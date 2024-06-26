@@ -1,4 +1,4 @@
-# ![logo](./public/logo_dark.png =48x48) TheOpenPresenter
+# <img src="./public/logo_dark.png" width=42 /> TheOpenPresenter
 
 **TheOpenPresenter** is an ambitious project aiming to be the final presenter software you'll ever need.
 It achieves this through its modular architecture, allowing for endless customization and feature based on every specific needs.
