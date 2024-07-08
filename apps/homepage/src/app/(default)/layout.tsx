@@ -1,8 +1,8 @@
 "use client";
 
 import BgShapes from "@/components/bg-shapes";
-import VerticalLines from "@/components/vertical-lines";
 import Header from "@/components/ui/header";
+import { styled } from "@/styled-system/jsx";
 
 export default function DefaultLayout({
   children,
@@ -11,11 +11,10 @@ export default function DefaultLayout({
 }) {
   return (
     <>
-      <VerticalLines />
       <BgShapes />
       <Header />
 
-      <main className="grow">{children}</main>
+      <styled.main flexGrow={1}>{children}</styled.main>
     </>
   );
 }
