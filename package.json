@@ -17,6 +17,7 @@
     "worker": "yarn workspace @repo/worker"
   },
   "devDependencies": {
+    "concurrently": "^8.2.2",
     "prettier": "^3.2.5",
     "turbo": "^2.0.4",
     "typescript": "5.5.3"
