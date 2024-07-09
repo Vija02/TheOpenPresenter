@@ -1,0 +1,30 @@
+{
+  "name": "@repo/worker",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "gw": "cd dist && cross-env NODE_OPTIONS=\"${NODE_OPTIONS:-} -r @repo/config/env\" graphile-worker --crontab ../crontab",
+    "dev": "cd dist && cross-env NODE_OPTIONS=\"${NODE_OPTIONS:-} -r @repo/config/env --inspect=9757\" graphile-worker --crontab ../crontab --watch",
+    "build": "tsc -b",
+    "start": "yarn gw",
+    "install-db-schema": "mkdirp dist && yarn gw --schema-only"
+  },
+  "dependencies": {
+    "@repo/config": "*",
+    "@types/html-to-text": "^9.0.0",
+    "@types/lodash": "^4.14.191",
+    "@types/mjml": "^4.7.0",
+    "@types/nodemailer": "^6.4.7",
+    "aws-sdk": "^2.1325.0",
+    "cross-env": "^7.0.3",
+    "graphile-worker": "^0.16.6",
+    "html-to-text": "^9.0.4",
+    "lodash": "^4.17.21",
+    "mjml": "^4.13.0",
+    "nodemailer": "^6.9.9",
+    "tslib": "^2.5.0"
+  },
+  "devDependencies": {
+    "mkdirp": "^2.1.3"
+  }
+}
