@@ -1,0 +1,15 @@
+{
+  "extends": "@repo/typescript-config/base.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "rootDir": ".",
+    "outDir": ".",
+    "tsBuildInfoFile": "tsconfig.tsbuildinfo",
+    "declarationDir": ".",
+    "lib": ["es2018", "esnext.asynciterable"],
+    "target": "es2018",
+    "module": "NodeNext",
+    "jsx": "react"
+  },
+  "include": ["index.tsx"]
+}
