@@ -21,7 +21,7 @@ module.exports = () => {
           return externals.map((ext) => {
             if (typeof ext === "function") {
               return (obj, callback) => {
-                if (/^@app\//.test(obj.request)) {
+                if (/^@repo\//.test(obj.request)) {
                   callback();
                 } else {
                   return ext(obj, callback);
