@@ -3,6 +3,9 @@
   "projectName": "TheOpenPresenter",
   "private": true,
   "scripts": {
+    "setup": "yarn && yarn setup:env auto && yarn setup:db && yarn setup:packages",
+    "setup:env": "node ./scripts/setup_env.js",
+    "setup:db": "node ./scripts/setup_db.js",
     "build": "turbo build",
     "dev": "turbo dev",
     "lint": "turbo lint",
