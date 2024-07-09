@@ -5,7 +5,8 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "dev": "tsc -b --watch --preserveWatchOutput"
   },
   "dependencies": {
     "dotenv": "^16.0.3"

@@ -4,8 +4,10 @@
   "version": "0.0.0",
   "scripts": {
     "gw": "cd dist && cross-env NODE_OPTIONS=\"${NODE_OPTIONS:-} -r @repo/config/env\" graphile-worker --crontab ../crontab",
-    "dev": "cd dist && cross-env NODE_OPTIONS=\"${NODE_OPTIONS:-} -r @repo/config/env --inspect=9757\" graphile-worker --crontab ../crontab --watch",
+    "dev": "concurrently --kill-others --names \"TS Watch,Worker\" --prefix \"({name})\" --prefix-colors \"orangeBright.bold,blueBright.bold\" \"yarn build:watch\" \"yarn run:watch\"",
     "build": "tsc -b",
+    "build:watch": "tsc -b --watch --preserveWatchOutput",
+    "run:watch": "nodemon --signal SIGINT --watch './dist/**/*.js' --watch './crontab' -x \"yarn gw\"",
     "start": "yarn gw",
     "install-db-schema": "mkdirp dist && yarn gw --schema-only"
   },
@@ -16,6 +18,7 @@
     "@types/mjml": "^4.7.0",
     "@types/nodemailer": "^6.4.7",
     "aws-sdk": "^2.1325.0",
+    "concurrently": "^8.2.2",
     "cross-env": "^7.0.3",
     "graphile-worker": "^0.16.6",
     "html-to-text": "^9.0.4",
