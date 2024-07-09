@@ -9,7 +9,12 @@
     "build": "turbo build",
     "dev": "turbo dev",
     "lint": "turbo lint",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\""
+    "test": "node scripts/test.js",
+    "test:watch": "node scripts/test.js --watch",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "db": "yarn workspace @repo/db",
+    "homepage": "yarn workspace @repo/homepage",
+    "worker": "yarn workspace @repo/worker"
   },
   "devDependencies": {
     "prettier": "^3.2.5",
