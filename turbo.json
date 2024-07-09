@@ -22,7 +22,8 @@
     "dev": {
       "cache": false,
       "persistent": true
-    }
+    },
+    "codegen": {}
   },
   "globalEnv": [
     "ROOT_URL"
