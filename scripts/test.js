@@ -78,7 +78,7 @@ function main() {
 
   // Reset the test database
   execSync("yarn db gm reset --shadow --erase", opts);
-  execSync("yarn db watch --once --shadow", opts);
+  execSync("yarn db dev --once --shadow", opts);
 
   if (watchMode) {
     // We're in watch mode, so keep watching the `current.yml` file
@@ -91,7 +91,7 @@ function main() {
         },
         {
           name: "testdb",
-          command: "yarn db watch --shadow",
+          command: "yarn db dev --shadow",
           prefixColor: "blue",
         },
       ],
