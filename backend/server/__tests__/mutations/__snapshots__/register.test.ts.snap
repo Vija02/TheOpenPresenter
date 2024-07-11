@@ -1,0 +1,20 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Register 2`] = `
+{
+  "data": {
+    "register": {
+      "user": {
+        "avatarUrl": null,
+        "createdAt": "[timestamp-1]",
+        "id": "[id-1]",
+        "isAdmin": false,
+        "isVerified": false,
+        "name": "Test User",
+        "updatedAt": "[timestamp-1]",
+        "username": "[username-1]",
+      },
+    },
+  },
+}
+`;

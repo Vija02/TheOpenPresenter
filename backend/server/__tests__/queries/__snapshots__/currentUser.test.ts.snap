@@ -1,0 +1,19 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`currentUser when logged in 1`] = `
+{
+  "data": {
+    "currentUser": {
+      "id": "[id-1]",
+    },
+  },
+}
+`;
+
+exports[`currentUser when logged out 1`] = `
+{
+  "data": {
+    "currentUser": null,
+  },
+}
+`;
