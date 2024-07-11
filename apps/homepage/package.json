@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "build": "cd src && cross-env NODE_ENV=production NODE_OPTIONS=\"${NODE_OPTIONS:-} -r @app/config/env\" next build",
+    "build": "cd src && cross-env NODE_ENV=production NODE_OPTIONS=\"${NODE_OPTIONS:-} -r @repo/config/env\" next build",
     "prepare": "cd src && panda codegen"
   },
   "dependencies": {
