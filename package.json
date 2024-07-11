@@ -14,6 +14,7 @@
     "build": "turbo build",
     "clean": "node ./scripts/clean.js",
     "reset": "yarn clean && node ./scripts/delete-env-file.js",
+    "postinstall": "yarn patch-package",
     "--shortcuts to run commands in workspaces--": "",
     "config": "yarn workspace @repo/db",
     "db": "yarn workspace @repo/db",
@@ -23,6 +24,7 @@
   },
   "devDependencies": {
     "concurrently": "^8.2.2",
+    "patch-package": "^8.0.0",
     "prettier": "^3.2.5",
     "turbo": "^2.0.4",
     "typescript": "5.5.3"
@@ -35,5 +37,12 @@
     "apps/*",
     "backend/*",
     "packages/*"
-  ]
+  ],
+  "dependencies": {
+    "graphql": "^15.9.0"
+  },
+  "resolutions": {
+    "graphql": "15.x",
+    "pg-connection-string": "2.x"
+  }
 }
