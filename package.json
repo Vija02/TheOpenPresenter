@@ -16,10 +16,11 @@
     "reset": "yarn clean && node ./scripts/delete-env-file.js",
     "postinstall": "yarn patch-package",
     "--shortcuts to run commands in workspaces--": "",
-    "config": "yarn workspace @repo/db",
+    "config": "yarn workspace @repo/config",
     "db": "yarn workspace @repo/db",
-    "graphql": "yarn workspace @repo/db",
+    "graphql": "yarn workspace @repo/graphql",
     "homepage": "yarn workspace @repo/homepage",
+    "server": "yarn workspace @repo/server",
     "worker": "yarn workspace @repo/worker"
   },
   "devDependencies": {
