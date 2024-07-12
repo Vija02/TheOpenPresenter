@@ -7,10 +7,11 @@ import installHelmet from "./installHelmet";
 import installLogging from "./installLogging";
 import installPassport from "./installPassport";
 import installPostGraphile from "./installPostGraphile";
+import installRemote from "./installRemote";
+import installSSR from "./installSSR";
 import installSameOrigin from "./installSameOrigin";
 import installSession from "./installSession";
 import installSharedStatic from "./installSharedStatic";
-import installSSR from "./installSSR";
 import installWorkerUtils from "./installWorkerUtils";
 
 export {
@@ -23,9 +24,10 @@ export {
   installLogging,
   installPassport,
   installPostGraphile,
+  installRemote,
+  installSSR,
   installSameOrigin,
   installSession,
   installSharedStatic,
-  installSSR,
   installWorkerUtils,
 };

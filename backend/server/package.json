@@ -37,6 +37,7 @@
     "redis": "^4.6.15",
     "source-map-support": "^0.5.21",
     "typeid-js": "^0.7.0",
+    "vite-express": "^0.17.0",
     "y-protocols": "^1.0.6",
     "yjs": "^13.6.18"
   },
