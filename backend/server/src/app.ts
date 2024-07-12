@@ -5,7 +5,7 @@ import { Duplex } from "stream";
 
 import { cloudflareIps } from "./cloudflare";
 import * as middleware from "./middleware";
-import { makeShutdownActions, ShutdownAction } from "./shutdownActions";
+import { ShutdownAction, makeShutdownActions } from "./shutdownActions";
 import { sanitizeEnv } from "./utils";
 
 // Server may not always be supplied, e.g. where mounting on a sub-route
@@ -22,7 +22,7 @@ type UpgradeHandlers = Array<{
   check: (
     req: IncomingMessage,
     socket: Duplex,
-    head: Buffer
+    head: Buffer,
   ) => boolean | Promise<boolean>;
   upgrade: (req: IncomingMessage, socket: Duplex, head: Buffer) => void;
 }>;
@@ -31,7 +31,7 @@ export function getUpgradeHandlers(app: Express): UpgradeHandlers {
 }
 
 export function getWebsocketMiddlewares(
-  app: Express
+  app: Express,
 ): Middleware<express.Request, express.Response>[] {
   return app.get("websocketMiddlewares");
 }
@@ -80,8 +80,8 @@ export async function makeApp({
       process.env.TRUST_PROXY === "1"
         ? true
         : process.env.TRUST_PROXY === "cloudflare"
-        ? ["loopback", "linklocal", "uniquelocal", ...cloudflareIps]
-        : process.env.TRUST_PROXY.split(",")
+          ? ["loopback", "linklocal", "uniquelocal", ...cloudflareIps]
+          : process.env.TRUST_PROXY.split(","),
     );
   }
 
@@ -140,6 +140,7 @@ export async function makeApp({
   await middleware.installPostGraphile(app);
   await middleware.installRemote(app, httpServer!);
   await middleware.installSSR(app);
+  await middleware.installHocuspocus(app);
 
   /*
    * Error handling middleware

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
+
 /* eslint-disable no-console */
-import { createServer, IncomingMessage } from "http";
+import { IncomingMessage, createServer } from "http";
 import { Duplex } from "stream";
 
 import { getShutdownActions, getUpgradeHandlers, makeApp } from "./app";
@@ -26,7 +27,7 @@ async function main() {
   async function handleUpgrade(
     req: IncomingMessage,
     socket: Duplex,
-    head: Buffer
+    head: Buffer,
   ) {
     if (isDev && httpServer.listeners("upgrade").length > 1) {
       console.error(httpServer.listeners("upgrade").map((f) => f.toString()));
@@ -44,7 +45,7 @@ async function main() {
     } catch (e) {
       console.error(
         `Error occurred whilst trying to handle 'upgrade' event:`,
-        e
+        e,
       );
       socket.destroy();
     }
@@ -65,24 +66,24 @@ async function main() {
       typeof address === "string"
         ? address
         : address && address.port
-        ? String(address.port)
-        : String(PORT);
+          ? String(address.port)
+          : String(PORT);
     console.log();
     console.log(
       chalk.green(
         `${chalk.bold(packageJson.projectName)} listening on port ${chalk.bold(
-          actualPort
-        )}`
-      )
+          actualPort,
+        )}`,
+      ),
     );
     console.log();
     console.log(
-      `  Site:     ${chalk.bold.underline(`http://localhost:${actualPort}`)}`
+      `  Site:     ${chalk.bold.underline(`http://localhost:${actualPort}`)}`,
     );
     console.log(
       `  GraphiQL: ${chalk.bold.underline(
-        `http://localhost:${actualPort}/graphiql`
-      )}`
+        `http://localhost:${actualPort}/graphiql`,
+      )}`,
     );
     console.log();
   });

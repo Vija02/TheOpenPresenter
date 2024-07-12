@@ -4,6 +4,7 @@ import installDatabasePools from "./installDatabasePools";
 import installErrorHandler from "./installErrorHandler";
 import installForceSSL from "./installForceSSL";
 import installHelmet from "./installHelmet";
+import installHocuspocus from "./installHocuspocus";
 import installLogging from "./installLogging";
 import installPassport from "./installPassport";
 import installPostGraphile from "./installPostGraphile";
@@ -21,6 +22,7 @@ export {
   installErrorHandler,
   installForceSSL,
   installHelmet,
+  installHocuspocus,
   installLogging,
   installPassport,
   installPostGraphile,
