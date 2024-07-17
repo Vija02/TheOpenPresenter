@@ -41,6 +41,7 @@ export default async function installHelmet(app: Express) {
       ROOT_URL.replace(/^http/, "ws"),
       // For Vite
       "ws://localhost:*",
+      "http://localhost:*",
     ];
     // Dev needs 'unsafe-eval' due to
     // https://github.com/vercel/next.js/issues/14221
