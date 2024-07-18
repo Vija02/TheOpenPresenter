@@ -36,6 +36,7 @@ module.exports = {
 		".eslintrc.cjs",
 	],
 	rules: {
+		"@typescript-eslint/no-explicit-any": 0,
 		"react-refresh/only-export-components": [
 			"warn",
 			{ allowConstantExport: true },
