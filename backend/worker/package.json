@@ -9,7 +9,8 @@
     "build:watch": "tsc -b --watch --preserveWatchOutput",
     "run:watch": "nodemon --signal SIGINT --watch './dist/**/*.js' --watch './crontab' -x \"yarn gw\"",
     "start": "yarn gw",
-    "install-db-schema": "mkdirp dist && yarn gw --schema-only"
+    "install-db-schema": "mkdirp dist && yarn gw --schema-only",
+    "postinstall": "cd ../.. && yarn patch-package"
   },
   "dependencies": {
     "@repo/config": "*",

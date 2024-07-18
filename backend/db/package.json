@@ -11,7 +11,8 @@
     "reset": "yarn gm reset",
     "dump": "yarn gm migrate && yarn gm reset --shadow --erase && yarn gm migrate --shadow --forceActions",
     "wipe-if-demo": "./scripts/wipe-if-demo",
-    "test": "cross-env NODE_ENV=test NODE_OPTIONS=\"${NODE_OPTIONS:-} -r @repo/config/env\" vitest"
+    "test": "cross-env NODE_ENV=test NODE_OPTIONS=\"${NODE_OPTIONS:-} -r @repo/config/env\" vitest",
+    "postinstall": "cd ../.. && yarn patch-package"
   },
   "dependencies": {
     "cross-env": "^7.0.3",

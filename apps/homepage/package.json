@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "build": "cd src && cross-env NODE_ENV=production NODE_OPTIONS=\"${NODE_OPTIONS:-} -r @repo/config/env\" next build",
-    "prepare": "cd src && panda codegen"
+    "prepare": "cd src && panda codegen",
+    "postinstall": "cd ../.. && yarn patch-package"
   },
   "dependencies": {
     "@repo/ui": "*",

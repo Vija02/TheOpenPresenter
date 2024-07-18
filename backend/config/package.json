@@ -6,7 +6,8 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "dev": "tsc -b --watch --preserveWatchOutput"
+    "dev": "tsc -b --watch --preserveWatchOutput",
+    "postinstall": "cd ../.. && yarn patch-package"
   },
   "dependencies": {
     "dotenv": "^16.0.3"

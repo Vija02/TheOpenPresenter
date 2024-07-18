@@ -7,7 +7,8 @@
     "dev": "nodemon --signal SIGINT --watch 'dist/**/*.js' -x \"node --inspect=9678 -r @repo/config/env -r source-map-support/register\" dist/index.js",
     "schema:export": "yarn cross-env NODE_OPTIONS=\"-r @repo/config/env\" yarn ts-node scripts/schema-export.ts",
     "cloudflare:import": "(echo \"export const cloudflareIps: string[] = [\"; (curl -Ls https://www.cloudflare.com/ips-v4 | sort | sed -e \"s/^/  \\\"/\" -e \"s/$/\\\",/\"); echo \"];\") > src/cloudflare.ts",
-    "test": "yarn cross-env NODE_ENV=test NODE_OPTIONS=\"-r @repo/config/env\" yarn vitest"
+    "test": "yarn cross-env NODE_ENV=test NODE_OPTIONS=\"-r @repo/config/env\" yarn vitest",
+    "postinstall": "cd ../.. && yarn patch-package"
   },
   "dependencies": {
     "@graphile-contrib/pg-simplify-inflector": "^6.1.0",
