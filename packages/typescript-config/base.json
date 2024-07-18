@@ -8,12 +8,17 @@
     "incremental": true,
     "composite": true,
     "isolatedModules": true,
-    "lib": ["es2022", "DOM", "DOM.Iterable"],
+    "lib": [
+      "es2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
     "module": "NodeNext",
     "moduleDetection": "force",
     "moduleResolution": "NodeNext",
     "noUncheckedIndexedAccess": true,
     "resolveJsonModule": true,
+    "importHelpers": true,
     "skipLibCheck": true,
     "strict": true,
     "target": "ES2022"
