@@ -132,11 +132,13 @@ export async function makeApp({
   if (process.env.FORCE_SSL) {
     await middleware.installForceSSL(app);
   }
+  await middleware.installPluginStatic(app);
   // These are our assets: images/etc; served out of the /backend/server/public folder (if present)
   await middleware.installSharedStatic(app);
   if (isTest || isDev) {
     await middleware.installCypressServerCommand(app);
   }
+  await middleware.installTrpc(app);
   await middleware.installPostGraphile(app);
   await middleware.installRemote(app, httpServer!);
   await middleware.installSSR(app);

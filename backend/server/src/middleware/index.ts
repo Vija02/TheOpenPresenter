@@ -7,12 +7,14 @@ import installHelmet from "./installHelmet";
 import installHocuspocus from "./installHocuspocus";
 import installLogging from "./installLogging";
 import installPassport from "./installPassport";
+import installPluginStatic from "./installPluginStatic";
 import installPostGraphile from "./installPostGraphile";
 import installRemote from "./installRemote";
 import installSSR from "./installSSR";
 import installSameOrigin from "./installSameOrigin";
 import installSession from "./installSession";
 import installSharedStatic from "./installSharedStatic";
+import installTrpc from "./installTrpc";
 import installWorkerUtils from "./installWorkerUtils";
 
 export {
@@ -25,11 +27,13 @@ export {
   installHocuspocus,
   installLogging,
   installPassport,
+  installPluginStatic,
   installPostGraphile,
   installRemote,
   installSSR,
   installSameOrigin,
   installSession,
   installSharedStatic,
+  installTrpc,
   installWorkerUtils,
 };
