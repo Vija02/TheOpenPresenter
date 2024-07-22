@@ -1,0 +1,23 @@
+{
+  "name": "@repo/ui",
+  "version": "0.0.0",
+  "private": true,
+  "exports": "./src/index.ts",
+  "scripts": {
+    "lint": "eslint . --max-warnings 0",
+    "postinstall": "cd ../.. && yarn patch-package"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "*",
+    "@repo/typescript-config": "*",
+    "@types/node": "^20",
+    "@types/eslint": "^8.56.5",
+    "@types/react": "npm:types-react@rc",
+    "@types/react-dom": "npm:types-react-dom@rc",
+    "eslint": "^8.57.0",
+    "typescript": "5.5.3"
+  },
+  "dependencies": {
+    "react": "rc"
+  }
+}
