@@ -1,0 +1,20 @@
+{
+  "name": "@repo/base-plugin",
+  "private": true,
+  "version": "0.0.0",
+  "main": "src/index.ts",
+  "scripts": {
+    "build": "tsup-node src/index.ts",
+    "postinstall": "cd ../.. && yarn patch-package"
+  },
+  "dependencies": {
+    "@repo/prettier-config": "*",
+    "@trpc/server": "^11.0.0-rc.461",
+    "dotenv": "^16.0.3",
+    "yjs": "^13.6.18"
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3",
+    "tsup": "^8.1.2"
+  }
+}
