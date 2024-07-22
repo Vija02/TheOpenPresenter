@@ -45,5 +45,9 @@
   "resolutions": {
     "graphql": "15.x",
     "pg-connection-string": "2.x"
+  },
+  "overrides": {
+    "@types/react": "npm:types-react@rc",
+    "@types/react-dom": "npm:types-react-dom@rc"
   }
 }
