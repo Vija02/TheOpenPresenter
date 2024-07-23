@@ -1,7 +1,7 @@
 import { initTRPC } from "@trpc/server";
 import type { Map } from "yjs";
 
-import { IDisposable } from "./types";
+import { IDisposable } from "../types";
 
 export class ServerPluginApi {
   protected registeredTrpcAppRouter: ((
@@ -18,6 +18,10 @@ export class ServerPluginApi {
   protected registeredLoadJsOnRemoteView: {
     pluginName: string;
     path: string;
+  }[] = [];
+  protected registeredRemoteViewWebComponent: {
+    pluginName: string;
+    webComponentTag: string;
   }[] = [];
 
   public registerTrpcAppRouter(
@@ -39,5 +43,12 @@ export class ServerPluginApi {
 
   public loadJsOnRemoteView(pluginName: string, path: string) {
     this.registeredLoadJsOnRemoteView.push({ pluginName, path });
+  }
+
+  public registerRemoteViewWebComponent(
+    pluginName: string,
+    webComponentTag: string,
+  ) {
+    this.registeredRemoteViewWebComponent.push({ pluginName, webComponentTag });
   }
 }

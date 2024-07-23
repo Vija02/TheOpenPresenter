@@ -1,4 +1,4 @@
-import { ServerPluginApi } from "@repo/base-plugin";
+import { ServerPluginApi } from "@repo/base-plugin/server";
 import aki from "aki-plugin-manager";
 import chalk from "chalk";
 import fs from "fs";
@@ -20,6 +20,9 @@ class ServerPluginApiPrivate extends ServerPluginApi {
   }
   getRegisteredLoadJsOnRemoteView() {
     return this.registeredLoadJsOnRemoteView;
+  }
+  getRegisteredRemoteViewWebComponent() {
+    return this.registeredRemoteViewWebComponent;
   }
 }
 

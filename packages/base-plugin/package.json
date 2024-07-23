@@ -2,9 +2,15 @@
   "name": "@repo/base-plugin",
   "private": true,
   "version": "0.0.0",
-  "main": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./server": "./src/server/index.ts",
+    "./client": "./src/client/index.ts"
+  },
   "scripts": {
-    "build": "tsup-node src/index.ts",
+    "build": "yarn build:server && yarn build:client",
+    "build:server": "tsup-node src/server/index.ts",
+    "build:client": "tsup src/client/index.ts",
     "postinstall": "cd ../.. && yarn patch-package"
   },
   "dependencies": {

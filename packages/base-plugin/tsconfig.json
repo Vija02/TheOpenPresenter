@@ -9,7 +9,8 @@
     "lib": ["es2018", "esnext.asynciterable"],
     "target": "es2018",
     "module": "CommonJS",
-    "moduleResolution": "Node"
+    "moduleResolution": "Node",
+    "jsx": "react-jsx"
   },
   "include": ["src"]
 }
