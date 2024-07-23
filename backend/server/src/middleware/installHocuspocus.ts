@@ -1,5 +1,5 @@
 import { Server } from "@hocuspocus/server";
-import { IDisposable } from "@repo/base-plugin";
+import type { IDisposable } from "@repo/base-plugin";
 import { Express } from "express";
 import { IncomingMessage } from "http";
 import { Duplex } from "stream";
