@@ -120,3 +120,18 @@ Server rendering renders the final picture in the server. This is required if we
 For example: Video stream like NDI/SDI/HDMI/RTSP and the like.
 
 The benefit is that there won't need to be a client. Or at least it can be a very simple client.
+
+## Plugin
+
+### Custom view
+
+TheOpenPresenter uses Web Components as the mechanism to load views from its plugins. Plugin creators can use web component directly or use a wrapper if they are using a framework like React or Vue.
+
+### Shared dependencies
+
+The Web component is loaded directly on the page's main thread. This makes it easy for data to flow between the main page and the plugin. However, it does come with an edge case. Some dependencies does not work when it is loaded multiple times.
+
+In our case, Yjs is the primary suspect. It is used extensively to get live collaboration working. 
+
+To solve that, some dependencies are excluded from the main bundle and is loaded separately. We use import maps to route the import to the correct place. If you're using a bundler, you'll need to exclude bundling that dependency from your build. For examples, see the plugins folder to see how we achieve that.
+
