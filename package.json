@@ -37,7 +37,8 @@
   "workspaces": [
     "apps/*",
     "backend/*",
-    "packages/*"
+    "packages/*",
+    "plugins/*"
   ],
   "dependencies": {
     "graphql": "^15.9.0"
