@@ -14,6 +14,8 @@ const isDevOrTest =
   process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test";
 
 export default async function installHelmet(app: Express) {
+  const defaultScriptSrc = ["'self'", "https://ga.jspm.io", "blob:"];
+
   const options: HelmetOptions = {
     contentSecurityPolicy: {
       directives: {
@@ -25,6 +27,7 @@ export default async function installHelmet(app: Express) {
           // it.
           ROOT_URL.replace(/^http/, "ws"),
         ],
+        "script-src": defaultScriptSrc,
       },
     },
   };
@@ -46,7 +49,7 @@ export default async function installHelmet(app: Express) {
     // Dev needs 'unsafe-eval' due to
     // https://github.com/vercel/next.js/issues/14221
     options.contentSecurityPolicy.directives!["script-src"] = [
-      "'self'",
+      ...defaultScriptSrc,
       "'unsafe-eval'",
       // For Vite
       "'unsafe-inline'",
