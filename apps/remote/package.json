@@ -21,6 +21,7 @@
     "framer-motion": "^11.2.12",
     "react": "rc",
     "react-dom": "rc",
+    "react-json-view": "^1.21.3",
     "typeid-js": "^1.0.0",
     "valtio": "^1.13.2",
     "valtio-yjs": "^0.6.0",

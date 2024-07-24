@@ -1,4 +1,5 @@
 import { Grid } from "@chakra-ui/react";
+import ReactJson from "react-json-view";
 import { useSnapshot } from "valtio";
 
 import MainBody from "./MainBody";
@@ -16,7 +17,7 @@ function App() {
           <MainBody />
         </Grid>
       )}
-      <div>{JSON.stringify(data)}</div>
+      <ReactJson src={data} />
     </div>
   );
 }
