@@ -19,6 +19,7 @@
     "@trpc/client": "^11.0.0-rc.461",
     "@trpc/react-query": "^11.0.0-rc.461",
     "framer-motion": "^11.2.12",
+    "lodash": "^4.17.21",
     "react": "rc",
     "react-dom": "rc",
     "react-json-view": "^1.21.3",

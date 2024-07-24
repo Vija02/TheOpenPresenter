@@ -1,5 +1,6 @@
 import { Box, Button, Divider, Heading, Text } from "@chakra-ui/react";
 import type { Scene } from "@repo/base-plugin";
+import { sortBy } from "lodash";
 import { typeidUnboxed } from "typeid-js";
 import { useLocation } from "wouter";
 
@@ -26,9 +27,8 @@ const Sidebar = () => {
         TheOpenPresenter Remote
       </Heading>
       <Divider />
-      {Object.entries(data.data)
-        .sort(([, value]) => value.order)
-        .map(([id, value]) => (
+      {sortBy(Object.entries(data.data), ([, value]) => value.order).map(
+        ([id, value]) => (
           <Box
             key={id}
             onClick={() => {
@@ -46,7 +46,8 @@ const Sidebar = () => {
               </Text>
             </Text>
           </Box>
-        ))}
+        ),
+      )}
       <Button onClick={onAdd}>+</Button>
     </Box>
   );
