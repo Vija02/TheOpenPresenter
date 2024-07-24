@@ -17,6 +17,7 @@
     "@repo/prettier-config": "*",
     "@trpc/server": "^11.0.0-rc.461",
     "dotenv": "^16.0.3",
+    "react-yjs": "^2.0.0",
     "yjs": "^13.6.18"
   },
   "devDependencies": {

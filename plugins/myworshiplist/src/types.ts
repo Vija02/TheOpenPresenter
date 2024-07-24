@@ -1,5 +1,5 @@
 export type SongCache = {
-  id: string;
+  id: number;
   title: string;
   content: string;
 };
@@ -10,7 +10,7 @@ export type BaseData = {
 
 export type CustomData = {
   type: "custom";
-  songIds: string[];
+  songIds: number[];
   songCache: SongCache[];
 };
 

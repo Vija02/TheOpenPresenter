@@ -11,12 +11,11 @@ import {
   ModalOverlay,
   ModalProps,
 } from "@chakra-ui/react";
-import { useMutablePluginData } from "@repo/base-plugin/client";
 import { OverlayToggleComponentProps } from "@repo/ui";
 import { useCallback, useState } from "react";
 
-import { CustomData } from "../../../../src/types";
 import { trpc } from "../../../trpc";
+import { useValtioSceneData } from "../../../util";
 
 export type MWLRemoteCustomAddSongModalPropTypes = Omit<
   ModalProps,
@@ -30,18 +29,18 @@ const MWLRemoteCustomAddSongModal = ({
   resetData,
   ...props
 }: MWLRemoteCustomAddSongModalPropTypes) => {
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const mutableData = useMutablePluginData<CustomData>();
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const sceneData = useValtioSceneData();
 
   const { data } = trpc.myworshiplist.search.useQuery({ title: "hi" });
 
   const addSong = useCallback(() => {
     if (selectedId) {
-      mutableData.data.songIds.push(selectedId.toString());
+      sceneData.data.songIds.push(selectedId);
       onToggle?.();
       resetData?.();
     }
-  }, [mutableData.data.songIds, onToggle, resetData, selectedId]);
+  }, [sceneData.data.songIds, onToggle, resetData, selectedId]);
 
   return (
     <Modal
@@ -57,7 +56,7 @@ const MWLRemoteCustomAddSongModal = ({
         <ModalBody>
           <Input placeholder="Search..." />
           <Box>
-            {data?.data.map((x) => (
+            {data?.data.map((x: any) => (
               <Box
                 key={x.id}
                 bg={selectedId === x.id ? "gray.200" : "transparent"}

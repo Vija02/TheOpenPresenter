@@ -1,18 +1,18 @@
 import { Box } from "@chakra-ui/react";
-import { useSnapshotPluginData } from "@repo/base-plugin/client";
 
 import { MyWorshipListData } from "../../src/types";
+import { useValtioSceneData } from "../util";
 import MWLLanding from "./MWLLanding";
 import MWLRemoteCustom from "./MWLRemoteCustom";
 
 const MWLRemote = () => {
-  const d = useSnapshotPluginData<MyWorshipListData>();
+  const sceneData = useValtioSceneData<MyWorshipListData>();
 
-  if (d.data.type === "unselected") {
+  if (sceneData.data.type === "unselected") {
     return <MWLLanding />;
   }
 
-  if (d.data.type === "custom") {
+  if (sceneData.data.type === "custom") {
     return <MWLRemoteCustom />;
   }
 

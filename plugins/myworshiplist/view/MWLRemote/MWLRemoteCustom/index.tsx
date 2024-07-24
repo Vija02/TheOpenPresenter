@@ -1,26 +1,25 @@
-import { Box, Button, Heading, Text } from "@chakra-ui/react";
-import {
-  useMutablePluginData,
-  useSnapshotPluginData,
-} from "@repo/base-plugin/client";
+import { Box, Button, Heading } from "@chakra-ui/react";
 import { OverlayToggle } from "@repo/ui";
 
-import { CustomData } from "../../../src/types";
+import { useSceneData } from "../../util";
+import MWLSongView from "../MWLSongView";
 import MWLRemoteCustomAddSongModal from "./MWLRemoteCustomAddSongModal";
 
 const MWLRemoteCustom = () => {
-  const d = useSnapshotPluginData<CustomData>();
-  const mutableData = useMutablePluginData<CustomData>();
+  const songIds = useSceneData((x) => x.data.songIds);
 
   return (
     <Box p={3}>
       <Heading>MWL REMOTE</Heading>
-      <Box p={2} my={2} bg="gray.100">
+      {/* <Box p={2} my={2} bg="gray.100">
         <Text fontWeight="bold" fontSize="xs">
           DEBUG
         </Text>
         <Text color="gray.600">{JSON.stringify(d)}</Text>
-      </Box>
+      </Box> */}
+      {songIds.map((songId) => (
+        <MWLSongView key={songId} songId={songId} />
+      ))}
       <OverlayToggle
         toggler={({ onToggle }) => (
           <Button

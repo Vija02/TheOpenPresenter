@@ -1,17 +1,17 @@
 import { Box, Button, Text } from "@chakra-ui/react";
-import { useMutablePluginData } from "@repo/base-plugin/client";
 import { useCallback } from "react";
 
-import { CustomData, MyWorshipListData } from "../../src/types";
+import { CustomData } from "../../src/types";
+import { useValtioSceneData } from "../util";
 
 const MWLLanding = () => {
-  const mutableData = useMutablePluginData<MyWorshipListData>();
+  const sceneData = useValtioSceneData();
 
   const onCustom = useCallback(() => {
-    mutableData.data.type = "custom";
-    (mutableData.data as CustomData).songCache = [];
-    (mutableData.data as CustomData).songIds = [];
-  }, [mutableData]);
+    sceneData.data.type = "custom";
+    (sceneData.data as CustomData).songCache = [];
+    (sceneData.data as CustomData).songIds = [];
+  }, [sceneData]);
 
   return (
     <Box>

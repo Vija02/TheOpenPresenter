@@ -1,36 +1,14 @@
 import { Scene, ServerPluginApi } from "@repo/base-plugin/server";
 import { initTRPC } from "@trpc/server";
+import axios from "axios";
 import { proxy, subscribe } from "valtio";
 import { bind } from "valtio-yjs";
 import type { Map } from "yjs";
 import z from "zod";
 
 import { pluginName, remoteWebComponentTag } from "./consts";
+import { getSongData } from "./data";
 import { CustomData, MyWorshipListData } from "./types";
-
-// TODO: API
-const sampleData = [
-  {
-    id: "1",
-    title: "Jesus I need you",
-    content: `Hope be my anthem
-Lord, when the world has fallen quiet`,
-  },
-  {
-    id: "2",
-    title: "One Way",
-    content: `I lay my life down at Your feet
-Cause You’re the only one I need`,
-  },
-  {
-    id: "3",
-    title: "Turn it up",
-    content: `You are here as we lift you up
-You are riding on our praise`,
-  },
-  { id: "4", title: "Cornerstone", content: "" },
-  { id: "5", title: "10000 Reasons", content: "" },
-];
 
 export const init = (serverPluginApi: ServerPluginApi) => {
   serverPluginApi.registerTrpcAppRouter(getAppRouter);
@@ -48,7 +26,7 @@ const onPluginDataLoaded = (entryData: Map<any>) => {
   const data = proxy<Scene<MyWorshipListData>>(entryData.toJSON() as any);
   const unbind = bind(data, entryData);
 
-  const unsubscribe = subscribe(data.data, () => {
+  const unsubscribe = subscribe(data.data, async () => {
     if (data.data.type === "custom") {
       const cachedIds = data.data.songCache.map((x) => x.id);
       const noDuplicateSongIds = Array.from(data.data.songIds);
@@ -58,11 +36,11 @@ const onPluginDataLoaded = (entryData: Map<any>) => {
           (songId) => !cachedIds.includes(songId),
         );
 
-        missingCaches.forEach((songId) => {
-          const newD = sampleData.find((x) => x.id === songId);
+        for (const songId of missingCaches) {
+          const songData = await getSongData(songId);
 
-          (data.data as CustomData).songCache.push(newD!);
-        });
+          (data.data as CustomData).songCache.push(songData);
+        }
       }
     }
   });
@@ -85,8 +63,9 @@ const getAppRouter = (t: ReturnType<typeof initTRPC.create>) => {
           }),
         )
         .query(async (opts) => {
+          const res = await axios("https://myworshiplist.com/api/songs");
           return {
-            data: sampleData,
+            data: res.data.data,
           };
         }),
     },
