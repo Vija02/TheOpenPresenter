@@ -39,6 +39,6 @@
     "@vitejs/plugin-react-swc": "^3.7.0",
     "cross-env": "^7.0.3",
     "tsup": "^8.1.2",
-    "vite": "^5.3.1"
+    "vite": "^5.3.5"
   }
 }

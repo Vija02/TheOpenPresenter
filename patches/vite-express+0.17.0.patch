@@ -1,20 +1,14 @@
 diff --git a/node_modules/vite-express/dist/main.js b/node_modules/vite-express/dist/main.js
-index f1f8eff..6d53bbd 100644
+index f1f8eff..39cf5db 100644
 --- a/node_modules/vite-express/dist/main.js
 +++ b/node_modules/vite-express/dist/main.js
-@@ -255,7 +255,6 @@ function injectHTMLMiddleware(app) {
- }
- function startServer(server) {
-     return __awaiter(this, void 0, void 0, function* () {
--        var _a, _b;
+@@ -258,8 +258,7 @@ function startServer(server) {
+         var _a, _b;
          const { createServer, mergeConfig } = yield import('vite');
          const config = yield getViteConfig();
-         const isUsingViteResolvedConfig = Object.entries(config).length > 3;
-@@ -265,7 +264,6 @@ function startServer(server) {
+-        const isUsingViteResolvedConfig = Object.entries(config).length > 3;
+-        const vite = yield createServer(mergeConfig(isUsingViteResolvedConfig ? {} : config, {
++        const vite = yield createServer(mergeConfig(config, {
+             configFile: Config.viteConfigFile,
+             clearScreen: false,
              appType: "custom",
-             server: {
-                 middlewareMode: true,
--                hmr: (_b = (_a = config.server) === null || _a === void 0 ? void 0 : _a.hmr) !== null && _b !== void 0 ? _b : { server },
-             },
-         }));
-         server.on("close", () => __awaiter(this, void 0, void 0, function* () {

@@ -1,0 +1,14 @@
+diff --git a/node_modules/vite/dist/node/chunks/dep-mCdpKltl.js b/node_modules/vite/dist/node/chunks/dep-mCdpKltl.js
+index dc7a3d5..d11d1c3 100644
+--- a/node_modules/vite/dist/node/chunks/dep-mCdpKltl.js
++++ b/node_modules/vite/dist/node/chunks/dep-mCdpKltl.js
+@@ -17402,6 +17402,9 @@ function mergeConfigRecursively(defaults, overrides, rootPath) {
+         ...backwardCompatibleWorkerPlugins(value)
+       ];
+       continue;
++    } else if (key === "server" && rootPath === "server.hmr") {
++      merged[key] = value
++      continue;
+     }
+     if (Array.isArray(existing) || Array.isArray(value)) {
+       merged[key] = [...arraify(existing), ...arraify(value)];
