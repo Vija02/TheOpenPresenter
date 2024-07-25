@@ -41,11 +41,21 @@ const MWLSongViewInner = ({ songId }: { songId: number }) => {
   const groupedData = useMemo(() => groupData(cleanData), [cleanData]);
 
   return (
-    <Box p={3}>
-      <Heading>{songCache.title}</Heading>
+    <Box py={3}>
+      <Heading fontSize="xl" mb={2}>
+        {songCache.title}
+      </Heading>
       <Flex gap={3} flexWrap="wrap">
         {Object.entries(groupedData).map(([section, content], i) => (
           <Box key={i}>
+            <Text
+              fontWeight="bold"
+              textTransform="uppercase"
+              fontSize="xs"
+              mb={1}
+            >
+              {section}
+            </Text>
             <Box
               bg="gray.900"
               color="white"
@@ -54,9 +64,6 @@ const MWLSongViewInner = ({ songId }: { songId: number }) => {
               w="200px"
               overflow="hidden"
             >
-              <Text fontWeight="bold" textTransform="uppercase" fontSize="xs">
-                {section}
-              </Text>
               <Text as="pre">{content.join("\n")}</Text>
             </Box>
           </Box>
