@@ -12589,10 +12589,10 @@ vite-node@2.0.2:
     tinyrainbow "^1.2.0"
     vite "^5.0.0"
 
-vite-plugin-externalize-dependencies@^0.13.0:
-  version "0.13.0"
-  resolved "https://registry.yarnpkg.com/vite-plugin-externalize-dependencies/-/vite-plugin-externalize-dependencies-0.13.0.tgz#2df4e393c5ffcac4be6545181148e96d49965b39"
-  integrity sha512-rcVPrv9AgVItjLyBg5jcmbj6wcNaNpbBYmfW6XnA9cIpegSr29xU8pt8YF/uVCpaUE7vc2f5fcuSObtpB7MtSg==
+vite-plugin-externalize-dependencies@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/vite-plugin-externalize-dependencies/-/vite-plugin-externalize-dependencies-1.0.1.tgz#b38490dfdcec6898ddff06faaf6556db4aaf2654"
+  integrity sha512-kRIizv+YcrXFwzjde1iqayKTOKLR0JE3JPVrwm/6bsrXnwGSz+3Q+pKOgamAtlASPXx13JpXB50/OfQ0GqiIUw==
 
 vite@^5.0.0, vite@^5.3.1:
   version "5.3.3"
