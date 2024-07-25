@@ -8,9 +8,9 @@ const MWLLanding = () => {
   const sceneData = useValtioSceneData();
 
   const onCustom = useCallback(() => {
-    sceneData.data.type = "custom";
-    (sceneData.data as CustomData).songCache = [];
-    (sceneData.data as CustomData).songIds = [];
+    sceneData.pluginData.type = "custom";
+    (sceneData.pluginData as CustomData).songCache = [];
+    (sceneData.pluginData as CustomData).songIds = [];
   }, [sceneData]);
 
   return (

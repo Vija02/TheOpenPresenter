@@ -10,7 +10,7 @@ import {
 import { useSceneData } from "../../util";
 
 const MWLSongView = ({ songId }: { songId: number }) => {
-  const songCaches = useSceneData((x) => x.data.songCache);
+  const songCaches = useSceneData((x) => x.pluginData.songCache);
   const songCache = useMemo(
     () => songCaches.find((x) => x.id === songId),
     [songCaches, songId],
@@ -23,7 +23,7 @@ const MWLSongView = ({ songId }: { songId: number }) => {
 };
 
 const MWLSongViewInner = ({ songId }: { songId: number }) => {
-  const songCaches = useSceneData((x) => x.data.songCache);
+  const songCaches = useSceneData((x) => x.pluginData.songCache);
 
   const songCache = useMemo(
     () => songCaches.find((x) => x.id === songId)!,

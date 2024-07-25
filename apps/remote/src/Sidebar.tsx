@@ -16,8 +16,13 @@ const Sidebar = () => {
       order:
         (Math.max(0, ...Object.values(data.data).map((x) => x.order)) ?? 0) + 1,
       type: "scene",
-      data: { type: "unselected" },
-      plugin: "myworshiplist",
+      children: {
+        [typeidUnboxed("plugin")]: {
+          plugin: "myworshiplist",
+          order: 1,
+          pluginData: { type: "unselected" },
+        },
+      },
     } as Scene;
   };
 

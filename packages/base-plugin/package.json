@@ -22,6 +22,7 @@
   },
   "devDependencies": {
     "cross-env": "^7.0.3",
-    "tsup": "^8.1.2"
+    "tsup": "^8.1.2",
+    "yjs-types": "^0.0.1"
   }
 }

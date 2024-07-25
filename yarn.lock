@@ -12965,6 +12965,11 @@ yargs@^17.0.0, yargs@^17.3.1, yargs@^17.7.2:
     y18n "^5.0.5"
     yargs-parser "^21.1.1"
 
+yjs-types@^0.0.1:
+  version "0.0.1"
+  resolved "https://registry.yarnpkg.com/yjs-types/-/yjs-types-0.0.1.tgz#33d4ff87d90a37597e06745d305d02d4d241898b"
+  integrity sha512-ruTBSiNYR7AyaI+fV+1SLitWIYzHfmAgBM+Py/vo4fGVckBbUMv3atqPcK1YOrL0FGJLRboqWXHS9GYA1V8kxg==
+
 yjs@^13.6.18:
   version "13.6.18"
   resolved "https://registry.yarnpkg.com/yjs/-/yjs-13.6.18.tgz#d1575203478bc99ad1b89c098e7d4bacb7f91c3b"

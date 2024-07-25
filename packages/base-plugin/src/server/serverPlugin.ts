@@ -1,7 +1,6 @@
 import { initTRPC } from "@trpc/server";
-import type { Map } from "yjs";
 
-import { IDisposable } from "../types";
+import { IDisposable, ObjectToTypedMap, Plugin } from "../types";
 
 export class ServerPluginApi {
   protected registeredTrpcAppRouter: ((
@@ -9,7 +8,7 @@ export class ServerPluginApi {
   ) => any)[] = [];
   protected registeredOnPluginDataLoaded: {
     pluginName: string;
-    callback: (entryData: Map<any>) => IDisposable;
+    callback: (entryData: ObjectToTypedMap<Plugin>) => IDisposable;
   }[] = [];
   protected registeredServeStatic: {
     pluginName: string;
@@ -32,7 +31,7 @@ export class ServerPluginApi {
 
   public onPluginDataLoaded(
     pluginName: string,
-    callback: (entryData: Map<any>) => IDisposable,
+    callback: (entryData: ObjectToTypedMap<Plugin>) => IDisposable,
   ) {
     this.registeredOnPluginDataLoaded.push({ pluginName, callback });
   }

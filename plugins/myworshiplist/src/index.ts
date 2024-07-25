@@ -1,9 +1,12 @@
-import { Scene, ServerPluginApi } from "@repo/base-plugin/server";
+import {
+  ObjectToTypedMap,
+  Plugin,
+  ServerPluginApi,
+} from "@repo/base-plugin/server";
 import { initTRPC } from "@trpc/server";
 import axios from "axios";
 import { proxy, subscribe } from "valtio";
 import { bind } from "valtio-yjs";
-import type { Map } from "yjs";
 import z from "zod";
 
 import { pluginName, remoteWebComponentTag } from "./consts";
@@ -22,14 +25,14 @@ export const init = (serverPluginApi: ServerPluginApi) => {
   );
 };
 
-const onPluginDataLoaded = (entryData: Map<any>) => {
-  const data = proxy<Scene<MyWorshipListData>>(entryData.toJSON() as any);
-  const unbind = bind(data, entryData);
+const onPluginDataLoaded = (pluginInfo: ObjectToTypedMap<Plugin>) => {
+  const data = proxy(pluginInfo.toJSON() as Plugin<MyWorshipListData>);
+  const unbind = bind(data, pluginInfo as any);
 
-  const unsubscribe = subscribe(data.data, async () => {
-    if (data.data.type === "custom") {
-      const cachedIds = data.data.songCache.map((x) => x.id);
-      const noDuplicateSongIds = Array.from(data.data.songIds);
+  const unsubscribe = subscribe(data.pluginData, async () => {
+    if (data.pluginData.type === "custom") {
+      const cachedIds = data.pluginData.songCache.map((x) => x.id);
+      const noDuplicateSongIds = Array.from(data.pluginData.songIds);
 
       if (cachedIds.length < noDuplicateSongIds.length) {
         const missingCaches = noDuplicateSongIds.filter(
@@ -39,7 +42,7 @@ const onPluginDataLoaded = (entryData: Map<any>) => {
         for (const songId of missingCaches) {
           const songData = await getSongData(songId);
 
-          (data.data as CustomData).songCache.push(songData);
+          (data.pluginData as CustomData).songCache.push(songData);
         }
       }
     }

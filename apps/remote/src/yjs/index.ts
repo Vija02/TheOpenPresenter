@@ -1,8 +1,7 @@
 import { HocuspocusProvider } from "@hocuspocus/provider";
-import type { State } from "@repo/base-plugin";
+import type { ObjectToTypedMap, Scene, State, YState } from "@repo/base-plugin";
 import { proxy, useSnapshot } from "valtio";
 import { bind } from "valtio-yjs";
-import * as Y from "yjs";
 
 // TODO: Everything
 export const provider = new HocuspocusProvider({
@@ -10,13 +9,15 @@ export const provider = new HocuspocusProvider({
   name: "example-document",
 });
 
-const ymap = provider.document.getMap();
+const ymap = provider.document.getMap() as YState;
 
 export const mainState = proxy({} as State);
-const unbind = bind(mainState, ymap);
+const unbind = bind(mainState, ymap as any);
 
-export const getYJSPluginData = (sceneId: string) => {
-  return (ymap.get("data") as Y.Map<any>).get(sceneId) as Y.Map<any>;
+export const getYJSPluginData = (sceneId: string, pluginId: string) => {
+  return (ymap.get("data")?.get(sceneId) as ObjectToTypedMap<Scene>)
+    ?.get("children")
+    ?.get(pluginId);
 };
 
 export const useData = () => {

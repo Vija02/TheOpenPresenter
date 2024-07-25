@@ -10,13 +10,13 @@ import { proxy } from "valtio";
 import { bind } from "valtio-yjs";
 import type { Map } from "yjs";
 
-import { Scene } from "../types";
+import { Plugin } from "../types";
 
 type PluginDataProviderType<T> = {
   yjsData: Map<any> | null;
-  valtioSceneData: Scene | null;
+  valtioSceneData: Plugin | null;
   traverser:
-    | ((traverseFunction: TraverseFunction<Scene<T>, any>) => Map<any>)
+    | ((traverseFunction: TraverseFunction<Plugin<T>, any>) => Map<any>)
     | null;
 };
 
@@ -35,10 +35,10 @@ export function PluginDataProvider<T = any>({
 }: React.PropsWithChildren<{
   yjsData: Map<any>;
 }>) {
-  const [valtioSceneData, setValtioSceneData] = useState<Scene | null>(null);
+  const [valtioSceneData, setValtioSceneData] = useState<Plugin | null>(null);
 
   useEffect(() => {
-    const valtioSceneData = proxy({} as Scene);
+    const valtioSceneData = proxy({} as Plugin);
     const unbind = bind(valtioSceneData, yjsData);
 
     setValtioSceneData(valtioSceneData);
@@ -48,7 +48,7 @@ export function PluginDataProvider<T = any>({
     };
   }, []);
 
-  const traverser = useCallback(createTraverser<Scene<T>>(yjsData!), []);
+  const traverser = useCallback(createTraverser<Plugin<T>>(yjsData!), []);
 
   return (
     <PluginDataContext.Provider
@@ -72,11 +72,11 @@ export function getTypedProviderHelperFunctions<T = any>() {
     },
     useValtioSceneData<O = undefined>() {
       const pluginDataContext = useContext(PluginDataContext);
-      return pluginDataContext.valtioSceneData! as Scene<
+      return pluginDataContext.valtioSceneData! as Plugin<
         O extends undefined ? T : O
       >;
     },
-    useSceneData<Y extends Record<string, any> = any>(fn: (x: Scene<T>) => Y) {
+    useSceneData<Y extends Record<string, any> = any>(fn: (x: Plugin<T>) => Y) {
       const pluginDataContext = useContext(PluginDataContext);
       return useY(pluginDataContext.traverser!(fn)) as Y;
     },

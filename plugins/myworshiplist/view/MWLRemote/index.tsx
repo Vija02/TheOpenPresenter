@@ -6,7 +6,7 @@ import MWLLanding from "./MWLLanding";
 import MWLRemoteCustom from "./MWLRemoteCustom";
 
 const MWLRemote = () => {
-  const pluginData = useSceneData<MyWorshipListData>((x) => x.data);
+  const pluginData = useSceneData<MyWorshipListData>((x) => x.pluginData);
 
   if (pluginData.type === "unselected") {
     return <MWLLanding />;

@@ -1,5 +1,10 @@
 import { Server } from "@hocuspocus/server";
-import type { IDisposable } from "@repo/base-plugin";
+import type {
+  IDisposable,
+  ObjectToTypedMap,
+  Scene,
+  YState,
+} from "@repo/base-plugin";
 import { Express } from "express";
 import { IncomingMessage } from "http";
 import { Duplex } from "stream";
@@ -71,39 +76,71 @@ export default async function installHocuspocus(app: Express) {
       }
 
       // Now we can start hooking the data to our plugins
-      const dataMap = data.instance.documents
+      const state = data.instance.documents
         .get(data.documentName)
-        ?.getMap()
-        .get("data") as Y.Map<Y.Map<any>>;
+        ?.getMap() as YState;
+
+      const dataMap = state.get("data");
 
       const registeredOnPluginDataLoaded =
         serverPluginApi.getRegisteredOnPluginDataLoaded();
 
       // Load for each plugin of the document
-      dataMap.forEach((value) => {
-        disposableDocumentManager
-          .getDocumentDisposable(data.documentName)
-          .push(
-            registeredOnPluginDataLoaded
-              .find((x) => x.pluginName === value.get("plugin"))
-              ?.callback(value) ?? {},
-          );
+      dataMap?.forEach((sectionOrScene) => {
+        if (sectionOrScene.get("type") === "section") {
+          return;
+        }
+
+        const scene = sectionOrScene as ObjectToTypedMap<
+          Scene<Record<string, any>>
+        >;
+        const children = scene?.get("children");
+
+        children?.observe((event) => {
+          // TODO:
+          // Handle when new plugin are added or removed
+          console.log(event);
+        });
+
+        children?.forEach((pluginInfo) => {
+          disposableDocumentManager
+            .getDocumentDisposable(data.documentName)
+            .push(
+              registeredOnPluginDataLoaded
+                .find((x) => x.pluginName === pluginInfo.get("plugin"))
+                ?.callback(pluginInfo) ?? {},
+            );
+        });
       });
 
-      // Handle new plugins that is added
-      dataMap.observe((event) => {
+      // Handle new scenes that is added
+      dataMap?.observe((event) => {
         event.keys.forEach((value, key) => {
           if (value.action === "add") {
-            const entryData = dataMap.get(key);
-            const pluginName = entryData?.get("plugin") as string;
+            const sectionOrScene = dataMap.get(key);
+            if (sectionOrScene?.get("type") === "section") {
+              return;
+            }
 
-            disposableDocumentManager
-              .getDocumentDisposable(data.documentName)
-              .push(
-                registeredOnPluginDataLoaded
-                  .find((x) => x.pluginName === pluginName)
-                  ?.callback(entryData!) ?? {},
-              );
+            const scene = sectionOrScene as ObjectToTypedMap<
+              Scene<Record<string, any>>
+            >;
+            const children = scene?.get("children");
+
+            children?.observe((event) => {
+              // Handle when new plugin are added or removed
+              TODO: console.log(event);
+            });
+
+            children?.forEach((pluginInfo) => {
+              disposableDocumentManager
+                .getDocumentDisposable(data.documentName)
+                .push(
+                  registeredOnPluginDataLoaded
+                    .find((x) => x.pluginName === pluginInfo.get("plugin"))
+                    ?.callback(pluginInfo) ?? {},
+                );
+            });
           } else if (value.action === "delete") {
             // TODO: Delete the listener (Check if scene)
           }

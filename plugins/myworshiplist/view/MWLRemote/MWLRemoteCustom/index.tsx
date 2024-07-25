@@ -6,7 +6,7 @@ import MWLSongView from "../MWLSongView";
 import MWLRemoteCustomAddSongModal from "./MWLRemoteCustomAddSongModal";
 
 const MWLRemoteCustom = () => {
-  const songIds = useSceneData((x) => x.data.songIds);
+  const songIds = useSceneData((x) => x.pluginData.songIds);
 
   return (
     <Box p={3}>

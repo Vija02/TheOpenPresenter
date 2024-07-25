@@ -14,9 +14,9 @@ const MainBody = () => {
       <Switch>
         {Object.entries(data.data)
           .filter(([, value]) => value.type === "scene")
-          .map(([id, value]) => (
-            <Route key={id} path={`/${id}`}>
-              <PluginRenderer id={id} value={value as Scene} />
+          .map(([sceneId, value]) => (
+            <Route key={sceneId} path={`/${sceneId}`}>
+              <PluginRenderer sceneId={sceneId} value={value as Scene} />
             </Route>
           ))}
       </Switch>
@@ -24,18 +24,28 @@ const MainBody = () => {
   );
 };
 
-const PluginRenderer = ({ id, value }: { id: string; value: Scene }) => {
+const PluginRenderer = ({
+  sceneId,
+  value,
+}: {
+  sceneId: string;
+  value: Scene;
+}) => {
   return (
     <>
-      {/* TODO: Get data from backend */}
-      {value.plugin === "myworshiplist" ? (
-        React.createElement("myworshiplist-remote", {
-          yjsData: getYJSPluginData(id),
-          trpcClient,
-        })
-      ) : (
-        <Text>No renderer for {value.plugin}</Text>
-      )}
+      {Object.entries(value.children).map(([pluginId, pluginInfo]) => (
+        <Box key={pluginId}>
+          {/* TODO: Get data from backend */}
+          {pluginInfo.plugin === "myworshiplist" ? (
+            React.createElement("myworshiplist-remote", {
+              yjsData: getYJSPluginData(sceneId, pluginId),
+              trpcClient,
+            })
+          ) : (
+            <Text>No renderer for {pluginInfo.plugin}</Text>
+          )}
+        </Box>
+      ))}
     </>
   );
 };

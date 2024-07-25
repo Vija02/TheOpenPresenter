@@ -30,17 +30,17 @@ const MWLRemoteCustomAddSongModal = ({
   ...props
 }: MWLRemoteCustomAddSongModalPropTypes) => {
   const [selectedId, setSelectedId] = useState<number | null>(null);
-  const sceneData = useValtioSceneData();
+  const pluginInfo = useValtioSceneData();
 
   const { data } = trpc.myworshiplist.search.useQuery({ title: "hi" });
 
   const addSong = useCallback(() => {
     if (selectedId) {
-      sceneData.data.songIds.push(selectedId);
+      pluginInfo.pluginData.songIds.push(selectedId);
       onToggle?.();
       resetData?.();
     }
-  }, [sceneData.data.songIds, onToggle, resetData, selectedId]);
+  }, [pluginInfo.pluginData.songIds, onToggle, resetData, selectedId]);
 
   return (
     <Modal
