@@ -28,7 +28,7 @@ export default async function installRemote(app: Express, server: Server) {
   if (upgradeHandler) {
     const upgradeHandlers = getUpgradeHandlers(app);
     upgradeHandlers.push({
-      name: "Remote Hander",
+      name: "Remote Handler",
       check(req) {
         return (req.url === "/app" || req.url?.startsWith("/app")) ?? false;
       },
