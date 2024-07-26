@@ -7,8 +7,9 @@ import { serverPluginApi } from "../pluginManager";
 
 export default async function installRemote(app: Express, server: Server) {
   const fakeHttpServer = createServer();
+  const viteExpress = new ViteExpress();
 
-  ViteExpress.config({
+  viteExpress.config({
     mode: process.env.NODE_ENV === "production" ? "production" : "development",
     inlineViteConfig: {
       root: `${__dirname}/../../../../apps/remote`,
@@ -22,7 +23,7 @@ export default async function installRemote(app: Express, server: Server) {
     },
     transformer,
   });
-  await ViteExpress.bind(app, server);
+  await viteExpress.bind(app, server);
 
   const upgradeHandler = fakeHttpServer.listeners("upgrade")[0] as any;
   if (upgradeHandler) {
