@@ -11,9 +11,10 @@ export default defineConfig({
   plugins: [react()],
   build: {
     lib: {
-      entry: "./view/main.tsx",
-      name: "myworshiplist-remote",
-      fileName: (format) => `myworshiplist-remote.${format}.js`,
+      entry: ["./view/remote.tsx"],
+      name: "myworshiplist-views",
+      fileName: (format, entryName) =>
+        `myworshiplist-${entryName}.${format}.js`,
     },
     rollupOptions: {
       external: ["yjs"],
