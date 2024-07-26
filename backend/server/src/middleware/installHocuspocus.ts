@@ -3,6 +3,7 @@ import type {
   IDisposable,
   ObjectToTypedMap,
   Scene,
+  Section,
   YState,
 } from "@repo/base-plugin";
 import { Express } from "express";
@@ -86,7 +87,9 @@ export default async function installHocuspocus(app: Express) {
         serverPluginApi.getRegisteredOnPluginDataLoaded();
 
       // Load for each plugin of the document
-      dataMap?.forEach((sectionOrScene) => {
+      const handleSectionOrScene = (
+        sectionOrScene: ObjectToTypedMap<Section | Scene<Record<string, any>>>,
+      ) => {
         if (sectionOrScene.get("type") === "section") {
           return;
         }
@@ -98,7 +101,7 @@ export default async function installHocuspocus(app: Express) {
 
         children?.observe((event) => {
           // TODO:
-          // Handle when new plugin are added or removed
+          // Handle when new plugin are added or removed within a scene
           console.log(event);
         });
 
@@ -111,36 +114,18 @@ export default async function installHocuspocus(app: Express) {
                 ?.callback(pluginInfo) ?? {},
             );
         });
+      };
+      dataMap?.forEach((sectionOrScene) => {
+        handleSectionOrScene(sectionOrScene);
       });
 
       // Handle new scenes that is added
       dataMap?.observe((event) => {
         event.keys.forEach((value, key) => {
           if (value.action === "add") {
-            const sectionOrScene = dataMap.get(key);
-            if (sectionOrScene?.get("type") === "section") {
-              return;
-            }
+            const sectionOrScene = dataMap.get(key)!;
 
-            const scene = sectionOrScene as ObjectToTypedMap<
-              Scene<Record<string, any>>
-            >;
-            const children = scene?.get("children");
-
-            children?.observe((event) => {
-              // Handle when new plugin are added or removed
-              TODO: console.log(event);
-            });
-
-            children?.forEach((pluginInfo) => {
-              disposableDocumentManager
-                .getDocumentDisposable(data.documentName)
-                .push(
-                  registeredOnPluginDataLoaded
-                    .find((x) => x.pluginName === pluginInfo.get("plugin"))
-                    ?.callback(pluginInfo) ?? {},
-                );
-            });
+            handleSectionOrScene(sectionOrScene);
           } else if (value.action === "delete") {
             // TODO: Delete the listener (Check if scene)
           }
