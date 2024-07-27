@@ -4,7 +4,7 @@
   "scripts": {
     "build": "tsup-node src/index.ts",
     "start": "node -r @repo/config/env dist/index.js",
-    "dev": "tsx watch --clear-screen=false --ignore './../../apps/remote/vite.config.ts*' --inspect=9678 -r @repo/config/env -r source-map-support/register src/index.ts",
+    "dev": "tsx watch --clear-screen=false --ignore './../../apps/homepage/.next/**/*' --ignore './../../apps/remote/vite.config.ts*' --ignore './../../apps/renderer/vite.config.ts*' --inspect=9678 -r @repo/config/env -r source-map-support/register src/index.ts",
     "schema:export": "yarn cross-env NODE_OPTIONS=\"-r @repo/config/env\" yarn ts-node scripts/schema-export.ts",
     "cloudflare:import": "(echo \"export const cloudflareIps: string[] = [\"; (curl -Ls https://www.cloudflare.com/ips-v4 | sort | sed -e \"s/^/  \\\"/\" -e \"s/$/\\\",/\"); echo \"];\") > src/cloudflare.ts",
     "test": "yarn cross-env NODE_ENV=test NODE_OPTIONS=\"-r @repo/config/env\" yarn vitest",
