@@ -25,10 +25,9 @@ const MWLSongView = ({ songId }: { songId: number }) => {
 
 const MWLSongViewInner = ({ songId }: { songId: number }) => {
   const songCaches = pluginApi.scene.useData((x) => x.pluginData.songCache);
-  const renderData = pluginApi.renderer.useData();
-  // TODO:
-  const selectedHeading = renderData.heading;
-  const selectedSongId = renderData.songId;
+  const selectedHeading = pluginApi.renderer.useData((x) => x.heading);
+  const selectedSongId = pluginApi.renderer.useData((x) => x.songId);
+
   const rendererData = pluginApi.renderer.useValtioData();
   const setRenderCurrentScene = pluginApi.useSetRenderCurrentScene();
 

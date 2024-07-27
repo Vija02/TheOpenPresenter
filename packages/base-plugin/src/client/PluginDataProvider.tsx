@@ -148,7 +148,14 @@ export function getTypedProviderHelperFunctions<
         fn?: (x: Plugin<PluginSceneDataType>) => Y,
       ) {
         const pluginDataContext = useContext(PluginDataContext);
-        return useY(pluginDataContext.scene.traverser!(fn)) as Y;
+        const data = pluginDataContext.scene.traverser!(fn);
+
+        if (typeof data === "object" && "doc" in data) {
+          return useY(data) as Y;
+        } else {
+          // If it's a primitive, we just return the data directly
+          return data;
+        }
       },
       // Use this for write
       useValtioData<O = undefined>() {
@@ -164,7 +171,14 @@ export function getTypedProviderHelperFunctions<
         fn?: (x: PluginRendererDataType) => Y,
       ) {
         const pluginDataContext = useContext(PluginDataContext);
-        return useY(pluginDataContext.renderer.traverser!(fn)) as Y;
+        const data = pluginDataContext.renderer.traverser!(fn);
+
+        if (typeof data === "object" && "doc" in data) {
+          return useY(data) as Y;
+        } else {
+          // If it's a primitive, we just return the data directly
+          return data;
+        }
       },
       // Use this for write
       useValtioData<O = undefined>() {
@@ -191,7 +205,13 @@ function createTraverser<T = any>(yData: Map<any>) {
           return target;
         }
 
-        return new Proxy(target.get(key), handler);
+        const newTarget = target.get(key);
+        // If not an yjs object, return it as it is
+        if (typeof newTarget !== "object" || !("doc" in newTarget)) {
+          return { [originalValue]: newTarget };
+        }
+
+        return new Proxy(newTarget, handler);
       },
     };
 
