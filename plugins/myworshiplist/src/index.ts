@@ -23,6 +23,11 @@ export const init = (serverPluginApi: ServerPluginApi) => {
     pluginName,
     remoteWebComponentTag,
   );
+  serverPluginApi.loadJsOnRendererView(pluginName, "myworshiplist-renderer.es.js");
+  serverPluginApi.registerRendererViewWebComponent(
+    pluginName,
+    remoteWebComponentTag,
+  );
 };
 
 const onPluginDataLoaded = (pluginInfo: ObjectToTypedMap<Plugin>) => {

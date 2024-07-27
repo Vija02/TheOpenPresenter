@@ -15,7 +15,7 @@ import { OverlayToggleComponentProps } from "@repo/ui";
 import { useCallback, useState } from "react";
 
 import { trpc } from "../../../trpc";
-import { useValtioSceneData } from "../../../util";
+import { pluginApi } from "../../../util";
 
 export type MWLRemoteCustomAddSongModalPropTypes = Omit<
   ModalProps,
@@ -30,7 +30,7 @@ const MWLRemoteCustomAddSongModal = ({
   ...props
 }: MWLRemoteCustomAddSongModalPropTypes) => {
   const [selectedId, setSelectedId] = useState<number | null>(null);
-  const pluginInfo = useValtioSceneData();
+  const pluginInfo = pluginApi.scene.useValtioData();
 
   const { data } = trpc.myworshiplist.search.useQuery({ title: "hi" });
 

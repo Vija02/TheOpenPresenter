@@ -11,7 +11,7 @@ export default defineConfig({
   plugins: [react()],
   build: {
     lib: {
-      entry: ["./view/remote.tsx"],
+      entry: ["./view/remote.tsx", "./view/renderer.tsx"],
       name: "myworshiplist-views",
       fileName: (format, entryName) =>
         `myworshiplist-${entryName}.${format}.js`,

@@ -1,12 +1,12 @@
 import { Box, Button, Heading } from "@chakra-ui/react";
 import { OverlayToggle } from "@repo/ui";
 
-import { useSceneData } from "../../util";
+import { pluginApi } from "../../util";
 import MWLSongView from "../MWLSongView";
 import MWLRemoteCustomAddSongModal from "./MWLRemoteCustomAddSongModal";
 
 const MWLRemoteCustom = () => {
-  const songIds = useSceneData((x) => x.pluginData.songIds);
+  const songIds = pluginApi.scene.useData((x) => x.pluginData.songIds);
 
   return (
     <Box p={3}>

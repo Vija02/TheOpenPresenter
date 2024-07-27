@@ -6,12 +6,12 @@ import type { TRPCUntypedClient } from "@trpc/client";
 import type { Map } from "yjs";
 
 import { AppRouter } from "../src";
-import MWLRemote from "./MWLRemote";
+import MWLRenderer from "./MWLRenderer";
 import { trpc } from "./trpc";
 
 const queryClient = new QueryClient();
 
-const MyWorshipListEntry = ({
+const MyWorshipListRendererEntry = ({
   yjsPluginSceneData,
   yjsPluginRendererData,
   setRenderCurrentScene,
@@ -31,7 +31,7 @@ const MyWorshipListEntry = ({
       >
         <trpc.Provider client={trpcClient} queryClient={queryClient}>
           <QueryClientProvider client={queryClient}>
-            <MWLRemote />
+            <MWLRenderer />
           </QueryClientProvider>
         </trpc.Provider>
       </PluginDataProvider>
@@ -39,7 +39,7 @@ const MyWorshipListEntry = ({
   );
 };
 
-const Component = r2wc(MyWorshipListEntry, {
+const Component = r2wc(MyWorshipListRendererEntry, {
   //@ts-ignore
   props: {
     yjsPluginSceneData: "",
@@ -48,4 +48,4 @@ const Component = r2wc(MyWorshipListEntry, {
     trpcClient: "",
   },
 });
-customElements.define("myworshiplist-remote", Component);
+customElements.define("myworshiplist-renderer", Component);

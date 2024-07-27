@@ -1,16 +1,17 @@
 import { Box, Flex, Heading, Text } from "@chakra-ui/react";
 import { useMemo } from "react";
 
+import MWLSongRenderView from "../../MWLRenderer/MWLSongRenderView";
 import {
   cleanWhiteSpace,
   groupData,
   removeAuxiliaryText,
   removeChords,
 } from "../../songHelpers";
-import { useSceneData } from "../../util";
+import { pluginApi } from "../../util";
 
 const MWLSongView = ({ songId }: { songId: number }) => {
-  const songCaches = useSceneData((x) => x.pluginData.songCache);
+  const songCaches = pluginApi.scene.useData((x) => x.pluginData.songCache);
   const songCache = useMemo(
     () => songCaches.find((x) => x.id === songId),
     [songCaches, songId],
@@ -23,7 +24,13 @@ const MWLSongView = ({ songId }: { songId: number }) => {
 };
 
 const MWLSongViewInner = ({ songId }: { songId: number }) => {
-  const songCaches = useSceneData((x) => x.pluginData.songCache);
+  const songCaches = pluginApi.scene.useData((x) => x.pluginData.songCache);
+  const renderData = pluginApi.renderer.useData((x) => x);
+  // TODO:
+  const selectedHeading = renderData.heading;
+  const selectedSongId = renderData.songId;
+  const rendererData = pluginApi.renderer.useValtioData();
+  const setRenderCurrentScene = pluginApi.useSetRenderCurrentScene();
 
   const songCache = useMemo(
     () => songCaches.find((x) => x.id === songId)!,
@@ -47,7 +54,15 @@ const MWLSongViewInner = ({ songId }: { songId: number }) => {
       </Heading>
       <Flex gap={3} flexWrap="wrap">
         {Object.entries(groupedData).map(([section, content], i) => (
-          <Box key={i}>
+          <Box
+            key={i}
+            cursor="pointer"
+            onClick={() => {
+              rendererData.heading = section;
+              rendererData.songId = songId;
+              setRenderCurrentScene();
+            }}
+          >
             <Text
               fontWeight="bold"
               textTransform="uppercase"
@@ -57,14 +72,16 @@ const MWLSongViewInner = ({ songId }: { songId: number }) => {
               {section}
             </Text>
             <Box
-              bg="gray.900"
-              color="white"
-              p={2}
               aspectRatio={4 / 3}
               w="200px"
-              overflow="hidden"
+              border="1px"
+              borderColor={
+                section === selectedHeading && songId === selectedSongId
+                  ? "blue.600"
+                  : "gray.200"
+              }
             >
-              <Text as="pre">{content.join("\n")}</Text>
+              <MWLSongRenderView groupedData={groupedData} heading={section} />
             </Box>
           </Box>
         ))}
