@@ -12,73 +12,167 @@ import type { Map } from "yjs";
 
 import { Plugin } from "../types";
 
-type PluginDataProviderType<T> = {
-  yjsData: Map<any> | null;
-  valtioSceneData: Plugin | null;
-  traverser:
-    | ((traverseFunction: TraverseFunction<Plugin<T>, any>) => Map<any>)
-    | null;
+type PluginDataProviderType<PluginSceneDataType, PluginRendererDataType> = {
+  setRenderCurrentScene: () => void;
+  scene: {
+    yjsData: Map<any> | null;
+    valtio: Plugin | null;
+    traverser:
+      | ((
+          traverseFunction: TraverseFunction<Plugin<PluginSceneDataType>, any>,
+        ) => Map<any>)
+      | null;
+  };
+  renderer: {
+    yjsData: Map<any> | null;
+    valtio: Record<string, any> | null;
+    traverser:
+      | ((
+          traverseFunction: TraverseFunction<PluginRendererDataType, any>,
+        ) => Map<any>)
+      | null;
+  };
 };
 
-const initialData: PluginDataProviderType<any> = {
-  yjsData: null,
-  valtioSceneData: null,
-  traverser: null,
+const initialData: PluginDataProviderType<any, any> = {
+  setRenderCurrentScene: () => {},
+  scene: {
+    yjsData: null,
+    valtio: null,
+    traverser: null,
+  },
+  renderer: {
+    yjsData: null,
+    valtio: null,
+    traverser: null,
+  },
 };
 
 export const PluginDataContext =
-  createContext<PluginDataProviderType<any>>(initialData);
+  createContext<PluginDataProviderType<any, any>>(initialData);
 
-export function PluginDataProvider<T = any>({
+export function PluginDataProvider<
+  PluginSceneDataType = any,
+  PluginRendererDataType = any,
+>({
   children,
-  yjsData,
+  yjsPluginSceneData,
+  yjsPluginRendererData,
+  setRenderCurrentScene,
 }: React.PropsWithChildren<{
-  yjsData: Map<any>;
+  yjsPluginSceneData: Map<any>;
+  yjsPluginRendererData: Map<any>;
+  setRenderCurrentScene: () => void;
 }>) {
-  const [valtioSceneData, setValtioSceneData] = useState<Plugin | null>(null);
+  const [sceneValtio, setSceneValtio] = useState<Plugin | null>(null);
+  const [rendererValtio, setRendererValtio] = useState<Record<
+    string,
+    any
+  > | null>(null);
 
   useEffect(() => {
-    const valtioSceneData = proxy({} as Plugin);
-    const unbind = bind(valtioSceneData, yjsData);
+    const sceneV = proxy({} as Plugin);
+    const unbind = bind(sceneV, yjsPluginSceneData);
 
-    setValtioSceneData(valtioSceneData);
+    setSceneValtio(sceneV);
 
     return () => {
       unbind();
     };
   }, []);
 
-  const traverser = useCallback(createTraverser<Plugin<T>>(yjsData!), []);
+  useEffect(() => {
+    const rendererV = proxy({} as Plugin);
+    const unbind = bind(rendererV, yjsPluginRendererData);
+
+    setRendererValtio(rendererV);
+
+    return () => {
+      unbind();
+    };
+  }, []);
+
+  const sceneTraverser = useCallback(
+    createTraverser<Plugin<PluginSceneDataType>>(yjsPluginSceneData!),
+    [],
+  );
+  const rendererTraverser = useCallback(
+    createTraverser<Plugin<PluginRendererDataType>>(yjsPluginRendererData!),
+    [],
+  );
 
   return (
     <PluginDataContext.Provider
       value={{
-        valtioSceneData,
-        yjsData,
-        traverser,
+        setRenderCurrentScene,
+        scene: {
+          yjsData: yjsPluginSceneData,
+          valtio: sceneValtio,
+          traverser: sceneTraverser,
+        },
+        renderer: {
+          yjsData: yjsPluginRendererData,
+          valtio: rendererValtio,
+          traverser: rendererTraverser,
+        },
       }}
     >
-      {!!valtioSceneData && children}
+      {!!sceneValtio && !!rendererValtio && children}
     </PluginDataContext.Provider>
   );
 }
 
-export function getTypedProviderHelperFunctions<T = any>() {
+export function getTypedProviderHelperFunctions<
+  PluginSceneDataType = any,
+  PluginRendererDataType = any,
+>() {
   return {
-    usePluginDataContext<O = undefined>(): PluginDataProviderType<
-      O extends undefined ? T : O
+    usePluginDataContext<
+      O = undefined,
+      X = undefined,
+    >(): PluginDataProviderType<
+      O extends undefined ? PluginSceneDataType : O,
+      X extends undefined ? PluginRendererDataType : X
     > {
       return useContext(PluginDataContext);
     },
-    useValtioSceneData<O = undefined>() {
+    useSetRenderCurrentScene: () => {
       const pluginDataContext = useContext(PluginDataContext);
-      return pluginDataContext.valtioSceneData! as Plugin<
-        O extends undefined ? T : O
-      >;
+      return () => {
+        pluginDataContext.setRenderCurrentScene();
+      };
     },
-    useSceneData<Y extends Record<string, any> = any>(fn: (x: Plugin<T>) => Y) {
-      const pluginDataContext = useContext(PluginDataContext);
-      return useY(pluginDataContext.traverser!(fn)) as Y;
+    scene: {
+      // Use this for read
+      useData<Y extends Record<string, any> = any>(
+        fn: (x: Plugin<PluginSceneDataType>) => Y,
+      ) {
+        const pluginDataContext = useContext(PluginDataContext);
+        return useY(pluginDataContext.scene.traverser!(fn)) as Y;
+      },
+      // Use this for write
+      useValtioData<O = undefined>() {
+        const pluginDataContext = useContext(PluginDataContext);
+        return pluginDataContext.scene.valtio! as Plugin<
+          O extends undefined ? PluginSceneDataType : O
+        >;
+      },
+    },
+    renderer: {
+      // Use this for read
+      useData<Y extends Record<string, any> = any>(
+        fn: (x: PluginRendererDataType) => Y,
+      ) {
+        const pluginDataContext = useContext(PluginDataContext);
+        return useY(pluginDataContext.renderer.traverser!(fn)) as Y;
+      },
+      // Use this for write
+      useValtioData<O = undefined>() {
+        const pluginDataContext = useContext(PluginDataContext);
+        return pluginDataContext.renderer.valtio! as O extends undefined
+          ? PluginRendererDataType
+          : O;
+      },
     },
   };
 }

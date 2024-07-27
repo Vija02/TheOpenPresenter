@@ -11,6 +11,7 @@ export type YState = ObjectToTypedMap<State>;
 export type State = {
   meta: Meta;
   data: StateData;
+  renderer: Renderer;
 };
 
 export type Meta = {
@@ -38,6 +39,13 @@ export type Plugin<T = Record<string, any>> = {
   plugin: string;
   order: number;
   pluginData: T;
+};
+
+export type Renderer = Record<string, RenderData>;
+
+export type RenderData<T = Record<string, any>> = {
+  currentScene: UUID | null;
+  children: Record<UUID, Record<UUID, T>>;
 };
 
 export interface IDisposable {

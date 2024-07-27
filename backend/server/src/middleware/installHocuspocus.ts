@@ -61,6 +61,12 @@ export default async function installHocuspocus(app: Express) {
             createdAt: new Date().toISOString(),
           },
           data: {},
+          renderer: {
+            "1": {
+              currentScene: null,
+              children: {},
+            },
+          },
         });
         const unbind = bind(mainState, yDoc.getMap());
 
@@ -76,19 +82,20 @@ export default async function installHocuspocus(app: Express) {
         Y.applyUpdate(data.document, update);
       }
 
-      // Now we can start hooking the data to our plugins
-      const state = data.instance.documents
-        .get(data.documentName)
-        ?.getMap() as YState;
+      /**
+       * Now we can start hooking the data to our plugins
+       */
+      const document = data.instance.documents.get(data.documentName);
+      const state = document?.getMap() as YState;
 
       const dataMap = state.get("data");
 
       const registeredOnPluginDataLoaded =
         serverPluginApi.getRegisteredOnPluginDataLoaded();
 
-      // Load for each plugin of the document
       const handleSectionOrScene = (
         sectionOrScene: ObjectToTypedMap<Section | Scene<Record<string, any>>>,
+        id: string,
       ) => {
         if (sectionOrScene.get("type") === "section") {
           return;
@@ -97,6 +104,48 @@ export default async function installHocuspocus(app: Express) {
         const scene = sectionOrScene as ObjectToTypedMap<
           Scene<Record<string, any>>
         >;
+
+        // First, let's make sure that the scene & plugin is reflected in `renderer`
+        state.get("renderer")?.forEach((renderData) => {
+          const sceneKeys = Array.from(
+            renderData.get("children")?.keys() ?? [],
+          );
+
+          const pluginIds = Array.from(scene.get("children")?.keys()!);
+          if (!sceneKeys.includes(id)) {
+            // Create the scene object with all the plugins as well
+            const renderMap = new Y.Map();
+            pluginIds.forEach((x) => renderMap.set(x, new Y.Map()));
+
+            // Then we can set it all at once
+            renderData
+              .get("children")
+              ?.set(
+                id,
+                renderMap as ObjectToTypedMap<
+                  Record<string, Record<string, any>>
+                >,
+              );
+          } else {
+            // Otherwise we just add the plugin
+            const plugins = renderData.get("children")?.get(id);
+            const currentPluginIds = Array.from(plugins?.keys()!);
+            const missingPluginIds = pluginIds.filter(
+              (x) => !currentPluginIds.includes(x),
+            );
+
+            document?.transact(() => {
+              for (const missingId of missingPluginIds) {
+                plugins?.set(
+                  missingId,
+                  new Y.Map() as ObjectToTypedMap<Record<string, any>>,
+                );
+              }
+            });
+          }
+        });
+
+        // Then we can start registering the hook to the plugins
         const children = scene?.get("children");
 
         children?.observe((event) => {
@@ -115,8 +164,9 @@ export default async function installHocuspocus(app: Express) {
             );
         });
       };
-      dataMap?.forEach((sectionOrScene) => {
-        handleSectionOrScene(sectionOrScene);
+      // Initial load
+      dataMap?.forEach((sectionOrScene, id) => {
+        handleSectionOrScene(sectionOrScene, id);
       });
 
       // Handle new scenes that is added
@@ -125,7 +175,7 @@ export default async function installHocuspocus(app: Express) {
           if (value.action === "add") {
             const sectionOrScene = dataMap.get(key)!;
 
-            handleSectionOrScene(sectionOrScene);
+            handleSectionOrScene(sectionOrScene, key);
           } else if (value.action === "delete") {
             // TODO: Delete the listener (Check if scene)
           }

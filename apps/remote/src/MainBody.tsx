@@ -4,7 +4,12 @@ import React from "react";
 import { Route, Switch } from "wouter";
 
 import { trpcClient } from "./trpc";
-import { getYJSPluginData, useData } from "./yjs";
+import {
+  getYJSPluginRenderer,
+  getYJSPluginRendererData,
+  getYJSPluginSceneData,
+  useData,
+} from "./yjs";
 
 const MainBody = () => {
   const data = useData();
@@ -38,7 +43,14 @@ const PluginRenderer = ({
           {/* TODO: Get data from backend */}
           {pluginInfo.plugin === "myworshiplist" ? (
             React.createElement("myworshiplist-remote", {
-              yjsData: getYJSPluginData(sceneId, pluginId),
+              yjsPluginSceneData: getYJSPluginSceneData(sceneId, pluginId),
+              yjsPluginRendererData: getYJSPluginRendererData(
+                sceneId,
+                pluginId,
+              ),
+              setRenderCurrentScene: () => {
+                getYJSPluginRenderer()?.set("currentScene", sceneId);
+              },
               trpcClient,
             })
           ) : (

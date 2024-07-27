@@ -22,6 +22,14 @@ export class ServerPluginApi {
     pluginName: string;
     webComponentTag: string;
   }[] = [];
+  protected registeredLoadJsOnRendererView: {
+    pluginName: string;
+    path: string;
+  }[] = [];
+  protected registeredRendererViewWebComponent: {
+    pluginName: string;
+    webComponentTag: string;
+  }[] = [];
 
   public registerTrpcAppRouter(
     getAppRouter: (t: ReturnType<typeof initTRPC.create>) => any,
@@ -49,5 +57,19 @@ export class ServerPluginApi {
     webComponentTag: string,
   ) {
     this.registeredRemoteViewWebComponent.push({ pluginName, webComponentTag });
+  }
+
+  public loadJsOnRendererView(pluginName: string, path: string) {
+    this.registeredLoadJsOnRendererView.push({ pluginName, path });
+  }
+
+  public registerRendererViewWebComponent(
+    pluginName: string,
+    webComponentTag: string,
+  ) {
+    this.registeredRendererViewWebComponent.push({
+      pluginName,
+      webComponentTag,
+    });
   }
 }

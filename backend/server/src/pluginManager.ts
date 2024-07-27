@@ -24,6 +24,12 @@ class ServerPluginApiPrivate extends ServerPluginApi {
   getRegisteredRemoteViewWebComponent() {
     return this.registeredRemoteViewWebComponent;
   }
+  getRegisteredLoadJsOnRendererView() {
+    return this.registeredLoadJsOnRendererView;
+  }
+  getRegisteredRendererViewWebComponent() {
+    return this.registeredRendererViewWebComponent;
+  }
 }
 
 export const serverPluginApi = new ServerPluginApiPrivate();
