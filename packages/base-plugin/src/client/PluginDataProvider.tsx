@@ -19,7 +19,7 @@ type PluginDataProviderType<PluginSceneDataType, PluginRendererDataType> = {
     valtio: Plugin | null;
     traverser:
       | ((
-          traverseFunction: TraverseFunction<Plugin<PluginSceneDataType>, any>,
+          traverseFunction?: TraverseFunction<Plugin<PluginSceneDataType>, any>,
         ) => Map<any>)
       | null;
   };
@@ -28,7 +28,7 @@ type PluginDataProviderType<PluginSceneDataType, PluginRendererDataType> = {
     valtio: Record<string, any> | null;
     traverser:
       | ((
-          traverseFunction: TraverseFunction<PluginRendererDataType, any>,
+          traverseFunction?: TraverseFunction<PluginRendererDataType, any>,
         ) => Map<any>)
       | null;
   };
@@ -145,7 +145,7 @@ export function getTypedProviderHelperFunctions<
     scene: {
       // Use this for read
       useData<Y extends Record<string, any> = any>(
-        fn: (x: Plugin<PluginSceneDataType>) => Y,
+        fn?: (x: Plugin<PluginSceneDataType>) => Y,
       ) {
         const pluginDataContext = useContext(PluginDataContext);
         return useY(pluginDataContext.scene.traverser!(fn)) as Y;
@@ -161,7 +161,7 @@ export function getTypedProviderHelperFunctions<
     renderer: {
       // Use this for read
       useData<Y extends Record<string, any> = any>(
-        fn: (x: PluginRendererDataType) => Y,
+        fn?: (x: PluginRendererDataType) => Y,
       ) {
         const pluginDataContext = useContext(PluginDataContext);
         return useY(pluginDataContext.renderer.traverser!(fn)) as Y;
@@ -180,7 +180,9 @@ export function getTypedProviderHelperFunctions<
 // TODO: Revisit the types for this function
 type TraverseFunction<T, Y = any> = (x: T) => Y;
 function createTraverser<T = any>(yData: Map<any>) {
-  return (traverseFunction: TraverseFunction<T>): Map<any> => {
+  return (traverseFunction?: TraverseFunction<T>): Map<any> => {
+    if (!traverseFunction) return yData;
+
     const originalValue = Symbol("originalValue");
 
     const handler = {
