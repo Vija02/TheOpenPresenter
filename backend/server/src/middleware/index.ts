@@ -10,6 +10,7 @@ import installPassport from "./installPassport";
 import installPluginStatic from "./installPluginStatic";
 import installPostGraphile from "./installPostGraphile";
 import installRemote from "./installRemote";
+import installRenderer from "./installRenderer";
 import installSSR from "./installSSR";
 import installSameOrigin from "./installSameOrigin";
 import installSession from "./installSession";
@@ -30,6 +31,7 @@ export {
   installPluginStatic,
   installPostGraphile,
   installRemote,
+  installRenderer,
   installSSR,
   installSameOrigin,
   installSession,
