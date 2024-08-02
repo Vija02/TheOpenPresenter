@@ -90,12 +90,15 @@ export default async function installHocuspocus(app: Express) {
 
       const dataMap = state.get("data");
 
+      const registeredOnPluginDataCreated =
+        serverPluginApi.getRegisteredOnPluginDataCreated();
       const registeredOnPluginDataLoaded =
         serverPluginApi.getRegisteredOnPluginDataLoaded();
 
       const handleSectionOrScene = (
         sectionOrScene: ObjectToTypedMap<Section | Scene<Record<string, any>>>,
         id: string,
+        isJustCreated: boolean = false,
       ) => {
         if (sectionOrScene.get("type") === "section") {
           return;
@@ -155,6 +158,15 @@ export default async function installHocuspocus(app: Express) {
         });
 
         children?.forEach((pluginInfo) => {
+          if (isJustCreated) {
+            disposableDocumentManager
+              .getDocumentDisposable(data.documentName)
+              .push(
+                registeredOnPluginDataCreated
+                  .find((x) => x.pluginName === pluginInfo.get("plugin"))
+                  ?.callback(pluginInfo) ?? {},
+              );
+          }
           disposableDocumentManager
             .getDocumentDisposable(data.documentName)
             .push(
@@ -175,7 +187,7 @@ export default async function installHocuspocus(app: Express) {
           if (value.action === "add") {
             const sectionOrScene = dataMap.get(key)!;
 
-            handleSectionOrScene(sectionOrScene, key);
+            handleSectionOrScene(sectionOrScene, key, true);
           } else if (value.action === "delete") {
             // TODO: Delete the listener (Check if scene)
           }

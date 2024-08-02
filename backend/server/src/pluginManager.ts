@@ -12,6 +12,9 @@ class ServerPluginApiPrivate extends ServerPluginApi {
   getRegisteredTrpcAppRouter() {
     return this.registeredTrpcAppRouter;
   }
+  getRegisteredOnPluginDataCreated() {
+    return this.registeredOnPluginDataCreated;
+  }
   getRegisteredOnPluginDataLoaded() {
     return this.registeredOnPluginDataLoaded;
   }

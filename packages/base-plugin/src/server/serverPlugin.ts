@@ -6,6 +6,10 @@ export class ServerPluginApi {
   protected registeredTrpcAppRouter: ((
     t: ReturnType<typeof initTRPC.create>,
   ) => any)[] = [];
+  protected registeredOnPluginDataCreated: {
+    pluginName: string;
+    callback: (entryData: ObjectToTypedMap<Plugin>) => IDisposable;
+  }[] = [];
   protected registeredOnPluginDataLoaded: {
     pluginName: string;
     callback: (entryData: ObjectToTypedMap<Plugin>) => IDisposable;
@@ -39,6 +43,13 @@ export class ServerPluginApi {
     getAppRouter: (t: ReturnType<typeof initTRPC.create>) => any,
   ) {
     this.registeredTrpcAppRouter.push(getAppRouter);
+  }
+
+  public onPluginDataCreated(
+    pluginName: string,
+    callback: (entryData: ObjectToTypedMap<Plugin>) => IDisposable,
+  ) {
+    this.registeredOnPluginDataCreated.push({ pluginName, callback });
   }
 
   public onPluginDataLoaded(
