@@ -1,6 +1,6 @@
 overwrite: true
 schema: "../../data/schema.graphql"
-documents: "../../apps/homepage/src/**/*.graphql"
+documents: ["../../apps/homepage/src/**/*.graphql", "../../apps/remote/src/**/*.graphql"]
 config:
   avoidOptionals:
     field: true

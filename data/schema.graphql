@@ -747,6 +747,10 @@ type PageInfo {
   startCursor: Cursor
 }
 
+type PluginMeta {
+  sceneCreator: [SceneCreator]!
+}
+
 """The root query type which gives access points into the data universe."""
 type Query {
   """The currently logged in user (or null if not logged in)."""
@@ -788,6 +792,7 @@ type Query {
     """The method to use when ordering `Organization`."""
     orderBy: [OrganizationsOrderBy!] = [PRIMARY_KEY_ASC]
   ): OrganizationsConnection
+  pluginMeta: PluginMeta!
   user(id: UUID!): User
   userAuthentication(id: UUID!): UserAuthentication
   userByUsername(username: String!): User
@@ -905,6 +910,11 @@ type ResetPasswordPayload {
   """
   query: Query
   success: Boolean
+}
+
+type SceneCreator {
+  pluginName: String!
+  title: String!
 }
 
 """

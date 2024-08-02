@@ -1,0 +1,8 @@
+query BasePlugin {
+  pluginMeta {
+    sceneCreator {
+      title
+      pluginName
+    }
+  }
+}

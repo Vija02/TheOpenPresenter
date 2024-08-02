@@ -8,8 +8,10 @@
     "declarationDir": ".",
     "lib": ["es2018", "esnext.asynciterable"],
     "target": "es2018",
-    "module": "NodeNext",
+    "module": "ESNext",
+    "moduleResolution": "Node",
     "jsx": "react"
   },
-  "include": ["index.tsx"]
+  "include": ["index.tsx"],
+  "exclude": []
 }
