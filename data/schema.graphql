@@ -748,7 +748,7 @@ type PageInfo {
 }
 
 type PluginMeta {
-  sceneCreator: [SceneCreator]!
+  sceneCreator: [SceneCreator!]!
 }
 
 """The root query type which gives access points into the data universe."""

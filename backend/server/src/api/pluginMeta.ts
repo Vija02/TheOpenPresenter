@@ -11,7 +11,7 @@ export const pluginMeta = makeExtendSchemaPlugin(() => ({
     }
 
     type PluginMeta {
-      sceneCreator: [SceneCreator]!
+      sceneCreator: [SceneCreator!]!
     }
 
     type SceneCreator {
