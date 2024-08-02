@@ -1,13 +1,15 @@
-import PgPubsub from "@graphile/pg-pubsub";
-import GraphilePro from "@graphile/pro"; // Requires license key
+// Requires license key
 import PgSimplifyInflectorPlugin from "@graphile-contrib/pg-simplify-inflector";
+import PgPubsub from "@graphile/pg-pubsub";
+import GraphilePro from "@graphile/pro";
 import { Request, Response } from "express";
 import { NodePlugin } from "graphile-build";
 import { resolve } from "path";
 import { Pool, PoolClient } from "pg";
-import { makePluginHook, Middleware, PostGraphileOptions } from "postgraphile";
+import { Middleware, PostGraphileOptions, makePluginHook } from "postgraphile";
 import { makePgSmartTagsFromFilePlugin } from "postgraphile/plugins";
 
+import APIPlugin from "./plugins/APIPlugin";
 import OrdersPlugin from "./plugins/Orders";
 import PassportLoginPlugin from "./plugins/PassportLoginPlugin";
 import PrimaryKeyMutationsOnlyPlugin from "./plugins/PrimaryKeyMutationsOnlyPlugin";
@@ -34,7 +36,7 @@ declare global {
 const TagsFilePlugin = makePgSmartTagsFromFilePlugin(
   // We're using JSONC for VSCode compatibility; also using an explicit file
   // path keeps the tests happy.
-  resolve(__dirname, "../postgraphile.tags.jsonc")
+  resolve(__dirname, "../postgraphile.tags.jsonc"),
 );
 
 type UUID = string;
@@ -46,7 +48,7 @@ function uuidOrNull(input: string | number | null | undefined): UUID | null {
   const str = String(input);
   if (
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-      str
+      str,
     )
   ) {
     return str;
@@ -183,6 +185,9 @@ export function getPostGraphileOptions({
 
       // Adds custom orders to our GraphQL schema
       OrdersPlugin,
+
+      // Adds other API functions
+      APIPlugin,
     ],
 
     /*
@@ -223,7 +228,7 @@ export function getPostGraphileOptions({
         // Update the last_active timestamp (but only do it at most once every 15 seconds to avoid too much churn).
         await rootPgPool.query(
           "UPDATE app_private.sessions SET last_active = NOW() WHERE uuid = $1 AND last_active < NOW() - INTERVAL '15 seconds'",
-          [sessionId]
+          [sessionId],
         );
       }
       return {
@@ -246,7 +251,7 @@ export function getPostGraphileOptions({
      * access to, e.g., the logged in user.
      */
     async additionalGraphQLContextFromRequest(
-      req
+      req,
     ): Promise<Partial<OurGraphQLContext>> {
       return {
         // The current session id
@@ -263,7 +268,7 @@ export function getPostGraphileOptions({
 
         logout: () => {
           return new Promise<void>((resolve, reject) =>
-            req.logout((err) => (err ? reject(err) : resolve()))
+            req.logout((err) => (err ? reject(err) : resolve())),
           );
         },
       };

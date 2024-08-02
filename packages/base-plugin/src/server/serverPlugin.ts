@@ -30,6 +30,10 @@ export class ServerPluginApi {
     pluginName: string;
     webComponentTag: string;
   }[] = [];
+  protected registeredSceneCreator: {
+    pluginName: string;
+    sceneCreatorMeta: { title: string };
+  }[] = [];
 
   public registerTrpcAppRouter(
     getAppRouter: (t: ReturnType<typeof initTRPC.create>) => any,
@@ -70,6 +74,13 @@ export class ServerPluginApi {
     this.registeredRendererViewWebComponent.push({
       pluginName,
       webComponentTag,
+    });
+  }
+
+  public registerSceneCreator(pluginName: string, meta: { title: string }) {
+    this.registeredSceneCreator.push({
+      pluginName,
+      sceneCreatorMeta: meta,
     });
   }
 }

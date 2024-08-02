@@ -30,6 +30,9 @@ class ServerPluginApiPrivate extends ServerPluginApi {
   getRegisteredRendererViewWebComponent() {
     return this.registeredRendererViewWebComponent;
   }
+  getRegisteredSceneCreator() {
+    return this.registeredSceneCreator;
+  }
 }
 
 export const serverPluginApi = new ServerPluginApiPrivate();
