@@ -11,6 +11,7 @@
     "postinstall": "cd ../.. && yarn patch-package"
   },
   "dependencies": {
+    "@apollo/client": "3.8.1",
     "@chakra-ui/react": "^2.8.2",
     "@emotion/react": "^11.11.4",
     "@emotion/styled": "^11.11.5",
@@ -23,6 +24,7 @@
     "react": "rc",
     "react-dom": "rc",
     "react-json-view": "^1.21.3",
+    "react-toastify": "^10.0.5",
     "typeid-js": "^1.0.0",
     "valtio": "^1.13.2",
     "valtio-yjs": "^0.6.0",
@@ -32,6 +34,7 @@
   "devDependencies": {
     "@repo/base-plugin": "*",
     "@repo/eslint-config": "*",
+    "@repo/graphql": "*",
     "@repo/plugin-myworshiplist": "*",
     "@repo/prettier-config": "*",
     "@repo/typescript-config": "*",

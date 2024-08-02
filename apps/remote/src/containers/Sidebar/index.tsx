@@ -1,30 +1,14 @@
 import { Box, Button, Divider, Heading, Text } from "@chakra-ui/react";
-import type { Scene } from "@repo/base-plugin";
+import { OverlayToggle } from "@repo/ui";
 import { sortBy } from "lodash";
-import { typeidUnboxed } from "typeid-js";
 import { useLocation } from "wouter";
 
-import { mainState, useData } from "./yjs";
+import { useData } from "../../yjs";
+import SidebarAddSceneModal from "./SidebarAddSceneModal";
 
 const Sidebar = () => {
   const data = useData();
   const [location, navigate] = useLocation();
-
-  const onAdd = () => {
-    mainState.data[typeidUnboxed("scene")] = {
-      name: "MWL",
-      order:
-        (Math.max(0, ...Object.values(data.data).map((x) => x.order)) ?? 0) + 1,
-      type: "scene",
-      children: {
-        [typeidUnboxed("plugin")]: {
-          plugin: "myworshiplist",
-          order: 1,
-          pluginData: { type: "unselected" },
-        },
-      },
-    } as Scene;
-  };
 
   return (
     <Box bg="gray.100">
@@ -53,7 +37,23 @@ const Sidebar = () => {
           </Box>
         ),
       )}
-      <Button onClick={onAdd}>+</Button>
+      <OverlayToggle
+        toggler={({ onToggle }) => (
+          <Button
+            p={1}
+            _hover={{
+              bgColor: "blue.500",
+              color: "white",
+            }}
+            cursor="pointer"
+            onClick={onToggle}
+          >
+            +
+          </Button>
+        )}
+      >
+        <SidebarAddSceneModal />
+      </OverlayToggle>
     </Box>
   );
 };

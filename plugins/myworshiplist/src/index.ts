@@ -15,19 +15,33 @@ import { CustomData, MyWorshipListData } from "./types";
 
 export const init = (serverPluginApi: ServerPluginApi) => {
   serverPluginApi.registerTrpcAppRouter(getAppRouter);
+  serverPluginApi.onPluginDataCreated(pluginName, onPluginDataCreated);
   serverPluginApi.onPluginDataLoaded(pluginName, onPluginDataLoaded);
+  serverPluginApi.registerSceneCreator(pluginName, {
+    title: "MyWorshipList",
+  });
 
   serverPluginApi.serveStatic(pluginName, "dist");
+
   serverPluginApi.loadJsOnRemoteView(pluginName, "myworshiplist-remote.es.js");
   serverPluginApi.registerRemoteViewWebComponent(
     pluginName,
     remoteWebComponentTag,
   );
-  serverPluginApi.loadJsOnRendererView(pluginName, "myworshiplist-renderer.es.js");
+  serverPluginApi.loadJsOnRendererView(
+    pluginName,
+    "myworshiplist-renderer.es.js",
+  );
   serverPluginApi.registerRendererViewWebComponent(
     pluginName,
     remoteWebComponentTag,
   );
+};
+
+const onPluginDataCreated = (pluginInfo: ObjectToTypedMap<Plugin>) => {
+  pluginInfo.get("pluginData")?.set("type", "unselected");
+
+  return {};
 };
 
 const onPluginDataLoaded = (pluginInfo: ObjectToTypedMap<Plugin>) => {

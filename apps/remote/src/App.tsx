@@ -3,7 +3,7 @@ import ReactJson from "react-json-view";
 import { useSnapshot } from "valtio";
 
 import MainBody from "./MainBody";
-import Sidebar from "./Sidebar";
+import Sidebar from "./containers/Sidebar";
 import { mainState } from "./yjs";
 
 function App() {

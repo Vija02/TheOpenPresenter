@@ -44,7 +44,7 @@
     "graphql": "^15.9.0"
   },
   "resolutions": {
-    "graphql": "15.x",
+    "graphql": "15.9",
     "pg-connection-string": "2.x"
   },
   "overrides": {
