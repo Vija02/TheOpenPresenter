@@ -11,11 +11,11 @@ import {
   ModalProps,
 } from "@chakra-ui/react";
 import { Scene } from "@repo/base-plugin";
-import { useBasePluginQuery } from "@repo/graphql";
 import { OverlayToggleComponentProps } from "@repo/ui";
 import { useState } from "react";
 import { typeidUnboxed } from "typeid-js";
 
+import { usePluginMetaData } from "../../../contexts/PluginMetaDataProvider";
 import { mainState } from "../../../yjs";
 
 export type SidebarAddSceneModalPropTypes = Omit<
@@ -32,7 +32,7 @@ const SidebarAddSceneModal = ({
 }: SidebarAddSceneModalPropTypes) => {
   const [selectedPlugin, setSelectedPlugin] = useState<string | null>(null);
 
-  const { data: pluginData } = useBasePluginQuery();
+  const pluginMetaData = usePluginMetaData();
 
   const addPlugin = () => {
     mainState.data[typeidUnboxed("scene")] = {
@@ -67,7 +67,7 @@ const SidebarAddSceneModal = ({
         <ModalCloseButton />
         <ModalBody>
           <Box>
-            {pluginData?.pluginMeta.sceneCreator.map((sceneCreator) => (
+            {pluginMetaData?.pluginMeta.sceneCreator.map((sceneCreator) => (
               <Box
                 key={sceneCreator.pluginName}
                 bg={

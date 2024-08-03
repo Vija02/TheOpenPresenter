@@ -9,6 +9,7 @@ import { Router } from "wouter";
 
 import App from "./App";
 import { apolloClient } from "./apollo";
+import { PluginMetaDataProvider } from "./contexts/PluginMetaDataProvider";
 import { trpc, trpcClient } from "./trpc";
 
 const queryClient = new QueryClient();
@@ -20,10 +21,12 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         <trpc.Provider client={trpcClient} queryClient={queryClient}>
           <ApolloProvider client={apolloClient}>
             <QueryClientProvider client={queryClient}>
-              <>
-                <App />
-                <ToastContainer />
-              </>
+              <PluginMetaDataProvider>
+                <>
+                  <App />
+                  <ToastContainer />
+                </>
+              </PluginMetaDataProvider>
             </QueryClientProvider>
           </ApolloProvider>
         </trpc.Provider>

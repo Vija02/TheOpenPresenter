@@ -1,9 +1,9 @@
 import { Box, Text } from "@chakra-ui/react";
 import type { Scene } from "@repo/base-plugin";
-import { useBasePluginQuery } from "@repo/graphql";
 import React from "react";
 import { Route, Switch } from "wouter";
 
+import { usePluginMetaData } from "./contexts/PluginMetaDataProvider";
 import { trpcClient } from "./trpc";
 import {
   getYJSPluginRenderer,
@@ -37,12 +37,12 @@ const PluginRenderer = ({
   sceneId: string;
   value: Scene;
 }) => {
-  const { data: pluginData } = useBasePluginQuery();
+  const pluginMetaData = usePluginMetaData();
 
   return (
     <>
       {Object.entries(value.children).map(([pluginId, pluginInfo]) => {
-        const tag = pluginData?.pluginMeta.registeredView.find(
+        const tag = pluginMetaData?.pluginMeta.registeredView.find(
           (x) => x.pluginName === pluginInfo.plugin,
         )?.tag;
 
