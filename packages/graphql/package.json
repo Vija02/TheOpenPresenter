@@ -6,21 +6,22 @@
   "types": "index.d.ts",
   "scripts": {
     "build": "yarn codegen && tsc -b",
-    "dev": "yarn codegen --watch",
+    "dev": "concurrently --kill-others --names \"GQL-CodeGen,GQL-Build\" --prefix \"({name})\" --prefix-colors \"magentaBright.bold,greenBright.bold\" \"yarn codegen --watch\" \"tsc -b --watch --preserveWatchOutput\"",
     "codegen": "graphql-codegen --config codegen.yml",
     "postinstall": "cd ../.. && yarn patch-package"
   },
   "dependencies": {
-    "@apollo/client": "3.4.17",
+    "@apollo/client": "3.8.1",
     "react": "rc",
     "tslib": "^2.5.0"
   },
   "devDependencies": {
-    "@graphql-codegen/add": "^4.0.1",
-    "@graphql-codegen/cli": "^3.2.1",
-    "@graphql-codegen/typescript": "^3.0.1",
-    "@graphql-codegen/typescript-operations": "^3.0.1",
-    "@graphql-codegen/typescript-react-apollo": "3.3.7",
+    "@graphql-codegen/add": "^5.0.3",
+    "@graphql-codegen/cli": "^5.0.2",
+    "@graphql-codegen/typescript": "^4.0.9",
+    "@graphql-codegen/typescript-operations": "^4.2.3",
+    "@graphql-codegen/typescript-react-apollo": "4.3.0",
+    "@parcel/watcher": "^2.4.1",
     "cross-env": "^7.0.3"
   }
 }
