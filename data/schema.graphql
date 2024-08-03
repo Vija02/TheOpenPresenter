@@ -748,6 +748,7 @@ type PageInfo {
 }
 
 type PluginMeta {
+  registeredView: [RegisteredView!]!
   sceneCreator: [SceneCreator!]!
 }
 
@@ -809,6 +810,11 @@ input RegisterInput {
 
 type RegisterPayload {
   user: User!
+}
+
+type RegisteredView {
+  pluginName: String!
+  tag: String!
 }
 
 """All input for the `removeFromOrganization` mutation."""

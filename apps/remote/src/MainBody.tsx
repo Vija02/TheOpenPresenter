@@ -1,5 +1,6 @@
 import { Box, Text } from "@chakra-ui/react";
 import type { Scene } from "@repo/base-plugin";
+import { useBasePluginQuery } from "@repo/graphql";
 import React from "react";
 import { Route, Switch } from "wouter";
 
@@ -36,28 +37,35 @@ const PluginRenderer = ({
   sceneId: string;
   value: Scene;
 }) => {
+  const { data: pluginData } = useBasePluginQuery();
+
   return (
     <>
-      {Object.entries(value.children).map(([pluginId, pluginInfo]) => (
-        <Box key={pluginId}>
-          {/* TODO: Get data from backend */}
-          {pluginInfo.plugin === "myworshiplist" ? (
-            React.createElement("myworshiplist-remote", {
-              yjsPluginSceneData: getYJSPluginSceneData(sceneId, pluginId),
-              yjsPluginRendererData: getYJSPluginRendererData(
-                sceneId,
-                pluginId,
-              ),
-              setRenderCurrentScene: () => {
-                getYJSPluginRenderer()?.set("currentScene", sceneId);
-              },
-              trpcClient,
-            })
-          ) : (
-            <Text>No renderer for {pluginInfo.plugin}</Text>
-          )}
-        </Box>
-      ))}
+      {Object.entries(value.children).map(([pluginId, pluginInfo]) => {
+        const tag = pluginData?.pluginMeta.registeredView.find(
+          (x) => x.pluginName === pluginInfo.plugin,
+        )?.tag;
+
+        return (
+          <Box key={pluginId}>
+            {tag ? (
+              React.createElement(tag, {
+                yjsPluginSceneData: getYJSPluginSceneData(sceneId, pluginId),
+                yjsPluginRendererData: getYJSPluginRendererData(
+                  sceneId,
+                  pluginId,
+                ),
+                setRenderCurrentScene: () => {
+                  getYJSPluginRenderer()?.set("currentScene", sceneId);
+                },
+                trpcClient,
+              })
+            ) : (
+              <Text>No renderer for {pluginInfo.plugin}</Text>
+            )}
+          </Box>
+        );
+      })}
     </>
   );
 };

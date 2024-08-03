@@ -12,11 +12,17 @@ export const pluginMeta = makeExtendSchemaPlugin(() => ({
 
     type PluginMeta {
       sceneCreator: [SceneCreator!]!
+      registeredView: [RegisteredView!]!
     }
 
     type SceneCreator {
-      title: String!
       pluginName: String!
+      title: String!
+    }
+
+    type RegisteredView {
+      pluginName: String!
+      tag: String!
     }
   `,
   resolvers: {
@@ -24,11 +30,17 @@ export const pluginMeta = makeExtendSchemaPlugin(() => ({
       async pluginMeta(_, _args, _context: OurGraphQLContext) {
         try {
           const sceneCreator = serverPluginApi.getRegisteredSceneCreator();
+          const remoteViewWebComponent =
+            serverPluginApi.getRegisteredRemoteViewWebComponent();
 
           return {
             sceneCreator: sceneCreator.map((x) => ({
               pluginName: x.pluginName,
               title: x.sceneCreatorMeta.title,
+            })),
+            registeredView: remoteViewWebComponent.map((x) => ({
+              pluginName: x.pluginName,
+              tag: x.webComponentTag,
             })),
           };
         } catch (e: any) {

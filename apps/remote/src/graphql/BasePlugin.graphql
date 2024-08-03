@@ -4,5 +4,9 @@ query BasePlugin {
       title
       pluginName
     }
+    registeredView {
+      pluginName
+      tag
+    }
   }
 }
