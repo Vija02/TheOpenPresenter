@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsup-node src/index.ts && yarn build:view",
     "build:view": "vite build",
-    "dev": "tsc -b --watch --preserveWatchOutput",
+    "dev": "concurrently --kill-others \"tsc -b --watch --preserveWatchOutput\" \"vite build --watch\"",
     "postinstall": "cd ../.. && yarn patch-package"
   },
   "dependencies": {

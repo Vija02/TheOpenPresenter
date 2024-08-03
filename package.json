@@ -27,7 +27,7 @@
     "concurrently": "^8.2.2",
     "patch-package": "^8.0.0",
     "prettier": "^3.2.5",
-    "turbo": "^2.0.4",
+    "turbo": "^2.0.11",
     "typescript": "5.5.3"
   },
   "engines": {
