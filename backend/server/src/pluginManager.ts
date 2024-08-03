@@ -72,8 +72,11 @@ export const initPlugins = async () => {
 
 const _linkPlugin = async (pluginName: string) => {
   try {
-    if (fs.readdirSync(path.resolve(dir, pluginName))) {
+    try {
+      fs.readdirSync(path.resolve(dir, pluginName));
       return;
+    } catch (e) {
+      // If here, then it doesn't exist. So we let it go
     }
 
     const localPluginDir = path.resolve(`${__dirname}/../../../plugins/`);
