@@ -138,6 +138,7 @@ export async function makeApp({
   if (isTest || isDev) {
     await middleware.installCypressServerCommand(app);
   }
+  await middleware.installFileUpload(app);
   await middleware.installTrpc(app);
   await middleware.installPostGraphile(app);
   await middleware.installRemote(app, httpServer!);

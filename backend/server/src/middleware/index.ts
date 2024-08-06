@@ -2,6 +2,7 @@ import installCSRFProtection from "./installCSRFProtection";
 import installCypressServerCommand from "./installCypressServerCommand";
 import installDatabasePools from "./installDatabasePools";
 import installErrorHandler from "./installErrorHandler";
+import installFileUpload from "./installFileUpload";
 import installForceSSL from "./installForceSSL";
 import installHelmet from "./installHelmet";
 import installHocuspocus from "./installHocuspocus";
@@ -23,6 +24,7 @@ export {
   installCypressServerCommand,
   installDatabasePools,
   installErrorHandler,
+  installFileUpload,
   installForceSSL,
   installHelmet,
   installHocuspocus,
