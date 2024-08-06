@@ -1,12 +1,8 @@
-query BasePlugin {
+query RendererBasePlugin {
   pluginMeta {
     sceneCreator {
       title
       pluginName
-    }
-    registeredRemoteView {
-      pluginName
-      tag
     }
     registeredRendererView {
       pluginName

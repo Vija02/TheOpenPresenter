@@ -34,7 +34,7 @@ export const pluginMeta = makeExtendSchemaPlugin(() => ({
           const remoteViewWebComponent =
             serverPluginApi.getRegisteredRemoteViewWebComponent();
           const rendererViewWebComponent =
-            serverPluginApi.getRegisteredRemoteViewWebComponent();
+            serverPluginApi.getRegisteredRendererViewWebComponent();
 
           return {
             sceneCreator: sceneCreator.map((x) => ({

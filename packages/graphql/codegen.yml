@@ -3,6 +3,7 @@ schema: "../../data/schema.graphql"
 documents: 
   - "../../apps/homepage/src/**/*.graphql"
   - "../../apps/remote/src/**/*.graphql"
+  - "../../apps/renderer/src/**/*.graphql"
 config:
   avoidOptionals:
     field: true

@@ -1,8 +1,11 @@
-import { RemoteBasePluginQuery, useRemoteBasePluginQuery } from "@repo/graphql";
+import {
+  RendererBasePluginQuery,
+  useRendererBasePluginQuery,
+} from "@repo/graphql";
 import React, { createContext, useContext } from "react";
 
 type PluginMetaDataProviderType = {
-  pluginMetaData: RemoteBasePluginQuery | null;
+  pluginMetaData: RendererBasePluginQuery | null;
 };
 
 const initialData: PluginMetaDataProviderType = {
@@ -15,7 +18,7 @@ export const PluginMetaDataContext =
 export function PluginMetaDataProvider({
   children,
 }: React.PropsWithChildren<{}>) {
-  const { data: pluginMetaData } = useRemoteBasePluginQuery();
+  const { data: pluginMetaData } = useRendererBasePluginQuery();
 
   return (
     <PluginMetaDataContext.Provider

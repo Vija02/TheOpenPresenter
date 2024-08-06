@@ -1,0 +1,12 @@
+query RemoteBasePlugin {
+  pluginMeta {
+    sceneCreator {
+      title
+      pluginName
+    }
+    registeredRemoteView {
+      pluginName
+      tag
+    }
+  }
+}
