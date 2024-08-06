@@ -42,7 +42,7 @@ const PluginRenderer = ({
   return (
     <>
       {Object.entries(value.children).map(([pluginId, pluginInfo]) => {
-        const tag = pluginMetaData?.pluginMeta.registeredView.find(
+        const tag = pluginMetaData?.pluginMeta.registeredRemoteView.find(
           (x) => x.pluginName === pluginInfo.plugin,
         )?.tag;
 

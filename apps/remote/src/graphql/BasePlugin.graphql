@@ -4,7 +4,11 @@ query BasePlugin {
       title
       pluginName
     }
-    registeredView {
+    registeredRemoteView {
+      pluginName
+      tag
+    }
+    registeredRendererView {
       pluginName
       tag
     }

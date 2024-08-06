@@ -6,6 +6,7 @@ import type { TRPCUntypedClient } from "@trpc/client";
 import type { Map } from "yjs";
 
 import { AppRouter } from "../src";
+import { remoteWebComponentTag } from "../src/consts";
 import MWLRemote from "./MWLRemote";
 import { trpc } from "./trpc";
 
@@ -48,4 +49,4 @@ const Component = r2wc(MyWorshipListEntry, {
     trpcClient: "",
   },
 });
-customElements.define("myworshiplist-remote", Component);
+customElements.define(remoteWebComponentTag, Component);

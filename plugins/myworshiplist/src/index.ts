@@ -9,7 +9,11 @@ import { proxy, subscribe } from "valtio";
 import { bind } from "valtio-yjs";
 import z from "zod";
 
-import { pluginName, remoteWebComponentTag } from "./consts";
+import {
+  pluginName,
+  remoteWebComponentTag,
+  rendererWebComponentTag,
+} from "./consts";
 import { getSongData } from "./data";
 import { CustomData, MyWorshipListData } from "./types";
 
@@ -34,7 +38,7 @@ export const init = (serverPluginApi: ServerPluginApi) => {
   );
   serverPluginApi.registerRendererViewWebComponent(
     pluginName,
-    remoteWebComponentTag,
+    rendererWebComponentTag,
   );
 };
 

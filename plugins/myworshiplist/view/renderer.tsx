@@ -6,6 +6,7 @@ import type { TRPCUntypedClient } from "@trpc/client";
 import type { Map } from "yjs";
 
 import { AppRouter } from "../src";
+import { rendererWebComponentTag } from "../src/consts";
 import MWLRenderer from "./MWLRenderer";
 import { trpc } from "./trpc";
 
@@ -48,4 +49,4 @@ const Component = r2wc(MyWorshipListRendererEntry, {
     trpcClient: "",
   },
 });
-customElements.define("myworshiplist-renderer", Component);
+customElements.define(rendererWebComponentTag, Component);

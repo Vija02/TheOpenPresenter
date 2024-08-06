@@ -12,7 +12,8 @@ export const pluginMeta = makeExtendSchemaPlugin(() => ({
 
     type PluginMeta {
       sceneCreator: [SceneCreator!]!
-      registeredView: [RegisteredView!]!
+      registeredRemoteView: [RegisteredView!]!
+      registeredRendererView: [RegisteredView!]!
     }
 
     type SceneCreator {
@@ -32,13 +33,19 @@ export const pluginMeta = makeExtendSchemaPlugin(() => ({
           const sceneCreator = serverPluginApi.getRegisteredSceneCreator();
           const remoteViewWebComponent =
             serverPluginApi.getRegisteredRemoteViewWebComponent();
+          const rendererViewWebComponent =
+            serverPluginApi.getRegisteredRemoteViewWebComponent();
 
           return {
             sceneCreator: sceneCreator.map((x) => ({
               pluginName: x.pluginName,
               title: x.sceneCreatorMeta.title,
             })),
-            registeredView: remoteViewWebComponent.map((x) => ({
+            registeredRemoteView: remoteViewWebComponent.map((x) => ({
+              pluginName: x.pluginName,
+              tag: x.webComponentTag,
+            })),
+            registeredRendererView: rendererViewWebComponent.map((x) => ({
               pluginName: x.pluginName,
               tag: x.webComponentTag,
             })),

@@ -748,7 +748,8 @@ type PageInfo {
 }
 
 type PluginMeta {
-  registeredView: [RegisteredView!]!
+  registeredRemoteView: [RegisteredView!]!
+  registeredRendererView: [RegisteredView!]!
   sceneCreator: [SceneCreator!]!
 }
 
