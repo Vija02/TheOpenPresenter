@@ -22,11 +22,19 @@ export class ServerPluginApi {
     pluginName: string;
     path: string;
   }[] = [];
+  protected registeredLoadCssOnRemoteView: {
+    pluginName: string;
+    path: string;
+  }[] = [];
   protected registeredRemoteViewWebComponent: {
     pluginName: string;
     webComponentTag: string;
   }[] = [];
   protected registeredLoadJsOnRendererView: {
+    pluginName: string;
+    path: string;
+  }[] = [];
+  protected registeredLoadCssOnRendererView: {
     pluginName: string;
     path: string;
   }[] = [];
@@ -67,6 +75,10 @@ export class ServerPluginApi {
     this.registeredLoadJsOnRemoteView.push({ pluginName, path });
   }
 
+  public loadCssOnRemoteView(pluginName: string, path: string) {
+    this.registeredLoadCssOnRemoteView.push({ pluginName, path });
+  }
+
   public registerRemoteViewWebComponent(
     pluginName: string,
     webComponentTag: string,
@@ -76,6 +88,10 @@ export class ServerPluginApi {
 
   public loadJsOnRendererView(pluginName: string, path: string) {
     this.registeredLoadJsOnRendererView.push({ pluginName, path });
+  }
+
+  public loadCssOnRendererView(pluginName: string, path: string) {
+    this.registeredLoadCssOnRendererView.push({ pluginName, path });
   }
 
   public registerRendererViewWebComponent(

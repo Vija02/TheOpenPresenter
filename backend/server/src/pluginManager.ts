@@ -24,11 +24,17 @@ class ServerPluginApiPrivate extends ServerPluginApi {
   getRegisteredLoadJsOnRemoteView() {
     return this.registeredLoadJsOnRemoteView;
   }
+  getRegisteredLoadCssOnRemoteView() {
+    return this.registeredLoadCssOnRemoteView;
+  }
   getRegisteredRemoteViewWebComponent() {
     return this.registeredRemoteViewWebComponent;
   }
   getRegisteredLoadJsOnRendererView() {
     return this.registeredLoadJsOnRendererView;
+  }
+  getRegisteredLoadCssOnRendererView() {
+    return this.registeredLoadCssOnRendererView;
   }
   getRegisteredRendererViewWebComponent() {
     return this.registeredRendererViewWebComponent;

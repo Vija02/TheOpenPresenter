@@ -41,14 +41,22 @@ export default async function installRemote(app: Express, server: Server) {
 function transformer(html: string, _req: Request) {
   const registeredLoadJsOnRemoteView =
     serverPluginApi.getRegisteredLoadJsOnRemoteView();
+  const registeredLoadCssOnRemoteView =
+    serverPluginApi.getRegisteredLoadCssOnRemoteView();
 
-  // Load all the JS from plugins
+  // Load all file from plugins
   return html.replace(
     "<!-- injection point -->",
     registeredLoadJsOnRemoteView
       .map(
         ({ pluginName, path }) =>
           `<script type="module" src="/plugin/${pluginName}/${path}"></script>`,
+      )
+      .concat(
+        registeredLoadCssOnRemoteView.map(
+          ({ pluginName, path }) =>
+            `<link rel="stylesheet" type="text/css" href="/plugin/${pluginName}/${path}">`,
+        ),
       )
       .join("\n"),
   );
