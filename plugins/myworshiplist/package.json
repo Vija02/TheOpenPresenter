@@ -38,7 +38,7 @@
     "@types/react-dom": "npm:types-react-dom@rc",
     "@vitejs/plugin-react-swc": "^3.7.0",
     "cross-env": "^7.0.3",
-    "eslint": "^9.8.0",
+    "eslint": "^8.57.0",
     "tsup": "^8.1.2",
     "vite": "^5.3.5"
   }

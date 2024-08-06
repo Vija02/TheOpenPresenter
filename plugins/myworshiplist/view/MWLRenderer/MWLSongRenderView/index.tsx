@@ -15,7 +15,7 @@ const MWLSongRenderView = ({
 
   const viewBox = useMemo(
     () => [0, 0, size.width, size.height].join(" "),
-    [size],
+    [size.height, size.width],
   );
 
   useLayoutEffect(() => {
@@ -34,7 +34,7 @@ const MWLSongRenderView = ({
         });
       }
     }, 0);
-  }, [heading, textRef]);
+  }, [heading, paddingX, size, textRef]);
 
   return (
     <svg

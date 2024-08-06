@@ -52,7 +52,7 @@ const MWLSongViewInner = ({ songId }: { songId: number }) => {
         {songCache.title}
       </Heading>
       <Flex gap={3} flexWrap="wrap">
-        {Object.entries(groupedData).map(([section, content], i) => (
+        {Object.keys(groupedData).map((section, i) => (
           <Box
             key={i}
             cursor="pointer"
