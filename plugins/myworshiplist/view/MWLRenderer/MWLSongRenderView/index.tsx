@@ -34,7 +34,8 @@ const MWLSongRenderView = ({
         });
       }
     }, 0);
-  }, [heading, paddingX, size, textRef]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [heading, paddingX, textRef]);
 
   return (
     <svg
