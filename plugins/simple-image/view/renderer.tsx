@@ -8,7 +8,7 @@ import { AppRouter } from "../src";
 import { rendererWebComponentTag } from "../src/consts";
 import ImageRenderer from "./ImageRenderer";
 
-const SimpleImageRendererEntry = ({
+const RendererEntry = ({
   yjsPluginSceneData,
   yjsPluginRendererData,
   setRenderCurrentScene,
@@ -32,7 +32,7 @@ const SimpleImageRendererEntry = ({
   );
 };
 
-const Component = r2wc(SimpleImageRendererEntry, {
+const Component = r2wc(RendererEntry, {
   //@ts-ignore
   props: {
     yjsPluginSceneData: "",

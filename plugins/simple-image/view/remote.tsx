@@ -15,7 +15,7 @@ import { trpc } from "./trpc";
 
 const queryClient = new QueryClient();
 
-const SimpleImageEntry = ({
+const RemoteEntry = ({
   yjsPluginSceneData,
   yjsPluginRendererData,
   setRenderCurrentScene,
@@ -43,7 +43,7 @@ const SimpleImageEntry = ({
   );
 };
 
-const Component = r2wc(SimpleImageEntry, {
+const Component = r2wc(RemoteEntry, {
   //@ts-ignore
   props: {
     yjsPluginSceneData: "",

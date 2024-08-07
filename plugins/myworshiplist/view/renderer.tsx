@@ -12,7 +12,7 @@ import { trpc } from "./trpc";
 
 const queryClient = new QueryClient();
 
-const MyWorshipListRendererEntry = ({
+const RendererEntry = ({
   yjsPluginSceneData,
   yjsPluginRendererData,
   setRenderCurrentScene,
@@ -40,7 +40,7 @@ const MyWorshipListRendererEntry = ({
   );
 };
 
-const Component = r2wc(MyWorshipListRendererEntry, {
+const Component = r2wc(RendererEntry, {
   //@ts-ignore
   props: {
     yjsPluginSceneData: "",
