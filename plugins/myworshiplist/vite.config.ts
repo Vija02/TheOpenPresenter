@@ -1,6 +1,8 @@
 import react from "@vitejs/plugin-react-swc";
 import { defineConfig } from "vite";
 
+import { pluginName } from "./src/consts";
+
 // https://vitejs.dev/config/
 export default defineConfig({
   define: {
@@ -12,9 +14,9 @@ export default defineConfig({
   build: {
     lib: {
       entry: ["./view/remote.tsx", "./view/renderer.tsx"],
-      name: "myworshiplist-views",
+      name: `${pluginName}-views`,
       fileName: (format, entryName) =>
-        `myworshiplist-${entryName}.${format}.js`,
+        `${pluginName}-${entryName}.${format}.js`,
     },
     rollupOptions: {
       external: ["yjs"],
