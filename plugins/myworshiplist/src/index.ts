@@ -27,14 +27,14 @@ export const init = (serverPluginApi: ServerPluginApi) => {
 
   serverPluginApi.serveStatic(pluginName, "dist");
 
-  serverPluginApi.loadJsOnRemoteView(pluginName, "myworshiplist-remote.es.js");
+  serverPluginApi.loadJsOnRemoteView(pluginName, `${pluginName}-remote.es.js`);
   serverPluginApi.registerRemoteViewWebComponent(
     pluginName,
     remoteWebComponentTag,
   );
   serverPluginApi.loadJsOnRendererView(
     pluginName,
-    "myworshiplist-renderer.es.js",
+    `${pluginName}-renderer.es.js`,
   );
   serverPluginApi.registerRendererViewWebComponent(
     pluginName,

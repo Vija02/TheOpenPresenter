@@ -21,7 +21,7 @@ export const init = (serverPluginApi: ServerPluginApi) => {
 
   serverPluginApi.serveStatic(pluginName, "dist");
 
-  serverPluginApi.loadJsOnRemoteView(pluginName, "simple-image-remote.es.js");
+  serverPluginApi.loadJsOnRemoteView(pluginName, `${pluginName}-remote.es.js`);
   serverPluginApi.loadCssOnRemoteView(pluginName, "style.css");
   serverPluginApi.registerRemoteViewWebComponent(
     pluginName,
@@ -29,7 +29,7 @@ export const init = (serverPluginApi: ServerPluginApi) => {
   );
   serverPluginApi.loadJsOnRendererView(
     pluginName,
-    "simple-image-renderer.es.js",
+    `${pluginName}-renderer.es.js`,
   );
   serverPluginApi.registerRendererViewWebComponent(
     pluginName,
