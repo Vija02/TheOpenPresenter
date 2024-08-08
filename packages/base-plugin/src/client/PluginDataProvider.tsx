@@ -144,9 +144,7 @@ export function getTypedProviderHelperFunctions<
     },
     scene: {
       // Use this for read
-      useData<Y extends Record<string, any> = any>(
-        fn?: (x: Plugin<PluginSceneDataType>) => Y,
-      ) {
+      useData<Y = any>(fn?: (x: Plugin<PluginSceneDataType>) => Y) {
         const pluginDataContext = useContext(PluginDataContext);
         const data = pluginDataContext.scene.traverser!(fn);
 
@@ -167,9 +165,7 @@ export function getTypedProviderHelperFunctions<
     },
     renderer: {
       // Use this for read
-      useData<Y extends Record<string, any> = any>(
-        fn?: (x: PluginRendererDataType) => Y,
-      ) {
+      useData<Y = any>(fn?: (x: PluginRendererDataType) => Y) {
         const pluginDataContext = useContext(PluginDataContext);
         const data = pluginDataContext.renderer.traverser!(fn);
 
