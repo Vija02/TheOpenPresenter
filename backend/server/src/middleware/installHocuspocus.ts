@@ -104,6 +104,8 @@ export default async function installHocuspocus(app: Express) {
           return;
         }
 
+        const sceneId = id;
+
         const scene = sectionOrScene as ObjectToTypedMap<
           Scene<Record<string, any>>
         >;
@@ -115,7 +117,7 @@ export default async function installHocuspocus(app: Express) {
           );
 
           const pluginIds = Array.from(scene.get("children")?.keys()!);
-          if (!sceneKeys.includes(id)) {
+          if (!sceneKeys.includes(sceneId)) {
             // Create the scene object with all the plugins as well
             const renderMap = new Y.Map();
             pluginIds.forEach((x) => renderMap.set(x, new Y.Map()));
@@ -124,14 +126,14 @@ export default async function installHocuspocus(app: Express) {
             renderData
               .get("children")
               ?.set(
-                id,
+                sceneId,
                 renderMap as ObjectToTypedMap<
                   Record<string, Record<string, any>>
                 >,
               );
           } else {
             // Otherwise we just add the plugin
-            const plugins = renderData.get("children")?.get(id);
+            const plugins = renderData.get("children")?.get(sceneId);
             const currentPluginIds = Array.from(plugins?.keys()!);
             const missingPluginIds = pluginIds.filter(
               (x) => !currentPluginIds.includes(x),
@@ -157,14 +159,14 @@ export default async function installHocuspocus(app: Express) {
           console.log(event);
         });
 
-        children?.forEach((pluginInfo) => {
+        for (const [pluginId, pluginInfo] of children?.entries() ?? []) {
           if (isJustCreated) {
             disposableDocumentManager
               .getDocumentDisposable(data.documentName)
               .push(
                 registeredOnPluginDataCreated
                   .find((x) => x.pluginName === pluginInfo.get("plugin"))
-                  ?.callback(pluginInfo) ?? {},
+                  ?.callback(pluginInfo, { pluginId, sceneId }) ?? {},
               );
           }
           disposableDocumentManager
@@ -172,9 +174,9 @@ export default async function installHocuspocus(app: Express) {
             .push(
               registeredOnPluginDataLoaded
                 .find((x) => x.pluginName === pluginInfo.get("plugin"))
-                ?.callback(pluginInfo) ?? {},
+                ?.callback(pluginInfo, { pluginId, sceneId }) ?? {},
             );
-        });
+        }
       };
       // Initial load
       dataMap?.forEach((sectionOrScene, id) => {

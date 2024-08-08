@@ -48,6 +48,11 @@ export type RenderData<T = Record<string, any>> = {
   children: Record<UUID, Record<UUID, T>>;
 };
 
+export type PluginContext = {
+  pluginId: UUID;
+  sceneId: UUID;
+};
+
 export interface IDisposable {
   dispose?(): void;
 }

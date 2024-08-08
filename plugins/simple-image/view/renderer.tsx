@@ -1,6 +1,6 @@
 import { ChakraProvider } from "@chakra-ui/react";
 import r2wc from "@r2wc/react-to-web-component";
-import { PluginDataProvider } from "@repo/base-plugin/client";
+import { PluginContext, PluginDataProvider } from "@repo/base-plugin/client";
 import type { TRPCUntypedClient } from "@trpc/client";
 import type { Map } from "yjs";
 
@@ -11,11 +11,13 @@ import ImageRenderer from "./ImageRenderer";
 const RendererEntry = ({
   yjsPluginSceneData,
   yjsPluginRendererData,
+  pluginContext,
   setRenderCurrentScene,
   trpcClient,
 }: {
   yjsPluginSceneData: Map<any>;
   yjsPluginRendererData: Map<any>;
+  pluginContext: PluginContext;
   setRenderCurrentScene: () => void;
   trpcClient: TRPCUntypedClient<AppRouter>;
 }) => {
@@ -24,6 +26,7 @@ const RendererEntry = ({
       <PluginDataProvider
         yjsPluginSceneData={yjsPluginSceneData}
         yjsPluginRendererData={yjsPluginRendererData}
+        pluginContext={pluginContext}
         setRenderCurrentScene={setRenderCurrentScene}
       >
         <ImageRenderer />
@@ -37,6 +40,7 @@ const Component = r2wc(RendererEntry, {
   props: {
     yjsPluginSceneData: "",
     yjsPluginRendererData: "",
+    pluginContext: "",
     setRenderCurrentScene: "",
     trpcClient: "",
   },

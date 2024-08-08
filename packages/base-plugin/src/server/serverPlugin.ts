@@ -1,6 +1,6 @@
 import { initTRPC } from "@trpc/server";
 
-import { IDisposable, ObjectToTypedMap, Plugin } from "../types";
+import { IDisposable, ObjectToTypedMap, Plugin, PluginContext } from "../types";
 
 export class ServerPluginApi {
   protected registeredTrpcAppRouter: ((
@@ -8,11 +8,17 @@ export class ServerPluginApi {
   ) => any)[] = [];
   protected registeredOnPluginDataCreated: {
     pluginName: string;
-    callback: (entryData: ObjectToTypedMap<Plugin>) => IDisposable;
+    callback: (
+      entryData: ObjectToTypedMap<Plugin>,
+      pluginContext: PluginContext,
+    ) => IDisposable;
   }[] = [];
   protected registeredOnPluginDataLoaded: {
     pluginName: string;
-    callback: (entryData: ObjectToTypedMap<Plugin>) => IDisposable;
+    callback: (
+      entryData: ObjectToTypedMap<Plugin>,
+      pluginContext: PluginContext,
+    ) => IDisposable;
   }[] = [];
   protected registeredServeStatic: {
     pluginName: string;
@@ -55,14 +61,20 @@ export class ServerPluginApi {
 
   public onPluginDataCreated(
     pluginName: string,
-    callback: (entryData: ObjectToTypedMap<Plugin>) => IDisposable,
+    callback: (
+      entryData: ObjectToTypedMap<Plugin>,
+      pluginContext: PluginContext,
+    ) => IDisposable,
   ) {
     this.registeredOnPluginDataCreated.push({ pluginName, callback });
   }
 
   public onPluginDataLoaded(
     pluginName: string,
-    callback: (entryData: ObjectToTypedMap<Plugin>) => IDisposable,
+    callback: (
+      entryData: ObjectToTypedMap<Plugin>,
+      pluginContext: PluginContext,
+    ) => IDisposable,
   ) {
     this.registeredOnPluginDataLoaded.push({ pluginName, callback });
   }

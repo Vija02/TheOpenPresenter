@@ -55,6 +55,7 @@ const PluginRenderer = ({
                   sceneId,
                   pluginId,
                 ),
+                pluginContext: { pluginId, sceneId },
                 setRenderCurrentScene: () => {
                   getYJSPluginRenderer()?.set("currentScene", sceneId);
                 },

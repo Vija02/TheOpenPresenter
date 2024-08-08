@@ -18,7 +18,7 @@ export const Body = () => {
   const currentRenderer = data.renderer["1"];
   const currentScene = currentRenderer?.currentScene;
   const pluginMetaData = usePluginMetaData();
-  
+
   if (!currentScene) {
     return;
   }
@@ -46,6 +46,7 @@ export const Body = () => {
                     currentScene,
                     pluginId,
                   ),
+                  pluginContext: { pluginId, sceneId: currentScene },
                   setRenderCurrentScene: () => {
                     getYJSPluginRenderer()?.set("currentScene", currentScene);
                   },

@@ -10,10 +10,11 @@ import { proxy } from "valtio";
 import { bind } from "valtio-yjs";
 import type { Map } from "yjs";
 
-import { Plugin } from "../types";
+import { Plugin, PluginContext } from "../types";
 
 type PluginDataProviderType<PluginSceneDataType, PluginRendererDataType> = {
   setRenderCurrentScene: () => void;
+  pluginContext: PluginContext;
   scene: {
     yjsData: Map<any> | null;
     valtio: Plugin | null;
@@ -36,6 +37,7 @@ type PluginDataProviderType<PluginSceneDataType, PluginRendererDataType> = {
 
 const initialData: PluginDataProviderType<any, any> = {
   setRenderCurrentScene: () => {},
+  pluginContext: { pluginId: "", sceneId: "" },
   scene: {
     yjsData: null,
     valtio: null,
@@ -58,10 +60,12 @@ export function PluginDataProvider<
   children,
   yjsPluginSceneData,
   yjsPluginRendererData,
+  pluginContext,
   setRenderCurrentScene,
 }: React.PropsWithChildren<{
   yjsPluginSceneData: Map<any>;
   yjsPluginRendererData: Map<any>;
+  pluginContext: PluginContext;
   setRenderCurrentScene: () => void;
 }>) {
   const [sceneValtio, setSceneValtio] = useState<Plugin | null>(null);
@@ -105,6 +109,7 @@ export function PluginDataProvider<
     <PluginDataContext.Provider
       value={{
         setRenderCurrentScene,
+        pluginContext,
         scene: {
           yjsData: yjsPluginSceneData,
           valtio: sceneValtio,

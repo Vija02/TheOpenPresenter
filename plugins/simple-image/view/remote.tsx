@@ -1,6 +1,6 @@
 import { ChakraProvider } from "@chakra-ui/react";
 import r2wc from "@r2wc/react-to-web-component";
-import { PluginDataProvider } from "@repo/base-plugin/client";
+import { PluginContext, PluginDataProvider } from "@repo/base-plugin/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { TRPCUntypedClient } from "@trpc/client";
 import "@uppy/core/dist/style.min.css";
@@ -18,11 +18,13 @@ const queryClient = new QueryClient();
 const RemoteEntry = ({
   yjsPluginSceneData,
   yjsPluginRendererData,
+  pluginContext,
   setRenderCurrentScene,
   trpcClient,
 }: {
   yjsPluginSceneData: Map<any>;
   yjsPluginRendererData: Map<any>;
+  pluginContext: PluginContext;
   setRenderCurrentScene: () => void;
   trpcClient: TRPCUntypedClient<AppRouter>;
 }) => {
@@ -31,6 +33,7 @@ const RemoteEntry = ({
       <PluginDataProvider
         yjsPluginSceneData={yjsPluginSceneData}
         yjsPluginRendererData={yjsPluginRendererData}
+        pluginContext={pluginContext}
         setRenderCurrentScene={setRenderCurrentScene}
       >
         <trpc.Provider client={trpcClient} queryClient={queryClient}>
@@ -48,6 +51,7 @@ const Component = r2wc(RemoteEntry, {
   props: {
     yjsPluginSceneData: "",
     yjsPluginRendererData: "",
+    pluginContext: "",
     setRenderCurrentScene: "",
     trpcClient: "",
   },
