@@ -42,6 +42,9 @@ class ServerPluginApiPrivate extends ServerPluginApi {
   getRegisteredSceneCreator() {
     return this.registeredSceneCreator;
   }
+  getRegisteredPrivateRoute() {
+    return this.registeredPrivateRoute;
+  }
 }
 
 export const serverPluginApi = new ServerPluginApiPrivate();

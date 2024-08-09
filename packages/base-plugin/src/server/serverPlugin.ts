@@ -1,4 +1,5 @@
 import { initTRPC } from "@trpc/server";
+import { RequestHandler } from "express";
 
 import { IDisposable, ObjectToTypedMap, Plugin, PluginContext } from "../types";
 
@@ -51,6 +52,11 @@ export class ServerPluginApi {
   protected registeredSceneCreator: {
     pluginName: string;
     sceneCreatorMeta: { title: string };
+  }[] = [];
+  protected registeredPrivateRoute: {
+    pluginName: string;
+    path: string;
+    middleware: RequestHandler;
   }[] = [];
 
   public registerTrpcAppRouter(
@@ -121,5 +127,13 @@ export class ServerPluginApi {
       pluginName,
       sceneCreatorMeta: meta,
     });
+  }
+
+  public registerPrivateRoute(
+    pluginName: string,
+    path: string,
+    middleware: RequestHandler,
+  ) {
+    this.registeredPrivateRoute.push({ pluginName, path, middleware });
   }
 }

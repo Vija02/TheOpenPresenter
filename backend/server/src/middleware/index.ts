@@ -8,6 +8,7 @@ import installHelmet from "./installHelmet";
 import installHocuspocus from "./installHocuspocus";
 import installLogging from "./installLogging";
 import installPassport from "./installPassport";
+import installPluginRoute from "./installPluginRoute";
 import installPluginStatic from "./installPluginStatic";
 import installPostGraphile from "./installPostGraphile";
 import installRemote from "./installRemote";
@@ -30,6 +31,7 @@ export {
   installHocuspocus,
   installLogging,
   installPassport,
+  installPluginRoute,
   installPluginStatic,
   installPostGraphile,
   installRemote,
