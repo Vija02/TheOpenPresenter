@@ -8,7 +8,7 @@ export default (app: Express) => {
 
   for (const { pluginName, path: staticPath } of registeredServeStatic) {
     app.use(
-      `/plugin/${pluginName}`,
+      `/plugin/${pluginName}/static`,
       staticMiddleware(
         path.resolve(
           __dirname,

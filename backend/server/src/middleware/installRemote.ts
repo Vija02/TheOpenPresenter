@@ -50,12 +50,12 @@ function transformer(html: string, _req: Request) {
     registeredLoadJsOnRemoteView
       .map(
         ({ pluginName, path }) =>
-          `<script type="module" src="/plugin/${pluginName}/${path}"></script>`,
+          `<script type="module" src="/plugin/${pluginName}/static/${path}"></script>`,
       )
       .concat(
         registeredLoadCssOnRemoteView.map(
           ({ pluginName, path }) =>
-            `<link rel="stylesheet" type="text/css" href="/plugin/${pluginName}/${path}">`,
+            `<link rel="stylesheet" type="text/css" href="/plugin/${pluginName}/static/${path}">`,
         ),
       )
       .join("\n"),
