@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@repo/config": "*",
+    "@repo/typescript-config": "*",
     "@types/html-to-text": "^9.0.0",
     "@types/lodash": "^4.14.191",
     "@types/mjml": "^4.7.0",
@@ -26,9 +27,10 @@
     "lodash": "^4.17.21",
     "mjml": "^4.13.0",
     "nodemailer": "^6.9.9",
-    "tslib": "^2.5.0"
+    "tslib": "^2.6.3"
   },
   "devDependencies": {
-    "mkdirp": "^2.1.3"
+    "mkdirp": "^2.1.3",
+    "nodemon": "^3.1.4"
   }
 }
