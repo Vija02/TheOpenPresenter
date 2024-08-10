@@ -57,6 +57,9 @@ export type PluginContext = {
   sceneId: UUID;
 };
 
+export const keyPressTypes = ["PREV", "NEXT"] as const;
+export type KeyPressType = (typeof keyPressTypes)[number];
+
 export interface IDisposable {
   dispose?(): void;
 }

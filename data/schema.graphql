@@ -463,6 +463,14 @@ type Mutation {
     input: MakeEmailPrimaryInput!
   ): MakeEmailPrimaryPayload
 
+  """Use this mutation to trigger a key press"""
+  pluginKeyPress(
+    """
+    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.
+    """
+    input: PluginKeyPressInput!
+  ): PluginKeyPressPayload
+
   """
   Use this mutation to create an account on our system. This may only be used if you are logged out.
   """
@@ -595,6 +603,35 @@ type Organization {
     """The method to use when ordering `OrganizationMembership`."""
     orderBy: [OrganizationMembershipsOrderBy!] = [PRIMARY_KEY_ASC]
   ): OrganizationMembershipsConnection!
+
+  """Reads and enables pagination through a set of `Project`."""
+  projects(
+    """Read all values in the set after (below) this cursor."""
+    after: Cursor
+
+    """Read all values in the set before (above) this cursor."""
+    before: Cursor
+
+    """
+    A condition to be used in determining which values should be returned by the collection.
+    """
+    condition: ProjectCondition
+
+    """Only read the first `n` values of the set."""
+    first: Int
+
+    """Only read the last `n` values of the set."""
+    last: Int
+
+    """
+    Skip the first `n` values from our `after` cursor, an alternative to cursor
+    based pagination. May not be used with `last`.
+    """
+    offset: Int
+
+    """The method to use when ordering `Project`."""
+    orderBy: [ProjectsOrderBy!] = [PRIMARY_KEY_ASC]
+  ): ProjectsConnection!
   slug: String!
 }
 
@@ -747,10 +784,93 @@ type PageInfo {
   startCursor: Cursor
 }
 
+input PluginKeyPressInput {
+  keyType: String!
+  projectId: String!
+  rendererId: String!
+}
+
+type PluginKeyPressPayload {
+  success: Boolean!
+}
+
 type PluginMeta {
   registeredRemoteView: [RegisteredView!]!
   registeredRendererView: [RegisteredView!]!
   sceneCreator: [SceneCreator!]!
+}
+
+type Project {
+  createdAt: Datetime!
+
+  """Reads a single `User` that is related to this `Project`."""
+  creatorUser: User
+  creatorUserId: UUID
+  document: String!
+  id: UUID!
+
+  """Reads a single `Organization` that is related to this `Project`."""
+  organization: Organization
+  organizationId: UUID!
+  updatedAt: Datetime!
+}
+
+"""
+A condition to be used against `Project` object types. All fields are tested for equality and combined with a logical ‘and.’
+"""
+input ProjectCondition {
+  """Checks for equality with the object’s `creatorUserId` field."""
+  creatorUserId: UUID
+
+  """Checks for equality with the object’s `id` field."""
+  id: UUID
+
+  """Checks for equality with the object’s `organizationId` field."""
+  organizationId: UUID
+
+  """Checks for equality with the object’s `updatedAt` field."""
+  updatedAt: Datetime
+}
+
+"""A connection to a list of `Project` values."""
+type ProjectsConnection {
+  """
+  A list of edges which contains the `Project` and cursor to aid in pagination.
+  """
+  edges: [ProjectsEdge!]!
+
+  """A list of `Project` objects."""
+  nodes: [Project!]!
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+
+  """The count of *all* `Project` you could get from the connection."""
+  totalCount: Int!
+}
+
+"""A `Project` edge in the connection."""
+type ProjectsEdge {
+  """A cursor for use in pagination."""
+  cursor: Cursor
+
+  """The `Project` at the end of the edge."""
+  node: Project!
+}
+
+"""Methods to use when ordering `Project`."""
+enum ProjectsOrderBy {
+  CREATOR_USER_ID_ASC
+  CREATOR_USER_ID_DESC
+  ID_ASC
+  ID_DESC
+  NATURAL
+  ORGANIZATION_ID_ASC
+  ORGANIZATION_ID_DESC
+  PRIMARY_KEY_ASC
+  PRIMARY_KEY_DESC
+  UPDATED_AT_ASC
+  UPDATED_AT_DESC
 }
 
 """The root query type which gives access points into the data universe."""
@@ -795,6 +915,36 @@ type Query {
     orderBy: [OrganizationsOrderBy!] = [PRIMARY_KEY_ASC]
   ): OrganizationsConnection
   pluginMeta: PluginMeta!
+  project(id: UUID!): Project
+
+  """Reads and enables pagination through a set of `Project`."""
+  projects(
+    """Read all values in the set after (below) this cursor."""
+    after: Cursor
+
+    """Read all values in the set before (above) this cursor."""
+    before: Cursor
+
+    """
+    A condition to be used in determining which values should be returned by the collection.
+    """
+    condition: ProjectCondition
+
+    """Only read the first `n` values of the set."""
+    first: Int
+
+    """Only read the last `n` values of the set."""
+    last: Int
+
+    """
+    Skip the first `n` values from our `after` cursor, an alternative to cursor
+    based pagination. May not be used with `last`.
+    """
+    offset: Int
+
+    """The method to use when ordering `Project`."""
+    orderBy: [ProjectsOrderBy!] = [PRIMARY_KEY_ASC]
+  ): ProjectsConnection
   user(id: UUID!): User
   userAuthentication(id: UUID!): UserAuthentication
   userByUsername(username: String!): User
@@ -1126,6 +1276,35 @@ type User {
     """The method to use when ordering `OrganizationMembership`."""
     orderBy: [OrganizationMembershipsOrderBy!] = [PRIMARY_KEY_ASC]
   ): OrganizationMembershipsConnection!
+
+  """Reads and enables pagination through a set of `Project`."""
+  projectsByCreatorUserId(
+    """Read all values in the set after (below) this cursor."""
+    after: Cursor
+
+    """Read all values in the set before (above) this cursor."""
+    before: Cursor
+
+    """
+    A condition to be used in determining which values should be returned by the collection.
+    """
+    condition: ProjectCondition
+
+    """Only read the first `n` values of the set."""
+    first: Int
+
+    """Only read the last `n` values of the set."""
+    last: Int
+
+    """
+    Skip the first `n` values from our `after` cursor, an alternative to cursor
+    based pagination. May not be used with `last`.
+    """
+    offset: Int
+
+    """The method to use when ordering `Project`."""
+    orderBy: [ProjectsOrderBy!] = [PRIMARY_KEY_ASC]
+  ): ProjectsConnection!
   updatedAt: Datetime!
 
   """Reads and enables pagination through a set of `UserAuthentication`."""

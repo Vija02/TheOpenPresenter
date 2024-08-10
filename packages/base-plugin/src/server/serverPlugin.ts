@@ -1,25 +1,23 @@
 import { initTRPC } from "@trpc/server";
 import { RequestHandler } from "express";
 
-import { IDisposable, ObjectToTypedMap, Plugin, PluginContext } from "../types";
+import {
+  RegisterKeyPressHandlerCallback,
+  RegisterOnPluginDataCreated,
+  RegisterOnPluginDataLoaded,
+} from "./serverPluginTypes";
 
-export class ServerPluginApi {
+export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
   protected registeredTrpcAppRouter: ((
     t: ReturnType<typeof initTRPC.create>,
   ) => any)[] = [];
   protected registeredOnPluginDataCreated: {
     pluginName: string;
-    callback: (
-      entryData: ObjectToTypedMap<Plugin>,
-      pluginContext: PluginContext,
-    ) => IDisposable;
+    callback: RegisterOnPluginDataCreated<PluginDataType>;
   }[] = [];
   protected registeredOnPluginDataLoaded: {
     pluginName: string;
-    callback: (
-      entryData: ObjectToTypedMap<Plugin>,
-      pluginContext: PluginContext,
-    ) => IDisposable;
+    callback: RegisterOnPluginDataLoaded<PluginDataType>;
   }[] = [];
   protected registeredServeStatic: {
     pluginName: string;
@@ -58,6 +56,10 @@ export class ServerPluginApi {
     path: string;
     middleware: RequestHandler;
   }[] = [];
+  protected registeredKeyPressHandler: {
+    pluginName: string;
+    callback: RegisterKeyPressHandlerCallback<PluginDataType, RendererDataType>;
+  }[] = [];
 
   public registerTrpcAppRouter(
     getAppRouter: (t: ReturnType<typeof initTRPC.create>) => any,
@@ -67,20 +69,14 @@ export class ServerPluginApi {
 
   public onPluginDataCreated(
     pluginName: string,
-    callback: (
-      entryData: ObjectToTypedMap<Plugin>,
-      pluginContext: PluginContext,
-    ) => IDisposable,
+    callback: RegisterOnPluginDataCreated<PluginDataType>,
   ) {
     this.registeredOnPluginDataCreated.push({ pluginName, callback });
   }
 
   public onPluginDataLoaded(
     pluginName: string,
-    callback: (
-      entryData: ObjectToTypedMap<Plugin>,
-      pluginContext: PluginContext,
-    ) => IDisposable,
+    callback: RegisterOnPluginDataLoaded<PluginDataType>,
   ) {
     this.registeredOnPluginDataLoaded.push({ pluginName, callback });
   }
@@ -135,5 +131,12 @@ export class ServerPluginApi {
     middleware: RequestHandler,
   ) {
     this.registeredPrivateRoute.push({ pluginName, path, middleware });
+  }
+
+  public registerKeyPressHandler(
+    pluginName: string,
+    callback: RegisterKeyPressHandlerCallback<PluginDataType, RendererDataType>,
+  ) {
+    this.registeredKeyPressHandler.push({ pluginName, callback });
   }
 }

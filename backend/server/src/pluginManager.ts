@@ -45,6 +45,9 @@ class ServerPluginApiPrivate extends ServerPluginApi {
   getRegisteredPrivateRoute() {
     return this.registeredPrivateRoute;
   }
+  getRegisteredKeyPressHandler() {
+    return this.registeredKeyPressHandler;
+  }
 }
 
 export const serverPluginApi = new ServerPluginApiPrivate();
