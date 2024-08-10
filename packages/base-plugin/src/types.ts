@@ -2,9 +2,13 @@ import { TypedMap } from "yjs-types";
 
 export type UUID = string;
 
-export type ObjectToTypedMap<T extends Record<any, any>> = TypedMap<{
-  [K in keyof T]: T[K] extends Record<any, any> ? ObjectToTypedMap<T[K]> : T[K];
-}>;
+export type ObjectToTypedMap<T> = T extends object
+  ? TypedMap<{
+      [K in keyof T]: T[K] extends Record<any, any>
+        ? ObjectToTypedMap<T[K]>
+        : T[K];
+    }>
+  : T;
 
 export type YState = ObjectToTypedMap<State>;
 

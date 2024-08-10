@@ -1,2 +1,2 @@
 export * from "./PluginDataProvider";
-export * from "../types";
+export * from "../index";

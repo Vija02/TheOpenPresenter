@@ -11,6 +11,7 @@ import { bind } from "valtio-yjs";
 import type { Map } from "yjs";
 
 import { Plugin, PluginContext } from "../types";
+import { createTraverser } from "../utils";
 
 type PluginDataProviderType<PluginSceneDataType, PluginRendererDataType> = {
   setRenderCurrentScene: () => void;
@@ -18,20 +19,16 @@ type PluginDataProviderType<PluginSceneDataType, PluginRendererDataType> = {
   scene: {
     yjsData: Map<any> | null;
     valtio: Plugin | null;
-    traverser:
-      | ((
-          traverseFunction?: TraverseFunction<Plugin<PluginSceneDataType>, any>,
-        ) => Map<any>)
-      | null;
+    traverser: ReturnType<
+      typeof createTraverser<Plugin<PluginSceneDataType>>
+    > | null;
   };
   renderer: {
     yjsData: Map<any> | null;
     valtio: Record<string, any> | null;
-    traverser:
-      | ((
-          traverseFunction?: TraverseFunction<PluginRendererDataType, any>,
-        ) => Map<any>)
-      | null;
+    traverser: ReturnType<
+      typeof createTraverser<PluginRendererDataType>
+    > | null;
   };
 };
 
@@ -101,7 +98,7 @@ export function PluginDataProvider<
     [],
   );
   const rendererTraverser = useCallback(
-    createTraverser<Plugin<PluginRendererDataType>>(yjsPluginRendererData!),
+    createTraverser<PluginRendererDataType>(yjsPluginRendererData!),
     [],
   );
 
@@ -153,8 +150,8 @@ export function getTypedProviderHelperFunctions<
         const pluginDataContext = useContext(PluginDataContext);
         const data = pluginDataContext.scene.traverser!(fn);
 
-        if (typeof data === "object" && "doc" in data) {
-          return useY(data) as Y;
+        if (!!data && typeof data === "object" && "doc" in data) {
+          return useY(data as unknown as Map<any>) as Y;
         } else {
           // If it's a primitive, we just return the data directly
           return data;
@@ -174,8 +171,8 @@ export function getTypedProviderHelperFunctions<
         const pluginDataContext = useContext(PluginDataContext);
         const data = pluginDataContext.renderer.traverser!(fn);
 
-        if (typeof data === "object" && "doc" in data) {
-          return useY(data) as Y;
+        if (!!data && typeof data === "object" && "doc" in data) {
+          return useY(data as unknown as Map<any>) as Y;
         } else {
           // If it's a primitive, we just return the data directly
           return data;
@@ -189,35 +186,5 @@ export function getTypedProviderHelperFunctions<
           : O;
       },
     },
-  };
-}
-
-// TODO: Revisit the types for this function
-type TraverseFunction<T, Y = any> = (x: T) => Y;
-function createTraverser<T = any>(yData: Map<any>) {
-  return (traverseFunction?: TraverseFunction<T>): Map<any> => {
-    if (!traverseFunction) return yData;
-
-    const originalValue = Symbol("originalValue");
-
-    const handler = {
-      get(target: any, key: any): any {
-        if (key === originalValue) {
-          return target;
-        }
-
-        const newTarget = target.get(key);
-        // If not an yjs object, return it as it is
-        if (typeof newTarget !== "object" || !("doc" in newTarget)) {
-          return { [originalValue]: newTarget };
-        }
-
-        return new Proxy(newTarget, handler);
-      },
-    };
-
-    const proxy = new Proxy(yData, handler);
-
-    return traverseFunction(proxy)[originalValue];
   };
 }
