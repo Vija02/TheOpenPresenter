@@ -1,4 +1,12 @@
-import { Box, Button, Divider, Heading, Text } from "@chakra-ui/react";
+import {
+  Box,
+  Button,
+  Divider,
+  Heading,
+  Link,
+  Stack,
+  Text,
+} from "@chakra-ui/react";
 import { OverlayToggle } from "@repo/ui";
 import { sortBy } from "lodash";
 import { useLocation } from "wouter";
@@ -37,23 +45,31 @@ const Sidebar = () => {
           </Box>
         ),
       )}
-      <OverlayToggle
-        toggler={({ onToggle }) => (
-          <Button
-            p={1}
-            _hover={{
-              bgColor: "blue.500",
-              color: "white",
-            }}
-            cursor="pointer"
-            onClick={onToggle}
-          >
-            +
+      <Stack mt={3}>
+        <OverlayToggle
+          toggler={({ onToggle }) => (
+            <Button
+              p={1}
+              _hover={{
+                bgColor: "blue.500",
+                color: "white",
+              }}
+              cursor="pointer"
+              onClick={onToggle}
+              colorScheme="green"
+            >
+              Add New Scene
+            </Button>
+          )}
+        >
+          <SidebarAddSceneModal />
+        </OverlayToggle>
+        <Link href="/render" isExternal>
+          <Button w="100%" variant="outline">
+            Open Renderer
           </Button>
-        )}
-      >
-        <SidebarAddSceneModal />
-      </OverlayToggle>
+        </Link>
+      </Stack>
     </Box>
   );
 };
