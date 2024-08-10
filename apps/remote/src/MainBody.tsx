@@ -14,9 +14,24 @@ import {
 
 const MainBody = () => {
   const data = useData();
+  const [keyPressMutate] = useKeyPressMutation();
 
   return (
-    <Box>
+    <Box
+      overflow="auto"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "ArrowRight" || e.key === "ArrowLeft")
+          keyPressMutate({
+            variables: {
+              keyType: e.key === "ArrowRight" ? "NEXT" : "PREV",
+              // TODO:
+              projectId: "example-document",
+              rendererId: "1",
+            },
+          });
+      }}
+    >
       <Switch>
         {Object.entries(data.data)
           .filter(([, value]) => value.type === "scene")

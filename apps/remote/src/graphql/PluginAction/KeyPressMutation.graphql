@@ -1,0 +1,11 @@
+mutation KeyPress(
+  $keyType: String!
+  $projectId: String!
+  $rendererId: String!
+) {
+  pluginKeyPress(
+    input: { keyType: $keyType, projectId: $projectId, rendererId: $rendererId }
+  ) {
+    success
+  }
+}
