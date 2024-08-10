@@ -154,7 +154,7 @@ export function getTypedProviderHelperFunctions<
           return useY(data as unknown as Map<any>) as Y;
         } else {
           // If it's a primitive, we just return the data directly
-          return data;
+          return data as Y;
         }
       },
       // Use this for write
@@ -175,7 +175,7 @@ export function getTypedProviderHelperFunctions<
           return useY(data as unknown as Map<any>) as Y;
         } else {
           // If it's a primitive, we just return the data directly
-          return data;
+          return data as Y;
         }
       },
       // Use this for write
