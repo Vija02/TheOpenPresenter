@@ -25,10 +25,9 @@ const MWLSongView = ({ songId }: { songId: number }) => {
 
 const MWLSongViewInner = ({ songId }: { songId: number }) => {
   const songCaches = pluginApi.scene.useData((x) => x.pluginData.songCache);
-  const selectedHeading = pluginApi.renderer.useData((x) => x.heading);
-  const selectedSongId = pluginApi.renderer.useData((x) => x.songId);
+  const renderData = pluginApi.renderer.useData((x) => x);
 
-  const rendererData = pluginApi.renderer.useValtioData();
+  const mutableRendererData = pluginApi.renderer.useValtioData();
   const setRenderCurrentScene = pluginApi.useSetRenderCurrentScene();
 
   const songCache = useMemo(
@@ -57,8 +56,8 @@ const MWLSongViewInner = ({ songId }: { songId: number }) => {
             key={i}
             cursor="pointer"
             onClick={() => {
-              rendererData.heading = section;
-              rendererData.songId = songId;
+              mutableRendererData.heading = section;
+              mutableRendererData.songId = songId;
               setRenderCurrentScene();
             }}
           >
@@ -75,7 +74,7 @@ const MWLSongViewInner = ({ songId }: { songId: number }) => {
               w="200px"
               border="1px"
               borderColor={
-                section === selectedHeading && songId === selectedSongId
+                section === renderData.heading && songId === renderData.songId
                   ? "blue.600"
                   : "gray.200"
               }

@@ -1,6 +1,8 @@
 import { Box, Text } from "@chakra-ui/react";
 import type { Scene } from "@repo/base-plugin";
-import React from "react";
+import { Plugin } from "@repo/base-plugin";
+import { useKeyPressMutation } from "@repo/graphql";
+import React, { useMemo } from "react";
 import { Route, Switch } from "wouter";
 
 import { usePluginMetaData } from "./contexts/PluginMetaDataProvider";
@@ -37,7 +39,7 @@ const MainBody = () => {
           .filter(([, value]) => value.type === "scene")
           .map(([sceneId, value]) => (
             <Route key={sceneId} path={`/${sceneId}`}>
-              <PluginRenderer sceneId={sceneId} value={value as Scene} />
+              <SceneRenderer sceneId={sceneId} value={value as Scene} />
             </Route>
           ))}
       </Switch>
@@ -45,45 +47,61 @@ const MainBody = () => {
   );
 };
 
-const PluginRenderer = ({
-  sceneId,
-  value,
-}: {
-  sceneId: string;
-  value: Scene;
-}) => {
-  const pluginMetaData = usePluginMetaData();
+const SceneRenderer = React.memo(
+  ({ sceneId, value }: { sceneId: string; value: Scene }) => {
+    return (
+      <>
+        {Object.entries(value.children).map(([pluginId, pluginInfo]) => (
+          <PluginRenderer
+            key={pluginId}
+            sceneId={sceneId}
+            pluginId={pluginId}
+            pluginInfo={pluginInfo}
+          />
+        ))}
+      </>
+    );
+  },
+);
 
-  return (
-    <>
-      {Object.entries(value.children).map(([pluginId, pluginInfo]) => {
-        const tag = pluginMetaData?.pluginMeta.registeredRemoteView.find(
+const PluginRenderer = React.memo(
+  ({
+    sceneId,
+    pluginId,
+    pluginInfo,
+  }: {
+    sceneId: string;
+    pluginId: string;
+    pluginInfo: Plugin<Record<string, any>>;
+  }) => {
+    const pluginMetaData = usePluginMetaData();
+
+    const tag = useMemo(
+      () =>
+        pluginMetaData?.pluginMeta.registeredRemoteView.find(
           (x) => x.pluginName === pluginInfo.plugin,
-        )?.tag;
+        )?.tag,
+      [pluginInfo.plugin, pluginMetaData?.pluginMeta.registeredRemoteView],
+    );
 
-        return (
-          <Box key={pluginId}>
-            {tag ? (
-              React.createElement(tag, {
-                yjsPluginSceneData: getYJSPluginSceneData(sceneId, pluginId),
-                yjsPluginRendererData: getYJSPluginRendererData(
-                  sceneId,
-                  pluginId,
-                ),
-                pluginContext: { pluginId, sceneId },
-                setRenderCurrentScene: () => {
-                  getYJSPluginRenderer()?.set("currentScene", sceneId);
-                },
-                trpcClient,
-              })
-            ) : (
-              <Text>No renderer for {pluginInfo.plugin}</Text>
-            )}
-          </Box>
-        );
-      })}
-    </>
-  );
-};
+    const Element = useMemo(() => {
+      return tag ? (
+        React.createElement(tag, {
+          yjsPluginSceneData: getYJSPluginSceneData(sceneId, pluginId),
+          yjsPluginRendererData: getYJSPluginRendererData(sceneId, pluginId),
+          pluginContext: { pluginId, sceneId },
+          setRenderCurrentScene: () => {
+            getYJSPluginRenderer()?.set("currentScene", sceneId);
+          },
+          trpcClient,
+        })
+      ) : (
+        <Text>No renderer for {pluginInfo.plugin}</Text>
+      );
+    }, [pluginId, pluginInfo.plugin, sceneId, tag]);
+
+    return <Box>{Element}</Box>;
+  },
+);
 
 export default MainBody;
