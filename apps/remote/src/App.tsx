@@ -1,4 +1,4 @@
-import { Grid } from "@chakra-ui/react";
+import { Box, Grid } from "@chakra-ui/react";
 import ReactJson from "react-json-view";
 import { useSnapshot } from "valtio";
 
@@ -12,12 +12,14 @@ function App() {
   return (
     <div>
       {!!data.data && (
-        <Grid gridTemplateColumns={`200px 1fr`}>
+        <Grid gridTemplateColumns={`200px 1fr`} width="100vw" height="100vh">
           <Sidebar />
           <MainBody />
         </Grid>
       )}
-      <ReactJson src={data} />
+      <Box w="100%" overflow="auto">
+        <ReactJson src={data} />
+      </Box>
     </div>
   );
 }
