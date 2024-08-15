@@ -3,29 +3,56 @@
   "private": true,
   "version": "0.0.0",
   "exports": {
-    ".": "./src/index.ts",
-    "./server": "./src/server/index.ts",
-    "./client": "./src/client/index.ts"
+    ".": {
+      "import": {
+        "default": "./dist/index.mjs",
+        "types": "./dist/index.d.mts"
+      },
+      "require": {
+        "default": "./dist/index.js",
+        "types": "./dist/index.d.ts"
+      }
+    },
+    "./server": {
+      "import": {
+        "default": "./dist/server/index.mjs",
+        "types": "./dist/server/index.d.mts"
+      },
+      "require": {
+        "default": "./dist/server/index.js",
+        "types": "./dist/server/index.d.ts"
+      }
+    },
+    "./client": {
+      "import": {
+        "default": "./dist/client/index.mjs",
+        "types": "./dist/client/index.d.mts"
+      },
+      "require": {
+        "default": "./dist/client/index.js",
+        "types": "./dist/client/index.d.ts"
+      }
+    }
   },
   "scripts": {
-    "build": "yarn build:server && yarn build:client",
-    "build:server": "tsup-node src/server/index.ts",
-    "build:client": "tsup src/client/index.ts",
+    "build": "pkgroll",
+    "dev": "pkgroll --watch",
     "postinstall": "cd ../.. && yarn patch-package"
   },
   "dependencies": {
     "@trpc/server": "^11.0.0-rc.461",
+    "@types/react": "npm:types-react@rc",
     "express": "^4.19.2",
     "react": "rc",
     "react-yjs": "^2.0.0",
+    "tslib": "^2.6.3",
     "valtio": "^1.13.2",
     "valtio-yjs": "^0.6.0",
-    "yjs": "^13.6.18"
+    "yjs": "^13.6.18",
+    "yjs-types": "^0.0.1"
   },
   "devDependencies": {
     "@repo/typescript-config": "*",
-    "@types/react": "npm:types-react@rc",
-    "tsup": "^8.1.2",
-    "yjs-types": "^0.0.1"
+    "pkgroll": "^2.4.2"
   }
 }
