@@ -2,11 +2,17 @@
   "name": "@repo/plugin-simple-image",
   "private": true,
   "version": "0.0.0",
-  "main": "src/index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "default": "./dist/index.mjs",
+      "types": "./dist/index.d.mts"
+    }
+  },
   "scripts": {
-    "build": "tsup-node src/index.ts && yarn build:view",
-    "build:view": "vite build",
-    "dev": "vite build --watch",
+    "build": "pkgroll && vite build",
+    "dev": "concurrently \"pkgroll --watch\" \"vite build --watch\"",
     "postinstall": "cd ../.. && yarn patch-package"
   },
   "dependencies": {
@@ -19,6 +25,8 @@
     "@trpc/client": "^11.0.0-rc.461",
     "@trpc/react-query": "^11.0.0-rc.461",
     "@trpc/server": "^11.0.0-rc.461",
+    "@types/react": "npm:types-react@rc",
+    "@types/react-dom": "npm:types-react-dom@rc",
     "@uppy/core": "^4.1.0",
     "@uppy/dashboard": "^4.0.2",
     "@uppy/file-input": "^4.0.0",
@@ -34,11 +42,9 @@
     "@repo/eslint-config": "*",
     "@repo/prettier-config": "*",
     "@repo/typescript-config": "*",
-    "@types/react": "npm:types-react@rc",
-    "@types/react-dom": "npm:types-react-dom@rc",
     "@vitejs/plugin-react-swc": "^3.7.0",
     "eslint": "^8.57.0",
-    "tsup": "^8.1.2",
+    "pkgroll": "^2.4.2",
     "vite": "^5.3.5"
   }
 }
