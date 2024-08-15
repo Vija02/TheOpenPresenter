@@ -87,7 +87,7 @@ ARG ROOT_URL
 COPY packages/ui/ /app/packages/ui/
 
 COPY apps/homepage/ /app/apps/homepage/
-RUN yarn homepage build && yarn homepage codegen
+RUN yarn homepage codegen && yarn homepage build
 
 COPY apps/remote/ /app/apps/remote/
 RUN ls /app/packages/typescript-config
