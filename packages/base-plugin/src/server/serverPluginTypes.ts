@@ -1,5 +1,4 @@
 import {
-  BaseRecord,
   IDisposable,
   KeyPressType,
   ObjectToTypedMap,
