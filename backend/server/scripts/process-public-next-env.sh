@@ -14,7 +14,7 @@ then
 
       eval "ACTUAL_ENV=\$$ENV_NAME"
 
-      find /app/@app/client/.next -type f -exec sed -i "s|$STRING_TO_REPLACE|$ACTUAL_ENV|g" {} \;
-    done < /app/@app/server/.env.production
+      find /app/apps/homepage/.next -type f -exec sed -i "s|$STRING_TO_REPLACE|$ACTUAL_ENV|g" {} \;
+    done < /app/backend/server/.env.production
   fi
 fi
