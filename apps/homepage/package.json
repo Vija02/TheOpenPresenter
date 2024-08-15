@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "build": "cd src && NODE_ENV=production NODE_OPTIONS=\"${NODE_OPTIONS:-} -r @repo/config/env\" next build",
-    "prepare": "cd src && panda codegen"
+    "postinstall": "cd src && panda codegen"
   },
   "dependencies": {
     "@next/eslint-plugin-next": "^14.2.5",
