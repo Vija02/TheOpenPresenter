@@ -40,6 +40,7 @@
   },
   "dependencies": {
     "@trpc/server": "^11.0.0-rc.461",
+    "@types/express": "^4.17.21",
     "@types/react": "npm:types-react@rc",
     "express": "^4.19.2",
     "react": "rc",
@@ -52,6 +53,7 @@
   },
   "devDependencies": {
     "@repo/typescript-config": "*",
-    "pkgroll": "^2.4.2"
+    "pkgroll": "^2.4.2",
+    "typescript": "^5.5.4"
   }
 }

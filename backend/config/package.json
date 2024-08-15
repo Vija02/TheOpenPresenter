@@ -12,6 +12,8 @@
     "dotenv": "^16.0.3"
   },
   "devDependencies": {
-    "@repo/typescript-config": "*"
+    "@repo/typescript-config": "*",
+    "@types/node": "^22.3.0",
+    "typescript": "5.5.3"
   }
 }
