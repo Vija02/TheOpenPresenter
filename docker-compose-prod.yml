@@ -1,0 +1,121 @@
+version: "3.5"
+services:
+  theopenpresenter:
+    image: ghcr.io/vija02/theopenpresenter_server:main
+    container_name: theopenpresenter_server
+    restart: always
+    depends_on:
+      - theopenpresenter_db
+    networks:
+      - db
+      - caddy
+    environment:
+      - NODE_ENV=production
+      - ROOT_DATABASE_URL=$ROOT_DATABASE_URL
+      - DATABASE_HOST=$DATABASE_HOST
+      - DATABASE_NAME=$DATABASE_NAME
+      - DATABASE_OWNER=$DATABASE_OWNER
+      - DATABASE_OWNER_PASSWORD=$DATABASE_OWNER_PASSWORD
+      - DATABASE_AUTHENTICATOR=$DATABASE_AUTHENTICATOR
+      - DATABASE_AUTHENTICATOR_PASSWORD=$DATABASE_AUTHENTICATOR_PASSWORD
+      - DATABASE_VISITOR=$DATABASE_VISITOR
+      - SECRET=$SECRET
+      - JWT_SECRET=$JWT_SECRET
+      - PORT=$PORT
+      - ROOT_URL=$ROOT_URL
+    labels:
+      caddy: theopenpresenter.com
+      caddy.reverse_proxy: "{{upstreams 5678}}"
+      caddy.reverse_proxy.transport: "http"
+
+  theopenpresenter-worker:
+    image: ghcr.io/vija02/theopenpresenter_server:main
+    container_name: theopenpresenter_worker
+    restart: always
+    depends_on:
+      - theopenpresenter_db
+    networks:
+      - db
+    environment:
+      - NODE_ENV=production
+      - ROOT_DATABASE_URL=$ROOT_DATABASE_URL
+      - DATABASE_HOST=$DATABASE_HOST
+      - DATABASE_NAME=$DATABASE_NAME
+      - DATABASE_OWNER=$DATABASE_OWNER
+      - DATABASE_OWNER_PASSWORD=$DATABASE_OWNER_PASSWORD
+      - DATABASE_AUTHENTICATOR=$DATABASE_AUTHENTICATOR
+      - DATABASE_AUTHENTICATOR_PASSWORD=$DATABASE_AUTHENTICATOR_PASSWORD
+      - DATABASE_VISITOR=$DATABASE_VISITOR
+      - AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+      - SECRET=$SECRET
+      - JWT_SECRET=$JWT_SECRET
+      - PORT=$PORT
+      - ROOT_URL=$ROOT_URL
+      - TARGET=worker
+
+  theopenpresenter_db:
+    image: postgres:16.4
+    container_name: theopenpresenter_db
+
+    # Unlike above, the Postgres image cannot start as our user account
+    # otherwise we get permission denied errors. So this one has to run as
+    # root. :(
+    #
+    # user: $UID
+
+    working_dir: /
+
+    volumes:
+      - theopenpresenter-pg-volume:/var/lib/postgresql/data
+      # Mount backup so we can restore easily
+      - ./backups/main_db:/backups:ro
+      # No need to export
+      # - ./data:/data
+    ports:
+      - "7070:5432"
+    restart: unless-stopped
+    networks:
+      - db
+    environment:
+      - FORCE_COLOR=$FORCE_COLOR
+      - PG_DUMP=$PG_DUMP
+      - CONFIRM_DROP=$CONFIRM_DROP
+      - POSTGRES_PASSWORD=$POSTGRES_PASSWORD
+      - DATABASE_HOST=$DATABASE_HOST
+      - ROOT_DATABASE_URL=$ROOT_DATABASE_URL
+    command:
+      postgres -c logging_collector=on -c log_destination=stderr -c log_directory=/var/lib/postgresql/data/logs -c
+      log_rotation_age=60 -c log_truncate_on_rotation=on -c log_filename=server_log.hour.%H%M
+
+  main_db_backup:
+    image: prodrigestivill/postgres-backup-local:16-alpine
+    restart: always
+    volumes:
+      - ./backups/theopenpresenter_db:/backups
+    networks:
+      - db
+    depends_on:
+      - theopenpresenter_db
+    environment:
+      - POSTGRES_HOST=$DATABASE_HOST
+      - POSTGRES_DB=theopenpresenter_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=$POSTGRES_PASSWORD
+      - POSTGRES_EXTRA_OPTS=-Z6 --format=custom
+      - SCHEDULE=@daily
+      - BACKUP_KEEP_DAYS=7
+      - BACKUP_KEEP_WEEKS=4
+      - BACKUP_KEEP_MONTHS=6
+      - BACKUP_SUFFIX=.tar
+      - HEALTHCHECK_PORT=8080
+
+networks:
+  caddy:
+    external: true
+  db:
+    external: true
+
+volumes:
+  theopenpresenter-pg-volume:
+    external: true
