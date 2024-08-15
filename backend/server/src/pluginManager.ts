@@ -1,6 +1,5 @@
 import { ServerPluginApi } from "@repo/base-plugin/server";
 import aki from "aki-plugin-manager";
-import chalk from "chalk";
 import fs from "fs";
 import path from "path";
 
@@ -53,6 +52,9 @@ class ServerPluginApiPrivate extends ServerPluginApi {
 export const serverPluginApi = new ServerPluginApiPrivate();
 
 export const initPlugins = async () => {
+  const { default: chalk } = await import("chalk");
+
+  // TODO: Try catch one by one
   try {
     // Make sure plugins are available
     console.log("\nInitializing Plugin...");

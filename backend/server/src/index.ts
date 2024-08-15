@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 
 /* eslint-disable no-console */
-import chalk from "chalk";
 import { IncomingMessage, createServer } from "http";
 import { Duplex } from "stream";
 
@@ -14,6 +13,8 @@ const packageJson = require("../../../package.json");
 const isDev = process.env.NODE_ENV === "development";
 
 async function main() {
+  const { default: chalk } = await import("chalk");
+
   await initPlugins();
 
   // Create our HTTP server
