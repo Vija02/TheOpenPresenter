@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "@next/eslint-plugin-next": "^14.2.5",
+    "@repo/config": "*",
     "@repo/ui": "*",
     "next": "14.2.4",
     "next-themes": "^0.3.0",

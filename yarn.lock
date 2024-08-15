@@ -4640,6 +4640,7 @@ __metadata:
   dependencies:
     "@next/eslint-plugin-next": "npm:^14.2.5"
     "@pandacss/dev": "npm:^0.41.0"
+    "@repo/config": "npm:*"
     "@repo/eslint-config": "npm:*"
     "@repo/prettier-config": "npm:*"
     "@repo/typescript-config": "npm:*"
@@ -4796,6 +4797,8 @@ __metadata:
     "@vitejs/plugin-react-swc": "npm:^3.5.0"
     eslint: "npm:^8.57.0"
     framer-motion: "npm:^11.2.12"
+    graphql: "npm:^15.9.0"
+    graphql-ws: "npm:^5.16.0"
     lodash: "npm:^4.17.21"
     react: "npm:rc"
     react-dom: "npm:rc"
@@ -4834,6 +4837,8 @@ __metadata:
     "@vitejs/plugin-react-swc": "npm:^3.5.0"
     eslint: "npm:^8.57.0"
     framer-motion: "npm:^11.2.12"
+    graphql: "npm:^15.9.0"
+    graphql-ws: "npm:^5.16.0"
     lodash: "npm:^4.17.21"
     react: "npm:rc"
     react-dom: "npm:rc"
@@ -10786,7 +10791,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"graphql-ws@npm:^5.14.0, graphql-ws@npm:^5.6.2":
+"graphql-ws@npm:^5.14.0, graphql-ws@npm:^5.16.0, graphql-ws@npm:^5.6.2":
   version: 5.16.0
   resolution: "graphql-ws@npm:5.16.0"
   peerDependencies:
