@@ -73,7 +73,7 @@ services:
       # No need to export
       # - ./data:/data
     ports:
-      - "7070:5432"
+      - "7948:5432"
     restart: unless-stopped
     networks:
       - db
