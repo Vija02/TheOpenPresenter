@@ -1,6 +1,6 @@
 import { Express, Request } from "express";
 import { Server, createServer } from "http";
-import ViteExpress from "vite-express";
+import { ViteExpress } from "vite-express";
 
 import { getUpgradeHandlers } from "../app";
 import { serverPluginApi } from "../pluginManager";
@@ -12,7 +12,7 @@ export default async function installRenderer(app: Express, server: Server) {
   viteExpress.config({
     mode: process.env.NODE_ENV === "production" ? "production" : "development",
     inlineViteConfig: {
-      root: `${__dirname}/../../../../apps/renderer`,
+      root: `${__dirname}/../../../apps/renderer`,
       base: "/render",
       build: { outDir: "dist" },
       server: {

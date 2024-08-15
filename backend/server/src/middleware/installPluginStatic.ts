@@ -12,7 +12,7 @@ export default (app: Express) => {
       staticMiddleware(
         path.resolve(
           __dirname,
-          "../../../../loadedPlugins",
+          "../../../loadedPlugins",
           pluginName,
           staticPath,
         ),

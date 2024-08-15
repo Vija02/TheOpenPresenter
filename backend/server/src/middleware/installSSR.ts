@@ -15,7 +15,7 @@ export default async function installSSR(app: Express) {
   const fakeHttpServer = createServer();
   const nextApp = next({
     dev: isDev,
-    dir: `${__dirname}/../../../../apps/homepage/src`,
+    dir: `${__dirname}/../../../apps/homepage/src`,
     quiet: !isDev,
     // Don't specify 'conf' key
 
