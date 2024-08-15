@@ -13,7 +13,7 @@
     "moduleDetection": "force"
   },
   "include": ["src"],
-  "references": [{ "path": "../config" }],
+  "references": [{ "path": "../../packages/base-plugin" }, { "path": "../config" }],
   "ts-node": {
     "compilerOptions": {
       "rootDir": null

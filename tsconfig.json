@@ -1,0 +1,17 @@
+{
+  "extends": "@repo/typescript-config/base.json",
+  "include": [],
+  "references": [
+    { "path": "backend/config" },
+    { "path": "backend/server" },
+    { "path": "backend/worker" },
+
+    { "path": "packages/base-plugin" },
+    { "path": "packages/graphql" },
+    { "path": "packages/ui" },
+
+    { "path": "plugins/google-slides" },
+    { "path": "plugins/myworshiplist" },
+    { "path": "plugins/simple-image" }
+  ]
+}

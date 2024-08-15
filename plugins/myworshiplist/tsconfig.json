@@ -12,5 +12,9 @@
     "esModuleInterop": true,
     "moduleResolution": "Node"
   },
-  "include": ["src", "vite.config.ts"]
+  "include": ["src", "vite.config.ts"],
+  "references": [
+    { "path": "../../packages/base-plugin" },
+    { "path": "../../packages/ui" }
+  ]
 }
