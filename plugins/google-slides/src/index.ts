@@ -31,7 +31,7 @@ export const init = (
     title: "Google Slides",
   });
 
-  serverPluginApi.serveStatic(pluginName, "dist");
+  serverPluginApi.serveStatic(pluginName, "out");
 
   serverPluginApi.loadJsOnRemoteView(pluginName, `${pluginName}-remote.es.js`);
   serverPluginApi.registerRemoteViewWebComponent(

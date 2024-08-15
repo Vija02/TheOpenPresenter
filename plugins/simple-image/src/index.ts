@@ -19,7 +19,7 @@ export const init = (serverPluginApi: ServerPluginApi) => {
     title: "Simple Image",
   });
 
-  serverPluginApi.serveStatic(pluginName, "dist");
+  serverPluginApi.serveStatic(pluginName, "out");
 
   serverPluginApi.loadJsOnRemoteView(pluginName, `${pluginName}-remote.es.js`);
   serverPluginApi.loadCssOnRemoteView(pluginName, "style.css");

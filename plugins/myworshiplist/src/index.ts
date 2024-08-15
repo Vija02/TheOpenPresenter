@@ -25,7 +25,7 @@ export const init = (serverPluginApi: ServerPluginApi) => {
     title: "MyWorshipList",
   });
 
-  serverPluginApi.serveStatic(pluginName, "dist");
+  serverPluginApi.serveStatic(pluginName, "out");
 
   serverPluginApi.loadJsOnRemoteView(pluginName, `${pluginName}-remote.es.js`);
   serverPluginApi.registerRemoteViewWebComponent(

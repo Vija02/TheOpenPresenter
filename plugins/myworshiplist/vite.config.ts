@@ -12,6 +12,7 @@ export default defineConfig({
   },
   plugins: [react()],
   build: {
+    outDir: "out",
     lib: {
       entry: ["./view/remote.tsx", "./view/renderer.tsx"],
       name: `${pluginName}-views`,
