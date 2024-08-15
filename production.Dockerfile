@@ -21,6 +21,7 @@ RUN corepack enable
 COPY turbo.json package.json yarn.lock .yarnrc.yml /app/
 COPY .yarn/ /app/.yarn
 COPY patches/ /app/patches
+COPY scripts/ /app/scripts
 
 COPY apps/homepage/package.json /app/apps/homepage/package.json
 COPY apps/remote/package.json /app/apps/remote/package.json
@@ -47,7 +48,6 @@ RUN yarn install
 FROM deps AS builder-core
 
 COPY tsconfig.json .gitignore /app/
-COPY scripts/ /app/scripts
 COPY data/ /app/data
 
 COPY packages/typescript-config/ /app/packages/typescript-config/
@@ -87,7 +87,7 @@ ARG ROOT_URL
 COPY packages/ui/ /app/packages/ui/
 
 COPY apps/homepage/ /app/apps/homepage/
-RUN yarn homepage build
+RUN yarn homepage build && yarn homepage codegen
 
 COPY apps/remote/ /app/apps/remote/
 RUN ls /app/packages/typescript-config
