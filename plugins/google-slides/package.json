@@ -12,8 +12,7 @@
   },
   "scripts": {
     "build": "pkgroll && vite build",
-    "dev": "concurrently \"pkgroll --watch\" \"vite build --watch\"",
-    "postinstall": "cd ../.. && yarn patch-package"
+    "dev": "concurrently \"pkgroll --watch\" \"vite build --watch\""
   },
   "dependencies": {
     "@chakra-ui/react": "^2.8.2",

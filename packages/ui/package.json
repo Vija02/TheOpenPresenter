@@ -4,8 +4,7 @@
   "private": true,
   "exports": "./src/index.ts",
   "scripts": {
-    "lint": "eslint . --max-warnings 0",
-    "postinstall": "cd ../.. && yarn patch-package"
+    "lint": "eslint . --max-warnings 0"
   },
   "dependencies": {
     "@chakra-ui/react": "^2.8.2",

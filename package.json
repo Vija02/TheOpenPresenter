@@ -27,15 +27,17 @@
   },
   "devDependencies": {
     "concurrently": "^8.2.2",
+    "nodemon": "^3.1.4",
     "patch-package": "^8.0.0",
     "prettier": "^3.2.5",
-    "turbo": "^2.0.11",
-    "typescript": "5.5.3"
+    "turbo": "^2.0.14",
+    "typescript": "5.5.3",
+    "vitest": "^2.0.5"
   },
   "engines": {
     "node": ">=18"
   },
-  "packageManager": "yarn@1.22.19",
+  "packageManager": "yarn@4.4.0",
   "workspaces": [
     "apps/*",
     "backend/*",

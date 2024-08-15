@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "scripts": {
-    "gm": "cross-env NODE_OPTIONS=\"${NODE_OPTIONS:-} -r @repo/config/env\" graphile-migrate",
+    "gm": "NODE_OPTIONS=\"${NODE_OPTIONS:-} -r @repo/config/env\" graphile-migrate",
     "migrate": "yarn gm migrate",
     "dev": "yarn gm watch",
     "commit": "yarn gm commit",
@@ -11,11 +11,9 @@
     "reset": "yarn gm reset",
     "dump": "yarn gm migrate && yarn gm reset --shadow --erase && yarn gm migrate --shadow --forceActions",
     "wipe-if-demo": "./scripts/wipe-if-demo",
-    "test": "cross-env NODE_ENV=test NODE_OPTIONS=\"${NODE_OPTIONS:-} -r @repo/config/env\" vitest",
-    "postinstall": "cd ../.. && yarn patch-package"
+    "test": "NODE_ENV=test NODE_OPTIONS=\"${NODE_OPTIONS:-} -r @repo/config/env\" vitest"
   },
   "dependencies": {
-    "cross-env": "^7.0.3",
     "graphile-migrate": "^1.4.1"
   },
   "devDependencies": {

@@ -86,7 +86,7 @@ function main() {
       [
         {
           name: "vitest",
-          command: `cross-env NODE_OPTIONS="--inspect=9876" vitest watch`,
+          command: `NODE_OPTIONS="--inspect=9876" vitest watch`,
           prefixColor: "greenBright",
         },
         {

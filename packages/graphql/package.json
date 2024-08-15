@@ -7,8 +7,7 @@
   "scripts": {
     "build": "yarn codegen && tsc -b",
     "dev": "concurrently --kill-others --names \"GQL-CodeGen,GQL-Build\" --prefix \"({name})\" --prefix-colors \"magentaBright.bold,greenBright.bold\" \"yarn codegen --watch\" \"tsc -b --watch --preserveWatchOutput\"",
-    "codegen": "graphql-codegen --config codegen.yml",
-    "postinstall": "cd ../.. && yarn patch-package"
+    "codegen": "graphql-codegen --config codegen.yml"
   },
   "dependencies": {
     "@apollo/client": "3.8.1",

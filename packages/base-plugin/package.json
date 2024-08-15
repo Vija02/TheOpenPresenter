@@ -36,8 +36,7 @@
   },
   "scripts": {
     "build": "pkgroll",
-    "dev": "pkgroll --watch",
-    "postinstall": "cd ../.. && yarn patch-package"
+    "dev": "pkgroll --watch"
   },
   "dependencies": {
     "@trpc/server": "^11.0.0-rc.461",

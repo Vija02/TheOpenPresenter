@@ -5,6 +5,12 @@ node_modules
 .pnp
 .pnp.js
 
+# Yarn 2
+.yarn/*
+!.yarn/releases
+!.yarn/plugins
+.pnp.*
+
 # Local env files
 .env
 .env.local
