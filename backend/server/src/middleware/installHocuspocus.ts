@@ -3,7 +3,6 @@ import type {
   IDisposable,
   ObjectToTypedMap,
   Scene,
-  Section,
   YState,
 } from "@repo/base-plugin";
 import { Express } from "express";
@@ -96,7 +95,7 @@ export default async function installHocuspocus(app: Express) {
         serverPluginApi.getRegisteredOnPluginDataLoaded();
 
       const handleSectionOrScene = (
-        sectionOrScene: ObjectToTypedMap<Section | Scene<Record<string, any>>>,
+        sectionOrScene: ObjectToTypedMap<any>,
         id: string,
         isJustCreated: boolean = false,
       ) => {
