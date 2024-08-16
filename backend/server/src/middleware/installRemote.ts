@@ -4,7 +4,8 @@ import { ViteExpress } from "vite-express";
 
 import { getUpgradeHandlers } from "../app";
 import { serverPluginApi } from "../pluginManager";
-import { DEV_NONCE, getImportMap } from "./shared";
+import { injectEndOfHead } from "../utils/injectHtml";
+import { DEV_NONCE } from "./shared";
 
 export default async function installRemote(app: Express, server: Server) {
   const fakeHttpServer = createServer();
@@ -52,27 +53,29 @@ function transformer(html: string, req: Request) {
   const registeredLoadCssOnRemoteView =
     serverPluginApi.getRegisteredLoadCssOnRemoteView();
 
+  const scripts = [];
+
   // Load all file from plugins
-  return html
-    .replace(
-      "<!-- injection point -->",
-      [getImportMap(req.res?.locals.nonce)]
-        .concat(
-          registeredLoadJsOnRemoteView.map(
-            ({ pluginName, path }) =>
-              `<script type="module" src="/plugin/${pluginName}/static/${path}"></script>`,
-          ),
-        )
-        .concat(
-          registeredLoadCssOnRemoteView.map(
-            ({ pluginName, path }) =>
-              `<link rel="stylesheet" type="text/css" href="/plugin/${pluginName}/static/${path}">`,
-          ),
-        )
-        .concat(
-          `<script nonce="INJECT_NONCE">window.__APP_DATA__ = { ROOT_URL: "${process.env.ROOT_URL}", CSRF_TOKEN: "${req.csrfToken()}" }</script>`,
-        )
-        .join("\n"),
-    )
-    .replace(/INJECT_NONCE/g, req.res?.locals.nonce);
+  scripts.push(
+    ...registeredLoadJsOnRemoteView.map(
+      ({ pluginName, path }) =>
+        `<script type="module" src="/plugin/${pluginName}/static/${path}"></script>`,
+    ),
+  );
+  scripts.push(
+    ...registeredLoadCssOnRemoteView.map(
+      ({ pluginName, path }) =>
+        `<link rel="stylesheet" type="text/css" href="/plugin/${pluginName}/static/${path}">`,
+    ),
+  );
+
+  // Extra data
+  scripts.push(
+    `<script nonce="INJECT_NONCE">window.__APP_DATA__ = { ROOT_URL: "${process.env.ROOT_URL}", CSRF_TOKEN: "${req.csrfToken()}" }</script>`,
+  );
+
+  return injectEndOfHead(html, scripts.join("\n")).replace(
+    /INJECT_NONCE/g,
+    req.res?.locals.nonce,
+  );
 }
