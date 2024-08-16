@@ -4,7 +4,9 @@ import fs from "fs";
 import path from "path";
 
 const dir = path.join(__dirname, "../../../", "loadedPlugins");
-const enabledPlugins = (process.env.ENABLED_PLUGINS ?? "").split(",");
+const enabledPlugins = process.env.ENABLED_PLUGINS
+  ? process.env.ENABLED_PLUGINS.split(",")
+  : [];
 
 // Class to access the data in ServerPluginApi
 class ServerPluginApiPrivate extends ServerPluginApi {
@@ -54,29 +56,53 @@ export const serverPluginApi = new ServerPluginApiPrivate();
 export const initPlugins = async () => {
   const { default: chalk } = await import("chalk");
 
-  // TODO: Try catch one by one
   try {
     // Make sure plugins are available
     console.log("\nInitializing Plugin...");
+    if (enabledPlugins.length === 0) {
+      console.log(
+        "No plugins enabled. Specify the plugins through the ENABLED_PLUGINS environment variable",
+      );
+    }
+
     for (const pluginName of enabledPlugins) {
-      // TODO: Handle non-local plugin
-      await _linkPlugin(pluginName);
+      try {
+        // TODO: Handle non-local plugin
+        await _linkPlugin(pluginName);
+      } catch (e) {
+        console.error(e);
+        console.error(
+          `ERROR: Failed to install the '${pluginName}' plugin. Skipping...`,
+        );
+      }
     }
 
     const plugins = aki.list(dir);
 
+    const initializedPlugins = [];
+
     // Now we can load them
-    for (const [pluginName] of plugins) {
-      const p = aki.load(dir, pluginName);
-      if ("init" in p) {
-        p.init(serverPluginApi);
-      } else {
-        console.warn(`Plugin ${pluginName} does not have a init function`);
+    for (const [pluginName, version] of plugins) {
+      try {
+        const p = aki.load(dir, pluginName);
+        if ("init" in p) {
+          p.init(serverPluginApi);
+          initializedPlugins.push([pluginName, version]);
+        } else {
+          throw new Error(
+            `Plugin ${pluginName} does not have an init function`,
+          );
+        }
+      } catch (e) {
+        console.error(e);
+        console.error(
+          `ERROR: Plugin '${pluginName}' installed but failed to call the init function. Skipping...`,
+        );
       }
     }
 
     console.log(
-      `${chalk.green(`${plugins.length} plugins initialized!`)} ${chalk.gray(plugins.map(([name, version]) => `${name}@${version}`).join(", "))}\n`,
+      `${chalk.green(`${initializedPlugins.length} plugins initialized!`)} ${chalk.gray(initializedPlugins.map(([name, version]) => `${name}@${version}`).join(", "))}\n`,
     );
   } catch (e) {
     console.error(e);
