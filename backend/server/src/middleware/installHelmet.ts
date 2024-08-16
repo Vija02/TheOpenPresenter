@@ -2,7 +2,7 @@ import crypto from "crypto";
 import { Express } from "express";
 import helmet, { HelmetOptions } from "helmet";
 
-import { DEV_NONCE } from "./const";
+import { DEV_NONCE } from "./shared";
 
 const { contentSecurityPolicy } = helmet;
 

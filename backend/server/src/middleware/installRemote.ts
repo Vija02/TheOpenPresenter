@@ -4,7 +4,7 @@ import { ViteExpress } from "vite-express";
 
 import { getUpgradeHandlers } from "../app";
 import { serverPluginApi } from "../pluginManager";
-import { DEV_NONCE } from "./const";
+import { DEV_NONCE, getImportMap } from "./shared";
 
 export default async function installRemote(app: Express, server: Server) {
   const fakeHttpServer = createServer();
@@ -56,10 +56,12 @@ function transformer(html: string, req: Request) {
   return html
     .replace(
       "<!-- injection point -->",
-      registeredLoadJsOnRemoteView
-        .map(
-          ({ pluginName, path }) =>
-            `<script type="module" src="/plugin/${pluginName}/static/${path}"></script>`,
+      [getImportMap(req.res?.locals.nonce)]
+        .concat(
+          registeredLoadJsOnRemoteView.map(
+            ({ pluginName, path }) =>
+              `<script type="module" src="/plugin/${pluginName}/static/${path}"></script>`,
+          ),
         )
         .concat(
           registeredLoadCssOnRemoteView.map(
