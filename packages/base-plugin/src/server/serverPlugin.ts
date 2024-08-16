@@ -60,6 +60,10 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
     pluginName: string;
     callback: RegisterKeyPressHandlerCallback<PluginDataType, RendererDataType>;
   }[] = [];
+  protected registeredCSPDirectives: {
+    pluginName: string;
+    cspDirective: any;
+  }[] = [];
 
   public registerTrpcAppRouter(
     getAppRouter: (t: ReturnType<typeof initTRPC.create>) => any,
@@ -138,5 +142,9 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
     callback: RegisterKeyPressHandlerCallback<PluginDataType, RendererDataType>,
   ) {
     this.registeredKeyPressHandler.push({ pluginName, callback });
+  }
+
+  public registerCSPDirective(pluginName: string, cspDirective: any) {
+    this.registeredCSPDirectives.push({ pluginName, cspDirective });
   }
 }

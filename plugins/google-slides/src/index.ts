@@ -24,6 +24,11 @@ import { PluginBaseData, RendererBaseData } from "./types";
 export const init = (
   serverPluginApi: ServerPluginApi<PluginBaseData, RendererBaseData>,
 ) => {
+  serverPluginApi.registerCSPDirective(pluginName, {
+    "frame-src": ["docs.google.com"],
+    "img-src": ["*.googleusercontent.com", "ssl.gstatic.com"],
+  });
+
   serverPluginApi.registerTrpcAppRouter(getAppRouter);
   serverPluginApi.onPluginDataCreated(pluginName, onPluginDataCreated);
   serverPluginApi.onPluginDataLoaded(pluginName, onPluginDataLoaded);

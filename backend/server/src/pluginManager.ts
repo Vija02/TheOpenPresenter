@@ -49,6 +49,9 @@ class ServerPluginApiPrivate extends ServerPluginApi {
   getRegisteredKeyPressHandler() {
     return this.registeredKeyPressHandler;
   }
+  getRegisteredCSPDirectives() {
+    return this.registeredCSPDirectives;
+  }
 }
 
 export const serverPluginApi = new ServerPluginApiPrivate();
