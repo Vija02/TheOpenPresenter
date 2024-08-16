@@ -1,7 +1,7 @@
 import type { AppRouter } from "@repo/plugin-myworshiplist";
 import { createTRPCReact, httpBatchLink } from "@trpc/react-query";
 
-import { getRootURL } from "../appData";
+import { getCSRFToken, getRootURL } from "../appData";
 
 export const trpc = createTRPCReact<AppRouter>();
 export const trpcClient = trpc.createClient({
@@ -9,6 +9,9 @@ export const trpcClient = trpc.createClient({
     httpBatchLink({
       // TODO: Auth
       url: getRootURL() + "/trpc",
+      headers: {
+        "csrf-token": getCSRFToken(),
+      },
     }),
   ],
 });
