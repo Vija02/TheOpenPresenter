@@ -65,6 +65,8 @@ export const initPlugins = async () => {
       );
     }
 
+    fs.mkdirSync(dir, { recursive: true });
+
     for (const pluginName of enabledPlugins) {
       try {
         // TODO: Handle non-local plugin
