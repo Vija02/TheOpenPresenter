@@ -23,6 +23,7 @@ services:
       - JWT_SECRET=$JWT_SECRET
       - PORT=$PORT
       - ROOT_URL=$ROOT_URL
+      - ENABLED_PLUGINS=$ENABLED_PLUGINS
     labels:
       caddy: theopenpresenter.com
       caddy.reverse_proxy: "{{upstreams 5678}}"
@@ -52,6 +53,7 @@ services:
       - JWT_SECRET=$JWT_SECRET
       - PORT=$PORT
       - ROOT_URL=$ROOT_URL
+      - ENABLED_PLUGINS=$ENABLED_PLUGINS
       - TARGET=worker
 
   theopenpresenter_db:
