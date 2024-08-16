@@ -3,9 +3,11 @@ import type { ObjectToTypedMap, Scene, State, YState } from "@repo/base-plugin";
 import { proxy, useSnapshot } from "valtio";
 import { bind } from "valtio-yjs";
 
+import { getRootURL } from "../appData";
+
 // TODO: Everything
 export const provider = new HocuspocusProvider({
-  url: "ws://localhost:5678/wlink",
+  url: (getRootURL() + "/wlink").replace(/^http/, "ws"),
   name: "example-document",
 });
 

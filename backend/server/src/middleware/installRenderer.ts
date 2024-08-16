@@ -55,19 +55,24 @@ function transformer(html: string, req: Request) {
     serverPluginApi.getRegisteredLoadCssOnRendererView();
 
   // Load all file from plugins
-  return html.replace(/INJECT_NONCE/g, req.res?.locals.nonce).replace(
-    "<!-- injection point -->",
-    registeredLoadJsOnRendererView
-      .map(
-        ({ pluginName, path }) =>
-          `<script type="module" src="/plugin/${pluginName}/static/${path}"></script>`,
-      )
-      .concat(
-        registeredLoadCssOnRendererView.map(
+  return html
+    .replace(
+      "<!-- injection point -->",
+      registeredLoadJsOnRendererView
+        .map(
           ({ pluginName, path }) =>
-            `<link rel="stylesheet" type="text/css" href="/plugin/${pluginName}/static/${path}">`,
-        ),
-      )
-      .join("\n"),
-  );
+            `<script type="module" src="/plugin/${pluginName}/static/${path}"></script>`,
+        )
+        .concat(
+          registeredLoadCssOnRendererView.map(
+            ({ pluginName, path }) =>
+              `<link rel="stylesheet" type="text/css" href="/plugin/${pluginName}/static/${path}">`,
+          ),
+        )
+        .concat(
+          `<script nonce="INJECT_NONCE">window.__APP_DATA__ = { ROOT_URL: "${process.env.ROOT_URL}", CSRF_TOKEN: "${req.csrfToken()}" }</script>`,
+        )
+        .join("\n"),
+    )
+    .replace(/INJECT_NONCE/g, req.res?.locals.nonce);
 }
