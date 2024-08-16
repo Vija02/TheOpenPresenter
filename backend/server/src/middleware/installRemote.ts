@@ -4,6 +4,7 @@ import { ViteExpress } from "vite-express";
 
 import { getUpgradeHandlers } from "../app";
 import { serverPluginApi } from "../pluginManager";
+import { DEV_NONCE } from "./const";
 
 export default async function installRemote(app: Express, server: Server) {
   const fakeHttpServer = createServer();
@@ -12,6 +13,13 @@ export default async function installRemote(app: Express, server: Server) {
   viteExpress.config({
     mode: process.env.NODE_ENV === "production" ? "production" : "development",
     inlineViteConfig: {
+      ...(process.env.NODE_ENV === "production"
+        ? {}
+        : {
+            html: {
+              cspNonce: DEV_NONCE,
+            },
+          }),
       root: `${__dirname}/../../../apps/remote`,
       base: "/app",
       build: { outDir: "dist" },
@@ -38,14 +46,14 @@ export default async function installRemote(app: Express, server: Server) {
   }
 }
 
-function transformer(html: string, _req: Request) {
+function transformer(html: string, req: Request) {
   const registeredLoadJsOnRemoteView =
     serverPluginApi.getRegisteredLoadJsOnRemoteView();
   const registeredLoadCssOnRemoteView =
     serverPluginApi.getRegisteredLoadCssOnRemoteView();
 
   // Load all file from plugins
-  return html.replace(
+  return html.replace(/INJECT_NONCE/g, req.res?.locals.nonce).replace(
     "<!-- injection point -->",
     registeredLoadJsOnRemoteView
       .map(
