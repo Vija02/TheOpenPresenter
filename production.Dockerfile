@@ -148,13 +148,13 @@ COPY --from=builder-server /app/backend/worker/crontab /app/backend/worker/
 COPY --from=builder-server /app/backend/worker/templates/ /app/backend/worker/templates/
 COPY --from=builder-server /app/backend/worker/dist/ /app/backend/worker/dist/
 
-COPY --from=builder-plugin /app/plugins/google-slides/package.json /app/pluginss/google-slides/
+COPY --from=builder-plugin /app/plugins/google-slides/package.json /app/plugins/google-slides/
 COPY --from=builder-plugin /app/plugins/google-slides/dist/ /app/plugins/google-slides/dist/
 COPY --from=builder-plugin /app/plugins/google-slides/out/ /app/plugins/google-slides/out/
-COPY --from=builder-plugin /app/plugins/myworshiplist/package.json /app/pluginss/myworshiplist/
+COPY --from=builder-plugin /app/plugins/myworshiplist/package.json /app/plugins/myworshiplist/
 COPY --from=builder-plugin /app/plugins/myworshiplist/dist/ /app/plugins/myworshiplist/dist/
 COPY --from=builder-plugin /app/plugins/myworshiplist/out/ /app/plugins/myworshiplist/out/
-COPY --from=builder-plugin /app/plugins/simple-image/package.json /app/pluginss/simple-image/
+COPY --from=builder-plugin /app/plugins/simple-image/package.json /app/plugins/simple-image/
 COPY --from=builder-plugin /app/plugins/simple-image/dist/ /app/plugins/simple-image/dist/
 COPY --from=builder-plugin /app/plugins/simple-image/out/ /app/plugins/simple-image/out/
 
