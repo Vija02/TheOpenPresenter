@@ -27,7 +27,6 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
                   <ToastContainer />
                 </>
               </PluginMetaDataProvider>
-              <App />
             </QueryClientProvider>
           </ApolloProvider>
         </trpc.Provider>
