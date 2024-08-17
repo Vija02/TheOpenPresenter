@@ -20,6 +20,7 @@ const MainBody = () => {
 
   return (
     <Box
+      width="100%"
       overflow="auto"
       tabIndex={0}
       onKeyDown={(e) => {

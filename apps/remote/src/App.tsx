@@ -1,4 +1,4 @@
-import { Grid } from "@chakra-ui/react";
+import { Box } from "@chakra-ui/react";
 import { useSnapshot } from "valtio";
 
 import MainBody from "./MainBody";
@@ -11,10 +11,15 @@ function App() {
   return (
     <div>
       {!!data.data && (
-        <Grid gridTemplateColumns={`200px 1fr`} width="100vw" height="100vh">
+        <Box
+          display="flex"
+          position="relative"
+          height="100vh"
+          overflow="hidden"
+        >
           <Sidebar />
           <MainBody />
-        </Grid>
+        </Box>
       )}
     </div>
   );

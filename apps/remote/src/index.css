@@ -1,0 +1,27 @@
+.sidebar-resizable-container {
+  flex-shrink: 0;
+  height: 100%;
+}
+
+.react-resizable {
+  position: relative;
+}
+
+.react-resizable-handle {
+  position: absolute;
+  width: 6px;
+  height: 100%;
+  z-index: 100;
+}
+
+.react-resizable-handle-e {
+  top: 0;
+  right: -3px;
+  cursor: ew-resize;
+}
+
+.react-resizable-handle-w {
+  top: 0;
+  left: -3px;
+  cursor: ew-resize;
+}
