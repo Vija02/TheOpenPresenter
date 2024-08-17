@@ -1,14 +1,18 @@
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 
+import { SlideStyle } from "../../../src";
+
+type MWLSongRenderViewProps = {
+  groupedData: Record<string, string[]>;
+  heading: string;
+  slideStyle: Required<SlideStyle>;
+};
+
 const MWLSongRenderView = ({
   groupedData,
   heading,
-  paddingX = 20,
-}: {
-  groupedData: Record<string, string[]>;
-  heading: string;
-  paddingX?: number;
-}) => {
+  slideStyle,
+}: MWLSongRenderViewProps) => {
   const textRef = useRef<SVGTextElement>(null);
 
   const [size, setSize] = useState({ width: 0, height: 0 });
@@ -25,7 +29,7 @@ const MWLSongRenderView = ({
         return;
       }
       const state = size;
-      const width = (el?.width ?? 0) + paddingX;
+      const width = (el?.width ?? 0) + slideStyle.padding;
       const height = el?.height ?? 0;
       if (state.width !== width || state.height !== height) {
         setSize({
@@ -35,7 +39,7 @@ const MWLSongRenderView = ({
       }
     }, 0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [heading, paddingX, textRef]);
+  }, [heading, slideStyle.padding, textRef]);
 
   return (
     <svg
@@ -44,7 +48,7 @@ const MWLSongRenderView = ({
       style={{
         width: "100%",
         height: "100%",
-        fill: "currentcolor",
+        backgroundColor: slideStyle.isDarkMode ? "black" : "transparent",
         overflow: "visible",
         userSelect: "none",
       }}
@@ -55,9 +59,10 @@ const MWLSongRenderView = ({
         style={{
           fontFamily: "inherit",
           fontSize: "1rem",
-          fontWeight: "inherit",
+          fontWeight: slideStyle.fontWeight,
           textAnchor: "middle",
         }}
+        fill={slideStyle.isDarkMode ? "white" : "rgb(26, 32, 44)"}
       >
         {groupedData?.[heading]?.map((x, i) => (
           <tspan key={i} x="50%" dy="1em">

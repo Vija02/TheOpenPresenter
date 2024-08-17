@@ -1,6 +1,7 @@
 import { Box } from "@chakra-ui/react";
 import { useMemo } from "react";
 
+import { getSlideStyle } from "../../src/slideStyle";
 import {
   cleanWhiteSpace,
   groupData,
@@ -12,10 +13,11 @@ import MWLSongRenderView from "./MWLSongRenderView";
 
 const MWLRenderer = () => {
   const data = pluginApi.renderer.useData((x) => x);
-  const songId = data.songId;
-  const heading = data.heading;
+  const songId = useMemo(() => data.songId, [data.songId]);
+  const heading = useMemo(() => data.heading, [data.heading]);
 
   const songCaches = pluginApi.scene.useData((x) => x.pluginData.songCache);
+  const slideStyle = pluginApi.scene.useData((x) => x.pluginData.style);
 
   const songCache = useMemo(
     () => songCaches.find((x) => x.id === songId)!,
@@ -38,6 +40,7 @@ const MWLRenderer = () => {
         key={heading}
         groupedData={groupedData}
         heading={heading}
+        slideStyle={getSlideStyle(slideStyle)}
       />
     </Box>
   );
