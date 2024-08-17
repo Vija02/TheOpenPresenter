@@ -30,13 +30,16 @@ const SidebarAddSceneModal = ({
   resetData,
   ...props
 }: SidebarAddSceneModalPropTypes) => {
-  const [selectedPlugin, setSelectedPlugin] = useState<string | null>(null);
-
   const pluginMetaData = usePluginMetaData();
+
+  const [selectedPlugin, setSelectedPlugin] = useState<string | null>(null);
+  const selectedSceneCreator = pluginMetaData?.pluginMeta.sceneCreator.find(
+    (x) => x.pluginName === selectedPlugin,
+  );
 
   const addPlugin = () => {
     mainState.data[typeidUnboxed("scene")] = {
-      name: "MWL",
+      name: selectedSceneCreator?.title,
       order:
         (Math.max(0, ...Object.values(mainState.data).map((x) => x.order)) ??
           0) + 1,

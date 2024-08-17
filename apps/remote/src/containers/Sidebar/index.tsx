@@ -36,12 +36,7 @@ const Sidebar = () => {
             _hover={{ bg: "gray.300" }}
             bg={location.includes(id) ? "gray.300" : "transparent"}
           >
-            <Text fontWeight="bold">
-              {value.name}
-              <Text as="i" color="gray.800" fontWeight="normal">
-                ({value.type})
-              </Text>
-            </Text>
+            <Text fontWeight="bold">{value.name}</Text>
           </Box>
         ),
       )}
