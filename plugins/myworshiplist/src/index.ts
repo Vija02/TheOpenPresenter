@@ -15,7 +15,7 @@ import {
   rendererWebComponentTag,
 } from "./consts";
 import { getSongData } from "./data";
-import { CustomData, MyWorshipListData } from "./types";
+import { CustomTypeData, MyWorshipListData } from "./types";
 
 export const init = (serverPluginApi: ServerPluginApi) => {
   serverPluginApi.registerTrpcAppRouter(getAppRouter);
@@ -65,7 +65,7 @@ const onPluginDataLoaded = (pluginInfo: ObjectToTypedMap<Plugin>) => {
         for (const songId of missingCaches) {
           const songData = await getSongData(songId);
 
-          (data.pluginData as CustomData).songCache.push(songData);
+          (data.pluginData as CustomTypeData).songCache.push(songData);
         }
       }
     }

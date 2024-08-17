@@ -4,14 +4,24 @@ export type SongCache = {
   content: string;
 };
 
+export type SlideStyle = {
+  fontWeight?: string | number;
+  isDarkMode?: boolean;
+  padding?: number;
+};
+
 export type BaseData = {
+  style?: SlideStyle;
+};
+
+export type UnselectedTypeData = BaseData & {
   type: "unselected";
 };
 
-export type CustomData = {
+export type CustomTypeData = BaseData & {
   type: "custom";
   songIds: number[];
   songCache: SongCache[];
 };
 
-export type MyWorshipListData = BaseData | CustomData;
+export type MyWorshipListData = UnselectedTypeData | CustomTypeData;

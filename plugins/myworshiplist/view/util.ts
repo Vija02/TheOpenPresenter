@@ -1,7 +1,7 @@
 import { getTypedProviderHelperFunctions } from "@repo/base-plugin/client";
 
-import { CustomData } from "../src";
+import { CustomTypeData } from "../src";
 
-const pluginApi = getTypedProviderHelperFunctions<CustomData>();
+const pluginApi = getTypedProviderHelperFunctions<CustomTypeData>();
 
 export { pluginApi };
