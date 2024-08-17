@@ -1,5 +1,4 @@
 import { Box } from "@chakra-ui/react";
-import ReactJson from "react-json-view";
 import { useSnapshot } from "valtio";
 
 import { Body } from "./Body";
@@ -8,6 +7,8 @@ import { mainState } from "./yjs";
 function App() {
   const data = useSnapshot(mainState);
 
+  // TODO: Loading
+
   return (
     <div>
       {!!data.data && (
@@ -15,7 +16,6 @@ function App() {
           <Body />
         </Box>
       )}
-      <ReactJson src={data} />
     </div>
   );
 }
