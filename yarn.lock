@@ -4722,6 +4722,7 @@ __metadata:
     pkgroll: "npm:^2.4.2"
     react: "npm:rc"
     react-dom: "npm:rc"
+    use-debounce: "npm:^10.0.3"
     valtio: "npm:^1.13.2"
     valtio-yjs: "npm:^0.6.0"
     vite: "npm:^5.3.5"
@@ -17289,6 +17290,15 @@ __metadata:
   peerDependencies:
     react: ^16.8.0 || ^17.0.0 || ^18.0.0
   checksum: 10c0/e64ce52f4b18c020407636784192726807404a2552609acf7497b66a2b7070674fb5d2b950d426c4aa85f353e2bbecb02ebf9c5b865cd06797938c70bcbf5d26
+  languageName: node
+  linkType: hard
+
+"use-debounce@npm:^10.0.3":
+  version: 10.0.3
+  resolution: "use-debounce@npm:10.0.3"
+  peerDependencies:
+    react: "*"
+  checksum: 10c0/351b62c565d6dce5a21ecc21fe3e1f8db74f70c81c8f7d9dbdfc2da1cb82d883578589f6146e684d91dac534bc3c8b145ab1a36fbf4d44cbb4113827508b39aa
   languageName: node
   linkType: hard
 

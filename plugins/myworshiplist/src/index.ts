@@ -89,7 +89,9 @@ const getAppRouter = (t: ReturnType<typeof initTRPC.create>) => {
           }),
         )
         .query(async (opts) => {
-          const res = await axios("https://myworshiplist.com/api/songs");
+          const res = await axios(
+            "https://myworshiplist.com/api/songs?search=" + opts.input.title,
+          );
           return {
             data: res.data.data,
           };

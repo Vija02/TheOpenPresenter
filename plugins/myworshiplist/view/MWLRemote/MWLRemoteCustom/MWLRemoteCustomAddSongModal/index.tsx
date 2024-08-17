@@ -13,6 +13,7 @@ import {
 } from "@chakra-ui/react";
 import { OverlayToggleComponentProps } from "@repo/ui";
 import { useCallback, useState } from "react";
+import { useDebounce } from "use-debounce";
 
 import { trpc } from "../../../trpc";
 import { pluginApi } from "../../../util";
@@ -29,10 +30,16 @@ const MWLRemoteCustomAddSongModal = ({
   resetData,
   ...props
 }: MWLRemoteCustomAddSongModalPropTypes) => {
-  const [selectedId, setSelectedId] = useState<number | null>(null);
   const pluginInfo = pluginApi.scene.useValtioData();
 
-  const { data } = trpc.myworshiplist.search.useQuery({ title: "hi" });
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [searchInput, setSearchInput] = useState("");
+
+  const [debouncedSearchInput] = useDebounce(searchInput, 200);
+
+  const { data } = trpc.myworshiplist.search.useQuery({
+    title: debouncedSearchInput,
+  });
 
   const addSong = useCallback(() => {
     if (selectedId) {
@@ -54,7 +61,11 @@ const MWLRemoteCustomAddSongModal = ({
         <ModalHeader>Add song</ModalHeader>
         <ModalCloseButton />
         <ModalBody>
-          <Input placeholder="Search..." />
+          <Input
+            placeholder="Search..."
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+          />
           <Box>
             {data?.data.map((x: any) => (
               <Box
