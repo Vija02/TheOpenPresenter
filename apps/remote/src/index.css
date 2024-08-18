@@ -1,3 +1,7 @@
+html {
+  overscroll-behavior: contain;
+}
+
 .sidebar-resizable-container {
   flex-shrink: 0;
   height: 100%;
