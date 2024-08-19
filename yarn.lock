@@ -4713,6 +4713,7 @@ __metadata:
     "@trpc/client": "npm:^11.0.0-rc.461"
     "@trpc/react-query": "npm:^11.0.0-rc.461"
     "@trpc/server": "npm:^11.0.0-rc.461"
+    "@types/lodash": "npm:^4.14.191"
     "@types/react": "npm:types-react@rc"
     "@types/react-dom": "npm:types-react-dom@rc"
     "@vitejs/plugin-react-swc": "npm:^3.7.0"
@@ -4721,6 +4722,8 @@ __metadata:
     formik: "npm:^2.4.6"
     formik-chakra-ui: "npm:^1.6.1"
     framer-motion: "npm:^11.3.8"
+    lodash: "npm:^4.17.21"
+    ohash: "npm:^1.1.3"
     pkgroll: "npm:^2.4.2"
     react: "npm:rc"
     react-dom: "npm:rc"
@@ -13850,6 +13853,13 @@ __metadata:
   version: 1.1.2
   resolution: "obuf@npm:1.1.2"
   checksum: 10c0/520aaac7ea701618eacf000fc96ae458e20e13b0569845800fc582f81b386731ab22d55354b4915d58171db00e79cfcd09c1638c02f89577ef092b38c65b7d81
+  languageName: node
+  linkType: hard
+
+"ohash@npm:^1.1.3":
+  version: 1.1.3
+  resolution: "ohash@npm:1.1.3"
+  checksum: 10c0/928f5bdbd8cd73f90cf544c0533dbda8e0a42d9b8c7454ab89e64e4d11bc85f85242830b4e107426ce13dc4dd3013286f8f5e0c84abd8942a014b907d9692540
   languageName: node
   linkType: hard
 
