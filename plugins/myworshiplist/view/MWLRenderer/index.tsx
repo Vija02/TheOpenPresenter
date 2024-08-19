@@ -21,19 +21,23 @@ const MWLRenderer = () => {
   const slideStyle = useMemo(() => pluginData.style, [pluginData.style]);
 
   const songCache = useMemo(
-    () => songCaches.find((x) => x.id === songId)!,
+    () => songCaches.find((x) => x.id === songId),
     [songCaches, songId],
   );
 
   const cleanData = useMemo(
     () =>
       removeAuxiliaryText(
-        cleanWhiteSpace(removeChords(songCache.content.split("<br>"))),
+        cleanWhiteSpace(removeChords(songCache?.content.split("<br>") ?? [])),
       ),
-    [songCache.content],
+    [songCache?.content],
   );
 
   const groupedData = useMemo(() => groupData(cleanData), [cleanData]);
+
+  if (!songCache) {
+    return null;
+  }
 
   return (
     <Box w="100vw" h="100vh">
