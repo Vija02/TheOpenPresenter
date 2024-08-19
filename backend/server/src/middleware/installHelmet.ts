@@ -76,7 +76,8 @@ export default async function installHelmet(app: Express) {
         "'unsafe-eval'",
         // For Vite
         "'unsafe-inline'",
-      ];
+        // Don't use nonce on dev since we're using unsafe inline. This is also used by React dev tools
+      ].filter((x) => !x.startsWith("'nonce"));
     }
     if (isDevOrTest || !!process.env.ENABLE_GRAPHIQL) {
       // Enables prettier script and SVG icon in GraphiQL
