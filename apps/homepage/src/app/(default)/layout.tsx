@@ -1,6 +1,6 @@
 "use client";
 
-import BgShapes from "@/components/bg-shapes";
+import BgShapes from "@/components/ui/bg-shapes";
 import Header from "@/components/ui/header";
 import { styled } from "@/styled-system/jsx";
 

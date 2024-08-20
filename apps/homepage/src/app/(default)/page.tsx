@@ -1,5 +1,5 @@
-import PageHeader from "@/components/page-header";
-import ViewOnGithub from "@/components/view-on-github";
+import PageHeader from "@/components/ui/page-header";
+import ViewOnGithub from "@/components/ui/view-on-github";
 import { Box, styled } from "@/styled-system/jsx";
 
 export default function Home() {
