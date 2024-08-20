@@ -8,6 +8,7 @@
 
     { "path": "packages/base-plugin" },
     { "path": "packages/graphql" },
+    { "path": "packages/lib" },
     { "path": "packages/ui" },
 
     { "path": "plugins/google-slides" },

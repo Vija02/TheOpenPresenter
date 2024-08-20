@@ -33,6 +33,7 @@ COPY backend/worker/package.json /app/backend/worker/package.json
 COPY packages/base-plugin/package.json /app/packages/base-plugin/package.json
 COPY packages/eslint-config/package.json /app/packages/eslint-config/package.json
 COPY packages/graphql/package.json /app/packages/graphql/package.json
+COPY packages/lib/package.json /app/packages/lib/package.json
 COPY packages/prettier-config/package.json /app/packages/prettier-config/package.json
 COPY packages/typescript-config/package.json /app/packages/typescript-config/package.json
 COPY packages/ui/package.json /app/packages/ui/package.json
@@ -60,6 +61,9 @@ RUN yarn graphql build
 
 COPY backend/config/ /app/backend/config/
 RUN yarn workspace @repo/config build
+
+COPY packages/lib/ /app/packages/lib/
+RUN yarn workspace @repo/lib build
 
 COPY packages/base-plugin/ /app/packages/base-plugin/
 RUN yarn workspace @repo/base-plugin build
@@ -126,6 +130,7 @@ COPY --from=deps /app/.yarn /app/.yarn/
 COPY --from=deps /app/node_modules /app/node_modules/
 COPY --from=builder-core /app/packages/graphql/ /app/packages/graphql/
 COPY --from=builder-core /app/backend/config/ /app/backend/config/
+COPY --from=builder-core /app/packages/lib/ /app/packages/lib/
 COPY --from=builder-core /app/packages/base-plugin/ /app/packages/base-plugin/
 COPY backend/db/ /app/backend/db/
 

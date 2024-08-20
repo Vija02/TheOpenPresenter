@@ -10,7 +10,7 @@
     "test": "node scripts/test.js",
     "test:watch": "node scripts/test.js --watch",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "dev": "yarn && turbo dev",
+    "dev": "yarn && turbo dev --concurrency 15",
     "build": "turbo build",
     "clean": "node ./scripts/clean.js",
     "reset": "yarn clean && node ./scripts/delete-env-file.js",
