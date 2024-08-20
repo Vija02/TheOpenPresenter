@@ -2,6 +2,7 @@ import { Express } from "express";
 import { get } from "lodash";
 import passport from "passport";
 import { Strategy as GitHubStrategy } from "passport-github2";
+import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 
 import { getWebsocketMiddlewares } from "../app";
 import installPassportStrategy from "./installPassportStrategy";
@@ -51,7 +52,29 @@ export default async (app: Express) => {
         avatarUrl: get(profile, "photos.0.value"),
         email: profile.email || get(profile, "emails.0.value"),
       }),
-      ["token", "tokenSecret"]
+      ["token", "tokenSecret"],
+    );
+  } else if (process.env.GOOGLE_CLIENT_ID) {
+    await installPassportStrategy(
+      app,
+      "google",
+      GoogleStrategy,
+      {
+        clientID: process.env.GOOGLE_CLIENT_ID,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+        scope: ["profile", "email"],
+      },
+      {},
+      async (profile, _accessToken, _refreshToken, _extra, _req) => {
+        return {
+          id: profile.id,
+          displayName: profile.displayName || "",
+          username: profile.username,
+          avatarUrl: get(profile, "photos.0.value"),
+          email: profile.email || get(profile, "emails.0.value"),
+        };
+      },
+      ["token", "tokenSecret"],
     );
   }
 };

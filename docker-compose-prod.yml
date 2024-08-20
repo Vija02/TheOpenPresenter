@@ -24,6 +24,10 @@ services:
       - PORT=$PORT
       - ROOT_URL=$ROOT_URL
       - ENABLED_PLUGINS=$ENABLED_PLUGINS
+      - GITHUB_KEY=$GITHUB_KEY
+      - GITHUB_SECRET=$GITHUB_SECRET
+      - GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID
+      - GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET
     labels:
       caddy: theopenpresenter.com
       caddy.reverse_proxy: "{{upstreams 5678}}"

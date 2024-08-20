@@ -122,6 +122,22 @@ exports.updateDotenv = function updateDotenv(add, answers) {
 # Client Secret:`
   );
 
+  add(
+    "GOOGLE_CLIENT_ID",
+    null,
+    `\
+# To enable login with Google, fill the OAuth details below
+#
+# Client ID:`
+  );
+
+  add(
+    "GOOGLE_CLIENT_SECRET",
+    null,
+    `\
+# Client Secret:`
+  );
+
   const nodeVersion = parseInt(
     process.version.replace(/\..*$/, "").replace(/[^0-9]/g, ""),
     10

@@ -12,6 +12,8 @@ const {
   JWT_SECRET,
   GITHUB_KEY,
   GITHUB_SECRET,
+  GOOGLE_CLIENT_ID,
+  GOOGLE_CLIENT_SECRET,
   DATABASE_NAME,
   GRAPHILE_LICENSE,
 } = process.env;
@@ -43,5 +45,9 @@ runSync("docker", [
   `GITHUB_KEY=${GITHUB_KEY}`,
   "-e",
   `GITHUB_SECRET=${GITHUB_SECRET}`,
+  "-e",
+  `GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}`,
+  "-e",
+  `GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}`,
   process.argv[2],
 ]);
