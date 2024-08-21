@@ -62,7 +62,8 @@ const isDev = process.env.NODE_ENV === "development";
 
 const pluginHook = makePluginHook([
   // Add the pub/sub realtime provider
-  PgPubsub,
+  // @ts-expect-error
+  PgPubsub.default,
 
   // If we have a Graphile Pro license, then enable the plugin
   ...(process.env.GRAPHILE_LICENSE ? [GraphilePro] : []),
