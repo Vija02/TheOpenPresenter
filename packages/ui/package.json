@@ -8,10 +8,13 @@
   },
   "dependencies": {
     "@chakra-ui/react": "^2.8.2",
-    "react": "rc"
+    "react": "rc",
+    "react-icons": "^5.3.0",
+    "react-loader-spinner": "^6.1.6"
   },
   "devDependencies": {
     "@repo/eslint-config": "*",
+    "@repo/graphql": "*",
     "@repo/typescript-config": "*",
     "@types/react": "npm:types-react@rc",
     "eslint": "^8.57.0",
