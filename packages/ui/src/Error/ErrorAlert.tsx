@@ -46,14 +46,15 @@ export function ErrorAlert({ error }: ErrorAlertProps) {
       <Heading textAlign="center">Unexpected error occurred</Heading>
       <Text textAlign="center" color="subtitle">
         We're really sorry, an unexpected error occurred. Please{" "}
-        <Link href="/">return to the homepage</Link>
-        and try again.
+        <Link href="/">return to the homepage</Link> and try again.
       </Text>
       <Box pb={3} />
-      <Alert status="error" maxW="2xl">
-        <AlertIcon />
-        <AlertDescription display="block">{error.message}</AlertDescription>
-      </Alert>
+      {!!error && (
+        <Alert status="error" maxW="2xl">
+          <AlertIcon />
+          <AlertDescription display="block">{error?.message}</AlertDescription>
+        </Alert>
+      )}
     </VStack>
   );
 }
