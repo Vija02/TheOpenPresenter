@@ -4838,6 +4838,7 @@ __metadata:
     "@repo/plugin-myworshiplist": "npm:*"
     "@repo/prettier-config": "npm:*"
     "@repo/typescript-config": "npm:*"
+    "@repo/ui": "npm:*"
     "@tanstack/react-query": "npm:^5.51.1"
     "@trpc/client": "npm:^11.0.0-rc.461"
     "@trpc/react-query": "npm:^11.0.0-rc.461"
@@ -4853,6 +4854,7 @@ __metadata:
     lodash: "npm:^4.17.21"
     react: "npm:rc"
     react-dom: "npm:rc"
+    react-error-boundary: "npm:^4.0.13"
     react-icons: "npm:^5.3.0"
     react-json-view: "npm:^1.21.3"
     react-resizable: "npm:^3.0.5"
@@ -15283,6 +15285,17 @@ __metadata:
     react: ">= 16.3.0"
     react-dom: ">= 16.3.0"
   checksum: 10c0/1e8cf47414a8554caa68447e5f27749bc40e1eabb4806e2dadcb39ab081d263f517d6aaec5231677e6b425603037c7e3386d1549898f9ffcc98a86cabafb2b9a
+  languageName: node
+  linkType: hard
+
+"react-error-boundary@npm:^4.0.13":
+  version: 4.0.13
+  resolution: "react-error-boundary@npm:4.0.13"
+  dependencies:
+    "@babel/runtime": "npm:^7.12.5"
+  peerDependencies:
+    react: ">=16.13.1"
+  checksum: 10c0/6f3e0e4d7669f680ccf49c08c9571519c6e31f04dcfc30a765a7136c7e6fbbbe93423dd5a9fce12107f8166e54133e9dd5c2079a00c7a38201ac811f7a28b8e7
   languageName: node
   linkType: hard
 

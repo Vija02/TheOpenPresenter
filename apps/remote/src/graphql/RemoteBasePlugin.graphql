@@ -1,12 +1,25 @@
-query RemoteBasePlugin {
+query RemoteBasePlugin($orgSlug: String!, $projectSlug: String!) {
   pluginMeta {
-    sceneCreator {
-      title
-      pluginName
+    ...BasePluginMeta
+  }
+
+  organizationBySlug(slug: $orgSlug) {
+    id
+    projects(condition: { slug: $projectSlug }) {
+      nodes {
+        id
+      }
     }
-    registeredRemoteView {
-      pluginName
-      tag
-    }
+  }
+}
+
+fragment BasePluginMeta on PluginMeta {
+  sceneCreator {
+    title
+    pluginName
+  }
+  registeredRemoteView {
+    pluginName
+    tag
   }
 }

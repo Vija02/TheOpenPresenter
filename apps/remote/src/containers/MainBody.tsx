@@ -5,18 +5,14 @@ import { useKeyPressMutation } from "@repo/graphql";
 import React, { useMemo } from "react";
 import { Route, Switch } from "wouter";
 
-import { usePluginMetaData } from "./contexts/PluginMetaDataProvider";
-import { trpcClient } from "./trpc";
-import {
-  getYJSPluginRenderer,
-  getYJSPluginRendererData,
-  getYJSPluginSceneData,
-  useData,
-} from "./yjs";
+import { useData, usePluginData } from "../contexts/PluginDataProvider";
+import { usePluginMetaData } from "../contexts/PluginMetaDataProvider";
+import { trpcClient } from "../trpc";
 
 const MainBody = () => {
   const data = useData();
   const [keyPressMutate] = useKeyPressMutation();
+  const projectId = usePluginMetaData().projectId;
 
   return (
     <Box
@@ -28,8 +24,8 @@ const MainBody = () => {
           keyPressMutate({
             variables: {
               keyType: e.key === "ArrowRight" ? "NEXT" : "PREV",
+              projectId: projectId,
               // TODO:
-              projectId: "example-document",
               rendererId: "1",
             },
           });
@@ -39,7 +35,7 @@ const MainBody = () => {
         {Object.entries(data.data)
           .filter(([, value]) => value.type === "scene")
           .map(([sceneId, value]) => (
-            <Route key={sceneId} path={`/${sceneId}`}>
+            <Route nest key={sceneId} path={`/${sceneId}`}>
               <SceneRenderer sceneId={sceneId} value={value as Scene} />
             </Route>
           ))}
@@ -75,7 +71,12 @@ const PluginRenderer = React.memo(
     pluginId: string;
     pluginInfo: Plugin<Record<string, any>>;
   }) => {
-    const pluginMetaData = usePluginMetaData();
+    const pluginMetaData = usePluginMetaData().pluginMetaData;
+    const {
+      getYJSPluginRenderer,
+      getYJSPluginRendererData,
+      getYJSPluginSceneData,
+    } = usePluginData();
 
     const tag = useMemo(
       () =>
@@ -99,7 +100,15 @@ const PluginRenderer = React.memo(
       ) : (
         <Text>No renderer for {pluginInfo.plugin}</Text>
       );
-    }, [pluginId, pluginInfo.plugin, sceneId, tag]);
+    }, [
+      getYJSPluginRenderer,
+      getYJSPluginRendererData,
+      getYJSPluginSceneData,
+      pluginId,
+      pluginInfo.plugin,
+      sceneId,
+      tag,
+    ]);
 
     return <Box>{Element}</Box>;
   },

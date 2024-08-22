@@ -1,12 +1,20 @@
+import { Text } from "@chakra-ui/react";
 import { RemoteBasePluginQuery, useRemoteBasePluginQuery } from "@repo/graphql";
+import { ErrorOccurred, LoadingFull } from "@repo/ui";
 import React, { createContext, useContext } from "react";
 
 type PluginMetaDataProviderType = {
   pluginMetaData: RemoteBasePluginQuery | null;
+  orgSlug: string;
+  projectSlug: string;
+  projectId: string;
 };
 
 const initialData: PluginMetaDataProviderType = {
   pluginMetaData: null,
+  orgSlug: "",
+  projectSlug: "",
+  projectId: "",
 };
 
 export const PluginMetaDataContext =
@@ -14,13 +22,39 @@ export const PluginMetaDataContext =
 
 export function PluginMetaDataProvider({
   children,
-}: React.PropsWithChildren<{}>) {
-  const { data: pluginMetaData } = useRemoteBasePluginQuery();
+  orgSlug,
+  projectSlug,
+}: React.PropsWithChildren<{ orgSlug: string; projectSlug: string }>) {
+  const {
+    data: pluginMetaData,
+    loading,
+    error,
+  } = useRemoteBasePluginQuery({
+    variables: { orgSlug, projectSlug },
+  });
+
+  if (error) {
+    console.error(error);
+    return <ErrorOccurred />;
+  }
+
+  if (loading) {
+    return <LoadingFull />;
+  }
+
+  // Check that project doesn't exist
+  if (pluginMetaData?.organizationBySlug?.projects.nodes.length === 0) {
+    window.location.href = `/o/${orgSlug}`;
+    return <Text>Project does not exist. Redirecting...</Text>;
+  }
 
   return (
     <PluginMetaDataContext.Provider
       value={{
         pluginMetaData: pluginMetaData ?? null,
+        orgSlug,
+        projectSlug,
+        projectId: pluginMetaData?.organizationBySlug?.projects.nodes[0]?.id,
       }}
     >
       {!!pluginMetaData && children}
@@ -29,5 +63,5 @@ export function PluginMetaDataProvider({
 }
 
 export function usePluginMetaData() {
-  return useContext(PluginMetaDataContext).pluginMetaData;
+  return useContext(PluginMetaDataContext);
 }

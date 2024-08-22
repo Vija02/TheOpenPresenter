@@ -15,8 +15,8 @@ import { OverlayToggleComponentProps } from "@repo/ui";
 import { useState } from "react";
 import { typeidUnboxed } from "typeid-js";
 
+import { usePluginData } from "../../../contexts/PluginDataProvider";
 import { usePluginMetaData } from "../../../contexts/PluginMetaDataProvider";
-import { mainState } from "../../../yjs";
 
 export type SidebarAddSceneModalPropTypes = Omit<
   ModalProps,
@@ -30,7 +30,8 @@ const SidebarAddSceneModal = ({
   resetData,
   ...props
 }: SidebarAddSceneModalPropTypes) => {
-  const pluginMetaData = usePluginMetaData();
+  const mainState = usePluginData().mainState!;
+  const pluginMetaData = usePluginMetaData().pluginMetaData;
 
   const [selectedPlugin, setSelectedPlugin] = useState<string | null>(null);
   const selectedSceneCreator = pluginMetaData?.pluginMeta.sceneCreator.find(

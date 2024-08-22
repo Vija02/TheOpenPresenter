@@ -1,22 +1,31 @@
 import { Box, Button, Divider, Link, Stack, Text } from "@chakra-ui/react";
-import { Logo, OverlayToggle } from "@repo/ui";
+import { OverlayToggle } from "@repo/ui";
 import { sortBy } from "lodash";
-import { VscAdd, VscLinkExternal } from "react-icons/vsc";
+import { VscAdd, VscArrowLeft, VscLinkExternal } from "react-icons/vsc";
 import { useLocation } from "wouter";
 
-import { useData } from "../../yjs";
+import { useData } from "../../contexts/PluginDataProvider";
+import { usePluginMetaData } from "../../contexts/PluginMetaDataProvider";
 import SidebarAddSceneModal from "./SidebarAddSceneModal";
 
 const SidebarMobile = () => {
   const data = useData();
   const [location, navigate] = useLocation();
+  const { orgSlug } = usePluginMetaData();
 
   return (
     <Box boxShadow="md">
       <Box bg="gray.100" height="100%" width="80px">
-        <Box bg="black" p={1}>
-          <Logo />
-        </Box>
+        <Link
+          href={`/o/${orgSlug}`}
+          display="flex"
+          height="40px"
+          alignItems="center"
+          justifyContent="center"
+          _hover={{ bg: "gray.300" }}
+        >
+          <VscArrowLeft fontSize={20} />
+        </Link>
         <Divider />
         {sortBy(Object.entries(data.data), ([, value]) => value.order).map(
           ([id, value]) => (
