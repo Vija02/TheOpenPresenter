@@ -1,0 +1,20 @@
+mutation CreateProject(
+  $organizationId: UUID!
+  $creatorUserId: UUID!
+  $slug: String!
+) {
+  createProject(
+    input: {
+      project: {
+        organizationId: $organizationId
+        creatorUserId: $creatorUserId
+        slug: $slug
+      }
+    }
+  ) {
+    project {
+      id
+      slug
+    }
+  }
+}

@@ -12,6 +12,7 @@ if (!process.env.ROOT_URL) {
 // those variables. To enforce this, we've deliberately shadowed process.
 module.exports = () => {
   return {
+    transpilePackages: ['@repo/ui'],
     poweredByHeader: false,
     distDir: `../.next`,
     trailingSlash: false,

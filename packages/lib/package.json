@@ -21,7 +21,8 @@
   "dependencies": {
     "@apollo/client": "3.8.1",
     "graphql": "^15.9.0",
-    "tslib": "^2.6.3"
+    "tslib": "^2.6.3",
+    "zustand": "^4.5.5"
   },
   "devDependencies": {
     "@repo/typescript-config": "*",

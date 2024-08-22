@@ -3,7 +3,7 @@
 --
 
 -- Dumped from database version 16.3 (Debian 16.3-1.pgdg120+1)
--- Dumped by pg_dump version 16.2
+-- Dumped by pg_dump version 16.3
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -1734,6 +1734,17 @@ $$;
 
 
 --
+-- Name: users_primary_email(app_public.users); Type: FUNCTION; Schema: app_public; Owner: -
+--
+
+CREATE FUNCTION app_public.users_primary_email(users app_public.users) RETURNS text
+    LANGUAGE sql STABLE
+    AS $$
+  select email from app_public.user_emails where user_id = users.id and is_primary = true
+$$;
+
+
+--
 -- Name: verify_email(uuid, text); Type: FUNCTION; Schema: app_public; Owner: -
 --
 
@@ -1899,6 +1910,21 @@ CREATE TABLE app_public.organization_memberships (
 
 
 --
+-- Name: projects; Type: TABLE; Schema: app_public; Owner: -
+--
+
+CREATE TABLE app_public.projects (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    organization_id uuid NOT NULL,
+    creator_user_id uuid,
+    slug public.citext NOT NULL,
+    document bytea,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
 -- Name: user_authentications; Type: TABLE; Schema: app_public; Owner: -
 --
 
@@ -2046,6 +2072,22 @@ ALTER TABLE ONLY app_public.organizations
 
 
 --
+-- Name: projects projects_organization_id_slug_key; Type: CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.projects
+    ADD CONSTRAINT projects_organization_id_slug_key UNIQUE (organization_id, slug);
+
+
+--
+-- Name: projects projects_pkey; Type: CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.projects
+    ADD CONSTRAINT projects_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: user_authentications uniq_user_authentications; Type: CONSTRAINT; Schema: app_public; Owner: -
 --
 
@@ -2129,6 +2171,34 @@ CREATE INDEX organization_memberships_user_id_idx ON app_public.organization_mem
 
 
 --
+-- Name: projects_creator_user_id_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX projects_creator_user_id_idx ON app_public.projects USING btree (creator_user_id);
+
+
+--
+-- Name: projects_organization_id_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX projects_organization_id_idx ON app_public.projects USING btree (organization_id);
+
+
+--
+-- Name: projects_slug_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX projects_slug_idx ON app_public.projects USING btree (slug);
+
+
+--
+-- Name: projects_updated_at_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX projects_updated_at_idx ON app_public.projects USING btree (updated_at);
+
+
+--
 -- Name: uniq_user_emails_primary_email; Type: INDEX; Schema: app_public; Owner: -
 --
 
@@ -2147,6 +2217,13 @@ CREATE UNIQUE INDEX uniq_user_emails_verified_email ON app_public.user_emails US
 --
 
 CREATE INDEX user_authentications_user_id_idx ON app_public.user_authentications USING btree (user_id);
+
+
+--
+-- Name: projects _100_timestamps; Type: TRIGGER; Schema: app_public; Owner: -
+--
+
+CREATE TRIGGER _100_timestamps BEFORE INSERT OR UPDATE ON app_public.projects FOR EACH ROW EXECUTE FUNCTION app_private.tg__timestamps();
 
 
 --
@@ -2319,6 +2396,22 @@ ALTER TABLE ONLY app_public.organization_memberships
 
 
 --
+-- Name: projects projects_creator_user_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.projects
+    ADD CONSTRAINT projects_creator_user_id_fkey FOREIGN KEY (creator_user_id) REFERENCES app_public.users(id) ON DELETE SET NULL;
+
+
+--
+-- Name: projects projects_organization_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.projects
+    ADD CONSTRAINT projects_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES app_public.organizations(id) ON DELETE CASCADE;
+
+
+--
 -- Name: user_authentications user_authentications_user_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
 --
 
@@ -2386,6 +2479,20 @@ CREATE POLICY insert_own ON app_public.user_emails FOR INSERT WITH CHECK ((user_
 
 
 --
+-- Name: projects insert_own_creator; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY insert_own_creator ON app_public.projects FOR INSERT WITH CHECK ((creator_user_id = app_public.current_user_id()));
+
+
+--
+-- Name: projects insert_own_org; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY insert_own_org ON app_public.projects FOR INSERT WITH CHECK ((organization_id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids)));
+
+
+--
 -- Name: organization_invitations; Type: ROW SECURITY; Schema: app_public; Owner: -
 --
 
@@ -2402,6 +2509,12 @@ ALTER TABLE app_public.organization_memberships ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE app_public.organizations ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: projects; Type: ROW SECURITY; Schema: app_public; Owner: -
+--
+
+ALTER TABLE app_public.projects ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: users select_all; Type: POLICY; Schema: app_public; Owner: -
@@ -2436,6 +2549,13 @@ CREATE POLICY select_member ON app_public.organization_memberships FOR SELECT US
 --
 
 CREATE POLICY select_member ON app_public.organizations FOR SELECT USING ((id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids)));
+
+
+--
+-- Name: projects select_own; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY select_own ON app_public.projects FOR SELECT USING ((organization_id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids)));
 
 
 --
@@ -2873,6 +2993,14 @@ GRANT ALL ON FUNCTION app_public.users_has_password(u app_public.users) TO theop
 
 
 --
+-- Name: FUNCTION users_primary_email(users app_public.users); Type: ACL; Schema: app_public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_public.users_primary_email(users app_public.users) FROM PUBLIC;
+GRANT ALL ON FUNCTION app_public.users_primary_email(users app_public.users) TO theopenpresenter_visitor;
+
+
+--
 -- Name: FUNCTION verify_email(user_email_id uuid, token text); Type: ACL; Schema: app_public; Owner: -
 --
 
@@ -2885,6 +3013,34 @@ GRANT ALL ON FUNCTION app_public.verify_email(user_email_id uuid, token text) TO
 --
 
 GRANT SELECT ON TABLE app_public.organization_memberships TO theopenpresenter_visitor;
+
+
+--
+-- Name: TABLE projects; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT SELECT ON TABLE app_public.projects TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN projects.organization_id; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(organization_id) ON TABLE app_public.projects TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN projects.creator_user_id; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(creator_user_id) ON TABLE app_public.projects TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN projects.slug; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(slug) ON TABLE app_public.projects TO theopenpresenter_visitor;
 
 
 --

@@ -106,6 +106,47 @@ type CreateOrganizationPayload {
   query: Query
 }
 
+"""All input for the create `Project` mutation."""
+input CreateProjectInput {
+  """
+  An arbitrary string value with no semantic meaning. Will be included in the
+  payload verbatim. May be used to track mutations by the client.
+  """
+  clientMutationId: String
+
+  """The `Project` to be created by this mutation."""
+  project: ProjectInput!
+}
+
+"""The output of our create `Project` mutation."""
+type CreateProjectPayload {
+  """
+  The exact same `clientMutationId` that was provided in the mutation input,
+  unchanged and unused. May be used by a client to track mutations.
+  """
+  clientMutationId: String
+
+  """Reads a single `User` that is related to this `Project`."""
+  creatorUser: User
+
+  """Reads a single `Organization` that is related to this `Project`."""
+  organization: Organization
+
+  """The `Project` that was created by this mutation."""
+  project: Project
+
+  """An edge for our `Project`. May be used by Relay 1."""
+  projectEdge(
+    """The method to use when ordering `Project`."""
+    orderBy: [ProjectsOrderBy!] = [PRIMARY_KEY_ASC]
+  ): ProjectsEdge
+
+  """
+  Our root query field type. Allows us to run any query from our mutation payload.
+  """
+  query: Query
+}
+
 """All input for the create `UserEmail` mutation."""
 input CreateUserEmailInput {
   """
@@ -383,6 +424,14 @@ type Mutation {
     """
     input: CreateOrganizationInput!
   ): CreateOrganizationPayload
+
+  """Creates a single `Project`."""
+  createProject(
+    """
+    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.
+    """
+    input: CreateProjectInput!
+  ): CreateProjectPayload
 
   """Creates a single `UserEmail`."""
   createUserEmail(
@@ -806,12 +855,13 @@ type Project {
   """Reads a single `User` that is related to this `Project`."""
   creatorUser: User
   creatorUserId: UUID
-  document: String!
+  document: String
   id: UUID!
 
   """Reads a single `Organization` that is related to this `Project`."""
   organization: Organization
   organizationId: UUID!
+  slug: String!
   updatedAt: Datetime!
 }
 
@@ -828,8 +878,18 @@ input ProjectCondition {
   """Checks for equality with the object’s `organizationId` field."""
   organizationId: UUID
 
+  """Checks for equality with the object’s `slug` field."""
+  slug: String
+
   """Checks for equality with the object’s `updatedAt` field."""
   updatedAt: Datetime
+}
+
+"""An input for mutations affecting `Project`"""
+input ProjectInput {
+  creatorUserId: UUID
+  organizationId: UUID!
+  slug: String!
 }
 
 """A connection to a list of `Project` values."""
@@ -869,6 +929,8 @@ enum ProjectsOrderBy {
   ORGANIZATION_ID_DESC
   PRIMARY_KEY_ASC
   PRIMARY_KEY_DESC
+  SLUG_ASC
+  SLUG_DESC
   UPDATED_AT_ASC
   UPDATED_AT_DESC
 }
@@ -916,6 +978,7 @@ type Query {
   ): OrganizationsConnection
   pluginMeta: PluginMeta!
   project(id: UUID!): Project
+  projectByOrganizationIdAndSlug(organizationId: UUID!, slug: String!): Project
 
   """Reads and enables pagination through a set of `Project`."""
   projects(
@@ -1276,6 +1339,7 @@ type User {
     """The method to use when ordering `OrganizationMembership`."""
     orderBy: [OrganizationMembershipsOrderBy!] = [PRIMARY_KEY_ASC]
   ): OrganizationMembershipsConnection!
+  primaryEmail: String
 
   """Reads and enables pagination through a set of `Project`."""
   projectsByCreatorUserId(

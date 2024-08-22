@@ -1,0 +1,14 @@
+query OrganizationDashboardIndexPage($slug: String!) {
+  ...SharedOrganization
+
+  organizationBySlug(slug: $slug) {
+    id
+    projects(orderBy: UPDATED_AT_DESC) {
+      nodes {
+        id
+        slug
+        updatedAt
+      }
+    }
+  }
+}

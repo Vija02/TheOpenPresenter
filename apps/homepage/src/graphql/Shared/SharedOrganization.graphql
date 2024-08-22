@@ -1,0 +1,22 @@
+fragment CurrentUserShared on Query {
+  currentUser {
+    id
+    ...CurrentUser
+  }
+}
+
+fragment SharedOrganization on Query {
+  # Data of current user
+  ...CurrentUserShared
+
+  # Org Selection
+  ...OrganizationSelector
+
+  organizationBySlug(slug: $slug) {
+    id
+  }
+}
+
+query SharedOrganization($slug: String!) {
+  ...SharedOrganization
+}
