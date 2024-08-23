@@ -2,15 +2,9 @@ import { Box, Text } from "@chakra-ui/react";
 import { Scene } from "@repo/base-plugin";
 import React, { useMemo } from "react";
 
+import { useData, usePluginData } from "./contexts/PluginDataProvider";
 import { usePluginMetaData } from "./contexts/PluginMetaDataProvider";
 import { trpcClient } from "./trpc";
-import {
-  getYJSPluginRenderer,
-  getYJSPluginRendererData,
-  getYJSPluginSceneData,
-  mainState,
-  useData,
-} from "./yjs";
 
 export const Body = () => {
   const data = useData();
@@ -42,11 +36,17 @@ export const Body = () => {
 
 const PluginRenderer = React.memo(
   ({ pluginId, currentScene }: { pluginId: string; currentScene: string }) => {
-    const pluginMetaData = usePluginMetaData();
+    const pluginMetaData = usePluginMetaData().pluginMetaData;
+    const {
+      getYJSPluginRenderer,
+      getYJSPluginRendererData,
+      getYJSPluginSceneData,
+    } = usePluginData();
+    const mainState = usePluginData().mainState!;
 
     const pluginInfo = useMemo(
       () => (mainState.data[currentScene] as Scene).children[pluginId],
-      [currentScene, pluginId],
+      [currentScene, mainState.data, pluginId],
     );
     const tag = useMemo(
       () =>
@@ -74,7 +74,15 @@ const PluginRenderer = React.memo(
         ) : (
           <Text>No renderer for {pluginInfo?.plugin}</Text>
         ),
-      [currentScene, pluginId, pluginInfo?.plugin, tag],
+      [
+        currentScene,
+        getYJSPluginRenderer,
+        getYJSPluginRendererData,
+        getYJSPluginSceneData,
+        pluginId,
+        pluginInfo?.plugin,
+        tag,
+      ],
     );
 
     return <Box key={pluginId}>{TagElement}</Box>;

@@ -1,6 +1,6 @@
 query RemoteBasePlugin($orgSlug: String!, $projectSlug: String!) {
   pluginMeta {
-    ...BasePluginMeta
+    ...BaseRemotePluginMeta
   }
 
   organizationBySlug(slug: $orgSlug) {
@@ -13,7 +13,7 @@ query RemoteBasePlugin($orgSlug: String!, $projectSlug: String!) {
   }
 }
 
-fragment BasePluginMeta on PluginMeta {
+fragment BaseRemotePluginMeta on PluginMeta {
   sceneCreator {
     title
     pluginName

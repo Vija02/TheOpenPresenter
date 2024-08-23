@@ -1,12 +1,25 @@
-query RendererBasePlugin {
+query RendererBasePlugin($orgSlug: String!, $projectSlug: String!) {
   pluginMeta {
-    sceneCreator {
-      title
-      pluginName
+    ...BaseRendererPluginMeta
+  }
+
+  organizationBySlug(slug: $orgSlug) {
+    id
+    projects(condition: { slug: $projectSlug }) {
+      nodes {
+        id
+      }
     }
-    registeredRendererView {
-      pluginName
-      tag
-    }
+  }
+}
+
+fragment BaseRendererPluginMeta on PluginMeta {
+  sceneCreator {
+    title
+    pluginName
+  }
+  registeredRendererView {
+    pluginName
+    tag
   }
 }
