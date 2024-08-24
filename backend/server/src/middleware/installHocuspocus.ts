@@ -6,7 +6,8 @@ import type {
   YState,
 } from "@repo/base-plugin";
 import { Express } from "express";
-import { IncomingMessage } from "http";
+import { IncomingMessage, ServerResponse } from "http";
+import { Middleware } from "postgraphile";
 import { Duplex } from "stream";
 import { typeidUnboxed } from "typeid-js";
 import { proxy } from "valtio";
@@ -14,11 +15,9 @@ import { bind } from "valtio-yjs";
 import WebSocket, { WebSocketServer } from "ws";
 import * as Y from "yjs";
 
-import { getUpgradeHandlers } from "../app";
+import { getUpgradeHandlers, getWebsocketMiddlewares } from "../app";
 import { serverPluginApi } from "../pluginManager";
-
-// TODO: Use DB
-const temporaryDatabase: Record<string, any> = {};
+import { getAuthPgPool, getRootPgPool } from "./installDatabasePools";
 
 class DisposableDocumentManager {
   private disposable: Record<string, IDisposable[]> = {};
@@ -45,12 +44,56 @@ export default async function installHocuspocus(app: Express) {
   Server.configure({
     name: "Hocuspocus Server",
     onStoreDocument: async (data) => {
-      temporaryDatabase[data.documentName] = Buffer.from(
-        Y.encodeStateAsUpdate(data.document),
+      const rootPgPool = getRootPgPool(app);
+      await rootPgPool.query(
+        "update app_public.projects set document = $1 where id = $2",
+        [Buffer.from(Y.encodeStateAsUpdate(data.document)), data.documentName],
       );
     },
+    onAuthenticate: async (data) => {
+      const authPgPool = getAuthPgPool(app);
+
+      const sessionId = data.context.session_id;
+
+      const client = await authPgPool.connect();
+      try {
+        await client.query("BEGIN");
+
+        await client.query(
+          `select set_config('role', $1::text, true), set_config('jwt.claims.session_id', $2::text, true)`,
+          [process.env.DATABASE_VISITOR, sessionId],
+        );
+        const {
+          rows: [row],
+        } = await client.query(
+          "select * from app_public.projects where id = $1",
+          [data.documentName],
+        );
+        if (!row) {
+          throw new Error("Not Authorized");
+        }
+
+        await client.query("COMMIT");
+      } catch (e) {
+        await client.query("ROLLBACK");
+        throw e;
+      } finally {
+        client.release();
+      }
+    },
     onLoadDocument: async (data) => {
-      if (!temporaryDatabase[data.documentName]) {
+      const rootPgPool = getRootPgPool(app);
+
+      const {
+        rows: [row],
+      } = await rootPgPool.query(
+        "select * from app_public.projects where id = $1",
+        [data.documentName],
+      );
+
+      let dbDocument = row.document;
+
+      if (!dbDocument) {
         const yDoc = new Y.Doc();
         // Initial state. We use valtio here so that we can define it as JSON
         const mainState = proxy({
@@ -71,14 +114,16 @@ export default async function installHocuspocus(app: Express) {
 
         const update = Y.encodeStateAsUpdate(yDoc);
 
-        temporaryDatabase[data.documentName] = update;
+        dbDocument = update;
+        await rootPgPool.query(
+          "update app_public.projects set document = $1 where id = $2",
+          [update, data.documentName],
+        );
         unbind();
       }
 
-      const update = temporaryDatabase[data.documentName];
-
-      if (update) {
-        Y.applyUpdate(data.document, update);
+      if (dbDocument) {
+        Y.applyUpdate(data.document, dbDocument);
       }
 
       /**
@@ -201,10 +246,11 @@ export default async function installHocuspocus(app: Express) {
   });
 
   const webSocketServer = new WebSocketServer({ noServer: true });
+  const websocketMiddlewares = getWebsocketMiddlewares(app);
 
   webSocketServer.on(
     "connection",
-    async (incoming: WebSocket, request: IncomingMessage) => {
+    async (incoming: WebSocket, request: OurRequest) => {
       incoming.on("error", (error) => {
         /**
          * Handle a ws instance error, which is required to prevent
@@ -216,7 +262,30 @@ export default async function installHocuspocus(app: Express) {
         console.log(error);
       });
 
-      Server.handleConnection(incoming, request);
+      const dummyRes = new ServerResponse(request);
+
+      await applyMiddleware(
+        websocketMiddlewares as Middleware<IncomingMessage, ServerResponse>[],
+        request,
+        dummyRes,
+      );
+
+      // Everyone needs to be logged in
+      if (!request.user.session_id) {
+        const errorMessage = JSON.stringify({
+          type: "error",
+          code: 401,
+          message:
+            "You do not have permission to use this WebSocket connection",
+        });
+        incoming.send(errorMessage);
+        incoming.close();
+        return;
+      }
+
+      Server.handleConnection(incoming, request, {
+        session_id: request.user.session_id,
+      });
     },
   );
 
@@ -238,4 +307,20 @@ export default async function installHocuspocus(app: Express) {
     },
     upgrade: hocuspocusUpgradeHandler,
   });
+}
+
+const applyMiddleware = async (
+  middlewares: Array<Middleware<IncomingMessage, ServerResponse>> = [],
+  req: IncomingMessage,
+  res: ServerResponse,
+): Promise<void> => {
+  for (const middleware of middlewares) {
+    await new Promise<void>((resolve, reject): void => {
+      middleware(req, res, (err) => (err ? reject(err) : resolve()));
+    });
+  }
+};
+
+interface OurRequest extends IncomingMessage {
+  user: { session_id: string };
 }

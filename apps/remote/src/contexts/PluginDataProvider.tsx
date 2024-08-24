@@ -112,6 +112,8 @@ const initializeHocuspocusProvider = (projectId: string) => {
     const provider = new HocuspocusProvider({
       url: (getRootURL() + "/wlink").replace(/^http/, "ws"),
       name: projectId,
+      // Here only to force authentication
+      token: " ",
     });
 
     // Set a timeout to reject if we can't connect
