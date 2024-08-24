@@ -1,5 +1,5 @@
 import { Box, Flex, Heading, Text } from "@chakra-ui/react";
-import { useMemo } from "react";
+import React, { useMemo } from "react";
 
 import { getSlideStyle } from "../../../src/slideStyle";
 import MWLSongRenderView from "../../MWLRenderer/MWLSongRenderView";
@@ -11,7 +11,7 @@ import {
 } from "../../songHelpers";
 import { pluginApi } from "../../util";
 
-const MWLSongView = ({ songId }: { songId: number }) => {
+const MWLSongView = React.memo(({ songId }: { songId: number }) => {
   const songCaches = pluginApi.scene.useData((x) => x.pluginData.songCache);
   const songCache = useMemo(
     () => songCaches.find((x) => x.id === songId),
@@ -22,9 +22,9 @@ const MWLSongView = ({ songId }: { songId: number }) => {
     return <Text>Loading...</Text>;
   }
   return <MWLSongViewInner songId={songId} />;
-};
+});
 
-const MWLSongViewInner = ({ songId }: { songId: number }) => {
+const MWLSongViewInner = React.memo(({ songId }: { songId: number }) => {
   const songCaches = pluginApi.scene.useData((x) => x.pluginData.songCache);
   const slideStyle = pluginApi.scene.useData((x) => x.pluginData.style);
   const renderData = pluginApi.renderer.useData((x) => x);
@@ -74,11 +74,11 @@ const MWLSongViewInner = ({ songId }: { songId: number }) => {
             <Box
               aspectRatio={4 / 3}
               w="200px"
-              border="1px"
+              borderWidth="4px"
               borderColor={
                 section === renderData.heading && songId === renderData.songId
-                  ? "blue.600"
-                  : "gray.200"
+                  ? "red.600"
+                  : "transparent"
               }
             >
               <MWLSongRenderView
@@ -92,6 +92,6 @@ const MWLSongViewInner = ({ songId }: { songId: number }) => {
       </Flex>
     </Box>
   );
-};
+});
 
 export default MWLSongView;
