@@ -63,13 +63,19 @@ const RemoteHandler = () => {
               setRenderCurrentScene();
             }}
           />
+          <Text
+            fontWeight="bold"
+            textTransform="uppercase"
+            fontSize="xs"
+            mb={1}
+          >
+            Slide {i + 1}
+          </Text>
           <Box
             aspectRatio={4 / 3}
             w="200px"
             border="1px"
-            borderColor={
-              i === rendererData.slideIndex ? "blue.600" : "gray.200"
-            }
+            borderColor={i === rendererData.slideIndex ? "red.600" : "gray.200"}
           >
             {/* <RenderView
               key={pluginData.slideLink}
