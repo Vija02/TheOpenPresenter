@@ -20,10 +20,18 @@ const MainBody = () => {
       overflow="auto"
       tabIndex={0}
       onKeyDown={(e) => {
-        if (e.key === "ArrowRight" || e.key === "ArrowLeft")
+        if (
+          e.key === "ArrowUp" ||
+          e.key === "ArrowDown" ||
+          e.key === "ArrowRight" ||
+          e.key === "ArrowLeft"
+        )
           keyPressMutate({
             variables: {
-              keyType: e.key === "ArrowRight" ? "NEXT" : "PREV",
+              keyType:
+                e.key === "ArrowRight" || e.key === "ArrowDown"
+                  ? "NEXT"
+                  : "PREV",
               projectId: projectId,
               // TODO:
               rendererId: "1",
