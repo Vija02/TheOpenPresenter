@@ -271,7 +271,7 @@ export default async function installHocuspocus(app: Express) {
       );
 
       // Everyone needs to be logged in
-      if (!request.user.session_id) {
+      if (!request?.user?.session_id) {
         const errorMessage = JSON.stringify({
           type: "error",
           code: 401,
