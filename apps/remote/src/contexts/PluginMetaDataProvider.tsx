@@ -43,7 +43,10 @@ export function PluginMetaDataProvider({
   }
 
   // Check that project doesn't exist
-  if (pluginMetaData?.organizationBySlug?.projects.nodes.length === 0) {
+  if (
+    !pluginMetaData?.organizationBySlug?.projects.nodes ||
+    pluginMetaData.organizationBySlug.projects.nodes.length === 0
+  ) {
     window.location.href = `/o/${orgSlug}`;
     return <Text>Project does not exist. Redirecting...</Text>;
   }
