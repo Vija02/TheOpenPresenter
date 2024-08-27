@@ -1,5 +1,8 @@
 import { initTRPC } from "@trpc/server";
 import { RequestHandler } from "express";
+import fs from "fs";
+import path from "path";
+import { typeidUnboxed } from "typeid-js";
 
 import {
   RegisterKeyPressHandlerCallback,
@@ -146,5 +149,23 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
 
   public registerCSPDirective(pluginName: string, cspDirective: any) {
     this.registeredCSPDirectives.push({ pluginName, cspDirective });
+  }
+
+  public uploadMedia(
+    media: string | NodeJS.ArrayBufferView,
+    extension: string,
+  ) {
+    const newFileName = typeidUnboxed("media") + "." + extension;
+
+    const uploadsDir = path.resolve(`${__dirname}/../../../../uploads`);
+    const final = uploadsDir + "/" + newFileName;
+
+    fs.writeFileSync(final, media);
+
+    return {
+      newFileName,
+      url: process.env.ROOT_URL + "/media/data/" + newFileName,
+      extension,
+    };
   }
 }

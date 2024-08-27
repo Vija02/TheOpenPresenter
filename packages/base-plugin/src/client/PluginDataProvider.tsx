@@ -1,3 +1,4 @@
+import { appData } from "@repo/lib";
 import React, {
   createContext,
   useCallback,
@@ -143,6 +144,10 @@ export function getTypedProviderHelperFunctions<
       return () => {
         pluginDataContext.setRenderCurrentScene();
       };
+    },
+    media: {
+      getUrl: (fileName: string) =>
+        appData.getRootURL() + "/media/data/" + fileName,
     },
     scene: {
       // Use this for read

@@ -8,8 +8,8 @@
     "declarationDir": "dist",
     "lib": ["es2018", "esnext.asynciterable"],
     "target": "es2018",
-    "module": "CommonJS",
-    "moduleResolution": "Node",
+    "module": "Preserve",
+    "moduleResolution": "Bundler",
     "jsx": "react-jsx"
   },
   "include": ["src"]

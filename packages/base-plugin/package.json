@@ -39,6 +39,7 @@
     "dev": "pkgroll --watch"
   },
   "dependencies": {
+    "@repo/lib": "*",
     "@trpc/server": "^11.0.0-rc.461",
     "@types/express": "^4.17.21",
     "@types/react": "npm:types-react@rc",
@@ -46,6 +47,7 @@
     "react": "rc",
     "react-yjs": "^2.0.0",
     "tslib": "^2.6.3",
+    "typeid-js": "^1.0.0",
     "valtio": "^1.13.2",
     "valtio-yjs": "^0.6.0",
     "yjs": "^13.6.18",
