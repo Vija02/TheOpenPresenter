@@ -28,6 +28,8 @@ services:
       - GITHUB_SECRET=$GITHUB_SECRET
       - GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID
       - GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET
+    volumes: 
+      - ./uploads:/app/uploads
     labels:
       caddy: theopenpresenter.com
       caddy.reverse_proxy: "{{upstreams 5678}}"

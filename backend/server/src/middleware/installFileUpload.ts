@@ -4,7 +4,7 @@ import path from "path";
 import { typeidUnboxed } from "typeid-js";
 
 const storage = multer.diskStorage({
-  destination: path.resolve(`${__dirname}/../../../../uploads`),
+  destination: path.resolve(`${__dirname}/../../../uploads`),
   filename: function (_req, file, cb) {
     const originalFileName = file.originalname;
     const splitFileName = originalFileName.split(".") ?? [""];
@@ -22,7 +22,7 @@ const upload = multer({
 export default (app: Express) => {
   app.use(
     `/media/data`,
-    staticMiddleware(path.resolve(__dirname, "../../../../uploads")),
+    staticMiddleware(path.resolve(`${__dirname}/../../../uploads`)),
   );
   app.use(`/media/upload/formData`, upload.single("file"), (req, res, next) => {
     // Shouldn't get here since we have multer
