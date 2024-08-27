@@ -1,0 +1,28 @@
+diff --git a/node_modules/@hocuspocus/server/dist/hocuspocus-server.cjs b/node_modules/@hocuspocus/server/dist/hocuspocus-server.cjs
+index 52516f9..a2f1b90 100644
+--- a/node_modules/@hocuspocus/server/dist/hocuspocus-server.cjs
++++ b/node_modules/@hocuspocus/server/dist/hocuspocus-server.cjs
+@@ -2734,7 +2734,8 @@ class Hocuspocus {
+         // WebSocket connection, we don’t need to feel responsible for
+         // storing the content.
+         // also ignore changes incoming through redis connection, as this would be a breaking change (#730, #696, #606)
+-        if (!connection || connection === '__hocuspocus__redis__origin__') {
++        // NOTE: THIS IS PATCHED BY US
++        if (connection === '__hocuspocus__redis__origin__') {
+             return;
+         }
+         await this.storeDocumentHooks(document, hookPayload);
+diff --git a/node_modules/@hocuspocus/server/dist/hocuspocus-server.esm.js b/node_modules/@hocuspocus/server/dist/hocuspocus-server.esm.js
+index 1d33a25..59b2744 100644
+--- a/node_modules/@hocuspocus/server/dist/hocuspocus-server.esm.js
++++ b/node_modules/@hocuspocus/server/dist/hocuspocus-server.esm.js
+@@ -2707,7 +2707,8 @@ class Hocuspocus {
+         // WebSocket connection, we don’t need to feel responsible for
+         // storing the content.
+         // also ignore changes incoming through redis connection, as this would be a breaking change (#730, #696, #606)
+-        if (!connection || connection === '__hocuspocus__redis__origin__') {
++        // NOTE: THIS IS PATCHED BY US
++        if (connection === '__hocuspocus__redis__origin__') {
+             return;
+         }
+         await this.storeDocumentHooks(document, hookPayload);
