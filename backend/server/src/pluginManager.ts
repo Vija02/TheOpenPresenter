@@ -52,6 +52,9 @@ class ServerPluginApiPrivate extends ServerPluginApi {
   getRegisteredCSPDirectives() {
     return this.registeredCSPDirectives;
   }
+  getRegisteredEnvToViews() {
+    return this.registeredEnvToViews;
+  }
 }
 
 export const serverPluginApi = new ServerPluginApiPrivate();

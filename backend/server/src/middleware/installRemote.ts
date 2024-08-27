@@ -52,9 +52,11 @@ function transformer(html: string, req: Request) {
     serverPluginApi.getRegisteredLoadJsOnRemoteView();
   const registeredLoadCssOnRemoteView =
     serverPluginApi.getRegisteredLoadCssOnRemoteView();
+  const registeredEnvToViews = serverPluginApi.getRegisteredEnvToViews();
 
   const scripts = [];
 
+  // TODO: Load only plugins that are active
   // Load all file from plugins
   scripts.push(
     ...registeredLoadJsOnRemoteView.map(
@@ -70,8 +72,21 @@ function transformer(html: string, req: Request) {
   );
 
   // Extra data
+  const extraEnv = [
+    { ROOT_URL: process.env.ROOT_URL, CSRF_TOKEN: req.csrfToken() } as Record<
+      string,
+      string
+    >,
+  ]
+    .concat(registeredEnvToViews.map((x) => x.envVars))
+    .reduce((acc, val) => ({ ...acc, ...val }), {} as Record<string, string>);
+
   scripts.push(
-    `<script nonce="INJECT_NONCE">window.__APP_DATA__ = { ROOT_URL: "${process.env.ROOT_URL}", CSRF_TOKEN: "${req.csrfToken()}" }</script>`,
+    `<script nonce="INJECT_NONCE">window.__APP_DATA__ = { ${Object.entries(
+      extraEnv,
+    )
+      .map(([key, val]) => `${key}: "${val}"`)
+      .join(", ")} }</script>`,
   );
 
   return injectEndOfHead(html, scripts.join("\n")).replace(

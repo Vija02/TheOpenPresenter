@@ -67,6 +67,10 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
     pluginName: string;
     cspDirective: any;
   }[] = [];
+  protected registeredEnvToViews: {
+    pluginName: string;
+    envVars: Record<string, string>;
+  }[] = [];
 
   public registerTrpcAppRouter(
     getAppRouter: (t: ReturnType<typeof initTRPC.create>) => any,
@@ -149,6 +153,13 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
 
   public registerCSPDirective(pluginName: string, cspDirective: any) {
     this.registeredCSPDirectives.push({ pluginName, cspDirective });
+  }
+
+  public registerEnvToViews(
+    pluginName: string,
+    envVars: Record<string, string>,
+  ) {
+    this.registeredEnvToViews.push({ pluginName, envVars });
   }
 
   public uploadMedia(
