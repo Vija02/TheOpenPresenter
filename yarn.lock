@@ -4575,6 +4575,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@repo/base-plugin@workspace:packages/base-plugin"
   dependencies:
+    "@repo/lib": "npm:*"
     "@repo/typescript-config": "npm:*"
     "@trpc/server": "npm:^11.0.0-rc.461"
     "@types/express": "npm:^4.17.21"
@@ -4584,6 +4585,7 @@ __metadata:
     react: "npm:rc"
     react-yjs: "npm:^2.0.0"
     tslib: "npm:^2.6.3"
+    typeid-js: "npm:^1.0.0"
     typescript: "npm:^5.5.4"
     valtio: "npm:^1.13.2"
     valtio-yjs: "npm:^0.6.0"
@@ -4688,7 +4690,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@repo/lib@workspace:packages/lib":
+"@repo/lib@npm:*, @repo/lib@workspace:packages/lib":
   version: 0.0.0-use.local
   resolution: "@repo/lib@workspace:packages/lib"
   dependencies:
@@ -4696,15 +4698,16 @@ __metadata:
     "@repo/typescript-config": "npm:*"
     graphql: "npm:^15.9.0"
     pkgroll: "npm:^2.4.2"
+    react: "npm:rc"
     tslib: "npm:^2.6.3"
     typescript: "npm:^5.5.4"
     zustand: "npm:^4.5.5"
   languageName: unknown
   linkType: soft
 
-"@repo/plugin-google-slides@workspace:plugins/google-slides":
+"@repo/plugin-audio-recorder@workspace:plugins/audio-recorder":
   version: 0.0.0-use.local
-  resolution: "@repo/plugin-google-slides@workspace:plugins/google-slides"
+  resolution: "@repo/plugin-audio-recorder@workspace:plugins/audio-recorder"
   dependencies:
     "@chakra-ui/react": "npm:^2.8.2"
     "@emotion/react": "npm:^11.13.0"
@@ -4720,16 +4723,53 @@ __metadata:
     "@trpc/server": "npm:^11.0.0-rc.461"
     "@types/react": "npm:types-react@rc"
     "@types/react-dom": "npm:types-react-dom@rc"
+    "@uppy/core": "npm:^4.1.0"
+    "@uppy/dashboard": "npm:^4.0.2"
+    "@uppy/file-input": "npm:^4.0.0"
+    "@uppy/react": "npm:^4.0.1"
+    "@uppy/status-bar": "npm:^4.0.1"
+    "@uppy/xhr-upload": "npm:^4.0.2"
+    "@vitejs/plugin-react-swc": "npm:^3.7.0"
+    eslint: "npm:^8.57.0"
+    framer-motion: "npm:^11.3.8"
+    pkgroll: "npm:^2.4.2"
+    react: "npm:rc"
+    react-dom: "npm:rc"
+    vite: "npm:^5.3.5"
+    yjs: "npm:^13.6.18"
+  languageName: unknown
+  linkType: soft
+
+"@repo/plugin-google-slides@workspace:plugins/google-slides":
+  version: 0.0.0-use.local
+  resolution: "@repo/plugin-google-slides@workspace:plugins/google-slides"
+  dependencies:
+    "@chakra-ui/react": "npm:^2.8.2"
+    "@emotion/react": "npm:^11.13.0"
+    "@emotion/styled": "npm:^11.13.0"
+    "@r2wc/react-to-web-component": "npm:^2.0.3"
+    "@repo/base-plugin": "npm:*"
+    "@repo/eslint-config": "npm:*"
+    "@repo/lib": "npm:*"
+    "@repo/prettier-config": "npm:*"
+    "@repo/typescript-config": "npm:*"
+    "@tanstack/react-query": "npm:^5.51.1"
+    "@trpc/client": "npm:^11.0.0-rc.461"
+    "@trpc/react-query": "npm:^11.0.0-rc.461"
+    "@trpc/server": "npm:^11.0.0-rc.461"
+    "@types/gapi": "npm:^0.0.47"
+    "@types/google.accounts": "npm:^0.0.14"
+    "@types/google.picker": "npm:^0.0.42"
+    "@types/react": "npm:types-react@rc"
+    "@types/react-dom": "npm:types-react-dom@rc"
     "@vitejs/plugin-react-swc": "npm:^3.7.0"
     axios: "npm:^1.7.2"
     eslint: "npm:^8.57.0"
     framer-motion: "npm:^11.3.8"
-    html5parser: "npm:^2.0.2"
     http-proxy-middleware: "npm:^3.0.0"
     pkgroll: "npm:^2.4.2"
     react: "npm:rc"
     react-dom: "npm:rc"
-    recast: "npm:^0.23.9"
     valtio: "npm:^1.13.2"
     valtio-yjs: "npm:^0.6.0"
     vite: "npm:^5.3.5"
@@ -4835,6 +4875,7 @@ __metadata:
     "@repo/base-plugin": "npm:*"
     "@repo/eslint-config": "npm:*"
     "@repo/graphql": "npm:*"
+    "@repo/lib": "npm:*"
     "@repo/plugin-myworshiplist": "npm:*"
     "@repo/prettier-config": "npm:*"
     "@repo/typescript-config": "npm:*"
@@ -4880,6 +4921,7 @@ __metadata:
     "@hocuspocus/provider": "npm:^2.13.2"
     "@repo/base-plugin": "npm:*"
     "@repo/eslint-config": "npm:*"
+    "@repo/lib": "npm:*"
     "@repo/plugin-myworshiplist": "npm:*"
     "@repo/prettier-config": "npm:*"
     "@repo/typescript-config": "npm:*"
@@ -5601,6 +5643,27 @@ __metadata:
     "@types/qs": "npm:*"
     "@types/serve-static": "npm:*"
   checksum: 10c0/12e562c4571da50c7d239e117e688dc434db1bac8be55613294762f84fd77fbd0658ccd553c7d3ab02408f385bc93980992369dd30e2ecd2c68c358e6af8fabf
+  languageName: node
+  linkType: hard
+
+"@types/gapi@npm:^0.0.47":
+  version: 0.0.47
+  resolution: "@types/gapi@npm:0.0.47"
+  checksum: 10c0/014d7326b6182d260c33ae5b7317d7c0271263dde83b9d24fccd78481dce8877f0ec7a110467a626bf9e1c0b73f2b1935c31f5ef66f71f1328ae0926f6e8b0fe
+  languageName: node
+  linkType: hard
+
+"@types/google.accounts@npm:^0.0.14":
+  version: 0.0.14
+  resolution: "@types/google.accounts@npm:0.0.14"
+  checksum: 10c0/70f8f2e4334df2fff213353530def82ec219ecd49957c0a63aa4612e27e6c94044015d0395d28b47ccc77dbdbb560535b269c8ab722b04e3bc6676fcccceeefb
+  languageName: node
+  linkType: hard
+
+"@types/google.picker@npm:^0.0.42":
+  version: 0.0.42
+  resolution: "@types/google.picker@npm:0.0.42"
+  checksum: 10c0/f3b25634708aa554deb677b4b7e7b6cfb7f8b7982dc3ff9ff6ccc5226e876c329199581307d9d1ea235fc508d25197f19f78dd707a34b3fda31ec96f99594c3f
   languageName: node
   linkType: hard
 
@@ -7204,15 +7267,6 @@ __metadata:
   version: 0.0.8
   resolution: "ast-types-flow@npm:0.0.8"
   checksum: 10c0/f2a0ba8055353b743c41431974521e5e852a9824870cd6fce2db0e538ac7bf4da406bbd018d109af29ff3f8f0993f6a730c9eddbd0abd031fbcb29ca75c1014e
-  languageName: node
-  linkType: hard
-
-"ast-types@npm:^0.16.1":
-  version: 0.16.1
-  resolution: "ast-types@npm:0.16.1"
-  dependencies:
-    tslib: "npm:^2.0.1"
-  checksum: 10c0/abcc49e42eb921a7ebc013d5bec1154651fb6dbc3f497541d488859e681256901b2990b954d530ba0da4d0851271d484f7057d5eff5e07cb73e8b10909f711bf
   languageName: node
   linkType: hard
 
@@ -9835,7 +9889,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"esprima@npm:^4.0.0, esprima@npm:~4.0.0":
+"esprima@npm:^4.0.0":
   version: 4.0.1
   resolution: "esprima@npm:4.0.1"
   bin:
@@ -11130,15 +11184,6 @@ __metadata:
     htmlparser2: "npm:^8.0.2"
     selderee: "npm:^0.11.0"
   checksum: 10c0/5d2c77b798cf88a81b1da2fc1ea1a3b3e2ff49fe5a3d812392f802fff18ec315cf0969bd7846ef2eb7df8c37f463bc63e8cbdcf84e42696c6f3e15dfa61cdf4f
-  languageName: node
-  linkType: hard
-
-"html5parser@npm:^2.0.2":
-  version: 2.0.2
-  resolution: "html5parser@npm:2.0.2"
-  dependencies:
-    tslib: "npm:^2.2.0"
-  checksum: 10c0/1ba2829f7586296a186a2ab64d460c17c23494f503bd9fcb1abc044ab5dd7505cc44f4c6f81ca77a79ed0fe9914351467d03d1c7870071a89ebc6d08d3cd9e78
   languageName: node
   linkType: hard
 
@@ -15568,19 +15613,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"recast@npm:^0.23.9":
-  version: 0.23.9
-  resolution: "recast@npm:0.23.9"
-  dependencies:
-    ast-types: "npm:^0.16.1"
-    esprima: "npm:~4.0.0"
-    source-map: "npm:~0.6.1"
-    tiny-invariant: "npm:^1.3.3"
-    tslib: "npm:^2.0.1"
-  checksum: 10c0/65d6e780351f0180ea4fe5c9593ac18805bf2b79977f5bedbbbf26f6d9b619ed0f6992c1bf9e06dd40fca1aea727ad6d62463cfb5d3a33342ee5a6e486305fe5
-  languageName: node
-  linkType: hard
-
 "redis@npm:*, redis@npm:^4.6.15":
   version: 4.6.15
   resolution: "redis@npm:4.6.15"
@@ -16423,7 +16455,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"source-map@npm:^0.6.0, source-map@npm:~0.6.0, source-map@npm:~0.6.1":
+"source-map@npm:^0.6.0, source-map@npm:~0.6.0":
   version: 0.6.1
   resolution: "source-map@npm:0.6.1"
   checksum: 10c0/ab55398007c5e5532957cb0beee2368529618ac0ab372d789806f5718123cc4367d57de3904b4e6a4170eb5a0b0f41373066d02ca0735a0c4d75c7d328d3e011
@@ -16902,7 +16934,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tiny-invariant@npm:^1.0.6, tiny-invariant@npm:^1.3.3":
+"tiny-invariant@npm:^1.0.6":
   version: 1.3.3
   resolution: "tiny-invariant@npm:1.3.3"
   checksum: 10c0/65af4a07324b591a059b35269cd696aba21bef2107f29b9f5894d83cc143159a204b299553435b03874ebb5b94d019afa8b8eff241c8a4cfee95872c2e1c1c4a
@@ -17175,7 +17207,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tslib@npm:^2.0.0, tslib@npm:^2.0.1, tslib@npm:^2.0.3, tslib@npm:^2.1.0, tslib@npm:^2.2.0, tslib@npm:^2.3.0, tslib@npm:^2.3.1, tslib@npm:^2.4.0, tslib@npm:^2.5.0, tslib@npm:^2.6.1, tslib@npm:^2.6.2, tslib@npm:^2.6.3, tslib@npm:~2.6.0":
+"tslib@npm:^2.0.0, tslib@npm:^2.0.1, tslib@npm:^2.0.3, tslib@npm:^2.1.0, tslib@npm:^2.3.0, tslib@npm:^2.3.1, tslib@npm:^2.4.0, tslib@npm:^2.5.0, tslib@npm:^2.6.1, tslib@npm:^2.6.2, tslib@npm:^2.6.3, tslib@npm:~2.6.0":
   version: 2.6.3
   resolution: "tslib@npm:2.6.3"
   checksum: 10c0/2598aef53d9dbe711af75522464b2104724d6467b26a60f2bdac8297d2b5f1f6b86a71f61717384aa8fd897240467aaa7bcc36a0700a0faf751293d1331db39a
