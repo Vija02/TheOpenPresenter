@@ -49,6 +49,8 @@ export default async function installHelmet(app: Express) {
           defaultDirectives as Record<string, any>,
         ),
       },
+      // Useful for OAuth
+      crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
     };
 
     if (isDevOrTest) {
