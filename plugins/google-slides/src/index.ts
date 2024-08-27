@@ -6,9 +6,7 @@ import {
 } from "@repo/base-plugin/server";
 import { initTRPC } from "@trpc/server";
 import axios from "axios";
-import { SyntaxKind, parse as parseHtml, walk as walkHtml } from "html5parser";
 import { createProxyMiddleware } from "http-proxy-middleware";
-import { parse as parseJs, print } from "recast";
 import { proxy } from "valtio";
 import { bind } from "valtio-yjs";
 import Y from "yjs";
@@ -25,11 +23,18 @@ export const init = (
   serverPluginApi: ServerPluginApi<PluginBaseData, RendererBaseData>,
 ) => {
   serverPluginApi.registerCSPDirective(pluginName, {
-    "frame-src": ["docs.google.com"],
+    "frame-src": ["*.google.com"],
     "img-src": ["*.googleusercontent.com", "ssl.gstatic.com"],
+    // We need these for Auth & Google Picker API
+    "script-src": [
+      "https://apis.google.com",
+      "https://accounts.google.com/gsi/client",
+    ],
+    "connect-src": ["https://accounts.google.com/gsi/"],
+    "default-src": ["https://accounts.google.com/gsi/"],
   });
 
-  serverPluginApi.registerTrpcAppRouter(getAppRouter);
+  serverPluginApi.registerTrpcAppRouter(getAppRouter(serverPluginApi));
   serverPluginApi.onPluginDataCreated(pluginName, onPluginDataCreated);
   serverPluginApi.onPluginDataLoaded(pluginName, onPluginDataLoaded);
   serverPluginApi.registerSceneCreator(pluginName, {
@@ -51,9 +56,9 @@ export const init = (
     pluginName,
     rendererWebComponentTag,
   );
-  serverPluginApi.registerPrivateRoute(pluginName, "proxy", (req, res) => {
-    res.send(html);
-  });
+  // serverPluginApi.registerPrivateRoute(pluginName, "proxy", (req, res) => {
+  //   res.send(html);
+  // });
 
   // TODO: Handle different regions
   // Maybe we want to cache it too?
@@ -67,7 +72,7 @@ export const init = (
   serverPluginApi.registerKeyPressHandler(
     pluginName,
     (keyType, { pluginData, rendererData }, next) => {
-      const slideIds = pluginData.get("slideIds");
+      const pageIds = pluginData.get("pageIds");
       const slideIndex = rendererData.get("slideIndex");
 
       if (slideIndex === null || slideIndex === undefined) {
@@ -76,13 +81,13 @@ export const init = (
       }
 
       if (keyType === "NEXT") {
-        if (slideIds?._length && slideIds._length - 1 > slideIndex) {
+        if (pageIds?._length && pageIds._length - 1 > slideIndex) {
           rendererData.set("slideIndex", slideIndex + 1);
         } else {
           next();
         }
       } else {
-        if (slideIds?._length && slideIndex > 0) {
+        if (pageIds?._length && slideIndex > 0) {
           rendererData.set("slideIndex", slideIndex - 1);
         } else {
           next();
@@ -93,116 +98,107 @@ export const init = (
 };
 
 const onPluginDataCreated = (pluginInfo: ObjectToTypedMap<Plugin>) => {
-  pluginInfo.get("pluginData")?.set("slideLink", "");
-  pluginInfo.get("pluginData")?.set("slideIds", new Y.Array());
+  pluginInfo.get("pluginData")?.set("presentationId", "");
+  pluginInfo.get("pluginData")?.set("pageIds", new Y.Array());
+  pluginInfo.get("pluginData")?.set("thumbnailLinks", new Y.Array());
 
   return {};
 };
 
+// Keep a local copy of the yjs data so that we can use it outside the initialization context
 const loadedPlugins: Record<string, Plugin<PluginBaseData>> = {};
+const loadedYjsData: Record<
+  string,
+  ObjectToTypedMap<Plugin<PluginBaseData>>
+> = {};
 
 const contextToKey = (context: PluginContext) =>
   `${context.sceneId}_${context.pluginId}`;
 
 const onPluginDataLoaded = (
-  pluginInfo: ObjectToTypedMap<Plugin>,
+  pluginInfo: ObjectToTypedMap<Plugin<PluginBaseData>>,
   context: PluginContext,
 ) => {
   const data = proxy(pluginInfo.toJSON() as Plugin<PluginBaseData>);
   const unbind = bind(data, pluginInfo as any);
 
   loadedPlugins[contextToKey(context)] = data;
+  loadedYjsData[contextToKey(context)] = pluginInfo;
 
   return {
     dispose: () => {
       delete loadedPlugins[contextToKey(context)];
+      delete loadedYjsData[contextToKey(context)];
       unbind();
     },
   };
 };
 
-let html = "";
+const getAppRouter =
+  (serverPluginApi: ServerPluginApi) =>
+  (t: ReturnType<typeof initTRPC.create>) => {
+    return t.router({
+      googleslides: {
+        selectSlide: t.procedure
+          .input(
+            z.object({
+              sceneId: z.string(),
+              pluginId: z.string(),
+              presentationId: z.string(),
+              token: z.string(),
+            }),
+          )
+          .mutation(
+            async ({ input: { sceneId, pluginId, presentationId, token } }) => {
+              // TODO: Validation
+              const loadedPlugin =
+                loadedPlugins[contextToKey({ sceneId, pluginId })]!;
 
-const getAppRouter = (t: ReturnType<typeof initTRPC.create>) => {
-  return t.router({
-    googleslides: {
-      setLink: t.procedure
-        .input(
-          z.object({
-            sceneId: z.string(),
-            pluginId: z.string(),
-            slideLink: z.string(),
-          }),
-        )
-        .mutation(async ({ input: { sceneId, pluginId, slideLink } }) => {
-          // TODO: Validation
-          const loadedPlugin =
-            loadedPlugins[contextToKey({ sceneId, pluginId })]!;
+              const presentationDataRes = await axios(
+                `https://slides.googleapis.com/v1/presentations/${presentationId}`,
+                {
+                  headers: { Authorization: `Bearer ${token}` },
+                },
+              );
 
-          if (slideLink !== "") {
-            const googleSlideHtmlData = await axios.get(slideLink);
-            const rawHtml = googleSlideHtmlData.data;
-            // TODO:
-            html = processHtml(rawHtml);
-            const htmlAst = parseHtml(rawHtml);
+              const pageIds = presentationDataRes.data.slides.map(
+                (page: any) => page.objectId,
+              );
 
-            walkHtml(htmlAst, {
-              enter(node) {
-                if (node.type === SyntaxKind.Tag && node.name === "script") {
-                  const firstNode = node.body?.[0];
-                  if (
-                    firstNode?.type === SyntaxKind.Text &&
-                    firstNode.value.includes("var viewerData =")
-                  ) {
-                    const scriptText = firstNode.value.replace(/\n/g, "\\n");
+              loadedPlugin.pluginData.presentationId = presentationId;
+              loadedPlugin.pluginData.pageIds = pageIds;
 
-                    const jsAst = parseJs(scriptText);
-                    const result = print(
-                      jsAst.program.body[1].declarations[0].init,
-                    );
-                    const extractedData = eval(`(${result.code})`);
+              // DEBT: Make this runnable somewhere else
+              // The problem is, if that's the case then we'll need to store the token
+              for (const pageId of pageIds) {
+                const thumbnailDataRes = await axios(
+                  `https://slides.googleapis.com/v1/presentations/${presentationId}/pages/${pageId}/thumbnail?thumbnailProperties.thumbnailSize=SMALL`,
+                  {
+                    headers: { Authorization: `Bearer ${token}` },
+                  },
+                );
 
-                    const slideIds = extractedData.docData[1].map(
-                      (x: any) => x[0],
-                    );
+                const picture = await axios(thumbnailDataRes.data.contentUrl, {
+                  responseType: "arraybuffer",
+                });
 
-                    loadedPlugin.pluginData.slideIds = slideIds;
-                    loadedPlugin.pluginData.slideLink = slideLink;
-                  }
-                }
-              },
-            });
-          }
-        }),
-      proxy: t.procedure
-        .input(
-          z.object({
-            slideLink: z.string(),
-          }),
-        )
-        .query(async (opts) => {
-          return html;
-        }),
-    },
-  });
-};
+                const uploadedMedia = serverPluginApi.uploadMedia(
+                  picture.data,
+                  "png",
+                );
 
-function processHtml(html: string) {
-  return html
-    .replace(
-      /\/static\/presentation\/client\//g,
-      "/plugin/google-slides/static/gs-scripts/",
-    )
-    .replace(
-      /https:\/\/lh7-rt\.googleusercontent\.com/g,
-      "/plugin/google-slides/staticProxy",
-    )
-    .replace(
-      /https:\\\/\\\/lh7-rt\.googleusercontent\.com/g,
-      "/plugin/google-slides/staticProxy",
-    );
-}
+                loadedPlugin.pluginData.thumbnailLinks.push(
+                  uploadedMedia.newFileName,
+                );
+              }
 
-export type AppRouter = ReturnType<typeof getAppRouter>;
+              return {};
+            },
+          ),
+      },
+    });
+  };
+
+export type AppRouter = ReturnType<ReturnType<typeof getAppRouter>>;
 
 export * from "./types";

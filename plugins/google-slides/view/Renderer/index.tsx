@@ -6,16 +6,27 @@ import RenderView from "./RenderView";
 
 const Renderer = () => {
   const data = pluginApi.renderer.useData((x) => x);
-  const slideIndex = data.slideIndex!;
+  const slideIndex = useMemo(() => data.slideIndex!, [data.slideIndex]);
 
-  const slideIds = pluginApi.scene.useData((x) => x.pluginData.slideIds);
-  const slideLink = pluginApi.scene.useData((x) => x.pluginData.slideLink);
+  const pageIds = pluginApi.scene.useData((x) => x.pluginData.pageIds);
+  const presentationId = pluginApi.scene.useData(
+    (x) => x.pluginData.presentationId,
+  );
 
-  const slideId = useMemo(() => slideIds[slideIndex]!, [slideIds, slideIndex]);
+  const selectedPageId = useMemo(
+    () => pageIds[slideIndex]!,
+    [pageIds, slideIndex],
+  );
+
+  const slideSrc = useMemo(
+    () =>
+      `https://docs.google.com/presentation/d/${presentationId}/embed?rm=minimal`,
+    [presentationId],
+  );
 
   return (
     <Box w="100vw" h="100vh">
-      <RenderView key={slideLink} src={slideLink} slideId={slideId} />
+      <RenderView key={slideSrc} src={slideSrc} slideId={selectedPageId} />
     </Box>
   );
 };

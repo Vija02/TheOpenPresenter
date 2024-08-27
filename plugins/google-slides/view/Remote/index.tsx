@@ -1,32 +1,35 @@
-import { Box, Button, Flex, Input, Text } from "@chakra-ui/react";
-import { useState } from "react";
+import { Box, Center, Flex, Image, Text } from "@chakra-ui/react";
 
-import { PluginBaseData, RendererBaseData } from "../../src/types";
-import RenderView from "../Renderer/RenderView";
 import { trpc } from "../trpc";
 import { pluginApi } from "../util";
+import { SlidePicker } from "./SlidePicker";
 
 const Remote = () => {
-  const [linkValue, setLinkValue] = useState("");
-  const sceneData = pluginApi.scene.useValtioData();
   const pluginContext = pluginApi.usePluginDataContext().pluginContext;
 
-  const setLinkMutation = trpc.googleslides.setLink.useMutation();
+  const selectSlideMutation = trpc.googleslides.selectSlide.useMutation();
 
   return (
     <Box p={3}>
-      <Input value={linkValue} onChange={(e) => setLinkValue(e.target.value)} />
-      <Button
-        onClick={() => {
-          setLinkMutation.mutate({
-            pluginId: pluginContext.pluginId,
-            sceneId: pluginContext.sceneId,
-            slideLink: linkValue,
-          });
+      <SlidePicker
+        onFileSelected={(data, token) => {
+          const picker = google.picker;
+          if (data[picker.Response.ACTION] === "picked") {
+            if (data[picker.Response.DOCUMENTS].length > 0) {
+              const docs = data[picker.Response.DOCUMENTS][0]!;
+
+              const id = docs[picker.Document.ID];
+
+              selectSlideMutation.mutate({
+                pluginId: pluginContext.pluginId,
+                sceneId: pluginContext.sceneId,
+                presentationId: id,
+                token: token,
+              });
+            }
+          }
         }}
-      >
-        Link
-      </Button>
+      />
 
       <Flex gap={3} flexWrap="wrap">
         <RemoteHandler />
@@ -36,21 +39,18 @@ const Remote = () => {
 };
 
 const RemoteHandler = () => {
-  const pluginData = pluginApi.scene.useData((x) => x.pluginData);
+  const pageIds = pluginApi.scene.useData((x) => x.pluginData.pageIds);
+  const thumbnailLinks = pluginApi.scene.useData(
+    (x) => x.pluginData.thumbnailLinks,
+  );
   const rendererData = pluginApi.renderer.useData((x) => x);
 
   const mutableRendererData = pluginApi.renderer.useValtioData();
   const setRenderCurrentScene = pluginApi.useSetRenderCurrentScene();
 
-  // const { data } = trpc.googleslides.proxy.useQuery({
-  //   slideLink: pluginData.slideLink,
-  // });
-
-  // <iframe srcDoc={data} />;
-
   return (
     <>
-      {pluginData.slideIds.map((x, i) => (
+      {pageIds.map((x, i) => (
         <Box key={i} cursor="pointer" position="relative">
           <Box
             position="absolute"
@@ -74,15 +74,25 @@ const RemoteHandler = () => {
           <Box
             aspectRatio={4 / 3}
             w="200px"
-            border="1px"
-            borderColor={i === rendererData.slideIndex ? "red.600" : "gray.200"}
+            border="4px"
+            borderColor={
+              i === rendererData.slideIndex ? "red.600" : "transparent"
+            }
           >
-            {/* <RenderView
-              key={pluginData.slideLink}
-              src={pluginData.slideLink}
-              slideId={x}
-            /> */}
-            <Text>{x}</Text>
+            {thumbnailLinks?.[i] ? (
+              <Center>
+                <Image src={pluginApi.media.getUrl(thumbnailLinks[i]!)} />
+              </Center>
+            ) : (
+              <Text
+                height="100%"
+                border="1px solid"
+                borderColor="gray.200"
+                p={2}
+              >
+                Loading...
+              </Text>
+            )}
           </Box>
         </Box>
       ))}

@@ -1,16 +1,20 @@
-const RenderView = ({ src, slideId }: { src: string; slideId: string }) => {
-  const url = new URL(src);
+import React, { useMemo } from "react";
 
-  const basePathName = url.pathname.split("/").slice(0, -1).join("/");
-  const embedLink =
-    url.origin + basePathName + "/embed?rm=minimal" + "#slide=id." + slideId;
+const RenderView = React.memo(
+  ({ src, slideId }: { src: string; slideId: string }) => {
+    const embedLink = useMemo(
+      () => src + "#slide=id." + slideId,
+      [slideId, src],
+    );
 
-  return (
-    <iframe
-      style={{ border: 0, width: "100%", height: "100%" }}
-      src={embedLink}
-    />
-  );
-};
+    return (
+      <iframe
+        key={src}
+        style={{ border: 0, width: "100%", height: "100%" }}
+        src={embedLink}
+      />
+    );
+  },
+);
 
 export default RenderView;
