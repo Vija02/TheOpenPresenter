@@ -28,7 +28,8 @@ services:
       - GITHUB_SECRET=$GITHUB_SECRET
       - GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID
       - GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET
-    volumes: 
+      - PLUGIN_GOOGLE_SLIDES_CLIENT_ID=$PLUGIN_GOOGLE_SLIDES_CLIENT_ID
+    volumes:
       - ./uploads:/app/uploads
     labels:
       caddy: theopenpresenter.com

@@ -2,12 +2,8 @@
 /// <reference types="google.picker" />
 /// <reference types="gapi" />
 import { Button } from "@chakra-ui/react";
-import { useInjectScript } from "@repo/lib";
+import { appData, useInjectScript } from "@repo/lib";
 import { useCallback, useMemo } from "react";
-
-// TODO:
-const ClientId =
-  "69245303872-fo9ap9sv2a6a5oiim2aqsk1hnnrmkkdk.apps.googleusercontent.com";
 
 export const SlidePicker = ({
   onFileSelected,
@@ -29,10 +25,15 @@ export const SlidePicker = ({
     "https://accounts.google.com/gsi/client",
   );
 
+  const googleClientID = useMemo(
+    () => appData.getCustomEnv("PLUGIN_GOOGLE_SLIDES_CLIENT_ID"),
+    [],
+  );
+
   const getAccessToken = useCallback(() => {
     return new Promise<string>((resolve, reject) => {
       const client = google.accounts.oauth2.initTokenClient({
-        client_id: ClientId,
+        client_id: googleClientID,
         scope: ["https://www.googleapis.com/auth/drive.readonly"].join(" "),
         callback: (tokenResponse: any) => {
           resolve(tokenResponse.access_token);
@@ -44,7 +45,7 @@ export const SlidePicker = ({
 
       client.requestAccessToken();
     });
-  }, []);
+  }, [googleClientID]);
 
   const openPicker = useCallback(async () => {
     const accessToken = await getAccessToken();

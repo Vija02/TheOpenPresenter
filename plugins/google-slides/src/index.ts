@@ -22,6 +22,11 @@ import { PluginBaseData, RendererBaseData } from "./types";
 export const init = (
   serverPluginApi: ServerPluginApi<PluginBaseData, RendererBaseData>,
 ) => {
+  if (!process.env.PLUGIN_GOOGLE_SLIDES_CLIENT_ID) {
+    throw new Error(
+      "PLUGIN_GOOGLE_SLIDES_CLIENT_ID env var missing. Please set it to use this plugin.",
+    );
+  }
   serverPluginApi.registerCSPDirective(pluginName, {
     "frame-src": ["*.google.com"],
     "img-src": ["*.googleusercontent.com", "ssl.gstatic.com"],
@@ -42,6 +47,10 @@ export const init = (
   });
 
   serverPluginApi.serveStatic(pluginName, "out");
+
+  serverPluginApi.registerEnvToViews(pluginName, {
+    PLUGIN_GOOGLE_SLIDES_CLIENT_ID: process.env.PLUGIN_GOOGLE_SLIDES_CLIENT_ID,
+  });
 
   serverPluginApi.loadJsOnRemoteView(pluginName, `${pluginName}-remote.es.js`);
   serverPluginApi.registerRemoteViewWebComponent(
