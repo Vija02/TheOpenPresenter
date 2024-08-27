@@ -7,6 +7,7 @@ import type {
   State,
   YState,
 } from "@repo/base-plugin";
+import { appData } from "@repo/lib";
 import { ErrorAlert, LoadingFull } from "@repo/ui";
 import { useQuery } from "@tanstack/react-query";
 import React, {
@@ -20,7 +21,6 @@ import React, {
 import { proxy, useSnapshot } from "valtio";
 import { bind } from "valtio-yjs";
 
-import { getRootURL } from "../appData";
 import { usePluginMetaData } from "./PluginMetaDataProvider";
 
 type PluginDataProviderType = {
@@ -110,7 +110,7 @@ function PluginDataProviderInner({
 const initializeHocuspocusProvider = (projectId: string) => {
   return new Promise<HocuspocusProvider>((resolve, reject) => {
     const provider = new HocuspocusProvider({
-      url: (getRootURL() + "/wlink").replace(/^http/, "ws"),
+      url: (appData.getRootURL() + "/wlink").replace(/^http/, "ws"),
       name: projectId,
       // Here only to force authentication
       token: " ",

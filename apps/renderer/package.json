@@ -33,6 +33,7 @@
   "devDependencies": {
     "@repo/base-plugin": "*",
     "@repo/eslint-config": "*",
+    "@repo/lib": "*",
     "@repo/plugin-myworshiplist": "*",
     "@repo/prettier-config": "*",
     "@repo/typescript-config": "*",
