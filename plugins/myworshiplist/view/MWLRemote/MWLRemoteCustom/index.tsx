@@ -2,13 +2,16 @@ import { Box, Button, Heading } from "@chakra-ui/react";
 import { OverlayToggle } from "@repo/ui";
 import { VscAdd, VscSettingsGear } from "react-icons/vsc";
 
-import { pluginApi } from "../../util";
+import { CustomTypeData } from "../../../src/types";
+import { pluginApi } from "../../pluginApi";
 import MWLSongView from "../MWLSongView";
 import MWLRemoteCustomAddSongModal from "./MWLRemoteCustomAddSongModal";
 import MWLStyleSettingModal from "./MWLStyleSettingModal";
 
 const MWLRemoteCustom = () => {
-  const songIds = pluginApi.scene.useData((x) => x.pluginData.songIds);
+  const songIds = pluginApi.scene.useData(
+    (x) => (x.pluginData as CustomTypeData).songIds,
+  );
 
   return (
     <Box p={3}>

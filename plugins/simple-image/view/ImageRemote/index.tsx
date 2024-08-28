@@ -6,7 +6,7 @@ import { useState } from "react";
 
 import { PluginBaseData } from "../../src/types";
 import ImageRenderView from "../ImageRenderer/ImageRenderView";
-import { pluginApi } from "../util";
+import { pluginApi } from "../pluginApi";
 
 const ImageRemote = () => {
   const [uppy] = useState(() =>
@@ -27,7 +27,7 @@ const ImageRemote = () => {
   );
 
   const rendererData = pluginApi.renderer.useValtioData();
-  const setRenderCurrentScene = pluginApi.useSetRenderCurrentScene();
+  const setRenderCurrentScene = pluginApi.renderer.setRenderCurrentScene;
 
   return (
     <Box p={3}>

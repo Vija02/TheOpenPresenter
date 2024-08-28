@@ -17,10 +17,10 @@ import {
   remoteWebComponentTag,
   rendererWebComponentTag,
 } from "./consts";
-import { PluginBaseData, RendererBaseData } from "./types";
+import { PluginBaseData, PluginRendererData } from "./types";
 
 export const init = (
-  serverPluginApi: ServerPluginApi<PluginBaseData, RendererBaseData>,
+  serverPluginApi: ServerPluginApi<PluginBaseData, PluginRendererData>,
 ) => {
   if (!process.env.PLUGIN_GOOGLE_SLIDES_CLIENT_ID) {
     throw new Error(

@@ -4591,6 +4591,7 @@ __metadata:
     valtio-yjs: "npm:^0.6.0"
     yjs: "npm:^13.6.18"
     yjs-types: "npm:^0.0.1"
+    zustand: "npm:^4.5.5"
   languageName: unknown
   linkType: soft
 
@@ -4736,6 +4737,7 @@ __metadata:
     react: "npm:rc"
     react-dom: "npm:rc"
     vite: "npm:^5.3.5"
+    y-protocols: "npm:^1.0.6"
     yjs: "npm:^13.6.18"
   languageName: unknown
   linkType: soft
@@ -4886,6 +4888,7 @@ __metadata:
     "@types/react": "npm:types-react@rc"
     "@types/react-dom": "npm:types-react-dom@rc"
     "@types/react-resizable": "npm:^3"
+    "@types/uuid": "npm:^10"
     "@typescript-eslint/parser": "npm:^7.13.1"
     "@vitejs/plugin-react-swc": "npm:^3.5.0"
     eslint: "npm:^8.57.0"
@@ -4902,6 +4905,7 @@ __metadata:
     react-toastify: "npm:^10.0.5"
     typeid-js: "npm:^1.0.0"
     typescript: "npm:5.5.3"
+    uuid: "npm:^10.0.0"
     valtio: "npm:^1.13.2"
     valtio-yjs: "npm:^0.6.0"
     vite: "npm:^5.3.5"
@@ -4931,6 +4935,7 @@ __metadata:
     "@trpc/react-query": "npm:^11.0.0-rc.461"
     "@types/react": "npm:types-react@rc"
     "@types/react-dom": "npm:types-react-dom@rc"
+    "@types/uuid": "npm:^10"
     "@typescript-eslint/parser": "npm:^7.13.1"
     "@vitejs/plugin-react-swc": "npm:^3.5.0"
     eslint: "npm:^8.57.0"
@@ -4944,6 +4949,7 @@ __metadata:
     react-json-view: "npm:^1.21.3"
     typeid-js: "npm:^1.0.0"
     typescript: "npm:5.5.3"
+    uuid: "npm:^10.0.0"
     valtio: "npm:^1.13.2"
     valtio-yjs: "npm:^0.6.0"
     vite: "npm:^5.3.5"
@@ -6049,6 +6055,13 @@ __metadata:
   version: 4.2.5
   resolution: "@types/stylis@npm:4.2.5"
   checksum: 10c0/23f5b35a3a04f6bb31a29d404fa1bc8e0035fcaff2356b4047743a057e0c37b2eba7efe14d57dd2b95b398cea3bac294d9c6cd93ed307d8c0b7f5d282224b469
+  languageName: node
+  linkType: hard
+
+"@types/uuid@npm:^10":
+  version: 10.0.0
+  resolution: "@types/uuid@npm:10.0.0"
+  checksum: 10c0/9a1404bf287164481cb9b97f6bb638f78f955be57c40c6513b7655160beb29df6f84c915aaf4089a1559c216557dc4d2f79b48d978742d3ae10b937420ddac60
   languageName: node
   linkType: hard
 
@@ -12376,6 +12389,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"lib0@npm:^0.2.85":
+  version: 0.2.97
+  resolution: "lib0@npm:0.2.97"
+  dependencies:
+    isomorphic.js: "npm:^0.2.4"
+  bin:
+    0ecdsa-generate-keypair: bin/0ecdsa-generate-keypair.js
+    0gentesthtml: bin/gentesthtml.js
+    0serve: bin/0serve.js
+  checksum: 10c0/45ef258a47a537a65ceb628c92145df839559b6b7139fc5db0aa315df314678ebad5c1c4076635782cdb3aa8d6fe352aeca0ad2d6295718c2d8ac03cf29344d3
+  languageName: node
+  linkType: hard
+
 "lightningcss-darwin-arm64@npm:1.23.0":
   version: 1.23.0
   resolution: "lightningcss-darwin-arm64@npm:1.23.0"
@@ -18426,6 +18452,17 @@ __metadata:
   version: 4.0.2
   resolution: "xtend@npm:4.0.2"
   checksum: 10c0/366ae4783eec6100f8a02dff02ac907bf29f9a00b82ac0264b4d8b832ead18306797e283cf19de776538babfdcb2101375ec5646b59f08c52128ac4ab812ed0e
+  languageName: node
+  linkType: hard
+
+"y-protocols@npm:^1.0.6":
+  version: 1.0.6
+  resolution: "y-protocols@npm:1.0.6"
+  dependencies:
+    lib0: "npm:^0.2.85"
+  peerDependencies:
+    yjs: ^13.0.0
+  checksum: 10c0/fae7d63d4609e75eac8114320aa3581311993cd0c1b7ac03d13dc30c9a95d7b1680e4500786bb417c1fb3d11a69e1bed3e50d08e15febde9b8abf70f133eb917
   languageName: node
   linkType: hard
 

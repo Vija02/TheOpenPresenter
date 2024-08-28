@@ -18,7 +18,7 @@ import { toFormikValidationSchema as toFormicValidationSchema } from "zod-formik
 
 import { getSlideStyle } from "../../../../src/slideStyle";
 import { SlideStyle, slideStyleValidator } from "../../../../src/types";
-import { pluginApi } from "../../../util";
+import { pluginApi } from "../../../pluginApi";
 
 export type MWLStyleSettingModalPropTypes = Omit<
   ModalProps,

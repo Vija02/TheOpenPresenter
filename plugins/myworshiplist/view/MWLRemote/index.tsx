@@ -1,7 +1,7 @@
 import { Box } from "@chakra-ui/react";
 
 import { MyWorshipListData } from "../../src/types";
-import { pluginApi } from "../util";
+import { pluginApi } from "../pluginApi";
 import MWLLanding from "./MWLLanding";
 import MWLRemoteCustom from "./MWLRemoteCustom";
 

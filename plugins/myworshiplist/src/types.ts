@@ -8,6 +8,7 @@ export type SongCache = {
 
 export type BaseData = {
   style?: SlideStyle;
+  type: string;
 };
 
 export type UnselectedTypeData = BaseData & {
@@ -28,3 +29,5 @@ export const slideStyleValidator = z.object({
   padding: z.number().optional(),
 });
 export type SlideStyle = z.infer<typeof slideStyleValidator>;
+
+export type PluginRendererData = { songId: number; heading: string };

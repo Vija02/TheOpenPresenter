@@ -1,16 +1,18 @@
 import { ChakraProvider } from "@chakra-ui/react";
 import r2wc from "@r2wc/react-to-web-component";
-import { PluginContext, PluginDataProvider } from "@repo/base-plugin/client";
+import { AwarenessContext, PluginContext } from "@repo/base-plugin/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { TRPCUntypedClient } from "@trpc/client";
 import "@uppy/core/dist/style.min.css";
 import "@uppy/file-input/dist/style.css";
 import "@uppy/status-bar/dist/style.min.css";
+import { useEffect, useState } from "react";
 import type { Map } from "yjs";
 
 import { AppRouter } from "../src";
 import { remoteWebComponentTag } from "../src/consts";
-import ImageRemote from "./ImageRemote";
+import Remote from "./ImageRemote";
+import { init } from "./pluginApi";
 import { trpc } from "./trpc";
 
 const queryClient = new QueryClient();
@@ -18,30 +20,43 @@ const queryClient = new QueryClient();
 const RemoteEntry = ({
   yjsPluginSceneData,
   yjsPluginRendererData,
+  awarenessContext,
   pluginContext,
   setRenderCurrentScene,
   trpcClient,
 }: {
   yjsPluginSceneData: Map<any>;
   yjsPluginRendererData: Map<any>;
+  awarenessContext: AwarenessContext;
   pluginContext: PluginContext;
   setRenderCurrentScene: () => void;
   trpcClient: TRPCUntypedClient<AppRouter>;
 }) => {
+  const [isInitialized, setIsInitialized] = useState(false);
+  useEffect(() => {
+    init({
+      yjsPluginSceneData,
+      yjsPluginRendererData,
+      awarenessContext,
+      pluginContext,
+      setRenderCurrentScene,
+    });
+    setIsInitialized(true);
+  }, [
+    awarenessContext,
+    pluginContext,
+    setRenderCurrentScene,
+    yjsPluginRendererData,
+    yjsPluginSceneData,
+  ]);
+
   return (
     <ChakraProvider resetCSS>
-      <PluginDataProvider
-        yjsPluginSceneData={yjsPluginSceneData}
-        yjsPluginRendererData={yjsPluginRendererData}
-        pluginContext={pluginContext}
-        setRenderCurrentScene={setRenderCurrentScene}
-      >
-        <trpc.Provider client={trpcClient} queryClient={queryClient}>
-          <QueryClientProvider client={queryClient}>
-            <ImageRemote />
-          </QueryClientProvider>
-        </trpc.Provider>
-      </PluginDataProvider>
+      <trpc.Provider client={trpcClient} queryClient={queryClient}>
+        <QueryClientProvider client={queryClient}>
+          {isInitialized && <Remote />}
+        </QueryClientProvider>
+      </trpc.Provider>
     </ChakraProvider>
   );
 };
@@ -51,6 +66,7 @@ const Component = r2wc(RemoteEntry, {
   props: {
     yjsPluginSceneData: "",
     yjsPluginRendererData: "",
+    awarenessContext: "",
     pluginContext: "",
     setRenderCurrentScene: "",
     trpcClient: "",

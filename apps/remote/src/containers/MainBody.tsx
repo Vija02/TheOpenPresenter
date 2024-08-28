@@ -1,5 +1,5 @@
 import { Box, Text } from "@chakra-ui/react";
-import type { Scene } from "@repo/base-plugin";
+import type { AwarenessContext, PluginContext, Scene } from "@repo/base-plugin";
 import { Plugin } from "@repo/base-plugin";
 import { useKeyPressMutation } from "@repo/graphql";
 import React, { useMemo } from "react";
@@ -84,6 +84,7 @@ const PluginRenderer = React.memo(
       getYJSPluginRenderer,
       getYJSPluginRendererData,
       getYJSPluginSceneData,
+      provider,
     } = usePluginData();
 
     const tag = useMemo(
@@ -99,7 +100,11 @@ const PluginRenderer = React.memo(
         React.createElement(tag, {
           yjsPluginSceneData: getYJSPluginSceneData(sceneId, pluginId),
           yjsPluginRendererData: getYJSPluginRendererData(sceneId, pluginId),
-          pluginContext: { pluginId, sceneId },
+          awarenessContext: {
+            awarenessObj: provider?.awareness,
+            currentUserId: "",
+          } as AwarenessContext,
+          pluginContext: { pluginId, sceneId } as PluginContext,
           setRenderCurrentScene: () => {
             getYJSPluginRenderer()?.set("currentScene", sceneId);
           },
@@ -114,6 +119,7 @@ const PluginRenderer = React.memo(
       getYJSPluginSceneData,
       pluginId,
       pluginInfo.plugin,
+      provider,
       sceneId,
       tag,
     ]);

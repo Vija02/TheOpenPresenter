@@ -1,5 +1,5 @@
 import { Box, Text } from "@chakra-ui/react";
-import { Scene } from "@repo/base-plugin";
+import { AwarenessContext, Scene } from "@repo/base-plugin";
 import React, { useMemo } from "react";
 
 import { useData, usePluginData } from "./contexts/PluginDataProvider";
@@ -41,6 +41,7 @@ const PluginRenderer = React.memo(
       getYJSPluginRenderer,
       getYJSPluginRendererData,
       getYJSPluginSceneData,
+      provider,
     } = usePluginData();
     const mainState = usePluginData().mainState!;
 
@@ -65,6 +66,10 @@ const PluginRenderer = React.memo(
               currentScene,
               pluginId,
             ),
+            awarenessContext: {
+              awarenessObj: provider?.awareness,
+              currentUserId: "",
+            } as AwarenessContext,
             pluginContext: { pluginId, sceneId: currentScene },
             setRenderCurrentScene: () => {
               getYJSPluginRenderer()?.set("currentScene", currentScene);
@@ -81,6 +86,7 @@ const PluginRenderer = React.memo(
         getYJSPluginSceneData,
         pluginId,
         pluginInfo?.plugin,
+        provider?.awareness,
         tag,
       ],
     );

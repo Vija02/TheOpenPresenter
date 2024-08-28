@@ -1,3 +1,4 @@
+import * as awarenessProtocol from "y-protocols/awareness.js";
 import { TypedArray, TypedMap } from "yjs-types";
 
 export type UUID = string;
@@ -60,6 +61,10 @@ export type RenderData<T = Record<string, any>> = {
 export type PluginContext = {
   pluginId: UUID;
   sceneId: UUID;
+};
+export type AwarenessContext = {
+  awarenessObj: awarenessProtocol.Awareness;
+  currentUserId: string;
 };
 
 export const keyPressTypes = ["PREV", "NEXT"] as const;

@@ -7,6 +7,6 @@ export type PluginBaseData = {
   thumbnailLinks: string[];
 };
 
-export type RendererBaseData = {
+export type PluginRendererData = {
   slideIndex: number | null;
 };

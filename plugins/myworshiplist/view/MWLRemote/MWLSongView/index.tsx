@@ -2,17 +2,20 @@ import { Box, Flex, Heading, Text } from "@chakra-ui/react";
 import React, { useMemo } from "react";
 
 import { getSlideStyle } from "../../../src/slideStyle";
+import { CustomTypeData } from "../../../src/types";
 import MWLSongRenderView from "../../MWLRenderer/MWLSongRenderView";
+import { pluginApi } from "../../pluginApi";
 import {
   cleanWhiteSpace,
   groupData,
   removeAuxiliaryText,
   removeChords,
 } from "../../songHelpers";
-import { pluginApi } from "../../util";
 
 const MWLSongView = React.memo(({ songId }: { songId: number }) => {
-  const songCaches = pluginApi.scene.useData((x) => x.pluginData.songCache);
+  const songCaches = pluginApi.scene.useData(
+    (x) => (x.pluginData as CustomTypeData).songCache,
+  );
   const songCache = useMemo(
     () => songCaches.find((x) => x.id === songId),
     [songCaches, songId],
@@ -25,12 +28,14 @@ const MWLSongView = React.memo(({ songId }: { songId: number }) => {
 });
 
 const MWLSongViewInner = React.memo(({ songId }: { songId: number }) => {
-  const songCaches = pluginApi.scene.useData((x) => x.pluginData.songCache);
+  const songCaches = pluginApi.scene.useData(
+    (x) => (x.pluginData as CustomTypeData).songCache,
+  );
   const slideStyle = pluginApi.scene.useData((x) => x.pluginData.style);
   const renderData = pluginApi.renderer.useData((x) => x);
 
   const mutableRendererData = pluginApi.renderer.useValtioData();
-  const setRenderCurrentScene = pluginApi.useSetRenderCurrentScene();
+  const setRenderCurrentScene = pluginApi.renderer.setRenderCurrentScene;
 
   const songCache = useMemo(
     () => songCaches.find((x) => x.id === songId)!,

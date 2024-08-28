@@ -15,8 +15,9 @@ import { OverlayToggleComponentProps } from "@repo/ui";
 import { useCallback, useState } from "react";
 import { useDebounce } from "use-debounce";
 
+import { CustomTypeData } from "../../../../src";
+import { pluginApi } from "../../../pluginApi";
 import { trpc } from "../../../trpc";
-import { pluginApi } from "../../../util";
 
 export type MWLRemoteCustomAddSongModalPropTypes = Omit<
   ModalProps,
@@ -30,7 +31,7 @@ const MWLRemoteCustomAddSongModal = ({
   resetData,
   ...props
 }: MWLRemoteCustomAddSongModalPropTypes) => {
-  const pluginInfo = pluginApi.scene.useValtioData();
+  const pluginInfo = pluginApi.scene.useValtioData<CustomTypeData>();
 
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [searchInput, setSearchInput] = useState("");

@@ -2,7 +2,7 @@ import { Box, Button, Text } from "@chakra-ui/react";
 import { useCallback } from "react";
 
 import { CustomTypeData } from "../../src/types";
-import { pluginApi } from "../util";
+import { pluginApi } from "../pluginApi";
 
 const MWLLanding = () => {
   const sceneData = pluginApi.scene.useValtioData();

@@ -18,12 +18,14 @@ import React, {
   useMemo,
   useState,
 } from "react";
+import { v4 } from "uuid";
 import { proxy, useSnapshot } from "valtio";
 import { bind } from "valtio-yjs";
 
 import { usePluginMetaData } from "./PluginMetaDataProvider";
 
 type PluginDataProviderType = {
+  provider: HocuspocusProvider | null;
   mainState: State | null;
   getYJSPluginSceneData: (
     sceneId: string,
@@ -37,6 +39,7 @@ type PluginDataProviderType = {
 };
 
 const initialData: PluginDataProviderType = {
+  provider: null,
   mainState: null,
   getYJSPluginSceneData: () => undefined,
   getYJSPluginRendererData: () => undefined,
@@ -96,6 +99,7 @@ function PluginDataProviderInner({
   return (
     <PluginDataContext.Provider
       value={{
+        provider,
         mainState,
         getYJSPluginSceneData,
         getYJSPluginRendererData,
@@ -127,6 +131,10 @@ const initializeHocuspocusProvider = (projectId: string) => {
     const syncFunction = () => {
       clearTimeout(timeout);
       provider.off("synced", syncFunction);
+      provider.setAwarenessField("user", {
+        id: v4(),
+        type: "renderer",
+      });
       resolve(provider);
     };
 
