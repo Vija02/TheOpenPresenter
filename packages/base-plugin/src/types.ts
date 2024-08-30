@@ -1,4 +1,5 @@
 import type { Document } from "@hocuspocus/server";
+import UAParser from "ua-parser-js";
 import * as awarenessProtocol from "y-protocols/awareness.js";
 import {
   TypedArray as TypedArrayRaw,
