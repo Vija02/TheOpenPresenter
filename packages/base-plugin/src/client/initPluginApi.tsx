@@ -63,6 +63,7 @@ export function initPluginApi<
   awarenessContext.awarenessObj.on("update", onAwarenessUpdate);
 
   return {
+    env: appData,
     pluginContext,
     awareness: {
       awarenessObj: awarenessContext.awarenessObj,
