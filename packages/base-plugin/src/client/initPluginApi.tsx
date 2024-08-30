@@ -1,5 +1,6 @@
 import { appData } from "@repo/lib";
 import { useY } from "react-yjs";
+import { typeidUnboxed } from "typeid-js";
 import { proxy } from "valtio";
 import { bind } from "valtio-yjs";
 import * as awarenessProtocol from "y-protocols/awareness.js";
@@ -64,6 +65,7 @@ export function initPluginApi<
       useAwarenessData: () => awarenessStore((x) => x.awarenessData),
     },
     media: {
+      generateId: () => typeidUnboxed("media"),
       getUrl: (fileName: string) =>
         appData.getRootURL() + "/media/data/" + fileName,
     },
