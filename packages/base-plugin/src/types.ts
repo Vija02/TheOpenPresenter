@@ -74,10 +74,6 @@ export type PluginContext = {
   pluginId: UUID;
   sceneId: UUID;
 };
-export type AwarenessContext = {
-  awarenessObj: awarenessProtocol.Awareness;
-  currentUserId: string;
-};
 
 export const keyPressTypes = ["PREV", "NEXT"] as const;
 export type KeyPressType = (typeof keyPressTypes)[number];
@@ -85,3 +81,17 @@ export type KeyPressType = (typeof keyPressTypes)[number];
 export interface IDisposable {
   dispose?(): void;
 }
+
+// ========================================================================== //
+// ================================ Awareness =============================== //
+// ========================================================================== //
+export type AwarenessContext = {
+  awarenessObj: awarenessProtocol.Awareness;
+  currentUserId: string;
+};
+
+export type AwarenessUserData = {
+  id: string;
+  type: "remote" | "renderer";
+  userAgentInfo: UAParser.IResult;
+};
