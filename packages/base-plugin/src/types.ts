@@ -1,7 +1,19 @@
+import type { Document } from "@hocuspocus/server";
 import * as awarenessProtocol from "y-protocols/awareness.js";
-import { TypedArray, TypedMap } from "yjs-types";
+import {
+  TypedArray as TypedArrayRaw,
+  TypedMap as TypedMapRaw,
+} from "yjs-types";
 
 export type UUID = string;
+
+interface TypedArray<T> extends TypedArrayRaw<T> {
+  doc: Document | null;
+}
+interface TypedMap<Data extends Record<string, unknown>>
+  extends TypedMapRaw<Data> {
+  doc: Document | null;
+}
 
 export type ObjectToTypedMap<T> =
   T extends Array<any>
