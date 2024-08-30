@@ -42,6 +42,7 @@ const PluginRenderer = React.memo(
       getYJSPluginRendererData,
       getYJSPluginSceneData,
       provider,
+      currentUserId,
     } = usePluginData();
     const mainState = usePluginData().mainState!;
 
@@ -68,7 +69,7 @@ const PluginRenderer = React.memo(
             ),
             awarenessContext: {
               awarenessObj: provider?.awareness,
-              currentUserId: "",
+              currentUserId,
             } as AwarenessContext,
             pluginContext: { pluginId, sceneId: currentScene },
             setRenderCurrentScene: () => {
@@ -81,6 +82,7 @@ const PluginRenderer = React.memo(
         ),
       [
         currentScene,
+        currentUserId,
         getYJSPluginRenderer,
         getYJSPluginRendererData,
         getYJSPluginSceneData,

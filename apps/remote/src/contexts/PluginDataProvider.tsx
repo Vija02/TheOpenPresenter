@@ -26,6 +26,7 @@ import { usePluginMetaData } from "./PluginMetaDataProvider";
 
 type PluginDataProviderType = {
   provider: HocuspocusProvider | null;
+  currentUserId: string | null;
   mainState: State | null;
   getYJSPluginSceneData: (
     sceneId: string,
@@ -40,6 +41,7 @@ type PluginDataProviderType = {
 
 const initialData: PluginDataProviderType = {
   provider: null,
+  currentUserId: null,
   mainState: null,
   getYJSPluginSceneData: () => undefined,
   getYJSPluginRendererData: () => undefined,
@@ -52,7 +54,11 @@ export const PluginDataContext =
 function PluginDataProviderInner({
   children,
   provider,
-}: React.PropsWithChildren<{ provider: HocuspocusProvider }>) {
+  currentUserId,
+}: React.PropsWithChildren<{
+  provider: HocuspocusProvider;
+  currentUserId: string;
+}>) {
   const [bound, setBound] = useState(false);
   const mainYMap = useMemo(
     () => provider.document.getMap() as YState,
@@ -100,6 +106,7 @@ function PluginDataProviderInner({
     <PluginDataContext.Provider
       value={{
         provider,
+        currentUserId,
         mainState,
         getYJSPluginSceneData,
         getYJSPluginRendererData,
@@ -111,7 +118,10 @@ function PluginDataProviderInner({
   );
 }
 
-const initializeHocuspocusProvider = (projectId: string) => {
+const initializeHocuspocusProvider = (
+  projectId: string,
+  currentUserId: string,
+) => {
   return new Promise<HocuspocusProvider>((resolve, reject) => {
     const provider = new HocuspocusProvider({
       url: (appData.getRootURL() + "/wlink").replace(/^http/, "ws"),
@@ -132,7 +142,7 @@ const initializeHocuspocusProvider = (projectId: string) => {
       clearTimeout(timeout);
       provider.off("synced", syncFunction);
       provider.setAwarenessField("user", {
-        id: v4(),
+        id: currentUserId,
         type: "remote",
       });
       resolve(provider);
@@ -148,6 +158,7 @@ export const PluginDataProvider = ({
   children: React.ReactNode;
 }) => {
   const projectId = usePluginMetaData().projectId;
+  const [currentUserId] = useState(v4());
 
   const {
     data: provider,
@@ -156,7 +167,7 @@ export const PluginDataProvider = ({
     isError,
   } = useQuery({
     queryKey: ["provider", projectId],
-    queryFn: () => initializeHocuspocusProvider(projectId),
+    queryFn: () => initializeHocuspocusProvider(projectId, currentUserId),
     retry: false,
   });
   if (isError) {
@@ -167,7 +178,7 @@ export const PluginDataProvider = ({
   }
 
   return (
-    <PluginDataProviderInner provider={provider}>
+    <PluginDataProviderInner provider={provider} currentUserId={currentUserId}>
       {children}
     </PluginDataProviderInner>
   );
