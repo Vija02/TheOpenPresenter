@@ -74,6 +74,8 @@ export function initPluginApi<
       generateId: () => typeidUnboxed("media"),
       getUrl: (fileName: string) =>
         appData.getRootURL() + "/media/data/" + fileName,
+      tusUploadUrl: appData.getRootURL() + "/media/upload/tus",
+      formDataUploadUrl: appData.getRootURL() + "/media/upload/form-data",
     },
     scene: {
       // Use this for read
