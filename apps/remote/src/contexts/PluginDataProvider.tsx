@@ -1,5 +1,6 @@
 import { HocuspocusProvider } from "@hocuspocus/provider";
 import type {
+  AwarenessUserData,
   ObjectToTypedMap,
   Plugin,
   RenderData,
@@ -18,6 +19,7 @@ import React, {
   useMemo,
   useState,
 } from "react";
+import uaParser from "ua-parser-js";
 import { v4 } from "uuid";
 import { proxy, useSnapshot } from "valtio";
 import { bind } from "valtio-yjs";
@@ -138,13 +140,16 @@ const initializeHocuspocusProvider = (
       reject();
     }, 5000);
 
+    const uaData = uaParser();
+
     const syncFunction = () => {
       clearTimeout(timeout);
       provider.off("synced", syncFunction);
       provider.setAwarenessField("user", {
         id: currentUserId,
         type: "remote",
-      });
+        userAgentInfo: uaData,
+      } as AwarenessUserData);
       resolve(provider);
     };
 
