@@ -1,4 +1,5 @@
 import { appData } from "@repo/lib";
+import _ from "lodash";
 import { useY } from "react-yjs";
 import { typeidUnboxed } from "typeid-js";
 import { proxy } from "valtio";
@@ -48,9 +49,13 @@ export function initPluginApi<
   };
 
   const onAwarenessUpdate = () => {
-    awarenessStore.setState({
-      awarenessData: getAwarenessState(awarenessContext.awarenessObj),
-    });
+    const newState = getAwarenessState(awarenessContext.awarenessObj);
+
+    if (!_.isEqual(awarenessStore.getState().awarenessData, newState)) {
+      awarenessStore.setState({
+        awarenessData: newState,
+      });
+    }
   };
   // Set the initial value
   onAwarenessUpdate();
