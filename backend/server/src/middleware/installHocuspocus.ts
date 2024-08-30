@@ -205,21 +205,37 @@ export default async function installHocuspocus(app: Express) {
 
         for (const [pluginId, pluginInfo] of children?.entries() ?? []) {
           if (isJustCreated) {
+            try {
+              disposableDocumentManager
+                .getDocumentDisposable(data.documentName)
+                .push(
+                  registeredOnPluginDataCreated
+                    .find((x) => x.pluginName === pluginInfo.get("plugin"))
+                    ?.callback(pluginInfo, { pluginId, sceneId }) ?? {},
+                );
+            } catch (e) {
+              console.error(
+                "Error: Error occurred while running the `onPluginDataCreated` function in " +
+                  pluginInfo.get("plugin"),
+              );
+              console.error(e);
+            }
+          }
+          try {
             disposableDocumentManager
               .getDocumentDisposable(data.documentName)
               .push(
-                registeredOnPluginDataCreated
+                registeredOnPluginDataLoaded
                   .find((x) => x.pluginName === pluginInfo.get("plugin"))
                   ?.callback(pluginInfo, { pluginId, sceneId }) ?? {},
               );
-          }
-          disposableDocumentManager
-            .getDocumentDisposable(data.documentName)
-            .push(
-              registeredOnPluginDataLoaded
-                .find((x) => x.pluginName === pluginInfo.get("plugin"))
-                ?.callback(pluginInfo, { pluginId, sceneId }) ?? {},
+          } catch (e) {
+            console.error(
+              "Error: Error occurred while running the `onPluginDataLoaded` function in " +
+                pluginInfo.get("plugin"),
             );
+            console.error(e);
+          }
         }
       };
       // Initial load
