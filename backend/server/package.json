@@ -18,6 +18,8 @@
     "@repo/base-plugin": "*",
     "@repo/config": "*",
     "@trpc/server": "^11.0.0-rc.461",
+    "@tus/file-store": "^1.4.0",
+    "@tus/server": "^1.7.0",
     "@types/connect-pg-simple": "^7.0.3",
     "@types/csurf": "^1.11.5",
     "@types/express": "^4.17.21",
