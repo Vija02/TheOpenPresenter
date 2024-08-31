@@ -20,6 +20,7 @@ const MainBody = () => {
       overflow="auto"
       tabIndex={0}
       onKeyDown={(e) => {
+        // TODO: Expand on this functionality
         const keysToDetect = [
           "ArrowLeft",
           "ArrowRight",
