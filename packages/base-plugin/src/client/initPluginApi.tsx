@@ -4,7 +4,6 @@ import { useY } from "react-yjs";
 import { typeidUnboxed } from "typeid-js";
 import { proxy } from "valtio";
 import { bind } from "valtio-yjs";
-import * as awarenessProtocol from "y-protocols/awareness.js";
 import type { Map } from "yjs";
 
 import { AwarenessContext, Plugin, PluginContext } from "../types";
@@ -44,7 +43,7 @@ export function initPluginApi<
   const unbindRenderer = bind(rendererValtio, yjsPluginRendererData);
 
   // Awareness
-  const getAwarenessState = (awareness: awarenessProtocol.Awareness) => {
+  const getAwarenessState = (awareness: AwarenessContext["awarenessObj"]) => {
     return Array.from(awareness.getStates().values()) as any[];
   };
 

@@ -1,4 +1,5 @@
 import {
+  AwarenessContext,
   ObjectToTypedMap,
   Plugin,
   ServerPluginApi,
@@ -6,7 +7,6 @@ import {
 import { initTRPC } from "@trpc/server";
 import { proxy } from "valtio";
 import { bind } from "valtio-yjs";
-import * as awarenessProtocol from "y-protocols/awareness.js";
 import Y from "yjs";
 
 import {
@@ -74,7 +74,7 @@ const onPluginDataLoaded = (
   });
 
   // Then we can watch the awareness and purge those that doesn't exist anymore
-  const getAwarenessState = (awareness: awarenessProtocol.Awareness) => {
+  const getAwarenessState = (awareness: AwarenessContext["awarenessObj"]) => {
     return Array.from(awareness.getStates().values()) as any[];
   };
   pluginInfo.doc!.awareness.on("change", () => {

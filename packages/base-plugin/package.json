@@ -53,6 +53,7 @@
     "ua-parser-js": "^1.0.38",
     "valtio": "^1.13.2",
     "valtio-yjs": "^0.6.0",
+    "y-protocols": "^1.0.6",
     "yjs": "^13.6.18",
     "yjs-types": "^0.0.1",
     "zustand": "^4.5.5"
