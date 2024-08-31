@@ -3,8 +3,8 @@ import { VscDebugStop, VscPlay } from "react-icons/vsc";
 
 import { Stream } from "../../src";
 import { pluginApi } from "../pluginApi";
-import { UserNameTag } from "./AwarenessUser/UserNameTag";
 import { getStreamState } from "../useAudioRecording";
+import { UserNameTag } from "./AwarenessUser/UserNameTag";
 
 type PropTypes = {
   activeStream: Stream;
@@ -110,6 +110,8 @@ const WaitingForPermission = () => {
       flexDir="column"
       border="1px solid"
       borderColor="gray.500"
+      textAlign="center"
+      p={2}
     >
       <Text fontWeight="bold">Waiting for permission from device...</Text>
       <Text color="gray.600">
