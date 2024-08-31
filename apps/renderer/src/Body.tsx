@@ -1,5 +1,6 @@
 import { Box, Text } from "@chakra-ui/react";
 import { AwarenessContext, Scene } from "@repo/base-plugin";
+import { motion } from "framer-motion";
 import React, { useMemo } from "react";
 
 import { useData, usePluginData } from "./contexts/PluginDataProvider";
@@ -21,21 +22,49 @@ export const Body = () => {
 
   return (
     <>
-      {Object.keys(currentRenderer?.children[currentScene] ?? {}).map(
-        (pluginId) => (
-          <PluginRenderer
-            key={pluginId}
-            pluginId={pluginId}
-            currentScene={currentScene}
-          />
-        ),
-      )}
+      {Object.keys(currentRenderer?.children ?? {}).map((sceneId) => (
+        <SceneRenderer key={sceneId} sceneId={sceneId} />
+      ))}
     </>
   );
 };
 
+// TEST: All scenes should be rendered but only the main one shown
+const SceneRenderer = React.memo(({ sceneId }: { sceneId: string }) => {
+  const data = useData();
+
+  const currentRenderer = useMemo(() => data.renderer["1"], [data.renderer]);
+  const currentScene = useMemo(
+    () => currentRenderer?.currentScene,
+    [currentRenderer?.currentScene],
+  );
+
+  return (
+    <Box position="absolute" zIndex={currentScene === sceneId ? 1 : 0}>
+      <motion.div
+        animate={currentScene === sceneId ? "show" : "hidden"}
+        variants={{
+          show: { opacity: 1 },
+          // DEBT: Get transition delay dynamically instead of hardcoding a duration
+          hidden: { opacity: 0, transition: { delay: 0.4, duration: 0 } },
+        }}
+      >
+        {Object.keys(currentRenderer?.children[sceneId] ?? {}).map(
+          (pluginId) => (
+            <PluginRenderer
+              key={pluginId}
+              pluginId={pluginId}
+              sceneId={sceneId}
+            />
+          ),
+        )}
+      </motion.div>
+    </Box>
+  );
+});
+
 const PluginRenderer = React.memo(
-  ({ pluginId, currentScene }: { pluginId: string; currentScene: string }) => {
+  ({ pluginId, sceneId }: { pluginId: string; sceneId: string }) => {
     const pluginMetaData = usePluginMetaData().pluginMetaData;
     const {
       getYJSPluginRenderer,
@@ -47,8 +76,8 @@ const PluginRenderer = React.memo(
     const mainState = usePluginData().mainState!;
 
     const pluginInfo = useMemo(
-      () => (mainState.data[currentScene] as Scene).children[pluginId],
-      [currentScene, mainState.data, pluginId],
+      () => (mainState.data[sceneId] as Scene).children[pluginId],
+      [sceneId, mainState.data, pluginId],
     );
     const tag = useMemo(
       () =>
@@ -62,18 +91,15 @@ const PluginRenderer = React.memo(
       () =>
         tag ? (
           React.createElement(tag, {
-            yjsPluginSceneData: getYJSPluginSceneData(currentScene, pluginId),
-            yjsPluginRendererData: getYJSPluginRendererData(
-              currentScene,
-              pluginId,
-            ),
+            yjsPluginSceneData: getYJSPluginSceneData(sceneId, pluginId),
+            yjsPluginRendererData: getYJSPluginRendererData(sceneId, pluginId),
             awarenessContext: {
               awarenessObj: provider?.awareness,
               currentUserId,
             } as AwarenessContext,
-            pluginContext: { pluginId, sceneId: currentScene },
+            pluginContext: { pluginId, sceneId },
             setRenderCurrentScene: () => {
-              getYJSPluginRenderer()?.set("currentScene", currentScene);
+              getYJSPluginRenderer()?.set("currentScene", sceneId);
             },
             trpcClient,
           })
@@ -81,7 +107,6 @@ const PluginRenderer = React.memo(
           <Text>No renderer for {pluginInfo?.plugin}</Text>
         ),
       [
-        currentScene,
         currentUserId,
         getYJSPluginRenderer,
         getYJSPluginRendererData,
@@ -89,6 +114,7 @@ const PluginRenderer = React.memo(
         pluginId,
         pluginInfo?.plugin,
         provider?.awareness,
+        sceneId,
         tag,
       ],
     );
