@@ -40,6 +40,7 @@ COPY packages/ui/package.json /app/packages/ui/package.json
 COPY plugins/google-slides/package.json /app/plugins/google-slides/package.json
 COPY plugins/myworshiplist/package.json /app/plugins/myworshiplist/package.json
 COPY plugins/simple-image/package.json /app/plugins/simple-image/package.json
+COPY plugins/audio-recorder/package.json /app/plugins/audio-recorder/package.json
 
 RUN yarn install
 
@@ -116,6 +117,9 @@ RUN yarn workspace @repo/plugin-myworshiplist build
 COPY plugins/simple-image/ /app/plugins/simple-image/
 RUN yarn workspace @repo/plugin-simple-image build
 
+COPY plugins/audio-recorder/ /app/plugins/audio-recorder/
+RUN yarn workspace @repo/plugin-audio-recorder build
+
 ################################################################################
 # Build stage 6 - Combine deps and build, taking only needed files
 
@@ -162,6 +166,9 @@ COPY --from=builder-plugin /app/plugins/myworshiplist/out/ /app/plugins/myworshi
 COPY --from=builder-plugin /app/plugins/simple-image/package.json /app/plugins/simple-image/
 COPY --from=builder-plugin /app/plugins/simple-image/dist/ /app/plugins/simple-image/dist/
 COPY --from=builder-plugin /app/plugins/simple-image/out/ /app/plugins/simple-image/out/
+COPY --from=builder-plugin /app/plugins/audio-recorder/package.json /app/plugins/audio-recorder/
+COPY --from=builder-plugin /app/plugins/audio-recorder/dist/ /app/plugins/audio-recorder/dist/
+COPY --from=builder-plugin /app/plugins/audio-recorder/out/ /app/plugins/audio-recorder/out/
 
 # Shared args shouldn't be overridable at runtime (because they're baked into
 # the built JS).
