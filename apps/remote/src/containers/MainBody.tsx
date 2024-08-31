@@ -20,16 +20,21 @@ const MainBody = () => {
       overflow="auto"
       tabIndex={0}
       onKeyDown={(e) => {
-        if (
-          e.key === "ArrowUp" ||
-          e.key === "ArrowDown" ||
-          e.key === "ArrowRight" ||
-          e.key === "ArrowLeft"
-        )
+        const keysToDetect = [
+          "ArrowLeft",
+          "ArrowRight",
+          "ArrowUp",
+          "ArrowDown",
+          "PageUp",
+          "PageDown",
+        ];
+        if (keysToDetect.includes(e.key)) {
           keyPressMutate({
             variables: {
               keyType:
-                e.key === "ArrowRight" || e.key === "ArrowDown"
+                e.key === "ArrowRight" ||
+                e.key === "ArrowDown" ||
+                e.key === "PageDown"
                   ? "NEXT"
                   : "PREV",
               projectId: projectId,
@@ -37,6 +42,8 @@ const MainBody = () => {
               rendererId: "1",
             },
           });
+          e.preventDefault();
+        }
       }}
     >
       <Switch>
