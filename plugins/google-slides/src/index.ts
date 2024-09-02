@@ -176,6 +176,7 @@ const getAppRouter =
 
               loadedPlugin.pluginData.presentationId = presentationId;
               loadedPlugin.pluginData.pageIds = pageIds;
+              loadedPlugin.pluginData.thumbnailLinks = [];
 
               // DEBT: Make this runnable somewhere else
               // The problem is, if that's the case then we'll need to store the token
