@@ -1,0 +1,8 @@
+html {
+  background-color: black;
+}
+
+body {
+  /* Chakra overrides this so we either put !important or change it in chakra */
+  background-color: black !important;
+}

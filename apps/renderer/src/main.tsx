@@ -11,6 +11,7 @@ import { Router } from "wouter";
 
 import App from "./App";
 import { apolloClient } from "./apollo";
+import "./index.css";
 import { trpc, trpcClient } from "./trpc";
 
 const queryClient = new QueryClient({
