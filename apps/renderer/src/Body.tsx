@@ -42,6 +42,7 @@ const SceneRenderer = React.memo(({ sceneId }: { sceneId: string }) => {
   return (
     <Box position="absolute" zIndex={currentScene === sceneId ? 1 : 0}>
       <motion.div
+        initial={{ opacity: 0 }}
         animate={currentScene === sceneId ? "show" : "hidden"}
         variants={{
           show: { opacity: 1 },
