@@ -4,10 +4,11 @@ import { useMemo, useState } from "react";
 import { useElapsedTime } from "use-elapsed-time";
 
 import { Recording } from "../../src/types";
-import { pluginApi } from "../pluginApi";
+import { usePluginAPI } from "../pluginApi";
 import { getStreamState } from "../useAudioRecording";
 
 export const RecordingSection = () => {
+  const pluginApi = usePluginAPI();
   const recordings = pluginApi.scene.useData((x) => x.pluginData.recordings);
 
   return (
@@ -46,6 +47,7 @@ const CurrentlyRecording = ({ recording }: { recording: Recording }) => {
 };
 
 const RecordingEnded = ({ recording }: { recording: Recording }) => {
+  const pluginApi = usePluginAPI();
   return (
     <Box>
       <audio

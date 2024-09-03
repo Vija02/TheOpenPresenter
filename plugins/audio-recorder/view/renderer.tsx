@@ -1,47 +1,30 @@
 import r2wc from "@r2wc/react-to-web-component";
-import { AwarenessContext, PluginContext } from "@repo/base-plugin/client";
+import {
+  AwarenessContext,
+  ObjectToTypedMap,
+  Plugin,
+  PluginAPIProvider,
+  PluginContext,
+} from "@repo/base-plugin/client";
 import type { TRPCUntypedClient } from "@trpc/client";
-import { useEffect, useState } from "react";
-import type { Map } from "yjs";
 
 import { AppRouter } from "../src";
 import { rendererWebComponentTag } from "../src/consts";
-import { init } from "./pluginApi";
 import { useAudioRecording } from "./useAudioRecording";
 
-const RendererEntry = ({
-  yjsPluginSceneData,
-  yjsPluginRendererData,
-  awarenessContext,
-  pluginContext,
-  setRenderCurrentScene,
-}: {
-  yjsPluginSceneData: Map<any>;
-  yjsPluginRendererData: Map<any>;
+const RendererEntry = (props: {
+  yjsPluginSceneData: ObjectToTypedMap<Plugin<any>>;
+  yjsPluginRendererData: ObjectToTypedMap<any>;
   awarenessContext: AwarenessContext;
   pluginContext: PluginContext;
   setRenderCurrentScene: () => void;
   trpcClient: TRPCUntypedClient<AppRouter>;
 }) => {
-  const [isInitialized, setIsInitialized] = useState(false);
-  useEffect(() => {
-    init({
-      yjsPluginSceneData,
-      yjsPluginRendererData,
-      awarenessContext,
-      pluginContext,
-      setRenderCurrentScene,
-    });
-    setIsInitialized(true);
-  }, [
-    awarenessContext,
-    pluginContext,
-    setRenderCurrentScene,
-    yjsPluginRendererData,
-    yjsPluginSceneData,
-  ]);
-
-  return <>{isInitialized && <AudioHandler />}</>;
+  return (
+    <PluginAPIProvider {...props}>
+      <AudioHandler />
+    </PluginAPIProvider>
+  );
 };
 
 const AudioHandler = () => {

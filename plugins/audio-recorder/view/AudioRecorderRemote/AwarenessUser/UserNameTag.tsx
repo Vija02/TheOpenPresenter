@@ -1,7 +1,7 @@
 import { Badge, Stack, Text } from "@chakra-ui/react";
 import { AwarenessUserData } from "@repo/base-plugin/client";
 
-import { pluginApi } from "../../pluginApi";
+import { usePluginAPI } from "../../pluginApi";
 
 const getStringFromUA = (ua: AwarenessUserData["userAgentInfo"]) => {
   return `${ua.browser.name} / ${ua.os.name}`;
@@ -11,6 +11,7 @@ type PropTypes = {
   user: AwarenessUserData;
 };
 export const UserNameTag = ({ user }: PropTypes) => {
+  const pluginApi = usePluginAPI();
   const currentUserId = pluginApi.awareness.currentUserId;
   const userIsThisDevice = user.id === currentUserId;
 

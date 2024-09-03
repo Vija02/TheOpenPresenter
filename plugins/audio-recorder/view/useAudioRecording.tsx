@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import * as tus from "tus-js-client";
 import { proxy, useSnapshot } from "valtio";
 
-import { pluginApi } from "./pluginApi";
+import { usePluginAPI } from "./pluginApi";
 
 const streamState: Record<
   string,
@@ -22,6 +22,7 @@ const streamState: Record<
 // Note: Recording should continue running even when we're viewing different plugins. Applies to renderer too
 // DEBT: Maybe make a test for this
 export const useAudioRecording = () => {
+  const pluginApi = usePluginAPI();
   const currentUserId = pluginApi.awareness.currentUserId;
 
   const mutableSceneData = pluginApi.scene.useValtioData();
@@ -104,6 +105,7 @@ export const useAudioRecording = () => {
         const mediaId = pluginApi.media.generateId();
 
         startStreamUpload({
+          pluginApi,
           mediaRecorder,
           currentStreamState: localStreamData,
           mediaId,
@@ -120,7 +122,7 @@ export const useAudioRecording = () => {
           new Date().toISOString();
       }
     });
-  }, [mutableSceneData.pluginData.recordings, recordings]);
+  }, [mutableSceneData.pluginData.recordings, pluginApi, recordings]);
 };
 
 export const useStreamState = (streamId: string) => {
@@ -133,11 +135,13 @@ export const getStreamState = (streamId: string) => {
 // Much of the code here is inspired from
 // https://github.com/tus/tus-js-client/blob/main/demos/browser/video.js
 function startStreamUpload({
+  pluginApi,
   mediaRecorder,
   currentStreamState,
   mediaId,
   onStopRecording,
 }: {
+  pluginApi: ReturnType<typeof usePluginAPI>;
   mediaRecorder: MediaRecorder;
   currentStreamState: (typeof streamState)[string];
   mediaId: string;
@@ -184,7 +188,7 @@ function startStreamUpload({
     },
   };
 
-  startUpload(readableRecorder, mediaId);
+  startUpload(pluginApi, readableRecorder, mediaId);
 
   currentStreamState.stopRecording = () => {
     for (const track of currentStreamState.stream.getTracks()) {
@@ -196,7 +200,11 @@ function startStreamUpload({
   };
 }
 
-function startUpload(file: any, mediaId: string) {
+function startUpload(
+  pluginApi: ReturnType<typeof usePluginAPI>,
+  file: any,
+  mediaId: string,
+) {
   const endpoint = pluginApi.media.tusUploadUrl;
   const chunkSize = 15000; // 15kb. Roughly every second
 

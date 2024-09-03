@@ -2,7 +2,7 @@ import { Box, Button, Flex, Stack, Text } from "@chakra-ui/react";
 import { VscDebugStop, VscPlay } from "react-icons/vsc";
 
 import { Stream } from "../../src";
-import { pluginApi } from "../pluginApi";
+import { usePluginAPI } from "../pluginApi";
 import { getStreamState } from "../useAudioRecording";
 import { UserNameTag } from "./AwarenessUser/UserNameTag";
 
@@ -10,6 +10,7 @@ type PropTypes = {
   activeStream: Stream;
 };
 export const StreamCard = ({ activeStream }: PropTypes) => {
+  const pluginApi = usePluginAPI();
   const mutableSceneData = pluginApi.scene.useValtioData();
   const recordings = pluginApi.scene.useData((x) => x.pluginData.recordings);
   const currentUserId = pluginApi.awareness.currentUserId;

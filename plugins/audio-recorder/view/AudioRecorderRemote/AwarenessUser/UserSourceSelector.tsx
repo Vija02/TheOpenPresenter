@@ -1,13 +1,14 @@
 import { Stack } from "@chakra-ui/react";
 import _ from "lodash";
 
-import { pluginApi } from "../../pluginApi";
+import { usePluginAPI } from "../../pluginApi";
 import { UserCard } from "./UserCard";
 
 type PropTypes = {
   onSelectUser: (userId: string) => void;
 };
 export const UserSourceSelector = ({ onSelectUser }: PropTypes) => {
+  const pluginApi = usePluginAPI();
   const awarenessData = pluginApi.awareness.useAwarenessData();
 
   return (

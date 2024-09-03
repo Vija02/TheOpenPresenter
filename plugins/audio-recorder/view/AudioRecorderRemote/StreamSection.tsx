@@ -2,11 +2,12 @@ import { Box, Button, Tag, TagLabel, TagLeftIcon } from "@chakra-ui/react";
 import { useState } from "react";
 import { VscWarning } from "react-icons/vsc";
 
-import { pluginApi } from "../pluginApi";
+import { usePluginAPI } from "../pluginApi";
 import { UserSourceSelector } from "./AwarenessUser/UserSourceSelector";
 import { StreamCard } from "./StreamCard";
 
 export const StreamSection = () => {
+  const pluginApi = usePluginAPI();
   const activeStreams = pluginApi.scene.useData(
     (x) => x.pluginData.activeStreams,
   );
@@ -50,6 +51,7 @@ export const StreamSection = () => {
 };
 
 const AddNewStreams = () => {
+  const pluginApi = usePluginAPI();
   const [isAdding, setIsAdding] = useState(false);
 
   const mutableSceneData = pluginApi.scene.useValtioData();
