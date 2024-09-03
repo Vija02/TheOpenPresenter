@@ -1,14 +1,41 @@
 import { appData } from "@repo/lib";
 import _ from "lodash";
-import { useY } from "react-yjs";
+import { useRef, useSyncExternalStore } from "react";
 import { typeidUnboxed } from "typeid-js";
 import { proxy } from "valtio";
 import { bind } from "valtio-yjs";
-import type { Map } from "yjs";
+import { AbstractType, YEvent, Map as YMap } from "yjs";
 
-import { AwarenessContext, Plugin, PluginContext } from "../types";
+import {
+  AwarenessContext,
+  ObjectToTypedMap,
+  Plugin,
+  PluginContext,
+} from "../types";
 import { createTraverser } from "../utils";
 import { awarenessStore } from "./store";
+import { getPathsFromSharedType, isYjsObj } from "./util";
+
+const _watcher: Record<string, { id: string; callback: () => void }[]> = {};
+// Only the paths that are below the paths that we are watching need to be refreshed
+// Eg: If a__b__c is updated
+// Then we refresh a__b__c AND a__b__c__d
+const watcherCreateObserveHandler =
+  (basePath: string[]) => (events: YEvent<any>[]) => {
+    events.forEach((event) => {
+      const eventPath = basePath
+        .concat(event.path.map((x) => x.toString()))
+        .join("__");
+
+      const matchingWatchers = Object.entries(_watcher).filter(([key]) =>
+        key.includes(eventPath),
+      );
+      console.log(matchingWatchers, _watcher, eventPath);
+      matchingWatchers.forEach(([_key, val]) =>
+        val.forEach((x) => x.callback()),
+      );
+    });
+  };
 
 export function initPluginApi<
   PluginSceneDataType extends object = any,
@@ -20,13 +47,21 @@ export function initPluginApi<
   pluginContext,
   setRenderCurrentScene,
 }: {
-  yjsPluginSceneData: Map<any>;
-  yjsPluginRendererData: Map<any>;
+  yjsPluginSceneData: ObjectToTypedMap<Plugin<PluginSceneDataType>>;
+  yjsPluginRendererData: ObjectToTypedMap<PluginRendererDataType>;
   awarenessContext: AwarenessContext;
   pluginContext: PluginContext;
   setRenderCurrentScene: () => void;
 }) {
   // TODO: Should only be called once
+
+  const sceneBasePath = getPathsFromSharedType(yjsPluginSceneData);
+  const sceneObserveHandler = watcherCreateObserveHandler(sceneBasePath);
+  yjsPluginSceneData.observeDeep(sceneObserveHandler);
+
+  const rendererBasePath = getPathsFromSharedType(yjsPluginRendererData);
+  const rendererObserveHandler = watcherCreateObserveHandler(rendererBasePath);
+  yjsPluginRendererData.observeDeep(rendererObserveHandler);
 
   const sceneTraverser = createTraverser<Plugin<PluginSceneDataType>>(
     yjsPluginSceneData!,
@@ -37,7 +72,7 @@ export function initPluginApi<
 
   // Valtio
   const sceneValtio = proxy({} as Plugin<PluginSceneDataType>);
-  const unbindScene = bind(sceneValtio, yjsPluginSceneData);
+  const unbindScene = bind(sceneValtio, yjsPluginSceneData as YMap<any>);
 
   const rendererValtio = proxy({} as PluginRendererDataType);
   const unbindRenderer = bind(rendererValtio, yjsPluginRendererData);
@@ -78,15 +113,8 @@ export function initPluginApi<
     },
     scene: {
       // Use this for read
-      useData<Y = any>(fn?: (x: Plugin<PluginSceneDataType>) => Y) {
-        const data = sceneTraverser(fn);
-
-        if (!!data && typeof data === "object" && "doc" in data) {
-          return useY(data as unknown as Map<any>) as Y;
-        } else {
-          // If it's a primitive, we just return the data directly
-          return data as Y;
-        }
+      useData<Y = any>(fn?: (x: Plugin<PluginSceneDataType>) => Y): Y {
+        return useData<Y>(sceneTraverser, fn);
       },
       // Use this for write
       useValtioData<O = undefined>() {
@@ -96,16 +124,8 @@ export function initPluginApi<
       },
     },
     renderer: {
-      // Use this for read
-      useData<Y = any>(fn?: (x: PluginRendererDataType) => Y) {
-        const data = rendererTraverser(fn);
-
-        if (!!data && typeof data === "object" && "doc" in data) {
-          return useY(data as unknown as Map<any>) as Y;
-        } else {
-          // If it's a primitive, we just return the data directly
-          return data as Y;
-        }
+      useData<Y = any>(fn?: (x: PluginRendererDataType) => Y): Y {
+        return useData<Y>(rendererTraverser, fn);
       },
       // Use this for write
       useValtioData<O = undefined>() {
@@ -119,7 +139,68 @@ export function initPluginApi<
       unbindScene();
       unbindRenderer();
 
+      yjsPluginSceneData.unobserveDeep(sceneObserveHandler);
+      yjsPluginRendererData.unobserveDeep(rendererObserveHandler);
+
       awarenessContext.awarenessObj.off("update", onAwarenessUpdate);
     },
   };
+}
+
+function useData<Y>(
+  traverser: (
+    traverseFunction?: any | undefined,
+    returnClosestYjsObj?: boolean,
+  ) => ObjectToTypedMap<ReturnType<any>>,
+  fn?: (x: any) => Y,
+) {
+  const initialYjsObj = traverser(fn, true);
+  if (!isYjsObj(initialYjsObj)) {
+    return initialYjsObj;
+  }
+
+  const path = getPathsFromSharedType(
+    initialYjsObj as unknown as YMap<any>,
+  ).join("__");
+
+  // We need this so that we can remove the watcher when unmounted
+  const calledId = Math.random().toString();
+
+  const prevDataRef = useRef<any | null>(null);
+
+  return useSyncExternalStore(
+    (callback) => {
+      if (!_watcher[path]) _watcher[path] = [];
+      _watcher[path]!.push({ id: calledId, callback });
+
+      return () => {
+        const index = _watcher[path]?.findIndex((x) => x.id === calledId);
+        if (index) _watcher[path]?.splice(index, 1);
+      };
+    },
+    () => {
+      const data = traverser(fn);
+
+      if (isYjsObj(data)) {
+        const jsonData = (data as unknown as AbstractType<any>).toJSON();
+        if (_.isEqual(prevDataRef.current, jsonData)) {
+          return prevDataRef.current;
+        } else {
+          prevDataRef.current = jsonData;
+          return prevDataRef.current;
+        }
+      } else {
+        // If it's a primitive, we just return the data directly
+        return data as Y;
+      }
+    },
+    () => {
+      const data = traverser(fn);
+
+      if (isYjsObj(data)) {
+        return data.toJson();
+      }
+      return data;
+    },
+  );
 }
