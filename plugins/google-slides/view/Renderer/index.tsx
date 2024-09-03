@@ -1,10 +1,11 @@
 import { Box } from "@chakra-ui/react";
 import { useMemo } from "react";
 
-import { pluginApi } from "../pluginApi";
+import { usePluginAPI } from "../pluginApi";
 import RenderView from "./RenderView";
 
 const Renderer = () => {
+  const pluginApi = usePluginAPI();
   const data = pluginApi.renderer.useData((x) => x);
   const slideIndex = useMemo(() => data.slideIndex!, [data.slideIndex]);
 

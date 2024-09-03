@@ -1,10 +1,11 @@
 import { Box, Center, Flex, Image, Text } from "@chakra-ui/react";
 
-import { pluginApi } from "../pluginApi";
+import { usePluginAPI } from "../pluginApi";
 import { trpc } from "../trpc";
 import { SlidePicker } from "./SlidePicker";
 
 const Remote = () => {
+  const pluginApi = usePluginAPI();
   const pluginContext = pluginApi.pluginContext;
 
   const selectSlideMutation = trpc.googleslides.selectSlide.useMutation();
@@ -39,6 +40,7 @@ const Remote = () => {
 };
 
 const RemoteHandler = () => {
+  const pluginApi = usePluginAPI();
   const pageIds = pluginApi.scene.useData((x) => x.pluginData.pageIds);
   const thumbnailLinks = pluginApi.scene.useData(
     (x) => x.pluginData.thumbnailLinks,
