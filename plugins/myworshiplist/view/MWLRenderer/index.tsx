@@ -30,8 +30,7 @@ const MWLRendererInner = () => {
   const songCaches = pluginApi.scene.useData<SongCache[]>(
     (x) => (x.pluginData as CustomTypeData).songCache,
   );
-  const pluginData = pluginApi.scene.useData((x) => x.pluginData);
-  const slideStyle = useMemo(() => pluginData.style, [pluginData.style]);
+  const slideStyle = pluginApi.scene.useData((x) => x.pluginData.style);
 
   const songCache = useMemo(
     () => songCaches.find((x) => x.id === songId),

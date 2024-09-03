@@ -34,8 +34,7 @@ const MWLStyleSettingModal = ({
 }: MWLStyleSettingModalPropTypes) => {
   const mutablePluginInfo = pluginApi.scene.useValtioData();
 
-  const pluginData = pluginApi.scene.useData((x) => x.pluginData);
-  const style = useMemo(() => pluginData.style, [pluginData.style]);
+  const style = pluginApi.scene.useData((x) => x.pluginData.style);
 
   const slideStyle = getSlideStyle(style);
 
