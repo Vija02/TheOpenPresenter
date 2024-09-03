@@ -1,11 +1,12 @@
 import { Box } from "@chakra-ui/react";
 
 import { MyWorshipListData } from "../../src/types";
-import { pluginApi } from "../pluginApi";
+import { usePluginAPI } from "../pluginApi";
 import MWLLanding from "./MWLLanding";
 import MWLRemoteCustom from "./MWLRemoteCustom";
 
 const MWLRemote = () => {
+  const pluginApi = usePluginAPI();
   const pluginData = pluginApi.scene.useData<MyWorshipListData>(
     (x) => x.pluginData,
   );

@@ -1,4 +1,5 @@
-import { initPluginApi } from "@repo/base-plugin/client";
+import { PluginAPIContext, initPluginApi } from "@repo/base-plugin/client";
+import { useContext } from "react";
 
 import { MyWorshipListData, PluginRendererData } from "../src/types";
 
@@ -7,10 +8,7 @@ type InitPluginApiFunc = typeof initPluginApi<
   PluginRendererData
 >;
 
-let pluginApi: ReturnType<InitPluginApiFunc>;
-
-function init(...params: Parameters<InitPluginApiFunc>) {
-  pluginApi = initPluginApi(...params);
+export function usePluginAPI() {
+  return useContext(PluginAPIContext)
+    .pluginAPI as ReturnType<InitPluginApiFunc>;
 }
-
-export { pluginApi, init };

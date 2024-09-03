@@ -3,7 +3,7 @@ import { useMemo } from "react";
 
 import { CustomTypeData, SongCache } from "../../src";
 import { getSlideStyle } from "../../src/slideStyle";
-import { pluginApi } from "../pluginApi";
+import { usePluginAPI } from "../pluginApi";
 import {
   cleanWhiteSpace,
   groupData,
@@ -13,6 +13,7 @@ import {
 import MWLSongRenderView from "./MWLSongRenderView";
 
 const MWLRenderer = () => {
+  const pluginApi = usePluginAPI();
   const type = pluginApi.scene.useData((x) => x.pluginData.type);
   if (type === "unselected") {
     return null;
@@ -23,6 +24,7 @@ const MWLRenderer = () => {
 };
 
 const MWLRendererInner = () => {
+  const pluginApi = usePluginAPI();
   const data = pluginApi.renderer.useData((x) => x);
   const songId = useMemo(() => data.songId, [data.songId]);
   const heading = useMemo(() => data.heading, [data.heading]);

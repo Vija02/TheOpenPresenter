@@ -13,12 +13,12 @@ import {
 import { OverlayToggleComponentProps } from "@repo/ui";
 import { Form, Formik } from "formik";
 import { InputControl, SubmitButton, SwitchControl } from "formik-chakra-ui";
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect } from "react";
 import { toFormikValidationSchema as toFormicValidationSchema } from "zod-formik-adapter";
 
 import { getSlideStyle } from "../../../../src/slideStyle";
 import { SlideStyle, slideStyleValidator } from "../../../../src/types";
-import { pluginApi } from "../../../pluginApi";
+import { usePluginAPI } from "../../../pluginApi";
 
 export type MWLStyleSettingModalPropTypes = Omit<
   ModalProps,
@@ -32,6 +32,7 @@ const MWLStyleSettingModal = ({
   resetData,
   ...props
 }: MWLStyleSettingModalPropTypes) => {
+  const pluginApi = usePluginAPI();
   const mutablePluginInfo = pluginApi.scene.useValtioData();
 
   const style = pluginApi.scene.useData((x) => x.pluginData.style);

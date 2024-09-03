@@ -4,7 +4,7 @@ import React, { useMemo } from "react";
 import { getSlideStyle } from "../../../src/slideStyle";
 import { CustomTypeData } from "../../../src/types";
 import MWLSongRenderView from "../../MWLRenderer/MWLSongRenderView";
-import { pluginApi } from "../../pluginApi";
+import { usePluginAPI } from "../../pluginApi";
 import {
   cleanWhiteSpace,
   groupData,
@@ -13,6 +13,7 @@ import {
 } from "../../songHelpers";
 
 const MWLSongView = React.memo(({ songId }: { songId: number }) => {
+  const pluginApi = usePluginAPI();
   const songCaches = pluginApi.scene.useData(
     (x) => (x.pluginData as CustomTypeData).songCache,
   );
@@ -28,6 +29,7 @@ const MWLSongView = React.memo(({ songId }: { songId: number }) => {
 });
 
 const MWLSongViewInner = React.memo(({ songId }: { songId: number }) => {
+  const pluginApi = usePluginAPI();
   const songCaches = pluginApi.scene.useData(
     (x) => (x.pluginData as CustomTypeData).songCache,
   );

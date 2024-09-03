@@ -16,7 +16,7 @@ import { useCallback, useState } from "react";
 import { useDebounce } from "use-debounce";
 
 import { CustomTypeData } from "../../../../src";
-import { pluginApi } from "../../../pluginApi";
+import { usePluginAPI } from "../../../pluginApi";
 import { trpc } from "../../../trpc";
 
 export type MWLRemoteCustomAddSongModalPropTypes = Omit<
@@ -31,6 +31,7 @@ const MWLRemoteCustomAddSongModal = ({
   resetData,
   ...props
 }: MWLRemoteCustomAddSongModalPropTypes) => {
+  const pluginApi = usePluginAPI();
   const pluginInfo = pluginApi.scene.useValtioData<CustomTypeData>();
 
   const [selectedId, setSelectedId] = useState<number | null>(null);
