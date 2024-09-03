@@ -35,7 +35,7 @@ const MWLSongRenderView = React.memo(
         style={{
           width: "100%",
           height: "100%",
-          backgroundColor: slideStyle.isDarkMode ? "black" : "transparent",
+          backgroundColor: slideStyle.isDarkMode ? "black" : "white",
           overflow: "visible",
           userSelect: "none",
         }}
