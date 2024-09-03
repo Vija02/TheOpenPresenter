@@ -1,10 +1,11 @@
 import { Box } from "@chakra-ui/react";
 import { useMemo } from "react";
 
-import { pluginApi } from "../pluginApi";
+import { usePluginAPI } from "../pluginApi";
 import ImageRenderView from "./ImageRenderView";
 
 const ImageRenderer = () => {
+  const pluginApi = usePluginAPI();
   const data = pluginApi.renderer.useData((x) => x);
   const imgIndex = data.imgIndex;
 

@@ -6,9 +6,10 @@ import { useState } from "react";
 
 import { PluginBaseData } from "../../src/types";
 import ImageRenderView from "../ImageRenderer/ImageRenderView";
-import { pluginApi } from "../pluginApi";
+import { usePluginAPI } from "../pluginApi";
 
 const ImageRemote = () => {
+  const pluginApi = usePluginAPI();
   const [uppy] = useState(() =>
     new Uppy().use(XHR, {
       endpoint: "/media/upload/formData",
