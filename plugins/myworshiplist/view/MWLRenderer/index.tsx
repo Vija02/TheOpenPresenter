@@ -13,6 +13,16 @@ import {
 import MWLSongRenderView from "./MWLSongRenderView";
 
 const MWLRenderer = () => {
+  const type = pluginApi.scene.useData((x) => x.pluginData.type);
+  if (type === "unselected") {
+    return null;
+  }
+
+  // TODO: Handle each type
+  return <MWLRendererInner />;
+};
+
+const MWLRendererInner = () => {
   const data = pluginApi.renderer.useData((x) => x);
   const songId = useMemo(() => data.songId, [data.songId]);
   const heading = useMemo(() => data.heading, [data.heading]);
