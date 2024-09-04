@@ -30,7 +30,6 @@ const watcherCreateObserveHandler =
       const matchingWatchers = Object.entries(_watcher).filter(([key]) =>
         key.includes(eventPath),
       );
-      console.log(matchingWatchers, _watcher, eventPath);
       matchingWatchers.forEach(([_key, val]) =>
         val.forEach((x) => x.callback()),
       );
