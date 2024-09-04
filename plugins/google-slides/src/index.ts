@@ -77,7 +77,12 @@ export const init = (
     });
 
     const loadedPlugin = loadedPlugins[key];
-    res.send(loadedPlugin?.pluginData.html ?? "");
+    res.send(
+      loadedPlugin?.pluginData.html?.replace(
+        /nonce="(.+?)"/g,
+        `nonce="${res.locals.nonce}"`,
+      ) ?? "",
+    );
   });
 
   // TODO: Handle different regions
