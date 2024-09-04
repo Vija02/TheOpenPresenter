@@ -10,20 +10,22 @@ const Renderer = () => {
   const slideIndex = useMemo(() => data.slideIndex!, [data.slideIndex]);
 
   const pageIds = pluginApi.scene.useData((x) => x.pluginData.pageIds);
-  const presentationId = pluginApi.scene.useData(
-    (x) => x.pluginData.presentationId,
-  );
 
   const selectedPageId = useMemo(
     () => pageIds[slideIndex]!,
     [pageIds, slideIndex],
   );
 
-  const slideSrc = useMemo(
-    () =>
-      `https://docs.google.com/presentation/d/${presentationId}/embed?rm=minimal`,
-    [presentationId],
-  );
+  const slideSrc = useMemo(() => {
+    return (
+      pluginApi.env.getRootURL() +
+      `/plugin/google-slides/proxy?sceneId=${pluginApi.pluginContext.sceneId}&pluginId=${pluginApi.pluginContext.pluginId}`
+    );
+  }, [
+    pluginApi.env,
+    pluginApi.pluginContext.pluginId,
+    pluginApi.pluginContext.sceneId,
+  ]);
 
   return (
     <Box w="100vw" h="100vh">

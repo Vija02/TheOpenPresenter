@@ -28,7 +28,7 @@ export const init = (
     );
   }
   serverPluginApi.registerCSPDirective(pluginName, {
-    "frame-src": ["*.google.com"],
+    "frame-src": ["'self'", "*.google.com"],
     "img-src": ["*.googleusercontent.com", "ssl.gstatic.com"],
     // We need these for Auth & Google Picker API
     "script-src": [
@@ -65,18 +65,43 @@ export const init = (
     pluginName,
     rendererWebComponentTag,
   );
-  // serverPluginApi.registerPrivateRoute(pluginName, "proxy", (req, res) => {
-  //   res.send(html);
-  // });
+  serverPluginApi.registerPrivateRoute(pluginName, "proxy", (req, res) => {
+    if (!req.query?.sceneId || !req.query?.pluginId) {
+      return res.sendStatus(400);
+    }
+    // TODO: Authentication
+
+    const key = contextToKey({
+      sceneId: req.query.sceneId as string,
+      pluginId: req.query.pluginId as string,
+    });
+
+    const loadedPlugin = loadedPlugins[key];
+    res.send(loadedPlugin?.pluginData.html ?? "");
+  });
 
   // TODO: Handle different regions
   // Maybe we want to cache it too?
   const apiProxy = createProxyMiddleware({
     target: "https://lh7-rt.googleusercontent.com",
+    on: {
+      proxyReq: (proxyReq) => {
+        proxyReq.removeHeader("Referer");
+      },
+    },
+    changeOrigin: true,
+  });
+  const apiProxyScripts = createProxyMiddleware({
+    target: "https://docs.google.com",
     changeOrigin: true,
   });
 
   serverPluginApi.registerPrivateRoute(pluginName, "staticProxy", apiProxy);
+  serverPluginApi.registerPrivateRoute(
+    pluginName,
+    "staticScripts",
+    apiProxyScripts,
+  );
 
   serverPluginApi.registerKeyPressHandler(
     pluginName,
@@ -178,8 +203,15 @@ const getAppRouter =
               loadedPlugin.pluginData.pageIds = pageIds;
               loadedPlugin.pluginData.thumbnailLinks = [];
 
+              const htmlData = await axios(
+                `https://docs.google.com/presentation/d/${presentationId}/embed?rm=minimal`,
+              );
+
+              loadedPlugin.pluginData.html = processHtml(htmlData.data);
+
               // DEBT: Make this runnable somewhere else
               // The problem is, if that's the case then we'll need to store the token
+              // TODO: Problem if we run this again while still running
               for (const pageId of pageIds) {
                 const thumbnailDataRes = await axios(
                   `https://slides.googleapis.com/v1/presentations/${presentationId}/pages/${pageId}/thumbnail?thumbnailProperties.thumbnailSize=SMALL`,
@@ -208,6 +240,22 @@ const getAppRouter =
       },
     });
   };
+
+function processHtml(html: string) {
+  return html
+    .replace(
+      /\/static\/presentation\/client\//g,
+      "/plugin/google-slides/staticScripts/static/presentation/client/",
+    )
+    .replace(
+      /https:\/\/lh7-rt\.googleusercontent\.com/g,
+      "/plugin/google-slides/staticProxy",
+    )
+    .replace(
+      /https:\\\/\\\/lh7-rt\.googleusercontent\.com/g,
+      "/plugin/google-slides/staticProxy",
+    );
+}
 
 export type AppRouter = ReturnType<ReturnType<typeof getAppRouter>>;
 

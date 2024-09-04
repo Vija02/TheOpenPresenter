@@ -5,6 +5,8 @@ export type PluginBaseData = {
   pageIds: string[];
   /** Links to the preview images of the presentation  */
   thumbnailLinks: string[];
+
+  html?: string
 };
 
 export type PluginRendererData = {
