@@ -4844,6 +4844,42 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@repo/plugin-radio@workspace:plugins/radio":
+  version: 0.0.0-use.local
+  resolution: "@repo/plugin-radio@workspace:plugins/radio"
+  dependencies:
+    "@chakra-ui/react": "npm:^2.8.2"
+    "@emotion/react": "npm:^11.13.0"
+    "@emotion/styled": "npm:^11.13.0"
+    "@r2wc/react-to-web-component": "npm:^2.0.3"
+    "@repo/base-plugin": "npm:*"
+    "@repo/eslint-config": "npm:*"
+    "@repo/prettier-config": "npm:*"
+    "@repo/typescript-config": "npm:*"
+    "@tanstack/react-query": "npm:^5.51.1"
+    "@trpc/client": "npm:^11.0.0-rc.461"
+    "@trpc/react-query": "npm:^11.0.0-rc.461"
+    "@trpc/server": "npm:^11.0.0-rc.461"
+    "@types/react": "npm:types-react@rc"
+    "@types/react-dom": "npm:types-react-dom@rc"
+    "@vitejs/plugin-react-swc": "npm:^3.7.0"
+    date-fns: "npm:^3.6.0"
+    eslint: "npm:^8.57.0"
+    framer-motion: "npm:^11.3.8"
+    pkgroll: "npm:^2.4.2"
+    react: "npm:rc"
+    react-dom: "npm:rc"
+    react-icons: "npm:^5.3.0"
+    ua-parser-js: "npm:^1.0.38"
+    use-elapsed-time: "npm:^3.0.4"
+    valtio: "npm:^2.0.0"
+    valtio-yjs: "npm:^0.6.0"
+    vite: "npm:^5.3.5"
+    y-protocols: "npm:^1.0.6"
+    yjs: "npm:^13.6.18"
+  languageName: unknown
+  linkType: soft
+
 "@repo/plugin-simple-image@workspace:plugins/simple-image":
   version: 0.0.0-use.local
   resolution: "@repo/plugin-simple-image@workspace:plugins/simple-image"

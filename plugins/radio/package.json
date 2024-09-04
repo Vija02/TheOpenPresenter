@@ -1,0 +1,50 @@
+{
+  "name": "@repo/plugin-radio",
+  "private": true,
+  "version": "0.0.0",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "default": "./dist/index.mjs",
+      "types": "./dist/index.d.mts"
+    }
+  },
+  "scripts": {
+    "build": "pkgroll && vite build",
+    "dev": "concurrently \"pkgroll --watch\" \"vite build --watch\""
+  },
+  "dependencies": {
+    "@chakra-ui/react": "^2.8.2",
+    "@emotion/react": "^11.13.0",
+    "@emotion/styled": "^11.13.0",
+    "@r2wc/react-to-web-component": "^2.0.3",
+    "@repo/base-plugin": "*",
+    "@tanstack/react-query": "^5.51.1",
+    "@trpc/client": "^11.0.0-rc.461",
+    "@trpc/react-query": "^11.0.0-rc.461",
+    "@trpc/server": "^11.0.0-rc.461",
+    "@types/react": "npm:types-react@rc",
+    "@types/react-dom": "npm:types-react-dom@rc",
+    "date-fns": "^3.6.0",
+    "framer-motion": "^11.3.8",
+    "react": "rc",
+    "react-dom": "rc",
+    "react-icons": "^5.3.0",
+    "ua-parser-js": "^1.0.38",
+    "use-elapsed-time": "^3.0.4",
+    "valtio": "^2.0.0",
+    "valtio-yjs": "^0.6.0",
+    "y-protocols": "^1.0.6",
+    "yjs": "^13.6.18"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "*",
+    "@repo/prettier-config": "*",
+    "@repo/typescript-config": "*",
+    "@vitejs/plugin-react-swc": "^3.7.0",
+    "eslint": "^8.57.0",
+    "pkgroll": "^2.4.2",
+    "vite": "^5.3.5"
+  }
+}
