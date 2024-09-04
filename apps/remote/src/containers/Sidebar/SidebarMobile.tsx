@@ -42,7 +42,12 @@ const SidebarMobile = () => {
               display="flex"
               alignItems="center"
             >
-              <Text fontSize="xs" textAlign="center" wordBreak="break-word">
+              <Text
+                fontSize="xs"
+                textAlign="center"
+                wordBreak="break-word"
+                width="100%"
+              >
                 {value.name}
               </Text>
             </Box>
