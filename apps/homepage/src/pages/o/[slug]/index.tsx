@@ -8,8 +8,10 @@ import {
   Button,
   HStack,
   Heading,
+  Link,
   LinkBox,
   LinkOverlay,
+  Stack,
   Text,
 } from "@chakra-ui/react";
 import {
@@ -30,7 +32,15 @@ const OrganizationPage: NextPage = () => {
     <SharedOrgLayout title="Dashboard" sharedOrgQuery={query}>
       {organizationLoadingElement || (
         <StandardWidth>
-          <Heading mb={3}>Projects</Heading>
+          <Stack
+            direction="row"
+            justifyContent="space-between"
+            alignItems="center"
+            mb={3}
+          >
+            <Heading>Projects</Heading>
+            <Link href="/logout">Logout</Link>
+          </Stack>
           <HStack alignItems="center" marginBottom={2}>
             {query.data?.organizationBySlug?.projects.nodes.map(
               (project, i) => (
