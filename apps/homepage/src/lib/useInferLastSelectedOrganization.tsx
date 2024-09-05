@@ -21,10 +21,14 @@ export const useInferLastSelectedOrganization = (
     );
 
   if (lastSelectedOrganizationId) {
-    return sharedQuery.data?.currentUser?.organizationMemberships.nodes.find(
-      (membership) =>
-        membership.organization?.id === lastSelectedOrganizationId,
-    )?.organization;
+    const membership =
+      sharedQuery.data?.currentUser?.organizationMemberships.nodes.find(
+        (membership) =>
+          membership.organization?.id === lastSelectedOrganizationId,
+      );
+    if (membership) {
+      return membership.organization;
+    }
   }
 
   if (
