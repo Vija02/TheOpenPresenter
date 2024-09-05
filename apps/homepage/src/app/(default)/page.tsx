@@ -15,6 +15,30 @@ export default function Home() {
           </PageHeader>
 
           <ViewOnGithub />
+
+          <Box display="flex" justifyContent="center">
+            <styled.a
+              mt={6}
+              href="/o"
+              bg="indigo.700"
+              color="white"
+              padding="5px 10px"
+              borderRadius="md"
+              fontWeight="bold"
+              transition="background-color 0.3s"
+              _hover={{ bg: "indigo.800" }}
+            >
+              <styled.span
+                display="flex"
+                flex={1}
+                alignItems="center"
+                gap={3}
+                fontSize="lg"
+              >
+                Go to Dashboard
+              </styled.span>
+            </styled.a>
+          </Box>
         </Box>
       </Box>
     </styled.section>

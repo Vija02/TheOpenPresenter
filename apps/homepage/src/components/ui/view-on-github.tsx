@@ -19,7 +19,6 @@ export default function ViewOnGithub() {
           cursor: "pointer",
         }}
         my={-2.5}
-        ml={8}
       >
         <styled.span
           display="flex"
