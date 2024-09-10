@@ -1,16 +1,19 @@
+import { Redirect } from "@/components/Redirect";
+import { SharedLayout } from "@/components/SharedLayout";
 import { SocialLoginOptions } from "@/components/SocialLoginOptions";
 import { resetWebsocketConnection } from "@/lib/withApollo";
-import { Box } from "@/styled-system/jsx";
 import { ApolloError, useApolloClient } from "@apollo/client";
 import {
   Alert,
   AlertDescription,
   AlertIcon,
   AlertTitle,
+  Box,
+  Flex,
   Link,
   VStack,
 } from "@chakra-ui/react";
-import { useLoginMutation } from "@repo/graphql";
+import { useLoginMutation, useSharedQuery } from "@repo/graphql";
 import { extractError, getCodeFromError } from "@repo/lib";
 import { Form, Formik, FormikHelpers } from "formik";
 import { InputControl, SubmitButton } from "formik-chakra-ui";
@@ -21,7 +24,30 @@ import * as Yup from "yup";
 
 export default function Home() {
   const [error, setError] = useState<Error | ApolloError | null>(null);
-  return <LoginForm error={error} setError={setError} onSuccessRedirectTo="/o" />;
+  const query = useSharedQuery();
+
+  let redirectTo = "/o/";
+
+  return (
+    <SharedLayout title="Register" query={query}>
+      {({ currentUser }) =>
+        currentUser ? (
+          // Handle it here instead of shared layout so we can redirect properly
+          <Redirect href={redirectTo} />
+        ) : (
+          <Flex justifyContent="center" marginTop={16}>
+            <Box maxW="lg" w="100%">
+              <LoginForm
+                error={error}
+                setError={setError}
+                onSuccessRedirectTo="/o"
+              />
+            </Box>
+          </Flex>
+        )
+      }
+    </SharedLayout>
+  );
 }
 
 const validationSchema = Yup.object({
@@ -94,6 +120,8 @@ function LoginForm({ onSuccessRedirectTo, error, setError }: LoginFormProps) {
                 autoComplete: "email username",
                 // @ts-ignore
                 "data-cy": "loginpage-input-username",
+                onBlur: (e) =>
+                  e.relatedTarget?.tagName === "a" && e.stopPropagation(),
               }}
             />
 

@@ -165,6 +165,9 @@ const Register: NextPage = () => {
                           autoComplete: "name",
                           // @ts-ignore
                           "data-cy": "registerpage-input-name",
+                          onBlur: (e) =>
+                            e.relatedTarget?.tagName === "a" &&
+                            e.stopPropagation(),
                         }}
                       />
 
@@ -215,9 +218,9 @@ const Register: NextPage = () => {
                         }}
                       />
 
-                      <NextLink href="/login" passHref>
-                        <Link>Already have an account? Sign in</Link>
-                      </NextLink>
+                      <Link as={NextLink} href="/login">
+                        Already have an account? Sign in
+                      </Link>
 
                       {error ? (
                         <Alert status="error">
