@@ -1,5 +1,7 @@
-import { Box, Center, Flex, Image, Text } from "@chakra-ui/react";
+import { Box, Button, Center, Flex, Image, Text } from "@chakra-ui/react";
+import { useMemo } from "react";
 
+import Renderer from "../Renderer";
 import { usePluginAPI } from "../pluginApi";
 import { trpc } from "../trpc";
 import { SlidePicker } from "./SlidePicker";
@@ -7,6 +9,8 @@ import { SlidePicker } from "./SlidePicker";
 const Remote = () => {
   const pluginApi = usePluginAPI();
   const pluginContext = pluginApi.pluginContext;
+
+  const mutableRendererData = pluginApi.renderer.useValtioData();
 
   const selectSlideMutation = trpc.googleslides.selectSlide.useMutation();
 
@@ -35,6 +39,27 @@ const Remote = () => {
       <Flex gap={3} flexWrap="wrap">
         <RemoteHandler />
       </Flex>
+      <Button
+        onClick={() => {
+          mutableRendererData.clickCount =
+            (mutableRendererData.clickCount ?? 0) - 1;
+        }}
+      >
+        Left
+      </Button>
+      <Button
+        onClick={() => {
+          mutableRendererData.clickCount =
+            (mutableRendererData.clickCount ?? 0) + 1;
+        }}
+      >
+        Right
+      </Button>
+
+      {/* We render this to calculate what slide is currently selected through clicking  */}
+      <Box sx={{ contentVisibility: "hidden" }}>
+        <Renderer shouldUpdateResolvedSlideIndex />
+      </Box>
     </Box>
   );
 };
@@ -49,6 +74,14 @@ const RemoteHandler = () => {
 
   const mutableRendererData = pluginApi.renderer.useValtioData();
 
+  const actualSlideIndex = useMemo(
+    () =>
+      rendererData.resolvedSlideIndex !== null
+        ? rendererData.resolvedSlideIndex
+        : rendererData.slideIndex,
+    [rendererData.resolvedSlideIndex, rendererData.slideIndex],
+  );
+
   return (
     <>
       {pageIds.map((x, i) => (
@@ -61,6 +94,8 @@ const RemoteHandler = () => {
             bottom={0}
             onClick={() => {
               mutableRendererData.slideIndex = i;
+              mutableRendererData.clickCount = null;
+              mutableRendererData.resolvedSlideIndex = null;
               pluginApi.renderer.setRenderCurrentScene();
             }}
           />
@@ -76,9 +111,7 @@ const RemoteHandler = () => {
             aspectRatio={4 / 3}
             w="200px"
             border="4px"
-            borderColor={
-              i === rendererData.slideIndex ? "red.600" : "transparent"
-            }
+            borderColor={i === actualSlideIndex ? "red.600" : "transparent"}
           >
             {thumbnailLinks?.[i] ? (
               <Center>

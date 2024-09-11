@@ -1,13 +1,24 @@
 import { Box } from "@chakra-ui/react";
-import { useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { usePluginAPI } from "../pluginApi";
-import RenderView from "./RenderView";
+import RenderView, { RenderViewHandle } from "./RenderView";
 
-const Renderer = () => {
+const Renderer = ({
+  shouldUpdateResolvedSlideIndex = false,
+}: {
+  shouldUpdateResolvedSlideIndex?: boolean;
+}) => {
+  const ref = useRef<RenderViewHandle>(null);
+
+  const [localClickCount, setLocalClickCount] = useState(0);
+  const [loaded, setLoaded] = useState(false);
+  const [initialized, setInitialized] = useState(false);
+
   const pluginApi = usePluginAPI();
-  const data = pluginApi.renderer.useData((x) => x);
-  const slideIndex = useMemo(() => data.slideIndex!, [data.slideIndex]);
+  const slideIndex = pluginApi.renderer.useData((x) => x.slideIndex!);
+  const clickCount = pluginApi.renderer.useData((x) => x.clickCount!);
+  const mutableRendererData = pluginApi.renderer.useValtioData();
 
   const pageIds = pluginApi.scene.useData((x) => x.pluginData.pageIds);
 
@@ -27,9 +38,77 @@ const Renderer = () => {
     pluginApi.pluginContext.sceneId,
   ]);
 
+  const updateResolvedSlideIndex = useCallback(
+    (newSlideId: string) => {
+      const newSlideIndex = pageIds.findIndex((x) => x === newSlideId);
+      console.log(newSlideIndex)
+      mutableRendererData.resolvedSlideIndex = newSlideIndex;
+    },
+    [mutableRendererData, pageIds],
+  );
+
+  const update = useCallback(() => {
+    if (clickCount !== null) {
+      const offset = Math.abs(clickCount - localClickCount);
+
+      Array.from(new Array(offset)).forEach(() => {
+        if (clickCount > localClickCount) {
+          setTimeout(() => {
+            const newSlideId = ref.current?.next();
+            // DEBT: We check if the offset is 1 because we don't want to run this on load
+            // But maybe we can handle this better by checking the previous loaded state
+            if (shouldUpdateResolvedSlideIndex && offset === 1 && newSlideId) {
+              updateResolvedSlideIndex(newSlideId);
+            }
+          }, 50);
+        } else {
+          setTimeout(() => {
+            const newSlideId = ref.current?.prev();
+            if (shouldUpdateResolvedSlideIndex && offset === 1 && newSlideId) {
+              updateResolvedSlideIndex(newSlideId);
+            }
+          }, 50);
+        }
+      });
+      setLocalClickCount(clickCount);
+    }
+  }, [
+    clickCount,
+    localClickCount,
+    shouldUpdateResolvedSlideIndex,
+    updateResolvedSlideIndex,
+  ]);
+
+  useEffect(() => {
+    if (loaded && !initialized) {
+      ref.current?.goToSlide(selectedPageId);
+      update();
+      setInitialized(true);
+    }
+  }, [initialized, loaded, selectedPageId, update]);
+
+  useEffect(() => {
+    // TEST: Clicking on the same slideId as the current selected one should reset the click count
+    if (initialized && clickCount === null) {
+      ref.current?.goToSlide(selectedPageId);
+      setLocalClickCount(0);
+    }
+  }, [clickCount, initialized, selectedPageId]);
+
+  useEffect(() => {
+    if (initialized && clickCount !== localClickCount && clickCount !== null) {
+      update();
+    }
+  }, [clickCount, initialized, localClickCount, update]);
+
   return (
     <Box w="100vw" h="100vh">
-      <RenderView key={slideSrc} src={slideSrc} slideId={selectedPageId} />
+      <RenderView
+        ref={ref}
+        key={slideSrc}
+        src={slideSrc}
+        onLoad={() => setLoaded(true)}
+      />
     </Box>
   );
 };

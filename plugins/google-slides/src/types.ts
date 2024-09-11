@@ -6,9 +6,15 @@ export type PluginBaseData = {
   /** Links to the preview images of the presentation  */
   thumbnailLinks: string[];
 
-  html?: string
+  html?: string;
 };
 
 export type PluginRendererData = {
   slideIndex: number | null;
+  clickCount: number | null;
+  /** 
+   * We store this based on what the click returns to us.
+   * Used to display on the remote which slide is currently used
+   */
+  resolvedSlideIndex: number | null
 };

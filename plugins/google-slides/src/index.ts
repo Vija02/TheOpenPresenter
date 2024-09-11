@@ -110,9 +110,9 @@ export const init = (
 
   serverPluginApi.registerKeyPressHandler(
     pluginName,
-    (keyType, { pluginData, rendererData }, next) => {
-      const pageIds = pluginData.get("pageIds");
+    (keyType, { rendererData }) => {
       const slideIndex = rendererData.get("slideIndex");
+      const clickCount = rendererData.get("clickCount");
 
       if (slideIndex === null || slideIndex === undefined) {
         rendererData.set("slideIndex", 0);
@@ -120,17 +120,11 @@ export const init = (
       }
 
       if (keyType === "NEXT") {
-        if (pageIds?._length && pageIds._length - 1 > slideIndex) {
-          rendererData.set("slideIndex", slideIndex + 1);
-        } else {
-          next();
-        }
+        // TODO: We need to somehow fix the issue when clickCount passes through the slide first/last slide
+        // In which case the local click count goes out of sync with the state
+        rendererData.set("clickCount", (clickCount ?? 0) + 1);
       } else {
-        if (pageIds?._length && slideIndex > 0) {
-          rendererData.set("slideIndex", slideIndex - 1);
-        } else {
-          next();
-        }
+        rendererData.set("clickCount", (clickCount ?? 0) - 1);
       }
     },
   );
