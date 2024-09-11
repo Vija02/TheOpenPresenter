@@ -41,7 +41,6 @@ const Renderer = ({
   const updateResolvedSlideIndex = useCallback(
     (newSlideId: string) => {
       const newSlideIndex = pageIds.findIndex((x) => x === newSlideId);
-      console.log(newSlideIndex)
       mutableRendererData.resolvedSlideIndex = newSlideIndex;
     },
     [mutableRendererData, pageIds],

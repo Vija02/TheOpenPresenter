@@ -1,4 +1,12 @@
-import { Box, Button, Center, Flex, Image, Text } from "@chakra-ui/react";
+import {
+  Box,
+  Button,
+  Center,
+  Flex,
+  Image,
+  Stack,
+  Text,
+} from "@chakra-ui/react";
 import { useMemo } from "react";
 
 import Renderer from "../Renderer";
@@ -16,45 +24,47 @@ const Remote = () => {
 
   return (
     <Box p={3}>
-      <SlidePicker
-        onFileSelected={(data, token) => {
-          const picker = google.picker;
-          if (data[picker.Response.ACTION] === "picked") {
-            if (data[picker.Response.DOCUMENTS].length > 0) {
-              const docs = data[picker.Response.DOCUMENTS][0]!;
+      <Stack direction="row">
+        <SlidePicker
+          onFileSelected={(data, token) => {
+            const picker = google.picker;
+            if (data[picker.Response.ACTION] === "picked") {
+              if (data[picker.Response.DOCUMENTS].length > 0) {
+                const docs = data[picker.Response.DOCUMENTS][0]!;
 
-              const id = docs[picker.Document.ID];
+                const id = docs[picker.Document.ID];
 
-              selectSlideMutation.mutate({
-                pluginId: pluginContext.pluginId,
-                sceneId: pluginContext.sceneId,
-                presentationId: id,
-                token: token,
-              });
+                selectSlideMutation.mutate({
+                  pluginId: pluginContext.pluginId,
+                  sceneId: pluginContext.sceneId,
+                  presentationId: id,
+                  token: token,
+                });
+              }
             }
-          }
-        }}
-      />
+          }}
+        />
+        <Button
+          onClick={() => {
+            mutableRendererData.clickCount =
+              (mutableRendererData.clickCount ?? 0) - 1;
+          }}
+        >
+          Left
+        </Button>
+        <Button
+          onClick={() => {
+            mutableRendererData.clickCount =
+              (mutableRendererData.clickCount ?? 0) + 1;
+          }}
+        >
+          Right
+        </Button>
+      </Stack>
 
       <Flex gap={3} flexWrap="wrap">
         <RemoteHandler />
       </Flex>
-      <Button
-        onClick={() => {
-          mutableRendererData.clickCount =
-            (mutableRendererData.clickCount ?? 0) - 1;
-        }}
-      >
-        Left
-      </Button>
-      <Button
-        onClick={() => {
-          mutableRendererData.clickCount =
-            (mutableRendererData.clickCount ?? 0) + 1;
-        }}
-      >
-        Right
-      </Button>
 
       {/* We render this to calculate what slide is currently selected through clicking  */}
       <Box sx={{ contentVisibility: "hidden" }}>
