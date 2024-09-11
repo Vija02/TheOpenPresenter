@@ -66,10 +66,21 @@ const Remote = () => {
         <RemoteHandler />
       </Flex>
 
-      {/* We render this to calculate what slide is currently selected through clicking  */}
-      <Box sx={{ contentVisibility: "hidden" }}>
+      <ResolvedSlideHandler />
+    </Box>
+  );
+};
+
+const ResolvedSlideHandler = () => {
+  const pluginApi = usePluginAPI();
+  const slideIndex = pluginApi.renderer.useData((x) => x.slideIndex);
+
+  // We render this to calculate what slide is currently selected through clicking
+  return (
+    <Box sx={{ contentVisibility: "hidden" }}>
+      {slideIndex !== undefined && slideIndex !== null && (
         <Renderer shouldUpdateResolvedSlideIndex />
-      </Box>
+      )}
     </Box>
   );
 };
