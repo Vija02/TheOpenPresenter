@@ -80,19 +80,19 @@ const Renderer = ({
 
   useEffect(() => {
     if (loaded && !initialized) {
-      ref.current?.goToSlide(selectedPageId);
+      ref.current?.goToSlide(slideIndex);
       update();
       setInitialized(true);
     }
-  }, [initialized, loaded, selectedPageId, update]);
+  }, [initialized, loaded, slideIndex, update]);
 
   useEffect(() => {
     // TEST: Clicking on the same slideId as the current selected one should reset the click count
     if (initialized && clickCount === null) {
-      ref.current?.goToSlide(selectedPageId);
+      ref.current?.goToSlide(slideIndex);
       setLocalClickCount(0);
     }
-  }, [clickCount, initialized, selectedPageId]);
+  }, [clickCount, initialized, slideIndex]);
 
   useEffect(() => {
     if (initialized && clickCount !== localClickCount && clickCount !== null) {
