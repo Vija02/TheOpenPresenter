@@ -17,59 +17,62 @@ const SidebarWeb = () => {
   return (
     <Box boxShadow="md">
       <ResizableBoxWrapper>
-        <Box bg="gray.100" height="100%">
-          <Link
-            href={`/o/${orgSlug}`}
-            display="flex"
-            height="40px"
-            alignItems="center"
-            justifyContent="center"
-            _hover={{ bg: "gray.300" }}
-          >
-            <VscArrowLeft fontSize={20} /> Back to Projects
-          </Link>
-          <Divider />
-          {sortBy(Object.entries(data.data), ([, value]) => value.order).map(
-            ([id, value]) => (
-              <Box
-                key={id}
-                onClick={() => {
-                  navigate(`/${id}`);
-                }}
-                cursor="pointer"
-                px={2}
-                _hover={{ bg: "gray.300" }}
-                bg={location.includes(id) ? "gray.300" : "transparent"}
-              >
-                <Text fontWeight="bold">{value.name}</Text>
-              </Box>
-            ),
-          )}
-          <Stack mt={3} px={2}>
-            <OverlayToggle
-              toggler={({ onToggle }) => (
-                <Button
-                  p={1}
-                  _hover={{
-                    bgColor: "blue.500",
-                    color: "white",
+        <Box display="flex" flexDir="column" bg="gray.100" height="100%">
+          <Box flex={1}>
+            <Link
+              href={`/o/${orgSlug}`}
+              display="flex"
+              height="40px"
+              alignItems="center"
+              justifyContent="center"
+              _hover={{ bg: "gray.300" }}
+            >
+              <VscArrowLeft fontSize={20} /> Back to Projects
+            </Link>
+            <Divider />
+            {sortBy(Object.entries(data.data), ([, value]) => value.order).map(
+              ([id, value]) => (
+                <Box
+                  key={id}
+                  onClick={() => {
+                    navigate(`/${id}`);
                   }}
                   cursor="pointer"
-                  onClick={onToggle}
-                  colorScheme="green"
+                  py={2}
+                  px={2}
+                  _hover={{ bg: "gray.300" }}
+                  bg={location.includes(id) ? "gray.300" : "transparent"}
                 >
-                  <VscAdd /> Add New Scene
+                  <Text fontWeight="bold">{value.name}</Text>
+                </Box>
+              ),
+            )}
+            <Stack mt={3} px={2}>
+              <OverlayToggle
+                toggler={({ onToggle }) => (
+                  <Button
+                    p={1}
+                    _hover={{
+                      bgColor: "blue.500",
+                      color: "white",
+                    }}
+                    cursor="pointer"
+                    onClick={onToggle}
+                    colorScheme="green"
+                  >
+                    <VscAdd /> Add New Scene
+                  </Button>
+                )}
+              >
+                <SidebarAddSceneModal />
+              </OverlayToggle>
+              <Link href={`/render/${orgSlug}/${projectSlug}`} isExternal>
+                <Button w="100%" variant="outline">
+                  Open Renderer
                 </Button>
-              )}
-            >
-              <SidebarAddSceneModal />
-            </OverlayToggle>
-            <Link href={`/render/${orgSlug}/${projectSlug}`} isExternal>
-              <Button w="100%" variant="outline">
-                Open Renderer
-              </Button>
-            </Link>
-          </Stack>
+              </Link>
+            </Stack>
+          </Box>
         </Box>
       </ResizableBoxWrapper>
     </Box>
