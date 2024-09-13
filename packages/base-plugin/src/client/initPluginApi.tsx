@@ -28,7 +28,7 @@ const watcherCreateObserveHandler =
         .join("__");
 
       const matchingWatchers = Object.entries(_watcher).filter(([key]) =>
-        key.includes(eventPath),
+        eventPath.includes(key),
       );
       matchingWatchers.forEach(([_key, val]) =>
         val.forEach((x) => x.callback()),
