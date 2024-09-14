@@ -204,6 +204,9 @@ const getAppRouter =
 
               const htmlData = await axios(
                 `https://docs.google.com/presentation/d/${presentationId}/embed?rm=minimal`,
+                {
+                  headers: { Authorization: `Bearer ${token}` },
+                },
               );
 
               loadedPlugin.pluginData.html = processHtml(htmlData.data);
