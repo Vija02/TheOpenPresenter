@@ -1,4 +1,4 @@
-import { Box, Text } from "@chakra-ui/react";
+import { Box, Button, Flex, Stack, Text } from "@chakra-ui/react";
 import type { AwarenessContext, PluginContext, Scene } from "@repo/base-plugin";
 import { Plugin } from "@repo/base-plugin";
 import { useKeyPressMutation } from "@repo/graphql";
@@ -11,6 +11,7 @@ import { trpcClient } from "../trpc";
 
 const MainBody = () => {
   const data = useData();
+  const mainState = usePluginData().mainState!;
   const [keyPressMutate] = useKeyPressMutation();
   const projectId = usePluginMetaData().projectId;
 
@@ -47,6 +48,44 @@ const MainBody = () => {
         }
       }}
     >
+      <Flex
+        height="40px"
+        boxShadow="md"
+        alignItems="center"
+        justifyContent="flex-end"
+      >
+        <Stack direction="row" p={2}>
+          <Button
+            size="sm"
+            rounded="none"
+            {...(data.renderer["1"]!.overlay &&
+            data.renderer["1"]!.overlay.type === "black"
+              ? {
+                  border: "2px solid #ff6464",
+                  animation: "blink 1.5s steps(1, end) infinite",
+                }
+              : { border: "2px solid transparent" })}
+            onClick={() => {
+              if (mainState.renderer["1"]!.overlay?.type === "black") {
+                mainState.renderer["1"]!.overlay = null;
+              } else {
+                mainState.renderer["1"]!.overlay = { type: "black" };
+              }
+            }}
+          >
+            Black
+          </Button>
+          <Button
+            size="sm"
+            rounded="none"
+            onClick={() => {
+              mainState.renderer["1"]!.overlay = null;
+            }}
+          >
+            Clear
+          </Button>
+        </Stack>
+      </Flex>
       <Switch>
         {Object.entries(data.data)
           .filter(([, value]) => value.type === "scene")

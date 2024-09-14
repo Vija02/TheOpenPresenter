@@ -1,6 +1,7 @@
 import { Box, Text } from "@chakra-ui/react";
 import { AwarenessContext, Scene } from "@repo/base-plugin";
-import { motion } from "framer-motion";
+import { MotionBox } from "@repo/ui";
+import { AnimatePresence, motion } from "framer-motion";
 import React, { useMemo } from "react";
 
 import { useData, usePluginData } from "./contexts/PluginDataProvider";
@@ -22,10 +23,36 @@ export const Body = () => {
 
   return (
     <>
+      <Overlay />
       {Object.keys(currentRenderer?.children ?? {}).map((sceneId) => (
         <SceneRenderer key={sceneId} sceneId={sceneId} />
       ))}
     </>
+  );
+};
+
+const Overlay = () => {
+  const data = useData();
+  const currentRenderer = useMemo(() => data.renderer["1"], [data.renderer]);
+
+  return (
+    <AnimatePresence>
+      {currentRenderer?.overlay?.type === "black" && (
+        <MotionBox
+          key="black"
+          top={0}
+          left={0}
+          right={0}
+          bottom={0}
+          position="absolute"
+          bg="black"
+          zIndex={999}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        />
+      )}
+    </AnimatePresence>
   );
 };
 

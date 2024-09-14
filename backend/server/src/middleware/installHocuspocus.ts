@@ -3,6 +3,7 @@ import type {
   IDisposable,
   ObjectToTypedMap,
   Scene,
+  State,
   YState,
 } from "@repo/base-plugin";
 import { Express } from "express";
@@ -106,10 +107,11 @@ export default async function installHocuspocus(app: Express) {
           renderer: {
             "1": {
               currentScene: null,
+              overlay: null,
               children: {},
             },
           },
-        });
+        } satisfies State);
         const unbind = bind(mainState, yDoc.getMap());
 
         const update = Y.encodeStateAsUpdate(yDoc);

@@ -68,6 +68,7 @@ export type Renderer = Record<string, RenderData>;
 
 export type RenderData<T = Record<string, any>> = {
   currentScene: UUID | null;
+  overlay: { type: "black" | "white" } | null;
   children: Record<UUID, Record<UUID, T>>;
 };
 
@@ -89,6 +90,7 @@ export interface IDisposable {
 export type AwarenessContext = {
   awarenessObj: awarenessProtocol.Awareness;
   currentUserId: string;
+  setAwarenessField: (key: string, val: any) => void;
 };
 
 export type AwarenessUserData = {
