@@ -41,7 +41,7 @@ const OrganizationPage: NextPage = () => {
             <Heading>Projects</Heading>
             <Link href="/logout">Logout</Link>
           </Stack>
-          <HStack alignItems="center" marginBottom={2}>
+          <HStack alignItems="center" marginBottom={2} flexWrap="wrap">
             {query.data?.organizationBySlug?.projects.nodes.map(
               (project, i) => (
                 <LinkBox
