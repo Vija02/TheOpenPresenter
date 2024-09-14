@@ -11,7 +11,7 @@ import SidebarAddSceneModal from "./SidebarAddSceneModal";
 const SidebarMobile = () => {
   const data = useData();
   const [location, navigate] = useLocation();
-  const { orgSlug } = usePluginMetaData();
+  const { orgSlug, projectSlug } = usePluginMetaData();
 
   return (
     <Box boxShadow="md">
@@ -72,7 +72,7 @@ const SidebarMobile = () => {
           >
             <SidebarAddSceneModal />
           </OverlayToggle>
-          <Link href="/render" isExternal>
+          <Link href={`/render/${orgSlug}/${projectSlug}`} isExternal>
             <Button w="100%" variant="outline">
               <VscLinkExternal />
             </Button>
