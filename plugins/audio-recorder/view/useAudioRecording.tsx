@@ -92,6 +92,11 @@ export const useAudioRecording = () => {
       if (availableLocalStreamIds.includes(recording.streamId)) {
         const localStreamData = streamState[recording.streamId]!;
 
+        // Stop if stopping
+        if (mutableSceneData.pluginData.recordings[i]!.status === "stopping") {
+          localStreamData.stopRecording?.();
+          return;
+        }
         // Skip if we're already recording
         if (localStreamData.recorder) {
           return;
@@ -127,9 +132,6 @@ export const useAudioRecording = () => {
 
 export const useStreamState = (streamId: string) => {
   return useSnapshot(proxy(streamState))[streamId];
-};
-export const getStreamState = (streamId: string) => {
-  return streamState[streamId];
 };
 
 // Much of the code here is inspired from

@@ -5,7 +5,6 @@ import { useElapsedTime } from "use-elapsed-time";
 
 import { Recording } from "../../src/types";
 import { usePluginAPI } from "../pluginApi";
-import { getStreamState } from "../useAudioRecording";
 
 export const RecordingSection = () => {
   const pluginApi = usePluginAPI();
@@ -32,11 +31,17 @@ const RecordingCard = ({ recording }: { recording: Recording }) => {
 };
 
 const CurrentlyRecording = ({ recording }: { recording: Recording }) => {
+  const pluginApi = usePluginAPI();
+  const mutableSceneData = pluginApi.scene.useValtioData();
+
   return (
     <Box>
       <Button
         onClick={() => {
-          getStreamState(recording.streamId)?.stopRecording?.();
+          const index = mutableSceneData.pluginData.recordings.findIndex(
+            (x) => x.streamId === recording.streamId && x.status !== "ended",
+          );
+          mutableSceneData.pluginData.recordings[index]!.status = "stopping";
         }}
       >
         Stop Recording

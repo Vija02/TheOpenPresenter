@@ -9,9 +9,10 @@ export type Recording = {
   /**
    * pending -> waiting for the recording to start by the host
    * recording -> host currently recording
+   * stopping -> stopping is triggered and waiting for it to be ended
    * ended -> recording ended
    */
-  status: "pending" | "recording" | "ended";
+  status: "pending" | "recording" | "stopping" | "ended";
   /** The ID of the media */
   mediaId: string | null;
   /** The time the recording was started */

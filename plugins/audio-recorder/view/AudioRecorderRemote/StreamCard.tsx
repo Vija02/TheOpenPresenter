@@ -3,7 +3,6 @@ import { VscDebugStop, VscPlay } from "react-icons/vsc";
 
 import { Stream } from "../../src";
 import { usePluginAPI } from "../pluginApi";
-import { getStreamState } from "../useAudioRecording";
 import { UserNameTag } from "./AwarenessUser/UserNameTag";
 
 type PropTypes = {
@@ -55,7 +54,12 @@ export const StreamCard = ({ activeStream }: PropTypes) => {
                 endedAt: null,
               });
             } else {
-              getStreamState(activeStream.streamId!)?.stopRecording?.();
+              const index = mutableSceneData.pluginData.recordings.findIndex(
+                (x) =>
+                  x.streamId === activeStream.streamId && x.status !== "ended",
+              );
+              mutableSceneData.pluginData.recordings[index]!.status =
+                "stopping";
             }
           }}
         >
