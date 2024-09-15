@@ -22,11 +22,6 @@ const Renderer = ({
 
   const pageIds = pluginApi.scene.useData((x) => x.pluginData.pageIds);
 
-  const selectedPageId = useMemo(
-    () => pageIds[slideIndex]!,
-    [pageIds, slideIndex],
-  );
-
   const slideSrc = useMemo(() => {
     return (
       pluginApi.env.getRootURL() +

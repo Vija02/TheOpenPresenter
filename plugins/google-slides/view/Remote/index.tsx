@@ -13,6 +13,7 @@ import Renderer from "../Renderer";
 import { usePluginAPI } from "../pluginApi";
 import { trpc } from "../trpc";
 import { SlidePicker } from "./SlidePicker";
+import "./index.css";
 
 const Remote = () => {
   const pluginApi = usePluginAPI();
@@ -77,7 +78,7 @@ const ResolvedSlideHandler = () => {
 
   // We render this to calculate what slide is currently selected through clicking
   return (
-    <Box sx={{ contentVisibility: "hidden" }}>
+    <Box className="content-hidden">
       {slideIndex !== undefined && slideIndex !== null && (
         <Renderer shouldUpdateResolvedSlideIndex />
       )}
