@@ -18,7 +18,6 @@ const MainBody = () => {
   return (
     <Box
       width="100%"
-      overflow="auto"
       tabIndex={0}
       onKeyDown={(e) => {
         // TODO: Expand on this functionality
@@ -86,15 +85,17 @@ const MainBody = () => {
           </Button>
         </Stack>
       </Flex>
-      <Switch>
-        {Object.entries(data.data)
-          .filter(([, value]) => value.type === "scene")
-          .map(([sceneId, value]) => (
-            <Route nest key={sceneId} path={`/${sceneId}`}>
-              <SceneRenderer sceneId={sceneId} value={value as Scene} />
-            </Route>
-          ))}
-      </Switch>
+      <Box height="calc(100vh - 40px)" overflow="auto">
+        <Switch>
+          {Object.entries(data.data)
+            .filter(([, value]) => value.type === "scene")
+            .map(([sceneId, value]) => (
+              <Route nest key={sceneId} path={`/${sceneId}`}>
+                <SceneRenderer sceneId={sceneId} value={value as Scene} />
+              </Route>
+            ))}
+        </Switch>
+      </Box>
     </Box>
   );
 };
