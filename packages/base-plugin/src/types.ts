@@ -90,7 +90,6 @@ export interface IDisposable {
 export type AwarenessContext = {
   awarenessObj: awarenessProtocol.Awareness;
   currentUserId: string;
-  setAwarenessField: (key: string, val: any) => void;
 };
 
 export type AwarenessUserData = {
