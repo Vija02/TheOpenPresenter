@@ -1,6 +1,7 @@
 import { appData } from "@repo/lib";
 import _ from "lodash";
 import { useRef, useSyncExternalStore } from "react";
+import { useLocation } from "react-use";
 import { typeidUnboxed } from "typeid-js";
 import { proxy } from "valtio";
 import { bind } from "valtio-yjs";
@@ -133,6 +134,18 @@ export function initPluginApi<
           : O;
       },
       setRenderCurrentScene,
+    },
+    remote: {
+      usePluginInView: () => {
+        const state = useLocation();
+
+        const splittedPath = state.pathname?.split("/");
+        if (!splittedPath) return false;
+
+        const scene = splittedPath[splittedPath.length - 1];
+
+        return pluginContext.sceneId === scene;
+      },
     },
     dispose: () => {
       unbindScene();

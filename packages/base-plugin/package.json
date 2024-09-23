@@ -47,6 +47,7 @@
     "@types/ua-parser-js": "^0.7.39",
     "express": "^4.19.2",
     "react": "rc",
+    "react-use": "^17.5.1",
     "react-yjs": "^2.0.0",
     "tslib": "^2.6.3",
     "typeid-js": "^1.0.0",
