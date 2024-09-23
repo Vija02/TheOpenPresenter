@@ -77,7 +77,8 @@ const onPluginDataLoaded = (
   const getAwarenessState = (awareness: AwarenessContext["awarenessObj"]) => {
     return Array.from(awareness.getStates().values()) as any[];
   };
-  pluginInfo.doc!.awareness.on("change", () => {
+
+  const onAwarenessChange = () => {
     const state = getAwarenessState(pluginInfo.doc!.awareness);
 
     const allUserIds = state.map((x) => x.user.id);
@@ -107,11 +108,13 @@ const onPluginDataLoaded = (
         }
       }
     }
-  });
+  };
+  pluginInfo.doc?.awareness.on("change", onAwarenessChange);
 
   return {
     dispose: () => {
       unbind();
+      pluginInfo.doc?.awareness.off("change", onAwarenessChange);
     },
   };
 };
