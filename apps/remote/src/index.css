@@ -35,3 +35,13 @@ html {
     border-color: #fff;
   }
 }
+
+.content-hidden {
+  display: none;
+}
+
+@supports (content-visibility: hidden) {
+  .content-hidden {
+    content-visibility: hidden;
+  }
+}

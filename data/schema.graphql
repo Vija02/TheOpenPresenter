@@ -844,8 +844,8 @@ type PluginKeyPressPayload {
 }
 
 type PluginMeta {
-  registeredRemoteView: [RegisteredView!]!
-  registeredRendererView: [RegisteredView!]!
+  registeredRemoteView: [RegisteredRemoteView!]!
+  registeredRendererView: [RegisteredRendererView!]!
   sceneCreator: [SceneCreator!]!
 }
 
@@ -1026,9 +1026,19 @@ type RegisterPayload {
   user: User!
 }
 
-type RegisteredView {
+type RegisteredRemoteView {
+  config: RemoteViewWebComponentConfig
   pluginName: String!
   tag: String!
+}
+
+type RegisteredRendererView {
+  pluginName: String!
+  tag: String!
+}
+
+type RemoteViewWebComponentConfig {
+  alwaysRender: Boolean
 }
 
 """All input for the `removeFromOrganization` mutation."""

@@ -21,5 +21,8 @@ fragment BaseRemotePluginMeta on PluginMeta {
   registeredRemoteView {
     pluginName
     tag
+    config {
+      alwaysRender
+    }
   }
 }

@@ -8,6 +8,7 @@ import {
   RegisterKeyPressHandlerCallback,
   RegisterOnPluginDataCreated,
   RegisterOnPluginDataLoaded,
+  RemoteViewWebComponentConfig,
 } from "./serverPluginTypes";
 
 export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
@@ -37,6 +38,7 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
   protected registeredRemoteViewWebComponent: {
     pluginName: string;
     webComponentTag: string;
+    config?: RemoteViewWebComponentConfig;
   }[] = [];
   protected registeredLoadJsOnRendererView: {
     pluginName: string;
@@ -107,8 +109,13 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
   public registerRemoteViewWebComponent(
     pluginName: string,
     webComponentTag: string,
+    config?: RemoteViewWebComponentConfig,
   ) {
-    this.registeredRemoteViewWebComponent.push({ pluginName, webComponentTag });
+    this.registeredRemoteViewWebComponent.push({
+      pluginName,
+      webComponentTag,
+      config,
+    });
   }
 
   public loadJsOnRendererView(pluginName: string, path: string) {

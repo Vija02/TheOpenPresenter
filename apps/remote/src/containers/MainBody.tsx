@@ -3,7 +3,7 @@ import type { AwarenessContext, PluginContext, Scene } from "@repo/base-plugin";
 import { Plugin } from "@repo/base-plugin";
 import { useKeyPressMutation } from "@repo/graphql";
 import React, { useMemo } from "react";
-import { Route, Switch } from "wouter";
+import { useRoute } from "wouter";
 
 import { useData, usePluginData } from "../contexts/PluginDataProvider";
 import { usePluginMetaData } from "../contexts/PluginMetaDataProvider";
@@ -86,15 +86,11 @@ const MainBody = () => {
         </Stack>
       </Flex>
       <Box height="calc(100vh - 40px)" overflow="auto">
-        <Switch>
-          {Object.entries(data.data)
-            .filter(([, value]) => value.type === "scene")
-            .map(([sceneId, value]) => (
-              <Route nest key={sceneId} path={`/${sceneId}`}>
-                <SceneRenderer sceneId={sceneId} value={value as Scene} />
-              </Route>
-            ))}
-        </Switch>
+        {Object.entries(data.data)
+          .filter(([, value]) => value.type === "scene")
+          .map(([sceneId, value]) => (
+            <SceneRenderer sceneId={sceneId} value={value as Scene} />
+          ))}
       </Box>
     </Box>
   );
@@ -136,17 +132,19 @@ const PluginRenderer = React.memo(
       currentUserId,
     } = usePluginData();
 
-    const tag = useMemo(
+    const [match] = useRoute(`/${sceneId}`);
+
+    const viewData = useMemo(
       () =>
         pluginMetaData?.pluginMeta.registeredRemoteView.find(
           (x) => x.pluginName === pluginInfo.plugin,
-        )?.tag,
+        ),
       [pluginInfo.plugin, pluginMetaData?.pluginMeta.registeredRemoteView],
     );
 
     const Element = useMemo(() => {
-      return tag ? (
-        React.createElement(tag, {
+      return viewData?.tag ? (
+        React.createElement(viewData.tag, {
           yjsPluginSceneData: getYJSPluginSceneData(sceneId, pluginId),
           yjsPluginRendererData: getYJSPluginRendererData(sceneId, pluginId),
           awarenessContext: {
@@ -171,10 +169,22 @@ const PluginRenderer = React.memo(
       pluginInfo.plugin,
       provider,
       sceneId,
-      tag,
+      viewData?.tag,
     ]);
 
-    return <Box>{Element}</Box>;
+    if (match || viewData?.config?.alwaysRender) {
+      return (
+        <Box
+          className={
+            !match && viewData?.config?.alwaysRender ? "content-hidden" : ""
+          }
+        >
+          {Element}
+        </Box>
+      );
+    }
+
+    return null;
   },
 );
 
