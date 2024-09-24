@@ -4,9 +4,10 @@ import {
   Center,
   Flex,
   Image,
+  Skeleton,
   Stack,
-  Text,
 } from "@chakra-ui/react";
+import { Slide } from "@repo/ui";
 import { useMemo } from "react";
 
 import Renderer from "../Renderer";
@@ -107,50 +108,25 @@ const RemoteHandler = () => {
   return (
     <>
       {pageIds.map((x, i) => (
-        <Box key={i} cursor="pointer" position="relative">
-          <Box
-            position="absolute"
-            top={0}
-            left={0}
-            right={0}
-            bottom={0}
-            onClick={() => {
-              mutableRendererData.slideIndex = i;
-              mutableRendererData.clickCount = null;
-              mutableRendererData.resolvedSlideIndex = null;
-              pluginApi.renderer.setRenderCurrentScene();
-            }}
-          />
-          <Text
-            fontWeight="bold"
-            textTransform="uppercase"
-            fontSize="xs"
-            mb={1}
-          >
-            Slide {i + 1}
-          </Text>
-          <Box
-            aspectRatio={4 / 3}
-            w="200px"
-            border="4px"
-            borderColor={i === actualSlideIndex ? "red.600" : "transparent"}
-          >
-            {thumbnailLinks?.[i] ? (
-              <Center>
-                <Image src={pluginApi.media.getUrl(thumbnailLinks[i]!)} />
-              </Center>
-            ) : (
-              <Text
-                height="100%"
-                border="1px solid"
-                borderColor="gray.200"
-                p={2}
-              >
-                Loading...
-              </Text>
-            )}
-          </Box>
-        </Box>
+        <Slide
+          key={i}
+          heading={`Slide ${i + 1}`}
+          isActive={i === actualSlideIndex}
+          onClick={() => {
+            mutableRendererData.slideIndex = i;
+            mutableRendererData.clickCount = null;
+            mutableRendererData.resolvedSlideIndex = null;
+            pluginApi.renderer.setRenderCurrentScene();
+          }}
+        >
+          {thumbnailLinks?.[i] ? (
+            <Center>
+              <Image src={pluginApi.media.getUrl(thumbnailLinks[i]!)} />
+            </Center>
+          ) : (
+            <Skeleton height="100%" />
+          )}
+        </Slide>
       ))}
     </>
   );

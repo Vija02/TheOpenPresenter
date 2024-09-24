@@ -21,6 +21,7 @@
     "@r2wc/react-to-web-component": "^2.0.3",
     "@repo/base-plugin": "*",
     "@repo/lib": "*",
+    "@repo/ui": "*",
     "@tanstack/react-query": "^5.51.1",
     "@trpc/client": "^11.0.0-rc.461",
     "@trpc/react-query": "^11.0.0-rc.461",
