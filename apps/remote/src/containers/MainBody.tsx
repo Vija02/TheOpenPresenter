@@ -89,7 +89,11 @@ const MainBody = () => {
         {Object.entries(data.data)
           .filter(([, value]) => value.type === "scene")
           .map(([sceneId, value]) => (
-            <SceneRenderer sceneId={sceneId} value={value as Scene} />
+            <SceneRenderer
+              key={sceneId}
+              sceneId={sceneId}
+              value={value as Scene}
+            />
           ))}
       </Box>
     </Box>
