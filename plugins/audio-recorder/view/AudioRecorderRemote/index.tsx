@@ -1,12 +1,23 @@
 import { Heading, Stack } from "@chakra-ui/react";
 
+import { usePluginAPI } from "../pluginApi";
+import { useAudioRecording } from "../useAudioRecording";
 import { RecordingSection } from "./RecordingSection";
 import { StreamSection } from "./StreamSection";
-import { useAudioRecording } from "../useAudioRecording";
 
 const AudioRecorderRemote = () => {
+  // Handle audio recording always. We can record from remote. So this should always be rendered as long as the tab is open.
   useAudioRecording();
 
+  const pluginApi = usePluginAPI();
+  const pluginInView = pluginApi.remote.usePluginInView();
+  if (!pluginInView) {
+    return null;
+  }
+
+  return <AudioRecorderRemoteInner />;
+};
+const AudioRecorderRemoteInner = () => {
   return (
     <Stack dir="column" p={3}>
       <Heading>Streams</Heading>
