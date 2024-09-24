@@ -1,7 +1,7 @@
 import { memoize } from "lodash";
 import { objectHash } from "ohash";
 
-import { SlideStyle } from "../src";
+import { SlideStyle } from "../../../src";
 
 export const getSvgMeasurement = memoize(measureSVGText, (props) =>
   objectHash(props),
@@ -9,9 +9,11 @@ export const getSvgMeasurement = memoize(measureSVGText, (props) =>
 
 function measureSVGText({
   slideStyle,
+  heading,
   textLines,
 }: {
   slideStyle: Required<SlideStyle>;
+  heading: string;
   textLines: string[];
 }) {
   // Create an offscreen SVG element
@@ -34,12 +36,26 @@ function measureSVGText({
   textElement.setAttribute("y", "0");
   textElement.style.fontSize = "1rem";
   textElement.style.fontWeight = slideStyle.fontWeight.toString();
-  textElement.style.fontFamily = "inherit";
+  // TODO: Get from slideStyle
+  textElement.style.fontFamily = `-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"`;
 
-  for (const line of textLines) {
+  const headingEl = document.createElementNS(
+    "http://www.w3.org/2000/svg",
+    "tspan",
+  );
+  headingEl.setAttribute("x", "0%");
+  headingEl.setAttribute("dy", "2rem");
+  headingEl.setAttribute("font-size", "0.6rem");
+  headingEl.setAttribute(
+    "font-family",
+    `-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"`,
+  );
+  headingEl.textContent = heading;
+  textElement.appendChild(headingEl);
+  for (const [index, line] of textLines.entries()) {
     const el = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
-    el.setAttribute("x", "50%");
-    el.setAttribute("dy", "1em");
+    el.setAttribute("x", "0%");
+    el.setAttribute("dy", index === 0 ? "1.2rem" : "1rem");
     el.textContent = line;
 
     textElement.appendChild(el);

@@ -15,13 +15,22 @@ export type UnselectedTypeData = BaseData & {
   type: "unselected";
 };
 
+export type FullSongTypeData = BaseData & {
+  type: "fullsong";
+  songIds: number[];
+  songCache: SongCache[];
+};
+
 export type CustomTypeData = BaseData & {
   type: "custom";
   songIds: number[];
   songCache: SongCache[];
 };
 
-export type MyWorshipListData = UnselectedTypeData | CustomTypeData;
+export type MyWorshipListData =
+  | UnselectedTypeData
+  | CustomTypeData
+  | FullSongTypeData;
 
 export const slideStyleValidator = z.object({
   fontWeight: z.string().or(z.number()).optional(),

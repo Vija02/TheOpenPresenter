@@ -53,7 +53,10 @@ const onPluginDataLoaded = (pluginInfo: ObjectToTypedMap<Plugin>) => {
   const unbind = bind(data, pluginInfo as any);
 
   const unsubscribe = subscribe(data.pluginData, async () => {
-    if (data.pluginData.type === "custom") {
+    if (
+      data.pluginData.type === "custom" ||
+      data.pluginData.type === "fullsong"
+    ) {
       const cachedIds = data.pluginData.songCache.map((x) => x.id);
       const noDuplicateSongIds = Array.from(data.pluginData.songIds);
 

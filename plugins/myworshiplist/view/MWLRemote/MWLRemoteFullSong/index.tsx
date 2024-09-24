@@ -4,11 +4,11 @@ import { VscAdd, VscSettingsGear } from "react-icons/vsc";
 
 import { CustomTypeData } from "../../../src/types";
 import { usePluginAPI } from "../../pluginApi";
-import MWLRemoteCustomAddSongModal from "./MWLRemoteCustomAddSongModal";
-import MWLStyleSettingModal from "./MWLStyleSettingModal";
+import MWLRemoteCustomAddSongModal from "../MWLRemoteCustom/MWLRemoteCustomAddSongModal";
+import MWLStyleSettingModal from "../MWLRemoteCustom/MWLStyleSettingModal";
 import SongView from "./SongView";
 
-const MWLRemoteCustom = () => {
+const MWLRemoteFullSong = () => {
   const pluginApi = usePluginAPI();
   const songIds = pluginApi.scene.useData(
     (x) => (x.pluginData as CustomTypeData).songIds,
@@ -16,7 +16,7 @@ const MWLRemoteCustom = () => {
 
   return (
     <Box p={3}>
-      <Heading>MWL REMOTE</Heading>
+      <Heading>MWL REMOTE FULL SONG</Heading>
       <OverlayToggle
         toggler={({ onToggle }) => (
           <Button
@@ -76,4 +76,4 @@ const MWLRemoteCustom = () => {
   );
 };
 
-export default MWLRemoteCustom;
+export default MWLRemoteFullSong;

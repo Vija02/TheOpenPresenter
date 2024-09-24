@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 
 import { SlideStyle } from "../../../src";
-import { getSvgMeasurement } from "../../cache";
+import { getSvgMeasurement } from "./cache";
 
 type MWLSongRenderViewProps = {
   groupedData: Record<string, string[]>;
