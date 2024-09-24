@@ -1,6 +1,7 @@
-import { Box, Flex, Heading, Text } from "@chakra-ui/react";
-import { Slide } from "@repo/ui";
-import React, { useMemo } from "react";
+import { Box, Button, Flex, Heading, Stack, Text } from "@chakra-ui/react";
+import { OverlayToggle, PopConfirm, Slide } from "@repo/ui";
+import React, { useCallback, useMemo } from "react";
+import { VscEdit, VscTrash } from "react-icons/vsc";
 
 import { getSlideStyle } from "../../../src/slideStyle";
 import { CustomTypeData } from "../../../src/types";
@@ -12,6 +13,7 @@ import {
   removeAuxiliaryText,
   removeChords,
 } from "../../songHelpers";
+import MWLRemoteSongEditModal from "./MWLRemoteSongEditModal";
 
 const MWLSongView = React.memo(({ songId }: { songId: number }) => {
   const pluginApi = usePluginAPI();
@@ -37,6 +39,7 @@ const MWLSongViewInner = React.memo(({ songId }: { songId: number }) => {
   const slideStyle = pluginApi.scene.useData((x) => x.pluginData.style);
   const renderData = pluginApi.renderer.useData((x) => x);
 
+  const mutableSceneData = pluginApi.scene.useValtioData();
   const mutableRendererData = pluginApi.renderer.useValtioData();
   const setRenderCurrentScene = pluginApi.renderer.setRenderCurrentScene;
 
@@ -55,11 +58,45 @@ const MWLSongViewInner = React.memo(({ songId }: { songId: number }) => {
 
   const groupedData = useMemo(() => groupData(cleanData), [cleanData]);
 
+  const handleRemove = useCallback(() => {
+    const pluginData = mutableSceneData.pluginData as CustomTypeData;
+
+    pluginData.songIds = pluginData.songIds.filter((x) => x !== songId);
+    pluginData.songCache = pluginData.songCache.filter((x) => x.id !== songId);
+  }, [mutableSceneData.pluginData, songId]);
+
   return (
     <Box py={3}>
-      <Heading fontSize="xl" mb={2}>
-        {songCache.title}
-      </Heading>
+      <Flex direction="row" alignItems="center" gap={2} mb={2}>
+        <Heading fontSize="xl">{songCache.title}</Heading>
+        <Stack direction="row" gap={0}>
+          <OverlayToggle
+            toggler={({ onToggle }) => (
+              <Button
+                size="sm"
+                variant="ghost"
+                rounded="none"
+                onClick={onToggle}
+              >
+                <VscEdit />
+              </Button>
+            )}
+          >
+            <MWLRemoteSongEditModal />
+          </OverlayToggle>
+          <PopConfirm
+            title={`Are you sure you want to remove this song?`}
+            onConfirm={handleRemove}
+            okText="Yes"
+            cancelText="No"
+            key="remove"
+          >
+            <Button size="sm" variant="ghost" rounded="none">
+              <VscTrash />
+            </Button>
+          </PopConfirm>
+        </Stack>
+      </Flex>
       <Flex gap={3} flexWrap="wrap">
         {Object.keys(groupedData).map((section, i) => (
           <Slide
