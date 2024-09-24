@@ -7,3 +7,4 @@ export * from "./Logo";
 export * from "./MotionBox";
 export * from "./OverlayToggle";
 export * from "./theme";
+export * from "./Slide";
