@@ -1,4 +1,5 @@
-import { Box, Flex, Heading, Text } from "@chakra-ui/react";
+import { Box, Heading, Text } from "@chakra-ui/react";
+import { Slide } from "@repo/ui";
 import React, { useMemo } from "react";
 
 import { getSlideStyle } from "../../../src/slideStyle";
@@ -59,29 +60,18 @@ const MWLSongViewInner = React.memo(({ songId }: { songId: number }) => {
       <Heading fontSize="xl" mb={2}>
         {songCache.title}
       </Heading>
-      <Flex gap={3} flexWrap="wrap">
-        <Box
-          cursor="pointer"
-          onClick={() => {
-            mutableRendererData.songId = songId;
-            setRenderCurrentScene();
-          }}
-        >
-          <Box
-            aspectRatio={4 / 3}
-            w="200px"
-            borderWidth="4px"
-            borderColor={
-              songId === renderData.songId ? "red.600" : "transparent"
-            }
-          >
-            <MWLFullSongRenderView
-              groupedData={groupedData}
-              slideStyle={getSlideStyle(slideStyle)}
-            />
-          </Box>
-        </Box>
-      </Flex>
+      <Slide
+        isActive={songId === renderData.songId}
+        onClick={() => {
+          mutableRendererData.songId = songId;
+          setRenderCurrentScene();
+        }}
+      >
+        <MWLFullSongRenderView
+          groupedData={groupedData}
+          slideStyle={getSlideStyle(slideStyle)}
+        />
+      </Slide>
     </Box>
   );
 });

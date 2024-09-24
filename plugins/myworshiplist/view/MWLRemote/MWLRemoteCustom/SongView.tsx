@@ -1,4 +1,5 @@
 import { Box, Flex, Heading, Text } from "@chakra-ui/react";
+import { Slide } from "@repo/ui";
 import React, { useMemo } from "react";
 
 import { getSlideStyle } from "../../../src/slideStyle";
@@ -61,40 +62,24 @@ const MWLSongViewInner = React.memo(({ songId }: { songId: number }) => {
       </Heading>
       <Flex gap={3} flexWrap="wrap">
         {Object.keys(groupedData).map((section, i) => (
-          <Box
+          <Slide
             key={i}
-            cursor="pointer"
+            heading={section}
+            isActive={
+              section === renderData.heading && songId === renderData.songId
+            }
             onClick={() => {
               mutableRendererData.heading = section;
               mutableRendererData.songId = songId;
               setRenderCurrentScene();
             }}
           >
-            <Text
-              fontWeight="bold"
-              textTransform="uppercase"
-              fontSize="xs"
-              mb={1}
-            >
-              {section}
-            </Text>
-            <Box
-              aspectRatio={4 / 3}
-              w="200px"
-              borderWidth="4px"
-              borderColor={
-                section === renderData.heading && songId === renderData.songId
-                  ? "red.600"
-                  : "transparent"
-              }
-            >
-              <MWLSongRenderView
-                groupedData={groupedData}
-                heading={section}
-                slideStyle={getSlideStyle(slideStyle)}
-              />
-            </Box>
-          </Box>
+            <MWLSongRenderView
+              groupedData={groupedData}
+              heading={section}
+              slideStyle={getSlideStyle(slideStyle)}
+            />
+          </Slide>
         ))}
       </Flex>
     </Box>
