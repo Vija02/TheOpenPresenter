@@ -1,9 +1,19 @@
-import { Box, Button, Divider, Link, Stack, Text } from "@chakra-ui/react";
+import {
+  Avatar,
+  AvatarGroup,
+  Box,
+  Button,
+  Divider,
+  Link,
+  Stack,
+  Text,
+} from "@chakra-ui/react";
 import { OverlayToggle } from "@repo/ui";
 import { sortBy } from "lodash";
 import { VscAdd, VscArrowLeft } from "react-icons/vsc";
 import { useLocation } from "wouter";
 
+import { useAwareness } from "../../contexts/AwarenessProvider";
 import { useData } from "../../contexts/PluginDataProvider";
 import { usePluginMetaData } from "../../contexts/PluginMetaDataProvider";
 import { ResizableBoxWrapper } from "./ResizableBoxWrapper";
@@ -13,6 +23,7 @@ const SidebarWeb = () => {
   const data = useData();
   const [location, navigate] = useLocation();
   const { orgSlug, projectSlug } = usePluginMetaData();
+  const { awarenessData } = useAwareness();
 
   return (
     <Box boxShadow="md">
@@ -73,6 +84,24 @@ const SidebarWeb = () => {
               </Link>
             </Stack>
           </Box>
+          <Stack p={2}>
+            <Text>Remote</Text>
+            <AvatarGroup>
+              {awarenessData
+                .filter((x) => x.user.type === "remote")
+                .map((x, i) => (
+                  <Avatar key={i} size="sm" name={x.user.type} />
+                ))}
+            </AvatarGroup>
+            <Text>Renderer</Text>
+            <AvatarGroup>
+              {awarenessData
+                .filter((x) => x.user.type === "renderer")
+                .map((x, i) => (
+                  <Avatar key={i} size="sm" name={x.user.type} />
+                ))}
+            </AvatarGroup>
+          </Stack>
         </Box>
       </ResizableBoxWrapper>
     </Box>
