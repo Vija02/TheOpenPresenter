@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { Route, Switch, useParams } from "wouter";
 
 import { Body } from "./Body";
+import { AwarenessProvider } from "./contexts/AwarenessProvider";
 import { PluginDataProvider } from "./contexts/PluginDataProvider";
 import { PluginMetaDataProvider } from "./contexts/PluginMetaDataProvider";
 
@@ -25,9 +26,11 @@ function Root() {
   return (
     <PluginMetaDataProvider orgSlug={orgSlug!} projectSlug={projectSlug!}>
       <PluginDataProvider>
-        <Box w="100vw" h="100vh">
-          <Body />
-        </Box>
+        <AwarenessProvider>
+          <Box w="100vw" h="100vh">
+            <Body />
+          </Box>
+        </AwarenessProvider>
       </PluginDataProvider>
     </PluginMetaDataProvider>
   );

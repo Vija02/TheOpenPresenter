@@ -4,6 +4,7 @@ import { Route, Switch, useParams } from "wouter";
 
 import MainBody from "./containers/MainBody";
 import Sidebar from "./containers/Sidebar";
+import { AwarenessProvider } from "./contexts/AwarenessProvider";
 import { PluginDataProvider } from "./contexts/PluginDataProvider";
 import { PluginMetaDataProvider } from "./contexts/PluginMetaDataProvider";
 
@@ -26,15 +27,17 @@ function Root() {
   return (
     <PluginMetaDataProvider orgSlug={orgSlug!} projectSlug={projectSlug!}>
       <PluginDataProvider>
-        <Box
-          display="flex"
-          position="relative"
-          height="100vh"
-          overflow="hidden"
-        >
-          <Sidebar />
-          <MainBody />
-        </Box>
+        <AwarenessProvider>
+          <Box
+            display="flex"
+            position="relative"
+            height="100vh"
+            overflow="hidden"
+          >
+            <Sidebar />
+            <MainBody />
+          </Box>
+        </AwarenessProvider>
       </PluginDataProvider>
     </PluginMetaDataProvider>
   );
