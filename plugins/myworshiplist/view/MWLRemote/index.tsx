@@ -1,30 +1,16 @@
-import { Box } from "@chakra-ui/react";
-
-import { MyWorshipListData } from "../../src/types";
 import { usePluginAPI } from "../pluginApi";
 import MWLLanding from "./MWLLanding";
-import MWLRemoteCustom from "./MWLRemoteCustom";
-import MWLRemoteFullSong from "./MWLRemoteFullSong";
+import MWLRemote from "./MWLRemote";
 
-const MWLRemote = () => {
+const MWLRemoteIndex = () => {
   const pluginApi = usePluginAPI();
-  const pluginData = pluginApi.scene.useData<MyWorshipListData>(
-    (x) => x.pluginData,
-  );
+  const songs = pluginApi.scene.useData((x) => x.pluginData.songs);
 
-  if (pluginData.type === "unselected") {
+  if (songs.length === 0) {
     return <MWLLanding />;
   }
 
-  if (pluginData.type === "custom") {
-    return <MWLRemoteCustom />;
-  }
-
-  if (pluginData.type === "fullsong") {
-    return <MWLRemoteFullSong />;
-  }
-
-  return <Box p={3}>UNHANDLED</Box>;
+  return <MWLRemote />;
 };
 
-export default MWLRemote;
+export default MWLRemoteIndex;

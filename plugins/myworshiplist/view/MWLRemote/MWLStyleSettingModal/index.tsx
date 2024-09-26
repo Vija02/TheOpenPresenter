@@ -14,11 +14,11 @@ import { OverlayToggleComponentProps } from "@repo/ui";
 import { Form, Formik } from "formik";
 import { InputControl, SubmitButton, SwitchControl } from "formik-chakra-ui";
 import { useCallback, useEffect } from "react";
-import { toFormikValidationSchema as toFormicValidationSchema } from "zod-formik-adapter";
+import { toFormikValidationSchema } from "zod-formik-adapter";
 
-import { getSlideStyle } from "../../../../src/slideStyle";
-import { SlideStyle, slideStyleValidator } from "../../../../src/types";
-import { usePluginAPI } from "../../../pluginApi";
+import { getSlideStyle } from "../../../src/slideStyle";
+import { SlideStyle, slideStyleValidator } from "../../../src/types";
+import { usePluginAPI } from "../../pluginApi";
 
 export type MWLStyleSettingModalPropTypes = Omit<
   ModalProps,
@@ -65,7 +65,7 @@ const MWLStyleSettingModal = ({
       <ModalOverlay />
       <Formik
         initialValues={slideStyle}
-        validationSchema={toFormicValidationSchema(slideStyleValidator)}
+        validationSchema={toFormikValidationSchema(slideStyleValidator)}
         onSubmit={handleSubmit}
       >
         {({ handleSubmit }) => (

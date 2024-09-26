@@ -15,24 +15,23 @@ import { OverlayToggleComponentProps } from "@repo/ui";
 import { useCallback, useState } from "react";
 import { useDebounce } from "use-debounce";
 
-import { CustomTypeData } from "../../../../src";
-import { usePluginAPI } from "../../../pluginApi";
-import { trpc } from "../../../trpc";
+import { usePluginAPI } from "../../pluginApi";
+import { trpc } from "../../trpc";
 
-export type MWLRemoteCustomAddSongModalPropTypes = Omit<
+export type MWLRemoteAddSongModalPropTypes = Omit<
   ModalProps,
   "isOpen" | "onClose" | "children"
 > &
   Partial<OverlayToggleComponentProps> & {};
 
-const MWLRemoteCustomAddSongModal = ({
+const MWLRemoteAddSongModal = ({
   isOpen,
   onToggle,
   resetData,
   ...props
-}: MWLRemoteCustomAddSongModalPropTypes) => {
+}: MWLRemoteAddSongModalPropTypes) => {
   const pluginApi = usePluginAPI();
-  const pluginInfo = pluginApi.scene.useValtioData<CustomTypeData>();
+  const pluginInfo = pluginApi.scene.useValtioData();
 
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [searchInput, setSearchInput] = useState("");
@@ -45,11 +44,14 @@ const MWLRemoteCustomAddSongModal = ({
 
   const addSong = useCallback(() => {
     if (selectedId) {
-      pluginInfo.pluginData.songIds.push(selectedId);
+      pluginInfo.pluginData.songs.push({
+        id: selectedId,
+        setting: { displayType: "sections" },
+      });
       onToggle?.();
       resetData?.();
     }
-  }, [pluginInfo.pluginData.songIds, onToggle, resetData, selectedId]);
+  }, [selectedId, pluginInfo.pluginData.songs, onToggle, resetData]);
 
   return (
     <Modal
@@ -105,4 +107,4 @@ const MWLRemoteCustomAddSongModal = ({
   );
 };
 
-export default MWLRemoteCustomAddSongModal;
+export default MWLRemoteAddSongModal;

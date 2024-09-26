@@ -7,6 +7,7 @@ import { initTRPC } from "@trpc/server";
 import axios from "axios";
 import { proxy, subscribe } from "valtio";
 import { bind } from "valtio-yjs";
+import Y from "yjs";
 import z from "zod";
 
 import {
@@ -15,7 +16,7 @@ import {
   rendererWebComponentTag,
 } from "./consts";
 import { getSongData } from "./data";
-import { CustomTypeData, MyWorshipListData } from "./types";
+import { MyWorshipListData, Song } from "./types";
 
 export const init = (serverPluginApi: ServerPluginApi) => {
   serverPluginApi.registerTrpcAppRouter(getAppRouter);
@@ -43,7 +44,7 @@ export const init = (serverPluginApi: ServerPluginApi) => {
 };
 
 const onPluginDataCreated = (pluginInfo: ObjectToTypedMap<Plugin>) => {
-  pluginInfo.get("pluginData")?.set("type", "unselected");
+  pluginInfo.get("pluginData")?.set("songs", new Y.Array());
 
   return {};
 };
@@ -52,24 +53,38 @@ const onPluginDataLoaded = (pluginInfo: ObjectToTypedMap<Plugin>) => {
   const data = proxy(pluginInfo.toJSON() as Plugin<MyWorshipListData>);
   const unbind = bind(data, pluginInfo as any);
 
-  const unsubscribe = subscribe(data.pluginData, async () => {
-    if (
-      data.pluginData.type === "custom" ||
-      data.pluginData.type === "fullsong"
-    ) {
-      const cachedIds = data.pluginData.songCache.map((x) => x.id);
-      const noDuplicateSongIds = Array.from(data.pluginData.songIds);
+  // Migrate from old type
+  if (!data.pluginData.songs) {
+    data.pluginData.songs = [];
 
-      if (cachedIds.length < noDuplicateSongIds.length) {
-        const missingCaches = noDuplicateSongIds.filter(
-          (songId) => !cachedIds.includes(songId),
+    try {
+      const pluginData = data.pluginData as any;
+
+      pluginData.songIds.map((songId: number) => {
+        const songCache = pluginData.songCache.find(
+          (cache: any) => cache.id === songId,
         );
 
-        for (const songId of missingCaches) {
-          const songData = await getSongData(songId);
+        pluginData.songs.push({
+          id: songId,
+          cachedData: songCache,
+          setting: { displayType: "sections" },
+        } satisfies Song);
+      });
 
-          (data.pluginData as CustomTypeData).songCache.push(songData);
-        }
+      delete pluginData.songIds;
+      delete pluginData.songCache;
+    } catch (e) {
+      console.error("MWL: Failed to migrate to new data version");
+    }
+  }
+
+  const unsubscribe = subscribe(data.pluginData.songs, async () => {
+    for (const song of data.pluginData.songs) {
+      if (!song.cachedData) {
+        const songData = await getSongData(song.id);
+
+        song.cachedData = songData;
       }
     }
   });

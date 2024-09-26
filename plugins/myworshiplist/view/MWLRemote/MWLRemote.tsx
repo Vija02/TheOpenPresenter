@@ -2,17 +2,14 @@ import { Box, Button, Heading } from "@chakra-ui/react";
 import { OverlayToggle } from "@repo/ui";
 import { VscAdd, VscSettingsGear } from "react-icons/vsc";
 
-import { CustomTypeData } from "../../../src/types";
-import { usePluginAPI } from "../../pluginApi";
-import MWLRemoteCustomAddSongModal from "./MWLRemoteCustomAddSongModal";
+import { usePluginAPI } from "../pluginApi";
+import MWLRemoteAddSongModal from "./MWLRemoteAddSongModal";
 import MWLStyleSettingModal from "./MWLStyleSettingModal";
 import SongView from "./SongView";
 
-const MWLRemoteCustom = () => {
+const MWLRemote = () => {
   const pluginApi = usePluginAPI();
-  const songIds = pluginApi.scene.useData(
-    (x) => (x.pluginData as CustomTypeData).songIds,
-  );
+  const songs = pluginApi.scene.useData((x) => x.pluginData.songs);
 
   return (
     <Box p={3}>
@@ -32,7 +29,7 @@ const MWLRemoteCustom = () => {
           </Button>
         )}
       >
-        <MWLRemoteCustomAddSongModal />
+        <MWLRemoteAddSongModal />
       </OverlayToggle>
       <OverlayToggle
         toggler={({ onToggle }) => (
@@ -52,8 +49,8 @@ const MWLRemoteCustom = () => {
         <MWLStyleSettingModal />
       </OverlayToggle>
 
-      {songIds.map((songId) => (
-        <SongView key={songId} songId={songId} />
+      {songs.map((song) => (
+        <SongView key={song.id} song={song} />
       ))}
       <OverlayToggle
         toggler={({ onToggle }) => (
@@ -70,10 +67,10 @@ const MWLRemoteCustom = () => {
           </Button>
         )}
       >
-        <MWLRemoteCustomAddSongModal />
+        <MWLRemoteAddSongModal />
       </OverlayToggle>
     </Box>
   );
 };
 
-export default MWLRemoteCustom;
+export default MWLRemote;

@@ -1,7 +1,7 @@
 import { Box } from "@chakra-ui/react";
 import { useMemo } from "react";
 
-import { CustomTypeData, SongCache } from "../../src";
+import { Song } from "../../src";
 import { getSlideStyle } from "../../src/slideStyle";
 import { usePluginAPI } from "../pluginApi";
 import {
@@ -11,7 +11,7 @@ import {
   removeChords,
 } from "../songHelpers";
 import MWLFullSongRenderView from "./MWLFullSongRenderView";
-import MWLSongRenderView from "./MWLSongRenderView";
+import MWLSectionsRenderView from "./MWLSectionsRenderView";
 
 const MWLRenderer = () => {
   return (
@@ -23,33 +23,27 @@ const MWLRenderer = () => {
 
 const MWLRendererInner = () => {
   const pluginApi = usePluginAPI();
-  const type = pluginApi.scene.useData((x) => x.pluginData.type);
+  const data = pluginApi.renderer.useData((x) => x);
+  const songId = useMemo(() => data.songId, [data.songId]);
+  const heading = useMemo(() => data.heading, [data.heading]);
 
-  if (type === "unselected") {
-    return null;
-  } else if (type === "fullsong") {
-    return <MWLFullSongRenderer />;
-  } else if (type === "custom") {
-    return <MWLCustomRenderer />;
+  const songs = pluginApi.scene.useData((x) => x.pluginData.songs);
+
+  const song = songs.find((x) => x.id === songId)!;
+
+  if (song.setting.displayType === "sections") {
+    return <MWLSectionsRenderer song={song} heading={heading} />;
+  } else if (song.setting.displayType === "fullSong") {
+    return <MWLFullSongRenderer song={song} />;
   }
-
   return null;
 };
 
-const MWLFullSongRenderer = () => {
+const MWLFullSongRenderer = ({ song }: { song: Song }) => {
   const pluginApi = usePluginAPI();
-  const data = pluginApi.renderer.useData((x) => x);
-  const songId = useMemo(() => data.songId, [data.songId]);
-
-  const songCaches = pluginApi.scene.useData<SongCache[]>(
-    (x) => (x.pluginData as CustomTypeData).songCache,
-  );
   const slideStyle = pluginApi.scene.useData((x) => x.pluginData.style);
 
-  const songCache = useMemo(
-    () => songCaches.find((x) => x.id === songId),
-    [songCaches, songId],
-  );
+  const songCache = useMemo(() => song.cachedData, [song.cachedData]);
 
   const cleanData = useMemo(
     () =>
@@ -69,21 +63,17 @@ const MWLFullSongRenderer = () => {
   );
 };
 
-const MWLCustomRenderer = () => {
+const MWLSectionsRenderer = ({
+  song,
+  heading,
+}: {
+  song: Song;
+  heading: string;
+}) => {
   const pluginApi = usePluginAPI();
-  const data = pluginApi.renderer.useData((x) => x);
-  const songId = useMemo(() => data.songId, [data.songId]);
-  const heading = useMemo(() => data.heading, [data.heading]);
-
-  const songCaches = pluginApi.scene.useData<SongCache[]>(
-    (x) => (x.pluginData as CustomTypeData).songCache,
-  );
   const slideStyle = pluginApi.scene.useData((x) => x.pluginData.style);
 
-  const songCache = useMemo(
-    () => songCaches.find((x) => x.id === songId),
-    [songCaches, songId],
-  );
+  const songCache = useMemo(() => song.cachedData, [song.cachedData]);
 
   const cleanData = useMemo(
     () =>
@@ -100,7 +90,7 @@ const MWLCustomRenderer = () => {
   }
 
   return (
-    <MWLSongRenderView
+    <MWLSectionsRenderView
       key={heading}
       groupedData={groupedData}
       heading={heading}

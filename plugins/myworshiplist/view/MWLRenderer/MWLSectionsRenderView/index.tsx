@@ -3,14 +3,14 @@ import React, { useMemo } from "react";
 import { SlideStyle } from "../../../src";
 import { getSvgMeasurement } from "./cache";
 
-type MWLSongRenderViewProps = {
+type MWLSectionsRenderViewProps = {
   groupedData: Record<string, string[]>;
   heading: string;
   slideStyle: Required<SlideStyle>;
 };
 
-const MWLSongRenderView = React.memo(
-  ({ groupedData, heading, slideStyle }: MWLSongRenderViewProps) => {
+const MWLSectionsRenderView = React.memo(
+  ({ groupedData, heading, slideStyle }: MWLSectionsRenderViewProps) => {
     const measuredData = useMemo(
       () =>
         getSvgMeasurement({ slideStyle, textLines: groupedData![heading]! }),
@@ -61,4 +61,4 @@ const MWLSongRenderView = React.memo(
   },
 );
 
-export default MWLSongRenderView;
+export default MWLSectionsRenderView;
