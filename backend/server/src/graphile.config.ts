@@ -1,6 +1,5 @@
 // Requires license key
 import PgSimplifyInflectorPlugin from "@graphile-contrib/pg-simplify-inflector";
-import PgPubsub from "@graphile/pg-pubsub";
 import GraphilePro from "@graphile/pro";
 import { Request, Response } from "express";
 import { NodePlugin } from "graphile-build";
@@ -16,6 +15,8 @@ import PrimaryKeyMutationsOnlyPlugin from "./plugins/PrimaryKeyMutationsOnlyPlug
 import RemoveQueryQueryPlugin from "./plugins/RemoveQueryQueryPlugin";
 import SubscriptionsPlugin from "./plugins/SubscriptionsPlugin";
 import handleErrors from "./utils/handleErrors";
+
+const { default: PgPubsub } = require("@graphile/pg-pubsub");
 
 export interface OurGraphQLContext {
   pgClient: PoolClient;
@@ -62,8 +63,7 @@ const isDev = process.env.NODE_ENV === "development";
 
 const pluginHook = makePluginHook([
   // Add the pub/sub realtime provider
-  // @ts-expect-error
-  PgPubsub.default,
+  PgPubsub,
 
   // If we have a Graphile Pro license, then enable the plugin
   ...(process.env.GRAPHILE_LICENSE ? [GraphilePro] : []),

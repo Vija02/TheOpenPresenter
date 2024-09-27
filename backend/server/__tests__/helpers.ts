@@ -125,15 +125,15 @@ export const setup = async () => {
 export const teardown = async () => {
   try {
     if (!ctx) {
-      return null;
+      return;
     }
     const { rootPgPool } = ctx;
     ctx = null;
     rootPgPool.end();
-    return null;
+    return;
   } catch (e: any) {
     console.error(e);
-    return null;
+    return;
   }
 };
 
