@@ -16,6 +16,7 @@ import { useLocation } from "wouter";
 import { useAwareness } from "../../contexts/AwarenessProvider";
 import { useData } from "../../contexts/PluginDataProvider";
 import { usePluginMetaData } from "../../contexts/PluginMetaDataProvider";
+import DebugDrawer from "./DebugDrawer";
 import { ResizableBoxWrapper } from "./ResizableBoxWrapper";
 import SidebarAddSceneModal from "./SidebarAddSceneModal";
 
@@ -61,16 +62,7 @@ const SidebarWeb = () => {
             <Stack mt={3} px={2}>
               <OverlayToggle
                 toggler={({ onToggle }) => (
-                  <Button
-                    p={1}
-                    _hover={{
-                      bgColor: "blue.500",
-                      color: "white",
-                    }}
-                    cursor="pointer"
-                    onClick={onToggle}
-                    colorScheme="green"
-                  >
+                  <Button onClick={onToggle} colorScheme="green">
                     <VscAdd /> Add New Scene
                   </Button>
                 )}
@@ -101,6 +93,17 @@ const SidebarWeb = () => {
                   <Avatar key={i} size="sm" name={x.user.type} />
                 ))}
             </AvatarGroup>
+          </Stack>
+          <Stack>
+            <OverlayToggle
+              toggler={({ onToggle }) => (
+                <Button onClick={onToggle} colorScheme="green">
+                  Debug
+                </Button>
+              )}
+            >
+              <DebugDrawer />
+            </OverlayToggle>
           </Stack>
         </Box>
       </ResizableBoxWrapper>
