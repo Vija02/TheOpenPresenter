@@ -4,7 +4,6 @@ import { ObjectToTypedMap } from "../yjsTypes";
 export function createTraverser<T = any>(yData: any) {
   return function traverser<Y extends (x: T) => any>(
     traverseFunction?: Y,
-    returnClosestYjsObj = false,
   ): ObjectToTypedMap<ReturnType<Y>> {
     if (!traverseFunction) return yData;
 
@@ -27,9 +26,6 @@ export function createTraverser<T = any>(yData: any) {
           typeof newTarget !== "object" ||
           !("doc" in newTarget)
         ) {
-          if (returnClosestYjsObj) {
-            return target;
-          }
           return newTarget;
         }
 
