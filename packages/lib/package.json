@@ -20,9 +20,14 @@
   },
   "dependencies": {
     "@apollo/client": "3.8.1",
+    "@hocuspocus/server": "^2.13.5",
+    "@types/lodash": "^4.14.191",
     "graphql": "^15.9.0",
+    "lodash": "^4.17.21",
     "react": "rc",
     "tslib": "^2.6.3",
+    "yjs": "^13.6.18",
+    "yjs-types": "^0.0.1",
     "zustand": "^4.5.5"
   },
   "devDependencies": {

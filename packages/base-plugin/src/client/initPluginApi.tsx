@@ -1,11 +1,10 @@
-import { appData } from "@repo/lib";
+import { YjsWatcher, appData } from "@repo/lib";
 import _ from "lodash";
-import { useRef, useSyncExternalStore } from "react";
 import { useLocation } from "react-use";
 import { typeidUnboxed } from "typeid-js";
 import { proxy } from "valtio";
 import { bind } from "valtio-yjs";
-import { AbstractType, YEvent, Map as YMap } from "yjs";
+import { Map as YMap } from "yjs";
 
 import {
   AwarenessContext,
@@ -13,29 +12,7 @@ import {
   Plugin,
   PluginContext,
 } from "../types";
-import { createTraverser } from "../utils";
 import { awarenessStore } from "./store";
-import { getPathsFromSharedType, isYjsObj } from "./util";
-
-const _watcher: Record<string, { id: string; callback: () => void }[]> = {};
-// Only the paths that are below the paths that we are watching need to be refreshed
-// Eg: If a__b__c is updated
-// Then we refresh a__b__c AND a__b__c__d
-const watcherCreateObserveHandler =
-  (basePath: string[]) => (events: YEvent<any>[]) => {
-    events.forEach((event) => {
-      const eventPath = basePath
-        .concat(event.path.map((x) => x.toString()))
-        .join("__");
-
-      const matchingWatchers = Object.entries(_watcher).filter(([key]) =>
-        eventPath.includes(key),
-      );
-      matchingWatchers.forEach(([_key, val]) =>
-        val.forEach((x) => x.callback()),
-      );
-    });
-  };
 
 export function initPluginApi<
   PluginSceneDataType extends object = any,
@@ -54,21 +31,8 @@ export function initPluginApi<
   setRenderCurrentScene: () => void;
 }) {
   // TODO: Should only be called once
-
-  const sceneBasePath = getPathsFromSharedType(yjsPluginSceneData);
-  const sceneObserveHandler = watcherCreateObserveHandler(sceneBasePath);
-  yjsPluginSceneData.observeDeep(sceneObserveHandler);
-
-  const rendererBasePath = getPathsFromSharedType(yjsPluginRendererData);
-  const rendererObserveHandler = watcherCreateObserveHandler(rendererBasePath);
-  yjsPluginRendererData.observeDeep(rendererObserveHandler);
-
-  const sceneTraverser = createTraverser<Plugin<PluginSceneDataType>>(
-    yjsPluginSceneData!,
-  );
-  const rendererTraverser = createTraverser<PluginRendererDataType>(
-    yjsPluginRendererData!,
-  );
+  const sceneWatcher = new YjsWatcher(yjsPluginSceneData as any);
+  const rendererWatcher = new YjsWatcher(yjsPluginRendererData as any);
 
   // Valtio
   const sceneValtio = proxy({} as Plugin<PluginSceneDataType>);
@@ -114,7 +78,7 @@ export function initPluginApi<
     scene: {
       // Use this for read
       useData<Y = any>(fn?: (x: Plugin<PluginSceneDataType>) => Y): Y {
-        return useData<Y>(sceneTraverser, fn);
+        return sceneWatcher.useYjsData<Y>(fn);
       },
       // Use this for write
       useValtioData<O = undefined>() {
@@ -125,7 +89,7 @@ export function initPluginApi<
     },
     renderer: {
       useData<Y = any>(fn?: (x: PluginRendererDataType) => Y): Y {
-        return useData<Y>(rendererTraverser, fn);
+        return rendererWatcher.useYjsData<Y>(fn);
       },
       // Use this for write
       useValtioData<O = undefined>() {
@@ -151,68 +115,10 @@ export function initPluginApi<
       unbindScene();
       unbindRenderer();
 
-      yjsPluginSceneData.unobserveDeep(sceneObserveHandler);
-      yjsPluginRendererData.unobserveDeep(rendererObserveHandler);
+      sceneWatcher.dispose();
+      rendererWatcher.dispose();
 
       awarenessContext.awarenessObj.off("update", onAwarenessUpdate);
     },
   };
-}
-
-function useData<Y>(
-  traverser: (
-    traverseFunction?: any | undefined,
-    returnClosestYjsObj?: boolean,
-  ) => ObjectToTypedMap<ReturnType<any>>,
-  fn?: (x: any) => Y,
-) {
-  const initialYjsObj = traverser(fn, true);
-  if (!isYjsObj(initialYjsObj)) {
-    return initialYjsObj;
-  }
-
-  const path = getPathsFromSharedType(
-    initialYjsObj as unknown as YMap<any>,
-  ).join("__");
-
-  // We need this so that we can remove the watcher when unmounted
-  const calledId = Math.random().toString();
-
-  const prevDataRef = useRef<any | null>(null);
-
-  return useSyncExternalStore(
-    (callback) => {
-      if (!_watcher[path]) _watcher[path] = [];
-      _watcher[path]!.push({ id: calledId, callback });
-
-      return () => {
-        const index = _watcher[path]?.findIndex((x) => x.id === calledId);
-        if (index) _watcher[path]?.splice(index, 1);
-      };
-    },
-    () => {
-      const data = traverser(fn);
-
-      if (isYjsObj(data)) {
-        const jsonData = (data as unknown as AbstractType<any>).toJSON();
-        if (_.isEqual(prevDataRef.current, jsonData)) {
-          return prevDataRef.current;
-        } else {
-          prevDataRef.current = jsonData;
-          return prevDataRef.current;
-        }
-      } else {
-        // If it's a primitive, we just return the data directly
-        return data as Y;
-      }
-    },
-    () => {
-      const data = traverser(fn);
-
-      if (isYjsObj(data)) {
-        return data.toJson();
-      }
-      return data;
-    },
-  );
 }

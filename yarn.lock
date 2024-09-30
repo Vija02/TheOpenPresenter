@@ -4771,12 +4771,17 @@ __metadata:
   resolution: "@repo/lib@workspace:packages/lib"
   dependencies:
     "@apollo/client": "npm:3.8.1"
+    "@hocuspocus/server": "npm:^2.13.5"
     "@repo/typescript-config": "npm:*"
+    "@types/lodash": "npm:^4.14.191"
     graphql: "npm:^15.9.0"
+    lodash: "npm:^4.17.21"
     pkgroll: "npm:^2.4.2"
     react: "npm:rc"
     tslib: "npm:^2.6.3"
     typescript: "npm:^5.5.4"
+    yjs: "npm:^13.6.18"
+    yjs-types: "npm:^0.0.1"
     zustand: "npm:^4.5.5"
   languageName: unknown
   linkType: soft
@@ -6251,11 +6256,11 @@ __metadata:
   linkType: hard
 
 "@types/ws@npm:^8.0.0":
-  version: 8.5.10
-  resolution: "@types/ws@npm:8.5.10"
+  version: 8.5.12
+  resolution: "@types/ws@npm:8.5.12"
   dependencies:
     "@types/node": "npm:*"
-  checksum: 10c0/e9af279b984c4a04ab53295a40aa95c3e9685f04888df5c6920860d1dd073fcc57c7bd33578a04b285b2c655a0b52258d34bee0a20569dca8defb8393e1e5d29
+  checksum: 10c0/3fd77c9e4e05c24ce42bfc7647f7506b08c40a40fe2aea236ef6d4e96fc7cb4006a81ed1b28ec9c457e177a74a72924f4768b7b4652680b42dfd52bc380e15f9
   languageName: node
   linkType: hard
 
