@@ -9,6 +9,25 @@ const Renderer = ({
 }: {
   shouldUpdateResolvedSlideIndex?: boolean;
 }) => {
+  const pluginApi = usePluginAPI();
+  const fetchId = pluginApi.scene.useData((x) => x.pluginData.fetchId);
+  if (!fetchId) {
+    return null;
+  }
+
+  return (
+    <RendererInner
+      key={fetchId}
+      shouldUpdateResolvedSlideIndex={shouldUpdateResolvedSlideIndex}
+    />
+  );
+};
+
+const RendererInner = ({
+  shouldUpdateResolvedSlideIndex = false,
+}: {
+  shouldUpdateResolvedSlideIndex?: boolean;
+}) => {
   const ref = useRef<RenderViewHandle>(null);
 
   const [localClickCount, setLocalClickCount] = useState(0);
@@ -16,8 +35,8 @@ const Renderer = ({
   const [initialized, setInitialized] = useState(false);
 
   const pluginApi = usePluginAPI();
-  const slideIndex = pluginApi.renderer.useData((x) => x.slideIndex!);
-  const clickCount = pluginApi.renderer.useData((x) => x.clickCount!);
+  const slideIndex = pluginApi.renderer.useData((x) => x.slideIndex);
+  const clickCount = pluginApi.renderer.useData((x) => x.clickCount);
   const mutableRendererData = pluginApi.renderer.useValtioData();
 
   const pageIds = pluginApi.scene.useData((x) => x.pluginData.pageIds);
@@ -75,7 +94,7 @@ const Renderer = ({
 
   useEffect(() => {
     if (loaded && !initialized) {
-      ref.current?.goToSlide(slideIndex);
+      ref.current?.goToSlide(slideIndex ?? 0);
       update();
       setInitialized(true);
     }
@@ -84,7 +103,7 @@ const Renderer = ({
   useEffect(() => {
     // TEST: Clicking on the same slideId as the current selected one should reset the click count
     if (initialized && clickCount === null) {
-      ref.current?.goToSlide(slideIndex);
+      ref.current?.goToSlide(slideIndex ?? 0);
       setLocalClickCount(0);
     }
   }, [clickCount, initialized, slideIndex]);

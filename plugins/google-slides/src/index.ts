@@ -7,6 +7,7 @@ import {
 import { initTRPC } from "@trpc/server";
 import axios from "axios";
 import { createProxyMiddleware } from "http-proxy-middleware";
+import { typeidUnboxed } from "typeid-js";
 import { proxy } from "valtio";
 import { bind } from "valtio-yjs";
 import Y from "yjs";
@@ -42,6 +43,7 @@ export const init = (
   serverPluginApi.registerTrpcAppRouter(getAppRouter(serverPluginApi));
   serverPluginApi.onPluginDataCreated(pluginName, onPluginDataCreated);
   serverPluginApi.onPluginDataLoaded(pluginName, onPluginDataLoaded);
+  serverPluginApi.onRendererDataCreated(pluginName, onRendererDataCreated);
   serverPluginApi.registerSceneCreator(pluginName, {
     title: "Google Slides",
   });
@@ -78,6 +80,12 @@ export const init = (
     });
 
     const loadedPlugin = loadedPlugins[key];
+
+    if (!loadedPlugin) {
+      res.sendStatus(404);
+      return;
+    }
+
     res.send(
       loadedPlugin?.pluginData.html?.replace(
         /nonce="(.+?)"/g,
@@ -132,6 +140,7 @@ export const init = (
 };
 
 const onPluginDataCreated = (pluginInfo: ObjectToTypedMap<Plugin>) => {
+  pluginInfo.get("pluginData")?.set("fetchId", null);
   pluginInfo.get("pluginData")?.set("presentationId", "");
   pluginInfo.get("pluginData")?.set("pageIds", new Y.Array());
   pluginInfo.get("pluginData")?.set("thumbnailLinks", new Y.Array());
@@ -156,6 +165,15 @@ const onPluginDataLoaded = (
   const data = proxy(pluginInfo.toJSON() as Plugin<PluginBaseData>);
   const unbind = bind(data, pluginInfo as any);
 
+  // Migrate from old type
+  if (!data.pluginData.fetchId) {
+    if (data.pluginData.presentationId !== "") {
+      data.pluginData.fetchId = typeidUnboxed("fetch");
+    } else {
+      data.pluginData.fetchId = null;
+    }
+  }
+
   loadedPlugins[contextToKey(context)] = data;
   loadedYjsData[contextToKey(context)] = pluginInfo;
 
@@ -166,6 +184,16 @@ const onPluginDataLoaded = (
       unbind();
     },
   };
+};
+
+const onRendererDataCreated = (
+  rendererData: ObjectToTypedMap<Partial<PluginRendererData>>,
+) => {
+  rendererData.set("slideIndex", null);
+  rendererData.set("clickCount", null);
+  rendererData.set("resolvedSlideIndex", null);
+
+  return {};
 };
 
 const getAppRouter =
@@ -187,6 +215,8 @@ const getAppRouter =
               // TODO: Validation
               const loadedPlugin =
                 loadedPlugins[contextToKey({ sceneId, pluginId })]!;
+              const loadedYjs =
+                loadedYjsData[contextToKey({ sceneId, pluginId })]!;
 
               const presentationDataRes = await axios(
                 `https://slides.googleapis.com/v1/presentations/${presentationId}`,
@@ -199,10 +229,6 @@ const getAppRouter =
                 (page: any) => page.objectId,
               );
 
-              loadedPlugin.pluginData.presentationId = presentationId;
-              loadedPlugin.pluginData.pageIds = pageIds;
-              loadedPlugin.pluginData.thumbnailLinks = [];
-
               const htmlData = await axios(
                 `https://docs.google.com/presentation/d/${presentationId}/embed?rm=minimal`,
                 {
@@ -210,7 +236,13 @@ const getAppRouter =
                 },
               );
 
-              loadedPlugin.pluginData.html = processHtml(htmlData.data);
+              loadedYjs.doc?.transact(() => {
+                loadedPlugin.pluginData.fetchId = typeidUnboxed("fetch");
+                loadedPlugin.pluginData.presentationId = presentationId;
+                loadedPlugin.pluginData.pageIds = pageIds;
+                loadedPlugin.pluginData.thumbnailLinks = [];
+                loadedPlugin.pluginData.html = processHtml(htmlData.data);
+              });
 
               // DEBT: Make this runnable somewhere else
               // The problem is, if that's the case then we'll need to store the token
