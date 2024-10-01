@@ -24,7 +24,11 @@ const MWLRendererInner = () => {
 
   const songs = pluginApi.scene.useData((x) => x.pluginData.songs);
 
-  const song = songs.find((x) => x.id === songId)!;
+  const song = songs.find((x) => x.id === songId);
+
+  if (!song) {
+    return null;
+  }
 
   if (song.setting.displayType === "sections") {
     return <MWLSectionsRenderer song={song} heading={heading} />;
