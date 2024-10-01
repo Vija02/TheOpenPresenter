@@ -1,9 +1,17 @@
 import { Box, Button, Flex, Stack, Text } from "@chakra-ui/react";
-import type { AwarenessContext, PluginContext, Scene } from "@repo/base-plugin";
-import { Plugin } from "@repo/base-plugin";
+import {
+  AwarenessContext,
+  Plugin,
+  PluginContext,
+  Scene,
+  State,
+  YjsWatcher,
+} from "@repo/base-plugin";
 import { useKeyPressMutation } from "@repo/graphql";
-import React, { useMemo } from "react";
+import { useDisposable } from "@repo/lib";
+import React, { useMemo, useState } from "react";
 import { useRoute } from "wouter";
+import Y from "yjs";
 
 import { useData, usePluginData } from "../contexts/PluginDataProvider";
 import { usePluginMetaData } from "../contexts/PluginMetaDataProvider";
@@ -130,11 +138,25 @@ const PluginRenderer = React.memo(
     const pluginMetaData = usePluginMetaData().pluginMetaData;
     const {
       getYJSPluginRenderer,
-      getYJSPluginRendererData,
       getYJSPluginSceneData,
       provider,
+      mainYMap,
       currentUserId,
     } = usePluginData();
+
+    const yjsWatcher = useDisposable(() => {
+      const watcher = new YjsWatcher(mainYMap! as Y.Map<any>);
+      return [watcher, () => watcher.dispose()];
+    }, [mainYMap]);
+
+    const [yjsPluginSceneData] = useState(
+      getYJSPluginSceneData(sceneId, pluginId),
+    );
+
+    // Renderer is added through the server and requires an extra update. So we use a watcher here
+    const yjsPluginRendererData = yjsWatcher?.useYjs<any>(
+      (x: State) => x.renderer?.[1]?.children?.[sceneId]?.[pluginId],
+    );
 
     const [match] = useRoute(`/${sceneId}`);
 
@@ -147,33 +169,37 @@ const PluginRenderer = React.memo(
     );
 
     const Element = useMemo(() => {
-      return viewData?.tag ? (
-        React.createElement(viewData.tag, {
-          yjsPluginSceneData: getYJSPluginSceneData(sceneId, pluginId),
-          yjsPluginRendererData: getYJSPluginRendererData(sceneId, pluginId),
-          awarenessContext: {
-            awarenessObj: provider!.awareness!,
-            currentUserId: currentUserId!,
-          } satisfies AwarenessContext,
-          pluginContext: { pluginId, sceneId } as PluginContext,
-          setRenderCurrentScene: () => {
-            getYJSPluginRenderer()?.set("currentScene", sceneId);
-          },
-          trpcClient,
-        })
-      ) : (
-        <Text>No renderer for {pluginInfo.plugin}</Text>
-      );
+      if (!viewData?.tag) {
+        return <Text>No renderer for {pluginInfo.plugin}</Text>;
+      }
+
+      if (!yjsPluginSceneData || !yjsPluginRendererData) {
+        return <Text>Loading...</Text>;
+      }
+
+      return React.createElement(viewData.tag, {
+        yjsPluginSceneData,
+        yjsPluginRendererData,
+        awarenessContext: {
+          awarenessObj: provider!.awareness!,
+          currentUserId: currentUserId!,
+        } satisfies AwarenessContext,
+        pluginContext: { pluginId, sceneId } as PluginContext,
+        setRenderCurrentScene: () => {
+          getYJSPluginRenderer()?.set("currentScene", sceneId);
+        },
+        trpcClient,
+      });
     }, [
       currentUserId,
       getYJSPluginRenderer,
-      getYJSPluginRendererData,
-      getYJSPluginSceneData,
       pluginId,
       pluginInfo.plugin,
       provider,
       sceneId,
       viewData?.tag,
+      yjsPluginRendererData,
+      yjsPluginSceneData,
     ]);
 
     if (match || viewData?.config?.alwaysRender) {

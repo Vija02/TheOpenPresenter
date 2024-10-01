@@ -28,6 +28,7 @@ import { usePluginMetaData } from "./PluginMetaDataProvider";
 
 type PluginDataProviderType = {
   provider: HocuspocusProvider | null;
+  mainYMap: YState | null;
   currentUserId: string | null;
   mainState: State | null;
   getYJSPluginSceneData: (
@@ -43,6 +44,7 @@ type PluginDataProviderType = {
 
 const initialData: PluginDataProviderType = {
   provider: null,
+  mainYMap: null,
   currentUserId: null,
   mainState: null,
   getYJSPluginSceneData: () => undefined,
@@ -108,6 +110,7 @@ function PluginDataProviderInner({
     <PluginDataContext.Provider
       value={{
         provider,
+        mainYMap,
         currentUserId,
         mainState,
         getYJSPluginSceneData,

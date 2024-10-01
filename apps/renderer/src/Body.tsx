@@ -1,8 +1,10 @@
 import { Box, Text } from "@chakra-ui/react";
-import { AwarenessContext, Scene } from "@repo/base-plugin";
+import { AwarenessContext, Scene, State, YjsWatcher } from "@repo/base-plugin";
+import { useDisposable } from "@repo/lib";
 import { MotionBox } from "@repo/ui";
 import { AnimatePresence, motion } from "framer-motion";
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
+import Y from "yjs";
 
 import { useData, usePluginData } from "./contexts/PluginDataProvider";
 import { usePluginMetaData } from "./contexts/PluginMetaDataProvider";
@@ -96,11 +98,26 @@ const PluginRenderer = React.memo(
     const pluginMetaData = usePluginMetaData().pluginMetaData;
     const {
       getYJSPluginRenderer,
-      getYJSPluginRendererData,
       getYJSPluginSceneData,
       provider,
+      mainYMap,
       currentUserId,
     } = usePluginData();
+
+    const yjsWatcher = useDisposable(() => {
+      const watcher = new YjsWatcher(mainYMap! as Y.Map<any>);
+      return [watcher, () => watcher.dispose()];
+    }, [mainYMap]);
+
+    const [yjsPluginSceneData] = useState(
+      getYJSPluginSceneData(sceneId, pluginId),
+    );
+
+    // Renderer is added through the server and requires an extra update. So we use a watcher here
+    const yjsPluginRendererData = yjsWatcher?.useYjs<any>(
+      (x: State) => x.renderer?.[1]?.children?.[sceneId]?.[pluginId],
+    );
+
     const mainState = usePluginData().mainState!;
 
     const pluginInfo = useMemo(
@@ -115,37 +132,39 @@ const PluginRenderer = React.memo(
       [pluginInfo?.plugin, pluginMetaData?.pluginMeta.registeredRendererView],
     );
 
-    const TagElement = useMemo(
-      () =>
-        tag ? (
-          React.createElement(tag, {
-            yjsPluginSceneData: getYJSPluginSceneData(sceneId, pluginId),
-            yjsPluginRendererData: getYJSPluginRendererData(sceneId, pluginId),
-            awarenessContext: {
-              awarenessObj: provider!.awareness!,
-              currentUserId: currentUserId!,
-            } satisfies AwarenessContext,
-            pluginContext: { pluginId, sceneId },
-            setRenderCurrentScene: () => {
-              getYJSPluginRenderer()?.set("currentScene", sceneId);
-            },
-            trpcClient,
-          })
-        ) : (
-          <Text>No renderer for {pluginInfo?.plugin}</Text>
-        ),
-      [
-        currentUserId,
-        getYJSPluginRenderer,
-        getYJSPluginRendererData,
-        getYJSPluginSceneData,
-        pluginId,
-        pluginInfo?.plugin,
-        provider,
-        sceneId,
-        tag,
-      ],
-    );
+    const TagElement = useMemo(() => {
+      if (!tag) {
+        return <Text>No renderer for {pluginInfo?.plugin}</Text>;
+      }
+
+      if (!yjsPluginSceneData || !yjsPluginRendererData) {
+        return <Text>Loading...</Text>;
+      }
+
+      return React.createElement(tag, {
+        yjsPluginSceneData,
+        yjsPluginRendererData,
+        awarenessContext: {
+          awarenessObj: provider!.awareness!,
+          currentUserId: currentUserId!,
+        } satisfies AwarenessContext,
+        pluginContext: { pluginId, sceneId },
+        setRenderCurrentScene: () => {
+          getYJSPluginRenderer()?.set("currentScene", sceneId);
+        },
+        trpcClient,
+      });
+    }, [
+      currentUserId,
+      getYJSPluginRenderer,
+      pluginId,
+      pluginInfo?.plugin,
+      provider,
+      sceneId,
+      tag,
+      yjsPluginRendererData,
+      yjsPluginSceneData,
+    ]);
 
     return <Box key={pluginId}>{TagElement}</Box>;
   },
