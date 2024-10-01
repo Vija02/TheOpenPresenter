@@ -49,7 +49,7 @@ export class YjsWatcher implements IDisposable {
    * This functions adds a callback function to the _watcher object.
    * This callback should be called whenever the data changes to trigger an update in react
    */
-  public watchYjsData<Y>(traverserFn?: (x: any) => Y, callback?: () => void) {
+  public watchYjs<Y>(traverserFn?: (x: any) => Y, callback?: () => void) {
     const paths = pathTraverser(traverserFn).map((x) =>
       this.basePath.concat(x).join("__"),
     );
@@ -79,12 +79,42 @@ export class YjsWatcher implements IDisposable {
     return dispose;
   }
 
+  public useYjs<Y>(traverserFn?: (x: any) => Y) {
+    const prevDataRef = useRef<any | null>(null);
+
+    return useSyncExternalStore(
+      (callback) => {
+        const cleanupWatcher = this.watchYjs(traverserFn, callback);
+        return cleanupWatcher;
+      },
+      () => {
+        const data = this.traverser(traverserFn);
+
+        if (isYjsObj(data)) {
+          if (_.isEqual(prevDataRef.current, data)) {
+            return prevDataRef.current;
+          } else {
+            prevDataRef.current = data;
+            return prevDataRef.current;
+          }
+        } else {
+          // If it's a primitive, we just return the data directly
+          return data as Y;
+        }
+      },
+      () => {
+        const data = this.traverser(traverserFn) as any;
+        return data;
+      },
+    );
+  }
+
   public useYjsData<Y>(traverserFn?: (x: any) => Y) {
     const prevDataRef = useRef<any | null>(null);
 
     return useSyncExternalStore(
       (callback) => {
-        const cleanupWatcher = this.watchYjsData(traverserFn, callback);
+        const cleanupWatcher = this.watchYjs(traverserFn, callback);
         return cleanupWatcher;
       },
       () => {

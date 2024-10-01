@@ -13,23 +13,23 @@ const getBasicSetup = (shallow: boolean = false) => {
   return {
     map,
     yjsWatcher,
-    watchYjsDataTyped<Y = any>(fn?: (x: MapType) => Y, callback?: () => void) {
-      return yjsWatcher.watchYjsData<Y>(fn, callback);
+    watchYjsTyped<Y = any>(fn?: (x: MapType) => Y, callback?: () => void) {
+      return yjsWatcher.watchYjs<Y>(fn, callback);
     },
   };
 };
 
 test("tracks primitive changes", async () => {
-  const { map, watchYjsDataTyped } = getBasicSetup();
+  const { map, watchYjsTyped } = getBasicSetup();
 
   const cbFn1 = vi.fn(() => {});
-  watchYjsDataTyped((x) => x.number, cbFn1);
+  watchYjsTyped((x) => x.number, cbFn1);
   const cbFn2 = vi.fn(() => {});
-  watchYjsDataTyped((x) => x.bool, cbFn2);
+  watchYjsTyped((x) => x.bool, cbFn2);
   const cbFn3 = vi.fn(() => {});
-  watchYjsDataTyped((x) => x.null, cbFn3);
+  watchYjsTyped((x) => x.null, cbFn3);
   const cbFn4 = vi.fn(() => {});
-  watchYjsDataTyped((x) => x.nothing, cbFn4);
+  watchYjsTyped((x) => x.nothing, cbFn4);
 
   // ACTION
   map.set("number", 200);
@@ -53,21 +53,21 @@ test("tracks primitive changes (with base path)", async () => {
 
   const yjsWatcher = new YjsWatcher(childMap);
 
-  function watchYjsDataTyped<Y = any>(
+  function watchYjsTyped<Y = any>(
     fn?: (x: MapType) => Y,
     callback?: () => void,
   ) {
-    return yjsWatcher.watchYjsData<Y>(fn, callback);
+    return yjsWatcher.watchYjs<Y>(fn, callback);
   }
 
   const cbFn1 = vi.fn(() => {});
-  watchYjsDataTyped((x) => x.number, cbFn1);
+  watchYjsTyped((x) => x.number, cbFn1);
   const cbFn2 = vi.fn(() => {});
-  watchYjsDataTyped((x) => x.bool, cbFn2);
+  watchYjsTyped((x) => x.bool, cbFn2);
   const cbFn3 = vi.fn(() => {});
-  watchYjsDataTyped((x) => x.null, cbFn3);
+  watchYjsTyped((x) => x.null, cbFn3);
   const cbFn4 = vi.fn(() => {});
-  watchYjsDataTyped((x) => x.nothing, cbFn4);
+  watchYjsTyped((x) => x.nothing, cbFn4);
 
   // ACTION
   childMap.set("number", 200);
@@ -85,10 +85,10 @@ test("tracks primitive changes (with base path)", async () => {
 });
 
 test("tracks when parent is changed", async () => {
-  const { map, watchYjsDataTyped } = getBasicSetup();
+  const { map, watchYjsTyped } = getBasicSetup();
 
   const cbFn1 = vi.fn(() => {});
-  watchYjsDataTyped((x) => x.nestedArray[1], cbFn1);
+  watchYjsTyped((x) => x.nestedArray[1], cbFn1);
 
   // ACTION
   map.set("nestedArray", "Hello");
@@ -99,10 +99,10 @@ test("tracks when parent is changed", async () => {
 });
 
 test("tracks when children is changed", async () => {
-  const { map, watchYjsDataTyped } = getBasicSetup();
+  const { map, watchYjsTyped } = getBasicSetup();
 
   const cbFn1 = vi.fn(() => {});
-  watchYjsDataTyped((x) => x.nestedArray, cbFn1);
+  watchYjsTyped((x) => x.nestedArray, cbFn1);
 
   // ACTION
   (map.get("nestedArray") as Y.Array<any>).get(0).push([1]);
@@ -113,20 +113,20 @@ test("tracks when children is changed", async () => {
 });
 
 test("tracks when object changed in transaction", async () => {
-  const { map, watchYjsDataTyped } = getBasicSetup();
+  const { map, watchYjsTyped } = getBasicSetup();
 
   const cbFn1 = vi.fn(() => {});
-  watchYjsDataTyped((x) => x.nothing, cbFn1);
+  watchYjsTyped((x) => x.nothing, cbFn1);
   const cbFn2 = vi.fn(() => {});
-  watchYjsDataTyped((x) => x.number, cbFn2);
+  watchYjsTyped((x) => x.number, cbFn2);
   const cbFn3 = vi.fn(() => {});
-  watchYjsDataTyped((x) => x.emptyObject, cbFn3);
+  watchYjsTyped((x) => x.emptyObject, cbFn3);
   const cbFn4 = vi.fn(() => {});
-  watchYjsDataTyped((x) => x.nestedMap, cbFn4);
+  watchYjsTyped((x) => x.nestedMap, cbFn4);
   const cbFn5 = vi.fn(() => {});
-  watchYjsDataTyped((x) => x.nestedMap.nestedMapAgain, cbFn5);
+  watchYjsTyped((x) => x.nestedMap.nestedMapAgain, cbFn5);
   const cbFn6 = vi.fn(() => {});
-  watchYjsDataTyped((x) => x.nestedMap.nestedMapAgain.nestedValue, cbFn6);
+  watchYjsTyped((x) => x.nestedMap.nestedMapAgain.nestedValue, cbFn6);
 
   // ACTION
   map.doc?.transact(() => {
@@ -147,10 +147,10 @@ test("tracks when object changed in transaction", async () => {
 });
 
 test("tracks when object changed immutably", async () => {
-  const { map, watchYjsDataTyped } = getBasicSetup();
+  const { map, watchYjsTyped } = getBasicSetup();
 
   const cbFn1 = vi.fn(() => {});
-  watchYjsDataTyped((x) => x.nestedMap.nestedMapAgain.nestedValue, cbFn1);
+  watchYjsTyped((x) => x.nestedMap.nestedMapAgain.nestedValue, cbFn1);
 
   // ACTION
   const newMap = new Y.Map();
@@ -162,10 +162,10 @@ test("tracks when object changed immutably", async () => {
 });
 
 test("stops tracking when cleaned up", async () => {
-  const { map, watchYjsDataTyped } = getBasicSetup();
+  const { map, watchYjsTyped } = getBasicSetup();
 
   const cbFn1 = vi.fn(() => {});
-  const stopWatching = watchYjsDataTyped((x) => x.number, cbFn1);
+  const stopWatching = watchYjsTyped((x) => x.number, cbFn1);
 
   // SETUP & TEST
   map.set("number", 200);
@@ -185,14 +185,14 @@ test("stops tracking when cleaned up", async () => {
 });
 
 test("tracks shallow when option is passed", async () => {
-  const { map, watchYjsDataTyped } = getBasicSetup(true);
+  const { map, watchYjsTyped } = getBasicSetup(true);
 
   const cbFn1 = vi.fn(() => {});
-  watchYjsDataTyped((x) => x.nestedMap.nestedMapAgain.nestedValue, cbFn1);
+  watchYjsTyped((x) => x.nestedMap.nestedMapAgain.nestedValue, cbFn1);
   const cbFn2 = vi.fn(() => {});
-  watchYjsDataTyped((x) => x.nestedArray, cbFn2);
+  watchYjsTyped((x) => x.nestedArray, cbFn2);
   const cbFn3 = vi.fn(() => {});
-  watchYjsDataTyped((x) => x.number, cbFn3);
+  watchYjsTyped((x) => x.number, cbFn3);
 
   // ACTION
   (map.get("nestedMap") as Y.Map<any>).set("nestedMapAgain", "Test");
