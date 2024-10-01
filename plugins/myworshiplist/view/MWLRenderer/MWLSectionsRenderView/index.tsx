@@ -11,10 +11,17 @@ type MWLSectionsRenderViewProps = {
 
 const MWLSectionsRenderView = React.memo(
   ({ groupedData, heading, slideStyle }: MWLSectionsRenderViewProps) => {
+    const validatedHeading = groupedData[heading]
+      ? heading
+      : Object.keys(groupedData)[0] ?? "";
+
     const measuredData = useMemo(
       () =>
-        getSvgMeasurement({ slideStyle, textLines: groupedData![heading]! }),
-      [groupedData, heading, slideStyle],
+        getSvgMeasurement({
+          slideStyle,
+          textLines: groupedData[validatedHeading]!,
+        }),
+      [groupedData, validatedHeading, slideStyle],
     );
 
     const viewBox = useMemo(
@@ -50,7 +57,7 @@ const MWLSectionsRenderView = React.memo(
           }}
           fill={slideStyle.isDarkMode ? "white" : "rgb(26, 32, 44)"}
         >
-          {groupedData?.[heading]?.map((x, i) => (
+          {groupedData[validatedHeading]?.map((x, i) => (
             <tspan key={i} x="50%" dy="1em">
               {x}
             </tspan>

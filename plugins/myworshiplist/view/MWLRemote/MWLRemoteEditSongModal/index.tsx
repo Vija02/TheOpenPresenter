@@ -23,6 +23,7 @@ import {
   slideStyleValidator,
 } from "../../../src";
 import { usePluginAPI } from "../../pluginApi";
+import { processSongCache } from "../../songHelpers";
 
 export type MWLRemoteEditSongModalPropTypes = Omit<
   ModalProps,
@@ -39,18 +40,40 @@ const MWLRemoteEditSongModal = ({
 }: MWLRemoteEditSongModalPropTypes) => {
   const pluginApi = usePluginAPI();
   const mutableSceneData = pluginApi.scene.useValtioData();
+  const mutableRendererData = pluginApi.renderer.useValtioData();
 
   const handleSubmit = useCallback(
     (data: SongSetting) => {
       const index = mutableSceneData.pluginData.songs.findIndex(
         (x) => x.id === song.id,
       );
+
+      // If we're changing this song to sections and the current song is selected,
+      // Then we want to reset the heading to the first item
+      if (
+        data.displayType === "sections" &&
+        mutableSceneData.pluginData.songs[index]!.setting.displayType !==
+          "sections" &&
+        mutableRendererData.songId === song.id
+      ) {
+        mutableRendererData.heading =
+          Object.keys(processSongCache(song.cachedData))[0] ?? "";
+      }
+
       mutableSceneData.pluginData.songs[index]!.setting = data;
+
       resetData?.();
       onToggle?.();
       return Promise.resolve();
     },
-    [mutableSceneData.pluginData.songs, onToggle, resetData, song.id],
+    [
+      mutableRendererData,
+      mutableSceneData.pluginData.songs,
+      onToggle,
+      resetData,
+      song.cachedData,
+      song.id,
+    ],
   );
 
   return (
