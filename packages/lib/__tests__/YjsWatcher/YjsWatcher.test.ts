@@ -4,11 +4,11 @@ import * as Y from "yjs";
 import { YjsWatcher } from "../../src";
 import { MapType, getYDoc } from "../helpers";
 
-const getBasicSetup = () => {
+const getBasicSetup = (shallow: boolean = false) => {
   const doc = getYDoc();
   const map = doc.getMap("map");
 
-  const yjsWatcher = new YjsWatcher(map);
+  const yjsWatcher = new YjsWatcher(map, { shallow });
 
   return {
     map,
@@ -182,4 +182,25 @@ test("stops tracking when cleaned up", async () => {
   map.set("number", 200);
 
   expect(cbFn1).toBeCalledTimes(2);
+});
+
+test("tracks shallow when option is passed", async () => {
+  const { map, watchYjsDataTyped } = getBasicSetup(true);
+
+  const cbFn1 = vi.fn(() => {});
+  watchYjsDataTyped((x) => x.nestedMap.nestedMapAgain.nestedValue, cbFn1);
+  const cbFn2 = vi.fn(() => {});
+  watchYjsDataTyped((x) => x.nestedArray, cbFn2);
+  const cbFn3 = vi.fn(() => {});
+  watchYjsDataTyped((x) => x.number, cbFn3);
+
+  // ACTION
+  (map.get("nestedMap") as Y.Map<any>).set("nestedMapAgain", "Test");
+  map.set("nestedArray", "Testing");
+  map.set("number", 123);
+
+  // TEST
+  expect(cbFn1).toBeCalledTimes(0);
+  expect(cbFn2).toBeCalledTimes(1);
+  expect(cbFn3).toBeCalledTimes(1);
 });

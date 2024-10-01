@@ -8,6 +8,10 @@ import { getYjsEventPath } from "./getYjsEventPath";
 import { pathTraverser } from "./pathTraverser";
 import { getPathsFromSharedType, isYjsObj } from "./util";
 
+export type YjsWatcherOptions = {
+  shallow?: boolean;
+};
+
 export class YjsWatcher implements IDisposable {
   private _watcher: Record<string, { id: string; callback: () => void }[]> = {};
   private _disposable: IDisposable[] = [];
@@ -16,17 +20,24 @@ export class YjsWatcher implements IDisposable {
   private traverser: ReturnType<typeof createTraverser>;
   private basePath: string[];
 
-  constructor(yjsObj: YMap<any>) {
+  constructor(yjsObj: YMap<any>, options?: YjsWatcherOptions) {
     this.yjsObj = yjsObj;
     this.traverser = createTraverser(yjsObj);
     this.basePath = getPathsFromSharedType(yjsObj);
 
-    const observeHandler = this.createUseYjsDataWatcherHandler();
-    yjsObj.observeDeep(observeHandler);
-
-    this._disposable.push({
-      dispose: () => yjsObj.unobserveDeep(observeHandler),
-    });
+    if (options?.shallow) {
+      const handler = this.createObserveEventHandler();
+      yjsObj.observe(handler);
+      this._disposable.push({
+        dispose: () => yjsObj.unobserve(handler),
+      });
+    } else {
+      const handler = this.createDeepObserveEventHandler();
+      yjsObj.observeDeep(handler);
+      this._disposable.push({
+        dispose: () => yjsObj.unobserveDeep(handler),
+      });
+    }
   }
 
   /**
@@ -122,34 +133,35 @@ export class YjsWatcher implements IDisposable {
    * Since this will only save performance when the update and watcher is in a separate branch.
    * Eg: a__b__x and a__c
    */
-  private createUseYjsDataWatcherHandler() {
+  private createDeepObserveEventHandler() {
     return (events: YEvent<any>[]) => {
-      events.forEach((event) => {
-        const eventPaths = getYjsEventPath(event);
-        const fullPaths = eventPaths.map((path) =>
-          this.basePath.concat(path).join("__"),
-        );
-
-        const matched = fullPaths
-          .map((fullPath) => {
-            const matchingWatchers = Object.entries(this._watcher).filter(
-              ([key]) => fullPath.startsWith(key) || key.startsWith(fullPath),
-            );
-
-            return matchingWatchers;
-          })
-          .flat();
-
-        const withoutDuplicate = matched.reduce(
-          (acc, val) =>
-            !acc.find((x) => x[0] === val[0]) ? [...acc, val] : acc,
-          [] as typeof matched,
-        ) as typeof matched;
-
-        withoutDuplicate.forEach(([_key, val]) =>
-          val.forEach((x) => x.callback()),
-        );
-      });
+      events.forEach(this.eventHandler.bind(this));
     };
+  }
+  private createObserveEventHandler() {
+    return this.eventHandler.bind(this);
+  }
+  private eventHandler(event: YEvent<any>) {
+    const eventPaths = getYjsEventPath(event);
+    const fullPaths = eventPaths.map((path) =>
+      this.basePath.concat(path).join("__"),
+    );
+
+    const matched = fullPaths
+      .map((fullPath) => {
+        const matchingWatchers = Object.entries(this._watcher).filter(
+          ([key]) => fullPath.startsWith(key) || key.startsWith(fullPath),
+        );
+
+        return matchingWatchers;
+      })
+      .flat();
+
+    const withoutDuplicate = matched.reduce(
+      (acc, val) => (!acc.find((x) => x[0] === val[0]) ? [...acc, val] : acc),
+      [] as typeof matched,
+    ) as typeof matched;
+
+    withoutDuplicate.forEach(([_key, val]) => val.forEach((x) => x.callback()));
   }
 }
