@@ -1,3 +1,5 @@
+import { SongCache } from "../src";
+
 export const removeChords = (content: string[]) => {
   return content.reduce((acc, val) => {
     return val.match(/x[01]/) ? acc : [...acc, val];
@@ -43,4 +45,14 @@ export const groupData = (content: string[]) => {
   }
 
   return map;
+};
+
+export const processSongCache = (songCache?: SongCache) => {
+  const cleanData = removeAuxiliaryText(
+    cleanWhiteSpace(removeChords(songCache?.content.split("<br>") ?? [])),
+  );
+
+  const groupedData = groupData(cleanData);
+
+  return groupedData;
 };

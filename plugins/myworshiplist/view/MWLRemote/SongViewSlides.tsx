@@ -6,25 +6,13 @@ import { getSlideStyle } from "../../src/slideStyle";
 import MWLFullSongRenderView from "../MWLRenderer/MWLFullSongRenderView";
 import MWLSectionsRenderView from "../MWLRenderer/MWLSectionsRenderView";
 import { usePluginAPI } from "../pluginApi";
-import {
-  cleanWhiteSpace,
-  groupData,
-  removeAuxiliaryText,
-  removeChords,
-} from "../songHelpers";
+import { processSongCache } from "../songHelpers";
 
 export const SongViewSlides = ({ song }: { song: Song }) => {
-  const cleanData = useMemo(
-    () =>
-      removeAuxiliaryText(
-        cleanWhiteSpace(
-          removeChords(song.cachedData?.content.split("<br>") ?? []),
-        ),
-      ),
-    [song.cachedData?.content],
+  const groupedData = useMemo(
+    () => processSongCache(song.cachedData),
+    [song.cachedData],
   );
-
-  const groupedData = useMemo(() => groupData(cleanData), [cleanData]);
 
   if (song.setting.displayType === "sections") {
     return <Sections song={song} groupedData={groupedData} />;

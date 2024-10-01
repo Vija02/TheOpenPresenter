@@ -4,12 +4,7 @@ import { useMemo } from "react";
 import { Song } from "../../src";
 import { getSlideStyle } from "../../src/slideStyle";
 import { usePluginAPI } from "../pluginApi";
-import {
-  cleanWhiteSpace,
-  groupData,
-  removeAuxiliaryText,
-  removeChords,
-} from "../songHelpers";
+import { processSongCache } from "../songHelpers";
 import MWLFullSongRenderView from "./MWLFullSongRenderView";
 import MWLSectionsRenderView from "./MWLSectionsRenderView";
 
@@ -44,16 +39,7 @@ const MWLFullSongRenderer = ({ song }: { song: Song }) => {
   const slideStyle = pluginApi.scene.useData((x) => x.pluginData.style);
 
   const songCache = useMemo(() => song.cachedData, [song.cachedData]);
-
-  const cleanData = useMemo(
-    () =>
-      removeAuxiliaryText(
-        cleanWhiteSpace(removeChords(songCache?.content.split("<br>") ?? [])),
-      ),
-    [songCache?.content],
-  );
-
-  const groupedData = useMemo(() => groupData(cleanData), [cleanData]);
+  const groupedData = useMemo(() => processSongCache(songCache), [songCache]);
 
   return (
     <MWLFullSongRenderView
@@ -74,16 +60,7 @@ const MWLSectionsRenderer = ({
   const slideStyle = pluginApi.scene.useData((x) => x.pluginData.style);
 
   const songCache = useMemo(() => song.cachedData, [song.cachedData]);
-
-  const cleanData = useMemo(
-    () =>
-      removeAuxiliaryText(
-        cleanWhiteSpace(removeChords(songCache?.content.split("<br>") ?? [])),
-      ),
-    [songCache?.content],
-  );
-
-  const groupedData = useMemo(() => groupData(cleanData), [cleanData]);
+  const groupedData = useMemo(() => processSongCache(songCache), [songCache]);
 
   if (!songCache) {
     return null;
