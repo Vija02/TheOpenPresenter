@@ -203,3 +203,21 @@ test("returns original value if no fn passed", async () => {
 
   expect(res).toEqual(map);
 });
+
+test("returns undefined when accessing an undefined property using optional chaining", async () => {
+  const doc = getYDoc();
+  const map = doc.getMap("map");
+
+  const traverser = createTraverser<MapType>(map);
+
+  // @ts-ignore
+  const res = traverser((x) => x.a?.b?.c);
+
+  expect(res).toEqual(undefined);
+});
+
+test("throws error if passed a non yjs object", async () => {
+  expect(() => createTraverser<MapType>({ Hello: "World" })).toThrowError(
+    "Invalid value passed to traverser",
+  );
+});

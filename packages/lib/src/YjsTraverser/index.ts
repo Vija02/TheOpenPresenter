@@ -1,11 +1,20 @@
+import { AbstractType } from "yjs";
+
 import { ObjectToTypedMap } from "../yjsTypes";
 
 // TODO: Infer type from yData
 export function createTraverser<T = any>(yData: any) {
+  if (!(yData instanceof AbstractType)) {
+    // We have the option to return the value.
+    // But in this case, it's probably an error so we better just throw the error
+    throw new Error(
+      "Error: Invalid value passed to traverser. Traverser only accepts valid yjs object.",
+    );
+  }
   return function traverser<Y extends (x: T) => any>(
     traverseFunction?: Y,
   ): ObjectToTypedMap<ReturnType<Y>> {
-    if (!traverseFunction) return yData;
+    if (!traverseFunction) return yData as any;
 
     const originalValue = Symbol("originalValue");
     const isProxy = Symbol("isProxy");
