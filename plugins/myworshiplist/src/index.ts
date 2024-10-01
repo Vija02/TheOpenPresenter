@@ -134,6 +134,12 @@ const getAppRouter = (t: ReturnType<typeof initTRPC.create>) => {
             data: res.data.data,
           };
         }),
+      playlist: t.procedure.query(async () => {
+        const res = await axios("https://myworshiplist.com/api/songlists");
+        return {
+          data: res.data.data,
+        };
+      }),
     },
   });
 };
