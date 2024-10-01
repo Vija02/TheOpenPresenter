@@ -10,9 +10,11 @@ import {
   DrawerProps,
 } from "@chakra-ui/react";
 import { OverlayToggleComponentProps } from "@repo/ui";
-import ReactJson from "react-json-view";
+import { lazy } from "react";
 
-import { useData } from "../../contexts/PluginDataProvider";
+import { useData } from "../../../contexts/PluginDataProvider";
+
+const JSONViewer = lazy(() => import("./JSONViewer"));
 
 export type DebugDrawerPropTypes = Omit<
   DrawerProps,
@@ -35,7 +37,8 @@ const DebugDrawer = ({ isOpen, onToggle, ...props }: DebugDrawerPropTypes) => {
         <DrawerHeader>Debug</DrawerHeader>
         <DrawerCloseButton />
         <DrawerBody>
-          <ReactJson src={data} />
+          {/* Lazy load */}
+          {isOpen && <JSONViewer src={data} />}
         </DrawerBody>
 
         <DrawerFooter>

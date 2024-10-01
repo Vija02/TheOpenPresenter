@@ -16,7 +16,7 @@ import { useLocation } from "wouter";
 import { useAwareness } from "../../contexts/AwarenessProvider";
 import { useData } from "../../contexts/PluginDataProvider";
 import { usePluginMetaData } from "../../contexts/PluginMetaDataProvider";
-import DebugDrawer from "./DebugDrawer";
+import DebugDrawer from "./Debug/DebugDrawer";
 import { ResizableBoxWrapper } from "./ResizableBoxWrapper";
 import SidebarAddSceneModal from "./SidebarAddSceneModal";
 
