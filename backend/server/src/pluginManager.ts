@@ -19,6 +19,12 @@ class ServerPluginApiPrivate extends ServerPluginApi {
   getRegisteredOnPluginDataLoaded() {
     return this.registeredOnPluginDataLoaded;
   }
+  getRegisteredOnRendererDataCreated() {
+    return this.registeredOnRendererDataCreated;
+  }
+  getRegisteredOnRendererDataLoaded() {
+    return this.registeredOnRendererDataLoaded;
+  }
   getRegisteredServeStatic() {
     return this.registeredServeStatic;
   }

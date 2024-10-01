@@ -24,6 +24,16 @@ export type RegisterOnPluginDataLoaded<PluginDataType = any> = (
   pluginContext: PluginContext,
 ) => IDisposable;
 
+export type RegisterOnRendererDataCreated<RendererDataType = any> = (
+  entryData: ObjectToTypedMap<RendererDataType>,
+  pluginContext: PluginContext,
+) => IDisposable;
+
+export type RegisterOnRendererDataLoaded<RendererDataType = any> = (
+  entryData: ObjectToTypedMap<RendererDataType>,
+  pluginContext: PluginContext,
+) => IDisposable;
+
 export type RegisterKeyPressHandlerCallback<
   PluginDataType = any,
   RendererDataType = any,

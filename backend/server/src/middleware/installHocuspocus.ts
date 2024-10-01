@@ -140,6 +140,10 @@ export default async function installHocuspocus(app: Express) {
         serverPluginApi.getRegisteredOnPluginDataCreated();
       const registeredOnPluginDataLoaded =
         serverPluginApi.getRegisteredOnPluginDataLoaded();
+      const registeredOnRendererDataCreated =
+        serverPluginApi.getRegisteredOnRendererDataCreated();
+      const registeredOnRendererDataLoaded =
+        serverPluginApi.getRegisteredOnRendererDataLoaded();
 
       const handleSectionOrScene = (
         sectionOrScene: ObjectToTypedMap<any>,
@@ -162,18 +166,42 @@ export default async function installHocuspocus(app: Express) {
             renderData.get("children")?.keys() ?? [],
           );
 
-          const pluginIds = Array.from(scene.get("children")?.keys()!);
+          const sceneChildrenEntries = Array.from(
+            scene.get("children")?.entries()!,
+          );
+
           if (!sceneKeys.includes(sceneId)) {
             // Create the scene object with all the plugins as well
-            const renderMap = new Y.Map();
-            pluginIds.forEach((x) => renderMap.set(x, new Y.Map()));
+            const sceneMap = new Y.Map();
+
+            sceneChildrenEntries.forEach(([pluginId, pluginInfo]) => {
+              const pluginMap = new Y.Map();
+
+              try {
+                disposableDocumentManager
+                  .getDocumentDisposable(data.documentName)
+                  .push(
+                    registeredOnRendererDataCreated
+                      .find((x) => x.pluginName === pluginInfo.get("plugin"))
+                      ?.callback(pluginMap, { pluginId, sceneId }) ?? {},
+                  );
+              } catch (e) {
+                console.error(
+                  "Error: Error occurred while running the `onRendererDataCreated` function in " +
+                    pluginInfo.get("plugin"),
+                );
+                console.error(e);
+              }
+
+              sceneMap.set(pluginId, pluginMap);
+            });
 
             // Then we can set it all at once
             renderData
               .get("children")
               ?.set(
                 sceneId,
-                renderMap as ObjectToTypedMap<
+                sceneMap as ObjectToTypedMap<
                   Record<string, Record<string, any>>
                 >,
               );
@@ -181,18 +209,62 @@ export default async function installHocuspocus(app: Express) {
             // Otherwise we just add the plugin
             const plugins = renderData.get("children")?.get(sceneId);
             const currentPluginIds = Array.from(plugins?.keys()!);
-            const missingPluginIds = pluginIds.filter(
-              (x) => !currentPluginIds.includes(x),
+            const missingPlugins = sceneChildrenEntries.filter(
+              ([pluginId]) => !currentPluginIds.includes(pluginId),
             );
 
-            document?.transact(() => {
-              for (const missingId of missingPluginIds) {
-                plugins?.set(
-                  missingId,
-                  new Y.Map() as ObjectToTypedMap<Record<string, any>>,
+            if (missingPlugins.length > 0) {
+              document?.transact(() => {
+                for (const [pluginId, pluginInfo] of missingPlugins) {
+                  const pluginMap = new Y.Map();
+
+                  try {
+                    disposableDocumentManager
+                      .getDocumentDisposable(data.documentName)
+                      .push(
+                        registeredOnRendererDataCreated
+                          .find(
+                            (x) => x.pluginName === pluginInfo.get("plugin"),
+                          )
+                          ?.callback(pluginMap, {
+                            pluginId,
+                            sceneId,
+                          }) ?? {},
+                      );
+                  } catch (e) {
+                    console.error(
+                      "Error: Error occurred while running the `onRendererDataCreated` function in " +
+                        pluginInfo.get("plugin"),
+                    );
+                    console.error(e);
+                  }
+
+                  plugins?.set(
+                    pluginId,
+                    pluginMap as ObjectToTypedMap<Record<string, any>>,
+                  );
+                }
+              });
+            }
+          }
+
+          // Handle renderer load
+          for (const [pluginId, pluginInfo] of sceneChildrenEntries) {
+            try {
+              disposableDocumentManager
+                .getDocumentDisposable(data.documentName)
+                .push(
+                  registeredOnRendererDataLoaded
+                    .find((x) => x.pluginName === pluginInfo.get("plugin"))
+                    ?.callback(pluginInfo, { pluginId, sceneId }) ?? {},
                 );
-              }
-            });
+            } catch (e) {
+              console.error(
+                "Error: Error occurred while running the `onRendererDataLoaded` function in " +
+                  pluginInfo.get("plugin"),
+              );
+              console.error(e);
+            }
           }
         });
 

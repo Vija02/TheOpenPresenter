@@ -4,10 +4,10 @@ import {
   TypedMap as TypedMapRaw,
 } from "yjs-types";
 
-interface TypedArray<T> extends TypedArrayRaw<T> {
+export interface TypedArray<T> extends TypedArrayRaw<T> {
   doc: Document | null;
 }
-interface TypedMap<Data extends Record<string, unknown>>
+export interface TypedMap<Data extends Record<string, unknown>>
   extends TypedMapRaw<Data> {
   doc: Document | null;
 }

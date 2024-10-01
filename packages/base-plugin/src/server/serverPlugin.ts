@@ -8,6 +8,8 @@ import {
   RegisterKeyPressHandlerCallback,
   RegisterOnPluginDataCreated,
   RegisterOnPluginDataLoaded,
+  RegisterOnRendererDataCreated,
+  RegisterOnRendererDataLoaded,
   RemoteViewWebComponentConfig,
 } from "./serverPluginTypes";
 
@@ -22,6 +24,14 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
   protected registeredOnPluginDataLoaded: {
     pluginName: string;
     callback: RegisterOnPluginDataLoaded<PluginDataType>;
+  }[] = [];
+  protected registeredOnRendererDataCreated: {
+    pluginName: string;
+    callback: RegisterOnRendererDataCreated<RendererDataType>;
+  }[] = [];
+  protected registeredOnRendererDataLoaded: {
+    pluginName: string;
+    callback: RegisterOnRendererDataLoaded<RendererDataType>;
   }[] = [];
   protected registeredServeStatic: {
     pluginName: string;
@@ -92,6 +102,20 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
     callback: RegisterOnPluginDataLoaded<PluginDataType>,
   ) {
     this.registeredOnPluginDataLoaded.push({ pluginName, callback });
+  }
+
+  public onRendererDataCreated(
+    pluginName: string,
+    callback: RegisterOnRendererDataCreated<RendererDataType>,
+  ) {
+    this.registeredOnRendererDataCreated.push({ pluginName, callback });
+  }
+
+  public onRendererDataLoaded(
+    pluginName: string,
+    callback: RegisterOnRendererDataLoaded<RendererDataType>,
+  ) {
+    this.registeredOnRendererDataLoaded.push({ pluginName, callback });
   }
 
   public serveStatic(pluginName: string, path: string) {
