@@ -2,10 +2,11 @@ import {
   ObjectToTypedMap,
   Plugin,
   ServerPluginApi,
+  YjsWatcher,
 } from "@repo/base-plugin/server";
 import { initTRPC } from "@trpc/server";
 import axios from "axios";
-import { proxy, subscribe } from "valtio";
+import { proxy } from "valtio";
 import { bind } from "valtio-yjs";
 import Y from "yjs";
 import z from "zod";
@@ -79,7 +80,7 @@ const onPluginDataLoaded = (pluginInfo: ObjectToTypedMap<Plugin>) => {
     }
   }
 
-  const unsubscribe = subscribe(data.pluginData.songs, async () => {
+  const handleCachedSong = async () => {
     for (const song of data.pluginData.songs) {
       if (!song.cachedData) {
         const songData = await getSongData(song.id);
@@ -87,12 +88,21 @@ const onPluginDataLoaded = (pluginInfo: ObjectToTypedMap<Plugin>) => {
         song.cachedData = songData;
       }
     }
-  });
+  };
+
+  // Handle on load
+  handleCachedSong();
+
+  const yjsWatcher = new YjsWatcher(pluginInfo as Y.Map<any>);
+  yjsWatcher.watchYjs(
+    (x: Plugin<MyWorshipListData>) => x.pluginData.songs,
+    handleCachedSong,
+  );
 
   return {
     dispose: () => {
       unbind();
-      unsubscribe();
+      yjsWatcher.dispose();
     },
   };
 };
