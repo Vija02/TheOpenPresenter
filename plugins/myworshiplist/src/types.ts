@@ -40,4 +40,7 @@ export const songSettingValidator = z.object({
 });
 export type SongSetting = z.infer<typeof songSettingValidator>;
 
-export type PluginRendererData = { songId: number; heading: string };
+export type PluginRendererData = {
+  songId: number | null;
+  heading: string | null;
+};

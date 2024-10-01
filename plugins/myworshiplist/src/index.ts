@@ -17,12 +17,13 @@ import {
   rendererWebComponentTag,
 } from "./consts";
 import { getSongData } from "./data";
-import { MyWorshipListData, Song } from "./types";
+import { MyWorshipListData, PluginRendererData, Song } from "./types";
 
 export const init = (serverPluginApi: ServerPluginApi) => {
   serverPluginApi.registerTrpcAppRouter(getAppRouter);
   serverPluginApi.onPluginDataCreated(pluginName, onPluginDataCreated);
   serverPluginApi.onPluginDataLoaded(pluginName, onPluginDataLoaded);
+  serverPluginApi.onRendererDataCreated(pluginName, onRendererDataCreated);
   serverPluginApi.registerSceneCreator(pluginName, {
     title: "MyWorshipList",
   });
@@ -105,6 +106,15 @@ const onPluginDataLoaded = (pluginInfo: ObjectToTypedMap<Plugin>) => {
       yjsWatcher.dispose();
     },
   };
+};
+
+const onRendererDataCreated = (
+  rendererData: ObjectToTypedMap<Partial<PluginRendererData>>,
+) => {
+  rendererData.set("songId", null);
+  rendererData.set("heading", null);
+
+  return {};
 };
 
 const getAppRouter = (t: ReturnType<typeof initTRPC.create>) => {

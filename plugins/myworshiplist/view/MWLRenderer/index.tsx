@@ -26,7 +26,7 @@ const MWLRendererInner = () => {
 
   const song = songs.find((x) => x.id === songId);
 
-  if (!song) {
+  if (!song || !heading) {
     return null;
   }
 
