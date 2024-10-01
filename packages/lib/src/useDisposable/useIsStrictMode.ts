@@ -1,6 +1,8 @@
 // Taken from https://github.com/microsoft/use-disposable
 // At the time this is copied, the npm repo has not yet been updated to include the change to fix this for React 19
 // See more: https://github.com/microsoft/use-disposable/issues/31
+// Also removed support for React 18. It was causing build error with Next.js due to its transpilation process
+// See: https://github.com/vercel/next.js/pull/59569
 import * as React from "react";
 
 /**
@@ -12,19 +14,6 @@ export const getCurrentOwner = () => {
     // @ts-ignore - using react internals
     return React.__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE.A.getOwner();
   } catch {}
-
-  try {
-    // React <18
-    // @ts-ignore - using react internals
-    return React.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED
-      .ReactCurrentOwner.current;
-  } catch {
-    if (process.env.NODE_ENV !== "production") {
-      console.error(
-        "use-disposable: failed to get current fiber, please report this bug to maintainers",
-      );
-    }
-  }
 };
 
 const REACT_STRICT_MODE_TYPE = /*#__PURE__*/ Symbol.for("react.strict_mode");
