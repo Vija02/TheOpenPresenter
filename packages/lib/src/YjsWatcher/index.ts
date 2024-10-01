@@ -21,6 +21,11 @@ export class YjsWatcher implements IDisposable {
   private basePath: string[];
 
   constructor(yjsObj: YMap<any>, options?: YjsWatcherOptions) {
+    if (!(yjsObj instanceof AbstractType)) {
+      throw new Error(
+        "Error: Invalid value passed to watcher. YjsWatcher only accepts valid yjs object.",
+      );
+    }
     this.yjsObj = yjsObj;
     this.traverser = createTraverser(yjsObj);
     this.basePath = getPathsFromSharedType(yjsObj);

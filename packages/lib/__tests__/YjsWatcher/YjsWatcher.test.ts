@@ -204,3 +204,10 @@ test("tracks shallow when option is passed", async () => {
   expect(cbFn2).toBeCalledTimes(1);
   expect(cbFn3).toBeCalledTimes(1);
 });
+
+test("throws error if passed a non yjs object", async () => {
+  // @ts-ignore
+  expect(() => new YjsWatcher({ Hello: "World" })).toThrowError(
+    "Invalid value passed",
+  );
+});
