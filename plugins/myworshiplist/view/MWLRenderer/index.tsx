@@ -26,15 +26,20 @@ const MWLRendererInner = () => {
 
   const song = songs.find((x) => x.id === songId);
 
-  if (!song || !heading) {
+  if (!song) {
     return null;
   }
-
-  if (song.setting.displayType === "sections") {
-    return <MWLSectionsRenderer song={song} heading={heading} />;
-  } else if (song.setting.displayType === "fullSong") {
+  if (song.setting.displayType === "fullSong") {
     return <MWLFullSongRenderer song={song} />;
   }
+
+  if (!heading) {
+    return null;
+  }
+  if (song.setting.displayType === "sections") {
+    return <MWLSectionsRenderer song={song} heading={heading} />;
+  }
+
   return null;
 };
 
