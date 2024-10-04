@@ -13,6 +13,7 @@
     "@emotion/styled": "^11.13.0",
     "@fontsource-variable/inter": "^5.0.20",
     "@fontsource-variable/source-sans-3": "^5.0.22",
+    "@microsoft/fetch-event-source": "^2.0.1",
     "@next/eslint-plugin-next": "14.2.13",
     "@repo/config": "*",
     "@repo/graphql": "*",
@@ -27,6 +28,7 @@
     "random-word-slugs": "^0.1.7",
     "react": "rc",
     "react-dom": "rc",
+    "react-qr-code": "^2.0.15",
     "slugify": "^1.6.6",
     "yup": "^1.4.0"
   },
