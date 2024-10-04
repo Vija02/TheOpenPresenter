@@ -5,6 +5,7 @@ import { Strategy as GitHubStrategy } from "passport-github2";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 
 import { getWebsocketMiddlewares } from "../app";
+import installPassportQRStrategy from "./installPassportQRStrategy";
 import installPassportStrategy from "./installPassportStrategy";
 
 interface DbSession {
@@ -33,6 +34,8 @@ export default async (app: Express) => {
       res.redirect("/");
     });
   });
+
+  installPassportQRStrategy(app);
 
   if (process.env.GITHUB_KEY) {
     await installPassportStrategy(
