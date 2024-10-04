@@ -6,6 +6,7 @@ import { theme } from "@repo/ui";
 import { AppProps } from "next/app";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import "../helper.css"
 
 function MyApp({ Component, pageProps }: AppProps) {
   return (

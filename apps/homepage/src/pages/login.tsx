@@ -10,7 +10,9 @@ import {
   AlertTitle,
   Box,
   Flex,
+  Heading,
   Link,
+  Text,
   VStack,
 } from "@chakra-ui/react";
 import { useLoginMutation, useSharedQuery } from "@repo/graphql";
@@ -36,7 +38,8 @@ export default function Home() {
           <Redirect href={redirectTo} />
         ) : (
           <Flex justifyContent="center" marginTop={16}>
-            <Box maxW="lg" w="100%">
+            <Box maxW="md" w="100%">
+              <Heading>Login</Heading>
               <LoginForm
                 error={error}
                 setError={setError}
@@ -137,8 +140,6 @@ function LoginForm({ onSuccessRedirectTo, error, setError }: LoginFormProps) {
               }}
             />
 
-            <SocialLoginOptions next={onSuccessRedirectTo} />
-
             <Link as={NextLink} href="/forgot">
               Forgotten your password?
             </Link>
@@ -162,6 +163,12 @@ function LoginForm({ onSuccessRedirectTo, error, setError }: LoginFormProps) {
             <SubmitButton colorScheme="green" data-cy="loginpage-button-submit">
               Sign in
             </SubmitButton>
+
+            <Text className="lineText" width="100%" py={2} color="gray.600">
+              Or continue with
+            </Text>
+
+            <SocialLoginOptions next={onSuccessRedirectTo} />
           </VStack>
         </Form>
       )}
