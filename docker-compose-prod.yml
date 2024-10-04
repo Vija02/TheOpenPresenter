@@ -119,6 +119,16 @@ services:
       - BACKUP_SUFFIX=.tar
       - HEALTHCHECK_PORT=8080
 
+  cache:
+    image: redis:7.4-alpine
+    container_name: theopenpresenter_redis
+    restart: unless-stopped
+    command: redis-server --save 60 1 --loglevel warning --requirepass $REDIS_HOST_PASSWORD
+    volumes:
+      - theopenpresenter-redis-volume:/data
+    networks:
+      - db
+
 networks:
   caddy:
     external: true
@@ -127,4 +137,6 @@ networks:
 
 volumes:
   theopenpresenter-pg-volume:
+    external: true
+  theopenpresenter-redis-volume:
     external: true
