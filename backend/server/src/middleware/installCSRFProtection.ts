@@ -14,7 +14,9 @@ export default (app: Express) => {
   });
 
   app.use((req, res, next) => {
-    if (
+    if (!!req.headers["X-TOP-CSRF-PROTECTION"]) {
+      next();
+    } else if (
       req.method === "POST" &&
       req.path === "/graphql" &&
       (req.headers.referer === `${process.env.ROOT_URL}/graphiql` ||
