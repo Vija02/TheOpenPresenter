@@ -14,7 +14,7 @@ export default (app: Express) => {
   });
 
   app.use((req, res, next) => {
-    if (!!req.headers["X-TOP-CSRF-PROTECTION"]) {
+    if (!!req.headers["x-top-csrf-protection"]) {
       next();
     } else if (
       req.method === "POST" &&
