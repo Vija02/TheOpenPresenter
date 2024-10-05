@@ -100,8 +100,7 @@ export default async (app: Express) => {
 
     publishClient.publish(getChannelForId(id), req.user?.session_id);
 
-    // TODO: Redirect to somewhere nicer
-    res.sendStatus(200);
+    res.redirect("/qr-login-success");
   });
 
   // Used to replace the temporary token with a valid session
