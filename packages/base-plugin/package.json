@@ -41,7 +41,7 @@
   "dependencies": {
     "@hocuspocus/server": "^2.13.5",
     "@repo/lib": "*",
-    "@trpc/server": "^11.0.0-rc.461",
+    "@trpc/server": "^11.0.0-rc.553",
     "@types/express": "^4.17.21",
     "@types/react": "npm:types-react@rc",
     "@types/ua-parser-js": "^0.7.39",
