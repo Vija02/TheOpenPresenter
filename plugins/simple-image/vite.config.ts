@@ -14,7 +14,7 @@ export default defineConfig({
   build: {
     outDir: "out",
     lib: {
-      entry: ["./view/remote.tsx", "./view/renderer.tsx"],
+      entry: ["./view/entries/remote.tsx", "./view/entries/renderer.tsx"],
       name: `${pluginName}-views`,
       fileName: (format, entryName) =>
         `${pluginName}-${entryName}.${format}.js`,

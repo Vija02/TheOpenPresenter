@@ -74,3 +74,15 @@ export type AwarenessUserData = {
   type: "remote" | "renderer";
   userAgentInfo: UAParser.IResult;
 };
+
+// ========================================================================== //
+// ================================== Misc ================================== //
+// ========================================================================== //
+export type WebComponentProps<TrpcClient> = {
+  yjsPluginSceneData: ObjectToTypedMap<Plugin<any>>;
+  yjsPluginRendererData: ObjectToTypedMap<any>;
+  awarenessContext: AwarenessContext;
+  pluginContext: PluginContext;
+  setRenderCurrentScene: () => void;
+  trpcClient: TrpcClient;
+};

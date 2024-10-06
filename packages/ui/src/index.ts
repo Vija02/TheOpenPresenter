@@ -9,3 +9,4 @@ export * from "./OverlayToggle";
 export * from "./theme";
 export * from "./PopConfirm";
 export * from "./Slide";
+export * from "./withSuspense";
