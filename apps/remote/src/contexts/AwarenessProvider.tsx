@@ -1,4 +1,4 @@
-import _ from "lodash";
+import { isEqual } from "lodash-es";
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { Awareness } from "y-protocols/awareness";
 
@@ -38,7 +38,7 @@ function AwarenessProviderInner({
   useEffect(() => {
     setAwarenessData((prev) => {
       const newVal = Array.from(awareness.getStates().values()) as any[];
-      if (_.isEqual(prev, newVal)) {
+      if (isEqual(prev, newVal)) {
         return prev;
       }
       return newVal;
@@ -47,7 +47,7 @@ function AwarenessProviderInner({
     const onAwarenessUpdate = () => {
       setAwarenessData((prev) => {
         const newVal = Array.from(awareness.getStates().values()) as any[];
-        if (_.isEqual(prev, newVal)) {
+        if (isEqual(prev, newVal)) {
           return prev;
         }
         return newVal;

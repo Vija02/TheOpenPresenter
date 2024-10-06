@@ -1,4 +1,4 @@
-import _ from "lodash";
+import { isEqual } from "lodash-es";
 import { useRef, useSyncExternalStore } from "react";
 import { AbstractType, YEvent, Map as YMap } from "yjs";
 
@@ -91,7 +91,7 @@ export class YjsWatcher implements IDisposable {
         const data = this.traverser(traverserFn);
 
         if (isYjsObj(data)) {
-          if (_.isEqual(prevDataRef.current, data)) {
+          if (isEqual(prevDataRef.current, data)) {
             return prevDataRef.current;
           } else {
             prevDataRef.current = data;
@@ -122,7 +122,7 @@ export class YjsWatcher implements IDisposable {
 
         if (isYjsObj(data)) {
           const jsonData = (data as unknown as AbstractType<any>).toJSON();
-          if (_.isEqual(prevDataRef.current, jsonData)) {
+          if (isEqual(prevDataRef.current, jsonData)) {
             return prevDataRef.current;
           } else {
             prevDataRef.current = jsonData;

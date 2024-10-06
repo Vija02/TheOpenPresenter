@@ -1,6 +1,6 @@
 import { Box, Button, Divider, Link, Stack, Text } from "@chakra-ui/react";
 import { OverlayToggle } from "@repo/ui";
-import { sortBy } from "lodash";
+import { sortBy } from "lodash-es";
 import { VscAdd, VscArrowLeft, VscLinkExternal } from "react-icons/vsc";
 import { useLocation } from "wouter";
 

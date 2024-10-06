@@ -9,7 +9,7 @@ import {
   Text,
 } from "@chakra-ui/react";
 import { OverlayToggle } from "@repo/ui";
-import { sortBy } from "lodash";
+import { sortBy } from "lodash-es";
 import { VscAdd, VscArrowLeft } from "react-icons/vsc";
 import { useLocation } from "wouter";
 

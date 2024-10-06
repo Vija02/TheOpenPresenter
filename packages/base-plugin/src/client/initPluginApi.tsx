@@ -1,5 +1,5 @@
 import { YjsWatcher, appData } from "@repo/lib";
-import _ from "lodash";
+import { isEqual } from "lodash-es";
 import { useLocation } from "react-use";
 import { typeidUnboxed } from "typeid-js";
 import { proxy } from "valtio";
@@ -49,7 +49,7 @@ export function initPluginApi<
   const onAwarenessUpdate = () => {
     const newState = getAwarenessState(awarenessContext.awarenessObj);
 
-    if (!_.isEqual(awarenessStore.getState().awarenessData, newState)) {
+    if (!isEqual(awarenessStore.getState().awarenessData, newState)) {
       awarenessStore.setState({
         awarenessData: newState,
       });

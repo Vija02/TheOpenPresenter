@@ -1,5 +1,5 @@
 import { Stack } from "@chakra-ui/react";
-import _ from "lodash";
+import { sortBy } from "lodash-es";
 
 import { usePluginAPI } from "../../pluginApi";
 import { UserCard } from "./UserCard";
@@ -14,7 +14,7 @@ export const UserSourceSelector = ({ onSelectUser }: PropTypes) => {
   return (
     <>
       <Stack gap={0}>
-        {_.sortBy(awarenessData, "user.type").map((state) => (
+        {sortBy(awarenessData, "user.type").map((state) => (
           <UserCard
             key={state.user.id}
             user={state.user}
