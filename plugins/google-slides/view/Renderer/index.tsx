@@ -1,4 +1,3 @@
-import { Box } from "@chakra-ui/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { usePluginAPI } from "../pluginApi";
@@ -115,14 +114,12 @@ const RendererInner = ({
   }, [clickCount, initialized, localClickCount, update]);
 
   return (
-    <Box w="100vw" h="100vh">
-      <RenderView
-        ref={ref}
-        key={slideSrc}
-        src={slideSrc}
-        onLoad={() => setLoaded(true)}
-      />
-    </Box>
+    <RenderView
+      ref={ref}
+      key={slideSrc}
+      src={slideSrc}
+      onLoad={() => setLoaded(true)}
+    />
   );
 };
 
