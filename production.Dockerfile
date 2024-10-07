@@ -70,6 +70,9 @@ RUN yarn workspace @repo/lib build
 COPY packages/base-plugin/ /app/packages/base-plugin/
 RUN yarn workspace @repo/base-plugin build
 
+COPY packages/ui/ /app/packages/ui/
+RUN yarn workspace @repo/ui build
+
 ################################################################################
 # Build stage 3 - Build server
 
