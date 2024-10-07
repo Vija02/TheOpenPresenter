@@ -1,4 +1,4 @@
-import { isEqual } from "lodash-es";
+import isEqual from "fast-deep-equal";
 import { useRef, useSyncExternalStore } from "react";
 import { AbstractType, YEvent, Map as YMap } from "yjs";
 
