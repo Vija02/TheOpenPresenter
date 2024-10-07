@@ -68,7 +68,7 @@
   "devDependencies": {
     "@repo/typescript-config": "*",
     "mock-req": "^0.2.0",
-    "pkgroll": "^2.4.2",
+    "pkgroll": "^2.5.0",
     "vitest": "^2.0.5"
   }
 }
