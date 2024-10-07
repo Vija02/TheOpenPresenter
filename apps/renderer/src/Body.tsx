@@ -166,6 +166,16 @@ const PluginRenderer = React.memo(
       yjsPluginSceneData,
     ]);
 
-    return <Box key={pluginId}>{TagElement}</Box>;
+    return (
+      <Box
+        key={pluginId}
+        width="100vw"
+        height="100vh"
+        userSelect="none"
+        pointerEvents="none"
+      >
+        {TagElement}
+      </Box>
+    );
   },
 );
