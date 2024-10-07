@@ -1,5 +1,5 @@
 import { YjsWatcher, appData } from "@repo/lib";
-import { isEqual } from "lodash-es";
+import isEqual from "fast-deep-equal";
 import { useLocation } from "react-use";
 import { typeidUnboxed } from "typeid-js";
 import { proxy } from "valtio";

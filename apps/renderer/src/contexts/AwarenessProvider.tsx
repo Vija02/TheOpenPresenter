@@ -1,4 +1,4 @@
-import { isEqual } from "lodash-es";
+import isEqual from "fast-deep-equal";
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { Awareness } from "y-protocols/awareness";
 
