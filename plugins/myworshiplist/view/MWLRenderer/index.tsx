@@ -1,4 +1,3 @@
-import { Box } from "@chakra-ui/react";
 import { useMemo } from "react";
 
 import { Song } from "../../src";
@@ -9,14 +8,6 @@ import MWLFullSongRenderView from "./MWLFullSongRenderView";
 import MWLSectionsRenderView from "./MWLSectionsRenderView";
 
 const MWLRenderer = () => {
-  return (
-    <Box w="100vw" h="100vh">
-      <MWLRendererInner />
-    </Box>
-  );
-};
-
-const MWLRendererInner = () => {
   const pluginApi = usePluginAPI();
   const data = pluginApi.renderer.useData((x) => x);
   const songId = useMemo(() => data.songId, [data.songId]);
