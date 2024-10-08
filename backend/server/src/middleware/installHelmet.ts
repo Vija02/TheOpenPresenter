@@ -36,6 +36,7 @@ export default async function installHelmet(app: Express) {
         ] as Iterable<any>),
         // ES Module shim
         "https://ga.jspm.io",
+        "https://esm.sh",
         // Nonce for general usage
         `'nonce-${nonce}'`,
         "blob:",

@@ -20,7 +20,7 @@ export default defineConfig({
         `${pluginName}-${entryName}.${format}.js`,
     },
     rollupOptions: {
-      external: ["yjs"],
+      external: ["yjs", "react", "react-dom", "react-dom/client"],
     },
     target: "esnext",
   },

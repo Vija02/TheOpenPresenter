@@ -14,7 +14,7 @@ export default defineConfig({
   build: {
     sourcemap: false,
     rollupOptions: {
-      external: ["yjs"],
+      external: ["yjs", "react", "react-dom", "react-dom/client"],
     },
   },
 });
