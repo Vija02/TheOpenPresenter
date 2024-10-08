@@ -21,7 +21,7 @@ import {
   SongSetting,
   displayTypeSettings,
   slideStyleValidator,
-} from "../../../src";
+} from "../../../src/types";
 import { usePluginAPI } from "../../pluginApi";
 import { processSongCache } from "../../songHelpers";
 
