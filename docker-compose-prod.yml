@@ -65,7 +65,7 @@ services:
       - TARGET=worker
 
   theopenpresenter_db:
-    image: postgres:17.0
+    image: ghcr.io/vija02/theopenpresenter_db:main
     container_name: theopenpresenter_db
 
     # Unlike above, the Postgres image cannot start as our user account

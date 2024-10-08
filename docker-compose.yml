@@ -1,7 +1,7 @@
 version: "3.5"
 services:
   db:
-    image: postgres:17.0
+    image: ghcr.io/vija02/theopenpresenter_db:main
     env_file:
       - .env
 
