@@ -5,7 +5,7 @@ RUN apt-get update && apt-get -y upgrade \
   && apt-get install -y build-essential libpq-dev postgresql-server-dev-all
 
 WORKDIR /srv
-COPY . /srv
+COPY ./postgresExtensions /srv
 
 # build extension for all supported versions
 RUN for v in `seq 13 17`; do pg_buildext build-$v $v; done
