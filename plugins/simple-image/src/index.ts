@@ -2,8 +2,8 @@ import {
   ObjectToTypedMap,
   Plugin,
   ServerPluginApi,
+  TRPCObject,
 } from "@repo/base-plugin/server";
-import { initTRPC } from "@trpc/server";
 import Y from "yjs";
 
 import {
@@ -43,7 +43,7 @@ const onPluginDataCreated = (pluginInfo: ObjectToTypedMap<Plugin>) => {
   return {};
 };
 
-const getAppRouter = (t: ReturnType<typeof initTRPC.create>) => {
+const getAppRouter = (t: TRPCObject) => {
   return t.router({});
 };
 

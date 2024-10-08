@@ -3,8 +3,8 @@ import {
   Plugin,
   PluginContext,
   ServerPluginApi,
+  TRPCObject,
 } from "@repo/base-plugin/server";
-import { initTRPC } from "@trpc/server";
 import axios from "axios";
 import { createProxyMiddleware } from "http-proxy-middleware";
 import { typeidUnboxed } from "typeid-js";
@@ -190,80 +190,78 @@ const onRendererDataCreated = (
   return {};
 };
 
-const getAppRouter =
-  (serverPluginApi: ServerPluginApi) =>
-  (t: ReturnType<typeof initTRPC.create>) => {
-    return t.router({
-      googleslides: {
-        selectSlide: t.procedure
-          .input(
-            z.object({
-              pluginId: z.string(),
-              presentationId: z.string(),
-              token: z.string(),
-            }),
-          )
-          .mutation(async ({ input: { pluginId, presentationId, token } }) => {
-            // TODO: Validation
-            const loadedPlugin = loadedPlugins[pluginId]!;
-            const loadedYjs = loadedYjsData[pluginId]!;
+const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
+  return t.router({
+    googleslides: {
+      selectSlide: t.procedure
+        .input(
+          z.object({
+            pluginId: z.string(),
+            presentationId: z.string(),
+            token: z.string(),
+          }),
+        )
+        .mutation(async ({ input: { pluginId, presentationId, token } }) => {
+          // TODO: Validation
+          const loadedPlugin = loadedPlugins[pluginId]!;
+          const loadedYjs = loadedYjsData[pluginId]!;
 
-            const presentationDataRes = await axios(
-              `https://slides.googleapis.com/v1/presentations/${presentationId}`,
+          const presentationDataRes = await axios(
+            `https://slides.googleapis.com/v1/presentations/${presentationId}`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            },
+          );
+
+          const pageIds = presentationDataRes.data.slides.map(
+            (page: any) => page.objectId,
+          );
+
+          const htmlData = await axios(
+            `https://docs.google.com/presentation/d/${presentationId}/embed?rm=minimal`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            },
+          );
+
+          loadedYjs.doc?.transact(() => {
+            loadedPlugin.pluginData.fetchId = typeidUnboxed("fetch");
+            loadedPlugin.pluginData.presentationId = presentationId;
+            loadedPlugin.pluginData.pageIds = pageIds;
+            loadedPlugin.pluginData.thumbnailLinks = [];
+            loadedPlugin.pluginData.html = processHtml(htmlData.data);
+          });
+
+          // DEBT: Make this runnable somewhere else
+          // The problem is, if that's the case then we'll need to store the token
+          // TODO: Problem if we run this again while still running
+          for (const pageId of pageIds) {
+            const thumbnailDataRes = await axios(
+              `https://slides.googleapis.com/v1/presentations/${presentationId}/pages/${pageId}/thumbnail?thumbnailProperties.thumbnailSize=SMALL`,
               {
                 headers: { Authorization: `Bearer ${token}` },
               },
             );
 
-            const pageIds = presentationDataRes.data.slides.map(
-              (page: any) => page.objectId,
-            );
-
-            const htmlData = await axios(
-              `https://docs.google.com/presentation/d/${presentationId}/embed?rm=minimal`,
-              {
-                headers: { Authorization: `Bearer ${token}` },
-              },
-            );
-
-            loadedYjs.doc?.transact(() => {
-              loadedPlugin.pluginData.fetchId = typeidUnboxed("fetch");
-              loadedPlugin.pluginData.presentationId = presentationId;
-              loadedPlugin.pluginData.pageIds = pageIds;
-              loadedPlugin.pluginData.thumbnailLinks = [];
-              loadedPlugin.pluginData.html = processHtml(htmlData.data);
+            const picture = await axios(thumbnailDataRes.data.contentUrl, {
+              responseType: "arraybuffer",
             });
 
-            // DEBT: Make this runnable somewhere else
-            // The problem is, if that's the case then we'll need to store the token
-            // TODO: Problem if we run this again while still running
-            for (const pageId of pageIds) {
-              const thumbnailDataRes = await axios(
-                `https://slides.googleapis.com/v1/presentations/${presentationId}/pages/${pageId}/thumbnail?thumbnailProperties.thumbnailSize=SMALL`,
-                {
-                  headers: { Authorization: `Bearer ${token}` },
-                },
-              );
+            const uploadedMedia = serverPluginApi.uploadMedia(
+              picture.data,
+              "png",
+            );
 
-              const picture = await axios(thumbnailDataRes.data.contentUrl, {
-                responseType: "arraybuffer",
-              });
+            loadedPlugin.pluginData.thumbnailLinks.push(
+              uploadedMedia.newFileName,
+            );
+          }
 
-              const uploadedMedia = serverPluginApi.uploadMedia(
-                picture.data,
-                "png",
-              );
-
-              loadedPlugin.pluginData.thumbnailLinks.push(
-                uploadedMedia.newFileName,
-              );
-            }
-
-            return {};
-          }),
-      },
-    });
-  };
+          return {};
+        }),
+    },
+  });
+};
 
 function processHtml(html: string) {
   return html

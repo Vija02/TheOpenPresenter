@@ -1,4 +1,3 @@
-import { initTRPC } from "@trpc/server";
 import { Express, RequestHandler } from "express";
 import fs from "fs";
 import path from "path";
@@ -12,11 +11,10 @@ import {
   RegisterOnRendererDataLoaded,
   RemoteViewWebComponentConfig,
 } from "./serverPluginTypes";
+import { TRPCObject } from "./types";
 
 export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
-  protected registeredTrpcAppRouter: ((
-    t: ReturnType<typeof initTRPC.create>,
-  ) => any)[] = [];
+  protected registeredTrpcAppRouter: ((t: TRPCObject) => any)[] = [];
   protected registeredOnPluginDataCreated: {
     pluginName: string;
     callback: RegisterOnPluginDataCreated<PluginDataType>;
@@ -90,9 +88,7 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
     this.app = app;
   }
 
-  public registerTrpcAppRouter(
-    getAppRouter: (t: ReturnType<typeof initTRPC.create>) => any,
-  ) {
+  public registerTrpcAppRouter(getAppRouter: (t: TRPCObject) => any) {
     this.registeredTrpcAppRouter.push(getAppRouter);
   }
 

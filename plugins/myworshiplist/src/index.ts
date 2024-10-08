@@ -2,9 +2,9 @@ import {
   ObjectToTypedMap,
   Plugin,
   ServerPluginApi,
+  TRPCObject,
   YjsWatcher,
 } from "@repo/base-plugin/server";
-import { initTRPC } from "@trpc/server";
 import axios from "axios";
 import { proxy } from "valtio";
 import { bind } from "valtio-yjs";
@@ -117,7 +117,7 @@ const onRendererDataCreated = (
   return {};
 };
 
-const getAppRouter = (t: ReturnType<typeof initTRPC.create>) => {
+const getAppRouter = (t: TRPCObject) => {
   return t.router({
     myworshiplist: {
       search: t.procedure

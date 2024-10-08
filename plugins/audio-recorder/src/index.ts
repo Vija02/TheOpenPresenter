@@ -3,8 +3,8 @@ import {
   ObjectToTypedMap,
   Plugin,
   ServerPluginApi,
+  TRPCObject,
 } from "@repo/base-plugin/server";
-import { initTRPC } from "@trpc/server";
 import { proxy } from "valtio";
 import { bind } from "valtio-yjs";
 import Y from "yjs";
@@ -120,7 +120,7 @@ const onPluginDataLoaded = (
   };
 };
 
-const getAppRouter = (t: ReturnType<typeof initTRPC.create>) => {
+const getAppRouter = (t: TRPCObject) => {
   return t.router({});
 };
 
