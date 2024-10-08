@@ -92,6 +92,7 @@ export default async function installHocuspocus(app: Express) {
         [data.documentName],
       );
 
+      const organizationId = row.organization_id;
       let dbDocument = row.document;
 
       if (!dbDocument) {
@@ -183,7 +184,11 @@ export default async function installHocuspocus(app: Express) {
                   .push(
                     registeredOnRendererDataCreated
                       .find((x) => x.pluginName === pluginInfo.get("plugin"))
-                      ?.callback(pluginMap, { pluginId, sceneId }) ?? {},
+                      ?.callback(pluginMap, {
+                        pluginId,
+                        sceneId,
+                        organizationId,
+                      }) ?? {},
                   );
               } catch (e) {
                 console.error(
@@ -229,6 +234,7 @@ export default async function installHocuspocus(app: Express) {
                           ?.callback(pluginMap, {
                             pluginId,
                             sceneId,
+                            organizationId,
                           }) ?? {},
                       );
                   } catch (e) {
@@ -256,7 +262,11 @@ export default async function installHocuspocus(app: Express) {
                 .push(
                   registeredOnRendererDataLoaded
                     .find((x) => x.pluginName === pluginInfo.get("plugin"))
-                    ?.callback(pluginInfo, { pluginId, sceneId }) ?? {},
+                    ?.callback(pluginInfo, {
+                      pluginId,
+                      sceneId,
+                      organizationId,
+                    }) ?? {},
                 );
             } catch (e) {
               console.error(
@@ -285,7 +295,11 @@ export default async function installHocuspocus(app: Express) {
                 .push(
                   registeredOnPluginDataCreated
                     .find((x) => x.pluginName === pluginInfo.get("plugin"))
-                    ?.callback(pluginInfo, { pluginId, sceneId }) ?? {},
+                    ?.callback(pluginInfo, {
+                      pluginId,
+                      sceneId,
+                      organizationId,
+                    }) ?? {},
                 );
             } catch (e) {
               console.error(
@@ -301,7 +315,11 @@ export default async function installHocuspocus(app: Express) {
               .push(
                 registeredOnPluginDataLoaded
                   .find((x) => x.pluginName === pluginInfo.get("plugin"))
-                  ?.callback(pluginInfo, { pluginId, sceneId }) ?? {},
+                  ?.callback(pluginInfo, {
+                    pluginId,
+                    sceneId,
+                    organizationId,
+                  }) ?? {},
               );
           } catch (e) {
             console.error(
