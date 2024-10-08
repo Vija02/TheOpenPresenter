@@ -52,6 +52,7 @@ export type RenderData<T = Record<string, any>> = {
 export type PluginContext = {
   pluginId: UUID;
   sceneId: UUID;
+  organizationId: UUID;
 };
 
 export const keyPressTypes = ["PREV", "NEXT"] as const;

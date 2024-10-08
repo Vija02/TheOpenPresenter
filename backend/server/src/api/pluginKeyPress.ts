@@ -33,15 +33,25 @@ export const pluginKeyPress = makeExtendSchemaPlugin(() => ({
   `,
   resolvers: {
     Mutation: {
-      async pluginKeyPress(_mutation, args, _context: OurGraphQLContext) {
+      async pluginKeyPress(_mutation, args, context: OurGraphQLContext) {
         const { keyType, projectId, rendererId } = args.input;
+        const { pgClient } = context;
 
         if (!keyPressTypes.includes(keyType)) {
           throw new Error("Invalid keyType");
         }
 
-        // TODO: Validate that the user can do this
-        if (!Server.documents.has(projectId)) {
+        const {
+          rows: [projectRow],
+        } = await pgClient.query(
+          `
+            select id, organization_id from app_public.projects where id = $1
+          `,
+          [projectId],
+        );
+
+        // Validate that the user can do this
+        if (!projectRow || !Server.documents.has(projectId)) {
           throw new Error("Project not found");
         }
 
@@ -76,7 +86,11 @@ export const pluginKeyPress = makeExtendSchemaPlugin(() => ({
                 {
                   pluginData: plugin?.get("pluginData"),
                   rendererData: renderer.get(pluginId),
-                  pluginContext: { pluginId, sceneId },
+                  pluginContext: {
+                    pluginId,
+                    sceneId,
+                    organizationId: projectRow.organization_id,
+                  },
                 },
                 () => {
                   // TODO: Handle next

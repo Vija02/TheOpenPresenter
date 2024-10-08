@@ -5,6 +5,7 @@ import React, { createContext, useContext } from "react";
 
 type PluginMetaDataProviderType = {
   pluginMetaData: RemoteBasePluginQuery | null;
+  orgId: string;
   orgSlug: string;
   projectSlug: string;
   projectId: string;
@@ -12,6 +13,7 @@ type PluginMetaDataProviderType = {
 
 const initialData: PluginMetaDataProviderType = {
   pluginMetaData: null,
+  orgId: "",
   orgSlug: "",
   projectSlug: "",
   projectId: "",
@@ -55,6 +57,7 @@ export function PluginMetaDataProvider({
     <PluginMetaDataContext.Provider
       value={{
         pluginMetaData: pluginMetaData ?? null,
+        orgId: pluginMetaData.organizationBySlug.id,
         orgSlug,
         projectSlug,
         projectId: pluginMetaData?.organizationBySlug?.projects.nodes[0]?.id,

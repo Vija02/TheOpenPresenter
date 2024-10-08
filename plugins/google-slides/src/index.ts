@@ -69,15 +69,12 @@ export const init = (
     rendererWebComponentTag,
   );
   serverPluginApi.registerPrivateRoute(pluginName, "proxy", (req, res) => {
-    if (!req.query?.sceneId || !req.query?.pluginId) {
+    if (!req.query?.pluginId) {
       return res.sendStatus(400);
     }
     // TODO: Authentication
 
-    const key = contextToKey({
-      sceneId: req.query.sceneId as string,
-      pluginId: req.query.pluginId as string,
-    });
+    const key = req.query.pluginId as string;
 
     const loadedPlugin = loadedPlugins[key];
 
@@ -155,9 +152,6 @@ const loadedYjsData: Record<
   ObjectToTypedMap<Plugin<PluginBaseData>>
 > = {};
 
-const contextToKey = (context: PluginContext) =>
-  `${context.sceneId}_${context.pluginId}`;
-
 const onPluginDataLoaded = (
   pluginInfo: ObjectToTypedMap<Plugin<PluginBaseData>>,
   context: PluginContext,
@@ -174,13 +168,13 @@ const onPluginDataLoaded = (
     }
   }
 
-  loadedPlugins[contextToKey(context)] = data;
-  loadedYjsData[contextToKey(context)] = pluginInfo;
+  loadedPlugins[context.pluginId] = data;
+  loadedYjsData[context.pluginId] = pluginInfo;
 
   return {
     dispose: () => {
-      delete loadedPlugins[contextToKey(context)];
-      delete loadedYjsData[contextToKey(context)];
+      delete loadedPlugins[context.pluginId];
+      delete loadedYjsData[context.pluginId];
       unbind();
     },
   };
@@ -204,74 +198,69 @@ const getAppRouter =
         selectSlide: t.procedure
           .input(
             z.object({
-              sceneId: z.string(),
               pluginId: z.string(),
               presentationId: z.string(),
               token: z.string(),
             }),
           )
-          .mutation(
-            async ({ input: { sceneId, pluginId, presentationId, token } }) => {
-              // TODO: Validation
-              const loadedPlugin =
-                loadedPlugins[contextToKey({ sceneId, pluginId })]!;
-              const loadedYjs =
-                loadedYjsData[contextToKey({ sceneId, pluginId })]!;
+          .mutation(async ({ input: { pluginId, presentationId, token } }) => {
+            // TODO: Validation
+            const loadedPlugin = loadedPlugins[pluginId]!;
+            const loadedYjs = loadedYjsData[pluginId]!;
 
-              const presentationDataRes = await axios(
-                `https://slides.googleapis.com/v1/presentations/${presentationId}`,
+            const presentationDataRes = await axios(
+              `https://slides.googleapis.com/v1/presentations/${presentationId}`,
+              {
+                headers: { Authorization: `Bearer ${token}` },
+              },
+            );
+
+            const pageIds = presentationDataRes.data.slides.map(
+              (page: any) => page.objectId,
+            );
+
+            const htmlData = await axios(
+              `https://docs.google.com/presentation/d/${presentationId}/embed?rm=minimal`,
+              {
+                headers: { Authorization: `Bearer ${token}` },
+              },
+            );
+
+            loadedYjs.doc?.transact(() => {
+              loadedPlugin.pluginData.fetchId = typeidUnboxed("fetch");
+              loadedPlugin.pluginData.presentationId = presentationId;
+              loadedPlugin.pluginData.pageIds = pageIds;
+              loadedPlugin.pluginData.thumbnailLinks = [];
+              loadedPlugin.pluginData.html = processHtml(htmlData.data);
+            });
+
+            // DEBT: Make this runnable somewhere else
+            // The problem is, if that's the case then we'll need to store the token
+            // TODO: Problem if we run this again while still running
+            for (const pageId of pageIds) {
+              const thumbnailDataRes = await axios(
+                `https://slides.googleapis.com/v1/presentations/${presentationId}/pages/${pageId}/thumbnail?thumbnailProperties.thumbnailSize=SMALL`,
                 {
                   headers: { Authorization: `Bearer ${token}` },
                 },
               );
 
-              const pageIds = presentationDataRes.data.slides.map(
-                (page: any) => page.objectId,
-              );
-
-              const htmlData = await axios(
-                `https://docs.google.com/presentation/d/${presentationId}/embed?rm=minimal`,
-                {
-                  headers: { Authorization: `Bearer ${token}` },
-                },
-              );
-
-              loadedYjs.doc?.transact(() => {
-                loadedPlugin.pluginData.fetchId = typeidUnboxed("fetch");
-                loadedPlugin.pluginData.presentationId = presentationId;
-                loadedPlugin.pluginData.pageIds = pageIds;
-                loadedPlugin.pluginData.thumbnailLinks = [];
-                loadedPlugin.pluginData.html = processHtml(htmlData.data);
+              const picture = await axios(thumbnailDataRes.data.contentUrl, {
+                responseType: "arraybuffer",
               });
 
-              // DEBT: Make this runnable somewhere else
-              // The problem is, if that's the case then we'll need to store the token
-              // TODO: Problem if we run this again while still running
-              for (const pageId of pageIds) {
-                const thumbnailDataRes = await axios(
-                  `https://slides.googleapis.com/v1/presentations/${presentationId}/pages/${pageId}/thumbnail?thumbnailProperties.thumbnailSize=SMALL`,
-                  {
-                    headers: { Authorization: `Bearer ${token}` },
-                  },
-                );
+              const uploadedMedia = serverPluginApi.uploadMedia(
+                picture.data,
+                "png",
+              );
 
-                const picture = await axios(thumbnailDataRes.data.contentUrl, {
-                  responseType: "arraybuffer",
-                });
+              loadedPlugin.pluginData.thumbnailLinks.push(
+                uploadedMedia.newFileName,
+              );
+            }
 
-                const uploadedMedia = serverPluginApi.uploadMedia(
-                  picture.data,
-                  "png",
-                );
-
-                loadedPlugin.pluginData.thumbnailLinks.push(
-                  uploadedMedia.newFileName,
-                );
-              }
-
-              return {};
-            },
-          ),
+            return {};
+          }),
       },
     });
   };

@@ -38,7 +38,6 @@ const Remote = () => {
 
                 selectSlideMutation.mutate({
                   pluginId: pluginContext.pluginId,
-                  sceneId: pluginContext.sceneId,
                   presentationId: id,
                   token: token,
                 });

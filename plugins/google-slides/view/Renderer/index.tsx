@@ -43,13 +43,9 @@ const RendererInner = ({
   const slideSrc = useMemo(() => {
     return (
       pluginApi.env.getRootURL() +
-      `/plugin/google-slides/proxy?sceneId=${pluginApi.pluginContext.sceneId}&pluginId=${pluginApi.pluginContext.pluginId}`
+      `/plugin/google-slides/proxy?pluginId=${pluginApi.pluginContext.pluginId}`
     );
-  }, [
-    pluginApi.env,
-    pluginApi.pluginContext.pluginId,
-    pluginApi.pluginContext.sceneId,
-  ]);
+  }, [pluginApi.env, pluginApi.pluginContext.pluginId]);
 
   const updateResolvedSlideIndex = useCallback(
     (newSlideId: string) => {

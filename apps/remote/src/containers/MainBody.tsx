@@ -136,6 +136,7 @@ const PluginRenderer = React.memo(
     pluginInfo: Plugin<Record<string, any>>;
   }) => {
     const pluginMetaData = usePluginMetaData().pluginMetaData;
+    const orgId = usePluginMetaData().orgId;
     const {
       getYJSPluginRenderer,
       getYJSPluginSceneData,
@@ -184,7 +185,11 @@ const PluginRenderer = React.memo(
           awarenessObj: provider!.awareness!,
           currentUserId: currentUserId!,
         } satisfies AwarenessContext,
-        pluginContext: { pluginId, sceneId } as PluginContext,
+        pluginContext: {
+          pluginId,
+          sceneId,
+          organizationId: orgId,
+        } as PluginContext,
         setRenderCurrentScene: () => {
           getYJSPluginRenderer()?.set("currentScene", sceneId);
         },
@@ -193,6 +198,7 @@ const PluginRenderer = React.memo(
     }, [
       currentUserId,
       getYJSPluginRenderer,
+      orgId,
       pluginId,
       pluginInfo.plugin,
       provider,
