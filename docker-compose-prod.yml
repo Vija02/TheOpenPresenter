@@ -65,7 +65,7 @@ services:
       - TARGET=worker
 
   theopenpresenter_db:
-    image: postgres:16.4
+    image: postgres:17.0
     container_name: theopenpresenter_db
 
     # Unlike above, the Postgres image cannot start as our user account
