@@ -1,5 +1,5 @@
 import { initTRPC } from "@trpc/server";
-import { RequestHandler } from "express";
+import { Express, RequestHandler } from "express";
 import fs from "fs";
 import path from "path";
 import { typeidUnboxed } from "typeid-js";
@@ -83,6 +83,12 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
     pluginName: string;
     envVars: Record<string, string>;
   }[] = [];
+
+  private app: Express;
+
+  public constructor(app: Express) {
+    this.app = app;
+  }
 
   public registerTrpcAppRouter(
     getAppRouter: (t: ReturnType<typeof initTRPC.create>) => any,

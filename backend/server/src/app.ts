@@ -5,6 +5,7 @@ import { Duplex } from "stream";
 
 import { cloudflareIps } from "./cloudflare";
 import * as middleware from "./middleware";
+import { initPlugins } from "./pluginManager";
 import { ShutdownAction, makeShutdownActions } from "./shutdownActions";
 import { sanitizeEnv } from "./utils";
 
@@ -58,6 +59,8 @@ export async function makeApp({
    * Our Express server
    */
   const app = express();
+
+  await initPlugins(app);
 
   /*
    * In production, we may need to enable the 'trust proxy' setting so that the

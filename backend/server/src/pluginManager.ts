@@ -1,5 +1,6 @@
 import { ServerPluginApi } from "@repo/base-plugin/server";
 import aki from "aki-plugin-manager";
+import { Express } from "express";
 import fs from "fs";
 import path from "path";
 
@@ -63,9 +64,11 @@ class ServerPluginApiPrivate extends ServerPluginApi {
   }
 }
 
-export const serverPluginApi = new ServerPluginApiPrivate();
+export let serverPluginApi: ServerPluginApiPrivate;
 
-export const initPlugins = async () => {
+export const initPlugins = async (app: Express) => {
+  serverPluginApi = new ServerPluginApiPrivate(app);
+
   const { default: chalk } = await import("chalk");
 
   try {
