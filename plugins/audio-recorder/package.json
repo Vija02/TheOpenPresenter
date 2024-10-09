@@ -46,7 +46,8 @@
     "valtio": "^2.0.0",
     "valtio-yjs": "^0.6.0",
     "y-protocols": "^1.0.6",
-    "yjs": "^13.6.18"
+    "yjs": "^13.6.18",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@repo/eslint-config": "*",

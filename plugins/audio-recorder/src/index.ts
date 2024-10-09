@@ -2,12 +2,15 @@ import {
   AwarenessContext,
   ObjectToTypedMap,
   Plugin,
+  PluginContext,
   ServerPluginApi,
   TRPCObject,
 } from "@repo/base-plugin/server";
+import { TRPCError } from "@trpc/server";
 import { proxy } from "valtio";
 import { bind } from "valtio-yjs";
 import Y from "yjs";
+import z from "zod";
 
 import {
   pluginName,
@@ -17,7 +20,7 @@ import {
 import { PluginBaseData } from "./types";
 
 export const init = (serverPluginApi: ServerPluginApi) => {
-  serverPluginApi.registerTrpcAppRouter(getAppRouter);
+  serverPluginApi.registerTrpcAppRouter(getAppRouter(serverPluginApi));
   serverPluginApi.onPluginDataCreated(pluginName, onPluginDataCreated);
   serverPluginApi.onPluginDataLoaded(pluginName, onPluginDataLoaded);
   serverPluginApi.registerSceneCreator(pluginName, {
@@ -55,11 +58,22 @@ const onPluginDataCreated = (
   return {};
 };
 
+// Keep a local copy of the yjs data so that we can use it outside the initialization context
+const loadedPlugins: Record<string, Plugin<PluginBaseData>> = {};
+const loadedYjsData: Record<
+  string,
+  ObjectToTypedMap<Plugin<PluginBaseData>>
+> = {};
+
 const onPluginDataLoaded = (
   pluginInfo: ObjectToTypedMap<Plugin<PluginBaseData>>,
+  context: PluginContext,
 ) => {
   const data = proxy(pluginInfo.toJSON() as Plugin<PluginBaseData>);
   const unbind = bind(data, pluginInfo as any);
+
+  loadedPlugins[context.pluginId] = data;
+  loadedYjsData[context.pluginId] = pluginInfo;
 
   // When loaded, there can't be any streams connected. So we can nuke the option
   data.pluginData.activeStreams = [];
@@ -115,15 +129,51 @@ const onPluginDataLoaded = (
   return {
     dispose: () => {
       unbind();
+      delete loadedPlugins[context.pluginId];
+      delete loadedYjsData[context.pluginId];
       pluginInfo.doc?.awareness.off("change", onAwarenessChange);
     },
   };
 };
 
-const getAppRouter = (t: TRPCObject) => {
-  return t.router({});
+const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
+  return t.router({
+    audioRecorder: {
+      deleteAudio: t.procedure
+        .input(
+          z.object({
+            mediaId: z.string(),
+            pluginId: z.string(),
+          }),
+        )
+        .mutation(async (opts) => {
+          const loadedPlugin = loadedPlugins?.[opts.input.pluginId];
+          const loadedYjs = loadedYjsData?.[opts.input.pluginId];
+
+          if (loadedPlugin) {
+            const recordingIndex = loadedPlugin.pluginData.recordings.findIndex(
+              (x) => x.mediaId === opts.input.mediaId,
+            );
+            if (recordingIndex > -1) {
+              try {
+                await serverPluginApi.deleteMedia(opts.input.mediaId + ".mp3");
+                loadedYjs
+                  ?.get("pluginData")
+                  ?.get("recordings")
+                  ?.delete(recordingIndex);
+              } catch (e: any) {
+                // If we get here, likely because the file doesn't exist
+                throw new TRPCError({ code: "BAD_REQUEST" });
+              }
+            }
+          }
+
+          return { success: true };
+        }),
+    },
+  });
 };
 
-export type AppRouter = ReturnType<typeof getAppRouter>;
+export type AppRouter = ReturnType<ReturnType<typeof getAppRouter>>;
 
 export * from "./types";

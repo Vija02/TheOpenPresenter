@@ -5009,6 +5009,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@repo/backend-shared@npm:*, @repo/backend-shared@workspace:backend/backend-shared":
+  version: 0.0.0-use.local
+  resolution: "@repo/backend-shared@workspace:backend/backend-shared"
+  dependencies:
+    "@repo/typescript-config": "npm:*"
+    "@tus/file-store": "npm:^1.4.0"
+    "@tus/server": "npm:^1.7.0"
+    "@types/pg": "npm:^8.11.6"
+    express: "npm:^4.19.2"
+    pg: "npm:^8.12.0"
+    pkgroll: "npm:^2.5.0"
+    typeid-js: "npm:^0.7.0"
+  languageName: unknown
+  linkType: soft
+
 "@repo/base-plugin@npm:*, @repo/base-plugin@workspace:packages/base-plugin":
   version: 0.0.0-use.local
   resolution: "@repo/base-plugin@workspace:packages/base-plugin"
@@ -5168,6 +5183,7 @@ __metadata:
     "@repo/eslint-config": "npm:*"
     "@repo/prettier-config": "npm:*"
     "@repo/typescript-config": "npm:*"
+    "@repo/ui": "npm:*"
     "@tanstack/react-query": "npm:^5.51.1"
     "@trpc/client": "npm:^11.0.0-rc.553"
     "@trpc/react-query": "npm:^11.0.0-rc.553"
@@ -5198,6 +5214,7 @@ __metadata:
     vite: "npm:^5.3.5"
     y-protocols: "npm:^1.0.6"
     yjs: "npm:^13.6.18"
+    zod: "npm:^3.23.8"
   languageName: unknown
   linkType: soft
 
@@ -5295,6 +5312,7 @@ __metadata:
     "@repo/eslint-config": "npm:*"
     "@repo/prettier-config": "npm:*"
     "@repo/typescript-config": "npm:*"
+    "@repo/ui": "npm:*"
     "@tanstack/react-query": "npm:^5.51.1"
     "@trpc/client": "npm:^11.0.0-rc.553"
     "@trpc/react-query": "npm:^11.0.0-rc.553"
@@ -5331,6 +5349,7 @@ __metadata:
     "@repo/eslint-config": "npm:*"
     "@repo/prettier-config": "npm:*"
     "@repo/typescript-config": "npm:*"
+    "@repo/ui": "npm:*"
     "@tanstack/react-query": "npm:^5.51.1"
     "@trpc/client": "npm:^11.0.0-rc.553"
     "@trpc/react-query": "npm:^11.0.0-rc.553"
@@ -5469,6 +5488,7 @@ __metadata:
     "@graphile/pg-pubsub": "npm:^4.13.0"
     "@graphile/pro": "npm:^1.0.4"
     "@hocuspocus/server": "npm:^2.13.5"
+    "@repo/backend-shared": "npm:*"
     "@repo/base-plugin": "npm:*"
     "@repo/config": "npm:*"
     "@repo/typescript-config": "npm:*"

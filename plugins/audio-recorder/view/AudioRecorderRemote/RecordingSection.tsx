@@ -1,10 +1,13 @@
-import { Box, Button, Text } from "@chakra-ui/react";
+import { Box, Button, Stack, Text } from "@chakra-ui/react";
+import { PopConfirm } from "@repo/ui";
 import { addSeconds, formatDuration, intervalToDuration } from "date-fns";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { VscTrash } from "react-icons/vsc";
 import { useElapsedTime } from "use-elapsed-time";
 
 import { Recording } from "../../src/types";
 import { usePluginAPI } from "../pluginApi";
+import { trpc } from "../trpc";
 
 export const RecordingSection = () => {
   const pluginApi = usePluginAPI();
@@ -53,14 +56,36 @@ const CurrentlyRecording = ({ recording }: { recording: Recording }) => {
 
 const RecordingEnded = ({ recording }: { recording: Recording }) => {
   const pluginApi = usePluginAPI();
+
+  const { mutateAsync: deleteAudio } =
+    trpc.audioRecorder.deleteAudio.useMutation();
+
+  const handleRemove = useCallback(() => {
+    deleteAudio({
+      mediaId: recording.mediaId!,
+      pluginId: pluginApi.pluginContext.pluginId,
+    });
+  }, [deleteAudio, pluginApi.pluginContext.pluginId, recording.mediaId]);
+
   return (
-    <Box>
+    <Stack direction="row">
       <audio
         controls
         preload="metadata"
         src={pluginApi.media.getUrl(recording.mediaId + ".mp3")}
       ></audio>
-    </Box>
+      <PopConfirm
+        title={`Are you sure you want to remove this recording?`}
+        onConfirm={handleRemove}
+        okText="Yes"
+        cancelText="No"
+        key="remove"
+      >
+        <Button size="sm" variant="ghost" rounded="none">
+          <VscTrash />
+        </Button>
+      </PopConfirm>
+    </Stack>
   );
 };
 
