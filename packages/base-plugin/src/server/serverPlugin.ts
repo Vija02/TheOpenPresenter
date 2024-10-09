@@ -1,7 +1,6 @@
+import { MediaHandler } from "@repo/backend-shared";
 import { Express, RequestHandler } from "express";
-import fs from "fs";
-import path from "path";
-import { typeidUnboxed } from "typeid-js";
+import stream from "stream";
 
 import {
   RegisterKeyPressHandlerCallback,
@@ -195,21 +194,26 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
     this.registeredEnvToViews.push({ pluginName, envVars });
   }
 
-  public uploadMedia(
-    media: string | NodeJS.ArrayBufferView,
+  public async uploadMedia(
+    media: string | Buffer,
     extension: string,
+    { organizationId, userId }: { organizationId: string; userId: string },
   ) {
-    const newFileName = typeidUnboxed("media") + "." + extension;
-
-    const uploadsDir = path.resolve(`${__dirname}/../../../../uploads`);
-    const final = uploadsDir + "/" + newFileName;
-
-    fs.writeFileSync(final, media);
+    const { fileName } = await new MediaHandler(this.app).uploadMedia({
+      file: stream.Readable.from(media),
+      extension,
+      userId,
+      organizationId,
+    });
 
     return {
-      newFileName,
-      url: process.env.ROOT_URL + "/media/data/" + newFileName,
+      newFileName: fileName,
+      url: process.env.ROOT_URL + "/media/data/" + fileName,
       extension,
     };
+  }
+
+  public async deleteMedia(fullFileId: string) {
+    await new MediaHandler(this.app).deleteMedia(fullFileId);
   }
 }
