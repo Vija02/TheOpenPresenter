@@ -229,6 +229,14 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
               },
             );
 
+            if (loadedPlugin.pluginData.thumbnailLinks.length > 0) {
+              await Promise.all(
+                loadedPlugin.pluginData.thumbnailLinks.map((mediaId) =>
+                  serverPluginApi.deleteMedia(mediaId),
+                ),
+              );
+            }
+
             loadedYjs.doc?.transact(() => {
               loadedPlugin.pluginData.fetchId = typeidUnboxed("fetch");
               loadedPlugin.pluginData.presentationId = presentationId;
