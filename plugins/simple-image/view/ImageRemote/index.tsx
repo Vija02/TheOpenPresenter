@@ -12,7 +12,7 @@ const ImageRemote = () => {
   const pluginApi = usePluginAPI();
   const [uppy] = useState(() =>
     new Uppy().use(XHR, {
-      endpoint: "/media/upload/formData",
+      endpoint: pluginApi.media.formDataUploadUrl,
     }),
   );
   const sceneData = pluginApi.scene.useValtioData();

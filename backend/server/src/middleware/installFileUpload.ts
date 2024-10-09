@@ -101,7 +101,7 @@ export default (app: Express) => {
 
   app.use(`/media/data`, staticMiddleware(UPLOADS_PATH));
   app.use("/media/upload/tus", tusUploadServer);
-  app.use(`/media/upload/formData`, upload.single("file"), (req, res, next) => {
+  app.use(`/media/upload/form-data`, upload.single("file"), (req, res, next) => {
     // Shouldn't get here since we have multer
     if (!req.file) {
       res.status(500).send("Error");
