@@ -1,0 +1,32 @@
+{
+  "name": "@repo/backend-shared",
+  "version": "0.0.0",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      }
+    }
+  },
+  "scripts": {
+    "build": "pkgroll",
+    "dev": "pkgroll --watch"
+  },
+  "dependencies": {
+    "@tus/file-store": "^1.4.0",
+    "@tus/server": "^1.7.0",
+    "@types/pg": "^8.11.6",
+    "express": "^4.19.2",
+    "pg": "^8.12.0",
+    "typeid-js": "^0.7.0"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "*",
+    "pkgroll": "^2.5.0"
+  }
+}
