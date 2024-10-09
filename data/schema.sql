@@ -2,12 +2,13 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 16.3 (Debian 16.3-1.pgdg120+1)
--- Dumped by pg_dump version 16.3
+-- Dumped from database version 17.0 (Debian 17.0-1.pgdg120+1)
+-- Dumped by pg_dump version 17.0 (Debian 17.0-1.pgdg120+1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
+SET transaction_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SELECT pg_catalog.set_config('search_path', '', false);
@@ -56,6 +57,20 @@ CREATE EXTENSION IF NOT EXISTS citext WITH SCHEMA public;
 --
 
 COMMENT ON EXTENSION citext IS 'data type for case-insensitive character strings';
+
+
+--
+-- Name: pg_uuidv7; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS pg_uuidv7 WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION pg_uuidv7; Type: COMMENT; Schema: -; Owner: -
+--
+
+COMMENT ON EXTENSION pg_uuidv7 IS 'pg_uuidv7: create UUIDv7 values in postgres';
 
 
 --
@@ -1881,6 +1896,24 @@ COMMENT ON TABLE app_private.user_secrets IS 'The contents of this table should 
 
 
 --
+-- Name: medias; Type: TABLE; Schema: app_public; Owner: -
+--
+
+CREATE TABLE app_public.medias (
+    id uuid DEFAULT public.uuid_generate_v7() NOT NULL,
+    media_name text NOT NULL,
+    file_size bigint,
+    file_offset integer NOT NULL,
+    original_name text,
+    file_extension text,
+    organization_id uuid NOT NULL,
+    creator_user_id uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
 -- Name: organization_invitations; Type: TABLE; Schema: app_public; Owner: -
 --
 
@@ -2013,6 +2046,14 @@ ALTER TABLE ONLY app_private.user_email_secrets
 
 ALTER TABLE ONLY app_private.user_secrets
     ADD CONSTRAINT user_secrets_pkey PRIMARY KEY (user_id);
+
+
+--
+-- Name: medias medias_pkey; Type: CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.medias
+    ADD CONSTRAINT medias_pkey PRIMARY KEY (id);
 
 
 --
@@ -2157,6 +2198,27 @@ CREATE INDEX idx_user_emails_user ON app_public.user_emails USING btree (user_id
 
 
 --
+-- Name: medias_created_at_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX medias_created_at_idx ON app_public.medias USING btree (created_at);
+
+
+--
+-- Name: medias_creator_user_id_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX medias_creator_user_id_idx ON app_public.medias USING btree (creator_user_id);
+
+
+--
+-- Name: medias_organization_id_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX medias_organization_id_idx ON app_public.medias USING btree (organization_id);
+
+
+--
 -- Name: organization_invitations_user_id_idx; Type: INDEX; Schema: app_public; Owner: -
 --
 
@@ -2217,6 +2279,13 @@ CREATE UNIQUE INDEX uniq_user_emails_verified_email ON app_public.user_emails US
 --
 
 CREATE INDEX user_authentications_user_id_idx ON app_public.user_authentications USING btree (user_id);
+
+
+--
+-- Name: medias _100_timestamps; Type: TRIGGER; Schema: app_public; Owner: -
+--
+
+CREATE TRIGGER _100_timestamps BEFORE INSERT OR UPDATE ON app_public.medias FOR EACH ROW EXECUTE FUNCTION app_private.tg__timestamps();
 
 
 --
@@ -2364,6 +2433,22 @@ ALTER TABLE ONLY app_private.user_secrets
 
 
 --
+-- Name: medias medias_creator_user_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.medias
+    ADD CONSTRAINT medias_creator_user_id_fkey FOREIGN KEY (creator_user_id) REFERENCES app_public.users(id) ON DELETE SET NULL;
+
+
+--
+-- Name: medias medias_organization_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.medias
+    ADD CONSTRAINT medias_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES app_public.organizations(id) ON DELETE CASCADE;
+
+
+--
 -- Name: organization_invitations organization_invitations_organization_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
 --
 
@@ -2493,6 +2578,12 @@ CREATE POLICY insert_own_org ON app_public.projects FOR INSERT WITH CHECK ((orga
 
 
 --
+-- Name: medias; Type: ROW SECURITY; Schema: app_public; Owner: -
+--
+
+ALTER TABLE app_public.medias ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: organization_invitations; Type: ROW SECURITY; Schema: app_public; Owner: -
 --
 
@@ -2549,6 +2640,13 @@ CREATE POLICY select_member ON app_public.organization_memberships FOR SELECT US
 --
 
 CREATE POLICY select_member ON app_public.organizations FOR SELECT USING ((id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids)));
+
+
+--
+-- Name: medias select_own; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY select_own ON app_public.medias FOR SELECT USING ((organization_id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids)));
 
 
 --
@@ -3006,6 +3104,53 @@ GRANT ALL ON FUNCTION app_public.users_primary_email(users app_public.users) TO 
 
 REVOKE ALL ON FUNCTION app_public.verify_email(user_email_id uuid, token text) FROM PUBLIC;
 GRANT ALL ON FUNCTION app_public.verify_email(user_email_id uuid, token text) TO theopenpresenter_visitor;
+
+
+--
+-- Name: FUNCTION uuid_generate_v7(); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.uuid_generate_v7() FROM PUBLIC;
+GRANT ALL ON FUNCTION public.uuid_generate_v7() TO theopenpresenter_visitor;
+
+
+--
+-- Name: FUNCTION uuid_timestamp_to_v7(timestamp without time zone, zero boolean); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.uuid_timestamp_to_v7(timestamp without time zone, zero boolean) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.uuid_timestamp_to_v7(timestamp without time zone, zero boolean) TO theopenpresenter_visitor;
+
+
+--
+-- Name: FUNCTION uuid_timestamptz_to_v7(timestamp with time zone, zero boolean); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.uuid_timestamptz_to_v7(timestamp with time zone, zero boolean) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.uuid_timestamptz_to_v7(timestamp with time zone, zero boolean) TO theopenpresenter_visitor;
+
+
+--
+-- Name: FUNCTION uuid_v7_to_timestamp(uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.uuid_v7_to_timestamp(uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.uuid_v7_to_timestamp(uuid) TO theopenpresenter_visitor;
+
+
+--
+-- Name: FUNCTION uuid_v7_to_timestamptz(uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.uuid_v7_to_timestamptz(uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.uuid_v7_to_timestamptz(uuid) TO theopenpresenter_visitor;
+
+
+--
+-- Name: TABLE medias; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT SELECT ON TABLE app_public.medias TO theopenpresenter_visitor;
 
 
 --

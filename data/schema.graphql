@@ -23,6 +23,13 @@ type AcceptInvitationToOrganizationPayload {
   query: Query
 }
 
+"""
+A signed eight-byte integer. The upper big integer values are greater than the
+max value for a JavaScript number. Therefore all big integers will be output as
+strings and not numbers.
+"""
+scalar BigInt
+
 """All input for the `changePassword` mutation."""
 input ChangePasswordInput {
   """
@@ -383,6 +390,83 @@ type MakeEmailPrimaryPayload {
   ): UserEmailsEdge
 }
 
+type Media {
+  createdAt: Datetime!
+
+  """Reads a single `User` that is related to this `Media`."""
+  creatorUser: User
+  creatorUserId: UUID
+  fileExtension: String
+  fileOffset: Int!
+  fileSize: BigInt
+  id: UUID!
+  mediaName: String!
+
+  """Reads a single `Organization` that is related to this `Media`."""
+  organization: Organization
+  organizationId: UUID!
+  originalName: String
+  updatedAt: Datetime!
+}
+
+"""
+A condition to be used against `Media` object types. All fields are tested for equality and combined with a logical ‘and.’
+"""
+input MediaCondition {
+  """Checks for equality with the object’s `createdAt` field."""
+  createdAt: Datetime
+
+  """Checks for equality with the object’s `creatorUserId` field."""
+  creatorUserId: UUID
+
+  """Checks for equality with the object’s `id` field."""
+  id: UUID
+
+  """Checks for equality with the object’s `organizationId` field."""
+  organizationId: UUID
+}
+
+"""A connection to a list of `Media` values."""
+type MediaConnection {
+  """
+  A list of edges which contains the `Media` and cursor to aid in pagination.
+  """
+  edges: [MediaEdge!]!
+
+  """A list of `Media` objects."""
+  nodes: [Media!]!
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+
+  """The count of *all* `Media` you could get from the connection."""
+  totalCount: Int!
+}
+
+"""A `Media` edge in the connection."""
+type MediaEdge {
+  """A cursor for use in pagination."""
+  cursor: Cursor
+
+  """The `Media` at the end of the edge."""
+  node: Media!
+}
+
+"""Methods to use when ordering `Media`."""
+enum MediaOrderBy {
+  CREATED_AT_ASC
+  CREATED_AT_DESC
+  CREATOR_USER_ID_ASC
+  CREATOR_USER_ID_DESC
+  ID_ASC
+  ID_DESC
+  NATURAL
+  ORGANIZATION_ID_ASC
+  ORGANIZATION_ID_DESC
+  PRIMARY_KEY_ASC
+  PRIMARY_KEY_DESC
+}
+
 """
 The root mutation type which contains root level fields which mutate data.
 """
@@ -620,6 +704,35 @@ type Organization {
   currentUserIsBillingContact: Boolean
   currentUserIsOwner: Boolean
   id: UUID!
+
+  """Reads and enables pagination through a set of `Media`."""
+  medias(
+    """Read all values in the set after (below) this cursor."""
+    after: Cursor
+
+    """Read all values in the set before (above) this cursor."""
+    before: Cursor
+
+    """
+    A condition to be used in determining which values should be returned by the collection.
+    """
+    condition: MediaCondition
+
+    """Only read the first `n` values of the set."""
+    first: Int
+
+    """Only read the last `n` values of the set."""
+    last: Int
+
+    """
+    Skip the first `n` values from our `after` cursor, an alternative to cursor
+    based pagination. May not be used with `last`.
+    """
+    offset: Int
+
+    """The method to use when ordering `Media`."""
+    orderBy: [MediaOrderBy!] = [PRIMARY_KEY_ASC]
+  ): MediaConnection!
   name: String!
 
   """
@@ -939,6 +1052,36 @@ enum ProjectsOrderBy {
 type Query {
   """The currently logged in user (or null if not logged in)."""
   currentUser: User
+  media(id: UUID!): Media
+
+  """Reads and enables pagination through a set of `Media`."""
+  medias(
+    """Read all values in the set after (below) this cursor."""
+    after: Cursor
+
+    """Read all values in the set before (above) this cursor."""
+    before: Cursor
+
+    """
+    A condition to be used in determining which values should be returned by the collection.
+    """
+    condition: MediaCondition
+
+    """Only read the first `n` values of the set."""
+    first: Int
+
+    """Only read the last `n` values of the set."""
+    last: Int
+
+    """
+    Skip the first `n` values from our `after` cursor, an alternative to cursor
+    based pagination. May not be used with `last`.
+    """
+    offset: Int
+
+    """The method to use when ordering `Media`."""
+    orderBy: [MediaOrderBy!] = [PRIMARY_KEY_ASC]
+  ): MediaConnection
   organization(id: UUID!): Organization
   organizationBySlug(slug: String!): Organization
 
@@ -1315,6 +1458,35 @@ type User {
   """If true, the user has elevated privileges."""
   isAdmin: Boolean!
   isVerified: Boolean!
+
+  """Reads and enables pagination through a set of `Media`."""
+  mediaByCreatorUserId(
+    """Read all values in the set after (below) this cursor."""
+    after: Cursor
+
+    """Read all values in the set before (above) this cursor."""
+    before: Cursor
+
+    """
+    A condition to be used in determining which values should be returned by the collection.
+    """
+    condition: MediaCondition
+
+    """Only read the first `n` values of the set."""
+    first: Int
+
+    """Only read the last `n` values of the set."""
+    last: Int
+
+    """
+    Skip the first `n` values from our `after` cursor, an alternative to cursor
+    based pagination. May not be used with `last`.
+    """
+    offset: Int
+
+    """The method to use when ordering `Media`."""
+    orderBy: [MediaOrderBy!] = [PRIMARY_KEY_ASC]
+  ): MediaConnection!
 
   """Public-facing name (or pseudonym) of the user."""
   name: String
