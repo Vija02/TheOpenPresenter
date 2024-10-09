@@ -84,6 +84,19 @@ test("tracks primitive changes (with base path)", async () => {
   expect(cbFn4).toBeCalledTimes(1);
 });
 
+test("tracks array deletion", async () => {
+  const { map, watchYjsTyped } = getBasicSetup();
+
+  const cbFn1 = vi.fn(() => {});
+  watchYjsTyped((x) => x.primitiveArray, cbFn1);
+
+  // ACTION
+  (map.get("primitiveArray") as Y.Array<any>).delete(5, 1);
+
+  // TEST
+  expect(cbFn1).toBeCalledTimes(1);
+});
+
 test("tracks when parent is changed", async () => {
   const { map, watchYjsTyped } = getBasicSetup();
 

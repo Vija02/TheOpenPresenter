@@ -45,7 +45,10 @@ export const getYjsEventPath = (event: YEvent<any>) => {
       );
     }
 
-    const updatedIndex = Array.from(new Array(newArrayLength))
+    const originalArrayLength = newArrayLength - pushed;
+    const updatedIndex = Array.from(
+      new Array(Math.max(originalArrayLength, newArrayLength)),
+    )
       .map((_, i) => i)
       .filter((x) => !sameIndex.includes(x));
 

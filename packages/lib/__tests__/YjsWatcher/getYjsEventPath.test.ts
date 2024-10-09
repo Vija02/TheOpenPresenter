@@ -158,6 +158,8 @@ test("returns changes in array", async () => {
         "emptyArray__3",
         "emptyArray__4",
         "emptyArray__6",
+        "emptyArray__7",
+        "emptyArray__8",
       ],
     ],
   ]);
@@ -173,4 +175,22 @@ test("returns changes in nested array", async () => {
     [["nestedArray__0__0", "nestedArray__0__1"]],
     [["nestedArray__1__hello"]],
   ]);
+});
+
+test("returns changes in array element that is just added", async () => {
+  const { map, eventPaths } = getBasicSetup();
+
+  (map.get("nestedArray") as Y.Array<any>).insert(0, [1, 2]);
+
+  expect(eventPaths).toEqual([
+    [["nestedArray__0", "nestedArray__1", "nestedArray__2", "nestedArray__3"]],
+  ]);
+});
+
+test("returns changes in array element that is just removed", async () => {
+  const { map, eventPaths } = getBasicSetup();
+
+  (map.get("nestedArray") as Y.Array<any>).delete(0, 1);
+
+  expect(eventPaths).toEqual([[["nestedArray__0", "nestedArray__1"]]]);
 });
