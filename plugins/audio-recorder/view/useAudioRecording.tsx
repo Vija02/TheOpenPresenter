@@ -221,6 +221,7 @@ function startUpload(
     metadata: {
       id: mediaId,
       extension: "mp3",
+      organizationId: pluginApi.pluginContext.organizationId,
     },
     onError(error) {
       if ("originalRequest" in error) {
