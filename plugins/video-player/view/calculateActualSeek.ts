@@ -4,6 +4,10 @@ export const calculateActualSeek = (
   currentPlayingVideo: CurrentPlayingVideo,
   videoDuration: number,
 ) => {
+  if (!videoDuration) {
+    return 0;
+  }
+
   const elapsedSecond =
     (new Date().getTime() - currentPlayingVideo.startedAt) / 1000;
   const startedSecond = currentPlayingVideo.playFrom * videoDuration!;
