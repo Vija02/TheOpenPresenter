@@ -1,5 +1,5 @@
 import canAutoPlay from "can-autoplay";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ReactPlayer from "react-player/lazy";
 
 import { calculateActualSeek } from "../calculateActualSeek";
@@ -48,8 +48,9 @@ const VideoPlayerRendererInner = () => {
 
   const mutableSceneData = pluginApi.scene.useValtioData();
 
-  const currentVideo = videos.find(
-    (vid) => vid.id === currentPlayingVideo.videoId,
+  const currentVideo = useMemo(
+    () => videos.find((vid) => vid.id === currentPlayingVideo.videoId),
+    [currentPlayingVideo.videoId, videos],
   );
 
   // Handle on the go seeking
@@ -66,6 +67,23 @@ const VideoPlayerRendererInner = () => {
       ref.current?.seekTo(seek);
     }
   }, [currentPlayingVideo, currentVideo?.metadata.duration, isPlaying]);
+
+  const setVideoSeek = useCallback(() => {
+    if (currentPlayingVideo.playFrom) {
+      const duration = currentVideo?.metadata.duration ?? 0;
+
+      const targetSeek = calculateActualSeek(currentPlayingVideo, duration);
+
+      const currentTime = ref.current?.getCurrentTime();
+      const currentSeek = (currentTime ?? 0) / duration;
+
+      // 2 second tolerance
+      const tolerance = 2 / duration;
+      if (Math.abs(currentSeek - targetSeek) > tolerance) {
+        ref.current?.seekTo(targetSeek);
+      }
+    }
+  }, [currentPlayingVideo, currentVideo?.metadata.duration]);
 
   return (
     <ReactPlayer
@@ -84,15 +102,7 @@ const VideoPlayerRendererInner = () => {
           )
         ]!.metadata.duration = dur;
       }}
-      onStart={() => {
-        if (currentPlayingVideo.playFrom) {
-          const seek = calculateActualSeek(
-            currentPlayingVideo,
-            currentVideo?.metadata.duration ?? 0,
-          );
-          ref.current?.seekTo(seek);
-        }
-      }}
+      onBufferEnd={setVideoSeek}
       url={currentVideo?.url}
       config={{ youtube: { playerVars: { controls: 0 } } }}
     />
