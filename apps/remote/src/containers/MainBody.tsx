@@ -191,7 +191,10 @@ const PluginRenderer = React.memo(
           organizationId: orgId,
         } as PluginContext,
         setRenderCurrentScene: () => {
-          getYJSPluginRenderer()?.set("currentScene", sceneId);
+          const renderer = getYJSPluginRenderer();
+          if (renderer?.get("currentScene") !== sceneId) {
+            renderer?.set("currentScene", sceneId);
+          }
         },
         trpcClient,
       });
