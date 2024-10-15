@@ -42,6 +42,7 @@ export default async function installHelmet(app: Express) {
         "blob:",
       ],
       "media-src": ["*"],
+      "img-src": ["*"],
     };
 
     const options: HelmetOptions = {
