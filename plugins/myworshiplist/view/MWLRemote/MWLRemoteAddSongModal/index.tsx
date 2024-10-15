@@ -58,7 +58,6 @@ const MWLRemoteAddSongModal = ({
         const playlist = playlistData?.data.find(
           (x: any) => x.id === selected.id,
         );
-        console.log(playlist);
         playlist.content.forEach((x: any) => {
           pluginInfo.pluginData.songs.push({
             id: x.id,
