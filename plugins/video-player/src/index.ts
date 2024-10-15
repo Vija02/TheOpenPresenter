@@ -18,8 +18,16 @@ import { PluginBaseData, PluginRendererData } from "./types";
 
 export const init = (serverPluginApi: ServerPluginApi) => {
   serverPluginApi.registerCSPDirective(pluginName, {
-    "script-src": ["https://www.youtube.com"],
-    "frame-src": ["https://www.youtube.com"],
+    "script-src": [
+      "https://www.youtube.com",
+      "cdn.jsdelivr.net",
+      "cdnjs.cloudflare.com",
+      "https://player.vimeo.com",
+      "https://fast.wistia.com",
+    ],
+    "frame-src": ["https://www.youtube.com", "https://player.vimeo.com"],
+    // To play HLS or DASH from arbitrary source, we unfortunately need to relax this
+    "connect-src": ["*"],
     "media-src": ["blob:"],
   });
   serverPluginApi.registerTrpcAppRouter(getAppRouter);
