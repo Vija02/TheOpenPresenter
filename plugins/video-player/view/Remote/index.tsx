@@ -23,7 +23,11 @@ const VideoPlayerRemote = () => {
       <Heading>Video Player</Heading>
 
       <Stack direction="row">
-        <Input value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} />
+        <Input
+          placeholder="Enter Video/Youtube/Vimeo/Etc URL"
+          value={videoUrl}
+          onChange={(e) => setVideoUrl(e.target.value)}
+        />
         <Button
           onClick={() => {
             const reactPlayerCanPlay = ReactPlayer.canPlay(videoUrl);
@@ -35,6 +39,7 @@ const VideoPlayerRemote = () => {
                 url: videoUrl,
               });
               setIsError(false);
+              setVideoUrl("");
             } else {
               setIsError(true);
             }

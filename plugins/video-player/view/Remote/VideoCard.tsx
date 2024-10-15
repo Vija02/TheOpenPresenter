@@ -4,8 +4,8 @@ import { FaPause, FaPlay } from "react-icons/fa";
 import { Scrubber } from "react-scrubber";
 
 import { Video } from "../../src/types";
-import { usePluginAPI } from "../pluginApi";
 import { calculateActualSeek } from "../calculateActualSeek";
+import { usePluginAPI } from "../pluginApi";
 import { useSeek } from "./useSeek";
 
 // TODO: Handle if no duration
@@ -83,22 +83,33 @@ const VideoCard = ({ video }: { video: Video }) => {
     ],
   );
 
+  const color = useMemo(
+    () => (currentVideoIsPlaying ? "rgb(136, 53, 53)" : "#2F2F2F"),
+    [currentVideoIsPlaying],
+  );
+
   return (
     <Box>
       <Box
         p={1}
         border="1px solid"
-        borderColor="#2F2F2F"
+        borderColor={color}
         borderBottom={0}
-        bg="#2F2F2F"
+        bg={color}
       >
         <Text fontWeight="bold" color="white">
           {video.metadata.title ?? video.url}
         </Text>
       </Box>
-      <Box p={2} alignItems="center" border="1px solid" borderColor="#2F2F2F">
+      <Box p={2} alignItems="center" border="1px solid" borderColor={color}>
         <Stack direction="row" w="100%" gap={3}>
-          <Button size="md" onClick={onTogglePlay}>
+          <Button
+            size="md"
+            onClick={onTogglePlay}
+            {...(currentVideoIsPlaying
+              ? { bg: "black", color: "white", _hover: { bg: "gray.700" } }
+              : { variant: "outline", colorScheme: "grey" })}
+          >
             {currentVideoIsPlaying ? <FaPause /> : <FaPlay />}
           </Button>
           <Flex w="100%" alignItems="center">
