@@ -78,7 +78,7 @@ const VideoPlayerRemote = () => {
       >
         <Stack direction="row">
           <Input
-            placeholder="Enter Video/Youtube/Vimeo/Etc URL"
+            placeholder="Search or Enter Video/Youtube/Vimeo/Etc URL"
             value={input}
             onChange={(e) => setInput(e.target.value)}
           />
