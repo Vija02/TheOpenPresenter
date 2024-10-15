@@ -15,10 +15,6 @@ import {
 import { PluginBaseData } from "./types";
 
 export const init = (serverPluginApi: ServerPluginApi) => {
-  serverPluginApi.registerCSPDirective(pluginName, {
-    // TODO: Nonce
-    "media-src": ["*"],
-  });
   serverPluginApi.registerTrpcAppRouter(getAppRouter);
   serverPluginApi.onPluginDataCreated(pluginName, onPluginDataCreated);
   serverPluginApi.onPluginDataLoaded(pluginName, onPluginDataLoaded);
