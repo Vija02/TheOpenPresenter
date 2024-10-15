@@ -26,6 +26,7 @@ COPY scripts/ /app/scripts
 COPY apps/homepage/package.json /app/apps/homepage/package.json
 COPY apps/remote/package.json /app/apps/remote/package.json
 COPY apps/renderer/package.json /app/apps/renderer/package.json
+COPY backend/backend-shared/package.json /app/backend/backend-shared/package.json
 COPY backend/config/package.json /app/backend/config/package.json
 COPY backend/db/package.json /app/backend/db/package.json
 COPY backend/server/package.json /app/backend/server/package.json
@@ -67,6 +68,9 @@ RUN yarn workspace @repo/config build
 
 COPY packages/lib/ /app/packages/lib/
 RUN yarn workspace @repo/lib build
+
+COPY backend/backend-shared/ /app/backend/backend-shared/
+RUN yarn workspace @repo/backend-shared build
 
 COPY packages/base-plugin/ /app/packages/base-plugin/
 RUN yarn workspace @repo/base-plugin build
@@ -146,6 +150,7 @@ COPY --from=deps /app/node_modules /app/node_modules/
 COPY --from=builder-core /app/packages/graphql/ /app/packages/graphql/
 COPY --from=builder-core /app/backend/config/ /app/backend/config/
 COPY --from=builder-core /app/packages/lib/ /app/packages/lib/
+COPY --from=builder-core /app/backend/backend-shared/ /app/backend/backend-shared/
 COPY --from=builder-core /app/packages/base-plugin/ /app/packages/base-plugin/
 COPY backend/db/ /app/backend/db/
 
