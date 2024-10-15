@@ -41,6 +41,7 @@ export default async function installHelmet(app: Express) {
         `'nonce-${nonce}'`,
         "blob:",
       ],
+      "media-src": ["*"],
     };
 
     const options: HelmetOptions = {
