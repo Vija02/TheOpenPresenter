@@ -8,6 +8,8 @@ import { TypedArray, TypedMap } from "@repo/lib";
 import { proxy } from "valtio";
 import { bind } from "valtio-yjs";
 import Y from "yjs";
+import { Innertube, UniversalCache } from "youtubei.js";
+import z from "zod";
 
 import {
   pluginName,
@@ -89,7 +91,47 @@ const onRendererDataCreated = (
 };
 
 const getAppRouter = (t: TRPCObject) => {
-  return t.router({});
+  return t.router({
+    videoPlayer: {
+      search: t.procedure
+        .input(
+          z.object({
+            title: z.string(),
+          }),
+        )
+        .query(async (opts) => {
+          const yt = await Innertube.create({
+            cache: new UniversalCache(false),
+            generate_session_locally: true,
+          });
+
+          const res = await yt.search(opts.input.title, { type: "video" });
+
+          return {
+            results: res.results,
+            refinements: res.refinements,
+          };
+        }),
+      searchSuggestion: t.procedure
+        .input(
+          z.object({
+            title: z.string(),
+          }),
+        )
+        .query(async (opts) => {
+          const yt = await Innertube.create({
+            cache: new UniversalCache(false),
+            generate_session_locally: true,
+          });
+
+          const res = await yt.getSearchSuggestions(opts.input.title);
+
+          return {
+            results: res,
+          };
+        }),
+    },
+  });
 };
 
 export type AppRouter = ReturnType<typeof getAppRouter>;

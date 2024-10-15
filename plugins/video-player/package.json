@@ -24,6 +24,7 @@
     "@trpc/client": "^11.0.0-rc.553",
     "@trpc/react-query": "^11.0.0-rc.553",
     "@trpc/server": "^11.0.0-rc.553",
+    "@types/can-autoplay": "^3",
     "@types/react": "npm:types-react@rc",
     "can-autoplay": "^3.0.2",
     "framer-motion": "^11.3.8",
@@ -35,13 +36,14 @@
     "typeid-js": "^1.1.0",
     "valtio": "^2.0.0",
     "valtio-yjs": "^0.6.0",
-    "yjs": "^13.6.18"
+    "yjs": "^13.6.18",
+    "youtubei.js": "^10.5.0",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@repo/eslint-config": "*",
     "@repo/prettier-config": "*",
     "@repo/typescript-config": "*",
-    "@types/can-autoplay": "^3",
     "@vitejs/plugin-react-swc": "^3.7.0",
     "eslint": "^8.57.0",
     "pkgroll": "^2.5.0",
