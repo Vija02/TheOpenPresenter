@@ -1,7 +1,13 @@
 import {
+  Box,
   Button,
   Heading,
   Input,
+  Slider,
+  SliderFilledTrack,
+  SliderMark,
+  SliderThumb,
+  SliderTrack,
   Stack,
   Text,
   useDisclosure,
@@ -32,8 +38,10 @@ const VideoPlayerRemote = () => {
   const pluginApi = usePluginAPI();
 
   const mutableSceneData = pluginApi.scene.useValtioData();
+  const mutableRendererData = pluginApi.renderer.useValtioData();
 
   const videos = pluginApi.scene.useData((x) => x.pluginData.videos);
+  const volume = pluginApi.renderer.useData((x) => x.volume);
 
   const [input, setInput] = useState("");
   const [isError, setIsError] = useState(false);
@@ -92,6 +100,36 @@ const VideoPlayerRemote = () => {
           setInput("");
         }}
       />
+
+      <Box>
+        <Slider
+          id="slider"
+          value={volume ?? 1}
+          min={0}
+          max={1}
+          step={0}
+          colorScheme="teal"
+          onChange={(v) => {
+            mutableRendererData.volume = v;
+          }}
+          height={{ base: "70vh", md: "100%" }}
+          width={{ base: "80px", md: "100%" }}
+        >
+          <SliderMark value={0.25} mt="1" ml="-2.5" fontSize="sm">
+            25%
+          </SliderMark>
+          <SliderMark value={0.5} mt="1" ml="-2.5" fontSize="sm">
+            50%
+          </SliderMark>
+          <SliderMark value={0.75} mt="1" ml="-2.5" fontSize="sm">
+            75%
+          </SliderMark>
+          <SliderTrack>
+            <SliderFilledTrack />
+          </SliderTrack>
+          <SliderThumb />
+        </Slider>
+      </Box>
 
       <Text fontSize="lg" mt={2} fontWeight="bold">
         Loaded Videos
