@@ -32,6 +32,9 @@ export type RegisterOnRendererDataCreated<RendererDataType = any> = (
 export type RegisterOnRendererDataLoaded<RendererDataType = any> = (
   entryData: ObjectToTypedMap<RendererDataType>,
   pluginContext: PluginContext,
+  extras: {
+    onSceneVisibilityChange: (callback: (isVisible: boolean) => void) => void;
+  },
 ) => IDisposable;
 
 export type RegisterKeyPressHandlerCallback<

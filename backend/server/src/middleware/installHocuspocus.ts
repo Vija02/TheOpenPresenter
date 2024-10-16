@@ -146,6 +146,12 @@ export default async function installHocuspocus(app: Express) {
       const registeredOnRendererDataLoaded =
         serverPluginApi.getRegisteredOnRendererDataLoaded();
 
+      const registeredSceneVisibilityChangeEventHandler: {
+        sceneId: string;
+        pluginId: string;
+        callback: (visible: boolean) => void;
+      }[] = [];
+
       const handleSectionOrScene = (
         sectionOrScene: ObjectToTypedMap<any>,
         id: string,
@@ -254,6 +260,23 @@ export default async function installHocuspocus(app: Express) {
             }
           }
 
+          // Handle scene change on each renderer
+          renderData.observe((ev) => {
+            if (ev.keysChanged.has("currentScene")) {
+              const previousScene =
+                ev.changes.keys.get("currentScene")?.oldValue;
+              const newScene = renderData.get("currentScene");
+
+              registeredSceneVisibilityChangeEventHandler.forEach((handler) => {
+                if (handler.sceneId === previousScene) {
+                  handler.callback(false);
+                } else if (handler.sceneId === newScene) {
+                  handler.callback(true);
+                }
+              });
+            }
+          });
+
           // Handle renderer load
           for (const [pluginId, pluginInfo] of sceneChildrenEntries) {
             try {
@@ -262,11 +285,24 @@ export default async function installHocuspocus(app: Express) {
                 .push(
                   registeredOnRendererDataLoaded
                     .find((x) => x.pluginName === pluginInfo.get("plugin"))
-                    ?.callback(pluginInfo, {
-                      pluginId,
-                      sceneId,
-                      organizationId,
-                    }) ?? {},
+                    ?.callback(
+                      renderData.get("children")?.get(sceneId)?.get(pluginId),
+                      {
+                        pluginId,
+                        sceneId,
+                        organizationId,
+                      },
+                      {
+                        onSceneVisibilityChange: (callback) => {
+                          // Register callback
+                          registeredSceneVisibilityChangeEventHandler.push({
+                            sceneId,
+                            pluginId,
+                            callback,
+                          });
+                        },
+                      },
+                    ) ?? {},
                 );
             } catch (e) {
               console.error(
