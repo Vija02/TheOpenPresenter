@@ -1,6 +1,7 @@
 import {
   ObjectToTypedMap,
   Plugin,
+  RegisterOnRendererDataLoaded,
   ServerPluginApi,
   TRPCObject,
 } from "@repo/base-plugin/server";
@@ -36,6 +37,7 @@ export const init = (serverPluginApi: ServerPluginApi) => {
   serverPluginApi.onPluginDataCreated(pluginName, onPluginDataCreated);
   serverPluginApi.onPluginDataLoaded(pluginName, onPluginDataLoaded);
   serverPluginApi.onRendererDataCreated(pluginName, onRendererDataCreated);
+  serverPluginApi.onRendererDataLoaded(pluginName, onRendererDataLoaded);
   serverPluginApi.registerSceneCreator(pluginName, {
     title: "Video Player",
   });
@@ -86,6 +88,21 @@ const onRendererDataCreated = (
   rendererData.set("videoSeeks", new Y.Map<any>() as TypedMap<any>);
   rendererData.set("isPlaying", false);
   rendererData.set("volume", 1);
+
+  return {};
+};
+
+const onRendererDataLoaded: RegisterOnRendererDataLoaded<PluginRendererData> = (
+  rendererData,
+  _context,
+  { onSceneVisibilityChange },
+) => {
+  onSceneVisibilityChange((visibility: boolean) => {
+    if (!visibility) {
+      // PAUSE
+      rendererData.set("isPlaying", false);
+    }
+  });
 
   return {};
 };
