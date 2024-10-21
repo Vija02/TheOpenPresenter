@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "build": "cd src && NODE_ENV=production NODE_OPTIONS=\"${NODE_OPTIONS:-} -r @repo/config/env\" next build",
-    "codegen": "cd src && panda codegen"
+    "codegen": "cd src && panda codegen",
+    "dev": "cd src && panda --watch"
   },
   "dependencies": {
     "@apollo/client": "3.8.1",
@@ -29,6 +30,7 @@
     "react": "rc",
     "react-dom": "rc",
     "react-qr-code": "^2.0.15",
+    "sass": "^1.80.3",
     "slugify": "^1.6.6",
     "yup": "^1.4.0"
   },
