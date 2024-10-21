@@ -57,7 +57,8 @@ export default async (app: Express) => {
       }),
       ["token", "tokenSecret"],
     );
-  } else if (process.env.GOOGLE_CLIENT_ID) {
+  }
+  if (process.env.GOOGLE_CLIENT_ID) {
     await installPassportStrategy(
       app,
       "google",
