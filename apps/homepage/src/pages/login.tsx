@@ -20,22 +20,31 @@ import { extractError, getCodeFromError } from "@repo/lib";
 import { Form, Formik, FormikHelpers } from "formik";
 import { InputControl, SubmitButton } from "formik-chakra-ui";
 import NextLink from "next/link";
-import Router from "next/router";
+import Router, { useRouter } from "next/router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import * as Yup from "yup";
+
+export function isSafe(nextUrl: string | null) {
+  return (nextUrl && nextUrl[0] === "/") || false;
+}
 
 export default function Home() {
   const [error, setError] = useState<Error | ApolloError | null>(null);
   const query = useSharedQuery();
 
-  let redirectTo = "/o/";
+  const router = useRouter();
+  const { next: rawNext } = router.query;
+
+  const next: string = isSafe(rawNext?.toString() ?? null)
+    ? rawNext!.toString()
+    : "/o/";
 
   return (
     <SharedLayout title="Register" query={query}>
       {({ currentUser }) =>
         currentUser ? (
           // Handle it here instead of shared layout so we can redirect properly
-          <Redirect href={redirectTo} />
+          <Redirect href={next} />
         ) : (
           <Flex justifyContent="center" marginTop={16}>
             <Box maxW="md" w="100%">
@@ -43,7 +52,7 @@ export default function Home() {
               <LoginForm
                 error={error}
                 setError={setError}
-                onSuccessRedirectTo="/o"
+                onSuccessRedirectTo={next}
               />
             </Box>
           </Flex>

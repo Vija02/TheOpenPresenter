@@ -180,7 +180,8 @@ export default (
 
   const step2Middleware = passport.authenticate(service, {
     failureRedirect: "/login",
-    successReturnToOrRedirect: "/",
+    successReturnToOrRedirect: "/o",
+    keepSessionInfo: true,
   });
 
   app.get(`/auth/${service}/callback`, async (req, res, next) => {
