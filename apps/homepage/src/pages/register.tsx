@@ -1,5 +1,6 @@
 import { Redirect } from "@/components/Redirect";
 import { SharedLayout } from "@/components/SharedLayout";
+import { WrappedPasswordStrength } from "@/components/WrappedPasswordStrength";
 import { resetWebsocketConnection } from "@/lib/withApollo";
 import { ApolloError, useApolloClient } from "@apollo/client";
 import {
@@ -204,7 +205,7 @@ const Register: NextPage = () => {
                         }}
                       />
 
-                      {/* <WrappedPasswordStrength /> */}
+                      <WrappedPasswordStrength />
 
                       <InputControl
                         name="confirm"

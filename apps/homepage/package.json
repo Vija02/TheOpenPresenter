@@ -32,7 +32,8 @@
     "react-qr-code": "^2.0.15",
     "sass": "^1.80.3",
     "slugify": "^1.6.6",
-    "yup": "^1.4.0"
+    "yup": "^1.4.0",
+    "zxcvbn": "^4.4.2"
   },
   "devDependencies": {
     "@pandacss/dev": "^0.41.0",
@@ -42,6 +43,7 @@
     "@types/node": "^20",
     "@types/react": "npm:types-react@rc",
     "@types/react-dom": "npm:types-react-dom@rc",
+    "@types/zxcvbn": "^4",
     "autoprefixer": "^10.4.19",
     "eslint": "^8",
     "postcss": "^8.4.38",
