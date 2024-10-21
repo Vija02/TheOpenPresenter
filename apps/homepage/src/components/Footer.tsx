@@ -39,28 +39,6 @@ export function Footer() {
                 mb={4}
                 fontWeight="bold"
               >
-                LINKS
-              </Text>
-              <VStack alignItems="flex-start" spacing={1}>
-                <Link
-                  as={NextLink}
-                  href="/about"
-                  fontSize="md"
-                  fontWeight="500"
-                  variant="footer"
-                >
-                  About
-                </Link>
-              </VStack>
-            </Flex>
-            <Flex flexDir="column" alignItems="flex-start">
-              <Text
-                textAlign="end"
-                fontSize="lg"
-                color="white"
-                mb={4}
-                fontWeight="bold"
-              >
                 CONTACT
               </Text>
               <VStack alignItems="flex-start" spacing={1}>
