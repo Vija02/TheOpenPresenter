@@ -113,6 +113,9 @@ export default async (app: Express) => {
   // Used to replace the temporary token with a valid session
   // Should be called by the unauthenticated user to finally login
   app.get("/qr-auth/login", async (req, res) => {
+    const returnTo =
+      (req.query && req.query.next && String(req.query.next)) ||
+      req.session.returnTo;
     const token = req.query.token?.toString();
 
     if (!token) {
@@ -130,7 +133,7 @@ export default async (app: Express) => {
     }
 
     req.login({ session_id: value }, () => {
-      res.redirect("/o");
+      res.redirect(returnTo || "/o");
     });
   });
 };

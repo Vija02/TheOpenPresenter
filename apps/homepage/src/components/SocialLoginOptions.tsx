@@ -65,7 +65,7 @@ export function SocialLoginOptions({
           </Box>
         )}
       >
-        <QRLoginModal />
+        <QRLoginModal next={next} />
       </OverlayToggle>
     </Stack>
   );

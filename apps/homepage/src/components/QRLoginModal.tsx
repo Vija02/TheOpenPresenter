@@ -19,16 +19,18 @@ export type QRLoginModalPropTypes = Omit<
   ModalProps,
   "isOpen" | "onClose" | "children"
 > &
-  Partial<OverlayToggleComponentProps> & {};
+  Partial<OverlayToggleComponentProps> & { next: string };
 
 const QRLoginModal = ({
   isOpen,
   onToggle,
   resetData,
+  next,
   ...props
 }: QRLoginModalPropTypes) => {
   const [qrId, setQRId] = useState<string | null>(null);
 
+  // TODO: Only start if modal is open
   useEffect(() => {
     (async () => {
       await fetchEventSource("/qr-auth/request", {
@@ -39,7 +41,7 @@ const QRLoginModal = ({
               setQRId(data.id);
             }
             if (data.done) {
-              window.location.href = "/qr-auth/login?token=" + data.token;
+              window.location.href = `/qr-auth/login?token=${data.token}&next=${encodeURIComponent(next)}`;
             }
           } catch (e) {
             // Keep alive
@@ -63,9 +65,11 @@ const QRLoginModal = ({
         <ModalBody>
           <Center flexDir="column" gap={4}>
             <Text>Scan with your mobile phone to log in</Text>
-            <QRCode
-              value={`${process.env.NEXT_PUBLIC_ROOT_URL}/qr-auth/auth?id=${qrId}`}
-            />
+            {qrId && (
+              <QRCode
+                value={`${process.env.NEXT_PUBLIC_ROOT_URL}/qr-auth/auth?id=${qrId}`}
+              />
+            )}
           </Center>
         </ModalBody>
 
