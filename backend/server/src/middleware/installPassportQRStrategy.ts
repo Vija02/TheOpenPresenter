@@ -82,7 +82,7 @@ export default async (app: Express) => {
 
   // Authorize the ID that has been generated from the method above.
   // Should be called by the authenticated user
-  app.get("/qr-auth/auth", (req, res) => {
+  app.get("/qr-auth/auth", async (req, res) => {
     if (!req.user?.session_id) {
       // TODO: Redirect to login
       res.status(401).json({
@@ -98,9 +98,16 @@ export default async (app: Express) => {
       return;
     }
 
-    publishClient.publish(getChannelForId(id), req.user?.session_id);
+    const success = await publishClient.publish(
+      getChannelForId(id),
+      req.user?.session_id,
+    );
 
-    res.redirect("/qr-login-success");
+    if (success) {
+      res.redirect("/qr-login-success");
+    } else {
+      res.redirect("/qr-login-failed");
+    }
   });
 
   // Used to replace the temporary token with a valid session
