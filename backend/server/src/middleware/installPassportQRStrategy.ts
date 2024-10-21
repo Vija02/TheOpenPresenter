@@ -84,10 +84,7 @@ export default async (app: Express) => {
   // Should be called by the authenticated user
   app.get("/qr-auth/auth", async (req, res) => {
     if (!req.user?.session_id) {
-      // TODO: Redirect to login
-      res.status(401).json({
-        error: "You are not authenticated",
-      });
+      res.redirect(`/login?next=/qr-auth/auth?id=${req.query.id}`);
       return;
     }
 
