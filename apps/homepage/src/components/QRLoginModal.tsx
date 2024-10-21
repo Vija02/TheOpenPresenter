@@ -1,4 +1,5 @@
 import {
+  Box,
   Center,
   Modal,
   ModalBody,
@@ -8,6 +9,7 @@ import {
   ModalHeader,
   ModalOverlay,
   ModalProps,
+  Skeleton,
   Text,
 } from "@chakra-ui/react";
 import { fetchEventSource } from "@microsoft/fetch-event-source";
@@ -30,26 +32,33 @@ const QRLoginModal = ({
 }: QRLoginModalPropTypes) => {
   const [qrId, setQRId] = useState<string | null>(null);
 
-  // TODO: Only start if modal is open
   useEffect(() => {
     (async () => {
-      await fetchEventSource("/qr-auth/request", {
-        onmessage(ev) {
-          try {
-            const data = JSON.parse(ev.data);
-            if (data.id) {
-              setQRId(data.id);
+      if (isOpen) {
+        const ctrl = new AbortController();
+        await fetchEventSource("/qr-auth/request", {
+          signal: ctrl.signal,
+          onmessage(ev) {
+            try {
+              const data = JSON.parse(ev.data);
+              if (data.id) {
+                setQRId(data.id);
+              }
+              if (data.done) {
+                window.location.href = `/qr-auth/login?token=${data.token}&next=${encodeURIComponent(next)}`;
+              }
+            } catch (e) {
+              // Keep alive
             }
-            if (data.done) {
-              window.location.href = `/qr-auth/login?token=${data.token}&next=${encodeURIComponent(next)}`;
-            }
-          } catch (e) {
-            // Keep alive
-          }
-        },
-      });
+          },
+        });
+        return () => {
+          ctrl.abort();
+          setQRId(null);
+        };
+      }
     })();
-  }, []);
+  }, [isOpen]);
 
   return (
     <Modal
@@ -65,10 +74,19 @@ const QRLoginModal = ({
         <ModalBody>
           <Center flexDir="column" gap={4}>
             <Text>Scan with your mobile phone to log in</Text>
+            {!qrId && <Skeleton width="100%" maxW="256px" aspectRatio={1} />}
             {qrId && (
-              <QRCode
-                value={`${process.env.NEXT_PUBLIC_ROOT_URL}/qr-auth/auth?id=${qrId}`}
-              />
+              <Box width="100%">
+                <QRCode
+                  style={{
+                    height: "auto",
+                    maxWidth: "100%",
+                    width: "100%",
+                    maxHeight: 256,
+                  }}
+                  value={`${process.env.NEXT_PUBLIC_ROOT_URL}/qr-auth/auth?id=${qrId}`}
+                />
+              </Box>
             )}
           </Center>
         </ModalBody>
