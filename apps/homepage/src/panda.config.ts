@@ -1,4 +1,31 @@
 import { defineConfig } from "@pandacss/dev";
+import { defineTextStyles } from "@pandacss/dev";
+
+export const textStyles = defineTextStyles({
+  body: {
+    value: {
+      fontWeight: "400",
+      fontSize: "16px",
+      lineHeight: "24px",
+      letterSpacing: "0",
+      textDecoration: "None",
+      textTransform: "None",
+    },
+  },
+  heading: {
+    value: {
+      md: {
+        fontSize: "2.25rem",
+        marginBottom: "30px" as any,
+      },
+      marginBottom: "20px" as any,
+      fontSize: "1.68rem",
+      lineHeight: 1.111,
+      fontWeight: "700",
+      letterSpacing: "0",
+    },
+  },
+});
 
 export default defineConfig({
   // Whether to use css reset
@@ -19,6 +46,7 @@ export default defineConfig({
   // Useful for theme customization
   theme: {
     extend: {
+      textStyles,
       tokens: {
         fonts: {
           inter: { value: ["Inter", "sans-serif"] },
