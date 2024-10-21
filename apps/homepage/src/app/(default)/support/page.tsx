@@ -10,7 +10,10 @@ export default function Support() {
         <h1 className={css({ textStyle: "heading" })}>Support</h1>
         <Box textAlign="center" maxW="500px" textStyle="body">
           Need help or have questions? Email us at{" "}
-          <NextLink href="mailto:support@theopenpresenter.com">
+          <NextLink
+            href="mailto:support@theopenpresenter.com"
+            className={css({ textStyle: "link" })}
+          >
             support@theopenpresenter.com
           </NextLink>
         </Box>

@@ -1,4 +1,4 @@
-import { Box, BoxProps } from "@chakra-ui/react";
+import { Box, BoxProps } from "@/styled-system/jsx";
 import React from "react";
 
 type PropTypes = BoxProps & { customMaxWidth?: BoxProps["maxWidth"] };
@@ -18,7 +18,7 @@ export const StandardWidth = React.forwardRef<HTMLDivElement, PropTypes>(
         </Box>
       </Box>
     );
-  }
+  },
 );
 
 StandardWidth.displayName = "StandardWidth";

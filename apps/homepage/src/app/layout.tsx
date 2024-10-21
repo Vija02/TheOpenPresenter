@@ -1,7 +1,7 @@
 import { styled } from "@/styled-system/jsx";
 import { Inter, Inter_Tight } from "next/font/google";
 
-import "./global.css";
+import "../global.css";
 import "./style.scss";
 import Theme from "./theme-provider";
 

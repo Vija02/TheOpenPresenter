@@ -25,6 +25,18 @@ export const textStyles = defineTextStyles({
       letterSpacing: "0",
     },
   },
+  link: {
+    value: {
+      textDecoration: "none",
+      color: "#0076d1" as any,
+      _osDark: {
+        color: "#41adff" as any,
+      },
+      _hover: {
+        textDecoration: "underline",
+      },
+    },
+  },
 });
 
 export default defineConfig({
