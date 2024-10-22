@@ -73,7 +73,7 @@ export default async (app: Express) => {
         return {
           id: profile.id,
           displayName: profile.displayName || "",
-          username: profile.username,
+          username: get(profile, "name.givenName"),
           avatarUrl: get(profile, "photos.0.value"),
           email: profile.email || get(profile, "emails.0.value"),
         };
