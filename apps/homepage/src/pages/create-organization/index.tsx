@@ -86,7 +86,7 @@ const CreateOrganizationPage: NextPage = () => {
               <VStack alignItems="flex-start">
                 <Heading>Create organization</Heading>
                 <Text>
-                  Just one last step! After that you can start creating tasks.
+                  Just one last step! After that you can start presenting.
                 </Text>
 
                 <InputControl
