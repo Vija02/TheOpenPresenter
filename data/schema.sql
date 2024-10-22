@@ -464,7 +464,7 @@ begin
   end if;
   v_username = regexp_replace(v_username, '^[^a-z]+', '', 'gi');
   v_username = regexp_replace(v_username, '[^a-z0-9]+', '_', 'gi');
-  if v_username is null or length(v_username) < 3 then
+  if v_username is null or length(v_username) < 3 or length(v_username) > 19 then
     v_username = 'user';
   end if;
   select (
@@ -472,7 +472,7 @@ begin
     when i = 0 then v_username
     else v_username || i::text
     end
-  ) into v_username from generate_series(0, 1000) i
+  ) into v_username from generate_series(0, 10000) i
   where not exists(
     select 1
     from app_public.users
