@@ -1,15 +1,12 @@
-import {
-  emailLegalText as legalText,
-  fromEmail,
-  projectName,
-} from "@repo/config";
-import { promises as fsp } from "fs";
+import { fromEmail } from "@repo/config";
 import { Task } from "graphile-worker";
 import { htmlToText } from "html-to-text";
-import { template as lodashTemplate } from "lodash";
-import mjml2html from "mjml";
 import * as nodemailer from "nodemailer";
 
+import {
+  readTemplateFile,
+  replaceTemplateVariablesAndConvertHtml,
+} from "../email";
 import getTransport from "../transport";
 
 declare module global {
@@ -17,8 +14,6 @@ declare module global {
 }
 
 global.TEST_EMAILS = [];
-
-const { readFile } = fsp;
 
 const isTest = process.env.NODE_ENV === "test";
 const isDev = process.env.NODE_ENV !== "production";
@@ -29,74 +24,58 @@ export interface SendEmailPayload {
     to: string | string[];
     subject: string;
   };
-  template: string;
-  variables: {
+  template?: string;
+  html?: string;
+  variables?: {
     [varName: string]: any;
   };
 }
 
 const task: Task = async (inPayload) => {
+  const { default: chalk } = await import("chalk");
+  
   const payload: SendEmailPayload = inPayload as any;
   const transport = await getTransport();
-  const { options: inOptions, template, variables } = payload;
+  const { options: inOptions, template, html, variables } = payload;
   const options = {
     from: fromEmail,
     ...inOptions,
   };
-  if (template) {
+
+  let finalHtml = html;
+  if (!finalHtml && !!template) {
     const templateFn = await loadTemplate(template);
-    const html = await templateFn!(variables);
-    const html2textableHtml = html.replace(/(<\/?)div/g, "$1p");
+    finalHtml = await templateFn(variables);
+  }
+
+  if (finalHtml) {
+    const html2textableHtml = finalHtml.replace(/(<\/?)div/g, "$1p");
     const text = htmlToText(html2textableHtml, {
       wordwrap: 120,
     }).replace(/\n\s+\n/g, "\n\n");
-    Object.assign(options, { html, text });
+    Object.assign(options, { html: finalHtml, text });
   }
+
   const info = await transport.sendMail(options);
   if (isTest) {
     global.TEST_EMAILS.push(info);
   } else if (isDev) {
     const url = nodemailer.getTestMessageUrl(info);
     if (url) {
-      // Hex codes here equivalent to chalk.blue.underline
-      console.log(
-        `Development email preview: \x1B[34m\x1B[4m${url}\x1B[24m\x1B[39m`
-      );
+      console.log(`Development email preview: ${chalk.blue.underline(url)}`);
     }
   }
 };
 
 export default task;
 
-const templatePromises: Record<
-  string,
-  Promise<(variables: Record<string, any>) => string>
-> = {};
+const templatePromises: Record<any, any> = {};
 function loadTemplate(template: string) {
   if (isDev || !templatePromises[template]) {
     templatePromises[template] = (async () => {
-      if (!template.match(/^[a-zA-Z0-9_.-]+$/)) {
-        throw new Error(`Disallowed template name '${template}'`);
-      }
-      const templateString = await readFile(
-        `${__dirname}/../../templates/${template}`,
-        "utf8"
-      );
-      const templateFn = lodashTemplate(templateString, {
-        escape: /\[\[([\s\S]+?)\]\]/g,
-      });
-      return (variables: { [varName: string]: any }) => {
-        const mjml = templateFn({
-          projectName,
-          legalText,
-          ...variables,
-        });
-        const { html, errors } = mjml2html(mjml);
-        if (errors && errors.length) {
-          console.error(errors);
-        }
-        return html;
-      };
+      const templateString = await readTemplateFile(template);
+
+      return replaceTemplateVariablesAndConvertHtml(templateString);
     })();
   }
   return templatePromises[template];
