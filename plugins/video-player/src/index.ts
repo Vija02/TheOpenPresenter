@@ -97,12 +97,12 @@ const onRendererDataLoaded: RegisterOnRendererDataLoaded<PluginRendererData> = (
   _context,
   { onSceneVisibilityChange },
 ) => {
-  onSceneVisibilityChange((visibility: boolean) => {
-    if (!visibility) {
-      // PAUSE
-      rendererData.set("isPlaying", false);
-    }
-  });
+  // onSceneVisibilityChange((visibility: boolean) => {
+  //   if (!visibility) {
+  //     // PAUSE
+  //     rendererData.set("isPlaying", false);
+  //   }
+  // });
 
   return {};
 };
