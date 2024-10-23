@@ -1,0 +1,25 @@
+<mjml>
+  <mj-head>
+    <mj-font
+      name="Inter"
+      href="https://fonts.googleapis.com/css2?family=Inter"
+    />
+    <mj-font
+      name="Oswald"
+      href="https://fonts.googleapis.com/css2?family=Oswald"
+    />
+    <mj-attributes>
+      <mj-all padding="0px"></mj-all>
+      <mj-class
+        name="preheader"
+        color="#000000"
+        font-size="11px"
+        font-family="Inter, Ubuntu, Helvetica, Arial, sans-serif"
+        padding="0px"
+      ></mj-class>
+    </mj-attributes>
+    <mj-style inline="inline"
+      >a { text-decoration: none; color: inherit; }</mj-style
+    >
+  </mj-head>
+</mjml>
