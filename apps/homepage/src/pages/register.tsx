@@ -89,7 +89,7 @@ const Register: NextPage = () => {
       } catch (e: any) {
         const code = getCodeFromError(e);
         const exception = getExceptionFromError(e);
-        const fields: any = exception && "fields" in exception;
+        const fields: any = exception && "fields" in exception && exception.fields;
         if (code === "WEAKP") {
           formikHelpers.setFieldError(
             "password",
