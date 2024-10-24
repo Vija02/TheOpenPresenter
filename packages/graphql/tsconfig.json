@@ -12,6 +12,6 @@
     "moduleResolution": "Node",
     "jsx": "react"
   },
-  "include": ["index.tsx"],
+  "include": ["index.tsx", "apollo-react-hooks.tsx"],
   "exclude": []
 }

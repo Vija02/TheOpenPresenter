@@ -48,3 +48,6 @@ loadedPlugins
 *.tsbuildinfo
 
 /uploads
+
+packages/graphql/apollo-react-hooks.*
+!packages/graphql/apollo-react-hooks.tsx

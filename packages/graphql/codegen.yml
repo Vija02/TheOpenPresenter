@@ -5,6 +5,7 @@ documents:
   - "../../apps/remote/src/**/*.graphql"
   - "../../apps/renderer/src/**/*.graphql"
 config:
+  apolloReactHooksImportFrom: "./apollo-react-hooks"
   avoidOptionals:
     field: true
     inputValue: false

@@ -1,0 +1,9 @@
+node_modules
+**/dist
+/data/schema.graphql
+/data/schema.sql
+/packages/graphql/index.*
+/packages/graphql/apollo-react-hooks*
+/apps/homepage/.next
+.next
+.yarn
