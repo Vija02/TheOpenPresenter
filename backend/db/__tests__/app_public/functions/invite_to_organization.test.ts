@@ -88,22 +88,21 @@ it("Can invite user to organization", () =>
       id: invitation.id,
     });
 
-    // TODO: Fix this test
-    // // Assert that the job can run correctly
-    // // Run the job
-    // await runJobs(client);
-    // await assertJobComplete(client, job);
-    // // Check that the email was sent
-    // const emails = getEmails();
-    // expect(emails).toHaveLength(1);
-    // const [email] = emails;
-    // expect(email.envelope.to).toEqual(["b@b.c"]);
-    // const message = JSON.parse(email.message);
-    // expect(message.subject).toEqual(
-    //   `You have been invited to ${organization.name}`,
-    // );
-    // const expectedLink = `${process.env.ROOT_URL}/invitations/accept?id=${invitation.id}`;
-    // expect(message.html).toContain(expectedLink);
+    // Assert that the job can run correctly
+    // Run the job
+    await runJobs(client);
+    await assertJobComplete(client, job);
+    // Check that the email was sent
+    const emails = getEmails();
+    expect(emails).toHaveLength(1);
+    const [email] = emails;
+    expect(email.envelope.to).toEqual(["b@b.c"]);
+    const message = JSON.parse(email.message);
+    expect(message.subject).toEqual(
+      `You have been invited to ${organization.name}`,
+    );
+    const expectedLink = `${process.env.ROOT_URL}/invitations/accept?id=${invitation.id}`;
+    expect(message.html).toContain(expectedLink);
   }));
 
 it("Can accept an invitation", () =>
