@@ -9,7 +9,10 @@ import { usePluginAPI } from "../pluginApi";
 import { processSongCache } from "../songHelpers";
 
 export const SongViewSlides = ({ song }: { song: Song }) => {
-  const groupedData = useMemo(() => processSongCache(song), [song]);
+  const groupedData = useMemo(
+    () => processSongCache(song.cachedData),
+    [song.cachedData],
+  );
 
   if (song.setting.displayType === "sections") {
     return <Sections song={song} groupedData={groupedData} />;

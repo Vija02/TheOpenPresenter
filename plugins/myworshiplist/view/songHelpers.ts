@@ -1,4 +1,4 @@
-import { Song } from "../src/types";
+import { SongCache } from "../src";
 
 export const removeChords = (content: string[]) => {
   return content.reduce((acc, val) => {
@@ -34,12 +34,10 @@ export const groupData = (content: string[]) => {
 
   for (const songLine of content) {
     const matches = songLine.match(
-      /^(\s*)\[?(verse|bridge|pre-? ?chorus|chorus|end|ending|outro|tag|instrumental|interlude) ?(\d+)?\]?(\s*)$/i,
+      /^(\s*)\[?(verse|bridge|pre-? ?chorus|chorus|end|ending|outro|tag|instrumental) ?(\d+)?\]?(\s*)$/i,
     );
     if (matches && matches?.length > 1) {
       heading = matches[0];
-    } else if (songLine === "-") {
-      heading += "-";
     } else {
       if (!map[heading]) map[heading] = [];
       map[heading]?.push(songLine);
@@ -49,11 +47,9 @@ export const groupData = (content: string[]) => {
   return map;
 };
 
-export const processSongCache = (song?: Song) => {
-  const content = song?.modifiedContent ?? song?.cachedData?.content ?? "";
-
+export const processSongCache = (songCache?: SongCache) => {
   const cleanData = removeAuxiliaryText(
-    cleanWhiteSpace(removeChords(content.split(/<br>|\n/gm) ?? [])),
+    cleanWhiteSpace(removeChords(songCache?.content.split("<br>") ?? [])),
   );
 
   const groupedData = groupData(cleanData);
