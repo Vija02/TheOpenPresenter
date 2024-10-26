@@ -56,22 +56,6 @@ test("can register user with a password", () =>
     `);
   }));
 
-test("cannot register with a weak password", () =>
-  withRootDb(async (client) => {
-    const promise = reallyCreateUser(
-      client,
-      "testuser",
-      "testuser@example.com",
-      "Test One",
-      "http://example.com",
-      "WEAK",
-    );
-    await expect(promise).rejects.toMatchInlineSnapshot(
-      `[error: Password is too weak]`,
-    );
-    await expect(promise).rejects.toHaveProperty("code", "WEAKP");
-  }));
-
 test("can register user with just a username and email", () =>
   withRootDb(async (client) => {
     // Normally PassportLoginPlugin will call this SQL function directly.

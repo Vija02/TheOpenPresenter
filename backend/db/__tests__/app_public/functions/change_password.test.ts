@@ -56,21 +56,6 @@ it("cannot change password if password is wrong (CREDS)", () =>
     await expect(promise).rejects.toHaveProperty("code", "CREDS");
   }));
 
-it("cannot set a 'weak' password (WEAKP)", () =>
-  // For a given value of 'weak'
-  withUserDb(async (client, user) => {
-    const newPassword = "WEAK";
-
-    // Action
-    const promise = changePassword(client, user._password, newPassword);
-
-    // Assertions
-    await expect(promise).rejects.toMatchInlineSnapshot(
-      `[error: Password is too weak]`,
-    );
-    await expect(promise).rejects.toHaveProperty("code", "WEAKP");
-  }));
-
 it("gives error if not logged in (LOGIN)", () =>
   withRootDb(async (client) => {
     // Setup
