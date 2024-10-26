@@ -1,0 +1,13 @@
+query JoinOrganizationIndexPage {
+  ...SharedLayout_Query
+
+  currentUser {
+    id
+    userEmails(first: 1) {
+      nodes {
+        id
+        email
+      }
+    }
+  }
+}

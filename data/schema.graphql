@@ -23,12 +23,78 @@ type AcceptInvitationToOrganizationPayload {
   query: Query
 }
 
+"""All input for the `acceptJoinRequestToOrganization` mutation."""
+input AcceptJoinRequestToOrganizationInput {
+  """
+  An arbitrary string value with no semantic meaning. Will be included in the
+  payload verbatim. May be used to track mutations by the client.
+  """
+  clientMutationId: String
+  requestId: UUID!
+}
+
+"""The output of our `acceptJoinRequestToOrganization` mutation."""
+type AcceptJoinRequestToOrganizationPayload {
+  """
+  The exact same `clientMutationId` that was provided in the mutation input,
+  unchanged and unused. May be used by a client to track mutations.
+  """
+  clientMutationId: String
+
+  """
+  Our root query field type. Allows us to run any query from our mutation payload.
+  """
+  query: Query
+}
+
 """
 A signed eight-byte integer. The upper big integer values are greater than the
 max value for a JavaScript number. Therefore all big integers will be output as
 strings and not numbers.
 """
 scalar BigInt
+
+"""
+A filter to be used against Boolean fields. All fields are combined with a logical ‘and.’
+"""
+input BooleanFilter {
+  """
+  Not equal to the specified value, treating null like an ordinary value.
+  """
+  distinctFrom: Boolean
+
+  """Equal to the specified value."""
+  equalTo: Boolean
+
+  """Greater than the specified value."""
+  greaterThan: Boolean
+
+  """Greater than or equal to the specified value."""
+  greaterThanOrEqualTo: Boolean
+
+  """Included in the specified list."""
+  in: [Boolean!]
+
+  """
+  Is null (if `true` is specified) or is not null (if `false` is specified).
+  """
+  isNull: Boolean
+
+  """Less than the specified value."""
+  lessThan: Boolean
+
+  """Less than or equal to the specified value."""
+  lessThanOrEqualTo: Boolean
+
+  """Equal to the specified value, treating null like an ordinary value."""
+  notDistinctFrom: Boolean
+
+  """Not equal to the specified value."""
+  notEqualTo: Boolean
+
+  """Not included in the specified list."""
+  notIn: [Boolean!]
+}
 
 """All input for the `changePassword` mutation."""
 input ChangePasswordInput {
@@ -200,6 +266,48 @@ A point in time as described by the [ISO
 8601](https://en.wikipedia.org/wiki/ISO_8601) standard. May or may not include a timezone.
 """
 scalar Datetime
+
+"""
+A filter to be used against Datetime fields. All fields are combined with a logical ‘and.’
+"""
+input DatetimeFilter {
+  """
+  Not equal to the specified value, treating null like an ordinary value.
+  """
+  distinctFrom: Datetime
+
+  """Equal to the specified value."""
+  equalTo: Datetime
+
+  """Greater than the specified value."""
+  greaterThan: Datetime
+
+  """Greater than or equal to the specified value."""
+  greaterThanOrEqualTo: Datetime
+
+  """Included in the specified list."""
+  in: [Datetime!]
+
+  """
+  Is null (if `true` is specified) or is not null (if `false` is specified).
+  """
+  isNull: Boolean
+
+  """Less than the specified value."""
+  lessThan: Datetime
+
+  """Less than or equal to the specified value."""
+  lessThanOrEqualTo: Datetime
+
+  """Equal to the specified value, treating null like an ordinary value."""
+  notDistinctFrom: Datetime
+
+  """Not equal to the specified value."""
+  notEqualTo: Datetime
+
+  """Not included in the specified list."""
+  notIn: [Datetime!]
+}
 
 """All input for the `deleteOrganization` mutation."""
 input DeleteOrganizationInput {
@@ -452,6 +560,32 @@ type MediaEdge {
   node: Media!
 }
 
+"""
+A filter to be used against `Media` object types. All fields are combined with a logical ‘and.’
+"""
+input MediaFilter {
+  """Checks for all expressions in this list."""
+  and: [MediaFilter!]
+
+  """Filter by the object’s `createdAt` field."""
+  createdAt: DatetimeFilter
+
+  """Filter by the object’s `creatorUserId` field."""
+  creatorUserId: UUIDFilter
+
+  """Filter by the object’s `id` field."""
+  id: UUIDFilter
+
+  """Negates the expression."""
+  not: MediaFilter
+
+  """Checks for any expressions in this list."""
+  or: [MediaFilter!]
+
+  """Filter by the object’s `organizationId` field."""
+  organizationId: UUIDFilter
+}
+
 """Methods to use when ordering `Media`."""
 enum MediaOrderBy {
   CREATED_AT_ASC
@@ -480,6 +614,12 @@ type Mutation {
     """
     input: AcceptInvitationToOrganizationInput!
   ): AcceptInvitationToOrganizationPayload
+  acceptJoinRequestToOrganization(
+    """
+    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.
+    """
+    input: AcceptJoinRequestToOrganizationInput!
+  ): AcceptJoinRequestToOrganizationPayload
 
   """Enter your old password and a new password to change your password."""
   changePassword(
@@ -631,6 +771,12 @@ type Mutation {
     """
     input: RequestAccountDeletionInput!
   ): RequestAccountDeletionPayload
+  requestJoinToOrganization(
+    """
+    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.
+    """
+    input: RequestJoinToOrganizationInput!
+  ): RequestJoinToOrganizationPayload
 
   """
   If you didn't receive the verification code for this email, we can resend it. We silently cap the rate of resends on the backend, so calls to this function may not result in another email being sent if it has been called recently.
@@ -704,6 +850,7 @@ type Organization {
   currentUserIsBillingContact: Boolean
   currentUserIsOwner: Boolean
   id: UUID!
+  isPublic: Boolean
 
   """Reads and enables pagination through a set of `Media`."""
   medias(
@@ -717,6 +864,11 @@ type Organization {
     A condition to be used in determining which values should be returned by the collection.
     """
     condition: MediaCondition
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: MediaFilter
 
     """Only read the first `n` values of the set."""
     first: Int
@@ -736,6 +888,42 @@ type Organization {
   name: String!
 
   """
+  Reads and enables pagination through a set of `OrganizationJoinRequest`.
+  """
+  organizationJoinRequests(
+    """Read all values in the set after (below) this cursor."""
+    after: Cursor
+
+    """Read all values in the set before (above) this cursor."""
+    before: Cursor
+
+    """
+    A condition to be used in determining which values should be returned by the collection.
+    """
+    condition: OrganizationJoinRequestCondition
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: OrganizationJoinRequestFilter
+
+    """Only read the first `n` values of the set."""
+    first: Int
+
+    """Only read the last `n` values of the set."""
+    last: Int
+
+    """
+    Skip the first `n` values from our `after` cursor, an alternative to cursor
+    based pagination. May not be used with `last`.
+    """
+    offset: Int
+
+    """The method to use when ordering `OrganizationJoinRequest`."""
+    orderBy: [OrganizationJoinRequestsOrderBy!] = [PRIMARY_KEY_ASC]
+  ): OrganizationJoinRequestsConnection!
+
+  """
   Reads and enables pagination through a set of `OrganizationMembership`.
   """
   organizationMemberships(
@@ -749,6 +937,11 @@ type Organization {
     A condition to be used in determining which values should be returned by the collection.
     """
     condition: OrganizationMembershipCondition
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: OrganizationMembershipFilter
 
     """Only read the first `n` values of the set."""
     first: Int
@@ -779,6 +972,11 @@ type Organization {
     """
     condition: ProjectCondition
 
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: ProjectFilter
+
     """Only read the first `n` values of the set."""
     first: Int
 
@@ -805,8 +1003,135 @@ input OrganizationCondition {
   """Checks for equality with the object’s `id` field."""
   id: UUID
 
+  """Checks for equality with the object’s `isPublic` field."""
+  isPublic: Boolean
+
   """Checks for equality with the object’s `slug` field."""
   slug: String
+}
+
+"""
+A filter to be used against `Organization` object types. All fields are combined with a logical ‘and.’
+"""
+input OrganizationFilter {
+  """Checks for all expressions in this list."""
+  and: [OrganizationFilter!]
+
+  """Filter by the object’s `currentUserIsBillingContact` field."""
+  currentUserIsBillingContact: BooleanFilter
+
+  """Filter by the object’s `currentUserIsOwner` field."""
+  currentUserIsOwner: BooleanFilter
+
+  """Filter by the object’s `id` field."""
+  id: UUIDFilter
+
+  """Filter by the object’s `isPublic` field."""
+  isPublic: BooleanFilter
+
+  """Negates the expression."""
+  not: OrganizationFilter
+
+  """Checks for any expressions in this list."""
+  or: [OrganizationFilter!]
+
+  """Filter by the object’s `slug` field."""
+  slug: StringFilter
+}
+
+type OrganizationJoinRequest {
+  id: UUID!
+
+  """
+  Reads a single `Organization` that is related to this `OrganizationJoinRequest`.
+  """
+  organization: Organization
+  organizationId: UUID!
+
+  """
+  Reads a single `User` that is related to this `OrganizationJoinRequest`.
+  """
+  user: User
+  userId: UUID
+}
+
+"""
+A condition to be used against `OrganizationJoinRequest` object types. All
+fields are tested for equality and combined with a logical ‘and.’
+"""
+input OrganizationJoinRequestCondition {
+  """Checks for equality with the object’s `id` field."""
+  id: UUID
+
+  """Checks for equality with the object’s `organizationId` field."""
+  organizationId: UUID
+
+  """Checks for equality with the object’s `userId` field."""
+  userId: UUID
+}
+
+"""
+A filter to be used against `OrganizationJoinRequest` object types. All fields are combined with a logical ‘and.’
+"""
+input OrganizationJoinRequestFilter {
+  """Checks for all expressions in this list."""
+  and: [OrganizationJoinRequestFilter!]
+
+  """Filter by the object’s `id` field."""
+  id: UUIDFilter
+
+  """Negates the expression."""
+  not: OrganizationJoinRequestFilter
+
+  """Checks for any expressions in this list."""
+  or: [OrganizationJoinRequestFilter!]
+
+  """Filter by the object’s `organizationId` field."""
+  organizationId: UUIDFilter
+
+  """Filter by the object’s `userId` field."""
+  userId: UUIDFilter
+}
+
+"""A connection to a list of `OrganizationJoinRequest` values."""
+type OrganizationJoinRequestsConnection {
+  """
+  A list of edges which contains the `OrganizationJoinRequest` and cursor to aid in pagination.
+  """
+  edges: [OrganizationJoinRequestsEdge!]!
+
+  """A list of `OrganizationJoinRequest` objects."""
+  nodes: [OrganizationJoinRequest!]!
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+
+  """
+  The count of *all* `OrganizationJoinRequest` you could get from the connection.
+  """
+  totalCount: Int!
+}
+
+"""A `OrganizationJoinRequest` edge in the connection."""
+type OrganizationJoinRequestsEdge {
+  """A cursor for use in pagination."""
+  cursor: Cursor
+
+  """The `OrganizationJoinRequest` at the end of the edge."""
+  node: OrganizationJoinRequest!
+}
+
+"""Methods to use when ordering `OrganizationJoinRequest`."""
+enum OrganizationJoinRequestsOrderBy {
+  ID_ASC
+  ID_DESC
+  NATURAL
+  ORGANIZATION_ID_ASC
+  ORGANIZATION_ID_DESC
+  PRIMARY_KEY_ASC
+  PRIMARY_KEY_DESC
+  USER_ID_ASC
+  USER_ID_DESC
 }
 
 type OrganizationMembership {
@@ -841,6 +1166,29 @@ input OrganizationMembershipCondition {
 
   """Checks for equality with the object’s `userId` field."""
   userId: UUID
+}
+
+"""
+A filter to be used against `OrganizationMembership` object types. All fields are combined with a logical ‘and.’
+"""
+input OrganizationMembershipFilter {
+  """Checks for all expressions in this list."""
+  and: [OrganizationMembershipFilter!]
+
+  """Filter by the object’s `id` field."""
+  id: UUIDFilter
+
+  """Negates the expression."""
+  not: OrganizationMembershipFilter
+
+  """Checks for any expressions in this list."""
+  or: [OrganizationMembershipFilter!]
+
+  """Filter by the object’s `organizationId` field."""
+  organizationId: UUIDFilter
+
+  """Filter by the object’s `userId` field."""
+  userId: UUIDFilter
 }
 
 """A connection to a list of `OrganizationMembership` values."""
@@ -924,6 +1272,8 @@ type OrganizationsEdge {
 enum OrganizationsOrderBy {
   ID_ASC
   ID_DESC
+  IS_PUBLIC_ASC
+  IS_PUBLIC_DESC
   NATURAL
   PRIMARY_KEY_ASC
   PRIMARY_KEY_DESC
@@ -998,6 +1348,35 @@ input ProjectCondition {
   updatedAt: Datetime
 }
 
+"""
+A filter to be used against `Project` object types. All fields are combined with a logical ‘and.’
+"""
+input ProjectFilter {
+  """Checks for all expressions in this list."""
+  and: [ProjectFilter!]
+
+  """Filter by the object’s `creatorUserId` field."""
+  creatorUserId: UUIDFilter
+
+  """Filter by the object’s `id` field."""
+  id: UUIDFilter
+
+  """Negates the expression."""
+  not: ProjectFilter
+
+  """Checks for any expressions in this list."""
+  or: [ProjectFilter!]
+
+  """Filter by the object’s `organizationId` field."""
+  organizationId: UUIDFilter
+
+  """Filter by the object’s `slug` field."""
+  slug: StringFilter
+
+  """Filter by the object’s `updatedAt` field."""
+  updatedAt: DatetimeFilter
+}
+
 """An input for mutations affecting `Project`"""
 input ProjectInput {
   creatorUserId: UUID
@@ -1067,6 +1446,11 @@ type Query {
     """
     condition: MediaCondition
 
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: MediaFilter
+
     """Only read the first `n` values of the set."""
     first: Int
 
@@ -1089,6 +1473,44 @@ type Query {
   Given an invitation UUID (and, if required, the code that was emailed to you), retrieves the `Organization` that you were invited to.
   """
   organizationForInvitation(code: String, invitationId: UUID!): Organization
+  organizationJoinRequest(id: UUID!): OrganizationJoinRequest
+  organizationJoinRequestByOrganizationIdAndUserId(organizationId: UUID!, userId: UUID!): OrganizationJoinRequest
+
+  """
+  Reads and enables pagination through a set of `OrganizationJoinRequest`.
+  """
+  organizationJoinRequests(
+    """Read all values in the set after (below) this cursor."""
+    after: Cursor
+
+    """Read all values in the set before (above) this cursor."""
+    before: Cursor
+
+    """
+    A condition to be used in determining which values should be returned by the collection.
+    """
+    condition: OrganizationJoinRequestCondition
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: OrganizationJoinRequestFilter
+
+    """Only read the first `n` values of the set."""
+    first: Int
+
+    """Only read the last `n` values of the set."""
+    last: Int
+
+    """
+    Skip the first `n` values from our `after` cursor, an alternative to cursor
+    based pagination. May not be used with `last`.
+    """
+    offset: Int
+
+    """The method to use when ordering `OrganizationJoinRequest`."""
+    orderBy: [OrganizationJoinRequestsOrderBy!] = [PRIMARY_KEY_ASC]
+  ): OrganizationJoinRequestsConnection
   organizationMembership(id: UUID!): OrganizationMembership
 
   """Reads and enables pagination through a set of `Organization`."""
@@ -1104,6 +1526,11 @@ type Query {
     """
     condition: OrganizationCondition
 
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: OrganizationFilter
+
     """Only read the first `n` values of the set."""
     first: Int
 
@@ -1118,6 +1545,33 @@ type Query {
 
     """The method to use when ordering `Organization`."""
     orderBy: [OrganizationsOrderBy!] = [PRIMARY_KEY_ASC]
+  ): OrganizationsConnection
+
+  """Reads and enables pagination through a set of `Organization`."""
+  organizationsPublicSearch(
+    """Read all values in the set after (below) this cursor."""
+    after: Cursor
+
+    """Read all values in the set before (above) this cursor."""
+    before: Cursor
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: OrganizationFilter
+
+    """Only read the first `n` values of the set."""
+    first: Int
+
+    """Only read the last `n` values of the set."""
+    last: Int
+
+    """
+    Skip the first `n` values from our `after` cursor, an alternative to cursor
+    based pagination. May not be used with `last`.
+    """
+    offset: Int
+    searchString: String!
   ): OrganizationsConnection
   pluginMeta: PluginMeta!
   project(id: UUID!): Project
@@ -1135,6 +1589,11 @@ type Query {
     A condition to be used in determining which values should be returned by the collection.
     """
     condition: ProjectCondition
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: ProjectFilter
 
     """Only read the first `n` values of the set."""
     first: Int
@@ -1233,6 +1692,30 @@ type RequestAccountDeletionPayload {
   success: Boolean
 }
 
+"""All input for the `requestJoinToOrganization` mutation."""
+input RequestJoinToOrganizationInput {
+  """
+  An arbitrary string value with no semantic meaning. Will be included in the
+  payload verbatim. May be used to track mutations by the client.
+  """
+  clientMutationId: String
+  organizationId: UUID!
+}
+
+"""The output of our `requestJoinToOrganization` mutation."""
+type RequestJoinToOrganizationPayload {
+  """
+  The exact same `clientMutationId` that was provided in the mutation input,
+  unchanged and unused. May be used by a client to track mutations.
+  """
+  clientMutationId: String
+
+  """
+  Our root query field type. Allows us to run any query from our mutation payload.
+  """
+  query: Query
+}
+
 """All input for the `resendEmailVerificationCode` mutation."""
 input ResendEmailVerificationCodeInput {
   """
@@ -1288,6 +1771,138 @@ type ResetPasswordPayload {
 type SceneCreator {
   pluginName: String!
   title: String!
+}
+
+"""
+A filter to be used against String fields. All fields are combined with a logical ‘and.’
+"""
+input StringFilter {
+  """
+  Not equal to the specified value, treating null like an ordinary value.
+  """
+  distinctFrom: String
+
+  """
+  Not equal to the specified value, treating null like an ordinary value (case-insensitive).
+  """
+  distinctFromInsensitive: String
+
+  """Ends with the specified string (case-sensitive)."""
+  endsWith: String
+
+  """Ends with the specified string (case-insensitive)."""
+  endsWithInsensitive: String
+
+  """Equal to the specified value."""
+  equalTo: String
+
+  """Equal to the specified value (case-insensitive)."""
+  equalToInsensitive: String
+
+  """Greater than the specified value."""
+  greaterThan: String
+
+  """Greater than the specified value (case-insensitive)."""
+  greaterThanInsensitive: String
+
+  """Greater than or equal to the specified value."""
+  greaterThanOrEqualTo: String
+
+  """Greater than or equal to the specified value (case-insensitive)."""
+  greaterThanOrEqualToInsensitive: String
+
+  """Included in the specified list."""
+  in: [String!]
+
+  """Included in the specified list (case-insensitive)."""
+  inInsensitive: [String!]
+
+  """Contains the specified string (case-sensitive)."""
+  includes: String
+
+  """Contains the specified string (case-insensitive)."""
+  includesInsensitive: String
+
+  """
+  Is null (if `true` is specified) or is not null (if `false` is specified).
+  """
+  isNull: Boolean
+
+  """Less than the specified value."""
+  lessThan: String
+
+  """Less than the specified value (case-insensitive)."""
+  lessThanInsensitive: String
+
+  """Less than or equal to the specified value."""
+  lessThanOrEqualTo: String
+
+  """Less than or equal to the specified value (case-insensitive)."""
+  lessThanOrEqualToInsensitive: String
+
+  """
+  Matches the specified pattern (case-sensitive). An underscore (_) matches any single character; a percent sign (%) matches any sequence of zero or more characters.
+  """
+  like: String
+
+  """
+  Matches the specified pattern (case-insensitive). An underscore (_) matches any single character; a percent sign (%) matches any sequence of zero or more characters.
+  """
+  likeInsensitive: String
+
+  """Equal to the specified value, treating null like an ordinary value."""
+  notDistinctFrom: String
+
+  """
+  Equal to the specified value, treating null like an ordinary value (case-insensitive).
+  """
+  notDistinctFromInsensitive: String
+
+  """Does not end with the specified string (case-sensitive)."""
+  notEndsWith: String
+
+  """Does not end with the specified string (case-insensitive)."""
+  notEndsWithInsensitive: String
+
+  """Not equal to the specified value."""
+  notEqualTo: String
+
+  """Not equal to the specified value (case-insensitive)."""
+  notEqualToInsensitive: String
+
+  """Not included in the specified list."""
+  notIn: [String!]
+
+  """Not included in the specified list (case-insensitive)."""
+  notInInsensitive: [String!]
+
+  """Does not contain the specified string (case-sensitive)."""
+  notIncludes: String
+
+  """Does not contain the specified string (case-insensitive)."""
+  notIncludesInsensitive: String
+
+  """
+  Does not match the specified pattern (case-sensitive). An underscore (_) matches any single character; a percent sign (%) matches any sequence of zero or more characters.
+  """
+  notLike: String
+
+  """
+  Does not match the specified pattern (case-insensitive). An underscore (_) matches any single character; a percent sign (%) matches any sequence of zero or more characters.
+  """
+  notLikeInsensitive: String
+
+  """Does not start with the specified string (case-sensitive)."""
+  notStartsWith: String
+
+  """Does not start with the specified string (case-insensitive)."""
+  notStartsWithInsensitive: String
+
+  """Starts with the specified string (case-sensitive)."""
+  startsWith: String
+
+  """Starts with the specified string (case-insensitive)."""
+  startsWithInsensitive: String
 }
 
 """
@@ -1366,6 +1981,48 @@ type TransferOrganizationOwnershipPayload {
 A universally unique identifier as defined by [RFC 4122](https://tools.ietf.org/html/rfc4122).
 """
 scalar UUID
+
+"""
+A filter to be used against UUID fields. All fields are combined with a logical ‘and.’
+"""
+input UUIDFilter {
+  """
+  Not equal to the specified value, treating null like an ordinary value.
+  """
+  distinctFrom: UUID
+
+  """Equal to the specified value."""
+  equalTo: UUID
+
+  """Greater than the specified value."""
+  greaterThan: UUID
+
+  """Greater than or equal to the specified value."""
+  greaterThanOrEqualTo: UUID
+
+  """Included in the specified list."""
+  in: [UUID!]
+
+  """
+  Is null (if `true` is specified) or is not null (if `false` is specified).
+  """
+  isNull: Boolean
+
+  """Less than the specified value."""
+  lessThan: UUID
+
+  """Less than or equal to the specified value."""
+  lessThanOrEqualTo: UUID
+
+  """Equal to the specified value, treating null like an ordinary value."""
+  notDistinctFrom: UUID
+
+  """Not equal to the specified value."""
+  notEqualTo: UUID
+
+  """Not included in the specified list."""
+  notIn: [UUID!]
+}
 
 """All input for the `updateOrganization` mutation."""
 input UpdateOrganizationInput {
@@ -1472,6 +2129,11 @@ type User {
     """
     condition: MediaCondition
 
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: MediaFilter
+
     """Only read the first `n` values of the set."""
     first: Int
 
@@ -1492,6 +2154,42 @@ type User {
   name: String
 
   """
+  Reads and enables pagination through a set of `OrganizationJoinRequest`.
+  """
+  organizationJoinRequests(
+    """Read all values in the set after (below) this cursor."""
+    after: Cursor
+
+    """Read all values in the set before (above) this cursor."""
+    before: Cursor
+
+    """
+    A condition to be used in determining which values should be returned by the collection.
+    """
+    condition: OrganizationJoinRequestCondition
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: OrganizationJoinRequestFilter
+
+    """Only read the first `n` values of the set."""
+    first: Int
+
+    """Only read the last `n` values of the set."""
+    last: Int
+
+    """
+    Skip the first `n` values from our `after` cursor, an alternative to cursor
+    based pagination. May not be used with `last`.
+    """
+    offset: Int
+
+    """The method to use when ordering `OrganizationJoinRequest`."""
+    orderBy: [OrganizationJoinRequestsOrderBy!] = [PRIMARY_KEY_ASC]
+  ): OrganizationJoinRequestsConnection!
+
+  """
   Reads and enables pagination through a set of `OrganizationMembership`.
   """
   organizationMemberships(
@@ -1505,6 +2203,11 @@ type User {
     A condition to be used in determining which values should be returned by the collection.
     """
     condition: OrganizationMembershipCondition
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: OrganizationMembershipFilter
 
     """Only read the first `n` values of the set."""
     first: Int
@@ -1536,6 +2239,11 @@ type User {
     """
     condition: ProjectCondition
 
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: ProjectFilter
+
     """Only read the first `n` values of the set."""
     first: Int
 
@@ -1560,6 +2268,11 @@ type User {
     """
     condition: UserAuthenticationCondition
 
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: UserAuthenticationFilter
+
     """Only read the first `n` values of the set."""
     first: Int
 
@@ -1582,6 +2295,11 @@ type User {
     A condition to be used in determining which values should be returned by the collection.
     """
     condition: UserEmailCondition
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: UserEmailFilter
 
     """Only read the first `n` values of the set."""
     first: Int
@@ -1637,6 +2355,29 @@ input UserAuthenticationCondition {
   userId: UUID
 }
 
+"""
+A filter to be used against `UserAuthentication` object types. All fields are combined with a logical ‘and.’
+"""
+input UserAuthenticationFilter {
+  """Checks for all expressions in this list."""
+  and: [UserAuthenticationFilter!]
+
+  """Filter by the object’s `id` field."""
+  id: UUIDFilter
+
+  """Negates the expression."""
+  not: UserAuthenticationFilter
+
+  """Checks for any expressions in this list."""
+  or: [UserAuthenticationFilter!]
+
+  """Filter by the object’s `service` field."""
+  service: StringFilter
+
+  """Filter by the object’s `userId` field."""
+  userId: UUIDFilter
+}
+
 """Methods to use when ordering `UserAuthentication`."""
 enum UserAuthenticationsOrderBy {
   ID_ASC
@@ -1683,6 +2424,29 @@ input UserEmailCondition {
 
   """Checks for equality with the object’s `userId` field."""
   userId: UUID
+}
+
+"""
+A filter to be used against `UserEmail` object types. All fields are combined with a logical ‘and.’
+"""
+input UserEmailFilter {
+  """Checks for all expressions in this list."""
+  and: [UserEmailFilter!]
+
+  """Filter by the object’s `id` field."""
+  id: UUIDFilter
+
+  """Filter by the object’s `isPrimary` field."""
+  isPrimary: BooleanFilter
+
+  """Negates the expression."""
+  not: UserEmailFilter
+
+  """Checks for any expressions in this list."""
+  or: [UserEmailFilter!]
+
+  """Filter by the object’s `userId` field."""
+  userId: UUIDFilter
 }
 
 """An input for mutations affecting `UserEmail`"""

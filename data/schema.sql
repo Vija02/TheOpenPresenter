@@ -782,6 +782,44 @@ $$;
 
 
 --
+-- Name: accept_join_request_to_organization(uuid); Type: FUNCTION; Schema: app_public; Owner: -
+--
+
+CREATE FUNCTION app_public.accept_join_request_to_organization(request_id uuid) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+    AS $$
+declare
+  v_request app_public.organization_join_requests;
+begin
+  select * into v_request from app_public.organization_join_requests where id = request_id;
+
+  if not exists(
+    select 1 from app_public.organization_memberships
+      where organization_memberships.organization_id = v_request.organization_id
+      and organization_memberships.user_id = app_public.current_user_id()
+      and is_owner is true
+  ) then
+    raise exception 'You''re not the owner of this organization' using errcode = 'DNIED';
+  end if;
+
+  -- Accept the user into the organization
+  insert into app_public.organization_memberships (organization_id, user_id)
+    values(v_request.organization_id, v_request.user_id)
+    on conflict do nothing;
+
+  -- Delete the join request
+  delete from app_public.organization_join_requests where id = request_id;
+
+  perform graphile_worker.add_job(
+    'organization_join_requests__send_request_accepted',
+    json_build_object('organization_id', v_request.organization_id, 'user_id', v_request.user_id)
+  );
+end;
+$$;
+
+
+--
 -- Name: change_password(text, text); Type: FUNCTION; Schema: app_public; Owner: -
 --
 
@@ -901,7 +939,8 @@ CREATE TABLE app_public.organizations (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     slug public.citext NOT NULL,
     name text NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    is_public boolean DEFAULT false
 );
 
 
@@ -1352,6 +1391,17 @@ $$;
 
 
 --
+-- Name: organizations_public_search(text); Type: FUNCTION; Schema: app_public; Owner: -
+--
+
+CREATE FUNCTION app_public.organizations_public_search(search_string text) RETURNS SETOF app_public.organizations
+    LANGUAGE sql STABLE
+    AS $$
+  select * from app_public.organizations o where o.is_public is true AND o.name ILIKE '%' || search_string || '%';
+$$;
+
+
+--
 -- Name: remove_from_organization(uuid, uuid); Type: FUNCTION; Schema: app_public; Owner: -
 --
 
@@ -1459,6 +1509,43 @@ $$;
 --
 
 COMMENT ON FUNCTION app_public.request_account_deletion() IS 'Begin the account deletion flow by requesting the confirmation email';
+
+
+--
+-- Name: request_join_to_organization(uuid); Type: FUNCTION; Schema: app_public; Owner: -
+--
+
+CREATE FUNCTION app_public.request_join_to_organization(organization_id uuid) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+    AS $$
+declare
+  v_user app_public.users;
+begin
+  -- Are we logged in
+  if app_public.current_user_id() is null then
+    raise exception 'You must log in to request to join an organization' using errcode = 'LOGIN';
+  end if;
+
+  select * into v_user from app_public.users where id = app_public.current_user_id();
+
+  if not v_user.is_verified then
+    raise exception 'You must verify your account to request to join an organization' using errcode = 'VRFY2';
+  end if;
+
+  if exists(
+    select 1 from app_public.organization_memberships
+      where organization_memberships.organization_id = request_join_to_organization.organization_id
+      and organization_memberships.user_id = app_public.current_user_id()
+  ) then
+    raise exception 'Cannot join this organization since user is already a member' using errcode = 'ISMBR';
+  end if;
+
+  -- Request to join
+  insert into app_public.organization_join_requests(organization_id, user_id)
+    values (request_join_to_organization.organization_id, app_public.current_user_id());
+end;
+$$;
 
 
 --
@@ -1974,6 +2061,17 @@ CREATE TABLE app_public.organization_invitations (
 
 
 --
+-- Name: organization_join_requests; Type: TABLE; Schema: app_public; Owner: -
+--
+
+CREATE TABLE app_public.organization_join_requests (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    organization_id uuid NOT NULL,
+    user_id uuid
+);
+
+
+--
 -- Name: organization_memberships; Type: TABLE; Schema: app_public; Owner: -
 --
 
@@ -2126,6 +2224,22 @@ ALTER TABLE ONLY app_public.organization_invitations
 
 
 --
+-- Name: organization_join_requests organization_join_requests_organization_id_user_id_key; Type: CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.organization_join_requests
+    ADD CONSTRAINT organization_join_requests_organization_id_user_id_key UNIQUE (organization_id, user_id);
+
+
+--
+-- Name: organization_join_requests organization_join_requests_pkey; Type: CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.organization_join_requests
+    ADD CONSTRAINT organization_join_requests_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: organization_memberships organization_memberships_organization_id_user_id_key; Type: CONSTRAINT; Schema: app_public; Owner: -
 --
 
@@ -2271,10 +2385,31 @@ CREATE INDEX organization_invitations_user_id_idx ON app_public.organization_inv
 
 
 --
+-- Name: organization_join_requests_organization_id_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX organization_join_requests_organization_id_idx ON app_public.organization_join_requests USING btree (organization_id);
+
+
+--
+-- Name: organization_join_requests_user_id_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX organization_join_requests_user_id_idx ON app_public.organization_join_requests USING btree (user_id);
+
+
+--
 -- Name: organization_memberships_user_id_idx; Type: INDEX; Schema: app_public; Owner: -
 --
 
 CREATE INDEX organization_memberships_user_id_idx ON app_public.organization_memberships USING btree (user_id);
+
+
+--
+-- Name: organizations_is_public_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX organizations_is_public_idx ON app_public.organizations USING btree (is_public);
 
 
 --
@@ -2432,6 +2567,13 @@ CREATE TRIGGER _500_send_email AFTER INSERT ON app_public.organization_invitatio
 
 
 --
+-- Name: organization_join_requests _500_send_email; Type: TRIGGER; Schema: app_public; Owner: -
+--
+
+CREATE TRIGGER _500_send_email AFTER INSERT ON app_public.organization_join_requests FOR EACH ROW EXECUTE FUNCTION app_private.tg__add_job('organization_join_requests__send_request');
+
+
+--
 -- Name: user_emails _500_verify_account_on_verified; Type: TRIGGER; Schema: app_public; Owner: -
 --
 
@@ -2507,6 +2649,22 @@ ALTER TABLE ONLY app_public.organization_invitations
 
 ALTER TABLE ONLY app_public.organization_invitations
     ADD CONSTRAINT organization_invitations_user_id_fkey FOREIGN KEY (user_id) REFERENCES app_public.users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: organization_join_requests organization_join_requests_organization_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.organization_join_requests
+    ADD CONSTRAINT organization_join_requests_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES app_public.organizations(id) ON DELETE CASCADE;
+
+
+--
+-- Name: organization_join_requests organization_join_requests_user_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.organization_join_requests
+    ADD CONSTRAINT organization_join_requests_user_id_fkey FOREIGN KEY (user_id) REFERENCES app_public.users(id) ON DELETE CASCADE;
 
 
 --
@@ -2635,6 +2793,12 @@ ALTER TABLE app_public.medias ENABLE ROW LEVEL SECURITY;
 ALTER TABLE app_public.organization_invitations ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: organization_join_requests; Type: ROW SECURITY; Schema: app_public; Owner: -
+--
+
+ALTER TABLE app_public.organization_join_requests ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: organization_memberships; Type: ROW SECURITY; Schema: app_public; Owner: -
 --
 
@@ -2688,6 +2852,13 @@ CREATE POLICY select_member ON app_public.organizations FOR SELECT USING ((id IN
 
 
 --
+-- Name: organization_join_requests select_organization; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY select_organization ON app_public.organization_join_requests FOR SELECT USING ((organization_id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids)));
+
+
+--
 -- Name: medias select_own; Type: POLICY; Schema: app_public; Owner: -
 --
 
@@ -2713,6 +2884,13 @@ CREATE POLICY select_own ON app_public.user_authentications FOR SELECT USING ((u
 --
 
 CREATE POLICY select_own ON app_public.user_emails FOR SELECT USING ((user_id = app_public.current_user_id()));
+
+
+--
+-- Name: organizations select_public; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY select_public ON app_public.organizations FOR SELECT USING ((is_public IS TRUE));
 
 
 --
@@ -2885,6 +3063,14 @@ GRANT ALL ON FUNCTION app_public.accept_invitation_to_organization(invitation_id
 
 
 --
+-- Name: FUNCTION accept_join_request_to_organization(request_id uuid); Type: ACL; Schema: app_public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_public.accept_join_request_to_organization(request_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION app_public.accept_join_request_to_organization(request_id uuid) TO theopenpresenter_visitor;
+
+
+--
 -- Name: FUNCTION change_password(old_password text, new_password text); Type: ACL; Schema: app_public; Owner: -
 --
 
@@ -3048,6 +3234,14 @@ GRANT ALL ON FUNCTION app_public.organizations_current_user_is_owner(org app_pub
 
 
 --
+-- Name: FUNCTION organizations_public_search(search_string text); Type: ACL; Schema: app_public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_public.organizations_public_search(search_string text) FROM PUBLIC;
+GRANT ALL ON FUNCTION app_public.organizations_public_search(search_string text) TO theopenpresenter_visitor;
+
+
+--
 -- Name: FUNCTION remove_from_organization(organization_id uuid, user_id uuid); Type: ACL; Schema: app_public; Owner: -
 --
 
@@ -3061,6 +3255,14 @@ GRANT ALL ON FUNCTION app_public.remove_from_organization(organization_id uuid, 
 
 REVOKE ALL ON FUNCTION app_public.request_account_deletion() FROM PUBLIC;
 GRANT ALL ON FUNCTION app_public.request_account_deletion() TO theopenpresenter_visitor;
+
+
+--
+-- Name: FUNCTION request_join_to_organization(organization_id uuid); Type: ACL; Schema: app_public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_public.request_join_to_organization(organization_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION app_public.request_join_to_organization(organization_id uuid) TO theopenpresenter_visitor;
 
 
 --
@@ -3194,6 +3396,13 @@ GRANT ALL ON FUNCTION public.uuid_v7_to_timestamptz(uuid) TO theopenpresenter_vi
 --
 
 GRANT SELECT ON TABLE app_public.medias TO theopenpresenter_visitor;
+
+
+--
+-- Name: TABLE organization_join_requests; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT SELECT ON TABLE app_public.organization_join_requests TO theopenpresenter_visitor;
 
 
 --
