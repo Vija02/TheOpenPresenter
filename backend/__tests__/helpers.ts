@@ -14,7 +14,7 @@ export type User = {
   _password?: string;
   _email?: string;
 };
-export type Organization = { id: string; name: string };
+export type Organization = { id: string; name: string; slug: string };
 
 // Make sure we release those pgPools so that our tests exit!
 afterAll(async () => {

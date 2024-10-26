@@ -1,11 +1,8 @@
 import { PoolClient } from "pg";
 import { expect, it } from "vitest";
 
-
-
 import { snapshotSafe, withRootDb } from "../../helpers";
 import { reallyCreateUser } from "./really_create_user.test";
-
 
 export async function login(
   client: PoolClient,
