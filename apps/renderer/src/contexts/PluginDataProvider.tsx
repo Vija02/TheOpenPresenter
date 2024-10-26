@@ -133,6 +133,9 @@ const initializeHocuspocusProvider = (
       name: projectId,
       // Here only to force authentication
       token: " ",
+      onAuthenticationFailed: () => {
+        reject(new Error("Authentication Failed"));
+      },
     });
 
     // Set a timeout to reject if we can't connect
@@ -140,8 +143,8 @@ const initializeHocuspocusProvider = (
     // So this is an effort to at least show an error if that happens
     // https://github.com/ueberdosis/hocuspocus/issues/762
     const timeout = setTimeout(() => {
-      reject();
-    }, 5000);
+      reject(new Error("Unable to connect: Timeout reached"));
+    }, 60000);
 
     const uaData = uaParser();
 
