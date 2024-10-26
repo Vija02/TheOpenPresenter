@@ -31,6 +31,7 @@ export const init = (serverPluginApi: ServerPluginApi) => {
   serverPluginApi.serveStatic(pluginName, "out");
 
   serverPluginApi.loadJsOnRemoteView(pluginName, `${pluginName}-remote.es.js`);
+  serverPluginApi.loadCssOnRemoteView(pluginName, `style.css`);
   serverPluginApi.registerRemoteViewWebComponent(
     pluginName,
     remoteWebComponentTag,

@@ -1,5 +1,6 @@
 import {
   Button,
+  FormLabel,
   Modal,
   ModalBody,
   ModalCloseButton,
@@ -8,12 +9,13 @@ import {
   ModalHeader,
   ModalOverlay,
   ModalProps,
+  Stack,
   VStack,
 } from "@chakra-ui/react";
 import { OverlayToggleComponentProps } from "@repo/ui";
 import { Form, Formik } from "formik";
 import { SelectControl, SubmitButton } from "formik-chakra-ui";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { toFormikValidationSchema } from "zod-formik-adapter";
 
 import {
@@ -24,6 +26,7 @@ import {
 } from "../../../src/types";
 import { usePluginAPI } from "../../pluginApi";
 import { processSongCache } from "../../songHelpers";
+import TextareaControl from "./TextareaControl";
 
 export type MWLRemoteEditSongModalPropTypes = Omit<
   ModalProps,
@@ -43,7 +46,10 @@ const MWLRemoteEditSongModal = ({
   const mutableRendererData = pluginApi.renderer.useValtioData();
 
   const handleSubmit = useCallback(
-    (data: SongSetting) => {
+    ({
+      modifiedContent,
+      ...data
+    }: SongSetting & { modifiedContent: string }) => {
       const index = mutableSceneData.pluginData.songs.findIndex(
         (x) => x.id === song.id,
       );
@@ -57,10 +63,12 @@ const MWLRemoteEditSongModal = ({
         mutableRendererData.songId === song.id
       ) {
         mutableRendererData.heading =
-          Object.keys(processSongCache(song.cachedData))[0] ?? "";
+          Object.keys(processSongCache(song))[0] ?? "";
       }
 
       mutableSceneData.pluginData.songs[index]!.setting = data;
+      mutableSceneData.pluginData.songs[index]!.modifiedContent =
+        modifiedContent;
 
       resetData?.();
       onToggle?.();
@@ -71,9 +79,24 @@ const MWLRemoteEditSongModal = ({
       mutableSceneData.pluginData.songs,
       onToggle,
       resetData,
-      song.cachedData,
-      song.id,
+      song,
     ],
+  );
+
+  const originalContent = useMemo(
+    () => (song.cachedData?.content ?? "").split("<br>").join("\n"),
+    [song.cachedData?.content],
+  );
+  const modifiedContent = useMemo(
+    () =>
+      song.modifiedContent
+        ? song.modifiedContent.split("<br>").join("\n")
+        : undefined,
+    [song.modifiedContent],
+  );
+  const content = useMemo(
+    () => modifiedContent ?? originalContent,
+    [modifiedContent, originalContent],
   );
 
   return (
@@ -81,15 +104,19 @@ const MWLRemoteEditSongModal = ({
       size="xl"
       isOpen={isOpen ?? false}
       onClose={onToggle ?? (() => {})}
+      scrollBehavior="inside"
       {...props}
     >
       <ModalOverlay />
       <Formik
-        initialValues={song.setting}
+        initialValues={{
+          ...song.setting,
+          modifiedContent: content,
+        }}
         validationSchema={toFormikValidationSchema(slideStyleValidator)}
         onSubmit={handleSubmit}
       >
-        {({ handleSubmit }) => (
+        {({ handleSubmit, values, setFieldValue }) => (
           <Form onSubmit={handleSubmit as any}>
             <ModalContent>
               <ModalHeader>Edit song "{song.cachedData?.title}"</ModalHeader>
@@ -105,6 +132,26 @@ const MWLRemoteEditSongModal = ({
                       ),
                     )}
                   </SelectControl>
+
+                  <Stack
+                    direction="row"
+                    alignItems="center"
+                    justifyContent="space-between"
+                    width="100%"
+                  >
+                    <FormLabel mb={0}>Content</FormLabel>
+                    {values.modifiedContent !== originalContent && (
+                      <Button
+                        size="xs"
+                        onClick={() => {
+                          setFieldValue("modifiedContent", originalContent);
+                        }}
+                      >
+                        Reset
+                      </Button>
+                    )}
+                  </Stack>
+                  <TextareaControl name="modifiedContent" />
                 </VStack>
               </ModalBody>
               <ModalFooter>

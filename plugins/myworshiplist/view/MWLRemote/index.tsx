@@ -1,6 +1,7 @@
 import { usePluginAPI } from "../pluginApi";
 import MWLLanding from "./MWLLanding";
 import MWLRemote from "./MWLRemote";
+import "./index.css";
 
 const MWLRemoteIndex = () => {
   const pluginApi = usePluginAPI();

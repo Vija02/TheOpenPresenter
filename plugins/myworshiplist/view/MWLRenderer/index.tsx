@@ -38,8 +38,7 @@ const MWLFullSongRenderer = ({ song }: { song: Song }) => {
   const pluginApi = usePluginAPI();
   const slideStyle = pluginApi.scene.useData((x) => x.pluginData.style);
 
-  const songCache = useMemo(() => song.cachedData, [song.cachedData]);
-  const groupedData = useMemo(() => processSongCache(songCache), [songCache]);
+  const groupedData = useMemo(() => processSongCache(song), [song]);
 
   return (
     <MWLFullSongRenderView
@@ -60,7 +59,7 @@ const MWLSectionsRenderer = ({
   const slideStyle = pluginApi.scene.useData((x) => x.pluginData.style);
 
   const songCache = useMemo(() => song.cachedData, [song.cachedData]);
-  const groupedData = useMemo(() => processSongCache(songCache), [songCache]);
+  const groupedData = useMemo(() => processSongCache(song), [song]);
 
   if (!songCache) {
     return null;
