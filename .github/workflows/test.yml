@@ -46,7 +46,7 @@ jobs:
       - name: yarn, lint, build and test
         run: |
           cp .env.ci .env
-          yarn --immutable
+          yarn
           CONFIRM_DROP=1 yarn setup
           yarn build
           yarn test
