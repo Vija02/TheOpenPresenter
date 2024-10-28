@@ -160,7 +160,7 @@ const CreateOrganizationPage: NextPage = () => {
         </Box>
         <Box mt={{ base: 10, md: 0 }}>
           <Heading>FAQ</Heading>
-          <Accordion defaultIndex={[0]} allowMultiple allowToggle>
+          <Accordion defaultIndex={[0]} allowMultiple>
             <AccordionItem>
               <h2>
                 <AccordionButton>
