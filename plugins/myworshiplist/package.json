@@ -48,7 +48,7 @@
     "@repo/prettier-config": "*",
     "@repo/typescript-config": "*",
     "@vitejs/plugin-react-swc": "^3.7.1",
-    "eslint": "^8.57.0",
+    "eslint": "^8.57.1",
     "pkgroll": "^2.5.1",
     "vite": "5.3.5"
   }

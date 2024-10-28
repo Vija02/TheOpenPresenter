@@ -24,7 +24,7 @@
     "html-to-text": "^9.0.5",
     "lodash": "^4.17.21",
     "mjml": "^4.15.3",
-    "nodemailer": "^6.9.15",
+    "nodemailer": "^6.9.16",
     "tslib": "^2.8.0"
   },
   "devDependencies": {
