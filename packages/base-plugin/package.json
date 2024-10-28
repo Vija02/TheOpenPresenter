@@ -42,7 +42,7 @@
     "@hocuspocus/server": "2.13.5",
     "@repo/lib": "*",
     "@trpc/server": "^11.0.0-rc.593",
-    "@types/express": "^4.17.21",
+    "@types/express": "^5.0.0",
     "@types/react": "npm:types-react@rc",
     "@types/ua-parser-js": "^0.7.39",
     "express": "^4.21.1",

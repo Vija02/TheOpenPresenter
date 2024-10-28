@@ -36,7 +36,7 @@
     "zxcvbn": "^4.4.2"
   },
   "devDependencies": {
-    "@pandacss/dev": "^0.41.0",
+    "@pandacss/dev": "^0.47.0",
     "@repo/eslint-config": "*",
     "@repo/prettier-config": "*",
     "@repo/typescript-config": "*",
