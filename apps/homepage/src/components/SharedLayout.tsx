@@ -1,5 +1,5 @@
 import { ApolloError, QueryResult } from "@apollo/client";
-import { Button, HStack, Link, Wrap } from "@chakra-ui/react";
+import { Button, HStack, Link } from "@chakra-ui/react";
 import {
   SharedLayout_QueryFragment,
   SharedLayout_UserFragment,
@@ -132,8 +132,8 @@ export function SharedLayout({
         overrideTitle={overrideTitle}
         noFooter={noFooter}
         navbarRight={
-          <Wrap>
-            <HStack spacing={6}>
+          <HStack wrap="wrap">
+            <HStack gap={6}>
               <Link as={NextLink} href={`/login`} variant="linkButton">
                 <Button size="sm" variant="link" data-cy="header-login-button">
                   Sign in
@@ -149,7 +149,7 @@ export function SharedLayout({
                 </Button>
               </Link>
             </HStack>
-          </Wrap>
+          </HStack>
         }
       >
         {renderChildren({

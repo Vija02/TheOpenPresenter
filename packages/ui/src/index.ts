@@ -1,4 +1,5 @@
 export * from "./ClientOnly";
+export * as Chakra from "./Chakra";
 export * from "./DateDisplay";
 export * from "./DeferredLoad";
 export * from "./Error";

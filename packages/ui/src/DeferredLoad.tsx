@@ -1,4 +1,4 @@
-import { Fade } from "@chakra-ui/react";
+import { Box } from "@chakra-ui/react";
 import React, { useEffect, useState } from "react";
 
 type PropTypes = { durationMs?: number; children?: React.ReactNode };
@@ -16,5 +16,5 @@ export function DeferredLoad({ durationMs = 1500, children }: PropTypes) {
     };
   }, [durationMs]);
 
-  return <Fade in={showItem}>{children}</Fade>;
+  return <Box animation={showItem ? "fade-in" : "fade-out"}>{children}</Box>;
 }

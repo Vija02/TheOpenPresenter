@@ -13,9 +13,8 @@
     "dev": "concurrently \"pkgroll --watch\" \"vite build --watch\""
   },
   "dependencies": {
-    "@chakra-ui/react": "^2.8.2",
-    "@emotion/react": "^11.13.0",
-    "@emotion/styled": "^11.13.0",
+    "@chakra-ui/react": "^3.0.1",
+    "@emotion/react": "^11.13.3",
     "@r2wc/react-to-web-component": "^2.0.3",
     "@repo/base-plugin": "*",
     "@repo/ui": "*",
@@ -27,7 +26,6 @@
     "@types/react": "npm:types-react@rc",
     "@types/react-dom": "npm:types-react-dom@rc",
     "date-fns": "^4.1.0",
-    "framer-motion": "^11.11.10",
     "lodash-es": "^4.17.21",
     "react": "rc",
     "react-dom": "rc",

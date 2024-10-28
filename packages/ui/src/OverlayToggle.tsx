@@ -1,13 +1,13 @@
-import { ModalProps, useDisclosure } from "@chakra-ui/react";
+import { DialogRootProps, useDisclosure } from "@chakra-ui/react";
 import { cloneElement, useCallback, useState } from "react";
 
 /**
  * This is the minimum props the overlay component needs to have
  */
 export type OverlayToggleComponentProps = {
-  isOpen: ModalProps["isOpen"];
+  open: DialogRootProps["open"];
 
-  /** Function to call from modal component to toggle `isOpen` */
+  /** Function to call from modal component to toggle `open` */
   onToggle?: () => void;
 
   /** Function to remount the modal component */
@@ -31,13 +31,13 @@ export type OverlayTogglePropTypes = {
 
 /**
  * This component lets us render a overlay component alongside a custom toggler
- * Doing this offloads the `isOpen` state to this component, reducing unnecessary re-renders
+ * Doing this offloads the `open` state to this component, reducing unnecessary re-renders
  */
 export const OverlayToggle = ({
   toggler,
   children,
 }: OverlayTogglePropTypes) => {
-  const { isOpen, onToggle, onOpen } = useDisclosure();
+  const { open, onToggle, onOpen } = useDisclosure();
   const [key, setKey] = useState(0);
 
   const resetData = useCallback(() => {
@@ -49,7 +49,7 @@ export const OverlayToggle = ({
       {toggler({ onOpen, onToggle })}
       {cloneElement(children, {
         key,
-        isOpen,
+        open,
         onToggle,
         resetData,
       })}

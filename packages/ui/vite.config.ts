@@ -20,8 +20,8 @@ export default defineConfig({
       external: [
         "react",
         "react-dom",
+        "@zag-js",
         "@emotion/react",
-        "@emotion/styled",
         "react/jsx-runtime",
       ],
       input: Object.fromEntries(

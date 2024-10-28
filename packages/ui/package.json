@@ -17,7 +17,7 @@
     "lint": "eslint . --max-warnings 0"
   },
   "dependencies": {
-    "@chakra-ui/react": "^2.8.2",
+    "@chakra-ui/react": "^3.0.1",
     "@repo/graphql": "*",
     "@types/react": "npm:types-react@rc",
     "react": "rc",

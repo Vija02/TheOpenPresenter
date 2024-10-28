@@ -1,4 +1,4 @@
-import { Box, Button, Divider, Link, Stack, Text } from "@chakra-ui/react";
+import { Box, Button, Link, Separator, Stack, Text } from "@chakra-ui/react";
 import { OverlayToggle } from "@repo/ui";
 import { sortBy } from "lodash-es";
 import { VscAdd, VscArrowLeft, VscLinkExternal } from "react-icons/vsc";
@@ -26,7 +26,7 @@ const SidebarMobile = () => {
         >
           <VscArrowLeft fontSize={20} />
         </Link>
-        <Divider />
+        <Separator />
         {sortBy(Object.entries(data.data), ([, value]) => value.order).map(
           ([id, value]) => (
             <Box
@@ -72,7 +72,11 @@ const SidebarMobile = () => {
           >
             <SidebarAddSceneModal />
           </OverlayToggle>
-          <Link href={`/render/${orgSlug}/${projectSlug}`} isExternal>
+          <Link
+            href={`/render/${orgSlug}/${projectSlug}`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             <Button w="100%" variant="outline">
               <VscLinkExternal />
             </Button>

@@ -13,9 +13,8 @@
     "dev": "concurrently \"pkgroll --watch\" \"vite build --watch\""
   },
   "dependencies": {
-    "@chakra-ui/react": "^2.8.2",
-    "@emotion/react": "^11.13.0",
-    "@emotion/styled": "^11.13.0",
+    "@chakra-ui/react": "^3.0.1",
+    "@emotion/react": "^11.13.3",
     "@r2wc/react-to-web-component": "^2.0.3",
     "@react-hook/size": "^2.1.2",
     "@repo/base-plugin": "*",
@@ -30,7 +29,6 @@
     "axios": "^1.7.7",
     "formik": "^2.4.6",
     "formik-chakra-ui": "^1.6.1",
-    "framer-motion": "^11.11.10",
     "lodash-es": "^4.17.21",
     "ohash": "^1.1.4",
     "react": "rc",

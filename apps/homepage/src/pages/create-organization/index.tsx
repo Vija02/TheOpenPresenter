@@ -1,23 +1,7 @@
 import { Redirect } from "@/components/Redirect";
 import { AuthRestrict, SharedLayout } from "@/components/SharedLayout";
 import { ApolloError } from "@apollo/client";
-import {
-  Accordion,
-  AccordionButton,
-  AccordionIcon,
-  AccordionItem,
-  AccordionPanel,
-  Alert,
-  AlertDescription,
-  AlertIcon,
-  AlertTitle,
-  Box,
-  Button,
-  Heading,
-  Stack,
-  Text,
-  VStack,
-} from "@chakra-ui/react";
+import { Box, Button, Heading, Stack, Text, VStack } from "@chakra-ui/react";
 import {
   CreatedOrganizationFragment,
   useCreateOrganizationMutation,
@@ -25,6 +9,7 @@ import {
   useSharedQuery,
 } from "@repo/graphql";
 import { extractError, getCodeFromError } from "@repo/lib";
+import { Chakra } from "@repo/ui";
 import { Form, Formik, useFormikContext } from "formik";
 import { InputControl, SubmitButton } from "formik-chakra-ui";
 import { NextPage } from "next";
@@ -114,30 +99,25 @@ const CreateOrganizationPage: NextPage = () => {
                   <SlugCheck />
 
                   {error ? (
-                    <Alert status="error">
-                      <AlertIcon />
-                      <Box flex="1">
-                        <AlertTitle mr={2}>
-                          Error: Failed to create organization
-                        </AlertTitle>
-                        <AlertDescription display="block">
-                          {code === "NUNIQ" ? (
-                            <span data-cy="createorganization-alert-nuniq">
-                              That organization name is already in use, please
-                              choose a different organization name.
-                            </span>
-                          ) : (
-                            extractError(error).message
-                          )}
-                          {code ? (
-                            <span>
-                              {" "}
-                              (Error code: <code>ERR_{code}</code>)
-                            </span>
-                          ) : null}
-                        </AlertDescription>
-                      </Box>
-                    </Alert>
+                    <Chakra.Alert
+                      status="error"
+                      title="Error: Failed to create organization"
+                    >
+                      {code === "NUNIQ" ? (
+                        <span data-cy="createorganization-alert-nuniq">
+                          That organization name is already in use, please
+                          choose a different organization name.
+                        </span>
+                      ) : (
+                        extractError(error).message
+                      )}
+                      {code ? (
+                        <span>
+                          {" "}
+                          (Error code: <code>ERR_{code}</code>)
+                        </span>
+                      ) : null}
+                    </Chakra.Alert>
                   ) : null}
 
                   <Stack direction="row" alignItems="center">
@@ -160,17 +140,16 @@ const CreateOrganizationPage: NextPage = () => {
         </Box>
         <Box mt={{ base: 10, md: 0 }}>
           <Heading>FAQ</Heading>
-          <Accordion defaultIndex={[0]} allowMultiple>
-            <AccordionItem>
+          <Chakra.AccordionRoot defaultIndex={[0]} allowMultiple>
+            <Chakra.AccordionItem>
               <h2>
-                <AccordionButton>
+                <Chakra.AccordionItemTrigger>
                   <Box as="span" flex="1" textAlign="left">
                     Why do I need to create an organization?
                   </Box>
-                  <AccordionIcon />
-                </AccordionButton>
+                </Chakra.AccordionItemTrigger>
               </h2>
-              <AccordionPanel pb={4}>
+              <Chakra.AccordionItemContent pb={4}>
                 Every project/presentation in TheOpenPresenter lives within an
                 organization. It's mostly used to group your projects together
                 in a way that makes sense.
@@ -178,19 +157,18 @@ const CreateOrganizationPage: NextPage = () => {
                 <br />
                 You can change the details of an organization after its
                 creation, so don't worry about getting it right the first time.
-              </AccordionPanel>
-            </AccordionItem>
+              </Chakra.AccordionItemContent>
+            </Chakra.AccordionItem>
 
-            <AccordionItem>
+            <Chakra.AccordionItem>
               <h2>
-                <AccordionButton>
+                <Chakra.AccordionItemTrigger>
                   <Box as="span" flex="1" textAlign="left">
                     How can I join an existing organization?
                   </Box>
-                  <AccordionIcon />
-                </AccordionButton>
+                </Chakra.AccordionItemTrigger>
               </h2>
-              <AccordionPanel pb={4}>
+              <Chakra.AccordionItemContent pb={4}>
                 If you are working with an existing organization, you probably
                 want to join their organization before starting. This will allow
                 you to access all existing and newly created projects.
@@ -201,9 +179,9 @@ const CreateOrganizationPage: NextPage = () => {
                 clicking on the "Join an existing organization" button.
                 <br />
                 Note: You can only do this for public organizations.
-              </AccordionPanel>
-            </AccordionItem>
-          </Accordion>
+              </Chakra.AccordionItemContent>
+            </Chakra.AccordionItem>
+          </Chakra.AccordionRoot>
         </Box>
       </Box>
     </SharedLayout>

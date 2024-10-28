@@ -1,4 +1,6 @@
-import { Progress, Text, VStack } from "@chakra-ui/react";
+import { Text, VStack } from "@chakra-ui/react";
+
+import { ProgressBar, ProgressRoot } from "./Chakra/progress";
 
 export interface PasswordStrengthProps {
   passwordStrength: number;
@@ -42,11 +44,13 @@ export function PasswordStrength({
           You can proceed. However, we recommend choosing a stronger password.
         </Text>
       )}
-      <Progress
+      <ProgressRoot
         w="100%"
         value={strengthToPercent(passwordStrength)}
-        colorScheme={passwordStrength < 2 ? "red" : "green"}
-      />
+        colorPalette={passwordStrength < 2 ? "red" : "green"}
+      >
+        <ProgressBar />
+      </ProgressRoot>
       {passwordStrength < 2 && content}
     </VStack>
   );

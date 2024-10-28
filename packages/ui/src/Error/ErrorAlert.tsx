@@ -1,7 +1,4 @@
 import {
-  Alert,
-  AlertDescription,
-  AlertIcon,
   Box,
   Button,
   Heading,
@@ -11,6 +8,8 @@ import {
   VStack,
 } from "@chakra-ui/react";
 import { VscSync } from "react-icons/vsc";
+
+import { Alert } from "../Chakra";
 
 export interface ErrorAlertProps {
   error: Error;
@@ -32,8 +31,8 @@ export function ErrorAlert({ error }: ErrorAlertProps) {
           size="md"
           onClick={() => window.location.reload()}
           colorScheme="blue"
-          leftIcon={<VscSync />}
         >
+          <VscSync />
           Refresh page
         </Button>
       </VStack>
@@ -51,8 +50,7 @@ export function ErrorAlert({ error }: ErrorAlertProps) {
       <Box pb={3} />
       {!!error && (
         <Alert status="error" maxW="2xl">
-          <AlertIcon />
-          <AlertDescription display="block">{error?.message}</AlertDescription>
+          {error?.message}
         </Alert>
       )}
     </VStack>

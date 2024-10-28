@@ -3,8 +3,8 @@ import {
   AvatarGroup,
   Box,
   Button,
-  Divider,
   Link,
+  Separator,
   Stack,
   Text,
 } from "@chakra-ui/react";
@@ -41,7 +41,7 @@ const SidebarWeb = () => {
             >
               <VscArrowLeft fontSize={20} /> Back to Projects
             </Link>
-            <Divider />
+            <Separator />
             {sortBy(Object.entries(data.data), ([, value]) => value.order).map(
               ([id, value]) => (
                 <Box
@@ -69,7 +69,11 @@ const SidebarWeb = () => {
               >
                 <SidebarAddSceneModal />
               </OverlayToggle>
-              <Link href={`/render/${orgSlug}/${projectSlug}`} isExternal>
+              <Link
+                href={`/render/${orgSlug}/${projectSlug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 <Button w="100%" variant="outline">
                   Open Renderer
                 </Button>
