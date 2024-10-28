@@ -20,25 +20,25 @@
     "@repo/base-plugin": "*",
     "@repo/ui": "*",
     "@tanstack/react-query": "^5.51.1",
-    "@trpc/client": "^11.0.0-rc.553",
-    "@trpc/react-query": "^11.0.0-rc.553",
-    "@trpc/server": "^11.0.0-rc.553",
+    "@trpc/client": "^11.0.0-rc.593",
+    "@trpc/react-query": "^11.0.0-rc.593",
+    "@trpc/server": "^11.0.0-rc.593",
     "@types/react": "npm:types-react@rc",
     "@types/react-dom": "npm:types-react-dom@rc",
     "framer-motion": "^11.3.8",
     "react": "rc",
     "react-dom": "rc",
-    "valtio": "^2.0.0",
+    "valtio": "^2.1.1",
     "valtio-yjs": "^0.6.0",
-    "yjs": "^13.6.18"
+    "yjs": "^13.6.20"
   },
   "devDependencies": {
     "@repo/eslint-config": "*",
     "@repo/prettier-config": "*",
     "@repo/typescript-config": "*",
-    "@vitejs/plugin-react-swc": "^3.7.0",
+    "@vitejs/plugin-react-swc": "^3.7.1",
     "eslint": "^8.57.0",
-    "pkgroll": "^2.5.0",
-    "vite": "^5.3.5"
+    "pkgroll": "^2.5.1",
+    "vite": "5.3.5"
   }
 }
