@@ -14,7 +14,7 @@
     "@graphile-contrib/pg-simplify-inflector": "^6.1.0",
     "@graphile/pg-pubsub": "^4.14.0",
     "@graphile/pro": "^1.0.4",
-    "@hocuspocus/server": "2.13.5",
+    "@hocuspocus/server": "2.13.7",
     "@repo/backend-shared": "*",
     "@repo/base-plugin": "*",
     "@repo/config": "*",
