@@ -9,7 +9,7 @@
     "dev": "tsc -b --watch --preserveWatchOutput"
   },
   "dependencies": {
-    "dotenv": "^16.0.3"
+    "dotenv": "^16.4.5"
   },
   "devDependencies": {
     "@repo/typescript-config": "*",

@@ -26,10 +26,10 @@
     "worker": "yarn workspace @repo/worker"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2",
+    "concurrently": "^9.0.1",
     "nodemon": "^3.1.7",
     "patch-package": "^8.0.0",
-    "prettier": "^3.2.5",
+    "prettier": "^3.3.3",
     "turbo": "^2.2.3",
     "typescript": "5.5.3",
     "vitest": "^2.1.3"

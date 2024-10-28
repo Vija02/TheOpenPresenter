@@ -31,7 +31,7 @@
     "@uppy/react": "^4.0.2",
     "@uppy/status-bar": "^4.0.3",
     "@uppy/xhr-upload": "^4.2.1",
-    "framer-motion": "^11.3.8",
+    "framer-motion": "^11.11.10",
     "react": "rc",
     "react-dom": "rc",
     "yjs": "^13.6.20"

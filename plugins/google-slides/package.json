@@ -30,7 +30,7 @@
     "@types/react": "npm:types-react@rc",
     "@types/react-dom": "npm:types-react-dom@rc",
     "axios": "^1.7.7",
-    "framer-motion": "^11.3.8",
+    "framer-motion": "^11.11.10",
     "http-proxy-middleware": "^3.0.3",
     "react": "rc",
     "react-dom": "rc",

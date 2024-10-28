@@ -18,8 +18,8 @@
     "@types/lodash": "^4.17.12",
     "@types/mjml": "^4.7.4",
     "@types/nodemailer": "^6.4.16",
-    "aws-sdk": "^2.1325.0",
-    "concurrently": "^8.2.2",
+    "aws-sdk": "^2.1691.0",
+    "concurrently": "^9.0.1",
     "graphile-worker": "^0.16.6",
     "html-to-text": "^9.0.5",
     "lodash": "^4.17.21",
@@ -28,6 +28,6 @@
     "tslib": "^2.8.0"
   },
   "devDependencies": {
-    "mkdirp": "^2.1.6"
+    "mkdirp": "^3.0.1"
   }
 }

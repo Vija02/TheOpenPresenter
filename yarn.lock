@@ -1077,7 +1077,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/runtime@npm:^7.0.0, @babel/runtime@npm:^7.12.13, @babel/runtime@npm:^7.12.5, @babel/runtime@npm:^7.18.3, @babel/runtime@npm:^7.21.0, @babel/runtime@npm:^7.23.9":
+"@babel/runtime@npm:^7.0.0, @babel/runtime@npm:^7.12.13, @babel/runtime@npm:^7.12.5, @babel/runtime@npm:^7.18.3, @babel/runtime@npm:^7.23.9":
   version: 7.24.7
   resolution: "@babel/runtime@npm:7.24.7"
   dependencies:
@@ -5101,7 +5101,7 @@ __metadata:
   dependencies:
     "@repo/typescript-config": "npm:*"
     "@types/node": "npm:^22.3.0"
-    dotenv: "npm:^16.0.3"
+    dotenv: "npm:^16.4.5"
     typescript: "npm:5.5.3"
   languageName: unknown
   linkType: soft
@@ -5178,7 +5178,7 @@ __metadata:
     eslint: "npm:^8"
     formik: "npm:^2.4.6"
     formik-chakra-ui: "npm:^1.6.1"
-    framer-motion: "npm:^11.3.28"
+    framer-motion: "npm:^11.11.10"
     next: "npm:14.2.16"
     next-themes: "npm:^0.3.0"
     next-with-apollo: "npm:^5.3.0"
@@ -5236,9 +5236,9 @@ __metadata:
     "@types/react": "npm:types-react@rc"
     "@types/react-dom": "npm:types-react-dom@rc"
     "@vitejs/plugin-react-swc": "npm:^3.7.1"
-    date-fns: "npm:^3.6.0"
+    date-fns: "npm:^4.1.0"
     eslint: "npm:^8.57.0"
-    framer-motion: "npm:^11.3.8"
+    framer-motion: "npm:^11.11.10"
     lodash-es: "npm:^4.17.21"
     pkgroll: "npm:^2.5.1"
     react: "npm:rc"
@@ -5280,7 +5280,7 @@ __metadata:
     "@vitejs/plugin-react-swc": "npm:^3.7.1"
     axios: "npm:^1.7.7"
     eslint: "npm:^8.57.0"
-    framer-motion: "npm:^11.3.8"
+    framer-motion: "npm:^11.11.10"
     http-proxy-middleware: "npm:^3.0.3"
     pkgroll: "npm:^2.5.1"
     react: "npm:rc"
@@ -5319,7 +5319,7 @@ __metadata:
     eslint: "npm:^8.57.0"
     formik: "npm:^2.4.6"
     formik-chakra-ui: "npm:^1.6.1"
-    framer-motion: "npm:^11.3.8"
+    framer-motion: "npm:^11.11.10"
     lodash-es: "npm:^4.17.21"
     ohash: "npm:^1.1.4"
     pkgroll: "npm:^2.5.1"
@@ -5357,7 +5357,7 @@ __metadata:
     "@types/react-dom": "npm:types-react-dom@rc"
     "@vitejs/plugin-react-swc": "npm:^3.7.1"
     eslint: "npm:^8.57.0"
-    framer-motion: "npm:^11.3.8"
+    framer-motion: "npm:^11.11.10"
     pkgroll: "npm:^2.5.1"
     react: "npm:rc"
     react-dom: "npm:rc"
@@ -5395,7 +5395,7 @@ __metadata:
     "@uppy/xhr-upload": "npm:^4.2.1"
     "@vitejs/plugin-react-swc": "npm:^3.7.1"
     eslint: "npm:^8.57.0"
-    framer-motion: "npm:^11.3.8"
+    framer-motion: "npm:^11.11.10"
     pkgroll: "npm:^2.5.1"
     react: "npm:rc"
     react-dom: "npm:rc"
@@ -5427,7 +5427,7 @@ __metadata:
     "@vitejs/plugin-react-swc": "npm:^3.7.1"
     can-autoplay: "npm:^3.0.2"
     eslint: "npm:^8.57.0"
-    framer-motion: "npm:^11.3.8"
+    framer-motion: "npm:^11.11.10"
     pkgroll: "npm:^2.5.1"
     react: "npm:rc"
     react-dom: "npm:rc"
@@ -5476,18 +5476,17 @@ __metadata:
     "@types/react-dom": "npm:types-react-dom@rc"
     "@types/react-resizable": "npm:^3.0.8"
     "@types/ua-parser-js": "npm:^0.7.39"
-    "@types/uuid": "npm:^10.0.0"
     "@typescript-eslint/parser": "npm:^7.13.1"
     "@vitejs/plugin-react-swc": "npm:^3.7.1"
     eslint: "npm:^8.57.0"
     fast-deep-equal: "npm:^3.1.3"
-    framer-motion: "npm:^11.2.12"
+    framer-motion: "npm:^11.11.10"
     graphql: "npm:^15.9.0"
     graphql-ws: "npm:^5.16.0"
     lodash-es: "npm:^4.17.21"
     react: "npm:rc"
     react-dom: "npm:rc"
-    react-error-boundary: "npm:^4.0.13"
+    react-error-boundary: "npm:^4.1.2"
     react-icons: "npm:^5.3.0"
     react-resizable: "npm:^3.0.5"
     react-toastify: "npm:^10.0.6"
@@ -5495,7 +5494,7 @@ __metadata:
     typeid-js: "npm:^1.1.0"
     typescript: "npm:5.5.3"
     ua-parser-js: "npm:^1.0.39"
-    uuid: "npm:^10.0.0"
+    uuid: "npm:^11.0.1"
     valtio: "npm:^2.1.1"
     valtio-yjs: "npm:^0.6.0"
     vite: "npm:5.3.5"
@@ -5526,22 +5525,21 @@ __metadata:
     "@types/react": "npm:types-react@rc"
     "@types/react-dom": "npm:types-react-dom@rc"
     "@types/ua-parser-js": "npm:^0.7.39"
-    "@types/uuid": "npm:^10.0.0"
     "@typescript-eslint/parser": "npm:^7.13.1"
     "@vitejs/plugin-react-swc": "npm:^3.7.1"
     eslint: "npm:^8.57.0"
     fast-deep-equal: "npm:^3.1.3"
-    framer-motion: "npm:^11.2.12"
+    framer-motion: "npm:^11.11.10"
     graphql: "npm:^15.9.0"
     graphql-ws: "npm:^5.16.0"
     react: "npm:rc"
     react-dom: "npm:rc"
-    react-error-boundary: "npm:^4.0.13"
+    react-error-boundary: "npm:^4.1.2"
     react-json-view: "npm:^1.21.3"
     typeid-js: "npm:^1.1.0"
     typescript: "npm:5.5.3"
     ua-parser-js: "npm:^1.0.39"
-    uuid: "npm:^10.0.0"
+    uuid: "npm:^11.0.1"
     valtio: "npm:^2.1.1"
     valtio-yjs: "npm:^0.6.0"
     vite: "npm:5.3.5"
@@ -5585,7 +5583,7 @@ __metadata:
     connect-redis: "npm:^7.1.1"
     csurf: "npm:^1.11.0"
     express: "npm:^4.21.1"
-    express-session: "npm:^1.18.0"
+    express-session: "npm:^1.18.1"
     graphile-build: "npm:^4.13.0"
     graphile-build-pg: "npm:^4.13.0"
     graphile-utils: "npm:^4.13.0"
@@ -5654,13 +5652,13 @@ __metadata:
     "@types/lodash": "npm:^4.17.12"
     "@types/mjml": "npm:^4.7.4"
     "@types/nodemailer": "npm:^6.4.16"
-    aws-sdk: "npm:^2.1325.0"
-    concurrently: "npm:^8.2.2"
+    aws-sdk: "npm:^2.1691.0"
+    concurrently: "npm:^9.0.1"
     graphile-worker: "npm:^0.16.6"
     html-to-text: "npm:^9.0.5"
     lodash: "npm:^4.17.21"
     mjml: "npm:^4.15.3"
-    mkdirp: "npm:^2.1.6"
+    mkdirp: "npm:^3.0.1"
     nodemailer: "npm:^6.9.15"
     tslib: "npm:^2.8.0"
   languageName: unknown
@@ -6834,13 +6832,6 @@ __metadata:
   version: 0.7.39
   resolution: "@types/ua-parser-js@npm:0.7.39"
   checksum: 10c0/fea522f42dfc2854d9c93144a13c3db3bbe1c791458451db06d46bec7e1dbbe945d1542e02bb38378e39a04bdb7810b43e2ead26f9e6c250832e187312522708
-  languageName: node
-  linkType: hard
-
-"@types/uuid@npm:^10.0.0":
-  version: 10.0.0
-  resolution: "@types/uuid@npm:10.0.0"
-  checksum: 10c0/9a1404bf287164481cb9b97f6bb638f78f955be57c40c6513b7655160beb29df6f84c915aaf4089a1559c216557dc4d2f79b48d978742d3ae10b937420ddac60
   languageName: node
   linkType: hard
 
@@ -8269,9 +8260,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"aws-sdk@npm:^2.1325.0":
-  version: 2.1657.0
-  resolution: "aws-sdk@npm:2.1657.0"
+"aws-sdk@npm:^2.1691.0":
+  version: 2.1691.0
+  resolution: "aws-sdk@npm:2.1691.0"
   dependencies:
     buffer: "npm:4.9.2"
     events: "npm:1.1.1"
@@ -8283,7 +8274,7 @@ __metadata:
     util: "npm:^0.12.4"
     uuid: "npm:8.0.0"
     xml2js: "npm:0.6.2"
-  checksum: 10c0/c9827aad62d2d892eb12b83263c43a3fc8208bff8f30a080337f64285f3b76173bbfd4dba4c151ce415c1475c5ae11881b4d515c5ffc29187d7b3f6315bcd71f
+  checksum: 10c0/f08b279bb875ac6becc882ecde41dfd8c3766a1c836cc8e472ea62ae3e2d0316f73fc1eab6514391dedc0bb266a289f45db0ba5087178f63a78ffd2ef4edc38a
   languageName: node
   linkType: hard
 
@@ -9232,23 +9223,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"concurrently@npm:^8.2.2":
-  version: 8.2.2
-  resolution: "concurrently@npm:8.2.2"
+"concurrently@npm:^9.0.1":
+  version: 9.0.1
+  resolution: "concurrently@npm:9.0.1"
   dependencies:
     chalk: "npm:^4.1.2"
-    date-fns: "npm:^2.30.0"
     lodash: "npm:^4.17.21"
     rxjs: "npm:^7.8.1"
     shell-quote: "npm:^1.8.1"
-    spawn-command: "npm:0.0.2"
     supports-color: "npm:^8.1.1"
     tree-kill: "npm:^1.2.2"
     yargs: "npm:^17.7.2"
   bin:
     conc: dist/bin/concurrently.js
     concurrently: dist/bin/concurrently.js
-  checksum: 10c0/0e9683196fe9c071d944345d21d8f34aa6c0cc50c0dd897e95619f2f1c9eb4871dca851b2569da17888235b7335b4c821ca19deed35bebcd9a131ee5d247f34c
+  checksum: 10c0/e2c3d3f3d1b1457ccd27e69f0d840ba4915d571fae4e1088498234ec1174fd547c127de0df6dbe5eb71b2df973b26a6fdc931a9e7e3658f25287ef2106bdb413
   languageName: node
   linkType: hard
 
@@ -9349,17 +9338,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cookie@npm:0.6.0":
-  version: 0.6.0
-  resolution: "cookie@npm:0.6.0"
-  checksum: 10c0/f2318b31af7a31b4ddb4a678d024514df5e705f9be5909a192d7f116cfb6d45cbacf96a473fa733faa95050e7cff26e7832bb3ef94751592f1387b71c8956686
-  languageName: node
-  linkType: hard
-
 "cookie@npm:0.7.1":
   version: 0.7.1
   resolution: "cookie@npm:0.7.1"
   checksum: 10c0/5de60c67a410e7c8dc8a46a4b72eb0fe925871d057c9a5d2c0e8145c4270a4f81076de83410c4d397179744b478e33cd80ccbcc457abf40a9409ad27dcd21dde
+  languageName: node
+  linkType: hard
+
+"cookie@npm:0.7.2":
+  version: 0.7.2
+  resolution: "cookie@npm:0.7.2"
+  checksum: 10c0/9596e8ccdbf1a3a88ae02cf5ee80c1c50959423e1022e4e60b91dd87c622af1da309253d8abdb258fb5e3eacb4f08e579dc58b4897b8087574eee0fd35dfa5d2
   languageName: node
   linkType: hard
 
@@ -9622,19 +9611,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"date-fns@npm:^2.30.0":
-  version: 2.30.0
-  resolution: "date-fns@npm:2.30.0"
-  dependencies:
-    "@babel/runtime": "npm:^7.21.0"
-  checksum: 10c0/e4b521fbf22bc8c3db332bbfb7b094fd3e7627de0259a9d17c7551e2d2702608a7307a449206065916538e384f37b181565447ce2637ae09828427aed9cb5581
-  languageName: node
-  linkType: hard
-
-"date-fns@npm:^3.6.0":
-  version: 3.6.0
-  resolution: "date-fns@npm:3.6.0"
-  checksum: 10c0/0b5fb981590ef2f8e5a3ba6cd6d77faece0ea7f7158948f2eaae7bbb7c80a8f63ae30b01236c2923cf89bb3719c33aeb150c715ea4fe4e86e37dcf06bed42fb6
+"date-fns@npm:^4.1.0":
+  version: 4.1.0
+  resolution: "date-fns@npm:4.1.0"
+  checksum: 10c0/b79ff32830e6b7faa009590af6ae0fb8c3fd9ffad46d930548fbb5acf473773b4712ae887e156ba91a7b3dc30591ce0f517d69fd83bd9c38650fdc03b4e0bac8
   languageName: node
   linkType: hard
 
@@ -10006,7 +9986,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dotenv@npm:^16.0.0, dotenv@npm:^16.0.3":
+"dotenv@npm:^16.0.0, dotenv@npm:^16.4.5":
   version: 16.4.5
   resolution: "dotenv@npm:16.4.5"
   checksum: 10c0/48d92870076832af0418b13acd6e5a5a3e83bb00df690d9812e94b24aff62b88ade955ac99a05501305b8dc8f1b0ee7638b18493deb6fe93d680e5220936292f
@@ -11083,11 +11063,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"express-session@npm:^1.18.0":
-  version: 1.18.0
-  resolution: "express-session@npm:1.18.0"
+"express-session@npm:^1.18.1":
+  version: 1.18.1
+  resolution: "express-session@npm:1.18.1"
   dependencies:
-    cookie: "npm:0.6.0"
+    cookie: "npm:0.7.2"
     cookie-signature: "npm:1.0.7"
     debug: "npm:2.6.9"
     depd: "npm:~2.0.0"
@@ -11095,7 +11075,7 @@ __metadata:
     parseurl: "npm:~1.3.3"
     safe-buffer: "npm:5.2.1"
     uid-safe: "npm:~2.1.5"
-  checksum: 10c0/5c3f1237f2789cf32f9cd668d3217c228916edfd3b5a686a894a80c7cca63f9ef66bb86a8457074b9b4cc4b2ee97e16781dd4e0cff7829b671ab0db5da0db638
+  checksum: 10c0/7999f128df1528430044c97bb1aac95093afaee86c5fa54b2890c4aad9898d79745301f8c90c2df057d6dfe7af7f8ee220340bf5eb53dca5eff37e52cc2fbec7
   languageName: node
   linkType: hard
 
@@ -11522,9 +11502,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"framer-motion@npm:^11.2.12":
-  version: 11.3.0
-  resolution: "framer-motion@npm:11.3.0"
+"framer-motion@npm:^11.11.10":
+  version: 11.11.10
+  resolution: "framer-motion@npm:11.11.10"
   dependencies:
     tslib: "npm:^2.4.0"
   peerDependencies:
@@ -11538,47 +11518,7 @@ __metadata:
       optional: true
     react-dom:
       optional: true
-  checksum: 10c0/1765b07161a533f140579cb157c521a0820b5212c02220481803fbf9b4dc1d82bf44c26273bc96d37feb0025d736165ae2246b6d0529f9ad1602bb65050a5e1e
-  languageName: node
-  linkType: hard
-
-"framer-motion@npm:^11.3.28":
-  version: 11.3.28
-  resolution: "framer-motion@npm:11.3.28"
-  dependencies:
-    tslib: "npm:^2.4.0"
-  peerDependencies:
-    "@emotion/is-prop-valid": "*"
-    react: ^18.0.0
-    react-dom: ^18.0.0
-  peerDependenciesMeta:
-    "@emotion/is-prop-valid":
-      optional: true
-    react:
-      optional: true
-    react-dom:
-      optional: true
-  checksum: 10c0/f5aaf914f764ca4a05f7b77e50469b0dbd3311f7be98be871385075513370840de2f154422c7cdc00664147a3cc04f31053997c5eb3131edb25a1abfec570f93
-  languageName: node
-  linkType: hard
-
-"framer-motion@npm:^11.3.8":
-  version: 11.3.8
-  resolution: "framer-motion@npm:11.3.8"
-  dependencies:
-    tslib: "npm:^2.4.0"
-  peerDependencies:
-    "@emotion/is-prop-valid": "*"
-    react: ^18.0.0
-    react-dom: ^18.0.0
-  peerDependenciesMeta:
-    "@emotion/is-prop-valid":
-      optional: true
-    react:
-      optional: true
-    react-dom:
-      optional: true
-  checksum: 10c0/71c7ff866694f531d01d4d6f44c2eef620abab1acf52436716b3c82e5ae45be544b4cf45b1a15686e17daa214a89fae3523077624919e6f9df9a53d3c46509f0
+  checksum: 10c0/0f8cdcfad0b1bb371db70a93605da17f191484b47e197387349c5f30b848f799d35e51ec8b54245756e5652903607a051c718fc16997616cf0cd97b1ee642871
   languageName: node
   linkType: hard
 
@@ -14856,15 +14796,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mkdirp@npm:^2.1.6":
-  version: 2.1.6
-  resolution: "mkdirp@npm:2.1.6"
-  bin:
-    mkdirp: dist/cjs/src/bin.js
-  checksum: 10c0/96f551c651dd8f5f9435d53df1a7b9bfc553be769ee6da5192c37c1f303a376ef1c6996f96913d4a8d357060451d4526a346031d1919f92c58806a5fa3cd8dfe
-  languageName: node
-  linkType: hard
-
 "mkdirp@npm:^3.0.1":
   version: 3.0.1
   resolution: "mkdirp@npm:3.0.1"
@@ -16476,12 +16407,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"prettier@npm:^3.2.5":
-  version: 3.3.2
-  resolution: "prettier@npm:3.3.2"
+"prettier@npm:^3.3.3":
+  version: 3.3.3
+  resolution: "prettier@npm:3.3.3"
   bin:
     prettier: bin/prettier.cjs
-  checksum: 10c0/39ed27d17f0238da6dd6571d63026566bd790d3d0edac57c285fbab525982060c8f1e01955fe38134ab10f0951a6076da37f015db8173c02f14bc7f0803a384c
+  checksum: 10c0/b85828b08e7505716324e4245549b9205c0cacb25342a030ba8885aba2039a115dbcf75a0b7ca3b37bc9d101ee61fab8113fc69ca3359f2a226f1ecc07ad2e26
   languageName: node
   linkType: hard
 
@@ -16762,14 +16693,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-error-boundary@npm:^4.0.13":
-  version: 4.0.13
-  resolution: "react-error-boundary@npm:4.0.13"
+"react-error-boundary@npm:^4.1.2":
+  version: 4.1.2
+  resolution: "react-error-boundary@npm:4.1.2"
   dependencies:
     "@babel/runtime": "npm:^7.12.5"
   peerDependencies:
     react: ">=16.13.1"
-  checksum: 10c0/6f3e0e4d7669f680ccf49c08c9571519c6e31f04dcfc30a765a7136c7e6fbbbe93423dd5a9fce12107f8166e54133e9dd5c2079a00c7a38201ac811f7a28b8e7
+  checksum: 10c0/0737e5259bed40ce14eb0823b3c7b152171921f2179e604f48f3913490cdc594d6c22d43d7abb4ffb1512c832850228db07aa69d3b941db324953a5e393cb399
   languageName: node
   linkType: hard
 
@@ -18076,13 +18007,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"spawn-command@npm:0.0.2":
-  version: 0.0.2
-  resolution: "spawn-command@npm:0.0.2"
-  checksum: 10c0/b22f2d71239e6e628a400831861ba747750bbb40c0a53323754cf7b84330b73d81e40ff1f9055e6d1971818679510208a9302e13d9ff3b32feb67e74d7a1b3ef
-  languageName: node
-  linkType: hard
-
 "spdx-correct@npm:^3.0.0":
   version: 3.2.0
   resolution: "spdx-correct@npm:3.2.0"
@@ -18567,11 +18491,11 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "theopenpresenter@workspace:."
   dependencies:
-    concurrently: "npm:^8.2.2"
+    concurrently: "npm:^9.0.1"
     graphql: "npm:^15.9.0"
     nodemon: "npm:^3.1.7"
     patch-package: "npm:^8.0.0"
-    prettier: "npm:^3.2.5"
+    prettier: "npm:^3.3.3"
     turbo: "npm:^2.2.3"
     typescript: "npm:5.5.3"
     vitest: "npm:^2.1.3"
@@ -19589,6 +19513,15 @@ __metadata:
   bin:
     uuid: dist/bin/uuid
   checksum: 10c0/eab18c27fe4ab9fb9709a5d5f40119b45f2ec8314f8d4cf12ce27e4c6f4ffa4a6321dc7db6c515068fa373c075b49691ba969f0010bf37f44c37ca40cd6bf7fe
+  languageName: node
+  linkType: hard
+
+"uuid@npm:^11.0.1":
+  version: 11.0.1
+  resolution: "uuid@npm:11.0.1"
+  bin:
+    uuid: dist/esm/bin/uuid
+  checksum: 10c0/cd5a1d7eccfd6da80382ec88cfa28b68dce2c1c1402228b813fc0065ab8b29d20594cffeb67d850bc166ade677a6c35741072bd9dd0cc7d565c1fe8eca14ef22
   languageName: node
   linkType: hard
 

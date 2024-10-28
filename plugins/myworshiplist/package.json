@@ -30,7 +30,7 @@
     "axios": "^1.7.7",
     "formik": "^2.4.6",
     "formik-chakra-ui": "^1.6.1",
-    "framer-motion": "^11.3.8",
+    "framer-motion": "^11.11.10",
     "lodash-es": "^4.17.21",
     "ohash": "^1.1.4",
     "react": "rc",

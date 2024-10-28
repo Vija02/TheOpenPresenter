@@ -21,7 +21,7 @@
     "@repo/ui": "*",
     "formik": "^2.4.6",
     "formik-chakra-ui": "^1.6.1",
-    "framer-motion": "^11.3.28",
+    "framer-motion": "^11.11.10",
     "next": "14.2.16",
     "next-themes": "^0.3.0",
     "next-with-apollo": "^5.3.0",

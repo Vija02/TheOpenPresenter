@@ -25,7 +25,7 @@
     "@trpc/server": "^11.0.0-rc.593",
     "@types/react": "npm:types-react@rc",
     "@types/react-dom": "npm:types-react-dom@rc",
-    "framer-motion": "^11.3.8",
+    "framer-motion": "^11.11.10",
     "react": "rc",
     "react-dom": "rc",
     "valtio": "^2.1.1",
