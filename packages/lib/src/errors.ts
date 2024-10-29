@@ -1,5 +1,5 @@
 import { ApolloError } from "@apollo/client";
-import { GraphQLError } from "graphql";
+import { GraphQLError, GraphQLFormattedError } from "graphql";
 
 export function extractError(error: null): null;
 export function extractError(error: Error): Error;
@@ -10,7 +10,7 @@ export function extractError(
 ): null | Error | GraphQLError;
 export function extractError(
   error: null | Error | ApolloError | GraphQLError,
-): null | Error | GraphQLError {
+): null | Error | GraphQLFormattedError {
   return (
     (error &&
       "graphQLErrors" in error &&
