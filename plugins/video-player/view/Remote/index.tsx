@@ -12,12 +12,15 @@ import {
   Text,
   useDisclosure,
 } from "@chakra-ui/react";
+import { OverlayToggle } from "@repo/ui";
 import { useState } from "react";
+import { MdCloudUpload } from "react-icons/md";
 import ReactPlayer from "react-player/lazy";
 import "react-scrubber/lib/scrubber.css";
 import { typeidUnboxed } from "typeid-js";
 
 import { usePluginAPI } from "../pluginApi";
+import UploadVideoModal from "./UploadVideoModal";
 import VideoCard from "./VideoCard";
 import YoutubeSearchModal from "./YoutubeSearchModal";
 import "./index.css";
@@ -68,7 +71,26 @@ const VideoPlayerRemote = () => {
 
   return (
     <Stack dir="column" p={3}>
-      <Heading>Video Player</Heading>
+      <Stack direction="row" alignItems="center" justifyContent="space-between">
+        <Heading>Video Player</Heading>
+        <OverlayToggle
+          toggler={({ onToggle }) => (
+            <Button
+              onClick={onToggle}
+              size="sm"
+              bg="black"
+              color="white"
+              display="flex"
+              gap={2}
+              _hover={{ bg: "gray.800" }}
+            >
+              <MdCloudUpload /> <Text>Upload video</Text>
+            </Button>
+          )}
+        >
+          <UploadVideoModal />
+        </OverlayToggle>
+      </Stack>
 
       <form
         onSubmit={(e) => {
