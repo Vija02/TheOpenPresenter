@@ -97,7 +97,7 @@ const VideoCard = ({ video }: { video: Video }) => {
         borderBottom={0}
         bg={color}
       >
-        <Text fontWeight="bold" color="white">
+        <Text fontWeight="bold" color="white" wordBreak="break-all">
           {video.metadata.title ?? video.url}
         </Text>
       </Box>

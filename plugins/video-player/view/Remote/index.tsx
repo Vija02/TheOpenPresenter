@@ -82,7 +82,9 @@ const VideoPlayerRemote = () => {
             value={input}
             onChange={(e) => setInput(e.target.value)}
           />
-          <Button type="submit">Search/Add</Button>
+          <Button type="submit" colorScheme="green">
+            Search/Add
+          </Button>
         </Stack>
         {isError && <Text color="red">Unable to load this video</Text>}
       </form>
@@ -112,8 +114,8 @@ const VideoPlayerRemote = () => {
           onChange={(v) => {
             mutableRendererData.volume = v;
           }}
-          height={{ base: "70vh", md: "100%" }}
-          width={{ base: "80px", md: "100%" }}
+          height="100%"
+          width="100%"
         >
           <SliderMark value={0.25} mt="1" ml="-2.5" fontSize="sm">
             25%
