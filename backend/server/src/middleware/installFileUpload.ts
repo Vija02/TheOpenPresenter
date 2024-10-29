@@ -1,4 +1,8 @@
-import { UPLOADS_PATH, createFileStore } from "@repo/backend-shared";
+import {
+  CustomFileKvStore,
+  UPLOADS_PATH,
+  createFileStore,
+} from "@repo/backend-shared";
 import { Server } from "@tus/server";
 import express, { Express, static as staticMiddleware } from "express";
 import http from "http";
@@ -101,27 +105,88 @@ export default (app: Express) => {
 
   app.use(`/media/data`, staticMiddleware(UPLOADS_PATH));
   app.use("/media/upload/tus", tusUploadServer);
-  app.use(`/media/upload/form-data`, upload.single("file"), (req, res, next) => {
-    // Shouldn't get here since we have multer
-    if (!req.file) {
-      res.status(500).send("Error");
-      return;
-    }
-    // TODO: Permission
+  app.use(
+    `/media/upload/form-data`,
+    upload.single("file"),
+    async (req, res, next) => {
+      // TODO: Use custom storage implementation to match tus
+      if (!req.file) {
+        // Shouldn't get here since we have multer
+        res.status(500).send("Error");
+        return;
+      }
 
-    const originalFileName = req.file.originalname;
-    const newFileName = req.file.filename;
+      if (!req.body.organizationId) {
+        res.status(400).send("Missing organizationId");
+        return;
+      }
+      // TODO: Permission & Authentication
 
-    const splitFileName = originalFileName.split(".") ?? [""];
-    const extension = splitFileName[splitFileName.length - 1];
+      let userId;
 
-    res.status(200).json({
-      originalFileName,
-      newFileName,
-      url: process.env.ROOT_URL + "/media/data/" + newFileName,
-      extension,
-    });
-  });
+      const authPgPool = getAuthPgPool(app);
+      const client = await authPgPool.connect();
+      try {
+        await client.query("BEGIN");
+
+        await client.query(
+          `select set_config('role', $1::text, true), set_config('jwt.claims.session_id', $2::text, true)`,
+          [
+            process.env.DATABASE_VISITOR,
+            (req as OurRequest)?.user?.session_id ?? "",
+          ],
+        );
+        const {
+          rows: [row],
+        } = await client.query(
+          "select * from app_public.organizations where id = $1",
+          [req.body.organizationId],
+        );
+        if (!row) {
+          throw new Error("Not Authorized");
+        }
+        const {
+          rows: [user],
+        } = await client.query("select app_public.current_user_id() as id");
+        userId = user.id;
+
+        await client.query("COMMIT");
+      } catch (e) {
+        await client.query("ROLLBACK");
+        throw e;
+      } finally {
+        client.release();
+      }
+
+      const originalFileName = req.file.originalname;
+      const newFileName = req.file.filename;
+
+      const splitFileName = originalFileName.split(".") ?? [""];
+      const extension = splitFileName[splitFileName.length - 1];
+
+      const configstore = new CustomFileKvStore(app);
+      await configstore.set(newFileName, {
+        id: "",
+        size: req.file.size,
+        offset: 0,
+        metadata: {
+          originalFileName,
+          organizationId: req.body.organizationId,
+          userId: userId,
+        },
+        creation_date: new Date().toISOString(),
+        sizeIsDeferred: false,
+        storage: { type: "", path: "" },
+      });
+
+      res.status(200).json({
+        originalFileName,
+        newFileName,
+        url: process.env.ROOT_URL + "/media/data/" + newFileName,
+        extension,
+      });
+    },
+  );
 };
 
 interface OurRequest extends http.IncomingMessage {

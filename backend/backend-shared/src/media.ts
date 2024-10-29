@@ -60,7 +60,7 @@ export class MediaHandler {
   }
 }
 
-class CustomFileKvStore<T extends Upload> implements KvStore<T> {
+export class CustomFileKvStore<T extends Upload> implements KvStore<T> {
   rootPgPool: Pool;
 
   constructor(app: Express) {
