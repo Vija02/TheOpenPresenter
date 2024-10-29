@@ -21,7 +21,7 @@ import { OverlayToggle } from "@repo/ui";
 import NextLink from "next/link";
 import * as React from "react";
 import { useEffect } from "react";
-import { IoMdSettings } from "react-icons/io";
+import { IoMdArrowBack, IoMdSettings } from "react-icons/io";
 import { PiProjectorScreenChartLight } from "react-icons/pi";
 import { RxHamburgerMenu } from "react-icons/rx";
 
@@ -67,17 +67,39 @@ export function SharedOrgLayout({
   const navbar = React.useMemo(
     () => (
       <Box
-        width="250px"
+        width={{ base: "100%", md: "250px" }}
         alignSelf="stretch"
         borderRight="1px solid rgb(217, 217, 217)"
       >
-        <Stack direction="row" p={3} alignItems="center">
-          <Avatar
-            size="xs"
-            src={data?.currentUser?.avatarUrl ?? undefined}
-            name={data?.currentUser?.name ?? ""}
-          />
-          <Text>{data?.currentUser?.name}</Text>
+        <Stack direction="row" alignItems="stretch" spacing={0}>
+          <Box
+            as={NextLink}
+            href="/org/overview"
+            display="flex"
+            alignItems="center"
+            flexShrink={0}
+            _hover={{ bg: "blue.50" }}
+          >
+            <Icon fontSize="20px" cursor="pointer" px={3} width="100%">
+              <IoMdArrowBack />
+            </Icon>
+          </Box>
+          <Stack
+            direction="row"
+            p={3}
+            pl={0}
+            alignItems="center"
+            overflow="hidden"
+          >
+            <Avatar
+              size="xs"
+              src={data?.organizationBySlug?.name ?? undefined}
+              name={data?.organizationBySlug?.name ?? ""}
+            />
+            <Text textOverflow="ellipsis" overflow="hidden" whiteSpace="nowrap">
+              {data?.organizationBySlug?.name}
+            </Text>
+          </Stack>
         </Stack>
         <Divider />
         <SidebarItem
@@ -100,7 +122,7 @@ export function SharedOrgLayout({
         </SidebarItem>
       </Box>
     ),
-    [data?.currentUser?.avatarUrl, data?.currentUser?.name, slug],
+    [data?.organizationBySlug?.name, slug],
   );
 
   return (
