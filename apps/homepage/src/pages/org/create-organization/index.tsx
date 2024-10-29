@@ -78,13 +78,10 @@ const CreateOrganizationPage: NextPage = () => {
   }
 
   return (
-    <SharedLayoutLoggedIn
-      title="Create organization"
-      query={query}
-    >
+    <SharedLayoutLoggedIn title="Create organization" query={query}>
       <Box
         w="100%"
-        display={{ base: "block", md: "grid" }}
+        display={{ base: "block", lg: "grid" }}
         gridTemplateColumns="1fr 300px"
       >
         <Box maxW="lg">
@@ -139,7 +136,7 @@ const CreateOrganizationPage: NextPage = () => {
                     </Alert>
                   ) : null}
 
-                  <Stack direction="row" alignItems="center">
+                  <Stack direction="row" alignItems="center" flexWrap="wrap">
                     <SubmitButton
                       colorScheme="green"
                       data-cy="createorganization-submit-button"
@@ -157,7 +154,7 @@ const CreateOrganizationPage: NextPage = () => {
             )}
           </Formik>
         </Box>
-        <Box mt={{ base: 10, md: 0 }}>
+        <Box mt={{ base: 10, lg: 0 }}>
           <Heading>FAQ</Heading>
           <Accordion defaultIndex={[0]} allowMultiple>
             <AccordionItem>

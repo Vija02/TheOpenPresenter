@@ -30,7 +30,7 @@ import { Form, Formik } from "formik";
 import { SubmitButton } from "formik-chakra-ui";
 import { NextPage } from "next";
 import NextLink from "next/link";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { FaCheck } from "react-icons/fa";
 import { toast } from "react-toastify";
 import { useDebounce } from "use-debounce";
@@ -61,20 +61,26 @@ const JoinOrganizationPage: NextPage = () => {
     skip: debouncedSearch === "",
   });
 
-  const userIsVerified = query.data?.currentUser?.isVerified;
+  const userIsVerified = useMemo(
+    () => query.data?.currentUser?.isVerified ?? true,
+    [query.data?.currentUser?.isVerified],
+  );
 
-  const onSubmit = useCallback(async (values: FormInputs) => {
-    setError(null);
-    try {
-      await requestJoinToOrganization({
-        variables: { organizationId: values.selectedOrgId },
-      });
+  const onSubmit = useCallback(
+    async (values: FormInputs) => {
       setError(null);
-      setDone(true);
-    } catch (e: any) {
-      setError(e);
-    }
-  }, []);
+      try {
+        await requestJoinToOrganization({
+          variables: { organizationId: values.selectedOrgId },
+        });
+        setError(null);
+        setDone(true);
+      } catch (e: any) {
+        setError(e);
+      }
+    },
+    [requestJoinToOrganization],
+  );
 
   if (done) {
     return (
@@ -134,7 +140,7 @@ const JoinOrganizationPage: NextPage = () => {
       {userIsVerified && (
         <Box
           w="100%"
-          display={{ base: "block", md: "grid" }}
+          display={{ base: "block", lg: "grid" }}
           gridTemplateColumns="1fr 300px"
         >
           <Box maxW="lg">
@@ -208,7 +214,7 @@ const JoinOrganizationPage: NextPage = () => {
                       </Alert>
                     ) : null}
 
-                    <Stack direction="row" alignItems="center">
+                    <Stack direction="row" alignItems="center" flexWrap="wrap">
                       <SubmitButton
                         colorScheme="green"
                         data-cy="joinorganization-submit-button"
@@ -228,7 +234,7 @@ const JoinOrganizationPage: NextPage = () => {
             </Formik>
           </Box>
 
-          <Box mt={{ base: 10, md: 0 }}>
+          <Box mt={{ base: 10, lg: 0 }}>
             <Heading>FAQ</Heading>
             <Accordion defaultIndex={[0]} allowMultiple>
               <AccordionItem>
