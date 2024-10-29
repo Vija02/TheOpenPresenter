@@ -38,7 +38,7 @@ class WebSocketLink extends ApolloLink {
       return wsClient.subscribe<FetchResult>(
         { ...operation, query: print(operation.query) },
         {
-          next: sink.next.bind(sink),
+          next: (val) => sink.next.bind(sink)(val.data!),
           complete: sink.complete.bind(sink),
           error: (err) => {
             if (err instanceof Error) {
