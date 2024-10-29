@@ -1,5 +1,5 @@
 import { Redirect } from "@/components/Redirect";
-import { AuthRestrict, SharedLayout } from "@/components/SharedLayout";
+import { SharedLayoutLoggedIn } from "@/components/SharedLayoutLoggedIn";
 import { ApolloError } from "@apollo/client";
 import {
   Accordion,
@@ -78,10 +78,9 @@ const CreateOrganizationPage: NextPage = () => {
   }
 
   return (
-    <SharedLayout
+    <SharedLayoutLoggedIn
       title="Create organization"
       query={query}
-      forbidWhen={AuthRestrict.LOGGED_OUT}
     >
       <Box
         w="100%"
@@ -147,7 +146,7 @@ const CreateOrganizationPage: NextPage = () => {
                     >
                       Create organization
                     </SubmitButton>
-                    <NextLink href="/join-organization">
+                    <NextLink href="/org/join-organization">
                       <Button variant="link" size="sm">
                         Alternatively, Join an existing organization
                       </Button>
@@ -206,7 +205,7 @@ const CreateOrganizationPage: NextPage = () => {
           </Accordion>
         </Box>
       </Box>
-    </SharedLayout>
+    </SharedLayoutLoggedIn>
   );
 };
 

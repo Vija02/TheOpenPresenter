@@ -69,7 +69,7 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
     variables: {
       userFullName: user.name,
       organizationName: organization.name,
-      link: `${process.env.ROOT_URL}/join-organization/accept?id=${encodeURIComponent(
+      link: `${process.env.ROOT_URL}/org/join-organization/accept?id=${encodeURIComponent(
         joinRequest.id,
       )}`,
     },

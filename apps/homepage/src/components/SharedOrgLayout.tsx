@@ -1,53 +1,49 @@
-import { useOrganizationSlug } from "@/lib/permissionHooks/organization";
-import { QueryResult } from "@apollo/client";
-import { Box } from "@chakra-ui/react";
-import { projectName } from "@repo/config";
 import {
-  SharedOrganizationFragment,
-  useCurrentUserUpdatedSubscription,
-} from "@repo/graphql";
+  useOrganizationLoading,
+  useOrganizationSlug,
+} from "@/lib/permissionHooks/organization";
+import { QueryResult } from "@apollo/client";
+import {
+  Avatar,
+  Box,
+  Button,
+  Divider,
+  Icon,
+  Link,
+  Show,
+  Stack,
+  Text,
+  Wrap,
+} from "@chakra-ui/react";
+import { SharedOrganizationFragment } from "@repo/graphql";
 import { globalState } from "@repo/lib";
-import Head from "next/head";
-import { useRouter } from "next/router";
-import React, { useEffect } from "react";
+import { OverlayToggle } from "@repo/ui";
+import NextLink from "next/link";
+import * as React from "react";
+import { useEffect } from "react";
+import { IoMdSettings } from "react-icons/io";
+import { PiProjectorScreenChartLight } from "react-icons/pi";
+import { RxHamburgerMenu } from "react-icons/rx";
 
-import { Redirect } from "./Redirect";
-import { AuthRestrict } from "./SharedLayout";
+import { AuthRestrict, SharedLayout, SharedLayoutProps } from "./SharedLayout";
+import { contentMinHeight } from "./SharedLayoutSkeleton";
+import { DrawerShell } from "./Sidebar/DrawerShell";
+import { SidebarItem } from "./Sidebar/SidebarItem";
+import { StandardWidth } from "./StandardWidth";
 
-/* The Apollo `useSubscription` hook doesn't currently allow skipping the
- * subscription; we only want it when the user is logged in, so we conditionally
- * call this stub component.
- */
-function CurrentUserUpdatedSubscription() {
-  /*
-   * This will set up a GraphQL subscription monitoring for changes to the
-   * current user. Interestingly we don't need to actually _do_ anything - no
-   * rendering or similar - because the payload of this mutation will
-   * automatically update Apollo's cache which will cause the data to be
-   * re-rendered wherever appropriate.
-   */
-  useCurrentUserUpdatedSubscription();
-  return null;
-}
-
-type PropTypes = {
-  children?: React.ReactNode;
+export function SharedOrgLayout({
+  sharedOrgQuery,
+  ...props
+}: Omit<SharedLayoutProps, "forbidWhen" | "noPad" | "children" | "query"> & {
+  children: React.ReactNode;
   sharedOrgQuery: Pick<
     QueryResult<SharedOrganizationFragment>,
     "data" | "loading" | "error" | "networkStatus" | "client" | "refetch"
   >;
-  title?: string;
-  forbidWhen?: AuthRestrict;
-};
-
-export default function SharedOrgLayout({
-  children,
-  sharedOrgQuery,
-  title,
-  forbidWhen = AuthRestrict.LOGGED_OUT,
-}: PropTypes) {
+}) {
   const slug = useOrganizationSlug();
-  const router = useRouter();
+  const { data } = sharedOrgQuery;
+  const organizationLoadingElement = useOrganizationLoading(sharedOrgQuery);
 
   // Update last selected organization
   const setLastSelectedOrganizationId =
@@ -68,52 +64,88 @@ export default function SharedOrgLayout({
     }
   }, [setLastSelectedOrganizationId, sharedOrgQuery.data?.currentUser, slug]);
 
-  const forbidsLoggedIn = forbidWhen & AuthRestrict.LOGGED_IN;
-  const forbidsLoggedOut = forbidWhen & AuthRestrict.LOGGED_OUT;
-  const forbidsNotAdmin = forbidWhen & AuthRestrict.NOT_ADMIN;
-
-  if (
-    sharedOrgQuery.data &&
-    sharedOrgQuery.data.currentUser &&
-    (forbidsLoggedIn ||
-      (forbidsNotAdmin && !sharedOrgQuery.data.currentUser.isAdmin))
-  ) {
-    return <Redirect href={"/"} />;
-  } else if (
-    sharedOrgQuery.data &&
-    sharedOrgQuery.data.currentUser === null &&
-    !sharedOrgQuery.loading &&
-    !sharedOrgQuery.error &&
-    forbidsLoggedOut
-  ) {
-    return (
-      <Redirect href={`/login?next=${encodeURIComponent(router.asPath)}`} />
-    );
-  }
+  const navbar = React.useMemo(
+    () => (
+      <Box
+        width="250px"
+        alignSelf="stretch"
+        borderRight="1px solid rgb(217, 217, 217)"
+      >
+        <Stack direction="row" p={3} alignItems="center">
+          <Avatar
+            size="xs"
+            src={data?.currentUser?.avatarUrl ?? undefined}
+            name={data?.currentUser?.name ?? ""}
+          />
+          <Text>{data?.currentUser?.name}</Text>
+        </Stack>
+        <Divider />
+        <SidebarItem
+          href={`/o/${slug}`}
+          icon={<PiProjectorScreenChartLight />}
+          name="Projects"
+        />
+        <SidebarItem
+          href={`/o/${slug}/settings`}
+          icon={<IoMdSettings />}
+          name="Settings"
+        >
+          <SidebarItem href={`/o/${slug}/settings/profile`} name="Profile" />
+          <SidebarItem href={`/o/${slug}/settings/security`} name="Password" />
+          <SidebarItem href={`/o/${slug}/settings/emails`} name="Emails" />
+          <SidebarItem
+            href={`/o/${slug}/settings/delete`}
+            name="Delete Account"
+          />
+        </SidebarItem>
+      </Box>
+    ),
+    [data?.currentUser?.avatarUrl, data?.currentUser?.name, slug],
+  );
 
   return (
-    <>
-      <CurrentUserUpdatedSubscription />
-      <Box display="flex" position="relative">
-        <Head>
-          <title>{title ? `${title} — ${projectName}` : projectName}</title>
-        </Head>
-        <MainPanel>{children}</MainPanel>
-      </Box>
-    </>
+    <SharedLayout
+      forbidWhen={AuthRestrict.LOGGED_OUT}
+      noPad
+      query={sharedOrgQuery}
+      {...props}
+      navbarLeft={
+        <Show below="md">
+          <OverlayToggle
+            toggler={({ onToggle }) => (
+              <Button
+                variant="ghost"
+                _hover={{ bg: "none" }}
+                onClick={onToggle}
+              >
+                <Icon color="white" fontSize="24px">
+                  <RxHamburgerMenu />
+                </Icon>
+              </Button>
+            )}
+          >
+            <DrawerShell>{navbar}</DrawerShell>
+          </OverlayToggle>
+        </Show>
+      }
+      navbarRight={
+        <Wrap>
+          <Stack direction="row" spacing={6}>
+            <Link as={NextLink} href={`/logout`} variant="linkButton">
+              <Button size="sm" variant="link" data-cy="header-logout-button">
+                Logout
+              </Button>
+            </Link>
+          </Stack>
+        </Wrap>
+      }
+    >
+      {organizationLoadingElement || (
+        <Box display="flex" minHeight={contentMinHeight}>
+          <Show above="md">{navbar}</Show>
+          <StandardWidth width="100%">{props.children}</StandardWidth>
+        </Box>
+      )}
+    </SharedLayout>
   );
 }
-
-type MainPanelPropTypes = {
-  children: React.ReactNode;
-};
-
-const MainPanel = ({ children }: MainPanelPropTypes) => {
-  return (
-    <Box display="flex" flexDirection="column" height="100vh" width="100%">
-      <Box overflowY="auto" overflowX="hidden" height="100vh">
-        {children}
-      </Box>
-    </Box>
-  );
-};

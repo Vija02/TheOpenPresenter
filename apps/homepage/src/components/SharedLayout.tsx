@@ -11,7 +11,10 @@ import { useRouter } from "next/router";
 import * as React from "react";
 
 import { Redirect } from "./Redirect";
-import { SharedLayoutSkeleton } from "./SharedLayoutSkeleton";
+import {
+  SharedLayoutSkeleton,
+  SharedLayoutSkeletonProps,
+} from "./SharedLayoutSkeleton";
 import { StandardWidth } from "./StandardWidth";
 
 export interface SharedLayoutChildProps {
@@ -52,6 +55,8 @@ export interface SharedLayoutProps {
   noFooter?: boolean;
   noHandleErrors?: boolean;
   forbidWhen?: AuthRestrict;
+  navbarLeft?: SharedLayoutSkeletonProps["navbarLeft"];
+  navbarRight?: SharedLayoutSkeletonProps["navbarRight"];
 }
 
 /* The Apollo `useSubscription` hook doesn't currently allow skipping the
@@ -76,6 +81,8 @@ export function SharedLayout({
   noPad = false,
   noFooter = false,
   noHandleErrors = false,
+  navbarLeft,
+  navbarRight,
   query,
   forbidWhen = AuthRestrict.NEVER,
   children,
@@ -131,25 +138,32 @@ export function SharedLayout({
         title={title}
         overrideTitle={overrideTitle}
         noFooter={noFooter}
+        navbarLeft={navbarLeft}
         navbarRight={
-          <Wrap>
-            <HStack spacing={6}>
-              <Link as={NextLink} href={`/login`} variant="linkButton">
-                <Button size="sm" variant="link" data-cy="header-login-button">
-                  Sign in
-                </Button>
-              </Link>
-              <Link as={NextLink} href={`/register`} variant="button">
-                <Button
-                  size="sm"
-                  colorScheme="green"
-                  data-cy="header-register-button"
-                >
-                  Sign up for free
-                </Button>
-              </Link>
-            </HStack>
-          </Wrap>
+          navbarRight ?? (
+            <Wrap>
+              <HStack spacing={6}>
+                <Link as={NextLink} href={`/login`} variant="linkButton">
+                  <Button
+                    size="sm"
+                    variant="link"
+                    data-cy="header-login-button"
+                  >
+                    Sign in
+                  </Button>
+                </Link>
+                <Link as={NextLink} href={`/register`} variant="button">
+                  <Button
+                    size="sm"
+                    colorScheme="green"
+                    data-cy="header-register-button"
+                  >
+                    Sign up for free
+                  </Button>
+                </Link>
+              </HStack>
+            </Wrap>
+          )
         }
       >
         {renderChildren({

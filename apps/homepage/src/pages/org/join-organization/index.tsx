@@ -1,4 +1,4 @@
-import { AuthRestrict, SharedLayout } from "@/components/SharedLayout";
+import { SharedLayoutLoggedIn } from "@/components/SharedLayoutLoggedIn";
 import { ApolloError } from "@apollo/client";
 import {
   Accordion,
@@ -78,11 +78,7 @@ const JoinOrganizationPage: NextPage = () => {
 
   if (done) {
     return (
-      <SharedLayout
-        title="Join organization"
-        query={query}
-        forbidWhen={AuthRestrict.LOGGED_OUT}
-      >
+      <SharedLayoutLoggedIn title="Join organization" query={query}>
         <Flex alignItems="center" gap={2} mb={3}>
           <Heading mb={0}>Request sent</Heading>
           <FaCheck fontSize="24px" color="#38A169" />
@@ -91,16 +87,12 @@ const JoinOrganizationPage: NextPage = () => {
         <Text>
           You’ll get an email letting you know if your request was approved
         </Text>
-      </SharedLayout>
+      </SharedLayoutLoggedIn>
     );
   }
 
   return (
-    <SharedLayout
-      title="Join organization"
-      query={query}
-      forbidWhen={AuthRestrict.LOGGED_OUT}
-    >
+    <SharedLayoutLoggedIn title="Join organization" query={query}>
       {!userIsVerified && (
         <>
           <Heading>Join organization</Heading>
@@ -224,7 +216,7 @@ const JoinOrganizationPage: NextPage = () => {
                       >
                         Request to join organization
                       </SubmitButton>
-                      <NextLink href="/create-organization">
+                      <NextLink href="/org/create-organization">
                         <Button variant="link" size="sm">
                           Alternatively, create a new organization
                         </Button>
@@ -282,7 +274,7 @@ const JoinOrganizationPage: NextPage = () => {
           </Box>
         </Box>
       )}
-    </SharedLayout>
+    </SharedLayoutLoggedIn>
   );
 };
 

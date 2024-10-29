@@ -1,5 +1,4 @@
-import { Redirect } from "@/components/Redirect";
-import { AuthRestrict, SharedLayout } from "@/components/SharedLayout";
+import { SharedLayoutLoggedIn } from "@/components/SharedLayoutLoggedIn";
 import { QueryResult } from "@apollo/client";
 import { Box, Button, Center, Skeleton, Text, VStack } from "@chakra-ui/react";
 import {
@@ -12,7 +11,6 @@ import {
 import { ErrorAlert, LoadingInline } from "@repo/ui";
 import { NextPage } from "next";
 import { useRouter } from "next/router";
-import * as qs from "querystring";
 import React, { FC } from "react";
 
 enum Status {
@@ -25,10 +23,6 @@ const JoinRequestAccept: NextPage = () => {
   const router = useRouter();
   const { id: rawId } = router.query;
 
-  const fullHref =
-    router.pathname +
-    (router && router.query ? `?${qs.stringify(router.query)}` : "");
-
   const id = rawId?.toString() ?? "";
   const query = useJoinRequestDetailQuery({
     variables: {
@@ -39,26 +33,19 @@ const JoinRequestAccept: NextPage = () => {
   });
 
   return (
-    <SharedLayout
+    <SharedLayoutLoggedIn
       title="Accept Join Request"
       query={query}
       noHandleErrors
-      forbidWhen={AuthRestrict.LOGGED_OUT}
     >
-      {({ currentUser, error, loading }) =>
-        !currentUser && !error && !loading ? (
-          <Redirect href={`/login?next=${encodeURIComponent(fullHref)}`} />
-        ) : (
-          <Box>
-            <JoinRequestAcceptInner
-              currentUser={currentUser}
-              id={id}
-              query={query}
-            />
-          </Box>
-        )
-      }
-    </SharedLayout>
+      <Box>
+        <JoinRequestAcceptInner
+          currentUser={query.data?.currentUser}
+          id={id}
+          query={query}
+        />
+      </Box>
+    </SharedLayoutLoggedIn>
   );
 };
 

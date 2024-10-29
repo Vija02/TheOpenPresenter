@@ -97,7 +97,7 @@ it("Can request join to organization", () =>
     expect(email.envelope.to).toEqual(["a@b.c"]);
     const message = JSON.parse(email.message);
     expect(message.subject).toEqual(`Join request for ${organization.name}`);
-    const expectedLink = `${process.env.ROOT_URL}/join-organization/accept?id=${request.id}`;
+    const expectedLink = `${process.env.ROOT_URL}/org/join-organization/accept?id=${request.id}`;
     expect(message.html).toContain(expectedLink);
   }));
 

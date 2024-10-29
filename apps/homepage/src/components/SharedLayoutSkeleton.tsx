@@ -15,6 +15,7 @@ export interface SharedLayoutSkeletonProps {
   overrideTitle?: string;
   description?: string;
   noFooter?: boolean;
+  navbarLeft?: React.ReactNode;
   navbarRight?: React.ReactNode;
   bannerUrl?: string;
   children?: React.ReactNode;
@@ -25,6 +26,7 @@ export function SharedLayoutSkeleton({
   overrideTitle,
   description,
   noFooter = false,
+  navbarLeft,
   navbarRight,
   bannerUrl = "/images/social_banner.jpg",
   children,
@@ -109,6 +111,7 @@ export function SharedLayoutSkeleton({
           alignItems="center"
           flexWrap="wrap"
         >
+          {navbarLeft}
           <NextLink href="/">
             <Logo height="40px" />
           </NextLink>

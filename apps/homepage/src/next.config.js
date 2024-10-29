@@ -12,10 +12,19 @@ if (!process.env.ROOT_URL) {
 // those variables. To enforce this, we've deliberately shadowed process.
 module.exports = () => {
   return {
-    transpilePackages: ['@repo/ui'],
+    transpilePackages: ["@repo/ui"],
     poweredByHeader: false,
     distDir: `../.next`,
     trailingSlash: false,
+    redirects() {
+      return [
+        {
+          source: "/org",
+          destination: "/org/overview",
+          permanent: true,
+        },
+      ];
+    },
     webpack(config, { webpack, dev, isServer }) {
       const makeSafe = (externals) => {
         if (Array.isArray(externals)) {

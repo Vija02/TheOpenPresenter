@@ -23,7 +23,7 @@ const OrganizationIndex = () => {
         if (lastSelectedOrganization) {
           window.location.replace(`/o/${lastSelectedOrganization.slug}`);
         } else {
-          Router.replace(`/create-organization`);
+          Router.replace(`/org/create-organization`);
         }
       } else {
         // If not logged in
