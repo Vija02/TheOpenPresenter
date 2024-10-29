@@ -9,8 +9,8 @@ import {
 } from "@repo/base-plugin";
 import { useKeyPressMutation } from "@repo/graphql";
 import { useDisposable } from "@repo/lib";
-import React, { useMemo, useState } from "react";
-import { useRoute } from "wouter";
+import React, { useEffect, useMemo, useState } from "react";
+import { useLocation, useRoute } from "wouter";
 import Y from "yjs";
 
 import { useData, usePluginData } from "../contexts/PluginDataProvider";
@@ -18,10 +18,21 @@ import { usePluginMetaData } from "../contexts/PluginMetaDataProvider";
 import { trpcClient } from "../trpc";
 
 const MainBody = () => {
+  const [, navigate] = useLocation();
+
   const data = useData();
   const mainState = usePluginData().mainState!;
   const [keyPressMutate] = useKeyPressMutation();
   const projectId = usePluginMetaData().projectId;
+
+  // On load, select the scene that is active if available
+  useEffect(() => {
+    const currentScene = mainState.renderer["1"]?.currentScene;
+    if (currentScene) {
+      navigate(`/${currentScene}`);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <Box
