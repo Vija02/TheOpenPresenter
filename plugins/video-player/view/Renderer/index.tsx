@@ -22,7 +22,18 @@ const VideoPlayerRenderer = () => {
 const VideoPlayerRendererInner = () => {
   const pluginApi = usePluginAPI();
 
+  const currentPlayingVideo = pluginApi.renderer.useData(
+    (x) => x.currentPlayingVideo!,
+  );
+
+  return <Player key={currentPlayingVideo.videoId} />;
+};
+
+const Player = () => {
+  const pluginApi = usePluginAPI();
+
   const [canPlay, setCanPlay] = useState(false);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     const check = async () => {
@@ -58,15 +69,17 @@ const VideoPlayerRendererInner = () => {
     if (
       currentPlayingVideo.videoId &&
       isPlaying &&
-      currentPlayingVideo.playFrom
+      ready &&
+      currentPlayingVideo.playFrom &&
+      currentVideo?.metadata.duration
     ) {
       const seek = calculateActualSeek(
         currentPlayingVideo,
-        currentVideo?.metadata.duration ?? 0,
+        currentVideo?.metadata.duration,
       );
       ref.current?.seekTo(seek);
     }
-  }, [currentPlayingVideo, currentVideo?.metadata.duration, isPlaying]);
+  }, [currentPlayingVideo, currentVideo?.metadata.duration, isPlaying, ready]);
 
   const setVideoSeek = useCallback(() => {
     if (currentPlayingVideo.playFrom) {
@@ -88,7 +101,6 @@ const VideoPlayerRendererInner = () => {
   return (
     <ReactPlayer
       ref={ref}
-      key={currentPlayingVideo.videoId}
       height="100%"
       width="100%"
       muted={!canPlay}
@@ -96,11 +108,17 @@ const VideoPlayerRendererInner = () => {
       playing={isPlaying}
       // TODO: Get this earlier
       onDuration={(dur) => {
-        mutableSceneData.pluginData.videos[
-          mutableSceneData.pluginData.videos.findIndex(
-            (x) => x.id === currentPlayingVideo.videoId,
-          )
-        ]!.metadata.duration = dur;
+        const index = mutableSceneData.pluginData.videos.findIndex(
+          (x) => x.id === currentPlayingVideo.videoId,
+        );
+        if (
+          mutableSceneData.pluginData.videos[index]?.metadata.duration !== dur
+        ) {
+          mutableSceneData.pluginData.videos[index]!.metadata.duration = dur;
+        }
+      }}
+      onReady={() => {
+        setReady(true);
       }}
       onBufferEnd={setVideoSeek}
       url={currentVideo?.url}
