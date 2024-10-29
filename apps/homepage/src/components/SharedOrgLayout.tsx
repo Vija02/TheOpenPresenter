@@ -8,6 +8,7 @@ import {
   Box,
   Button,
   Divider,
+  Hide,
   Icon,
   Link,
   Show,
@@ -164,7 +165,7 @@ export function SharedOrgLayout({
     >
       {organizationLoadingElement || (
         <Box display="flex" minHeight={contentMinHeight}>
-          <Show above="md">{navbar}</Show>
+          <Hide below="md">{navbar}</Hide>
           <StandardWidth width="100%">{props.children}</StandardWidth>
         </Box>
       )}
