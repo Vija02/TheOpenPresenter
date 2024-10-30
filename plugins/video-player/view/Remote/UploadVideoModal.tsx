@@ -53,6 +53,7 @@ const UploadVideoModal = ({
       url: url,
     });
     onToggle?.();
+    resetData?.();
   });
 
   return (
