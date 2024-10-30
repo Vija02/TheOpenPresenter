@@ -1,4 +1,5 @@
 import { Box, Flex } from "@chakra-ui/react";
+import { appData } from "@repo/lib";
 import Uppy from "@uppy/core";
 import { FileInput, StatusBar, useUppyEvent } from "@uppy/react";
 import XHR from "@uppy/xhr-upload";
@@ -11,8 +12,13 @@ import { usePluginAPI } from "../pluginApi";
 const ImageRemote = () => {
   const pluginApi = usePluginAPI();
   const [uppy] = useState(() =>
-    new Uppy().use(XHR, {
+    new Uppy({
+      meta: { organizationId: pluginApi.pluginContext.organizationId },
+    }).use(XHR, {
       endpoint: pluginApi.media.formDataUploadUrl,
+      headers: {
+        "csrf-token": appData.getCSRFToken(),
+      },
     }),
   );
   const sceneData = pluginApi.scene.useValtioData();
