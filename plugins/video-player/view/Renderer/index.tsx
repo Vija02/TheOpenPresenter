@@ -64,25 +64,8 @@ const Player = () => {
     [currentPlayingVideo.videoId, videos],
   );
 
-  // Handle on the go seeking
-  useEffect(() => {
-    if (
-      currentPlayingVideo.videoId &&
-      isPlaying &&
-      ready &&
-      currentPlayingVideo.playFrom &&
-      currentVideo?.metadata.duration
-    ) {
-      const seek = calculateActualSeek(
-        currentPlayingVideo,
-        currentVideo?.metadata.duration,
-      );
-      ref.current?.seekTo(seek);
-    }
-  }, [currentPlayingVideo, currentVideo?.metadata.duration, isPlaying, ready]);
-
   const setVideoSeek = useCallback(() => {
-    if (currentPlayingVideo.playFrom) {
+    if (currentPlayingVideo.playFrom && ready) {
       const duration = currentVideo?.metadata.duration ?? 0;
 
       const targetSeek = calculateActualSeek(currentPlayingVideo, duration);
@@ -96,7 +79,26 @@ const Player = () => {
         ref.current?.seekTo(targetSeek);
       }
     }
-  }, [currentPlayingVideo, currentVideo?.metadata.duration]);
+  }, [currentPlayingVideo, currentVideo?.metadata.duration, ready]);
+
+  // Handle on the go seeking
+  useEffect(() => {
+    if (
+      currentPlayingVideo.videoId &&
+      isPlaying &&
+      ready &&
+      currentPlayingVideo.playFrom &&
+      currentVideo?.metadata.duration
+    ) {
+      setVideoSeek();
+    }
+  }, [
+    currentPlayingVideo,
+    currentVideo?.metadata.duration,
+    isPlaying,
+    ready,
+    setVideoSeek,
+  ]);
 
   return (
     <ReactPlayer
