@@ -1,5 +1,4 @@
 # <img src="./public/logo_dark.png" width=42 /> TheOpenPresenter
-========================================
 
 [![License: AGPL](https://img.shields.io/badge/license-AGPL%203.0-454377.svg)](https://github.com/Vija02/TheOpenPresenter/blob/main/LICENSE)
 [![Documentation](https://img.shields.io/badge/read-the%20docs-4d6a91.svg)](https://docs.theopenpresenter.com)
