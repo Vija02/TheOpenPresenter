@@ -5313,6 +5313,7 @@ __metadata:
     "@repo/typescript-config": "npm:*"
     "@repo/ui": "npm:*"
     "@types/node": "npm:^20"
+    "@types/nprogress": "npm:^0"
     "@types/react": "npm:types-react@rc"
     "@types/react-dom": "npm:types-react-dom@rc"
     "@types/zxcvbn": "npm:^4.4.5"
@@ -5324,6 +5325,7 @@ __metadata:
     next: "npm:14.2.16"
     next-themes: "npm:^0.3.0"
     next-with-apollo: "npm:^5.3.0"
+    nprogress: "npm:^0.2.0"
     postcss: "npm:^8.4.47"
     postcss-import: "npm:^16.1.0"
     random-word-slugs: "npm:^0.1.7"
@@ -6952,6 +6954,13 @@ __metadata:
   version: 2.4.4
   resolution: "@types/normalize-package-data@npm:2.4.4"
   checksum: 10c0/aef7bb9b015883d6f4119c423dd28c4bdc17b0e8a0ccf112c78b4fe0e91fbc4af7c6204b04bba0e199a57d2f3fbbd5b4a14bf8739bf9d2a39b2a0aad545e0f86
+  languageName: node
+  linkType: hard
+
+"@types/nprogress@npm:^0":
+  version: 0.2.3
+  resolution: "@types/nprogress@npm:0.2.3"
+  checksum: 10c0/cac0fe73aca79bc1472a1556f56303df72026f2fcd8dbe311fe84b1f46e454b9040c1e69223d94e3bf156a5986382170c52ebda19aa70f555f1b6855d8f744a6
   languageName: node
   linkType: hard
 
@@ -15331,6 +15340,13 @@ __metadata:
   version: 0.1.2
   resolution: "normalize-range@npm:0.1.2"
   checksum: 10c0/bf39b73a63e0a42ad1a48c2bd1bda5a07ede64a7e2567307a407674e595bcff0fa0d57e8e5f1e7fa5e91000797c7615e13613227aaaa4d6d6e87f5bd5cc95de6
+  languageName: node
+  linkType: hard
+
+"nprogress@npm:^0.2.0":
+  version: 0.2.0
+  resolution: "nprogress@npm:0.2.0"
+  checksum: 10c0/eab9a923a1ad1eed71a455ecfbc358442dd9bcd71b9fa3fa1c67eddf5159360b182c218f76fca320c97541a1b45e19ced04e6dcb044a662244c5419f8ae9e821
   languageName: node
   linkType: hard
 
