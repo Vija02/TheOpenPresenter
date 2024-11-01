@@ -57,7 +57,12 @@ export function SharedLayoutLoggedIn(
           <SidebarItem href="/org/create-organization" name="Create new" />
           <SidebarItem href="/org/join-organization" name="Join existing" />
         </SidebarItem>
-        <SidebarItem href="/settings" icon={<IoMdSettings />} name="Settings">
+        <SidebarItem
+          baseUrl="/settings"
+          href="/settings/profile"
+          icon={<IoMdSettings />}
+          name="Settings"
+        >
           <SidebarItem href="/settings/profile" name="Profile" />
           <SidebarItem href="/settings/security" name="Password" />
           <SidebarItem href="/settings/emails" name="Emails" />
