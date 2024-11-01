@@ -6,6 +6,7 @@ const fsp = require("fs").promises;
 const { runSync } = require("./lib/run");
 const { withDotenvUpdater, readDotenv } = require("./lib/dotenv");
 const { safeRandomString } = require("./lib/random");
+const { readdirSync } = require("fs");
 
 // fixes runSync not throwing ENOENT on windows
 const platform = require("os").platform();
@@ -158,6 +159,8 @@ exports.updateDotenv = function updateDotenv(add, answers) {
 # The name of the folder you cloned graphile-starter to (so we can run docker-compose inside a container):`
     );
   }
+
+  add("ENABLED_PLUGINS", readdirSync("./plugins").join(","));
 };
 
 exports.checkGit = async function checkGit() {
