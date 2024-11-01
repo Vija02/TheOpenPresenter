@@ -1,137 +1,50 @@
 # <img src="./public/logo_dark.png" width=42 /> TheOpenPresenter
+========================================
+
+[![License: AGPL](https://img.shields.io/badge/license-AGPL%203.0-454377.svg)](https://github.com/Vija02/TheOpenPresenter/blob/main/LICENSE)
+[![Documentation](https://img.shields.io/badge/read-the%20docs-4d6a91.svg)](https://docs.theopenpresenter.com)
 
 **TheOpenPresenter** is an ambitious project aiming to be the final presenter software you'll ever need.
 It achieves this through its modular architecture, allowing for endless customization and feature based on every specific needs.
 
+[Try it now!](https://theopenpresenter.com)
+
 ## This project is under development 🏗️
 
-At this current time, you will not see anything substantial here. However, this README will serve as a document to align the goals and vision of the project.
+Status: **Alpha**
 
-## Goals
+At this current time, the project is under heavy development work. You are able to use it through https://theopenpresenter.com and I personally use it every week. However, use at your own risk as things might break.
 
-### 1. Web-based
+### Developer wiki
 
-Most, if not all of the projection software available today is distributed as an app. With the way technology are progressing today, there is no reason why it can't be a simple web page.
+We maintain a separate wiki page at https://docs.theopenpresenter.com. Please refer to this site for anything technical relating this project. If anything is unclear or missing, please do contact us and we'll try our best to explain it better.
 
-An event organizer should be able to open a link and start presenting right away. Think Google slides, but much more powerful.
+## What is TheOpenPresenter?
 
-### 2. Cloud powered & Collaborative
+**Our mission is to provide the most user-friendly solution to present any media in a church setting.**
 
-One desirable feature from software available today is collaboration. Imagine again Google slides. You can work on the same slide at the same time. Why not have the same here? 
+✅ Present in any device that can run a browser  
+✅ Collaborate & control presentation from anywhere  
+✅ Play video from various sources (Youtube, local, etc)  
+🟨 Import & display lyrics from various sources with ease (currently only MyWorshipList)  
+🟨 Display slides from many different sources (currently only Google Slides)  
+🟨 Record audio and save it for future playback  
+⬜ Organize your past and future presentation sessions   
+⬜ Offline support  
 
-Someone could prepare the announcements slides while the other prepare the lyrics and so on.
+Last but not least, the code for TheOpenPresenter will always be Open Source. We also promise to keep a hosted version of TheOpenPresenter free for small churches for as long as possible, the ones that will benefit from this project the most.
 
-Or if it's a multi-day event, you could prepare everything in advance directly in TheOpenPresenter. On the day, all you need to do is open the webpage.
+### Who is it for?
 
-### 3. Available as a local app
+If you regularly present slides or lyrics to a congregation - no matter how small or big it is, TheOpenPresenter is for you. 
 
-With that in mind, not every venue has access to internet. And even if they do, it's not always reliable. So TheOpenPresenter should also be available as a local app. Syncing to the cloud when possible.
+However, do note that this project is build with the focus on smaller congregations. As such, more advanced features might take land futher on in the development cycle.
 
-### 4. Modular & Powerful
 
-Most feature should be available as plugins. There are so many use-cases for a presentation software. We can't possibly do them all here. Instead, we try to be as modular as possible so that plugin developers can extend it to fit their use case.
+## Every Contribution Makes a Difference
 
-### 5. Focused
+We welcome contributions of any kind, including blog posts, tutorials, translations, testing, writing documentation, and pull requests. Our [Developer Wiki](https://docs.theopenpresenter.com) contains all the information necessary for you to get started.
 
-TheOpenPresenter is first and foremost designed to be used in a church setting. As such, it needs to be suited to that use case. It should also be easy to use and volunteer friendly.
+## License
 
-The modular approach of this project should complement this goal by only showing as much as needed for each church's use-case.
-
-## Note: Work in Progress
-
-Many of the things written below this point is not built. They are written as a design document for what is to come.
-
-## Core Architecture
-
-### 1. Server
-
-The server is the core piece of architecture that is responsible for orchestrating many of the functionality in TheOpenPresenter.  
-Briefly, it's responsibilities consists of:  
-- Connecting the clients together (remote, renderer)
-- Storing rendering state
-- Plugin Database
-- Plugin Media storage
-
-#### Server as a service
-
-The server is available as a cloud service, allowing TheOpenPresenter to be used with ease.  
-Additionally, you can self-host the server by running a few simple commands in any linux box.
-
-#### Server as a local app
-
-Alternatively, the server is also available as a local app. This is the preferred method for locations with unreliable or no internet connection. 
-
-In this configuration, you can download and install an app that will handle everything, just like how other presentation software is designed.
-
-#### State
-
-In TheOpenPresenter, we use the abstraction of "project" to represent everything you'd need within the app. For example, you'd have a "Sunday Morning" project.
-
-Any data relating to a project is encapsulated within what we call "state".  
-The state object holds: 
-- The configuration of the presentation. Eg: Slides, link to videos, etc.
-- Instruction on how the renderer should render the data
-
-The state is passed around to every piece of architecture and is the main driving force of the whole application.
-
-#### Plugin System
-
-TheOpenPresenter uses a plugin system and relies on it to do most of its functionalities. Plugins provide logic to the server, along with the Remote and Renderer documented below.
-
-To facilitate that, we provide an API that allows it to query most of the state of the presentation, along with some mechanism to do its job well.
-
-##### Database
-
-TheOpenPresenter allows plugins to access a database instance to store any kind of data. This is achieved through creating a database schema in its own internal database.
-
-##### Media Storage
-
-Additionally, plugins can use the API provided to store media directly in TheOpenPresenter. 
-
-Some plugins may also provide different medium of storage. Eg: Local, S3, and more.
-
-### 2. Remote
-
-The remote is a client-side piece of architecture that is used to manipulate the state of the presenter.  
-In other words, this is the UI to control the app. 
-
-This is the simplest part of the architecture. Yet, it is very important as this is what the operator uses to do anything at all.
-
-### 3. Renderer
-
-The renderer is architecture that renders the state into the final picture/result.
-
-There are multiple ways to render the final result.
-- Using the browser of the renderer machine.
-- In the server
-
-#### 3a. Browser rendering
-
-Browser rendering is the default rendering method. It is the simplest and the recommended way for anything simple. 
-
-##### Media cache
-
-Since rendering is done in this part, we use media cache to ensure smooth media playback and transition.
-If there are multiple renderer connected, each of them will need a cache of their own.
-
-#### 3b. Server rendering
-
-Server rendering renders the final picture in the server. This is required if we want an output in a specific format.  
-For example: Video stream like NDI/SDI/HDMI/RTSP and the like.
-
-The benefit is that there won't need to be a client. Or at least it can be a very simple client.
-
-## Plugin
-
-### Custom view
-
-TheOpenPresenter uses Web Components as the mechanism to load views from its plugins. Plugin creators can use web component directly or use a wrapper if they are using a framework like React or Vue.
-
-### Shared dependencies
-
-The Web component is loaded directly on the page's main thread. This makes it easy for data to flow between the main page and the plugin. However, it does come with an edge case. Some dependencies does not work when it is loaded multiple times.
-
-In our case, Yjs is the primary suspect. It is used extensively to get live collaboration working. 
-
-To solve that, some dependencies are excluded from the main bundle and is loaded separately. We use import maps to route the import to the correct place. If you're using a bundler, you'll need to exclude bundling that dependency from your build. For examples, see the plugins folder to see how we achieve that.
-
+Licensed under the AGPL License.
