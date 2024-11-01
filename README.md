@@ -39,10 +39,15 @@ If you regularly present slides or lyrics to a congregation - no matter how smal
 
 However, do note that this project is build with the focus on smaller congregations. As such, more advanced features might take land futher on in the development cycle.
 
-
 ## Every Contribution Makes a Difference
 
 We welcome contributions of any kind, including blog posts, tutorials, translations, testing, writing documentation, and pull requests. Our [Developer Wiki](https://docs.theopenpresenter.com) contains all the information necessary for you to get started.
+
+## Thank you, open source
+
+TheOpenPresenter makes use of numerous open-source projects and we are deeply grateful. We hope that by offering TheOpenPresenter as a free, open-source project, we can help others in the same way these programs have helped us.
+
+We would like to particularly thank [graphile/starter](https://github.com/graphile/starter) as this repo started from there. Many of the features here would have taken much longer otherwise.
 
 ## License
 
