@@ -19,7 +19,6 @@ NProgress.configure({
 
 if (typeof window !== "undefined") {
   Router.events.on("routeChangeStart", () => {
-    console.log("HUH");
     NProgress.start();
   });
 
