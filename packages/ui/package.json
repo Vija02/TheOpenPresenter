@@ -17,7 +17,9 @@
     "lint": "eslint . --max-warnings 0"
   },
   "dependencies": {
+    "@ajna/pagination": "^1.4.19",
     "@chakra-ui/react": "^2.8.2",
+    "@rehooks/component-size": "^1.0.3",
     "@repo/graphql": "*",
     "@types/react": "npm:types-react@rc",
     "react": "rc",
