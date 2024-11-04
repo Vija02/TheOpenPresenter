@@ -3108,6 +3108,13 @@ GRANT UPDATE(name) ON TABLE app_public.organizations TO theopenpresenter_visitor
 
 
 --
+-- Name: COLUMN organizations.is_public; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT UPDATE(is_public) ON TABLE app_public.organizations TO theopenpresenter_visitor;
+
+
+--
 -- Name: FUNCTION create_organization(slug public.citext, name text); Type: ACL; Schema: app_public; Owner: -
 --
 

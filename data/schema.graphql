@@ -1033,6 +1033,7 @@ enum OrganizationMembershipsOrderBy {
 Represents an update to a `Organization`. Fields that are set will be updated.
 """
 input OrganizationPatch {
+  isPublic: Boolean
   name: String
   slug: String
 }
