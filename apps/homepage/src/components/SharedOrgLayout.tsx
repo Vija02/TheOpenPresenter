@@ -109,16 +109,20 @@ export function SharedOrgLayout({
           name="Projects"
         />
         <SidebarItem
-          href={`/o/${slug}/settings`}
+          baseUrl={`/o/${slug}/settings`}
+          href={`/o/${slug}/settings/general`}
           icon={<IoMdSettings />}
           name="Settings"
         >
-          <SidebarItem href={`/o/${slug}/settings/profile`} name="Profile" />
-          <SidebarItem href={`/o/${slug}/settings/security`} name="Password" />
-          <SidebarItem href={`/o/${slug}/settings/emails`} name="Emails" />
+          <SidebarItem href={`/o/${slug}/settings/general`} name="General" />
+          <SidebarItem href={`/o/${slug}/settings/members`} name="Members" />
+          <SidebarItem
+            href={`/o/${slug}/settings/leave`}
+            name="Leave Organization"
+          />
           <SidebarItem
             href={`/o/${slug}/settings/delete`}
-            name="Delete Account"
+            name="Delete Organization"
           />
         </SidebarItem>
       </Box>

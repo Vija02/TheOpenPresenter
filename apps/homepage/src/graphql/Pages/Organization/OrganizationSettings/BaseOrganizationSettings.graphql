@@ -1,0 +1,17 @@
+fragment BaseOrganizationSettingsPage on Query {
+  ...SharedOrganization
+
+  ...BaseOrganizationSettingsPageOrganizationInfo
+}
+
+query BaseOrganizationSettingsPage($slug: String!) {
+  ...BaseOrganizationSettingsPage
+}
+
+fragment BaseOrganizationSettingsPageOrganizationInfo on Query {
+  organizationBySlug(slug: $slug) {
+    id
+    currentUserIsBillingContact
+    currentUserIsOwner
+  }
+}
