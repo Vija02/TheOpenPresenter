@@ -1,4 +1,4 @@
-import { Box, Button, Flex, Stack, Text } from "@chakra-ui/react";
+import { Box, Button, Flex, Stack, Text, chakra } from "@chakra-ui/react";
 import {
   AwarenessContext,
   Plugin,
@@ -9,30 +9,43 @@ import {
 } from "@repo/base-plugin";
 import { useKeyPressMutation } from "@repo/graphql";
 import { useDisposable } from "@repo/lib";
+import { OverlayToggle, PopConfirm } from "@repo/ui";
 import React, { useEffect, useMemo, useState } from "react";
+import {
+  VscSettingsGear as VscSettingsGearRaw,
+  VscTrash as VscTrashRaw,
+} from "react-icons/vsc";
 import { useLocation, useRoute } from "wouter";
 import Y from "yjs";
 
 import { useData, usePluginData } from "../contexts/PluginDataProvider";
 import { usePluginMetaData } from "../contexts/PluginMetaDataProvider";
 import { trpcClient } from "../trpc";
+import SceneSettingsModal from "./SceneSettingsModal";
+
+const VscSettingsGear = chakra(VscSettingsGearRaw);
+const VscTrash = chakra(VscTrashRaw);
 
 const MainBody = () => {
-  const [, navigate] = useLocation();
+  const [location, navigate] = useLocation();
 
   const data = useData();
   const mainState = usePluginData().mainState!;
   const [keyPressMutate] = useKeyPressMutation();
   const projectId = usePluginMetaData().projectId;
 
+  const selectedScene = useMemo(
+    () => (data.data[location.slice(1)] ? location.slice(1) : null),
+    [data.data, location],
+  );
+
   // On load, select the scene that is active if available
   useEffect(() => {
     const currentScene = mainState.renderer["1"]?.currentScene;
-    if (currentScene) {
+    if (currentScene && !selectedScene) {
       navigate(`/${currentScene}`);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [mainState.renderer, navigate, selectedScene]);
 
   return (
     <Box
@@ -70,8 +83,62 @@ const MainBody = () => {
         height="40px"
         boxShadow="md"
         alignItems="center"
-        justifyContent="flex-end"
+        justifyContent="space-between"
       >
+        <Stack direction="row" p={2} px={4} alignItems="center">
+          {selectedScene && (
+            <>
+              <Text fontWeight="bold">{data.data[selectedScene]?.name}</Text>
+              <Stack direction="row" spacing={0}>
+                <OverlayToggle
+                  toggler={({ onToggle }) => (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      justifyContent="center"
+                      role="group"
+                      onClick={onToggle}
+                    >
+                      <VscSettingsGear
+                        color="gray.500"
+                        fontSize="12px"
+                        _groupHover={{ color: "gray.900" }}
+                      />
+                    </Button>
+                  )}
+                >
+                  <SceneSettingsModal selectedScene={selectedScene} />
+                </OverlayToggle>
+                <PopConfirm
+                  title={`Are you sure you want to remove this scene?`}
+                  onConfirm={() => {
+                    delete mainState.data[selectedScene];
+                    if (
+                      mainState.renderer["1"]?.currentScene === selectedScene
+                    ) {
+                      mainState.renderer["1"]!.currentScene = null;
+                    }
+                  }}
+                  okText="Yes"
+                  cancelText="No"
+                  key="remove"
+                >
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    justifyContent="center"
+                    role="group"
+                  >
+                    <VscTrash
+                      color="gray.500"
+                      _groupHover={{ color: "gray.900" }}
+                    />
+                  </Button>
+                </PopConfirm>
+              </Stack>
+            </>
+          )}
+        </Stack>
         <Stack direction="row" p={2}>
           <Button
             size="sm"
