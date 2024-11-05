@@ -2,39 +2,43 @@
   "name": "@repo/ui",
   "version": "0.0.0",
   "private": true,
-  "type": "module",
   "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "module": "dist/ui.esm.js",
+  "typings": "dist/ui/src/index.d.ts",
   "files": [
-    "dist"
-  ],
-  "sideEffects": [
-    "**/*.css"
+    "dist",
+    "src"
   ],
   "scripts": {
-    "build": "vite build",
-    "dev": "vite build --watch",
-    "lint": "eslint . --max-warnings 0"
+    "build": "dts build",
+    "dev": "dts watch"
+  },
+  "peerDependencies": {
+    "react": ">=18"
+  },
+  "engines": {
+    "node": ">=12"
   },
   "dependencies": {
     "@ajna/pagination": "^1.4.19",
     "@chakra-ui/react": "^2.8.2",
     "@rehooks/component-size": "^1.0.3",
     "@repo/graphql": "*",
-    "@types/react": "npm:types-react@rc",
-    "react": "rc",
+    "autoprefixer": "^10.4.20",
+    "cssnano": "^7.0.6",
+    "date-fns": "^4.1.0",
+    "framer-motion": "^11.11.11",
     "react-icons": "^5.3.0",
-    "react-loader-spinner": "^6.1.6"
+    "react-loader-spinner": "^6.1.6",
+    "rollup-plugin-postcss": "^4.0.2"
   },
   "devDependencies": {
-    "@repo/eslint-config": "*",
-    "@vitejs/plugin-react": "^4.3.3",
-    "eslint": "^8.57.1",
-    "glob": "^11.0.0",
-    "tslib": "^2.8.0",
-    "typescript": "5.6.3",
-    "vite": "5.4.10",
-    "vite-plugin-dts": "^4.3.0",
-    "vite-plugin-lib-inject-css": "^2.1.1"
+    "@tsconfig/vite-react": "^3.0.2",
+    "@types/react": "npm:types-react@rc",
+    "@types/react-dom": "npm:types-react-dom@rc",
+    "dts-cli": "^2.0.5",
+    "react": "rc",
+    "react-dom": "rc",
+    "typescript": "^5.6.3"
   }
 }
