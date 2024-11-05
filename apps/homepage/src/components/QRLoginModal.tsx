@@ -58,7 +58,7 @@ const QRLoginModal = ({
         };
       }
     })();
-  }, [isOpen]);
+  }, [isOpen, next]);
 
   return (
     <Modal
