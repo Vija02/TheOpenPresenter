@@ -43,7 +43,7 @@ const MainBody = () => {
   useEffect(() => {
     const currentScene = mainState.renderer["1"]?.currentScene;
     if (currentScene && !selectedScene) {
-      navigate(`/${currentScene}`);
+      navigate(`/${currentScene}`, { replace: true });
     }
   }, [mainState.renderer, navigate, selectedScene]);
 
