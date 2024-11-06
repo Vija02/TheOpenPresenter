@@ -366,6 +366,30 @@ export default async function installHocuspocus(app: Express) {
           }
         }
       };
+
+      const handleDeleteScene = (
+        sectionOrScene: ObjectToTypedMap<any>,
+        id: string,
+      ) => {
+        if (sectionOrScene.get("type") === "section") {
+          return;
+        }
+        const sceneId = id;
+
+        // Make sure that renderer only have the available scene
+        state.get("renderer")?.forEach((renderData) => {
+          const sceneKeys = Array.from(
+            renderData.get("children")?.keys() ?? [],
+          );
+
+          if (sceneKeys.includes(sceneId)) {
+            renderData.get("children")?.delete(sceneId);
+          }
+        });
+
+        // TODO: Remove listeners
+      };
+
       // Initial load
       dataMap?.forEach((sectionOrScene, id) => {
         handleSectionOrScene(sectionOrScene, id);
@@ -379,10 +403,12 @@ export default async function installHocuspocus(app: Express) {
 
             handleSectionOrScene(sectionOrScene, key, true);
           } else if (value.action === "delete") {
-            // TODO: Delete the listener (Check if scene)
+            handleDeleteScene(value.oldValue, key);
           }
         });
       });
+
+      // TODO: Need to handle multiple plugin in 1 scene (adding, removing)
     },
     afterUnloadDocument: async (data) => {
       disposableDocumentManager.disposeDocument(data.documentName);
