@@ -49,6 +49,8 @@ const MainBody = () => {
 
   return (
     <Box
+      display="flex"
+      flexDir="column"
       width="100%"
       tabIndex={0}
       onKeyDown={(e) => {
@@ -80,12 +82,14 @@ const MainBody = () => {
       }}
     >
       <Flex
-        height="40px"
+        flexShrink={0}
         boxShadow="md"
         alignItems="center"
         justifyContent="space-between"
+        flexWrap="wrap"
+        p={2}
       >
-        <Stack direction="row" p={2} px={4} alignItems="center">
+        <Stack direction="row" px={2} alignItems="center">
           {selectedScene && (
             <>
               <Text fontWeight="bold">{data.data[selectedScene]?.name}</Text>
@@ -139,7 +143,7 @@ const MainBody = () => {
             </>
           )}
         </Stack>
-        <Stack direction="row" p={2}>
+        <Stack direction="row">
           <Button
             size="sm"
             rounded="none"
@@ -171,7 +175,7 @@ const MainBody = () => {
           </Button>
         </Stack>
       </Flex>
-      <Box height="calc(100vh - 40px)" overflow="auto">
+      <Box flex={1} overflow="auto">
         {Object.entries(data.data)
           .filter(([, value]) => value.type === "scene")
           .map(([sceneId, value]) => (
