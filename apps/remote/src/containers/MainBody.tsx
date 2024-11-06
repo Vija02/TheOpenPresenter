@@ -9,8 +9,9 @@ import {
 } from "@repo/base-plugin";
 import { useKeyPressMutation } from "@repo/graphql";
 import { useDisposable } from "@repo/lib";
-import { OverlayToggle, PopConfirm } from "@repo/ui";
+import { ErrorAlert, OverlayToggle, PopConfirm } from "@repo/ui";
 import React, { useEffect, useMemo, useState } from "react";
+import { ErrorBoundary } from "react-error-boundary";
 import {
   VscSettingsGear as VscSettingsGearRaw,
   VscTrash as VscTrashRaw,
@@ -195,12 +196,13 @@ const SceneRenderer = React.memo(
     return (
       <>
         {Object.entries(value.children).map(([pluginId, pluginInfo]) => (
-          <PluginRenderer
-            key={pluginId}
-            sceneId={sceneId}
-            pluginId={pluginId}
-            pluginInfo={pluginInfo}
-          />
+          <ErrorBoundary key={pluginId} FallbackComponent={ErrorAlert}>
+            <PluginRenderer
+              sceneId={sceneId}
+              pluginId={pluginId}
+              pluginInfo={pluginInfo}
+            />
+          </ErrorBoundary>
         ))}
       </>
     );

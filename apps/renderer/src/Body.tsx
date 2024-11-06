@@ -1,9 +1,10 @@
 import { Box, Text } from "@chakra-ui/react";
 import { AwarenessContext, Scene, State, YjsWatcher } from "@repo/base-plugin";
 import { useDisposable } from "@repo/lib";
-import { MotionBox } from "@repo/ui";
+import { ErrorAlert, MotionBox } from "@repo/ui";
 import { AnimatePresence, motion } from "framer-motion";
 import React, { useMemo, useState } from "react";
+import { ErrorBoundary } from "react-error-boundary";
 import Y from "yjs";
 
 import { useData, usePluginData } from "./contexts/PluginDataProvider";
@@ -81,11 +82,9 @@ const SceneRenderer = React.memo(({ sceneId }: { sceneId: string }) => {
       >
         {Object.keys(currentRenderer?.children[sceneId] ?? {}).map(
           (pluginId) => (
-            <PluginRenderer
-              key={pluginId}
-              pluginId={pluginId}
-              sceneId={sceneId}
-            />
+            <ErrorBoundary key={pluginId} FallbackComponent={ErrorAlert}>
+              <PluginRenderer pluginId={pluginId} sceneId={sceneId} />
+            </ErrorBoundary>
           ),
         )}
       </motion.div>
