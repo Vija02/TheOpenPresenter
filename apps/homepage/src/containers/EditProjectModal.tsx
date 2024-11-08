@@ -1,5 +1,4 @@
 import { TagsSelector } from "@/components/Tag/TagsSelector";
-import { useOrganizationSlug } from "@/lib/permissionHooks/organization";
 import {
   Button,
   FormControl,
@@ -16,24 +15,27 @@ import {
 } from "@chakra-ui/react";
 import {
   CategoryFragment,
-  useCreateProjectMutation,
+  ProjectFragment,
+  useCreateProjectTagMutation,
   useCreateTagMutation,
+  useDeleteProjectTagMutation,
+  useUpdateProjectMutation,
 } from "@repo/graphql";
 import { globalState } from "@repo/lib";
 import { OverlayToggleComponentProps } from "@repo/ui";
-import { format } from "date-fns";
 import { Form, Formik } from "formik";
 import { InputControl, SelectControl, SubmitButton } from "formik-chakra-ui";
 import { generateSlug } from "random-word-slugs";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
-export type CreateProjectModalPropTypes = Omit<
+export type EditProjectModalPropTypes = Omit<
   ModalProps,
   "isOpen" | "onClose" | "children"
 > &
   Partial<OverlayToggleComponentProps> & {
     organizationId: string;
     categories: CategoryFragment[];
+    project: ProjectFragment;
   };
 
 type FormInputs = {
@@ -41,23 +43,31 @@ type FormInputs = {
   categoryId: string | undefined;
 };
 
-const CreateProjectModal = ({
+const EditProjectModal = ({
   isOpen,
   onToggle,
   resetData,
   organizationId,
   categories,
+  project,
   ...props
-}: CreateProjectModalPropTypes) => {
-  const [createProject] = useCreateProjectMutation();
-  const slug = useOrganizationSlug();
+}: EditProjectModalPropTypes) => {
+  const [updateProject] = useUpdateProjectMutation();
+  const [createProjectTag] = useCreateProjectTagMutation();
+  const [deleteProjectTag] = useDeleteProjectTagMutation();
 
-  const namePlaceholder = useMemo(
-    () => `Untitled (${format(new Date(), "do MMM yyyy")})`,
-    [],
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>(
+    project.projectTags.nodes.map((x) => x.tag?.id),
   );
+  // Update value when change (after update)
+  useEffect(() => {
+    const actualValue = project.projectTags.nodes.map((x) => x.tag?.id);
+    setSelectedTagIds(actualValue);
+  }, [project.projectTags.nodes]);
 
-  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+  const { publish } = globalState.modelDataAccess.usePublishAPIChanges({
+    token: "page",
+  });
 
   const { allTagByOrganization, refetch: refetchTags } =
     globalState.modelDataAccess.useTag();
@@ -68,32 +78,55 @@ const CreateProjectModal = ({
   });
 
   const handleSubmit = useCallback(
-    (data: FormInputs) => {
-      createProject({
+    async (data: FormInputs) => {
+      await updateProject({
         variables: {
-          organizationId,
+          id: project.id,
           slug: generateSlug(),
-          name: data.name === "" ? namePlaceholder : data.name,
+          name: data.name,
           categoryId: data.categoryId,
-          tags: selectedTagIds,
         },
-      }).then((x) => {
-        const projectSlug = x.data?.createFullProject?.project?.slug;
-
-        window.location.href = `/app/${slug}/${projectSlug}`;
       });
+      const existingTagIds = project.projectTags.nodes.map((x) => x.tag?.id);
+      const newTagIds = selectedTagIds;
+
+      const missingTagIds = newTagIds.filter(
+        (x) => !existingTagIds.includes(x),
+      );
+      const nonMissingTagIds = existingTagIds.filter(
+        (x) => !newTagIds.includes(x),
+      );
+
+      const createPromises = missingTagIds.map((id) =>
+        createProjectTag({
+          variables: { projectId: project.id, tagId: id },
+        }),
+      );
+      const deletePromises = nonMissingTagIds.map((id) =>
+        deleteProjectTag({
+          variables: {
+            id: project.projectTags.nodes.find((x) => x.tag?.id === id)?.id,
+          },
+        }),
+      );
+
+      await Promise.all([...createPromises, ...deletePromises]);
+
+      publish();
 
       onToggle?.();
       resetData?.();
     },
     [
-      createProject,
-      namePlaceholder,
+      createProjectTag,
+      deleteProjectTag,
       onToggle,
-      organizationId,
+      project.id,
+      project.projectTags.nodes,
+      publish,
       resetData,
       selectedTagIds,
-      slug,
+      updateProject,
     ],
   );
 
@@ -107,23 +140,19 @@ const CreateProjectModal = ({
       <ModalOverlay />
       <Formik
         initialValues={{
-          name: "",
-          categoryId: undefined,
+          name: project.name,
+          categoryId: project.category?.id,
         }}
         onSubmit={handleSubmit}
       >
         {({ handleSubmit }) => (
           <Form onSubmit={handleSubmit as any}>
             <ModalContent>
-              <ModalHeader>New Project</ModalHeader>
+              <ModalHeader>Edit Project</ModalHeader>
               <ModalCloseButton />
               <ModalBody>
                 <VStack alignItems="flex-start">
-                  <InputControl
-                    label="Name"
-                    name="name"
-                    inputProps={{ placeholder: namePlaceholder }}
-                  />
+                  <InputControl label="Name" name="name" />
                   <SelectControl name="categoryId" label="Category">
                     <option key="none" value={undefined}>
                       Uncategorized
@@ -178,4 +207,4 @@ const CreateProjectModal = ({
   );
 };
 
-export default CreateProjectModal;
+export default EditProjectModal;

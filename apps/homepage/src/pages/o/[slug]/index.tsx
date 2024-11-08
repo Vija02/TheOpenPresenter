@@ -1,6 +1,7 @@
 import { SharedOrgLayout } from "@/components/SharedOrgLayout";
 import { Tag } from "@/components/Tag";
 import CreateProjectModal from "@/containers/CreateProjectModal";
+import EditProjectModal from "@/containers/EditProjectModal";
 import { useOrganizationSlug } from "@/lib/permissionHooks/organization";
 import {
   Button,
@@ -10,7 +11,6 @@ import {
   LinkOverlay,
   Text,
   VStack,
-  chakra,
 } from "@chakra-ui/react";
 import {
   useDeleteProjectMutation,
@@ -21,10 +21,8 @@ import { DateDisplayRelative, OverlayToggle, PopConfirm } from "@repo/ui";
 import { NextPage } from "next";
 import { useCallback } from "react";
 import { FaPlus } from "react-icons/fa";
-import { VscTrash as VscTrashRaw } from "react-icons/vsc";
+import { VscEdit, VscTrash } from "react-icons/vsc";
 import { toast } from "react-toastify";
-
-const VscTrash = chakra(VscTrashRaw);
 
 const OrganizationPage: NextPage = () => {
   const slug = useOrganizationSlug();
@@ -108,6 +106,31 @@ const OrganizationPage: NextPage = () => {
                 </Text>
               </LinkOverlay>
               <Flex>
+                <OverlayToggle
+                  toggler={({ onToggle }) => (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      role="button"
+                      color="gray"
+                      _hover={{ bg: "blue.100", color: "blue.700" }}
+                      opacity={{ base: 1, md: 0 }}
+                      _groupHover={{ opacity: 1 }}
+                      onClick={onToggle}
+                    >
+                      <VscEdit />
+                    </Button>
+                  )}
+                >
+                  <EditProjectModal
+                    project={project}
+                    organizationId={query.data?.organizationBySlug?.id}
+                    categories={
+                      query.data?.organizationBySlug?.categories.nodes ?? []
+                    }
+                  />
+                </OverlayToggle>
+
                 <PopConfirm
                   title={`Are you sure you want to delete this project? This action is not reversible.`}
                   onConfirm={() => handleDeleteProject(project.id)}

@@ -6,24 +6,7 @@ query OrganizationDashboardIndexPage($slug: String!) {
     projects(orderBy: UPDATED_AT_DESC) {
       nodes {
         id
-        name
-        slug
-        category {
-          id
-          name
-        }
-        projectTags {
-          nodes {
-            id
-            tag {
-              id
-              ...Tag
-            }
-          }
-        }
-        createdAt
-        targetDate
-        updatedAt
+        ...Project
       }
     }
     categories {

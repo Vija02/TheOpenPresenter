@@ -1,0 +1,8 @@
+fragment ProjectTag on ProjectTag {
+  id
+  projectId
+  tag {
+    id
+    ...Tag
+  }
+}
