@@ -54,6 +54,184 @@ strings and not numbers.
 """
 scalar BigInt
 
+"""
+A filter to be used against Boolean fields. All fields are combined with a logical ‘and.’
+"""
+input BooleanFilter {
+  """
+  Not equal to the specified value, treating null like an ordinary value.
+  """
+  distinctFrom: Boolean
+
+  """Equal to the specified value."""
+  equalTo: Boolean
+
+  """Greater than the specified value."""
+  greaterThan: Boolean
+
+  """Greater than or equal to the specified value."""
+  greaterThanOrEqualTo: Boolean
+
+  """Included in the specified list."""
+  in: [Boolean!]
+
+  """
+  Is null (if `true` is specified) or is not null (if `false` is specified).
+  """
+  isNull: Boolean
+
+  """Less than the specified value."""
+  lessThan: Boolean
+
+  """Less than or equal to the specified value."""
+  lessThanOrEqualTo: Boolean
+
+  """Equal to the specified value, treating null like an ordinary value."""
+  notDistinctFrom: Boolean
+
+  """Not equal to the specified value."""
+  notEqualTo: Boolean
+
+  """Not included in the specified list."""
+  notIn: [Boolean!]
+}
+
+"""A connection to a list of `Category` values."""
+type CategoriesConnection {
+  """
+  A list of edges which contains the `Category` and cursor to aid in pagination.
+  """
+  edges: [CategoriesEdge!]!
+
+  """A list of `Category` objects."""
+  nodes: [Category!]!
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+
+  """The count of *all* `Category` you could get from the connection."""
+  totalCount: Int!
+}
+
+"""A `Category` edge in the connection."""
+type CategoriesEdge {
+  """A cursor for use in pagination."""
+  cursor: Cursor
+
+  """The `Category` at the end of the edge."""
+  node: Category!
+}
+
+"""Methods to use when ordering `Category`."""
+enum CategoriesOrderBy {
+  ID_ASC
+  ID_DESC
+  NAME_ASC
+  NAME_DESC
+  NATURAL
+  ORGANIZATION_ID_ASC
+  ORGANIZATION_ID_DESC
+  PRIMARY_KEY_ASC
+  PRIMARY_KEY_DESC
+}
+
+"""Categories data"""
+type Category {
+  createdAt: Datetime!
+  id: UUID!
+  name: String!
+
+  """Reads a single `Organization` that is related to this `Category`."""
+  organization: Organization
+  organizationId: UUID!
+
+  """Reads and enables pagination through a set of `Project`."""
+  projects(
+    """Read all values in the set after (below) this cursor."""
+    after: Cursor
+
+    """Read all values in the set before (above) this cursor."""
+    before: Cursor
+
+    """
+    A condition to be used in determining which values should be returned by the collection.
+    """
+    condition: ProjectCondition
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: ProjectFilter
+
+    """Only read the first `n` values of the set."""
+    first: Int
+
+    """Only read the last `n` values of the set."""
+    last: Int
+
+    """
+    Skip the first `n` values from our `after` cursor, an alternative to cursor
+    based pagination. May not be used with `last`.
+    """
+    offset: Int
+
+    """The method to use when ordering `Project`."""
+    orderBy: [ProjectsOrderBy!] = [PRIMARY_KEY_ASC]
+  ): ProjectsConnection!
+  updatedAt: Datetime!
+}
+
+"""
+A condition to be used against `Category` object types. All fields are tested
+for equality and combined with a logical ‘and.’
+"""
+input CategoryCondition {
+  """Checks for equality with the object’s `id` field."""
+  id: UUID
+
+  """Checks for equality with the object’s `name` field."""
+  name: String
+
+  """Checks for equality with the object’s `organizationId` field."""
+  organizationId: UUID
+}
+
+"""
+A filter to be used against `Category` object types. All fields are combined with a logical ‘and.’
+"""
+input CategoryFilter {
+  """Checks for all expressions in this list."""
+  and: [CategoryFilter!]
+
+  """Filter by the object’s `id` field."""
+  id: UUIDFilter
+
+  """Filter by the object’s `name` field."""
+  name: StringFilter
+
+  """Negates the expression."""
+  not: CategoryFilter
+
+  """Checks for any expressions in this list."""
+  or: [CategoryFilter!]
+
+  """Filter by the object’s `organizationId` field."""
+  organizationId: UUIDFilter
+}
+
+"""An input for mutations affecting `Category`"""
+input CategoryInput {
+  name: String!
+  organizationId: UUID!
+}
+
+"""
+Represents an update to a `Category`. Fields that are set will be updated.
+"""
+input CategoryPatch {
+  name: String
+}
+
 """All input for the `changePassword` mutation."""
 input ChangePasswordInput {
   """
@@ -105,6 +283,90 @@ type ConfirmAccountDeletionPayload {
   success: Boolean
 }
 
+"""All input for the create `Category` mutation."""
+input CreateCategoryInput {
+  """The `Category` to be created by this mutation."""
+  category: CategoryInput!
+
+  """
+  An arbitrary string value with no semantic meaning. Will be included in the
+  payload verbatim. May be used to track mutations by the client.
+  """
+  clientMutationId: String
+}
+
+"""The output of our create `Category` mutation."""
+type CreateCategoryPayload {
+  """The `Category` that was created by this mutation."""
+  category: Category
+
+  """An edge for our `Category`. May be used by Relay 1."""
+  categoryEdge(
+    """The method to use when ordering `Category`."""
+    orderBy: [CategoriesOrderBy!] = [PRIMARY_KEY_ASC]
+  ): CategoriesEdge
+
+  """
+  The exact same `clientMutationId` that was provided in the mutation input,
+  unchanged and unused. May be used by a client to track mutations.
+  """
+  clientMutationId: String
+
+  """Reads a single `Organization` that is related to this `Category`."""
+  organization: Organization
+
+  """
+  Our root query field type. Allows us to run any query from our mutation payload.
+  """
+  query: Query
+}
+
+"""All input for the `createFullProject` mutation."""
+input CreateFullProjectInput {
+  categoryId: UUID
+
+  """
+  An arbitrary string value with no semantic meaning. Will be included in the
+  payload verbatim. May be used to track mutations by the client.
+  """
+  clientMutationId: String
+  name: String!
+  pOrganizationId: UUID!
+  slug: String!
+  tags: [UUID]!
+  targetDate: Datetime
+}
+
+"""The output of our `createFullProject` mutation."""
+type CreateFullProjectPayload {
+  """Reads a single `Category` that is related to this `Project`."""
+  category: Category
+
+  """
+  The exact same `clientMutationId` that was provided in the mutation input,
+  unchanged and unused. May be used by a client to track mutations.
+  """
+  clientMutationId: String
+
+  """Reads a single `User` that is related to this `Project`."""
+  creatorUser: User
+
+  """Reads a single `Organization` that is related to this `Project`."""
+  organization: Organization
+  project: Project
+
+  """An edge for our `Project`. May be used by Relay 1."""
+  projectEdge(
+    """The method to use when ordering `Project`."""
+    orderBy: [ProjectsOrderBy!] = [PRIMARY_KEY_ASC]
+  ): ProjectsEdge
+
+  """
+  Our root query field type. Allows us to run any query from our mutation payload.
+  """
+  query: Query
+}
+
 """All input for the `createOrganization` mutation."""
 input CreateOrganizationInput {
   """
@@ -151,6 +413,9 @@ input CreateProjectInput {
 
 """The output of our create `Project` mutation."""
 type CreateProjectPayload {
+  """Reads a single `Category` that is related to this `Project`."""
+  category: Category
+
   """
   The exact same `clientMutationId` that was provided in the mutation input,
   unchanged and unused. May be used by a client to track mutations.
@@ -176,6 +441,85 @@ type CreateProjectPayload {
   Our root query field type. Allows us to run any query from our mutation payload.
   """
   query: Query
+}
+
+"""All input for the create `ProjectTag` mutation."""
+input CreateProjectTagInput {
+  """
+  An arbitrary string value with no semantic meaning. Will be included in the
+  payload verbatim. May be used to track mutations by the client.
+  """
+  clientMutationId: String
+
+  """The `ProjectTag` to be created by this mutation."""
+  projectTag: ProjectTagInput!
+}
+
+"""The output of our create `ProjectTag` mutation."""
+type CreateProjectTagPayload {
+  """
+  The exact same `clientMutationId` that was provided in the mutation input,
+  unchanged and unused. May be used by a client to track mutations.
+  """
+  clientMutationId: String
+
+  """Reads a single `Project` that is related to this `ProjectTag`."""
+  project: Project
+
+  """The `ProjectTag` that was created by this mutation."""
+  projectTag: ProjectTag
+
+  """An edge for our `ProjectTag`. May be used by Relay 1."""
+  projectTagEdge(
+    """The method to use when ordering `ProjectTag`."""
+    orderBy: [ProjectTagsOrderBy!] = [PRIMARY_KEY_ASC]
+  ): ProjectTagsEdge
+
+  """
+  Our root query field type. Allows us to run any query from our mutation payload.
+  """
+  query: Query
+
+  """Reads a single `Tag` that is related to this `ProjectTag`."""
+  tag: Tag
+}
+
+"""All input for the create `Tag` mutation."""
+input CreateTagInput {
+  """
+  An arbitrary string value with no semantic meaning. Will be included in the
+  payload verbatim. May be used to track mutations by the client.
+  """
+  clientMutationId: String
+
+  """The `Tag` to be created by this mutation."""
+  tag: TagInput!
+}
+
+"""The output of our create `Tag` mutation."""
+type CreateTagPayload {
+  """
+  The exact same `clientMutationId` that was provided in the mutation input,
+  unchanged and unused. May be used by a client to track mutations.
+  """
+  clientMutationId: String
+
+  """Reads a single `Organization` that is related to this `Tag`."""
+  organization: Organization
+
+  """
+  Our root query field type. Allows us to run any query from our mutation payload.
+  """
+  query: Query
+
+  """The `Tag` that was created by this mutation."""
+  tag: Tag
+
+  """An edge for our `Tag`. May be used by Relay 1."""
+  tagEdge(
+    """The method to use when ordering `Tag`."""
+    orderBy: [TagsOrderBy!] = [PRIMARY_KEY_ASC]
+  ): TagsEdge
 }
 
 """All input for the create `UserEmail` mutation."""
@@ -225,6 +569,85 @@ A point in time as described by the [ISO
 """
 scalar Datetime
 
+"""
+A filter to be used against Datetime fields. All fields are combined with a logical ‘and.’
+"""
+input DatetimeFilter {
+  """
+  Not equal to the specified value, treating null like an ordinary value.
+  """
+  distinctFrom: Datetime
+
+  """Equal to the specified value."""
+  equalTo: Datetime
+
+  """Greater than the specified value."""
+  greaterThan: Datetime
+
+  """Greater than or equal to the specified value."""
+  greaterThanOrEqualTo: Datetime
+
+  """Included in the specified list."""
+  in: [Datetime!]
+
+  """
+  Is null (if `true` is specified) or is not null (if `false` is specified).
+  """
+  isNull: Boolean
+
+  """Less than the specified value."""
+  lessThan: Datetime
+
+  """Less than or equal to the specified value."""
+  lessThanOrEqualTo: Datetime
+
+  """Equal to the specified value, treating null like an ordinary value."""
+  notDistinctFrom: Datetime
+
+  """Not equal to the specified value."""
+  notEqualTo: Datetime
+
+  """Not included in the specified list."""
+  notIn: [Datetime!]
+}
+
+"""All input for the `deleteCategory` mutation."""
+input DeleteCategoryInput {
+  """
+  An arbitrary string value with no semantic meaning. Will be included in the
+  payload verbatim. May be used to track mutations by the client.
+  """
+  clientMutationId: String
+  id: UUID!
+}
+
+"""The output of our delete `Category` mutation."""
+type DeleteCategoryPayload {
+  """The `Category` that was deleted by this mutation."""
+  category: Category
+
+  """An edge for our `Category`. May be used by Relay 1."""
+  categoryEdge(
+    """The method to use when ordering `Category`."""
+    orderBy: [CategoriesOrderBy!] = [PRIMARY_KEY_ASC]
+  ): CategoriesEdge
+
+  """
+  The exact same `clientMutationId` that was provided in the mutation input,
+  unchanged and unused. May be used by a client to track mutations.
+  """
+  clientMutationId: String
+  deletedCategoryNodeId: ID
+
+  """Reads a single `Organization` that is related to this `Category`."""
+  organization: Organization
+
+  """
+  Our root query field type. Allows us to run any query from our mutation payload.
+  """
+  query: Query
+}
+
 """All input for the `deleteOrganization` mutation."""
 input DeleteOrganizationInput {
   """
@@ -247,6 +670,126 @@ type DeleteOrganizationPayload {
   Our root query field type. Allows us to run any query from our mutation payload.
   """
   query: Query
+}
+
+"""All input for the `deleteProject` mutation."""
+input DeleteProjectInput {
+  """
+  An arbitrary string value with no semantic meaning. Will be included in the
+  payload verbatim. May be used to track mutations by the client.
+  """
+  clientMutationId: String
+  id: UUID!
+}
+
+"""The output of our delete `Project` mutation."""
+type DeleteProjectPayload {
+  """Reads a single `Category` that is related to this `Project`."""
+  category: Category
+
+  """
+  The exact same `clientMutationId` that was provided in the mutation input,
+  unchanged and unused. May be used by a client to track mutations.
+  """
+  clientMutationId: String
+
+  """Reads a single `User` that is related to this `Project`."""
+  creatorUser: User
+  deletedProjectNodeId: ID
+
+  """Reads a single `Organization` that is related to this `Project`."""
+  organization: Organization
+
+  """The `Project` that was deleted by this mutation."""
+  project: Project
+
+  """An edge for our `Project`. May be used by Relay 1."""
+  projectEdge(
+    """The method to use when ordering `Project`."""
+    orderBy: [ProjectsOrderBy!] = [PRIMARY_KEY_ASC]
+  ): ProjectsEdge
+
+  """
+  Our root query field type. Allows us to run any query from our mutation payload.
+  """
+  query: Query
+}
+
+"""All input for the `deleteProjectTag` mutation."""
+input DeleteProjectTagInput {
+  """
+  An arbitrary string value with no semantic meaning. Will be included in the
+  payload verbatim. May be used to track mutations by the client.
+  """
+  clientMutationId: String
+  id: UUID!
+}
+
+"""The output of our delete `ProjectTag` mutation."""
+type DeleteProjectTagPayload {
+  """
+  The exact same `clientMutationId` that was provided in the mutation input,
+  unchanged and unused. May be used by a client to track mutations.
+  """
+  clientMutationId: String
+  deletedProjectTagNodeId: ID
+
+  """Reads a single `Project` that is related to this `ProjectTag`."""
+  project: Project
+
+  """The `ProjectTag` that was deleted by this mutation."""
+  projectTag: ProjectTag
+
+  """An edge for our `ProjectTag`. May be used by Relay 1."""
+  projectTagEdge(
+    """The method to use when ordering `ProjectTag`."""
+    orderBy: [ProjectTagsOrderBy!] = [PRIMARY_KEY_ASC]
+  ): ProjectTagsEdge
+
+  """
+  Our root query field type. Allows us to run any query from our mutation payload.
+  """
+  query: Query
+
+  """Reads a single `Tag` that is related to this `ProjectTag`."""
+  tag: Tag
+}
+
+"""All input for the `deleteTag` mutation."""
+input DeleteTagInput {
+  """
+  An arbitrary string value with no semantic meaning. Will be included in the
+  payload verbatim. May be used to track mutations by the client.
+  """
+  clientMutationId: String
+  id: UUID!
+}
+
+"""The output of our delete `Tag` mutation."""
+type DeleteTagPayload {
+  """
+  The exact same `clientMutationId` that was provided in the mutation input,
+  unchanged and unused. May be used by a client to track mutations.
+  """
+  clientMutationId: String
+  deletedTagNodeId: ID
+
+  """Reads a single `Organization` that is related to this `Tag`."""
+  organization: Organization
+
+  """
+  Our root query field type. Allows us to run any query from our mutation payload.
+  """
+  query: Query
+
+  """The `Tag` that was deleted by this mutation."""
+  tag: Tag
+
+  """An edge for our `Tag`. May be used by Relay 1."""
+  tagEdge(
+    """The method to use when ordering `Tag`."""
+    orderBy: [TagsOrderBy!] = [PRIMARY_KEY_ASC]
+  ): TagsEdge
 }
 
 """All input for the `deleteUserAuthentication` mutation."""
@@ -476,6 +1019,32 @@ type MediaEdge {
   node: Media!
 }
 
+"""
+A filter to be used against `Media` object types. All fields are combined with a logical ‘and.’
+"""
+input MediaFilter {
+  """Checks for all expressions in this list."""
+  and: [MediaFilter!]
+
+  """Filter by the object’s `createdAt` field."""
+  createdAt: DatetimeFilter
+
+  """Filter by the object’s `creatorUserId` field."""
+  creatorUserId: UUIDFilter
+
+  """Filter by the object’s `id` field."""
+  id: UUIDFilter
+
+  """Negates the expression."""
+  not: MediaFilter
+
+  """Checks for any expressions in this list."""
+  or: [MediaFilter!]
+
+  """Filter by the object’s `organizationId` field."""
+  organizationId: UUIDFilter
+}
+
 """Methods to use when ordering `Media`."""
 enum MediaOrderBy {
   CREATED_AT_ASC
@@ -529,6 +1098,20 @@ type Mutation {
     input: ConfirmAccountDeletionInput!
   ): ConfirmAccountDeletionPayload
 
+  """Creates a single `Category`."""
+  createCategory(
+    """
+    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.
+    """
+    input: CreateCategoryInput!
+  ): CreateCategoryPayload
+  createFullProject(
+    """
+    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.
+    """
+    input: CreateFullProjectInput!
+  ): CreateFullProjectPayload
+
   """
   An `Organization` is a great way of sharing access to resources between multiple users without compromising security. When you create an organization you will have the 'owner' and 'billing contact' roles. You may invite other users and redistribute these roles.
   """
@@ -547,6 +1130,22 @@ type Mutation {
     input: CreateProjectInput!
   ): CreateProjectPayload
 
+  """Creates a single `ProjectTag`."""
+  createProjectTag(
+    """
+    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.
+    """
+    input: CreateProjectTagInput!
+  ): CreateProjectTagPayload
+
+  """Creates a single `Tag`."""
+  createTag(
+    """
+    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.
+    """
+    input: CreateTagInput!
+  ): CreateTagPayload
+
   """Creates a single `UserEmail`."""
   createUserEmail(
     """
@@ -554,6 +1153,14 @@ type Mutation {
     """
     input: CreateUserEmailInput!
   ): CreateUserEmailPayload
+
+  """Deletes a single `Category` using a unique key."""
+  deleteCategory(
+    """
+    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.
+    """
+    input: DeleteCategoryInput!
+  ): DeleteCategoryPayload
 
   """
   Only the 'owner' may delete an organization. This operation cannot be undone, so be sure that it is what you intend.
@@ -564,6 +1171,30 @@ type Mutation {
     """
     input: DeleteOrganizationInput!
   ): DeleteOrganizationPayload
+
+  """Deletes a single `Project` using a unique key."""
+  deleteProject(
+    """
+    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.
+    """
+    input: DeleteProjectInput!
+  ): DeleteProjectPayload
+
+  """Deletes a single `ProjectTag` using a unique key."""
+  deleteProjectTag(
+    """
+    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.
+    """
+    input: DeleteProjectTagInput!
+  ): DeleteProjectTagPayload
+
+  """Deletes a single `Tag` using a unique key."""
+  deleteTag(
+    """
+    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.
+    """
+    input: DeleteTagInput!
+  ): DeleteTagPayload
 
   """Deletes a single `UserAuthentication` using a unique key."""
   deleteUserAuthentication(
@@ -708,6 +1339,14 @@ type Mutation {
     input: TransferOrganizationOwnershipInput!
   ): TransferOrganizationOwnershipPayload
 
+  """Updates a single `Category` using a unique key and a patch."""
+  updateCategory(
+    """
+    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.
+    """
+    input: UpdateCategoryInput!
+  ): UpdateCategoryPayload
+
   """Updates a single `Organization` using a unique key and a patch."""
   updateOrganization(
     """
@@ -715,6 +1354,22 @@ type Mutation {
     """
     input: UpdateOrganizationInput!
   ): UpdateOrganizationPayload
+
+  """Updates a single `Project` using a unique key and a patch."""
+  updateProject(
+    """
+    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.
+    """
+    input: UpdateProjectInput!
+  ): UpdateProjectPayload
+
+  """Updates a single `Tag` using a unique key and a patch."""
+  updateTag(
+    """
+    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.
+    """
+    input: UpdateTagInput!
+  ): UpdateTagPayload
 
   """Updates a single `User` using a unique key and a patch."""
   updateUser(
@@ -736,6 +1391,39 @@ type Mutation {
 }
 
 type Organization {
+  """Reads and enables pagination through a set of `Category`."""
+  categories(
+    """Read all values in the set after (below) this cursor."""
+    after: Cursor
+
+    """Read all values in the set before (above) this cursor."""
+    before: Cursor
+
+    """
+    A condition to be used in determining which values should be returned by the collection.
+    """
+    condition: CategoryCondition
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: CategoryFilter
+
+    """Only read the first `n` values of the set."""
+    first: Int
+
+    """Only read the last `n` values of the set."""
+    last: Int
+
+    """
+    Skip the first `n` values from our `after` cursor, an alternative to cursor
+    based pagination. May not be used with `last`.
+    """
+    offset: Int
+
+    """The method to use when ordering `Category`."""
+    orderBy: [CategoriesOrderBy!] = [PRIMARY_KEY_ASC]
+  ): CategoriesConnection!
   createdAt: Datetime!
   currentUserIsBillingContact: Boolean
   currentUserIsOwner: Boolean
@@ -754,6 +1442,11 @@ type Organization {
     A condition to be used in determining which values should be returned by the collection.
     """
     condition: MediaCondition
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: MediaFilter
 
     """Only read the first `n` values of the set."""
     first: Int
@@ -787,6 +1480,11 @@ type Organization {
     """
     condition: OrganizationJoinRequestCondition
 
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: OrganizationJoinRequestFilter
+
     """Only read the first `n` values of the set."""
     first: Int
 
@@ -818,6 +1516,11 @@ type Organization {
     """
     condition: OrganizationMembershipCondition
 
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: OrganizationMembershipFilter
+
     """Only read the first `n` values of the set."""
     first: Int
 
@@ -847,6 +1550,11 @@ type Organization {
     """
     condition: ProjectCondition
 
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: ProjectFilter
+
     """Only read the first `n` values of the set."""
     first: Int
 
@@ -863,6 +1571,40 @@ type Organization {
     orderBy: [ProjectsOrderBy!] = [PRIMARY_KEY_ASC]
   ): ProjectsConnection!
   slug: String!
+
+  """Reads and enables pagination through a set of `Tag`."""
+  tags(
+    """Read all values in the set after (below) this cursor."""
+    after: Cursor
+
+    """Read all values in the set before (above) this cursor."""
+    before: Cursor
+
+    """
+    A condition to be used in determining which values should be returned by the collection.
+    """
+    condition: TagCondition
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: TagFilter
+
+    """Only read the first `n` values of the set."""
+    first: Int
+
+    """Only read the last `n` values of the set."""
+    last: Int
+
+    """
+    Skip the first `n` values from our `after` cursor, an alternative to cursor
+    based pagination. May not be used with `last`.
+    """
+    offset: Int
+
+    """The method to use when ordering `Tag`."""
+    orderBy: [TagsOrderBy!] = [PRIMARY_KEY_ASC]
+  ): TagsConnection!
 }
 
 """
@@ -878,6 +1620,35 @@ input OrganizationCondition {
 
   """Checks for equality with the object’s `slug` field."""
   slug: String
+}
+
+"""
+A filter to be used against `Organization` object types. All fields are combined with a logical ‘and.’
+"""
+input OrganizationFilter {
+  """Checks for all expressions in this list."""
+  and: [OrganizationFilter!]
+
+  """Filter by the object’s `currentUserIsBillingContact` field."""
+  currentUserIsBillingContact: BooleanFilter
+
+  """Filter by the object’s `currentUserIsOwner` field."""
+  currentUserIsOwner: BooleanFilter
+
+  """Filter by the object’s `id` field."""
+  id: UUIDFilter
+
+  """Filter by the object’s `isPublic` field."""
+  isPublic: BooleanFilter
+
+  """Negates the expression."""
+  not: OrganizationFilter
+
+  """Checks for any expressions in this list."""
+  or: [OrganizationFilter!]
+
+  """Filter by the object’s `slug` field."""
+  slug: StringFilter
 }
 
 type OrganizationJoinRequest {
@@ -909,6 +1680,29 @@ input OrganizationJoinRequestCondition {
 
   """Checks for equality with the object’s `userId` field."""
   userId: UUID
+}
+
+"""
+A filter to be used against `OrganizationJoinRequest` object types. All fields are combined with a logical ‘and.’
+"""
+input OrganizationJoinRequestFilter {
+  """Checks for all expressions in this list."""
+  and: [OrganizationJoinRequestFilter!]
+
+  """Filter by the object’s `id` field."""
+  id: UUIDFilter
+
+  """Negates the expression."""
+  not: OrganizationJoinRequestFilter
+
+  """Checks for any expressions in this list."""
+  or: [OrganizationJoinRequestFilter!]
+
+  """Filter by the object’s `organizationId` field."""
+  organizationId: UUIDFilter
+
+  """Filter by the object’s `userId` field."""
+  userId: UUIDFilter
 }
 
 """A connection to a list of `OrganizationJoinRequest` values."""
@@ -984,6 +1778,29 @@ input OrganizationMembershipCondition {
 
   """Checks for equality with the object’s `userId` field."""
   userId: UUID
+}
+
+"""
+A filter to be used against `OrganizationMembership` object types. All fields are combined with a logical ‘and.’
+"""
+input OrganizationMembershipFilter {
+  """Checks for all expressions in this list."""
+  and: [OrganizationMembershipFilter!]
+
+  """Filter by the object’s `id` field."""
+  id: UUIDFilter
+
+  """Negates the expression."""
+  not: OrganizationMembershipFilter
+
+  """Checks for any expressions in this list."""
+  or: [OrganizationMembershipFilter!]
+
+  """Filter by the object’s `organizationId` field."""
+  organizationId: UUIDFilter
+
+  """Filter by the object’s `userId` field."""
+  userId: UUIDFilter
 }
 
 """A connection to a list of `OrganizationMembership` values."""
@@ -1109,6 +1926,9 @@ type PluginMeta {
 }
 
 type Project {
+  """Reads a single `Category` that is related to this `Project`."""
+  category: Category
+  categoryId: UUID
   createdAt: Datetime!
 
   """Reads a single `User` that is related to this `Project`."""
@@ -1116,11 +1936,47 @@ type Project {
   creatorUserId: UUID
   document: String
   id: UUID!
+  name: String!
 
   """Reads a single `Organization` that is related to this `Project`."""
   organization: Organization
   organizationId: UUID!
+
+  """Reads and enables pagination through a set of `ProjectTag`."""
+  projectTags(
+    """Read all values in the set after (below) this cursor."""
+    after: Cursor
+
+    """Read all values in the set before (above) this cursor."""
+    before: Cursor
+
+    """
+    A condition to be used in determining which values should be returned by the collection.
+    """
+    condition: ProjectTagCondition
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: ProjectTagFilter
+
+    """Only read the first `n` values of the set."""
+    first: Int
+
+    """Only read the last `n` values of the set."""
+    last: Int
+
+    """
+    Skip the first `n` values from our `after` cursor, an alternative to cursor
+    based pagination. May not be used with `last`.
+    """
+    offset: Int
+
+    """The method to use when ordering `ProjectTag`."""
+    orderBy: [ProjectTagsOrderBy!] = [PRIMARY_KEY_ASC]
+  ): ProjectTagsConnection!
   slug: String!
+  targetDate: Datetime
   updatedAt: Datetime!
 }
 
@@ -1128,6 +1984,9 @@ type Project {
 A condition to be used against `Project` object types. All fields are tested for equality and combined with a logical ‘and.’
 """
 input ProjectCondition {
+  """Checks for equality with the object’s `categoryId` field."""
+  categoryId: UUID
+
   """Checks for equality with the object’s `creatorUserId` field."""
   creatorUserId: UUID
 
@@ -1144,11 +2003,154 @@ input ProjectCondition {
   updatedAt: Datetime
 }
 
+"""
+A filter to be used against `Project` object types. All fields are combined with a logical ‘and.’
+"""
+input ProjectFilter {
+  """Checks for all expressions in this list."""
+  and: [ProjectFilter!]
+
+  """Filter by the object’s `categoryId` field."""
+  categoryId: UUIDFilter
+
+  """Filter by the object’s `creatorUserId` field."""
+  creatorUserId: UUIDFilter
+
+  """Filter by the object’s `id` field."""
+  id: UUIDFilter
+
+  """Negates the expression."""
+  not: ProjectFilter
+
+  """Checks for any expressions in this list."""
+  or: [ProjectFilter!]
+
+  """Filter by the object’s `organizationId` field."""
+  organizationId: UUIDFilter
+
+  """Filter by the object’s `slug` field."""
+  slug: StringFilter
+
+  """Filter by the object’s `updatedAt` field."""
+  updatedAt: DatetimeFilter
+}
+
 """An input for mutations affecting `Project`"""
 input ProjectInput {
+  categoryId: UUID
   creatorUserId: UUID
+  name: String
   organizationId: UUID!
   slug: String!
+  targetDate: Datetime
+}
+
+"""
+Represents an update to a `Project`. Fields that are set will be updated.
+"""
+input ProjectPatch {
+  categoryId: UUID
+  name: String
+  slug: String
+  targetDate: Datetime
+}
+
+"""Many to many relation from project to tag"""
+type ProjectTag {
+  createdAt: Datetime!
+  id: UUID!
+
+  """Reads a single `Project` that is related to this `ProjectTag`."""
+  project: Project
+  projectId: UUID!
+
+  """Reads a single `Tag` that is related to this `ProjectTag`."""
+  tag: Tag
+  tagId: UUID!
+  updatedAt: Datetime!
+}
+
+"""
+A condition to be used against `ProjectTag` object types. All fields are tested
+for equality and combined with a logical ‘and.’
+"""
+input ProjectTagCondition {
+  """Checks for equality with the object’s `id` field."""
+  id: UUID
+
+  """Checks for equality with the object’s `projectId` field."""
+  projectId: UUID
+
+  """Checks for equality with the object’s `tagId` field."""
+  tagId: UUID
+}
+
+"""
+A filter to be used against `ProjectTag` object types. All fields are combined with a logical ‘and.’
+"""
+input ProjectTagFilter {
+  """Checks for all expressions in this list."""
+  and: [ProjectTagFilter!]
+
+  """Filter by the object’s `id` field."""
+  id: UUIDFilter
+
+  """Negates the expression."""
+  not: ProjectTagFilter
+
+  """Checks for any expressions in this list."""
+  or: [ProjectTagFilter!]
+
+  """Filter by the object’s `projectId` field."""
+  projectId: UUIDFilter
+
+  """Filter by the object’s `tagId` field."""
+  tagId: UUIDFilter
+}
+
+"""An input for mutations affecting `ProjectTag`"""
+input ProjectTagInput {
+  projectId: UUID!
+  tagId: UUID!
+}
+
+"""A connection to a list of `ProjectTag` values."""
+type ProjectTagsConnection {
+  """
+  A list of edges which contains the `ProjectTag` and cursor to aid in pagination.
+  """
+  edges: [ProjectTagsEdge!]!
+
+  """A list of `ProjectTag` objects."""
+  nodes: [ProjectTag!]!
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+
+  """The count of *all* `ProjectTag` you could get from the connection."""
+  totalCount: Int!
+}
+
+"""A `ProjectTag` edge in the connection."""
+type ProjectTagsEdge {
+  """A cursor for use in pagination."""
+  cursor: Cursor
+
+  """The `ProjectTag` at the end of the edge."""
+  node: ProjectTag!
+}
+
+"""Methods to use when ordering `ProjectTag`."""
+enum ProjectTagsOrderBy {
+  ID_ASC
+  ID_DESC
+  NATURAL
+  PRIMARY_KEY_ASC
+  PRIMARY_KEY_DESC
+  PROJECT_ID_ASC
+  PROJECT_ID_DESC
+  TAG_ID_ASC
+  TAG_ID_DESC
 }
 
 """A connection to a list of `Project` values."""
@@ -1179,6 +2181,8 @@ type ProjectsEdge {
 
 """Methods to use when ordering `Project`."""
 enum ProjectsOrderBy {
+  CATEGORY_ID_ASC
+  CATEGORY_ID_DESC
   CREATOR_USER_ID_ASC
   CREATOR_USER_ID_DESC
   ID_ASC
@@ -1196,8 +2200,46 @@ enum ProjectsOrderBy {
 
 """The root query type which gives access points into the data universe."""
 type Query {
+  """Reads and enables pagination through a set of `Category`."""
+  categories(
+    """Read all values in the set after (below) this cursor."""
+    after: Cursor
+
+    """Read all values in the set before (above) this cursor."""
+    before: Cursor
+
+    """
+    A condition to be used in determining which values should be returned by the collection.
+    """
+    condition: CategoryCondition
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: CategoryFilter
+
+    """Only read the first `n` values of the set."""
+    first: Int
+
+    """Only read the last `n` values of the set."""
+    last: Int
+
+    """
+    Skip the first `n` values from our `after` cursor, an alternative to cursor
+    based pagination. May not be used with `last`.
+    """
+    offset: Int
+
+    """The method to use when ordering `Category`."""
+    orderBy: [CategoriesOrderBy!] = [PRIMARY_KEY_ASC]
+  ): CategoriesConnection
+  category(id: UUID!): Category
+
   """The currently logged in user (or null if not logged in)."""
   currentUser: User
+  currentUserCanAccessCategory(categoryId: UUID!): Boolean
+  currentUserCanAccessProject(projectId: UUID!): Boolean
+  currentUserCanAccessTag(tagId: UUID!): Boolean
   media(id: UUID!): Media
 
   """Reads and enables pagination through a set of `Media`."""
@@ -1212,6 +2254,11 @@ type Query {
     A condition to be used in determining which values should be returned by the collection.
     """
     condition: MediaCondition
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: MediaFilter
 
     """Only read the first `n` values of the set."""
     first: Int
@@ -1253,6 +2300,11 @@ type Query {
     """
     condition: OrganizationJoinRequestCondition
 
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: OrganizationJoinRequestFilter
+
     """Only read the first `n` values of the set."""
     first: Int
 
@@ -1283,6 +2335,11 @@ type Query {
     """
     condition: OrganizationCondition
 
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: OrganizationFilter
+
     """Only read the first `n` values of the set."""
     first: Int
 
@@ -1307,6 +2364,11 @@ type Query {
     """Read all values in the set before (above) this cursor."""
     before: Cursor
 
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: OrganizationFilter
+
     """Only read the first `n` values of the set."""
     first: Int
 
@@ -1323,6 +2385,41 @@ type Query {
   pluginMeta: PluginMeta!
   project(id: UUID!): Project
   projectByOrganizationIdAndSlug(organizationId: UUID!, slug: String!): Project
+  projectTag(id: UUID!): ProjectTag
+
+  """Reads and enables pagination through a set of `ProjectTag`."""
+  projectTags(
+    """Read all values in the set after (below) this cursor."""
+    after: Cursor
+
+    """Read all values in the set before (above) this cursor."""
+    before: Cursor
+
+    """
+    A condition to be used in determining which values should be returned by the collection.
+    """
+    condition: ProjectTagCondition
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: ProjectTagFilter
+
+    """Only read the first `n` values of the set."""
+    first: Int
+
+    """Only read the last `n` values of the set."""
+    last: Int
+
+    """
+    Skip the first `n` values from our `after` cursor, an alternative to cursor
+    based pagination. May not be used with `last`.
+    """
+    offset: Int
+
+    """The method to use when ordering `ProjectTag`."""
+    orderBy: [ProjectTagsOrderBy!] = [PRIMARY_KEY_ASC]
+  ): ProjectTagsConnection
 
   """Reads and enables pagination through a set of `Project`."""
   projects(
@@ -1336,6 +2433,11 @@ type Query {
     A condition to be used in determining which values should be returned by the collection.
     """
     condition: ProjectCondition
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: ProjectFilter
 
     """Only read the first `n` values of the set."""
     first: Int
@@ -1352,6 +2454,41 @@ type Query {
     """The method to use when ordering `Project`."""
     orderBy: [ProjectsOrderBy!] = [PRIMARY_KEY_ASC]
   ): ProjectsConnection
+  tag(id: UUID!): Tag
+
+  """Reads and enables pagination through a set of `Tag`."""
+  tags(
+    """Read all values in the set after (below) this cursor."""
+    after: Cursor
+
+    """Read all values in the set before (above) this cursor."""
+    before: Cursor
+
+    """
+    A condition to be used in determining which values should be returned by the collection.
+    """
+    condition: TagCondition
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: TagFilter
+
+    """Only read the first `n` values of the set."""
+    first: Int
+
+    """Only read the last `n` values of the set."""
+    last: Int
+
+    """
+    Skip the first `n` values from our `after` cursor, an alternative to cursor
+    based pagination. May not be used with `last`.
+    """
+    offset: Int
+
+    """The method to use when ordering `Tag`."""
+    orderBy: [TagsOrderBy!] = [PRIMARY_KEY_ASC]
+  ): TagsConnection
   user(id: UUID!): User
   userAuthentication(id: UUID!): UserAuthentication
   userByUsername(username: String!): User
@@ -1516,11 +2653,288 @@ type SceneCreator {
 }
 
 """
+A filter to be used against String fields. All fields are combined with a logical ‘and.’
+"""
+input StringFilter {
+  """
+  Not equal to the specified value, treating null like an ordinary value.
+  """
+  distinctFrom: String
+
+  """
+  Not equal to the specified value, treating null like an ordinary value (case-insensitive).
+  """
+  distinctFromInsensitive: String
+
+  """Ends with the specified string (case-sensitive)."""
+  endsWith: String
+
+  """Ends with the specified string (case-insensitive)."""
+  endsWithInsensitive: String
+
+  """Equal to the specified value."""
+  equalTo: String
+
+  """Equal to the specified value (case-insensitive)."""
+  equalToInsensitive: String
+
+  """Greater than the specified value."""
+  greaterThan: String
+
+  """Greater than the specified value (case-insensitive)."""
+  greaterThanInsensitive: String
+
+  """Greater than or equal to the specified value."""
+  greaterThanOrEqualTo: String
+
+  """Greater than or equal to the specified value (case-insensitive)."""
+  greaterThanOrEqualToInsensitive: String
+
+  """Included in the specified list."""
+  in: [String!]
+
+  """Included in the specified list (case-insensitive)."""
+  inInsensitive: [String!]
+
+  """Contains the specified string (case-sensitive)."""
+  includes: String
+
+  """Contains the specified string (case-insensitive)."""
+  includesInsensitive: String
+
+  """
+  Is null (if `true` is specified) or is not null (if `false` is specified).
+  """
+  isNull: Boolean
+
+  """Less than the specified value."""
+  lessThan: String
+
+  """Less than the specified value (case-insensitive)."""
+  lessThanInsensitive: String
+
+  """Less than or equal to the specified value."""
+  lessThanOrEqualTo: String
+
+  """Less than or equal to the specified value (case-insensitive)."""
+  lessThanOrEqualToInsensitive: String
+
+  """
+  Matches the specified pattern (case-sensitive). An underscore (_) matches any single character; a percent sign (%) matches any sequence of zero or more characters.
+  """
+  like: String
+
+  """
+  Matches the specified pattern (case-insensitive). An underscore (_) matches any single character; a percent sign (%) matches any sequence of zero or more characters.
+  """
+  likeInsensitive: String
+
+  """Equal to the specified value, treating null like an ordinary value."""
+  notDistinctFrom: String
+
+  """
+  Equal to the specified value, treating null like an ordinary value (case-insensitive).
+  """
+  notDistinctFromInsensitive: String
+
+  """Does not end with the specified string (case-sensitive)."""
+  notEndsWith: String
+
+  """Does not end with the specified string (case-insensitive)."""
+  notEndsWithInsensitive: String
+
+  """Not equal to the specified value."""
+  notEqualTo: String
+
+  """Not equal to the specified value (case-insensitive)."""
+  notEqualToInsensitive: String
+
+  """Not included in the specified list."""
+  notIn: [String!]
+
+  """Not included in the specified list (case-insensitive)."""
+  notInInsensitive: [String!]
+
+  """Does not contain the specified string (case-sensitive)."""
+  notIncludes: String
+
+  """Does not contain the specified string (case-insensitive)."""
+  notIncludesInsensitive: String
+
+  """
+  Does not match the specified pattern (case-sensitive). An underscore (_) matches any single character; a percent sign (%) matches any sequence of zero or more characters.
+  """
+  notLike: String
+
+  """
+  Does not match the specified pattern (case-insensitive). An underscore (_) matches any single character; a percent sign (%) matches any sequence of zero or more characters.
+  """
+  notLikeInsensitive: String
+
+  """Does not start with the specified string (case-sensitive)."""
+  notStartsWith: String
+
+  """Does not start with the specified string (case-insensitive)."""
+  notStartsWithInsensitive: String
+
+  """Starts with the specified string (case-sensitive)."""
+  startsWith: String
+
+  """Starts with the specified string (case-insensitive)."""
+  startsWithInsensitive: String
+}
+
+"""
 The root subscription type: contains realtime events you can subscribe to with the `subscription` operation.
 """
 type Subscription {
   """Triggered when the logged in user's record is updated in some way."""
   currentUserUpdated: UserSubscriptionPayload
+}
+
+"""Tag data"""
+type Tag {
+  backgroundColor: String
+  createdAt: Datetime!
+  description: String
+  foregroundColor: String
+  id: UUID!
+  name: String!
+
+  """Reads a single `Organization` that is related to this `Tag`."""
+  organization: Organization
+  organizationId: UUID!
+
+  """Reads and enables pagination through a set of `ProjectTag`."""
+  projectTags(
+    """Read all values in the set after (below) this cursor."""
+    after: Cursor
+
+    """Read all values in the set before (above) this cursor."""
+    before: Cursor
+
+    """
+    A condition to be used in determining which values should be returned by the collection.
+    """
+    condition: ProjectTagCondition
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: ProjectTagFilter
+
+    """Only read the first `n` values of the set."""
+    first: Int
+
+    """Only read the last `n` values of the set."""
+    last: Int
+
+    """
+    Skip the first `n` values from our `after` cursor, an alternative to cursor
+    based pagination. May not be used with `last`.
+    """
+    offset: Int
+
+    """The method to use when ordering `ProjectTag`."""
+    orderBy: [ProjectTagsOrderBy!] = [PRIMARY_KEY_ASC]
+  ): ProjectTagsConnection!
+  updatedAt: Datetime!
+  variant: String
+}
+
+"""
+A condition to be used against `Tag` object types. All fields are tested for equality and combined with a logical ‘and.’
+"""
+input TagCondition {
+  """Checks for equality with the object’s `id` field."""
+  id: UUID
+
+  """Checks for equality with the object’s `name` field."""
+  name: String
+
+  """Checks for equality with the object’s `organizationId` field."""
+  organizationId: UUID
+}
+
+"""
+A filter to be used against `Tag` object types. All fields are combined with a logical ‘and.’
+"""
+input TagFilter {
+  """Checks for all expressions in this list."""
+  and: [TagFilter!]
+
+  """Filter by the object’s `id` field."""
+  id: UUIDFilter
+
+  """Filter by the object’s `name` field."""
+  name: StringFilter
+
+  """Negates the expression."""
+  not: TagFilter
+
+  """Checks for any expressions in this list."""
+  or: [TagFilter!]
+
+  """Filter by the object’s `organizationId` field."""
+  organizationId: UUIDFilter
+}
+
+"""An input for mutations affecting `Tag`"""
+input TagInput {
+  backgroundColor: String
+  description: String
+  foregroundColor: String
+  name: String!
+  organizationId: UUID!
+  variant: String
+}
+
+"""Represents an update to a `Tag`. Fields that are set will be updated."""
+input TagPatch {
+  backgroundColor: String
+  description: String
+  foregroundColor: String
+  name: String
+  variant: String
+}
+
+"""A connection to a list of `Tag` values."""
+type TagsConnection {
+  """
+  A list of edges which contains the `Tag` and cursor to aid in pagination.
+  """
+  edges: [TagsEdge!]!
+
+  """A list of `Tag` objects."""
+  nodes: [Tag!]!
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+
+  """The count of *all* `Tag` you could get from the connection."""
+  totalCount: Int!
+}
+
+"""A `Tag` edge in the connection."""
+type TagsEdge {
+  """A cursor for use in pagination."""
+  cursor: Cursor
+
+  """The `Tag` at the end of the edge."""
+  node: Tag!
+}
+
+"""Methods to use when ordering `Tag`."""
+enum TagsOrderBy {
+  ID_ASC
+  ID_DESC
+  NAME_ASC
+  NAME_DESC
+  NATURAL
+  ORGANIZATION_ID_ASC
+  ORGANIZATION_ID_DESC
+  PRIMARY_KEY_ASC
+  PRIMARY_KEY_DESC
 }
 
 """All input for the `transferOrganizationBillingContact` mutation."""
@@ -1592,6 +3006,89 @@ A universally unique identifier as defined by [RFC 4122](https://tools.ietf.org/
 """
 scalar UUID
 
+"""
+A filter to be used against UUID fields. All fields are combined with a logical ‘and.’
+"""
+input UUIDFilter {
+  """
+  Not equal to the specified value, treating null like an ordinary value.
+  """
+  distinctFrom: UUID
+
+  """Equal to the specified value."""
+  equalTo: UUID
+
+  """Greater than the specified value."""
+  greaterThan: UUID
+
+  """Greater than or equal to the specified value."""
+  greaterThanOrEqualTo: UUID
+
+  """Included in the specified list."""
+  in: [UUID!]
+
+  """
+  Is null (if `true` is specified) or is not null (if `false` is specified).
+  """
+  isNull: Boolean
+
+  """Less than the specified value."""
+  lessThan: UUID
+
+  """Less than or equal to the specified value."""
+  lessThanOrEqualTo: UUID
+
+  """Equal to the specified value, treating null like an ordinary value."""
+  notDistinctFrom: UUID
+
+  """Not equal to the specified value."""
+  notEqualTo: UUID
+
+  """Not included in the specified list."""
+  notIn: [UUID!]
+}
+
+"""All input for the `updateCategory` mutation."""
+input UpdateCategoryInput {
+  """
+  An arbitrary string value with no semantic meaning. Will be included in the
+  payload verbatim. May be used to track mutations by the client.
+  """
+  clientMutationId: String
+  id: UUID!
+
+  """
+  An object where the defined keys will be set on the `Category` being updated.
+  """
+  patch: CategoryPatch!
+}
+
+"""The output of our update `Category` mutation."""
+type UpdateCategoryPayload {
+  """The `Category` that was updated by this mutation."""
+  category: Category
+
+  """An edge for our `Category`. May be used by Relay 1."""
+  categoryEdge(
+    """The method to use when ordering `Category`."""
+    orderBy: [CategoriesOrderBy!] = [PRIMARY_KEY_ASC]
+  ): CategoriesEdge
+
+  """
+  The exact same `clientMutationId` that was provided in the mutation input,
+  unchanged and unused. May be used by a client to track mutations.
+  """
+  clientMutationId: String
+
+  """Reads a single `Organization` that is related to this `Category`."""
+  organization: Organization
+
+  """
+  Our root query field type. Allows us to run any query from our mutation payload.
+  """
+  query: Query
+}
+
 """All input for the `updateOrganization` mutation."""
 input UpdateOrganizationInput {
   """
@@ -1628,6 +3125,94 @@ type UpdateOrganizationPayload {
   Our root query field type. Allows us to run any query from our mutation payload.
   """
   query: Query
+}
+
+"""All input for the `updateProject` mutation."""
+input UpdateProjectInput {
+  """
+  An arbitrary string value with no semantic meaning. Will be included in the
+  payload verbatim. May be used to track mutations by the client.
+  """
+  clientMutationId: String
+  id: UUID!
+
+  """
+  An object where the defined keys will be set on the `Project` being updated.
+  """
+  patch: ProjectPatch!
+}
+
+"""The output of our update `Project` mutation."""
+type UpdateProjectPayload {
+  """Reads a single `Category` that is related to this `Project`."""
+  category: Category
+
+  """
+  The exact same `clientMutationId` that was provided in the mutation input,
+  unchanged and unused. May be used by a client to track mutations.
+  """
+  clientMutationId: String
+
+  """Reads a single `User` that is related to this `Project`."""
+  creatorUser: User
+
+  """Reads a single `Organization` that is related to this `Project`."""
+  organization: Organization
+
+  """The `Project` that was updated by this mutation."""
+  project: Project
+
+  """An edge for our `Project`. May be used by Relay 1."""
+  projectEdge(
+    """The method to use when ordering `Project`."""
+    orderBy: [ProjectsOrderBy!] = [PRIMARY_KEY_ASC]
+  ): ProjectsEdge
+
+  """
+  Our root query field type. Allows us to run any query from our mutation payload.
+  """
+  query: Query
+}
+
+"""All input for the `updateTag` mutation."""
+input UpdateTagInput {
+  """
+  An arbitrary string value with no semantic meaning. Will be included in the
+  payload verbatim. May be used to track mutations by the client.
+  """
+  clientMutationId: String
+  id: UUID!
+
+  """
+  An object where the defined keys will be set on the `Tag` being updated.
+  """
+  patch: TagPatch!
+}
+
+"""The output of our update `Tag` mutation."""
+type UpdateTagPayload {
+  """
+  The exact same `clientMutationId` that was provided in the mutation input,
+  unchanged and unused. May be used by a client to track mutations.
+  """
+  clientMutationId: String
+
+  """Reads a single `Organization` that is related to this `Tag`."""
+  organization: Organization
+
+  """
+  Our root query field type. Allows us to run any query from our mutation payload.
+  """
+  query: Query
+
+  """The `Tag` that was updated by this mutation."""
+  tag: Tag
+
+  """An edge for our `Tag`. May be used by Relay 1."""
+  tagEdge(
+    """The method to use when ordering `Tag`."""
+    orderBy: [TagsOrderBy!] = [PRIMARY_KEY_ASC]
+  ): TagsEdge
 }
 
 """All input for the `updateUser` mutation."""
@@ -1697,6 +3282,11 @@ type User {
     """
     condition: MediaCondition
 
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: MediaFilter
+
     """Only read the first `n` values of the set."""
     first: Int
 
@@ -1731,6 +3321,11 @@ type User {
     """
     condition: OrganizationJoinRequestCondition
 
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: OrganizationJoinRequestFilter
+
     """Only read the first `n` values of the set."""
     first: Int
 
@@ -1762,6 +3357,11 @@ type User {
     """
     condition: OrganizationMembershipCondition
 
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: OrganizationMembershipFilter
+
     """Only read the first `n` values of the set."""
     first: Int
 
@@ -1792,6 +3392,11 @@ type User {
     """
     condition: ProjectCondition
 
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: ProjectFilter
+
     """Only read the first `n` values of the set."""
     first: Int
 
@@ -1816,6 +3421,11 @@ type User {
     """
     condition: UserAuthenticationCondition
 
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: UserAuthenticationFilter
+
     """Only read the first `n` values of the set."""
     first: Int
 
@@ -1838,6 +3448,11 @@ type User {
     A condition to be used in determining which values should be returned by the collection.
     """
     condition: UserEmailCondition
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: UserEmailFilter
 
     """Only read the first `n` values of the set."""
     first: Int
@@ -1893,6 +3508,29 @@ input UserAuthenticationCondition {
   userId: UUID
 }
 
+"""
+A filter to be used against `UserAuthentication` object types. All fields are combined with a logical ‘and.’
+"""
+input UserAuthenticationFilter {
+  """Checks for all expressions in this list."""
+  and: [UserAuthenticationFilter!]
+
+  """Filter by the object’s `id` field."""
+  id: UUIDFilter
+
+  """Negates the expression."""
+  not: UserAuthenticationFilter
+
+  """Checks for any expressions in this list."""
+  or: [UserAuthenticationFilter!]
+
+  """Filter by the object’s `service` field."""
+  service: StringFilter
+
+  """Filter by the object’s `userId` field."""
+  userId: UUIDFilter
+}
+
 """Methods to use when ordering `UserAuthentication`."""
 enum UserAuthenticationsOrderBy {
   ID_ASC
@@ -1939,6 +3577,29 @@ input UserEmailCondition {
 
   """Checks for equality with the object’s `userId` field."""
   userId: UUID
+}
+
+"""
+A filter to be used against `UserEmail` object types. All fields are combined with a logical ‘and.’
+"""
+input UserEmailFilter {
+  """Checks for all expressions in this list."""
+  and: [UserEmailFilter!]
+
+  """Filter by the object’s `id` field."""
+  id: UUIDFilter
+
+  """Filter by the object’s `isPrimary` field."""
+  isPrimary: BooleanFilter
+
+  """Negates the expression."""
+  not: UserEmailFilter
+
+  """Checks for any expressions in this list."""
+  or: [UserEmailFilter!]
+
+  """Filter by the object’s `userId` field."""
+  userId: UUIDFilter
 }
 
 """An input for mutations affecting `UserEmail`"""
