@@ -6,6 +6,7 @@ import { NodePlugin } from "graphile-build";
 import { resolve } from "path";
 import { Pool, PoolClient } from "pg";
 import { Middleware, PostGraphileOptions, makePluginHook } from "postgraphile";
+import ConnectionFilterPlugin from "postgraphile-plugin-connection-filter";
 import { makePgSmartTagsFromFilePlugin } from "postgraphile/plugins";
 
 import APIPlugin from "./plugins/APIPlugin";
@@ -186,6 +187,9 @@ export function getPostGraphileOptions({
 
       // Adds custom orders to our GraphQL schema
       OrdersPlugin,
+
+      // Adds extra filters
+      ConnectionFilterPlugin,
 
       // Adds other API functions
       APIPlugin,
