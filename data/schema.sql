@@ -709,6 +709,71 @@ COMMENT ON FUNCTION app_private.tg__timestamps() IS 'This trigger should be call
 
 
 --
+-- Name: tg_organizations__create_default_category(); Type: FUNCTION; Schema: app_private; Owner: -
+--
+
+CREATE FUNCTION app_private.tg_organizations__create_default_category() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+    AS $$
+begin
+  insert into app_public.categories(organization_id, name) VALUES(NEW.id, 'Sunday Morning');
+
+  return NEW;
+end;
+$$;
+
+
+--
+-- Name: tg_project_tags__forbid_if_project_and_tag_within_different_org(); Type: FUNCTION; Schema: app_private; Owner: -
+--
+
+CREATE FUNCTION app_private.tg_project_tags__forbid_if_project_and_tag_within_different_org() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+    AS $$
+declare
+  v_tag_org_id uuid;
+  v_project_org_id uuid;
+begin
+  select organization_id into v_tag_org_id from app_public.tags where id = NEW.tag_id;
+  select
+    organization_id into v_project_org_id
+  from
+    app_public.projects as p
+  where
+    p.id = NEW.project_id;
+
+  if (v_tag_org_id <> v_project_org_id) then
+    raise exception 'Cannot create this tag-project relation' using errcode='TGOCT';
+  end if;
+  return NEW;
+end;
+$$;
+
+
+--
+-- Name: tg_projects__forbid_if_category_is_not_same_org(); Type: FUNCTION; Schema: app_private; Owner: -
+--
+
+CREATE FUNCTION app_private.tg_projects__forbid_if_category_is_not_same_org() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+    AS $$
+DECLARE
+  v_category_org_id uuid;
+begin
+  select organization_id into v_category_org_id from app_public.categories where id = NEW.category_id;
+
+  if (v_category_org_id <> NEW.organization_id) then
+    raise exception 'Cannot assign this category to this project since they below to different organization' using errcode='CRORG';
+  end if;
+  return NEW;
+end;
+$$;
+
+
+--
 -- Name: tg_user_email_secrets__insert_with_user_email(); Type: FUNCTION; Schema: app_private; Owner: -
 --
 
@@ -932,6 +997,46 @@ COMMENT ON FUNCTION app_public.confirm_account_deletion(token text) IS 'If you''
 
 
 --
+-- Name: projects; Type: TABLE; Schema: app_public; Owner: -
+--
+
+CREATE TABLE app_public.projects (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    organization_id uuid NOT NULL,
+    creator_user_id uuid,
+    slug public.citext NOT NULL,
+    document bytea,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    name text DEFAULT ''::text NOT NULL,
+    target_date timestamp with time zone,
+    category_id uuid
+);
+
+
+--
+-- Name: create_full_project(uuid, text, text, uuid[], uuid, timestamp with time zone); Type: FUNCTION; Schema: app_public; Owner: -
+--
+
+CREATE FUNCTION app_public.create_full_project(p_organization_id uuid, name text, slug text, tags uuid[], category_id uuid DEFAULT NULL::uuid, target_date timestamp with time zone DEFAULT NULL::timestamp with time zone) RETURNS app_public.projects
+    LANGUAGE plpgsql
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+    AS $$
+declare
+  v_project app_public.projects;
+  tag_id uuid;
+begin
+  insert into app_public.projects (organization_id, name, slug, category_id, target_date, creator_user_id) values (p_organization_id, name, slug, category_id, target_date, app_public.current_user_id()) returning * into v_project;
+  foreach tag_id in array tags loop
+    insert into app_public.project_tags (project_id, tag_id) values (v_project.id, tag_id);
+  end loop;
+
+  return v_project;
+end;
+$$;
+
+
+--
 -- Name: organizations; Type: TABLE; Schema: app_public; Owner: -
 --
 
@@ -1000,6 +1105,42 @@ $$;
 --
 
 COMMENT ON FUNCTION app_public."current_user"() IS 'The currently logged in user (or null if not logged in).';
+
+
+--
+-- Name: current_user_can_access_category(uuid); Type: FUNCTION; Schema: app_public; Owner: -
+--
+
+CREATE FUNCTION app_public.current_user_can_access_category(category_id uuid) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+    AS $$
+  select exists(select 1 from app_public.categories where id = category_id and organization_id in (select app_public.current_user_member_organization_ids()));
+$$;
+
+
+--
+-- Name: current_user_can_access_project(uuid); Type: FUNCTION; Schema: app_public; Owner: -
+--
+
+CREATE FUNCTION app_public.current_user_can_access_project(project_id uuid) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+    AS $$
+  select exists(select 1 from app_public.projects where id = project_id and organization_id in (select app_public.current_user_member_organization_ids()));
+$$;
+
+
+--
+-- Name: current_user_can_access_tag(uuid); Type: FUNCTION; Schema: app_public; Owner: -
+--
+
+CREATE FUNCTION app_public.current_user_can_access_tag(tag_id uuid) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+    AS $$
+  select exists(select 1 from app_public.tags where id = tag_id and organization_id in (select app_public.current_user_member_organization_ids()));
+$$;
 
 
 --
@@ -2028,6 +2169,26 @@ COMMENT ON TABLE app_private.user_secrets IS 'The contents of this table should 
 
 
 --
+-- Name: categories; Type: TABLE; Schema: app_public; Owner: -
+--
+
+CREATE TABLE app_public.categories (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name text NOT NULL,
+    organization_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: TABLE categories; Type: COMMENT; Schema: app_public; Owner: -
+--
+
+COMMENT ON TABLE app_public.categories IS 'Categories data';
+
+
+--
 -- Name: medias; Type: TABLE; Schema: app_public; Owner: -
 --
 
@@ -2086,18 +2247,47 @@ CREATE TABLE app_public.organization_memberships (
 
 
 --
--- Name: projects; Type: TABLE; Schema: app_public; Owner: -
+-- Name: project_tags; Type: TABLE; Schema: app_public; Owner: -
 --
 
-CREATE TABLE app_public.projects (
+CREATE TABLE app_public.project_tags (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    organization_id uuid NOT NULL,
-    creator_user_id uuid,
-    slug public.citext NOT NULL,
-    document bytea,
+    project_id uuid NOT NULL,
+    tag_id uuid NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
+
+
+--
+-- Name: TABLE project_tags; Type: COMMENT; Schema: app_public; Owner: -
+--
+
+COMMENT ON TABLE app_public.project_tags IS 'Many to many relation from project to tag';
+
+
+--
+-- Name: tags; Type: TABLE; Schema: app_public; Owner: -
+--
+
+CREATE TABLE app_public.tags (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name text NOT NULL,
+    description text DEFAULT ''::text,
+    background_color text DEFAULT ''::text,
+    foreground_color text DEFAULT ''::text,
+    variant text DEFAULT ''::text,
+    organization_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: TABLE tags; Type: COMMENT; Schema: app_public; Owner: -
+--
+
+COMMENT ON TABLE app_public.tags IS 'Tag data';
 
 
 --
@@ -2192,6 +2382,14 @@ ALTER TABLE ONLY app_private.user_secrets
 
 
 --
+-- Name: categories categories_pkey; Type: CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.categories
+    ADD CONSTRAINT categories_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: medias medias_pkey; Type: CONSTRAINT; Schema: app_public; Owner: -
 --
 
@@ -2272,6 +2470,14 @@ ALTER TABLE ONLY app_public.organizations
 
 
 --
+-- Name: project_tags project_tags_pkey; Type: CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.project_tags
+    ADD CONSTRAINT project_tags_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: projects projects_organization_id_slug_key; Type: CONSTRAINT; Schema: app_public; Owner: -
 --
 
@@ -2285,6 +2491,14 @@ ALTER TABLE ONLY app_public.projects
 
 ALTER TABLE ONLY app_public.projects
     ADD CONSTRAINT projects_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: tags tags_pkey; Type: CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.tags
+    ADD CONSTRAINT tags_pkey PRIMARY KEY (id);
 
 
 --
@@ -2340,6 +2554,20 @@ ALTER TABLE ONLY app_public.users
 --
 
 CREATE INDEX sessions_user_id_idx ON app_private.sessions USING btree (user_id);
+
+
+--
+-- Name: categories_name_organization_id_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE UNIQUE INDEX categories_name_organization_id_idx ON app_public.categories USING btree (name, organization_id);
+
+
+--
+-- Name: categories_organization_id_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX categories_organization_id_idx ON app_public.categories USING btree (organization_id);
 
 
 --
@@ -2413,6 +2641,34 @@ CREATE INDEX organizations_is_public_idx ON app_public.organizations USING btree
 
 
 --
+-- Name: project_tags_project_id_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX project_tags_project_id_idx ON app_public.project_tags USING btree (project_id);
+
+
+--
+-- Name: project_tags_project_id_tag_id_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE UNIQUE INDEX project_tags_project_id_tag_id_idx ON app_public.project_tags USING btree (project_id, tag_id);
+
+
+--
+-- Name: project_tags_tag_id_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX project_tags_tag_id_idx ON app_public.project_tags USING btree (tag_id);
+
+
+--
+-- Name: projects_category_id_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX projects_category_id_idx ON app_public.projects USING btree (category_id);
+
+
+--
 -- Name: projects_creator_user_id_idx; Type: INDEX; Schema: app_public; Owner: -
 --
 
@@ -2441,6 +2697,20 @@ CREATE INDEX projects_updated_at_idx ON app_public.projects USING btree (updated
 
 
 --
+-- Name: tags_name_organization_id_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE UNIQUE INDEX tags_name_organization_id_idx ON app_public.tags USING btree (name, organization_id);
+
+
+--
+-- Name: tags_organization_id_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX tags_organization_id_idx ON app_public.tags USING btree (organization_id);
+
+
+--
 -- Name: uniq_user_emails_primary_email; Type: INDEX; Schema: app_public; Owner: -
 --
 
@@ -2462,6 +2732,13 @@ CREATE INDEX user_authentications_user_id_idx ON app_public.user_authentications
 
 
 --
+-- Name: categories _100_timestamps; Type: TRIGGER; Schema: app_public; Owner: -
+--
+
+CREATE TRIGGER _100_timestamps BEFORE INSERT OR UPDATE ON app_public.categories FOR EACH ROW EXECUTE FUNCTION app_private.tg__timestamps();
+
+
+--
 -- Name: medias _100_timestamps; Type: TRIGGER; Schema: app_public; Owner: -
 --
 
@@ -2469,10 +2746,24 @@ CREATE TRIGGER _100_timestamps BEFORE INSERT OR UPDATE ON app_public.medias FOR 
 
 
 --
+-- Name: project_tags _100_timestamps; Type: TRIGGER; Schema: app_public; Owner: -
+--
+
+CREATE TRIGGER _100_timestamps BEFORE INSERT OR UPDATE ON app_public.project_tags FOR EACH ROW EXECUTE FUNCTION app_private.tg__timestamps();
+
+
+--
 -- Name: projects _100_timestamps; Type: TRIGGER; Schema: app_public; Owner: -
 --
 
 CREATE TRIGGER _100_timestamps BEFORE INSERT OR UPDATE ON app_public.projects FOR EACH ROW EXECUTE FUNCTION app_private.tg__timestamps();
+
+
+--
+-- Name: tags _100_timestamps; Type: TRIGGER; Schema: app_public; Owner: -
+--
+
+CREATE TRIGGER _100_timestamps BEFORE INSERT OR UPDATE ON app_public.tags FOR EACH ROW EXECUTE FUNCTION app_private.tg__timestamps();
 
 
 --
@@ -2497,10 +2788,31 @@ CREATE TRIGGER _100_timestamps BEFORE INSERT OR UPDATE ON app_public.users FOR E
 
 
 --
+-- Name: organizations _200_create_default_category; Type: TRIGGER; Schema: app_public; Owner: -
+--
+
+CREATE TRIGGER _200_create_default_category AFTER INSERT ON app_public.organizations FOR EACH ROW EXECUTE FUNCTION app_private.tg_organizations__create_default_category();
+
+
+--
 -- Name: user_emails _200_forbid_existing_email; Type: TRIGGER; Schema: app_public; Owner: -
 --
 
 CREATE TRIGGER _200_forbid_existing_email BEFORE INSERT ON app_public.user_emails FOR EACH ROW EXECUTE FUNCTION app_public.tg_user_emails__forbid_if_verified();
+
+
+--
+-- Name: projects _200_forbid_if_category_is_not_same_org; Type: TRIGGER; Schema: app_public; Owner: -
+--
+
+CREATE TRIGGER _200_forbid_if_category_is_not_same_org BEFORE INSERT OR UPDATE ON app_public.projects FOR EACH ROW EXECUTE FUNCTION app_private.tg_projects__forbid_if_category_is_not_same_org();
+
+
+--
+-- Name: project_tags _200_forbid_if_project_and_tag_within_different_org; Type: TRIGGER; Schema: app_public; Owner: -
+--
+
+CREATE TRIGGER _200_forbid_if_project_and_tag_within_different_org BEFORE INSERT OR UPDATE ON app_public.project_tags FOR EACH ROW EXECUTE FUNCTION app_private.tg_project_tags__forbid_if_project_and_tag_within_different_org();
 
 
 --
@@ -2620,6 +2932,14 @@ ALTER TABLE ONLY app_private.user_secrets
 
 
 --
+-- Name: categories categories_organization_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.categories
+    ADD CONSTRAINT categories_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES app_public.organizations(id) ON DELETE CASCADE;
+
+
+--
 -- Name: medias medias_creator_user_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
 --
 
@@ -2684,6 +3004,30 @@ ALTER TABLE ONLY app_public.organization_memberships
 
 
 --
+-- Name: project_tags project_tags_project_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.project_tags
+    ADD CONSTRAINT project_tags_project_id_fkey FOREIGN KEY (project_id) REFERENCES app_public.projects(id) ON DELETE CASCADE;
+
+
+--
+-- Name: project_tags project_tags_tag_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.project_tags
+    ADD CONSTRAINT project_tags_tag_id_fkey FOREIGN KEY (tag_id) REFERENCES app_public.tags(id) ON DELETE CASCADE;
+
+
+--
+-- Name: projects projects_category_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.projects
+    ADD CONSTRAINT projects_category_id_fkey FOREIGN KEY (category_id) REFERENCES app_public.categories(id) ON DELETE CASCADE;
+
+
+--
 -- Name: projects projects_creator_user_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
 --
 
@@ -2697,6 +3041,14 @@ ALTER TABLE ONLY app_public.projects
 
 ALTER TABLE ONLY app_public.projects
     ADD CONSTRAINT projects_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES app_public.organizations(id) ON DELETE CASCADE;
+
+
+--
+-- Name: tags tags_organization_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.tags
+    ADD CONSTRAINT tags_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES app_public.organizations(id) ON DELETE CASCADE;
 
 
 --
@@ -2746,6 +3098,19 @@ ALTER TABLE app_private.user_email_secrets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE app_private.user_secrets ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: categories; Type: ROW SECURITY; Schema: app_public; Owner: -
+--
+
+ALTER TABLE app_public.categories ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: project_tags delete_own; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY delete_own ON app_public.project_tags FOR DELETE USING (app_public.current_user_can_access_project(project_id));
+
+
+--
 -- Name: user_authentications delete_own; Type: POLICY; Schema: app_public; Owner: -
 --
 
@@ -2757,6 +3122,27 @@ CREATE POLICY delete_own ON app_public.user_authentications FOR DELETE USING ((u
 --
 
 CREATE POLICY delete_own ON app_public.user_emails FOR DELETE USING ((user_id = app_public.current_user_id()));
+
+
+--
+-- Name: categories delete_own_org; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY delete_own_org ON app_public.categories FOR DELETE USING ((organization_id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids)));
+
+
+--
+-- Name: projects delete_own_org; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY delete_own_org ON app_public.projects FOR DELETE USING ((organization_id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids)));
+
+
+--
+-- Name: tags delete_own_org; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY delete_own_org ON app_public.tags FOR DELETE USING ((organization_id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids)));
 
 
 --
@@ -2774,10 +3160,38 @@ CREATE POLICY insert_own_creator ON app_public.projects FOR INSERT WITH CHECK ((
 
 
 --
+-- Name: categories insert_own_org; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY insert_own_org ON app_public.categories FOR INSERT WITH CHECK ((organization_id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids)));
+
+
+--
 -- Name: projects insert_own_org; Type: POLICY; Schema: app_public; Owner: -
 --
 
 CREATE POLICY insert_own_org ON app_public.projects FOR INSERT WITH CHECK ((organization_id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids)));
+
+
+--
+-- Name: tags insert_own_org; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY insert_own_org ON app_public.tags FOR INSERT WITH CHECK ((organization_id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids)));
+
+
+--
+-- Name: project_tags insert_own_project; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY insert_own_project ON app_public.project_tags FOR INSERT WITH CHECK (app_public.current_user_can_access_project(project_id));
+
+
+--
+-- Name: project_tags insert_own_tag; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY insert_own_tag ON app_public.project_tags FOR INSERT WITH CHECK (app_public.current_user_can_access_tag(tag_id));
 
 
 --
@@ -2809,6 +3223,12 @@ ALTER TABLE app_public.organization_memberships ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE app_public.organizations ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: project_tags; Type: ROW SECURITY; Schema: app_public; Owner: -
+--
+
+ALTER TABLE app_public.project_tags ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: projects; Type: ROW SECURITY; Schema: app_public; Owner: -
@@ -2866,6 +3286,13 @@ CREATE POLICY select_own ON app_public.medias FOR SELECT USING ((organization_id
 
 
 --
+-- Name: project_tags select_own; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY select_own ON app_public.project_tags FOR SELECT USING (app_public.current_user_can_access_project(project_id));
+
+
+--
 -- Name: projects select_own; Type: POLICY; Schema: app_public; Owner: -
 --
 
@@ -2887,10 +3314,51 @@ CREATE POLICY select_own ON app_public.user_emails FOR SELECT USING ((user_id = 
 
 
 --
+-- Name: categories select_own_org; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY select_own_org ON app_public.categories FOR SELECT USING ((organization_id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids)));
+
+
+--
+-- Name: tags select_own_org; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY select_own_org ON app_public.tags FOR SELECT USING ((organization_id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids)));
+
+
+--
 -- Name: organizations select_public; Type: POLICY; Schema: app_public; Owner: -
 --
 
 CREATE POLICY select_public ON app_public.organizations FOR SELECT USING ((is_public IS TRUE));
+
+
+--
+-- Name: tags; Type: ROW SECURITY; Schema: app_public; Owner: -
+--
+
+ALTER TABLE app_public.tags ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: categories update_own_org; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY update_own_org ON app_public.categories FOR UPDATE USING ((organization_id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids)));
+
+
+--
+-- Name: projects update_own_org; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY update_own_org ON app_public.projects FOR UPDATE USING ((organization_id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids)));
+
+
+--
+-- Name: tags update_own_org; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY update_own_org ON app_public.tags FOR UPDATE USING ((organization_id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids)));
 
 
 --
@@ -3041,6 +3509,27 @@ REVOKE ALL ON FUNCTION app_private.tg__timestamps() FROM PUBLIC;
 
 
 --
+-- Name: FUNCTION tg_organizations__create_default_category(); Type: ACL; Schema: app_private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_private.tg_organizations__create_default_category() FROM PUBLIC;
+
+
+--
+-- Name: FUNCTION tg_project_tags__forbid_if_project_and_tag_within_different_org(); Type: ACL; Schema: app_private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_private.tg_project_tags__forbid_if_project_and_tag_within_different_org() FROM PUBLIC;
+
+
+--
+-- Name: FUNCTION tg_projects__forbid_if_category_is_not_same_org(); Type: ACL; Schema: app_private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_private.tg_projects__forbid_if_category_is_not_same_org() FROM PUBLIC;
+
+
+--
 -- Name: FUNCTION tg_user_email_secrets__insert_with_user_email(); Type: ACL; Schema: app_private; Owner: -
 --
 
@@ -3084,6 +3573,63 @@ GRANT ALL ON FUNCTION app_public.change_password(old_password text, new_password
 
 REVOKE ALL ON FUNCTION app_public.confirm_account_deletion(token text) FROM PUBLIC;
 GRANT ALL ON FUNCTION app_public.confirm_account_deletion(token text) TO theopenpresenter_visitor;
+
+
+--
+-- Name: TABLE projects; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT SELECT,DELETE ON TABLE app_public.projects TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN projects.organization_id; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(organization_id) ON TABLE app_public.projects TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN projects.creator_user_id; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(creator_user_id) ON TABLE app_public.projects TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN projects.slug; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(slug),UPDATE(slug) ON TABLE app_public.projects TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN projects.name; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(name),UPDATE(name) ON TABLE app_public.projects TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN projects.target_date; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(target_date),UPDATE(target_date) ON TABLE app_public.projects TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN projects.category_id; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(category_id),UPDATE(category_id) ON TABLE app_public.projects TO theopenpresenter_visitor;
+
+
+--
+-- Name: FUNCTION create_full_project(p_organization_id uuid, name text, slug text, tags uuid[], category_id uuid, target_date timestamp with time zone); Type: ACL; Schema: app_public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_public.create_full_project(p_organization_id uuid, name text, slug text, tags uuid[], category_id uuid, target_date timestamp with time zone) FROM PUBLIC;
+GRANT ALL ON FUNCTION app_public.create_full_project(p_organization_id uuid, name text, slug text, tags uuid[], category_id uuid, target_date timestamp with time zone) TO theopenpresenter_visitor;
 
 
 --
@@ -3136,6 +3682,30 @@ GRANT ALL ON FUNCTION app_public.current_session_id() TO theopenpresenter_visito
 
 REVOKE ALL ON FUNCTION app_public."current_user"() FROM PUBLIC;
 GRANT ALL ON FUNCTION app_public."current_user"() TO theopenpresenter_visitor;
+
+
+--
+-- Name: FUNCTION current_user_can_access_category(category_id uuid); Type: ACL; Schema: app_public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_public.current_user_can_access_category(category_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION app_public.current_user_can_access_category(category_id uuid) TO theopenpresenter_visitor;
+
+
+--
+-- Name: FUNCTION current_user_can_access_project(project_id uuid); Type: ACL; Schema: app_public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_public.current_user_can_access_project(project_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION app_public.current_user_can_access_project(project_id uuid) TO theopenpresenter_visitor;
+
+
+--
+-- Name: FUNCTION current_user_can_access_tag(tag_id uuid); Type: ACL; Schema: app_public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_public.current_user_can_access_tag(tag_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION app_public.current_user_can_access_tag(tag_id uuid) TO theopenpresenter_visitor;
 
 
 --
@@ -3399,6 +3969,27 @@ GRANT ALL ON FUNCTION public.uuid_v7_to_timestamptz(uuid) TO theopenpresenter_vi
 
 
 --
+-- Name: TABLE categories; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT SELECT,DELETE ON TABLE app_public.categories TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN categories.name; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(name),UPDATE(name) ON TABLE app_public.categories TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN categories.organization_id; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(organization_id) ON TABLE app_public.categories TO theopenpresenter_visitor;
+
+
+--
 -- Name: TABLE medias; Type: ACL; Schema: app_public; Owner: -
 --
 
@@ -3420,31 +4011,73 @@ GRANT SELECT ON TABLE app_public.organization_memberships TO theopenpresenter_vi
 
 
 --
--- Name: TABLE projects; Type: ACL; Schema: app_public; Owner: -
+-- Name: TABLE project_tags; Type: ACL; Schema: app_public; Owner: -
 --
 
-GRANT SELECT ON TABLE app_public.projects TO theopenpresenter_visitor;
-
-
---
--- Name: COLUMN projects.organization_id; Type: ACL; Schema: app_public; Owner: -
---
-
-GRANT INSERT(organization_id) ON TABLE app_public.projects TO theopenpresenter_visitor;
+GRANT SELECT,DELETE ON TABLE app_public.project_tags TO theopenpresenter_visitor;
 
 
 --
--- Name: COLUMN projects.creator_user_id; Type: ACL; Schema: app_public; Owner: -
+-- Name: COLUMN project_tags.project_id; Type: ACL; Schema: app_public; Owner: -
 --
 
-GRANT INSERT(creator_user_id) ON TABLE app_public.projects TO theopenpresenter_visitor;
+GRANT INSERT(project_id) ON TABLE app_public.project_tags TO theopenpresenter_visitor;
 
 
 --
--- Name: COLUMN projects.slug; Type: ACL; Schema: app_public; Owner: -
+-- Name: COLUMN project_tags.tag_id; Type: ACL; Schema: app_public; Owner: -
 --
 
-GRANT INSERT(slug) ON TABLE app_public.projects TO theopenpresenter_visitor;
+GRANT INSERT(tag_id) ON TABLE app_public.project_tags TO theopenpresenter_visitor;
+
+
+--
+-- Name: TABLE tags; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT SELECT,DELETE ON TABLE app_public.tags TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN tags.name; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(name),UPDATE(name) ON TABLE app_public.tags TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN tags.description; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(description),UPDATE(description) ON TABLE app_public.tags TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN tags.background_color; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(background_color),UPDATE(background_color) ON TABLE app_public.tags TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN tags.foreground_color; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(foreground_color),UPDATE(foreground_color) ON TABLE app_public.tags TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN tags.variant; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(variant),UPDATE(variant) ON TABLE app_public.tags TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN tags.organization_id; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(organization_id) ON TABLE app_public.tags TO theopenpresenter_visitor;
 
 
 --
