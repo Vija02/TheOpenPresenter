@@ -10,15 +10,49 @@ import {
   LinkOverlay,
   Text,
   VStack,
+  chakra,
 } from "@chakra-ui/react";
-import { useOrganizationDashboardIndexPageQuery } from "@repo/graphql";
-import { DateDisplayRelative, OverlayToggle } from "@repo/ui";
+import {
+  useDeleteProjectMutation,
+  useOrganizationDashboardIndexPageQuery,
+} from "@repo/graphql";
+import { globalState } from "@repo/lib";
+import { DateDisplayRelative, OverlayToggle, PopConfirm } from "@repo/ui";
 import { NextPage } from "next";
+import { useCallback } from "react";
 import { FaPlus } from "react-icons/fa";
+import { VscTrash as VscTrashRaw } from "react-icons/vsc";
+import { toast } from "react-toastify";
+
+const VscTrash = chakra(VscTrashRaw);
 
 const OrganizationPage: NextPage = () => {
   const slug = useOrganizationSlug();
   const query = useOrganizationDashboardIndexPageQuery({ variables: { slug } });
+
+  const { publish } = globalState.modelDataAccess.usePublishAPIChanges({
+    token: "page",
+  });
+
+  const [deleteProject] = useDeleteProjectMutation({
+    onCompleted: publish,
+  });
+
+  const handleDeleteProject = useCallback(
+    async (id: string) => {
+      try {
+        await deleteProject({
+          variables: {
+            id,
+          },
+        });
+        toast.success("Project successfully deleted");
+      } catch (e: any) {
+        toast.error("Error occurred when deleting this project: " + e.message);
+      }
+    },
+    [deleteProject],
+  );
 
   return (
     <SharedOrgLayout title="Dashboard" sharedOrgQuery={query}>
@@ -48,7 +82,7 @@ const OrganizationPage: NextPage = () => {
       <VStack alignItems="center" marginBottom={2} flexWrap="wrap" spacing={0}>
         {query.data?.organizationBySlug?.projects.nodes.map((project, i) => (
           <LinkBox
-            key={i}
+            key={project.id}
             display="flex"
             flexDir={{ base: "column", sm: "row" }}
             width="100%"
@@ -58,8 +92,13 @@ const OrganizationPage: NextPage = () => {
             _hover={{ bg: "blue.50" }}
             borderBottom={{ base: "1px solid", sm: "none" }}
             borderColor="gray.200"
+            role="group"
           >
-            <Flex alignItems="center">
+            <Flex
+              alignItems="center"
+              gap={2}
+              justifyContent={{ base: "space-between", sm: "flex-start" }}
+            >
               <LinkOverlay href={`/app/${slug}/${project.slug}`}>
                 <Text fontWeight={{ base: 600, sm: 500 }}>
                   {project.name !== "" ? project.name : project.slug}
@@ -68,6 +107,27 @@ const OrganizationPage: NextPage = () => {
                   {project.category?.name}
                 </Text>
               </LinkOverlay>
+              <Flex>
+                <PopConfirm
+                  title={`Are you sure you want to delete this project? This action is not reversible.`}
+                  onConfirm={() => handleDeleteProject(project.id)}
+                  okText="Yes"
+                  cancelText="No"
+                  key="remove"
+                >
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    role="button"
+                    color="gray"
+                    _hover={{ bg: "red.50", color: "red.400" }}
+                    opacity={{ base: 1, md: 0 }}
+                    _groupHover={{ opacity: 1 }}
+                  >
+                    <VscTrash />
+                  </Button>
+                </PopConfirm>
+              </Flex>
             </Flex>
             <Flex
               flexDir={{ base: "column-reverse", sm: "row" }}
