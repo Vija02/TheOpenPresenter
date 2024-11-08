@@ -116,6 +116,11 @@ export function SharedOrgLayout({
           name="Settings"
         >
           <SidebarItem href={`/o/${slug}/settings/general`} name="General" />
+          <SidebarItem href={`/o/${slug}/settings/tags`} name="Tags" />
+          <SidebarItem
+            href={`/o/${slug}/settings/categories`}
+            name="Categories"
+          />
           <SidebarItem href={`/o/${slug}/settings/members`} name="Members" />
           <SidebarItem
             href={`/o/${slug}/settings/leave`}
