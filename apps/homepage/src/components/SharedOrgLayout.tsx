@@ -8,10 +8,8 @@ import {
   Box,
   Button,
   Divider,
-  Hide,
   Icon,
   Link,
-  Show,
   Stack,
   Text,
   Wrap,
@@ -31,6 +29,7 @@ import { contentMinHeight } from "./SharedLayoutSkeleton";
 import { DrawerShell } from "./Sidebar/DrawerShell";
 import { SidebarItem } from "./Sidebar/SidebarItem";
 import { StandardWidth } from "./StandardWidth";
+import { useIsMobile } from "./useIsMobile";
 
 export function SharedOrgLayout({
   sharedOrgQuery,
@@ -51,6 +50,8 @@ export function SharedOrgLayout({
     globalState.organization.useLastSelectedOrganizationId(
       (x) => x.setLastSelectedOrganizationId,
     );
+
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (sharedOrgQuery.data?.currentUser) {
@@ -137,7 +138,7 @@ export function SharedOrgLayout({
       query={sharedOrgQuery}
       {...props}
       navbarLeft={
-        <Show below="md">
+        isMobile && (
           <OverlayToggle
             toggler={({ onToggle }) => (
               <Button
@@ -153,7 +154,7 @@ export function SharedOrgLayout({
           >
             <DrawerShell>{navbar}</DrawerShell>
           </OverlayToggle>
-        </Show>
+        )
       }
       navbarRight={
         <Wrap>
@@ -169,7 +170,7 @@ export function SharedOrgLayout({
     >
       {organizationLoadingElement || (
         <Box display="flex" minHeight={contentMinHeight}>
-          <Hide below="md">{navbar}</Hide>
+          {!isMobile && navbar}
           <StandardWidth width="100%">{props.children}</StandardWidth>
         </Box>
       )}

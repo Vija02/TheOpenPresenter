@@ -3,10 +3,8 @@ import {
   Box,
   Button,
   Divider,
-  Hide,
   Icon,
   Link,
-  Show,
   Stack,
   Text,
   Wrap,
@@ -23,6 +21,7 @@ import { contentMinHeight } from "./SharedLayoutSkeleton";
 import { DrawerShell } from "./Sidebar/DrawerShell";
 import { SidebarItem } from "./Sidebar/SidebarItem";
 import { StandardWidth } from "./StandardWidth";
+import { useIsMobile } from "./useIsMobile";
 
 export function SharedLayoutLoggedIn(
   props: Omit<SharedLayoutProps, "forbidWhen" | "noPad" | "children"> & {
@@ -30,6 +29,8 @@ export function SharedLayoutLoggedIn(
   },
 ) {
   const { data } = props.query;
+
+  const isMobile = useIsMobile();
 
   const navbar = React.useMemo(
     () => (
@@ -79,7 +80,7 @@ export function SharedLayoutLoggedIn(
       noPad
       {...props}
       navbarLeft={
-        <Show below="md">
+        isMobile && (
           <OverlayToggle
             toggler={({ onToggle }) => (
               <Button
@@ -95,7 +96,7 @@ export function SharedLayoutLoggedIn(
           >
             <DrawerShell>{navbar}</DrawerShell>
           </OverlayToggle>
-        </Show>
+        )
       }
       navbarRight={
         <Wrap>
@@ -110,7 +111,7 @@ export function SharedLayoutLoggedIn(
       }
     >
       <Box display="flex" minHeight={contentMinHeight}>
-        <Hide below="md">{navbar}</Hide>
+        {!isMobile && navbar}
         <StandardWidth width="100%">{props.children}</StandardWidth>
       </Box>
     </SharedLayout>
