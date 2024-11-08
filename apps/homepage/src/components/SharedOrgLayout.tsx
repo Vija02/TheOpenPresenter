@@ -137,48 +137,50 @@ export function SharedOrgLayout({
   );
 
   return (
-    <SharedLayout
-      forbidWhen={AuthRestrict.LOGGED_OUT}
-      noPad
-      query={sharedOrgQuery}
-      {...props}
-      navbarLeft={
-        isMobile && (
-          <OverlayToggle
-            toggler={({ onToggle }) => (
-              <Button
-                variant="ghost"
-                _hover={{ bg: "none" }}
-                onClick={onToggle}
-              >
-                <Icon color="white" fontSize="24px">
-                  <RxHamburgerMenu />
-                </Icon>
-              </Button>
-            )}
-          >
-            <DrawerShell>{navbar}</DrawerShell>
-          </OverlayToggle>
-        )
-      }
-      navbarRight={
-        <Wrap>
-          <Stack direction="row" spacing={6}>
-            <Link as={NextLink} href={`/logout`} variant="linkButton">
-              <Button size="sm" variant="link" data-cy="header-logout-button">
-                Logout
-              </Button>
-            </Link>
-          </Stack>
-        </Wrap>
-      }
-    >
-      {organizationLoadingElement || (
-        <Box display="flex" minHeight={contentMinHeight}>
-          {!isMobile && navbar}
-          <StandardWidth width="100%">{props.children}</StandardWidth>
-        </Box>
-      )}
-    </SharedLayout>
+    <globalState.modelDataAccess.TagProvider key="TagProvider" slug={slug}>
+      <SharedLayout
+        forbidWhen={AuthRestrict.LOGGED_OUT}
+        noPad
+        query={sharedOrgQuery}
+        {...props}
+        navbarLeft={
+          isMobile && (
+            <OverlayToggle
+              toggler={({ onToggle }) => (
+                <Button
+                  variant="ghost"
+                  _hover={{ bg: "none" }}
+                  onClick={onToggle}
+                >
+                  <Icon color="white" fontSize="24px">
+                    <RxHamburgerMenu />
+                  </Icon>
+                </Button>
+              )}
+            >
+              <DrawerShell>{navbar}</DrawerShell>
+            </OverlayToggle>
+          )
+        }
+        navbarRight={
+          <Wrap>
+            <Stack direction="row" spacing={6}>
+              <Link as={NextLink} href={`/logout`} variant="linkButton">
+                <Button size="sm" variant="link" data-cy="header-logout-button">
+                  Logout
+                </Button>
+              </Link>
+            </Stack>
+          </Wrap>
+        }
+      >
+        {organizationLoadingElement || (
+          <Box display="flex" minHeight={contentMinHeight}>
+            {!isMobile && navbar}
+            <StandardWidth width="100%">{props.children}</StandardWidth>
+          </Box>
+        )}
+      </SharedLayout>
+    </globalState.modelDataAccess.TagProvider>
   );
 }

@@ -1,15 +1,19 @@
 mutation CreateProject(
   $organizationId: UUID!
-  $creatorUserId: UUID!
   $slug: String!
+  $name: String!
+  $categoryId: UUID
+  $tags: [UUID]!
+  $targetDate: Datetime
 ) {
-  createProject(
+  createFullProject(
     input: {
-      project: {
-        organizationId: $organizationId
-        creatorUserId: $creatorUserId
-        slug: $slug
-      }
+      pOrganizationId: $organizationId
+      name: $name
+      slug: $slug
+      categoryId: $categoryId
+      tags: $tags
+      targetDate: $targetDate
     }
   ) {
     project {
