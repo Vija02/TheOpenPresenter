@@ -32,6 +32,7 @@
     "react": "rc",
     "react-dom": "rc",
     "react-qr-code": "^2.0.15",
+    "react-select": "^5.8.2",
     "sass": "^1.80.4",
     "slugify": "^1.6.6",
     "yup": "^1.4.0",
