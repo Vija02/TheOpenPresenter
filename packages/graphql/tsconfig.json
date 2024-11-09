@@ -3,7 +3,7 @@
   "compilerOptions": {
     "noEmit": false,
     "rootDir": ".",
-    "outDir": ".",
+    "outDir": "dist",
     "tsBuildInfoFile": "tsconfig.tsbuildinfo",
     "declarationDir": ".",
     "lib": ["es2018", "esnext.asynciterable"],
