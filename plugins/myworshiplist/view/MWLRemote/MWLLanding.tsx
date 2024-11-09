@@ -6,7 +6,7 @@ import MWLRemoteAddSongModal from "./MWLRemoteAddSongModal";
 
 const MWLLanding = () => {
   return (
-    <Center mt={10}>
+    <Center mt={10} p={2}>
       <Stack>
         <Heading textAlign="center" mb={4}>
           Welcome to MyWorshipList
