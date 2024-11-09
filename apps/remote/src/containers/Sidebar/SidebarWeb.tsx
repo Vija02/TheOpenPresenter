@@ -54,7 +54,18 @@ const SidebarWeb = () => {
                   px={2}
                   _hover={{ bg: "gray.300" }}
                   bg={location.includes(id) ? "gray.300" : "transparent"}
+                  position="relative"
                 >
+                  {data.renderer["1"]?.currentScene === id && (
+                    <Box
+                      top={0}
+                      bottom={0}
+                      left={0}
+                      width="3px"
+                      position="absolute"
+                      bg="red.400"
+                    />
+                  )}
                   <Text fontWeight="bold">{value.name}</Text>
                 </Box>
               ),

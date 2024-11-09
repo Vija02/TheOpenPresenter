@@ -41,7 +41,18 @@ const SidebarMobile = () => {
               height="80px"
               display="flex"
               alignItems="center"
+              position="relative"
             >
+              {data.renderer["1"]?.currentScene === id && (
+                <Box
+                  top={0}
+                  bottom={0}
+                  left={0}
+                  width="3px"
+                  position="absolute"
+                  bg="red.400"
+                />
+              )}
               <Text
                 fontSize="xs"
                 textAlign="center"
