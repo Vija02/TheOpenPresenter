@@ -18,7 +18,10 @@ export const TextareaControl: FC<TextareaControlProps> = React.forwardRef(
 
     return (
       <FormControl name={name} label={label} {...rest}>
-        <div className="text-area-grow" data-replicated-value={field.value}>
+        <div
+          className="text-area-grow"
+          data-replicated-value={field.value + "\n"}
+        >
           <Textarea
             {...field}
             id={name}
