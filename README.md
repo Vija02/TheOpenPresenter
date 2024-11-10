@@ -2,6 +2,7 @@
 
 [![License: AGPL](https://img.shields.io/badge/license-AGPL%203.0-454377.svg)](https://github.com/Vija02/TheOpenPresenter/blob/main/LICENSE)
 [![Documentation](https://img.shields.io/badge/read-the%20docs-4d6a91.svg)](https://docs.theopenpresenter.com)
+[![Uptime](https://img.shields.io/uptimerobot/status/m797995489-5997105577a220e528307298)](https://stats.uptimerobot.com/Lehx3qwROA)
 
 **TheOpenPresenter** is an ambitious project aiming to be the final presenter software you'll ever need.
 It achieves this through its modular architecture, allowing for endless customization and feature based on every specific needs.
