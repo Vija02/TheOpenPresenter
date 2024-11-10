@@ -3,7 +3,10 @@
   "compilerOptions": {
     "allowImportingTsExtensions": false,
     "jsx": "react-jsx",
-    "declaration": false,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "declarationDir": "./dist",
+    "noEmit": false,
   },
   "include": ["src", "types"]
 }

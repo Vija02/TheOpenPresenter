@@ -3,14 +3,14 @@
   "version": "0.0.0",
   "private": true,
   "module": "dist/ui.esm.js",
-  "typings": "dist/ui/src/index.d.ts",
+  "types": "dist/index.d.ts",
   "files": [
     "dist",
     "src"
   ],
   "scripts": {
-    "build": "dts build",
-    "dev": "dts watch"
+    "build": "dts build && tsc --project tsconfig-types.json",
+    "dev": "concurrently \"dts watch\" \"tsc --watch --project tsconfig-types.json\""
   },
   "peerDependencies": {
     "react": ">=18"
