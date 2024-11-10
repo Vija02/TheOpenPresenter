@@ -98,8 +98,6 @@ FROM builder-core AS builder-client
 ARG NODE_ENV
 ARG ROOT_URL
 
-COPY packages/ui/ /app/packages/ui/
-
 COPY apps/homepage/ /app/apps/homepage/
 RUN yarn homepage codegen && yarn homepage build
 
@@ -114,8 +112,6 @@ RUN yarn renderer build
 # Build stage 5 - Build plugin
 
 FROM builder-core AS builder-plugin
-
-COPY packages/ui/ /app/packages/ui/
 
 COPY plugins/google-slides/ /app/plugins/google-slides/
 RUN yarn workspace @repo/plugin-google-slides build
