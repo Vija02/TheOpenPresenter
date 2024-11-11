@@ -8,22 +8,34 @@ import MWLSectionsRenderView from "../MWLRenderer/MWLSectionsRenderView";
 import { usePluginAPI } from "../pluginApi";
 import { processSongCache } from "../songHelpers";
 
-export const SongViewSlides = ({ song }: { song: Song }) => {
+export const SongViewSlides = ({
+  song,
+  isPreview = false,
+}: {
+  song: Song;
+  isPreview?: boolean;
+}) => {
   const groupedData = useMemo(() => processSongCache(song), [song]);
 
   if (song.setting.displayType === "sections") {
-    return <Sections song={song} groupedData={groupedData} />;
+    return (
+      <Sections song={song} groupedData={groupedData} isPreview={isPreview} />
+    );
   } else if (song.setting.displayType === "fullSong") {
-    return <FullSong song={song} groupedData={groupedData} />;
+    return (
+      <FullSong song={song} groupedData={groupedData} isPreview={isPreview} />
+    );
   }
 };
 
 const Sections = ({
   song,
   groupedData,
+  isPreview = false,
 }: {
   song: Song;
   groupedData: Record<string, string[]>;
+  isPreview?: boolean;
 }) => {
   const pluginApi = usePluginAPI();
   const mutableRendererData = pluginApi.renderer.useValtioData();
@@ -39,13 +51,19 @@ const Sections = ({
           key={i}
           heading={section}
           isActive={
-            section === renderData.heading && song.id === renderData.songId
+            !isPreview &&
+            section === renderData.heading &&
+            song.id === renderData.songId
           }
-          onClick={() => {
-            mutableRendererData.heading = section;
-            mutableRendererData.songId = song.id;
-            setRenderCurrentScene();
-          }}
+          onClick={
+            isPreview
+              ? undefined
+              : () => {
+                  mutableRendererData.heading = section;
+                  mutableRendererData.songId = song.id;
+                  setRenderCurrentScene();
+                }
+          }
         >
           <MWLSectionsRenderView
             groupedData={groupedData}
@@ -60,9 +78,11 @@ const Sections = ({
 const FullSong = ({
   song,
   groupedData,
+  isPreview = false,
 }: {
   song: Song;
   groupedData: Record<string, string[]>;
+  isPreview?: boolean;
 }) => {
   const pluginApi = usePluginAPI();
   const mutableRendererData = pluginApi.renderer.useValtioData();
@@ -73,11 +93,17 @@ const FullSong = ({
 
   return (
     <Slide
-      isActive={song.id === activeSongId}
-      onClick={() => {
-        mutableRendererData.songId = song.id;
-        setRenderCurrentScene();
-      }}
+      isActive={!isPreview && song.id === activeSongId}
+      onClick={
+        isPreview
+          ? undefined
+          : () => {
+              if (!isPreview) {
+                mutableRendererData.songId = song.id;
+                setRenderCurrentScene();
+              }
+            }
+      }
     >
       <MWLFullSongRenderView
         groupedData={groupedData}

@@ -10,7 +10,7 @@
   ],
   "scripts": {
     "build": "dts build && tsc --project tsconfig-types.json",
-    "dev": "concurrently \"dts watch\" \"tsc --watch --project tsconfig-types.json\""
+    "dev": "concurrently \"dts watch --noClean\" \"tsc --watch --project tsconfig-types.json\""
   },
   "peerDependencies": {
     "react": ">=18"

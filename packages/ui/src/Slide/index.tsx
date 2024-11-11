@@ -16,7 +16,7 @@ export const Slide = ({
   children,
 }: PropTypes) => {
   return (
-    <Box cursor="pointer" onClick={onClick}>
+    <Box cursor={onClick ? "pointer" : "auto"} onClick={onClick}>
       {heading && (
         <Text fontWeight="bold" textTransform="uppercase" fontSize="xs" mb={1}>
           {heading}

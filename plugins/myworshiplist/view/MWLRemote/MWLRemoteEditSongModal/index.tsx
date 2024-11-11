@@ -1,6 +1,10 @@
 import {
+  Box,
   Button,
+  Flex,
   FormLabel,
+  Grid,
+  Heading,
   Modal,
   ModalBody,
   ModalCloseButton,
@@ -9,13 +13,16 @@ import {
   ModalHeader,
   ModalOverlay,
   ModalProps,
+  Show,
   Stack,
+  Text,
   VStack,
 } from "@chakra-ui/react";
-import { OverlayToggleComponentProps } from "@repo/ui";
+import { MotionBox, OverlayToggleComponentProps } from "@repo/ui";
 import { Form, Formik } from "formik";
 import { SelectControl, SubmitButton } from "formik-chakra-ui";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { FaChevronUp } from "react-icons/fa";
 import { toFormikValidationSchema } from "zod-formik-adapter";
 
 import {
@@ -26,6 +33,7 @@ import {
 } from "../../../src/types";
 import { usePluginAPI } from "../../pluginApi";
 import { processSongCache } from "../../songHelpers";
+import { SongViewSlides } from "../SongViewSlides";
 import TextareaControl from "./TextareaControl";
 
 export type MWLRemoteEditSongModalPropTypes = Omit<
@@ -44,6 +52,8 @@ const MWLRemoteEditSongModal = ({
   const pluginApi = usePluginAPI();
   const mutableSceneData = pluginApi.scene.useValtioData();
   const mutableRendererData = pluginApi.renderer.useValtioData();
+
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const handleSubmit = useCallback(
     ({
@@ -101,7 +111,7 @@ const MWLRemoteEditSongModal = ({
 
   return (
     <Modal
-      size="xl"
+      size={{ base: "full", md: "5xl" }}
       isOpen={isOpen ?? false}
       onClose={onToggle ?? (() => {})}
       scrollBehavior="inside"
@@ -119,46 +129,124 @@ const MWLRemoteEditSongModal = ({
         {({ handleSubmit, values, setFieldValue }) => (
           <Form onSubmit={handleSubmit as any}>
             <ModalContent>
-              <ModalHeader>Edit song "{song.cachedData?.title}"</ModalHeader>
+              <ModalHeader px={{ base: 3, md: 6 }}>
+                Edit song "{song.cachedData?.title}"
+              </ModalHeader>
               <ModalCloseButton />
-              <ModalBody>
-                <VStack alignItems="flex-start">
-                  <SelectControl name="displayType" label="Display Type">
-                    {Object.entries(displayTypeSettings).map(
-                      ([key, { label }]) => (
-                        <option key={key} value={key}>
-                          {label}
-                        </option>
-                      ),
-                    )}
-                  </SelectControl>
+              <ModalBody px={{ base: 3, md: 6 }}>
+                <Flex flexDir={{ base: "column", md: "row" }} gap={3}>
+                  <VStack flex={1} alignItems="flex-start">
+                    <SelectControl name="displayType" label="Display Type">
+                      {Object.entries(displayTypeSettings).map(
+                        ([key, { label }]) => (
+                          <option key={key} value={key}>
+                            {label}
+                          </option>
+                        ),
+                      )}
+                    </SelectControl>
 
-                  <Stack
-                    direction="row"
-                    alignItems="center"
-                    justifyContent="space-between"
-                    width="100%"
-                  >
-                    <FormLabel mb={0}>Content</FormLabel>
-                    {values.modifiedContent !== originalContent && (
-                      <Button
-                        size="xs"
-                        onClick={() => {
-                          setFieldValue("modifiedContent", originalContent);
+                    <Stack
+                      direction="row"
+                      alignItems="center"
+                      justifyContent="space-between"
+                      width="100%"
+                    >
+                      <FormLabel mb={0}>Content</FormLabel>
+                      {values.modifiedContent !== originalContent && (
+                        <Button
+                          size="xs"
+                          onClick={() => {
+                            setFieldValue("modifiedContent", originalContent);
+                          }}
+                        >
+                          Reset
+                        </Button>
+                      )}
+                    </Stack>
+                    <TextareaControl name="modifiedContent" />
+                  </VStack>
+                  <Show above="md">
+                    <VStack flexBasis="200px">
+                      <Heading fontSize="lg">Preview</Heading>
+                      <SongViewSlides
+                        song={{
+                          ...song,
+                          setting: values,
+                          modifiedContent: values.modifiedContent,
                         }}
-                      >
-                        Reset
-                      </Button>
-                    )}
-                  </Stack>
-                  <TextareaControl name="modifiedContent" />
-                </VStack>
+                        isPreview
+                      />
+                    </VStack>
+                  </Show>
+                </Flex>
               </ModalBody>
-              <ModalFooter>
-                <SubmitButton colorScheme="green">Save</SubmitButton>
-                <Button variant="ghost" onClick={onToggle}>
-                  Close
-                </Button>
+              <ModalFooter
+                pt={0}
+                px={0}
+                boxShadow={{
+                  base: "rgba(0, 0, 0, 0.8) 0px 5px 10px 0px",
+                  md: "none",
+                }}
+              >
+                <Flex flexDir="column" width="100%">
+                  <Box borderBottom="1px solid rgb(0,0,0,0.1)">
+                    <Button
+                      display={{ base: "flex", md: "none" }}
+                      gap={2}
+                      variant="ghost"
+                      borderRadius={0}
+                      onClick={() => setPreviewOpen((prev) => !prev)}
+                      width="100%"
+                    >
+                      <Text>Preview </Text>{" "}
+                      <FaChevronUp
+                        style={{
+                          transform: previewOpen ? "rotate(180deg)" : "",
+                        }}
+                        fontSize={14}
+                      />
+                    </Button>
+                    <Show below="md">
+                      <MotionBox
+                        initial="close"
+                        variants={{
+                          open: { height: "30vh" },
+                          close: { height: "0vh" },
+                        }}
+                        animate={previewOpen ? "open" : "close"}
+                        overflow="hidden"
+                      >
+                        <Grid
+                          maxHeight="30vh"
+                          overflow="auto"
+                          px={3}
+                          gridTemplateColumns="repeat(auto-fill, minmax(200px, 1fr))"
+                        >
+                          <SongViewSlides
+                            song={{
+                              ...song,
+                              setting: values,
+                              modifiedContent: values.modifiedContent,
+                            }}
+                            isPreview
+                          />
+                        </Grid>
+                      </MotionBox>
+                    </Show>
+                  </Box>
+                  <Stack
+                    px={{ base: 3, md: 6 }}
+                    pt={3}
+                    direction="row"
+                    alignSelf="flex-end"
+                  >
+                    <SubmitButton colorScheme="green">Save</SubmitButton>
+                    <Button variant="ghost" onClick={onToggle}>
+                      Close
+                    </Button>
+                  </Stack>
+                </Flex>
               </ModalFooter>
             </ModalContent>
           </Form>
