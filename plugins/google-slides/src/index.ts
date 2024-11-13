@@ -91,10 +91,14 @@ export const init = (
     );
   });
 
-  // TODO: Handle different regions
-  // Maybe we want to cache it too?
+  // DEBT: Maybe we can cache this
   const apiProxy = createProxyMiddleware({
-    target: "https://lh7-rt.googleusercontent.com",
+    pathRewrite: (path) => {
+      return "/" + path.split("/").slice(2).join("/");
+    },
+    router: (req) => {
+      return `https://${req.url?.split("/")[1]}.googleusercontent.com`;
+    },
     on: {
       proxyReq: (proxyReq) => {
         proxyReq.removeHeader("Referer");
@@ -288,12 +292,12 @@ function processHtml(html: string) {
       "/plugin/google-slides/staticScripts/static/presentation/client/",
     )
     .replace(
-      /https:\/\/lh7-rt\.googleusercontent\.com/g,
-      "/plugin/google-slides/staticProxy",
+      /https:\/\/([^.]+?)\.googleusercontent\.com/g,
+      "/plugin/google-slides/staticProxy/$1",
     )
     .replace(
-      /https:\\\/\\\/lh7-rt\.googleusercontent\.com/g,
-      "/plugin/google-slides/staticProxy",
+      /https:\\\/\\\/([^.]+?)\.googleusercontent\.com/g,
+      "/plugin/google-slides/staticProxy/$1",
     );
 }
 
