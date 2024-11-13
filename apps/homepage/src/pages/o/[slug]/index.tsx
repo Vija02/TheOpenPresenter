@@ -7,6 +7,7 @@ import {
   Button,
   Flex,
   Heading,
+  Link,
   LinkBox,
   LinkOverlay,
   Text,
@@ -21,6 +22,7 @@ import { DateDisplayRelative, OverlayToggle, PopConfirm } from "@repo/ui";
 import { NextPage } from "next";
 import { useCallback } from "react";
 import { FaPlus } from "react-icons/fa";
+import { MdCoPresent } from "react-icons/md";
 import { VscEdit, VscTrash } from "react-icons/vsc";
 import { toast } from "react-toastify";
 
@@ -106,6 +108,19 @@ const OrganizationPage: NextPage = () => {
                 </Text>
               </LinkOverlay>
               <Flex>
+                <Link href={`/render/${slug}/${project.slug}`} isExternal>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    role="button"
+                    color="gray"
+                    _hover={{ bg: "blue.100", color: "blue.700" }}
+                    opacity={{ base: 1, md: 0 }}
+                    _groupHover={{ opacity: 1 }}
+                  >
+                    <MdCoPresent />
+                  </Button>
+                </Link>
                 <OverlayToggle
                   toggler={({ onToggle }) => (
                     <Button
