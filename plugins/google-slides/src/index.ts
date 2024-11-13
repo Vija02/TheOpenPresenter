@@ -70,7 +70,8 @@ export const init = (
   );
   serverPluginApi.registerPrivateRoute(pluginName, "proxy", (req, res) => {
     if (!req.query?.pluginId) {
-      return res.sendStatus(400);
+      res.sendStatus(400);
+      return;
     }
     // TODO: Authentication
 
