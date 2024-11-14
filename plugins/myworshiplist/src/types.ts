@@ -13,7 +13,7 @@ export type Song = {
   setting: SongSetting;
 };
 
-export type MyWorshipListData = {
+export type PluginBaseData = {
   style?: SlideStyle;
   songs: Song[];
 };

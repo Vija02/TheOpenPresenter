@@ -18,7 +18,7 @@ import {
 } from "./consts";
 import { getSongData } from "./data";
 import { convertMWLData } from "./importer/myworshiplist";
-import { MyWorshipListData, PluginRendererData, Song } from "./types";
+import { PluginBaseData, PluginRendererData, Song } from "./types";
 
 export const init = (serverPluginApi: ServerPluginApi) => {
   serverPluginApi.registerTrpcAppRouter(getAppRouter);
@@ -54,7 +54,7 @@ const onPluginDataCreated = (pluginInfo: ObjectToTypedMap<Plugin>) => {
 };
 
 const onPluginDataLoaded = (pluginInfo: ObjectToTypedMap<Plugin>) => {
-  const data = proxy(pluginInfo.toJSON() as Plugin<MyWorshipListData>);
+  const data = proxy(pluginInfo.toJSON() as Plugin<PluginBaseData>);
   const unbind = bind(data, pluginInfo as any);
 
   // Migrate from old type
@@ -101,7 +101,7 @@ const onPluginDataLoaded = (pluginInfo: ObjectToTypedMap<Plugin>) => {
 
   const yjsWatcher = new YjsWatcher(pluginInfo as Y.Map<any>);
   yjsWatcher.watchYjs(
-    (x: Plugin<MyWorshipListData>) => x.pluginData.songs,
+    (x: Plugin<PluginBaseData>) => x.pluginData.songs,
     handleCachedSong,
   );
 
