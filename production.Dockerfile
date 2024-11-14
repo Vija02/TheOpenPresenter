@@ -39,7 +39,7 @@ COPY packages/prettier-config/package.json /app/packages/prettier-config/package
 COPY packages/typescript-config/package.json /app/packages/typescript-config/package.json
 COPY packages/ui/package.json /app/packages/ui/package.json
 COPY plugins/google-slides/package.json /app/plugins/google-slides/package.json
-COPY plugins/myworshiplist/package.json /app/plugins/myworshiplist/package.json
+COPY plugins/lyrics-presenter/package.json /app/plugins/lyrics-presenter/package.json
 COPY plugins/simple-image/package.json /app/plugins/simple-image/package.json
 COPY plugins/audio-recorder/package.json /app/plugins/audio-recorder/package.json
 COPY plugins/video-player/package.json /app/plugins/video-player/package.json
@@ -116,8 +116,8 @@ FROM builder-core AS builder-plugin
 COPY plugins/google-slides/ /app/plugins/google-slides/
 RUN yarn workspace @repo/plugin-google-slides build
 
-COPY plugins/myworshiplist/ /app/plugins/myworshiplist/
-RUN yarn workspace @repo/plugin-myworshiplist build
+COPY plugins/lyrics-presenter/ /app/plugins/lyrics-presenter/
+RUN yarn workspace @repo/plugin-lyrics-presenter build
 
 COPY plugins/simple-image/ /app/plugins/simple-image/
 RUN yarn workspace @repo/plugin-simple-image build
@@ -172,9 +172,9 @@ COPY --from=builder-server /app/backend/worker/dist/ /app/backend/worker/dist/
 COPY --from=builder-plugin /app/plugins/google-slides/package.json /app/plugins/google-slides/
 COPY --from=builder-plugin /app/plugins/google-slides/dist/ /app/plugins/google-slides/dist/
 COPY --from=builder-plugin /app/plugins/google-slides/out/ /app/plugins/google-slides/out/
-COPY --from=builder-plugin /app/plugins/myworshiplist/package.json /app/plugins/myworshiplist/
-COPY --from=builder-plugin /app/plugins/myworshiplist/dist/ /app/plugins/myworshiplist/dist/
-COPY --from=builder-plugin /app/plugins/myworshiplist/out/ /app/plugins/myworshiplist/out/
+COPY --from=builder-plugin /app/plugins/lyrics-presenter/package.json /app/plugins/lyrics-presenter/
+COPY --from=builder-plugin /app/plugins/lyrics-presenter/dist/ /app/plugins/lyrics-presenter/dist/
+COPY --from=builder-plugin /app/plugins/lyrics-presenter/out/ /app/plugins/lyrics-presenter/out/
 COPY --from=builder-plugin /app/plugins/simple-image/package.json /app/plugins/simple-image/
 COPY --from=builder-plugin /app/plugins/simple-image/dist/ /app/plugins/simple-image/dist/
 COPY --from=builder-plugin /app/plugins/simple-image/out/ /app/plugins/simple-image/out/

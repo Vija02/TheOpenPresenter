@@ -4960,9 +4960,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@repo/plugin-myworshiplist@npm:*, @repo/plugin-myworshiplist@workspace:plugins/myworshiplist":
+"@repo/plugin-lyrics-presenter@npm:*, @repo/plugin-lyrics-presenter@workspace:plugins/lyrics-presenter":
   version: 0.0.0-use.local
-  resolution: "@repo/plugin-myworshiplist@workspace:plugins/myworshiplist"
+  resolution: "@repo/plugin-lyrics-presenter@workspace:plugins/lyrics-presenter"
   dependencies:
     "@chakra-ui/react": "npm:^2.10.3"
     "@emotion/react": "npm:^11.13.3"
@@ -5145,7 +5145,7 @@ __metadata:
     "@repo/eslint-config": "npm:*"
     "@repo/graphql": "npm:*"
     "@repo/lib": "npm:*"
-    "@repo/plugin-myworshiplist": "npm:*"
+    "@repo/plugin-lyrics-presenter": "npm:*"
     "@repo/prettier-config": "npm:*"
     "@repo/typescript-config": "npm:*"
     "@repo/ui": "npm:*"
@@ -5198,7 +5198,7 @@ __metadata:
     "@repo/base-plugin": "npm:*"
     "@repo/eslint-config": "npm:*"
     "@repo/lib": "npm:*"
-    "@repo/plugin-myworshiplist": "npm:*"
+    "@repo/plugin-lyrics-presenter": "npm:*"
     "@repo/prettier-config": "npm:*"
     "@repo/typescript-config": "npm:*"
     "@repo/ui": "npm:*"

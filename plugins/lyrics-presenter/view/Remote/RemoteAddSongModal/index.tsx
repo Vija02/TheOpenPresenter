@@ -42,10 +42,10 @@ const RemoteAddSongModal = ({
 
   const [debouncedSearchInput] = useDebounce(searchInput, 200);
 
-  const { data: songData } = trpc.myworshiplist.search.useQuery({
+  const { data: songData } = trpc.lyricsPresenter.search.useQuery({
     title: debouncedSearchInput,
   });
-  const { data: playlistData } = trpc.myworshiplist.playlist.useQuery();
+  const { data: playlistData } = trpc.lyricsPresenter.playlist.useQuery();
 
   const addSong = useCallback(() => {
     if (selected) {

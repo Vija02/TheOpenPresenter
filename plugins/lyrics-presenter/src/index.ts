@@ -26,7 +26,7 @@ export const init = (serverPluginApi: ServerPluginApi) => {
   serverPluginApi.onPluginDataLoaded(pluginName, onPluginDataLoaded);
   serverPluginApi.onRendererDataCreated(pluginName, onRendererDataCreated);
   serverPluginApi.registerSceneCreator(pluginName, {
-    title: "MyWorshipList",
+    title: "Lyrics Presenter",
   });
 
   serverPluginApi.serveStatic(pluginName, "out");
@@ -124,7 +124,7 @@ const onRendererDataCreated = (
 
 const getAppRouter = (t: TRPCObject) => {
   return t.router({
-    myworshiplist: {
+    lyricsPresenter: {
       search: t.procedure
         .input(
           z.object({

@@ -9,7 +9,7 @@ const Landing = () => {
     <Center mt={10} p={2}>
       <Stack>
         <Heading textAlign="center" mb={4}>
-          Welcome to MyWorshipList
+          Welcome to Lyrics Presenter
         </Heading>
 
         <Text textAlign="center" mb={4} fontSize="md" color="gray.500">

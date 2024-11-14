@@ -37,7 +37,7 @@
     "@repo/base-plugin": "*",
     "@repo/eslint-config": "*",
     "@repo/lib": "*",
-    "@repo/plugin-myworshiplist": "*",
+    "@repo/plugin-lyrics-presenter": "*",
     "@repo/prettier-config": "*",
     "@repo/typescript-config": "*",
     "@repo/ui": "*",

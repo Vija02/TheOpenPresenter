@@ -1,5 +1,5 @@
 {
-  "name": "@repo/plugin-myworshiplist",
+  "name": "@repo/plugin-lyrics-presenter",
   "private": true,
   "version": "0.0.0",
   "main": "./dist/index.js",

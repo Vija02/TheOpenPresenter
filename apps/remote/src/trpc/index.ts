@@ -1,5 +1,5 @@
 import { appData } from "@repo/lib";
-import type { AppRouter } from "@repo/plugin-myworshiplist";
+import type { AppRouter } from "@repo/plugin-lyrics-presenter";
 import { createTRPCReact, httpBatchLink } from "@trpc/react-query";
 
 export const trpc = createTRPCReact<AppRouter>();

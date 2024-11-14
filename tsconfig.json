@@ -12,7 +12,7 @@
     { "path": "packages/ui" },
 
     { "path": "plugins/google-slides" },
-    { "path": "plugins/myworshiplist" },
+    { "path": "plugins/lyrics-presenter" },
     { "path": "plugins/simple-image" }
   ]
 }
