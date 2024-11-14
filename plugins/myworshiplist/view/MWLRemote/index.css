@@ -1,30 +1,22 @@
-.text-area-grow {
-  /* easy way to plop the elements on top of each other and have them both sized based on the tallest one's height */
-  display: grid;
+.tiptap .chord {
+  color: #b02424;
 }
-.text-area-grow::after {
-  /* Note the weird space! Needed to preventy jumpy behavior */
-  content: attr(data-replicated-value) " ";
 
-  /* This is how textarea text behaves */
-  white-space: pre-wrap;
-
-  /* Hidden from view, clicks, and screen readers */
-  visibility: hidden;
+.tiptap .heading {
+  color: #434eff;
+  font-weight: bold;
 }
-.text-area-grow > textarea {
-  /* You could leave this, but after a user resizes, then it ruins the auto sizing */
-  resize: none;
 
-  /* Firefox shows scrollbar on growth, you can hide like this. */
-  overflow: hidden;
-
-  height: 100%;
+.tiptap .lineBreak {
+  color: #a8a8a8;
 }
-.text-area-grow > textarea,
-.text-area-grow::after {
-  font: inherit;
+.tiptap .lineBreak::after {
+  content: "  (split slide)";
+  color: #a8a8a8;
+  cursor: text;
+  font-style: italic;
+}
 
-  /* Place on top of each other */
-  grid-area: 1 / 1 / 2 / 2;
+.ProseMirror-focused {
+  outline: none;
 }

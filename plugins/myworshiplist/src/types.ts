@@ -42,5 +42,5 @@ export type SongSetting = z.infer<typeof songSettingValidator>;
 
 export type PluginRendererData = {
   songId: number | null;
-  heading: string | null;
+  currentIndex: number | null;
 };

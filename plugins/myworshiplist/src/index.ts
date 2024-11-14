@@ -17,6 +17,7 @@ import {
   rendererWebComponentTag,
 } from "./consts";
 import { getSongData } from "./data";
+import { convertMWLData } from "./importer/myworshiplist";
 import { MyWorshipListData, PluginRendererData, Song } from "./types";
 
 export const init = (serverPluginApi: ServerPluginApi) => {
@@ -87,7 +88,10 @@ const onPluginDataLoaded = (pluginInfo: ObjectToTypedMap<Plugin>) => {
       if (!song.cachedData) {
         const songData = await getSongData(song.id);
 
-        song.cachedData = songData;
+        song.cachedData = {
+          ...songData,
+          content: convertMWLData(songData.content),
+        };
       }
     }
   };
@@ -113,7 +117,7 @@ const onRendererDataCreated = (
   rendererData: ObjectToTypedMap<Partial<PluginRendererData>>,
 ) => {
   rendererData.set("songId", null);
-  rendererData.set("heading", null);
+  rendererData.set("currentIndex", null);
 
   return {};
 };

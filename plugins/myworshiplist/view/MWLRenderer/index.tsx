@@ -11,7 +11,7 @@ const MWLRenderer = () => {
   const pluginApi = usePluginAPI();
   const data = pluginApi.renderer.useData((x) => x);
   const songId = useMemo(() => data.songId, [data.songId]);
-  const heading = useMemo(() => data.heading, [data.heading]);
+  const currentIndex = useMemo(() => data.currentIndex, [data.currentIndex]);
 
   const songs = pluginApi.scene.useData((x) => x.pluginData.songs);
 
@@ -24,11 +24,11 @@ const MWLRenderer = () => {
     return <MWLFullSongRenderer song={song} />;
   }
 
-  if (!heading) {
+  if (currentIndex === undefined || currentIndex === null) {
     return null;
   }
   if (song.setting.displayType === "sections") {
-    return <MWLSectionsRenderer song={song} heading={heading} />;
+    return <MWLSectionsRenderer song={song} currentIndex={currentIndex} />;
   }
 
   return null;
@@ -50,10 +50,10 @@ const MWLFullSongRenderer = ({ song }: { song: Song }) => {
 
 const MWLSectionsRenderer = ({
   song,
-  heading,
+  currentIndex,
 }: {
   song: Song;
-  heading: string;
+  currentIndex: number;
 }) => {
   const pluginApi = usePluginAPI();
   const slideStyle = pluginApi.scene.useData((x) => x.pluginData.style);
@@ -67,9 +67,9 @@ const MWLSectionsRenderer = ({
 
   return (
     <MWLSectionsRenderView
-      key={heading}
+      key={currentIndex}
       groupedData={groupedData}
-      heading={heading}
+      currentIndex={currentIndex}
       slideStyle={getSlideStyle(slideStyle)}
     />
   );

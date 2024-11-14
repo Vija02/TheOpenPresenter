@@ -2,6 +2,7 @@ import { Box, Text } from "@chakra-ui/react";
 
 type PropTypes = {
   heading?: string;
+  headingIsFaded?: boolean;
   isActive?: boolean;
   aspectRatio?: number;
   onClick?: () => void;
@@ -10,6 +11,7 @@ type PropTypes = {
 
 export const Slide = ({
   heading,
+  headingIsFaded,
   isActive,
   aspectRatio = 16 / 9,
   onClick,
@@ -18,7 +20,13 @@ export const Slide = ({
   return (
     <Box cursor={onClick ? "pointer" : "auto"} onClick={onClick}>
       {heading && (
-        <Text fontWeight="bold" textTransform="uppercase" fontSize="xs" mb={1}>
+        <Text
+          fontWeight={headingIsFaded ? "normal" : "bold"}
+          textTransform="uppercase"
+          fontSize="xs"
+          mb={1}
+          color={headingIsFaded ? "gray.600" : "inherit"}
+        >
           {heading}
         </Text>
       )}

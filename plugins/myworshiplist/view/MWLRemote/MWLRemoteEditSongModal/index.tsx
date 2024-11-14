@@ -13,6 +13,8 @@ import {
   ModalHeader,
   ModalOverlay,
   ModalProps,
+  Popover,
+  PopoverTrigger,
   Show,
   Stack,
   Text,
@@ -23,6 +25,7 @@ import { Form, Formik } from "formik";
 import { SelectControl, SubmitButton } from "formik-chakra-ui";
 import { useCallback, useMemo, useState } from "react";
 import { FaChevronUp } from "react-icons/fa";
+import { FaCircleInfo } from "react-icons/fa6";
 import { toFormikValidationSchema } from "zod-formik-adapter";
 
 import {
@@ -32,9 +35,10 @@ import {
   slideStyleValidator,
 } from "../../../src/types";
 import { usePluginAPI } from "../../pluginApi";
-import { processSongCache } from "../../songHelpers";
+import { removeChords } from "../../songHelpers";
 import { SongViewSlides } from "../SongViewSlides";
-import TextareaControl from "./TextareaControl";
+import SongEditEditor from "./SongEditEditor";
+import { SongEditInfo } from "./SongEditInfo";
 
 export type MWLRemoteEditSongModalPropTypes = Omit<
   ModalProps,
@@ -65,15 +69,14 @@ const MWLRemoteEditSongModal = ({
       );
 
       // If we're changing this song to sections and the current song is selected,
-      // Then we want to reset the heading to the first item
+      // Then we want to reset the index to the first item
       if (
         data.displayType === "sections" &&
         mutableSceneData.pluginData.songs[index]!.setting.displayType !==
           "sections" &&
         mutableRendererData.songId === song.id
       ) {
-        mutableRendererData.heading =
-          Object.keys(processSongCache(song))[0] ?? "";
+        mutableRendererData.currentIndex = 0;
       }
 
       mutableSceneData.pluginData.songs[index]!.setting = data;
@@ -152,19 +155,52 @@ const MWLRemoteEditSongModal = ({
                       justifyContent="space-between"
                       width="100%"
                     >
-                      <FormLabel mb={0}>Content</FormLabel>
-                      {values.modifiedContent !== originalContent && (
+                      <FormLabel mb={0}>
+                        Content{" "}
+                        <Popover>
+                          <PopoverTrigger>
+                            <Button size="sm" variant="ghost">
+                              <FaCircleInfo color="gray" />
+                            </Button>
+                          </PopoverTrigger>
+                          <SongEditInfo />
+                        </Popover>
+                      </FormLabel>
+                      <Stack direction="row" alignItems="center">
                         <Button
                           size="xs"
                           onClick={() => {
-                            setFieldValue("modifiedContent", originalContent);
+                            setFieldValue(
+                              "modifiedContent",
+                              removeChords(
+                                values.modifiedContent.split("\n"),
+                              ).join("\n"),
+                            );
                           }}
                         >
-                          Reset
+                          Remove chords
                         </Button>
-                      )}
+                        {values.modifiedContent !== originalContent && (
+                          <Button
+                            size="xs"
+                            onClick={() => {
+                              setFieldValue("modifiedContent", originalContent);
+                            }}
+                          >
+                            Reset
+                          </Button>
+                        )}
+                      </Stack>
                     </Stack>
-                    <TextareaControl name="modifiedContent" />
+                    <SongEditEditor
+                      initialContent={values.modifiedContent
+                        .split("\n")
+                        .map((x) => `<p>${x}</p>`)
+                        .join("")}
+                      onChange={(val) => {
+                        setFieldValue("modifiedContent", val);
+                      }}
+                    />
                   </VStack>
                   <Show above="md">
                     <VStack flexBasis="200px">

@@ -1,27 +1,55 @@
 import React, { useMemo } from "react";
 
 import { SlideStyle } from "../../../src";
+import { GroupedData } from "../../songHelpers";
 import { getSvgMeasurement } from "./cache";
 
 type MWLSectionsRenderViewProps = {
-  groupedData: Record<string, string[]>;
-  heading: string;
+  groupedData: GroupedData;
+  currentIndex: number;
   slideStyle: Required<SlideStyle>;
 };
 
-const MWLSectionsRenderView = React.memo(
-  ({ groupedData, heading, slideStyle }: MWLSectionsRenderViewProps) => {
-    const validatedHeading = groupedData[heading]
-      ? heading
-      : Object.keys(groupedData)[0] ?? "";
+const MWLSectionsRenderView = (props: MWLSectionsRenderViewProps) => {
+  const { groupedData, currentIndex } = props;
+
+  const totalSlideLength = useMemo(
+    () =>
+      groupedData
+        .map((x) => x.slides.length)
+        .reduce((acc, val) => acc + val, 0),
+    [groupedData],
+  );
+  if (totalSlideLength <= currentIndex) {
+    return null;
+  }
+
+  return <MWLSectionsRenderViewInner {...props} />;
+};
+
+const MWLSectionsRenderViewInner = React.memo(
+  ({ groupedData, currentIndex, slideStyle }: MWLSectionsRenderViewProps) => {
+    const textLines = useMemo(() => {
+      let counter = 0;
+      let index = 0;
+      for (const d of groupedData) {
+        if (counter + d.slides.length > currentIndex) {
+          break;
+        }
+        counter += d.slides.length;
+        index++;
+      }
+
+      return groupedData[index]?.slides[currentIndex - counter] ?? [];
+    }, [currentIndex, groupedData]);
 
     const measuredData = useMemo(
       () =>
         getSvgMeasurement({
           slideStyle,
-          textLines: groupedData[validatedHeading]!,
+          textLines,
         }),
-      [groupedData, validatedHeading, slideStyle],
+      [slideStyle, textLines],
     );
 
     const viewBox = useMemo(
@@ -57,7 +85,7 @@ const MWLSectionsRenderView = React.memo(
           }}
           fill={slideStyle.isDarkMode ? "white" : "rgb(26, 32, 44)"}
         >
-          {groupedData[validatedHeading]?.map((x, i) => (
+          {textLines?.map((x, i) => (
             <tspan key={i} x="50%" dy="1em">
               {x}
             </tspan>

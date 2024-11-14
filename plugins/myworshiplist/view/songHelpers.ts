@@ -2,58 +2,45 @@ import { Song } from "../src/types";
 
 export const removeChords = (content: string[]) => {
   return content.reduce((acc, val) => {
-    return val.match(/x[01]/) ? acc : [...acc, val];
+    return val.startsWith(".") ? acc : [...acc, val];
   }, [] as string[]);
 };
 export const cleanWhiteSpace = (content: string[]) => {
   return content.map((x) => x.replace(/\s+/g, " ").trim());
 };
-export const removeAuxiliaryText = (content: string[]) => {
-  return content.filter((songLine) => {
-    const match1 = songLine.match(
-      /^(\s*)repeat(\s*)(verse|bridge|pre-? ?chorus|chorus|end|tag|intro)? ?(\d+)?(.*)$/i,
-    );
 
-    if (match1 && match1?.length > 0) {
-      return false;
-    }
+export type GroupedData = {
+  heading: string;
+  slides: string[][];
+}[];
 
-    const match2 = songLine.match(/^(\s*)solo(\s*)$/i);
-
-    if (match2 && match2?.length > 0) {
-      return false;
-    }
-
-    return true;
-  });
-};
-
-export const groupData = (content: string[]) => {
-  let heading = "Unknown";
-  const map: Record<string, string[]> = {};
+export const groupData = (content: string[]): GroupedData => {
+  const group = [];
 
   for (const songLine of content) {
-    const matches = songLine.match(
-      /^(\s*)\[?(verse|bridge|pre-? ?chorus|chorus|end|ending|outro|tag|instrumental|interlude) ?(\d+)?\]?(\s*)$/i,
-    );
-    if (matches && matches?.length > 1) {
-      heading = matches[0];
+    if (songLine.startsWith("[") && songLine.endsWith("]")) {
+      group.push({ heading: songLine.slice(1, -1), slides: [[]] });
     } else if (songLine === "-") {
-      heading += "-";
+      group[group.length - 1]?.slides.push([]);
     } else {
-      if (!map[heading]) map[heading] = [];
-      map[heading]?.push(songLine);
+      if (group.length === 0) {
+        group.push({ heading: "Unknown", slides: [[] as string[]] });
+      }
+
+      group[group.length - 1]?.slides[
+        group[group.length - 1]!.slides.length - 1
+      ]?.push(songLine);
     }
   }
 
-  return map;
+  return group;
 };
 
 export const processSongCache = (song?: Song) => {
   const content = song?.modifiedContent ?? song?.cachedData?.content ?? "";
 
-  const cleanData = removeAuxiliaryText(
-    cleanWhiteSpace(removeChords(content.split(/<br>|\n/gm) ?? [])),
+  const cleanData = cleanWhiteSpace(
+    removeChords(content.split(/<br>|\n/gm) ?? []),
   );
 
   const groupedData = groupData(cleanData);

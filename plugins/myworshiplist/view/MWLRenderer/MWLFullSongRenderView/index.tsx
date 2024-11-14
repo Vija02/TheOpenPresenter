@@ -4,10 +4,11 @@ import React, { useMemo } from "react";
 import { SlideStyle } from "../../../src/index.js";
 // @ts-expect-error JS file
 import partition from "../../partition.js";
+import { GroupedData } from "../../songHelpers.js";
 import { getSvgMeasurement } from "./cache";
 
 type MWLFullSongRenderViewProps = {
-  groupedData: Record<string, string[]>;
+  groupedData: GroupedData;
   slideStyle: Required<SlideStyle>;
 };
 
@@ -19,8 +20,8 @@ const MWLFullSongRenderView = React.memo(
     // We measure everything first
     const groupMeasurements = useMemo(
       () =>
-        Object.entries(groupedData).map(([heading, lines]) =>
-          getSvgMeasurement({ slideStyle, heading, textLines: lines }),
+        groupedData.map(({ heading, slides }) =>
+          getSvgMeasurement({ slideStyle, heading, textLines: slides.flat() }),
         ),
       [groupedData, slideStyle],
     );
@@ -72,10 +73,9 @@ const MWLFullSongRenderView = React.memo(
       const draft = [];
 
       let index = 0;
-      const entries = Object.entries(groupedData);
       for (const res of partitionResult) {
         const newIndex = res.length;
-        draft.push(entries.slice(index, index + newIndex));
+        draft.push(groupedData.slice(index, index + newIndex));
         index += newIndex;
       }
 
@@ -113,7 +113,7 @@ const MWLFullSongRenderView = React.memo(
                 }}
                 fill={slideStyle.isDarkMode ? "white" : "rgb(26, 32, 44)"}
               >
-                {partition.map(([heading, lines]) =>
+                {partition.map(({ heading, slides }) =>
                   [
                     <tspan
                       key="heading"
@@ -124,7 +124,7 @@ const MWLFullSongRenderView = React.memo(
                       {heading}
                     </tspan>,
                   ].concat(
-                    lines.map((x, j) => (
+                    slides.flat().map((x, j) => (
                       <tspan
                         key={j}
                         x={xPosition}

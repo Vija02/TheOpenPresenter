@@ -6,7 +6,7 @@ import { getSlideStyle } from "../../src/slideStyle";
 import MWLFullSongRenderView from "../MWLRenderer/MWLFullSongRenderView";
 import MWLSectionsRenderView from "../MWLRenderer/MWLSectionsRenderView";
 import { usePluginAPI } from "../pluginApi";
-import { processSongCache } from "../songHelpers";
+import { GroupedData, processSongCache } from "../songHelpers";
 
 export const SongViewSlides = ({
   song,
@@ -34,7 +34,7 @@ const Sections = ({
   isPreview = false,
 }: {
   song: Song;
-  groupedData: Record<string, string[]>;
+  groupedData: GroupedData;
   isPreview?: boolean;
 }) => {
   const pluginApi = usePluginAPI();
@@ -46,32 +46,44 @@ const Sections = ({
 
   return (
     <>
-      {Object.keys(groupedData).map((section, i) => (
-        <Slide
-          key={i}
-          heading={section}
-          isActive={
-            !isPreview &&
-            section === renderData.heading &&
-            song.id === renderData.songId
-          }
-          onClick={
-            isPreview
-              ? undefined
-              : () => {
-                  mutableRendererData.heading = section;
-                  mutableRendererData.songId = song.id;
-                  setRenderCurrentScene();
-                }
-          }
-        >
-          <MWLSectionsRenderView
-            groupedData={groupedData}
-            heading={section}
-            slideStyle={getSlideStyle(slideStyle)}
-          />
-        </Slide>
-      ))}
+      {groupedData.map(({ heading, slides }, i, all) => {
+        const previousCounts = all
+          .slice(0, i)
+          .map((x) => x.slides.length)
+          .reduce((acc, val) => acc + val, 0);
+
+        return slides.map((_, j) => {
+          const currentIndex = previousCounts + j;
+
+          return (
+            <Slide
+              key={`${i}_${j}`}
+              heading={j !== 0 ? heading + " (cont.)" : heading}
+              headingIsFaded={j !== 0}
+              isActive={
+                !isPreview &&
+                currentIndex === renderData.currentIndex &&
+                song.id === renderData.songId
+              }
+              onClick={
+                isPreview
+                  ? undefined
+                  : () => {
+                      mutableRendererData.currentIndex = currentIndex;
+                      mutableRendererData.songId = song.id;
+                      setRenderCurrentScene();
+                    }
+              }
+            >
+              <MWLSectionsRenderView
+                groupedData={groupedData}
+                currentIndex={currentIndex}
+                slideStyle={getSlideStyle(slideStyle)}
+              />
+            </Slide>
+          );
+        });
+      })}
     </>
   );
 };
@@ -81,7 +93,7 @@ const FullSong = ({
   isPreview = false,
 }: {
   song: Song;
-  groupedData: Record<string, string[]>;
+  groupedData: GroupedData;
   isPreview?: boolean;
 }) => {
   const pluginApi = usePluginAPI();
