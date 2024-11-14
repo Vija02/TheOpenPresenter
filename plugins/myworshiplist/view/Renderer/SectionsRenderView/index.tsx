@@ -4,13 +4,13 @@ import { SlideStyle } from "../../../src";
 import { GroupedData } from "../../songHelpers";
 import { getSvgMeasurement } from "./cache";
 
-type MWLSectionsRenderViewProps = {
+type SectionsRenderViewProps = {
   groupedData: GroupedData;
   currentIndex: number;
   slideStyle: Required<SlideStyle>;
 };
 
-const MWLSectionsRenderView = (props: MWLSectionsRenderViewProps) => {
+const SectionsRenderView = (props: SectionsRenderViewProps) => {
   const { groupedData, currentIndex } = props;
 
   const totalSlideLength = useMemo(
@@ -24,11 +24,11 @@ const MWLSectionsRenderView = (props: MWLSectionsRenderViewProps) => {
     return null;
   }
 
-  return <MWLSectionsRenderViewInner {...props} />;
+  return <SectionsRenderViewInner {...props} />;
 };
 
-const MWLSectionsRenderViewInner = React.memo(
-  ({ groupedData, currentIndex, slideStyle }: MWLSectionsRenderViewProps) => {
+const SectionsRenderViewInner = React.memo(
+  ({ groupedData, currentIndex, slideStyle }: SectionsRenderViewProps) => {
     const textLines = useMemo(() => {
       let counter = 0;
       let index = 0;
@@ -96,4 +96,4 @@ const MWLSectionsRenderViewInner = React.memo(
   },
 );
 
-export default MWLSectionsRenderView;
+export default SectionsRenderView;

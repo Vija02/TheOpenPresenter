@@ -3,8 +3,8 @@ import { useMemo } from "react";
 
 import { Song } from "../../src";
 import { getSlideStyle } from "../../src/slideStyle";
-import MWLFullSongRenderView from "../MWLRenderer/MWLFullSongRenderView";
-import MWLSectionsRenderView from "../MWLRenderer/MWLSectionsRenderView";
+import FullSongRenderView from "../Renderer/FullSongRenderView";
+import SectionsRenderView from "../Renderer/SectionsRenderView";
 import { usePluginAPI } from "../pluginApi";
 import { GroupedData, processSongCache } from "../songHelpers";
 
@@ -75,7 +75,7 @@ const Sections = ({
                     }
               }
             >
-              <MWLSectionsRenderView
+              <SectionsRenderView
                 groupedData={groupedData}
                 currentIndex={currentIndex}
                 slideStyle={getSlideStyle(slideStyle)}
@@ -117,7 +117,7 @@ const FullSong = ({
             }
       }
     >
-      <MWLFullSongRenderView
+      <FullSongRenderView
         groupedData={groupedData}
         slideStyle={getSlideStyle(slideStyle)}
       />

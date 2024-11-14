@@ -2,9 +2,9 @@ import { Button, Center, Heading, Stack, Text } from "@chakra-ui/react";
 import { OverlayToggle } from "@repo/ui";
 import { VscAdd } from "react-icons/vsc";
 
-import MWLRemoteAddSongModal from "./MWLRemoteAddSongModal";
+import RemoteAddSongModal from "./RemoteAddSongModal";
 
-const MWLLanding = () => {
+const Landing = () => {
   return (
     <Center mt={10} p={2}>
       <Stack>
@@ -33,10 +33,10 @@ const MWLLanding = () => {
             </Button>
           )}
         >
-          <MWLRemoteAddSongModal />
+          <RemoteAddSongModal />
         </OverlayToggle>
       </Stack>
     </Center>
   );
 };
-export default MWLLanding;
+export default Landing;

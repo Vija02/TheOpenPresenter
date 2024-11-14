@@ -3,11 +3,11 @@ import { OverlayToggle } from "@repo/ui";
 import { VscAdd, VscPaintcan } from "react-icons/vsc";
 
 import { usePluginAPI } from "../pluginApi";
-import MWLRemoteAddSongModal from "./MWLRemoteAddSongModal";
-import MWLStyleSettingModal from "./MWLStyleSettingModal";
+import RemoteAddSongModal from "./RemoteAddSongModal";
 import SongView from "./SongView";
+import StyleSettingModal from "./StyleSettingModal";
 
-const MWLRemote = () => {
+const Remote = () => {
   const pluginApi = usePluginAPI();
   const songs = pluginApi.scene.useData((x) => x.pluginData.songs);
 
@@ -38,7 +38,7 @@ const MWLRemote = () => {
                 </Button>
               )}
             >
-              <MWLRemoteAddSongModal />
+              <RemoteAddSongModal />
             </OverlayToggle>
             <OverlayToggle
               toggler={({ onToggle }) => (
@@ -57,7 +57,7 @@ const MWLRemote = () => {
                 </Button>
               )}
             >
-              <MWLStyleSettingModal />
+              <StyleSettingModal />
             </OverlayToggle>
           </Stack>
         </Stack>
@@ -80,11 +80,11 @@ const MWLRemote = () => {
             </Button>
           )}
         >
-          <MWLRemoteAddSongModal />
+          <RemoteAddSongModal />
         </OverlayToggle>
       </Box>
     </Box>
   );
 };
 
-export default MWLRemote;
+export default Remote;

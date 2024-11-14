@@ -20,18 +20,18 @@ import { useDebounce } from "use-debounce";
 import { usePluginAPI } from "../../pluginApi";
 import { trpc } from "../../trpc";
 
-export type MWLRemoteAddSongModalPropTypes = Omit<
+export type RemoteAddSongModalPropTypes = Omit<
   ModalProps,
   "isOpen" | "onClose" | "children"
 > &
   Partial<OverlayToggleComponentProps> & {};
 
-const MWLRemoteAddSongModal = ({
+const RemoteAddSongModal = ({
   isOpen,
   onToggle,
   resetData,
   ...props
-}: MWLRemoteAddSongModalPropTypes) => {
+}: RemoteAddSongModalPropTypes) => {
   const pluginApi = usePluginAPI();
   const pluginInfo = pluginApi.scene.useValtioData();
 
@@ -192,4 +192,4 @@ const MWLRemoteAddSongModal = ({
   );
 };
 
-export default MWLRemoteAddSongModal;
+export default RemoteAddSongModal;

@@ -5,17 +5,17 @@ import { VscEdit, VscTrash } from "react-icons/vsc";
 
 import { Song } from "../../src/types";
 import { usePluginAPI } from "../pluginApi";
-import MWLRemoteEditSongModal from "./MWLRemoteEditSongModal";
+import RemoteEditSongModal from "./RemoteEditSongModal";
 import { SongViewSlides } from "./SongViewSlides";
 
-const MWLSongView = React.memo(({ song }: { song: Song }) => {
+const SongView = React.memo(({ song }: { song: Song }) => {
   if (!song.cachedData) {
     return <Text>Loading...</Text>;
   }
-  return <MWLSongViewInner song={song} />;
+  return <SongViewInner song={song} />;
 });
 
-const MWLSongViewInner = React.memo(({ song }: { song: Song }) => {
+const SongViewInner = React.memo(({ song }: { song: Song }) => {
   const pluginApi = usePluginAPI();
   const mutableSceneData = pluginApi.scene.useValtioData();
 
@@ -42,7 +42,7 @@ const MWLSongViewInner = React.memo(({ song }: { song: Song }) => {
               </Button>
             )}
           >
-            <MWLRemoteEditSongModal song={song} />
+            <RemoteEditSongModal song={song} />
           </OverlayToggle>
           <PopConfirm
             title={`Are you sure you want to remove this song?`}
@@ -64,4 +64,4 @@ const MWLSongViewInner = React.memo(({ song }: { song: Song }) => {
   );
 });
 
-export default MWLSongView;
+export default SongView;

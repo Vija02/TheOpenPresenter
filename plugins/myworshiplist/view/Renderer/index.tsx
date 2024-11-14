@@ -4,10 +4,10 @@ import { Song } from "../../src";
 import { getSlideStyle } from "../../src/slideStyle";
 import { usePluginAPI } from "../pluginApi";
 import { processSongCache } from "../songHelpers";
-import MWLFullSongRenderView from "./MWLFullSongRenderView";
-import MWLSectionsRenderView from "./MWLSectionsRenderView";
+import FullSongRenderView from "./FullSongRenderView";
+import SectionsRenderView from "./SectionsRenderView";
 
-const MWLRenderer = () => {
+const Renderer = () => {
   const pluginApi = usePluginAPI();
   const data = pluginApi.renderer.useData((x) => x);
   const songId = useMemo(() => data.songId, [data.songId]);
@@ -21,34 +21,34 @@ const MWLRenderer = () => {
     return null;
   }
   if (song.setting.displayType === "fullSong") {
-    return <MWLFullSongRenderer song={song} />;
+    return <FullSongRenderer song={song} />;
   }
 
   if (currentIndex === undefined || currentIndex === null) {
     return null;
   }
   if (song.setting.displayType === "sections") {
-    return <MWLSectionsRenderer song={song} currentIndex={currentIndex} />;
+    return <SectionsRenderer song={song} currentIndex={currentIndex} />;
   }
 
   return null;
 };
 
-const MWLFullSongRenderer = ({ song }: { song: Song }) => {
+const FullSongRenderer = ({ song }: { song: Song }) => {
   const pluginApi = usePluginAPI();
   const slideStyle = pluginApi.scene.useData((x) => x.pluginData.style);
 
   const groupedData = useMemo(() => processSongCache(song), [song]);
 
   return (
-    <MWLFullSongRenderView
+    <FullSongRenderView
       groupedData={groupedData}
       slideStyle={getSlideStyle(slideStyle)}
     />
   );
 };
 
-const MWLSectionsRenderer = ({
+const SectionsRenderer = ({
   song,
   currentIndex,
 }: {
@@ -66,7 +66,7 @@ const MWLSectionsRenderer = ({
   }
 
   return (
-    <MWLSectionsRenderView
+    <SectionsRenderView
       key={currentIndex}
       groupedData={groupedData}
       currentIndex={currentIndex}
@@ -75,4 +75,4 @@ const MWLSectionsRenderer = ({
   );
 };
 
-export default MWLRenderer;
+export default Renderer;

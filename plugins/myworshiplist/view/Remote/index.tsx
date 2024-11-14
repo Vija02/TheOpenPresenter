@@ -1,17 +1,17 @@
 import { usePluginAPI } from "../pluginApi";
-import MWLLanding from "./MWLLanding";
-import MWLRemote from "./MWLRemote";
+import Landing from "./Landing";
+import Remote from "./Remote";
 import "./index.css";
 
-const MWLRemoteIndex = () => {
+const RemoteIndex = () => {
   const pluginApi = usePluginAPI();
   const songs = pluginApi.scene.useData((x) => x.pluginData.songs);
 
   if (songs.length === 0) {
-    return <MWLLanding />;
+    return <Landing />;
   }
 
-  return <MWLRemote />;
+  return <Remote />;
 };
 
-export default MWLRemoteIndex;
+export default RemoteIndex;

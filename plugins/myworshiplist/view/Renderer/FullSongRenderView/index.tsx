@@ -7,13 +7,13 @@ import partition from "../../partition.js";
 import { GroupedData } from "../../songHelpers.js";
 import { getSvgMeasurement } from "./cache";
 
-type MWLFullSongRenderViewProps = {
+type FullSongRenderViewProps = {
   groupedData: GroupedData;
   slideStyle: Required<SlideStyle>;
 };
 
-const MWLFullSongRenderView = React.memo(
-  ({ groupedData, slideStyle }: MWLFullSongRenderViewProps) => {
+const FullSongRenderView = React.memo(
+  ({ groupedData, slideStyle }: FullSongRenderViewProps) => {
     const target = React.useRef<any>(null);
     const [width, height] = useSize(target);
 
@@ -144,7 +144,7 @@ const MWLFullSongRenderView = React.memo(
   },
 );
 
-export default MWLFullSongRenderView;
+export default FullSongRenderView;
 
 const getPartition = (
   { width, height }: { width: number; height: number },

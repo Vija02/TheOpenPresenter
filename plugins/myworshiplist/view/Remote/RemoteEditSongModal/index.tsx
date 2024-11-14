@@ -40,19 +40,19 @@ import { SongViewSlides } from "../SongViewSlides";
 import SongEditEditor from "./SongEditEditor";
 import { SongEditInfo } from "./SongEditInfo";
 
-export type MWLRemoteEditSongModalPropTypes = Omit<
+export type RemoteEditSongModalPropTypes = Omit<
   ModalProps,
   "isOpen" | "onClose" | "children"
 > &
   Partial<OverlayToggleComponentProps> & { song: Song };
 
-const MWLRemoteEditSongModal = ({
+const RemoteEditSongModal = ({
   song,
   isOpen,
   onToggle,
   resetData,
   ...props
-}: MWLRemoteEditSongModalPropTypes) => {
+}: RemoteEditSongModalPropTypes) => {
   const pluginApi = usePluginAPI();
   const mutableSceneData = pluginApi.scene.useValtioData();
   const mutableRendererData = pluginApi.renderer.useValtioData();
@@ -292,4 +292,4 @@ const MWLRemoteEditSongModal = ({
   );
 };
 
-export default MWLRemoteEditSongModal;
+export default RemoteEditSongModal;

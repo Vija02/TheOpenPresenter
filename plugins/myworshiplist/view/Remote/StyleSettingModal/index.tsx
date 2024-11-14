@@ -20,18 +20,18 @@ import { getSlideStyle } from "../../../src/slideStyle";
 import { SlideStyle, slideStyleValidator } from "../../../src/types";
 import { usePluginAPI } from "../../pluginApi";
 
-export type MWLStyleSettingModalPropTypes = Omit<
+export type StyleSettingModalPropTypes = Omit<
   ModalProps,
   "isOpen" | "onClose" | "children"
 > &
   Partial<OverlayToggleComponentProps> & {};
 
-const MWLStyleSettingModal = ({
+const StyleSettingModal = ({
   isOpen,
   onToggle,
   resetData,
   ...props
-}: MWLStyleSettingModalPropTypes) => {
+}: StyleSettingModalPropTypes) => {
   const pluginApi = usePluginAPI();
   const mutablePluginInfo = pluginApi.scene.useValtioData();
 
@@ -99,4 +99,4 @@ const MWLStyleSettingModal = ({
   );
 };
 
-export default MWLStyleSettingModal;
+export default StyleSettingModal;
