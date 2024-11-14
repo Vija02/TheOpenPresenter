@@ -26,7 +26,7 @@ const MWLSongViewInner = React.memo(({ song }: { song: Song }) => {
   }, [mutableSceneData.pluginData, song.id]);
 
   return (
-    <Box py={3}>
+    <Box pb={4}>
       <Flex direction="row" alignItems="center" gap={2} mb={2}>
         <Heading fontSize="xl">{song.cachedData?.title}</Heading>
         <Stack direction="row" gap={0}>
