@@ -1,7 +1,7 @@
 import { ServerPluginApi } from "@repo/base-plugin/server";
 import aki from "aki-plugin-manager";
 import { Express } from "express";
-import fs from "fs";
+import fs, { readdirSync, statSync } from "fs";
 import path from "path";
 
 const dir = path.join(__dirname, "../../../", "loadedPlugins");
@@ -91,6 +91,15 @@ export const initPlugins = async (app: Express) => {
         console.error(
           `ERROR: Failed to install the '${pluginName}' plugin. Skipping...`,
         );
+      }
+    }
+
+    // Cleanup plugins before we continue
+    for (const name of readdirSync(dir)) {
+      try {
+        statSync(path.join(dir, name));
+      } catch (e) {
+        fs.rmSync(path.join(dir, name), { recursive: true });
       }
     }
 
