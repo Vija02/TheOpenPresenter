@@ -10,8 +10,8 @@
   "scripts": {
     "gw": "cd dist && NODE_OPTIONS=\"${NODE_OPTIONS:-} -r @repo/config/env\" graphile-worker --crontab ../crontab",
     "dev": "concurrently --kill-others --names \"TS Watch,Worker\" --prefix \"({name})\" --prefix-colors \"orangeBright.bold,blueBright.bold\" \"yarn build:watch\" \"yarn run:watch\"",
-    "build": "pkgroll",
-    "build:watch": "pkgroll --watch",
+    "build": "pkgroll --export-condition=node --conditions=node",
+    "build:watch": "pkgroll --export-condition=node --conditions=node --watch",
     "run:watch": "nodemon --signal SIGINT --watch './dist/**/*.js' --watch './crontab' -x \"yarn gw\"",
     "start": "yarn gw",
     "install-db-schema": "mkdirp dist && yarn gw --schema-only"
