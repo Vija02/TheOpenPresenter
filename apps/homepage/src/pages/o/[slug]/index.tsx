@@ -177,7 +177,7 @@ const OrganizationPage: NextPage = () => {
                   <Tag key={i} tag={projectTag.tag!} />
                 ))}
               </Flex>
-              <Text color="gray.700" fontSize="xs">
+              <Text color="gray.700" fontSize="xs" textAlign="right">
                 Updated{" "}
                 <DateDisplayRelative date={new Date(project.updatedAt)} />
               </Text>
