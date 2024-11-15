@@ -1,5 +1,6 @@
 import { Redirect } from "@/components/Redirect";
 import { SharedLayoutLoggedIn } from "@/components/SharedLayoutLoggedIn";
+import { getServerSidePropsDeviceType, withDeviceType } from "@/lib/DeviceType";
 import { ApolloError } from "@apollo/client";
 import {
   Alert,
@@ -45,8 +46,6 @@ const Settings_Profile: NextPage = () => {
     </SharedLayoutLoggedIn>
   );
 };
-
-export default Settings_Profile;
 
 const validationSchema = Yup.object({
   name: Yup.string().required("Please enter your name"),
@@ -173,3 +172,7 @@ function ProfileSettingsForm({
     </Formik>
   );
 }
+
+export const getServerSideProps = getServerSidePropsDeviceType;
+
+export default withDeviceType(Settings_Profile);

@@ -1,5 +1,6 @@
 import { SharedOrgLayout } from "@/components/SharedOrgLayout";
 import { Tag, TagEdit, TagEditPropTypes, TagType } from "@/components/Tag";
+import { getServerSidePropsDeviceType, withDeviceType } from "@/lib/DeviceType";
 import {
   useOrganizationLoading,
   useOrganizationSlug,
@@ -313,4 +314,7 @@ const OrganizationSettingsTagsPageInner: FC<
     </>
   );
 };
-export default OrganizationSettingsTagsPage;
+
+export const getServerSideProps = getServerSidePropsDeviceType;
+
+export default withDeviceType(OrganizationSettingsTagsPage);

@@ -1,5 +1,6 @@
 import { Redirect } from "@/components/Redirect";
 import { SharedLayoutLoggedIn } from "@/components/SharedLayoutLoggedIn";
+import { getServerSidePropsDeviceType, withDeviceType } from "@/lib/DeviceType";
 import { ApolloError } from "@apollo/client";
 import {
   Accordion,
@@ -206,8 +207,6 @@ const CreateOrganizationPage: NextPage = () => {
   );
 };
 
-export default CreateOrganizationPage;
-
 const SlugCheck = () => {
   const formik = useFormikContext<FormInputs>();
 
@@ -247,3 +246,7 @@ const SlugCheck = () => {
     </>
   );
 };
+
+export const getServerSideProps = getServerSidePropsDeviceType;
+
+export default withDeviceType(CreateOrganizationPage);

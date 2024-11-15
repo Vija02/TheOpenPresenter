@@ -1,6 +1,7 @@
 import { SharedOrgLayout } from "@/components/SharedOrgLayout";
 import ExistingMembers from "@/containers/Settings/Members/ExistingMembers";
 import InviteNewMember from "@/containers/Settings/Members/InviteNewMember";
+import { getServerSidePropsDeviceType, withDeviceType } from "@/lib/DeviceType";
 import {
   useOrganizationLoading,
   useOrganizationSlug,
@@ -76,4 +77,6 @@ const OrganizationSettingsIndexPageInner = ({
   );
 };
 
-export default OrganizationSettingsIndexPage;
+export const getServerSideProps = getServerSidePropsDeviceType;
+
+export default withDeviceType(OrganizationSettingsIndexPage);

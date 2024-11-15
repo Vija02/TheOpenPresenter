@@ -2,6 +2,7 @@ import { SharedOrgLayout } from "@/components/SharedOrgLayout";
 import { Tag } from "@/components/Tag";
 import CreateProjectModal from "@/containers/CreateProjectModal";
 import EditProjectModal from "@/containers/EditProjectModal";
+import { getServerSidePropsDeviceType, withDeviceType } from "@/lib/DeviceType";
 import { useOrganizationSlug } from "@/lib/permissionHooks/organization";
 import {
   Button,
@@ -203,4 +204,6 @@ const OrganizationPage: NextPage = () => {
   );
 };
 
-export default OrganizationPage;
+export const getServerSideProps = getServerSidePropsDeviceType;
+
+export default withDeviceType(OrganizationPage);

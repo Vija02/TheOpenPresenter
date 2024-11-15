@@ -1,4 +1,5 @@
 import { SharedLayoutLoggedIn } from "@/components/SharedLayoutLoggedIn";
+import { getServerSidePropsDeviceType, withDeviceType } from "@/lib/DeviceType";
 import { Box, Heading, Link, Stack, Text } from "@chakra-ui/react";
 import { useOrganizationOverviewIndexPageQuery } from "@repo/graphql";
 import { NextPage } from "next";
@@ -58,4 +59,6 @@ const OrganizationOverview: NextPage = () => {
   );
 };
 
-export default OrganizationOverview;
+export const getServerSideProps = getServerSidePropsDeviceType;
+
+export default withDeviceType(OrganizationOverview);

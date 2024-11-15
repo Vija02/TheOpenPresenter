@@ -4,6 +4,7 @@ import {
   CategoryType,
 } from "@/components/Category/CategoryEdit";
 import { SharedOrgLayout } from "@/components/SharedOrgLayout";
+import { getServerSidePropsDeviceType, withDeviceType } from "@/lib/DeviceType";
 import {
   useOrganizationLoading,
   useOrganizationSlug,
@@ -300,4 +301,7 @@ const OrganizationSettingsCategoriesPageInner: FC<
     </>
   );
 };
-export default OrganizationSettingsCategoriesPage;
+
+export const getServerSideProps = getServerSidePropsDeviceType;
+
+export default withDeviceType(OrganizationSettingsCategoriesPage);

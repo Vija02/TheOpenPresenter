@@ -1,4 +1,5 @@
 import { SharedOrgLayout } from "@/components/SharedOrgLayout";
+import { getServerSidePropsDeviceType, withDeviceType } from "@/lib/DeviceType";
 import {
   useOrganizationLoading,
   useOrganizationSlug,
@@ -162,4 +163,6 @@ const OrganizationSettingsIndexPageInner = ({ query }: PropTypes) => {
   );
 };
 
-export default OrganizationSettingsIndexPage;
+export const getServerSideProps = getServerSidePropsDeviceType;
+
+export default withDeviceType(OrganizationSettingsIndexPage);

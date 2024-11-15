@@ -1,5 +1,6 @@
 import { SharedLayoutLoggedIn } from "@/components/SharedLayoutLoggedIn";
 import { WrappedPasswordStrength } from "@/components/WrappedPasswordStrength";
+import { getServerSidePropsDeviceType, withDeviceType } from "@/lib/DeviceType";
 import { ApolloError } from "@apollo/client";
 import {
   Alert,
@@ -139,4 +140,6 @@ const Settings_Security: NextPage = () => {
   );
 };
 
-export default Settings_Security;
+export const getServerSideProps = getServerSidePropsDeviceType;
+
+export default withDeviceType(Settings_Security);

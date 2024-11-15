@@ -1,4 +1,5 @@
 import { SharedOrgLayout } from "@/components/SharedOrgLayout";
+import { getServerSidePropsDeviceType, withDeviceType } from "@/lib/DeviceType";
 import {
   useOrganizationLoading,
   useOrganizationSlug,
@@ -144,4 +145,7 @@ const OrganizationSettingsDeletePageInner: FC<
     </>
   );
 };
-export default OrganizationSettingsDeletePage;
+
+export const getServerSideProps = getServerSidePropsDeviceType;
+
+export default withDeviceType(OrganizationSettingsDeletePage);

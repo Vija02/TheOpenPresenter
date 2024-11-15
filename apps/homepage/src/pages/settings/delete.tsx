@@ -1,4 +1,5 @@
 import { SharedLayoutLoggedIn } from "@/components/SharedLayoutLoggedIn";
+import { getServerSidePropsDeviceType, withDeviceType } from "@/lib/DeviceType";
 import { Link, Text } from "@chakra-ui/react";
 import { supportEmail } from "@repo/config";
 import { useSharedQuery } from "@repo/graphql";
@@ -19,4 +20,6 @@ const Settings_Accounts: NextPage = () => {
   );
 };
 
-export default Settings_Accounts;
+export const getServerSideProps = getServerSidePropsDeviceType;
+
+export default withDeviceType(Settings_Accounts);

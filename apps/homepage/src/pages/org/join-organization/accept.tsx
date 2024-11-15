@@ -1,4 +1,5 @@
 import { SharedLayoutLoggedIn } from "@/components/SharedLayoutLoggedIn";
+import { getServerSidePropsDeviceType, withDeviceType } from "@/lib/DeviceType";
 import { QueryResult } from "@apollo/client";
 import { Box, Button, Center, Skeleton, Text, VStack } from "@chakra-ui/react";
 import {
@@ -145,4 +146,6 @@ const JoinRequestAcceptInner: FC<JoinRequestAcceptInnerProps> = (props) => {
   return child;
 };
 
-export default JoinRequestAccept;
+export const getServerSideProps = getServerSidePropsDeviceType;
+
+export default withDeviceType(JoinRequestAccept);

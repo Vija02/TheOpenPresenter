@@ -1,9 +1,11 @@
+import { useDeviceType } from "@/lib/DeviceType";
 import { useBreakpointValue } from "@chakra-ui/react";
-import { isMobile as mobile } from "is-mobile";
 
 export const useIsMobile = () => {
+  const deviceType = useDeviceType();
+
   return useBreakpointValue(
     { base: true, md: false },
-    { fallback: mobile() ? "base" : "md" },
+    { fallback: deviceType === "mobile" ? "base" : "md" },
   );
 };

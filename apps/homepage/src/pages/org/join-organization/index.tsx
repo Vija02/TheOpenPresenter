@@ -1,4 +1,5 @@
 import { SharedLayoutLoggedIn } from "@/components/SharedLayoutLoggedIn";
+import { getServerSidePropsDeviceType, withDeviceType } from "@/lib/DeviceType";
 import { ApolloError } from "@apollo/client";
 import {
   Accordion,
@@ -284,4 +285,6 @@ const JoinOrganizationPage: NextPage = () => {
   );
 };
 
-export default JoinOrganizationPage;
+export const getServerSideProps = getServerSidePropsDeviceType;
+
+export default withDeviceType(JoinOrganizationPage);

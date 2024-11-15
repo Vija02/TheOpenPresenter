@@ -1,5 +1,6 @@
 import { Redirect } from "@/components/Redirect";
 import { SharedLayoutLoggedIn } from "@/components/SharedLayoutLoggedIn";
+import { getServerSidePropsDeviceType, withDeviceType } from "@/lib/DeviceType";
 import { ApolloError } from "@apollo/client";
 import {
   Alert,
@@ -244,8 +245,6 @@ const Settings_Emails: NextPage = () => {
   );
 };
 
-export default Settings_Emails;
-
 const validationSchema = Yup.object({
   email: Yup.string().required("Please enter an email address"),
 });
@@ -317,3 +316,7 @@ function AddEmailForm({ error, setError, onComplete }: AddEmailFormProps) {
     </Formik>
   );
 }
+
+export const getServerSideProps = getServerSidePropsDeviceType;
+
+export default withDeviceType(Settings_Emails);
