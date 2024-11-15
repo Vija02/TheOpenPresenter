@@ -18,7 +18,11 @@ import {
 } from "./consts";
 import { getSongData } from "./data";
 import { convertMWLData } from "./importer/myworshiplist";
-import { PluginBaseData, PluginRendererData, Song } from "./types";
+import {
+  MyWorshipListImportedData,
+  PluginBaseData,
+  PluginRendererData,
+} from "./types";
 
 export const init = (serverPluginApi: ServerPluginApi) => {
   serverPluginApi.registerTrpcAppRouter(getAppRouter);
@@ -57,52 +61,34 @@ const onPluginDataLoaded = (pluginInfo: ObjectToTypedMap<Plugin>) => {
   const data = proxy(pluginInfo.toJSON() as Plugin<PluginBaseData>);
   const unbind = bind(data, pluginInfo as any);
 
-  // Migrate from old type
-  if (!data.pluginData.songs) {
-    data.pluginData.songs = [];
-
-    try {
-      const pluginData = data.pluginData as any;
-
-      pluginData.songIds.map((songId: number) => {
-        const songCache = pluginData.songCache.find(
-          (cache: any) => cache.id === songId,
+  const handleImportSong = async () => {
+    for (const song of data.pluginData.songs) {
+      if (!song._imported && !!song.import) {
+        const songData: MyWorshipListImportedData = await getSongData(
+          song.import.meta.id,
         );
 
-        pluginData.songs.push({
-          id: songId,
-          cachedData: songCache,
-          setting: { displayType: "sections" },
-        } satisfies Song);
-      });
+        // Store for cache
+        const newContent = convertMWLData(songData.content);
+        song.import.importedData = { ...songData, content: newContent };
 
-      delete pluginData.songIds;
-      delete pluginData.songCache;
-    } catch (e) {
-      console.error("MWL: Failed to migrate to new data version");
-    }
-  }
+        // Now we store it into the various fields
+        song.title = songData.title;
+        song.content = newContent;
+        song.author = songData.author;
 
-  const handleCachedSong = async () => {
-    for (const song of data.pluginData.songs) {
-      if (!song.cachedData) {
-        const songData = await getSongData(song.id);
-
-        song.cachedData = {
-          ...songData,
-          content: convertMWLData(songData.content),
-        };
+        song._imported = true;
       }
     }
   };
 
   // Handle on load
-  handleCachedSong();
+  handleImportSong();
 
   const yjsWatcher = new YjsWatcher(pluginInfo as Y.Map<any>);
   yjsWatcher.watchYjs(
     (x: Plugin<PluginBaseData>) => x.pluginData.songs,
-    handleCachedSong,
+    handleImportSong,
   );
 
   return {

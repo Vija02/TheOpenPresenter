@@ -1,16 +1,30 @@
 import { z } from "zod";
 
-export type SongCache = {
+export type MyWorshipListImportSetting = {
+  type: "myworshiplist";
+  meta: { id: number };
+  importedData?: MyWorshipListImportedData;
+};
+export type MyWorshipListImportedData = {
   id: number;
   title: string;
+  author: string | null;
+  year: number | null;
   content: string;
+  original_chord: string;
 };
 
 export type Song = {
-  id: number;
-  cachedData?: SongCache;
-  modifiedContent?: string;
+  id: string;
+  title: string;
+  content: string;
+  author?: string | null;
+  album?: string | null;
   setting: SongSetting;
+
+  _imported: boolean;
+  // If this exist then this song is imported.
+  import?: MyWorshipListImportSetting;
 };
 
 export type PluginBaseData = {
@@ -41,6 +55,6 @@ export const songSettingValidator = z.object({
 export type SongSetting = z.infer<typeof songSettingValidator>;
 
 export type PluginRendererData = {
-  songId: number | null;
+  songId: string | null;
   currentIndex: number | null;
 };

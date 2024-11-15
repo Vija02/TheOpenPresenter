@@ -6,7 +6,7 @@ import { getSlideStyle } from "../../src/slideStyle";
 import FullSongRenderView from "../Renderer/FullSongRenderView";
 import SectionsRenderView from "../Renderer/SectionsRenderView";
 import { usePluginAPI } from "../pluginApi";
-import { GroupedData, processSongCache } from "../songHelpers";
+import { GroupedData, processSong } from "../songHelpers";
 
 export const SongViewSlides = ({
   song,
@@ -15,7 +15,7 @@ export const SongViewSlides = ({
   song: Song;
   isPreview?: boolean;
 }) => {
-  const groupedData = useMemo(() => processSongCache(song), [song]);
+  const groupedData = useMemo(() => processSong(song.content), [song.content]);
 
   if (song.setting.displayType === "sections") {
     return (

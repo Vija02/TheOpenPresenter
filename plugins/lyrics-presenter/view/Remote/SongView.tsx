@@ -9,8 +9,8 @@ import RemoteEditSongModal from "./RemoteEditSongModal";
 import { SongViewSlides } from "./SongViewSlides";
 
 const SongView = React.memo(({ song }: { song: Song }) => {
-  if (!song.cachedData) {
-    return <Text>Loading...</Text>;
+  if (!song._imported && !!song.import) {
+    return <Text>Importing...</Text>;
   }
   return <SongViewInner song={song} />;
 });
@@ -28,7 +28,7 @@ const SongViewInner = React.memo(({ song }: { song: Song }) => {
   return (
     <Box pb={4}>
       <Flex direction="row" alignItems="center" gap={2} mb={2}>
-        <Heading fontSize="xl">{song.cachedData?.title}</Heading>
+        <Heading fontSize="xl">{song.title}</Heading>
         <Stack direction="row" gap={0}>
           <OverlayToggle
             toggler={({ onToggle }) => (

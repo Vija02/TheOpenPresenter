@@ -60,10 +60,7 @@ const RemoteEditSongModal = ({
   const [previewOpen, setPreviewOpen] = useState(false);
 
   const handleSubmit = useCallback(
-    ({
-      modifiedContent,
-      ...data
-    }: SongSetting & { modifiedContent: string }) => {
+    ({ content, ...data }: SongSetting & { content: string }) => {
       const index = mutableSceneData.pluginData.songs.findIndex(
         (x) => x.id === song.id,
       );
@@ -80,8 +77,7 @@ const RemoteEditSongModal = ({
       }
 
       mutableSceneData.pluginData.songs[index]!.setting = data;
-      mutableSceneData.pluginData.songs[index]!.modifiedContent =
-        modifiedContent;
+      mutableSceneData.pluginData.songs[index]!.content = content;
 
       resetData?.();
       onToggle?.();
@@ -97,20 +93,20 @@ const RemoteEditSongModal = ({
   );
 
   const originalContent = useMemo(
-    () => (song.cachedData?.content ?? "").split("<br>").join("\n"),
-    [song.cachedData?.content],
+    () => (song.import?.importedData?.content ?? "").split("<br>").join("\n"),
+    [song.import?.importedData?.content],
   );
-  const modifiedContent = useMemo(
-    () =>
-      song.modifiedContent
-        ? song.modifiedContent.split("<br>").join("\n")
-        : undefined,
-    [song.modifiedContent],
-  );
-  const content = useMemo(
-    () => modifiedContent ?? originalContent,
-    [modifiedContent, originalContent],
-  );
+  // const modifiedContent = useMemo(
+  //   () =>
+  //     song.modifiedContent
+  //       ? song.modifiedContent.split("<br>").join("\n")
+  //       : undefined,
+  //   [song.modifiedContent],
+  // );
+  // const content = useMemo(
+  //   () => modifiedContent ?? originalContent,
+  //   [modifiedContent, originalContent],
+  // );
 
   return (
     <Modal
@@ -124,169 +120,168 @@ const RemoteEditSongModal = ({
       <Formik
         initialValues={{
           ...song.setting,
-          modifiedContent: content,
+          content: song.content,
         }}
         validationSchema={toFormikValidationSchema(slideStyleValidator)}
         onSubmit={handleSubmit}
       >
-        {({ handleSubmit, values, setFieldValue }) => (
-          <Form onSubmit={handleSubmit as any}>
-            <ModalContent>
-              <ModalHeader px={{ base: 3, md: 6 }}>
-                Edit song "{song.cachedData?.title}"
-              </ModalHeader>
-              <ModalCloseButton />
-              <ModalBody px={{ base: 3, md: 6 }}>
-                <Flex flexDir={{ base: "column", md: "row" }} gap={3}>
-                  <VStack flex={1} alignItems="flex-start">
-                    <SelectControl name="displayType" label="Display Type">
-                      {Object.entries(displayTypeSettings).map(
-                        ([key, { label }]) => (
-                          <option key={key} value={key}>
-                            {label}
-                          </option>
-                        ),
-                      )}
-                    </SelectControl>
+        {({ handleSubmit, values, setFieldValue }) => {
+          const preview = (
+            <SongViewSlides
+              song={{
+                ...song,
+                setting: values,
+                content: values.content,
+              }}
+              isPreview
+            />
+          );
 
-                    <Stack
-                      direction="row"
-                      alignItems="center"
-                      justifyContent="space-between"
-                      width="100%"
-                    >
-                      <FormLabel mb={0}>
-                        Content{" "}
-                        <Popover>
-                          <PopoverTrigger>
-                            <Button size="sm" variant="ghost">
-                              <FaCircleInfo color="gray" />
-                            </Button>
-                          </PopoverTrigger>
-                          <SongEditInfo />
-                        </Popover>
-                      </FormLabel>
-                      <Stack direction="row" alignItems="center">
-                        <Button
-                          size="xs"
-                          onClick={() => {
-                            setFieldValue(
-                              "modifiedContent",
-                              removeChords(
-                                values.modifiedContent.split("\n"),
-                              ).join("\n"),
-                            );
-                          }}
-                        >
-                          Remove chords
-                        </Button>
-                        {values.modifiedContent !== originalContent && (
+          return (
+            <Form onSubmit={handleSubmit as any}>
+              <ModalContent>
+                <ModalHeader px={{ base: 3, md: 6 }}>
+                  Edit song "{song.title}"
+                </ModalHeader>
+                <ModalCloseButton />
+                <ModalBody px={{ base: 3, md: 6 }}>
+                  <Flex flexDir={{ base: "column", md: "row" }} gap={3}>
+                    <VStack flex={1} alignItems="flex-start">
+                      <SelectControl name="displayType" label="Display Type">
+                        {Object.entries(displayTypeSettings).map(
+                          ([key, { label }]) => (
+                            <option key={key} value={key}>
+                              {label}
+                            </option>
+                          ),
+                        )}
+                      </SelectControl>
+
+                      <Stack
+                        direction="row"
+                        alignItems="center"
+                        justifyContent="space-between"
+                        width="100%"
+                      >
+                        <FormLabel mb={0}>
+                          Content{" "}
+                          <Popover>
+                            <PopoverTrigger>
+                              <Button size="sm" variant="ghost">
+                                <FaCircleInfo color="gray" />
+                              </Button>
+                            </PopoverTrigger>
+                            <SongEditInfo />
+                          </Popover>
+                        </FormLabel>
+                        <Stack direction="row" alignItems="center">
                           <Button
                             size="xs"
                             onClick={() => {
-                              setFieldValue("modifiedContent", originalContent);
+                              setFieldValue(
+                                "content",
+                                removeChords(values.content.split("\n")).join(
+                                  "\n",
+                                ),
+                              );
                             }}
                           >
-                            Reset
+                            Remove chords
                           </Button>
-                        )}
+                          {values.content !== originalContent && (
+                            <Button
+                              size="xs"
+                              onClick={() => {
+                                setFieldValue("content", originalContent);
+                              }}
+                            >
+                              Reset
+                            </Button>
+                          )}
+                        </Stack>
                       </Stack>
-                    </Stack>
-                    <SongEditEditor
-                      initialContent={values.modifiedContent
-                        .split("\n")
-                        .map((x) => `<p>${x}</p>`)
-                        .join("")}
-                      onChange={(val) => {
-                        setFieldValue("modifiedContent", val);
-                      }}
-                    />
-                  </VStack>
-                  <Show above="md">
-                    <VStack flexBasis="200px">
-                      <Heading fontSize="lg">Preview</Heading>
-                      <SongViewSlides
-                        song={{
-                          ...song,
-                          setting: values,
-                          modifiedContent: values.modifiedContent,
+                      <SongEditEditor
+                        initialContent={values.content
+                          .split("\n")
+                          .map((x) => `<p>${x}</p>`)
+                          .join("")}
+                        onChange={(val) => {
+                          setFieldValue("content", val);
                         }}
-                        isPreview
                       />
                     </VStack>
-                  </Show>
-                </Flex>
-              </ModalBody>
-              <ModalFooter
-                pt={0}
-                px={0}
-                boxShadow={{
-                  base: "rgba(0, 0, 0, 0.8) 0px 5px 10px 0px",
-                  md: "none",
-                }}
-              >
-                <Flex flexDir="column" width="100%">
-                  <Box borderBottom="1px solid rgb(0,0,0,0.1)">
-                    <Button
-                      display={{ base: "flex", md: "none" }}
-                      gap={2}
-                      variant="ghost"
-                      borderRadius={0}
-                      onClick={() => setPreviewOpen((prev) => !prev)}
-                      width="100%"
-                    >
-                      <Text>Preview </Text>{" "}
-                      <FaChevronUp
-                        style={{
-                          transform: previewOpen ? "rotate(180deg)" : "",
-                        }}
-                        fontSize={14}
-                      />
-                    </Button>
-                    <Show below="md">
-                      <MotionBox
-                        initial="close"
-                        variants={{
-                          open: { height: "30vh" },
-                          close: { height: "0vh" },
-                        }}
-                        animate={previewOpen ? "open" : "close"}
-                        overflow="hidden"
-                      >
-                        <Grid
-                          maxHeight="30vh"
-                          overflow="auto"
-                          px={3}
-                          gridTemplateColumns="repeat(auto-fill, minmax(200px, 1fr))"
-                        >
-                          <SongViewSlides
-                            song={{
-                              ...song,
-                              setting: values,
-                              modifiedContent: values.modifiedContent,
-                            }}
-                            isPreview
-                          />
-                        </Grid>
-                      </MotionBox>
+                    <Show above="md">
+                      <VStack flexBasis="200px">
+                        <Heading fontSize="lg">Preview</Heading>
+                        {preview}
+                      </VStack>
                     </Show>
-                  </Box>
-                  <Stack
-                    px={{ base: 3, md: 6 }}
-                    pt={3}
-                    direction="row"
-                    alignSelf="flex-end"
-                  >
-                    <SubmitButton colorScheme="green">Save</SubmitButton>
-                    <Button variant="ghost" onClick={onToggle}>
-                      Close
-                    </Button>
-                  </Stack>
-                </Flex>
-              </ModalFooter>
-            </ModalContent>
-          </Form>
-        )}
+                  </Flex>
+                </ModalBody>
+                <ModalFooter
+                  pt={0}
+                  px={0}
+                  boxShadow={{
+                    base: "rgba(0, 0, 0, 0.8) 0px 5px 10px 0px",
+                    md: "none",
+                  }}
+                >
+                  <Flex flexDir="column" width="100%">
+                    <Box borderBottom="1px solid rgb(0,0,0,0.1)">
+                      <Button
+                        display={{ base: "flex", md: "none" }}
+                        gap={2}
+                        variant="ghost"
+                        borderRadius={0}
+                        onClick={() => setPreviewOpen((prev) => !prev)}
+                        width="100%"
+                      >
+                        <Text>Preview </Text>{" "}
+                        <FaChevronUp
+                          style={{
+                            transform: previewOpen ? "rotate(180deg)" : "",
+                          }}
+                          fontSize={14}
+                        />
+                      </Button>
+                      <Show below="md">
+                        <MotionBox
+                          initial="close"
+                          variants={{
+                            open: { height: "30vh" },
+                            close: { height: "0vh" },
+                          }}
+                          animate={previewOpen ? "open" : "close"}
+                          overflow="hidden"
+                        >
+                          <Grid
+                            maxHeight="30vh"
+                            overflow="auto"
+                            px={3}
+                            gridTemplateColumns="repeat(auto-fill, minmax(200px, 1fr))"
+                          >
+                            {preview}
+                          </Grid>
+                        </MotionBox>
+                      </Show>
+                    </Box>
+                    <Stack
+                      px={{ base: 3, md: 6 }}
+                      pt={3}
+                      direction="row"
+                      alignSelf="flex-end"
+                    >
+                      <SubmitButton colorScheme="green">Save</SubmitButton>
+                      <Button variant="ghost" onClick={onToggle}>
+                        Close
+                      </Button>
+                    </Stack>
+                  </Flex>
+                </ModalFooter>
+              </ModalContent>
+            </Form>
+          );
+        }}
       </Formik>
     </Modal>
   );

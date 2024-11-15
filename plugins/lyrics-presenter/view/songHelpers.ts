@@ -1,5 +1,3 @@
-import { Song } from "../src/types";
-
 export const removeChords = (content: string[]) => {
   return content.reduce((acc, val) => {
     return val.startsWith(".") ? acc : [...acc, val];
@@ -36,9 +34,7 @@ export const groupData = (content: string[]): GroupedData => {
   return group;
 };
 
-export const processSongCache = (song?: Song) => {
-  const content = song?.modifiedContent ?? song?.cachedData?.content ?? "";
-
+export const processSong = (content: string) => {
   const cleanData = cleanWhiteSpace(
     removeChords(content.split(/<br>|\n/gm) ?? []),
   );

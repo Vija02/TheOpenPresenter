@@ -3,7 +3,7 @@ import { useMemo } from "react";
 import { Song } from "../../src";
 import { getSlideStyle } from "../../src/slideStyle";
 import { usePluginAPI } from "../pluginApi";
-import { processSongCache } from "../songHelpers";
+import { processSong } from "../songHelpers";
 import FullSongRenderView from "./FullSongRenderView";
 import SectionsRenderView from "./SectionsRenderView";
 
@@ -38,7 +38,7 @@ const FullSongRenderer = ({ song }: { song: Song }) => {
   const pluginApi = usePluginAPI();
   const slideStyle = pluginApi.scene.useData((x) => x.pluginData.style);
 
-  const groupedData = useMemo(() => processSongCache(song), [song]);
+  const groupedData = useMemo(() => processSong(song.content), [song.content]);
 
   return (
     <FullSongRenderView
@@ -58,12 +58,7 @@ const SectionsRenderer = ({
   const pluginApi = usePluginAPI();
   const slideStyle = pluginApi.scene.useData((x) => x.pluginData.style);
 
-  const songCache = useMemo(() => song.cachedData, [song.cachedData]);
-  const groupedData = useMemo(() => processSongCache(song), [song]);
-
-  if (!songCache) {
-    return null;
-  }
+  const groupedData = useMemo(() => processSong(song.content), [song.content]);
 
   return (
     <SectionsRenderView

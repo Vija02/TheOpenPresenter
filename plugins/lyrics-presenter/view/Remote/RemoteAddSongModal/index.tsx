@@ -15,6 +15,7 @@ import {
 } from "@chakra-ui/react";
 import { OverlayToggleComponentProps } from "@repo/ui";
 import { useCallback, useState } from "react";
+import { typeidUnboxed } from "typeid-js";
 import { useDebounce } from "use-debounce";
 
 import { usePluginAPI } from "../../pluginApi";
@@ -51,7 +52,14 @@ const RemoteAddSongModal = ({
     if (selected) {
       if (selected.type === "song") {
         pluginInfo.pluginData.songs.push({
-          id: selected.id,
+          id: typeidUnboxed(),
+          title: "",
+          content: "",
+          _imported: false,
+          import: {
+            type: "myworshiplist",
+            meta: { id: selected.id },
+          },
           setting: { displayType: "sections" },
         });
       } else if (selected.type === "playlist") {
@@ -60,7 +68,14 @@ const RemoteAddSongModal = ({
         );
         playlist.content.forEach((x: any) => {
           pluginInfo.pluginData.songs.push({
-            id: x.id,
+            id: typeidUnboxed(),
+            title: "",
+            content: "",
+            _imported: false,
+            import: {
+              type: "myworshiplist",
+              meta: { id: x.id },
+            },
             setting: { displayType: "sections" },
           });
         });

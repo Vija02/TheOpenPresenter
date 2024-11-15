@@ -4999,6 +4999,7 @@ __metadata:
     react: "npm:rc"
     react-dom: "npm:rc"
     react-icons: "npm:^5.3.0"
+    typeid-js: "npm:^1.1.0"
     use-debounce: "npm:^10.0.4"
     valtio: "npm:^2.1.1"
     valtio-yjs: "npm:^0.6.0"
