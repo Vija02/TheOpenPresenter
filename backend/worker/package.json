@@ -2,11 +2,16 @@
   "name": "@repo/worker",
   "private": true,
   "version": "0.0.0",
+  "exports": {
+    "./**/*.js": {
+      "default": "./dist/**/*.js"
+    }
+  },
   "scripts": {
     "gw": "cd dist && NODE_OPTIONS=\"${NODE_OPTIONS:-} -r @repo/config/env\" graphile-worker --crontab ../crontab",
     "dev": "concurrently --kill-others --names \"TS Watch,Worker\" --prefix \"({name})\" --prefix-colors \"orangeBright.bold,blueBright.bold\" \"yarn build:watch\" \"yarn run:watch\"",
-    "build": "tsc -b",
-    "build:watch": "tsc -b --watch --preserveWatchOutput",
+    "build": "pkgroll",
+    "build:watch": "pkgroll --watch",
     "run:watch": "nodemon --signal SIGINT --watch './dist/**/*.js' --watch './crontab' -x \"yarn gw\"",
     "start": "yarn gw",
     "install-db-schema": "mkdirp dist && yarn gw --schema-only"
@@ -28,6 +33,7 @@
     "tslib": "^2.8.0"
   },
   "devDependencies": {
-    "mkdirp": "^3.0.1"
+    "mkdirp": "^3.0.1",
+    "pkgroll": "^2.5.1"
   }
 }

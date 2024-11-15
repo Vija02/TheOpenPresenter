@@ -5349,6 +5349,7 @@ __metadata:
     mjml: "npm:^4.15.3"
     mkdirp: "npm:^3.0.1"
     nodemailer: "npm:^6.9.16"
+    pkgroll: "npm:^2.5.1"
     tslib: "npm:^2.8.0"
   languageName: unknown
   linkType: soft
