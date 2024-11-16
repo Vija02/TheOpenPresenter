@@ -12,6 +12,7 @@ import {
   ModalHeader,
   ModalOverlay,
   ModalProps,
+  Stack,
   VStack,
 } from "@chakra-ui/react";
 import {
@@ -99,7 +100,7 @@ const CreateProjectModal = ({
 
   return (
     <Modal
-      size="xl"
+      size={{ base: "full", md: "xl" }}
       isOpen={isOpen ?? false}
       onClose={onToggle ?? (() => {})}
       {...props}
@@ -165,10 +166,12 @@ const CreateProjectModal = ({
                 </VStack>
               </ModalBody>
               <ModalFooter>
-                <SubmitButton colorScheme="green">Save</SubmitButton>
-                <Button variant="ghost" onClick={onToggle}>
-                  Close
-                </Button>
+                <Stack direction="row">
+                  <SubmitButton colorScheme="green">Save</SubmitButton>
+                  <Button variant="ghost" onClick={onToggle}>
+                    Close
+                  </Button>
+                </Stack>
               </ModalFooter>
             </ModalContent>
           </Form>
