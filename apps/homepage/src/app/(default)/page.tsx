@@ -14,11 +14,9 @@ export default function Home() {
             Coming Soon
           </PageHeader>
 
-          <ViewOnGithub />
-
           <Box display="flex" justifyContent="center">
             <styled.a
-              mt={6}
+              mb={4}
               href="/o"
               bg="indigo.700"
               color="white"
@@ -33,12 +31,15 @@ export default function Home() {
                 flex={1}
                 alignItems="center"
                 gap={3}
+                px={3}
+                py={2}
                 fontSize="lg"
               >
                 Go to Dashboard
               </styled.span>
             </styled.a>
           </Box>
+          <ViewOnGithub />
         </Box>
       </Box>
     </styled.section>

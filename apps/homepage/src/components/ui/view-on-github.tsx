@@ -18,17 +18,16 @@ export default function ViewOnGithub() {
           bg: "gray.300",
           cursor: "pointer",
         }}
-        my={-2.5}
       >
         <styled.span
           display="flex"
           flex={1}
           alignItems="center"
           gap={3}
-          fontSize="lg"
+          fontSize="sm"
         >
           <styled.svg
-            w={8}
+            w={5}
             viewBox="0 0 98 96"
             xmlns="http://www.w3.org/2000/svg"
           >
