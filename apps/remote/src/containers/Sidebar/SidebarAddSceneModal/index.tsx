@@ -9,6 +9,7 @@ import {
   ModalHeader,
   ModalOverlay,
   ModalProps,
+  Text,
 } from "@chakra-ui/react";
 import { Scene } from "@repo/base-plugin";
 import { OverlayToggleComponentProps } from "@repo/ui";
@@ -76,6 +77,7 @@ const SidebarAddSceneModal = ({
         <ModalHeader>Add scene</ModalHeader>
         <ModalCloseButton />
         <ModalBody>
+          <Text fontWeight="bold" mb={2}>Select a component to add:</Text>
           <Box>
             {pluginMetaData?.pluginMeta.sceneCreator.map((sceneCreator) => (
               <Box
@@ -106,7 +108,7 @@ const SidebarAddSceneModal = ({
               addPlugin();
             }}
           >
-            Add Plugin
+            Add Scene
           </Button>
           <Button variant="ghost" onClick={onToggle}>
             Cancel
