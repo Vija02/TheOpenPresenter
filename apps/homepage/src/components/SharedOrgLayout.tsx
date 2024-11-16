@@ -108,6 +108,7 @@ export function SharedOrgLayout({
           href={`/o/${slug}`}
           icon={<PiProjectorScreenChartLight />}
           name="Projects"
+          exact
         />
         <SidebarItem
           baseUrl={`/o/${slug}/settings`}

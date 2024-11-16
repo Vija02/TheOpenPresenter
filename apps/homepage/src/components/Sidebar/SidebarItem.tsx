@@ -9,6 +9,7 @@ type PropTypes = {
   name: string;
   baseUrl?: string;
   href: string;
+  exact?: boolean;
   children?: React.ReactNode;
 };
 export const SidebarItem = ({
@@ -16,6 +17,7 @@ export const SidebarItem = ({
   name,
   baseUrl,
   href,
+  exact,
   children,
 }: PropTypes) => {
   const { asPath } = useRouter();
@@ -34,7 +36,10 @@ export const SidebarItem = ({
           textDecor="none"
           flex={1}
           _hover={{ textDecor: "none" }}
-          {...(!children && asPath.includes(href) ? { bg: "blue.50" } : {})}
+          {...(!children &&
+          (exact ? asPath.split("?")[0] === href : asPath.includes(href))
+            ? { bg: "blue.50" }
+            : {})}
         >
           <Box p={3} _hover={{ bg: "blue.50" }}>
             <Stack direction="row" spacing={4} alignItems="center">
