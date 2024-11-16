@@ -5176,6 +5176,7 @@ __metadata:
     typeid-js: "npm:^1.1.0"
     typescript: "npm:5.6.3"
     ua-parser-js: "npm:^1.0.39"
+    use-disposable: "npm:^1.0.4"
     uuid: "npm:^11.0.1"
     valtio: "npm:^2.1.1"
     valtio-yjs: "npm:^0.6.0"
@@ -5222,6 +5223,7 @@ __metadata:
     typeid-js: "npm:^1.1.0"
     typescript: "npm:5.6.3"
     ua-parser-js: "npm:^1.0.39"
+    use-disposable: "npm:^1.0.4"
     uuid: "npm:^11.0.1"
     valtio: "npm:^2.1.1"
     valtio-yjs: "npm:^0.6.0"
@@ -23053,6 +23055,18 @@ __metadata:
   peerDependencies:
     react: "*"
   checksum: 10c0/73494fc44b2bd58a7ec799a528fc20077c45fe2e94fedff6dcd88d136f7a39f417d77f584d5613aac615ed32aeb2ea393797ae1f7d5b2645eab57cb497a6d0cb
+  languageName: node
+  linkType: hard
+
+"use-disposable@npm:^1.0.4":
+  version: 1.0.4
+  resolution: "use-disposable@npm:1.0.4"
+  peerDependencies:
+    "@types/react": ">=16.8.0 <19.0.0"
+    "@types/react-dom": ">=16.8.0 <19.0.0"
+    react: ">=16.8.0 <19.0.0"
+    react-dom: ">=16.8.0 <19.0.0"
+  checksum: 10c0/4ce459e9e90345618c1f77ceb7076e75b00a6fd9f7f9415dff8ca90b5c1d549135a4e4164c116888beab89e018c64baca374889624c64384f33e12b2bd979a44
   languageName: node
   linkType: hard
 

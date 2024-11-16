@@ -34,6 +34,7 @@
     "react18-json-view": "^0.2.8",
     "typeid-js": "^1.1.0",
     "ua-parser-js": "^1.0.39",
+    "use-disposable": "^1.0.4",
     "uuid": "^11.0.1",
     "valtio": "^2.1.1",
     "valtio-yjs": "^0.6.0",

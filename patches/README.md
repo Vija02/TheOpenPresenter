@@ -14,6 +14,10 @@ Remove the .mjs entry to force bundler to use the cjs build. This was causing us
 
 Applied this PR: https://github.com/privatenumber/pkgroll/pull/73 so that we can use the feature to build our `worker` files. And we use pkgroll to handle ESM/CJS issues (Yjs).
 
+# use-disposable
+
+Applied this PR: https://github.com/microsoft/use-disposable/pull/40 to get the behavior right for React 19. Without it, the library doesn't work correctly.
+
 ## vite-express
 
 Fixed 2 issues:

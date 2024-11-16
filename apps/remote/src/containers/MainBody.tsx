@@ -8,7 +8,6 @@ import {
   YjsWatcher,
 } from "@repo/base-plugin";
 import { useKeyPressMutation } from "@repo/graphql";
-import { useDisposable } from "@repo/lib";
 import { ErrorAlert, OverlayToggle, PopConfirm } from "@repo/ui";
 import React, { useEffect, useMemo, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
@@ -16,6 +15,7 @@ import {
   VscSettingsGear as VscSettingsGearRaw,
   VscTrash as VscTrashRaw,
 } from "react-icons/vsc";
+import { useDisposable } from "use-disposable";
 import { useLocation, useRoute } from "wouter";
 import Y from "yjs";
 
@@ -240,7 +240,7 @@ const PluginRenderer = React.memo(
 
     // Renderer is added through the server and requires an extra update. So we use a watcher here
     const yjsPluginRendererData = yjsWatcher?.useYjs<any>(
-      (x: State) => x.renderer?.[1]?.children?.[sceneId]?.[pluginId],
+      (x: State) => x.renderer?.["1"]?.children?.[sceneId]?.[pluginId],
     );
 
     const [match] = useRoute(`/${sceneId}`);

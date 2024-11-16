@@ -1,10 +1,10 @@
 import { Box, Text } from "@chakra-ui/react";
 import { AwarenessContext, Scene, State, YjsWatcher } from "@repo/base-plugin";
-import { useDisposable } from "@repo/lib";
 import { ErrorAlert, MotionBox } from "@repo/ui";
 import { AnimatePresence, motion } from "framer-motion";
 import React, { useMemo, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
+import { useDisposable } from "use-disposable";
 import Y from "yjs";
 
 import { useData, usePluginData } from "./contexts/PluginDataProvider";
@@ -115,7 +115,7 @@ const PluginRenderer = React.memo(
 
     // Renderer is added through the server and requires an extra update. So we use a watcher here
     const yjsPluginRendererData = yjsWatcher?.useYjs<any>(
-      (x: State) => x.renderer?.[1]?.children?.[sceneId]?.[pluginId],
+      (x: State) => x.renderer?.["1"]?.children?.[sceneId]?.[pluginId],
     );
 
     const mainState = usePluginData().mainState!;
