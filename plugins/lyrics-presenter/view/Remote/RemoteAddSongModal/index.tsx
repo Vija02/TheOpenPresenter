@@ -132,7 +132,12 @@ const RemoteAddSongModal = ({
                     setSelected({ type: "playlist", id: playlist.id });
                   }}
                 >
-                  <Text fontWeight="bold" fontSize="md">
+                  <Text
+                    fontWeight="bold"
+                    fontSize="md"
+                    overflow="hidden"
+                    textOverflow="ellipsis"
+                  >
                     {playlist?.title}
                   </Text>
                   <Box color="gray.800">
