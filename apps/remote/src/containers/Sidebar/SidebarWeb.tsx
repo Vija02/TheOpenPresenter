@@ -10,6 +10,7 @@ import {
 } from "@chakra-ui/react";
 import { OverlayToggle } from "@repo/ui";
 import { sortBy } from "lodash-es";
+import { MdCoPresent } from "react-icons/md";
 import { VscAdd, VscArrowLeft } from "react-icons/vsc";
 import { useLocation } from "wouter";
 
@@ -74,15 +75,19 @@ const SidebarWeb = () => {
               <OverlayToggle
                 toggler={({ onToggle }) => (
                   <Button onClick={onToggle} colorScheme="green">
-                    <VscAdd /> Add New Scene
+                    <VscAdd />{" "}
+                    <Text ml={2} color="white">
+                      Add New Scene
+                    </Text>
                   </Button>
                 )}
               >
                 <SidebarAddSceneModal />
               </OverlayToggle>
               <Link href={`/render/${orgSlug}/${projectSlug}`} isExternal>
-                <Button w="100%" variant="outline">
-                  Open Renderer
+                <Button w="100%" variant="outline" borderColor="gray.300">
+                  <MdCoPresent />
+                  <Text ml={2}>Present</Text>
                 </Button>
               </Link>
             </Stack>
@@ -108,7 +113,12 @@ const SidebarWeb = () => {
           <Stack>
             <OverlayToggle
               toggler={({ onToggle }) => (
-                <Button onClick={onToggle} colorScheme="green">
+                <Button
+                  onClick={onToggle}
+                  colorScheme="green"
+                  size="sm"
+                  rounded="none"
+                >
                   Debug
                 </Button>
               )}

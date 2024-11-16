@@ -1,7 +1,8 @@
 import { Box, Button, Divider, Link, Stack, Text } from "@chakra-ui/react";
 import { OverlayToggle } from "@repo/ui";
 import { sortBy } from "lodash-es";
-import { VscAdd, VscArrowLeft, VscLinkExternal } from "react-icons/vsc";
+import { MdCoPresent } from "react-icons/md";
+import { VscAdd, VscArrowLeft } from "react-icons/vsc";
 import { useLocation } from "wouter";
 
 import { useData } from "../../contexts/PluginDataProvider";
@@ -69,23 +70,38 @@ const SidebarMobile = () => {
             toggler={({ onToggle }) => (
               <Button
                 p={1}
-                _hover={{
-                  bgColor: "blue.500",
-                  color: "white",
-                }}
                 cursor="pointer"
                 onClick={onToggle}
                 colorScheme="green"
+                display="flex"
+                flexDir="column"
               >
                 <VscAdd />
+                <Text color="white" fontSize="2xs" fontWeight="normal">
+                  Add
+                </Text>
               </Button>
             )}
           >
             <SidebarAddSceneModal />
           </OverlayToggle>
-          <Link href={`/render/${orgSlug}/${projectSlug}`} isExternal>
-            <Button w="100%" variant="outline">
-              <VscLinkExternal />
+          <Link
+            href={`/render/${orgSlug}/${projectSlug}`}
+            isExternal
+            textDecor="none"
+            _hover={{ textDecor: "none" }}
+          >
+            <Button
+              w="100%"
+              variant="outline"
+              display="flex"
+              flexDir="column"
+              borderColor="gray.300"
+            >
+              <MdCoPresent />
+              <Text fontSize="2xs" fontWeight="normal">
+                Present
+              </Text>
             </Button>
           </Link>
         </Stack>
