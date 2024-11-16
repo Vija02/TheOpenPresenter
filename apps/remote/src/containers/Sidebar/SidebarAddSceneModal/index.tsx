@@ -14,6 +14,7 @@ import { Scene } from "@repo/base-plugin";
 import { OverlayToggleComponentProps } from "@repo/ui";
 import { useState } from "react";
 import { typeidUnboxed } from "typeid-js";
+import { useLocation } from "wouter";
 
 import { usePluginData } from "../../../contexts/PluginDataProvider";
 import { usePluginMetaData } from "../../../contexts/PluginMetaDataProvider";
@@ -30,6 +31,8 @@ const SidebarAddSceneModal = ({
   resetData,
   ...props
 }: SidebarAddSceneModalPropTypes) => {
+  const [, navigate] = useLocation();
+
   const mainState = usePluginData().mainState!;
   const pluginMetaData = usePluginMetaData().pluginMetaData;
 
@@ -39,7 +42,8 @@ const SidebarAddSceneModal = ({
   );
 
   const addPlugin = () => {
-    mainState.data[typeidUnboxed("scene")] = {
+    const sceneId = typeidUnboxed("scene");
+    mainState.data[sceneId] = {
       name: selectedSceneCreator?.title,
       order:
         (Math.max(0, ...Object.values(mainState.data).map((x) => x.order)) ??
@@ -53,6 +57,8 @@ const SidebarAddSceneModal = ({
         },
       },
     } as Scene;
+
+    navigate(`/${sceneId}`);
 
     onToggle?.();
     resetData?.();
