@@ -96,17 +96,6 @@ const RemoteEditSongModal = ({
     () => (song.import?.importedData?.content ?? "").split("<br>").join("\n"),
     [song.import?.importedData?.content],
   );
-  // const modifiedContent = useMemo(
-  //   () =>
-  //     song.modifiedContent
-  //       ? song.modifiedContent.split("<br>").join("\n")
-  //       : undefined,
-  //   [song.modifiedContent],
-  // );
-  // const content = useMemo(
-  //   () => modifiedContent ?? originalContent,
-  //   [modifiedContent, originalContent],
-  // );
 
   return (
     <Modal
