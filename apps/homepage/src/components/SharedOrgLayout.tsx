@@ -92,6 +92,7 @@ export function SharedOrgLayout({
             pl={0}
             alignItems="center"
             overflow="hidden"
+            flex={1}
           >
             <Avatar
               size="xs"
