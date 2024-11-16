@@ -22,6 +22,7 @@ import Y from "yjs";
 import { useData, usePluginData } from "../contexts/PluginDataProvider";
 import { usePluginMetaData } from "../contexts/PluginMetaDataProvider";
 import { trpcClient } from "../trpc";
+import { EmptyScene } from "./EmptyScene";
 import SceneSettingsModal from "./SceneSettingsModal";
 
 const VscSettingsGear = chakra(VscSettingsGearRaw);
@@ -40,13 +41,23 @@ const MainBody = () => {
     [data.data, location],
   );
 
+  const scenes = useMemo(
+    () =>
+      Object.entries(data.data).filter(([, value]) => value.type === "scene"),
+    [data.data],
+  );
+
   // On load, select the scene that is active if available
   useEffect(() => {
     const currentScene = mainState.renderer["1"]?.currentScene;
-    if (currentScene && !selectedScene) {
-      navigate(`/${currentScene}`, { replace: true });
+    if (!selectedScene) {
+      if (currentScene) {
+        navigate(`/${currentScene}`, { replace: true });
+      } else if (scenes.length > 0) {
+        navigate(`/${scenes[0]![0]}`, { replace: true });
+      }
     }
-  }, [mainState.renderer, navigate, selectedScene]);
+  }, [mainState.renderer, navigate, scenes, selectedScene]);
 
   return (
     <Box
@@ -177,15 +188,14 @@ const MainBody = () => {
         </Stack>
       </Flex>
       <Box flex={1} overflow="auto">
-        {Object.entries(data.data)
-          .filter(([, value]) => value.type === "scene")
-          .map(([sceneId, value]) => (
-            <SceneRenderer
-              key={sceneId}
-              sceneId={sceneId}
-              value={value as Scene}
-            />
-          ))}
+        {scenes.map(([sceneId, value]) => (
+          <SceneRenderer
+            key={sceneId}
+            sceneId={sceneId}
+            value={value as Scene}
+          />
+        ))}
+        {scenes.length === 0 && <EmptyScene />}
       </Box>
     </Box>
   );
