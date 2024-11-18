@@ -33,6 +33,7 @@ const OrganizationOverview: NextPage = () => {
                 borderColor="gray.200"
                 rounded="sm"
                 p={2}
+                _hover={{ borderColor: "blue.400" }}
               >
                 <Text fontWeight="bold" fontSize="lg">
                   {membership.organization?.name}
