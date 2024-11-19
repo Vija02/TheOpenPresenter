@@ -84,7 +84,18 @@ const SidebarWeb = () => {
               >
                 <SidebarAddSceneModal />
               </OverlayToggle>
-              <Link href={`/render/${orgSlug}/${projectSlug}`} isExternal>
+              <Link
+                href={`/render/${orgSlug}/${projectSlug}`}
+                isExternal
+                onClick={(e) => {
+                  window.open(
+                    `/render/${orgSlug}/${projectSlug}`,
+                    "_blank",
+                    `width=${screen.availWidth},height=${screen.availHeight},toolbar=no,fullscreen=yes,top=0,left=${screen.availWidth}`,
+                  );
+                  e.preventDefault();
+                }}
+              >
                 <Button w="100%" variant="outline" borderColor="gray.300">
                   <MdCoPresent />
                   <Text ml={2}>Present</Text>

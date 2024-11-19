@@ -90,6 +90,14 @@ const SidebarMobile = () => {
             isExternal
             textDecor="none"
             _hover={{ textDecor: "none" }}
+            onClick={(e) => {
+              window.open(
+                `/render/${orgSlug}/${projectSlug}`,
+                "_blank",
+                `width=${screen.availWidth},height=${screen.availHeight},toolbar=no,fullscreen=yes,top=0,left=${screen.availWidth}`,
+              );
+              e.preventDefault();
+            }}
           >
             <Button
               w="100%"
