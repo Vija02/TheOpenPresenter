@@ -1,17 +1,21 @@
 /// <reference types="google.accounts" />
 /// <reference types="google.picker" />
 /// <reference types="gapi" />
-import { Button } from "@chakra-ui/react";
 import { appData, useInjectScript } from "@repo/lib";
 import { useCallback, useMemo } from "react";
 
 export const SlidePicker = ({
   onFileSelected,
+  children,
 }: {
   onFileSelected: (
     d: google.picker.ResponseObject,
     accessToken: string,
   ) => void;
+  children: (val: {
+    isLoading: boolean;
+    openPicker: () => void;
+  }) => React.ReactElement<any>;
 }) => {
   const [loadedApi, errorApi] = useInjectScript(
     "https://apis.google.com/js/api.js",
@@ -66,9 +70,8 @@ export const SlidePicker = ({
     [errorApi, errorGsi, loadedApi, loadedGsi],
   );
 
-  return (
-    <Button isLoading={!scriptLoaded} onClick={() => openPicker()}>
-      Select Slide
-    </Button>
-  );
+  return children({
+    isLoading: !scriptLoaded,
+    openPicker,
+  });
 };

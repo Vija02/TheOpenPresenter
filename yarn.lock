@@ -4951,6 +4951,7 @@ __metadata:
     pkgroll: "npm:^2.5.1"
     react: "npm:rc"
     react-dom: "npm:rc"
+    react-icons: "npm:^5.3.0"
     valtio: "npm:^2.1.1"
     valtio-yjs: "npm:^0.6.0"
     vite: "npm:5.4.10"

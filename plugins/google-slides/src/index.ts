@@ -148,6 +148,7 @@ const onPluginDataCreated = (pluginInfo: ObjectToTypedMap<Plugin>) => {
   pluginInfo.get("pluginData")?.set("presentationId", "");
   pluginInfo.get("pluginData")?.set("pageIds", new Y.Array());
   pluginInfo.get("pluginData")?.set("thumbnailLinks", new Y.Array());
+  pluginInfo.get("pluginData")?.set("_isFetching", false);
 
   return {};
 };

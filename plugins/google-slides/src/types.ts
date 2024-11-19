@@ -13,6 +13,8 @@ export type PluginBaseData = {
   thumbnailLinks: string[];
 
   html?: string;
+
+  _isFetching?: boolean;
 };
 
 export type PluginRendererData = {
