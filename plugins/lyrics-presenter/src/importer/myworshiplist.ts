@@ -1,9 +1,23 @@
+import { groupData, ungroupData } from "../processLyrics";
+
 export const convertMWLData = (content: string) => {
-  return convertHeading(
+  const raw = convertHeading(
     removeAuxiliaryText(
       cleanWhiteSpace(convertChords(content.split(/<br>|\n/gm) ?? [])),
     ),
-  ).join("\n");
+  );
+
+  const grouped = groupData(raw);
+  // Remove slides that are empty
+  const processed = grouped.filter(
+    (x) =>
+      x.slides
+        .flat()
+        .filter((j) => !j.startsWith("."))
+        .join("") !== "",
+  );
+
+  return ungroupData(processed).join("\n");
 };
 
 const convertChords = (content: string[]) => {
@@ -36,7 +50,7 @@ const removeAuxiliaryText = (content: string[]) => {
 const convertHeading = (content: string[]) => {
   return content.map((val) => {
     const matches = val.match(
-      /^(\s*)\[?(verse|bridge|pre-? ?chorus|chorus|end|ending|outro|tag|instrumental|interlude) ?(\d+)?\]?(\s*)$/i,
+      /^(\s*)\[?(verse|bridge|pre-? ?chorus|chorus|end|ending|outro|tag|instrumental|interlude|intro) ?(\d+)?\]?(\s*)$/i,
     );
     return matches ? "[" + val.replace(/[\[\]]/g, "") + "]" : val;
   });

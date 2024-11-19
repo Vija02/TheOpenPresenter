@@ -28,6 +28,7 @@ import { FaChevronUp } from "react-icons/fa";
 import { FaCircleInfo } from "react-icons/fa6";
 import { toFormikValidationSchema } from "zod-formik-adapter";
 
+import { removeChords } from "../../../src/processLyrics";
 import {
   Song,
   SongSetting,
@@ -35,7 +36,6 @@ import {
   slideStyleValidator,
 } from "../../../src/types";
 import { usePluginAPI } from "../../pluginApi";
-import { removeChords } from "../../songHelpers";
 import { SongViewSlides } from "../SongViewSlides";
 import SongEditEditor from "./SongEditEditor";
 import { SongEditInfo } from "./SongEditInfo";
