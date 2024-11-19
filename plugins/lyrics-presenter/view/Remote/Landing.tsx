@@ -20,10 +20,6 @@ const Landing = () => {
           toggler={({ onToggle }) => (
             <Button
               p={1}
-              _hover={{
-                bgColor: "blue.500",
-                color: "white",
-              }}
               cursor="pointer"
               onClick={onToggle}
               colorScheme="green"
