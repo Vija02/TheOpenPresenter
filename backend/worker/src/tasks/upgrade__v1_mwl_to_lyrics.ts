@@ -61,7 +61,9 @@ const task: Task = async (_, { withPgClient }) => {
             }
 
             // 2. Migrate plugin type
-            plugin.plugin = "lyrics-presenter";
+            if (plugin.plugin === "myworshiplist") {
+              plugin.plugin = "lyrics-presenter";
+            }
 
             // 3. Migrate to new generalized format
             try {
@@ -87,17 +89,19 @@ const task: Task = async (_, { withPgClient }) => {
             } catch (e) {
               console.error("Lyrics: Failed to migrate to new data version", e);
             }
-
-            // SAVE TO DB
-            await withPgClient((pgClient) =>
-              pgClient.query(
-                "update app_public.projects set document = $1 where id = $2",
-                [Buffer.from(Y.encodeStateAsUpdate(ydoc)), project.id],
-              ),
-            );
           }
         }
       }
+
+      // SAVE TO DB
+      await withPgClient(async (pgClient) => {
+        await pgClient.query("SET session_replication_role = replica;");
+        await pgClient.query(
+          "update app_public.projects set document = $1 where id = $2",
+          [Buffer.from(Y.encodeStateAsUpdate(ydoc)), project.id],
+        );
+        return Promise.resolve();
+      });
     }
 
     unbind();
