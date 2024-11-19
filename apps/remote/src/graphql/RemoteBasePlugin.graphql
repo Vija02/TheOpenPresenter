@@ -17,6 +17,10 @@ fragment BaseRemotePluginMeta on PluginMeta {
   sceneCreator {
     title
     pluginName
+    description
+    categories
+    isExperimental
+    isStarred
   }
   registeredRemoteView {
     pluginName

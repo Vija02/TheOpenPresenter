@@ -20,6 +20,8 @@ export const init = (serverPluginApi: ServerPluginApi) => {
   serverPluginApi.onPluginDataLoaded(pluginName, onPluginDataLoaded);
   serverPluginApi.registerSceneCreator(pluginName, {
     title: "Radio",
+    description: "Play a radio station stream in the background",
+    categories: ["Audio"],
   });
 
   serverPluginApi.serveStatic(pluginName, "out");

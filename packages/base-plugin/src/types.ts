@@ -87,3 +87,6 @@ export type WebComponentProps<TrpcClient> = {
   setRenderCurrentScene: () => void;
   trpcClient: TrpcClient;
 };
+
+export const sceneCategories = ["Display", "Media", "Audio"] as const;
+export type SceneCategories = (typeof sceneCategories)[number];

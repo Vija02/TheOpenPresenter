@@ -40,6 +40,9 @@ export const init = (serverPluginApi: ServerPluginApi) => {
   serverPluginApi.onRendererDataLoaded(pluginName, onRendererDataLoaded);
   serverPluginApi.registerSceneCreator(pluginName, {
     title: "Video Player",
+    description:
+      "Play videos from sources like YouTube and Vimeo. You can also upload your own video.",
+    categories: ["Media"],
   });
 
   serverPluginApi.serveStatic(pluginName, "out");

@@ -46,6 +46,8 @@ export const init = (
   serverPluginApi.onRendererDataCreated(pluginName, onRendererDataCreated);
   serverPluginApi.registerSceneCreator(pluginName, {
     title: "Google Slides",
+    description: "Import & display Google Slides presentation",
+    categories: ["Display"],
   });
 
   serverPluginApi.serveStatic(pluginName, "out");

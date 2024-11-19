@@ -2648,6 +2648,10 @@ type ResetPasswordPayload {
 }
 
 type SceneCreator {
+  categories: [String!]!
+  description: String!
+  isExperimental: Boolean
+  isStarred: Boolean
   pluginName: String!
   title: String!
 }

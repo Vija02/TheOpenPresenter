@@ -25,6 +25,9 @@ export const init = (serverPluginApi: ServerPluginApi) => {
   serverPluginApi.onPluginDataLoaded(pluginName, onPluginDataLoaded);
   serverPluginApi.registerSceneCreator(pluginName, {
     title: "Audio Recorder",
+    description: "Records audio from any of your microphones",
+    categories: ["Audio"],
+    isExperimental: true,
   });
 
   serverPluginApi.serveStatic(pluginName, "out");

@@ -2,6 +2,7 @@ import { MediaHandler } from "@repo/backend-shared";
 import { Express, RequestHandler } from "express";
 import stream from "stream";
 
+import { SceneCategories } from "../types";
 import {
   RegisterKeyPressHandlerCallback,
   RegisterOnPluginDataCreated,
@@ -61,7 +62,13 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
   }[] = [];
   protected registeredSceneCreator: {
     pluginName: string;
-    sceneCreatorMeta: { title: string };
+    sceneCreatorMeta: {
+      title: string;
+      description: string;
+      categories: SceneCategories[];
+      isExperimental?: boolean;
+      isStarred?: boolean;
+    };
   }[] = [];
   protected registeredPrivateRoute: {
     pluginName: string;
@@ -161,7 +168,16 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
     });
   }
 
-  public registerSceneCreator(pluginName: string, meta: { title: string }) {
+  public registerSceneCreator(
+    pluginName: string,
+    meta: {
+      title: string;
+      description: string;
+      categories: SceneCategories[];
+      isExperimental?: boolean;
+      isStarred?: boolean;
+    },
+  ) {
     this.registeredSceneCreator.push({
       pluginName,
       sceneCreatorMeta: meta,

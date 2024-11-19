@@ -17,6 +17,8 @@ export const init = (serverPluginApi: ServerPluginApi) => {
   serverPluginApi.onPluginDataCreated(pluginName, onPluginDataCreated);
   serverPluginApi.registerSceneCreator(pluginName, {
     title: "Simple Image",
+    description: "Upload and display an image to the screen",
+    categories: ["Media"],
   });
 
   serverPluginApi.serveStatic(pluginName, "out");

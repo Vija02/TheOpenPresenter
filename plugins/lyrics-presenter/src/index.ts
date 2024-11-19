@@ -31,6 +31,9 @@ export const init = (serverPluginApi: ServerPluginApi) => {
   serverPluginApi.onRendererDataCreated(pluginName, onRendererDataCreated);
   serverPluginApi.registerSceneCreator(pluginName, {
     title: "Lyrics Presenter",
+    description: "Display song lyrics to the screen",
+    categories: ["Display"],
+    isStarred: true,
   });
 
   serverPluginApi.serveStatic(pluginName, "out");

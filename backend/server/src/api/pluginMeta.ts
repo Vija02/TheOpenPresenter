@@ -19,6 +19,10 @@ export const pluginMeta = makeExtendSchemaPlugin(() => ({
     type SceneCreator {
       pluginName: String!
       title: String!
+      description: String!
+      categories: [String!]!
+      isExperimental: Boolean
+      isStarred: Boolean
     }
 
     type RegisteredRemoteView {
@@ -50,6 +54,10 @@ export const pluginMeta = makeExtendSchemaPlugin(() => ({
             sceneCreator: sceneCreator.map((x) => ({
               pluginName: x.pluginName,
               title: x.sceneCreatorMeta.title,
+              description: x.sceneCreatorMeta.description,
+              categories: x.sceneCreatorMeta.categories,
+              isExperimental: x.sceneCreatorMeta.isExperimental,
+              isStarred: x.sceneCreatorMeta.isStarred,
             })),
             registeredRemoteView: remoteViewWebComponent.map((x) => ({
               pluginName: x.pluginName,
