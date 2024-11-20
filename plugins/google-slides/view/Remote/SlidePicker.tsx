@@ -38,7 +38,7 @@ export const SlidePicker = ({
     return new Promise<string>((resolve, reject) => {
       const client = google.accounts.oauth2.initTokenClient({
         client_id: googleClientID,
-        scope: ["https://www.googleapis.com/auth/drive.readonly"].join(" "),
+        scope: ["https://www.googleapis.com/auth/drive.file"].join(" "),
         callback: (tokenResponse: any) => {
           resolve(tokenResponse.access_token);
         },
@@ -55,11 +55,16 @@ export const SlidePicker = ({
     const accessToken = await getAccessToken();
 
     new google.picker.PickerBuilder()
-      .addView(google.picker.ViewId.PRESENTATIONS)
+      .addView(
+        new google.picker.DocsView(google.picker.ViewId.PRESENTATIONS).setMode(
+          google.picker.DocsViewMode.LIST,
+        ),
+      )
       .setOAuthToken(accessToken)
-      .setDeveloperKey("")
       .setCallback((data) => onFileSelected(data, accessToken))
-      .setAppId("")
+      .setAppId(
+        appData.getCustomEnv("PLUGIN_GOOGLE_SLIDES_CLIENT_ID").split("-")?.[0],
+      )
       .enableFeature(google.picker.Feature.SUPPORT_DRIVES)
       .build()
       .setVisible(true);
