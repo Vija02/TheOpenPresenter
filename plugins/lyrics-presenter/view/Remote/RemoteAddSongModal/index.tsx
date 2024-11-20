@@ -3,6 +3,7 @@ import {
   Button,
   Grid,
   Input,
+  Link,
   Modal,
   ModalBody,
   ModalCloseButton,
@@ -105,6 +106,17 @@ const RemoteAddSongModal = ({
         <ModalCloseButton />
         <ModalBody>
           <Box>
+            <Text fontSize="lg" mb={3}>
+              Songs from{" "}
+              <Link
+                href="https://myworshiplist.com/"
+                isExternal
+                color="blue.400"
+              >
+                MyWorshipList
+              </Link>
+              . Other sources and the ability to add your own songs coming soon!
+            </Text>
             <Text pb={2} fontSize="lg" fontWeight="600">
               Recent Playlist
             </Text>
