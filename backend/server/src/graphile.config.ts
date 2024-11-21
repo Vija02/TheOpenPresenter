@@ -211,6 +211,9 @@ export function getPostGraphileOptions({
 
       // Makes all SQL function arguments except those with defaults non-nullable
       pgStrictFunctions: true,
+
+      // Makes ordering by DESC order null values after those with values
+      orderByNullsLast: true,
     },
 
     /*
