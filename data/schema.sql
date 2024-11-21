@@ -2690,6 +2690,13 @@ CREATE INDEX projects_slug_idx ON app_public.projects USING btree (slug);
 
 
 --
+-- Name: projects_target_date_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX projects_target_date_idx ON app_public.projects USING btree (target_date);
+
+
+--
 -- Name: projects_updated_at_idx; Type: INDEX; Schema: app_public; Owner: -
 --
 
