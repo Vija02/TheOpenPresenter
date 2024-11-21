@@ -1,12 +1,17 @@
 import { Text, TextProps } from "@chakra-ui/react";
-import { formatDistanceToNowStrict, lightFormat } from "date-fns";
+import { format, formatDistanceToNowStrict } from "date-fns";
 
 export type DateDisplayPropTypes = {
   date: Date;
+  formatToken?: string;
   textProps?: TextProps;
 };
-export function DateDisplay({ date, textProps }: DateDisplayPropTypes) {
-  const humanReadable = formatHumanReadableDate(date);
+export function DateDisplay({
+  date,
+  textProps,
+  formatToken,
+}: DateDisplayPropTypes) {
+  const humanReadable = formatHumanReadableDate(date, formatToken);
 
   return (
     <Text
@@ -21,8 +26,8 @@ export function DateDisplay({ date, textProps }: DateDisplayPropTypes) {
   );
 }
 
-export function formatHumanReadableDate(date: Date) {
-  return lightFormat(date, "yyyy-MM-dd");
+export function formatHumanReadableDate(date: Date, formatToken?: string) {
+  return format(date, formatToken ?? "yyyy-MM-dd");
 }
 
 // ========================
