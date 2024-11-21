@@ -26,10 +26,10 @@ We maintain a separate wiki page at https://docs.theopenpresenter.com. Please re
 ✅ Present in any device that can run a browser  
 ✅ Collaborate & control presentation from anywhere  
 ✅ Play video from various sources (Youtube, local, etc)  
+✅ Organize your past and future presentation sessions   
 🟨 Import & display lyrics from various sources with ease (currently only MyWorshipList)  
 🟨 Display slides from many different sources (currently only Google Slides)  
 🟨 Record audio and save it for future playback  
-⬜ Organize your past and future presentation sessions   
 ⬜ Offline support  
 
 Last but not least, the code for TheOpenPresenter will always be Open Source. We also promise to keep a hosted version of TheOpenPresenter free for small churches for as long as possible, the ones that will benefit from this project the most.

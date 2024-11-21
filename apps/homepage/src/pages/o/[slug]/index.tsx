@@ -22,7 +22,13 @@ import {
   useOrganizationDashboardIndexPageQuery,
 } from "@repo/graphql";
 import { globalState } from "@repo/lib";
-import { DateDisplayRelative, OverlayToggle, PopConfirm } from "@repo/ui";
+import {
+  DateDisplay,
+  DateDisplayRelative,
+  OverlayToggle,
+  PopConfirm,
+} from "@repo/ui";
+import { format } from "date-fns";
 import { NextPage } from "next";
 import { useCallback, useMemo } from "react";
 import { FaPlus } from "react-icons/fa";
@@ -162,8 +168,19 @@ const ProjectCard = ({
         justifyContent={{ base: "space-between", sm: "flex-start" }}
       >
         <LinkOverlay href={`/app/${slug}/${project.slug}`}>
-          <Text fontWeight={{ base: 600, sm: 500 }}>
-            {project.name !== "" ? project.name : project.slug}
+          {project.targetDate && (
+            <DateDisplay
+              date={new Date(project.targetDate)}
+              formatToken="do MMM yyyy"
+              textProps={{ fontSize: "sm", fontWeight: { base: 600, sm: 500 } }}
+            />
+          )}
+          <Text fontSize={project.targetDate ? "xs" : "sm"}>
+            {project.name !== ""
+              ? project.name
+              : project.targetDate
+                ? ""
+                : `Untitled (${format(new Date(project.createdAt), "do MMM yyyy")})`}
           </Text>
           <Text fontSize="xs" color="gray.500">
             {project.category?.name}

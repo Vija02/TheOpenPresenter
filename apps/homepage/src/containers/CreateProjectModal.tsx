@@ -1,3 +1,4 @@
+import { ReactSelectDateProps } from "@/components/DatePicker/datePickerReactSelect";
 import { TagsSelector } from "@/components/Tag/TagsSelector";
 import { useOrganizationSlug } from "@/lib/permissionHooks/organization";
 import {
@@ -21,12 +22,13 @@ import {
   useCreateTagMutation,
 } from "@repo/graphql";
 import { globalState } from "@repo/lib";
-import { OverlayToggleComponentProps } from "@repo/ui";
+import { OverlayToggleComponentProps, formatHumanReadableDate } from "@repo/ui";
 import { format } from "date-fns";
 import { Form, Formik } from "formik";
 import { InputControl, SelectControl, SubmitButton } from "formik-chakra-ui";
 import { generateSlug } from "random-word-slugs";
 import { useCallback, useMemo, useState } from "react";
+import Select from "react-select";
 
 export type CreateProjectModalPropTypes = Omit<
   ModalProps,
@@ -40,6 +42,7 @@ export type CreateProjectModalPropTypes = Omit<
 type FormInputs = {
   name: string;
   categoryId: string | undefined;
+  targetDate: Date | undefined;
 };
 
 const CreateProjectModal = ({
@@ -74,9 +77,10 @@ const CreateProjectModal = ({
         variables: {
           organizationId,
           slug: generateSlug(),
-          name: data.name === "" ? namePlaceholder : data.name,
+          name: data.name,
           categoryId: data.categoryId,
           tags: selectedTagIds,
+          targetDate: data.targetDate ? data.targetDate.toDateString() : null,
         },
       }).then((x) => {
         const projectSlug = x.data?.createFullProject?.project?.slug;
@@ -87,15 +91,7 @@ const CreateProjectModal = ({
       onToggle?.();
       resetData?.();
     },
-    [
-      createProject,
-      namePlaceholder,
-      onToggle,
-      organizationId,
-      resetData,
-      selectedTagIds,
-      slug,
-    ],
+    [createProject, onToggle, organizationId, resetData, selectedTagIds, slug],
   );
 
   return (
@@ -110,10 +106,11 @@ const CreateProjectModal = ({
         initialValues={{
           name: "",
           categoryId: undefined,
+          targetDate: undefined,
         }}
         onSubmit={handleSubmit}
       >
-        {({ handleSubmit }) => (
+        {({ handleSubmit, values, setFieldValue }) => (
           <Form onSubmit={handleSubmit as any}>
             <ModalContent>
               <ModalHeader>New Project</ModalHeader>
@@ -125,6 +122,27 @@ const CreateProjectModal = ({
                     name="name"
                     inputProps={{ placeholder: namePlaceholder }}
                   />
+
+                  <FormControl>
+                    <FormLabel>Service Time</FormLabel>
+                    <Select
+                      {...ReactSelectDateProps}
+                      value={
+                        values.targetDate
+                          ? {
+                              value: values.targetDate,
+                              label: formatHumanReadableDate(values.targetDate),
+                            }
+                          : null
+                      }
+                      onChange={(val) => {
+                        setFieldValue("targetDate", val);
+                      }}
+                      isClearable
+                      isSearchable={false}
+                    />
+                  </FormControl>
+
                   <SelectControl name="categoryId" label="Category">
                     <option key="none" value={undefined}>
                       Uncategorized

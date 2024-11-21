@@ -1,3 +1,4 @@
+import { ReactSelectDateProps } from "@/components/DatePicker/datePickerReactSelect";
 import { TagsSelector } from "@/components/Tag/TagsSelector";
 import {
   Button,
@@ -22,11 +23,12 @@ import {
   useUpdateProjectMutation,
 } from "@repo/graphql";
 import { globalState } from "@repo/lib";
-import { OverlayToggleComponentProps } from "@repo/ui";
+import { OverlayToggleComponentProps, formatHumanReadableDate } from "@repo/ui";
 import { Form, Formik } from "formik";
 import { InputControl, SelectControl, SubmitButton } from "formik-chakra-ui";
 import { generateSlug } from "random-word-slugs";
 import { useCallback, useEffect, useState } from "react";
+import Select from "react-select";
 
 export type EditProjectModalPropTypes = Omit<
   ModalProps,
@@ -41,6 +43,7 @@ export type EditProjectModalPropTypes = Omit<
 type FormInputs = {
   name: string;
   categoryId: string | undefined;
+  targetDate: Date | undefined;
 };
 
 const EditProjectModal = ({
@@ -85,6 +88,7 @@ const EditProjectModal = ({
           slug: generateSlug(),
           name: data.name,
           categoryId: data.categoryId,
+          targetDate: data.targetDate ? data.targetDate.toDateString() : null,
         },
       });
       const existingTagIds = project.projectTags.nodes.map((x) => x.tag?.id);
@@ -142,10 +146,13 @@ const EditProjectModal = ({
         initialValues={{
           name: project.name,
           categoryId: project.category?.id,
+          targetDate: project.targetDate
+            ? new Date(project.targetDate)
+            : undefined,
         }}
         onSubmit={handleSubmit}
       >
-        {({ handleSubmit }) => (
+        {({ handleSubmit, values, setFieldValue }) => (
           <Form onSubmit={handleSubmit as any}>
             <ModalContent>
               <ModalHeader>Edit Project</ModalHeader>
@@ -153,6 +160,27 @@ const EditProjectModal = ({
               <ModalBody>
                 <VStack alignItems="flex-start">
                   <InputControl label="Name" name="name" />
+
+                  <FormControl>
+                    <FormLabel>Service Time</FormLabel>
+                    <Select
+                      {...ReactSelectDateProps}
+                      value={
+                        values.targetDate
+                          ? {
+                              value: values.targetDate,
+                              label: formatHumanReadableDate(values.targetDate),
+                            }
+                          : null
+                      }
+                      onChange={(val) => {
+                        setFieldValue("targetDate", val);
+                      }}
+                      isClearable
+                      isSearchable={false}
+                    />
+                  </FormControl>
+
                   <SelectControl name="categoryId" label="Category">
                     <option key="none" value={undefined}>
                       Uncategorized
