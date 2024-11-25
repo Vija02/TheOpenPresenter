@@ -44,6 +44,7 @@ COPY plugins/simple-image/package.json /app/plugins/simple-image/package.json
 COPY plugins/audio-recorder/package.json /app/plugins/audio-recorder/package.json
 COPY plugins/video-player/package.json /app/plugins/video-player/package.json
 COPY plugins/radio/package.json /app/plugins/radio/package.json
+COPY plugins/worship-pads/package.json /app/plugins/worship-pads/package.json
 
 RUN yarn install
 
@@ -131,6 +132,9 @@ RUN yarn workspace @repo/plugin-video-player build
 COPY plugins/radio/ /app/plugins/radio/
 RUN yarn workspace @repo/plugin-radio build
 
+COPY plugins/worship-pads/ /app/plugins/worship-pads/
+RUN yarn workspace @repo/plugin-worship-pads build
+
 ################################################################################
 # Build stage 6 - Combine deps and build, taking only needed files
 
@@ -187,6 +191,9 @@ COPY --from=builder-plugin /app/plugins/video-player/out/ /app/plugins/video-pla
 COPY --from=builder-plugin /app/plugins/radio/package.json /app/plugins/radio/
 COPY --from=builder-plugin /app/plugins/radio/dist/ /app/plugins/radio/dist/
 COPY --from=builder-plugin /app/plugins/radio/out/ /app/plugins/radio/out/
+COPY --from=builder-plugin /app/plugins/worship-pads/package.json /app/plugins/worship-pads/
+COPY --from=builder-plugin /app/plugins/worship-pads/dist/ /app/plugins/worship-pads/dist/
+COPY --from=builder-plugin /app/plugins/worship-pads/out/ /app/plugins/worship-pads/out/
 
 # Shared args shouldn't be overridable at runtime (because they're baked into
 # the built JS).

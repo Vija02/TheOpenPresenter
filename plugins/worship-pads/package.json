@@ -1,0 +1,47 @@
+{
+  "name": "@repo/plugin-worship-pads",
+  "private": true,
+  "version": "0.0.0",
+  "main": "./dist/index.js",
+  "exports": {
+    ".": {
+      "default": "./dist/index.mjs"
+    }
+  },
+  "scripts": {
+    "build": "pkgroll && vite build",
+    "dev": "concurrently \"pkgroll --watch\" \"vite build --watch\""
+  },
+  "dependencies": {
+    "@chakra-ui/react": "^2.10.3",
+    "@emotion/react": "^11.13.3",
+    "@emotion/styled": "^11.13.0",
+    "@r2wc/react-to-web-component": "^2.0.3",
+    "@repo/base-plugin": "*",
+    "@repo/ui": "*",
+    "@tanstack/react-query": "^5.59.16",
+    "@trpc/client": "^11.0.0-rc.593",
+    "@trpc/react-query": "^11.0.0-rc.593",
+    "@trpc/server": "^11.0.0-rc.593",
+    "@types/react": "npm:types-react@rc",
+    "@types/react-dom": "npm:types-react-dom@rc",
+    "framer-motion": "^11.11.10",
+    "howler": "^2.2.4",
+    "react": "rc",
+    "react-dom": "rc",
+    "react-icons": "^5.3.0",
+    "valtio": "^2.1.1",
+    "valtio-yjs": "^0.6.0",
+    "yjs": "^13.6.20"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "*",
+    "@repo/prettier-config": "*",
+    "@repo/typescript-config": "*",
+    "@types/howler": "^2",
+    "@vitejs/plugin-react-swc": "^3.7.1",
+    "eslint": "^8.57.1",
+    "pkgroll": "^2.5.1",
+    "vite": "5.4.10"
+  }
+}
