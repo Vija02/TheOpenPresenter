@@ -1,5 +1,6 @@
 import { YjsWatcher, appData } from "@repo/lib";
 import isEqual from "fast-deep-equal";
+import { useEffect, useState } from "react";
 import { useLocation } from "react-use";
 import { typeidUnboxed } from "typeid-js";
 import { proxy } from "valtio";
@@ -23,12 +24,14 @@ export function initPluginApi<
   awarenessContext,
   pluginContext,
   setRenderCurrentScene,
+  audioRef,
 }: {
   yjsPluginSceneData: ObjectToTypedMap<Plugin<PluginSceneDataType>>;
   yjsPluginRendererData: ObjectToTypedMap<PluginRendererDataType>;
   awarenessContext: AwarenessContext;
   pluginContext: PluginContext;
   setRenderCurrentScene: () => void;
+  audioRef: React.RefObject<HTMLAudioElement | null>;
 }) {
   // TODO: Should only be called once
   const sceneWatcher = new YjsWatcher(yjsPluginSceneData as any);
@@ -59,6 +62,8 @@ export function initPluginApi<
   onAwarenessUpdate();
   // Then on all updates
   awarenessContext.awarenessObj.on("update", onAwarenessUpdate);
+
+  let canPlay = false;
 
   return {
     env: appData,
@@ -109,6 +114,28 @@ export function initPluginApi<
         const scene = splittedPath[splittedPath.length - 1];
 
         return pluginContext.sceneId === scene;
+      },
+    },
+    audio: {
+      useCanPlay: () => {
+        const [status, setStatus] = useState(canPlay);
+
+        useEffect(() => {
+          if (status) return;
+          const interval = setInterval(async () => {
+            try {
+              await audioRef.current?.play();
+              canPlay = true;
+              setStatus(true);
+
+              clearInterval(interval);
+            } catch (e) {
+              console.log("Checking autoplay. Error:", e);
+            }
+          }, 1000);
+        }, []);
+
+        return status;
       },
     },
     dispose: () => {

@@ -1,4 +1,3 @@
-import canAutoPlay from "can-autoplay";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ReactPlayer from "react-player/lazy";
 
@@ -32,21 +31,9 @@ const VideoPlayerRendererInner = () => {
 const Player = () => {
   const pluginApi = usePluginAPI();
 
-  const [canPlay, setCanPlay] = useState(false);
+  const canPlay = pluginApi.audio.useCanPlay();
+
   const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    const check = async () => {
-      const res = await canAutoPlay.audio({ inline: true });
-      if (res.result) {
-        setCanPlay(true);
-      } else {
-        setTimeout(check, 1000);
-      }
-    };
-
-    check();
-  }, []);
 
   const ref = useRef<ReactPlayer>(null);
 

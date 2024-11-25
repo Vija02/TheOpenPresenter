@@ -2400,6 +2400,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@eshaz/web-worker@npm:1.2.2":
+  version: 1.2.2
+  resolution: "@eshaz/web-worker@npm:1.2.2"
+  checksum: 10c0/4f1ad8287587d294af3c9dabfa88f7ffea54b958cf89ee50d928406436f10b7c4d733bf47e6566a57988c24f3773144fc1ba540dc4a7dd8031e6abb85ba76ba2
+  languageName: node
+  linkType: hard
+
 "@eslint-community/eslint-utils@npm:^4.2.0, @eslint-community/eslint-utils@npm:^4.4.0":
   version: 4.4.1
   resolution: "@eslint-community/eslint-utils@npm:4.4.1"
@@ -5098,7 +5105,6 @@ __metadata:
     "@trpc/client": "npm:^11.0.0-rc.593"
     "@trpc/react-query": "npm:^11.0.0-rc.593"
     "@trpc/server": "npm:^11.0.0-rc.593"
-    "@types/can-autoplay": "npm:^3.0.5"
     "@types/react": "npm:types-react@rc"
     "@uppy/core": "npm:^4.2.2"
     "@uppy/dashboard": "npm:^4.1.1"
@@ -5107,7 +5113,6 @@ __metadata:
     "@uppy/status-bar": "npm:^4.0.3"
     "@uppy/xhr-upload": "npm:^4.2.1"
     "@vitejs/plugin-react-swc": "npm:^3.7.1"
-    can-autoplay: "npm:^3.0.2"
     eslint: "npm:^8.57.1"
     framer-motion: "npm:^11.11.10"
     pkgroll: "npm:^2.5.1"
@@ -5123,6 +5128,43 @@ __metadata:
     yjs: "npm:^13.6.20"
     youtubei.js: "npm:^10.5.0"
     zod: "npm:^3.23.8"
+  languageName: unknown
+  linkType: soft
+
+"@repo/plugin-worship-pads@workspace:plugins/worship-pads":
+  version: 0.0.0-use.local
+  resolution: "@repo/plugin-worship-pads@workspace:plugins/worship-pads"
+  dependencies:
+    "@chakra-ui/react": "npm:^2.10.3"
+    "@emotion/react": "npm:^11.13.3"
+    "@emotion/styled": "npm:^11.13.0"
+    "@r2wc/react-to-web-component": "npm:^2.0.3"
+    "@repo/base-plugin": "npm:*"
+    "@repo/eslint-config": "npm:*"
+    "@repo/prettier-config": "npm:*"
+    "@repo/typescript-config": "npm:*"
+    "@repo/ui": "npm:*"
+    "@tanstack/react-query": "npm:^5.59.16"
+    "@trpc/client": "npm:^11.0.0-rc.593"
+    "@trpc/react-query": "npm:^11.0.0-rc.593"
+    "@trpc/server": "npm:^11.0.0-rc.593"
+    "@types/howler": "npm:^2"
+    "@types/react": "npm:types-react@rc"
+    "@types/react-dom": "npm:types-react-dom@rc"
+    "@vitejs/plugin-react-swc": "npm:^3.7.1"
+    audio-buffer-utils: "npm:^5.1.2"
+    eslint: "npm:^8.57.1"
+    framer-motion: "npm:^11.11.10"
+    howler: "npm:^2.2.4"
+    ogg-opus-decoder: "npm:^1.6.14"
+    opus-stream-decoder: "npm:1.2.6"
+    pkgroll: "npm:^2.5.1"
+    react: "npm:rc"
+    react-dom: "npm:rc"
+    valtio: "npm:^2.1.1"
+    valtio-yjs: "npm:^0.6.0"
+    vite: "npm:5.4.10"
+    yjs: "npm:^13.6.20"
   languageName: unknown
   linkType: soft
 
@@ -6218,13 +6260,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/can-autoplay@npm:^3.0.5":
-  version: 3.0.5
-  resolution: "@types/can-autoplay@npm:3.0.5"
-  checksum: 10c0/f8d3d182c612fa4ec02ae2be34cba1310e85defed6473aba95f04c9c493efab06653c13132f7e4d78aabf10ee9cd0d946705317e8114ab3d273659b70f54031c
-  languageName: node
-  linkType: hard
-
 "@types/connect-pg-simple@npm:^7.0.3":
   version: 7.0.3
   resolution: "@types/connect-pg-simple@npm:7.0.3"
@@ -6359,6 +6394,13 @@ __metadata:
     "@types/react": "npm:*"
     hoist-non-react-statics: "npm:^3.3.0"
   checksum: 10c0/2a3b64bf3d9817d7830afa60ee314493c475fb09570a64e7737084cd482d2177ebdddf888ce837350bac51741278b077683facc9541f052d4bbe8487b4e3e618
+  languageName: node
+  linkType: hard
+
+"@types/howler@npm:^2":
+  version: 2.2.12
+  resolution: "@types/howler@npm:2.2.12"
+  checksum: 10c0/fb30e8c137ec03aa6a1e739be11b9d5b973f5f19d9f8a92eb11cff466170c9b5a314d73b8b34bb9a435e309ae880ba4847dee1029ec37d08c3f64b2219add462
   languageName: node
   linkType: hard
 
@@ -7524,6 +7566,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@wasm-audio-decoders/common@npm:9.0.5":
+  version: 9.0.5
+  resolution: "@wasm-audio-decoders/common@npm:9.0.5"
+  dependencies:
+    "@eshaz/web-worker": "npm:1.2.2"
+    simple-yenc: "npm:^1.0.4"
+  checksum: 10c0/59e72231bee7ba5f01fd4f812b626248a1772b5a0fa1e602bbeb66745ee7618209ee9d35e93fb4c1ac586cde6bf00aeb6c5adcb69db9644dc82fd6673c808f52
+  languageName: node
+  linkType: hard
+
 "@whatwg-node/fetch@npm:^0.10.0":
   version: 0.10.1
   resolution: "@whatwg-node/fetch@npm:0.10.1"
@@ -8146,10 +8198,77 @@ __metadata:
   languageName: node
   linkType: hard
 
+"atob-lite@npm:^2.0.0":
+  version: 2.0.0
+  resolution: "atob-lite@npm:2.0.0"
+  checksum: 10c0/8073795465dad14aa92b2cd3322472e93dbc8b87da5740150bbae9d716ee6cc254af1c375b7310a475d876eb24c25011584ae9c1277bdb3eb53ebb4cd236f501
+  languageName: node
+  linkType: hard
+
 "atomic-sleep@npm:^1.0.0":
   version: 1.0.0
   resolution: "atomic-sleep@npm:1.0.0"
   checksum: 10c0/e329a6665512736a9bbb073e1761b4ec102f7926cce35037753146a9db9c8104f5044c1662e4a863576ce544fb8be27cd2be6bc8c1a40147d03f31eb1cfb6e8a
+  languageName: node
+  linkType: hard
+
+"audio-buffer-from@npm:^1.0.0":
+  version: 1.1.1
+  resolution: "audio-buffer-from@npm:1.1.1"
+  dependencies:
+    audio-buffer: "npm:^4.0.4"
+    audio-context: "npm:^1.0.1"
+    audio-format: "npm:^2.0.0"
+    is-audio-buffer: "npm:^1.0.11"
+    is-plain-obj: "npm:^1.1.0"
+    pcm-convert: "npm:^1.6.0"
+    pick-by-alias: "npm:^1.2.0"
+    string-to-arraybuffer: "npm:^1.0.0"
+  checksum: 10c0/347f67a233cd4536b2f2d201ac200c237ad3a29402f6c822717c42ec738d73f13a19f339e16af5a4cc778f2f094c076003048e568f28ee3ea36f558566083a5b
+  languageName: node
+  linkType: hard
+
+"audio-buffer-utils@npm:^5.1.2":
+  version: 5.1.2
+  resolution: "audio-buffer-utils@npm:5.1.2"
+  dependencies:
+    audio-buffer: "npm:^4.0.0"
+    audio-buffer-from: "npm:^1.0.0"
+    audio-context: "npm:^1.0.0"
+    clamp: "npm:^1.0.1"
+    is-audio-buffer: "npm:^1.0.8"
+    is-browser: "npm:^2.0.1"
+    is-buffer: "npm:^2.0.0"
+  checksum: 10c0/925a05aa042b088f5c6277f3cf841543904bcabd203956779df19dc32e258c6f84ba341b60f6c28a50a6a91f8a842cc14b51252f5c8dded100a5c3708a71c6e7
+  languageName: node
+  linkType: hard
+
+"audio-buffer@npm:^4.0.0, audio-buffer@npm:^4.0.4":
+  version: 4.0.4
+  resolution: "audio-buffer@npm:4.0.4"
+  dependencies:
+    audio-context: "npm:^1.0.0"
+  checksum: 10c0/03258d23ad049a0bda0f1e49b4bd131cf27023fabb3dc073692d267e32a80a3d1b8cb83fd856eced0b71f7ca9f64ecb716d771e9d1dba70c6ec11a4a5ae8dc55
+  languageName: node
+  linkType: hard
+
+"audio-context@npm:^1.0.0, audio-context@npm:^1.0.1":
+  version: 1.0.3
+  resolution: "audio-context@npm:1.0.3"
+  checksum: 10c0/496a48c24602977207d99e7701265af7b0e2fa6a9658136f0b526a6f6651d31e90ddefb670d2f95d6cc81e091d8b74d3edd766d7ad9d43f594ff21a022750cb6
+  languageName: node
+  linkType: hard
+
+"audio-format@npm:^2.0.0, audio-format@npm:^2.3.2":
+  version: 2.3.2
+  resolution: "audio-format@npm:2.3.2"
+  dependencies:
+    is-audio-buffer: "npm:^1.0.11"
+    is-buffer: "npm:^1.1.5"
+    is-plain-obj: "npm:^1.1.0"
+    pick-by-alias: "npm:^1.2.0"
+    sample-rate: "npm:^2.0.0"
+  checksum: 10c0/8c63467ea778fcde5419aa6549ecb274a6863e2aec159c11004a9dd595403b809cf072da7dce8b7d08c1ef380f606731ed3e43b8725c2f4fd39f3126e083a9df
   languageName: node
   linkType: hard
 
@@ -8772,13 +8891,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"can-autoplay@npm:^3.0.2":
-  version: 3.0.2
-  resolution: "can-autoplay@npm:3.0.2"
-  checksum: 10c0/d5734a64d3b05b10d4666ebbfdda3ccbaeadd5482ef325fe8c0546320f13b662863810ac578959d6593acd81bfcc949170d7c3f7a423cbe6e30b6d2f932f32f1
-  languageName: node
-  linkType: hard
-
 "caniuse-api@npm:^3.0.0":
   version: 3.0.0
   resolution: "caniuse-api@npm:3.0.0"
@@ -9029,6 +9141,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"clamp@npm:^1.0.1":
+  version: 1.0.1
+  resolution: "clamp@npm:1.0.1"
+  checksum: 10c0/8f95ccbc5d646a98c1d690bce820f3d060a5267242083e8994f70dc504ce441dbc7b8ef13b93819129fc166e7a5b6abd320f109bdba0f49b8dcc794710987c97
+  languageName: node
+  linkType: hard
+
 "classnames@npm:^2.2.6":
   version: 2.5.1
   resolution: "classnames@npm:2.5.1"
@@ -9178,6 +9297,13 @@ __metadata:
   version: 12.0.0
   resolution: "code-block-writer@npm:12.0.0"
   checksum: 10c0/ced73cdc466bff968bba9e8e32340d88420d25a229b9269f7425a10a7c2c9a12ca702dcb601b2462b96472d354f021cf66e552179fcbe30c8f7ecd0173c5fa07
+  languageName: node
+  linkType: hard
+
+"codec-parser@npm:2.5.0":
+  version: 2.5.0
+  resolution: "codec-parser@npm:2.5.0"
+  checksum: 10c0/ee017ce76251f75a7feacb5c11ae6c8269d8b76818facf4270e4a0e01c5fc5daaca840372d314a27d7aa12823012d2b46de30bb6c44726c0ca6898a266300c06
   languageName: node
   linkType: hard
 
@@ -13158,6 +13284,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"howler@npm:^2.2.4":
+  version: 2.2.4
+  resolution: "howler@npm:2.2.4"
+  checksum: 10c0/74a295f56fd9b2abce122b27ed12c33fa195fb8a76832803e92d8e462a1eca803b55f44c14db052211d0cfab85c7c5249664c68d95bbbc16c775fac73866c6ef
+  languageName: node
+  linkType: hard
+
 "html-encoding-sniffer@npm:^3.0.0":
   version: 3.0.0
   resolution: "html-encoding-sniffer@npm:3.0.0"
@@ -13686,6 +13819,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"is-audio-buffer@npm:^1.0.11, is-audio-buffer@npm:^1.0.8":
+  version: 1.1.0
+  resolution: "is-audio-buffer@npm:1.1.0"
+  checksum: 10c0/af5163b00de2a67c74a6f5c81e59985e7dbc65f3a3fc3dc82a3c9d0e09fdf2c881c18fe8e15fbc4eb6e444844837f78cc039a4b165a3ab4df4b73b36ff7faa9f
+  languageName: node
+  linkType: hard
+
+"is-base64@npm:^0.1.0":
+  version: 0.1.0
+  resolution: "is-base64@npm:0.1.0"
+  checksum: 10c0/640eabae25a24107200c2bb52a6e06686e94259e1b1df38f2aee112305f596327c5b98ea7ae56bff9109f55c0f04de7d507c9c76889028ca692469127d040945
+  languageName: node
+  linkType: hard
+
 "is-bigint@npm:^1.0.1":
   version: 1.0.4
   resolution: "is-bigint@npm:1.0.4"
@@ -13711,6 +13858,27 @@ __metadata:
     call-bind: "npm:^1.0.2"
     has-tostringtag: "npm:^1.0.0"
   checksum: 10c0/6090587f8a8a8534c0f816da868bc94f32810f08807aa72fa7e79f7e11c466d281486ffe7a788178809c2aa71fe3e700b167fe80dd96dad68026bfff8ebf39f7
+  languageName: node
+  linkType: hard
+
+"is-browser@npm:^2.0.1":
+  version: 2.1.0
+  resolution: "is-browser@npm:2.1.0"
+  checksum: 10c0/107cb5211009823df2c3001e419bd9806472f9f2ca81e87b2e60b36c0a4ac709dc5f093d415c372d37758a39f22c98fd5bff060c1d0cfbb74c694b41d3df75c9
+  languageName: node
+  linkType: hard
+
+"is-buffer@npm:^1.1.5":
+  version: 1.1.6
+  resolution: "is-buffer@npm:1.1.6"
+  checksum: 10c0/ae18aa0b6e113d6c490ad1db5e8df9bdb57758382b313f5a22c9c61084875c6396d50bbf49315f5b1926d142d74dfb8d31b40d993a383e0a158b15fea7a82234
+  languageName: node
+  linkType: hard
+
+"is-buffer@npm:^2.0.0":
+  version: 2.0.5
+  resolution: "is-buffer@npm:2.0.5"
+  checksum: 10c0/e603f6fced83cf94c53399cff3bda1a9f08e391b872b64a73793b0928be3e5f047f2bcece230edb7632eaea2acdbfcb56c23b33d8a20c820023b230f1485679a
   languageName: node
   linkType: hard
 
@@ -13915,6 +14083,13 @@ __metadata:
   version: 2.1.0
   resolution: "is-plain-obj@npm:2.1.0"
   checksum: 10c0/e5c9814cdaa627a9ad0a0964ded0e0491bfd9ace405c49a5d63c88b30a162f1512c069d5b80997893c4d0181eadc3fed02b4ab4b81059aba5620bfcdfdeb9c53
+  languageName: node
+  linkType: hard
+
+"is-plain-obj@npm:^1.1.0":
+  version: 1.1.0
+  resolution: "is-plain-obj@npm:1.1.0"
+  checksum: 10c0/daaee1805add26f781b413fdf192fc91d52409583be30ace35c82607d440da63cc4cac0ac55136716688d6c0a2c6ef3edb2254fecbd1fe06056d6bd15975ee8c
   languageName: node
   linkType: hard
 
@@ -17246,6 +17421,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"ogg-opus-decoder@npm:^1.6.14":
+  version: 1.6.14
+  resolution: "ogg-opus-decoder@npm:1.6.14"
+  dependencies:
+    "@wasm-audio-decoders/common": "npm:9.0.5"
+    codec-parser: "npm:2.5.0"
+    opus-decoder: "npm:0.7.7"
+  checksum: 10c0/9a378ca77c3f6b3e0d4880f23f8becbeb7af19afd0966d2818fabb3924f82b1d43b65fc03a638a983f13b47a8b7562a269422ef3944780027398c88903c3b3e0
+  languageName: node
+  linkType: hard
+
 "ohash@npm:^1.1.4":
   version: 1.1.4
   resolution: "ohash@npm:1.1.4"
@@ -17345,6 +17531,22 @@ __metadata:
     type-check: "npm:^0.4.0"
     word-wrap: "npm:^1.2.5"
   checksum: 10c0/4afb687a059ee65b61df74dfe87d8d6815cd6883cb8b3d5883a910df72d0f5d029821f37025e4bccf4048873dbdb09acc6d303d27b8f76b1a80dd5a7d5334675
+  languageName: node
+  linkType: hard
+
+"opus-decoder@npm:0.7.7":
+  version: 0.7.7
+  resolution: "opus-decoder@npm:0.7.7"
+  dependencies:
+    "@wasm-audio-decoders/common": "npm:9.0.5"
+  checksum: 10c0/35cd037b75183db8859eafdf65080c097117192b1284dd8abc3ffbd7b896f9a92c3f307dd8f17b83ce9d0d58cc388fe4fc629e0f509b1b8cf10347a6fb3152a7
+  languageName: node
+  linkType: hard
+
+"opus-stream-decoder@npm:1.2.6":
+  version: 1.2.6
+  resolution: "opus-stream-decoder@npm:1.2.6"
+  checksum: 10c0/f0de5c5370505ac8b904cfd12f1616b84bfe188336e88280718112a083056f1f09a4a7413ea07a71e6870793c13837758cbf8d18873778cd214bc6d806104233
   languageName: node
   linkType: hard
 
@@ -17806,6 +18008,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"pcm-convert@npm:^1.6.0":
+  version: 1.6.5
+  resolution: "pcm-convert@npm:1.6.5"
+  dependencies:
+    audio-format: "npm:^2.3.2"
+    is-audio-buffer: "npm:^1.0.11"
+    is-buffer: "npm:^1.1.5"
+    object-assign: "npm:^4.1.1"
+  checksum: 10c0/58e62ec5b8f805f7bc3c431629d8195f053770e7cf09e0e89beb60067f014347a0507e776b8eb0e79db94cf57d400860cab92bfbd6f1cfbe5a59de79681633ec
+  languageName: node
+  linkType: hard
+
 "peberminta@npm:^0.9.0":
   version: 0.9.0
   resolution: "peberminta@npm:0.9.0"
@@ -17941,6 +18155,13 @@ __metadata:
   dependencies:
     split2: "npm:^4.1.0"
   checksum: 10c0/5ea6c9b2de04c33abb08d33a2dded303c4a3c7162a9264519cbe85c0a9857d712463140ba42fad0c7cd4b21f644dd870b45bb2e02fcbe505b4de0744fd802c1d
+  languageName: node
+  linkType: hard
+
+"pick-by-alias@npm:^1.2.0":
+  version: 1.2.0
+  resolution: "pick-by-alias@npm:1.2.0"
+  checksum: 10c0/2336088c95a04f50b088986394e35d2d0b63a95d85ffec547dcdb0fe1ccd710ab36569607fcf72d8654bbbf49e1f983a25f2a7c57e8ff2d587cf86070fc669b6
   languageName: node
   linkType: hard
 
@@ -20794,6 +21015,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"sample-rate@npm:^2.0.0":
+  version: 2.0.1
+  resolution: "sample-rate@npm:2.0.1"
+  checksum: 10c0/ba8cd01fb0bd6bb9b90d14899771c5b3b287c4e1997cb92e3ad8f0f4654a788c753304a994d81e61b7812dcfa947ebea7b127981ce358e954b576aca0ec09495
+  languageName: node
+  linkType: hard
+
 "sass@npm:^1.80.4":
   version: 1.80.7
   resolution: "sass@npm:1.80.7"
@@ -21228,6 +21456,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"simple-yenc@npm:^1.0.4":
+  version: 1.0.4
+  resolution: "simple-yenc@npm:1.0.4"
+  checksum: 10c0/5a476cf328e5e5b6006ac44af01daeda8a9832d3d2205c80d71fbdf3a9ff1ee5092ed41b909c77532c80b9f6db65b577e2c1283fcbb5a9b194f1e96b0077de73
+  languageName: node
+  linkType: hard
+
 "sisteransi@npm:^1.0.5":
   version: 1.0.5
   resolution: "sisteransi@npm:1.0.5"
@@ -21641,6 +21876,16 @@ __metadata:
   version: 3.0.1
   resolution: "string-natural-compare@npm:3.0.1"
   checksum: 10c0/85a6a9195736be500af5d817c7ea36b7e1ac278af079a807f70f79a56602359ee6743ca409af6291b94557de550ff60d1ec31b3c4fc8e7a08d0e12cdab57c149
+  languageName: node
+  linkType: hard
+
+"string-to-arraybuffer@npm:^1.0.0":
+  version: 1.0.2
+  resolution: "string-to-arraybuffer@npm:1.0.2"
+  dependencies:
+    atob-lite: "npm:^2.0.0"
+    is-base64: "npm:^0.1.0"
+  checksum: 10c0/cc3db6f74ab3e5562c22390b713bc0b1ded8545c048b7615f9282669041f7251d7ca8f2a37fb6c37554204e12292c5fa5e0d30d46c3ecf5fc9761ab0b9b6c492
   languageName: node
   linkType: hard
 
