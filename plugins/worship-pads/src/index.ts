@@ -98,7 +98,10 @@ const onPluginDataCreated = (
     },
   ];
 
-  unbind();
+  // So that the update is flushed before we unbind
+  setTimeout(() => {
+    unbind();
+  });
 
   return {};
 };
