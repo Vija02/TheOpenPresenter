@@ -311,6 +311,7 @@ const PluginRenderer = React.memo(
           className={
             !match && viewData?.config?.alwaysRender ? "content-hidden" : ""
           }
+          height="100%"
         >
           {Element}
         </Box>
