@@ -124,6 +124,7 @@ export function initPluginApi<
           if (status) return;
           const interval = setInterval(async () => {
             try {
+              // TODO: Make this only run once per browser
               await audioRef.current?.play();
               canPlay = true;
               setStatus(true);
