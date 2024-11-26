@@ -8,33 +8,81 @@ export class HowlerPlayer {
 
   public targetVolume: number = 1;
 
+  // We use this to keep track of the extra sounds needed to loop the sounds early
+  public backupSounds: Map<string, Howl>;
+  // Keep track of the timeout so that we can clear them
+  public loopTimeout: NodeJS.Timeout[] = [];
+
   constructor() {
     this.sounds = new Map();
+    this.backupSounds = new Map();
     this.currentTrack = null;
   }
 
   loadTrack(id: string, url: string) {
     if (this.sounds.has(id)) return;
 
+    // Handle looping early.
+    // Note:
+    // - This relies on the duration of the sound. So if we seek, this won't work, need to handle separately
+    // - Overlap time is currently hardcoded, might want to pull it from parameter
+    const earlyLoopHandler = (s: Howl) => {
+      if (this.currentTrack === id) {
+        this.loopTimeout.push(
+          setTimeout(
+            () => {
+              let newSound: Howl;
+              if (this.backupSounds.has(id)) {
+                newSound = this.backupSounds.get(id)!;
+              } else {
+                newSound = new Howl({
+                  src: [url],
+                  html5: true,
+                  loop: false,
+                  preload: true,
+                });
+                newSound.on("play", () => {
+                  earlyLoopHandler(newSound);
+                });
+              }
+              this.backupSounds.set(id, s);
+              this.sounds.set(id, newSound);
+
+              this.play(id);
+            },
+            (s.duration() - s.seek()) * 1000 - 5000,
+          ),
+        );
+      }
+    };
+
     const sound = new Howl({
       src: [url],
       html5: true,
-      loop: true,
+      loop: false,
       preload: true,
+    });
+    sound.on("play", () => {
+      earlyLoopHandler(sound);
     });
     this.sounds.set(id, sound);
   }
 
   play(id: string) {
+    this.clearLoopQueue();
+
     const sound = this.sounds.get(id);
     if (sound) {
       sound.volume(this.targetVolume);
       sound.play();
+
       this.currentTrack = id;
     }
   }
 
   crossFade(fromId: string, toId: string, duration = 1000) {
+    this.clearLoopQueue();
+
     const fromSound = this.sounds.get(fromId);
     const toSound = this.sounds.get(toId);
 
@@ -62,6 +110,8 @@ export class HowlerPlayer {
   }
 
   stop(id: string, duration = 1000) {
+    this.clearLoopQueue();
+
     const sound = this.sounds.get(id);
     if (sound) {
       this.currentTrack = null;
@@ -100,6 +150,15 @@ export class HowlerPlayer {
     const sound = this.sounds.get(id);
     if (sound) {
       sound.volume(volume);
+    }
+  }
+
+  clearLoopQueue() {
+    if (this.loopTimeout.length > 0) {
+      for (const timeout of this.loopTimeout) {
+        clearTimeout(timeout);
+      }
+      this.loopTimeout = [];
     }
   }
 }
