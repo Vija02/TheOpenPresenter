@@ -1,6 +1,6 @@
 import { Howl } from "howler";
 
-const silent = 0.01;
+const silent = 0;
 
 export class HowlerPlayer {
   public sounds: Map<string, Howl>;
@@ -101,11 +101,6 @@ export class HowlerPlayer {
 
       // Update current track
       this.currentTrack = toId;
-
-      // Stop the old track after fade
-      setTimeout(() => {
-        fromSound.stop();
-      }, duration);
     }
   }
 
@@ -116,9 +111,6 @@ export class HowlerPlayer {
     if (sound) {
       this.currentTrack = null;
       this.smoothFade(sound, sound.volume(), silent, duration);
-      setTimeout(() => {
-        sound.stop();
-      }, duration);
     }
   }
 
