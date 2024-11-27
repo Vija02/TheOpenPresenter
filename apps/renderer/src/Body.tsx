@@ -7,6 +7,7 @@ import { ErrorBoundary } from "react-error-boundary";
 import { useDisposable } from "use-disposable";
 import Y from "yjs";
 
+import { useAudioCheck } from "./contexts/AudioCheckProvider";
 import { useData, usePluginData } from "./contexts/PluginDataProvider";
 import { usePluginMetaData } from "./contexts/PluginMetaDataProvider";
 import { trpcClient } from "./trpc";
@@ -132,6 +133,8 @@ const PluginRenderer = React.memo(
       [pluginInfo?.plugin, pluginMetaData?.pluginMeta.registeredRendererView],
     );
 
+    const { canPlayAudio } = useAudioCheck();
+
     const TagElement = useMemo(() => {
       if (!tag) {
         return <Text>No renderer for {pluginInfo?.plugin}</Text>;
@@ -160,8 +163,10 @@ const PluginRenderer = React.memo(
           }
         },
         trpcClient,
+        canPlayAudio,
       });
     }, [
+      canPlayAudio,
       currentUserId,
       getYJSPluginRenderer,
       orgId,

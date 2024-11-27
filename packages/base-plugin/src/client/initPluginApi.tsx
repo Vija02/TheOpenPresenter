@@ -1,6 +1,6 @@
 import { YjsWatcher, appData } from "@repo/lib";
 import isEqual from "fast-deep-equal";
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { useLocation } from "react-use";
 import { typeidUnboxed } from "typeid-js";
 import { proxy } from "valtio";
@@ -9,6 +9,7 @@ import { Map as YMap } from "yjs";
 
 import {
   AwarenessContext,
+  CanPlayAudio,
   ObjectToTypedMap,
   Plugin,
   PluginContext,
@@ -24,14 +25,14 @@ export function initPluginApi<
   awarenessContext,
   pluginContext,
   setRenderCurrentScene,
-  audioRef,
+  canPlayAudio,
 }: {
   yjsPluginSceneData: ObjectToTypedMap<Plugin<PluginSceneDataType>>;
   yjsPluginRendererData: ObjectToTypedMap<PluginRendererDataType>;
   awarenessContext: AwarenessContext;
   pluginContext: PluginContext;
   setRenderCurrentScene: () => void;
-  audioRef: React.RefObject<HTMLAudioElement | null>;
+  canPlayAudio: CanPlayAudio;
 }) {
   // TODO: Should only be called once
   const sceneWatcher = new YjsWatcher(yjsPluginSceneData as any);
@@ -62,8 +63,6 @@ export function initPluginApi<
   onAwarenessUpdate();
   // Then on all updates
   awarenessContext.awarenessObj.on("update", onAwarenessUpdate);
-
-  let canPlay = false;
 
   return {
     env: appData,
@@ -118,25 +117,10 @@ export function initPluginApi<
     },
     audio: {
       useCanPlay: () => {
-        const [status, setStatus] = useState(canPlay);
-
-        useEffect(() => {
-          if (status) return;
-          const interval = setInterval(async () => {
-            try {
-              // TODO: Make this only run once per browser
-              await audioRef.current?.play();
-              canPlay = true;
-              setStatus(true);
-
-              clearInterval(interval);
-            } catch (e) {
-              console.log("Checking autoplay. Error:", e);
-            }
-          }, 1000);
-        }, []);
-
-        return status;
+        return useSyncExternalStore(
+          canPlayAudio.subscribe,
+          () => canPlayAudio.value,
+        );
       },
     },
     dispose: () => {

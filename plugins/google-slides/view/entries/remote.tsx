@@ -13,6 +13,7 @@ const Component = r2wc(withSuspense(lazy(() => import("./RemoteEntry"))), {
     pluginContext: "",
     setRenderCurrentScene: "",
     trpcClient: "",
+    canPlayAudio: "",
   },
 });
 customElements.define(remoteWebComponentTag, Component);

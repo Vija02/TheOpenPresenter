@@ -86,7 +86,13 @@ export type WebComponentProps<TrpcClient> = {
   pluginContext: PluginContext;
   setRenderCurrentScene: () => void;
   trpcClient: TrpcClient;
+  canPlayAudio: CanPlayAudio;
 };
 
 export const sceneCategories = ["Display", "Media", "Audio"] as const;
 export type SceneCategories = (typeof sceneCategories)[number];
+
+export type CanPlayAudio = {
+  value: boolean;
+  subscribe: (callback: () => void) => () => void;
+};
