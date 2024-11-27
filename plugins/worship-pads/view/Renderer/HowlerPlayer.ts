@@ -37,7 +37,7 @@ export class HowlerPlayer {
               } else {
                 newSound = new Howl({
                   src: [url],
-                  html5: true,
+                  html5: false,
                   loop: false,
                   preload: true,
                 });
@@ -58,7 +58,7 @@ export class HowlerPlayer {
 
     const sound = new Howl({
       src: [url],
-      html5: true,
+      html5: false,
       loop: false,
       preload: true,
     });
