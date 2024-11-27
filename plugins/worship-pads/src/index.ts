@@ -47,54 +47,55 @@ const onPluginDataCreated = (
   const data = proxy(pluginInfo.toJSON() as Plugin<PluginBaseData>);
   const unbind = bind(data, pluginInfo as any);
 
+  // TODO: Get path from env
   data.pluginData.files = [
     {
       key: "C",
-      url: "https://raw.githubusercontent.com/Vija02/theopenpresenter-static/refs/heads/main/worship-pads/karl-verkade-bridge/C_Major.mp3",
+      url: "https://static.theopenpresenter.com/worship-pads/karl-verkade-bridge/C_Major.mp3",
     },
     {
       key: "Db",
-      url: "https://raw.githubusercontent.com/Vija02/theopenpresenter-static/refs/heads/main/worship-pads/karl-verkade-bridge/Db_Major.mp3",
+      url: "https://static.theopenpresenter.com/worship-pads/karl-verkade-bridge/Db_Major.mp3",
     },
     {
       key: "D",
-      url: "https://raw.githubusercontent.com/Vija02/theopenpresenter-static/refs/heads/main/worship-pads/karl-verkade-bridge/D_Major.mp3",
+      url: "https://static.theopenpresenter.com/worship-pads/karl-verkade-bridge/D_Major.mp3",
     },
     {
       key: "Eb",
-      url: "https://raw.githubusercontent.com/Vija02/theopenpresenter-static/refs/heads/main/worship-pads/karl-verkade-bridge/Eb_Major.mp3",
+      url: "https://static.theopenpresenter.com/worship-pads/karl-verkade-bridge/Eb_Major.mp3",
     },
     {
       key: "E",
-      url: "https://raw.githubusercontent.com/Vija02/theopenpresenter-static/refs/heads/main/worship-pads/karl-verkade-bridge/E_Major.mp3",
+      url: "https://static.theopenpresenter.com/worship-pads/karl-verkade-bridge/E_Major.mp3",
     },
     {
       key: "F",
-      url: "https://raw.githubusercontent.com/Vija02/theopenpresenter-static/refs/heads/main/worship-pads/karl-verkade-bridge/F_Major.mp3",
+      url: "https://static.theopenpresenter.com/worship-pads/karl-verkade-bridge/F_Major.mp3",
     },
     {
       key: "Gb",
-      url: "https://raw.githubusercontent.com/Vija02/theopenpresenter-static/refs/heads/main/worship-pads/karl-verkade-bridge/Gb_Major.mp3",
+      url: "https://static.theopenpresenter.com/worship-pads/karl-verkade-bridge/Gb_Major.mp3",
     },
     {
       key: "G",
-      url: "https://raw.githubusercontent.com/Vija02/theopenpresenter-static/refs/heads/main/worship-pads/karl-verkade-bridge/G_Major.mp3",
+      url: "https://static.theopenpresenter.com/worship-pads/karl-verkade-bridge/G_Major.mp3",
     },
     {
       key: "Ab",
-      url: "https://raw.githubusercontent.com/Vija02/theopenpresenter-static/refs/heads/main/worship-pads/karl-verkade-bridge/Ab_Major.mp3",
+      url: "https://static.theopenpresenter.com/worship-pads/karl-verkade-bridge/Ab_Major.mp3",
     },
     {
       key: "A",
-      url: "https://raw.githubusercontent.com/Vija02/theopenpresenter-static/refs/heads/main/worship-pads/karl-verkade-bridge/A_Major.mp3",
+      url: "https://static.theopenpresenter.com/worship-pads/karl-verkade-bridge/A_Major.mp3",
     },
     {
       key: "Bb",
-      url: "https://raw.githubusercontent.com/Vija02/theopenpresenter-static/refs/heads/main/worship-pads/karl-verkade-bridge/Bb_Major.mp3",
+      url: "https://static.theopenpresenter.com/worship-pads/karl-verkade-bridge/Bb_Major.mp3",
     },
     {
       key: "B",
-      url: "https://raw.githubusercontent.com/Vija02/theopenpresenter-static/refs/heads/main/worship-pads/karl-verkade-bridge/B_Major.mp3",
+      url: "https://static.theopenpresenter.com/worship-pads/karl-verkade-bridge/B_Major.mp3",
     },
   ];
 
