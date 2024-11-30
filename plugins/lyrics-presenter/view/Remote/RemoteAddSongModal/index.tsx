@@ -152,7 +152,7 @@ const RemoteAddSongModal = ({
       >
         <ModalHeader>Add song(s)</ModalHeader>
         <ModalCloseButton />
-        <ModalBody overflowX="hidden">
+        <ModalBody overflowX="hidden" pt={0}>
           {selectedMode === -1 && (
             <LandingAddSong
               onSearch={(val) => {
@@ -163,11 +163,15 @@ const RemoteAddSongModal = ({
             />
           )}
           {selectedMode > -1 && (
-            <Tabs index={selectedMode} onChange={handleTabsChange}>
+            <Tabs
+              index={selectedMode}
+              onChange={handleTabsChange}
+              position="relative"
+            >
               <TabList>
-                <Tab>Search Song</Tab>
-                <Tab>Create Song</Tab>
-                <Tab>Import Playlist</Tab>
+                <Tab fontSize="sm">Search Song</Tab>
+                <Tab fontSize="sm">Create Song</Tab>
+                <Tab fontSize="sm">Import Playlist</Tab>
               </TabList>
 
               <TabPanels>
