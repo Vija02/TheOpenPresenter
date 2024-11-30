@@ -2,9 +2,9 @@ import useSize from "@react-hook/size";
 import React, { useMemo } from "react";
 
 import { SlideStyle } from "../../../src/index.js";
+import { GroupedData } from "../../../src/processLyrics";
 // @ts-expect-error JS file
 import partition from "../../partition.js";
-import { GroupedData } from "../../songHelpers.js";
 import { getSvgMeasurement } from "./cache";
 
 type FullSongRenderViewProps = {

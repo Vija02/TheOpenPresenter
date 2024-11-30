@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 
 import { SlideStyle } from "../../../src";
-import { GroupedData } from "../../songHelpers";
+import { GroupedData } from "../../../src/processLyrics";
 import { getSvgMeasurement } from "./cache";
 
 type SectionsRenderViewProps = {
