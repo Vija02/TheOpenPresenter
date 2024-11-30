@@ -152,12 +152,20 @@ const RemoteEditSongModal = ({
                         justifyContent="space-between"
                         width="100%"
                       >
-                        <FormLabel mb={0}>
-                          Content{" "}
+                        <FormLabel
+                          mb={0}
+                          display="flex"
+                          gap={3}
+                          alignItems="center"
+                        >
+                          Lyric{" "}
                           <Popover>
                             <PopoverTrigger>
-                              <Button size="sm" variant="ghost">
+                              <Button size="xs" variant="outline">
                                 <FaCircleInfo color="gray" />
+                                <Text ml={2} fontWeight="light">
+                                  How does this work?
+                                </Text>
                               </Button>
                             </PopoverTrigger>
                             <SongEditInfo />
