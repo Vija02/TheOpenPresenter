@@ -1,4 +1,5 @@
 import React, { createContext, useEffect, useState } from "react";
+import type { toast as ReactToast } from "react-toastify";
 
 import { AwarenessContext, CanPlayAudio, PluginContext } from "..";
 import { initPluginApi } from "./initPluginApi";
@@ -22,7 +23,7 @@ export const PluginAPIProvider = ({
   awarenessContext,
   pluginContext,
   setRenderCurrentScene,
-  canPlayAudio,
+  misc,
   children,
 }: {
   yjsPluginSceneData: any;
@@ -30,7 +31,7 @@ export const PluginAPIProvider = ({
   awarenessContext: AwarenessContext;
   pluginContext: PluginContext;
   setRenderCurrentScene: () => void;
-  canPlayAudio: CanPlayAudio;
+  misc: { canPlayAudio: CanPlayAudio; toast: typeof ReactToast };
   children: React.ReactNode;
 }) => {
   const [pluginAPI, setPluginAPI] =
@@ -44,7 +45,7 @@ export const PluginAPIProvider = ({
         awarenessContext,
         pluginContext,
         setRenderCurrentScene,
-        canPlayAudio,
+        misc,
       }),
     );
   }, [
@@ -54,7 +55,7 @@ export const PluginAPIProvider = ({
     awarenessContext,
     pluginContext,
     setRenderCurrentScene,
-    canPlayAudio,
+    misc,
   ]);
 
   return (

@@ -13,7 +13,7 @@ const Component = r2wc(withSuspense(lazy(() => import("./RendererEntry"))), {
     pluginContext: "",
     setRenderCurrentScene: "",
     trpcClient: "",
-    canPlayAudio: "",
+    misc: "",
   },
 });
 customElements.define(rendererWebComponentTag, Component);

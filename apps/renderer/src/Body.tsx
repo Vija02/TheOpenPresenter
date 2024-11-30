@@ -4,6 +4,7 @@ import { ErrorAlert, MotionBox } from "@repo/ui";
 import { AnimatePresence, motion } from "framer-motion";
 import React, { useMemo, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
+import { toast } from "react-toastify";
 import { useDisposable } from "use-disposable";
 import Y from "yjs";
 
@@ -163,7 +164,10 @@ const PluginRenderer = React.memo(
           }
         },
         trpcClient,
-        canPlayAudio,
+        misc: {
+          canPlayAudio,
+          toast,
+        },
       });
     }, [
       canPlayAudio,

@@ -1,6 +1,7 @@
 import { YjsWatcher, appData } from "@repo/lib";
 import isEqual from "fast-deep-equal";
 import { useSyncExternalStore } from "react";
+import { toast as ReactToast } from "react-toastify";
 import { useLocation } from "react-use";
 import { typeidUnboxed } from "typeid-js";
 import { proxy } from "valtio";
@@ -25,14 +26,14 @@ export function initPluginApi<
   awarenessContext,
   pluginContext,
   setRenderCurrentScene,
-  canPlayAudio,
+  misc,
 }: {
   yjsPluginSceneData: ObjectToTypedMap<Plugin<PluginSceneDataType>>;
   yjsPluginRendererData: ObjectToTypedMap<PluginRendererDataType>;
   awarenessContext: AwarenessContext;
   pluginContext: PluginContext;
   setRenderCurrentScene: () => void;
-  canPlayAudio: CanPlayAudio;
+  misc: { canPlayAudio: CanPlayAudio; toast: typeof ReactToast };
 }) {
   // TODO: Should only be called once
   const sceneWatcher = new YjsWatcher(yjsPluginSceneData as any);
@@ -114,12 +115,13 @@ export function initPluginApi<
 
         return pluginContext.sceneId === scene;
       },
+      toast: misc.toast,
     },
     audio: {
       useCanPlay: () => {
         return useSyncExternalStore(
-          canPlayAudio.subscribe,
-          () => canPlayAudio.value,
+          misc.canPlayAudio.subscribe,
+          () => misc.canPlayAudio.value,
         );
       },
     },

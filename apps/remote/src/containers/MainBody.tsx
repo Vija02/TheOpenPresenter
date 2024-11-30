@@ -15,6 +15,7 @@ import {
   VscSettingsGear as VscSettingsGearRaw,
   VscTrash as VscTrashRaw,
 } from "react-icons/vsc";
+import { toast } from "react-toastify";
 import { useDisposable } from "use-disposable";
 import { useLocation, useRoute } from "wouter";
 import Y from "yjs";
@@ -294,7 +295,10 @@ const PluginRenderer = React.memo(
           }
         },
         trpcClient,
-        canPlayAudio,
+        misc: {
+          canPlayAudio,
+          toast,
+        },
       });
     }, [
       canPlayAudio,
