@@ -25,10 +25,12 @@ export const LyricFormLabel = ({
       alignItems="center"
       justifyContent="space-between"
       width="100%"
+      gap={1}
+      flexWrap="wrap"
     >
       <FormLabel mb={0} display="flex" gap={3} alignItems="center">
         Lyric{" "}
-        <Popover>
+        <Popover placement="bottom-start">
           <PopoverTrigger>
             <Button size="xs" variant="outline">
               <FaCircleInfo color="gray" />

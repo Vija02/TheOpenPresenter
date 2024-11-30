@@ -9,11 +9,12 @@ import {
   Text,
 } from "@chakra-ui/react";
 
+// TODO: Make this clearer & using modal/drawer
 export const SongEditInfo = () => {
   return (
     <PopoverContent
       width="100%"
-      maxW="lg"
+      maxW="100vw"
       color="white"
       bg="blue.800"
       borderColor="blue.800"

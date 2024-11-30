@@ -27,7 +27,12 @@ const SongViewInner = React.memo(({ song }: { song: Song }) => {
 
   return (
     <Box pb={4}>
-      <Flex direction="row" alignItems="center" gap={2} mb={2}>
+      <Flex
+        direction={{ base: "column", sm: "row" }}
+        alignItems={{ base: "flex-start", sm: "center" }}
+        gap={2}
+        mb={2}
+      >
         <Heading fontSize="xl">{song.title}</Heading>
         <Stack direction="row" gap={0}>
           <OverlayToggle
