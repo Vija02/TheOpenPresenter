@@ -1,9 +1,6 @@
 import {
-  Box,
   Button,
-  Grid,
-  Input,
-  Link,
+  Flex,
   Modal,
   ModalBody,
   ModalCloseButton,
@@ -12,21 +9,39 @@ import {
   ModalHeader,
   ModalOverlay,
   ModalProps,
-  Text,
+  Stack,
+  Tab,
+  TabList,
+  TabPanel,
+  TabPanels,
+  Tabs,
 } from "@chakra-ui/react";
 import { OverlayToggleComponentProps } from "@repo/ui";
-import { useCallback, useState } from "react";
+import { isEqual } from "lodash-es";
+import { useCallback, useMemo, useState } from "react";
 import { typeidUnboxed } from "typeid-js";
-import { useDebounce } from "use-debounce";
 
+import { Song } from "../../../src";
 import { usePluginAPI } from "../../pluginApi";
-import { trpc } from "../../trpc";
+import { MobilePreview } from "../RemoteEditSongModal/MobilePreview";
+import { SongViewSlides } from "../SongViewSlides";
+import { CreateNewSong } from "./CreateNewSong";
+import { ImportPlaylist } from "./ImportPlaylist";
+import { LandingAddSong } from "./LandingAddSong";
+import { SearchSong } from "./SearchSong";
 
 export type RemoteAddSongModalPropTypes = Omit<
   ModalProps,
   "isOpen" | "onClose" | "children"
 > &
   Partial<OverlayToggleComponentProps> & {};
+
+export enum Mode {
+  NONE = -1,
+  SEARCH_SONG = 0,
+  CREATE_SONG = 1,
+  IMPORT_PLAYLIST = 2,
+}
 
 const RemoteAddSongModal = ({
   isOpen,
@@ -37,21 +52,56 @@ const RemoteAddSongModal = ({
   const pluginApi = usePluginAPI();
   const pluginInfo = pluginApi.scene.useValtioData();
 
-  const [selected, setSelected] = useState<{ type: string; id: number } | null>(
+  const [newSong, setNewSong] = useState<Song | null>(null);
+  const [selectedSongId, setSelectedSongId] = useState<number | null>(null);
+  const [selectedPlaylistSongIds, setSelectedPlaylistSongIds] = useState<
+    number[] | null
+  >(null);
+
+  const [initialSongSearch, setInitialSongSearch] = useState<string | null>(
     null,
   );
-  const [searchInput, setSearchInput] = useState("");
 
-  const [debouncedSearchInput] = useDebounce(searchInput, 200);
+  const [selectedMode, setSelectedMode] = useState(Mode.NONE);
+  const handleTabsChange = useCallback((index: number) => {
+    setSelectedMode(index);
+  }, []);
 
-  const { data: songData } = trpc.lyricsPresenter.search.useQuery({
-    title: debouncedSearchInput,
-  });
-  const { data: playlistData } = trpc.lyricsPresenter.playlist.useQuery();
+  const canSubmit = useMemo(() => {
+    if (selectedMode === Mode.CREATE_SONG) {
+      return newSong !== null;
+    } else if (selectedMode === Mode.SEARCH_SONG) {
+      return selectedSongId !== null;
+    } else if (selectedMode === Mode.IMPORT_PLAYLIST) {
+      return selectedPlaylistSongIds !== null;
+    }
+
+    return false;
+  }, [newSong, selectedMode, selectedPlaylistSongIds, selectedSongId]);
 
   const addSong = useCallback(() => {
-    if (selected) {
-      if (selected.type === "song") {
+    if (selectedMode === Mode.CREATE_SONG && newSong) {
+      pluginInfo.pluginData.songs.push({
+        ...newSong,
+        id: typeidUnboxed(),
+      });
+    } else if (selectedMode === Mode.SEARCH_SONG && selectedSongId !== null) {
+      pluginInfo.pluginData.songs.push({
+        id: typeidUnboxed(),
+        title: "",
+        content: "",
+        _imported: false,
+        import: {
+          type: "myworshiplist",
+          meta: { id: selectedSongId },
+        },
+        setting: { displayType: "sections" },
+      });
+    } else if (
+      selectedMode === Mode.IMPORT_PLAYLIST &&
+      !!selectedPlaylistSongIds
+    ) {
+      selectedPlaylistSongIds.forEach((x: any) => {
         pluginInfo.pluginData.songs.push({
           id: typeidUnboxed(),
           title: "",
@@ -59,166 +109,135 @@ const RemoteAddSongModal = ({
           _imported: false,
           import: {
             type: "myworshiplist",
-            meta: { id: selected.id },
+            meta: { id: x },
           },
           setting: { displayType: "sections" },
         });
-      } else if (selected.type === "playlist") {
-        const playlist = playlistData?.data.find(
-          (x: any) => x.id === selected.id,
-        );
-        playlist.content.forEach((x: any) => {
-          pluginInfo.pluginData.songs.push({
-            id: typeidUnboxed(),
-            title: "",
-            content: "",
-            _imported: false,
-            import: {
-              type: "myworshiplist",
-              meta: { id: x.id },
-            },
-            setting: { displayType: "sections" },
-          });
-        });
-      }
-      onToggle?.();
-      resetData?.();
+      });
+    } else {
+      pluginApi.remote.toast.error("Failed to add song");
+      return;
     }
+
+    onToggle?.();
+    resetData?.();
   }, [
-    selected,
+    selectedMode,
+    newSong,
+    selectedSongId,
+    selectedPlaylistSongIds,
     onToggle,
     resetData,
     pluginInfo.pluginData.songs,
-    playlistData?.data,
+    pluginApi.remote.toast,
   ]);
+
+  const onClose = useCallback(() => {
+    onToggle?.();
+    resetData?.();
+  }, [onToggle, resetData]);
 
   return (
     <Modal
-      size="xl"
+      size={selectedMode === -1 ? "sm" : { base: "full", md: "5xl" }}
       isOpen={isOpen ?? false}
-      onClose={onToggle ?? (() => {})}
+      onClose={onClose}
       scrollBehavior="inside"
       {...props}
     >
       <ModalOverlay />
-      <ModalContent maxW="900">
+      <ModalContent
+        maxW={selectedMode === -1 ? "sm" : "900"}
+        pb={selectedMode === -1 ? 5 : 0}
+      >
         <ModalHeader>Add song(s)</ModalHeader>
         <ModalCloseButton />
-        <ModalBody>
-          <Box>
-            <Text fontSize="lg" mb={3}>
-              Songs from{" "}
-              <Link
-                href="https://myworshiplist.com/"
-                isExternal
-                color="blue.400"
-              >
-                MyWorshipList
-              </Link>
-              . Other sources and the ability to add your own songs coming soon!
-            </Text>
-            <Text pb={2} fontSize="lg" fontWeight="600">
-              Recent Playlist
-            </Text>
-            <Grid
-              gridTemplateColumns="repeat(auto-fit, minmax(min(200px, 100%), 1fr))"
-              gap={1}
-            >
-              {playlistData?.data.map((playlist: any) => (
-                <Box
-                  key={playlist.id}
-                  p={1}
-                  cursor="pointer"
-                  _hover={{ bg: "gray.100" }}
-                  flex={1}
-                  whiteSpace="nowrap"
-                  border="1px solid"
-                  borderColor="gray.300"
-                  bg={
-                    selected?.type === "playlist" &&
-                    selected?.id === playlist.id
-                      ? "gray.200"
-                      : "transparent"
-                  }
-                  onClick={() => {
-                    setSelected({ type: "playlist", id: playlist.id });
-                  }}
-                >
-                  <Text
-                    fontWeight="bold"
-                    fontSize="md"
-                    overflow="hidden"
-                    textOverflow="ellipsis"
-                  >
-                    {playlist?.title}
-                  </Text>
-                  <Box color="gray.800">
-                    {playlist.content.map((content: any) => (
-                      <Text
-                        key={content.id}
-                        textOverflow="ellipsis"
-                        overflow="hidden"
-                      >
-                        - {content.title}
-                      </Text>
-                    ))}
-                  </Box>
-                </Box>
-              ))}
-            </Grid>
-          </Box>
-          <Text pb={1} pt={4} fontSize="lg" fontWeight="600">
-            Songs
-          </Text>
-          <Input
-            mb={2}
-            placeholder="Search..."
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-          />
-          <Box>
-            {songData?.data.map((x: any) => (
-              <Box
-                key={x.id}
-                bg={
-                  selected?.type === "song" && selected?.id === x.id
-                    ? "gray.200"
-                    : "transparent"
-                }
-                _hover={{ bg: "gray.100" }}
-                cursor="pointer"
-                onClick={() => {
-                  setSelected({ type: "song", id: x.id });
-                }}
-                py={1}
-                px={1}
-              >
-                <Text fontSize="md" lineHeight={1}>
-                  {x.title}
-                </Text>
-                <Text fontSize="xs" color="gray.500">
-                  {x.author}
-                </Text>
-              </Box>
-            ))}
-          </Box>
+        <ModalBody overflowX="hidden">
+          {selectedMode === -1 && (
+            <LandingAddSong
+              onSearch={(val) => {
+                setSelectedMode(Mode.SEARCH_SONG);
+                setInitialSongSearch(val);
+              }}
+              onSetMode={setSelectedMode}
+            />
+          )}
+          {selectedMode > -1 && (
+            <Tabs index={selectedMode} onChange={handleTabsChange}>
+              <TabList>
+                <Tab>Search Song</Tab>
+                <Tab>Create Song</Tab>
+                <Tab>Import Playlist</Tab>
+              </TabList>
+
+              <TabPanels>
+                <TabPanel px={0}>
+                  <SearchSong
+                    key={initialSongSearch}
+                    initialValue={initialSongSearch}
+                    selectedSongId={selectedSongId}
+                    setSelectedSongId={setSelectedSongId}
+                  />
+                </TabPanel>
+                <TabPanel px={0}>
+                  <CreateNewSong
+                    onChange={(song) => {
+                      if (!isEqual(song, newSong)) {
+                        setNewSong(song);
+                      }
+                    }}
+                  />
+                </TabPanel>
+                <TabPanel px={0}>
+                  <ImportPlaylist
+                    setSelectedPlaylistSongIds={setSelectedPlaylistSongIds}
+                  />
+                </TabPanel>
+              </TabPanels>
+            </Tabs>
+          )}
         </ModalBody>
 
-        <ModalFooter>
-          <Button
-            colorScheme="green"
-            mr={3}
-            isDisabled={selected === null}
-            onClick={() => {
-              addSong();
+        {selectedMode !== -1 && (
+          <ModalFooter
+            pt={0}
+            px={0}
+            boxShadow={{
+              base: "rgba(0, 0, 0, 0.8) 0px 5px 10px 0px",
+              md: "none",
             }}
           >
-            Add to list
-          </Button>
-          <Button variant="ghost" onClick={onToggle}>
-            Cancel
-          </Button>
-        </ModalFooter>
+            <Flex flexDir="column" width="100%">
+              {selectedMode === Mode.CREATE_SONG && (
+                <MobilePreview
+                  preview={
+                    newSong ? <SongViewSlides song={newSong} isPreview /> : null
+                  }
+                />
+              )}
+              <Stack
+                px={{ base: 3, md: 6 }}
+                pt={3}
+                direction="row"
+                alignSelf="flex-end"
+              >
+                <Button
+                  colorScheme="green"
+                  mr={3}
+                  isDisabled={!canSubmit}
+                  onClick={() => {
+                    addSong();
+                  }}
+                >
+                  Add to list
+                </Button>
+                <Button variant="ghost" onClick={onClose}>
+                  Cancel
+                </Button>
+              </Stack>
+            </Flex>
+          </ModalFooter>
+        )}
       </ModalContent>
     </Modal>
   );
