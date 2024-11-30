@@ -1,8 +1,6 @@
 import {
-  Box,
   Button,
   Flex,
-  Grid,
   Heading,
   Modal,
   ModalBody,
@@ -14,14 +12,12 @@ import {
   ModalProps,
   Show,
   Stack,
-  Text,
   VStack,
 } from "@chakra-ui/react";
-import { MotionBox, OverlayToggleComponentProps } from "@repo/ui";
+import { OverlayToggleComponentProps } from "@repo/ui";
 import { Form, Formik } from "formik";
 import { InputControl, SelectControl, SubmitButton } from "formik-chakra-ui";
 import { useCallback, useMemo, useState } from "react";
-import { FaChevronUp } from "react-icons/fa";
 import { toFormikValidationSchema } from "zod-formik-adapter";
 
 import { removeChords } from "../../../src/processLyrics";
@@ -34,6 +30,7 @@ import {
 import { usePluginAPI } from "../../pluginApi";
 import { SongViewSlides } from "../SongViewSlides";
 import { LyricFormLabel } from "./LyricFormLabel";
+import { MobilePreview } from "./MobilePreview";
 import SongEditEditor from "./SongEditEditor";
 
 export type RemoteEditSongModalPropTypes = Omit<
@@ -188,44 +185,7 @@ const RemoteEditSongModal = ({
                   }}
                 >
                   <Flex flexDir="column" width="100%">
-                    <Box borderBottom="1px solid rgb(0,0,0,0.1)">
-                      <Button
-                        display={{ base: "flex", md: "none" }}
-                        gap={2}
-                        variant="ghost"
-                        borderRadius={0}
-                        onClick={() => setPreviewOpen((prev) => !prev)}
-                        width="100%"
-                      >
-                        <Text>Preview </Text>{" "}
-                        <FaChevronUp
-                          style={{
-                            transform: previewOpen ? "rotate(180deg)" : "",
-                          }}
-                          fontSize={14}
-                        />
-                      </Button>
-                      <Show below="md">
-                        <MotionBox
-                          initial="close"
-                          variants={{
-                            open: { height: "30vh" },
-                            close: { height: "0vh" },
-                          }}
-                          animate={previewOpen ? "open" : "close"}
-                          overflow="hidden"
-                        >
-                          <Grid
-                            maxHeight="30vh"
-                            overflow="auto"
-                            px={3}
-                            gridTemplateColumns="repeat(auto-fill, minmax(200px, 1fr))"
-                          >
-                            {preview}
-                          </Grid>
-                        </MotionBox>
-                      </Show>
-                    </Box>
+                    <MobilePreview preview={preview} />
                     <Stack
                       px={{ base: 3, md: 6 }}
                       pt={3}
