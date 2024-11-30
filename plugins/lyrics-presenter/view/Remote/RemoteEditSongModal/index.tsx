@@ -2,7 +2,6 @@ import {
   Box,
   Button,
   Flex,
-  FormLabel,
   Grid,
   Heading,
   Modal,
@@ -13,8 +12,6 @@ import {
   ModalHeader,
   ModalOverlay,
   ModalProps,
-  Popover,
-  PopoverTrigger,
   Show,
   Stack,
   Text,
@@ -25,7 +22,6 @@ import { Form, Formik } from "formik";
 import { InputControl, SelectControl, SubmitButton } from "formik-chakra-ui";
 import { useCallback, useMemo, useState } from "react";
 import { FaChevronUp } from "react-icons/fa";
-import { FaCircleInfo } from "react-icons/fa6";
 import { toFormikValidationSchema } from "zod-formik-adapter";
 
 import { removeChords } from "../../../src/processLyrics";
@@ -33,12 +29,12 @@ import {
   Song,
   SongSetting,
   displayTypeSettings,
-  slideStyleValidator,
+  songSettingValidator,
 } from "../../../src/types";
 import { usePluginAPI } from "../../pluginApi";
 import { SongViewSlides } from "../SongViewSlides";
+import { LyricFormLabel } from "./LyricFormLabel";
 import SongEditEditor from "./SongEditEditor";
-import { SongEditInfo } from "./SongEditInfo";
 
 export type RemoteEditSongModalPropTypes = Omit<
   ModalProps,
@@ -117,7 +113,7 @@ const RemoteEditSongModal = ({
           title: song.title,
           content: song.content,
         }}
-        validationSchema={toFormikValidationSchema(slideStyleValidator)}
+        validationSchema={toFormikValidationSchema(songSettingValidator)}
         onSubmit={handleSubmit}
       >
         {({ handleSubmit, values, setFieldValue }) => {
@@ -153,57 +149,18 @@ const RemoteEditSongModal = ({
                         )}
                       </SelectControl>
 
-                      <Stack
-                        direction="row"
-                        alignItems="center"
-                        justifyContent="space-between"
-                        width="100%"
-                      >
-                        <FormLabel
-                          mb={0}
-                          display="flex"
-                          gap={3}
-                          alignItems="center"
-                        >
-                          Lyric{" "}
-                          <Popover>
-                            <PopoverTrigger>
-                              <Button size="xs" variant="outline">
-                                <FaCircleInfo color="gray" />
-                                <Text ml={2} fontWeight="light">
-                                  How does this work?
-                                </Text>
-                              </Button>
-                            </PopoverTrigger>
-                            <SongEditInfo />
-                          </Popover>
-                        </FormLabel>
-                        <Stack direction="row" alignItems="center">
-                          <Button
-                            size="xs"
-                            onClick={() => {
-                              setFieldValue(
-                                "content",
-                                removeChords(values.content.split("\n")).join(
-                                  "\n",
-                                ),
-                              );
-                            }}
-                          >
-                            Remove chords
-                          </Button>
-                          {values.content !== originalContent && (
-                            <Button
-                              size="xs"
-                              onClick={() => {
-                                setFieldValue("content", originalContent);
-                              }}
-                            >
-                              Reset
-                            </Button>
-                          )}
-                        </Stack>
-                      </Stack>
+                      <LyricFormLabel
+                        onRemoveChords={() => {
+                          setFieldValue(
+                            "content",
+                            removeChords(values.content.split("\n")).join("\n"),
+                          );
+                        }}
+                        canReset={values.content !== originalContent}
+                        onReset={() => {
+                          setFieldValue("content", originalContent);
+                        }}
+                      />
                       <SongEditEditor
                         initialContent={values.content
                           .split("\n")
