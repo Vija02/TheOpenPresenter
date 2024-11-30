@@ -22,7 +22,7 @@ import {
 } from "@chakra-ui/react";
 import { MotionBox, OverlayToggleComponentProps } from "@repo/ui";
 import { Form, Formik } from "formik";
-import { SelectControl, SubmitButton } from "formik-chakra-ui";
+import { InputControl, SelectControl, SubmitButton } from "formik-chakra-ui";
 import { useCallback, useMemo, useState } from "react";
 import { FaChevronUp } from "react-icons/fa";
 import { FaCircleInfo } from "react-icons/fa6";
@@ -60,7 +60,11 @@ const RemoteEditSongModal = ({
   const [previewOpen, setPreviewOpen] = useState(false);
 
   const handleSubmit = useCallback(
-    ({ content, ...data }: SongSetting & { content: string }) => {
+    ({
+      title,
+      content,
+      ...data
+    }: SongSetting & Pick<Song, "title" | "content">) => {
       const index = mutableSceneData.pluginData.songs.findIndex(
         (x) => x.id === song.id,
       );
@@ -77,6 +81,7 @@ const RemoteEditSongModal = ({
       }
 
       mutableSceneData.pluginData.songs[index]!.setting = data;
+      mutableSceneData.pluginData.songs[index]!.title = title;
       mutableSceneData.pluginData.songs[index]!.content = content;
 
       resetData?.();
@@ -109,6 +114,7 @@ const RemoteEditSongModal = ({
       <Formik
         initialValues={{
           ...song.setting,
+          title: song.title,
           content: song.content,
         }}
         validationSchema={toFormikValidationSchema(slideStyleValidator)}
@@ -136,6 +142,7 @@ const RemoteEditSongModal = ({
                 <ModalBody px={{ base: 3, md: 6 }}>
                   <Flex flexDir={{ base: "column", md: "row" }} gap={3}>
                     <VStack flex={1} alignItems="flex-start">
+                      <InputControl name="title" label="Title" />
                       <SelectControl name="displayType" label="Display Type">
                         {Object.entries(displayTypeSettings).map(
                           ([key, { label }]) => (
