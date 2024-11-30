@@ -11,6 +11,7 @@ import {
   displayTypeSettings,
   songSettingValidator,
 } from "../../../src/types";
+import { usePluginAPI } from "../../pluginApi";
 import { LyricFormLabel } from "../RemoteEditSongModal/LyricFormLabel";
 import SongEditEditor from "../RemoteEditSongModal/SongEditEditor";
 import { SongViewSlides } from "../SongViewSlides";
@@ -29,6 +30,9 @@ export const CreateNewSong = ({
 }: {
   onChange: (song: Song) => void;
 }) => {
+  const pluginApi = usePluginAPI();
+  const slideStyle = pluginApi.scene.useData((x) => x.pluginData.style) ?? {};
+
   return (
     <Formik
       initialValues={{
@@ -87,7 +91,11 @@ export const CreateNewSong = ({
             <Show above="md">
               <VStack flexBasis="200px">
                 <Heading fontSize="lg">Preview</Heading>
-                <SongViewSlides song={previewSong} isPreview />
+                <SongViewSlides
+                  song={previewSong}
+                  slideStyle={slideStyle}
+                  isPreview
+                />
               </VStack>
             </Show>
           </Flex>

@@ -18,6 +18,7 @@ const SongView = React.memo(({ song }: { song: Song }) => {
 const SongViewInner = React.memo(({ song }: { song: Song }) => {
   const pluginApi = usePluginAPI();
   const mutableSceneData = pluginApi.scene.useValtioData();
+  const slideStyle = pluginApi.scene.useData((x) => x.pluginData.style) ?? {};
 
   const handleRemove = useCallback(() => {
     const pluginData = mutableSceneData.pluginData;
@@ -63,7 +64,7 @@ const SongViewInner = React.memo(({ song }: { song: Song }) => {
         </Stack>
       </Flex>
       <Flex gap={3} flexWrap="wrap">
-        <SongViewSlides song={song} />
+        <SongViewSlides song={song} slideStyle={slideStyle} />
       </Flex>
     </Box>
   );

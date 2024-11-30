@@ -1,29 +1,42 @@
 import { Slide } from "@repo/ui";
 import { useMemo } from "react";
 
-import { Song } from "../../src";
+import { SlideStyle, Song } from "../../src";
+import { GroupedData } from "../../src/processLyrics";
 import { getSlideStyle } from "../../src/slideStyle";
 import FullSongRenderView from "../Renderer/FullSongRenderView";
 import SectionsRenderView from "../Renderer/SectionsRenderView";
 import { usePluginAPI } from "../pluginApi";
-import { GroupedData, processSong } from "../songHelpers";
+import { processSong } from "../songHelpers";
 
 export const SongViewSlides = ({
   song,
   isPreview = false,
+  slideStyle,
 }: {
   song: Song;
   isPreview?: boolean;
+  slideStyle: SlideStyle;
 }) => {
   const groupedData = useMemo(() => processSong(song.content), [song.content]);
 
   if (song.setting.displayType === "sections") {
     return (
-      <Sections song={song} groupedData={groupedData} isPreview={isPreview} />
+      <Sections
+        song={song}
+        groupedData={groupedData}
+        isPreview={isPreview}
+        slideStyle={slideStyle}
+      />
     );
   } else if (song.setting.displayType === "fullSong") {
     return (
-      <FullSong song={song} groupedData={groupedData} isPreview={isPreview} />
+      <FullSong
+        song={song}
+        groupedData={groupedData}
+        isPreview={isPreview}
+        slideStyle={slideStyle}
+      />
     );
   }
 };
@@ -31,17 +44,18 @@ export const SongViewSlides = ({
 const Sections = ({
   song,
   groupedData,
+  slideStyle,
   isPreview = false,
 }: {
   song: Song;
   groupedData: GroupedData;
+  slideStyle: SlideStyle;
   isPreview?: boolean;
 }) => {
   const pluginApi = usePluginAPI();
   const mutableRendererData = pluginApi.renderer.useValtioData();
   const setRenderCurrentScene = pluginApi.renderer.setRenderCurrentScene;
 
-  const slideStyle = pluginApi.scene.useData((x) => x.pluginData.style);
   const renderData = pluginApi.renderer.useData((x) => x);
 
   return (
@@ -90,17 +104,18 @@ const Sections = ({
 const FullSong = ({
   song,
   groupedData,
+  slideStyle,
   isPreview = false,
 }: {
   song: Song;
   groupedData: GroupedData;
+  slideStyle: SlideStyle;
   isPreview?: boolean;
 }) => {
   const pluginApi = usePluginAPI();
   const mutableRendererData = pluginApi.renderer.useValtioData();
   const setRenderCurrentScene = pluginApi.renderer.setRenderCurrentScene;
 
-  const slideStyle = pluginApi.scene.useData((x) => x.pluginData.style);
   const activeSongId = pluginApi.renderer.useData((x) => x.songId);
 
   return (

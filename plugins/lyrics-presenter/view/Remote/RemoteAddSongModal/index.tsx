@@ -51,6 +51,7 @@ const RemoteAddSongModal = ({
 }: RemoteAddSongModalPropTypes) => {
   const pluginApi = usePluginAPI();
   const pluginInfo = pluginApi.scene.useValtioData();
+  const slideStyle = pluginApi.scene.useData((x) => x.pluginData.style) ?? {};
 
   const [newSong, setNewSong] = useState<Song | null>(null);
   const [selectedSongId, setSelectedSongId] = useState<number | null>(null);
@@ -215,7 +216,13 @@ const RemoteAddSongModal = ({
               {selectedMode === Mode.CREATE_SONG && (
                 <MobilePreview
                   preview={
-                    newSong ? <SongViewSlides song={newSong} isPreview /> : null
+                    newSong ? (
+                      <SongViewSlides
+                        song={newSong}
+                        slideStyle={slideStyle}
+                        isPreview
+                      />
+                    ) : null
                   }
                 />
               )}

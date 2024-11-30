@@ -17,7 +17,7 @@ import {
 import { OverlayToggleComponentProps } from "@repo/ui";
 import { Form, Formik } from "formik";
 import { InputControl, SelectControl, SubmitButton } from "formik-chakra-ui";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
 import { toFormikValidationSchema } from "zod-formik-adapter";
 
 import { removeChords } from "../../../src/processLyrics";
@@ -47,10 +47,9 @@ const RemoteEditSongModal = ({
   ...props
 }: RemoteEditSongModalPropTypes) => {
   const pluginApi = usePluginAPI();
+  const slideStyle = pluginApi.scene.useData((x) => x.pluginData.style) ?? {};
   const mutableSceneData = pluginApi.scene.useValtioData();
   const mutableRendererData = pluginApi.renderer.useValtioData();
-
-  const [previewOpen, setPreviewOpen] = useState(false);
 
   const handleSubmit = useCallback(
     ({
@@ -121,6 +120,7 @@ const RemoteEditSongModal = ({
                 setting: values,
                 content: values.content,
               }}
+              slideStyle={slideStyle}
               isPreview
             />
           );
