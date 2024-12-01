@@ -1,16 +1,24 @@
 import { extendTheme, withDefaultSize } from "@chakra-ui/react";
 
-
 export const theme = extendTheme(
   withDefaultSize({
     size: "lg",
     components: ["Heading"],
   }),
   {
+    semanticTokens: {
+      colors: {
+        text: {
+          default: "gray.700",
+          _dark: "#EDEDED",
+        },
+      },
+    },
     styles: {
       global: {
         body: {
           fontSize: "14px",
+          color: "text",
         },
       },
     },
@@ -37,17 +45,11 @@ export const theme = extendTheme(
       Heading: {
         baseStyle: {
           fontWeight: "medium",
-          // lineHeight: "54px",
-          // letterSpacing: "1.5px",
           marginBottom: 3,
           color: "gray.800",
         },
       },
       Text: {
-        baseStyle: {
-          letterSpacing: "0.4px",
-          color: "gray.700",
-        },
         variants: {
           subtitle: {
             color: "subtitle",
