@@ -1,4 +1,5 @@
 import { ObjectToTypedMap } from "@repo/lib";
+import { toast as ReactToast } from "react-toastify";
 import UAParser from "ua-parser-js";
 import * as awarenessProtocol from "y-protocols/awareness.js";
 
@@ -86,7 +87,7 @@ export type WebComponentProps<TrpcClient> = {
   pluginContext: PluginContext;
   setRenderCurrentScene: () => void;
   trpcClient: TrpcClient;
-  canPlayAudio: CanPlayAudio;
+  misc: { canPlayAudio: CanPlayAudio; toast: typeof ReactToast };
 };
 
 export const sceneCategories = ["Display", "Media", "Audio"] as const;
