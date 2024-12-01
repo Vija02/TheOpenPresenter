@@ -19,6 +19,7 @@ export class HowlerPlayer {
     this.currentTrack = null;
   }
 
+  // TODO: Make this stream rather than loading the entire file first
   loadTrack(id: string, url: string) {
     if (this.sounds.has(id)) return;
 
