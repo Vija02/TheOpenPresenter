@@ -34,12 +34,15 @@ function measureSVGText({
   textElement.setAttribute("y", "0");
   textElement.style.fontSize = "1rem";
   textElement.style.fontWeight = slideStyle.fontWeight.toString();
-  textElement.style.fontFamily = `-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"`;
+  textElement.style.fontStyle = slideStyle.fontStyle;
+  textElement.style.fontFamily = slideStyle.fontFamily;
+  textElement.style.textAnchor = "middle";
 
-  for (const line of textLines) {
+  for (let i = 0; i < textLines.length; i++) {
+    const line = textLines[i]!;
     const el = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
     el.setAttribute("x", "50%");
-    el.setAttribute("dy", "1em");
+    el.setAttribute("dy", i === 0 ? "1em" : slideStyle.lineHeight + "em");
     el.textContent = line;
 
     textElement.appendChild(el);

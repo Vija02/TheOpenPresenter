@@ -33,9 +33,29 @@ export type PluginBaseData = {
 };
 
 export const slideStyleValidator = z.object({
+  autoSize: z.boolean().optional(),
+  fontSize: z.string().or(z.number()).optional(),
   fontWeight: z.string().or(z.number()).optional(),
+  fontStyle: z.string().optional(),
+  fontFamily: z.string().optional(),
+  lineHeight: z
+    .string()
+    .or(z.number())
+    .transform((x) => {
+      const num = parseInt(x.toString(), 10);
+      return Number.isNaN(num) ? 1 : num;
+    })
+    .optional(),
   isDarkMode: z.boolean().optional(),
-  padding: z.number().optional(),
+  padding: z
+    .string()
+    .or(z.number())
+    .transform((x) => {
+      const num = parseInt(x.toString(), 10);
+      return Number.isNaN(num) ? 0 : num;
+    })
+    .optional(),
+  debugPadding: z.boolean().optional(),
 });
 export type SlideStyle = z.infer<typeof slideStyleValidator>;
 

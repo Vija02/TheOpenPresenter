@@ -36,8 +36,8 @@ function measureSVGText({
   textElement.setAttribute("y", "0");
   textElement.style.fontSize = "1rem";
   textElement.style.fontWeight = slideStyle.fontWeight.toString();
-  // TODO: Get from slideStyle
-  textElement.style.fontFamily = `-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"`;
+  textElement.style.fontStyle = slideStyle.fontStyle;
+  textElement.style.fontFamily = slideStyle.fontFamily;
 
   const headingEl = document.createElementNS(
     "http://www.w3.org/2000/svg",
@@ -46,10 +46,7 @@ function measureSVGText({
   headingEl.setAttribute("x", "0%");
   headingEl.setAttribute("dy", "2rem");
   headingEl.setAttribute("font-size", "0.6rem");
-  headingEl.setAttribute(
-    "font-family",
-    `-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"`,
-  );
+  headingEl.setAttribute("font-family", slideStyle.fontFamily);
   headingEl.textContent = heading;
   textElement.appendChild(headingEl);
   for (const [index, line] of textLines.entries()) {

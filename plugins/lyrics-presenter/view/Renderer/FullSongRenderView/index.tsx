@@ -82,6 +82,9 @@ const FullSongRenderView = React.memo(
       return draft;
     }, [groupedData, partitionResult]);
 
+    // TODO: Rework to use new padding style
+    // TODO: Calculate and handle line height
+    // TODO: Fix overlap on some song
     return (
       <div ref={target} style={{ width: "100%", height: "100%" }}>
         <svg
@@ -110,6 +113,7 @@ const FullSongRenderView = React.memo(
                   fontFamily: "inherit",
                   fontSize: "1rem",
                   fontWeight: slideStyle.fontWeight,
+                  fontStyle: slideStyle.fontStyle,
                 }}
                 fill={slideStyle.isDarkMode ? "white" : "rgb(26, 32, 44)"}
               >

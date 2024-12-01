@@ -34,7 +34,9 @@ const SongViewInner = React.memo(({ song }: { song: Song }) => {
         gap={2}
         mb={2}
       >
-        <Heading fontSize="xl">{song.title}</Heading>
+        <Heading fontSize="xl" mb={0} fontWeight="bold">
+          {song.title}
+        </Heading>
         <Stack direction="row" gap={0}>
           <OverlayToggle
             toggler={({ onToggle }) => (
