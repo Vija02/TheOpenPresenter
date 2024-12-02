@@ -168,13 +168,14 @@ const SectionsRenderViewManualFontSize = React.memo(
         overflow="hidden"
         padding={finalPadding + "px"}
         position="relative"
+        fontSize={width / 280} // Magic number to get the pt scale right
       >
         {slideStyle.debugPadding && <DebugPadding padding={finalPadding} />}
         <Text
           fontWeight={slideStyle.fontWeight}
           fontStyle={slideStyle.fontStyle}
           color={slideStyle.isDarkMode ? "white" : "rgb(26, 32, 44)"}
-          fontSize={slideStyle.fontSize}
+          fontSize={slideStyle.fontSize + "em"}
           fontFamily={slideStyle.fontFamily}
           lineHeight={slideStyle.lineHeight}
           textAlign="center"

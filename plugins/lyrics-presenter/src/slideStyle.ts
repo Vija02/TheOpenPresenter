@@ -5,7 +5,7 @@ export const getSlideStyle = (
 ): Required<SlideStyle> => {
   return {
     autoSize: slideStyle?.autoSize ?? true,
-    fontSize: slideStyle?.fontSize ?? 12,
+    fontSize: slideStyle?.fontSize ?? 14,
     fontWeight: slideStyle?.fontWeight ?? "600",
     fontStyle: slideStyle?.fontStyle ?? "normal",
     fontFamily:
