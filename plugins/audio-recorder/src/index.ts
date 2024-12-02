@@ -99,7 +99,7 @@ const onPluginDataLoaded = (
   const onAwarenessChange = () => {
     const state = getAwarenessState(pluginInfo.doc!.awareness);
 
-    const allUserIds = state.map((x) => x.user.id);
+    const allUserIds = state.map((x) => x?.user?.id);
 
     for (let i = data.pluginData.activeStreams.length - 1; i >= 0; i--) {
       const activeStream = data.pluginData.activeStreams[i]!;
