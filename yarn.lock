@@ -5055,6 +5055,7 @@ __metadata:
     "@r2wc/react-to-web-component": "npm:^2.0.3"
     "@repo/base-plugin": "npm:*"
     "@repo/eslint-config": "npm:*"
+    "@repo/lib": "npm:*"
     "@repo/prettier-config": "npm:*"
     "@repo/typescript-config": "npm:*"
     "@repo/ui": "npm:*"
@@ -5065,10 +5066,8 @@ __metadata:
     "@types/react": "npm:types-react@rc"
     "@types/react-dom": "npm:types-react-dom@rc"
     "@uppy/core": "npm:^4.2.2"
-    "@uppy/dashboard": "npm:^4.1.1"
-    "@uppy/file-input": "npm:^4.0.2"
+    "@uppy/dashboard": "npm:^4.1.2"
     "@uppy/react": "npm:^4.0.2"
-    "@uppy/status-bar": "npm:^4.0.3"
     "@uppy/xhr-upload": "npm:^4.2.1"
     "@vitejs/plugin-react-swc": "npm:^3.7.1"
     eslint: "npm:^8.57.1"
@@ -5076,6 +5075,7 @@ __metadata:
     pkgroll: "npm:^2.5.1"
     react: "npm:rc"
     react-dom: "npm:rc"
+    react-icons: "npm:^5.3.0"
     vite: "npm:5.4.10"
     yjs: "npm:^13.6.20"
   languageName: unknown
@@ -7222,7 +7222,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@uppy/dashboard@npm:^4.1.1":
+"@uppy/dashboard@npm:^4.1.1, @uppy/dashboard@npm:^4.1.2":
   version: 4.1.2
   resolution: "@uppy/dashboard@npm:4.1.2"
   dependencies:

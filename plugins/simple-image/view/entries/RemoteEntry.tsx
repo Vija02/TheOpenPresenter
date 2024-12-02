@@ -4,8 +4,7 @@ import { theme } from "@repo/ui";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { TRPCUntypedClient } from "@trpc/client";
 import "@uppy/core/dist/style.min.css";
-import "@uppy/file-input/dist/style.css";
-import "@uppy/status-bar/dist/style.min.css";
+import "@uppy/dashboard/dist/style.min.css";
 
 import { AppRouter } from "../../src";
 import Remote from "../ImageRemote";
