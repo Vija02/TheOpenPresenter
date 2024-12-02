@@ -1,5 +1,15 @@
-import { Box, Flex, Input, Stack, Text } from "@chakra-ui/react";
+import {
+  Box,
+  Flex,
+  Input,
+  InputGroup,
+  InputRightElement,
+  Stack,
+  Text,
+} from "@chakra-ui/react";
+import { LoadingInline } from "@repo/ui";
 import { useEffect, useRef, useState } from "react";
+import Highlighter from "react-highlight-words";
 import { useDebounce } from "use-debounce";
 
 import { trpc } from "../../trpc";
@@ -18,7 +28,7 @@ export const SearchSong = ({
   const [searchInput, setSearchInput] = useState(initialValue ?? "");
   const [debouncedSearchInput] = useDebounce(searchInput, 200);
 
-  const { data: songData } = trpc.lyricsPresenter.search.useQuery({
+  const { data: songData, isFetching } = trpc.lyricsPresenter.search.useQuery({
     title: debouncedSearchInput,
   });
 
@@ -58,13 +68,20 @@ export const SearchSong = ({
         </Text>
       </Stack>
       <Stack pl={{ base: "", sm: "4" }} width="100%">
-        <Input
-          ref={focusElement}
-          mb={2}
-          placeholder="Search a song..."
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-        />
+        <InputGroup>
+          <Input
+            ref={focusElement}
+            mb={2}
+            placeholder="Search a song..."
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+          />
+          <InputRightElement>
+            <Box display={isFetching ? "block" : "none"}>
+              <LoadingInline defer={false} />
+            </Box>
+          </InputRightElement>
+        </InputGroup>
         <Box>
           {songData?.data.map((x: any) => (
             <Box
@@ -79,10 +96,20 @@ export const SearchSong = ({
               px={1}
             >
               <Text fontSize="md" lineHeight={1}>
-                {x.title}
+                {/* @ts-ignore */}
+                <Highlighter
+                  searchWords={[debouncedSearchInput]}
+                  autoEscape={true}
+                  textToHighlight={x.title}
+                />
               </Text>
               <Text fontSize="xs" color="gray.500">
-                {x.author}
+                {/* @ts-ignore */}
+                <Highlighter
+                  searchWords={[debouncedSearchInput]}
+                  autoEscape={true}
+                  textToHighlight={x.author !== "" ? x.author : "-"}
+                />
               </Text>
             </Box>
           ))}
