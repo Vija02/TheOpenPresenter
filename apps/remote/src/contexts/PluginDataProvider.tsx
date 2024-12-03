@@ -148,16 +148,34 @@ const initializeHocuspocusProvider = (
 
     const uaData = uaParser();
 
-    const syncFunction = () => {
-      clearTimeout(timeout);
-      provider.off("synced", syncFunction);
+    const setAwarenessData = () => {
       provider.setAwarenessField("user", {
         id: currentUserId,
         type: "remote",
         userAgentInfo: uaData,
       } as AwarenessUserData);
+    };
+    const clearAwarenessData = () => {
+      provider.setAwarenessField("user", null);
+    };
+
+    const syncFunction = () => {
+      clearTimeout(timeout);
+      provider.off("synced", syncFunction);
+      setAwarenessData();
       resolve(provider);
     };
+
+    addEventListener("pagehide", () => {
+      clearAwarenessData();
+    });
+    addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "hidden") {
+        clearAwarenessData();
+      } else {
+        setAwarenessData();
+      }
+    });
 
     provider.on("synced", syncFunction);
   });
