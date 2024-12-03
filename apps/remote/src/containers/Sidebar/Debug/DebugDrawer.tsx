@@ -8,10 +8,16 @@ import {
   DrawerHeader,
   DrawerOverlay,
   DrawerProps,
+  Tab,
+  TabList,
+  TabPanel,
+  TabPanels,
+  Tabs,
 } from "@chakra-ui/react";
 import { OverlayToggleComponentProps } from "@repo/ui";
 import { lazy } from "react";
 
+import { useAwareness } from "../../../contexts/AwarenessProvider";
 import { useData } from "../../../contexts/PluginDataProvider";
 
 const JSONViewer = lazy(() => import("./JSONViewer"));
@@ -24,6 +30,7 @@ export type DebugDrawerPropTypes = Omit<
 
 const DebugDrawer = ({ isOpen, onToggle, ...props }: DebugDrawerPropTypes) => {
   const data = useData();
+  const { awarenessData } = useAwareness();
 
   return (
     <Drawer
@@ -37,8 +44,16 @@ const DebugDrawer = ({ isOpen, onToggle, ...props }: DebugDrawerPropTypes) => {
         <DrawerHeader>Debug</DrawerHeader>
         <DrawerCloseButton />
         <DrawerBody>
-          {/* Lazy load */}
-          {isOpen && <JSONViewer src={data} />}
+          <Tabs isLazy>
+            <TabList>
+              <Tab>Main Data</Tab>
+              <Tab>Awareness Data</Tab>
+            </TabList>
+            <TabPanels>
+              <TabPanel>{<JSONViewer src={data} />}</TabPanel>
+              <TabPanel>{<JSONViewer src={awarenessData} />}</TabPanel>
+            </TabPanels>
+          </Tabs>
         </DrawerBody>
 
         <DrawerFooter>
