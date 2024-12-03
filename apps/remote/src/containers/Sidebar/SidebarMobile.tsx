@@ -16,7 +16,14 @@ const SidebarMobile = () => {
 
   return (
     <Box boxShadow="md">
-      <Box bg="gray.100" height="100%" width="80px">
+      <Box
+        display="flex"
+        flexDir="column"
+        bg="#F9FBFF"
+        height="100%"
+        width="80px"
+        borderRight="1px solid #d0d0d0"
+      >
         <Link
           href={`/o/${orgSlug}`}
           display="flex"
@@ -24,48 +31,54 @@ const SidebarMobile = () => {
           alignItems="center"
           justifyContent="center"
           _hover={{ bg: "gray.300" }}
+          bg="white"
         >
           <VscArrowLeft fontSize={20} />
         </Link>
         <Divider />
-        {sortBy(Object.entries(data.data), ([, value]) => value.order).map(
-          ([id, value]) => (
-            <Box
-              key={id}
-              onClick={() => {
-                navigate(`/${id}`);
-              }}
-              cursor="pointer"
-              px={2}
-              _hover={{ bg: "gray.300" }}
-              bg={location.includes(id) ? "gray.300" : "transparent"}
-              height="80px"
-              display="flex"
-              alignItems="center"
-              position="relative"
-            >
-              {data.renderer["1"]?.currentScene === id && (
-                <Box
-                  top={0}
-                  bottom={0}
-                  left={0}
-                  width="3px"
-                  position="absolute"
-                  bg="red.400"
-                />
-              )}
-              <Text
-                fontSize="xs"
-                textAlign="center"
-                wordBreak="break-word"
-                width="100%"
+        <Box overflow="auto">
+          {sortBy(Object.entries(data.data), ([, value]) => value.order).map(
+            ([id, value]) => (
+              <Box
+                key={id}
+                onClick={() => {
+                  navigate(`/${id}`);
+                }}
+                cursor="pointer"
+                px={2}
+                _hover={{ bg: "gray.300" }}
+                bg={location.includes(id) ? "gray.300" : "transparent"}
+                height="80px"
+                display="flex"
+                alignItems="center"
+                position="relative"
+                borderBottom="1px solid rgb(0, 0, 0, 0.06)"
               >
-                {value.name}
-              </Text>
-            </Box>
-          ),
-        )}
-        <Stack mt={3} px={2}>
+                {data.renderer["1"]?.currentScene === id && (
+                  <Box
+                    top={0}
+                    bottom={0}
+                    left={0}
+                    width="3px"
+                    position="absolute"
+                    bg="red.400"
+                  />
+                )}
+                <Text
+                  fontSize="xs"
+                  textAlign="center"
+                  wordBreak="break-word"
+                  width="100%"
+                  fontWeight="medium"
+                >
+                  {value.name}
+                </Text>
+              </Box>
+            ),
+          )}
+        </Box>
+        <Divider />
+        <Stack py={3} px={2}>
           <OverlayToggle
             toggler={({ onToggle }) => (
               <Button
@@ -90,6 +103,7 @@ const SidebarMobile = () => {
             isExternal
             textDecor="none"
             _hover={{ textDecor: "none" }}
+            bg="white"
           >
             <Button
               w="100%"

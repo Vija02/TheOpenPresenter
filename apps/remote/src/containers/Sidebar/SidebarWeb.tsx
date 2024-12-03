@@ -30,8 +30,14 @@ const SidebarWeb = () => {
   return (
     <Box boxShadow="md">
       <ResizableBoxWrapper>
-        <Box display="flex" flexDir="column" bg="gray.100" height="100%">
-          <Box flex={1}>
+        <Box
+          display="flex"
+          flexDir="column"
+          bg="#F9FBFF"
+          height="100%"
+          borderRight="1px solid #d0d0d0"
+        >
+          <Box display="flex" flexDir="column" flex={1} overflow="auto">
             <Link
               href={`/o/${orgSlug}`}
               display="flex"
@@ -39,12 +45,16 @@ const SidebarWeb = () => {
               alignItems="center"
               justifyContent="center"
               _hover={{ bg: "gray.300" }}
+              bg="white"
             >
               <VscArrowLeft fontSize={20} /> Back to Projects
             </Link>
             <Divider />
-            {sortBy(Object.entries(data.data), ([, value]) => value.order).map(
-              ([id, value]) => (
+            <Box overflow="auto">
+              {sortBy(
+                Object.entries(data.data),
+                ([, value]) => value.order,
+              ).map(([id, value]) => (
                 <Box
                   key={id}
                   onClick={() => {
@@ -69,8 +79,8 @@ const SidebarWeb = () => {
                   )}
                   <Text fontWeight="bold">{value.name}</Text>
                 </Box>
-              ),
-            )}
+              ))}
+            </Box>
             <Stack mt={3} px={2}>
               <OverlayToggle
                 toggler={({ onToggle }) => (
@@ -84,7 +94,11 @@ const SidebarWeb = () => {
               >
                 <SidebarAddSceneModal />
               </OverlayToggle>
-              <Link href={`/render/${orgSlug}/${projectSlug}`} isExternal>
+              <Link
+                href={`/render/${orgSlug}/${projectSlug}`}
+                isExternal
+                bg="white"
+              >
                 <Button w="100%" variant="outline" borderColor="gray.300">
                   <MdCoPresent />
                   <Text ml={2}>Present</Text>
