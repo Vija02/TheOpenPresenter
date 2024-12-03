@@ -125,20 +125,22 @@ const SidebarWeb = () => {
             </AvatarGroup>
           </Stack>
           <Stack>
-            <OverlayToggle
-              toggler={({ onToggle }) => (
-                <Button
-                  onClick={onToggle}
-                  colorScheme="green"
-                  size="sm"
-                  rounded="none"
-                >
-                  Debug
-                </Button>
-              )}
-            >
-              <DebugDrawer />
-            </OverlayToggle>
+            {import.meta.env.DEV && (
+              <OverlayToggle
+                toggler={({ onToggle }) => (
+                  <Button
+                    onClick={onToggle}
+                    colorScheme="green"
+                    size="sm"
+                    rounded="none"
+                  >
+                    Debug
+                  </Button>
+                )}
+              >
+                <DebugDrawer />
+              </OverlayToggle>
+            )}
           </Stack>
         </Box>
       </ResizableBoxWrapper>
