@@ -110,17 +110,17 @@ const SidebarWeb = () => {
             <Text>Remote</Text>
             <AvatarGroup>
               {awarenessData
-                .filter((x) => x.user.type === "remote")
+                .filter((x) => x.user?.type === "remote")
                 .map((x, i) => (
-                  <Avatar key={i} size="sm" name={x.user.type} />
+                  <Avatar key={i} size="sm" name={x.user?.type} />
                 ))}
             </AvatarGroup>
             <Text>Renderer</Text>
             <AvatarGroup>
               {awarenessData
-                .filter((x) => x.user.type === "renderer")
+                .filter((x) => x.user?.type === "renderer")
                 .map((x, i) => (
-                  <Avatar key={i} size="sm" name={x.user.type} />
+                  <Avatar key={i} size="sm" name={x.user?.type} />
                 ))}
             </AvatarGroup>
           </Stack>

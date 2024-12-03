@@ -25,12 +25,12 @@ export const StreamCard = ({ activeStream }: PropTypes) => {
     }
 
     const currentAwarenessData = awarenessData.find(
-      (x) => x.user.id === activeStream.awarenessUserId,
+      (x) => x.user?.id === activeStream.awarenessUserId,
     );
 
     // If the user just disappeared, this object will be cleaned.
     // So just return null
-    if (!currentAwarenessData) {
+    if (!currentAwarenessData || !currentAwarenessData.user) {
       return null;
     }
 

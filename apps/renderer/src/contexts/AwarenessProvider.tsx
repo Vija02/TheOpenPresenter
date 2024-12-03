@@ -1,3 +1,4 @@
+import { AwarenessUserData } from "@repo/base-plugin";
 import isEqual from "fast-deep-equal";
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { Awareness } from "y-protocols/awareness";
@@ -5,7 +6,9 @@ import { Awareness } from "y-protocols/awareness";
 import { usePluginData } from "./PluginDataProvider";
 
 type AwarenessProviderType = {
-  awarenessData: Record<string, any>[];
+  awarenessData: {
+    user?: AwarenessUserData;
+  }[];
 };
 
 const initialData: AwarenessProviderType = {
