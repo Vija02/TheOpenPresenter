@@ -32,6 +32,14 @@ export type PluginBaseData = {
   songs: Song[];
 };
 
+const paddingValidator = z
+  .string()
+  .or(z.number())
+  .transform((x) => {
+    const num = parseInt(x.toString(), 10);
+    return Number.isNaN(num) ? 0 : num;
+  })
+  .optional();
 export const slideStyleValidator = z.object({
   autoSize: z.boolean().optional(),
   fontSize: z.string().or(z.number()).optional(),
@@ -47,14 +55,12 @@ export const slideStyleValidator = z.object({
     })
     .optional(),
   isDarkMode: z.boolean().optional(),
-  padding: z
-    .string()
-    .or(z.number())
-    .transform((x) => {
-      const num = parseInt(x.toString(), 10);
-      return Number.isNaN(num) ? 0 : num;
-    })
-    .optional(),
+  padding: paddingValidator,
+  paddingIsLinked: z.boolean().optional(),
+  leftPadding: paddingValidator,
+  topPadding: paddingValidator,
+  rightPadding: paddingValidator,
+  bottomPadding: paddingValidator,
   debugPadding: z.boolean().optional(),
 });
 export type SlideStyle = z.infer<typeof slideStyleValidator>;

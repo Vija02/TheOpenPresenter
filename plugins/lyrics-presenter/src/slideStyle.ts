@@ -14,6 +14,11 @@ export const getSlideStyle = (
     lineHeight: slideStyle?.lineHeight ?? 1,
     isDarkMode: slideStyle?.isDarkMode ?? true,
     padding: slideStyle?.padding ?? 4,
+    paddingIsLinked: slideStyle?.paddingIsLinked ?? true,
+    leftPadding: slideStyle?.leftPadding ?? 4,
+    topPadding: slideStyle?.topPadding ?? 4,
+    rightPadding: slideStyle?.rightPadding ?? 4,
+    bottomPadding: slideStyle?.bottomPadding ?? 4,
     debugPadding: slideStyle?.debugPadding ?? false,
   };
 };

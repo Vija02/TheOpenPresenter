@@ -7,6 +7,7 @@ import {
   NumberInputStepper,
   Stack,
   Text,
+  TextProps,
 } from "@chakra-ui/react";
 import { useField, useFormikContext } from "formik";
 import { BaseProps, FormControl } from "formik-chakra-ui";
@@ -17,6 +18,7 @@ export type NumberInputControlWithUnitProps = BaseProps & {
   showStepper?: boolean;
   children?: React.ReactNode;
   unit?: string;
+  unitProps?: TextProps;
 };
 
 export const NumberInputControlWithUnit: FC<NumberInputControlWithUnitProps> =
@@ -32,6 +34,7 @@ export const NumberInputControlWithUnit: FC<NumberInputControlWithUnitProps> =
         children,
         numberInputProps,
         unit,
+        unitProps,
         ...rest
       } = props;
       const [field, { error, touched }] = useField(name);
@@ -60,7 +63,7 @@ export const NumberInputControlWithUnit: FC<NumberInputControlWithUnitProps> =
               )}
               {children}
             </NumberInput>
-            <Text fontSize="lg" fontWeight="medium">
+            <Text fontSize="lg" fontWeight="medium" {...unitProps}>
               {unit}
             </Text>
           </Stack>

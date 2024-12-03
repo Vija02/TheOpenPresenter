@@ -26,7 +26,7 @@ import {
   SubmitButton,
 } from "formik-chakra-ui";
 import { useCallback, useEffect } from "react";
-import { FaBold, FaItalic } from "react-icons/fa6";
+import { FaBold, FaItalic, FaLink } from "react-icons/fa6";
 import { toFormikValidationSchema } from "zod-formik-adapter";
 
 import { getSlideStyle } from "../../../src/slideStyle";
@@ -228,17 +228,97 @@ const StyleSettingModal = ({
                     <Heading fontSize="xl" fontWeight="bold" mt={5}>
                       Placement
                     </Heading>
-                    <NumberInputControlWithUnit
-                      name="padding"
-                      label="Padding"
-                      maxW="100px"
-                      unit="%"
-                      numberInputProps={{
-                        min: 0,
-                        max: 100,
-                        step: 0.5,
-                      }}
-                    />
+                    <Stack direction="row" alignItems="center">
+                      <FormLabel mb={0}>Padding</FormLabel>
+                      <Button
+                        size="sm"
+                        bg={values.paddingIsLinked ? "gray.100" : "transparent"}
+                        variant="outline"
+                        onClick={() =>
+                          setFieldValue(
+                            "paddingIsLinked",
+                            !values.paddingIsLinked,
+                          )
+                        }
+                      >
+                        <FaLink />
+                      </Button>
+                    </Stack>
+                    {values.paddingIsLinked ? (
+                      <NumberInputControlWithUnit
+                        name="padding"
+                        maxW="100px"
+                        unit="%"
+                        numberInputProps={{
+                          min: 0,
+                          max: 100,
+                          step: 0.5,
+                        }}
+                      />
+                    ) : (
+                      <Stack direction="row">
+                        <NumberInputControlWithUnit
+                          name="leftPadding"
+                          label="Left"
+                          maxW="100px"
+                          unit="%"
+                          numberInputProps={{
+                            min: 0,
+                            max: 100,
+                            step: 0.5,
+                            size: "sm",
+                          }}
+                          labelProps={{
+                            fontSize: "sm",
+                          }}
+                        />
+                        <NumberInputControlWithUnit
+                          name="topPadding"
+                          label="Top"
+                          maxW="100px"
+                          unit="%"
+                          numberInputProps={{
+                            min: 0,
+                            max: 100,
+                            step: 0.5,
+                            size: "sm",
+                          }}
+                          labelProps={{
+                            fontSize: "sm",
+                          }}
+                        />
+                        <NumberInputControlWithUnit
+                          name="rightPadding"
+                          label="Right"
+                          maxW="100px"
+                          unit="%"
+                          numberInputProps={{
+                            min: 0,
+                            max: 100,
+                            step: 0.5,
+                            size: "sm",
+                          }}
+                          labelProps={{
+                            fontSize: "sm",
+                          }}
+                        />
+                        <NumberInputControlWithUnit
+                          name="bottomPadding"
+                          label="Bottom"
+                          maxW="100px"
+                          unit="%"
+                          numberInputProps={{
+                            min: 0,
+                            max: 100,
+                            step: 0.5,
+                            size: "sm",
+                          }}
+                          labelProps={{
+                            fontSize: "sm",
+                          }}
+                        />
+                      </Stack>
+                    )}
                   </VStack>
                   <Show above="md">
                     <VStack flexBasis="200px">

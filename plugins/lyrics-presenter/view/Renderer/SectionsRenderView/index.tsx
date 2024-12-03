@@ -84,6 +84,8 @@ const SectionsRenderViewAutoSize = React.memo(
     textLines: string[];
     size: [number, number];
   }) => {
+    const [width, height] = size;
+
     const measuredData = useMemo(
       () =>
         getSvgMeasurement({
@@ -92,10 +94,37 @@ const SectionsRenderViewAutoSize = React.memo(
         }),
       [slideStyle, textLines],
     );
-    const finalPadding = useMemo(
-      () => (slideStyle.padding / 100) * size[0],
-      [size, slideStyle.padding],
-    );
+
+    const padding = useMemo(() => {
+      if (slideStyle.paddingIsLinked) {
+        const scaledPadding = (slideStyle.padding / 100) * size[0];
+        const clamppedPadding = Math.min(width / 2, height / 2, scaledPadding);
+
+        return [
+          clamppedPadding,
+          clamppedPadding,
+          clamppedPadding,
+          clamppedPadding,
+        ] as [number, number, number, number];
+      } else {
+        return [
+          slideStyle.leftPadding,
+          slideStyle.topPadding,
+          slideStyle.rightPadding,
+          slideStyle.bottomPadding,
+        ].map((x) => (x / 100) * size[0]) as [number, number, number, number];
+      }
+    }, [
+      height,
+      size,
+      slideStyle.bottomPadding,
+      slideStyle.leftPadding,
+      slideStyle.padding,
+      slideStyle.paddingIsLinked,
+      slideStyle.rightPadding,
+      slideStyle.topPadding,
+      width,
+    ]);
 
     const viewBox = useMemo(
       () => [0, 0, measuredData.width, measuredData.height].join(" "),
@@ -103,18 +132,18 @@ const SectionsRenderViewAutoSize = React.memo(
     );
     return (
       <>
-        {slideStyle.debugPadding && <DebugPadding padding={finalPadding} />}
+        {slideStyle.debugPadding && <DebugPadding padding={padding} />}
         <svg
           viewBox={viewBox}
           xmlns="http://www.w3.org/2000/svg"
           style={{
-            width: `calc(100% - ${finalPadding * 2}px)`,
-            height: `calc(100% - ${finalPadding * 2}px)`,
+            width: `calc(100% - ${padding[0]}px - ${padding[2]}px)`,
+            height: `calc(100% - ${padding[1]}px - ${padding[3]}px)`,
             overflow: "visible",
             userSelect: "none",
             position: "absolute",
-            top: finalPadding,
-            left: finalPadding,
+            left: padding[0],
+            top: padding[1],
           }}
         >
           <text
@@ -155,8 +184,36 @@ const SectionsRenderViewManualFontSize = React.memo(
   }) => {
     const [width, height] = size;
 
-    const padding = (slideStyle.padding / 100) * size[0];
-    const finalPadding = Math.min(width / 2, height / 2, padding);
+    const padding = useMemo(() => {
+      if (slideStyle.paddingIsLinked) {
+        const scaledPadding = (slideStyle.padding / 100) * size[0];
+        const clamppedPadding = Math.min(width / 2, height / 2, scaledPadding);
+
+        return [
+          clamppedPadding,
+          clamppedPadding,
+          clamppedPadding,
+          clamppedPadding,
+        ] as [number, number, number, number];
+      } else {
+        return [
+          slideStyle.leftPadding,
+          slideStyle.topPadding,
+          slideStyle.rightPadding,
+          slideStyle.bottomPadding,
+        ].map((x) => (x / 100) * size[0]) as [number, number, number, number];
+      }
+    }, [
+      height,
+      size,
+      slideStyle.bottomPadding,
+      slideStyle.leftPadding,
+      slideStyle.padding,
+      slideStyle.paddingIsLinked,
+      slideStyle.rightPadding,
+      slideStyle.topPadding,
+      width,
+    ]);
 
     return (
       <Box
@@ -166,11 +223,11 @@ const SectionsRenderViewManualFontSize = React.memo(
         justifyContent="center"
         height="100%"
         overflow="hidden"
-        padding={finalPadding + "px"}
+        padding={padding.map((x) => x + "px").join(" ")}
         position="relative"
         fontSize={width / 280} // Magic number to get the pt scale right
       >
-        {slideStyle.debugPadding && <DebugPadding padding={finalPadding} />}
+        {slideStyle.debugPadding && <DebugPadding padding={padding} />}
         <Text
           fontWeight={slideStyle.fontWeight}
           fontStyle={slideStyle.fontStyle}
@@ -193,7 +250,11 @@ const SectionsRenderViewManualFontSize = React.memo(
   },
 );
 
-const DebugPadding = ({ padding }: { padding: number }) => {
+const DebugPadding = ({
+  padding,
+}: {
+  padding: [number, number, number, number];
+}) => {
   return (
     <>
       <Box
@@ -201,40 +262,32 @@ const DebugPadding = ({ padding }: { padding: number }) => {
         left={0}
         top={0}
         bottom={0}
-        borderLeft={`${padding}px solid rgb(115, 94, 255)`}
-        borderTop={`${padding}px solid transparent`}
-        borderBottom={`${padding}px solid transparent`}
-        opacity={0.7}
-      />
-      <Box
-        position="absolute"
-        right={0}
-        top={0}
-        bottom={0}
-        borderRight={`${padding}px solid rgb(115, 94, 255)`}
-        borderTop={`${padding}px solid transparent`}
-        borderBottom={`${padding}px solid transparent`}
-        opacity={0.7}
+        width={`${padding[0]}px`}
+        bg="#5042B2"
       />
       <Box
         position="absolute"
         top={0}
         left={0}
         right={0}
-        borderTop={`${padding}px solid rgb(115, 94, 255)`}
-        borderLeft={`${padding}px solid transparent`}
-        borderRight={`${padding}px solid transparent`}
-        opacity={0.7}
+        height={`${padding[1]}px`}
+        bg="#5042B2"
+      />
+      <Box
+        position="absolute"
+        right={0}
+        top={0}
+        bottom={0}
+        width={`${padding[2]}px`}
+        bg="#5042B2"
       />
       <Box
         position="absolute"
         bottom={0}
         left={0}
         right={0}
-        borderBottom={`${padding}px solid rgb(115, 94, 255)`}
-        borderLeft={`${padding}px solid transparent`}
-        borderRight={`${padding}px solid transparent`}
-        opacity={0.7}
+        height={`${padding[3]}px`}
+        bg="#5042B2"
       />
     </>
   );
