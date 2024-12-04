@@ -6,6 +6,7 @@ import MainBody from "./containers/MainBody";
 import Sidebar from "./containers/Sidebar";
 import { AudioCheckProvider } from "./contexts/AudioCheckProvider";
 import { AwarenessProvider } from "./contexts/AwarenessProvider";
+import { ErrorProvider } from "./contexts/ErrorProvider";
 import { PluginDataProvider } from "./contexts/PluginDataProvider";
 import { PluginMetaDataProvider } from "./contexts/PluginMetaDataProvider";
 
@@ -27,21 +28,23 @@ function Root() {
 
   return (
     <PluginMetaDataProvider orgSlug={orgSlug!} projectSlug={projectSlug!}>
-      <PluginDataProvider>
-        <AwarenessProvider>
-          <AudioCheckProvider>
-            <Box
-              display="flex"
-              position="relative"
-              height="100vh"
-              overflow="hidden"
-            >
-              <Sidebar />
-              <MainBody />
-            </Box>
-          </AudioCheckProvider>
-        </AwarenessProvider>
-      </PluginDataProvider>
+      <ErrorProvider>
+        <AudioCheckProvider>
+          <PluginDataProvider type="remote">
+            <AwarenessProvider>
+              <Box
+                display="flex"
+                position="relative"
+                height="100vh"
+                overflow="hidden"
+              >
+                <Sidebar />
+                <MainBody />
+              </Box>
+            </AwarenessProvider>
+          </PluginDataProvider>
+        </AudioCheckProvider>
+      </ErrorProvider>
     </PluginMetaDataProvider>
   );
 }

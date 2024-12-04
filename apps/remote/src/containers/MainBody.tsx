@@ -21,6 +21,7 @@ import { useLocation, useRoute } from "wouter";
 import Y from "yjs";
 
 import { useAudioCheck } from "../contexts/AudioCheckProvider";
+import { useError } from "../contexts/ErrorProvider";
 import { useData, usePluginData } from "../contexts/PluginDataProvider";
 import { usePluginMetaData } from "../contexts/PluginMetaDataProvider";
 import { trpcClient } from "../trpc";
@@ -266,6 +267,7 @@ const PluginRenderer = React.memo(
     );
 
     const { canPlayAudio } = useAudioCheck();
+    const { addError, removeError } = useError();
 
     const Element = useMemo(() => {
       if (!viewData?.tag) {
@@ -296,11 +298,13 @@ const PluginRenderer = React.memo(
         },
         trpcClient,
         misc: {
+          errorHandler: { addError, removeError },
           canPlayAudio,
           toast,
         },
       });
     }, [
+      addError,
       canPlayAudio,
       currentUserId,
       getYJSPluginRenderer,
@@ -308,6 +312,7 @@ const PluginRenderer = React.memo(
       pluginId,
       pluginInfo.plugin,
       provider,
+      removeError,
       sceneId,
       viewData?.tag,
       yjsPluginRendererData,

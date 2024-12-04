@@ -11,6 +11,7 @@ import { Map as YMap } from "yjs";
 import {
   AwarenessContext,
   CanPlayAudio,
+  ErrorHandler,
   ObjectToTypedMap,
   Plugin,
   PluginContext,
@@ -33,7 +34,11 @@ export function initPluginApi<
   awarenessContext: AwarenessContext;
   pluginContext: PluginContext;
   setRenderCurrentScene: () => void;
-  misc: { canPlayAudio: CanPlayAudio; toast: typeof ReactToast };
+  misc: {
+    errorHandler: ErrorHandler;
+    canPlayAudio: CanPlayAudio;
+    toast: typeof ReactToast;
+  };
 }) {
   // TODO: Should only be called once
   const sceneWatcher = new YjsWatcher(yjsPluginSceneData as any);
@@ -118,12 +123,17 @@ export function initPluginApi<
       toast: misc.toast,
     },
     audio: {
-      useCanPlay: () => {
-        return useSyncExternalStore(
-          misc.canPlayAudio.subscribe,
-          () => misc.canPlayAudio.value,
+      useCanPlay: (options?: { skipCheck?: boolean }) => {
+        return useSyncExternalStore(misc.canPlayAudio.subscribe, () =>
+          options?.skipCheck
+            ? misc.canPlayAudio._rawValue
+            : misc.canPlayAudio.value,
         );
       },
+    },
+    error: {
+      addError: misc.errorHandler.addError,
+      removeError: misc.errorHandler.removeError,
     },
     dispose: () => {
       unbindScene();

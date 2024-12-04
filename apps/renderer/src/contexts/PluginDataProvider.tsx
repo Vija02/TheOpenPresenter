@@ -15,6 +15,7 @@ import React, {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useLayoutEffect,
   useMemo,
   useState,
@@ -24,6 +25,7 @@ import { v4 } from "uuid";
 import { proxy, useSnapshot } from "valtio";
 import { bind } from "valtio-yjs";
 
+import { useError } from "./ErrorProvider";
 import { usePluginMetaData } from "./PluginMetaDataProvider";
 
 type PluginDataProviderType = {
@@ -123,21 +125,8 @@ function PluginDataProviderInner({
   );
 }
 
-const initializeHocuspocusProvider = (
-  projectId: string,
-  currentUserId: string,
-) => {
+const initializeHocuspocusProvider = (projectId: string) => {
   return new Promise<HocuspocusProvider>((resolve, reject) => {
-    const provider = new HocuspocusProvider({
-      url: (appData.getRootURL() + "/wlink").replace(/^http/, "ws"),
-      name: projectId,
-      // Here only to force authentication
-      token: " ",
-      onAuthenticationFailed: () => {
-        reject(new Error("Authentication Failed"));
-      },
-    });
-
     // Set a timeout to reject if we can't connect
     // Due to how the provider works, some error could go uncaught
     // So this is an effort to at least show an error if that happens
@@ -146,45 +135,28 @@ const initializeHocuspocusProvider = (
       reject(new Error("Unable to connect: Timeout reached"));
     }, 60000);
 
-    const uaData = uaParser();
-
-    const setAwarenessData = () => {
-      provider.setAwarenessField("user", {
-        id: currentUserId,
-        type: "renderer",
-        userAgentInfo: uaData,
-      } as AwarenessUserData);
-    };
-    const clearAwarenessData = () => {
-      provider.setAwarenessField("user", null);
-    };
-
-    const syncFunction = () => {
-      clearTimeout(timeout);
-      provider.off("synced", syncFunction);
-      setAwarenessData();
-      resolve(provider);
-    };
-
-    addEventListener("pagehide", () => {
-      clearAwarenessData();
+    const provider = new HocuspocusProvider({
+      url: (appData.getRootURL() + "/wlink").replace(/^http/, "ws"),
+      name: projectId,
+      // Here only to force authentication
+      token: " ",
+      onAuthenticationFailed: () => {
+        reject(new Error("Authentication Failed"));
+      },
+      onSynced: () => {
+        clearTimeout(timeout);
+        resolve(provider);
+      },
     });
-    addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "hidden") {
-        clearAwarenessData();
-      } else {
-        setAwarenessData();
-      }
-    });
-
-    provider.on("synced", syncFunction);
   });
 };
 
 export const PluginDataProvider = ({
   children,
+  type,
 }: {
   children: React.ReactNode;
+  type: "remote" | "renderer";
 }) => {
   const projectId = usePluginMetaData().projectId;
   const [currentUserId] = useState(v4());
@@ -196,9 +168,48 @@ export const PluginDataProvider = ({
     isError,
   } = useQuery({
     queryKey: ["provider", projectId],
-    queryFn: () => initializeHocuspocusProvider(projectId, currentUserId),
+    queryFn: () => initializeHocuspocusProvider(projectId),
     retry: false,
   });
+  const { errors } = useError();
+
+  const uaData = useMemo(() => uaParser(), []);
+
+  const setAwarenessData = useCallback(() => {
+    provider?.setAwarenessField("user", {
+      id: currentUserId,
+      type,
+      userAgentInfo: uaData,
+      errors,
+    } satisfies AwarenessUserData);
+  }, [currentUserId, errors, provider, type, uaData]);
+  const clearAwarenessData = useCallback(() => {
+    provider?.setAwarenessField("user", null);
+  }, [provider]);
+
+  useEffect(() => {
+    if (provider?.synced) {
+      // Set the data
+      setAwarenessData();
+
+      addEventListener("pageshow", setAwarenessData);
+      addEventListener("pagehide", clearAwarenessData);
+      addEventListener("unload", clearAwarenessData);
+
+      return () => {
+        removeEventListener("pageshow", setAwarenessData);
+        removeEventListener("pagehide", clearAwarenessData);
+        removeEventListener("unload", clearAwarenessData);
+      };
+    }
+  }, [
+    clearAwarenessData,
+    currentUserId,
+    provider,
+    provider?.synced,
+    setAwarenessData,
+  ]);
+
   if (isError) {
     return <ErrorAlert error={error} />;
   }

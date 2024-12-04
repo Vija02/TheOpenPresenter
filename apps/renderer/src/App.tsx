@@ -5,6 +5,7 @@ import { Route, Switch, useParams } from "wouter";
 import { Body } from "./Body";
 import { AudioCheckProvider } from "./contexts/AudioCheckProvider";
 import { AwarenessProvider } from "./contexts/AwarenessProvider";
+import { ErrorProvider } from "./contexts/ErrorProvider";
 import { PluginDataProvider } from "./contexts/PluginDataProvider";
 import { PluginMetaDataProvider } from "./contexts/PluginMetaDataProvider";
 
@@ -26,15 +27,17 @@ function Root() {
 
   return (
     <PluginMetaDataProvider orgSlug={orgSlug!} projectSlug={projectSlug!}>
-      <PluginDataProvider>
-        <AwarenessProvider>
-          <AudioCheckProvider>
-            <Box w="100vw" h="100vh">
-              <Body />
-            </Box>
-          </AudioCheckProvider>
-        </AwarenessProvider>
-      </PluginDataProvider>
+      <ErrorProvider>
+        <AudioCheckProvider>
+          <PluginDataProvider type="renderer">
+            <AwarenessProvider>
+              <Box w="100vw" h="100vh">
+                <Body />
+              </Box>
+            </AwarenessProvider>
+          </PluginDataProvider>
+        </AudioCheckProvider>
+      </ErrorProvider>
     </PluginMetaDataProvider>
   );
 }

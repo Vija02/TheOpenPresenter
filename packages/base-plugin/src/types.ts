@@ -75,6 +75,7 @@ export type AwarenessUserData = {
   id: string;
   type: "remote" | "renderer";
   userAgentInfo: UAParser.IResult;
+  errors: string[];
 };
 
 // ========================================================================== //
@@ -95,5 +96,12 @@ export type SceneCategories = (typeof sceneCategories)[number];
 
 export type CanPlayAudio = {
   value: boolean;
+  _rawValue: boolean;
+  isChecking: boolean;
   subscribe: (callback: () => void) => () => void;
+};
+
+export type ErrorHandler = {
+  addError: (code: string) => void;
+  removeError: (code: string) => void;
 };

@@ -1,3 +1,4 @@
+import { CanPlayAudio } from "@repo/base-plugin";
 import React, {
   createContext,
   useContext,
@@ -7,14 +8,19 @@ import React, {
 } from "react";
 import { proxy } from "valtio";
 
+import { useError } from "./ErrorProvider";
+
 type AudioCheckProviderType = {
-  canPlayAudio: {
-    value: boolean;
-  };
+  canPlayAudio: CanPlayAudio;
 };
 
 const initialData: AudioCheckProviderType = {
-  canPlayAudio: { value: false },
+  canPlayAudio: {
+    value: false,
+    _rawValue: false,
+    isChecking: false,
+    subscribe: () => () => {},
+  },
 };
 
 export const AudioCheckContext =
@@ -28,6 +34,8 @@ export function AudioCheckProvider({ children }: React.PropsWithChildren<{}>) {
   const subscriber = useRef<Record<string, () => void>>({});
   const audioRef = useRef<HTMLAudioElement>(null);
 
+  const { addError, removeError } = useError();
+
   const audioCanPlay = proxy({
     get value() {
       if (canPlayObj.value) {
@@ -38,6 +46,12 @@ export function AudioCheckProvider({ children }: React.PropsWithChildren<{}>) {
       }
 
       return false;
+    },
+    get _rawValue() {
+      return canPlayObj.value;
+    },
+    get isChecking() {
+      return canPlayObj.isChecking;
     },
     get subscribe() {
       return (callback: () => void) => {
@@ -57,12 +71,14 @@ export function AudioCheckProvider({ children }: React.PropsWithChildren<{}>) {
         try {
           await audioRef.current?.play();
           setCanPlayObj({ value: true, isChecking: false });
+          removeError("ERR_AUDIO_AUTOPLAY");
           Object.values(subscriber.current).forEach((callback) => {
             callback();
           });
 
           clearInterval(interval);
         } catch (e) {
+          addError("ERR_AUDIO_AUTOPLAY");
           console.log("Checking autoplay. Error:", e);
         }
       }, 1000);
@@ -71,7 +87,7 @@ export function AudioCheckProvider({ children }: React.PropsWithChildren<{}>) {
         clearInterval(interval);
       };
     }
-  }, [canPlayObj.isChecking, canPlayObj.value]);
+  }, [addError, canPlayObj.isChecking, canPlayObj.value, removeError]);
 
   return (
     <AudioCheckContext.Provider
