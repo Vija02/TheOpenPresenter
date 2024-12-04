@@ -14,15 +14,17 @@ export const UserSourceSelector = ({ onSelectUser }: PropTypes) => {
   return (
     <>
       <Stack gap={0}>
-        {sortBy(awarenessData, "user.type").map((state) => (
-          <UserCard
-            key={state.user.id}
-            user={state.user}
-            onSelectUser={(id) => {
-              onSelectUser(id);
-            }}
-          />
-        ))}
+        {sortBy(awarenessData, "user.type").map((state) =>
+          state.user ? (
+            <UserCard
+              key={state.user.id}
+              user={state.user}
+              onSelectUser={(id) => {
+                onSelectUser(id);
+              }}
+            />
+          ) : null,
+        )}
       </Stack>
     </>
   );
