@@ -1,16 +1,16 @@
 import {
-  Avatar,
-  AvatarGroup,
   Box,
   Button,
   Divider,
   Link,
   Stack,
   Text,
+  chakra,
 } from "@chakra-ui/react";
 import { OverlayToggle } from "@repo/ui";
 import { sortBy } from "lodash-es";
-import { MdCoPresent } from "react-icons/md";
+import { MdCoPresent as MdCoPresentRaw } from "react-icons/md";
+import { RiRemoteControlLine as RiRemoteControlLineRaw } from "react-icons/ri";
 import { VscAdd, VscArrowLeft } from "react-icons/vsc";
 import { useLocation } from "wouter";
 
@@ -18,8 +18,12 @@ import { useAwareness } from "../../contexts/AwarenessProvider";
 import { useData } from "../../contexts/PluginDataProvider";
 import { usePluginMetaData } from "../../contexts/PluginMetaDataProvider";
 import DebugDrawer from "./Debug/DebugDrawer";
+import { RendererWarning } from "./RendererWarning";
 import { ResizableBoxWrapper } from "./ResizableBoxWrapper";
 import SidebarAddSceneModal from "./SidebarAddSceneModal";
+
+const MdCoPresent = chakra(MdCoPresentRaw);
+const RiRemoteControlLine = chakra(RiRemoteControlLineRaw);
 
 const SidebarWeb = () => {
   const data = useData();
@@ -37,7 +41,7 @@ const SidebarWeb = () => {
           height="100%"
           borderRight="1px solid #d0d0d0"
         >
-          <Box display="flex" flexDir="column" flex={1} overflow="auto">
+          <Box display="flex" flexDir="column" flex={1} overflow="auto" pb={2}>
             <Link
               href={`/o/${orgSlug}`}
               display="flex"
@@ -106,25 +110,32 @@ const SidebarWeb = () => {
               </Link>
             </Stack>
           </Box>
-          <Stack p={2}>
-            <Text>Remote</Text>
-            <AvatarGroup>
-              {awarenessData
-                .filter((x) => x.user?.type === "remote")
-                .map((x, i) => (
-                  <Avatar key={i} size="sm" name={x.user?.type} />
-                ))}
-            </AvatarGroup>
-            <Text>Renderer</Text>
-            <AvatarGroup>
-              {awarenessData
-                .filter((x) => x.user?.type === "renderer")
-                .map((x, i) => (
-                  <Avatar key={i} size="sm" name={x.user?.type} />
-                ))}
-            </AvatarGroup>
+          <Stack
+            direction="row"
+            p={2}
+            justifyContent="center"
+            gap={5}
+            borderTop="1px solid"
+            borderColor="gray.200"
+          >
+            <Stack direction="row" alignItems="center">
+              <Text fontWeight="medium" fontSize="lg">
+                {awarenessData.filter((x) => x.user?.type === "remote").length}
+              </Text>
+              <RiRemoteControlLine title="Active remote" fontSize="lg" />
+            </Stack>
+            <Stack direction="row" alignItems="center">
+              <Text fontWeight="medium" fontSize="lg">
+                {
+                  awarenessData.filter((x) => x.user?.type === "renderer")
+                    .length
+                }
+              </Text>
+              <MdCoPresent title="Active screens" fontSize="lg" />
+            </Stack>
           </Stack>
-          <Stack>
+          <Stack gap={0}>
+            <RendererWarning />
             {import.meta.env.DEV && (
               <OverlayToggle
                 toggler={({ onToggle }) => (
