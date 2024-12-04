@@ -130,7 +130,7 @@ const SidebarWeb = () => {
                 toggler={({ onToggle }) => (
                   <Button
                     onClick={onToggle}
-                    colorScheme="green"
+                    colorScheme="gray"
                     size="sm"
                     rounded="none"
                   >
