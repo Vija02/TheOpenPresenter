@@ -6,9 +6,10 @@ import { HowlerPlayer } from "./HowlerPlayer";
 const WorshipPadsRenderer = () => {
   const pluginApi = usePluginAPI();
 
+  const isPlaying = pluginApi.renderer.useData((x) => x.isPlaying);
   const volume = pluginApi.renderer.useData((x) => x.volume);
 
-  const canPlay = pluginApi.audio.useCanPlay();
+  const canPlay = pluginApi.audio.useCanPlay({ skipCheck: !isPlaying });
 
   const player = useRef<HowlerPlayer>(null);
   const [playerLoaded, setPlayerLoaded] = useState(false);

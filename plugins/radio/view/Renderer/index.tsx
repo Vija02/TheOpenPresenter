@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { usePluginAPI } from "../pluginApi";
 
@@ -9,6 +9,18 @@ import { usePluginAPI } from "../pluginApi";
 
 const RadioRenderer = () => {
   const pluginApi = usePluginAPI();
+  const isPlaying = pluginApi.renderer.useData((x) => x.isPlaying);
+
+  const canPlay = pluginApi.audio.useCanPlay({ skipCheck: !isPlaying });
+
+  if (!canPlay) {
+    return null;
+  }
+  return <RadioRendererInner />;
+};
+
+const RadioRendererInner = () => {
+  const pluginApi = usePluginAPI();
 
   const ref = useRef<HTMLAudioElement>(null);
 
@@ -17,21 +29,13 @@ const RadioRenderer = () => {
 
   const [localIsPlaying, setLocalIsPlaying] = useState(false);
 
-  const play = useCallback(() => {
-    ref.current?.play().catch((e) => {
-      // TODO: Handle this better
-      console.log("NOT INTERACTED. Retrying in 2s", e);
-      setTimeout(play, 2000);
-    });
-  }, []);
-
   useEffect(() => {
     if (isPlaying && !localIsPlaying) {
-      play();
+      ref.current?.play();
     } else if (!isPlaying && localIsPlaying) {
       ref.current?.pause();
     }
-  }, [isPlaying, localIsPlaying, play]);
+  }, [isPlaying, localIsPlaying]);
 
   useEffect(() => {
     if (ref.current) {

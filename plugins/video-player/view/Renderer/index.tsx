@@ -31,8 +31,6 @@ const VideoPlayerRendererInner = () => {
 const Player = () => {
   const pluginApi = usePluginAPI();
 
-  const canPlay = pluginApi.audio.useCanPlay();
-
   const [ready, setReady] = useState(false);
 
   const ref = useRef<ReactPlayer>(null);
@@ -50,6 +48,8 @@ const Player = () => {
     () => videos.find((vid) => vid.id === currentPlayingVideo.videoId),
     [currentPlayingVideo.videoId, videos],
   );
+
+  const canPlay = pluginApi.audio.useCanPlay({ skipCheck: !isPlaying });
 
   const setVideoSeek = useCallback(() => {
     if (currentPlayingVideo.playFrom && ready) {
