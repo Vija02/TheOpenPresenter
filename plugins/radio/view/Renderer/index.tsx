@@ -1,3 +1,4 @@
+import { perceptualToAmplitude } from "@discordapp/perceptual";
 import { useEffect, useRef, useState } from "react";
 
 import { usePluginAPI } from "../pluginApi";
@@ -39,7 +40,9 @@ const RadioRendererInner = () => {
 
   useEffect(() => {
     if (ref.current) {
-      ref.current.volume = Math.min(Math.max(0, volume ?? 1), 1);
+      ref.current.volume = perceptualToAmplitude(
+        Math.min(Math.max(0, volume ?? 1), 1),
+      );
     }
   }, [volume]);
 

@@ -131,7 +131,7 @@ const VideoPlayerRemote = () => {
           value={volume ?? 1}
           min={0}
           max={1}
-          step={0}
+          step={0.01}
           colorScheme="teal"
           onChange={(v) => {
             mutableRendererData.volume = v;

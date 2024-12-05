@@ -44,7 +44,7 @@ const WorshipPadsRemote = () => {
           value={volume ?? 1}
           min={0}
           max={1}
-          step={0.001}
+          step={0.01}
           orientation="vertical"
           onChange={(v) => {
             mutableRendererData.volume = v;

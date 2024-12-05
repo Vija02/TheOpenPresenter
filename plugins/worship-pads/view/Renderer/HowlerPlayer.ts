@@ -1,3 +1,7 @@
+import {
+  amplitudeToPerceptual,
+  perceptualToAmplitude,
+} from "@discordapp/perceptual";
 import { Howl } from "howler";
 
 const silent = 0;
@@ -74,7 +78,7 @@ export class HowlerPlayer {
 
     const sound = this.sounds.get(id);
     if (sound) {
-      sound.volume(this.targetVolume);
+      sound.volume(perceptualToAmplitude(this.targetVolume));
       sound.play();
 
       this.currentTrack = id;
@@ -97,7 +101,12 @@ export class HowlerPlayer {
 
       // Fade in new track
       setTimeout(() => {
-        this.smoothFade(toSound, silent, this.targetVolume, duration);
+        this.smoothFade(
+          toSound,
+          silent,
+          perceptualToAmplitude(this.targetVolume),
+          duration,
+        );
       }, 10);
 
       // Update current track
@@ -117,17 +126,16 @@ export class HowlerPlayer {
 
   smoothFade(sound: Howl, from: number, to: number, duration: number) {
     const startTime = performance.now();
-    const diff = to - from;
+    const fromPerceptual = amplitudeToPerceptual(from);
+    const diff = amplitudeToPerceptual(to) - fromPerceptual;
 
     function update() {
       const elapsed = performance.now() - startTime;
       const progress = Math.min(elapsed / duration, 1);
 
-      // Use easing function for smoother transition
-      const eased = 0.5 * (1 - Math.cos(progress * Math.PI));
-      const newVolume = from + diff * eased;
+      const newVolume = fromPerceptual + diff * progress;
 
-      sound.volume(newVolume);
+      sound.volume(perceptualToAmplitude(newVolume));
 
       if (progress < 1) {
         requestAnimationFrame(update);
@@ -142,7 +150,7 @@ export class HowlerPlayer {
   setVolume(id: string, volume: number) {
     const sound = this.sounds.get(id);
     if (sound) {
-      sound.volume(volume);
+      sound.volume(perceptualToAmplitude(volume));
     }
   }
 
