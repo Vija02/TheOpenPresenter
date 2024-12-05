@@ -110,6 +110,7 @@ const MainBody = () => {
           e.preventDefault();
         }
       }}
+      overflow="hidden"
     >
       <Flex
         flexShrink={0}
