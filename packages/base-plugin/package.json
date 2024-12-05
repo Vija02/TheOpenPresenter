@@ -5,32 +5,32 @@
   "exports": {
     ".": {
       "import": {
-        "default": "./dist/index.mjs",
-        "types": "./dist/index.d.mts"
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
       },
       "require": {
-        "default": "./dist/index.js",
-        "types": "./dist/index.d.ts"
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
       }
     },
     "./server": {
       "import": {
-        "default": "./dist/server/index.mjs",
-        "types": "./dist/server/index.d.mts"
+        "types": "./dist/server/index.d.mts",
+        "default": "./dist/server/index.mjs"
       },
       "require": {
-        "default": "./dist/server/index.js",
-        "types": "./dist/server/index.d.ts"
+        "types": "./dist/server/index.d.ts",
+        "default": "./dist/server/index.js"
       }
     },
     "./client": {
       "import": {
-        "default": "./dist/client/index.mjs",
-        "types": "./dist/client/index.d.mts"
+        "types": "./dist/client/index.d.mts",
+        "default": "./dist/client/index.mjs"
       },
       "require": {
-        "default": "./dist/client/index.js",
-        "types": "./dist/client/index.d.ts"
+        "types": "./dist/client/index.d.ts",
+        "default": "./dist/client/index.js"
       }
     }
   },
