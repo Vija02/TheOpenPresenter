@@ -4,6 +4,7 @@ import { use, useContext } from "react";
 import { useStore } from "zustand";
 
 import { CustomSizeContext } from "./SlideGrid";
+import { mapZoomToRange } from "./mapZoomToRange";
 
 type PropTypes = {
   heading?: string;
@@ -22,10 +23,11 @@ export const Slide = ({
   onClick,
   children,
 }: PropTypes) => {
-  const { forceWidth } = use(CustomSizeContext);
+  const { forceWidth, containerWidth } = use(CustomSizeContext);
   const val = useContext(PluginAPIContext);
   const { zoomLevel } = val.pluginAPI
-    ? useStore(val.pluginAPI.remote.zoomLevel)
+    ? // Breaks the rule of hook, but this should be a one time condition
+      useStore(val.pluginAPI.remote.zoomLevel)
     : { zoomLevel: 0.5 };
 
   return (
@@ -52,7 +54,11 @@ export const Slide = ({
         )}
         <Box
           aspectRatio={aspectRatio}
-          w={forceWidth ? `${forceWidth}px` : `${zoomLevel * 400}px`}
+          w={
+            forceWidth
+              ? `${forceWidth}px`
+              : `${mapZoomToRange(zoomLevel, containerWidth)}px`
+          }
           borderWidth="4px"
           borderColor={isActive ? "red.600" : "transparent"}
           userSelect="none"

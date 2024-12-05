@@ -5395,6 +5395,7 @@ __metadata:
   dependencies:
     "@ajna/pagination": "npm:^1.4.19"
     "@chakra-ui/react": "npm:^2.10.3"
+    "@react-hook/size": "npm:^2.1.2"
     "@rehooks/component-size": "npm:^1.0.3"
     "@repo/base-plugin": "npm:*"
     "@repo/graphql": "npm:*"

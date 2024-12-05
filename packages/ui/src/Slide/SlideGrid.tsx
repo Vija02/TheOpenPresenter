@@ -1,7 +1,10 @@
 import { Grid } from "@chakra-ui/react";
+import useSize from "@react-hook/size";
 import { PluginAPIContext } from "@repo/base-plugin/client";
-import { createContext, useContext, useMemo } from "react";
+import { createContext, useContext, useMemo, useRef } from "react";
 import { useStore } from "zustand";
+
+import { mapZoomToRange } from "./mapZoomToRange";
 
 type PropTypes = {
   children?: React.ReactNode;
@@ -9,19 +12,24 @@ type PropTypes = {
 };
 
 export const SlideGrid = ({ children, forceWidth }: PropTypes) => {
+  const target = useRef<any>(null);
+  const [width] = useSize(target);
+
   const val = useContext(PluginAPIContext);
   const { zoomLevel } = val.pluginAPI
-    ? useStore(val.pluginAPI.remote.zoomLevel)
+    ? // Breaks the rule of hook, but this should be a one time condition
+      useStore(val.pluginAPI.remote.zoomLevel)
     : { zoomLevel: 0.5 };
 
   const pixelValue = useMemo(
-    () => (forceWidth ? forceWidth : zoomLevel * 400),
-    [forceWidth, zoomLevel],
+    () => (forceWidth ? forceWidth : mapZoomToRange(zoomLevel, width)),
+    [forceWidth, width, zoomLevel],
   );
 
   return (
-    <CustomSizeContext.Provider value={{ forceWidth }}>
+    <CustomSizeContext.Provider value={{ forceWidth, containerWidth: width }}>
       <Grid
+        ref={target}
         gap={3}
         gridTemplateColumns={`repeat(auto-fill, minmax(${pixelValue}px, 1fr))`}
       >
@@ -33,4 +41,5 @@ export const SlideGrid = ({ children, forceWidth }: PropTypes) => {
 
 export const CustomSizeContext = createContext<{
   forceWidth?: number | undefined;
-}>({});
+  containerWidth: number;
+}>({ containerWidth: window.innerWidth || 0 });

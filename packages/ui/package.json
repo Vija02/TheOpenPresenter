@@ -21,6 +21,7 @@
   "dependencies": {
     "@ajna/pagination": "^1.4.19",
     "@chakra-ui/react": "^2.10.3",
+    "@react-hook/size": "^2.1.2",
     "@rehooks/component-size": "^1.0.3",
     "@repo/base-plugin": "*",
     "@repo/graphql": "*",
