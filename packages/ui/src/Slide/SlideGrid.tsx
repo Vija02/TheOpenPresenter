@@ -42,4 +42,4 @@ export const SlideGrid = ({ children, forceWidth }: PropTypes) => {
 export const CustomSizeContext = createContext<{
   forceWidth?: number | undefined;
   containerWidth: number;
-}>({ containerWidth: window.innerWidth || 0 });
+}>({ containerWidth: typeof window !== "undefined" ? window.innerWidth : 0 });
