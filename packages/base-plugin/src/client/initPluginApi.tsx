@@ -15,6 +15,7 @@ import {
   ObjectToTypedMap,
   Plugin,
   PluginContext,
+  ZoomLevel,
 } from "../types";
 import { awarenessStore } from "./store";
 
@@ -35,6 +36,7 @@ export function initPluginApi<
   pluginContext: PluginContext;
   setRenderCurrentScene: () => void;
   misc: {
+    zoomLevel: ZoomLevel;
     errorHandler: ErrorHandler;
     canPlayAudio: CanPlayAudio;
     toast: typeof ReactToast;
@@ -121,6 +123,7 @@ export function initPluginApi<
         return pluginContext.sceneId === scene;
       },
       toast: misc.toast,
+      zoomLevel: misc.zoomLevel,
     },
     audio: {
       useCanPlay: (options?: { skipCheck?: boolean }) => {

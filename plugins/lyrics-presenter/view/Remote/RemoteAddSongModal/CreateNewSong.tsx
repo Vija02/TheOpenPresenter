@@ -1,4 +1,5 @@
 import { Flex, Heading, Show, VStack } from "@chakra-ui/react";
+import { SlideGrid } from "@repo/ui";
 import { Formik } from "formik";
 import { InputControl, SelectControl } from "formik-chakra-ui";
 import { useEffect } from "react";
@@ -91,11 +92,13 @@ export const CreateNewSong = ({
             <Show above="md">
               <VStack flexBasis="200px">
                 <Heading fontSize="lg">Preview</Heading>
-                <SongViewSlides
-                  song={previewSong}
-                  slideStyle={slideStyle}
-                  isPreview
-                />
+                <SlideGrid forceWidth={200}>
+                  <SongViewSlides
+                    song={previewSong}
+                    slideStyle={slideStyle}
+                    isPreview
+                  />
+                </SlideGrid>
               </VStack>
             </Show>
           </Flex>

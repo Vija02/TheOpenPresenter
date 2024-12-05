@@ -4583,6 +4583,26 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@react-hook/debounce@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "@react-hook/debounce@npm:3.0.0"
+  dependencies:
+    "@react-hook/latest": "npm:^1.0.2"
+  peerDependencies:
+    react: ">=16.8"
+  checksum: 10c0/12db70a62b82061f3aaa9cbcc3d4c2ec6c40b150f4edf658f22931349743a91d8297a75b65edb1b946f8feb7e3110aae8fde22694770d10f30bf2302e007f5a0
+  languageName: node
+  linkType: hard
+
+"@react-hook/event@npm:^1.2.1":
+  version: 1.2.6
+  resolution: "@react-hook/event@npm:1.2.6"
+  peerDependencies:
+    react: ">=16.8"
+  checksum: 10c0/72a185b6ffd4e7e6729a2807c83c4d8cca3f83cf9c03065b9be2ae47f6623998799c0effe939fd70602efe148537353f03d7250cc876372d2b092d52fd4c3513
+  languageName: node
+  linkType: hard
+
 "@react-hook/latest@npm:^1.0.2":
   version: 1.0.3
   resolution: "@react-hook/latest@npm:1.0.3"
@@ -4623,6 +4643,30 @@ __metadata:
   peerDependencies:
     react: ">=16.8"
   checksum: 10c0/f361cbd17290993faaedfcb13524610311766486ee70e5b82e0f17a377c77085ab3a41bdd3fe8d079e26a96f4e102347a2ce8907851a4bba079d8f1ce4c95008
+  languageName: node
+  linkType: hard
+
+"@react-hook/throttle@npm:^2.2.0":
+  version: 2.2.0
+  resolution: "@react-hook/throttle@npm:2.2.0"
+  dependencies:
+    "@react-hook/latest": "npm:^1.0.2"
+  peerDependencies:
+    react: ">=16.8"
+  checksum: 10c0/a8c99314fcd4401cb482330c5d1e16fa871371d327a8529efdbcfc1c2b97cc11bf43b668dadaf4e993286fb6b8904275f8ee6f80721631ece4f2bdc7a9612e18
+  languageName: node
+  linkType: hard
+
+"@react-hook/window-size@npm:^3.1.1":
+  version: 3.1.1
+  resolution: "@react-hook/window-size@npm:3.1.1"
+  dependencies:
+    "@react-hook/debounce": "npm:^3.0.0"
+    "@react-hook/event": "npm:^1.2.1"
+    "@react-hook/throttle": "npm:^2.2.0"
+  peerDependencies:
+    react: ">=16.8"
+  checksum: 10c0/01b6ebc9d184c203bf9bc18db47172b30d2df697e1acd38865511afc7124cc6b5bd4311906667ae713b0e0e836f79e9498ae123f9d37a85a1a1301629941dae4
   languageName: node
   linkType: hard
 
@@ -4971,6 +5015,7 @@ __metadata:
     "@emotion/styled": "npm:^11.13.0"
     "@r2wc/react-to-web-component": "npm:^2.0.3"
     "@react-hook/size": "npm:^2.1.2"
+    "@react-hook/window-size": "npm:^3.1.1"
     "@repo/base-plugin": "npm:*"
     "@repo/eslint-config": "npm:*"
     "@repo/prettier-config": "npm:*"
@@ -5351,6 +5396,7 @@ __metadata:
     "@ajna/pagination": "npm:^1.4.19"
     "@chakra-ui/react": "npm:^2.10.3"
     "@rehooks/component-size": "npm:^1.0.3"
+    "@repo/base-plugin": "npm:*"
     "@repo/graphql": "npm:*"
     "@tsconfig/vite-react": "npm:^3.0.2"
     "@types/react": "npm:types-react@rc"
@@ -5366,6 +5412,7 @@ __metadata:
     react-loader-spinner: "npm:^6.1.6"
     rollup-plugin-postcss: "npm:^4.0.2"
     typescript: "npm:^5.6.3"
+    zustand: "npm:^5.0.2"
   peerDependencies:
     react: ">=18"
   languageName: unknown
@@ -24171,6 +24218,27 @@ __metadata:
     use-sync-external-store:
       optional: true
   checksum: 10c0/b4239c8bf3988bfdaaed1c48f3958d0b047b721c4908a76bd78e73387d107963cda774541cf303c2ea89261481c995aa6666e7e77c30717ad440cdb499d9e5ca
+  languageName: node
+  linkType: hard
+
+"zustand@npm:^5.0.2":
+  version: 5.0.2
+  resolution: "zustand@npm:5.0.2"
+  peerDependencies:
+    "@types/react": ">=18.0.0"
+    immer: ">=9.0.6"
+    react: ">=18.0.0"
+    use-sync-external-store: ">=1.2.0"
+  peerDependenciesMeta:
+    "@types/react":
+      optional: true
+    immer:
+      optional: true
+    react:
+      optional: true
+    use-sync-external-store:
+      optional: true
+  checksum: 10c0/d9bb048d8129fd1aaed3fda974991b15a7c9c31ef06f78e9bf5c4b3678f249850764a6dadb8c93127257d07831995cf7a048281658a37c5d1143ad6f397fe37c
   languageName: node
   linkType: hard
 

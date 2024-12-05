@@ -14,7 +14,7 @@ import {
   Stack,
   VStack,
 } from "@chakra-ui/react";
-import { OverlayToggleComponentProps } from "@repo/ui";
+import { OverlayToggleComponentProps, SlideGrid } from "@repo/ui";
 import { Form, Formik } from "formik";
 import { InputControl, SelectControl, SubmitButton } from "formik-chakra-ui";
 import { useCallback, useMemo } from "react";
@@ -171,7 +171,7 @@ const RemoteEditSongModal = ({
                     <Show above="md">
                       <VStack flexBasis="200px">
                         <Heading fontSize="lg">Preview</Heading>
-                        {preview}
+                        <SlideGrid forceWidth={200}>{preview}</SlideGrid>
                       </VStack>
                     </Show>
                   </Flex>

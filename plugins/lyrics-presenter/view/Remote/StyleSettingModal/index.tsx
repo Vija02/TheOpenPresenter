@@ -18,7 +18,7 @@ import {
   Text,
   VStack,
 } from "@chakra-ui/react";
-import { OverlayToggleComponentProps } from "@repo/ui";
+import { OverlayToggleComponentProps, SlideGrid } from "@repo/ui";
 import { Form, Formik } from "formik";
 import {
   CheckboxSingleControl,
@@ -349,7 +349,7 @@ const StyleSettingModal = ({
                       <VStack flexBasis="200px">
                         <Heading fontSize="lg">Preview</Heading>
 
-                        {preview}
+                        <SlideGrid forceWidth={200}>{preview}</SlideGrid>
 
                         <CheckboxSingleControl
                           name="debugPadding"

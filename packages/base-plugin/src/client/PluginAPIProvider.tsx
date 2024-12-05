@@ -6,6 +6,7 @@ import {
   CanPlayAudio,
   ErrorHandler,
   PluginContext,
+  ZoomLevel,
 } from "..";
 import { initPluginApi } from "./initPluginApi";
 
@@ -37,6 +38,7 @@ export const PluginAPIProvider = ({
   pluginContext: PluginContext;
   setRenderCurrentScene: () => void;
   misc: {
+    zoomLevel: ZoomLevel;
     errorHandler: ErrorHandler;
     canPlayAudio: CanPlayAudio;
     toast: typeof ReactToast;

@@ -1,5 +1,5 @@
 import { Box, Button, Flex, Heading, Stack, Text } from "@chakra-ui/react";
-import { OverlayToggle, PopConfirm } from "@repo/ui";
+import { OverlayToggle, PopConfirm, SlideGrid } from "@repo/ui";
 import React, { useCallback } from "react";
 import { VscEdit, VscTrash } from "react-icons/vsc";
 
@@ -65,9 +65,9 @@ const SongViewInner = React.memo(({ song }: { song: Song }) => {
           </PopConfirm>
         </Stack>
       </Flex>
-      <Flex gap={3} flexWrap="wrap">
+      <SlideGrid>
         <SongViewSlides song={song} slideStyle={slideStyle} />
-      </Flex>
+      </SlideGrid>
     </Box>
   );
 });

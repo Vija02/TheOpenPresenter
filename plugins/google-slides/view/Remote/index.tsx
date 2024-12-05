@@ -2,13 +2,12 @@ import {
   Box,
   Button,
   Center,
-  Flex,
   Image,
   Skeleton,
   Stack,
   Text,
 } from "@chakra-ui/react";
-import { LoadingFull, Slide } from "@repo/ui";
+import { LoadingFull, Slide, SlideGrid } from "@repo/ui";
 import { useMemo } from "react";
 import { FaArrowLeft, FaArrowRight } from "react-icons/fa";
 
@@ -149,9 +148,9 @@ const Remote = () => {
       </Box>
 
       <Box p={3}>
-        <Flex gap={3} flexWrap="wrap">
+        <SlideGrid>
           <RemoteHandler />
-        </Flex>
+        </SlideGrid>
 
         <ResolvedSlideHandler />
       </Box>
@@ -207,7 +206,10 @@ const RemoteHandler = () => {
         >
           {thumbnailLinks?.[i] ? (
             <Center>
-              <Image src={pluginApi.media.getUrl(thumbnailLinks[i]!)} />
+              <Image
+                src={pluginApi.media.getUrl(thumbnailLinks[i]!)}
+                width="100%"
+              />
             </Center>
           ) : (
             <Skeleton height="100%" />

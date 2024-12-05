@@ -1,4 +1,15 @@
-import { Box, Button, Flex, Stack, Text, chakra } from "@chakra-ui/react";
+import {
+  Box,
+  Button,
+  Flex,
+  Slider,
+  SliderFilledTrack,
+  SliderThumb,
+  SliderTrack,
+  Stack,
+  Text,
+  chakra,
+} from "@chakra-ui/react";
 import {
   AwarenessContext,
   Plugin,
@@ -19,11 +30,13 @@ import { toast } from "react-toastify";
 import { useDisposable } from "use-disposable";
 import { useLocation, useRoute } from "wouter";
 import Y from "yjs";
+import { useStore } from "zustand";
 
 import { useAudioCheck } from "../contexts/AudioCheckProvider";
 import { useError } from "../contexts/ErrorProvider";
 import { useData, usePluginData } from "../contexts/PluginDataProvider";
 import { usePluginMetaData } from "../contexts/PluginMetaDataProvider";
+import { zoomLevelStore } from "../contexts/zoomLevel";
 import { trpcClient } from "../trpc";
 import { EmptyScene } from "./EmptyScene";
 import SceneSettingsModal from "./SceneSettingsModal";
@@ -49,6 +62,8 @@ const MainBody = () => {
       Object.entries(data.data).filter(([, value]) => value.type === "scene"),
     [data.data],
   );
+
+  const { zoomLevel, setZoomLevel } = useStore(zoomLevelStore);
 
   // On load, select the scene that is active if available
   useEffect(() => {
@@ -200,6 +215,29 @@ const MainBody = () => {
         ))}
         {scenes.length === 0 && <EmptyScene />}
       </Box>
+      <Flex
+        bg="#F9FBFF"
+        borderTop="1px solid #d0d0d0"
+        flexDir="row-reverse"
+        py={2}
+        px={4}
+      >
+        <Slider
+          flex="1"
+          focusThumbOnChange={false}
+          min={0}
+          max={1}
+          value={zoomLevel}
+          onChange={setZoomLevel}
+          step={0.0001}
+          maxW="150px"
+        >
+          <SliderTrack>
+            <SliderFilledTrack />
+          </SliderTrack>
+          <SliderThumb fontSize="sm" />
+        </Slider>
+      </Flex>
     </Box>
   );
 };
@@ -298,6 +336,7 @@ const PluginRenderer = React.memo(
         },
         trpcClient,
         misc: {
+          zoomLevel: zoomLevelStore,
           errorHandler: { addError, removeError },
           canPlayAudio,
           toast,

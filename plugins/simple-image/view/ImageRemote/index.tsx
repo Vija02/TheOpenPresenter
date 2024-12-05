@@ -1,5 +1,5 @@
-import { Box, Flex, Stack, Text } from "@chakra-ui/react";
-import { Slide } from "@repo/ui";
+import { Box, Stack, Text } from "@chakra-ui/react";
+import { Slide, SlideGrid } from "@repo/ui";
 
 import ImageRenderView from "../ImageRenderer/ImageRenderView";
 import { usePluginAPI } from "../pluginApi";
@@ -29,7 +29,7 @@ const ImageRemote = () => {
       </Box>
 
       <Box p={3}>
-        <Flex gap={3} flexWrap="wrap">
+        <SlideGrid>
           {pluginData.images.map((x, i) => (
             <Slide
               key={i}
@@ -42,7 +42,7 @@ const ImageRemote = () => {
               <ImageRenderView src={x} />
             </Slide>
           ))}
-        </Flex>
+        </SlideGrid>
       </Box>
     </Box>
   );

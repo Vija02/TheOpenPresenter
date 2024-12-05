@@ -18,6 +18,7 @@
     "@emotion/styled": "^11.13.0",
     "@r2wc/react-to-web-component": "^2.0.3",
     "@react-hook/size": "^2.1.2",
+    "@react-hook/window-size": "^3.1.1",
     "@repo/base-plugin": "*",
     "@repo/ui": "*",
     "@tanstack/react-query": "^5.59.16",

@@ -2,6 +2,7 @@ import { ObjectToTypedMap } from "@repo/lib";
 import { toast as ReactToast } from "react-toastify";
 import UAParser from "ua-parser-js";
 import * as awarenessProtocol from "y-protocols/awareness.js";
+import { StoreApi } from "zustand";
 
 export type { ObjectToTypedMap };
 
@@ -88,7 +89,12 @@ export type WebComponentProps<TrpcClient> = {
   pluginContext: PluginContext;
   setRenderCurrentScene: () => void;
   trpcClient: TrpcClient;
-  misc: { canPlayAudio: CanPlayAudio; toast: typeof ReactToast };
+  misc: {
+    zoomLevel: ZoomLevel;
+    errorHandler: ErrorHandler;
+    canPlayAudio: CanPlayAudio;
+    toast: typeof ReactToast;
+  };
 };
 
 export const sceneCategories = ["Display", "Media", "Audio"] as const;
@@ -105,3 +111,9 @@ export type ErrorHandler = {
   addError: (code: string) => void;
   removeError: (code: string) => void;
 };
+
+export type ZoomLevelState = {
+  zoomLevel: number;
+  setZoomLevel: (val: number) => void;
+};
+export type ZoomLevel = StoreApi<ZoomLevelState>;
