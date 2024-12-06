@@ -44,18 +44,18 @@
     "zxcvbn": "^4.4.2"
   },
   "devDependencies": {
-    "@pandacss/dev": "^0.47.1",
+    "@pandacss/dev": "^0.48.0",
     "@repo/eslint-config": "*",
     "@repo/prettier-config": "*",
     "@repo/typescript-config": "*",
     "@types/node": "^20",
-    "@types/nprogress": "^0",
+    "@types/nprogress": "^0.2.3",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@types/zxcvbn": "^4.4.5",
     "autoprefixer": "^10.4.20",
     "eslint": "^8.57.1",
     "postcss": "^8.4.49",
-    "typescript": "5.6.3"
+    "typescript": "5.7.2"
   }
 }
