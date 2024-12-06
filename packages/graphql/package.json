@@ -21,7 +21,7 @@
   },
   "dependencies": {
     "@apollo/client": "3.11.8",
-    "react": "rc",
+    "react": "^19.0.0",
     "use-pubsub-js": "^1.0.7"
   },
   "devDependencies": {
