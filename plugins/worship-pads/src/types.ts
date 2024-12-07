@@ -1,3 +1,5 @@
+import { PluginRendererState } from "@repo/base-plugin";
+
 export type PluginBaseData = {
   files: {
     key: string;
@@ -5,7 +7,7 @@ export type PluginBaseData = {
   }[];
 };
 
-export type PluginRendererData = {
+export type PluginRendererData = PluginRendererState & {
   currentKey: string;
   isPlaying: boolean;
   volume: number;

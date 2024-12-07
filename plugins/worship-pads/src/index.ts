@@ -1,11 +1,12 @@
 import {
   ObjectToTypedMap,
   Plugin,
+  RegisterOnRendererDataLoaded,
   ServerPluginApi,
   TRPCObject,
   getStaticPath,
 } from "@repo/base-plugin/server";
-import { TypedArray } from "@repo/lib";
+import { TypedArray, YjsWatcher } from "@repo/lib";
 import { proxy } from "valtio";
 import { bind } from "valtio-yjs";
 import Y from "yjs";
@@ -15,12 +16,13 @@ import {
   remoteWebComponentTag,
   rendererWebComponentTag,
 } from "./consts";
-import { PluginBaseData } from "./types";
+import { PluginBaseData, PluginRendererData } from "./types";
 
 export const init = (serverPluginApi: ServerPluginApi) => {
   serverPluginApi.registerTrpcAppRouter(getAppRouter);
   serverPluginApi.onPluginDataCreated(pluginName, onPluginDataCreated);
   serverPluginApi.onPluginDataLoaded(pluginName, onPluginDataLoaded);
+  serverPluginApi.onRendererDataLoaded(pluginName, onRendererDataLoaded);
   serverPluginApi.registerSceneCreator(pluginName, {
     title: "Worship Pads",
     description: "Play an ambient pad to back your worship session",
@@ -122,6 +124,24 @@ const onPluginDataLoaded = (
   return {
     dispose: () => {
       unbind();
+    },
+  };
+};
+
+const onRendererDataLoaded: RegisterOnRendererDataLoaded<PluginRendererData> = (
+  rendererData,
+) => {
+  const yjsWatcher = new YjsWatcher(rendererData as Y.Map<any>);
+  yjsWatcher.watchYjs(
+    (x: PluginRendererData) => x.isPlaying,
+    () => {
+      rendererData.set("__audioIsPlaying", rendererData.get("isPlaying"));
+    },
+  );
+
+  return {
+    dispose: () => {
+      yjsWatcher.dispose();
     },
   };
 };

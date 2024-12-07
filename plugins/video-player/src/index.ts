@@ -5,7 +5,7 @@ import {
   ServerPluginApi,
   TRPCObject,
 } from "@repo/base-plugin/server";
-import { TypedArray, TypedMap } from "@repo/lib";
+import { TypedArray, TypedMap, YjsWatcher } from "@repo/lib";
 import { proxy } from "valtio";
 import { bind } from "valtio-yjs";
 import Y from "yjs";
@@ -100,14 +100,26 @@ const onRendererDataLoaded: RegisterOnRendererDataLoaded<PluginRendererData> = (
   _context,
   { onSceneVisibilityChange },
 ) => {
+  const yjsWatcher = new YjsWatcher(rendererData as Y.Map<any>);
+  yjsWatcher.watchYjs(
+    (x: PluginRendererData) => x.isPlaying,
+    () => {
+      rendererData.set("__audioIsPlaying", rendererData.get("isPlaying"));
+    },
+  );
+
+  return {
+    dispose: () => {
+      yjsWatcher.dispose();
+    },
+  };
+
   // onSceneVisibilityChange((visibility: boolean) => {
   //   if (!visibility) {
   //     // PAUSE
   //     rendererData.set("isPlaying", false);
   //   }
   // });
-
-  return {};
 };
 
 const getAppRouter = (t: TRPCObject) => {

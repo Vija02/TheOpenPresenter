@@ -1,3 +1,5 @@
+import { PluginRendererState } from "@repo/base-plugin";
+
 export type PluginBaseData = {
   videos: Video[];
 };
@@ -12,7 +14,7 @@ export type Video = {
   };
 };
 
-export type PluginRendererData = {
+export type PluginRendererData = PluginRendererState & {
   currentPlayingVideo: CurrentPlayingVideo | null;
   videoSeeks: Record<string, number>;
   // 0 to 1
