@@ -14,7 +14,7 @@
     "@emotion/react": "^11.13.5",
     "@emotion/styled": "^11.13.5",
     "@hocuspocus/provider": "^2.14.0",
-    "@tanstack/react-query": "^5.62.2",
+    "@tanstack/react-query": "^5.62.3",
     "@trpc/client": "^11.0.0-rc.657",
     "@trpc/react-query": "^11.0.0-rc.657",
     "@types/ua-parser-js": "^0.7.39",
