@@ -51,6 +51,10 @@ export type RenderData<T = Record<string, any>> = {
   children: Record<UUID, Record<UUID, T>>;
 };
 
+export type PluginRendererState = {
+  __audioIsPlaying?: boolean;
+};
+
 export type PluginContext = {
   pluginId: UUID;
   sceneId: UUID;

@@ -7,9 +7,13 @@ import {
   Text,
   chakra,
 } from "@chakra-ui/react";
+import { PluginRendererState } from "@repo/base-plugin";
 import { OverlayToggle } from "@repo/ui";
 import { sortBy } from "lodash-es";
-import { MdCoPresent as MdCoPresentRaw } from "react-icons/md";
+import {
+  MdCoPresent as MdCoPresentRaw,
+  MdVolumeUp as MdVolumeUpRaw,
+} from "react-icons/md";
 import { RiRemoteControlLine as RiRemoteControlLineRaw } from "react-icons/ri";
 import { VscAdd, VscArrowLeft } from "react-icons/vsc";
 import { useLocation } from "wouter";
@@ -22,6 +26,7 @@ import { RendererWarning } from "./RendererWarning";
 import SidebarAddSceneModal from "./SidebarAddSceneModal";
 
 const MdCoPresent = chakra(MdCoPresentRaw);
+const MdVolumeUp = chakra(MdVolumeUpRaw);
 const RiRemoteControlLine = chakra(RiRemoteControlLineRaw);
 
 const SidebarMobile = () => {
@@ -55,43 +60,52 @@ const SidebarMobile = () => {
           <Divider />
           <Box overflow="auto">
             {sortBy(Object.entries(data.data), ([, value]) => value.order).map(
-              ([id, value]) => (
-                <Box
-                  key={id}
-                  onClick={() => {
-                    navigate(`/${id}`);
-                  }}
-                  cursor="pointer"
-                  px={2}
-                  _hover={{ bg: "gray.300" }}
-                  bg={location.includes(id) ? "gray.300" : "transparent"}
-                  height="80px"
-                  display="flex"
-                  alignItems="center"
-                  position="relative"
-                  borderBottom="1px solid rgb(0, 0, 0, 0.06)"
-                >
-                  {data.renderer["1"]?.currentScene === id && (
-                    <Box
-                      top={0}
-                      bottom={0}
-                      left={0}
-                      width="3px"
-                      position="absolute"
-                      bg="red.400"
-                    />
-                  )}
-                  <Text
-                    fontSize="xs"
-                    textAlign="center"
-                    wordBreak="break-word"
-                    width="100%"
-                    fontWeight="medium"
+              ([id, value]) => {
+                const audioIsPlaying = !!Object.values(
+                  data.renderer["1"]?.children[id] ?? {},
+                ).find((x: PluginRendererState) => x.__audioIsPlaying);
+
+                return (
+                  <Stack
+                    key={id}
+                    spacing={1}
+                    onClick={() => {
+                      navigate(`/${id}`);
+                    }}
+                    cursor="pointer"
+                    px={2}
+                    _hover={{ bg: "gray.300" }}
+                    bg={location.includes(id) ? "gray.300" : "transparent"}
+                    height="80px"
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="center"
+                    position="relative"
+                    borderBottom="1px solid rgb(0, 0, 0, 0.06)"
                   >
-                    {value.name}
-                  </Text>
-                </Box>
-              ),
+                    {data.renderer["1"]?.currentScene === id && (
+                      <Box
+                        top={0}
+                        bottom={0}
+                        left={0}
+                        width="3px"
+                        position="absolute"
+                        bg="red.400"
+                      />
+                    )}
+                    <Text
+                      fontSize="xs"
+                      textAlign="center"
+                      wordBreak="break-word"
+                      width="100%"
+                      fontWeight="medium"
+                    >
+                      {value.name}
+                    </Text>
+                    {audioIsPlaying && <MdVolumeUp fontSize="lg" />}
+                  </Stack>
+                );
+              },
             )}
           </Box>
           <Stack py={3} px={2}>

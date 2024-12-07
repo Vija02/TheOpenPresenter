@@ -7,9 +7,13 @@ import {
   Text,
   chakra,
 } from "@chakra-ui/react";
+import { PluginRendererState } from "@repo/base-plugin";
 import { OverlayToggle } from "@repo/ui";
 import { sortBy } from "lodash-es";
-import { MdCoPresent as MdCoPresentRaw } from "react-icons/md";
+import {
+  MdCoPresent as MdCoPresentRaw,
+  MdVolumeUp as MdVolumeUpRaw,
+} from "react-icons/md";
 import { RiRemoteControlLine as RiRemoteControlLineRaw } from "react-icons/ri";
 import { VscAdd, VscArrowLeft } from "react-icons/vsc";
 import { useLocation } from "wouter";
@@ -23,6 +27,7 @@ import { ResizableBoxWrapper } from "./ResizableBoxWrapper";
 import SidebarAddSceneModal from "./SidebarAddSceneModal";
 
 const MdCoPresent = chakra(MdCoPresentRaw);
+const MdVolumeUp = chakra(MdVolumeUpRaw);
 const RiRemoteControlLine = chakra(RiRemoteControlLineRaw);
 
 const SidebarWeb = () => {
@@ -58,32 +63,41 @@ const SidebarWeb = () => {
               {sortBy(
                 Object.entries(data.data),
                 ([, value]) => value.order,
-              ).map(([id, value]) => (
-                <Box
-                  key={id}
-                  onClick={() => {
-                    navigate(`/${id}`);
-                  }}
-                  cursor="pointer"
-                  py={2}
-                  px={2}
-                  _hover={{ bg: "gray.300" }}
-                  bg={location.includes(id) ? "gray.300" : "transparent"}
-                  position="relative"
-                >
-                  {data.renderer["1"]?.currentScene === id && (
-                    <Box
-                      top={0}
-                      bottom={0}
-                      left={0}
-                      width="3px"
-                      position="absolute"
-                      bg="red.400"
-                    />
-                  )}
-                  <Text fontWeight="bold">{value.name}</Text>
-                </Box>
-              ))}
+              ).map(([id, value]) => {
+                const audioIsPlaying = !!Object.values(
+                  data.renderer["1"]?.children[id] ?? {},
+                ).find((x: PluginRendererState) => x.__audioIsPlaying);
+
+                return (
+                  <Stack
+                    key={id}
+                    direction="row"
+                    alignItems="center"
+                    onClick={() => {
+                      navigate(`/${id}`);
+                    }}
+                    cursor="pointer"
+                    py={2}
+                    px={2}
+                    _hover={{ bg: "gray.300" }}
+                    bg={location.includes(id) ? "gray.300" : "transparent"}
+                    position="relative"
+                  >
+                    {data.renderer["1"]?.currentScene === id && (
+                      <Box
+                        top={0}
+                        bottom={0}
+                        left={0}
+                        width="3px"
+                        position="absolute"
+                        bg="red.400"
+                      />
+                    )}
+                    {audioIsPlaying && <MdVolumeUp fontSize="md" />}
+                    <Text fontWeight="bold">{value.name}</Text>
+                  </Stack>
+                );
+              })}
             </Box>
             <Stack mt={3} px={2}>
               <OverlayToggle
