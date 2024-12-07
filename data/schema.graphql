@@ -2462,6 +2462,7 @@ type Query {
     """The method to use when ordering `Project`."""
     orderBy: [ProjectsOrderBy!] = [PRIMARY_KEY_ASC]
   ): ProjectsConnection
+  sceneState(input: SceneStateInput!): [StateSingle!]!
   tag(id: UUID!): Tag
 
   """Reads and enables pagination through a set of `Tag`."""
@@ -2664,6 +2665,15 @@ type SceneCreator {
   title: String!
 }
 
+input SceneStateInput {
+  projectSlug: String!
+}
+
+type StateSingle {
+  audioIsPlaying: Boolean
+  sceneId: String!
+}
+
 """
 A filter to be used against String fields. All fields are combined with a logical ‘and.’
 """
@@ -2802,6 +2812,7 @@ The root subscription type: contains realtime events you can subscribe to with t
 type Subscription {
   """Triggered when the logged in user's record is updated in some way."""
   currentUserUpdated: UserSubscriptionPayload
+  sceneState(input: SceneStateInput!): [StateSingle!]!
 }
 
 """Tag data"""

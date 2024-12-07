@@ -9,6 +9,7 @@ import {
   RegisterOnPluginDataLoaded,
   RegisterOnRendererDataCreated,
   RegisterOnRendererDataLoaded,
+  RegisterSceneStateCallback,
   RemoteViewWebComponentConfig,
 } from "./serverPluginTypes";
 import { TRPCObject } from "./types";
@@ -69,6 +70,10 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
       isExperimental?: boolean;
       isStarred?: boolean;
     };
+  }[] = [];
+  protected registeredSceneStateHandler: {
+    pluginName: string;
+    callback: RegisterSceneStateCallback<PluginDataType, RendererDataType>;
   }[] = [];
   protected registeredPrivateRoute: {
     pluginName: string;
@@ -181,6 +186,16 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
     this.registeredSceneCreator.push({
       pluginName,
       sceneCreatorMeta: meta,
+    });
+  }
+
+  public registerSceneState(
+    pluginName: string,
+    callback: RegisterSceneStateCallback<PluginDataType, RendererDataType>,
+  ) {
+    this.registeredSceneStateHandler.push({
+      pluginName,
+      callback,
     });
   }
 

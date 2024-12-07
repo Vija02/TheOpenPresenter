@@ -408,6 +408,13 @@ export default async function installHocuspocus(app: Express) {
         });
       });
 
+      state.observeDeep(async () => {
+        await rootPgPool.query(
+          `select pg_notify('graphql:sceneState:${data.documentName}','{}');`,
+          [],
+        );
+      });
+
       // TODO: Need to handle multiple plugin in 1 scene (adding, removing)
     },
     afterUnloadDocument: async (data) => {

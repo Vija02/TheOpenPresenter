@@ -49,3 +49,12 @@ export type RegisterKeyPressHandlerCallback<
   },
   next: () => void,
 ) => void;
+
+export type RegisterSceneStateCallback<
+  PluginDataType = any,
+  RendererDataType = any,
+> = (
+  sceneData: ObjectToTypedMap<Plugin<PluginDataType>>,
+  rendererData: ObjectToTypedMap<RendererDataType>[],
+  pluginContext: PluginContext,
+) => { audioIsPlaying?: boolean } & IDisposable;

@@ -12,7 +12,7 @@ import {
   remoteWebComponentTag,
   rendererWebComponentTag,
 } from "./consts";
-import { PluginBaseData } from "./types";
+import { PluginBaseData, PluginRendererData } from "./types";
 
 export const init = (serverPluginApi: ServerPluginApi) => {
   serverPluginApi.registerTrpcAppRouter(getAppRouter);
@@ -38,6 +38,16 @@ export const init = (serverPluginApi: ServerPluginApi) => {
   serverPluginApi.registerRendererViewWebComponent(
     pluginName,
     rendererWebComponentTag,
+  );
+  serverPluginApi.registerSceneState(
+    pluginName,
+    (_, rendererData: ObjectToTypedMap<PluginRendererData>[]) => {
+      return rendererData.find((x) => !!x.get("isPlaying"))
+        ? {
+            audioIsPlaying: true,
+          }
+        : {};
+    },
   );
 };
 

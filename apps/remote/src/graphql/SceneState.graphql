@@ -1,0 +1,6 @@
+query SceneState($projectSlug: String!) {
+  initialSceneState: sceneState(input: { projectSlug: $projectSlug }) {
+    sceneId
+    audioIsPlaying
+  }
+}

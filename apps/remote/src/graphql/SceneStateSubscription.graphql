@@ -1,0 +1,6 @@
+subscription SceneStateSubscription($projectSlug: String!) {
+  sceneState(input: { projectSlug: $projectSlug }) {
+    sceneId
+    audioIsPlaying
+  }
+}

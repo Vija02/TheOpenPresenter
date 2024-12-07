@@ -17,6 +17,7 @@ import { useLocation } from "wouter";
 import { useAwareness } from "../../contexts/AwarenessProvider";
 import { useData } from "../../contexts/PluginDataProvider";
 import { usePluginMetaData } from "../../contexts/PluginMetaDataProvider";
+import { useSceneState } from "../../contexts/SceneStateProvider";
 import DebugDrawer from "./Debug/DebugDrawer";
 import { RendererWarning } from "./RendererWarning";
 import { ResizableBoxWrapper } from "./ResizableBoxWrapper";
@@ -30,6 +31,7 @@ const SidebarWeb = () => {
   const [location, navigate] = useLocation();
   const { orgSlug, projectSlug } = usePluginMetaData();
   const { awarenessData } = useAwareness();
+  const { sceneState } = useSceneState();
 
   return (
     <Box boxShadow="md">
@@ -82,6 +84,8 @@ const SidebarWeb = () => {
                     />
                   )}
                   <Text fontWeight="bold">{value.name}</Text>
+                  {sceneState?.find((x) => x.sceneId === id)
+                    ?.audioIsPlaying && <Text>AUDIO</Text>}
                 </Box>
               ))}
             </Box>

@@ -9,6 +9,7 @@ import { AwarenessProvider } from "./contexts/AwarenessProvider";
 import { ErrorProvider } from "./contexts/ErrorProvider";
 import { PluginDataProvider } from "./contexts/PluginDataProvider";
 import { PluginMetaDataProvider } from "./contexts/PluginMetaDataProvider";
+import { SceneStateProvider } from "./contexts/SceneStateProvider";
 
 function App() {
   return (
@@ -32,15 +33,17 @@ function Root() {
         <AudioCheckProvider>
           <PluginDataProvider type="remote">
             <AwarenessProvider>
-              <Box
-                display="flex"
-                position="relative"
-                height="100vh"
-                overflow="hidden"
-              >
-                <Sidebar />
-                <MainBody />
-              </Box>
+              <SceneStateProvider projectSlug={projectSlug!}>
+                <Box
+                  display="flex"
+                  position="relative"
+                  height="100vh"
+                  overflow="hidden"
+                >
+                  <Sidebar />
+                  <MainBody />
+                </Box>
+              </SceneStateProvider>
             </AwarenessProvider>
           </PluginDataProvider>
         </AudioCheckProvider>

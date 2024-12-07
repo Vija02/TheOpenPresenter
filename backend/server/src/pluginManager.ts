@@ -50,6 +50,9 @@ class ServerPluginApiPrivate extends ServerPluginApi {
   getRegisteredSceneCreator() {
     return this.registeredSceneCreator;
   }
+  getRegisteredSceneStateHandler() {
+    return this.registeredSceneStateHandler;
+  }
   getRegisteredPrivateRoute() {
     return this.registeredPrivateRoute;
   }
