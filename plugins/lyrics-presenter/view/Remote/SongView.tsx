@@ -9,8 +9,32 @@ import RemoteEditSongModal from "./RemoteEditSongModal";
 import { SongViewSlides } from "./SongViewSlides";
 
 const SongView = React.memo(({ song }: { song: Song }) => {
+  const pluginApi = usePluginAPI();
+  const mutableSceneData = pluginApi.scene.useValtioData();
+
+  const handleRemove = useCallback(() => {
+    const pluginData = mutableSceneData.pluginData;
+
+    pluginData.songs = pluginData.songs.filter((s) => s.id !== song.id);
+  }, [mutableSceneData.pluginData, song.id]);
+
   if (!song._imported && !!song.import) {
-    return <Text>Importing...</Text>;
+    return (
+      <Stack direction="column" bg="gray.100" p={2} mb={2} spacing={0}>
+        <Text fontWeight="bold">{song.title}</Text>
+        <Stack direction="row" alignItems="center">
+          <Text>Importing data from {song.import.type}...</Text>
+          <Button
+            size="sm"
+            variant="ghost"
+            rounded="none"
+            onClick={handleRemove}
+          >
+            <VscTrash />
+          </Button>
+        </Stack>
+      </Stack>
+    );
   }
   return <SongViewInner song={song} />;
 });
