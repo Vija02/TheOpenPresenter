@@ -14,6 +14,7 @@ import { FaPause, FaPlay } from "react-icons/fa6";
 
 import { usePluginAPI } from "../pluginApi";
 
+// TODO: Pull from API
 const radios = [
   {
     title: "Worship 24/7 (worship247.com)",
@@ -172,7 +173,7 @@ const RadioRemote = () => {
               </Button>
               <Box>
                 <Text fontSize="md">{radio.title}</Text>
-                <Link fontSize="xs" href={radio.url} isExternal>
+                <Link fontSize="xs" href={radio.webLink} isExternal>
                   Link
                 </Link>
               </Box>
