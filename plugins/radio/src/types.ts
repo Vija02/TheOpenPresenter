@@ -5,6 +5,7 @@ export type PluginBaseData = {
 };
 
 export type PluginRendererData = PluginRendererState & {
+  url: string | null;
   isPlaying: boolean;
   volume: number;
 };

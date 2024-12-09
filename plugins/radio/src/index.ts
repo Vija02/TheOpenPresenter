@@ -1,6 +1,7 @@
 import {
   ObjectToTypedMap,
   Plugin,
+  RegisterOnRendererDataCreated,
   RegisterOnRendererDataLoaded,
   ServerPluginApi,
   TRPCObject,
@@ -21,6 +22,7 @@ export const init = (serverPluginApi: ServerPluginApi) => {
   serverPluginApi.registerTrpcAppRouter(getAppRouter);
   serverPluginApi.onPluginDataCreated(pluginName, onPluginDataCreated);
   serverPluginApi.onPluginDataLoaded(pluginName, onPluginDataLoaded);
+  serverPluginApi.onRendererDataCreated(pluginName, onRendererDataCreated);
   serverPluginApi.onRendererDataLoaded(pluginName, onRendererDataLoaded);
   serverPluginApi.registerSceneCreator(pluginName, {
     title: "Radio",
@@ -64,6 +66,16 @@ const onPluginDataLoaded = (
       unbind();
     },
   };
+};
+
+const onRendererDataCreated: RegisterOnRendererDataCreated<
+  PluginRendererData
+> = (rendererData) => {
+  rendererData.set("url", null);
+  rendererData.set("isPlaying", false);
+  rendererData.set("volume", 1);
+
+  return {};
 };
 
 const onRendererDataLoaded: RegisterOnRendererDataLoaded<PluginRendererData> = (

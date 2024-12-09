@@ -2505,6 +2505,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@eshaz/web-worker@npm:1.2.1":
+  version: 1.2.1
+  resolution: "@eshaz/web-worker@npm:1.2.1"
+  checksum: 10c0/0813dbf74c48e1abe6655321ebb83a8e660fc2a4152b0ff8b3b6cd4ab86e5c4f00223305e17239986d4071efeb810cb3e0e16fd8f8a9793c89de76c3dfdcf1fe
+  languageName: node
+  linkType: hard
+
+"@eshaz/web-worker@npm:1.2.2":
+  version: 1.2.2
+  resolution: "@eshaz/web-worker@npm:1.2.2"
+  checksum: 10c0/4f1ad8287587d294af3c9dabfa88f7ffea54b958cf89ee50d928406436f10b7c4d733bf47e6566a57988c24f3773144fc1ba540dc4a7dd8031e6abb85ba76ba2
+  languageName: node
+  linkType: hard
+
 "@eslint-community/eslint-utils@npm:^4.2.0, @eslint-community/eslint-utils@npm:^4.4.0":
   version: 4.4.1
   resolution: "@eslint-community/eslint-utils@npm:4.4.1"
@@ -4971,9 +4985,11 @@ __metadata:
     "@vitejs/plugin-react-swc": "npm:^3.7.2"
     eslint: "npm:^8.57.1"
     framer-motion: "npm:^11.13.1"
+    icecast-metadata-player: "npm:^1.17.6"
     pkgroll: "npm:^2.5.1"
     react: "npm:^19.0.0"
     react-dom: "npm:^19.0.0"
+    use-disposable: "npm:^1.0.4"
     valtio: "npm:^2.1.2"
     valtio-yjs: "npm:^0.6.0"
     vite: "npm:5.4.11"
@@ -7490,6 +7506,36 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@wasm-audio-decoders/common@npm:9.0.5":
+  version: 9.0.5
+  resolution: "@wasm-audio-decoders/common@npm:9.0.5"
+  dependencies:
+    "@eshaz/web-worker": "npm:1.2.2"
+    simple-yenc: "npm:^1.0.4"
+  checksum: 10c0/59e72231bee7ba5f01fd4f812b626248a1772b5a0fa1e602bbeb66745ee7618209ee9d35e93fb4c1ac586cde6bf00aeb6c5adcb69db9644dc82fd6673c808f52
+  languageName: node
+  linkType: hard
+
+"@wasm-audio-decoders/flac@npm:0.2.5":
+  version: 0.2.5
+  resolution: "@wasm-audio-decoders/flac@npm:0.2.5"
+  dependencies:
+    "@wasm-audio-decoders/common": "npm:9.0.5"
+    codec-parser: "npm:2.5.0"
+  checksum: 10c0/4996adfdf993c1453258922fbe403ae64cfd413662cd0f708c3cb5ba09b284021ae91f1039f011abb7f70a536210a0ea370fc81c553cd92651b6e2c3f209468e
+  languageName: node
+  linkType: hard
+
+"@wasm-audio-decoders/ogg-vorbis@npm:0.1.16":
+  version: 0.1.16
+  resolution: "@wasm-audio-decoders/ogg-vorbis@npm:0.1.16"
+  dependencies:
+    "@wasm-audio-decoders/common": "npm:9.0.5"
+    codec-parser: "npm:2.5.0"
+  checksum: 10c0/0a52e28b68c61083992bccf0b7b3ea09a168ad905dd5b3f53257d6ae60d69a3fad5346e604b8f4d1f2f11a586d389020e8351b513e40b2c2db87116167e2a716
+  languageName: node
+  linkType: hard
+
 "@whatwg-node/fetch@npm:^0.10.0":
   version: 0.10.1
   resolution: "@whatwg-node/fetch@npm:0.10.1"
@@ -9052,6 +9098,13 @@ __metadata:
   version: 12.0.0
   resolution: "code-block-writer@npm:12.0.0"
   checksum: 10c0/ced73cdc466bff968bba9e8e32340d88420d25a229b9269f7425a10a7c2c9a12ca702dcb601b2462b96472d354f021cf66e552179fcbe30c8f7ecd0173c5fa07
+  languageName: node
+  linkType: hard
+
+"codec-parser@npm:2.5.0":
+  version: 2.5.0
+  resolution: "codec-parser@npm:2.5.0"
+  checksum: 10c0/ee017ce76251f75a7feacb5c11ae6c8269d8b76818facf4270e4a0e01c5fc5daaca840372d314a27d7aa12823012d2b46de30bb6c44726c0ca6898a266300c06
   languageName: node
   linkType: hard
 
@@ -13088,6 +13141,31 @@ __metadata:
   languageName: node
   linkType: hard
 
+"icecast-metadata-js@npm:1.2.9":
+  version: 1.2.9
+  resolution: "icecast-metadata-js@npm:1.2.9"
+  dependencies:
+    codec-parser: "npm:2.5.0"
+  checksum: 10c0/2f2f92ccba962c22433c67c9251e1f9d921007e964285287399c594b322e05cbdc44b6c2a999e74d3fcd99eb0da49bfd96f7e3f6a3a782fec6e20cbcf6397994
+  languageName: node
+  linkType: hard
+
+"icecast-metadata-player@npm:^1.17.6":
+  version: 1.17.6
+  resolution: "icecast-metadata-player@npm:1.17.6"
+  dependencies:
+    "@wasm-audio-decoders/flac": "npm:0.2.5"
+    "@wasm-audio-decoders/ogg-vorbis": "npm:0.1.16"
+    codec-parser: "npm:2.5.0"
+    icecast-metadata-js: "npm:1.2.9"
+    mpg123-decoder: "npm:1.0.0"
+    mse-audio-wrapper: "npm:1.4.15"
+    opus-decoder: "npm:0.7.7"
+    synaudio: "npm:0.3.5"
+  checksum: 10c0/21178ec8a388a3c30f87205d4cedea479595f7f091cc0b710bb7fc05d9a66ae899c765d6df80867757175dea5c5d3849cf9e48e6622cdedb158981fb07aad0e5
+  languageName: node
+  linkType: hard
+
 "iconv-lite@npm:0.4.24, iconv-lite@npm:^0.4.24":
   version: 0.4.24
   resolution: "iconv-lite@npm:0.4.24"
@@ -16352,6 +16430,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"mpg123-decoder@npm:1.0.0":
+  version: 1.0.0
+  resolution: "mpg123-decoder@npm:1.0.0"
+  dependencies:
+    "@wasm-audio-decoders/common": "npm:9.0.5"
+  checksum: 10c0/69e79ccebb8b7f2ec09bf4e3c2ffc149fc4bf7462014fb95443e3f25c2be0ac3c9c6b3179775eee8fe1a4277393b8711bd5b48f994c1482e139eb0c0171e5396
+  languageName: node
+  linkType: hard
+
 "mri@npm:^1.1.0":
   version: 1.2.0
   resolution: "mri@npm:1.2.0"
@@ -16370,6 +16457,15 @@ __metadata:
   version: 2.1.3
   resolution: "ms@npm:2.1.3"
   checksum: 10c0/d924b57e7312b3b63ad21fc5b3dc0af5e78d61a1fc7cfb5457edaf26326bf62be5307cc87ffb6862ef1c2b33b0233cdb5d4f01c4c958cc0d660948b65a287a48
+  languageName: node
+  linkType: hard
+
+"mse-audio-wrapper@npm:1.4.15":
+  version: 1.4.15
+  resolution: "mse-audio-wrapper@npm:1.4.15"
+  dependencies:
+    codec-parser: "npm:2.5.0"
+  checksum: 10c0/48392b326476093f903e6d214f92417425688fac4c08c5517c66d4fc1b4e08db2dc1ab735fe770a2ccf4a11216728562b33ac471a487e553bd58fc653490ca5d
   languageName: node
   linkType: hard
 
@@ -16943,6 +17039,15 @@ __metadata:
     type-check: "npm:^0.4.0"
     word-wrap: "npm:^1.2.5"
   checksum: 10c0/4afb687a059ee65b61df74dfe87d8d6815cd6883cb8b3d5883a910df72d0f5d029821f37025e4bccf4048873dbdb09acc6d303d27b8f76b1a80dd5a7d5334675
+  languageName: node
+  linkType: hard
+
+"opus-decoder@npm:0.7.7":
+  version: 0.7.7
+  resolution: "opus-decoder@npm:0.7.7"
+  dependencies:
+    "@wasm-audio-decoders/common": "npm:9.0.5"
+  checksum: 10c0/35cd037b75183db8859eafdf65080c097117192b1284dd8abc3ffbd7b896f9a92c3f307dd8f17b83ce9d0d58cc388fe4fc629e0f509b1b8cf10347a6fb3152a7
   languageName: node
   linkType: hard
 
@@ -20618,6 +20723,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"simple-yenc@npm:^1.0.2, simple-yenc@npm:^1.0.4":
+  version: 1.0.4
+  resolution: "simple-yenc@npm:1.0.4"
+  checksum: 10c0/5a476cf328e5e5b6006ac44af01daeda8a9832d3d2205c80d71fbdf3a9ff1ee5092ed41b909c77532c80b9f6db65b577e2c1283fcbb5a9b194f1e96b0077de73
+  languageName: node
+  linkType: hard
+
 "sisteransi@npm:^1.0.5":
   version: 1.0.5
   resolution: "sisteransi@npm:1.0.5"
@@ -21429,6 +21541,16 @@ __metadata:
   version: 3.2.4
   resolution: "symbol-tree@npm:3.2.4"
   checksum: 10c0/dfbe201ae09ac6053d163578778c53aa860a784147ecf95705de0cd23f42c851e1be7889241495e95c37cabb058edb1052f141387bef68f705afc8f9dd358509
+  languageName: node
+  linkType: hard
+
+"synaudio@npm:0.3.5":
+  version: 0.3.5
+  resolution: "synaudio@npm:0.3.5"
+  dependencies:
+    "@eshaz/web-worker": "npm:1.2.1"
+    simple-yenc: "npm:^1.0.2"
+  checksum: 10c0/68fca8d8f14bfcc87d28be6ccce89d7918d7eb3ff2057031da2607c11cff65d3ba805f8bd4e1abbe72b3d93214dc347d5b9304e4fe22d7120bf1878d38d846c4
   languageName: node
   linkType: hard
 

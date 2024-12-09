@@ -27,8 +27,10 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "framer-motion": "^11.13.1",
+    "icecast-metadata-player": "^1.17.6",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "use-disposable": "^1.0.4",
     "valtio": "^2.1.2",
     "valtio-yjs": "^0.6.0",
     "yjs": "^13.6.20"
