@@ -225,12 +225,14 @@ function startUpload(
     },
     onError(error) {
       if ("originalRequest" in error) {
-        if (window.confirm(`Failed because: ${error}\nDo you want to retry?`)) {
-          upload.start();
-          return;
-        }
+        pluginApi.remote.toast.warning(
+          `Audio Recorder: Failed to upload video. Retrying... Error: ${error.message}`,
+        );
+        upload.start();
       } else {
-        window.alert(`Failed because: ${error}`);
+        pluginApi.remote.toast.error(
+          `Audio Recorder: Failed to upload video. Error: ${error.message}`,
+        );
       }
 
       // reset()
