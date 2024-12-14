@@ -151,7 +151,7 @@ function startStreamUpload({
 }) {
   mediaRecorder.onerror = (err) => {
     console.error(err);
-    alert("Error occured: " + err);
+    pluginApi.remote.toast(`Audio Recorder: Failed to record. Error: ${err}`);
 
     // reset()
   };
