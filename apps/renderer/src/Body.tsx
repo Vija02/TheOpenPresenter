@@ -1,8 +1,16 @@
 import { Box, Text } from "@chakra-ui/react";
-import { AwarenessContext, Scene, State, YjsWatcher } from "@repo/base-plugin";
+import {
+  AwarenessContext,
+  AwarenessStateData,
+  Scene,
+  State,
+  WebComponentProps,
+  YjsWatcher,
+} from "@repo/base-plugin";
 import { RendererBasePluginQuery } from "@repo/graphql";
 import {
   useAudioCheck,
+  useAwarenessState,
   useData,
   useError,
   usePluginData,
@@ -10,7 +18,7 @@ import {
 } from "@repo/shared";
 import { ErrorAlert, MotionBox } from "@repo/ui";
 import { AnimatePresence, motion } from "framer-motion";
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { toast } from "react-toastify";
 import { useDisposable } from "use-disposable";
@@ -142,6 +150,13 @@ const PluginRenderer = React.memo(
 
     const { canPlayAudio } = useAudioCheck();
     const { addError, removeError } = useError();
+    const setAwarenessState = useAwarenessState((x) => x.setAwarenessState);
+    const setAwarenessStateData = useCallback(
+      (data: AwarenessStateData) => {
+        setAwarenessState(sceneId, pluginId, data);
+      },
+      [pluginId, sceneId, setAwarenessState],
+    );
 
     const TagElement = useMemo(() => {
       if (!tag) {
@@ -171,8 +186,14 @@ const PluginRenderer = React.memo(
           }
         },
         trpcClient,
-        misc: { errorHandler: { addError, removeError }, canPlayAudio, toast },
-      });
+        misc: {
+          setAwarenessStateData,
+          zoomLevel: {} as any, // This should never be called
+          errorHandler: { addError, removeError },
+          canPlayAudio,
+          toast,
+        },
+      } satisfies WebComponentProps<any>);
     }, [
       addError,
       canPlayAudio,
@@ -184,6 +205,7 @@ const PluginRenderer = React.memo(
       provider,
       removeError,
       sceneId,
+      setAwarenessStateData,
       tag,
       yjsPluginRendererData,
       yjsPluginSceneData,

@@ -7,6 +7,7 @@ import {
   Text,
   chakra,
 } from "@chakra-ui/react";
+import { keyframes } from "@emotion/react";
 import { PluginRendererState } from "@repo/base-plugin";
 import { useAwareness, useData, usePluginMetaData } from "@repo/shared";
 import { OverlayToggle } from "@repo/ui";
@@ -26,6 +27,11 @@ import SidebarAddSceneModal from "./SidebarAddSceneModal";
 const MdCoPresent = chakra(MdCoPresentRaw);
 const MdVolumeUp = chakra(MdVolumeUpRaw);
 const RiRemoteControlLine = chakra(RiRemoteControlLineRaw);
+
+const pulse = keyframes`
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(0.9); }
+`;
 
 const SidebarMobile = () => {
   const data = useData();
@@ -63,6 +69,13 @@ const SidebarMobile = () => {
                   data.renderer["1"]?.children[id] ?? {},
                 ).find((x: PluginRendererState) => x.__audioIsPlaying);
 
+                const isLoading = awarenessData.find(
+                  (x) =>
+                    x.user &&
+                    x.user.type === "renderer" &&
+                    x.user.state.find((y) => y.sceneId === id && y.isLoading),
+                );
+
                 return (
                   <Stack
                     key={id}
@@ -81,6 +94,15 @@ const SidebarMobile = () => {
                     position="relative"
                     borderBottom="1px solid rgb(0, 0, 0, 0.06)"
                   >
+                    {isLoading && (
+                      <Box
+                        width="10px"
+                        height="10px"
+                        rounded="full"
+                        bgColor="orange.400"
+                        animation={`${pulse} 2s infinite`}
+                      />
+                    )}
                     {data.renderer["1"]?.currentScene === id && (
                       <Box
                         top={0}

@@ -27,6 +27,7 @@ import { bind } from "valtio-yjs";
 
 import { useError } from "./ErrorProvider";
 import { usePluginMetaData } from "./PluginMetaDataProvider";
+import { useAwarenessState } from "./awarenessState";
 
 type PluginDataProviderType = {
   provider: HocuspocusProvider | null;
@@ -174,6 +175,7 @@ export const PluginDataProvider = ({
   const { errors } = useError();
 
   const uaData = useMemo(() => uaParser(), []);
+  const awarenessState = useAwarenessState((x) => x.awarenessState);
 
   const setAwarenessData = useCallback(() => {
     provider?.setAwarenessField("user", {
@@ -181,9 +183,9 @@ export const PluginDataProvider = ({
       type,
       userAgentInfo: uaData,
       errors,
-      state: { isError: false, isLoading: false },
+      state: awarenessState,
     } satisfies AwarenessUserData);
-  }, [currentUserId, errors, provider, type, uaData]);
+  }, [awarenessState, currentUserId, errors, provider, type, uaData]);
   const clearAwarenessData = useCallback(() => {
     provider?.setAwarenessField("user", null);
   }, [provider]);

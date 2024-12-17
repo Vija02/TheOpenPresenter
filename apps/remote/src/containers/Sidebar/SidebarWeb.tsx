@@ -7,6 +7,7 @@ import {
   Text,
   chakra,
 } from "@chakra-ui/react";
+import { keyframes } from "@emotion/react";
 import { PluginRendererState } from "@repo/base-plugin";
 import { useAwareness, useData, usePluginMetaData } from "@repo/shared";
 import { OverlayToggle } from "@repo/ui";
@@ -27,6 +28,11 @@ import SidebarAddSceneModal from "./SidebarAddSceneModal";
 const MdCoPresent = chakra(MdCoPresentRaw);
 const MdVolumeUp = chakra(MdVolumeUpRaw);
 const RiRemoteControlLine = chakra(RiRemoteControlLineRaw);
+
+const pulse = keyframes`
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(0.9); }
+`;
 
 const SidebarWeb = () => {
   const data = useData();
@@ -66,6 +72,13 @@ const SidebarWeb = () => {
                   data.renderer["1"]?.children[id] ?? {},
                 ).find((x: PluginRendererState) => x.__audioIsPlaying);
 
+                const isLoading = awarenessData.find(
+                  (x) =>
+                    x.user &&
+                    x.user.type === "renderer" &&
+                    x.user.state.find((y) => y.sceneId === id && y.isLoading),
+                );
+
                 return (
                   <Stack
                     key={id}
@@ -80,7 +93,9 @@ const SidebarWeb = () => {
                     _hover={{ bg: "gray.300" }}
                     bg={location.includes(id) ? "gray.300" : "transparent"}
                     position="relative"
+                    justifyContent="space-between"
                   >
+                    <Stack direction="row" alignItems="center">
                       {data.renderer["1"]?.currentScene === id && (
                         <Box
                           top={0}
@@ -93,6 +108,16 @@ const SidebarWeb = () => {
                       )}
                       {audioIsPlaying && <MdVolumeUp fontSize="md" />}
                       <Text fontWeight="bold">{value.name}</Text>
+                    </Stack>
+                    {isLoading && (
+                      <Box
+                        width="10px"
+                        height="10px"
+                        rounded="full"
+                        bgColor="orange.400"
+                        animation={`${pulse} 2s infinite`}
+                      />
+                    )}
                   </Stack>
                 );
               })}

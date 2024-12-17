@@ -12,22 +12,25 @@ import {
 } from "@chakra-ui/react";
 import {
   AwarenessContext,
+  AwarenessStateData,
   Plugin,
   PluginContext,
   Scene,
   State,
+  WebComponentProps,
   YjsWatcher,
 } from "@repo/base-plugin";
 import { RemoteBasePluginQuery, useKeyPressMutation } from "@repo/graphql";
 import {
   useAudioCheck,
+  useAwarenessState,
   useData,
   useError,
   usePluginData,
   usePluginMetaData,
 } from "@repo/shared";
 import { ErrorAlert, OverlayToggle, PopConfirm } from "@repo/ui";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import {
   VscSettingsGear as VscSettingsGearRaw,
@@ -311,6 +314,13 @@ const PluginRenderer = React.memo(
 
     const { canPlayAudio } = useAudioCheck();
     const { addError, removeError } = useError();
+    const setAwarenessState = useAwarenessState((x) => x.setAwarenessState);
+    const setAwarenessStateData = useCallback(
+      (data: AwarenessStateData) => {
+        setAwarenessState(sceneId, pluginId, data);
+      },
+      [pluginId, sceneId, setAwarenessState],
+    );
 
     const Element = useMemo(() => {
       if (!viewData?.tag) {
@@ -341,12 +351,13 @@ const PluginRenderer = React.memo(
         },
         trpcClient,
         misc: {
+          setAwarenessStateData,
           zoomLevel: zoomLevelStore,
           errorHandler: { addError, removeError },
           canPlayAudio,
           toast,
         },
-      });
+      } satisfies WebComponentProps<any>);
     }, [
       addError,
       canPlayAudio,
@@ -358,6 +369,7 @@ const PluginRenderer = React.memo(
       provider,
       removeError,
       sceneId,
+      setAwarenessStateData,
       viewData?.tag,
       yjsPluginRendererData,
       yjsPluginSceneData,

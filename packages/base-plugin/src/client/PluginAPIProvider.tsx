@@ -1,13 +1,6 @@
 import React, { createContext, useEffect, useState } from "react";
-import type { toast as ReactToast } from "react-toastify";
 
-import {
-  AwarenessContext,
-  CanPlayAudio,
-  ErrorHandler,
-  PluginContext,
-  ZoomLevel,
-} from "..";
+import { AwarenessContext, MiscProps, PluginContext } from "..";
 import { initPluginApi } from "./initPluginApi";
 
 type InitPluginApiFunc = typeof initPluginApi<any, any>;
@@ -37,12 +30,7 @@ export const PluginAPIProvider = ({
   awarenessContext: AwarenessContext;
   pluginContext: PluginContext;
   setRenderCurrentScene: () => void;
-  misc: {
-    zoomLevel: ZoomLevel;
-    errorHandler: ErrorHandler;
-    canPlayAudio: CanPlayAudio;
-    toast: typeof ReactToast;
-  };
+  misc: MiscProps;
   children: React.ReactNode;
 }) => {
   const [pluginAPI, setPluginAPI] =

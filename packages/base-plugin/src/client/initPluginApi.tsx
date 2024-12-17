@@ -1,7 +1,6 @@
 import { YjsWatcher, appData } from "@repo/lib";
 import isEqual from "fast-deep-equal";
 import { useSyncExternalStore } from "react";
-import { toast as ReactToast } from "react-toastify";
 import { useLocation } from "react-use";
 import { typeidUnboxed } from "typeid-js";
 import { proxy } from "valtio";
@@ -10,12 +9,10 @@ import { Map as YMap } from "yjs";
 
 import {
   AwarenessContext,
-  CanPlayAudio,
-  ErrorHandler,
+  MiscProps,
   ObjectToTypedMap,
   Plugin,
   PluginContext,
-  ZoomLevel,
 } from "../types";
 import { awarenessStore } from "./store";
 
@@ -35,12 +32,7 @@ export function initPluginApi<
   awarenessContext: AwarenessContext;
   pluginContext: PluginContext;
   setRenderCurrentScene: () => void;
-  misc: {
-    zoomLevel: ZoomLevel;
-    errorHandler: ErrorHandler;
-    canPlayAudio: CanPlayAudio;
-    toast: typeof ReactToast;
-  };
+  misc: MiscProps;
 }) {
   // TODO: Should only be called once
   const sceneWatcher = new YjsWatcher(yjsPluginSceneData as any);
@@ -79,6 +71,7 @@ export function initPluginApi<
       awarenessObj: awarenessContext.awarenessObj,
       currentUserId: awarenessContext.currentUserId,
       useAwarenessData: () => awarenessStore((x) => x.awarenessData),
+      setAwarenessStateData: misc.setAwarenessStateData,
     },
     media: {
       generateId: () => typeidUnboxed("media"),

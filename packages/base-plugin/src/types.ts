@@ -76,16 +76,36 @@ export type AwarenessContext = {
   currentUserId: string;
 };
 
+// Extra state about the client
+export type AwarenessStateContext = {
+  pluginId: string;
+  sceneId: string;
+};
+export type AwarenessStateData = {
+  isLoading?: boolean;
+  isError?: boolean;
+};
+export type AwarenessState = (AwarenessStateContext & AwarenessStateData)[];
+
 export type AwarenessUserData = {
   id: string;
   type: "remote" | "renderer";
   userAgentInfo: UAParser.IResult;
   errors: string[];
+  state: AwarenessState;
 };
 
 // ========================================================================== //
 // ================================== Misc ================================== //
 // ========================================================================== //
+export type MiscProps = {
+  setAwarenessStateData: (state: AwarenessStateData) => void;
+  zoomLevel: ZoomLevel;
+  errorHandler: ErrorHandler;
+  canPlayAudio: CanPlayAudio;
+  toast: typeof ReactToast;
+};
+
 export type WebComponentProps<TrpcClient> = {
   yjsPluginSceneData: ObjectToTypedMap<Plugin<any>>;
   yjsPluginRendererData: ObjectToTypedMap<any>;
@@ -93,12 +113,7 @@ export type WebComponentProps<TrpcClient> = {
   pluginContext: PluginContext;
   setRenderCurrentScene: () => void;
   trpcClient: TrpcClient;
-  misc: {
-    zoomLevel: ZoomLevel;
-    errorHandler: ErrorHandler;
-    canPlayAudio: CanPlayAudio;
-    toast: typeof ReactToast;
-  };
+  misc: MiscProps;
 };
 
 export const sceneCategories = ["Display", "Media", "Audio"] as const;
