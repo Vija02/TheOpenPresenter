@@ -10,12 +10,11 @@ import {
   ModalProps,
   VStack,
 } from "@chakra-ui/react";
+import { useData, usePluginData } from "@repo/shared";
 import { OverlayToggleComponentProps } from "@repo/ui";
 import { Form, Formik } from "formik";
 import { InputControl, SubmitButton } from "formik-chakra-ui";
 import { useCallback } from "react";
-
-import { useData, usePluginData } from "../contexts/PluginDataProvider";
 
 export type SceneSettingsModalPropTypes = Omit<
   ModalProps,

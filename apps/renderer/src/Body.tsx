@@ -1,5 +1,13 @@
 import { Box, Text } from "@chakra-ui/react";
 import { AwarenessContext, Scene, State, YjsWatcher } from "@repo/base-plugin";
+import { RendererBasePluginQuery } from "@repo/graphql";
+import {
+  useAudioCheck,
+  useData,
+  useError,
+  usePluginData,
+  usePluginMetaData,
+} from "@repo/shared";
 import { ErrorAlert, MotionBox } from "@repo/ui";
 import { AnimatePresence, motion } from "framer-motion";
 import React, { useMemo, useState } from "react";
@@ -8,10 +16,6 @@ import { toast } from "react-toastify";
 import { useDisposable } from "use-disposable";
 import Y from "yjs";
 
-import { useAudioCheck } from "./contexts/AudioCheckProvider";
-import { useError } from "./contexts/ErrorProvider";
-import { useData, usePluginData } from "./contexts/PluginDataProvider";
-import { usePluginMetaData } from "./contexts/PluginMetaDataProvider";
 import { trpcClient } from "./trpc";
 
 export const Body = () => {
@@ -97,7 +101,8 @@ const SceneRenderer = React.memo(({ sceneId }: { sceneId: string }) => {
 
 const PluginRenderer = React.memo(
   ({ pluginId, sceneId }: { pluginId: string; sceneId: string }) => {
-    const pluginMetaData = usePluginMetaData().pluginMetaData;
+    const pluginMetaData = usePluginMetaData()
+      .pluginMetaData as RendererBasePluginQuery;
     const orgId = usePluginMetaData().orgId;
     const {
       getYJSPluginRenderer,

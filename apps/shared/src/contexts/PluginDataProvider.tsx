@@ -181,6 +181,7 @@ export const PluginDataProvider = ({
       type,
       userAgentInfo: uaData,
       errors,
+      state: { isError: false, isLoading: false },
     } satisfies AwarenessUserData);
   }, [currentUserId, errors, provider, type, uaData]);
   const clearAwarenessData = useCallback(() => {

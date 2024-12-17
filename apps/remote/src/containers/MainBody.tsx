@@ -18,7 +18,14 @@ import {
   State,
   YjsWatcher,
 } from "@repo/base-plugin";
-import { useKeyPressMutation } from "@repo/graphql";
+import { RemoteBasePluginQuery, useKeyPressMutation } from "@repo/graphql";
+import {
+  useAudioCheck,
+  useData,
+  useError,
+  usePluginData,
+  usePluginMetaData,
+} from "@repo/shared";
 import { ErrorAlert, OverlayToggle, PopConfirm } from "@repo/ui";
 import React, { useEffect, useMemo, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
@@ -32,10 +39,6 @@ import { useLocation, useRoute } from "wouter";
 import Y from "yjs";
 import { useStore } from "zustand";
 
-import { useAudioCheck } from "../contexts/AudioCheckProvider";
-import { useError } from "../contexts/ErrorProvider";
-import { useData, usePluginData } from "../contexts/PluginDataProvider";
-import { usePluginMetaData } from "../contexts/PluginMetaDataProvider";
 import { zoomLevelStore } from "../contexts/zoomLevel";
 import { trpcClient } from "../trpc";
 import { EmptyScene } from "./EmptyScene";
@@ -271,7 +274,8 @@ const PluginRenderer = React.memo(
     pluginId: string;
     pluginInfo: Plugin<Record<string, any>>;
   }) => {
-    const pluginMetaData = usePluginMetaData().pluginMetaData;
+    const pluginMetaData = usePluginMetaData()
+      .pluginMetaData as RemoteBasePluginQuery;
     const orgId = usePluginMetaData().orgId;
     const {
       getYJSPluginRenderer,

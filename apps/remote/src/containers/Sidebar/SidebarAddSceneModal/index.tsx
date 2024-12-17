@@ -16,6 +16,8 @@ import {
   chakra,
 } from "@chakra-ui/react";
 import { Scene, SceneCategories, sceneCategories } from "@repo/base-plugin";
+import { RemoteBasePluginQuery } from "@repo/graphql";
+import { usePluginData, usePluginMetaData } from "@repo/shared";
 import { OverlayToggleComponentProps } from "@repo/ui";
 import React, { useState } from "react";
 import { FaStar as FaStarRaw } from "react-icons/fa";
@@ -24,9 +26,6 @@ import { MdOutlineOndemandVideo } from "react-icons/md";
 import { PiMusicNotesSimple, PiPresentationChart } from "react-icons/pi";
 import { typeidUnboxed } from "typeid-js";
 import { useLocation } from "wouter";
-
-import { usePluginData } from "../../../contexts/PluginDataProvider";
-import { usePluginMetaData } from "../../../contexts/PluginMetaDataProvider";
 
 const FaStar = chakra(FaStarRaw);
 
@@ -53,7 +52,8 @@ const SidebarAddSceneModal = ({
   const [selectedCategory, setSelectedCategory] = useState("All");
 
   const mainState = usePluginData().mainState!;
-  const pluginMetaData = usePluginMetaData().pluginMetaData;
+  const pluginMetaData = usePluginMetaData()
+    .pluginMetaData as RemoteBasePluginQuery;
 
   const [selectedPlugin, setSelectedPlugin] = useState<string | null>(null);
   const selectedSceneCreator = pluginMetaData?.pluginMeta.sceneCreator.find(

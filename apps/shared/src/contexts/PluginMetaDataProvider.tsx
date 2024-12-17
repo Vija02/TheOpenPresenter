@@ -1,10 +1,15 @@
 import { Text } from "@chakra-ui/react";
-import { RemoteBasePluginQuery, useRemoteBasePluginQuery } from "@repo/graphql";
+import {
+  RemoteBasePluginQuery,
+  RendererBasePluginQuery,
+  useRemoteBasePluginQuery,
+  useRendererBasePluginQuery,
+} from "@repo/graphql";
 import { ErrorOccurred, LoadingFull } from "@repo/ui";
 import React, { createContext, useContext } from "react";
 
 type PluginMetaDataProviderType = {
-  pluginMetaData: RemoteBasePluginQuery | null;
+  pluginMetaData: RendererBasePluginQuery | RemoteBasePluginQuery | null;
   orgId: string;
   orgSlug: string;
   projectSlug: string;
@@ -26,12 +31,19 @@ export function PluginMetaDataProvider({
   children,
   orgSlug,
   projectSlug,
-}: React.PropsWithChildren<{ orgSlug: string; projectSlug: string }>) {
+  type,
+}: React.PropsWithChildren<{
+  orgSlug: string;
+  projectSlug: string;
+  type: "remote" | "renderer";
+}>) {
+  const useFunc =
+    type === "remote" ? useRemoteBasePluginQuery : useRendererBasePluginQuery;
   const {
     data: pluginMetaData,
     loading,
     error,
-  } = useRemoteBasePluginQuery({
+  } = useFunc({
     variables: { orgSlug, projectSlug },
   });
 

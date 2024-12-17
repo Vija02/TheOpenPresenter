@@ -16,13 +16,13 @@ import {
   chakra,
 } from "@chakra-ui/react";
 import { AwarenessUserData } from "@repo/base-plugin";
+import { useAwareness } from "@repo/shared";
 import { OverlayToggle, OverlayToggleComponentProps } from "@repo/ui";
 import {
   FaChevronRight as FaChevronRightRaw,
   FaTriangleExclamation as FaTriangleExclamationRaw,
 } from "react-icons/fa6";
 
-import { useAwareness } from "../../contexts/AwarenessProvider";
 import { useIsMobile } from "../../hooks/useIsMobile";
 
 const FaTriangleExclamation = chakra(FaTriangleExclamationRaw);

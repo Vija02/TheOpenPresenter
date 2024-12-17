@@ -8,6 +8,7 @@ import {
   chakra,
 } from "@chakra-ui/react";
 import { PluginRendererState } from "@repo/base-plugin";
+import { useAwareness, useData, usePluginMetaData } from "@repo/shared";
 import { OverlayToggle } from "@repo/ui";
 import { sortBy } from "lodash-es";
 import {
@@ -18,9 +19,6 @@ import { RiRemoteControlLine as RiRemoteControlLineRaw } from "react-icons/ri";
 import { VscAdd, VscArrowLeft } from "react-icons/vsc";
 import { useLocation } from "wouter";
 
-import { useAwareness } from "../../contexts/AwarenessProvider";
-import { useData } from "../../contexts/PluginDataProvider";
-import { usePluginMetaData } from "../../contexts/PluginMetaDataProvider";
 import DebugDrawer from "./Debug/DebugDrawer";
 import { RendererWarning } from "./RendererWarning";
 import { ResizableBoxWrapper } from "./ResizableBoxWrapper";
@@ -83,18 +81,18 @@ const SidebarWeb = () => {
                     bg={location.includes(id) ? "gray.300" : "transparent"}
                     position="relative"
                   >
-                    {data.renderer["1"]?.currentScene === id && (
-                      <Box
-                        top={0}
-                        bottom={0}
-                        left={0}
-                        width="3px"
-                        position="absolute"
-                        bg="red.400"
-                      />
-                    )}
-                    {audioIsPlaying && <MdVolumeUp fontSize="md" />}
-                    <Text fontWeight="bold">{value.name}</Text>
+                      {data.renderer["1"]?.currentScene === id && (
+                        <Box
+                          top={0}
+                          bottom={0}
+                          left={0}
+                          width="3px"
+                          position="absolute"
+                          bg="red.400"
+                        />
+                      )}
+                      {audioIsPlaying && <MdVolumeUp fontSize="md" />}
+                      <Text fontWeight="bold">{value.name}</Text>
                   </Stack>
                 );
               })}

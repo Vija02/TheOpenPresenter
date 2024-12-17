@@ -14,11 +14,9 @@ import {
   TabPanels,
   Tabs,
 } from "@chakra-ui/react";
+import { useAwareness, useData } from "@repo/shared";
 import { OverlayToggleComponentProps } from "@repo/ui";
 import { lazy } from "react";
-
-import { useAwareness } from "../../../contexts/AwarenessProvider";
-import { useData } from "../../../contexts/PluginDataProvider";
 
 const JSONViewer = lazy(() => import("./JSONViewer"));
 

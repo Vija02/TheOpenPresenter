@@ -1,13 +1,15 @@
 import { Box, Text } from "@chakra-ui/react";
+import {
+  AudioCheckProvider,
+  AwarenessProvider,
+  ErrorProvider,
+  PluginDataProvider,
+  PluginMetaDataProvider,
+} from "@repo/shared";
 import { useEffect } from "react";
 import { Route, Switch, useParams } from "wouter";
 
 import { Body } from "./Body";
-import { AudioCheckProvider } from "./contexts/AudioCheckProvider";
-import { AwarenessProvider } from "./contexts/AwarenessProvider";
-import { ErrorProvider } from "./contexts/ErrorProvider";
-import { PluginDataProvider } from "./contexts/PluginDataProvider";
-import { PluginMetaDataProvider } from "./contexts/PluginMetaDataProvider";
 
 function App() {
   return (
@@ -26,7 +28,11 @@ function Root() {
   const { orgSlug, projectSlug } = params;
 
   return (
-    <PluginMetaDataProvider orgSlug={orgSlug!} projectSlug={projectSlug!}>
+    <PluginMetaDataProvider
+      orgSlug={orgSlug!}
+      projectSlug={projectSlug!}
+      type="renderer"
+    >
       <ErrorProvider>
         <AudioCheckProvider>
           <PluginDataProvider type="renderer">
