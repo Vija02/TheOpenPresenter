@@ -106,7 +106,19 @@ const Player = () => {
           mutableSceneData.pluginData.videos[index]!.metadata.duration = dur;
         }
       }}
+      onPlay={() => {
+        pluginApi.awareness.setAwarenessStateData({ isLoading: false });
+      }}
+      onPause={() => {
+        pluginApi.awareness.setAwarenessStateData({ isLoading: false });
+      }}
+      onBuffer={() => {
+        pluginApi.awareness.setAwarenessStateData({ isLoading: true });
+      }}
       onReady={() => {
+        if (isPlaying) {
+          pluginApi.awareness.setAwarenessStateData({ isLoading: true });
+        }
         setReady(true);
       }}
       onBufferEnd={setVideoSeek}

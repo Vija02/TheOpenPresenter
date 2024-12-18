@@ -15,14 +15,26 @@ const Player = () => {
   const [localIsPlaying, setLocalIsPlaying] = useState(false);
 
   const player = useDisposable(() => {
+    const audioElement = new Audio();
+    audioElement.onplaying = () => {
+      pluginApi.awareness.setAwarenessStateData({ isLoading: false });
+    };
+    audioElement.onwaiting = () => {
+      pluginApi.awareness.setAwarenessStateData({ isLoading: true });
+    };
     const player = new IcecastMetadataPlayer(url!, {
+      enableLogging: true,
       onPlay: () => {
         setLocalIsPlaying(true);
       },
       onStop: () => {
         setLocalIsPlaying(false);
       },
+      onError: () => {
+        pluginApi.awareness.setAwarenessStateData({ isError: true });
+      },
       metadataTypes: ["ogg"],
+      audioElement,
     });
     return [
       player,
@@ -34,11 +46,12 @@ const Player = () => {
 
   useEffect(() => {
     if (isPlaying && !localIsPlaying) {
+      pluginApi.awareness.setAwarenessStateData({ isLoading: true });
       player?.play();
     } else if (!isPlaying && localIsPlaying) {
       player?.stop();
     }
-  }, [isPlaying, localIsPlaying, player]);
+  }, [isPlaying, localIsPlaying, player, pluginApi.awareness]);
 
   useEffect(() => {
     if (player) {

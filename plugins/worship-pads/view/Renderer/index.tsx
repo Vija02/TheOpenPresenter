@@ -15,7 +15,9 @@ const WorshipPadsRenderer = () => {
   const [playerLoaded, setPlayerLoaded] = useState(false);
 
   useEffect(() => {
-    player.current = new HowlerPlayer();
+    player.current = new HowlerPlayer(() => {
+      pluginApi.awareness.setAwarenessStateData({ isLoading: false });
+    });
     player.current.targetVolume = volume;
     setPlayerLoaded(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -36,6 +38,7 @@ const Player = ({
   player: React.RefObject<HowlerPlayer | null>;
 }) => {
   const pluginApi = usePluginAPI();
+  const setAwarenessStateData = pluginApi.awareness.setAwarenessStateData;
 
   const files = pluginApi.scene.useData((x) => x.pluginData.files);
 
@@ -52,6 +55,7 @@ const Player = ({
       if (player.current?.currentTrack) {
         // If we're already playing, let's cross fade it
         if (player.current.currentTrack !== currentKey) {
+          setAwarenessStateData({ isLoading: true });
           player.current?.crossFade(
             player.current.currentTrack,
             currentKey,
@@ -60,13 +64,15 @@ const Player = ({
         }
       } else {
         // Otherwise lets just play normally
+        setAwarenessStateData({ isLoading: true });
         player.current?.play(currentKey);
       }
     } else if (player.current?.currentTrack) {
       // If we're not playing, then we should stop
+      setAwarenessStateData({ isLoading: false });
       player.current.stop(player.current.currentTrack, FADE_DURATION);
     }
-  }, [currentKey, files, isPlaying, player]);
+  }, [currentKey, files, isPlaying, player, setAwarenessStateData]);
 
   // Sync the target volume
   useEffect(() => {

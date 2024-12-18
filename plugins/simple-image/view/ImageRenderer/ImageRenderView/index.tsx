@@ -1,4 +1,15 @@
+import { useEffect } from "react";
+
+import { usePluginAPI } from "../../pluginApi";
+
 const ImageRenderView = ({ src }: { src: string }) => {
+  const pluginApi = usePluginAPI();
+  const setAwarenessStateData = pluginApi.awareness.setAwarenessStateData;
+
+  useEffect(() => {
+    setAwarenessStateData({ isLoading: true });
+  }, [setAwarenessStateData]);
+
   return (
     <img
       src={src}
@@ -7,6 +18,9 @@ const ImageRenderView = ({ src }: { src: string }) => {
         height: "100%",
         objectFit: "contain",
         background: "black",
+      }}
+      onLoad={() => {
+        pluginApi.awareness.setAwarenessStateData({ isLoading: false });
       }}
     />
   );

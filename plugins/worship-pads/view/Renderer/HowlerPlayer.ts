@@ -17,10 +17,13 @@ export class HowlerPlayer {
   // Keep track of the timeout so that we can clear them
   public loopTimeout: NodeJS.Timeout[] = [];
 
-  constructor() {
+  onPlay: () => void;
+
+  constructor(onPlay?: () => void) {
     this.sounds = new Map();
     this.backupSounds = new Map();
     this.currentTrack = null;
+    this.onPlay = onPlay ?? (() => {});
   }
 
   // TODO: Make this stream rather than loading the entire file first
@@ -68,6 +71,7 @@ export class HowlerPlayer {
       preload: true,
     });
     sound.on("play", () => {
+      this.onPlay();
       earlyLoopHandler(sound);
     });
     this.sounds.set(id, sound);

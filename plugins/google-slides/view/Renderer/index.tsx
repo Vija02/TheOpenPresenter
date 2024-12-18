@@ -34,6 +34,7 @@ const RendererInner = ({
   const [initialized, setInitialized] = useState(false);
 
   const pluginApi = usePluginAPI();
+  const setAwarenessStateData = pluginApi.awareness.setAwarenessStateData;
   const slideIndex = pluginApi.renderer.useData((x) => x.slideIndex);
   const clickCount = pluginApi.renderer.useData((x) => x.clickCount);
   const mutableRendererData = pluginApi.renderer.useValtioData();
@@ -88,12 +89,17 @@ const RendererInner = ({
   ]);
 
   useEffect(() => {
+    setAwarenessStateData({ isLoading: true });
+  }, [setAwarenessStateData]);
+
+  useEffect(() => {
     if (loaded && !initialized) {
       ref.current?.goToSlide(slideIndex ?? 0);
       update();
       setInitialized(true);
+      setAwarenessStateData({ isLoading: false });
     }
-  }, [initialized, loaded, slideIndex, update]);
+  }, [initialized, loaded, setAwarenessStateData, slideIndex, update]);
 
   useEffect(() => {
     // TEST: Clicking on the same slideId as the current selected one should reset the click count
