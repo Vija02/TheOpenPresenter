@@ -26,6 +26,7 @@ COPY scripts/ /app/scripts
 COPY apps/homepage/package.json /app/apps/homepage/package.json
 COPY apps/remote/package.json /app/apps/remote/package.json
 COPY apps/renderer/package.json /app/apps/renderer/package.json
+COPY apps/shared/package.json /app/apps/shared/package.json
 COPY backend/backend-shared/package.json /app/backend/backend-shared/package.json
 COPY backend/config/package.json /app/backend/config/package.json
 COPY backend/db/package.json /app/backend/db/package.json
@@ -99,11 +100,13 @@ FROM builder-core AS builder-client
 ARG NODE_ENV
 ARG ROOT_URL
 
+COPY apps/shared/ /app/apps/shared/
+RUN yarn shared build
+
 COPY apps/homepage/ /app/apps/homepage/
 RUN yarn homepage codegen && yarn homepage build
 
 COPY apps/remote/ /app/apps/remote/
-RUN ls /app/packages/typescript-config
 RUN yarn remote build
 
 COPY apps/renderer/ /app/apps/renderer/

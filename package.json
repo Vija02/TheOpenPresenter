@@ -22,6 +22,7 @@
     "homepage": "yarn workspace @repo/homepage",
     "remote": "yarn workspace @repo/remote",
     "renderer": "yarn workspace @repo/renderer",
+    "shared": "yarn workspace @repo/shared",
     "server": "yarn workspace @repo/server",
     "worker": "yarn workspace @repo/worker"
   },
