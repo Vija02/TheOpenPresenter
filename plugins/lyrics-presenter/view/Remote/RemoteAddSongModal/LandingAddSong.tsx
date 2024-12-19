@@ -18,7 +18,7 @@ export const LandingAddSong = ({
   }, [focusElement]);
 
   return (
-    <Stack alignItems="center">
+    <Stack>
       <Stack alignItems="center">
         <Text fontWeight="bold">Search existing songs</Text>
         <Input
@@ -29,7 +29,9 @@ export const LandingAddSong = ({
         />
       </Stack>
 
-      <Text color="gray.500">or</Text>
+      <Text color="gray.500" textAlign="center">
+        or
+      </Text>
 
       <Button
         size="sm"
@@ -40,7 +42,9 @@ export const LandingAddSong = ({
         <Text ml={2}>Create a new song</Text>
       </Button>
 
-      <Text color="gray.500">or</Text>
+      <Text color="gray.500" textAlign="center">
+        or
+      </Text>
 
       <Button
         size="sm"
