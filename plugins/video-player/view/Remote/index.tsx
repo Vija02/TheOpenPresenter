@@ -1,11 +1,10 @@
 import {
   Box,
   Button,
-  Heading,
+  Flex,
   Input,
   Slider,
   SliderFilledTrack,
-  SliderMark,
   SliderThumb,
   SliderTrack,
   Stack,
@@ -70,98 +69,129 @@ const VideoPlayerRemote = () => {
   const disclosureProps = useDisclosure();
 
   return (
-    <Stack dir="column" p={3}>
-      <Stack direction="row" alignItems="center" justifyContent="space-between">
-        <Heading>Video Player</Heading>
-        <OverlayToggle
-          toggler={({ onToggle }) => (
-            <Button
-              onClick={onToggle}
-              size="sm"
-              bg="black"
-              color="white"
-              display="flex"
-              gap={2}
-              _hover={{ bg: "gray.800" }}
+    <Flex flexDir="column" height="100%">
+      <Box p={3} bg="gray.900">
+        <Stack direction="row" alignItems="center" gap={5}>
+          <Stack direction="row" alignItems="center">
+            <Text fontWeight="bold" color="white">
+              <Text>Video Player</Text>
+            </Text>
+          </Stack>
+          <Stack direction="row" alignItems="center" spacing={2}>
+            <OverlayToggle
+              toggler={({ onToggle }) => (
+                <Button
+                  size="xs"
+                  bg="transparent"
+                  color="white"
+                  border="1px solid #ffffff6b"
+                  _hover={{ bg: "rgba(255, 255, 255, 0.13)" }}
+                  onClick={onToggle}
+                >
+                  <MdCloudUpload /> <Text ml={2}>Upload video</Text>
+                </Button>
+              )}
             >
-              <MdCloudUpload /> <Text>Upload video</Text>
-            </Button>
-          )}
-        >
-          <UploadVideoModal />
-        </OverlayToggle>
-      </Stack>
-
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          onSearch();
-        }}
-      >
-        <Stack direction="row">
-          <Input
-            placeholder="Search or Enter Video/Youtube/Vimeo/Etc URL"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-          />
-          <Button type="submit" colorScheme="green">
-            Search/Add
-          </Button>
+              <UploadVideoModal />
+            </OverlayToggle>
+          </Stack>
         </Stack>
-        {isError && <Text color="red">Unable to load this video</Text>}
-      </form>
-
-      <YoutubeSearchModal
-        {...disclosureProps}
-        searchQuery={input}
-        onVideoSelect={(videoId) => {
-          mutableSceneData.pluginData.videos.push({
-            id: typeidUnboxed("video"),
-            metadata: {},
-            url: `https://www.youtube.com/watch?v=${videoId}`,
-          });
-          setIsError(false);
-          setInput("");
-        }}
-      />
-
-      <Box>
-        <Slider
-          id="slider"
-          value={volume ?? 1}
-          min={0}
-          max={1}
-          step={0.01}
-          colorScheme="teal"
-          onChange={(v) => {
-            mutableRendererData.volume = v;
-          }}
-          height="100%"
-          width="100%"
-        >
-          <SliderMark value={0.25} mt="1" ml="-2.5" fontSize="sm">
-            25%
-          </SliderMark>
-          <SliderMark value={0.5} mt="1" ml="-2.5" fontSize="sm">
-            50%
-          </SliderMark>
-          <SliderMark value={0.75} mt="1" ml="-2.5" fontSize="sm">
-            75%
-          </SliderMark>
-          <SliderTrack>
-            <SliderFilledTrack />
-          </SliderTrack>
-          <SliderThumb />
-        </Slider>
       </Box>
+      <Flex width="100%" height="100%">
+        <Flex
+          flexDirection="column"
+          gap={2}
+          w="40px"
+          px="5px"
+          py={4}
+          bg="#313131"
+          alignItems="center"
+        >
+          <Text color="white" fontSize="1xs" fontWeight="bold">
+            VOL
+          </Text>
+          <Slider
+            id="slider"
+            value={volume ?? 1}
+            min={0}
+            max={1}
+            step={0.01}
+            orientation="vertical"
+            onChange={(v) => {
+              mutableRendererData.volume = v;
+            }}
+            mb={4}
+            mt={10}
+            flex={1}
+          >
+            <SliderTrack
+              w={2}
+              bg="black"
+              border="1px solid rgb(255, 255, 255, 0.3)"
+            >
+              <SliderFilledTrack bg="rgb(130, 130, 130)" />
+            </SliderTrack>
+            <SliderThumb
+              rounded="5px"
+              width="30px"
+              height="50px"
+              bg="linear-gradient(#282828 0%, #323232 45%, white 45%, white 55%, #383838 55%, #494949 100%)"
+              border="1px solid #ffffff1c"
+              borderTop="1px solid rgba(255, 255, 255, 0.32)"
+              boxShadow="rgba(0, 0, 0, 0.75) 2px 4px 5px 0px"
+            />
+          </Slider>
+        </Flex>
 
-      <Text fontSize="lg" mt={2} fontWeight="bold">
-        Loaded Videos
-      </Text>
-      {videos.map((video) => (
-        <VideoCard key={video.id} video={video} />
-      ))}
-    </Stack>
+        <Stack flex={1} dir="column" p={3}>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              onSearch();
+            }}
+          >
+            <Text fontSize="md" fontWeight="bold" mb={1}>
+              Search or enter URL:
+            </Text>
+            <Stack direction="row">
+              <Input
+                placeholder="Search..."
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+              />
+              <Button type="submit" colorScheme="green">
+                Go
+              </Button>
+            </Stack>
+            {isError && <Text color="red">Unable to load this video</Text>}
+          </form>
+
+          <YoutubeSearchModal
+            {...disclosureProps}
+            searchQuery={input}
+            onVideoSelect={(videoId) => {
+              mutableSceneData.pluginData.videos.push({
+                id: typeidUnboxed("video"),
+                metadata: {},
+                url: `https://www.youtube.com/watch?v=${videoId}`,
+              });
+              setIsError(false);
+              setInput("");
+            }}
+          />
+
+          <Text fontSize="lg" mt={2} fontWeight="bold">
+            Loaded Videos
+          </Text>
+          {videos.length === 0 && (
+            <Text color="gray.600">No videos loaded yet.</Text>
+          )}
+          {videos.map((video) => (
+            <VideoCard key={video.id} video={video} />
+          ))}
+        </Stack>
+      </Flex>
+    </Flex>
   );
 };
 
