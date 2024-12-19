@@ -18,13 +18,15 @@ import {
 } from "@repo/shared";
 import { ErrorAlert, MotionBox } from "@repo/ui";
 import { AnimatePresence, motion } from "framer-motion";
-import React, { useCallback, useMemo, useState } from "react";
+import React, { lazy, useCallback, useMemo, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { toast } from "react-toastify";
 import { useDisposable } from "use-disposable";
 import Y from "yjs";
 
 import { trpcClient } from "./trpc";
+
+const Landing = lazy(() => import("./Landing"));
 
 export const Body = () => {
   const data = useData();
@@ -36,7 +38,7 @@ export const Body = () => {
   );
 
   if (!currentScene) {
-    return;
+    return <Landing />;
   }
 
   return (
