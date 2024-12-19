@@ -36,8 +36,8 @@ const WorshipPadsRemote = () => {
         bg="#313131"
         alignItems="center"
       >
-        <Text color="white" fontSize="3xs">
-          Volume
+        <Text color="white" fontSize="1xs" fontWeight="bold">
+          VOL
         </Text>
         <Slider
           id="slider"
@@ -49,11 +49,16 @@ const WorshipPadsRemote = () => {
           onChange={(v) => {
             mutableRendererData.volume = v;
           }}
-          my={4}
+          mb={4}
+          mt={10}
           flex={1}
         >
-          <SliderTrack w={2} bg="black">
-            <SliderFilledTrack bg="rgb(87, 87, 87)" />
+          <SliderTrack
+            w={2}
+            bg="black"
+            border="1px solid rgb(255, 255, 255, 0.3)"
+          >
+            <SliderFilledTrack bg="rgb(130, 130, 130)" />
           </SliderTrack>
           <SliderThumb
             rounded="5px"
