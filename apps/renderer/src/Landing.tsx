@@ -19,7 +19,7 @@ const Landing = () => {
   return (
     <Box
       height="100%"
-      bgColor="rgb(10, 10, 10)"
+      background="linear-gradient(-73deg, rgb(10, 10, 10) 0%, rgb(23,23,23) 100%)"
       color="white"
       p={{ base: 10, md: 20 }}
       border="10px solid"
