@@ -1,5 +1,6 @@
 import {
   Box,
+  Center,
   Grid,
   Image,
   Modal,
@@ -10,6 +11,7 @@ import {
   ModalHeader,
   ModalOverlay,
   ModalProps,
+  Skeleton,
   Stack,
   Text,
 } from "@chakra-ui/react";
@@ -57,7 +59,7 @@ const YoutubeSearchModal = ({
       {...props}
     >
       <ModalOverlay />
-      <ModalContent maxW="1200">
+      <ModalContent maxW="1200" minH="70%">
         <ModalHeader>
           <Stack direction="row" alignItems="center">
             <FaYoutube color="red" fontSize={24} />
@@ -66,19 +68,33 @@ const YoutubeSearchModal = ({
         </ModalHeader>
         <ModalCloseButton />
         <ModalBody>
-          {isLoading && <LoadingInline />}
-          {data && (
-            <Grid
-              gridTemplateColumns={{
-                base: "1fr",
-                sm: "repeat(2, 1fr)",
-                md: "repeat(3, 1fr)",
-                lg: "repeat(4, 1fr)",
-              }}
-              gap={2}
-            >
-              {data.results.map((result) => {
-                if (result.type === "Video") {
+          {data && data.results.length === 0 && (
+            <Text my={10} color="gray.800" textAlign="center">
+              No results found.
+            </Text>
+          )}
+          <Grid
+            gridTemplateColumns={{
+              base: "1fr",
+              sm: "repeat(2, 1fr)",
+              md: "repeat(3, 1fr)",
+              lg: "repeat(4, 1fr)",
+            }}
+            gap={2}
+          >
+            {isLoading &&
+              Array.from(new Array(9)).map((_, i) => (
+                <Stack key={i} direction="column">
+                  <Skeleton aspectRatio={16 / 9} />
+                  <Skeleton height="20px" width="80%" mb="4px" />
+                  <Skeleton height="10px" maxW="71px" />
+                  <Skeleton height="10px" maxW="118px" />
+                </Stack>
+              ))}
+            {data &&
+              data.results
+                .filter((result: any) => result.type === "Video")
+                .map((result: YTNodes.Video) => {
                   const res = result as YTNodes.Video;
 
                   return (
@@ -142,12 +158,8 @@ const YoutubeSearchModal = ({
                       </Stack>
                     </Box>
                   );
-                }
-
-                return <Box>{result.type === "Video"}</Box>;
-              })}
-            </Grid>
-          )}
+                })}
+          </Grid>
         </ModalBody>
 
         <ModalFooter></ModalFooter>
