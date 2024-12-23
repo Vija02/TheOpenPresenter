@@ -1,66 +1,9 @@
-import { FileStore } from "@tus/file-store";
 import { KvStore, Upload } from "@tus/server";
 import { Express } from "express";
-import path from "path";
 import { Pool } from "pg";
-import stream from "stream";
-import { TypeId, toUUID, typeidUnboxed } from "typeid-js";
+import { TypeId, toUUID } from "typeid-js";
 
-export const UPLOADS_PATH = path.resolve(`${process.cwd()}/../../uploads`);
-
-export const createFileStore = (app: Express) => {
-  return new FileStore({
-    directory: UPLOADS_PATH,
-    configstore: new CustomFileKvStore(app),
-  });
-};
-
-export class MediaHandler {
-  fileStore: FileStore;
-
-  constructor(app: Express) {
-    this.fileStore = createFileStore(app);
-  }
-
-  async uploadMedia({
-    file,
-    extension,
-    userId,
-    organizationId,
-    id = typeidUnboxed("media"),
-    originalFileName,
-  }: {
-    file: stream.Readable;
-    extension: string;
-    userId: string;
-    organizationId: string;
-    id?: string;
-    originalFileName?: string;
-  }) {
-    const finalFileName = id + "." + extension;
-
-    const upload = new Upload({
-      id: finalFileName,
-      offset: 0,
-      metadata: {
-        originalFileName: originalFileName ?? null,
-        userId,
-        organizationId,
-      },
-    });
-
-    await this.fileStore.create(upload);
-    await this.fileStore.write(file, upload.id, 0);
-
-    return { id, fileName: finalFileName, extension };
-  }
-
-  async deleteMedia(fullFileId: string) {
-    await this.fileStore.remove(fullFileId);
-  }
-}
-
-export class CustomFileKvStore<T extends Upload> implements KvStore<T> {
+export class CustomKVStore<T extends Upload> implements KvStore<T> {
   rootPgPool: Pool;
 
   constructor(app: Express) {

@@ -1,41 +1,55 @@
-import {
-  CustomFileKvStore,
-  UPLOADS_PATH,
-  createFileStore,
-} from "@repo/backend-shared";
+import { media } from "@repo/backend-shared";
 import { Server } from "@tus/server";
 import express, { Express, static as staticMiddleware } from "express";
 import http from "http";
 import multer from "multer";
-import { fromString, typeidUnboxed } from "typeid-js";
+import { fromString } from "typeid-js";
 
 import { getAuthPgPool } from "./installDatabasePools";
 
-const storage = multer.diskStorage({
-  destination: UPLOADS_PATH,
-  filename: function (_req, file, cb) {
-    const originalFileName = file.originalname;
-    const splitFileName = originalFileName.split(".") ?? [""];
-    const extension = splitFileName[splitFileName.length - 1];
+const checkUserAuth = async (
+  app: Express,
+  { organizationId, sessionId }: { organizationId: string; sessionId: string },
+) => {
+  const authPgPool = getAuthPgPool(app);
+  const client = await authPgPool.connect();
+  try {
+    await client.query("BEGIN");
 
-    const newFileName = typeidUnboxed("media") + "." + extension;
+    await client.query(
+      `select set_config('role', $1::text, true), set_config('jwt.claims.session_id', $2::text, true)`,
+      [process.env.DATABASE_VISITOR, sessionId],
+    );
+    const {
+      rows: [row],
+    } = await client.query(
+      "select * from app_public.organizations where id = $1",
+      [organizationId],
+    );
+    if (!row) {
+      throw new Error("Not Authorized");
+    }
+    const {
+      rows: [user],
+    } = await client.query("select app_public.current_user_id() as id");
 
-    cb(null, newFileName);
-  },
-});
-const upload = multer({
-  storage,
-});
+    return user.id;
+  } catch (e) {
+    throw e;
+  } finally {
+    client.release();
+  }
+};
 
 export default (app: Express) => {
   // TODO: Setup caddy properly
   // https://github.com/tus/tus-node-server/tree/main/packages/server#example-use-with-nginx
   const server = new Server({
     path: "/media/upload/tus",
-    datastore: createFileStore(app),
+    datastore: media.file.createTusStore(app),
     respectForwardedHeaders: true,
     onUploadCreate: async (req, res, upload) => {
-      // TODO: Better Authentication & Validation (with file limit)
+      // TODO: Better Validation (with file limit)
 
       if (
         !upload.metadata ||
@@ -46,44 +60,13 @@ export default (app: Express) => {
         throw new Error("Bad Request");
       }
 
-      let userId;
-
-      const authPgPool = getAuthPgPool(app);
-      const client = await authPgPool.connect();
-      try {
-        await client.query("BEGIN");
-
-        await client.query(
-          `select set_config('role', $1::text, true), set_config('jwt.claims.session_id', $2::text, true)`,
-          [
-            process.env.DATABASE_VISITOR,
-            (req as OurRequest)?.user?.session_id ?? "",
-          ],
-        );
-        const {
-          rows: [row],
-        } = await client.query(
-          "select * from app_public.organizations where id = $1",
-          [upload.metadata.organizationId],
-        );
-        if (!row) {
-          throw new Error("Not Authorized");
-        }
-        const {
-          rows: [user],
-        } = await client.query("select app_public.current_user_id() as id");
-        userId = user.id;
-
-        await client.query("COMMIT");
-      } catch (e) {
-        await client.query("ROLLBACK");
-        throw e;
-      } finally {
-        client.release();
-      }
-
       // This works as validation since it will throw if invalid
       fromString(upload.metadata.id!, "media");
+
+      const userId = await checkUserAuth(app, {
+        organizationId: upload.metadata.organizationId ?? "",
+        sessionId: (req as OurRequest)?.user?.session_id ?? "",
+      });
 
       return Promise.resolve({
         res,
@@ -103,86 +86,43 @@ export default (app: Express) => {
   const tusUploadServer = express();
   tusUploadServer.all("*", server.handle.bind(server));
 
-  app.use(`/media/data`, staticMiddleware(UPLOADS_PATH));
+  const upload = multer({
+    storage: new media.file.multerStorage(app),
+  });
+
+  app.use(`/media/data`, staticMiddleware(media.UPLOADS_PATH));
   app.use("/media/upload/tus", tusUploadServer);
   app.use(
     `/media/upload/form-data`,
+    async (reqRaw, res, next) => {
+      const req = reqRaw as media.OurMulterRequest;
+
+      if (!req.headers["organization-id"]) {
+        res.status(400).send("Missing organization-id");
+        return;
+      }
+      req.customMulterData = {
+        organizationId: req.headers["organization-id"].toString(),
+      };
+
+      const userId = await checkUserAuth(app, {
+        organizationId: req.customMulterData.organizationId ?? "",
+        sessionId: (req as OurRequest)?.user?.session_id ?? "",
+      });
+      req.customMulterData.userId = userId;
+
+      next();
+    },
+    // Handle the upload
     upload.single("file"),
-    async (req, res, next) => {
-      // TODO: Use custom storage implementation to match tus
-      if (!req.file) {
-        // Shouldn't get here since we have multer
-        res.status(500).send("Error");
-        return;
-      }
-
-      if (!req.body.organizationId) {
-        res.status(400).send("Missing organizationId");
-        return;
-      }
-      // TODO: Permission & Authentication
-
-      let userId;
-
-      const authPgPool = getAuthPgPool(app);
-      const client = await authPgPool.connect();
-      try {
-        await client.query("BEGIN");
-
-        await client.query(
-          `select set_config('role', $1::text, true), set_config('jwt.claims.session_id', $2::text, true)`,
-          [
-            process.env.DATABASE_VISITOR,
-            (req as OurRequest)?.user?.session_id ?? "",
-          ],
-        );
-        const {
-          rows: [row],
-        } = await client.query(
-          "select * from app_public.organizations where id = $1",
-          [req.body.organizationId],
-        );
-        if (!row) {
-          throw new Error("Not Authorized");
-        }
-        const {
-          rows: [user],
-        } = await client.query("select app_public.current_user_id() as id");
-        userId = user.id;
-
-        await client.query("COMMIT");
-      } catch (e) {
-        await client.query("ROLLBACK");
-        throw e;
-      } finally {
-        client.release();
-      }
-
-      const originalFileName = req.file.originalname;
-      const newFileName = req.file.filename;
-
-      const splitFileName = originalFileName.split(".") ?? [""];
+    async (req, res) => {
+      const splitFileName = req.file?.originalname.split(".") ?? [""];
       const extension = splitFileName[splitFileName.length - 1];
 
-      const configstore = new CustomFileKvStore(app);
-      await configstore.set(newFileName, {
-        id: "",
-        size: req.file.size,
-        offset: 0,
-        metadata: {
-          originalFileName,
-          organizationId: req.body.organizationId,
-          userId: userId,
-        },
-        creation_date: new Date().toISOString(),
-        sizeIsDeferred: false,
-        storage: { type: "", path: "" },
-      });
-
       res.status(200).json({
-        originalFileName,
-        newFileName,
-        url: process.env.ROOT_URL + "/media/data/" + newFileName,
+        originalFileName: req.file?.originalname,
+        newFileName: req.file?.filename,
+        url: process.env.ROOT_URL + "/media/data/" + req.file?.filename,
         extension,
       });
     },

@@ -11,12 +11,11 @@ import { usePluginAPI } from "../pluginApi";
 export const UploadModal = () => {
   const pluginApi = usePluginAPI();
   const [uppy] = useState(() =>
-    new Uppy({
-      meta: { organizationId: pluginApi.pluginContext.organizationId },
-    }).use(XHR, {
+    new Uppy().use(XHR, {
       endpoint: pluginApi.media.formDataUploadUrl,
       headers: {
         "csrf-token": appData.getCSRFToken(),
+        "organization-id": pluginApi.pluginContext.organizationId,
       },
     }),
   );

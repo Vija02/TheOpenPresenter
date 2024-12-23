@@ -1,4 +1,4 @@
-import { MediaHandler } from "@repo/backend-shared";
+import { media } from "@repo/backend-shared";
 import { Express, RequestHandler } from "express";
 import stream from "stream";
 
@@ -211,12 +211,14 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
   }
 
   public async uploadMedia(
-    media: string | Buffer,
+    data: string | Buffer,
     extension: string,
     { organizationId, userId }: { organizationId: string; userId: string },
   ) {
-    const { fileName } = await new MediaHandler(this.app).uploadMedia({
-      file: stream.Readable.from(media),
+    const { fileName } = await new media.file.mediaHandler(
+      this.app,
+    ).uploadMedia({
+      file: stream.Readable.from(data),
       extension,
       userId,
       organizationId,
@@ -230,6 +232,6 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
   }
 
   public async deleteMedia(fullFileId: string) {
-    await new MediaHandler(this.app).deleteMedia(fullFileId);
+    await new media.file.mediaHandler(this.app).deleteMedia(fullFileId);
   }
 }
