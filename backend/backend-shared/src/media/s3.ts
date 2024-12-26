@@ -1,8 +1,7 @@
-import { FileStore } from "@tus/file-store";
+import { S3Store } from "@tus/s3-store";
 import { Upload } from "@tus/server";
 import { Express, Request } from "express";
 import { StorageEngine } from "multer";
-import path from "path";
 import stream from "stream";
 import { typeidUnboxed } from "typeid-js";
 
@@ -13,20 +12,27 @@ import {
   OurMulterRequest,
 } from "./types";
 
-export const UPLOADS_PATH = path.resolve(`${process.cwd()}/../../uploads`);
-
-const createFileStore = (app: Express) => {
-  return new FileStore({
-    directory: UPLOADS_PATH,
-    configstore: new CustomKVStore(app),
+const createS3Store = (app: Express) => {
+  return new S3Store({
+    s3ClientConfig: {
+      bucket: process.env.STORAGE_S3_BUCKET!,
+      region: process.env.STORAGE_S3_REGION!,
+      endpoint: process.env.STORAGE_S3_ENDPOINT!,
+      credentials: {
+        accessKeyId: process.env.STORAGE_S3_ACCESS_KEY_ID!,
+        secretAccessKey: process.env.STORAGE_S3_SECRET_ACCESS_KEY!,
+      },
+    },
+    // TODO: Handle this directly rather than through cache
+    cache: new CustomKVStore(app),
   });
 };
 
 class MediaHandler implements MediaHandlerInterface {
-  fileStore: FileStore;
+  s3Store: S3Store;
 
   constructor(app: Express) {
-    this.fileStore = createFileStore(app);
+    this.s3Store = createS3Store(app);
   }
 
   async uploadMedia({
@@ -62,14 +68,14 @@ class MediaHandler implements MediaHandlerInterface {
       },
     });
 
-    await this.fileStore.create(upload);
-    await this.fileStore.write(file, upload.id, 0);
+    await this.s3Store.create(upload);
+    await this.s3Store.write(file, upload.id, 0);
 
     return { id, fileName: finalFileName, extension };
   }
 
   async deleteMedia(fullFileId: string) {
-    await this.fileStore.remove(fullFileId);
+    await this.s3Store.remove(fullFileId);
   }
 }
 
@@ -130,7 +136,7 @@ class MulterFileStorage implements StorageEngine {
 }
 
 export const mediaDataHandler = {
-  createTusStore: createFileStore,
+  createTusStore: createS3Store,
   mediaHandler: MediaHandler,
   multerStorage: MulterFileStorage,
 } satisfies MediaDataHandler;

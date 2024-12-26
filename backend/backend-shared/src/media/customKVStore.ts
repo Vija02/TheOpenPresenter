@@ -1,9 +1,12 @@
+import { MetadataValue } from "@tus/s3-store";
 import { KvStore, Upload } from "@tus/server";
 import { Express } from "express";
 import { Pool } from "pg";
 import { TypeId, toUUID } from "typeid-js";
 
-export class CustomKVStore<T extends Upload> implements KvStore<T> {
+export class CustomKVStore<T extends Upload | MetadataValue>
+  implements KvStore<T>
+{
   rootPgPool: Pool;
 
   constructor(app: Express) {
@@ -19,6 +22,7 @@ export class CustomKVStore<T extends Upload> implements KvStore<T> {
       "SELECT * FROM app_public.medias WHERE id = $1",
       [toUUID(splittedKey[0] as TypeId<string>)],
     );
+    if (!mediaRow) return undefined;
 
     const newObj = {
       id: mediaRow.media_name,
@@ -42,6 +46,8 @@ export class CustomKVStore<T extends Upload> implements KvStore<T> {
     const uuid = toUUID(mediaId as TypeId<string>);
     const extension = splittedKey[1];
 
+    const file = "file" in value ? value.file : (value as Upload);
+
     await this.rootPgPool.query(
       `INSERT INTO app_public.medias(
         id, media_name, file_size, file_offset, original_name, file_extension, organization_id, creator_user_id
@@ -58,12 +64,12 @@ export class CustomKVStore<T extends Upload> implements KvStore<T> {
       [
         uuid,
         key,
-        value.size,
-        value.offset,
-        value.metadata?.originalFileName ?? "",
+        file.size,
+        file.offset,
+        file.metadata?.originalFileName ?? "",
         extension,
-        value.metadata?.organizationId,
-        value.metadata?.userId,
+        file.metadata?.organizationId,
+        file.metadata?.userId,
       ],
     );
   }

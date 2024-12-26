@@ -215,9 +215,9 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
     extension: string,
     { organizationId, userId }: { organizationId: string; userId: string },
   ) {
-    const { fileName } = await new media.file.mediaHandler(
-      this.app,
-    ).uploadMedia({
+    const { fileName } = await new media[
+      process.env.STORAGE_TYPE as "file" | "s3"
+    ].mediaHandler(this.app).uploadMedia({
       file: stream.Readable.from(data),
       extension,
       userId,
@@ -232,6 +232,8 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
   }
 
   public async deleteMedia(fullFileId: string) {
-    await new media.file.mediaHandler(this.app).deleteMedia(fullFileId);
+    await new media[process.env.STORAGE_TYPE as "file" | "s3"].mediaHandler(
+      this.app,
+    ).deleteMedia(fullFileId);
   }
 }

@@ -40,5 +40,8 @@ export type OurMulterRequest = Request & {
   customMulterData?: {
     organizationId?: string;
     userId?: string;
+    uploadLength?: number;
+    explicitFileExtension?: string;
+    mediaId?: string;
   };
 };

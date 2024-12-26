@@ -3,7 +3,7 @@ import { Server } from "@tus/server";
 import express, { Express, static as staticMiddleware } from "express";
 import http from "http";
 import multer from "multer";
-import { fromString } from "typeid-js";
+import { fromString, typeidUnboxed } from "typeid-js";
 
 import { getAuthPgPool } from "./installDatabasePools";
 
@@ -42,52 +42,75 @@ const checkUserAuth = async (
 };
 
 export default (app: Express) => {
+  // TODO: File size validation
   // TODO: Setup caddy properly
   // https://github.com/tus/tus-node-server/tree/main/packages/server#example-use-with-nginx
   const server = new Server({
     path: "/media/upload/tus",
-    datastore: media.file.createTusStore(app),
+    datastore:
+      media[process.env.STORAGE_TYPE as "file" | "s3"].createTusStore(app),
     respectForwardedHeaders: true,
     onUploadCreate: async (req, res, upload) => {
-      // TODO: Better Validation (with file limit)
-
-      if (
-        !upload.metadata ||
-        !("id" in upload.metadata) ||
-        !("extension" in upload.metadata) ||
-        !("organizationId" in upload.metadata)
-      ) {
-        throw new Error("Bad Request");
+      if (!req.headers["organization-id"]) {
+        throw new Error("Missing organization-id header");
       }
 
-      // This works as validation since it will throw if invalid
-      fromString(upload.metadata.id!, "media");
+      const organizationId = req.headers["organization-id"].toString();
 
-      const userId = await checkUserAuth(app, {
-        organizationId: upload.metadata.organizationId ?? "",
-        sessionId: (req as OurRequest)?.user?.session_id ?? "",
-      });
-
-      return Promise.resolve({
-        res,
-        metadata: {
-          id: upload.metadata.id,
-          extension: upload.metadata.extension,
-          originalFileName: null,
-          organizationId: upload.metadata.organizationId,
-          userId: userId,
-        },
-      });
+      try {
+        const userId = await checkUserAuth(app, {
+          organizationId: organizationId,
+          sessionId: (req as OurRequest)?.user?.session_id ?? "",
+        });
+        return Promise.resolve({
+          res,
+          metadata: {
+            originalFileName: upload.metadata?.filename ?? null,
+            organizationId,
+            userId,
+          },
+        });
+      } catch (e) {
+        throw new Error("You are not allowed to do this action.");
+      }
     },
     namingFunction: (req, metadata) => {
-      return `${metadata!.id}.${metadata!.extension}`;
+      // Get the file extension either from header, or infer from file name
+      let fileExtension: string;
+
+      if (req.headers["file-extension"]) {
+        fileExtension = req.headers["file-extension"].toString();
+      } else if (metadata?.filename) {
+        const split = metadata.filename.split(".");
+        if (split.length <= 1) {
+          fileExtension = "";
+        }
+        fileExtension = split[split.length - 1]!;
+      } else {
+        fileExtension = "";
+      }
+
+      let mediaId: string = typeidUnboxed("media");
+      if (req.headers["custom-media-id"]) {
+        mediaId = req.headers["custom-media-id"].toString();
+        try {
+          // This works as validation since it will throw if invalid
+          fromString(mediaId, "media");
+        } catch (e) {
+          throw new Error("Invalid custom-media-id");
+        }
+      }
+
+      return `${mediaId}.${fileExtension}`;
     },
   });
   const tusUploadServer = express();
   tusUploadServer.all("*", server.handle.bind(server));
 
   const upload = multer({
-    storage: new media.file.multerStorage(app),
+    storage: new media[process.env.STORAGE_TYPE as "file" | "s3"].multerStorage(
+      app,
+    ),
   });
 
   app.use(`/media/data`, staticMiddleware(media.UPLOADS_PATH));
@@ -98,18 +121,53 @@ export default (app: Express) => {
       const req = reqRaw as media.OurMulterRequest;
 
       if (!req.headers["organization-id"]) {
-        res.status(400).send("Missing organization-id");
+        res.status(400).send("Missing organization-id header");
         return;
       }
+      if (!req.headers["upload-length"]) {
+        res.status(400).send("Missing upload-length header");
+        return;
+      }
+
+      const uploadLength = parseInt(
+        req.headers["upload-length"].toString(),
+        10,
+      );
+      if (!Number.isSafeInteger(uploadLength)) {
+        res.status(400).send("Invalid upload-length");
+        return;
+      }
+
       req.customMulterData = {
         organizationId: req.headers["organization-id"].toString(),
+        uploadLength,
+        explicitFileExtension: req.headers["file-extension"]
+          ? req.headers["file-extension"].toString()
+          : undefined,
       };
 
-      const userId = await checkUserAuth(app, {
-        organizationId: req.customMulterData.organizationId ?? "",
-        sessionId: (req as OurRequest)?.user?.session_id ?? "",
-      });
-      req.customMulterData.userId = userId;
+      let mediaId: string = typeidUnboxed("media");
+      if (req.headers["custom-media-id"]) {
+        mediaId = req.headers["custom-media-id"].toString();
+        try {
+          // This works as validation since it will throw if invalid
+          fromString(mediaId, "media");
+        } catch (e) {
+          res.status(400).send("Invalid custom-media-id");
+        }
+      }
+      req.customMulterData.mediaId = mediaId;
+
+      try {
+        const userId = await checkUserAuth(app, {
+          organizationId: req.customMulterData.organizationId ?? "",
+          sessionId: (req as OurRequest)?.user?.session_id ?? "",
+        });
+        req.customMulterData.userId = userId;
+      } catch (e) {
+        res.status(403).send("You are not allowed to do this action.");
+        return;
+      }
 
       next();
     },
