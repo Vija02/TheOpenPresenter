@@ -180,6 +180,16 @@ exports.updateDotenv = function updateDotenv(add, answers) {
   add("STORAGE_S3_ACCESS_KEY_ID");
   add("STORAGE_S3_SECRET_ACCESS_KEY");
 
+  add(
+    "STORAGE_PROXY",
+    "local",
+    `\
+# Should we proxy the media url: /media/data
+# 'local' = Proxy to the local folder. Only works if STORAGE_TYPE is file. Otherwise, this is disabled
+# [url] = Proxy to the specified url. Eg: https://mys3bucket.com
+# For any other values, this option is disabled`,
+  );
+
   add("ENABLED_PLUGINS", readdirSync("./plugins").join(","));
 };
 

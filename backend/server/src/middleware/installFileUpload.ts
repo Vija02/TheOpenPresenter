@@ -2,44 +2,11 @@ import { media } from "@repo/backend-shared";
 import { Server } from "@tus/server";
 import express, { Express, static as staticMiddleware } from "express";
 import http from "http";
+import { createProxyMiddleware } from "http-proxy-middleware";
 import multer from "multer";
 import { fromString, typeidUnboxed } from "typeid-js";
 
 import { getAuthPgPool } from "./installDatabasePools";
-
-const checkUserAuth = async (
-  app: Express,
-  { organizationId, sessionId }: { organizationId: string; sessionId: string },
-) => {
-  const authPgPool = getAuthPgPool(app);
-  const client = await authPgPool.connect();
-  try {
-    await client.query("BEGIN");
-
-    await client.query(
-      `select set_config('role', $1::text, true), set_config('jwt.claims.session_id', $2::text, true)`,
-      [process.env.DATABASE_VISITOR, sessionId],
-    );
-    const {
-      rows: [row],
-    } = await client.query(
-      "select * from app_public.organizations where id = $1",
-      [organizationId],
-    );
-    if (!row) {
-      throw new Error("Not Authorized");
-    }
-    const {
-      rows: [user],
-    } = await client.query("select app_public.current_user_id() as id");
-
-    return user.id;
-  } catch (e) {
-    throw e;
-  } finally {
-    client.release();
-  }
-};
 
 export default (app: Express) => {
   // TODO: File size validation
@@ -103,8 +70,22 @@ export default (app: Express) => {
     ),
   });
 
-  app.use(`/media/data`, staticMiddleware(media.UPLOADS_PATH));
+  if (process.env.STORAGE_PROXY) {
+    if (
+      process.env.STORAGE_PROXY === "local" &&
+      process.env.STORAGE_TYPE === "file"
+    ) {
+      app.use(`/media/data`, staticMiddleware(media.UPLOADS_PATH));
+    } else if (isValidURL(process.env.STORAGE_PROXY)) {
+      const apiProxy = createProxyMiddleware({
+        target: process.env.STORAGE_PROXY,
+        changeOrigin: true,
+      });
+      app.use(`/media/data`, apiProxy);
+    }
+  }
   app.use("/media/upload/tus", tusUploadServer);
+
   app.use(
     `/media/upload/form-data`,
     async (reqRaw, res, next) => {
@@ -180,6 +161,49 @@ export default (app: Express) => {
       });
     },
   );
+};
+
+function isValidURL(string: string) {
+  try {
+    new URL(string);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+const checkUserAuth = async (
+  app: Express,
+  { organizationId, sessionId }: { organizationId: string; sessionId: string },
+) => {
+  const authPgPool = getAuthPgPool(app);
+  const client = await authPgPool.connect();
+  try {
+    await client.query("BEGIN");
+
+    await client.query(
+      `select set_config('role', $1::text, true), set_config('jwt.claims.session_id', $2::text, true)`,
+      [process.env.DATABASE_VISITOR, sessionId],
+    );
+    const {
+      rows: [row],
+    } = await client.query(
+      "select * from app_public.organizations where id = $1",
+      [organizationId],
+    );
+    if (!row) {
+      throw new Error("Not Authorized");
+    }
+    const {
+      rows: [user],
+    } = await client.query("select app_public.current_user_id() as id");
+
+    return user.id;
+  } catch (e) {
+    throw e;
+  } finally {
+    client.release();
+  }
 };
 
 interface OurRequest extends http.IncomingMessage {
