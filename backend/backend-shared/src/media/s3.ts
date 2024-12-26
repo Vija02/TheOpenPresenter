@@ -6,6 +6,7 @@ import stream from "stream";
 import { typeidUnboxed } from "typeid-js";
 
 import { CustomKVStore } from "./customKVStore";
+import { multerProcessFileName } from "./helper";
 import {
   MediaDataHandler,
   MediaHandlerInterface,
@@ -91,16 +92,7 @@ class MulterFileStorage implements StorageEngine {
     file: Express.Multer.File,
     cb: (error?: any, info?: Partial<Express.Multer.File>) => void,
   ) {
-    let fileExtension;
-    if (req.customMulterData?.explicitFileExtension) {
-      fileExtension = req.customMulterData.explicitFileExtension;
-    } else {
-      const splittedKey = file.originalname.split(".");
-      if (splittedKey.length <= 1) {
-        fileExtension = "";
-      }
-      fileExtension = splittedKey[splittedKey.length - 1]!;
-    }
+    const { fileExtension } = multerProcessFileName(file, req.customMulterData);
 
     try {
       const { fileName } = await this.mediaHandler.uploadMedia({

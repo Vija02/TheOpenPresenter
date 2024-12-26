@@ -75,20 +75,10 @@ export default (app: Express) => {
       }
     },
     namingFunction: (req, metadata) => {
-      // Get the file extension either from header, or infer from file name
-      let fileExtension: string;
-
-      if (req.headers["file-extension"]) {
-        fileExtension = req.headers["file-extension"].toString();
-      } else if (metadata?.filename) {
-        const split = metadata.filename.split(".");
-        if (split.length <= 1) {
-          fileExtension = "";
-        }
-        fileExtension = split[split.length - 1]!;
-      } else {
-        fileExtension = "";
-      }
+      const fileExtension = media.extractFileExtension({
+        explicitFileExtension: req.headers["file-extension"]?.toString(),
+        originalFileName: metadata?.filename?.toString(),
+      });
 
       let mediaId: string = typeidUnboxed("media");
       if (req.headers["custom-media-id"]) {
@@ -173,15 +163,20 @@ export default (app: Express) => {
     },
     // Handle the upload
     upload.single("file"),
-    async (req, res) => {
-      const splitFileName = req.file?.originalname.split(".") ?? [""];
-      const extension = splitFileName[splitFileName.length - 1];
+    async (reqRaw, res) => {
+      const req = reqRaw as media.OurMulterRequest;
+
+      const { fileExtension } = media.multerProcessFileName(
+        req.file as Express.Multer.File,
+        req.customMulterData,
+      );
 
       res.status(200).json({
+        mediaId: req.customMulterData?.mediaId,
+        fileExtension,
+        fileName: req.file?.filename,
         originalFileName: req.file?.originalname,
-        newFileName: req.file?.filename,
         url: process.env.ROOT_URL + "/media/data/" + req.file?.filename,
-        extension,
       });
     },
   );
