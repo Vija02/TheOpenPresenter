@@ -8,8 +8,27 @@ import { fromString, typeidUnboxed } from "typeid-js";
 
 import { getAuthPgPool } from "./installDatabasePools";
 
+// TODO: File size validation
 export default (app: Express) => {
-  // TODO: File size validation
+  // Handle serving the media
+  if (process.env.STORAGE_PROXY) {
+    if (
+      process.env.STORAGE_PROXY === "local" &&
+      process.env.STORAGE_TYPE === "file"
+    ) {
+      app.use(`/media/data`, staticMiddleware(media.UPLOADS_PATH));
+    } else if (isValidURL(process.env.STORAGE_PROXY)) {
+      const apiProxy = createProxyMiddleware({
+        target: process.env.STORAGE_PROXY,
+        changeOrigin: true,
+      });
+      app.use(`/media/data`, apiProxy);
+    }
+  }
+
+  // ================================== //
+  // =========== Tus Upload =========== //
+  // ================================== //
   // TODO: Setup caddy properly
   // https://github.com/tus/tus-node-server/tree/main/packages/server#example-use-with-nginx
   const server = new Server({
@@ -64,27 +83,16 @@ export default (app: Express) => {
   const tusUploadServer = express();
   tusUploadServer.all("*", server.handle.bind(server));
 
+  app.use("/media/upload/tus", tusUploadServer);
+
+  // ================================== //
+  // ==== Form Data / Multer Upload === //
+  // ================================== //
   const upload = multer({
     storage: new media[process.env.STORAGE_TYPE as "file" | "s3"].multerStorage(
       app,
     ),
   });
-
-  if (process.env.STORAGE_PROXY) {
-    if (
-      process.env.STORAGE_PROXY === "local" &&
-      process.env.STORAGE_TYPE === "file"
-    ) {
-      app.use(`/media/data`, staticMiddleware(media.UPLOADS_PATH));
-    } else if (isValidURL(process.env.STORAGE_PROXY)) {
-      const apiProxy = createProxyMiddleware({
-        target: process.env.STORAGE_PROXY,
-        changeOrigin: true,
-      });
-      app.use(`/media/data`, apiProxy);
-    }
-  }
-  app.use("/media/upload/tus", tusUploadServer);
 
   app.use(
     `/media/upload/form-data`,
