@@ -1,5 +1,5 @@
 import { MetadataValue } from "@tus/s3-store";
-import { KvStore, Upload } from "@tus/server";
+import { KvStore, TUS_RESUMABLE, Upload } from "@tus/server";
 import { Express } from "express";
 import { Pool } from "pg";
 import { TypeId, toUUID } from "typeid-js";
@@ -37,7 +37,13 @@ export class CustomKVStore<T extends Upload | MetadataValue>
       creation_date: new Date(mediaRow.created_at).toISOString(),
     } as T;
 
-    return newObj;
+    return process.env.STORAGE_TYPE === "s3"
+      ? ({
+          file: newObj as Upload,
+          "tus-version": TUS_RESUMABLE,
+          "upload-id": mediaRow.s3_upload_id,
+        } satisfies MetadataValue as T)
+      : newObj;
   }
 
   async set(key: string, value: T): Promise<void> {
@@ -50,8 +56,8 @@ export class CustomKVStore<T extends Upload | MetadataValue>
 
     await this.rootPgPool.query(
       `INSERT INTO app_public.medias(
-        id, media_name, file_size, file_offset, original_name, file_extension, organization_id, creator_user_id
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) ON CONFLICT (id) DO UPDATE 
+        id, media_name, file_size, file_offset, original_name, file_extension, organization_id, creator_user_id, s3_upload_id
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) ON CONFLICT (id) DO UPDATE 
       SET 
         media_name = $2,
         file_size = $3,
@@ -59,7 +65,8 @@ export class CustomKVStore<T extends Upload | MetadataValue>
         original_name = $5,
         file_extension = $6,
         organization_id = $7,
-        creator_user_id = $8
+        creator_user_id = $8,
+        s3_upload_id = $9
       `,
       [
         uuid,
@@ -70,6 +77,7 @@ export class CustomKVStore<T extends Upload | MetadataValue>
         extension,
         file.metadata?.organizationId,
         file.metadata?.userId,
+        "upload-id" in value ? value["upload-id"] : null,
       ],
     );
   }

@@ -973,6 +973,7 @@ type Media {
   organization: Organization
   organizationId: UUID!
   originalName: String
+  s3UploadId: String
   updatedAt: Datetime!
 }
 

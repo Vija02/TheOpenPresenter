@@ -24,7 +24,7 @@ const createS3Store = (app: Express) => {
         secretAccessKey: process.env.STORAGE_S3_SECRET_ACCESS_KEY!,
       },
     },
-    // TODO: Handle this directly rather than through cache
+    // TODO: Handle this directly rather than through cache & remove .info
     cache: new CustomKVStore(app),
   });
 };
