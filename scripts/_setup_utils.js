@@ -27,28 +27,28 @@ exports.updateDotenv = function updateDotenv(add, answers) {
     `\
 # If you're supporting PostGraphile's development via Patreon or Graphile
 # Store, add your license key from https://store.graphile.com here so you can
-# use the Pro plugin - thanks so much!`
+# use the Pro plugin - thanks so much!`,
   );
 
   add(
     "NODE_ENV",
     "development",
     `\
-# This is a development environment (production wouldn't write envvars to a file)`
+# This is a development environment (production wouldn't write envvars to a file)`,
   );
 
   add(
     "ROOT_DATABASE_URL",
     null,
     `\
-# Superuser connection string (to a _different_ database), so databases can be dropped/created (may not be necessary in production)`
+# Superuser connection string (to a _different_ database), so databases can be dropped/created (may not be necessary in production)`,
   );
 
   add(
     "DATABASE_HOST",
     null,
     `\
-# Where's the DB, and who owns it?`
+# Where's the DB, and who owns it?`,
   );
 
   add("DATABASE_NAME");
@@ -60,7 +60,7 @@ exports.updateDotenv = function updateDotenv(add, answers) {
     `${answers.DATABASE_NAME}_authenticator`,
     `\
 # The PostGraphile database user, which has very limited
-# privileges, but can switch into the DATABASE_VISITOR role`
+# privileges, but can switch into the DATABASE_VISITOR role`,
   );
 
   add("DATABASE_AUTHENTICATOR_PASSWORD", safeRandomString(30));
@@ -69,28 +69,28 @@ exports.updateDotenv = function updateDotenv(add, answers) {
     "DATABASE_VISITOR",
     `${answers.DATABASE_NAME}_visitor`,
     `\
-# Visitor role, cannot be logged into directly`
+# Visitor role, cannot be logged into directly`,
   );
 
   add(
     "SECRET",
     safeRandomString(30),
     `\
-# This secret is used for signing cookies`
+# This secret is used for signing cookies`,
   );
 
   add(
     "JWT_SECRET",
     safeRandomString(48),
     `\
-# This secret is used for signing JWT tokens (we don't use this by default)`
+# This secret is used for signing JWT tokens (we don't use this by default)`,
   );
 
   add(
     "PORT",
     "5678",
     `\
-# This port is the one you'll connect to`
+# This port is the one you'll connect to`,
   );
 
   add(
@@ -98,7 +98,7 @@ exports.updateDotenv = function updateDotenv(add, answers) {
     "http://localhost:5678",
     `\
 # This is needed any time we use absolute URLs, e.g. for OAuth callback URLs
-# IMPORTANT: must NOT end with a slash`
+# IMPORTANT: must NOT end with a slash`,
   );
 
   add(
@@ -113,14 +113,14 @@ exports.updateDotenv = function updateDotenv(add, answers) {
 #   Homepage URL: http://localhost:5678
 #   Authorization callback URL: http://localhost:5678/auth/github/callback
 #
-# Client ID:`
+# Client ID:`,
   );
 
   add(
     "GITHUB_SECRET",
     null,
     `\
-# Client Secret:`
+# Client Secret:`,
   );
 
   add(
@@ -129,26 +129,26 @@ exports.updateDotenv = function updateDotenv(add, answers) {
     `\
 # To enable login with Google, fill the OAuth details below
 #
-# Client ID:`
+# Client ID:`,
   );
 
   add(
     "GOOGLE_CLIENT_SECRET",
     null,
     `\
-# Client Secret:`
+# Client Secret:`,
   );
 
   const nodeVersion = parseInt(
     process.version.replace(/\..*$/, "").replace(/[^0-9]/g, ""),
-    10
+    10,
   );
 
   add(
     "GRAPHILE_TURBO",
     nodeVersion >= 12 ? "1" : "",
     `\
-# Set to 1 only if you're on Node v12 of higher; enables advanced optimisations:`
+# Set to 1 only if you're on Node v12 of higher; enables advanced optimisations:`,
   );
 
   if (projectName) {
@@ -156,9 +156,29 @@ exports.updateDotenv = function updateDotenv(add, answers) {
       "COMPOSE_PROJECT_NAME",
       projectName,
       `\
-# The name of the folder you cloned graphile-starter to (so we can run docker-compose inside a container):`
+# The name of the folder you cloned graphile-starter to (so we can run docker-compose inside a container):`,
     );
   }
+
+  add(
+    "STORAGE_TYPE",
+    "file",
+    `\
+# How should storage be stored
+# 'file' = Store in the filesystem
+# 's3' = Store in S3`,
+  );
+
+  add(
+    "STORAGE_S3_BUCKET",
+    null,
+    `\
+# S3 Storage Configuration`,
+  );
+  add("STORAGE_S3_REGION");
+  add("STORAGE_S3_ENDPOINT");
+  add("STORAGE_S3_ACCESS_KEY_ID");
+  add("STORAGE_S3_SECRET_ACCESS_KEY");
 
   add("ENABLED_PLUGINS", readdirSync("./plugins").join(","));
 };
@@ -174,7 +194,7 @@ exports.checkGit = async function checkGit() {
     console.error();
     console.error();
     console.error(
-      "ERROR: Graphile Starter must run inside of a git versioned folder. Please run the following:"
+      "ERROR: Graphile Starter must run inside of a git versioned folder. Please run the following:",
     );
     console.error();
     console.error("  git init");
@@ -182,7 +202,7 @@ exports.checkGit = async function checkGit() {
     console.error("  git commit -m 'Graphile Starter base'");
     console.error();
     console.error(
-      "For more information, read https://github.com/graphile/starter#making-it-yours"
+      "For more information, read https://github.com/graphile/starter#making-it-yours",
     );
     console.error();
     console.error();
