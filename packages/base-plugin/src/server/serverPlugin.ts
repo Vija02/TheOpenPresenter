@@ -215,6 +215,11 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
     extension: string,
     { organizationId, userId }: { organizationId: string; userId: string },
   ) {
+    const size =
+      typeof data === "object" && "byteLength" in data
+        ? data.byteLength
+        : data.length;
+
     const { fileName } = await new media[
       process.env.STORAGE_TYPE as "file" | "s3"
     ].mediaHandler(this.app).uploadMedia({
@@ -222,6 +227,7 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
       extension,
       userId,
       organizationId,
+      size,
     });
 
     return {

@@ -44,7 +44,7 @@ class MediaHandler implements MediaHandlerInterface {
     extension: string;
     userId: string;
     organizationId: string;
-    size?: number;
+    size: number;
     creation_date?: string;
     id?: string;
     originalFileName?: string;
@@ -92,7 +92,7 @@ class MulterFileStorage implements StorageEngine {
       const { fileName } = await this.mediaHandler.uploadMedia({
         file: file.stream,
         extension: fileExtension,
-        size: req.customMulterData?.uploadLength,
+        size: req.customMulterData?.uploadLength!,
         originalFileName: file.originalname,
         // These should be validated on the calling method
         userId: req.customMulterData?.userId!,
