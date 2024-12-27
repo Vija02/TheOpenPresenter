@@ -6,6 +6,11 @@ We keep a list of the changes here to keep track of what we did
 
 Patched so that we can push changes from the server. Previously, these changes would be ignored.
 
+## @tus/s3-store
+
+- Update everything private -> protected. So that we can extend the functionality
+- Export the Options type, also so that we can extend the constructor
+
 ## graphql
 
 Remove the .mjs entry to force bundler to use the cjs build. This was causing us build issues.

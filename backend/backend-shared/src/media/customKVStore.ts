@@ -27,7 +27,7 @@ export class CustomKVStore<T extends Upload | MetadataValue>
     const newObj = {
       id: mediaRow.media_name,
       offset: mediaRow.file_offset,
-      size: mediaRow.file_size,
+      size: mediaRow.file_size ? parseInt(mediaRow.file_size, 10) : undefined,
       metadata: {
         originalFileName: mediaRow.original_name,
         organizationId: mediaRow.organization_id,

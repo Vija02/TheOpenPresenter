@@ -1,36 +1,36 @@
-import { S3Store } from "@tus/s3-store";
 import { Upload } from "@tus/server";
 import { Express, Request } from "express";
 import { StorageEngine } from "multer";
 import stream from "stream";
 import { typeidUnboxed } from "typeid-js";
 
-import { CustomKVStore } from "./customKVStore";
-import { multerProcessFileName } from "./helper";
+import { multerProcessFileName } from "../helper";
 import {
   MediaDataHandler,
   MediaHandlerInterface,
   OurMulterRequest,
-} from "./types";
+} from "../types";
+import { OurS3Store } from "./OurS3Store";
 
 const createS3Store = (app: Express) => {
-  return new S3Store({
-    s3ClientConfig: {
-      bucket: process.env.STORAGE_S3_BUCKET!,
-      region: process.env.STORAGE_S3_REGION!,
-      endpoint: process.env.STORAGE_S3_ENDPOINT!,
-      credentials: {
-        accessKeyId: process.env.STORAGE_S3_ACCESS_KEY_ID!,
-        secretAccessKey: process.env.STORAGE_S3_SECRET_ACCESS_KEY!,
+  return new OurS3Store(
+    {
+      s3ClientConfig: {
+        bucket: process.env.STORAGE_S3_BUCKET!,
+        region: process.env.STORAGE_S3_REGION!,
+        endpoint: process.env.STORAGE_S3_ENDPOINT!,
+        credentials: {
+          accessKeyId: process.env.STORAGE_S3_ACCESS_KEY_ID!,
+          secretAccessKey: process.env.STORAGE_S3_SECRET_ACCESS_KEY!,
+        },
       },
     },
-    // TODO: Handle this directly rather than through cache & remove .info
-    cache: new CustomKVStore(app),
-  });
+    app,
+  );
 };
 
 class MediaHandler implements MediaHandlerInterface {
-  s3Store: S3Store;
+  s3Store: OurS3Store;
 
   constructor(app: Express) {
     this.s3Store = createS3Store(app);
