@@ -238,8 +238,13 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
   }
 
   public async deleteMedia(fullFileId: string) {
-    await new media[process.env.STORAGE_TYPE as "file" | "s3"].mediaHandler(
-      this.app,
-    ).deleteMedia(fullFileId);
+    try {
+      await new media[process.env.STORAGE_TYPE as "file" | "s3"].mediaHandler(
+        this.app,
+      ).deleteMedia(fullFileId);
+      return { success: true };
+    } catch (e) {
+      return { success: false };
+    }
   }
 }
