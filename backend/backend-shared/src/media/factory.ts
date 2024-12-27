@@ -1,18 +1,14 @@
-import { FileStore } from "@tus/file-store";
 import { DataStore, Upload } from "@tus/server";
 import { Express, Request } from "express";
 import { StorageEngine } from "multer";
-import path from "path";
-import stream from "stream";
 import { typeidUnboxed } from "typeid-js";
 
-import { CustomKVStore } from "./customKVStore";
 import { multerProcessFileName } from "./helper";
 import {
-  MediaDataHandler,
   MediaHandlerConstructor,
   MediaHandlerInterface,
   OurMulterRequest,
+  UploadMediaParam,
 } from "./types";
 
 export const createMediaHandler = <T extends DataStore>(
@@ -27,30 +23,21 @@ export const createMediaHandler = <T extends DataStore>(
 
     async uploadMedia({
       file,
-      extension,
+      fileExtension,
+      fileSize,
       userId,
       organizationId,
-      size,
-      creation_date,
-      id = typeidUnboxed("media"),
+      creationDate,
+      mediaId = typeidUnboxed("media"),
       originalFileName,
-    }: {
-      file: stream.Readable;
-      extension: string;
-      userId: string;
-      organizationId: string;
-      size: number;
-      creation_date?: string;
-      id?: string;
-      originalFileName?: string;
-    }) {
-      const finalFileName = id + "." + extension;
+    }: UploadMediaParam) {
+      const finalFileName = mediaId + "." + fileExtension;
 
       const upload = new Upload({
         id: finalFileName,
         offset: 0,
-        size,
-        creation_date,
+        size: fileSize,
+        creation_date: creationDate,
         metadata: {
           originalFileName: originalFileName ?? null,
           userId,
@@ -61,7 +48,7 @@ export const createMediaHandler = <T extends DataStore>(
       await this.store.create(upload);
       await this.store.write(file, upload.id, 0);
 
-      return { id, fileName: finalFileName, extension };
+      return { mediaId, fileExtension, fileName: finalFileName };
     }
 
     async deleteMedia(fullFileId: string) {
@@ -91,13 +78,13 @@ export const createMulterStorage = (MediaHandler: MediaHandlerConstructor) => {
       try {
         const { fileName } = await this.mediaHandler.uploadMedia({
           file: file.stream,
-          extension: fileExtension,
-          size: req.customMulterData?.uploadLength!,
+          fileExtension,
+          fileSize: req.customMulterData?.uploadLength!,
           originalFileName: file.originalname,
           // These should be validated on the calling method
           userId: req.customMulterData?.userId!,
           organizationId: req.customMulterData?.organizationId!,
-          id: req.customMulterData?.mediaId,
+          mediaId: req.customMulterData?.mediaId,
         });
 
         cb(null, { filename: fileName });

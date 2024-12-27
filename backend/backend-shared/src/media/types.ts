@@ -6,20 +6,25 @@ import stream from "stream";
 export interface MediaHandlerConstructor {
   new (app: Express): MediaHandlerInterface;
 }
+
+export type UploadMediaParam = {
+  file: stream.Readable;
+  fileExtension: string;
+  fileSize: number;
+  mediaId?: string;
+  originalFileName?: string;
+  creationDate?: string;
+
+  // Other meta
+  userId: string;
+  organizationId: string;
+};
+
 export interface MediaHandlerInterface {
-  uploadMedia(meta: {
-    file: stream.Readable;
-    extension: string;
-    userId: string;
-    organizationId: string;
-    size: number;
-    creation_date?: string;
-    id?: string;
-    originalFileName?: string;
-  }): Promise<{
-    id: string;
+  uploadMedia(param: UploadMediaParam): Promise<{
+    mediaId: string;
+    fileExtension: string;
     fileName: string;
-    extension: string;
   }>;
 
   deleteMedia(fullFileId: string): Promise<void>;

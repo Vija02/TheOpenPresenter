@@ -278,7 +278,7 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
               );
 
               loadedPlugin.pluginData.thumbnailLinks.push(
-                uploadedMedia.newFileName,
+                uploadedMedia.fileName,
               );
             }
 

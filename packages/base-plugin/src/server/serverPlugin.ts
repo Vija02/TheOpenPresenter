@@ -212,28 +212,29 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
 
   public async uploadMedia(
     data: string | Buffer,
-    extension: string,
+    fileExtension: string,
     { organizationId, userId }: { organizationId: string; userId: string },
   ) {
-    const size =
+    const fileSize =
       typeof data === "object" && "byteLength" in data
         ? data.byteLength
         : data.length;
 
-    const { fileName } = await new media[
+    const { mediaId, fileName } = await new media[
       process.env.STORAGE_TYPE as "file" | "s3"
     ].mediaHandler(this.app).uploadMedia({
       file: stream.Readable.from(data),
-      extension,
+      fileExtension,
+      fileSize,
       userId,
       organizationId,
-      size,
     });
 
     return {
-      newFileName: fileName,
+      mediaId,
+      fileExtension,
+      fileName,
       url: process.env.ROOT_URL + "/media/data/" + fileName,
-      extension,
     };
   }
 
