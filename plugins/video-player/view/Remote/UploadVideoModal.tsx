@@ -13,7 +13,7 @@ import { appData } from "@repo/lib";
 import { OverlayToggleComponentProps } from "@repo/ui";
 import Uppy from "@uppy/core";
 import { FileInput, StatusBar, useUppyEvent } from "@uppy/react";
-import XHR from "@uppy/xhr-upload";
+import Tus from "@uppy/tus";
 import { useState } from "react";
 import { typeidUnboxed } from "typeid-js";
 
@@ -33,8 +33,8 @@ const UploadVideoModal = ({
 }: UploadVideoModalPropTypes) => {
   const pluginApi = usePluginAPI();
   const [uppy] = useState(() =>
-    new Uppy().use(XHR, {
-      endpoint: pluginApi.media.formDataUploadUrl,
+    new Uppy().use(Tus, {
+      endpoint: pluginApi.media.tusUploadUrl,
       headers: {
         "csrf-token": appData.getCSRFToken(),
         "organization-id": pluginApi.pluginContext.organizationId,
@@ -43,13 +43,14 @@ const UploadVideoModal = ({
   );
   const mutableSceneData = pluginApi.scene.useValtioData();
 
-  useUppyEvent(uppy, "upload-success", (_file, response) => {
-    const url = (response.body as any)?.url as string;
+  useUppyEvent(uppy, "upload-success", (file) => {
+    const splitted = file?.tus?.uploadUrl?.split("/");
+    const fileName = splitted?.[splitted.length - 1];
 
     mutableSceneData.pluginData.videos.push({
       id: typeidUnboxed("video"),
       metadata: {},
-      url: url,
+      url: pluginApi.media.getUrl(fileName ?? ""),
     });
     onToggle?.();
     resetData?.();
