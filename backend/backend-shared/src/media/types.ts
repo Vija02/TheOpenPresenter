@@ -3,19 +3,17 @@ import { Express, Request } from "express";
 import multer from "multer";
 import stream from "stream";
 
+export interface MediaHandlerConstructor {
+  new (app: Express): MediaHandlerInterface;
+}
 export interface MediaHandlerInterface {
-  uploadMedia({
-    file,
-    extension,
-    userId,
-    organizationId,
-    id,
-    originalFileName,
-  }: {
+  uploadMedia(meta: {
     file: stream.Readable;
     extension: string;
     userId: string;
     organizationId: string;
+    size: number;
+    creation_date?: string;
     id?: string;
     originalFileName?: string;
   }): Promise<{
