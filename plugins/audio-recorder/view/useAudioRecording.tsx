@@ -151,7 +151,9 @@ function startStreamUpload({
 }) {
   mediaRecorder.onerror = (err) => {
     console.error(err);
-    pluginApi.remote.toast(`Audio Recorder: Failed to record. Error: ${err}`);
+    pluginApi.remote.toast(`Audio Recorder: Failed to record. Error: ${err}`, {
+      toastId: "audio-recorder--mediaRecorderError",
+    });
 
     // reset()
   };
@@ -208,6 +210,7 @@ function startUpload(
   mediaId: string,
 ) {
   const endpoint = pluginApi.media.tusUploadUrl;
+  // DEBT: Maybe need bigger chunkSize
   const chunkSize = 15000; // 15kb. Roughly every second
 
   const options: tus.UploadOptions = {
@@ -217,21 +220,24 @@ function startUpload(
     uploadLengthDeferred: true,
     headers: {
       "csrf-token": pluginApi.env.getCSRFToken(),
+      "organization-id": pluginApi.pluginContext.organizationId,
+      "file-extension": "mp3",
+      "custom-media-id": mediaId,
     },
     metadata: {
-      id: mediaId,
-      extension: "mp3",
-      organizationId: pluginApi.pluginContext.organizationId,
+      filename: `recording_${new Date().toISOString()}.mp3`,
     },
     onError(error) {
       if ("originalRequest" in error) {
+        // TODO: Better error handling
         pluginApi.remote.toast.warning(
           `Audio Recorder: Failed to upload video. Retrying... Error: ${error.message}`,
+          { toastId: "audio-recorder--uploadError-originalRequest" },
         );
-        upload.start();
       } else {
         pluginApi.remote.toast.error(
           `Audio Recorder: Failed to upload video. Error: ${error.message}`,
+          { toastId: "audio-recorder--uploadError-no-originalRequest" },
         );
       }
 
