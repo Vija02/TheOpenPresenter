@@ -59,6 +59,7 @@ export class OurS3Store extends S3Store {
   // ========================================================================== //
 
   // Our own function to help get the part path
+  // TODO: Make this configurable
   protected getIncompletePartPath(id: string) {
     const partKey = this.partKey(id, true);
     const filePath = path.join(os.tmpdir(), partKey);
@@ -86,6 +87,8 @@ export class OurS3Store extends S3Store {
   ): Promise<string> {
     const filePath = this.getIncompletePartPath(id);
 
+    // DEBT: We can make this more efficient by simply appending the new data
+    // However, this will require us to override the `write` function. Potentially `uploadParts` too
     await streamProm.pipeline(readStream, fs.createWriteStream(filePath));
 
     return "";
@@ -114,7 +117,9 @@ export class OurS3Store extends S3Store {
     }
   }
 
-  protected async getIncompletePart(id: string): Promise<Readable | undefined> {
+  protected async getIncompletePart(
+    _id: string,
+  ): Promise<Readable | undefined> {
     // Not used, we've overridden downloadIncompletePart
     return;
   }
