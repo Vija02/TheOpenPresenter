@@ -12,6 +12,7 @@ const createFileStore = (app: Express) => {
   return new FileStore({
     directory: UPLOADS_PATH,
     configstore: new CustomKVStore(app),
+    expirationPeriodInMilliseconds: 6 * 60 * 60 * 1000, // 6h
   });
 };
 

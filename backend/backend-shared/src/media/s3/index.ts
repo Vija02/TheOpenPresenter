@@ -16,6 +16,7 @@ const createS3Store = (app: Express) => {
           secretAccessKey: process.env.STORAGE_S3_SECRET_ACCESS_KEY!,
         },
       },
+      expirationPeriodInMilliseconds: 6 * 60 * 60 * 1000, // 6h
     },
     app,
   );
