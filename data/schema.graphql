@@ -967,6 +967,7 @@ type Media {
   fileOffset: Int!
   fileSize: BigInt
   id: UUID!
+  isComplete: Boolean!
   mediaName: String!
 
   """Reads a single `Organization` that is related to this `Media`."""

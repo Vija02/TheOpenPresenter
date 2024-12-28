@@ -2202,7 +2202,9 @@ CREATE TABLE app_public.medias (
     organization_id uuid NOT NULL,
     creator_user_id uuid,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    s3_upload_id text,
+    is_complete boolean DEFAULT false NOT NULL
 );
 
 

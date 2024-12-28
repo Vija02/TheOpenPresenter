@@ -4,7 +4,8 @@ import express, { Express, static as staticMiddleware } from "express";
 import http from "http";
 import { createProxyMiddleware } from "http-proxy-middleware";
 import multer from "multer";
-import { fromString, typeidUnboxed } from "typeid-js";
+import { Pool } from "pg";
+import { TypeId, fromString, toUUID, typeidUnboxed } from "typeid-js";
 
 import { getAuthPgPool } from "./installDatabasePools";
 
@@ -78,6 +79,23 @@ export default (app: Express) => {
       }
 
       return `${mediaId}.${fileExtension}`;
+    },
+    onUploadFinish: async (_req, res, upload) => {
+      const splittedKey = upload.id.split(".");
+      const mediaId = splittedKey[0];
+      const uuid = toUUID(mediaId as TypeId<string>);
+
+      const rootPgPool = app.get("rootPgPool") as Pool;
+      await rootPgPool.query(
+        `UPDATE app_public.medias
+          SET 
+            is_complete = $1
+          WHERE id = $2
+        `,
+        [true, uuid],
+      );
+
+      return res;
     },
   });
   const tusUploadServer = express();
