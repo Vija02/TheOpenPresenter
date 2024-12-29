@@ -43,6 +43,7 @@ services:
       caddy: theopenpresenter.com
       caddy.reverse_proxy: "{{upstreams 5678}}"
       caddy.reverse_proxy.transport: "http"
+      caddy.request_body.max_size: "1GB"
 
   theopenpresenter-worker:
     image: ghcr.io/vija02/theopenpresenter_server:main
