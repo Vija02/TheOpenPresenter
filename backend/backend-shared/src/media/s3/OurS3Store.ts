@@ -2,11 +2,14 @@ import { MetadataValue, Options, S3Store } from "@tus/s3-store";
 import { type KvStore, TUS_RESUMABLE, Upload } from "@tus/utils";
 import debug from "debug";
 import { Express } from "express";
+import _ from "lodash";
 import fs, { promises as fsProm } from "node:fs";
 import type { Readable } from "node:stream";
 import { promises as streamProm } from "node:stream";
 import os from "os";
 import path from "path";
+import { Pool } from "pg";
+import { TypeId, toUUID } from "typeid-js";
 
 import { CustomKVStore } from "../customKVStore";
 
@@ -141,5 +144,81 @@ export class OurS3Store extends S3Store {
   protected async deleteIncompletePart(_id: string): Promise<void> {
     // Don't do anything since we'll delete it during uploadPart
     return;
+  }
+
+  public async remove(id: string): Promise<void> {
+    super.remove(id);
+
+    const splittedKey = id.split(".");
+    const mediaId = splittedKey[0];
+    const uuid = toUUID(mediaId as TypeId<string>);
+
+    const rootPgPool = this.app.get("rootPgPool") as Pool;
+
+    // Remove metadata from DB
+    await rootPgPool.query(`DELETE FROM app_public.medias WHERE id = $1`, [
+      uuid,
+    ]);
+  }
+
+  async deleteExpired(): Promise<number> {
+    if (this.getExpiration() === 0) {
+      return 0;
+    }
+
+    const rootPgPool = this.app.get("rootPgPool") as Pool;
+
+    const { rows } = await rootPgPool.query(
+      `SELECT 
+          id, media_name, s3_upload_id
+        FROM 
+          app_public.medias 
+        WHERE 
+          is_complete is false AND 
+          now() > created_at + (interval '1 millisecond' * $1) AND
+          s3_upload_id is not null
+      `,
+      [this.getExpiration()],
+    );
+
+    const promises = [];
+
+    // Remove parts
+    promises.push(
+      ...rows.map((expiredUpload) => {
+        return this.client.abortMultipartUpload({
+          Bucket: this.bucket,
+          Key: expiredUpload.media_name,
+          UploadId: expiredUpload.s3_upload_id,
+        });
+      }),
+    );
+
+    // Remove incomplete parts
+    promises.push(
+      ...rows.map((expiredUpload) =>
+        fsProm
+          .rm(this.getIncompletePartPath(expiredUpload.media_name))
+          .catch(() => {
+            /* ignore */
+          }),
+      ),
+    );
+
+    await Promise.all(promises);
+
+    // Remove metadata from DB
+    await Promise.all(
+      _.chunk(
+        rows.map((row) => row.id),
+        1000,
+      ).map((chunk) =>
+        rootPgPool.query(`DELETE FROM app_public.medias WHERE id = ANY($1)`, [
+          chunk,
+        ]),
+      ),
+    );
+
+    return rows.length;
   }
 }
