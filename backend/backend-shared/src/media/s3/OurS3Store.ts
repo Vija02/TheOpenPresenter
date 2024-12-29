@@ -78,10 +78,10 @@ export class OurS3Store extends S3Store {
     const filePath = this.getIncompletePartPath(metadata.file.id);
     // Before we upload, let's delete the incomplete parts
     // If nothing, then we can just ignore it
-    fsProm.rm(filePath).catch(() => {
+    await fsProm.rm(filePath).catch(() => {
       /* ignore */
     });
-    return super.uploadPart(metadata, readStream, partNumber);
+    return await super.uploadPart(metadata, readStream, partNumber);
   }
 
   protected async uploadIncompletePart(
@@ -147,7 +147,7 @@ export class OurS3Store extends S3Store {
   }
 
   public async remove(id: string): Promise<void> {
-    super.remove(id);
+    await super.remove(id);
 
     const splittedKey = id.split(".");
     const mediaId = splittedKey[0];
