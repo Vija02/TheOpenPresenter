@@ -147,7 +147,31 @@ export class OurS3Store extends S3Store {
   }
 
   public async remove(id: string): Promise<void> {
-    await super.remove(id);
+    const { "upload-id": uploadId } = await this.getMetadata(id);
+    if (uploadId) {
+      await this.client
+        .abortMultipartUpload({
+          Bucket: this.bucket,
+          Key: id,
+          UploadId: uploadId,
+        })
+        .catch(() => {
+          /* ignore */
+        });
+    }
+
+    await this.client
+      .deleteObject({
+        Bucket: this.bucket,
+        Key: id,
+      })
+      .catch(() => {
+        /* ignore */
+      });
+
+    await fsProm.rm(this.getIncompletePartPath(id)).catch(() => {
+      /* ignore */
+    });
 
     const splittedKey = id.split(".");
     const mediaId = splittedKey[0];
