@@ -6060,6 +6060,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@repo/worker@workspace:backend/worker"
   dependencies:
+    "@repo/backend-shared": "npm:*"
+    "@repo/base-plugin": "npm:*"
     "@repo/config": "npm:*"
     "@repo/typescript-config": "npm:*"
     "@types/html-to-text": "npm:^9.0.4"
@@ -6068,6 +6070,7 @@ __metadata:
     "@types/nodemailer": "npm:^6.4.17"
     aws-sdk: "npm:^2.1692.0"
     concurrently: "npm:^9.1.0"
+    express: "npm:^4.21.2"
     graphile-worker: "npm:^0.16.6"
     html-to-text: "npm:^9.0.5"
     lodash: "npm:^4.17.21"
@@ -6076,6 +6079,10 @@ __metadata:
     nodemailer: "npm:^6.9.16"
     pkgroll: "npm:^2.5.1"
     tslib: "npm:^2.8.1"
+    typeid-js: "npm:^1.1.0"
+    valtio: "npm:^2.1.2"
+    valtio-yjs: "npm:^0.6.0"
+    yjs: "npm:^13.6.20"
   languageName: unknown
   linkType: soft
 
