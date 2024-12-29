@@ -13,3 +13,4 @@
 # │ │ │ │ │ │    │     │
 # │ │ │ │ │ │    │     │
 # * * * * * task ?opts {payload}
+0 0 * * * medias__cleanExpiredUploads
