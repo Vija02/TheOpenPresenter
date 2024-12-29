@@ -9,7 +9,7 @@ import { TypeId, fromString, toUUID, typeidUnboxed } from "typeid-js";
 
 import { getAuthPgPool } from "./installDatabasePools";
 
-// TODO: File size validation
+// TODO: File size validation & increase caddy max_size
 export default (app: Express) => {
   // Handle serving the media
   if (process.env.STORAGE_PROXY) {
@@ -30,8 +30,6 @@ export default (app: Express) => {
   // ================================== //
   // =========== Tus Upload =========== //
   // ================================== //
-  // TODO: Setup caddy properly
-  // https://github.com/tus/tus-node-server/tree/main/packages/server#example-use-with-nginx
   const server = new Server({
     path: "/media/upload/tus",
     datastore:
