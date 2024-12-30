@@ -2,6 +2,7 @@ import { Server } from "@hocuspocus/server";
 import type {
   IDisposable,
   ObjectToTypedMap,
+  Plugin,
   Scene,
   YState,
 } from "@repo/base-plugin";
@@ -53,7 +54,7 @@ const callPluginHooks = <
   documentName: string;
   registeredHooks: T;
   hookName: string;
-  pluginInfo: any;
+  pluginInfo: ObjectToTypedMap<Plugin>;
   callbackProps: Parameters<T[number]["callback"]>;
 }) => {
   try {
@@ -165,101 +166,40 @@ export default async function installHocuspocus(app: Express) {
         callback: (visible: boolean) => void;
       }[] = [];
 
-      const handleSectionOrScene = (
-        sectionOrScene: ObjectToTypedMap<any>,
-        id: string,
+      const handleScene = (
+        scene: ObjectToTypedMap<Scene<Record<string, any>>>,
+        sceneId: string,
         isJustCreated: boolean = false,
       ) => {
-        if (sectionOrScene.get("type") === "section") {
-          return;
-        }
-
-        const sceneId = id;
-
-        const scene = sectionOrScene as ObjectToTypedMap<
-          Scene<Record<string, any>>
-        >;
-
-        // First, let's make sure that the scene & plugin is reflected in `renderer`
         state.get("renderer")?.forEach((renderData) => {
-          const sceneKeys = Array.from(
-            renderData.get("children")?.keys() ?? [],
-          );
-
-          const sceneChildrenEntries = Array.from(
-            scene.get("children")?.entries()!,
-          );
-
-          if (!sceneKeys.includes(sceneId)) {
-            // Create the scene object with all the plugins as well
-            const sceneMap = new Y.Map();
-
-            sceneChildrenEntries.forEach(([pluginId, pluginInfo]) => {
-              const pluginMap = new Y.Map();
-
-              callPluginHooks({
-                documentName: data.documentName,
-                registeredHooks: registeredOnRendererDataCreated,
-                hookName: "onRendererDataCreated",
+          document?.transact(() => {
+            // Make sure that the scene & plugin is reflected in `renderer`
+            YjsState.syncRenderDataForScene({
+              renderData,
+              scene,
+              sceneId,
+              onRendererDataCreated: ({
+                pluginId,
                 pluginInfo,
-                callbackProps: [
-                  pluginMap,
-                  {
-                    pluginId,
-                    sceneId,
-                    organizationId,
-                  },
-                ],
-              });
-
-              sceneMap.set(pluginId, pluginMap);
+                rendererPluginMap,
+              }) => {
+                callPluginHooks({
+                  documentName: data.documentName,
+                  registeredHooks: registeredOnRendererDataCreated,
+                  hookName: "onRendererDataCreated",
+                  pluginInfo,
+                  callbackProps: [
+                    rendererPluginMap,
+                    {
+                      pluginId,
+                      sceneId,
+                      organizationId,
+                    },
+                  ],
+                });
+              },
             });
-
-            // Then we can set it all at once
-            renderData
-              .get("children")
-              ?.set(
-                sceneId,
-                sceneMap as ObjectToTypedMap<
-                  Record<string, Record<string, any>>
-                >,
-              );
-          } else {
-            // Otherwise we just add the plugin
-            const plugins = renderData.get("children")?.get(sceneId);
-            const currentPluginIds = Array.from(plugins?.keys()!);
-            const missingPlugins = sceneChildrenEntries.filter(
-              ([pluginId]) => !currentPluginIds.includes(pluginId),
-            );
-
-            if (missingPlugins.length > 0) {
-              document?.transact(() => {
-                for (const [pluginId, pluginInfo] of missingPlugins) {
-                  const pluginMap = new Y.Map();
-
-                  callPluginHooks({
-                    documentName: data.documentName,
-                    registeredHooks: registeredOnRendererDataCreated,
-                    hookName: "onRendererDataCreated",
-                    pluginInfo,
-                    callbackProps: [
-                      pluginMap,
-                      {
-                        pluginId,
-                        sceneId,
-                        organizationId,
-                      },
-                    ],
-                  });
-
-                  plugins?.set(
-                    pluginId,
-                    pluginMap as ObjectToTypedMap<Record<string, any>>,
-                  );
-                }
-              });
-            }
-          }
+          });
 
           // Handle scene change on each renderer
           renderData.observe((ev) => {
@@ -279,6 +219,9 @@ export default async function installHocuspocus(app: Express) {
           });
 
           // Handle renderer load
+          const sceneChildrenEntries = Array.from(
+            scene.get("children")?.entries()!,
+          );
           for (const [pluginId, pluginInfo] of sceneChildrenEntries) {
             callPluginHooks({
               documentName: data.documentName,
@@ -350,6 +293,21 @@ export default async function installHocuspocus(app: Express) {
         }
       };
 
+      const handleSectionOrScene = (
+        sectionOrScene: ObjectToTypedMap<any>,
+        id: string,
+        isJustCreated: boolean = false,
+      ) => {
+        if (sectionOrScene.get("type") === "section") {
+          return;
+        }
+
+        const scene = sectionOrScene as ObjectToTypedMap<
+          Scene<Record<string, any>>
+        >;
+        handleScene(scene, id, isJustCreated);
+      };
+
       const handleDeleteScene = (
         sectionOrScene: ObjectToTypedMap<any>,
         id: string,
@@ -375,17 +333,20 @@ export default async function installHocuspocus(app: Express) {
 
       // Initial load
       dataMap?.forEach((sectionOrScene, id) => {
+        // We handle all scenes that exist
         handleSectionOrScene(sectionOrScene, id);
       });
 
-      // Handle new scenes that is added
+      // Handle changes
       dataMap?.observe((event) => {
         event.keys.forEach((value, key) => {
+          // Handle additional scenes
           if (value.action === "add") {
             const sectionOrScene = dataMap.get(key)!;
 
             handleSectionOrScene(sectionOrScene, key, true);
           } else if (value.action === "delete") {
+            // And handle removal of existing scenes too
             handleDeleteScene(value.oldValue, key);
           }
         });
