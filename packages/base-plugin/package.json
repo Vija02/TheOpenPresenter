@@ -39,6 +39,7 @@
     "dev": "pkgroll --watch"
   },
   "dependencies": {
+    "@hocuspocus/server": "2.14.0",
     "@repo/backend-shared": "*",
     "@repo/lib": "*",
     "@trpc/server": "^11.0.0-rc.657",
