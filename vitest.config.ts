@@ -8,6 +8,8 @@ export default defineConfig({
         singleThread: true,
       },
     },
+    globals: true,
+    environment: 'jsdom',
     exclude: [
       "**/node_modules/**",
       "**/dist/**",
