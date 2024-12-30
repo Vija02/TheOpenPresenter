@@ -1,4 +1,4 @@
-import { ServerPluginApi } from "@repo/base-plugin/server";
+import { ServerPluginApiPrivate } from "@repo/base-plugin/server";
 import aki from "aki-plugin-manager";
 import { Express } from "express";
 import fs, { readdirSync, statSync } from "fs";
@@ -8,61 +8,6 @@ const dir = path.join(__dirname, "../../../", "loadedPlugins");
 const enabledPlugins = process.env.ENABLED_PLUGINS
   ? process.env.ENABLED_PLUGINS.split(",")
   : [];
-
-// Class to access the data in ServerPluginApi
-class ServerPluginApiPrivate extends ServerPluginApi {
-  getRegisteredTrpcAppRouter() {
-    return this.registeredTrpcAppRouter;
-  }
-  getRegisteredOnPluginDataCreated() {
-    return this.registeredOnPluginDataCreated;
-  }
-  getRegisteredOnPluginDataLoaded() {
-    return this.registeredOnPluginDataLoaded;
-  }
-  getRegisteredOnRendererDataCreated() {
-    return this.registeredOnRendererDataCreated;
-  }
-  getRegisteredOnRendererDataLoaded() {
-    return this.registeredOnRendererDataLoaded;
-  }
-  getRegisteredServeStatic() {
-    return this.registeredServeStatic;
-  }
-  getRegisteredLoadJsOnRemoteView() {
-    return this.registeredLoadJsOnRemoteView;
-  }
-  getRegisteredLoadCssOnRemoteView() {
-    return this.registeredLoadCssOnRemoteView;
-  }
-  getRegisteredRemoteViewWebComponent() {
-    return this.registeredRemoteViewWebComponent;
-  }
-  getRegisteredLoadJsOnRendererView() {
-    return this.registeredLoadJsOnRendererView;
-  }
-  getRegisteredLoadCssOnRendererView() {
-    return this.registeredLoadCssOnRendererView;
-  }
-  getRegisteredRendererViewWebComponent() {
-    return this.registeredRendererViewWebComponent;
-  }
-  getRegisteredSceneCreator() {
-    return this.registeredSceneCreator;
-  }
-  getRegisteredPrivateRoute() {
-    return this.registeredPrivateRoute;
-  }
-  getRegisteredKeyPressHandler() {
-    return this.registeredKeyPressHandler;
-  }
-  getRegisteredCSPDirectives() {
-    return this.registeredCSPDirectives;
-  }
-  getRegisteredEnvToViews() {
-    return this.registeredEnvToViews;
-  }
-}
 
 export let serverPluginApi: ServerPluginApiPrivate;
 

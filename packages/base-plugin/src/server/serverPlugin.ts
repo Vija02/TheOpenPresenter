@@ -249,3 +249,58 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
     }
   }
 }
+
+// Class to access the data in ServerPluginApi
+export class ServerPluginApiPrivate extends ServerPluginApi {
+  getRegisteredTrpcAppRouter() {
+    return this.registeredTrpcAppRouter;
+  }
+  getRegisteredOnPluginDataCreated() {
+    return this.registeredOnPluginDataCreated;
+  }
+  getRegisteredOnPluginDataLoaded() {
+    return this.registeredOnPluginDataLoaded;
+  }
+  getRegisteredOnRendererDataCreated() {
+    return this.registeredOnRendererDataCreated;
+  }
+  getRegisteredOnRendererDataLoaded() {
+    return this.registeredOnRendererDataLoaded;
+  }
+  getRegisteredServeStatic() {
+    return this.registeredServeStatic;
+  }
+  getRegisteredLoadJsOnRemoteView() {
+    return this.registeredLoadJsOnRemoteView;
+  }
+  getRegisteredLoadCssOnRemoteView() {
+    return this.registeredLoadCssOnRemoteView;
+  }
+  getRegisteredRemoteViewWebComponent() {
+    return this.registeredRemoteViewWebComponent;
+  }
+  getRegisteredLoadJsOnRendererView() {
+    return this.registeredLoadJsOnRendererView;
+  }
+  getRegisteredLoadCssOnRendererView() {
+    return this.registeredLoadCssOnRendererView;
+  }
+  getRegisteredRendererViewWebComponent() {
+    return this.registeredRendererViewWebComponent;
+  }
+  getRegisteredSceneCreator() {
+    return this.registeredSceneCreator;
+  }
+  getRegisteredPrivateRoute() {
+    return this.registeredPrivateRoute;
+  }
+  getRegisteredKeyPressHandler() {
+    return this.registeredKeyPressHandler;
+  }
+  getRegisteredCSPDirectives() {
+    return this.registeredCSPDirectives;
+  }
+  getRegisteredEnvToViews() {
+    return this.registeredEnvToViews;
+  }
+}
