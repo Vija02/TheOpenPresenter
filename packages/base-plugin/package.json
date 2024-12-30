@@ -39,7 +39,7 @@
     "dev": "pkgroll --watch"
   },
   "dependencies": {
-    "@hocuspocus/server": "2.14.0",
+    "@repo/backend-shared": "*",
     "@repo/lib": "*",
     "@trpc/server": "^11.0.0-rc.657",
     "@types/express": "^5.0.0",
@@ -50,7 +50,6 @@
     "react": "^19.0.0",
     "react-toastify": "^10.0.6",
     "react-use": "^17.5.1",
-    "react-yjs": "^2.0.1",
     "tslib": "^2.8.1",
     "typeid-js": "^1.1.0",
     "ua-parser-js": "^1.0.39",
@@ -58,7 +57,6 @@
     "valtio-yjs": "^0.6.0",
     "y-protocols": "^1.0.6",
     "yjs": "^13.6.20",
-    "yjs-types": "^0.0.1",
     "zustand": "^5.0.2"
   },
   "devDependencies": {

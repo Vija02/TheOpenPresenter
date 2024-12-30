@@ -3,16 +3,13 @@ import type {
   IDisposable,
   ObjectToTypedMap,
   Scene,
-  State,
   YState,
 } from "@repo/base-plugin";
+import { YjsState } from "@repo/base-plugin/server";
 import { Express } from "express";
 import { IncomingMessage, ServerResponse } from "http";
 import { Middleware } from "postgraphile";
 import { Duplex } from "stream";
-import { typeidUnboxed } from "typeid-js";
-import { proxy } from "valtio";
-import { bind } from "valtio-yjs";
 import WebSocket, { WebSocketServer } from "ws";
 import * as Y from "yjs";
 
@@ -40,6 +37,41 @@ class DisposableDocumentManager {
 }
 const disposableDocumentManager: DisposableDocumentManager =
   new DisposableDocumentManager();
+
+const callPluginHooks = <
+  T extends {
+    pluginName: string;
+    callback: (...args: any) => any;
+  }[],
+>({
+  documentName,
+  registeredHooks,
+  hookName,
+  pluginInfo,
+  callbackProps,
+}: {
+  documentName: string;
+  registeredHooks: T;
+  hookName: string;
+  pluginInfo: any;
+  callbackProps: Parameters<T[number]["callback"]>;
+}) => {
+  try {
+    disposableDocumentManager
+      .getDocumentDisposable(documentName)
+      .push(
+        registeredHooks
+          .find((x) => x.pluginName === pluginInfo.get("plugin"))
+          ?.callback(...callbackProps) ?? {},
+      );
+  } catch (e) {
+    console.error(
+      `Error: Error occurred while running the \`${hookName}\` function in ` +
+        pluginInfo.get("plugin"),
+    );
+    console.error(e);
+  }
+};
 
 export default async function installHocuspocus(app: Express) {
   Server.configure({
@@ -96,25 +128,7 @@ export default async function installHocuspocus(app: Express) {
       let dbDocument = row.document;
 
       if (!dbDocument) {
-        const yDoc = new Y.Doc();
-        // Initial state. We use valtio here so that we can define it as JSON
-        const mainState = proxy({
-          meta: {
-            id: typeidUnboxed("project"),
-            name: "",
-            createdAt: new Date().toISOString(),
-          },
-          data: {},
-          renderer: {
-            "1": {
-              currentScene: null,
-              overlay: null,
-              children: {},
-            },
-          },
-        } satisfies State);
-        const unbind = bind(mainState, yDoc.getMap());
-
+        const yDoc = YjsState.createEmptyState();
         const update = Y.encodeStateAsUpdate(yDoc);
 
         dbDocument = update;
@@ -122,7 +136,6 @@ export default async function installHocuspocus(app: Express) {
           "update app_public.projects set document = $1 where id = $2",
           [update, data.documentName],
         );
-        unbind();
       }
 
       if (dbDocument) {
@@ -184,25 +197,20 @@ export default async function installHocuspocus(app: Express) {
             sceneChildrenEntries.forEach(([pluginId, pluginInfo]) => {
               const pluginMap = new Y.Map();
 
-              try {
-                disposableDocumentManager
-                  .getDocumentDisposable(data.documentName)
-                  .push(
-                    registeredOnRendererDataCreated
-                      .find((x) => x.pluginName === pluginInfo.get("plugin"))
-                      ?.callback(pluginMap, {
-                        pluginId,
-                        sceneId,
-                        organizationId,
-                      }) ?? {},
-                  );
-              } catch (e) {
-                console.error(
-                  "Error: Error occurred while running the `onRendererDataCreated` function in " +
-                    pluginInfo.get("plugin"),
-                );
-                console.error(e);
-              }
+              callPluginHooks({
+                documentName: data.documentName,
+                registeredHooks: registeredOnRendererDataCreated,
+                hookName: "onRendererDataCreated",
+                pluginInfo,
+                callbackProps: [
+                  pluginMap,
+                  {
+                    pluginId,
+                    sceneId,
+                    organizationId,
+                  },
+                ],
+              });
 
               sceneMap.set(pluginId, pluginMap);
             });
@@ -229,27 +237,20 @@ export default async function installHocuspocus(app: Express) {
                 for (const [pluginId, pluginInfo] of missingPlugins) {
                   const pluginMap = new Y.Map();
 
-                  try {
-                    disposableDocumentManager
-                      .getDocumentDisposable(data.documentName)
-                      .push(
-                        registeredOnRendererDataCreated
-                          .find(
-                            (x) => x.pluginName === pluginInfo.get("plugin"),
-                          )
-                          ?.callback(pluginMap, {
-                            pluginId,
-                            sceneId,
-                            organizationId,
-                          }) ?? {},
-                      );
-                  } catch (e) {
-                    console.error(
-                      "Error: Error occurred while running the `onRendererDataCreated` function in " +
-                        pluginInfo.get("plugin"),
-                    );
-                    console.error(e);
-                  }
+                  callPluginHooks({
+                    documentName: data.documentName,
+                    registeredHooks: registeredOnRendererDataCreated,
+                    hookName: "onRendererDataCreated",
+                    pluginInfo,
+                    callbackProps: [
+                      pluginMap,
+                      {
+                        pluginId,
+                        sceneId,
+                        organizationId,
+                      },
+                    ],
+                  });
 
                   plugins?.set(
                     pluginId,
@@ -279,38 +280,30 @@ export default async function installHocuspocus(app: Express) {
 
           // Handle renderer load
           for (const [pluginId, pluginInfo] of sceneChildrenEntries) {
-            try {
-              disposableDocumentManager
-                .getDocumentDisposable(data.documentName)
-                .push(
-                  registeredOnRendererDataLoaded
-                    .find((x) => x.pluginName === pluginInfo.get("plugin"))
-                    ?.callback(
-                      renderData.get("children")?.get(sceneId)?.get(pluginId),
-                      {
-                        pluginId,
-                        sceneId,
-                        organizationId,
-                      },
-                      {
-                        onSceneVisibilityChange: (callback) => {
-                          // Register callback
-                          registeredSceneVisibilityChangeEventHandler.push({
-                            sceneId,
-                            pluginId,
-                            callback,
-                          });
-                        },
-                      },
-                    ) ?? {},
-                );
-            } catch (e) {
-              console.error(
-                "Error: Error occurred while running the `onRendererDataLoaded` function in " +
-                  pluginInfo.get("plugin"),
-              );
-              console.error(e);
-            }
+            callPluginHooks({
+              documentName: data.documentName,
+              registeredHooks: registeredOnRendererDataLoaded,
+              hookName: "onRendererDataLoaded",
+              pluginInfo,
+              callbackProps: [
+                renderData.get("children")?.get(sceneId)?.get(pluginId),
+                {
+                  pluginId,
+                  sceneId,
+                  organizationId,
+                },
+                {
+                  onSceneVisibilityChange: (callback) => {
+                    // Register callback
+                    registeredSceneVisibilityChangeEventHandler.push({
+                      sceneId,
+                      pluginId,
+                      callback,
+                    });
+                  },
+                },
+              ],
+            });
           }
         });
 
@@ -325,45 +318,35 @@ export default async function installHocuspocus(app: Express) {
 
         for (const [pluginId, pluginInfo] of children?.entries() ?? []) {
           if (isJustCreated) {
-            try {
-              disposableDocumentManager
-                .getDocumentDisposable(data.documentName)
-                .push(
-                  registeredOnPluginDataCreated
-                    .find((x) => x.pluginName === pluginInfo.get("plugin"))
-                    ?.callback(pluginInfo, {
-                      pluginId,
-                      sceneId,
-                      organizationId,
-                    }) ?? {},
-                );
-            } catch (e) {
-              console.error(
-                "Error: Error occurred while running the `onPluginDataCreated` function in " +
-                  pluginInfo.get("plugin"),
-              );
-              console.error(e);
-            }
+            callPluginHooks({
+              documentName: data.documentName,
+              registeredHooks: registeredOnPluginDataCreated,
+              hookName: "onPluginDataCreated",
+              pluginInfo,
+              callbackProps: [
+                pluginInfo,
+                {
+                  pluginId,
+                  sceneId,
+                  organizationId,
+                },
+              ],
+            });
           }
-          try {
-            disposableDocumentManager
-              .getDocumentDisposable(data.documentName)
-              .push(
-                registeredOnPluginDataLoaded
-                  .find((x) => x.pluginName === pluginInfo.get("plugin"))
-                  ?.callback(pluginInfo, {
-                    pluginId,
-                    sceneId,
-                    organizationId,
-                  }) ?? {},
-              );
-          } catch (e) {
-            console.error(
-              "Error: Error occurred while running the `onPluginDataLoaded` function in " +
-                pluginInfo.get("plugin"),
-            );
-            console.error(e);
-          }
+          callPluginHooks({
+            documentName: data.documentName,
+            registeredHooks: registeredOnPluginDataLoaded,
+            hookName: "onPluginDataLoaded",
+            pluginInfo,
+            callbackProps: [
+              pluginInfo,
+              {
+                pluginId,
+                sceneId,
+                organizationId,
+              },
+            ],
+          });
         }
       };
 
