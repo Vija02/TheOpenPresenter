@@ -1,12 +1,6 @@
 import { Server } from "@hocuspocus/server";
-import type {
-  IDisposable,
-  ObjectToTypedMap,
-  Plugin,
-  Scene,
-  YState,
-} from "@repo/base-plugin";
-import { YjsState } from "@repo/base-plugin/server";
+import type { YState } from "@repo/base-plugin";
+import { DisposableDocumentManager, YjsState } from "@repo/base-plugin/server";
 import { Express } from "express";
 import { IncomingMessage, ServerResponse } from "http";
 import { Middleware } from "postgraphile";
@@ -18,61 +12,8 @@ import { getUpgradeHandlers, getWebsocketMiddlewares } from "../app";
 import { serverPluginApi } from "../pluginManager";
 import { getAuthPgPool, getRootPgPool } from "./installDatabasePools";
 
-class DisposableDocumentManager {
-  private disposable: Record<string, IDisposable[]> = {};
-
-  getDocumentDisposable(documentName: string) {
-    if (!this.disposable[documentName]) {
-      this.disposable[documentName] = [];
-    }
-
-    return this.disposable[documentName]!;
-  }
-
-  disposeDocument(documentName: string) {
-    this.disposable[documentName]?.forEach((x) => {
-      x.dispose?.();
-    });
-    delete this.disposable[documentName];
-  }
-}
 const disposableDocumentManager: DisposableDocumentManager =
   new DisposableDocumentManager();
-
-const callPluginHooks = <
-  T extends {
-    pluginName: string;
-    callback: (...args: any) => any;
-  }[],
->({
-  documentName,
-  registeredHooks,
-  hookName,
-  pluginInfo,
-  callbackProps,
-}: {
-  documentName: string;
-  registeredHooks: T;
-  hookName: string;
-  pluginInfo: ObjectToTypedMap<Plugin>;
-  callbackProps: Parameters<T[number]["callback"]>;
-}) => {
-  try {
-    disposableDocumentManager
-      .getDocumentDisposable(documentName)
-      .push(
-        registeredHooks
-          .find((x) => x.pluginName === pluginInfo.get("plugin"))
-          ?.callback(...callbackProps) ?? {},
-      );
-  } catch (e) {
-    console.error(
-      `Error: Error occurred while running the \`${hookName}\` function in ` +
-        pluginInfo.get("plugin"),
-    );
-    console.error(e);
-  }
-};
 
 export default async function installHocuspocus(app: Express) {
   Server.configure({
@@ -142,217 +83,20 @@ export default async function installHocuspocus(app: Express) {
       if (dbDocument) {
         Y.applyUpdate(data.document, dbDocument);
       }
-
       /**
-       * Now we can start hooking the data to our plugins
+       * Handle hooks & everything needed for the Yjs State
        */
       const document = data.instance.documents.get(data.documentName);
       const state = document?.getMap() as YState;
 
-      const dataMap = state.get("data");
-
-      const registeredOnPluginDataCreated =
-        serverPluginApi.getRegisteredOnPluginDataCreated();
-      const registeredOnPluginDataLoaded =
-        serverPluginApi.getRegisteredOnPluginDataLoaded();
-      const registeredOnRendererDataCreated =
-        serverPluginApi.getRegisteredOnRendererDataCreated();
-      const registeredOnRendererDataLoaded =
-        serverPluginApi.getRegisteredOnRendererDataLoaded();
-
-      const registeredSceneVisibilityChangeEventHandler: {
-        sceneId: string;
-        pluginId: string;
-        callback: (visible: boolean) => void;
-      }[] = [];
-
-      const handleScene = (
-        scene: ObjectToTypedMap<Scene<Record<string, any>>>,
-        sceneId: string,
-        isJustCreated: boolean = false,
-      ) => {
-        state.get("renderer")?.forEach((renderData) => {
-          document?.transact(() => {
-            // Make sure that the scene & plugin is reflected in `renderer`
-            YjsState.syncRenderDataForScene({
-              renderData,
-              scene,
-              sceneId,
-              onRendererDataCreated: ({
-                pluginId,
-                pluginInfo,
-                rendererPluginMap,
-              }) => {
-                callPluginHooks({
-                  documentName: data.documentName,
-                  registeredHooks: registeredOnRendererDataCreated,
-                  hookName: "onRendererDataCreated",
-                  pluginInfo,
-                  callbackProps: [
-                    rendererPluginMap,
-                    {
-                      pluginId,
-                      sceneId,
-                      organizationId,
-                    },
-                  ],
-                });
-              },
-            });
-          });
-
-          // Handle scene change on each renderer
-          renderData.observe((ev) => {
-            if (ev.keysChanged.has("currentScene")) {
-              const previousScene =
-                ev.changes.keys.get("currentScene")?.oldValue;
-              const newScene = renderData.get("currentScene");
-
-              registeredSceneVisibilityChangeEventHandler.forEach((handler) => {
-                if (handler.sceneId === previousScene) {
-                  handler.callback(false);
-                } else if (handler.sceneId === newScene) {
-                  handler.callback(true);
-                }
-              });
-            }
-          });
-
-          // Handle renderer load
-          const sceneChildrenEntries = Array.from(
-            scene.get("children")?.entries()!,
-          );
-          for (const [pluginId, pluginInfo] of sceneChildrenEntries) {
-            callPluginHooks({
-              documentName: data.documentName,
-              registeredHooks: registeredOnRendererDataLoaded,
-              hookName: "onRendererDataLoaded",
-              pluginInfo,
-              callbackProps: [
-                renderData.get("children")?.get(sceneId)?.get(pluginId),
-                {
-                  pluginId,
-                  sceneId,
-                  organizationId,
-                },
-                {
-                  onSceneVisibilityChange: (callback) => {
-                    // Register callback
-                    registeredSceneVisibilityChangeEventHandler.push({
-                      sceneId,
-                      pluginId,
-                      callback,
-                    });
-                  },
-                },
-              ],
-            });
-          }
-        });
-
-        // Then we can start registering the hook to the plugins
-        const children = scene?.get("children");
-
-        children?.observe((event) => {
-          // TODO:
-          // Handle when new plugin are added or removed within a scene
-          console.log(event);
-        });
-
-        for (const [pluginId, pluginInfo] of children?.entries() ?? []) {
-          if (isJustCreated) {
-            callPluginHooks({
-              documentName: data.documentName,
-              registeredHooks: registeredOnPluginDataCreated,
-              hookName: "onPluginDataCreated",
-              pluginInfo,
-              callbackProps: [
-                pluginInfo,
-                {
-                  pluginId,
-                  sceneId,
-                  organizationId,
-                },
-              ],
-            });
-          }
-          callPluginHooks({
-            documentName: data.documentName,
-            registeredHooks: registeredOnPluginDataLoaded,
-            hookName: "onPluginDataLoaded",
-            pluginInfo,
-            callbackProps: [
-              pluginInfo,
-              {
-                pluginId,
-                sceneId,
-                organizationId,
-              },
-            ],
-          });
-        }
-      };
-
-      const handleSectionOrScene = (
-        sectionOrScene: ObjectToTypedMap<any>,
-        id: string,
-        isJustCreated: boolean = false,
-      ) => {
-        if (sectionOrScene.get("type") === "section") {
-          return;
-        }
-
-        const scene = sectionOrScene as ObjectToTypedMap<
-          Scene<Record<string, any>>
-        >;
-        handleScene(scene, id, isJustCreated);
-      };
-
-      const handleDeleteScene = (
-        sectionOrScene: ObjectToTypedMap<any>,
-        id: string,
-      ) => {
-        if (sectionOrScene.get("type") === "section") {
-          return;
-        }
-        const sceneId = id;
-
-        // Make sure that renderer only have the available scene
-        state.get("renderer")?.forEach((renderData) => {
-          const sceneKeys = Array.from(
-            renderData.get("children")?.keys() ?? [],
-          );
-
-          if (sceneKeys.includes(sceneId)) {
-            renderData.get("children")?.delete(sceneId);
-          }
-        });
-
-        // TODO: Remove listeners
-      };
-
-      // Initial load
-      dataMap?.forEach((sectionOrScene, id) => {
-        // We handle all scenes that exist
-        handleSectionOrScene(sectionOrScene, id);
+      YjsState.handleYjsDocumentLoad({
+        document: document!,
+        documentName: data.documentName,
+        state,
+        serverPluginApi,
+        disposableDocumentManager,
+        organizationId,
       });
-
-      // Handle changes
-      dataMap?.observe((event) => {
-        event.keys.forEach((value, key) => {
-          // Handle additional scenes
-          if (value.action === "add") {
-            const sectionOrScene = dataMap.get(key)!;
-
-            handleSectionOrScene(sectionOrScene, key, true);
-          } else if (value.action === "delete") {
-            // And handle removal of existing scenes too
-            handleDeleteScene(value.oldValue, key);
-          }
-        });
-      });
-
-      // TODO: Need to handle multiple plugin in 1 scene (adding, removing)
     },
     afterUnloadDocument: async (data) => {
       disposableDocumentManager.disposeDocument(data.documentName);
