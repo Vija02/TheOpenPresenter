@@ -13,6 +13,7 @@ import {
   YjsState,
 } from "@repo/base-plugin/server";
 import { typeidUnboxed } from "typeid-js";
+import { v4 } from "uuid";
 import { proxy } from "valtio";
 import { bind } from "valtio-yjs";
 import * as awareness from "y-protocols/awareness";
@@ -107,7 +108,13 @@ export const addPlugin = async <
 
 let id = 0;
 
-export const simulateUser = (document: Document) => {
+export const simulateUser = (
+  server: Awaited<ReturnType<typeof simulateServer>>,
+  plugin: Awaited<ReturnType<typeof addPlugin>>,
+  { type }: { type: AwarenessUserData["type"] } = { type: "renderer" },
+) => {
+  const awarenessUserId = v4();
+
   const clientDoc = new Y.Doc();
   clientDoc.clientID = id++;
 
@@ -122,8 +129,38 @@ export const simulateUser = (document: Document) => {
       aw,
       added.concat(updated).concat(removed),
     );
-    awareness.applyAwarenessUpdate(document.awareness, enc, "custom");
+    awareness.applyAwarenessUpdate(server.document.awareness, enc, "custom");
   });
 
-  return { setState };
+  setState({
+    id: awarenessUserId,
+    type,
+    userAgentInfo: {} as any,
+    errors: [],
+    state: [],
+  });
+
+  const pluginApiProps = {
+    yjsPluginSceneData: plugin.pluginData,
+    yjsPluginRendererData: plugin.rendererData,
+    awarenessContext: {
+      awarenessObj: aw,
+      currentUserId: awarenessUserId,
+    },
+    pluginContext: {
+      pluginId: plugin.pluginId,
+      sceneId: plugin.sceneId,
+      organizationId: "orgId",
+    },
+    setRenderCurrentScene: () => {},
+    misc: {
+      setAwarenessStateData: () => {},
+      zoomLevel: undefined as any,
+      errorHandler: { addError: () => {}, removeError: () => {} },
+      canPlayAudio: undefined as any,
+      toast: undefined as any,
+    },
+  };
+
+  return { awarenessUserId, setState, awareness: aw, pluginApiProps };
 };

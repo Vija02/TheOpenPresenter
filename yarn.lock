@@ -6035,6 +6035,7 @@ __metadata:
     tslib: "npm:^2.8.1"
     typeid-js: "npm:^1.1.0"
     typescript: "npm:^5.7.2"
+    uuid: "npm:^11.0.3"
     valtio: "npm:^2.1.2"
     valtio-yjs: "npm:^0.6.0"
     yjs: "npm:^13.6.20"

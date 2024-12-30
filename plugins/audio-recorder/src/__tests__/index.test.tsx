@@ -13,22 +13,16 @@ const wait = (ms: number): Promise<void> =>
 
 describe("audio-recorder onPluginDataLoaded", () => {
   it("should watch user awareness and remove stream when user disappears", async () => {
-    const { document, state } = await simulateServer(init);
-    const { pluginDataValtio } = await addPlugin<
-      PluginBaseData,
-      PluginRendererData
-    >(state, {
-      pluginName,
-    });
+    const server = await simulateServer(init);
+    const plugin = await addPlugin<PluginBaseData, PluginRendererData>(
+      server.state,
+      {
+        pluginName,
+      },
+    );
+    const { pluginDataValtio } = plugin;
 
-    const user1 = simulateUser(document);
-    user1.setState({
-      id: "user1",
-      type: "remote",
-      userAgentInfo: {} as any,
-      errors: [],
-      state: [],
-    });
+    const user1 = simulateUser(server, plugin);
 
     // Start stream
     pluginDataValtio.pluginData.activeStreams.push({
