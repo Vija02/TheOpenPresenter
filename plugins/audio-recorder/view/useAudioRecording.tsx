@@ -1,13 +1,16 @@
 import { useEffect } from "react";
 import * as tus from "tus-js-client";
-import { proxy, useSnapshot } from "valtio";
 
 import { usePluginAPI } from "./pluginApi";
 
-const streamState: Record<
+// Stream ID -> Stream
+// TODO: Capability to stop stream
+const streamManager: Record<string, MediaStream> = {};
+// Media ID -> Recorder, etc
+const recorderManager: Record<
   string,
   {
-    stream: MediaStream;
+    streamId: string;
     recorder: MediaRecorder | null;
     chunks: any[];
     done: boolean;
@@ -17,10 +20,8 @@ const streamState: Record<
 > = {};
 
 // TODO: Store locally and upload when available when offline
-// TODO: Allow streams to be reused
 // TODO: Handle error better
 // Note: Recording should continue running even when we're viewing different plugins. Applies to renderer too
-// DEBT: Maybe make a test for this
 export const useAudioRecording = () => {
   const pluginApi = usePluginAPI();
   const currentUserId = pluginApi.awareness.currentUserId;
@@ -73,87 +74,82 @@ export const useAudioRecording = () => {
 
             mutableSceneData.pluginData.activeStreams[i]!.streamId = stream.id;
 
-            streamState[stream.id] = {
-              stream,
-              recorder: null,
-              chunks: [],
-              done: false,
-              onDataAvailable: null,
-              stopRecording: null,
-            };
+            streamManager[stream.id] = stream;
           });
       }
     });
   }, [activeStreams, currentUserId, mutableSceneData.pluginData.activeStreams]);
 
   useEffect(() => {
+    // For each recording
     recordings.forEach((recording, i) => {
-      const availableLocalStreamIds = Object.keys(streamState);
+      const availableLocalStreamIds = Object.keys(streamManager);
+      // Only handle if the stream is in this tab
       if (availableLocalStreamIds.includes(recording.streamId)) {
-        const localStreamData = streamState[recording.streamId]!;
+        // In the beginning, let's create the recording if it doesn't exist yet
+        if (mutableSceneData.pluginData.recordings[i]?.mediaId === null) {
+          const mediaId = pluginApi.media.generateId();
+
+          const mediaRecorder = new MediaRecorder(
+            streamManager[recording.streamId]!,
+          );
+
+          recorderManager[mediaId] = {
+            streamId: recording.streamId,
+            recorder: mediaRecorder,
+            chunks: [],
+            done: false,
+            onDataAvailable: null,
+            stopRecording: null,
+          };
+
+          mutableSceneData.pluginData.recordings[i]!.mediaId = mediaId;
+          mutableSceneData.pluginData.recordings[i]!.status = "recording";
+          mutableSceneData.pluginData.recordings[i]!.startedAt =
+            new Date().toISOString();
+
+          // Now let's start uploading
+          startStreamUpload({
+            pluginApi,
+            mediaId,
+            onStopRecording: () => {
+              mutableSceneData.pluginData.recordings[i]!.status = "ended";
+              mutableSceneData.pluginData.recordings[i]!.endedAt =
+                new Date().toISOString();
+            },
+            onUploaded: () => {
+              mutableSceneData.pluginData.recordings[i]!.isUploaded = true;
+            },
+          });
+        }
 
         // Stop if stopping
         if (mutableSceneData.pluginData.recordings[i]!.status === "stopping") {
-          localStreamData.stopRecording?.();
-          return;
+          recorderManager[
+            mutableSceneData.pluginData.recordings[i]!.mediaId!
+          ]?.stopRecording?.();
         }
-        // Skip if we're already recording
-        if (localStreamData.recorder) {
-          return;
-        }
-
-        const mediaRecorder = new MediaRecorder(localStreamData.stream);
-
-        localStreamData.recorder = mediaRecorder;
-
-        // Now let's handle the recording
-        const mediaId = pluginApi.media.generateId();
-
-        startStreamUpload({
-          pluginApi,
-          mediaRecorder,
-          currentStreamState: localStreamData,
-          mediaId,
-          onStopRecording: () => {
-            mutableSceneData.pluginData.recordings[i]!.status = "ended";
-            mutableSceneData.pluginData.recordings[i]!.endedAt =
-              new Date().toISOString();
-          },
-          onUploaded: () => {
-            mutableSceneData.pluginData.recordings[i]!.isUploaded = true;
-          },
-        });
-
-        mutableSceneData.pluginData.recordings[i]!.mediaId = mediaId;
-        mutableSceneData.pluginData.recordings[i]!.status = "recording";
-        mutableSceneData.pluginData.recordings[i]!.startedAt =
-          new Date().toISOString();
       }
     });
   }, [mutableSceneData.pluginData.recordings, pluginApi, recordings]);
-};
-
-export const useStreamState = (streamId: string) => {
-  return useSnapshot(proxy(streamState))[streamId];
 };
 
 // Much of the code here is inspired from
 // https://github.com/tus/tus-js-client/blob/main/demos/browser/video.js
 function startStreamUpload({
   pluginApi,
-  mediaRecorder,
-  currentStreamState,
   mediaId,
   onStopRecording,
   onUploaded,
 }: {
   pluginApi: ReturnType<typeof usePluginAPI>;
-  mediaRecorder: MediaRecorder;
-  currentStreamState: (typeof streamState)[string];
   mediaId: string;
   onStopRecording: () => void;
   onUploaded: () => void;
 }) {
+  const recordingInstance = recorderManager[mediaId]!;
+  const mediaRecorder = recordingInstance.recorder!;
+
   mediaRecorder.onerror = (err) => {
     console.error(err);
     pluginApi.remote.toast(`Audio Recorder: Failed to record. Error: ${err}`, {
@@ -163,16 +159,16 @@ function startStreamUpload({
     // reset()
   };
   mediaRecorder.onstop = () => {
-    currentStreamState.done = true;
-    if (currentStreamState.onDataAvailable) {
-      currentStreamState.onDataAvailable(readableRecorder.read());
+    recordingInstance.done = true;
+    if (recordingInstance.onDataAvailable) {
+      recordingInstance.onDataAvailable(readableRecorder.read());
     }
   };
   mediaRecorder.ondataavailable = (event) => {
-    currentStreamState.chunks.push(event.data);
-    if (currentStreamState.onDataAvailable) {
-      currentStreamState.onDataAvailable(readableRecorder.read());
-      currentStreamState.onDataAvailable = undefined;
+    recordingInstance.chunks.push(event.data);
+    if (recordingInstance.onDataAvailable) {
+      recordingInstance.onDataAvailable(readableRecorder.read());
+      recordingInstance.onDataAvailable = undefined;
     }
   };
 
@@ -180,32 +176,29 @@ function startStreamUpload({
 
   const readableRecorder = {
     read() {
-      if (currentStreamState.done && currentStreamState.chunks.length === 0) {
+      if (recordingInstance.done && recordingInstance.chunks.length === 0) {
         return Promise.resolve({ done: true });
       }
 
-      if (currentStreamState.chunks.length > 0) {
+      if (recordingInstance.chunks.length > 0) {
         return Promise.resolve({
-          value: currentStreamState.chunks.shift(),
+          value: recordingInstance.chunks.shift(),
           done: false,
         });
       }
 
       return new Promise((resolve) => {
-        currentStreamState.onDataAvailable = resolve;
+        recordingInstance.onDataAvailable = resolve;
       });
     },
   };
 
   startUpload(pluginApi, readableRecorder, { mediaId, onSuccess: onUploaded });
 
-  currentStreamState.stopRecording = () => {
-    for (const track of currentStreamState.stream.getTracks()) {
-      track.stop();
-    }
+  recordingInstance.stopRecording = () => {
     onStopRecording();
     mediaRecorder.stop();
-    currentStreamState.stopRecording = null;
+    delete recorderManager[mediaId];
   };
 }
 
@@ -217,6 +210,7 @@ function startUpload(
   const endpoint = pluginApi.media.tusUploadUrl;
   // DEBT: Maybe need bigger chunkSize
   const chunkSize = 15000; // 15kb. Roughly every second
+  // TODO: Save to indexeddb
 
   const options: tus.UploadOptions = {
     endpoint,
