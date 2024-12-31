@@ -15,8 +15,8 @@ export const RecordingSection = () => {
 
   return (
     <>
-      {recordings.map((recording, i) => (
-        <RecordingCard key={i} recording={recording} />
+      {recordings.map((recording) => (
+        <RecordingCard key={recording.mediaId} recording={recording} />
       ))}
     </>
   );
