@@ -52,6 +52,7 @@ export const StreamCard = ({ activeStream }: PropTypes) => {
                 mediaId: null,
                 startedAt: null,
                 endedAt: null,
+                isUploaded: false,
               });
             } else {
               const index = mutableSceneData.pluginData.recordings.findIndex(

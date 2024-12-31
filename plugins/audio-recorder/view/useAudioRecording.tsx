@@ -119,6 +119,9 @@ export const useAudioRecording = () => {
             mutableSceneData.pluginData.recordings[i]!.endedAt =
               new Date().toISOString();
           },
+          onUploaded: () => {
+            mutableSceneData.pluginData.recordings[i]!.isUploaded = true;
+          },
         });
 
         mutableSceneData.pluginData.recordings[i]!.mediaId = mediaId;
@@ -142,12 +145,14 @@ function startStreamUpload({
   currentStreamState,
   mediaId,
   onStopRecording,
+  onUploaded,
 }: {
   pluginApi: ReturnType<typeof usePluginAPI>;
   mediaRecorder: MediaRecorder;
   currentStreamState: (typeof streamState)[string];
   mediaId: string;
   onStopRecording: () => void;
+  onUploaded: () => void;
 }) {
   mediaRecorder.onerror = (err) => {
     console.error(err);
@@ -192,7 +197,7 @@ function startStreamUpload({
     },
   };
 
-  startUpload(pluginApi, readableRecorder, mediaId);
+  startUpload(pluginApi, readableRecorder, { mediaId, onSuccess: onUploaded });
 
   currentStreamState.stopRecording = () => {
     for (const track of currentStreamState.stream.getTracks()) {
@@ -207,7 +212,7 @@ function startStreamUpload({
 function startUpload(
   pluginApi: ReturnType<typeof usePluginAPI>,
   file: any,
-  mediaId: string,
+  { mediaId, onSuccess }: { mediaId: string; onSuccess: () => void },
 ) {
   const endpoint = pluginApi.media.tusUploadUrl;
   // DEBT: Maybe need bigger chunkSize
@@ -243,6 +248,7 @@ function startUpload(
 
       // reset()
     },
+    onSuccess,
   };
 
   const upload = new tus.Upload(file, options);

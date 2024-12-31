@@ -22,6 +22,8 @@ export type Recording = {
    * Note: This may not be accurate
    */
   endedAt: string | null;
+  /** Whether the recording has finished uploading or not */
+  isUploaded: boolean;
 };
 
 /**

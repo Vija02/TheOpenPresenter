@@ -67,6 +67,25 @@ const RecordingEnded = ({ recording }: { recording: Recording }) => {
     });
   }, [deleteAudio, pluginApi.pluginContext.pluginId, recording.mediaId]);
 
+  if (!recording.isUploaded) {
+    return (
+      <Stack direction="row">
+        <Text>Uploading...</Text>
+        <PopConfirm
+          title={`Are you sure you want to remove this recording?`}
+          onConfirm={handleRemove}
+          okText="Yes"
+          cancelText="No"
+          key="remove"
+        >
+          <Button size="sm" variant="ghost" rounded="none">
+            <VscTrash />
+          </Button>
+        </PopConfirm>
+      </Stack>
+    );
+  }
+
   return (
     <Stack direction="row">
       <audio
