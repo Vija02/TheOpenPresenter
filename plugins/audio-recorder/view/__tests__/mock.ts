@@ -50,8 +50,37 @@ export const setupMediaDeviceMocks = () => {
           onaddtrack: vi.fn(),
           oninactive: vi.fn(),
           onremovetrack: vi.fn(),
+          getTracks: vi.fn().mockImplementation(() => []),
         };
       })
       .mockName("MediaStream"),
+  });
+
+  Object.defineProperty(global, "MediaRecorder", {
+    writable: true,
+    value: vi
+      .fn()
+      .mockImplementation(() => {
+        return {
+          ondataavailable: vi.fn(),
+          audioBitrateMode: "variable",
+          audioBitsPerSecond: 0,
+          onerror: vi.fn(),
+          onpause: vi.fn(),
+          onresume: vi.fn(),
+          mimeType: "audio/webm",
+          stream: global.MediaStream,
+          state: "inactive",
+          start: () => {},
+          stop: vi.fn((state) => {}),
+          pause: vi.fn(),
+          resume: vi.fn(),
+          requestData: vi.fn(),
+          addEventListener: vi.fn(),
+          removeEventListener: vi.fn(),
+          dispatchEvent: vi.fn(),
+        };
+      })
+      .mockName("MediaRecorder"),
   });
 };
