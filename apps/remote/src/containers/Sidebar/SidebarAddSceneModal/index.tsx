@@ -88,6 +88,7 @@ const SidebarAddSceneModal = ({
       size={{ base: "full", md: "xl" }}
       isOpen={isOpen ?? false}
       onClose={onToggle ?? (() => {})}
+      scrollBehavior="inside"
       {...props}
     >
       <ModalOverlay />
