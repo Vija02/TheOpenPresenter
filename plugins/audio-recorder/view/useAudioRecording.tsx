@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import * as tus from "tus-js-client";
 
+import { OPFSStorageManager } from "./OPFSStorageManager";
 import { usePluginAPI } from "./pluginApi";
 
 // Stream ID -> Stream
@@ -136,7 +137,7 @@ export const useAudioRecording = () => {
 
 // Much of the code here is inspired from
 // https://github.com/tus/tus-js-client/blob/main/demos/browser/video.js
-function startStreamUpload({
+async function startStreamUpload({
   pluginApi,
   mediaId,
   onStopRecording,
@@ -147,8 +148,12 @@ function startStreamUpload({
   onStopRecording: () => void;
   onUploaded: () => void;
 }) {
+  const storageManager = new OPFSStorageManager();
   const recordingInstance = recorderManager[mediaId]!;
   const mediaRecorder = recordingInstance.recorder!;
+
+  const fileName = `${mediaId}.mp3`;
+  const fileHandle = await storageManager.getFileHandle(fileName);
 
   mediaRecorder.onerror = (err) => {
     console.error(err);
@@ -164,11 +169,18 @@ function startStreamUpload({
       recordingInstance.onDataAvailable(readableRecorder.read());
     }
   };
-  mediaRecorder.ondataavailable = (event) => {
+  mediaRecorder.ondataavailable = async (event) => {
     recordingInstance.chunks.push(event.data);
     if (recordingInstance.onDataAvailable) {
       recordingInstance.onDataAvailable(readableRecorder.read());
       recordingInstance.onDataAvailable = undefined;
+    }
+
+    if (fileHandle) {
+      storageManager.writeFile(fileHandle, {
+        data: event.data,
+        shouldAppend: true,
+      });
     }
   };
 
@@ -193,7 +205,15 @@ function startStreamUpload({
     },
   };
 
-  startUpload(pluginApi, readableRecorder, { mediaId, onSuccess: onUploaded });
+  startUpload(pluginApi, readableRecorder, {
+    mediaId,
+    onSuccess: () => {
+      onUploaded();
+      // Remove cache if already successfully uploaded
+      // TODO: Remove on manual upload
+      storageManager.removeFile(fileName);
+    },
+  });
 
   recordingInstance.stopRecording = () => {
     onStopRecording();
@@ -210,7 +230,6 @@ function startUpload(
   const endpoint = pluginApi.media.tusUploadUrl;
   // DEBT: Maybe need bigger chunkSize
   const chunkSize = 15000; // 15kb. Roughly every second
-  // TODO: Save to indexeddb
 
   const options: tus.UploadOptions = {
     endpoint,
@@ -227,6 +246,7 @@ function startUpload(
       filename: `recording_${new Date().toISOString()}.mp3`,
     },
     onError(error) {
+      // TODO: Set state
       if ("originalRequest" in error) {
         // TODO: Better error handling
         pluginApi.remote.toast.warning(
