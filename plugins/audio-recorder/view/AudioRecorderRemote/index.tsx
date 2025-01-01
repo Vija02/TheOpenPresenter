@@ -2,7 +2,7 @@ import { Heading, Stack } from "@chakra-ui/react";
 
 import { usePluginAPI } from "../pluginApi";
 import { useAudioRecording } from "../useAudioRecording";
-import { RecordingSection } from "./RecordingSection";
+import { RecordingSection } from "./Recording/RecordingSection";
 import { StreamSection } from "./StreamSection";
 
 const AudioRecorderRemote = () => {
