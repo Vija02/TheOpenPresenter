@@ -83,13 +83,24 @@ const onPluginDataLoaded = (
   data.pluginData.recordings = data.pluginData.recordings.filter(
     (x) => !!x.mediaId,
   );
-  // Clean up recordings. Same as before, there can't be anything recording right now
-  data.pluginData.recordings.forEach((x, i) => {
-    if (x.status === "recording") {
+
+  for (let i = data.pluginData.recordings.length - 1; i >= 0; i--) {
+    // If we haven't started, then let's just delete it
+    if (data.pluginData.recordings[i]?.status === "pending") {
+      data.pluginData.recordings.splice(i, 1);
+    }
+    // Clean up recordings. There can't be anything recording right now
+    else if (
+      ["recording", "stopping"].includes(
+        data.pluginData.recordings[i]?.status ?? "",
+      )
+    ) {
       data.pluginData.recordings[i]!.status = "ended";
       data.pluginData.recordings[i]!.endedAt = new Date().toISOString();
+      // This also means that the stream didn't finish uploading
+      data.pluginData.recordings[i]!.streamUploadFailed = true;
     }
-  });
+  }
 
   // Then we can watch the awareness and purge those that doesn't exist anymore
   const getAwarenessState = (awareness: AwarenessContext["awarenessObj"]) => {
@@ -101,6 +112,7 @@ const onPluginDataLoaded = (
 
     const allUserIds = state.map((x) => x?.user?.id);
 
+    // Remove streams from user that disappeared
     for (let i = data.pluginData.activeStreams.length - 1; i >= 0; i--) {
       const activeStream = data.pluginData.activeStreams[i]!;
       if (!allUserIds.includes(activeStream?.awarenessUserId)) {
@@ -112,17 +124,20 @@ const onPluginDataLoaded = (
       (stream) => stream.streamId,
     );
 
+    // Cleanup recording when user disappear
     for (let i = data.pluginData.recordings.length - 1; i >= 0; i--) {
       const recording = data.pluginData.recordings[i]!;
-      if (
-        recording.status !== "ended" &&
-        !allActiveStreamIds.includes(recording?.streamId)
-      ) {
+      if (!allActiveStreamIds.includes(recording?.streamId)) {
         if (recording.status === "pending") {
           data.pluginData.recordings.splice(i, 1);
-        } else if (recording.status === "recording") {
+        } else if (
+          recording.status === "recording" ||
+          recording.status === "stopping"
+        ) {
           recording.status = "ended";
           recording.endedAt = new Date().toISOString();
+          // This also means that the stream didn't finish uploading
+          recording.streamUploadFailed = true;
         }
       }
     }

@@ -22,6 +22,13 @@ export type Recording = {
    * Note: This may not be accurate
    */
   endedAt: string | null;
+  /**
+   * This should be true if
+   * - Streaming file errored - Set by the client
+   * - User is gone before stopped/completed - Monitored by the server
+   * From there, we can deal with this another way
+   */
+  streamUploadFailed?: boolean;
   /** Whether the recording has finished uploading or not */
   isUploaded: boolean;
 };

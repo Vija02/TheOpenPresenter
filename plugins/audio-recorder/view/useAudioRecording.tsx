@@ -121,6 +121,10 @@ export const useAudioRecording = () => {
             onUploaded: () => {
               mutableSceneData.pluginData.recordings[i]!.isUploaded = true;
             },
+            onError: () => {
+              mutableSceneData.pluginData.recordings[i]!.streamUploadFailed =
+                true;
+            },
           });
         }
 
@@ -142,11 +146,13 @@ async function startStreamUpload({
   mediaId,
   onStopRecording,
   onUploaded,
+  onError,
 }: {
   pluginApi: ReturnType<typeof usePluginAPI>;
   mediaId: string;
   onStopRecording: () => void;
   onUploaded: () => void;
+  onError: () => void;
 }) {
   const storageManager = new OPFSStorageManager();
   const recordingInstance = recorderManager[mediaId]!;
@@ -213,6 +219,7 @@ async function startStreamUpload({
       // TODO: Remove on manual upload
       storageManager.removeFile(fileName);
     },
+    onError,
   });
 
   recordingInstance.stopRecording = () => {
@@ -225,7 +232,15 @@ async function startStreamUpload({
 function startUpload(
   pluginApi: ReturnType<typeof usePluginAPI>,
   file: any,
-  { mediaId, onSuccess }: { mediaId: string; onSuccess: () => void },
+  {
+    mediaId,
+    onSuccess,
+    onError,
+  }: {
+    mediaId: string;
+    onSuccess: () => void;
+    onError: (err: Error | tus.DetailedError) => void;
+  },
 ) {
   const endpoint = pluginApi.media.tusUploadUrl;
   // DEBT: Maybe need bigger chunkSize
@@ -246,6 +261,7 @@ function startUpload(
       filename: `recording_${new Date().toISOString()}.mp3`,
     },
     onError(error) {
+      onError(error);
       // TODO: Set state
       if ("originalRequest" in error) {
         // TODO: Better error handling
