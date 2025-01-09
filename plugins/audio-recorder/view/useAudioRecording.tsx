@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import * as tus from "tus-js-client";
 
-import { OPFSStorageManager } from "./OPFSStorageManager";
 import { usePluginAPI } from "./pluginApi";
 
 // Stream ID -> Stream
@@ -154,12 +153,12 @@ async function startStreamUpload({
   onUploaded: () => void;
   onError: () => void;
 }) {
-  const storageManager = new OPFSStorageManager();
   const recordingInstance = recorderManager[mediaId]!;
   const mediaRecorder = recordingInstance.recorder!;
 
   const fileName = `${mediaId}.mp3`;
-  const fileHandle = await storageManager.getFileHandle(fileName);
+  const fileHandle =
+    await pluginApi.media.pluginClientStorage.getFileHandle(fileName);
 
   mediaRecorder.onerror = (err) => {
     console.error(err);
@@ -183,7 +182,7 @@ async function startStreamUpload({
     }
 
     if (fileHandle) {
-      storageManager.writeFile(fileHandle, {
+      pluginApi.media.pluginClientStorage.writeFile(fileHandle, {
         data: event.data,
         shouldAppend: true,
       });
@@ -217,7 +216,7 @@ async function startStreamUpload({
       onUploaded();
       // Remove cache if already successfully uploaded
       // TODO: Remove on manual upload
-      storageManager.removeFile(fileName);
+      pluginApi.media.pluginClientStorage.removeFile(fileName);
     },
     onError,
   });

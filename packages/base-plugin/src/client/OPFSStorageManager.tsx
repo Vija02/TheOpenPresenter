@@ -1,25 +1,29 @@
 export class OPFSStorageManager {
-  isOPFSSupported: boolean;
-  rootDirectory: FileSystemDirectoryHandle | undefined;
+  isSupported: boolean;
+  protected rootDirectory: FileSystemDirectoryHandle | undefined;
+  protected pluginId: string;
 
-  constructor() {
-    this.isOPFSSupported = this.checkOPFSSupport();
+  constructor(pluginId: string) {
+    this.isSupported = this.checkIsSupported();
+    this.pluginId = pluginId;
   }
 
-  checkOPFSSupport() {
+  protected checkIsSupported() {
     return !!("storage" in navigator && "getDirectory" in navigator.storage);
   }
 
   async getDirectoryHandle() {
-    if (this.isOPFSSupported && !this.rootDirectory) {
-      this.rootDirectory = await navigator.storage.getDirectory();
+    if (this.isSupported && !this.rootDirectory) {
+      this.rootDirectory = await (
+        await navigator.storage.getDirectory()
+      ).getDirectoryHandle(this.pluginId, { create: true });
     }
     return this.rootDirectory!;
   }
 
   async getFileHandle(fileName: string) {
     try {
-      if (this.isOPFSSupported) {
+      if (this.isSupported) {
         const dir = await this.getDirectoryHandle();
         return await dir.getFileHandle(fileName, {
           create: true,
@@ -42,7 +46,7 @@ export class OPFSStorageManager {
     },
   ) {
     try {
-      if (this.isOPFSSupported) {
+      if (this.isSupported) {
         const dir = await this.getDirectoryHandle();
         const fileHandle =
           typeof fileHandleOrFileName === "string"
@@ -76,7 +80,7 @@ export class OPFSStorageManager {
 
   async readFile(fileHandleOrFileName: FileSystemFileHandle | string) {
     try {
-      if (this.isOPFSSupported) {
+      if (this.isSupported) {
         const dir = await this.getDirectoryHandle();
         const fileHandle =
           typeof fileHandleOrFileName === "string"
@@ -95,7 +99,7 @@ export class OPFSStorageManager {
 
   async listFiles() {
     try {
-      if (this.isOPFSSupported) {
+      if (this.isSupported) {
         const dir = await this.getDirectoryHandle();
         const files = [];
         for await (const [name, handle] of dir.entries()) {
@@ -118,7 +122,7 @@ export class OPFSStorageManager {
 
   async removeFile(fileName: string) {
     try {
-      if (this.isOPFSSupported) {
+      if (this.isSupported) {
         const dir = await this.getDirectoryHandle();
         await dir.removeEntry(fileName);
       }

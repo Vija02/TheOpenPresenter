@@ -6,11 +6,12 @@
     "outDir": "dist",
     "tsBuildInfoFile": "dist/tsconfig.tsbuildinfo",
     "declarationDir": "dist",
-    "lib": ["es2018", "esnext.asynciterable"],
+    "lib": ["es2018", "esnext.asynciterable", "DOM.AsyncIterable"],
     "target": "es2018",
     "module": "Preserve",
     "moduleResolution": "Bundler",
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "importHelpers": false
   },
   "include": ["src"]
 }

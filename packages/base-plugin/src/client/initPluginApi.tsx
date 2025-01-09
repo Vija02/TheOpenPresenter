@@ -14,6 +14,7 @@ import {
   Plugin,
   PluginContext,
 } from "../types";
+import { OPFSStorageManager } from "./OPFSStorageManager";
 import { awarenessStore } from "./store";
 
 export function initPluginApi<
@@ -64,6 +65,8 @@ export function initPluginApi<
   // Then on all updates
   awarenessContext.awarenessObj.on("update", onAwarenessUpdate);
 
+  const storageManager = new OPFSStorageManager(pluginContext.pluginId);
+
   return {
     env: appData,
     pluginContext,
@@ -79,6 +82,7 @@ export function initPluginApi<
         appData.getRootURL() + "/media/data/" + fileName,
       tusUploadUrl: appData.getRootURL() + "/media/upload/tus",
       formDataUploadUrl: appData.getRootURL() + "/media/upload/form-data",
+      pluginClientStorage: storageManager, // Scoped to plugin
     },
     scene: {
       // Use this for read
