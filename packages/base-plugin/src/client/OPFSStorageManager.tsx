@@ -1,11 +1,26 @@
+import isEqual from "fast-deep-equal";
+import { useCallback, useRef, useSyncExternalStore } from "react";
+import { typeidUnboxed } from "typeid-js";
+
+type Files = {
+  name: string;
+  size: number;
+  lastModified: number;
+}[];
+
 export class OPFSStorageManager {
   isSupported: boolean;
   protected rootDirectory: FileSystemDirectoryHandle | undefined;
   protected pluginId: string;
 
+  protected watcher: Record<string, () => void> = {};
+  protected currentFiles: Files = [];
+
   constructor(pluginId: string) {
     this.isSupported = this.checkIsSupported();
     this.pluginId = pluginId;
+
+    this.callWatcher();
   }
 
   protected checkIsSupported() {
@@ -70,6 +85,8 @@ export class OPFSStorageManager {
         });
         await writable.close();
 
+        this.callWatcher();
+
         return true;
       }
     } catch (error) {
@@ -97,7 +114,7 @@ export class OPFSStorageManager {
     }
   }
 
-  async listFiles() {
+  async listFiles(): Promise<Files> {
     try {
       if (this.isSupported) {
         const dir = await this.getDirectoryHandle();
@@ -114,6 +131,7 @@ export class OPFSStorageManager {
         }
         return files;
       }
+      return [];
     } catch (error) {
       console.warn("listFiles error:", error);
       return [];
@@ -125,10 +143,43 @@ export class OPFSStorageManager {
       if (this.isSupported) {
         const dir = await this.getDirectoryHandle();
         await dir.removeEntry(fileName);
+
+        this.callWatcher();
       }
     } catch (error) {
       console.warn("removeFile error:", error);
       return [];
     }
+  }
+
+  protected async callWatcher() {
+    this.currentFiles = await this.listFiles();
+
+    Object.values(this.watcher).forEach((x) => x());
+  }
+
+  useListFiles() {
+    const prevDataRef = useRef<any | null>(null);
+
+    const subscribe = useCallback((callback: any) => {
+      const id = typeidUnboxed();
+
+      this.watcher[id] = callback;
+
+      return () => {
+        delete this.watcher[id];
+      };
+    }, []);
+
+    const returnFunc = useCallback(() => {
+      if (isEqual(prevDataRef.current, this.currentFiles)) {
+        return prevDataRef.current;
+      } else {
+        prevDataRef.current = this.currentFiles;
+        return prevDataRef.current;
+      }
+    }, []);
+
+    return useSyncExternalStore(subscribe, returnFunc);
   }
 }

@@ -26,6 +26,24 @@ export const useAudioRecording = () => {
   const pluginApi = usePluginAPI();
   const currentUserId = pluginApi.awareness.currentUserId;
 
+  const availableMedias = pluginApi.media.pluginClientStorage.useListFiles();
+
+  useEffect(() => {
+    (async () => {
+      pluginApi.awareness.awarenessObj.setLocalStateField(
+        pluginApi.pluginContext.pluginId,
+        {
+          availableMedias,
+        },
+      );
+    })();
+  }, [
+    availableMedias,
+    pluginApi.awareness.awarenessObj,
+    pluginApi.media.pluginClientStorage,
+    pluginApi.pluginContext.pluginId,
+  ]);
+
   const mutableSceneData = pluginApi.scene.useValtioData();
   const activeStreams = pluginApi.scene.useData(
     (x) => x.pluginData.activeStreams,
