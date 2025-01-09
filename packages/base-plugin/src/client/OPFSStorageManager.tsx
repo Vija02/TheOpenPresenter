@@ -106,7 +106,7 @@ export class OPFSStorageManager {
               })
             : fileHandleOrFileName;
         const file = await fileHandle.getFile();
-        return await file.text();
+        return file;
       }
     } catch (error) {
       console.warn("readFile error:", error);
