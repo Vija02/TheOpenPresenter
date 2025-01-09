@@ -11,11 +11,12 @@
     "lib": [
       "es2022",
       "DOM",
-      "DOM.Iterable"
+      "DOM.Iterable",
+      "DOM.AsyncIterable"
     ],
     "module": "NodeNext",
     "moduleDetection": "force",
-    "moduleResolution": "NodeNext",
+    "moduleResolution": "bundler",
     "noUncheckedIndexedAccess": true,
     "resolveJsonModule": true,
     "importHelpers": true,

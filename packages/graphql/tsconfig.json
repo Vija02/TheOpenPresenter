@@ -9,7 +9,6 @@
     "lib": ["es2018", "esnext.asynciterable"],
     "target": "es2018",
     "module": "CommonJS",
-    "moduleResolution": "Node",
     "jsx": "react"
   },
   "include": ["index.tsx", "apollo-react-hooks.tsx"],

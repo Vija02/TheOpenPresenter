@@ -8,7 +8,8 @@
     "declarationDir": "dist",
     "lib": ["es2018", "esnext.asynciterable"],
     "target": "es2018",
-    "module": "NodeNext"
+    "module": "NodeNext",
+    "moduleResolution": "nodenext"
   },
   "include": ["src"]
 }
