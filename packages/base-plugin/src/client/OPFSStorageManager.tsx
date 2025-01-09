@@ -2,7 +2,7 @@ import isEqual from "fast-deep-equal";
 import { useCallback, useRef, useSyncExternalStore } from "react";
 import { typeidUnboxed } from "typeid-js";
 
-type Files = {
+export type Files = {
   name: string;
   size: number;
   lastModified: number;
@@ -158,7 +158,7 @@ export class OPFSStorageManager {
     Object.values(this.watcher).forEach((x) => x());
   }
 
-  useListFiles() {
+  useListFiles(): Files {
     const prevDataRef = useRef<any | null>(null);
 
     const subscribe = useCallback((callback: any) => {
