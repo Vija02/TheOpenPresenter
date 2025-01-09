@@ -53,6 +53,7 @@ export type RenderData<T = Record<string, any>> = {
 
 export type PluginRendererState = {
   __audioIsPlaying?: boolean;
+  __audioIsRecording?: boolean;
 };
 
 export type PluginContext = {

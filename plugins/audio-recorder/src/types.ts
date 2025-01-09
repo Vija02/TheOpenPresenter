@@ -1,3 +1,5 @@
+import { PluginRendererState } from "@repo/base-plugin";
+
 export type PluginBaseData = {
   recordings: Recording[];
   activeStreams: Stream[];
@@ -71,4 +73,4 @@ export type Stream = {
   streamId: string | null;
 };
 
-export type PluginRendererData = {};
+export type PluginRendererData = PluginRendererState & {};

@@ -12,6 +12,7 @@ import { PluginRendererState } from "@repo/base-plugin";
 import { useAwareness, useData, usePluginMetaData } from "@repo/shared";
 import { OverlayToggle } from "@repo/ui";
 import { sortBy } from "lodash-es";
+import { FaMicrophoneLines as FaMicrophoneLinesRaw } from "react-icons/fa6";
 import {
   MdCoPresent as MdCoPresentRaw,
   MdVolumeUp as MdVolumeUpRaw,
@@ -27,6 +28,7 @@ import SidebarAddSceneModal from "./SidebarAddSceneModal";
 const MdCoPresent = chakra(MdCoPresentRaw);
 const MdVolumeUp = chakra(MdVolumeUpRaw);
 const RiRemoteControlLine = chakra(RiRemoteControlLineRaw);
+const FaMicrophoneLines = chakra(FaMicrophoneLinesRaw);
 
 const pulse = keyframes`
   0%, 100% { transform: scale(1); }
@@ -68,6 +70,9 @@ const SidebarMobile = () => {
                 const audioIsPlaying = !!Object.values(
                   data.renderer["1"]?.children[id] ?? {},
                 ).find((x: PluginRendererState) => x.__audioIsPlaying);
+                const audioIsRecording = !!Object.values(
+                  data.renderer["1"]?.children[id] ?? {},
+                ).find((x: PluginRendererState) => x.__audioIsRecording);
 
                 const isLoading = awarenessData.find(
                   (x) =>
@@ -122,7 +127,12 @@ const SidebarMobile = () => {
                     >
                       {value.name}
                     </Text>
-                    {audioIsPlaying && <MdVolumeUp fontSize="lg" />}
+                    <Stack direction="row">
+                      {audioIsPlaying && <MdVolumeUp fontSize="lg" />}
+                      {audioIsRecording && (
+                        <FaMicrophoneLines color="red.500" fontSize="lg" />
+                      )}
+                    </Stack>
                   </Stack>
                 );
               },

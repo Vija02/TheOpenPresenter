@@ -4,7 +4,11 @@ import {
   Plugin,
   PluginContext,
   ServerPluginApi,
+  State,
   TRPCObject,
+  YState,
+  YjsWatcher,
+  createTraverser,
 } from "@repo/base-plugin/server";
 import { TRPCError } from "@trpc/server";
 import { proxy } from "valtio";
@@ -17,7 +21,7 @@ import {
   remoteWebComponentTag,
   rendererWebComponentTag,
 } from "./consts";
-import { PluginBaseData } from "./types";
+import { PluginBaseData, PluginRendererData } from "./types";
 
 export const init = (serverPluginApi: ServerPluginApi) => {
   serverPluginApi.registerTrpcAppRouter(getAppRouter(serverPluginApi));
@@ -144,12 +148,38 @@ const onPluginDataLoaded = (
   };
   pluginInfo.doc?.awareness.on("change", onAwarenessChange);
 
+  const yState = pluginInfo.parent?.parent?.parent?.parent as YState;
+  const traverseState = createTraverser<State>(yState);
+  const rendererData = traverseState(
+    (x) =>
+      x.renderer["1"]?.children[context.sceneId]![
+        context.pluginId
+      ] as PluginRendererData,
+  );
+
+  // Let's watch the data and update __audioIsRecording
+  const t = createTraverser<Plugin<PluginBaseData>>(pluginInfo);
+  const yjsWatcher = new YjsWatcher(pluginInfo as Y.Map<any>);
+  yjsWatcher.watchYjs(
+    (x: Plugin<PluginBaseData>) => x.pluginData.recordings,
+    () => {
+      const val = t((y) => y.pluginData.recordings)
+        .toJSON()
+        .some((y) => y.status === "recording");
+
+      if (rendererData.get("__audioIsRecording") !== val) {
+        rendererData?.set("__audioIsRecording", val);
+      }
+    },
+  );
+
   return {
     dispose: () => {
       unbind();
       delete loadedPlugins[context.pluginId];
       delete loadedYjsData[context.pluginId];
       pluginInfo.doc?.awareness.off("change", onAwarenessChange);
+      yjsWatcher.dispose();
     },
   };
 };
