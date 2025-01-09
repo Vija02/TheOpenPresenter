@@ -1,9 +1,9 @@
 import { create } from "zustand";
 
-import { AwarenessUserData } from "../types";
+import { AwarenessStore } from "../types";
 
 interface State {
-  awarenessData: { user?: AwarenessUserData }[];
+  awarenessData: AwarenessStore[];
 }
 
 export const awarenessStore = create<State>()(() => ({

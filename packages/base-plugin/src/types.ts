@@ -88,6 +88,9 @@ export type AwarenessStateData = {
 };
 export type AwarenessState = (AwarenessStateContext & AwarenessStateData)[];
 
+export type AwarenessStore<T extends object = {}> = T & {
+  user: AwarenessUserData;
+};
 export type AwarenessUserData = {
   id: string;
   type: "remote" | "renderer";
