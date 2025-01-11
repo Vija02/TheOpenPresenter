@@ -81,46 +81,17 @@ const onPluginDataLoaded = (
   loadedPlugins[context.pluginId] = data;
   loadedYjsData[context.pluginId] = pluginInfo;
 
-  // When loaded, there can't be any streams connected. So we can nuke the option
-  data.pluginData.activeStreams = [];
-  data.pluginData.recordings = data.pluginData.recordings.filter(
-    (x) => !!x.mediaId,
-  );
-
-  for (let i = data.pluginData.recordings.length - 1; i >= 0; i--) {
-    // If we haven't started, then let's just delete it
-    if (data.pluginData.recordings[i]?.status === "pending") {
-      data.pluginData.recordings.splice(i, 1);
-    }
-    // Clean up recordings. There can't be anything recording right now
-    if (
-      ["recording", "stopping"].includes(
-        data.pluginData.recordings[i]?.status ?? "",
-      )
-    ) {
-      data.pluginData.recordings[i]!.status = "ended";
-      data.pluginData.recordings[i]!.endedAt = new Date().toISOString();
-    }
-    if (
-      data.pluginData.recordings[i]?.status === "ended" &&
-      !data.pluginData.recordings[i]?.isUploaded
-    ) {
-      // This also means that the stream didn't finish uploading
-      data.pluginData.recordings[i]!.streamUploadFailed = true;
-    }
-  }
-
-  // Then we can watch the awareness and purge those that doesn't exist anymore
   const getAwarenessState = (awareness: AwarenessContext["awarenessObj"]) => {
     return Array.from(awareness.getStates().values()) as any[];
   };
 
-  const onAwarenessChange = () => {
+  // Here, we check each of the data and update the status to the correct ones. (Or purge them)
+  const handleCurrentData = () => {
     const state = getAwarenessState(pluginInfo.doc!.awareness);
 
     const allUserIds = state.map((x) => x?.user?.id);
 
-    // Remove streams from user that disappeared
+    // Remove streams for users that doesn't exist anymore
     for (let i = data.pluginData.activeStreams.length - 1; i >= 0; i--) {
       const activeStream = data.pluginData.activeStreams[i]!;
       if (!allUserIds.includes(activeStream?.awarenessUserId)) {
@@ -132,7 +103,7 @@ const onPluginDataLoaded = (
       (stream) => stream.streamId,
     );
 
-    // Cleanup recording when user disappear
+    // Cleanup recording and update its status
     for (let i = data.pluginData.recordings.length - 1; i >= 0; i--) {
       const recording = data.pluginData.recordings[i]!;
       if (!allActiveStreamIds.includes(recording?.streamId)) {
@@ -151,9 +122,20 @@ const onPluginDataLoaded = (
           recording.streamUploadFailed = true;
         }
       }
+
+      if (
+        !!recording?.awarenessUserToRetry &&
+        !allUserIds.includes(recording.awarenessUserToRetry)
+      ) {
+        recording.awarenessUserIsUploading = false;
+        recording.awarenessUserToRetry = null;
+      }
     }
   };
-  pluginInfo.doc?.awareness.on("change", onAwarenessChange);
+  // Handle status on initial load
+  handleCurrentData();
+  // And also anytime a user changes
+  pluginInfo.doc?.awareness.on("change", handleCurrentData);
 
   const yState = pluginInfo.parent?.parent?.parent?.parent as YState;
   const traverseState = createTraverser<State>(yState);
@@ -185,7 +167,7 @@ const onPluginDataLoaded = (
       unbind();
       delete loadedPlugins[context.pluginId];
       delete loadedYjsData[context.pluginId];
-      pluginInfo.doc?.awareness.off("change", onAwarenessChange);
+      pluginInfo.doc?.awareness.off("change", handleCurrentData);
       yjsWatcher.dispose();
     },
   };

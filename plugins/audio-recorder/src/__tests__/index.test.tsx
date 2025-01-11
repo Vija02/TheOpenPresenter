@@ -480,4 +480,171 @@ describe("audio-recorder onPluginDataLoaded", () => {
       pluginDataValtio.pluginData.recordings[3]?.streamUploadFailed,
     ).toEqual(undefined);
   });
+
+  // ========================================================================== //
+  // ============ awarenessUserToRetry and awarenessUserIsUploading =========== //
+  // ========================================================================== //
+  it("should update awarenessUserToRetry and awarenessUserIsUploading when first loaded", async () => {
+    const server = await simulateServer(init, { delayLoad: true });
+    const plugin = await addPlugin<PluginBaseData, PluginRendererData>(
+      server.state,
+      {
+        pluginName,
+      },
+    );
+    const { pluginDataValtio } = plugin;
+
+    // Initial data
+    pluginDataValtio.pluginData = {
+      recordings: [
+        {
+          status: "ended",
+          mediaId: "mediaId",
+          isUploaded: false,
+          streamId: "...",
+          startedAt: new Date().toISOString(),
+          endedAt: new Date().toISOString(),
+          streamUploadFailed: false,
+          awarenessUserToRetry: "userTest",
+          awarenessUserIsUploading: true,
+        },
+        {
+          status: "ended",
+          mediaId: "mediaId",
+          isUploaded: false,
+          streamId: "...",
+          startedAt: new Date().toISOString(),
+          endedAt: new Date().toISOString(),
+          streamUploadFailed: false,
+          awarenessUserToRetry: "userTest",
+          awarenessUserIsUploading: false,
+        },
+      ],
+      activeStreams: [],
+    };
+
+    await wait(0);
+    server.load();
+    await wait(0);
+
+    expect(
+      pluginDataValtio.pluginData.recordings[0]?.awarenessUserToRetry,
+    ).toEqual(null);
+    expect(
+      pluginDataValtio.pluginData.recordings[0]?.awarenessUserIsUploading,
+    ).toEqual(false);
+    expect(
+      pluginDataValtio.pluginData.recordings[1]?.awarenessUserToRetry,
+    ).toEqual(null);
+    expect(
+      pluginDataValtio.pluginData.recordings[1]?.awarenessUserIsUploading,
+    ).toEqual(false);
+  });
+  it("should watch user awareness and set streamUploadFailed to true for ended recordings if isUploaded is false", async () => {
+    const server = await simulateServer(init);
+    const plugin = await addPlugin<PluginBaseData, PluginRendererData>(
+      server.state,
+      {
+        pluginName,
+      },
+    );
+    const { pluginDataValtio } = plugin;
+
+    const user1 = simulateUser(server, plugin);
+    const user2 = simulateUser(server, plugin);
+
+    // Start stream
+    pluginDataValtio.pluginData.activeStreams.push({
+      awarenessUserId: user1.awarenessUserId,
+      availableSources: [],
+      permissionGranted: false,
+      selectedDeviceId: null,
+      devicePermissionGranted: false,
+      streamId: "testStream",
+    });
+    pluginDataValtio.pluginData.activeStreams.push({
+      awarenessUserId: user2.awarenessUserId,
+      availableSources: [],
+      permissionGranted: false,
+      selectedDeviceId: null,
+      devicePermissionGranted: false,
+      streamId: "testStream2",
+    });
+
+    pluginDataValtio.pluginData.recordings.push({
+      status: "ended",
+      mediaId: "mediaId",
+      isUploaded: false,
+      streamId: "testStream",
+      startedAt: new Date().toISOString(),
+      endedAt: new Date().toISOString(),
+      streamUploadFailed: false,
+      awarenessUserToRetry: user1.awarenessUserId,
+      awarenessUserIsUploading: false,
+    });
+    pluginDataValtio.pluginData.recordings.push({
+      status: "ended",
+      mediaId: "mediaId",
+      isUploaded: false,
+      streamId: "testStream",
+      startedAt: new Date().toISOString(),
+      endedAt: new Date().toISOString(),
+      streamUploadFailed: false,
+      awarenessUserToRetry: user1.awarenessUserId,
+      awarenessUserIsUploading: true,
+    });
+    pluginDataValtio.pluginData.recordings.push({
+      status: "ended",
+      mediaId: "mediaId",
+      isUploaded: false,
+      streamId: "testStream2",
+      startedAt: new Date().toISOString(),
+      endedAt: new Date().toISOString(),
+      streamUploadFailed: false,
+      awarenessUserToRetry: user2.awarenessUserId,
+      awarenessUserIsUploading: false,
+    });
+    pluginDataValtio.pluginData.recordings.push({
+      status: "ended",
+      mediaId: "mediaId",
+      isUploaded: false,
+      streamId: "testStream2",
+      startedAt: new Date().toISOString(),
+      endedAt: new Date().toISOString(),
+      streamUploadFailed: false,
+      awarenessUserToRetry: user2.awarenessUserId,
+      awarenessUserIsUploading: true,
+    });
+    await wait(0);
+
+    // Now, simulate user1 disappear
+    user1.setState(null);
+    await wait(0);
+
+    expect(
+      pluginDataValtio.pluginData.recordings[0]?.awarenessUserToRetry,
+    ).toEqual(null);
+    expect(
+      pluginDataValtio.pluginData.recordings[0]?.awarenessUserIsUploading,
+    ).toEqual(false);
+    expect(
+      pluginDataValtio.pluginData.recordings[1]?.awarenessUserToRetry,
+    ).toEqual(null);
+    expect(
+      pluginDataValtio.pluginData.recordings[1]?.awarenessUserIsUploading,
+    ).toEqual(false);
+
+    expect(
+      pluginDataValtio.pluginData.recordings[2]?.awarenessUserToRetry,
+    ).toEqual(user2.awarenessUserId);
+    expect(
+      pluginDataValtio.pluginData.recordings[2]?.awarenessUserIsUploading,
+    ).toEqual(false);
+    expect(
+      pluginDataValtio.pluginData.recordings[3]?.awarenessUserToRetry,
+    ).toEqual(user2.awarenessUserId);
+    expect(
+      pluginDataValtio.pluginData.recordings[3]?.awarenessUserIsUploading,
+    ).toEqual(true);
+  });
 });

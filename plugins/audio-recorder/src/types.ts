@@ -31,6 +31,9 @@ export type Recording = {
    * From there, we can deal with this another way
    */
   streamUploadFailed?: boolean;
+  /** Indication to the specified user to retry upload */
+  awarenessUserToRetry?: string | null;
+  awarenessUserIsUploading?: boolean;
   /** Whether the recording has finished uploading or not */
   isUploaded: boolean;
 };
