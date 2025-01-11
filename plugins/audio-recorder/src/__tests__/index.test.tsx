@@ -162,4 +162,168 @@ describe("audio-recorder onPluginDataLoaded", () => {
     expect(pluginDataValtio.pluginData.activeStreams).toEqual([]);
     expect(pluginDataValtio.pluginData.recordings).toEqual([]);
   });
+
+  // ================================== //
+  // = "recording" recordings cleanup = //
+  // ================================== //
+  it("should end 'recording' recordings when first loaded", async () => {
+    const server = await simulateServer(init, { delayLoad: true });
+    const plugin = await addPlugin<PluginBaseData, PluginRendererData>(
+      server.state,
+      {
+        pluginName,
+      },
+    );
+    const { pluginDataValtio } = plugin;
+
+    // Initial data
+    pluginDataValtio.pluginData = {
+      recordings: [
+        {
+          status: "recording",
+          mediaId: "mediaId",
+          isUploaded: false,
+          streamId: "...",
+          startedAt: new Date().toISOString(),
+          endedAt: null,
+        },
+      ],
+      activeStreams: [],
+    };
+
+    await wait(0);
+
+    expect(pluginDataValtio.pluginData.recordings).not.toEqual([]);
+
+    server.load();
+
+    await wait(0);
+
+    expect(pluginDataValtio.pluginData.recordings[0]?.status).toEqual("ended");
+    expect(pluginDataValtio.pluginData.recordings[0]?.endedAt).not.toBeNull();
+  });
+  it("should watch user awareness and end 'recording' recordings", async () => {
+    const server = await simulateServer(init);
+    const plugin = await addPlugin<PluginBaseData, PluginRendererData>(
+      server.state,
+      {
+        pluginName,
+      },
+    );
+    const { pluginDataValtio } = plugin;
+
+    const user1 = simulateUser(server, plugin);
+
+    // Start stream
+    pluginDataValtio.pluginData.activeStreams.push({
+      awarenessUserId: "user1",
+      availableSources: [],
+      permissionGranted: false,
+      selectedDeviceId: null,
+      devicePermissionGranted: false,
+      streamId: "testStream",
+    });
+    pluginDataValtio.pluginData.recordings.push({
+      status: "recording",
+      streamId: "testStream",
+      endedAt: null,
+      isUploaded: false,
+      mediaId: "",
+      startedAt: new Date().toISOString(),
+    });
+    await wait(0);
+
+    expect(pluginDataValtio.pluginData.recordings).not.toEqual([]);
+
+    // Now, simulate user disappear
+    user1.setState(null);
+    await wait(0);
+
+    expect(pluginDataValtio.pluginData.activeStreams).toEqual([]);
+    expect(pluginDataValtio.pluginData.recordings).toHaveLength(1);
+    expect(pluginDataValtio.pluginData.recordings[0]?.status).toEqual("ended");
+    expect(pluginDataValtio.pluginData.recordings[0]?.endedAt).not.toBeNull();
+  });
+
+  // ================================== //
+  // == "stopping" recordings cleanup = //
+  // ================================== //
+  it("should end 'stopping' recordings when first loaded", async () => {
+    const server = await simulateServer(init, { delayLoad: true });
+    const plugin = await addPlugin<PluginBaseData, PluginRendererData>(
+      server.state,
+      {
+        pluginName,
+      },
+    );
+    const { pluginDataValtio } = plugin;
+
+    // Initial data
+    pluginDataValtio.pluginData = {
+      recordings: [
+        {
+          status: "stopping",
+          mediaId: "mediaId",
+          isUploaded: false,
+          streamId: "...",
+          startedAt: new Date().toISOString(),
+          endedAt: null,
+        },
+      ],
+      activeStreams: [],
+    };
+
+    await wait(0);
+
+    expect(pluginDataValtio.pluginData.recordings).not.toEqual([]);
+
+    server.load();
+
+    await wait(0);
+
+    expect(pluginDataValtio.pluginData.recordings[0]?.status).toEqual("ended");
+    expect(pluginDataValtio.pluginData.recordings[0]?.endedAt).not.toBeNull();
+  });
+  it("should watch user awareness and end 'stopping' recordings", async () => {
+    const server = await simulateServer(init);
+    const plugin = await addPlugin<PluginBaseData, PluginRendererData>(
+      server.state,
+      {
+        pluginName,
+      },
+    );
+    const { pluginDataValtio } = plugin;
+
+    const user1 = simulateUser(server, plugin);
+
+    // Start stream
+    pluginDataValtio.pluginData.activeStreams.push({
+      awarenessUserId: "user1",
+      availableSources: [],
+      permissionGranted: false,
+      selectedDeviceId: null,
+      devicePermissionGranted: false,
+      streamId: "testStream",
+    });
+    pluginDataValtio.pluginData.recordings.push({
+      status: "stopping",
+      streamId: "testStream",
+      endedAt: null,
+      isUploaded: false,
+      mediaId: "",
+      startedAt: new Date().toISOString(),
+    });
+    await wait(0);
+
+    expect(pluginDataValtio.pluginData.recordings).not.toEqual([]);
+
+    // Now, simulate user disappear
+    user1.setState(null);
+    await wait(0);
+
+    expect(pluginDataValtio.pluginData.activeStreams).toEqual([]);
+    expect(pluginDataValtio.pluginData.recordings).toHaveLength(1);
+    expect(pluginDataValtio.pluginData.recordings[0]?.status).toEqual("ended");
+    expect(pluginDataValtio.pluginData.recordings[0]?.endedAt).not.toBeNull();
+  });
 });
