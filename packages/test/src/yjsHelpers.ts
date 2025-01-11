@@ -10,8 +10,14 @@ import {
 import {
   DisposableDocumentManager,
   ServerPluginApiPrivate,
+  TRPCContext,
   YjsState,
 } from "@repo/base-plugin/server";
+import { initTRPC } from "@trpc/server";
+import {
+  DecorateRouterRecord,
+  Router,
+} from "@trpc/server/unstable-core-do-not-import";
 import { typeidUnboxed } from "typeid-js";
 import { v4 } from "uuid";
 import { proxy } from "valtio";
@@ -26,11 +32,24 @@ const wait = (ms: number): Promise<void> =>
     }, ms),
   );
 
+type ExtractRouterRecord<T> = T extends Router<any, infer R> ? R : never;
+
 export const simulateServer = async (
   init: (serverPluginApi: ServerPluginApiPrivate) => void,
 ) => {
   const serverPluginApi = new ServerPluginApiPrivate("" as any);
   init(serverPluginApi);
+
+  const getTrpcClient = <T extends Router<any, any>>() => {
+    const trpc = initTRPC.context<TRPCContext>().create();
+    const mergedRouters = trpc.mergeRouters(
+      ...serverPluginApi.getRegisteredTrpcAppRouter().map((x) => x(trpc)),
+    );
+    const createCaller = trpc.createCallerFactory(mergedRouters);
+    return createCaller({ userId: "testUserId" }) as DecorateRouterRecord<
+      ExtractRouterRecord<T>
+    >;
+  };
 
   const yDoc = YjsState.createEmptyState();
   const update = Y.encodeStateAsUpdate(yDoc);
@@ -50,7 +69,7 @@ export const simulateServer = async (
     organizationId: "orgId",
   });
 
-  return { document, state, t };
+  return { document, state, t, getTrpcClient };
 };
 
 export const addPlugin = async <
