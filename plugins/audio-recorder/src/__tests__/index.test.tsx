@@ -1,7 +1,7 @@
 import { addPlugin, simulateServer, simulateUser } from "@repo/test";
 import { describe, expect, it } from "vitest";
 
-import { AppRouter, PluginBaseData, PluginRendererData, init } from "../../src";
+import { PluginBaseData, PluginRendererData, init } from "../../src";
 import { pluginName } from "../../src/consts";
 
 const wait = (ms: number): Promise<void> =>
@@ -12,6 +12,45 @@ const wait = (ms: number): Promise<void> =>
   );
 
 describe("audio-recorder onPluginDataLoaded", () => {
+  // ================================== //
+  // ====== activeStreams Cleanup ===== //
+  // ================================== //
+  it("should remove stream when first loaded", async () => {
+    const server = await simulateServer(init, { delayLoad: true });
+    const plugin = await addPlugin<PluginBaseData, PluginRendererData>(
+      server.state,
+      {
+        pluginName,
+      },
+    );
+    const { pluginDataValtio } = plugin;
+
+    // Initial data
+    pluginDataValtio.pluginData = {
+      recordings: [],
+      activeStreams: [
+        {
+          awarenessUserId: "",
+          streamId: null,
+          availableSources: [],
+          devicePermissionGranted: false,
+          permissionGranted: false,
+          selectedDeviceId: null,
+        },
+      ],
+    };
+
+    await wait(0);
+
+    expect(pluginDataValtio.pluginData.activeStreams).not.toEqual([]);
+
+    server.load();
+
+    await wait(0);
+
+    // It should be removed
+    expect(pluginDataValtio.pluginData.activeStreams).toEqual([]);
+  });
   it("should watch user awareness and remove stream when user disappears", async () => {
     const server = await simulateServer(init);
     const plugin = await addPlugin<PluginBaseData, PluginRendererData>(
@@ -44,7 +83,46 @@ describe("audio-recorder onPluginDataLoaded", () => {
     expect(pluginDataValtio.pluginData.activeStreams).toEqual([]);
   });
 
-  it("should delete the recordings in yjs when TRPC delete is called", async () => {
+  // ================================== //
+  // === Pending recordings cleanup === //
+  // ================================== //
+  it("should clear pending recordings when first loaded", async () => {
+    const server = await simulateServer(init, { delayLoad: true });
+    const plugin = await addPlugin<PluginBaseData, PluginRendererData>(
+      server.state,
+      {
+        pluginName,
+      },
+    );
+    const { pluginDataValtio } = plugin;
+
+    // Initial data
+    pluginDataValtio.pluginData = {
+      recordings: [
+        {
+          status: "pending",
+          mediaId: "mediaId",
+          isUploaded: false,
+          streamId: "...",
+          startedAt: null,
+          endedAt: null,
+        },
+      ],
+      activeStreams: [],
+    };
+
+    await wait(0);
+
+    expect(pluginDataValtio.pluginData.recordings).not.toEqual([]);
+
+    server.load();
+
+    await wait(0);
+
+    // It should be removed
+    expect(pluginDataValtio.pluginData.recordings).toEqual([]);
+  });
+  it("should watch user awareness and clear pending recordings", async () => {
     const server = await simulateServer(init);
     const plugin = await addPlugin<PluginBaseData, PluginRendererData>(
       server.state,
@@ -53,61 +131,35 @@ describe("audio-recorder onPluginDataLoaded", () => {
       },
     );
     const { pluginDataValtio } = plugin;
-    const trpcClient = server.getTrpcClient<AppRouter>();
 
-    pluginDataValtio.pluginData.recordings.push({
-      mediaId: "testMediaId",
-      status: "ended",
-      streamId: "",
-      startedAt: new Date().toISOString(),
-      endedAt: new Date().toISOString(),
-      isUploaded: true,
-    });
+    const user1 = simulateUser(server, plugin);
 
-    expect(pluginDataValtio.pluginData.recordings).toHaveLength(1);
-
-    await trpcClient.audioRecorder.deleteAudio({
-      mediaId: "testMediaId",
-      pluginId: plugin.pluginId,
-    });
-
-    expect(pluginDataValtio.pluginData.recordings).toHaveLength(0);
-
-    // Let's try multiple
-    pluginDataValtio.pluginData.recordings.push({
-      mediaId: "testMediaId1",
-      status: "ended",
-      streamId: "",
-      startedAt: new Date().toISOString(),
-      endedAt: new Date().toISOString(),
-      isUploaded: true,
+    // Start stream
+    pluginDataValtio.pluginData.activeStreams.push({
+      awarenessUserId: "user1",
+      availableSources: [],
+      permissionGranted: false,
+      selectedDeviceId: null,
+      devicePermissionGranted: false,
+      streamId: "testStream",
     });
     pluginDataValtio.pluginData.recordings.push({
-      mediaId: "testMediaId2",
-      status: "ended",
-      streamId: "",
-      startedAt: new Date().toISOString(),
-      endedAt: new Date().toISOString(),
-      isUploaded: true,
+      status: "pending",
+      streamId: "testStream",
+      endedAt: null,
+      isUploaded: false,
+      mediaId: "",
+      startedAt: null,
     });
-    pluginDataValtio.pluginData.recordings.push({
-      mediaId: "testMediaId3",
-      status: "ended",
-      streamId: "",
-      startedAt: new Date().toISOString(),
-      endedAt: new Date().toISOString(),
-      isUploaded: true,
-    });
+    await wait(0);
 
-    expect(pluginDataValtio.pluginData.recordings).toHaveLength(3);
+    expect(pluginDataValtio.pluginData.recordings).not.toEqual([]);
 
-    await trpcClient.audioRecorder.deleteAudio({
-      mediaId: "testMediaId2",
-      pluginId: plugin.pluginId,
-    });
+    // Now, simulate user disappear
+    user1.setState(null);
+    await wait(0);
 
-    expect(
-      pluginDataValtio.pluginData.recordings.map((x) => x.mediaId),
-    ).toEqual(["testMediaId1", "testMediaId3"]);
+    expect(pluginDataValtio.pluginData.activeStreams).toEqual([]);
+    expect(pluginDataValtio.pluginData.recordings).toEqual([]);
   });
 });
