@@ -10,7 +10,6 @@ import {
   YjsWatcher,
   createTraverser,
 } from "@repo/base-plugin/server";
-import { TRPCError } from "@trpc/server";
 import { proxy } from "valtio";
 import { bind } from "valtio-yjs";
 import * as Y from "yjs";
@@ -198,6 +197,8 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
           const loadedPlugin = loadedPlugins?.[opts.input.pluginId];
           const loadedYjs = loadedYjsData?.[opts.input.pluginId];
 
+          let deleted = false;
+
           if (loadedPlugin) {
             const recordingIndex = loadedPlugin.pluginData.recordings.findIndex(
               (x) => x.mediaId === opts.input.mediaId,
@@ -205,18 +206,22 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
             if (recordingIndex > -1) {
               try {
                 await serverPluginApi.deleteMedia(opts.input.mediaId + ".mp3");
+
+                deleted = true;
+              } catch (e: any) {
+                // If we get here, likely because the file doesn't exist, but we don't need to do anything
+              } finally {
                 loadedYjs
                   ?.get("pluginData")
                   ?.get("recordings")
                   ?.delete(recordingIndex);
-              } catch (e: any) {
-                // If we get here, likely because the file doesn't exist
-                throw new TRPCError({ code: "BAD_REQUEST" });
               }
             }
+          } else {
+            throw new Error("PLUGIN_NOT_LOADED");
           }
 
-          return { success: true };
+          return { success: true, deleted };
         }),
     },
   });
