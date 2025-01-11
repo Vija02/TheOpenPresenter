@@ -93,13 +93,18 @@ const onPluginDataLoaded = (
       data.pluginData.recordings.splice(i, 1);
     }
     // Clean up recordings. There can't be anything recording right now
-    else if (
+    if (
       ["recording", "stopping"].includes(
         data.pluginData.recordings[i]?.status ?? "",
       )
     ) {
       data.pluginData.recordings[i]!.status = "ended";
       data.pluginData.recordings[i]!.endedAt = new Date().toISOString();
+    }
+    if (
+      data.pluginData.recordings[i]?.status === "ended" &&
+      !data.pluginData.recordings[i]?.isUploaded
+    ) {
       // This also means that the stream didn't finish uploading
       data.pluginData.recordings[i]!.streamUploadFailed = true;
     }
@@ -133,13 +138,16 @@ const onPluginDataLoaded = (
       if (!allActiveStreamIds.includes(recording?.streamId)) {
         if (recording.status === "pending") {
           data.pluginData.recordings.splice(i, 1);
-        } else if (
+        }
+        if (
           recording.status === "recording" ||
           recording.status === "stopping"
         ) {
           recording.status = "ended";
           recording.endedAt = new Date().toISOString();
-          // This also means that the stream didn't finish uploading
+        }
+        if (recording.status === "ended" && !recording.isUploaded) {
+          // Means something went wrong while uploading on the last step
           recording.streamUploadFailed = true;
         }
       }

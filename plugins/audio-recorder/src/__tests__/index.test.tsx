@@ -326,4 +326,158 @@ describe("audio-recorder onPluginDataLoaded", () => {
     expect(pluginDataValtio.pluginData.recordings[0]?.status).toEqual("ended");
     expect(pluginDataValtio.pluginData.recordings[0]?.endedAt).not.toBeNull();
   });
+
+  // ================================== //
+  // === "ended" recordings cleanup === //
+  // ================================== //
+  it("should set streamUploadFailed to true for any recordings if isUploaded is false when first loaded", async () => {
+    const server = await simulateServer(init, { delayLoad: true });
+    const plugin = await addPlugin<PluginBaseData, PluginRendererData>(
+      server.state,
+      {
+        pluginName,
+      },
+    );
+    const { pluginDataValtio } = plugin;
+
+    // Initial data
+    pluginDataValtio.pluginData = {
+      recordings: [
+        {
+          status: "recording",
+          mediaId: "mediaId",
+          isUploaded: false,
+          streamId: "...",
+          startedAt: new Date().toISOString(),
+          endedAt: null,
+        },
+        {
+          status: "stopping",
+          mediaId: "mediaId",
+          isUploaded: false,
+          streamId: "...",
+          startedAt: new Date().toISOString(),
+          endedAt: null,
+        },
+        {
+          status: "ended",
+          mediaId: "mediaId",
+          isUploaded: false,
+          streamId: "...",
+          startedAt: new Date().toISOString(),
+          endedAt: null,
+        },
+        {
+          status: "ended",
+          mediaId: "mediaId",
+          isUploaded: true,
+          streamId: "...",
+          startedAt: new Date().toISOString(),
+          endedAt: new Date().toISOString(),
+        },
+      ],
+      activeStreams: [],
+    };
+
+    await wait(0);
+    server.load();
+    await wait(0);
+
+    expect(pluginDataValtio.pluginData.recordings[0]?.status).toEqual("ended");
+    expect(
+      pluginDataValtio.pluginData.recordings[0]?.streamUploadFailed,
+    ).toEqual(true);
+    expect(pluginDataValtio.pluginData.recordings[1]?.status).toEqual("ended");
+    expect(
+      pluginDataValtio.pluginData.recordings[1]?.streamUploadFailed,
+    ).toEqual(true);
+    expect(pluginDataValtio.pluginData.recordings[2]?.status).toEqual("ended");
+    expect(
+      pluginDataValtio.pluginData.recordings[2]?.streamUploadFailed,
+    ).toEqual(true);
+    expect(pluginDataValtio.pluginData.recordings[3]?.status).toEqual("ended");
+    expect(
+      pluginDataValtio.pluginData.recordings[3]?.streamUploadFailed,
+    ).toEqual(undefined);
+    expect(pluginDataValtio.pluginData.recordings[3]?.isUploaded).toEqual(true);
+  });
+  it("should watch user awareness and set streamUploadFailed to true for ended recordings if isUploaded is false", async () => {
+    const server = await simulateServer(init);
+    const plugin = await addPlugin<PluginBaseData, PluginRendererData>(
+      server.state,
+      {
+        pluginName,
+      },
+    );
+    const { pluginDataValtio } = plugin;
+
+    const user1 = simulateUser(server, plugin);
+
+    // Start stream
+    pluginDataValtio.pluginData.activeStreams.push({
+      awarenessUserId: "user1",
+      availableSources: [],
+      permissionGranted: false,
+      selectedDeviceId: null,
+      devicePermissionGranted: false,
+      streamId: "testStream",
+    });
+
+    pluginDataValtio.pluginData.recordings.push({
+      status: "recording",
+      streamId: "testStream",
+      endedAt: null,
+      isUploaded: false,
+      mediaId: "",
+      startedAt: new Date().toISOString(),
+    });
+    pluginDataValtio.pluginData.recordings.push({
+      status: "stopping",
+      streamId: "testStream",
+      endedAt: null,
+      isUploaded: false,
+      mediaId: "",
+      startedAt: new Date().toISOString(),
+    });
+    pluginDataValtio.pluginData.recordings.push({
+      status: "ended",
+      streamId: "testStream",
+      endedAt: null,
+      isUploaded: false,
+      mediaId: "",
+      startedAt: new Date().toISOString(),
+    });
+    pluginDataValtio.pluginData.recordings.push({
+      status: "ended",
+      streamId: "testStream",
+      endedAt: new Date().toISOString(),
+      isUploaded: true,
+      mediaId: "",
+      startedAt: new Date().toISOString(),
+    });
+    await wait(0);
+
+    // Now, simulate user disappear
+    user1.setState(null);
+    await wait(0);
+
+    expect(pluginDataValtio.pluginData.activeStreams).toEqual([]);
+    expect(pluginDataValtio.pluginData.recordings).toHaveLength(4);
+    expect(pluginDataValtio.pluginData.recordings[0]?.status).toEqual("ended");
+    expect(
+      pluginDataValtio.pluginData.recordings[0]?.streamUploadFailed,
+    ).toEqual(true);
+    expect(pluginDataValtio.pluginData.recordings[1]?.status).toEqual("ended");
+    expect(
+      pluginDataValtio.pluginData.recordings[1]?.streamUploadFailed,
+    ).toEqual(true);
+    expect(pluginDataValtio.pluginData.recordings[2]?.status).toEqual("ended");
+    expect(
+      pluginDataValtio.pluginData.recordings[2]?.streamUploadFailed,
+    ).toEqual(true);
+    expect(pluginDataValtio.pluginData.recordings[3]?.status).toEqual("ended");
+    expect(
+      pluginDataValtio.pluginData.recordings[3]?.streamUploadFailed,
+    ).toEqual(undefined);
+  });
 });
