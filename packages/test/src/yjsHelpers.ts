@@ -1,10 +1,12 @@
 import { Document } from "@hocuspocus/server";
 import {
   AwarenessUserData,
+  ObjectToTypedMap,
   Plugin,
   Scene,
   State,
   YState,
+  YjsWatcher,
   createTraverser,
 } from "@repo/base-plugin";
 import {
@@ -36,6 +38,9 @@ type ExtractRouterRecord<T> = T extends Router<any, infer R> ? R : never;
 
 export const simulateServer = async (
   init: (serverPluginApi: ServerPluginApiPrivate) => void,
+  options?: {
+    delayLoad?: boolean;
+  },
 ) => {
   const serverPluginApi = new ServerPluginApiPrivate("" as any);
   init(serverPluginApi);
@@ -60,16 +65,22 @@ export const simulateServer = async (
   const state = document?.getMap() as YState;
   const t = createTraverser<State>(state);
 
-  YjsState.handleYjsDocumentLoad({
-    document,
-    documentName: "id",
-    state,
-    serverPluginApi,
-    disposableDocumentManager: new DisposableDocumentManager(),
-    organizationId: "orgId",
-  });
+  const load = () => {
+    YjsState.handleYjsDocumentLoad({
+      document,
+      documentName: "id",
+      state,
+      serverPluginApi,
+      disposableDocumentManager: new DisposableDocumentManager(),
+      organizationId: "orgId",
+    });
+  };
 
-  return { document, state, t, getTrpcClient };
+  if (!options?.delayLoad) {
+    load();
+  }
+
+  return { document, state, t, getTrpcClient, load };
 };
 
 export const addPlugin = async <
@@ -107,13 +118,29 @@ export const addPlugin = async <
   unbind();
 
   const pluginData = t((x) => (x.data[sceneId] as Scene).children[pluginId]);
-  const rendererData = t((x) => x.renderer["1"]?.children[sceneId]![pluginId]);
-
   const pluginDataValtio = proxy({} as Plugin<PluginSceneDataType>);
   bind(pluginDataValtio, pluginData as any);
 
-  const rendererDataValtio = proxy({} as PluginRendererDataType);
-  bind(rendererDataValtio, rendererData as any);
+  // For renderer, we want to watch because it could be delayed with the delayLoad option
+  let rendererData: ObjectToTypedMap<PluginRendererDataType> = (t(
+    (x) => x.renderer["1"]?.children[sceneId]?.[pluginId],
+  ) ?? {}) as ObjectToTypedMap<PluginRendererDataType>;
+  let rendererDataValtio = proxy({} as PluginRendererDataType);
+
+  const yjsWatcher = new YjsWatcher(yState as Y.Map<any>);
+  yjsWatcher.watchYjs(
+    (x: State) => x.renderer["1"]?.children[sceneId]?.[pluginId],
+    () => {
+      const newRenderer = t(
+        (x) => x.renderer["1"]?.children[sceneId]?.[pluginId],
+      ) as ObjectToTypedMap<PluginRendererDataType>;
+
+      if (newRenderer !== undefined) {
+        rendererData = newRenderer;
+        bind(rendererDataValtio, rendererData as any);
+      }
+    },
+  );
 
   return {
     sceneId,
