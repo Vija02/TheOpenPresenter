@@ -24,9 +24,13 @@ export type PluginRendererData = PluginRendererState & {
 };
 
 export type CurrentPlayingVideo = {
+  // Unique ID for the current user interaction
+  // We use this to make sure that the UI is crisp
+  uid?: string;
   videoId: string;
   // 0 to 1
   playFrom: number;
   // UNIX Timestamp
   startedAt: number;
+  wasPlayingBeforeSeek?: boolean | null;
 };

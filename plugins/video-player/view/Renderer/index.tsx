@@ -51,40 +51,37 @@ const Player = () => {
 
   const canPlay = pluginApi.audio.useCanPlay({ skipCheck: !isPlaying });
 
-  const setVideoSeek = useCallback(() => {
-    if (currentPlayingVideo.playFrom && ready) {
-      const duration = currentVideo?.metadata.duration ?? 0;
+  const setVideoSeek = useCallback(
+    (manual?: boolean) => {
+      if (ready) {
+        const duration = currentVideo?.metadata.duration ?? 0;
 
-      const targetSeek = calculateActualSeek(currentPlayingVideo, duration);
+        const targetSeek = calculateActualSeek(currentPlayingVideo, duration);
 
-      const currentTime = ref.current?.getCurrentTime();
-      const currentSeek = (currentTime ?? 0) / duration;
+        const currentTime = ref.current?.getCurrentTime();
+        const currentSeek = (currentTime ?? 0) / duration;
 
-      // 2 second tolerance
-      const tolerance = 2 / duration;
-      if (Math.abs(currentSeek - targetSeek) > tolerance) {
-        ref.current?.seekTo(targetSeek);
+        // 2 second tolerance
+        const tolerance = 2 / duration;
+        if (manual || Math.abs(currentSeek - targetSeek) > tolerance) {
+          ref.current?.seekTo(targetSeek);
+        }
       }
-    }
-  }, [currentPlayingVideo, currentVideo?.metadata.duration, ready]);
+    },
+    [currentPlayingVideo, currentVideo?.metadata.duration, ready],
+  );
 
   // Handle on the go seeking
   useEffect(() => {
-    if (
-      currentPlayingVideo.videoId &&
-      isPlaying &&
-      ready &&
-      currentPlayingVideo.playFrom &&
-      currentVideo?.metadata.duration
-    ) {
-      setVideoSeek();
+    if (ready && currentVideo?.metadata.duration) {
+      setVideoSeek(true);
     }
   }, [
-    currentPlayingVideo,
     currentVideo?.metadata.duration,
-    isPlaying,
     ready,
     setVideoSeek,
+    // Run this anytime UID is updated
+    currentPlayingVideo.uid,
   ]);
 
   return (

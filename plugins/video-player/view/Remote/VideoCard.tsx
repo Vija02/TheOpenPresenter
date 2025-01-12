@@ -50,6 +50,7 @@ const VideoCard = ({ video }: { video: Video }) => {
     } else {
       mutableRendererData.isPlaying = true;
       mutableRendererData.currentPlayingVideo = {
+        uid: Math.random().toString(),
         playFrom: mutableRendererData.videoSeeks[video.id] ?? 0,
         startedAt: new Date().getTime(),
         videoId: video.id,
@@ -69,18 +70,32 @@ const VideoCard = ({ video }: { video: Video }) => {
     (v: number) => {
       mutableRendererData.videoSeeks[video.id] = v;
 
-      if (currentVideoIsPlaying) {
-        mutableRendererData.currentPlayingVideo!.playFrom = v;
-        mutableRendererData.currentPlayingVideo!.startedAt =
-          new Date().getTime();
+      mutableRendererData.currentPlayingVideo!.uid = Math.random().toString();
+      mutableRendererData.currentPlayingVideo!.playFrom = v;
+      mutableRendererData.currentPlayingVideo!.startedAt = new Date().getTime();
+
+      mutableRendererData.currentPlayingVideo!.wasPlayingBeforeSeek =
+        mutableRendererData.currentPlayingVideo!.wasPlayingBeforeSeek ||
+        currentVideoIsPlaying;
+
+      mutableRendererData.isPlaying = false;
+    },
+    [currentVideoIsPlaying, mutableRendererData, video.id],
+  );
+  const onSeekEnd = useCallback(
+    (v: number) => {
+      mutableRendererData.videoSeeks[video.id] = v;
+
+      mutableRendererData.currentPlayingVideo!.uid = Math.random().toString();
+      mutableRendererData.currentPlayingVideo!.playFrom = v;
+      mutableRendererData.currentPlayingVideo!.startedAt = new Date().getTime();
+
+      if (mutableRendererData.currentPlayingVideo?.wasPlayingBeforeSeek) {
+        mutableRendererData.isPlaying = true;
+        mutableRendererData.currentPlayingVideo!.wasPlayingBeforeSeek = null;
       }
     },
-    [
-      currentVideoIsPlaying,
-      mutableRendererData.currentPlayingVideo,
-      mutableRendererData.videoSeeks,
-      video.id,
-    ],
+    [mutableRendererData, video.id],
   );
 
   const color = useMemo(
@@ -118,6 +133,7 @@ const VideoCard = ({ video }: { video: Video }) => {
               max={0.999999}
               value={seek}
               onScrubChange={onSeekHandle}
+              onScrubEnd={onSeekEnd}
               onScrubStart={onSeekHandle}
             />
           </Flex>
