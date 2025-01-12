@@ -10,7 +10,7 @@
     "target": "es2018",
     "module": "Preserve",
     "esModuleInterop": true,
-    "moduleResolution": "Node"
+    "moduleResolution": "bundler"
   },
   "include": ["src", "vite.config.ts"],
   "references": [
