@@ -146,6 +146,20 @@ export class OurS3Store extends S3Store {
     return;
   }
 
+  // ========================================================================== //
+  // =================================== ETC ================================== //
+  // ========================================================================== //
+
+  // Don't recreate resource if it already exist
+  public async create(upload: Upload) {
+    const metadata = await this.getMetadata(upload.id);
+    if (metadata) {
+      return metadata.file;
+    }
+
+    return super.create(upload);
+  }
+
   public async remove(id: string): Promise<void> {
     const { "upload-id": uploadId } = await this.getMetadata(id);
     if (uploadId) {
