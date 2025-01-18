@@ -276,4 +276,128 @@ describe("useAudioRecording", () => {
     // And upload should be called
     expect(startUploadMock).toHaveBeenCalledTimes(2);
   });
+
+  it("should start uploading if triggered through awarenessUserToRetry", async () => {
+    const server = await simulateServer(init);
+    const plugin = await addPlugin<PluginBaseData, PluginRendererData>(
+      server.state,
+      {
+        pluginName,
+      },
+    );
+    const { pluginDataValtio } = plugin;
+
+    const user1 = simulateUser(server, plugin);
+
+    await act(() => {
+      renderHook(
+        () => {
+          useAudioRecording();
+        },
+        {
+          wrapper: ({ children }) => (
+            <PluginAPIProvider {...user1.pluginApiProps}>
+              {children}
+            </PluginAPIProvider>
+          ),
+        },
+      );
+    });
+
+    expect(pluginDataValtio.pluginData.activeStreams).toEqual([]);
+
+    await act(() => {
+      pluginDataValtio.pluginData.recordings.push({
+        streamId: "streamid",
+        status: "ended",
+        mediaId: "mediaId",
+        startedAt: new Date().toISOString(),
+        endedAt: new Date().toISOString(),
+        isUploaded: false,
+        streamUploadFailed: true,
+        awarenessUserToRetry: user1.awarenessUserId,
+        awarenessUserIsUploading: false,
+      });
+    });
+
+    expect(
+      pluginDataValtio.pluginData.recordings[0]?.awarenessUserIsUploading,
+    ).toEqual(true);
+
+    // And upload should be called
+    expect(startUploadMock).toHaveBeenCalledTimes(1);
+
+    // Now let's finish the upload
+    await act(() => {
+      uploadOptions?.onSuccess?.({ lastResponse: {} as any });
+    });
+
+    expect(pluginDataValtio.pluginData.recordings[0]?.isUploaded).toEqual(true);
+  });
+
+  it("should set correct state if upload failed", async () => {
+    const server = await simulateServer(init);
+    const plugin = await addPlugin<PluginBaseData, PluginRendererData>(
+      server.state,
+      {
+        pluginName,
+      },
+    );
+    const { pluginDataValtio } = plugin;
+
+    const user1 = simulateUser(server, plugin);
+
+    await act(() => {
+      renderHook(
+        () => {
+          useAudioRecording();
+        },
+        {
+          wrapper: ({ children }) => (
+            <PluginAPIProvider {...user1.pluginApiProps}>
+              {children}
+            </PluginAPIProvider>
+          ),
+        },
+      );
+    });
+
+    expect(pluginDataValtio.pluginData.activeStreams).toEqual([]);
+
+    await act(() => {
+      pluginDataValtio.pluginData.recordings.push({
+        streamId: "streamid",
+        status: "ended",
+        mediaId: "mediaId",
+        startedAt: new Date().toISOString(),
+        endedAt: new Date().toISOString(),
+        isUploaded: false,
+        streamUploadFailed: true,
+        awarenessUserToRetry: user1.awarenessUserId,
+        awarenessUserIsUploading: false,
+      });
+    });
+
+    expect(
+      pluginDataValtio.pluginData.recordings[0]?.awarenessUserIsUploading,
+    ).toEqual(true);
+
+    // And upload should be called
+    expect(startUploadMock).toHaveBeenCalledTimes(1);
+
+    // Now let's trigger error
+    await act(() => {
+      uploadOptions?.onError?.(new Error());
+    });
+
+    expect(pluginDataValtio.pluginData.recordings[0]?.isUploaded).toEqual(
+      false,
+    );
+    expect(
+      pluginDataValtio.pluginData.recordings[0]?.awarenessUserIsUploading,
+    ).toEqual(false);
+    expect(
+      pluginDataValtio.pluginData.recordings[0]?.awarenessUserToRetry,
+    ).toEqual(null);
+  });
 });

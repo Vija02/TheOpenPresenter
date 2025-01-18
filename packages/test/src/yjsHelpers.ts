@@ -24,6 +24,7 @@ import { typeidUnboxed } from "typeid-js";
 import { v4 } from "uuid";
 import { proxy } from "valtio";
 import { bind } from "valtio-yjs";
+import { vi } from "vitest";
 import * as awareness from "y-protocols/awareness";
 import * as Y from "yjs";
 
@@ -204,7 +205,7 @@ export const simulateUser = (
       zoomLevel: undefined as any,
       errorHandler: { addError: () => {}, removeError: () => {} },
       canPlayAudio: undefined as any,
-      toast: undefined as any,
+      toast: { error: vi.fn() } as any,
     },
   };
 

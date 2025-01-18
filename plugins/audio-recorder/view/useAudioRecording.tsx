@@ -19,7 +19,6 @@ const recorderManager: Record<
   }
 > = {};
 
-// TODO: Store locally and upload when available when offline
 // TODO: Handle error better
 // Note: Recording should continue running even when we're viewing different plugins. Applies to renderer too
 export const useAudioRecording = () => {
@@ -152,6 +151,42 @@ export const useAudioRecording = () => {
           ]?.stopRecording?.();
         }
       }
+
+      // Handle retry upload from local
+      if (
+        recording.awarenessUserToRetry === pluginApi.awareness.currentUserId &&
+        !recording.awarenessUserIsUploading
+      ) {
+        (async () => {
+          // Then we should upload it
+          const mediaId = recording.mediaId!;
+          const fileName = `${mediaId}.mp3`;
+
+          const file =
+            await pluginApi.media.pluginClientStorage.readFile(fileName);
+
+          // Set state
+          mutableSceneData.pluginData.recordings[i]!.awarenessUserIsUploading =
+            true;
+          startUpload(pluginApi, file, {
+            mediaId,
+            onSuccess: () => {
+              mutableSceneData.pluginData.recordings[i]!.isUploaded = true;
+              // Remove cache if successfully uploaded
+              pluginApi.media.pluginClientStorage.removeFile(fileName);
+            },
+            onError: () => {
+              mutableSceneData.pluginData.recordings[i]!.awarenessUserToRetry =
+                null;
+              mutableSceneData.pluginData.recordings[
+                i
+              ]!.awarenessUserIsUploading = false;
+            },
+            stream: false,
+            uploadUrl: pluginApi.media.tusUploadUrl + `/${mediaId}.mp3`,
+          });
+        })();
+      }
     });
   }, [mutableSceneData.pluginData.recordings, pluginApi, recordings]);
 };
@@ -232,8 +267,7 @@ async function startStreamUpload({
     mediaId,
     onSuccess: () => {
       onUploaded();
-      // Remove cache if already successfully uploaded
-      // TODO: Remove on manual upload
+      // Remove cache if successfully uploaded
       pluginApi.media.pluginClientStorage.removeFile(fileName);
     },
     onError,
@@ -253,10 +287,14 @@ function startUpload(
     mediaId,
     onSuccess,
     onError,
+    stream = true,
+    uploadUrl,
   }: {
     mediaId: string;
     onSuccess: () => void;
     onError: (err: Error | tus.DetailedError) => void;
+    stream?: boolean;
+    uploadUrl?: string;
   },
 ) {
   const endpoint = pluginApi.media.tusUploadUrl;
@@ -265,9 +303,10 @@ function startUpload(
 
   const options: tus.UploadOptions = {
     endpoint,
-    chunkSize,
+    chunkSize: stream ? chunkSize : Infinity,
     retryDelays: [0, 1000, 3000, 5000],
     uploadLengthDeferred: true,
+    uploadUrl,
     headers: {
       "csrf-token": pluginApi.env.getCSRFToken(),
       "organization-id": pluginApi.pluginContext.organizationId,
