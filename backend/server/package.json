@@ -19,7 +19,7 @@
     "@repo/base-plugin": "*",
     "@repo/config": "*",
     "@trpc/server": "^11.0.0-rc.657",
-    "@tus/server": "^1.10.0",
+    "@tus/server": "^1.10.1",
     "@types/connect-pg-simple": "^7.0.3",
     "@types/csurf": "^1.11.5",
     "@types/express": "^5.0.0",
