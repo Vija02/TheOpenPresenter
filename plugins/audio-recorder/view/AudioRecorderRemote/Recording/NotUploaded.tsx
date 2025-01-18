@@ -98,8 +98,8 @@ const StreamUploadFailed = ({
           Your recording has not been successfully uploaded
         </Text>
         {foundIndex > -1 && (
-          <Button onClick={onUpload} mt={2} size="sm" colorScheme="primary">
-            Upload
+          <Button onClick={onUpload} mt={2} size="sm" colorScheme="green">
+            Re-Upload
           </Button>
         )}
         {foundIndex === -1 && (
