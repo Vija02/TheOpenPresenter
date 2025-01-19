@@ -118,7 +118,7 @@ const Player = () => {
         }
         setReady(true);
       }}
-      onBufferEnd={setVideoSeek}
+      onBufferEnd={() => setVideoSeek()}
       url={currentVideo?.url}
       config={{ youtube: { playerVars: { controls: 0 } } }}
     />
