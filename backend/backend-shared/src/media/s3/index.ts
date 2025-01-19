@@ -15,6 +15,9 @@ const createS3Store = (app: Express) => {
           accessKeyId: process.env.STORAGE_S3_ACCESS_KEY_ID!,
           secretAccessKey: process.env.STORAGE_S3_SECRET_ACCESS_KEY!,
         },
+        // Required for services outside AWS: https://github.com/aws/aws-sdk-js-v3/issues/6810
+        // DEBT: Make this configurable
+        requestChecksumCalculation: "WHEN_REQUIRED",
       },
       expirationPeriodInMilliseconds: 6 * 60 * 60 * 1000, // 6h
     },
