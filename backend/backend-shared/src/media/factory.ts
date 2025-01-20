@@ -1,7 +1,8 @@
 import { DataStore, Upload } from "@tus/server";
 import { Express, Request } from "express";
 import { StorageEngine } from "multer";
-import { typeidUnboxed } from "typeid-js";
+import { Pool } from "pg";
+import { TypeId, toUUID, typeidUnboxed } from "typeid-js";
 
 import { multerProcessFileName } from "./helper";
 import {
@@ -16,9 +17,11 @@ export const createMediaHandler = <T extends DataStore>(
 ) => {
   return class MediaHandler implements MediaHandlerInterface {
     store: T;
+    app: Express;
 
     constructor(app: Express) {
       this.store = createStore(app);
+      this.app = app;
     }
 
     async uploadMedia({
@@ -47,6 +50,18 @@ export const createMediaHandler = <T extends DataStore>(
 
       await this.store.create(upload);
       await this.store.write(file, upload.id, 0);
+
+      // Update is_complete flag
+      const uuid = toUUID(mediaId as TypeId<string>);
+      const rootPgPool = this.app.get("rootPgPool") as Pool;
+      await rootPgPool.query(
+        `UPDATE app_public.medias
+          SET 
+            is_complete = $1
+          WHERE id = $2
+        `,
+        [true, uuid],
+      );
 
       return { mediaId, fileExtension, fileName: finalFileName };
     }
