@@ -17,6 +17,7 @@
     "@emotion/react": "^11.13.5",
     "@emotion/styled": "^11.13.5",
     "@hocuspocus/provider": "^2.14.0",
+    "@openobserve/browser-rum": "^0.2.11",
     "@repo/graphql": "*",
     "@tanstack/react-query": "^5.62.3",
     "@types/ua-parser-js": "^0.7.39",

@@ -4,6 +4,7 @@ ARG NODE_ENV="production"
 ARG TARGET="server"
 # Reflect the same as on `.env.production`
 ARG ROOT_URL="ROOT_URL_PLACEHOLDER"
+ARG SHA
 
 ################################################################################
 # Build stage 1 - Dependencies
@@ -107,10 +108,10 @@ COPY apps/homepage/ /app/apps/homepage/
 RUN yarn homepage codegen && yarn homepage build
 
 COPY apps/remote/ /app/apps/remote/
-RUN yarn remote build
+RUN VITE_APP_SHA=$SHA yarn remote build
 
 COPY apps/renderer/ /app/apps/renderer/
-RUN yarn renderer build
+RUN VITE_APP_SHA=$SHA yarn renderer build
 
 ################################################################################
 # Build stage 5 - Build plugin
@@ -159,8 +160,10 @@ COPY backend/db/ /app/backend/db/
 
 COPY --from=builder-client /app/apps/remote/package.json /app/apps/remote/
 COPY --from=builder-client /app/apps/remote/dist/ /app/apps/remote/dist/
+COPY --from=builder-client /app/apps/remote/.env.production /app/apps/remote/
 COPY --from=builder-client /app/apps/renderer/package.json /app/apps/renderer/
 COPY --from=builder-client /app/apps/renderer/dist/ /app/apps/renderer/dist/
+COPY --from=builder-client /app/apps/renderer/.env.production /app/apps/renderer/
 COPY --from=builder-client /app/apps/homepage/package.json /app/apps/homepage/
 COPY --from=builder-client /app/apps/homepage/src/next.config.js /app/apps/homepage/src/next.config.js
 COPY --from=builder-client /app/apps/homepage/.next /app/apps/homepage/.next

@@ -1,5 +1,6 @@
 import { Express, Request } from "express";
 import { Server, createServer } from "http";
+import type { UserConfig } from "vite";
 import { ViteExpress } from "vite-express";
 
 import { getUpgradeHandlers } from "../app";
@@ -24,12 +25,14 @@ export default async function installRenderer(app: Express, server: Server) {
       root: `${__dirname}/../../../apps/renderer`,
       base: "/render",
       build: { outDir: "dist" },
+      envDir: `${__dirname}/../../../`,
       server: {
         hmr: {
           server: fakeHttpServer,
         },
       },
-    },
+    } as Partial<UserConfig> &
+      InstanceType<typeof ViteExpress>["_State"]["viteConfig"],
     transformer,
   });
   await viteExpress.bind(app, server);

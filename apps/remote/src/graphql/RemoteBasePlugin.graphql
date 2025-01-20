@@ -3,6 +3,12 @@ query RemoteBasePlugin($orgSlug: String!, $projectSlug: String!) {
     ...BaseRemotePluginMeta
   }
 
+  currentUser {
+    id
+    name
+    primaryEmail
+  }
+
   organizationBySlug(slug: $orgSlug) {
     id
     projects(condition: { slug: $projectSlug }) {

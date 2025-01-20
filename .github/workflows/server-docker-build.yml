@@ -40,6 +40,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=registry,ref=ghcr.io/vija02/theopenpresenter_server:buildcache
           cache-to: type=registry,ref=ghcr.io/vija02/theopenpresenter_server:buildcache,mode=max,image-manifest=true
+          build-args: SHA=${{ github.sha }}
 
 env:
   REGISTRY: ghcr.io

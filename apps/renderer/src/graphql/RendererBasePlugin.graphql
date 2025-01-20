@@ -3,6 +3,12 @@ query RendererBasePlugin($orgSlug: String!, $projectSlug: String!) {
     ...BaseRendererPluginMeta
   }
 
+  currentUser {
+    id
+    name
+    primaryEmail
+  }
+
   organizationBySlug(slug: $orgSlug) {
     id
     projects(condition: { slug: $projectSlug }) {

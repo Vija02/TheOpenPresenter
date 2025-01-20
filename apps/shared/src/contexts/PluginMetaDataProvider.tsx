@@ -1,4 +1,5 @@
 import { Text } from "@chakra-ui/react";
+import { openobserveRum } from "@openobserve/browser-rum";
 import {
   RemoteBasePluginQuery,
   RendererBasePluginQuery,
@@ -45,6 +46,15 @@ export function PluginMetaDataProvider({
     error,
   } = useFunc({
     variables: { orgSlug, projectSlug },
+    onCompleted: (res) => {
+      if (res.currentUser) {
+        openobserveRum.setUser({
+          id: res.currentUser.id,
+          email: res.currentUser.primaryEmail ?? undefined,
+          name: res.currentUser.name ?? undefined,
+        });
+      }
+    },
   });
 
   if (error) {

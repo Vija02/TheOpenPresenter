@@ -190,6 +190,14 @@ exports.updateDotenv = function updateDotenv(add, answers) {
 # For any other values, this option is disabled`,
   );
 
+  add(
+    "VITE_APP_OPENOBSERVE_CLIENT_TOKEN",
+    `\
+# Logging`,
+  );
+  add("VITE_APP_OPENOBSERVE_SITE");
+  add("VITE_APP_OPENOBSERVE_ORGANIZATION_IDENTIFIER");
+
   add("ENABLED_PLUGINS", readdirSync("./plugins").join(","));
 };
 

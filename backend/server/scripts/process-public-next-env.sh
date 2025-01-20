@@ -16,5 +16,23 @@ then
 
       find /app/apps/homepage/.next -type f -name "*.js" -print0 | xargs -0 -P $(nproc) sed -i "s|$STRING_TO_REPLACE|$ACTUAL_ENV|g";
     done < /app/backend/server/.env.production
+
+    while read line; do
+      ENV_NAME=$(echo "$line" | cut -d "=" -f 1)
+      STRING_TO_REPLACE=$(echo "$line" | cut -d "=" -f 2)
+
+      eval "ACTUAL_ENV=\$$ENV_NAME"
+
+      find /app/apps/remote/dist -type f -name "*.js" -print0 | xargs -0 -P $(nproc) sed -i "s|$STRING_TO_REPLACE|$ACTUAL_ENV|g";
+    done < /app/apps/remote/.env.production
+    
+    while read line; do
+      ENV_NAME=$(echo "$line" | cut -d "=" -f 1)
+      STRING_TO_REPLACE=$(echo "$line" | cut -d "=" -f 2)
+
+      eval "ACTUAL_ENV=\$$ENV_NAME"
+
+      find /app/apps/renderer/dist -type f -name "*.js" -print0 | xargs -0 -P $(nproc) sed -i "s|$STRING_TO_REPLACE|$ACTUAL_ENV|g";
+    done < /app/apps/renderer/.env.production
   fi
 fi
