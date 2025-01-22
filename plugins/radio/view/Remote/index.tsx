@@ -1,15 +1,5 @@
-import {
-  Box,
-  Button,
-  Flex,
-  Link,
-  Slider,
-  SliderFilledTrack,
-  SliderThumb,
-  SliderTrack,
-  Stack,
-  Text,
-} from "@chakra-ui/react";
+import { Box, Button, Link, Stack, Text } from "@chakra-ui/react";
+import { PluginScaffold, VolumeBar } from "@repo/ui";
 import { FaPause, FaPlay } from "react-icons/fa6";
 
 import { usePluginAPI } from "../pluginApi";
@@ -86,107 +76,65 @@ const RadioRemote = () => {
   const mutableRendererData = pluginApi.renderer.useValtioData();
 
   return (
-    <Flex flexDir="column" height="100%">
-      <Box p={3} bg="gray.900">
-        <Stack direction="row" alignItems="center" gap={5}>
-          <Stack direction="row" alignItems="center">
-            <Text fontWeight="bold" color="white">
-              <Text>Radio</Text>
-            </Text>
-          </Stack>
-          <Stack direction="row" alignItems="center" spacing={2}>
-            <Button
-              size="xs"
-              bg="transparent"
-              color="white"
-              border="1px solid #ffffff6b"
-              _hover={{ bg: "rgba(255, 255, 255, 0.13)" }}
-              onClick={() => {
-                mutableRendererData.isPlaying = !isPlaying;
-              }}
-              isDisabled={!playingUrl}
-            >
-              {!isPlaying ? <FaPlay /> : <FaPause />}
-            </Button>
-          </Stack>
-        </Stack>
-      </Box>
-      <Flex width="100%" height="100%">
-        <Flex
-          flexDirection="column"
-          gap={2}
-          w="40px"
-          px="5px"
-          py={4}
-          bg="#313131"
-          alignItems="center"
-        >
-          <Text color="white" fontSize="1xs" fontWeight="bold">
-            VOL
-          </Text>
-          <Slider
-            id="slider"
-            value={volume ?? 1}
-            min={0}
-            max={1}
-            step={0.01}
-            orientation="vertical"
+    <PluginScaffold
+      title="Radio"
+      toolbar={
+        <>
+          <Button
+            size="xs"
+            bg="transparent"
+            color="white"
+            border="1px solid #ffffff6b"
+            _hover={{ bg: "rgba(255, 255, 255, 0.13)" }}
+            onClick={() => {
+              mutableRendererData.isPlaying = !isPlaying;
+            }}
+            isDisabled={!playingUrl}
+          >
+            {!isPlaying ? <FaPlay /> : <FaPause />}
+          </Button>
+        </>
+      }
+      body={
+        <>
+          <VolumeBar
+            volume={volume}
             onChange={(v) => {
               mutableRendererData.volume = v;
             }}
-            mb={4}
-            mt={10}
-            flex={1}
-          >
-            <SliderTrack
-              w={2}
-              bg="black"
-              border="1px solid rgb(255, 255, 255, 0.3)"
-            >
-              <SliderFilledTrack bg="rgb(130, 130, 130)" />
-            </SliderTrack>
-            <SliderThumb
-              rounded="5px"
-              width="30px"
-              height="50px"
-              bg="linear-gradient(#282828 0%, #323232 45%, white 45%, white 55%, #383838 55%, #494949 100%)"
-              border="1px solid #ffffff1c"
-              borderTop="1px solid rgba(255, 255, 255, 0.32)"
-              boxShadow="rgba(0, 0, 0, 0.75) 2px 4px 5px 0px"
-            />
-          </Slider>
-        </Flex>
+          />
 
-        <Stack flex={1} dir="column" p={3}>
-          {radios.map((radio, i) => (
-            <Stack key={i} direction="row">
-              <Button
-                onClick={() => {
-                  if (!isPlaying || playingUrl !== radio.url) {
-                    mutableRendererData.isPlaying = true;
-                    mutableRendererData.url = radio.url;
-                  } else {
-                    mutableRendererData.isPlaying = false;
-                  }
-                }}
-              >
-                {!isPlaying || playingUrl !== radio.url ? (
-                  <FaPlay />
-                ) : (
-                  <FaPause />
-                )}
-              </Button>
-              <Box>
-                <Text fontSize="md">{radio.title}</Text>
-                <Link fontSize="xs" href={radio.webLink} isExternal>
-                  Link
-                </Link>
-              </Box>
-            </Stack>
-          ))}
-        </Stack>
-      </Flex>
-    </Flex>
+          <Stack flex={1} dir="column" p={3}>
+            {radios.map((radio, i) => (
+              <Stack key={i} direction="row">
+                <Button
+                  onClick={() => {
+                    if (!isPlaying || playingUrl !== radio.url) {
+                      mutableRendererData.isPlaying = true;
+                      mutableRendererData.url = radio.url;
+                    } else {
+                      mutableRendererData.isPlaying = false;
+                    }
+                  }}
+                >
+                  {!isPlaying || playingUrl !== radio.url ? (
+                    <FaPlay />
+                  ) : (
+                    <FaPause />
+                  )}
+                </Button>
+                <Box>
+                  <Text fontSize="md">{radio.title}</Text>
+                  <Link fontSize="xs" href={radio.webLink} isExternal>
+                    Link
+                  </Link>
+                </Box>
+              </Stack>
+            ))}
+          </Stack>
+        </>
+      }
+    />
   );
 };
 

@@ -7,7 +7,7 @@ import {
   Stack,
   Text,
 } from "@chakra-ui/react";
-import { LoadingFull, Slide, SlideGrid } from "@repo/ui";
+import { LoadingFull, PluginScaffold, Slide, SlideGrid } from "@repo/ui";
 import { useMemo } from "react";
 import { FaArrowLeft, FaArrowRight } from "react-icons/fa";
 
@@ -38,123 +38,108 @@ const Remote = () => {
   }
 
   return (
-    <Box>
-      <Box p={3} bg="gray.900">
-        <Stack
-          direction="row"
-          alignItems="center"
-          gap={{ base: 2, md: 5 }}
-          flexWrap="wrap"
-        >
-          <Stack direction="row" alignItems="center">
-            <Text fontWeight="bold" color="white">
-              <Text>Google Slides</Text>
-            </Text>
-          </Stack>
-          <Stack
-            direction="row"
-            alignItems="center"
-            spacing={2}
-            flexWrap="wrap"
+    <PluginScaffold
+      title="Google Slides"
+      toolbar={
+        <>
+          <SlidePicker
+            onFileSelected={(data, token) => {
+              const picker = google.picker;
+              if (data[picker.Response.ACTION] === "picked") {
+                if (data[picker.Response.DOCUMENTS].length > 0) {
+                  const docs = data[picker.Response.DOCUMENTS][0]!;
+
+                  const id = docs[picker.Document.ID];
+
+                  selectSlideMutation.mutate({
+                    pluginId: pluginContext.pluginId,
+                    presentationId: id,
+                    token: token,
+                  });
+                }
+              }
+            }}
           >
-            <SlidePicker
-              onFileSelected={(data, token) => {
-                const picker = google.picker;
-                if (data[picker.Response.ACTION] === "picked") {
-                  if (data[picker.Response.DOCUMENTS].length > 0) {
-                    const docs = data[picker.Response.DOCUMENTS][0]!;
+            {({ isLoading, openPicker }) => (
+              <Button
+                size="xs"
+                bg="transparent"
+                color="white"
+                border="1px solid #ffffff6b"
+                _hover={{ bg: "rgba(255, 255, 255, 0.13)" }}
+                onClick={openPicker}
+                isLoading={isLoading}
+              >
+                <Text fontWeight="normal" fontSize="xs">
+                  Replace Slide
+                </Text>
+              </Button>
+            )}
+          </SlidePicker>
 
-                    const id = docs[picker.Document.ID];
-
-                    selectSlideMutation.mutate({
-                      pluginId: pluginContext.pluginId,
-                      presentationId: id,
-                      token: token,
-                    });
-                  }
+          <Stack direction="row" alignItems="center">
+            <Text
+              display={{ base: "none", sm: "inherit" }}
+              fontWeight="bold"
+              color="white"
+              pl={4}
+              fontSize="xs"
+            >
+              Navigate:
+            </Text>
+            <Button
+              size="xs"
+              bg="transparent"
+              color="white"
+              border="1px solid #ffffff6b"
+              _hover={{ bg: "rgba(255, 255, 255, 0.13)" }}
+              onClick={() => {
+                if (!mutableRendererData.slideIndex) {
+                  mutableRendererData.slideIndex = 0;
+                } else {
+                  mutableRendererData.clickCount =
+                    (mutableRendererData.clickCount ?? 0) - 1;
                 }
               }}
             >
-              {({ isLoading, openPicker }) => (
-                <Button
-                  size="xs"
-                  bg="transparent"
-                  color="white"
-                  border="1px solid #ffffff6b"
-                  _hover={{ bg: "rgba(255, 255, 255, 0.13)" }}
-                  onClick={openPicker}
-                  isLoading={isLoading}
-                >
-                  <Text fontWeight="normal" fontSize="xs">
-                    Replace Slide
-                  </Text>
-                </Button>
-              )}
-            </SlidePicker>
-
-            <Stack direction="row" alignItems="center">
-              <Text
-                display={{ base: "none", sm: "inherit" }}
-                fontWeight="bold"
-                color="white"
-                pl={4}
-                fontSize="xs"
-              >
-                Navigate:
+              <FaArrowLeft />
+              <Text ml={1} fontWeight="normal" fontSize="xs">
+                Left
               </Text>
-              <Button
-                size="xs"
-                bg="transparent"
-                color="white"
-                border="1px solid #ffffff6b"
-                _hover={{ bg: "rgba(255, 255, 255, 0.13)" }}
-                onClick={() => {
-                  if (!mutableRendererData.slideIndex) {
-                    mutableRendererData.slideIndex = 0;
-                  } else {
-                    mutableRendererData.clickCount =
-                      (mutableRendererData.clickCount ?? 0) - 1;
-                  }
-                }}
-              >
-                <FaArrowLeft />
-                <Text ml={1} fontWeight="normal" fontSize="xs">
-                  Left
-                </Text>
-              </Button>
-              <Button
-                size="xs"
-                bg="transparent"
-                color="white"
-                border="1px solid #ffffff6b"
-                _hover={{ bg: "rgba(255, 255, 255, 0.13)" }}
-                onClick={() => {
-                  if (!mutableRendererData.slideIndex) {
-                    mutableRendererData.slideIndex = 0;
-                  } else {
-                    mutableRendererData.clickCount =
-                      (mutableRendererData.clickCount ?? 0) + 1;
-                  }
-                }}
-              >
-                <FaArrowRight />{" "}
-                <Text ml={1} fontWeight="normal" fontSize="xs">
-                  Right
-                </Text>
-              </Button>
-            </Stack>
+            </Button>
+            <Button
+              size="xs"
+              bg="transparent"
+              color="white"
+              border="1px solid #ffffff6b"
+              _hover={{ bg: "rgba(255, 255, 255, 0.13)" }}
+              onClick={() => {
+                if (!mutableRendererData.slideIndex) {
+                  mutableRendererData.slideIndex = 0;
+                } else {
+                  mutableRendererData.clickCount =
+                    (mutableRendererData.clickCount ?? 0) + 1;
+                }
+              }}
+            >
+              <FaArrowRight />{" "}
+              <Text ml={1} fontWeight="normal" fontSize="xs">
+                Right
+              </Text>
+            </Button>
           </Stack>
-        </Stack>
-      </Box>
+        </>
+      }
+      body={
+        <Box p={3} width="100%">
+          <SlideGrid>
+            <RemoteHandler />
+          </SlideGrid>
 
-      <Box p={3}>
-        <SlideGrid>
-          <RemoteHandler />
-        </SlideGrid>
-
-        <ResolvedSlideHandler />
-      </Box>
-    </Box>
+          <ResolvedSlideHandler />
+        </Box>
+      }
+    />
   );
 };
 

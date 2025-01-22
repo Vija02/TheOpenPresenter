@@ -1,4 +1,5 @@
 import { Heading, Stack } from "@chakra-ui/react";
+import { PluginScaffold } from "@repo/ui";
 
 import { usePluginAPI } from "../pluginApi";
 import { useAudioRecording } from "../useAudioRecording";
@@ -19,17 +20,21 @@ const AudioRecorderRemote = () => {
 };
 const AudioRecorderRemoteInner = () => {
   return (
-    <Stack dir="column" p={3}>
-      <Heading>Streams</Heading>
-
-      <StreamSection />
-
-      <Heading as="h3" size="md">
-        Current Recordings
-      </Heading>
-
-      <RecordingSection />
-    </Stack>
+    <PluginScaffold
+      title="Audio Recorder"
+      body={
+        <>
+          <Stack dir="column" p={3}>
+            <Heading>Streams</Heading>
+            <StreamSection />
+            <Heading as="h3" size="md">
+              Current Recordings
+            </Heading>
+            <RecordingSection />
+          </Stack>
+        </>
+      }
+    />
   );
 };
 
