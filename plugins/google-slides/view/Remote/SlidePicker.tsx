@@ -1,8 +1,10 @@
 /// <reference types="google.accounts" />
 /// <reference types="google.picker" />
 /// <reference types="gapi" />
-import { appData, useInjectScript } from "@repo/lib";
+import { useInjectScript } from "@repo/lib";
 import { useCallback, useMemo } from "react";
+
+import { usePluginAPI } from "../pluginApi";
 
 export const SlidePicker = ({
   onFileSelected,
@@ -17,6 +19,7 @@ export const SlidePicker = ({
     openPicker: () => void;
   }) => React.ReactElement<any>;
 }) => {
+  const pluginApi = usePluginAPI();
   const [loadedApi, errorApi] = useInjectScript(
     "https://apis.google.com/js/api.js",
     {
@@ -30,8 +33,8 @@ export const SlidePicker = ({
   );
 
   const googleClientID = useMemo(
-    () => appData.getCustomEnv("PLUGIN_GOOGLE_SLIDES_CLIENT_ID"),
-    [],
+    () => pluginApi.env.getCustomEnv("PLUGIN_GOOGLE_SLIDES_CLIENT_ID"),
+    [pluginApi.env],
   );
 
   const getAccessToken = useCallback(() => {
@@ -63,12 +66,14 @@ export const SlidePicker = ({
       .setOAuthToken(accessToken)
       .setCallback((data) => onFileSelected(data, accessToken))
       .setAppId(
-        appData.getCustomEnv("PLUGIN_GOOGLE_SLIDES_CLIENT_ID").split("-")?.[0],
+        pluginApi.env
+          .getCustomEnv("PLUGIN_GOOGLE_SLIDES_CLIENT_ID")
+          .split("-")?.[0],
       )
       .enableFeature(google.picker.Feature.SUPPORT_DRIVES)
       .build()
       .setVisible(true);
-  }, [getAccessToken, onFileSelected]);
+  }, [getAccessToken, onFileSelected, pluginApi.env]);
 
   const scriptLoaded = useMemo(
     () => loadedApi && !errorApi && loadedGsi && !errorGsi,
