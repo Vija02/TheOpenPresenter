@@ -301,7 +301,7 @@ function startUpload(
   // DEBT: Maybe need bigger chunkSize
   const chunkSize = 15000; // 15kb. Roughly every second
 
-  const options: tus.UploadOptions = {
+  const options: ConstructorParameters<typeof tus.Upload>[1] = {
     endpoint,
     chunkSize: stream ? chunkSize : Infinity,
     retryDelays: [0, 1000, 3000, 5000],
