@@ -17,6 +17,7 @@ export const UploadModal = () => {
         "csrf-token": appData.getCSRFToken(),
         "organization-id": pluginApi.pluginContext.organizationId,
       },
+      chunkSize: pluginApi.env.getMediaUploadChunkSize(),
     }),
   );
   const sceneData = pluginApi.scene.useValtioData();

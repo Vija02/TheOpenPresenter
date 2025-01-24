@@ -76,10 +76,11 @@ function transformer(html: string, req: Request) {
 
   // Extra data
   const extraEnv = [
-    { ROOT_URL: process.env.ROOT_URL, CSRF_TOKEN: req.csrfToken() } as Record<
-      string,
-      string
-    >,
+    {
+      ROOT_URL: process.env.ROOT_URL,
+      CSRF_TOKEN: req.csrfToken(),
+      MEDIA_UPLOAD_CHUNK_SIZE: process.env.MEDIA_UPLOAD_CHUNK_SIZE,
+    } as Record<string, string>,
   ]
     .concat(registeredEnvToViews.map((x) => x.envVars))
     .reduce((acc, val) => ({ ...acc, ...val }), {} as Record<string, string>);

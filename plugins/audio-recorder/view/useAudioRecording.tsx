@@ -299,7 +299,7 @@ function startUpload(
 ) {
   const endpoint = pluginApi.media.tusUploadUrl;
   // DEBT: Maybe need bigger chunkSize
-  const chunkSize = 15000; // 15kb. Roughly every second
+  const chunkSize = Math.min(15000, pluginApi.env.getMediaUploadChunkSize()); // 15kb. Roughly every second
 
   const options: ConstructorParameters<typeof tus.Upload>[1] = {
     endpoint,

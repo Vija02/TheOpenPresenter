@@ -32,6 +32,7 @@ const UploadVideoModal = ({
   ...props
 }: UploadVideoModalPropTypes) => {
   const pluginApi = usePluginAPI();
+
   const [uppy] = useState(() =>
     new Uppy().use(Tus, {
       endpoint: pluginApi.media.tusUploadUrl,
@@ -39,6 +40,7 @@ const UploadVideoModal = ({
         "csrf-token": appData.getCSRFToken(),
         "organization-id": pluginApi.pluginContext.organizationId,
       },
+      chunkSize: pluginApi.env.getMediaUploadChunkSize(),
     }),
   );
   const mutableSceneData = pluginApi.scene.useValtioData();

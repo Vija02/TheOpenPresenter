@@ -191,6 +191,14 @@ exports.updateDotenv = function updateDotenv(add, answers) {
   );
 
   add(
+    "MEDIA_UPLOAD_CHUNK_SIZE",
+    "100000000",
+    `\
+# How big each chunk of a file upload should be. This is useful in environments where there is a limit to how big a file upload can be.
+# Big files will be chunked into the provided size. Default is 100000000 which is 100mb`,
+  );
+
+  add(
     "VITE_APP_OPENOBSERVE_CLIENT_TOKEN",
     `\
 # Logging`,
