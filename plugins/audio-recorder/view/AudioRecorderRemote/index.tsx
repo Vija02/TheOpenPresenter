@@ -24,7 +24,7 @@ const AudioRecorderRemoteInner = () => {
       title="Audio Recorder"
       body={
         <>
-          <Stack dir="column" p={3}>
+          <Stack dir="column" p={3} w="100%">
             <Heading>Streams</Heading>
             <StreamSection />
             <Heading as="h3" size="md">
