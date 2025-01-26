@@ -5533,6 +5533,7 @@ __metadata:
     "@types/react": "npm:^19.0.0"
     "@types/react-dom": "npm:^19.0.0"
     "@vitejs/plugin-react-swc": "npm:^3.7.2"
+    "@wavesurfer/react": "npm:^1.0.8"
     date-fns: "npm:^4.1.0"
     eslint: "npm:^8.57.1"
     framer-motion: "npm:^11.13.1"
@@ -5546,6 +5547,7 @@ __metadata:
     valtio: "npm:^2.1.2"
     valtio-yjs: "npm:^0.6.0"
     vite: "npm:5.4.11"
+    wavesurfer.js: "npm:^7.8.16"
     yjs: "npm:^13.6.20"
     zod: "npm:^3.23.8"
   languageName: unknown
@@ -8968,6 +8970,16 @@ __metadata:
     "@wasm-audio-decoders/common": "npm:9.0.5"
     codec-parser: "npm:2.5.0"
   checksum: 10c0/0a52e28b68c61083992bccf0b7b3ea09a168ad905dd5b3f53257d6ae60d69a3fad5346e604b8f4d1f2f11a586d389020e8351b513e40b2c2db87116167e2a716
+  languageName: node
+  linkType: hard
+
+"@wavesurfer/react@npm:^1.0.8":
+  version: 1.0.8
+  resolution: "@wavesurfer/react@npm:1.0.8"
+  peerDependencies:
+    react: ^19.0.0
+    wavesurfer.js: ">=7.8.11"
+  checksum: 10c0/6ae78446d671c10300f993ea02f59c0b60847a5506a478675ad8d7b93b292e1eeaf74a677bb3cae8f98d4740a4a6ae54ebd6a2f29e39be5c7e8ce272db6ebf5d
   languageName: node
   linkType: hard
 
@@ -24431,6 +24443,13 @@ __metadata:
   dependencies:
     loose-envify: "npm:^1.0.0"
   checksum: 10c0/aebab445129f3e104c271f1637fa38e55eb25f968593e3825bd2f7a12bd58dc3738bb70dc8ec85826621d80b4acfed5a29ebc9da17397c6125864d72301b937e
+  languageName: node
+  linkType: hard
+
+"wavesurfer.js@npm:^7.8.16":
+  version: 7.8.16
+  resolution: "wavesurfer.js@npm:7.8.16"
+  checksum: 10c0/faa17764ef88bfc315f400c49ca6e462c3fa8362d478949e385ee692db5cd49327a4e0a54793375706c7661569ade18fa05781a63fd59c1a94e864c80d704e39
   languageName: node
   linkType: hard
 
