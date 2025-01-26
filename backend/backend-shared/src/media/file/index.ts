@@ -1,5 +1,5 @@
-import { Express } from "express";
 import path from "path";
+import { Pool, PoolClient } from "pg";
 
 import { CustomKVStore } from "../customKVStore";
 import { createMediaHandler, createMulterStorage } from "../factory";
@@ -8,14 +8,14 @@ import { OurFileStore } from "./OurFileStore";
 
 export const UPLOADS_PATH = path.resolve(`${process.cwd()}/../../uploads`);
 
-const createFileStore = (app: Express) => {
+const createFileStore = (pgPool: Pool | PoolClient) => {
   return new OurFileStore(
     {
       directory: UPLOADS_PATH,
-      configstore: new CustomKVStore(app),
+      configstore: new CustomKVStore(pgPool),
       expirationPeriodInMilliseconds: 6 * 60 * 60 * 1000, // 6h
     },
-    app,
+    pgPool,
   );
 };
 

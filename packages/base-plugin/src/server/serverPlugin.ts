@@ -222,7 +222,7 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
 
     const { mediaId, fileName } = await new media[
       process.env.STORAGE_TYPE as "file" | "s3"
-    ].mediaHandler(this.app).uploadMedia({
+    ].mediaHandler(this.app.get("rootPgPool")).uploadMedia({
       file: stream.Readable.from(data),
       fileExtension,
       fileSize,
@@ -242,7 +242,7 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
   public async deleteMedia(fullFileId: string) {
     try {
       await new media[process.env.STORAGE_TYPE as "file" | "s3"].mediaHandler(
-        this.app,
+        this.app.get("rootPgPool"),
       ).deleteMedia(fullFileId);
       return { success: true };
     } catch (e) {

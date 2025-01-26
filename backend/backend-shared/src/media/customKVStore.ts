@@ -1,16 +1,15 @@
 import { MetadataValue } from "@tus/s3-store";
 import { KvStore, TUS_RESUMABLE, Upload } from "@tus/server";
-import { Express } from "express";
-import { Pool } from "pg";
+import { Pool, PoolClient } from "pg";
 import { TypeId, toUUID } from "typeid-js";
 
 export class CustomKVStore<T extends Upload | MetadataValue>
   implements KvStore<T>
 {
-  rootPgPool: Pool;
+  pgPool: Pool | PoolClient;
 
-  constructor(app: Express) {
-    this.rootPgPool = app.get("rootPgPool") as Pool;
+  constructor(pgPool: Pool | PoolClient) {
+    this.pgPool = pgPool;
   }
 
   async get(key: string): Promise<T | undefined> {
@@ -18,7 +17,7 @@ export class CustomKVStore<T extends Upload | MetadataValue>
 
     const {
       rows: [mediaRow],
-    } = await this.rootPgPool.query(
+    } = await this.pgPool.query(
       "SELECT * FROM app_public.medias WHERE id = $1",
       [toUUID(splittedKey[0] as TypeId<string>)],
     );
@@ -55,7 +54,7 @@ export class CustomKVStore<T extends Upload | MetadataValue>
 
     const file = "file" in value ? value.file : (value as Upload);
 
-    await this.rootPgPool.query(
+    await this.pgPool.query(
       `INSERT INTO app_public.medias(
         id, media_name, file_size, file_offset, original_name, file_extension, organization_id, creator_user_id, s3_upload_id, is_user_uploaded
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) ON CONFLICT (id) DO UPDATE 
@@ -92,13 +91,13 @@ export class CustomKVStore<T extends Upload | MetadataValue>
     const mediaId = splittedKey[0];
     const uuid = toUUID(mediaId as TypeId<string>);
 
-    await this.rootPgPool.query("DELETE FROM app_public.medias WHERE id = $1", [
+    await this.pgPool.query("DELETE FROM app_public.medias WHERE id = $1", [
       uuid,
     ]);
   }
 
   async list(): Promise<Array<string>> {
-    const { rows } = await this.rootPgPool.query(
+    const { rows } = await this.pgPool.query(
       "SELECT media_name FROM app_public.medias",
     );
     return rows.map((x) => x.media_name);

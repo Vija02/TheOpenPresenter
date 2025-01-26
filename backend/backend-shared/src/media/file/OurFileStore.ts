@@ -1,23 +1,22 @@
 import { FileStore } from "@tus/file-store";
-import { Express } from "express";
-import { Pool } from "pg";
+import { Pool, PoolClient } from "pg";
 
 import { getFileIdsToDeleteFromID } from "../dependencyRemove";
 
 export class OurFileStore extends FileStore {
-  protected app: Express;
+  protected pgPool: Pool | PoolClient;
 
   constructor(
     options: ConstructorParameters<typeof FileStore>[0],
-    app: Express,
+    pgPool: Pool | PoolClient,
   ) {
     super(options);
 
-    this.app = app;
+    this.pgPool = pgPool;
   }
 
   public async remove(id: string): Promise<void> {
-    const fileIdsToDelete = await getFileIdsToDeleteFromID(this.app, id);
+    const fileIdsToDelete = await getFileIdsToDeleteFromID(this.pgPool, id);
 
     await Promise.all(
       fileIdsToDelete.map((fileIdToDelete) => super.remove(fileIdToDelete)),
@@ -29,9 +28,7 @@ export class OurFileStore extends FileStore {
       return 0;
     }
 
-    const rootPgPool = this.app.get("rootPgPool") as Pool;
-
-    const { rows } = await rootPgPool.query(
+    const { rows } = await this.pgPool.query(
       `SELECT 
           id, media_name
         FROM 

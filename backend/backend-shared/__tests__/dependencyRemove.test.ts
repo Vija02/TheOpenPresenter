@@ -1,5 +1,6 @@
 import express from "express";
 import fs from "fs";
+import { Pool } from "pg";
 import { describe, expect, it, vi } from "vitest";
 
 import {
@@ -18,10 +19,6 @@ import {
 describe("Media Dependency Remove", () => {
   it("should remove child media when the parent is removed in s3 storage", async () => {
     await withRootDb(async (client) => {
-      // Setup
-      const app = express();
-      app.set("rootPgPool", client);
-
       // Insert data
       const [user] = await createUsers(client);
       await becomeUser(client, user);
@@ -42,7 +39,7 @@ describe("Media Dependency Remove", () => {
       expect(initialMedias).toHaveLength(3);
 
       // Then let's trigger delete
-      await new media["s3"].mediaHandler(app).deleteMedia(m1.mediaName);
+      await new media["s3"].mediaHandler(client).deleteMedia(m1.mediaName);
 
       // Let's check
       const { rows: newMedias } = await client.query(
@@ -83,7 +80,7 @@ describe("Media Dependency Remove", () => {
       expect(initialMedias).toHaveLength(3);
 
       // Then let's trigger delete
-      await new media["file"].mediaHandler(app).deleteMedia(m1.mediaName);
+      await new media["file"].mediaHandler(client).deleteMedia(m1.mediaName);
 
       // Let's check
       const { rows: newMedias } = await client.query(

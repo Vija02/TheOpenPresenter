@@ -1,15 +1,15 @@
-import { Express } from "express";
-import { Pool } from "pg";
+import { Pool, PoolClient } from "pg";
 import { TypeId, toUUID } from "typeid-js";
 
-export const getFileIdsToDeleteFromID = async (app: Express, id: string) => {
-  const rootPgPool = app.get("rootPgPool") as Pool;
-
+export const getFileIdsToDeleteFromID = async (
+  pgPool: Pool | PoolClient,
+  id: string,
+) => {
   const splittedKey = id.split(".");
   const mediaId = splittedKey[0];
   const uuid = toUUID(mediaId as TypeId<string>);
 
-  const { rows } = await rootPgPool.query(
+  const { rows } = await pgPool.query(
     `
       WITH RECURSIVE child_tree AS (
         -- Base case: direct children
@@ -33,7 +33,7 @@ export const getFileIdsToDeleteFromID = async (app: Express, id: string) => {
     new Set(rows.map((row) => row.child_media_id).concat([uuid])),
   );
 
-  const { rows: rowsToDelete } = await rootPgPool.query(
+  const { rows: rowsToDelete } = await pgPool.query(
     `
       SELECT media_name 
         FROM app_public.medias 

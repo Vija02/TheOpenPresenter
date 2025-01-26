@@ -1,7 +1,7 @@
 import { DataStore, Upload } from "@tus/server";
-import { Express, Request } from "express";
+import { Request } from "express";
 import { StorageEngine } from "multer";
-import { Pool } from "pg";
+import { Pool, PoolClient } from "pg";
 import { TypeId, toUUID, typeidUnboxed } from "typeid-js";
 
 import { multerProcessFileName } from "./helper";
@@ -13,15 +13,15 @@ import {
 } from "./types";
 
 export const createMediaHandler = <T extends DataStore>(
-  createStore: (app: Express) => T,
+  createStore: (pgPool: Pool | PoolClient) => T,
 ) => {
   return class MediaHandler implements MediaHandlerInterface {
     store: T;
-    app: Express;
+    pgPool: Pool | PoolClient;
 
-    constructor(app: Express) {
-      this.store = createStore(app);
-      this.app = app;
+    constructor(pgPool: Pool | PoolClient) {
+      this.store = createStore(pgPool);
+      this.pgPool = pgPool;
     }
 
     async uploadMedia({
@@ -55,8 +55,7 @@ export const createMediaHandler = <T extends DataStore>(
 
       // Update is_complete flag
       const uuid = toUUID(mediaId as TypeId<string>);
-      const rootPgPool = this.app.get("rootPgPool") as Pool;
-      await rootPgPool.query(
+      await this.pgPool.query(
         `UPDATE app_public.medias
           SET 
             is_complete = $1
@@ -78,8 +77,8 @@ export const createMulterStorage = (MediaHandler: MediaHandlerConstructor) => {
   return class MulterFileStorage implements StorageEngine {
     mediaHandler: MediaHandlerInterface;
 
-    constructor(app: Express) {
-      this.mediaHandler = new MediaHandler(app);
+    constructor(pgPool: Pool | PoolClient) {
+      this.mediaHandler = new MediaHandler(pgPool);
     }
 
     async _handleFile(

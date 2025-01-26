@@ -1,10 +1,11 @@
 import { DataStore } from "@tus/server";
-import { Express, Request } from "express";
+import { Request } from "express";
 import multer from "multer";
+import { Pool, PoolClient } from "pg";
 import stream from "stream";
 
 export interface MediaHandlerConstructor {
-  new (app: Express): MediaHandlerInterface;
+  new (pgPool: Pool | PoolClient): MediaHandlerInterface;
 }
 
 export type UploadMediaParam = {
@@ -33,11 +34,11 @@ export interface MediaHandlerInterface {
 
 export type MediaDataHandler = {
   // To be used by tus, and also the others. This is the base store
-  createTusStore: (app: Express) => DataStore;
+  createTusStore: (pgPool: Pool | PoolClient) => DataStore;
   // Used by our server plugin API. When plugins want to upload from the server, it'll use this
-  mediaHandler: new (app: Express) => MediaHandlerInterface;
+  mediaHandler: new (pgPool: Pool | PoolClient) => MediaHandlerInterface;
   // Used for frontend to upload using multer
-  multerStorage: new (app: Express) => multer.StorageEngine;
+  multerStorage: new (pgPool: Pool | PoolClient) => multer.StorageEngine;
 };
 
 export type OurMulterRequest = Request & {

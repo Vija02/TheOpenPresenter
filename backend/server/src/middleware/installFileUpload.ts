@@ -7,7 +7,7 @@ import multer from "multer";
 import { Pool } from "pg";
 import { TypeId, fromString, toUUID, typeidUnboxed } from "typeid-js";
 
-import { getAuthPgPool } from "./installDatabasePools";
+import { getAuthPgPool, getRootPgPool } from "./installDatabasePools";
 
 // TODO: File size validation & increase caddy max_size
 export default (app: Express) => {
@@ -32,8 +32,9 @@ export default (app: Express) => {
   // ================================== //
   const server = new Server({
     path: "/media/upload/tus",
-    datastore:
-      media[process.env.STORAGE_TYPE as "file" | "s3"].createTusStore(app),
+    datastore: media[process.env.STORAGE_TYPE as "file" | "s3"].createTusStore(
+      getRootPgPool(app),
+    ),
     respectForwardedHeaders: true,
     onUploadCreate: async (req, res, upload) => {
       if (!req.headers["organization-id"]) {
@@ -106,7 +107,7 @@ export default (app: Express) => {
   // ================================== //
   const upload = multer({
     storage: new media[process.env.STORAGE_TYPE as "file" | "s3"].multerStorage(
-      app,
+      getRootPgPool(app),
     ),
   });
 

@@ -1,14 +1,13 @@
 import { MetadataValue, Options, S3Store } from "@tus/s3-store";
 import { type KvStore, TUS_RESUMABLE, Upload } from "@tus/utils";
 import debug from "debug";
-import { Express } from "express";
 import _ from "lodash";
 import fs, { promises as fsProm } from "node:fs";
 import type { Readable } from "node:stream";
 import { promises as streamProm } from "node:stream";
 import os from "os";
 import path from "path";
-import { Pool } from "pg";
+import { Pool, PoolClient } from "pg";
 import { TypeId, toUUID } from "typeid-js";
 
 import { CustomKVStore } from "../customKVStore";
@@ -17,14 +16,14 @@ import { getFileIdsToDeleteFromID } from "../dependencyRemove";
 const log = debug("tus-node-server:stores:s3store");
 
 export class OurS3Store extends S3Store {
-  protected app: Express;
+  protected pgPool: Pool | PoolClient;
   protected configstore: KvStore<MetadataValue>;
 
-  constructor(options: Options, app: Express) {
+  constructor(options: Options, pgPool: Pool | PoolClient) {
     super(options);
 
-    this.app = app;
-    this.configstore = new CustomKVStore<MetadataValue>(app);
+    this.pgPool = pgPool;
+    this.configstore = new CustomKVStore<MetadataValue>(pgPool);
   }
 
   // ========================================================================== //
@@ -162,7 +161,7 @@ export class OurS3Store extends S3Store {
   }
 
   public async remove(id: string): Promise<void> {
-    const fileIdsToDelete = await getFileIdsToDeleteFromID(this.app, id);
+    const fileIdsToDelete = await getFileIdsToDeleteFromID(this.pgPool, id);
 
     await Promise.all(
       fileIdsToDelete.map((fileIdToDelete) => this.removeRaw(fileIdToDelete)),
@@ -200,10 +199,8 @@ export class OurS3Store extends S3Store {
     const mediaId = splittedKey[0];
     const uuid = toUUID(mediaId as TypeId<string>);
 
-    const rootPgPool = this.app.get("rootPgPool") as Pool;
-
     // Remove metadata from DB
-    await rootPgPool.query(`DELETE FROM app_public.medias WHERE id = $1`, [
+    await this.pgPool.query(`DELETE FROM app_public.medias WHERE id = $1`, [
       uuid,
     ]);
   }
@@ -213,9 +210,7 @@ export class OurS3Store extends S3Store {
       return 0;
     }
 
-    const rootPgPool = this.app.get("rootPgPool") as Pool;
-
-    const { rows } = await rootPgPool.query(
+    const { rows } = await this.pgPool.query(
       `SELECT 
           id, media_name, s3_upload_id
         FROM 
@@ -260,7 +255,7 @@ export class OurS3Store extends S3Store {
         rows.map((row) => row.id),
         1000,
       ).map((chunk) =>
-        rootPgPool.query(`DELETE FROM app_public.medias WHERE id = ANY($1)`, [
+        this.pgPool.query(`DELETE FROM app_public.medias WHERE id = ANY($1)`, [
           chunk,
         ]),
       ),
