@@ -228,6 +228,7 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
       fileSize,
       userId,
       organizationId,
+      isUserUploaded: false,
     });
 
     return {

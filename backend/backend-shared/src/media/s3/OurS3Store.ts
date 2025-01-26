@@ -12,6 +12,7 @@ import { Pool } from "pg";
 import { TypeId, toUUID } from "typeid-js";
 
 import { CustomKVStore } from "../customKVStore";
+import { getFileIdsToDeleteFromID } from "../dependencyRemove";
 
 const log = debug("tus-node-server:stores:s3store");
 
@@ -161,6 +162,14 @@ export class OurS3Store extends S3Store {
   }
 
   public async remove(id: string): Promise<void> {
+    const fileIdsToDelete = await getFileIdsToDeleteFromID(this.app, id);
+
+    await Promise.all(
+      fileIdsToDelete.map((fileIdToDelete) => this.removeRaw(fileIdToDelete)),
+    );
+  }
+
+  async removeRaw(id: string) {
     const { "upload-id": uploadId } = await this.getMetadata(id);
     if (uploadId) {
       await this.client

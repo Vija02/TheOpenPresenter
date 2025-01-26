@@ -14,6 +14,7 @@ export type UploadMediaParam = {
   mediaId?: string;
   originalFileName?: string;
   creationDate?: string;
+  isUserUploaded?: boolean;
 
   // Other meta
   userId: string;

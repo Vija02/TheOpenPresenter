@@ -709,6 +709,29 @@ COMMENT ON FUNCTION app_private.tg__timestamps() IS 'This trigger should be call
 
 
 --
+-- Name: tg_media_dependencies__forbid_if_medias_within_different_org(); Type: FUNCTION; Schema: app_private; Owner: -
+--
+
+CREATE FUNCTION app_private.tg_media_dependencies__forbid_if_medias_within_different_org() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+    AS $$
+declare
+  v_parent_org_id uuid;
+  v_child_org_id uuid;
+begin
+  select organization_id into v_parent_org_id from app_public.medias where id = NEW.parent_media_id;
+  select organization_id into v_child_org_id from app_public.medias where id = NEW.child_media_id;
+
+  if (v_parent_org_id <> v_child_org_id) then
+    raise exception 'Cannot create this media dependency relation' using errcode='TGOCT';
+  end if;
+  return NEW;
+end;
+$$;
+
+
+--
 -- Name: tg_organizations__create_default_category(); Type: FUNCTION; Schema: app_private; Owner: -
 --
 
@@ -1116,6 +1139,18 @@ CREATE FUNCTION app_public.current_user_can_access_category(category_id uuid) RE
     SET search_path TO 'pg_catalog', 'public', 'pg_temp'
     AS $$
   select exists(select 1 from app_public.categories where id = category_id and organization_id in (select app_public.current_user_member_organization_ids()));
+$$;
+
+
+--
+-- Name: current_user_can_access_media(uuid); Type: FUNCTION; Schema: app_public; Owner: -
+--
+
+CREATE FUNCTION app_public.current_user_can_access_media(media_id uuid) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+    AS $$
+  select exists(select 1 from app_public.medias where id = media_id and organization_id in (select app_public.current_user_member_organization_ids()));
 $$;
 
 
@@ -2189,6 +2224,16 @@ COMMENT ON TABLE app_public.categories IS 'Categories data';
 
 
 --
+-- Name: media_dependencies; Type: TABLE; Schema: app_public; Owner: -
+--
+
+CREATE TABLE app_public.media_dependencies (
+    parent_media_id uuid NOT NULL,
+    child_media_id uuid NOT NULL
+);
+
+
+--
 -- Name: medias; Type: TABLE; Schema: app_public; Owner: -
 --
 
@@ -2204,7 +2249,8 @@ CREATE TABLE app_public.medias (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     s3_upload_id text,
-    is_complete boolean DEFAULT false NOT NULL
+    is_complete boolean DEFAULT false NOT NULL,
+    is_user_uploaded boolean DEFAULT true NOT NULL
 );
 
 
@@ -2587,6 +2633,27 @@ CREATE INDEX idx_user_emails_user ON app_public.user_emails USING btree (user_id
 
 
 --
+-- Name: media_dependencies_child_media_id_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX media_dependencies_child_media_id_idx ON app_public.media_dependencies USING btree (child_media_id);
+
+
+--
+-- Name: media_dependencies_parent_media_id_child_media_id_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE UNIQUE INDEX media_dependencies_parent_media_id_child_media_id_idx ON app_public.media_dependencies USING btree (parent_media_id, child_media_id);
+
+
+--
+-- Name: media_dependencies_parent_media_id_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX media_dependencies_parent_media_id_idx ON app_public.media_dependencies USING btree (parent_media_id);
+
+
+--
 -- Name: medias_created_at_idx; Type: INDEX; Schema: app_public; Owner: -
 --
 
@@ -2598,6 +2665,13 @@ CREATE INDEX medias_created_at_idx ON app_public.medias USING btree (created_at)
 --
 
 CREATE INDEX medias_creator_user_id_idx ON app_public.medias USING btree (creator_user_id);
+
+
+--
+-- Name: medias_is_user_uploaded_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX medias_is_user_uploaded_idx ON app_public.medias USING btree (is_user_uploaded);
 
 
 --
@@ -2818,6 +2892,13 @@ CREATE TRIGGER _200_forbid_if_category_is_not_same_org BEFORE INSERT OR UPDATE O
 
 
 --
+-- Name: media_dependencies _200_forbid_if_medias_within_different_org; Type: TRIGGER; Schema: app_public; Owner: -
+--
+
+CREATE TRIGGER _200_forbid_if_medias_within_different_org BEFORE INSERT OR UPDATE ON app_public.media_dependencies FOR EACH ROW EXECUTE FUNCTION app_private.tg_media_dependencies__forbid_if_medias_within_different_org();
+
+
+--
 -- Name: project_tags _200_forbid_if_project_and_tag_within_different_org; Type: TRIGGER; Schema: app_public; Owner: -
 --
 
@@ -2946,6 +3027,22 @@ ALTER TABLE ONLY app_private.user_secrets
 
 ALTER TABLE ONLY app_public.categories
     ADD CONSTRAINT categories_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES app_public.organizations(id) ON DELETE CASCADE;
+
+
+--
+-- Name: media_dependencies media_dependencies_child_media_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.media_dependencies
+    ADD CONSTRAINT media_dependencies_child_media_id_fkey FOREIGN KEY (child_media_id) REFERENCES app_public.medias(id) ON DELETE CASCADE;
+
+
+--
+-- Name: media_dependencies media_dependencies_parent_media_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.media_dependencies
+    ADD CONSTRAINT media_dependencies_parent_media_id_fkey FOREIGN KEY (parent_media_id) REFERENCES app_public.medias(id) ON DELETE CASCADE;
 
 
 --
@@ -3141,6 +3238,13 @@ CREATE POLICY delete_own_org ON app_public.categories FOR DELETE USING ((organiz
 
 
 --
+-- Name: media_dependencies delete_own_org; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY delete_own_org ON app_public.media_dependencies FOR DELETE USING (app_public.current_user_can_access_media(parent_media_id));
+
+
+--
 -- Name: projects delete_own_org; Type: POLICY; Schema: app_public; Owner: -
 --
 
@@ -3176,6 +3280,13 @@ CREATE POLICY insert_own_org ON app_public.categories FOR INSERT WITH CHECK ((or
 
 
 --
+-- Name: media_dependencies insert_own_org; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY insert_own_org ON app_public.media_dependencies FOR INSERT WITH CHECK (app_public.current_user_can_access_media(parent_media_id));
+
+
+--
 -- Name: projects insert_own_org; Type: POLICY; Schema: app_public; Owner: -
 --
 
@@ -3202,6 +3313,12 @@ CREATE POLICY insert_own_project ON app_public.project_tags FOR INSERT WITH CHEC
 
 CREATE POLICY insert_own_tag ON app_public.project_tags FOR INSERT WITH CHECK (app_public.current_user_can_access_tag(tag_id));
 
+
+--
+-- Name: media_dependencies; Type: ROW SECURITY; Schema: app_public; Owner: -
+--
+
+ALTER TABLE app_public.media_dependencies ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: medias; Type: ROW SECURITY; Schema: app_public; Owner: -
@@ -3327,6 +3444,13 @@ CREATE POLICY select_own ON app_public.user_emails FOR SELECT USING ((user_id = 
 --
 
 CREATE POLICY select_own_org ON app_public.categories FOR SELECT USING ((organization_id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids)));
+
+
+--
+-- Name: media_dependencies select_own_org; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY select_own_org ON app_public.media_dependencies FOR SELECT USING (app_public.current_user_can_access_media(parent_media_id));
 
 
 --
@@ -3518,6 +3642,13 @@ REVOKE ALL ON FUNCTION app_private.tg__timestamps() FROM PUBLIC;
 
 
 --
+-- Name: FUNCTION tg_media_dependencies__forbid_if_medias_within_different_org(); Type: ACL; Schema: app_private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_private.tg_media_dependencies__forbid_if_medias_within_different_org() FROM PUBLIC;
+
+
+--
 -- Name: FUNCTION tg_organizations__create_default_category(); Type: ACL; Schema: app_private; Owner: -
 --
 
@@ -3699,6 +3830,14 @@ GRANT ALL ON FUNCTION app_public."current_user"() TO theopenpresenter_visitor;
 
 REVOKE ALL ON FUNCTION app_public.current_user_can_access_category(category_id uuid) FROM PUBLIC;
 GRANT ALL ON FUNCTION app_public.current_user_can_access_category(category_id uuid) TO theopenpresenter_visitor;
+
+
+--
+-- Name: FUNCTION current_user_can_access_media(media_id uuid); Type: ACL; Schema: app_public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_public.current_user_can_access_media(media_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION app_public.current_user_can_access_media(media_id uuid) TO theopenpresenter_visitor;
 
 
 --
@@ -3996,6 +4135,27 @@ GRANT INSERT(name),UPDATE(name) ON TABLE app_public.categories TO theopenpresent
 --
 
 GRANT INSERT(organization_id) ON TABLE app_public.categories TO theopenpresenter_visitor;
+
+
+--
+-- Name: TABLE media_dependencies; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT SELECT,DELETE ON TABLE app_public.media_dependencies TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN media_dependencies.parent_media_id; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(parent_media_id) ON TABLE app_public.media_dependencies TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN media_dependencies.child_media_id; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(child_media_id) ON TABLE app_public.media_dependencies TO theopenpresenter_visitor;
 
 
 --

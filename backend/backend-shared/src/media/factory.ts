@@ -33,6 +33,7 @@ export const createMediaHandler = <T extends DataStore>(
       creationDate,
       mediaId = typeidUnboxed("media"),
       originalFileName,
+      isUserUploaded,
     }: UploadMediaParam) {
       const finalFileName = mediaId + "." + fileExtension;
 
@@ -45,6 +46,7 @@ export const createMediaHandler = <T extends DataStore>(
           originalFileName: originalFileName ?? null,
           userId,
           organizationId,
+          isUserUploaded: isUserUploaded ? "1" : "0",
         },
       });
 

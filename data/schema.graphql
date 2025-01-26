@@ -367,6 +367,47 @@ type CreateFullProjectPayload {
   query: Query
 }
 
+"""All input for the create `MediaDependency` mutation."""
+input CreateMediaDependencyInput {
+  """
+  An arbitrary string value with no semantic meaning. Will be included in the
+  payload verbatim. May be used to track mutations by the client.
+  """
+  clientMutationId: String
+
+  """The `MediaDependency` to be created by this mutation."""
+  mediaDependency: MediaDependencyInput!
+}
+
+"""The output of our create `MediaDependency` mutation."""
+type CreateMediaDependencyPayload {
+  """Reads a single `Media` that is related to this `MediaDependency`."""
+  childMedia: Media
+
+  """
+  The exact same `clientMutationId` that was provided in the mutation input,
+  unchanged and unused. May be used by a client to track mutations.
+  """
+  clientMutationId: String
+
+  """The `MediaDependency` that was created by this mutation."""
+  mediaDependency: MediaDependency
+
+  """An edge for our `MediaDependency`. May be used by Relay 1."""
+  mediaDependencyEdge(
+    """The method to use when ordering `MediaDependency`."""
+    orderBy: [MediaDependenciesOrderBy!] = [NATURAL]
+  ): MediaDependenciesEdge
+
+  """Reads a single `Media` that is related to this `MediaDependency`."""
+  parentMedia: Media
+
+  """
+  Our root query field type. Allows us to run any query from our mutation payload.
+  """
+  query: Query
+}
+
 """All input for the `createOrganization` mutation."""
 input CreateOrganizationInput {
   """
@@ -968,6 +1009,75 @@ type Media {
   fileSize: BigInt
   id: UUID!
   isComplete: Boolean!
+  isUserUploaded: Boolean!
+
+  """Reads and enables pagination through a set of `MediaDependency`."""
+  mediaDependenciesByChildMediaId(
+    """Read all values in the set after (below) this cursor."""
+    after: Cursor
+
+    """Read all values in the set before (above) this cursor."""
+    before: Cursor
+
+    """
+    A condition to be used in determining which values should be returned by the collection.
+    """
+    condition: MediaDependencyCondition
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: MediaDependencyFilter
+
+    """Only read the first `n` values of the set."""
+    first: Int
+
+    """Only read the last `n` values of the set."""
+    last: Int
+
+    """
+    Skip the first `n` values from our `after` cursor, an alternative to cursor
+    based pagination. May not be used with `last`.
+    """
+    offset: Int
+
+    """The method to use when ordering `MediaDependency`."""
+    orderBy: [MediaDependenciesOrderBy!] = [NATURAL]
+  ): MediaDependenciesConnection!
+
+  """Reads and enables pagination through a set of `MediaDependency`."""
+  mediaDependenciesByParentMediaId(
+    """Read all values in the set after (below) this cursor."""
+    after: Cursor
+
+    """Read all values in the set before (above) this cursor."""
+    before: Cursor
+
+    """
+    A condition to be used in determining which values should be returned by the collection.
+    """
+    condition: MediaDependencyCondition
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: MediaDependencyFilter
+
+    """Only read the first `n` values of the set."""
+    first: Int
+
+    """Only read the last `n` values of the set."""
+    last: Int
+
+    """
+    Skip the first `n` values from our `after` cursor, an alternative to cursor
+    based pagination. May not be used with `last`.
+    """
+    offset: Int
+
+    """The method to use when ordering `MediaDependency`."""
+    orderBy: [MediaDependenciesOrderBy!] = [NATURAL]
+  ): MediaDependenciesConnection!
   mediaName: String!
 
   """Reads a single `Organization` that is related to this `Media`."""
@@ -991,6 +1101,9 @@ input MediaCondition {
   """Checks for equality with the object’s `id` field."""
   id: UUID
 
+  """Checks for equality with the object’s `isUserUploaded` field."""
+  isUserUploaded: Boolean
+
   """Checks for equality with the object’s `organizationId` field."""
   organizationId: UUID
 }
@@ -1010,6 +1123,91 @@ type MediaConnection {
 
   """The count of *all* `Media` you could get from the connection."""
   totalCount: Int!
+}
+
+"""A connection to a list of `MediaDependency` values."""
+type MediaDependenciesConnection {
+  """
+  A list of edges which contains the `MediaDependency` and cursor to aid in pagination.
+  """
+  edges: [MediaDependenciesEdge!]!
+
+  """A list of `MediaDependency` objects."""
+  nodes: [MediaDependency!]!
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+
+  """
+  The count of *all* `MediaDependency` you could get from the connection.
+  """
+  totalCount: Int!
+}
+
+"""A `MediaDependency` edge in the connection."""
+type MediaDependenciesEdge {
+  """A cursor for use in pagination."""
+  cursor: Cursor
+
+  """The `MediaDependency` at the end of the edge."""
+  node: MediaDependency!
+}
+
+"""Methods to use when ordering `MediaDependency`."""
+enum MediaDependenciesOrderBy {
+  CHILD_MEDIA_ID_ASC
+  CHILD_MEDIA_ID_DESC
+  NATURAL
+  PARENT_MEDIA_ID_ASC
+  PARENT_MEDIA_ID_DESC
+}
+
+type MediaDependency {
+  """Reads a single `Media` that is related to this `MediaDependency`."""
+  childMedia: Media
+  childMediaId: UUID!
+
+  """Reads a single `Media` that is related to this `MediaDependency`."""
+  parentMedia: Media
+  parentMediaId: UUID!
+}
+
+"""
+A condition to be used against `MediaDependency` object types. All fields are
+tested for equality and combined with a logical ‘and.’
+"""
+input MediaDependencyCondition {
+  """Checks for equality with the object’s `childMediaId` field."""
+  childMediaId: UUID
+
+  """Checks for equality with the object’s `parentMediaId` field."""
+  parentMediaId: UUID
+}
+
+"""
+A filter to be used against `MediaDependency` object types. All fields are combined with a logical ‘and.’
+"""
+input MediaDependencyFilter {
+  """Checks for all expressions in this list."""
+  and: [MediaDependencyFilter!]
+
+  """Filter by the object’s `childMediaId` field."""
+  childMediaId: UUIDFilter
+
+  """Negates the expression."""
+  not: MediaDependencyFilter
+
+  """Checks for any expressions in this list."""
+  or: [MediaDependencyFilter!]
+
+  """Filter by the object’s `parentMediaId` field."""
+  parentMediaId: UUIDFilter
+}
+
+"""An input for mutations affecting `MediaDependency`"""
+input MediaDependencyInput {
+  childMediaId: UUID!
+  parentMediaId: UUID!
 }
 
 """A `Media` edge in the connection."""
@@ -1037,6 +1235,9 @@ input MediaFilter {
   """Filter by the object’s `id` field."""
   id: UUIDFilter
 
+  """Filter by the object’s `isUserUploaded` field."""
+  isUserUploaded: BooleanFilter
+
   """Negates the expression."""
   not: MediaFilter
 
@@ -1055,6 +1256,8 @@ enum MediaOrderBy {
   CREATOR_USER_ID_DESC
   ID_ASC
   ID_DESC
+  IS_USER_UPLOADED_ASC
+  IS_USER_UPLOADED_DESC
   NATURAL
   ORGANIZATION_ID_ASC
   ORGANIZATION_ID_DESC
@@ -1113,6 +1316,14 @@ type Mutation {
     """
     input: CreateFullProjectInput!
   ): CreateFullProjectPayload
+
+  """Creates a single `MediaDependency`."""
+  createMediaDependency(
+    """
+    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.
+    """
+    input: CreateMediaDependencyInput!
+  ): CreateMediaDependencyPayload
 
   """
   An `Organization` is a great way of sharing access to resources between multiple users without compromising security. When you create an organization you will have the 'owner' and 'billing contact' roles. You may invite other users and redistribute these roles.
@@ -2248,9 +2459,44 @@ type Query {
   """The currently logged in user (or null if not logged in)."""
   currentUser: User
   currentUserCanAccessCategory(categoryId: UUID!): Boolean
+  currentUserCanAccessMedia(mediaId: UUID!): Boolean
   currentUserCanAccessProject(projectId: UUID!): Boolean
   currentUserCanAccessTag(tagId: UUID!): Boolean
   media(id: UUID!): Media
+
+  """Reads and enables pagination through a set of `MediaDependency`."""
+  mediaDependencies(
+    """Read all values in the set after (below) this cursor."""
+    after: Cursor
+
+    """Read all values in the set before (above) this cursor."""
+    before: Cursor
+
+    """
+    A condition to be used in determining which values should be returned by the collection.
+    """
+    condition: MediaDependencyCondition
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: MediaDependencyFilter
+
+    """Only read the first `n` values of the set."""
+    first: Int
+
+    """Only read the last `n` values of the set."""
+    last: Int
+
+    """
+    Skip the first `n` values from our `after` cursor, an alternative to cursor
+    based pagination. May not be used with `last`.
+    """
+    offset: Int
+
+    """The method to use when ordering `MediaDependency`."""
+    orderBy: [MediaDependenciesOrderBy!] = [NATURAL]
+  ): MediaDependenciesConnection
 
   """Reads and enables pagination through a set of `Media`."""
   medias(

@@ -2,6 +2,8 @@ import { FileStore } from "@tus/file-store";
 import { Express } from "express";
 import { Pool } from "pg";
 
+import { getFileIdsToDeleteFromID } from "../dependencyRemove";
+
 export class OurFileStore extends FileStore {
   protected app: Express;
 
@@ -12,6 +14,14 @@ export class OurFileStore extends FileStore {
     super(options);
 
     this.app = app;
+  }
+
+  public async remove(id: string): Promise<void> {
+    const fileIdsToDelete = await getFileIdsToDeleteFromID(this.app, id);
+
+    await Promise.all(
+      fileIdsToDelete.map((fileIdToDelete) => super.remove(fileIdToDelete)),
+    );
   }
 
   async deleteExpired(): Promise<number> {

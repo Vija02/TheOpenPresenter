@@ -32,6 +32,7 @@ export class CustomKVStore<T extends Upload | MetadataValue>
         originalFileName: mediaRow.original_name,
         organizationId: mediaRow.organization_id,
         userId: mediaRow.creator_user_id,
+        isUserUploaded: mediaRow.is_user_uploaded,
       } as any,
       storage: undefined,
       creation_date: new Date(mediaRow.created_at).toISOString(),
@@ -56,8 +57,8 @@ export class CustomKVStore<T extends Upload | MetadataValue>
 
     await this.rootPgPool.query(
       `INSERT INTO app_public.medias(
-        id, media_name, file_size, file_offset, original_name, file_extension, organization_id, creator_user_id, s3_upload_id
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) ON CONFLICT (id) DO UPDATE 
+        id, media_name, file_size, file_offset, original_name, file_extension, organization_id, creator_user_id, s3_upload_id, is_user_uploaded
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) ON CONFLICT (id) DO UPDATE 
       SET 
         media_name = $2,
         file_size = $3,
@@ -66,7 +67,8 @@ export class CustomKVStore<T extends Upload | MetadataValue>
         file_extension = $6,
         organization_id = $7,
         creator_user_id = $8,
-        s3_upload_id = $9
+        s3_upload_id = $9,
+        is_user_uploaded = $10
       `,
       [
         uuid,
@@ -78,6 +80,9 @@ export class CustomKVStore<T extends Upload | MetadataValue>
         file.metadata?.organizationId,
         file.metadata?.userId,
         "upload-id" in value ? value["upload-id"] : null,
+        file.metadata?.isUserUploaded
+          ? file.metadata?.isUserUploaded === "1"
+          : true,
       ],
     );
   }
