@@ -5475,6 +5475,7 @@ __metadata:
     nprogress: "npm:^0.2.0"
     postcss: "npm:^8.4.49"
     postcss-import: "npm:^16.1.0"
+    pretty-bytes: "npm:^6.1.1"
     random-word-slugs: "npm:^0.1.7"
     react: "npm:^19.0.0"
     react-calendar: "npm:^5.1.0"
@@ -20224,6 +20225,13 @@ __metadata:
   bin:
     prettier: bin/prettier.cjs
   checksum: 10c0/99e076a26ed0aba4ebc043880d0f08bbb8c59a4c6641cdee6cdadf2205bdd87aa1d7823f50c3aea41e015e99878d37c58d7b5f0e663bba0ef047f94e36b96446
+  languageName: node
+  linkType: hard
+
+"pretty-bytes@npm:^6.1.1":
+  version: 6.1.1
+  resolution: "pretty-bytes@npm:6.1.1"
+  checksum: 10c0/c7a660b933355f3b4587ad3f001c266a8dd6afd17db9f89ebc50812354bb142df4b9600396ba5999bdb1f9717300387dc311df91895c5f0f2a1780e22495b5f8
   languageName: node
   linkType: hard
 

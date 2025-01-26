@@ -901,6 +901,14 @@ type DeleteUserEmailPayload {
   ): UserEmailsEdge
 }
 
+input DeleteUserMediaInput {
+  id: UUID!
+}
+
+type DeleteUserMediaPayload {
+  success: Boolean!
+}
+
 """All input for the `forgotPassword` mutation."""
 input ForgotPasswordInput {
   """
@@ -1424,6 +1432,14 @@ type Mutation {
     """
     input: DeleteUserEmailInput!
   ): DeleteUserEmailPayload
+
+  """Use this mutation to delete a media"""
+  deleteUserMedia(
+    """
+    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.
+    """
+    input: DeleteUserMediaInput!
+  ): DeleteUserMediaPayload
 
   """
   If you've forgotten your password, give us one of your email addresses and we'll send you a reset token. Note this only works if you have added an email address!

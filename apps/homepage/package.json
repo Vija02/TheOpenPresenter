@@ -29,6 +29,7 @@
     "next-with-apollo": "^5.3.0",
     "nprogress": "^0.2.0",
     "postcss-import": "^16.1.0",
+    "pretty-bytes": "^6.1.1",
     "random-word-slugs": "^0.1.7",
     "react": "^19.0.0",
     "react-calendar": "^5.1.0",

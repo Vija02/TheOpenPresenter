@@ -1,0 +1,13 @@
+query OrganizationMediaIndexPage($slug: String!) {
+  ...SharedOrganization
+
+  organizationBySlug(slug: $slug) {
+    id
+    medias(orderBy: CREATED_AT_DESC, condition: { isUserUploaded: true }) {
+      nodes {
+        id
+        ...Media
+      }
+    }
+  }
+}
