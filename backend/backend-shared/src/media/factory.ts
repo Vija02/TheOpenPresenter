@@ -1,9 +1,10 @@
-import { DataStore, Upload } from "@tus/server";
+import { Upload } from "@tus/server";
 import { Request } from "express";
 import { StorageEngine } from "multer";
 import { Pool, PoolClient } from "pg";
 import { TypeId, toUUID, typeidUnboxed } from "typeid-js";
 
+import { OurDataStore } from "./OurDataStore";
 import { multerProcessFileName } from "./helper";
 import {
   MediaHandlerConstructor,
@@ -12,7 +13,7 @@ import {
   UploadMediaParam,
 } from "./types";
 
-export const createMediaHandler = <T extends DataStore>(
+export const createMediaHandler = <T extends OurDataStore>(
   createStore: (pgPool: Pool | PoolClient) => T,
 ) => {
   return class MediaHandler implements MediaHandlerInterface {
@@ -69,6 +70,10 @@ export const createMediaHandler = <T extends DataStore>(
 
     async deleteMedia(fullFileId: string) {
       await this.store.remove(fullFileId);
+    }
+
+    async completeMedia(fullFileId: string) {
+      await this.store.complete(fullFileId);
     }
   };
 };

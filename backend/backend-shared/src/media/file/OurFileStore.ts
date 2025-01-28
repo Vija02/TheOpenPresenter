@@ -1,9 +1,11 @@
 import { FileStore } from "@tus/file-store";
 import { Pool, PoolClient } from "pg";
+import { TypeId, toUUID } from "typeid-js";
 
+import { OurDataStore } from "../OurDataStore";
 import { getFileIdsToDeleteFromID } from "../dependencyRemove";
 
-export class OurFileStore extends FileStore {
+export class OurFileStore extends FileStore implements OurDataStore {
   protected pgPool: Pool | PoolClient;
 
   constructor(
@@ -13,6 +15,21 @@ export class OurFileStore extends FileStore {
     super(options);
 
     this.pgPool = pgPool;
+  }
+
+  async complete(id: string) {
+    const splittedKey = id.split(".");
+    const mediaId = splittedKey[0];
+    const uuid = toUUID(mediaId as TypeId<string>);
+
+    await this.pgPool.query(
+      `UPDATE app_public.medias
+        SET 
+          is_complete = $1
+        WHERE id = $2
+      `,
+      [true, uuid],
+    );
   }
 
   public async remove(id: string): Promise<void> {

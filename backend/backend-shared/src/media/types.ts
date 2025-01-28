@@ -30,6 +30,7 @@ export interface MediaHandlerInterface {
   }>;
 
   deleteMedia(fullFileId: string): Promise<void>;
+  completeMedia(fullFileId: string): Promise<void>;
 }
 
 export type MediaDataHandler = {

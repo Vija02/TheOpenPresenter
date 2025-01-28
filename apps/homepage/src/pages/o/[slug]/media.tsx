@@ -14,6 +14,7 @@ import {
 } from "@chakra-ui/react";
 import {
   MediaFragment,
+  useCompleteMediaMutation,
   useDeleteMediaMutation,
   useOrganizationMediaIndexPageQuery,
 } from "@repo/graphql";
@@ -28,34 +29,6 @@ import { toast } from "react-toastify";
 const OrganizationMediaPage: NextPage = () => {
   const slug = useOrganizationSlug();
   const query = useOrganizationMediaIndexPageQuery({ variables: { slug } });
-
-  const { publish } = globalState.modelDataAccess.usePublishAPIChanges({
-    token: "page",
-  });
-
-  const [deleteMedia] = useDeleteMediaMutation({
-    onCompleted: publish,
-  });
-
-  const handleDeleteMedia = useCallback(
-    async (id: string) => {
-      try {
-        await deleteMedia({
-          variables: {
-            id,
-          },
-        });
-        toast.success("Media successfully deleted");
-      } catch (e: any) {
-        toast.error("Error occurred when deleting this media: " + e.message);
-      }
-    },
-    [deleteMedia],
-  );
-
-  const handleCompleteMedia = useCallback(async (id: string) => {
-    alert("TODO: Not implemented yet");
-  }, []);
 
   const emptyMedia = useMemo(
     () => query.data?.organizationBySlug?.medias.nodes.length === 0,
@@ -84,12 +57,7 @@ const OrganizationMediaPage: NextPage = () => {
         w="100%"
       >
         {query.data?.organizationBySlug?.medias.nodes.map((media) => (
-          <MediaCard
-            key={media.id}
-            media={media}
-            handleCompleteMedia={handleCompleteMedia}
-            handleDeleteMedia={handleDeleteMedia}
-          />
+          <MediaCard key={media.id} media={media} />
         ))}
       </Grid>
     </SharedOrgLayout>
@@ -107,15 +75,49 @@ const EmptyMedia = () => {
   );
 };
 
-const MediaCard = ({
-  media,
-  handleCompleteMedia,
-  handleDeleteMedia,
-}: {
-  media: MediaFragment;
-  handleCompleteMedia: (mediaId: string) => void;
-  handleDeleteMedia: (mediaId: string) => void;
-}) => {
+const MediaCard = ({ media }: { media: MediaFragment }) => {
+  const { publish } = globalState.modelDataAccess.usePublishAPIChanges({
+    token: "page",
+  });
+  const [deleteMedia] = useDeleteMediaMutation({
+    onCompleted: publish,
+  });
+  const [completeMedia, { loading: completeIsLoading }] =
+    useCompleteMediaMutation({
+      onCompleted: publish,
+    });
+
+  const handleDeleteMedia = useCallback(
+    async (id: string) => {
+      try {
+        await deleteMedia({
+          variables: {
+            id,
+          },
+        });
+        toast.success("Media successfully deleted");
+      } catch (e: any) {
+        toast.error("Error occurred when deleting this media: " + e.message);
+      }
+    },
+    [deleteMedia],
+  );
+  const handleCompleteMedia = useCallback(
+    async (id: string) => {
+      try {
+        await completeMedia({
+          variables: {
+            id,
+          },
+        });
+        toast.success("Media successfully completed");
+      } catch (e: any) {
+        toast.error("Error occurred when deleting this media: " + e.message);
+      }
+    },
+    [completeMedia],
+  );
+
   const fileSize = useMemo(() => {
     const parsed = parseInt(media.fileSize, 10);
     if (Number.isSafeInteger(parsed)) {
@@ -145,25 +147,23 @@ const MediaCard = ({
         <Text>{media.isComplete ? "YES" : "NO"}</Text>
       </Flex>
 
-      <Stack direction="row" justifyContent="center">
+      <Stack
+        key={JSON.stringify(media)}
+        direction="row"
+        justifyContent="center"
+      >
         {!media.isComplete && (
-          <PopConfirm
-            title={`Are you sure you want to complete this media? This action is not reversible.`}
-            onConfirm={() => handleCompleteMedia(media.id)}
-            okText="Yes"
-            cancelText="No"
-            key="remove"
+          <Button
+            variant="ghost"
+            size="sm"
+            role="button"
+            color="gray"
+            _hover={{ bg: "green.50", color: "green.400" }}
+            isLoading={completeIsLoading}
+            onClick={() => handleCompleteMedia(media.id)}
           >
-            <Button
-              variant="ghost"
-              size="sm"
-              role="button"
-              color="gray"
-              _hover={{ bg: "green.50", color: "green.400" }}
-            >
-              <VscCheck />
-            </Button>
-          </PopConfirm>
+            <VscCheck />
+          </Button>
         )}
 
         <Link href={`/media/data/${media.mediaName}`} isExternal>

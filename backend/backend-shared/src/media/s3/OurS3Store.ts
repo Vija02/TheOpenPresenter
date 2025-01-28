@@ -10,12 +10,13 @@ import path from "path";
 import { Pool, PoolClient } from "pg";
 import { TypeId, toUUID } from "typeid-js";
 
+import { OurDataStore } from "../OurDataStore";
 import { CustomKVStore } from "../customKVStore";
 import { getFileIdsToDeleteFromID } from "../dependencyRemove";
 
 const log = debug("tus-node-server:stores:s3store");
 
-export class OurS3Store extends S3Store {
+export class OurS3Store extends S3Store implements OurDataStore {
   protected pgPool: Pool | PoolClient;
   protected configstore: KvStore<MetadataValue>;
 
@@ -24,6 +25,64 @@ export class OurS3Store extends S3Store {
 
     this.pgPool = pgPool;
     this.configstore = new CustomKVStore<MetadataValue>(pgPool);
+  }
+
+  async complete(id: string) {
+    // We need to consider incomplete parts
+    let metadata = await this.getMetadata(id);
+    let parts = await this.retrieveParts(id);
+    const partNumber: number =
+      parts.length > 0 ? parts[parts.length - 1]!.PartNumber! : 0;
+    const nextPartNumber = partNumber + 1;
+
+    const incompletePart = await this.downloadIncompletePart(id);
+
+    // Update file size if needed
+    if (metadata.file.size === undefined) {
+      const totalPartSize = parts
+        .map((x) => x?.Size ?? 0)
+        .reduce((acc, val) => acc + val, 0);
+
+      const totalSize = totalPartSize + (incompletePart?.size ?? 0);
+
+      await this.declareUploadLength(id, totalSize);
+      metadata = await this.getMetadata(id);
+    }
+
+    // Then upload the incomplete parts if needed
+    if (incompletePart) {
+      // We need to load this file somewhere else cause it'll be deleted in uploadPart
+      // Rather that doing more work, we can just rename it
+      const memoryPath = incompletePart.path + "mem";
+      try {
+        await fsProm.rename(incompletePart.path, memoryPath);
+
+        const stream = fs.createReadStream(memoryPath);
+        await this.uploadPart(metadata, stream, nextPartNumber);
+        parts = await this.retrieveParts(id);
+      } finally {
+        fsProm.rm(memoryPath).catch(() => {
+          /* ignore */
+        });
+      }
+    }
+
+    // Finish the upload
+    await this.finishMultipartUpload(metadata, parts);
+
+    // Then we can update the state
+    const splittedKey = id.split(".");
+    const mediaId = splittedKey[0];
+    const uuid = toUUID(mediaId as TypeId<string>);
+
+    await this.pgPool.query(
+      `UPDATE app_public.medias
+        SET 
+          is_complete = $1
+        WHERE id = $2
+      `,
+      [true, uuid],
+    );
   }
 
   // ========================================================================== //

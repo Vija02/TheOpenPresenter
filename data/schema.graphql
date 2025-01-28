@@ -258,6 +258,14 @@ type ChangePasswordPayload {
   success: Boolean
 }
 
+input CompleteMediaInput {
+  id: UUID!
+}
+
+type CompleteMediaPayload {
+  success: Boolean!
+}
+
 """All input for the `confirmAccountDeletion` mutation."""
 input ConfirmAccountDeletionInput {
   """
@@ -1300,6 +1308,14 @@ type Mutation {
     """
     input: ChangePasswordInput!
   ): ChangePasswordPayload
+
+  """Use this mutation to complete a media"""
+  completeMedia(
+    """
+    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.
+    """
+    input: CompleteMediaInput!
+  ): CompleteMediaPayload
 
   """
   If you're certain you want to delete your account, use `requestAccountDeletion` to request an account deletion token, and then supply the token through this mutation to complete account deletion.
