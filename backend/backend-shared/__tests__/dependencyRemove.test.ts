@@ -18,6 +18,12 @@ import {
 
 describe("Media Dependency Remove", () => {
   it("should remove child media when the parent is removed in s3 storage", async () => {
+    vi.stubEnv("STORAGE_S3_BUCKET", "test");
+    vi.stubEnv("STORAGE_S3_REGION", "test");
+    vi.stubEnv("STORAGE_S3_ENDPOINT", "https://s3.example.com");
+    vi.stubEnv("STORAGE_S3_ACCESS_KEY_ID", "test");
+    vi.stubEnv("STORAGE_S3_SECRET_ACCESS_KEY", "test");
+
     await withRootDb(async (client) => {
       // Insert data
       const [user] = await createUsers(client);
