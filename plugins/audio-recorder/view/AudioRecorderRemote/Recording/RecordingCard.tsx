@@ -9,21 +9,24 @@ import Hover from "wavesurfer.js/dist/plugins/hover.esm.js";
 
 import { Recording } from "../../../src";
 import { usePluginAPI } from "../../pluginApi";
-import { trpc } from "../../trpc";
 import { NotUploaded } from "./NotUploaded";
 
 export const RecordingCard = ({ recording }: { recording: Recording }) => {
   const pluginApi = usePluginAPI();
+  const mutableSceneData = pluginApi.scene.useValtioData();
 
-  const { mutateAsync: deleteAudio } =
-    trpc.audioRecorder.deleteAudio.useMutation();
+  const handleRemove = useCallback(async () => {
+    await pluginApi.media.deleteMedia(recording.mediaId + ".mp3");
 
-  const handleRemove = useCallback(() => {
-    deleteAudio({
-      mediaId: recording.mediaId!,
-      pluginId: pluginApi.pluginContext.pluginId,
-    });
-  }, [deleteAudio, pluginApi.pluginContext.pluginId, recording.mediaId]);
+    const index = mutableSceneData.pluginData.recordings.findIndex(
+      (x) => x.mediaId === recording.mediaId,
+    );
+    mutableSceneData.pluginData.recordings.splice(index, 1);
+  }, [
+    mutableSceneData.pluginData.recordings,
+    pluginApi.media,
+    recording.mediaId,
+  ]);
 
   const [wavesurfer, setWavesurfer] = useState<WaveSurfer | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
