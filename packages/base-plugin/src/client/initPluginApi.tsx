@@ -83,6 +83,8 @@ export function initPluginApi<
       tusUploadUrl: appData.getRootURL() + "/media/upload/tus",
       formDataUploadUrl: appData.getRootURL() + "/media/upload/form-data",
       pluginClientStorage: storageManager, // Scoped to plugin
+      deleteMedia: misc.media.deleteMedia,
+      completeMedia: misc.media.completeMedia,
     },
     scene: {
       // Use this for read

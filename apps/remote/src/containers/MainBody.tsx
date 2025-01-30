@@ -20,7 +20,12 @@ import {
   WebComponentProps,
   YjsWatcher,
 } from "@repo/base-plugin";
-import { RemoteBasePluginQuery, useKeyPressMutation } from "@repo/graphql";
+import {
+  RemoteBasePluginQuery,
+  useCompleteMediaMutation,
+  useDeleteMediaMutation,
+  useKeyPressMutation,
+} from "@repo/graphql";
 import {
   useAudioCheck,
   useAwarenessState,
@@ -37,9 +42,10 @@ import {
   VscTrash as VscTrashRaw,
 } from "react-icons/vsc";
 import { toast } from "react-toastify";
+import { TypeId, toUUID } from "typeid-js";
 import { useDisposable } from "use-disposable";
 import { useLocation, useRoute } from "wouter";
-import Y from "yjs";
+import * as Y from "yjs";
 import { useStore } from "zustand";
 
 import { zoomLevelStore } from "../contexts/zoomLevel";
@@ -322,6 +328,9 @@ const PluginRenderer = React.memo(
       [pluginId, sceneId, setAwarenessState],
     );
 
+    const [deleteMedia] = useDeleteMediaMutation();
+    const [completeMedia] = useCompleteMediaMutation();
+
     const Element = useMemo(() => {
       if (!viewData?.tag) {
         return <Text>No renderer for {pluginInfo.plugin}</Text>;
@@ -356,12 +365,30 @@ const PluginRenderer = React.memo(
           errorHandler: { addError, removeError },
           canPlayAudio,
           toast,
+          media: {
+            deleteMedia: (mediaName: string) => {
+              const splittedKey = mediaName.split(".");
+              const mediaId = splittedKey[0];
+              const uuid = toUUID(mediaId as TypeId<string>);
+
+              return deleteMedia({ variables: { id: uuid } });
+            },
+            completeMedia: (mediaName: string) => {
+              const splittedKey = mediaName.split(".");
+              const mediaId = splittedKey[0];
+              const uuid = toUUID(mediaId as TypeId<string>);
+
+              return completeMedia({ variables: { id: uuid } });
+            },
+          },
         },
       } satisfies WebComponentProps<any>);
     }, [
       addError,
       canPlayAudio,
+      completeMedia,
       currentUserId,
+      deleteMedia,
       getYJSPluginRenderer,
       orgId,
       pluginId,

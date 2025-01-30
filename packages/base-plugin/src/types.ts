@@ -108,6 +108,7 @@ export type MiscProps = {
   errorHandler: ErrorHandler;
   canPlayAudio: CanPlayAudio;
   toast: typeof ReactToast;
+  media: MediaHandler;
 };
 
 export type WebComponentProps<TrpcClient> = {
@@ -140,3 +141,9 @@ export type ZoomLevelState = {
   setZoomLevel: (val: number) => void;
 };
 export type ZoomLevel = StoreApi<ZoomLevelState>;
+
+export type MediaHandler = {
+  // Debt: any type
+  deleteMedia: (id: string) => Promise<any>;
+  completeMedia: (id: string) => Promise<any>;
+};

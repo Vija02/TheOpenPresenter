@@ -5,6 +5,7 @@ import {
   Plugin,
   Scene,
   State,
+  WebComponentProps,
   YState,
   YjsWatcher,
   createTraverser,
@@ -206,8 +207,17 @@ export const simulateUser = (
       errorHandler: { addError: () => {}, removeError: () => {} },
       canPlayAudio: undefined as any,
       toast: { error: vi.fn() } as any,
+      media: {
+        deleteMedia() {
+          return Promise.resolve();
+        },
+        completeMedia() {
+          return Promise.resolve();
+        },
+      },
     },
-  };
+    trpcClient: null,
+  } as WebComponentProps<any>;
 
   return { awarenessUserId, setState, awareness: aw, pluginApiProps };
 };

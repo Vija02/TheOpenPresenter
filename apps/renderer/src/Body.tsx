@@ -22,7 +22,7 @@ import React, { lazy, useCallback, useMemo, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { toast } from "react-toastify";
 import { useDisposable } from "use-disposable";
-import Y from "yjs";
+import * as Y from "yjs";
 
 import { trpcClient } from "./trpc";
 
@@ -194,6 +194,15 @@ const PluginRenderer = React.memo(
           errorHandler: { addError, removeError },
           canPlayAudio,
           toast,
+          // These should probably never be called from the renderer
+          media: {
+            deleteMedia: () => {
+              return Promise.reject();
+            },
+            completeMedia: () => {
+              return Promise.reject();
+            },
+          },
         },
       } satisfies WebComponentProps<any>);
     }, [
