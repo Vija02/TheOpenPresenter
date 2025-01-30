@@ -58,7 +58,7 @@ export const RecordingCard = ({ recording }: { recording: Recording }) => {
   }
 
   return (
-    <Stack direction="column">
+    <Stack direction="column" py={2}>
       <Stack direction="row" justifyContent="space-between">
         <Stack direction="row" alignItems="center">
           <Button

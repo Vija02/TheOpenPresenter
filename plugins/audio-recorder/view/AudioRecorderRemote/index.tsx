@@ -28,7 +28,7 @@ const AudioRecorderRemoteInner = () => {
             <Heading>Streams</Heading>
             <StreamSection />
             <Heading as="h3" size="md">
-              Current Recordings
+              Recordings
             </Heading>
             <RecordingSection />
           </Stack>
