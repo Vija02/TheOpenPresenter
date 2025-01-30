@@ -6,20 +6,23 @@ import { VscTrash } from "react-icons/vsc";
 
 import { Recording } from "../../../src";
 import { usePluginAPI } from "../../pluginApi";
-import { trpc } from "../../trpc";
 
 export const NotUploaded = ({ recording }: { recording: Recording }) => {
   const pluginApi = usePluginAPI();
+  const mutableSceneData = pluginApi.scene.useValtioData();
 
-  const { mutateAsync: deleteAudio } =
-    trpc.audioRecorder.deleteAudio.useMutation();
+  const handleRemove = useCallback(async () => {
+    await pluginApi.media.deleteMedia(recording.mediaId + ".mp3");
 
-  const handleRemove = useCallback(() => {
-    deleteAudio({
-      mediaId: recording.mediaId!,
-      pluginId: pluginApi.pluginContext.pluginId,
-    });
-  }, [deleteAudio, pluginApi.pluginContext.pluginId, recording.mediaId]);
+    const index = mutableSceneData.pluginData.recordings.findIndex(
+      (x) => x.mediaId === recording.mediaId,
+    );
+    mutableSceneData.pluginData.recordings.splice(index, 1);
+  }, [
+    mutableSceneData.pluginData.recordings,
+    pluginApi.media,
+    recording.mediaId,
+  ]);
 
   if (recording.streamUploadFailed) {
     return (
@@ -84,6 +87,19 @@ const StreamUploadFailed = ({
     recording.mediaId,
   ]);
 
+  const onComplete = useCallback(async () => {
+    await pluginApi.media.completeMedia(`${recording.mediaId}.mp3`);
+
+    const index = mutableSceneData.pluginData.recordings.findIndex(
+      (x) => x.mediaId === recording.mediaId,
+    );
+    mutableSceneData.pluginData.recordings[index]!.isUploaded = true;
+  }, [
+    mutableSceneData.pluginData.recordings,
+    pluginApi.media,
+    recording.mediaId,
+  ]);
+
   return (
     <Stack
       direction="row"
@@ -98,7 +114,13 @@ const StreamUploadFailed = ({
           Your recording has not been successfully uploaded
         </Text>
         {foundIndex > -1 && (
-          <Button onClick={onUpload} mt={2} size="sm" colorScheme="green">
+          <Button
+            onClick={onUpload}
+            mt={2}
+            size="sm"
+            colorScheme="green"
+            isLoading={!!recording.awarenessUserToRetry}
+          >
             Re-Upload
           </Button>
         )}
@@ -109,7 +131,9 @@ const StreamUploadFailed = ({
             </Text>
           </Box>
         )}
-        <Text>{recording.awarenessUserToRetry}</Text>
+        <Button onClick={onComplete} mt={2} size="sm" colorScheme="green">
+          Complete
+        </Button>
       </Stack>
       <PopConfirm
         title={`Are you sure you want to remove this recording?`}
