@@ -201,20 +201,25 @@ exports.updateDotenv = function updateDotenv(add, answers) {
   add(
     "VITE_APP_OPENOBSERVE_CLIENT_TOKEN",
     `\
-# Logging`,
+# Logging & Observability`,
   );
   add("VITE_APP_OPENOBSERVE_SITE");
   add("VITE_APP_OPENOBSERVE_ORGANIZATION_IDENTIFIER");
-
-  add("ENABLED_PLUGINS", readdirSync("./plugins").join(","));
-
-
+  add("REMOTE_WRITE_HOST");
+  add("REMOTE_WRITE_AUTH");
+  add("LOKI_HOST");
+  add("LOKI_AUTH");
+  add("TEMPO_HOST");
+  add("TEMPO_AUTH");
+  add("PYROSCOPE_HOST");
+  add("PYROSCOPE_AUTH");
   add(
     "# OTLP_HOST",
-    "alloy",
-    `\
-Uncomment to enable OpenTelemetry`,
+    "http://alloy:4318",
+    `# Uncomment to enable OpenTelemetry`,
   );
+
+  add("ENABLED_PLUGINS", readdirSync("./plugins").join(","));
 };
 
 exports.checkGit = async function checkGit() {
