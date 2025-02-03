@@ -4,8 +4,8 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "pkgroll",
-    "start": "sh ./scripts/process-public-next-env.sh && node -r @repo/config/env dist/index.js",
-    "dev": "concurrently \"pkgroll --watch\" \"nodemon --signal SIGINT --watch '../../**/dist/**/*.js' -x 'node --inspect=9678 -r @repo/config/env -r source-map-support/register' dist/index.js\"",
+    "start": "sh ./scripts/process-public-next-env.sh && node -r @repo/config/env -r @repo/observability/initTracing dist/index.js",
+    "dev": "concurrently \"pkgroll --watch\" \"nodemon --signal SIGINT --watch '../../**/dist/**/*.js' -x 'node --inspect=9678 -r @repo/config/env -r @repo/observability/initTracing -r source-map-support/register' dist/index.js\"",
     "schema:export": "NODE_OPTIONS=\"-r @repo/config/env\" yarn ts-node scripts/schema-export.ts",
     "cloudflare:import": "(echo \"export const cloudflareIps: string[] = [\"; (curl -Ls https://www.cloudflare.com/ips-v4 | sort | sed -e \"s/^/  \\\"/\" -e \"s/$/\\\",/\"); echo \"];\") > src/cloudflare.ts",
     "test": "NODE_ENV=test NODE_OPTIONS=\"-r @repo/config/env\" yarn vitest"
@@ -18,6 +18,7 @@
     "@repo/backend-shared": "*",
     "@repo/base-plugin": "*",
     "@repo/config": "*",
+    "@repo/observability": "*",
     "@trpc/server": "^11.0.0-rc.657",
     "@tus/server": "^1.10.1",
     "@types/connect-pg-simple": "^7.0.3",

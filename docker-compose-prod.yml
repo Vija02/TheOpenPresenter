@@ -9,6 +9,7 @@ services:
     networks:
       - db
       - caddy
+      - logs
     environment:
       - NODE_ENV=production
       - ROOT_DATABASE_URL=$ROOT_DATABASE_URL
@@ -41,6 +42,7 @@ services:
       - VITE_APP_OPENOBSERVE_CLIENT_TOKEN=$VITE_APP_OPENOBSERVE_CLIENT_TOKEN
       - VITE_APP_OPENOBSERVE_SITE=$VITE_APP_OPENOBSERVE_SITE
       - VITE_APP_OPENOBSERVE_ORGANIZATION_IDENTIFIER=$VITE_APP_OPENOBSERVE_ORGANIZATION_IDENTIFIER
+      - OTLP_HOST=$OTLP_HOST
     volumes:
       - ./uploads:/app/uploads
     labels:
@@ -57,6 +59,7 @@ services:
       - theopenpresenter_db
     networks:
       - db
+      - logs
     environment:
       - NODE_ENV=production
       - ROOT_DATABASE_URL=$ROOT_DATABASE_URL
@@ -82,6 +85,7 @@ services:
       - STORAGE_PROXY=$STORAGE_PROXY
       - ENABLED_PLUGINS=$ENABLED_PLUGINS
       - TARGET=worker
+      - OTLP_HOST=$OTLP_HOST
 
   theopenpresenter_db:
     image: ghcr.io/vija02/theopenpresenter_db:main
@@ -149,10 +153,36 @@ services:
     networks:
       - db
 
+  alloy:
+    image: grafana/alloy:v1.5.1
+    container_name: theopenpresenter_alloy
+    restart: unless-stopped
+    volumes:
+      - ./config/alloy:/etc/alloy
+    networks:
+      - logs
+    environment:
+      REMOTE_WRITE_HOST: $REMOTE_WRITE_HOST
+      REMOTE_WRITE_AUTH: $REMOTE_WRITE_AUTH
+      LOKI_HOST: $LOKI_HOST
+      LOKI_AUTH: $LOKI_AUTH
+      TEMPO_HOST: $TEMPO_HOST
+      TEMPO_AUTH: $TEMPO_AUTH
+      PYROSCOPE_HOST: $PYROSCOPE_HOST
+      PYROSCOPE_AUTH: $PYROSCOPE_AUTH
+    command:
+      - run
+      - /etc/alloy/config.alloy
+      - --storage.path=/var/lib/alloy/data
+      - --server.http.listen-addr=0.0.0.0:12345
+      - --stability.level=experimental
+
 networks:
   caddy:
     external: true
   db:
+    external: true
+  logs:
     external: true
 
 volumes:

@@ -30,6 +30,31 @@ services:
     networks:
       - default
 
+  alloy:
+    image: grafana/alloy:v1.5.1
+    restart: unless-stopped
+    volumes:
+      - ./config/alloy:/etc/alloy
+    networks:
+      - default
+    ports:
+      - "12345:12345"
+      - "4318:4318"
+    environment:
+      REMOTE_WRITE_HOST: $REMOTE_WRITE_HOST
+      REMOTE_WRITE_AUTH: $REMOTE_WRITE_AUTH
+      LOKI_HOST: $LOKI_HOST
+      LOKI_AUTH: $LOKI_AUTH
+      TEMPO_HOST: $TEMPO_HOST
+      TEMPO_AUTH: $TEMPO_AUTH
+      PYROSCOPE_HOST: $PYROSCOPE_HOST
+      PYROSCOPE_AUTH: $PYROSCOPE_AUTH
+    command:
+      - run
+      - /etc/alloy/config.alloy
+      - --storage.path=/var/lib/alloy/data
+      - --server.http.listen-addr=0.0.0.0:12345
+      - --stability.level=experimental
 volumes:
   db-volume:
   cache-volume:

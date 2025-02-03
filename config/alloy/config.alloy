@@ -1,0 +1,107 @@
+// This file serves as an example Alloy configuration to interact with the
+// Docker Compose environment.
+
+// Our application should send all its data to this endpoint
+
+otelcol.receiver.otlp "default" {
+  http { }
+
+  output {
+    metrics = [prometheus.remote_write.mimir.receiver]
+    logs    = [otelcol.exporter.loki.default.input]
+    traces  = [otelcol.exporter.otlp.tempo.input]
+  }
+}
+
+otelcol.exporter.loki "default" {
+  forward_to = [loki.write.loki.receiver]
+}
+
+// The next few blocks are concerned about the alloy instance itself
+logging {
+	level = "debug"
+
+	// Forward internal logs to the local Loki instance.
+	write_to = [loki.relabel.alloy_logs.receiver]
+}
+
+loki.relabel "alloy_logs"{
+	rule {
+		target_label = "instance"
+		replacement = constants.hostname
+	}
+
+	rule {
+		target_label = "job"
+		replacement = "integrations/self"
+	}
+
+	forward_to = [loki.write.loki.receiver]
+}
+
+tracing {
+	// Write all spans. Don't do this in production!
+	sampling_fraction = 1.0
+
+	// Forward internal spans to the local Tempo instance.
+	write_to = [otelcol.exporter.otlp.tempo.input]
+}
+
+// Collect metrics from the local running Alloy instance and forward to
+// Prometheus.
+prometheus.exporter.self "alloy" {}
+prometheus.scrape "alloy" {
+	targets    = prometheus.exporter.self.alloy.targets
+	forward_to = [prometheus.remote_write.mimir.receiver]
+}
+
+// Collect profiles from the local running Alloy instance and forward to
+// Pyroscope.
+pyroscope.scrape "default" {
+  targets = [
+    {"__address__" = "localhost:12345", "service_name" = "alloy"},
+  ]
+  forward_to = [pyroscope.write.pyroscope.receiver]
+}
+
+prometheus.remote_write "mimir" {
+	endpoint {
+		url = string.format(
+			"%s/api/v1/push",
+			coalesce(sys.env("REMOTE_WRITE_HOST"), "localhost:9009"),
+		)
+		headers = {
+			"Authorization" = sys.env("REMOTE_WRITE_AUTH"),
+		}
+	}
+}
+
+loki.write "loki" {
+	endpoint {
+		url = string.format(
+			"%s/loki/api/v1/push",
+			coalesce(sys.env("LOKI_HOST"), "localhost:3100"),
+		)
+		headers = {
+			"Authorization" = sys.env("LOKI_AUTH"),
+		}
+	}
+}
+
+otelcol.exporter.otlp "tempo" {
+	client {
+		endpoint = coalesce(sys.env("TEMPO_HOST"), "localhost:4317")
+		headers = {
+			"Authorization" = sys.env("TEMPO_AUTH"),
+		}
+	}
+}
+
+pyroscope.write "pyroscope" {
+	endpoint {
+		url = coalesce(sys.env("PYROSCOPE_HOST"), "localhost:4040")
+		headers = {
+			"Authorization" = sys.env("PYROSCOPE_AUTH"),
+		}
+	}
+}

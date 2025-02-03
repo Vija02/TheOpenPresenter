@@ -207,6 +207,14 @@ exports.updateDotenv = function updateDotenv(add, answers) {
   add("VITE_APP_OPENOBSERVE_ORGANIZATION_IDENTIFIER");
 
   add("ENABLED_PLUGINS", readdirSync("./plugins").join(","));
+
+
+  add(
+    "# OTLP_HOST",
+    "alloy",
+    `\
+Uncomment to enable OpenTelemetry`,
+  );
 };
 
 exports.checkGit = async function checkGit() {
