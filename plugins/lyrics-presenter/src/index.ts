@@ -8,7 +8,7 @@ import {
 import axios from "axios";
 import { proxy } from "valtio";
 import { bind } from "valtio-yjs";
-import Y from "yjs";
+import * as Y from "yjs";
 import z from "zod";
 
 import {

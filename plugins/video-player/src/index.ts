@@ -8,7 +8,7 @@ import {
 import { TypedArray, TypedMap, YjsWatcher } from "@repo/lib";
 import { proxy } from "valtio";
 import { bind } from "valtio-yjs";
-import Y from "yjs";
+import * as Y from "yjs";
 import { Innertube, UniversalCache } from "youtubei.js";
 import z from "zod";
 

@@ -4,7 +4,7 @@ import {
   ServerPluginApi,
   TRPCObject,
 } from "@repo/base-plugin/server";
-import Y from "yjs";
+import * as Y from "yjs";
 
 import {
   pluginName,

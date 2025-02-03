@@ -9,7 +9,7 @@ import {
 import { TypedArray, YjsWatcher } from "@repo/lib";
 import { proxy } from "valtio";
 import { bind } from "valtio-yjs";
-import Y from "yjs";
+import * as Y from "yjs";
 
 import {
   pluginName,

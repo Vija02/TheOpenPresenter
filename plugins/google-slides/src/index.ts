@@ -10,7 +10,7 @@ import { createProxyMiddleware } from "http-proxy-middleware";
 import { typeidUnboxed } from "typeid-js";
 import { proxy } from "valtio";
 import { bind } from "valtio-yjs";
-import Y from "yjs";
+import * as Y from "yjs";
 import z from "zod";
 
 import {
