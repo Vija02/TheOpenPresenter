@@ -1,3 +1,4 @@
+import { logger } from "@repo/observability";
 import { MetadataValue, Options, S3Store } from "@tus/s3-store";
 import { type KvStore, TUS_RESUMABLE, Upload } from "@tus/utils";
 import debug from "debug";
@@ -129,6 +130,7 @@ export class OurS3Store extends S3Store implements OurDataStore {
     return filePath;
   }
 
+  // TODO: Skip multipart if small known size file
   protected async uploadPart(
     metadata: MetadataValue,
     readStream: fs.ReadStream | Readable,
@@ -213,6 +215,10 @@ export class OurS3Store extends S3Store implements OurDataStore {
   public async create(upload: Upload) {
     const metadata = await this.getMetadata(upload.id);
     if (metadata) {
+      logger.info(
+        { upload, metadata },
+        "S3 'create' function called for a resource that already exist",
+      );
       return metadata.file;
     }
 
@@ -222,13 +228,25 @@ export class OurS3Store extends S3Store implements OurDataStore {
   public async remove(id: string): Promise<void> {
     const fileIdsToDelete = await getFileIdsToDeleteFromID(this.pgPool, id);
 
+    if (fileIdsToDelete.length > 1) {
+      logger.info(
+        { id, fileIdsToDelete },
+        "Multiple files registered to be deleted",
+      );
+    }
+
     await Promise.all(
       fileIdsToDelete.map((fileIdToDelete) => this.removeRaw(fileIdToDelete)),
     );
   }
 
   async removeRaw(id: string) {
-    const { "upload-id": uploadId } = await this.getMetadata(id);
+    const { "upload-id": uploadId, file } = await this.getMetadata(id);
+
+    const isComplete = file.metadata?.isComplete;
+
+    logger.info({ id, isComplete }, "Deleting file...");
+
     if (uploadId) {
       await this.client
         .abortMultipartUpload({
@@ -236,7 +254,8 @@ export class OurS3Store extends S3Store implements OurDataStore {
           Key: id,
           UploadId: uploadId,
         })
-        .catch(() => {
+        .catch((e) => {
+          logger.warn({ id, e }, "Failed to abort multipart upload");
           /* ignore */
         });
     }
@@ -246,11 +265,13 @@ export class OurS3Store extends S3Store implements OurDataStore {
         Bucket: this.bucket,
         Key: id,
       })
-      .catch(() => {
+      .catch((e) => {
+        logger.warn({ id, e }, "Failed to delete object from bucket");
         /* ignore */
       });
 
-    await fsProm.rm(this.getIncompletePartPath(id)).catch(() => {
+    await fsProm.rm(this.getIncompletePartPath(id)).catch((e) => {
+      logger.warn({ id, e }, "Failed to delete local incomplete part");
       /* ignore */
     });
 
@@ -282,16 +303,26 @@ export class OurS3Store extends S3Store implements OurDataStore {
       [this.getExpiration()],
     );
 
+    logger.info({ rows }, "Deleting expired media");
+
     const promises = [];
 
     // Remove parts
     promises.push(
       ...rows.map((expiredUpload) => {
-        return this.client.abortMultipartUpload({
-          Bucket: this.bucket,
-          Key: expiredUpload.media_name,
-          UploadId: expiredUpload.s3_upload_id,
-        });
+        return this.client
+          .abortMultipartUpload({
+            Bucket: this.bucket,
+            Key: expiredUpload.media_name,
+            UploadId: expiredUpload.s3_upload_id,
+          })
+          .catch((e) => {
+            logger.warn(
+              { e },
+              "deleteExpired: Failed to abort multipart upload",
+            );
+            /* ignore */
+          });
       }),
     );
 
@@ -300,7 +331,11 @@ export class OurS3Store extends S3Store implements OurDataStore {
       ...rows.map((expiredUpload) =>
         fsProm
           .rm(this.getIncompletePartPath(expiredUpload.media_name))
-          .catch(() => {
+          .catch((e) => {
+            logger.warn(
+              { e },
+              "deleteExpired: Failed to delete local incomplete part",
+            );
             /* ignore */
           }),
       ),

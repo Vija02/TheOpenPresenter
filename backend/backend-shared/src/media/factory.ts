@@ -1,3 +1,4 @@
+import { logger } from "@repo/observability";
 import { Upload } from "@tus/server";
 import { Request } from "express";
 import { StorageEngine } from "multer";
@@ -36,44 +37,59 @@ export const createMediaHandler = <T extends OurDataStore>(
       originalFileName,
       isUserUploaded,
     }: UploadMediaParam) {
-      const finalFileName = mediaId + "." + fileExtension;
+      try {
+        const finalFileName = mediaId + "." + fileExtension;
 
-      const upload = new Upload({
-        id: finalFileName,
-        offset: 0,
-        size: fileSize,
-        creation_date: creationDate,
-        metadata: {
-          originalFileName: originalFileName ?? null,
-          userId,
-          organizationId,
-          isUserUploaded: isUserUploaded ? "1" : "0",
-        },
-      });
+        const upload = new Upload({
+          id: finalFileName,
+          offset: 0,
+          size: fileSize,
+          creation_date: creationDate,
+          metadata: {
+            originalFileName: originalFileName ?? null,
+            userId,
+            organizationId,
+            isUserUploaded: isUserUploaded ? "1" : "0",
+          },
+        });
 
-      await this.store.create(upload);
-      await this.store.write(file, upload.id, 0);
+        await this.store.create(upload);
+        await this.store.write(file, upload.id, 0);
 
-      // Update is_complete flag
-      const uuid = toUUID(mediaId as TypeId<string>);
-      await this.pgPool.query(
-        `UPDATE app_public.medias
-          SET 
-            is_complete = $1
-          WHERE id = $2
-        `,
-        [true, uuid],
-      );
+        // Update is_complete flag
+        const uuid = toUUID(mediaId as TypeId<string>);
+        await this.pgPool.query(
+          `UPDATE app_public.medias
+            SET 
+              is_complete = $1
+            WHERE id = $2
+          `,
+          [true, uuid],
+        );
 
-      return { mediaId, fileExtension, fileName: finalFileName };
+        return { mediaId, fileExtension, fileName: finalFileName };
+      } catch (e) {
+        logger.warn({ e }, "uploadMedia: Failed to upload");
+        throw e;
+      }
     }
 
     async deleteMedia(fullFileId: string) {
-      await this.store.remove(fullFileId);
+      try {
+        await this.store.remove(fullFileId);
+      } catch (e) {
+        logger.warn({ e }, "uploadMedia: Failed to delete");
+        throw e;
+      }
     }
 
     async completeMedia(fullFileId: string) {
-      await this.store.complete(fullFileId);
+      try {
+        await this.store.remove(fullFileId);
+      } catch (e) {
+        logger.warn({ e }, "uploadMedia: Failed to complete");
+        throw e;
+      }
     }
   };
 };

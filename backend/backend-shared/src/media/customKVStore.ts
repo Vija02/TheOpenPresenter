@@ -32,6 +32,7 @@ export class CustomKVStore<T extends Upload | MetadataValue>
         organizationId: mediaRow.organization_id,
         userId: mediaRow.creator_user_id,
         isUserUploaded: mediaRow.is_user_uploaded ? "1" : "0",
+        isComplete: mediaRow.is_complete,
       } as any,
       storage: undefined,
       creation_date: new Date(mediaRow.created_at).toISOString(),

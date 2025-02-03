@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 /* eslint-disable no-console */
+import { logger } from "@repo/observability";
 import { IncomingMessage, createServer } from "http";
 import { Duplex } from "stream";
 
@@ -12,6 +13,7 @@ const packageJson = require("../../../package.json");
 const isDev = process.env.NODE_ENV === "development";
 
 async function main() {
+  logger.info("Starting server");
   const { default: chalk } = await import("chalk");
 
   // Create our HTTP server
@@ -98,6 +100,7 @@ async function main() {
 }
 
 main().catch((e) => {
+  logger.fatal({ e }, "Failed to start server!");
   console.error("Fatal error occurred starting server!");
   console.error(e);
   process.exit(101);
