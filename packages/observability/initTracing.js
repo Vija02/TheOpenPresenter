@@ -9,22 +9,27 @@ const {
 const { OTLPLogExporter } = require("@opentelemetry/exporter-logs-otlp-proto");
 
 if (process.env.OTLP_HOST) {
-  diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.ERROR);
+  try {
+    diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.ERROR);
 
-  const traceExporter = new OTLPTraceExporter({
-    url: `${process.env.OTLP_HOST}/v1/traces`,
-  });
-  const logExporter = new OTLPLogExporter({
-    url: `${process.env.OTLP_HOST}/v1/logs`,
-  });
-  const sdk = new opentelemetry.NodeSDK({
-    traceExporter: traceExporter,
-    logExporter: logExporter,
-    instrumentations: [getNodeAutoInstrumentations()],
-    serviceName: "theopenpresenter-server",
-  });
+    const traceExporter = new OTLPTraceExporter({
+      url: `${process.env.OTLP_HOST}/v1/traces`,
+    });
+    const logExporter = new OTLPLogExporter({
+      url: `${process.env.OTLP_HOST}/v1/logs`,
+    });
+    const sdk = new opentelemetry.NodeSDK({
+      traceExporter: traceExporter,
+      logExporter: logExporter,
+      instrumentations: [getNodeAutoInstrumentations()],
+      serviceName: "theopenpresenter-server",
+    });
 
-  sdk.start();
+    sdk.start();
+    console.error("Successfully setup observability");
+  } catch (e) {
+    console.error("Failed to setup observability");
+  }
 } else {
   console.log("The 'OTLP_HOST' env was not set, skipping observability");
 }
