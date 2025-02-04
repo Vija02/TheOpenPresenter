@@ -10,6 +10,7 @@ import {
   YjsWatcher,
   createTraverser,
 } from "@repo/base-plugin/server";
+import { logger as rawLogger } from "@repo/observability";
 import { proxy } from "valtio";
 import { bind } from "valtio-yjs";
 import * as Y from "yjs";
@@ -67,6 +68,14 @@ const onPluginDataLoaded = (
   pluginInfo: ObjectToTypedMap<Plugin<PluginBaseData>>,
   context: PluginContext,
 ) => {
+  const logger = rawLogger.child({
+    context,
+    plugin: pluginInfo.get("plugin"),
+    pluginData: pluginInfo.get("pluginData")?.toJSON(),
+  });
+
+  logger.debug("onPluginDataLoaded called");
+
   const data = proxy(pluginInfo.toJSON() as Plugin<PluginBaseData>);
   const unbind = bind(data, pluginInfo as any);
 
@@ -84,6 +93,10 @@ const onPluginDataLoaded = (
     for (let i = data.pluginData.activeStreams.length - 1; i >= 0; i--) {
       const activeStream = data.pluginData.activeStreams[i]!;
       if (!allUserIds.includes(activeStream?.awarenessUserId)) {
+        logger.debug(
+          { awarenessState: state, streamToBeDeleted: activeStream, index: i },
+          "Removing stream since user doesn't exist anymore",
+        );
         data.pluginData.activeStreams.splice(i, 1);
       }
     }
@@ -96,26 +109,68 @@ const onPluginDataLoaded = (
     for (let i = data.pluginData.recordings.length - 1; i >= 0; i--) {
       const recording = data.pluginData.recordings[i]!;
       if (!allActiveStreamIds.includes(recording?.streamId)) {
+        logger.debug(
+          {
+            recording,
+            index: i,
+          },
+          "This recording does not have an active stream associated with it, processing...",
+        );
         if (recording.status === "pending") {
+          logger.debug(
+            {
+              recording,
+              index: i,
+            },
+            "Removing pending recording",
+          );
           data.pluginData.recordings.splice(i, 1);
         }
         if (
           recording.status === "recording" ||
           recording.status === "stopping"
         ) {
+          logger.debug(
+            {
+              recording,
+              index: i,
+            },
+            "Moving recording status to 'ended'",
+          );
           recording.status = "ended";
           recording.endedAt = new Date().toISOString();
         }
         if (recording.status === "ended" && !recording.isUploaded) {
+          logger.debug(
+            {
+              recording,
+              index: i,
+            },
+            "Setting `streamUploadFailed` to true",
+          );
           // Means something went wrong while uploading on the last step
           recording.streamUploadFailed = true;
         }
+        logger.debug(
+          {
+            recording,
+            index: i,
+          },
+          "Done updating recording status",
+        );
       }
 
       if (
         !!recording?.awarenessUserToRetry &&
         !allUserIds.includes(recording.awarenessUserToRetry)
       ) {
+        logger.debug(
+          {
+            recording,
+            index: i,
+          },
+          "Resetting upload retry flags since user does not exist anymore",
+        );
         recording.awarenessUserIsUploading = false;
         recording.awarenessUserToRetry = null;
       }
@@ -146,6 +201,7 @@ const onPluginDataLoaded = (
         .some((y) => y.status === "recording");
 
       if (rendererData.get("__audioIsRecording") !== val) {
+        logger.debug({ isRecording: val }, "Toggling `__audioIsRecording`");
         rendererData?.set("__audioIsRecording", val);
       }
     },
@@ -156,6 +212,7 @@ const onPluginDataLoaded = (
       unbind();
       pluginInfo.doc?.awareness.off("change", handleCurrentData);
       yjsWatcher.dispose();
+      logger.debug("onPluginDataLoaded disposed");
     },
   };
 };

@@ -6676,6 +6676,7 @@ __metadata:
     "@r2wc/react-to-web-component": "npm:^2.0.3"
     "@repo/base-plugin": "npm:*"
     "@repo/eslint-config": "npm:*"
+    "@repo/observability": "npm:*"
     "@repo/prettier-config": "npm:*"
     "@repo/typescript-config": "npm:*"
     "@repo/ui": "npm:*"
