@@ -10,6 +10,7 @@ const getMediaUploadChunkSize = () => {
   }
   return Infinity;
 };
+const getOTELEnabled = () => (window as any)?.__APP_DATA__?.ENABLE_OTEL === "1";
 
 const getCustomEnv = (envName: string) =>
   (window as any)?.__APP_DATA__?.[envName];
@@ -18,5 +19,6 @@ export const appData = {
   getRootURL,
   getCSRFToken,
   getMediaUploadChunkSize,
+  getOTELEnabled,
   getCustomEnv,
 };

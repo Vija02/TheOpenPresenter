@@ -80,6 +80,7 @@ function transformer(html: string, req: Request) {
       ROOT_URL: process.env.ROOT_URL,
       CSRF_TOKEN: req.csrfToken(),
       MEDIA_UPLOAD_CHUNK_SIZE: process.env.MEDIA_UPLOAD_CHUNK_SIZE,
+      ENABLE_OTEL: !!process.env.OTLP_HOST ? "1" : undefined,
     } as Record<string, string>,
   ]
     .concat(registeredEnvToViews.map((x) => x.envVars))
