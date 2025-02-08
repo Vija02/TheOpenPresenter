@@ -7,6 +7,7 @@ import installForceSSL from "./installForceSSL";
 import installHelmet from "./installHelmet";
 import installHocuspocus from "./installHocuspocus";
 import installLogging from "./installLogging";
+import installObservability from "./installObservability";
 import installPassport from "./installPassport";
 import installPluginRoute from "./installPluginRoute";
 import installPluginStatic from "./installPluginStatic";
@@ -30,6 +31,7 @@ export {
   installHelmet,
   installHocuspocus,
   installLogging,
+  installObservability,
   installPassport,
   installPluginRoute,
   installPluginStatic,

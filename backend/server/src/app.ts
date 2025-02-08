@@ -132,6 +132,7 @@ export async function makeApp({
   await middleware.installCSRFProtection(app);
   await middleware.installPassport(app);
   await middleware.installLogging(app);
+  await middleware.installObservability(app);
   if (process.env.FORCE_SSL) {
     await middleware.installForceSSL(app);
   }
