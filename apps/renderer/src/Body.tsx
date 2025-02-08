@@ -1,4 +1,3 @@
-import { Box, Text } from "@chakra-ui/react";
 import {
   AwarenessContext,
   AwarenessStateData,
@@ -87,7 +86,9 @@ const SceneRenderer = React.memo(({ sceneId }: { sceneId: string }) => {
   );
 
   return (
-    <Box position="absolute" zIndex={currentScene === sceneId ? 1 : 0}>
+    <div
+      style={{ position: "absolute", zIndex: currentScene === sceneId ? 1 : 0 }}
+    >
       <motion.div
         initial={{ opacity: 0 }}
         animate={currentScene === sceneId ? "show" : "hidden"}
@@ -105,7 +106,7 @@ const SceneRenderer = React.memo(({ sceneId }: { sceneId: string }) => {
           ),
         )}
       </motion.div>
-    </Box>
+    </div>
   );
 });
 
@@ -162,11 +163,11 @@ const PluginRenderer = React.memo(
 
     const TagElement = useMemo(() => {
       if (!tag) {
-        return <Text>No renderer for {pluginInfo?.plugin}</Text>;
+        return <p>No renderer for {pluginInfo?.plugin}</p>;
       }
 
       if (!yjsPluginSceneData || !yjsPluginRendererData) {
-        return <Text>Loading...</Text>;
+        return <p>Loading...</p>;
       }
 
       return React.createElement(tag, {
@@ -223,15 +224,17 @@ const PluginRenderer = React.memo(
     ]);
 
     return (
-      <Box
+      <div
         key={pluginId}
-        width="100vw"
-        height="100vh"
-        userSelect="none"
-        pointerEvents="none"
+        style={{
+          width: "100vw",
+          height: "100vh",
+          userSelect: "none",
+          pointerEvents: "none",
+        }}
       >
         {TagElement}
-      </Box>
+      </div>
     );
   },
 );
