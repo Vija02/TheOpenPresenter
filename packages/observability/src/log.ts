@@ -1,7 +1,47 @@
+import { Logger, SeverityNumber } from "@opentelemetry/api-logs";
 import pino from "pino";
 
-// This will be instrumented by opentelemetry
-// So setting the destination to /dev/null stops it from logging to the console
-const logger = pino({}, pino.destination("/dev/null"));
+const browserLogger: Logger | undefined =
+  typeof window !== "undefined" ? window.__otelLogger : undefined;
+
+// Mapping taken from OTEL pino instrumentation
+const DEFAULT_LEVELS = {
+  trace: 10,
+  debug: 20,
+  info: 30,
+  warn: 40,
+  error: 50,
+  fatal: 60,
+};
+
+const OTEL_SEV_NUM_FROM_PINO_LEVEL: { [level: number]: SeverityNumber } = {
+  [DEFAULT_LEVELS.trace]: SeverityNumber.TRACE,
+  [DEFAULT_LEVELS.debug]: SeverityNumber.DEBUG,
+  [DEFAULT_LEVELS.info]: SeverityNumber.INFO,
+  [DEFAULT_LEVELS.warn]: SeverityNumber.WARN,
+  [DEFAULT_LEVELS.error]: SeverityNumber.ERROR,
+  [DEFAULT_LEVELS.fatal]: SeverityNumber.FATAL,
+};
+
+const logger = pino(
+  {
+    browser: {
+      write: ({ msg, time, level, ...attributes }: any) => {
+        if (browserLogger) {
+          browserLogger.emit({
+            body: msg,
+            timestamp: time,
+            severityNumber: OTEL_SEV_NUM_FROM_PINO_LEVEL[level],
+            attributes,
+          });
+        }
+      },
+    },
+  },
+  // In Node, the destination will be instrumented by opentelemetry
+  // So setting the destination to /dev/null stops it from logging to the console
+  // Browser doesn't have pino.destination, so we can just pass undefined
+  typeof window !== "undefined" ? undefined : pino.destination("/dev/null"),
+);
 
 export { logger };
