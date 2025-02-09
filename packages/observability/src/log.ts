@@ -22,6 +22,8 @@ const OTEL_SEV_NUM_FROM_PINO_LEVEL: { [level: number]: SeverityNumber } = {
 
 const logger = pino(
   {
+    // TODO: Make configurable
+    level: "trace",
     browser: {
       write: ({ msg, time, level, ...attributes }: any) => {
         if (window.__otelLogger) {
