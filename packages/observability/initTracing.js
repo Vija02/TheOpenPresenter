@@ -1,3 +1,8 @@
+const { Resource } = require("@opentelemetry/resources");
+const { ATTR_SERVICE_NAME } = require("@opentelemetry/semantic-conventions");
+const {
+  ATTR_DEPLOYMENT_ENVIRONMENT_NAME,
+} = require("@opentelemetry/semantic-conventions/incubating");
 const opentelemetry = require("@opentelemetry/sdk-node");
 const {
   getNodeAutoInstrumentations,
@@ -11,6 +16,10 @@ const { OTLPLogExporter } = require("@opentelemetry/exporter-logs-otlp-proto");
 if (process.env.OTLP_HOST) {
   try {
     diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.ERROR);
+    const resource = new Resource({
+      [ATTR_SERVICE_NAME]: "theopenpresenter-server",
+      [ATTR_DEPLOYMENT_ENVIRONMENT_NAME]: process.env.NODE_ENV,
+    });
 
     const traceExporter = new OTLPTraceExporter({
       url: `${process.env.OTLP_HOST}/v1/traces`,
@@ -22,7 +31,7 @@ if (process.env.OTLP_HOST) {
       traceExporter: traceExporter,
       logExporter: logExporter,
       instrumentations: [getNodeAutoInstrumentations()],
-      serviceName: "theopenpresenter-server",
+      resource,
     });
 
     sdk.start();
