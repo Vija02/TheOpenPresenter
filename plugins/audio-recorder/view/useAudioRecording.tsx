@@ -146,6 +146,10 @@ export const useAudioRecording = () => {
 
         // Stop if stopping
         if (mutableSceneData.pluginData.recordings[i]!.status === "stopping") {
+          pluginApi.log.debug(
+            { recording: mutableSceneData.pluginData.recordings[i] },
+            "Stopping recording",
+          );
           recorderManager[
             mutableSceneData.pluginData.recordings[i]!.mediaId!
           ]?.stopRecording?.();
@@ -158,6 +162,7 @@ export const useAudioRecording = () => {
         !recording.awarenessUserIsUploading
       ) {
         (async () => {
+          pluginApi.log.debug({ recording }, "Manual retry upload");
           // Then we should upload it
           const mediaId = recording.mediaId!;
           const fileName = `${mediaId}.mp3`;
@@ -206,6 +211,7 @@ async function startStreamUpload({
   onUploaded: () => void;
   onError: () => void;
 }) {
+  pluginApi.log.debug({ mediaId }, "Starting recording");
   const recordingInstance = recorderManager[mediaId]!;
   const mediaRecorder = recordingInstance.recorder!;
 
@@ -214,7 +220,7 @@ async function startStreamUpload({
     await pluginApi.media.pluginClientStorage.getFileHandle(fileName);
 
   mediaRecorder.onerror = (err) => {
-    console.error(err);
+    pluginApi.log.error({ mediaId, error: err }, "Media recorder Error");
     pluginApi.remote.toast(`Audio Recorder: Failed to record. Error: ${err}`, {
       toastId: "audio-recorder--mediaRecorderError",
     });
@@ -222,12 +228,14 @@ async function startStreamUpload({
     // reset()
   };
   mediaRecorder.onstop = () => {
+    pluginApi.log.debug({ mediaId }, "Media recorder stopped");
     recordingInstance.done = true;
     if (recordingInstance.onDataAvailable) {
       recordingInstance.onDataAvailable(readableRecorder.read());
     }
   };
   mediaRecorder.ondataavailable = async (event) => {
+    pluginApi.log.trace({ mediaId }, "New data available for upload");
     recordingInstance.chunks.push(event.data);
     if (recordingInstance.onDataAvailable) {
       recordingInstance.onDataAvailable(readableRecorder.read());
@@ -263,9 +271,11 @@ async function startStreamUpload({
     },
   };
 
+  pluginApi.log.debug({ mediaId }, "Starting stream upload");
   startUpload(pluginApi, readableRecorder, {
     mediaId,
     onSuccess: () => {
+      pluginApi.log.debug({ mediaId }, "Uploading success!");
       onUploaded();
       // Remove cache if successfully uploaded
       pluginApi.media.pluginClientStorage.removeFile(fileName);
@@ -304,7 +314,7 @@ function startUpload(
   const options: ConstructorParameters<typeof tus.Upload>[1] = {
     endpoint,
     chunkSize: stream ? chunkSize : Infinity,
-    retryDelays: [0, 1000, 3000, 5000],
+    retryDelays: [0, 1000, 3000, 5000, 10000],
     uploadLengthDeferred: true,
     uploadUrl,
     headers: {
@@ -317,6 +327,7 @@ function startUpload(
       filename: `recording_${new Date().toISOString()}.mp3`,
     },
     onError(error) {
+      pluginApi.log.error({ error }, "Error when uploading recording");
       onError(error);
       // TODO: Set state
       if ("originalRequest" in error) {
@@ -333,6 +344,9 @@ function startUpload(
       }
 
       // reset()
+    },
+    onChunkComplete(status) {
+      pluginApi.log.trace({ status }, "Chunk uploaded");
     },
     onSuccess,
   };
