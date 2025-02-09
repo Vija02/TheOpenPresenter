@@ -15,8 +15,8 @@
     }
   },
   "scripts": {
-    "build": "pkgroll",
-    "dev": "pkgroll --watch"
+    "build": "tsup src/index.ts --format esm,cjs --experimental-dts",
+    "dev": "tsup src/index.ts --format esm,cjs --experimental-dts --watch"
   },
   "dependencies": {
     "@apollo/client": "3.12.2",
@@ -32,7 +32,7 @@
   },
   "devDependencies": {
     "@repo/typescript-config": "*",
-    "pkgroll": "^2.5.1",
+    "tsup": "^8.3.6",
     "typescript": "^5.7.2"
   }
 }

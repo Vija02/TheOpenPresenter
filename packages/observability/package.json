@@ -13,16 +13,11 @@
         "default": "./dist/index.js"
       }
     },
-    "./initBrowser": {
-      "types": "./out/initBrowser.d.ts",
-      "import": "./out/initBrowser.es.js",
-      "default": "./out/initBrowser.umd.js"
-    },
     "./initTracing": "./initTracing.js"
   },
   "scripts": {
-    "build": "pkgroll && vite build",
-    "dev": "concurrently 'pkgroll --watch' 'vite build --watch'"
+    "build": "tsup src/index.ts --format esm,cjs --experimental-dts",
+    "dev": "tsup src/index.ts --format esm,cjs --experimental-dts --watch"
   },
   "dependencies": {
     "@opentelemetry/api": "^1.9.0",
@@ -47,10 +42,7 @@
   },
   "devDependencies": {
     "@repo/typescript-config": "*",
-    "concurrently": "^9.1.0",
-    "pkgroll": "^2.5.1",
-    "typescript": "^5.7.2",
-    "vite": "^6.1.0",
-    "vite-plugin-dts": "^4.5.0"
+    "tsup": "^8.3.6",
+    "typescript": "^5.7.2"
   }
 }

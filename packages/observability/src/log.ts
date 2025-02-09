@@ -1,8 +1,5 @@
-import { Logger, SeverityNumber } from "@opentelemetry/api-logs";
+import { SeverityNumber } from "@opentelemetry/api-logs";
 import pino from "pino";
-
-const browserLogger: Logger | undefined =
-  typeof window !== "undefined" ? window.__otelLogger : undefined;
 
 // Mapping taken from OTEL pino instrumentation
 const DEFAULT_LEVELS = {
@@ -27,8 +24,8 @@ const logger = pino(
   {
     browser: {
       write: ({ msg, time, level, ...attributes }: any) => {
-        if (browserLogger) {
-          browserLogger.emit({
+        if (window.__otelLogger) {
+          window.__otelLogger.emit({
             body: msg,
             timestamp: time,
             severityNumber: OTEL_SEV_NUM_FROM_PINO_LEVEL[level],
