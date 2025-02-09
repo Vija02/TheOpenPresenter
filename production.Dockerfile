@@ -70,11 +70,11 @@ RUN yarn graphql build
 COPY backend/config/ /app/backend/config/
 RUN yarn workspace @repo/config build
 
-COPY packages/observability/ /app/packages/observability/
-RUN yarn workspace @repo/observability build
-
 COPY packages/lib/ /app/packages/lib/
 RUN yarn workspace @repo/lib build
+
+COPY packages/observability/ /app/packages/observability/
+RUN yarn workspace @repo/observability build
 
 COPY backend/backend-shared/ /app/backend/backend-shared/
 RUN yarn workspace @repo/backend-shared build
