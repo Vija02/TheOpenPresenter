@@ -21,6 +21,7 @@ import {
   DecorateRouterRecord,
   Router,
 } from "@trpc/server/unstable-core-do-not-import";
+import { pino } from "pino";
 import { typeidUnboxed } from "typeid-js";
 import { v4 } from "uuid";
 import { proxy } from "valtio";
@@ -215,6 +216,7 @@ export const simulateUser = (
           return Promise.resolve();
         },
       },
+      logger: pino(),
     },
     trpcClient: null,
   } as WebComponentProps<any>;
