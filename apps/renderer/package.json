@@ -17,6 +17,7 @@
     "@fontsource-variable/source-sans-3": "^5.1.0",
     "@openobserve/browser-rum": "^0.2.11",
     "@repo/graphql": "*",
+    "@repo/observability": "*",
     "@tanstack/react-query": "^5.62.3",
     "@trpc/client": "^11.0.0-rc.657",
     "@trpc/react-query": "^11.0.0-rc.657",
