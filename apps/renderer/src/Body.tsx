@@ -1,12 +1,14 @@
 import {
   AwarenessContext,
   AwarenessStateData,
+  PluginContext,
   Scene,
   State,
   WebComponentProps,
   YjsWatcher,
 } from "@repo/base-plugin";
 import { RendererBasePluginQuery } from "@repo/graphql";
+import { logger } from "@repo/observability";
 import {
   useAudioCheck,
   useAwarenessState,
@@ -161,6 +163,25 @@ const PluginRenderer = React.memo(
       [pluginId, sceneId, setAwarenessState],
     );
 
+    const pluginContext: PluginContext = useMemo(
+      () => ({
+        pluginId,
+        sceneId,
+        organizationId: orgId,
+      }),
+      [orgId, pluginId, sceneId],
+    );
+
+    const childLogger = useMemo(
+      () =>
+        logger.child({
+          context: pluginContext,
+          plugin: pluginInfo?.plugin,
+          pluginInfo: pluginInfo,
+        }),
+      [pluginContext, pluginInfo],
+    );
+
     const TagElement = useMemo(() => {
       if (!tag) {
         return <p>No renderer for {pluginInfo?.plugin}</p>;
@@ -177,11 +198,7 @@ const PluginRenderer = React.memo(
           awarenessObj: provider!.awareness!,
           currentUserId: currentUserId!,
         } satisfies AwarenessContext,
-        pluginContext: {
-          pluginId,
-          sceneId,
-          organizationId: orgId,
-        },
+        pluginContext,
         setRenderCurrentScene: () => {
           const renderer = getYJSPluginRenderer();
           if (renderer?.get("currentScene") !== sceneId) {
@@ -204,15 +221,16 @@ const PluginRenderer = React.memo(
               return Promise.reject();
             },
           },
+          logger: childLogger,
         },
       } satisfies WebComponentProps<any>);
     }, [
       addError,
       canPlayAudio,
+      childLogger,
       currentUserId,
       getYJSPluginRenderer,
-      orgId,
-      pluginId,
+      pluginContext,
       pluginInfo?.plugin,
       provider,
       removeError,

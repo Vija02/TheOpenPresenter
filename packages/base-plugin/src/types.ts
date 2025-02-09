@@ -1,4 +1,5 @@
 import { ObjectToTypedMap } from "@repo/lib";
+import type { Logger } from "pino";
 import { toast as ReactToast } from "react-toastify";
 import UAParser from "ua-parser-js";
 import * as awarenessProtocol from "y-protocols/awareness.js";
@@ -109,6 +110,7 @@ export type MiscProps = {
   canPlayAudio: CanPlayAudio;
   toast: typeof ReactToast;
   media: MediaHandler;
+  logger: Logger;
 };
 
 export type WebComponentProps<TrpcClient> = {

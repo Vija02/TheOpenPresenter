@@ -133,6 +133,7 @@ export function initPluginApi<
         );
       },
     },
+    log: misc.logger,
     error: {
       addError: misc.errorHandler.addError,
       removeError: misc.errorHandler.removeError,

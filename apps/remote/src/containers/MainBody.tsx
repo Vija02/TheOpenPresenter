@@ -26,6 +26,7 @@ import {
   useDeleteMediaMutation,
   useKeyPressMutation,
 } from "@repo/graphql";
+import { logger } from "@repo/observability";
 import {
   useAudioCheck,
   useAwarenessState,
@@ -331,6 +332,25 @@ const PluginRenderer = React.memo(
     const [deleteMedia] = useDeleteMediaMutation();
     const [completeMedia] = useCompleteMediaMutation();
 
+    const pluginContext: PluginContext = useMemo(
+      () => ({
+        pluginId,
+        sceneId,
+        organizationId: orgId,
+      }),
+      [orgId, pluginId, sceneId],
+    );
+
+    const childLogger = useMemo(
+      () =>
+        logger.child({
+          context: pluginContext,
+          plugin: pluginInfo.plugin,
+          pluginInfo: pluginInfo,
+        }),
+      [pluginContext, pluginInfo],
+    );
+
     const Element = useMemo(() => {
       if (!viewData?.tag) {
         return <Text>No renderer for {pluginInfo.plugin}</Text>;
@@ -347,11 +367,7 @@ const PluginRenderer = React.memo(
           awarenessObj: provider!.awareness!,
           currentUserId: currentUserId!,
         } satisfies AwarenessContext,
-        pluginContext: {
-          pluginId,
-          sceneId,
-          organizationId: orgId,
-        } as PluginContext,
+        pluginContext,
         setRenderCurrentScene: () => {
           const renderer = getYJSPluginRenderer();
           if (renderer?.get("currentScene") !== sceneId) {
@@ -381,17 +397,18 @@ const PluginRenderer = React.memo(
               return completeMedia({ variables: { id: uuid } });
             },
           },
+          logger: childLogger,
         },
       } satisfies WebComponentProps<any>);
     }, [
       addError,
       canPlayAudio,
+      childLogger,
       completeMedia,
       currentUserId,
       deleteMedia,
       getYJSPluginRenderer,
-      orgId,
-      pluginId,
+      pluginContext,
       pluginInfo.plugin,
       provider,
       removeError,
