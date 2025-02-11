@@ -108,7 +108,10 @@ const onPluginDataLoaded = (
     // Cleanup recording and update its status
     for (let i = data.pluginData.recordings.length - 1; i >= 0; i--) {
       const recording = data.pluginData.recordings[i]!;
-      if (!allActiveStreamIds.includes(recording?.streamId)) {
+      if (
+        !allActiveStreamIds.includes(recording?.streamId) &&
+        !recording.streamUploadFailed
+      ) {
         logger.debug(
           {
             recording,
@@ -140,7 +143,11 @@ const onPluginDataLoaded = (
           recording.status = "ended";
           recording.endedAt = new Date().toISOString();
         }
-        if (recording.status === "ended" && !recording.isUploaded) {
+        if (
+          recording.status === "ended" &&
+          !recording.isUploaded &&
+          !recording.streamUploadFailed
+        ) {
           logger.debug(
             {
               recording,
