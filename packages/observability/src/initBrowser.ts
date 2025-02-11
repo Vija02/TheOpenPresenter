@@ -58,7 +58,15 @@ export const initBrowser = (serviceName: string, env: string) => {
 
     // Registering instrumentations
     registerInstrumentations({
-      instrumentations: [getWebAutoInstrumentations({})],
+      instrumentations: [
+        getWebAutoInstrumentations({
+          "@opentelemetry/instrumentation-fetch": {
+            propagateTraceHeaderCorsUrls: [
+              new RegExp(`^(?!${window.location.origin}/media/data/).*$`),
+            ],
+          },
+        }),
+      ],
     });
   }
 };
