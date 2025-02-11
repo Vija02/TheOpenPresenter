@@ -1,7 +1,7 @@
 import { PluginAPIProvider } from "@repo/base-plugin/client";
 import { addPlugin, simulateServer, simulateUser } from "@repo/test";
 import { act, renderHook } from "@testing-library/react";
-import tus from "tus-js-client";
+import { type Upload } from "tus-js-client";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { PluginBaseData, PluginRendererData, init } from "../../src";
@@ -10,7 +10,7 @@ import { useAudioRecording } from "../useAudioRecording";
 import { setupMediaDeviceMocks } from "./mock";
 
 const startUploadMock = vi.fn();
-let uploadOptions: tus.UploadOptions;
+let uploadOptions: ConstructorParameters<typeof Upload>[1];
 
 beforeAll(() => {
   setupMediaDeviceMocks();
