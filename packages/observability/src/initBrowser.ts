@@ -65,6 +65,11 @@ export const initBrowser = (serviceName: string, env: string) => {
               new RegExp(`^(?!${window.location.origin}/media/data/).*$`),
             ],
           },
+          "@opentelemetry/instrumentation-xml-http-request": {
+            propagateTraceHeaderCorsUrls: [
+              new RegExp(`^(?!${window.location.origin}/media/data/).*$`),
+            ],
+          },
         }),
       ],
     });
