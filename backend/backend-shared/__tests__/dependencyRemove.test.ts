@@ -23,6 +23,7 @@ describe("Media Dependency Remove", () => {
     vi.stubEnv("STORAGE_S3_ENDPOINT", "https://s3.example.com");
     vi.stubEnv("STORAGE_S3_ACCESS_KEY_ID", "test");
     vi.stubEnv("STORAGE_S3_SECRET_ACCESS_KEY", "test");
+    vi.stubEnv("STORAGE_TYPE", "s3");
 
     await withRootDb(async (client) => {
       // Insert data
@@ -45,7 +46,9 @@ describe("Media Dependency Remove", () => {
       expect(initialMedias).toHaveLength(3);
 
       // Then let's trigger delete
-      await new media["s3"].mediaHandler(client).deleteMedia(m1.mediaName);
+      await new media[process.env.STORAGE_TYPE!].mediaHandler(
+        client,
+      ).deleteMedia(m1.mediaName);
 
       // Let's check
       const { rows: newMedias } = await client.query(
@@ -60,6 +63,7 @@ describe("Media Dependency Remove", () => {
     vi.spyOn(fs, "unlink").mockImplementation((path, callback) =>
       callback(null),
     );
+    vi.stubEnv("STORAGE_TYPE", "file");
 
     await withRootDb(async (client) => {
       // Setup
@@ -86,7 +90,9 @@ describe("Media Dependency Remove", () => {
       expect(initialMedias).toHaveLength(3);
 
       // Then let's trigger delete
-      await new media["file"].mediaHandler(client).deleteMedia(m1.mediaName);
+      await new media[process.env.STORAGE_TYPE!].mediaHandler(
+        client,
+      ).deleteMedia(m1.mediaName);
 
       // Let's check
       const { rows: newMedias } = await client.query(
