@@ -216,7 +216,7 @@ export const simulateUser = (
           return Promise.resolve();
         },
       },
-      logger: pino(),
+      logger: pino(pino.destination("/dev/null")),
     },
     trpcClient: null,
   } as WebComponentProps<any>;
