@@ -1,3 +1,4 @@
+const { BatchLogRecordProcessor } = require("@opentelemetry/sdk-logs");
 const { Resource } = require("@opentelemetry/resources");
 const { ATTR_SERVICE_NAME } = require("@opentelemetry/semantic-conventions");
 const {
@@ -29,7 +30,7 @@ if (process.env.OTLP_HOST) {
     });
     const sdk = new opentelemetry.NodeSDK({
       traceExporter: traceExporter,
-      logExporter: logExporter,
+      logRecordProcessors: [new BatchLogRecordProcessor(logExporter)],
       instrumentations: [getNodeAutoInstrumentations()],
       resource,
     });
