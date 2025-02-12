@@ -50,6 +50,21 @@ export class OPFSStorageManager {
     }
   }
 
+  async fileExists(fileName: string) {
+    try {
+      if (this.isSupported) {
+        const dir = await this.getDirectoryHandle();
+        await dir.getFileHandle(fileName, {
+          create: false,
+        });
+        return true;
+      }
+      return false;
+    } catch (error) {
+      return false;
+    }
+  }
+
   async writeFile(
     fileHandleOrFileName: FileSystemFileHandle | string,
     {
