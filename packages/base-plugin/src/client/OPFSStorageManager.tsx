@@ -1,3 +1,4 @@
+import { logger } from "@repo/observability";
 import isEqual from "fast-deep-equal";
 import { useCallback, useRef, useSyncExternalStore } from "react";
 import { typeidUnboxed } from "typeid-js";
@@ -16,9 +17,13 @@ export class OPFSStorageManager {
   protected watcher: Record<string, () => void> = {};
   protected currentFiles: Files = [];
 
+  protected logger;
+
   constructor(pluginId: string) {
     this.isSupported = this.checkIsSupported();
     this.pluginId = pluginId;
+
+    this.logger = logger.child({ pluginId, class: "OPFSStorageManager" });
 
     this.callWatcher();
   }
@@ -45,6 +50,7 @@ export class OPFSStorageManager {
         });
       }
     } catch (error) {
+      logger.warn({ error }, "getFileHandle error");
       console.warn("getFileHandle error:", error);
       return undefined;
     }
@@ -105,6 +111,7 @@ export class OPFSStorageManager {
         return true;
       }
     } catch (error) {
+      logger.warn({ error }, "writeFile error");
       console.warn("writeFile error:", error);
       return false;
     }
@@ -124,6 +131,7 @@ export class OPFSStorageManager {
         return file;
       }
     } catch (error) {
+      logger.warn({ error }, "readFile error");
       console.warn("readFile error:", error);
       return null;
     }
@@ -148,6 +156,7 @@ export class OPFSStorageManager {
       }
       return [];
     } catch (error) {
+      logger.warn({ error }, "listFiles error");
       console.warn("listFiles error:", error);
       return [];
     }
@@ -162,6 +171,7 @@ export class OPFSStorageManager {
         this.callWatcher();
       }
     } catch (error) {
+      logger.warn({ error }, "removeFile error");
       console.warn("removeFile error:", error);
       return [];
     }

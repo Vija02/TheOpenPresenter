@@ -42,6 +42,7 @@
     "@hocuspocus/server": "2.14.0",
     "@repo/backend-shared": "*",
     "@repo/lib": "*",
+    "@repo/observability": "*",
     "@trpc/server": "^11.0.0-rc.657",
     "@types/express": "^5.0.0",
     "@types/react": "^19.0.0",

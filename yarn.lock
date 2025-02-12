@@ -6843,6 +6843,7 @@ __metadata:
     "@hocuspocus/server": "npm:2.14.0"
     "@repo/backend-shared": "npm:*"
     "@repo/lib": "npm:*"
+    "@repo/observability": "npm:*"
     "@repo/typescript-config": "npm:*"
     "@trpc/server": "npm:^11.0.0-rc.657"
     "@types/express": "npm:^5.0.0"
