@@ -118,6 +118,9 @@ const Player = () => {
         }
         setReady(true);
       }}
+      onError={(error) => {
+        pluginApi.log.error({ error }, "Error on Video playback");
+      }}
       onBufferEnd={() => setVideoSeek()}
       url={currentVideo?.url}
       config={{ youtube: { playerVars: { controls: 0 } } }}
