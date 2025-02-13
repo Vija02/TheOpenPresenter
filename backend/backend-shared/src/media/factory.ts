@@ -85,7 +85,7 @@ export const createMediaHandler = <T extends OurDataStore>(
 
     async completeMedia(fullFileId: string) {
       try {
-        await this.store.remove(fullFileId);
+        await this.store.complete(fullFileId);
       } catch (e) {
         logger.warn({ e }, "uploadMedia: Failed to complete");
         throw e;
