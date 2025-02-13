@@ -1,5 +1,6 @@
 import { logger } from "@repo/observability";
 import { Upload } from "@tus/server";
+import { backOff } from "exponential-backoff";
 import { Request } from "express";
 import { StorageEngine } from "multer";
 import { Pool, PoolClient } from "pg";
@@ -38,57 +39,108 @@ export const createMediaHandler = <T extends OurDataStore>(
       isUserUploaded,
     }: UploadMediaParam) {
       try {
-        const finalFileName = mediaId + "." + fileExtension;
+        return await backOff(
+          async () => {
+            const finalFileName = mediaId + "." + fileExtension;
 
-        const upload = new Upload({
-          id: finalFileName,
-          offset: 0,
-          size: fileSize,
-          creation_date: creationDate,
-          metadata: {
-            originalFileName: originalFileName ?? null,
-            userId,
-            organizationId,
-            isUserUploaded: isUserUploaded ? "1" : "0",
+            const upload = new Upload({
+              id: finalFileName,
+              offset: 0,
+              size: fileSize,
+              creation_date: creationDate,
+              metadata: {
+                originalFileName: originalFileName ?? null,
+                userId,
+                organizationId,
+                isUserUploaded: isUserUploaded ? "1" : "0",
+              },
+            });
+
+            // TODO: Handle when file already exists and finished
+            await this.store.create(upload);
+            await this.store.write(file, upload.id, 0);
+
+            // Update is_complete flag
+            const uuid = toUUID(mediaId as TypeId<string>);
+            await this.pgPool.query(
+              `UPDATE app_public.medias
+              SET 
+                is_complete = $1
+              WHERE id = $2
+            `,
+              [true, uuid],
+            );
+
+            return { mediaId, fileExtension, fileName: finalFileName };
           },
-        });
-
-        await this.store.create(upload);
-        await this.store.write(file, upload.id, 0);
-
-        // Update is_complete flag
-        const uuid = toUUID(mediaId as TypeId<string>);
-        await this.pgPool.query(
-          `UPDATE app_public.medias
-            SET 
-              is_complete = $1
-            WHERE id = $2
-          `,
-          [true, uuid],
+          {
+            retry: (error, attemptNumber) => {
+              logger.warn(
+                { error, attemptNumber },
+                "uploadMedia: Failed to upload, retrying...",
+              );
+              return true;
+            },
+          },
         );
-
-        return { mediaId, fileExtension, fileName: finalFileName };
-      } catch (e) {
-        logger.warn({ e }, "uploadMedia: Failed to upload");
-        throw e;
+      } catch (error) {
+        logger.error(
+          { error },
+          "uploadMedia: Failed to upload. Throwing an error",
+        );
+        throw error;
       }
     }
 
     async deleteMedia(fullFileId: string) {
       try {
-        await this.store.remove(fullFileId);
-      } catch (e) {
-        logger.warn({ e }, "uploadMedia: Failed to delete");
-        throw e;
+        return await backOff(
+          async () => {
+            await this.store.remove(fullFileId);
+          },
+          {
+            numOfAttempts: 3,
+            retry: (error, attemptNumber) => {
+              logger.warn(
+                { error, attemptNumber },
+                "deleteMedia: Failed to delete, retrying...",
+              );
+              return true;
+            },
+          },
+        );
+      } catch (error) {
+        logger.error(
+          { error },
+          "deleteMedia: Failed to delete. Throwing an error",
+        );
+        throw error;
       }
     }
 
     async completeMedia(fullFileId: string) {
       try {
-        await this.store.complete(fullFileId);
-      } catch (e) {
-        logger.warn({ e }, "uploadMedia: Failed to complete");
-        throw e;
+        return await backOff(
+          async () => {
+            await this.store.complete(fullFileId);
+          },
+          {
+            numOfAttempts: 3,
+            retry: (error, attemptNumber) => {
+              logger.warn(
+                { error, attemptNumber },
+                "completeMedia: Failed to complete, retrying...",
+              );
+              return true;
+            },
+          },
+        );
+      } catch (error) {
+        logger.error(
+          { error },
+          "completeMedia: Failed to complete. Throwing an error",
+        );
+        throw error;
       }
     }
   };
