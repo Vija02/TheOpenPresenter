@@ -18,6 +18,7 @@ const createS3Store = (pgPool: Pool | PoolClient) => {
         // Required for services outside AWS: https://github.com/aws/aws-sdk-js-v3/issues/6810
         // DEBT: Make this configurable
         requestChecksumCalculation: "WHEN_REQUIRED",
+        responseChecksumValidation: "WHEN_REQUIRED",
       },
       expirationPeriodInMilliseconds: 6 * 60 * 60 * 1000, // 6h
     },
