@@ -17,6 +17,10 @@ export class OurFileStore extends FileStore implements OurDataStore {
     this.pgPool = pgPool;
   }
 
+  async getReadable(id: string) {
+    return super.read(id);
+  }
+
   async complete(id: string) {
     const splittedKey = id.split(".");
     const mediaId = splittedKey[0];

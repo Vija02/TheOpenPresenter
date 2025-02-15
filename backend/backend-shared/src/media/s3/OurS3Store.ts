@@ -4,7 +4,7 @@ import { type KvStore, TUS_RESUMABLE, Upload } from "@tus/utils";
 import debug from "debug";
 import _ from "lodash";
 import fs, { promises as fsProm } from "node:fs";
-import type { Readable } from "node:stream";
+import { Readable } from "node:stream";
 import { promises as streamProm } from "node:stream";
 import os from "os";
 import path from "path";
@@ -26,6 +26,10 @@ export class OurS3Store extends S3Store implements OurDataStore {
 
     this.pgPool = pgPool;
     this.configstore = new CustomKVStore<MetadataValue>(pgPool);
+  }
+
+  async getReadable(id: string) {
+    return await super.read(id);
   }
 
   async complete(id: string) {
