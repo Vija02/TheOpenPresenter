@@ -160,7 +160,14 @@ export const createMediaHandler = <T extends OurDataStore>(
         `,
           [parentMediaId, childMediaId],
         );
-      } catch (error) {
+      } catch (error: any) {
+        if (error?.code === "23505") {
+          logger.info(
+            { error },
+            "createDependency: Creating dependency failed but returning the function since it already exists",
+          );
+          return;
+        }
         logger.error(
           { error },
           "createDependency: Failed to create media dependency",
