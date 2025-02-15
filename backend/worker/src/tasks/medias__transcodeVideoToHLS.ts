@@ -1,5 +1,9 @@
 import { media } from "@repo/backend-shared";
-import { extractMediaName, uuidFromMediaId } from "@repo/lib";
+import {
+  constructMediaName,
+  extractMediaName,
+  uuidFromMediaId,
+} from "@repo/lib";
 import { logger } from "@repo/observability";
 import ffmpegPath from "ffmpeg-static";
 import ffprobe from "ffprobe-static";
@@ -110,7 +114,29 @@ const task: Task = async (inPayload, { withPgClient }) => {
         [mediaId],
       );
 
-      // TODO: Don't transcode again if it's already done
+      if (!mediaRow) {
+        logger.error(
+          { mediaId },
+          "Error transcoding HLS because media not found",
+        );
+        throw new Error("Missing media");
+      }
+
+      const {
+        rows: [mediaVideoMetadataRow],
+      } = await pgClient.query(
+        `select * from app_public.media_video_metadata where video_media_id = $1`,
+        [mediaId],
+      );
+
+      // Don't transcode again if it's already done
+      if (mediaVideoMetadataRow) {
+        throw {
+          code: "TRANSCODE_SKIP",
+          message:
+            "Skipping transcode task since it video has already been transcoded",
+        };
+      }
 
       const mediaName = mediaRow.media_name;
       mediaDir = path.join(baseDir, mediaName);
@@ -372,18 +398,92 @@ const task: Task = async (inPayload, { withPgClient }) => {
         "Finished creating media dependencies",
       );
 
+      // Get thumbnail, upload & set dependency
+      logger.trace({ mediaId }, "Starting processing thumbnail");
+      const { mediaId: thumbnailMediaId, mediaName: thumbnailMediaName } =
+        await generateThumbnail({
+          inputPath: localFilePath,
+          folder: mediaDir,
+        });
+      const thumbnailFilePath = path.join(mediaDir, thumbnailMediaName);
+      const thumbnailFileSize = fs.statSync(masterFilePath).size;
+      await mediaHandler.uploadMedia({
+        file: createReadStream(thumbnailFilePath),
+        userId: mediaRow.user_id,
+        organizationId: mediaRow.organization_id,
+        isUserUploaded: false,
+        fileSize: thumbnailFileSize,
+        fileExtension: "jpg",
+        mediaId: thumbnailMediaId,
+      });
+      await mediaHandler.createDependency(
+        mediaId,
+        uuidFromMediaId(thumbnailMediaId),
+      );
+      logger.trace(
+        { mediaId, thumbnailMediaName },
+        "Finished processing thumbnail",
+      );
+
       // Remove local file
       logger.trace({ mediaId, localFilePath }, "Deleting local files");
       fs.rmSync(localFilePath);
       fs.rmSync(mediaDir, { recursive: true });
       logger.trace({ mediaId, localFilePath }, "Local file deleted");
 
+      // Save it to the metadata table
+      await pgClient.query(
+        `insert into app_public.media_video_metadata(video_media_id, hls_media_id, thumbnail_media_id, duration) values($1, $2, $3, $4)`,
+        [
+          mediaId,
+          masterUuid,
+          uuidFromMediaId(thumbnailMediaId),
+          metadata.duration,
+        ],
+      );
+
       // TODO: Notify
     });
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.code === "TRANSCODE_SKIP") {
+      logger.info(
+        { mediaId },
+        "Skipping HLS transcoding since it has already been done before",
+      );
+      return;
+    }
     logger.error({ error, mediaId }, "Failed to transcode video to HLS");
     throw error;
   }
 };
+
+async function generateThumbnail({
+  inputPath,
+  folder,
+}: {
+  inputPath: string;
+  folder: string;
+}) {
+  const mediaId = typeidUnboxed("media");
+  const mediaName = constructMediaName(mediaId, "jpg");
+
+  return new Promise<{ mediaId: string; mediaName: string }>(
+    (resolve, reject) => {
+      ffmpeg(inputPath)
+        .screenshot({
+          timestamps: ["50%"],
+          folder,
+          filename: mediaName,
+          size: "360x?",
+        })
+        .on("end", () => {
+          resolve({ mediaId, mediaName });
+        })
+        .on("error", (err) => {
+          reject(err);
+        });
+    },
+  );
+}
 
 module.exports = task;
