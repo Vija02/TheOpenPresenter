@@ -3,7 +3,7 @@
 --
 
 -- Dumped from database version 17.0 (Debian 17.0-1.pgdg120+1)
--- Dumped by pg_dump version 17.0 (Debian 17.0-1.pgdg120+1)
+-- Dumped by pg_dump version 17.2
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -36,13 +36,6 @@ CREATE SCHEMA app_private;
 --
 
 CREATE SCHEMA app_public;
-
-
---
--- Name: postgraphile_watch; Type: SCHEMA; Schema: -; Owner: -
---
-
-CREATE SCHEMA postgraphile_watch;
 
 
 --
@@ -2057,48 +2050,6 @@ COMMENT ON FUNCTION app_public.verify_email(user_email_id uuid, token text) IS '
 
 
 --
--- Name: notify_watchers_ddl(); Type: FUNCTION; Schema: postgraphile_watch; Owner: -
---
-
-CREATE FUNCTION postgraphile_watch.notify_watchers_ddl() RETURNS event_trigger
-    LANGUAGE plpgsql
-    AS $$
-begin
-  perform pg_notify(
-    'postgraphile_watch',
-    json_build_object(
-      'type',
-      'ddl',
-      'payload',
-      (select json_agg(json_build_object('schema', schema_name, 'command', command_tag)) from pg_event_trigger_ddl_commands() as x)
-    )::text
-  );
-end;
-$$;
-
-
---
--- Name: notify_watchers_drop(); Type: FUNCTION; Schema: postgraphile_watch; Owner: -
---
-
-CREATE FUNCTION postgraphile_watch.notify_watchers_drop() RETURNS event_trigger
-    LANGUAGE plpgsql
-    AS $$
-begin
-  perform pg_notify(
-    'postgraphile_watch',
-    json_build_object(
-      'type',
-      'drop',
-      'payload',
-      (select json_agg(distinct x.schema_name) from pg_event_trigger_dropped_objects() as x)
-    )::text
-  );
-end;
-$$;
-
-
---
 -- Name: connect_pg_simple_sessions; Type: TABLE; Schema: app_private; Owner: -
 --
 
@@ -2230,6 +2181,18 @@ COMMENT ON TABLE app_public.categories IS 'Categories data';
 CREATE TABLE app_public.media_dependencies (
     parent_media_id uuid NOT NULL,
     child_media_id uuid NOT NULL
+);
+
+
+--
+-- Name: media_video_metadata; Type: TABLE; Schema: app_public; Owner: -
+--
+
+CREATE TABLE app_public.media_video_metadata (
+    video_media_id uuid NOT NULL,
+    hls_media_id uuid,
+    thumbnail_media_id uuid,
+    duration numeric(10,2)
 );
 
 
@@ -2435,6 +2398,14 @@ ALTER TABLE ONLY app_private.user_secrets
 
 ALTER TABLE ONLY app_public.categories
     ADD CONSTRAINT categories_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: media_video_metadata media_video_metadata_pkey; Type: CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.media_video_metadata
+    ADD CONSTRAINT media_video_metadata_pkey PRIMARY KEY (video_media_id);
 
 
 --
@@ -2651,6 +2622,20 @@ CREATE UNIQUE INDEX media_dependencies_parent_media_id_child_media_id_idx ON app
 --
 
 CREATE INDEX media_dependencies_parent_media_id_idx ON app_public.media_dependencies USING btree (parent_media_id);
+
+
+--
+-- Name: media_video_metadata_hls_media_id_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX media_video_metadata_hls_media_id_idx ON app_public.media_video_metadata USING btree (hls_media_id);
+
+
+--
+-- Name: media_video_metadata_thumbnail_media_id_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX media_video_metadata_thumbnail_media_id_idx ON app_public.media_video_metadata USING btree (thumbnail_media_id);
 
 
 --
@@ -3046,6 +3031,30 @@ ALTER TABLE ONLY app_public.media_dependencies
 
 
 --
+-- Name: media_video_metadata media_video_metadata_hls_media_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.media_video_metadata
+    ADD CONSTRAINT media_video_metadata_hls_media_id_fkey FOREIGN KEY (hls_media_id) REFERENCES app_public.medias(id) ON DELETE SET NULL;
+
+
+--
+-- Name: media_video_metadata media_video_metadata_thumbnail_media_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.media_video_metadata
+    ADD CONSTRAINT media_video_metadata_thumbnail_media_id_fkey FOREIGN KEY (thumbnail_media_id) REFERENCES app_public.medias(id) ON DELETE SET NULL;
+
+
+--
+-- Name: media_video_metadata media_video_metadata_video_media_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.media_video_metadata
+    ADD CONSTRAINT media_video_metadata_video_media_id_fkey FOREIGN KEY (video_media_id) REFERENCES app_public.medias(id) ON DELETE CASCADE;
+
+
+--
 -- Name: medias medias_creator_user_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
 --
 
@@ -3321,6 +3330,12 @@ CREATE POLICY insert_own_tag ON app_public.project_tags FOR INSERT WITH CHECK (a
 ALTER TABLE app_public.media_dependencies ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: media_video_metadata; Type: ROW SECURITY; Schema: app_public; Owner: -
+--
+
+ALTER TABLE app_public.media_video_metadata ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: medias; Type: ROW SECURITY; Schema: app_public; Owner: -
 --
 
@@ -3437,6 +3452,13 @@ CREATE POLICY select_own ON app_public.user_authentications FOR SELECT USING ((u
 --
 
 CREATE POLICY select_own ON app_public.user_emails FOR SELECT USING ((user_id = app_public.current_user_id()));
+
+
+--
+-- Name: media_video_metadata select_own_media; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY select_own_media ON app_public.media_video_metadata FOR SELECT USING (app_public.current_user_can_access_media(video_media_id));
 
 
 --
@@ -4079,20 +4101,6 @@ GRANT ALL ON FUNCTION app_public.verify_email(user_email_id uuid, token text) TO
 
 
 --
--- Name: FUNCTION notify_watchers_ddl(); Type: ACL; Schema: postgraphile_watch; Owner: -
---
-
-REVOKE ALL ON FUNCTION postgraphile_watch.notify_watchers_ddl() FROM PUBLIC;
-
-
---
--- Name: FUNCTION notify_watchers_drop(); Type: ACL; Schema: postgraphile_watch; Owner: -
---
-
-REVOKE ALL ON FUNCTION postgraphile_watch.notify_watchers_drop() FROM PUBLIC;
-
-
---
 -- Name: FUNCTION uuid_generate_v7(); Type: ACL; Schema: public; Owner: -
 --
 
@@ -4101,11 +4109,27 @@ GRANT ALL ON FUNCTION public.uuid_generate_v7() TO theopenpresenter_visitor;
 
 
 --
+-- Name: FUNCTION uuid_timestamp_to_v7(timestamp without time zone, zero boolean); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.uuid_timestamp_to_v7(timestamp without time zone, zero boolean) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.uuid_timestamp_to_v7(timestamp without time zone, zero boolean) TO theopenpresenter_visitor;
+
+
+--
 -- Name: FUNCTION uuid_timestamptz_to_v7(timestamp with time zone, zero boolean); Type: ACL; Schema: public; Owner: -
 --
 
 REVOKE ALL ON FUNCTION public.uuid_timestamptz_to_v7(timestamp with time zone, zero boolean) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.uuid_timestamptz_to_v7(timestamp with time zone, zero boolean) TO theopenpresenter_visitor;
+
+
+--
+-- Name: FUNCTION uuid_v7_to_timestamp(uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.uuid_v7_to_timestamp(uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.uuid_v7_to_timestamp(uuid) TO theopenpresenter_visitor;
 
 
 --
@@ -4156,6 +4180,13 @@ GRANT INSERT(parent_media_id) ON TABLE app_public.media_dependencies TO theopenp
 --
 
 GRANT INSERT(child_media_id) ON TABLE app_public.media_dependencies TO theopenpresenter_visitor;
+
+
+--
+-- Name: TABLE media_video_metadata; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT SELECT ON TABLE app_public.media_video_metadata TO theopenpresenter_visitor;
 
 
 --
@@ -4303,23 +4334,6 @@ ALTER DEFAULT PRIVILEGES FOR ROLE theopenpresenter IN SCHEMA public GRANT ALL ON
 --
 
 ALTER DEFAULT PRIVILEGES FOR ROLE theopenpresenter REVOKE ALL ON FUNCTIONS FROM PUBLIC;
-
-
---
--- Name: postgraphile_watch_ddl; Type: EVENT TRIGGER; Schema: -; Owner: -
---
-
-CREATE EVENT TRIGGER postgraphile_watch_ddl ON ddl_command_end
-         WHEN TAG IN ('ALTER AGGREGATE', 'ALTER DOMAIN', 'ALTER EXTENSION', 'ALTER FOREIGN TABLE', 'ALTER FUNCTION', 'ALTER POLICY', 'ALTER SCHEMA', 'ALTER TABLE', 'ALTER TYPE', 'ALTER VIEW', 'COMMENT', 'CREATE AGGREGATE', 'CREATE DOMAIN', 'CREATE EXTENSION', 'CREATE FOREIGN TABLE', 'CREATE FUNCTION', 'CREATE INDEX', 'CREATE POLICY', 'CREATE RULE', 'CREATE SCHEMA', 'CREATE TABLE', 'CREATE TABLE AS', 'CREATE VIEW', 'DROP AGGREGATE', 'DROP DOMAIN', 'DROP EXTENSION', 'DROP FOREIGN TABLE', 'DROP FUNCTION', 'DROP INDEX', 'DROP OWNED', 'DROP POLICY', 'DROP RULE', 'DROP SCHEMA', 'DROP TABLE', 'DROP TYPE', 'DROP VIEW', 'GRANT', 'REVOKE', 'SELECT INTO')
-   EXECUTE FUNCTION postgraphile_watch.notify_watchers_ddl();
-
-
---
--- Name: postgraphile_watch_drop; Type: EVENT TRIGGER; Schema: -; Owner: -
---
-
-CREATE EVENT TRIGGER postgraphile_watch_drop ON sql_drop
-   EXECUTE FUNCTION postgraphile_watch.notify_watchers_drop();
 
 
 --
