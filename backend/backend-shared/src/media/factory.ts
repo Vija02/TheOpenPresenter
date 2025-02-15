@@ -57,7 +57,7 @@ export const createMediaHandler = <T extends OurDataStore>(
 
             await this.store.create(upload);
             try {
-            await this.store.write(file, upload.id, 0);
+              await this.store.write(file, upload.id, 0);
             } catch (error: any) {
               if (error?.Code === "NoSuchUpload") {
                 logger.warn(
@@ -147,6 +147,23 @@ export const createMediaHandler = <T extends OurDataStore>(
         logger.error(
           { error },
           "completeMedia: Failed to complete. Throwing an error",
+        );
+        throw error;
+      }
+    }
+
+    async createDependency(parentMediaId: string, childMediaId: string) {
+      try {
+        await this.pgPool.query(
+          `
+          INSERT INTO app_public.media_dependencies(parent_media_id, child_media_id) values($1, $2)  
+        `,
+          [parentMediaId, childMediaId],
+        );
+      } catch (error) {
+        logger.error(
+          { error },
+          "createDependency: Failed to create media dependency",
         );
         throw error;
       }
