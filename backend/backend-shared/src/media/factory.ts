@@ -38,11 +38,10 @@ export const createMediaHandler = <T extends OurDataStore>(
       originalFileName,
       isUserUploaded,
     }: UploadMediaParam) {
+      const finalFileName = mediaId + "." + fileExtension;
       try {
         return await backOff(
           async () => {
-            const finalFileName = mediaId + "." + fileExtension;
-
             const upload = new Upload({
               id: finalFileName,
               offset: 0,
@@ -56,9 +55,18 @@ export const createMediaHandler = <T extends OurDataStore>(
               },
             });
 
-            // TODO: Handle when file already exists and finished
             await this.store.create(upload);
+            try {
             await this.store.write(file, upload.id, 0);
+            } catch (error: any) {
+              if (error?.Code === "NoSuchUpload") {
+                logger.warn(
+                  { error },
+                  "uploadMedia: File not uploaded but resolving function as normal. This probably happens because the file has already been uploaded.",
+                );
+                return { mediaId, fileExtension, fileName: finalFileName };
+              }
+            }
 
             // Update is_complete flag
             const uuid = toUUID(mediaId as TypeId<string>);
