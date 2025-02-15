@@ -27,6 +27,8 @@ export type OverlayTogglePropTypes = {
   toggler: (_prop: OverlayToggleTogglerFunctionProps) => React.ReactNode;
   /** The Overlay component (Eg: Modal, Drawer) */
   children: React.ReactElement<OverlayToggleComponentProps>;
+  /** If true, rendering of content will defer until the overlay is open */
+  isLazy?: boolean;
 };
 
 /**
@@ -35,6 +37,7 @@ export type OverlayTogglePropTypes = {
  */
 export const OverlayToggle = ({
   toggler,
+  isLazy,
   children,
 }: OverlayTogglePropTypes) => {
   const { isOpen, onToggle, onOpen } = useDisclosure();
@@ -47,12 +50,13 @@ export const OverlayToggle = ({
   return (
     <>
       {toggler({ onOpen, onToggle })}
-      {cloneElement(children, {
-        key,
-        isOpen,
-        onToggle,
-        resetData,
-      })}
+      {(isOpen || !isLazy) &&
+        cloneElement(children, {
+          key,
+          isOpen,
+          onToggle,
+          resetData,
+        })}
     </>
   );
 };

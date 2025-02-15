@@ -224,6 +224,7 @@ const MediaDependencyPanel = ({
 
   return (
     <OverlayToggle
+      isLazy
       toggler={({ onToggle }) => (
         <Box
           cursor="pointer"
