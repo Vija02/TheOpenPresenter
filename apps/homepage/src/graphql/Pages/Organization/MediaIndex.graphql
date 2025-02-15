@@ -6,7 +6,7 @@ query OrganizationMediaIndexPage($slug: String!) {
     medias(orderBy: CREATED_AT_DESC, condition: { isUserUploaded: true }) {
       nodes {
         id
-        ...Media
+        ...MediaWithMediaDependency
       }
     }
   }

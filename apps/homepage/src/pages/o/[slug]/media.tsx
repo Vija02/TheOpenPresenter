@@ -8,18 +8,31 @@ import {
   Grid,
   Heading,
   Link,
+  Modal,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+  ModalOverlay,
+  ModalProps,
   Stack,
   Text,
   VStack,
 } from "@chakra-ui/react";
 import {
-  MediaFragment,
+  MediaWithMediaDependencyFragment,
   useCompleteMediaMutation,
   useDeleteMediaMutation,
+  useMediaDependenciesOfParentQuery,
   useOrganizationMediaIndexPageQuery,
 } from "@repo/graphql";
 import { globalState } from "@repo/lib";
-import { PopConfirm } from "@repo/ui";
+import {
+  OverlayToggle,
+  OverlayToggleComponentProps,
+  PopConfirm,
+} from "@repo/ui";
 import { NextPage } from "next";
 import prettyBytes from "pretty-bytes";
 import { useCallback, useMemo } from "react";
@@ -75,7 +88,7 @@ const EmptyMedia = () => {
   );
 };
 
-const MediaCard = ({ media }: { media: MediaFragment }) => {
+const MediaCard = ({ media }: { media: MediaWithMediaDependencyFragment }) => {
   const { publish } = globalState.modelDataAccess.usePublishAPIChanges({
     token: "page",
   });
@@ -145,6 +158,10 @@ const MediaCard = ({ media }: { media: MediaFragment }) => {
         <Text>{fileSize}</Text>
         <Text fontWeight="bold">Is Complete</Text>
         <Text>{media.isComplete ? "YES" : "NO"}</Text>
+        <MediaDependencyPanel
+          totalCount={media.dependencies.totalCount}
+          parentMediaId={media.id}
+        />
       </Flex>
 
       <Stack
@@ -191,6 +208,82 @@ const MediaCard = ({ media }: { media: MediaFragment }) => {
         </PopConfirm>
       </Stack>
     </Flex>
+  );
+};
+
+const MediaDependencyPanel = ({
+  parentMediaId,
+  totalCount,
+}: {
+  parentMediaId: string;
+  totalCount: number;
+}) => {
+  if (totalCount === 0) {
+    return null;
+  }
+
+  return (
+    <OverlayToggle
+      toggler={({ onToggle }) => (
+        <Box
+          cursor="pointer"
+          onClick={onToggle}
+          flex={1}
+          _hover={{ bg: "gray.100" }}
+        >
+          <Text color="blue.400">{totalCount} dependant file(s)</Text>
+        </Box>
+      )}
+    >
+      <MediaDependencyModal parentMediaId={parentMediaId} />
+    </OverlayToggle>
+  );
+};
+
+export type MediaDependencyModalPropTypes = Omit<
+  ModalProps,
+  "isOpen" | "onClose" | "children"
+> &
+  Partial<OverlayToggleComponentProps> & { parentMediaId: string };
+
+const MediaDependencyModal = ({
+  isOpen,
+  onToggle,
+  parentMediaId,
+  ...props
+}: MediaDependencyModalPropTypes) => {
+  const { data } = useMediaDependenciesOfParentQuery({
+    variables: { parentMediaId },
+  });
+
+  return (
+    <Modal
+      size="lg"
+      isOpen={isOpen ?? false}
+      onClose={onToggle ?? (() => {})}
+      {...props}
+    >
+      <ModalOverlay />
+      <ModalContent>
+        <ModalHeader>Dependencies</ModalHeader>
+        <ModalCloseButton />
+        <ModalBody>
+          <Grid
+            gridTemplateColumns="repeat(auto-fill, minmax(200px, 1fr) )"
+            gap={2}
+            w="100%"
+          >
+            {data?.mediaDependencies?.nodes.map((mediaDependency) => (
+              <MediaCard
+                key={mediaDependency.childMedia?.id}
+                media={mediaDependency.childMedia!}
+              />
+            ))}
+          </Grid>
+        </ModalBody>
+        <ModalFooter />
+      </ModalContent>
+    </Modal>
   );
 };
 
