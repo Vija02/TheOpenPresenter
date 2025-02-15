@@ -1,9 +1,4 @@
-import {
-  Box,
-  Button,
-  Grid,
-  Text
-} from "@chakra-ui/react";
+import { Box, Button, Grid, Text } from "@chakra-ui/react";
 import { PluginScaffold, VolumeBar } from "@repo/ui";
 import { FaStop } from "react-icons/fa";
 
@@ -30,7 +25,7 @@ const WorshipPadsRemote = () => {
               mutableRendererData.volume = v;
             }}
           />
-          <Box p={3} width="100%">
+          <Box p={3} width="100%" overflow="auto">
             <Box>
               <Grid
                 maxW="1200px"

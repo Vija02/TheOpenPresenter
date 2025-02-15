@@ -104,7 +104,7 @@ const RadioRemote = () => {
             }}
           />
 
-          <Stack flex={1} dir="column" p={3}>
+          <Stack flex={1} dir="column" p={3} overflow="auto">
             {radios.map((radio, i) => (
               <Stack key={i} direction="row">
                 <Button
