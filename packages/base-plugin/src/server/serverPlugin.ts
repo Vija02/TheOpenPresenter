@@ -1,5 +1,7 @@
 import { media } from "@repo/backend-shared";
+import { mediaIdFromUUID } from "@repo/lib";
 import { Express, RequestHandler } from "express";
+import { Pool } from "pg";
 import stream from "stream";
 
 import { SceneCategories } from "../types";
@@ -249,6 +251,45 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
       return { success: false };
     }
   }
+
+  public media = {
+    queueVideoTranscode: async (mediaUUID: string) => {
+      const pool = this.app.get("rootPgPool") as Pool;
+      await pool.query(
+        `
+        select graphile_worker.add_job(
+          'medias__transcodeVideoToHLS',
+          payload := $1::json,
+          queue_name := $2
+        );  
+      `,
+        [JSON.stringify({ id: mediaUUID }), `video_transcode_${mediaUUID}`],
+      );
+    },
+    getVideoMetadata: async (mediaUUID: string) => {
+      const pool = this.app.get("rootPgPool") as Pool;
+      const {
+        rows: [row],
+      } = await pool.query(
+        `
+        select * from app_public.media_video_metadata where video_media_id = $1
+      `,
+        [mediaUUID],
+      );
+      return row
+        ? {
+            videoMediaId: row.video_media_id as string,
+            hlsMediaId: row.hls_media_id as string,
+            thumbnailMediaId: row.thumbnail_media_id as string,
+            // Debt: What if we change the file extension?
+            hlsMediaName: mediaIdFromUUID(row.hls_media_id as string) + ".m3u8",
+            thumbnailMediaName:
+              mediaIdFromUUID(row.thumbnail_media_id as string) + ".jpg",
+            duration: row.duration as number,
+          }
+        : undefined;
+    },
+  };
 }
 
 // Class to access the data in ServerPluginApi
