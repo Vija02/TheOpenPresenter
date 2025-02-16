@@ -251,17 +251,23 @@ export class OurS3Store extends S3Store implements OurDataStore {
 
     logger.info({ id, isComplete }, "Deleting file...");
 
-    if (uploadId) {
-      await this.client
-        .abortMultipartUpload({
-          Bucket: this.bucket,
-          Key: id,
-          UploadId: uploadId,
-        })
-        .catch((e) => {
-          logger.warn({ id, e }, "Failed to abort multipart upload");
-          /* ignore */
-        });
+    if (!isComplete) {
+      if (uploadId) {
+        await this.client
+          .abortMultipartUpload({
+            Bucket: this.bucket,
+            Key: id,
+            UploadId: uploadId,
+          })
+          .catch((e) => {
+            logger.error({ id, e }, "Failed to abort multipart upload");
+            /* ignore */
+          });
+      }
+      await fsProm.rm(this.getIncompletePartPath(id)).catch((e) => {
+        logger.error({ id, e }, "Failed to delete local incomplete part");
+        /* ignore */
+      });
     }
 
     await this.client
@@ -273,11 +279,6 @@ export class OurS3Store extends S3Store implements OurDataStore {
         logger.warn({ id, e }, "Failed to delete object from bucket");
         /* ignore */
       });
-
-    await fsProm.rm(this.getIncompletePartPath(id)).catch((e) => {
-      logger.warn({ id, e }, "Failed to delete local incomplete part");
-      /* ignore */
-    });
 
     const splittedKey = id.split(".");
     const mediaId = splittedKey[0];
