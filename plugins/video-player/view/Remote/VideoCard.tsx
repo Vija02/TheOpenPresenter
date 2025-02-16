@@ -1,9 +1,9 @@
-import { Box, Button, Flex, Stack, Text } from "@chakra-ui/react";
+import { Box, Button, Flex, Img, Stack, Text } from "@chakra-ui/react";
 import { useCallback, useMemo } from "react";
 import { FaPause, FaPlay } from "react-icons/fa";
 import { Scrubber } from "react-scrubber";
 
-import { Video } from "../../src/types";
+import { InternalVideo, Video } from "../../src/types";
 import { calculateActualSeek } from "../calculateActualSeek";
 import { usePluginAPI } from "../pluginApi";
 import { useSeek } from "./useSeek";
@@ -112,6 +112,14 @@ const VideoCard = ({ video }: { video: Video }) => {
         borderBottom={0}
         bg={color}
       >
+        {video.isInternalVideo &&
+          (video as InternalVideo).thumbnailMediaName && (
+            <Img
+              src={pluginApi.media.getUrl(
+                (video as InternalVideo).thumbnailMediaName!,
+              )}
+            />
+          )}
         <Text fontWeight="bold" color="white" wordBreak="break-all">
           {video.metadata.title ?? video.url}
         </Text>

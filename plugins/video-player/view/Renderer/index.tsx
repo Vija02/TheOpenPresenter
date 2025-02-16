@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ReactPlayer from "react-player/lazy";
 
+import { InternalVideo } from "../../src";
 import { calculateActualSeek } from "../calculateActualSeek";
 import { usePluginAPI } from "../pluginApi";
 
@@ -31,6 +32,8 @@ const VideoPlayerRendererInner = () => {
 const Player = () => {
   const pluginApi = usePluginAPI();
 
+  const [currentVideoUrl, setCurrentVideoUrl] = useState<string | null>(null);
+
   const [ready, setReady] = useState(false);
 
   const ref = useRef<ReactPlayer>(null);
@@ -48,6 +51,33 @@ const Player = () => {
     () => videos.find((vid) => vid.id === currentPlayingVideo.videoId),
     [currentPlayingVideo.videoId, videos],
   );
+
+  useEffect(() => {
+    let next: string;
+
+    if (currentVideo?.url) {
+      next = currentVideo.url;
+
+      // Handle upgrade to HLS
+      if (currentVideo.isInternalVideo) {
+        const vid = currentVideo as InternalVideo;
+
+        if (vid.hlsMediaName) {
+          // We only want to upgrade if it's first play or during pause
+          // TODO: Make this to test locally instead
+          if (currentVideoUrl !== currentVideo.url || !isPlaying) {
+            next = pluginApi.media.getUrl(vid.hlsMediaName);
+          }
+        }
+      }
+    } else {
+      return;
+    }
+
+    if (next && currentVideoUrl !== next) {
+      setCurrentVideoUrl(next);
+    }
+  }, [currentVideo, currentVideoUrl, isPlaying, pluginApi.media]);
 
   const canPlay = pluginApi.audio.useCanPlay({ skipCheck: !isPlaying });
 
@@ -83,6 +113,10 @@ const Player = () => {
     // Run this anytime UID is updated
     currentPlayingVideo.uid,
   ]);
+
+  if (!currentVideoUrl) {
+    return null;
+  }
 
   return (
     <ReactPlayer
@@ -122,7 +156,7 @@ const Player = () => {
         pluginApi.log.error({ error }, "Error on Video playback");
       }}
       onBufferEnd={() => setVideoSeek()}
-      url={currentVideo?.url}
+      url={currentVideoUrl}
       config={{ youtube: { playerVars: { controls: 0 } } }}
     />
   );
