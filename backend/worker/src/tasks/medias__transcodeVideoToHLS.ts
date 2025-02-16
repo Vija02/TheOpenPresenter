@@ -406,7 +406,7 @@ const task: Task = async (inPayload, { withPgClient }) => {
           folder: mediaDir,
         });
       const thumbnailFilePath = path.join(mediaDir, thumbnailMediaName);
-      const thumbnailFileSize = fs.statSync(masterFilePath).size;
+      const thumbnailFileSize = fs.statSync(thumbnailFilePath).size;
       await mediaHandler.uploadMedia({
         file: createReadStream(thumbnailFilePath),
         userId: mediaRow.user_id,
