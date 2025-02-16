@@ -25,9 +25,11 @@ const isTestEnv = typeof vitest !== "undefined";
 
 const logger = pino(
   {
-    // TODO: Make configurable
+    // TODO: Make level configurable
     level: "trace",
+    serializers: pino.stdSerializers,
     browser: {
+      serialize: true,
       write: ({ msg, time, level, ...attributes }: any) => {
         if (window.__otelLogger) {
           window.__otelLogger.emit({
