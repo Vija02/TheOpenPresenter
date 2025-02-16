@@ -53,6 +53,10 @@ const UploadVideoModal = ({
       id: typeidUnboxed("video"),
       metadata: {},
       url: pluginApi.media.getUrl(fileName ?? ""),
+      isInternalVideo: true,
+      hlsMediaName: null,
+      thumbnailMediaName: null,
+      transcodeRequested: false,
     });
     onToggle?.();
     resetData?.();

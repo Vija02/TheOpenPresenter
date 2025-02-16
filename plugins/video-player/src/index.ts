@@ -1,11 +1,13 @@
 import {
   ObjectToTypedMap,
   Plugin,
+  PluginContext,
   RegisterOnRendererDataLoaded,
   ServerPluginApi,
   TRPCObject,
 } from "@repo/base-plugin/server";
-import { TypedArray, TypedMap, YjsWatcher } from "@repo/lib";
+import { TypedArray, TypedMap, YjsWatcher, extractMediaName } from "@repo/lib";
+import { logger as rawLogger } from "@repo/observability";
 import { proxy } from "valtio";
 import { bind } from "valtio-yjs";
 import * as Y from "yjs";
@@ -17,9 +19,13 @@ import {
   remoteWebComponentTag,
   rendererWebComponentTag,
 } from "./consts";
-import { PluginBaseData, PluginRendererData } from "./types";
+import { InternalVideo, PluginBaseData, PluginRendererData } from "./types";
+
+// TODO: HACK: Remove this soon
+let hack_serverPluginApi: ServerPluginApi;
 
 export const init = (serverPluginApi: ServerPluginApi) => {
+  hack_serverPluginApi = serverPluginApi;
   serverPluginApi.registerCSPDirective(pluginName, {
     "script-src": [
       "https://www.youtube.com",
@@ -73,9 +79,84 @@ const onPluginDataCreated = (
 
 const onPluginDataLoaded = (
   pluginInfo: ObjectToTypedMap<Plugin<PluginBaseData>>,
+  context: PluginContext,
 ) => {
+  const logger = rawLogger.child({
+    context,
+    plugin: pluginInfo.get("plugin"),
+    pluginData: pluginInfo.get("pluginData")?.toJSON(),
+  });
+
   const data = proxy(pluginInfo.toJSON() as Plugin<PluginBaseData>);
   const unbind = bind(data, pluginInfo as any);
+
+  const serverPluginApi = hack_serverPluginApi;
+
+  const checkTranscoded = async (videoUUID: string) => {
+    // DEBT: Change to listen rather than polling
+    return await new Promise<
+      NonNullable<
+        Awaited<ReturnType<typeof serverPluginApi.media.getVideoMetadata>>
+      >
+    >(async (resolve, reject) => {
+      try {
+        let metadata = await serverPluginApi.media.getVideoMetadata(videoUUID);
+
+        if (!metadata) {
+          const interval = setInterval(async () => {
+            metadata = await serverPluginApi.media.getVideoMetadata(videoUUID);
+
+            if (metadata) {
+              clearInterval(interval);
+              resolve(metadata);
+            }
+          }, 3000);
+        } else {
+          resolve(metadata);
+        }
+      } catch (e) {
+        reject(e);
+      }
+    });
+  };
+
+  const run = async () => {
+    // Check if HLS
+    for (let i = 0; i < data.pluginData.videos.length; i++) {
+      const video = data.pluginData.videos[i]!;
+
+      if (video.isInternalVideo) {
+        const internalVideo = video as InternalVideo;
+        const splittedUrl = internalVideo.url.split("/");
+        const videoMediaName = splittedUrl[splittedUrl.length - 1]!;
+        const { uuid: videoUUID } = extractMediaName(videoMediaName);
+
+        // Request transcode if not yet
+        if (!internalVideo.transcodeRequested) {
+          logger.trace({ videoUUID }, "Queuing video transcode");
+          await serverPluginApi.media.queueVideoTranscode(videoUUID);
+          (data.pluginData.videos[i] as InternalVideo).transcodeRequested =
+            true;
+        }
+
+        // If not yet done, let's check
+        if (internalVideo.transcodeRequested && !internalVideo.hlsMediaName) {
+          logger.trace({ videoUUID }, "Checking transcode status");
+          checkTranscoded(videoUUID).then((metadata) => {
+            (data.pluginData.videos[i] as InternalVideo).hlsMediaName =
+              metadata.hlsMediaName;
+            (data.pluginData.videos[i] as InternalVideo).thumbnailMediaName =
+              metadata.thumbnailMediaName;
+            (data.pluginData.videos[i] as InternalVideo).metadata.duration =
+              metadata.duration;
+          });
+        }
+      }
+    }
+  };
+
+  // TODO: Watch newly added videos
+  run();
 
   return {
     dispose: () => {
