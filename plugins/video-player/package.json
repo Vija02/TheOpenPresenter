@@ -19,6 +19,7 @@
     "@r2wc/react-to-web-component": "^2.0.3",
     "@repo/base-plugin": "*",
     "@repo/lib": "*",
+    "@repo/observability": "*",
     "@repo/ui": "*",
     "@tanstack/react-query": "^5.62.3",
     "@trpc/client": "^11.0.0-rc.657",
@@ -49,6 +50,7 @@
     "@repo/prettier-config": "*",
     "@repo/typescript-config": "*",
     "@vitejs/plugin-react-swc": "^3.7.2",
+    "concurrently": "^9.1.2",
     "eslint": "^8.57.1",
     "pkgroll": "^2.5.1",
     "vite": "5.4.11"
