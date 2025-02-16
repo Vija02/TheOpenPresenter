@@ -13,7 +13,7 @@ export const extractMediaName = (mediaName: string) => {
 };
 
 export const mediaIdFromUUID = (uuid: string) => {
-  return fromUUID("media", uuid);
+  return fromUUID(uuid, "media");
 };
 
 export const constructMediaName = (mediaId: string, extension: string) => {
