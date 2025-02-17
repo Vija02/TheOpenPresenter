@@ -13,6 +13,7 @@ export type Video = {
     title?: string;
     // In seconds
     duration?: number;
+    thumbnailUrl?: string;
   };
 };
 // For internal video, we can provide a lot more info

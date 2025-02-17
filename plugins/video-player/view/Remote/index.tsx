@@ -112,10 +112,14 @@ const VideoPlayerRemote = () => {
             <YoutubeSearchModal
               {...disclosureProps}
               searchQuery={input}
-              onVideoSelect={(videoId) => {
+              onVideoSelect={(videoId, metadata) => {
                 mutableSceneData.pluginData.videos.push({
                   id: typeidUnboxed("video"),
-                  metadata: {},
+                  metadata: {
+                    title: metadata.title,
+                    duration: metadata.duration,
+                    thumbnailUrl: metadata.thumbnailUrl,
+                  },
                   url: `https://www.youtube.com/watch?v=${videoId}`,
                 });
                 setIsError(false);

@@ -1,11 +1,15 @@
-import { Box, Button, Flex, Img, Stack, Text } from "@chakra-ui/react";
+import { Box, Button, Flex, Link, Stack, Text } from "@chakra-ui/react";
+import { LogoFavicon } from "@repo/ui";
 import { useCallback, useMemo } from "react";
-import { FaPause, FaPlay } from "react-icons/fa";
+import { FaPause, FaPlay, FaYoutube } from "react-icons/fa";
+import { MdHls } from "react-icons/md";
+import { VscDebugRestart } from "react-icons/vsc";
 import { Scrubber } from "react-scrubber";
 
 import { InternalVideo, Video } from "../../src/types";
 import { calculateActualSeek } from "../calculateActualSeek";
 import { usePluginAPI } from "../pluginApi";
+import { VideoThumbnail } from "./VideoThumbnail";
 import { useSeek } from "./useSeek";
 
 // TODO: Handle if no duration
@@ -98,33 +102,64 @@ const VideoCard = ({ video }: { video: Video }) => {
     [mutableRendererData, video.id],
   );
 
-  const color = useMemo(
-    () => (currentVideoIsPlaying ? "rgb(136, 53, 53)" : "#2F2F2F"),
+  const border = useMemo(
+    () =>
+      currentVideoIsPlaying
+        ? "1px solid rgb(255, 0, 0)"
+        : "1px solid rgba(0, 0, 0, 0.2)",
     [currentVideoIsPlaying],
   );
 
   return (
-    <Box>
-      <Box
-        p={1}
-        border="1px solid"
-        borderColor={color}
-        borderBottom={0}
-        bg={color}
-      >
-        {video.isInternalVideo &&
-          (video as InternalVideo).thumbnailMediaName && (
-            <Img
-              src={pluginApi.media.getUrl(
-                (video as InternalVideo).thumbnailMediaName!,
-              )}
-            />
-          )}
-        <Text fontWeight="bold" color="white" wordBreak="break-all">
+    <Stack direction="column" boxShadow="base" p={2} border={border}>
+      <Stack direction={{ base: "column", md: "row" }} spacing={4}>
+        <VideoThumbnail video={video} />
+        <Stack direction="column">
+          <Text fontSize="lg" fontWeight="bold" wordBreak="break-all">
           {video.metadata.title ?? video.url}
         </Text>
-      </Box>
-      <Box p={2} alignItems="center" border="1px solid" borderColor={color}>
+          <Stack direction="row">
+            {!video.isInternalVideo ? (
+              <Link isExternal href={video.url}>
+                <FaYoutube color="red" fontSize={24} />
+              </Link>
+            ) : (
+              <Link isExternal href={video.url}>
+                <Flex
+                  alignItems="center"
+                  justifyContent="center"
+                  bg="black"
+                  width="24px"
+                  height="24px"
+                  p="2px"
+                  borderRadius="sm"
+                >
+                  <LogoFavicon />
+                </Flex>
+              </Link>
+            )}
+            {video.isInternalVideo && (video as InternalVideo).hlsMediaName && (
+              <MdHls fontSize={24} />
+            )}
+          </Stack>
+          <Stack direction="row">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                onSeekEnd(0);
+                if (!currentVideoIsPlaying) {
+                  onTogglePlay();
+                }
+              }}
+            >
+              <VscDebugRestart />
+            </Button>
+          </Stack>
+        </Stack>
+      </Stack>
+
+      <Box alignItems="center">
         <Stack direction="row" w="100%" gap={3}>
           <Button
             size="md"
@@ -147,7 +182,7 @@ const VideoCard = ({ video }: { video: Video }) => {
           </Flex>
         </Stack>
       </Box>
-    </Box>
+    </Stack>
   );
 };
 

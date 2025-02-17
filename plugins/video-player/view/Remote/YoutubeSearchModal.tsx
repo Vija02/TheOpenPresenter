@@ -1,6 +1,5 @@
 import {
   Box,
-  Center,
   Grid,
   Image,
   Modal,
@@ -15,7 +14,7 @@ import {
   Stack,
   Text,
 } from "@chakra-ui/react";
-import { LoadingInline, OverlayToggleComponentProps } from "@repo/ui";
+import { OverlayToggleComponentProps } from "@repo/ui";
 import { FaYoutube } from "react-icons/fa";
 import type { YTNodes } from "youtubei.js";
 
@@ -27,8 +26,14 @@ export type YoutubeSearchModalPropTypes = Omit<
 > &
   Partial<OverlayToggleComponentProps> & {
     searchQuery: string;
-    onVideoSelect: (videoId: string) => void;
+    onVideoSelect: (videoId: string, metadata: VideoMetaData) => void;
   };
+
+type VideoMetaData = {
+  title?: string;
+  thumbnailUrl?: string;
+  duration?: number;
+};
 
 const YoutubeSearchModal = ({
   isOpen,
@@ -45,8 +50,8 @@ const YoutubeSearchModal = ({
     { enabled: isOpen },
   );
 
-  const onSelect = (videoId: string) => {
-    onVideoSelect(videoId);
+  const onSelect = (videoId: string, metadata: VideoMetaData) => {
+    onVideoSelect(videoId, metadata);
     onToggle?.();
     resetData?.();
   };
@@ -103,7 +108,14 @@ const YoutubeSearchModal = ({
                       pb={4}
                       cursor="pointer"
                       _hover={{ bg: "#f4f4f4" }}
-                      onClick={() => onSelect(res.id)}
+                      onClick={() =>
+                        onSelect(res.id, {
+                          title: res.title.text,
+                          thumbnailUrl:
+                            res.thumbnails[res.thumbnails.length - 1]?.url,
+                          duration: res.duration.seconds,
+                        })
+                      }
                     >
                       <Box position="relative">
                         <Image
