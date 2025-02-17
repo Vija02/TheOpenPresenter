@@ -4,6 +4,7 @@ export * from "./DeferredLoad";
 export * from "./Error";
 export * from "./Loading";
 export * from "./Logo";
+export * from "./LogoFavicon";
 export * from "./MotionBox";
 export * from "./OverlayToggle";
 export * from "./theme";
