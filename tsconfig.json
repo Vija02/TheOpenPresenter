@@ -13,6 +13,7 @@
 
     { "path": "plugins/google-slides" },
     { "path": "plugins/lyrics-presenter" },
-    { "path": "plugins/simple-image" }
+    { "path": "plugins/simple-image" },
+    { "path": "plugins/embed" },
   ]
 }

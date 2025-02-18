@@ -7088,6 +7088,43 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@repo/plugin-embed@workspace:plugins/embed":
+  version: 0.0.0-use.local
+  resolution: "@repo/plugin-embed@workspace:plugins/embed"
+  dependencies:
+    "@chakra-ui/react": "npm:^2.10.4"
+    "@emotion/react": "npm:^11.13.5"
+    "@emotion/styled": "npm:^11.13.5"
+    "@r2wc/react-to-web-component": "npm:^2.0.3"
+    "@repo/base-plugin": "npm:*"
+    "@repo/eslint-config": "npm:*"
+    "@repo/lib": "npm:*"
+    "@repo/prettier-config": "npm:*"
+    "@repo/typescript-config": "npm:*"
+    "@repo/ui": "npm:*"
+    "@tanstack/react-query": "npm:^5.62.3"
+    "@trpc/client": "npm:^11.0.0-rc.657"
+    "@trpc/react-query": "npm:^11.0.0-rc.657"
+    "@trpc/server": "npm:^11.0.0-rc.657"
+    "@types/react": "npm:^19.0.0"
+    "@types/react-dom": "npm:^19.0.0"
+    "@uppy/core": "npm:^4.3.0"
+    "@uppy/dashboard": "npm:^4.1.3"
+    "@uppy/react": "npm:^4.0.4"
+    "@uppy/tus": "npm:^4.1.5"
+    "@vitejs/plugin-react-swc": "npm:^3.7.2"
+    concurrently: "npm:^9.1.2"
+    eslint: "npm:^8.57.1"
+    framer-motion: "npm:^11.13.1"
+    pkgroll: "npm:^2.5.1"
+    react: "npm:^19.0.0"
+    react-dom: "npm:^19.0.0"
+    react-icons: "npm:^5.4.0"
+    vite: "npm:5.4.11"
+    yjs: "npm:^13.6.20"
+  languageName: unknown
+  linkType: soft
+
 "@repo/plugin-google-slides@workspace:plugins/google-slides":
   version: 0.0.0-use.local
   resolution: "@repo/plugin-google-slides@workspace:plugins/google-slides"
