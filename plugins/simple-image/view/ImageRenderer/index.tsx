@@ -10,6 +10,7 @@ const ImageRenderer = () => {
 
   return images.map((imgSrc, i) => (
     <div
+      key={imgSrc}
       style={{
         position: "absolute",
         width: "100vw",
@@ -17,7 +18,7 @@ const ImageRenderer = () => {
         opacity: imgIndex === i ? 1 : 0,
       }}
     >
-      <ImageRenderView key={imgSrc} src={imgSrc} />
+      <ImageRenderView src={imgSrc} />
     </div>
   ));
 };
