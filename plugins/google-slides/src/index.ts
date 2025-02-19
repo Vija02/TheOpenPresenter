@@ -218,97 +218,102 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
           async ({ input: { pluginId, presentationId, token }, ctx }) => {
             const log = logger.child({ pluginId, presentationId });
 
-            // TODO: Validation
-            const loadedPlugin = loadedPlugins[pluginId]!;
-            const loadedContextData = loadedContext[pluginId]!;
-            const loadedYjs = loadedYjsData[pluginId]!;
+            try {
+              // TODO: Validation
+              const loadedPlugin = loadedPlugins[pluginId]!;
+              const loadedContextData = loadedContext[pluginId]!;
+              const loadedYjs = loadedYjsData[pluginId]!;
 
-            const presentationDataRes = await axios(
-              `https://slides.googleapis.com/v1/presentations/${presentationId}`,
-              {
-                headers: { Authorization: `Bearer ${token}` },
-              },
-            );
-
-            const pageIds = presentationDataRes.data.slides.map(
-              (page: any) => page.objectId,
-            );
-
-            const htmlData = await axios(
-              `https://docs.google.com/presentation/d/${presentationId}/embed?rm=minimal`,
-              {
-                headers: { Authorization: `Bearer ${token}` },
-              },
-            );
-
-            if (loadedPlugin.pluginData.thumbnailLinks.length > 0) {
-              await Promise.all(
-                loadedPlugin.pluginData.thumbnailLinks.map((mediaId) =>
-                  serverPluginApi.deleteMedia(mediaId).catch((err) => {
-                    log.error({ err }, "Failed to delete media");
-                  }),
-                ),
+              const presentationDataRes = await axios(
+                `https://slides.googleapis.com/v1/presentations/${presentationId}`,
+                {
+                  headers: { Authorization: `Bearer ${token}` },
+                },
               );
-            }
 
-            loadedYjs.doc?.transact(() => {
-              loadedPlugin.pluginData.fetchId = typeidUnboxed("fetch");
-              loadedPlugin.pluginData.presentationId = presentationId;
-              loadedPlugin.pluginData.pageIds = pageIds;
-              loadedPlugin.pluginData.thumbnailLinks = new Array(
-                pageIds.length,
-              ).fill("");
-              loadedPlugin.pluginData.html = processHtml(htmlData.data);
-            });
+              const pageIds = presentationDataRes.data.slides.map(
+                (page: any) => page.objectId,
+              );
 
-            log.info("Downloading PDF");
-            const pdfRes = await axios(
-              `https://docs.google.com/feeds/download/presentations/Export?id=${presentationId}&exportFormat=pdf`,
-              {
-                headers: { Authorization: `Bearer ${token}` },
-                responseType: "arraybuffer",
-              },
-            );
-            const pdfBuffer = Buffer.from(pdfRes.data);
-            const uploadPdfPromise = serverPluginApi.uploadMedia(
-              pdfBuffer,
-              "pdf",
-              {
-                organizationId: loadedContextData.organizationId,
-                userId: ctx.userId,
-              },
-            );
+              const htmlData = await axios(
+                `https://docs.google.com/presentation/d/${presentationId}/embed?rm=minimal`,
+                {
+                  headers: { Authorization: `Bearer ${token}` },
+                },
+              );
 
-            log.info("Downloaded. Size: " + pdfBuffer.length);
+              if (loadedPlugin.pluginData.thumbnailLinks.length > 0) {
+                await Promise.all(
+                  loadedPlugin.pluginData.thumbnailLinks.map((mediaId) =>
+                    serverPluginApi.deleteMedia(mediaId).catch((err) => {
+                      log.error({ err }, "Failed to delete media");
+                    }),
+                  ),
+                );
+              }
 
-            log.info("Converting...");
-            const output = await input(pdfBuffer, {
-              format: "jpeg",
-            }).output();
-            log.info("Convert done, uploading...");
+              loadedYjs.doc?.transact(() => {
+                loadedPlugin.pluginData.fetchId = typeidUnboxed("fetch");
+                loadedPlugin.pluginData.presentationId = presentationId;
+                loadedPlugin.pluginData.pageIds = pageIds;
+                loadedPlugin.pluginData.thumbnailLinks = new Array(
+                  pageIds.length,
+                ).fill("");
+                loadedPlugin.pluginData.html = processHtml(htmlData.data);
+              });
 
-            const uploadedPdf = await uploadPdfPromise;
-
-            // DEBT: Make this runnable somewhere else
-            // The problem is, if that's the case then we'll need to store the token
-            // TODO: Problem if we run this again while still running
-            output.forEach(async (img, i) => {
-              const uploadedMedia = await serverPluginApi.uploadMedia(
-                img,
-                "jpg",
+              log.info("Downloading PDF");
+              const pdfRes = await axios(
+                `https://docs.google.com/feeds/download/presentations/Export?id=${presentationId}&exportFormat=pdf`,
+                {
+                  headers: { Authorization: `Bearer ${token}` },
+                  responseType: "arraybuffer",
+                },
+              );
+              const pdfBuffer = Buffer.from(pdfRes.data);
+              const uploadPdfPromise = serverPluginApi.uploadMedia(
+                pdfBuffer,
+                "pdf",
                 {
                   organizationId: loadedContextData.organizationId,
                   userId: ctx.userId,
-                  parentMediaIdOrUUID: uploadedPdf.mediaId,
                 },
               );
-              loadedPlugin.pluginData.thumbnailLinks[i] =
-                uploadedMedia.fileName;
-            });
 
-            log.info("Uploading done");
+              log.info("Downloaded. Size: " + pdfBuffer.length);
 
-            return {};
+              log.info("Converting...");
+              const output = await input(pdfBuffer, {
+                format: "jpeg",
+              }).output();
+              log.info("Convert done, uploading...");
+
+              const uploadedPdf = await uploadPdfPromise;
+
+              // DEBT: Make this runnable somewhere else
+              // The problem is, if that's the case then we'll need to store the token
+              // TODO: Problem if we run this again while still running
+              output.forEach(async (img, i) => {
+                const uploadedMedia = await serverPluginApi.uploadMedia(
+                  img,
+                  "jpg",
+                  {
+                    organizationId: loadedContextData.organizationId,
+                    userId: ctx.userId,
+                    parentMediaIdOrUUID: uploadedPdf.mediaId,
+                  },
+                );
+                loadedPlugin.pluginData.thumbnailLinks[i] =
+                  uploadedMedia.fileName;
+              });
+
+              log.info("Uploading done");
+
+              return {};
+            } catch (err) {
+              logger.error({ err }, "Failed to select slide");
+              throw err;
+            }
           },
         ),
     },
