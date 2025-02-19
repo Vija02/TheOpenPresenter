@@ -5,8 +5,10 @@ import {
   ServerPluginApi,
   TRPCObject,
 } from "@repo/base-plugin/server";
+import { logger } from "@repo/observability";
 import axios from "axios";
 import { createProxyMiddleware } from "http-proxy-middleware";
+import { input } from "node-pdftocairo";
 import { typeidUnboxed } from "typeid-js";
 import { proxy } from "valtio";
 import { bind } from "valtio-yjs";
@@ -214,6 +216,8 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
         )
         .mutation(
           async ({ input: { pluginId, presentationId, token }, ctx }) => {
+            const log = logger.child({ pluginId, presentationId });
+
             // TODO: Validation
             const loadedPlugin = loadedPlugins[pluginId]!;
             const loadedContextData = loadedContext[pluginId]!;
@@ -240,7 +244,9 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
             if (loadedPlugin.pluginData.thumbnailLinks.length > 0) {
               await Promise.all(
                 loadedPlugin.pluginData.thumbnailLinks.map((mediaId) =>
-                  serverPluginApi.deleteMedia(mediaId),
+                  serverPluginApi.deleteMedia(mediaId).catch((err) => {
+                    log.error({ err }, "Failed to delete media");
+                  }),
                 ),
               );
             }
@@ -249,38 +255,58 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
               loadedPlugin.pluginData.fetchId = typeidUnboxed("fetch");
               loadedPlugin.pluginData.presentationId = presentationId;
               loadedPlugin.pluginData.pageIds = pageIds;
-              loadedPlugin.pluginData.thumbnailLinks = [];
+              loadedPlugin.pluginData.thumbnailLinks = new Array(
+                pageIds.length,
+              ).fill("");
               loadedPlugin.pluginData.html = processHtml(htmlData.data);
             });
+
+            log.info("Downloading PDF");
+            const pdfRes = await axios(
+              `https://docs.google.com/feeds/download/presentations/Export?id=${presentationId}&exportFormat=pdf`,
+              {
+                headers: { Authorization: `Bearer ${token}` },
+                responseType: "arraybuffer",
+              },
+            );
+            const pdfBuffer = Buffer.from(pdfRes.data);
+            const uploadPdfPromise = serverPluginApi.uploadMedia(
+              pdfBuffer,
+              "pdf",
+              {
+                organizationId: loadedContextData.organizationId,
+                userId: ctx.userId,
+              },
+            );
+
+            log.info("Downloaded. Size: " + pdfBuffer.length);
+
+            log.info("Converting...");
+            const output = await input(pdfBuffer, {
+              format: "jpeg",
+            }).output();
+            log.info("Convert done, uploading...");
+
+            const uploadedPdf = await uploadPdfPromise;
 
             // DEBT: Make this runnable somewhere else
             // The problem is, if that's the case then we'll need to store the token
             // TODO: Problem if we run this again while still running
-            for (const pageId of pageIds) {
-              const thumbnailDataRes = await axios(
-                `https://slides.googleapis.com/v1/presentations/${presentationId}/pages/${pageId}/thumbnail?thumbnailProperties.thumbnailSize=SMALL`,
-                {
-                  headers: { Authorization: `Bearer ${token}` },
-                },
-              );
-
-              const picture = await axios(thumbnailDataRes.data.contentUrl, {
-                responseType: "arraybuffer",
-              });
-
+            output.forEach(async (img, i) => {
               const uploadedMedia = await serverPluginApi.uploadMedia(
-                picture.data,
-                "png",
+                img,
+                "jpg",
                 {
                   organizationId: loadedContextData.organizationId,
                   userId: ctx.userId,
+                  parentMediaIdOrUUID: uploadedPdf.mediaId,
                 },
               );
+              loadedPlugin.pluginData.thumbnailLinks[i] =
+                uploadedMedia.fileName;
+            });
 
-              loadedPlugin.pluginData.thumbnailLinks.push(
-                uploadedMedia.fileName,
-              );
-            }
+            log.info("Uploading done");
 
             return {};
           },
