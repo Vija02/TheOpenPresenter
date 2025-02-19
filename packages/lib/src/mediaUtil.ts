@@ -23,3 +23,9 @@ export const constructMediaName = (mediaId: string, extension: string) => {
 export const uuidFromMediaId = (mediaId: string) => {
   return toUUID(mediaId as TypeId<string>);
 };
+
+export const uuidFromMediaIdOrUUID = (mediaIdOrUUID: string) => {
+  return mediaIdOrUUID.startsWith("media")
+    ? toUUID(mediaIdOrUUID as TypeId<string>)
+    : mediaIdOrUUID;
+};

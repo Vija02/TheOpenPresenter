@@ -1,3 +1,4 @@
+import { uuidFromMediaIdOrUUID } from "@repo/lib";
 import { logger } from "@repo/observability";
 import { Upload } from "@tus/server";
 import { backOff } from "exponential-backoff";
@@ -152,13 +153,19 @@ export const createMediaHandler = <T extends OurDataStore>(
       }
     }
 
-    async createDependency(parentMediaId: string, childMediaId: string) {
+    async createDependency(
+      parentMediaIdOrUUID: string,
+      childMediaIdOrUUID: string,
+    ) {
       try {
         await this.pgPool.query(
           `
           INSERT INTO app_public.media_dependencies(parent_media_id, child_media_id) values($1, $2)  
         `,
-          [parentMediaId, childMediaId],
+          [
+            uuidFromMediaIdOrUUID(parentMediaIdOrUUID),
+            uuidFromMediaIdOrUUID(childMediaIdOrUUID),
+          ],
         );
       } catch (error: any) {
         if (error?.code === "23505") {
