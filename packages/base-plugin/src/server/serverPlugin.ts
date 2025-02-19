@@ -215,16 +215,22 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
   public async uploadMedia(
     data: string | Buffer,
     fileExtension: string,
-    { organizationId, userId }: { organizationId: string; userId: string },
+    {
+      organizationId,
+      userId,
+      parentMediaIdOrUUID,
+    }: { organizationId: string; userId: string; parentMediaIdOrUUID?: string },
   ) {
     const fileSize =
       typeof data === "object" && "byteLength" in data
         ? data.byteLength
         : data.length;
 
-    const { mediaId, fileName } = await new media[
+    const mediaHandler = new media[
       process.env.STORAGE_TYPE as "file" | "s3"
-    ].mediaHandler(this.app.get("rootPgPool")).uploadMedia({
+    ].mediaHandler(this.app.get("rootPgPool"));
+
+    const { mediaId, fileName } = await mediaHandler.uploadMedia({
       file: stream.Readable.from(data),
       fileExtension,
       fileSize,
@@ -232,6 +238,10 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
       organizationId,
       isUserUploaded: false,
     });
+
+    if (parentMediaIdOrUUID) {
+      await mediaHandler.createDependency(parentMediaIdOrUUID, mediaId);
+    }
 
     return {
       mediaId,
@@ -243,6 +253,7 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
 
   public async deleteMedia(fullFileId: string) {
     try {
+      // TODO: Permission?
       await new media[process.env.STORAGE_TYPE as "file" | "s3"].mediaHandler(
         this.app.get("rootPgPool"),
       ).deleteMedia(fullFileId);
