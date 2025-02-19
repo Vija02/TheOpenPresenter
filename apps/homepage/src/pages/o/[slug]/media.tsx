@@ -17,6 +17,7 @@ import {
   ModalOverlay,
   ModalProps,
   Stack,
+  Switch,
   Text,
   VStack,
 } from "@chakra-ui/react";
@@ -35,13 +36,21 @@ import {
 } from "@repo/ui";
 import { NextPage } from "next";
 import prettyBytes from "pretty-bytes";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { VscCheck, VscLinkExternal, VscTrash } from "react-icons/vsc";
 import { toast } from "react-toastify";
 
 const OrganizationMediaPage: NextPage = () => {
   const slug = useOrganizationSlug();
-  const query = useOrganizationMediaIndexPageQuery({ variables: { slug } });
+
+  const [showSystemFiles, setShowSystemFiles] = useState(false);
+
+  const query = useOrganizationMediaIndexPageQuery({
+    variables: {
+      slug,
+      condition: showSystemFiles ? {} : { isUserUploaded: true },
+    },
+  });
 
   const emptyMedia = useMemo(
     () => query.data?.organizationBySlug?.medias.nodes.length === 0,
@@ -52,6 +61,13 @@ const OrganizationMediaPage: NextPage = () => {
     <SharedOrgLayout title="Dashboard" sharedOrgQuery={query}>
       <Flex px={1} alignItems="center" justifyContent="space-between" mb={3}>
         <Heading mb={0}>Media</Heading>
+        <Stack direction="row">
+          <Text>Show system files</Text>
+          <Switch
+            isChecked={showSystemFiles}
+            onChange={(e) => setShowSystemFiles(e.target.checked)}
+          />
+        </Stack>
       </Flex>
 
       {emptyMedia && (

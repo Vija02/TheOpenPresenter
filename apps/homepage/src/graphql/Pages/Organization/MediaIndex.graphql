@@ -1,9 +1,9 @@
-query OrganizationMediaIndexPage($slug: String!) {
+query OrganizationMediaIndexPage($slug: String!, $condition: MediaCondition) {
   ...SharedOrganization
 
   organizationBySlug(slug: $slug) {
     id
-    medias(orderBy: CREATED_AT_DESC, condition: { isUserUploaded: true }) {
+    medias(orderBy: CREATED_AT_DESC, condition: $condition) {
       nodes {
         id
         ...MediaWithMediaDependency
