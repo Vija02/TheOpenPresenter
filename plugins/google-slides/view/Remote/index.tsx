@@ -51,11 +51,19 @@ const Remote = () => {
 
                   const id = docs[picker.Document.ID];
 
-                  selectSlideMutation.mutate({
-                    pluginId: pluginContext.pluginId,
-                    presentationId: id,
-                    token: token,
-                  });
+                  selectSlideMutation.mutate(
+                    {
+                      pluginId: pluginContext.pluginId,
+                      presentationId: id,
+                      token: token,
+                    },
+                    {
+                      onError: (err) => {
+                        pluginApi.log.error({ err }, "Error selecting slide");
+                        pluginApi.remote.toast.error("Failed to select slide");
+                      },
+                    },
+                  );
                 }
               }
             }}
