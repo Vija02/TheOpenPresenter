@@ -111,6 +111,7 @@ RUN yarn shared build
 
 COPY apps/homepage/ /app/apps/homepage/
 RUN yarn homepage codegen && yarn homepage build
+RUN rm -rf /app/apps/homepage/.next/cache
 
 COPY apps/remote/ /app/apps/remote/
 RUN VITE_APP_SHA=$SHA yarn remote build
