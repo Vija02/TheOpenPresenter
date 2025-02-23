@@ -21,7 +21,6 @@
     "@repo/base-plugin": "*",
     "@repo/config": "*",
     "@repo/lib": "*",
-    "@repo/typescript-config": "*",
     "@types/html-to-text": "^9.0.4",
     "@types/lodash": "^4.17.13",
     "@types/mjml": "^4.7.4",
@@ -44,6 +43,7 @@
     "yjs": "^13.6.20"
   },
   "devDependencies": {
+    "@repo/typescript-config": "*",
     "@types/ffprobe-static": "^2.0.3",
     "@types/fluent-ffmpeg": "^2",
     "mkdirp": "^3.0.1",
