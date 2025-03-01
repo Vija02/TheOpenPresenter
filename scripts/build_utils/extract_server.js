@@ -7,6 +7,7 @@ const workerTasks = fs.readdirSync("./backend/worker/dist/tasks");
 const files = [
   "./backend/server/dist/index.js",
   ...workerTasks.map((x) => path.join("./backend/worker/dist/tasks", x)),
+  "./node_modules/graphile-worker/dist/cli.js"
 ];
 
 (async () => {

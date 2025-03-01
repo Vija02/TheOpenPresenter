@@ -1,8 +1,7 @@
 import { emailLegalText as legalText, projectName } from "@repo/config";
 import { promises as fsp } from "fs";
 import { template as lodashTemplate } from "lodash";
-// @ts-ignore
-import mjml2html = require("mjml");
+import mjml2html from "mjml";
 
 declare module global {
   let TEST_EMAILS: any[];
