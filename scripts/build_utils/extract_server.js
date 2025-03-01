@@ -1,7 +1,13 @@
 const { nodeFileTrace } = require("@vercel/nft");
 const fs = require("fs");
+const path = require("path");
 
-const files = ["./backend/server/dist/index.js"];
+const workerTasks = fs.readdirSync("./backend/worker/dist/tasks");
+
+const files = [
+  "./backend/server/dist/index.js",
+  ...workerTasks.map((x) => path.join("./backend/worker/dist/tasks", x)),
+];
 
 (async () => {
   try {
