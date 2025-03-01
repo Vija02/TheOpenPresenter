@@ -152,8 +152,8 @@ const Player = () => {
         }
         setReady(true);
       }}
-      onError={(error) => {
-        pluginApi.log.error({ error }, "Error on Video playback");
+      onError={(error, errorData) => {
+        pluginApi.log.error({ error, errorData }, "Error on Video playback");
       }}
       onBufferEnd={() => setVideoSeek()}
       url={currentVideoUrl}
