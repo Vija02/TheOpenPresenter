@@ -15,6 +15,7 @@ module.exports = () => {
     poweredByHeader: false,
     distDir: `../.next`,
     trailingSlash: false,
+    output: "standalone",
     redirects() {
       return [
         {

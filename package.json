@@ -29,6 +29,7 @@
   "devDependencies": {
     "@testing-library/dom": "^10.4.0",
     "@testing-library/react": "^16.1.0",
+    "@vercel/nft": "^0.29.2",
     "concurrently": "^9.1.0",
     "nodemon": "^3.1.7",
     "patch-package": "^8.0.0",

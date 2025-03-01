@@ -86,6 +86,8 @@ RUN yarn workspace @repo/base-plugin build
 COPY packages/ui/ /app/packages/ui/
 RUN yarn workspace @repo/ui build
 
+RUN node scripts/build_utils/extract_core.js
+
 ################################################################################
 # Build stage 3 - Build server
 
@@ -96,6 +98,8 @@ RUN yarn worker build
 
 COPY backend/server/ /app/backend/server/
 RUN yarn server build
+
+RUN node scripts/build_utils/extract_server.js
 
 ################################################################################
 # Build stage 4 - Build client
@@ -148,8 +152,20 @@ RUN yarn workspace @repo/plugin-radio build
 COPY plugins/worship-pads/ /app/plugins/worship-pads/
 RUN yarn workspace @repo/plugin-worship-pads build
 
+RUN node scripts/build_utils/extract_plugins.js
+
 ################################################################################
-# Build stage 6 - Combine deps and build, taking only needed files
+# Build stage 6 - Extract just the needed dependencies for runtime
+
+FROM deps AS nft-extract
+
+# We don't need to copy from core since both builder extends core
+COPY --from=builder-server /app/nft_results /app/nft_results
+COPY --from=builder-plugin /app/nft_results /app/nft_results
+RUN node scripts/build_utils/copy_deps.js
+
+################################################################################
+# Build stage 7 - Combine deps and build, taking only needed files
 
 FROM node:22-alpine AS clean
 # Import our shared args
@@ -159,7 +175,17 @@ ARG ROOT_URL
 # Copy over selectively just the tings we need, try and avoid the rest
 COPY --from=deps /app/turbo.json /app/package.json /app/yarn.lock /app/.yarnrc.yml /app/
 COPY --from=deps /app/.yarn /app/.yarn/
-COPY --from=deps /app/node_modules /app/node_modules/
+# Copy only the dependencies we need
+COPY --from=nft-extract /app/node_modules_nft/node_modules /app/node_modules
+# Get the standalone deps from next
+COPY --from=builder-client /app/apps/homepage/.next/standalone/node_modules /app/node_modules
+# Copy over the yarn state
+COPY --from=deps /app/node_modules/.yarn-state.yml /app/node_modules/
+# And also the @repo symlink
+COPY --from=deps /app/node_modules/@repo /app/node_modules/@repo/
+# And last but not least, get next specifically due to its complicated require setup. We'll get problems otherwise
+COPY --from=deps /app/node_modules/next /app/node_modules/next/
+
 COPY --from=builder-core /app/packages/graphql/ /app/packages/graphql/
 COPY --from=builder-core /app/backend/config/ /app/backend/config/
 COPY --from=builder-core /app/packages/observability/ /app/packages/observability/
@@ -174,9 +200,8 @@ COPY --from=builder-client /app/apps/remote/.env.production /app/apps/remote/
 COPY --from=builder-client /app/apps/renderer/package.json /app/apps/renderer/
 COPY --from=builder-client /app/apps/renderer/dist/ /app/apps/renderer/dist/
 COPY --from=builder-client /app/apps/renderer/.env.production /app/apps/renderer/
-COPY --from=builder-client /app/apps/homepage/package.json /app/apps/homepage/
-COPY --from=builder-client /app/apps/homepage/src/next.config.js /app/apps/homepage/src/next.config.js
-COPY --from=builder-client /app/apps/homepage/.next /app/apps/homepage/.next
+COPY --from=builder-client /app/apps/homepage/.next/standalone/apps/homepage /app/apps/homepage
+COPY --from=builder-client /app/apps/homepage/.next/static /app/apps/homepage/.next/static/
 
 COPY --from=builder-server /app/backend/server/package.json /app/backend/server/
 COPY --from=builder-server /app/backend/server/postgraphile.tags.jsonc /app/backend/server/
