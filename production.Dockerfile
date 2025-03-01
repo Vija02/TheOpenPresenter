@@ -185,6 +185,7 @@ COPY --from=deps /app/node_modules/.yarn-state.yml /app/node_modules/
 COPY --from=deps /app/node_modules/@repo /app/node_modules/@repo/
 # And last but not least, get next specifically due to its complicated require setup. We'll get problems otherwise
 COPY --from=deps /app/node_modules/next /app/node_modules/next/
+COPY --from=deps /app/node_modules/ffmpeg-static /app/node_modules/ffmpeg-static/
 
 COPY --from=builder-core /app/packages/graphql/ /app/packages/graphql/
 COPY --from=builder-core /app/backend/config/ /app/backend/config/
