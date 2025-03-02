@@ -239,9 +239,11 @@ const getAppRouter = (t: TRPCObject) => {
             generate_session_locally: true,
           });
 
-          const res = await yt.getBasicInfo(
-            YouTubeVideoId(opts.input.ytVideoUrl),
-          );
+          const youtubeId = getYouTubeID(opts.input.ytVideoUrl);
+          if (!youtubeId) {
+            throw new Error("Invalid Youtube ID");
+          }
+          const res = await yt.getBasicInfo(youtubeId);
 
           return {
             title: res.basic_info.title,
