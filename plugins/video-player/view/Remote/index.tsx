@@ -54,12 +54,21 @@ const VideoPlayerRemote = () => {
 
     const isYoutube = MATCH_URL_YOUTUBE.test(input);
     if (isYoutube) {
-      const ytMetadata = await getRes();
-      metadata = {
-        title: ytMetadata.data?.title,
-        duration: ytMetadata.data?.duration,
-        thumbnailUrl: ytMetadata.data?.thumbnailUrl,
-      };
+      try {
+        const ytMetadata = await getRes();
+        if (!ytMetadata.data) throw ytMetadata.error;
+
+        metadata = {
+          title: ytMetadata.data.title,
+          duration: ytMetadata.data.duration,
+          thumbnailUrl: ytMetadata.data.thumbnailUrl,
+        };
+      } catch (err) {
+        pluginApi.log.error(
+          { err, url: input },
+          "Failed to extract youtube metadata",
+        );
+      }
     }
 
     if (reactPlayerCanPlay) {
