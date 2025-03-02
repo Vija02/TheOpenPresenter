@@ -8,10 +8,10 @@ import {
 } from "@repo/base-plugin/server";
 import { TypedArray, TypedMap, YjsWatcher, extractMediaName } from "@repo/lib";
 import { logger as rawLogger } from "@repo/observability";
+import getYouTubeID from "get-youtube-id";
 import { proxy } from "valtio";
 import { bind } from "valtio-yjs";
 import * as Y from "yjs";
-import YouTubeVideoId from "youtube-video-id";
 import { Innertube, UniversalCache } from "youtubei.js";
 import type { YTNodes } from "youtubei.js";
 import z from "zod";
