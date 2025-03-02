@@ -245,6 +245,15 @@ const getAppRouter = (t: TRPCObject) => {
           }
           const res = await yt.getBasicInfo(youtubeId);
 
+          if (!res.basic_info.title) {
+            rawLogger.trace(
+              { res, ytVideoUrl: opts.input.ytVideoUrl, youtubeId },
+              "Error: Title not available.",
+            );
+
+            throw new Error("Invalid data");
+          }
+
           return {
             title: res.basic_info.title,
             duration: res.basic_info.duration,
