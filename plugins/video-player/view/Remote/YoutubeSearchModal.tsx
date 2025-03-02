@@ -98,8 +98,8 @@ const YoutubeSearchModal = ({
               ))}
             {data &&
               data.results
-                .filter((result: any) => result.type === "Video")
-                .map((result: YTNodes.Video) => {
+                .filter((result) => result.type === "Video")
+                .map((result) => {
                   const res = result as YTNodes.Video;
 
                   return (

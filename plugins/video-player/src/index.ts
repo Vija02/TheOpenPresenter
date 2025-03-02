@@ -11,7 +11,9 @@ import { logger as rawLogger } from "@repo/observability";
 import { proxy } from "valtio";
 import { bind } from "valtio-yjs";
 import * as Y from "yjs";
+import YouTubeVideoId from "youtube-video-id";
 import { Innertube, UniversalCache } from "youtubei.js";
+import type { YTNodes } from "youtubei.js";
 import z from "zod";
 
 import {
@@ -221,8 +223,33 @@ const getAppRouter = (t: TRPCObject) => {
           const res = await yt.search(opts.input.title, { type: "video" });
 
           return {
-            results: res.results,
+            results: res.results as unknown as YTNodes.Video[],
             refinements: res.refinements,
+          };
+        }),
+      youtubeMetadata: t.procedure
+        .input(
+          z.object({
+            ytVideoUrl: z.string(),
+          }),
+        )
+        .query(async (opts) => {
+          const yt = await Innertube.create({
+            cache: new UniversalCache(false),
+            generate_session_locally: true,
+          });
+
+          const res = await yt.getBasicInfo(
+            YouTubeVideoId(opts.input.ytVideoUrl),
+          );
+
+          return {
+            title: res.basic_info.title,
+            duration: res.basic_info.duration,
+            thumbnailUrl:
+              res.basic_info.thumbnail && res.basic_info.thumbnail.length > 0
+                ? res.basic_info.thumbnail[0]?.url
+                : "",
           };
         }),
       searchSuggestion: t.procedure

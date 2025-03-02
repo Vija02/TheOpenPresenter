@@ -6,7 +6,9 @@ import ReactPlayer from "react-player/lazy";
 import "react-scrubber/lib/scrubber.css";
 import { typeidUnboxed } from "typeid-js";
 
+import type { Video } from "../../src/types";
 import { usePluginAPI } from "../pluginApi";
+import { trpc } from "../trpc";
 import UploadVideoModal from "./UploadVideoModal";
 import VideoCard from "./VideoCard";
 import YoutubeSearchModal from "./YoutubeSearchModal";
@@ -24,6 +26,10 @@ function isValidHttpUrl(string: string) {
   return url.protocol === "http:" || url.protocol === "https:";
 }
 
+// Taken from react-player /src/patterns
+export const MATCH_URL_YOUTUBE =
+  /(?:youtu\.be\/|youtube(?:-nocookie|education)?\.com\/(?:embed\/|v\/|watch\/|watch\?v=|watch\?.+&v=|shorts\/|live\/))((\w|-){11})|youtube\.com\/playlist\?list=|youtube\.com\/user\//;
+
 const VideoPlayerRemote = () => {
   const pluginApi = usePluginAPI();
 
@@ -36,13 +42,30 @@ const VideoPlayerRemote = () => {
   const [input, setInput] = useState("");
   const [isError, setIsError] = useState(false);
 
-  const onSearch = () => {
+  const { refetch: getRes } = trpc.videoPlayer.youtubeMetadata.useQuery(
+    { ytVideoUrl: input },
+    { enabled: false },
+  );
+
+  const onSearch = async () => {
     const reactPlayerCanPlay = ReactPlayer.canPlay(input);
+
+    let metadata: Video["metadata"] = {};
+
+    const isYoutube = MATCH_URL_YOUTUBE.test(input);
+    if (isYoutube) {
+      const ytMetadata = await getRes();
+      metadata = {
+        title: ytMetadata.data?.title,
+        duration: ytMetadata.data?.duration,
+        thumbnailUrl: ytMetadata.data?.thumbnailUrl,
+      };
+    }
 
     if (reactPlayerCanPlay) {
       mutableSceneData.pluginData.videos.push({
         id: typeidUnboxed("video"),
-        metadata: {},
+        metadata,
         url: input,
       });
       setIsError(false);

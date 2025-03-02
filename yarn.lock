@@ -7361,6 +7361,7 @@ __metadata:
     valtio-yjs: "npm:^0.6.0"
     vite: "npm:5.4.11"
     yjs: "npm:^13.6.20"
+    youtube-video-id: "npm:^1.0.4"
     youtubei.js: "npm:^12.0.0"
     zod: "npm:^3.23.8"
   languageName: unknown
@@ -28011,6 +28012,13 @@ __metadata:
   version: 0.1.0
   resolution: "yocto-queue@npm:0.1.0"
   checksum: 10c0/dceb44c28578b31641e13695d200d34ec4ab3966a5729814d5445b194933c096b7ced71494ce53a0e8820685d1d010df8b2422e5bf2cdea7e469d97ffbea306f
+  languageName: node
+  linkType: hard
+
+"youtube-video-id@npm:^1.0.4":
+  version: 1.0.4
+  resolution: "youtube-video-id@npm:1.0.4"
+  checksum: 10c0/39446ee8ddac5ad4cedaa9e75133acec016504556597734ad2aaa43cb3138439bb8ddd583212921a02be063b5957da5e819e8a05ffaa90c187fbe4d628c8b8d0
   languageName: node
   linkType: hard
 
