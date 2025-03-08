@@ -31,20 +31,21 @@ jobs:
       - name: yarn, lint, build and test
         shell: bash
         run: |
-          cp .env.ci .env
-          yarn --no-immutable
-          yarn build
-
-          TEMP_DIR=$(mktemp -d)
           pwd
+          TEMP_DIR=$(mktemp -d)
           cd ..
           mv TheOpenPresenter $TEMP_DIR/theopenpresenter
 
           cd $TEMP_DIR
           mv ./theopenpresenter/tauri ./tauri
           mv ./theopenpresenter ./tauri/node-server/theopenpresenter
+
+          cd tauri/node-server/theopenpresenter
+          cp .env.ci .env
+          yarn --no-immutable
+          yarn build
+          cd ../../
           
-          cd tauri
           yarn
           cd node-server
           yarn
