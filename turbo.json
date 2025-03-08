@@ -12,8 +12,11 @@
       ],
       "outputs": [
         ".next/**",
-        "!.next/cache/**"
-      ]
+        "!.next/cache/**",
+        "dist/**",
+        "out/**"
+      ],
+      "cache": true
     },
     "lint": {
       "dependsOn": [
