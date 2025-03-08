@@ -34,7 +34,7 @@ jobs:
           pwd
           TEMP_DIR=$(mktemp -d)
           cd ..
-          mv TheOpenPresenter $TEMP_DIR/theopenpresenter
+          cp -r TheOpenPresenter $TEMP_DIR/theopenpresenter
 
           cd $TEMP_DIR
           mv ./theopenpresenter/tauri ./tauri
