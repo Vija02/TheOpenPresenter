@@ -1,0 +1,13 @@
+{
+  "name": "tauri-app",
+  "private": true,
+  "version": "0. 0.0",
+  "type": "module",
+  "scripts": {
+    "postinstall": "node node-server/script/copy_pg_extension.mjs",
+    "tauri": "tauri"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.3.1"
+  }
+}

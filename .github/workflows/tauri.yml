@@ -1,0 +1,49 @@
+name: Run Tauri Build
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: 'windows-latest'
+            args: ''
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+      - name: install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          # Those targets are only used on macos runners so it's in an `if` to slightly speed up windows and linux builds.
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+      - name: yarn, lint, build and test
+        shell: bash
+        run: |
+          cp .env.ci .env
+          yarn --no-immutable
+          yarn build
+
+          TEMP_DIR=$(mktemp -d)
+          cd ..
+          mv workspace $TEMP_DIR/theopenpresenter
+
+          cd $TEMP_DIR
+          mv ./theopenpresenter/tauri ./tauri
+          mv ./theopenpresenter ./tauri/node-server/theopenpresenter
+          
+          cd tauri
+          yarn
+          cd node-server
+          yarn
