@@ -36,6 +36,8 @@ jobs:
           yarn build
 
           TEMP_DIR=$(mktemp -d)
+          echo $TEMP_DIR
+          pwd
           cd ..
           mv workspace $TEMP_DIR/theopenpresenter
 
