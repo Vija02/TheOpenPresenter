@@ -23,6 +23,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: lts/*
+          cache: 'yarn'
+          cache-dependency-path: |
+            yarn.lock
+            tauri/yarn.lock
+            tauri/node-server/yarn.lock
       - name: install Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -47,8 +52,8 @@ jobs:
           cp .env.ci .env
           yarn --no-immutable
           yarn build
-          cd ../../
+          cd ..
           
-          yarn
-          cd node-server
-          yarn
+          yarn --no-immutable
+          cd ..
+          yarn --no-immutable
