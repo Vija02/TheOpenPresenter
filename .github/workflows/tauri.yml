@@ -36,10 +36,9 @@ jobs:
           yarn build
 
           TEMP_DIR=$(mktemp -d)
-          echo $TEMP_DIR
           pwd
           cd ..
-          mv workspace $TEMP_DIR/theopenpresenter
+          mv TheOpenPresenter $TEMP_DIR/theopenpresenter
 
           cd $TEMP_DIR
           mv ./theopenpresenter/tauri ./tauri
