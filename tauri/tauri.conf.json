@@ -27,7 +27,7 @@
     ],
     "externalBin": ["node"],
     "resources": [
-      "node-server/"
+      "node-server/**/*"
     ]
   }
 }
