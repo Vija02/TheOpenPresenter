@@ -43,7 +43,7 @@ jobs:
           cd ..
 
           mv ./TheOpenPresenter/tauri ./tauri
-          mv ./TheOpenPresenter ./tauri/node-server/theopenpresenter
+          cp -r ./TheOpenPresenter ./tauri/node-server/theopenpresenter
 
           cd tauri/node-server/theopenpresenter
           cp .env.ci .env
