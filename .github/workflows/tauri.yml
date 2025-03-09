@@ -57,3 +57,6 @@ jobs:
           yarn --no-immutable
           cd ..
           yarn --no-immutable
+
+          # TODO: Download Node
+          yarn tauri build
