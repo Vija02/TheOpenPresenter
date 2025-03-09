@@ -40,13 +40,10 @@ jobs:
           TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
         run: |
           pwd
-          TEMP_DIR=$(mktemp -d)
           cd ..
-          cp -r TheOpenPresenter $TEMP_DIR/theopenpresenter
 
-          cd $TEMP_DIR
-          mv ./theopenpresenter/tauri ./tauri
-          mv ./theopenpresenter ./tauri/node-server/theopenpresenter
+          mv ./TheOpenPresenter/tauri ./tauri
+          mv ./TheOpenPresenter ./tauri/node-server/theopenpresenter
 
           cd tauri/node-server/theopenpresenter
           cp .env.ci .env
