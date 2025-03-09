@@ -51,10 +51,20 @@ async function installPgUuidv7() {
     );
 
     // Copy files
-    copyFileSync(
-      join(tempDir, PG_VERSION, "pg_uuidv7.so"),
-      join(libDir, "pg_uuidv7.so"),
-    );
+    if (process.platform === "win32") {
+      copyFileSync(
+        join(
+          resolve(originalPath, "node-server/script/pg_uuidv7.dll"),
+          "pg_uuidv7.dll",
+        ),
+        join(libDir, "pg_uuidv7.dll"),
+      );
+    } else {
+      copyFileSync(
+        join(tempDir, PG_VERSION, "pg_uuidv7.so"),
+        join(libDir, "pg_uuidv7.so"),
+      );
+    }
 
     copyFileSync(
       join(tempDir, "pg_uuidv7--1.6.sql"),
