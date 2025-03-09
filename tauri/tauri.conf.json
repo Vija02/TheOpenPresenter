@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "theopenpresenter-app",
+  "productName": "TheOpenPresenter",
   "version": "0.1.0",
   "identifier": "com.theopenpresenter.app",
   "build": {

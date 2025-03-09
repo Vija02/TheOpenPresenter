@@ -59,4 +59,4 @@ jobs:
           yarn --no-immutable
 
           # TODO: Download Node
-          yarn tauri build
+          yarn tauri build --verbose
