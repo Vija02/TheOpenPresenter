@@ -1,0 +1,19 @@
+{
+  "name": "tauri-server",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Node helper for running TheOpenPresenter with Tauri",
+  "main": "run_pg.js",
+  "scripts": {
+    "postinstall": "",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@embedded-postgres/windows-x64": "^17.4.0-beta.15",
+    "dotenv": "^16.4.7",
+    "embedded-postgres": "17.4.0-beta.15",
+    "node-fetch": "^3.3.2",
+    "platform-folders": "^0.6.0",
+    "tar": "^7.4.3"
+  }
+}
