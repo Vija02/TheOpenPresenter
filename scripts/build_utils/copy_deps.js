@@ -32,6 +32,32 @@ const run = () => {
     // Copy the file
     fs.copyFileSync(filePath, targetPath);
   }
+
+  // Copy some files manually
+  const nodeModulesPath = "./node_modules";
+
+  // Copy over the yarn state
+  fs.copyFileSync(
+    path.join(nodeModulesPath, ".yarn-state.yml"),
+    path.join(targetDir, nodeModulesPath, ".yarn-state.yml"),
+  );
+  // And also the @repo symlink
+  fs.cpSync(
+    path.join(nodeModulesPath, "@repo"),
+    path.join(targetDir, nodeModulesPath, "@repo"),
+    { recursive: true },
+  );
+  // And last but not least, get next specifically due to its complicated require setup. We'll get problems otherwise
+  fs.cpSync(
+    path.join(nodeModulesPath, "next"),
+    path.join(targetDir, nodeModulesPath, "next"),
+    { recursive: true },
+  );
+  fs.cpSync(
+    path.join(nodeModulesPath, "ffmpeg-static"),
+    path.join(targetDir, nodeModulesPath, "ffmpeg-static"),
+    { recursive: true },
+  );
 };
 
 run();

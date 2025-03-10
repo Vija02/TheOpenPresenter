@@ -47,7 +47,9 @@ const logger = pino(
   // Browser doesn't have pino.destination, so we can just pass undefined
   typeof window !== "undefined" && !isTestEnv
     ? undefined
-    : pino.destination("/dev/null"),
+    : process.platform === "win32"
+      ? pino.destination("nul")
+      : pino.destination("/dev/null"),
 );
 
 export { logger };
