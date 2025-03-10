@@ -40,10 +40,10 @@ jobs:
           TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
         run: |
           pwd
-          cd ..
+          cd ../..
 
-          mv ./TheOpenPresenter/tauri ./tauri
-          cp -r ./TheOpenPresenter ./tauri/node-server/theopenpresenter
+          mv ./TheOpenPresenter/TheOpenPresenter/tauri ./tauri
+          cp -r ./TheOpenPresenter/TheOpenPresenter ./tauri/node-server/theopenpresenter
 
           cd tauri/node-server/theopenpresenter
           cp .env.ci .env
