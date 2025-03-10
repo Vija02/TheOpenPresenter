@@ -30,14 +30,14 @@ const run = () => {
     fs.mkdirSync(path.dirname(targetPath), { recursive: true });
 
     // Copy the file
-    fs.copyFileSync(filePath, targetPath);
+    fs.cpSync(filePath, targetPath);
   }
 
   // Copy some files manually
   const nodeModulesPath = "./node_modules";
 
   // Copy over the yarn state
-  fs.copyFileSync(
+  fs.cpSync(
     path.join(nodeModulesPath, ".yarn-state.yml"),
     path.join(targetDir, nodeModulesPath, ".yarn-state.yml"),
   );
