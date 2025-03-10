@@ -42,15 +42,35 @@ jobs:
           pwd
           cd ../..
 
+          # Prepare the repo
           mv ./TheOpenPresenter/TheOpenPresenter/tauri ./tauri
           cp -r ./TheOpenPresenter/TheOpenPresenter ./tauri/node-server/theopenpresenter
 
+          # Build TOP
           cd tauri/node-server/theopenpresenter
           cp .env.ci .env
           yarn --no-immutable
           yarn build
+
+          # Reduce size
+          node scripts/build_utils/extract_core.js
+          node scripts/build_utils/extract_server.js
+          node scripts/build_utils/extract_plugins.js
+          node scripts/build_utils/copy_deps.js
+
+          # Move the node_modules
+          rm -rf node_modules
+          cp -r ./node_modules_nft/node_modules ./node_modules
+          cp -r ./apps/homepage/.next/standalone/node_modules/* ./node_modules
+
+          # And Next.js stuff
+          cp -r apps/homepage/.next/standalone/apps/homepage homepage_temp
+          cp -r apps/homepage/.next/static next_static_temp
+          rm -rf apps/homepage
+          mv homepage_temp apps/homepage
+          mv next_static_temp apps/homepage/.next/static
+
           cd ..
-          
           yarn --no-immutable
           cd ..
           yarn --no-immutable
