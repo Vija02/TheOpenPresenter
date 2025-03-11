@@ -44,6 +44,7 @@ const runCommand = async (command, args, options) => {
 };
 
 const databaseDir = path.join(getDataHome(), "TheOpenPresenter", "db");
+const envPath = path.join(getDataHome(), "TheOpenPresenter", ".env");
 // TODO:
 const nodeBinaryPath = path.resolve("./node-x86_64-unknown-linux-gnu");
 
@@ -162,8 +163,8 @@ async function main() {
   //   },
   // );
 
-  // TODO: Resolve
-  const env = dotenv.parse(fs.readFileSync(path.resolve("../.env")));
+  // TODO: Automate creation of this
+  const env = dotenv.parse(fs.readFileSync(envPath));
 
   console.log("Starting Node Server...");
   await runCommand(
