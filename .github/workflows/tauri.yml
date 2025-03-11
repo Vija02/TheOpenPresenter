@@ -63,6 +63,9 @@ jobs:
           cp -r ./node_modules_nft/node_modules ./node_modules
           cp -r ./apps/homepage/.next/standalone/node_modules/* ./node_modules
 
+          # Cleanup
+          rm -rf node_modules_nft
+
           # And Next.js stuff
           cp -r apps/homepage/.next/standalone/apps/homepage homepage_temp
           cp -r apps/homepage/.next/static next_static_temp
