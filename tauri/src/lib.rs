@@ -2,6 +2,7 @@ use notify_rust::Notification;
 use std::sync::{Arc, Mutex};
 use tauri::path::BaseDirectory;
 use tauri::Manager;
+use tauri_plugin_log::{Target, TargetKind};
 use tauri_plugin_shell::process::CommandEvent;
 use tauri_plugin_shell::ShellExt;
 
@@ -23,6 +24,7 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_log::Builder::new().build())
         .setup(|app| {
             let resource_path = app
                 .path()
@@ -63,12 +65,12 @@ pub fn run() {
                     if let CommandEvent::Stdout(line_bytes) = &event {
                         let line = std::str::from_utf8(&line_bytes).unwrap();
 
-                        println!("JS: {:?}", line);
+                        log::info!("{:?}", line);
                     }
                     if let CommandEvent::Stderr(line_bytes) = &event {
                         let line = std::str::from_utf8(&line_bytes).unwrap();
 
-                        println!("JS: {:?}", line);
+                        log::error!("{:?}", line);
                     }
                 }
             });
