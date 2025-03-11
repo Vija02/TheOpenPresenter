@@ -48,7 +48,7 @@ const run = () => {
   fs.cpSync(
     path.join(nodeModulesPath, "@repo"),
     path.join(targetDir, nodeModulesPath, "@repo"),
-    { recursive: true },
+    { recursive: true, verbatimSymlinks: true },
   );
   // And last but not least, get next specifically due to its complicated require setup. We'll get problems otherwise
   fs.cpSync(
