@@ -82,7 +82,6 @@ jobs:
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: pg_uuidv7-${{matrix.configuration}}-${{matrix.platform}}
           path: |
-            ${{ env.tauri_path }}/target/release/bundle/nsis/TheOpenPresenter_0.1.0_x64-setup.exe
-            ${{ env.tauri_path }}/target/release/bundle/msi/TheOpenPresenter_0.1.0_x64_en-US.msi
+            /a/tauri/target/release/bundle/nsis/TheOpenPresenter_0.1.0_x64-setup.exe
+            /a/tauri/target/release/bundle/msi/TheOpenPresenter_0.1.0_x64_en-US.msi
