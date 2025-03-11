@@ -30,7 +30,10 @@ const run = () => {
     fs.mkdirSync(path.dirname(targetPath), { recursive: true });
 
     // Copy the file
-    fs.cpSync(filePath, targetPath, { recursive: true });
+    fs.cpSync(filePath, targetPath, {
+      recursive: true,
+      verbatimSymlinks: true,
+    });
   }
 
   // Copy some files manually
