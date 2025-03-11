@@ -57,6 +57,11 @@ const run = () => {
     { recursive: true },
   );
   fs.cpSync(
+    path.join(nodeModulesPath, "graphile-migrate"),
+    path.join(targetDir, nodeModulesPath, "graphile-migrate"),
+    { recursive: true },
+  );
+  fs.cpSync(
     path.join(nodeModulesPath, "ffmpeg-static"),
     path.join(targetDir, nodeModulesPath, "ffmpeg-static"),
     { recursive: true },

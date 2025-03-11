@@ -44,6 +44,9 @@ const runCommand = async (command, args, options) => {
 const databaseDir = path.join(getDataHome(), "TheOpenPresenter", "db");
 const envPath = path.join(getDataHome(), "TheOpenPresenter", ".env");
 const nodeBinaryPath = path.resolve("./node");
+const graphileMigrateJsPath = path.resolve(
+  "node-server/theopenpresenter/node_modules/graphile-migrate/dist/cli.js",
+);
 
 async function main() {
   const pg = new EmbeddedPostgres({
@@ -105,15 +108,7 @@ async function main() {
       console.log("Installing schema to DB now...");
       await runCommand(
         nodeBinaryPath,
-        [
-          path.resolve(
-            "node-server/theopenpresenter/node_modules/.bin/graphile-migrate",
-          ),
-          "-c",
-          "node-server/.gmrc",
-          "reset",
-          "--erase",
-        ],
+        [graphileMigrateJsPath, "-c", "node-server/.gmrc", "reset", "--erase"],
         {
           env: {
             DATABASE_URL: `postgres://${DATABASE_OWNER}:${DATABASE_OWNER_PASSWORD}@localhost:${PORT}/${DATABASE_NAME}`,
@@ -141,15 +136,7 @@ async function main() {
   // TODO: Migrate
   // await runCommand(
   //   nodeBinaryPath,
-  //   [
-  //     path.resolve(
-  //       "node-server/theopenpresenter/node_modules/.bin/graphile-migrate",
-  //     ),
-  //     "-c",
-  //     "node-server/.gmrc",
-  //     "reset",
-  //     "--erase",
-  //   ],
+  //   [graphileMigrateJsPath, "-c", "node-server/.gmrc", "reset", "--erase"],
   //   {
   //     env: {
   //       DATABASE_URL: `postgres://${DATABASE_OWNER}:${DATABASE_OWNER_PASSWORD}@localhost:${PORT}/${DATABASE_NAME}`,
