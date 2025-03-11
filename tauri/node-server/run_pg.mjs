@@ -15,8 +15,6 @@ const DATABASE_NAME = "theopenpresenter";
 
 const PORT = 7949;
 
-// TODO: Run migrate
-
 const runCommand = async (command, args, options) => {
   return new Promise((resolve, reject) => {
     const process = spawn(command, args, options);
@@ -45,8 +43,7 @@ const runCommand = async (command, args, options) => {
 
 const databaseDir = path.join(getDataHome(), "TheOpenPresenter", "db");
 const envPath = path.join(getDataHome(), "TheOpenPresenter", ".env");
-// TODO:
-const nodeBinaryPath = path.resolve("./node-x86_64-unknown-linux-gnu");
+const nodeBinaryPath = path.resolve("./node");
 
 async function main() {
   const pg = new EmbeddedPostgres({
