@@ -45,11 +45,11 @@ const run = () => {
     path.join(targetDir, nodeModulesPath, ".yarn-state.yml"),
   );
   // And also the @repo symlink
-  fs.cpSync(
-    path.join(nodeModulesPath, "@repo"),
-    path.join(targetDir, nodeModulesPath, "@repo"),
-    { recursive: true, verbatimSymlinks: true },
-  );
+  // fs.cpSync(
+  //   path.join(nodeModulesPath, "@repo"),
+  //   path.join(targetDir, nodeModulesPath, "@repo"),
+  //   { recursive: true, verbatimSymlinks: true },
+  // );
   // And last but not least, get next specifically due to its complicated require setup. We'll get problems otherwise
   fs.cpSync(
     path.join(nodeModulesPath, "next"),
