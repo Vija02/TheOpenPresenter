@@ -4,7 +4,7 @@ import { Express } from "express";
 import fs, { readdirSync, statSync } from "fs";
 import path from "path";
 
-const dir =
+export const pluginsPath =
   process.env.PLUGINS_PATH ??
   path.join(__dirname, "../../../", "loadedPlugins");
 const enabledPlugins = process.env.ENABLED_PLUGINS
@@ -27,7 +27,7 @@ export const initPlugins = async (app: Express) => {
       );
     }
 
-    fs.mkdirSync(dir, { recursive: true });
+    fs.mkdirSync(pluginsPath, { recursive: true });
 
     for (const pluginName of enabledPlugins) {
       try {
@@ -42,22 +42,22 @@ export const initPlugins = async (app: Express) => {
     }
 
     // Cleanup plugins before we continue
-    for (const name of readdirSync(dir)) {
+    for (const name of readdirSync(pluginsPath)) {
       try {
-        statSync(path.join(dir, name));
+        statSync(path.join(pluginsPath, name));
       } catch (e) {
-        fs.rmSync(path.join(dir, name), { recursive: true });
+        fs.rmSync(path.join(pluginsPath, name), { recursive: true });
       }
     }
 
-    const plugins = aki.list(dir);
+    const plugins = aki.list(pluginsPath);
 
     const initializedPlugins = [];
 
     // Now we can load them
     for (const [pluginName, version] of plugins) {
       try {
-        const p = aki.load(dir, pluginName);
+        const p = aki.load(pluginsPath, pluginName);
         if ("init" in p) {
           p.init(serverPluginApi);
           initializedPlugins.push([pluginName, version]);
@@ -86,7 +86,7 @@ export const initPlugins = async (app: Express) => {
 const _linkPlugin = async (pluginName: string) => {
   try {
     try {
-      fs.readdirSync(path.resolve(dir, pluginName));
+      fs.readdirSync(path.resolve(pluginsPath, pluginName));
       return;
     } catch (e) {
       // If here, then it doesn't exist. So we let it go
@@ -97,7 +97,7 @@ const _linkPlugin = async (pluginName: string) => {
     if (localPluginDirData.includes(pluginName)) {
       fs.symlinkSync(
         path.resolve(localPluginDir, pluginName),
-        path.resolve(dir, pluginName),
+        path.resolve(pluginsPath, pluginName),
       );
     } else {
       console.warn(`Linking local plugin '${pluginName}' failed`);
