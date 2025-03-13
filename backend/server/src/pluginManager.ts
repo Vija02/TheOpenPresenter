@@ -4,7 +4,9 @@ import { Express } from "express";
 import fs, { readdirSync, statSync } from "fs";
 import path from "path";
 
-const dir = path.join(__dirname, "../../../", "loadedPlugins");
+const dir =
+  process.env.PLUGINS_PATH ??
+  path.join(__dirname, "../../../", "loadedPlugins");
 const enabledPlugins = process.env.ENABLED_PLUGINS
   ? process.env.ENABLED_PLUGINS.split(",")
   : [];
