@@ -123,7 +123,6 @@ async function main() {
       console.error("Failed to initialize PG database", e);
       throw e;
     } finally {
-      await client.release();
       await client.end();
     }
     console.log("Database initialization done!");
