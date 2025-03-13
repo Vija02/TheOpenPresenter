@@ -48,7 +48,7 @@ const logger = pino(
   typeof window !== "undefined" && !isTestEnv
     ? undefined
     : process.platform === "win32"
-      ? pino.destination("nul")
+      ? pino.destination(require("os").tmpdir() + "/nul")
       : pino.destination("/dev/null"),
 );
 
