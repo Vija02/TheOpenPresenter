@@ -48,7 +48,6 @@ const graphileMigrateJsPath = path.resolve(
   "node-server/theopenpresenter/node_modules/graphile-migrate/dist/cli.js",
 );
 const uploadsPath = path.join(getDataHome(), "TheOpenPresenter", "uploads");
-const pluginsPath = path.join(getDataHome(), "TheOpenPresenter", "plugins");
 
 async function main() {
   const pg = new EmbeddedPostgres({
@@ -191,7 +190,7 @@ async function main() {
         // PLUGINS
         ENABLED_PLUGINS:
           "lyrics-presenter,simple-image,google-slides,radio,audio-recorder,video-player,worship-pads,embed",
-        PLUGINS_PATH: pluginsPath,
+        PLUGINS_PATH: "./plugins",
         // Debt: Make this easier for us to change
         PLUGIN_GOOGLE_SLIDES_CLIENT_ID:
           "69245303872-fo9ap9sv2a6a5oiim2aqsk1hnnrmkkdk.apps.googleusercontent.com",
