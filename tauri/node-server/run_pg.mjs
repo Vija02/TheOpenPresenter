@@ -148,7 +148,7 @@ async function main() {
   //   },
   // );
 
-  const envOverride = {};
+  let envOverride = {};
   if (fs.existsSync(envPath)) {
     envOverride = dotenv.parse(fs.readFileSync(envPath));
   }
