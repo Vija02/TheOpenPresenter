@@ -46,7 +46,7 @@ export default (app: Express) => {
             )
             select new_user.id as user_id, new_session.uuid as session_id
             from new_user, new_session`,
-            [defaultUsername, defaultEmail, "Anonymous", "", defaultPassword],
+            [defaultUsername, defaultEmail, "Anonymous", null, defaultPassword],
           );
 
           await login({ session_id: details?.session_id });
