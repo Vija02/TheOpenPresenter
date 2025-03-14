@@ -164,6 +164,7 @@ async function main() {
       cwd: path.resolve("node-server/theopenpresenter"),
       env: {
         NODE_ENV: "production",
+        AUTO_LOGIN: "1",
 
         // DB settings
         DATABASE_HOST: `localhost:${PORT}`,
