@@ -67,12 +67,8 @@ class WebSocketLink extends ApolloLink {
   }
 }
 
-let _rootURL: string | null = null;
 function createWsClient() {
-  if (!_rootURL) {
-    throw new Error("No ROOT_URL");
-  }
-  const url = `${_rootURL.replace(/^http/, "ws")}/graphql`;
+  const url = `/graphql`;
   const isServer = typeof window === "undefined";
   return createClient({
     url,
@@ -99,9 +95,7 @@ function makeSSRLink(req: any, res: any) {
   });
 }
 
-function makeStandardLink(ROOT_URL: string, isServer: boolean) {
-  _rootURL = ROOT_URL;
-
+function makeStandardLink(isServer: boolean) {
   let CSRF_TOKEN;
   if (!isServer) {
     const nextDataEl = document.getElementById("__NEXT_DATA__");
@@ -112,7 +106,7 @@ function makeStandardLink(ROOT_URL: string, isServer: boolean) {
     CSRF_TOKEN = data.query.CSRF_TOKEN;
   }
   const httpLink = new HttpLink({
-    uri: `${ROOT_URL}/graphql`,
+    uri: `/graphql`,
     credentials: "same-origin",
     headers: {
       "CSRF-Token": CSRF_TOKEN,
@@ -164,11 +158,6 @@ function makeStandardLink(ROOT_URL: string, isServer: boolean) {
 
 export const withApollo = withApolloBase(
   ({ initialState, ctx }) => {
-    const ROOT_URL = process.env.NEXT_PUBLIC_ROOT_URL;
-    if (!ROOT_URL) {
-      throw new Error("ROOT_URL envvar is not set");
-    }
-
     const onErrorLink = onError(({ graphQLErrors, networkError }) => {
       if (graphQLErrors)
         graphQLErrors.map(({ message, locations, path }) =>
@@ -189,9 +178,9 @@ export const withApollo = withApolloBase(
       mainLink =
         req && res && process.env.NEXT_PHASE !== "phase-production-build"
           ? makeSSRLink(req, res)
-          : makeStandardLink(ROOT_URL, true);
+          : makeStandardLink(true);
     } else {
-      mainLink = makeStandardLink(ROOT_URL, false);
+      mainLink = makeStandardLink(false);
     }
 
     const cache = new InMemoryCache({
