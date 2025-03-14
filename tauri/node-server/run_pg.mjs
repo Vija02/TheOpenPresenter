@@ -198,6 +198,7 @@ async function main() {
 
         // ETC
         STATIC_FILES_PATH: "https://static.theopenpresenter.com",
+        DISABLE_HSTS: "1",
 
         ...envOverride,
       },

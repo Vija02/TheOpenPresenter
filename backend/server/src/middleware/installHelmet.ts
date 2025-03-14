@@ -88,6 +88,9 @@ export default async function installHelmet(app: Express) {
       // Enables prettier script and SVG icon in GraphiQL
       options.crossOriginEmbedderPolicy = false;
     }
+    if (process.env.DISABLE_HSTS) {
+      options.strictTransportSecurity = false;
+    }
 
     return options;
   };
