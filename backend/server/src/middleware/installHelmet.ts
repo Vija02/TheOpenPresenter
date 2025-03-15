@@ -21,32 +21,39 @@ export default async function installHelmet(app: Express) {
   const registeredCSPDirectives = serverPluginApi.getRegisteredCSPDirectives();
 
   const getOptions = (nonce: string) => {
-    const defaultDirectives = {
-      ...contentSecurityPolicy.getDefaultDirectives(),
-      "connect-src": [
-        "'self'",
-        // Safari doesn't allow using wss:// origins as 'self' from
-        // an https:// page, so we have to translate explicitly for
-        // it.
-        ROOT_URL.replace(/^http/, "ws"),
-      ],
-      "script-src": [
-        ...(contentSecurityPolicy.getDefaultDirectives()[
-          "script-src"
-        ] as Iterable<any>),
-        // ES Module shim
-        "https://ga.jspm.io",
-        "https://esm.sh",
-        // Nonce for general usage
-        `'nonce-${nonce}'`,
-        "blob:",
-      ],
-      "media-src": ["*"],
-      "img-src": ["*"],
-    };
+    const defaultDirectives = Object.fromEntries(
+      Object.entries({
+        ...contentSecurityPolicy.getDefaultDirectives(),
+        "connect-src": [
+          "'self'",
+          // Safari doesn't allow using wss:// origins as 'self' from
+          // an https:// page, so we have to translate explicitly for
+          // it.
+          ROOT_URL.replace(/^http/, "ws"),
+        ],
+        "script-src": [
+          ...(contentSecurityPolicy.getDefaultDirectives()[
+            "script-src"
+          ] as Iterable<any>),
+          // ES Module shim
+          "https://ga.jspm.io",
+          "https://esm.sh",
+          // Nonce for general usage
+          `'nonce-${nonce}'`,
+          "blob:",
+        ],
+        "media-src": ["*"],
+        "img-src": ["*"],
+      }).filter(
+        process.env.DISABLE_HSTS
+          ? ([key]) => key !== "upgrade-insecure-requests"
+          : () => true,
+      ),
+    );
 
     const options: HelmetOptions = {
       contentSecurityPolicy: {
+        useDefaults: false,
         directives: registeredCSPDirectives.reduce(
           (acc, val) => mergeConfig(acc, val.cspDirective),
           defaultDirectives as Record<string, any>,
