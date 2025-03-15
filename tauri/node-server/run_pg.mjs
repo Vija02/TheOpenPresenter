@@ -133,19 +133,19 @@ async function main() {
     console.log("Postgres started!");
   }
 
-  // TODO: Migrate
-  // await runCommand(
-  //   nodeBinaryPath,
-  //   [graphileMigrateJsPath, "-c", "node-server/.gmrc", "reset", "--erase"],
-  //   {
-  //     env: {
-  //       DATABASE_URL: `postgres://${DATABASE_OWNER}:${DATABASE_OWNER_PASSWORD}@localhost:${PORT}/${DATABASE_NAME}`,
-  //       ROOT_DATABASE_URL: `postgres://postgres:password@localhost:${PORT}/postgres`,
-  //       DATABASE_AUTHENTICATOR,
-  //       DATABASE_VISITOR,
-  //     },
-  //   },
-  // );
+  // Migrate DB
+  await runCommand(
+    nodeBinaryPath,
+    [graphileMigrateJsPath, "-c", "node-server/.gmrc", "migrate"],
+    {
+      env: {
+        DATABASE_URL: `postgres://${DATABASE_OWNER}:${DATABASE_OWNER_PASSWORD}@localhost:${PORT}/${DATABASE_NAME}`,
+        ROOT_DATABASE_URL: `postgres://postgres:password@localhost:${PORT}/postgres`,
+        DATABASE_AUTHENTICATOR,
+        DATABASE_VISITOR,
+      },
+    },
+  );
 
   let envOverride = {};
   if (fs.existsSync(envPath)) {
