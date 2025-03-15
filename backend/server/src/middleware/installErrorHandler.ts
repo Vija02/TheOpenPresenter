@@ -1,6 +1,6 @@
 import { ErrorRequestHandler, Express } from "express";
 import * as fs from "fs";
-import { template, TemplateExecutor } from "lodash";
+import { TemplateExecutor, template } from "lodash";
 import { resolve } from "path";
 
 const isDev = process.env.NODE_ENV === "development";
@@ -16,7 +16,7 @@ function parseError(
     code?: string;
     statusCode?: number;
     status?: number;
-  }
+  },
 ): ParsedError {
   /*
    * Because an error may contain confidential information or information that
@@ -51,7 +51,7 @@ let errorPageTemplate: TemplateExecutor;
 function getErrorPage({ message }: ParsedError) {
   if (!errorPageTemplate || isDev) {
     errorPageTemplate = template(
-      fs.readFileSync(resolve(__dirname, "../../error.html"), "utf8")
+      fs.readFileSync(resolve(__dirname, "../error.html"), "utf8"),
     );
   }
 
