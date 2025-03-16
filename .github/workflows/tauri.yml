@@ -78,7 +78,6 @@ jobs:
           cd ..
           yarn --no-immutable
 
-          # TODO: Download Node
           yarn tauri build --verbose
 
           echo "tauri_path=$(pwd)" >> "$GITHUB_ENV"

@@ -8,6 +8,8 @@ Essentially, the desktop app is:
 - A bundle of our node.js server, configured to run locally (we include the `node` binary)
 - Tauri to wrap the website into an app window
 
+> Note: This currently only builds a windows version of the app. To get it working with Linux and MacOS, there are a few things that need to be done. See the section at the end of this README for more info.
+
 ## What is in the bundle?
 
 - Tauri/Rust code to wrap everything
@@ -95,8 +97,16 @@ Anytime we modify the following, we should check that everything still runs:
 - Modification to docker production build
 - Update to postgres (extension, version, etc)
 
-## Notable limitations
+## Other notable limitations that we need to address
 
 - Port clash
 - Worker not running
 - Plugins env
+
+## Linux and MacOS support
+
+- PG extension binary
+  - Currently, the PG extension we use are only compiled for 64bit linux and windows. For supporting other platform & arch, we'd need to build its binaries and include it somehow.
+  - Note that for Windows, we've manually included the .dll file in this repo
+- Yaml build
+  - The github action .yaml is setup for Windows only. We'd need to change this to build other platforms too.
