@@ -85,6 +85,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@napi-rs/triples@npm:^1.2.0":
+  version: 1.2.0
+  resolution: "@napi-rs/triples@npm:1.2.0"
+  checksum: 10c0/e8294cc63d36fe0b062dc5293a0a2c72ae9318676dd76168e969a8f47b95180e7fe80a301fc0d9c6688399494744bfe21275b58f247f2981b558898743389e0f
+  languageName: node
+  linkType: hard
+
 "@npmcli/agent@npm:^3.0.0":
   version: 3.0.0
   resolution: "@npmcli/agent@npm:3.0.0"
@@ -1534,6 +1541,7 @@ __metadata:
   resolution: "tauri-server@workspace:."
   dependencies:
     "@embedded-postgres/windows-x64": "npm:^17.4.0-beta.15"
+    "@napi-rs/triples": "npm:^1.2.0"
     dotenv: "npm:^16.4.7"
     embedded-postgres: "npm:17.4.0-beta.15"
     node-fetch: "npm:^3.3.2"

@@ -7,3 +7,8 @@
 /gen/schemas
 
 node-server/theopenpresenter
+
+# Node binary
+node-*
+# But don't capture this directory too
+!node-server

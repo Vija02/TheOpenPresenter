@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "postinstall": "node node-server/script/copy_pg_extension.mjs",
+    "postinstall": "node node-server/script/copy_pg_extension.mjs && node node-server/script/download_nodejs.mjs",
     "tauri": "tauri"
   },
   "devDependencies": {

@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@embedded-postgres/windows-x64": "^17.4.0-beta.15",
+    "@napi-rs/triples": "^1.2.0",
     "dotenv": "^16.4.7",
     "embedded-postgres": "17.4.0-beta.15",
     "node-fetch": "^3.3.2",
