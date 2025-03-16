@@ -41,13 +41,16 @@ const runCommand = async (command, args, options) => {
   });
 };
 
-const databaseDir = path.join(getDataHome(), "TheOpenPresenter", "db");
-const envPath = path.join(getDataHome(), "TheOpenPresenter", ".env");
+const appDataFolderName = "TheOpenPresenter";
+
+const uploadsPath = path.join(getDataHome(), appDataFolderName, "uploads");
+const databaseDir = path.join(getDataHome(), appDataFolderName, "db");
+const envPath = path.join(getDataHome(), appDataFolderName, ".env");
+
 const nodeBinaryPath = path.resolve("./node");
 const graphileMigrateJsPath = path.resolve(
   "node-server/theopenpresenter/node_modules/graphile-migrate/dist/cli.js",
 );
-const uploadsPath = path.join(getDataHome(), "TheOpenPresenter", "uploads");
 
 async function main() {
   const pg = new EmbeddedPostgres({

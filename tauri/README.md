@@ -33,13 +33,21 @@ TODO: Have a separate frontend to show something while everything is being initi
 ## Extra app data
 
 Extra files are stored in appData.
-- Linux: `/home/<Username>/.local/share`
-- Windows: `c:\Users\<Username>\AppData\Roaming`
-- macOS: `/Users/<Username>/Library/Application Support`
+- Linux: `/home/<Username>/.local/share/TheOpenPresenter`
+- Windows: `c:\Users\<Username>\AppData\Roaming\TheOpenPresenter`
+- macOS: `/Users/<Username>/Library/Application Support/TheOpenPresenter`
 
 Here, we store the `uploads` and `db` folders which is responsible for storing the uploaded files and the database files respectively.
 
 We can also create a `.env` file here that will override the default environment variables.
+
+## Logs
+
+We use [Tauri's logging plugin](https://tauri.app/plugin/logging/) to handle logs.  
+The file is stored in:
+- Linux: `/home/<Username>/.local/share/com.theopenpresenter.app/logs`
+- Windows: `C:\Users\<Username>\AppData\Local\com.theopenpresenter.app\logs`
+- macOS: `/Users/<Username>/Library/Logs/com.theopenpresenter.app`
 
 ## Bundling notes
 
