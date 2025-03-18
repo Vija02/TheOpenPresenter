@@ -9,6 +9,7 @@
 node-server/theopenpresenter
 
 # Node binary
+node
 node-*
 # But don't capture this directory too
 !node-server

@@ -94,23 +94,37 @@ async function downloadNodejs() {
     const tempDir = mkdtempSync(join(tmpdir(), "node-temp"));
     process.chdir(tempDir);
 
+    let nodeFileName;
+
     if (platform === "win32") {
-      const nodeFileName = await downloadWindowsBinary();
+      nodeFileName = await downloadWindowsBinary();
       copyFileSync(
         join(tempDir, nodeFileName),
         join(originalPath, nodeFileName),
+      );
+      copyFileSync(
+        join(originalPath, nodeFileName),
+        join(originalPath, "node.exe"),
       );
     } else if (platform === "linux") {
-      const nodeFileName = await downloadLinuxBinary();
+      nodeFileName = await downloadLinuxBinary();
       copyFileSync(
         join(tempDir, nodeFileName),
         join(originalPath, nodeFileName),
       );
+      copyFileSync(
+        join(originalPath, nodeFileName),
+        join(originalPath, "node"),
+      );
     } else if (platform === "darwin") {
-      const nodeFileName = await downloadDarwinBinary();
+      nodeFileName = await downloadDarwinBinary();
       copyFileSync(
         join(tempDir, nodeFileName),
         join(originalPath, nodeFileName),
+      );
+      copyFileSync(
+        join(originalPath, nodeFileName),
+        join(originalPath, "node"),
       );
     } else {
       throw new Error(`Unsupported arch "${arch}" for platform "${platform}"`);
