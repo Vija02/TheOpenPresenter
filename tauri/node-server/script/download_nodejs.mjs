@@ -1,5 +1,5 @@
 import { platformArchTriples } from "@napi-rs/triples";
-import { copyFileSync, createWriteStream, mkdtempSync, symlinkSync } from "fs";
+import { copyFileSync, createWriteStream, mkdtempSync } from "fs";
 import fetch from "node-fetch";
 import { tmpdir } from "os";
 import { join } from "path";
@@ -102,39 +102,21 @@ async function downloadNodejs() {
         join(tempDir, nodeFileName),
         join(originalPath, nodeFileName),
       );
-      try {
-        symlinkSync(
-          join(originalPath, nodeFileName),
-          join(originalPath, "node.exe"),
-          "file",
-        );
-      } catch (e) {}
+      copyFileSync(join(tempDir, nodeFileName), join(originalPath, "node.exe"));
     } else if (platform === "linux") {
       nodeFileName = await downloadLinuxBinary();
       copyFileSync(
         join(tempDir, nodeFileName),
         join(originalPath, nodeFileName),
       );
-      try {
-        symlinkSync(
-          join(originalPath, nodeFileName),
-          join(originalPath, "node"),
-          "file",
-        );
-      } catch (e) {}
+      copyFileSync(join(tempDir, nodeFileName), join(originalPath, "node"));
     } else if (platform === "darwin") {
       nodeFileName = await downloadDarwinBinary();
       copyFileSync(
         join(tempDir, nodeFileName),
         join(originalPath, nodeFileName),
       );
-      try {
-        symlinkSync(
-          join(originalPath, nodeFileName),
-          join(originalPath, "node"),
-          "file",
-        );
-      } catch (e) {}
+      copyFileSync(join(tempDir, nodeFileName), join(originalPath, "node"));
     } else {
       throw new Error(`Unsupported arch "${arch}" for platform "${platform}"`);
     }
