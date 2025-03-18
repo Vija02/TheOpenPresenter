@@ -39,15 +39,7 @@ jobs:
           TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
           TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
         run: |
-          pwd
-          cd ../..
-
-          # Prepare the repo
-          mv ./TheOpenPresenter/TheOpenPresenter/tauri ./tauri
-          cp -r ./TheOpenPresenter/TheOpenPresenter ./tauri/node-server/theopenpresenter
-
           # Build TOP
-          cd tauri/node-server/theopenpresenter
           cp .env.ci .env
           yarn --no-immutable
           yarn build
@@ -73,7 +65,7 @@ jobs:
           mv homepage_temp apps/homepage
           mv next_static_temp apps/homepage/.next/static
 
-          cd ..
+          cd tauri/node-server
           yarn --no-immutable
           cd ..
           yarn --no-immutable
