@@ -65,9 +65,7 @@ jobs:
           mv homepage_temp apps/homepage
           mv next_static_temp apps/homepage/.next/static
 
-          cd tauri/node-server
-          yarn --no-immutable
-          cd ..
+          cd tauri
           yarn --no-immutable
 
           yarn tauri build --verbose
