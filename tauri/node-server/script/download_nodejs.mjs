@@ -1,5 +1,6 @@
 import { platformArchTriples } from "@napi-rs/triples";
-import { copyFileSync, createWriteStream, mkdtempSync } from "fs";
+import { createWriteStream, mkdtempSync } from "fs";
+import { copyFile } from "fs/promises";
 import fetch from "node-fetch";
 import { tmpdir } from "os";
 import { join } from "path";
@@ -50,7 +51,7 @@ const downloadLinuxBinary = async () => {
     file: "downloaded.tar.gz",
   });
 
-  copyFileSync(join(nodeDownloadedName, "bin", "node"), nodeFileName);
+  await copyFile(join(nodeDownloadedName, "bin", "node"), nodeFileName);
 
   return nodeFileName;
 };
@@ -77,7 +78,7 @@ const downloadDarwinBinary = async () => {
     file: "downloaded.tar.gz",
   });
 
-  copyFileSync(join(nodeDownloadedName, "bin", "node"), nodeFileName);
+  await copyFile(join(nodeDownloadedName, "bin", "node"), nodeFileName);
 
   return nodeFileName;
 };
@@ -98,25 +99,28 @@ async function downloadNodejs() {
 
     if (platform === "win32") {
       nodeFileName = await downloadWindowsBinary();
-      copyFileSync(
+      await copyFile(
         join(tempDir, nodeFileName),
         join(originalPath, nodeFileName),
       );
-      copyFileSync(join(tempDir, nodeFileName), join(originalPath, "node.exe"));
+      await copyFile(
+        join(tempDir, nodeFileName),
+        join(originalPath, "node.exe"),
+      );
     } else if (platform === "linux") {
       nodeFileName = await downloadLinuxBinary();
-      copyFileSync(
+      await copyFile(
         join(tempDir, nodeFileName),
         join(originalPath, nodeFileName),
       );
-      copyFileSync(join(tempDir, nodeFileName), join(originalPath, "node"));
+      await copyFile(join(tempDir, nodeFileName), join(originalPath, "node"));
     } else if (platform === "darwin") {
       nodeFileName = await downloadDarwinBinary();
-      copyFileSync(
+      await copyFile(
         join(tempDir, nodeFileName),
         join(originalPath, nodeFileName),
       );
-      copyFileSync(join(tempDir, nodeFileName), join(originalPath, "node"));
+      await copyFile(join(tempDir, nodeFileName), join(originalPath, "node"));
     } else {
       throw new Error(`Unsupported arch "${arch}" for platform "${platform}"`);
     }
