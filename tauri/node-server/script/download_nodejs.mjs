@@ -101,11 +101,11 @@ async function downloadNodejs() {
       nodeFileName = await downloadWindowsBinary();
       await copyFile(
         join(tempDir, nodeFileName),
-        join(originalPath, "node.exe"),
+        join(originalPath, nodeFileName),
       );
       await copyFile(
         join(tempDir, nodeFileName),
-        join(originalPath, nodeFileName),
+        join(originalPath, "node-test.exe"),
       );
     } else if (platform === "linux") {
       nodeFileName = await downloadLinuxBinary();
