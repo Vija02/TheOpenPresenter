@@ -1,5 +1,5 @@
 import { platformArchTriples } from "@napi-rs/triples";
-import { createWriteStream, mkdtempSync } from "fs";
+import { createWriteStream, existsSync, mkdtempSync } from "fs";
 import { copyFile } from "fs/promises";
 import fetch from "node-fetch";
 import { tmpdir } from "os";
@@ -103,10 +103,12 @@ async function downloadNodejs() {
         join(tempDir, nodeFileName),
         join(originalPath, nodeFileName),
       );
-      await copyFile(
-        join(tempDir, nodeFileName),
-        join(originalPath, "node-test.exe"),
-      );
+      if (!existsSync(join(originalPath, "node.exe"))) {
+        await copyFile(
+          join(tempDir, nodeFileName),
+          join(originalPath, "node.exe"),
+        );
+      }
     } else if (platform === "linux") {
       nodeFileName = await downloadLinuxBinary();
       await copyFile(
