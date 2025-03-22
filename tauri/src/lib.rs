@@ -28,7 +28,7 @@ pub fn run() {
         .setup(|app| {
             let resource_path = app
                 .path()
-                .resolve("node-server/run_pg.mjs", BaseDirectory::Resource)?;
+                .resolve("node-server/run_server.mjs", BaseDirectory::Resource)?;
             let sidecar_command = app.shell().sidecar("node").unwrap();
             let (mut rx, child) = sidecar_command
                 .args([resource_path])

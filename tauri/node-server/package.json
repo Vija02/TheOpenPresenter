@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "description": "Node helper for running TheOpenPresenter with Tauri",
-  "main": "run_pg.js",
+  "main": "run_server.js",
   "scripts": {
     "postinstall": "yarn patch-package",
     "test": "echo \"Error: no test specified\" && exit 1"
