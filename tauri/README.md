@@ -10,6 +10,12 @@ Essentially, the desktop app is:
 
 > Note: This currently only builds a windows version of the app. To get it working with Linux and MacOS, there are a few things that need to be done. See the section at the end of this README for more info.
 
+## Getting started
+
+1. Make sure the main project is built
+2. Install the dependencies - `yarn`
+3. Run with `yarn tauri dev`
+
 ## What is in the bundle?
 
 - Tauri/Rust code to wrap everything
@@ -76,16 +82,15 @@ Notes:
 - Updated the path to point to the correct migration folder
 - Changed how `graphile-worker`'s schema is installed so that we don't have to include `yarn`.
 
-### File directory
+### File structure
 
-In the final bundle, the file structure is flipped.
+In order to bundle the server into tauri, we use symlinks to put our main project into the `tauri` folder.
+Here's what is expected:
 - tauri
   - node-server
     - theopenpresenter (this repo, without `tauri`)
 
-## Development
-
-TODO: Symlink
+This is achieved through manual symlinks on each of the files inside the repo, except for the `tauri` folder. This can be re-linked by running `yarn`.
 
 ## Fragility
 
@@ -103,7 +108,7 @@ Anytime we modify the following, we should check that everything still runs:
 - Worker not running
 - Plugins env
 
-## Linux and MacOS support
+### Linux and MacOS support
 
 - PG extension binary
   - Currently, the PG extension we use are only compiled for 64bit linux and windows. For supporting other platform & arch, we'd need to build its binaries and include it somehow.
