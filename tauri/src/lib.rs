@@ -6,21 +6,8 @@ use tauri_plugin_log::{Target, TargetKind};
 use tauri_plugin_shell::process::CommandEvent;
 use tauri_plugin_shell::ShellExt;
 
-// Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
-}
-
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    Notification::new()
-        .summary("TheOpenPresenter")
-        .body("Starting TheOpenPresenter")
-        // .timeout(Timeout::Milliseconds(6000)) //milliseconds
-        .show()
-        .unwrap();
-
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_opener::init())
@@ -44,6 +31,7 @@ pub fn run() {
             let window = app.get_webview_window("main").unwrap();
             let window_clone = window.clone();
 
+            // Handle cleaning process when window is closed
             window.on_window_event(move |event| {
                 if let tauri::WindowEvent::CloseRequested { api, .. } = event {
                     let mut child_lock = child_clone.lock().unwrap();
@@ -59,8 +47,8 @@ pub fn run() {
                 }
             });
 
+            // Log stdout and stderr
             tauri::async_runtime::spawn(async move {
-                // read events such as stdout
                 while let Some(event) = rx.recv().await {
                     if let CommandEvent::Stdout(line_bytes) = &event {
                         let line = std::str::from_utf8(&line_bytes).unwrap();
@@ -77,7 +65,5 @@ pub fn run() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![greet])
-        .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
