@@ -46,20 +46,20 @@ async function installPgUuidv7() {
     if (process.platform === "win32") {
       extensionDir = resolve(
         originalPath,
-        `node-server/node_modules/@embedded-postgres/${rustStyleTarget}/native/share/extension/`,
+        `node_modules/@embedded-postgres/${rustStyleTarget}/native/share/extension/`,
       );
       libDir = resolve(
         originalPath,
-        `node-server/node_modules/@embedded-postgres/${rustStyleTarget}/native/lib/`,
+        `node_modules/@embedded-postgres/${rustStyleTarget}/native/lib/`,
       );
     } else {
       extensionDir = resolve(
         originalPath,
-        `node-server/node_modules/@embedded-postgres/${rustStyleTarget}/native/share/postgresql/extension/`,
+        `node_modules/@embedded-postgres/${rustStyleTarget}/native/share/postgresql/extension/`,
       );
       libDir = resolve(
         originalPath,
-        `node-server/node_modules/@embedded-postgres/${rustStyleTarget}/native/lib/postgresql/`,
+        `node_modules/@embedded-postgres/${rustStyleTarget}/native/lib/postgresql/`,
       );
     }
 

@@ -1,13 +1,23 @@
 {
-  "name": "tauri-app",
+  "name": "theopenpresenter-tauri-app",
   "private": true,
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "postinstall": "node node-server/script/copy_pg_extension.mjs && node node-server/script/download_nodejs.mjs && node node-server/script/symlink_top.mjs",
+    "postinstall": "yarn patch-package && node node-server/script/copy_pg_extension.mjs && node node-server/script/download_nodejs.mjs && node node-server/script/symlink_top.mjs",
     "tauri": "tauri"
   },
+  "dependencies": {
+    "@embedded-postgres/windows-x64": "^17.4.0-beta.15",
+    "@napi-rs/triples": "^1.2.0",
+    "dotenv": "^16.4.7",
+    "embedded-postgres": "17.4.0-beta.15",
+    "node-fetch": "^3.3.2",
+    "platform-folders": "^0.6.0",
+    "tar": "^7.4.3"
+  },
   "devDependencies": {
-    "@tauri-apps/cli": "^2.3.1"
+    "@tauri-apps/cli": "^2.3.1",
+    "patch-package": "^8.0.0"
   }
 }

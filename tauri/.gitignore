@@ -6,6 +6,7 @@
 # will have schema files for capabilities auto-completion
 /gen/schemas
 
+# The project symlink
 node-server/theopenpresenter
 
 # Node binary
@@ -13,3 +14,9 @@ node
 node-*
 # But don't capture this directory too
 !node-server
+
+# Yarn stuff
+.yarn/*
+!.yarn/releases
+!.yarn/plugins
+.pnp.*
