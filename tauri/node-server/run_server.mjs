@@ -52,6 +52,11 @@ const graphileMigrateJsPath = path.resolve(
   "node-server/theopenpresenter/node_modules/graphile-migrate/dist/cli.js",
 );
 
+const killProcess = async (pg) => {
+  await pg.stop();
+  process.exit(1);
+};
+
 async function main() {
   const pg = new EmbeddedPostgres({
     databaseDir,
@@ -68,20 +73,9 @@ async function main() {
     process.kill(process.pid, "SIGINT");
     process.exit(1);
   });
-
-  process.once("SIGTERM", async () => {
-    await pg.stop();
-    process.exit(1);
-  });
-  process.once("SIGQUIT", async () => {
-    await pg.stop();
-    process.exit(1);
-  });
-
-  process.once("exit", async () => {
-    await pg.stop();
-    process.exit(1);
-  });
+  process.once("SIGTERM", () => killProcess(pg));
+  process.once("SIGQUIT", () => killProcess(pg));
+  process.once("exit", () => killProcess(pg));
 
   if (!fs.existsSync(databaseDir)) {
     console.log("Database not initialized, initializing now...");
@@ -209,5 +203,5 @@ async function main() {
   );
 }
 
-console.log("Running JS script");
+console.log("\n\nInitializing node server!");
 main();
