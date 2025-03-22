@@ -54,7 +54,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@embedded-postgres/windows-x64@npm:^17.4.0-beta.15":
+"@embedded-postgres/windows-x64@npm:17.4.0-beta.15, @embedded-postgres/windows-x64@npm:^17.4.0-beta.15":
   version: 17.4.0-beta.15
   resolution: "@embedded-postgres/windows-x64@npm:17.4.0-beta.15"
   checksum: 10c0/b3f7b30bb15ddbcdc627e6ae2c3e3cb54ea2795a23eec989c01c210922649f74d6b744dd5fae106396a772053d06adab8d5ae3a70283d08f28598244959e580f
@@ -1651,7 +1651,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "theopenpresenter-tauri-app@workspace:."
   dependencies:
-    "@embedded-postgres/windows-x64": "npm:^17.4.0-beta.15"
+    "@embedded-postgres/windows-x64": "npm:17.4.0-beta.15"
     "@napi-rs/triples": "npm:^1.2.0"
     "@tauri-apps/cli": "npm:^2.3.1"
     dotenv: "npm:^16.4.7"
