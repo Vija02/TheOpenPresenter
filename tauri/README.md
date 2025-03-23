@@ -64,8 +64,6 @@ The file is stored in:
 For the server build, we follow similar steps with the production docker build.  
 We use [vercel/nft](https://github.com/vercel/nft) to extract only the dependencies we require to reduce file size.  
 
-TODO: We currently still include the sourcecode in the bundle.
-
 ### PostgreSQL
 
 To run postgres, we use the `embedded-postgres` npm package.  
@@ -102,11 +100,12 @@ Anytime we modify the following, we should check that everything still runs:
 - Modification to docker production build
 - Update to postgres (extension, version, etc)
 
-## Other notable limitations that we need to address
+## Other notable limitations / shortcomings that we need to address
 
-- Port clash
-- Worker not running
-- Plugins env
+- Opening multiple instance of the app won't work well due to port clashing
+- We need to make it easier for user to configure the server (eg: for plugin env)
+- We currently still include the sourcecode in the bundle. We'd want to remove this.
+- TODO: Worker not running
 
 ### Linux and MacOS support
 
