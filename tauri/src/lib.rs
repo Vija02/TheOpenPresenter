@@ -53,12 +53,12 @@ pub fn run() {
                     if let CommandEvent::Stdout(line_bytes) = &event {
                         let line = std::str::from_utf8(&line_bytes).unwrap();
 
-                        log::info!("{:?}", line);
+                        log::info!("{}", line);
                     }
                     if let CommandEvent::Stderr(line_bytes) = &event {
                         let line = std::str::from_utf8(&line_bytes).unwrap();
 
-                        log::error!("{:?}", line);
+                        log::error!("{}", line);
                     }
                 }
             });
