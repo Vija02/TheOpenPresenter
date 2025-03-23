@@ -48,6 +48,18 @@ export default (app: Express) => {
             from new_user, new_session`,
             [defaultUsername, defaultEmail, "Anonymous", null, defaultPassword],
           );
+          // Create organization
+          const {
+            rows: [org],
+          } = await rootPgPool.query(
+            `insert into app_public.organizations (slug, name) values ($1, $2) returning *`,
+            ["local", "Local"],
+          );
+          await rootPgPool.query(
+            `insert into app_public.organization_memberships (organization_id, user_id, is_owner, is_billing_contact)
+              values($1, $2, $3, $4)`,
+            [org.id, details?.user_id, true, true],
+          );
 
           await login({ session_id: details?.session_id });
           next();
