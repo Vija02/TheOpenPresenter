@@ -28,9 +28,12 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "externalBin": ["node"],
+    "externalBin": [
+      "node"
+    ],
     "resources": [
-      "node-server/**/*"
+      "node-server/**/*",
+      "node_modules/**/*"
     ]
   }
 }
