@@ -1,6 +1,9 @@
 name: Run Tauri Build
 
 on:
+  push:
+    branches:
+      - main
   pull_request:
   workflow_dispatch:
 
@@ -75,5 +78,13 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           path: |
+            /a/tauri/target/release/bundle/nsis/TheOpenPresenter_0.1.0_x64-setup.exe
+            /a/tauri/target/release/bundle/msi/TheOpenPresenter_0.1.0_x64_en-US.msi
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')
+        with:
+          name: ${{ startsWith(github.ref, 'refs/tags/') && format('Release {0}', github.ref_name) || format('Nightly build {0}', github.sha) }}
+          files: |
             /a/tauri/target/release/bundle/nsis/TheOpenPresenter_0.1.0_x64-setup.exe
             /a/tauri/target/release/bundle/msi/TheOpenPresenter_0.1.0_x64_en-US.msi
