@@ -27,4 +27,6 @@ tauri-plugin-shell = "2"
 notify-rust = "4.11.5"
 tauri-plugin-localhost = "2"
 tauri-plugin-log = "2"
+reqwest = "0.12.15"
+tokio = "1.44.1"
 

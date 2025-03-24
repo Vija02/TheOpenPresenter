@@ -1,10 +1,28 @@
 use notify_rust::Notification;
 use std::sync::{Arc, Mutex};
+use std::time::Duration;
 use tauri::path::BaseDirectory;
 use tauri::Manager;
 use tauri_plugin_log::{Target, TargetKind};
 use tauri_plugin_shell::process::CommandEvent;
 use tauri_plugin_shell::ShellExt;
+use tokio::time::sleep;
+
+async fn wait_for_endpoint(url: &str) -> Result<(), Box<dyn std::error::Error>> {
+    let client = reqwest::Client::new();
+
+    loop {
+        match client.get(url).send().await {
+            Ok(response) => {
+                if response.status().is_success() {
+                    return Ok(());
+                }
+            }
+            Err(_) => {}
+        }
+        sleep(Duration::from_millis(500)).await;
+    }
+}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -64,6 +82,17 @@ pub fn run() {
 
                         log::error!("{}", line);
                     }
+                }
+            });
+
+            // Show splashscreen until we can reach the endpoint
+            let splash_window = app.get_webview_window("splashscreen").unwrap();
+            let main_window = app.get_webview_window("main").unwrap();
+
+            tauri::async_runtime::spawn(async move {
+                if wait_for_endpoint("http://localhost:5678/o/local").await.is_ok() {
+                    main_window.show().unwrap();
+                    splash_window.close().unwrap();
                 }
             });
 

@@ -36,8 +36,6 @@ Essentially, the desktop app is:
 2. Run DB migration (in case we upgraded)
 3. Start Node server
 
-TODO: Have a separate frontend to show something while everything is being initialized
-
 ## Extra app data
 
 Extra files are stored in appData.

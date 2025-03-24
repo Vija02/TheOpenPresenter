@@ -10,9 +10,18 @@
     "windows": [
       {
         "title": "TheOpenPresenter",
+        "label": "main",
+        "visible": false,
         "width": 800,
         "height": 600,
         "maximized": true
+      },
+      {
+        "label": "splashscreen",
+        "url": "/splashscreen",
+        "width": 700,
+        "height": 300,
+        "decorations": false
       }
     ]
   },
