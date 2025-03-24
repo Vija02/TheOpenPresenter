@@ -19,8 +19,10 @@
       {
         "label": "splashscreen",
         "url": "/splashscreen",
-        "width": 700,
-        "height": 300,
+        "width": 560,
+        "height": 240,
+        "resizable": false,
+        "center": true,
         "decorations": false
       }
     ]
