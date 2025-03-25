@@ -51,6 +51,9 @@ const nodeBinaryPath = path.resolve("./node");
 const graphileMigrateJsPath = path.resolve(
   "node-server/theopenpresenter/node_modules/graphile-migrate/dist/cli.js",
 );
+const graphileWorkerJsPath = path.resolve(
+  "node-server/theopenpresenter/node_modules/graphile-worker/dist/cli.js",
+);
 
 const killProcess = async (pg) => {
   await pg.stop();
@@ -149,6 +152,66 @@ async function main() {
     envOverride = dotenv.parse(fs.readFileSync(envPath));
   }
 
+  const finalEnv = {
+    NODE_ENV: "production",
+    AUTO_LOGIN: "1",
+
+    // DB settings
+    DATABASE_HOST: `localhost:${PORT}`,
+    DATABASE_URL: `postgres://${DATABASE_OWNER}:${DATABASE_OWNER_PASSWORD}@localhost:${PORT}/${DATABASE_NAME}`,
+    ROOT_DATABASE_URL: `postgres://postgres:password@localhost:${PORT}/postgres`,
+    DATABASE_AUTHENTICATOR,
+    DATABASE_AUTHENTICATOR_PASSWORD,
+    DATABASE_OWNER,
+    DATABASE_OWNER_PASSWORD,
+    DATABASE_VISITOR,
+    DATABASE_NAME,
+
+    // CORE
+    PORT: "5678",
+    ROOT_URL: "http://localhost:5678",
+    SECRET: "cookie_secret",
+    GRAPHILE_TURBO: "1",
+
+    // STORAGE
+    STORAGE_TYPE: "file",
+    STORAGE_PROXY: "local",
+    UPLOADS_PATH: uploadsPath,
+
+    // PLUGINS
+    ENABLED_PLUGINS:
+      "lyrics-presenter,simple-image,google-slides,radio,audio-recorder,video-player,worship-pads,embed",
+    PLUGINS_PATH: "./plugins",
+    // Debt: Make this easier for us to change
+    PLUGIN_GOOGLE_SLIDES_CLIENT_ID:
+      "69245303872-fo9ap9sv2a6a5oiim2aqsk1hnnrmkkdk.apps.googleusercontent.com",
+
+    // ETC
+    STATIC_FILES_PATH: "https://static.theopenpresenter.com",
+    // Allows us to access through http
+    DISABLE_HSTS: "1",
+    // Allows access from any origin
+    ALLOW_ANY_ORIGIN: "1",
+
+    ...envOverride,
+  };
+
+  console.log("Starting Worker...");
+  runCommand(
+    nodeBinaryPath,
+    [
+      "-r",
+      "@repo/config/extra",
+      graphileWorkerJsPath,
+      "--crontab",
+      "../crontab",
+    ],
+    {
+      cwd: path.resolve("node-server/theopenpresenter/backend/worker/dist"),
+      env: finalEnv,
+    },
+  );
+
   console.log("Starting Node Server...");
   await runCommand(
     nodeBinaryPath,
@@ -159,49 +222,7 @@ async function main() {
     ],
     {
       cwd: path.resolve("node-server/theopenpresenter"),
-      env: {
-        NODE_ENV: "production",
-        AUTO_LOGIN: "1",
-
-        // DB settings
-        DATABASE_HOST: `localhost:${PORT}`,
-        DATABASE_URL: `postgres://${DATABASE_OWNER}:${DATABASE_OWNER_PASSWORD}@localhost:${PORT}/${DATABASE_NAME}`,
-        ROOT_DATABASE_URL: `postgres://postgres:password@localhost:${PORT}/postgres`,
-        DATABASE_AUTHENTICATOR,
-        DATABASE_AUTHENTICATOR_PASSWORD,
-        DATABASE_OWNER,
-        DATABASE_OWNER_PASSWORD,
-        DATABASE_VISITOR,
-        DATABASE_NAME,
-
-        // CORE
-        PORT: "5678",
-        ROOT_URL: "http://localhost:5678",
-        SECRET: "cookie_secret",
-        GRAPHILE_TURBO: "1",
-
-        // STORAGE
-        STORAGE_TYPE: "file",
-        STORAGE_PROXY: "local",
-        UPLOADS_PATH: uploadsPath,
-
-        // PLUGINS
-        ENABLED_PLUGINS:
-          "lyrics-presenter,simple-image,google-slides,radio,audio-recorder,video-player,worship-pads,embed",
-        PLUGINS_PATH: "./plugins",
-        // Debt: Make this easier for us to change
-        PLUGIN_GOOGLE_SLIDES_CLIENT_ID:
-          "69245303872-fo9ap9sv2a6a5oiim2aqsk1hnnrmkkdk.apps.googleusercontent.com",
-
-        // ETC
-        STATIC_FILES_PATH: "https://static.theopenpresenter.com",
-        // Allows us to access through http
-        DISABLE_HSTS: "1",
-        // Allows access from any origin
-        ALLOW_ANY_ORIGIN: "1",
-
-        ...envOverride,
-      },
+      env: finalEnv,
     },
   );
 }
