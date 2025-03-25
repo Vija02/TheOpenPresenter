@@ -1,5 +1,5 @@
 html {
-  overscroll-behavior: contain;
+  overscroll-behavior: none;
 }
 
 .sidebar-resizable-container {
