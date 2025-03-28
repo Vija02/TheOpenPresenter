@@ -20,5 +20,3 @@ node-*
 !.yarn/releases
 !.yarn/plugins
 .pnp.*
-
-frontendDist
