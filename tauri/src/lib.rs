@@ -8,11 +8,6 @@ use tauri_plugin_shell::process::CommandEvent;
 use tauri_plugin_shell::ShellExt;
 use tokio::time::sleep;
 
-#[derive(Clone, Serialize)]
-struct AppStatus<'a> {
-    status: &'a str,
-}
-
 async fn wait_for_endpoint(url: &str) -> Result<(), Box<dyn std::error::Error>> {
     let client = reqwest::Client::new();
 
@@ -111,14 +106,10 @@ pub fn run() {
             // Show splashscreen until we can reach the endpoint
             let splash_window = app.get_webview_window("splashscreen").unwrap();
             let main_window = app.get_webview_window("main").unwrap();
-
+            
             tauri::async_runtime::spawn(async move {
-                if wait_for_endpoint("http://localhost:5678/o/local")
-                    .await
-                    .is_ok()
-                {
-                    app.emit("app_ready", AppStatus { status: "ready" })
-                        .unwrap();
+                if wait_for_endpoint("http://localhost:5678/o/local").await.is_ok() {
+                    main_window.eval("window.location.reload()").unwrap();
                     main_window.show().unwrap();
                     splash_window.close().unwrap();
                 }
