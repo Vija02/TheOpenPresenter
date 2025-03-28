@@ -69,6 +69,24 @@ pub fn run() {
                 }
             });
 
+            let window_splash = app.get_webview_window("splashscreen").unwrap();
+            let window_splash_clone = window.clone();
+
+            window_splash.on_window_event(move |event| {
+                if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                    let mut child_lock = child_clone.lock().unwrap();
+                    if let Some(mut child_process) = child_lock.take() {
+                        api.prevent_close();
+
+                        if let Err(e) = child_process.kill() {
+                            eprintln!("Failed to kill child process: {}", e);
+                        }
+
+                        window_splash_clone.close().unwrap();
+                    }
+                }
+            });
+
             // Log stdout and stderr
             tauri::async_runtime::spawn(async move {
                 while let Some(event) = rx.recv().await {
