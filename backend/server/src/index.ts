@@ -7,9 +7,6 @@ import { Duplex } from "stream";
 
 import { getShutdownActions, getUpgradeHandlers, makeApp } from "./app";
 
-// @ts-ignore
-const packageJson = require("../../../package.json");
-
 const isDev = process.env.NODE_ENV === "development";
 
 async function main() {
@@ -73,7 +70,7 @@ async function main() {
     console.log();
     console.log(
       chalk.green(
-        `${chalk.bold(packageJson.projectName)} listening on port ${chalk.bold(
+        `${chalk.bold("TheOpenPresenter")} listening on port ${chalk.bold(
           actualPort,
         )}`,
       ),
