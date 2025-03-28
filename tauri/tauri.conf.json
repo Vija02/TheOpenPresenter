@@ -11,6 +11,7 @@
       {
         "title": "TheOpenPresenter",
         "label": "main",
+        "url": "/frontend",
         "visible": false,
         "width": 800,
         "height": 600,
@@ -18,7 +19,7 @@
       },
       {
         "label": "splashscreen",
-        "url": "/splashscreen",
+        "url": "/frontend/splashscreen",
         "width": 560,
         "height": 240,
         "resizable": false,
