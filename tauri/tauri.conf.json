@@ -4,8 +4,6 @@
   "version": "0.1.0",
   "identifier": "com.theopenpresenter.app",
   "build": {
-    "beforeBuildCommand": "yarn build-frontend",
-    "beforeDevCommand": "yarn build-frontend",
     "frontendDist": "./frontendDist"
   },
   "app": {
