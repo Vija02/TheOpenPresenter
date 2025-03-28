@@ -2,26 +2,6 @@
 <html>
 
 <head>
-  <script>
-    const targetUrl = 'http://localhost:5678/o/local';
-    const checkInterval = 200; // Check every 200ms
-
-    async function checkService() {
-      try {
-        const response = await fetch(targetUrl, {
-          method: 'HEAD',
-          mode: 'no-cors'
-        });
-
-        // Redirect when available
-        window.location.replace(targetUrl);
-      } catch (error) {
-        setTimeout(checkService, checkInterval);
-      }
-    }
-
-    checkService();
-  </script>
 </head>
 
 <body>

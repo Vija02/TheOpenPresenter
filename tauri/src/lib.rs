@@ -88,10 +88,15 @@ pub fn run() {
             // Show splashscreen until we can reach the endpoint
             let splash_window = app.get_webview_window("splashscreen").unwrap();
             let main_window = app.get_webview_window("main").unwrap();
-            
+
             tauri::async_runtime::spawn(async move {
-                if wait_for_endpoint("http://localhost:5678/o/local").await.is_ok() {
-                    main_window.eval("window.location.reload()").unwrap();
+                if wait_for_endpoint("http://localhost:5678/o/local")
+                    .await
+                    .is_ok()
+                {
+                    main_window
+                        .eval("window.location.replace('http://localhost:5678/o/local')")
+                        .unwrap();
                     main_window.show().unwrap();
                     splash_window.close().unwrap();
                 }
