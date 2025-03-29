@@ -100,10 +100,12 @@ Anytime we modify the following, we should check that everything still runs:
 
 ## Other notable limitations / shortcomings that we need to address
 
+- Frontend logs not saved anywhere
+- Error not logged nor shown when node initialization fails
 - Opening multiple instance of the app won't work well due to port clashing
 - We need to make it easier for user to configure the server (eg: for plugin env)
 - We currently still include the sourcecode in the bundle. We'd want to remove this.
-- TODO: Worker not running
+- Worker needs to be configured better. Eg: Email, etc
 
 ### Linux and MacOS support
 
