@@ -252,8 +252,6 @@ RUN echo -e "NODE_ENV=$NODE_ENV\nROOT_URL=$ROOT_URL" > /app/.env
 
 FROM node:22-alpine
 
-RUN apk add poppler-utils
-
 EXPOSE $PORT
 WORKDIR /app/
 
