@@ -133,6 +133,7 @@ export async function makeApp({
   await middleware.installPassport(app);
   await middleware.installLogging(app);
   await middleware.installObservability(app);
+  await middleware.installAutoLogin(app);
   if (process.env.FORCE_SSL) {
     await middleware.installForceSSL(app);
   }

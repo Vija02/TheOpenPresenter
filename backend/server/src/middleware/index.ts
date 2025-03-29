@@ -1,3 +1,4 @@
+import installAutoLogin from "./installAutoLogin";
 import installCSRFProtection from "./installCSRFProtection";
 import installCypressServerCommand from "./installCypressServerCommand";
 import installDatabasePools from "./installDatabasePools";
@@ -22,6 +23,7 @@ import installTrpc from "./installTrpc";
 import installWorkerUtils from "./installWorkerUtils";
 
 export {
+  installAutoLogin,
   installCSRFProtection,
   installCypressServerCommand,
   installDatabasePools,

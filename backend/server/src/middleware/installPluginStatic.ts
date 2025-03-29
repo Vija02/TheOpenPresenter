@@ -1,7 +1,7 @@
 import { Express, static as staticMiddleware } from "express";
 import path from "path";
 
-import { serverPluginApi } from "../pluginManager";
+import { pluginsPath, serverPluginApi } from "../pluginManager";
 
 export default (app: Express) => {
   const registeredServeStatic = serverPluginApi.getRegisteredServeStatic();
@@ -9,14 +9,7 @@ export default (app: Express) => {
   for (const { pluginName, path: staticPath } of registeredServeStatic) {
     app.use(
       `/plugin/${pluginName}/static`,
-      staticMiddleware(
-        path.resolve(
-          __dirname,
-          "../../../loadedPlugins",
-          pluginName,
-          staticPath,
-        ),
-      ),
+      staticMiddleware(path.resolve(pluginsPath, pluginName, staticPath)),
     );
   }
 };
