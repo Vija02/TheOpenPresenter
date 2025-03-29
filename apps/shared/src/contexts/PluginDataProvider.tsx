@@ -137,7 +137,7 @@ const initializeHocuspocusProvider = (projectId: string) => {
     }, 60000);
 
     const provider = new HocuspocusProvider({
-      url: (appData.getRootURL() + "/wlink").replace(/^http/, "ws"),
+      url: `${window.location.origin.replace(/^http/, "ws")}/wlink`,
       name: projectId,
       // Here only to force authentication
       token: " ",
