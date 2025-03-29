@@ -8,7 +8,6 @@ import {
 import { logger } from "@repo/observability";
 import axios from "axios";
 import { createProxyMiddleware } from "http-proxy-middleware";
-import { input } from "node-pdftocairo";
 import { typeidUnboxed } from "typeid-js";
 import { proxy } from "valtio";
 import { bind } from "valtio-yjs";
@@ -216,6 +215,8 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
         )
         .mutation(
           async ({ input: { pluginId, presentationId, token }, ctx }) => {
+            const mupdf = await import("mupdf");
+
             const log = logger.child({ pluginId, presentationId });
 
             try {
@@ -283,9 +284,30 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
               log.info("Downloaded. Size: " + pdfBuffer.length);
 
               log.info("Converting...");
-              const output = await input(pdfBuffer, {
-                format: "jpeg",
-              }).output();
+
+              const doc = mupdf.Document.openDocument(
+                pdfBuffer,
+                "application/pdf",
+              );
+              const totalPage = doc.countPages();
+              let scale = -1;
+              const output = Array.from(new Array(totalPage)).map((_, i) => {
+                const page = doc.loadPage(i);
+                if (scale === -1) {
+                  const bounds = page.getBounds();
+                  const pageWidth = bounds[2] - bounds[0];
+
+                  const targetWidth = 720;
+
+                  scale = targetWidth / pageWidth;
+                }
+                const pixmap = page.toPixmap(
+                  mupdf.Matrix.scale(scale, scale),
+                  mupdf.ColorSpace.DeviceRGB,
+                );
+                return pixmap.asJPEG(80, false);
+              });
+
               log.info("Convert done, uploading...");
 
               const uploadedPdf = await uploadPdfPromise;
@@ -295,7 +317,7 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
               // TODO: Problem if we run this again while still running
               output.forEach(async (img, i) => {
                 const uploadedMedia = await serverPluginApi.uploadMedia(
-                  img,
+                  Buffer.from(img),
                   "jpg",
                   {
                     organizationId: loadedContextData.organizationId,
