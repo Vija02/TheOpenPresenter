@@ -8,7 +8,6 @@ import type {
   State,
   YState,
 } from "@repo/base-plugin";
-import { appData } from "@repo/lib";
 import { ErrorAlert, LoadingFull } from "@repo/ui";
 import { useQuery } from "@tanstack/react-query";
 import React, {
