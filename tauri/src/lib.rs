@@ -1,9 +1,7 @@
-use notify_rust::Notification;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tauri::path::BaseDirectory;
 use tauri::Manager;
-use tauri_plugin_log::{Target, TargetKind};
 use tauri_plugin_shell::process::CommandEvent;
 use tauri_plugin_shell::ShellExt;
 use tokio::time::sleep;
@@ -24,9 +22,19 @@ async fn wait_for_endpoint(url: &str) -> Result<(), Box<dyn std::error::Error>> 
     }
 }
 
+#[tauri::command]
+async fn open_renderer(app: tauri::AppHandle, url: String) {
+    let renderer_window = app.get_webview_window("renderer").unwrap();
+    renderer_window
+        .eval(&format!("window.location.replace('{}')", url))
+        .unwrap();
+    renderer_window.show().unwrap();
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .invoke_handler(tauri::generate_handler![open_renderer])
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(

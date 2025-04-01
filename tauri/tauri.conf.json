@@ -7,6 +7,7 @@
     "frontendDist": "./frontendDist"
   },
   "app": {
+    "withGlobalTauri": true,
     "windows": [
       {
         "title": "TheOpenPresenter",
@@ -23,6 +24,12 @@
         "height": 240,
         "resizable": false,
         "center": true,
+        "decorations": false
+      },
+      {
+        "label": "renderer",
+        "visible": false,
+        "fullscreen": true,
         "decorations": false
       }
     ]
