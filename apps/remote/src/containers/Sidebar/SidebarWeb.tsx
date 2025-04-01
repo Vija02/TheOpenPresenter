@@ -25,6 +25,7 @@ import DebugDrawer from "./Debug/DebugDrawer";
 import { RendererWarning } from "./RendererWarning";
 import { ResizableBoxWrapper } from "./ResizableBoxWrapper";
 import SidebarAddSceneModal from "./SidebarAddSceneModal";
+import { onPresentClick } from "./desktopPresent";
 
 const MdCoPresent = chakra(MdCoPresentRaw);
 const MdVolumeUp = chakra(MdVolumeUpRaw);
@@ -148,7 +149,12 @@ const SidebarWeb = () => {
                 isExternal
                 bg="white"
               >
-                <Button w="100%" variant="outline" borderColor="gray.300">
+                <Button
+                  w="100%"
+                  variant="outline"
+                  borderColor="gray.300"
+                  onClick={() => onPresentClick(orgSlug, projectSlug)}
+                >
                   <MdCoPresent />
                   <Text ml={2}>Present</Text>
                 </Button>

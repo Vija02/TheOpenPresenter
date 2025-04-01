@@ -24,6 +24,7 @@ import { useLocation } from "wouter";
 import DebugDrawer from "./Debug/DebugDrawer";
 import { RendererWarning } from "./RendererWarning";
 import SidebarAddSceneModal from "./SidebarAddSceneModal";
+import { onPresentClick } from "./desktopPresent";
 
 const MdCoPresent = chakra(MdCoPresentRaw);
 const MdVolumeUp = chakra(MdVolumeUpRaw);
@@ -171,6 +172,7 @@ const SidebarMobile = () => {
                 display="flex"
                 flexDir="column"
                 borderColor="gray.300"
+                onClick={() => onPresentClick(orgSlug, projectSlug)}
               >
                 <MdCoPresent />
                 <Text fontSize="2xs" fontWeight="normal">
