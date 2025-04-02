@@ -1,3 +1,4 @@
+use std::process;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tauri::path::BaseDirectory;
@@ -40,9 +41,9 @@ async fn open_renderer(app: tauri::AppHandle, url: String) {
 
     if let Ok(current_url) = renderer_window.url() {
         if current_url.to_string() != url {
-    renderer_window
-        .eval(&format!("window.location.replace('{}')", url))
-        .unwrap();
+            renderer_window
+                .eval(&format!("window.location.replace('{}')", url))
+                .unwrap();
         }
     }
 
@@ -91,6 +92,8 @@ pub fn run() {
                         }
 
                         window_clone.close().unwrap();
+
+                        process::exit(0);
                     }
                 }
             });
