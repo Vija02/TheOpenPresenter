@@ -25,12 +25,6 @@
         "resizable": false,
         "center": true,
         "decorations": false
-      },
-      {
-        "label": "renderer",
-        "visible": false,
-        "fullscreen": true,
-        "decorations": false
       }
     ]
   },

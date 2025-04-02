@@ -24,10 +24,28 @@ async fn wait_for_endpoint(url: &str) -> Result<(), Box<dyn std::error::Error>> 
 
 #[tauri::command]
 async fn open_renderer(app: tauri::AppHandle, url: String) {
-    let renderer_window = app.get_webview_window("renderer").unwrap();
+    let renderer_window = match app.get_webview_window("renderer") {
+        Some(window) => window,
+        None => tauri::WebviewWindowBuilder::new(
+            &app,
+            "renderer",
+            tauri::WebviewUrl::External(url.parse().unwrap()),
+        )
+        .title("TheOpenPresenter Renderer")
+        .fullscreen(true)
+        .decorations(false)
+        .build()
+        .unwrap(),
+    };
+
+    if let Ok(current_url) = renderer_window.url() {
+        if current_url.to_string() != url {
     renderer_window
         .eval(&format!("window.location.replace('{}')", url))
         .unwrap();
+        }
+    }
+
     renderer_window.show().unwrap();
 }
 
