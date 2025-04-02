@@ -8,7 +8,7 @@ import { typeidUnboxed } from "typeid-js";
 
 import type { Video } from "../../src/types";
 import { usePluginAPI } from "../pluginApi";
-import { trpc } from "../trpc";
+// import { trpc } from "../trpc";
 import UploadVideoModal from "./UploadVideoModal";
 import VideoCard from "./VideoCard";
 import YoutubeSearchModal from "./YoutubeSearchModal";
@@ -42,34 +42,34 @@ const VideoPlayerRemote = () => {
   const [input, setInput] = useState("");
   const [isError, setIsError] = useState(false);
 
-  const { refetch: getRes } = trpc.videoPlayer.youtubeMetadata.useQuery(
-    { ytVideoUrl: input },
-    { enabled: false },
-  );
+  // const { refetch: getRes } = trpc.videoPlayer.youtubeMetadata.useQuery(
+  //   { ytVideoUrl: input },
+  //   { enabled: false },
+  // );
 
   const onSearch = async () => {
     const reactPlayerCanPlay = ReactPlayer.canPlay(input);
 
-    let metadata: Video["metadata"] = {};
+    const metadata: Video["metadata"] = {};
 
-    const isYoutube = MATCH_URL_YOUTUBE.test(input);
-    if (isYoutube) {
-      try {
-        const ytMetadata = await getRes();
-        if (!ytMetadata.data) throw ytMetadata.error;
+    // const isYoutube = MATCH_URL_YOUTUBE.test(input);
+    // if (isYoutube) {
+    //   try {
+    //     const ytMetadata = await getRes();
+    //     if (!ytMetadata.data) throw ytMetadata.error;
 
-        metadata = {
-          title: ytMetadata.data.title,
-          duration: ytMetadata.data.duration,
-          thumbnailUrl: ytMetadata.data.thumbnailUrl,
-        };
-      } catch (err) {
-        pluginApi.log.error(
-          { err, url: input },
-          "Failed to extract youtube metadata",
-        );
-      }
-    }
+    //     metadata = {
+    //       title: ytMetadata.data.title,
+    //       duration: ytMetadata.data.duration,
+    //       thumbnailUrl: ytMetadata.data.thumbnailUrl,
+    //     };
+    //   } catch (err) {
+    //     pluginApi.log.error(
+    //       { err, url: input },
+    //       "Failed to extract youtube metadata",
+    //     );
+    //   }
+    // }
 
     if (reactPlayerCanPlay) {
       mutableSceneData.pluginData.videos.push({
