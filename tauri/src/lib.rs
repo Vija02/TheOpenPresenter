@@ -3,6 +3,7 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tauri::path::BaseDirectory;
 use tauri::Manager;
+use tauri::Position;
 use tauri_plugin_shell::process::CommandEvent;
 use tauri_plugin_shell::ShellExt;
 use tokio::time::sleep;
@@ -24,7 +25,7 @@ async fn wait_for_endpoint(url: &str) -> Result<(), Box<dyn std::error::Error>> 
 }
 
 #[tauri::command]
-async fn open_renderer(app: tauri::AppHandle, url: String, i: usize) {
+async fn open_renderer(app: tauri::AppHandle, url: String, i: usize) -> Result<(), String> {
     let renderer_window = match app.get_webview_window("renderer") {
         Some(window) => window,
         None => tauri::WebviewWindowBuilder::new(
@@ -48,7 +49,7 @@ async fn open_renderer(app: tauri::AppHandle, url: String, i: usize) {
     }
 
     let monitors = app.available_monitors()?;
-    let monitor = monitors.get(i).ok_or(tauri::Error::CreateWindow)?;
+    let monitor = monitors.get(i).ok_or(tauri::Error::WindowNotFound)?;
 
     let pos = monitor.position();
 
