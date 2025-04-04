@@ -22,9 +22,9 @@ import { VscAdd, VscArrowLeft } from "react-icons/vsc";
 import { useLocation } from "wouter";
 
 import DebugDrawer from "./Debug/DebugDrawer";
+import { PresentButton } from "./PresentButton";
 import { RendererWarning } from "./RendererWarning";
 import SidebarAddSceneModal from "./SidebarAddSceneModal";
-import { onPresentClick } from "./desktopPresent";
 
 const MdCoPresent = chakra(MdCoPresentRaw);
 const MdVolumeUp = chakra(MdVolumeUpRaw);
@@ -159,27 +159,8 @@ const SidebarMobile = () => {
             >
               <SidebarAddSceneModal />
             </OverlayToggle>
-            <Link
-              href={`/render/${orgSlug}/${projectSlug}`}
-              isExternal
-              textDecor="none"
-              _hover={{ textDecor: "none" }}
-              bg="white"
-            >
-              <Button
-                w="100%"
-                variant="outline"
-                display="flex"
-                flexDir="column"
-                borderColor="gray.300"
-                onClick={() => onPresentClick(orgSlug, projectSlug)}
-              >
-                <MdCoPresent />
-                <Text fontSize="2xs" fontWeight="normal">
-                  Present
-                </Text>
-              </Button>
-            </Link>
+
+            <PresentButton isMobile />
           </Stack>
         </Box>
         <Stack

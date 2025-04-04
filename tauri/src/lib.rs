@@ -24,7 +24,7 @@ async fn wait_for_endpoint(url: &str) -> Result<(), Box<dyn std::error::Error>> 
 }
 
 #[tauri::command]
-async fn open_renderer(app: tauri::AppHandle, url: String) {
+async fn open_renderer(app: tauri::AppHandle, url: String, i: usize) {
     let renderer_window = match app.get_webview_window("renderer") {
         Some(window) => window,
         None => tauri::WebviewWindowBuilder::new(
@@ -46,6 +46,16 @@ async fn open_renderer(app: tauri::AppHandle, url: String) {
                 .unwrap();
         }
     }
+
+    let monitors = app.available_monitors()?;
+    let monitor = monitors.get(i).ok_or(tauri::Error::CreateWindow)?;
+
+    let pos = monitor.position();
+
+    renderer_window.set_position(Position::Physical(tauri::PhysicalPosition {
+        x: pos.x,
+        y: 0,
+    }))?;
 
     renderer_window.show().unwrap();
 }

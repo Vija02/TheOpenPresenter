@@ -22,10 +22,10 @@ import { VscAdd, VscArrowLeft } from "react-icons/vsc";
 import { useLocation } from "wouter";
 
 import DebugDrawer from "./Debug/DebugDrawer";
+import { PresentButton } from "./PresentButton";
 import { RendererWarning } from "./RendererWarning";
 import { ResizableBoxWrapper } from "./ResizableBoxWrapper";
 import SidebarAddSceneModal from "./SidebarAddSceneModal";
-import { onPresentClick } from "./desktopPresent";
 
 const MdCoPresent = chakra(MdCoPresentRaw);
 const MdVolumeUp = chakra(MdVolumeUpRaw);
@@ -144,21 +144,8 @@ const SidebarWeb = () => {
               >
                 <SidebarAddSceneModal />
               </OverlayToggle>
-              <Link
-                href={`/render/${orgSlug}/${projectSlug}`}
-                isExternal
-                bg="white"
-              >
-                <Button
-                  w="100%"
-                  variant="outline"
-                  borderColor="gray.300"
-                  onClick={() => onPresentClick(orgSlug, projectSlug)}
-                >
-                  <MdCoPresent />
-                  <Text ml={2}>Present</Text>
-                </Button>
-              </Link>
+
+              <PresentButton />
             </Stack>
           </Box>
           <Stack
