@@ -8,7 +8,6 @@ import type {
   State,
   YState,
 } from "@repo/base-plugin";
-import { appData } from "@repo/lib";
 import { ErrorAlert, LoadingFull } from "@repo/ui";
 import { useQuery } from "@tanstack/react-query";
 import React, {
@@ -137,12 +136,17 @@ const initializeHocuspocusProvider = (projectId: string) => {
     }, 60000);
 
     const provider = new HocuspocusProvider({
-      url: (appData.getRootURL() + "/wlink").replace(/^http/, "ws"),
+      url: `${window.location.origin.replace(/^http/, "ws")}/wlink`,
       name: projectId,
       // Here only to force authentication
       token: " ",
       onAuthenticationFailed: () => {
         reject(new Error("Authentication Failed"));
+      },
+      onClose: (data) => {
+        if (data.event.code === 401) {
+          reject(new Error("Authentication Failed"));
+        }
       },
       onSynced: () => {
         clearTimeout(timeout);

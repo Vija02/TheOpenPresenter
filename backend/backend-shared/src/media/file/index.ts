@@ -6,7 +6,8 @@ import { createMediaHandler, createMulterStorage } from "../factory";
 import { MediaDataHandler } from "../types";
 import { OurFileStore } from "./OurFileStore";
 
-export const UPLOADS_PATH = path.resolve(`${process.cwd()}/../../uploads`);
+export const UPLOADS_PATH =
+  process.env.UPLOADS_PATH ?? path.resolve(`${process.cwd()}/../../uploads`);
 
 const createFileStore = (pgPool: Pool | PoolClient) => {
   return new OurFileStore(

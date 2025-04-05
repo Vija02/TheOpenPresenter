@@ -10,6 +10,7 @@ import {
   split,
 } from "@apollo/client";
 import { onError } from "@apollo/client/link/error";
+import { appData } from "@repo/lib";
 import {
   GraphQLError,
   OperationDefinitionNode,
@@ -78,6 +79,9 @@ function makeStandardLink() {
   const httpLink = new HttpLink({
     uri: `${window.location.origin}/graphql`,
     credentials: "same-origin",
+    headers: {
+      "CSRF-Token": appData.getCSRFToken(),
+    },
   });
   wsClient = createWsClient();
   const wsLink = new WebSocketLink();
