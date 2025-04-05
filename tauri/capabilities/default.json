@@ -12,5 +12,12 @@
     "log:default",
     "core:window:allow-available-monitors",
     "core:window:allow-current-monitor"
-  ]
+  ],
+  "remote": {
+    "urls": [
+      "http://*",
+      "https://*",
+      "http://localhost:*"
+    ]
+  }
 }

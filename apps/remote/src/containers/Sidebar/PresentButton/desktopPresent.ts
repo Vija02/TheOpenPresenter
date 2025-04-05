@@ -7,6 +7,6 @@ export const onPresentClick = async (
 ) => {
   await core.invoke("open_renderer", {
     url: window.location.origin + `/render/${orgSlug}/${projectSlug}`,
-    monitorIndex,
+    mindex: monitorIndex,
   });
 };

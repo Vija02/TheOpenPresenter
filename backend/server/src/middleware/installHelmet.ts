@@ -30,6 +30,8 @@ export default async function installHelmet(app: Express) {
           // an https:// page, so we have to translate explicitly for
           // it.
           ROOT_URL.replace(/^http/, "ws"),
+          // For tauri
+          "ipc:",
         ],
         "script-src": [
           ...(contentSecurityPolicy.getDefaultDirectives()[

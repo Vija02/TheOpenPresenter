@@ -1,4 +1,5 @@
 import {
+  Box,
   Modal,
   ModalBody,
   ModalCloseButton,
@@ -12,8 +13,8 @@ import {
 } from "@chakra-ui/react";
 import { usePluginMetaData } from "@repo/shared";
 import { OverlayToggle, OverlayToggleComponentProps } from "@repo/ui";
+import { useQuery } from "@tanstack/react-query";
 import { availableMonitors } from "@tauri-apps/api/window";
-import { use } from "react";
 
 import { onPresentClick } from "./desktopPresent";
 
@@ -28,7 +29,12 @@ const PresentMonitorModal = ({
   onToggle,
   ...props
 }: PresentMonitorModalPropTypes) => {
-  const monitors = use(availableMonitors());
+  const { data: monitors } = useQuery({
+    queryKey: ["availableMonitors"],
+    queryFn: () => {
+      return availableMonitors();
+    },
+  });
   const { orgSlug, projectSlug } = usePluginMetaData();
 
   return (
@@ -39,7 +45,7 @@ const PresentMonitorModal = ({
       {...props}
     >
       <ModalOverlay />
-      <ModalContent maxW="1200" minH="70%">
+      <ModalContent>
         <ModalHeader>
           <Stack direction="row" alignItems="center">
             <Text>Select monitor</Text>
@@ -47,15 +53,18 @@ const PresentMonitorModal = ({
         </ModalHeader>
         <ModalCloseButton />
         <ModalBody>
-          {monitors.map((monitor, i) => (
-            <div
+          {monitors?.map((monitor, i) => (
+            <Box
               key={i}
               onClick={() => {
                 onPresentClick(orgSlug, projectSlug, i);
+                onToggle?.();
               }}
+              cursor="pointer"
+              _hover={{ bg: "blue.100" }}
             >
               {monitor.name} | {monitor.size.width}x{monitor.size.height}
-            </div>
+            </Box>
           ))}
         </ModalBody>
 
@@ -70,7 +79,12 @@ const PresentMonitorModalWrapper = ({
 }: {
   ButtonElement: (prop: { onClick: () => void }) => React.ReactElement;
 }) => {
-  const monitors = use(availableMonitors());
+  const { data: monitors } = useQuery({
+    queryKey: ["availableMonitors"],
+    queryFn: () => {
+      return availableMonitors();
+    },
+  });
   const { orgSlug, projectSlug } = usePluginMetaData();
 
   return (
@@ -78,7 +92,7 @@ const PresentMonitorModalWrapper = ({
       toggler={({ onToggle }) => (
         <ButtonElement
           onClick={() => {
-            if (monitors.length === 1) {
+            if (monitors?.length === 1) {
               onPresentClick(orgSlug, projectSlug);
             } else {
               onToggle();
