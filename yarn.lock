@@ -7486,6 +7486,7 @@ __metadata:
     "@repo/typescript-config": "npm:*"
     "@repo/ui": "npm:*"
     "@tanstack/react-query": "npm:^5.62.3"
+    "@tauri-apps/api": "npm:^2.4.1"
     "@trpc/client": "npm:^11.0.0-rc.657"
     "@trpc/react-query": "npm:^11.0.0-rc.657"
     "@types/react": "npm:^19.0.0"
