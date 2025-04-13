@@ -11,7 +11,8 @@
     "shell:default",
     "log:default",
     "core:window:allow-available-monitors",
-    "core:window:allow-current-monitor"
+    "core:window:allow-current-monitor",
+    "core:window:allow-close"
   ],
   "remote": {
     "urls": [
