@@ -199,13 +199,10 @@ exports.updateDotenv = function updateDotenv(add, answers) {
   );
 
   add(
-    "VITE_APP_OPENOBSERVE_CLIENT_TOKEN",
+    "REMOTE_WRITE_HOST",
     `\
 # Logging & Observability`,
   );
-  add("VITE_APP_OPENOBSERVE_SITE");
-  add("VITE_APP_OPENOBSERVE_ORGANIZATION_IDENTIFIER");
-  add("REMOTE_WRITE_HOST");
   add("REMOTE_WRITE_AUTH");
   add("LOKI_HOST");
   add("LOKI_AUTH");

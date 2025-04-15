@@ -13,7 +13,6 @@
     "@chakra-ui/react": "^2.10.4",
     "@emotion/react": "^11.13.5",
     "@emotion/styled": "^11.13.5",
-    "@openobserve/browser-rum": "^0.2.11",
     "@repo/observability": "*",
     "@tanstack/react-query": "^5.62.3",
     "@tauri-apps/api": "^2.4.1",

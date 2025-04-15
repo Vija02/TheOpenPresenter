@@ -5033,37 +5033,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@openobserve/browser-core@npm:0.2.11":
-  version: 0.2.11
-  resolution: "@openobserve/browser-core@npm:0.2.11"
-  checksum: 10c0/bde8002161c2251a797a97920e3a711c5a6e2170db66de2069972d9d17f6a3fd8666be37c642bd9cbe7cdbfe6b1b9fdd4443612091eba8c368974d5ff56bf5ff
-  languageName: node
-  linkType: hard
-
-"@openobserve/browser-rum-core@npm:0.2.11":
-  version: 0.2.11
-  resolution: "@openobserve/browser-rum-core@npm:0.2.11"
-  dependencies:
-    "@openobserve/browser-core": "npm:0.2.11"
-  checksum: 10c0/2b10f0987dd4c43e512c4e1565d8d70be8cc8c125145e49766c67a597d484fd8817ff4006cee00c33a951a8c7646ebaa1c652b53edba35ea412a0cc9eb5ec3d7
-  languageName: node
-  linkType: hard
-
-"@openobserve/browser-rum@npm:^0.2.11":
-  version: 0.2.11
-  resolution: "@openobserve/browser-rum@npm:0.2.11"
-  dependencies:
-    "@openobserve/browser-core": "npm:0.2.11"
-    "@openobserve/browser-rum-core": "npm:0.2.11"
-  peerDependencies:
-    "@openobserve/browser-logs": 0.2.11
-  peerDependenciesMeta:
-    "@openobserve/browser-logs":
-      optional: true
-  checksum: 10c0/403b1c6b53cb994f476751d798a189c321c10c8cb24f9e1846ed312771144d1debf89afba9943896dbd4ae4cdc010ac2b5e46e637101e310bd6de5e96cf62575
-  languageName: node
-  linkType: hard
-
 "@opentelemetry/api-logs@npm:0.57.1, @opentelemetry/api-logs@npm:^0.57.0, @opentelemetry/api-logs@npm:^0.57.1":
   version: 0.57.1
   resolution: "@opentelemetry/api-logs@npm:0.57.1"
@@ -7419,7 +7388,6 @@ __metadata:
     "@chakra-ui/react": "npm:^2.10.4"
     "@emotion/react": "npm:^11.13.5"
     "@emotion/styled": "npm:^11.13.5"
-    "@openobserve/browser-rum": "npm:^0.2.11"
     "@repo/base-plugin": "npm:*"
     "@repo/eslint-config": "npm:*"
     "@repo/graphql": "npm:*"
@@ -7474,7 +7442,6 @@ __metadata:
     "@emotion/styled": "npm:^11.13.5"
     "@fontsource-variable/inter": "npm:^5.1.0"
     "@fontsource-variable/source-sans-3": "npm:^5.1.0"
-    "@openobserve/browser-rum": "npm:^0.2.11"
     "@repo/base-plugin": "npm:*"
     "@repo/eslint-config": "npm:*"
     "@repo/graphql": "npm:*"
@@ -7586,7 +7553,6 @@ __metadata:
     "@emotion/react": "npm:^11.13.5"
     "@emotion/styled": "npm:^11.13.5"
     "@hocuspocus/provider": "npm:^2.14.0"
-    "@openobserve/browser-rum": "npm:^0.2.11"
     "@repo/base-plugin": "npm:*"
     "@repo/eslint-config": "npm:*"
     "@repo/graphql": "npm:*"

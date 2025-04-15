@@ -15,7 +15,6 @@
     "@emotion/styled": "^11.13.5",
     "@fontsource-variable/inter": "^5.1.0",
     "@fontsource-variable/source-sans-3": "^5.1.0",
-    "@openobserve/browser-rum": "^0.2.11",
     "@repo/graphql": "*",
     "@repo/observability": "*",
     "@tanstack/react-query": "^5.62.3",

@@ -118,10 +118,10 @@ RUN yarn homepage codegen && yarn homepage build
 RUN rm -rf /app/apps/homepage/.next/cache
 
 COPY apps/remote/ /app/apps/remote/
-RUN VITE_APP_SHA=$SHA yarn remote build
+RUN yarn remote build
 
 COPY apps/renderer/ /app/apps/renderer/
-RUN VITE_APP_SHA=$SHA yarn renderer build
+RUN yarn renderer build
 
 ################################################################################
 # Build stage 5 - Build plugin
