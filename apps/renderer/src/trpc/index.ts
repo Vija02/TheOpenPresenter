@@ -7,7 +7,7 @@ export const trpcClient = trpc.createClient({
   links: [
     httpBatchLink({
       // TODO: Auth
-      url: appData.getRootURL() + "/trpc",
+      url: window.location.origin + "/trpc",
       headers: {
         "csrf-token": appData.getCSRFToken(),
       },

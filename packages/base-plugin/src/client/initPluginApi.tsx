@@ -79,9 +79,9 @@ export function initPluginApi<
     media: {
       generateId: () => typeidUnboxed("media"),
       getUrl: (fileName: string) =>
-        appData.getRootURL() + "/media/data/" + fileName,
-      tusUploadUrl: appData.getRootURL() + "/media/upload/tus",
-      formDataUploadUrl: appData.getRootURL() + "/media/upload/form-data",
+        window.location.origin + "/media/data/" + fileName,
+      tusUploadUrl: window.location.origin + "/media/upload/tus",
+      formDataUploadUrl: window.location.origin + "/media/upload/form-data",
       pluginClientStorage: storageManager, // Scoped to plugin
       deleteMedia: misc.media.deleteMedia,
       completeMedia: misc.media.completeMedia,
