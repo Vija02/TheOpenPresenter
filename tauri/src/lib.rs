@@ -139,7 +139,8 @@ pub fn run() {
 
             // Show splashscreen until we can reach the endpoint
             let splash_window = app.get_webview_window("splashscreen").unwrap();
-            let splash_window_clone = window.clone();
+            let splash_window_clone = splash_window.clone();
+            let splash_window_clone2 = splash_window.clone();
             let main_window = app.get_webview_window("main").unwrap();
 
             tauri::async_runtime::spawn(async move {
@@ -165,7 +166,7 @@ pub fn run() {
                             eprintln!("Failed to kill child process: {}", e);
                         }
 
-                        splash_window_clone.close().unwrap();
+                        splash_window_clone2.close().unwrap();
 
                         process::exit(0);
                     }
