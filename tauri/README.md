@@ -101,16 +101,17 @@ Anytime we modify the following, we should check that everything still runs:
 ## Other notable limitations / shortcomings that we need to address
 
 - It takes a long time for the node server to start
-- Frontend logs not saved anywhere
-- Error not logged nor shown when node initialization fails
 - Opening multiple instance of the app won't work well due to port clashing
 
-Domain issues: 
-- Fix trpc not working when accessed from different domain
-- Fix media (eg: google slide img) doesn't load when accessed from different domain
+Logging & error handling:
+- Frontend logs not saved anywhere
+- Error not logged nor shown when node initialization fails
+
+Cross origin: 
+- Simple image: Link is hardcoded, so it doesn't load
+- Audio recorder: navigator.mediaDevices only available on http
 
 Nice to have:
-- No option to stop presenting
 - Worker needs to be configured better. Eg: Email, etc
 - We currently still include the sourcecode in the bundle. We'd want to remove this.
 - We need to make it easier for user to configure the server (eg: for plugin env)
