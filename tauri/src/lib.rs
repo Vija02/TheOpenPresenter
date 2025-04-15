@@ -98,6 +98,7 @@ pub fn run() {
 
             // Clone the Arc to move into the async task
             let child_clone = Arc::clone(&child);
+            let child_clone2 = Arc::clone(&child);
 
             let window = app.get_webview_window("main").unwrap();
             let window_clone = window.clone();
@@ -138,6 +139,7 @@ pub fn run() {
 
             // Show splashscreen until we can reach the endpoint
             let splash_window = app.get_webview_window("splashscreen").unwrap();
+            let splash_window_clone = window.clone();
             let main_window = app.get_webview_window("main").unwrap();
 
             tauri::async_runtime::spawn(async move {
@@ -149,13 +151,13 @@ pub fn run() {
                         .eval("window.location.replace('http://localhost:5678/o/local')")
                         .unwrap();
                     main_window.show().unwrap();
-                    splash_window.close().unwrap();
+                    splash_window_clone.close().unwrap();
                 }
             });
 
             splash_window.on_window_event(move |event| {
                 if let tauri::WindowEvent::CloseRequested { api, .. } = event {
-                    let mut child_lock = child_clone.lock().unwrap();
+                    let mut child_lock = child_clone2.lock().unwrap();
                     if let Some(mut child_process) = child_lock.take() {
                         api.prevent_close();
 
@@ -163,7 +165,7 @@ pub fn run() {
                             eprintln!("Failed to kill child process: {}", e);
                         }
 
-                        splash_window.close().unwrap();
+                        splash_window_clone.close().unwrap();
 
                         process::exit(0);
                     }
