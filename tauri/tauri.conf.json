@@ -46,6 +46,11 @@
     "resources": [
       "node-server/**/*",
       "node_modules/**/*"
-    ]
+    ],
+    "windows": {
+      "wix": {
+        "template": "override.wsx"
+      }
+    }
   }
 }
