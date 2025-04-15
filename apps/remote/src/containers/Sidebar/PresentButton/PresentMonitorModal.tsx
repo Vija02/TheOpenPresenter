@@ -13,10 +13,10 @@ import {
 } from "@chakra-ui/react";
 import { usePluginMetaData } from "@repo/shared";
 import { OverlayToggle, OverlayToggleComponentProps } from "@repo/ui";
-import { useQuery } from "@tanstack/react-query";
-import { availableMonitors } from "@tauri-apps/api/window";
 
 import { onPresentClick } from "./desktopPresent";
+import { useAllWindows } from "./useAllWindows";
+import { useAvailableMonitors } from "./useAvailableMonitors";
 
 export type PresentMonitorModalPropTypes = Omit<
   ModalProps,
@@ -29,12 +29,9 @@ const PresentMonitorModal = ({
   onToggle,
   ...props
 }: PresentMonitorModalPropTypes) => {
-  const { data: monitors } = useQuery({
-    queryKey: ["availableMonitors"],
-    queryFn: () => {
-      return availableMonitors();
-    },
-  });
+  const { data: monitors } = useAvailableMonitors();
+  const { refetch: refetchWindow } = useAllWindows();
+
   const { orgSlug, projectSlug } = usePluginMetaData();
 
   return (
@@ -56,8 +53,9 @@ const PresentMonitorModal = ({
           {monitors?.map((monitor, i) => (
             <Box
               key={i}
-              onClick={() => {
-                onPresentClick(orgSlug, projectSlug, i);
+              onClick={async () => {
+                await onPresentClick(orgSlug, projectSlug, i);
+                await refetchWindow();
                 onToggle?.();
               }}
               cursor="pointer"
@@ -75,34 +73,47 @@ const PresentMonitorModal = ({
 };
 
 const PresentMonitorModalWrapper = ({
-  ButtonElement,
+  PresentButtonElement,
+  StopPresentButtonElement,
 }: {
-  ButtonElement: (prop: { onClick: () => void }) => React.ReactElement;
+  PresentButtonElement: (prop: { onClick: () => void }) => React.ReactElement;
+  StopPresentButtonElement: (prop: {
+    onClick: () => void;
+  }) => React.ReactElement;
 }) => {
-  const { data: monitors } = useQuery({
-    queryKey: ["availableMonitors"],
-    queryFn: () => {
-      return availableMonitors();
-    },
-  });
+  const { data: monitors } = useAvailableMonitors();
+  const { data: allWindows, refetch: refetchWindow } = useAllWindows();
+  const rendererWindow = allWindows?.find((x) => x.label === "renderer");
+
   const { orgSlug, projectSlug } = usePluginMetaData();
 
   return (
-    <OverlayToggle
-      toggler={({ onToggle }) => (
-        <ButtonElement
-          onClick={() => {
-            if (monitors?.length === 1) {
-              onPresentClick(orgSlug, projectSlug);
-            } else {
-              onToggle();
-            }
+    <>
+      <OverlayToggle
+        toggler={({ onToggle }) => (
+          <PresentButtonElement
+            onClick={() => {
+              if (monitors?.length === 1) {
+                onPresentClick(orgSlug, projectSlug);
+              } else {
+                onToggle();
+              }
+            }}
+          />
+        )}
+      >
+        <PresentMonitorModal />
+      </OverlayToggle>
+
+      {rendererWindow && (
+        <StopPresentButtonElement
+          onClick={async () => {
+            await rendererWindow.close();
+            await refetchWindow();
           }}
         />
       )}
-    >
-      <PresentMonitorModal />
-    </OverlayToggle>
+    </>
   );
 };
 
