@@ -1,0 +1,56 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "TheOpenPresenter",
+  "version": "0.1.0",
+  "identifier": "com.theopenpresenter.app",
+  "build": {
+    "frontendDist": "./frontendDist"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "title": "TheOpenPresenter",
+        "label": "main",
+        "visible": false,
+        "width": 800,
+        "height": 600,
+        "maximized": true
+      },
+      {
+        "label": "splashscreen",
+        "url": "/splashscreen",
+        "width": 560,
+        "height": 240,
+        "resizable": false,
+        "center": true,
+        "decorations": false
+      }
+    ]
+  },
+  "bundle": {
+    "active": true,
+    "homepage": "https://theopenpresenter.com",
+    "license": "AGPL",
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "externalBin": [
+      "node"
+    ],
+    "resources": [
+      "node-server/**/*",
+      "node_modules/**/*"
+    ],
+    "windows": {
+      "wix": {
+        "template": "override.wsx"
+      }
+    }
+  }
+}

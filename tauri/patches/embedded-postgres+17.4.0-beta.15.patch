@@ -1,0 +1,28 @@
+diff --git a/node_modules/embedded-postgres/dist/index.js b/node_modules/embedded-postgres/dist/index.js
+index bd74c14..c1019ee 100644
+--- a/node_modules/embedded-postgres/dist/index.js
++++ b/node_modules/embedded-postgres/dist/index.js
+@@ -109,8 +109,10 @@ class EmbeddedPostgres {
+             const passwordFile = path.resolve(tmpdir(), `pg-password-${randomId}`);
+             yield fs.writeFile(passwordFile, this.options.password + '\n');
+             // Greedily make the file executable, in case it is not
+-            yield fs.chmod(postgres, '755');
+-            yield fs.chmod(initdb, '755');
++            if (platform() !== 'win32') {
++                yield fs.chmod(postgres, '755');
++                yield fs.chmod(initdb, '755');
++            }
+             // Initialize the database
+             yield new Promise((resolve, reject) => {
+                 var _a;
+@@ -155,7 +157,9 @@ class EmbeddedPostgres {
+                 throw new Error('Postgres cannot run as a root user. embedded-postgres could not find a postgres user to run as instead. Consider using the `createPostgresUser` option.');
+             });
+             // Greedily make the file executable, in case it is not
+-            yield fs.chmod(postgres, '755');
++            if (platform() !== 'win32') {
++                yield fs.chmod(postgres, '755');
++            }
+             yield new Promise((resolve, reject) => {
+                 var _a;
+                 // Spawn a postgres server

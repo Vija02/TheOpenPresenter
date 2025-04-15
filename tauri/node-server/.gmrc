@@ -1,0 +1,28 @@
+/*
+ * Graphile Migrate configuration for Tauri
+ *
+ * This file is a close duplicate to our main .gmrc file in the db project.
+ * This is responsible for pointing the migration to the correct path.
+ * At the time of writing, it is also responsible for installing the worker db schema without yarn.
+ */
+
+{
+  "pgSettings": {
+    "search_path": "app_public,app_private,app_hidden,public"
+  },
+  "placeholders": {
+    ":DATABASE_AUTHENTICATOR": "!ENV",
+    ":DATABASE_VISITOR": "!ENV"
+  },
+  "afterReset": [
+    "!afterReset.sql",
+    {
+      "_": "command",
+      "command": "node node-server/theopenpresenter/backend/worker/install-db-schema.js"
+    }
+  ],
+
+  "migrationsFolder": "./node-server/theopenpresenter/backend/db/migrations",
+
+  "//generatedWith": "0.1.0"
+}

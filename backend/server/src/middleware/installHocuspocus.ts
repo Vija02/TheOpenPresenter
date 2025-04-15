@@ -130,14 +130,13 @@ export default async function installHocuspocus(app: Express) {
 
       // Everyone needs to be logged in
       if (!request?.user?.session_id) {
-        const errorMessage = JSON.stringify({
-          type: "error",
-          code: 401,
-          message:
-            "You do not have permission to use this WebSocket connection",
-        });
-        incoming.send(errorMessage);
-        incoming.close();
+        incoming.close(
+          401,
+          JSON.stringify({
+            message:
+              "You do not have permission to use this WebSocket connection",
+          }),
+        );
         return;
       }
 

@@ -1,0 +1,25 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Capability for the main window",
+  "windows": [
+    "main",
+    "renderer"
+  ],
+  "permissions": [
+    "core:default",
+    "opener:default",
+    "shell:default",
+    "log:default",
+    "core:window:allow-available-monitors",
+    "core:window:allow-current-monitor",
+    "core:window:allow-close"
+  ],
+  "remote": {
+    "urls": [
+      "http://*",
+      "https://*",
+      "http://localhost:*"
+    ]
+  }
+}

@@ -5,10 +5,12 @@ import {
   PluginDataProvider,
   PluginMetaDataProvider,
 } from "@repo/shared";
-import { useEffect } from "react";
+import { lazy, useEffect } from "react";
 import { Route, Switch, useParams } from "wouter";
 
 import { Body } from "./Body";
+
+const TauriHandler = lazy(() => import("./TauriHandler"));
 
 function App() {
   return (
@@ -37,7 +39,13 @@ function Root() {
           <PluginDataProvider type="renderer">
             <AwarenessProvider>
               <div style={{ width: "100vw", height: "100vh" }}>
-                <Body />
+                {window.__TAURI_INTERNALS__ ? (
+                  <TauriHandler>
+                    <Body />
+                  </TauriHandler>
+                ) : (
+                  <Body />
+                )}
               </div>
             </AwarenessProvider>
           </PluginDataProvider>

@@ -30,7 +30,7 @@ We maintain a separate wiki page at https://docs.theopenpresenter.com. Please re
 ✅ Record audio and save it for future playback  
 🟨 Import & display lyrics from various sources with ease (currently only MyWorshipList)  
 🟨 Display slides from many different sources (currently only Google Slides)  
-⬜ Offline support  
+🟨 Offline app support - Alpha (currently only for Windows)  
 
 Last but not least, the code for TheOpenPresenter will always be Open Source. We also promise to keep a hosted version of TheOpenPresenter free for small churches for as long as possible, the ones that will benefit from this project the most.
 
