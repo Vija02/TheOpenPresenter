@@ -152,7 +152,7 @@ pub fn run() {
                         .eval("window.location.replace('http://localhost:5678/o/local')")
                         .unwrap();
                     main_window.show().unwrap();
-                    splash_window_clone.close().unwrap();
+                    splash_window_clone.destroy().unwrap();
                 }
             });
 
