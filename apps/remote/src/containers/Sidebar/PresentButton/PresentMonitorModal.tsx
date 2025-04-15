@@ -13,6 +13,7 @@ import {
 } from "@chakra-ui/react";
 import { usePluginMetaData } from "@repo/shared";
 import { OverlayToggle, OverlayToggleComponentProps } from "@repo/ui";
+import { useMemo } from "react";
 
 import { onPresentClick } from "./desktopPresent";
 import { useAllWindows } from "./useAllWindows";
@@ -85,7 +86,10 @@ const PresentMonitorModalWrapper = ({
 }) => {
   const { data: monitors } = useAvailableMonitors();
   const { data: allWindows, refetch: refetchWindow } = useAllWindows();
-  const rendererWindow = allWindows?.find((x) => x.label === "renderer");
+  const rendererWindow = useMemo(
+    () => allWindows?.find((x) => x.label === "renderer"),
+    [allWindows],
+  );
 
   const { orgSlug, projectSlug } = usePluginMetaData();
 
