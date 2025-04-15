@@ -55,7 +55,9 @@ const PresentMonitorModal = ({
               key={i}
               onClick={async () => {
                 await onPresentClick(orgSlug, projectSlug, i);
-                await refetchWindow();
+                setTimeout(async () => {
+                  await refetchWindow();
+                }, 500);
                 onToggle?.();
               }}
               cursor="pointer"
