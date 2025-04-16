@@ -7196,6 +7196,7 @@ __metadata:
     "@types/react-highlight-words": "npm:^0.20.0"
     "@vitejs/plugin-react-swc": "npm:^3.7.2"
     axios: "npm:^1.7.9"
+    concurrently: "npm:^9.1.2"
     eslint: "npm:^8.57.1"
     formik: "npm:^2.4.6"
     formik-chakra-ui: "npm:^1.6.1"

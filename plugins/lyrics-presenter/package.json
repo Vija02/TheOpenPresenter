@@ -59,6 +59,7 @@
     "@repo/typescript-config": "*",
     "@types/react-highlight-words": "^0.20.0",
     "@vitejs/plugin-react-swc": "^3.7.2",
+    "concurrently": "^9.1.2",
     "eslint": "^8.57.1",
     "pkgroll": "^2.5.1",
     "vite": "5.4.11"
