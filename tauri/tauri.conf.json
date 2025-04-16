@@ -18,6 +18,7 @@
         "maximized": true
       },
       {
+        "title": "TheOpenPresenter",
         "label": "splashscreen",
         "url": "/splashscreen",
         "width": 560,
