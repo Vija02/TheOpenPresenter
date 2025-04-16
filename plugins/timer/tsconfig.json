@@ -1,0 +1,17 @@
+{
+  "extends": "@repo/typescript-config/base.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "rootDir": ".",
+    "outDir": "dist",
+    "tsBuildInfoFile": "dist/tsconfig.tsbuildinfo",
+    "declarationDir": "dist",
+    "lib": ["es2018", "esnext.asynciterable"],
+    "target": "es2018",
+    "module": "Preserve",
+    "esModuleInterop": true,
+    "moduleResolution": "bundler"
+  },
+  "include": ["src", "vite.config.ts"],
+  "references": [{ "path": "../../packages/base-plugin" }]
+}

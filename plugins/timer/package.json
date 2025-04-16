@@ -1,0 +1,44 @@
+{
+  "name": "@repo/plugin-timer",
+  "private": true,
+  "version": "0.0.0",
+  "main": "./dist/index.js",
+  "exports": {
+    ".": {
+      "default": "./dist/index.mjs"
+    }
+  },
+  "scripts": {
+    "build": "pkgroll && vite build",
+    "dev": "concurrently \"pkgroll --watch\" \"vite build --watch\""
+  },
+  "dependencies": {
+    "@chakra-ui/react": "^2.10.4",
+    "@emotion/react": "^11.13.5",
+    "@emotion/styled": "^11.13.5",
+    "@r2wc/react-to-web-component": "^2.0.3",
+    "@repo/base-plugin": "*",
+    "@repo/ui": "*",
+    "@tanstack/react-query": "^5.62.3",
+    "@trpc/client": "^11.0.0-rc.657",
+    "@trpc/react-query": "^11.0.0-rc.657",
+    "@trpc/server": "^11.0.0-rc.657",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "framer-motion": "^11.13.1",
+    "react": "^19.0.0",
+    "react-countdown": "^2.3.6",
+    "react-dom": "^19.0.0",
+    "yjs": "^13.6.20"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "*",
+    "@repo/prettier-config": "*",
+    "@repo/typescript-config": "*",
+    "@vitejs/plugin-react-swc": "^3.7.2",
+    "concurrently": "^9.1.2",
+    "eslint": "^8.57.1",
+    "pkgroll": "^2.5.1",
+    "vite": "5.4.11"
+  }
+}

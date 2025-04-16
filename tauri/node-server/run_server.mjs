@@ -180,7 +180,7 @@ async function main() {
 
     // PLUGINS
     ENABLED_PLUGINS:
-      "lyrics-presenter,simple-image,google-slides,radio,audio-recorder,video-player,worship-pads,embed",
+      "lyrics-presenter,simple-image,google-slides,radio,audio-recorder,video-player,worship-pads,embed,timer",
     PLUGINS_PATH: "./plugins",
     // Debt: Make this easier for us to change
     PLUGIN_GOOGLE_SLIDES_CLIENT_ID:

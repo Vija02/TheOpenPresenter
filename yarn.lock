@@ -7290,6 +7290,38 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@repo/plugin-timer@workspace:plugins/timer":
+  version: 0.0.0-use.local
+  resolution: "@repo/plugin-timer@workspace:plugins/timer"
+  dependencies:
+    "@chakra-ui/react": "npm:^2.10.4"
+    "@emotion/react": "npm:^11.13.5"
+    "@emotion/styled": "npm:^11.13.5"
+    "@r2wc/react-to-web-component": "npm:^2.0.3"
+    "@repo/base-plugin": "npm:*"
+    "@repo/eslint-config": "npm:*"
+    "@repo/prettier-config": "npm:*"
+    "@repo/typescript-config": "npm:*"
+    "@repo/ui": "npm:*"
+    "@tanstack/react-query": "npm:^5.62.3"
+    "@trpc/client": "npm:^11.0.0-rc.657"
+    "@trpc/react-query": "npm:^11.0.0-rc.657"
+    "@trpc/server": "npm:^11.0.0-rc.657"
+    "@types/react": "npm:^19.0.0"
+    "@types/react-dom": "npm:^19.0.0"
+    "@vitejs/plugin-react-swc": "npm:^3.7.2"
+    concurrently: "npm:^9.1.2"
+    eslint: "npm:^8.57.1"
+    framer-motion: "npm:^11.13.1"
+    pkgroll: "npm:^2.5.1"
+    react: "npm:^19.0.0"
+    react-countdown: "npm:^2.3.6"
+    react-dom: "npm:^19.0.0"
+    vite: "npm:5.4.11"
+    yjs: "npm:^13.6.20"
+  languageName: unknown
+  linkType: soft
+
 "@repo/plugin-video-player@workspace:plugins/video-player":
   version: 0.0.0-use.local
   resolution: "@repo/plugin-video-player@workspace:plugins/video-player"
@@ -23424,6 +23456,18 @@ __metadata:
   peerDependencies:
     react: ^15.3.0 || ^16.0.0 || ^17.0.0 || ^18.0.0
   checksum: 10c0/aba0adb666018e5c64657c31f4914a8558be73f71d6e2210fa871ebfcab94d786c83082868d7c7fa66feddc2aec19e375745cf0903e0619f2efffef08b92d941
+  languageName: node
+  linkType: hard
+
+"react-countdown@npm:^2.3.6":
+  version: 2.3.6
+  resolution: "react-countdown@npm:2.3.6"
+  dependencies:
+    prop-types: "npm:^15.7.2"
+  peerDependencies:
+    react: ">= 15"
+    react-dom: ">= 15"
+  checksum: 10c0/defb75cb9802c499eb0d5f6c8c6e4269de1005f9c05d5162bccf45063782fd2f5f87acd95d11f70e623fa75085a546b9d0fb0df27c5287ed6a86334342d903cf
   languageName: node
   linkType: hard
 

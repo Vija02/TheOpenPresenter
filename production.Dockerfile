@@ -42,6 +42,7 @@ COPY packages/prettier-config/package.json /app/packages/prettier-config/package
 COPY packages/typescript-config/package.json /app/packages/typescript-config/package.json
 COPY packages/ui/package.json /app/packages/ui/package.json
 COPY plugins/embed/package.json /app/plugins/embed/package.json
+COPY plugins/timer/package.json /app/plugins/timer/package.json
 COPY plugins/google-slides/package.json /app/plugins/google-slides/package.json
 COPY plugins/lyrics-presenter/package.json /app/plugins/lyrics-presenter/package.json
 COPY plugins/simple-image/package.json /app/plugins/simple-image/package.json
@@ -131,6 +132,9 @@ FROM builder-core AS builder-plugin
 COPY plugins/embed/ /app/plugins/embed/
 RUN yarn workspace @repo/plugin-embed build
 
+COPY plugins/timer/ /app/plugins/timer/
+RUN yarn workspace @repo/plugin-timer build
+
 COPY plugins/google-slides/ /app/plugins/google-slides/
 RUN yarn workspace @repo/plugin-google-slides build
 
@@ -218,6 +222,9 @@ COPY --from=builder-server /app/backend/worker/dist/ /app/backend/worker/dist/
 COPY --from=builder-plugin /app/plugins/embed/package.json /app/plugins/embed/
 COPY --from=builder-plugin /app/plugins/embed/dist/ /app/plugins/embed/dist/
 COPY --from=builder-plugin /app/plugins/embed/out/ /app/plugins/embed/out/
+COPY --from=builder-plugin /app/plugins/timer/package.json /app/plugins/timer/
+COPY --from=builder-plugin /app/plugins/timer/dist/ /app/plugins/timer/dist/
+COPY --from=builder-plugin /app/plugins/timer/out/ /app/plugins/timer/out/
 COPY --from=builder-plugin /app/plugins/google-slides/package.json /app/plugins/google-slides/
 COPY --from=builder-plugin /app/plugins/google-slides/dist/ /app/plugins/google-slides/dist/
 COPY --from=builder-plugin /app/plugins/google-slides/out/ /app/plugins/google-slides/out/
