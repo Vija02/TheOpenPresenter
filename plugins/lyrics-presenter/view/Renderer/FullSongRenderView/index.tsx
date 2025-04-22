@@ -5,6 +5,8 @@ import { SlideStyle } from "../../../src/index.js";
 import { GroupedData } from "../../../src/processLyrics";
 // @ts-expect-error JS file
 import partition from "../../partition.js";
+import { DebugPadding } from "../DebugPadding.js";
+import { usePadding } from "../usePadding";
 import { getSvgMeasurement } from "./cache";
 
 type FullSongRenderViewProps = {
@@ -12,6 +14,8 @@ type FullSongRenderViewProps = {
   slideStyle: Required<SlideStyle>;
 };
 
+// TODO: Optimize based on font size rather than horizontally. 
+// (Because column widths can be quite different, making us lose precious space)
 const FullSongRenderView = React.memo(
   ({ groupedData, slideStyle }: FullSongRenderViewProps) => {
     const target = React.useRef<any>(null);
@@ -37,36 +41,10 @@ const FullSongRenderView = React.memo(
       [groupMeasurements],
     );
 
-    // Calculate how many columns this song should be displayed in
-    const partitionNum = useMemo(
-      () =>
-        getPartition(
-          { width, height },
-          slideStyle,
-          groupRawLengths,
-          biggestWidth,
-        ),
-      [biggestWidth, groupRawLengths, height, slideStyle, width],
-    );
-
-    // Then we can calculate it and use the results
-    // DEBT: We could reuse the calculated partition from above
-    const partitionResult = useMemo(
-      () => partition(groupRawLengths, partitionNum) as number[][],
-      [groupRawLengths, partitionNum],
-    );
-    const rawHeightPerColumn = useMemo(
-      () =>
-        partitionResult.map((x) =>
-          // 20 is the height of the text when it's 1rem. Our padding between headings is 2rem. Meaning it's 20px
-          // We need to calculate this separately since measuring it individually doesn't include this padding
-          x.concat([20 * x.length]).reduce((acc, val) => acc + val, 0),
-        ),
-      [partitionResult],
-    );
-    const maxHeight = useMemo(
-      () => Math.max(...rawHeightPerColumn),
-      [rawHeightPerColumn],
+    // Calculate how many columns this song should be displayed in and some other info
+    const { partitionNum, partitionResult, maxRawHeight } = useMemo(
+      () => getPartition({ width, height }, groupRawLengths, biggestWidth),
+      [biggestWidth, groupRawLengths, height, width],
     );
 
     const partitionedData = useMemo(() => {
@@ -82,38 +60,44 @@ const FullSongRenderView = React.memo(
       return draft;
     }, [groupedData, partitionResult]);
 
-    // TODO: Rework to use new padding style
+    const padding = usePadding(slideStyle, { width, height });
+
     // TODO: Calculate and handle line height
-    // TODO: Fix overlap on some song
     return (
-      <div ref={target} style={{ width: "100%", height: "100%" }}>
+      <div
+        ref={target}
+        style={{
+          width: "100%",
+          height: "100%",
+          position: "relative",
+          backgroundColor: slideStyle.isDarkMode ? "black" : "white",
+        }}
+      >
+        {slideStyle.debugPadding && <DebugPadding padding={padding} />}
         <svg
-          viewBox={[
-            0,
-            0,
-            biggestWidth * partitionNum + slideStyle.padding,
-            maxHeight,
-          ].join(" ")}
+          viewBox={[0, 0, biggestWidth * partitionNum, maxRawHeight].join(" ")}
           xmlns="http://www.w3.org/2000/svg"
           style={{
-            width: "100%",
-            height: "100%",
-            backgroundColor: slideStyle.isDarkMode ? "black" : "white",
+            width: `calc(100% - ${padding[0]}px - ${padding[2]}px)`,
+            height: `calc(100% - ${padding[1]}px - ${padding[3]}px)`,
             overflow: "visible",
             userSelect: "none",
+            position: "absolute",
+            left: padding[0],
+            top: padding[1],
           }}
         >
           {partitionedData.map((partition, i) => {
-            const xPosition = `${slideStyle.padding / 2 + biggestWidth * i}px`;
+            const xPosition = `${biggestWidth * i}px`;
             return (
               <text
                 key={i}
                 x={xPosition}
                 style={{
-                  fontFamily: "inherit",
                   fontSize: "1rem",
                   fontWeight: slideStyle.fontWeight,
                   fontStyle: slideStyle.fontStyle,
+                  fontFamily: slideStyle.fontFamily,
                 }}
                 fill={slideStyle.isDarkMode ? "white" : "rgb(26, 32, 44)"}
               >
@@ -152,7 +136,6 @@ export default FullSongRenderView;
 
 const getPartition = (
   { width, height }: { width: number; height: number },
-  slideStyle: SlideStyle,
   groupRawLengths: number[],
   biggestWidth: number,
 ) => {
@@ -165,21 +148,29 @@ const getPartition = (
       currentPartition,
     ) as number[][];
 
-    const availableWidthPerColumn =
-      (width - (slideStyle.padding ?? 0)) / currentPartition;
+    const availableWidthPerColumn = width / currentPartition;
     const rawHeightPerColumn = partitionResult.map((x) =>
+      // 20 is the height of the text when it's 1rem. Our padding between headings is 2rem. Meaning it's 20px
+      // We need to calculate this separately since measuring it individually doesn't include this padding
       x.concat([20 * x.length]).reduce((acc, val) => acc + val, 0),
     );
+    const maxRawHeight = Math.max(...rawHeightPerColumn);
 
     const actualHeight = rawHeightPerColumn.map(
       (x) => (x * availableWidthPerColumn) / biggestWidth,
     );
-    const maxHeight = Math.max(...actualHeight);
+    const maxActualHeight = Math.max(...actualHeight);
 
-    if (maxHeight > height) {
+    if (maxActualHeight > height) {
       currentPartition++;
     } else {
-      return currentPartition;
+      return {
+        partitionNum: currentPartition,
+        partitionResult,
+        rawHeightPerColumn,
+        maxActualHeight,
+        maxRawHeight,
+      };
     }
   }
 };

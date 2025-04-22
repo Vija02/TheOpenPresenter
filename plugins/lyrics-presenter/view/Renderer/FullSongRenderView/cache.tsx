@@ -46,7 +46,6 @@ function measureSVGText({
   headingEl.setAttribute("x", "0%");
   headingEl.setAttribute("dy", "2rem");
   headingEl.setAttribute("font-size", "0.6rem");
-  headingEl.setAttribute("font-family", slideStyle.fontFamily);
   headingEl.textContent = heading;
   textElement.appendChild(headingEl);
   for (const [index, line] of textLines.entries()) {
