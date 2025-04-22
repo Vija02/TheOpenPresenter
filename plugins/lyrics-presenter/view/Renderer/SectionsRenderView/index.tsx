@@ -4,6 +4,8 @@ import React, { useMemo } from "react";
 
 import { SlideStyle } from "../../../src";
 import { GroupedData } from "../../../src/processLyrics";
+import { DebugPadding } from "../DebugPadding";
+import { usePadding } from "../usePadding";
 import { getSvgMeasurement } from "./cache";
 
 type SectionsRenderViewProps = {
@@ -95,36 +97,7 @@ const SectionsRenderViewAutoSize = React.memo(
       [slideStyle, textLines],
     );
 
-    const padding = useMemo(() => {
-      if (slideStyle.paddingIsLinked) {
-        const scaledPadding = (slideStyle.padding / 100) * size[0];
-        const clamppedPadding = Math.min(width / 2, height / 2, scaledPadding);
-
-        return [
-          clamppedPadding,
-          clamppedPadding,
-          clamppedPadding,
-          clamppedPadding,
-        ] as [number, number, number, number];
-      } else {
-        return [
-          slideStyle.leftPadding,
-          slideStyle.topPadding,
-          slideStyle.rightPadding,
-          slideStyle.bottomPadding,
-        ].map((x) => (x / 100) * size[0]) as [number, number, number, number];
-      }
-    }, [
-      height,
-      size,
-      slideStyle.bottomPadding,
-      slideStyle.leftPadding,
-      slideStyle.padding,
-      slideStyle.paddingIsLinked,
-      slideStyle.rightPadding,
-      slideStyle.topPadding,
-      width,
-    ]);
+    const padding = usePadding(slideStyle, { width, height });
 
     const viewBox = useMemo(
       () => [0, 0, measuredData.width, measuredData.height].join(" "),
@@ -184,36 +157,7 @@ const SectionsRenderViewManualFontSize = React.memo(
   }) => {
     const [width, height] = size;
 
-    const padding = useMemo(() => {
-      if (slideStyle.paddingIsLinked) {
-        const scaledPadding = (slideStyle.padding / 100) * size[0];
-        const clamppedPadding = Math.min(width / 2, height / 2, scaledPadding);
-
-        return [
-          clamppedPadding,
-          clamppedPadding,
-          clamppedPadding,
-          clamppedPadding,
-        ] as [number, number, number, number];
-      } else {
-        return [
-          slideStyle.leftPadding,
-          slideStyle.topPadding,
-          slideStyle.rightPadding,
-          slideStyle.bottomPadding,
-        ].map((x) => (x / 100) * size[0]) as [number, number, number, number];
-      }
-    }, [
-      height,
-      size,
-      slideStyle.bottomPadding,
-      slideStyle.leftPadding,
-      slideStyle.padding,
-      slideStyle.paddingIsLinked,
-      slideStyle.rightPadding,
-      slideStyle.topPadding,
-      width,
-    ]);
+    const padding = usePadding(slideStyle, { width, height });
 
     return (
       <Box
@@ -249,48 +193,5 @@ const SectionsRenderViewManualFontSize = React.memo(
     );
   },
 );
-
-const DebugPadding = ({
-  padding,
-}: {
-  padding: [number, number, number, number];
-}) => {
-  return (
-    <>
-      <Box
-        position="absolute"
-        left={0}
-        top={0}
-        bottom={0}
-        width={`${padding[0]}px`}
-        bg="#5042B2"
-      />
-      <Box
-        position="absolute"
-        top={0}
-        left={0}
-        right={0}
-        height={`${padding[1]}px`}
-        bg="#5042B2"
-      />
-      <Box
-        position="absolute"
-        right={0}
-        top={0}
-        bottom={0}
-        width={`${padding[2]}px`}
-        bg="#5042B2"
-      />
-      <Box
-        position="absolute"
-        bottom={0}
-        left={0}
-        right={0}
-        height={`${padding[3]}px`}
-        bg="#5042B2"
-      />
-    </>
-  );
-};
 
 export default SectionsRenderView;
