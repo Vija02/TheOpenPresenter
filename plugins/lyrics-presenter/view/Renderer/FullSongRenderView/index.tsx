@@ -14,7 +14,7 @@ type FullSongRenderViewProps = {
   slideStyle: Required<SlideStyle>;
 };
 
-// TODO: Optimize based on font size rather than horizontally. 
+// TODO: Optimize based on font size rather than horizontally.
 // (Because column widths can be quite different, making us lose precious space)
 const FullSongRenderView = React.memo(
   ({ groupedData, slideStyle }: FullSongRenderViewProps) => {
@@ -62,7 +62,6 @@ const FullSongRenderView = React.memo(
 
     const padding = usePadding(slideStyle, { width, height });
 
-    // TODO: Calculate and handle line height
     return (
       <div
         ref={target}
@@ -116,7 +115,7 @@ const FullSongRenderView = React.memo(
                       <tspan
                         key={j}
                         x={xPosition}
-                        dy={j === 0 ? "1.2rem" : "1rem"}
+                        dy={j === 0 ? "1.2rem" : slideStyle.lineHeight + "em"}
                       >
                         {x}
                       </tspan>

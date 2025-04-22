@@ -51,7 +51,10 @@ function measureSVGText({
   for (const [index, line] of textLines.entries()) {
     const el = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
     el.setAttribute("x", "0%");
-    el.setAttribute("dy", index === 0 ? "1.2rem" : "1rem");
+    el.setAttribute(
+      "dy",
+      index === 0 ? "1.2rem" : slideStyle.lineHeight + "em",
+    );
     el.textContent = line;
 
     textElement.appendChild(el);

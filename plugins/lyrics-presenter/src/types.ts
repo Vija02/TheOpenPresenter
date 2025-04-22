@@ -36,7 +36,7 @@ const paddingValidator = z
   .string()
   .or(z.number())
   .transform((x) => {
-    const num = parseInt(x.toString(), 10);
+    const num = parseFloat(x.toString());
     return Number.isNaN(num) ? 0 : num;
   })
   .optional();
@@ -50,7 +50,7 @@ export const slideStyleValidator = z.object({
     .string()
     .or(z.number())
     .transform((x) => {
-      const num = parseInt(x.toString(), 10);
+      const num = parseFloat(x.toString());
       return Number.isNaN(num) ? 1 : num;
     })
     .optional(),
