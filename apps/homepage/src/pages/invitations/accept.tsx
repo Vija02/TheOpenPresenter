@@ -115,7 +115,7 @@ const InvitationAcceptInner: FC<InvitationAcceptInnerProps> = (props) => {
     );
   }, [acceptInvite, code, id, organization]);
 
-  let child: JSX.Element | null = null;
+  let child: React.ReactNode | null = null;
   if (status === Status.ACCEPTING) {
     child = <LoadingInline />;
   } else if (error || acceptError) {

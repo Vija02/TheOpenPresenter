@@ -88,7 +88,7 @@ const JoinRequestAcceptInner: FC<JoinRequestAcceptInnerProps> = (props) => {
     );
   }, [acceptJoinRequest, id, user]);
 
-  let child: JSX.Element | null = null;
+  let child: React.ReactNode | null = null;
   if (status === Status.ACCEPTING) {
     child = <LoadingInline />;
   } else if (status === Status.DONE) {
