@@ -1,7 +1,8 @@
-import { Box, Button, Flex, Link, Stack, Text } from "@chakra-ui/react";
+import { Box, Button, Flex, Link, Stack, Text, chakra } from "@chakra-ui/react";
 import { LogoFavicon } from "@repo/ui";
 import { useCallback, useMemo } from "react";
 import { FaPause, FaPlay, FaYoutube } from "react-icons/fa";
+import { IoMdClose as IoMdCloseRaw } from "react-icons/io";
 import { MdHls } from "react-icons/md";
 import { VscDebugRestart } from "react-icons/vsc";
 import { Scrubber } from "react-scrubber";
@@ -11,6 +12,8 @@ import { calculateActualSeek } from "../calculateActualSeek";
 import { usePluginAPI } from "../pluginApi";
 import { VideoThumbnail } from "./VideoThumbnail";
 import { useSeek } from "./useSeek";
+
+const IoMdClose = chakra(IoMdCloseRaw);
 
 // TODO: Handle if no duration
 const VideoCard = ({ video }: { video: Video }) => {
@@ -114,48 +117,70 @@ const VideoCard = ({ video }: { video: Video }) => {
     <Stack direction="column" boxShadow="base" p={2} border={border}>
       <Stack direction={{ base: "column", md: "row" }} spacing={4}>
         <VideoThumbnail video={video} />
-        <Stack direction="column">
-          <Text fontSize="lg" fontWeight="bold" wordBreak="break-all">
-          {video.metadata.title ?? video.url}
-        </Text>
-          <Stack direction="row">
-            {!video.isInternalVideo ? (
-              <Link isExternal href={video.url}>
-                <FaYoutube color="red" fontSize={24} />
-              </Link>
-            ) : (
-              <Link isExternal href={video.url}>
-                <Flex
-                  alignItems="center"
-                  justifyContent="center"
-                  bg="black"
-                  width="24px"
-                  height="24px"
-                  p="2px"
-                  borderRadius="sm"
-                >
-                  <LogoFavicon />
-                </Flex>
-              </Link>
-            )}
-            {video.isInternalVideo && (video as InternalVideo).hlsMediaName && (
-              <MdHls fontSize={24} />
-            )}
+        <Stack direction="row" justifyContent="space-between" flex={1}>
+          <Stack direction="column">
+            <Text fontSize="lg" fontWeight="bold" wordBreak="break-all">
+              {video.metadata.title ?? video.url}
+            </Text>
+            <Stack direction="row">
+              {!video.isInternalVideo ? (
+                <Link isExternal href={video.url}>
+                  <FaYoutube color="red" fontSize={24} />
+                </Link>
+              ) : (
+                <Link isExternal href={video.url}>
+                  <Flex
+                    alignItems="center"
+                    justifyContent="center"
+                    bg="black"
+                    width="24px"
+                    height="24px"
+                    p="2px"
+                    borderRadius="sm"
+                  >
+                    <LogoFavicon />
+                  </Flex>
+                </Link>
+              )}
+              {video.isInternalVideo &&
+                (video as InternalVideo).hlsMediaName && (
+                  <MdHls fontSize={24} />
+                )}
+            </Stack>
+            <Stack direction="row">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  onSeekEnd(0);
+                  if (!currentVideoIsPlaying) {
+                    onTogglePlay();
+                  }
+                }}
+              >
+                <VscDebugRestart />
+              </Button>
+            </Stack>
           </Stack>
-          <Stack direction="row">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                onSeekEnd(0);
-                if (!currentVideoIsPlaying) {
-                  onTogglePlay();
-                }
-              }}
-            >
-              <VscDebugRestart />
-            </Button>
-          </Stack>
+          <IoMdClose
+            fontSize="2xl"
+            cursor="pointer"
+            onClick={() => {
+              const index = mutableSceneData.pluginData.videos.findIndex(
+                (x) => x.id === video.id,
+              );
+
+              mutableSceneData.pluginData.videos.splice(index, 1);
+
+              if (
+                mutableRendererData.currentPlayingVideo?.videoId === video.id
+              ) {
+                mutableRendererData.currentPlayingVideo = null;
+                mutableRendererData.isPlaying = false;
+                delete mutableRendererData.videoSeeks[video.id];
+              }
+            }}
+          />
         </Stack>
       </Stack>
 
