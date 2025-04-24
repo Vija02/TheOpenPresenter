@@ -24,8 +24,11 @@ const Landing = () => {
           onFileSelected={(data, token) => {
             const picker = google.picker;
             if (data[picker.Response.ACTION] === "picked") {
-              if (data[picker.Response.DOCUMENTS].length > 0) {
-                const docs = data[picker.Response.DOCUMENTS][0]!;
+              if (
+                data[picker.Response.DOCUMENTS] &&
+                data[picker.Response.DOCUMENTS]!.length > 0
+              ) {
+                const docs = data[picker.Response.DOCUMENTS]![0]!;
 
                 const id = docs[picker.Document.ID];
 

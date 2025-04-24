@@ -46,8 +46,11 @@ const Remote = () => {
             onFileSelected={(data, token) => {
               const picker = google.picker;
               if (data[picker.Response.ACTION] === "picked") {
-                if (data[picker.Response.DOCUMENTS].length > 0) {
-                  const docs = data[picker.Response.DOCUMENTS][0]!;
+                if (
+                  data[picker.Response.DOCUMENTS] &&
+                  data[picker.Response.DOCUMENTS]!.length > 0
+                ) {
+                  const docs = data[picker.Response.DOCUMENTS]![0]!;
 
                   const id = docs[picker.Document.ID];
 
@@ -102,7 +105,7 @@ const Remote = () => {
               border="1px solid #ffffff6b"
               _hover={{ bg: "rgba(255, 255, 255, 0.13)" }}
               onClick={() => {
-                if (!mutableRendererData.slideIndex) {
+                if (mutableRendererData.slideIndex == null) {
                   mutableRendererData.slideIndex = 0;
                 } else {
                   mutableRendererData.clickCount =
@@ -122,7 +125,7 @@ const Remote = () => {
               border="1px solid #ffffff6b"
               _hover={{ bg: "rgba(255, 255, 255, 0.13)" }}
               onClick={() => {
-                if (!mutableRendererData.slideIndex) {
+                if (mutableRendererData.slideIndex == null) {
                   mutableRendererData.slideIndex = 0;
                 } else {
                   mutableRendererData.clickCount =

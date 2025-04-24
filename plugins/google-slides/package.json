@@ -27,7 +27,7 @@
     "@trpc/server": "^11.0.0-rc.657",
     "@types/gapi": "^0.0.47",
     "@types/google.accounts": "^0.0.15",
-    "@types/google.picker": "^0.0.46",
+    "@types/google.picker": "^0.0.50",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "axios": "^1.7.9",

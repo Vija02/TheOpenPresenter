@@ -6984,7 +6984,7 @@ __metadata:
     "@trpc/server": "npm:^11.0.0-rc.657"
     "@types/gapi": "npm:^0.0.47"
     "@types/google.accounts": "npm:^0.0.15"
-    "@types/google.picker": "npm:^0.0.46"
+    "@types/google.picker": "npm:^0.0.50"
     "@types/react": "npm:^19.0.0"
     "@types/react-dom": "npm:^19.0.0"
     "@vitejs/plugin-react-swc": "npm:^3.7.2"
@@ -9277,10 +9277,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/google.picker@npm:^0.0.46":
-  version: 0.0.46
-  resolution: "@types/google.picker@npm:0.0.46"
-  checksum: 10c0/100c02b0d4a818b53251ae0cc5b9a6cd96565815f1fcccb53a0ffd0931fe3fff2ff45b6188e1de923bd274e9ade1b34d277665fcb5bf1c7f6a0e761dc41abd8c
+"@types/google.picker@npm:^0.0.50":
+  version: 0.0.50
+  resolution: "@types/google.picker@npm:0.0.50"
+  checksum: 10c0/355e032848df6a2143ae5d573c56e320df081efcc1b42df9e5c6790f1b4a1e3fb6751cd3f66328fc4d6fc9989a23e0e52d61457e745563c9a58db007e5d49891
   languageName: node
   linkType: hard
 
