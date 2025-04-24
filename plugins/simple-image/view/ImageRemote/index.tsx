@@ -1,4 +1,5 @@
 import { Box, Button, Stack } from "@chakra-ui/react";
+import { constructMediaName } from "@repo/lib";
 import { PluginScaffold, PopConfirm, Slide, SlideGrid } from "@repo/ui";
 import { useCallback } from "react";
 import { VscTrash } from "react-icons/vsc";
@@ -19,10 +20,14 @@ const ImageRemote = () => {
   const handleRemove = useCallback(
     async (index: number) => {
       if (pluginData.images[index]) {
-        const split = pluginData.images[index].split("/");
-        const mediaName = split[split.length - 1]!;
-
-        await pluginApi.media.deleteMedia(mediaName);
+        // If internal, delete that media
+        if (pluginApi.media.isInternalMedia(pluginData.images[index])) {
+          const mediaName = constructMediaName(
+            pluginData.images[index].mediaId,
+            pluginData.images[index].extension,
+          );
+          await pluginApi.media.deleteMedia(mediaName);
+        }
 
         mutableSceneData.pluginData.images.splice(index, 1);
       }
@@ -38,7 +43,11 @@ const ImageRemote = () => {
         <Box p={3} width="100%">
           <SlideGrid>
             {pluginData.images.map((x, i) => (
-              <Stack key={x} direction="column" justifyContent="center">
+              <Stack
+                key={pluginApi.media.resolveMediaUrl(x)}
+                direction="column"
+                justifyContent="center"
+              >
                 <Slide
                   isActive={i === imgIndex}
                   onClick={() => {
@@ -46,7 +55,7 @@ const ImageRemote = () => {
                     pluginApi.renderer.setRenderCurrentScene();
                   }}
                 >
-                  <ImageRenderView src={x} />
+                  <ImageRenderView src={pluginApi.media.resolveMediaUrl(x)} />
                 </Slide>
                 <PopConfirm
                   title={`Are you sure you want to remove this image?`}

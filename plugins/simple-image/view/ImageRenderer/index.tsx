@@ -10,7 +10,7 @@ const ImageRenderer = () => {
 
   return images.map((imgSrc, i) => (
     <div
-      key={imgSrc}
+      key={pluginApi.media.resolveMediaUrl(imgSrc)}
       style={{
         position: "absolute",
         width: "100vw",
@@ -18,7 +18,7 @@ const ImageRenderer = () => {
         opacity: imgIndex === i ? 1 : 0,
       }}
     >
-      <ImageRenderView src={imgSrc} />
+      <ImageRenderView src={pluginApi.media.resolveMediaUrl(imgSrc)} />
     </div>
   ));
 };

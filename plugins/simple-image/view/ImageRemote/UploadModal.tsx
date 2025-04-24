@@ -1,5 +1,5 @@
 import { Button, Text, useDisclosure } from "@chakra-ui/react";
-import { appData } from "@repo/lib";
+import { appData, extractMediaName } from "@repo/lib";
 import Uppy from "@uppy/core";
 import { DashboardModal, useUppyEvent } from "@uppy/react";
 import Tus from "@uppy/tus";
@@ -25,8 +25,9 @@ export const UploadModal = () => {
   useUppyEvent(uppy, "upload-success", (file) => {
     const splitted = file?.tus?.uploadUrl?.split("/");
     const fileName = splitted?.[splitted.length - 1];
+    const { mediaId, extension } = extractMediaName(fileName ?? "");
 
-    sceneData.pluginData.images.push(pluginApi.media.getUrl(fileName ?? ""));
+    sceneData.pluginData.images.push({ mediaId, extension });
   });
 
   const { isOpen, onToggle } = useDisclosure();
