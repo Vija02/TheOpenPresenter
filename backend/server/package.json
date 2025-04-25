@@ -8,7 +8,7 @@
     }
   },
   "scripts": {
-    "build": "tsup src/index.ts --format esm,cjs --experimental-dts",
+    "build": "tsup src/index.ts --format esm,cjs",
     "start": "sh ./scripts/process-public-next-env.sh && node -r @repo/config/env -r @repo/observability/initTracing dist/index.js",
     "dev": "concurrently \"yarn build --watch\" \"nodemon --signal SIGINT --watch '../../**/dist/**/*.js' -x 'node --inspect=9678 -r @repo/config/env -r @repo/observability/initTracing -r source-map-support/register' dist/index.js\"",
     "schema:export": "NODE_OPTIONS=\"-r @repo/config/env\" yarn ts-node scripts/schema-export.ts",
