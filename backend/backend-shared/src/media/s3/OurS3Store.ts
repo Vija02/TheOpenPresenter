@@ -5,7 +5,7 @@ import debug from "debug";
 import _ from "lodash";
 import fs, { promises as fsProm } from "node:fs";
 import { Readable } from "node:stream";
-import { promises as streamProm } from "node:stream";
+import stream, { promises as streamProm } from "node:stream";
 import os from "os";
 import path from "path";
 import { Pool, PoolClient } from "pg";
@@ -88,6 +88,32 @@ export class OurS3Store extends S3Store implements OurDataStore {
       `,
       [true, uuid],
     );
+  }
+
+  // Handle small size file upload. Skip multipart for performance
+  public async write(
+    src: stream.Readable,
+    id: string,
+    offset: number,
+  ): Promise<number> {
+    const metadata = await this.getMetadata(id);
+    if (
+      metadata.file.size !== undefined &&
+      // Under 10 mb
+      metadata.file.size < 10 * 1000 * 1000
+    ) {
+      // Upload directly
+      await this.client.putObject({
+        Bucket: this.bucket,
+        Key: id,
+        Body: src,
+        ContentLength: metadata.file.size,
+      });
+
+      return metadata.file.size;
+    }
+
+    return super.write(src, id, offset);
   }
 
   // ========================================================================== //
