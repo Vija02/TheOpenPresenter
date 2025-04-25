@@ -1,4 +1,10 @@
-import { YjsWatcher, appData } from "@repo/lib";
+import {
+  YjsWatcher,
+  appData,
+  isInternalMedia,
+  resolveMediaUrl,
+  resolveProcessedMediaUrl,
+} from "@repo/lib";
 import isEqual from "fast-deep-equal";
 import { useSyncExternalStore } from "react";
 import { useLocation } from "react-use";
@@ -13,10 +19,8 @@ import {
   ObjectToTypedMap,
   Plugin,
   PluginContext,
-  UniversalURL,
 } from "../types";
 import { OPFSStorageManager } from "./OPFSStorageManager";
-import { isInternalMedia } from "./media";
 import { awarenessStore } from "./store";
 
 export function initPluginApi<
@@ -85,13 +89,8 @@ export function initPluginApi<
       pluginClientStorage: storageManager, // Scoped to plugin
       deleteMedia: misc.media.deleteMedia,
       completeMedia: misc.media.completeMedia,
-      resolveMediaUrl: (mediaUrl: UniversalURL) => {
-        if (isInternalMedia(mediaUrl)) {
-          const mediaName = mediaUrl.mediaId + "." + mediaUrl.extension;
-          return window.location.origin + "/media/data/" + mediaName;
-        }
-        return mediaUrl;
-      },
+      resolveMediaUrl,
+      resolveProcessedMediaUrl,
       isInternalMedia,
     },
     scene: {

@@ -1,2 +1,7 @@
 export * from "./types";
-export { YjsWatcher, createTraverser } from "@repo/lib";
+export {
+  YjsWatcher,
+  createTraverser,
+  type UniversalURL,
+  type InternalMedia,
+} from "@repo/lib";

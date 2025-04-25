@@ -149,10 +149,3 @@ export type MediaHandler = {
   deleteMedia: (id: string) => Promise<any>;
   completeMedia: (id: string) => Promise<any>;
 };
-
-export type InternalMedia = {
-  mediaId: string;
-  extension: string;
-};
-
-export type UniversalURL = string | InternalMedia;
