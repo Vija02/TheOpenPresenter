@@ -8,9 +8,9 @@
     }
   },
   "scripts": {
-    "build": "pkgroll",
+    "build": "tsup src/index.ts --format esm,cjs --experimental-dts",
     "start": "sh ./scripts/process-public-next-env.sh && node -r @repo/config/env -r @repo/observability/initTracing dist/index.js",
-    "dev": "concurrently \"pkgroll --watch\" \"nodemon --signal SIGINT --watch '../../**/dist/**/*.js' -x 'node --inspect=9678 -r @repo/config/env -r @repo/observability/initTracing -r source-map-support/register' dist/index.js\"",
+    "dev": "concurrently \"yarn build --watch\" \"nodemon --signal SIGINT --watch '../../**/dist/**/*.js' -x 'node --inspect=9678 -r @repo/config/env -r @repo/observability/initTracing -r source-map-support/register' dist/index.js\"",
     "schema:export": "NODE_OPTIONS=\"-r @repo/config/env\" yarn ts-node scripts/schema-export.ts",
     "cloudflare:import": "(echo \"export const cloudflareIps: string[] = [\"; (curl -Ls https://www.cloudflare.com/ips-v4 | sort | sed -e \"s/^/  \\\"/\" -e \"s/$/\\\",/\"); echo \"];\") > src/cloudflare.ts",
     "test": "NODE_ENV=test NODE_OPTIONS=\"-r @repo/config/env\" yarn vitest"
@@ -64,6 +64,7 @@
     "postgraphile": "^4.14.0",
     "postgraphile-plugin-connection-filter": "^2.3.0",
     "redis": "^4.7.0",
+    "sharp": "^0.34.1",
     "source-map-support": "^0.5.21",
     "ts-node": "^10.9.2",
     "typeid-js": "^1.1.0",
@@ -76,7 +77,7 @@
   "devDependencies": {
     "@repo/typescript-config": "*",
     "mock-req": "^0.2.0",
-    "pkgroll": "^2.5.1",
+    "tsup": "^8.3.6",
     "vitest": "^2.1.8"
   }
 }
