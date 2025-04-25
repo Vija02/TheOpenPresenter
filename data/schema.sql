@@ -2185,6 +2185,29 @@ CREATE TABLE app_public.media_dependencies (
 
 
 --
+-- Name: media_image_metadata; Type: TABLE; Schema: app_public; Owner: -
+--
+
+CREATE TABLE app_public.media_image_metadata (
+    image_media_id uuid NOT NULL,
+    width integer NOT NULL,
+    height integer NOT NULL
+);
+
+
+--
+-- Name: media_image_sizes; Type: TABLE; Schema: app_public; Owner: -
+--
+
+CREATE TABLE app_public.media_image_sizes (
+    image_media_id uuid NOT NULL,
+    processed_media_id uuid NOT NULL,
+    width integer NOT NULL,
+    file_type text NOT NULL
+);
+
+
+--
 -- Name: media_video_metadata; Type: TABLE; Schema: app_public; Owner: -
 --
 
@@ -2398,6 +2421,14 @@ ALTER TABLE ONLY app_private.user_secrets
 
 ALTER TABLE ONLY app_public.categories
     ADD CONSTRAINT categories_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: media_image_metadata media_image_metadata_pkey; Type: CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.media_image_metadata
+    ADD CONSTRAINT media_image_metadata_pkey PRIMARY KEY (image_media_id);
 
 
 --
@@ -2622,6 +2653,27 @@ CREATE UNIQUE INDEX media_dependencies_parent_media_id_child_media_id_idx ON app
 --
 
 CREATE INDEX media_dependencies_parent_media_id_idx ON app_public.media_dependencies USING btree (parent_media_id);
+
+
+--
+-- Name: media_image_sizes_image_media_id_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX media_image_sizes_image_media_id_idx ON app_public.media_image_sizes USING btree (image_media_id);
+
+
+--
+-- Name: media_image_sizes_image_media_id_width_file_type_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE UNIQUE INDEX media_image_sizes_image_media_id_width_file_type_idx ON app_public.media_image_sizes USING btree (image_media_id, width, file_type);
+
+
+--
+-- Name: media_image_sizes_processed_media_id_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX media_image_sizes_processed_media_id_idx ON app_public.media_image_sizes USING btree (processed_media_id);
 
 
 --
@@ -3031,6 +3083,30 @@ ALTER TABLE ONLY app_public.media_dependencies
 
 
 --
+-- Name: media_image_metadata media_image_metadata_image_media_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.media_image_metadata
+    ADD CONSTRAINT media_image_metadata_image_media_id_fkey FOREIGN KEY (image_media_id) REFERENCES app_public.medias(id) ON DELETE CASCADE;
+
+
+--
+-- Name: media_image_sizes media_image_sizes_image_media_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.media_image_sizes
+    ADD CONSTRAINT media_image_sizes_image_media_id_fkey FOREIGN KEY (image_media_id) REFERENCES app_public.medias(id) ON DELETE CASCADE;
+
+
+--
+-- Name: media_image_sizes media_image_sizes_processed_media_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.media_image_sizes
+    ADD CONSTRAINT media_image_sizes_processed_media_id_fkey FOREIGN KEY (processed_media_id) REFERENCES app_public.medias(id) ON DELETE CASCADE;
+
+
+--
 -- Name: media_video_metadata media_video_metadata_hls_media_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
 --
 
@@ -3330,6 +3406,18 @@ CREATE POLICY insert_own_tag ON app_public.project_tags FOR INSERT WITH CHECK (a
 ALTER TABLE app_public.media_dependencies ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: media_image_metadata; Type: ROW SECURITY; Schema: app_public; Owner: -
+--
+
+ALTER TABLE app_public.media_image_metadata ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: media_image_sizes; Type: ROW SECURITY; Schema: app_public; Owner: -
+--
+
+ALTER TABLE app_public.media_image_sizes ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: media_video_metadata; Type: ROW SECURITY; Schema: app_public; Owner: -
 --
 
@@ -3452,6 +3540,20 @@ CREATE POLICY select_own ON app_public.user_authentications FOR SELECT USING ((u
 --
 
 CREATE POLICY select_own ON app_public.user_emails FOR SELECT USING ((user_id = app_public.current_user_id()));
+
+
+--
+-- Name: media_image_metadata select_own_media; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY select_own_media ON app_public.media_image_metadata FOR SELECT USING (app_public.current_user_can_access_media(image_media_id));
+
+
+--
+-- Name: media_image_sizes select_own_media; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY select_own_media ON app_public.media_image_sizes FOR SELECT USING (app_public.current_user_can_access_media(image_media_id));
 
 
 --
@@ -4180,6 +4282,20 @@ GRANT INSERT(parent_media_id) ON TABLE app_public.media_dependencies TO theopenp
 --
 
 GRANT INSERT(child_media_id) ON TABLE app_public.media_dependencies TO theopenpresenter_visitor;
+
+
+--
+-- Name: TABLE media_image_metadata; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT SELECT ON TABLE app_public.media_image_metadata TO theopenpresenter_visitor;
+
+
+--
+-- Name: TABLE media_image_sizes; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT SELECT ON TABLE app_public.media_image_sizes TO theopenpresenter_visitor;
 
 
 --

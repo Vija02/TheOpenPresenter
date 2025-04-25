@@ -1099,6 +1099,111 @@ type Media {
     """The method to use when ordering `MediaDependency`."""
     orderBy: [MediaDependenciesOrderBy!] = [NATURAL]
   ): MediaDependenciesConnection!
+
+  """Reads and enables pagination through a set of `MediaImageMetadatum`."""
+  mediaImageMetadataByImageMediaId(
+    """Read all values in the set after (below) this cursor."""
+    after: Cursor
+
+    """Read all values in the set before (above) this cursor."""
+    before: Cursor
+
+    """
+    A condition to be used in determining which values should be returned by the collection.
+    """
+    condition: MediaImageMetadatumCondition
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: MediaImageMetadatumFilter
+
+    """Only read the first `n` values of the set."""
+    first: Int
+
+    """Only read the last `n` values of the set."""
+    last: Int
+
+    """
+    Skip the first `n` values from our `after` cursor, an alternative to cursor
+    based pagination. May not be used with `last`.
+    """
+    offset: Int
+
+    """The method to use when ordering `MediaImageMetadatum`."""
+    orderBy: [MediaImageMetadataOrderBy!] = [PRIMARY_KEY_ASC]
+  ): MediaImageMetadataConnection! @deprecated(reason: "Please use mediaImageMetadatumByImageMediaId instead")
+
+  """Reads a single `MediaImageMetadatum` that is related to this `Media`."""
+  mediaImageMetadatumByImageMediaId: MediaImageMetadatum
+
+  """Reads and enables pagination through a set of `MediaImageSize`."""
+  mediaImageSizesByImageMediaId(
+    """Read all values in the set after (below) this cursor."""
+    after: Cursor
+
+    """Read all values in the set before (above) this cursor."""
+    before: Cursor
+
+    """
+    A condition to be used in determining which values should be returned by the collection.
+    """
+    condition: MediaImageSizeCondition
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: MediaImageSizeFilter
+
+    """Only read the first `n` values of the set."""
+    first: Int
+
+    """Only read the last `n` values of the set."""
+    last: Int
+
+    """
+    Skip the first `n` values from our `after` cursor, an alternative to cursor
+    based pagination. May not be used with `last`.
+    """
+    offset: Int
+
+    """The method to use when ordering `MediaImageSize`."""
+    orderBy: [MediaImageSizesOrderBy!] = [NATURAL]
+  ): MediaImageSizesConnection!
+
+  """Reads and enables pagination through a set of `MediaImageSize`."""
+  mediaImageSizesByProcessedMediaId(
+    """Read all values in the set after (below) this cursor."""
+    after: Cursor
+
+    """Read all values in the set before (above) this cursor."""
+    before: Cursor
+
+    """
+    A condition to be used in determining which values should be returned by the collection.
+    """
+    condition: MediaImageSizeCondition
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: MediaImageSizeFilter
+
+    """Only read the first `n` values of the set."""
+    first: Int
+
+    """Only read the last `n` values of the set."""
+    last: Int
+
+    """
+    Skip the first `n` values from our `after` cursor, an alternative to cursor
+    based pagination. May not be used with `last`.
+    """
+    offset: Int
+
+    """The method to use when ordering `MediaImageSize`."""
+    orderBy: [MediaImageSizesOrderBy!] = [NATURAL]
+  ): MediaImageSizesConnection!
   mediaName: String!
 
   """Reads and enables pagination through a set of `MediaVideoMetadatum`."""
@@ -1372,6 +1477,158 @@ input MediaFilter {
 
   """Filter by the object’s `organizationId` field."""
   organizationId: UUIDFilter
+}
+
+"""A connection to a list of `MediaImageMetadatum` values."""
+type MediaImageMetadataConnection {
+  """
+  A list of edges which contains the `MediaImageMetadatum` and cursor to aid in pagination.
+  """
+  edges: [MediaImageMetadataEdge!]!
+
+  """A list of `MediaImageMetadatum` objects."""
+  nodes: [MediaImageMetadatum!]!
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+
+  """
+  The count of *all* `MediaImageMetadatum` you could get from the connection.
+  """
+  totalCount: Int!
+}
+
+"""A `MediaImageMetadatum` edge in the connection."""
+type MediaImageMetadataEdge {
+  """A cursor for use in pagination."""
+  cursor: Cursor
+
+  """The `MediaImageMetadatum` at the end of the edge."""
+  node: MediaImageMetadatum!
+}
+
+"""Methods to use when ordering `MediaImageMetadatum`."""
+enum MediaImageMetadataOrderBy {
+  IMAGE_MEDIA_ID_ASC
+  IMAGE_MEDIA_ID_DESC
+  NATURAL
+  PRIMARY_KEY_ASC
+  PRIMARY_KEY_DESC
+}
+
+type MediaImageMetadatum {
+  height: Int!
+
+  """Reads a single `Media` that is related to this `MediaImageMetadatum`."""
+  imageMedia: Media
+  imageMediaId: UUID!
+  width: Int!
+}
+
+"""
+A condition to be used against `MediaImageMetadatum` object types. All fields
+are tested for equality and combined with a logical ‘and.’
+"""
+input MediaImageMetadatumCondition {
+  """Checks for equality with the object’s `imageMediaId` field."""
+  imageMediaId: UUID
+}
+
+"""
+A filter to be used against `MediaImageMetadatum` object types. All fields are combined with a logical ‘and.’
+"""
+input MediaImageMetadatumFilter {
+  """Checks for all expressions in this list."""
+  and: [MediaImageMetadatumFilter!]
+
+  """Filter by the object’s `imageMediaId` field."""
+  imageMediaId: UUIDFilter
+
+  """Negates the expression."""
+  not: MediaImageMetadatumFilter
+
+  """Checks for any expressions in this list."""
+  or: [MediaImageMetadatumFilter!]
+}
+
+type MediaImageSize {
+  fileType: String!
+
+  """Reads a single `Media` that is related to this `MediaImageSize`."""
+  imageMedia: Media
+  imageMediaId: UUID!
+
+  """Reads a single `Media` that is related to this `MediaImageSize`."""
+  processedMedia: Media
+  processedMediaId: UUID!
+  width: Int!
+}
+
+"""
+A condition to be used against `MediaImageSize` object types. All fields are
+tested for equality and combined with a logical ‘and.’
+"""
+input MediaImageSizeCondition {
+  """Checks for equality with the object’s `imageMediaId` field."""
+  imageMediaId: UUID
+
+  """Checks for equality with the object’s `processedMediaId` field."""
+  processedMediaId: UUID
+}
+
+"""
+A filter to be used against `MediaImageSize` object types. All fields are combined with a logical ‘and.’
+"""
+input MediaImageSizeFilter {
+  """Checks for all expressions in this list."""
+  and: [MediaImageSizeFilter!]
+
+  """Filter by the object’s `imageMediaId` field."""
+  imageMediaId: UUIDFilter
+
+  """Negates the expression."""
+  not: MediaImageSizeFilter
+
+  """Checks for any expressions in this list."""
+  or: [MediaImageSizeFilter!]
+
+  """Filter by the object’s `processedMediaId` field."""
+  processedMediaId: UUIDFilter
+}
+
+"""A connection to a list of `MediaImageSize` values."""
+type MediaImageSizesConnection {
+  """
+  A list of edges which contains the `MediaImageSize` and cursor to aid in pagination.
+  """
+  edges: [MediaImageSizesEdge!]!
+
+  """A list of `MediaImageSize` objects."""
+  nodes: [MediaImageSize!]!
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+
+  """The count of *all* `MediaImageSize` you could get from the connection."""
+  totalCount: Int!
+}
+
+"""A `MediaImageSize` edge in the connection."""
+type MediaImageSizesEdge {
+  """A cursor for use in pagination."""
+  cursor: Cursor
+
+  """The `MediaImageSize` at the end of the edge."""
+  node: MediaImageSize!
+}
+
+"""Methods to use when ordering `MediaImageSize`."""
+enum MediaImageSizesOrderBy {
+  IMAGE_MEDIA_ID_ASC
+  IMAGE_MEDIA_ID_DESC
+  NATURAL
+  PROCESSED_MEDIA_ID_ASC
+  PROCESSED_MEDIA_ID_DESC
 }
 
 """Methods to use when ordering `Media`."""
@@ -2734,6 +2991,75 @@ type Query {
     """The method to use when ordering `MediaDependency`."""
     orderBy: [MediaDependenciesOrderBy!] = [NATURAL]
   ): MediaDependenciesConnection
+
+  """Reads and enables pagination through a set of `MediaImageMetadatum`."""
+  mediaImageMetadata(
+    """Read all values in the set after (below) this cursor."""
+    after: Cursor
+
+    """Read all values in the set before (above) this cursor."""
+    before: Cursor
+
+    """
+    A condition to be used in determining which values should be returned by the collection.
+    """
+    condition: MediaImageMetadatumCondition
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: MediaImageMetadatumFilter
+
+    """Only read the first `n` values of the set."""
+    first: Int
+
+    """Only read the last `n` values of the set."""
+    last: Int
+
+    """
+    Skip the first `n` values from our `after` cursor, an alternative to cursor
+    based pagination. May not be used with `last`.
+    """
+    offset: Int
+
+    """The method to use when ordering `MediaImageMetadatum`."""
+    orderBy: [MediaImageMetadataOrderBy!] = [PRIMARY_KEY_ASC]
+  ): MediaImageMetadataConnection
+  mediaImageMetadatum(imageMediaId: UUID!): MediaImageMetadatum
+
+  """Reads and enables pagination through a set of `MediaImageSize`."""
+  mediaImageSizes(
+    """Read all values in the set after (below) this cursor."""
+    after: Cursor
+
+    """Read all values in the set before (above) this cursor."""
+    before: Cursor
+
+    """
+    A condition to be used in determining which values should be returned by the collection.
+    """
+    condition: MediaImageSizeCondition
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: MediaImageSizeFilter
+
+    """Only read the first `n` values of the set."""
+    first: Int
+
+    """Only read the last `n` values of the set."""
+    last: Int
+
+    """
+    Skip the first `n` values from our `after` cursor, an alternative to cursor
+    based pagination. May not be used with `last`.
+    """
+    offset: Int
+
+    """The method to use when ordering `MediaImageSize`."""
+    orderBy: [MediaImageSizesOrderBy!] = [NATURAL]
+  ): MediaImageSizesConnection
 
   """Reads and enables pagination through a set of `MediaVideoMetadatum`."""
   mediaVideoMetadata(
