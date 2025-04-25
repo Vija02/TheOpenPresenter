@@ -1,4 +1,5 @@
 import { Box, Img, Skeleton } from "@chakra-ui/react";
+import { extractMediaName } from "@repo/lib";
 import { useMemo } from "react";
 
 import { InternalVideo, Video } from "../../src";
@@ -9,8 +10,8 @@ export const VideoThumbnail = ({ video }: { video: Video }) => {
 
   const url = useMemo(() => {
     if (video.isInternalVideo && (video as InternalVideo).thumbnailMediaName) {
-      return pluginApi.media.getUrl(
-        (video as InternalVideo).thumbnailMediaName!,
+      return pluginApi.media.resolveMediaUrl(
+        extractMediaName((video as InternalVideo).thumbnailMediaName!),
       );
     }
     if (video.metadata.thumbnailUrl) {

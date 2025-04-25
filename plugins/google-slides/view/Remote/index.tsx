@@ -7,6 +7,7 @@ import {
   Stack,
   Text,
 } from "@chakra-ui/react";
+import { extractMediaName } from "@repo/lib";
 import { LoadingFull, PluginScaffold, Slide, SlideGrid } from "@repo/ui";
 import { useMemo } from "react";
 import { FaArrowLeft, FaArrowRight } from "react-icons/fa";
@@ -200,10 +201,12 @@ const RemoteHandler = () => {
             pluginApi.renderer.setRenderCurrentScene();
           }}
         >
-          {thumbnailLinks?.[i] ? (
+          {thumbnailLinks?.[i] && thumbnailLinks[i] !== "" ? (
             <Center>
               <Image
-                src={pluginApi.media.getUrl(thumbnailLinks[i]!)}
+                src={pluginApi.media.resolveMediaUrl(
+                  extractMediaName(thumbnailLinks[i]!),
+                )}
                 width="100%"
               />
             </Center>

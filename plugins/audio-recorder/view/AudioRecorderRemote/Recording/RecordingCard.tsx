@@ -92,7 +92,10 @@ export const RecordingCard = ({ recording }: { recording: Recording }) => {
           waveColor="#656666"
           progressColor="#ED672C"
           barWidth={2}
-          url={pluginApi.media.getUrl(recording.mediaId + ".mp3")}
+          url={pluginApi.media.resolveMediaUrl({
+            mediaId: recording.mediaId ?? "",
+            extension: "mp3",
+          })}
           onReady={onReady}
           onPlay={() => setIsPlaying(true)}
           onPause={() => setIsPlaying(false)}

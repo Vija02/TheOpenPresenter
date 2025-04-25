@@ -9,7 +9,7 @@ import {
   ModalProps,
   Text,
 } from "@chakra-ui/react";
-import { appData } from "@repo/lib";
+import { appData, extractMediaName } from "@repo/lib";
 import { OverlayToggleComponentProps } from "@repo/ui";
 import Uppy from "@uppy/core";
 import { FileInput, StatusBar, useUppyEvent } from "@uppy/react";
@@ -52,7 +52,7 @@ const UploadVideoModal = ({
     mutableSceneData.pluginData.videos.push({
       id: typeidUnboxed("video"),
       metadata: {},
-      url: pluginApi.media.getUrl(fileName ?? ""),
+      url: pluginApi.media.resolveMediaUrl(extractMediaName(fileName ?? "")),
       isInternalVideo: true,
       hlsMediaName: null,
       thumbnailMediaName: null,

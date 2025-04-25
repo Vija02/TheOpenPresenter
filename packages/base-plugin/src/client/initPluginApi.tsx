@@ -80,11 +80,6 @@ export function initPluginApi<
     },
     media: {
       generateId: () => typeidUnboxed("media"),
-      /**
-       * @deprecated Use the resolveMediaUrl method instead
-       */
-      getUrl: (fileName: string) =>
-        window.location.origin + "/media/data/" + fileName,
       tusUploadUrl: window.location.origin + "/media/upload/tus",
       formDataUploadUrl: window.location.origin + "/media/upload/form-data",
       pluginClientStorage: storageManager, // Scoped to plugin

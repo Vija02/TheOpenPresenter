@@ -1,3 +1,4 @@
+import { extractMediaName } from "@repo/lib";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ReactPlayer from "react-player/lazy";
 
@@ -66,7 +67,9 @@ const Player = () => {
           // We only want to upgrade if it's first play or during pause
           // TODO: Make this to test locally instead
           if (currentVideoUrl !== currentVideo.url || !isPlaying) {
-            next = pluginApi.media.getUrl(vid.hlsMediaName);
+            next = pluginApi.media.resolveMediaUrl(
+              extractMediaName(vid.hlsMediaName),
+            );
           }
         }
       }
