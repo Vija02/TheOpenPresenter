@@ -23,6 +23,7 @@
     "@repo/backend-shared": "*",
     "@repo/base-plugin": "*",
     "@repo/config": "*",
+    "@repo/lib": "*",
     "@repo/observability": "*",
     "@trpc/server": "^11.0.0-rc.657",
     "@tus/server": "^1.10.1",
