@@ -12,7 +12,9 @@ type PropTypes = {
   isActive?: boolean;
   aspectRatio?: number;
   onClick?: () => void;
-  children?: React.ReactNode;
+  children?:
+    | React.ReactNode
+    | (({ width }: { width: string }) => React.ReactNode);
 };
 
 export const Slide = ({
@@ -69,7 +71,7 @@ export const Slide = ({
             width,
           }}
         >
-          {children}
+          {typeof children === "function" ? children({ width }) : children}
         </Box>
       </Box>
     </Box>
