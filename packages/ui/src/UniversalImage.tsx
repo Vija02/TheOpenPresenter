@@ -16,6 +16,7 @@ const calculateSrcSet = (universalUrl: UniversalURL) => {
 
 type UniversalImagePropType = {
   src: UniversalURL;
+  width: string;
   isActive?: boolean;
   imgProp?: Omit<
     React.DetailedHTMLProps<
@@ -30,6 +31,7 @@ export const UniversalImage = ({
   src: universalUrl,
   isActive,
   imgProp,
+  width,
 }: UniversalImagePropType) => {
   const internalMedia = useMemo(
     () => isInternalMedia(universalUrl),
@@ -40,12 +42,28 @@ export const UniversalImage = ({
     [universalUrl],
   );
 
+  const handledSizes = useMemo(() => {
+    if (!width.includes("px")) {
+      return width;
+    }
+
+    const parsed = parseFloat(width);
+    if (Number.isNaN(parsed)) {
+      return width;
+    }
+
+    // Find the next higher resolution and pin there until changed
+    const found = ALLOWED_IMAGE_WIDTH.find((x) => x > parsed);
+    return found ? `${found}px` : width;
+  }, [width]);
+
   return (
     <img
       src={resolvedUrl}
       fetchPriority={isActive ? "high" : "auto"}
       {...(internalMedia
         ? {
+            sizes: handledSizes,
             srcSet: calculateSrcSet(universalUrl)
               .map((x) => `${x.src} ${x.width}w`)
               .join(", "),
