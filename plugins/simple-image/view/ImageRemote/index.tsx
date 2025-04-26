@@ -42,9 +42,9 @@ const ImageRemote = () => {
       body={
         <Box p={3} width="100%">
           <SlideGrid>
-            {pluginData.images.map((x, i) => (
+            {pluginData.images.map((imgSrc, i) => (
               <Stack
-                key={pluginApi.media.resolveMediaUrl(x)}
+                key={pluginApi.media.resolveMediaUrl(imgSrc)}
                 direction="column"
                 justifyContent="center"
               >
@@ -55,7 +55,13 @@ const ImageRemote = () => {
                     pluginApi.renderer.setRenderCurrentScene();
                   }}
                 >
-                  <ImageRenderView src={pluginApi.media.resolveMediaUrl(x)} />
+                  {({ width }) => (
+                    <ImageRenderView
+                      src={imgSrc}
+                      isActive={i === imgIndex}
+                      width={width}
+                    />
+                  )}
                 </Slide>
                 <PopConfirm
                   title={`Are you sure you want to remove this image?`}

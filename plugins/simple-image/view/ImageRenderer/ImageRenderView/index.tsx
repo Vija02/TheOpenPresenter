@@ -1,8 +1,16 @@
-import { useEffect } from "react";
+import { UniversalURL } from "@repo/lib";
+import { UniversalImage } from "@repo/ui";
+import { useCallback, useEffect, useMemo } from "react";
 
 import { usePluginAPI } from "../../pluginApi";
 
-const ImageRenderView = ({ src }: { src: string }) => {
+type PropType = {
+  src: UniversalURL;
+  isActive: boolean;
+  width?: string;
+};
+
+const ImageRenderView = ({ src, isActive, width }: PropType) => {
   const pluginApi = usePluginAPI();
   const setAwarenessStateData = pluginApi.awareness.setAwarenessStateData;
 
@@ -10,18 +18,27 @@ const ImageRenderView = ({ src }: { src: string }) => {
     setAwarenessStateData({ isLoading: true });
   }, [setAwarenessStateData]);
 
-  return (
-    <img
-      src={src}
-      style={{
+  const onLoad = useCallback(() => {
+    pluginApi.awareness.setAwarenessStateData({ isLoading: false });
+  }, [pluginApi.awareness]);
+
+  const style = useMemo(
+    () =>
+      ({
         width: "100%",
         height: "100%",
         objectFit: "contain",
         background: "black",
-      }}
-      onLoad={() => {
-        pluginApi.awareness.setAwarenessStateData({ isLoading: false });
-      }}
+      }) as React.CSSProperties,
+    [],
+  );
+
+  return (
+    <UniversalImage
+      src={src}
+      isActive={isActive}
+      imgProp={{ style, onLoad }}
+      width={width ?? "100%"}
     />
   );
 };

@@ -18,7 +18,7 @@ const ImageRenderer = () => {
         opacity: imgIndex === i ? 1 : 0,
       }}
     >
-      <ImageRenderView src={pluginApi.media.resolveMediaUrl(imgSrc)} />
+      <ImageRenderView src={imgSrc} isActive={imgIndex === i} />
     </div>
   ));
 };
