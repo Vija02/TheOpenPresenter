@@ -1,14 +1,12 @@
-import {
-  Box,
-  Button,
-  Center,
-  Image,
-  Skeleton,
-  Stack,
-  Text,
-} from "@chakra-ui/react";
+import { Box, Button, Center, Skeleton, Stack, Text } from "@chakra-ui/react";
 import { extractMediaName } from "@repo/lib";
-import { LoadingFull, PluginScaffold, Slide, SlideGrid } from "@repo/ui";
+import {
+  LoadingFull,
+  PluginScaffold,
+  Slide,
+  SlideGrid,
+  UniversalImage,
+} from "@repo/ui";
 import { useMemo } from "react";
 import { FaArrowLeft, FaArrowRight } from "react-icons/fa";
 
@@ -203,11 +201,9 @@ const RemoteHandler = () => {
         >
           {thumbnailLinks?.[i] && thumbnailLinks[i] !== "" ? (
             <Center>
-              <Image
-                src={pluginApi.media.resolveMediaUrl(
-                  extractMediaName(thumbnailLinks[i]!),
-                )}
-                width="100%"
+              <UniversalImage
+                src={extractMediaName(thumbnailLinks[i]!)}
+                imgProp={{ style: { width: "100%" } }}
               />
             </Center>
           ) : (
