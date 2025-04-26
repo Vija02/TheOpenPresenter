@@ -7,9 +7,9 @@ import {
 } from "@repo/lib";
 import { useMemo } from "react";
 
-const calculateSrcSet = (src: string) => {
+const calculateSrcSet = (universalUrl: UniversalURL) => {
   return ALLOWED_IMAGE_WIDTH.map((size) => ({
-    src: resolveProcessedMediaUrl({ mediaUrl: src, size }),
+    src: resolveProcessedMediaUrl({ mediaUrl: universalUrl, size }),
     width: size,
   }));
 };
@@ -46,7 +46,7 @@ export const UniversalImage = ({
       fetchPriority={isActive ? "high" : "auto"}
       {...(internalMedia
         ? {
-            srcSet: calculateSrcSet(resolvedUrl)
+            srcSet: calculateSrcSet(universalUrl)
               .map((x) => `${x.src} ${x.width}w`)
               .join(", "),
           }

@@ -56,8 +56,7 @@ export const resolveProcessedMediaUrl = ({
   size: number;
 }) => {
   if (isInternalMedia(mediaUrl)) {
-    const resolvedUrl = resolveMediaUrl(mediaUrl);
-    return `${window.location.origin}/media/processed/${size}/${resolvedUrl}`;
+    return `${window.location.origin}/media/processed/${size}/${constructMediaName(mediaUrl.mediaId, mediaUrl.extension)}`;
   }
 
   return undefined;
