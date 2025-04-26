@@ -1,10 +1,16 @@
-import { uuidFromMediaIdOrUUID } from "@repo/lib";
+import {
+  SUPPORTED_IMAGE_EXTENSIONS,
+  uuidFromMediaId,
+  uuidFromMediaIdOrUUID,
+} from "@repo/lib";
 import { logger } from "@repo/observability";
 import { Upload } from "@tus/server";
 import { backOff } from "exponential-backoff";
 import { Request } from "express";
 import { StorageEngine } from "multer";
 import { Pool, PoolClient } from "pg";
+import sharp from "sharp";
+import { PassThrough } from "stream";
 import { TypeId, toUUID, typeidUnboxed } from "typeid-js";
 
 import { OurDataStore } from "./OurDataStore";
@@ -58,7 +64,45 @@ export const createMediaHandler = <T extends OurDataStore>(
 
             await this.store.create(upload);
             try {
-              await this.store.write(file, upload.id, 0);
+              // Debt: Make the image processing code easier to read
+              const isImage = SUPPORTED_IMAGE_EXTENSIONS.includes(
+                "." + fileExtension.toLowerCase(),
+              );
+
+              // Pipe to passthrough and prep to pipe to metadata
+              const passthrough = new PassThrough();
+              file.pipe(passthrough);
+
+              const getMetadataPromise = new Promise<sharp.Metadata | void>(
+                async (resolve, reject) => {
+                  if (!isImage) {
+                    resolve();
+                    return;
+                  }
+                  file.pipe(
+                    sharp().metadata((err, metadata) => {
+                      if (err) reject(err);
+                      resolve(metadata);
+                    }),
+                  );
+                },
+              );
+
+              // Then we can start the stream process
+              // Write to storage
+              await this.store.write(passthrough, upload.id, 0);
+
+              // If image, then let's add some metadata
+              if (isImage) {
+                const metadata = await getMetadataPromise;
+
+                await this.pgPool.query(
+                  `INSERT INTO app_public.media_image_metadata (image_media_id, width, height)
+                    VALUES ($1, $2, $3)
+                    `,
+                  [uuidFromMediaId(mediaId), metadata?.width, metadata?.height],
+                );
+              }
             } catch (error: any) {
               if (error?.Code === "NoSuchUpload") {
                 logger.warn(
@@ -67,6 +111,7 @@ export const createMediaHandler = <T extends OurDataStore>(
                 );
                 return { mediaId, fileExtension, fileName: finalFileName };
               }
+              throw error;
             }
 
             // Update is_complete flag
