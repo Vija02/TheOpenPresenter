@@ -333,7 +333,7 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
 
               return {};
             } catch (err) {
-              logger.error({ err }, "Failed to select slide");
+              log.error({ err }, "Failed to select slide");
               throw err;
             }
           },
