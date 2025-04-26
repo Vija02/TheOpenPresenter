@@ -1,6 +1,6 @@
 import { Box, Text } from "@chakra-ui/react";
 import { PluginAPIContext } from "@repo/base-plugin/client";
-import { use, useContext } from "react";
+import { use, useContext, useMemo } from "react";
 import { useStore } from "zustand";
 
 import { CustomSizeContext } from "./SlideGrid";
@@ -30,6 +30,14 @@ export const Slide = ({
       useStore(val.pluginAPI.remote.zoomLevel)
     : { zoomLevel: 0.5 };
 
+  const width = useMemo(
+    () =>
+      forceWidth
+        ? `${forceWidth}px`
+        : `${mapZoomToRange(zoomLevel, containerWidth)}px`,
+    [containerWidth, forceWidth, zoomLevel],
+  );
+
   return (
     <Box
       display="flex"
@@ -54,14 +62,12 @@ export const Slide = ({
         )}
         <Box
           aspectRatio={aspectRatio}
-          w={
-            forceWidth
-              ? `${forceWidth}px`
-              : `${mapZoomToRange(zoomLevel, containerWidth)}px`
-          }
           borderWidth="4px"
           borderColor={isActive ? "red.600" : "transparent"}
           userSelect="none"
+          style={{
+            width,
+          }}
         >
           {children}
         </Box>

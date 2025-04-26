@@ -31,7 +31,9 @@ export const SlideGrid = ({ children, forceWidth }: PropTypes) => {
       <Grid
         ref={target}
         gap={3}
-        gridTemplateColumns={`repeat(auto-fill, minmax(${pixelValue}px, 1fr))`}
+        style={{
+          gridTemplateColumns: `repeat(auto-fill, minmax(${pixelValue}px, 1fr))`,
+        }}
       >
         {children}
       </Grid>
