@@ -13,4 +13,5 @@ export * from "./PasswordStrength";
 export * from "./PopConfirm";
 export * from "./Slide";
 export * from "./withSuspense";
+export * from "./UniversalImage";
 export * from "./PluginScaffold";
