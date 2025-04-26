@@ -297,7 +297,7 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
                   const bounds = page.getBounds();
                   const pageWidth = bounds[2] - bounds[0];
 
-                  const targetWidth = 720;
+                  const targetWidth = 1920;
 
                   scale = targetWidth / pageWidth;
                 }
