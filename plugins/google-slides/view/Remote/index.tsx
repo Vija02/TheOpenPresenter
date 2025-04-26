@@ -199,16 +199,19 @@ const RemoteHandler = () => {
             pluginApi.renderer.setRenderCurrentScene();
           }}
         >
-          {thumbnailLinks?.[i] && thumbnailLinks[i] !== "" ? (
+          {({ width }) =>
+            thumbnailLinks?.[i] && thumbnailLinks[i] !== "" ? (
             <Center>
               <UniversalImage
                 src={extractMediaName(thumbnailLinks[i]!)}
                 imgProp={{ style: { width: "100%" } }}
+                  width={width}
               />
             </Center>
           ) : (
             <Skeleton height="100%" />
-          )}
+            )
+          }
         </Slide>
       ))}
     </>
