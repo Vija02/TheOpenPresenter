@@ -1,5 +1,9 @@
 import { Button, Text, useDisclosure } from "@chakra-ui/react";
-import { appData, extractMediaName } from "@repo/lib";
+import {
+  SUPPORTED_IMAGE_EXTENSIONS,
+  appData,
+  extractMediaName,
+} from "@repo/lib";
 import Uppy from "@uppy/core";
 import { DashboardModal, useUppyEvent } from "@uppy/react";
 import Tus from "@uppy/tus";
@@ -11,7 +15,9 @@ import { usePluginAPI } from "../pluginApi";
 export const UploadModal = () => {
   const pluginApi = usePluginAPI();
   const [uppy] = useState(() =>
-    new Uppy().use(Tus, {
+    new Uppy({
+      restrictions: { allowedFileTypes: SUPPORTED_IMAGE_EXTENSIONS },
+    }).use(Tus, {
       endpoint: pluginApi.media.tusUploadUrl,
       headers: {
         "csrf-token": appData.getCSRFToken(),
