@@ -18,11 +18,15 @@ export const usePadding = (
         clamppedPadding,
       ] as [number, number, number, number];
     } else {
+      /* 
+        top | right | bottom | left
+        Matching CSS order
+      */
       return [
-        slideStyle.leftPadding,
         slideStyle.topPadding,
         slideStyle.rightPadding,
         slideStyle.bottomPadding,
+        slideStyle.leftPadding,
       ].map((x) => (x / 100) * width) as [number, number, number, number];
     }
   }, [

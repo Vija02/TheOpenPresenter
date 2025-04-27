@@ -9,18 +9,10 @@ export const DebugPadding = ({
     <>
       <Box
         position="absolute"
-        left={0}
-        top={0}
-        bottom={0}
-        width={`${padding[0]}px`}
-        bg="#5042B2"
-      />
-      <Box
-        position="absolute"
         top={0}
         left={0}
         right={0}
-        height={`${padding[1]}px`}
+        height={`${padding[0]}px`}
         bg="#5042B2"
       />
       <Box
@@ -28,7 +20,7 @@ export const DebugPadding = ({
         right={0}
         top={0}
         bottom={0}
-        width={`${padding[2]}px`}
+        width={`${padding[1]}px`}
         bg="#5042B2"
       />
       <Box
@@ -36,7 +28,15 @@ export const DebugPadding = ({
         bottom={0}
         left={0}
         right={0}
-        height={`${padding[3]}px`}
+        height={`${padding[2]}px`}
+        bg="#5042B2"
+      />
+      <Box
+        position="absolute"
+        left={0}
+        top={0}
+        bottom={0}
+        width={`${padding[3]}px`}
         bg="#5042B2"
       />
     </>

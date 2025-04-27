@@ -110,13 +110,13 @@ const SectionsRenderViewAutoSize = React.memo(
           viewBox={viewBox}
           xmlns="http://www.w3.org/2000/svg"
           style={{
-            width: `calc(100% - ${padding[0]}px - ${padding[2]}px)`,
-            height: `calc(100% - ${padding[1]}px - ${padding[3]}px)`,
+            width: `calc(100% - ${padding[3]}px - ${padding[1]}px)`,
+            height: `calc(100% - ${padding[0]}px - ${padding[2]}px)`,
             overflow: "visible",
             userSelect: "none",
             position: "absolute",
-            left: padding[0],
-            top: padding[1],
+            left: padding[3],
+            top: padding[0],
           }}
         >
           <text
