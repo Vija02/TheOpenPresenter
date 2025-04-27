@@ -134,7 +134,10 @@ export default (app: Express) => {
 
         await rootPgPool.query(
           `INSERT INTO app_public.media_image_metadata (image_media_id, width, height)
-            VALUES ($1, $2, $3)
+            VALUES ($1, $2, $3) ON CONFLICT (image_media_id) DO UPDATE 
+            SET 
+              width = $2,
+              height = $3
           `,
           [mediaDetails.uuid, metadata.width, metadata.height],
         );

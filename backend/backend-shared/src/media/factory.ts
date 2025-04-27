@@ -98,7 +98,10 @@ export const createMediaHandler = <T extends OurDataStore>(
 
                 await this.pgPool.query(
                   `INSERT INTO app_public.media_image_metadata (image_media_id, width, height)
-                    VALUES ($1, $2, $3)
+                    VALUES ($1, $2, $3) ON CONFLICT (image_media_id) DO UPDATE 
+                    SET 
+                      width = $2,
+                      height = $3
                     `,
                   [uuidFromMediaId(mediaId), metadata?.width, metadata?.height],
                 );
