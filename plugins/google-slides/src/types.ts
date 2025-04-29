@@ -17,6 +17,8 @@ export type PluginBaseData = {
   _isFetching?: boolean;
 };
 
+export type DisplayMode = "googleslides" | "image";
+
 export type PluginRendererData = {
   slideIndex: number | null;
   clickCount: number | null;
@@ -25,4 +27,9 @@ export type PluginRendererData = {
    * Used to display on the remote which slide is currently used
    */
   resolvedSlideIndex: number | null;
+  /**
+   * What mode should we render the slides with.
+   * By default, googleslides if nothing is selected
+   */
+  displayMode?: DisplayMode;
 };

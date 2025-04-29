@@ -1,7 +1,16 @@
-import { Box, Button, Center, Skeleton, Stack, Text } from "@chakra-ui/react";
+import {
+  Box,
+  Button,
+  Center,
+  Skeleton,
+  Stack,
+  Text,
+  chakra,
+} from "@chakra-ui/react";
 import { extractMediaName } from "@repo/lib";
 import {
   LoadingFull,
+  OverlayToggle,
   PluginScaffold,
   Slide,
   SlideGrid,
@@ -9,13 +18,17 @@ import {
 } from "@repo/ui";
 import { useMemo } from "react";
 import { FaArrowLeft, FaArrowRight } from "react-icons/fa";
+import { VscSettingsGear as VscSettingsGearRaw } from "react-icons/vsc";
 
 import Renderer from "../Renderer";
 import { usePluginAPI } from "../pluginApi";
 import { trpc } from "../trpc";
 import Landing from "./Landing";
+import SettingsModal from "./SettingsModal";
 import { SlidePicker } from "./SlidePicker";
 import "./index.css";
+
+const VscSettingsGear = chakra(VscSettingsGearRaw);
 
 const Remote = () => {
   const pluginApi = usePluginAPI();
@@ -39,8 +52,37 @@ const Remote = () => {
   return (
     <PluginScaffold
       title="Google Slides"
-      toolbar={
+      postToolbar={
         <>
+          <OverlayToggle
+            toggler={({ onToggle }) => (
+              <Button
+                size="xs"
+                bg="transparent"
+                color="white"
+                border="1px solid #ffffff6b"
+                _hover={{ bg: "rgba(255, 255, 255, 0.13)" }}
+                onClick={onToggle}
+              >
+                <VscSettingsGear />
+                <Text ml={1} fontWeight="normal" fontSize="xs">
+                  Settings
+                </Text>
+              </Button>
+            )}
+          >
+            <SettingsModal />
+          </OverlayToggle>
+        </>
+      }
+      toolbar={
+        <Stack
+          direction="row"
+          alignItems="center"
+          columnGap={4}
+          rowGap={2}
+          flexWrap="wrap"
+        >
           <SlidePicker
             onFileSelected={(data, token) => {
               const picker = google.picker;
@@ -92,7 +134,6 @@ const Remote = () => {
               display={{ base: "none", sm: "inherit" }}
               fontWeight="bold"
               color="white"
-              pl={4}
               fontSize="xs"
             >
               Navigate:
@@ -138,7 +179,7 @@ const Remote = () => {
               </Text>
             </Button>
           </Stack>
-        </>
+        </Stack>
       }
       body={
         <Box p={3} width="100%">
@@ -156,6 +197,11 @@ const Remote = () => {
 const ResolvedSlideHandler = () => {
   const pluginApi = usePluginAPI();
   const slideIndex = pluginApi.renderer.useData((x) => x.slideIndex);
+  const displayMode = pluginApi.renderer.useData((x) => x.displayMode);
+
+  if (displayMode === "image") {
+    return null;
+  }
 
   // We render this to calculate what slide is currently selected through clicking
   return (
@@ -179,10 +225,17 @@ const RemoteHandler = () => {
 
   const actualSlideIndex = useMemo(
     () =>
-      rendererData.resolvedSlideIndex !== null
-        ? rendererData.resolvedSlideIndex
-        : rendererData.slideIndex,
-    [rendererData.resolvedSlideIndex, rendererData.slideIndex],
+      rendererData.displayMode === "image"
+        ? (rendererData.slideIndex ?? 0) + (rendererData.clickCount ?? 0)
+        : rendererData.resolvedSlideIndex !== null
+          ? rendererData.resolvedSlideIndex
+          : rendererData.slideIndex,
+    [
+      rendererData.clickCount,
+      rendererData.displayMode,
+      rendererData.resolvedSlideIndex,
+      rendererData.slideIndex,
+    ],
   );
 
   return (
@@ -201,15 +254,15 @@ const RemoteHandler = () => {
         >
           {({ width }) =>
             thumbnailLinks?.[i] && thumbnailLinks[i] !== "" ? (
-            <Center>
-              <UniversalImage
-                src={extractMediaName(thumbnailLinks[i]!)}
-                imgProp={{ style: { width: "100%" } }}
+              <Center>
+                <UniversalImage
+                  src={extractMediaName(thumbnailLinks[i]!)}
+                  imgProp={{ style: { width: "100%" } }}
                   width={width}
-              />
-            </Center>
-          ) : (
-            <Skeleton height="100%" />
+                />
+              </Center>
+            ) : (
+              <Skeleton height="100%" />
             )
           }
         </Slide>
