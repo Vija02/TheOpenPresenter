@@ -136,7 +136,6 @@ export const SearchSong = ({
                 marginPagesDisplayed={isMobile ? 1 : 2}
                 pageCount={songData?.totalPage}
                 forcePage={pageOffset}
-                renderOnZeroPageCount={null}
               />
             )}
           </Box>
