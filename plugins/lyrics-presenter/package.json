@@ -45,6 +45,7 @@
     "react-dom": "^19.0.0",
     "react-highlight-words": "^0.20.0",
     "react-icons": "^5.4.0",
+    "react-paginate": "^8.3.0",
     "typeid-js": "^1.1.0",
     "use-debounce": "^10.0.4",
     "valtio": "^2.1.2",

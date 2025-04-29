@@ -7243,6 +7243,7 @@ __metadata:
     react-dom: "npm:^19.0.0"
     react-highlight-words: "npm:^0.20.0"
     react-icons: "npm:^5.4.0"
+    react-paginate: "npm:^8.3.0"
     typeid-js: "npm:^1.1.0"
     use-debounce: "npm:^10.0.4"
     valtio: "npm:^2.1.2"
@@ -22755,7 +22756,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"prop-types@npm:15.x, prop-types@npm:^15.5.8, prop-types@npm:^15.6.0, prop-types@npm:^15.6.2, prop-types@npm:^15.7.2, prop-types@npm:^15.8.1":
+"prop-types@npm:15.x, prop-types@npm:^15, prop-types@npm:^15.5.8, prop-types@npm:^15.6.0, prop-types@npm:^15.6.2, prop-types@npm:^15.7.2, prop-types@npm:^15.8.1":
   version: 15.8.1
   resolution: "prop-types@npm:15.8.1"
   dependencies:
@@ -23347,6 +23348,17 @@ __metadata:
     react: ^16.0.0 || ^17.0.0 || ^18.0.0
     react-dom: ^16.0.0 || ^17.0.0 || ^18.0.0
   checksum: 10c0/20d9d31b4cbd0720d8d9c818babbb9aaa430fe0adbbf85a90d585f7ac6bd1a338df9beb6c63f970de4d41c95ccd2cf2751e0842486e392fa7b0796c945535e43
+  languageName: node
+  linkType: hard
+
+"react-paginate@npm:^8.3.0":
+  version: 8.3.0
+  resolution: "react-paginate@npm:8.3.0"
+  dependencies:
+    prop-types: "npm:^15"
+  peerDependencies:
+    react: ^16 || ^17 || ^18 || ^19
+  checksum: 10c0/2529fe1d5235fb50195b78c2edf4ab72c5dda88d38445e68521822cd2ea1e47d490a6af9ac2e4d0507db3d094cded4cdd4b5db2b12e535b2c435b123e9427eb7
   languageName: node
   linkType: hard
 

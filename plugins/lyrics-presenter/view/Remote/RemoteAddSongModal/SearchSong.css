@@ -1,0 +1,33 @@
+.lyrics-presenter__search-song--pagination {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  list-style-type: none;
+  gap: 4px;
+
+  li a {
+    border: transparent 1px solid;
+    padding: 0.4rem 0.7rem;
+    border-radius: 2px;
+    cursor: pointer;
+    &:hover {
+      background-color: rgba(128, 128, 128, 0.1);
+    }
+  }
+  li.previous a,
+  li.next a {
+    font-weight: bold;
+  }
+  li.selected a {
+    border: rgba(128, 128, 128, 0.4) 1px solid;
+    /* color: white; */
+    min-width: 32px;
+  }
+  li.disabled a {
+    color: grey;
+  }
+  li.disable,
+  li.disabled a {
+    cursor: default;
+  }
+}

@@ -118,14 +118,18 @@ const getAppRouter = (t: TRPCObject) => {
         .input(
           z.object({
             title: z.string(),
+            page: z.number().optional(),
           }),
         )
         .query(async (opts) => {
           const res = await axios(
-            "https://myworshiplist.com/api/songs?search=" + opts.input.title,
+            "https://myworshiplist.com/api/songs?search=" +
+              opts.input.title +
+              (opts.input.page !== null ? `&page=${opts.input.page}` : ""),
           );
           return {
             data: res.data.data,
+            totalPage: res.data.meta.last_page,
           };
         }),
       playlist: t.procedure.query(async () => {

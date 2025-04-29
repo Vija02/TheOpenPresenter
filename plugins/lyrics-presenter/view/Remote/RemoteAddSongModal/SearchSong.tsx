@@ -6,13 +6,16 @@ import {
   InputRightElement,
   Stack,
   Text,
+  useMediaQuery,
 } from "@chakra-ui/react";
 import { LoadingInline } from "@repo/ui";
 import { useEffect, useRef, useState } from "react";
 import Highlighter from "react-highlight-words";
+import ReactPaginate from "react-paginate";
 import { useDebounce } from "use-debounce";
 
 import { trpc } from "../../trpc";
+import "./SearchSong.css";
 
 export const SearchSong = ({
   initialValue,
@@ -28,14 +31,19 @@ export const SearchSong = ({
   const [searchInput, setSearchInput] = useState(initialValue ?? "");
   const [debouncedSearchInput] = useDebounce(searchInput, 200);
 
+  const [pageOffset, setPageOffset] = useState(0);
+
   const { data: songData, isFetching } = trpc.lyricsPresenter.search.useQuery({
     title: debouncedSearchInput,
+    page: pageOffset + 1,
   });
 
   const focusElement = useRef<HTMLInputElement>(null);
   useEffect(() => {
     void (focusElement.current && focusElement.current!.focus());
   }, [focusElement]);
+
+  const [isMobile] = useMediaQuery("(max-width: 760px)");
 
   return (
     <Flex>
@@ -113,6 +121,25 @@ export const SearchSong = ({
               </Text>
             </Box>
           ))}
+
+          <Box display="flex" mt={5} justifyContent="center">
+            {songData?.totalPage > 1 && (
+              <ReactPaginate
+                className="lyrics-presenter__search-song--pagination"
+                breakLabel="..."
+                previousLabel={isMobile ? "<" : "< Previous"}
+                nextLabel={isMobile ? ">" : "Next >"}
+                onPageChange={(page) => {
+                  setPageOffset(page.selected);
+                }}
+                pageRangeDisplayed={3}
+                marginPagesDisplayed={isMobile ? 1 : 2}
+                pageCount={songData?.totalPage}
+                forcePage={pageOffset}
+                renderOnZeroPageCount={null}
+              />
+            )}
+          </Box>
         </Box>
       </Stack>
     </Flex>
