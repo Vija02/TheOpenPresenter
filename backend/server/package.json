@@ -73,7 +73,7 @@
     "valtio-yjs": "^0.6.0",
     "vite-express": "^0.17.0",
     "ws": "^8.18.0",
-    "yjs": "^13.6.20"
+    "yjs": "13.6.26"
   },
   "devDependencies": {
     "@repo/typescript-config": "*",

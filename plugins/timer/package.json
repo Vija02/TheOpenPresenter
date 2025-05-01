@@ -29,7 +29,7 @@
     "react": "^19.1.0",
     "react-countdown": "^2.3.6",
     "react-dom": "^19.1.0",
-    "yjs": "^13.6.20"
+    "yjs": "13.6.26"
   },
   "devDependencies": {
     "@repo/eslint-config": "*",

@@ -40,7 +40,7 @@
     "typeid-js": "^1.1.0",
     "valtio": "^2.1.2",
     "valtio-yjs": "^0.6.0",
-    "yjs": "^13.6.20"
+    "yjs": "13.6.26"
   },
   "devDependencies": {
     "@repo/typescript-config": "*",

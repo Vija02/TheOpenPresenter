@@ -31,7 +31,7 @@
     "react-toastify": "^10.0.6",
     "use-disposable": "^1.0.4",
     "wouter": "^3.3.5",
-    "yjs": "^13.6.20"
+    "yjs": "13.6.26"
   },
   "devDependencies": {
     "@repo/base-plugin": "*",

@@ -34,7 +34,7 @@
     "typeid-js": "^1.1.0",
     "use-disposable": "^1.0.4",
     "wouter": "^3.3.5",
-    "yjs": "^13.6.20",
+    "yjs": "13.6.26",
     "zustand": "^5.0.2"
   },
   "devDependencies": {
