@@ -1,18 +1,8 @@
-import {
-  Modal,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  ModalOverlay,
-  ModalProps,
-  Text,
-} from "@chakra-ui/react";
+import { ModalProps } from "@chakra-ui/react";
 import { appData, extractMediaName } from "@repo/lib";
 import { OverlayToggleComponentProps } from "@repo/ui";
 import Uppy from "@uppy/core";
-import { FileInput, StatusBar, useUppyEvent } from "@uppy/react";
+import { DashboardModal, useUppyEvent } from "@uppy/react";
 import Tus from "@uppy/tus";
 import { useState } from "react";
 import { typeidUnboxed } from "typeid-js";
@@ -29,12 +19,15 @@ const UploadVideoModal = ({
   isOpen,
   onToggle,
   resetData,
-  ...props
 }: UploadVideoModalPropTypes) => {
   const pluginApi = usePluginAPI();
 
   const [uppy] = useState(() =>
-    new Uppy().use(Tus, {
+    new Uppy({
+      restrictions: {
+        allowedFileTypes: ["video/*"],
+      },
+    }).use(Tus, {
       endpoint: pluginApi.media.tusUploadUrl,
       headers: {
         "csrf-token": appData.getCSRFToken(),
@@ -51,7 +44,7 @@ const UploadVideoModal = ({
 
     mutableSceneData.pluginData.videos.push({
       id: typeidUnboxed("video"),
-      metadata: {},
+      metadata: { title: file?.name },
       url: pluginApi.media.resolveMediaUrl(extractMediaName(fileName ?? "")),
       isInternalVideo: true,
       hlsMediaName: null,
@@ -63,26 +56,13 @@ const UploadVideoModal = ({
   });
 
   return (
-    <Modal
-      size="xl"
-      isOpen={isOpen ?? false}
-      onClose={onToggle ?? (() => {})}
-      {...props}
-    >
-      <ModalOverlay />
-      <ModalContent>
-        <ModalHeader>
-          <Text>Upload Video</Text>
-        </ModalHeader>
-        <ModalCloseButton />
-        <ModalBody>
-          <FileInput uppy={uppy} pretty />
-          <StatusBar uppy={uppy} />
-        </ModalBody>
-
-        <ModalFooter></ModalFooter>
-      </ModalContent>
-    </Modal>
+    <DashboardModal
+      open={isOpen}
+      onRequestClose={onToggle}
+      closeAfterFinish
+      closeModalOnClickOutside
+      uppy={uppy}
+    />
   );
 };
 
