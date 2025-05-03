@@ -53,7 +53,13 @@ export const UploadModal = () => {
           Add
         </Text>
       </Button>
-      <DashboardModal open={isOpen} uppy={uppy} />
+      <DashboardModal
+        open={isOpen}
+        onRequestClose={onToggle}
+        closeAfterFinish
+        closeModalOnClickOutside
+        uppy={uppy}
+      />
     </>
   );
 };
