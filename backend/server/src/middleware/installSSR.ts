@@ -1,4 +1,4 @@
-import { Express } from "express";
+import { Express, static as staticMiddleware } from "express";
 import { createServer } from "http";
 import next from "next";
 import { parse } from "url";
@@ -12,6 +12,14 @@ if (!process.env.NODE_ENV) {
 const isDev = process.env.NODE_ENV === "development";
 
 export default async function installSSR(app: Express) {
+  // @ts-ignore
+  const { handler : ssrHandler } = await import("../../../../apps/astro/dist/server/entry.mjs")
+  app.use(
+    "/",
+    staticMiddleware(`${__dirname}/../../../apps/astro/dist/client/`),
+  );
+  app.use(ssrHandler);
+
   const fakeHttpServer = createServer();
   const nextApp = next({
     dev: isDev,
@@ -51,7 +59,7 @@ export default async function installSSR(app: Express) {
   // Now handle websockets
   if (!(nextApp as any).getServer) {
     console.warn(
-      `Our Next.js workaround for getting the upgrade handler without giving Next.js dominion over all websockets might no longer work - nextApp.getServer (private API) is no more.`
+      `Our Next.js workaround for getting the upgrade handler without giving Next.js dominion over all websockets might no longer work - nextApp.getServer (private API) is no more.`,
     );
   } else {
     await (nextApp as any).getServer();
