@@ -1,4 +1,4 @@
-import { initBrowser } from "@repo/observability";
+import { initBrowser } from "@repo/observability/initBrowser";
 
 initBrowser(
   "theopenpresenter-renderer",
