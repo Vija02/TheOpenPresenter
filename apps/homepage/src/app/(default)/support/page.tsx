@@ -1,23 +1,44 @@
-import { StandardWidth } from "@/components/StandardWidth";
-import { css } from "@/styled-system/css";
-import { Box, VStack } from "@/styled-system/jsx";
-import NextLink from "next/link";
+import PageIllustration from "@/components/page-illustration";
+
+export const metadata = {
+  title: "Support | TheOpenPresenter",
+};
 
 export default function Support() {
   return (
-    <StandardWidth>
-      <VStack pt={{ base: 24, md: 28 }}>
-        <h1 className={css({ textStyle: "heading" })}>Support</h1>
-        <Box textAlign="center" maxW="500px" textStyle="body">
-          Need help or have questions? Email us at{" "}
-          <NextLink
-            href="mailto:support@theopenpresenter.com"
-            className={css({ textStyle: "link" })}
-          >
-            support@theopenpresenter.com
-          </NextLink>
-        </Box>
-      </VStack>
-    </StandardWidth>
+    <>
+      {/*  Page illustration */}
+      <div
+        className="relative max-w-6xl mx-auto h-0 pointer-events-none -z-1"
+        aria-hidden="true"
+      >
+        <PageIllustration />
+      </div>
+      <section className="relative">
+        {/* End background gradient (light version only) */}
+        <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="pt-32 pb-12 md:pt-40 md:pb-20">
+            <div className="max-w-3xl mx-auto text-center">
+              <h1 className="h1 font-red-hat-display mb-4" data-aos="fade-down">
+                Need help or have questions?
+              </h1>
+              <p
+                className="text-xl text-gray-600 dark:text-gray-400"
+                data-aos="fade-down"
+                data-aos-delay="150"
+              >
+                Email us at{" "}
+                <a
+                  href="mailto:support@theopenpresenter.com"
+                  className="text-blue-400"
+                >
+                  support@theopenpresenter.com
+                </a>
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </>
   );
 }

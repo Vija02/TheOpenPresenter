@@ -1,7 +1,10 @@
-import { styled } from "@/styled-system/jsx";
-import { Inter, Inter_Tight } from "next/font/google";
+import Footer from "@/components/ui/footer";
+import Header from "@/components/ui/header";
+import "aos/dist/aos.css";
+import { Inter, Red_Hat_Display } from "next/font/google";
 
-import "../global.css";
+import { InitAOS } from "./InitAOS";
+import "./css/compiled.css";
 import "./style.scss";
 import Theme from "./theme-provider";
 
@@ -11,11 +14,9 @@ const inter = Inter({
   display: "swap",
 });
 
-const inter_tight = Inter_Tight({
-  weight: ["500", "600", "700"],
-  style: ["normal", "italic"],
+const redhat = Red_Hat_Display({
   subsets: ["latin"],
-  variable: "--font-inter-tight",
+  variable: "--font-red-hat-display",
   display: "swap",
 });
 
@@ -30,37 +31,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html className="dark" lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       {/* suppressHydrationWarning: https://github.com/vercel/next.js/issues/44343 */}
-      <styled.body
-        fontFamily="Inter, sans-serif"
-        bg="indigo.100"
-        color="gray.800"
-        _dark={{
-          bg: "gray.900",
-          color: "gray.200",
-        }}
-        letterSpacing="tight"
-        fontSmoothing="antialiased"
-        className={`${inter.variable} ${inter_tight.variable}`}
+      <body
+        className={`${inter.variable} ${redhat.variable} font-inter antialiased bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100 tracking-tight`}
       >
+        <InitAOS />
         <Theme>
-          <styled.div
-            position="relative"
-            display="flex"
-            flexDir="column"
-            minH="screen"
-            overflow="hidden"
-            css={{
-              "@supports (overflow: clip)": {
-                overflow: "clip",
-              },
-            }}
-          >
-            {children}
-          </styled.div>
+          <div className="flex flex-col min-h-screen overflow-hidden">
+            <Header />
+            <main className="grow">{children}</main>
+            <Footer />
+          </div>
         </Theme>
-      </styled.body>
+      </body>
     </html>
   );
 }

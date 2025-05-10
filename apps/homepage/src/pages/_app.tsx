@@ -11,7 +11,6 @@ import "react-calendar/dist/Calendar.css";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-import "../global.css";
 import "../helper.css";
 
 NProgress.configure({

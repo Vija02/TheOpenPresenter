@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "build": "cd src && NODE_ENV=production NODE_OPTIONS=\"${NODE_OPTIONS:-} -r @repo/config/env\" next build",
-    "codegen": "cd src && panda codegen && panda",
-    "dev": "cd src && panda --watch"
+    "codegen": "cd src && npx @tailwindcss/cli -i ./src/app/css/style.css -o ./src/app/css/compiled.css",
+    "dev": "cd src && npx @tailwindcss/cli -i ./src/app/css/style.css -o ./src/app/css/compiled.css --watch"
   },
   "dependencies": {
     "@apollo/client": "3.12.2",
@@ -20,6 +20,7 @@
     "@repo/graphql": "*",
     "@repo/lib": "*",
     "@repo/ui": "*",
+    "aos": "^2.3.4",
     "date-fns": "^4.1.0",
     "formik": "^2.4.6",
     "formik-chakra-ui": "^1.6.1",
@@ -45,10 +46,13 @@
     "zxcvbn": "^4.4.2"
   },
   "devDependencies": {
-    "@pandacss/dev": "^0.48.0",
     "@repo/eslint-config": "*",
     "@repo/prettier-config": "*",
     "@repo/typescript-config": "*",
+    "@tailwindcss/cli": "^4.1.6",
+    "@tailwindcss/forms": "^0.5.10",
+    "@tailwindcss/typography": "^0.5.16",
+    "@types/aos": "^3.0.7",
     "@types/node": "^20",
     "@types/nprogress": "^0.2.3",
     "@types/react": "^19.1.2",
@@ -57,6 +61,7 @@
     "autoprefixer": "^10.4.20",
     "eslint": "^8.57.1",
     "postcss": "^8.4.49",
+    "tailwindcss": "^4.1.6",
     "typescript": "5.7.2"
   }
 }

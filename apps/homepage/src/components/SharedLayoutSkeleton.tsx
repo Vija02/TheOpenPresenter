@@ -103,7 +103,7 @@ export function SharedLayoutSkeleton({
         />
       </Head>
 
-      <StandardWidth bg="black" height="80px">
+      <StandardWidth style={{ background: "black", height: "80px" }}>
         <Flex
           w="100%"
           height="100%"

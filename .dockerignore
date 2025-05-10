@@ -18,5 +18,3 @@ uploads/
 **/node_modules
 **/dist
 **/__tests__
-
-styled-system
