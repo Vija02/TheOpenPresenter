@@ -20,8 +20,9 @@ export default function HeroHome() {
                 data-aos="fade-down"
                 data-aos-delay="150"
               >
-                Present your content seamlessly, wherever you are. Control from
-                your phone and display to any number of screens with ease.
+                Open-source Presentation System to present your content
+                seamlessly, wherever you are. Control from your phone and
+                display to any number of screens with ease.
               </p>
               {/* CTA form */}
               <CTAForm />

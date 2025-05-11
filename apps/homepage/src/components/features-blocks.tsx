@@ -84,10 +84,11 @@ export default function FeaturesBlocks() {
               >
                 <path
                   className="fill-current"
-                  d="M19 5.612V25a6 6 0 11-2-4.472V0h2v2.961A5.98 5.98 0 0023.497 5a8.476 8.476 0 018.444 9.474l-.253 2.13-1.469-1.563A6.472 6.472 0 0025.5 13c-1.842 0-3.634-.6-5.103-1.713l1.206-1.594A6.455 6.455 0 0025.5 11c1.557 0 3.068.428 4.376 1.217A6.475 6.475 0 0023.5 7 7.981 7.981 0 0119 5.612zM13 29a4 4 0 100-8 4 4 0 000 8zM0 5V3h14v2H0zm0 5V8h14v2H0zm0 5v-2h14v2H0z"
+                  d="M20.243 6.757l.707.707-1.414 1.414-.707-.707a4 4 0 00-5.658 0l-.707.707-1.414-1.414.707-.707a6 6 0 018.486 0zm3.535-3.535l.707.707-1.414 1.414-.707-.707a9 9 0 00-12.728 0l-.707.707L7.515 3.93l.707-.707c4.296-4.296 11.26-4.296 15.556 0zM9 17.212V16a7 7 0 00-7-7H1V7h1a9 9 0 019 9v.788l2.302 5.18L11 23.117V24a4 4 0 01-4 4H5v3H3v-5h4a2 2 0 002-2v-2.118l1.698-.85L9 17.213zm12-.424V16a9 9 0 019-9h1v2h-1a7 7 0 00-7 7v1.212l-1.698 3.82 1.698.85V24a2 2 0 002 2h4v5h-2v-3h-2a4 4 0 01-4-4v-.882l-2.302-1.15L21 16.787zM16 12a1 1 0 110-2 1 1 0 010 2z"
                   fillRule="nonzero"
                 />
               </svg>
+
               <div className="font-red-hat-display text-xl font-black tracking-tighter mb-1">
                 Inter-connected
               </div>
@@ -99,31 +100,76 @@ export default function FeaturesBlocks() {
             </span>
 
             {/* 4th item */}
-            <span
+            <a
               className="flex flex-col p-5 group text-white bg-linear-to-tr from-pink-500 to-pink-400 dark:to-pink-500 shadow-2xl"
+              href="https://github.com/Vija02/TheOpenPresenter"
               data-aos="fade-down"
               data-aos-anchor="[data-aos-id-featbl]"
               data-aos-delay="300"
             >
               <svg
                 className="w-8 h-8 mb-3"
-                viewBox="0 0 32 32"
+                viewBox="0 0 24 24"
                 xmlns="http://www.w3.org/2000/svg"
               >
-                <path
-                  className="fill-current"
-                  d="M20.243 6.757l.707.707-1.414 1.414-.707-.707a4 4 0 00-5.658 0l-.707.707-1.414-1.414.707-.707a6 6 0 018.486 0zm3.535-3.535l.707.707-1.414 1.414-.707-.707a9 9 0 00-12.728 0l-.707.707L7.515 3.93l.707-.707c4.296-4.296 11.26-4.296 15.556 0zM9 17.212V16a7 7 0 00-7-7H1V7h1a9 9 0 019 9v.788l2.302 5.18L11 23.117V24a4 4 0 01-4 4H5v3H3v-5h4a2 2 0 002-2v-2.118l1.698-.85L9 17.213zm12-.424V16a9 9 0 019-9h1v2h-1a7 7 0 00-7 7v1.212l-1.698 3.82 1.698.85V24a2 2 0 002 2h4v5h-2v-3h-2a4 4 0 01-4-4v-.882l-2.302-1.15L21 16.787zM16 12a1 1 0 110-2 1 1 0 010 2z"
-                  fillRule="nonzero"
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  fill="none"
+                  stroke="white"
+                  stroke-width="2"
                 />
+
+                <path
+                  d="M12 6c3.3 0 6 2.7 6 6s-2.7 6-6 6-6-2.7-6-6"
+                  stroke="white"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  fill="none"
+                />
+
+                <path
+                  d="M6 12c0-.7.8-2 2-2.5"
+                  stroke="white"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  fill="none"
+                />
+
+                <circle cx="12" cy="12" r="2" fill="white" />
               </svg>
               <div className="font-red-hat-display text-xl font-black tracking-tighter mb-1">
                 Open-source
               </div>
               <div className="grow opacity-80 mb-4">
-                Best of all, The Open Presenter is open-source. Anyone can
-                contribute and it'll always be available even if we're gone!
+                TheOpenPresenter is open-source. Anyone can contribute and it'll
+                always be available even if we're gone!
               </div>
-            </span>
+              <div className="flex justify-between">
+                <span className="flex items-center">
+                  View on
+                  <svg
+                    className="w-8 h-8 fill-white"
+                    viewBox="0 0 32 32"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path d="M16 8.2c-4.4 0-8 3.6-8 8 0 3.5 2.3 6.5 5.5 7.6.4.1.5-.2.5-.4V22c-2.2.5-2.7-1-2.7-1-.4-.9-.9-1.2-.9-1.2-.7-.5.1-.5.1-.5.8.1 1.2.8 1.2.8.7 1.3 1.9.9 2.3.7.1-.5.3-.9.5-1.1-1.8-.2-3.6-.9-3.6-4 0-.9.3-1.6.8-2.1-.1-.2-.4-1 .1-2.1 0 0 .7-.2 2.2.8.6-.2 1.3-.3 2-.3s1.4.1 2 .3c1.5-1 2.2-.8 2.2-.8.4 1.1.2 1.9.1 2.1.5.6.8 1.3.8 2.1 0 3.1-1.9 3.7-3.7 3.9.3.4.6.9.6 1.6v2.2c0 .2.1.5.6.4 3.2-1.1 5.5-4.1 5.5-7.6-.1-4.4-3.7-8-8.1-8z" />
+                  </svg>{" "}
+                  GitHub
+                </span>
+                <svg
+                  className="w-6 h-6 transform -translate-x-2 group-hover:translate-x-0 transition duration-150 ease-in-out"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    className="fill-current"
+                    d="M13 11V5.057L22.72 12 13 18.943V13H2v-2h11zm2 4.057L19.28 12 15 8.943v6.114z"
+                  />
+                </svg>
+              </div>
+            </a>
           </div>
         </div>
       </div>
