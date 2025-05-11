@@ -51,6 +51,7 @@
     "@repo/typescript-config": "*",
     "@tailwindcss/cli": "^4.1.6",
     "@tailwindcss/forms": "^0.5.10",
+    "@tailwindcss/postcss": "^4.1.6",
     "@tailwindcss/typography": "^0.5.16",
     "@types/aos": "^3.0.7",
     "@types/node": "^20",
