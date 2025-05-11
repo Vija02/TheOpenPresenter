@@ -4,11 +4,6 @@ module.exports = {
     "./pages/**/*.{js,ts,jsx,tsx}",
     "./components/**/*.{js,ts,jsx,tsx}",
   ],
-  safelist: [
-    {
-      pattern: /./, // This will include all classes (use with caution as it increases bundle size)
-    },
-  ],
   darkMode: "class",
   theme: {
     extend: {
