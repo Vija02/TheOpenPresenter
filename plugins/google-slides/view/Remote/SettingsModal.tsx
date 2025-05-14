@@ -25,6 +25,7 @@ import { FaCircleInfo as FaCircleInfoRaw } from "react-icons/fa6";
 
 import { DisplayMode } from "../../src/types";
 import { usePluginAPI } from "../pluginApi";
+import { displayTypeMapping } from "./displayTypeMapping";
 
 const FaCircleInfo = chakra(FaCircleInfoRaw);
 
@@ -46,6 +47,7 @@ const SettingsModal = ({
 }: SettingsModalPropTypes) => {
   const pluginApi = usePluginAPI();
   const mutableRendererData = pluginApi.renderer.useValtioData();
+  const type = pluginApi.scene.useData((x) => x.pluginData.type);
   const displayMode = pluginApi.renderer.useData((x) => x.displayMode);
 
   const handleSubmit = useCallback(
@@ -154,33 +156,39 @@ const SettingsModal = ({
                               ),
                               val: "image" satisfies DisplayMode,
                             },
-                          ].map(({ title, description, val }, i) => (
-                            <Box
-                              key={i}
-                              cursor="pointer"
-                              border="1px solid"
-                              borderColor={
-                                values.displayMode === val
-                                  ? "blue.400"
-                                  : "gray.200"
-                              }
-                              rounded="sm"
-                              p={2}
-                              _hover={{ borderColor: "blue.400" }}
-                              onClick={() => {
-                                setFieldValue("displayMode", val);
-                              }}
-                              width="100%"
-                              flex={1}
-                            >
-                              <Text fontWeight="bold" fontSize="md">
-                                {title}
-                              </Text>
-                              <Text fontSize="sm" color="gray.600">
-                                {description}
-                              </Text>
-                            </Box>
-                          ))}
+                          ]
+                            .filter((x) =>
+                              displayTypeMapping[x.val as DisplayMode].includes(
+                                type ?? "googleslides",
+                              ),
+                            )
+                            .map(({ title, description, val }, i) => (
+                              <Box
+                                key={i}
+                                cursor="pointer"
+                                border="1px solid"
+                                borderColor={
+                                  values.displayMode === val
+                                    ? "blue.400"
+                                    : "gray.200"
+                                }
+                                rounded="sm"
+                                p={2}
+                                _hover={{ borderColor: "blue.400" }}
+                                onClick={() => {
+                                  setFieldValue("displayMode", val);
+                                }}
+                                width="100%"
+                                flex={1}
+                              >
+                                <Text fontWeight="bold" fontSize="md">
+                                  {title}
+                                </Text>
+                                <Text fontSize="sm" color="gray.600">
+                                  {description}
+                                </Text>
+                              </Box>
+                            ))}
                         </Stack>
                       </FormControl>
                     </VStack>

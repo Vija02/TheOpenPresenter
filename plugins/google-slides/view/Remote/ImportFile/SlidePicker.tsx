@@ -4,7 +4,7 @@
 import { useInjectScript } from "@repo/lib";
 import { useCallback, useMemo } from "react";
 
-import { usePluginAPI } from "../pluginApi";
+import { usePluginAPI } from "../../pluginApi";
 
 export const SlidePicker = ({
   onFileSelected,

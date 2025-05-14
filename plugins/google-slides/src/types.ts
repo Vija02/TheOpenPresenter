@@ -1,9 +1,17 @@
+export type ImportType = "googleslides" | "pdf" | "ppt";
+
 export type PluginBaseData = {
   /**
    * An ID generated whenever we fetch the data.
    * We use this as a key to know when the data changes (eg: When we refetch the data)
    */
   fetchId: string | null;
+
+  /**
+   * The type of file imported
+   * By default, googleslides
+   */
+  type?: ImportType;
 
   /** The google presentation objectId */
   presentationId: string;
