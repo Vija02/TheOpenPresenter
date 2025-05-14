@@ -19,7 +19,7 @@ export const PPTUploadModal = () => {
 
   const [uppy] = useState(() =>
     new Uppy({
-      restrictions: { allowedFileTypes: [".pdf", ".ppt", ".pptx"] },
+      restrictions: { allowedFileTypes: [".ppt", ".pptx"] },
     }).use(Tus, {
       endpoint: pluginApi.media.tusUploadUrl,
       headers: {
