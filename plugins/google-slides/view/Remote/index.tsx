@@ -165,10 +165,11 @@ const Remote = () => {
 
 const ResolvedSlideHandler = () => {
   const pluginApi = usePluginAPI();
+  const type = pluginApi.scene.useData((x) => x.pluginData.type);
   const slideIndex = pluginApi.renderer.useData((x) => x.slideIndex);
   const displayMode = pluginApi.renderer.useData((x) => x.displayMode);
 
-  if (displayMode === "image") {
+  if (type === "pdf" || type === "ppt" || displayMode === "image") {
     return null;
   }
 
@@ -187,13 +188,14 @@ const RemoteHandler = () => {
   const thumbnailLinks = pluginApi.scene.useData(
     (x) => x.pluginData.thumbnailLinks,
   );
+  const type = pluginApi.scene.useData((x) => x.pluginData.type);
   const rendererData = pluginApi.renderer.useData((x) => x);
 
   const mutableRendererData = pluginApi.renderer.useValtioData();
 
   const actualSlideIndex = useMemo(
     () =>
-      rendererData.displayMode === "image"
+      type === "pdf" || type === "ppt" || rendererData.displayMode === "image"
         ? (rendererData.slideIndex ?? 0) + (rendererData.clickCount ?? 0)
         : rendererData.resolvedSlideIndex !== null
           ? rendererData.resolvedSlideIndex
@@ -203,6 +205,7 @@ const RemoteHandler = () => {
       rendererData.displayMode,
       rendererData.resolvedSlideIndex,
       rendererData.slideIndex,
+      type,
     ],
   );
 
