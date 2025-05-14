@@ -264,6 +264,11 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
   }
 
   public media = {
+    getMedia: async (mediaName: string) => {
+      return await new media[
+        process.env.STORAGE_TYPE as "file" | "s3"
+      ].mediaHandler(this.app.get("rootPgPool")).store.getReadable(mediaName);
+    },
     queueVideoTranscode: async (mediaUUID: string) => {
       const pool = this.app.get("rootPgPool") as Pool;
       await pool.query(
