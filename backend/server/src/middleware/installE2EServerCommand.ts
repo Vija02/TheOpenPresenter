@@ -11,27 +11,27 @@ export default (app: Express) => {
   }
 
   /*
-   * Furthermore we require the `ENABLE_CYPRESS_COMMANDS` environmental variable
+   * Furthermore we require the `ENABLE_E2E_COMMANDS` environmental variable
    * to be set; this gives us extra protection against accidental XSS/CSRF
    * attacks.
    */
-  const safeToRun = process.env.ENABLE_CYPRESS_COMMANDS === "1";
+  const safeToRun = process.env.ENABLE_E2E_COMMANDS === "1";
 
   const rootPgPool = getRootPgPool(app);
 
   /*
-   * This function is invoked for the /cypressServerCommand route and is
+   * This function is invoked for the /E2EServerCommand route and is
    * responsible for parsing the request and handing it off to the relevant
    * function.
    */
-  const handleCypressServerCommand: RequestHandler = async (req, res, next) => {
+  const handleE2EServerCommand: RequestHandler = async (req, res, next) => {
     /*
-     * If we didn't set ENABLE_CYPRESS_COMMANDS, output a warning to the server
-     * log, and then pretend the /cypressServerCommand route doesn't exist.
+     * If we didn't set ENABLE_E2E_COMMANDS, output a warning to the server
+     * log, and then pretend the /E2EServerCommand route doesn't exist.
      */
     if (!safeToRun) {
       console.error(
-        "/cypressServerCommand denied because ENABLE_CYPRESS_COMMANDS is not set."
+        "/E2EServerCommand denied because ENABLE_E2E_COMMANDS is not set."
       );
       // Pretend like nothing happened
       next();
@@ -73,7 +73,7 @@ export default (app: Express) => {
        * If anything goes wrong, let the test runner know so that it can fail
        * the test.
        */
-      console.error("cypressServerCommand failed!");
+      console.error("E2EServerCommand failed!");
       console.error(e);
       res.status(500).json({
         error: {
@@ -84,9 +84,9 @@ export default (app: Express) => {
     }
   };
   app.get(
-    "/cypressServerCommand",
+    "/E2EServerCommand",
     urlencoded({ extended: false }),
-    handleCypressServerCommand
+    handleE2EServerCommand
   );
 };
 
