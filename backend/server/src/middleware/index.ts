@@ -1,7 +1,7 @@
 import installAutoLogin from "./installAutoLogin";
 import installCSRFProtection from "./installCSRFProtection";
-import installCypressServerCommand from "./installCypressServerCommand";
 import installDatabasePools from "./installDatabasePools";
+import installE2EServerCommand from "./installE2EServerCommand";
 import installErrorHandler from "./installErrorHandler";
 import installFileUpload from "./installFileUpload";
 import installForceSSL from "./installForceSSL";
@@ -25,8 +25,8 @@ import installWorkerUtils from "./installWorkerUtils";
 export {
   installAutoLogin,
   installCSRFProtection,
-  installCypressServerCommand,
   installDatabasePools,
+  installE2EServerCommand,
   installErrorHandler,
   installFileUpload,
   installForceSSL,
