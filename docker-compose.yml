@@ -60,7 +60,7 @@ services:
     image: philiplehmann/unoserver:3.0.1-1816
     restart: always
     ports:
-      - "3000:3000"
+      - "8379:3000"
     networks:
       - default
 
