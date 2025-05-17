@@ -118,22 +118,22 @@ export default function FeaturesBlocks() {
                   r="10"
                   fill="none"
                   stroke="white"
-                  stroke-width="2"
+                  strokeWidth="2"
                 />
 
                 <path
                   d="M12 6c3.3 0 6 2.7 6 6s-2.7 6-6 6-6-2.7-6-6"
                   stroke="white"
-                  stroke-width="2"
-                  stroke-linecap="round"
+                  strokeWidth="2"
+                  strokeLinecap="round"
                   fill="none"
                 />
 
                 <path
                   d="M6 12c0-.7.8-2 2-2.5"
                   stroke="white"
-                  stroke-width="2"
-                  stroke-linecap="round"
+                  strokeWidth="2"
+                  strokeLinecap="round"
                   fill="none"
                 />
 
