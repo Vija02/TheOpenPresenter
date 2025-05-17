@@ -31,7 +31,7 @@ export default (app: Express) => {
      */
     if (!safeToRun) {
       console.error(
-        "/E2EServerCommand denied because ENABLE_E2E_COMMANDS is not set."
+        "/E2EServerCommand denied because ENABLE_E2E_COMMANDS is not set.",
       );
       // Pretend like nothing happened
       next();
@@ -86,7 +86,7 @@ export default (app: Express) => {
   app.get(
     "/E2EServerCommand",
     urlencoded({ extended: false }),
-    handleE2EServerCommand
+    handleE2EServerCommand,
   );
 };
 
@@ -95,16 +95,16 @@ async function runCommand(
   res: Response,
   rootPgPool: Pool,
   command: string,
-  payload: { [key: string]: any }
+  payload: { [key: string]: any },
 ): Promise<object | null> {
   if (command === "clearTestUsers") {
     await rootPgPool.query(
-      "delete from app_public.users where username like 'testuser%'"
+      "delete from app_public.users where username like 'testuser%'",
     );
     return { success: true };
   } else if (command === "clearTestOrganizations") {
     await rootPgPool.query(
-      "delete from app_public.organizations where slug like 'test%'"
+      "delete from app_public.organizations where slug like 'test%'",
     );
     return { success: true };
   } else if (command === "createUser") {
@@ -174,7 +174,7 @@ async function runCommand(
       async function setSession(sess: any) {
         await client.query(
           "select set_config('jwt.claims.session_id', $1, true)",
-          [sess.uuid]
+          [sess.uuid],
         );
       }
       try {
@@ -189,23 +189,23 @@ async function runCommand(
                 rows: [organization],
               } = await client.query(
                 "select * from app_public.create_organization($1, $2)",
-                [slug, name]
+                [slug, name],
               );
               if (!owner) {
                 await client.query(
                   "select app_public.invite_to_organization($1::uuid, $2::citext, null::citext)",
-                  [organization.id, user.username]
+                  [organization.id, user.username],
                 );
                 await setSession(session);
                 await client.query(
                   `select app_public.accept_invitation_to_organization(organization_invitations.id)
                    from app_public.organization_invitations
                    where user_id = $1`,
-                  [user.id]
+                  [user.id],
                 );
               }
-            }
-          )
+            },
+          ),
         );
       } finally {
         await client.query("commit");
@@ -229,7 +229,7 @@ async function runCommand(
     const { username = "testuser" } = payload;
     await rootPgPool.query(
       "update app_public.users SET is_verified = TRUE where username = $1",
-      [username]
+      [username],
     );
     return { success: true };
   } else {
@@ -253,7 +253,7 @@ async function reallyCreateUser(
     name?: string;
     avatarUrl?: string;
     password?: string;
-  }
+  },
 ) {
   const {
     rows: [user],
@@ -266,7 +266,7 @@ async function reallyCreateUser(
         avatar_url := $5,
         password := $6
       )`,
-    [username, email, verified, name, avatarUrl, password]
+    [username, email, verified, name, avatarUrl, password],
   );
   return user;
 }
@@ -280,7 +280,7 @@ async function createSession(rootPgPool: Pool, userId: string) {
       values ($1)
       returning *
     `,
-    [userId]
+    [userId],
   );
   return session;
 }
@@ -300,7 +300,7 @@ async function getUserEmailSecrets(rootPgPool: Pool, email: string) {
         limit 1
       )
     `,
-    [email]
+    [email],
   );
   return userEmailSecrets;
 }
