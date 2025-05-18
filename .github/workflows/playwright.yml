@@ -33,7 +33,7 @@ jobs:
         ports:
           - "0.0.0.0:8379:3000"
         # needed because the postgres container does not provide a healthcheck
-        options: --health-cmd "curl -f http://localhost:8379/health" --health-interval 10s --health-timeout 5s --health-retries 5
+        options: --health-cmd "curl -f http://0.0.0.0:8379/health" --health-interval 10s --health-timeout 5s --health-retries 5
 
     steps:
     - uses: actions/checkout@v4
