@@ -1,6 +1,5 @@
 import type { APIRequestContext, Page } from "@playwright/test";
 
-
 type User = {
   id: string;
   username: string;
@@ -31,7 +30,6 @@ export class E2ECommandAPI {
         payload ? `&payload=${encodeURIComponent(JSON.stringify(payload))}` : ""
       }`,
     );
-    // await page.waitForURL("**/login");
   }
 
   /**
