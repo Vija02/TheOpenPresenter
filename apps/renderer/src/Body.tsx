@@ -90,6 +90,11 @@ const SceneRenderer = React.memo(({ sceneId }: { sceneId: string }) => {
   return (
     <div
       style={{ position: "absolute", zIndex: currentScene === sceneId ? 1 : 0 }}
+      {...(currentScene === sceneId
+        ? {
+            "data-testid": "current-scene",
+          }
+        : {})}
     >
       <motion.div
         initial={{ opacity: 0 }}

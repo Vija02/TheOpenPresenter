@@ -1,0 +1,12 @@
+{
+  "name": "@repo/e2e",
+  "private": true,
+  "version": "0.0.0",
+  "devDependencies": {
+    "@playwright/test": "^1.52.0",
+    "@types/node": "^22.15.18"
+  },
+  "scripts": {
+    "test": "playwright test"
+  }
+}

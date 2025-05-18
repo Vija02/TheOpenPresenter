@@ -161,6 +161,7 @@ const ProjectCard = ({
       borderBottom={{ base: "1px solid", sm: "none" }}
       borderColor="gray.200"
       role="group"
+      data-testid="project-card"
     >
       <Flex
         alignItems="center"

@@ -18,6 +18,7 @@
     "--shortcuts to run commands in workspaces--": "",
     "config": "yarn workspace @repo/config",
     "db": "yarn workspace @repo/db",
+    "e2e": "yarn workspace @repo/e2e",
     "graphql": "yarn workspace @repo/graphql",
     "homepage": "yarn workspace @repo/homepage",
     "remote": "yarn workspace @repo/remote",
@@ -45,6 +46,7 @@
   "workspaces": [
     "apps/*",
     "backend/*",
+    "e2e",
     "packages/*",
     "plugins/*"
   ],

@@ -46,6 +46,7 @@ export const Slide = ({
       justifyContent="center"
       cursor={onClick ? "pointer" : "auto"}
       onClick={onClick}
+      data-testid="slide-container"
     >
       <Box overflow="hidden">
         {heading && (
