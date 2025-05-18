@@ -26,6 +26,7 @@ export class E2ECommandAPI {
     orgs?: {
       name: string;
       slug: string;
+      projects?: { name: string; slug: string }[];
       owner?: boolean;
     }[];
   }) {

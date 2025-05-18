@@ -184,10 +184,12 @@ async function runCommand(
             async ({
               name,
               slug,
+              projects = [],
               owner = true,
             }: {
               name: string;
               slug: string;
+              projects?: { name: string; slug: string }[];
               owner?: boolean;
             }) => {
               if (!owner) {
@@ -210,6 +212,15 @@ async function runCommand(
                    from app_public.organization_invitations
                    where user_id = $1`,
                   [user.id],
+                );
+              }
+
+              for (const project of projects) {
+                await client.query(
+                  `
+                  select app_public.create_full_project($1, $2, $3, $4);
+                `,
+                  [organization.id, project.name, project.slug, []],
                 );
               }
             },
