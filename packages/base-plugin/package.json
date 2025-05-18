@@ -64,7 +64,7 @@
   },
   "devDependencies": {
     "@repo/typescript-config": "*",
-    "pkgroll": "^2.5.1",
+    "pkgroll": "2.5.1",
     "typescript": "^5.7.2"
   }
 }
