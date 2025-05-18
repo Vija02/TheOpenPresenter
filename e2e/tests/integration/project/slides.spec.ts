@@ -12,23 +12,11 @@ test.describe("Slides Plugin", () => {
   test("can upload pdf and it is shown", async ({
     page,
     projectPage,
-    organizationPage,
-    e2eCommand,
+    loginAndGoToProject,
     uppyUploadFile,
   }) => {
-    await e2eCommand.login({
-      orgs: [{ name: "TestOrg", slug: "testorg" }],
-      next: "/o/testorg",
-    });
+    await loginAndGoToProject();
 
-    await expect(page.getByRole("heading", { name: "Projects" })).toBeVisible();
-
-    await organizationPage.newProjectButton.click();
-    await organizationPage.newProjectSaveButton.click();
-
-    await expect(page).toHaveURL(/app\/testorg/);
-
-    // Test from here
     await projectPage.createPlugin("Slides");
 
     await expect(page.getByRole("heading")).toContainText(
@@ -60,23 +48,11 @@ test.describe("Slides Plugin", () => {
   test("can upload pptx and it is shown", async ({
     page,
     projectPage,
-    organizationPage,
-    e2eCommand,
+    loginAndGoToProject,
     uppyUploadFile,
   }) => {
-    await e2eCommand.login({
-      orgs: [{ name: "TestOrg", slug: "testorg" }],
-      next: "/o/testorg",
-    });
+    await loginAndGoToProject();
 
-    await expect(page.getByRole("heading", { name: "Projects" })).toBeVisible();
-
-    await organizationPage.newProjectButton.click();
-    await organizationPage.newProjectSaveButton.click();
-
-    await expect(page).toHaveURL(/app\/testorg/);
-
-    // Test from here
     await projectPage.createPlugin("Slides");
 
     await expect(page.getByRole("heading")).toContainText(

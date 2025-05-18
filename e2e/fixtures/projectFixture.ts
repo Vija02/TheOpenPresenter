@@ -5,6 +5,7 @@ import { test as base } from "./baseFixture";
 type ProjectFixture = {
   projectPage: ProjectPage;
   organizationPage: OrganizationPage;
+  loginAndGoToProject: () => void;
   uppyUploadFile: (fileName: string) => void;
 };
 
@@ -16,6 +17,22 @@ export const test = base.extend<ProjectFixture>({
   projectPage: async ({ page }, use) => {
     const projectPage = new ProjectPage(page);
     await use(projectPage);
+  },
+  loginAndGoToProject: async ({ e2eCommand }, use) => {
+    const fn = async () => {
+      await e2eCommand.login({
+        orgs: [
+          {
+            name: "TestOrg",
+            slug: "testorg",
+            projects: [{ name: "TestProject", slug: "testproject" }],
+          },
+        ],
+        next: "/app/testorg/testproject",
+      });
+    };
+
+    await use(fn);
   },
   uppyUploadFile: async ({ page }, use) => {
     const upload = async (fileName: string) => {
