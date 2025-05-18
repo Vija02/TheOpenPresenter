@@ -43,7 +43,7 @@
     "@repo/backend-shared": "*",
     "@repo/lib": "*",
     "@repo/observability": "*",
-    "@trpc/server": "^11.0.0-rc.657",
+    "@trpc/server": "^11.1.2",
     "@types/express": "^5.0.0",
     "@types/react": "^19.1.2",
     "@types/ua-parser-js": "^0.7.39",
