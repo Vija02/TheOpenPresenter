@@ -42,7 +42,7 @@
     "@repo/typescript-config": "*",
     "@vitejs/plugin-react-swc": "^3.7.2",
     "eslint": "^8.57.1",
-    "pkgroll": "^2.5.1",
+    "pkgroll": "2.5.1",
     "vite": "5.4.11"
   }
 }
