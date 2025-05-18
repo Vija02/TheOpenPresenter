@@ -17,7 +17,7 @@ test.describe("Slides Plugin", () => {
     uppyUploadFile,
   }) => {
     await e2eCommand.login({
-      orgs: [["TestOrg", "testorg"]],
+      orgs: [{ name: "TestOrg", slug: "testorg" }],
       next: "/o/testorg",
     });
 
@@ -65,7 +65,7 @@ test.describe("Slides Plugin", () => {
     uppyUploadFile,
   }) => {
     await e2eCommand.login({
-      orgs: [["TestOrg", "testorg"]],
+      orgs: [{ name: "TestOrg", slug: "testorg" }],
       next: "/o/testorg",
     });
 

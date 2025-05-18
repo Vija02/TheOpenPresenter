@@ -15,7 +15,7 @@ test.describe("OrganizationPage", () => {
     e2eCommand,
   }) => {
     await e2eCommand.login({
-      orgs: [["TestOrg", "testorg"]],
+      orgs: [{ name: "TestOrg", slug: "testorg" }],
       next: "/o/testorg",
     });
 

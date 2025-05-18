@@ -181,7 +181,15 @@ async function runCommand(
         await setSession(session);
         await Promise.all(
           orgs.map(
-            async ([name, slug, owner = true]: [string, string, boolean?]) => {
+            async ({
+              name,
+              slug,
+              owner = true,
+            }: {
+              name: string;
+              slug: string;
+              owner?: boolean;
+            }) => {
               if (!owner) {
                 await setSession(otherSession);
               }

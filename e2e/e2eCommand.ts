@@ -23,7 +23,11 @@ export class E2ECommandAPI {
     name?: string;
     verified?: boolean;
     password?: string;
-    orgs?: [[string, string] | [string, string, boolean]];
+    orgs?: {
+      name: string;
+      slug: string;
+      owner?: boolean;
+    }[];
   }) {
     await this.page.goto(
       `/E2EServerCommand?command=login${
