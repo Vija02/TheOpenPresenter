@@ -13,9 +13,9 @@ export default defineConfig({
     exclude: [
       "**/node_modules/**",
       "**/dist/**",
-      "**/cypress/**",
+      "**/e2e/**",
       "**/.{idea,git,cache,output,temp}/**",
-      "**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build}.config.*",
+      "**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,playwright,tsup,build}.config.*",
       // Don't double test
       "**/loadedPlugins/**"
     ],
