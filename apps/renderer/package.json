@@ -48,7 +48,7 @@
     "@vitejs/plugin-react-swc": "^3.7.2",
     "eslint": "^8.57.1",
     "typescript": "5.7.2",
-    "vite": "5.4.11",
+    "vite": "6.3.5",
     "vite-plugin-externalize-dependencies": "^1.0.1"
   }
 }
