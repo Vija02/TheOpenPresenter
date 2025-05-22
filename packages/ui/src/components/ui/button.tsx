@@ -1,5 +1,6 @@
+import { LoadingInline } from "@/Loading/LoadingInline";
 import { cn } from "@/lib/utils";
-import { Slot } from "@radix-ui/react-slot";
+import { Slot, Slottable } from "@radix-ui/react-slot";
 import { type VariantProps, cva } from "class-variance-authority";
 import * as React from "react";
 
@@ -13,8 +14,7 @@ const buttonVariants = cva("ui--button", {
       destructive: "ui--button__destructive",
       outline: "ui--button__outline",
       muted: "ui--button__muted",
-      ghost:
-        "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
+      ghost: "ui--button__ghost",
       link: "text-primary underline-offset-4 hover:underline",
     },
     size: {
@@ -36,20 +36,25 @@ function Button({
   variant,
   size,
   isSelected,
+  isLoading,
   asChild = false,
   ...props
 }: React.ComponentProps<"button"> &
   VariantProps<typeof buttonVariants> & {
     asChild?: boolean;
-  } & { isSelected?: boolean }) {
+  } & { isSelected?: boolean; isLoading?: boolean }) {
   const Comp = asChild ? Slot : "button";
 
   return (
     <Comp
       data-slot="button"
       className={cn(buttonVariants({ variant, size, className }))}
+      {...(isLoading ? { disabled: true } : {})}
       {...props}
-    />
+    >
+      {isLoading && <LoadingInline data-slot="loading" />}
+      <Slottable>{props.children}</Slottable>
+    </Comp>
   );
 }
 

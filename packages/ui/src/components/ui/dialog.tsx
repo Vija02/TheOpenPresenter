@@ -78,7 +78,6 @@ function DialogContent({
         {...props}
       >
         <Slottable>{children}</Slottable>
-        {/* {children} */}
         <DialogPrimitive.Close className="ui--dialog-content__close">
           <XIcon />
           <span className="sr-only">Close</span>

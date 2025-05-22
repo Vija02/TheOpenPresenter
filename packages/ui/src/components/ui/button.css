@@ -5,6 +5,7 @@
     @apply inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-sm text-sm font-medium transition-all cursor-pointer;
     @apply disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px];
     @apply aria-invalid:ring-fill-destructive/20 dark:aria-invalid:ring-fill-destructive/40 aria-invalid:border-fill-destructive;
+    @apply data-[slot=loading]:bg-red-400 [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0;
   }
 
   .ui--button__default {
@@ -16,7 +17,7 @@
   .ui--button__muted {
     @apply bg-fill-muted text-fill-muted-fg shadow-xs;
     @apply hover:bg-fill-muted-hover;
-    @apply disabled:bg-fill-muted-disabled;
+    @apply disabled:bg-fill-muted-disabled disabled:text-tertiary;
   }
 
   .ui--button__success {
@@ -36,5 +37,10 @@
     @apply border border-stroke;
     @apply bg-surface-primary text-primary shadow-xs;
     @apply hover:bg-surface-secondary hover:text-secondary;
+    @apply disabled:bg-surface-secondary disabled:text-tertiary;
+  }
+  .ui--button__ghost {
+    @apply hover:bg-surface-tertiary;
+    @apply disabled:bg-surface-secondary disabled:text-tertiary;
   }
 }
