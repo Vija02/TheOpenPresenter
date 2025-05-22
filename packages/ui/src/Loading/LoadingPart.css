@@ -1,0 +1,7 @@
+@reference "../index.css";
+
+@layer base {
+  .ui--loading-part__circle {
+    @apply w-8 h-8 bg-gray-500 rounded-full;
+  }
+}

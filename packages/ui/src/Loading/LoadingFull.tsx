@@ -1,13 +1,29 @@
-import { Center } from "@chakra-ui/react";
+import { cx } from "class-variance-authority";
 
-import { LoadingInline } from "./LoadingInline";
+import { DeferredLoad } from "..";
+import "./LoadingFull.css";
 
-type PropTypes = { defer?: boolean; size?: number; p?: number };
+type PropTypes = {
+  defer?: number;
+  containerClassName?: string;
+  className?: string;
+};
 
-export function LoadingFull({ defer = false, size = 80, p = 5 }: PropTypes) {
+export function LoadingFull({
+  defer = 0,
+  containerClassName,
+  className,
+}: PropTypes) {
   return (
-    <Center height="100%" pt="150px">
-      <LoadingInline defer={defer} size={size} p={p} />
-    </Center>
+    <DeferredLoad durationMs={defer}>
+      <div
+        className={cx(
+          "flex justify-center h-full pt-[30vh]",
+          containerClassName,
+        )}
+      >
+        <div className={cx("ui--loading-full", className)} />
+      </div>
+    </DeferredLoad>
   );
 }
