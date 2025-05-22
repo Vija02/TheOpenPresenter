@@ -1,16 +1,4 @@
 import {
-  Box,
-  Button,
-  Flex,
-  Slider,
-  SliderFilledTrack,
-  SliderThumb,
-  SliderTrack,
-  Stack,
-  Text,
-  chakra,
-} from "@chakra-ui/react";
-import {
   AwarenessContext,
   AwarenessStateData,
   Plugin,
@@ -35,13 +23,18 @@ import {
   usePluginData,
   usePluginMetaData,
 } from "@repo/shared";
-import { ErrorAlert, OverlayToggle, PopConfirm } from "@repo/ui";
+import {
+  Button,
+  ErrorAlert,
+  OverlayToggle,
+  PopConfirm,
+  Slider,
+} from "@repo/ui";
+import cx from "classnames";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
-import {
-  VscSettingsGear as VscSettingsGearRaw,
-  VscTrash as VscTrashRaw,
-} from "react-icons/vsc";
+import { RxCross1 } from "react-icons/rx";
+import { VscSettingsGear, VscTrash } from "react-icons/vsc";
 import { toast } from "react-toastify";
 import { TypeId, toUUID } from "typeid-js";
 import { useDisposable } from "use-disposable";
@@ -53,9 +46,6 @@ import { zoomLevelStore } from "../contexts/zoomLevel";
 import { trpcClient } from "../trpc";
 import { EmptyScene } from "./EmptyScene";
 import SceneSettingsModal from "./SceneSettingsModal";
-
-const VscSettingsGear = chakra(VscSettingsGearRaw);
-const VscTrash = chakra(VscTrashRaw);
 
 const MainBody = () => {
   const [location, navigate] = useLocation();
@@ -91,10 +81,8 @@ const MainBody = () => {
   }, [mainState.renderer, navigate, scenes, selectedScene]);
 
   return (
-    <Box
-      display="flex"
-      flexDir="column"
-      width="100%"
+    <div
+      className="flex flex-col w-full overflow-hidden"
       tabIndex={0}
       onKeyDown={(e) => {
         // TODO: Expand on this functionality
@@ -123,35 +111,25 @@ const MainBody = () => {
           e.preventDefault();
         }
       }}
-      overflow="hidden"
     >
-      <Flex
-        flexShrink={0}
-        boxShadow="md"
-        alignItems="center"
-        justifyContent="space-between"
-        flexWrap="wrap"
-        p={2}
-      >
-        <Stack direction="row" px={2} alignItems="center">
+      <div className="flex shrink-0 shadow items-center justify-between flex-wrap p-2">
+        <div className="stack-row px-2">
           {selectedScene && (
             <>
-              <Text fontWeight="bold">{data.data[selectedScene]?.name}</Text>
-              <Stack direction="row" spacing={0}>
+              <p className="font-bold text-sm">
+                {data.data[selectedScene]?.name}
+              </p>
+              <div className="stack-row gap-0">
                 <OverlayToggle
                   toggler={({ onToggle }) => (
                     <Button
                       size="sm"
                       variant="ghost"
-                      justifyContent="center"
                       role="group"
                       onClick={onToggle}
+                      className=" text-gray-500 hover:text-gray-900"
                     >
-                      <VscSettingsGear
-                        color="gray.500"
-                        fontSize="12px"
-                        _groupHover={{ color: "gray.900" }}
-                      />
+                      <VscSettingsGear className="size-3" />
                     </Button>
                   )}
                 >
@@ -174,30 +152,26 @@ const MainBody = () => {
                   <Button
                     size="sm"
                     variant="ghost"
-                    justifyContent="center"
                     role="group"
+                    className=" text-gray-500 hover:text-gray-900"
                   >
-                    <VscTrash
-                      color="gray.500"
-                      _groupHover={{ color: "gray.900" }}
-                    />
+                    <VscTrash className="size-3.5" />
                   </Button>
                 </PopConfirm>
-              </Stack>
+              </div>
             </>
           )}
-        </Stack>
-        <Stack direction="row">
+        </div>
+        <div className="stack-row gap-0">
           <Button
             size="sm"
-            rounded="none"
-            {...(data.renderer["1"]!.overlay &&
-            data.renderer["1"]!.overlay.type === "black"
-              ? {
-                  border: "2px solid #ff6464",
-                  animation: "blink 1.5s steps(1, end) infinite",
-                }
-              : { border: "2px solid transparent" })}
+            className={cx(
+              "rounded-none border-2 border-fill-default",
+              data.renderer["1"]!.overlay &&
+                data.renderer["1"]!.overlay.type === "black"
+                ? "animate-border-blink bg-fill-default-selected"
+                : "",
+            )}
             onClick={() => {
               if (mainState.renderer["1"]!.overlay?.type === "black") {
                 mainState.renderer["1"]!.overlay = null;
@@ -208,18 +182,20 @@ const MainBody = () => {
           >
             Black
           </Button>
-          <Button
-            size="sm"
-            rounded="none"
-            onClick={() => {
-              mainState.renderer["1"]!.overlay = null;
-            }}
-          >
-            Clear
-          </Button>
-        </Stack>
-      </Flex>
-      <Box flex={1} overflow="auto">
+          {mainState.renderer["1"]!.overlay !== null && (
+            <Button
+              size="sm"
+              className="rounded-none"
+              onClick={() => {
+                mainState.renderer["1"]!.overlay = null;
+              }}
+            >
+              <RxCross1 className="size-3" />
+            </Button>
+          )}
+        </div>
+      </div>
+      <div className="flex-1 overflow-auto">
         {scenes.map(([sceneId, value]) => (
           <SceneRenderer
             key={sceneId}
@@ -228,31 +204,18 @@ const MainBody = () => {
           />
         ))}
         {scenes.length === 0 && <EmptyScene />}
-      </Box>
-      <Flex
-        bg="#F9FBFF"
-        borderTop="1px solid #d0d0d0"
-        flexDir="row-reverse"
-        py={2}
-        px={4}
-      >
+      </div>
+      <div className="flex flex-row-reverse py-3 px-4 border-stroke border-t-1">
         <Slider
-          flex="1"
-          focusThumbOnChange={false}
           min={0}
           max={1}
-          value={zoomLevel}
-          onChange={setZoomLevel}
+          value={[zoomLevel]}
+          onValueChange={(val) => setZoomLevel(val[0]!)}
           step={0.0001}
-          maxW="150px"
-        >
-          <SliderTrack>
-            <SliderFilledTrack />
-          </SliderTrack>
-          <SliderThumb fontSize="sm" />
-        </Slider>
-      </Flex>
-    </Box>
+          className="max-w-52"
+        ></Slider>
+      </div>
+    </div>
   );
 };
 
@@ -353,11 +316,11 @@ const PluginRenderer = React.memo(
 
     const Element = useMemo(() => {
       if (!viewData?.tag) {
-        return <Text>No renderer for {pluginInfo.plugin}</Text>;
+        return <p>No renderer for {pluginInfo.plugin}</p>;
       }
 
       if (!yjsPluginSceneData || !yjsPluginRendererData) {
-        return <Text>Loading...</Text>;
+        return <p>Loading...</p>;
       }
 
       return React.createElement(viewData.tag, {
@@ -421,14 +384,14 @@ const PluginRenderer = React.memo(
 
     if (match || viewData?.config?.alwaysRender) {
       return (
-        <Box
-          className={
-            !match && viewData?.config?.alwaysRender ? "content-hidden" : ""
-          }
-          height="100%"
+        <div
+          className={cx(
+            !match && viewData?.config?.alwaysRender ? "content-hidden" : "",
+            "h-full",
+          )}
         >
           {Element}
-        </Box>
+        </div>
       );
     }
 

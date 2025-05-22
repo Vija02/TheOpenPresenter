@@ -1,0 +1,45 @@
+@reference "../../index.css";
+
+@layer base {
+  .ui--dialog-overlay {
+    @apply data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0;
+    @apply fixed inset-0 z-50 bg-black/50;
+  }
+
+  .ui--dialog-content {
+    @apply bg-surface-primary data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95;
+    @apply fixed top-[50%] left-[50%] z-50 grid w-full translate-x-[-50%] translate-y-[-50%];
+    @apply gap-4 border shadow-lg duration-200;
+    @apply max-w-full h-screen md:h-auto md:max-h-11/12 md:rounded-lg;
+    @apply flex flex-col;
+  }
+  .ui--dialog-content > form {
+    @apply bg-surface-primary data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95;
+    @apply fixed top-[50%] left-[50%] z-50 grid w-full translate-x-[-50%] translate-y-[-50%];
+    @apply gap-4 border shadow-lg duration-200;
+    @apply max-w-full h-screen md:h-auto md:max-h-11/12 md:rounded-lg;
+    @apply flex flex-col;
+  }
+  .ui--dialog-content__close {
+    @apply ring-offset-surface-primary focus:ring-ring;
+    @apply absolute top-4 right-4 rounded-xs opacity-70 cursor-pointer transition-opacity hover:opacity-100;
+    @apply focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none;
+    @apply [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4;
+  }
+
+  .ui--dialog-header {
+    @apply flex flex-col gap-2 px-6 pt-4;
+  }
+  .ui--dialog-body {
+    @apply flex flex-col gap-2 px-6 overflow-y-scroll;
+  }
+  .ui--dialog-footer {
+    @apply flex gap-2 sm:flex-row px-6 pb-4 sm:justify-end;
+  }
+  .ui--dialog-title {
+    @apply text-lg leading-none font-semibold;
+  }
+  .ui--dialog-description {
+    @apply text-secondary text-sm;
+  }
+}

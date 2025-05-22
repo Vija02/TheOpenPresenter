@@ -1,11 +1,11 @@
-import { ModalProps, useDisclosure } from "@chakra-ui/react";
+import { useDisclosure } from "@chakra-ui/react";
 import { cloneElement, useCallback, useState } from "react";
 
 /**
  * This is the minimum props the overlay component needs to have
  */
 export type OverlayToggleComponentProps = {
-  isOpen: ModalProps["isOpen"];
+  isOpen: boolean;
 
   /** Function to call from modal component to toggle `isOpen` */
   onToggle?: () => void;

@@ -1,29 +1,21 @@
-import {
-  Box,
-  Modal,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  ModalOverlay,
-  ModalProps,
-  Stack,
-  Text,
-} from "@chakra-ui/react";
 import { usePluginMetaData } from "@repo/shared";
-import { OverlayToggle, OverlayToggleComponentProps } from "@repo/ui";
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  OverlayToggle,
+  OverlayToggleComponentProps,
+} from "@repo/ui";
 import { useMemo } from "react";
 
 import { onPresentClick } from "./desktopPresent";
 import { useAllWindows } from "./useAllWindows";
 import { useAvailableMonitors } from "./useAvailableMonitors";
 
-export type PresentMonitorModalPropTypes = Omit<
-  ModalProps,
-  "isOpen" | "onClose" | "children"
-> &
-  Partial<OverlayToggleComponentProps>;
+export type PresentMonitorModalPropTypes = Partial<OverlayToggleComponentProps>;
 
 const PresentMonitorModal = ({
   isOpen,
@@ -36,23 +28,18 @@ const PresentMonitorModal = ({
   const { orgSlug, projectSlug } = usePluginMetaData();
 
   return (
-    <Modal
-      size="xl"
-      isOpen={isOpen ?? false}
-      onClose={onToggle ?? (() => {})}
+    <Dialog
+      open={isOpen ?? false}
+      onOpenChange={onToggle ?? (() => {})}
       {...props}
     >
-      <ModalOverlay />
-      <ModalContent>
-        <ModalHeader>
-          <Stack direction="row" alignItems="center">
-            <Text>Select monitor</Text>
-          </Stack>
-        </ModalHeader>
-        <ModalCloseButton />
-        <ModalBody>
+      <DialogContent size="xl">
+        <DialogHeader>
+          <DialogTitle>Select monitor</DialogTitle>
+        </DialogHeader>
+        <DialogBody>
           {monitors?.map((monitor, i) => (
-            <Box
+            <div
               key={i}
               onClick={async () => {
                 await onPresentClick(orgSlug, projectSlug, i);
@@ -61,17 +48,16 @@ const PresentMonitorModal = ({
                 }, 2000);
                 onToggle?.();
               }}
-              cursor="pointer"
-              _hover={{ bg: "blue.100" }}
+              className="cursor-pointer hover:bg-surface-primary-hover"
             >
               {monitor.name} | {monitor.size.width}x{monitor.size.height}
-            </Box>
+            </div>
           ))}
-        </ModalBody>
+        </DialogBody>
 
-        <ModalFooter></ModalFooter>
-      </ModalContent>
-    </Modal>
+        <DialogFooter></DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
 

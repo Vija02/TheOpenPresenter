@@ -1,23 +1,12 @@
-import {
-  Box,
-  Button,
-  Divider,
-  Link,
-  Stack,
-  Text,
-  chakra,
-} from "@chakra-ui/react";
-import { keyframes } from "@emotion/react";
 import { PluginRendererState } from "@repo/base-plugin";
 import { useAwareness, useData, usePluginMetaData } from "@repo/shared";
+import { Button, Link } from "@repo/ui";
 import { OverlayToggle } from "@repo/ui";
+import cx from "classnames";
 import { sortBy } from "lodash-es";
-import { FaMicrophoneLines as FaMicrophoneLinesRaw } from "react-icons/fa6";
-import {
-  MdCoPresent as MdCoPresentRaw,
-  MdVolumeUp as MdVolumeUpRaw,
-} from "react-icons/md";
-import { RiRemoteControlLine as RiRemoteControlLineRaw } from "react-icons/ri";
+import { FaMicrophoneLines } from "react-icons/fa6";
+import { MdCoPresent, MdVolumeUp } from "react-icons/md";
+import { RiRemoteControlLine } from "react-icons/ri";
 import { VscAdd, VscArrowLeft } from "react-icons/vsc";
 import { useLocation } from "wouter";
 
@@ -26,46 +15,24 @@ import { PresentButton } from "./PresentButton";
 import { RendererWarning } from "./RendererWarning";
 import SidebarAddSceneModal from "./SidebarAddSceneModal";
 
-const MdCoPresent = chakra(MdCoPresentRaw);
-const MdVolumeUp = chakra(MdVolumeUpRaw);
-const RiRemoteControlLine = chakra(RiRemoteControlLineRaw);
-const FaMicrophoneLines = chakra(FaMicrophoneLinesRaw);
-
-const pulse = keyframes`
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(0.9); }
-`;
-
 const SidebarMobile = () => {
   const data = useData();
   const [location, navigate] = useLocation();
-  const { orgSlug, projectSlug } = usePluginMetaData();
+  const { orgSlug } = usePluginMetaData();
   const { awarenessData } = useAwareness();
 
   return (
-    <Box boxShadow="md">
-      <Box
-        display="flex"
-        flexDir="column"
-        bg="#F9FBFF"
-        height="100%"
-        width="80px"
-        borderRight="1px solid #d0d0d0"
-      >
-        <Box display="flex" flexDir="column" flex={1} overflow="auto" pb={2}>
+    <div className="shadow">
+      <div className="flex flex-col h-full w-[80px] border-r-1 border-r-gray-300">
+        <div className="flex flex-col flex-1 overflow-auto pb-2">
           <Link
             href={`/o/${orgSlug}`}
-            display="flex"
-            height="40px"
-            alignItems="center"
-            justifyContent="center"
-            _hover={{ bg: "gray.300" }}
-            bg="white"
+            className="font-medium text-sm h-8 justify-center"
           >
-            <VscArrowLeft fontSize={20} />
+            <VscArrowLeft />
           </Link>
-          <Divider />
-          <Box overflow="auto">
+          <hr />
+          <div className="overflow-auto">
             {sortBy(Object.entries(data.data), ([, value]) => value.order).map(
               ([id, value]) => {
                 const audioIsPlaying = !!Object.values(
@@ -83,77 +50,47 @@ const SidebarMobile = () => {
                 );
 
                 return (
-                  <Stack
+                  <div
                     key={id}
-                    spacing={1}
+                    className={cx(
+                      "stack-row h-[80px] cursor-pointer gap-1 py-2 px-2 hover:bg-gray-300 relative justify-center border-b-1 border-gray-50",
+                      location.includes(id) ? "bg-gray-300" : "bg-transparent",
+                    )}
                     onClick={() => {
                       navigate(`/${id}`);
                     }}
-                    cursor="pointer"
-                    px={2}
-                    _hover={{ bg: "gray.300" }}
-                    bg={location.includes(id) ? "gray.300" : "transparent"}
-                    height="80px"
-                    display="flex"
-                    alignItems="center"
-                    justifyContent="center"
-                    position="relative"
-                    borderBottom="1px solid rgb(0, 0, 0, 0.06)"
                   >
                     {isLoading && (
-                      <Box
-                        width="10px"
-                        height="10px"
-                        rounded="full"
-                        bgColor="orange.400"
-                        animation={`${pulse} 2s infinite`}
-                      />
+                      <div className="w-3 h-3 rounded-full bg-orange-400 animate-pulse" />
                     )}
                     {data.renderer["1"]?.currentScene === id && (
-                      <Box
-                        top={0}
-                        bottom={0}
-                        left={0}
-                        width="3px"
-                        position="absolute"
-                        bg="red.400"
-                      />
+                      <div className="absolute top-0 bottom-0 left-0 w-[3px] bg-red-400" />
                     )}
-                    <Text
-                      fontSize="xs"
-                      textAlign="center"
-                      wordBreak="break-word"
-                      width="100%"
-                      fontWeight="medium"
-                    >
+                    <p className="text-xs text-center break-words w-full font-medium">
                       {value.name}
-                    </Text>
-                    <Stack direction="row">
-                      {audioIsPlaying && <MdVolumeUp fontSize="lg" />}
+                    </p>
+                    <div className="stack-row">
+                      {audioIsPlaying && <MdVolumeUp />}
                       {audioIsRecording && (
-                        <FaMicrophoneLines color="red.500" fontSize="lg" />
+                        <FaMicrophoneLines className="text-red-600" />
                       )}
-                    </Stack>
-                  </Stack>
+                    </div>
+                  </div>
                 );
               },
             )}
-          </Box>
-          <Stack py={3} px={2}>
+          </div>
+          <div className="stack-col py-3 px-2">
             <OverlayToggle
               toggler={({ onToggle }) => (
                 <Button
-                  p={1}
-                  cursor="pointer"
                   onClick={onToggle}
-                  colorScheme="green"
-                  display="flex"
-                  flexDir="column"
+                  variant="success"
+                  size="mini"
+                  className="w-full"
                 >
                   <VscAdd />
-                  <Text color="white" fontSize="2xs" fontWeight="normal">
-                    Add
-                  </Text>
+                  Add
                 </Button>
               )}
             >
@@ -161,39 +98,32 @@ const SidebarMobile = () => {
             </OverlayToggle>
 
             <PresentButton isMobile />
-          </Stack>
-        </Box>
-        <Stack
-          direction="column"
-          p={2}
-          alignItems="center"
-          justifyContent="center"
-          borderTop="1px solid"
-          borderColor="gray.200"
-        >
-          <Stack direction="row" alignItems="center">
-            <Text fontWeight="medium" fontSize="md">
+          </div>
+        </div>
+        <div className="stack-col p-2 justify-center border-t-1 border-gray-200">
+          <div className="stack-row">
+            <p className="font-medium text-md">
               {awarenessData.filter((x) => x.user?.type === "remote").length}
-            </Text>
-            <RiRemoteControlLine title="Active remote" fontSize="md" />
-          </Stack>
-          <Stack direction="row" alignItems="center">
-            <Text fontWeight="medium" fontSize="md">
+            </p>
+            <RiRemoteControlLine title="Active remote" />
+          </div>
+          <div className="stack-row">
+            <p className="font-medium text-md">
               {awarenessData.filter((x) => x.user?.type === "renderer").length}
-            </Text>
-            <MdCoPresent title="Active screens" fontSize="md" />
-          </Stack>
-        </Stack>
-        <Stack gap={0}>
+            </p>
+            <MdCoPresent title="Active screens" />
+          </div>
+        </div>
+        <div className="stack-col gap-0">
           <RendererWarning />
           {import.meta.env.DEV && (
             <OverlayToggle
               toggler={({ onToggle }) => (
                 <Button
+                  className="w-full"
                   onClick={onToggle}
-                  colorScheme="gray"
+                  variant="muted"
                   size="sm"
-                  rounded="none"
                 >
                   Debug
                 </Button>
@@ -202,9 +132,9 @@ const SidebarMobile = () => {
               <DebugDrawer />
             </OverlayToggle>
           )}
-        </Stack>
-      </Box>
-    </Box>
+        </div>
+      </div>
+    </div>
   );
 };
 export default SidebarMobile;

@@ -1,4 +1,3 @@
-import { Box, Text } from "@chakra-ui/react";
 import {
   AudioCheckProvider,
   AwarenessProvider,
@@ -38,15 +37,10 @@ function Root() {
         <AudioCheckProvider>
           <PluginDataProvider type="remote">
             <AwarenessProvider>
-              <Box
-                display="flex"
-                position="relative"
-                height="100vh"
-                overflow="hidden"
-              >
+              <div className="flex relative h-screen overflow-hidden">
                 <Sidebar />
                 <MainBody />
-              </Box>
+              </div>
             </AwarenessProvider>
           </PluginDataProvider>
         </AudioCheckProvider>
@@ -60,5 +54,5 @@ function RedirectToOrg() {
     window.location.href = "/o";
   }, []);
 
-  return <Text>Redirecting...</Text>;
+  return <p>Redirecting...</p>;
 }
