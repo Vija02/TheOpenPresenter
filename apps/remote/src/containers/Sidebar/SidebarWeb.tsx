@@ -63,7 +63,7 @@ const SidebarWeb = () => {
                       location.includes(id) ? "bg-gray-300" : "bg-transparent",
                     )}
                   >
-                    <div className="stack-row">
+                    <div className="stack-row overflow-hidden">
                       {data.renderer["1"]?.currentScene === id && (
                         <div className="absolute top-0 bottom-0 left-0 w-[3px] bg-red-400" />
                       )}
@@ -71,7 +71,7 @@ const SidebarWeb = () => {
                       {audioIsRecording && (
                         <FaMicrophoneLines className="text-red-600" />
                       )}
-                      <p className="font-bold text-sm">{value.name}</p>
+                      <p className="font-bold text-sm text-ellipsis overflow-hidden">{value.name}</p>
                     </div>
                     {isLoading && (
                       <div className="w-3 h-3 rounded-full bg-orange-400 animate-pulse" />

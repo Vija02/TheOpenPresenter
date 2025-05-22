@@ -1,11 +1,11 @@
 import React, { FunctionComponent, Suspense } from "react";
 
-import { LoadingFull } from "./Loading";
+import { LoadingPart } from "./Loading";
 
 export const withSuspense = (component: FunctionComponent<any>) => {
   return (props: any) => {
     return (
-      <Suspense fallback={<LoadingFull />}>
+      <Suspense fallback={<LoadingPart />}>
         {React.createElement(component, props)}
       </Suspense>
     );

@@ -53,7 +53,7 @@ const SidebarMobile = () => {
                   <div
                     key={id}
                     className={cx(
-                      "stack-row h-[80px] cursor-pointer gap-1 py-2 px-2 hover:bg-gray-300 relative justify-center border-b-1 border-gray-50",
+                      "stack-col h-[80px] cursor-pointer gap-1 py-2 px-2 hover:bg-gray-300 relative justify-center border-b-1 border-gray-50 overflow-hidden",
                       location.includes(id) ? "bg-gray-300" : "bg-transparent",
                     )}
                     onClick={() => {
@@ -66,7 +66,7 @@ const SidebarMobile = () => {
                     {data.renderer["1"]?.currentScene === id && (
                       <div className="absolute top-0 bottom-0 left-0 w-[3px] bg-red-400" />
                     )}
-                    <p className="text-xs text-center break-words w-full font-medium">
+                    <p className="text-xs text-center break-words w-full font-medium text-ellipsis overflow-hidden">
                       {value.name}
                     </p>
                     <div className="stack-row">

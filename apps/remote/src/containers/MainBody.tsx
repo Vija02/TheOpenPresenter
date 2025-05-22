@@ -26,6 +26,7 @@ import {
 import {
   Button,
   ErrorAlert,
+  LoadingPart,
   OverlayToggle,
   PopConfirm,
   Slider,
@@ -136,7 +137,6 @@ const MainBody = () => {
                   <SceneSettingsModal selectedScene={selectedScene} />
                 </OverlayToggle>
                 <PopConfirm
-                  title={`Are you sure you want to remove this scene?`}
                   onConfirm={() => {
                     delete mainState.data[selectedScene];
                     if (
@@ -145,9 +145,6 @@ const MainBody = () => {
                       mainState.renderer["1"]!.currentScene = null;
                     }
                   }}
-                  okText="Yes"
-                  cancelText="No"
-                  key="remove"
                 >
                   <Button
                     size="sm"
@@ -320,7 +317,7 @@ const PluginRenderer = React.memo(
       }
 
       if (!yjsPluginSceneData || !yjsPluginRendererData) {
-        return <p>Loading...</p>;
+        return <LoadingPart />;
       }
 
       return React.createElement(viewData.tag, {

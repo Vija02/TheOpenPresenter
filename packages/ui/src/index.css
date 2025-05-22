@@ -63,6 +63,14 @@
   --color-fill-destructive-disabled: rgba(199, 10, 36, 0.4);
   --color-fill-destructive-fg: white;
 
+  --color-fill-warning: rgba(255, 184, 0, 1);
+  --color-fill-warning-hover: rgba(229, 165, 0, 1);
+  --color-fill-warning-selected: rgba(178, 132, 0, 1);
+  --color-fill-warning-disabled: rgba(255, 184, 0, 0.4);
+  --color-fill-warning-fg: white;
+
+  --breakpoint-desktop: 48rem; /* Same as md */
+
   /* --color-surface-info: rgba(234, 244, 255, 1);
   --color-surface-info-hover: rgba(224, 240, 255, 1);
   --color-surface-info-active: rgba(202, 230, 255, 1); */
@@ -186,11 +194,13 @@
 }
 
 @utility stack-row {
+  @apply [&_svg]:shrink-0;
   display: flex;
   gap: 10px;
   align-items: center;
 }
 @utility stack-col {
+  @apply [&_svg]:shrink-0;
   display: flex;
   flex-direction: column;
   gap: 10px;

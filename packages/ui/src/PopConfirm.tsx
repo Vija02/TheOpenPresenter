@@ -2,7 +2,6 @@ import { cx } from "class-variance-authority";
 import React, { useCallback, useState } from "react";
 import { FiAlertTriangle } from "react-icons/fi";
 
-import { LoadingInline } from "./Loading";
 import { Button } from "./components/ui/button";
 import {
   Popover,

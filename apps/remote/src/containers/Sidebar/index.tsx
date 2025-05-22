@@ -1,14 +1,16 @@
-import { useIsMobile } from "../../hooks/useIsMobile";
 import SidebarMobile from "./SidebarMobile";
 import SidebarWeb from "./SidebarWeb";
 
 const SidebarWrapper = () => {
-  const isMobile = useIsMobile();
-
-  if (isMobile) {
-    return <SidebarMobile />;
-  } else {
-    return <SidebarWeb />;
-  }
+  return (
+    <>
+      <div className="hidden desktop:flex h-screen relative">
+        <SidebarWeb />
+      </div>
+      <div className="desktop:hidden h-screen flex relative">
+        <SidebarMobile />
+      </div>
+    </>
+  );
 };
 export default SidebarWrapper;

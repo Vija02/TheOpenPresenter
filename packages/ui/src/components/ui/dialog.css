@@ -28,13 +28,13 @@
   }
 
   .ui--dialog-header {
-    @apply flex flex-col gap-2 px-6 pt-4;
+    @apply flex flex-col gap-2 px-6 pt-6;
   }
   .ui--dialog-body {
     @apply flex flex-col gap-2 px-6 overflow-y-scroll;
   }
   .ui--dialog-footer {
-    @apply flex gap-2 sm:flex-row px-6 pb-4 sm:justify-end;
+    @apply flex gap-2 sm:flex-row px-6 pb-6 sm:justify-end;
   }
   .ui--dialog-title {
     @apply text-lg leading-none font-semibold;
