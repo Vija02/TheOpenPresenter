@@ -1,6 +1,6 @@
 import { usePluginMetaData } from "@repo/shared";
 import { Button, Link } from "@repo/ui";
-import cx from "classnames";
+import { cx } from "class-variance-authority";
 import { lazy } from "react";
 import { MdCoPresent, MdOutlineCancelPresentation } from "react-icons/md";
 

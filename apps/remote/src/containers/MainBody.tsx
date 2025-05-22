@@ -31,7 +31,7 @@ import {
   PopConfirm,
   Slider,
 } from "@repo/ui";
-import cx from "classnames";
+import { cx } from "class-variance-authority";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { RxCross1 } from "react-icons/rx";

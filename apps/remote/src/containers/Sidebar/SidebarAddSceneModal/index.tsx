@@ -12,7 +12,7 @@ import {
   DialogTitle,
   OverlayToggleComponentProps,
 } from "@repo/ui";
-import cx from "classnames";
+import { cx } from "class-variance-authority";
 import React, { useState } from "react";
 import { FaStar } from "react-icons/fa";
 import { IconType } from "react-icons/lib";

@@ -2,7 +2,7 @@ import { PluginRendererState } from "@repo/base-plugin";
 import { useAwareness, useData, usePluginMetaData } from "@repo/shared";
 import { Button, Link } from "@repo/ui";
 import { OverlayToggle } from "@repo/ui";
-import cx from "classnames";
+import { cx } from "class-variance-authority";
 import { sortBy } from "lodash-es";
 import { FaMicrophoneLines } from "react-icons/fa6";
 import { MdCoPresent, MdVolumeUp } from "react-icons/md";

@@ -1,5 +1,5 @@
 import { PluginAPIContext } from "@repo/base-plugin/client";
-import cx from "classnames";
+import { cx } from "class-variance-authority";
 import { use, useContext, useMemo } from "react";
 import { useStore } from "zustand";
 

@@ -55,7 +55,6 @@
     "@tailwindcss/typography": "^0.5.16",
     "autoprefixer": "^10.4.20",
     "class-variance-authority": "^0.7.1",
-    "classnames": "^2.5.1",
     "clsx": "^2.1.1",
     "cssnano": "^7.0.6",
     "date-fns": "^4.1.0",
