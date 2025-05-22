@@ -11,6 +11,8 @@ const buttonVariants = cva("ui--button", {
     variant: {
       default: "ui--button__default",
       success: "ui--button__success",
+      info: "ui--button__info",
+      warning: "ui--button__warning",
       destructive: "ui--button__destructive",
       outline: "ui--button__outline",
       muted: "ui--button__muted",

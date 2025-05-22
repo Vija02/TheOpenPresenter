@@ -57,6 +57,12 @@
   --color-fill-success-disabled: rgba(4, 123, 93, 0.4);
   --color-fill-success-fg: white;
 
+  --color-fill-info: rgba(145, 208, 255, 1);
+  --color-fill-info-hover: rgba(81, 192, 255, 1);
+  --color-fill-info-selected: rgba(202, 230, 255, 1);
+  --color-fill-info-disabled: rgba(145, 208, 255, 0.4);
+  --color-fill-info-fg: rgba(0, 33, 51, 1);
+
   --color-fill-destructive: rgba(199, 10, 36, 1);
   --color-fill-destructive-hover: rgba(163, 10, 36, 1);
   --color-fill-destructive-selected: rgba(142, 11, 33, 1);
@@ -67,7 +73,7 @@
   --color-fill-warning-hover: rgba(229, 165, 0, 1);
   --color-fill-warning-selected: rgba(178, 132, 0, 1);
   --color-fill-warning-disabled: rgba(255, 184, 0, 0.4);
-  --color-fill-warning-fg: white;
+  --color-fill-warning-fg: rgba(37, 26, 0, 1);
 
   --breakpoint-desktop: 48rem; /* Same as md */
 

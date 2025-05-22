@@ -34,6 +34,16 @@ export const Destructive: Story = {
     variant: "destructive",
   },
 };
+export const Info: Story = {
+  args: {
+    variant: "info",
+  },
+};
+export const Warning: Story = {
+  args: {
+    variant: "warning",
+  },
+};
 export const Outline: Story = {
   args: {
     variant: "outline",

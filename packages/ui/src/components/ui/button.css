@@ -26,6 +26,18 @@
     @apply disabled:bg-fill-success-disabled;
   }
 
+  .ui--button__info {
+    @apply bg-fill-info text-fill-info-fg shadow-xs;
+    @apply hover:bg-fill-info-hover;
+    @apply disabled:bg-fill-info-disabled;
+  }
+
+  .ui--button__warning {
+    @apply bg-fill-warning text-fill-warning-fg shadow-xs;
+    @apply hover:bg-fill-warning-hover;
+    @apply disabled:bg-fill-warning-disabled;
+  }
+
   .ui--button__destructive {
     @apply bg-fill-destructive text-fill-destructive-fg shadow-xs;
     @apply hover:bg-fill-destructive-hover;
