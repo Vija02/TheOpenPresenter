@@ -1,5 +1,6 @@
-import { useDisclosure } from "@chakra-ui/react";
 import { cloneElement, useCallback, useState } from "react";
+
+import { useDisclosure } from "./lib/useDisclosure";
 
 /**
  * This is the minimum props the overlay component needs to have
@@ -40,7 +41,7 @@ export const OverlayToggle = ({
   isLazy,
   children,
 }: OverlayTogglePropTypes) => {
-  const { isOpen, onToggle, onOpen } = useDisclosure();
+  const { open, onToggle, onOpen } = useDisclosure();
   const [key, setKey] = useState(0);
 
   const resetData = useCallback(() => {
@@ -50,10 +51,10 @@ export const OverlayToggle = ({
   return (
     <>
       {toggler({ onOpen, onToggle })}
-      {(isOpen || !isLazy) &&
+      {(open || !isLazy) &&
         cloneElement(children, {
           key,
-          isOpen,
+          isOpen: open,
           onToggle,
           resetData,
         })}

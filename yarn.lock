@@ -8284,9 +8284,6 @@ __metadata:
   resolution: "@repo/remote@workspace:apps/remote"
   dependencies:
     "@apollo/client": "npm:3.12.2"
-    "@chakra-ui/react": "npm:^2.10.4"
-    "@emotion/react": "npm:^11.13.5"
-    "@emotion/styled": "npm:^11.13.5"
     "@repo/base-plugin": "npm:*"
     "@repo/eslint-config": "npm:*"
     "@repo/graphql": "npm:*"
@@ -8311,7 +8308,6 @@ __metadata:
     eslint: "npm:^8.57.1"
     formik: "npm:^2.4.6"
     formik-chakra-ui: "npm:^1.6.1"
-    framer-motion: "npm:^11.13.1"
     graphql: "npm:^15.9.0"
     graphql-ws: "npm:^5.16.0"
     lodash-es: "npm:^4.17.21"

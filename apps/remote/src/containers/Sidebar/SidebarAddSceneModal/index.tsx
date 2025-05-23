@@ -1,8 +1,8 @@
-import { Badge } from "@chakra-ui/react";
 import { Scene, SceneCategories, sceneCategories } from "@repo/base-plugin";
 import { RemoteBasePluginQuery } from "@repo/graphql";
 import { usePluginData, usePluginMetaData } from "@repo/shared";
 import {
+  Badge,
   Button,
   Dialog,
   DialogBody,
@@ -128,9 +128,7 @@ const SidebarAddSceneModal = ({
                             <div className="stack-row">
                               <p className="font-bold">{sceneCreator.title}</p>
                               {sceneCreator.isExperimental && (
-                                <Badge variant="subtle" colorScheme="red">
-                                  Experimental
-                                </Badge>
+                                <Badge variant="info">EXPERIMENTAL</Badge>
                               )}
                               {sceneCreator.isStarred && (
                                 <FaStar className="text-yellow-400" />

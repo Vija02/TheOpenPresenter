@@ -29,7 +29,7 @@ const DebugDrawer = ({ isOpen, onToggle, ...props }: DebugDrawerPropTypes) => {
       onOpenChange={onToggle ?? (() => {})}
       {...props}
     >
-      <DialogContent size="xl">
+      <DialogContent size="2xl">
         <DialogHeader>
           <DialogTitle>Debug</DialogTitle>
         </DialogHeader>

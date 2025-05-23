@@ -1,5 +1,3 @@
-import { Box, Flex, Stack, Text } from "@chakra-ui/react";
-
 type PluginScaffoldPropTypes = {
   title: string;
   toolbar?: React.ReactElement;
@@ -14,44 +12,21 @@ export const PluginScaffold = ({
   body,
 }: PluginScaffoldPropTypes) => {
   return (
-    <Flex flexDir="column" height="100%">
-      <Box p={3} bg="gray.900">
-        <Stack direction="row" alignItems="center" gap={5} flexWrap="wrap">
-          <Stack direction="row" alignItems="center">
-            <Text fontWeight="bold" color="white">
-              <Text>{title}</Text>
-            </Text>
-          </Stack>
-          <Stack
-            direction="row"
-            alignItems="center"
-            justifyContent="space-between"
-            spacing={2}
-            flex={1}
-            flexWrap="wrap"
-          >
-            <Stack
-              direction="row"
-              alignItems="center"
-              spacing={2}
-              flexWrap="wrap"
-            >
-              {toolbar}
-            </Stack>
-            <Stack
-              direction="row"
-              alignItems="center"
-              spacing={2}
-              flexWrap="wrap"
-            >
-              {postToolbar}
-            </Stack>
-          </Stack>
-        </Stack>
-      </Box>
-      <Flex width="100%" height="100%">
-        {body}
-      </Flex>
-    </Flex>
+    <div className="flex flex-col h-full">
+      <div className="p-3 bg-gray-900">
+        <div className="stack-row gap-5 flex-wrap">
+          <div className="stack-row">
+            <p className="font-bold text-white">
+              <p>{title}</p>
+            </p>
+          </div>
+          <div className="stack-row justify-between gap-2 flex-1 flex-wrap">
+            <div className="stack-row gap-2 flex-wrap">{toolbar}</div>
+            <div className="stack-row flex-wrap">{postToolbar}</div>
+          </div>
+        </div>
+      </div>
+      <div className="flex w-full h-full">{body}</div>
+    </div>
   );
 };
