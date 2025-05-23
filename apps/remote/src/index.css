@@ -1,3 +1,5 @@
+@import "../../../packages/ui/src/index.css";
+
 html {
   overscroll-behavior: none;
 }
@@ -28,12 +30,6 @@ html {
   top: 0;
   left: -3px;
   cursor: ew-resize;
-}
-
-@keyframes blink {
-  50% {
-    border-color: #fff;
-  }
 }
 
 .content-hidden {

@@ -1,66 +1,58 @@
+import { useAwareness, useData } from "@repo/shared";
 import {
   Button,
-  Drawer,
-  DrawerBody,
-  DrawerCloseButton,
-  DrawerContent,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerOverlay,
-  DrawerProps,
-  Tab,
-  TabList,
-  TabPanel,
-  TabPanels,
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  OverlayToggleComponentProps,
   Tabs,
-} from "@chakra-ui/react";
-import { useAwareness, useData } from "@repo/shared";
-import { OverlayToggleComponentProps } from "@repo/ui";
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@repo/ui";
 import { lazy } from "react";
 
 const JSONViewer = lazy(() => import("./JSONViewer"));
 
-export type DebugDrawerPropTypes = Omit<
-  DrawerProps,
-  "isOpen" | "onClose" | "children"
-> &
-  Partial<OverlayToggleComponentProps> & {};
+export type DebugDrawerPropTypes = Partial<OverlayToggleComponentProps>;
 
 const DebugDrawer = ({ isOpen, onToggle, ...props }: DebugDrawerPropTypes) => {
   const data = useData();
   const { awarenessData } = useAwareness();
 
   return (
-    <Drawer
-      size="xl"
-      isOpen={isOpen ?? false}
-      onClose={onToggle ?? (() => {})}
+    <Dialog
+      open={isOpen ?? false}
+      onOpenChange={onToggle ?? (() => {})}
       {...props}
     >
-      <DrawerOverlay />
-      <DrawerContent>
-        <DrawerHeader>Debug</DrawerHeader>
-        <DrawerCloseButton />
-        <DrawerBody>
-          <Tabs isLazy>
-            <TabList>
-              <Tab>Main Data</Tab>
-              <Tab>Awareness Data</Tab>
-            </TabList>
-            <TabPanels>
-              <TabPanel>{<JSONViewer src={data} />}</TabPanel>
-              <TabPanel>{<JSONViewer src={awarenessData} />}</TabPanel>
-            </TabPanels>
+      <DialogContent size="2xl">
+        <DialogHeader>
+          <DialogTitle>Debug</DialogTitle>
+        </DialogHeader>
+        <DialogBody>
+          <Tabs defaultValue="main">
+            <TabsList>
+              <TabsTrigger value="main">Main Data</TabsTrigger>
+              <TabsTrigger value="awareness">Awareness Data</TabsTrigger>
+            </TabsList>
+            <TabsContent value="main">{<JSONViewer src={data} />}</TabsContent>
+            <TabsContent value="awareness">
+              {<JSONViewer src={awarenessData} />}
+            </TabsContent>
           </Tabs>
-        </DrawerBody>
+        </DialogBody>
 
-        <DrawerFooter>
+        <DialogFooter>
           <Button variant="ghost" onClick={onToggle}>
             Close
           </Button>
-        </DrawerFooter>
-      </DrawerContent>
-    </Drawer>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
 

@@ -1,4 +1,3 @@
-import { Grid } from "@chakra-ui/react";
 import useSize from "@react-hook/size";
 import { PluginAPIContext } from "@repo/base-plugin/client";
 import { createContext, useContext, useMemo, useRef } from "react";
@@ -28,15 +27,15 @@ export const SlideGrid = ({ children, forceWidth }: PropTypes) => {
 
   return (
     <CustomSizeContext.Provider value={{ forceWidth, containerWidth: width }}>
-      <Grid
+      <div
+        className="grid gap-3"
         ref={target}
-        gap={3}
         style={{
           gridTemplateColumns: `repeat(auto-fill, minmax(${pixelValue}px, 1fr))`,
         }}
       >
         {children}
-      </Grid>
+      </div>
     </CustomSizeContext.Provider>
   );
 };

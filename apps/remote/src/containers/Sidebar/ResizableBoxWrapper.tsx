@@ -19,7 +19,6 @@ export const ResizableBoxWrapper = ({
     [setSidebarWidth],
   );
   return (
-    // @ts-expect-error due to react version mismatch
     <ResizableBox
       key={key}
       className="sidebar-resizable-container"
