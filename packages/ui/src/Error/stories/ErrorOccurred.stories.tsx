@@ -12,12 +12,4 @@ const meta = {
 
 export default meta;
 
-export const Default: StoryObj = {
-  decorators: [
-    (Story, context) => (
-      <div className="h-screen">
-        <Story {...context} />
-      </div>
-    ),
-  ],
-};
+export const Default: StoryObj = {};

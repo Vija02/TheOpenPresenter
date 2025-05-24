@@ -1,5 +1,3 @@
-import { theme } from "@/theme";
-import { ChakraProvider } from "@chakra-ui/react";
 import type { Meta, StoryObj } from "@storybook/react";
 
 import { ErrorAlert } from "../ErrorAlert";
@@ -14,24 +12,9 @@ const meta = {
 
 export default meta;
 
-export const Default: StoryObj = {
-  decorators: [
-    (Story, context) => (
-      <div className="h-screen">
-        <Story {...context} />
-      </div>
-    ),
-  ],
-};
+export const Default: StoryObj = {};
 export const WithErrorMessage: StoryObj = {
   args: { error: new Error("Test error message") },
-  decorators: [
-    (Story, context) => (
-      <div className="h-screen">
-        <Story {...context} />
-      </div>
-    ),
-  ],
 };
 
 const CSRFErr = new Error("");
@@ -39,11 +22,4 @@ const CSRFErr = new Error("");
 CSRFErr.networkError = { result: { errors: [{ code: "EBADCSRFTOKEN" }] } };
 export const CSRFError: StoryObj = {
   args: { error: CSRFErr },
-  decorators: [
-    (Story, context) => (
-      <div className="h-screen">
-        <Story {...context} />
-      </div>
-    ),
-  ],
 };
