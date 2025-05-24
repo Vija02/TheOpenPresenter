@@ -24,11 +24,11 @@ export function PasswordStrength({
   }
 
   const content = (
-    <ul className="list-disc">
+    <ul className="list-disc list-inside">
       {suggestions.map((suggestion, key) => {
         return (
-          <li key={key}>
-            <p className="text-secondary">{suggestion}</p>
+          <li key={key} className="text-secondary">
+            {suggestion}
           </li>
         );
       })}
