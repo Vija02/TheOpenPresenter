@@ -10,6 +10,7 @@ export * from "./components/ui/tabs";
 export * from "./components/ui/label";
 export * from "./components/ui/form";
 export * from "./components/ui/input";
+export * from "./components/ui/progress";
 export * from "./ClientOnly";
 export * from "./DateDisplay";
 export * from "./DeferredLoad";
