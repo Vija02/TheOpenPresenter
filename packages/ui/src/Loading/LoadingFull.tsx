@@ -16,12 +16,7 @@ export function LoadingFull({
 }: PropTypes) {
   return (
     <DeferredLoad durationMs={defer}>
-      <div
-        className={cx(
-          "flex justify-center h-full pt-[30vh]",
-          containerClassName,
-        )}
-      >
+      <div className={cx("center pt-[30vh]", containerClassName)}>
         <div className={cx("ui--loading-full", className)} />
       </div>
     </DeferredLoad>

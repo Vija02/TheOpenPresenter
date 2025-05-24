@@ -197,6 +197,9 @@
   body {
     @apply bg-surface-primary text-primary text-sm;
   }
+  a {
+    @apply text-link hover:underline;
+  }
 }
 
 @utility stack-row {
@@ -211,6 +214,9 @@
   flex-direction: column;
   gap: 10px;
   align-items: center;
+}
+@utility center {
+  @apply flex justify-center h-full;
 }
 
 @keyframes border-blink {
