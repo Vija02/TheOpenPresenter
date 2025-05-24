@@ -1,4 +1,4 @@
-import "./index.css";
+import "@repo/tailwind-config/index.css";
 
 export * from "./components/ui/alert";
 export * from "./components/ui/badge";

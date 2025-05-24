@@ -52,7 +52,6 @@
     "@rehooks/component-size": "^1.0.3",
     "@repo/base-plugin": "*",
     "@repo/graphql": "*",
-    "@tailwindcss/typography": "^0.5.16",
     "autoprefixer": "^10.4.20",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -76,7 +75,6 @@
     "@storybook/react": "^8.6.14",
     "@storybook/react-vite": "^8.6.14",
     "@storybook/test": "^8.6.14",
-    "@tailwindcss/postcss": "^4.1.6",
     "@tailwindcss/vite": "^4.1.7",
     "@tsconfig/vite-react": "^3.4.0",
     "@types/react": "^19.1.2",
@@ -87,7 +85,6 @@
     "react-dom": "^19.1.0",
     "storybook": "^8.6.14",
     "tailwindcss": "^4.1.7",
-    "tw-animate-css": "^1.3.0",
     "typescript": "^5.7.2",
     "vite": "6.3.5",
     "vite-plugin-dts": "^4.5.4"

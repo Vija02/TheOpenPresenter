@@ -1,4 +1,4 @@
-@import "../../../packages/ui/src/index.css";
+@import "@repo/tailwind-config/index.css";
 
 html {
   overscroll-behavior: none;

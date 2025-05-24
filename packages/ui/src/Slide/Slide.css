@@ -1,4 +1,4 @@
-@reference "../index.css";
+@reference "@repo/tailwind-config/index.css";
 
 .ui--slide-test {
   @apply uppercase text-xs mb-1 text-ellipsis overflow-hidden text-nowrap;
