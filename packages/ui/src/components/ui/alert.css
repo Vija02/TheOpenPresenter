@@ -1,7 +1,24 @@
-@reference "@repo/tailwind-config/index.css"
+@reference "@repo/tailwind-config/index.css";
 
 @layer base {
   .ui--alert {
-    @apply relative w-full rounded-lg border px-4 py-3 text-sm grid has-[>svg]:grid-cols-[calc(var(--spacing)*4)_1fr] grid-cols-[0_1fr] has-[>svg]:gap-x-3 gap-y-0.5 items-start [&>svg]:size-4 [&>svg]:translate-y-0.5 [&>svg]:text-current;
+    @apply relative w-full;
+    @apply shadow rounded-lg;
+  }
+
+  .ui--alert-heading {
+    @apply flex items-center gap-2 min-h-4 font-medium tracking-tight;
+    @apply [&>svg]:size-5;
+  }
+
+  .ui--alert > div {
+    @apply px-4;
+  }
+
+  .ui--alert > div:first-child {
+    @apply rounded-t-lg py-3;
+  }
+  .ui--alert > div:last-child {
+    @apply border-x border-b rounded-b-lg py-3;
   }
 }

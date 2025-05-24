@@ -1,15 +1,6 @@
-import {
-  Alert,
-  AlertDescription,
-  AlertIcon,
-  Box,
-  Button,
-  Heading,
-  Image,
-  Link,
-  Text,
-  VStack,
-} from "@chakra-ui/react";
+import { Alert } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { BiSolidErrorAlt } from "react-icons/bi";
 import { VscSync } from "react-icons/vsc";
 
 export interface ErrorAlertProps {
@@ -21,40 +12,40 @@ export function ErrorAlert({ error }: ErrorAlertProps) {
     ?.errors?.[0]?.code;
   if (code === "EBADCSRFTOKEN") {
     return (
-      <VStack mt="15vh">
-        <Image src="/svg/dead-emoji.svg" maxW="80px" />
-        <Heading textAlign="center">Invalid CSRF token</Heading>
-        <Text textAlign="center" color="subtitle">
+      <div className="stack-col mt-[15vh] text-center">
+        <BiSolidErrorAlt className="size-16 text-fill-warning" />
+        <h1 className="text-3xl font-medium">Invalid CSRF token</h1>
+        <p className="text-secondary">
           Our security protections have failed to authenticate your request; to
           solve this you need to refresh the page:
-        </Text>
-        <Button
-          size="md"
-          onClick={() => window.location.reload()}
-          colorScheme="blue"
-          leftIcon={<VscSync />}
-        >
+        </p>
+        <div className="pb-3" />
+        <Button onClick={() => window.location.reload()}>
+          <VscSync />
           Refresh page
         </Button>
-      </VStack>
+      </div>
     );
   }
 
   return (
-    <VStack mt="15vh">
-      <Image src="/svg/dead-emoji.svg" maxW="80px" />
-      <Heading textAlign="center">Unexpected error occurred</Heading>
-      <Text textAlign="center" color="subtitle">
-        We're really sorry, an unexpected error occurred. Please{" "}
-        <Link href="/">return to the homepage</Link> and try again.
-      </Text>
-      <Box pb={3} />
+    <div className="stack-col mt-[15vh] text-center">
+      <BiSolidErrorAlt className="size-16 text-fill-destructive" />
+      <h1 className="text-3xl font-medium">Unexpected error occurred</h1>
+      <p className="text-secondary">
+        We're really sorry, an unexpected error occurred. Please try again or{" "}
+        <a href="/">return to the homepage</a>.
+      </p>
+      <div className="pb-3" />
       {!!error && (
-        <Alert status="error" maxW="2xl">
-          <AlertIcon />
-          <AlertDescription display="block">{error?.message}</AlertDescription>
+        <Alert
+          variant="destructive"
+          title={error.name ?? "Error"}
+          className="max-w-2xl"
+        >
+          {error?.message}
         </Alert>
       )}
-    </VStack>
+    </div>
   );
 }
