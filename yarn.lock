@@ -8376,10 +8376,12 @@ __metadata:
     "@types/react-dom": "npm:^19.1.3"
     "@typescript-eslint/parser": "npm:^7.18.0"
     "@vitejs/plugin-react-swc": "npm:^3.7.2"
+    class-variance-authority: "npm:^0.7.1"
     eslint: "npm:^8.57.1"
     graphql: "npm:^15.9.0"
     graphql-ws: "npm:^5.16.0"
     react: "npm:^19.1.0"
+    react-animate-presence: "npm:^1.0.8"
     react-dom: "npm:^19.1.0"
     react-error-boundary: "npm:^4.1.2"
     react-qr-code: "npm:^2.0.15"
@@ -25604,6 +25606,13 @@ __metadata:
     iconv-lite: "npm:0.4.24"
     unpipe: "npm:1.0.0"
   checksum: 10c0/b201c4b66049369a60e766318caff5cb3cc5a900efd89bdac431463822d976ad0670912c931fdbdcf5543207daf6f6833bca57aa116e1661d2ea91e12ca692c4
+  languageName: node
+  linkType: hard
+
+"react-animate-presence@npm:^1.0.8":
+  version: 1.0.8
+  resolution: "react-animate-presence@npm:1.0.8"
+  checksum: 10c0/1a665082fe81e7981af16c0c0f68469f94156821795233b2a6438853a931aba708120396aeeabc51c8040cabbcb854481647e1b3309d6d5e2510de24296bf371
   languageName: node
   linkType: hard
 

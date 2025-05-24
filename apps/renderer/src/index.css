@@ -3,6 +3,9 @@
 html {
   background-color: black;
 }
+body {
+  background-color: black;
+}
 
 .landing {
   @apply h-full text-white p-10 md:p-20 border-[10px] border-orange-500;

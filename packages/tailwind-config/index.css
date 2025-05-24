@@ -228,3 +228,10 @@
 @utility animate-border-blink {
   animation: border-blink 1.8s steps(1, start) infinite;
 }
+
+@utility transition-fade-in {
+  @apply animate-in fade-in duration-300 ease-in fill-mode-forwards;
+}
+@utility transition-fade-out {
+  @apply animate-out fade-out duration-300 ease-out fill-mode-forwards;
+}
