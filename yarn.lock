@@ -8064,6 +8064,7 @@ __metadata:
     "@repo/prettier-config": "npm:*"
     "@repo/typescript-config": "npm:*"
     "@repo/ui": "npm:*"
+    "@tailwindcss/vite": "npm:^4.1.7"
     "@tanstack/react-query": "npm:^5.62.3"
     "@tiptap/core": "npm:^2.11.7"
     "@tiptap/extension-document": "npm:^2.11.7"

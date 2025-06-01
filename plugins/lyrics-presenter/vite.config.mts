@@ -1,3 +1,4 @@
+import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react-swc";
 import { defineConfig } from "vite";
 
@@ -10,7 +11,7 @@ export default defineConfig({
       NODE_ENV: "production",
     },
   },
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
   build: {
     outDir: "out",
     lib: {
@@ -21,6 +22,9 @@ export default defineConfig({
     },
     rollupOptions: {
       external: ["yjs", "react", "react-dom", "react-dom/client"],
+      output: {
+        assetFileNames: "style.css"
+      }
     },
     target: "esnext",
   },
