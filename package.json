@@ -51,7 +51,8 @@
     "plugins/*"
   ],
   "dependencies": {
-    "graphql": "^15.9.0"
+    "graphql": "^15.9.0",
+    "tailwindcss": "^4.1.8"
   },
   "resolutions": {
     "graphql": "15.9",

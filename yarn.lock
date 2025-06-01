@@ -8585,7 +8585,6 @@ __metadata:
     clsx: "npm:^2.1.1"
     cssnano: "npm:^7.0.6"
     date-fns: "npm:^4.1.0"
-    dts-cli: "npm:^2.0.5"
     eslint-plugin-storybook: "npm:^0.12.0"
     framer-motion: "npm:^11.13.1"
     lucide-react: "npm:^0.511.0"
@@ -28358,6 +28357,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"tailwindcss@npm:^4.1.8":
+  version: 4.1.8
+  resolution: "tailwindcss@npm:4.1.8"
+  checksum: 10c0/a566d049ee313f9c1638fd2a5fe95ae7e40bb35b58e92ed8d7c51880e71dff2a423dd430ff97444e2496c9c77b3f44ad4df48110b11484133019c1a8520d7bce
+  languageName: node
+  linkType: hard
+
 "tapable@npm:^2.2.0":
   version: 2.2.1
   resolution: "tapable@npm:2.2.1"
@@ -28455,6 +28461,7 @@ __metadata:
     nodemon: "npm:^3.1.7"
     patch-package: "npm:^8.0.0"
     prettier: "npm:^3.4.2"
+    tailwindcss: "npm:^4.1.8"
     turbo: "npm:^2.3.3"
     typescript: "npm:5.7.2"
     vitest: "npm:^2.1.8"
