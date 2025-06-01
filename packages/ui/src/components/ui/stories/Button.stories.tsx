@@ -59,6 +59,14 @@ export const Ghost: Story = {
     variant: "ghost",
   },
 };
+export const Pill: Story = {
+  args: {
+    variant: "pill",
+  },
+  render: (args) =>{
+    return <div className="bg-black p-3"><Button {...args} /></div>
+  }
+};
 export const Link: Story = {
   args: {
     variant: "link",

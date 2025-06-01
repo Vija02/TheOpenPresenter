@@ -17,11 +17,13 @@ const buttonVariants = cva("ui--button", {
       outline: "ui--button__outline",
       muted: "ui--button__muted",
       ghost: "ui--button__ghost",
+      pill: "ui--button__pill",
       link: "text-primary underline-offset-4 hover:underline",
     },
     size: {
       default: "h-9 px-4 py-2 has-[>svg]:px-3",
       mini: "h-initial text-2xs py-2 rounded-sm gap-1 px-1.5 has-[>svg]:px-2.5 flex flex-col",
+      xs: "h-6 rounded-sm gap-1.5 px-2 text-xs has-[>svg]:px-1 [&_svg:not([class*='size-'])]:size-3",
       sm: "h-8 rounded-sm gap-1.5 px-3 has-[>svg]:px-2.5",
       lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
       icon: "size-9",
