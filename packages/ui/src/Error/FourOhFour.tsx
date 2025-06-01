@@ -1,5 +1,5 @@
 interface FourOhFourProps {
-  loggedIn?: false;
+  loggedIn?: boolean;
 }
 
 export function FourOhFour({ loggedIn }: FourOhFourProps) {
