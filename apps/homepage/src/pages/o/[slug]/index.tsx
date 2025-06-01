@@ -173,7 +173,7 @@ const ProjectCard = ({
             <DateDisplay
               date={new Date(project.targetDate)}
               formatToken="do MMM yyyy"
-              textProps={{ fontSize: "sm", fontWeight: { base: 600, sm: 500 } }}
+              className="text-sm font-bold sm:font-medium"
             />
           )}
           <Text fontSize={project.targetDate ? "xs" : "sm"}>
