@@ -23,8 +23,8 @@ export default defineConfig({
     rollupOptions: {
       external: ["yjs", "react", "react-dom", "react-dom/client"],
       output: {
-        assetFileNames: "style.css"
-      }
+        assetFileNames: "style.css",
+      },
     },
     target: "esnext",
   },
