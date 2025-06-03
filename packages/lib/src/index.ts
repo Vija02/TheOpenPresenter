@@ -3,6 +3,7 @@ export * from "./constants";
 export * from "./errors";
 export * from "./globalState";
 export * from "./mediaUtil";
+export * from "./preloader";
 export * from "./streamToBuffer";
 export * from "./useInjectScript";
 export * from "./yjsTypes";

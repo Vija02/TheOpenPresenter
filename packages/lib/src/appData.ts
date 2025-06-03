@@ -15,10 +15,17 @@ const getOTELEnabled = () => (window as any)?.__APP_DATA__?.ENABLE_OTEL === "1";
 const getCustomEnv = (envName: string) =>
   (window as any)?.__APP_DATA__?.[envName];
 
+const getPluginData = () =>
+  (window as any)?.__APP_DATA__?.pluginData as Record<
+    string,
+    { scripts: string[]; css: string[] }
+  >;
+
 export const appData = {
   getRootURL,
   getCSRFToken,
   getMediaUploadChunkSize,
   getOTELEnabled,
   getCustomEnv,
+  getPluginData,
 };
