@@ -26,6 +26,7 @@ import {
   useDeleteMediaMutation,
   useKeyPressMutation,
 } from "@repo/graphql";
+import { preloader } from "@repo/lib";
 import { logger } from "@repo/observability";
 import {
   useAudioCheck,
@@ -35,7 +36,8 @@ import {
   usePluginData,
   usePluginMetaData,
 } from "@repo/shared";
-import { ErrorAlert, OverlayToggle, PopConfirm } from "@repo/ui";
+import { ErrorAlert, LoadingFull, OverlayToggle, PopConfirm } from "@repo/ui";
+import { useQuery } from "@tanstack/react-query";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import {
@@ -351,15 +353,32 @@ const PluginRenderer = React.memo(
       [pluginContext, pluginInfo],
     );
 
+    const { isSuccess, error } = useQuery({
+      queryKey: ["preloader", pluginInfo.plugin],
+      queryFn: () => {
+        const data = preloader.getPluginPromise(pluginInfo.plugin);
+        return data;
+      },
+    });
+
     const Element = useMemo(() => {
       if (!viewData?.tag) {
-        return <Text>No renderer for {pluginInfo.plugin}</Text>;
+        return (
+          <ErrorAlert
+            error={new Error(`No renderer for ${pluginInfo.plugin}`)}
+          />
+        );
+      }
+      if (error) {
+        return <ErrorAlert error={error} />;
       }
 
-      if (!yjsPluginSceneData || !yjsPluginRendererData) {
-        return <Text>Loading...</Text>;
+      if (!yjsPluginSceneData || !yjsPluginRendererData || !isSuccess) {
+        return <LoadingFull />;
       }
 
+      // We don't want to render this until the web component is hooked because
+      // the objects that are passed are not picked up correctly which leads to various errors.
       return React.createElement(viewData.tag, {
         yjsPluginSceneData,
         yjsPluginRendererData,
@@ -407,7 +426,9 @@ const PluginRenderer = React.memo(
       completeMedia,
       currentUserId,
       deleteMedia,
+      error,
       getYJSPluginRenderer,
+      isSuccess,
       pluginContext,
       pluginInfo.plugin,
       provider,

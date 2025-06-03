@@ -1,5 +1,6 @@
 import { ApolloProvider } from "@apollo/client";
 import { ChakraProvider } from "@chakra-ui/react";
+import { preloader } from "@repo/lib";
 import { ErrorAlert, theme } from "@repo/ui";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import React from "react";
@@ -21,6 +22,8 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+preloader.initPreloader();
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
