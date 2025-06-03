@@ -12,7 +12,7 @@ export function ErrorAlert({ error }: ErrorAlertProps) {
     ?.errors?.[0]?.code;
   if (code === "EBADCSRFTOKEN") {
     return (
-      <div className="stack-col mt-[15vh] text-center">
+      <div className="stack-col mt-[15vh] text-center p-3">
         <BiSolidErrorAlt className="size-16 text-fill-warning" />
         <h1 className="text-3xl font-medium">Invalid CSRF token</h1>
         <p className="text-secondary">
@@ -29,7 +29,7 @@ export function ErrorAlert({ error }: ErrorAlertProps) {
   }
 
   return (
-    <div className="stack-col mt-[15vh] text-center">
+    <div className="stack-col mt-[15vh] text-center p-3">
       <BiSolidErrorAlt className="size-16 text-fill-destructive" />
       <h1 className="text-3xl font-medium">Unexpected error occurred</h1>
       <p className="text-secondary">
