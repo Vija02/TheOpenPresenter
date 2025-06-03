@@ -21,6 +21,8 @@ import { PiMusicNotesSimple, PiPresentationChart } from "react-icons/pi";
 import { typeidUnboxed } from "typeid-js";
 import { useLocation } from "wouter";
 
+import "./index.css";
+
 export type SidebarAddSceneModalPropTypes =
   Partial<OverlayToggleComponentProps>;
 
@@ -96,7 +98,7 @@ const SidebarAddSceneModal = ({
                 </div>
               ))}
             </div>
-            <div className="stack-col items-start sm:pl-4 w-full">
+            <div className="rt--sidebar-add-scene-modal-body">
               {sceneCategories
                 .filter(
                   (x) => selectedCategory === "All" || selectedCategory === x,

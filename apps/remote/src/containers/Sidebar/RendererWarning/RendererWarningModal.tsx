@@ -8,48 +8,17 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  OverlayToggle,
   OverlayToggleComponentProps,
 } from "@repo/ui";
-import { FaChevronRight, FaTriangleExclamation } from "react-icons/fa6";
+import { FaTriangleExclamation } from "react-icons/fa6";
+
+import "./RendererWarningModal.css";
 
 const getStringFromUA = (ua: AwarenessUserData["userAgentInfo"]) => {
   return `${ua.browser.name} / ${ua.os.name}`;
 };
 
-export const RendererWarning = () => {
-  const { awarenessData } = useAwareness();
-
-  const allErrors = awarenessData.map((x) => x.user?.errors ?? []).flat();
-
-  if (allErrors.length === 0) {
-    return null;
-  }
-
-  return (
-    <OverlayToggle
-      toggler={({ onToggle }) => (
-        <div
-          className="stack-row p-2 justify-center desktop:justify-between cursor-pointer bg-fill-warning text-fill-warning-fg w-full"
-          onClick={onToggle}
-        >
-          <div className="stack-row">
-            <FaTriangleExclamation />
-            <p className="font-bold">
-              {allErrors.length}{" "}
-              <span className="hidden desktop:inline">Warning</span>
-            </p>
-          </div>
-          <FaChevronRight className="hidden desktop:block" />
-        </div>
-      )}
-    >
-      <RendererWarningModal />
-    </OverlayToggle>
-  );
-};
-
-export type SidebarAddSceneModalPropTypes =
+export type RendererWarningModalPropTypes =
   Partial<OverlayToggleComponentProps>;
 
 // TODO: Move this to server and allow plugins to register
@@ -65,11 +34,11 @@ const errorSettings: Record<
   },
 };
 
-const RendererWarningModal = ({
+export const RendererWarningModal = ({
   isOpen,
   onToggle,
   ...props
-}: SidebarAddSceneModalPropTypes) => {
+}: RendererWarningModalPropTypes) => {
   const { awarenessData } = useAwareness();
 
   const allErrors = awarenessData.map((x) => x.user?.errors ?? []).flat();
@@ -94,17 +63,20 @@ const RendererWarningModal = ({
             const errorData = errorSettings[errorCode]!;
 
             return (
-              <div key={errorCode} className="stack-col items-start">
-                <div>
-                  <div className="stack-row">
-                    <FaTriangleExclamation className="text-fill-warning" />
-                    <p className="font-bold text-md">{errorData.title}</p>
+              <div
+                key={errorCode}
+                className="rt--renderer-warning-modal--container"
+              >
+                <div className="rt--renderer-warning-modal--title">
+                  <div>
+                    <FaTriangleExclamation />
+                    <p>{errorData.title}</p>
                   </div>
                   <p>{errorData.description}</p>
                 </div>
-                <div>
-                  <p className="font-bold">Screens affected:</p>
-                  <ul className="list-disc list-inside">
+                <div className="rt--renderer-warning-modal--screen-affected">
+                  <p>Screens affected:</p>
+                  <ul>
                     {awarenessData
                       .filter((x) => x.user?.errors.includes(errorCode))
                       .map((x) => (
@@ -115,9 +87,9 @@ const RendererWarningModal = ({
                   </ul>
                 </div>
                 {!!errorData.action && (
-                  <div>
-                    <p className="font-bold">Steps to resolve:</p>
-                    <p className="text-orange-500">{errorData.action}</p>
+                  <div className="rt--renderer-warning-modal--resolve">
+                    <p>Steps to resolve:</p>
+                    <p>{errorData.action}</p>
                   </div>
                 )}
               </div>

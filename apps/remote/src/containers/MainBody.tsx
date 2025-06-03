@@ -23,19 +23,10 @@ import {
   usePluginData,
   usePluginMetaData,
 } from "@repo/shared";
-import {
-  Button,
-  ErrorAlert,
-  LoadingPart,
-  OverlayToggle,
-  PopConfirm,
-  Slider,
-} from "@repo/ui";
+import { ErrorAlert, LoadingPart, Slider } from "@repo/ui";
 import { cx } from "class-variance-authority";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
-import { RxCross1 } from "react-icons/rx";
-import { VscSettingsGear, VscTrash } from "react-icons/vsc";
 import { toast } from "react-toastify";
 import { TypeId, toUUID } from "typeid-js";
 import { useDisposable } from "use-disposable";
@@ -46,7 +37,8 @@ import { useStore } from "zustand";
 import { zoomLevelStore } from "../contexts/zoomLevel";
 import { trpcClient } from "../trpc";
 import { EmptyScene } from "./EmptyScene";
-import SceneSettingsModal from "./SceneSettingsModal";
+import "./MainBody.css";
+import { TopBar } from "./TopBar";
 
 const MainBody = () => {
   const [location, navigate] = useLocation();
@@ -83,7 +75,7 @@ const MainBody = () => {
 
   return (
     <div
-      className="flex flex-col w-full overflow-hidden"
+      className="rt--main-body-container"
       tabIndex={0}
       onKeyDown={(e) => {
         // TODO: Expand on this functionality
@@ -113,86 +105,8 @@ const MainBody = () => {
         }
       }}
     >
-      <div className="flex shrink-0 shadow items-center justify-between flex-wrap p-2">
-        <div className="stack-row px-2">
-          {selectedScene && (
-            <>
-              <p className="font-bold text-sm">
-                {data.data[selectedScene]?.name}
-              </p>
-              <div className="stack-row gap-0">
-                <OverlayToggle
-                  toggler={({ onToggle }) => (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      role="group"
-                      onClick={onToggle}
-                      className="text-gray-500 hover:text-gray-900"
-                    >
-                      <VscSettingsGear className="size-3" />
-                    </Button>
-                  )}
-                >
-                  <SceneSettingsModal selectedScene={selectedScene} />
-                </OverlayToggle>
-                <PopConfirm
-                  onConfirm={() => {
-                    delete mainState.data[selectedScene];
-                    if (
-                      mainState.renderer["1"]?.currentScene === selectedScene
-                    ) {
-                      mainState.renderer["1"]!.currentScene = null;
-                    }
-                  }}
-                >
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    role="group"
-                    className="text-gray-500 hover:text-gray-900"
-                  >
-                    <VscTrash className="size-3.5" />
-                  </Button>
-                </PopConfirm>
-              </div>
-            </>
-          )}
-        </div>
-        <div className="stack-row gap-0">
-          <Button
-            size="sm"
-            className={cx(
-              "rounded-none border-2 border-fill-default",
-              data.renderer["1"]!.overlay &&
-                data.renderer["1"]!.overlay.type === "black"
-                ? "animate-border-blink bg-fill-default-selected"
-                : "",
-            )}
-            onClick={() => {
-              if (mainState.renderer["1"]!.overlay?.type === "black") {
-                mainState.renderer["1"]!.overlay = null;
-              } else {
-                mainState.renderer["1"]!.overlay = { type: "black" };
-              }
-            }}
-          >
-            Black
-          </Button>
-          {mainState.renderer["1"]!.overlay !== null && (
-            <Button
-              size="sm"
-              className="rounded-none"
-              onClick={() => {
-                mainState.renderer["1"]!.overlay = null;
-              }}
-            >
-              <RxCross1 className="size-3" />
-            </Button>
-          )}
-        </div>
-      </div>
-      <div className="flex-1 overflow-auto">
+      <TopBar />
+      <div className="rt--main-body-center">
         {scenes.map(([sceneId, value]) => (
           <SceneRenderer
             key={sceneId}
@@ -202,7 +116,7 @@ const MainBody = () => {
         ))}
         {scenes.length === 0 && <EmptyScene />}
       </div>
-      <div className="flex flex-row-reverse py-3 px-4 border-stroke border-t-1">
+      <div className="rt--main-body-footer">
         <Slider
           min={0}
           max={1}
@@ -210,7 +124,7 @@ const MainBody = () => {
           onValueChange={(val) => setZoomLevel(val[0]!)}
           step={0.0001}
           className="max-w-52"
-        ></Slider>
+        />
       </div>
     </div>
   );

@@ -8,6 +8,7 @@ import {
 import { useEffect } from "react";
 import { Route, Switch, useParams } from "wouter";
 
+import "./App.css";
 import MainBody from "./containers/MainBody";
 import Sidebar from "./containers/Sidebar";
 
@@ -37,7 +38,7 @@ function Root() {
         <AudioCheckProvider>
           <PluginDataProvider type="remote">
             <AwarenessProvider>
-              <div className="flex relative h-screen overflow-hidden">
+              <div className="rt--app">
                 <Sidebar />
                 <MainBody />
               </div>

@@ -1,0 +1,3 @@
+.rt--app {
+  @apply flex relative h-screen overflow-hidden;
+}
