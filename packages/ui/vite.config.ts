@@ -2,16 +2,23 @@
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react-swc";
 import { join, resolve } from "node:path";
+import utwm from "unplugin-tailwindcss-mangle/vite";
 import { defineConfig } from "vite";
 import dts from "vite-plugin-dts";
 
 import { peerDependencies } from "./package.json";
 
 export default defineConfig({
-  plugins: [react(), tailwindcss(), dts()],
+  plugins: [
+    react(),
+    tailwindcss(),
+    dts(),
+    // Mangle the classname to avoid clashes
+    utwm({ classGenerator: { classPrefix: "u-" } }),
+  ],
   build: {
     target: "esnext",
-    minify: false,
+    minify: true,
     lib: {
       entry: resolve(__dirname, join("src", "index.ts")),
       fileName: "index",
