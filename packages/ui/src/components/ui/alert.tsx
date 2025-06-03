@@ -10,11 +10,11 @@ import "./alert.css";
 const alertVariants = cva("ui--alert-heading", {
   variants: {
     variant: {
-      default: "bg-fill-default text-fill-default-fg",
-      success: "bg-fill-success text-fill-success-fg",
-      destructive: "bg-fill-destructive text-fill-destructive-fg",
-      info: "bg-fill-info text-fill-info-fg",
-      warning: "bg-fill-warning text-fill-warning-fg",
+      default: "ui--alert-heading__default",
+      success: "ui--alert-heading__success",
+      destructive: "ui--alert-heading__destructive",
+      info: "ui--alert-heading__info",
+      warning: "ui--alert-heading__warning",
     },
   },
   defaultVariants: {
@@ -53,21 +53,18 @@ function Alert({
         {variant === "success" && <FaCheck />}
         {variant === "destructive" && <FaExclamation />}
         {variant === "warning" && <IoWarningOutline />}
-        <div className="flex flex-wrap">
+        <div className="ui--alert-heading-container">
           <span
             data-slot="alert-title"
             {...titleProps}
-            className={cn(
-              "font-semibold stack-row inline-flex pr-3",
-              titleProps?.className,
-            )}
+            className={cn("ui--alert-title", titleProps?.className)}
           >
             {title}
           </span>
           <span
             data-slot="alert-subtitle"
             {...subtitleProps}
-            className={cn("opacity-85", subtitleProps?.className)}
+            className={cn("ui--alert-subtitle", subtitleProps?.className)}
           >
             {subtitle}
           </span>
@@ -76,10 +73,7 @@ function Alert({
       {children && (
         <div
           {...bodyProps}
-          className={cn(
-            "col-start-2 grid justify-items-start gap-1 text-sm [&_p]:leading-relaxed",
-            bodyProps?.className,
-          )}
+          className={cn("ui--alert-body", bodyProps?.className)}
         >
           {children}
         </div>

@@ -128,7 +128,7 @@ const MainBody = () => {
                       variant="ghost"
                       role="group"
                       onClick={onToggle}
-                      className=" text-gray-500 hover:text-gray-900"
+                      className="text-gray-500 hover:text-gray-900"
                     >
                       <VscSettingsGear className="size-3" />
                     </Button>
@@ -150,7 +150,7 @@ const MainBody = () => {
                     size="sm"
                     variant="ghost"
                     role="group"
-                    className=" text-gray-500 hover:text-gray-900"
+                    className="text-gray-500 hover:text-gray-900"
                   >
                     <VscTrash className="size-3.5" />
                   </Button>

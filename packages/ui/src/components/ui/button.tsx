@@ -18,7 +18,7 @@ const buttonVariants = cva("ui--button", {
       muted: "ui--button__muted",
       ghost: "ui--button__ghost",
       pill: "ui--button__pill",
-      link: "text-primary underline-offset-4 hover:underline",
+      link: "ui--button__link",
     },
     size: {
       default: "h-9 px-4 py-2 has-[>svg]:px-3",

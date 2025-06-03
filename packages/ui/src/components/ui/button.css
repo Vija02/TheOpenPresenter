@@ -59,4 +59,7 @@
     @apply hover:bg-white/15;
     @apply disabled:bg-fill-default-fg/25;
   }
+  .ui--button__link {
+    @apply text-primary underline-offset-4 hover:underline;
+  }
 }

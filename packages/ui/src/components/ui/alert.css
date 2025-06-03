@@ -10,6 +10,24 @@
     @apply flex items-center gap-2 min-h-4 font-medium tracking-tight;
     @apply [&>svg]:size-5;
   }
+  .ui--alert-heading-container {
+    @apply flex flex-wrap;
+  }
+  .ui--alert-heading__default {
+    @apply bg-fill-default text-fill-default-fg;
+  }
+  .ui--alert-heading__success {
+    @apply bg-fill-success text-fill-success-fg;
+  }
+  .ui--alert-heading__destructive {
+    @apply bg-fill-destructive text-fill-destructive-fg;
+  }
+  .ui--alert-heading__info {
+    @apply bg-fill-info text-fill-info-fg;
+  }
+  .ui--alert-heading__warning {
+    @apply bg-fill-warning text-fill-warning-fg;
+  }
 
   .ui--alert > div {
     @apply px-4;
@@ -20,5 +38,15 @@
   }
   .ui--alert > div:last-child {
     @apply border-x border-b rounded-b-lg py-3;
+  }
+
+  .ui--alert-title {
+    @apply font-semibold stack-row inline-flex pr-3;
+  }
+  .ui--alert-subtitle {
+    @apply opacity-85;
+  }
+  .ui--alert-body {
+    @apply col-start-2 grid justify-items-start gap-1 text-sm [&_p]:leading-relaxed;
   }
 }
