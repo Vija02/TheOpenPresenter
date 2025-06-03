@@ -1,13 +1,14 @@
 import SidebarMobile from "./SidebarMobile";
 import SidebarWeb from "./SidebarWeb";
+import "./index.css";
 
 const SidebarWrapper = () => {
   return (
     <>
-      <div className="hidden desktop:flex h-screen relative">
+      <div className="rt--sidebar-wrapper-web">
         <SidebarWeb />
       </div>
-      <div className="desktop:hidden h-screen flex relative">
+      <div className="rt--sidebar-wrapper-mobile">
         <SidebarMobile />
       </div>
     </>
