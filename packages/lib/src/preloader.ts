@@ -17,11 +17,9 @@ async function importWithRetry(
   maxAttempts = 5,
   baseDelay = 1000,
 ) {
-  // await new Promise((resolve) => setTimeout(() => resolve, 3000));
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
       if (type === "js") {
-        /* @vite-ignore */
         return await import(/* @vite-ignore */ moduleUrl);
       } else {
         return await loadjsPromise(moduleUrl);
