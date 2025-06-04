@@ -1,5 +1,7 @@
 import { ApolloProvider } from "@apollo/client";
+import { preloader } from "@repo/lib";
 import { ErrorAlert } from "@repo/ui";
+import "@repo/ui/css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import React from "react";
 import ReactDOM from "react-dom/client";
@@ -20,6 +22,8 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+preloader.initPreloader();
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

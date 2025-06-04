@@ -8,6 +8,7 @@ import {
   YjsWatcher,
 } from "@repo/base-plugin";
 import { RendererBasePluginQuery } from "@repo/graphql";
+import { preloader } from "@repo/lib";
 import { logger } from "@repo/observability";
 import {
   useAudioCheck,
@@ -17,7 +18,8 @@ import {
   usePluginData,
   usePluginMetaData,
 } from "@repo/shared";
-import { ErrorAlert } from "@repo/ui";
+import { ErrorAlert, LoadingPart } from "@repo/ui";
+import { useQuery } from "@tanstack/react-query";
 import { cx } from "class-variance-authority";
 import React, { lazy, useCallback, useMemo, useState } from "react";
 import { useAnimatePresence } from "react-animate-presence";
@@ -189,15 +191,32 @@ const PluginRenderer = React.memo(
       [pluginContext, pluginInfo],
     );
 
+    const { isSuccess, error } = useQuery({
+      queryKey: ["preloader", pluginInfo?.plugin],
+      queryFn: () => {
+        const data = preloader.getPluginPromise(pluginInfo!.plugin);
+        return data;
+      },
+    });
+
     const TagElement = useMemo(() => {
       if (!tag) {
-        return <p>No renderer for {pluginInfo?.plugin}</p>;
+        return (
+          <ErrorAlert
+            error={new Error(`No renderer for ${pluginInfo?.plugin}`)}
+          />
+        );
+      }
+      if (error) {
+        return <ErrorAlert error={error} />;
       }
 
-      if (!yjsPluginSceneData || !yjsPluginRendererData) {
-        return <p>Loading...</p>;
+      if (!yjsPluginSceneData || !yjsPluginRendererData || !isSuccess) {
+        return <LoadingPart />;
       }
 
+      // We don't want to render this until the web component is hooked because
+      // the objects that are passed are not picked up correctly which leads to various errors.
       return React.createElement(tag, {
         yjsPluginSceneData,
         yjsPluginRendererData,
@@ -236,7 +255,9 @@ const PluginRenderer = React.memo(
       canPlayAudio,
       childLogger,
       currentUserId,
+      error,
       getYJSPluginRenderer,
+      isSuccess,
       pluginContext,
       pluginInfo?.plugin,
       provider,

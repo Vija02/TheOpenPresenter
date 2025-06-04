@@ -1,5 +1,6 @@
 import { Express, Request } from "express";
 import { Server, createServer } from "http";
+import serialize from "serialize-javascript";
 import type { UserConfig } from "vite";
 import { ViteExpress } from "vite-express";
 
@@ -61,19 +62,22 @@ function transformer(html: string, req: Request) {
 
   const scripts = [];
 
-  // TODO: Load only plugins that are active
-  // Load all file from plugins
-  scripts.push(
-    ...registeredLoadJsOnRendererView.map(
-      ({ pluginName, path }) =>
-        `<script type="module" src="/plugin/${pluginName}/static/${path}"></script>`,
-    ),
-  );
-  scripts.push(
-    ...registeredLoadCssOnRendererView.map(
-      ({ pluginName, path }) =>
-        `<link rel="stylesheet" type="text/css" href="/plugin/${pluginName}/static/${path}">`,
-    ),
+  const pluginNames = registeredLoadJsOnRendererView
+    .concat(registeredLoadCssOnRendererView)
+    .map((x) => x.pluginName);
+
+  const pluginData = Object.fromEntries(
+    pluginNames.map((pluginName) => [
+      pluginName,
+      {
+        scripts: registeredLoadJsOnRendererView
+          .filter((x) => x.pluginName === pluginName)
+          .map((x) => `/plugin/${pluginName}/static/${x.path}`),
+        css: registeredLoadCssOnRendererView
+          .filter((x) => x.pluginName === pluginName)
+          .map((x) => `/plugin/${pluginName}/static/${x.path}`),
+      },
+    ]),
   );
 
   // Extra data
@@ -89,11 +93,7 @@ function transformer(html: string, req: Request) {
     .reduce((acc, val) => ({ ...acc, ...val }), {} as Record<string, string>);
 
   scripts.push(
-    `<script nonce="INJECT_NONCE">window.__APP_DATA__ = { ${Object.entries(
-      extraEnv,
-    )
-      .map(([key, val]) => `${key}: "${val}"`)
-      .join(", ")} }</script>`,
+    `<script nonce="INJECT_NONCE">window.__APP_DATA__ = ${serialize({ ...extraEnv, pluginData })}</script>`,
   );
 
   return injectEndOfHead(html, scripts.join("\n")).replace(

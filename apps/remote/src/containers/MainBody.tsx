@@ -14,6 +14,7 @@ import {
   useDeleteMediaMutation,
   useKeyPressMutation,
 } from "@repo/graphql";
+import { preloader } from "@repo/lib";
 import { logger } from "@repo/observability";
 import {
   useAudioCheck,
@@ -24,6 +25,7 @@ import {
   usePluginMetaData,
 } from "@repo/shared";
 import { ErrorAlert, LoadingPart, Slider } from "@repo/ui";
+import { useQuery } from "@tanstack/react-query";
 import { cx } from "class-variance-authority";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
@@ -225,15 +227,32 @@ const PluginRenderer = React.memo(
       [pluginContext, pluginInfo],
     );
 
+    const { isSuccess, error } = useQuery({
+      queryKey: ["preloader", pluginInfo.plugin],
+      queryFn: () => {
+        const data = preloader.getPluginPromise(pluginInfo.plugin);
+        return data;
+      },
+    });
+
     const Element = useMemo(() => {
       if (!viewData?.tag) {
-        return <p>No renderer for {pluginInfo.plugin}</p>;
+        return (
+          <ErrorAlert
+            error={new Error(`No renderer for ${pluginInfo.plugin}`)}
+          />
+        );
+      }
+      if (error) {
+        return <ErrorAlert error={error} />;
       }
 
-      if (!yjsPluginSceneData || !yjsPluginRendererData) {
+      if (!yjsPluginSceneData || !yjsPluginRendererData || !isSuccess) {
         return <LoadingPart />;
       }
 
+      // We don't want to render this until the web component is hooked because
+      // the objects that are passed are not picked up correctly which leads to various errors.
       return React.createElement(viewData.tag, {
         yjsPluginSceneData,
         yjsPluginRendererData,
@@ -281,7 +300,9 @@ const PluginRenderer = React.memo(
       completeMedia,
       currentUserId,
       deleteMedia,
+      error,
       getYJSPluginRenderer,
+      isSuccess,
       pluginContext,
       pluginInfo.plugin,
       provider,
