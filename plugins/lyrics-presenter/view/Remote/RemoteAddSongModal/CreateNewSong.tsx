@@ -6,14 +6,12 @@ import {
   FormItem,
   FormMessage,
   InputControl,
+  OptionControl,
   SlideGrid,
 } from "@repo/ui";
-import { Formik } from "formik";
-import { SelectControl } from "formik-chakra-ui";
 import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { toFormikValidationSchema } from "zod-formik-adapter";
 
 import { removeChords } from "../../../src/processLyrics";
 import {
@@ -82,15 +80,18 @@ export const CreateNewSong = ({
         <div className="flex flex-col md:flex-row gap-3">
           <div className="stack-col flex-1 items-start">
             <InputControl name="title" label="Title" control={form.control} />
-            {/* <SelectControl name="displayType" label="Display Type">
-                    {Object.entries(displayTypeSettings).map(
-                      ([key, { label }]) => (
-                        <option key={key} value={key}>
-                          {label}
-                        </option>
-                      ),
-                    )}
-                  </SelectControl> */}
+            <OptionControl
+              name="displayType"
+              label="Display Type"
+              control={form.control}
+              options={Object.entries(displayTypeSettings).map(
+                ([key, { label, description }]) => ({
+                  title: label,
+                  description,
+                  value: key,
+                }),
+              )}
+            />
 
             <FormField
               control={form.control}

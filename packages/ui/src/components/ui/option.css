@@ -1,0 +1,34 @@
+@reference "@repo/tailwind-config/index.css";
+
+@layer base {
+  .ui--option {
+    @apply cursor-pointer border rounded-sm p-2 w-full flex-1 transition-all outline-none select-none;
+    @apply border-stroke;
+    @apply hover:border-blue-400;
+    @apply focus-visible:outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-2;
+  }
+
+  .ui--option--selected {
+    @apply border-blue-400;
+  }
+
+  .ui--option--disabled {
+    @apply pointer-events-none opacity-50;
+  }
+
+  .ui--option--disabled:hover {
+    @apply border-stroke;
+  }
+
+  .ui--option-group {
+    @apply flex flex-col md:flex-row items-stretch flex-wrap gap-2;
+  }
+
+  .ui--option__title {
+    @apply font-bold text-base;
+  }
+
+  .ui--option__description {
+    @apply text-sm text-secondary;
+  }
+}

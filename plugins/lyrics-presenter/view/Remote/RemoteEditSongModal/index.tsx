@@ -13,6 +13,7 @@ import {
   FormItem,
   FormMessage,
   InputControl,
+  OptionControl,
   OverlayToggleComponentProps,
   SlideGrid,
 } from "@repo/ui";
@@ -143,15 +144,18 @@ const RemoteEditSongModal = ({
                     label="Title"
                     control={form.control}
                   />
-                  {/* <SelectControl name="displayType" label="Display Type">
-                        {Object.entries(displayTypeSettings).map(
-                          ([key, { label }]) => (
-                            <option key={key} value={key}>
-                              {label}
-                            </option>
-                          ),
-                        )}
-                      </SelectControl> */}
+                  <OptionControl
+                    name="displayType"
+                    label="Display Type"
+                    control={form.control}
+                    options={Object.entries(displayTypeSettings).map(
+                      ([key, { label, description }]) => ({
+                        title: label,
+                        description,
+                        value: key,
+                      }),
+                    )}
+                  />
 
                   <FormField
                     control={form.control}
