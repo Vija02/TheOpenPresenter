@@ -39,7 +39,7 @@ export const init = (serverPluginApi: ServerPluginApi) => {
   serverPluginApi.serveStatic(pluginName, "out");
 
   serverPluginApi.loadJsOnRemoteView(pluginName, `${pluginName}-remote.es.js`);
-  serverPluginApi.loadCssOnRemoteView(pluginName, `style.css`);
+  serverPluginApi.loadCssOnRemoteView(pluginName, `RemoteEntry.css`);
   serverPluginApi.registerRemoteViewWebComponent(
     pluginName,
     remoteWebComponentTag,
@@ -48,6 +48,7 @@ export const init = (serverPluginApi: ServerPluginApi) => {
     pluginName,
     `${pluginName}-renderer.es.js`,
   );
+  serverPluginApi.loadCssOnRendererView(pluginName, `RendererEntry.css`);
   serverPluginApi.registerRendererViewWebComponent(
     pluginName,
     rendererWebComponentTag,

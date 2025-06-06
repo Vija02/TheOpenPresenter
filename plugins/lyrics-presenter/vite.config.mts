@@ -20,11 +20,9 @@ export default defineConfig({
       fileName: (format, entryName) =>
         `${pluginName}-${entryName}.${format}.js`,
     },
+    cssCodeSplit: true,
     rollupOptions: {
       external: ["yjs", "react", "react-dom", "react-dom/client"],
-      output: {
-        assetFileNames: "style.css",
-      },
     },
     target: "esnext",
   },
