@@ -44,7 +44,7 @@ const SceneSettingsModal = ({
   );
   const form = useForm({
     resolver: zodResolver(formSchema),
-    defaultValues: {
+    values: {
       name: data.data[selectedScene]?.name ?? "",
     },
   });

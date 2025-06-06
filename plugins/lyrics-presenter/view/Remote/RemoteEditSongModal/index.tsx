@@ -99,7 +99,7 @@ const RemoteEditSongModal = ({
         content: z.string(),
       }),
     ),
-    defaultValues: {
+    values: {
       ...song.setting,
       title: song.title,
       content: song.content,
@@ -130,12 +130,7 @@ const RemoteEditSongModal = ({
       {...props}
     >
       <Form {...form}>
-        <DialogContent
-          size="3xl"
-          // 5xl
-          asChild
-          className="gap-0"
-        >
+        <DialogContent size="3xl" asChild className="gap-0">
           <form onSubmit={form.handleSubmit(handleSubmit)}>
             <DialogHeader className="px-3 md:px-6 pb-4">
               <DialogTitle>Edit song "{song.title}"</DialogTitle>

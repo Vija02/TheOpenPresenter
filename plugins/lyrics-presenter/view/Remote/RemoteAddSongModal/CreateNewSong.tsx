@@ -43,7 +43,7 @@ export const CreateNewSong = ({
         content: z.string(),
       }),
     ),
-    defaultValues: {
+    values: {
       title: "",
       content: "[Verse 1]\n\n\n[Chorus]\n\n\n[Bridge]\n",
       displayType: "sections" as DisplayType,
