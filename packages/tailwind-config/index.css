@@ -22,9 +22,14 @@
   --color-tertiary: var(--gray-600);
 
   --color-surface-primary: white;
-  --color-surface-primary-hover: var(--color-blue-200);
+  --color-surface-primary-hover: var(--gray-100);
+  --color-surface-primary-active: var(--gray-100);
   --color-surface-secondary: var(--gray-100);
+  --color-surface-secondary-hover: var(--gray-200);
+  --color-surface-secondary-active: var(--gray-200);
   --color-surface-tertiary: var(--gray-200);
+  --color-surface-tertiary-hover: var(--gray-300);
+  --color-surface-tertiary-active: var(--gray-300);
 
   /* Let's add other useful things */
   --color-stroke: var(--gray-300);

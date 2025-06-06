@@ -1,11 +1,5 @@
-import {
-  Button,
-  FormLabel,
-  Popover,
-  PopoverTrigger,
-  Stack,
-  Text,
-} from "@chakra-ui/react";
+import { Popover, PopoverTrigger } from "@chakra-ui/react";
+import { Button, FormLabel } from "@repo/ui";
 import { FaCircleInfo } from "react-icons/fa6";
 
 import { SongEditInfo } from "./SongEditInfo";
@@ -20,29 +14,20 @@ export const LyricFormLabel = ({
   onReset: () => void;
 }) => {
   return (
-    <Stack
-      direction="row"
-      alignItems="center"
-      justifyContent="space-between"
-      width="100%"
-      gap={1}
-      flexWrap="wrap"
-    >
-      <FormLabel mb={0} display="flex" gap={3} alignItems="center">
+    <div className="stack-row justify-between w-full gap-1 flex-wrap">
+      <FormLabel className="stack-row mb-0">
         Lyric{" "}
         <Popover placement="bottom-start">
           <PopoverTrigger>
-            <Button size="xs" variant="outline">
-              <FaCircleInfo color="gray" />
-              <Text ml={2} fontWeight="light">
-                How does this work?
-              </Text>
+            <Button size="xs" variant="outline" className="font-light">
+              <FaCircleInfo className="text-gray-700" />
+              How does this work?
             </Button>
           </PopoverTrigger>
           <SongEditInfo />
         </Popover>
       </FormLabel>
-      <Stack direction="row" alignItems="center">
+      <div className="stack-row">
         <Button size="xs" onClick={onRemoveChords}>
           Remove chords
         </Button>
@@ -51,7 +36,7 @@ export const LyricFormLabel = ({
             Reset
           </Button>
         )}
-      </Stack>
-    </Stack>
+      </div>
+    </div>
   );
 };
