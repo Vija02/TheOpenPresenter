@@ -107,7 +107,7 @@ export const SearchSong = ({
             </div>
           ))}
 
-          <div className="flex my-5 justify-center">
+          <div className="flex mt-5 justify-center">
             {songData?.totalPage > 1 && (
               <ReactPaginate
                 className="lyrics-presenter__search-song--pagination"

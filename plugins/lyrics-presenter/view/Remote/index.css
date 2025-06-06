@@ -22,3 +22,8 @@
 .ProseMirror-focused {
   outline: none;
 }
+
+.pl-lyrics--preview-shadow {
+  box-shadow: rgba(0, 0, 0, 0.8) 0px 5px 10px 0px;
+  @apply md:shadow-none;
+}

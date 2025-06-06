@@ -1,24 +1,24 @@
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Button,
-  Flex,
-  Heading,
-  Modal,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  ModalOverlay,
-  ModalProps,
-  Show,
-  Stack,
-  VStack,
-} from "@chakra-ui/react";
-import { OverlayToggleComponentProps, SlideGrid } from "@repo/ui";
-import { Form, Formik } from "formik";
-import { InputControl, SelectControl, SubmitButton } from "formik-chakra-ui";
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormMessage,
+  InputControl,
+  OverlayToggleComponentProps,
+  SlideGrid,
+} from "@repo/ui";
 import { useCallback, useMemo } from "react";
-import { toFormikValidationSchema } from "zod-formik-adapter";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
 import { removeChords } from "../../../src/processLyrics";
 import {
@@ -33,10 +33,7 @@ import { LyricFormLabel } from "./LyricFormLabel";
 import { MobilePreview } from "./MobilePreview";
 import SongEditEditor from "./SongEditEditor";
 
-export type RemoteEditSongModalPropTypes = Omit<
-  ModalProps,
-  "isOpen" | "onClose" | "children"
-> &
+export type RemoteEditSongModalPropTypes =
   Partial<OverlayToggleComponentProps> & { song: Song };
 
 const RemoteEditSongModal = ({
@@ -47,7 +44,7 @@ const RemoteEditSongModal = ({
   ...props
 }: RemoteEditSongModalPropTypes) => {
   const pluginApi = usePluginAPI();
-  const slideStyle = pluginApi.scene.useData((x) => x.pluginData.style) ?? {};
+  const slideStyle = pluginApi.scene.useData((x) => x.pluginData.style);
   const mutableSceneData = pluginApi.scene.useValtioData();
   const mutableRendererData = pluginApi.renderer.useValtioData();
 
@@ -94,49 +91,64 @@ const RemoteEditSongModal = ({
     [song.import?.importedData?.content],
   );
 
+  const form = useForm({
+    resolver: zodResolver(
+      z.object({
+        ...songSettingValidator.shape,
+        title: z.string(),
+        content: z.string(),
+      }),
+    ),
+    defaultValues: {
+      ...song.setting,
+      title: song.title,
+      content: song.content,
+    },
+  });
+
+  const data = form.watch();
+
+  const preview = useMemo(
+    () => (
+      <SongViewSlides
+        song={{
+          ...song,
+          setting: data,
+          content: data.content,
+        }}
+        slideStyle={slideStyle ?? {}}
+        isPreview
+      />
+    ),
+    [data, slideStyle, song],
+  );
+
   return (
-    <Modal
-      size={{ base: "full", md: "5xl" }}
-      isOpen={isOpen ?? false}
-      onClose={onToggle ?? (() => {})}
-      scrollBehavior="inside"
+    <Dialog
+      open={isOpen ?? false}
+      onOpenChange={onToggle ?? (() => {})}
       {...props}
     >
-      <ModalOverlay />
-      <Formik
-        initialValues={{
-          ...song.setting,
-          title: song.title,
-          content: song.content,
-        }}
-        validationSchema={toFormikValidationSchema(songSettingValidator)}
-        onSubmit={handleSubmit}
-      >
-        {({ handleSubmit, values, setFieldValue }) => {
-          const preview = (
-            <SongViewSlides
-              song={{
-                ...song,
-                setting: values,
-                content: values.content,
-              }}
-              slideStyle={slideStyle}
-              isPreview
-            />
-          );
-
-          return (
-            <Form onSubmit={handleSubmit as any}>
-              <ModalContent>
-                <ModalHeader px={{ base: 3, md: 6 }}>
-                  Edit song "{song.title}"
-                </ModalHeader>
-                <ModalCloseButton />
-                <ModalBody px={{ base: 3, md: 6 }}>
-                  <Flex flexDir={{ base: "column", md: "row" }} gap={3}>
-                    <VStack flex={1} alignItems="flex-start">
-                      <InputControl name="title" label="Title" />
-                      <SelectControl name="displayType" label="Display Type">
+      <Form {...form}>
+        <DialogContent
+          size="3xl"
+          // 5xl
+          asChild
+          className="gap-0"
+        >
+          <form onSubmit={form.handleSubmit(handleSubmit)}>
+            <DialogHeader className="px-3 md:px-6 pb-4">
+              <DialogTitle>Edit song "{song.title}"</DialogTitle>
+            </DialogHeader>
+            <DialogBody className="px-3 md:px-6 pb-4">
+              <div className="flex flex-col md:flex-row gap-3">
+                <div className="stack-col flex-1 items-start">
+                  <InputControl
+                    name="title"
+                    label="Title"
+                    control={form.control}
+                  />
+                  {/* <SelectControl name="displayType" label="Display Type">
                         {Object.entries(displayTypeSettings).map(
                           ([key, { label }]) => (
                             <option key={key} value={key}>
@@ -144,67 +156,64 @@ const RemoteEditSongModal = ({
                             </option>
                           ),
                         )}
-                      </SelectControl>
+                      </SelectControl> */}
 
-                      <LyricFormLabel
-                        onRemoveChords={() => {
-                          setFieldValue(
-                            "content",
-                            removeChords(values.content.split("\n")).join("\n"),
-                          );
-                        }}
-                        canReset={values.content !== originalContent}
-                        onReset={() => {
-                          setFieldValue("content", originalContent);
-                        }}
-                      />
-                      <SongEditEditor
-                        initialContent={values.content
-                          .split("\n")
-                          .map((x) => `<p>${x}</p>`)
-                          .join("")}
-                        onChange={(val) => {
-                          setFieldValue("content", val);
-                        }}
-                      />
-                    </VStack>
-                    <Show above="md">
-                      <VStack flexBasis="200px">
-                        <Heading fontSize="lg">Preview</Heading>
-                        <SlideGrid forceWidth={200}>{preview}</SlideGrid>
-                      </VStack>
-                    </Show>
-                  </Flex>
-                </ModalBody>
-                <ModalFooter
-                  pt={0}
-                  px={0}
-                  boxShadow={{
-                    base: "rgba(0, 0, 0, 0.8) 0px 5px 10px 0px",
-                    md: "none",
-                  }}
-                >
-                  <Flex flexDir="column" width="100%">
-                    <MobilePreview preview={preview} />
-                    <Stack
-                      px={{ base: 3, md: 6 }}
-                      pt={3}
-                      direction="row"
-                      alignSelf="flex-end"
-                    >
-                      <SubmitButton colorScheme="green">Save</SubmitButton>
-                      <Button variant="ghost" onClick={onToggle}>
-                        Close
-                      </Button>
-                    </Stack>
-                  </Flex>
-                </ModalFooter>
-              </ModalContent>
-            </Form>
-          );
-        }}
-      </Formik>
-    </Modal>
+                  <FormField
+                    control={form.control}
+                    name="content"
+                    render={({ field }) => (
+                      <FormItem>
+                        <LyricFormLabel
+                          onRemoveChords={() => {
+                            form.setValue(
+                              "content",
+                              removeChords(data.content.split("\n")).join("\n"),
+                            );
+                          }}
+                          canReset={data.content !== originalContent}
+                          onReset={() => {
+                            form.setValue("content", originalContent);
+                          }}
+                        />
+                        <FormControl>
+                          <SongEditEditor
+                            initialContent={data.content
+                              .split("\n")
+                              .map((x) => `<p>${x}</p>`)
+                              .join("")}
+                            onChange={(val) => {
+                              form.setValue("content", val);
+                            }}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <div className="stack-col basis-[200px] hidden md:block">
+                  <h3 className="text-lg font-medium text-center mb-2">
+                    Preview
+                  </h3>
+                  <SlideGrid forceWidth={200}>{preview}</SlideGrid>
+                </div>
+              </div>
+            </DialogBody>
+            <DialogFooter className="pl-lyrics--preview-shadow pt-0 px-0 pb-3">
+              <div className="flex flex-col w-full">
+                <MobilePreview preview={preview} />
+                <div className="stack-row px-3 md:px-6 pt-3 justify-end">
+                  <Button variant="success">Save</Button>
+                  <Button type="button" variant="outline" onClick={onToggle}>
+                    Close
+                  </Button>
+                </div>
+              </div>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Form>
+    </Dialog>
   );
 };
 

@@ -17,9 +17,10 @@ export const MobilePreview = ({ preview }: { preview: React.ReactNode }) => {
   }, [windowWidth]);
 
   return (
-    <div className="border-b border-b-gray-50">
+    <div className="border-b border-b-stroke">
       <Button
         className="flex md:hidden gap-2 rounded-none w-full font-bold"
+        type="button"
         variant="ghost"
         onClick={() => setPreviewOpen((prev) => !prev)}
       >

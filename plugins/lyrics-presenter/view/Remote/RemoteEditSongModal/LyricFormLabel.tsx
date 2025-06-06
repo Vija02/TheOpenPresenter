@@ -1,5 +1,4 @@
-import { Popover, PopoverTrigger } from "@chakra-ui/react";
-import { Button, FormLabel } from "@repo/ui";
+import { Button, FormLabel, Popover, PopoverTrigger } from "@repo/ui";
 import { FaCircleInfo } from "react-icons/fa6";
 
 import { SongEditInfo } from "./SongEditInfo";
@@ -17,8 +16,8 @@ export const LyricFormLabel = ({
     <div className="stack-row justify-between w-full gap-1 flex-wrap">
       <FormLabel className="stack-row mb-0">
         Lyric{" "}
-        <Popover placement="bottom-start">
-          <PopoverTrigger>
+        <Popover>
+          <PopoverTrigger asChild>
             <Button size="xs" variant="outline" className="font-light">
               <FaCircleInfo className="text-gray-700" />
               How does this work?
