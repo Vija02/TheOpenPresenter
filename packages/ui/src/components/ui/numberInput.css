@@ -1,0 +1,52 @@
+@reference "@repo/tailwind-config/index.css";
+
+@layer base {
+  .ui--number-input {
+    @apply relative flex h-9 w-full min-w-0 rounded-md border bg-transparent shadow-xs transition-[color,box-shadow] outline-none;
+    @apply border-stroke-emphasis;
+  }
+
+  .ui--number-input-field {
+    @apply flex-1 bg-transparent px-3 py-1 text-base outline-none;
+    @apply placeholder:text-tertiary;
+    @apply disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm;
+    @apply focus-visible:outline-none;
+    @apply aria-invalid:text-fill-destructive;
+  }
+
+  .ui--number-input:focus-within {
+    @apply border-ring ring-ring/50 ring-2;
+  }
+
+  .ui--number-input[aria-invalid="true"] {
+    @apply ring-fill-destructive/20 border-fill-destructive;
+  }
+
+  .ui--number-input-stepper {
+    @apply flex flex-col border-l border-stroke-emphasis;
+  }
+
+  .ui--number-input-stepper-button {
+    @apply flex h-4 w-6 items-center justify-center bg-transparent text-tertiary transition-colors;
+    @apply hover:bg-surface-secondary hover:text-primary;
+    @apply active:bg-surface-tertiary;
+    @apply disabled:pointer-events-none disabled:opacity-50;
+    @apply focus-visible:outline-none focus-visible:bg-surface-secondary focus-visible:text-primary;
+  }
+
+  .ui--number-input-stepper-button:first-child {
+    @apply border-b border-stroke-emphasis rounded-tr-md;
+  }
+
+  .ui--number-input-stepper-button:last-child {
+    @apply rounded-br-md;
+  }
+
+  .ui--number-input-unit {
+    @apply text-base font-medium text-primary md:text-sm;
+  }
+
+  .ui--number-input-wrapper {
+    @apply flex items-center gap-2;
+  }
+}
