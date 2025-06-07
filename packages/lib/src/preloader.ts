@@ -19,10 +19,14 @@ async function importWithRetry(
 ) {
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
+      // Browser doesn't retry failed dynamic import. So we append this query to bust the cache
+      // More info: https://github.com/whatwg/html/issues/6768
+      // Reference: https://github.com/fatso83/retry-dynamic-import
+      const url = moduleUrl + (attempt !== 1 ? `?t=${+new Date()}` : "");
       if (type === "js") {
-        return await import(/* @vite-ignore */ moduleUrl);
+        return await import(/* @vite-ignore */ url);
       } else {
-        return await loadjsPromise(moduleUrl);
+        return await loadjsPromise(url);
       }
     } catch (error: any) {
       if (attempt === maxAttempts) {

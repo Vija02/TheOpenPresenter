@@ -15,7 +15,7 @@
     }
   },
   "scripts": {
-    "build": "tsup src/index.ts --format esm,cjs --minify --experimental-dts",
+    "build": "tsup src/index.ts --format esm,cjs --experimental-dts",
     "dev": "tsup src/index.ts --format esm,cjs --experimental-dts --watch"
   },
   "dependencies": {
