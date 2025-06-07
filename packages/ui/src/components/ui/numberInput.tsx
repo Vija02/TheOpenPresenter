@@ -95,7 +95,7 @@ const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
 
     const roundToPrecision = useCallback(
       (val: number): number => {
-        if (precision === undefined) return val;
+        if (precision === undefined) return parseFloat(val.toFixed(10));
         return (
           Math.round(val * Math.pow(10, precision)) / Math.pow(10, precision)
         );
@@ -273,7 +273,7 @@ export interface NumberInputControlProps<
   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
 > extends Omit<NumberInputProps, "value" | "onChange"> {
   name: TName;
-  label: string;
+  label?: string;
   description?: string;
   control: Control<TFieldValues>;
   unit?: string;
@@ -308,7 +308,7 @@ function NumberInputControl<
 
         return (
           <FormItem>
-            <FormLabel>{label}</FormLabel>
+            {label && <FormLabel>{label}</FormLabel>}
             <FormControl>
               {unit ? (
                 <div className="ui--number-input-wrapper">
