@@ -1,0 +1,42 @@
+@reference "@repo/tailwind-config/index.css";
+
+@layer base {
+  .ui--volume-bar {
+    @apply flex flex-col gap-2 items-center w-[40px] px-[5px] py-4 bg-fill-default text-fill-default-fg h-full;
+  }
+
+  .ui--volume-bar-root {
+    @apply flex flex-col flex-1 items-center relative;
+  }
+
+  .ui--volume-bar-track {
+    @apply relative w-2 flex-1;
+    border: 1px solid rgb(255, 255, 255, 0.3);
+  }
+
+  .ui--volume-bar-range {
+    position: absolute;
+    background-color: rgb(130, 130, 130);
+    width: 100%;
+  }
+
+  .ui--volume-bar-thumb {
+    display: block;
+    width: 30px;
+    height: 50px;
+
+    @apply rounded;
+
+    background: linear-gradient(
+      #282828 0%,
+      #323232 45%,
+      white 45%,
+      white 55%,
+      #383838 55%,
+      #494949 100%
+    );
+    border: 1px solid #ffffff1c;
+    border-top: 1px solid rgba(255, 255, 255, 0.32);
+    box-shadow: rgba(0, 0, 0, 0.75) 2px 4px 5px 0px;
+  }
+}

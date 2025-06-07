@@ -1,4 +1,4 @@
-import { Box, Grid, Link, Text } from "@chakra-ui/react";
+import { Link, cn } from "@repo/ui";
 import { useState } from "react";
 
 import { trpc } from "../../trpc";
@@ -14,31 +14,28 @@ export const ImportPlaylist = ({
   const { data: playlistData } = trpc.lyricsPresenter.playlist.useQuery();
 
   return (
-    <Box>
-      <Text fontSize="lg" fontWeight="600">
-        Recent Playlist
-      </Text>
-      <Text pb={2} fontSize="xs">
+    <div>
+      <p className="text-lg font-bold">Recent Playlist</p>
+      <p className="pb-2 text-xs">
         From{" "}
-        <Link href="https://myworshiplist.com" color="blue.500" isExternal>
+        <Link href="https://myworshiplist.com" isExternal>
           MyWorshipList
         </Link>
-      </Text>
-      <Grid
-        gridTemplateColumns="repeat(auto-fit, minmax(min(200px, 100%), 1fr))"
-        gap={1}
+      </p>
+      <div
+        className="grid gap-1"
+        style={{
+          gridTemplateColumns:
+            "repeat(auto-fit, minmax(min(200px, 100%), 1fr))",
+        }}
       >
         {playlistData?.data.map((playlist: any) => (
-          <Box
+          <div
             key={playlist.id}
-            p={1}
-            cursor="pointer"
-            _hover={{ bg: "gray.100" }}
-            flex={1}
-            whiteSpace="nowrap"
-            border="1px solid"
-            borderColor="gray.300"
-            bg={selectedPlaylistId === playlist.id ? "gray.200" : "transparent"}
+            className={cn(
+              "p-1 cursor-pointer flex-1 whitespace-nowrap border border-stroke hover:bg-surface-primary-hover",
+              selectedPlaylistId === playlist.id && "bg-surface-primary-hover",
+            )}
             onClick={() => {
               setSelectedPlaylistId(playlist.id);
               setSelectedPlaylistSongIds(
@@ -48,28 +45,19 @@ export const ImportPlaylist = ({
               );
             }}
           >
-            <Text
-              fontWeight="bold"
-              fontSize="md"
-              overflow="hidden"
-              textOverflow="ellipsis"
-            >
+            <p className="font-bold overflow-hidden text-ellipsis">
               {playlist?.title}
-            </Text>
-            <Box color="gray.800">
+            </p>
+            <div className="text-secondary">
               {playlist.content.map((content: any) => (
-                <Text
-                  key={content.id}
-                  textOverflow="ellipsis"
-                  overflow="hidden"
-                >
+                <p key={content.id} className="text-ellipsis overflow-hidden">
                   - {content.title}
-                </Text>
+                </p>
               ))}
-            </Box>
-          </Box>
+            </div>
+          </div>
         ))}
-      </Grid>
-    </Box>
+      </div>
+    </div>
   );
 };

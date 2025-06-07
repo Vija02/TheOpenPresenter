@@ -1,20 +1,17 @@
-import { Center } from "@chakra-ui/react";
-import { Oval } from "react-loader-spinner";
+import { cx } from "class-variance-authority";
+import { AiOutlineLoading3Quarters } from "react-icons/ai";
 
 import { DeferredLoad } from "../DeferredLoad";
 
-type PropTypes = { defer?: boolean; size?: number; p?: number };
+type PropTypes = {
+  defer?: number;
+  className?: string;
+};
 
-export function LoadingInline({ defer = true, size = 20, p = 5 }: PropTypes) {
-  const Component = (
-    <Center p={p}>
-      <Oval color="black" secondaryColor="gray" height={size} width={size} />
-    </Center>
+export function LoadingInline({ defer = 0, className }: PropTypes) {
+  return (
+    <DeferredLoad durationMs={defer}>
+      <AiOutlineLoading3Quarters className={cx("animate-spin", className)} />
+    </DeferredLoad>
   );
-
-  if (defer) {
-    return <DeferredLoad>{Component}</DeferredLoad>;
-  }
-
-  return Component;
 }

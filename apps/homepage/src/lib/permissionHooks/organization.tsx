@@ -28,7 +28,7 @@ export function useOrganizationLoading(
   } else if (error) {
     child = <ErrorAlert error={error} />;
   } else {
-    child = <FourOhFour currentUser={data?.currentUser} />;
+    child = <FourOhFour loggedIn={data?.currentUser} />;
   }
 
   return child ? <Box>{child}</Box> : null;

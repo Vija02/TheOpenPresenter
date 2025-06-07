@@ -1,4 +1,4 @@
-import { Button, Input, Stack, Text } from "@chakra-ui/react";
+import { Button, Input } from "@repo/ui";
 import { useEffect, useRef } from "react";
 import { AiOutlineImport } from "react-icons/ai";
 import { FaPlus } from "react-icons/fa";
@@ -18,33 +18,28 @@ export const LandingAddSong = ({
   }, [focusElement]);
 
   return (
-    <Stack>
-      <Stack alignItems="center">
-        <Text fontWeight="bold">Search existing songs</Text>
+    <div className="stack-col items-stretch">
+      <div className="stack-col">
+        <p className="font-bold">Search existing songs</p>
         <Input
           ref={focusElement}
-          maxW="xl"
           onChange={(e) => onSearch(e.target.value)}
           placeholder="Song title..."
         />
-      </Stack>
+      </div>
 
-      <Text color="gray.500" textAlign="center">
-        or
-      </Text>
+      <p className="text-secondary text-center">or</p>
 
       <Button
         size="sm"
-        colorScheme="green"
+        variant="success"
         onClick={() => onSetMode(Mode.CREATE_SONG)}
       >
         <FaPlus />
-        <Text ml={2}>Create a new song</Text>
+        Create a new song
       </Button>
 
-      <Text color="gray.500" textAlign="center">
-        or
-      </Text>
+      <p className="text-secondary text-center">or</p>
 
       <Button
         size="sm"
@@ -52,8 +47,8 @@ export const LandingAddSong = ({
         onClick={() => onSetMode(Mode.IMPORT_PLAYLIST)}
       >
         <AiOutlineImport />
-        <Text ml={2}>Import from existing playlist</Text>
+        Import from existing playlist
       </Button>
-    </Stack>
+    </div>
   );
 };

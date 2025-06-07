@@ -1,5 +1,5 @@
-import { Box, Text } from "@chakra-ui/react";
 import useSize from "@react-hook/size";
+import { cn } from "@repo/ui";
 import React, { useMemo } from "react";
 
 import { SlideStyle } from "../../../src";
@@ -53,11 +53,12 @@ const SectionsRenderViewWrapper = React.memo(
     }, [currentIndex, groupedData]);
 
     return (
-      <Box
+      <div
         ref={target}
-        height="100%"
-        position="relative"
-        backgroundColor={slideStyle.isDarkMode ? "black" : "white"}
+        className={cn(
+          "h-full relative",
+          slideStyle.isDarkMode ? "bg-black" : "bg-white",
+        )}
       >
         {slideStyle.autoSize ? (
           <SectionsRenderViewAutoSize
@@ -72,7 +73,7 @@ const SectionsRenderViewWrapper = React.memo(
             size={size}
           />
         )}
-      </Box>
+      </div>
     );
   },
 );
@@ -160,27 +161,26 @@ const SectionsRenderViewManualFontSize = React.memo(
     const padding = usePadding(slideStyle, { width, height });
 
     return (
-      <Box
-        display="flex"
-        flexDir="column"
-        alignItems="center"
-        justifyContent="center"
-        height="100%"
-        overflow="hidden"
-        padding={padding.map((x) => x + "px").join(" ")}
-        position="relative"
-        fontSize={width / 280} // Magic number to get the pt scale right
+      <div
+        className="flex flex-col items-center justify-center h-full overflow-hidden relative"
+        style={{
+          padding: padding.map((x) => x + "px").join(" "),
+          fontSize: width / 280, // Magic number to get the pt scale right
+        }}
       >
         {slideStyle.debugPadding && <DebugPadding padding={padding} />}
-        <Text
-          fontWeight={slideStyle.fontWeight}
-          fontStyle={slideStyle.fontStyle}
-          color={slideStyle.isDarkMode ? "white" : "rgb(26, 32, 44)"}
-          fontSize={slideStyle.fontSize + "em"}
-          fontFamily={slideStyle.fontFamily}
-          lineHeight={slideStyle.lineHeight}
-          textAlign="center"
-          maxHeight="100%"
+        <div
+          className={cn(
+            "text-center max-h-full",
+            slideStyle.isDarkMode ? "text-white" : "text-[rgb(26, 32, 44)]",
+          )}
+          style={{
+            fontWeight: slideStyle.fontWeight,
+            fontStyle: slideStyle.fontStyle,
+            fontSize: slideStyle.fontSize + "em",
+            fontFamily: slideStyle.fontFamily,
+            lineHeight: slideStyle.lineHeight,
+          }}
         >
           {textLines.map((x, i, all) => (
             <React.Fragment key={i}>
@@ -188,8 +188,8 @@ const SectionsRenderViewManualFontSize = React.memo(
               {i < all.length - 1 && <br />}
             </React.Fragment>
           ))}
-        </Text>
-      </Box>
+        </div>
+      </div>
     );
   },
 );

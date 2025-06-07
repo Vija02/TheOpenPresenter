@@ -5,6 +5,10 @@
   list-style-type: none;
   gap: 4px;
 
+  li {
+    display: inline-flex;
+  }
+
   li a {
     border: transparent 1px solid;
     padding: 0.4rem 0.7rem;
