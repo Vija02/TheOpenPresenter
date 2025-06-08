@@ -1,0 +1,30 @@
+@reference "@repo/tailwind-config/index.css";
+
+@layer base {
+  .ui--toggle-group {
+    @apply flex w-fit items-center rounded-md shadow-xs;
+  }
+
+  .ui--toggle-group-item {
+    @apply inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium transition-all cursor-pointer;
+    @apply disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px];
+    @apply aria-invalid:ring-fill-destructive/20 dark:aria-invalid:ring-fill-destructive/40 aria-invalid:border-fill-destructive;
+    @apply border border-stroke bg-surface-primary text-primary;
+    @apply hover:bg-surface-secondary hover:text-secondary;
+    @apply disabled:bg-surface-secondary disabled:text-tertiary;
+    @apply data-[state=on]:bg-accent data-[state=on]:text-accent-foreground;
+    @apply first:rounded-l-md last:rounded-r-md border-l-0 first:border-l;
+  }
+
+  .ui--toggle-group-item__default {
+    @apply h-9 px-2 min-w-9;
+  }
+
+  .ui--toggle-group-item__sm {
+    @apply h-8 px-1.5 min-w-8;
+  }
+
+  .ui--toggle-group-item__lg {
+    @apply h-10 px-2.5 min-w-10;
+  }
+}
