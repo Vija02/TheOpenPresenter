@@ -1,11 +1,20 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import * as TogglePrimitive from "@radix-ui/react-toggle"
-import { cva, type VariantProps } from "class-variance-authority"
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
+import * as TogglePrimitive from "@radix-ui/react-toggle";
+import { type VariantProps, cva } from "class-variance-authority";
+import * as React from "react";
+import { Control } from "react-hook-form";
 
-import "./toggle.css"
+import {
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "./form";
+import "./toggle.css";
 
 const toggleVariants = cva("ui--toggle", {
   variants: {
@@ -18,7 +27,7 @@ const toggleVariants = cva("ui--toggle", {
   defaultVariants: {
     size: "default",
   },
-})
+});
 
 function Toggle({
   className,
@@ -32,7 +41,45 @@ function Toggle({
       className={cn(toggleVariants({ size, className }))}
       {...props}
     />
-  )
+  );
 }
 
-export { Toggle, toggleVariants }
+function ToggleControl({
+  control,
+  name,
+  label,
+  description,
+  ...props
+}: React.ComponentProps<typeof TogglePrimitive.Root> &
+  VariantProps<typeof toggleVariants> & {
+    name: string;
+    label: string;
+    description?: string;
+    control: Control<any, any, any>;
+  }) {
+  return (
+    <FormField
+      control={control}
+      name={name}
+      render={({ field: { value, onChange, ...field } }) => (
+        <FormItem>
+          <FormLabel>{label}</FormLabel>
+          <FormControl>
+            <div>
+              <Toggle
+                pressed={value}
+                onPressedChange={onChange}
+                {...field}
+                {...props}
+              />
+            </div>
+          </FormControl>
+          {description && <FormDescription>{description}</FormDescription>}
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  );
+}
+
+export { Toggle, ToggleControl, toggleVariants };

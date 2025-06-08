@@ -7,7 +7,7 @@
   }
 
   .ui--number-input-field {
-    @apply flex-1 bg-transparent px-3 py-1 text-base outline-none;
+    @apply w-full flex-1 bg-transparent px-3 py-1 text-base outline-none;
     @apply placeholder:text-tertiary;
     @apply disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm;
     @apply focus-visible:outline-none;

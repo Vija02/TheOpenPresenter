@@ -1,7 +1,16 @@
 import { cn } from "@/lib/utils";
 import * as ToggleGroupPrimitive from "@radix-ui/react-toggle-group";
 import * as React from "react";
+import { Control } from "react-hook-form";
 
+import {
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "./form";
 import "./toggle-group.css";
 
 const ToggleGroupContext = React.createContext<{
@@ -59,4 +68,38 @@ function ToggleGroupItem({
   );
 }
 
-export { ToggleGroup, ToggleGroupItem };
+function ToggleGroupControl({
+  control,
+  name,
+  label,
+  description,
+  children,
+  ...props
+}: React.ComponentProps<typeof ToggleGroupPrimitive.Root> & {
+  name: string;
+  label: string;
+  description?: string;
+  control: Control<any, any, any>;
+  size?: "default" | "sm" | "lg";
+}) {
+  return (
+    <FormField
+      control={control}
+      name={name}
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel>{label}</FormLabel>
+          <FormControl>
+            <ToggleGroup {...field} {...props}>
+              {children}
+            </ToggleGroup>
+          </FormControl>
+          {description && <FormDescription>{description}</FormDescription>}
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  );
+}
+
+export { ToggleGroup, ToggleGroupItem, ToggleGroupControl };

@@ -9,10 +9,10 @@
     @apply inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium transition-all cursor-pointer;
     @apply disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px];
     @apply aria-invalid:ring-fill-destructive/20 dark:aria-invalid:ring-fill-destructive/40 aria-invalid:border-fill-destructive;
-    @apply border border-stroke bg-surface-primary text-primary;
-    @apply hover:bg-surface-secondary hover:text-secondary;
+    @apply border border-stroke bg-surface-primary text-secondary;
+    @apply hover:bg-surface-primary-hover;
     @apply disabled:bg-surface-secondary disabled:text-tertiary;
-    @apply data-[state=on]:bg-accent data-[state=on]:text-accent-foreground;
+    @apply data-[state=on]:bg-surface-primary-active data-[state=on]:text-primary;
     @apply first:rounded-l-md last:rounded-r-md border-l-0 first:border-l;
   }
 
