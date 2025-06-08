@@ -8576,9 +8576,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@repo/shared@workspace:apps/shared"
   dependencies:
-    "@chakra-ui/react": "npm:^2.10.4"
-    "@emotion/react": "npm:^11.13.5"
-    "@emotion/styled": "npm:^11.13.5"
     "@hocuspocus/provider": "npm:^2.14.0"
     "@repo/base-plugin": "npm:*"
     "@repo/eslint-config": "npm:*"
@@ -8597,7 +8594,6 @@ __metadata:
     dts-cli: "npm:^2.0.5"
     eslint: "npm:^8.57.1"
     fast-deep-equal: "npm:^3.1.3"
-    framer-motion: "npm:^11.13.1"
     immer: "npm:^10.1.1"
     react: "npm:^19.1.0"
     react-dom: "npm:^19.1.0"
