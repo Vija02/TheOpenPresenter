@@ -64,7 +64,7 @@ const SceneSettingsModal = ({
             </DialogBody>
             <DialogFooter>
               <Button type="submit">Submit</Button>
-              <Button type="button" variant="outline" onClick={onToggle}>
+              <Button variant="outline" onClick={onToggle}>
                 Close
               </Button>
             </DialogFooter>

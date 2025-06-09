@@ -202,8 +202,10 @@ const RemoteEditSongModal = ({
               <div className="flex flex-col w-full">
                 <MobilePreview preview={preview} />
                 <div className="stack-row px-3 md:px-6 pt-3 justify-end">
-                  <Button variant="success">Save</Button>
-                  <Button type="button" variant="outline" onClick={onToggle}>
+                  <Button type="submit" variant="success">
+                    Save
+                  </Button>
+                  <Button variant="outline" onClick={onToggle}>
                     Close
                   </Button>
                 </div>
