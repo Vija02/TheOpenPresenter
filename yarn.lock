@@ -8183,9 +8183,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@repo/plugin-lyrics-presenter@workspace:plugins/lyrics-presenter"
   dependencies:
-    "@chakra-ui/react": "npm:^2.10.4"
-    "@emotion/react": "npm:^11.13.5"
-    "@emotion/styled": "npm:^11.13.5"
     "@r2wc/react-to-web-component": "npm:^2.0.3"
     "@react-hook/size": "npm:^2.1.2"
     "@react-hook/window-size": "npm:^3.1.1"
@@ -8214,9 +8211,6 @@ __metadata:
     axios: "npm:^1.7.9"
     concurrently: "npm:^9.1.2"
     eslint: "npm:^8.57.1"
-    formik: "npm:^2.4.6"
-    formik-chakra-ui: "npm:^1.6.1"
-    framer-motion: "npm:^11.13.1"
     lodash-es: "npm:^4.17.21"
     ohash: "npm:^1.1.4"
     pkgroll: "npm:2.5.1"
@@ -8224,7 +8218,6 @@ __metadata:
     react-dom: "npm:^19.1.0"
     react-highlight-words: "npm:^0.20.0"
     react-icons: "npm:^5.4.0"
-    react-paginate: "npm:^8.3.0"
     typeid-js: "npm:^1.1.0"
     use-debounce: "npm:^10.0.4"
     valtio: "npm:^2.1.2"
@@ -8232,7 +8225,6 @@ __metadata:
     vite: "npm:6.3.5"
     yjs: "npm:13.6.26"
     zod: "npm:^3.25.17"
-    zod-formik-adapter: "npm:^1.3.0"
   languageName: unknown
   linkType: soft
 
@@ -31063,16 +31055,6 @@ __metadata:
   version: 0.8.15
   resolution: "zen-observable@npm:0.8.15"
   checksum: 10c0/71cc2f2bbb537300c3f569e25693d37b3bc91f225cefce251a71c30bc6bb3e7f8e9420ca0eb57f2ac9e492b085b8dfa075fd1e8195c40b83c951dd59c6e4fbf8
-  languageName: node
-  linkType: hard
-
-"zod-formik-adapter@npm:^1.3.0":
-  version: 1.3.0
-  resolution: "zod-formik-adapter@npm:1.3.0"
-  peerDependencies:
-    formik: ^2.2.9
-    zod: ^3.22.4
-  checksum: 10c0/2a56cdff782807c41ed40040274f0b3f0767935afb85d50fb00b834d0849bf698a39c05bdb472860a15ed2368aeebcaa2a632e7675e97b7b49be52818f4b1195
   languageName: node
   linkType: hard
 

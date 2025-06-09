@@ -1,8 +1,6 @@
-import { useMediaQuery } from "@chakra-ui/react";
-import { Input, LoadingInline, cn } from "@repo/ui";
+import { Input, LoadingInline, Pagination, cn } from "@repo/ui";
 import { useEffect, useRef, useState } from "react";
 import Highlighter from "react-highlight-words";
-import ReactPaginate from "react-paginate";
 import { useDebounce } from "use-debounce";
 
 import { trpc } from "../../trpc";
@@ -33,8 +31,6 @@ export const SearchSong = ({
   useEffect(() => {
     void (focusElement.current && focusElement.current!.focus());
   }, [focusElement]);
-
-  const [isMobile] = useMediaQuery("(max-width: 760px)");
 
   return (
     <div className="flex">
@@ -109,16 +105,10 @@ export const SearchSong = ({
 
           <div className="flex mt-5 justify-center">
             {songData?.totalPage > 1 && (
-              <ReactPaginate
-                className="lyrics-presenter__search-song--pagination"
-                breakLabel="..."
-                previousLabel={isMobile ? "<" : "< Previous"}
-                nextLabel={isMobile ? ">" : "Next >"}
+              <Pagination
                 onPageChange={(page) => {
                   setPageOffset(page.selected);
                 }}
-                pageRangeDisplayed={3}
-                marginPagesDisplayed={isMobile ? 1 : 2}
                 pageCount={songData?.totalPage}
                 forcePage={pageOffset}
               />
