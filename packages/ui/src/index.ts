@@ -3,6 +3,7 @@ import "@repo/tailwind-config/index.css";
 export * from "./components/ui/alert";
 export * from "./components/ui/badge";
 export * from "./components/ui/button";
+export * from "./components/ui/checkbox";
 export * from "./components/ui/dialog";
 export * from "./components/ui/form";
 export * from "./components/ui/input";

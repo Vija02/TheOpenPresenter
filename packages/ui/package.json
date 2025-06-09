@@ -43,6 +43,7 @@
     "@ajna/pagination": "^1.4.19",
     "@chakra-ui/react": "^2.10.4",
     "@hookform/resolvers": "^5.0.1",
+    "@radix-ui/react-checkbox": "^1.3.2",
     "@radix-ui/react-dialog": "^1.1.14",
     "@radix-ui/react-label": "^2.1.7",
     "@radix-ui/react-popover": "^1.1.14",
