@@ -1,0 +1,32 @@
+@reference "@repo/tailwind-config/index.css";
+
+@layer base {
+  .ui--pagination {
+    @apply mx-auto flex w-full justify-center;
+    @apply flex flex-row items-center gap-1;
+  }
+
+  .ui--pagination-link {
+    @apply inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-sm text-sm font-medium transition-all cursor-pointer;
+    @apply select-none disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px];
+    @apply aria-invalid:ring-fill-destructive/20 dark:aria-invalid:ring-fill-destructive/40 aria-invalid:border-fill-destructive;
+    @apply size-9;
+    /* Override anchor styles */
+    @apply text-inherit no-underline hover:no-underline;
+    /* Hover and disabled */
+    @apply hover:bg-surface-tertiary;
+    @apply disabled:bg-surface-secondary disabled:text-tertiary;
+  }
+
+  .ui--pagination .selected > a {
+    @apply border border-stroke shadow;
+  }
+
+  .ui--pagination-nav-link {
+    @apply h-9 px-3 w-full;
+  }
+
+  .ui--pagination-navigation-text {
+    @apply hidden sm:block;
+  }
+}

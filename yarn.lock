@@ -8727,6 +8727,7 @@ __metadata:
     react-hook-form: "npm:^7.56.4"
     react-icons: "npm:^5.4.0"
     react-loader-spinner: "npm:^6.1.6"
+    react-paginate: "npm:^8.3.0"
     rollup-plugin-postcss: "npm:^4.0.2"
     storybook: "npm:^8.6.14"
     tailwind-merge: "npm:^3.3.0"

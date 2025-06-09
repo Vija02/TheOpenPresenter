@@ -3,6 +3,7 @@ import { Box, ChakraProvider, Text } from "@chakra-ui/react";
 import "@fontsource-variable/inter";
 import "@fontsource-variable/source-sans-3";
 import { theme } from "@repo/ui";
+import "@repo/ui/css";
 import { AppProps } from "next/app";
 import { Router } from "next/router";
 import NProgress from "nprogress";
