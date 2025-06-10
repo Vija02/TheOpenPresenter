@@ -27,18 +27,7 @@ const WorshipPadsRemote = () => {
           />
           <div className="p-3 w-full overflow-auto">
             <div>
-              <div
-                className="grid gap-[1px] max-w-[1200px] border border-black bg-black grid-cols-3 md:grid-cols-4 lg:grid-cols-6"
-                // maxW="1200px"
-                // gap="1px"
-                // border="1px solid black"
-                // bg="black"
-                // gridTemplateColumns={{
-                //   base: "repeat(3, 1fr)",
-                //   md: "repeat(4, 1fr)",
-                //   lg: "repeat(6, 1fr)",
-                // }}
-              >
+              <div className="grid gap-[1px] max-w-[1200px] border border-black bg-black grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
                 {files.map((file) => (
                   <Button
                     className={cn(
@@ -48,16 +37,6 @@ const WorshipPadsRemote = () => {
                         "bg-surface-primary-active",
                     )}
                     variant="outline"
-                    // width="100%"
-                    // height="100%"
-                    // rounded="none"
-                    // aspectRatio={1}
-                    // bg={
-                    //   isPlaying && currentKey === file.key
-                    //     ? "blue.200"
-                    //     : "white"
-                    // }
-                    // _hover={{ bg: "blue.100" }}
                     onClick={() => {
                       mutableRendererData.currentKey = file.key;
                       mutableRendererData.isPlaying = true;

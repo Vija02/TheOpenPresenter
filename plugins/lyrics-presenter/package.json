@@ -49,6 +49,7 @@
   "devDependencies": {
     "@repo/eslint-config": "*",
     "@repo/prettier-config": "*",
+    "@repo/tailwind-config": "*",
     "@repo/typescript-config": "*",
     "@tailwindcss/vite": "^4.1.7",
     "@types/react-highlight-words": "^0.20.0",
