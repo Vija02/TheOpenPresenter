@@ -3,9 +3,21 @@
 @layer base {
   .ui--badge {
     @apply inline-flex items-center justify-center rounded-sm;
-    @apply px-2 py-0.5 text-xs font-medium w-fit whitespace-nowrap;
-    @apply shrink-0 gap-1 [&>svg]:size-3 [&>svg]:pointer-events-none;
+    @apply font-medium w-fit whitespace-nowrap;
+    @apply shrink-0 gap-1 [&>svg]:pointer-events-none;
     @apply focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px];
     @apply aria-invalid:ring-fill-destructive/20 aria-invalid:border-fill-destructive transition-[color,box-shadow] overflow-hidden;
+  }
+
+  .ui--badge__default {
+    @apply px-2 py-0.5 text-xs [&>svg]:size-3;
+  }
+
+  .ui--badge__sm {
+    @apply px-1.5 py-0.5 text-2xs [&>svg]:size-2.5;
+  }
+
+  .ui--badge__lg {
+    @apply px-3 py-1 text-sm [&>svg]:size-4;
   }
 }

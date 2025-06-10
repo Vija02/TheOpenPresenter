@@ -14,15 +14,22 @@ const badgeVariants = cva("ui--badge", {
       info: "bg-fill-info text-fill-info-fg",
       warning: "bg-fill-warning text-fill-warning-fg",
     },
+    size: {
+      default: "ui--badge__default",
+      sm: "ui--badge__sm",
+      lg: "ui--badge__lg",
+    },
   },
   defaultVariants: {
     variant: "default",
+    size: "default",
   },
 });
 
 function Badge({
   className,
   variant,
+  size,
   asChild = false,
   ...props
 }: React.ComponentProps<"span"> &
@@ -32,7 +39,7 @@ function Badge({
   return (
     <Comp
       data-slot="badge"
-      className={cn(badgeVariants({ variant }), className)}
+      className={cn(badgeVariants({ variant, size }), className)}
       {...props}
     />
   );
