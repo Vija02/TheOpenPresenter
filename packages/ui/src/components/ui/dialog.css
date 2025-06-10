@@ -37,7 +37,7 @@
     @apply flex gap-2 sm:flex-row px-6 pb-6 sm:justify-end;
   }
   .ui--dialog-title {
-    @apply text-lg leading-none font-semibold;
+    @apply text-lg leading-none font-semibold focus-visible:outline-none;
   }
   .ui--dialog-description {
     @apply text-secondary text-sm;
