@@ -3,3 +3,59 @@
 .rt--sidebar-add-scene-modal-body {
   @apply stack-col items-start sm:pl-4 w-full;
 }
+
+.rt--sidebar-add-scene-modal-description {
+  @apply font-bold;
+}
+
+.rt--sidebar-add-scene-modal-content {
+  @apply flex;
+}
+
+.rt--sidebar-add-scene-modal-sidebar {
+  @apply stack-col items-stretch pr-4 gap-0 border-r-stroke border-r-1;
+}
+
+.rt--sidebar-add-scene-modal-sidebar > p {
+  @apply font-bold mb-2;
+}
+
+.rt--sidebar-add-scene-modal-category {
+  @apply px-2 py-1 cursor-pointer hover:bg-blue-100;
+}
+
+.rt--sidebar-add-scene-modal-category__active {
+  @apply bg-blue-100;
+}
+
+.rt--sidebar-add-scene-modal-category-section {
+  @apply w-full;
+}
+
+.rt--sidebar-add-scene-modal-category-header {
+  @apply stack-row;
+}
+
+.rt--sidebar-add-scene-modal-category-header p {
+  @apply font-bold text-xl mb-1;
+}
+
+.rt--sidebar-add-scene-modal-plugins {
+  @apply stack-col gap-1 items-stretch;
+
+  > div {
+    @apply flex-col gap-1;
+  }
+}
+
+.rt--sidebar-add-scene-modal-plugin__selected {
+  @apply bg-gray-100;
+}
+
+.rt--sidebar-add-scene-modal-plugin-header {
+  @apply stack-row;
+}
+
+.rt--sidebar-add-scene-modal-star-icon {
+  @apply text-yellow-400;
+}

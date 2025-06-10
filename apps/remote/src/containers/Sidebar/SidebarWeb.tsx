@@ -14,6 +14,7 @@ import { PresentButton } from "./PresentButton";
 import { RendererWarning } from "./RendererWarning";
 import { ResizableBoxWrapper } from "./ResizableBoxWrapper";
 import SidebarAddSceneModal from "./SidebarAddSceneModal";
+import "./SidebarWeb.css";
 
 const SidebarWeb = () => {
   const data = useData();
@@ -22,18 +23,15 @@ const SidebarWeb = () => {
   const { awarenessData } = useAwareness();
 
   return (
-    <div className="shadow">
+    <div className="rt--sidebar-web-container">
       <ResizableBoxWrapper>
-        <div className="flex flex-col h-full border-r-1 border-r-gray-300">
-          <div className="flex flex-col flex-1 overflow-auto pb-2">
-            <Link
-              href={`/o/${orgSlug}`}
-              className="font-medium text-sm h-8 justify-center"
-            >
+        <div>
+          <div className="rt--sidebar-web-content">
+            <Link href={`/o/${orgSlug}`}>
               <VscArrowLeft /> All projects
             </Link>
             <hr />
-            <div className="overflow-auto">
+            <div className="rt--sidebar-web-scene-container">
               {sortBy(
                 Object.entries(data.data),
                 ([, value]) => value.order,
@@ -59,37 +57,33 @@ const SidebarWeb = () => {
                       navigate(`/${id}`);
                     }}
                     className={cx(
-                      "stack-row cursor-pointer py-2 px-2 hover:bg-gray-300 relative justify-between",
-                      location.includes(id) ? "bg-gray-300" : "bg-transparent",
+                      "rt--sidebar-web-scene-item",
+                      location.includes(id)
+                        ? "rt--sidebar-web-scene-item__active"
+                        : "rt--sidebar-web-scene-item__inactive",
                     )}
                   >
-                    <div className="stack-row overflow-hidden">
+                    <div>
                       {data.renderer["1"]?.currentScene === id && (
-                        <div className="absolute top-0 bottom-0 left-0 w-[3px] bg-red-400" />
+                        <div className="rt--sidebar-web-current-scene-indicator" />
                       )}
                       {audioIsPlaying && <MdVolumeUp />}
                       {audioIsRecording && (
-                        <FaMicrophoneLines className="text-red-600" />
+                        <FaMicrophoneLines className="rt--sidebar-web-recording-icon" />
                       )}
-                      <p className="font-bold text-sm text-ellipsis overflow-hidden">
-                        {value.name}
-                      </p>
+                      <p>{value.name}</p>
                     </div>
                     {isLoading && (
-                      <div className="w-3 h-3 rounded-full bg-orange-400 animate-pulse" />
+                      <div className="rt--sidebar-web-loading-indicator" />
                     )}
                   </div>
                 );
               })}
             </div>
-            <div className="stack-col mt-3 px-2">
+            <div className="rt--sidebar-web-actions">
               <OverlayToggle
                 toggler={({ onToggle }) => (
-                  <Button
-                    className="w-full"
-                    variant="success"
-                    onClick={onToggle}
-                  >
+                  <Button variant="success" onClick={onToggle}>
                     <VscAdd /> Add New Scene
                   </Button>
                 )}
@@ -100,15 +94,15 @@ const SidebarWeb = () => {
               <PresentButton />
             </div>
           </div>
-          <div className="stack-row p-2 justify-center gap-5 border-t-1 border-t-gray-200">
-            <div className="stack-row">
-              <p className="font-medium text-lg">
+          <div className="rt--sidebar-web-stats">
+            <div>
+              <p>
                 {awarenessData.filter((x) => x.user?.type === "remote").length}
               </p>
               <RiRemoteControlLine title="Active remote" />
             </div>
-            <div className="stack-row">
-              <p className="font-medium text-lg">
+            <div>
+              <p>
                 {
                   awarenessData.filter((x) => x.user?.type === "renderer")
                     .length
@@ -117,17 +111,12 @@ const SidebarWeb = () => {
               <MdCoPresent title="Active screens" />
             </div>
           </div>
-          <div>
+          <div className="rt--sidebar-web-debug-section">
             <RendererWarning />
             {import.meta.env.DEV && (
               <OverlayToggle
                 toggler={({ onToggle }) => (
-                  <Button
-                    className="w-full"
-                    onClick={onToggle}
-                    variant="muted"
-                    size="sm"
-                  >
+                  <Button onClick={onToggle} variant="muted" size="sm">
                     Debug
                   </Button>
                 )}

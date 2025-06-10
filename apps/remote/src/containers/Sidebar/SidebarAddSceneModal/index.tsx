@@ -10,6 +10,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  OptionGroup,
   OverlayToggleComponentProps,
 } from "@repo/ui";
 import { cx } from "class-variance-authority";
@@ -80,16 +81,20 @@ const SidebarAddSceneModal = ({
           <DialogTitle>Add scene</DialogTitle>
         </DialogHeader>
         <DialogBody>
-          <p className="font-bold">Select a component to add:</p>
-          <div className="flex">
-            <div className="stack-col items-stretch pr-4 gap-0 border-r-stroke border-r-1">
-              <p className="font-bold mb-2">Categories</p>
+          <p className="rt--sidebar-add-scene-modal-description">
+            Select a component to add:
+          </p>
+          <div className="rt--sidebar-add-scene-modal-content">
+            <div className="rt--sidebar-add-scene-modal-sidebar">
+              <p>Categories</p>
               {["All"].concat(sceneCategories).map((category) => (
                 <div
                   key={category}
-                  className={cx("px-2 py-1 cursor-pointer hover:bg-blue-100", {
-                    "bg-blue-100": category === selectedCategory,
-                  })}
+                  className={cx(
+                    "rt--sidebar-add-scene-modal-category",
+                    category === selectedCategory &&
+                      "rt--sidebar-add-scene-modal-category__active",
+                  )}
                   onClick={() => {
                     setSelectedCategory(category);
                   }}
@@ -104,41 +109,39 @@ const SidebarAddSceneModal = ({
                   (x) => selectedCategory === "All" || selectedCategory === x,
                 )
                 .map((category) => (
-                  <div key={category} className="w-full">
-                    <div className="stack-row">
+                  <div
+                    key={category}
+                    className="rt--sidebar-add-scene-modal-category-section"
+                  >
+                    <div className="rt--sidebar-add-scene-modal-category-header">
                       {React.createElement(sceneCategoriesConfig[category], {
                         fontSize: 20,
                       })}
-                      <p className="font-bold text-xl mb-1">{category}</p>
+                      <p>{category}</p>
                     </div>
-                    <div className="stack-col gap-1 items-stretch">
-                      {pluginMetaData?.pluginMeta.sceneCreator
-                        .filter((x) => x.categories.includes(category))
-                        .map((sceneCreator) => (
-                          <div
-                            key={sceneCreator.pluginName}
-                            className={cx(
-                              "cursor-pointer border-1 border-stroke p-2 hover:border-blue-400",
-                              selectedPlugin === sceneCreator.pluginName
-                                ? "bg-gray-100"
-                                : "",
-                            )}
-                            onClick={() => {
-                              setSelectedPlugin(sceneCreator.pluginName);
-                            }}
-                          >
-                            <div className="stack-row">
-                              <p className="font-bold">{sceneCreator.title}</p>
-                              {sceneCreator.isExperimental && (
-                                <Badge variant="info">EXPERIMENTAL</Badge>
-                              )}
-                              {sceneCreator.isStarred && (
-                                <FaStar className="text-yellow-400" />
-                              )}
-                            </div>
-                            <p>{sceneCreator.description}</p>
-                          </div>
-                        ))}
+                    <div className="rt--sidebar-add-scene-modal-plugins">
+                      <OptionGroup
+                        size="sm"
+                        options={pluginMetaData?.pluginMeta.sceneCreator
+                          .filter((x) => x.categories.includes(category))
+                          .map((sceneCreator) => ({
+                            title: (
+                              <div className="rt--sidebar-add-scene-modal-plugin-header">
+                                {sceneCreator.title}
+                                {sceneCreator.isExperimental && (
+                                  <Badge size="sm">EXPERIMENTAL</Badge>
+                                )}
+                                {sceneCreator.isStarred && (
+                                  <FaStar className="rt--sidebar-add-scene-modal-star-icon" />
+                                )}
+                              </div>
+                            ),
+                            description: sceneCreator.description,
+                            value: sceneCreator.pluginName,
+                          }))}
+                        value={selectedPlugin}
+                        onValueChange={(val) => setSelectedPlugin(val)}
+                      />
                     </div>
                   </div>
                 ))}

@@ -14,6 +14,7 @@ import DebugDrawer from "./Debug/DebugDrawer";
 import { PresentButton } from "./PresentButton";
 import { RendererWarning } from "./RendererWarning";
 import SidebarAddSceneModal from "./SidebarAddSceneModal";
+import "./SidebarMobile.css";
 
 const SidebarMobile = () => {
   const data = useData();
@@ -22,17 +23,14 @@ const SidebarMobile = () => {
   const { awarenessData } = useAwareness();
 
   return (
-    <div className="shadow">
-      <div className="flex flex-col h-full w-[80px] border-r-1 border-r-gray-300">
-        <div className="flex flex-col flex-1 overflow-auto pb-2">
-          <Link
-            href={`/o/${orgSlug}`}
-            className="font-medium text-sm h-8 justify-center"
-          >
+    <div className="rt--sidebar-mobile-container">
+      <div className="rt--sidebar-mobile-scene-container">
+        <div className="rt--sidebar-mobile-content">
+          <Link href={`/o/${orgSlug}`}>
             <VscArrowLeft />
           </Link>
           <hr />
-          <div className="overflow-auto">
+          <div className="rt--sidebar-mobile-scene-container">
             {sortBy(Object.entries(data.data), ([, value]) => value.order).map(
               ([id, value]) => {
                 const audioIsPlaying = !!Object.values(
@@ -53,26 +51,26 @@ const SidebarMobile = () => {
                   <div
                     key={id}
                     className={cx(
-                      "stack-col h-[80px] cursor-pointer gap-1 py-2 px-2 hover:bg-gray-300 relative justify-center border-b-1 border-gray-50 overflow-hidden",
-                      location.includes(id) ? "bg-gray-300" : "bg-transparent",
+                      "rt--sidebar-mobile-scene-item",
+                      location.includes(id)
+                        ? "rt--sidebar-mobile-scene-item__active"
+                        : "rt--sidebar-mobile-scene-item__inactive",
                     )}
                     onClick={() => {
                       navigate(`/${id}`);
                     }}
                   >
                     {isLoading && (
-                      <div className="w-3 h-3 rounded-full bg-orange-400 animate-pulse" />
+                      <div className="rt--sidebar-mobile-loading-indicator" />
                     )}
                     {data.renderer["1"]?.currentScene === id && (
-                      <div className="absolute top-0 bottom-0 left-0 w-[3px] bg-red-400" />
+                      <div className="rt--sidebar-mobile-current-scene-indicator" />
                     )}
-                    <p className="text-xs text-center break-words w-full font-medium text-ellipsis overflow-hidden">
-                      {value.name}
-                    </p>
-                    <div className="stack-row">
+                    <p>{value.name}</p>
+                    <div>
                       {audioIsPlaying && <MdVolumeUp />}
                       {audioIsRecording && (
-                        <FaMicrophoneLines className="text-red-600" />
+                        <FaMicrophoneLines className="rt--sidebar-mobile-recording-icon" />
                       )}
                     </div>
                   </div>
@@ -80,15 +78,10 @@ const SidebarMobile = () => {
               },
             )}
           </div>
-          <div className="stack-col py-3 px-2">
+          <div className="rt--sidebar-mobile-actions">
             <OverlayToggle
               toggler={({ onToggle }) => (
-                <Button
-                  onClick={onToggle}
-                  variant="success"
-                  size="mini"
-                  className="w-full"
-                >
+                <Button onClick={onToggle} variant="success" size="mini">
                   <VscAdd />
                   Add
                 </Button>
@@ -100,31 +93,26 @@ const SidebarMobile = () => {
             <PresentButton isMobile />
           </div>
         </div>
-        <div className="stack-col p-2 justify-center border-t-1 border-gray-200">
-          <div className="stack-row">
-            <p className="font-medium text-md">
+        <div className="rt--sidebar-mobile-stats">
+          <div>
+            <p>
               {awarenessData.filter((x) => x.user?.type === "remote").length}
             </p>
             <RiRemoteControlLine title="Active remote" />
           </div>
-          <div className="stack-row">
-            <p className="font-medium text-md">
+          <div>
+            <p>
               {awarenessData.filter((x) => x.user?.type === "renderer").length}
             </p>
             <MdCoPresent title="Active screens" />
           </div>
         </div>
-        <div className="stack-col gap-0">
+        <div className="rt--sidebar-mobile-debug-section">
           <RendererWarning />
           {import.meta.env.DEV && (
             <OverlayToggle
               toggler={({ onToggle }) => (
-                <Button
-                  className="w-full"
-                  onClick={onToggle}
-                  variant="muted"
-                  size="sm"
-                >
+                <Button onClick={onToggle} variant="muted" size="sm">
                   Debug
                 </Button>
               )}

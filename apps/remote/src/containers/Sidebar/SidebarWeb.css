@@ -1,0 +1,77 @@
+@reference "@repo/tailwind-config/index.css";
+
+.rt--sidebar-web-container {
+  @apply shadow;
+}
+
+.rt--sidebar-web-container > div > div {
+  @apply flex flex-col h-full border-r-1 border-r-gray-300;
+}
+
+.rt--sidebar-web-content {
+  @apply flex flex-col flex-1 pb-2 overflow-hidden;
+}
+
+.rt--sidebar-web-content a {
+  @apply font-medium text-sm h-8 justify-center shrink-0;
+}
+
+.rt--sidebar-web-scene-container {
+  @apply overflow-auto;
+}
+
+.rt--sidebar-web-scene-item {
+  @apply stack-row cursor-pointer py-2 px-2 hover:bg-gray-300 relative justify-between;
+}
+
+.rt--sidebar-web-scene-item__active {
+  @apply bg-gray-300;
+}
+
+.rt--sidebar-web-scene-item__inactive {
+  @apply bg-transparent;
+}
+
+.rt--sidebar-web-scene-item .rt--sidebar-web-current-scene-indicator {
+  @apply absolute top-0 bottom-0 left-0 w-[3px] bg-red-400;
+}
+
+.rt--sidebar-web-scene-item .rt--sidebar-web-loading-indicator {
+  @apply w-3 h-3 rounded-full bg-orange-400 animate-pulse;
+}
+
+.rt--sidebar-web-scene-item > div:first-child {
+  @apply stack-row overflow-hidden;
+}
+
+.rt--sidebar-web-scene-item .rt--sidebar-web-recording-icon {
+  @apply text-red-600;
+}
+
+.rt--sidebar-web-scene-item p {
+  @apply font-bold text-sm text-ellipsis overflow-hidden;
+}
+
+.rt--sidebar-web-actions {
+  @apply stack-col mt-3 px-2;
+}
+
+.rt--sidebar-web-actions button {
+  @apply w-full;
+}
+
+.rt--sidebar-web-stats {
+  @apply stack-row p-2 justify-center gap-5 border-t-1 border-t-gray-200 shrink-0;
+}
+
+.rt--sidebar-web-stats > div {
+  @apply stack-row;
+}
+
+.rt--sidebar-web-stats p {
+  @apply font-medium text-lg;
+}
+
+.rt--sidebar-web-debug-section button {
+  @apply w-full;
+}
