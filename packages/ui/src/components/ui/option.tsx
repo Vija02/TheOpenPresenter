@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import React from "react";
 import { Control } from "react-hook-form";
 
 import {
@@ -12,15 +13,15 @@ import {
 import "./option.css";
 
 export interface OptionItem<Value = string> {
-  title: string;
-  description?: string;
+  title: React.ReactNode;
+  description?: React.ReactNode;
   value: Value;
   disabled?: boolean;
 }
 
 interface OptionProps {
-  title: string;
-  description?: string;
+  title: React.ReactNode;
+  description?: React.ReactNode;
   selected?: boolean;
   disabled?: boolean;
   onClick?: () => void;
