@@ -8189,6 +8189,7 @@ __metadata:
     "@repo/base-plugin": "npm:*"
     "@repo/eslint-config": "npm:*"
     "@repo/prettier-config": "npm:*"
+    "@repo/tailwind-config": "npm:*"
     "@repo/typescript-config": "npm:*"
     "@repo/ui": "npm:*"
     "@tailwindcss/vite": "npm:^4.1.7"
@@ -8382,16 +8383,15 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@repo/plugin-worship-pads@workspace:plugins/worship-pads"
   dependencies:
-    "@chakra-ui/react": "npm:^2.10.4"
     "@discordapp/perceptual": "npm:^1.1.0"
-    "@emotion/react": "npm:^11.13.5"
-    "@emotion/styled": "npm:^11.13.5"
     "@r2wc/react-to-web-component": "npm:^2.0.3"
     "@repo/base-plugin": "npm:*"
     "@repo/eslint-config": "npm:*"
     "@repo/prettier-config": "npm:*"
+    "@repo/tailwind-config": "npm:*"
     "@repo/typescript-config": "npm:*"
     "@repo/ui": "npm:*"
+    "@tailwindcss/vite": "npm:^4.1.7"
     "@tanstack/react-query": "npm:^5.62.3"
     "@trpc/client": "npm:^11.1.2"
     "@trpc/react-query": "npm:^11.1.2"
@@ -8401,7 +8401,6 @@ __metadata:
     "@types/react-dom": "npm:^19.1.3"
     "@vitejs/plugin-react-swc": "npm:^3.7.2"
     eslint: "npm:^8.57.1"
-    framer-motion: "npm:^11.13.1"
     howler: "npm:^2.2.4"
     pkgroll: "npm:2.5.1"
     react: "npm:^19.1.0"
@@ -8626,7 +8625,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@repo/tailwind-config@workspace:packages/tailwind-config":
+"@repo/tailwind-config@npm:*, @repo/tailwind-config@workspace:packages/tailwind-config":
   version: 0.0.0-use.local
   resolution: "@repo/tailwind-config@workspace:packages/tailwind-config"
   dependencies:
