@@ -124,6 +124,8 @@ function DialogTitle({
   return (
     <DialogPrimitive.Title
       data-slot="dialog-title"
+      tabIndex={0}
+      autoFocus
       className={cn("ui--dialog-title", className)}
       {...props}
     />

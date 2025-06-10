@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 import { Check, ChevronDown, X } from "lucide-react";
 import React, { ReactElement, Ref } from "react";
+import { Control } from "react-hook-form";
 import SelectComponent, {
   ClassNamesConfig,
   ClearIndicatorProps,
@@ -18,8 +19,17 @@ import SelectComponent, {
 } from "react-select";
 import { FixedSizeList as List } from "react-window";
 
+import {
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "./form";
+
 /** Select option type */
-type OptionType = { label: string; value: string | number };
+type OptionType = { label: string; value: string | number | boolean };
 
 /**
  * Styles that aligns with shadcn/ui
@@ -36,7 +46,7 @@ const selectStyles = {
     "inline-flex items-center gap-2 rounded-sm border border-transparent bg-fill-muted text-fill-muted-fg hover:bg-fill-muted/80 px-1.5 py-0.5 text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
   indicatorsContainerStyles: "gap-1",
   clearIndicatorStyles: "p-1 cursor-pointer",
-  indicatorSeparatorStyles: "bg-fill-muted",
+  indicatorSeparatorStyles: "",
   dropdownIndicatorStyles: "p-1",
   menu: "bg-surface-primary mt-1.5 p-1.5 border border-input rounded-md",
   groupHeadingStyles:
@@ -299,4 +309,67 @@ const SelectParts = {
   MenuList,
 };
 
-export { Select, type OptionType, SelectParts };
+function SelectControl<IsMulti extends boolean = false>({
+  control,
+  name,
+  label,
+  description,
+  options,
+  ...props
+}: Omit<Props<OptionType, IsMulti>, "options"> & {
+  name: string;
+  label: string;
+  description?: string;
+  control: Control<any, any, any>;
+  options: OptionType[];
+  isMulti?: IsMulti;
+}) {
+  return (
+    <FormField
+      control={control}
+      name={name}
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel>{label}</FormLabel>
+          <FormControl>
+            <Select
+              {...field}
+              {...props}
+              options={options}
+              value={
+                field.value !== undefined && field.value !== null
+                  ? props.isMulti
+                    ? options.filter((option) =>
+                        Array.isArray(field.value)
+                          ? field.value.includes(option.value)
+                          : false,
+                      )
+                    : options.find((option) => option.value === field.value)
+                  : props.isMulti
+                    ? []
+                    : null
+              }
+              onChange={(selectedOption) => {
+                if (props.isMulti) {
+                  const values = Array.isArray(selectedOption)
+                    ? selectedOption.map((option) => option.value)
+                    : [];
+                  field.onChange(values);
+                } else {
+                  const value = selectedOption
+                    ? (selectedOption as OptionType).value
+                    : null;
+                  field.onChange(value);
+                }
+              }}
+            />
+          </FormControl>
+          {description && <FormDescription>{description}</FormDescription>}
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  );
+}
+
+export { Select, SelectControl, type OptionType, SelectParts };

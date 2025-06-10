@@ -1,7 +1,13 @@
+import { zodResolver } from "@hookform/resolvers/zod";
 import type { Meta, StoryObj } from "@storybook/react";
 import { fn } from "@storybook/test";
+import React, { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
-import { type OptionType, Select } from "../select";
+import { Button } from "../button";
+import { Form } from "../form";
+import { type OptionType, Select, SelectControl } from "../select";
 
 // Sample options for stories
 const basicOptions: OptionType[] = [
@@ -175,44 +181,264 @@ export const CustomWidth: Story = {
 };
 
 export const InForm: Story = {
-  args: {
-    placeholder: "Select your preference...",
-  },
-  render: (args) => {
+  render: () => {
+    const formSchema = z.object({
+      favoriteFruit: z.string().min(1, "Please select a fruit"),
+      multipleFruits: z
+        .array(z.string())
+        .min(1, "Please select at least one fruit"),
+    });
+
+    const form = useForm<z.infer<typeof formSchema>>({
+      resolver: zodResolver(formSchema),
+      defaultValues: {
+        favoriteFruit: "",
+        multipleFruits: [],
+      },
+    });
+
+    const onSubmit = (values: z.infer<typeof formSchema>) => {
+      console.log("Form submitted:", values);
+      alert(
+        `Selected: ${values.favoriteFruit}, Multiple: ${values.multipleFruits.join(", ")}`,
+      );
+    };
+
     return (
-      <div className="space-y-4 max-w-md">
-        <div>
-          <label className="block text-sm font-medium mb-2">
-            Favorite Fruit
-          </label>
-          <Select {...args} />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-2">
-            Multiple Selection
-          </label>
-          <Select
-            {...args}
+      <Form {...form}>
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="space-y-4 max-w-md"
+        >
+          <SelectControl
+            control={form.control}
+            name="favoriteFruit"
+            label="Favorite Fruit"
+            description="Choose your favorite fruit from the list"
+            options={basicOptions}
+            placeholder="Select your preference..."
+          />
+
+          <SelectControl
+            control={form.control}
+            name="multipleFruits"
+            label="Multiple Fruits"
+            description="You can select multiple fruits"
+            options={basicOptions}
+            placeholder="Select multiple fruits..."
             isMulti
             isClearable
-            placeholder="Select multiple fruits..."
           />
-        </div>
-      </div>
+
+          <Button type="submit">Submit</Button>
+        </form>
+      </Form>
     );
   },
 };
 
 export const ErrorState: Story = {
-  args: {
-    placeholder: "Select an option...",
-  },
-  render: (args) => {
+  render: () => {
+    const formSchema = z.object({
+      requiredField: z.string().min(1, "This field is required"),
+      optionalField: z.string().optional(),
+    });
+
+    const form = useForm<z.infer<typeof formSchema>>({
+      resolver: zodResolver(formSchema),
+      defaultValues: {
+        requiredField: "",
+        optionalField: "",
+      },
+    });
+
+    const data = form.watch();
+
+    // Trigger validation to show error state
+    useEffect(() => {
+      form.trigger();
+    }, [form, data]);
+
+    const onSubmit = (values: z.infer<typeof formSchema>) => {
+      console.log("Form submitted:", values);
+      alert(`Form data: ${JSON.stringify(values, null, 2)}`);
+    };
+
     return (
-      <div className="space-y-2">
-        <Select {...args} />
-        <p className="text-sm text-red-600">This field is required</p>
-      </div>
+      <Form {...form}>
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="space-y-4 max-w-md"
+        >
+          <SelectControl
+            control={form.control}
+            name="requiredField"
+            label="Required Selection"
+            description="This field must be filled"
+            options={basicOptions}
+            placeholder="Select an option..."
+          />
+
+          <SelectControl
+            control={form.control}
+            name="optionalField"
+            label="Optional Selection"
+            description="This field is optional"
+            options={countryOptions}
+            placeholder="Select a country (optional)..."
+          />
+
+          <Button type="submit">Submit</Button>
+        </form>
+      </Form>
+    );
+  },
+};
+
+export const FormWithValidation: Story = {
+  render: () => {
+    const formSchema = z.object({
+      category: z.string().min(1, "Category is required"),
+      tags: z.array(z.string()).min(2, "Please select at least 2 tags"),
+      priority: z.string().min(1, "Priority is required"),
+    });
+
+    const form = useForm<z.infer<typeof formSchema>>({
+      resolver: zodResolver(formSchema),
+      defaultValues: {
+        category: "",
+        tags: [],
+        priority: "",
+      },
+    });
+
+    const onSubmit = (values: z.infer<typeof formSchema>) => {
+      console.log("Form submitted:", values);
+      alert(`Form data: ${JSON.stringify(values, null, 2)}`);
+    };
+
+    const categoryOptions: OptionType[] = [
+      { label: "Technology", value: "tech" },
+      { label: "Design", value: "design" },
+      { label: "Marketing", value: "marketing" },
+      { label: "Sales", value: "sales" },
+    ];
+
+    const tagOptions: OptionType[] = [
+      { label: "React", value: "react" },
+      { label: "TypeScript", value: "typescript" },
+      { label: "Node.js", value: "nodejs" },
+      { label: "GraphQL", value: "graphql" },
+      { label: "PostgreSQL", value: "postgresql" },
+      { label: "Docker", value: "docker" },
+    ];
+
+    const priorityOptions: OptionType[] = [
+      { label: "Low", value: "low" },
+      { label: "Medium", value: "medium" },
+      { label: "High", value: "high" },
+      { label: "Critical", value: "critical" },
+    ];
+
+    return (
+      <Form {...form}>
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="space-y-6 max-w-md"
+        >
+          <SelectControl
+            control={form.control}
+            name="category"
+            label="Project Category"
+            description="Select the main category for this project"
+            options={categoryOptions}
+            placeholder="Choose a category..."
+          />
+
+          <SelectControl
+            control={form.control}
+            name="tags"
+            label="Technology Tags"
+            description="Select at least 2 technologies used in this project"
+            options={tagOptions}
+            placeholder="Select technologies..."
+            isMulti
+            isClearable
+          />
+
+          <SelectControl
+            control={form.control}
+            name="priority"
+            label="Priority Level"
+            description="Set the priority level for this project"
+            options={priorityOptions}
+            placeholder="Select priority..."
+          />
+
+          <div className="flex gap-2">
+            <Button type="submit">Create Project</Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => form.reset()}
+            >
+              Reset
+            </Button>
+          </div>
+        </form>
+      </Form>
+    );
+  },
+};
+
+export const DisabledFormField: Story = {
+  render: () => {
+    const formSchema = z.object({
+      enabledField: z.string().min(1, "This field is required"),
+      disabledField: z.string().optional(),
+    });
+
+    const form = useForm<z.infer<typeof formSchema>>({
+      resolver: zodResolver(formSchema),
+      defaultValues: {
+        enabledField: "",
+        disabledField: "preset-value",
+      },
+    });
+
+    const onSubmit = (values: z.infer<typeof formSchema>) => {
+      console.log("Form submitted:", values);
+      alert(`Form data: ${JSON.stringify(values, null, 2)}`);
+    };
+
+    return (
+      <Form {...form}>
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="space-y-4 max-w-md"
+        >
+          <SelectControl
+            control={form.control}
+            name="enabledField"
+            label="Enabled Field"
+            description="This field is interactive"
+            options={basicOptions}
+            placeholder="Select an option..."
+          />
+
+          <SelectControl
+            control={form.control}
+            name="disabledField"
+            label="Disabled Field"
+            description="This field is disabled with a preset value"
+            options={basicOptions}
+            placeholder="This is disabled..."
+            isDisabled
+          />
+
+          <Button type="submit">Submit</Button>
+        </form>
+      </Form>
     );
   },
 };
