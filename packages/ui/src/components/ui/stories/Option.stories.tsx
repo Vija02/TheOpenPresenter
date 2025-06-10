@@ -7,12 +7,18 @@ const meta = {
   title: "Primitive/Option",
   component: Option,
   tags: ["autodocs"],
-  argTypes: {},
+  argTypes: {
+    size: {
+      control: { type: "select" },
+      options: ["default", "sm", "lg"],
+    },
+  },
   args: {
     title: "Auto fit",
     description: "Fit your lyrics in the available space",
     selected: false,
     onClick: fn(),
+    size: "default",
   },
 } satisfies Meta<typeof Option>;
 
@@ -59,4 +65,38 @@ export const DisabledSelected: Story = {
     disabled: true,
     selected: true,
   },
+};
+
+export const Size: Story = {
+  render: () => (
+    <div className="space-y-4">
+      <div>
+        <h3 className="text-sm font-medium mb-2">Small</h3>
+        <Option
+          title="Small option"
+          description="This is a small sized option"
+          size="sm"
+          selected={false}
+        />
+      </div>
+      <div>
+        <h3 className="text-sm font-medium mb-2">Default</h3>
+        <Option
+          title="Default option"
+          description="This is a default sized option"
+          size="default"
+          selected={false}
+        />
+      </div>
+      <div>
+        <h3 className="text-sm font-medium mb-2">Large</h3>
+        <Option
+          title="Large option"
+          description="This is a large sized option"
+          size="lg"
+          selected={false}
+        />
+      </div>
+    </div>
+  ),
 };

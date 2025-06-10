@@ -2,10 +2,22 @@
 
 @layer base {
   .ui--option {
-    @apply cursor-pointer border rounded-sm p-2 w-full flex-1 transition-all outline-none select-none;
+    @apply cursor-pointer border rounded-sm w-full flex-1 transition-all outline-none select-none;
     @apply border-stroke;
     @apply hover:border-blue-400;
     @apply focus-visible:outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-2;
+  }
+
+  .ui--option__default {
+    @apply p-2;
+  }
+
+  .ui--option__sm {
+    @apply p-1.5;
+  }
+
+  .ui--option__lg {
+    @apply p-3;
   }
 
   .ui--option--selected {
@@ -30,5 +42,22 @@
 
   .ui--option__description {
     @apply text-sm text-secondary;
+  }
+
+  /* Size-specific title and description styles */
+  .ui--option__sm .ui--option__title {
+    @apply text-sm;
+  }
+
+  .ui--option__sm .ui--option__description {
+    @apply text-xs;
+  }
+
+  .ui--option__lg .ui--option__title {
+    @apply text-lg;
+  }
+
+  .ui--option__lg .ui--option__description {
+    @apply text-base;
   }
 }

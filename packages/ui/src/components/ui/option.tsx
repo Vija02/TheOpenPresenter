@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { type VariantProps, cva } from "class-variance-authority";
 import React from "react";
 import { Control } from "react-hook-form";
 
@@ -12,6 +13,19 @@ import {
 } from "./form";
 import "./option.css";
 
+const optionVariants = cva("ui--option", {
+  variants: {
+    size: {
+      default: "ui--option__default",
+      sm: "ui--option__sm",
+      lg: "ui--option__lg",
+    },
+  },
+  defaultVariants: {
+    size: "default",
+  },
+});
+
 export interface OptionItem<Value = string> {
   title: React.ReactNode;
   description?: React.ReactNode;
@@ -19,7 +33,7 @@ export interface OptionItem<Value = string> {
   disabled?: boolean;
 }
 
-interface OptionProps {
+interface OptionProps extends VariantProps<typeof optionVariants> {
   title: React.ReactNode;
   description?: React.ReactNode;
   selected?: boolean;
@@ -35,11 +49,12 @@ function Option({
   disabled,
   onClick,
   className,
+  size,
 }: OptionProps) {
   return (
     <div
       className={cn(
-        "ui--option",
+        optionVariants({ size }),
         selected && "ui--option--selected",
         disabled && "ui--option--disabled",
         className,
@@ -52,7 +67,7 @@ function Option({
   );
 }
 
-interface OptionGroupProps<Value = string> {
+interface OptionGroupProps<Value = string> extends VariantProps<typeof optionVariants> {
   options: OptionItem<Value>[];
   value?: Value;
   onValueChange?: (value: Value) => void;
@@ -66,6 +81,7 @@ function OptionGroup<Value = string>({
   onValueChange,
   disabled,
   className,
+  size,
 }: OptionGroupProps<Value>) {
   return (
     <div className={cn("ui--option-group", className)}>
@@ -77,13 +93,14 @@ function OptionGroup<Value = string>({
           selected={value === option.value}
           disabled={disabled ?? option.disabled}
           onClick={() => onValueChange?.(option.value)}
+          size={size}
         />
       ))}
     </div>
   );
 }
 
-interface OptionControlProps<Value = string> {
+interface OptionControlProps<Value = string> extends VariantProps<typeof optionVariants> {
   control: Control<any, any, any>;
   name: string;
   label: string;
@@ -100,6 +117,7 @@ function OptionControl<Value = string>({
   description,
   options,
   className,
+  size,
 }: OptionControlProps<Value>) {
   return (
     <FormField
@@ -115,6 +133,7 @@ function OptionControl<Value = string>({
               onValueChange={field.onChange}
               disabled={field.disabled}
               className={className}
+              size={size}
             />
           </FormControl>
           {description && <FormDescription>{description}</FormDescription>}
@@ -125,4 +144,4 @@ function OptionControl<Value = string>({
   );
 }
 
-export { Option, OptionGroup, OptionControl };
+export { Option, OptionGroup, OptionControl, optionVariants };
