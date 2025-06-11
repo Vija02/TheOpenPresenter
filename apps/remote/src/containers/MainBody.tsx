@@ -317,6 +317,7 @@ const PluginRenderer = React.memo(
     if (match || viewData?.config?.alwaysRender) {
       return (
         <div
+          id={`pl-${pluginInfo.plugin}`}
           className={cx(
             !match && viewData?.config?.alwaysRender ? "content-hidden" : "",
             "h-full",

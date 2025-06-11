@@ -271,6 +271,7 @@ const PluginRenderer = React.memo(
 
     return (
       <div
+        id={`pl-${pluginInfo?.plugin}`}
         key={pluginId}
         style={{
           width: "100vw",
