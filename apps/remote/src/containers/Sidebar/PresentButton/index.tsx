@@ -11,7 +11,7 @@ export const PresentButton = ({ isMobile }: { isMobile?: boolean }) => {
 
   const PresentButtonElement = ({ onClick }: { onClick?: () => void }) => (
     <Button
-      className={cx(["w-full"])}
+      className={cx(["rt--present-button"])}
       variant="outline"
       size={isMobile ? "mini" : "default"}
       onClick={onClick}
@@ -22,7 +22,7 @@ export const PresentButton = ({ isMobile }: { isMobile?: boolean }) => {
   );
   const StopPresentButtonElement = ({ onClick }: { onClick?: () => void }) => (
     <Button
-      className={cx(["w-full"])}
+      className={cx(["rt--present-button"])}
       variant="outline"
       size={isMobile ? "mini" : "default"}
       onClick={onClick}
@@ -45,7 +45,7 @@ export const PresentButton = ({ isMobile }: { isMobile?: boolean }) => {
     <Link
       href={`/render/${orgSlug}/${projectSlug}`}
       isExternal
-      className="w-full"
+      className="rt--present-button"
       variant="unstyled"
     >
       <PresentButtonElement />
