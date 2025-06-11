@@ -1,4 +1,7 @@
-@import "tailwindcss";
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
 @plugin "@tailwindcss/typography";
 @import "tw-animate-css";
 
@@ -193,18 +196,6 @@
   --gray-700: #495057;
   --gray-800: #343a40;
   --gray-900: #212529;
-}
-
-@layer base {
-  * {
-    @apply border-stroke outline-ring/50;
-  }
-  body {
-    @apply bg-surface-primary text-primary text-sm;
-  }
-  a {
-    @apply text-link hover:underline;
-  }
 }
 
 @utility stack-row {
