@@ -1,4 +1,4 @@
-import { Link, cn } from "@repo/ui";
+import { Link, Skeleton, cn } from "@repo/ui";
 import { useState } from "react";
 
 import { trpc } from "../../trpc";
@@ -11,7 +11,8 @@ export const ImportPlaylist = ({
   >;
 }) => {
   const [selectedPlaylistId, setSelectedPlaylistId] = useState(null);
-  const { data: playlistData } = trpc.lyricsPresenter.playlist.useQuery();
+  const { data: playlistData, isLoading } =
+    trpc.lyricsPresenter.playlist.useQuery();
 
   return (
     <div>
@@ -29,6 +30,10 @@ export const ImportPlaylist = ({
             "repeat(auto-fit, minmax(min(200px, 100%), 1fr))",
         }}
       >
+        {isLoading &&
+          Array.from(new Array(10)).map((_, i) => (
+            <Skeleton key={i} className="w-full h-20" />
+          ))}
         {playlistData?.data.map((playlist: any) => (
           <div
             key={playlist.id}

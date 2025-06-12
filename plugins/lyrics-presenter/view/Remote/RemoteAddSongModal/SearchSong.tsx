@@ -1,4 +1,4 @@
-import { Input, LoadingInline, Pagination, cn } from "@repo/ui";
+import { Input, LoadingInline, Pagination, Skeleton, cn } from "@repo/ui";
 import { useEffect, useRef, useState } from "react";
 import Highlighter from "react-highlight-words";
 import { useDebounce } from "use-debounce";
@@ -22,7 +22,7 @@ export const SearchSong = ({
 
   const [pageOffset, setPageOffset] = useState(0);
 
-  const { data: songData, isFetching } = trpc.lyricsPresenter.search.useQuery({
+  const { data: songData, isLoading } = trpc.lyricsPresenter.search.useQuery({
     title: debouncedSearchInput,
     page: pageOffset + 1,
   });
@@ -66,13 +66,20 @@ export const SearchSong = ({
           <div
             className={cn(
               "absolute top-0 right-3 bottom-0 flex items-center",
-              !isFetching && "hidden",
+              !isLoading && "hidden",
             )}
           >
             <LoadingInline />
           </div>
         </div>
         <div>
+          {isLoading && (
+            <div className="stack-col gap-1">
+              {Array.from(new Array(10)).map((_, i) => (
+                <Skeleton key={i} className="w-full h-10" />
+              ))}
+            </div>
+          )}
           {songData?.data.map((x: any) => (
             <div
               key={x.id}
