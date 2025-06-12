@@ -217,6 +217,7 @@ export const simulateUser = (
         },
       },
       logger: pino(pino.destination("/dev/null")),
+      parentContainer: document.body,
     },
     trpcClient: null,
   } as WebComponentProps<any>;

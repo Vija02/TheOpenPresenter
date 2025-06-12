@@ -1,4 +1,5 @@
 import { PluginAPIProvider, WebComponentProps } from "@repo/base-plugin/client";
+import { DialogPortalContainerContext } from "@repo/ui";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { TRPCUntypedClient } from "@trpc/client";
 
@@ -13,11 +14,13 @@ export default function RemoteEntry(
 ) {
   return (
     <PluginAPIProvider {...props}>
-      <trpc.Provider client={props.trpcClient} queryClient={queryClient}>
-        <QueryClientProvider client={queryClient}>
-          <Remote />
-        </QueryClientProvider>
-      </trpc.Provider>
+      <DialogPortalContainerContext.Provider value={props.misc.parentContainer}>
+        <trpc.Provider client={props.trpcClient} queryClient={queryClient}>
+          <QueryClientProvider client={queryClient}>
+            <Remote />
+          </QueryClientProvider>
+        </trpc.Provider>
+      </DialogPortalContainerContext.Provider>
     </PluginAPIProvider>
   );
 }

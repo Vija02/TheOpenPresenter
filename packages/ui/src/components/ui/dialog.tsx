@@ -69,8 +69,13 @@ function DialogContent({
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> &
   VariantProps<typeof dialogContentVariants>) {
+  const container = useDialogPortalContainerContext();
+
   return (
-    <DialogPortal data-slot="dialog-portal">
+    <DialogPortal
+      data-slot="dialog-portal"
+      container={container ?? document.body}
+    >
       <DialogOverlay />
       <DialogPrimitive.Content
         data-slot="dialog-content"
@@ -145,6 +150,12 @@ function DialogDescription({
   );
 }
 
+const DialogPortalContainerContext = React.createContext<HTMLElement | null>(
+  null,
+);
+const useDialogPortalContainerContext = () =>
+  React.useContext(DialogPortalContainerContext);
+
 export {
   Dialog,
   DialogClose,
@@ -157,4 +168,6 @@ export {
   DialogPortal,
   DialogTitle,
   DialogTrigger,
+  DialogPortalContainerContext,
+  useDialogPortalContainerContext,
 };

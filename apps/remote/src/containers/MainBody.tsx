@@ -27,7 +27,13 @@ import {
 import { ErrorAlert, LoadingPart, Slider } from "@repo/ui";
 import { useQuery } from "@tanstack/react-query";
 import { cx } from "class-variance-authority";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { toast } from "react-toastify";
 import { TypeId, toUUID } from "typeid-js";
@@ -160,6 +166,7 @@ const PluginRenderer = React.memo(
     pluginId: string;
     pluginInfo: Plugin<Record<string, any>>;
   }) => {
+    const pluginDivRef = useRef<HTMLDivElement>(null);
     const pluginMetaData = usePluginMetaData()
       .pluginMetaData as RemoteBasePluginQuery;
     const orgId = usePluginMetaData().orgId;
@@ -291,6 +298,7 @@ const PluginRenderer = React.memo(
             },
           },
           logger: childLogger,
+          parentContainer: pluginDivRef.current,
         },
       } satisfies WebComponentProps<any>);
     }, [
@@ -317,6 +325,7 @@ const PluginRenderer = React.memo(
     if (match || viewData?.config?.alwaysRender) {
       return (
         <div
+          ref={pluginDivRef}
           id={`pl-${pluginInfo.plugin}`}
           className={cx(
             !match && viewData?.config?.alwaysRender ? "content-hidden" : "",

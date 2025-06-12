@@ -21,7 +21,7 @@ import {
 import { ErrorAlert, LoadingPart } from "@repo/ui";
 import { useQuery } from "@tanstack/react-query";
 import { cx } from "class-variance-authority";
-import React, { lazy, useCallback, useMemo, useState } from "react";
+import React, { lazy, useCallback, useMemo, useRef, useState } from "react";
 import { useAnimatePresence } from "react-animate-presence";
 import { ErrorBoundary } from "react-error-boundary";
 import { toast } from "react-toastify";
@@ -123,6 +123,7 @@ const SceneRenderer = React.memo(({ sceneId }: { sceneId: string }) => {
 
 const PluginRenderer = React.memo(
   ({ pluginId, sceneId }: { pluginId: string; sceneId: string }) => {
+    const pluginDivRef = useRef<HTMLDivElement>(null);
     const pluginMetaData = usePluginMetaData()
       .pluginMetaData as RendererBasePluginQuery;
     const orgId = usePluginMetaData().orgId;
@@ -248,6 +249,7 @@ const PluginRenderer = React.memo(
             },
           },
           logger: childLogger,
+          parentContainer: pluginDivRef.current,
         },
       } satisfies WebComponentProps<any>);
     }, [
@@ -271,6 +273,7 @@ const PluginRenderer = React.memo(
 
     return (
       <div
+        ref={pluginDivRef}
         id={`pl-${pluginInfo?.plugin}`}
         key={pluginId}
         style={{
