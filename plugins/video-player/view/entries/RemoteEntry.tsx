@@ -2,6 +2,8 @@ import { PluginAPIProvider, WebComponentProps } from "@repo/base-plugin/client";
 import { DialogPortalContainerContext } from "@repo/ui";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { TRPCUntypedClient } from "@trpc/client";
+import "@uppy/core/dist/style.min.css";
+import "@uppy/dashboard/dist/style.min.css";
 
 import { AppRouter } from "../../src";
 import Remote from "../Remote";
