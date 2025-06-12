@@ -31,12 +31,12 @@ const WorshipPadsRemote = () => {
                 {files.map((file) => (
                   <Button
                     className={cn(
-                      "w-full h-full rounded-none aspect-square hover:bg-surface-primary-hover",
+                      "w-full h-full rounded-none aspect-square bg-surface-primary hover:bg-surface-primary-hover",
                       isPlaying &&
                         currentKey === file.key &&
                         "bg-surface-primary-active",
                     )}
-                    variant="outline"
+                    variant="ghost"
                     onClick={() => {
                       mutableRendererData.currentKey = file.key;
                       mutableRendererData.isPlaying = true;
