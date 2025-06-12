@@ -22,8 +22,21 @@ const alertVariants = cva("ui--alert-heading", {
   },
 });
 
+const alertSizeVariants = cva("ui--alert", {
+  variants: {
+    size: {
+      default: "ui--alert__default",
+      sm: "ui--alert__sm",
+    },
+  },
+  defaultVariants: {
+    size: "default",
+  },
+});
+
 function Alert({
   variant,
+  size,
   title,
   subtitle,
   titleProps,
@@ -33,7 +46,8 @@ function Alert({
   className,
   ...props
 }: React.ComponentProps<"div"> &
-  VariantProps<typeof alertVariants> & {
+  VariantProps<typeof alertVariants> &
+  VariantProps<typeof alertSizeVariants> & {
     title?: string;
     subtitle?: string;
     titleProps?: React.ComponentProps<"div">;
@@ -46,7 +60,7 @@ function Alert({
       data-slot="alert"
       role="alert"
       {...props}
-      className={cn("ui--alert", className)}
+      className={cn(alertSizeVariants({ size }), className)}
     >
       <div data-slot="alert-heading" className={cn(alertVariants({ variant }))}>
         {(variant === "info" || variant === "default") && <TfiInfoAlt />}
