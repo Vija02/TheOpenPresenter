@@ -8056,16 +8056,15 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@repo/plugin-audio-recorder@workspace:plugins/audio-recorder"
   dependencies:
-    "@chakra-ui/react": "npm:^2.10.4"
-    "@emotion/react": "npm:^11.13.5"
-    "@emotion/styled": "npm:^11.13.5"
     "@r2wc/react-to-web-component": "npm:^2.0.3"
     "@repo/base-plugin": "npm:*"
     "@repo/eslint-config": "npm:*"
     "@repo/observability": "npm:*"
     "@repo/prettier-config": "npm:*"
+    "@repo/tailwind-config": "npm:*"
     "@repo/typescript-config": "npm:*"
     "@repo/ui": "npm:*"
+    "@tailwindcss/vite": "npm:^4.1.7"
     "@tanstack/react-query": "npm:^5.62.3"
     "@trpc/client": "npm:^11.1.2"
     "@trpc/react-query": "npm:^11.1.2"
@@ -8077,7 +8076,6 @@ __metadata:
     "@wavesurfer/react": "npm:^1.0.8"
     date-fns: "npm:^4.1.0"
     eslint: "npm:^8.57.1"
-    framer-motion: "npm:^11.13.1"
     lodash-es: "npm:^4.17.21"
     pkgroll: "npm:2.5.1"
     react: "npm:^19.1.0"
@@ -8098,34 +8096,29 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@repo/plugin-embed@workspace:plugins/embed"
   dependencies:
-    "@chakra-ui/react": "npm:^2.10.4"
-    "@emotion/react": "npm:^11.13.5"
-    "@emotion/styled": "npm:^11.13.5"
     "@r2wc/react-to-web-component": "npm:^2.0.3"
     "@repo/base-plugin": "npm:*"
     "@repo/eslint-config": "npm:*"
-    "@repo/lib": "npm:*"
     "@repo/prettier-config": "npm:*"
+    "@repo/tailwind-config": "npm:*"
     "@repo/typescript-config": "npm:*"
     "@repo/ui": "npm:*"
+    "@tailwindcss/vite": "npm:^4.1.7"
     "@tanstack/react-query": "npm:^5.62.3"
     "@trpc/client": "npm:^11.1.2"
     "@trpc/react-query": "npm:^11.1.2"
     "@trpc/server": "npm:^11.1.2"
+    "@types/postcss-prefix-selector": "npm:^1.16.3"
     "@types/react": "npm:^19.1.2"
     "@types/react-dom": "npm:^19.1.3"
-    "@uppy/core": "npm:^4.3.0"
-    "@uppy/dashboard": "npm:^4.1.3"
-    "@uppy/react": "npm:^4.0.4"
-    "@uppy/tus": "npm:^4.1.5"
     "@vitejs/plugin-react-swc": "npm:^3.7.2"
+    autoprefixer: "npm:^10.4.21"
     concurrently: "npm:^9.1.2"
     eslint: "npm:^8.57.1"
-    framer-motion: "npm:^11.13.1"
     pkgroll: "npm:2.5.1"
+    postcss-prefix-selector: "npm:^2.1.1"
     react: "npm:^19.1.0"
     react-dom: "npm:^19.1.0"
-    react-icons: "npm:^5.4.0"
     vite: "npm:6.3.5"
     yjs: "npm:13.6.26"
   languageName: unknown
@@ -8135,18 +8128,17 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@repo/plugin-google-slides@workspace:plugins/google-slides"
   dependencies:
-    "@chakra-ui/react": "npm:^2.10.4"
     "@docwagen/unoserver-node": "npm:^2.2.0"
-    "@emotion/react": "npm:^11.13.5"
-    "@emotion/styled": "npm:^11.13.5"
     "@r2wc/react-to-web-component": "npm:^2.0.3"
     "@repo/base-plugin": "npm:*"
     "@repo/eslint-config": "npm:*"
     "@repo/lib": "npm:*"
     "@repo/observability": "npm:*"
     "@repo/prettier-config": "npm:*"
+    "@repo/tailwind-config": "npm:*"
     "@repo/typescript-config": "npm:*"
     "@repo/ui": "npm:*"
+    "@tailwindcss/vite": "npm:^4.1.7"
     "@tanstack/react-query": "npm:^5.62.3"
     "@trpc/client": "npm:^11.1.2"
     "@trpc/react-query": "npm:^11.1.2"
@@ -8154,6 +8146,7 @@ __metadata:
     "@types/gapi": "npm:^0.0.47"
     "@types/google.accounts": "npm:^0.0.15"
     "@types/google.picker": "npm:^0.0.50"
+    "@types/postcss-prefix-selector": "npm:^1.16.3"
     "@types/react": "npm:^19.1.2"
     "@types/react-dom": "npm:^19.1.3"
     "@uppy/core": "npm:^4.3.0"
@@ -8161,13 +8154,14 @@ __metadata:
     "@uppy/react": "npm:^4.0.4"
     "@uppy/tus": "npm:^4.1.5"
     "@vitejs/plugin-react-swc": "npm:^3.7.2"
+    autoprefixer: "npm:^10.4.21"
     axios: "npm:^1.7.9"
     concurrently: "npm:^9.1.2"
     eslint: "npm:^8.57.1"
-    framer-motion: "npm:^11.13.1"
     http-proxy-middleware: "npm:^3.0.3"
     mupdf: "npm:^1.3.5"
     pkgroll: "npm:2.5.1"
+    postcss-prefix-selector: "npm:^2.1.1"
     react: "npm:^19.1.0"
     react-dom: "npm:^19.1.0"
     react-icons: "npm:^5.4.0"
@@ -8205,16 +8199,19 @@ __metadata:
     "@trpc/react-query": "npm:^11.1.2"
     "@trpc/server": "npm:^11.1.2"
     "@types/lodash-es": "npm:^4.17.12"
+    "@types/postcss-prefix-selector": "npm:^1.16.3"
     "@types/react": "npm:^19.1.2"
     "@types/react-dom": "npm:^19.1.3"
     "@types/react-highlight-words": "npm:^0.20.0"
     "@vitejs/plugin-react-swc": "npm:^3.7.2"
+    autoprefixer: "npm:^10.4.21"
     axios: "npm:^1.7.9"
     concurrently: "npm:^9.1.2"
     eslint: "npm:^8.57.1"
     lodash-es: "npm:^4.17.21"
     ohash: "npm:^1.1.4"
     pkgroll: "npm:2.5.1"
+    postcss-prefix-selector: "npm:^2.1.1"
     react: "npm:^19.1.0"
     react-dom: "npm:^19.1.0"
     react-highlight-words: "npm:^0.20.0"
@@ -8233,27 +8230,28 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@repo/plugin-radio@workspace:plugins/radio"
   dependencies:
-    "@chakra-ui/react": "npm:^2.10.4"
     "@discordapp/perceptual": "npm:^1.1.0"
-    "@emotion/react": "npm:^11.13.5"
-    "@emotion/styled": "npm:^11.13.5"
     "@r2wc/react-to-web-component": "npm:^2.0.3"
     "@repo/base-plugin": "npm:*"
     "@repo/eslint-config": "npm:*"
     "@repo/prettier-config": "npm:*"
+    "@repo/tailwind-config": "npm:*"
     "@repo/typescript-config": "npm:*"
     "@repo/ui": "npm:*"
+    "@tailwindcss/vite": "npm:^4.1.7"
     "@tanstack/react-query": "npm:^5.62.3"
     "@trpc/client": "npm:^11.1.2"
     "@trpc/react-query": "npm:^11.1.2"
     "@trpc/server": "npm:^11.1.2"
+    "@types/postcss-prefix-selector": "npm:^1.16.3"
     "@types/react": "npm:^19.1.2"
     "@types/react-dom": "npm:^19.1.3"
     "@vitejs/plugin-react-swc": "npm:^3.7.2"
+    autoprefixer: "npm:^10.4.21"
     eslint: "npm:^8.57.1"
-    framer-motion: "npm:^11.13.1"
     icecast-metadata-player: "npm:^1.17.6"
     pkgroll: "npm:2.5.1"
+    postcss-prefix-selector: "npm:^2.1.1"
     react: "npm:^19.1.0"
     react-dom: "npm:^19.1.0"
     use-disposable: "npm:^1.0.4"
@@ -8268,20 +8266,20 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@repo/plugin-simple-image@workspace:plugins/simple-image"
   dependencies:
-    "@chakra-ui/react": "npm:^2.10.4"
-    "@emotion/react": "npm:^11.13.5"
-    "@emotion/styled": "npm:^11.13.5"
     "@r2wc/react-to-web-component": "npm:^2.0.3"
     "@repo/base-plugin": "npm:*"
     "@repo/eslint-config": "npm:*"
     "@repo/lib": "npm:*"
     "@repo/prettier-config": "npm:*"
+    "@repo/tailwind-config": "npm:*"
     "@repo/typescript-config": "npm:*"
     "@repo/ui": "npm:*"
+    "@tailwindcss/vite": "npm:^4.1.7"
     "@tanstack/react-query": "npm:^5.62.3"
     "@trpc/client": "npm:^11.1.2"
     "@trpc/react-query": "npm:^11.1.2"
     "@trpc/server": "npm:^11.1.2"
+    "@types/postcss-prefix-selector": "npm:^1.16.3"
     "@types/react": "npm:^19.1.2"
     "@types/react-dom": "npm:^19.1.3"
     "@uppy/core": "npm:^4.3.0"
@@ -8289,9 +8287,10 @@ __metadata:
     "@uppy/react": "npm:^4.0.4"
     "@uppy/tus": "npm:^4.1.5"
     "@vitejs/plugin-react-swc": "npm:^3.7.2"
+    autoprefixer: "npm:^10.4.21"
     eslint: "npm:^8.57.1"
-    framer-motion: "npm:^11.13.1"
     pkgroll: "npm:2.5.1"
+    postcss-prefix-selector: "npm:^2.1.1"
     react: "npm:^19.1.0"
     react-dom: "npm:^19.1.0"
     react-icons: "npm:^5.4.0"
@@ -8304,26 +8303,27 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@repo/plugin-timer@workspace:plugins/timer"
   dependencies:
-    "@chakra-ui/react": "npm:^2.10.4"
-    "@emotion/react": "npm:^11.13.5"
-    "@emotion/styled": "npm:^11.13.5"
     "@r2wc/react-to-web-component": "npm:^2.0.3"
     "@repo/base-plugin": "npm:*"
     "@repo/eslint-config": "npm:*"
     "@repo/prettier-config": "npm:*"
+    "@repo/tailwind-config": "npm:*"
     "@repo/typescript-config": "npm:*"
     "@repo/ui": "npm:*"
+    "@tailwindcss/vite": "npm:^4.1.7"
     "@tanstack/react-query": "npm:^5.62.3"
     "@trpc/client": "npm:^11.1.2"
     "@trpc/react-query": "npm:^11.1.2"
     "@trpc/server": "npm:^11.1.2"
+    "@types/postcss-prefix-selector": "npm:^1.16.3"
     "@types/react": "npm:^19.1.2"
     "@types/react-dom": "npm:^19.1.3"
     "@vitejs/plugin-react-swc": "npm:^3.7.2"
+    autoprefixer: "npm:^10.4.21"
     concurrently: "npm:^9.1.2"
     eslint: "npm:^8.57.1"
-    framer-motion: "npm:^11.13.1"
     pkgroll: "npm:2.5.1"
+    postcss-prefix-selector: "npm:^2.1.1"
     react: "npm:^19.1.0"
     react-countdown: "npm:^2.3.6"
     react-dom: "npm:^19.1.0"
@@ -8336,34 +8336,33 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@repo/plugin-video-player@workspace:plugins/video-player"
   dependencies:
-    "@chakra-ui/react": "npm:^2.10.4"
-    "@emotion/react": "npm:^11.13.5"
-    "@emotion/styled": "npm:^11.13.5"
     "@r2wc/react-to-web-component": "npm:^2.0.3"
     "@repo/base-plugin": "npm:*"
     "@repo/eslint-config": "npm:*"
     "@repo/lib": "npm:*"
     "@repo/observability": "npm:*"
     "@repo/prettier-config": "npm:*"
+    "@repo/tailwind-config": "npm:*"
     "@repo/typescript-config": "npm:*"
     "@repo/ui": "npm:*"
+    "@tailwindcss/vite": "npm:^4.1.7"
     "@tanstack/react-query": "npm:^5.62.3"
     "@trpc/client": "npm:^11.1.2"
     "@trpc/react-query": "npm:^11.1.2"
     "@trpc/server": "npm:^11.1.2"
+    "@types/postcss-prefix-selector": "npm:^1.16.3"
     "@types/react": "npm:^19.1.2"
     "@uppy/core": "npm:^4.3.0"
     "@uppy/dashboard": "npm:^4.1.3"
-    "@uppy/file-input": "npm:^4.0.4"
     "@uppy/react": "npm:^4.0.4"
-    "@uppy/status-bar": "npm:^4.0.5"
     "@uppy/tus": "npm:^4.1.5"
     "@vitejs/plugin-react-swc": "npm:^3.7.2"
+    autoprefixer: "npm:^10.4.21"
     concurrently: "npm:^9.1.2"
     eslint: "npm:^8.57.1"
-    framer-motion: "npm:^11.13.1"
     get-youtube-id: "npm:^1.0.1"
     pkgroll: "npm:2.5.1"
+    postcss-prefix-selector: "npm:^2.1.1"
     react: "npm:^19.1.0"
     react-dom: "npm:^19.1.0"
     react-icons: "npm:^5.4.0"
@@ -8374,7 +8373,7 @@ __metadata:
     valtio-yjs: "npm:^0.6.0"
     vite: "npm:6.3.5"
     yjs: "npm:13.6.26"
-    youtubei.js: "npm:^12.0.0"
+    youtubei.js: "npm:^14.0.0"
     zod: "npm:^3.25.17"
   languageName: unknown
   linkType: soft
@@ -8397,12 +8396,15 @@ __metadata:
     "@trpc/react-query": "npm:^11.1.2"
     "@trpc/server": "npm:^11.1.2"
     "@types/howler": "npm:^2.2.12"
+    "@types/postcss-prefix-selector": "npm:^1.16.3"
     "@types/react": "npm:^19.1.2"
     "@types/react-dom": "npm:^19.1.3"
     "@vitejs/plugin-react-swc": "npm:^3.7.2"
+    autoprefixer: "npm:^10.4.21"
     eslint: "npm:^8.57.1"
     howler: "npm:^2.2.4"
     pkgroll: "npm:2.5.1"
+    postcss-prefix-selector: "npm:^2.1.1"
     react: "npm:^19.1.0"
     react-dom: "npm:^19.1.0"
     react-icons: "npm:^5.4.0"
@@ -8676,7 +8678,6 @@ __metadata:
   resolution: "@repo/ui@workspace:packages/ui"
   dependencies:
     "@ajna/pagination": "npm:^1.4.19"
-    "@chakra-ui/react": "npm:^2.10.4"
     "@hookform/resolvers": "npm:^5.0.1"
     "@radix-ui/react-checkbox": "npm:^1.3.2"
     "@radix-ui/react-dialog": "npm:^1.1.14"
@@ -8711,7 +8712,6 @@ __metadata:
     cssnano: "npm:^7.0.6"
     date-fns: "npm:^4.1.0"
     eslint-plugin-storybook: "npm:^0.12.0"
-    framer-motion: "npm:^11.13.1"
     lucide-react: "npm:^0.511.0"
     nodemon: "npm:^3.1.7"
     react: "npm:^19.1.0"
@@ -11981,6 +11981,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/postcss-prefix-selector@npm:^1.16.3":
+  version: 1.16.3
+  resolution: "@types/postcss-prefix-selector@npm:1.16.3"
+  dependencies:
+    postcss: "npm:^8.4.27"
+  checksum: 10c0/4c05190936914704d1f1c6dfa37f4363df703c362dd3567c32f56245e18f456db40a3875d686e5587ca2523d869e7312942e6aef1707fb7f5e6dd1ee99fd1f21
+  languageName: node
+  linkType: hard
+
 "@types/pubsub-js@npm:^1.8.2":
   version: 1.8.6
   resolution: "@types/pubsub-js@npm:1.8.6"
@@ -12583,18 +12592,6 @@ __metadata:
   peerDependencies:
     "@uppy/core": ^4.3.0
   checksum: 10c0/af230437194063d1bd898fb0105857ada870b8f98f4d8b7a415d98d3c4e318eb49ad0b1207c341b37ed1b4b5a2e31f58ef3f2254005a950d2976ee6a60fcd115
-  languageName: node
-  linkType: hard
-
-"@uppy/file-input@npm:^4.0.4":
-  version: 4.0.4
-  resolution: "@uppy/file-input@npm:4.0.4"
-  dependencies:
-    "@uppy/utils": "npm:^6.0.5"
-    preact: "npm:^10.5.13"
-  peerDependencies:
-    "@uppy/core": ^4.3.0
-  checksum: 10c0/a66bbe63cb542668c7a22ec8e94abfcc2372683498d4bb2b95b4bed2ee869e135a5b56634ce7329e1fda1a7bdc7a5cb2262b1227d68af7f2f139bc38c4e1098e
   languageName: node
   linkType: hard
 
@@ -13811,6 +13808,24 @@ __metadata:
   languageName: node
   linkType: hard
 
+"autoprefixer@npm:^10.4.21":
+  version: 10.4.21
+  resolution: "autoprefixer@npm:10.4.21"
+  dependencies:
+    browserslist: "npm:^4.24.4"
+    caniuse-lite: "npm:^1.0.30001702"
+    fraction.js: "npm:^4.3.7"
+    normalize-range: "npm:^0.1.2"
+    picocolors: "npm:^1.1.1"
+    postcss-value-parser: "npm:^4.2.0"
+  peerDependencies:
+    postcss: ^8.1.0
+  bin:
+    autoprefixer: bin/autoprefixer
+  checksum: 10c0/de5b71d26d0baff4bbfb3d59f7cf7114a6030c9eeb66167acf49a32c5b61c68e308f1e0f869d92334436a221035d08b51cd1b2f2c4689b8d955149423c16d4d4
+  languageName: node
+  linkType: hard
+
 "available-typed-arrays@npm:^1.0.7":
   version: 1.0.7
   resolution: "available-typed-arrays@npm:1.0.7"
@@ -14221,6 +14236,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"browserslist@npm:^4.24.4":
+  version: 4.25.0
+  resolution: "browserslist@npm:4.25.0"
+  dependencies:
+    caniuse-lite: "npm:^1.0.30001718"
+    electron-to-chromium: "npm:^1.5.160"
+    node-releases: "npm:^2.0.19"
+    update-browserslist-db: "npm:^1.1.3"
+  bin:
+    browserslist: cli.js
+  checksum: 10c0/cc16c55b4468b18684a0e1ca303592b38635b1155d6724f172407192737a2f405b8030d87a05813729592793445b3d15e737b0055f901cdecccb29b1e580a1c5
+  languageName: node
+  linkType: hard
+
 "bs-logger@npm:^0.2.6":
   version: 0.2.6
   resolution: "bs-logger@npm:0.2.6"
@@ -14437,6 +14466,13 @@ __metadata:
   version: 1.0.30001715
   resolution: "caniuse-lite@npm:1.0.30001715"
   checksum: 10c0/0109a7da797ffbe1aa197baa5242b205011098eecec1087ef3d0c58ceea19be325ab6679b2751a78660adc3051a9f77e99d5789938fd1eb1235e6fdf6a1dbf8e
+  languageName: node
+  linkType: hard
+
+"caniuse-lite@npm:^1.0.30001702, caniuse-lite@npm:^1.0.30001718":
+  version: 1.0.30001721
+  resolution: "caniuse-lite@npm:1.0.30001721"
+  checksum: 10c0/fa3a8926899824b385279f1f886fe34c5efb1321c9ece1b9df25c8d567a2706db8450cc5b4d969e769e641593e08ea644909324aba93636a43e4949a75f81c4c
   languageName: node
   linkType: hard
 
@@ -16325,6 +16361,13 @@ __metadata:
   bin:
     ejs: bin/cli.js
   checksum: 10c0/52eade9e68416ed04f7f92c492183340582a36482836b11eab97b159fcdcfdedc62233a1bf0bf5e5e1851c501f2dca0e2e9afd111db2599e4e7f53ee29429ae1
+  languageName: node
+  linkType: hard
+
+"electron-to-chromium@npm:^1.5.160":
+  version: 1.5.166
+  resolution: "electron-to-chromium@npm:1.5.166"
+  checksum: 10c0/0244c09799f492035af63bb87857561aa034670a742cd80a78de5a88a0d536b0945fb078a636777d064d2451401c5d8302dfa8da7c996afe7476bf277b2dea63
   languageName: node
   linkType: hard
 
@@ -20772,12 +20815,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jintr@npm:^3.1.0":
-  version: 3.1.0
-  resolution: "jintr@npm:3.1.0"
+"jintr@npm:^3.3.1":
+  version: 3.3.1
+  resolution: "jintr@npm:3.3.1"
   dependencies:
     acorn: "npm:^8.8.0"
-  checksum: 10c0/49fea8c87dcc54ced0fe0265c6c7c36edf16656d3a0ee27717ffc1c790a3b20c5f890f4b5b59abdad4e02cf5a7de03e6e4fea2ca82dbf02eed8027fa25436a42
+  checksum: 10c0/e699894549a653fc1e40505b47fe9ba69beed74cd7bf7ee50f62a6e616cd6e3753423f254f05286fc1132a20f2f086b8d410e818bc0a9e32efb50c2adf583bcc
   languageName: node
   linkType: hard
 
@@ -23037,21 +23080,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"nanoid@npm:^3.3.11, nanoid@npm:^3.3.8":
+  version: 3.3.11
+  resolution: "nanoid@npm:3.3.11"
+  bin:
+    nanoid: bin/nanoid.cjs
+  checksum: 10c0/40e7f70b3d15f725ca072dfc4f74e81fcf1fbb02e491cf58ac0c79093adc9b0a73b152bcde57df4b79cd097e13023d7504acb38404a4da7bc1cd8e887b82fe0b
+  languageName: node
+  linkType: hard
+
 "nanoid@npm:^3.3.6, nanoid@npm:^3.3.7":
   version: 3.3.7
   resolution: "nanoid@npm:3.3.7"
   bin:
     nanoid: bin/nanoid.cjs
   checksum: 10c0/e3fb661aa083454f40500473bb69eedb85dc160e763150b9a2c567c7e9ff560ce028a9f833123b618a6ea742e311138b591910e795614a629029e86e180660f3
-  languageName: node
-  linkType: hard
-
-"nanoid@npm:^3.3.8":
-  version: 3.3.11
-  resolution: "nanoid@npm:3.3.11"
-  bin:
-    nanoid: bin/nanoid.cjs
-  checksum: 10c0/40e7f70b3d15f725ca072dfc4f74e81fcf1fbb02e491cf58ac0c79093adc9b0a73b152bcde57df4b79cd097e13023d7504acb38404a4da7bc1cd8e887b82fe0b
   languageName: node
   linkType: hard
 
@@ -23264,6 +23307,13 @@ __metadata:
   version: 2.0.18
   resolution: "node-releases@npm:2.0.18"
   checksum: 10c0/786ac9db9d7226339e1dc84bbb42007cb054a346bd9257e6aa154d294f01bc6a6cddb1348fa099f079be6580acbb470e3c048effd5f719325abd0179e566fd27
+  languageName: node
+  linkType: hard
+
+"node-releases@npm:^2.0.19":
+  version: 2.0.19
+  resolution: "node-releases@npm:2.0.19"
+  checksum: 10c0/52a0dbd25ccf545892670d1551690fe0facb6a471e15f2cfa1b20142a5b255b3aa254af5f59d6ecb69c2bec7390bc643c43aa63b13bf5e64b6075952e716b1aa
   languageName: node
   linkType: hard
 
@@ -25071,6 +25121,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"postcss-prefix-selector@npm:^2.1.1":
+  version: 2.1.1
+  resolution: "postcss-prefix-selector@npm:2.1.1"
+  peerDependencies:
+    postcss: ^8.0.0
+  checksum: 10c0/2e01188c8c64ebe35153a5228bad15c0bf2d32613141954903d31f3ba1b1e066b7f44e5f8ad1c13c915c871c4a75f8084c98e3b74894a2fbf0bc0f941541878c
+  languageName: node
+  linkType: hard
+
 "postcss-reduce-initial@npm:^5.1.2":
   version: 5.1.2
   resolution: "postcss-reduce-initial@npm:5.1.2"
@@ -25229,6 +25288,17 @@ __metadata:
     picocolors: "npm:^1.0.0"
     source-map-js: "npm:^1.2.0"
   checksum: 10c0/955407b8f70cf0c14acf35dab3615899a2a60a26718a63c848cf3c29f2467b0533991b985a2b994430d890bd7ec2b1963e36352b0774a19143b5f591540f7c06
+  languageName: node
+  linkType: hard
+
+"postcss@npm:^8.4.27":
+  version: 8.5.4
+  resolution: "postcss@npm:8.5.4"
+  dependencies:
+    nanoid: "npm:^3.3.11"
+    picocolors: "npm:^1.1.1"
+    source-map-js: "npm:^1.2.1"
+  checksum: 10c0/0feff648614a834f7cd5396ea6b05b658ca0507e10a4eaad03b56c348f6aec93f42a885fc1b30522630c6a7e49ae53b38a061e3cba526f2d9857afbe095a22bb
   languageName: node
   linkType: hard
 
@@ -29926,6 +29996,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"update-browserslist-db@npm:^1.1.3":
+  version: 1.1.3
+  resolution: "update-browserslist-db@npm:1.1.3"
+  dependencies:
+    escalade: "npm:^3.2.0"
+    picocolors: "npm:^1.1.1"
+  peerDependencies:
+    browserslist: ">= 4.21.0"
+  bin:
+    update-browserslist-db: cli.js
+  checksum: 10c0/682e8ecbf9de474a626f6462aa85927936cdd256fe584c6df2508b0df9f7362c44c957e9970df55dfe44d3623807d26316ea2c7d26b80bb76a16c56c37233c32
+  languageName: node
+  linkType: hard
+
 "upper-case-first@npm:^2.0.2":
   version: 2.0.2
   resolution: "upper-case-first@npm:2.0.2"
@@ -31041,15 +31125,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"youtubei.js@npm:^12.0.0":
-  version: 12.0.0
-  resolution: "youtubei.js@npm:12.0.0"
+"youtubei.js@npm:^14.0.0":
+  version: 14.0.0
+  resolution: "youtubei.js@npm:14.0.0"
   dependencies:
     "@bufbuild/protobuf": "npm:^2.0.0"
-    jintr: "npm:^3.1.0"
+    jintr: "npm:^3.3.1"
     tslib: "npm:^2.5.0"
     undici: "npm:^5.19.1"
-  checksum: 10c0/ad2db2fb4643ffd0bb789d542cad0daa08207dd4d8646932b5546945709497e43bbfde6dc230f558f1a55c0a19d7ac171b1251951a01493f8168c9c3c608985f
+  checksum: 10c0/a9792f6239060aac0fc745acae22804684db03104acd64cc57fa5673148b7015b755ff2e84c7f7513a9576003ca3b6e1c0a833407feeb4ba00ead4ddd4e8c28e
   languageName: node
   linkType: hard
 
