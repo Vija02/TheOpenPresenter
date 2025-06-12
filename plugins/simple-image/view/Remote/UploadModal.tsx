@@ -1,9 +1,9 @@
-import { Button, Text, useDisclosure } from "@chakra-ui/react";
 import {
   SUPPORTED_IMAGE_EXTENSIONS,
   appData,
   extractMediaName,
 } from "@repo/lib";
+import { Button, useDisclosure } from "@repo/ui";
 import Uppy from "@uppy/core";
 import { DashboardModal, useUppyEvent } from "@uppy/react";
 import Tus from "@uppy/tus";
@@ -36,25 +36,16 @@ export const UploadModal = () => {
     sceneData.pluginData.images.push({ mediaId, extension });
   });
 
-  const { isOpen, onToggle } = useDisclosure();
+  const { open, onToggle } = useDisclosure();
 
   return (
     <>
-      <Button
-        size="xs"
-        bg="transparent"
-        color="white"
-        border="1px solid #ffffff6b"
-        _hover={{ bg: "rgba(255, 255, 255, 0.13)" }}
-        onClick={onToggle}
-      >
+      <Button size="xs" variant="pill" onClick={onToggle}>
         <VscAdd />
-        <Text ml={1} fontWeight="normal" fontSize="xs">
-          Add
-        </Text>
+        Add
       </Button>
       <DashboardModal
-        open={isOpen}
+        open={open}
         onRequestClose={onToggle}
         closeAfterFinish
         closeModalOnClickOutside

@@ -1,12 +1,12 @@
-import { Box, Button, Stack } from "@chakra-ui/react";
 import { constructMediaName } from "@repo/lib";
-import { PluginScaffold, PopConfirm, Slide, SlideGrid } from "@repo/ui";
+import { Button, PluginScaffold, PopConfirm, Slide, SlideGrid } from "@repo/ui";
 import { useCallback } from "react";
 import { VscTrash } from "react-icons/vsc";
 
-import ImageRenderView from "../ImageRenderer/ImageRenderView";
+import ImageRenderView from "../Renderer/ImageRenderView";
 import { usePluginAPI } from "../pluginApi";
 import { UploadModal } from "./UploadModal";
+import "./index.css";
 
 const ImageRemote = () => {
   const pluginApi = usePluginAPI();
@@ -40,13 +40,12 @@ const ImageRemote = () => {
       title="Simple Image"
       toolbar={<UploadModal />}
       body={
-        <Box p={3} width="100%">
+        <div className="p-3 w-full">
           <SlideGrid>
             {pluginData.images.map((imgSrc, i) => (
-              <Stack
+              <div
                 key={pluginApi.media.resolveMediaUrl(imgSrc)}
-                direction="column"
-                justifyContent="center"
+                className="stack-col items-stretch justify-center"
               >
                 <Slide
                   isActive={i === imgIndex}
@@ -70,14 +69,14 @@ const ImageRemote = () => {
                   cancelText="No"
                   key="remove"
                 >
-                  <Button size="sm" variant="ghost" rounded="none">
+                  <Button size="sm" variant="ghost">
                     <VscTrash />
                   </Button>
                 </PopConfirm>
-              </Stack>
+              </div>
             ))}
           </SlideGrid>
-        </Box>
+        </div>
       }
     />
   );

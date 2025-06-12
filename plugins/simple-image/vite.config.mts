@@ -1,4 +1,7 @@
+import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react-swc";
+import autoprefixer from "autoprefixer";
+import prefixer from "postcss-prefix-selector";
 import { defineConfig } from "vite";
 
 import { pluginName } from "./src/consts";
@@ -10,7 +13,17 @@ export default defineConfig({
       NODE_ENV: "production",
     },
   },
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
+  css: {
+    postcss: {
+      plugins: [
+        prefixer({
+          prefix: `#pl-${pluginName}`,
+        }) as any,
+        autoprefixer({}),
+      ],
+    },
+  },
   build: {
     outDir: "out",
     lib: {
@@ -19,11 +32,9 @@ export default defineConfig({
       fileName: (format, entryName) =>
         `${pluginName}-${entryName}.${format}.js`,
     },
+    cssCodeSplit: true,
     rollupOptions: {
       external: ["yjs", "react", "react-dom", "react-dom/client"],
-      output: {
-        assetFileNames: "style.css",
-      },
     },
     target: "esnext",
   },

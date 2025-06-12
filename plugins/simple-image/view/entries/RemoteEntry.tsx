@@ -6,7 +6,7 @@ import "@uppy/core/dist/style.min.css";
 import "@uppy/dashboard/dist/style.min.css";
 
 import { AppRouter } from "../../src";
-import Remote from "../ImageRemote";
+import Remote from "../Remote";
 import { trpc } from "../trpc";
 
 const queryClient = new QueryClient();
