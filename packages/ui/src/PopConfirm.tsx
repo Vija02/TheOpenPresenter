@@ -51,10 +51,21 @@ export function PopConfirm({
     },
     [onConfirm, onToggle],
   );
+  const handleOnClick = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+      if (e.shiftKey) {
+        onToggle();
+        handleConfirm(e);
+      }
+    },
+    [],
+  );
 
   return (
     <Popover open={open} onOpenChange={onToggle}>
-      <PopoverTrigger asChild>{children}</PopoverTrigger>
+      <PopoverTrigger asChild onClick={handleOnClick}>
+        {children}
+      </PopoverTrigger>
       <PopoverContent
         {...popoverProps}
         className={cx(

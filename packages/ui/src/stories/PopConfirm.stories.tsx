@@ -16,7 +16,7 @@ const meta = {
   args: {
     onConfirm: () =>
       new Promise((resolve) => {
-        setTimeout(resolve, 100000);
+        setTimeout(resolve, 3000);
       }),
   },
 } satisfies Meta<typeof PopConfirm>;
@@ -26,9 +26,14 @@ export default meta;
 export const Default: StoryObj = {
   render: (args) => {
     return (
-      <PopConfirm {...args}>
-        <Button>Trigger delete</Button>
-      </PopConfirm>
+      <>
+        <PopConfirm {...args}>
+          <Button>Trigger delete</Button>
+        </PopConfirm>
+        <p className="mt-4 text-secondary">
+          Tip: Hold shift while pressing the button to instantly confirm
+        </p>
+      </>
     );
   },
 };
