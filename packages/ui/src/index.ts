@@ -28,7 +28,6 @@ export * from "./Loading";
 export * from "./Logo";
 export * from "./LogoFavicon";
 export * from "./OverlayToggle";
-export * from "./theme";
 export * from "./PasswordStrength";
 export * from "./PopConfirm";
 export * from "./Slide";
