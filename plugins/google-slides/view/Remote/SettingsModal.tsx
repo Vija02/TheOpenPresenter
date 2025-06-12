@@ -1,39 +1,24 @@
 import {
-  Box,
   Button,
-  Flex,
-  FormControl,
-  FormLabel,
-  Modal,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  ModalOverlay,
-  ModalProps,
-  Stack,
-  Text,
-  VStack,
-  chakra,
-} from "@chakra-ui/react";
-import { OverlayToggleComponentProps } from "@repo/ui";
-import { Form, Formik } from "formik";
-import { SubmitButton } from "formik-chakra-ui";
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  Form,
+  OptionControl,
+  OverlayToggleComponentProps,
+} from "@repo/ui";
 import { useCallback } from "react";
-import { FaCircleInfo as FaCircleInfoRaw } from "react-icons/fa6";
+import { useForm } from "react-hook-form";
+import { FaCircleInfo } from "react-icons/fa6";
 
 import { DisplayMode } from "../../src/types";
 import { usePluginAPI } from "../pluginApi";
 import { displayTypeMapping } from "./displayTypeMapping";
 
-const FaCircleInfo = chakra(FaCircleInfoRaw);
-
-export type SettingsModalPropTypes = Omit<
-  ModalProps,
-  "isOpen" | "onClose" | "children"
-> &
-  Partial<OverlayToggleComponentProps> & {};
+export type SettingsModalPropTypes = Partial<OverlayToggleComponentProps>;
 
 type SettingsData = {
   displayMode?: DisplayMode;
@@ -43,7 +28,6 @@ const SettingsModal = ({
   isOpen,
   onToggle,
   resetData,
-  ...props
 }: SettingsModalPropTypes) => {
   const pluginApi = usePluginAPI();
   const mutableRendererData = pluginApi.renderer.useValtioData();
@@ -83,146 +67,112 @@ const SettingsModal = ({
     [mutableRendererData, onToggle, resetData],
   );
 
-  return (
-    <Modal
-      size={{ base: "full", md: "3xl" }}
-      isOpen={isOpen ?? false}
-      onClose={onToggle ?? (() => {})}
-      scrollBehavior="inside"
-      {...props}
-    >
-      <ModalOverlay />
-      <Formik
-        initialValues={
-          { displayMode: displayMode ?? "googleslides" } as SettingsData
-        }
-        onSubmit={handleSubmit}
-      >
-        {({ handleSubmit, values, setFieldValue }) => {
-          return (
-            <Form onSubmit={handleSubmit as any}>
-              <ModalContent>
-                <ModalHeader px={{ base: 3, md: 6 }}>
-                  Slides Settings
-                </ModalHeader>
-                <ModalCloseButton />
-                <ModalBody px={{ base: 3, md: 6 }}>
-                  <Flex flexDir={{ base: "column", md: "row" }} gap={3}>
-                    <VStack flex={1} alignItems="flex-start">
-                      <FormControl>
-                        <FormLabel>Display Mode</FormLabel>
-                        <Stack
-                          direction={{ base: "column", md: "row" }}
-                          alignItems="stretch"
-                          marginBottom={2}
-                          flexWrap="wrap"
-                        >
-                          {[
-                            {
-                              title: "Google Slides",
-                              description: (
-                                <>
-                                  Uses the Google Slides embed renderer <br />
-                                  <Box
-                                    mt={2}
-                                    display="flex"
-                                    gap={1}
-                                    fontStyle="italic"
-                                  >
-                                    <FaCircleInfo margin={1} flexShrink={0} />
-                                    Preserves the most functionality but takes
-                                    the longest to load
-                                  </Box>
-                                </>
-                              ),
-                              val: "googleslides" satisfies DisplayMode,
-                            },
-                            {
-                              title: "Image",
-                              description: (
-                                <>
-                                  Renders the presentation as images <br />
-                                  <Box
-                                    mt={2}
-                                    display="flex"
-                                    gap={1}
-                                    fontStyle="italic"
-                                  >
-                                    <FaCircleInfo margin={1} flexShrink={0} />
-                                    Doesn't allow animations but is faster to
-                                    load
-                                  </Box>
-                                </>
-                              ),
-                              val: "image" satisfies DisplayMode,
-                            },
-                          ]
-                            .filter((x) =>
-                              displayTypeMapping[x.val as DisplayMode].includes(
-                                type ?? "googleslides",
-                              ),
-                            )
-                            .map(({ title, description, val }, i) => (
-                              <Box
-                                key={i}
-                                cursor="pointer"
-                                border="1px solid"
-                                borderColor={
-                                  values.displayMode === val
-                                    ? "blue.400"
-                                    : "gray.200"
-                                }
-                                rounded="sm"
-                                p={2}
-                                _hover={{ borderColor: "blue.400" }}
-                                onClick={() => {
-                                  setFieldValue("displayMode", val);
-                                }}
-                                width="100%"
-                                flex={1}
-                              >
-                                <Text fontWeight="bold" fontSize="md">
-                                  {title}
-                                </Text>
-                                <Text fontSize="sm" color="gray.600">
-                                  {description}
-                                </Text>
-                              </Box>
-                            ))}
-                        </Stack>
-                      </FormControl>
-                    </VStack>
-                  </Flex>
-                </ModalBody>
+  const form = useForm({
+    values: { displayMode: displayMode ?? "googleslides" } as SettingsData,
+  });
 
-                <ModalFooter
-                  pt={0}
-                  px={0}
-                  boxShadow={{
-                    base: "rgba(0, 0, 0, 0.8) 0px 5px 10px 0px",
-                    md: "none",
-                  }}
-                >
-                  <Flex flexDir="column" width="100%">
+  return (
+    <Dialog open={isOpen ?? false} onOpenChange={onToggle ?? (() => {})}>
+      <Form {...form}>
+        <DialogContent size="3xl" asChild>
+          <form onSubmit={form.handleSubmit(handleSubmit)}>
+            <DialogHeader>
+              <DialogTitle>Slides Settings</DialogTitle>
+            </DialogHeader>
+            <DialogBody>
+              <div className="flex flex-col md:flex-row gap-3">
+                <div className="stack-col items-start flex-1">
+                  <OptionControl
+                    control={form.control}
+                    label="Display Mode"
+                    name="displayMode"
+                    options={[
+                      {
+                        title: "Google Slides",
+                        description: (
+                          <>
+                            Uses the Google Slides embed renderer <br />
+                            <div className="mt-2 flex gap-1 italic">
+                              <FaCircleInfo className="m-1 shrink-0" />
+                              Preserves the most functionality but takes the
+                              longest to load
+                            </div>
+                          </>
+                        ),
+                        value: "googleslides" satisfies DisplayMode,
+                      },
+                      {
+                        title: "Image",
+                        description: (
+                          <>
+                            Renders the presentation as images <br />
+                            <div className="mt-2 flex gap-1 italic">
+                              <FaCircleInfo className="m-1 shrink-0" />
+                              Doesn't allow animations but is faster to load
+                            </div>
+                          </>
+                        ),
+                        value: "image" satisfies DisplayMode,
+                      },
+                    ].filter((x) =>
+                      displayTypeMapping[x.value as DisplayMode].includes(
+                        type ?? "googleslides",
+                      ),
+                    )}
+                  />
+                  {/* <FormControl>
+                    <FormLabel>Display Mode</FormLabel>
                     <Stack
-                      px={{ base: 3, md: 6 }}
-                      pt={3}
-                      direction="row"
-                      alignSelf="flex-end"
+                      direction={{ base: "column", md: "row" }}
+                      alignItems="stretch"
+                      marginBottom={2}
+                      flexWrap="wrap"
                     >
-                      <SubmitButton colorScheme="green">Save</SubmitButton>
-                      <Button variant="ghost" onClick={onToggle}>
-                        Close
-                      </Button>
+                      {
+                        .map(({ title, description, val }, i) => (
+                          <Box
+                            key={i}
+                            cursor="pointer"
+                            border="1px solid"
+                            borderColor={
+                              values.displayMode === val
+                                ? "blue.400"
+                                : "gray.200"
+                            }
+                            rounded="sm"
+                            p={2}
+                            _hover={{ borderColor: "blue.400" }}
+                            onClick={() => {
+                              setFieldValue("displayMode", val);
+                            }}
+                            width="100%"
+                            flex={1}
+                          >
+                            <Text fontWeight="bold" fontSize="md">
+                              {title}
+                            </Text>
+                            <Text fontSize="sm" color="gray.600">
+                              {description}
+                            </Text>
+                          </Box>
+                        ))}
                     </Stack>
-                  </Flex>
-                </ModalFooter>
-              </ModalContent>
-            </Form>
-          );
-        }}
-      </Formik>
-    </Modal>
+                  </FormControl> */}
+                </div>
+              </div>
+            </DialogBody>
+            <DialogFooter>
+              <Button type="submit" variant="success">
+                Save
+              </Button>
+              <Button variant="outline" onClick={onToggle}>
+                Close
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Form>
+    </Dialog>
   );
 };
 

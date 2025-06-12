@@ -60,7 +60,7 @@ export const init = (
   });
 
   serverPluginApi.loadJsOnRemoteView(pluginName, `${pluginName}-remote.es.js`);
-  serverPluginApi.loadCssOnRemoteView(pluginName, "style.css");
+  serverPluginApi.loadCssOnRemoteView(pluginName, "RemoteEntry.css");
   serverPluginApi.registerRemoteViewWebComponent(
     pluginName,
     remoteWebComponentTag,

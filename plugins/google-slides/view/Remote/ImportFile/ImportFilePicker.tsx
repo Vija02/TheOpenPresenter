@@ -1,14 +1,11 @@
-import { Box, chakra } from "@chakra-ui/react";
-import { FcGoogle as FcGoogleRaw } from "react-icons/fc";
+import { FcGoogle } from "react-icons/fc";
 
 import { usePluginAPI } from "../../pluginApi";
 import { trpc } from "../../trpc";
-import { SlidePicker } from "./SlidePicker";
 import { PickerCard } from "../component/PickerCard";
 import { PDFUploadModal } from "./PDFUploadModal";
 import { PPTUploadModal } from "./PPTUploadModal";
-
-const FcGoogle = chakra(FcGoogleRaw);
+import { SlidePicker } from "./SlidePicker";
 
 export const ImportFilePicker = () => {
   const pluginApi = usePluginAPI();
@@ -18,7 +15,7 @@ export const ImportFilePicker = () => {
 
   const selectSlideMutation = trpc.googleslides.selectSlide.useMutation();
   return (
-    <Box display="flex" gap={2}>
+    <div className="flex gap-2 w-full max-w-lg">
       <SlidePicker
         onFileSelected={(data, token) => {
           const picker = google.picker;
@@ -42,18 +39,18 @@ export const ImportFilePicker = () => {
         }}
       >
         {({ isLoading, openPicker }) => (
-          <Box flex={1}>
+          <div className="flex-1">
             <PickerCard
               onClick={openPicker}
-              icon={<FcGoogle fontSize="5xl" />}
+              icon={<FcGoogle className="size-10" />}
               text="Google Slides"
               isLoading={isLoading}
             />
-          </Box>
+          </div>
         )}
       </SlidePicker>
       <PDFUploadModal />
       <PPTUploadModal />
-    </Box>
+    </div>
   );
 };
