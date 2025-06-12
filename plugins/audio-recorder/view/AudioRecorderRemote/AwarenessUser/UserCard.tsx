@@ -1,4 +1,3 @@
-import { Box, Text } from "@chakra-ui/react";
 import { AwarenessUserData } from "@repo/base-plugin/client";
 
 import { UserNameTag } from "./UserNameTag";
@@ -9,19 +8,14 @@ type PropTypes = {
 };
 export const UserCard = ({ user, onSelectUser }: PropTypes) => {
   return (
-    <Box
+    <div
+      className="cursor-pointer hover:bg-surface-primary-hover py-2 px-1"
       onClick={() => {
         onSelectUser(user.id);
       }}
-      cursor="pointer"
-      _hover={{ bg: "gray.200" }}
-      py={2}
-      px={1}
     >
       <UserNameTag user={user} />
-      <Text fontSize="xs" color="gray.700" textTransform="uppercase">
-        {user.type}
-      </Text>
-    </Box>
+      <p className="text-xs text-secondary uppercase">{user.type}</p>
+    </div>
   );
 };
