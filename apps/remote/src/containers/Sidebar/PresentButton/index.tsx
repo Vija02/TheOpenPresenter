@@ -4,6 +4,8 @@ import { cx } from "class-variance-authority";
 import { lazy } from "react";
 import { MdCoPresent, MdOutlineCancelPresentation } from "react-icons/md";
 
+import "./index.css";
+
 const PresentMonitorModalWrapper = lazy(() => import("./PresentMonitorModal"));
 
 export const PresentButton = ({ isMobile }: { isMobile?: boolean }) => {
@@ -45,7 +47,7 @@ export const PresentButton = ({ isMobile }: { isMobile?: boolean }) => {
     <Link
       href={`/render/${orgSlug}/${projectSlug}`}
       isExternal
-      className="rt--present-button"
+      className="rt--present-button-link"
       variant="unstyled"
     >
       <PresentButtonElement />
