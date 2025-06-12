@@ -60,7 +60,7 @@ export const init = (serverPluginApi: ServerPluginApi) => {
     pluginName,
     remoteWebComponentTag,
   );
-  serverPluginApi.loadCssOnRemoteView(pluginName, "style.css");
+  serverPluginApi.loadCssOnRemoteView(pluginName, "RemoteEntry.css");
   serverPluginApi.loadJsOnRendererView(
     pluginName,
     `${pluginName}-renderer.es.js`,
@@ -223,7 +223,12 @@ const getAppRouter = (t: TRPCObject) => {
           const res = await yt.search(opts.input.title, { type: "video" });
 
           return {
-            results: res.results as unknown as YTNodes.Video[],
+            results: (
+              res.results.filter((x) => x.type === "Video") as YTNodes.Video[]
+            ).map((x: YTNodes.Video) => ({
+              ...x,
+              duration: x.duration
+            })) as unknown as YTNodes.Video[],
             refinements: res.refinements,
           };
         }),

@@ -1,5 +1,11 @@
-import { Button, Input, Stack, Text, useDisclosure } from "@chakra-ui/react";
-import { OverlayToggle, PluginScaffold, VolumeBar } from "@repo/ui";
+import {
+  Button,
+  Input,
+  OverlayToggle,
+  PluginScaffold,
+  VolumeBar,
+  useDisclosure,
+} from "@repo/ui";
 import { useState } from "react";
 import { MdCloudUpload } from "react-icons/md";
 import ReactPlayer from "react-player/lazy";
@@ -94,15 +100,8 @@ const VideoPlayerRemote = () => {
       toolbar={
         <OverlayToggle
           toggler={({ onToggle }) => (
-            <Button
-              size="xs"
-              bg="transparent"
-              color="white"
-              border="1px solid #ffffff6b"
-              _hover={{ bg: "rgba(255, 255, 255, 0.13)" }}
-              onClick={onToggle}
-            >
-              <MdCloudUpload /> <Text ml={2}>Upload video</Text>
+            <Button size="xs" variant="pill" onClick={onToggle}>
+              <MdCloudUpload /> Upload video
             </Button>
           )}
         >
@@ -118,31 +117,35 @@ const VideoPlayerRemote = () => {
             }}
           />
 
-          <Stack flex={1} dir="column" p={3} overflow="auto">
+          <div className="stack-col items-stretch w-full flex-1 p-3 overflow-auto">
             <form
               onSubmit={(e) => {
                 e.preventDefault();
                 onSearch();
               }}
             >
-              <Text fontSize="md" fontWeight="bold" mb={1}>
-                Search or enter URL:
-              </Text>
-              <Stack direction="row">
+              <div className="text-lg font-bold mb-1">Search or enter URL:</div>
+              <div className="stack-row">
                 <Input
+                  className="flex-1"
                   placeholder="Search..."
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                 />
-                <Button type="submit" colorScheme="green">
+                <Button type="submit" variant="success">
                   Go
                 </Button>
-              </Stack>
-              {isError && <Text color="red">Unable to load this video</Text>}
+              </div>
+              {isError && (
+                <div className="text-fill-destructive">
+                  Unable to load this video
+                </div>
+              )}
             </form>
 
             <YoutubeSearchModal
-              {...disclosureProps}
+              isOpen={disclosureProps.open}
+              onToggle={disclosureProps.onToggle}
               searchQuery={input}
               onVideoSelect={(videoId, metadata) => {
                 mutableSceneData.pluginData.videos.push({
@@ -159,16 +162,14 @@ const VideoPlayerRemote = () => {
               }}
             />
 
-            <Text fontSize="lg" mt={2} fontWeight="bold">
-              Loaded Videos
-            </Text>
+            <div className="text-lg mt-2 font-bold">Loaded Videos</div>
             {videos.length === 0 && (
-              <Text color="gray.600">No videos loaded yet.</Text>
+              <div className="text-secondary">No videos loaded yet.</div>
             )}
             {videos.map((video) => (
               <VideoCard key={video.id} video={video} />
             ))}
-          </Stack>
+          </div>
         </>
       }
     />

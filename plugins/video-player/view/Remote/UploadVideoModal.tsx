@@ -1,4 +1,3 @@
-import { ModalProps } from "@chakra-ui/react";
 import { appData, extractMediaName } from "@repo/lib";
 import { OverlayToggleComponentProps } from "@repo/ui";
 import Uppy from "@uppy/core";
@@ -9,11 +8,7 @@ import { typeidUnboxed } from "typeid-js";
 
 import { usePluginAPI } from "../pluginApi";
 
-export type UploadVideoModalPropTypes = Omit<
-  ModalProps,
-  "isOpen" | "onClose" | "children"
-> &
-  Partial<OverlayToggleComponentProps> & {};
+export type UploadVideoModalPropTypes = Partial<OverlayToggleComponentProps>;
 
 const UploadVideoModal = ({
   isOpen,
