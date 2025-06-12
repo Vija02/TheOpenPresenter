@@ -322,22 +322,18 @@ const PluginRenderer = React.memo(
       yjsPluginSceneData,
     ]);
 
-    if (match || viewData?.config?.alwaysRender) {
-      return (
-        <div
-          ref={pluginDivRef}
-          id={`pl-${pluginInfo.plugin}`}
-          className={cx(
-            !match && viewData?.config?.alwaysRender ? "content-hidden" : "",
-            "h-full",
-          )}
-        >
-          {Element}
-        </div>
-      );
-    }
-
-    return null;
+    return (
+      <div
+        ref={pluginDivRef}
+        id={`pl-${pluginInfo.plugin}`}
+        className={cx(
+          !match && viewData?.config?.alwaysRender ? "content-hidden" : "",
+          match && "h-full",
+        )}
+      >
+        {match || viewData?.config?.alwaysRender ? Element : null}
+      </div>
+    );
   },
 );
 
