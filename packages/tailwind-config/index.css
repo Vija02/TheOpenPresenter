@@ -36,7 +36,7 @@
 
   /* Let's add other useful things */
   --color-stroke: var(--gray-300);
-  --color-stroke-emphasis: var(--gray-400);
+  --color-stroke-emphasis: var(--gray-600);
   --color-stroke-disabled: var(--gray-200);
 
   --color-ring: var(--ring);
