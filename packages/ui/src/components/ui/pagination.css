@@ -7,9 +7,9 @@
   }
 
   .ui--pagination-link {
-    @apply inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-sm text-sm font-medium transition-all cursor-pointer;
+    @apply inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-sm text-sm font-medium cursor-pointer;
     @apply select-none disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px];
-    @apply aria-invalid:ring-fill-destructive/20 dark:aria-invalid:ring-fill-destructive/40 aria-invalid:border-fill-destructive;
+    @apply aria-invalid:border-fill-destructive;
     @apply size-9;
     /* Override anchor styles */
     @apply text-inherit no-underline hover:no-underline;
@@ -19,7 +19,7 @@
   }
 
   .ui--pagination .selected > a {
-    @apply border border-stroke shadow;
+    @apply border border-stroke shadow-xs;
   }
 
   .ui--pagination-nav-link {

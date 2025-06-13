@@ -3,6 +3,7 @@ import * as PopoverPrimitive from "@radix-ui/react-popover";
 import { XIcon } from "lucide-react";
 import * as React from "react";
 
+import { useDialogPortalContainerContext } from "./dialog";
 import "./popover.css";
 
 function Popover({
@@ -29,8 +30,11 @@ function PopoverContent({
   sideOffset = 4,
   ...props
 }: React.ComponentProps<typeof PopoverPrimitive.Content>) {
+  // Debt: Rename this context to be generic
+  const container = useDialogPortalContainerContext();
+
   return (
-    <PopoverPrimitive.Portal>
+    <PopoverPrimitive.Portal container={container ?? document.body}>
       <PopoverPrimitive.Content
         data-slot="popover-content"
         align={align}
