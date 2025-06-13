@@ -6,14 +6,35 @@
   }
 
   .ui--tabs-list {
-    @apply bg-surface-tertiary text-primary inline-flex h-9 w-fit items-center justify-center rounded-lg p-[3px];
+    @apply inline-flex w-full items-center justify-start;
+    @apply border-b border-stroke;
+  }
+
+  .ui--tabs[data-orientation="vertical"] .ui--tabs-list {
+    @apply border-b-0 border-r;
   }
 
   .ui--tabs-trigger {
-    @apply data-[state=active]:bg-surface-primary dark:data-[state=active]:text-primary focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring dark:data-[state=active]:border-stroke dark:data-[state=active]:bg-stroke/30 text-primary dark:text-fill-muted-fg inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-md border border-transparent px-2 py-1 text-sm font-medium whitespace-nowrap transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4;
+    @apply text-secondary data-[state=active]:text-primary data-[state=active]:font-bold hover:text-primary font-medium text-sm;
+    @apply relative stack-row px-4 py-2 whitespace-nowrap transition-colors;
+    @apply cursor-pointer;
+    @apply disabled:pointer-events-none disabled:opacity-50;
+    @apply [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4;
+  }
+
+  .ui--tabs-trigger[data-state="active"]::after {
+    @apply bg-accent;
+  }
+
+  .ui--tabs-trigger::after {
+    @apply absolute bottom-0 left-0 right-0 h-0.5 transition-colors;
+    content: "";
+  }
+  .ui--tabs[data-orientation="vertical"] .ui--tabs-trigger::after {
+    @apply bottom-auto top-0 left-auto right-0 w-0.5 h-full;
   }
 
   .ui--tabs-content {
-    @apply flex-1 outline-none;
+    @apply flex-1;
   }
 }

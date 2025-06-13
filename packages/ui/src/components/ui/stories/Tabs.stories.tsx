@@ -27,7 +27,7 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   render: (args) => (
-    <Tabs {...args} className="w-[400px]">
+    <Tabs {...args}>
       <TabsList>
         <TabsTrigger value="tab1">Account</TabsTrigger>
         <TabsTrigger value="tab2">Password</TabsTrigger>
@@ -60,9 +60,9 @@ export const Default: Story = {
 
 export const WithIcons: Story = {
   render: () => (
-    <Tabs defaultValue="overview" className="w-[400px]">
+    <Tabs defaultValue="overview">
       <TabsList>
-        <TabsTrigger value="overview" className="flex items-center gap-2">
+        <TabsTrigger value="overview">
           <svg
             className="w-4 h-4"
             fill="none"
@@ -78,7 +78,7 @@ export const WithIcons: Story = {
           </svg>
           Overview
         </TabsTrigger>
-        <TabsTrigger value="analytics" className="flex items-center gap-2">
+        <TabsTrigger value="analytics">
           <svg
             className="w-4 h-4"
             fill="none"
@@ -94,7 +94,7 @@ export const WithIcons: Story = {
           </svg>
           Analytics
         </TabsTrigger>
-        <TabsTrigger value="settings" className="flex items-center gap-2">
+        <TabsTrigger value="settings">
           <svg
             className="w-4 h-4"
             fill="none"
@@ -139,7 +139,7 @@ export const WithIcons: Story = {
 
 export const ManyTabs: Story = {
   render: () => (
-    <Tabs defaultValue="tab1" className="w-[600px]">
+    <Tabs defaultValue="tab1">
       <TabsList>
         <TabsTrigger value="tab1">Tab 1</TabsTrigger>
         <TabsTrigger value="tab2">Tab 2</TabsTrigger>
@@ -251,7 +251,7 @@ export const Vertical: Story = {
 
 export const DisabledTab: Story = {
   render: () => (
-    <Tabs defaultValue="available" className="w-[400px]">
+    <Tabs defaultValue="available">
       <TabsList>
         <TabsTrigger value="available">Available</TabsTrigger>
         <TabsTrigger value="disabled" disabled>

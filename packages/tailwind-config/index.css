@@ -44,6 +44,8 @@
   --color-link: #1d70b8;
   --color-link-hover: #003078;
 
+  --color-accent: var(--color-blue-400);
+
   /* Then we can move on to utility colors */
   --color-fill-default: rgba(48, 48, 48, 1);
   --color-fill-default-hover: rgba(26, 26, 26, 1);
