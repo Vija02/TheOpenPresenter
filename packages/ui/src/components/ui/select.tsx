@@ -36,19 +36,22 @@ type OptionType = { label: string; value: string | number | boolean };
  */
 const selectStyles = {
   controlStyles: {
-    base: "flex !min-h-9 w-full rounded-md border border-input pl-3 py-1 pr-1 gap-1 text-sm shadow-xs transition-colors",
-    focus: "outline-none ring-1 ring-ring",
+    base: "flex !min-h-9 w-full rounded-sm border border-stroke pl-3 py-1 pr-1 gap-1 text-sm transition-colors",
+    focus: "outline-none border-ring",
     disabled: "opacity-50",
   },
   placeholderStyles: "text-secondary",
   valueContainerStyles: "gap-1",
   multiValueStyles:
-    "inline-flex items-center gap-2 rounded-sm border border-transparent bg-fill-muted text-fill-muted-fg hover:bg-fill-muted/80 px-1.5 py-0.5 text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+    "inline-flex items-stretch gap-1 rounded-sm border border-transparent bg-surface-tertiary text-surface-tertiary-fg text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+  multiValueLabelStyles: "px-1.5 py-0.5 pr-0",
+  multiValueRemoveStyles:
+    "cursor-pointer hover:bg-fill-destructive hover:text-fill-destructive-fg px-0.5 rounded-r-sm",
   indicatorsContainerStyles: "gap-1",
   clearIndicatorStyles: "p-1 cursor-pointer",
   indicatorSeparatorStyles: "",
   dropdownIndicatorStyles: "p-1",
-  menu: "bg-surface-primary mt-1.5 p-1.5 border border-input rounded-md",
+  menu: "bg-surface-primary mt-1 p-1 border rounded-sm shadow-sm",
   groupHeadingStyles:
     "py-2 px-1 text-secondary-foreground text-sm font-semibold",
   optionStyles: {
@@ -60,7 +63,7 @@ const selectStyles = {
   noOptionsMessageStyles: "text-secondary py-4 text-center",
   label: "text-secondary text-sm",
   loadingIndicatorStyles: "flex items-center justify-center h-4 w-4 opacity-50",
-  loadingMessageStyles: "text-primary p-2 bg-accent",
+  loadingMessageStyles: "text-primary p-2 bg-primary",
 };
 
 /**
@@ -117,8 +120,16 @@ const createClassNames = (
     menuPortal: (state) => cn(classNames?.menuPortal?.(state)),
     multiValue: (state) =>
       cn(selectStyles.multiValueStyles, classNames?.multiValue?.(state)),
-    multiValueLabel: (state) => cn(classNames?.multiValueLabel?.(state)),
-    multiValueRemove: (state) => cn(classNames?.multiValueRemove?.(state)),
+    multiValueLabel: (state) =>
+      cn(
+        selectStyles.multiValueLabelStyles,
+        classNames?.multiValueLabel?.(state),
+      ),
+    multiValueRemove: (state) =>
+      cn(
+        selectStyles.multiValueRemoveStyles,
+        classNames?.multiValueRemove?.(state),
+      ),
     noOptionsMessage: (state) =>
       cn(
         selectStyles.noOptionsMessageStyles,

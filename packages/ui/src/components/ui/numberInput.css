@@ -2,8 +2,8 @@
 
 @layer base {
   .ui--number-input {
-    @apply relative flex h-9 w-full min-w-0 rounded-md border bg-transparent shadow-xs transition-[color,box-shadow] outline-none;
-    @apply border-stroke-emphasis;
+    @apply relative flex h-9 w-full min-w-0 rounded-sm bg-transparent transition-[color,box-shadow] outline-none;
+    @apply border border-stroke;
   }
 
   .ui--number-input-field {
@@ -15,7 +15,7 @@
   }
 
   .ui--number-input:focus-within {
-    @apply border-ring ring-ring/50 ring-2;
+    @apply border-ring;
   }
 
   .ui--number-input[aria-invalid="true"] {
@@ -23,7 +23,7 @@
   }
 
   .ui--number-input-stepper {
-    @apply flex flex-col border-l border-stroke-emphasis;
+    @apply flex flex-col border-l border-stroke;
   }
 
   .ui--number-input-stepper-button {
@@ -35,11 +35,11 @@
   }
 
   .ui--number-input-stepper-button:first-child {
-    @apply border-b border-stroke-emphasis rounded-tr-md;
+    @apply border-b border-stroke rounded-tr-sm;
   }
 
   .ui--number-input-stepper-button:last-child {
-    @apply rounded-br-md;
+    @apply rounded-br-sm;
   }
 
   .ui--number-input-unit {

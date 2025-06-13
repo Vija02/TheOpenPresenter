@@ -83,31 +83,16 @@
   --color-fill-warning-disabled: rgba(255, 184, 0, 0.4);
   --color-fill-warning-fg: rgba(37, 26, 0, 1);
 
-  --breakpoint-desktop: 48rem; /* Same as md */
-
+  
   /* --color-surface-info: rgba(234, 244, 255, 1);
   --color-surface-info-hover: rgba(224, 240, 255, 1);
   --color-surface-info-active: rgba(202, 230, 255, 1); */
+  
+  --breakpoint-desktop: 48rem; /* Same as md */
 
-  /* Utility */
-  /* --color-info: var(--gray-50);
-
-
-  /* --color-primary: --radius-sm: calc(var(--radius) - 4px); */
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
-  /* --color-primary: var(--primary); */
-  /* --color-primary-foreground: var(--primary-foreground); */
-  /* --color-secondary: var(--secondary); */
-  /* --color-secondary-foreground: var(--secondary-foreground); */
-  /* --color-muted: var(--muted); */
-  /* --color-muted-foreground: var(--muted-foreground); */
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  /* --color-destructive: var(--destructive); */
-  /* --color-border: var(--border); */
-  /* --color-input: var(--input); */
 
   --text-2xs: 0.625rem;
 }
