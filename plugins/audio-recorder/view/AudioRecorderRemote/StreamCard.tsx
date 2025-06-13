@@ -84,15 +84,7 @@ export const StreamCard = ({ activeStream }: PropTypes) => {
           </div>
         </div>
         {isRunning && (
-          <div
-            className="stack-row justify-between pt-2 border-t-1 border-stroke"
-            // direction="row"
-            // alignItems="center"
-            // justifyContent="space-between"
-            // pt={2}
-            // borderTop="1px solid"
-            // borderColor="gray.400"
-          >
+          <div className="stack-row justify-between pt-2 border-t-1 border-stroke">
             <div className="stack-row">
               <FaMicrophone className="text-red-400 mx-2 size-6" />
               <div className="flex flex-col">
