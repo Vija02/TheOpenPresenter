@@ -44,7 +44,7 @@
   --color-link: #1d70b8;
   --color-link-hover: #003078;
 
-  --color-accent: var(--color-blue-400);
+  --color-accent: oklch(70.7% 0.165 254.624);
 
   /* Then we can move on to utility colors */
   --color-fill-default: rgba(48, 48, 48, 1);
