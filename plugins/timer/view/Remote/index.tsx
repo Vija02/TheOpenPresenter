@@ -46,7 +46,7 @@ const Remote = () => {
             onChange={(e) => setInput(e.target.value)}
             placeholder="300"
           />
-          <div className="stack-row items-start">
+          <div className="stack-row items-start flex-wrap">
             <Button onClick={onSetTimer}>Set duration</Button>
             <Button onClick={onStartTimer}>Start Timer</Button>
             <Button onClick={onResetTimer}>Reset Timer</Button>
