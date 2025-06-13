@@ -1,0 +1,18 @@
+@import "tailwindcss/preflight.css" layer(base);
+
+@layer base {
+  * {
+    border-color: var(--gray-300);
+    outline-color: color-mix(in oklab, var(--ring) 50%, transparent);
+  }
+  body {
+    background-color: var(--color-surface-primary);
+    color: var(--color-primary);
+    font-size: var(--text-sm);
+    line-height: var(--tw-leading, var(--text-sm--line-height));
+  }
+  a {
+    color: var(--color-link);
+    @apply hover:underline;
+  }
+}

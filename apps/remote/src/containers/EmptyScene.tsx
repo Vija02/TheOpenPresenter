@@ -1,32 +1,30 @@
-import { Alert, Button, Heading, Text, VStack } from "@chakra-ui/react";
-import { OverlayToggle } from "@repo/ui";
+import { Alert, Button, OverlayToggle } from "@repo/ui";
 import { VscAdd } from "react-icons/vsc";
 
 import SidebarAddSceneModal from "./Sidebar/SidebarAddSceneModal";
 
 export const EmptyScene = () => {
   return (
-    <VStack p={3} alignItems="start">
-      <Heading>Add a scene</Heading>
-      <Text>
+    <div className="p-3 prose">
+      <h2 className="">Add a scene</h2>
+      <p>
         There is no scene in your project yet. Add one now to start presenting.
-      </Text>
+      </p>
       <OverlayToggle
         toggler={({ onToggle }) => (
-          <Button cursor="pointer" onClick={onToggle} colorScheme="green">
+          <Button onClick={onToggle} variant="success">
             <VscAdd />
-            <Text ml={2} color="white">
-              Add Scene
-            </Text>
+            Add Scene
           </Button>
         )}
       >
         <SidebarAddSceneModal />
       </OverlayToggle>
-      <Alert status="info">
-        Afterwards, click on the "Present" on the device you want the
+      <div className="pb-4" />
+      <Alert variant="info" title="Next steps">
+        Afterwards, click on the "Present" button on the device you want the
         presentation to be shown.
       </Alert>
-    </VStack>
+    </div>
   );
 };

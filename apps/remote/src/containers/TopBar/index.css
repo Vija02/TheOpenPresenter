@@ -1,0 +1,38 @@
+@reference "@repo/tailwind-config/index.css";
+
+.rt--top-bar {
+  @apply flex shrink-0 shadow items-center justify-between flex-wrap p-2;
+}
+
+.rt--top-bar--left {
+  @apply stack-row px-2;
+}
+.rt-top-bar--scene-name {
+  @apply font-bold text-sm;
+}
+.rt-top-bar--toolbar {
+  @apply stack-row gap-0;
+
+  button {
+    @apply text-gray-500 hover:text-gray-900;
+  }
+}
+
+.rt--top-bar--right {
+  @apply stack-row gap-0;
+
+  button {
+    @apply rounded-none;
+  }
+
+  svg {
+    @apply size-3;
+  }
+}
+
+.rt--top-bar--overlay-btn {
+  @apply border-2 border-fill-default;
+}
+.rt--top-bar--selected {
+  @apply animate-border-blink bg-fill-default-selected;
+}

@@ -26,7 +26,7 @@
     "@types/mjml": "^4.7.4",
     "@types/nodemailer": "^6.4.17",
     "aws-sdk": "^2.1692.0",
-    "concurrently": "^9.1.0",
+    "concurrently": "^9.1.2",
     "express": "^4.21.2",
     "ffmpeg-static": "^5.2.0",
     "ffprobe-static": "^3.1.0",

@@ -1,8 +1,8 @@
-import { Box, Button, Link, Stack, Text } from "@chakra-ui/react";
-import { PluginScaffold, VolumeBar } from "@repo/ui";
+import { Button, Link, PluginScaffold, VolumeBar } from "@repo/ui";
 import { FaPause, FaPlay } from "react-icons/fa6";
 
 import { usePluginAPI } from "../pluginApi";
+import "./index.css";
 
 // TODO: Pull from API
 const radios = [
@@ -82,14 +82,11 @@ const RadioRemote = () => {
         <>
           <Button
             size="xs"
-            bg="transparent"
-            color="white"
-            border="1px solid #ffffff6b"
-            _hover={{ bg: "rgba(255, 255, 255, 0.13)" }}
+            variant="pill"
             onClick={() => {
               mutableRendererData.isPlaying = !isPlaying;
             }}
-            isDisabled={!playingUrl}
+            disabled={!playingUrl}
           >
             {!isPlaying ? <FaPlay /> : <FaPause />}
           </Button>
@@ -104,34 +101,41 @@ const RadioRemote = () => {
             }}
           />
 
-          <Stack flex={1} dir="column" p={3} overflow="auto">
-            {radios.map((radio, i) => (
-              <Stack key={i} direction="row">
-                <Button
-                  onClick={() => {
-                    if (!isPlaying || playingUrl !== radio.url) {
-                      mutableRendererData.isPlaying = true;
-                      mutableRendererData.url = radio.url;
-                    } else {
-                      mutableRendererData.isPlaying = false;
+          <div className="stack-col items-stretch flex-1 p-3 overflow-auto">
+            {radios.map((radio, i) => {
+              const currentRadioIsPlaying =
+                !isPlaying || playingUrl !== radio.url;
+
+              return (
+                <div key={i} className="stack-row items-stretch">
+                  <Button
+                    variant={!currentRadioIsPlaying ? "default" : "outline"}
+                    className={
+                      !currentRadioIsPlaying
+                        ? "border-1 border-fill-default"
+                        : ""
                     }
-                  }}
-                >
-                  {!isPlaying || playingUrl !== radio.url ? (
-                    <FaPlay />
-                  ) : (
-                    <FaPause />
-                  )}
-                </Button>
-                <Box>
-                  <Text fontSize="md">{radio.title}</Text>
-                  <Link fontSize="xs" href={radio.webLink} isExternal>
-                    Link
-                  </Link>
-                </Box>
-              </Stack>
-            ))}
-          </Stack>
+                    onClick={() => {
+                      if (currentRadioIsPlaying) {
+                        mutableRendererData.isPlaying = true;
+                        mutableRendererData.url = radio.url;
+                      } else {
+                        mutableRendererData.isPlaying = false;
+                      }
+                    }}
+                  >
+                    {currentRadioIsPlaying ? <FaPlay /> : <FaPause />}
+                  </Button>
+                  <div>
+                    <p>{radio.title}</p>
+                    <Link href={radio.webLink} isExternal className="text-xs">
+                      Link
+                    </Link>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </>
       }
     />

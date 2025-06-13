@@ -67,12 +67,17 @@ export type SlideStyle = z.infer<typeof slideStyleValidator>;
 
 export const displayTypes = ["sections", "fullSong"] as const;
 export type DisplayType = (typeof displayTypes)[number];
-export const displayTypeSettings: Record<DisplayType, { label: string }> = {
+export const displayTypeSettings: Record<
+  DisplayType,
+  { label: string; description: string }
+> = {
   sections: {
     label: "Sections",
+    description: "Show lyrics in sections",
   },
   fullSong: {
     label: "Full Song",
+    description: "Show all in one screen",
   },
 };
 export const songSettingValidator = z.object({

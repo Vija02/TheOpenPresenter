@@ -1,0 +1,47 @@
+@reference "@repo/tailwind-config/index.css";
+
+@layer base {
+  .ui--progress {
+    @apply relative h-2 w-full overflow-hidden rounded-full;
+  }
+
+  .ui--progress__default {
+    @apply bg-fill-default/20;
+
+    > * {
+      @apply bg-fill-default;
+    }
+  }
+
+  .ui--progress__success {
+    @apply bg-fill-success/20;
+
+    > * {
+      @apply bg-fill-success;
+    }
+  }
+
+  .ui--progress__info {
+    @apply bg-fill-info/20;
+
+    > * {
+      @apply bg-fill-info;
+    }
+  }
+
+  .ui--progress__warning {
+    @apply bg-fill-warning/20;
+
+    > * {
+      @apply bg-fill-warning;
+    }
+  }
+
+  .ui--progress__destructive {
+    @apply bg-fill-destructive/20;
+
+    > * {
+      @apply bg-fill-destructive;
+    }
+  }
+}

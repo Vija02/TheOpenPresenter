@@ -111,6 +111,7 @@ export type MiscProps = {
   toast: typeof ReactToast;
   media: MediaHandler;
   logger: Logger;
+  parentContainer: HTMLElement | null;
 };
 
 export type WebComponentProps<TrpcClient> = {

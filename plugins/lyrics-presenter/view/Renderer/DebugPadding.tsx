@@ -1,5 +1,3 @@
-import { Box } from "@chakra-ui/react";
-
 export const DebugPadding = ({
   padding,
 }: {
@@ -7,37 +5,33 @@ export const DebugPadding = ({
 }) => {
   return (
     <>
-      <Box
-        position="absolute"
-        top={0}
-        left={0}
-        right={0}
-        height={`${padding[0]}px`}
-        bg="#5042B2"
+      <div
+        className="absolute top-0 left-0 right-0"
+        style={{
+          height: `${padding[0]}px`,
+          backgroundColor: "#5042B2",
+        }}
       />
-      <Box
-        position="absolute"
-        right={0}
-        top={0}
-        bottom={0}
-        width={`${padding[1]}px`}
-        bg="#5042B2"
+      <div
+        className="absolute right-0 top-0 bottom-0"
+        style={{
+          width: `${padding[1]}px`,
+          backgroundColor: "#5042B2",
+        }}
       />
-      <Box
-        position="absolute"
-        bottom={0}
-        left={0}
-        right={0}
-        height={`${padding[2]}px`}
-        bg="#5042B2"
+      <div
+        className="absolute bottom-0 left-0 right-0"
+        style={{
+          height: `${padding[2]}px`,
+          backgroundColor: "#5042B2",
+        }}
       />
-      <Box
-        position="absolute"
-        left={0}
-        top={0}
-        bottom={0}
-        width={`${padding[3]}px`}
-        bg="#5042B2"
+      <div
+        className="absolute left-0 top-0 bottom-0"
+        style={{
+          width: `${padding[3]}px`,
+          backgroundColor: "#5042B2",
+        }}
       />
     </>
   );

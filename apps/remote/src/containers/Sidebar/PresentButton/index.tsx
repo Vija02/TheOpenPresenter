@@ -1,7 +1,10 @@
-import { Button, Link, Text } from "@chakra-ui/react";
 import { usePluginMetaData } from "@repo/shared";
+import { Button, Link } from "@repo/ui";
+import { cx } from "class-variance-authority";
 import { lazy } from "react";
 import { MdCoPresent, MdOutlineCancelPresentation } from "react-icons/md";
+
+import "./index.css";
 
 const PresentMonitorModalWrapper = lazy(() => import("./PresentMonitorModal"));
 
@@ -10,36 +13,24 @@ export const PresentButton = ({ isMobile }: { isMobile?: boolean }) => {
 
   const PresentButtonElement = ({ onClick }: { onClick?: () => void }) => (
     <Button
-      w="100%"
+      className={cx(["rt--present-button"])}
       variant="outline"
-      borderColor="gray.300"
-      {...(isMobile ? { display: "flex", flexDir: "column" } : {})}
+      size={isMobile ? "mini" : "default"}
       onClick={onClick}
     >
       <MdCoPresent />
-      <Text
-        {...(isMobile ? { fontSize: "2xs", fontWeight: "normal" } : { ml: 2 })}
-        ml={2}
-      >
-        Present
-      </Text>
+      Present
     </Button>
   );
   const StopPresentButtonElement = ({ onClick }: { onClick?: () => void }) => (
     <Button
-      w="100%"
+      className={cx(["rt--present-button"])}
       variant="outline"
-      borderColor="gray.300"
-      {...(isMobile ? { display: "flex", flexDir: "column" } : {})}
+      size={isMobile ? "mini" : "default"}
       onClick={onClick}
     >
       <MdOutlineCancelPresentation />
-      <Text
-        {...(isMobile ? { fontSize: "2xs", fontWeight: "normal" } : { ml: 2 })}
-        ml={2}
-      >
-        Stop Presenting
-      </Text>
+      Stop Presenting
     </Button>
   );
 
@@ -56,10 +47,8 @@ export const PresentButton = ({ isMobile }: { isMobile?: boolean }) => {
     <Link
       href={`/render/${orgSlug}/${projectSlug}`}
       isExternal
-      bg="white"
-      {...(isMobile
-        ? { textDecor: "none", _hover: { textDecor: "none" } }
-        : {})}
+      className="rt--present-button-link"
+      variant="unstyled"
     >
       <PresentButtonElement />
     </Link>

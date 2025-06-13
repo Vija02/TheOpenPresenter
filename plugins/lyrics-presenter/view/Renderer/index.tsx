@@ -6,6 +6,7 @@ import { usePluginAPI } from "../pluginApi";
 import { processSong } from "../songHelpers";
 import FullSongRenderView from "./FullSongRenderView";
 import SectionsRenderView from "./SectionsRenderView";
+import "./index.css";
 
 const Renderer = () => {
   const pluginApi = usePluginAPI();

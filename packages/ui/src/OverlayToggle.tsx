@@ -1,11 +1,12 @@
-import { ModalProps, useDisclosure } from "@chakra-ui/react";
 import { cloneElement, useCallback, useState } from "react";
+
+import { useDisclosure } from "./lib/useDisclosure";
 
 /**
  * This is the minimum props the overlay component needs to have
  */
 export type OverlayToggleComponentProps = {
-  isOpen: ModalProps["isOpen"];
+  isOpen: boolean;
 
   /** Function to call from modal component to toggle `isOpen` */
   onToggle?: () => void;
@@ -40,7 +41,7 @@ export const OverlayToggle = ({
   isLazy,
   children,
 }: OverlayTogglePropTypes) => {
-  const { isOpen, onToggle, onOpen } = useDisclosure();
+  const { open, onToggle, onOpen } = useDisclosure();
   const [key, setKey] = useState(0);
 
   const resetData = useCallback(() => {
@@ -50,10 +51,10 @@ export const OverlayToggle = ({
   return (
     <>
       {toggler({ onOpen, onToggle })}
-      {(isOpen || !isLazy) &&
+      {(open || !isLazy) &&
         cloneElement(children, {
           key,
-          isOpen,
+          isOpen: open,
           onToggle,
           resetData,
         })}

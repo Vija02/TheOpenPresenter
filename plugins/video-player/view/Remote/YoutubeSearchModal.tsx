@@ -1,29 +1,20 @@
 import {
-  Box,
-  Grid,
-  Image,
-  Modal,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  ModalOverlay,
-  ModalProps,
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  OverlayToggleComponentProps,
   Skeleton,
-  Stack,
-  Text,
-} from "@chakra-ui/react";
-import { OverlayToggleComponentProps } from "@repo/ui";
+} from "@repo/ui";
 import { FaYoutube } from "react-icons/fa";
 import type { YTNodes } from "youtubei.js";
 
 import { trpc } from "../trpc";
+import "./YoutubeSearchModal.css";
 
-export type YoutubeSearchModalPropTypes = Omit<
-  ModalProps,
-  "isOpen" | "onClose" | "children"
-> &
+export type YoutubeSearchModalPropTypes =
   Partial<OverlayToggleComponentProps> & {
     searchQuery: string;
     onVideoSelect: (videoId: string, metadata: VideoMetaData) => void;
@@ -41,7 +32,6 @@ const YoutubeSearchModal = ({
   resetData,
   searchQuery,
   onVideoSelect,
-  ...props
 }: YoutubeSearchModalPropTypes) => {
   const { data, isLoading } = trpc.videoPlayer.search.useQuery(
     {
@@ -57,44 +47,29 @@ const YoutubeSearchModal = ({
   };
 
   return (
-    <Modal
-      size="xl"
-      isOpen={isOpen ?? false}
-      onClose={onToggle ?? (() => {})}
-      {...props}
-    >
-      <ModalOverlay />
-      <ModalContent maxW="1200" minH="70%">
-        <ModalHeader>
-          <Stack direction="row" alignItems="center">
-            <FaYoutube color="red" fontSize={24} />
-            <Text>Youtube Search</Text>
-          </Stack>
-        </ModalHeader>
-        <ModalCloseButton />
-        <ModalBody>
+    <Dialog open={isOpen ?? false} onOpenChange={onToggle ?? (() => {})}>
+      <DialogContent size="xl" className="max-w-[1200px] min-h-[70%]">
+        <DialogHeader>
+          <DialogTitle>
+            <div className="stack-row">
+              <FaYoutube className="text-[#FF0000] size-4" />
+              <span>Youtube Search</span>
+            </div>
+          </DialogTitle>
+        </DialogHeader>
+        <DialogBody>
           {data && data.results.length === 0 && (
-            <Text my={10} color="gray.800" textAlign="center">
-              No results found.
-            </Text>
+            <p className="my-10 text-gray-800 text-center">No results found.</p>
           )}
-          <Grid
-            gridTemplateColumns={{
-              base: "1fr",
-              sm: "repeat(2, 1fr)",
-              md: "repeat(3, 1fr)",
-              lg: "repeat(4, 1fr)",
-            }}
-            gap={2}
-          >
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
             {isLoading &&
               Array.from(new Array(9)).map((_, i) => (
-                <Stack key={i} direction="column">
-                  <Skeleton aspectRatio={16 / 9} />
-                  <Skeleton height="20px" width="80%" mb="4px" />
-                  <Skeleton height="10px" maxW="71px" />
-                  <Skeleton height="10px" maxW="118px" />
-                </Stack>
+                <div key={i} className="pl--video-player-youtube-skeleton">
+                  <Skeleton />
+                  <Skeleton />
+                  <Skeleton />
+                  <Skeleton />
+                </div>
               ))}
             {data &&
               data.results
@@ -103,13 +78,11 @@ const YoutubeSearchModal = ({
                   const res = result as YTNodes.Video;
 
                   return (
-                    <Box
-                      p={1}
-                      pb={4}
-                      cursor="pointer"
-                      _hover={{ bg: "#f4f4f4" }}
+                    <div
+                      key={res.video_id}
+                      className="p-1 pb-4 cursor-pointer hover:bg-gray-100"
                       onClick={() =>
-                        onSelect(res.id, {
+                        onSelect(res.video_id, {
                           title: res.title.text,
                           thumbnailUrl:
                             res.thumbnails[res.thumbnails.length - 1]?.url,
@@ -117,66 +90,42 @@ const YoutubeSearchModal = ({
                         })
                       }
                     >
-                      <Box position="relative">
-                        <Image
+                      <div className="relative">
+                        <img
                           src={res.thumbnails[res.thumbnails.length - 1]?.url}
-                          aspectRatio={16 / 9}
-                          width="100%"
+                          className="aspect-video w-full"
+                          alt={res.title.text}
                         />
                         {res.thumbnail_overlays.find(
                           (x) => x.type === "ThumbnailOverlayTimeStatus",
                         ) && (
-                          <Box
-                            position="absolute"
-                            bottom={2}
-                            right={2}
-                            bg="rgb(28, 28, 28)"
-                            opacity={0.9}
-                            color="white"
-                            rounded="sm"
-                            px={1}
-                            fontSize="xs"
-                            fontWeight="600"
-                          >
+                          <div className="absolute bottom-2 right-2 bg-gray-900 opacity-90 text-white rounded-sm px-1 text-xs font-semibold">
                             {
                               (res.thumbnail_overlays.find(
                                 (x) => x.type === "ThumbnailOverlayTimeStatus",
                               ) as YTNodes.ThumbnailOverlayTimeStatus)!.text
                             }
-                          </Box>
+                          </div>
                         )}
-                      </Box>
-                      <Text
-                        mt={2}
-                        mb={1}
-                        fontSize="md"
-                        overflow="hidden"
-                        display="-webkit-box"
-                        sx={{
-                          lineClamp: 2,
-                          "-webkit-line-clamp": "2",
-                          boxOrient: "vertical",
-                          "-webkit-box-orient": "vertical",
-                        }}
-                        textOverflow="ellipsis"
-                      >
+                      </div>
+                      <p className="mt-2 mb-1 text-base overflow-hidden line-clamp-2 text-ellipsis">
                         {res.title.text}
-                      </Text>
-                      <Text color="gray.600">{res.author.name}</Text>
-                      <Stack color="gray.600" direction="row">
-                        <Text>{res.short_view_count.text}</Text>
-                        <Text>•</Text>
-                        <Text>{res.published.text}</Text>
-                      </Stack>
-                    </Box>
+                      </p>
+                      <p className="text-gray-600">{res.author.name}</p>
+                      <div className="stack-row text-gray-600">
+                        <span>{res.short_view_count?.text}</span>
+                        <span>•</span>
+                        <span>{res.published?.text}</span>
+                      </div>
+                    </div>
                   );
                 })}
-          </Grid>
-        </ModalBody>
+          </div>
+        </DialogBody>
 
-        <ModalFooter></ModalFooter>
-      </ModalContent>
-    </Modal>
+        <DialogFooter></DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
 

@@ -1,0 +1,81 @@
+@reference "@repo/tailwind-config/index.css";
+
+.rt--sidebar-mobile-container {
+  @apply shadow;
+}
+
+.rt--sidebar-mobile-container > div {
+  @apply flex flex-col h-full w-[80px] border-r-1 border-r-gray-300;
+}
+
+.rt--sidebar-mobile-content {
+  @apply flex flex-col flex-1 pb-2;
+}
+
+.rt--sidebar-mobile-content a {
+  @apply font-medium text-sm h-8 justify-center;
+}
+
+.rt--sidebar-mobile-scene-container {
+  @apply overflow-auto flex-1 basis-0;
+}
+
+.rt--sidebar-mobile-scene-item {
+  @apply stack-col h-[80px] cursor-pointer gap-1 py-2 px-2 hover:bg-gray-300 relative justify-center border-b-1 border-gray-50 overflow-hidden;
+}
+
+.rt--sidebar-mobile-scene-item__active {
+  @apply bg-gray-300;
+}
+
+.rt--sidebar-mobile-scene-item__inactive {
+  @apply bg-transparent;
+}
+
+.rt--sidebar-mobile-scene-item .rt--sidebar-mobile-loading-indicator {
+  @apply w-3 h-3 rounded-full bg-orange-400 animate-pulse;
+}
+
+.rt--sidebar-mobile-scene-item .rt--sidebar-mobile-current-scene-indicator {
+  @apply absolute top-0 bottom-0 left-0 w-[3px] bg-red-400;
+}
+
+.rt--sidebar-mobile-scene-item p {
+  @apply text-xs text-center break-words w-full font-medium text-ellipsis overflow-hidden;
+}
+
+.rt--sidebar-mobile-scene-item > div:last-child {
+  @apply stack-row;
+}
+
+.rt--sidebar-mobile-scene-item .rt--sidebar-mobile-recording-icon {
+  @apply text-red-600;
+}
+
+.rt--sidebar-mobile-actions {
+  @apply stack-col py-3 px-2;
+}
+
+.rt--sidebar-mobile-actions button {
+  @apply w-full;
+}
+
+.rt--sidebar-mobile-stats {
+  @apply stack-col p-2 justify-center border-t-1 border-gray-200 shrink-0;
+}
+
+.rt--sidebar-mobile-stats > div {
+  @apply stack-row;
+}
+
+.rt--sidebar-mobile-stats p {
+  @apply font-medium text-base;
+}
+
+.rt--sidebar-mobile-debug-section {
+  @apply stack-col gap-0;
+}
+
+.rt--sidebar-mobile-debug-section button {
+  @apply w-full;
+}

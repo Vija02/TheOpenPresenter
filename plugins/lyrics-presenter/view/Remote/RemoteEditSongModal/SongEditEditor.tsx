@@ -1,4 +1,3 @@
-import { Box } from "@chakra-ui/react";
 import Document from "@tiptap/extension-document";
 import History from "@tiptap/extension-history";
 import Paragraph from "@tiptap/extension-paragraph";
@@ -46,16 +45,9 @@ const SongEditEditor = ({
   }, [editor, initialContent]);
 
   return (
-    <Box
-      rounded="md"
-      border="1px solid"
-      borderColor="gray.200"
-      px={3}
-      py={2}
-      w="100%"
-    >
+    <div className="rounded-sm border border-stroke px-3 py-2 w-full">
       <EditorContent editor={editor} />
-    </Box>
+    </div>
   );
 };
 

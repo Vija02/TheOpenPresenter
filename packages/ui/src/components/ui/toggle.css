@@ -1,0 +1,25 @@
+@reference "@repo/tailwind-config/index.css";
+
+@layer base {
+  .ui--toggle {
+    @apply inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all cursor-pointer;
+    @apply disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px];
+    @apply aria-invalid:ring-fill-destructive/20 dark:aria-invalid:ring-fill-destructive/40 aria-invalid:border-fill-destructive;
+    @apply border border-stroke bg-surface-primary text-primary shadow-xs;
+    @apply hover:bg-surface-primary-hover text-secondary;
+    @apply disabled:bg-surface-secondary disabled:text-tertiary;
+    @apply data-[state=on]:bg-surface-primary-active data-[state=on]:text-primary;
+  }
+
+  .ui--toggle__default {
+    @apply h-9 px-2 min-w-9;
+  }
+
+  .ui--toggle__sm {
+    @apply h-8 px-1.5 min-w-8;
+  }
+
+  .ui--toggle__lg {
+    @apply h-10 px-2.5 min-w-10;
+  }
+}

@@ -1,11 +1,12 @@
-import { Box, Button, Show, Text } from "@chakra-ui/react";
 import { useWindowWidth } from "@react-hook/window-size";
-import { MotionBox, SlideGrid } from "@repo/ui";
+import { Button, SlideGrid, cn } from "@repo/ui";
 import { useMemo, useState } from "react";
 import { FaChevronUp } from "react-icons/fa6";
 
+import "./MobilePreview.css";
+
 export const MobilePreview = ({ preview }: { preview: React.ReactNode }) => {
-  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState<boolean | null>(null);
   const windowWidth = useWindowWidth();
 
   const width = useMemo(() => {
@@ -16,36 +17,35 @@ export const MobilePreview = ({ preview }: { preview: React.ReactNode }) => {
   }, [windowWidth]);
 
   return (
-    <Box borderBottom="1px solid rgb(0,0,0,0.1)">
+    <div className="border-b border-b-stroke">
       <Button
-        display={{ base: "flex", md: "none" }}
-        gap={2}
+        className="flex md:hidden gap-2 rounded-none w-full font-bold"
         variant="ghost"
-        borderRadius={0}
         onClick={() => setPreviewOpen((prev) => !prev)}
-        width="100%"
       >
-        <Text>Preview </Text>{" "}
+        Preview
         <FaChevronUp
           style={{
             transform: previewOpen ? "rotate(180deg)" : "",
           }}
-          fontSize={14}
         />
       </Button>
-      <Show below="md">
-        <MotionBox
-          initial="close"
-          variants={{
-            open: { height: "30vh" },
-            close: { height: "0vh" },
-          }}
-          animate={previewOpen ? "open" : "close"}
-          overflow="auto"
+      <div className="block md:hidden">
+        <div
+          className={cn(
+            "overflow-auto h-0",
+            previewOpen
+              ? "pl-lyrics--mobile-preview-pane__open"
+              : // If null, we don't want to animate since it's first load
+                // So we check for false here
+                previewOpen === false
+                ? "pl-lyrics--mobile-preview-pane__close"
+                : "",
+          )}
         >
           <SlideGrid forceWidth={width}>{preview}</SlideGrid>
-        </MotionBox>
-      </Show>
-    </Box>
+        </div>
+      </div>
+    </div>
   );
 };

@@ -1,8 +1,8 @@
-import { Box, Button, Grid, Text } from "@chakra-ui/react";
-import { PluginScaffold, VolumeBar } from "@repo/ui";
+import { Button, PluginScaffold, VolumeBar, cn } from "@repo/ui";
 import { FaStop } from "react-icons/fa";
 
 import { usePluginAPI } from "../pluginApi";
+import "./index.css";
 
 const WorshipPadsRemote = () => {
   const pluginApi = usePluginAPI();
@@ -25,31 +25,18 @@ const WorshipPadsRemote = () => {
               mutableRendererData.volume = v;
             }}
           />
-          <Box p={3} width="100%" overflow="auto">
-            <Box>
-              <Grid
-                maxW="1200px"
-                gap="1px"
-                border="1px solid black"
-                bg="black"
-                gridTemplateColumns={{
-                  base: "repeat(3, 1fr)",
-                  md: "repeat(4, 1fr)",
-                  lg: "repeat(6, 1fr)",
-                }}
-              >
+          <div className="p-3 w-full overflow-auto">
+            <div>
+              <div className="grid gap-[1px] max-w-[1200px] border border-black bg-black grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
                 {files.map((file) => (
                   <Button
-                    width="100%"
-                    height="100%"
-                    rounded="none"
-                    aspectRatio={1}
-                    bg={
-                      isPlaying && currentKey === file.key
-                        ? "blue.200"
-                        : "white"
-                    }
-                    _hover={{ bg: "blue.100" }}
+                    className={cn(
+                      "w-full h-full rounded-none aspect-square bg-surface-primary hover:bg-surface-primary-hover",
+                      isPlaying &&
+                        currentKey === file.key &&
+                        "bg-surface-primary-active",
+                    )}
+                    variant="ghost"
                     onClick={() => {
                       mutableRendererData.currentKey = file.key;
                       mutableRendererData.isPlaying = true;
@@ -58,23 +45,22 @@ const WorshipPadsRemote = () => {
                     {file.key}
                   </Button>
                 ))}
-              </Grid>
-            </Box>
+              </div>
+            </div>
 
             {isPlaying && (
               <Button
                 onClick={() => {
                   mutableRendererData.isPlaying = false;
                 }}
-                width="100%"
-                mt={3}
-                colorScheme="orange"
+                className="w-full mt-3"
+                variant="warning"
               >
                 <FaStop />
-                <Text ml={2}>Stop</Text>
+                Stop
               </Button>
             )}
-          </Box>
+          </div>
         </>
       }
     />

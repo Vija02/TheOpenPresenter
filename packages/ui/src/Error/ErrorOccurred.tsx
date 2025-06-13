@@ -1,14 +1,12 @@
-import { Heading, Link, Text } from "@chakra-ui/react";
-
 export function ErrorOccurred() {
   return (
-    <div>
-      <Heading>Something Went Wrong</Heading>
-      <Text>
+    <div className="stack-col items-start">
+      <h2 className="text-3xl font-medium">Something Went Wrong</h2>
+      <p>
         We're not sure what happened there. Please try again later, or if this
         keeps happening then let us know.
-      </Text>
-      <Link href="/">Go to the homepage</Link>
+      </p>
+      <a href="/">Back to home</a>
     </div>
   );
 }

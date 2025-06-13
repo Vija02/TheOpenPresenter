@@ -1,16 +1,4 @@
 import {
-  Box,
-  Button,
-  Flex,
-  Slider,
-  SliderFilledTrack,
-  SliderThumb,
-  SliderTrack,
-  Stack,
-  Text,
-  chakra,
-} from "@chakra-ui/react";
-import {
   AwarenessContext,
   AwarenessStateData,
   Plugin,
@@ -36,14 +24,17 @@ import {
   usePluginData,
   usePluginMetaData,
 } from "@repo/shared";
-import { ErrorAlert, LoadingFull, OverlayToggle, PopConfirm } from "@repo/ui";
+import { ErrorAlert, LoadingPart, Slider } from "@repo/ui";
 import { useQuery } from "@tanstack/react-query";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { cx } from "class-variance-authority";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { ErrorBoundary } from "react-error-boundary";
-import {
-  VscSettingsGear as VscSettingsGearRaw,
-  VscTrash as VscTrashRaw,
-} from "react-icons/vsc";
 import { toast } from "react-toastify";
 import { TypeId, toUUID } from "typeid-js";
 import { useDisposable } from "use-disposable";
@@ -54,10 +45,8 @@ import { useStore } from "zustand";
 import { zoomLevelStore } from "../contexts/zoomLevel";
 import { trpcClient } from "../trpc";
 import { EmptyScene } from "./EmptyScene";
-import SceneSettingsModal from "./SceneSettingsModal";
-
-const VscSettingsGear = chakra(VscSettingsGearRaw);
-const VscTrash = chakra(VscTrashRaw);
+import "./MainBody.css";
+import { TopBar } from "./TopBar";
 
 const MainBody = () => {
   const [location, navigate] = useLocation();
@@ -93,10 +82,8 @@ const MainBody = () => {
   }, [mainState.renderer, navigate, scenes, selectedScene]);
 
   return (
-    <Box
-      display="flex"
-      flexDir="column"
-      width="100%"
+    <div
+      className="rt--main-body-container"
       tabIndex={0}
       onKeyDown={(e) => {
         // TODO: Expand on this functionality
@@ -125,103 +112,9 @@ const MainBody = () => {
           e.preventDefault();
         }
       }}
-      overflow="hidden"
     >
-      <Flex
-        flexShrink={0}
-        boxShadow="md"
-        alignItems="center"
-        justifyContent="space-between"
-        flexWrap="wrap"
-        p={2}
-      >
-        <Stack direction="row" px={2} alignItems="center">
-          {selectedScene && (
-            <>
-              <Text fontWeight="bold">{data.data[selectedScene]?.name}</Text>
-              <Stack direction="row" spacing={0}>
-                <OverlayToggle
-                  toggler={({ onToggle }) => (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      justifyContent="center"
-                      role="group"
-                      onClick={onToggle}
-                    >
-                      <VscSettingsGear
-                        color="gray.500"
-                        fontSize="12px"
-                        _groupHover={{ color: "gray.900" }}
-                      />
-                    </Button>
-                  )}
-                >
-                  <SceneSettingsModal selectedScene={selectedScene} />
-                </OverlayToggle>
-                <PopConfirm
-                  title={`Are you sure you want to remove this scene?`}
-                  onConfirm={() => {
-                    delete mainState.data[selectedScene];
-                    if (
-                      mainState.renderer["1"]?.currentScene === selectedScene
-                    ) {
-                      mainState.renderer["1"]!.currentScene = null;
-                    }
-                  }}
-                  okText="Yes"
-                  cancelText="No"
-                  key="remove"
-                >
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    justifyContent="center"
-                    role="group"
-                  >
-                    <VscTrash
-                      color="gray.500"
-                      _groupHover={{ color: "gray.900" }}
-                    />
-                  </Button>
-                </PopConfirm>
-              </Stack>
-            </>
-          )}
-        </Stack>
-        <Stack direction="row">
-          <Button
-            size="sm"
-            rounded="none"
-            {...(data.renderer["1"]!.overlay &&
-            data.renderer["1"]!.overlay.type === "black"
-              ? {
-                  border: "2px solid #ff6464",
-                  animation: "blink 1.5s steps(1, end) infinite",
-                }
-              : { border: "2px solid transparent" })}
-            onClick={() => {
-              if (mainState.renderer["1"]!.overlay?.type === "black") {
-                mainState.renderer["1"]!.overlay = null;
-              } else {
-                mainState.renderer["1"]!.overlay = { type: "black" };
-              }
-            }}
-          >
-            Black
-          </Button>
-          <Button
-            size="sm"
-            rounded="none"
-            onClick={() => {
-              mainState.renderer["1"]!.overlay = null;
-            }}
-          >
-            Clear
-          </Button>
-        </Stack>
-      </Flex>
-      <Box flex={1} overflow="auto">
+      <TopBar />
+      <div className="rt--main-body-center">
         {scenes.map(([sceneId, value]) => (
           <SceneRenderer
             key={sceneId}
@@ -230,31 +123,18 @@ const MainBody = () => {
           />
         ))}
         {scenes.length === 0 && <EmptyScene />}
-      </Box>
-      <Flex
-        bg="#F9FBFF"
-        borderTop="1px solid #d0d0d0"
-        flexDir="row-reverse"
-        py={2}
-        px={4}
-      >
+      </div>
+      <div className="rt--main-body-footer">
         <Slider
-          flex="1"
-          focusThumbOnChange={false}
           min={0}
           max={1}
-          value={zoomLevel}
-          onChange={setZoomLevel}
+          value={[zoomLevel]}
+          onValueChange={(val) => setZoomLevel(val[0]!)}
           step={0.0001}
-          maxW="150px"
-        >
-          <SliderTrack>
-            <SliderFilledTrack />
-          </SliderTrack>
-          <SliderThumb fontSize="sm" />
-        </Slider>
-      </Flex>
-    </Box>
+          className="max-w-52"
+        />
+      </div>
+    </div>
   );
 };
 
@@ -286,6 +166,7 @@ const PluginRenderer = React.memo(
     pluginId: string;
     pluginInfo: Plugin<Record<string, any>>;
   }) => {
+    const pluginDivRef = useRef<HTMLDivElement>(null);
     const pluginMetaData = usePluginMetaData()
       .pluginMetaData as RemoteBasePluginQuery;
     const orgId = usePluginMetaData().orgId;
@@ -374,7 +255,7 @@ const PluginRenderer = React.memo(
       }
 
       if (!yjsPluginSceneData || !yjsPluginRendererData || !isSuccess) {
-        return <LoadingFull />;
+        return <LoadingPart />;
       }
 
       // We don't want to render this until the web component is hooked because
@@ -417,6 +298,7 @@ const PluginRenderer = React.memo(
             },
           },
           logger: childLogger,
+          parentContainer: pluginDivRef.current,
         },
       } satisfies WebComponentProps<any>);
     }, [
@@ -440,20 +322,18 @@ const PluginRenderer = React.memo(
       yjsPluginSceneData,
     ]);
 
-    if (match || viewData?.config?.alwaysRender) {
-      return (
-        <Box
-          className={
-            !match && viewData?.config?.alwaysRender ? "content-hidden" : ""
-          }
-          height="100%"
-        >
-          {Element}
-        </Box>
-      );
-    }
-
-    return null;
+    return (
+      <div
+        ref={pluginDivRef}
+        id={`pl-${pluginInfo.plugin}`}
+        className={cx(
+          !match && viewData?.config?.alwaysRender ? "content-hidden" : "",
+          match && "h-full",
+        )}
+      >
+        {match || viewData?.config?.alwaysRender ? Element : null}
+      </div>
+    );
   },
 );
 

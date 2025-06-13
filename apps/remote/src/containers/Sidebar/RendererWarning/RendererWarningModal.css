@@ -1,0 +1,38 @@
+@reference "@repo/tailwind-config/index.css";
+
+.rt--renderer-warning-modal--container {
+  @apply stack-col items-start;
+}
+
+.rt--renderer-warning-modal--title {
+  > div {
+    @apply stack-row;
+
+    & svg {
+      @apply text-fill-warning;
+    }
+
+    & p {
+      @apply font-bold;
+    }
+  }
+}
+
+.rt--renderer-warning-modal--screen-affected {
+  p {
+    @apply font-bold;
+  }
+
+  ul {
+    @apply list-disc list-inside;
+  }
+}
+
+.rt--renderer-warning-modal--resolve {
+  p:nth-child(1) {
+    @apply font-bold;
+  }
+  p:nth-child(2) {
+    @apply text-orange-500;
+  }
+}

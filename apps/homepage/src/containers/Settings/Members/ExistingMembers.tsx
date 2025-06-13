@@ -19,7 +19,7 @@ import {
   useTransferOrganizationOwnershipMutation,
 } from "@repo/graphql";
 import { Pagination, PopConfirm } from "@repo/ui";
-import { FC, useCallback } from "react";
+import { FC, useCallback, useMemo } from "react";
 import { toast } from "react-toastify";
 
 // This needs to match the `first:` used in Members.graphql
@@ -37,15 +37,26 @@ type PropTypes = {
 export default function ExistingMembers({ query, page, setPage }: PropTypes) {
   const organization = query.data?.organizationBySlug!;
 
-  const handlePaginationChange = (page: number) => {
-    setPage(page);
-  };
+  const handlePaginationChange = useCallback(
+    ({ selected }: { selected: number }) => {
+      setPage(selected);
+    },
+    [setPage],
+  );
 
   const renderItem = useCallback(
     (node: OrganizationSettingsMembers_MembershipFragment) => (
       <OrganizationMemberListItem key={node.id} node={node} query={query} />
     ),
     [query],
+  );
+
+  const pageCount = useMemo(
+    () =>
+      Math.ceil(
+        organization.organizationMemberships?.totalCount / RESULTS_PER_PAGE,
+      ),
+    [organization.organizationMemberships?.totalCount],
   );
 
   return (
@@ -55,14 +66,15 @@ export default function ExistingMembers({ query, page, setPage }: PropTypes) {
           {(organization.organizationMemberships?.nodes ?? []).map(renderItem)}
         </Tbody>
       </Table>
-      <Flex justifyContent="center">
-        <Pagination
-          currentPage={page}
-          pageSize={RESULTS_PER_PAGE}
-          total={organization.organizationMemberships?.totalCount}
-          onPageChange={handlePaginationChange}
-        />
-      </Flex>
+      {pageCount > 1 && (
+        <Flex justifyContent="center" mt={3}>
+          <Pagination
+            pageCount={pageCount}
+            forcePage={page}
+            onPageChange={handlePaginationChange}
+          />
+        </Flex>
+      )}
     </>
   );
 }
