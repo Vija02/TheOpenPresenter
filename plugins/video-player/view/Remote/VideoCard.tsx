@@ -112,7 +112,7 @@ const VideoCard = ({ video }: { video: Video }) => {
 
   return (
     <div className={`stack-col items-stretch shadow-md p-2 ${borderClass}`}>
-      <div className="stack-col md:stack-row md:items-start gap-4 items-start">
+      <div className="stack-col md:stack-row md:items-start gap-4 items-stretch">
         <VideoThumbnail video={video} />
         <div className="stack-row items-start justify-between flex-1">
           <div className="stack-col items-start">
