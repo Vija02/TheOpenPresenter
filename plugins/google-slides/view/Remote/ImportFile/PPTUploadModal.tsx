@@ -43,7 +43,7 @@ export const PPTUploadModal = () => {
   });
 
   return (
-    <div className="flex-1">
+    <div className="flex justify-center flex-1">
       <PickerCard
         onClick={onToggle}
         icon={<RiFilePpt2Fill className="size-10 text-[#CC4A34]" />}

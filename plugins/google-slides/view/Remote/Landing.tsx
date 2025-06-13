@@ -8,6 +8,7 @@ const Landing = () => {
           Welcome to Slides Presenter
         </h3>
 
+        <p className="font-medium">Select source:</p>
         <ImportFilePicker />
       </div>
     </div>

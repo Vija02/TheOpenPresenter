@@ -43,7 +43,7 @@ export const PDFUploadModal = () => {
   });
 
   return (
-    <div className="flex-1">
+    <div className="flex justify-center flex-1">
       <PickerCard
         onClick={onToggle}
         icon={<FaFilePdf className="size-10 text-[#F52102]" />}

@@ -15,7 +15,7 @@ export const ImportFilePicker = () => {
 
   const selectSlideMutation = trpc.googleslides.selectSlide.useMutation();
   return (
-    <div className="flex gap-2 w-full max-w-lg">
+    <div className="flex gap-2 w-full max-w-lg flex-wrap">
       <SlidePicker
         onFileSelected={(data, token) => {
           const picker = google.picker;
@@ -39,7 +39,7 @@ export const ImportFilePicker = () => {
         }}
       >
         {({ isLoading, openPicker }) => (
-          <div className="flex-1">
+          <div className="flex justify-center flex-1">
             <PickerCard
               onClick={openPicker}
               icon={<FcGoogle className="size-10" />}

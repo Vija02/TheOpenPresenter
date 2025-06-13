@@ -14,7 +14,7 @@ export const PickerCard = ({
   return (
     <div
       className={cn(
-        "stack-col border border-stroke rounded-sm p-2 w-full justify-center aspect-square",
+        "stack-col border border-stroke rounded-sm p-2 justify-center aspect-square w-36",
         isLoading && "cursor-not-allowed opacity-80",
         !isLoading && "cursor-pointer hover:border-blue-400",
       )}

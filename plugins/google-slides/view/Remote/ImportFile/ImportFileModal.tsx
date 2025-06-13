@@ -21,6 +21,7 @@ const ImportFileModal = ({ isOpen, onToggle }: ImportFileModalPropTypes) => {
           <DialogTitle>Replace slide</DialogTitle>
         </DialogHeader>
         <DialogBody>
+          <p className="font-medium">Select source:</p>
           <ImportFilePicker />
         </DialogBody>
         <DialogFooter>
