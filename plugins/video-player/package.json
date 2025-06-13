@@ -45,7 +45,7 @@
     "@repo/prettier-config": "*",
     "@repo/tailwind-config": "*",
     "@repo/typescript-config": "*",
-    "@tailwindcss/vite": "^4.1.7",
+    "@tailwindcss/vite": "^4.1.10",
     "@types/postcss-prefix-selector": "^1.16.3",
     "@vitejs/plugin-react-swc": "^3.7.2",
     "autoprefixer": "^10.4.21",

@@ -8,7 +8,7 @@
   },
   "dependencies": {
     "@tailwindcss/typography": "^0.5.16",
-    "tailwindcss": "^4.1.7",
-    "tw-animate-css": "^1.3.0"
+    "tailwindcss": "^4.1.10",
+    "tw-animate-css": "^1.3.4"
   }
 }
