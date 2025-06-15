@@ -34,7 +34,11 @@ function PopoverContent({
   const container = useDialogPortalContainerContext();
 
   return (
-    <PopoverPrimitive.Portal container={container ?? document.body}>
+    <PopoverPrimitive.Portal
+      container={
+        (container ?? typeof window !== "undefined") ? document.body : undefined
+      }
+    >
       <PopoverPrimitive.Content
         data-slot="popover-content"
         align={align}
