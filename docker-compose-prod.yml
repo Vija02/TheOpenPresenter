@@ -39,6 +39,7 @@ services:
       - GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID
       - GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET
       - PLUGIN_GOOGLE_SLIDES_CLIENT_ID=$PLUGIN_GOOGLE_SLIDES_CLIENT_ID
+      - PLUGIN_GOOGLE_SLIDES_UNOCONVERT_SERVER=$PLUGIN_GOOGLE_SLIDES_UNOCONVERT_SERVER
       - OTLP_HOST=$OTLP_HOST
     volumes:
       - ./uploads:/app/uploads
@@ -173,6 +174,13 @@ services:
       - --storage.path=/var/lib/alloy/data
       - --server.http.listen-addr=0.0.0.0:12345
       - --stability.level=experimental
+
+  unoserver:
+    image: philiplehmann/unoserver:3.0.1-1816
+    container_name: theopenpresenter_unoserver
+    restart: always
+    networks:
+      - db
 
 networks:
   caddy:

@@ -1,43 +1,42 @@
-import { Box, styled } from "@/styled-system/jsx";
+import PageIllustration from "@/components/page-illustration";
+import NextLink from "next/link";
 
 export default function QRLoginFailed() {
   return (
-    <styled.section>
-      <Box pt={{ base: 64, md: 80 }} pb={{ base: 12, md: 20 }}>
-        <Box px={{ base: 4, sm: 6 }}>
-          <styled.h1 textAlign="center" fontSize="3xl" fontWeight="bold">
-            Login not successful
-          </styled.h1>
-          <styled.p textAlign="center" fontSize="xl">
-            Something went wrong when trying to log into your account. Please
-            try again
-          </styled.p>
-
-          <Box display="flex" justifyContent="center">
-            <styled.a
-              mt={6}
-              href="/o"
-              bg="indigo.700"
-              color="white"
-              padding="5px 10px"
-              borderRadius="md"
-              fontWeight="bold"
-              transition="background-color 0.3s"
-              _hover={{ bg: "indigo.800" }}
-            >
-              <styled.span
-                display="flex"
-                flex={1}
-                alignItems="center"
-                gap={3}
-                fontSize="lg"
+    <>
+      {/*  Page illustration */}
+      <div
+        className="relative max-w-6xl mx-auto h-0 pointer-events-none -z-1"
+        aria-hidden="true"
+      >
+        <PageIllustration />
+      </div>
+      <section className="relative">
+        {/* End background gradient (light version only) */}
+        <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="pt-32 pb-12 md:pt-40 md:pb-20 text-center">
+            <div className="max-w-3xl mx-auto">
+              <h1 className="h1 font-red-hat-display mb-4" data-aos="fade-down">
+                Login not successful
+              </h1>
+              <p
+                className="text-xl text-gray-600 dark:text-gray-400"
+                data-aos="fade-down"
+                data-aos-delay="150"
               >
-                Go to Dashboard
-              </styled.span>
-            </styled.a>
-          </Box>
-        </Box>
-      </Box>
-    </styled.section>
+                Something went wrong when trying to log into your account.
+                Please try again
+              </p>
+            </div>
+            <NextLink
+              className="btn text-white bg-teal-500 hover:bg-teal-400 inline-flex items-center"
+              href="/o"
+            >
+              <span>Try again</span>
+            </NextLink>
+          </div>
+        </div>
+      </section>
+    </>
   );
 }

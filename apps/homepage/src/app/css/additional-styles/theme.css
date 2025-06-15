@@ -1,0 +1,220 @@
+/* Hamburger button */
+.hamburger svg>*:nth-child(1),
+.hamburger svg>*:nth-child(2),
+.hamburger svg>*:nth-child(3) {
+    transform-origin: center;
+    transform: rotate(0deg);
+}
+
+.hamburger svg>*:nth-child(1) {
+    transition: y 0.075s 0.12s ease, opacity 0.075s ease, transform 0.075s cubic-bezier(0.55, 0.055, 0.675, 0.19);
+}
+
+.hamburger svg>*:nth-child(2) {
+    transition-property: transform;
+    transition-duration: 0.075s;
+    transition-timing-function: cubic-bezier(0.55, 0.055, 0.675, 0.19);
+}
+
+.hamburger svg>*:nth-child(3) {
+    transition: y 0.075s 0.12s ease, transform 0.075s cubic-bezier(0.55, 0.055, 0.675, 0.19);
+}
+
+.hamburger.active svg>*:nth-child(1) {
+    opacity: 0;
+    transform: rotate(45deg);
+    y: 11;
+    transition: y 0.075s ease, opacity 0.075s 0.12s ease, transform 0.075s 0.12s cubic-bezier(0.215, 0.61, 0.355, 1);
+}
+
+.hamburger.active svg>*:nth-child(2) {
+    transform: rotate(45deg);
+    transition-delay: 0.12s;
+    transition-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1);
+}
+
+.hamburger.active svg>*:nth-child(3) {
+    y: 11;
+    transform: rotate(-45deg);
+    transition: y 0.075s ease, transform 0.075s 0.12s cubic-bezier(0.215, 0.61, 0.355, 1);
+}
+
+/* Light switch */
+.form-switch input[type="checkbox"].light-switch + label {
+    @apply bg-teal-500;
+}
+
+.dark .form-switch input[type="checkbox"].light-switch + label > span:first-child {
+    left: 22px;
+}
+
+/* Custom Swiper styles */
+.carousel.swiper-container {
+    @apply overflow-visible;
+}
+
+.carousel .swiper-slide img {
+    opacity: .32;
+}
+
+.carousel .swiper-slide > div > div {
+    @apply opacity-0;
+}        
+
+.carousel .swiper-slide.swiper-slide-active,
+.carousel .swiper-slide.swiper-slide-duplicate-active {
+    @apply shadow-2xl;
+}
+
+.carousel .swiper-slide.swiper-slide-active img,
+.carousel .swiper-slide.swiper-slide-duplicate-active img {
+    @apply opacity-100;
+}
+
+.carousel .swiper-slide.swiper-slide-active > div > div,
+.carousel .swiper-slide.swiper-slide-duplicate-active > div > div {
+    @apply opacity-100;
+}
+
+/* Helper class to fix swipering carousel on Safari */
+.translate-z-0 {
+    transform: translateZ(0);
+}
+
+/* Tags animation */
+.tags-animation {
+    animation: tagsmove 30000ms linear infinite;
+}
+
+.tags-1 {
+    animation-delay: calc(30000ms * -0.1); /* -0.1 will make the tag move 76px right (i.e. 768px container size * -0.1) */
+}
+
+.tags-2 {
+    animation-delay: calc(30000ms * -0.16);
+}
+
+.tags-3 {
+    animation-delay: calc(30000ms * -0.23);
+}
+
+.tags-4 {
+    animation-delay: calc(30000ms * -0.27);
+}
+
+.tags-5 {
+    animation-delay: calc(30000ms * -0.44);
+}
+
+.tags-6 {
+    animation-delay: calc(30000ms * -0.55);
+}
+
+.tags-7 {
+    animation-delay: calc(30000ms * -0.63);
+}
+
+.tags-8 {
+    animation-delay: calc(30000ms * -0.73);
+}
+
+.tags-9 {
+    animation-delay: calc(30000ms * -0.76);
+}
+
+.tags-10 {
+    animation-delay: calc(30000ms * -0.8);
+}
+
+@keyframes tagsmove {
+  from {
+    transform: translateX(-100%);
+  }
+
+  to {
+    transform: translateX(768px);
+  }
+}
+
+/* Custom AOS distance */
+@media screen {
+    html:not(.no-js) body [data-aos=fade-up] {
+        -webkit-transform: translate3d(0, 16px, 0);
+        transform: translate3d(0, 16px, 0);
+    }
+
+    html:not(.no-js) body [data-aos=fade-down] {
+        -webkit-transform: translate3d(0, -16px, 0);
+        transform: translate3d(0, -16px, 0);
+    }
+
+    html:not(.no-js) body [data-aos=fade-right] {
+        -webkit-transform: translate3d(-16px, 0, 0);
+        transform: translate3d(-16px, 0, 0);
+    }
+
+    html:not(.no-js) body [data-aos=fade-left] {
+        -webkit-transform: translate3d(16px, 0, 0);
+        transform: translate3d(16px, 0, 0);
+    }
+
+    html:not(.no-js) body [data-aos=fade-up-right] {
+        -webkit-transform: translate3d(-16px, 16px, 0);
+        transform: translate3d(-16px, 16px, 0);
+    }
+
+    html:not(.no-js) body [data-aos=fade-up-left] {
+        -webkit-transform: translate3d(16px, 16px, 0);
+        transform: translate3d(16px, 16px, 0);
+    }
+
+    html:not(.no-js) body [data-aos=fade-down-right] {
+        -webkit-transform: translate3d(-16px, -16px, 0);
+        transform: translate3d(-16px, -16px, 0);
+    }
+
+    html:not(.no-js) body [data-aos=fade-down-left] {
+        -webkit-transform: translate3d(16px, -16px, 0);
+        transform: translate3d(16px, -16px, 0);
+    }
+
+    html:not(.no-js) body [data-aos=zoom-in-up] {
+        -webkit-transform: translate3d(0, 16px, 0) scale(.6);
+        transform: translate3d(0, 16px, 0) scale(.6);
+    }
+
+    html:not(.no-js) body [data-aos=zoom-in-down] {
+        -webkit-transform: translate3d(0, -16px, 0) scale(.6);
+        transform: translate3d(0, -16px, 0) scale(.6);
+    }
+
+    html:not(.no-js) body [data-aos=zoom-in-right] {
+        -webkit-transform: translate3d(-16px, 0, 0) scale(.6);
+        transform: translate3d(-16px, 0, 0) scale(.6);
+    }
+
+    html:not(.no-js) body [data-aos=zoom-in-left] {
+        -webkit-transform: translate3d(16px, 0, 0) scale(.6);
+        transform: translate3d(16px, 0, 0) scale(.6);
+    }
+
+    html:not(.no-js) body [data-aos=zoom-out-up] {
+        -webkit-transform: translate3d(0, 16px, 0) scale(1.2);
+        transform: translate3d(0, 16px, 0) scale(1.2);
+    }
+
+    html:not(.no-js) body [data-aos=zoom-out-down] {
+        -webkit-transform: translate3d(0, -16px, 0) scale(1.2);
+        transform: translate3d(0, -16px, 0) scale(1.2);
+    }
+
+    html:not(.no-js) body [data-aos=zoom-out-right] {
+        -webkit-transform: translate3d(-16px, 0, 0) scale(1.2);
+        transform: translate3d(-16px, 0, 0) scale(1.2);
+    }
+
+    html:not(.no-js) body [data-aos=zoom-out-left] {
+        -webkit-transform: translate3d(16px, 0, 0) scale(1.2);
+        transform: translate3d(16px, 0, 0) scale(1.2);
+    }
+}

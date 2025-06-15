@@ -29,7 +29,7 @@ We maintain a separate wiki page at https://docs.theopenpresenter.com. Please re
 ✅ Organize your past and future presentation sessions   
 ✅ Record audio and save it for future playback  
 🟨 Import & display lyrics from various sources with ease (currently only MyWorshipList)  
-🟨 Display slides from many different sources (currently only Google Slides)  
+🟨 Display slides from many different sources (currently only Powerpoint, Google Slides and PDFs)  
 🟨 Offline app support - Alpha (currently only for Windows)  
 
 Last but not least, the code for TheOpenPresenter will always be Open Source. We also promise to keep a hosted version of TheOpenPresenter free for small churches for as long as possible, the ones that will benefit from this project the most.
@@ -49,6 +49,8 @@ We welcome contributions of any kind, including blog posts, tutorials, translati
 TheOpenPresenter makes use of numerous open-source projects and we are deeply grateful. We hope that by offering TheOpenPresenter as a free, open-source project, we can help others in the same way these programs have helped us.
 
 We would like to particularly thank [graphile/starter](https://github.com/graphile/starter) as this repo started from there. Many of the features here would have taken much longer otherwise.
+
+This project is tested with BrowserStack
 
 ## License
 

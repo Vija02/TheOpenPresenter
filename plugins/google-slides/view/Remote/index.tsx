@@ -22,30 +22,26 @@ import { VscSettingsGear as VscSettingsGearRaw } from "react-icons/vsc";
 
 import Renderer from "../Renderer";
 import { usePluginAPI } from "../pluginApi";
-import { trpc } from "../trpc";
+import ImportFileModal from "./ImportFile/ImportFileModal";
 import Landing from "./Landing";
 import SettingsModal from "./SettingsModal";
-import { SlidePicker } from "./SlidePicker";
 import "./index.css";
 
 const VscSettingsGear = chakra(VscSettingsGearRaw);
 
 const Remote = () => {
   const pluginApi = usePluginAPI();
-  const pluginContext = pluginApi.pluginContext;
 
   const mutableRendererData = pluginApi.renderer.useValtioData();
 
-  const html = pluginApi.scene.useData((x) => x.pluginData.html);
+  const fetchId = pluginApi.scene.useData((x) => x.pluginData.fetchId);
   const isFetching = pluginApi.scene.useData((x) => x.pluginData._isFetching);
 
-  const selectSlideMutation = trpc.googleslides.selectSlide.useMutation();
-
-  if (!!isFetching && !html) {
+  if (!!isFetching && !fetchId) {
     return <LoadingFull />;
   }
 
-  if (!html) {
+  if (!fetchId) {
     return <Landing />;
   }
 
@@ -83,51 +79,24 @@ const Remote = () => {
           rowGap={2}
           flexWrap="wrap"
         >
-          <SlidePicker
-            onFileSelected={(data, token) => {
-              const picker = google.picker;
-              if (data[picker.Response.ACTION] === "picked") {
-                if (
-                  data[picker.Response.DOCUMENTS] &&
-                  data[picker.Response.DOCUMENTS]!.length > 0
-                ) {
-                  const docs = data[picker.Response.DOCUMENTS]![0]!;
-
-                  const id = docs[picker.Document.ID];
-
-                  selectSlideMutation.mutate(
-                    {
-                      pluginId: pluginContext.pluginId,
-                      presentationId: id,
-                      token: token,
-                    },
-                    {
-                      onError: (err) => {
-                        pluginApi.log.error({ err }, "Error selecting slide");
-                        pluginApi.remote.toast.error("Failed to select slide");
-                      },
-                    },
-                  );
-                }
-              }
-            }}
-          >
-            {({ isLoading, openPicker }) => (
+          <OverlayToggle
+            toggler={({ onToggle }) => (
               <Button
                 size="xs"
                 bg="transparent"
                 color="white"
                 border="1px solid #ffffff6b"
                 _hover={{ bg: "rgba(255, 255, 255, 0.13)" }}
-                onClick={openPicker}
-                isLoading={isLoading}
+                onClick={onToggle}
               >
                 <Text fontWeight="normal" fontSize="xs">
                   Replace Slide
                 </Text>
               </Button>
             )}
-          </SlidePicker>
+          >
+            <ImportFileModal />
+          </OverlayToggle>
 
           <Stack direction="row" alignItems="center">
             <Text
@@ -196,10 +165,11 @@ const Remote = () => {
 
 const ResolvedSlideHandler = () => {
   const pluginApi = usePluginAPI();
+  const type = pluginApi.scene.useData((x) => x.pluginData.type);
   const slideIndex = pluginApi.renderer.useData((x) => x.slideIndex);
   const displayMode = pluginApi.renderer.useData((x) => x.displayMode);
 
-  if (displayMode === "image") {
+  if (type === "pdf" || type === "ppt" || displayMode === "image") {
     return null;
   }
 
@@ -215,17 +185,17 @@ const ResolvedSlideHandler = () => {
 
 const RemoteHandler = () => {
   const pluginApi = usePluginAPI();
-  const pageIds = pluginApi.scene.useData((x) => x.pluginData.pageIds);
   const thumbnailLinks = pluginApi.scene.useData(
     (x) => x.pluginData.thumbnailLinks,
   );
+  const type = pluginApi.scene.useData((x) => x.pluginData.type);
   const rendererData = pluginApi.renderer.useData((x) => x);
 
   const mutableRendererData = pluginApi.renderer.useValtioData();
 
   const actualSlideIndex = useMemo(
     () =>
-      rendererData.displayMode === "image"
+      type === "pdf" || type === "ppt" || rendererData.displayMode === "image"
         ? (rendererData.slideIndex ?? 0) + (rendererData.clickCount ?? 0)
         : rendererData.resolvedSlideIndex !== null
           ? rendererData.resolvedSlideIndex
@@ -235,12 +205,13 @@ const RemoteHandler = () => {
       rendererData.displayMode,
       rendererData.resolvedSlideIndex,
       rendererData.slideIndex,
+      type,
     ],
   );
 
   return (
     <>
-      {pageIds.map((x, i) => (
+      {thumbnailLinks.map((thumbnailLink, i) => (
         <Slide
           key={i}
           heading={`Slide ${i + 1}`}
@@ -253,10 +224,10 @@ const RemoteHandler = () => {
           }}
         >
           {({ width }) =>
-            thumbnailLinks?.[i] && thumbnailLinks[i] !== "" ? (
+            thumbnailLink && thumbnailLink !== "" ? (
               <Center>
                 <UniversalImage
-                  src={extractMediaName(thumbnailLinks[i]!)}
+                  src={extractMediaName(thumbnailLink)}
                   imgProp={{ style: { width: "100%" } }}
                   width={width}
                 />

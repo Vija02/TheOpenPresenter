@@ -1,0 +1,89 @@
+/* Typography */
+.h1 {
+    @apply text-4xl font-black tracking-tighter;
+}
+
+.h2 {
+    @apply text-3xl font-black tracking-tighter;
+}
+
+.h3 {
+    @apply text-3xl font-black;
+}
+
+.h4 {
+    @apply text-2xl font-black tracking-tight;
+}
+
+@media (width >= theme(--breakpoint-md)) {
+    .h1 {
+        @apply text-5xl;
+    }
+
+    .h2 {
+        @apply text-4xl;
+    }
+}
+
+/* Buttons */
+.btn,
+.btn-sm {
+    @apply font-medium inline-flex items-center justify-center border border-transparent rounded-xs leading-snug transition duration-150 ease-in-out;
+}
+
+.btn {
+    @apply px-8 py-3;
+}
+
+.btn-sm {
+    @apply px-4 py-2;
+}
+
+/* Forms */
+.form-input,
+.form-textarea,
+.form-multiselect,
+.form-select,
+.form-checkbox,
+.form-radio {
+    @apply border border-gray-300 dark:border-gray-600 focus:ring-0 focus:ring-offset-0;
+}
+
+.form-input,
+.form-textarea,
+.form-multiselect,
+.form-select {
+    @apply bg-white dark:bg-gray-800 leading-snug rounded-xs py-3 px-4 focus:border-gray-400 dark:focus:border-gray-500;
+}
+
+.form-input,
+.form-textarea {
+    @apply placeholder-gray-500 dark:placeholder-gray-400;
+}
+
+.form-select {
+    @apply pr-10;
+}
+
+.form-checkbox,
+.form-radio {
+    @apply bg-transparent checked:bg-teal-500 checked:border-transparent focus-visible:not-checked:border-gray-400 dark:focus-visible:not-checked:border-gray-500;
+}
+
+.form-checkbox {
+    @apply rounded-xs;
+}
+
+/* Chrome, Safari and Opera */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.dark .h4 {
+    @apply font-bold;
+}

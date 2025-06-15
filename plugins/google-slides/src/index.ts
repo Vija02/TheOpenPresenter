@@ -5,6 +5,7 @@ import {
   ServerPluginApi,
   TRPCObject,
 } from "@repo/base-plugin/server";
+import { extractMediaName, streamToBuffer } from "@repo/lib";
 import { logger } from "@repo/observability";
 import axios from "axios";
 import { createProxyMiddleware } from "http-proxy-middleware";
@@ -46,8 +47,9 @@ export const init = (
   serverPluginApi.onPluginDataLoaded(pluginName, onPluginDataLoaded);
   serverPluginApi.onRendererDataCreated(pluginName, onRendererDataCreated);
   serverPluginApi.registerSceneCreator(pluginName, {
-    title: "Google Slides",
-    description: "Import & display Google Slides presentation",
+    title: "Slides",
+    description:
+      "Import & display presentations from PPT, Google Slides and more",
     categories: ["Display"],
   });
 
@@ -205,6 +207,137 @@ const onRendererDataCreated = (
 const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
   return t.router({
     googleslides: {
+      selectPpt: t.procedure
+        .input(
+          z.object({
+            pluginId: z.string(),
+            mediaName: z.string(),
+          }),
+        )
+        .mutation(async ({ input: { pluginId, mediaName }, ctx }) => {
+          // TODO: Validate file
+          if (!process.env.PLUGIN_GOOGLE_SLIDES_UNOCONVERT_SERVER) {
+            throw new Error("Not available");
+          }
+
+          const log = logger.child({ pluginId, mediaName });
+          try {
+            const loadedPlugin = loadedPlugins[pluginId]!;
+            const loadedContextData = loadedContext[pluginId]!;
+
+            if (loadedPlugin.pluginData.thumbnailLinks.length > 0) {
+              await Promise.all(
+                loadedPlugin.pluginData.thumbnailLinks.map((mediaId) =>
+                  serverPluginApi.deleteMedia(mediaId).catch((err) => {
+                    log.error({ err }, "Failed to delete media");
+                  }),
+                ),
+              );
+            }
+
+            const pptMedia = await serverPluginApi.media.getMedia(mediaName);
+
+            const res = await axios.post(
+              process.env.PLUGIN_GOOGLE_SLIDES_UNOCONVERT_SERVER! +
+                "/convert?convertTo=pdf",
+              pptMedia,
+              { responseType: "arraybuffer" },
+            );
+
+            const pdfMedia = res.data;
+
+            log.info("Converting...");
+
+            const output = await convertPdf(Buffer.from(pdfMedia));
+
+            log.info("Convert done, uploading...");
+
+            loadedPlugin.pluginData.fetchId = typeidUnboxed("fetch");
+            loadedPlugin.pluginData.type = "ppt";
+            loadedPlugin.pluginData.presentationId = "";
+            loadedPlugin.pluginData.pageIds = [];
+            loadedPlugin.pluginData.thumbnailLinks = new Array(
+              output.length,
+            ).fill("");
+            loadedPlugin.pluginData.html = "";
+
+            await uploadImages({
+              output,
+              organizationId: loadedContextData.organizationId,
+              userId: ctx.userId,
+              parentMediaId: extractMediaName(mediaName).mediaId,
+              serverPluginApi,
+              onUploaded: (uploadedMedia, i) => {
+                loadedPlugin.pluginData.thumbnailLinks[i] =
+                  uploadedMedia.fileName;
+              },
+            });
+
+            log.info("Uploading done");
+          } catch (err) {
+            log.error({ err }, "Failed to select ppt");
+            throw err;
+          }
+        }),
+      selectPdf: t.procedure
+        .input(
+          z.object({
+            pluginId: z.string(),
+            mediaName: z.string(),
+          }),
+        )
+        .mutation(async ({ input: { pluginId, mediaName }, ctx }) => {
+          // TODO: Validate file
+          const log = logger.child({ pluginId, mediaName });
+          try {
+            const loadedPlugin = loadedPlugins[pluginId]!;
+            const loadedContextData = loadedContext[pluginId]!;
+
+            if (loadedPlugin.pluginData.thumbnailLinks.length > 0) {
+              await Promise.all(
+                loadedPlugin.pluginData.thumbnailLinks.map((mediaId) =>
+                  serverPluginApi.deleteMedia(mediaId).catch((err) => {
+                    log.error({ err }, "Failed to delete media");
+                  }),
+                ),
+              );
+            }
+
+            const media = await serverPluginApi.media.getMedia(mediaName);
+
+            log.info("Converting...");
+
+            const output = await convertPdf(await streamToBuffer(media));
+
+            log.info("Convert done, uploading...");
+
+            loadedPlugin.pluginData.fetchId = typeidUnboxed("fetch");
+            loadedPlugin.pluginData.type = "pdf";
+            loadedPlugin.pluginData.presentationId = "";
+            loadedPlugin.pluginData.pageIds = [];
+            loadedPlugin.pluginData.thumbnailLinks = new Array(
+              output.length,
+            ).fill("");
+            loadedPlugin.pluginData.html = "";
+
+            await uploadImages({
+              output,
+              organizationId: loadedContextData.organizationId,
+              userId: ctx.userId,
+              parentMediaId: extractMediaName(mediaName).mediaId,
+              serverPluginApi,
+              onUploaded: (uploadedMedia, i) => {
+                loadedPlugin.pluginData.thumbnailLinks[i] =
+                  uploadedMedia.fileName;
+              },
+            });
+
+            log.info("Uploading done");
+          } catch (err) {
+            log.error({ err }, "Failed to select pdf");
+            throw err;
+          }
+        }),
       selectSlide: t.procedure
         .input(
           z.object({
@@ -215,8 +348,6 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
         )
         .mutation(
           async ({ input: { pluginId, presentationId, token }, ctx }) => {
-            const mupdf = await import("mupdf");
-
             const log = logger.child({ pluginId, presentationId });
 
             try {
@@ -255,6 +386,7 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
 
               loadedYjs.doc?.transact(() => {
                 loadedPlugin.pluginData.fetchId = typeidUnboxed("fetch");
+                loadedPlugin.pluginData.type = "googleslides";
                 loadedPlugin.pluginData.presentationId = presentationId;
                 loadedPlugin.pluginData.pageIds = pageIds;
                 loadedPlugin.pluginData.thumbnailLinks = new Array(
@@ -285,48 +417,22 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
 
               log.info("Converting...");
 
-              const doc = mupdf.Document.openDocument(
-                pdfBuffer,
-                "application/pdf",
-              );
-              const totalPage = doc.countPages();
-              let scale = -1;
-              const output = Array.from(new Array(totalPage)).map((_, i) => {
-                const page = doc.loadPage(i);
-                if (scale === -1) {
-                  const bounds = page.getBounds();
-                  const pageWidth = bounds[2] - bounds[0];
-
-                  const targetWidth = 1920;
-
-                  scale = targetWidth / pageWidth;
-                }
-                const pixmap = page.toPixmap(
-                  mupdf.Matrix.scale(scale, scale),
-                  mupdf.ColorSpace.DeviceRGB,
-                );
-                return pixmap.asJPEG(80, false);
-              });
+              const output = await convertPdf(pdfBuffer);
 
               log.info("Convert done, uploading...");
 
               const uploadedPdf = await uploadPdfPromise;
 
-              // DEBT: Make this runnable somewhere else
-              // The problem is, if that's the case then we'll need to store the token
-              // TODO: Problem if we run this again while still running
-              output.forEach(async (img, i) => {
-                const uploadedMedia = await serverPluginApi.uploadMedia(
-                  Buffer.from(img),
-                  "jpg",
-                  {
-                    organizationId: loadedContextData.organizationId,
-                    userId: ctx.userId,
-                    parentMediaIdOrUUID: uploadedPdf.mediaId,
-                  },
-                );
-                loadedPlugin.pluginData.thumbnailLinks[i] =
-                  uploadedMedia.fileName;
+              await uploadImages({
+                output,
+                organizationId: loadedContextData.organizationId,
+                userId: ctx.userId,
+                parentMediaId: uploadedPdf.mediaId,
+                serverPluginApi,
+                onUploaded: (uploadedMedia, i) => {
+                  loadedPlugin.pluginData.thumbnailLinks[i] =
+                    uploadedMedia.fileName;
+                },
               });
 
               log.info("Uploading done");
@@ -341,6 +447,67 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
     },
   });
 };
+
+async function convertPdf(pdfBuffer: Buffer | ArrayBuffer | Uint8Array) {
+  const mupdf = await import("mupdf");
+
+  const doc = mupdf.Document.openDocument(pdfBuffer, "application/pdf");
+  const totalPage = doc.countPages();
+  let scale = -1;
+  const output = Array.from(new Array(totalPage)).map((_, i) => {
+    const page = doc.loadPage(i);
+    if (scale === -1) {
+      const bounds = page.getBounds();
+      const pageWidth = bounds[2] - bounds[0];
+
+      const targetWidth = 1920;
+
+      scale = targetWidth / pageWidth;
+    }
+    const pixmap = page.toPixmap(
+      mupdf.Matrix.scale(scale, scale),
+      mupdf.ColorSpace.DeviceRGB,
+    );
+    return pixmap.asJPEG(80, false);
+  });
+
+  return output;
+}
+
+async function uploadImages({
+  output,
+  serverPluginApi,
+  organizationId,
+  userId,
+  parentMediaId,
+  onUploaded,
+}: {
+  output: Uint8Array<ArrayBufferLike>[];
+  serverPluginApi: ServerPluginApi<any, any>;
+  organizationId: string;
+  userId: string;
+  parentMediaId: string;
+  onUploaded: (
+    data: Awaited<ReturnType<typeof serverPluginApi.uploadMedia>>,
+    i: number,
+  ) => void;
+}) {
+  // DEBT: Make this runnable somewhere else
+  // The problem is, if that's the case then we'll need to store the token
+  // TODO: Problem if we run this again while still running
+  output.forEach(async (img, i) => {
+    const uploadedMedia = await serverPluginApi.uploadMedia(
+      Buffer.from(img),
+      "jpg",
+      {
+        organizationId: organizationId,
+        userId: userId,
+        parentMediaIdOrUUID: parentMediaId,
+      },
+    );
+    onUploaded(uploadedMedia, i);
+  });
+}
 
 function processHtml(html: string) {
   return html

@@ -142,7 +142,7 @@ export async function makeApp({
   // These are our assets: images/etc; served out of the /backend/server/public folder (if present)
   await middleware.installSharedStatic(app);
   if (isTest || isDev) {
-    await middleware.installCypressServerCommand(app);
+    await middleware.installE2EServerCommand(app);
   }
   await middleware.installFileUpload(app);
   await middleware.installTrpc(app);

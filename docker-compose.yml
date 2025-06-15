@@ -55,6 +55,15 @@ services:
       - --storage.path=/var/lib/alloy/data
       - --server.http.listen-addr=0.0.0.0:12345
       - --stability.level=experimental
+
+  unoserver:
+    image: philiplehmann/unoserver:3.0.1-1816
+    restart: always
+    ports:
+      - "8379:3000"
+    networks:
+      - default
+
 volumes:
   db-volume:
   cache-volume:

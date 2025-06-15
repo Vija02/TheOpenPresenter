@@ -16,8 +16,8 @@
     "@repo/observability": "*",
     "@tanstack/react-query": "^5.62.3",
     "@tauri-apps/api": "^2.4.1",
-    "@trpc/client": "^11.0.0-rc.657",
-    "@trpc/react-query": "^11.0.0-rc.657",
+    "@trpc/client": "^11.1.2",
+    "@trpc/react-query": "^11.1.2",
     "formik": "^2.4.6",
     "formik-chakra-ui": "^1.6.1",
     "framer-motion": "^11.13.1",
@@ -54,7 +54,7 @@
     "@vitejs/plugin-react-swc": "^3.7.2",
     "eslint": "^8.57.1",
     "typescript": "5.7.2",
-    "vite": "5.4.11",
+    "vite": "6.3.5",
     "vite-plugin-externalize-dependencies": "^1.0.1"
   }
 }

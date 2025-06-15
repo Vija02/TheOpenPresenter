@@ -21,13 +21,13 @@ const OrganizationIndex = () => {
     if (!query.loading) {
       if (query.data?.currentUser) {
         if (lastSelectedOrganization) {
-          window.location.replace(`/o/${lastSelectedOrganization.slug}`);
+          Router.replace(`/o/${lastSelectedOrganization.slug}`);
         } else {
           Router.replace(`/org/create-organization`);
         }
       } else {
         // If not logged in
-        Router.replace(`/login`);
+        Router.replace(`/logout?next=${encodeURIComponent("/login")}`);
       }
     }
   }, [lastSelectedOrganization, query.data?.currentUser, query.loading]);

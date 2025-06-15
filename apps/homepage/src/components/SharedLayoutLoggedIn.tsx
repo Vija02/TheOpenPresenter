@@ -112,7 +112,9 @@ export function SharedLayoutLoggedIn(
     >
       <Box display="flex" minHeight={contentMinHeight}>
         {!isMobile && navbar}
-        <StandardWidth width="100%">{props.children}</StandardWidth>
+        <StandardWidth style={{ width: "100%" }}>
+          {props.children}
+        </StandardWidth>
       </Box>
     </SharedLayout>
   );

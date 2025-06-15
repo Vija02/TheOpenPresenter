@@ -11,27 +11,27 @@ export default (app: Express) => {
   }
 
   /*
-   * Furthermore we require the `ENABLE_CYPRESS_COMMANDS` environmental variable
+   * Furthermore we require the `ENABLE_E2E_COMMANDS` environmental variable
    * to be set; this gives us extra protection against accidental XSS/CSRF
    * attacks.
    */
-  const safeToRun = process.env.ENABLE_CYPRESS_COMMANDS === "1";
+  const safeToRun = process.env.ENABLE_E2E_COMMANDS === "1";
 
   const rootPgPool = getRootPgPool(app);
 
   /*
-   * This function is invoked for the /cypressServerCommand route and is
+   * This function is invoked for the /E2EServerCommand route and is
    * responsible for parsing the request and handing it off to the relevant
    * function.
    */
-  const handleCypressServerCommand: RequestHandler = async (req, res, next) => {
+  const handleE2EServerCommand: RequestHandler = async (req, res, next) => {
     /*
-     * If we didn't set ENABLE_CYPRESS_COMMANDS, output a warning to the server
-     * log, and then pretend the /cypressServerCommand route doesn't exist.
+     * If we didn't set ENABLE_E2E_COMMANDS, output a warning to the server
+     * log, and then pretend the /E2EServerCommand route doesn't exist.
      */
     if (!safeToRun) {
       console.error(
-        "/cypressServerCommand denied because ENABLE_CYPRESS_COMMANDS is not set."
+        "/E2EServerCommand denied because ENABLE_E2E_COMMANDS is not set.",
       );
       // Pretend like nothing happened
       next();
@@ -73,7 +73,7 @@ export default (app: Express) => {
        * If anything goes wrong, let the test runner know so that it can fail
        * the test.
        */
-      console.error("cypressServerCommand failed!");
+      console.error("E2EServerCommand failed!");
       console.error(e);
       res.status(500).json({
         error: {
@@ -84,9 +84,9 @@ export default (app: Express) => {
     }
   };
   app.get(
-    "/cypressServerCommand",
+    "/E2EServerCommand",
     urlencoded({ extended: false }),
-    handleCypressServerCommand
+    handleE2EServerCommand,
   );
 };
 
@@ -95,16 +95,16 @@ async function runCommand(
   res: Response,
   rootPgPool: Pool,
   command: string,
-  payload: { [key: string]: any }
+  payload: { [key: string]: any },
 ): Promise<object | null> {
   if (command === "clearTestUsers") {
     await rootPgPool.query(
-      "delete from app_public.users where username like 'testuser%'"
+      "delete from app_public.users where username like 'testuser%'",
     );
     return { success: true };
   } else if (command === "clearTestOrganizations") {
     await rootPgPool.query(
-      "delete from app_public.organizations where slug like 'test%'"
+      "delete from app_public.organizations where slug like 'test%'",
     );
     return { success: true };
   } else if (command === "createUser") {
@@ -174,14 +174,24 @@ async function runCommand(
       async function setSession(sess: any) {
         await client.query(
           "select set_config('jwt.claims.session_id', $1, true)",
-          [sess.uuid]
+          [sess.uuid],
         );
       }
       try {
         await setSession(session);
         await Promise.all(
           orgs.map(
-            async ([name, slug, owner = true]: [string, string, boolean?]) => {
+            async ({
+              name,
+              slug,
+              projects = [],
+              owner = true,
+            }: {
+              name: string;
+              slug: string;
+              projects?: { name: string; slug: string }[];
+              owner?: boolean;
+            }) => {
               if (!owner) {
                 await setSession(otherSession);
               }
@@ -189,23 +199,32 @@ async function runCommand(
                 rows: [organization],
               } = await client.query(
                 "select * from app_public.create_organization($1, $2)",
-                [slug, name]
+                [slug, name],
               );
               if (!owner) {
                 await client.query(
                   "select app_public.invite_to_organization($1::uuid, $2::citext, null::citext)",
-                  [organization.id, user.username]
+                  [organization.id, user.username],
                 );
                 await setSession(session);
                 await client.query(
                   `select app_public.accept_invitation_to_organization(organization_invitations.id)
                    from app_public.organization_invitations
                    where user_id = $1`,
-                  [user.id]
+                  [user.id],
                 );
               }
-            }
-          )
+
+              for (const project of projects) {
+                await client.query(
+                  `
+                  select app_public.create_full_project($1, $2, $3, $4);
+                `,
+                  [organization.id, project.name, project.slug, []],
+                );
+              }
+            },
+          ),
         );
       } finally {
         await client.query("commit");
@@ -229,7 +248,7 @@ async function runCommand(
     const { username = "testuser" } = payload;
     await rootPgPool.query(
       "update app_public.users SET is_verified = TRUE where username = $1",
-      [username]
+      [username],
     );
     return { success: true };
   } else {
@@ -253,7 +272,7 @@ async function reallyCreateUser(
     name?: string;
     avatarUrl?: string;
     password?: string;
-  }
+  },
 ) {
   const {
     rows: [user],
@@ -266,7 +285,7 @@ async function reallyCreateUser(
         avatar_url := $5,
         password := $6
       )`,
-    [username, email, verified, name, avatarUrl, password]
+    [username, email, verified, name, avatarUrl, password],
   );
   return user;
 }
@@ -280,7 +299,7 @@ async function createSession(rootPgPool: Pool, userId: string) {
       values ($1)
       returning *
     `,
-    [userId]
+    [userId],
   );
   return session;
 }
@@ -300,7 +319,7 @@ async function getUserEmailSecrets(rootPgPool: Pool, email: string) {
         limit 1
       )
     `,
-    [email]
+    [email],
   );
   return userEmailSecrets;
 }

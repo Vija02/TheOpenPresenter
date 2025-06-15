@@ -32,6 +32,6 @@
     "@graphql-codegen/typescript-react-apollo": "4.3.2",
     "@parcel/watcher": "^2.5.0",
     "@repo/typescript-config": "*",
-    "pkgroll": "^2.5.1"
+    "pkgroll": "2.5.1"
   }
 }

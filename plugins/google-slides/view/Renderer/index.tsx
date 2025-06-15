@@ -9,12 +9,13 @@ const Renderer = ({
 }) => {
   const pluginApi = usePluginAPI();
   const fetchId = pluginApi.scene.useData((x) => x.pluginData.fetchId);
+  const type = pluginApi.scene.useData((x) => x.pluginData.type);
   const displayMode = pluginApi.renderer.useData((x) => x.displayMode);
   if (!fetchId) {
     return null;
   }
 
-  if (displayMode === "image") {
+  if (type === "pdf" || type === "ppt" || displayMode === "image") {
     return <ImageRenderer key={fetchId} />;
   }
 

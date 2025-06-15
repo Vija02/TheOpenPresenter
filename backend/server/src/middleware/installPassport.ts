@@ -31,7 +31,7 @@ export default async (app: Express) => {
 
   app.get("/logout", (req, res) => {
     req.logout(() => {
-      res.redirect("/");
+      res.redirect(req.query.next?.toString() ?? "/");
     });
   });
 
