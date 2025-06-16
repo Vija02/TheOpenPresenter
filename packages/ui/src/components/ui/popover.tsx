@@ -36,7 +36,7 @@ function PopoverContent({
   return (
     <PopoverPrimitive.Portal
       container={
-        (container ?? typeof window !== "undefined") ? document.body : undefined
+        container ?? (typeof window !== "undefined" ? document.body : undefined)
       }
     >
       <PopoverPrimitive.Content

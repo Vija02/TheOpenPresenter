@@ -75,7 +75,7 @@ function DialogContent({
     <DialogPortal
       data-slot="dialog-portal"
       container={
-        (container ?? typeof window !== "undefined") ? document.body : undefined
+        container ?? (typeof window !== "undefined" ? document.body : undefined)
       }
     >
       <DialogOverlay />
