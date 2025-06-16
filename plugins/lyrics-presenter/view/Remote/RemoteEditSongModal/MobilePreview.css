@@ -1,0 +1,23 @@
+@keyframes open-height {
+  0% {
+    height: 0vh;
+  }
+  100% {
+    height: 30vh;
+  }
+}
+@keyframes close-height {
+  0% {
+    height: 30vh;
+  }
+  100% {
+    height: 0vh;
+  }
+}
+
+.pl-lyrics--mobile-preview-pane__open {
+  animation: open-height 0.3s ease-in-out forwards;
+}
+.pl-lyrics--mobile-preview-pane__close {
+  animation: close-height 0.3s ease-in-out forwards;
+}

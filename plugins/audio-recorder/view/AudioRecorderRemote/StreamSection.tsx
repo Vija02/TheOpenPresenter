@@ -1,6 +1,5 @@
-import { Box, Button, Tag, TagLabel, TagLeftIcon } from "@chakra-ui/react";
+import { Alert, Button } from "@repo/ui";
 import { useState } from "react";
-import { VscWarning } from "react-icons/vsc";
 
 import { usePluginAPI } from "../pluginApi";
 import { UserSourceSelector } from "./AwarenessUser/UserSourceSelector";
@@ -16,13 +15,16 @@ export const StreamSection = () => {
 
   if (activeStreams.length === 0) {
     return (
-      <Box>
-        <Tag colorScheme="orange">
-          <TagLeftIcon boxSize="12px" as={VscWarning} />
-          <TagLabel>No active stream. Add one to start recording</TagLabel>
-        </Tag>
+      <div>
+        <Alert
+          variant="info"
+          title="No active stream."
+          subtitle="Add one to start recording"
+          size="sm"
+          className="w-fit"
+        />
 
-        <Box mb={2} />
+        <div className="mb-2" />
 
         <UserSourceSelector
           onSelectUser={(userId) => {
@@ -36,7 +38,7 @@ export const StreamSection = () => {
             });
           }}
         />
-      </Box>
+      </div>
     );
   }
 
@@ -57,7 +59,7 @@ const AddNewStreams = () => {
   const mutableSceneData = pluginApi.scene.useValtioData();
 
   return (
-    <Box>
+    <div className="stack-col items-start">
       <Button onClick={() => setIsAdding(true)}>Add new stream</Button>
       {isAdding && (
         <>
@@ -76,6 +78,6 @@ const AddNewStreams = () => {
           />
         </>
       )}
-    </Box>
+    </div>
   );
 };

@@ -1,21 +1,19 @@
-import { Box, chakra, useDisclosure } from "@chakra-ui/react";
 import { appData } from "@repo/lib";
+import { useDisclosure } from "@repo/ui";
 import Uppy from "@uppy/core";
 import { DashboardModal, useUppyEvent } from "@uppy/react";
 import Tus from "@uppy/tus";
 import { useState } from "react";
-import { FaFilePdf as FaFilePdfRaw } from "react-icons/fa";
+import { FaFilePdf } from "react-icons/fa";
 
 import { usePluginAPI } from "../../pluginApi";
 import { trpc } from "../../trpc";
 import { PickerCard } from "../component/PickerCard";
 
-const FaFilePdf = chakra(FaFilePdfRaw);
-
 export const PDFUploadModal = () => {
   const pluginApi = usePluginAPI();
 
-  const { isOpen, onToggle, onClose } = useDisclosure();
+  const { open, onToggle, onClose } = useDisclosure();
 
   const [uppy] = useState(() =>
     new Uppy({
@@ -45,20 +43,20 @@ export const PDFUploadModal = () => {
   });
 
   return (
-    <Box flex={1}>
+    <div className="flex justify-center flex-1">
       <PickerCard
         onClick={onToggle}
-        icon={<FaFilePdf fontSize="5xl" color="#F52102" />}
+        icon={<FaFilePdf className="size-10 text-[#F52102]" />}
         text="PDF"
         isLoading={isPending}
       />
       <DashboardModal
-        open={isOpen}
+        open={open}
         onRequestClose={onToggle}
         closeAfterFinish
         closeModalOnClickOutside
         uppy={uppy}
       />
-    </Box>
+    </div>
   );
 };

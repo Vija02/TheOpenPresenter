@@ -1,8 +1,8 @@
-import { Button, FormLabel, Input, Stack } from "@chakra-ui/react";
-import { PluginScaffold } from "@repo/ui";
+import { Button, Input, PluginScaffold } from "@repo/ui";
 import { useCallback, useState } from "react";
 
 import { usePluginAPI } from "../pluginApi";
+import "./index.css";
 
 const Remote = () => {
   const pluginApi = usePluginAPI();
@@ -24,18 +24,18 @@ const Remote = () => {
     <PluginScaffold
       title="Embed"
       body={
-        <Stack direction="column" p={3} width="100%">
-          <FormLabel fontWeight="bold">Embed URL</FormLabel>
+        <div className="stack-col items-stretch p-3 w-full">
+          <p className="font-bold">Embed URL</p>
           <Input
             value={input ?? ""}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Enter your url..."
           />
-          <Stack direction="row">
+          <div className="stack-row">
             <Button onClick={onClick}>Load/Save URL</Button>
             <Button onClick={onView}>Open in view</Button>
-          </Stack>
-        </Stack>
+          </div>
+        </div>
       }
     />
   );

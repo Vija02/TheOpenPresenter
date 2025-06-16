@@ -1,8 +1,8 @@
-import { Button, FormLabel, Input, Stack } from "@chakra-ui/react";
-import { PluginScaffold } from "@repo/ui";
+import { Button, Input, PluginScaffold } from "@repo/ui";
 import { useCallback, useState } from "react";
 
 import { usePluginAPI } from "../pluginApi";
+import "./index.css";
 
 const Remote = () => {
   const pluginApi = usePluginAPI();
@@ -39,20 +39,20 @@ const Remote = () => {
     <PluginScaffold
       title="Timer"
       body={
-        <Stack direction="column" p={3} width="100%">
-          <FormLabel fontWeight="bold">Timer in seconds</FormLabel>
+        <div className="stack-col items-start p-3 w-full">
+          <p className="font-bold">Timer in seconds</p>
           <Input
             value={input ?? ""}
             onChange={(e) => setInput(e.target.value)}
             placeholder="300"
           />
-          <Stack direction="row">
+          <div className="stack-row items-start flex-wrap">
             <Button onClick={onSetTimer}>Set duration</Button>
             <Button onClick={onStartTimer}>Start Timer</Button>
             <Button onClick={onResetTimer}>Reset Timer</Button>
             <Button onClick={onView}>Open in view</Button>
-          </Stack>
-        </Stack>
+          </div>
+        </div>
       }
     />
   );

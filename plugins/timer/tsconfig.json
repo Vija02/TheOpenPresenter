@@ -12,6 +12,6 @@
     "esModuleInterop": true,
     "moduleResolution": "bundler"
   },
-  "include": ["src", "vite.config.ts"],
+  "include": ["src", "vite.config.mts"],
   "references": [{ "path": "../../packages/base-plugin" }]
 }

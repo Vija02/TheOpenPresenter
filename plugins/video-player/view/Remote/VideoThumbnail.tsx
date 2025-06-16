@@ -1,5 +1,5 @@
-import { Box, Img, Skeleton } from "@chakra-ui/react";
 import { extractMediaName } from "@repo/lib";
+import { Skeleton, cn } from "@repo/ui";
 import { useMemo } from "react";
 
 import { InternalVideo, Video } from "../../src";
@@ -21,39 +21,27 @@ export const VideoThumbnail = ({ video }: { video: Video }) => {
   }, [pluginApi.media, video]);
 
   return (
-    <Box position="relative">
+    <div className="relative">
       {url ? (
-        <Img
+        <img
           src={url}
-          width={{ base: "100%", md: 300 }}
-          height="100%"
-          borderRadius="lg"
+          className={cn(
+            "aspect-video w-full md:w-[300px] h-full shrink-0 rounded-lg",
+          )}
         />
       ) : (
         <Skeleton
-          aspectRatio={16 / 9}
-          width={{ base: "100%", md: 300 }}
-          height="100%"
-          borderRadius="lg"
+          className={cn(
+            "aspect-video w-full md:w-[300px] h-full shrink-0 rounded-lg",
+          )}
         />
       )}
       {video.metadata.duration !== undefined && (
-        <Box
-          position="absolute"
-          bottom={2}
-          right={2}
-          bg="rgb(28, 28, 28)"
-          opacity={0.9}
-          color="white"
-          rounded="sm"
-          px={1}
-          fontSize="xs"
-          fontWeight="600"
-        >
+        <div className="absolute bottom-2 right-2 bg-gray-900 opacity-90 text-white rounded-sm px-1 text-xs font-bold">
           {formatDuration(video.metadata.duration)}
-        </Box>
+        </div>
       )}
-    </Box>
+    </div>
   );
 };
 

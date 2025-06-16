@@ -1,5 +1,4 @@
-import { Box, Button, Stack, Text } from "@chakra-ui/react";
-import { DateDisplay, PopConfirm } from "@repo/ui";
+import { Button, DateDisplay, PopConfirm } from "@repo/ui";
 import WavesurferPlayer from "@wavesurfer/react";
 import { useCallback, useMemo, useState } from "react";
 import { FaPause, FaPlay } from "react-icons/fa6";
@@ -58,22 +57,21 @@ export const RecordingCard = ({ recording }: { recording: Recording }) => {
   }
 
   return (
-    <Stack direction="column" py={2}>
-      <Stack direction="row" justifyContent="space-between">
-        <Stack direction="row" alignItems="center">
+    <div className="stack-col py-2 items-stretch">
+      <div className="stack-row justify-between items-stretch">
+        <div className="stack-row">
           <Button
             size="sm"
             onClick={onPlayPause}
-            {...(isPlaying
-              ? { bg: "black", color: "white", _hover: { bg: "gray.700" } }
-              : { variant: "outline", colorScheme: "grey" })}
+            variant={isPlaying ? "default" : "outline"}
+            className={isPlaying ? "border-1 border-fill-default" : ""}
           >
             {!isPlaying ? <FaPlay /> : <FaPause />}
           </Button>
-          <Text>
+          <span>
             Recording <DateDisplay date={new Date(recording.startedAt!)} />
-          </Text>
-        </Stack>
+          </span>
+        </div>
         <PopConfirm
           title={`Are you sure you want to remove this recording?`}
           onConfirm={handleRemove}
@@ -81,12 +79,12 @@ export const RecordingCard = ({ recording }: { recording: Recording }) => {
           cancelText="No"
           key="remove"
         >
-          <Button size="sm" variant="ghost" rounded="none">
+          <Button size="sm" variant="ghost" className="rounded-none">
             <VscTrash />
           </Button>
         </PopConfirm>
-      </Stack>
-      <Box w="100%">
+      </div>
+      <div className="w-full">
         <WavesurferPlayer
           height={70}
           waveColor="#656666"
@@ -101,7 +99,7 @@ export const RecordingCard = ({ recording }: { recording: Recording }) => {
           onPause={() => setIsPlaying(false)}
           plugins={plugins}
         />
-      </Box>
-    </Stack>
+      </div>
+    </div>
   );
 };

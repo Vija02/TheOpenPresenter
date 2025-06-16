@@ -1,4 +1,3 @@
-import { Stack } from "@chakra-ui/react";
 import { sortBy } from "lodash-es";
 
 import { usePluginAPI } from "../../pluginApi";
@@ -13,7 +12,7 @@ export const UserSourceSelector = ({ onSelectUser }: PropTypes) => {
 
   return (
     <>
-      <Stack gap={0}>
+      <div className="flex flex-col">
         {sortBy(awarenessData, "user.type").map((state) =>
           state.user ? (
             <UserCard
@@ -25,7 +24,7 @@ export const UserSourceSelector = ({ onSelectUser }: PropTypes) => {
             />
           ) : null,
         )}
-      </Stack>
+      </div>
     </>
   );
 };

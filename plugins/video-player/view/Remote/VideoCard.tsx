@@ -1,8 +1,7 @@
-import { Box, Button, Flex, Link, Stack, Text, chakra } from "@chakra-ui/react";
-import { LogoFavicon } from "@repo/ui";
+import { Button, LogoFavicon } from "@repo/ui";
 import { useCallback, useMemo } from "react";
 import { FaPause, FaPlay, FaYoutube } from "react-icons/fa";
-import { IoMdClose as IoMdCloseRaw } from "react-icons/io";
+import { IoMdClose } from "react-icons/io";
 import { MdHls } from "react-icons/md";
 import { VscDebugRestart } from "react-icons/vsc";
 import { Scrubber } from "react-scrubber";
@@ -12,8 +11,6 @@ import { calculateActualSeek } from "../calculateActualSeek";
 import { usePluginAPI } from "../pluginApi";
 import { VideoThumbnail } from "./VideoThumbnail";
 import { useSeek } from "./useSeek";
-
-const IoMdClose = chakra(IoMdCloseRaw);
 
 // TODO: Handle if no duration
 const VideoCard = ({ video }: { video: Video }) => {
@@ -105,49 +102,41 @@ const VideoCard = ({ video }: { video: Video }) => {
     [mutableRendererData, video.id],
   );
 
-  const border = useMemo(
+  const borderClass = useMemo(
     () =>
       currentVideoIsPlaying
-        ? "1px solid rgb(255, 0, 0)"
-        : "1px solid rgba(0, 0, 0, 0.2)",
+        ? "border border-red-500"
+        : "border border-black/20",
     [currentVideoIsPlaying],
   );
 
   return (
-    <Stack direction="column" boxShadow="base" p={2} border={border}>
-      <Stack direction={{ base: "column", md: "row" }} spacing={4}>
+    <div className={`stack-col items-stretch shadow-md p-2 ${borderClass}`}>
+      <div className="stack-col md:stack-row md:items-start gap-4 items-stretch">
         <VideoThumbnail video={video} />
-        <Stack direction="row" justifyContent="space-between" flex={1}>
-          <Stack direction="column">
-            <Text fontSize="lg" fontWeight="bold" wordBreak="break-all">
+        <div className="stack-row items-start justify-between flex-1">
+          <div className="stack-col items-start">
+            <h3 className="text-lg font-bold break-all">
               {video.metadata.title ?? video.url}
-            </Text>
-            <Stack direction="row">
+            </h3>
+            <div className="stack-row">
               {!video.isInternalVideo ? (
-                <Link isExternal href={video.url}>
+                <a href={video.url} target="_blank" rel="noopener noreferrer">
                   <FaYoutube color="red" fontSize={24} />
-                </Link>
+                </a>
               ) : (
-                <Link isExternal href={video.url}>
-                  <Flex
-                    alignItems="center"
-                    justifyContent="center"
-                    bg="black"
-                    width="24px"
-                    height="24px"
-                    p="2px"
-                    borderRadius="sm"
-                  >
+                <a href={video.url} target="_blank" rel="noopener noreferrer">
+                  <div className="flex items-center justify-center bg-black w-6 h-6 p-0.5 rounded-sm">
                     <LogoFavicon />
-                  </Flex>
-                </Link>
+                  </div>
+                </a>
               )}
               {video.isInternalVideo &&
                 (video as InternalVideo).hlsMediaName && (
                   <MdHls fontSize={24} />
                 )}
-            </Stack>
-            <Stack direction="row">
+            </div>
+            <div className="stack-row">
               <Button
                 variant="outline"
                 size="sm"
@@ -160,11 +149,10 @@ const VideoCard = ({ video }: { video: Video }) => {
               >
                 <VscDebugRestart />
               </Button>
-            </Stack>
-          </Stack>
-          <IoMdClose
-            fontSize="2xl"
-            cursor="pointer"
+            </div>
+          </div>
+          <Button
+            variant="ghost"
             onClick={() => {
               const index = mutableSceneData.pluginData.videos.findIndex(
                 (x) => x.id === video.id,
@@ -180,22 +168,24 @@ const VideoCard = ({ video }: { video: Video }) => {
                 delete mutableRendererData.videoSeeks[video.id];
               }
             }}
-          />
-        </Stack>
-      </Stack>
+          >
+            <IoMdClose className="text-2xl cursor-pointer" />
+          </Button>
+        </div>
+      </div>
 
-      <Box alignItems="center">
-        <Stack direction="row" w="100%" gap={3}>
+      <div className="flex items-center">
+        <div className="stack-row w-full gap-3">
           <Button
-            size="md"
             onClick={onTogglePlay}
-            {...(currentVideoIsPlaying
-              ? { bg: "black", color: "white", _hover: { bg: "gray.700" } }
-              : { variant: "outline", colorScheme: "grey" })}
+            variant={currentVideoIsPlaying ? "default" : "outline"}
+            className={
+              currentVideoIsPlaying ? "border-1 border-fill-default" : ""
+            }
           >
             {currentVideoIsPlaying ? <FaPause /> : <FaPlay />}
           </Button>
-          <Flex w="100%" alignItems="center">
+          <div className="w-full flex items-center">
             <Scrubber
               min={0}
               max={0.999999}
@@ -204,10 +194,10 @@ const VideoCard = ({ video }: { video: Video }) => {
               onScrubEnd={onSeekEnd}
               onScrubStart={onSeekHandle}
             />
-          </Flex>
-        </Stack>
-      </Box>
-    </Stack>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 

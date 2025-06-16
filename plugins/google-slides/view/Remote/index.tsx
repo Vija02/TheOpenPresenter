@@ -1,24 +1,17 @@
-import {
-  Box,
-  Button,
-  Center,
-  Skeleton,
-  Stack,
-  Text,
-  chakra,
-} from "@chakra-ui/react";
 import { extractMediaName } from "@repo/lib";
 import {
+  Button,
   LoadingFull,
   OverlayToggle,
   PluginScaffold,
+  Skeleton,
   Slide,
   SlideGrid,
   UniversalImage,
 } from "@repo/ui";
 import { useMemo } from "react";
 import { FaArrowLeft, FaArrowRight } from "react-icons/fa";
-import { VscSettingsGear as VscSettingsGearRaw } from "react-icons/vsc";
+import { VscSettingsGear } from "react-icons/vsc";
 
 import Renderer from "../Renderer";
 import { usePluginAPI } from "../pluginApi";
@@ -26,8 +19,6 @@ import ImportFileModal from "./ImportFile/ImportFileModal";
 import Landing from "./Landing";
 import SettingsModal from "./SettingsModal";
 import "./index.css";
-
-const VscSettingsGear = chakra(VscSettingsGearRaw);
 
 const Remote = () => {
   const pluginApi = usePluginAPI();
@@ -52,18 +43,9 @@ const Remote = () => {
         <>
           <OverlayToggle
             toggler={({ onToggle }) => (
-              <Button
-                size="xs"
-                bg="transparent"
-                color="white"
-                border="1px solid #ffffff6b"
-                _hover={{ bg: "rgba(255, 255, 255, 0.13)" }}
-                onClick={onToggle}
-              >
+              <Button size="xs" variant="pill" onClick={onToggle}>
                 <VscSettingsGear />
-                <Text ml={1} fontWeight="normal" fontSize="xs">
-                  Settings
-                </Text>
+                Settings
               </Button>
             )}
           >
@@ -72,47 +54,24 @@ const Remote = () => {
         </>
       }
       toolbar={
-        <Stack
-          direction="row"
-          alignItems="center"
-          columnGap={4}
-          rowGap={2}
-          flexWrap="wrap"
-        >
+        <div className="stack-row gap-x-4 gap-y-2 flex-wrap">
           <OverlayToggle
             toggler={({ onToggle }) => (
-              <Button
-                size="xs"
-                bg="transparent"
-                color="white"
-                border="1px solid #ffffff6b"
-                _hover={{ bg: "rgba(255, 255, 255, 0.13)" }}
-                onClick={onToggle}
-              >
-                <Text fontWeight="normal" fontSize="xs">
-                  Replace Slide
-                </Text>
+              <Button size="xs" variant="pill" onClick={onToggle}>
+                Replace Slide
               </Button>
             )}
           >
             <ImportFileModal />
           </OverlayToggle>
 
-          <Stack direction="row" alignItems="center">
-            <Text
-              display={{ base: "none", sm: "inherit" }}
-              fontWeight="bold"
-              color="white"
-              fontSize="xs"
-            >
+          <div className="stack-row">
+            <span className="hidden sm:inline font-bold text-white text-xs">
               Navigate:
-            </Text>
+            </span>
             <Button
               size="xs"
-              bg="transparent"
-              color="white"
-              border="1px solid #ffffff6b"
-              _hover={{ bg: "rgba(255, 255, 255, 0.13)" }}
+              variant="pill"
               onClick={() => {
                 if (mutableRendererData.slideIndex == null) {
                   mutableRendererData.slideIndex = 0;
@@ -123,16 +82,11 @@ const Remote = () => {
               }}
             >
               <FaArrowLeft />
-              <Text ml={1} fontWeight="normal" fontSize="xs">
-                Left
-              </Text>
+              Left
             </Button>
             <Button
               size="xs"
-              bg="transparent"
-              color="white"
-              border="1px solid #ffffff6b"
-              _hover={{ bg: "rgba(255, 255, 255, 0.13)" }}
+              variant="pill"
               onClick={() => {
                 if (mutableRendererData.slideIndex == null) {
                   mutableRendererData.slideIndex = 0;
@@ -142,22 +96,19 @@ const Remote = () => {
                 }
               }}
             >
-              <FaArrowRight />{" "}
-              <Text ml={1} fontWeight="normal" fontSize="xs">
-                Right
-              </Text>
+              <FaArrowRight /> Right
             </Button>
-          </Stack>
-        </Stack>
+          </div>
+        </div>
       }
       body={
-        <Box p={3} width="100%">
+        <div className="p-3 w-full">
           <SlideGrid>
             <RemoteHandler />
           </SlideGrid>
 
           <ResolvedSlideHandler />
-        </Box>
+        </div>
       }
     />
   );
@@ -175,11 +126,11 @@ const ResolvedSlideHandler = () => {
 
   // We render this to calculate what slide is currently selected through clicking
   return (
-    <Box className="content-hidden">
+    <div className="content-hidden">
       {slideIndex !== undefined && slideIndex !== null && (
         <Renderer shouldUpdateResolvedSlideIndex />
       )}
-    </Box>
+    </div>
   );
 };
 
@@ -225,15 +176,15 @@ const RemoteHandler = () => {
         >
           {({ width }) =>
             thumbnailLink && thumbnailLink !== "" ? (
-              <Center>
+              <div className="center">
                 <UniversalImage
                   src={extractMediaName(thumbnailLink)}
                   imgProp={{ style: { width: "100%" } }}
                   width={width}
                 />
-              </Center>
+              </div>
             ) : (
-              <Skeleton height="100%" />
+              <Skeleton className="h-full" />
             )
           }
         </Slide>

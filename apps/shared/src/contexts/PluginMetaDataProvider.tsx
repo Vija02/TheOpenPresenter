@@ -1,4 +1,3 @@
-import { Text } from "@chakra-ui/react";
 import {
   RemoteBasePluginQuery,
   RendererBasePluginQuery,
@@ -62,7 +61,7 @@ export function PluginMetaDataProvider({
     pluginMetaData.organizationBySlug.projects.nodes.length === 0
   ) {
     window.location.href = `/o/${orgSlug}`;
-    return <Text>Project does not exist. Redirecting...</Text>;
+    return <p>Project does not exist. Redirecting...</p>;
   }
 
   return (

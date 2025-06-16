@@ -22,11 +22,11 @@ const RESULTS_PER_PAGE = 10;
 
 const OrganizationSettingsIndexPage: NextPage = () => {
   const slug = useOrganizationSlug();
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(0);
   const query = useOrganizationSettingsMembersPageQuery({
     variables: {
       slug,
-      offset: (page - 1) * RESULTS_PER_PAGE,
+      offset: page * RESULTS_PER_PAGE,
     },
   });
 

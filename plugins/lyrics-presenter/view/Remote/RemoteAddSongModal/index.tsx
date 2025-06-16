@@ -1,22 +1,18 @@
 import {
   Button,
-  Flex,
-  Modal,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  ModalOverlay,
-  ModalProps,
-  Stack,
-  Tab,
-  TabList,
-  TabPanel,
-  TabPanels,
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  OverlayToggleComponentProps,
   Tabs,
-} from "@chakra-ui/react";
-import { OverlayToggleComponentProps } from "@repo/ui";
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+  cn,
+} from "@repo/ui";
 import { isEqual } from "lodash-es";
 import { useCallback, useMemo, useState } from "react";
 import { typeidUnboxed } from "typeid-js";
@@ -30,17 +26,13 @@ import { ImportPlaylist } from "./ImportPlaylist";
 import { LandingAddSong } from "./LandingAddSong";
 import { SearchSong } from "./SearchSong";
 
-export type RemoteAddSongModalPropTypes = Omit<
-  ModalProps,
-  "isOpen" | "onClose" | "children"
-> &
-  Partial<OverlayToggleComponentProps> & {};
+export type RemoteAddSongModalPropTypes = Partial<OverlayToggleComponentProps>;
 
 export enum Mode {
-  NONE = -1,
-  SEARCH_SONG = 0,
-  CREATE_SONG = 1,
-  IMPORT_PLAYLIST = 2,
+  NONE = "none",
+  SEARCH_SONG = "search",
+  CREATE_SONG = "create",
+  IMPORT_PLAYLIST = "playlist",
 }
 
 const RemoteAddSongModal = ({
@@ -64,8 +56,8 @@ const RemoteAddSongModal = ({
   );
 
   const [selectedMode, setSelectedMode] = useState(Mode.NONE);
-  const handleTabsChange = useCallback((index: number) => {
-    setSelectedMode(index);
+  const handleTabsChange = useCallback((index: string) => {
+    setSelectedMode(index as Mode);
   }, []);
 
   const canSubmit = useMemo(() => {
@@ -139,22 +131,25 @@ const RemoteAddSongModal = ({
   }, [onToggle, resetData]);
 
   return (
-    <Modal
-      size={selectedMode === -1 ? "sm" : { base: "full", md: "5xl" }}
-      isOpen={isOpen ?? false}
-      onClose={onClose}
-      scrollBehavior="inside"
+    <Dialog
+      open={isOpen ?? false}
+      onOpenChange={onToggle ?? (() => {})}
       {...props}
     >
-      <ModalOverlay />
-      <ModalContent
-        maxW={selectedMode === -1 ? "sm" : "900"}
-        pb={selectedMode === -1 ? 5 : 0}
+      <DialogContent
+        size={selectedMode === Mode.NONE ? "sm" : "3xl"}
+        className={cn("gap-0", selectedMode === Mode.NONE && "pb-5")}
       >
-        <ModalHeader>Add song(s)</ModalHeader>
-        <ModalCloseButton />
-        <ModalBody overflowX="hidden" pt={0}>
-          {selectedMode === -1 && (
+        <DialogHeader className="pb-4">
+          <DialogTitle>Add song(s)</DialogTitle>
+        </DialogHeader>
+        <DialogBody
+          className={cn(
+            "overflow-x-hidden pt-0",
+            selectedMode === Mode.CREATE_SONG && "pb-4",
+          )}
+        >
+          {selectedMode === Mode.NONE && (
             <LandingAddSong
               onSearch={(val) => {
                 setSelectedMode(Mode.SEARCH_SONG);
@@ -163,56 +158,47 @@ const RemoteAddSongModal = ({
               onSetMode={setSelectedMode}
             />
           )}
-          {selectedMode > -1 && (
+          {selectedMode !== Mode.NONE && (
             <Tabs
-              index={selectedMode}
-              onChange={handleTabsChange}
-              position="relative"
+              value={selectedMode}
+              onValueChange={handleTabsChange}
+              className="relative"
             >
-              <TabList>
-                <Tab fontSize="sm">Search Song</Tab>
-                <Tab fontSize="sm">Create Song</Tab>
-                <Tab fontSize="sm">Import Playlist</Tab>
-              </TabList>
+              <TabsList>
+                <TabsTrigger value="search">Search Song</TabsTrigger>
+                <TabsTrigger value="create">Create Song</TabsTrigger>
+                <TabsTrigger value="playlist">Import Playlist</TabsTrigger>
+              </TabsList>
 
-              <TabPanels>
-                <TabPanel px={0}>
-                  <SearchSong
-                    key={initialSongSearch}
-                    initialValue={initialSongSearch}
-                    selectedSongId={selectedSongId}
-                    setSelectedSongId={setSelectedSongId}
-                  />
-                </TabPanel>
-                <TabPanel px={0}>
-                  <CreateNewSong
-                    onChange={(song) => {
-                      if (!isEqual(song, newSong)) {
-                        setNewSong(song);
-                      }
-                    }}
-                  />
-                </TabPanel>
-                <TabPanel px={0}>
-                  <ImportPlaylist
-                    setSelectedPlaylistSongIds={setSelectedPlaylistSongIds}
-                  />
-                </TabPanel>
-              </TabPanels>
+              <TabsContent value={Mode.SEARCH_SONG}>
+                <SearchSong
+                  key={initialSongSearch}
+                  initialValue={initialSongSearch}
+                  selectedSongId={selectedSongId}
+                  setSelectedSongId={setSelectedSongId}
+                />
+              </TabsContent>
+              <TabsContent value={Mode.CREATE_SONG}>
+                <CreateNewSong
+                  onChange={(song) => {
+                    if (!isEqual(song, newSong)) {
+                      setNewSong(song);
+                    }
+                  }}
+                />
+              </TabsContent>
+              <TabsContent value={Mode.IMPORT_PLAYLIST}>
+                <ImportPlaylist
+                  setSelectedPlaylistSongIds={setSelectedPlaylistSongIds}
+                />
+              </TabsContent>
             </Tabs>
           )}
-        </ModalBody>
+        </DialogBody>
 
-        {selectedMode !== -1 && (
-          <ModalFooter
-            pt={0}
-            px={0}
-            boxShadow={{
-              base: "rgba(0, 0, 0, 0.8) 0px 5px 10px 0px",
-              md: "none",
-            }}
-          >
-            <Flex flexDir="column" width="100%">
+        {selectedMode !== Mode.NONE && (
+          <DialogFooter className="pl-lyrics--preview-shadow pt-0 px-0 pb-3">
+            <div className="flex flex-col w-full">
               {selectedMode === Mode.CREATE_SONG && (
                 <MobilePreview
                   preview={
@@ -226,31 +212,25 @@ const RemoteAddSongModal = ({
                   }
                 />
               )}
-              <Stack
-                px={{ base: 3, md: 6 }}
-                pt={3}
-                direction="row"
-                alignSelf="flex-end"
-              >
+              <div className="stack-row pt-3 px-3 md:px-6 self-end">
                 <Button
-                  colorScheme="green"
-                  mr={3}
-                  isDisabled={!canSubmit}
+                  variant="success"
+                  disabled={!canSubmit}
                   onClick={() => {
                     addSong();
                   }}
                 >
                   Add to list
                 </Button>
-                <Button variant="ghost" onClick={onClose}>
+                <Button variant="outline" onClick={onClose}>
                   Cancel
                 </Button>
-              </Stack>
-            </Flex>
-          </ModalFooter>
+              </div>
+            </div>
+          </DialogFooter>
         )}
-      </ModalContent>
-    </Modal>
+      </DialogContent>
+    </Dialog>
   );
 };
 

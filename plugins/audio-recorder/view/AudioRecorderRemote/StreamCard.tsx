@@ -1,13 +1,11 @@
-import { Box, Button, Flex, Stack, Text, chakra } from "@chakra-ui/react";
-import { FaMicrophone as FaMicrophoneRaw } from "react-icons/fa";
+import { Button } from "@repo/ui";
+import { FaMicrophone } from "react-icons/fa";
 import { VscDebugStop, VscPlay } from "react-icons/vsc";
 
 import { Stream } from "../../src";
 import { usePluginAPI } from "../pluginApi";
 import { UserNameTag } from "./AwarenessUser/UserNameTag";
 import { TimeSinceCreation } from "./TimeSinceCreation";
-
-const FaMicrophone = chakra(FaMicrophoneRaw);
 
 type PropTypes = {
   activeStream: Stream;
@@ -53,8 +51,8 @@ export const StreamCard = ({ activeStream }: PropTypes) => {
     };
 
     return (
-      <Stack direction="column" border="1px solid" borderColor="gray.500" p={2}>
-        <Stack direction="row">
+      <div className="stack-col items-stretch border border-stroke-emphasis p-2">
+        <div className="stack-row items-start">
           <Button
             variant="ghost"
             onClick={() => {
@@ -74,38 +72,31 @@ export const StreamCard = ({ activeStream }: PropTypes) => {
           >
             {isRunning ? <VscDebugStop /> : <VscPlay />}
           </Button>
-          <Stack gap={0}>
+          <div className="flex flex-col">
             <UserNameTag user={user} />
-            <Text fontSize="sm" color="gray.600">
+            <p className="text-sm text-secondary">
               {
                 activeStream.availableSources.find(
                   (x) => x.deviceId === activeStream.selectedDeviceId,
                 )?.label
               }
-            </Text>
-          </Stack>
-        </Stack>
+            </p>
+          </div>
+        </div>
         {isRunning && (
-          <Stack
-            direction="row"
-            alignItems="center"
-            justifyContent="space-between"
-            pt={2}
-            borderTop="1px solid"
-            borderColor="gray.400"
-          >
-            <Stack direction="row" alignItems="center">
-              <FaMicrophone color="red.400" fontSize="xl" mx={2} />
-              <Stack direction="column" gap={0}>
-                <Text fontWeight="bold">Recording on progress</Text>
-                <Stack direction="row">
-                  <Text>Elapsed:</Text>
+          <div className="stack-row justify-between pt-2 border-t-1 border-stroke">
+            <div className="stack-row">
+              <FaMicrophone className="text-red-400 mx-2 size-6" />
+              <div className="flex flex-col">
+                <p className="font-bold">Recording on progress</p>
+                <div className="stack-row items-stretch">
+                  <p>Elapsed:</p>
                   <TimeSinceCreation
                     startedAt={foundRecording?.startedAt ?? new Date()}
                   />
-                </Stack>
-              </Stack>
-            </Stack>
+                </div>
+              </div>
+            </div>
             <Button
               size="sm"
               variant="outline"
@@ -114,26 +105,25 @@ export const StreamCard = ({ activeStream }: PropTypes) => {
               }}
             >
               <VscDebugStop />
-              <Text pl={2}>Stop</Text>
+              Stop
             </Button>
-          </Stack>
+          </div>
         )}
-      </Stack>
+      </div>
     );
   }
 
   return (
-    <Box bg="gray.200" p={2}>
-      <Text fontWeight="bold">
+    <div className="bg-surface-secondary p-2">
+      <p className="font-bold">
         {activeStream.awarenessUserId}
         {activeStream.awarenessUserId === currentUserId ? " (This device)" : ""}
-      </Text>
-      <Text>Choose device to record</Text>
+      </p>
+      <p>Choose device to record</p>
       {activeStream.availableSources.map((source) => (
-        <Text
+        <p
           key={source.deviceId}
-          cursor="pointer"
-          _hover={{ bg: "gray.300" }}
+          className="cursor-pointer hover:bg-surface-secondary-hover"
           onClick={() => {
             const index = mutableSceneData.pluginData.activeStreams.findIndex(
               (x) => x.streamId === activeStream.streamId,
@@ -143,28 +133,19 @@ export const StreamCard = ({ activeStream }: PropTypes) => {
           }}
         >
           - {source.label}
-        </Text>
+        </p>
       ))}
-    </Box>
+    </div>
   );
 };
 
 const WaitingForPermission = () => {
   return (
-    <Flex
-      minH="90px"
-      alignItems="center"
-      justifyContent="center"
-      flexDir="column"
-      border="1px solid"
-      borderColor="gray.500"
-      textAlign="center"
-      p={2}
-    >
-      <Text fontWeight="bold">Waiting for permission from device...</Text>
-      <Text color="gray.600">
+    <div className="flex flex-col items-center justify-center border border-stroke text-center p-2 min-h-20">
+      <p className="font-bold">Waiting for permission from device...</p>
+      <p className="text-secondary">
         Please allow microphone access in selected device
-      </Text>
-    </Flex>
+      </p>
+    </div>
   );
 };

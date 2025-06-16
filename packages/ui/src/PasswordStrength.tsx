@@ -1,4 +1,4 @@
-import { Progress, Text, VStack } from "@chakra-ui/react";
+import { Progress } from "./components/ui/progress";
 
 export interface PasswordStrengthProps {
   passwordStrength: number;
@@ -24,11 +24,11 @@ export function PasswordStrength({
   }
 
   const content = (
-    <ul>
+    <ul className="list-disc list-inside">
       {suggestions.map((suggestion, key) => {
         return (
-          <li key={key}>
-            <Text color="subtitle">{suggestion}</Text>
+          <li key={key} className="text-secondary">
+            {suggestion}
           </li>
         );
       })}
@@ -36,18 +36,18 @@ export function PasswordStrength({
   );
 
   return (
-    <VStack alignItems="flex-start" w="100%">
+    <div className="stack-col items-start w-full">
       {passwordStrength < 2 && (
-        <Text color="subtitle">
+        <p className="text-secondary">
           You can proceed. However, we recommend choosing a stronger password.
-        </Text>
+        </p>
       )}
       <Progress
-        w="100%"
+        className="w-full"
         value={strengthToPercent(passwordStrength)}
-        colorScheme={passwordStrength < 2 ? "red" : "green"}
+        variant={passwordStrength < 2 ? "destructive" : "success"}
       />
       {passwordStrength < 2 && content}
-    </VStack>
+    </div>
   );
 }
