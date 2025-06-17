@@ -40,6 +40,8 @@ COPY packages/lib/package.json /app/packages/lib/package.json
 COPY packages/observability/package.json /app/packages/observability/package.json
 COPY packages/prettier-config/package.json /app/packages/prettier-config/package.json
 COPY packages/typescript-config/package.json /app/packages/typescript-config/package.json
+COPY packages/tailwind-config/package.json /app/packages/tailwind-config/package.json
+COPY packages/test/package.json /app/packages/test/package.json
 COPY packages/ui/package.json /app/packages/ui/package.json
 COPY plugins/embed/package.json /app/plugins/embed/package.json
 COPY plugins/timer/package.json /app/plugins/timer/package.json
@@ -62,6 +64,7 @@ COPY tsconfig.json .gitignore /app/
 COPY data/ /app/data
 
 COPY packages/typescript-config/ /app/packages/typescript-config/
+COPY packages/tailwind-config/ /app/packages/tailwind-config/
 
 COPY packages/graphql/ /app/packages/graphql/
 COPY apps/homepage/src/graphql/ /app/apps/homepage/src/graphql/
