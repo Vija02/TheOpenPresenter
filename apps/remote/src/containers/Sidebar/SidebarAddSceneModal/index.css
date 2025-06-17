@@ -13,7 +13,7 @@
 }
 
 .rt--sidebar-add-scene-modal-sidebar {
-  @apply stack-col items-stretch pr-4 gap-0 border-r-stroke border-r-1;
+  @apply stack-col items-stretch pr-4 gap-0 border-r-stroke border-r-1 hidden sm:flex;
 }
 
 .rt--sidebar-add-scene-modal-sidebar > p {
