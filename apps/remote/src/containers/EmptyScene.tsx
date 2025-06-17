@@ -1,4 +1,4 @@
-import { Alert, Button, OverlayToggle } from "@repo/ui";
+import { Button, OverlayToggle } from "@repo/ui";
 import { VscAdd } from "react-icons/vsc";
 
 import SidebarAddSceneModal from "./Sidebar/SidebarAddSceneModal";
@@ -20,11 +20,12 @@ export const EmptyScene = () => {
       >
         <SidebarAddSceneModal />
       </OverlayToggle>
-      <div className="pb-4" />
-      <Alert variant="info" title="Next steps">
+
+      <h4>Next steps</h4>
+      <p>
         Afterwards, click on the "Present" button on the device you want the
         presentation to be shown.
-      </Alert>
+      </p>
     </div>
   );
 };
