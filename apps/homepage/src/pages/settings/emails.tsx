@@ -1,3 +1,4 @@
+import { PopConfirm } from "@/components/PopConfirm";
 import { Redirect } from "@/components/Redirect";
 import { SharedLayoutLoggedIn } from "@/components/SharedLayoutLoggedIn";
 import { getServerSidePropsDeviceType, withDeviceType } from "@/lib/DeviceType";
@@ -30,7 +31,7 @@ import {
   useSettingsEmailsPageQuery,
 } from "@repo/graphql";
 import { extractError } from "@repo/lib";
-import { ErrorAlert, PopConfirm } from "@repo/ui";
+import { ErrorAlert } from "@repo/ui";
 import { Form, Formik } from "formik";
 import { InputControl, SubmitButton } from "formik-chakra-ui";
 import { NextPage } from "next";

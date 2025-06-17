@@ -1,3 +1,4 @@
+import { PopConfirm } from "@/components/PopConfirm";
 import { SharedOrgLayout } from "@/components/SharedOrgLayout";
 import { Tag, TagEdit, TagEditPropTypes, TagType } from "@/components/Tag";
 import { getServerSidePropsDeviceType, withDeviceType } from "@/lib/DeviceType";
@@ -37,7 +38,6 @@ import {
   useUpdateTagMutation,
 } from "@repo/graphql";
 import { globalState } from "@repo/lib";
-import { PopConfirm } from "@repo/ui";
 import { NextPage } from "next";
 import { FC, useCallback, useState } from "react";
 import { FiPlus, FiTag } from "react-icons/fi";

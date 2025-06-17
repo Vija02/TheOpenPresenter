@@ -1,3 +1,4 @@
+import { PopConfirm } from "@/components/PopConfirm";
 import { SharedOrgLayout } from "@/components/SharedOrgLayout";
 import { Tag } from "@/components/Tag";
 import CreateProjectModal from "@/containers/CreateProjectModal";
@@ -22,12 +23,7 @@ import {
   useOrganizationDashboardIndexPageQuery,
 } from "@repo/graphql";
 import { globalState } from "@repo/lib";
-import {
-  DateDisplay,
-  DateDisplayRelative,
-  OverlayToggle,
-  PopConfirm,
-} from "@repo/ui";
+import { DateDisplay, DateDisplayRelative, OverlayToggle } from "@repo/ui";
 import { format } from "date-fns";
 import { NextPage } from "next";
 import { useCallback, useMemo } from "react";

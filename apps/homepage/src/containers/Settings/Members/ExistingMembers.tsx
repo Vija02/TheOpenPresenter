@@ -1,3 +1,4 @@
+import { PopConfirm } from "@/components/PopConfirm";
 import { QueryResult } from "@apollo/client";
 import {
   Button,
@@ -18,7 +19,7 @@ import {
   useTransferOrganizationBillingContactMutation,
   useTransferOrganizationOwnershipMutation,
 } from "@repo/graphql";
-import { Pagination, PopConfirm } from "@repo/ui";
+import { Pagination } from "@repo/ui";
 import { FC, useCallback, useMemo } from "react";
 import { toast } from "react-toastify";
 

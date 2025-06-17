@@ -1,3 +1,4 @@
+import { PopConfirm } from "@/components/PopConfirm";
 import { SharedOrgLayout } from "@/components/SharedOrgLayout";
 import { getServerSidePropsDeviceType, withDeviceType } from "@/lib/DeviceType";
 import { useOrganizationSlug } from "@/lib/permissionHooks/organization";
@@ -29,11 +30,7 @@ import {
   useOrganizationMediaIndexPageQuery,
 } from "@repo/graphql";
 import { globalState } from "@repo/lib";
-import {
-  OverlayToggle,
-  OverlayToggleComponentProps,
-  PopConfirm,
-} from "@repo/ui";
+import { OverlayToggle, OverlayToggleComponentProps } from "@repo/ui";
 import { NextPage } from "next";
 import prettyBytes from "pretty-bytes";
 import { useCallback, useMemo, useState } from "react";
