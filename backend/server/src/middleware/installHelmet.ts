@@ -1,6 +1,8 @@
 import crypto from "crypto";
 import { Express } from "express";
+import fs from "fs";
 import helmet, { HelmetOptions } from "helmet";
+import path from "path";
 
 import { serverPluginApi } from "../pluginManager";
 import { DEV_NONCE } from "./shared";
@@ -20,7 +22,7 @@ const isDevOrTest =
 export default async function installHelmet(app: Express) {
   const registeredCSPDirectives = serverPluginApi.getRegisteredCSPDirectives();
 
-  const getOptions = (nonce: string) => {
+  const getOptions = (nonce: string, devMode: boolean = false) => {
     const defaultDirectives = Object.fromEntries(
       Object.entries({
         ...contentSecurityPolicy.getDefaultDirectives(),
@@ -65,7 +67,7 @@ export default async function installHelmet(app: Express) {
       crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
     };
 
-    if (isDevOrTest) {
+    if (isDevOrTest || devMode) {
       // Appease TypeScript
       if (
         typeof options.contentSecurityPolicy === "boolean" ||
@@ -109,9 +111,30 @@ export default async function installHelmet(app: Express) {
       process.env.NODE_ENV === "development" ? DEV_NONCE : crypto.randomUUID();
     res.locals.nonce = nonce;
 
-    return helmet(getOptions(nonce))(req, res, next);
+    return helmet(getOptions(nonce, hack__shouldBypass(req.url)))(
+      req,
+      res,
+      next,
+    );
   });
 }
+
+// DEBT: We use unsafe-inline for homepage because next.js uses it
+// This is something that is not possible in next.js right now for app pages
+// https://github.com/vercel/next.js/discussions/54907
+const homepathPath = path.join(__dirname, "../../../", "apps/homepage");
+const homepageAppDirContents = fs.readdirSync(
+  path.join(homepathPath, "src/app/(default)"),
+  {
+    withFileTypes: true,
+  },
+);
+const listOfPages = homepageAppDirContents
+  .filter((x) => x.isDirectory())
+  .map((x) => `/${x.name}`);
+const hack__shouldBypass = (url: string) => {
+  return url === "/" || listOfPages.some((x) => x.startsWith(url));
+};
 
 function mergeConfigRecursively(
   defaults: Record<string, any>,
