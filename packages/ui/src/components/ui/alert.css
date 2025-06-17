@@ -3,7 +3,7 @@
 @layer base {
   .ui--alert {
     @apply relative w-full;
-    @apply shadow rounded-lg;
+    @apply shadow rounded-sm;
   }
 
   .ui--alert-heading {
@@ -43,10 +43,10 @@
   }
 
   .ui--alert > div:first-child {
-    @apply rounded-t-lg py-3;
+    @apply rounded-t-sm py-3;
   }
   .ui--alert > div:last-child {
-    @apply border-x border-b rounded-b-lg py-3;
+    @apply border-x border-b rounded-b-sm py-3;
   }
 
   /* Size-specific padding */
