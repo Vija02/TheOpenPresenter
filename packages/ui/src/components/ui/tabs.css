@@ -1,0 +1,40 @@
+@reference "@repo/tailwind-config/index.css";
+
+@layer base {
+  .ui--tabs {
+    @apply flex flex-col gap-2;
+  }
+
+  .ui--tabs-list {
+    @apply inline-flex w-full items-center justify-start;
+    @apply border-b border-stroke;
+  }
+
+  .ui--tabs[data-orientation="vertical"] .ui--tabs-list {
+    @apply border-b-0 border-r;
+  }
+
+  .ui--tabs-trigger {
+    @apply text-secondary data-[state=active]:text-primary data-[state=active]:font-bold hover:text-primary font-medium text-sm;
+    @apply relative stack-row px-4 py-2 whitespace-nowrap transition-colors;
+    @apply cursor-pointer;
+    @apply disabled:pointer-events-none disabled:opacity-50;
+    @apply [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4;
+  }
+
+  .ui--tabs-trigger[data-state="active"]::after {
+    @apply bg-accent;
+  }
+
+  .ui--tabs-trigger::after {
+    @apply absolute bottom-0 left-0 right-0 h-0.5 transition-colors;
+    content: "";
+  }
+  .ui--tabs[data-orientation="vertical"] .ui--tabs-trigger::after {
+    @apply bottom-auto top-0 left-auto right-0 w-0.5 h-full;
+  }
+
+  .ui--tabs-content {
+    @apply flex-1;
+  }
+}

@@ -1,8 +1,43 @@
+@import "@repo/tailwind-config/preflight.css";
+@import "@repo/tailwind-config/theme.css";
+@import "@repo/tailwind-config/index.css";
+
 html {
   background-color: black;
 }
-
 body {
-  /* Chakra overrides this so we either put !important or change it in chakra */
-  background-color: black !important;
+  background-color: black;
+}
+
+.landing {
+  @apply h-full text-white p-10 md:p-20 border-[10px] border-orange-500;
+
+  h1 {
+    @apply text-orange-500 uppercase font-extrabold;
+    @apply text-3xl sm:text-5xl md:text-6xl lg:text-7xl;
+    @apply max-w-md md:max-w-xl;
+  }
+  p {
+    @apply text-lg md:text-3xl;
+  }
+
+  @media (orientation: landscape) and (max-height: 540px) {
+    @apply p-10 flex gap-10;
+
+    h1 {
+      @apply text-4xl;
+    }
+    p {
+      @apply text-xl;
+    }
+  }
+
+  @media (orientation: landscape) and (max-height: 350px) {
+    h1 {
+      @apply text-2xl;
+    }
+    p {
+      @apply text-lg;
+    }
+  }
 }

@@ -9,7 +9,7 @@ import {
   useAcceptJoinRequestToOrganizationMutation,
   useJoinRequestDetailQuery,
 } from "@repo/graphql";
-import { ErrorAlert, LoadingInline } from "@repo/ui";
+import { ErrorAlert, LoadingPart } from "@repo/ui";
 import { NextPage } from "next";
 import { useRouter } from "next/router";
 import React, { FC } from "react";
@@ -90,7 +90,7 @@ const JoinRequestAcceptInner: FC<JoinRequestAcceptInnerProps> = (props) => {
 
   let child: React.ReactNode | null = null;
   if (status === Status.ACCEPTING) {
-    child = <LoadingInline />;
+    child = <LoadingPart />;
   } else if (status === Status.DONE) {
     child = (
       <Center mt="10vh">

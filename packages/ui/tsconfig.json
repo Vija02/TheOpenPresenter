@@ -4,6 +4,11 @@
     "allowImportingTsExtensions": false,
     "jsx": "react-jsx",
     "declaration": false,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
   },
-  "include": ["src", "types"]
+  "include": ["src", "types"],
+  "exclude": ["**/*.stories.tsx"]
 }

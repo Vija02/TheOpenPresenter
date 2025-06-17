@@ -1,8 +1,9 @@
+import { theme } from "@/lib/theme";
 import { withApollo } from "@/lib/withApollo";
 import { Box, ChakraProvider, Text } from "@chakra-ui/react";
 import "@fontsource-variable/inter";
 import "@fontsource-variable/source-sans-3";
-import { theme } from "@repo/ui";
+import "@repo/ui/css";
 import { AppProps } from "next/app";
 import { Router } from "next/router";
 import NProgress from "nprogress";
@@ -12,6 +13,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 import "../helper.css";
+import "../app/css/compiled.css";
 
 NProgress.configure({
   showSpinner: false,

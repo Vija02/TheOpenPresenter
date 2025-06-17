@@ -1,38 +1,32 @@
-import { Button, Center, Heading, Stack, Text } from "@chakra-ui/react";
-import { OverlayToggle } from "@repo/ui";
+import { Button, OverlayToggle } from "@repo/ui";
 import { VscAdd } from "react-icons/vsc";
 
 import RemoteAddSongModal from "./RemoteAddSongModal";
 
 const Landing = () => {
   return (
-    <Center mt={10} p={2}>
-      <Stack>
-        <Heading textAlign="center" mb={4}>
+    <div className="center mt-10 p-2">
+      <div className="stack-col">
+        <h2 className="text-center mb-4 text-3xl font-bold">
           Welcome to Lyrics Presenter
-        </Heading>
+        </h2>
 
-        <Text textAlign="center" mb={4} fontSize="md" color="gray.500">
+        <p className="text-center mb-4 text-secondary">
           Song list empty. Add a new song to start presenting.
-        </Text>
+        </p>
 
         <OverlayToggle
           toggler={({ onToggle }) => (
-            <Button
-              p={1}
-              cursor="pointer"
-              onClick={onToggle}
-              colorScheme="green"
-            >
+            <Button onClick={onToggle} variant="success" className="w-full">
               <VscAdd />
-              <Text ml={2}>Add a song to the list</Text>
+              Add a song to the list
             </Button>
           )}
         >
           <RemoteAddSongModal />
         </OverlayToggle>
-      </Stack>
-    </Center>
+      </div>
+    </div>
   );
 };
 export default Landing;

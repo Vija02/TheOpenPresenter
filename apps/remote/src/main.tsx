@@ -1,7 +1,7 @@
 import { ApolloProvider } from "@apollo/client";
-import { ChakraProvider } from "@chakra-ui/react";
 import { preloader } from "@repo/lib";
-import { ErrorAlert, theme } from "@repo/ui";
+import { ErrorAlert } from "@repo/ui";
+import "@repo/ui/css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import React from "react";
 import ReactDOM from "react-dom/client";
@@ -27,21 +27,19 @@ preloader.initPreloader();
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <ChakraProvider theme={theme} resetCSS>
-      <ErrorBoundary FallbackComponent={ErrorAlert}>
-        <Router base="/app">
-          <trpc.Provider client={trpcClient} queryClient={queryClient}>
-            <ApolloProvider client={apolloClient}>
-              <QueryClientProvider client={queryClient}>
-                <>
-                  <App />
-                  <ToastContainer />
-                </>
-              </QueryClientProvider>
-            </ApolloProvider>
-          </trpc.Provider>
-        </Router>
-      </ErrorBoundary>
-    </ChakraProvider>
+    <ErrorBoundary FallbackComponent={ErrorAlert}>
+      <Router base="/app">
+        <trpc.Provider client={trpcClient} queryClient={queryClient}>
+          <ApolloProvider client={apolloClient}>
+            <QueryClientProvider client={queryClient}>
+              <>
+                <App />
+                <ToastContainer />
+              </>
+            </QueryClientProvider>
+          </ApolloProvider>
+        </trpc.Provider>
+      </Router>
+    </ErrorBoundary>
   </React.StrictMode>,
 );

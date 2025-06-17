@@ -1,24 +1,19 @@
-import { Center, Link, Text, VStack } from "@chakra-ui/react";
-import type { User } from "@repo/graphql";
-
 interface FourOhFourProps {
-  currentUser?: Pick<User, "id"> | null;
+  loggedIn?: boolean;
 }
-export function FourOhFour(props: FourOhFourProps) {
-  const { currentUser } = props;
-  return (
-    <div data-cy="fourohfour-div">
-      <Center mt="15vh">
-        <VStack>
-          <Text fontSize={60}>404</Text>
-          <Text>
-            The page you attempted to load was not found.{" "}
-            {currentUser ? "" : " Maybe you need to log in?"}
-          </Text>
 
-          <Link href="/">Back to Home</Link>
-        </VStack>
-      </Center>
+export function FourOhFour({ loggedIn }: FourOhFourProps) {
+  return (
+    <div data-cy="fourohfour-div" className="text-center center mt-[15vh]">
+      <div className="stack-col">
+        <p className="text-6xl">404</p>
+        <p>
+          The page you attempted to load was not found.{" "}
+          {loggedIn ? "" : " Maybe you need to log in?"}
+        </p>
+
+        <a href="/">Back to Home</a>
+      </div>
     </div>
   );
 }

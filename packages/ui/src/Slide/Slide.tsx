@@ -1,8 +1,9 @@
-import { Box, Text } from "@chakra-ui/react";
 import { PluginAPIContext } from "@repo/base-plugin/client";
+import { cx } from "class-variance-authority";
 import { use, useContext, useMemo } from "react";
 import { useStore } from "zustand";
 
+import "./Slide.css";
 import { CustomSizeContext } from "./SlideGrid";
 import { mapZoomToRange } from "./mapZoomToRange";
 
@@ -41,40 +42,37 @@ export const Slide = ({
   );
 
   return (
-    <Box
-      display="flex"
-      justifyContent="center"
-      cursor={onClick ? "pointer" : "auto"}
+    <div
+      className={cx(["flex justify-center", { "cursor-pointer": !!onClick }])}
       onClick={onClick}
       data-testid="slide-container"
     >
-      <Box overflow="hidden">
+      <div className="overflow-hidden">
         {heading && (
-          <Text
-            fontWeight={headingIsFaded ? "normal" : "bold"}
-            textTransform="uppercase"
-            fontSize="xs"
-            mb={1}
-            color={headingIsFaded ? "gray.600" : "inherit"}
-            textOverflow="ellipsis"
-            overflow="hidden"
-            whiteSpace="nowrap"
+          <p
+            className={cx([
+              "ui--slide-test",
+              headingIsFaded ? "font-normal" : "font-bold",
+              headingIsFaded ? "text-gray-600" : "text-inherit",
+            ])}
           >
             {heading}
-          </Text>
+          </p>
         )}
-        <Box
-          aspectRatio={aspectRatio}
-          borderWidth="4px"
-          borderColor={isActive ? "red.600" : "transparent"}
-          userSelect="none"
+        <div
+          className={cx([
+            "select-none",
+            "border-4",
+            { "border-red-600": isActive, "border-transparent": !isActive },
+          ])}
           style={{
             width,
+            aspectRatio,
           }}
         >
           {typeof children === "function" ? children({ width }) : children}
-        </Box>
-      </Box>
-    </Box>
+        </div>
+      </div>
+    </div>
   );
 };

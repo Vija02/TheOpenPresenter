@@ -1,6 +1,5 @@
-import { Box, Button, Stack, Text } from "@chakra-ui/react";
 import { AwarenessStore } from "@repo/base-plugin/client";
-import { PopConfirm } from "@repo/ui";
+import { Button, PopConfirm } from "@repo/ui";
 import { useCallback, useMemo } from "react";
 import { VscTrash } from "react-icons/vsc";
 
@@ -101,40 +100,38 @@ const StreamUploadFailed = ({
   ]);
 
   return (
-    <Stack
-      direction="row"
-      border="1px solid"
-      borderColor="gray.500"
-      p={2}
-      justifyContent="space-between"
-      alignItems="center"
-    >
-      <Stack gap={0}>
-        <Text fontWeight="bold">
+    <div className="stack-row border border-stroke-emphasis p-2 justify-between">
+      <div className="flex flex-col">
+        <span className="font-bold">
           Your recording has not been successfully uploaded
-        </Text>
+        </span>
         {foundIndex > -1 && (
           <Button
             onClick={onUpload}
-            mt={2}
+            className="mt-2"
             size="sm"
-            colorScheme="green"
+            variant="success"
             isLoading={!!recording.awarenessUserToRetry}
           >
             Re-Upload
           </Button>
         )}
         {foundIndex === -1 && (
-          <Box>
-            <Text>
+          <div>
+            <span>
               To reupload, open the device that the audio was recorded in
-            </Text>
-          </Box>
+            </span>
+          </div>
         )}
-        <Button onClick={onComplete} mt={2} size="sm" colorScheme="green">
+        <Button
+          onClick={onComplete}
+          className="mt-2"
+          size="sm"
+          variant="success"
+        >
           Complete
         </Button>
-      </Stack>
+      </div>
       <PopConfirm
         title={`Are you sure you want to remove this recording?`}
         onConfirm={handleRemove}
@@ -142,28 +139,21 @@ const StreamUploadFailed = ({
         cancelText="No"
         key="remove"
       >
-        <Button size="sm" variant="ghost" rounded="none">
+        <Button size="sm" variant="ghost">
           <VscTrash />
         </Button>
       </PopConfirm>
-    </Stack>
+    </div>
   );
 };
 
 const StreamUploading = ({ handleRemove }: { handleRemove: () => void }) => {
   return (
-    <Stack
-      direction="row"
-      border="1px solid"
-      borderColor="gray.500"
-      p={2}
-      justifyContent="space-between"
-      alignItems="center"
-    >
-      <Stack gap={0}>
-        <Text fontWeight="bold">Your recording is being uploaded</Text>
-        <Text>This should be done shortly</Text>
-      </Stack>
+    <div className="stack-row border border-stroke-emphasis p-2 justify-between">
+      <div className="flex flex-col">
+        <span className="font-bold">Your recording is being uploaded</span>
+        <span>This should be done shortly</span>
+      </div>
       <PopConfirm
         title={`Are you sure you want to remove this recording?`}
         onConfirm={handleRemove}
@@ -171,10 +161,10 @@ const StreamUploading = ({ handleRemove }: { handleRemove: () => void }) => {
         cancelText="No"
         key="remove"
       >
-        <Button size="sm" variant="ghost" rounded="none">
+        <Button size="sm" variant="ghost">
           <VscTrash />
         </Button>
       </PopConfirm>
-    </Stack>
+    </div>
   );
 };

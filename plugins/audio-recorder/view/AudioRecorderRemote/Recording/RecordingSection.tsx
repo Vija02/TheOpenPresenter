@@ -1,4 +1,3 @@
-import { Stack, Text } from "@chakra-ui/react";
 import { useMemo } from "react";
 
 import { usePluginAPI } from "../../pluginApi";
@@ -15,12 +14,12 @@ export const RecordingSection = () => {
 
   return (
     <>
-      {endedRecordings.length === 0 && <Text>Nothing here yet.</Text>}
-      <Stack direction="column" spacing={4}>
+      {endedRecordings.length === 0 && <p>Nothing here yet.</p>}
+      <div className="stack-col items-stretch gap-4">
         {endedRecordings.map((recording) => (
           <RecordingCard key={recording.mediaId} recording={recording} />
         ))}
-      </Stack>
+      </div>
     </>
   );
 };

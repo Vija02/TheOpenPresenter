@@ -1,0 +1,7 @@
+@reference "@repo/tailwind-config/index.css";
+
+@layer base {
+  .ui--link {
+    @apply inline-flex gap-2 items-center text-link underline-offset-4 hover:underline hover:text-link-hover;
+  }
+}

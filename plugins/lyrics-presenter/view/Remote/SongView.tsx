@@ -1,5 +1,4 @@
-import { Box, Button, Flex, Heading, Stack, Text } from "@chakra-ui/react";
-import { OverlayToggle, PopConfirm, SlideGrid } from "@repo/ui";
+import { Button, OverlayToggle, PopConfirm, SlideGrid } from "@repo/ui";
 import React, { useCallback } from "react";
 import { VscEdit, VscTrash } from "react-icons/vsc";
 
@@ -20,20 +19,15 @@ const SongView = React.memo(({ song }: { song: Song }) => {
 
   if (!song._imported && !!song.import) {
     return (
-      <Stack direction="column" bg="gray.100" p={2} mb={2} spacing={0}>
-        <Text fontWeight="bold">{song.title}</Text>
-        <Stack direction="row" alignItems="center">
-          <Text>Importing data from {song.import.type}...</Text>
-          <Button
-            size="sm"
-            variant="ghost"
-            rounded="none"
-            onClick={handleRemove}
-          >
+      <div className="flex flex-col p-2 mb-2 bg-surface-secondary">
+        <p className="font-bold">{song.title}</p>
+        <div className="stack-row">
+          <p>Importing data from {song.import.type}...</p>
+          <Button size="sm" variant="ghost" onClick={handleRemove}>
             <VscTrash />
           </Button>
-        </Stack>
-      </Stack>
+        </div>
+      </div>
     );
   }
   return <SongViewInner song={song} />;
@@ -51,25 +45,13 @@ const SongViewInner = React.memo(({ song }: { song: Song }) => {
   }, [mutableSceneData.pluginData, song.id]);
 
   return (
-    <Box pb={4}>
-      <Flex
-        direction={{ base: "column", sm: "row" }}
-        alignItems={{ base: "flex-start", sm: "center" }}
-        gap={2}
-        mb={2}
-      >
-        <Heading fontSize="xl" mb={0} fontWeight="bold">
-          {song.title}
-        </Heading>
-        <Stack direction="row" gap={0}>
+    <div className="pb-4">
+      <div className="flex flex-col items-start gap-2 mb-2 sm:flex-row sm:items-center">
+        <p className="text-xl mb-0 font-bold">{song.title}</p>
+        <div className="flex">
           <OverlayToggle
             toggler={({ onToggle }) => (
-              <Button
-                size="sm"
-                variant="ghost"
-                rounded="none"
-                onClick={onToggle}
-              >
+              <Button size="sm" variant="ghost" onClick={onToggle}>
                 <VscEdit />
               </Button>
             )}
@@ -83,16 +65,16 @@ const SongViewInner = React.memo(({ song }: { song: Song }) => {
             cancelText="No"
             key="remove"
           >
-            <Button size="sm" variant="ghost" rounded="none">
+            <Button size="sm" variant="ghost">
               <VscTrash />
             </Button>
           </PopConfirm>
-        </Stack>
-      </Flex>
+        </div>
+      </div>
       <SlideGrid>
         <SongViewSlides song={song} slideStyle={slideStyle} />
       </SlideGrid>
-    </Box>
+    </div>
   );
 });
 

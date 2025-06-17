@@ -1,0 +1,7 @@
+@reference "@repo/tailwind-config/index.css";
+
+@layer base {
+  .ui--skeleton {
+    @apply bg-surface-tertiary animate-pulse rounded-sm;
+  }
+}

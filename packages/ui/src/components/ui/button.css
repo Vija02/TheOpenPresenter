@@ -1,0 +1,65 @@
+@reference "@repo/tailwind-config/index.css";
+
+@layer base {
+  .ui--button {
+    @apply inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-sm text-sm font-medium transition-all cursor-pointer;
+    @apply disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px];
+    @apply aria-invalid:ring-fill-destructive/20 dark:aria-invalid:ring-fill-destructive/40 aria-invalid:border-fill-destructive;
+  }
+
+  .ui--button__default {
+    @apply bg-fill-default text-fill-default-fg shadow-xs;
+    @apply hover:bg-fill-default-hover hover:text-fill-default-fg-hover;
+    @apply disabled:bg-fill-default-disabled disabled:text-fill-default-fg-disabled;
+  }
+
+  .ui--button__muted {
+    @apply bg-fill-muted text-fill-muted-fg shadow-xs;
+    @apply hover:bg-fill-muted-hover;
+    @apply disabled:bg-fill-muted-disabled disabled:text-tertiary;
+  }
+
+  .ui--button__success {
+    @apply bg-fill-success text-fill-success-fg shadow-xs;
+    @apply hover:bg-fill-success-hover;
+    @apply disabled:bg-fill-success-disabled;
+  }
+
+  .ui--button__info {
+    @apply bg-fill-info text-fill-info-fg shadow-xs;
+    @apply hover:bg-fill-info-hover;
+    @apply disabled:bg-fill-info-disabled;
+  }
+
+  .ui--button__warning {
+    @apply bg-fill-warning text-fill-warning-fg shadow-xs;
+    @apply hover:bg-fill-warning-hover;
+    @apply disabled:bg-fill-warning-disabled;
+  }
+
+  .ui--button__destructive {
+    @apply bg-fill-destructive text-fill-destructive-fg shadow-xs;
+    @apply hover:bg-fill-destructive-hover;
+    @apply disabled:bg-fill-destructive-disabled;
+  }
+
+  /* Others */
+  .ui--button__outline {
+    @apply border border-stroke;
+    @apply bg-surface-primary text-primary shadow-xs;
+    @apply hover:bg-surface-secondary hover:text-secondary;
+    @apply disabled:bg-surface-secondary disabled:text-tertiary;
+  }
+  .ui--button__ghost {
+    @apply hover:bg-surface-tertiary;
+    @apply disabled:bg-surface-secondary disabled:text-tertiary;
+  }
+  .ui--button__pill {
+    @apply bg-transparent border border-fill-default-fg/50 text-fill-default-fg;
+    @apply hover:bg-white/15;
+    @apply disabled:opacity-75;
+  }
+  .ui--button__link {
+    @apply text-primary underline-offset-4 hover:underline;
+  }
+}

@@ -1,14 +1,17 @@
-import { useIsMobile } from "../../hooks/useIsMobile";
 import SidebarMobile from "./SidebarMobile";
 import SidebarWeb from "./SidebarWeb";
+import "./index.css";
 
 const SidebarWrapper = () => {
-  const isMobile = useIsMobile();
-
-  if (isMobile) {
-    return <SidebarMobile />;
-  } else {
-    return <SidebarWeb />;
-  }
+  return (
+    <>
+      <div className="rt--sidebar-wrapper-web">
+        <SidebarWeb />
+      </div>
+      <div className="rt--sidebar-wrapper-mobile">
+        <SidebarMobile />
+      </div>
+    </>
+  );
 };
 export default SidebarWrapper;

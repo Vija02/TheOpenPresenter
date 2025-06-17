@@ -1,4 +1,3 @@
-import { Box, Text } from "@chakra-ui/react";
 import {
   AudioCheckProvider,
   AwarenessProvider,
@@ -9,6 +8,7 @@ import {
 import { useEffect } from "react";
 import { Route, Switch, useParams } from "wouter";
 
+import "./App.css";
 import MainBody from "./containers/MainBody";
 import Sidebar from "./containers/Sidebar";
 
@@ -38,15 +38,10 @@ function Root() {
         <AudioCheckProvider>
           <PluginDataProvider type="remote">
             <AwarenessProvider>
-              <Box
-                display="flex"
-                position="relative"
-                height="100vh"
-                overflow="hidden"
-              >
+              <div className="rt--app">
                 <Sidebar />
                 <MainBody />
-              </Box>
+              </div>
             </AwarenessProvider>
           </PluginDataProvider>
         </AudioCheckProvider>
@@ -60,5 +55,5 @@ function RedirectToOrg() {
     window.location.href = "/o";
   }, []);
 
-  return <Text>Redirecting...</Text>;
+  return <p>Redirecting...</p>;
 }

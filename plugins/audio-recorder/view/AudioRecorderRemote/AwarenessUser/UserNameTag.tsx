@@ -1,5 +1,5 @@
-import { Badge, Stack, Text } from "@chakra-ui/react";
 import { AwarenessUserData } from "@repo/base-plugin/client";
+import { Badge } from "@repo/ui";
 
 import { usePluginAPI } from "../../pluginApi";
 
@@ -17,21 +17,21 @@ export const UserNameTag = ({ user }: PropTypes) => {
 
   return (
     <>
-      <Stack direction="row" alignItems="center">
-        <Text fontSize="md" fontWeight="medium" lineHeight={1}>
+      <div className="stack-row">
+        <p className="text-md font-medium leading-none">
           {getStringFromUA(user.userAgentInfo)}{" "}
-        </Text>
+        </p>
         {user.userAgentInfo.device.type && (
-          <Badge size="sm" colorScheme="orange" textTransform="uppercase">
+          <Badge size="sm" variant="warning" className="uppercase">
             {user.userAgentInfo.device.type}
           </Badge>
         )}
         {userIsThisDevice && (
-          <Badge size="sm" colorScheme="green">
+          <Badge size="sm" variant="success">
             This device
           </Badge>
         )}
-      </Stack>
+      </div>
     </>
   );
 };

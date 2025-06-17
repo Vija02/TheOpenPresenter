@@ -1,3 +1,4 @@
+import { PopConfirm } from "@/components/PopConfirm";
 import { SharedOrgLayout } from "@/components/SharedOrgLayout";
 import { Tag } from "@/components/Tag";
 import CreateProjectModal from "@/containers/CreateProjectModal";
@@ -22,12 +23,7 @@ import {
   useOrganizationDashboardIndexPageQuery,
 } from "@repo/graphql";
 import { globalState } from "@repo/lib";
-import {
-  DateDisplay,
-  DateDisplayRelative,
-  OverlayToggle,
-  PopConfirm,
-} from "@repo/ui";
+import { DateDisplay, DateDisplayRelative, OverlayToggle } from "@repo/ui";
 import { format } from "date-fns";
 import { NextPage } from "next";
 import { useCallback, useMemo } from "react";
@@ -173,7 +169,7 @@ const ProjectCard = ({
             <DateDisplay
               date={new Date(project.targetDate)}
               formatToken="do MMM yyyy"
-              textProps={{ fontSize: "sm", fontWeight: { base: 600, sm: 500 } }}
+              className="text-sm font-bold sm:font-medium"
             />
           )}
           <Text fontSize={project.targetDate ? "xs" : "sm"}>

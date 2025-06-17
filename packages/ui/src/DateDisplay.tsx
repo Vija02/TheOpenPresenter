@@ -1,28 +1,26 @@
-import { Text, TextProps } from "@chakra-ui/react";
+import { cx } from "class-variance-authority";
 import { format, formatDistanceToNowStrict } from "date-fns";
 
 export type DateDisplayPropTypes = {
   date: Date;
   formatToken?: string;
-  textProps?: TextProps;
+  className?: string;
 };
 export function DateDisplay({
   date,
-  textProps,
+  className,
   formatToken,
 }: DateDisplayPropTypes) {
   const humanReadable = formatHumanReadableDate(date, formatToken);
 
   return (
-    <Text
-      display="inline"
-      whiteSpace="nowrap"
+    <p
+      className={cx("inline nowrap", className)}
       title={date.toISOString()}
       suppressHydrationWarning
-      {...textProps}
     >
       {humanReadable}
-    </Text>
+    </p>
   );
 }
 
@@ -36,30 +34,26 @@ export function formatHumanReadableDate(date: Date, formatToken?: string) {
 
 export type DateDisplayRelativePropTypes = {
   date: Date;
-  textProps?: TextProps;
+  className?: string;
   isFuture?: boolean;
 };
 export function DateDisplayRelative({
   date,
-  textProps,
+  className,
   isFuture = false,
 }: DateDisplayRelativePropTypes) {
   const humanReadable = formatHumanReadableDateRelative(date);
 
   return (
-    <Text
-      color="inherit"
-      as="span"
-      display="inline"
-      whiteSpace="nowrap"
+    <span
+      className={cx("text-inherit inline nowrap", className)}
       title={date.toISOString()}
       suppressHydrationWarning
-      {...textProps}
     >
       {!!isFuture && "in "}
       {humanReadable}
       {!isFuture && " ago"}
-    </Text>
+    </span>
   );
 }
 

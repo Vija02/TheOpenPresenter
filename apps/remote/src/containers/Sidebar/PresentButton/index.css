@@ -1,0 +1,6 @@
+.rt--present-button {
+  @apply w-full;
+}
+.rt--present-button-link {
+  @apply w-full contents;
+}

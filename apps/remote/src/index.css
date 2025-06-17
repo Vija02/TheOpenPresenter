@@ -1,3 +1,7 @@
+@import "@repo/tailwind-config/preflight.css";
+@import "@repo/tailwind-config/theme.css";
+@import "@repo/tailwind-config/index.css";
+
 html {
   overscroll-behavior: none;
 }
@@ -28,12 +32,6 @@ html {
   top: 0;
   left: -3px;
   cursor: ew-resize;
-}
-
-@keyframes blink {
-  50% {
-    border-color: #fff;
-  }
 }
 
 .content-hidden {

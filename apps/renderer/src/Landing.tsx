@@ -1,4 +1,3 @@
-import { Box, Heading, Text } from "@chakra-ui/react";
 import "@fontsource-variable/inter";
 import "@fontsource-variable/source-sans-3";
 import { Logo } from "@repo/ui";
@@ -17,32 +16,25 @@ const Landing = () => {
   );
 
   return (
-    <Box
-      height="100%"
-      background="linear-gradient(-73deg, rgb(10, 10, 10) 0%, rgb(23,23,23) 100%)"
-      color="white"
-      p={{ base: 10, md: 20 }}
-      border="10px solid"
-      borderColor="orange.500"
+    <div
+      className="landing"
+      style={{
+        background:
+          "linear-gradient(-73deg, rgb(10, 10, 10) 0%, rgb(23,23,23) 100%)",
+      }}
     >
-      <Logo height={40} />
-      <Box mb={{ base: 6, md: 10, xl: 16 }} />
-      <Heading
-        color="orange.500"
-        textTransform="uppercase"
-        fontSize={{ base: "5xl", md: "7xl" }}
-        fontWeight="800"
-        maxW={{ base: "md", md: "xl" }}
-      >
-        Nothing to show here yet
-      </Heading>
-      <Box mb={{ base: 4, md: 7 }} />
-      <Text fontSize={{ base: "2xl", md: "3xl" }}>
-        This screen loaded perfectly! <br />
-        Select something in your device to start presenting.
-      </Text>
-      <Box mb={7} />
-      <Box display="flex" gap={10} alignItems="center">
+      <div>
+        <Logo height={40} />
+        <div className="mb-6 md:mb-10 xl:mb-16" />
+        <h1>Choose something to display</h1>
+        <div className="mb-4 md:mb-7" />
+        <p>
+          This screen loaded perfectly! <br />
+          Select something in your device to start presenting.
+        </p>
+        <div className="mb-7" />
+      </div>
+      <div className="flex gap-10 items-center">
         <QRCode
           style={{
             height: "auto",
@@ -52,8 +44,8 @@ const Landing = () => {
           }}
           value={qrcodeUrl}
         />
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 };
 export default Landing;

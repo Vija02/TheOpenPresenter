@@ -3,6 +3,7 @@ import {
   CategoryEditPropTypes,
   CategoryType,
 } from "@/components/Category/CategoryEdit";
+import { PopConfirm } from "@/components/PopConfirm";
 import { SharedOrgLayout } from "@/components/SharedOrgLayout";
 import { getServerSidePropsDeviceType, withDeviceType } from "@/lib/DeviceType";
 import {
@@ -41,7 +42,6 @@ import {
   useUpdateCategoryMutation,
 } from "@repo/graphql";
 import { globalState } from "@repo/lib";
-import { PopConfirm } from "@repo/ui";
 import { NextPage } from "next";
 import { FC, useCallback, useState } from "react";
 import { FiPlus } from "react-icons/fi";

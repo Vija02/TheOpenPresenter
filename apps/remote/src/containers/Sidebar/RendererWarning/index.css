@@ -1,0 +1,19 @@
+@reference "@repo/tailwind-config/index.css";
+
+.rt--renderer-warning-container {
+  @apply stack-row p-2 justify-center desktop:justify-between cursor-pointer bg-fill-warning text-fill-warning-fg w-full;
+}
+
+.rt--renderer-warning--inner {
+  @apply stack-row;
+}
+.rt--renderer-warning--inner > p {
+  @apply font-bold;
+}
+.rt--renderer-warning--inner span {
+  @apply hidden desktop:inline;
+}
+
+.rt--renderer-warning--chevron {
+  @apply hidden desktop:block;
+}

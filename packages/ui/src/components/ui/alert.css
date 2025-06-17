@@ -1,0 +1,83 @@
+@reference "@repo/tailwind-config/index.css";
+
+@layer base {
+  .ui--alert {
+    @apply relative w-full;
+    @apply shadow rounded-sm;
+  }
+
+  .ui--alert-heading {
+    @apply flex items-center gap-2 min-h-4 font-medium tracking-tight;
+    @apply [&>svg]:size-5;
+  }
+
+  .ui--alert__default .ui--alert-heading {
+    @apply [&>svg]:size-5;
+  }
+
+  .ui--alert__sm .ui--alert-heading {
+    @apply [&>svg]:size-3;
+  }
+
+  .ui--alert-heading-container {
+    @apply flex flex-wrap items-center;
+  }
+  .ui--alert-heading__default {
+    @apply bg-fill-default text-fill-default-fg;
+  }
+  .ui--alert-heading__success {
+    @apply bg-fill-success text-fill-success-fg;
+  }
+  .ui--alert-heading__destructive {
+    @apply bg-fill-destructive text-fill-destructive-fg;
+  }
+  .ui--alert-heading__info {
+    @apply bg-fill-info text-fill-info-fg;
+  }
+  .ui--alert-heading__warning {
+    @apply bg-fill-warning text-fill-warning-fg;
+  }
+
+  .ui--alert > div {
+    @apply px-4;
+  }
+
+  .ui--alert > div:first-child {
+    @apply rounded-t-sm py-3;
+  }
+  .ui--alert > div:last-child {
+    @apply border-x border-b rounded-b-sm py-3;
+  }
+
+  /* Size-specific padding */
+  .ui--alert__sm > div {
+    @apply px-3;
+  }
+  .ui--alert__sm > div:first-child {
+    @apply py-2;
+  }
+  .ui--alert__sm > div:last-child {
+    @apply py-2;
+  }
+
+  .ui--alert-title {
+    @apply font-semibold stack-row inline-flex pr-3;
+  }
+  .ui--alert-subtitle {
+    @apply opacity-85;
+  }
+  .ui--alert-body {
+    @apply col-start-2 grid justify-items-start text-sm [&_p]:leading-relaxed;
+  }
+
+  /* Size-specific text and spacing */
+  .ui--alert__sm .ui--alert-title {
+    @apply font-medium text-xs pr-2;
+  }
+  .ui--alert__sm .ui--alert-subtitle {
+    @apply text-xs;
+  }
+  .ui--alert__sm .ui--alert-body {
+    @apply text-xs;
+  }
+}

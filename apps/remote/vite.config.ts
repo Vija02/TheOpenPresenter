@@ -1,4 +1,6 @@
+import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react-swc";
+import postcssNested from "postcss-nested";
 import { defineConfig } from "vite";
 import externalize from "vite-plugin-externalize-dependencies";
 
@@ -6,10 +8,12 @@ import externalize from "vite-plugin-externalize-dependencies";
 export default defineConfig({
   plugins: [
     react(),
+    tailwindcss(),
     externalize({
       externals: ["yjs"],
     }),
   ],
+  css: { postcss: { plugins: [postcssNested() as any] } },
   base: "/app",
   build: {
     sourcemap: false,

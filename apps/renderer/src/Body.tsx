@@ -18,10 +18,11 @@ import {
   usePluginData,
   usePluginMetaData,
 } from "@repo/shared";
-import { ErrorAlert, LoadingFull, MotionBox } from "@repo/ui";
+import { ErrorAlert, LoadingPart } from "@repo/ui";
 import { useQuery } from "@tanstack/react-query";
-import { AnimatePresence, motion } from "framer-motion";
-import React, { lazy, useCallback, useMemo, useState } from "react";
+import { cx } from "class-variance-authority";
+import React, { lazy, useCallback, useMemo, useRef, useState } from "react";
+import { useAnimatePresence } from "react-animate-presence";
 import { ErrorBoundary } from "react-error-boundary";
 import { toast } from "react-toastify";
 import { useDisposable } from "use-disposable";
@@ -58,24 +59,27 @@ const Overlay = () => {
   const data = useData();
   const currentRenderer = useMemo(() => data.renderer["1"], [data.renderer]);
 
+  const { ref, animationClassName, isRendered } = useAnimatePresence({
+    visible: currentRenderer?.overlay?.type === "black",
+    animation: {
+      enter: "transition-fade-in",
+      exit: "transition-fade-out",
+    },
+  });
+
   return (
-    <AnimatePresence>
-      {currentRenderer?.overlay?.type === "black" && (
-        <MotionBox
+    <>
+      {isRendered && (
+        <div
           key="black"
-          top={0}
-          left={0}
-          right={0}
-          bottom={0}
-          position="absolute"
-          bg="black"
-          zIndex={999}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+          ref={ref}
+          className={cx(
+            animationClassName,
+            "top-0 left-0 right-0 bottom-0 absolute bg-black z-[999]",
+          )}
         />
       )}
-    </AnimatePresence>
+    </>
   );
 };
 
@@ -98,14 +102,12 @@ const SceneRenderer = React.memo(({ sceneId }: { sceneId: string }) => {
           }
         : {})}
     >
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={currentScene === sceneId ? "show" : "hidden"}
-        variants={{
-          show: { opacity: 1 },
-          // DEBT: Get transition delay dynamically instead of hardcoding a duration
-          hidden: { opacity: 0, transition: { delay: 0.4, duration: 0 } },
-        }}
+      <div
+        className={cx(
+          currentScene === sceneId
+            ? "transition-fade-in"
+            : "transition-fade-out delay-[400ms]",
+        )}
       >
         {Object.keys(currentRenderer?.children[sceneId] ?? {}).map(
           (pluginId) => (
@@ -114,13 +116,14 @@ const SceneRenderer = React.memo(({ sceneId }: { sceneId: string }) => {
             </ErrorBoundary>
           ),
         )}
-      </motion.div>
+      </div>
     </div>
   );
 });
 
 const PluginRenderer = React.memo(
   ({ pluginId, sceneId }: { pluginId: string; sceneId: string }) => {
+    const pluginDivRef = useRef<HTMLDivElement>(null);
     const pluginMetaData = usePluginMetaData()
       .pluginMetaData as RendererBasePluginQuery;
     const orgId = usePluginMetaData().orgId;
@@ -210,7 +213,7 @@ const PluginRenderer = React.memo(
       }
 
       if (!yjsPluginSceneData || !yjsPluginRendererData || !isSuccess) {
-        return <LoadingFull />;
+        return <LoadingPart />;
       }
 
       // We don't want to render this until the web component is hooked because
@@ -246,6 +249,7 @@ const PluginRenderer = React.memo(
             },
           },
           logger: childLogger,
+          parentContainer: pluginDivRef.current,
         },
       } satisfies WebComponentProps<any>);
     }, [
@@ -269,6 +273,8 @@ const PluginRenderer = React.memo(
 
     return (
       <div
+        ref={pluginDivRef}
+        id={`pl-${pluginInfo?.plugin}`}
         key={pluginId}
         style={{
           width: "100vw",

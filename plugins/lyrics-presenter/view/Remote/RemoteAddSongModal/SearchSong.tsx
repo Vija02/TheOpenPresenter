@@ -1,17 +1,6 @@
-import {
-  Box,
-  Flex,
-  Input,
-  InputGroup,
-  InputRightElement,
-  Stack,
-  Text,
-  useMediaQuery,
-} from "@chakra-ui/react";
-import { LoadingInline } from "@repo/ui";
+import { Input, LoadingInline, Pagination, Skeleton, cn } from "@repo/ui";
 import { useEffect, useRef, useState } from "react";
 import Highlighter from "react-highlight-words";
-import ReactPaginate from "react-paginate";
 import { useDebounce } from "use-debounce";
 
 import { trpc } from "../../trpc";
@@ -33,7 +22,7 @@ export const SearchSong = ({
 
   const [pageOffset, setPageOffset] = useState(0);
 
-  const { data: songData, isFetching } = trpc.lyricsPresenter.search.useQuery({
+  const { data: songData, isLoading } = trpc.lyricsPresenter.search.useQuery({
     title: debouncedSearchInput,
     page: pageOffset + 1,
   });
@@ -43,104 +32,97 @@ export const SearchSong = ({
     void (focusElement.current && focusElement.current!.focus());
   }, [focusElement]);
 
-  const [isMobile] = useMediaQuery("(max-width: 760px)");
-
   return (
-    <Flex>
-      <Stack
-        display={{ base: "none", sm: "flex" }}
-        pr={4}
-        borderRight="1px solid rgb(0, 0, 0, 0.1)"
-        spacing={0}
-      >
-        <Text fontWeight="bold" mb={2}>
-          Sources
-        </Text>
+    <div className="flex">
+      <div className="hidden sm:flex flex-col pr-4 border-r-stroke border-r">
+        <p className="font-bold mb-2">Sources</p>
         {["Any", "MyWorshipList"].map((source) => (
-          <Box
+          <div
+            className={cn(
+              "px-2 py-1 cursor-pointer hover:bg-surface-primary-hover",
+              source === selectedSource && "bg-surface-primary-active",
+            )}
             key={source}
-            bg={source === selectedSource ? "blue.50" : ""}
-            px={2}
-            py={1}
-            cursor="pointer"
-            _hover={{ bg: "blue.50" }}
             onClick={() => {
               setSelectedSource(source);
             }}
           >
-            <Text>{source}</Text>
-          </Box>
+            <p>{source}</p>
+          </div>
         ))}
-        <Text fontSize="xs" textAlign="center" color="gray.400" pt={4}>
+        <p className="text-xs text-center text-tertiary pt-4">
           More coming soon...
-        </Text>
-      </Stack>
-      <Stack pl={{ base: "", sm: "4" }} width="100%">
-        <InputGroup>
+        </p>
+      </div>
+      <div className="sm:pl-4 w-full">
+        <div className="relative">
           <Input
             ref={focusElement}
-            mb={2}
+            className="mb-2 pr-8"
             placeholder="Search a song..."
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
           />
-          <InputRightElement>
-            <Box display={isFetching ? "block" : "none"}>
-              <LoadingInline defer={false} />
-            </Box>
-          </InputRightElement>
-        </InputGroup>
-        <Box>
+          <div
+            className={cn(
+              "absolute top-0 right-3 bottom-0 flex items-center",
+              !isLoading && "hidden",
+            )}
+          >
+            <LoadingInline />
+          </div>
+        </div>
+        <div>
+          {isLoading && (
+            <div className="stack-col gap-1">
+              {Array.from(new Array(10)).map((_, i) => (
+                <Skeleton key={i} className="w-full h-10" />
+              ))}
+            </div>
+          )}
           {songData?.data.map((x: any) => (
-            <Box
+            <div
               key={x.id}
-              bg={selectedSongId === x.id ? "gray.200" : "transparent"}
-              _hover={{ bg: "gray.100" }}
-              cursor="pointer"
+              className={cn(
+                "cursor-pointer py-1 px-1 hover:bg-surface-primary-hover",
+                selectedSongId === x.id && "bg-surface-primary-active",
+              )}
               onClick={() => {
                 setSelectedSongId(x.id);
               }}
-              py={1}
-              px={1}
             >
-              <Text fontSize="md" lineHeight={1}>
+              <p className="leading-4">
                 {/* @ts-ignore */}
                 <Highlighter
                   searchWords={[debouncedSearchInput]}
                   autoEscape={true}
                   textToHighlight={x.title}
                 />
-              </Text>
-              <Text fontSize="xs" color="gray.500">
+              </p>
+              <p className="text-xs text-secondary">
                 {/* @ts-ignore */}
                 <Highlighter
                   searchWords={[debouncedSearchInput]}
                   autoEscape={true}
                   textToHighlight={x.author !== "" ? x.author : "-"}
                 />
-              </Text>
-            </Box>
+              </p>
+            </div>
           ))}
 
-          <Box display="flex" mt={5} justifyContent="center">
+          <div className="flex mt-5 justify-center">
             {songData?.totalPage > 1 && (
-              <ReactPaginate
-                className="lyrics-presenter__search-song--pagination"
-                breakLabel="..."
-                previousLabel={isMobile ? "<" : "< Previous"}
-                nextLabel={isMobile ? ">" : "Next >"}
+              <Pagination
                 onPageChange={(page) => {
                   setPageOffset(page.selected);
                 }}
-                pageRangeDisplayed={3}
-                marginPagesDisplayed={isMobile ? 1 : 2}
                 pageCount={songData?.totalPage}
                 forcePage={pageOffset}
               />
             )}
-          </Box>
-        </Box>
-      </Stack>
-    </Flex>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };

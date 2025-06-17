@@ -1,0 +1,29 @@
+@reference "@repo/tailwind-config/index.css";
+
+@layer base {
+  .ui--checkbox {
+    /* Base styles */
+    @apply size-4 shrink-0 rounded-sm border;
+    @apply border-stroke-emphasis cursor-pointer;
+
+    /* Background and states */
+    @apply data-[state=checked]:bg-fill-default data-[state=checked]:border-fill-default;
+    @apply data-[state=checked]:text-fill-default-fg;
+
+    /* Focus styles */
+    @apply focus-visible:outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-2;
+
+    /* Hover state */
+    @apply hover:bg-fill-default-fg-hover data-[state=checked]:hover:bg-fill-default-hover;
+
+    /* Invalid state */
+    @apply aria-invalid:ring-fill-destructive/20 aria-invalid:border-fill-destructive;
+
+    /* Disabled state */
+    @apply disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .ui--checkbox-indicator {
+    @apply flex items-center justify-center text-current transition-none;
+  }
+}

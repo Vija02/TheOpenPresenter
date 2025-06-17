@@ -1,0 +1,196 @@
+
+:root {
+  --gray-50: #f8f9fa;
+  --gray-100: #f1f3f5;
+  --gray-200: #e9ecef;
+  --gray-300: #dee2e6;
+  --gray-400: #ced4da;
+  --gray-500: #adb5bd;
+  --gray-600: #868e96;
+  --gray-700: #495057;
+  --gray-800: #343a40;
+  --gray-900: #212529;
+}
+
+:root {
+  --primary: var(--gray-800);
+  --secondary: var(--gray-700);
+  --tertiary: var(--gray-600);
+
+  /* Surfaces */
+  --surface-primary: white;
+  --surface-primary-hover: var(--gray-100);
+  --surface-primary-active: var(--gray-200);
+  --surface-secondary: var(--gray-100);
+  --surface-secondary-hover: var(--gray-300);
+  --surface-secondary-active: var(--gray-400);
+  --surface-tertiary: var(--gray-200);
+  --surface-tertiary-hover: var(--gray-400);
+  --surface-tertiary-active: var(--gray-500);
+
+  /* Then we can move on to our fills */
+  --fill-default: rgba(48, 48, 48, 1);
+  --fill-default-hover: rgba(26, 26, 26, 1);
+  --fill-default-selected: rgba(26, 26, 26, 1);
+  --fill-default-disabled: rgba(0, 0, 0, 0.17);
+  --fill-default-fg: rgba(255, 255, 255, 1);
+  --fill-default-fg-hover: rgba(227, 227, 227, 1);
+  --fill-default-fg-disabled: rgba(255, 255, 255, 1);
+
+  --fill-muted: var(--gray-400);
+  --fill-muted-hover: var(--gray-500);
+  --fill-muted-selected: var(--gray-500);
+  --fill-muted-disabled: var(--gray-200);
+  --fill-muted-fg: var(--gray-900);
+
+  --fill-success: rgba(4, 123, 93, 1);
+  --fill-success-hover: rgba(3, 94, 76, 1);
+  --fill-success-selected: rgba(1, 75, 64, 1);
+  --fill-success-disabled: rgba(4, 123, 93, 0.4);
+  --fill-success-fg: white;
+
+  --fill-info: rgba(145, 208, 255, 1);
+  --fill-info-hover: rgba(81, 192, 255, 1);
+  --fill-info-selected: rgba(202, 230, 255, 1);
+  --fill-info-disabled: rgba(145, 208, 255, 0.4);
+  --fill-info-fg: rgba(0, 33, 51, 1);
+
+  --fill-destructive: rgba(199, 10, 36, 1);
+  --fill-destructive-hover: rgba(163, 10, 36, 1);
+  --fill-destructive-selected: rgba(142, 11, 33, 1);
+  --fill-destructive-disabled: rgba(199, 10, 36, 0.4);
+  --fill-destructive-fg: white;
+
+  --fill-warning: rgba(255, 184, 0, 1);
+  --fill-warning-hover: rgba(229, 165, 0, 1);
+  --fill-warning-selected: rgba(178, 132, 0, 1);
+  --fill-warning-disabled: rgba(255, 184, 0, 0.4);
+  --fill-warning-fg: rgba(37, 26, 0, 1);
+
+  /* Other misc colors */
+  --stroke: var(--gray-300);
+  --stroke-emphasis: var(--gray-600);
+  --stroke-disabled: var(--gray-200);
+
+  --ring: oklch(0.707 0.022 261.325);
+
+  --link: #1d70b8;
+  --link-hover: #003078;
+
+  --accent: oklch(70.7% 0.165 254.624);
+
+  /* Misc */
+  --radius: 0.625rem;
+}
+
+.dark {
+  --primary: var(--gray-100);
+  --secondary: var(--gray-200);
+  --tertiary: var(--gray-300);
+
+  /* Surfaces */
+  --surface-primary: rgb(22, 22, 22);
+  --surface-primary-hover: var(--gray-900);
+  --surface-primary-active: var(--gray-800);
+  --surface-secondary: var(--gray-900);
+  --surface-secondary-hover: var(--gray-700);
+  --surface-secondary-active: var(--gray-600);
+  --surface-tertiary: var(--gray-800);
+  --surface-tertiary-hover: var(--gray-600);
+  --surface-tertiary-active: var(--gray-500);
+
+  /* Other misc colors */
+  --stroke: var(--gray-700);
+  --stroke-emphasis: var(--gray-400);
+  --stroke-disabled: var(--gray-800);
+}
+
+@theme inline {
+  --color-gray-50: var(--gray-50);
+  --color-gray-100: var(--gray-100);
+  --color-gray-200: var(--gray-200);
+  --color-gray-300: var(--gray-300);
+  --color-gray-400: var(--gray-400);
+  --color-gray-500: var(--gray-500);
+  --color-gray-600: var(--gray-600);
+  --color-gray-700: var(--gray-700);
+  --color-gray-800: var(--gray-800);
+  --color-gray-900: var(--gray-900);
+
+  /* Main text */
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+  --color-tertiary: var(--tertiary);
+
+  /* Surfaces */
+  --color-surface-primary: var(--surface-primary);
+  --color-surface-primary-hover: var(--surface-primary-hover);
+  --color-surface-primary-active: var(--surface-primary-active);
+  --color-surface-secondary: var(--surface-secondary);
+  --color-surface-secondary-hover: var(--surface-secondary-hover);
+  --color-surface-secondary-active: var(--surface-secondary-active);
+  --color-surface-tertiary: var(--surface-tertiary);
+  --color-surface-tertiary-hover: var(--surface-tertiary-hover);
+  --color-surface-tertiary-active: var(--surface-tertiary-active);
+
+  /* Then we can move on to our fills */
+  --color-fill-default: var(--fill-default);
+  --color-fill-default-hover: var(--fill-default-hover);
+  --color-fill-default-selected: var(--fill-default-selected);
+  --color-fill-default-disabled: var(--fill-default-disabled);
+  --color-fill-default-fg: var(--fill-default-fg);
+  --color-fill-default-fg-hover: var(--fill-default-fg-hover);
+  --color-fill-default-fg-disabled: var(--fill-default-fg-disabled);
+
+  --color-fill-muted: var(--fill-muted);
+  --color-fill-muted-hover: var(--fill-muted-hover);
+  --color-fill-muted-selected: var(--fill-muted-selected);
+  --color-fill-muted-disabled: var(--fill-muted-disabled);
+  --color-fill-muted-fg: var(--fill-muted-fg);
+
+  --color-fill-success: var(--fill-success);
+  --color-fill-success-hover: var(--fill-success-hover);
+  --color-fill-success-selected: var(--fill-success-selected);
+  --color-fill-success-disabled: var(--fill-success-disabled);
+  --color-fill-success-fg: var(--fill-success-fg);
+
+  --color-fill-info: var(--fill-info);
+  --color-fill-info-hover: var(--fill-info-hover);
+  --color-fill-info-selected: var(--fill-info-selected);
+  --color-fill-info-disabled: var(--fill-info-disabled);
+  --color-fill-info-fg: var(--fill-info-fg);
+
+  --color-fill-destructive: var(--fill-destructive);
+  --color-fill-destructive-hover: var(--fill-destructive-hover);
+  --color-fill-destructive-selected: var(--fill-destructive-selected);
+  --color-fill-destructive-disabled: var(--fill-destructive-disabled);
+  --color-fill-destructive-fg: var(--fill-destructive-fg);
+
+  --color-fill-warning: var(--fill-warning);
+  --color-fill-warning-hover: var(--fill-warning-hover);
+  --color-fill-warning-selected: var(--fill-warning-selected);
+  --color-fill-warning-disabled: var(--fill-warning-disabled);
+  --color-fill-warning-fg: var(--fill-warning-fg);
+
+  /* Other misc colors */
+  --color-stroke: var(--stroke);
+  --color-stroke-emphasis: var(--stroke-emphasis);
+  --color-stroke-disabled: var(--stroke-disabled);
+
+  --color-ring: var(--ring);
+
+  --color-link: var(--link);
+  --color-link-hover: var(--link-hover);
+
+  --color-accent: var(--accent);
+
+  /* Misc */
+
+  --breakpoint-desktop: 48rem; /* Same as md */
+
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --text-2xs: 0.625rem;
+}

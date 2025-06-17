@@ -1,4 +1,3 @@
-import { Text } from "@chakra-ui/react";
 import { addSeconds, formatDuration, intervalToDuration } from "date-fns";
 import { useMemo, useState } from "react";
 import { useElapsedTime } from "use-elapsed-time";
@@ -26,7 +25,7 @@ export const TimeSinceCreation = ({
 
   return (
     <>
-      <Text>{formatDuration(duration)}</Text>
+      <p>{formatDuration(duration)}</p>
     </>
   );
 };

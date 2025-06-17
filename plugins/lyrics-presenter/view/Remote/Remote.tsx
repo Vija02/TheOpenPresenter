@@ -1,5 +1,4 @@
-import { Box, Button, Text } from "@chakra-ui/react";
-import { OverlayToggle, PluginScaffold } from "@repo/ui";
+import { Button, OverlayToggle, PluginScaffold } from "@repo/ui";
 import { useCallback } from "react";
 import { PiExportLight } from "react-icons/pi";
 import { VscAdd, VscPaintcan } from "react-icons/vsc";
@@ -72,18 +71,9 @@ const Remote = () => {
         <>
           <OverlayToggle
             toggler={({ onToggle }) => (
-              <Button
-                size="xs"
-                bg="transparent"
-                color="white"
-                border="1px solid #ffffff6b"
-                _hover={{ bg: "rgba(255, 255, 255, 0.13)" }}
-                onClick={onToggle}
-              >
+              <Button size="xs" variant="pill" onClick={onToggle}>
                 <VscAdd />
-                <Text ml={1} fontWeight="normal" fontSize="xs">
-                  Add
-                </Text>
+                Add
               </Button>
             )}
           >
@@ -91,59 +81,35 @@ const Remote = () => {
           </OverlayToggle>
           <OverlayToggle
             toggler={({ onToggle }) => (
-              <Button
-                size="xs"
-                bg="transparent"
-                color="white"
-                border="1px solid #ffffff6b"
-                _hover={{ bg: "rgba(255, 255, 255, 0.13)" }}
-                onClick={onToggle}
-              >
-                <VscPaintcan />{" "}
-                <Text ml={1} fontWeight="normal" fontSize="xs">
-                  Style
-                </Text>
+              <Button size="xs" variant="pill" onClick={onToggle}>
+                <VscPaintcan />
+                Style
               </Button>
             )}
           >
             <StyleSettingModal />
           </OverlayToggle>
-          <Button
-            size="xs"
-            bg="transparent"
-            color="white"
-            border="1px solid #ffffff6b"
-            _hover={{ bg: "rgba(255, 255, 255, 0.13)" }}
-            onClick={onExport}
-          >
-            <PiExportLight />{" "}
-            <Text ml={1} fontWeight="normal" fontSize="xs">
-              Export
-            </Text>
+          <Button size="xs" variant="pill" onClick={onExport}>
+            <PiExportLight /> Export
           </Button>
         </>
       }
       body={
-        <Box p={3} w="100%">
+        <div className="p-3 w-full">
           {songs.map((song) => (
             <SongView key={song.id} song={song} />
           ))}
           <OverlayToggle
             toggler={({ onToggle }) => (
-              <Button
-                size="sm"
-                colorScheme="green"
-                cursor="pointer"
-                onClick={onToggle}
-              >
+              <Button size="sm" variant="success" onClick={onToggle}>
                 <VscAdd />
-                <Text ml={2}>Add Song</Text>
+                Add Song
               </Button>
             )}
           >
             <RemoteAddSongModal />
           </OverlayToggle>
-        </Box>
+        </div>
       }
     />
   );
