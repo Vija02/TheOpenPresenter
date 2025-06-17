@@ -18,7 +18,7 @@ import {
   useInvitationDetailQuery,
 } from "@repo/graphql";
 import { getCodeFromError } from "@repo/lib";
-import { ErrorAlert, LoadingInline } from "@repo/ui";
+import { ErrorAlert, LoadingPart } from "@repo/ui";
 import { NextPage } from "next";
 import NextLink from "next/link";
 import Router, { useRouter } from "next/router";
@@ -117,7 +117,7 @@ const InvitationAcceptInner: FC<InvitationAcceptInnerProps> = (props) => {
 
   let child: React.ReactNode | null = null;
   if (status === Status.ACCEPTING) {
-    child = <LoadingInline />;
+    child = <LoadingPart />;
   } else if (error || acceptError) {
     const code = getCodeFromError(error || acceptError);
     if (code === "NTFND") {

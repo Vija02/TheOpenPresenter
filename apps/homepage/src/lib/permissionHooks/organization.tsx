@@ -1,7 +1,7 @@
 import { QueryResult } from "@apollo/client";
 import { Box } from "@chakra-ui/react";
 import { SharedOrganizationFragment } from "@repo/graphql";
-import { ErrorAlert, FourOhFour, LoadingInline } from "@repo/ui";
+import { ErrorAlert, FourOhFour, LoadingPart } from "@repo/ui";
 import { useRouter } from "next/router";
 import React from "react";
 
@@ -24,7 +24,7 @@ export function useOrganizationLoading(
   if (organization) {
     return null;
   } else if (loading && !data) {
-    child = <LoadingInline />;
+    child = <LoadingPart />;
   } else if (error) {
     child = <ErrorAlert error={error} />;
   } else {
