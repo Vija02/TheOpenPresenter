@@ -2,17 +2,17 @@
 
 @layer base {
   * {
-    border-color: var(--gray-300);
+    border-color: var(--stroke);
     outline-color: color-mix(in oklab, var(--ring) 50%, transparent);
   }
   body {
-    background-color: var(--color-surface-primary);
-    color: var(--color-primary);
+    background-color: var(--surface-primary);
+    color: var(--primary);
     font-size: var(--text-sm);
     line-height: var(--tw-leading, var(--text-sm--line-height));
   }
   a {
-    color: var(--color-link);
+    color: var(--link);
     @apply hover:underline;
   }
 }

@@ -1,5 +1,6 @@
 import "@repo/tailwind-config/index.css";
 import "@repo/tailwind-config/preflight.css";
+import "@repo/tailwind-config/theme.css";
 import type { Preview } from "@storybook/react";
 
 import { withThemeProvider } from "./withThemeProvider";
