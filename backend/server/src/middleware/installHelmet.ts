@@ -123,12 +123,25 @@ export default async function installHelmet(app: Express) {
 // This is something that is not possible in next.js right now for app pages
 // https://github.com/vercel/next.js/discussions/54907
 const homepathPath = path.join(__dirname, "../../../", "apps/homepage");
-const homepageAppDirContents = fs.readdirSync(
-  path.join(homepathPath, "src/app/(default)"),
-  {
-    withFileTypes: true,
-  },
-);
+let homepageAppDirContents: fs.Dirent[] = [];
+try {
+  // Dev
+  homepageAppDirContents = fs.readdirSync(
+    path.join(homepathPath, "src/app/(default)"),
+    {
+      withFileTypes: true,
+    },
+  );
+} catch {}
+try {
+  // For prod
+  homepageAppDirContents = fs.readdirSync(
+    path.join(homepathPath, ".next/server/app/(default)"),
+    {
+      withFileTypes: true,
+    },
+  );
+} catch {}
 const listOfPages = homepageAppDirContents
   .filter((x) => x.isDirectory())
   .map((x) => `/${x.name}`);
