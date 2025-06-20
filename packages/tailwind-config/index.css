@@ -29,7 +29,7 @@
 
 @keyframes border-blink {
   50% {
-    border-color: var(--destructive);
+    border-color: var(--fill-destructive);
   }
 }
 
