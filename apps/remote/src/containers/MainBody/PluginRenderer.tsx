@@ -3,7 +3,6 @@ import {
   AwarenessStateData,
   Plugin,
   PluginContext,
-  Scene,
   State,
   WebComponentProps,
   YjsWatcher,
@@ -12,149 +11,28 @@ import {
   RemoteBasePluginQuery,
   useCompleteMediaMutation,
   useDeleteMediaMutation,
-  useKeyPressMutation,
 } from "@repo/graphql";
 import { preloader } from "@repo/lib";
 import { logger } from "@repo/observability";
 import {
   useAudioCheck,
   useAwarenessState,
-  useData,
   useError,
   usePluginData,
   usePluginMetaData,
 } from "@repo/shared";
-import { ErrorAlert, LoadingPart, Slider } from "@repo/ui";
+import { ErrorAlert, LoadingPart } from "@repo/ui";
 import { useQuery } from "@tanstack/react-query";
 import { cx } from "class-variance-authority";
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
-import { ErrorBoundary } from "react-error-boundary";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { TypeId, toUUID } from "typeid-js";
 import { useDisposable } from "use-disposable";
-import { useLocation, useRoute } from "wouter";
+import { useRoute } from "wouter";
 import * as Y from "yjs";
-import { useStore } from "zustand";
 
-import { zoomLevelStore } from "../contexts/zoomLevel";
-import { trpcClient } from "../trpc";
-import { EmptyScene } from "./EmptyScene";
-import "./MainBody.css";
-import { TopBar } from "./TopBar";
-
-const MainBody = () => {
-  const [location, navigate] = useLocation();
-
-  const data = useData();
-  const mainState = usePluginData().mainState!;
-  const [keyPressMutate] = useKeyPressMutation();
-  const projectId = usePluginMetaData().projectId;
-
-  const selectedScene = useMemo(
-    () => (data.data[location.slice(1)] ? location.slice(1) : null),
-    [data.data, location],
-  );
-
-  const scenes = useMemo(
-    () =>
-      Object.entries(data.data).filter(([, value]) => value.type === "scene"),
-    [data.data],
-  );
-
-  const { zoomLevel, setZoomLevel } = useStore(zoomLevelStore);
-
-  // On load, select the scene that is active if available
-  useEffect(() => {
-    const currentScene = mainState.renderer["1"]?.currentScene;
-    if (!selectedScene) {
-      if (currentScene) {
-        navigate(`/${currentScene}`, { replace: true });
-      } else if (scenes.length > 0) {
-        navigate(`/${scenes[0]![0]}`, { replace: true });
-      }
-    }
-  }, [mainState.renderer, navigate, scenes, selectedScene]);
-
-  return (
-    <div
-      className="rt--main-body-container"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        // TODO: Expand on this functionality
-        const keysToDetect = [
-          "ArrowLeft",
-          "ArrowRight",
-          "ArrowUp",
-          "ArrowDown",
-          "PageUp",
-          "PageDown",
-        ];
-        if (keysToDetect.includes(e.key)) {
-          keyPressMutate({
-            variables: {
-              keyType:
-                e.key === "ArrowRight" ||
-                e.key === "ArrowDown" ||
-                e.key === "PageDown"
-                  ? "NEXT"
-                  : "PREV",
-              projectId: projectId,
-              // TODO:
-              rendererId: "1",
-            },
-          });
-          e.preventDefault();
-        }
-      }}
-    >
-      <TopBar />
-      <div className="rt--main-body-center">
-        {scenes.map(([sceneId, value]) => (
-          <SceneRenderer
-            key={sceneId}
-            sceneId={sceneId}
-            value={value as Scene}
-          />
-        ))}
-        {scenes.length === 0 && <EmptyScene />}
-      </div>
-      <div className="rt--main-body-footer">
-        <Slider
-          min={0}
-          max={1}
-          value={[zoomLevel]}
-          onValueChange={(val) => setZoomLevel(val[0]!)}
-          step={0.0001}
-          className="max-w-52"
-        />
-      </div>
-    </div>
-  );
-};
-
-const SceneRenderer = React.memo(
-  ({ sceneId, value }: { sceneId: string; value: Scene }) => {
-    return (
-      <>
-        {Object.entries(value.children).map(([pluginId, pluginInfo]) => (
-          <ErrorBoundary key={pluginId} FallbackComponent={ErrorAlert}>
-            <PluginRenderer
-              sceneId={sceneId}
-              pluginId={pluginId}
-              pluginInfo={pluginInfo}
-            />
-          </ErrorBoundary>
-        ))}
-      </>
-    );
-  },
-);
+import { zoomLevelStore } from "../../contexts/zoomLevel";
+import { trpcClient } from "../../trpc";
 
 const PluginRenderer = React.memo(
   ({
@@ -337,4 +215,4 @@ const PluginRenderer = React.memo(
   },
 );
 
-export default MainBody;
+export default PluginRenderer;

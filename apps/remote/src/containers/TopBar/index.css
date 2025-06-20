@@ -1,14 +1,15 @@
 @reference "@repo/tailwind-config/index.css";
+@reference "@repo/tailwind-config/theme.css";
 
 .rt--top-bar {
   @apply flex shrink-0 shadow items-center justify-between flex-wrap p-2;
 }
 
 .rt--top-bar--left {
-  @apply stack-row px-2;
+  @apply stack-row px-2 gap-2 overflow-hidden;
 }
 .rt-top-bar--scene-name {
-  @apply font-bold text-sm;
+  @apply font-bold text-sm pl-1 text-ellipsis whitespace-nowrap overflow-hidden max-w-100;
 }
 .rt-top-bar--toolbar {
   @apply stack-row gap-0;
@@ -35,4 +36,32 @@
 }
 .rt--top-bar--selected {
   @apply animate-border-blink bg-fill-default-selected;
+}
+
+.rt--top-bar--breadcrumb {
+  @apply stack-row border-r-1 pr-3 text-tertiary hidden desktop:flex;
+}
+
+.rt--top-bar--breadcrumb-link {
+  @apply text-xs;
+}
+
+.rt--top-bar--project-name {
+  @apply stack-row text-xs text-secondary cursor-pointer hover:text-primary;
+}
+
+.rt--top-bar--project-settings-icon {
+  @apply size-3 text-primary opacity-50 group-hover:opacity-80;
+}
+
+.rt--top-bar--back-link {
+  @apply desktop:hidden;
+}
+
+.rt--top-bar--scene-settings-icon {
+  @apply size-3;
+}
+
+.rt--top-bar--delete-icon {
+  @apply size-3.5;
 }

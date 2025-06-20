@@ -1,7 +1,7 @@
 import { Button, OverlayToggle } from "@repo/ui";
 import { VscAdd } from "react-icons/vsc";
 
-import SidebarAddSceneModal from "./Sidebar/SidebarAddSceneModal";
+import SidebarAddSceneModal from "../Sidebar/SidebarAddSceneModal";
 
 export const EmptyScene = () => {
   return (

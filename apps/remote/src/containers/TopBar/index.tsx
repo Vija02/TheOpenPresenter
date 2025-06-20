@@ -1,16 +1,18 @@
-import { useData, usePluginData } from "@repo/shared";
-import { Button, OverlayToggle, PopConfirm } from "@repo/ui";
+import { useData, usePluginData, usePluginMetaData } from "@repo/shared";
+import { Button, Link, OverlayToggle, PopConfirm } from "@repo/ui";
 import { cx } from "class-variance-authority";
 import { useMemo } from "react";
 import { RxCross1 } from "react-icons/rx";
-import { VscSettingsGear, VscTrash } from "react-icons/vsc";
+import { VscArrowLeft, VscSettingsGear, VscTrash } from "react-icons/vsc";
 import { useLocation } from "wouter";
 
+import ProjectSettingsModal from "../ProjectSettingsModal";
 import SceneSettingsModal from "../SceneSettingsModal";
 import "./index.css";
 
 export const TopBar = () => {
   const [location] = useLocation();
+  const { orgSlug, pluginMetaData } = usePluginMetaData();
 
   const data = useData();
   const mainState = usePluginData().mainState!;
@@ -20,12 +22,42 @@ export const TopBar = () => {
     [data.data, location],
   );
 
+  const project = useMemo(
+    () => pluginMetaData?.organizationBySlug?.projects.nodes[0],
+    [pluginMetaData?.organizationBySlug?.projects.nodes],
+  );
+
   return (
     <div className="rt--top-bar">
       <div className="rt--top-bar--left">
+        <div className="rt--top-bar--breadcrumb">
+          <Link href={`/o/${orgSlug}`} className="rt--top-bar--breadcrumb-link">
+            Projects
+          </Link>
+          <span className="text-tertiary">/</span>
+          <OverlayToggle
+            toggler={({ onToggle }) => (
+              <span
+                className="rt--top-bar--project-name group"
+                onClick={onToggle}
+              >
+                {project?.name}
+                <VscSettingsGear className="rt--top-bar--project-settings-icon" />
+              </span>
+            )}
+          >
+            <ProjectSettingsModal />
+          </OverlayToggle>
+        </div>
+        <Link href={`/o/${orgSlug}`} className="rt--top-bar--back-link">
+          <VscArrowLeft />
+        </Link>
         {selectedScene && (
           <>
-            <p className="rt-top-bar--scene-name">
+            <p
+              className="rt-top-bar--scene-name"
+              title={data.data[selectedScene]?.name}
+            >
               {data.data[selectedScene]?.name}
             </p>
             <div className="rt-top-bar--toolbar">
@@ -37,7 +69,7 @@ export const TopBar = () => {
                     role="group"
                     onClick={onToggle}
                   >
-                    <VscSettingsGear className="size-3" />
+                    <VscSettingsGear className="rt--top-bar--scene-settings-icon" />
                   </Button>
                 )}
               >
@@ -52,7 +84,7 @@ export const TopBar = () => {
                 }}
               >
                 <Button size="sm" variant="ghost" role="group">
-                  <VscTrash className="size-3.5" />
+                  <VscTrash className="rt--top-bar--delete-icon" />
                 </Button>
               </PopConfirm>
             </div>

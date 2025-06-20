@@ -1,5 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useData, usePluginData } from "@repo/shared";
+import { useUpdateProjectMutation } from "@repo/graphql";
+import { usePluginMetaData } from "@repo/shared";
 import {
   Button,
   Dialog,
@@ -12,40 +13,46 @@ import {
   InputControl,
   OverlayToggleComponentProps,
 } from "@repo/ui";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import z from "zod";
 
-export type SceneSettingsModalPropTypes =
-  Partial<OverlayToggleComponentProps> & { selectedScene: string };
+export type ProjectSettingsModalPropTypes =
+  Partial<OverlayToggleComponentProps> & {};
 
 const formSchema = z.object({
   name: z.string(),
 });
 
-const SceneSettingsModal = ({
+const ProjectSettingsModal = ({
   isOpen,
   onToggle,
   resetData,
-  selectedScene,
-}: SceneSettingsModalPropTypes) => {
-  const data = useData();
-  const mainState = usePluginData().mainState!;
+}: ProjectSettingsModalPropTypes) => {
+  const { pluginMetaData, refetch } = usePluginMetaData();
+
+  const project = useMemo(
+    () => pluginMetaData?.organizationBySlug?.projects.nodes[0],
+    [pluginMetaData?.organizationBySlug?.projects.nodes],
+  );
+
+  const [updateProject, { loading }] = useUpdateProjectMutation();
 
   const handleSubmit = useCallback(
-    ({ name }: { name: string }) => {
-      mainState.data[selectedScene]!.name = name;
+    async ({ name }: { name: string }) => {
+      updateProject({ variables: { id: project?.id, name } }).then(() => {
+        refetch();
 
-      resetData?.();
-      onToggle?.();
-      return Promise.resolve();
+        resetData?.();
+        onToggle?.();
+      });
     },
-    [mainState.data, onToggle, resetData, selectedScene],
+    [onToggle, project?.id, refetch, resetData, updateProject],
   );
   const form = useForm({
     resolver: zodResolver(formSchema),
     values: {
-      name: data.data[selectedScene]?.name ?? "",
+      name: project?.name ?? "",
     },
   });
 
@@ -55,7 +62,7 @@ const SceneSettingsModal = ({
         <DialogContent size="sm" asChild>
           <form onSubmit={form.handleSubmit(handleSubmit)}>
             <DialogHeader>
-              <DialogTitle>Scene Settings</DialogTitle>
+              <DialogTitle>Edit Project</DialogTitle>
             </DialogHeader>
             <DialogBody>
               <div className="stack-col items-start py-2">
@@ -63,7 +70,9 @@ const SceneSettingsModal = ({
               </div>
             </DialogBody>
             <DialogFooter>
-              <Button type="submit">Save</Button>
+              <Button type="submit" isLoading={loading}>
+                Save
+              </Button>
               <Button variant="outline" onClick={onToggle}>
                 Close
               </Button>
@@ -75,4 +84,4 @@ const SceneSettingsModal = ({
   );
 };
 
-export default SceneSettingsModal;
+export default ProjectSettingsModal;

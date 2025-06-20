@@ -1,12 +1,12 @@
 import { PluginRendererState } from "@repo/base-plugin";
-import { useAwareness, useData, usePluginMetaData } from "@repo/shared";
-import { Button, Link, OverlayToggle } from "@repo/ui";
+import { useAwareness, useData } from "@repo/shared";
+import { Button, OverlayToggle } from "@repo/ui";
 import { cx } from "class-variance-authority";
 import { sortBy } from "lodash-es";
 import { FaMicrophoneLines } from "react-icons/fa6";
 import { MdCoPresent, MdVolumeUp } from "react-icons/md";
 import { RiRemoteControlLine } from "react-icons/ri";
-import { VscAdd, VscArrowLeft } from "react-icons/vsc";
+import { VscAdd } from "react-icons/vsc";
 import { useLocation } from "wouter";
 
 import DebugDrawer from "./Debug/DebugDrawer";
@@ -19,7 +19,6 @@ import "./SidebarWeb.css";
 const SidebarWeb = () => {
   const data = useData();
   const [location, navigate] = useLocation();
-  const { orgSlug } = usePluginMetaData();
   const { awarenessData } = useAwareness();
 
   return (
@@ -27,10 +26,6 @@ const SidebarWeb = () => {
       <ResizableBoxWrapper>
         <div>
           <div className="rt--sidebar-web-content">
-            <Link href={`/o/${orgSlug}`}>
-              <VscArrowLeft /> All projects
-            </Link>
-            <hr />
             <div className="rt--sidebar-web-scene-container">
               {sortBy(
                 Object.entries(data.data),

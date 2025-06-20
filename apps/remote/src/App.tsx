@@ -9,8 +9,8 @@ import { useEffect } from "react";
 import { Route, Switch, useParams } from "wouter";
 
 import "./App.css";
-import MainBody from "./containers/MainBody";
-import Sidebar from "./containers/Sidebar";
+import CentralContainer from "./containers/CentralContainer";
+import { TopBar } from "./containers/TopBar";
 
 function App() {
   return (
@@ -39,8 +39,8 @@ function Root() {
           <PluginDataProvider type="remote">
             <AwarenessProvider>
               <div className="rt--app">
-                <Sidebar />
-                <MainBody />
+                <TopBar />
+                <CentralContainer />
               </div>
             </AwarenessProvider>
           </PluginDataProvider>

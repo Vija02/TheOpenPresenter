@@ -1,9 +1,9 @@
 @reference "@repo/tailwind-config/index.css";
 
 .rt--sidebar-wrapper-web {
-  @apply hidden desktop:flex h-screen relative;
+  @apply hidden desktop:flex relative;
 }
 
 .rt--sidebar-wrapper-mobile {
-  @apply desktop:hidden h-screen flex relative;
+  @apply desktop:hidden flex relative;
 }

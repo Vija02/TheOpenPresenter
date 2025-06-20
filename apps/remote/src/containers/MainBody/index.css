@@ -7,6 +7,3 @@
 .rt--main-body-center {
   @apply flex-1 overflow-auto;
 }
-.rt--main-body-footer {
-  @apply flex flex-row-reverse py-3 px-4 border-stroke border-t-1;
-}
