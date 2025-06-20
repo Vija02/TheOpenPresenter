@@ -5,7 +5,7 @@ import {
   useRendererBasePluginQuery,
 } from "@repo/graphql";
 import { ErrorOccurred, LoadingFull } from "@repo/ui";
-import React, { createContext, useContext } from "react";
+import React, { createContext, useContext, useMemo } from "react";
 
 type PluginMetaDataProviderType = {
   pluginMetaData: RendererBasePluginQuery | RemoteBasePluginQuery | null;
@@ -13,6 +13,7 @@ type PluginMetaDataProviderType = {
   orgSlug: string;
   projectSlug: string;
   projectId: string;
+  refetch: () => void;
 };
 
 const initialData: PluginMetaDataProviderType = {
@@ -21,6 +22,7 @@ const initialData: PluginMetaDataProviderType = {
   orgSlug: "",
   projectSlug: "",
   projectId: "",
+  refetch: () => {},
 };
 
 export const PluginMetaDataContext =
@@ -38,20 +40,20 @@ export function PluginMetaDataProvider({
 }>) {
   const useFunc =
     type === "remote" ? useRemoteBasePluginQuery : useRendererBasePluginQuery;
-  const {
-    data: pluginMetaData,
-    loading,
-    error,
-  } = useFunc({
+  const { data, previousData, loading, error, refetch } = useFunc({
     variables: { orgSlug, projectSlug },
   });
+  const pluginMetaData = useMemo(
+    () => data ?? previousData,
+    [data, previousData],
+  );
 
   if (error) {
     console.error(error);
     return <ErrorOccurred />;
   }
 
-  if (loading) {
+  if (loading && !pluginMetaData) {
     return <LoadingFull />;
   }
 
@@ -72,6 +74,7 @@ export function PluginMetaDataProvider({
         orgSlug,
         projectSlug,
         projectId: pluginMetaData?.organizationBySlug?.projects.nodes[0]?.id,
+        refetch,
       }}
     >
       {!!pluginMetaData && children}

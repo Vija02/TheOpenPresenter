@@ -14,6 +14,7 @@ query RemoteBasePlugin($orgSlug: String!, $projectSlug: String!) {
     projects(condition: { slug: $projectSlug }) {
       nodes {
         id
+        name
       }
     }
   }
