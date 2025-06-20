@@ -1,7 +1,7 @@
 mutation UpdateProject(
   $id: UUID!
-  $name: String!
-  $slug: String!
+  $name: String
+  $slug: String
   $targetDate: Datetime
   $categoryId: UUID
 ) {

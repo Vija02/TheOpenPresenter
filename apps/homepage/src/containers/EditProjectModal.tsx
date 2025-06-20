@@ -85,7 +85,6 @@ const EditProjectModal = ({
       await updateProject({
         variables: {
           id: project.id,
-          slug: generateSlug(),
           name: data.name,
           categoryId: data.categoryId,
           targetDate: data.targetDate ? data.targetDate.toDateString() : null,
