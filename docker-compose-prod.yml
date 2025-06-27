@@ -120,7 +120,7 @@ services:
       log_rotation_age=60 -c log_truncate_on_rotation=on -c log_filename=server_log.hour.%H%M
 
   main_db_backup:
-    image: prodrigestivill/postgres-backup-local:16-alpine
+    image: prodrigestivill/postgres-backup-local:17-alpine
     restart: always
     volumes:
       - ./backups/theopenpresenter_db:/backups
