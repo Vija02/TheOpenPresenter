@@ -145,6 +145,7 @@ export async function makeApp({
     await middleware.installE2EServerCommand(app);
   }
   await middleware.installFileUpload(app);
+  await middleware.installProjectImportExport(app);
   await middleware.installTrpc(app);
   await middleware.installPostGraphile(app);
   await middleware.installRemote(app, httpServer!);
