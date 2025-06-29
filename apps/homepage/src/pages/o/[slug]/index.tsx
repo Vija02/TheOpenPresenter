@@ -3,6 +3,7 @@ import { SharedOrgLayout } from "@/components/SharedOrgLayout";
 import { Tag } from "@/components/Tag";
 import CreateProjectModal from "@/containers/CreateProjectModal";
 import EditProjectModal from "@/containers/EditProjectModal";
+import ImportProjectModal from "@/containers/ImportProjectModal";
 import { getServerSidePropsDeviceType, withDeviceType } from "@/lib/DeviceType";
 import { useOrganizationSlug } from "@/lib/permissionHooks/organization";
 import {
@@ -13,6 +14,7 @@ import {
   Link,
   LinkBox,
   LinkOverlay,
+  Stack,
   Text,
   VStack,
 } from "@chakra-ui/react";
@@ -27,7 +29,7 @@ import { DateDisplay, DateDisplayRelative, OverlayToggle } from "@repo/ui";
 import { format } from "date-fns";
 import { NextPage } from "next";
 import { useCallback, useMemo } from "react";
-import { FaPlus } from "react-icons/fa";
+import { FaFileImport, FaPlus } from "react-icons/fa";
 import { MdCoPresent } from "react-icons/md";
 import { VscEdit, VscTrash } from "react-icons/vsc";
 import { toast } from "react-toastify";
@@ -69,25 +71,47 @@ const OrganizationPage: NextPage = () => {
     <SharedOrgLayout title="Dashboard" sharedOrgQuery={query}>
       <Flex px={1} alignItems="center" justifyContent="space-between" mb={3}>
         <Heading mb={0}>Projects</Heading>
-        <OverlayToggle
-          toggler={({ onToggle }) => (
-            <Button
-              colorScheme="green"
-              size="sm"
-              display="flex"
-              gap={2}
-              onClick={onToggle}
-            >
-              <FaPlus />
-              New
-            </Button>
-          )}
-        >
-          <CreateProjectModal
-            organizationId={query.data?.organizationBySlug?.id}
-            categories={query.data?.organizationBySlug?.categories.nodes ?? []}
-          />
-        </OverlayToggle>
+        <Stack direction="row">
+          <OverlayToggle
+            toggler={({ onToggle }) => (
+              <Button
+                colorScheme="green"
+                size="sm"
+                display="flex"
+                gap={2}
+                onClick={onToggle}
+              >
+                <FaPlus />
+                New
+              </Button>
+            )}
+          >
+            <CreateProjectModal
+              organizationId={query.data?.organizationBySlug?.id}
+              categories={
+                query.data?.organizationBySlug?.categories.nodes ?? []
+              }
+            />
+          </OverlayToggle>
+          <OverlayToggle
+            toggler={({ onToggle }) => (
+              <Button
+                variant="outline"
+                size="sm"
+                display="flex"
+                gap={2}
+                onClick={onToggle}
+              >
+                <FaFileImport />
+                Import
+              </Button>
+            )}
+          >
+            <ImportProjectModal
+              organizationId={query.data?.organizationBySlug?.id}
+            />
+          </OverlayToggle>
+        </Stack>
       </Flex>
 
       <VStack alignItems="center" marginBottom={2} flexWrap="wrap" spacing={0}>

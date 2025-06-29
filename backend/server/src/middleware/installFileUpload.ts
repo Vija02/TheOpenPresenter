@@ -21,7 +21,8 @@ import { Readable } from "stream";
 import { pipeline } from "stream/promises";
 import { TypeId, fromString, toUUID, typeidUnboxed } from "typeid-js";
 
-import { getAuthPgPool, getRootPgPool } from "./installDatabasePools";
+import { withUserPgPool } from "../utils/withUserPgPool";
+import { getRootPgPool } from "./installDatabasePools";
 
 // TODO: File size validation & increase caddy max_size
 export default (app: Express) => {
@@ -380,15 +381,7 @@ const checkUserAuth = async (
   app: Express,
   { organizationId, sessionId }: { organizationId: string; sessionId: string },
 ) => {
-  const authPgPool = getAuthPgPool(app);
-  const client = await authPgPool.connect();
-  try {
-    await client.query("BEGIN");
-
-    await client.query(
-      `select set_config('role', $1::text, true), set_config('jwt.claims.session_id', $2::text, true)`,
-      [process.env.DATABASE_VISITOR, sessionId],
-    );
+  return await withUserPgPool(app, sessionId, async (client) => {
     const {
       rows: [row],
     } = await client.query(
@@ -403,11 +396,7 @@ const checkUserAuth = async (
     } = await client.query("select app_public.current_user_id() as id");
 
     return user.id;
-  } catch (e) {
-    throw e;
-  } finally {
-    client.release();
-  }
+  });
 };
 
 interface OurRequest extends http.IncomingMessage {

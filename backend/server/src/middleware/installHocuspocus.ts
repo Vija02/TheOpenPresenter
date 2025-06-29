@@ -10,7 +10,8 @@ import * as Y from "yjs";
 
 import { getUpgradeHandlers, getWebsocketMiddlewares } from "../app";
 import { serverPluginApi } from "../pluginManager";
-import { getAuthPgPool, getRootPgPool } from "./installDatabasePools";
+import { withUserPgPool } from "../utils/withUserPgPool";
+import { getRootPgPool } from "./installDatabasePools";
 
 const disposableDocumentManager: DisposableDocumentManager =
   new DisposableDocumentManager();
@@ -26,18 +27,7 @@ export default async function installHocuspocus(app: Express) {
       );
     },
     onAuthenticate: async (data) => {
-      const authPgPool = getAuthPgPool(app);
-
-      const sessionId = data.context.session_id;
-
-      const client = await authPgPool.connect();
-      try {
-        await client.query("BEGIN");
-
-        await client.query(
-          `select set_config('role', $1::text, true), set_config('jwt.claims.session_id', $2::text, true)`,
-          [process.env.DATABASE_VISITOR, sessionId],
-        );
+      await withUserPgPool(app, data.context.session_id, async (client) => {
         const {
           rows: [row],
         } = await client.query(
@@ -47,14 +37,7 @@ export default async function installHocuspocus(app: Express) {
         if (!row) {
           throw new Error("Not Authorized");
         }
-
-        await client.query("COMMIT");
-      } catch (e) {
-        await client.query("ROLLBACK");
-        throw e;
-      } finally {
-        client.release();
-      }
+      });
     },
     onLoadDocument: async (data) => {
       const rootPgPool = getRootPgPool(app);

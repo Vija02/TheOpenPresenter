@@ -25,6 +25,7 @@ import { toast } from "react-toastify";
 import WebSocket from "ws";
 
 import { GraphileApolloLink } from "./GraphileApolloLink";
+import { getCSRFToken } from "./getCSRFToken";
 
 let wsClient: Client | null = null;
 
@@ -98,12 +99,7 @@ function makeSSRLink(req: any, res: any) {
 function makeStandardLink(isServer: boolean) {
   let CSRF_TOKEN;
   if (!isServer) {
-    const nextDataEl = document.getElementById("__NEXT_DATA__");
-    if (!nextDataEl || !nextDataEl.textContent) {
-      throw new Error("Cannot read from __NEXT_DATA__ element");
-    }
-    const data = JSON.parse(nextDataEl.textContent);
-    CSRF_TOKEN = data.query.CSRF_TOKEN;
+    CSRF_TOKEN = getCSRFToken();
   }
   const httpLink = new HttpLink({
     uri: `/graphql`,
