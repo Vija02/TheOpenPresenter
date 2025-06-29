@@ -8021,7 +8021,7 @@ __metadata:
     "@uppy/tus": "npm:^4.1.5"
     "@vitejs/plugin-react-swc": "npm:^3.7.2"
     autoprefixer: "npm:^10.4.21"
-    axios: "npm:^1.7.9"
+    axios: "npm:^1.10.0"
     concurrently: "npm:^9.1.2"
     eslint: "npm:^8.57.1"
     http-proxy-middleware: "npm:^3.0.3"
@@ -8074,7 +8074,7 @@ __metadata:
     "@types/react-highlight-words": "npm:^0.20.0"
     "@vitejs/plugin-react-swc": "npm:^3.7.2"
     autoprefixer: "npm:^10.4.21"
-    axios: "npm:^1.7.9"
+    axios: "npm:^1.10.0"
     concurrently: "npm:^9.1.2"
     eslint: "npm:^8.57.1"
     lodash-es: "npm:^4.17.21"
@@ -8339,6 +8339,7 @@ __metadata:
     "@types/react-resizable": "npm:^3.0.8"
     "@typescript-eslint/parser": "npm:^7.18.0"
     "@vitejs/plugin-react-swc": "npm:^3.7.2"
+    axios: "npm:^1.10.0"
     class-variance-authority: "npm:^0.7.1"
     eslint: "npm:^8.57.1"
     graphql: "npm:^15.9.0"
@@ -13649,14 +13650,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"axios@npm:^1.7.9":
-  version: 1.7.9
-  resolution: "axios@npm:1.7.9"
+"axios@npm:^1.10.0":
+  version: 1.10.0
+  resolution: "axios@npm:1.10.0"
   dependencies:
     follow-redirects: "npm:^1.15.6"
     form-data: "npm:^4.0.0"
     proxy-from-env: "npm:^1.1.0"
-  checksum: 10c0/b7a41e24b59fee5f0f26c1fc844b45b17442832eb3a0fb42dd4f1430eb4abc571fe168e67913e8a1d91c993232bd1d1ab03e20e4d1fee8c6147649b576fc1b0b
+  checksum: 10c0/2239cb269cc789eac22f5d1aabd58e1a83f8f364c92c2caa97b6f5cbb4ab2903d2e557d9dc670b5813e9bcdebfb149e783fb8ab3e45098635cd2f559b06bd5d8
   languageName: node
   linkType: hard
 
