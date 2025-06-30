@@ -45,13 +45,13 @@ const ProjectSettingsModal = ({
     exportProject().then((x) => {
       const link = document.createElement("a");
       link.href = window.URL.createObjectURL(new Blob([x.data]));
-      link.download = "filename.top";
+      link.download = `${project?.name}.top`;
       link.click();
       window.URL.revokeObjectURL(link.href);
 
       toast.success("Project exported!");
     });
-  }, [exportProject]);
+  }, [exportProject, project?.name]);
 
   const [updateProject, { loading }] = useUpdateProjectMutation();
 
