@@ -13,6 +13,7 @@ import installPassport from "./installPassport";
 import installPluginRoute from "./installPluginRoute";
 import installPluginStatic from "./installPluginStatic";
 import installPostGraphile from "./installPostGraphile";
+import installProjectImportExport from "./installProjectImportExport";
 import installRemote from "./installRemote";
 import installRenderer from "./installRenderer";
 import installSSR from "./installSSR";
@@ -38,6 +39,7 @@ export {
   installPluginRoute,
   installPluginStatic,
   installPostGraphile,
+  installProjectImportExport,
   installRemote,
   installRenderer,
   installSSR,

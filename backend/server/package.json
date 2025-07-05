@@ -25,6 +25,7 @@
     "@repo/config": "*",
     "@repo/lib": "*",
     "@repo/observability": "*",
+    "@repo/portable-file": "*",
     "@trpc/server": "^11.1.2",
     "@tus/server": "^1.10.1",
     "@types/connect-pg-simple": "^7.0.3",

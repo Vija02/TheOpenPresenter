@@ -15,7 +15,11 @@ import {
 } from "@repo/ui";
 import { useCallback, useMemo } from "react";
 import { useForm } from "react-hook-form";
+import { PiExportLight } from "react-icons/pi";
+import { toast } from "react-toastify";
 import z from "zod";
+
+import { useExportProject } from "../api/useExportProject";
 
 export type ProjectSettingsModalPropTypes =
   Partial<OverlayToggleComponentProps> & {};
@@ -35,6 +39,19 @@ const ProjectSettingsModal = ({
     () => pluginMetaData?.organizationBySlug?.projects.nodes[0],
     [pluginMetaData?.organizationBySlug?.projects.nodes],
   );
+  const { mutateAsync: exportProject, isPending: exportLoading } =
+    useExportProject(project?.id);
+  const onExport = useCallback(() => {
+    exportProject().then((x) => {
+      const link = document.createElement("a");
+      link.href = window.URL.createObjectURL(new Blob([x.data]));
+      link.download = `${project?.name}.top`;
+      link.click();
+      window.URL.revokeObjectURL(link.href);
+
+      toast.success("Project exported!");
+    });
+  }, [exportProject, project?.name]);
 
   const [updateProject, { loading }] = useUpdateProjectMutation();
 
@@ -69,13 +86,24 @@ const ProjectSettingsModal = ({
                 <InputControl control={form.control} label="Name" name="name" />
               </div>
             </DialogBody>
-            <DialogFooter>
-              <Button type="submit" isLoading={loading}>
-                Save
-              </Button>
-              <Button variant="outline" onClick={onToggle}>
-                Close
-              </Button>
+            <DialogFooter className="justify-between">
+              <div>
+                <Button
+                  variant="outline"
+                  onClick={onExport}
+                  isLoading={exportLoading}
+                >
+                  <PiExportLight /> Export Project
+                </Button>
+              </div>
+              <div className="stack-row">
+                <Button type="submit" isLoading={loading}>
+                  Save
+                </Button>
+                <Button variant="outline" onClick={onToggle}>
+                  Close
+                </Button>
+              </div>
             </DialogFooter>
           </form>
         </DialogContent>
