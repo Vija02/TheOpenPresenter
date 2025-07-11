@@ -6,6 +6,7 @@ const files = [
   "./backend/config/dist/index.js",
   "./backend/config/env.js",
   "./packages/lib/dist/index.js",
+  "./packages/portable-file/dist/index.js",
   "./packages/observability/dist/index.js",
   "./packages/observability/initTracing.js",
   "./backend/backend-shared/dist/index.js",
