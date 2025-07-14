@@ -4,16 +4,22 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
-  build_and_publish:
+  build:
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -39,7 +45,7 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=registry,ref=ghcr.io/vija02/theopenpresenter_server:buildcache
-          cache-to: type=registry,ref=ghcr.io/vija02/theopenpresenter_server:buildcache,mode=max,image-manifest=true
+          cache-to: ${{ github.event_name == 'push' && 'type=registry,ref=ghcr.io/vija02/theopenpresenter_server:buildcache,mode=max,image-manifest=true' || '' }}
           build-args: SHA=${{ github.sha }}
 
 env:

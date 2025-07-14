@@ -6,10 +6,15 @@ on:
       - main
     paths:
       - "postgresExtensions/**"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "postgresExtensions/**"
   workflow_dispatch:
 
 jobs:
-  build_and_publish:
+  build:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -17,7 +22,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Log into registry ${{ env.REGISTRY }}
         if: github.event_name != 'pull_request'
