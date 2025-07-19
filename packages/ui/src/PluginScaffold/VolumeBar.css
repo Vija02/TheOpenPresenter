@@ -6,7 +6,7 @@
   }
 
   .ui--volume-bar-root {
-    @apply flex flex-col flex-1 items-center relative;
+    @apply flex flex-col flex-1 items-center relative touch-none select-none;
   }
 
   .ui--volume-bar-track {
