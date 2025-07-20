@@ -7,6 +7,7 @@ import {
   keyPressTypes,
 } from "@repo/base-plugin";
 import { gql, makeExtendSchemaPlugin } from "graphile-utils";
+import { Doc } from "yjs";
 
 import { OurGraphQLContext } from "../graphile.config";
 import { serverPluginApi } from "../pluginManager";
@@ -84,6 +85,7 @@ export const pluginKeyPress = makeExtendSchemaPlugin(() => ({
               handler?.callback(
                 keyType,
                 {
+                  document: document as Doc,
                   pluginData: plugin?.get("pluginData"),
                   rendererData: renderer.get(pluginId),
                   pluginContext: {

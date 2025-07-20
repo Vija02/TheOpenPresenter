@@ -1,3 +1,5 @@
+import { Doc } from "yjs";
+
 import {
   IDisposable,
   KeyPressType,
@@ -45,6 +47,7 @@ export type RegisterKeyPressHandlerCallback<
   data: {
     pluginData: ObjectToTypedMap<PluginDataType>;
     rendererData: ObjectToTypedMap<RendererDataType>;
+    document: Doc;
     pluginContext: PluginContext;
   },
   next: () => void,
