@@ -18,13 +18,17 @@ import {
 } from "./consts";
 import { getSongData } from "./data";
 import { convertMWLData } from "./importer/myworshiplist";
+import { getMaxIndex, processSong } from "./songHelpers";
 import {
   MyWorshipListImportedData,
   PluginBaseData,
   PluginRendererData,
+  Song,
 } from "./types";
 
-export const init = (serverPluginApi: ServerPluginApi) => {
+export const init = (
+  serverPluginApi: ServerPluginApi<PluginBaseData, PluginRendererData>,
+) => {
   serverPluginApi.registerTrpcAppRouter(getAppRouter);
   serverPluginApi.onPluginDataCreated(pluginName, onPluginDataCreated);
   serverPluginApi.onPluginDataLoaded(pluginName, onPluginDataLoaded);
@@ -52,6 +56,74 @@ export const init = (serverPluginApi: ServerPluginApi) => {
   serverPluginApi.registerRendererViewWebComponent(
     pluginName,
     rendererWebComponentTag,
+  );
+
+  serverPluginApi.registerKeyPressHandler(
+    pluginName,
+    (keyType, { document, pluginData, rendererData }) => {
+      const songs: Song[] = pluginData.get("songs")?.toJSON() ?? [];
+      const songIds = songs.map((x) => x.id);
+
+      const currentSongId = rendererData.get("songId");
+      const currentIndex = rendererData.get("currentIndex");
+
+      // If nothing yet, we can just set it to the first item
+      if (currentIndex === null || currentIndex === undefined) {
+        if (songIds.length > 0) {
+          document.transact(() => {
+            rendererData.set("songId", songIds[0]!);
+            rendererData.set("currentIndex", 0);
+          });
+        }
+        return;
+      }
+
+      const currentSong = songs.find((x) => x.id === currentSongId);
+      const currentSongMaxIndex = getMaxIndex(
+        processSong(currentSong?.content ?? ""),
+      );
+
+      // Then handle next
+      if (keyType === "NEXT") {
+        const newIndex = (currentIndex ?? 0) + 1;
+
+        // Handle going to next song if at the end
+        if (newIndex >= currentSongMaxIndex) {
+          const nextSongId =
+            songIds[songIds.findIndex((x) => x === currentSongId) + 1];
+          if (nextSongId) {
+            document.transact(() => {
+              rendererData.set("songId", nextSongId);
+              rendererData.set("currentIndex", 0);
+            });
+          }
+        } else {
+          rendererData.set("currentIndex", newIndex);
+        }
+      } else {
+        // Then handle previous
+        const newIndex = (currentIndex ?? 0) - 1;
+
+        // Handle going to previous song if at the beginning
+        if (newIndex < 0) {
+          const prevSongId =
+            songIds[songIds.findIndex((x) => x === currentSongId) - 1];
+          if (prevSongId) {
+            const prevSongMaxIndex = getMaxIndex(
+              processSong(
+                songs.find((x) => x.id === prevSongId)?.content ?? "",
+              ),
+            );
+            document.transact(() => {
+              rendererData.set("songId", prevSongId);
+              rendererData.set("currentIndex", prevSongMaxIndex - 1);
+            });
+          }
+        } else {
+          rendererData.set("currentIndex", newIndex);
+        }
+      }
+    },
   );
 };
 

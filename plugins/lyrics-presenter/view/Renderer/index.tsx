@@ -2,8 +2,8 @@ import { useMemo } from "react";
 
 import { Song } from "../../src";
 import { getSlideStyle } from "../../src/slideStyle";
+import { processSong } from "../../src/songHelpers";
 import { usePluginAPI } from "../pluginApi";
-import { processSong } from "../songHelpers";
 import FullSongRenderView from "./FullSongRenderView";
 import SectionsRenderView from "./SectionsRenderView";
 import "./index.css";

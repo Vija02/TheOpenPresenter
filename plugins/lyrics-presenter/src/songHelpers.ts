@@ -1,4 +1,4 @@
-import { GroupedData, groupData, removeChords } from "../src/processLyrics";
+import { GroupedData, groupData, removeChords } from "./processLyrics";
 
 export const cleanWhiteSpace = (content: string[]) => {
   return content.map((x) => x.replace(/\s+/g, " ").trim());
@@ -38,4 +38,15 @@ export const processSong = (content: string) => {
   const groupedData = groupData(cleanData);
 
   return suppressStartAndEndEmptyLines(groupedData);
+};
+
+export const getMaxIndex = (
+  groupedData: {
+    slides: string[][];
+    heading: string;
+  }[],
+) => {
+  return groupedData
+    .map((x) => x.slides.length)
+    .reduce((acc, val) => acc + val, 0);
 };
