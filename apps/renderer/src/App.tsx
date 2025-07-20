@@ -5,6 +5,7 @@ import {
   PluginDataProvider,
   PluginMetaDataProvider,
 } from "@repo/shared";
+import { useHandleKeyPress } from "@repo/shared";
 import { lazy, useEffect } from "react";
 import { Route, Switch, useParams } from "wouter";
 
@@ -38,15 +39,7 @@ function Root() {
         <AudioCheckProvider>
           <PluginDataProvider type="renderer">
             <AwarenessProvider>
-              <div style={{ width: "100vw", height: "100vh" }}>
-                {window.__TAURI_INTERNALS__ ? (
-                  <TauriHandler>
-                    <Body />
-                  </TauriHandler>
-                ) : (
-                  <Body />
-                )}
-              </div>
+              <Inner />
             </AwarenessProvider>
           </PluginDataProvider>
         </AudioCheckProvider>
@@ -54,6 +47,26 @@ function Root() {
     </PluginMetaDataProvider>
   );
 }
+
+const Inner = () => {
+  const handleKeyPress = useHandleKeyPress();
+
+  return (
+    <div
+      style={{ width: "100vw", height: "100vh" }}
+      tabIndex={0}
+      onKeyDown={handleKeyPress}
+    >
+      {window.__TAURI_INTERNALS__ ? (
+        <TauriHandler>
+          <Body />
+        </TauriHandler>
+      ) : (
+        <Body />
+      )}
+    </div>
+  );
+};
 
 function RedirectToOrg() {
   useEffect(() => {
