@@ -1,4 +1,4 @@
-import { expect, test } from "../../../fixtures/projectFixture";
+import { expect, test } from "../../../../../fixtures/projectFixture";
 
 test.describe("Slides Plugin", () => {
   test.beforeEach(
