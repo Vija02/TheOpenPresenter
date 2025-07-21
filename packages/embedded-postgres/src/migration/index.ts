@@ -1,6 +1,6 @@
+import type { DatabaseUrls, MigrationConfig } from "../types/index.js";
 import { runCommand } from "../utils/command.js";
 import { getGraphilePaths } from "../utils/paths.js";
-import type { MigrationConfig, DatabaseUrls } from "../types/index.js";
 
 export class MigrationManager {
   private config: MigrationConfig;
@@ -14,7 +14,7 @@ export class MigrationManager {
     projectRoot: string,
     databaseUrls: DatabaseUrls,
     databaseAuthenticator: string,
-    databaseVisitor: string
+    databaseVisitor: string,
   ) {
     this.config = config;
     this.projectRoot = projectRoot;
@@ -25,7 +25,7 @@ export class MigrationManager {
 
   async resetDatabase(): Promise<void> {
     const { nodeBinaryPath = "node", gmrcPath } = this.config;
-    
+
     if (!gmrcPath) {
       throw new Error("gmrcPath is required for database reset");
     }
@@ -43,14 +43,14 @@ export class MigrationManager {
           DATABASE_AUTHENTICATOR: this.databaseAuthenticator,
           DATABASE_VISITOR: this.databaseVisitor,
         },
-      }
+      },
     );
     console.log("Database schema reset completed");
   }
 
   async runMigrations(): Promise<void> {
     const { nodeBinaryPath = "node", gmrcPath } = this.config;
-    
+
     if (!gmrcPath) {
       throw new Error("gmrcPath is required for migrations");
     }
@@ -68,14 +68,14 @@ export class MigrationManager {
           DATABASE_AUTHENTICATOR: this.databaseAuthenticator,
           DATABASE_VISITOR: this.databaseVisitor,
         },
-      }
+      },
     );
     console.log("Database migrations completed");
   }
 
   async watchMigrations(): Promise<void> {
     const { nodeBinaryPath = "node", gmrcPath } = this.config;
-    
+
     if (!gmrcPath) {
       throw new Error("gmrcPath is required for migration watching");
     }
@@ -93,7 +93,7 @@ export class MigrationManager {
           DATABASE_AUTHENTICATOR: this.databaseAuthenticator,
           DATABASE_VISITOR: this.databaseVisitor,
         },
-      }
+      },
     );
   }
 }

@@ -1,15 +1,16 @@
 import EmbeddedPostgres from "embedded-postgres";
 import { existsSync } from "fs";
+import { resolve } from "path";
 import type { Client } from "pg";
-import { getAppDataPaths } from "./utils/paths.js";
+
 import { ExtensionManager } from "./extensions/index.js";
 import { MigrationManager } from "./migration/index.js";
 import type {
-  EmbeddedPostgresConfig,
-  DatabaseRoles,
   ConnectionInfo,
   DatabaseUrls,
+  EmbeddedPostgresConfig,
 } from "./types/index.js";
+import { getAppDataPaths } from "./utils/paths.js";
 
 export class EmbeddedPostgresManager {
   private pg: any | null = null;
@@ -41,16 +42,17 @@ export class EmbeddedPostgresManager {
           name: "theopenpresenter_visitor",
         },
       },
-      migration: config.migration || {},
-      extensions: config.extensions || { installPgUuidv7: true },
+      migration: config.migration || {
+        gmrcPath: resolve(__dirname, "../../../backend/db/.gmrc.js"),
+      },
     };
 
-    // Set up paths
+    // Set up databaseDir
     const paths = getAppDataPaths(this.config.appDataFolderName);
     this.config.databaseDir = config.databaseDir || paths.databaseDir;
 
     // Initialize extension manager
-    this.extensionManager = new ExtensionManager(this.config.projectRoot, this.config.extensions);
+    this.extensionManager = new ExtensionManager(this.config.projectRoot);
 
     // Set up signal handlers for graceful shutdown
     this.setupSignalHandlers();
@@ -109,8 +111,9 @@ export class EmbeddedPostgresManager {
         this.config.projectRoot,
         this.getDatabaseUrls(),
         this.config.roles.authenticator.name,
-        this.config.roles.visitor.name
+        this.config.roles.visitor.name,
       );
+      this.migrationManager.runMigrations();
     }
   }
 
@@ -128,7 +131,9 @@ export class EmbeddedPostgresManager {
 
   async runMigrations(): Promise<void> {
     if (!this.migrationManager) {
-      throw new Error("Migration manager not available. Ensure gmrcPath is configured and database is started.");
+      throw new Error(
+        "Migration manager not available. Ensure gmrcPath is configured and database is started.",
+      );
     }
 
     await this.migrationManager.runMigrations();
@@ -136,7 +141,9 @@ export class EmbeddedPostgresManager {
 
   async resetDatabase(): Promise<void> {
     if (!this.migrationManager) {
-      throw new Error("Migration manager not available. Ensure gmrcPath is configured and database is started.");
+      throw new Error(
+        "Migration manager not available. Ensure gmrcPath is configured and database is started.",
+      );
     }
 
     await this.migrationManager.resetDatabase();
@@ -144,7 +151,9 @@ export class EmbeddedPostgresManager {
 
   async watchMigrations(): Promise<void> {
     if (!this.migrationManager) {
-      throw new Error("Migration manager not available. Ensure gmrcPath is configured and database is started.");
+      throw new Error(
+        "Migration manager not available. Ensure gmrcPath is configured and database is started.",
+      );
     }
 
     await this.migrationManager.watchMigrations();
@@ -168,7 +177,7 @@ export class EmbeddedPostgresManager {
   getDatabaseUrls(): DatabaseUrls {
     const ownerUrl = this.getConnectionString();
     const rootUrl = `postgres://postgres:password@localhost:${this.config.port}/postgres`;
-    
+
     return {
       databaseUrl: ownerUrl,
       rootDatabaseUrl: rootUrl,
@@ -189,7 +198,7 @@ export class EmbeddedPostgresManager {
     }
 
     let client: Client | null = null;
-    
+
     try {
       // Initialize and start PostgreSQL
       await this.pg.initialise();
@@ -202,7 +211,7 @@ export class EmbeddedPostgresManager {
       if (!client) {
         throw new Error("Failed to get PostgreSQL client");
       }
-      
+
       await client.connect();
       await this.createDatabaseRoles(client);
 
@@ -213,9 +222,9 @@ export class EmbeddedPostgresManager {
           this.config.projectRoot,
           this.getDatabaseUrls(),
           this.config.roles.authenticator.name,
-          this.config.roles.visitor.name
+          this.config.roles.visitor.name,
         );
-        
+
         console.log("Running initial database reset...");
         await migrationManager.resetDatabase();
       }
@@ -238,12 +247,12 @@ export class EmbeddedPostgresManager {
 
     // Create owner role
     await client.query(
-      `CREATE ROLE ${owner.name} WITH LOGIN PASSWORD '${owner.password}' SUPERUSER;`
+      `CREATE ROLE ${owner.name} WITH LOGIN PASSWORD '${owner.password}' SUPERUSER;`,
     );
 
     // Create authenticator role
     await client.query(
-      `CREATE ROLE ${authenticator.name} WITH LOGIN PASSWORD '${authenticator.password}' NOINHERIT;`
+      `CREATE ROLE ${authenticator.name} WITH LOGIN PASSWORD '${authenticator.password}' NOINHERIT;`,
     );
 
     // Create visitor role
