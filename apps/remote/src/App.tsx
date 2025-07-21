@@ -4,6 +4,7 @@ import {
   ErrorProvider,
   PluginDataProvider,
   PluginMetaDataProvider,
+  useHandleKeyPress,
 } from "@repo/shared";
 import { useEffect } from "react";
 import { Route, Switch, useParams } from "wouter";
@@ -38,10 +39,7 @@ function Root() {
         <AudioCheckProvider>
           <PluginDataProvider type="remote">
             <AwarenessProvider>
-              <div className="rt--app">
-                <TopBar />
-                <CentralContainer />
-              </div>
+              <Inner />
             </AwarenessProvider>
           </PluginDataProvider>
         </AudioCheckProvider>
@@ -49,6 +47,17 @@ function Root() {
     </PluginMetaDataProvider>
   );
 }
+
+const Inner = () => {
+  const handleKeyPress = useHandleKeyPress();
+
+  return (
+    <div className="rt--app" tabIndex={0} onKeyDown={handleKeyPress}>
+      <TopBar />
+      <CentralContainer />
+    </div>
+  );
+};
 
 function RedirectToOrg() {
   useEffect(() => {
