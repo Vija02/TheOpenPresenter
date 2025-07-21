@@ -1,10 +1,14 @@
+import { LyricsPlugin } from "../pages/LyricsPlugin";
 import { OrganizationPage } from "../pages/OrganizationPage";
 import { ProjectPage } from "../pages/ProjectPage";
+import { VideoPlayerPlugin } from "../pages/VideoPlayerPlugin";
 import { test as base } from "./baseFixture";
 
 type ProjectFixture = {
   projectPage: ProjectPage;
   organizationPage: OrganizationPage;
+  lyricsPlugin: LyricsPlugin;
+  videoPlayerPlugin: VideoPlayerPlugin;
   loginAndGoToProject: () => void;
   uppyUploadFile: (fileName: string) => void;
 };
@@ -17,6 +21,14 @@ export const test = base.extend<ProjectFixture>({
   projectPage: async ({ page }, use) => {
     const projectPage = new ProjectPage(page);
     await use(projectPage);
+  },
+  lyricsPlugin: async ({ page }, use) => {
+    const lyricsPlugin = new LyricsPlugin(page);
+    await use(lyricsPlugin);
+  },
+  videoPlayerPlugin: async ({ page }, use) => {
+    const videoPlayerPlugin = new VideoPlayerPlugin(page);
+    await use(videoPlayerPlugin);
   },
   loginAndGoToProject: async ({ e2eCommand }, use) => {
     const fn = async () => {
