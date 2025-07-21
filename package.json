@@ -28,6 +28,7 @@
     "worker": "yarn workspace @repo/worker"
   },
   "devDependencies": {
+    "@repo/embedded-postgres": "*",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/react": "^16.1.0",
     "@vercel/nft": "^0.29.2",

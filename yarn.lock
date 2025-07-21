@@ -7822,7 +7822,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@repo/embedded-postgres@workspace:packages/embedded-postgres":
+"@repo/embedded-postgres@npm:*, @repo/embedded-postgres@workspace:packages/embedded-postgres":
   version: 0.0.0-use.local
   resolution: "@repo/embedded-postgres@workspace:packages/embedded-postgres"
   dependencies:
@@ -29076,6 +29076,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "theopenpresenter@workspace:."
   dependencies:
+    "@repo/embedded-postgres": "npm:*"
     "@testing-library/dom": "npm:^10.4.0"
     "@testing-library/react": "npm:^16.1.0"
     "@vercel/nft": "npm:^0.29.2"
