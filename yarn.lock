@@ -2565,6 +2565,63 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@embedded-postgres/darwin-arm64@npm:^17.4.0-beta.15":
+  version: 17.4.0-beta.15
+  resolution: "@embedded-postgres/darwin-arm64@npm:17.4.0-beta.15"
+  conditions: os=darwin & cpu=arm64
+  languageName: node
+  linkType: hard
+
+"@embedded-postgres/darwin-x64@npm:^17.4.0-beta.15":
+  version: 17.4.0-beta.15
+  resolution: "@embedded-postgres/darwin-x64@npm:17.4.0-beta.15"
+  conditions: os=darwin & cpu=x64
+  languageName: node
+  linkType: hard
+
+"@embedded-postgres/linux-arm64@npm:^17.4.0-beta.15":
+  version: 17.4.0-beta.15
+  resolution: "@embedded-postgres/linux-arm64@npm:17.4.0-beta.15"
+  conditions: os=linux & cpu=arm64
+  languageName: node
+  linkType: hard
+
+"@embedded-postgres/linux-arm@npm:^17.4.0-beta.15":
+  version: 17.4.0-beta.15
+  resolution: "@embedded-postgres/linux-arm@npm:17.4.0-beta.15"
+  conditions: os=linux & cpu=arm
+  languageName: node
+  linkType: hard
+
+"@embedded-postgres/linux-ia32@npm:^17.4.0-beta.15":
+  version: 17.4.0-beta.15
+  resolution: "@embedded-postgres/linux-ia32@npm:17.4.0-beta.15"
+  conditions: os=linux & cpu=ia32
+  languageName: node
+  linkType: hard
+
+"@embedded-postgres/linux-ppc64@npm:^17.4.0-beta.15":
+  version: 17.4.0-beta.15
+  resolution: "@embedded-postgres/linux-ppc64@npm:17.4.0-beta.15"
+  conditions: os=linux & cpu=ppc64
+  languageName: node
+  linkType: hard
+
+"@embedded-postgres/linux-x64@npm:^17.4.0-beta.15":
+  version: 17.4.0-beta.15
+  resolution: "@embedded-postgres/linux-x64@npm:17.4.0-beta.15"
+  conditions: os=linux & cpu=x64
+  languageName: node
+  linkType: hard
+
+"@embedded-postgres/windows-x64@npm:17.4.0-beta.15, @embedded-postgres/windows-x64@npm:^17.4.0-beta.15":
+  version: 17.4.0-beta.15
+  resolution: "@embedded-postgres/windows-x64@npm:17.4.0-beta.15"
+  checksum: 10c0/b3f7b30bb15ddbcdc627e6ae2c3e3cb54ea2795a23eec989c01c210922649f74d6b744dd5fae106396a772053d06adab8d5ae3a70283d08f28598244959e580f
+  conditions: os=win32 & cpu=x64
+  languageName: node
+  linkType: hard
+
 "@emnapi/core@npm:^1.4.3":
   version: 1.4.3
   resolution: "@emnapi/core@npm:1.4.3"
@@ -7765,6 +7822,29 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@repo/embedded-postgres@workspace:packages/embedded-postgres":
+  version: 0.0.0-use.local
+  resolution: "@repo/embedded-postgres@workspace:packages/embedded-postgres"
+  dependencies:
+    "@embedded-postgres/windows-x64": "npm:17.4.0-beta.15"
+    "@repo/typescript-config": "npm:*"
+    "@types/node": "npm:^20.0.0"
+    "@types/node-fetch": "npm:^2.6.11"
+    "@types/pg": "npm:^8.6.6"
+    "@types/tar": "npm:^6.1.11"
+    embedded-postgres: "npm:17.4.0-beta.15"
+    graphile-migrate: "npm:^1.4.1"
+    node-fetch: "npm:^3.3.2"
+    pg: "npm:^8.9.0"
+    platform-folders: "npm:^0.6.0"
+    tar: "npm:^7.4.3"
+    tsup: "npm:^8.3.6"
+    typescript: "npm:^5.7.2"
+  peerDependencies:
+    "@napi-rs/triples": ^1.2.0
+  languageName: unknown
+  linkType: soft
+
 "@repo/eslint-config@npm:*, @repo/eslint-config@workspace:packages/eslint-config":
   version: 0.0.0-use.local
   resolution: "@repo/eslint-config@workspace:packages/eslint-config"
@@ -11586,6 +11666,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/node-fetch@npm:^2.6.11":
+  version: 2.6.12
+  resolution: "@types/node-fetch@npm:2.6.12"
+  dependencies:
+    "@types/node": "npm:*"
+    form-data: "npm:^4.0.0"
+  checksum: 10c0/7693acad5499b7df2d1727d46cff092a63896dc04645f36b973dd6dd754a59a7faba76fcb777bdaa35d80625c6a9dd7257cca9c401a4bab03b04480cda7fd1af
+  languageName: node
+  linkType: hard
+
 "@types/node@npm:*, @types/node@npm:>=13.7.0, @types/node@npm:^22.3.0":
   version: 22.12.0
   resolution: "@types/node@npm:22.12.0"
@@ -11615,6 +11705,15 @@ __metadata:
   dependencies:
     undici-types: "npm:~6.19.2"
   checksum: 10c0/2af0722989c677416dec4d9bc37e262a9724e090e5ce021a976e4ab12d4fa26aecbb00dddc8114d0fbf4a6552f12ace0ec98156247a20bf4d57809b7ce90ea5a
+  languageName: node
+  linkType: hard
+
+"@types/node@npm:^20.0.0":
+  version: 20.19.9
+  resolution: "@types/node@npm:20.19.9"
+  dependencies:
+    undici-types: "npm:~6.21.0"
+  checksum: 10c0/c6738131f1698258a5ac1e0185e4fc56977f7f566cd0ee11167f93f2339478470257bd82c5e1908a936a204e0ad7996d741356a1a07c04997a236161ea23a874
   languageName: node
   linkType: hard
 
@@ -11917,6 +12016,16 @@ __metadata:
   version: 2.0.3
   resolution: "@types/stack-utils@npm:2.0.3"
   checksum: 10c0/1f4658385ae936330581bcb8aa3a066df03867d90281cdf89cc356d404bd6579be0f11902304e1f775d92df22c6dd761d4451c804b0a4fba973e06211e9bd77c
+  languageName: node
+  linkType: hard
+
+"@types/tar@npm:^6.1.11":
+  version: 6.1.13
+  resolution: "@types/tar@npm:6.1.13"
+  dependencies:
+    "@types/node": "npm:*"
+    minipass: "npm:^4.0.0"
+  checksum: 10c0/98cc72d444fa622049e86e457a64d859c6effd7c7518d36e7b40b4ab1e7aa9e2412cc868cbef396650485dae07d50d98f662e8a53bb45f4a70eb6c61f80a63c7
   languageName: node
   linkType: hard
 
@@ -13532,6 +13641,13 @@ __metadata:
   version: 2.0.0
   resolution: "astral-regex@npm:2.0.0"
   checksum: 10c0/f63d439cc383db1b9c5c6080d1e240bd14dae745f15d11ec5da863e182bbeca70df6c8191cffef5deba0b566ef98834610a68be79ac6379c95eeb26e1b310e25
+  languageName: node
+  linkType: hard
+
+"async-exit-hook@npm:^2.0.1":
+  version: 2.0.1
+  resolution: "async-exit-hook@npm:2.0.1"
+  checksum: 10c0/81407a440ef0aab328df2369f1a9d957ee53e9a5a43e3b3dcb2be05151a68de0e4ff5e927f4718c88abf85800731f5b3f69a47a6642ce135f5e7d43ca0fce41d
   languageName: node
   linkType: hard
 
@@ -15562,6 +15678,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"data-uri-to-buffer@npm:^4.0.0":
+  version: 4.0.1
+  resolution: "data-uri-to-buffer@npm:4.0.1"
+  checksum: 10c0/20a6b93107597530d71d4cb285acee17f66bcdfc03fd81040921a81252f19db27588d87fc8fc69e1950c55cfb0bf8ae40d0e5e21d907230813eb5d5a7f9eb45b
+  languageName: node
+  linkType: hard
+
 "data-urls@npm:^3.0.2":
   version: 3.0.2
   resolution: "data-urls@npm:3.0.2"
@@ -16244,6 +16367,41 @@ __metadata:
   version: 1.5.57
   resolution: "electron-to-chromium@npm:1.5.57"
   checksum: 10c0/42b969681985016be6069ae68cf29e84ba3f2191fcb7f9d3355e83e81da8dbd100e4b5c9d69b88637003e06dc1860125a50332ec0caee49fd9c2c4ab62feb288
+  languageName: node
+  linkType: hard
+
+"embedded-postgres@npm:17.4.0-beta.15":
+  version: 17.4.0-beta.15
+  resolution: "embedded-postgres@npm:17.4.0-beta.15"
+  dependencies:
+    "@embedded-postgres/darwin-arm64": "npm:^17.4.0-beta.15"
+    "@embedded-postgres/darwin-x64": "npm:^17.4.0-beta.15"
+    "@embedded-postgres/linux-arm": "npm:^17.4.0-beta.15"
+    "@embedded-postgres/linux-arm64": "npm:^17.4.0-beta.15"
+    "@embedded-postgres/linux-ia32": "npm:^17.4.0-beta.15"
+    "@embedded-postgres/linux-ppc64": "npm:^17.4.0-beta.15"
+    "@embedded-postgres/linux-x64": "npm:^17.4.0-beta.15"
+    "@embedded-postgres/windows-x64": "npm:^17.4.0-beta.15"
+    async-exit-hook: "npm:^2.0.1"
+    pg: "npm:^8.7.3"
+  dependenciesMeta:
+    "@embedded-postgres/darwin-arm64":
+      optional: true
+    "@embedded-postgres/darwin-x64":
+      optional: true
+    "@embedded-postgres/linux-arm":
+      optional: true
+    "@embedded-postgres/linux-arm64":
+      optional: true
+    "@embedded-postgres/linux-ia32":
+      optional: true
+    "@embedded-postgres/linux-ppc64":
+      optional: true
+    "@embedded-postgres/linux-x64":
+      optional: true
+    "@embedded-postgres/windows-x64":
+      optional: true
+  checksum: 10c0/d0e7a028073425d516bf5a7b016605faeae38ad0e8d1319d22b5c0ea8a562adda9afd22d4867737fedf93a21f3174a0e483aa8c2e402b9f2a4be1570c6b87bc0
   languageName: node
   linkType: hard
 
@@ -17894,6 +18052,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"fetch-blob@npm:^3.1.2, fetch-blob@npm:^3.1.4":
+  version: 3.2.0
+  resolution: "fetch-blob@npm:3.2.0"
+  dependencies:
+    node-domexception: "npm:^1.0.0"
+    web-streams-polyfill: "npm:^3.0.3"
+  checksum: 10c0/60054bf47bfa10fb0ba6cb7742acec2f37c1f56344f79a70bb8b1c48d77675927c720ff3191fa546410a0442c998d27ab05e9144c32d530d8a52fbe68f843b69
+  languageName: node
+  linkType: hard
+
 "ffmpeg-static@npm:^5.2.0":
   version: 5.2.0
   resolution: "ffmpeg-static@npm:5.2.0"
@@ -18101,6 +18269,15 @@ __metadata:
     combined-stream: "npm:^1.0.8"
     mime-types: "npm:^2.1.12"
   checksum: 10c0/bb102d570be8592c23f4ea72d7df9daa50c7792eb0cf1c5d7e506c1706e7426a4e4ae48a35b109e91c85f1c0ec63774a21ae252b66f4eb981cb8efef7d0463c8
+  languageName: node
+  linkType: hard
+
+"formdata-polyfill@npm:^4.0.10":
+  version: 4.0.10
+  resolution: "formdata-polyfill@npm:4.0.10"
+  dependencies:
+    fetch-blob: "npm:^3.1.2"
+  checksum: 10c0/5392ec484f9ce0d5e0d52fb5a78e7486637d516179b0eb84d81389d7eccf9ca2f663079da56f761355c0a65792810e3b345dc24db9a8bbbcf24ef3c8c88570c6
   languageName: node
   linkType: hard
 
@@ -22199,6 +22376,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"minipass@npm:^4.0.0":
+  version: 4.2.8
+  resolution: "minipass@npm:4.2.8"
+  checksum: 10c0/4ea76b030d97079f4429d6e8a8affd90baf1b6a1898977c8ccce4701c5a2ba2792e033abc6709373f25c2c4d4d95440d9d5e9464b46b7b76ca44d2ce26d939ce
+  languageName: node
+  linkType: hard
+
 "minipass@npm:^5.0.0":
   version: 5.0.0
   resolution: "minipass@npm:5.0.0"
@@ -23037,6 +23221,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"node-domexception@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "node-domexception@npm:1.0.0"
+  checksum: 10c0/5e5d63cda29856402df9472335af4bb13875e1927ad3be861dc5ebde38917aecbf9ae337923777af52a48c426b70148815e890a5d72760f1b4d758cc671b1a2b
+  languageName: node
+  linkType: hard
+
 "node-fetch-native@npm:^1.6.6":
   version: 1.6.6
   resolution: "node-fetch-native@npm:1.6.6"
@@ -23055,6 +23246,17 @@ __metadata:
     encoding:
       optional: true
   checksum: 10c0/b55786b6028208e6fbe594ccccc213cab67a72899c9234eb59dba51062a299ea853210fcf526998eaa2867b0963ad72338824450905679ff0fa304b8c5093ae8
+  languageName: node
+  linkType: hard
+
+"node-fetch@npm:^3.3.2":
+  version: 3.3.2
+  resolution: "node-fetch@npm:3.3.2"
+  dependencies:
+    data-uri-to-buffer: "npm:^4.0.0"
+    fetch-blob: "npm:^3.1.4"
+    formdata-polyfill: "npm:^4.0.10"
+  checksum: 10c0/f3d5e56190562221398c9f5750198b34cf6113aa304e34ee97c94fd300ec578b25b2c2906edba922050fce983338fde0d5d34fcb0fc3336ade5bd0e429ad7538
   languageName: node
   linkType: hard
 
@@ -23956,6 +24158,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"pg-cloudflare@npm:^1.2.7":
+  version: 1.2.7
+  resolution: "pg-cloudflare@npm:1.2.7"
+  checksum: 10c0/8a52713dbdecc9d389dc4e65e3b7ede2e199ec3715f7491ee80a15db171f2d75677a102e9c2cef0cb91a2f310e91f976eaec0dd6ef5d8bf357de0b948f9d9431
+  languageName: node
+  linkType: hard
+
 "pg-connection-string@npm:2.x":
   version: 2.7.0
   resolution: "pg-connection-string@npm:2.7.0"
@@ -23984,6 +24193,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"pg-pool@npm:^3.10.1":
+  version: 3.10.1
+  resolution: "pg-pool@npm:3.10.1"
+  peerDependencies:
+    pg: ">=8.0"
+  checksum: 10c0/a00916b7df64226cc597fe769e3a757ff9b11562dc87ce5b0a54101a18c1fe282daaa2accaf27221e81e1e4cdf4da6a33dab09614734d32904d6c4e11c44a079
+  languageName: node
+  linkType: hard
+
 "pg-pool@npm:^3.7.0":
   version: 3.7.0
   resolution: "pg-pool@npm:3.7.0"
@@ -23997,6 +24215,13 @@ __metadata:
   version: 1.7.0
   resolution: "pg-protocol@npm:1.7.0"
   checksum: 10c0/c4af854d9b843c808231c0040fed89f2b9101006157df8da2bb2f62a7dde702de748d852228dc22df41cc7ffddfb526af3bcb34b278b581e9f76a060789186c1
+  languageName: node
+  linkType: hard
+
+"pg-protocol@npm:^1.10.3":
+  version: 1.10.3
+  resolution: "pg-protocol@npm:1.10.3"
+  checksum: 10c0/f7ef54708c93ee6d271e37678296fc5097e4337fca91a88a3d99359b78633dbdbf6e983f0adb34b7cdd261b7ec7266deb20c3233bf3dfdb498b3e1098e8750b9
   languageName: node
   linkType: hard
 
@@ -24014,7 +24239,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"pg-types@npm:^2.1.0, pg-types@npm:^2.2.0":
+"pg-types@npm:2.2.0, pg-types@npm:^2.1.0, pg-types@npm:^2.2.0":
   version: 2.2.0
   resolution: "pg-types@npm:2.2.0"
   dependencies:
@@ -24064,7 +24289,29 @@ __metadata:
   languageName: node
   linkType: hard
 
-"pgpass@npm:1.x":
+"pg@npm:^8.7.3":
+  version: 8.16.3
+  resolution: "pg@npm:8.16.3"
+  dependencies:
+    pg-cloudflare: "npm:^1.2.7"
+    pg-connection-string: "npm:^2.9.1"
+    pg-pool: "npm:^3.10.1"
+    pg-protocol: "npm:^1.10.3"
+    pg-types: "npm:2.2.0"
+    pgpass: "npm:1.0.5"
+  peerDependencies:
+    pg-native: ">=3.0.1"
+  dependenciesMeta:
+    pg-cloudflare:
+      optional: true
+  peerDependenciesMeta:
+    pg-native:
+      optional: true
+  checksum: 10c0/a6a407ff0efb7599760d72ffdcda47a74c34c0fd71d896623caac45cf2cfb0f49a10973cce23110f182b9810639a1e9f6904454d7358c7001574ee0ffdcbce2a
+  languageName: node
+  linkType: hard
+
+"pgpass@npm:1.0.5, pgpass@npm:1.x":
   version: 1.0.5
   resolution: "pgpass@npm:1.0.5"
   dependencies:
@@ -24205,6 +24452,16 @@ __metadata:
   bin:
     pkgroll: dist/cli.js
   checksum: 10c0/15c1dcb982c27056579f27615f49366bca634df19450e7eb1b44d2ac86ebe80266e4ec5b419190c0cf591a7acf839c22f9029749e15ec7d6736b3ceb8660e896
+  languageName: node
+  linkType: hard
+
+"platform-folders@npm:^0.6.0":
+  version: 0.6.0
+  resolution: "platform-folders@npm:0.6.0"
+  dependencies:
+    bindings: "npm:^1.5.0"
+    node-gyp: "npm:latest"
+  checksum: 10c0/5d273742e3731d4e2f43d35c00483815ef71eface927c62aa39f9ea3de6658f3e21f60977f0f12ccfac93362af04c0feb8766bf2c2708e0c223b0eb2638e697b
   languageName: node
   linkType: hard
 
@@ -30469,6 +30726,13 @@ __metadata:
     node-fetch: "npm:^2.6.0"
     valid-data-url: "npm:^3.0.0"
   checksum: 10c0/b4b457de2448255100797b1eaefa0f62a8846b2452de8495b9ec17d3e223ebb4848a31b11a645e3541a5b114eb9f201219cda2f99d1b513631777f8c89d1c8a6
+  languageName: node
+  linkType: hard
+
+"web-streams-polyfill@npm:^3.0.3":
+  version: 3.3.3
+  resolution: "web-streams-polyfill@npm:3.3.3"
+  checksum: 10c0/64e855c47f6c8330b5436147db1c75cb7e7474d924166800e8e2aab5eb6c76aac4981a84261dd2982b3e754490900b99791c80ae1407a9fa0dcff74f82ea3a7f
   languageName: node
   linkType: hard
 

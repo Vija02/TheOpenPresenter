@@ -17,11 +17,6 @@ export interface MigrationConfig {
   nodeBinaryPath?: string;
 }
 
-export interface ExtensionConfig {
-  installPgUuidv7?: boolean;
-  extensionSourcePath?: string;
-}
-
 export interface EmbeddedPostgresConfig {
   databaseDir?: string;
   port?: number;
@@ -30,7 +25,6 @@ export interface EmbeddedPostgresConfig {
   projectRoot?: string;
   roles?: DatabaseRoles;
   migration?: MigrationConfig;
-  extensions?: ExtensionConfig;
   persistent?: boolean;
 }
 
@@ -50,10 +44,4 @@ export interface DatabaseUrls {
 export interface CommandOptions {
   cwd?: string;
   env?: Record<string, string>;
-}
-
-export interface ExtensionFile {
-  source: string;
-  destination: string;
-  platform?: 'windows' | 'unix';
 }
