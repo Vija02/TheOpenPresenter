@@ -17,7 +17,12 @@ const Landing = () => {
 
         <OverlayToggle
           toggler={({ onToggle }) => (
-            <Button onClick={onToggle} variant="success" className="w-full">
+            <Button
+              onClick={onToggle}
+              variant="success"
+              className="w-full"
+              data-testid="ly-landing-add-song"
+            >
               <VscAdd />
               Add a song to the list
             </Button>
