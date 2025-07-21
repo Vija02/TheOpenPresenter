@@ -10,7 +10,6 @@ export class ExtensionManager {
   async installExtensions(): Promise<void> {
     const extensions: Promise<void>[] = [];
 
-    console.log("Installing pg_uuidv7 extension...");
     const pgUuidv7 = new PgUuidv7Extension(this.projectRoot);
     extensions.push(pgUuidv7.install());
 
