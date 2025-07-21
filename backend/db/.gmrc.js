@@ -1,3 +1,4 @@
+const path = require("path");
 /*
  * Graphile Migrate configuration.
  *
@@ -7,8 +8,7 @@
  * This file is in JSON5 format, in VSCode you can use "JSON with comments" as
  * the file format.
  */
-
-{
+module.exports = {
   /*
    * Database connections strings are sourced from the DATABASE_URL,
    * SHADOW_DATABASE_URL and ROOT_DATABASE_URL environmental variables.
@@ -19,8 +19,8 @@
    * before running migrations, using an equivalent of `SET LOCAL <key> TO
    * <value>`
    */
-  "pgSettings": {
-    "search_path": "app_public,app_private,app_hidden,public"
+  pgSettings: {
+    search_path: "app_public,app_private,app_hidden,public",
   },
 
   /*
@@ -40,9 +40,9 @@
    * `:DATABASE_OWNER` placeholders, and you should not attempt to override
    * these.
    */
-  "placeholders": {
+  placeholders: {
     ":DATABASE_AUTHENTICATOR": "!ENV",
-    ":DATABASE_VISITOR": "!ENV"
+    ":DATABASE_VISITOR": "!ENV",
   },
 
   /*
@@ -64,37 +64,37 @@
   /*
    * afterReset: actions executed after a `graphile-migrate reset` command.
    */
-  "afterReset": [
+  afterReset: [
     "!afterReset.sql",
     {
-      "_": "command",
-      "command": "DATABASE_URL=\"$GM_DBURL\" yarn workspace @repo/worker install-db-schema"
-    }
+      _: "command",
+      command: `node ${path.resolve(__dirname, "../worker/install-db-schema.js")}`,
+    },
   ],
 
   /*
    * afterAllMigrations: actions executed once all migrations are complete.
    */
-  "afterAllMigrations": [
+  afterAllMigrations: [
     {
-      "_": "command",
-      "shadow": true,
+      _: "command",
+      shadow: true,
       // NOTE: this script does nothing when envvar `IN_TESTS` is `1`
-      "command": "node scripts/dump-db.js"
-    }
+      command: "node scripts/dump-db.js",
+    },
   ],
 
   /*
    * afterCurrent: actions executed once the current migration has been
    * evaluated (i.e. in watch mode).
    */
-  "afterCurrent": [
+  afterCurrent: [
     {
-      "_": "command",
-      "shadow": true,
+      _: "command",
+      shadow: true,
       // NOTE: this script does nothing unless envvar `IN_TESTS` is `1`
-      "command": "node scripts/test-seed.js"
-    }
+      command: "node scripts/test-seed.js",
+    },
   ],
 
   /*
@@ -119,7 +119,7 @@
   /*
    * migrationsFolder: path to the folder in which to store your migrations.
    */
-  // migrationsFolder: "./migrations",
+  migrationsFolder: __dirname + "/migrations",
 
-  "//generatedWith": "0.1.0"
-}
+  "//generatedWith": "0.1.0",
+};
