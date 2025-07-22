@@ -11,6 +11,7 @@
     "test:watch": "node scripts/test.js --watch",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "dev": "yarn && turbo dev --concurrency 25",
+    "local-dev": "node ./scripts/local-dev.mjs",
     "build": "turbo build",
     "clean": "node ./scripts/clean.js",
     "reset": "yarn clean && node ./scripts/delete-env-file.js",
@@ -28,7 +29,6 @@
     "worker": "yarn workspace @repo/worker"
   },
   "devDependencies": {
-    "@repo/embedded-postgres": "*",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/react": "^16.1.0",
     "@vercel/nft": "^0.29.2",
