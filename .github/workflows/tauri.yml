@@ -51,6 +51,7 @@ jobs:
           node scripts/build_utils/extract_core.js
           node scripts/build_utils/extract_server.js
           node scripts/build_utils/extract_plugins.js
+          node scripts/build_utils/extract_tauri.js
           node scripts/build_utils/copy_deps.js
 
           # Move the node_modules
