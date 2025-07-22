@@ -1,6 +1,5 @@
 import { spawn } from "child_process";
 import dotenv from "dotenv";
-import EmbeddedPostgres from "embedded-postgres";
 import fs from "fs";
 import path from "path";
 import { getDataHome } from "platform-folders";
@@ -44,13 +43,9 @@ const runCommand = async (command, args, options) => {
 const appDataFolderName = "TheOpenPresenter";
 
 const uploadsPath = path.join(getDataHome(), appDataFolderName, "uploads");
-const databaseDir = path.join(getDataHome(), appDataFolderName, "db");
 const envPath = path.join(getDataHome(), appDataFolderName, ".env");
 
 const nodeBinaryPath = path.resolve("./node");
-const graphileMigrateJsPath = path.resolve(
-  "node-server/theopenpresenter/node_modules/graphile-migrate/dist/cli.js",
-);
 const graphileWorkerJsPath = path.resolve(
   "node-server/theopenpresenter/node_modules/graphile-worker/dist/cli.js",
 );
@@ -61,13 +56,14 @@ const killProcess = async (pg) => {
 };
 
 async function main() {
-  const pg = new EmbeddedPostgres({
-    databaseDir,
-    user: "postgres",
-    password: "password",
+  const { EmbeddedPostgresManager } = await import(
+    "./theopenpresenter/packages/embedded-postgres/dist/index.js"
+  );
+  const pg = new EmbeddedPostgresManager({
+    appDataFolderName,
+    projectRoot: resolve(import.meta.dirname, "./theopenpresenter"),
     // TODO: Handle multiple port
     port: PORT,
-    persistent: true,
   });
 
   process.once("SIGINT", async () => {
@@ -80,72 +76,8 @@ async function main() {
   process.once("SIGQUIT", () => killProcess(pg));
   process.once("exit", () => killProcess(pg));
 
-  if (!fs.existsSync(databaseDir)) {
-    console.log("Database not initialized, initializing now...");
-    let client;
-    try {
-      await pg.initialise();
-      await pg.start();
-      console.log("Database Initialized & Started. Running setup now...");
-
-      // Setup database
-      client = pg.getPgClient();
-      await client.connect();
-
-      // IMPORTANT: This should match with the setup_db.js script.
-      await client.query(
-        `CREATE ROLE ${DATABASE_OWNER} WITH LOGIN PASSWORD '${DATABASE_OWNER_PASSWORD}' SUPERUSER;`,
-      );
-      await client.query(
-        `CREATE ROLE ${DATABASE_AUTHENTICATOR} WITH LOGIN PASSWORD '${DATABASE_AUTHENTICATOR_PASSWORD}' NOINHERIT;`,
-      );
-      await client.query(`CREATE ROLE ${DATABASE_VISITOR};`);
-      await client.query(
-        `GRANT ${DATABASE_VISITOR} TO ${DATABASE_AUTHENTICATOR};`,
-      );
-
-      console.log("Database roles successfully added");
-
-      console.log("Installing schema to DB now...");
-      await runCommand(
-        nodeBinaryPath,
-        [graphileMigrateJsPath, "-c", "node-server/.gmrc", "reset", "--erase"],
-        {
-          env: {
-            DATABASE_URL: `postgres://${DATABASE_OWNER}:${DATABASE_OWNER_PASSWORD}@localhost:${PORT}/${DATABASE_NAME}`,
-            ROOT_DATABASE_URL: `postgres://postgres:password@localhost:${PORT}/postgres`,
-            DATABASE_AUTHENTICATOR,
-            DATABASE_VISITOR,
-          },
-        },
-      );
-      console.log("DB schema installed. We're done!");
-    } catch (e) {
-      console.error("Failed to initialize PG database", e);
-      throw e;
-    } finally {
-      await client.end();
-    }
-    console.log("Database initialization done!");
-  } else {
-    console.log("Starting Postgres...");
-    await pg.start();
-    console.log("Postgres started!");
-  }
-
-  // Migrate DB
-  await runCommand(
-    nodeBinaryPath,
-    [graphileMigrateJsPath, "-c", "node-server/.gmrc", "migrate"],
-    {
-      env: {
-        DATABASE_URL: `postgres://${DATABASE_OWNER}:${DATABASE_OWNER_PASSWORD}@localhost:${PORT}/${DATABASE_NAME}`,
-        ROOT_DATABASE_URL: `postgres://postgres:password@localhost:${PORT}/postgres`,
-        DATABASE_AUTHENTICATOR,
-        DATABASE_VISITOR,
-      },
-    },
-  );
+  await pg.initialize();
+  await pg.start();
 
   let envOverride = {};
   if (fs.existsSync(envPath)) {
