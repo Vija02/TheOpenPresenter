@@ -61,7 +61,7 @@ async function main() {
   );
   const pg = new EmbeddedPostgresManager({
     appDataFolderName,
-    projectRoot: resolve(import.meta.dirname, "./theopenpresenter"),
+    projectRoot: path.resolve(import.meta.dirname, "./theopenpresenter"),
     // TODO: Handle multiple port
     port: PORT,
   });
