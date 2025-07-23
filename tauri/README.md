@@ -64,19 +64,12 @@ We use [vercel/nft](https://github.com/vercel/nft) to extract only the dependenc
 
 ### PostgreSQL
 
-To run postgres, we use the `embedded-postgres` npm package.  
-This package is responsible for getting the postgres binary so we don't have to do anything more.
-
-> Note: We have an extra step during installation to copy our PG extension.
+To run postgres, we use the `@repo/embedded-postgres` package.
+This package is responsible for getting the postgres binary and handling all initialization automatically, so we don't have to do anything more.
 
 ### Migration
 
-Since our migration code is in different repos, we've had to do some extra scaffolding here to get everything working.   
-There is a separate `.gmrc` file in this repo to setup everything right.
-
-Notes:
-- Updated the path to point to the correct migration folder
-- Changed how `graphile-worker`'s schema is installed so that we don't have to include `yarn`.
+Migration is handled automatically by the @repo/embedded-postgres package, which includes all necessary configuration and handles graphile-worker schema setup without requiring yarn.
 
 ### File structure
 
