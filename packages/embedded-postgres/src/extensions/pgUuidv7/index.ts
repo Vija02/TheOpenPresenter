@@ -39,7 +39,7 @@ export class PgUuidv7Extension {
       );
 
       // Check if already installed
-      if (!existsSync(join(extensionDir, "pg_uuidv7.control"))) {
+      if (existsSync(join(extensionDir, "pg_uuidv7.control"))) {
         console.log("Already installed. Skipping...");
         return;
       }
