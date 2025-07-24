@@ -2,7 +2,6 @@ import { spawn } from "child_process";
 import dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
-import { getDataHome } from "platform-folders";
 
 // Since we're running locally, we can just hard-code these values
 const DATABASE_AUTHENTICATOR = "theopenpresenter_authenticator";
@@ -41,14 +40,7 @@ const runCommand = async (command, args, options) => {
 };
 
 const appDataFolderName = "TheOpenPresenter";
-
-const uploadsPath = path.join(getDataHome(), appDataFolderName, "uploads");
-const envPath = path.join(getDataHome(), appDataFolderName, ".env");
-
 const nodeBinaryPath = path.resolve("./node");
-const graphileWorkerJsPath = path.resolve(
-  "node-server/theopenpresenter/node_modules/graphile-worker/dist/cli.js",
-);
 
 const killProcess = async (pg) => {
   await pg.stop();
@@ -56,9 +48,15 @@ const killProcess = async (pg) => {
 };
 
 async function main() {
-  const { EmbeddedPostgresManager } = await import(
+  const { EmbeddedPostgresManager, getAppDataPaths, getGraphilePaths } = await import(
     "./theopenpresenter/packages/embedded-postgres/dist/index.js"
   );
+  
+  const { uploadsPath, envPath } = getAppDataPaths(appDataFolderName);
+  const { graphileWorkerJsPath } = getGraphilePaths(
+    path.resolve(import.meta.dirname, "./theopenpresenter")
+  );
+  
   const pg = new EmbeddedPostgresManager({
     appDataFolderName,
     projectRoot: path.resolve(import.meta.dirname, "./theopenpresenter"),
