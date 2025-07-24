@@ -88,6 +88,18 @@ jobs:
             /a/TheOpenPresenter/TheOpenPresenter/tauri/target/release/bundle/msi/TheOpenPresenter_0.1.0_x64_en-US.msi
             /Users/runner/work/TheOpenPresenter/TheOpenPresenter/tauri/target/release/bundle/dmg/TheOpenPresenter_0.1.0_aarch64.dmg
             /Users/runner/work/TheOpenPresenter/TheOpenPresenter/tauri/target/release/bundle/macos/TheOpenPresenter.app
+
+  release:
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main' || github.ref_type == 'tag'
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
       - name: Update Nightly Release
         uses: andelf/nightly-release@main
         if: github.ref == 'refs/heads/main'
@@ -99,14 +111,16 @@ jobs:
           prerelease: true
           body: 'This is a nightly release of TheOpenPresenter desktop app. Please use with caution.'
           files: |
-            /a/TheOpenPresenter/TheOpenPresenter/tauri/target/release/bundle/msi/TheOpenPresenter_0.1.0_x64_en-US.msi
-            /Users/runner/work/TheOpenPresenter/TheOpenPresenter/tauri/target/release/bundle/dmg/TheOpenPresenter_0.1.0_aarch64.dmg
-            /Users/runner/work/TheOpenPresenter/TheOpenPresenter/tauri/target/release/bundle/macos/TheOpenPresenter.app
+            artifacts/tauri-windows-latest/TheOpenPresenter_0.1.0_x64-setup.exe
+            artifacts/tauri-windows-latest/TheOpenPresenter_0.1.0_x64_en-US.msi
+            artifacts/tauri-macos-latest--target-aarch64-apple-darwin/TheOpenPresenter_0.1.0_aarch64.dmg
+            artifacts/tauri-macos-latest--target-aarch64-apple-darwin/TheOpenPresenter.app
       - name: Release Tag
         uses: softprops/action-gh-release@v2
         if: github.ref_type == 'tag'
         with:
           files: |
-            /a/TheOpenPresenter/TheOpenPresenter/tauri/target/release/bundle/msi/TheOpenPresenter_0.1.0_x64_en-US.msi
-            /Users/runner/work/TheOpenPresenter/TheOpenPresenter/tauri/target/release/bundle/dmg/TheOpenPresenter_0.1.0_aarch64.dmg
-            /Users/runner/work/TheOpenPresenter/TheOpenPresenter/tauri/target/release/bundle/macos/TheOpenPresenter.app
+            artifacts/tauri-windows-latest/TheOpenPresenter_0.1.0_x64-setup.exe
+            artifacts/tauri-windows-latest/TheOpenPresenter_0.1.0_x64_en-US.msi
+            artifacts/tauri-macos-latest--target-aarch64-apple-darwin/TheOpenPresenter_0.1.0_aarch64.dmg
+            artifacts/tauri-macos-latest--target-aarch64-apple-darwin/TheOpenPresenter.app
