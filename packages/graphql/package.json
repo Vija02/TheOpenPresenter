@@ -16,7 +16,7 @@
   },
   "scripts": {
     "build": "yarn codegen && pkgroll --src .",
-    "dev": "concurrently --kill-others --names \"GQL-CodeGen,GQL-Build\" --prefix \"({name})\" --prefix-colors \"magentaBright.bold,greenBright.bold\" \"yarn codegen --watch\" \"pkgroll --src ./ --watch\"",
+    "dev": "yarn codegen && concurrently --kill-others --names \"GQL-CodeGen,GQL-Build\" --prefix \"({name})\" --prefix-colors \"magentaBright.bold,greenBright.bold\" \"yarn codegen --watch\" \"pkgroll --src ./ --watch\"",
     "codegen": "graphql-codegen --config codegen.yml"
   },
   "dependencies": {
