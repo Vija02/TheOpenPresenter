@@ -48,13 +48,13 @@ const run = () => {
   fs.cpSync(
     path.join(nodeModulesPath, "next"),
     path.join(targetDir, nodeModulesPath, "next"),
-    { recursive: true },
+    { recursive: true, verbatimSymlinks: true },
   );
   // And ffmpeg since it's not detected
   fs.cpSync(
     path.join(nodeModulesPath, "ffmpeg-static"),
     path.join(targetDir, nodeModulesPath, "ffmpeg-static"),
-    { recursive: true },
+    { recursive: true, verbatimSymlinks: true },
   );
 };
 
