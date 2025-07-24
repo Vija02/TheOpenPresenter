@@ -86,10 +86,8 @@ jobs:
           path: |
             /a/TheOpenPresenter/TheOpenPresenter/tauri/target/release/bundle/nsis/TheOpenPresenter_0.1.0_x64-setup.exe
             /a/TheOpenPresenter/TheOpenPresenter/tauri/target/release/bundle/msi/TheOpenPresenter_0.1.0_x64_en-US.msi
-            /a/TheOpenPresenter/TheOpenPresenter/tauri/target/release/bundle/dmg/TheOpenPresenter_0.1.0_aarch64.dmg
-            /a/TheOpenPresenter/TheOpenPresenter/tauri/target/release/bundle/dmg/TheOpenPresenter_0.1.0_x64.dmg
-            /a/TheOpenPresenter/TheOpenPresenter/tauri/target/release/bundle/macos/TheOpenPresenter.app.tar.gz
-            /a/TheOpenPresenter/TheOpenPresenter/tauri/target/release/bundle/macos/TheOpenPresenter_aarch64.app.tar.gz
+            /Users/runner/work/TheOpenPresenter/TheOpenPresenter/tauri/target/release/bundle/dmg/TheOpenPresenter_0.1.0_aarch64.dmg
+            /Users/runner/work/TheOpenPresenter/TheOpenPresenter/tauri/target/release/bundle/macos/TheOpenPresenter.app
       - name: Update Nightly Release
         uses: andelf/nightly-release@main
         if: github.ref == 'refs/heads/main'
@@ -102,13 +100,13 @@ jobs:
           body: 'This is a nightly release of TheOpenPresenter desktop app. Please use with caution.'
           files: |
             /a/TheOpenPresenter/TheOpenPresenter/tauri/target/release/bundle/msi/TheOpenPresenter_0.1.0_x64_en-US.msi
-            /a/TheOpenPresenter/TheOpenPresenter/tauri/target/*/release/bundle/dmg/TheOpenPresenter_0.1.0_*.dmg
-            /a/TheOpenPresenter/TheOpenPresenter/tauri/target/*/release/bundle/macos/TheOpenPresenter*.app.tar.gz
+            /Users/runner/work/TheOpenPresenter/TheOpenPresenter/tauri/target/release/bundle/dmg/TheOpenPresenter_0.1.0_aarch64.dmg
+            /Users/runner/work/TheOpenPresenter/TheOpenPresenter/tauri/target/release/bundle/macos/TheOpenPresenter.app
       - name: Release Tag
         uses: softprops/action-gh-release@v2
         if: github.ref_type == 'tag'
         with:
           files: |
             /a/TheOpenPresenter/TheOpenPresenter/tauri/target/release/bundle/msi/TheOpenPresenter_0.1.0_x64_en-US.msi
-            /a/TheOpenPresenter/TheOpenPresenter/tauri/target/*/release/bundle/dmg/TheOpenPresenter_0.1.0_*.dmg
-            /a/TheOpenPresenter/TheOpenPresenter/tauri/target/*/release/bundle/macos/TheOpenPresenter*.app.tar.gz
+            /Users/runner/work/TheOpenPresenter/TheOpenPresenter/tauri/target/release/bundle/dmg/TheOpenPresenter_0.1.0_aarch64.dmg
+            /Users/runner/work/TheOpenPresenter/TheOpenPresenter/tauri/target/release/bundle/macos/TheOpenPresenter.app
