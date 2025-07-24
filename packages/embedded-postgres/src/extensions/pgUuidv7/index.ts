@@ -14,6 +14,11 @@ const precompiledBinary = [
     arch: "x64",
     binaryPath: "win32_x86_64.dll",
   },
+  {
+    platform: "darwin",
+    arch: "arm64",
+    binaryPath: "darwin_arm64.dylib",
+  },
 ];
 
 // Debt: We need to change this manually when we upgrade our PG version
@@ -67,7 +72,11 @@ export class PgUuidv7Extension {
       );
       const targetBinary = join(
         libDir,
-        process.platform === "win32" ? "pg_uuidv7.dll" : "pg_uuidv7.so",
+        process.platform === "win32"
+          ? "pg_uuidv7.dll"
+          : process.platform === "darwin"
+            ? "pg_uuidv7.dylib"
+            : "pg_uuidv7.so",
       );
 
       copyFileSync(sourceBinary, targetBinary);
