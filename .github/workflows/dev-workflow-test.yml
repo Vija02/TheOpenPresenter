@@ -1,0 +1,54 @@
+name: Test Dev Workflow
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  test-dev-workflow:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'yarn'
+          
+      - name: Enable corepack and install yarn
+        run: |
+          corepack enable
+          corepack use yarn
+          
+      - name: Install dependencies
+        run: yarn install --no-immutable
+          
+      - name: Start local-dev in background
+        run: |
+          yarn local-dev &
+          LOCAL_DEV_PID=$!
+          
+          # Now test yarn dev
+          yarn dev &
+          DEV_PID=$!
+          
+          # Wait for dev server to start
+          timeout 300 bash -c 'until curl -s http://localhost:5678 > /dev/null; do sleep 2; done' || {
+            echo "Dev server failed to start within 5 minutes"
+            kill $DEV_PID || true
+            kill $LOCAL_DEV_PID || true
+            exit 1
+          }
+          
+          # Clean up both processes
+          kill $DEV_PID || true
+          kill $LOCAL_DEV_PID || true
+          wait $DEV_PID || true
+          wait $LOCAL_DEV_PID || true
