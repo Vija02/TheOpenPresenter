@@ -114,7 +114,6 @@ jobs:
             /home/runner/work/TheOpenPresenter/TheOpenPresenter/artifacts/**/*.exe
             /home/runner/work/TheOpenPresenter/TheOpenPresenter/artifacts/**/*.msi
             /home/runner/work/TheOpenPresenter/TheOpenPresenter/artifacts/**/*.dmg
-            /home/runner/work/TheOpenPresenter/TheOpenPresenter/artifacts/**/*.app
       - name: Release Tag
         uses: softprops/action-gh-release@v2
         if: github.ref_type == 'tag'
@@ -123,4 +122,3 @@ jobs:
             /home/runner/work/TheOpenPresenter/TheOpenPresenter/artifacts/**/*.exe
             /home/runner/work/TheOpenPresenter/TheOpenPresenter/artifacts/**/*.msi
             /home/runner/work/TheOpenPresenter/TheOpenPresenter/artifacts/**/*.dmg
-            /home/runner/work/TheOpenPresenter/TheOpenPresenter/artifacts/**/*.app
