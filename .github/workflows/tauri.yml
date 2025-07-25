@@ -111,16 +111,16 @@ jobs:
           prerelease: true
           body: 'This is a nightly release of TheOpenPresenter desktop app. Please use with caution.'
           files: |
-            artifacts/tauri-windows-latest/TheOpenPresenter_0.1.0_x64-setup.exe
-            artifacts/tauri-windows-latest/TheOpenPresenter_0.1.0_x64_en-US.msi
-            artifacts/tauri-macos-latest--target-aarch64-apple-darwin/TheOpenPresenter_0.1.0_aarch64.dmg
-            artifacts/tauri-macos-latest--target-aarch64-apple-darwin/TheOpenPresenter.app
+            /home/runner/work/TheOpenPresenter/TheOpenPresenter/artifacts/tauri-windows-latest/TheOpenPresenter_0.1.0_x64-setup.exe
+            /home/runner/work/TheOpenPresenter/TheOpenPresenter/artifacts/tauri-windows-latest/TheOpenPresenter_0.1.0_x64_en-US.msi
+            /home/runner/work/TheOpenPresenter/TheOpenPresenter/artifacts/tauri-macos-latest--target-aarch64-apple-darwin/TheOpenPresenter_0.1.0_aarch64.dmg
+            /home/runner/work/TheOpenPresenter/TheOpenPresenter/artifacts/tauri-macos-latest--target-aarch64-apple-darwin/TheOpenPresenter.app
       - name: Release Tag
         uses: softprops/action-gh-release@v2
         if: github.ref_type == 'tag'
         with:
           files: |
-            artifacts/tauri-windows-latest/TheOpenPresenter_0.1.0_x64-setup.exe
-            artifacts/tauri-windows-latest/TheOpenPresenter_0.1.0_x64_en-US.msi
-            artifacts/tauri-macos-latest--target-aarch64-apple-darwin/TheOpenPresenter_0.1.0_aarch64.dmg
-            artifacts/tauri-macos-latest--target-aarch64-apple-darwin/TheOpenPresenter.app
+            /home/runner/work/TheOpenPresenter/TheOpenPresenter/artifacts/tauri-windows-latest/TheOpenPresenter_0.1.0_x64-setup.exe
+            /home/runner/work/TheOpenPresenter/TheOpenPresenter/artifacts/tauri-windows-latest/TheOpenPresenter_0.1.0_x64_en-US.msi
+            /home/runner/work/TheOpenPresenter/TheOpenPresenter/artifacts/tauri-macos-latest--target-aarch64-apple-darwin/TheOpenPresenter_0.1.0_aarch64.dmg
+            /home/runner/work/TheOpenPresenter/TheOpenPresenter/artifacts/tauri-macos-latest--target-aarch64-apple-darwin/TheOpenPresenter.app
