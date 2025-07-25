@@ -52,6 +52,9 @@
       "wix": {
         "template": "override.wsx"
       }
+    },
+    "macOS": {
+      "signingIdentity": "-"
     }
   }
 }
