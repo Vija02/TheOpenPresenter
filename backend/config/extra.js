@@ -32,3 +32,4 @@ process.env.TEST_DATABASE_URL = `postgres://${process.env.DATABASE_OWNER}:${proc
 
 // This means that we may have to rebuild docker to get this updated
 process.env.NEXT_PUBLIC_ROOT_URL = process.env.ROOT_URL;
+process.env.VITE_PUBLIC_ROOT_URL = process.env.ROOT_URL;
