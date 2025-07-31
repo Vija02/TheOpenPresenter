@@ -1,23 +1,27 @@
 diff --git a/node_modules/vite-express/dist/main.d.ts b/node_modules/vite-express/dist/main.d.ts
-index 75c2cc5..a79b8c9 100644
+index af60c85..ce044e9 100644
 --- a/node_modules/vite-express/dist/main.d.ts
 +++ b/node_modules/vite-express/dist/main.d.ts
-@@ -1,12 +1,11 @@
--/// <reference types="qs" />
- /// <reference types="node" />
- /// <reference types="node" />
+@@ -1,15 +1,16 @@
 -import express from "express";
 +import express, { RequestHandler } from "express";
  import core from "express-serve-static-core";
+ import { ExpressStaticGzipOptions } from "express-static-gzip";
  import http from "http";
  import https from "https";
- import { ServeStaticOptions } from "serve-static";
 -import type { HmrOptions } from "vite";
 +import type { HmrOptions, ViteDevServer } from "vite";
  type ViteConfig = {
      root: string;
      base: string;
-@@ -22,7 +21,7 @@ declare enum Verbosity {
+     build: {
+         outDir: string;
+     };
++    expressBase?: string | string[];
+     server?: {
+         hmr?: boolean | HmrOptions;
+     };
+@@ -19,27 +20,40 @@ declare enum Verbosity {
      ErrorsOnly = 1,
      Normal = 2
  }
@@ -26,8 +30,10 @@ index 75c2cc5..a79b8c9 100644
      mode: "production" | "development";
      inlineViteConfig: Partial<ViteConfig> | undefined;
      viteConfigFile: string | undefined;
-@@ -30,19 +29,32 @@ declare const Config: {
-     transformer: ((html: string, req: express.Request) => string | Promise<string>) | undefined;
+-    ignorePaths: undefined | RegExp | ((path: string, req: express.Request) => boolean);
+-    transformer: undefined | ((html: string, req: express.Request) => string | Promise<string>);
++    ignorePaths: RegExp | ((path: string, req: express.Request) => boolean) | undefined;
++    transformer: ((html: string, req: express.Request) => string | Promise<string>) | undefined;
      verbosity: Verbosity;
  };
 -type ConfigurationOptions = Partial<typeof Config>;
@@ -41,7 +47,7 @@ index 75c2cc5..a79b8c9 100644
 -    bind: typeof bind;
 -    listen: typeof listen;
 -    build: typeof build;
--    static: (options?: ServeStaticOptions) => express.RequestHandler<core.ParamsDictionary, any, any, import("qs").ParsedQs, Record<string, any>>;
+-    static: (options?: ExpressStaticGzipOptions) => express.RequestHandler<core.ParamsDictionary, any, any, import("qs").ParsedQs, Record<string, any>>;
 -    getViteConfig: typeof getViteConfig;
 -    Verbosity: typeof Verbosity;
 -};
@@ -49,7 +55,7 @@ index 75c2cc5..a79b8c9 100644
 +export declare class ViteExpress {
 +    _State: {
 +        viteConfig: ViteConfig | undefined;
-+        staticOptions: ServeStaticOptions<http.ServerResponse<http.IncomingMessage>> | undefined;
++        staticOptions: ExpressStaticGzipOptions | undefined;
 +    };
 +    Config: ConfigurationOptions;
 +    clearState(): void;
@@ -76,7 +82,7 @@ index 75c2cc5..a79b8c9 100644
 +}
 +export default ViteExpress;
 diff --git a/node_modules/vite-express/dist/main.js b/node_modules/vite-express/dist/main.js
-index f1f8eff..5844264 100644
+index 72d8e45..88bcef4 100644
 --- a/node_modules/vite-express/dist/main.js
 +++ b/node_modules/vite-express/dist/main.js
 @@ -1,5 +1,7 @@
@@ -84,10 +90,10 @@ index f1f8eff..5844264 100644
  
 +Object.defineProperty(exports, '__esModule', { value: true });
 +
- var express = require('express');
+ var expressStaticGzip = require('express-static-gzip');
  var fs = require('fs');
  var path = require('path');
-@@ -43,287 +45,278 @@ var Verbosity;
+@@ -43,295 +45,283 @@ var Verbosity;
      Verbosity[Verbosity["ErrorsOnly"] = 1] = "ErrorsOnly";
      Verbosity[Verbosity["Normal"] = 2] = "Normal";
  })(Verbosity || (Verbosity = {}));
@@ -222,13 +228,14 @@ index f1f8eff..5844264 100644
 +                    this.error(`Unable to use ${pc.yellow("Vite")}, running in ${pc.yellow("viteless")} mode`);
 +                }
              }
-             catch (e) {
+-            catch (e) {
 -                console.error(e);
 -                error(`Unable to use ${pc.yellow("Vite")}, running in ${pc.yellow("viteless")} mode`);
++            catch (_d) {
 +                /* empty */
              }
 -        }
--        catch (e) {
+-        catch (_d) {
 -            /* empty */
 -        }
 -        try {
@@ -243,7 +250,7 @@ index f1f8eff..5844264 100644
 -                build: { outDir: outDir !== null && outDir !== void 0 ? outDir : defaultConfig.build.outDir },
 -            };
 -        }
--        catch (e) {
+-        catch (_e) {
 -            error(`Unable to locate ${pc.yellow("vite.config.*s file")}, using default options`);
 -            return getDefaultViteConfig();
 -        }
@@ -273,14 +280,16 @@ index f1f8eff..5844264 100644
 -        else {
 -            info(`${pc.green(`Serving static files from ${pc.gray(distPath)}`)}`);
 -        }
--        return express.static(distPath, Object.assign({ index: false }, _State.staticOptions));
+-        return expressStaticGzip(distPath, Object.assign({ index: false, serveStatic: { redirect: false } }, _State.staticOptions));
 -    });
 -}
 -const stubMiddleware = (req, res, next) => next();
 -function injectStaticMiddleware(app, middleware) {
 -    return __awaiter(this, void 0, void 0, function* () {
 -        const config = yield getViteConfig();
--        app.use(config.base, (req, res, next) => req.path.endsWith(".html") ? next() : middleware(req, res, next));
+-        app.use(config.base, (req, res, next) => req.path.endsWith(".html") && !req.originalUrl.includes("?html-proxy")
+-            ? next()
+-            : middleware(req, res, next));
 -        const router = (() => {
              try {
 -                return app.router;
@@ -295,8 +304,9 @@ index f1f8eff..5844264 100644
 +                    build: { outDir: outDir !== null && outDir !== void 0 ? outDir : defaultConfig.build.outDir },
 +                };
              }
-             catch (e) {
+-            catch (_a) {
 -                return app._router;
++            catch (_e) {
 +                this.error(`Unable to locate ${pc.yellow("vite.config.*s file")}, using default options`);
 +                return this.getDefaultViteConfig();
              }
@@ -322,15 +332,33 @@ index f1f8eff..5844264 100644
 -        const pathToTest = path.join(root, reqPath);
 -        if (fs.existsSync(pathToTest))
 -            return pathToTest;
--    }
++        });
+     }
 -    // find closest index.html to provided path
 -    const basePath = reqPath.slice(0, reqPath.lastIndexOf("/"));
+-    // if the path doesn't end with a /, look for root/req/path.html
+-    if (!reqPath.endsWith("/")) {
+-        const pathToTest = path.join(root, reqPath + ".html");
+-        if (fs.existsSync(pathToTest))
+-            return pathToTest;
++    getViteConfig() {
++        return __awaiter(this, void 0, void 0, function* () {
++            if (!this._State.viteConfig) {
++                this._State.viteConfig = yield this.resolveConfig();
++            }
++            return this._State.viteConfig;
++        });
+     }
 -    const dirs = basePath.split("/");
 -    while (dirs.length > 0) {
 -        const pathToTest = path.join(root, ...dirs, "index.html");
 -        if (fs.existsSync(pathToTest))
 -            return pathToTest;
 -        dirs.pop();
++    getDistPath() {
++        return __awaiter(this, void 0, void 0, function* () {
++            const config = yield this.getViteConfig();
++            return path.resolve(config.root, config.build.outDir);
 +        });
      }
 -    return undefined;
@@ -351,30 +379,19 @@ index f1f8eff..5844264 100644
 -            try {
 -                html = yield getTransformedHTML(html, req);
 -                res.send(html);
-+    getViteConfig() {
-+        return __awaiter(this, void 0, void 0, function* () {
-+            if (!this._State.viteConfig) {
-+                this._State.viteConfig = yield this.resolveConfig();
-             }
--            catch (e) {
--                console.error(e);
--                res.status(500);
--                return next();
-+            return this._State.viteConfig;
-+        });
-+    }
-+    getDistPath() {
-+        return __awaiter(this, void 0, void 0, function* () {
-+            const config = yield this.getViteConfig();
-+            return path.resolve(config.root, config.build.outDir);
-+        });
-+    }
 +    serveStatic() {
 +        return __awaiter(this, void 0, void 0, function* () {
 +            const distPath = yield this.getDistPath();
 +            if (!fs.existsSync(distPath)) {
 +                this.error(`${`Static files at ${pc.gray(distPath)} not found!`}`);
 +                this.info(`${pc.yellow(`Did you forget to run ${pc.bold(pc.green("vite build"))} command?`)}`);
+             }
+-            catch (e) {
+-                console.error(e);
+-                res.status(500);
+-                return next();
++            else {
++                this.info(`${pc.green(`Serving static files from ${pc.gray(distPath)}`)}`);
              }
 -        }));
 -    });
@@ -393,25 +410,26 @@ index f1f8eff..5844264 100644
 -            try {
 -                html = yield getTransformedHTML(html, req);
 -                res.send(html);
-+            else {
-+                this.info(`${pc.green(`Serving static files from ${pc.gray(distPath)}`)}`);
-             }
+-            }
 -            catch (e) {
 -                console.error(e);
 -                res.status(500);
 -                return next();
-+            return express.static(distPath, Object.assign({ index: false }, this._State.staticOptions));
++            return expressStaticGzip(distPath, Object.assign({ index: false, serveStatic: { redirect: false } }, this._State.staticOptions));
 +        });
 +    }
 +    injectStaticMiddleware(app, middleware) {
 +        return __awaiter(this, void 0, void 0, function* () {
++            var _a;
 +            const config = yield this.getViteConfig();
-+            app.use(config.base, (req, res, next) => req.path.endsWith(".html") ? next() : middleware(req, res, next));
++            app.use((_a = config.expressBase) !== null && _a !== void 0 ? _a : config.base, (req, res, next) => req.path.endsWith(".html") && !req.originalUrl.includes("?html-proxy")
++                ? next()
++                : middleware(req, res, next));
 +            const router = (() => {
 +                try {
 +                    return app.router;
 +                }
-+                catch (e) {
++                catch (_a) {
 +                    return app._router;
 +                }
 +            })();
@@ -430,7 +448,7 @@ index f1f8eff..5844264 100644
 -        var _a, _b;
 -        const { createServer, mergeConfig } = yield import('vite');
 -        const config = yield getViteConfig();
--        const isUsingViteResolvedConfig = Object.entries(config).length > 3;
+-        const isUsingViteResolvedConfig = "assetsInclude" in config;
 -        const vite = yield createServer(mergeConfig(isUsingViteResolvedConfig ? {} : config, {
 -            configFile: Config.viteConfigFile,
 -            clearScreen: false,
@@ -510,8 +528,9 @@ index f1f8eff..5844264 100644
 +    }
 +    injectViteHTMLMiddleware(app, server) {
 +        return __awaiter(this, void 0, void 0, function* () {
++            var _a;
 +            const config = yield this.getViteConfig();
-+            app.use(config.base, (req, res, next) => __awaiter(this, void 0, void 0, function* () {
++            app.use((_a = config.expressBase) !== null && _a !== void 0 ? _a : config.base, (req, res, next) => __awaiter(this, void 0, void 0, function* () {
 +                if (req.method !== "GET")
 +                    return next();
 +                if (this.isIgnoredPath(req.path, req))
@@ -535,9 +554,10 @@ index f1f8eff..5844264 100644
 +    }
 +    injectHTMLMiddleware(app) {
 +        return __awaiter(this, void 0, void 0, function* () {
++            var _a;
 +            const distPath = yield this.getDistPath();
 +            const config = yield this.getViteConfig();
-+            app.use(config.base, (req, res, next) => __awaiter(this, void 0, void 0, function* () {
++            app.use((_a = config.expressBase) !== null && _a !== void 0 ? _a : config.base, (req, res, next) => __awaiter(this, void 0, void 0, function* () {
 +                if (this.isIgnoredPath(req.path, req))
 +                    return next();
 +                const templateFilePath = this.findTemplateFilePath(req.path, distPath);
