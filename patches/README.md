@@ -29,6 +29,5 @@ Applied this PR: https://github.com/microsoft/use-disposable/pull/40 to get the 
 
 ## vite-express
 
-Fixed 2 issues:
-1. https://github.com/szymmis/vite-express/pull/140 (now published but still in this patch)
-2. The package is using global state. Since we use this for both our `remote` and `renderer`. It was clashing. So this patch also wraps them into a class to fix the issue.
+- The package is using global state. Since we use this multiple times, it was clashing. So this patch also wraps them into a class to fix the issue.
+- Added a `expressBase` config to serve multiple express path.

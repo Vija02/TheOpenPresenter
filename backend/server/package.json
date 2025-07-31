@@ -73,7 +73,7 @@
     "typeid-js": "^1.1.0",
     "valtio": "^2.1.2",
     "valtio-yjs": "^0.6.0",
-    "vite-express": "^0.17.0",
+    "vite-express": "^0.21.1",
     "ws": "^8.18.0",
     "yjs": "13.6.26"
   },
