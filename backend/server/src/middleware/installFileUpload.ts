@@ -102,6 +102,12 @@ export default (app: Express) => {
         [mediaDetails.uuid],
       );
 
+      // If media doesn't exist, return 404
+      if (!mediaRow) {
+        res.status(404).send("Media not found");
+        return;
+      }
+
       // If requested size is bigger than original file, skip the resize and just give the original file
       if (mediaRow.width && width > mediaRow.width) {
         res.redirect(301, `/media/data/${req.params.mediaName}`);
