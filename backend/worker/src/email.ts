@@ -1,4 +1,4 @@
-import { emailLegalText as legalText, projectName } from "@repo/config";
+import { projectName } from "@repo/config";
 import { promises as fsp } from "fs";
 import { template as lodashTemplate } from "lodash";
 import mjml2html from "mjml";
@@ -34,7 +34,6 @@ export const replaceTemplateVariablesAndConvertHtml =
     });
     const htmlWithVars = templateFn({
       projectName,
-      legalText,
       ...variables,
     });
     return htmlWithVars;
