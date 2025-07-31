@@ -31,7 +31,7 @@
     "react18-json-view": "^0.2.8",
     "typeid-js": "^1.1.0",
     "use-disposable": "^1.0.4",
-    "wouter": "^3.3.5",
+    "wouter": "^3.7.1",
     "yjs": "13.6.26",
     "zod": "^3.25.17",
     "zustand": "^5.0.2"

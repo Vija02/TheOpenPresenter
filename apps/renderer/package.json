@@ -28,7 +28,7 @@
     "react-qr-code": "^2.0.15",
     "react-toastify": "^10.0.6",
     "use-disposable": "^1.0.4",
-    "wouter": "^3.3.5",
+    "wouter": "^3.7.1",
     "yjs": "13.6.26"
   },
   "devDependencies": {
