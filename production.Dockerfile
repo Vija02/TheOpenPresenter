@@ -25,6 +25,7 @@ COPY patches/ /app/patches
 COPY scripts/ /app/scripts
 
 COPY apps/homepage/package.json /app/apps/homepage/package.json
+COPY apps/project/package.json /app/apps/project/package.json
 COPY apps/remote/package.json /app/apps/remote/package.json
 COPY apps/renderer/package.json /app/apps/renderer/package.json
 COPY apps/shared/package.json /app/apps/shared/package.json
@@ -69,6 +70,7 @@ COPY packages/tailwind-config/ /app/packages/tailwind-config/
 
 COPY packages/graphql/ /app/packages/graphql/
 COPY apps/homepage/src/graphql/ /app/apps/homepage/src/graphql/
+COPY apps/project/src/graphql/ /app/apps/project/src/graphql/
 COPY apps/remote/src/graphql/ /app/apps/remote/src/graphql/
 COPY apps/renderer/src/graphql/ /app/apps/renderer/src/graphql/
 RUN yarn graphql build
@@ -124,6 +126,9 @@ RUN yarn shared build
 COPY apps/homepage/ /app/apps/homepage/
 RUN yarn homepage codegen && yarn homepage build
 RUN rm -rf /app/apps/homepage/.next/cache
+
+COPY apps/project/ /app/apps/project/
+RUN yarn project build
 
 COPY apps/remote/ /app/apps/remote/
 RUN yarn remote build
@@ -207,6 +212,8 @@ COPY --from=builder-core /app/backend/backend-shared/ /app/backend/backend-share
 COPY --from=builder-core /app/packages/base-plugin/ /app/packages/base-plugin/
 COPY backend/db/ /app/backend/db/
 
+COPY --from=builder-client /app/apps/project/package.json /app/apps/project/
+COPY --from=builder-client /app/apps/project/dist/ /app/apps/project/dist/
 COPY --from=builder-client /app/apps/remote/package.json /app/apps/remote/
 COPY --from=builder-client /app/apps/remote/dist/ /app/apps/remote/dist/
 COPY --from=builder-client /app/apps/remote/.env.production /app/apps/remote/
