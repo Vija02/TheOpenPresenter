@@ -1,7 +1,7 @@
 overwrite: true
 schema: "../../data/schema.graphql"
 documents: 
-  - "../../apps/homepage/src/**/*.graphql"
+  - "../../apps/project/src/**/*.graphql"
   - "../../apps/remote/src/**/*.graphql"
   - "../../apps/renderer/src/**/*.graphql"
 config:
