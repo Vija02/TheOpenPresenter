@@ -1,0 +1,10 @@
+query MediaDependenciesOfParent($parentMediaId: UUID!) {
+  mediaDependencies(condition: { parentMediaId: $parentMediaId }) {
+    nodes {
+      childMedia {
+        id
+        ...MediaWithMediaDependency
+      }
+    }
+  }
+}

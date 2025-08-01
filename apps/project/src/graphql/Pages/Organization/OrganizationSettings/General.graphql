@@ -1,0 +1,14 @@
+query OrganizationSettingsGeneralPage($slug: String!) {
+  ...BaseOrganizationSettingsPage
+
+  ...OrganizationSettingsGeneralInfo
+}
+
+fragment OrganizationSettingsGeneralInfo on Query {
+  organizationBySlug(slug: $slug) {
+    id
+    name
+    slug
+    isPublic
+  }
+}

@@ -1,0 +1,18 @@
+mutation UpdateCategory(
+  $id: UUID!
+  $name: String!
+) {
+  updateCategory(
+    input: {
+      id: $id
+      patch: {
+        name: $name
+      }
+    }
+  ) {
+    category {
+      id
+      ...Category
+    }
+  }
+}

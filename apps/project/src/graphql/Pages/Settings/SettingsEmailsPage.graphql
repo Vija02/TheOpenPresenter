@@ -1,0 +1,10 @@
+#import "./EmailsForm_User.graphql"
+
+query SettingsEmailsPage {
+  ...SharedLayout_Query
+  currentUser {
+    id
+    isVerified
+    ...EmailsForm_User
+  }
+}

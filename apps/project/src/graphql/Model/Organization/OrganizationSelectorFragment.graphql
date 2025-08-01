@@ -1,0 +1,18 @@
+fragment OrganizationSelector on Query {
+  currentUser {
+    id
+    organizationMemberships(first: 20) {
+      nodes {
+        id
+        organization {
+          id
+          ...OrganizationShared
+        }
+      }
+    }
+  }
+  organizationBySlug(slug: $slug) {
+    id
+    ...OrganizationShared
+  }
+}

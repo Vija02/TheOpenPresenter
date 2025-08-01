@@ -1,0 +1,17 @@
+query OrganizationSettingsTagsPage($slug: String!) {
+  ...BaseOrganizationSettingsPage
+
+  ...OrganizationSettingsTagsData
+}
+
+fragment OrganizationSettingsTagsData on Query {
+  organizationBySlug(slug: $slug) {
+    id
+    tags {
+      nodes {
+        id
+        ...Tag
+      }
+    }
+  }
+}

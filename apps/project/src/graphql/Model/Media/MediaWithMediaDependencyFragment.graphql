@@ -1,0 +1,7 @@
+fragment MediaWithMediaDependency on Media {
+  id
+  ...Media
+  dependencies: mediaDependenciesByParentMediaId {
+    totalCount
+  }
+}

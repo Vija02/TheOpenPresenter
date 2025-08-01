@@ -1,0 +1,11 @@
+query AllCategoryByOrganization($slug: String!, $search: String) {
+  organizationBySlug(slug: $slug) {
+    id
+    categories(filter: { name: { includesInsensitive: $search } }) {
+      nodes {
+        id
+        ...Category
+      }
+    }
+  }
+}

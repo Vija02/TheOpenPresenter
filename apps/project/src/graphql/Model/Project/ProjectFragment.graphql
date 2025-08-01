@@ -1,0 +1,21 @@
+fragment Project on Project {
+  id
+  name
+  slug
+  category {
+    id
+    name
+  }
+  projectTags {
+    nodes {
+      id
+      tag {
+        id
+        ...Tag
+      }
+    }
+  }
+  createdAt
+  targetDate
+  updatedAt
+}

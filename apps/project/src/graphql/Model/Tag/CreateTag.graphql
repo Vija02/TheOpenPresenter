@@ -1,0 +1,26 @@
+mutation CreateTag(
+  $organizationId: UUID!
+  $name: String!
+  $description: String
+  $backgroundColor: String
+  $foregroundColor: String
+  $variant: String
+) {
+  createTag(
+    input: {
+      tag: {
+        organizationId: $organizationId
+        name: $name
+        description: $description
+        backgroundColor: $backgroundColor
+        foregroundColor: $foregroundColor
+        variant: $variant
+      }
+    }
+  ) {
+    tag {
+      id
+      ...Tag
+    }
+  }
+}
