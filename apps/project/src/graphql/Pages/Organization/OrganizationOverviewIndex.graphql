@@ -1,0 +1,17 @@
+query OrganizationOverviewIndexPage {
+  ...SharedLayout_Query
+
+  currentUser {
+    id
+    organizationMemberships(first: 20) {
+      nodes {
+        id
+        organization {
+          projects {
+            totalCount
+          }
+        }
+      }
+    }
+  }
+}

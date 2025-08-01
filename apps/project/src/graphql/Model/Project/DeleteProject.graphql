@@ -1,0 +1,5 @@
+mutation DeleteProject($id: UUID!) {
+  deleteProject(input: { id: $id }) {
+    deletedProjectNodeId
+  }
+}

@@ -1,0 +1,10 @@
+mutation CreateProjectTag($tagId: UUID!, $projectId: UUID!) {
+  createProjectTag(
+    input: { projectTag: { tagId: $tagId, projectId: $projectId } }
+  ) {
+    projectTag {
+      id
+      ...ProjectTag
+    }
+  }
+}

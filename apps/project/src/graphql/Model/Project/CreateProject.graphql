@@ -1,0 +1,24 @@
+mutation CreateProject(
+  $organizationId: UUID!
+  $slug: String!
+  $name: String!
+  $categoryId: UUID
+  $tags: [UUID]!
+  $targetDate: Datetime
+) {
+  createFullProject(
+    input: {
+      pOrganizationId: $organizationId
+      name: $name
+      slug: $slug
+      categoryId: $categoryId
+      tags: $tags
+      targetDate: $targetDate
+    }
+  ) {
+    project {
+      id
+      slug
+    }
+  }
+}

@@ -1,0 +1,17 @@
+query OrganizationSettingsCategoriesPage($slug: String!) {
+  ...BaseOrganizationSettingsPage
+
+  ...OrganizationSettingsCategoriesData
+}
+
+fragment OrganizationSettingsCategoriesData on Query {
+  organizationBySlug(slug: $slug) {
+    id
+    categories {
+      nodes {
+        id
+        ...Category
+      }
+    }
+  }
+}

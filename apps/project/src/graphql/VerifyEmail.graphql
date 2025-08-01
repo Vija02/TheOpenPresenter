@@ -1,0 +1,11 @@
+mutation VerifyEmail($id: UUID!, $token: String!) {
+  verifyEmail(input: { userEmailId: $id, token: $token }) {
+    success
+    query {
+      currentUser {
+        id
+        isVerified
+      }
+    }
+  }
+}

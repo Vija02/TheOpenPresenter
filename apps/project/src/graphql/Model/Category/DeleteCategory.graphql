@@ -1,0 +1,5 @@
+mutation DeleteCategory($id: UUID!) {
+  deleteCategory(input: { id: $id }) {
+    deletedCategoryNodeId
+  }
+}

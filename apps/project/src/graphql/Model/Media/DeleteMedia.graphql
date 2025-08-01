@@ -1,0 +1,5 @@
+mutation DeleteMedia($id: UUID!) {
+  deleteUserMedia(input: { id: $id }) {
+    success
+  }
+}

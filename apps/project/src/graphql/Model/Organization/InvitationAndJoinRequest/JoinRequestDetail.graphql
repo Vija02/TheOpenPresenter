@@ -1,0 +1,16 @@
+query JoinRequestDetail($id: UUID!) {
+  ...SharedLayout_Query
+
+  organizationJoinRequest(id: $id) {
+    id
+    user {
+      id
+      name
+    }
+    organization {
+      id
+      slug
+      name
+    }
+  }
+}

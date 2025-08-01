@@ -1,0 +1,5 @@
+mutation DeleteTag($id: UUID!) {
+  deleteTag(input: { id: $id }) {
+    deletedTagNodeId
+  }
+}

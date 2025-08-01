@@ -1,0 +1,5 @@
+fragment OrganizationShared on Organization {
+  id
+  name
+  slug
+}
