@@ -8442,7 +8442,7 @@ __metadata:
     typescript: "npm:5.7.2"
     use-debounce: "npm:^10.0.4"
     vite: "npm:6.3.5"
-    vite-tsconfig-paths: "npm:^6.0.0-beta.3"
+    vite-tsconfig-paths: "npm:^6.0.0-beta.4"
     wouter: "npm:^3.7.1"
     yup: "npm:^1.5.0"
     zxcvbn: "npm:^4.4.2"
@@ -30603,9 +30603,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vite-tsconfig-paths@npm:^6.0.0-beta.3":
-  version: 6.0.0-beta.3
-  resolution: "vite-tsconfig-paths@npm:6.0.0-beta.3"
+"vite-tsconfig-paths@npm:^6.0.0-beta.4":
+  version: 6.0.0-beta.4
+  resolution: "vite-tsconfig-paths@npm:6.0.0-beta.4"
   dependencies:
     debug: "npm:^4.1.1"
     globrex: "npm:^0.1.2"
@@ -30615,7 +30615,7 @@ __metadata:
   peerDependenciesMeta:
     vite:
       optional: true
-  checksum: 10c0/a36ec5479d7b8f53fe319d35b22995fec875eda19a889148eccdecfbd1ded7faf53d4418ef1458d8c28eb2ae531a79e43f06627d40deabda139ca22ebf3db7af
+  checksum: 10c0/9ec4ca27c92ee1a294fafd0a298f6db8d710cd627b25305df0f52dd750bff1840b2e82431d0b7e342ab5731b31ab91700f9064fcbf6ffd1ac0fa4c6470da1777
   languageName: node
   linkType: hard
 
