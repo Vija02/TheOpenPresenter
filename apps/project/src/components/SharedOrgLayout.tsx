@@ -81,6 +81,8 @@ export function SharedOrgLayout({
             alignItems="center"
             flexShrink={0}
             _hover={{ bg: "blue.50" }}
+            role="button"
+            aria-label="Back to organization overview"
           >
             <Icon fontSize="20px" cursor="pointer" px={3} width="100%">
               <IoMdArrowBack />
