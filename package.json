@@ -22,6 +22,7 @@
     "e2e": "yarn workspace @repo/e2e",
     "graphql": "yarn workspace @repo/graphql",
     "homepage": "yarn workspace @repo/homepage",
+    "project": "yarn workspace @repo/project",
     "remote": "yarn workspace @repo/remote",
     "renderer": "yarn workspace @repo/renderer",
     "shared": "yarn workspace @repo/shared",
