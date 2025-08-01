@@ -1,9 +1,0 @@
-query SearchPublicOrganizations($search: String!) {
-  organizationsPublicSearch(first: 20, searchString: $search) {
-    nodes {
-      id
-      slug
-      name
-    }
-  }
-}

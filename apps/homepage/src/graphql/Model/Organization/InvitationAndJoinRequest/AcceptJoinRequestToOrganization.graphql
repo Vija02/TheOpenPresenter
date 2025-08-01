@@ -1,5 +1,0 @@
-mutation AcceptJoinRequestToOrganization($id: UUID!) {
-  acceptJoinRequestToOrganization(input: { requestId: $id }) {
-    clientMutationId
-  }
-}
