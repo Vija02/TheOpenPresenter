@@ -26,4 +26,29 @@ test.describe("OrganizationPage", () => {
 
     await expect(page).toHaveURL(/app\/testorg/);
   });
+
+  test("can import a new project", async ({
+    page,
+    organizationPage,
+    e2eCommand,
+  }) => {
+    await e2eCommand.login({
+      orgs: [{ name: "TestOrg", slug: "testorg" }],
+      next: "/o/testorg",
+    });
+
+    await organizationPage.importButton.click();
+
+    const [fileChooser] = await Promise.all([
+      page.waitForEvent("filechooser"),
+      page.getByRole("button", { name: "choose file" }).click(),
+    ]);
+    await fileChooser.setFiles("./dummyFiles/dummyProject.top");
+
+    await expect(page.getByText("Import Complete")).toBeInViewport();
+
+    await organizationPage.importCloseButton.click();
+
+    await expect(page.getByText("Test Import Project")).toBeInViewport();
+  });
 });
