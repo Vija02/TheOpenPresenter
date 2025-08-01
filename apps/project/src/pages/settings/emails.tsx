@@ -33,6 +33,7 @@ import { extractError } from "@repo/lib";
 import { ErrorAlert, LoadingFull } from "@repo/ui";
 import { Form, Formik } from "formik";
 import { InputControl, SubmitButton } from "formik-chakra-ui";
+import React from "react";
 import { useCallback, useState } from "react";
 import { toast } from "react-toastify";
 import * as Yup from "yup";
@@ -145,12 +146,14 @@ function Email({
       </Td>
       <Td>
         <HStack whiteSpace="nowrap" justifyContent="flex-end">
-          {actions.map((action, i) => [
-            action,
-            i !== actions.length - 1 && (
-              <Divider key={i} orientation="vertical" height="20px" />
-            ),
-          ])}
+          {actions.map((action, i) => (
+            <React.Fragment key={i}>
+              {action}
+              {i !== actions.length - 1 && (
+                <Divider orientation="vertical" height="20px" />
+              )}
+            </React.Fragment>
+          ))}
         </HStack>
       </Td>
     </Tr>
