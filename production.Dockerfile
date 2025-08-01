@@ -69,7 +69,6 @@ COPY packages/typescript-config/ /app/packages/typescript-config/
 COPY packages/tailwind-config/ /app/packages/tailwind-config/
 
 COPY packages/graphql/ /app/packages/graphql/
-COPY apps/homepage/src/graphql/ /app/apps/homepage/src/graphql/
 COPY apps/project/src/graphql/ /app/apps/project/src/graphql/
 COPY apps/remote/src/graphql/ /app/apps/remote/src/graphql/
 COPY apps/renderer/src/graphql/ /app/apps/renderer/src/graphql/
