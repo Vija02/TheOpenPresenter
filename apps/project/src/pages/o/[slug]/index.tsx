@@ -116,6 +116,7 @@ const OrganizationPage = () => {
         {emptyProject && <EmptyProject />}
         {query.data?.organizationBySlug?.projects.nodes.map((project) => (
           <ProjectCard
+            key={project.id}
             project={project}
             organizationId={query.data?.organizationBySlug?.id}
             categories={query.data?.organizationBySlug?.categories.nodes ?? []}
