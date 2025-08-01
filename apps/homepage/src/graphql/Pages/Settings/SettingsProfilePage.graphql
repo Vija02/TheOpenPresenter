@@ -1,9 +1,0 @@
-#import "./ProfileSettingsForm_User.graphql"
-
-query SettingsProfilePage {
-  ...SharedLayout_Query
-  currentUser {
-    id
-    ...ProfileSettingsForm_User
-  }
-}

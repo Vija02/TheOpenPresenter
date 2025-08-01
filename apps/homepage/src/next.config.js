@@ -16,15 +16,6 @@ module.exports = () => {
     distDir: `../.next`,
     trailingSlash: false,
     output: "standalone",
-    redirects() {
-      return [
-        {
-          source: "/org",
-          destination: "/org/overview",
-          permanent: true,
-        },
-      ];
-    },
     webpack(config, { webpack, dev, isServer }) {
       const makeSafe = (externals) => {
         if (Array.isArray(externals)) {

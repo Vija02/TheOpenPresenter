@@ -1,8 +1,0 @@
-fragment Media on Media {
-  id
-  originalName
-  mediaName
-  fileSize
-  fileExtension
-  isComplete
-}

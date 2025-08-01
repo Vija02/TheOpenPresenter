@@ -1,7 +1,0 @@
-mutation DeleteProjectTag($id: UUID!) {
-  deleteProjectTag(input: { id: $id }) {
-    projectTag {
-      id
-    }
-  }
-}

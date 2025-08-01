@@ -1,7 +1,0 @@
-fragment EmailsForm_UserEmail on UserEmail {
-  id
-  email
-  isVerified
-  isPrimary
-  createdAt
-}

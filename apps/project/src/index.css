@@ -1,3 +1,29 @@
 @import "@repo/tailwind-config/preflight.css";
 @import "@repo/tailwind-config/theme.css";
 @import "@repo/tailwind-config/index.css";
+
+.lineText {
+  overflow: hidden;
+  text-align: center;
+}
+
+.lineText::before,
+.lineText::after {
+  background-color: #4a5568;
+  content: "";
+  display: inline-block;
+  height: 1px;
+  position: relative;
+  vertical-align: middle;
+  width: 50%;
+}
+
+.lineText::before {
+  right: 0.5em;
+  margin-left: -50%;
+}
+
+.lineText::after {
+  left: 0.5em;
+  margin-right: -50%;
+}

@@ -1,8 +1,0 @@
-fragment Tag on Tag {
-  id
-  name
-  description
-  backgroundColor
-  foregroundColor
-  variant
-}

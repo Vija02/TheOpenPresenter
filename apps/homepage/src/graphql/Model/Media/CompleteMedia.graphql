@@ -1,5 +1,0 @@
-mutation CompleteMedia($id: UUID!) {
-  completeMedia(input: { id: $id }) {
-    success
-  }
-}
