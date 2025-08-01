@@ -150,6 +150,7 @@ export async function makeApp({
   await middleware.installPostGraphile(app);
   await middleware.installRemote(app, httpServer!);
   await middleware.installRenderer(app, httpServer!);
+  await middleware.installProjectManagement(app, httpServer!);
   await middleware.installSSR(app);
   await middleware.installHocuspocus(app);
 

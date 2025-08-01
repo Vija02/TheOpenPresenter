@@ -14,6 +14,7 @@ import installPluginRoute from "./installPluginRoute";
 import installPluginStatic from "./installPluginStatic";
 import installPostGraphile from "./installPostGraphile";
 import installProjectImportExport from "./installProjectImportExport";
+import installProjectManagement from "./installProjectManagement";
 import installRemote from "./installRemote";
 import installRenderer from "./installRenderer";
 import installSSR from "./installSSR";
@@ -40,6 +41,7 @@ export {
   installPluginStatic,
   installPostGraphile,
   installProjectImportExport,
+  installProjectManagement,
   installRemote,
   installRenderer,
   installSSR,
