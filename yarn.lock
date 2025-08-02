@@ -8442,7 +8442,6 @@ __metadata:
     typescript: "npm:5.7.2"
     use-debounce: "npm:^10.0.4"
     vite: "npm:6.3.5"
-    vite-tsconfig-paths: "npm:^6.0.0-beta.4"
     wouter: "npm:^3.7.1"
     yup: "npm:^1.5.0"
     zxcvbn: "npm:^4.4.2"
@@ -29548,20 +29547,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tsconfck@npm:^3.0.3":
-  version: 3.1.6
-  resolution: "tsconfck@npm:3.1.6"
-  peerDependencies:
-    typescript: ^5.0.0
-  peerDependenciesMeta:
-    typescript:
-      optional: true
-  bin:
-    tsconfck: bin/tsconfck.js
-  checksum: 10c0/269c3c513540be44844117bb9b9258fe6f8aeab026d32aeebf458d5299125f330711429dbb556dbf125a0bc25f4a81e6c24ac96de2740badd295c3fb400f66c4
-  languageName: node
-  linkType: hard
-
 "tsconfig-paths@npm:^3.15.0":
   version: 3.15.0
   resolution: "tsconfig-paths@npm:3.15.0"
@@ -30600,22 +30585,6 @@ __metadata:
   version: 1.0.1
   resolution: "vite-plugin-externalize-dependencies@npm:1.0.1"
   checksum: 10c0/265782a798f3cda514e607ee1dccb2ccff4e850075b0497127435e90007806ba7f5a0893aa730b100fead9d6b73dd0d238b0ccc5dca7386a63f59ebb5560b92c
-  languageName: node
-  linkType: hard
-
-"vite-tsconfig-paths@npm:^6.0.0-beta.4":
-  version: 6.0.0-beta.4
-  resolution: "vite-tsconfig-paths@npm:6.0.0-beta.4"
-  dependencies:
-    debug: "npm:^4.1.1"
-    globrex: "npm:^0.1.2"
-    tsconfck: "npm:^3.0.3"
-  peerDependencies:
-    vite: "*"
-  peerDependenciesMeta:
-    vite:
-      optional: true
-  checksum: 10c0/9ec4ca27c92ee1a294fafd0a298f6db8d710cd627b25305df0f52dd750bff1840b2e82431d0b7e342ab5731b31ab91700f9064fcbf6ffd1ac0fa4c6470da1777
   languageName: node
   linkType: hard
 
