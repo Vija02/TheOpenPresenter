@@ -67,7 +67,7 @@
     @apply opacity-85;
   }
   .ui--alert-body {
-    @apply col-start-2 grid justify-items-start text-sm [&_p]:leading-relaxed;
+    @apply text-sm [&_p]:leading-relaxed;
   }
 
   /* Size-specific text and spacing */
