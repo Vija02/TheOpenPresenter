@@ -1,16 +1,8 @@
-import { Box, Center, Link, Stack, chakra } from "@chakra-ui/react";
 import { OverlayToggle } from "@repo/ui";
-import {
-  BsGithub as BsGithubRaw,
-  BsQrCodeScan as BsQrCodeScanRaw,
-} from "react-icons/bs";
-import { FcGoogle as FcGoogleRaw } from "react-icons/fc";
+import { BsGithub, BsQrCodeScan } from "react-icons/bs";
+import { FcGoogle } from "react-icons/fc";
 
 import QRLoginModal from "./QRLoginModal";
-
-const BsGithub = chakra(BsGithubRaw);
-const FcGoogle = chakra(FcGoogleRaw);
-const BsQrCodeScan = chakra(BsQrCodeScanRaw);
 
 export interface SocialLoginOptionsProps {
   next: string;
@@ -26,47 +18,43 @@ export function SocialLoginOptions({
   buttonTextFromService = defaultButtonTextFromService,
 }: SocialLoginOptionsProps) {
   return (
-    <Stack direction="row" justifyContent="center" gap={3} width="100%">
-      <Link
+    <div className="stack-row justify-center gap-3 w-full">
+      <a
         href={`/auth/google?next=${encodeURIComponent(next)}`}
-        flex={1}
-        _hover={{ bg: "gray.100" }}
+        className="flex-1 hover:bg-gray-100 transition-colors"
       >
-        <Box border="1px solid" borderColor="gray.600" rounded="md" p={2}>
-          <Center>
-            <FcGoogle fontSize="2em" />
-          </Center>
-        </Box>
-      </Link>
-      <Link
+        <div className="border border-gray-600 rounded-sm p-2">
+          <div className="center">
+            <FcGoogle className="text-2xl" />
+          </div>
+        </div>
+      </a>
+      <a
         href={`/auth/github?next=${encodeURIComponent(next)}`}
-        flex={1}
-        _hover={{ bg: "gray.100" }}
+        className="flex-1 hover:bg-gray-100 transition-colors"
       >
-        <Box border="1px solid" borderColor="gray.600" rounded="md" p={2}>
-          <Center>
-            <BsGithub fontSize="2em" color="black" />
-          </Center>
-        </Box>
-      </Link>
+        <div className="border border-gray-600 rounded-sm p-2">
+          <div className="center">
+            <BsGithub className="text-2xl text-black" />
+          </div>
+        </div>
+      </a>
       <OverlayToggle
         toggler={({ onToggle }) => (
-          <Box
-            cursor="pointer"
+          <div
+            className="cursor-pointer flex-1 hover:bg-gray-100 transition-colors"
             onClick={onToggle}
-            flex={1}
-            _hover={{ bg: "gray.100" }}
           >
-            <Box border="1px solid" borderColor="gray.600" rounded="md" p={2}>
-              <Center>
-                <BsQrCodeScan fontSize="2em" color="black" />
-              </Center>
-            </Box>
-          </Box>
+            <div className="border border-gray-600 rounded-sm p-2">
+              <div className="center">
+                <BsQrCodeScan className="text-2xl text-black" />
+              </div>
+            </div>
+          </div>
         )}
       >
         <QRLoginModal next={next} />
       </OverlayToggle>
-    </Stack>
+    </div>
   );
 }

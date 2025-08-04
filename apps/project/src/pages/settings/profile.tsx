@@ -1,15 +1,7 @@
 import { Redirect } from "@/components/Redirect";
 import { SharedLayoutLoggedIn } from "@/components/SharedLayoutLoggedIn";
 import { ApolloError } from "@apollo/client";
-import {
-  Alert,
-  AlertDescription,
-  AlertIcon,
-  AlertTitle,
-  Box,
-  Heading,
-  VStack,
-} from "@chakra-ui/react";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   ProfileSettingsForm_UserFragment,
   useSettingsProfilePageQuery,
@@ -17,10 +9,28 @@ import {
 } from "@repo/graphql";
 import { extractError, getCodeFromError } from "@repo/lib";
 import { ErrorAlert, LoadingFull } from "@repo/ui";
-import { Form, Formik, FormikHelpers } from "formik";
-import { InputControl, SubmitButton } from "formik-chakra-ui";
+import { Alert, Button, Form, InputControl } from "@repo/ui";
 import { useCallback, useState } from "react";
-import * as Yup from "yup";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+
+const validationSchema = z.object({
+  name: z.string().min(1, "Please enter your name"),
+  username: z
+    .string()
+    .min(2, "Username must be at least 2 characters long.")
+    .regex(/^([a-zA-Z]|$)/, "Username must start with a letter.")
+    .regex(
+      /^([^_]|_[^_]|_$)*$/,
+      "Username must not contain two underscores next to each other.",
+    )
+    .regex(
+      /^[a-zA-Z0-9_]*$/,
+      "Username must contain only alphanumeric characters and underscores.",
+    ),
+});
+
+type FormInputs = z.infer<typeof validationSchema>;
 
 const Settings_Profile = () => {
   const [formError, setFormError] = useState<Error | ApolloError | null>(null);
@@ -45,23 +55,6 @@ const Settings_Profile = () => {
   );
 };
 
-const validationSchema = Yup.object({
-  name: Yup.string().required("Please enter your name"),
-  username: Yup.string()
-    .min(2, "Username must be at least 2 characters long.")
-    .matches(/^([a-zA-Z]|$)/, "Username must start with a letter.")
-    .matches(
-      /^([^_]|_[^_]|_$)*$/,
-      "Username must not contain two underscores next to each other.",
-    )
-    .matches(
-      /^[a-zA-Z0-9_]*$/,
-      "Username must contain only alphanumeric characters and underscores.",
-    )
-    .required("Please enter a username"),
-});
-type FormInputs = Yup.InferType<typeof validationSchema>;
-
 interface ProfileSettingsFormProps {
   user: ProfileSettingsForm_UserFragment;
   error: Error | ApolloError | null;
@@ -76,8 +69,16 @@ function ProfileSettingsForm({
   const [updateUser, { data }] = useUpdateUserMutation();
   const success = !!data?.updateUser;
 
+  const form = useForm<FormInputs>({
+    resolver: zodResolver(validationSchema),
+    defaultValues: {
+      name: user.name ?? "",
+      username: user.username,
+    },
+  });
+
   const onSubmit = useCallback(
-    async (values: FormInputs, formikHelpers: FormikHelpers<any>) => {
+    async (values: FormInputs) => {
       setError(null);
       try {
         await updateUser({
@@ -93,81 +94,60 @@ function ProfileSettingsForm({
       } catch (e: any) {
         const errcode = getCodeFromError(e);
         if (errcode === "23505" || errcode === "NUNIQ") {
-          formikHelpers.setFieldError(
-            "username",
-            "This username is already in use, please pick a different name",
-          );
+          form.setError("username", {
+            type: "manual",
+            message:
+              "This username is already in use, please pick a different name",
+          });
         } else {
           setError(e);
         }
       }
     },
-    [setError, updateUser, user.id],
+    [form, setError, updateUser, user.id],
   );
 
   return (
-    <Formik
-      initialValues={{ name: user.name ?? "", username: user.username }}
-      onSubmit={onSubmit}
-      validationSchema={validationSchema}
-    >
-      {({ handleSubmit }) => (
-        <Form onSubmit={handleSubmit as any}>
-          <VStack alignItems="flex-start">
-            <Heading>Profile Settings</Heading>
-            <InputControl
-              name="name"
-              label="Name"
-              inputProps={{
-                autoComplete: "name",
-                // @ts-ignore
-                "data-cy": "settingsprofilepage-input-name",
-              }}
-            />
+    <Form {...form}>
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="stack-col items-start gap-4"
+      >
+        <h1 className="text-2xl font-bold">Profile Settings</h1>
 
-            <InputControl
-              name="username"
-              label="Username"
-              inputProps={{
-                autoComplete: "username",
-                // @ts-ignore
-                "data-cy": "settingsprofilepage-input-username",
-              }}
-            />
+        <InputControl
+          control={form.control}
+          name="name"
+          label="Name"
+          autoComplete="name"
+          data-cy="settingsprofilepage-input-name"
+        />
 
-            {error ? (
-              <Alert status="error">
-                <AlertIcon />
-                <Box flex="1">
-                  <AlertTitle mr={2}>
-                    Error: Failed to update profile
-                  </AlertTitle>
-                  <AlertDescription display="block">
-                    {extractError(error).message}
-                  </AlertDescription>
-                </Box>
-              </Alert>
-            ) : null}
+        <InputControl
+          control={form.control}
+          name="username"
+          label="Username"
+          autoComplete="username"
+          data-cy="settingsprofilepage-input-username"
+        />
 
-            {success ? (
-              <Alert status="success">
-                <AlertIcon />
-                <Box flex="1">
-                  <AlertTitle mr={2}>Profile updated</AlertTitle>
-                </Box>
-              </Alert>
-            ) : null}
+        {error ? (
+          <Alert variant="destructive" title="Error: Failed to update profile">
+            {extractError(error).message}
+          </Alert>
+        ) : null}
 
-            <SubmitButton
-              colorScheme="green"
-              data-cy="settingsprofilepage-submit-button"
-            >
-              Update Profile
-            </SubmitButton>
-          </VStack>
-        </Form>
-      )}
-    </Formik>
+        {success ? <Alert variant="success" title="Profile updated" /> : null}
+
+        <Button
+          type="submit"
+          isLoading={form.formState.isSubmitting}
+          data-cy="settingsprofilepage-submit-button"
+        >
+          Update Profile
+        </Button>
+      </form>
+    </Form>
   );
 }
 

@@ -1,25 +1,17 @@
 import { SharedLayout } from "@/components/SharedLayout";
-import {
-  Alert,
-  AlertDescription,
-  AlertIcon,
-  AlertTitle,
-  Box,
-  Flex,
-  VStack,
-} from "@chakra-ui/react";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useSharedQuery, useVerifyEmailMutation } from "@repo/graphql";
 import { extractError } from "@repo/lib";
-import { Form, Formik } from "formik";
-import { InputControl, SubmitButton } from "formik-chakra-ui";
+import { Alert, Button, Form, InputControl } from "@repo/ui";
 import React, { useCallback, useEffect } from "react";
+import { useForm } from "react-hook-form";
 import { useSearchParams } from "wouter";
-import * as Yup from "yup";
+import z from "zod";
 
-const validationSchema = Yup.object({
-  code: Yup.string().required("Please enter your verification code"),
+const formSchema = z.object({
+  code: z.string().min(1, "Please enter your verification code"),
 });
-type FormInputs = Yup.InferType<typeof validationSchema>;
+type FormInputs = z.infer<typeof formSchema>;
 
 const VerifyPage = () => {
   const [searchParams] = useSearchParams();
@@ -47,6 +39,13 @@ const VerifyPage = () => {
     }
   }, [initialShouldSubmit, rawId, rawToken, verifyEmail]);
 
+  const form = useForm<FormInputs>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      code: "",
+    },
+  });
+
   const onSubmit = useCallback(
     async (values: FormInputs) => {
       setError(null);
@@ -67,66 +66,50 @@ const VerifyPage = () => {
   const query = useSharedQuery();
   return (
     <SharedLayout title="Verify Email Address" query={query}>
-      <Flex justifyContent="center" marginTop={10}>
-        <Box maxW="lg" w="100%">
+      <div className="flex justify-center mt-10">
+        <div className="max-w-md w-full">
           {((!initialShouldSubmit && !success) || !!error) && (
-            <Formik
-              initialValues={{ code: "" }}
-              onSubmit={onSubmit}
-              validationSchema={validationSchema}
-            >
-              {({ handleSubmit }) => (
-                <Form onSubmit={handleSubmit as any}>
-                  <VStack alignItems="flex-start">
-                    <InputControl
-                      name="code"
-                      label="Please enter your email verification code"
-                      inputProps={{
-                        // @ts-ignore
-                        "data-cy": "verifypage-input-code",
-                      }}
-                    />
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)}>
+                <div className="stack-col items-start gap-4">
+                  <InputControl
+                    control={form.control}
+                    name="code"
+                    label="Please enter your email verification code"
+                    data-cy="verifypage-input-code"
+                  />
 
-                    {error ? (
-                      <Alert status="error">
-                        <AlertIcon />
-                        <Box flex="1">
-                          <AlertTitle mr={2}>
-                            Error: Failed to verify email
-                          </AlertTitle>
-                          <AlertDescription display="block">
-                            {extractError(error).message}
-                          </AlertDescription>
-                        </Box>
-                      </Alert>
-                    ) : null}
-
-                    <SubmitButton
-                      colorScheme="green"
-                      data-cy="verifypage-button-submit"
+                  {error ? (
+                    <Alert
+                      variant="destructive"
+                      title="Error: Failed to verify email"
                     >
-                      Submit
-                    </SubmitButton>
-                  </VStack>
-                </Form>
-              )}
-            </Formik>
+                      {extractError(error).message}
+                    </Alert>
+                  ) : null}
+
+                  <Button
+                    type="submit"
+                    variant="success"
+                    isLoading={form.formState.isSubmitting}
+                    data-cy="verifypage-button-submit"
+                    className="w-full"
+                  >
+                    Submit
+                  </Button>
+                </div>
+              </form>
+            </Form>
           )}
-          {loading && "Verifying..."}
+          {loading && <div className="text-center py-4">Verifying...</div>}
           {success && (
-            <Alert status="success">
-              <AlertIcon />
-              <Box flex="1">
-                <AlertTitle mr={2}>Email Verified</AlertTitle>
-                <AlertDescription display="block">
-                  Thank you for verifying your email address. You may now close
-                  this window.
-                </AlertDescription>
-              </Box>
+            <Alert variant="success" title="Email Verified">
+              Thank you for verifying your email address. You may now close this
+              window.
             </Alert>
           )}
-        </Box>
-      </Flex>
+        </div>
+      </div>
     </SharedLayout>
   );
 };
