@@ -27,8 +27,8 @@
   },
   "scripts": {
     "prepare": "tw-patch install",
-    "build": "tsc && tw-patch extract && vite build",
-    "dev": "concurrently \"vite build --watch\" \"nodemon -e tsx,ts --watch src -x 'tw-patch extract'\"",
+    "build": "tsc && tw-patch extract && node extraClassNames.mjs && vite build",
+    "dev": "concurrently \"vite build --watch\" \"nodemon -e tsx,ts --watch src -x 'tw-patch extract && node extraClassNames.mjs'\"",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },
