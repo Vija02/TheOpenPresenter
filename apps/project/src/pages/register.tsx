@@ -2,56 +2,44 @@ import { Redirect } from "@/components/Redirect";
 import { SharedLayout } from "@/components/SharedLayout";
 import { WrappedPasswordStrength } from "@/components/WrappedPasswordStrength";
 import { ApolloError, useApolloClient } from "@apollo/client";
-import {
-  Alert,
-  AlertDescription,
-  AlertIcon,
-  AlertTitle,
-  Box,
-  Flex,
-  Link,
-  VStack,
-} from "@chakra-ui/react";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useRegisterMutation, useSharedQuery } from "@repo/graphql";
 import {
   extractError,
   getCodeFromError,
   getExceptionFromError,
 } from "@repo/lib";
-import { Form, Formik, FormikHelpers } from "formik";
-import { InputControl, SubmitButton } from "formik-chakra-ui";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Link as WouterLink } from "wouter";
-import { useLocation, useSearchParams } from "wouter";
-import * as Yup from "yup";
+import { Alert, Button, Form, InputControl, Link } from "@repo/ui";
+import { useCallback, useState } from "react";
+import { useForm } from "react-hook-form";
+import { Link as WouterLink, useLocation, useSearchParams } from "wouter";
+import z from "zod";
 
-const validationSchema = Yup.object({
-  name: Yup.string().required("Please enter your name"),
-  username: Yup.string()
-    .min(2, "Username must be at least 2 characters long.")
-    .max(24, "Username must be at most 24 characters long.")
-    .matches(/^([a-zA-Z]|$)/, "Username must start with a letter.")
-    .matches(
-      /^([^_]|_[^_]|_$)*$/,
-      "Username must not contain two underscores next to each other.",
-    )
-    .matches(
-      /^[a-zA-Z0-9_]*$/,
-      "Username must contain only alphanumeric characters and underscores.",
-    )
-    .required("Please enter a username"),
-  email: Yup.string()
-    .email("Please enter a valid email")
-    .required("Please enter your email"),
-  password: Yup.string().required("Please enter your password"),
-  confirm: Yup.string()
-    .oneOf(
-      [Yup.ref("password")],
-      "Make sure your password is the same in both password boxes.",
-    )
-    .required("Please enter your password again"),
-});
-type FormInputs = Yup.InferType<typeof validationSchema>;
+const formSchema = z
+  .object({
+    name: z.string().min(1, "Please enter your name"),
+    username: z
+      .string()
+      .min(2, "Username must be at least 2 characters long.")
+      .max(24, "Username must be at most 24 characters long.")
+      .regex(/^([a-zA-Z]|$)/, "Username must start with a letter.")
+      .regex(
+        /^([^_]|_[^_]|_$)*$/,
+        "Username must not contain two underscores next to each other.",
+      )
+      .regex(
+        /^[a-zA-Z0-9_]*$/,
+        "Username must contain only alphanumeric characters and underscores.",
+      ),
+    email: z.string().email("Please enter a valid email"),
+    password: z.string().min(1, "Please enter your password"),
+    confirm: z.string().min(1, "Please enter your password again"),
+  })
+  .refine((data) => data.password === data.confirm, {
+    message: "Make sure your password is the same in both password boxes.",
+    path: ["confirm"],
+  });
+type FormInputs = z.infer<typeof formSchema>;
 
 /**
  * The registration page just renders the standard layout and embeds the
@@ -70,8 +58,19 @@ const Register = () => {
 
   const redirectTo = "/o/";
 
+  const form = useForm<FormInputs>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: "",
+      username: "",
+      email: email?.toString() ?? "",
+      password: "",
+      confirm: "",
+    },
+  });
+
   const onSubmit = useCallback(
-    async (values: FormInputs, formikHelpers: FormikHelpers<any>) => {
+    async (values: FormInputs) => {
       try {
         await register({
           variables: {
@@ -90,37 +89,31 @@ const Register = () => {
         const fields: any =
           exception && "fields" in exception && exception.fields;
         if (code === "WEAKP") {
-          formikHelpers.setFieldError(
-            "password",
-            "This password is too weak, please try a stronger password.",
-          );
+          form.setError("password", {
+            message:
+              "This password is too weak, please try a stronger password.",
+          });
         } else if (code === "EMTKN") {
-          formikHelpers.setFieldError(
-            "email",
-            "An account with this email address has already been registered. Please login or use the forgot password feature to retrive your account.",
-          );
+          form.setError("email", {
+            message:
+              "An account with this email address has already been registered. Please login or use the forgot password feature to retrive your account.",
+          });
         } else if (code === "NUNIQ" && fields && fields[0] === "username") {
-          formikHelpers.setFieldError(
-            "username",
-            "An account with this username has already been registered, please try a different username.",
-          );
+          form.setError("username", {
+            message:
+              "An account with this username has already been registered, please try a different username.",
+          });
         } else if (code === "23514") {
-          formikHelpers.setFieldError(
-            "username",
-            "This username is not allowed; usernames must be between 2 and 24 characters long (inclusive), must start with a letter, and must contain only alphanumeric characters and underscores.",
-          );
+          form.setError("username", {
+            message:
+              "This username is not allowed; usernames must be between 2 and 24 characters long (inclusive), must start with a letter, and must contain only alphanumeric characters and underscores.",
+          });
         } else {
           setError(e);
         }
       }
     },
-    [register, client, navigate],
-  );
-
-  const focusElement = useRef<HTMLInputElement>(null);
-  useEffect(
-    () => void (focusElement.current && focusElement.current!.focus()),
-    [focusElement],
+    [register, client, navigate, form],
   );
 
   return (
@@ -130,124 +123,101 @@ const Register = () => {
           // Handle it here instead of shared layout so we can redirect properly
           <Redirect href={redirectTo} />
         ) : (
-          <Flex justifyContent="center" marginTop={16}>
-            <Box maxW="lg" w="100%">
-              <Formik
-                initialValues={{
-                  name: "",
-                  username: "",
-                  email: email?.toString() ?? "",
-                  password: "",
-                  confirm: "",
-                }}
-                onSubmit={onSubmit}
-                validationSchema={validationSchema}
-              >
-                {({ handleSubmit, setFieldValue }) => (
-                  <Form onSubmit={handleSubmit as any}>
-                    <VStack alignItems="flex-start">
-                      <InputControl
-                        // @ts-ignore
-                        ref={focusElement}
-                        name="name"
-                        label="Name"
-                        inputProps={{
-                          onChange: (e) => {
-                            const newValue = e.target.value as string;
-                            const newUsername = newValue
-                              .toLowerCase()
-                              .replace(/\s\s+/g, " ")
-                              .replace(/ /g, "_");
+          <div className="flex justify-center mt-16">
+            <div className="max-w-md w-full">
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)}>
+                  <div className="stack-col items-start gap-4">
+                    <h1 className="text-2xl font-bold">Register</h1>
+                    <InputControl
+                      control={form.control}
+                      name="name"
+                      label="Name"
+                      autoComplete="name"
+                      data-cy="registerpage-input-name"
+                      onChange={(e) => {
+                        const newValue = e.target.value as string;
+                        const newUsername = newValue
+                          .toLowerCase()
+                          .replace(/\s\s+/g, " ")
+                          .replace(/ /g, "_");
 
-                            setFieldValue("name", newValue);
-                            setFieldValue("username", newUsername);
-                          },
-                          autoComplete: "name",
-                          // @ts-ignore
-                          "data-cy": "registerpage-input-name",
-                          onBlur: (e) =>
-                            e.relatedTarget?.tagName === "a" &&
-                            e.stopPropagation(),
-                        }}
-                      />
+                        form.setValue("name", newValue);
+                        form.setValue("username", newUsername);
+                      }}
+                      autoFocus
+                    />
 
-                      <InputControl
-                        name="username"
-                        label="Username"
-                        inputProps={{
-                          autoComplete: "username",
-                          // @ts-ignore
-                          "data-cy": "registerpage-input-username",
-                        }}
-                      />
+                    <InputControl
+                      control={form.control}
+                      name="username"
+                      label="Username"
+                      autoComplete="username"
+                      data-cy="registerpage-input-username"
+                    />
 
-                      <InputControl
-                        name="email"
-                        label="E-mail"
-                        inputProps={{
-                          autoComplete: "email",
-                          type: "email",
-                          // @ts-ignore
-                          "data-cy": "registerpage-input-email",
-                        }}
-                      />
+                    <InputControl
+                      control={form.control}
+                      name="email"
+                      label="E-mail"
+                      type="email"
+                      autoComplete="email"
+                      data-cy="registerpage-input-email"
+                    />
 
-                      <InputControl
-                        name="password"
-                        label="Password"
-                        inputProps={{
-                          placeholder: "Password",
-                          autoComplete: "new-password",
-                          type: "password",
-                          // @ts-ignore
-                          "data-cy": "registerpage-input-password",
-                        }}
-                      />
+                    <InputControl
+                      control={form.control}
+                      name="password"
+                      label="Password"
+                      placeholder="Password"
+                      type="password"
+                      autoComplete="new-password"
+                      data-cy="registerpage-input-password"
+                    />
 
-                      <WrappedPasswordStrength />
+                    <WrappedPasswordStrength
+                      password={form.watch("password")}
+                    />
 
-                      <InputControl
-                        name="confirm"
-                        label="Confirm password"
-                        inputProps={{
-                          placeholder: "Password",
-                          autoComplete: "new-password",
-                          type: "password",
-                          // @ts-ignore
-                          "data-cy": "registerpage-input-password2",
-                        }}
-                      />
+                    <InputControl
+                      control={form.control}
+                      name="confirm"
+                      label="Confirm password"
+                      placeholder="Password"
+                      type="password"
+                      autoComplete="new-password"
+                      data-cy="registerpage-input-password2"
+                    />
 
-                      <Link as={WouterLink} href="/login">
+                    <Link asChild>
+                      <WouterLink href="/login" className="text-sm">
                         Already have an account? Sign in
-                      </Link>
+                      </WouterLink>
+                    </Link>
 
-                      {error ? (
-                        <Alert status="error">
-                          <AlertIcon />
-                          <Box flex="1">
-                            <AlertTitle mr={2}>
-                              Error: Failed to register
-                            </AlertTitle>
-                            <AlertDescription display="block">
-                              {extractError(error).message}
-                            </AlertDescription>
-                          </Box>
-                        </Alert>
-                      ) : null}
-
-                      <SubmitButton
-                        colorScheme="green"
-                        data-cy="registerpage-submit-button"
+                    {error ? (
+                      <Alert
+                        variant="destructive"
+                        title="Error: Failed to register"
                       >
-                        Register
-                      </SubmitButton>
-                    </VStack>
-                  </Form>
-                )}
-              </Formik>
-            </Box>
-          </Flex>
+                        {extractError(error).message}
+                      </Alert>
+                    ) : null}
+
+                    <Button
+                      type="submit"
+                      variant="success"
+                      isLoading={form.formState.isSubmitting}
+                      data-cy="registerpage-submit-button"
+                      className="w-full"
+                    >
+                      Register
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </div>
+          </div>
         )
       }
     </SharedLayout>
