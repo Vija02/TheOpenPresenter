@@ -3,20 +3,9 @@ import {
   useOrganizationSlug,
 } from "@/lib/permissionHooks/organization";
 import { QueryResult } from "@apollo/client";
-import {
-  Avatar,
-  Box,
-  Button,
-  Divider,
-  Icon,
-  Link,
-  Stack,
-  Text,
-  Wrap,
-} from "@chakra-ui/react";
 import { SharedOrganizationFragment } from "@repo/graphql";
 import { globalState } from "@repo/lib";
-import { OverlayToggle } from "@repo/ui";
+import { Avatar, AvatarFallback, Button, OverlayToggle } from "@repo/ui";
 import * as React from "react";
 import { useEffect } from "react";
 import { IoMdArrowBack, IoMdSettings } from "react-icons/io";
@@ -68,45 +57,29 @@ export function SharedOrgLayout({
 
   const navbar = React.useMemo(
     () => (
-      <Box
-        width={{ base: "100%", md: "250px" }}
-        alignSelf="stretch"
-        borderRight="1px solid rgb(217, 217, 217)"
-      >
-        <Stack direction="row" alignItems="stretch" spacing={0}>
-          <Box
-            as={WouterLink}
+      <div className="w-full md:w-[250px] self-stretch border-r border-stroke">
+        <div className="flex items-stretch">
+          <WouterLink
             href="/org/overview"
-            display="flex"
-            alignItems="center"
-            flexShrink={0}
-            _hover={{ bg: "blue.50" }}
+            className="flex items-center flex-shrink-0 hover:bg-blue-50 text-tertiary"
             role="button"
             aria-label="Back to organization overview"
           >
-            <Icon fontSize="20px" cursor="pointer" px={3} width="100%">
-              <IoMdArrowBack />
-            </Icon>
-          </Box>
-          <Stack
-            direction="row"
-            p={3}
-            pl={0}
-            alignItems="center"
-            overflow="hidden"
-            flex={1}
-          >
-            <Avatar
-              size="xs"
-              src={data?.organizationBySlug?.name ?? undefined}
-              name={data?.organizationBySlug?.name ?? ""}
-            />
-            <Text textOverflow="ellipsis" overflow="hidden" whiteSpace="nowrap">
+            <IoMdArrowBack className="size-4 cursor-pointer px-3 w-full" />
+          </WouterLink>
+          <div className="stack-row p-3 pl-1 overflow-hidden flex-1">
+            <Avatar className="size-6">
+              <AvatarFallback>
+                {data?.organizationBySlug?.name?.charAt(0)?.toUpperCase() ??
+                  "?"}
+              </AvatarFallback>
+            </Avatar>
+            <div className="text-ellipsis overflow-hidden whitespace-nowrap">
               {data?.organizationBySlug?.name}
-            </Text>
-          </Stack>
-        </Stack>
-        <Divider />
+            </div>
+          </div>
+        </div>
+        <div className="border-t border-stroke-disabled"></div>
         <SidebarItem
           href={`/o/${slug}`}
           icon={<PiProjectorScreenChartLight />}
@@ -135,7 +108,7 @@ export function SharedOrgLayout({
             name="Delete Organization"
           />
         </SidebarItem>
-      </Box>
+      </div>
     ),
     [data?.organizationBySlug?.name, slug],
   );
@@ -153,12 +126,10 @@ export function SharedOrgLayout({
               toggler={({ onToggle }) => (
                 <Button
                   variant="ghost"
-                  _hover={{ bg: "none" }}
+                  className="hover:bg-transparent"
                   onClick={onToggle}
                 >
-                  <Icon color="white" fontSize="24px">
-                    <RxHamburgerMenu />
-                  </Icon>
+                  <RxHamburgerMenu className="size-6 text-gray-400" />
                 </Button>
               )}
             >
@@ -167,24 +138,25 @@ export function SharedOrgLayout({
           )
         }
         navbarRight={
-          <Wrap>
-            <Stack direction="row" spacing={6}>
-              <Link as={WouterLink} href={`/logout`} variant="linkButton">
-                <Button size="sm" variant="link" data-cy="header-logout-button">
-                  Logout
-                </Button>
-              </Link>
-            </Stack>
-          </Wrap>
+          <WouterLink href={`/logout`}>
+            <Button
+              size="sm"
+              variant="link"
+              className="text-tertiary"
+              data-cy="header-logout-button"
+            >
+              Logout
+            </Button>
+          </WouterLink>
         }
       >
         {organizationLoadingElement || (
-          <Box display="flex" minHeight={contentMinHeight}>
+          <div className="flex" style={{ minHeight: contentMinHeight }}>
             {!isMobile && navbar}
             <StandardWidth style={{ width: "100%" }}>
               {props.children}
             </StandardWidth>
-          </Box>
+          </div>
         )}
       </SharedLayout>
     </globalState.modelDataAccess.TagProvider>
