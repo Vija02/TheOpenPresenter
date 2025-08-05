@@ -1,15 +1,10 @@
 import {
   Avatar,
-  Box,
+  AvatarFallback,
+  AvatarImage,
   Button,
-  Divider,
-  Icon,
-  Link,
-  Stack,
-  Text,
-  Wrap,
-} from "@chakra-ui/react";
-import { OverlayToggle } from "@repo/ui";
+  OverlayToggle,
+} from "@repo/ui";
 import * as React from "react";
 import { GoOrganization } from "react-icons/go";
 import { IoMdSettings } from "react-icons/io";
@@ -34,20 +29,17 @@ export function SharedLayoutLoggedIn(
 
   const navbar = React.useMemo(
     () => (
-      <Box
-        width={{ base: "100%", md: "250px" }}
-        alignSelf="stretch"
-        borderRight="1px solid rgb(217, 217, 217)"
-      >
-        <Stack direction="row" p={3} alignItems="center">
-          <Avatar
-            size="xs"
-            src={data?.currentUser?.avatarUrl ?? undefined}
-            name={data?.currentUser?.name ?? ""}
-          />
-          <Text>{data?.currentUser?.name}</Text>
-        </Stack>
-        <Divider />
+      <div className="w-full md:w-[250px] self-stretch border-r border-gray-300">
+        <div className="stack-row items-start p-3">
+          <Avatar className="size-6">
+            <AvatarImage src={data?.currentUser?.avatarUrl ?? undefined} />
+            <AvatarFallback>
+              {data?.currentUser?.name?.charAt(0)?.toUpperCase() ?? "?"}
+            </AvatarFallback>
+          </Avatar>
+          <span>{data?.currentUser?.name}</span>
+        </div>
+        <hr className="border-gray-200" />
         <SidebarItem
           baseUrl="/org"
           href="/org/overview"
@@ -69,7 +61,7 @@ export function SharedLayoutLoggedIn(
           <SidebarItem href="/settings/emails" name="Emails" />
           <SidebarItem href="/settings/delete" name="Delete Account" />
         </SidebarItem>
-      </Box>
+      </div>
     ),
     [data?.currentUser?.avatarUrl, data?.currentUser?.name],
   );
@@ -85,12 +77,10 @@ export function SharedLayoutLoggedIn(
             toggler={({ onToggle }) => (
               <Button
                 variant="ghost"
-                _hover={{ bg: "none" }}
+                className="hover:bg-transparent"
                 onClick={onToggle}
               >
-                <Icon color="white" fontSize="24px">
-                  <RxHamburgerMenu />
-                </Icon>
+                <RxHamburgerMenu className="size-6 text-gray-400" />
               </Button>
             )}
           >
@@ -99,23 +89,24 @@ export function SharedLayoutLoggedIn(
         )
       }
       navbarRight={
-        <Wrap>
-          <Stack direction="row" spacing={6}>
-            <Link as={WouterLink} href={`/logout`} variant="linkButton">
-              <Button size="sm" variant="link" data-cy="header-logout-button">
-                Logout
-              </Button>
-            </Link>
-          </Stack>
-        </Wrap>
+        <WouterLink href={`/logout`}>
+          <Button
+            size="sm"
+            variant="link"
+            className="text-tertiary"
+            data-cy="header-logout-button"
+          >
+            Logout
+          </Button>
+        </WouterLink>
       }
     >
-      <Box display="flex" minHeight={contentMinHeight}>
+      <div className="flex" style={{ minHeight: contentMinHeight }}>
         {!isMobile && navbar}
         <StandardWidth style={{ width: "100%" }}>
           {props.children}
         </StandardWidth>
-      </Box>
+      </div>
     </SharedLayout>
   );
 }

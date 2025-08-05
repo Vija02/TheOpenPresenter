@@ -140,7 +140,7 @@ export function SharedLayout({
                     <Button
                       size="sm"
                       variant="link"
-                      className="text-gray-500"
+                      className="text-tertiary"
                       data-cy="header-login-button"
                     >
                       Sign in
