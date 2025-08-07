@@ -1,18 +1,11 @@
 import { PasswordStrength } from "@repo/ui";
-import { useFormikContext } from "formik";
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 import zxcvbn from "zxcvbn";
 
-type FormInputs = {
-  password: string;
-};
-
-// Only to be used in the context of formik
-export const WrappedPasswordStrength = () => {
-  const formik = useFormikContext<FormInputs>();
-
+// Only to be used in the context of react-hook-form
+export const WrappedPasswordStrength = ({ password }: { password: string }) => {
   const [passwordStrength, passwordSuggestions] = useMemo(() => {
-    const { score, feedback } = zxcvbn(formik.values.password || "");
+    const { score, feedback } = zxcvbn(password || "");
 
     const messages = [...feedback.suggestions];
     if (feedback.warning !== "") {
@@ -20,9 +13,9 @@ export const WrappedPasswordStrength = () => {
     }
 
     return [score, messages];
-  }, [formik.values.password]);
+  }, [password]);
 
-  const isDirty = formik.values.password !== "";
+  const isDirty = password !== "";
 
   return (
     <PasswordStrength

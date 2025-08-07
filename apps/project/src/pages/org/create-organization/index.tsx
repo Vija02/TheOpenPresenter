@@ -1,23 +1,7 @@
 import { Redirect } from "@/components/Redirect";
 import { SharedLayoutLoggedIn } from "@/components/SharedLayoutLoggedIn";
 import { ApolloError } from "@apollo/client";
-import {
-  Accordion,
-  AccordionButton,
-  AccordionIcon,
-  AccordionItem,
-  AccordionPanel,
-  Alert,
-  AlertDescription,
-  AlertIcon,
-  AlertTitle,
-  Box,
-  Button,
-  Heading,
-  Stack,
-  Text,
-  VStack,
-} from "@chakra-ui/react";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   CreatedOrganizationFragment,
   useCreateOrganizationMutation,
@@ -25,22 +9,37 @@ import {
   useSharedQuery,
 } from "@repo/graphql";
 import { extractError, getCodeFromError } from "@repo/lib";
-import { Form, Formik, useFormikContext } from "formik";
-import { InputControl, SubmitButton } from "formik-chakra-ui";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+  Alert,
+  Button,
+  Form,
+  InputControl,
+} from "@repo/ui";
 import { useCallback, useState } from "react";
+import { useForm, useFormContext } from "react-hook-form";
 import slugify from "slugify";
 import { useDebounce } from "use-debounce";
 import { Link as WouterLink } from "wouter";
-import * as Yup from "yup";
+import * as z from "zod";
 
-const validationSchema = Yup.object({
-  name: Yup.string().required("Please choose a name for the organization"),
+const formSchema = z.object({
+  name: z.string().min(1, "Please choose a name for the organization"),
 });
-type FormInputs = Yup.InferType<typeof validationSchema>;
+type FormInputs = z.infer<typeof formSchema>;
 
 const CreateOrganizationPage = () => {
   const [error, setError] = useState<Error | ApolloError | null>(null);
   const query = useSharedQuery();
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: "",
+    },
+  });
 
   const code = getCodeFromError(error);
   const [organization, setOrganization] =
@@ -76,137 +75,120 @@ const CreateOrganizationPage = () => {
 
   return (
     <SharedLayoutLoggedIn title="Create organization" query={query}>
-      <Box
-        w="100%"
-        display={{ base: "block", lg: "grid" }}
-        gridTemplateColumns="1fr 300px"
-      >
-        <Box maxW="lg">
-          <Formik
-            initialValues={{ name: "" }}
-            onSubmit={onSubmit}
-            validationSchema={validationSchema}
-          >
-            {({ handleSubmit }) => (
-              <Form onSubmit={handleSubmit as any}>
-                <VStack alignItems="flex-start">
-                  <Heading>Create organization</Heading>
-                  <Text>
-                    Just one last step! After that you can start presenting.
-                  </Text>
+      <div className="w-full grid grid-cols-1 gap-4 lg:grid-cols-[1fr_300px]">
+        <div className="max-w-lg">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)}>
+              <div className="stack-col items-start">
+                <h1 className="text-2xl font-bold">Create organization</h1>
+                <p>Just one last step! After that you can start presenting.</p>
 
-                  <InputControl
-                    name="name"
-                    label="Name"
-                    inputProps={{
-                      // @ts-ignore
-                      "data-cy": "createorganization-input-name",
-                    }}
-                  />
+                <InputControl
+                  control={form.control}
+                  name="name"
+                  label="Name"
+                  data-cy="createorganization-input-name"
+                />
 
-                  <SlugCheck />
+                {/* <SlugCheck /> */}
 
-                  {error ? (
-                    <Alert status="error">
-                      <AlertIcon />
-                      <Box flex="1">
-                        <AlertTitle mr={2}>
-                          Error: Failed to create organization
-                        </AlertTitle>
-                        <AlertDescription display="block">
-                          {code === "NUNIQ" ? (
-                            <span data-cy="createorganization-alert-nuniq">
-                              That organization name is already in use, please
-                              choose a different organization name.
-                            </span>
-                          ) : (
-                            extractError(error).message
-                          )}
-                          {code ? (
-                            <span>
-                              {" "}
-                              (Error code: <code>ERR_{code}</code>)
-                            </span>
-                          ) : null}
-                        </AlertDescription>
-                      </Box>
-                    </Alert>
-                  ) : null}
+                {error ? (
+                  <Alert
+                    variant="destructive"
+                    title="Error: Failed to create organization"
+                  >
+                    <div className="block">
+                      {code === "NUNIQ" ? (
+                        <span data-cy="createorganization-alert-nuniq">
+                          That organization name is already in use, please
+                          choose a different organization name.
+                        </span>
+                      ) : (
+                        extractError(error).message
+                      )}
+                      {code ? (
+                        <span>
+                          {" "}
+                          (Error code: <code>ERR_{code}</code>)
+                        </span>
+                      ) : null}
+                    </div>
+                  </Alert>
+                ) : null}
 
-                  <Stack direction="row" alignItems="center" flexWrap="wrap">
-                    <SubmitButton
-                      colorScheme="green"
-                      data-cy="createorganization-submit-button"
-                    >
-                      Create organization
-                    </SubmitButton>
-                    <WouterLink href="/org/join-organization">
-                      <Button variant="link" size="sm">
-                        Alternatively, Join an existing organization
-                      </Button>
-                    </WouterLink>
-                  </Stack>
-                </VStack>
-              </Form>
-            )}
-          </Formik>
-        </Box>
-        <Box mt={{ base: 10, lg: 0 }}>
-          <Heading>FAQ</Heading>
-          <Accordion defaultIndex={[0]} allowMultiple>
-            <AccordionItem>
-              <h2>
-                <AccordionButton>
-                  <Box as="span" flex="1" textAlign="left">
-                    Why do I need to create an organization?
-                  </Box>
-                  <AccordionIcon />
-                </AccordionButton>
-              </h2>
-              <AccordionPanel pb={4}>
-                Every project/presentation in TheOpenPresenter lives within an
-                organization. It's mostly used to group your projects together
-                in a way that makes sense.
+                <div className="stack-row items-center flex-wrap">
+                  <Button
+                    type="submit"
+                    variant="success"
+                    data-cy="createorganization-submit-button"
+                    isLoading={form.formState.isSubmitting}
+                  >
+                    Create organization
+                  </Button>
+                  <WouterLink href="/org/join-organization">
+                    <Button variant="link" size="sm">
+                      Alternatively, Join an existing organization
+                    </Button>
+                  </WouterLink>
+                </div>
+              </div>
+            </form>
+          </Form>
+        </div>
+        <div className="mt-10 lg:mt-0">
+          <h2 className="text-xl font-bold">FAQ</h2>
+          <Accordion type="multiple" defaultValue={["item-1"]}>
+            <AccordionItem value="item-1">
+              <AccordionTrigger>
+                Why do I need to create an organization?
+              </AccordionTrigger>
+              <AccordionContent>
+                <p>
+                  Every project/presentation in TheOpenPresenter lives within an
+                  organization. It's mostly used to group your projects together
+                  in a way that makes sense.
+                </p>
                 <br />
-                <br />
-                You can change the details of an organization after its
-                creation, so don't worry about getting it right the first time.
-              </AccordionPanel>
+                <p>
+                  You can change the details of an organization after its
+                  creation, so don't worry about getting it right the first
+                  time.
+                </p>
+              </AccordionContent>
             </AccordionItem>
 
-            <AccordionItem>
-              <h2>
-                <AccordionButton>
-                  <Box as="span" flex="1" textAlign="left">
-                    How can I join an existing organization?
-                  </Box>
-                  <AccordionIcon />
-                </AccordionButton>
-              </h2>
-              <AccordionPanel pb={4}>
-                If you are working with an existing organization, you probably
-                want to join their organization before starting. This will allow
-                you to access all existing and newly created projects.
+            <AccordionItem value="item-2">
+              <AccordionTrigger>
+                How can I join an existing organization?
+              </AccordionTrigger>
+              <AccordionContent>
+                <p>
+                  If you are working with an existing organization, you probably
+                  want to join their organization before starting. This will
+                  allow you to access all existing and newly created projects.
+                </p>
                 <br />
+                <p>
+                  The owner of your organization is able to invite you directly.
+                  Alternatively, you can request to join the organization by
+                  clicking on the "Join an existing organization" button.
+                </p>
                 <br />
-                The owner of your organization is able to invite you directly.
-                Alternatively, you can request to join the organization by
-                clicking on the "Join an existing organization" button.
-                <br />
-                Note: You can only do this for public organizations.
-              </AccordionPanel>
+                <p>Note: You can only do this for public organizations.</p>
+              </AccordionContent>
             </AccordionItem>
           </Accordion>
-        </Box>
-      </Box>
+        </div>
+      </div>
     </SharedLayoutLoggedIn>
   );
 };
 
 const SlugCheck = () => {
-  const formik = useFormikContext<FormInputs>();
+  const { watch } = useFormContext<z.infer<typeof formSchema>>();
 
-  const slug = slugify(formik.values.name || "", {
+  const name = watch("name");
+  const slug = slugify(name || "", {
     lower: true,
   });
   const [debouncedSlug] = useDebounce(slug, 500);
@@ -228,16 +210,16 @@ const SlugCheck = () => {
       </p>
 
       {existingOrganizationData?.organizationBySlug && (
-        <Text color="red.400" data-cy="createorganization-hint-nameinuse">
+        <p className="text-red-500" data-cy="createorganization-hint-nameinuse">
           Organization name is already in use
-        </Text>
+        </p>
       )}
 
       {slugError && (
-        <Text color="red.400">
+        <p className="text-red-500">
           Error occurred checking for existing organization with this name
           (error code: ERR_{getCodeFromError(slugError)})
-        </Text>
+        </p>
       )}
     </>
   );

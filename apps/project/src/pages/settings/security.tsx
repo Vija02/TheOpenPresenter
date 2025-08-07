@@ -1,27 +1,19 @@
 import { SharedLayoutLoggedIn } from "@/components/SharedLayoutLoggedIn";
 import { WrappedPasswordStrength } from "@/components/WrappedPasswordStrength";
 import { ApolloError } from "@apollo/client";
-import {
-  Alert,
-  AlertDescription,
-  AlertIcon,
-  AlertTitle,
-  Box,
-  Heading,
-  VStack,
-} from "@chakra-ui/react";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useChangePasswordMutation, useSharedQuery } from "@repo/graphql";
 import { extractError, getCodeFromError } from "@repo/lib";
-import { Form, Formik, FormikHelpers } from "formik";
-import { InputControl, SubmitButton } from "formik-chakra-ui";
+import { Alert, Button, Form, InputControl } from "@repo/ui";
 import { useCallback, useState } from "react";
-import * as Yup from "yup";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
-const validationSchema = Yup.object({
-  oldPassword: Yup.string().required("Please enter your current password"),
-  password: Yup.string().required("Please enter your new password"),
+const formSchema = z.object({
+  oldPassword: z.string().min(1, "Please enter your current password"),
+  password: z.string().min(1, "Please enter your new password"),
 });
-type FormInputs = Yup.InferType<typeof validationSchema>;
+type FormInputs = z.infer<typeof formSchema>;
 
 const Settings_Security = () => {
   const [error, setError] = useState<Error | ApolloError | null>(null);
@@ -30,8 +22,16 @@ const Settings_Security = () => {
   const [changePassword, { data }] = useChangePasswordMutation();
   const success = !!data?.changePassword?.success;
 
+  const form = useForm<FormInputs>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      oldPassword: "",
+      password: "",
+    },
+  });
+
   const onSubmit = useCallback(
-    async (values: FormInputs, formikHelpers: FormikHelpers<any>) => {
+    async (values: FormInputs) => {
       setError(null);
       try {
         await changePassword({
@@ -40,23 +40,27 @@ const Settings_Security = () => {
             newPassword: values.password,
           },
         });
-        formikHelpers.resetForm();
+        form.reset();
         setError(null);
       } catch (e: any) {
         const code = getCodeFromError(e);
         if (code === "WEAKP") {
-          formikHelpers.setFieldError(
-            "password",
-            "This password is too weak, please try a stronger password.",
-          );
+          form.setError("password", {
+            type: "manual",
+            message:
+              "This password is too weak, please try a stronger password.",
+          });
         } else if (code === "CREDS") {
-          formikHelpers.setFieldError("oldPassword", "Incorrect old password");
+          form.setError("oldPassword", {
+            type: "manual",
+            message: "Incorrect old password",
+          });
         } else {
           setError(e);
         }
       }
     },
-    [changePassword],
+    [changePassword, form],
   );
 
   return (
@@ -65,75 +69,57 @@ const Settings_Security = () => {
       query={query}
       noHandleErrors
     >
-      <Formik
-        initialValues={{
-          oldPassword: "",
-          password: "",
-        }}
-        onSubmit={onSubmit}
-        validationSchema={validationSchema}
-      >
-        {({ handleSubmit }) => (
-          <Form onSubmit={handleSubmit as any}>
-            <VStack alignItems="flex-start">
-              <Heading>Change Password</Heading>
-              <InputControl
-                name="oldPassword"
-                label="Old/Current password"
-                inputProps={{
-                  autoComplete: "old-password password",
-                  type: "password",
-                  // @ts-ignore
-                  "data-cy": "settingsecuritypage-input-password",
-                }}
-              />
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)}>
+          <div className="stack-col items-start gap-4">
+            <h2 className="text-2xl font-bold">Change Password</h2>
 
-              <InputControl
-                name="password"
-                label="New password"
-                inputProps={{
-                  autoComplete: "new-password",
-                  type: "password",
-                  // @ts-ignore
-                  "data-cy": "settingsecuritypage-input-password2",
-                }}
-              />
+            <InputControl
+              control={form.control}
+              name="oldPassword"
+              label="Old/Current password"
+              autoComplete="old-password password"
+              type="password"
+              data-cy="settingsecuritypage-input-password"
+            />
 
-              <WrappedPasswordStrength />
+            <InputControl
+              control={form.control}
+              name="password"
+              label="New password"
+              autoComplete="new-password"
+              type="password"
+              data-cy="settingsecuritypage-input-password2"
+            />
 
-              {error ? (
-                <Alert status="error">
-                  <AlertIcon />
-                  <Box flex="1">
-                    <AlertTitle mr={2}>
-                      Error: Failed to change password
-                    </AlertTitle>
-                    <AlertDescription display="block">
-                      {extractError(error).message}
-                    </AlertDescription>
-                  </Box>
-                </Alert>
-              ) : null}
+            <div>
+              <WrappedPasswordStrength password={form.watch("password")} />
+            </div>
 
-              {success ? (
-                <Alert status="success">
-                  <AlertIcon />
-                  <Box flex="1">
-                    <AlertTitle mr={2}>Password changed!</AlertTitle>
-                  </Box>
-                </Alert>
-              ) : null}
-
-              <SubmitButton
-                colorScheme="green"
-                data-cy="settingsecuritypage-submit-button"
+            {error ? (
+              <Alert
+                variant="destructive"
+                title="Error: Failed to change password"
               >
-                Change Password
-              </SubmitButton>
-            </VStack>
-          </Form>
-        )}
-      </Formik>
+                {extractError(error).message}
+              </Alert>
+            ) : null}
+
+            {success ? (
+              <Alert variant="success" title="Password changed!" />
+            ) : null}
+
+            <Button
+              type="submit"
+              variant="success"
+              isLoading={form.formState.isSubmitting}
+              data-cy="settingsecuritypage-submit-button"
+            >
+              Change Password
+            </Button>
+          </div>
+        </form>
+      </Form>
     </SharedLayoutLoggedIn>
   );
 };
