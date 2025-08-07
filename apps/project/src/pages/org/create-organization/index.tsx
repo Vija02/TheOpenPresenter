@@ -90,7 +90,7 @@ const CreateOrganizationPage = () => {
                   data-cy="createorganization-input-name"
                 />
 
-                {/* <SlugCheck /> */}
+                <SlugCheck name={form.watch("name")} />
 
                 {error ? (
                   <Alert
@@ -184,10 +184,7 @@ const CreateOrganizationPage = () => {
   );
 };
 
-const SlugCheck = () => {
-  const { watch } = useFormContext<z.infer<typeof formSchema>>();
-
-  const name = watch("name");
+const SlugCheck = ({ name }: { name: string }) => {
   const slug = slugify(name || "", {
     lower: true,
   });
