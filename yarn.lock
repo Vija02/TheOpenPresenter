@@ -7838,7 +7838,7 @@ __metadata:
     graphile-migrate: "npm:^1.4.1"
     node-fetch: "npm:^3.3.2"
     pg: "npm:^8.9.0"
-    platform-folders: "npm:^0.6.0"
+    platformdirs: "npm:^4.3.8-rc3"
     tar: "npm:^7.4.3"
     tsup: "npm:^8.3.6"
     typescript: "npm:^5.7.2"
@@ -24532,13 +24532,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"platform-folders@npm:^0.6.0":
-  version: 0.6.0
-  resolution: "platform-folders@npm:0.6.0"
-  dependencies:
-    bindings: "npm:^1.5.0"
-    node-gyp: "npm:latest"
-  checksum: 10c0/5d273742e3731d4e2f43d35c00483815ef71eface927c62aa39f9ea3de6658f3e21f60977f0f12ccfac93362af04c0feb8766bf2c2708e0c223b0eb2638e697b
+"platformdirs@npm:^4.3.8-rc3":
+  version: 4.3.8-rc3
+  resolution: "platformdirs@npm:4.3.8-rc3"
+  bin:
+    platformdirs: dist/main.js
+  checksum: 10c0/cf432a53b4e4d7cb88516917520421e894715dc367082b1681bc145be006b431113d0ec0363bebf4e45b4d10a51f7f9a6c8f10241e1560f250e70aaa322c4920
   languageName: node
   linkType: hard
 
