@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 const fs = require("fs");
-const { spawn } = require("child_process");
+const spawn = require("cross-spawn");
 
 const ENVFILE = `${__dirname}/../.env`;
 
