@@ -157,7 +157,7 @@ const ProjectCard = ({
   return (
     <div
       key={project.id}
-      className="project--project-card"
+      className="project--project-card group"
       role="group"
       data-testid="project-card"
     >
