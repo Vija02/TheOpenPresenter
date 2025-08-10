@@ -131,7 +131,7 @@ const JoinOrganizationPage = () => {
         </>
       )}
       {userIsVerified && (
-        <div className="w-full block lg:grid lg:grid-cols-[1fr_300px]">
+        <div className="w-full block lg:grid lg:grid-cols-[1fr_300px] gap-4">
           <div className="max-w-xl">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -213,7 +213,7 @@ const JoinOrganizationPage = () => {
             </Form>
           </div>
 
-          <div className="mt-10 lg:mt-0">
+          <div className="mt-5 lg:mt-0">
             <h2 className="text-xl font-bold">FAQ</h2>
             <Accordion type="multiple" defaultValue={["item-1"]}>
               <AccordionItem value="item-1">

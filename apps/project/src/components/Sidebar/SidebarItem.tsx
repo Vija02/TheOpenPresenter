@@ -35,9 +35,9 @@ export const SidebarItem = ({
         <Link
           asChild
           variant="unstyled"
-          className={`flex-1 ${!children && isActive ? "bg-blue-50" : ""}`}
+          className={`flex-1 ${!children && isActive ? "bg-surface-primary-hover" : ""}`}
         >
-          <WouterLink href={href} className="hover:bg-blue-50">
+          <WouterLink href={href} className="hover:bg-surface-primary-hover">
             <div className="p-3">
               <div className="stack-row gap-4">
                 {icon && <div className="text-[24px]">{icon}</div>}
@@ -48,7 +48,7 @@ export const SidebarItem = ({
         </Link>
         {children && (
           <div
-            className="h-full p-3 hover:bg-blue-50 cursor-pointer"
+            className="h-full p-3 hover:bg-surface-primary-hover cursor-pointer"
             onClick={onToggle}
           >
             <div

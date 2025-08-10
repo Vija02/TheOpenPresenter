@@ -19,6 +19,7 @@ export * from "./components/ui/progress";
 export * from "./components/ui/select";
 export * from "./components/ui/skeleton";
 export * from "./components/ui/slider";
+export * from "./components/ui/table";
 export * from "./components/ui/tabs";
 export * from "./components/ui/toggle";
 export * from "./components/ui/toggle-group";
