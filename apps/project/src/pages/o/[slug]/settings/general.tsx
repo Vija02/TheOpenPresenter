@@ -107,7 +107,7 @@ const OrganizationSettingsIndexPageInner = ({ query }: PropTypes) => {
         className="stack-col items-start gap-4"
       >
         <h1 className="text-2xl font-bold">General Settings</h1>
-        <div className="stack-col items-start">
+        <div className="stack-col items-start w-full max-w-xl">
           {!userHaveAccess && (
             <Alert variant="warning" title="No access" className="mb-4">
               You must be an owner or the billing contact to edit these settings

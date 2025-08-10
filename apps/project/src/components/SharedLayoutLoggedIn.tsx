@@ -30,7 +30,7 @@ export function SharedLayoutLoggedIn(
   const navbar = React.useMemo(
     () => (
       <div className="w-full md:w-[250px] self-stretch border-r border-gray-300">
-        <div className="stack-row items-start p-3">
+        <div className="stack-row p-3">
           <Avatar className="size-6">
             <AvatarImage src={data?.currentUser?.avatarUrl ?? undefined} />
             <AvatarFallback>
