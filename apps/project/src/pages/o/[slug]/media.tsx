@@ -1,4 +1,3 @@
-import { PopConfirm } from "@/components/PopConfirm";
 import { SharedOrgLayout } from "@/components/SharedOrgLayout";
 import { useOrganizationSlug } from "@/lib/permissionHooks/organization";
 import {
@@ -29,7 +28,11 @@ import {
   useOrganizationMediaIndexPageQuery,
 } from "@repo/graphql";
 import { globalState } from "@repo/lib";
-import { OverlayToggle, OverlayToggleComponentProps } from "@repo/ui";
+import {
+  OverlayToggle,
+  OverlayToggleComponentProps,
+  PopConfirm,
+} from "@repo/ui";
 import prettyBytes from "pretty-bytes";
 import { useCallback, useMemo, useState } from "react";
 import { VscCheck, VscLinkExternal, VscTrash } from "react-icons/vsc";

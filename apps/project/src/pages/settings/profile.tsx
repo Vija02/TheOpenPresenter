@@ -141,6 +141,7 @@ function ProfileSettingsForm({
 
         <Button
           type="submit"
+          variant="success"
           isLoading={form.formState.isSubmitting}
           data-cy="settingsprofilepage-submit-button"
         >

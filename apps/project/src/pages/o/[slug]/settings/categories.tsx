@@ -3,7 +3,6 @@ import {
   CategoryEditPropTypes,
   CategoryType,
 } from "@/components/Category/CategoryEdit";
-import { PopConfirm } from "@/components/PopConfirm";
 import { SharedOrgLayout } from "@/components/SharedOrgLayout";
 import {
   useOrganizationLoading,
@@ -41,6 +40,7 @@ import {
   useUpdateCategoryMutation,
 } from "@repo/graphql";
 import { globalState } from "@repo/lib";
+import { PopConfirm } from "@repo/ui";
 import { FC, useCallback, useState } from "react";
 import { FiPlus } from "react-icons/fi";
 import { TbCategory } from "react-icons/tb";

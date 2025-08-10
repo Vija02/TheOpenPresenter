@@ -20,7 +20,7 @@ import {
   InputControl,
 } from "@repo/ui";
 import { useCallback, useState } from "react";
-import { useForm, useFormContext } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import slugify from "slugify";
 import { useDebounce } from "use-debounce";
 import { Link as WouterLink } from "wouter";
@@ -76,7 +76,7 @@ const CreateOrganizationPage = () => {
   return (
     <SharedLayoutLoggedIn title="Create organization" query={query}>
       <div className="w-full grid grid-cols-1 gap-4 lg:grid-cols-[1fr_300px]">
-        <div className="max-w-lg">
+        <div className="max-w-xl">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)}>
               <div className="stack-col items-start">
