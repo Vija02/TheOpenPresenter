@@ -1,0 +1,43 @@
+@reference "@repo/tailwind-config/index.css";
+
+@layer base {
+  .ui--table-container {
+    @apply relative w-full overflow-x-auto;
+  }
+
+  .ui--table {
+    @apply w-full caption-bottom text-sm;
+  }
+
+  .ui--table-header {
+    @apply [&_tr]:border-b;
+  }
+
+  .ui--table-body {
+    @apply [&_tr:last-child]:border-0;
+  }
+
+  .ui--table-footer {
+    @apply bg-fill-muted/50 border-t font-medium [&>tr]:last:border-b-0;
+  }
+
+  .ui--table-row {
+    @apply data-[state=selected]:bg-fill-muted border-b transition-colors;
+  }
+
+  .ui--table-body .ui--table-row {
+    @apply hover:bg-fill-muted/50;
+  }
+
+  .ui--table-head {
+    @apply text-primary h-10 px-2 text-left align-middle font-medium whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px];
+  }
+
+  .ui--table-cell {
+    @apply p-2 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px];
+  }
+
+  .ui--table-caption {
+    @apply text-fill-muted-fg mt-4 text-sm;
+  }
+}
