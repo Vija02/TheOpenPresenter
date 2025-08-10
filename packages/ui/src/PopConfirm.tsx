@@ -73,7 +73,7 @@ export function PopConfirm({
           popoverProps?.className,
         )}
       >
-        <div className="stack-row">
+        <div className="stack-row pr-3">
           <FiAlertTriangle className="text-fill-destructive" />{" "}
           <p className="font-bold">{title}</p>
         </div>
