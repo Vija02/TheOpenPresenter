@@ -10,7 +10,7 @@
   }
 
   .ui--table-header {
-    @apply [&_tr]:border-b;
+    @apply [&_tr]:border-b uppercase text-xs;
   }
 
   .ui--table-body {
@@ -30,7 +30,7 @@
   }
 
   .ui--table-head {
-    @apply text-primary h-10 px-2 text-left align-middle font-medium whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px];
+    @apply text-primary h-10 px-2 text-left align-middle font-bold whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px];
   }
 
   .ui--table-cell {
