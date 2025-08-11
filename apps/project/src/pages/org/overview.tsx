@@ -1,6 +1,6 @@
 import { SharedLayoutLoggedIn } from "@/components/SharedLayoutLoggedIn";
-import { Box, Heading, Link, Stack, Text } from "@chakra-ui/react";
 import { useOrganizationOverviewIndexPageQuery } from "@repo/graphql";
+import { Link, Option } from "@repo/ui";
 import { Link as WouterLink } from "wouter";
 
 const OrganizationOverview = () => {
@@ -12,48 +12,37 @@ const OrganizationOverview = () => {
       query={query}
       noHandleErrors
     >
-      <Heading>Your Organizations</Heading>
-      <Box>
-        <Stack
-          direction="row"
-          alignItems="center"
-          marginBottom={2}
-          flexWrap="wrap"
-        >
+      <h1 className="text-2xl font-bold mb-4">Your Organizations</h1>
+      <div>
+        <div className="stack-row items-start mb-2 flex-wrap">
           {query.data?.currentUser?.organizationMemberships.nodes.map(
             (membership) => (
-              <Box
+              <WouterLink
                 key={membership.id}
-                as={WouterLink}
                 href={"/o/" + membership.organization?.slug}
-                cursor="pointer"
-                border="1px solid"
-                borderColor="gray.200"
-                rounded="sm"
-                p={2}
-                _hover={{ borderColor: "blue.400" }}
+                className="text-primary no-underline w-full max-w-[200px]"
               >
-                <Text fontWeight="bold" fontSize="lg">
-                  {membership.organization?.name}
-                </Text>
-                <Text>
-                  {membership.organization?.projects.totalCount} projects
-                </Text>
-              </Box>
+                <Option
+                  title={membership.organization?.name}
+                  description={`${membership.organization?.projects.totalCount} projects`}
+                />
+              </WouterLink>
             ),
           )}
-        </Stack>
+        </div>
         {query.data?.currentUser?.organizationMemberships.nodes.length ===
           0 && (
-          <Text>
+          <p>
             You are not part of any organization. <br />
             To get started with TheOpenPresenter, please{" "}
-            <Link as={WouterLink} href="/org/create-organization">
-              create a new organization
+            <Link asChild>
+              <WouterLink href="/org/create-organization">
+                create a new organization
+              </WouterLink>
             </Link>
-          </Text>
+          </p>
         )}
-      </Box>
+      </div>
     </SharedLayoutLoggedIn>
   );
 };
