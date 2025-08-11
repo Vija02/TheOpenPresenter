@@ -5,31 +5,24 @@ import {
 } from "@/lib/permissionHooks/organization";
 import { ApolloError, QueryResult } from "@apollo/client";
 import {
-  Alert,
-  AlertDescription,
-  AlertIcon,
-  AlertTitle,
-  Box,
-  Button,
-  Heading,
-  Modal,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  ModalOverlay,
-  VStack,
-  useDisclosure,
-} from "@chakra-ui/react";
-import {
   BaseOrganizationSettingsPageQuery,
   BaseOrganizationSettingsPageQueryVariables,
   Exact,
   useBaseOrganizationSettingsPageQuery,
   useRemoveFromOrganizationMutation,
 } from "@repo/graphql";
-import { ErrorAlert } from "@repo/ui";
+import {
+  Alert,
+  Button,
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  ErrorAlert,
+  useDisclosure,
+} from "@repo/ui";
 import { FC, useCallback, useState } from "react";
 import { toast } from "react-toastify";
 import { useLocation } from "wouter";
@@ -65,7 +58,7 @@ const OrganizationSettingsLeavePageInner: FC<
   const [, navigate] = useLocation();
   const [error, setError] = useState<ApolloError | null>(null);
 
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const { open, onOpen, onToggle } = useDisclosure();
 
   const [removeMember] = useRemoveFromOrganizationMutation();
   const handleRemove = useCallback(async () => {
@@ -84,6 +77,7 @@ const OrganizationSettingsLeavePageInner: FC<
       toast.error("Error occurred when leaving: " + e.message);
     }
   }, [
+    navigate,
     organization.id,
     organization.name,
     query.data?.currentUser?.id,
@@ -92,58 +86,45 @@ const OrganizationSettingsLeavePageInner: FC<
 
   return (
     <>
-      <Heading>Leave Organization?</Heading>
+      <h1 className="text-2xl font-semibold mb-2">Leave Organization?</h1>
 
       {organization.currentUserIsOwner ? (
-        <Alert status="error">
-          <Box flex="1">
-            <AlertTitle mr={2}>You are not permitted to do this</AlertTitle>
-            <AlertDescription display="block">
-              You cannot leave the organization as the owner of this
-              organization.
-            </AlertDescription>
-          </Box>
+        <Alert variant="destructive" title="You are not permitted to do this">
+          You cannot leave the organization as the owner of this organization.
         </Alert>
       ) : (
-        <Alert status="error">
-          <AlertIcon />
-          <Box flex="1">
-            <AlertTitle mr={2}>
-              Are you sure you want to leave '{organization.name}'?
-            </AlertTitle>
-            <Box mb={2} />
-            <AlertDescription display="block">
-              <VStack alignItems="flex-start">
-                <Button colorScheme="red" onClick={onOpen}>
-                  Leave this organization
-                </Button>
-              </VStack>
-            </AlertDescription>
-          </Box>
+        <Alert
+          variant="destructive"
+          title={`Are you sure you want to leave '${organization.name}'?`}
+        >
+          <div className="stack-col items-start gap-2">
+            <Button variant="destructive" onClick={onOpen}>
+              Leave this organization
+            </Button>
+          </div>
         </Alert>
       )}
 
       {error ? <ErrorAlert error={error} /> : null}
 
-      <Modal isOpen={isOpen} onClose={onClose}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Confirm</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
+      <Dialog open={open} onOpenChange={onToggle}>
+        <DialogContent size="sm">
+          <DialogHeader>
+            <DialogTitle>Confirm</DialogTitle>
+          </DialogHeader>
+          <DialogBody>
             This action cannot be undone. Click Leave to continue
-          </ModalBody>
-
-          <ModalFooter>
-            <Button colorScheme="red" mr={3} onClick={handleRemove}>
+          </DialogBody>
+          <DialogFooter>
+            <Button variant="destructive" onClick={handleRemove}>
               Leave
             </Button>
-            <Button variant="ghost" onClick={onClose}>
+            <Button variant="outline" onClick={onToggle}>
               Cancel
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
