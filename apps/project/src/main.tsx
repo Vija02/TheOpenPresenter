@@ -33,14 +33,14 @@ NProgress.configure({
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ErrorBoundary FallbackComponent={ErrorAlert}>
-        <Router>
-          <ApolloProvider client={apolloClient}>
-            <QueryClientProvider client={queryClient}>
-              <App />
-              <ToastContainer />
-            </QueryClientProvider>
-          </ApolloProvider>
-        </Router>
+      <Router>
+        <ApolloProvider client={apolloClient}>
+          <QueryClientProvider client={queryClient}>
+            <App />
+            <ToastContainer />
+          </QueryClientProvider>
+        </ApolloProvider>
+      </Router>
     </ErrorBoundary>
   </StrictMode>,
 );

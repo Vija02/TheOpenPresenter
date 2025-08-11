@@ -14,7 +14,7 @@
   }
 
   .ui--accordion-content {
-    @apply data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down;
+    @apply overflow-hidden data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down;
   }
 
   .ui--accordion-content-inner {

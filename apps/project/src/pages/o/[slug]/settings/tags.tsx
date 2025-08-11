@@ -1,4 +1,3 @@
-import { PopConfirm } from "@/components/PopConfirm";
 import { SharedOrgLayout } from "@/components/SharedOrgLayout";
 import { Tag, TagEdit, TagEditPropTypes, TagType } from "@/components/Tag";
 import {
@@ -6,27 +5,6 @@ import {
   useOrganizationSlug,
 } from "@/lib/permissionHooks/organization";
 import { ApolloError, QueryResult } from "@apollo/client";
-import {
-  Box,
-  Button,
-  Collapse,
-  Flex,
-  Heading,
-  Modal,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalHeader,
-  ModalOverlay,
-  Table,
-  Tbody,
-  Td,
-  Text,
-  Th,
-  Thead,
-  Tr,
-  useDisclosure,
-} from "@chakra-ui/react";
 import {
   Exact,
   OrganizationSettingsTagsPageQuery,
@@ -37,6 +15,22 @@ import {
   useUpdateTagMutation,
 } from "@repo/graphql";
 import { globalState } from "@repo/lib";
+import {
+  Button,
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  PopConfirm,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+  useDisclosure,
+} from "@repo/ui";
 import { FC, useCallback, useState } from "react";
 import { FiPlus, FiTag } from "react-icons/fi";
 import { VscEdit, VscTrash } from "react-icons/vsc";
@@ -73,7 +67,7 @@ const OrganizationSettingsTagsPageInner: FC<
   const [editError, setEditError] = useState<ApolloError | null>(null);
 
   const {
-    isOpen: newIsOpen,
+    open: newIsOpen,
     onOpen: newOnOpen,
     onClose: newOnClose,
   } = useDisclosure();
@@ -160,33 +154,25 @@ const OrganizationSettingsTagsPageInner: FC<
   const tags = query.data?.organizationBySlug?.tags.nodes;
 
   return (
-    <>
-      <Heading>Tags</Heading>
+    <div className="stack-col items-start">
+      <h1 className="text-2xl font-bold">Tags</h1>
 
       {tags?.length === 0 && (
-        <Box
-          backgroundColor="gray.100"
-          shadow="md"
-          display="flex"
-          flexDirection="column"
-          alignItems="center"
-          justifyContent="center"
-          textAlign="center"
-          minHeight="200px"
-          paddingY={10}
-        >
+        <div className="flex flex-col items-center justify-center text-center min-h-[200px] py-10 bg-surface-secondary shadow-md rounded w-full">
           <FiTag fontSize={40} />
-          <Heading mt={4} mb={1} fontSize="lg">
+          <h2 className="mt-4 mb-1 text-lg font-bold">
             Welcome to the Tags settings!
-          </Heading>
-          <Text>You can create tags in this page to categorize projects.</Text>
-          <Button mt={4} colorScheme="green" onClick={newOnOpen}>
+          </h2>
+          <p className="text-secondary">
+            You can create tags in this page to categorize projects.
+          </p>
+          <Button className="mt-4" variant="success" onClick={newOnOpen}>
             Create a Tag
           </Button>
 
-          <Box width="100%" px={5}>
-            <Collapse in={newIsOpen}>
-              <Box backgroundColor="white" width="100%" px={5} py={5} mt={5}>
+          <div className="w-full px-5">
+            {newIsOpen && (
+              <div className="bg-surface-primary w-full px-5 py-5 mt-5 rounded">
                 <TagEdit
                   initialTag={{
                     name: "",
@@ -199,30 +185,30 @@ const OrganizationSettingsTagsPageInner: FC<
                   onCreate={newOnCreate}
                   onCancel={newOnClose}
                 />
-              </Box>
-            </Collapse>
-          </Box>
-        </Box>
+              </div>
+            )}
+          </div>
+        </div>
       )}
 
       {tags && tags?.length > 0 && (
         <>
-          <Table variant="simple">
-            <Thead>
-              <Tr>
-                <Th>Tag Name</Th>
-                <Th>Description</Th>
-                <Th width="130px"></Th>
-              </Tr>
-            </Thead>
-            <Tbody>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Tag Name</TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead style={{ width: "130px" }}></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {tags.map((tag) => (
-                <Tr key={tag.id}>
-                  <Td>
+                <TableRow key={tag.id}>
+                  <TableCell>
                     <Tag tag={tag} />
-                  </Td>
-                  <Td>{tag.description}</Td>
-                  <Td width="130px">
+                  </TableCell>
+                  <TableCell>{tag.description}</TableCell>
+                  <TableCell style={{ width: "130px" }}>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -230,43 +216,43 @@ const OrganizationSettingsTagsPageInner: FC<
                         setEditingTag(tag);
                       }}
                     >
-                      <VscEdit color="gray" />
+                      <VscEdit className="text-secondary" />
                     </Button>
                     <PopConfirm
-                      title={`Are you sure you want to delete this tag? This action is not reversible. Projects will NOT be deleted but the corresponding tag will`}
+                      title={`Are you sure you want to delete this tag?`}
                       onConfirm={() => {
                         onDeleteTag(tag.id);
                       }}
+                      description="This action is not reversible. Projects will NOT be deleted but the corresponding tag will."
                       okText="Yes"
                       cancelText="No"
                       key="remove"
                     >
                       <Button variant="ghost" size="sm">
-                        <VscTrash color="gray" />
+                        <VscTrash className="text-secondary" />
                       </Button>
                     </PopConfirm>
-                  </Td>
-                </Tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </Tbody>
+            </TableBody>
           </Table>
 
-          <Flex justifyContent="center">
+          <div className="flex justify-center w-full">
             <Button
-              leftIcon={<FiPlus />}
               size="sm"
-              mt={4}
-              colorScheme="green"
+              className="mt-4 stack-row items-center"
               variant="outline"
               onClick={newOnOpen}
             >
+              <FiPlus />
               Add Tag
             </Button>
-          </Flex>
+          </div>
 
-          <Box width="100%" px={5}>
-            <Collapse in={newIsOpen}>
-              <Box shadow="base" width="100%" px={5} py={5} mt={5}>
+          <div className="w-full px-5">
+            {newIsOpen && (
+              <div className="shadow rounded w-full px-5 py-5 mt-5">
                 <TagEdit
                   initialTag={{
                     name: "",
@@ -279,22 +265,21 @@ const OrganizationSettingsTagsPageInner: FC<
                   onCreate={newOnCreate}
                   onCancel={newOnClose}
                 />
-              </Box>
-            </Collapse>
-          </Box>
+              </div>
+            )}
+          </div>
         </>
       )}
 
-      <Modal
-        size="2xl"
-        isOpen={!!editingTag}
-        onClose={() => setEditingTag(null)}
+      <Dialog
+        open={!!editingTag}
+        onOpenChange={(open) => !open && setEditingTag(null)}
       >
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Edit Tag</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
+        <DialogContent size="2xl">
+          <DialogHeader>
+            <DialogTitle>Edit Tag</DialogTitle>
+          </DialogHeader>
+          <DialogBody>
             {!!editingTag && (
               <TagEdit
                 key={JSON.stringify(editingTag)}
@@ -305,11 +290,11 @@ const OrganizationSettingsTagsPageInner: FC<
                 submitText="Edit"
               />
             )}
-            <Box mb={4} />
-          </ModalBody>
-        </ModalContent>
-      </Modal>
-    </>
+            <div className="mb-4" />
+          </DialogBody>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 };
 
