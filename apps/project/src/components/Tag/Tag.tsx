@@ -1,5 +1,5 @@
-import { Tag as ChakraTag, Flex, Text, Tooltip } from "@chakra-ui/react";
 import { TagFragment } from "@repo/graphql";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@repo/ui";
 import React from "react";
 import { FiX } from "react-icons/fi";
 
@@ -29,45 +29,48 @@ export function Tag({
   } = useCalculatedColor(backgroundColor, foregroundColor);
 
   return (
-    <Tooltip label={description}>
-      <ChakraTag
-        size="xs"
-        borderRadius="sm"
-        backgroundColor={variant === "outline" ? "" : calculatedBackgroundColor}
-        borderColor={calculatedBackgroundColor}
-        borderWidth={variant === "outline" ? 1 : 0}
-        rounded="sm"
-        boxShadow="none"
-        variant={(variant as any) ?? "solid"}
-        paddingX={0}
-        alignItems="normal"
-      >
-        <Flex alignItems="center" overflow="hidden">
-          <Text
-            px={2}
-            py={1}
-            color={calculatedForegroundColor}
-            whiteSpace="nowrap"
-            textOverflow="ellipsis"
-            fontSize="xs"
-            overflow="hidden"
-          >
-            {!!name && name !== "" ? name : placeholder}
-          </Text>
-        </Flex>
-        {showRemove && (
-          <Flex
-            alignItems="center"
-            _hover={{ backgroundColor: "black", opacity: 0.3 }}
-            onMouseDown={(e) => e.stopPropagation()}
-            onClick={onRemove}
-            px={2}
-            alignSelf="normal"
-          >
-            <FiX color={calculatedForegroundColor} />
-          </Flex>
-        )}
-      </ChakraTag>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div
+          title={description || undefined}
+          className={`
+        inline-flex items-center text-xs rounded-xs overflow-hidden
+        ${
+          variant === "outline"
+            ? `border border-solid bg-transparent`
+            : `border-0`
+        }
+      `}
+          style={{
+            backgroundColor:
+              variant === "outline" ? "transparent" : calculatedBackgroundColor,
+            borderColor: calculatedBackgroundColor,
+          }}
+        >
+          <div className="flex items-center overflow-hidden">
+            <span
+              className="px-2 py-1 whitespace-nowrap text-ellipsis overflow-hidden text-xs"
+              style={{ color: calculatedForegroundColor }}
+            >
+              {!!name && name !== "" ? name : placeholder}
+            </span>
+          </div>
+          {showRemove && (
+            <div
+              className="flex items-center px-2 hover:bg-black hover:opacity-30 cursor-pointer"
+              onMouseDown={(e) => e.stopPropagation()}
+              onClick={onRemove}
+            >
+              <FiX color={calculatedForegroundColor} />
+            </div>
+          )}
+        </div>
+      </TooltipTrigger>
+      {description && (
+        <TooltipContent>
+          <p>{description}</p>
+        </TooltipContent>
+      )}
     </Tooltip>
   );
 }
