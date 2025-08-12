@@ -6,7 +6,6 @@ import {
   useOrganizationSlug,
 } from "@/lib/permissionHooks/organization";
 import { QueryResult } from "@apollo/client";
-import { Box, Heading } from "@chakra-ui/react";
 import {
   Exact,
   OrganizationSettingsMembersPageQuery,
@@ -61,12 +60,12 @@ const OrganizationSettingsIndexPageInner = ({
 
   return (
     <>
-      <Heading>Members</Heading>
+      <h1 className="text-2xl font-bold mb-2">Members</h1>
 
       {organization.currentUserIsOwner && (
         <>
           <InviteNewMember organization={organization} />
-          <Box my={3} />
+          <div className="my-3" />
         </>
       )}
 
