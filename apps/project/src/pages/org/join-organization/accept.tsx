@@ -1,6 +1,5 @@
 import { SharedLayoutLoggedIn } from "@/components/SharedLayoutLoggedIn";
 import { QueryResult } from "@apollo/client";
-import { Box, Button, Center, Skeleton, Text, VStack } from "@chakra-ui/react";
 import {
   JoinRequestDetailQuery,
   JoinRequestDetailQueryVariables,
@@ -8,7 +7,7 @@ import {
   useAcceptJoinRequestToOrganizationMutation,
   useJoinRequestDetailQuery,
 } from "@repo/graphql";
-import { ErrorAlert, LoadingPart } from "@repo/ui";
+import { Button, ErrorAlert, LoadingPart, Skeleton } from "@repo/ui";
 import React, { FC } from "react";
 import { useSearchParams } from "wouter";
 
@@ -37,13 +36,11 @@ const JoinRequestAccept = () => {
       query={query}
       noHandleErrors
     >
-      <Box>
-        <JoinRequestAcceptInner
-          currentUser={query.data?.currentUser}
-          id={id}
-          query={query}
-        />
-      </Box>
+      <JoinRequestAcceptInner
+        currentUser={query.data?.currentUser}
+        id={id}
+        query={query}
+      />
     </SharedLayoutLoggedIn>
   );
 };
@@ -91,54 +88,44 @@ const JoinRequestAcceptInner: FC<JoinRequestAcceptInnerProps> = (props) => {
     child = <LoadingPart />;
   } else if (status === Status.DONE) {
     child = (
-      <Center mt="10vh">
-        <VStack>
-          <Text fontSize="lg" fontWeight="bold">
-            {user?.name} is now a member of {organization?.name}
-          </Text>
-          <Text>We will send them an email to notify them of this change.</Text>
-        </VStack>
-      </Center>
+      <div className="stack-col items-start">
+        <p className="text-2xl font-bold">
+          {user?.name} is now a member of {organization?.name}
+        </p>
+        <p>We will send them an email to notify them of this change.</p>
+      </div>
     );
   } else if (error || acceptError) {
     child = <ErrorAlert error={error || acceptError!} />;
   } else if (user) {
     child = (
-      <Center mt="10vh">
-        <VStack>
-          <Text fontSize="lg" fontWeight="bold">
-            Accept join request by {user.name}
-          </Text>
-          <Text>
-            By accepting this request, you will be granting full access of your
-            organization <b>'{organization?.name}'</b> to the user{" "}
-            <b>'{user.name}'</b>
-          </Text>
-          <Text>
-            They will be able to modify all and create any projects in{" "}
-            {organization?.name}. You will always be able to change this in the
-            settings page.
-          </Text>
-          <Button onClick={handleAccept} colorScheme="green">
-            Accept request
-          </Button>
-        </VStack>
-      </Center>
+      <div className="stack-col items-start">
+        <p className="text-2xl font-bold">Accept join request by {user.name}</p>
+        <p>
+          By accepting this request, you will be granting full access of your
+          organization <b>'{organization?.name}'</b> to the user{" "}
+          <b>'{user.name}'</b>
+        </p>
+        <p>
+          They will be able to modify all and create any projects in{" "}
+          {organization?.name}. You will always be able to change this in the
+          settings page.
+        </p>
+        <Button onClick={handleAccept} variant="success">
+          Accept request
+        </Button>
+      </div>
     );
   } else if (loading) {
     child = <Skeleton />;
   } else {
     child = (
-      <Center mt="10vh">
-        <VStack>
-          <Text fontSize="lg" fontWeight="bold">
-            Something went wrong
-          </Text>
-          <Text>
-            We couldn't find details about this invite, please try again later
-          </Text>
-        </VStack>
-      </Center>
+      <div className="stack-col items-start">
+        <p className="text-2xl font-bold">Something went wrong</p>
+        <p>
+          We couldn't find details about this invite, please try again later
+        </p>
+      </div>
     );
   }
   return child;

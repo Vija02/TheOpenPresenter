@@ -8025,7 +8025,6 @@ __metadata:
   resolution: "@repo/homepage@workspace:apps/homepage"
   dependencies:
     "@apollo/client": "npm:3.12.2"
-    "@chakra-ui/react": "npm:^2.10.4"
     "@emotion/react": "npm:^11.13.5"
     "@emotion/styled": "npm:^11.13.5"
     "@fontsource-variable/inter": "npm:^5.1.0"
