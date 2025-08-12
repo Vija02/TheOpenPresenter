@@ -43,7 +43,7 @@ function App() {
             <Route path="/invitations/accept">
               <InvitationsAcceptPage />
             </Route>
-            <Route path="/invitations/*">
+            <Route path="/invitations/*?">
               <FourOhFour />
             </Route>
           </Switch>
@@ -71,7 +71,7 @@ function App() {
                   <Route path="/o/:slug/settings/tags">
                     <OrganizationSlugSettingsTagsPage />
                   </Route>
-                  <Route path="/o/:slug/settings/*">
+                  <Route path="/o/:slug/settings/*?">
                     <Redirect href={`/o/${slug}/settings/general`} />
                   </Route>
                 </Switch>
@@ -83,7 +83,7 @@ function App() {
             <Route path="/o/:slug">
               <OrganizationSlugPage />
             </Route>
-            <Route path="/o/*">
+            <Route path="/o/*?">
               <OrganizationPage />
             </Route>
           </Switch>
@@ -101,7 +101,7 @@ function App() {
                 <Route path="/org/join-organization">
                   <OrgJoinOrganizationPage />
                 </Route>
-                <Route path="/org/join-organization/*">
+                <Route path="/org/join-organization/*?">
                   <Redirect href="/org/join-organization" />
                 </Route>
               </Switch>
@@ -109,7 +109,7 @@ function App() {
             <Route path="/org/overview">
               <OrgOverviewPage />
             </Route>
-            <Route path="/org/*">
+            <Route path="/org/*?">
               <Redirect href="/org/overview" />
             </Route>
           </Switch>
@@ -128,7 +128,7 @@ function App() {
             <Route path="/settings/security">
               <SettingsSecurityPage />
             </Route>
-            <Route path="/settings/*">
+            <Route path="/settings/*?">
               <Redirect href="/settings/profile" />
             </Route>
           </Switch>

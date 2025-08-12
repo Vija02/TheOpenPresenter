@@ -1,15 +1,4 @@
-import { PopConfirm } from "@/components/PopConfirm";
 import { QueryResult } from "@apollo/client";
-import {
-  Button,
-  Flex,
-  HStack,
-  Table,
-  Tbody,
-  Td,
-  Text,
-  Tr,
-} from "@chakra-ui/react";
 import {
   Exact,
   OrganizationSettingsMembersPageQuery,
@@ -19,7 +8,17 @@ import {
   useTransferOrganizationBillingContactMutation,
   useTransferOrganizationOwnershipMutation,
 } from "@repo/graphql";
-import { Pagination } from "@repo/ui";
+import {
+  Button,
+  Pagination,
+  PopConfirm,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@repo/ui";
 import { FC, useCallback, useMemo } from "react";
 import { toast } from "react-toastify";
 
@@ -62,19 +61,25 @@ export default function ExistingMembers({ query, page, setPage }: PropTypes) {
 
   return (
     <>
-      <Table variant="simple">
-        <Tbody>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Member</TableHead>
+            <TableHead></TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {(organization.organizationMemberships?.nodes ?? []).map(renderItem)}
-        </Tbody>
+        </TableBody>
       </Table>
       {pageCount > 1 && (
-        <Flex justifyContent="center" mt={3}>
+        <div className="flex justify-center mt-3">
           <Pagination
             pageCount={pageCount}
             forcePage={page}
             onPageChange={handlePaginationChange}
           />
-        </Flex>
+        </div>
       )}
     </>
   );
@@ -149,20 +154,20 @@ const OrganizationMemberListItem: FC<OrganizationMemberListItemProps> = (
   ]
     .filter(Boolean)
     .join(" and ");
-  return (
-    <Tr>
-      <Td>
-        <Text>
-          {node.user?.name}{" "}
-          <Text as="span" color="gray.500">
-            ({node.user?.username})
-          </Text>
-        </Text>
 
-        {roles && <Text color="subtitle">({roles})</Text>}
-      </Td>
-      <Td>
-        <HStack justifyContent="flex-end" spacing={3}>
+  return (
+    <TableRow>
+      <TableCell>
+        <div>
+          <span className="font-medium">
+            {node.user?.name}{" "}
+            <span className="text-tertiary">({node.user?.username})</span>
+          </span>
+          {roles && <div className="text-sm text-gray-600">({roles})</div>}
+        </div>
+      </TableCell>
+      <TableCell>
+        <div className="flex justify-end space-x-3">
           {organization.currentUserIsOwner &&
           node.user?.id !== currentUser?.id ? (
             <PopConfirm
@@ -172,7 +177,7 @@ const OrganizationMemberListItem: FC<OrganizationMemberListItemProps> = (
               cancelText="No"
               key="remove"
             >
-              <Button size="sm" variant="link">
+              <Button variant="link" size="sm">
                 Remove
               </Button>
             </PopConfirm>
@@ -187,7 +192,7 @@ const OrganizationMemberListItem: FC<OrganizationMemberListItemProps> = (
               cancelText="No"
               key="transfer"
             >
-              <Button size="sm" variant="link">
+              <Button variant="link" size="sm">
                 Make owner
               </Button>
             </PopConfirm>
@@ -201,13 +206,13 @@ const OrganizationMemberListItem: FC<OrganizationMemberListItemProps> = (
               cancelText="No"
               key="billingTransfer"
             >
-              <Button size="sm" variant="link">
+              <Button variant="link" size="sm">
                 Make billing contact
               </Button>
             </PopConfirm>
           ) : null}
-        </HStack>
-      </Td>
-    </Tr>
+        </div>
+      </TableCell>
+    </TableRow>
   );
 };
