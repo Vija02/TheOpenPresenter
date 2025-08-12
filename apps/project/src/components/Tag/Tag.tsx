@@ -34,7 +34,7 @@ export function Tag({
         <div
           title={description || undefined}
           className={`
-        inline-flex items-center text-xs rounded-xs overflow-hidden
+        inline-flex items-stretch text-xs rounded-xs overflow-hidden
         ${
           variant === "outline"
             ? `border border-solid bg-transparent`

@@ -1,19 +1,6 @@
 import { ReactSelectDateProps } from "@/components/DatePicker/datePickerReactSelect";
 import { TagsSelector } from "@/components/Tag/TagsSelector";
-import {
-  Button,
-  FormControl,
-  FormLabel,
-  Modal,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  ModalOverlay,
-  ModalProps,
-  VStack,
-} from "@chakra-ui/react";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   CategoryFragment,
   ProjectFragment,
@@ -23,28 +10,48 @@ import {
   useUpdateProjectMutation,
 } from "@repo/graphql";
 import { globalState } from "@repo/lib";
-import { OverlayToggleComponentProps, formatHumanReadableDate } from "@repo/ui";
-import { Form, Formik } from "formik";
-import { InputControl, SelectControl, SubmitButton } from "formik-chakra-ui";
-import { generateSlug } from "random-word-slugs";
+import {
+  Button,
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  InputControl,
+  OverlayToggleComponentProps,
+  SelectControl,
+  formatHumanReadableDate,
+} from "@repo/ui";
 import { useCallback, useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
 import Select from "react-select";
+import { z } from "zod";
 
-export type EditProjectModalPropTypes = Omit<
-  ModalProps,
-  "isOpen" | "onClose" | "children"
-> &
-  Partial<OverlayToggleComponentProps> & {
-    organizationId: string;
-    categories: CategoryFragment[];
-    project: ProjectFragment;
-  };
+const formSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  categoryId: z.string().optional(),
+  targetDate: z.date().optional(),
+});
 
-type FormInputs = {
-  name: string;
-  categoryId: string | undefined;
-  targetDate: Date | undefined;
-};
+type FormInputs = z.infer<typeof formSchema>;
+
+const UNCATEGORIZED = "uncategorized";
+
+export type EditProjectModalPropTypes = {
+  isOpen?: boolean;
+  onToggle?: () => void;
+  resetData?: () => void;
+  organizationId: string;
+  categories: CategoryFragment[];
+  project: ProjectFragment;
+} & Partial<OverlayToggleComponentProps>;
 
 const EditProjectModal = ({
   isOpen,
@@ -53,7 +60,6 @@ const EditProjectModal = ({
   organizationId,
   categories,
   project,
-  ...props
 }: EditProjectModalPropTypes) => {
   const [updateProject] = useUpdateProjectMutation();
   const [createProjectTag] = useCreateProjectTagMutation();
@@ -80,13 +86,23 @@ const EditProjectModal = ({
     },
   });
 
+  const form = useForm<FormInputs>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: project.name,
+      categoryId: project.category?.id || UNCATEGORIZED,
+      targetDate: project.targetDate ? new Date(project.targetDate) : undefined,
+    },
+  });
+
   const handleSubmit = useCallback(
     async (data: FormInputs) => {
       await updateProject({
         variables: {
           id: project.id,
           name: data.name,
-          categoryId: data.categoryId,
+          categoryId:
+            data.categoryId === UNCATEGORIZED ? undefined : data.categoryId,
           targetDate: data.targetDate ? data.targetDate.toDateString() : null,
         },
       });
@@ -134,103 +150,96 @@ const EditProjectModal = ({
   );
 
   return (
-    <Modal
-      size="xl"
-      isOpen={isOpen ?? false}
-      onClose={onToggle ?? (() => {})}
-      {...props}
-    >
-      <ModalOverlay />
-      <Formik
-        initialValues={{
-          name: project.name,
-          categoryId: project.category?.id,
-          targetDate: project.targetDate
-            ? new Date(project.targetDate)
-            : undefined,
-        }}
-        onSubmit={handleSubmit}
-      >
-        {({ handleSubmit, values, setFieldValue }) => (
-          <Form onSubmit={handleSubmit as any}>
-            <ModalContent>
-              <ModalHeader>Edit Project</ModalHeader>
-              <ModalCloseButton />
-              <ModalBody>
-                <VStack alignItems="flex-start">
-                  <InputControl label="Name" name="name" />
+    <Dialog open={isOpen ?? false} onOpenChange={onToggle}>
+      <Form {...form}>
+        <DialogContent className="max-w-2xl" asChild>
+          <form onSubmit={form.handleSubmit(handleSubmit)}>
+            <DialogHeader>
+              <DialogTitle>Edit Project</DialogTitle>
+            </DialogHeader>
+            <DialogBody>
+              <InputControl control={form.control} name="name" label="Name" />
 
-                  <FormControl>
+              <FormField
+                control={form.control}
+                name="targetDate"
+                render={({ field }) => (
+                  <FormItem>
                     <FormLabel>Service Time</FormLabel>
-                    <Select
-                      {...ReactSelectDateProps}
-                      value={
-                        values.targetDate
-                          ? {
-                              value: values.targetDate,
-                              label: formatHumanReadableDate(values.targetDate),
-                            }
-                          : null
-                      }
-                      onChange={(val) => {
-                        setFieldValue("targetDate", val);
-                      }}
-                      isClearable
-                      isSearchable={false}
-                    />
-                  </FormControl>
+                    <FormControl>
+                      <Select
+                        {...ReactSelectDateProps}
+                        value={
+                          field.value
+                            ? {
+                                value: field.value,
+                                label: formatHumanReadableDate(field.value),
+                              }
+                            : null
+                        }
+                        onChange={(val) => {
+                          field.onChange(val);
+                        }}
+                        isClearable
+                        isSearchable={false}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-                  <SelectControl name="categoryId" label="Category">
-                    <option key="none" value={undefined}>
-                      Uncategorized
-                    </option>
-                    {Object.values(categories).map(({ id, name }) => (
-                      <option key={id} value={id}>
-                        {name}
-                      </option>
-                    ))}
-                  </SelectControl>
+              <SelectControl
+                control={form.control}
+                name="categoryId"
+                label="Category"
+                options={[
+                  { label: "Uncategorized", value: UNCATEGORIZED },
+                ].concat(
+                  categories.map((x) => ({ label: x.name, value: x.id })),
+                )}
+              />
 
-                  <FormControl>
-                    <FormLabel>Tags</FormLabel>
-                    <TagsSelector
-                      value={selectedTagIds.map((tagId) => ({
-                        value: allTagByOrganization?.find(
-                          (tag) => tag.id === tagId,
-                        ),
-                        label:
-                          allTagByOrganization?.find((tag) => tag.id === tagId)
-                            ?.name ?? "",
-                      }))}
-                      onChange={(val) => {
-                        const selectedIds: string[] =
-                          val.map((x: any) => x.value.id) ?? [];
+              <div>
+                <FormLabel className="mb-2">Tags</FormLabel>
+                <TagsSelector
+                  value={selectedTagIds.map((tagId) => ({
+                    value: allTagByOrganization?.find(
+                      (tag) => tag.id === tagId,
+                    ),
+                    label:
+                      allTagByOrganization?.find((tag) => tag.id === tagId)
+                        ?.name ?? "",
+                  }))}
+                  onChange={(val) => {
+                    const selectedIds: string[] =
+                      val.map((x: any) => x.value.id) ?? [];
 
-                        setSelectedTagIds(selectedIds);
-                      }}
-                      onCreateOption={(optionName: string) =>
-                        createTag({
-                          variables: {
-                            name: optionName,
-                            organizationId: organizationId,
-                          },
-                        })
-                      }
-                    />
-                  </FormControl>
-                </VStack>
-              </ModalBody>
-              <ModalFooter>
-                <SubmitButton colorScheme="green">Save</SubmitButton>
-                <Button variant="ghost" onClick={onToggle}>
-                  Close
+                    setSelectedTagIds(selectedIds);
+                  }}
+                  onCreateOption={(optionName: string) =>
+                    createTag({
+                      variables: {
+                        name: optionName,
+                        organizationId: organizationId,
+                      },
+                    })
+                  }
+                />
+              </div>
+            </DialogBody>
+            <DialogFooter>
+              <div className="flex gap-2">
+                <Button type="submit" variant="success">
+                  Save
                 </Button>
-              </ModalFooter>
-            </ModalContent>
-          </Form>
-        )}
-      </Formik>
-    </Modal>
+                <Button onClick={onToggle}>Close</Button>
+              </div>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Form>
+    </Dialog>
   );
 };
 
