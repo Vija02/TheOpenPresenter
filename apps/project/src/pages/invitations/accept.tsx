@@ -2,15 +2,6 @@ import { Redirect } from "@/components/Redirect";
 import { AuthRestrict, SharedLayout } from "@/components/SharedLayout";
 import { QueryResult } from "@apollo/client";
 import {
-  Box,
-  Button,
-  Center,
-  Link,
-  Skeleton,
-  Text,
-  VStack,
-} from "@chakra-ui/react";
-import {
   InvitationDetailQuery,
   InvitationDetailQueryVariables,
   SharedLayout_UserFragment,
@@ -18,7 +9,14 @@ import {
   useInvitationDetailQuery,
 } from "@repo/graphql";
 import { getCodeFromError } from "@repo/lib";
-import { ErrorAlert, LoadingPart } from "@repo/ui";
+import {
+  Button,
+  ErrorAlert,
+  FourOhFour,
+  Link,
+  LoadingPart,
+  Skeleton,
+} from "@repo/ui";
 import React, { FC } from "react";
 import { Link as WouterLink } from "wouter";
 import { useLocation, useSearch, useSearchParams } from "wouter";
@@ -48,6 +46,10 @@ const InvitationAccept = () => {
     fetchPolicy: "network-only",
   });
 
+  if (!id) {
+    throw new Error("id not supplied");
+  }
+
   return (
     <SharedLayout
       title="Accept Invitation"
@@ -59,14 +61,12 @@ const InvitationAccept = () => {
         !currentUser && !error && !loading ? (
           <Redirect href={`/login?next=${encodeURIComponent(fullHref)}`} />
         ) : (
-          <Box>
-            <InvitationAcceptInner
-              currentUser={currentUser}
-              id={id}
-              code={code}
-              query={query}
-            />
-          </Box>
+          <InvitationAcceptInner
+            currentUser={currentUser}
+            id={id}
+            code={code}
+            query={query}
+          />
         )
       }
     </SharedLayout>
@@ -112,7 +112,7 @@ const InvitationAcceptInner: FC<InvitationAcceptInnerProps> = (props) => {
         setAcceptError(e);
       },
     );
-  }, [acceptInvite, code, id, organization]);
+  }, [acceptInvite, code, id, navigate, organization]);
 
   let child: React.ReactNode | null = null;
   if (status === Status.ACCEPTING) {
@@ -121,76 +121,57 @@ const InvitationAcceptInner: FC<InvitationAcceptInnerProps> = (props) => {
     const code = getCodeFromError(error || acceptError);
     if (code === "NTFND") {
       child = (
-        <Center mt="10vh">
-          <VStack>
-            <Text fontSize="lg" fontWeight="bold">
-              That invitation could not be found
-            </Text>
-            <Text>Perhaps you have already accepted it?</Text>
-          </VStack>
-        </Center>
+        <div className="stack-col items-start">
+          <h2 className="text-2xl font-bold">
+            That invitation could not be found
+          </h2>
+          <p>Perhaps you have already accepted it?</p>
+        </div>
       );
     } else if (code === "DNIED") {
       child = (
-        <Center mt="10vh">
-          <VStack>
-            <Text fontSize="lg" fontWeight="bold">
-              That invitation is not for you
-            </Text>
-            <Text>
-              Perhaps you should log out and log in with a different account?
-            </Text>
-          </VStack>
-        </Center>
+        <div className="stack-col items-start">
+          <h2 className="text-2xl font-bold">That invitation is not for you</h2>
+          <p>Perhaps you should log out and log in with a different account?</p>
+        </div>
       );
     } else if (code === "LOGIN") {
       child = (
-        <Center mt="10vh">
-          <VStack>
-            <Text fontSize="lg" fontWeight="bold">
-              Log in to accept invitation
-            </Text>
-            <Text>
-              <Link
-                as={WouterLink}
-                href={`/login?next=${encodeURIComponent(location)}`}
-              >
+        <div className="stack-col items-start">
+          <h2 className="text-2xl font-bold">Log in to accept invitation</h2>
+          <div>
+            <Link asChild>
+              <WouterLink href={`/login?next=${encodeURIComponent(location)}`}>
                 <Button>Log in</Button>
-              </Link>
-            </Text>
-          </VStack>
-        </Center>
+              </WouterLink>
+            </Link>
+          </div>
+        </div>
       );
     } else {
       child = <ErrorAlert error={error || acceptError!} />;
     }
   } else if (organization) {
     child = (
-      <Center mt="10vh">
-        <VStack>
-          <Text fontSize="lg" fontWeight="bold">
-            You were invited to {organization.name}
-          </Text>
-          <Button onClick={handleAccept} colorScheme="green">
-            Accept invitation
-          </Button>
-        </VStack>
-      </Center>
+      <div className="stack-col items-start">
+        <h2 className="text-2xl font-bold">
+          You were invited to {organization.name}
+        </h2>
+        <Button onClick={handleAccept} variant="success">
+          Accept invitation
+        </Button>
+      </div>
     );
   } else if (loading) {
     child = <Skeleton />;
   } else {
     child = (
-      <Center mt="10vh">
-        <VStack>
-          <Text fontSize="lg" fontWeight="bold">
-            Something went wrong
-          </Text>
-          <Text>
-            We couldn't find details about this invite, please try again later
-          </Text>
-        </VStack>
-      </Center>
+      <div className="stack-col items-start">
+        <h2 className="text-2xl font-bold">Something went wrong</h2>
+        <p>
+          We couldn't find details about this invite, please try again later
+        </p>
+      </div>
     );
   }
   return child;
