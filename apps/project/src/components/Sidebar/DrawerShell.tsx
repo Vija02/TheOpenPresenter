@@ -1,19 +1,14 @@
 import {
-  Drawer,
-  DrawerBody,
-  DrawerCloseButton,
-  DrawerContent,
-  DrawerHeader,
-  DrawerOverlay,
-  DrawerProps,
-} from "@chakra-ui/react";
-import { OverlayToggleComponentProps } from "@repo/ui";
+  OverlayToggleComponentProps,
+  Sheet,
+  SheetContent,
+  SheetHeader,
+} from "@repo/ui";
+import * as React from "react";
 
-export type DrawerShellPropTypes = Omit<
-  DrawerProps,
-  "isOpen" | "onClose" | "children"
-> &
-  Partial<OverlayToggleComponentProps> & { children: React.ReactNode };
+export type DrawerShellPropTypes = Partial<OverlayToggleComponentProps> & {
+  children: React.ReactNode;
+};
 
 export const DrawerShell = ({
   isOpen,
@@ -23,19 +18,19 @@ export const DrawerShell = ({
   ...props
 }: DrawerShellPropTypes) => {
   return (
-    <Drawer
-      placement="left"
-      isOpen={isOpen ?? false}
-      onClose={onToggle ?? (() => {})}
+    <Sheet
+      open={isOpen ?? false}
+      onOpenChange={(open: boolean) => {
+        if (!open && onToggle) {
+          onToggle();
+        }
+      }}
       {...props}
     >
-      <DrawerOverlay />
-      <DrawerContent>
-        <DrawerCloseButton />
-        <DrawerHeader></DrawerHeader>
-
-        <DrawerBody padding={0}>{children}</DrawerBody>
-      </DrawerContent>
-    </Drawer>
+      <SheetContent side="left" className="p-0">
+        <SheetHeader></SheetHeader>
+        {children}
+      </SheetContent>
+    </Sheet>
   );
 };
