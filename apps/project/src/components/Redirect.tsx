@@ -1,6 +1,6 @@
 import { NetworkStatus, useApolloClient } from "@apollo/client";
-import { Skeleton, Stack, Text } from "@chakra-ui/react";
-import React, { useEffect } from "react";
+import { Skeleton } from "@repo/ui";
+import { useEffect } from "react";
 import { useLocation } from "wouter";
 
 import { SharedLayout } from "./SharedLayout";
@@ -15,9 +15,11 @@ export interface RedirectProps {
 export function Redirect({ href, layout }: RedirectProps) {
   const client = useApolloClient();
   const [, navigate] = useLocation();
+
   useEffect(() => {
     navigate(href);
-  }, [href]);
+  }, [href, navigate]);
+
   if (layout) {
     return (
       <SharedLayout
@@ -39,16 +41,14 @@ export function Redirect({ href, layout }: RedirectProps) {
   } else {
     return (
       <StandardWidth>
-        <Text fontSize="3xl" fontWeight="bold" mb={5}>
-          Redirecting...
-        </Text>
-        <Stack>
-          <Skeleton height="20px" w="80%" />
-          <Skeleton height="20px" />
-          <Skeleton height="20px" w="90%" />
-          <Skeleton height="20px" w="50%" />
-        </Stack>
-        <Skeleton />
+        <h1 className="text-3xl font-bold mb-5">Redirecting...</h1>
+        <div className="stack-col items-start">
+          <Skeleton className="h-5 w-4/5" />
+          <Skeleton className="h-5 w-full" />
+          <Skeleton className="h-5 w-[90%]" />
+          <Skeleton className="h-5 w-1/2" />
+        </div>
+        <Skeleton className="h-20 w-full" />
       </StandardWidth>
     );
   }
