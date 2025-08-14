@@ -1,4 +1,4 @@
-const { spawn } = require("child_process");
+const spawn = require("cross-spawn");
 
 if (process.env.IN_TESTS === "1") {
   process.exit(0);
@@ -7,7 +7,7 @@ if (process.env.IN_TESTS === "1") {
 const connectionString = process.env.GM_DBURL;
 if (!connectionString) {
   console.error(
-    "This script should only be called from a graphile-migrate action."
+    "This script should only be called from a graphile-migrate action.",
   );
   process.exit(1);
 }
@@ -26,5 +26,5 @@ spawn(
   {
     stdio: "inherit",
     shell: true,
-  }
+  },
 );

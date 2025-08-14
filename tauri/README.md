@@ -51,9 +51,9 @@ We can also create a `.env` file here that will override the default environment
 
 We use [Tauri's logging plugin](https://tauri.app/plugin/logging/) to handle logs.  
 The file is stored in:
-- Linux: `/home/<Username>/.local/share/com.theopenpresenter.app/logs`
-- Windows: `C:\Users\<Username>\AppData\Local\com.theopenpresenter.app\logs`
-- macOS: `/Users/<Username>/Library/Logs/com.theopenpresenter.app`
+- Linux: `/home/<Username>/.local/share/com.theopenpresenter/logs`
+- Windows: `C:\Users\<Username>\AppData\Local\com.theopenpresenter\logs`
+- macOS: `/Users/<Username>/Library/Logs/com.theopenpresenter`
 
 ## Bundling notes
 

@@ -7824,6 +7824,7 @@ __metadata:
   resolution: "@repo/db@workspace:backend/db"
   dependencies:
     "@types/pg": "npm:^8.6.6"
+    cross-spawn: "npm:^7.0.6"
     graphile-migrate: "npm:^1.4.1"
     graphile-worker: "npm:^0.16.6"
     lodash: "npm:^4.17.21"
@@ -7855,7 +7856,7 @@ __metadata:
     graphile-migrate: "npm:^1.4.1"
     node-fetch: "npm:^3.3.2"
     pg: "npm:^8.9.0"
-    platform-folders: "npm:^0.6.0"
+    platformdirs: "npm:^4.3.8-rc3"
     tar: "npm:^7.4.3"
     tsup: "npm:^8.3.6"
     typescript: "npm:^5.7.2"
@@ -15322,6 +15323,17 @@ __metadata:
     shebang-command: "npm:^2.0.0"
     which: "npm:^2.0.1"
   checksum: 10c0/aa82ce7ac0814a27e6f2b738c5a7cf1fa21a3558a1e42df449fc96541ba3ba731e4d3ecffa4435348808a86212f287c6f20a1ee551ef1ff95d01cfec5f434944
+  languageName: node
+  linkType: hard
+
+"cross-spawn@npm:^7.0.6":
+  version: 7.0.6
+  resolution: "cross-spawn@npm:7.0.6"
+  dependencies:
+    path-key: "npm:^3.1.0"
+    shebang-command: "npm:^2.0.0"
+    which: "npm:^2.0.1"
+  checksum: 10c0/053ea8b2135caff68a9e81470e845613e374e7309a47731e81639de3eaeb90c3d01af0e0b44d2ab9d50b43467223b88567dfeb3262db942dc063b9976718ffc1
   languageName: node
   linkType: hard
 
@@ -24300,13 +24312,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"platform-folders@npm:^0.6.0":
-  version: 0.6.0
-  resolution: "platform-folders@npm:0.6.0"
-  dependencies:
-    bindings: "npm:^1.5.0"
-    node-gyp: "npm:latest"
-  checksum: 10c0/5d273742e3731d4e2f43d35c00483815ef71eface927c62aa39f9ea3de6658f3e21f60977f0f12ccfac93362af04c0feb8766bf2c2708e0c223b0eb2638e697b
+"platformdirs@npm:^4.3.8-rc3":
+  version: 4.3.8-rc3
+  resolution: "platformdirs@npm:4.3.8-rc3"
+  bin:
+    platformdirs: dist/main.js
+  checksum: 10c0/cf432a53b4e4d7cb88516917520421e894715dc367082b1681bc145be006b431113d0ec0363bebf4e45b4d10a51f7f9a6c8f10241e1560f250e70aaa322c4920
   languageName: node
   linkType: hard
 
@@ -28818,6 +28829,7 @@ __metadata:
     "@testing-library/react": "npm:^16.1.0"
     "@vercel/nft": "npm:^0.29.2"
     concurrently: "npm:^9.1.2"
+    cross-spawn: "npm:^7.0.6"
     graphql: "npm:^15.9.0"
     nodemon: "npm:^3.1.7"
     patch-package: "npm:^8.0.0"

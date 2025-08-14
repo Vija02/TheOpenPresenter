@@ -1,7 +1,7 @@
-const { spawnSync } = require("child_process");
+const spawn = require("cross-spawn");
 
 const runSync = (cmd, args, options = {}) => {
-  const result = spawnSync(cmd, args, {
+  const result = spawn.sync(cmd, args, {
     stdio: ["inherit", "inherit", "inherit"],
     windowsHide: true,
     ...options,
@@ -31,13 +31,13 @@ const runSync = (cmd, args, options = {}) => {
       throw new Error(
         `Process exited with status '${status}' (running '${cmd} ${
           args ? args.join(" ") : ""
-        }')`
+        }')`,
       );
     } else {
       throw new Error(
         `Process exited due to signal '${signal}' (running '${cmd} ${
           args ? args.join(" ") : null
-        }')`
+        }')`,
       );
     }
   }

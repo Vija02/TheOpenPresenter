@@ -1,9 +1,9 @@
 import { join, resolve } from "path";
-import { getDataHome } from "platform-folders";
+import { userDataDir } from "platformdirs";
 
 export const getAppDataPaths = (appDataFolderName: string) => {
-  const appDataRoot = join(getDataHome(), appDataFolderName);
-  
+  const appDataRoot = userDataDir(appDataFolderName, false, undefined, true);
+
   return {
     appDataRoot,
     uploadsPath: join(appDataRoot, "uploads"),
@@ -16,11 +16,11 @@ export const getGraphilePaths = (projectRoot: string) => {
   return {
     graphileMigrateJsPath: resolve(
       projectRoot,
-      "node_modules/graphile-migrate/dist/cli.js"
+      "node_modules/graphile-migrate/dist/cli.js",
     ),
     graphileWorkerJsPath: resolve(
       projectRoot,
-      "node_modules/graphile-worker/dist/cli.js"
+      "node_modules/graphile-worker/dist/cli.js",
     ),
   };
 };
@@ -32,7 +32,7 @@ export const getEmbeddedPostgresPaths = (projectRoot: string) => {
 
   const baseNativePath = resolve(
     projectRoot,
-    `node_modules/@embedded-postgres/${rustStyleTarget}/native`
+    `node_modules/@embedded-postgres/${rustStyleTarget}/native`,
   );
 
   if (process.platform === "win32") {
