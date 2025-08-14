@@ -13,20 +13,11 @@ export type DrawerShellPropTypes = Partial<OverlayToggleComponentProps> & {
 export const DrawerShell = ({
   isOpen,
   onToggle,
-  resetData,
   children,
   ...props
 }: DrawerShellPropTypes) => {
   return (
-    <Sheet
-      open={isOpen ?? false}
-      onOpenChange={(open: boolean) => {
-        if (!open && onToggle) {
-          onToggle();
-        }
-      }}
-      {...props}
-    >
+    <Sheet open={isOpen ?? false} onOpenChange={onToggle} {...props}>
       <SheetContent side="left" className="p-0">
         <SheetHeader></SheetHeader>
         {children}

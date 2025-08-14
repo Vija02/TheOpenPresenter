@@ -30,7 +30,7 @@ export type OverlayTogglePropTypes = {
   children: React.ReactElement<OverlayToggleComponentProps>;
   /** If true, rendering of content will defer until the overlay is open */
   isLazy?: boolean;
-  /** If true */
+  /** If true, don't automatically reset on close */
   disableResetOnClose?: boolean;
 };
 

@@ -16,6 +16,7 @@ import {
   Alert,
   Button,
   Form,
+  Input,
   Link,
 } from "@repo/ui";
 import { useCallback, useMemo, useState } from "react";
@@ -139,8 +140,7 @@ const JoinOrganizationPage = () => {
                   <h1 className="text-2xl font-bold">Join organization</h1>
                   <p>Search for an organization to join:</p>
 
-                  <input
-                    className="ui--input w-full"
+                  <Input
                     onChange={(e) => {
                       setSearch(e.target.value);
                     }}
