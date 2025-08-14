@@ -47,7 +47,7 @@ const DebugDrawer = ({ isOpen, onToggle, ...props }: DebugDrawerPropTypes) => {
         </DialogBody>
 
         <DialogFooter>
-          <Button variant="ghost" onClick={onToggle}>
+          <Button variant="outline" onClick={onToggle}>
             Close
           </Button>
         </DialogFooter>

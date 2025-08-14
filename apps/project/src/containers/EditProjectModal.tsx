@@ -233,7 +233,7 @@ const EditProjectModal = ({
                 <Button type="submit" variant="success">
                   Save
                 </Button>
-                <Button onClick={onToggle}>Close</Button>
+                <Button variant="outline" onClick={onToggle}>Close</Button>
               </div>
             </DialogFooter>
           </form>

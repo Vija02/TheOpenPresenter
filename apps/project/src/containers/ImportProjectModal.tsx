@@ -180,7 +180,7 @@ const ImportProjectModal = ({
         </DialogBody>
         <DialogFooter>
           <div className="stack-row">
-            <Button variant="ghost" onClick={handleClose}>
+            <Button variant="outline" onClick={handleClose}>
               Close
             </Button>
           </div>
