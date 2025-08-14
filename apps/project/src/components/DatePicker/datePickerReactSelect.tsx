@@ -51,5 +51,4 @@ export const ReactSelectDateStyle: Partial<
 export const ReactSelectDateProps: Props<any, any> = {
   styles: ReactSelectDateStyle,
   components: ReactSelectDateComponents,
-  menuPosition: "fixed",
 };

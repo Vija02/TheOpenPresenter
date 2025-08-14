@@ -1,26 +1,7 @@
-import { PopConfirm } from "@/components/PopConfirm";
 import { Redirect } from "@/components/Redirect";
 import { SharedLayoutLoggedIn } from "@/components/SharedLayoutLoggedIn";
 import { ApolloError } from "@apollo/client";
-import {
-  Alert,
-  AlertDescription,
-  AlertIcon,
-  AlertTitle,
-  Box,
-  Button,
-  Divider,
-  HStack,
-  Heading,
-  Table,
-  Tbody,
-  Td,
-  Text,
-  Th,
-  Thead,
-  Tr,
-  VStack,
-} from "@chakra-ui/react";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   EmailsForm_UserEmailFragment,
   useAddEmailMutation,
@@ -30,13 +11,20 @@ import {
   useSettingsEmailsPageQuery,
 } from "@repo/graphql";
 import { extractError } from "@repo/lib";
-import { ErrorAlert, LoadingFull } from "@repo/ui";
-import { Form, Formik } from "formik";
-import { InputControl, SubmitButton } from "formik-chakra-ui";
+import {
+  Alert,
+  Button,
+  ErrorAlert,
+  Form,
+  InputControl,
+  LoadingFull,
+  PopConfirm,
+} from "@repo/ui";
 import React from "react";
 import { useCallback, useState } from "react";
+import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
-import * as Yup from "yup";
+import { z } from "zod";
 
 function Email({
   email,
@@ -52,13 +40,12 @@ function Email({
 
   const actions = [
     email.isPrimary && (
-      <Text
+      <span
         data-cy="settingsemails-indicator-primary"
-        color="orange.500"
-        fontWeight="bold"
+        className="text-orange-500 font-bold"
       >
         Primary
-      </Text>
+      </span>
     ),
     canDelete && (
       <PopConfirm
@@ -109,20 +96,19 @@ function Email({
   ].filter((x) => !!x);
 
   return (
-    <Tr
+    <tr
       data-cy={`settingsemails-emailitem-${email.email.replace(
         /[^a-zA-Z0-9]/g,
         "-",
       )}`}
       key={email.id}
     >
-      <Td>
-        <Box>
-          <Box>
-            <Text>
+      <td className="border p-3 border-r-0">
+        <div>
+          <div>
+            <span>
               {email.email}{" "}
-              <Text
-                as="span"
+              <span
                 title={
                   email.isVerified
                     ? "Verified"
@@ -132,31 +118,29 @@ function Email({
                 {email.isVerified ? (
                   "✅"
                 ) : (
-                  <Text as="small" color="red">
-                    (unverified)
-                  </Text>
+                  <small className="text-red-500">(unverified)</small>
                 )}
-              </Text>
-            </Text>
-          </Box>
-          <Text color="subtitle">
+              </span>
+            </span>
+          </div>
+          <div className="text-tertiary text-sm">
             Added {new Date(Date.parse(email.createdAt)).toLocaleString()}
-          </Text>
-        </Box>
-      </Td>
-      <Td>
-        <HStack whiteSpace="nowrap" justifyContent="flex-end">
+          </div>
+        </div>
+      </td>
+      <td className="border p-3 border-l-0">
+        <div className="stack-row items-center justify-end whitespace-nowrap">
           {actions.map((action, i) => (
             <React.Fragment key={i}>
               {action}
               {i !== actions.length - 1 && (
-                <Divider orientation="vertical" height="20px" />
+                <div className="w-px h-5 bg-gray-300" />
               )}
             </React.Fragment>
           ))}
-        </HStack>
-      </Td>
-    </Tr>
+        </div>
+      </td>
+    </tr>
   );
 }
 
@@ -178,41 +162,33 @@ const Settings_Emails = () => {
       ) : !user ? (
         <LoadingFull />
       ) : (
-        <Box>
-          <Heading>Email Addresses</Heading>
+        <div>
+          <h1 className="text-2xl font-bold mb-4">Email Addresses</h1>
           {user.isVerified ? null : (
-            <Box mb="0.5rem">
-              <Alert status="warning">
-                <AlertIcon />
-                <Box flex="1">
-                  <AlertTitle mr={2}>No verified emails</AlertTitle>
-                  <AlertDescription display="block">
-                    You do not have any verified email addresses, this will make
-                    account recovery impossible and may limit your available
-                    functionality within this application. Please complete email
-                    verification.
-                  </AlertDescription>
-                </Box>
+            <div className="mb-2">
+              <Alert variant="warning" title="No verified emails">
+                You do not have any verified email addresses, this will make
+                account recovery impossible and may limit your available
+                functionality within this application. Please complete email
+                verification.
               </Alert>
-            </Box>
+            </div>
           )}
-          <Text>
+          <p className="mb-5">
             <b>Account notices will be sent your primary email address.</b>{" "}
             Additional email addresses may be added to help with account
             recovery (or to change your primary email), but they cannot be used
             until verified.
-          </Text>
+          </p>
 
-          <Box mb={5} />
-
-          <Table variant="simple">
-            <Thead>
-              <Tr>
-                <Th>Email address</Th>
-                <Th width="130px"></Th>
-              </Tr>
-            </Thead>
-            <Tbody>
+          <table className="w-full border mb-5">
+            <thead>
+              <tr className="bg-surface-secondary">
+                <th className="text-secondary p-3 text-left">Email address</th>
+                <th className="p-3 text-left w-32"></th>
+              </tr>
+            </thead>
+            <tbody>
               {user.userEmails.nodes.map((email, i) => (
                 <Email
                   key={i}
@@ -220,14 +196,12 @@ const Settings_Emails = () => {
                   hasOtherEmails={user.userEmails.nodes.length > 1}
                 />
               ))}
-            </Tbody>
-          </Table>
-
-          <Box mb={5} />
+            </tbody>
+          </table>
 
           {!showAddEmailForm ? (
             <Button
-              colorScheme="green"
+              variant="success"
               size="sm"
               onClick={() => setShowAddEmailForm(true)}
               data-cy="settingsemails-button-addemail"
@@ -241,16 +215,19 @@ const Settings_Emails = () => {
               setError={setFormError}
             />
           )}
-        </Box>
+        </div>
       )}
     </SharedLayoutLoggedIn>
   );
 };
 
-const validationSchema = Yup.object({
-  email: Yup.string().required("Please enter an email address"),
+const formSchema = z.object({
+  email: z
+    .string()
+    .min(1, "Please enter an email address")
+    .email("Please enter a valid email address"),
 });
-type FormInputs = Yup.InferType<typeof validationSchema>;
+type FormInputs = z.infer<typeof formSchema>;
 
 interface AddEmailFormProps {
   onComplete: () => void;
@@ -260,6 +237,13 @@ interface AddEmailFormProps {
 
 function AddEmailForm({ error, setError, onComplete }: AddEmailFormProps) {
   const [addEmail] = useAddEmailMutation();
+
+  const form = useForm<FormInputs>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      email: "",
+    },
+  });
 
   const onSubmit = useCallback(
     async (values: FormInputs) => {
@@ -276,46 +260,34 @@ function AddEmailForm({ error, setError, onComplete }: AddEmailFormProps) {
   );
 
   return (
-    <Formik
-      initialValues={{ email: "" }}
-      onSubmit={onSubmit}
-      validationSchema={validationSchema}
-    >
-      {({ handleSubmit }) => (
-        <Form onSubmit={handleSubmit as any}>
-          <VStack alignItems="flex-start">
-            <InputControl
-              name="email"
-              label="New email"
-              inputProps={{
-                autoComplete: "email",
-                // @ts-ignore
-                "data-cy": "settingsemails-input-email",
-              }}
-            />
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)}>
+        <div className="stack-col items-start gap-4">
+          <InputControl
+            control={form.control}
+            name="email"
+            label="New email"
+            autoComplete="email"
+            data-cy="settingsemails-input-email"
+          />
 
-            {error ? (
-              <Alert status="error">
-                <AlertIcon />
-                <Box flex="1">
-                  <AlertTitle mr={2}>Error: Failed to add email</AlertTitle>
-                  <AlertDescription display="block">
-                    {extractError(error).message}
-                  </AlertDescription>
-                </Box>
-              </Alert>
-            ) : null}
+          {error ? (
+            <Alert variant="destructive" title="Error: Failed to add email">
+              {extractError(error).message}
+            </Alert>
+          ) : null}
 
-            <SubmitButton
-              colorScheme="green"
-              data-cy="settingsemails-button-submit"
-            >
-              Add email
-            </SubmitButton>
-          </VStack>
-        </Form>
-      )}
-    </Formik>
+          <Button
+            type="submit"
+            variant="success"
+            isLoading={form.formState.isSubmitting}
+            data-cy="settingsemails-button-submit"
+          >
+            Add email
+          </Button>
+        </div>
+      </form>
+    </Form>
   );
 }
 

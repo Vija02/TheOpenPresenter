@@ -1,24 +1,6 @@
 import { SharedLayoutLoggedIn } from "@/components/SharedLayoutLoggedIn";
 import { ApolloError } from "@apollo/client";
-import {
-  Accordion,
-  AccordionButton,
-  AccordionIcon,
-  AccordionItem,
-  AccordionPanel,
-  Alert,
-  AlertDescription,
-  AlertIcon,
-  AlertTitle,
-  Box,
-  Button,
-  Flex,
-  Heading,
-  Input,
-  Stack,
-  Text,
-  VStack,
-} from "@chakra-ui/react";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   useJoinOrganizationIndexPageQuery,
   useRequestJoinToOrganizationMutation,
@@ -26,19 +8,30 @@ import {
   useSearchPublicOrganizationsQuery,
 } from "@repo/graphql";
 import { extractError, getCodeFromError } from "@repo/lib";
-import { Form, Formik } from "formik";
-import { SubmitButton } from "formik-chakra-ui";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+  Alert,
+  Button,
+  Form,
+  Input,
+  Link,
+} from "@repo/ui";
 import { useCallback, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
 import { FaCheck } from "react-icons/fa";
 import { toast } from "react-toastify";
 import { useDebounce } from "use-debounce";
 import { Link as WouterLink } from "wouter";
-import * as Yup from "yup";
+import * as z from "zod";
 
-const validationSchema = Yup.object({
-  selectedOrgId: Yup.string().required("Please select an organization"),
+const formSchema = z.object({
+  selectedOrgId: z.string().min(1, "Please select an organization"),
 });
-type FormInputs = Yup.InferType<typeof validationSchema>;
+
+type FormInputs = z.infer<typeof formSchema>;
 
 const JoinOrganizationPage = () => {
   const [error, setError] = useState<Error | ApolloError | null>(null);
@@ -65,6 +58,13 @@ const JoinOrganizationPage = () => {
     [query.data?.currentUser?.isVerified],
   );
 
+  const form = useForm<FormInputs>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      selectedOrgId: "",
+    },
+  });
+
   const onSubmit = useCallback(
     async (values: FormInputs) => {
       setError(null);
@@ -84,14 +84,12 @@ const JoinOrganizationPage = () => {
   if (done) {
     return (
       <SharedLayoutLoggedIn title="Join organization" query={query}>
-        <Flex alignItems="center" gap={2} mb={3}>
-          <Heading mb={0}>Request sent</Heading>
+        <div className="flex items-center gap-2 mb-3">
+          <h1 className="text-2xl font-bold mb-0">Request sent</h1>
           <FaCheck fontSize="24px" color="#38A169" />
-        </Flex>
+        </div>
 
-        <Text>
-          You’ll get an email letting you know if your request was approved
-        </Text>
+        <p>You'll get an email letting you know if your request was approved</p>
       </SharedLayoutLoggedIn>
     );
   }
@@ -100,152 +98,129 @@ const JoinOrganizationPage = () => {
     <SharedLayoutLoggedIn title="Join organization" query={query}>
       {!userIsVerified && (
         <>
-          <Heading>Join organization</Heading>
-          <Alert status="error">
-            <AlertIcon />
-            <Box>
-              <AlertTitle>Verify your email address to continue</AlertTitle>
-              <AlertDescription>
-                <Text>
-                  In order to join an organization, we require you to verify
-                  your account. <br />
-                  Please check your inbox for a verification email. Once
-                  verified, simply refresh this page to continue.
-                </Text>
-                <Button
-                  mt={2}
-                  size="sm"
-                  variant="outline"
-                  colorScheme="orange"
-                  onClick={() => {
-                    resendEmailVerification({
-                      variables: {
-                        emailId:
-                          query.data?.currentUser?.userEmails.nodes[0]?.id,
-                      },
-                      onCompleted: () => {
-                        toast.success("Verification email has been sent!");
-                      },
-                    });
-                  }}
-                >
-                  Resend verification
-                </Button>
-              </AlertDescription>
-            </Box>
+          <h1 className="text-2xl font-bold mb-4">Join organization</h1>
+          <Alert
+            variant="warning"
+            title="Verify your email address to continue"
+          >
+            <div>
+              <p>
+                In order to join an organization, we require you to verify your
+                account. <br />
+                Please check your inbox for a verification email. Once verified,
+                simply refresh this page to continue.
+              </p>
+              <Button
+                className="mt-2"
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  resendEmailVerification({
+                    variables: {
+                      emailId: query.data?.currentUser?.userEmails.nodes[0]?.id,
+                    },
+                    onCompleted: () => {
+                      toast.success("Verification email has been sent!");
+                    },
+                  });
+                }}
+              >
+                Resend verification
+              </Button>
+            </div>
           </Alert>
         </>
       )}
       {userIsVerified && (
-        <Box
-          w="100%"
-          display={{ base: "block", lg: "grid" }}
-          gridTemplateColumns="1fr 300px"
-        >
-          <Box maxW="lg">
-            <Formik
-              initialValues={{ selectedOrgId: "" }}
-              onSubmit={onSubmit}
-              validationSchema={validationSchema}
-            >
-              {({ handleSubmit, values, setFieldValue }) => (
-                <Form onSubmit={handleSubmit as any}>
-                  <VStack alignItems="flex-start">
-                    <Heading>Join organization</Heading>
-                    <Text>Search for an organization to join:</Text>
+        <div className="w-full block lg:grid lg:grid-cols-[1fr_300px] gap-4">
+          <div className="max-w-xl">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)}>
+                <div className="stack-col items-start">
+                  <h1 className="text-2xl font-bold">Join organization</h1>
+                  <p>Search for an organization to join:</p>
 
-                    <Input
-                      onChange={(e) => {
-                        setSearch(e.target.value);
-                      }}
-                    />
+                  <Input
+                    onChange={(e) => {
+                      setSearch(e.target.value);
+                    }}
+                    placeholder="Search organizations..."
+                  />
 
-                    {publicOrganizations?.organizationsPublicSearch?.nodes
-                      .length === 0 && <Text>No organization found.</Text>}
-                    <Box width="100%">
-                      {publicOrganizations?.organizationsPublicSearch?.nodes.map(
-                        (org, i) => (
-                          <Box
-                            key={i}
-                            onClick={() => {
-                              setFieldValue("selectedOrgId", org.id);
-                            }}
-                            width="100%"
-                            cursor="pointer"
-                            py={1}
-                            px={1}
-                            bg={
-                              values["selectedOrgId"] === org.id
-                                ? "gray.200"
-                                : "transparent"
-                            }
-                            _hover={{ bg: "gray.100" }}
-                          >
-                            <Text>{org.name}</Text>
-                          </Box>
-                        ),
+                  {publicOrganizations?.organizationsPublicSearch?.nodes
+                    .length === 0 && <p>No organization found.</p>}
+                  <div className="w-full">
+                    {publicOrganizations?.organizationsPublicSearch?.nodes.map(
+                      (org, i) => (
+                        <div
+                          key={i}
+                          onClick={() => {
+                            form.setValue("selectedOrgId", org.id);
+                          }}
+                          className={`w-full cursor-pointer py-1 px-1 hover:bg-gray-100 ${
+                            form.watch("selectedOrgId") === org.id
+                              ? "bg-gray-200"
+                              : "bg-transparent"
+                          }`}
+                        >
+                          <p>{org.name}</p>
+                        </div>
+                      ),
+                    )}
+                  </div>
+
+                  {error ? (
+                    <Alert
+                      variant="destructive"
+                      title="Error: Failed to request to join organization"
+                    >
+                      {code === "NUNIQ" ? (
+                        <span data-cy="joinorganization-alert-nuniq">
+                          You are already a member of this organization.
+                        </span>
+                      ) : (
+                        extractError(error).message
                       )}
-                    </Box>
+                      {code ? (
+                        <span>
+                          {" "}
+                          (Error code: <code>ERR_{code}</code>)
+                        </span>
+                      ) : null}
+                    </Alert>
+                  ) : null}
 
-                    {error ? (
-                      <Alert status="error">
-                        <AlertIcon />
-                        <Box flex="1">
-                          <AlertTitle mr={2}>
-                            Error: Failed to request to join organization
-                          </AlertTitle>
-                          <AlertDescription display="block">
-                            {code === "NUNIQ" ? (
-                              <span data-cy="joinorganization-alert-nuniq">
-                                You are already a member of this organization.
-                              </span>
-                            ) : (
-                              extractError(error).message
-                            )}
-                            {code ? (
-                              <span>
-                                {" "}
-                                (Error code: <code>ERR_{code}</code>)
-                              </span>
-                            ) : null}
-                          </AlertDescription>
-                        </Box>
-                      </Alert>
-                    ) : null}
-
-                    <Stack direction="row" alignItems="center" flexWrap="wrap">
-                      <SubmitButton
-                        colorScheme="green"
-                        data-cy="joinorganization-submit-button"
-                        isDisabled={values.selectedOrgId === ""}
-                      >
-                        Request to join organization
-                      </SubmitButton>
+                  <div className="stack-row items-center flex-wrap">
+                    <Button
+                      type="submit"
+                      variant="success"
+                      data-cy="joinorganization-submit-button"
+                      disabled={form.watch("selectedOrgId") === ""}
+                      isLoading={form.formState.isSubmitting}
+                    >
+                      Request to join organization
+                    </Button>
+                    <Link asChild>
                       <WouterLink href="/org/create-organization">
                         <Button variant="link" size="sm">
                           Alternatively, create a new organization
                         </Button>
                       </WouterLink>
-                    </Stack>
-                  </VStack>
-                </Form>
-              )}
-            </Formik>
-          </Box>
+                    </Link>
+                  </div>
+                </div>
+              </form>
+            </Form>
+          </div>
 
-          <Box mt={{ base: 10, lg: 0 }}>
-            <Heading>FAQ</Heading>
-            <Accordion defaultIndex={[0]} allowMultiple>
-              <AccordionItem>
-                <h2>
-                  <AccordionButton>
-                    <Box as="span" flex="1" textAlign="left">
-                      Why can't I find the organization I'm looking for?
-                    </Box>
-                    <AccordionIcon />
-                  </AccordionButton>
-                </h2>
-                <AccordionPanel pb={4}>
+          <div className="mt-5 lg:mt-0">
+            <h2 className="text-xl font-bold">FAQ</h2>
+            <Accordion type="multiple" defaultValue={["item-1"]}>
+              <AccordionItem value="item-1">
+                <AccordionTrigger>
+                  Why can't I find the organization I'm looking for?
+                </AccordionTrigger>
+                <AccordionContent>
                   You can only find public organization here. If it is private,
                   the admin of the organization will have to invite you
                   directly.
@@ -253,18 +228,13 @@ const JoinOrganizationPage = () => {
                   <br />
                   If you are an organization owner, you can change the
                   visibility of your organization through the settings page.
-                </AccordionPanel>
+                </AccordionContent>
               </AccordionItem>
-              <AccordionItem>
-                <h2>
-                  <AccordionButton>
-                    <Box as="span" flex="1" textAlign="left">
-                      What does it mean to join an organization?
-                    </Box>
-                    <AccordionIcon />
-                  </AccordionButton>
-                </h2>
-                <AccordionPanel pb={4}>
+              <AccordionItem value="item-2">
+                <AccordionTrigger>
+                  What does it mean to join an organization?
+                </AccordionTrigger>
+                <AccordionContent>
                   Every project/presentation in TheOpenPresenter lives within an
                   organization. Don't worry, it's mostly used to group your
                   projects together in a way that makes sense.
@@ -273,11 +243,11 @@ const JoinOrganizationPage = () => {
                   Joining an existing organization allows you to access
                   everything in that organization, allowing you present their
                   presentation and collaborate on them.
-                </AccordionPanel>
+                </AccordionContent>
               </AccordionItem>
             </Accordion>
-          </Box>
-        </Box>
+          </div>
+        </div>
       )}
     </SharedLayoutLoggedIn>
   );

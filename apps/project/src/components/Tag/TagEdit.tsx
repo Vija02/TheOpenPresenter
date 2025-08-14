@@ -1,27 +1,22 @@
 import { ApolloError } from "@apollo/client";
-import {
-  Accordion,
-  AccordionButton,
-  AccordionIcon,
-  AccordionItem,
-  AccordionPanel,
-  Alert,
-  AlertDescription,
-  AlertIcon,
-  AlertTitle,
-  Box,
-  Button,
-  Flex,
-  FormLabel,
-  HStack,
-  VStack,
-} from "@chakra-ui/react";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { TagFragment } from "@repo/graphql";
 import { extractError } from "@repo/lib";
-import { Form, Formik, FormikHelpers } from "formik";
-import { InputControl, SelectControl } from "formik-chakra-ui";
-import React, { useCallback } from "react";
-import * as Yup from "yup";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+  Alert,
+  Button,
+  Form,
+  InputControl,
+  Label,
+  SelectControl,
+} from "@repo/ui";
+import { useCallback } from "react";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
 
 import { Tag } from "./Tag";
 
@@ -38,14 +33,12 @@ export type TagEditPropTypes = {
   submitText?: string;
 };
 
-const validationSchema = Yup.object({
-  name: Yup.string()
-    .min(1, "Tag name must not be empty")
-    .required("Tag name is required"),
-  description: Yup.string().optional(),
-  backgroundColor: Yup.string().optional(),
-  foregroundColor: Yup.string().optional(),
-  variant: Yup.string().optional(),
+const formSchema = z.object({
+  name: z.string().min(1, "Tag name must not be empty"),
+  description: z.string().nullable().optional(),
+  backgroundColor: z.string().nullable().optional(),
+  foregroundColor: z.string().nullable().optional(),
+  variant: z.string().nullable().optional(),
 });
 
 export function TagEdit({
@@ -55,107 +48,113 @@ export function TagEdit({
   error,
   submitText = "Create",
 }: TagEditPropTypes) {
+  const form = useForm({
+    resolver: zodResolver(formSchema),
+    defaultValues: initialTag,
+  });
+
   const handleCreate = useCallback(
-    (values: TagType, { resetForm }: FormikHelpers<any>) => {
-      onCreate(values).then((res) => {
-        resetForm();
+    (values: z.infer<typeof formSchema>) => {
+      const tagValues: TagType = {
+        name: values.name,
+        description: values.description ?? null,
+        backgroundColor: values.backgroundColor ?? null,
+        foregroundColor: values.foregroundColor ?? null,
+        variant: values.variant ?? null,
+      };
+      onCreate(tagValues).then((res) => {
+        form.reset();
         return res;
       });
     },
-    [onCreate],
+    [onCreate, form],
   );
 
+  const watchedValues = form.watch();
+
+  // Convert form values to TagType for preview
+  const previewTag: TagType = {
+    name: watchedValues.name || "",
+    description: watchedValues.description ?? null,
+    backgroundColor: watchedValues.backgroundColor ?? null,
+    foregroundColor: watchedValues.foregroundColor ?? null,
+    variant: watchedValues.variant ?? null,
+  };
+
   return (
-    <Formik
-      initialValues={initialTag}
-      onSubmit={handleCreate}
-      validationSchema={validationSchema}
-    >
-      {({ handleSubmit, values }) => (
-        <Form onSubmit={handleSubmit as any}>
-          <VStack spacing={5}>
-            <Flex width="100%" flexWrap="wrap">
-              <VStack
-                minWidth="200px"
-                flex={1}
-                flexShrink={1}
-                alignItems="flex-start"
-              >
-                <InputControl
-                  name="name"
-                  label="Tag Name"
-                  inputProps={{ placeholder: "Tag Name" }}
-                />
-                <InputControl
-                  name="description"
-                  label="Description"
-                  inputProps={{ placeholder: "Description (optional)" }}
-                />
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(handleCreate)}>
+        <div className="stack-col items-start gap-5">
+          <div className="flex w-full flex-wrap">
+            <div className="stack-col items-start min-w-[200px] flex-1 flex-shrink">
+              <InputControl
+                control={form.control}
+                name="name"
+                label="Tag Name"
+                placeholder="Tag Name"
+              />
+              <InputControl
+                control={form.control}
+                name="description"
+                label="Description"
+                placeholder="Description (optional)"
+              />
 
-                <InputControl name="backgroundColor" label="Background Color" />
+              <InputControl
+                control={form.control}
+                name="backgroundColor"
+                label="Background Color"
+              />
 
-                <Accordion width="100%" allowToggle>
-                  <AccordionItem border="none">
-                    <AccordionButton>
-                      <Box flex="1" textAlign="left">
-                        Advanced
-                      </Box>
-                      <AccordionIcon />
-                    </AccordionButton>
-                    <AccordionPanel pb={4}>
-                      <VStack alignItems="flex-start">
-                        <InputControl
-                          name="foregroundColor"
-                          label="Foreground Color"
-                        />
-                        <SelectControl
-                          label="Variant"
-                          name="variant"
-                          selectProps={{ placeholder: "Select variant" }}
-                        >
-                          <option value="solid">Solid</option>
-                          <option value="outline">Outline</option>
-                        </SelectControl>
-                      </VStack>
-                    </AccordionPanel>
-                  </AccordionItem>
-                </Accordion>
-              </VStack>
-              <VStack
-                minWidth="200px"
-                flex={1}
-                flexShrink={1}
-                justifyContent="center"
-              >
-                <FormLabel>Preview</FormLabel>
-                <Tag tag={values} placeholder="Preview Tag" />
-              </VStack>
-            </Flex>
+              <Accordion type="single" collapsible className="w-full">
+                <AccordionItem value="advanced">
+                  <AccordionTrigger>Advanced</AccordionTrigger>
+                  <AccordionContent className="pb-4">
+                    <div className="stack-col items-start">
+                      <InputControl
+                        control={form.control}
+                        name="foregroundColor"
+                        label="Foreground Color"
+                      />
+                      <SelectControl
+                        control={form.control}
+                        label="Variant"
+                        name="variant"
+                        placeholder="Select variant"
+                        options={[
+                          { value: "solid", label: "Solid" },
+                          { value: "outline", label: "Outline" },
+                        ]}
+                      />
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </div>
+            <div className="stack-col min-w-[200px] flex-1 flex-shrink justify-center">
+              <Label>Preview</Label>
+              <Tag tag={previewTag} placeholder="Preview Tag" />
+            </div>
+          </div>
 
-            {error ? (
-              <Alert status="error">
-                <AlertIcon />
-                <Box flex="1">
-                  <AlertTitle mr={2}>
-                    Error performing this operation
-                  </AlertTitle>
-                  <AlertDescription display="block">
-                    {extractError(error).message}
-                  </AlertDescription>
-                </Box>
-              </Alert>
-            ) : null}
-            <HStack alignSelf="flex-start">
-              <Button colorScheme="green" type="submit">
-                {submitText}
-              </Button>
-              <Button variant="outline" onClick={onCancel}>
-                Cancel
-              </Button>
-            </HStack>
-          </VStack>
-        </Form>
-      )}
-    </Formik>
+          {error ? (
+            <Alert
+              variant="destructive"
+              title="Error performing this operation"
+            >
+              {extractError(error).message}
+            </Alert>
+          ) : null}
+          <div className="stack-row self-start">
+            <Button variant="success" type="submit">
+              {submitText}
+            </Button>
+            <Button variant="outline" onClick={onCancel}>
+              Cancel
+            </Button>
+          </div>
+        </div>
+      </form>
+    </Form>
   );
 }

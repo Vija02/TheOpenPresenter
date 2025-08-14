@@ -1,4 +1,3 @@
-import { Box, Flex } from "@chakra-ui/react";
 import { projectName } from "@repo/config";
 import { Logo } from "@repo/ui";
 import * as React from "react";
@@ -35,24 +34,20 @@ export function SharedLayoutSkeleton({
   }, [finalTitle]);
 
   return (
-    <Box>
+    <div>
       <StandardWidth style={{ background: "black", height: "80px" }}>
-        <Flex
-          w="100%"
-          height="100%"
-          justify="space-between"
-          alignItems="center"
-          flexWrap="wrap"
+        <div
+          className="w-full h-full flex justify-between items-center flex-wrap"
         >
           {navbarLeft}
           <WouterLink href="/">
             <Logo height="40px" />
           </WouterLink>
           {navbarRight}
-        </Flex>
+        </div>
       </StandardWidth>
-      <Box style={{ minHeight: contentMinHeight }}>{children}</Box>
+      <div style={{ minHeight: contentMinHeight }}>{children}</div>
       {noFooter ? null : <Footer />}
-    </Box>
+    </div>
   );
 }

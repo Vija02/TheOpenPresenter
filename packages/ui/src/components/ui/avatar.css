@@ -1,0 +1,15 @@
+@reference "@repo/tailwind-config/index.css";
+
+@layer base {
+  .ui--avatar {
+    @apply relative flex size-8 shrink-0 overflow-hidden rounded-full;
+  }
+
+  .ui--avatar-image {
+    @apply aspect-square size-full;
+  }
+
+  .ui--avatar-fallback {
+    @apply bg-fill-muted flex size-full items-center justify-center rounded-full;
+  }
+}

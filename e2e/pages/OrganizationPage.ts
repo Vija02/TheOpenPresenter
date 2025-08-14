@@ -16,7 +16,9 @@ export class OrganizationPage {
       name: "Import",
       exact: true,
     });
-    this.importCloseButton = page.getByLabel("Close");
+    this.importCloseButton = page
+      .getByRole("button", { name: "Close" })
+      .first();
     this.newProjectSaveButton = page.getByRole("button", {
       name: "Save",
     });

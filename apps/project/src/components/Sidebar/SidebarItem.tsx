@@ -1,8 +1,7 @@
-import { Box, Icon, Link, Stack, Text, useDisclosure } from "@chakra-ui/react";
+import { Link, useDisclosure } from "@repo/ui";
 import React from "react";
 import { MdOutlineArrowDropDown } from "react-icons/md";
-import { Link as WouterLink } from "wouter";
-import { useLocation } from "wouter";
+import { Link as WouterLink, useLocation } from "wouter";
 
 type PropTypes = {
   icon?: React.ReactNode;
@@ -12,6 +11,7 @@ type PropTypes = {
   exact?: boolean;
   children?: React.ReactNode;
 };
+
 export const SidebarItem = ({
   icon,
   name,
@@ -21,55 +21,47 @@ export const SidebarItem = ({
   children,
 }: PropTypes) => {
   const [location] = useLocation();
-
-  const { isOpen, onToggle } = useDisclosure({
-    defaultIsOpen: location.includes(baseUrl ?? href),
+  const { open, onToggle } = useDisclosure({
+    defaultOpen: location.includes(baseUrl ?? href),
   });
+
+  const isActive = exact
+    ? location.split("?")[0] === href
+    : location.includes(href);
 
   return (
     <>
-      <Stack direction="row" spacing={0} flex={1}>
+      <div className="stack-row gap-0 flex-1">
         <Link
-          as={WouterLink}
-          href={href}
-          color="blue.800"
-          textDecor="none"
-          flex={1}
-          _hover={{ textDecor: "none" }}
-          {...(!children &&
-          (exact ? location.split("?")[0] === href : location.includes(href))
-            ? { bg: "blue.50" }
-            : {})}
+          asChild
+          variant="unstyled"
+          className={`flex-1 ${!children && isActive ? "bg-surface-primary-hover" : ""}`}
         >
-          <Box p={3} _hover={{ bg: "blue.50" }}>
-            <Stack direction="row" spacing={4} alignItems="center">
-              {icon && <Icon fontSize="24px">{icon}</Icon>}
-              <Text>{name}</Text>
-            </Stack>
-          </Box>
+          <WouterLink href={href} className="hover:bg-surface-primary-hover">
+            <div className="p-3">
+              <div className="stack-row gap-4">
+                {icon && <div className="text-[24px]">{icon}</div>}
+                <span>{name}</span>
+              </div>
+            </div>
+          </WouterLink>
         </Link>
         {children && (
-          <Box
-            height="100%"
-            p={3}
-            _hover={{ bg: "blue.50" }}
-            cursor="pointer"
+          <div
+            className="h-full p-3 hover:bg-surface-primary-hover cursor-pointer"
             onClick={onToggle}
           >
-            <Icon
-              fontSize="24px"
-              transform={`rotate(${isOpen ? 180 : 0}deg)`}
-              transition="0.1s all ease"
+            <div
+              data-state={open ? "open" : "closed"}
+              className="text-[24px] [&[data-state=open]>svg]:rotate-180"
             >
-              <MdOutlineArrowDropDown />
-            </Icon>
-          </Box>
+              <MdOutlineArrowDropDown className="transition-transform" />
+            </div>
+          </div>
         )}
-      </Stack>
-      {children && isOpen && (
-        <Box ml={5} borderLeft="1px solid" borderColor="gray.300" flex={1}>
-          {children}
-        </Box>
+      </div>
+      {children && open && (
+        <div className="ml-5 border-l border-gray-300 flex-1">{children}</div>
       )}
     </>
   );

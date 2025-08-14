@@ -1,3 +1,6 @@
+import { useWindowWidth } from "@react-hook/window-size";
+
 export const useIsMobile = () => {
-  return window.innerWidth < 768;
+  const windowWidth = useWindowWidth();
+  return windowWidth < 768;
 };

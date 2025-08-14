@@ -1,5 +1,4 @@
 import { ApolloProvider } from "@apollo/client";
-import { ChakraProvider } from "@chakra-ui/react";
 import "@fontsource-variable/inter";
 import "@fontsource-variable/source-sans-3";
 import { ErrorAlert } from "@repo/ui";
@@ -18,7 +17,6 @@ import { Router } from "wouter";
 import App from "./App";
 import { apolloClient } from "./apollo";
 import "./index.css";
-import { theme } from "./lib/theme";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -35,16 +33,14 @@ NProgress.configure({
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ErrorBoundary FallbackComponent={ErrorAlert}>
-      <ChakraProvider theme={theme} resetCSS>
-        <Router>
-          <ApolloProvider client={apolloClient}>
-            <QueryClientProvider client={queryClient}>
-              <App />
-              <ToastContainer />
-            </QueryClientProvider>
-          </ApolloProvider>
-        </Router>
-      </ChakraProvider>
+      <Router>
+        <ApolloProvider client={apolloClient}>
+          <QueryClientProvider client={queryClient}>
+            <App />
+            <ToastContainer />
+          </QueryClientProvider>
+        </ApolloProvider>
+      </Router>
     </ErrorBoundary>
   </StrictMode>,
 );

@@ -1,4 +1,4 @@
-import { cloneElement, useCallback, useState } from "react";
+import { cloneElement, useCallback, useEffect, useState } from "react";
 
 import { useDisclosure } from "./lib/useDisclosure";
 
@@ -30,6 +30,8 @@ export type OverlayTogglePropTypes = {
   children: React.ReactElement<OverlayToggleComponentProps>;
   /** If true, rendering of content will defer until the overlay is open */
   isLazy?: boolean;
+  /** If true, don't automatically reset on close */
+  disableResetOnClose?: boolean;
 };
 
 /**
@@ -39,6 +41,7 @@ export type OverlayTogglePropTypes = {
 export const OverlayToggle = ({
   toggler,
   isLazy,
+  disableResetOnClose,
   children,
 }: OverlayTogglePropTypes) => {
   const { open, onToggle, onOpen } = useDisclosure();
@@ -46,7 +49,13 @@ export const OverlayToggle = ({
 
   const resetData = useCallback(() => {
     setKey((x) => x + 1);
-  }, []);
+  }, [setKey]);
+
+  useEffect(() => {
+    if (!disableResetOnClose && open) {
+      resetData();
+    }
+  }, [open, resetData]);
 
   return (
     <>

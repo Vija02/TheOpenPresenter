@@ -1,0 +1,74 @@
+@reference "@repo/tailwind-config/index.css";
+
+@layer base {
+  /* Sheet Overlay */
+  .ui--sheet-overlay {
+    @apply fixed inset-0 z-50 bg-black/50;
+    @apply data-[state=open]:animate-in data-[state=closed]:animate-out;
+    @apply data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0;
+  }
+
+  /* Sheet Content */
+  .ui--sheet-content {
+    @apply fixed z-50 flex flex-col shadow-lg transition-all;
+    @apply bg-surface-primary;
+    @apply data-[state=open]:animate-in data-[state=closed]:animate-out;
+    @apply data-[state=closed]:duration-200 data-[state=open]:duration-300;
+  }
+
+  /* Sheet Content - Right Side */
+  .ui--sheet-content__right {
+    @apply inset-y-0 right-0 h-full w-3/4 border-l;
+    @apply data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right;
+    @apply sm:max-w-sm;
+  }
+
+  /* Sheet Content - Left Side */
+  .ui--sheet-content__left {
+    @apply inset-y-0 left-0 h-full w-3/4 border-r;
+    @apply data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left;
+    @apply sm:max-w-sm;
+  }
+
+  /* Sheet Content - Top Side */
+  .ui--sheet-content__top {
+    @apply inset-x-0 top-0 h-auto border-b;
+    @apply data-[state=closed]:slide-out-to-top data-[state=open]:slide-in-from-top;
+  }
+
+  /* Sheet Content - Bottom Side */
+  .ui--sheet-content__bottom {
+    @apply inset-x-0 bottom-0 h-auto border-t;
+    @apply data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom;
+  }
+
+  /* Sheet Close Button */
+  .ui--sheet-close {
+    @apply absolute top-4 right-4 rounded-xs opacity-70 transition-opacity;
+    @apply focus:ring-ring;
+    @apply data-[state=open]:bg-secondary;
+    @apply focus:ring-2 focus:ring-offset-2 focus:outline-hidden;
+    @apply hover:opacity-100;
+    @apply disabled:pointer-events-none;
+  }
+
+  /* Sheet Header */
+  .ui--sheet-header {
+    @apply flex flex-col gap-1.5 p-4;
+  }
+
+  /* Sheet Footer */
+  .ui--sheet-footer {
+    @apply mt-auto flex flex-col gap-2 p-4;
+  }
+
+  /* Sheet Title */
+  .ui--sheet-title {
+    @apply text-primary font-semibold;
+  }
+
+  /* Sheet Description */
+  .ui--sheet-description {
+    @apply text-fill-muted-fg text-sm;
+  }
+}

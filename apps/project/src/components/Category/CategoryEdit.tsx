@@ -1,21 +1,11 @@
 import { ApolloError } from "@apollo/client";
-import {
-  Alert,
-  AlertDescription,
-  AlertIcon,
-  AlertTitle,
-  Box,
-  Button,
-  Flex,
-  HStack,
-  VStack,
-} from "@chakra-ui/react";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { CategoryFragment } from "@repo/graphql";
 import { extractError } from "@repo/lib";
-import { Form, Formik, FormikHelpers } from "formik";
-import { InputControl } from "formik-chakra-ui";
+import { Alert, Button, Form, InputControl } from "@repo/ui";
 import { useCallback } from "react";
-import * as Yup from "yup";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
 export type CategoryType = Pick<CategoryFragment, "name">;
 
@@ -27,10 +17,8 @@ export type CategoryEditPropTypes = {
   submitText?: string;
 };
 
-const validationSchema = Yup.object({
-  name: Yup.string()
-    .min(1, "Name must not be empty")
-    .required("Name is required"),
+const formSchema = z.object({
+  name: z.string().min(1, "Name must not be empty"),
 });
 
 export function CategoryEdit({
@@ -40,64 +28,57 @@ export function CategoryEdit({
   error,
   submitText = "Create",
 }: CategoryEditPropTypes) {
+  const form = useForm({
+    resolver: zodResolver(formSchema),
+    defaultValues: initialCategory,
+  });
+
   const handleCreate = useCallback(
-    (values: CategoryType, { resetForm }: FormikHelpers<any>) => {
-      onCreate(values).then((res) => {
-        resetForm();
-        return res;
-      });
+    async (values: CategoryType) => {
+      await onCreate(values);
+      form.reset();
     },
-    [onCreate],
+    [onCreate, form],
   );
 
   return (
-    <Formik
-      initialValues={initialCategory}
-      onSubmit={handleCreate}
-      validationSchema={validationSchema}
-    >
-      {({ handleSubmit }) => (
-        <Form onSubmit={handleSubmit as any}>
-          <VStack spacing={5}>
-            <Flex width="100%" flexWrap="wrap">
-              <VStack
-                minWidth="200px"
-                flex={1}
-                flexShrink={1}
-                alignItems="flex-start"
-              >
-                <InputControl
-                  name="name"
-                  label="Name"
-                  inputProps={{ placeholder: "Name" }}
-                />
-              </VStack>
-            </Flex>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(handleCreate)}>
+        <div className="stack-col items-start gap-5">
+          <div className="w-full flex flex-wrap">
+            <div className="min-w-[200px] flex-1 flex-shrink stack-col items-start">
+              <InputControl
+                control={form.control}
+                name="name"
+                label="Name"
+                placeholder="Name"
+              />
+            </div>
+          </div>
 
-            {error ? (
-              <Alert status="error">
-                <AlertIcon />
-                <Box flex="1">
-                  <AlertTitle mr={2}>
-                    Error performing this operation
-                  </AlertTitle>
-                  <AlertDescription display="block">
-                    {extractError(error).message}
-                  </AlertDescription>
-                </Box>
-              </Alert>
-            ) : null}
-            <HStack alignSelf="flex-start">
-              <Button colorScheme="green" type="submit">
-                {submitText}
-              </Button>
-              <Button variant="outline" onClick={onCancel}>
-                Cancel
-              </Button>
-            </HStack>
-          </VStack>
-        </Form>
-      )}
-    </Formik>
+          {error ? (
+            <Alert
+              variant="destructive"
+              title="Error performing this operation"
+            >
+              {extractError(error).message}
+            </Alert>
+          ) : null}
+
+          <div className="stack-row items-start">
+            <Button
+              variant="success"
+              type="submit"
+              isLoading={form.formState.isSubmitting}
+            >
+              {submitText}
+            </Button>
+            <Button variant="outline" onClick={onCancel}>
+              Cancel
+            </Button>
+          </div>
+        </div>
+      </form>
+    </Form>
   );
 }

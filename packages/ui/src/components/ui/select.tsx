@@ -19,6 +19,7 @@ import SelectComponent, {
 } from "react-select";
 import { FixedSizeList as List } from "react-window";
 
+import { useDialogPortalContainerContext } from "./dialog";
 import {
   FormControl,
   FormDescription,
@@ -191,6 +192,7 @@ const defaultStyles: StylesConfig<
       background: "transparent",
     },
   }),
+  menuPortal: (base) => ({ ...base, zIndex: 9999, pointerEvents: "auto" }),
 };
 
 /**
@@ -276,6 +278,7 @@ const BaseSelect = <IsMulti extends boolean = false>(
     ...rest
   } = props;
   const instanceId = React.useId();
+  const container = useDialogPortalContainerContext();
 
   return (
     <SelectComponent<OptionType, IsMulti, GroupBase<OptionType>>
@@ -286,6 +289,9 @@ const BaseSelect = <IsMulti extends boolean = false>(
         matchFrom: "any",
         stringify: (option) => option.label,
       })}
+      menuPortalTarget={
+        container ?? (typeof window !== "undefined" ? document.body : undefined)
+      }
       components={{
         DropdownIndicator,
         ClearIndicator,

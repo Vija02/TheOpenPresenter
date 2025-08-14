@@ -2,25 +2,14 @@ import { Redirect } from "@/components/Redirect";
 import { SharedLayout } from "@/components/SharedLayout";
 import { SocialLoginOptions } from "@/components/SocialLoginOptions";
 import { ApolloError, useApolloClient } from "@apollo/client";
-import {
-  Alert,
-  AlertDescription,
-  AlertIcon,
-  AlertTitle,
-  Box,
-  Flex,
-  Heading,
-  Link,
-  Text,
-  VStack,
-} from "@chakra-ui/react";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useLoginMutation, useSharedQuery } from "@repo/graphql";
 import { extractError, getCodeFromError } from "@repo/lib";
-import { Form, Formik, FormikHelpers } from "formik";
-import { InputControl, SubmitButton } from "formik-chakra-ui";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Alert, Button, Form, InputControl, Link } from "@repo/ui";
+import { useCallback, useState } from "react";
+import { useForm } from "react-hook-form";
 import { Link as WouterLink, useLocation, useSearchParams } from "wouter";
-import * as Yup from "yup";
+import z from "zod";
 
 export function isSafe(nextUrl: string | null) {
   return (nextUrl && nextUrl[0] === "/") || false;
@@ -44,27 +33,27 @@ export default function Home() {
           // Handle it here instead of shared layout so we can redirect properly
           <Redirect href={next} />
         ) : (
-          <Flex justifyContent="center" marginTop={16}>
-            <Box maxW="md" w="100%">
-              <Heading>Login</Heading>
+          <div className="flex justify-center mt-16">
+            <div className="max-w-md w-full">
+              <h1 className="text-2xl font-bold mb-4">Login</h1>
               <LoginForm
                 error={error}
                 setError={setError}
                 onSuccessRedirectTo={next}
               />
-            </Box>
-          </Flex>
+            </div>
+          </div>
         )
       }
     </SharedLayout>
   );
 }
 
-const validationSchema = Yup.object({
-  username: Yup.string().required("Please enter your e-mail or username"),
-  password: Yup.string().required("Please enter your password"),
+const formSchema = z.object({
+  username: z.string().min(1, "Please enter your e-mail or username"),
+  password: z.string().min(1, "Please enter your password"),
 });
-type FormInputs = Yup.InferType<typeof validationSchema>;
+type FormInputs = z.infer<typeof formSchema>;
 
 interface LoginFormProps {
   onSuccessRedirectTo: string;
@@ -77,8 +66,16 @@ function LoginForm({ onSuccessRedirectTo, error, setError }: LoginFormProps) {
   const client = useApolloClient();
   const [, navigate] = useLocation();
 
+  const form = useForm({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      username: "",
+      password: "",
+    },
+  });
+
   const onSubmit = useCallback(
-    async (values: FormInputs, formikHelpers: FormikHelpers<any>) => {
+    async (values: FormInputs) => {
       setError(null);
       try {
         await login({
@@ -93,92 +90,75 @@ function LoginForm({ onSuccessRedirectTo, error, setError }: LoginFormProps) {
       } catch (e: any) {
         const code = getCodeFromError(e);
         if (code === "CREDS") {
-          formikHelpers.setFieldError(
-            "password",
-            "Incorrect username or password",
-          );
+          form.setError("password", {
+            type: "manual",
+            message: "Incorrect username or password",
+          });
         } else {
           setError(e);
         }
       }
     },
-    [client, login, navigate, onSuccessRedirectTo, setError],
-  );
-
-  const focusElement = useRef<any>(null);
-  useEffect(
-    () => void (focusElement.current && focusElement.current!.focus()),
-    [focusElement],
+    [client, login, navigate, onSuccessRedirectTo, setError, form],
   );
 
   return (
-    <Formik
-      initialValues={{ username: "", password: "" }}
-      onSubmit={onSubmit}
-      validationSchema={validationSchema}
-    >
-      {({ handleSubmit }) => (
-        <Form onSubmit={handleSubmit as any}>
-          <VStack alignItems="flex-start">
-            <InputControl
-              // @ts-ignore
-              ref={focusElement}
-              name="username"
-              label="E-mail or Username"
-              inputProps={{
-                placeholder: "Enter your e-mail or username",
-                autoComplete: "email username",
-                // @ts-ignore
-                "data-cy": "loginpage-input-username",
-                onBlur: (e) =>
-                  e.relatedTarget?.tagName === "a" && e.stopPropagation(),
-              }}
-            />
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)}>
+        <div className="stack-col items-start gap-4">
+          <InputControl
+            control={form.control}
+            name="username"
+            label="E-mail or Username"
+            placeholder="Enter your e-mail or username"
+            autoComplete="email username"
+            data-cy="loginpage-input-username"
+            autoFocus
+          />
+          <InputControl
+            control={form.control}
+            name="password"
+            label="Password"
+            type="password"
+            placeholder="Password"
+            autoComplete="current-password"
+            data-cy="loginpage-input-password"
+          />
 
-            <InputControl
-              name="password"
-              label="Password"
-              inputProps={{
-                placeholder: "Password",
-                autoComplete: "current-password",
-                type: "password",
-                // @ts-ignore
-                "data-cy": "loginpage-input-password",
-              }}
-            />
-
-            <Link as={WouterLink} href="/forgot">
-              Forgotten your password?
+          <div className="stack-col items-start gap-2">
+            <Link asChild>
+              <WouterLink href="/forgot" className="text-sm">
+                Forgotten your password?
+              </WouterLink>
             </Link>
 
-            <Link as={WouterLink} href="/register">
-              Don't have an account yet? Sign up
+            <Link asChild>
+              <WouterLink href="/register" className="text-sm">
+                Don't have an account yet? Sign up
+              </WouterLink>
             </Link>
+          </div>
 
-            {error ? (
-              <Alert status="error">
-                <AlertIcon />
-                <Box flex="1">
-                  <AlertTitle mr={2}>Error: Failed to sign in</AlertTitle>
-                  <AlertDescription display="block">
-                    {extractError(error).message}
-                  </AlertDescription>
-                </Box>
-              </Alert>
-            ) : null}
+          {error ? (
+            <Alert variant="destructive" title="Login failed">
+              {extractError(error).message}
+            </Alert>
+          ) : null}
 
-            <SubmitButton colorScheme="green" data-cy="loginpage-button-submit">
-              Sign in
-            </SubmitButton>
+          <Button
+            type="submit"
+            variant="success"
+            isLoading={form.formState.isSubmitting}
+            className="w-full"
+          >
+            Sign in
+          </Button>
 
-            <Text className="lineText" width="100%" py={2} color="gray.600">
-              Or continue with
-            </Text>
+          <p className="lineText w-full text-gray-700">Or continue with</p>
 
-            <SocialLoginOptions next={onSuccessRedirectTo} />
-          </VStack>
-        </Form>
-      )}
-    </Formik>
+          <SocialLoginOptions next={onSuccessRedirectTo} />
+        </div>
+      </form>
+    </Form>
   );
 }

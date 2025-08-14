@@ -4,15 +4,7 @@ import {
   useOrganizationSlug,
 } from "@/lib/permissionHooks/organization";
 import { QueryResult } from "@apollo/client";
-import {
-  Alert,
-  AlertDescription,
-  AlertIcon,
-  AlertTitle,
-  Box,
-  Heading,
-  VStack,
-} from "@chakra-ui/react";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Exact,
   OrganizationSettingsGeneralPageQuery,
@@ -21,16 +13,12 @@ import {
   useUpdateOrganizationMutation,
 } from "@repo/graphql";
 import { extractError } from "@repo/lib";
-import { Form, Formik } from "formik";
-import {
-  CheckboxSingleControl,
-  InputControl,
-  SubmitButton,
-} from "formik-chakra-ui";
+import { Alert, Button, CheckboxControl, Form, InputControl } from "@repo/ui";
 import { useCallback, useState } from "react";
+import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import { useLocation } from "wouter";
-import * as Yup from "yup";
+import * as z from "zod";
 
 const OrganizationSettingsIndexPage = () => {
   const slug = useOrganizationSlug();
@@ -56,16 +44,13 @@ type PropTypes = {
   >;
 };
 
-const validationSchema = Yup.object({
-  name: Yup.string()
-    .min(1, "Organization name must not be empty")
-    .required("Organization name is required"),
-  slug: Yup.string()
-    .min(2, "Slug must be at least 2 characters long")
-    .required("Slug is required"),
-  isPublic: Yup.bool(),
+const formSchema = z.object({
+  name: z.string().min(1, "Organization name must not be empty"),
+  slug: z.string().min(2, "Slug must be at least 2 characters long"),
+  isPublic: z.boolean().optional(),
 });
-type FormInputs = Yup.InferType<typeof validationSchema>;
+
+type FormInputs = z.infer<typeof formSchema>;
 
 const OrganizationSettingsIndexPageInner = ({ query }: PropTypes) => {
   const organization = query.data?.organizationBySlug!;
@@ -74,6 +59,16 @@ const OrganizationSettingsIndexPageInner = ({ query }: PropTypes) => {
 
   const [updateOrganization] = useUpdateOrganizationMutation();
   const [error, setError] = useState<Error | null>(null);
+
+  const form = useForm<FormInputs>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      slug,
+      name,
+      isPublic: isPublic ?? false,
+    },
+  });
+
   const onSubmit = useCallback(
     async (values: FormInputs) => {
       try {
@@ -99,66 +94,66 @@ const OrganizationSettingsIndexPageInner = ({ query }: PropTypes) => {
         setError(e);
       }
     },
-    [organization.id, organization.slug, updateOrganization],
+    [navigate, organization.id, organization.slug, updateOrganization],
   );
 
   const userHaveAccess =
     organization.currentUserIsBillingContact || organization.currentUserIsOwner;
 
   return (
-    <Formik
-      initialValues={{ slug, name, isPublic: isPublic ?? false }}
-      onSubmit={onSubmit}
-      validationSchema={validationSchema}
-    >
-      {({ handleSubmit }) => (
-        <Form onSubmit={handleSubmit as any}>
-          <Heading>General Settings</Heading>
-          <VStack alignItems="flex-start">
-            {!userHaveAccess && (
-              <Alert>
-                <AlertIcon />
-                <AlertDescription mr={2}>
-                  You must be an owner or the billing contact to edit these
-                  settings
-                </AlertDescription>
-              </Alert>
-            )}
-            <InputControl
-              name="name"
-              label="Name"
-              inputProps={{ isDisabled: !userHaveAccess }}
-            />
-            <InputControl
-              name="slug"
-              label="Slug"
-              inputProps={{ isDisabled: !userHaveAccess }}
-            />
-            <CheckboxSingleControl
-              name="isPublic"
-              label="Is Public"
-              checkBoxProps={{ isDisabled: !userHaveAccess }}
-            />
+    <Form {...form}>
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="stack-col items-start gap-4"
+      >
+        <h1 className="text-2xl font-bold">General Settings</h1>
+        <div className="stack-col items-start w-full max-w-xl">
+          {!userHaveAccess && (
+            <Alert variant="warning" title="No access" className="mb-4">
+              You must be an owner or the billing contact to edit these settings
+            </Alert>
+          )}
 
-            {error ? (
-              <Alert status="error">
-                <AlertIcon />
-                <Box flex="1">
-                  <AlertTitle mr={2}>Error updating organization</AlertTitle>
-                  <AlertDescription display="block">
-                    {extractError(error).message}
-                  </AlertDescription>
-                </Box>
-              </Alert>
-            ) : null}
+          <InputControl
+            control={form.control}
+            name="name"
+            label="Name"
+            disabled={!userHaveAccess}
+            className="w-full"
+          />
 
-            <SubmitButton colorScheme="green" isDisabled={!userHaveAccess}>
-              Update organization
-            </SubmitButton>
-          </VStack>
-        </Form>
-      )}
-    </Formik>
+          <InputControl
+            control={form.control}
+            name="slug"
+            label="Slug"
+            disabled={!userHaveAccess}
+            className="w-full"
+          />
+
+          <CheckboxControl
+            control={form.control}
+            name="isPublic"
+            label="Is Public"
+            disabled={!userHaveAccess}
+          />
+
+          {error ? (
+            <Alert variant="destructive" title="Error updating organization">
+              {extractError(error).message}
+            </Alert>
+          ) : null}
+
+          <Button
+            type="submit"
+            variant="success"
+            disabled={!userHaveAccess}
+            isLoading={form.formState.isSubmitting}
+          >
+            Update organization
+          </Button>
+        </div>
+      </form>
+    </Form>
   );
 };
 

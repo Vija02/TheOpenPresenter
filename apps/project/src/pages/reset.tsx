@@ -1,35 +1,27 @@
+import { Redirect } from "@/components/Redirect";
 import { AuthRestrict, SharedLayout } from "@/components/SharedLayout";
 import { WrappedPasswordStrength } from "@/components/WrappedPasswordStrength";
-import {
-  Alert,
-  AlertDescription,
-  AlertIcon,
-  AlertTitle,
-  Box,
-  Flex,
-  Link,
-  VStack,
-} from "@chakra-ui/react";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useResetPasswordMutation, useSharedQuery } from "@repo/graphql";
 import { extractError } from "@repo/lib";
-import { Form, Formik } from "formik";
-import { InputControl, SubmitButton } from "formik-chakra-ui";
+import { Alert, Button, Form, InputControl, Link } from "@repo/ui";
 import { useCallback, useState } from "react";
+import { useForm } from "react-hook-form";
 import { Link as WouterLink } from "wouter";
 import { useSearchParams } from "wouter";
-import * as Yup from "yup";
+import { z } from "zod";
 
-const validationSchema = Yup.object({
-  token: Yup.string().required("Please enter your reset token"),
-  password: Yup.string().required("Please enter your password"),
-  confirm: Yup.string()
-    .oneOf(
-      [Yup.ref("password")],
-      "Make sure your password is the same in both password boxes.",
-    )
-    .required("Please enter your password again"),
-});
-type FormInputs = Yup.InferType<typeof validationSchema>;
+const formSchema = z
+  .object({
+    token: z.string().min(1, "Please enter your reset token"),
+    password: z.string().min(1, "Please enter your password"),
+    confirm: z.string().min(1, "Please enter your password again"),
+  })
+  .refine((data) => data.password === data.confirm, {
+    message: "Make sure your password is the same in both password boxes.",
+    path: ["confirm"],
+  });
+type FormInputs = z.infer<typeof formSchema>;
 
 const ResetPage = () => {
   const [searchParams] = useSearchParams();
@@ -42,6 +34,15 @@ const ResetPage = () => {
   const [resetPassword, { data }] = useResetPasswordMutation();
 
   const success = !!data?.resetPassword?.success;
+
+  const form = useForm<FormInputs>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      token: token?.toString() ?? "",
+      password: "",
+      confirm: "",
+    },
+  });
 
   const onSubmit = useCallback(
     async (values: FormInputs) => {
@@ -61,6 +62,10 @@ const ResetPage = () => {
     [resetPassword, user_id],
   );
 
+  if (!user_id) {
+    return <Redirect href="/login" />;
+  }
+
   return (
     <SharedLayout
       title="Reset Password"
@@ -70,98 +75,76 @@ const ResetPage = () => {
         AuthRestrict.NEVER
       }
     >
-      <Flex justifyContent="center" marginTop={16}>
-        <Box maxW="lg" w="100%">
+      <div className="flex justify-center mt-16">
+        <div className="max-w-md w-full">
           {success && (
-            <Alert status="success">
-              <AlertIcon />
-              <Box flex="1">
-                <AlertTitle mr={2}>Password successfully reset</AlertTitle>
-                <AlertDescription display="block">
-                  Your password was reset. You can go and{" "}
-                  <Link as={WouterLink} href="/login">
-                    log in
-                  </Link>{" "}
-                  now
-                </AlertDescription>
-              </Box>
+            <Alert variant="success" title="Password successfully reset">
+              Your password was reset. You can go and{" "}
+              <Link asChild>
+                <WouterLink href="/login" className="text-sm">
+                  log in
+                </WouterLink>
+              </Link>{" "}
+              now
             </Alert>
           )}
           {!success && (
-            <Formik
-              initialValues={{
-                token: token?.toString() ?? "",
-                password: "",
-                confirm: "",
-              }}
-              onSubmit={onSubmit}
-              validationSchema={validationSchema}
-            >
-              {({ handleSubmit }) => (
-                <Form onSubmit={handleSubmit as any}>
-                  <VStack alignItems="flex-start">
-                    <InputControl
-                      name="token"
-                      label="Enter your reset token:"
-                      inputProps={{
-                        // @ts-ignore
-                        "data-cy": "resetpage-input-token",
-                      }}
-                    />
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)}>
+                <div className="stack-col items-start gap-4">
+                  <InputControl
+                    control={form.control}
+                    name="token"
+                    label="Enter your reset token:"
+                    data-cy="resetpage-input-token"
+                  />
 
-                    <InputControl
-                      name="password"
-                      label="Password"
-                      inputProps={{
-                        placeholder: "Password",
-                        autoComplete: "new-password",
-                        type: "password",
-                        // @ts-ignore
-                        "data-cy": "resetpage-input-password",
-                      }}
-                    />
+                  <InputControl
+                    control={form.control}
+                    name="password"
+                    label="Password"
+                    placeholder="Password"
+                    autoComplete="new-password"
+                    type="password"
+                    data-cy="resetpage-input-password"
+                  />
 
-                    <WrappedPasswordStrength />
+                  <WrappedPasswordStrength password={form.watch("password")} />
 
-                    <InputControl
-                      name="confirm"
-                      label="Confirm password"
-                      inputProps={{
-                        placeholder: "Password",
-                        autoComplete: "new-password",
-                        type: "password",
-                        // @ts-ignore
-                        "data-cy": "resetpage-input-password2",
-                      }}
-                    />
+                  <InputControl
+                    control={form.control}
+                    name="confirm"
+                    label="Confirm password"
+                    placeholder="Password"
+                    autoComplete="new-password"
+                    type="password"
+                    data-cy="resetpage-input-password2"
+                  />
 
-                    {error ? (
-                      <Alert status="error">
-                        <AlertIcon />
-                        <Box flex="1">
-                          <AlertTitle mr={2}>
-                            Error: Failed to reset password
-                          </AlertTitle>
-                          <AlertDescription display="block">
-                            {extractError(error).message}
-                          </AlertDescription>
-                        </Box>
-                      </Alert>
-                    ) : null}
-
-                    <SubmitButton
-                      colorScheme="green"
-                      data-cy="resetpage-button-submit"
+                  {error ? (
+                    <Alert
+                      variant="destructive"
+                      title="Error: Failed to reset password"
                     >
-                      Reset password
-                    </SubmitButton>
-                  </VStack>
-                </Form>
-              )}
-            </Formik>
+                      {extractError(error).message}
+                    </Alert>
+                  ) : null}
+
+                  <Button
+                    type="submit"
+                    variant="success"
+                    isLoading={form.formState.isSubmitting}
+                    data-cy="resetpage-button-submit"
+                    className="w-full"
+                  >
+                    Reset password
+                  </Button>
+                </div>
+              </form>
+            </Form>
           )}
-        </Box>
-      </Flex>
+        </div>
+      </div>
     </SharedLayout>
   );
 };

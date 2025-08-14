@@ -1,11 +1,10 @@
 import { ApolloError, QueryResult } from "@apollo/client";
-import { Button, HStack, Link, Wrap } from "@chakra-ui/react";
 import {
   SharedLayout_QueryFragment,
   SharedLayout_UserFragment,
   useCurrentUserUpdatedSubscription,
 } from "@repo/graphql";
-import { ErrorAlert } from "@repo/ui";
+import { Button, ErrorAlert, Link } from "@repo/ui";
 import * as React from "react";
 import { Link as WouterLink, useLocation } from "wouter";
 
@@ -134,28 +133,33 @@ export function SharedLayout({
         navbarLeft={navbarLeft}
         navbarRight={
           navbarRight ?? (
-            <Wrap>
-              <HStack spacing={6}>
-                <Link as={WouterLink} href={`/login`} variant="linkButton">
-                  <Button
-                    size="sm"
-                    variant="link"
-                    data-cy="header-login-button"
-                  >
-                    Sign in
-                  </Button>
+            <div className="flex flex-wrap gap-6">
+              <div className="stack-row items-center gap-6">
+                <Link asChild>
+                  <WouterLink href="/login">
+                    <Button
+                      size="sm"
+                      variant="link"
+                      className="text-tertiary"
+                      data-cy="header-login-button"
+                    >
+                      Sign in
+                    </Button>
+                  </WouterLink>
                 </Link>
-                <Link as={WouterLink} href={`/register`} variant="button">
-                  <Button
-                    size="sm"
-                    colorScheme="green"
-                    data-cy="header-register-button"
-                  >
-                    Sign up for free
-                  </Button>
+                <Link asChild>
+                  <WouterLink href="/register">
+                    <Button
+                      size="sm"
+                      variant="success"
+                      data-cy="header-register-button"
+                    >
+                      Sign up for free
+                    </Button>
+                  </WouterLink>
                 </Link>
-              </HStack>
-            </Wrap>
+              </div>
+            </div>
           )
         }
       >

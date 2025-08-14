@@ -1,31 +1,23 @@
 import { useOrganizationSlug } from "@/lib/permissionHooks/organization";
-import {
-  Box,
-  Button,
-  Modal,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  ModalOverlay,
-  ModalProps,
-  Stack,
-  Text,
-  VStack,
-} from "@chakra-ui/react";
 import { appData, globalState } from "@repo/lib";
 import { logger } from "@repo/observability";
-import { OverlayToggleComponentProps } from "@repo/ui";
+import {
+  Button,
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  Link,
+  OverlayToggleComponentProps,
+} from "@repo/ui";
 import { useCallback, useRef, useState } from "react";
 import { FaExternalLinkAlt, FaFileImport } from "react-icons/fa";
 import { toast } from "react-toastify";
 import { Link as WouterLink } from "wouter";
 
-export type ImportProjectModalPropTypes = Omit<
-  ModalProps,
-  "isOpen" | "onClose" | "children"
-> &
+export type ImportProjectModalPropTypes =
   Partial<OverlayToggleComponentProps> & {
     organizationId: string;
   };
@@ -35,7 +27,6 @@ const ImportProjectModal = ({
   onToggle,
   resetData,
   organizationId,
-  ...props
 }: ImportProjectModalPropTypes) => {
   const { publish } = globalState.modelDataAccess.usePublishAPIChanges({
     token: "page",
@@ -122,59 +113,52 @@ const ImportProjectModal = ({
   );
 
   return (
-    <Modal
-      size={{ base: "full", md: "xl" }}
-      isOpen={isOpen ?? false}
-      onClose={handleClose}
-      {...props}
-    >
-      <ModalOverlay />
-      <ModalContent>
-        <ModalHeader>
-          {importedProject
-            ? "Project Imported Successfully!"
-            : "Import Project"}
-        </ModalHeader>
-        <ModalCloseButton />
-        <ModalBody>
+    <Dialog open={isOpen ?? false} onOpenChange={handleClose}>
+      <DialogContent size="xl">
+        <DialogHeader>
+          <DialogTitle>
+            {importedProject
+              ? "Project Imported Successfully!"
+              : "Import Project"}
+          </DialogTitle>
+        </DialogHeader>
+        <DialogBody>
           {importedProject ? (
-            <VStack alignItems="center" spacing={4}>
-              <Text fontSize="lg" fontWeight="bold" color="green.600">
+            <div className="stack-col gap-4">
+              <p className="text-lg font-bold text-green-600">
                 ✅ Import Complete
-              </Text>
-              <Text textAlign="center">
+              </p>
+              <p className="text-center">
                 Project <strong>"{importedProject.name}"</strong> has been
                 successfully imported to your organization.
-              </Text>
-              <WouterLink
-                href={`/app/${organizationSlug}/${importedProject.slug}`}
-              >
-                <Button
-                  variant="outline"
-                  size="sm"
-                  display="flex"
-                  gap={2}
-                  onClick={handleNavigateToProject}
-                  w="100%"
+              </p>
+              <Link asChild>
+                <WouterLink
+                  href={`/app/${organizationSlug}/${importedProject.slug}`}
                 >
-                  <FaExternalLinkAlt />
-                  Open
-                </Button>
-              </WouterLink>
-            </VStack>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex gap-2 w-full"
+                    onClick={handleNavigateToProject}
+                  >
+                    <FaExternalLinkAlt />
+                    Open
+                  </Button>
+                </WouterLink>
+              </Link>
+            </div>
           ) : (
-            <VStack alignItems="flex-start" spacing={4}>
-              <Text>Select a .top file to import into your organization.</Text>
+            <div className="stack-col items-start gap-4">
+              <p>Select a .top file to import into your organization.</p>
 
-              <Box w="100%">
+              <div className="w-full">
                 <Button
-                  colorScheme="green"
-                  size="md"
-                  display="flex"
-                  gap={2}
+                  variant="success"
+                  size="default"
+                  className="flex gap-2 w-full"
                   isLoading={isLoading}
                   onClick={handleImportClick}
-                  w="100%"
                 >
                   <FaFileImport />
                   Choose File to Import
@@ -186,23 +170,23 @@ const ImportProjectModal = ({
                   style={{ display: "none" }}
                   onChange={handleFileChange}
                 />
-              </Box>
+              </div>
 
-              <Text fontSize="sm" color="gray.600">
+              <p className="text-sm text-secondary">
                 Only .top files are supported for import.
-              </Text>
-            </VStack>
+              </p>
+            </div>
           )}
-        </ModalBody>
-        <ModalFooter>
-          <Stack direction="row">
+        </DialogBody>
+        <DialogFooter>
+          <div className="stack-row">
             <Button variant="ghost" onClick={handleClose}>
               Close
             </Button>
-          </Stack>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+          </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
 

@@ -1,16 +1,9 @@
 import { useOrganizationSlug } from "@/lib/permissionHooks/organization";
-import {
-  HStack,
-  LinkBox,
-  LinkOverlay,
-  Text,
-  VStack,
-  chakra,
-} from "@chakra-ui/react";
-import React from "react";
+import { Link } from "@repo/ui";
 import { FiSettings } from "react-icons/fi";
-import { MultiValue, Props } from "react-select";
+import { Props } from "react-select";
 import CreatableSelect, { CreatableProps } from "react-select/creatable";
+import { Link as WouterLink } from "wouter";
 
 import { ReactSelectTagsProps } from "./tagReactSelect";
 
@@ -39,27 +32,21 @@ export function TagsSelector({
   );
 }
 
-const SettingsIcon = chakra(FiSettings);
-
 export function TagSettingsPrompt() {
   const slug = useOrganizationSlug();
 
   return (
-    <LinkBox
-      height="100%"
-      _hover={{ backgroundColor: "gray.100" }}
-      transition="ease"
+    <Link
+      variant="unstyled"
+      className="block h-full hover:bg-surface-secondary-hover transition-colors ease-in-out w-full"
+      asChild
     >
-      <HStack py={1} justifyContent="center" alignItems="center">
-        <SettingsIcon color="subtitle" fontSize={13} />
-        <LinkOverlay
-          color="subtitle"
-          fontSize="xs"
-          href={`/o/${slug}/settings/tags`}
-        >
-          Tag Settings
-        </LinkOverlay>
-      </HStack>
-    </LinkBox>
+      <WouterLink href={`/o/${slug}/settings/tags`}>
+        <div className="stack-row justify-center py-1">
+          <FiSettings className="text-secondary text-[13px]" />
+          <p className="text-secondary text-xs">Tag Settings</p>
+        </div>
+      </WouterLink>
+    </Link>
   );
 }

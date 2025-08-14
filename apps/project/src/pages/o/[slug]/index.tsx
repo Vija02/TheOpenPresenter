@@ -1,4 +1,3 @@
-import { PopConfirm } from "@/components/PopConfirm";
 import { SharedOrgLayout } from "@/components/SharedOrgLayout";
 import { Tag } from "@/components/Tag";
 import CreateProjectModal from "@/containers/CreateProjectModal";
@@ -6,31 +5,28 @@ import EditProjectModal from "@/containers/EditProjectModal";
 import ImportProjectModal from "@/containers/ImportProjectModal";
 import { useOrganizationSlug } from "@/lib/permissionHooks/organization";
 import {
-  Box,
-  Button,
-  Flex,
-  Heading,
-  Link,
-  LinkBox,
-  LinkOverlay,
-  Stack,
-  Text,
-  VStack,
-} from "@chakra-ui/react";
-import {
   CategoryFragment,
   ProjectFragment,
   useDeleteProjectMutation,
   useOrganizationDashboardIndexPageQuery,
 } from "@repo/graphql";
 import { globalState } from "@repo/lib";
-import { DateDisplay, DateDisplayRelative, OverlayToggle } from "@repo/ui";
+import {
+  Button,
+  DateDisplay,
+  DateDisplayRelative,
+  Link,
+  OverlayToggle,
+  PopConfirm,
+} from "@repo/ui";
 import { format } from "date-fns";
 import { useCallback, useMemo } from "react";
 import { FaFileImport, FaPlus } from "react-icons/fa";
 import { MdCoPresent } from "react-icons/md";
 import { VscEdit, VscTrash } from "react-icons/vsc";
 import { toast } from "react-toastify";
+
+import "./index.css";
 
 const OrganizationPage = () => {
   const slug = useOrganizationSlug();
@@ -67,18 +63,12 @@ const OrganizationPage = () => {
 
   return (
     <SharedOrgLayout title="Dashboard" sharedOrgQuery={query}>
-      <Flex px={1} alignItems="center" justifyContent="space-between" mb={3}>
-        <Heading mb={0}>Projects</Heading>
-        <Stack direction="row">
+      <div className="flex items-center justify-between mb-3 px-1">
+        <h1 className="text-2xl font-bold mb-0">Projects</h1>
+        <div className="stack-row">
           <OverlayToggle
             toggler={({ onToggle }) => (
-              <Button
-                colorScheme="green"
-                size="sm"
-                display="flex"
-                gap={2}
-                onClick={onToggle}
-              >
+              <Button variant="success" size="sm" onClick={onToggle}>
                 <FaPlus />
                 New
               </Button>
@@ -96,8 +86,7 @@ const OrganizationPage = () => {
               <Button
                 variant="outline"
                 size="sm"
-                display="flex"
-                gap={2}
+                className="flex gap-2"
                 onClick={onToggle}
               >
                 <FaFileImport />
@@ -109,10 +98,10 @@ const OrganizationPage = () => {
               organizationId={query.data?.organizationBySlug?.id}
             />
           </OverlayToggle>
-        </Stack>
-      </Flex>
+        </div>
+      </div>
 
-      <VStack alignItems="center" marginBottom={2} flexWrap="wrap" spacing={0}>
+      <div className="stack-col items-center mb-2 flex-wrap gap-0">
         {emptyProject && <EmptyProject />}
         {query.data?.organizationBySlug?.projects.nodes.map((project) => (
           <ProjectCard
@@ -123,11 +112,11 @@ const OrganizationPage = () => {
             handleDeleteProject={handleDeleteProject}
           />
         ))}
-      </VStack>
+      </div>
 
       <OverlayToggle
         toggler={({ onToggle }) => (
-          <Button onClick={onToggle} colorScheme="green" display="flex" gap={2}>
+          <Button onClick={onToggle} variant="success" className="flex gap-2">
             <FaPlus />
             New project
           </Button>
@@ -144,14 +133,12 @@ const OrganizationPage = () => {
 
 const EmptyProject = () => {
   return (
-    <Box mt={3} w="100%">
-      <Text fontSize="lg" fontWeight="bold">
-        Welcome to your projects page!
-      </Text>
-      <Text>
+    <div className="mt-3 w-full">
+      <p className="text-lg font-bold">Welcome to your projects page!</p>
+      <p>
         There's currently nothing here. Create a new project to get started.
-      </Text>
-    </Box>
+      </p>
+    </div>
   );
 };
 
@@ -168,26 +155,17 @@ const ProjectCard = ({
 }) => {
   const slug = useOrganizationSlug();
   return (
-    <LinkBox
+    <div
       key={project.id}
-      display="flex"
-      flexDir={{ base: "column", sm: "row" }}
-      width="100%"
-      py={2}
-      px={1}
-      justifyContent="space-between"
-      _hover={{ bg: "blue.50" }}
-      borderBottom={{ base: "1px solid", sm: "none" }}
-      borderColor="gray.200"
+      className="project--project-card group"
       role="group"
       data-testid="project-card"
     >
-      <Flex
-        alignItems="center"
-        gap={2}
-        justifyContent={{ base: "space-between", sm: "flex-start" }}
-      >
-        <LinkOverlay href={`/app/${slug}/${project.slug}`}>
+      <div className="flex items-center gap-2 justify-between sm:justify-start">
+        <Link
+          href={`/app/${slug}/${project.slug}`}
+          className="project--project-card-main-link"
+        >
           {project.targetDate && (
             <DateDisplay
               date={new Date(project.targetDate)}
@@ -195,27 +173,22 @@ const ProjectCard = ({
               className="text-sm font-bold sm:font-medium"
             />
           )}
-          <Text fontSize={project.targetDate ? "xs" : "sm"}>
+          <p className={`${project.targetDate ? "text-xs" : "text-sm"}`}>
             {project.name !== ""
               ? project.name
               : project.targetDate
                 ? ""
                 : `Untitled (${format(new Date(project.createdAt), "do MMM yyyy")})`}
-          </Text>
-          <Text fontSize="xs" color="gray.500">
-            {project.category?.name}
-          </Text>
-        </LinkOverlay>
-        <Flex>
+          </p>
+          <p className="text-xs text-tertiary">{project.category?.name}</p>
+        </Link>
+        <div className="flex">
           <Link href={`/render/${slug}/${project.slug}`} isExternal>
             <Button
               variant="ghost"
               size="sm"
               role="button"
-              color="gray"
-              _hover={{ bg: "blue.100", color: "blue.700" }}
-              opacity={{ base: 1, md: 0 }}
-              _groupHover={{ opacity: 1 }}
+              className="text-tertiary hover:bg-blue-100 hover:text-accent opacity-100 md:opacity-0 group-hover:opacity-100"
             >
               <MdCoPresent />
             </Button>
@@ -226,10 +199,7 @@ const ProjectCard = ({
                 variant="ghost"
                 size="sm"
                 role="button"
-                color="gray"
-                _hover={{ bg: "blue.100", color: "blue.700" }}
-                opacity={{ base: 1, md: 0 }}
-                _groupHover={{ opacity: 1 }}
+                className="text-tertiary hover:bg-blue-100 hover:text-accent opacity-100 md:opacity-0 group-hover:opacity-100"
                 onClick={onToggle}
               >
                 <VscEdit />
@@ -254,31 +224,24 @@ const ProjectCard = ({
               variant="ghost"
               size="sm"
               role="button"
-              color="gray"
-              _hover={{ bg: "red.50", color: "red.400" }}
-              opacity={{ base: 1, md: 0 }}
-              _groupHover={{ opacity: 1 }}
+              className="text-tertiary hover:bg-red-50 hover:text-red-400 opacity-100 md:opacity-0 group-hover:opacity-100"
             >
               <VscTrash />
             </Button>
           </PopConfirm>
-        </Flex>
-      </Flex>
-      <Flex
-        flexDir={{ base: "column-reverse", sm: "row" }}
-        gap={{ base: 1, sm: 4 }}
-        alignItems={{ base: "flex-start", sm: "center" }}
-      >
-        <Flex gap={1}>
+        </div>
+      </div>
+      <div className="flex flex-col-reverse sm:flex-row gap-1 sm:gap-4 items-start sm:items-center">
+        <div className="flex gap-1">
           {project.projectTags.nodes.map((projectTag, i) => (
             <Tag key={i} tag={projectTag.tag!} />
           ))}
-        </Flex>
-        <Text color="gray.700" fontSize="xs" textAlign="right">
+        </div>
+        <p className="text-primary text-xs text-right">
           Updated <DateDisplayRelative date={new Date(project.updatedAt)} />
-        </Text>
-      </Flex>
-    </LinkBox>
+        </p>
+      </div>
+    </div>
   );
 };
 

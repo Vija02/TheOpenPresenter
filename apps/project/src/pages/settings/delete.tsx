@@ -1,20 +1,20 @@
 import { SharedLayoutLoggedIn } from "@/components/SharedLayoutLoggedIn";
-import { Link, Text } from "@chakra-ui/react";
 import { supportEmail } from "@repo/config";
 import { useSharedQuery } from "@repo/graphql";
+import { Link } from "@repo/ui";
 
-const Settings_Accounts = () => {
+const Settings_Delete = () => {
   const query = useSharedQuery();
   return (
     <SharedLayoutLoggedIn title="Delete Account" query={query} noHandleErrors>
-      <Text>
+      <p>
         Automatic deletion is not supported yet. If you want to proceed, please
         send an email to{" "}
         <Link href={`mailto:${supportEmail}`}>{supportEmail}</Link>. Sorry for
         the inconvenience.
-      </Text>
+      </p>
     </SharedLayoutLoggedIn>
   );
 };
 
-export default Settings_Accounts;
+export default Settings_Delete;

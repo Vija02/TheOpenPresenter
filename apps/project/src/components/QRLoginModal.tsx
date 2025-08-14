@@ -1,35 +1,22 @@
-import {
-  Box,
-  Center,
-  Modal,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  ModalOverlay,
-  ModalProps,
-  Skeleton,
-  Text,
-} from "@chakra-ui/react";
 import { fetchEventSource } from "@microsoft/fetch-event-source";
-import { OverlayToggleComponentProps } from "@repo/ui";
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  OverlayToggleComponentProps,
+  Skeleton,
+} from "@repo/ui";
 import { useEffect, useState } from "react";
 import QRCode from "react-qr-code";
 
-export type QRLoginModalPropTypes = Omit<
-  ModalProps,
-  "isOpen" | "onClose" | "children"
-> &
-  Partial<OverlayToggleComponentProps> & { next: string };
+export type QRLoginModalPropTypes = Partial<OverlayToggleComponentProps> & {
+  next: string;
+};
 
-const QRLoginModal = ({
-  isOpen,
-  onToggle,
-  resetData,
-  next,
-  ...props
-}: QRLoginModalPropTypes) => {
+const QRLoginModal = ({ isOpen, onToggle, next }: QRLoginModalPropTypes) => {
   const [qrId, setQRId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -61,39 +48,30 @@ const QRLoginModal = ({
   }, [isOpen, next]);
 
   return (
-    <Modal
-      size="sm"
-      isOpen={isOpen ?? false}
-      onClose={onToggle ?? (() => {})}
-      {...props}
-    >
-      <ModalOverlay />
-      <ModalContent>
-        <ModalHeader>QR Login</ModalHeader>
-        <ModalCloseButton />
-        <ModalBody>
-          <Center flexDir="column" gap={4}>
-            <Text>Scan with your mobile phone to log in</Text>
-            {!qrId && <Skeleton width="100%" maxW="256px" aspectRatio={1} />}
+    <Dialog open={isOpen ?? false} onOpenChange={onToggle ?? (() => {})}>
+      <DialogContent size="sm">
+        <DialogHeader>
+          <DialogTitle>QR Login</DialogTitle>
+        </DialogHeader>
+        <DialogBody>
+          <div className="center flex-col items-center gap-4">
+            <p className="text-sm">Scan with your mobile phone to log in</p>
+            {!qrId && (
+              <Skeleton className="w-full max-w-[256px] aspect-square bg-gray-200 animate-pulse rounded-sm" />
+            )}
             {qrId && (
-              <Box width="100%">
+              <div className="w-full">
                 <QRCode
-                  style={{
-                    height: "auto",
-                    maxWidth: "100%",
-                    width: "100%",
-                    maxHeight: 256,
-                  }}
+                  className="h-auto max-w-full w-full max-h-[256px]"
                   value={`${import.meta.env.VITE_PUBLIC_ROOT_URL}/qr-auth/auth?id=${qrId}`}
                 />
-              </Box>
+              </div>
             )}
-          </Center>
-        </ModalBody>
-
-        <ModalFooter></ModalFooter>
-      </ModalContent>
-    </Modal>
+          </div>
+        </DialogBody>
+        <DialogFooter />
+      </DialogContent>
+    </Dialog>
   );
 };
 

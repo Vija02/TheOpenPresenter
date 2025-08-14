@@ -1,5 +1,4 @@
 import { QueryResult } from "@apollo/client";
-import { Box } from "@chakra-ui/react";
 import { SharedOrganizationFragment } from "@repo/graphql";
 import { ErrorAlert, FourOhFour, LoadingFull } from "@repo/ui";
 import React from "react";
@@ -30,5 +29,5 @@ export function useOrganizationLoading(
     child = <FourOhFour loggedIn={!!data?.currentUser} />;
   }
 
-  return child ? <Box>{child}</Box> : null;
+  return child ? <div>{child}</div> : null;
 }
