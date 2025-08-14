@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "postinstall": "yarn patch-package && node node-server/script/download_nodejs.mjs && node node-server/script/symlink_top.mjs",
+    "postinstall": "yarn patch-package && node node-server/script/install_pg_extensions.mjs && node node-server/script/download_nodejs.mjs && node node-server/script/symlink_top.mjs",
     "tauri": "tauri"
   },
   "dependencies": {
