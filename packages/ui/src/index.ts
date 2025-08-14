@@ -6,6 +6,7 @@ export * from "./components/ui/avatar";
 export * from "./components/ui/badge";
 export * from "./components/ui/button";
 export * from "./components/ui/checkbox";
+export * from "./components/ui/creatableSelect";
 export * from "./components/ui/dialog";
 export * from "./components/ui/form";
 export * from "./components/ui/input";

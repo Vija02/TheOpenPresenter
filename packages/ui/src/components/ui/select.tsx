@@ -30,7 +30,7 @@ import {
 } from "./form";
 
 /** Select option type */
-type OptionType = { label: string; value: string | number | boolean };
+type OptionType = { label: string; value: any };
 
 /**
  * Styles that aligns with shadcn/ui
@@ -155,8 +155,8 @@ const createClassNames = (
   };
 };
 
-const defaultClassNames = createClassNames({});
-const defaultStyles: StylesConfig<
+const selectDefaultClassNames = createClassNames({});
+const selectDefaultStyles: StylesConfig<
   OptionType,
   boolean,
   GroupBase<OptionType>
@@ -226,7 +226,7 @@ const Option = (props: OptionProps<OptionType>) => {
   return (
     <components.Option {...props}>
       <div className="flex items-center justify-between">
-        <div>{props.label}</div>
+        <div>{props.children}</div>
         {props.isSelected && <Check className="h-4 w-4 opacity-50" />}
       </div>
     </components.Option>
@@ -267,16 +267,20 @@ const MenuList = (props: MenuListProps<OptionType>) => {
   );
 };
 
+const SelectParts = {
+  DropdownIndicator,
+  ClearIndicator,
+  MultiValueRemove,
+  Option,
+  Menu,
+  MenuList,
+};
+
 const BaseSelect = <IsMulti extends boolean = false>(
   props: Props<OptionType, IsMulti> & { isMulti?: IsMulti },
   ref: React.Ref<SelectInstance<OptionType, IsMulti, GroupBase<OptionType>>>,
 ) => {
-  const {
-    styles = defaultStyles,
-    classNames = defaultClassNames,
-    components = {},
-    ...rest
-  } = props;
+  const { styles, classNames, components = {}, ...rest } = props;
   const instanceId = React.useId();
   const container = useDialogPortalContainerContext();
 
@@ -293,16 +297,11 @@ const BaseSelect = <IsMulti extends boolean = false>(
         container ?? (typeof window !== "undefined" ? document.body : undefined)
       }
       components={{
-        DropdownIndicator,
-        ClearIndicator,
-        MultiValueRemove,
-        Option,
-        Menu,
-        MenuList,
+        ...SelectParts,
         ...components,
       }}
-      styles={styles}
-      classNames={classNames}
+      styles={{ ...selectDefaultStyles, ...styles }}
+      classNames={{ ...selectDefaultClassNames, ...classNames }}
       {...rest}
     />
   );
@@ -316,15 +315,6 @@ const Select = React.forwardRef(BaseSelect) as <
     isMulti?: IsMulti;
   },
 ) => ReactElement;
-
-const SelectParts = {
-  DropdownIndicator,
-  ClearIndicator,
-  MultiValueRemove,
-  Option,
-  Menu,
-  MenuList,
-};
 
 function SelectControl<IsMulti extends boolean = false>({
   control,
@@ -389,4 +379,11 @@ function SelectControl<IsMulti extends boolean = false>({
   );
 }
 
-export { Select, SelectControl, type OptionType, SelectParts };
+export {
+  Select,
+  SelectControl,
+  type OptionType,
+  SelectParts,
+  selectDefaultClassNames,
+  selectDefaultStyles,
+};

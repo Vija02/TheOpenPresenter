@@ -24,6 +24,7 @@ import {
   FormMessage,
   InputControl,
   OverlayToggleComponentProps,
+  Select,
   SelectControl,
   formatHumanReadableDate,
 } from "@repo/ui";
@@ -31,7 +32,6 @@ import { format } from "date-fns";
 import { generateSlug } from "random-word-slugs";
 import { useCallback, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
-import Select from "react-select";
 import { z } from "zod";
 
 const formSchema = z.object({

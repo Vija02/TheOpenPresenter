@@ -1,8 +1,8 @@
 import { useOrganizationSlug } from "@/lib/permissionHooks/organization";
-import { Link } from "@repo/ui";
+import { CreatableSelect, Link } from "@repo/ui";
 import { FiSettings } from "react-icons/fi";
 import { Props } from "react-select";
-import CreatableSelect, { CreatableProps } from "react-select/creatable";
+import { CreatableProps } from "react-select/creatable";
 import { Link as WouterLink } from "wouter";
 
 import { ReactSelectTagsProps } from "./tagReactSelect";
