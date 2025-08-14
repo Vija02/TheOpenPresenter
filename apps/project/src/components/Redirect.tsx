@@ -48,7 +48,6 @@ export function Redirect({ href, layout }: RedirectProps) {
           <Skeleton className="h-5 w-[90%]" />
           <Skeleton className="h-5 w-1/2" />
         </div>
-        <Skeleton className="h-20 w-full" />
       </StandardWidth>
     );
   }
