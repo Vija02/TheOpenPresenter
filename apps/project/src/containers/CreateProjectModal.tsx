@@ -35,7 +35,7 @@ import Select from "react-select";
 import { z } from "zod";
 
 const formSchema = z.object({
-  name: z.string().min(1, "Name is required"),
+  name: z.string().optional(),
   categoryId: z.string().optional(),
   targetDate: z.date().optional(),
 });
@@ -92,7 +92,7 @@ const CreateProjectModal = ({
         variables: {
           organizationId,
           slug: generateSlug(),
-          name: data.name,
+          name: data.name ?? "",
           categoryId:
             data.categoryId === UNCATEGORIZED ? undefined : data.categoryId,
           tags: selectedTagIds,
