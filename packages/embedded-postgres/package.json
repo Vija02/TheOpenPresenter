@@ -16,7 +16,7 @@
     }
   },
   "scripts": {
-    "build": "tsup src/index.ts --format esm,cjs --experimental-dts",
+    "build": "tsup src/index.ts --format esm,cjs --experimental-dts && node script/install_pg_extensions.mjs",
     "dev": "tsup src/index.ts --format esm,cjs --experimental-dts --watch"
   },
   "dependencies": {
