@@ -76,6 +76,7 @@ jobs:
           cd tauri
           yarn --no-immutable
 
+          yarn prebuild
           yarn tauri build --verbose
 
           echo "tauri_path=$(pwd)" >> "$GITHUB_ENV"
