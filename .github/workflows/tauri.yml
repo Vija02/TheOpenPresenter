@@ -61,17 +61,12 @@ jobs:
           # Move the node_modules
           rm -rf node_modules
           cp -r ./node_modules_nft/node_modules ./node_modules
-          cp -r ./apps/homepage/.next/standalone/node_modules/* ./node_modules
 
           # Cleanup
           rm -rf node_modules_nft
 
           # And Next.js stuff
-          cp -r apps/homepage/.next/standalone/apps/homepage homepage_temp
-          cp -r apps/homepage/.next/static next_static_temp
-          rm -rf apps/homepage
-          mv homepage_temp apps/homepage
-          mv next_static_temp apps/homepage/.next/static
+          rm -rf apps/homepage/.next
 
           cd tauri
           yarn --no-immutable
