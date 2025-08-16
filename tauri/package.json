@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "postinstall": "yarn patch-package && node node-server/script/download_nodejs.mjs && node node-server/script/symlink_top.mjs",
+    "prebuild": "node node-server/theopenpresenter/packages/embedded-postgres/script/install_pg_extensions.mjs",
     "tauri": "tauri"
   },
   "dependencies": {
