@@ -83,5 +83,8 @@ export default defineConfig({
     command: "yarn server start",
     url: "http://localhost:5678",
     reuseExistingServer: !process.env.CI,
+    env: {
+      NODE_ENV: "production",
+    },
   },
 });
