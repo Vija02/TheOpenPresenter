@@ -10,7 +10,7 @@ function fixFilePaths(connectionString) {
   // here.
   return connectionString.replace(
     /\.\.\/\.\.\/data\//g,
-    resolve(__dirname, "../../data") + "/"
+    resolve(__dirname, "../../data") + "/",
   );
 }
 
@@ -29,7 +29,3 @@ process.env.SHADOW_AUTH_DATABASE_URL = process.env.SHADOW_AUTH_DATABASE_URL
 
 // Always overwrite test database URL
 process.env.TEST_DATABASE_URL = `postgres://${process.env.DATABASE_OWNER}:${process.env.DATABASE_OWNER_PASSWORD}@${process.env.DATABASE_HOST}/${process.env.DATABASE_NAME}_test`;
-
-// This means that we may have to rebuild docker to get this updated
-process.env.NEXT_PUBLIC_ROOT_URL = process.env.ROOT_URL;
-process.env.VITE_PUBLIC_ROOT_URL = process.env.ROOT_URL;

@@ -203,7 +203,7 @@ const SlugCheck = ({ name }: { name: string }) => {
     <>
       <p>
         Your organization URL will be{" "}
-        <span data-cy="createorganization-slug-value">{`${import.meta.env.VITE_PUBLIC_ROOT_URL}/o/${slug}`}</span>
+        <span data-cy="createorganization-slug-value">{`${window.location.origin}/o/${slug}`}</span>
       </p>
 
       {existingOrganizationData?.organizationBySlug && (

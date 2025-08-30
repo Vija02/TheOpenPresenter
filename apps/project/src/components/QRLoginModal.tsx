@@ -63,7 +63,7 @@ const QRLoginModal = ({ isOpen, onToggle, next }: QRLoginModalPropTypes) => {
               <div className="w-full">
                 <QRCode
                   className="h-auto max-w-full w-full max-h-[256px]"
-                  value={`${import.meta.env.VITE_PUBLIC_ROOT_URL}/qr-auth/auth?id=${qrId}`}
+                  value={`${window.location.origin}/qr-auth/auth?id=${qrId}`}
                 />
               </div>
             )}
