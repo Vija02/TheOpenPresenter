@@ -20,7 +20,6 @@
     "dev": "tsup src/index.ts --format esm,cjs --experimental-dts --watch"
   },
   "dependencies": {
-    "@embedded-postgres/windows-x64": "17.4.0-beta.15",
     "embedded-postgres": "17.4.0-beta.15",
     "graphile-migrate": "^1.4.1",
     "node-fetch": "^3.3.2",

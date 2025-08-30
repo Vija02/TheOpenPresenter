@@ -2521,10 +2521,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@embedded-postgres/windows-x64@npm:17.4.0-beta.15, @embedded-postgres/windows-x64@npm:^17.4.0-beta.15":
+"@embedded-postgres/windows-x64@npm:^17.4.0-beta.15":
   version: 17.4.0-beta.15
   resolution: "@embedded-postgres/windows-x64@npm:17.4.0-beta.15"
-  checksum: 10c0/b3f7b30bb15ddbcdc627e6ae2c3e3cb54ea2795a23eec989c01c210922649f74d6b744dd5fae106396a772053d06adab8d5ae3a70283d08f28598244959e580f
   conditions: os=win32 & cpu=x64
   languageName: node
   linkType: hard
@@ -7846,7 +7845,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@repo/embedded-postgres@workspace:packages/embedded-postgres"
   dependencies:
-    "@embedded-postgres/windows-x64": "npm:17.4.0-beta.15"
     "@repo/typescript-config": "npm:*"
     "@types/node": "npm:^20.0.0"
     "@types/node-fetch": "npm:^2.6.11"
