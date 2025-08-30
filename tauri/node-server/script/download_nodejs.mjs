@@ -91,6 +91,12 @@ async function downloadNodejs() {
     // Original path
     const originalPath = process.cwd();
 
+    // Simple check - if node binary already exists, skip download
+    if (existsSync(join(originalPath, "node")) || existsSync(join(originalPath, "node.exe"))) {
+      console.log("Node binary already exists, skipping download");
+      return;
+    }
+
     // Create temp directory
     const tempDir = mkdtempSync(join(tmpdir(), "node-temp"));
     process.chdir(tempDir);
