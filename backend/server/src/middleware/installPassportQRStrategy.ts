@@ -62,7 +62,7 @@ export default async (app: Express) => {
       // When user successfully logged in
       const token = typeidUnboxed();
 
-      await client.set(getKeyForToken(token), message);
+      await client.setEx(getKeyForToken(token), 600, message);
       res.write(`data: {"done": true, "token": "${token}"}\n\n`);
 
       clearInterval(keepAliveInterval);
