@@ -84,6 +84,7 @@ function DialogContent({
         className={cn(dialogContentVariants({ size, className }))}
         {...props}
       >
+        <DialogPrimitive.Description className="hidden" />
         <Slottable>{children}</Slottable>
         <DialogPrimitive.Close className="ui--dialog-content__close">
           <XIcon />
