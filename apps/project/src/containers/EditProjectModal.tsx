@@ -25,10 +25,10 @@ import {
   FormLabel,
   FormMessage,
   InputControl,
-  OverlayToggleComponentProps,
   Select,
   SelectControl,
   formatHumanReadableDate,
+  useOverlayToggle,
 } from "@repo/ui";
 import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -45,22 +45,18 @@ type FormInputs = z.infer<typeof formSchema>;
 const UNCATEGORIZED = "uncategorized";
 
 export type EditProjectModalPropTypes = {
-  isOpen?: boolean;
-  onToggle?: () => void;
-  resetData?: () => void;
   organizationId: string;
   categories: CategoryFragment[];
   project: ProjectFragment;
-} & Partial<OverlayToggleComponentProps>;
+};
 
 const EditProjectModal = ({
-  isOpen,
-  onToggle,
-  resetData,
   organizationId,
   categories,
   project,
 }: EditProjectModalPropTypes) => {
+  const { isOpen, onToggle, resetData } = useOverlayToggle();
+
   const [updateProject] = useUpdateProjectMutation();
   const [createProjectTag] = useCreateProjectTagMutation();
   const [deleteProjectTag] = useDeleteProjectTagMutation();
@@ -233,7 +229,9 @@ const EditProjectModal = ({
                 <Button type="submit" variant="success">
                   Save
                 </Button>
-                <Button variant="outline" onClick={onToggle}>Close</Button>
+                <Button variant="outline" onClick={onToggle}>
+                  Close
+                </Button>
               </div>
             </DialogFooter>
           </form>

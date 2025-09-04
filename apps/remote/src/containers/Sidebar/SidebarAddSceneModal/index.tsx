@@ -11,7 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
   OptionGroup,
-  OverlayToggleComponentProps,
+  useOverlayToggle,
 } from "@repo/ui";
 import { cx } from "class-variance-authority";
 import React, { useState } from "react";
@@ -24,20 +24,15 @@ import { useLocation } from "wouter";
 
 import "./index.css";
 
-export type SidebarAddSceneModalPropTypes =
-  Partial<OverlayToggleComponentProps>;
-
 const sceneCategoriesConfig: Record<SceneCategories, IconType> = {
   Display: PiPresentationChart,
   Media: MdOutlineOndemandVideo,
   Audio: PiMusicNotesSimple,
 };
 
-const SidebarAddSceneModal = ({
-  isOpen,
-  onToggle,
-  resetData,
-}: SidebarAddSceneModalPropTypes) => {
+const SidebarAddSceneModal = () => {
+  const { isOpen, onToggle, resetData } = useOverlayToggle();
+
   const [, navigate] = useLocation();
 
   const [selectedCategory, setSelectedCategory] = useState("All");

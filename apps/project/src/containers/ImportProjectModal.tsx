@@ -10,24 +10,22 @@ import {
   DialogHeader,
   DialogTitle,
   Link,
-  OverlayToggleComponentProps,
+  useOverlayToggle,
 } from "@repo/ui";
 import { useCallback, useRef, useState } from "react";
 import { FaExternalLinkAlt, FaFileImport } from "react-icons/fa";
 import { toast } from "react-toastify";
 import { Link as WouterLink } from "wouter";
 
-export type ImportProjectModalPropTypes =
-  Partial<OverlayToggleComponentProps> & {
-    organizationId: string;
-  };
+export type ImportProjectModalPropTypes = {
+  organizationId: string;
+};
 
 const ImportProjectModal = ({
-  isOpen,
-  onToggle,
-  resetData,
   organizationId,
 }: ImportProjectModalPropTypes) => {
+  const { isOpen, onToggle, resetData } = useOverlayToggle();
+
   const { publish } = globalState.modelDataAccess.usePublishAPIChanges({
     token: "page",
   });

@@ -19,8 +19,8 @@ import {
   DialogTitle,
   Link,
   OverlayToggle,
-  OverlayToggleComponentProps,
   PopConfirm,
+  useOverlayToggle,
 } from "@repo/ui";
 import prettyBytes from "pretty-bytes";
 import { useCallback, useMemo, useState } from "react";
@@ -179,7 +179,11 @@ const MediaCard = ({ media }: { media: MediaWithMediaDependencyFragment }) => {
 
         <p
           className="text-sm text-secondary truncate"
-          title={media.originalName === "" || media.originalName === null ? "No original name" : media.originalName}
+          title={
+            media.originalName === "" || media.originalName === null
+              ? "No original name"
+              : media.originalName
+          }
         >
           Original: {media.originalName === "" ? "-" : media.originalName}
         </p>
@@ -282,14 +286,13 @@ const MediaDependencyPanel = ({
   );
 };
 
-export type MediaDependencyModalPropTypes =
-  Partial<OverlayToggleComponentProps> & { parentMediaId: string };
+export type MediaDependencyModalPropTypes = { parentMediaId: string };
 
 const MediaDependencyModal = ({
-  isOpen,
-  onToggle,
   parentMediaId,
 }: MediaDependencyModalPropTypes) => {
+  const { isOpen, onToggle } = useOverlayToggle();
+
   const { data } = useMediaDependenciesOfParentQuery({
     variables: { parentMediaId },
   });

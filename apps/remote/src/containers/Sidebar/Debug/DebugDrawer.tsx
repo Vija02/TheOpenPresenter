@@ -7,28 +7,24 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  OverlayToggleComponentProps,
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
+  useOverlayToggle,
 } from "@repo/ui";
 import { lazy } from "react";
 
 const JSONViewer = lazy(() => import("./JSONViewer"));
 
-export type DebugDrawerPropTypes = Partial<OverlayToggleComponentProps>;
+const DebugDrawer = () => {
+  const { isOpen, onToggle } = useOverlayToggle();
 
-const DebugDrawer = ({ isOpen, onToggle, ...props }: DebugDrawerPropTypes) => {
   const data = useData();
   const { awarenessData } = useAwareness();
 
   return (
-    <Dialog
-      open={isOpen ?? false}
-      onOpenChange={onToggle ?? (() => {})}
-      {...props}
-    >
+    <Dialog open={isOpen ?? false} onOpenChange={onToggle ?? (() => {})}>
       <DialogContent size="2xl">
         <DialogHeader>
           <DialogTitle>Debug</DialogTitle>

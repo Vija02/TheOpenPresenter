@@ -6,14 +6,14 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  OverlayToggleComponentProps,
+  useOverlayToggle,
 } from "@repo/ui";
 
 import { ImportFilePicker } from "./ImportFilePicker";
 
-export type ImportFileModalPropTypes = Partial<OverlayToggleComponentProps>;
+const ImportFileModal = () => {
+  const { isOpen, onToggle } = useOverlayToggle();
 
-const ImportFileModal = ({ isOpen, onToggle }: ImportFileModalPropTypes) => {
   return (
     <Dialog open={isOpen ?? false} onOpenChange={onToggle ?? (() => {})}>
       <DialogContent size="lg">
