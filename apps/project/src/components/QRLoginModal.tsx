@@ -6,17 +6,18 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  OverlayToggleComponentProps,
   Skeleton,
+  useOverlayToggle,
 } from "@repo/ui";
 import { useEffect, useState } from "react";
 import QRCode from "react-qr-code";
 
-export type QRLoginModalPropTypes = Partial<OverlayToggleComponentProps> & {
+export type QRLoginModalPropTypes = {
   next: string;
 };
 
-const QRLoginModal = ({ isOpen, onToggle, next }: QRLoginModalPropTypes) => {
+const QRLoginModal = ({ next }: QRLoginModalPropTypes) => {
+  const { isOpen, onToggle } = useOverlayToggle();
   const [qrId, setQRId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -49,7 +50,7 @@ const QRLoginModal = ({ isOpen, onToggle, next }: QRLoginModalPropTypes) => {
 
   return (
     <Dialog open={isOpen ?? false} onOpenChange={onToggle ?? (() => {})}>
-      <DialogContent size="sm">
+      <DialogContent size="sm" aria-description="Test">
         <DialogHeader>
           <DialogTitle>QR Login</DialogTitle>
         </DialogHeader>

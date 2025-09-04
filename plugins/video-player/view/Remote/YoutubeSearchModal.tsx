@@ -5,8 +5,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  OverlayToggleComponentProps,
   Skeleton,
+  useOverlayToggle,
 } from "@repo/ui";
 import { FaYoutube } from "react-icons/fa";
 import type { YTNodes } from "youtubei.js";
@@ -14,11 +14,10 @@ import type { YTNodes } from "youtubei.js";
 import { trpc } from "../trpc";
 import "./YoutubeSearchModal.css";
 
-export type YoutubeSearchModalPropTypes =
-  Partial<OverlayToggleComponentProps> & {
-    searchQuery: string;
-    onVideoSelect: (videoId: string, metadata: VideoMetaData) => void;
-  };
+export type YoutubeSearchModalPropTypes = {
+  searchQuery: string;
+  onVideoSelect: (videoId: string, metadata: VideoMetaData) => void;
+};
 
 type VideoMetaData = {
   title?: string;
@@ -27,12 +26,11 @@ type VideoMetaData = {
 };
 
 const YoutubeSearchModal = ({
-  isOpen,
-  onToggle,
-  resetData,
   searchQuery,
   onVideoSelect,
 }: YoutubeSearchModalPropTypes) => {
+  const { isOpen, onToggle, resetData } = useOverlayToggle();
+
   const { data, isLoading } = trpc.videoPlayer.search.useQuery(
     {
       title: searchQuery,

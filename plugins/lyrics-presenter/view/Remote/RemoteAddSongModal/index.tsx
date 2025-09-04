@@ -6,12 +6,12 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  OverlayToggleComponentProps,
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
   cn,
+  useOverlayToggle,
 } from "@repo/ui";
 import { isEqual } from "lodash-es";
 import { useCallback, useMemo, useState } from "react";
@@ -26,8 +26,6 @@ import { ImportPlaylist } from "./ImportPlaylist";
 import { LandingAddSong } from "./LandingAddSong";
 import { SearchSong } from "./SearchSong";
 
-export type RemoteAddSongModalPropTypes = Partial<OverlayToggleComponentProps>;
-
 export enum Mode {
   NONE = "none",
   SEARCH_SONG = "search",
@@ -35,12 +33,9 @@ export enum Mode {
   IMPORT_PLAYLIST = "playlist",
 }
 
-const RemoteAddSongModal = ({
-  isOpen,
-  onToggle,
-  resetData,
-  ...props
-}: RemoteAddSongModalPropTypes) => {
+const RemoteAddSongModal = () => {
+  const { isOpen, onToggle, resetData } = useOverlayToggle();
+
   const pluginApi = usePluginAPI();
   const pluginInfo = pluginApi.scene.useValtioData();
   const slideStyle = pluginApi.scene.useData((x) => x.pluginData.style) ?? {};
@@ -131,11 +126,7 @@ const RemoteAddSongModal = ({
   }, [onToggle, resetData]);
 
   return (
-    <Dialog
-      open={isOpen ?? false}
-      onOpenChange={onToggle ?? (() => {})}
-      {...props}
-    >
+    <Dialog open={isOpen ?? false} onOpenChange={onToggle ?? (() => {})}>
       <DialogContent
         size={selectedMode === Mode.NONE ? "sm" : "3xl"}
         className={cn("gap-0", selectedMode === Mode.NONE && "pb-5")}

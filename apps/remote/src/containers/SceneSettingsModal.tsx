@@ -10,25 +10,21 @@ import {
   DialogTitle,
   Form,
   InputControl,
-  OverlayToggleComponentProps,
+  useOverlayToggle,
 } from "@repo/ui";
 import { useCallback } from "react";
 import { useForm } from "react-hook-form";
 import z from "zod";
 
-export type SceneSettingsModalPropTypes =
-  Partial<OverlayToggleComponentProps> & { selectedScene: string };
+export type SceneSettingsModalPropTypes = { selectedScene: string };
 
 const formSchema = z.object({
   name: z.string(),
 });
 
-const SceneSettingsModal = ({
-  isOpen,
-  onToggle,
-  resetData,
-  selectedScene,
-}: SceneSettingsModalPropTypes) => {
+const SceneSettingsModal = ({ selectedScene }: SceneSettingsModalPropTypes) => {
+  const { isOpen, onToggle, resetData } = useOverlayToggle();
+
   const data = useData();
   const mainState = usePluginData().mainState!;
 

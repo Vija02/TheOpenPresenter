@@ -8,7 +8,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  OverlayToggleComponentProps,
+  useOverlayToggle,
 } from "@repo/ui";
 import { FaTriangleExclamation } from "react-icons/fa6";
 
@@ -17,9 +17,6 @@ import "./RendererWarningModal.css";
 const getStringFromUA = (ua: AwarenessUserData["userAgentInfo"]) => {
   return `${ua.browser.name} / ${ua.os.name}`;
 };
-
-export type RendererWarningModalPropTypes =
-  Partial<OverlayToggleComponentProps>;
 
 // TODO: Move this to server and allow plugins to register
 const errorSettings: Record<
@@ -34,21 +31,15 @@ const errorSettings: Record<
   },
 };
 
-export const RendererWarningModal = ({
-  isOpen,
-  onToggle,
-  ...props
-}: RendererWarningModalPropTypes) => {
+export const RendererWarningModal = () => {
+  const { isOpen, onToggle } = useOverlayToggle();
+
   const { awarenessData } = useAwareness();
 
   const allErrors = awarenessData.map((x) => x.user?.errors ?? []).flat();
 
   return (
-    <Dialog
-      open={isOpen ?? false}
-      onOpenChange={onToggle ?? (() => {})}
-      {...props}
-    >
+    <Dialog open={isOpen ?? false} onOpenChange={onToggle ?? (() => {})}>
       <DialogContent size="xl">
         <DialogHeader>
           <DialogTitle>Warnings</DialogTitle>

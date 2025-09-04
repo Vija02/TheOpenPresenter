@@ -23,10 +23,10 @@ import {
   FormLabel,
   FormMessage,
   InputControl,
-  OverlayToggleComponentProps,
   Select,
   SelectControl,
   formatHumanReadableDate,
+  useOverlayToggle,
 } from "@repo/ui";
 import { format } from "date-fns";
 import { generateSlug } from "random-word-slugs";
@@ -43,22 +43,18 @@ const formSchema = z.object({
 type FormInputs = z.infer<typeof formSchema>;
 
 export type CreateProjectModalPropTypes = {
-  isOpen?: boolean;
-  onToggle?: () => void;
-  resetData?: () => void;
   organizationId: string;
   categories: CategoryFragment[];
-} & Partial<OverlayToggleComponentProps>;
+};
 
 const UNCATEGORIZED = "uncategorized";
 
 const CreateProjectModal = ({
-  isOpen,
-  onToggle,
-  resetData,
   organizationId,
   categories,
 }: CreateProjectModalPropTypes) => {
+  const { isOpen, onToggle, resetData } = useOverlayToggle();
+
   const [createProject] = useCreateProjectMutation();
   const slug = useOrganizationSlug();
 
