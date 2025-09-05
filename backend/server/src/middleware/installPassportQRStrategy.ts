@@ -1,3 +1,4 @@
+import { createSession } from "better-sse";
 import { Express } from "express";
 import * as redis from "redis";
 import { typeidUnboxed } from "typeid-js";
@@ -40,32 +41,21 @@ export default async (app: Express) => {
   }
 
   // Request the QR Code. Should be called by the authenticated user
-  app.get("/qr-auth/request", (req, res) => {
-    // Set headers for SSE
-    res.setHeader("Cache-Control", "no-cache");
-    res.setHeader("Content-Type", "text/event-stream");
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Connection", "keep-alive");
-    res.flushHeaders();
+  app.get("/qr-auth/request", async (req, res) => {
+    const session = await createSession(req, res, { keepAlive: 60_000 }); // Ping every minute
 
     // Generate the ID for the client
     const id = typeidUnboxed();
 
-    res.write(`data: {"id": "${id}"}\n\n`);
-
-    // Send keep alive messages to keep the connection on
-    const keepAliveInterval = setInterval(() => {
-      res.write(":\n\n");
-    }, 60 * 1000);
+    session.push({ id });
 
     const listener = async (message: string) => {
       // When user successfully logged in
       const token = typeidUnboxed();
 
       await client.setEx(getKeyForToken(token), 600, message);
-      res.write(`data: {"done": true, "token": "${token}"}\n\n`);
+      session.push({ done: true, token });
 
-      clearInterval(keepAliveInterval);
       subscribeClient.unsubscribe(getChannelForId(id), listener);
       res.end();
     };
@@ -74,7 +64,6 @@ export default async (app: Express) => {
 
     // If client closes connection, stop sending events
     res.on("close", () => {
-      clearInterval(keepAliveInterval);
       subscribeClient.unsubscribe(getChannelForId(id), listener);
       res.end();
     });
