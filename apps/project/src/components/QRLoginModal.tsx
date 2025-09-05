@@ -50,7 +50,7 @@ const QRLoginModal = ({ next }: QRLoginModalPropTypes) => {
 
   return (
     <Dialog open={isOpen ?? false} onOpenChange={onToggle ?? (() => {})}>
-      <DialogContent size="sm" aria-description="Test">
+      <DialogContent size="sm">
         <DialogHeader>
           <DialogTitle>QR Login</DialogTitle>
         </DialogHeader>
