@@ -1,4 +1,3 @@
-import { fetchEventSource } from "@microsoft/fetch-event-source";
 import {
   Dialog,
   DialogBody,
@@ -9,8 +8,10 @@ import {
   Skeleton,
   useOverlayToggle,
 } from "@repo/ui";
-import { useEffect, useState } from "react";
+import { EventSourcePlus } from "event-source-plus";
+import { useState } from "react";
 import QRCode from "react-qr-code";
+import { useDisposable } from "use-disposable";
 
 export type QRLoginModalPropTypes = {
   next: string;
@@ -20,33 +21,29 @@ const QRLoginModal = ({ next }: QRLoginModalPropTypes) => {
   const { isOpen, onToggle } = useOverlayToggle();
   const [qrId, setQRId] = useState<string | null>(null);
 
-  useEffect(() => {
-    (async () => {
-      if (isOpen) {
-        const ctrl = new AbortController();
-        await fetchEventSource("/qr-auth/request", {
-          signal: ctrl.signal,
-          onmessage(ev) {
-            try {
-              const data = JSON.parse(ev.data);
-              if (data.id) {
-                setQRId(data.id);
-              }
-              if (data.done) {
-                window.location.href = `/qr-auth/login?token=${data.token}&next=${encodeURIComponent(next)}`;
-              }
-            } catch (e) {
-              // Keep alive
+  useDisposable(() => {
+    if (isOpen) {
+      const eventSource = new EventSourcePlus("/qr-auth/request");
+      const controller = eventSource.listen({
+        onMessage(ev) {
+          try {
+            const data = JSON.parse(ev.data);
+            if (data.id) {
+              setQRId(data.id);
             }
-          },
-        });
-        return () => {
-          ctrl.abort();
-          setQRId(null);
-        };
-      }
-    })();
-  }, [isOpen, next]);
+            if (data.done) {
+              window.location.href = `/qr-auth/login?token=${data.token}&next=${encodeURIComponent(next)}`;
+            }
+          } catch (e) {
+            // Keep alive
+          }
+        },
+      });
+
+      return [undefined, () => controller.abort()];
+    }
+    return [undefined, () => {}];
+  }, [next]);
 
   return (
     <Dialog open={isOpen ?? false} onOpenChange={onToggle ?? (() => {})}>
