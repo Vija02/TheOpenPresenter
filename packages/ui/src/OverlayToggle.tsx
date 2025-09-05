@@ -76,9 +76,7 @@ export const OverlayToggle = ({
   return (
     <OverlayToggleContext value={{ isOpen: open, onToggle, resetData }}>
       {toggler({ onOpen, onToggle })}
-      {(open || !isLazy) && (
-        <React.Fragment key={key}>{children}</React.Fragment>
-      )}
+      <React.Fragment key={key}>{(open || !isLazy) && children}</React.Fragment>
     </OverlayToggleContext>
   );
 };
