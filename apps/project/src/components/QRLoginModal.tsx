@@ -23,7 +23,9 @@ const QRLoginModal = ({ next }: QRLoginModalPropTypes) => {
 
   useDisposable(() => {
     if (isOpen) {
-      const eventSource = new EventSourcePlus("/qr-auth/request");
+      const eventSource = new EventSourcePlus("/qr-auth/request", {
+        retryStrategy: "on-error",
+      });
       const controller = eventSource.listen({
         onMessage(ev) {
           try {
