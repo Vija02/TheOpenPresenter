@@ -8731,7 +8731,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@repo/renderer@workspace:apps/renderer"
   dependencies:
-    "@apollo/client": "npm:3.12.2"
     "@fontsource-variable/inter": "npm:^5.1.0"
     "@fontsource-variable/source-sans-3": "npm:^5.1.0"
     "@repo/base-plugin": "npm:*"
@@ -8894,15 +8893,12 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@repo/test@workspace:packages/test"
   dependencies:
-    "@apollo/client": "npm:3.12.2"
     "@hocuspocus/server": "npm:2.14.0"
     "@microsoft/api-extractor": "npm:^7.49.2"
     "@repo/base-plugin": "npm:*"
-    "@repo/graphql": "npm:*"
     "@repo/typescript-config": "npm:*"
     "@trpc/server": "npm:^11.1.2"
     fast-deep-equal: "npm:^3.1.3"
-    graphql: "npm:^15.9.0"
     pg: "npm:^8.12.0"
     react: "npm:^19.1.0"
     tslib: "npm:^2.8.1"
