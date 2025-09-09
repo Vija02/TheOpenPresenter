@@ -48,11 +48,11 @@ const ProjectSettingsModal = () => {
     });
   }, [exportProject, project?.name]);
 
-  const [updateProject, { loading }] = useUpdateProjectMutation();
+  const [{ fetching: loading }, updateProject] = useUpdateProjectMutation();
 
   const handleSubmit = useCallback(
     async ({ name }: { name: string }) => {
-      updateProject({ variables: { id: project?.id, name } }).then(() => {
+      updateProject({ id: project?.id, name }).then(() => {
         refetch();
 
         resetData?.();
