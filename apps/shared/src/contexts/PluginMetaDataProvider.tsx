@@ -5,7 +5,7 @@ import {
   useRendererBasePluginQuery,
 } from "@repo/graphql";
 import { ErrorOccurred, LoadingFull } from "@repo/ui";
-import React, { createContext, useContext, useMemo } from "react";
+import React, { createContext, useContext } from "react";
 
 type PluginMetaDataProviderType = {
   pluginMetaData: RendererBasePluginQuery | RemoteBasePluginQuery | null;
@@ -40,12 +40,10 @@ export function PluginMetaDataProvider({
 }>) {
   const useFunc =
     type === "remote" ? useRemoteBasePluginQuery : useRendererBasePluginQuery;
-  const { data, previousData, loading, error, refetch } = useFunc({
-    variables: { orgSlug, projectSlug },
-  });
-  const pluginMetaData = useMemo(
-    () => data ?? previousData,
-    [data, previousData],
+  const [{ data: pluginMetaData, fetching: loading, error }, refetch] = useFunc(
+    {
+      variables: { orgSlug, projectSlug },
+    },
   );
 
   if (error) {
