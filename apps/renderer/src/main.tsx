@@ -1,4 +1,3 @@
-import { ApolloProvider } from "@apollo/client";
 import { preloader } from "@repo/lib";
 import { ErrorAlert } from "@repo/ui";
 import "@repo/ui/css";
@@ -8,12 +7,13 @@ import ReactDOM from "react-dom/client";
 import { ErrorBoundary } from "react-error-boundary";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { Provider } from "urql";
 import { Router } from "wouter";
 
 import App from "./App";
-import { apolloClient } from "./apollo";
 import "./index.css";
 import { trpc, trpcClient } from "./trpc";
+import { urqlClient } from "./urql";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -30,14 +30,14 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <ErrorBoundary FallbackComponent={ErrorAlert}>
       <Router base="/render">
         <trpc.Provider client={trpcClient} queryClient={queryClient}>
-          <ApolloProvider client={apolloClient}>
+          <Provider value={urqlClient}>
             <QueryClientProvider client={queryClient}>
               <>
                 <App />
                 <ToastContainer />
               </>
             </QueryClientProvider>
-          </ApolloProvider>
+          </Provider>
         </trpc.Provider>
       </Router>
     </ErrorBoundary>
