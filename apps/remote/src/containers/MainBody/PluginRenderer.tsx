@@ -90,8 +90,8 @@ const PluginRenderer = React.memo(
       [pluginId, sceneId, setAwarenessState],
     );
 
-    const [deleteMedia] = useDeleteMediaMutation();
-    const [completeMedia] = useCompleteMediaMutation();
+    const [, deleteMedia] = useDeleteMediaMutation();
+    const [, completeMedia] = useCompleteMediaMutation();
 
     const pluginContext: PluginContext = useMemo(
       () => ({
@@ -165,14 +165,14 @@ const PluginRenderer = React.memo(
               const mediaId = splittedKey[0];
               const uuid = toUUID(mediaId as TypeId<string>);
 
-              return deleteMedia({ variables: { id: uuid } });
+              return deleteMedia({ id: uuid });
             },
             completeMedia: (mediaName: string) => {
               const splittedKey = mediaName.split(".");
               const mediaId = splittedKey[0];
               const uuid = toUUID(mediaId as TypeId<string>);
 
-              return completeMedia({ variables: { id: uuid } });
+              return completeMedia({ id: uuid });
             },
           },
           logger: childLogger,

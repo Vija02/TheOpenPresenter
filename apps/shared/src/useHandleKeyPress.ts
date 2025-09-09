@@ -3,7 +3,7 @@ import { useKeyPressMutation } from "@repo/graphql";
 import { usePluginMetaData } from "./contexts";
 
 export const useHandleKeyPress = () => {
-  const [keyPressMutate] = useKeyPressMutation();
+  const [, keyPressMutate] = useKeyPressMutation();
   const projectId = usePluginMetaData().projectId;
 
   const handleKeyPress = (e: React.KeyboardEvent<any>) => {
@@ -29,17 +29,15 @@ export const useHandleKeyPress = () => {
     ];
     if (keysToDetect.includes(e.key)) {
       keyPressMutate({
-        variables: {
-          keyType:
-            e.key === "ArrowRight" ||
-            e.key === "ArrowDown" ||
-            e.key === "PageDown"
-              ? "NEXT"
-              : "PREV",
-          projectId: projectId,
-          // TODO:
-          rendererId: "1",
-        },
+        keyType:
+          e.key === "ArrowRight" ||
+          e.key === "ArrowDown" ||
+          e.key === "PageDown"
+            ? "NEXT"
+            : "PREV",
+        projectId: projectId,
+        // TODO:
+        rendererId: "1",
       });
       e.preventDefault();
     }
