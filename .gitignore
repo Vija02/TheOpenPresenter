@@ -49,8 +49,5 @@ loadedPlugins
 
 /uploads
 
-packages/graphql/apollo-react-hooks.*
-!packages/graphql/apollo-react-hooks.tsx
-
 nft_results
 node_modules_nft
