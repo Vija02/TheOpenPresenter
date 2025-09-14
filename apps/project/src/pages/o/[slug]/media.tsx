@@ -43,10 +43,11 @@ const OrganizationMediaPage = () => {
       condition: showSystemFiles ? {} : { isUserUploaded: true },
     },
   });
+  const { data } = query[0];
 
   const emptyMedia = useMemo(
-    () => query.data?.organizationBySlug?.medias.nodes.length === 0,
-    [query.data?.organizationBySlug?.medias.nodes.length],
+    () => data?.organizationBySlug?.medias.nodes.length === 0,
+    [data?.organizationBySlug?.medias.nodes.length],
   );
 
   return (
@@ -77,7 +78,7 @@ const OrganizationMediaPage = () => {
 
         {/* Media grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
-          {query.data?.organizationBySlug?.medias.nodes.map((media) => (
+          {data?.organizationBySlug?.medias.nodes.map((media) => (
             <MediaCard key={media.id} media={media} />
           ))}
         </div>
@@ -107,43 +108,37 @@ const MediaCard = ({ media }: { media: MediaWithMediaDependencyFragment }) => {
   const { publish } = globalState.modelDataAccess.usePublishAPIChanges({
     token: "page",
   });
-  const [deleteMedia] = useDeleteMediaMutation({
-    onCompleted: publish,
-  });
-  const [completeMedia, { loading: completeIsLoading }] =
-    useCompleteMediaMutation({
-      onCompleted: publish,
-    });
+  const [, deleteMedia] = useDeleteMediaMutation();
+  const [{ fetching: completeIsLoading }, completeMedia] =
+    useCompleteMediaMutation();
 
   const handleDeleteMedia = useCallback(
     async (id: string) => {
       try {
         await deleteMedia({
-          variables: {
-            id,
-          },
+          id,
         });
+        publish();
         toast.success("Media successfully deleted");
       } catch (e: any) {
         toast.error("Error occurred when deleting this media: " + e.message);
       }
     },
-    [deleteMedia],
+    [deleteMedia, publish],
   );
   const handleCompleteMedia = useCallback(
     async (id: string) => {
       try {
         await completeMedia({
-          variables: {
-            id,
-          },
+          id,
         });
+        publish();
         toast.success("Media successfully completed");
       } catch (e: any) {
         toast.error("Error occurred when deleting this media: " + e.message);
       }
     },
-    [completeMedia],
+    [completeMedia, publish],
   );
 
   const fileSize = useMemo(() => {
@@ -293,7 +288,7 @@ const MediaDependencyModal = ({
 }: MediaDependencyModalPropTypes) => {
   const { isOpen, onToggle } = useOverlayToggle();
 
-  const { data } = useMediaDependenciesOfParentQuery({
+  const [{ data }] = useMediaDependenciesOfParentQuery({
     variables: { parentMediaId },
   });
 

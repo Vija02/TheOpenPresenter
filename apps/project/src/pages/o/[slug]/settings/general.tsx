@@ -3,7 +3,6 @@ import {
   useOrganizationLoading,
   useOrganizationSlug,
 } from "@/lib/permissionHooks/organization";
-import { QueryResult } from "@apollo/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Exact,
@@ -17,6 +16,7 @@ import { Alert, Button, CheckboxControl, Form, InputControl } from "@repo/ui";
 import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
+import { UseQueryResponse } from "urql";
 import { useLocation } from "wouter";
 import * as z from "zod";
 
@@ -38,7 +38,7 @@ const OrganizationSettingsIndexPage = () => {
 };
 
 type PropTypes = {
-  query: QueryResult<
+  query: UseQueryResponse<
     OrganizationSettingsGeneralPageQuery,
     Exact<OrganizationSettingsGeneralPageQueryVariables>
   >;
@@ -52,12 +52,14 @@ const formSchema = z.object({
 
 type FormInputs = z.infer<typeof formSchema>;
 
-const OrganizationSettingsIndexPageInner = ({ query }: PropTypes) => {
-  const organization = query.data?.organizationBySlug!;
+const OrganizationSettingsIndexPageInner = ({
+  query: [{ data }],
+}: PropTypes) => {
+  const organization = data?.organizationBySlug!;
   const { name, slug, isPublic } = organization;
   const [, navigate] = useLocation();
 
-  const [updateOrganization] = useUpdateOrganizationMutation();
+  const [, updateOrganization] = useUpdateOrganizationMutation();
   const [error, setError] = useState<Error | null>(null);
 
   const form = useForm<FormInputs>({
@@ -74,14 +76,12 @@ const OrganizationSettingsIndexPageInner = ({ query }: PropTypes) => {
       try {
         setError(null);
         const { data } = await updateOrganization({
-          variables: {
-            input: {
-              id: organization.id,
-              patch: {
-                slug: values.slug,
-                name: values.name,
-                isPublic: values.isPublic,
-              },
+          input: {
+            id: organization.id,
+            patch: {
+              slug: values.slug,
+              name: values.name,
+              isPublic: values.isPublic,
             },
           },
         });

@@ -14,13 +14,14 @@ const OrganizationIndexWrapper = () => {
 
 const OrganizationIndex = () => {
   const query = useSharedQuery();
+  const { fetching: loading, data } = query[0];
   const [, navigate] = useLocation();
 
   const lastSelectedOrganization = useInferLastSelectedOrganization(query);
 
   useEffect(() => {
-    if (!query.loading) {
-      if (query.data?.currentUser) {
+    if (!loading) {
+      if (data?.currentUser) {
         if (lastSelectedOrganization) {
           navigate(`/o/${lastSelectedOrganization.slug}`, { replace: true });
         } else {
@@ -33,12 +34,7 @@ const OrganizationIndex = () => {
         });
       }
     }
-  }, [
-    lastSelectedOrganization,
-    navigate,
-    query.data?.currentUser,
-    query.loading,
-  ]);
+  }, [lastSelectedOrganization, navigate, data?.currentUser, loading]);
 
   return <div>Redirecting...</div>;
 };

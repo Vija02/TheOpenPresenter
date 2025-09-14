@@ -1,12 +1,12 @@
 import { SharedLayoutLoggedIn } from "@/components/SharedLayoutLoggedIn";
 import { WrappedPasswordStrength } from "@/components/WrappedPasswordStrength";
-import { ApolloError } from "@apollo/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useChangePasswordMutation, useSharedQuery } from "@repo/graphql";
 import { extractError, getCodeFromError } from "@repo/lib";
 import { Alert, Button, Form, InputControl } from "@repo/ui";
 import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
+import { CombinedError } from "urql";
 import { z } from "zod";
 
 const formSchema = z.object({
@@ -16,10 +16,10 @@ const formSchema = z.object({
 type FormInputs = z.infer<typeof formSchema>;
 
 const Settings_Security = () => {
-  const [error, setError] = useState<Error | ApolloError | null>(null);
+  const [error, setError] = useState<Error | CombinedError | null>(null);
   const query = useSharedQuery();
 
-  const [changePassword, { data }] = useChangePasswordMutation();
+  const [{ data }, changePassword] = useChangePasswordMutation();
   const success = !!data?.changePassword?.success;
 
   const form = useForm<FormInputs>({
@@ -35,10 +35,8 @@ const Settings_Security = () => {
       setError(null);
       try {
         await changePassword({
-          variables: {
-            oldPassword: values.oldPassword,
-            newPassword: values.password,
-          },
+          oldPassword: values.oldPassword,
+          newPassword: values.password,
         });
         form.reset();
         setError(null);

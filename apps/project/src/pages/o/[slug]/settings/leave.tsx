@@ -3,7 +3,6 @@ import {
   useOrganizationLoading,
   useOrganizationSlug,
 } from "@/lib/permissionHooks/organization";
-import { ApolloError, QueryResult } from "@apollo/client";
 import {
   BaseOrganizationSettingsPageQuery,
   BaseOrganizationSettingsPageQueryVariables,
@@ -25,6 +24,7 @@ import {
 } from "@repo/ui";
 import { FC, useCallback, useState } from "react";
 import { toast } from "react-toastify";
+import { CombinedError, UseQueryResponse } from "urql";
 import { useLocation } from "wouter";
 
 const OrganizationSettingsLeavePage = () => {
@@ -45,7 +45,7 @@ const OrganizationSettingsLeavePage = () => {
 };
 
 interface OrganizationSettingsLeavePageInnerProps {
-  query: QueryResult<
+  query: UseQueryResponse<
     BaseOrganizationSettingsPageQuery,
     Exact<BaseOrganizationSettingsPageQueryVariables>
   >;
@@ -53,22 +53,20 @@ interface OrganizationSettingsLeavePageInnerProps {
 
 const OrganizationSettingsLeavePageInner: FC<
   OrganizationSettingsLeavePageInnerProps
-> = ({ query }) => {
-  const organization = query.data?.organizationBySlug!;
+> = ({ query: [{ data }] }) => {
+  const organization = data?.organizationBySlug!;
   const [, navigate] = useLocation();
-  const [error, setError] = useState<ApolloError | null>(null);
+  const [error, setError] = useState<CombinedError | null>(null);
 
   const { open, onOpen, onToggle } = useDisclosure();
 
-  const [removeMember] = useRemoveFromOrganizationMutation();
+  const [, removeMember] = useRemoveFromOrganizationMutation();
   const handleRemove = useCallback(async () => {
     setError(null);
     try {
       await removeMember({
-        variables: {
-          organizationId: organization.id,
-          userId: query.data?.currentUser?.id,
-        },
+        organizationId: organization.id,
+        userId: data?.currentUser?.id,
       });
       toast.success(`Successfully left '${organization.name}'`);
       navigate("/");
@@ -77,10 +75,10 @@ const OrganizationSettingsLeavePageInner: FC<
       toast.error("Error occurred when leaving: " + e.message);
     }
   }, [
+    data?.currentUser?.id,
     navigate,
     organization.id,
     organization.name,
-    query.data?.currentUser?.id,
     removeMember,
   ]);
 

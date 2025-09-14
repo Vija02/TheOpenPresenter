@@ -1,15 +1,15 @@
-import { ApolloError } from "@apollo/client";
 import { GraphQLError, GraphQLFormattedError } from "graphql";
+import { CombinedError } from "urql";
 
 export function extractError(error: null): null;
 export function extractError(error: Error): Error;
-export function extractError(error: ApolloError): GraphQLError;
+export function extractError(error: CombinedError): GraphQLError;
 export function extractError(error: GraphQLError): GraphQLError;
 export function extractError(
-  error: null | Error | ApolloError | GraphQLError,
+  error: null | Error | CombinedError | GraphQLError,
 ): null | Error | GraphQLError;
 export function extractError(
-  error: null | Error | ApolloError | GraphQLError,
+  error: null | Error | CombinedError | GraphQLError,
 ): null | Error | GraphQLFormattedError {
   return (
     (error &&
@@ -22,7 +22,7 @@ export function extractError(
 }
 
 export function getExceptionFromError(
-  error: null | Error | ApolloError | GraphQLError,
+  error: null | Error | CombinedError | GraphQLError,
 ): Error | null {
   // @ts-ignore
   const graphqlError: GraphQLError = extractError(error);
@@ -34,7 +34,7 @@ export function getExceptionFromError(
 }
 
 export function getCodeFromError(
-  error: null | Error | ApolloError | GraphQLError,
+  error: null | Error | CombinedError | GraphQLError,
 ): null | string {
   const err = getExceptionFromError(error);
   return (err && (err as any)["code"]) || null;

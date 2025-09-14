@@ -1,4 +1,3 @@
-import { ApolloError } from "@apollo/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { TagFragment } from "@repo/graphql";
 import { extractError } from "@repo/lib";
@@ -16,6 +15,7 @@ import {
 } from "@repo/ui";
 import { useCallback } from "react";
 import { useForm } from "react-hook-form";
+import { CombinedError } from "urql";
 import * as z from "zod";
 
 import { Tag } from "./Tag";
@@ -29,7 +29,7 @@ export type TagEditPropTypes = {
   initialTag: TagType;
   onCreate: (tag: TagType) => Promise<any>;
   onCancel: () => void;
-  error: ApolloError | null;
+  error: CombinedError | null;
   submitText?: string;
 };
 

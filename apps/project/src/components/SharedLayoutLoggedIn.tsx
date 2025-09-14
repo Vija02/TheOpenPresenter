@@ -23,7 +23,7 @@ export function SharedLayoutLoggedIn(
     children: React.ReactNode;
   },
 ) {
-  const { data } = props.query;
+  const [{ data }] = props.query;
 
   const isMobile = useIsMobile();
 

@@ -5,7 +5,6 @@ documents:
   - "../../apps/remote/src/**/*.graphql"
   - "../../apps/renderer/src/**/*.graphql"
 config:
-  apolloReactHooksImportFrom: "./apollo-react-hooks" # TODO: Handle this
   avoidOptionals:
     field: true
     inputValue: false
@@ -24,3 +23,7 @@ generates:
       - "typescript"
       - "typescript-operations"
       - "typescript-urql"
+    config:
+      urqlImportFrom: "./urql-patch"
+      # https://github.com/dotansimha/graphql-code-generator/issues/8103#issuecomment-1288784273
+      dedupeFragments: true

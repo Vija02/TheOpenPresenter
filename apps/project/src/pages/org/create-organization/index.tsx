@@ -1,6 +1,5 @@
 import { Redirect } from "@/components/Redirect";
 import { SharedLayoutLoggedIn } from "@/components/SharedLayoutLoggedIn";
-import { ApolloError } from "@apollo/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   CreatedOrganizationFragment,
@@ -22,6 +21,7 @@ import {
 import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
 import slugify from "slugify";
+import { CombinedError } from "urql";
 import { useDebounce } from "use-debounce";
 import { Link as WouterLink } from "wouter";
 import * as z from "zod";
@@ -32,7 +32,7 @@ const formSchema = z.object({
 type FormInputs = z.infer<typeof formSchema>;
 
 const CreateOrganizationPage = () => {
-  const [error, setError] = useState<Error | ApolloError | null>(null);
+  const [error, setError] = useState<Error | CombinedError | null>(null);
   const query = useSharedQuery();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -44,7 +44,7 @@ const CreateOrganizationPage = () => {
   const code = getCodeFromError(error);
   const [organization, setOrganization] =
     useState<null | CreatedOrganizationFragment>(null);
-  const [createOrganization] = useCreateOrganizationMutation();
+  const [, createOrganization] = useCreateOrganizationMutation();
 
   const onSubmit = useCallback(
     async (values: FormInputs) => {
@@ -55,10 +55,8 @@ const CreateOrganizationPage = () => {
           lower: true,
         });
         const { data } = await createOrganization({
-          variables: {
-            name,
-            slug,
-          },
+          name,
+          slug,
         });
         setError(null);
         setOrganization(data?.createOrganization?.organization || null);
@@ -191,12 +189,12 @@ const SlugCheck = ({ name }: { name: string }) => {
   const [debouncedSlug] = useDebounce(slug, 500);
 
   // TODO: Check slug of orgs by other user too
-  const { data: existingOrganizationData, error: slugError } =
+  const [{ data: existingOrganizationData, error: slugError }] =
     useOrganizationBySlugQuery({
       variables: {
         slug: debouncedSlug,
       },
-      skip: debouncedSlug === "",
+      pause: debouncedSlug === "",
     });
 
   return (

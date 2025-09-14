@@ -16,7 +16,7 @@ type InviteFormData = z.infer<typeof inviteSchema>;
 type PropTypes = { organization: { id: string } };
 
 export default function InviteNewMember({ organization }: PropTypes) {
-  const [inviteToOrganization] = useInviteToOrganizationMutation();
+  const [, inviteToOrganization] = useInviteToOrganizationMutation();
   const [inviteInProgress, setInviteInProgress] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
@@ -39,11 +39,9 @@ export default function InviteNewMember({ organization }: PropTypes) {
       const isEmail = inviteText.includes("@");
       try {
         await inviteToOrganization({
-          variables: {
-            organizationId: organization.id,
-            email: isEmail ? inviteText : null,
-            username: isEmail ? null : inviteText,
-          },
+          organizationId: organization.id,
+          email: isEmail ? inviteText : null,
+          username: isEmail ? null : inviteText,
         });
         toast.success(`'${inviteText}' invited.`);
         form.reset();

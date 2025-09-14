@@ -63,7 +63,7 @@ export const ReactSelectTagsStyle: Partial<
 export const ReactSelectTagsProps = () => {
   const { allTagByOrganization, allTagByOrganizationQueryResult } =
     globalState.modelDataAccess.useTag();
-  const loading = allTagByOrganizationQueryResult?.loading;
+  const loading = allTagByOrganizationQueryResult?.fetching;
 
   return {
     components: ReactSelectTagsComponents,

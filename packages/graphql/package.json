@@ -20,7 +20,6 @@
     "codegen": "graphql-codegen --config codegen.yml"
   },
   "dependencies": {
-    "@apollo/client": "3.12.2",
     "react": "^19.1.0",
     "urql": "^5.0.1",
     "use-pubsub-js": "^1.0.7"

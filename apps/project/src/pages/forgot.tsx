@@ -1,11 +1,11 @@
 import { AuthRestrict, SharedLayout } from "@/components/SharedLayout";
-import { ApolloError } from "@apollo/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForgotPasswordMutation, useSharedQuery } from "@repo/graphql";
 import { extractError } from "@repo/lib";
 import { Alert, Button, Form, InputControl, Link } from "@repo/ui";
 import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
+import { CombinedError } from "urql";
 import { Link as WouterLink } from "wouter";
 import { z } from "zod";
 
@@ -16,10 +16,10 @@ const formSchema = z.object({
 type FormInputs = z.infer<typeof formSchema>;
 
 const ForgotPassword = () => {
-  const [error, setError] = useState<Error | ApolloError | null>(null);
+  const [error, setError] = useState<Error | CombinedError | null>(null);
   const query = useSharedQuery();
 
-  const [forgotPassword] = useForgotPasswordMutation();
+  const [, forgotPassword] = useForgotPasswordMutation();
   const [successfulEmail, setSuccessfulEmail] = useState<string | null>(null);
 
   const form = useForm<FormInputs>({
@@ -35,9 +35,7 @@ const ForgotPassword = () => {
       try {
         const email = values.email;
         await forgotPassword({
-          variables: {
-            email,
-          },
+          email,
         });
         // Success: refetch
         setSuccessfulEmail(email);
