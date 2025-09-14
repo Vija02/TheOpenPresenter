@@ -1,7 +1,6 @@
 import {
   SharedLayout_QueryFragment,
   SharedLayout_UserFragment,
-  useCurrentUserUpdatedSubscription,
 } from "@repo/graphql";
 import { Button, ErrorAlert, Link } from "@repo/ui";
 import * as React from "react";
