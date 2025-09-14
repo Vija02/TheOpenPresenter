@@ -53,22 +53,6 @@ export interface SharedLayoutProps {
   navbarRight?: SharedLayoutSkeletonProps["navbarRight"];
 }
 
-/* The Apollo `useSubscription` hook doesn't currently allow skipping the
- * subscription; we only want it when the user is logged in, so we conditionally
- * call this stub component.
- */
-function CurrentUserUpdatedSubscription() {
-  /*
-   * This will set up a GraphQL subscription monitoring for changes to the
-   * current user. Interestingly we don't need to actually _do_ anything - no
-   * rendering or similar - because the payload of this mutation will
-   * automatically update Apollo's cache which will cause the data to be
-   * re-rendered wherever appropriate.
-   */
-  useCurrentUserUpdatedSubscription();
-  return null;
-}
-
 export function SharedLayout({
   title,
   overrideTitle,
@@ -121,7 +105,6 @@ export function SharedLayout({
 
   return (
     <>
-      {data && data.currentUser ? <CurrentUserUpdatedSubscription /> : null}
       <SharedLayoutSkeleton
         title={title}
         overrideTitle={overrideTitle}
