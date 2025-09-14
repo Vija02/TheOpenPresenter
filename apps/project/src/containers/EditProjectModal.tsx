@@ -57,9 +57,9 @@ const EditProjectModal = ({
 }: EditProjectModalPropTypes) => {
   const { isOpen, onToggle, resetData } = useOverlayToggle();
 
-  const [updateProject] = useUpdateProjectMutation();
-  const [createProjectTag] = useCreateProjectTagMutation();
-  const [deleteProjectTag] = useDeleteProjectTagMutation();
+  const [, updateProject] = useUpdateProjectMutation();
+  const [, createProjectTag] = useCreateProjectTagMutation();
+  const [, deleteProjectTag] = useDeleteProjectTagMutation();
 
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>(
     project.projectTags.nodes.map((x) => x.tag?.id),
@@ -76,11 +76,7 @@ const EditProjectModal = ({
 
   const { allTagByOrganization, refetch: refetchTags } =
     globalState.modelDataAccess.useTag();
-  const [createTag] = useCreateTagMutation({
-    onCompleted: () => {
-      refetchTags?.();
-    },
-  });
+  const [, createTag] = useCreateTagMutation();
 
   const form = useForm<FormInputs>({
     resolver: zodResolver(formSchema),
@@ -94,13 +90,11 @@ const EditProjectModal = ({
   const handleSubmit = useCallback(
     async (data: FormInputs) => {
       await updateProject({
-        variables: {
-          id: project.id,
-          name: data.name,
-          categoryId:
-            data.categoryId === UNCATEGORIZED ? undefined : data.categoryId,
-          targetDate: data.targetDate ? data.targetDate.toDateString() : null,
-        },
+        id: project.id,
+        name: data.name,
+        categoryId:
+          data.categoryId === UNCATEGORIZED ? undefined : data.categoryId,
+        targetDate: data.targetDate ? data.targetDate.toDateString() : null,
       });
       const existingTagIds = project.projectTags.nodes.map((x) => x.tag?.id);
       const newTagIds = selectedTagIds;
@@ -114,14 +108,13 @@ const EditProjectModal = ({
 
       const createPromises = missingTagIds.map((id) =>
         createProjectTag({
-          variables: { projectId: project.id, tagId: id },
+          projectId: project.id,
+          tagId: id,
         }),
       );
       const deletePromises = nonMissingTagIds.map((id) =>
         deleteProjectTag({
-          variables: {
-            id: project.projectTags.nodes.find((x) => x.tag?.id === id)?.id,
-          },
+          id: project.projectTags.nodes.find((x) => x.tag?.id === id)?.id,
         }),
       );
 
@@ -213,14 +206,13 @@ const EditProjectModal = ({
 
                     setSelectedTagIds(selectedIds);
                   }}
-                  onCreateOption={(optionName: string) =>
-                    createTag({
-                      variables: {
-                        name: optionName,
-                        organizationId: organizationId,
-                      },
-                    })
-                  }
+                  onCreateOption={async (optionName: string) => {
+                    await createTag({
+                      name: optionName,
+                      organizationId: organizationId,
+                    });
+                    refetchTags?.();
+                  }}
                 />
               </div>
             </DialogBody>

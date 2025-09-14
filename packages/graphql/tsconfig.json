@@ -11,6 +11,6 @@
     "module": "esnext",
     "jsx": "react"
   },
-  "include": ["index.tsx", "apollo-react-hooks.tsx"],
+  "include": ["index.tsx", "urql-patch.tsx"],
   "exclude": []
 }

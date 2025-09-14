@@ -59,15 +59,6 @@ module.exports = () => {
             // attempting to bundle them into the client.
             resourceRegExp: /^(node-gyp-build|bufferutil|utf-8-validate)$/,
           }),
-          ...(isServer
-            ? []
-            : [
-                // Don't try and bundle Grafast on the client for heaven's sake
-                new webpack.NormalModuleReplacementPlugin(
-                  /GraphileApolloLink.js/,
-                  "./GraphileApolloLink.client.js",
-                ),
-              ]),
         ],
         externals: [
           ...(externals || []),

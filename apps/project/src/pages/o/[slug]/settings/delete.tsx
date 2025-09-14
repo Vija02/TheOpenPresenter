@@ -3,7 +3,6 @@ import {
   useOrganizationLoading,
   useOrganizationSlug,
 } from "@/lib/permissionHooks/organization";
-import { ApolloError, QueryResult } from "@apollo/client";
 import {
   BaseOrganizationSettingsPageQuery,
   BaseOrganizationSettingsPageQueryVariables,
@@ -11,6 +10,7 @@ import {
   useBaseOrganizationSettingsPageQuery,
   useDeleteOrganizationMutation,
 } from "@repo/graphql";
+import { globalState } from "@repo/lib";
 import {
   Alert,
   Button,
@@ -25,6 +25,7 @@ import {
 } from "@repo/ui";
 import { FC, useCallback, useState } from "react";
 import { toast } from "react-toastify";
+import { CombinedError, UseQueryResponse } from "urql";
 import { useLocation } from "wouter";
 
 const OrganizationSettingsDeletePage = () => {
@@ -45,7 +46,7 @@ const OrganizationSettingsDeletePage = () => {
 };
 
 interface OrganizationSettingsDeletePageInnerProps {
-  query: QueryResult<
+  query: UseQueryResponse<
     BaseOrganizationSettingsPageQuery,
     Exact<BaseOrganizationSettingsPageQueryVariables>
   >;
@@ -53,11 +54,15 @@ interface OrganizationSettingsDeletePageInnerProps {
 
 const OrganizationSettingsDeletePageInner: FC<
   OrganizationSettingsDeletePageInnerProps
-> = ({ query }) => {
-  const organization = query.data?.organizationBySlug!;
+> = ({ query: [{ data }] }) => {
+  const organization = data?.organizationBySlug!;
   const [, navigate] = useLocation();
-  const [deleteOrganization] = useDeleteOrganizationMutation();
-  const [error, setError] = useState<ApolloError | null>(null);
+  const [, deleteOrganization] = useDeleteOrganizationMutation();
+  const [error, setError] = useState<CombinedError | null>(null);
+
+  const { publish } = globalState.modelDataAccess.usePublishAPIChanges({
+    token: "page",
+  });
 
   const { open, onOpen, onToggle } = useDisclosure();
 
@@ -65,18 +70,22 @@ const OrganizationSettingsDeletePageInner: FC<
     setError(null);
     try {
       await deleteOrganization({
-        variables: {
-          organizationId: organization.id,
-        },
-        refetchQueries: ["Shared"],
+        organizationId: organization.id,
       });
+      publish();
       toast.success(`Organization '${organization.name}' successfully deleted`);
       navigate("/");
     } catch (e: any) {
       setError(e);
       return;
     }
-  }, [deleteOrganization, navigate, organization.id, organization.name]);
+  }, [
+    deleteOrganization,
+    navigate,
+    organization.id,
+    organization.name,
+    publish,
+  ]);
 
   return (
     <>

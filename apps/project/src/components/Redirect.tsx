@@ -1,4 +1,3 @@
-import { NetworkStatus, useApolloClient } from "@apollo/client";
 import { Skeleton } from "@repo/ui";
 import { useEffect } from "react";
 import { useLocation } from "wouter";
@@ -13,7 +12,6 @@ export interface RedirectProps {
 }
 
 export function Redirect({ href, layout }: RedirectProps) {
-  const client = useApolloClient();
   const [, navigate] = useLocation();
 
   useEffect(() => {
@@ -24,16 +22,7 @@ export function Redirect({ href, layout }: RedirectProps) {
     return (
       <SharedLayout
         title="Redirecting..."
-        query={{
-          loading: true,
-          data: undefined,
-          error: undefined,
-          networkStatus: NetworkStatus.loading,
-          client,
-          refetch: (async () => {
-            throw new Error("Redirecting...");
-          }) as any,
-        }}
+        query={[{ fetching: false, hasNext: false, stale: false }, () => {}]}
       >
         <Skeleton />
       </SharedLayout>

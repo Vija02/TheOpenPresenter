@@ -5,6 +5,7 @@ import { Link as WouterLink } from "wouter";
 
 const OrganizationOverview = () => {
   const query = useOrganizationOverviewIndexPageQuery();
+  const { data } = query[0];
 
   return (
     <SharedLayoutLoggedIn
@@ -15,7 +16,7 @@ const OrganizationOverview = () => {
       <h1 className="text-2xl font-bold mb-4">Your Organizations</h1>
       <div>
         <div className="stack-row items-start mb-2 flex-wrap">
-          {query.data?.currentUser?.organizationMemberships.nodes.map(
+          {data?.currentUser?.organizationMemberships.nodes.map(
             (membership) => (
               <WouterLink
                 key={membership.id}
@@ -30,8 +31,7 @@ const OrganizationOverview = () => {
             ),
           )}
         </div>
-        {query.data?.currentUser?.organizationMemberships.nodes.length ===
-          0 && (
+        {data?.currentUser?.organizationMemberships.nodes.length === 0 && (
           <p>
             You are not part of any organization. <br />
             To get started with TheOpenPresenter, please{" "}

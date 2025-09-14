@@ -5,7 +5,6 @@ import {
   useOrganizationLoading,
   useOrganizationSlug,
 } from "@/lib/permissionHooks/organization";
-import { QueryResult } from "@apollo/client";
 import {
   Exact,
   OrganizationSettingsMembersPageQuery,
@@ -13,6 +12,7 @@ import {
   useOrganizationSettingsMembersPageQuery,
 } from "@repo/graphql";
 import { useState } from "react";
+import { UseQueryResponse } from "urql";
 
 // This needs to match the `first:` used in Members.graphql
 const RESULTS_PER_PAGE = 10;
@@ -43,7 +43,7 @@ const OrganizationSettingsIndexPage = () => {
 };
 
 type PropTypes = {
-  query: QueryResult<
+  query: UseQueryResponse<
     OrganizationSettingsMembersPageQuery,
     Exact<OrganizationSettingsMembersPageQueryVariables>
   >;
@@ -56,7 +56,7 @@ const OrganizationSettingsIndexPageInner = ({
   page,
   setPage,
 }: PropTypes) => {
-  const organization = query.data?.organizationBySlug!;
+  const organization = query[0].data?.organizationBySlug!;
 
   return (
     <>

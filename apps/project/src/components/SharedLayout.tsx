@@ -1,4 +1,3 @@
-import { ApolloError, QueryResult } from "@apollo/client";
 import {
   SharedLayout_QueryFragment,
   SharedLayout_UserFragment,
@@ -6,6 +5,7 @@ import {
 } from "@repo/graphql";
 import { Button, ErrorAlert, Link } from "@repo/ui";
 import * as React from "react";
+import { CombinedError, UseQueryResponse } from "urql";
 import { Link as WouterLink, useLocation } from "wouter";
 
 import { Redirect } from "./Redirect";
@@ -16,7 +16,7 @@ import {
 import { StandardWidth } from "./StandardWidth";
 
 export interface SharedLayoutChildProps {
-  error?: ApolloError | Error;
+  error?: CombinedError | Error;
   loading: boolean;
   currentUser?: SharedLayout_UserFragment | null;
 }
@@ -39,11 +39,7 @@ export interface SharedLayoutProps {
    * page to be fetchable via a single GraphQL query, rather than multiple
    * chained queries.
    */
-  query: Pick<
-    QueryResult<SharedLayout_QueryFragment>,
-    "data" | "loading" | "error" | "networkStatus" | "client" | "refetch"
-  >;
-
+  query: UseQueryResponse<SharedLayout_QueryFragment>;
   title?: string;
   overrideTitle?: string;
   children:
@@ -112,7 +108,7 @@ export function SharedLayout({
     } else if (
       data &&
       data.currentUser === null &&
-      !loading &&
+      !fetching &&
       !error &&
       forbidsLoggedOut
     ) {
@@ -121,7 +117,7 @@ export function SharedLayout({
 
     return noPad ? inner : <StandardWidth>{inner}</StandardWidth>;
   };
-  const { data, loading, error } = query;
+  const [{ data, fetching, error }] = query;
 
   return (
     <>
@@ -165,7 +161,7 @@ export function SharedLayout({
       >
         {renderChildren({
           error,
-          loading,
+          loading: fetching,
           currentUser: data && data.currentUser,
         })}
       </SharedLayoutSkeleton>

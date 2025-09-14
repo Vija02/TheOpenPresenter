@@ -1,13 +1,14 @@
 import { Redirect } from "@/components/Redirect";
 import { SharedLayout } from "@/components/SharedLayout";
 import { SocialLoginOptions } from "@/components/SocialLoginOptions";
-import { ApolloError, useApolloClient } from "@apollo/client";
+import { useResetURQLClient } from "@/urql";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useLoginMutation, useSharedQuery } from "@repo/graphql";
 import { extractError, getCodeFromError } from "@repo/lib";
 import { Alert, Button, Form, InputControl, Link } from "@repo/ui";
 import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
+import { CombinedError } from "urql";
 import { Link as WouterLink, useLocation, useSearchParams } from "wouter";
 import z from "zod";
 
@@ -16,7 +17,7 @@ export function isSafe(nextUrl: string | null) {
 }
 
 export default function Home() {
-  const [error, setError] = useState<Error | ApolloError | null>(null);
+  const [error, setError] = useState<Error | CombinedError | null>(null);
   const query = useSharedQuery();
 
   const [searchParams] = useSearchParams();
@@ -57,14 +58,15 @@ type FormInputs = z.infer<typeof formSchema>;
 
 interface LoginFormProps {
   onSuccessRedirectTo: string;
-  error: Error | ApolloError | null;
-  setError: (error: Error | ApolloError | null) => void;
+  error: Error | CombinedError | null;
+  setError: (error: Error | CombinedError | null) => void;
 }
 
 function LoginForm({ onSuccessRedirectTo, error, setError }: LoginFormProps) {
-  const [login] = useLoginMutation({});
-  const client = useApolloClient();
+  const [, login] = useLoginMutation();
   const [, navigate] = useLocation();
+
+  const resetClient = useResetURQLClient();
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -79,13 +81,11 @@ function LoginForm({ onSuccessRedirectTo, error, setError }: LoginFormProps) {
       setError(null);
       try {
         await login({
-          variables: {
-            username: values.username,
-            password: values.password,
-          },
+          username: values.username,
+          password: values.password,
         });
         // Success: refetch
-        client.resetStore();
+        resetClient();
         navigate(onSuccessRedirectTo);
       } catch (e: any) {
         const code = getCodeFromError(e);
@@ -99,7 +99,7 @@ function LoginForm({ onSuccessRedirectTo, error, setError }: LoginFormProps) {
         }
       }
     },
-    [client, login, navigate, onSuccessRedirectTo, setError, form],
+    [setError, login, resetClient, navigate, onSuccessRedirectTo, form],
   );
 
   return (

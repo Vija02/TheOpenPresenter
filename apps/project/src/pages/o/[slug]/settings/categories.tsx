@@ -8,7 +8,6 @@ import {
   useOrganizationLoading,
   useOrganizationSlug,
 } from "@/lib/permissionHooks/organization";
-import { ApolloError, QueryResult } from "@apollo/client";
 import {
   Exact,
   OrganizationSettingsCategoriesPageQuery,
@@ -40,6 +39,7 @@ import { FiPlus } from "react-icons/fi";
 import { TbCategory } from "react-icons/tb";
 import { VscEdit, VscTrash } from "react-icons/vsc";
 import { toast } from "react-toastify";
+import { CombinedError, UseQueryResponse } from "urql";
 
 const OrganizationSettingsCategoriesPage = () => {
   const slug = useOrganizationSlug();
@@ -59,7 +59,7 @@ const OrganizationSettingsCategoriesPage = () => {
 };
 
 interface OrganizationSettingsCategoriesPageInnerProps {
-  query: QueryResult<
+  query: UseQueryResponse<
     OrganizationSettingsCategoriesPageQuery,
     Exact<OrganizationSettingsCategoriesPageQueryVariables>
   >;
@@ -67,9 +67,9 @@ interface OrganizationSettingsCategoriesPageInnerProps {
 
 const OrganizationSettingsCategoriesPageInner: FC<
   OrganizationSettingsCategoriesPageInnerProps
-> = ({ query }) => {
-  const [error, setError] = useState<ApolloError | null>(null);
-  const [editError, setEditError] = useState<ApolloError | null>(null);
+> = ({ query: [{ data }] }) => {
+  const [error, setError] = useState<CombinedError | null>(null);
+  const [editError, setEditError] = useState<CombinedError | null>(null);
 
   const {
     open: newIsOpen,
@@ -84,33 +84,26 @@ const OrganizationSettingsCategoriesPageInner: FC<
     token: "page",
   });
 
-  const [createCategory] = useCreateCategoryMutation({
-    onCompleted: publish,
-  });
-  const [editCategory] = useUpdateCategoryMutation({
-    onCompleted: publish,
-  });
-  const [deleteCategory] = useDeleteCategoryMutation({
-    onCompleted: publish,
-  });
+  const [, createCategory] = useCreateCategoryMutation();
+  const [, editCategory] = useUpdateCategoryMutation();
+  const [, deleteCategory] = useDeleteCategoryMutation();
 
   const newOnCreate = useCallback(
     async (values: CategoryType) => {
       try {
         setError(null);
         await createCategory({
-          variables: {
-            name: values.name,
-            organizationId: query.data?.organizationBySlug?.id,
-          },
+          name: values.name,
+          organizationId: data?.organizationBySlug?.id,
         });
+        publish();
         toast.success("Category created");
         newOnClose();
       } catch (e: any) {
         setError(e);
       }
     },
-    [query, createCategory, newOnClose],
+    [createCategory, data?.organizationBySlug?.id, publish, newOnClose],
   );
 
   const onEdit = useCallback(
@@ -118,37 +111,35 @@ const OrganizationSettingsCategoriesPageInner: FC<
       try {
         setEditError(null);
         await editCategory({
-          variables: {
-            id: editingCategory?.id,
-            name: values.name,
-          },
+          id: editingCategory?.id,
+          name: values.name,
         });
+        publish();
         toast.success("Category updated");
         setEditingCategory(null);
       } catch (e: any) {
         setEditError(e);
       }
     },
-    [editCategory, editingCategory?.id],
+    [editCategory, editingCategory?.id, publish],
   );
 
   const onDeleteCategory = useCallback(
     async (id: string) => {
       try {
         await deleteCategory({
-          variables: {
-            id,
-          },
+          id,
         });
+        publish();
         toast.success("Category deleted");
       } catch (e: any) {
         toast.error("Failed to delete category");
       }
     },
-    [deleteCategory],
+    [deleteCategory, publish],
   );
 
-  const categories = query.data?.organizationBySlug?.categories.nodes;
+  const categories = data?.organizationBySlug?.categories.nodes;
 
   return (
     <div className="stack-col items-start">

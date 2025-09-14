@@ -21,7 +21,7 @@ const VerifyPage = () => {
   const initialShouldSubmit = !!rawId && !!rawToken;
 
   const [error, setError] = React.useState<Error | null>(null);
-  const [verifyEmail, { data, loading }] = useVerifyEmailMutation();
+  const [{ data, fetching: loading }, verifyEmail] = useVerifyEmailMutation();
 
   const success = !!data?.verifyEmail?.success;
 
@@ -29,10 +29,8 @@ const VerifyPage = () => {
     if (initialShouldSubmit) {
       setError(null);
       verifyEmail({
-        variables: {
-          id: rawId.toString(),
-          token: rawToken.toString()!,
-        },
+        id: rawId.toString(),
+        token: rawToken.toString()!,
       }).catch((e: Error) => {
         setError(e);
       });
@@ -51,10 +49,8 @@ const VerifyPage = () => {
       setError(null);
       try {
         await verifyEmail({
-          variables: {
-            id: rawId,
-            token: values.code,
-          },
+          id: rawId,
+          token: values.code,
         });
       } catch (e: any) {
         setError(e);

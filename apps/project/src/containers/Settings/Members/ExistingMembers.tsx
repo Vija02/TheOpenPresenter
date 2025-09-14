@@ -1,4 +1,3 @@
-import { QueryResult } from "@apollo/client";
 import {
   Exact,
   OrganizationSettingsMembersPageQuery,
@@ -8,6 +7,7 @@ import {
   useTransferOrganizationBillingContactMutation,
   useTransferOrganizationOwnershipMutation,
 } from "@repo/graphql";
+import { globalState } from "@repo/lib";
 import {
   Button,
   Pagination,
@@ -21,12 +21,13 @@ import {
 } from "@repo/ui";
 import { FC, useCallback, useMemo } from "react";
 import { toast } from "react-toastify";
+import { UseQueryResponse } from "urql";
 
 // This needs to match the `first:` used in Members.graphql
 const RESULTS_PER_PAGE = 10;
 
 type PropTypes = {
-  query: QueryResult<
+  query: UseQueryResponse<
     OrganizationSettingsMembersPageQuery,
     Exact<OrganizationSettingsMembersPageQueryVariables>
   >;
@@ -35,7 +36,8 @@ type PropTypes = {
 };
 
 export default function ExistingMembers({ query, page, setPage }: PropTypes) {
-  const organization = query.data?.organizationBySlug!;
+  const [{ data }] = query;
+  const organization = data?.organizationBySlug!;
 
   const handlePaginationChange = useCallback(
     ({ selected }: { selected: number }) => {
@@ -87,7 +89,7 @@ export default function ExistingMembers({ query, page, setPage }: PropTypes) {
 
 interface OrganizationMemberListItemProps {
   node: OrganizationSettingsMembers_MembershipFragment;
-  query: QueryResult<
+  query: UseQueryResponse<
     OrganizationSettingsMembersPageQuery,
     Exact<OrganizationSettingsMembersPageQueryVariables>
   >;
@@ -96,57 +98,58 @@ interface OrganizationMemberListItemProps {
 const OrganizationMemberListItem: FC<OrganizationMemberListItemProps> = (
   props,
 ) => {
-  const { node, query } = props;
+  const {
+    node,
+    query: [{ data }],
+  } = props;
 
-  const organization = query.data?.organizationBySlug!;
-  const currentUser = query.data?.currentUser;
+  const organization = data?.organizationBySlug!;
+  const currentUser = data?.currentUser;
 
-  const [removeMember] = useRemoveFromOrganizationMutation();
+  const { publish } = globalState.modelDataAccess.usePublishAPIChanges({
+    token: "page",
+  });
+
+  const [, removeMember] = useRemoveFromOrganizationMutation();
   const handleRemove = useCallback(async () => {
     try {
       await removeMember({
-        variables: {
-          organizationId: organization.id,
-          userId: node.user?.id ?? 0,
-        },
-        refetchQueries: ["OrganizationSettingsMembersPage"],
+        organizationId: organization.id,
+        userId: node.user?.id ?? 0,
       });
+      publish();
     } catch (e: any) {
       toast.error("Error occurred when removing member: " + e.message);
     }
-  }, [node.user, organization.id, removeMember]);
+  }, [node.user?.id, organization.id, publish, removeMember]);
 
-  const [transferOwnership] = useTransferOrganizationOwnershipMutation();
+  const [, transferOwnership] = useTransferOrganizationOwnershipMutation();
   const handleTransfer = useCallback(async () => {
     try {
       await transferOwnership({
-        variables: {
-          organizationId: organization.id,
-          userId: node.user?.id ?? 0,
-        },
-        refetchQueries: ["OrganizationSettingsMembersPage"],
+        organizationId: organization.id,
+        userId: node.user?.id ?? 0,
       });
+      publish();
     } catch (e: any) {
       toast.error("Error occurred when transferring ownership: " + e.message);
     }
-  }, [node.user, organization.id, transferOwnership]);
+  }, [node.user?.id, organization.id, publish, transferOwnership]);
 
-  const [transferBilling] = useTransferOrganizationBillingContactMutation();
+  const [, transferBilling] = useTransferOrganizationBillingContactMutation();
   const handleBillingTransfer = useCallback(async () => {
     try {
       await transferBilling({
-        variables: {
-          organizationId: organization.id,
-          userId: node.user?.id ?? 0,
-        },
-        refetchQueries: ["OrganizationSettingsMembersPage"],
+        organizationId: organization.id,
+        userId: node.user?.id ?? 0,
       });
+      publish();
     } catch (e: any) {
       toast.error(
         "Error occurred when transferring billing contact: " + e.message,
       );
     }
-  }, [node.user, organization.id, transferBilling]);
+  }, [node.user?.id, organization.id, publish, transferBilling]);
 
   const roles = [
     node.isOwner ? "owner" : null,

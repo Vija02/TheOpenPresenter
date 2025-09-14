@@ -1,6 +1,5 @@
 import { Redirect } from "@/components/Redirect";
 import { SharedLayoutLoggedIn } from "@/components/SharedLayoutLoggedIn";
-import { ApolloError } from "@apollo/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   EmailsForm_UserEmailFragment,
@@ -24,6 +23,7 @@ import React from "react";
 import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
+import { CombinedError } from "urql";
 import { z } from "zod";
 
 function Email({
@@ -34,9 +34,9 @@ function Email({
   hasOtherEmails: boolean;
 }) {
   const canDelete = !email.isPrimary && hasOtherEmails;
-  const [deleteEmail] = useDeleteEmailMutation();
-  const [resendEmailVerification] = useResendEmailVerificationMutation();
-  const [makeEmailPrimary] = useMakeEmailPrimaryMutation();
+  const [, deleteEmail] = useDeleteEmailMutation();
+  const [, resendEmailVerification] = useResendEmailVerificationMutation();
+  const [, makeEmailPrimary] = useMakeEmailPrimaryMutation();
 
   const actions = [
     email.isPrimary && (
@@ -50,13 +50,11 @@ function Email({
     canDelete && (
       <PopConfirm
         title={`Are you sure you want to remove this email?`}
-        onConfirm={() => {
-          deleteEmail({
-            variables: { emailId: email.id },
-            onCompleted: () => {
-              toast.success("Email deleted!");
-            },
+        onConfirm={async () => {
+          await deleteEmail({
+            emailId: email.id,
           });
+          toast.success("Email deleted!");
         }}
         okText="Yes"
         cancelText="No"
@@ -71,14 +69,12 @@ function Email({
       <Button
         size="sm"
         variant="link"
-        onClick={() =>
-          resendEmailVerification({
-            variables: { emailId: email.id },
-            onCompleted: () => {
-              toast.success("Verification email has been sent!");
-            },
-          })
-        }
+        onClick={async () => {
+          await resendEmailVerification({
+            emailId: email.id,
+          });
+          toast.success("Verification email has been sent!");
+        }}
       >
         Resend verification
       </Button>
@@ -87,7 +83,7 @@ function Email({
       <Button
         size="sm"
         variant="link"
-        onClick={() => makeEmailPrimary({ variables: { emailId: email.id } })}
+        onClick={() => makeEmailPrimary({ emailId: email.id })}
         data-cy="settingsemails-button-makeprimary"
       >
         Make primary
@@ -146,9 +142,11 @@ function Email({
 
 const Settings_Emails = () => {
   const [showAddEmailForm, setShowAddEmailForm] = useState(false);
-  const [formError, setFormError] = useState<Error | ApolloError | null>(null);
+  const [formError, setFormError] = useState<Error | CombinedError | null>(
+    null,
+  );
   const query = useSettingsEmailsPageQuery();
-  const { data, loading, error } = query;
+  const { data, fetching: loading, error } = query[0];
   const user = data && data.currentUser;
 
   return (
@@ -231,12 +229,12 @@ type FormInputs = z.infer<typeof formSchema>;
 
 interface AddEmailFormProps {
   onComplete: () => void;
-  error: Error | ApolloError | null;
-  setError: (error: Error | ApolloError | null) => void;
+  error: Error | CombinedError | null;
+  setError: (error: Error | CombinedError | null) => void;
 }
 
 function AddEmailForm({ error, setError, onComplete }: AddEmailFormProps) {
-  const [addEmail] = useAddEmailMutation();
+  const [, addEmail] = useAddEmailMutation();
 
   const form = useForm<FormInputs>({
     resolver: zodResolver(formSchema),
@@ -249,7 +247,7 @@ function AddEmailForm({ error, setError, onComplete }: AddEmailFormProps) {
     async (values: FormInputs) => {
       setError(null);
       try {
-        await addEmail({ variables: { email: values.email } });
+        await addEmail({ email: values.email });
         onComplete();
         setError(null);
       } catch (e: any) {

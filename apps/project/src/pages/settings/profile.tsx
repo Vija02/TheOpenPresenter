@@ -1,6 +1,5 @@
 import { Redirect } from "@/components/Redirect";
 import { SharedLayoutLoggedIn } from "@/components/SharedLayoutLoggedIn";
-import { ApolloError } from "@apollo/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   ProfileSettingsForm_UserFragment,
@@ -12,6 +11,7 @@ import { ErrorAlert, LoadingFull } from "@repo/ui";
 import { Alert, Button, Form, InputControl } from "@repo/ui";
 import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
+import { CombinedError } from "urql";
 import { z } from "zod";
 
 const validationSchema = z.object({
@@ -33,9 +33,11 @@ const validationSchema = z.object({
 type FormInputs = z.infer<typeof validationSchema>;
 
 const Settings_Profile = () => {
-  const [formError, setFormError] = useState<Error | ApolloError | null>(null);
+  const [formError, setFormError] = useState<Error | CombinedError | null>(
+    null,
+  );
   const query = useSettingsProfilePageQuery();
-  const { data, loading, error } = query;
+  const { data, fetching: loading, error } = query[0];
   return (
     <SharedLayoutLoggedIn title="Profile Settings" query={query} noHandleErrors>
       {data && data.currentUser ? (
@@ -57,8 +59,8 @@ const Settings_Profile = () => {
 
 interface ProfileSettingsFormProps {
   user: ProfileSettingsForm_UserFragment;
-  error: Error | ApolloError | null;
-  setError: (error: Error | ApolloError | null) => void;
+  error: Error | CombinedError | null;
+  setError: (error: Error | CombinedError | null) => void;
 }
 
 function ProfileSettingsForm({
@@ -66,7 +68,7 @@ function ProfileSettingsForm({
   error,
   setError,
 }: ProfileSettingsFormProps) {
-  const [updateUser, { data }] = useUpdateUserMutation();
+  const [{ data }, updateUser] = useUpdateUserMutation();
   const success = !!data?.updateUser;
 
   const form = useForm<FormInputs>({
@@ -82,12 +84,10 @@ function ProfileSettingsForm({
       setError(null);
       try {
         await updateUser({
-          variables: {
-            id: user.id,
-            patch: {
-              username: values.username,
-              name: values.name,
-            },
+          id: user.id,
+          patch: {
+            username: values.username,
+            name: values.name,
           },
         });
         setError(null);
