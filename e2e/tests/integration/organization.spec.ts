@@ -12,7 +12,6 @@ test.describe("OrganizationPage", () => {
   test("can create a new project", async ({
     page,
     organizationPage,
-    e2eCommand,
     loginDefault,
   }) => {
     await loginDefault();
@@ -45,5 +44,34 @@ test.describe("OrganizationPage", () => {
     await organizationPage.importCloseButton.click();
 
     await expect(page.getByText("Test Import Project")).toBeInViewport();
+  });
+
+  test("can edit and delete project", async ({
+    page,
+    organizationPage,
+    loginWithDefaultProject,
+  }) => {
+    await loginWithDefaultProject();
+
+    await organizationPage.projectCardEditButtonNth(0).click();
+    await page.getByRole("textbox", { name: "Name" }).click();
+    await page.getByRole("textbox", { name: "Name" }).fill("Test Project Name");
+
+    await page
+      .locator("div")
+      .filter({ hasText: /^Uncategorized$/ })
+      .nth(1)
+      .click();
+    await page.getByRole("option", { name: "Sunday Morning" }).click();
+
+    await page.getByRole("button", { name: "Save" }).click();
+
+    await expect(page.getByText("Test Project Name")).toBeInViewport();
+    await expect(page.getByText("Sunday Morning")).toBeInViewport();
+
+    await organizationPage.projectCardDeleteButtonNth(0).click();
+    await page.getByTestId("popconfirm-confirm").click();
+
+    await expect(page.getByText("Test Project Name")).not.toBeInViewport();
   });
 });
