@@ -13,11 +13,9 @@ test.describe("OrganizationPage", () => {
     page,
     organizationPage,
     e2eCommand,
+    loginDefault,
   }) => {
-    await e2eCommand.login({
-      orgs: [{ name: "TestOrg", slug: "testorg" }],
-      next: "/o/testorg",
-    });
+    await loginDefault();
 
     await expect(page.getByRole("heading", { name: "Projects" })).toBeVisible();
 
@@ -30,12 +28,9 @@ test.describe("OrganizationPage", () => {
   test("can import a new project", async ({
     page,
     organizationPage,
-    e2eCommand,
+    loginDefault,
   }) => {
-    await e2eCommand.login({
-      orgs: [{ name: "TestOrg", slug: "testorg" }],
-      next: "/o/testorg",
-    });
+    await loginDefault();
 
     await organizationPage.importButton.click();
 

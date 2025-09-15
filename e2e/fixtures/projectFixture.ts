@@ -30,18 +30,9 @@ export const test = base.extend<ProjectFixture>({
     const videoPlayerPlugin = new VideoPlayerPlugin(page);
     await use(videoPlayerPlugin);
   },
-  loginAndGoToProject: async ({ e2eCommand }, use) => {
+  loginAndGoToProject: async ({ loginWithDefaultProject }, use) => {
     const fn = async () => {
-      await e2eCommand.login({
-        orgs: [
-          {
-            name: "TestOrg",
-            slug: "testorg",
-            projects: [{ name: "TestProject", slug: "testproject" }],
-          },
-        ],
-        next: "/app/testorg/testproject",
-      });
+      await loginWithDefaultProject("/app/testorg/testproject");
     };
 
     await use(fn);

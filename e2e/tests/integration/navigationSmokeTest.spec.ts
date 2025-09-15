@@ -11,13 +11,10 @@ test.describe("NavigationSmokeTest", () => {
 
   test("can access all pages without error", async ({
     page,
-    organizationPage,
+    loginDefault,
     e2eCommand,
   }) => {
-    await e2eCommand.login({
-      orgs: [{ name: "TestOrg", slug: "testorg" }],
-      next: "/o/",
-    });
+    await loginDefault();
 
     await expect(page).toHaveURL(/o\/testorg/);
 
