@@ -4,7 +4,6 @@ import {
   useOrganizationLoading,
   useOrganizationSlug,
 } from "@/lib/permissionHooks/organization";
-import { ApolloError, QueryResult } from "@apollo/client";
 import {
   Exact,
   OrganizationSettingsTagsPageQuery,
@@ -35,6 +34,7 @@ import { FC, useCallback, useState } from "react";
 import { FiPlus, FiTag } from "react-icons/fi";
 import { VscEdit, VscTrash } from "react-icons/vsc";
 import { toast } from "react-toastify";
+import { CombinedError, UseQueryResponse } from "urql";
 
 const OrganizationSettingsTagsPage = () => {
   const slug = useOrganizationSlug();
@@ -54,7 +54,7 @@ const OrganizationSettingsTagsPage = () => {
 };
 
 interface OrganizationSettingsTagsPageInnerProps {
-  query: QueryResult<
+  query: UseQueryResponse<
     OrganizationSettingsTagsPageQuery,
     Exact<OrganizationSettingsTagsPageQueryVariables>
   >;
@@ -62,9 +62,9 @@ interface OrganizationSettingsTagsPageInnerProps {
 
 const OrganizationSettingsTagsPageInner: FC<
   OrganizationSettingsTagsPageInnerProps
-> = ({ query }) => {
-  const [error, setError] = useState<ApolloError | null>(null);
-  const [editError, setEditError] = useState<ApolloError | null>(null);
+> = ({ query: [{ data }] }) => {
+  const [error, setError] = useState<CombinedError | null>(null);
+  const [editError, setEditError] = useState<CombinedError | null>(null);
 
   const {
     open: newIsOpen,
@@ -79,37 +79,30 @@ const OrganizationSettingsTagsPageInner: FC<
     token: "page",
   });
 
-  const [createTag] = useCreateTagMutation({
-    onCompleted: publish,
-  });
-  const [editTag] = useUpdateTagMutation({
-    onCompleted: publish,
-  });
-  const [deleteTag] = useDeleteTagMutation({
-    onCompleted: publish,
-  });
+  const [, createTag] = useCreateTagMutation();
+  const [, editTag] = useUpdateTagMutation();
+  const [, deleteTag] = useDeleteTagMutation();
 
   const newOnCreate = useCallback(
     async (values: TagType) => {
       try {
         setError(null);
         await createTag({
-          variables: {
-            name: values.name,
-            description: values.description,
-            backgroundColor: values.backgroundColor,
-            foregroundColor: values.foregroundColor,
-            variant: values.variant,
-            organizationId: query.data?.organizationBySlug?.id,
-          },
+          name: values.name,
+          description: values.description,
+          backgroundColor: values.backgroundColor,
+          foregroundColor: values.foregroundColor,
+          variant: values.variant,
+          organizationId: data?.organizationBySlug?.id,
         });
+        publish();
         toast.success("Tag created");
         newOnClose();
       } catch (e: any) {
         setError(e);
       }
     },
-    [query, createTag, newOnClose],
+    [createTag, data?.organizationBySlug?.id, newOnClose, publish],
   );
 
   const onEdit = useCallback(
@@ -117,41 +110,39 @@ const OrganizationSettingsTagsPageInner: FC<
       try {
         setEditError(null);
         await editTag({
-          variables: {
-            id: editingTag?.id,
-            name: values.name,
-            description: values.description ?? "",
-            backgroundColor: values.backgroundColor ?? "",
-            foregroundColor: values.foregroundColor ?? "",
-            variant: values.variant ?? "",
-          },
+          id: editingTag?.id,
+          name: values.name,
+          description: values.description ?? "",
+          backgroundColor: values.backgroundColor ?? "",
+          foregroundColor: values.foregroundColor ?? "",
+          variant: values.variant ?? "",
         });
+        publish();
         toast.success("Tag updated");
         setEditingTag(null);
       } catch (e: any) {
         setEditError(e);
       }
     },
-    [editTag, editingTag?.id],
+    [editTag, editingTag?.id, publish],
   );
 
   const onDeleteTag = useCallback(
     async (id: string) => {
       try {
         await deleteTag({
-          variables: {
-            id,
-          },
+          id,
         });
+        publish();
         toast.success("Tag deleted");
       } catch (e: any) {
         toast.error("Failed to delete tag");
       }
     },
-    [deleteTag],
+    [deleteTag, publish],
   );
 
-  const tags = query.data?.organizationBySlug?.tags.nodes;
+  const tags = data?.organizationBySlug?.tags.nodes;
 
   return (
     <div className="stack-col items-start">

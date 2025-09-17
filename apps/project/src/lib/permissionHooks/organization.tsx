@@ -1,7 +1,7 @@
-import { QueryResult } from "@apollo/client";
 import { SharedOrganizationFragment } from "@repo/graphql";
 import { ErrorAlert, FourOhFour, LoadingFull } from "@repo/ui";
 import React from "react";
+import { UseQueryResponse } from "urql";
 import { useParams } from "wouter";
 
 export function useOrganizationSlug() {
@@ -10,12 +10,9 @@ export function useOrganizationSlug() {
 }
 
 export function useOrganizationLoading(
-  query: Pick<
-    QueryResult<SharedOrganizationFragment>,
-    "data" | "loading" | "error" | "networkStatus" | "client" | "refetch"
-  >,
+  query: UseQueryResponse<SharedOrganizationFragment>,
 ) {
-  const { data, loading, error } = query;
+  const [{ data, fetching: loading, error }] = query;
 
   let child: React.ReactNode | null = null;
   const organization = data?.organizationBySlug;

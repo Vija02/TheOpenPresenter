@@ -20,16 +20,16 @@
     "codegen": "graphql-codegen --config codegen.yml"
   },
   "dependencies": {
-    "@apollo/client": "3.12.2",
     "react": "^19.1.0",
+    "urql": "^5.0.1",
     "use-pubsub-js": "^1.0.7"
   },
   "devDependencies": {
-    "@graphql-codegen/add": "^5.0.3",
-    "@graphql-codegen/cli": "^5.0.3",
-    "@graphql-codegen/typescript": "^4.1.2",
-    "@graphql-codegen/typescript-operations": "^4.4.0",
-    "@graphql-codegen/typescript-react-apollo": "4.3.2",
+    "@graphql-codegen/add": "^6.0.0",
+    "@graphql-codegen/cli": "^6.0.0",
+    "@graphql-codegen/typescript": "^5.0.0",
+    "@graphql-codegen/typescript-operations": "^5.0.0",
+    "@graphql-codegen/typescript-urql": "^4.0.1",
     "@parcel/watcher": "^2.5.0",
     "@repo/typescript-config": "*",
     "pkgroll": "2.5.1"

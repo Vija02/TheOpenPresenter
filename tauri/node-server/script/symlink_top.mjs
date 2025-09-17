@@ -8,6 +8,17 @@ async function createSymlinks() {
   const excludeFolder = "tauri";
 
   try {
+    // Check if target directory exists and has content
+    try {
+      const targetFiles = await fs.readdir(targetDir);
+      if (targetFiles.length > 0) {
+        console.log("Target directory already exists and has content, skipping symlink creation");
+        return;
+      }
+    } catch (err) {
+      // Directory doesn't exist, proceed with creation
+    }
+
     // Make sure target directory exists
     await fs.mkdir(targetDir, { recursive: true });
 

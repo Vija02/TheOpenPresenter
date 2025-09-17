@@ -14,8 +14,8 @@ import {
   FormMessage,
   InputControl,
   OptionControl,
-  OverlayToggleComponentProps,
   SlideGrid,
+  useOverlayToggle,
 } from "@repo/ui";
 import { useCallback, useMemo } from "react";
 import { useForm } from "react-hook-form";
@@ -34,16 +34,14 @@ import { LyricFormLabel } from "./LyricFormLabel";
 import { MobilePreview } from "./MobilePreview";
 import SongEditEditor from "./SongEditEditor";
 
-export type RemoteEditSongModalPropTypes =
-  Partial<OverlayToggleComponentProps> & { song: Song };
+export type RemoteEditSongModalPropTypes = { song: Song };
 
 const RemoteEditSongModal = ({
   song,
-  isOpen,
-  onToggle,
-  resetData,
   ...props
 }: RemoteEditSongModalPropTypes) => {
+  const { isOpen, onToggle, resetData } = useOverlayToggle();
+
   const pluginApi = usePluginAPI();
   const slideStyle = pluginApi.scene.useData((x) => x.pluginData.style);
   const mutableSceneData = pluginApi.scene.useValtioData();

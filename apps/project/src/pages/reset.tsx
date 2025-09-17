@@ -31,7 +31,7 @@ const ResetPage = () => {
   const [error, setError] = useState<Error | null>(null);
   const query = useSharedQuery();
 
-  const [resetPassword, { data }] = useResetPasswordMutation();
+  const [{ data }, resetPassword] = useResetPasswordMutation();
 
   const success = !!data?.resetPassword?.success;
 
@@ -49,11 +49,9 @@ const ResetPage = () => {
       setError(null);
       try {
         await resetPassword({
-          variables: {
-            userId: user_id?.toString(),
-            token: values.token,
-            password: values.password,
-          },
+          userId: user_id?.toString(),
+          token: values.token,
+          password: values.password,
         });
       } catch (e: any) {
         setError(e);

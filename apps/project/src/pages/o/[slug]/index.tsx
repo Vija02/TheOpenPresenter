@@ -31,34 +31,32 @@ import "./index.css";
 const OrganizationPage = () => {
   const slug = useOrganizationSlug();
   const query = useOrganizationDashboardIndexPageQuery({ variables: { slug } });
+  const { data } = query[0];
 
   const { publish } = globalState.modelDataAccess.usePublishAPIChanges({
     token: "page",
   });
 
-  const [deleteProject] = useDeleteProjectMutation({
-    onCompleted: publish,
-  });
+  const [, deleteProject] = useDeleteProjectMutation();
 
   const handleDeleteProject = useCallback(
     async (id: string) => {
       try {
         await deleteProject({
-          variables: {
-            id,
-          },
+          id,
         });
+        publish();
         toast.success("Project successfully deleted");
       } catch (e: any) {
         toast.error("Error occurred when deleting this project: " + e.message);
       }
     },
-    [deleteProject],
+    [deleteProject, publish],
   );
 
   const emptyProject = useMemo(
-    () => query.data?.organizationBySlug?.projects.nodes.length === 0,
-    [query.data?.organizationBySlug?.projects.nodes.length],
+    () => data?.organizationBySlug?.projects.nodes.length === 0,
+    [data?.organizationBySlug?.projects.nodes.length],
   );
 
   return (
@@ -75,10 +73,8 @@ const OrganizationPage = () => {
             )}
           >
             <CreateProjectModal
-              organizationId={query.data?.organizationBySlug?.id}
-              categories={
-                query.data?.organizationBySlug?.categories.nodes ?? []
-              }
+              organizationId={data?.organizationBySlug?.id}
+              categories={data?.organizationBySlug?.categories.nodes ?? []}
             />
           </OverlayToggle>
           <OverlayToggle
@@ -94,21 +90,19 @@ const OrganizationPage = () => {
               </Button>
             )}
           >
-            <ImportProjectModal
-              organizationId={query.data?.organizationBySlug?.id}
-            />
+            <ImportProjectModal organizationId={data?.organizationBySlug?.id} />
           </OverlayToggle>
         </div>
       </div>
 
       <div className="stack-col items-center mb-2 flex-wrap gap-0">
         {emptyProject && <EmptyProject />}
-        {query.data?.organizationBySlug?.projects.nodes.map((project) => (
+        {data?.organizationBySlug?.projects.nodes.map((project) => (
           <ProjectCard
             key={project.id}
             project={project}
-            organizationId={query.data?.organizationBySlug?.id}
-            categories={query.data?.organizationBySlug?.categories.nodes ?? []}
+            organizationId={data?.organizationBySlug?.id}
+            categories={data?.organizationBySlug?.categories.nodes ?? []}
             handleDeleteProject={handleDeleteProject}
           />
         ))}
@@ -123,8 +117,8 @@ const OrganizationPage = () => {
         )}
       >
         <CreateProjectModal
-          organizationId={query.data?.organizationBySlug?.id}
-          categories={query.data?.organizationBySlug?.categories.nodes ?? []}
+          organizationId={data?.organizationBySlug?.id}
+          categories={data?.organizationBySlug?.categories.nodes ?? []}
         />
       </OverlayToggle>
     </SharedOrgLayout>

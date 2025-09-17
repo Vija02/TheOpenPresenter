@@ -2,7 +2,6 @@ import {
   useOrganizationLoading,
   useOrganizationSlug,
 } from "@/lib/permissionHooks/organization";
-import { QueryResult } from "@apollo/client";
 import { SharedOrganizationFragment } from "@repo/graphql";
 import { globalState } from "@repo/lib";
 import { Avatar, AvatarFallback, Button, OverlayToggle } from "@repo/ui";
@@ -11,6 +10,7 @@ import { useEffect } from "react";
 import { IoMdArrowBack, IoMdSettings } from "react-icons/io";
 import { PiProjectorScreenChartLight } from "react-icons/pi";
 import { RxHamburgerMenu } from "react-icons/rx";
+import { UseQueryResponse } from "urql";
 import { Link as WouterLink } from "wouter";
 
 import { AuthRestrict, SharedLayout, SharedLayoutProps } from "./SharedLayout";
@@ -25,13 +25,11 @@ export function SharedOrgLayout({
   ...props
 }: Omit<SharedLayoutProps, "forbidWhen" | "noPad" | "children" | "query"> & {
   children: React.ReactNode;
-  sharedOrgQuery: Pick<
-    QueryResult<SharedOrganizationFragment>,
-    "data" | "loading" | "error" | "networkStatus" | "client" | "refetch"
-  >;
+  sharedOrgQuery: UseQueryResponse<SharedOrganizationFragment>;
 }) {
   const slug = useOrganizationSlug();
-  const { data } = sharedOrgQuery;
+  const result = sharedOrgQuery[0];
+  const { data } = result;
   const organizationLoadingElement = useOrganizationLoading(sharedOrgQuery);
 
   // Update last selected organization
@@ -43,9 +41,9 @@ export function SharedOrgLayout({
   const isMobile = useIsMobile();
 
   useEffect(() => {
-    if (sharedOrgQuery.data?.currentUser) {
+    if (result.data?.currentUser) {
       const membership =
-        sharedOrgQuery.data.currentUser?.organizationMemberships?.nodes.find(
+        result.data.currentUser?.organizationMemberships?.nodes.find(
           (membership) => membership.organization?.slug === slug,
         );
 
@@ -53,7 +51,7 @@ export function SharedOrgLayout({
         setLastSelectedOrganizationId(membership.organization?.id);
       }
     }
-  }, [setLastSelectedOrganizationId, sharedOrgQuery.data?.currentUser, slug]);
+  }, [setLastSelectedOrganizationId, result.data?.currentUser, slug]);
 
   const navbar = React.useMemo(
     () => (

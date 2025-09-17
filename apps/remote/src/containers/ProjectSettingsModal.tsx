@@ -11,7 +11,7 @@ import {
   DialogTitle,
   Form,
   InputControl,
-  OverlayToggleComponentProps,
+  useOverlayToggle,
 } from "@repo/ui";
 import { useCallback, useMemo } from "react";
 import { useForm } from "react-hook-form";
@@ -21,18 +21,13 @@ import z from "zod";
 
 import { useExportProject } from "../api/useExportProject";
 
-export type ProjectSettingsModalPropTypes =
-  Partial<OverlayToggleComponentProps> & {};
-
 const formSchema = z.object({
   name: z.string(),
 });
 
-const ProjectSettingsModal = ({
-  isOpen,
-  onToggle,
-  resetData,
-}: ProjectSettingsModalPropTypes) => {
+const ProjectSettingsModal = () => {
+  const { isOpen, onToggle, resetData } = useOverlayToggle();
+
   const { pluginMetaData, refetch } = usePluginMetaData();
 
   const project = useMemo(
@@ -53,11 +48,11 @@ const ProjectSettingsModal = ({
     });
   }, [exportProject, project?.name]);
 
-  const [updateProject, { loading }] = useUpdateProjectMutation();
+  const [{ fetching: loading }, updateProject] = useUpdateProjectMutation();
 
   const handleSubmit = useCallback(
     async ({ name }: { name: string }) => {
-      updateProject({ variables: { id: project?.id, name } }).then(() => {
+      updateProject({ id: project?.id, name }).then(() => {
         refetch();
 
         resetData?.();

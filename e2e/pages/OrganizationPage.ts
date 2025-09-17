@@ -6,6 +6,9 @@ export class OrganizationPage {
   readonly importCloseButton: Locator;
   readonly newProjectSaveButton: Locator;
   readonly projectCards: Locator;
+  readonly projectCardEditButtonNth: (nth?: number) => Locator;
+  readonly projectCardPresentButtonNth: (nth?: number) => Locator;
+  readonly projectCardDeleteButtonNth: (nth?: number) => Locator;
 
   constructor(public readonly page: Page) {
     this.newProjectButton = page.getByRole("button", {
@@ -22,6 +25,25 @@ export class OrganizationPage {
     this.newProjectSaveButton = page.getByRole("button", {
       name: "Save",
     });
-    this.projectCards = page.getByTestId("project-card");
+
+    this.projectCards = page.locator("[data-testid=project-card]");
+    this.projectCardPresentButtonNth = (nth = 0) =>
+      page
+        .locator("[data-testid=project-card]")
+        .nth(nth)
+        .getByRole("button")
+        .nth(0);
+    this.projectCardEditButtonNth = (nth = 0) =>
+      page
+        .locator("[data-testid=project-card]")
+        .nth(nth)
+        .getByRole("button")
+        .nth(1);
+    this.projectCardDeleteButtonNth = (nth = 0) =>
+      page
+        .locator("[data-testid=project-card]")
+        .nth(nth)
+        .getByRole("button")
+        .nth(2);
   }
 }

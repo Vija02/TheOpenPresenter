@@ -1,4 +1,3 @@
-import { ApolloProvider } from "@apollo/client";
 import "@fontsource-variable/inter";
 import "@fontsource-variable/source-sans-3";
 import { ErrorAlert } from "@repo/ui";
@@ -15,8 +14,8 @@ import "react-toastify/dist/ReactToastify.css";
 import { Router } from "wouter";
 
 import App from "./App";
-import { apolloClient } from "./apollo";
 import "./index.css";
+import { URQLClientProvider } from "./urql";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -34,12 +33,12 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ErrorBoundary FallbackComponent={ErrorAlert}>
       <Router>
-        <ApolloProvider client={apolloClient}>
+        <URQLClientProvider>
           <QueryClientProvider client={queryClient}>
             <App />
             <ToastContainer />
           </QueryClientProvider>
-        </ApolloProvider>
+        </URQLClientProvider>
       </Router>
     </ErrorBoundary>
   </StrictMode>,

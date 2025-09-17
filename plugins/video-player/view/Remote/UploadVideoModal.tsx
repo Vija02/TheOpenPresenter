@@ -1,5 +1,5 @@
 import { appData, extractMediaName } from "@repo/lib";
-import { OverlayToggleComponentProps } from "@repo/ui";
+import { useOverlayToggle } from "@repo/ui";
 import Uppy from "@uppy/core";
 import { DashboardModal, useUppyEvent } from "@uppy/react";
 import Tus from "@uppy/tus";
@@ -8,13 +8,9 @@ import { typeidUnboxed } from "typeid-js";
 
 import { usePluginAPI } from "../pluginApi";
 
-export type UploadVideoModalPropTypes = Partial<OverlayToggleComponentProps>;
+const UploadVideoModal = () => {
+  const { isOpen, onToggle, resetData } = useOverlayToggle();
 
-const UploadVideoModal = ({
-  isOpen,
-  onToggle,
-  resetData,
-}: UploadVideoModalPropTypes) => {
   const pluginApi = usePluginAPI();
 
   const [uppy] = useState(() =>

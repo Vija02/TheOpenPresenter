@@ -10,7 +10,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@apollo/client": "3.12.2",
     "@fontsource-variable/inter": "^5.1.0",
     "@fontsource-variable/source-sans-3": "^5.1.0",
     "@hookform/resolvers": "^5.1.1",
@@ -34,6 +33,7 @@
     "react-select": "^5.10.1",
     "react-toastify": "^11.0.5",
     "slugify": "^1.6.6",
+    "urql": "^5.0.1",
     "use-debounce": "^10.0.4",
     "wouter": "^3.7.1",
     "zod": "^3.25.17",

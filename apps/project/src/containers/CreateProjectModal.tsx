@@ -23,10 +23,10 @@ import {
   FormLabel,
   FormMessage,
   InputControl,
-  OverlayToggleComponentProps,
   Select,
   SelectControl,
   formatHumanReadableDate,
+  useOverlayToggle,
 } from "@repo/ui";
 import { format } from "date-fns";
 import { generateSlug } from "random-word-slugs";
@@ -43,23 +43,19 @@ const formSchema = z.object({
 type FormInputs = z.infer<typeof formSchema>;
 
 export type CreateProjectModalPropTypes = {
-  isOpen?: boolean;
-  onToggle?: () => void;
-  resetData?: () => void;
   organizationId: string;
   categories: CategoryFragment[];
-} & Partial<OverlayToggleComponentProps>;
+};
 
 const UNCATEGORIZED = "uncategorized";
 
 const CreateProjectModal = ({
-  isOpen,
-  onToggle,
-  resetData,
   organizationId,
   categories,
 }: CreateProjectModalPropTypes) => {
-  const [createProject] = useCreateProjectMutation();
+  const { isOpen, onToggle, resetData } = useOverlayToggle();
+
+  const [, createProject] = useCreateProjectMutation();
   const slug = useOrganizationSlug();
 
   const namePlaceholder = useMemo(
@@ -71,11 +67,7 @@ const CreateProjectModal = ({
 
   const { allTagByOrganization, refetch: refetchTags } =
     globalState.modelDataAccess.useTag();
-  const [createTag] = useCreateTagMutation({
-    onCompleted: () => {
-      refetchTags?.();
-    },
-  });
+  const [, createTag] = useCreateTagMutation();
 
   const form = useForm<FormInputs>({
     resolver: zodResolver(formSchema),
@@ -89,15 +81,13 @@ const CreateProjectModal = ({
   const handleSubmit = useCallback(
     (data: FormInputs) => {
       createProject({
-        variables: {
-          organizationId,
-          slug: generateSlug(),
-          name: data.name ?? "",
-          categoryId:
-            data.categoryId === UNCATEGORIZED ? undefined : data.categoryId,
-          tags: selectedTagIds,
-          targetDate: data.targetDate ? data.targetDate.toDateString() : null,
-        },
+        organizationId,
+        slug: generateSlug(),
+        name: data.name ?? "",
+        categoryId:
+          data.categoryId === UNCATEGORIZED ? undefined : data.categoryId,
+        tags: selectedTagIds,
+        targetDate: data.targetDate ? data.targetDate.toDateString() : null,
       }).then((x) => {
         const projectSlug = x.data?.createFullProject?.project?.slug;
 
@@ -183,14 +173,13 @@ const CreateProjectModal = ({
 
                     setSelectedTagIds(selectedIds);
                   }}
-                  onCreateOption={(optionName: string) =>
-                    createTag({
-                      variables: {
-                        name: optionName,
-                        organizationId: organizationId,
-                      },
-                    })
-                  }
+                  onCreateOption={async (optionName: string) => {
+                    await createTag({
+                      name: optionName,
+                      organizationId: organizationId,
+                    });
+                    refetchTags?.();
+                  }}
                 />
               </div>
             </DialogBody>

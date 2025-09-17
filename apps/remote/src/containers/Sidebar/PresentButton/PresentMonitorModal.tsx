@@ -7,7 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
   OverlayToggle,
-  OverlayToggleComponentProps,
+  useOverlayToggle,
 } from "@repo/ui";
 import { useMemo } from "react";
 
@@ -15,24 +15,16 @@ import { onPresentClick } from "./desktopPresent";
 import { useAllWindows } from "./useAllWindows";
 import { useAvailableMonitors } from "./useAvailableMonitors";
 
-export type PresentMonitorModalPropTypes = Partial<OverlayToggleComponentProps>;
+const PresentMonitorModal = () => {
+  const { isOpen, onToggle } = useOverlayToggle();
 
-const PresentMonitorModal = ({
-  isOpen,
-  onToggle,
-  ...props
-}: PresentMonitorModalPropTypes) => {
   const { data: monitors } = useAvailableMonitors();
   const { refetch: refetchWindow } = useAllWindows();
 
   const { orgSlug, projectSlug } = usePluginMetaData();
 
   return (
-    <Dialog
-      open={isOpen ?? false}
-      onOpenChange={onToggle ?? (() => {})}
-      {...props}
-    >
+    <Dialog open={isOpen ?? false} onOpenChange={onToggle ?? (() => {})}>
       <DialogContent size="xl">
         <DialogHeader>
           <DialogTitle>Select monitor</DialogTitle>

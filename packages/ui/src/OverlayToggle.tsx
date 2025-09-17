@@ -1,4 +1,10 @@
-import { cloneElement, useCallback, useEffect, useState } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 
 import { useDisclosure } from "./lib/useDisclosure";
 
@@ -27,11 +33,21 @@ export type OverlayTogglePropTypes = {
   /** The function returning ReactNode that will toggle the Overlay component */
   toggler: (_prop: OverlayToggleTogglerFunctionProps) => React.ReactNode;
   /** The Overlay component (Eg: Modal, Drawer) */
-  children: React.ReactElement<OverlayToggleComponentProps>;
+  children: React.ReactElement;
   /** If true, rendering of content will defer until the overlay is open */
   isLazy?: boolean;
   /** If true, don't automatically reset on close */
   disableResetOnClose?: boolean;
+};
+
+/** Pass state through context */
+export const OverlayToggleContext = createContext<OverlayToggleComponentProps>({
+  isOpen: false,
+});
+
+/** Hook to access the OverlayToggle disclosure state */
+export const useOverlayToggle = () => {
+  return useContext(OverlayToggleContext);
 };
 
 /**
@@ -58,15 +74,11 @@ export const OverlayToggle = ({
   }, [open, resetData]);
 
   return (
-    <>
+    <OverlayToggleContext value={{ isOpen: open, onToggle, resetData }}>
       {toggler({ onOpen, onToggle })}
-      {(open || !isLazy) &&
-        cloneElement(children, {
-          key,
-          isOpen: open,
-          onToggle,
-          resetData,
-        })}
-    </>
+      {(open || !isLazy) && (
+        <React.Fragment key={key}>{children}</React.Fragment>
+      )}
+    </OverlayToggleContext>
   );
 };

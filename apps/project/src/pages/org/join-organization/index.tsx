@@ -1,5 +1,4 @@
 import { SharedLayoutLoggedIn } from "@/components/SharedLayoutLoggedIn";
-import { ApolloError } from "@apollo/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   useJoinOrganizationIndexPageQuery,
@@ -23,6 +22,7 @@ import { useCallback, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { FaCheck } from "react-icons/fa";
 import { toast } from "react-toastify";
+import { CombinedError } from "urql";
 import { useDebounce } from "use-debounce";
 import { Link as WouterLink } from "wouter";
 import * as z from "zod";
@@ -34,8 +34,9 @@ const formSchema = z.object({
 type FormInputs = z.infer<typeof formSchema>;
 
 const JoinOrganizationPage = () => {
-  const [error, setError] = useState<Error | ApolloError | null>(null);
+  const [error, setError] = useState<Error | CombinedError | null>(null);
   const query = useJoinOrganizationIndexPageQuery();
+  const { data } = query[0];
 
   const code = getCodeFromError(error);
 
@@ -44,18 +45,17 @@ const JoinOrganizationPage = () => {
 
   const [done, setDone] = useState(false);
 
-  const [requestJoinToOrganization] = useRequestJoinToOrganizationMutation();
-  const [resendEmailVerification] = useResendEmailVerificationMutation();
+  const [, requestJoinToOrganization] = useRequestJoinToOrganizationMutation();
+  const [, resendEmailVerification] = useResendEmailVerificationMutation();
 
-  const { data: publicOrganizations } = useSearchPublicOrganizationsQuery({
-    returnPartialData: true,
+  const [{ data: publicOrganizations }] = useSearchPublicOrganizationsQuery({
     variables: { search: debouncedSearch },
-    skip: debouncedSearch === "",
+    pause: debouncedSearch === "",
   });
 
   const userIsVerified = useMemo(
-    () => query.data?.currentUser?.isVerified ?? true,
-    [query.data?.currentUser?.isVerified],
+    () => data?.currentUser?.isVerified ?? true,
+    [data?.currentUser?.isVerified],
   );
 
   const form = useForm<FormInputs>({
@@ -70,7 +70,7 @@ const JoinOrganizationPage = () => {
       setError(null);
       try {
         await requestJoinToOrganization({
-          variables: { organizationId: values.selectedOrgId },
+          organizationId: values.selectedOrgId,
         });
         setError(null);
         setDone(true);
@@ -114,15 +114,11 @@ const JoinOrganizationPage = () => {
                 className="mt-2"
                 size="sm"
                 variant="outline"
-                onClick={() => {
-                  resendEmailVerification({
-                    variables: {
-                      emailId: query.data?.currentUser?.userEmails.nodes[0]?.id,
-                    },
-                    onCompleted: () => {
-                      toast.success("Verification email has been sent!");
-                    },
+                onClick={async () => {
+                  await resendEmailVerification({
+                    emailId: data?.currentUser?.userEmails.nodes[0]?.id,
                   });
+                  toast.success("Verification email has been sent!");
                 }}
               >
                 Resend verification

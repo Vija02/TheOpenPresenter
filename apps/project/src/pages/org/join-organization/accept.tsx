@@ -1,5 +1,4 @@
 import { SharedLayoutLoggedIn } from "@/components/SharedLayoutLoggedIn";
-import { QueryResult } from "@apollo/client";
 import {
   JoinRequestDetailQuery,
   JoinRequestDetailQueryVariables,
@@ -9,6 +8,7 @@ import {
 } from "@repo/graphql";
 import { Button, ErrorAlert, LoadingPart, Skeleton } from "@repo/ui";
 import React, { FC } from "react";
+import { UseQueryResponse } from "urql";
 import { useSearchParams } from "wouter";
 
 enum Status {
@@ -26,8 +26,8 @@ const JoinRequestAccept = () => {
     variables: {
       id,
     },
-    skip: !id,
-    fetchPolicy: "network-only",
+    pause: !id,
+    requestPolicy: "network-only",
   });
 
   return (
@@ -37,7 +37,7 @@ const JoinRequestAccept = () => {
       noHandleErrors
     >
       <JoinRequestAcceptInner
-        currentUser={query.data?.currentUser}
+        currentUser={query[0].data?.currentUser}
         id={id}
         query={query}
       />
@@ -47,15 +47,18 @@ const JoinRequestAccept = () => {
 
 interface JoinRequestAcceptInnerProps {
   currentUser?: SharedLayout_UserFragment | null;
-  query: QueryResult<JoinRequestDetailQuery, JoinRequestDetailQueryVariables>;
+  query: UseQueryResponse<
+    JoinRequestDetailQuery,
+    JoinRequestDetailQueryVariables
+  >;
   id: string;
 }
 
 const JoinRequestAcceptInner: FC<JoinRequestAcceptInnerProps> = (props) => {
   const { id, query } = props;
 
-  const { data, loading, error } = query;
-  const [acceptJoinRequest] = useAcceptJoinRequestToOrganizationMutation();
+  const { data, fetching: loading, error } = query[0];
+  const [, acceptJoinRequest] = useAcceptJoinRequestToOrganizationMutation();
 
   const [status, setStatus] = React.useState(Status.PENDING);
   const [acceptError, setAcceptError] = React.useState<Error | null>(null);
@@ -69,9 +72,7 @@ const JoinRequestAcceptInner: FC<JoinRequestAcceptInnerProps> = (props) => {
     setStatus(Status.ACCEPTING);
     // Call mutation
     acceptJoinRequest({
-      variables: {
-        id,
-      },
+      id,
     }).then(
       () => {
         setStatus(Status.DONE);

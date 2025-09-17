@@ -8,7 +8,7 @@ import {
   DialogTitle,
   Form,
   OptionControl,
-  OverlayToggleComponentProps,
+  useOverlayToggle,
 } from "@repo/ui";
 import { useCallback } from "react";
 import { useForm } from "react-hook-form";
@@ -18,17 +18,13 @@ import { DisplayMode } from "../../src/types";
 import { usePluginAPI } from "../pluginApi";
 import { displayTypeMapping } from "./displayTypeMapping";
 
-export type SettingsModalPropTypes = Partial<OverlayToggleComponentProps>;
-
 type SettingsData = {
   displayMode?: DisplayMode;
 };
 
-const SettingsModal = ({
-  isOpen,
-  onToggle,
-  resetData,
-}: SettingsModalPropTypes) => {
+const SettingsModal = () => {
+  const { isOpen, onToggle, resetData } = useOverlayToggle();
+
   const pluginApi = usePluginAPI();
   const mutableRendererData = pluginApi.renderer.useValtioData();
   const type = pluginApi.scene.useData((x) => x.pluginData.type);

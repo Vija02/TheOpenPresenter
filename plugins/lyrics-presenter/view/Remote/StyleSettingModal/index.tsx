@@ -12,12 +12,12 @@ import {
   FormLabel,
   NumberInputControl,
   OptionControl,
-  OverlayToggleComponentProps,
   SelectControl,
   SlideGrid,
   ToggleControl,
   ToggleGroup,
   ToggleGroupItem,
+  useOverlayToggle,
 } from "@repo/ui";
 import { useCallback, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
@@ -29,13 +29,9 @@ import { usePluginAPI } from "../../pluginApi";
 import { MobilePreview } from "../RemoteEditSongModal/MobilePreview";
 import { SongViewSlides } from "../SongViewSlides";
 
-export type StyleSettingModalPropTypes = Partial<OverlayToggleComponentProps>;
+const StyleSettingModal = () => {
+  const { isOpen, onToggle, resetData } = useOverlayToggle();
 
-const StyleSettingModal = ({
-  isOpen,
-  onToggle,
-  resetData,
-}: StyleSettingModalPropTypes) => {
   const pluginApi = usePluginAPI();
   const mutablePluginInfo = pluginApi.scene.useValtioData();
 

@@ -1,10 +1,6 @@
-import { ApolloQueryResult, useApolloClient } from "@apollo/client";
 import {
-  AllTagByOrganizationDocument,
-  AllTagByOrganizationQuery,
-  AllTagByOrganizationQueryVariables,
   TagFragment,
-  useAllTagByOrganizationQuery,
+  useAllTagByOrganizationQuery
 } from "@repo/graphql";
 import React, {
   createContext,
@@ -14,6 +10,7 @@ import React, {
   useMemo,
   useState,
 } from "react";
+import { UseQueryExecute } from "urql";
 
 import { useSubscribeAPIChanges } from "./pubsub";
 
@@ -22,19 +19,15 @@ type TagProviderPropTypes = {
 };
 
 type TagProviderType = {
-  searchAllTagByOrganization:
-    | ((search: string) => Promise<ApolloQueryResult<TagFragment[]>>)
-    | null;
   loadAllTagByOrganization: (() => void) | null;
-  allTagByOrganizationQueryResult: ReturnType<
-    typeof useAllTagByOrganizationQuery
-  > | null;
+  allTagByOrganizationQueryResult:
+    | ReturnType<typeof useAllTagByOrganizationQuery>[0]
+    | null;
   allTagByOrganization: TagFragment[] | undefined;
-  refetch: ReturnType<typeof useAllTagByOrganizationQuery>["refetch"] | null;
+  refetch: UseQueryExecute | null;
 };
 
 const initialData: TagProviderType = {
-  searchAllTagByOrganization: null,
   loadAllTagByOrganization: null,
   allTagByOrganizationQueryResult: null,
   allTagByOrganization: undefined,
@@ -65,28 +58,11 @@ export const TagProvider = ({
     setSkip(false);
   }, []);
 
-  const allTagByOrganizationQueryResult = useAllTagByOrganizationQuery({
-    variables: { slug, search: "" },
-    skip,
-  });
-
-  const client = useApolloClient();
-  const searchAllTagByOrganization = useCallback(
-    (search: string) =>
-      client
-        .query<AllTagByOrganizationQuery, AllTagByOrganizationQueryVariables>({
-          query: AllTagByOrganizationDocument,
-          variables: { slug, search },
-        })
-        .then(
-          (res) =>
-            ({
-              ...res,
-              data: res.data.organizationBySlug?.tags.nodes,
-            }) as ApolloQueryResult<TagFragment[]>,
-        ),
-    [client, slug],
-  );
+  const [allTagByOrganizationQueryResult, refetch] =
+    useAllTagByOrganizationQuery({
+      variables: { slug, search: "" },
+      pause: skip,
+    });
 
   const allTagByOrganization = useMemo(
     () => allTagByOrganizationQueryResult.data?.organizationBySlug?.tags?.nodes,
@@ -96,8 +72,8 @@ export const TagProvider = ({
   useSubscribeAPIChanges({
     token: "tag",
     handler: () => {
-      if (allTagByOrganizationQueryResult.called) {
-        allTagByOrganizationQueryResult.refetch();
+      if (allTagByOrganizationQueryResult.data) {
+        refetch();
       }
     },
   });
@@ -105,11 +81,10 @@ export const TagProvider = ({
   return (
     <TagContext.Provider
       value={{
-        searchAllTagByOrganization,
         loadAllTagByOrganization,
         allTagByOrganizationQueryResult,
         allTagByOrganization,
-        refetch: allTagByOrganizationQueryResult.refetch,
+        refetch,
       }}
     >
       {children}

@@ -6,17 +6,18 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  OverlayToggleComponentProps,
   Skeleton,
+  useOverlayToggle,
 } from "@repo/ui";
 import { useEffect, useState } from "react";
 import QRCode from "react-qr-code";
 
-export type QRLoginModalPropTypes = Partial<OverlayToggleComponentProps> & {
+export type QRLoginModalPropTypes = {
   next: string;
 };
 
-const QRLoginModal = ({ isOpen, onToggle, next }: QRLoginModalPropTypes) => {
+const QRLoginModal = ({ next }: QRLoginModalPropTypes) => {
+  const { isOpen, onToggle } = useOverlayToggle();
   const [qrId, setQRId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -63,7 +64,7 @@ const QRLoginModal = ({ isOpen, onToggle, next }: QRLoginModalPropTypes) => {
               <div className="w-full">
                 <QRCode
                   className="h-auto max-w-full w-full max-h-[256px]"
-                  value={`${import.meta.env.VITE_PUBLIC_ROOT_URL}/qr-auth/auth?id=${qrId}`}
+                  value={`${window.location.origin}/qr-auth/auth?id=${qrId}`}
                 />
               </div>
             )}

@@ -9,7 +9,6 @@
     "prettier": "prettier --write \"**/*.{ts,tsx}\""
   },
   "dependencies": {
-    "@apollo/client": "3.12.2",
     "@hookform/resolvers": "^5.1.1",
     "@repo/observability": "*",
     "@tanstack/react-query": "^5.62.3",
@@ -19,7 +18,6 @@
     "axios": "^1.10.0",
     "class-variance-authority": "^0.7.1",
     "graphql": "^15.9.0",
-    "graphql-ws": "^5.16.0",
     "lodash-es": "^4.17.21",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
@@ -30,6 +28,7 @@
     "react-toastify": "^10.0.6",
     "react18-json-view": "^0.2.8",
     "typeid-js": "^1.1.0",
+    "urql": "^5.0.1",
     "use-disposable": "^1.0.4",
     "wouter": "^3.7.1",
     "yjs": "13.6.26",

@@ -8,9 +8,9 @@
     "declarationDir": ".",
     "lib": ["es2018", "esnext.asynciterable"],
     "target": "es2018",
-    "module": "CommonJS",
+    "module": "esnext",
     "jsx": "react"
   },
-  "include": ["index.tsx", "apollo-react-hooks.tsx"],
+  "include": ["index.tsx", "urql-patch.tsx"],
   "exclude": []
 }

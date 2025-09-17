@@ -89,6 +89,7 @@ export function PopConfirm({
             variant="destructive"
             onClick={handleConfirm}
             isLoading={isLoading}
+            data-testid="popconfirm-confirm"
             {...okButtonProps}
           >
             {okText}

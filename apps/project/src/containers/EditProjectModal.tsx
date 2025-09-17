@@ -25,10 +25,10 @@ import {
   FormLabel,
   FormMessage,
   InputControl,
-  OverlayToggleComponentProps,
   Select,
   SelectControl,
   formatHumanReadableDate,
+  useOverlayToggle,
 } from "@repo/ui";
 import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -45,25 +45,21 @@ type FormInputs = z.infer<typeof formSchema>;
 const UNCATEGORIZED = "uncategorized";
 
 export type EditProjectModalPropTypes = {
-  isOpen?: boolean;
-  onToggle?: () => void;
-  resetData?: () => void;
   organizationId: string;
   categories: CategoryFragment[];
   project: ProjectFragment;
-} & Partial<OverlayToggleComponentProps>;
+};
 
 const EditProjectModal = ({
-  isOpen,
-  onToggle,
-  resetData,
   organizationId,
   categories,
   project,
 }: EditProjectModalPropTypes) => {
-  const [updateProject] = useUpdateProjectMutation();
-  const [createProjectTag] = useCreateProjectTagMutation();
-  const [deleteProjectTag] = useDeleteProjectTagMutation();
+  const { isOpen, onToggle, resetData } = useOverlayToggle();
+
+  const [, updateProject] = useUpdateProjectMutation();
+  const [, createProjectTag] = useCreateProjectTagMutation();
+  const [, deleteProjectTag] = useDeleteProjectTagMutation();
 
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>(
     project.projectTags.nodes.map((x) => x.tag?.id),
@@ -80,11 +76,7 @@ const EditProjectModal = ({
 
   const { allTagByOrganization, refetch: refetchTags } =
     globalState.modelDataAccess.useTag();
-  const [createTag] = useCreateTagMutation({
-    onCompleted: () => {
-      refetchTags?.();
-    },
-  });
+  const [, createTag] = useCreateTagMutation();
 
   const form = useForm<FormInputs>({
     resolver: zodResolver(formSchema),
@@ -98,13 +90,11 @@ const EditProjectModal = ({
   const handleSubmit = useCallback(
     async (data: FormInputs) => {
       await updateProject({
-        variables: {
-          id: project.id,
-          name: data.name,
-          categoryId:
-            data.categoryId === UNCATEGORIZED ? undefined : data.categoryId,
-          targetDate: data.targetDate ? data.targetDate.toDateString() : null,
-        },
+        id: project.id,
+        name: data.name,
+        categoryId:
+          data.categoryId === UNCATEGORIZED ? undefined : data.categoryId,
+        targetDate: data.targetDate ? data.targetDate.toDateString() : null,
       });
       const existingTagIds = project.projectTags.nodes.map((x) => x.tag?.id);
       const newTagIds = selectedTagIds;
@@ -118,14 +108,13 @@ const EditProjectModal = ({
 
       const createPromises = missingTagIds.map((id) =>
         createProjectTag({
-          variables: { projectId: project.id, tagId: id },
+          projectId: project.id,
+          tagId: id,
         }),
       );
       const deletePromises = nonMissingTagIds.map((id) =>
         deleteProjectTag({
-          variables: {
-            id: project.projectTags.nodes.find((x) => x.tag?.id === id)?.id,
-          },
+          id: project.projectTags.nodes.find((x) => x.tag?.id === id)?.id,
         }),
       );
 
@@ -217,14 +206,13 @@ const EditProjectModal = ({
 
                     setSelectedTagIds(selectedIds);
                   }}
-                  onCreateOption={(optionName: string) =>
-                    createTag({
-                      variables: {
-                        name: optionName,
-                        organizationId: organizationId,
-                      },
-                    })
-                  }
+                  onCreateOption={async (optionName: string) => {
+                    await createTag({
+                      name: optionName,
+                      organizationId: organizationId,
+                    });
+                    refetchTags?.();
+                  }}
                 />
               </div>
             </DialogBody>
@@ -233,7 +221,9 @@ const EditProjectModal = ({
                 <Button type="submit" variant="success">
                   Save
                 </Button>
-                <Button variant="outline" onClick={onToggle}>Close</Button>
+                <Button variant="outline" onClick={onToggle}>
+                  Close
+                </Button>
               </div>
             </DialogFooter>
           </form>

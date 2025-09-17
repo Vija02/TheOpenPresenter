@@ -1,6 +1,5 @@
 import { Redirect } from "@/components/Redirect";
 import { AuthRestrict, SharedLayout } from "@/components/SharedLayout";
-import { QueryResult } from "@apollo/client";
 import {
   InvitationDetailQuery,
   InvitationDetailQueryVariables,
@@ -9,15 +8,9 @@ import {
   useInvitationDetailQuery,
 } from "@repo/graphql";
 import { getCodeFromError } from "@repo/lib";
-import {
-  Button,
-  ErrorAlert,
-  FourOhFour,
-  Link,
-  LoadingPart,
-  Skeleton,
-} from "@repo/ui";
+import { Button, ErrorAlert, Link, LoadingPart, Skeleton } from "@repo/ui";
 import React, { FC } from "react";
+import { UseQueryResponse } from "urql";
 import { Link as WouterLink } from "wouter";
 import { useLocation, useSearch, useSearchParams } from "wouter";
 
@@ -42,8 +35,8 @@ const InvitationAccept = () => {
       id,
       code: code,
     },
-    skip: !id,
-    fetchPolicy: "network-only",
+    pause: !id,
+    requestPolicy: "network-only",
   });
 
   if (!id) {
@@ -75,7 +68,10 @@ const InvitationAccept = () => {
 
 interface InvitationAcceptInnerProps {
   currentUser?: SharedLayout_UserFragment | null;
-  query: QueryResult<InvitationDetailQuery, InvitationDetailQueryVariables>;
+  query: UseQueryResponse<
+    InvitationDetailQuery,
+    InvitationDetailQueryVariables
+  >;
   id: string;
   code: string;
 }
@@ -84,8 +80,8 @@ const InvitationAcceptInner: FC<InvitationAcceptInnerProps> = (props) => {
   const { id, code, query } = props;
   const [location, navigate] = useLocation();
 
-  const { data, loading, error } = query;
-  const [acceptInvite] = useAcceptOrganizationInviteMutation();
+  const { data, fetching: loading, error } = query[0];
+  const [, acceptInvite] = useAcceptOrganizationInviteMutation();
 
   const [status, setStatus] = React.useState(Status.PENDING);
   const [acceptError, setAcceptError] = React.useState<Error | null>(null);
@@ -98,10 +94,8 @@ const InvitationAcceptInner: FC<InvitationAcceptInnerProps> = (props) => {
     setStatus(Status.ACCEPTING);
     // Call mutation
     acceptInvite({
-      variables: {
-        id,
-        code,
-      },
+      id,
+      code,
     }).then(
       () => {
         // Redirect
