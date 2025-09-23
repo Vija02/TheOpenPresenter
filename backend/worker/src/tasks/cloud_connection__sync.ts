@@ -12,12 +12,13 @@ interface CloudConnectionSyncPayload {
    * request id
    */
   id: string;
+  force_resync?: boolean;
 }
 
 const task: Task = async (inPayload, { addJob, withPgClient }) => {
   try {
     const payload: CloudConnectionSyncPayload = inPayload as any;
-    const { id: cloudConnectionId } = payload;
+    const { id: cloudConnectionId, force_resync } = payload;
     const {
       rows: [cloudConnection],
     } = await withPgClient((pgClient) =>
@@ -67,6 +68,10 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
     const projectIdsToCreateOrUpdate =
       projectUpdatedRes.data?.organizationBySlug?.projects.nodes
         .filter((cloudProject) => {
+          if (force_resync) {
+            return true;
+          }
+
           const foundInCurrentProject = localProjects.find(
             (currentProject) => cloudProject.id === currentProject.id,
           );
