@@ -70,10 +70,6 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
           const foundInCurrentProject = localProjects.find(
             (currentProject) => cloudProject.id === currentProject.id,
           );
-          console.log(
-            new Date(foundInCurrentProject.updated_at),
-            new Date(cloudProject.updatedAt),
-          );
           return (
             !foundInCurrentProject ||
             new Date(foundInCurrentProject.updated_at).getTime() !==
