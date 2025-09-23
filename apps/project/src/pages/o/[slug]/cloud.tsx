@@ -100,6 +100,22 @@ const OrganizationCloudPage = () => {
       }
     }
   }, [cloudConnection, syncCloudConnection]);
+  const onForceSync = useCallback(async () => {
+    if (cloudConnection) {
+      setIsSyncing(true);
+      setError(null);
+      try {
+        await syncCloudConnection({
+          cloudConnectionId: cloudConnection.id,
+          forceResync: true,
+        });
+      } catch (err) {
+        setError(err as Error);
+      } finally {
+        setIsSyncing(false);
+      }
+    }
+  }, [cloudConnection, syncCloudConnection]);
 
   return (
     <SharedOrgLayout title="Cloud" sharedOrgQuery={query}>
@@ -199,6 +215,13 @@ const OrganizationCloudPage = () => {
 
               <Button onClick={onSync} disabled={isSyncing} variant="outline">
                 {isSyncing ? "Syncing..." : "Start Sync"}
+              </Button>
+              <Button
+                onClick={onForceSync}
+                disabled={isSyncing}
+                variant="outline"
+              >
+                {isSyncing ? "Syncing..." : "Force Resync"}
               </Button>
             </div>
           )}

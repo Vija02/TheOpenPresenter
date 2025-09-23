@@ -7,6 +7,7 @@ export const syncCloudConnection = makeExtendSchemaPlugin(() => ({
   typeDefs: gql`
     input SyncCloudConnectionInput {
       cloudConnectionId: UUID!
+      forceResync: Boolean
     }
 
     type SyncCloudConnectionPayload {
@@ -25,7 +26,7 @@ export const syncCloudConnection = makeExtendSchemaPlugin(() => ({
   resolvers: {
     Mutation: {
       async syncCloudConnection(_mutation, args, context: OurGraphQLContext) {
-        const { cloudConnectionId } = args.input;
+        const { cloudConnectionId, forceResync = false } = args.input;
         const { pgClient, rootPgPool } = context;
 
         await pgClient.query("SAVEPOINT graphql_mutation");
@@ -47,11 +48,12 @@ export const syncCloudConnection = makeExtendSchemaPlugin(() => ({
               select graphile_worker.add_job(
                 'cloud_connection__sync',
                 json_build_object(
-                  'id', $1::uuid
+                  'id', $1::uuid,
+                  'force_resync', $2::boolean
                 )
               );
             `,
-            [cloudConnectionId],
+            [cloudConnectionId, forceResync],
           );
 
           return { success: true };
