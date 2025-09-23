@@ -98,6 +98,7 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
       throw res.error;
     }
 
+    // CATEGORIES
     const requiredCategories =
       res.data?.organizationBySlug?.projects.nodes
         .map((x) => x.category?.name)
@@ -107,9 +108,9 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
     const { rows: currentCategories } = await withPgClient((pgClient) =>
       pgClient.query(
         `
-          SELECT * FROM app_public.categories WHERE name = ANY($1)
+          SELECT * FROM app_public.categories WHERE name = ANY($1) AND organization_id = $2
         `,
-        [requiredCategories],
+        [requiredCategories, cloudConnection.organization_id],
       ),
     );
     categoriesMap.push(...currentCategories);
