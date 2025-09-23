@@ -1,0 +1,16 @@
+mutation SelectTargetOrganizationCloudConnection(
+  $cloudConnectionId: UUID!
+  $targetOrganizationSlug: String!
+) {
+  updateCloudConnection(
+    input: {
+      id: $cloudConnectionId
+      patch: { targetOrganizationSlug: $targetOrganizationSlug }
+    }
+  ) {
+    cloudConnection {
+      id
+      targetOrganizationSlug
+    }
+  }
+}
