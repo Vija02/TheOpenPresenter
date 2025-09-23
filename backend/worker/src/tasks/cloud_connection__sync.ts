@@ -15,6 +15,7 @@ interface CloudConnectionSyncPayload {
   force_resync?: boolean;
 }
 
+// TODO: Consider if categories or tags changes
 const task: Task = async (inPayload, { addJob, withPgClient }) => {
   try {
     const payload: CloudConnectionSyncPayload = inPayload as any;
@@ -140,6 +141,66 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
       categoriesMap.push(...newCategories);
     }
 
+    // TAGS
+    // Tags have multiple fields. But we'll only match based on name here. So the style might look different
+    // if we already have something defined locally that has the same name.
+    const requiredTags =
+      res.data?.organizationBySlug?.projects.nodes
+        .flatMap((x) => x.projectTags.nodes.flatMap((y) => y.tag?.name))
+        .filter((name): name is string => name != null) || [];
+
+    const tagsMap: { id: string; name: string }[] = [];
+    const { rows: currentTags } = await withPgClient((pgClient) =>
+      pgClient.query(
+        `
+          SELECT * FROM app_public.tags WHERE name = ANY($1) AND organization_id = $2
+        `,
+        [requiredTags, cloudConnection.organization_id],
+      ),
+    );
+    tagsMap.push(...currentTags);
+
+    // Create missing tags
+    const existingTagNames = new Set(tagsMap.map((cat) => cat.name));
+    const missingTags = Array.from(
+      new Set(requiredTags.filter((name) => !existingTagNames.has(name))),
+    );
+
+    const missingTagsFullData = missingTags.map(
+      (missingTag) =>
+        res.data?.organizationBySlug?.tags.nodes.find(
+          (tag) => tag.name === missingTag,
+        )!,
+    );
+
+    if (missingTags.length > 0) {
+      const { rows: newTags } = await withPgClient((pgClient) =>
+        pgClient.query(
+          `
+            INSERT INTO app_public.tags (name, description, background_color, foreground_color, variant, organization_id)
+              SELECT name, description, background_color, foreground_color, variant, organization_id
+              FROM jsonb_to_recordset($1) AS t (name text, description text, background_color text, foreground_color text, variant text, organization_id uuid)
+            RETURNING *
+          `,
+          [
+            JSON.stringify(
+              missingTagsFullData.map((tag) => ({
+                name: tag.name,
+                description: tag.description,
+                background_color: tag.backgroundColor,
+                foreground_color: tag.foregroundColor,
+                variant: tag.variant,
+                organization_id: cloudConnection.organization_id,
+              })),
+            ),
+          ],
+        ),
+      );
+
+      // Add newly created tags to the tagsMap
+      tagsMap.push(...newTags);
+    }
+
     // Update metadata
     await withPgClient(async (pgClient) => {
       await pgClient.query("SET session_replication_role = replica;");
@@ -181,6 +242,73 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
         ],
       );
     });
+
+    // TODO: Handle deleted projects
+
+    const projectsToCreateOrUpdate =
+      res.data?.organizationBySlug?.projects.nodes.filter((project) =>
+        projectIdsToCreateOrUpdate?.includes(project.id),
+      ) ?? [];
+
+    // Now create the project-tag connection
+    await withPgClient((pgClient) =>
+      pgClient.query(
+        `
+          INSERT INTO app_public.project_tags (project_id, tag_id)
+            SELECT project_id, tag_id
+            FROM jsonb_to_recordset($1) AS t (project_id uuid, tag_id uuid)
+          ON CONFLICT DO NOTHING
+        `,
+        [
+          JSON.stringify(
+            projectsToCreateOrUpdate.flatMap((project) =>
+              project.projectTags.nodes.map((x) => ({
+                project_id: project.id,
+                tag_id: tagsMap.find((tagMap) => tagMap.name === x.tag?.name)
+                  ?.id,
+              })),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    // Remove trailing project tags
+    const { rows: currentProjectTags } = await withPgClient((pgClient) =>
+      pgClient.query(
+        `
+          SELECT * FROM app_public.project_tags WHERE project_id = ANY($1)
+        `,
+        [projectIdsToCreateOrUpdate],
+      ),
+    );
+    const projectTagsToCreateOrUpdate = projectsToCreateOrUpdate.flatMap(
+      (project) =>
+        project.projectTags.nodes.map((pt) => ({
+          project_id: project.id,
+          tag_id: tagsMap.find((tagMap) => tagMap.name === pt.tag?.name)?.id,
+        })),
+    );
+    const projectTagsToDelete = currentProjectTags.filter(
+      (current) =>
+        !projectTagsToCreateOrUpdate.some(
+          (x) =>
+            x.project_id === current.project_id && x.tag_id === current.tag_id,
+        ),
+    );
+
+    await withPgClient((pgClient) =>
+      pgClient.query(
+        `
+          DELETE FROM app_public.project_tags WHERE 
+            (project_id, tag_id) IN (
+              SELECT project_id, tag_id
+                FROM jsonb_to_recordset($1) AS t (project_id uuid, tag_id uuid)
+            )
+        `,
+        [JSON.stringify(projectTagsToDelete)],
+      ),
+    );
 
     if (projectIdsToCreateOrUpdate && projectIdsToCreateOrUpdate.length > 0) {
       await Promise.all(
