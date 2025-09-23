@@ -59,19 +59,22 @@ export default async (app: Express) => {
         tableName: "connect_pg_simple_sessions",
       });
 
-  const sessionMiddleware = session({
-    rolling: true,
-    saveUninitialized: false,
-    resave: false,
-    cookie: {
-      maxAge: MAXIMUM_SESSION_DURATION_IN_MILLISECONDS,
-      httpOnly: true, // default
-      sameSite: "lax", // Cannot be 'strict' otherwise OAuth won't work.
-      secure: "auto", // May need to app.set('trust proxy') for this to work.
-    },
-    store,
-    secret: SECRET,
-  });
+  const getSessionMiddleware = (persistent?: boolean) =>
+    session({
+      rolling: true,
+      saveUninitialized: false,
+      resave: false,
+      cookie: {
+        maxAge: persistent
+          ? 400 * DAY // Browser max
+          : MAXIMUM_SESSION_DURATION_IN_MILLISECONDS,
+        httpOnly: true, // default
+        sameSite: "lax", // Cannot be 'strict' otherwise OAuth won't work.
+        secure: "auto", // May need to app.set('trust proxy') for this to work.
+      },
+      store,
+      secret: SECRET,
+    });
 
   /**
    * For security reasons we only enable sessions for requests within the our
@@ -80,7 +83,10 @@ export default async (app: Express) => {
    */
   const wrappedSessionMiddleware: RequestHandler = (req, res, next) => {
     if (req.isSameOrigin) {
-      sessionMiddleware(req, res, next);
+      const shouldPersistCookie =
+        req.query?.["persist-session"] === "1" ||
+        req.headers?.["persist-session"] === "1";
+      getSessionMiddleware(shouldPersistCookie)(req, res, next);
     } else {
       next();
     }
