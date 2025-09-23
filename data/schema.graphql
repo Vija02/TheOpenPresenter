@@ -267,6 +267,120 @@ type ChangePasswordPayload {
   success: Boolean
 }
 
+type CloudConnection {
+  createdAt: Datetime!
+
+  """Reads a single `User` that is related to this `CloudConnection`."""
+  creatorUser: User
+  creatorUserId: UUID
+  host: String!
+  id: UUID!
+
+  """
+  Reads a single `Organization` that is related to this `CloudConnection`.
+  """
+  organization: Organization
+  organizationId: UUID!
+  organizationList: [String]!
+  syncAll: Boolean
+  targetOrganizationSlug: String
+  updatedAt: Datetime!
+}
+
+"""
+A condition to be used against `CloudConnection` object types. All fields are
+tested for equality and combined with a logical ‘and.’
+"""
+input CloudConnectionCondition {
+  """Checks for equality with the object’s `createdAt` field."""
+  createdAt: Datetime
+
+  """Checks for equality with the object’s `creatorUserId` field."""
+  creatorUserId: UUID
+
+  """Checks for equality with the object’s `id` field."""
+  id: UUID
+
+  """Checks for equality with the object’s `organizationId` field."""
+  organizationId: UUID
+}
+
+"""
+A filter to be used against `CloudConnection` object types. All fields are combined with a logical ‘and.’
+"""
+input CloudConnectionFilter {
+  """Checks for all expressions in this list."""
+  and: [CloudConnectionFilter!]
+
+  """Filter by the object’s `createdAt` field."""
+  createdAt: DatetimeFilter
+
+  """Filter by the object’s `creatorUserId` field."""
+  creatorUserId: UUIDFilter
+
+  """Filter by the object’s `id` field."""
+  id: UUIDFilter
+
+  """Negates the expression."""
+  not: CloudConnectionFilter
+
+  """Checks for any expressions in this list."""
+  or: [CloudConnectionFilter!]
+
+  """Filter by the object’s `organizationId` field."""
+  organizationId: UUIDFilter
+}
+
+"""
+Represents an update to a `CloudConnection`. Fields that are set will be updated.
+"""
+input CloudConnectionPatch {
+  targetOrganizationSlug: String
+}
+
+"""A connection to a list of `CloudConnection` values."""
+type CloudConnectionsConnection {
+  """
+  A list of edges which contains the `CloudConnection` and cursor to aid in pagination.
+  """
+  edges: [CloudConnectionsEdge!]!
+
+  """A list of `CloudConnection` objects."""
+  nodes: [CloudConnection!]!
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+
+  """
+  The count of *all* `CloudConnection` you could get from the connection.
+  """
+  totalCount: Int!
+}
+
+"""A `CloudConnection` edge in the connection."""
+type CloudConnectionsEdge {
+  """A cursor for use in pagination."""
+  cursor: Cursor
+
+  """The `CloudConnection` at the end of the edge."""
+  node: CloudConnection!
+}
+
+"""Methods to use when ordering `CloudConnection`."""
+enum CloudConnectionsOrderBy {
+  CREATED_AT_ASC
+  CREATED_AT_DESC
+  CREATOR_USER_ID_ASC
+  CREATOR_USER_ID_DESC
+  ID_ASC
+  ID_DESC
+  NATURAL
+  ORGANIZATION_ID_ASC
+  ORGANIZATION_ID_DESC
+  PRIMARY_KEY_ASC
+  PRIMARY_KEY_DESC
+}
+
 input CompleteMediaInput {
   id: UUID!
 }
@@ -2113,6 +2227,14 @@ type Mutation {
     input: ResetPasswordInput!
   ): ResetPasswordPayload
 
+  """Use this mutation to sync a cloud connection"""
+  syncCloudConnection(
+    """
+    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.
+    """
+    input: SyncCloudConnectionInput!
+  ): SyncCloudConnectionPayload
+
   """
   The owner of an `Organization` may use this mutation to make any organization member the billing contact.
   """
@@ -2151,6 +2273,14 @@ type Mutation {
     """
     input: UpdateCategoryInput!
   ): UpdateCategoryPayload
+
+  """Updates a single `CloudConnection` using a unique key and a patch."""
+  updateCloudConnection(
+    """
+    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.
+    """
+    input: UpdateCloudConnectionInput!
+  ): UpdateCloudConnectionPayload
 
   """Updates a single `Organization` using a unique key and a patch."""
   updateOrganization(
@@ -2229,6 +2359,40 @@ type Organization {
     """The method to use when ordering `Category`."""
     orderBy: [CategoriesOrderBy!] = [PRIMARY_KEY_ASC]
   ): CategoriesConnection!
+
+  """Reads and enables pagination through a set of `CloudConnection`."""
+  cloudConnections(
+    """Read all values in the set after (below) this cursor."""
+    after: Cursor
+
+    """Read all values in the set before (above) this cursor."""
+    before: Cursor
+
+    """
+    A condition to be used in determining which values should be returned by the collection.
+    """
+    condition: CloudConnectionCondition
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: CloudConnectionFilter
+
+    """Only read the first `n` values of the set."""
+    first: Int
+
+    """Only read the last `n` values of the set."""
+    last: Int
+
+    """
+    Skip the first `n` values from our `after` cursor, an alternative to cursor
+    based pagination. May not be used with `last`.
+    """
+    offset: Int
+
+    """The method to use when ordering `CloudConnection`."""
+    orderBy: [CloudConnectionsOrderBy!] = [PRIMARY_KEY_ASC]
+  ): CloudConnectionsConnection!
   createdAt: Datetime!
   currentUserIsBillingContact: Boolean
   currentUserIsOwner: Boolean
@@ -2734,6 +2898,9 @@ type Project {
   """Reads a single `Category` that is related to this `Project`."""
   category: Category
   categoryId: UUID
+  cloudConnectionId: UUID
+  cloudLastUpdated: Datetime
+  cloudShouldSync: Boolean
   createdAt: Datetime!
 
   """Reads a single `User` that is related to this `Project`."""
@@ -2826,6 +2993,9 @@ input ProjectCondition {
   """Checks for equality with the object’s `categoryId` field."""
   categoryId: UUID
 
+  """Checks for equality with the object’s `cloudConnectionId` field."""
+  cloudConnectionId: UUID
+
   """Checks for equality with the object’s `creatorUserId` field."""
   creatorUserId: UUID
 
@@ -2854,6 +3024,9 @@ input ProjectFilter {
 
   """Filter by the object’s `categoryId` field."""
   categoryId: UUIDFilter
+
+  """Filter by the object’s `cloudConnectionId` field."""
+  cloudConnectionId: UUIDFilter
 
   """Filter by the object’s `creatorUserId` field."""
   creatorUserId: UUIDFilter
@@ -3123,6 +3296,8 @@ type ProjectsEdge {
 enum ProjectsOrderBy {
   CATEGORY_ID_ASC
   CATEGORY_ID_DESC
+  CLOUD_CONNECTION_ID_ASC
+  CLOUD_CONNECTION_ID_DESC
   CREATOR_USER_ID_ASC
   CREATOR_USER_ID_DESC
   ID_ASC
@@ -3179,6 +3354,41 @@ type Query {
     orderBy: [CategoriesOrderBy!] = [PRIMARY_KEY_ASC]
   ): CategoriesConnection
   category(id: UUID!): Category
+  cloudConnection(id: UUID!): CloudConnection
+
+  """Reads and enables pagination through a set of `CloudConnection`."""
+  cloudConnections(
+    """Read all values in the set after (below) this cursor."""
+    after: Cursor
+
+    """Read all values in the set before (above) this cursor."""
+    before: Cursor
+
+    """
+    A condition to be used in determining which values should be returned by the collection.
+    """
+    condition: CloudConnectionCondition
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: CloudConnectionFilter
+
+    """Only read the first `n` values of the set."""
+    first: Int
+
+    """Only read the last `n` values of the set."""
+    last: Int
+
+    """
+    Skip the first `n` values from our `after` cursor, an alternative to cursor
+    based pagination. May not be used with `last`.
+    """
+    offset: Int
+
+    """The method to use when ordering `CloudConnection`."""
+    orderBy: [CloudConnectionsOrderBy!] = [PRIMARY_KEY_ASC]
+  ): CloudConnectionsConnection
 
   """The currently logged in user (or null if not logged in)."""
   currentUser: User
@@ -3914,6 +4124,14 @@ type Subscription {
   currentUserUpdated: UserSubscriptionPayload
 }
 
+input SyncCloudConnectionInput {
+  cloudConnectionId: UUID!
+}
+
+type SyncCloudConnectionPayload {
+  success: Boolean!
+}
+
 """Tag data"""
 type Tag {
   backgroundColor: String
@@ -4221,6 +4439,52 @@ type UpdateCategoryPayload {
   query: Query
 }
 
+"""All input for the `updateCloudConnection` mutation."""
+input UpdateCloudConnectionInput {
+  """
+  An arbitrary string value with no semantic meaning. Will be included in the
+  payload verbatim. May be used to track mutations by the client.
+  """
+  clientMutationId: String
+  id: UUID!
+
+  """
+  An object where the defined keys will be set on the `CloudConnection` being updated.
+  """
+  patch: CloudConnectionPatch!
+}
+
+"""The output of our update `CloudConnection` mutation."""
+type UpdateCloudConnectionPayload {
+  """
+  The exact same `clientMutationId` that was provided in the mutation input,
+  unchanged and unused. May be used by a client to track mutations.
+  """
+  clientMutationId: String
+
+  """The `CloudConnection` that was updated by this mutation."""
+  cloudConnection: CloudConnection
+
+  """An edge for our `CloudConnection`. May be used by Relay 1."""
+  cloudConnectionEdge(
+    """The method to use when ordering `CloudConnection`."""
+    orderBy: [CloudConnectionsOrderBy!] = [PRIMARY_KEY_ASC]
+  ): CloudConnectionsEdge
+
+  """Reads a single `User` that is related to this `CloudConnection`."""
+  creatorUser: User
+
+  """
+  Reads a single `Organization` that is related to this `CloudConnection`.
+  """
+  organization: Organization
+
+  """
+  Our root query field type. Allows us to run any query from our mutation payload.
+  """
+  query: Query
+}
+
 """All input for the `updateOrganization` mutation."""
 input UpdateOrganizationInput {
   """
@@ -4391,6 +4655,40 @@ type UpdateUserPayload {
 type User {
   """Optional avatar URL."""
   avatarUrl: String
+
+  """Reads and enables pagination through a set of `CloudConnection`."""
+  cloudConnectionsByCreatorUserId(
+    """Read all values in the set after (below) this cursor."""
+    after: Cursor
+
+    """Read all values in the set before (above) this cursor."""
+    before: Cursor
+
+    """
+    A condition to be used in determining which values should be returned by the collection.
+    """
+    condition: CloudConnectionCondition
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: CloudConnectionFilter
+
+    """Only read the first `n` values of the set."""
+    first: Int
+
+    """Only read the last `n` values of the set."""
+    last: Int
+
+    """
+    Skip the first `n` values from our `after` cursor, an alternative to cursor
+    based pagination. May not be used with `last`.
+    """
+    offset: Int
+
+    """The method to use when ordering `CloudConnection`."""
+    orderBy: [CloudConnectionsOrderBy!] = [PRIMARY_KEY_ASC]
+  ): CloudConnectionsConnection!
   createdAt: Datetime!
   hasPassword: Boolean
 

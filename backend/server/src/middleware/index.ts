@@ -1,5 +1,6 @@
 import installAutoLogin from "./installAutoLogin";
 import installCSRFProtection from "./installCSRFProtection";
+import installCloudConnection from "./installCloudConnection";
 import installDatabasePools from "./installDatabasePools";
 import installE2EServerCommand from "./installE2EServerCommand";
 import installErrorHandler from "./installErrorHandler";
@@ -27,6 +28,7 @@ import installWorkerUtils from "./installWorkerUtils";
 export {
   installAutoLogin,
   installCSRFProtection,
+  installCloudConnection,
   installDatabasePools,
   installE2EServerCommand,
   installErrorHandler,
