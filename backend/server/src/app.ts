@@ -144,6 +144,7 @@ export async function makeApp({
   if (isTest || isDev) {
     await middleware.installE2EServerCommand(app);
   }
+  await middleware.installCloudConnection(app);
   await middleware.installFileUpload(app);
   await middleware.installProjectImportExport(app);
   await middleware.installTrpc(app);
