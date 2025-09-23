@@ -23,6 +23,7 @@
     "@repo/backend-shared": "*",
     "@repo/base-plugin": "*",
     "@repo/config": "*",
+    "@repo/graphql": "*",
     "@repo/lib": "*",
     "@repo/observability": "*",
     "@repo/portable-file": "*",

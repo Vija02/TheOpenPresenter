@@ -8967,6 +8967,7 @@ __metadata:
     "@repo/backend-shared": "npm:*"
     "@repo/base-plugin": "npm:*"
     "@repo/config": "npm:*"
+    "@repo/graphql": "npm:*"
     "@repo/lib": "npm:*"
     "@repo/observability": "npm:*"
     "@repo/portable-file": "npm:*"
