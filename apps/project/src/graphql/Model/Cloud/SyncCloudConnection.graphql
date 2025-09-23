@@ -1,0 +1,5 @@
+mutation SyncCloudConnection($cloudConnectionId: UUID!) {
+  syncCloudConnection(input: { cloudConnectionId: $cloudConnectionId }) {
+    success
+  }
+}

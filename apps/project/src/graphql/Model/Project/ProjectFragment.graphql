@@ -15,6 +15,8 @@ fragment Project on Project {
       }
     }
   }
+  cloudConnectionId
+  cloudLastUpdated
   createdAt
   targetDate
   updatedAt

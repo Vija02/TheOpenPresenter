@@ -1,0 +1,11 @@
+query AllProjectUpdatedAt($slug: String!) {
+  organizationBySlug(slug: $slug) {
+    id
+    projects {
+      nodes {
+        id
+        updatedAt
+      }
+    }
+  }
+}

@@ -1,0 +1,40 @@
+query AllProjectMetadata($slug: String!, $projectIds: [UUID!]) {
+  organizationBySlug(slug: $slug) {
+    id
+    projects(filter: { id: { in: $projectIds } }) {
+      nodes {
+        id
+        name
+        slug
+        category {
+          id
+          name
+        }
+        projectTags {
+          nodes {
+            id
+            tag {
+              id
+              ...Tag
+            }
+          }
+        }
+        createdAt
+        targetDate
+        updatedAt
+      }
+    }
+    categories {
+      nodes {
+        id
+        ...Category
+      }
+    }
+    tags {
+      nodes {
+        id
+        ...Tag
+      }
+    }
+  }
+}

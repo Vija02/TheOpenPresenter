@@ -1,0 +1,16 @@
+query OrganizationCloudIndexPage($slug: String!) {
+  ...SharedOrganization
+
+  organizationBySlug(slug: $slug) {
+    id
+    cloudConnections {
+      nodes {
+        id
+        host
+        syncAll
+        organizationList
+        targetOrganizationSlug
+      }
+    }
+  }
+}
