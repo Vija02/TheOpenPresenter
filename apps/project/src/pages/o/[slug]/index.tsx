@@ -22,6 +22,7 @@ import {
 import { format } from "date-fns";
 import { useCallback, useMemo } from "react";
 import { FaFileImport, FaPlus } from "react-icons/fa";
+import { IoCloudDoneOutline } from "react-icons/io5";
 import { MdCoPresent } from "react-icons/md";
 import { VscEdit, VscTrash } from "react-icons/vsc";
 import { toast } from "react-toastify";
@@ -156,6 +157,7 @@ const ProjectCard = ({
       data-testid="project-card"
     >
       <div className="flex items-center gap-2 justify-between sm:justify-start">
+        {project.cloudConnectionId && <IoCloudDoneOutline />}
         <Link
           href={`/app/${slug}/${project.slug}`}
           className="project--project-card-main-link"

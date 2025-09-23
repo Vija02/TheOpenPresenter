@@ -7,6 +7,7 @@ import { globalState } from "@repo/lib";
 import { Avatar, AvatarFallback, Button, OverlayToggle } from "@repo/ui";
 import * as React from "react";
 import { useEffect } from "react";
+import { FaCloud } from "react-icons/fa";
 import { IoMdArrowBack, IoMdSettings } from "react-icons/io";
 import { PiProjectorScreenChartLight } from "react-icons/pi";
 import { RxHamburgerMenu } from "react-icons/rx";
@@ -82,6 +83,12 @@ export function SharedOrgLayout({
           href={`/o/${slug}`}
           icon={<PiProjectorScreenChartLight />}
           name="Projects"
+          exact
+        />
+        <SidebarItem
+          href={`/o/${slug}/cloud`}
+          icon={<FaCloud />}
+          name="Cloud"
           exact
         />
         <SidebarItem
