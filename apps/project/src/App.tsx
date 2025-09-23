@@ -8,6 +8,7 @@ import InvitationsAcceptPage from "./pages/invitations/accept";
 import LoginPage from "./pages/login";
 import OrganizationPage from "./pages/o";
 import OrganizationSlugPage from "./pages/o/[slug]";
+import OrganizationSlugCloudPage from "./pages/o/[slug]/cloud";
 import OrganizationSlugMediaPage from "./pages/o/[slug]/media";
 import OrganizationSlugSettingsCategoriesPage from "./pages/o/[slug]/settings/categories";
 import OrganizationSlugSettingsDeletePage from "./pages/o/[slug]/settings/delete";
@@ -79,6 +80,9 @@ function App() {
             </Route>
             <Route path="/o/:slug/media">
               <OrganizationSlugMediaPage />
+            </Route>
+            <Route path="/o/:slug/cloud">
+              <OrganizationSlugCloudPage />
             </Route>
             <Route path="/o/:slug">
               <OrganizationSlugPage />
