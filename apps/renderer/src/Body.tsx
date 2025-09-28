@@ -127,6 +127,7 @@ const PluginRenderer = React.memo(
     const pluginMetaData = usePluginMetaData()
       .pluginMetaData as RendererBasePluginQuery;
     const orgId = usePluginMetaData().orgId;
+    const projectId = usePluginMetaData().projectId;
     const {
       getYJSPluginRenderer,
       getYJSPluginSceneData,
@@ -178,8 +179,9 @@ const PluginRenderer = React.memo(
         pluginId,
         sceneId,
         organizationId: orgId,
+        projectId,
       }),
-      [orgId, pluginId, sceneId],
+      [orgId, pluginId, projectId, sceneId],
     );
 
     const childLogger = useMemo(

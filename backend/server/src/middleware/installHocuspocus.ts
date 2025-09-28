@@ -50,6 +50,7 @@ export default async function installHocuspocus(app: Express) {
       );
 
       const organizationId = row.organization_id;
+      const projectId = row.id;
       let dbDocument = row.document;
 
       if (!dbDocument) {
@@ -79,6 +80,7 @@ export default async function installHocuspocus(app: Express) {
         serverPluginApi,
         disposableDocumentManager,
         organizationId,
+        projectId,
       });
     },
     afterUnloadDocument: async (data) => {
