@@ -123,6 +123,7 @@ const handleYjsDocumentLoad = ({
   serverPluginApi,
   disposableDocumentManager,
   organizationId,
+  projectId,
 }: {
   document: Y.Doc;
   documentName: string;
@@ -130,6 +131,7 @@ const handleYjsDocumentLoad = ({
   serverPluginApi: ServerPluginApiPrivate;
   disposableDocumentManager: DisposableDocumentManager;
   organizationId: string;
+  projectId: string;
 }) => {
   const callPluginHooks = <
     T extends {
@@ -211,6 +213,7 @@ const handleYjsDocumentLoad = ({
                   pluginId,
                   sceneId,
                   organizationId,
+                  projectId,
                 },
               ],
             });
@@ -249,6 +252,7 @@ const handleYjsDocumentLoad = ({
               pluginId,
               sceneId,
               organizationId,
+              projectId,
             },
             {
               onSceneVisibilityChange: (callback) => {
@@ -286,6 +290,7 @@ const handleYjsDocumentLoad = ({
               pluginId,
               sceneId,
               organizationId,
+              projectId,
             },
           ],
         });
@@ -300,6 +305,7 @@ const handleYjsDocumentLoad = ({
             pluginId,
             sceneId,
             organizationId,
+            projectId,
           },
         ],
       });

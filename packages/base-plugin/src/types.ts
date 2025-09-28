@@ -61,6 +61,7 @@ export type PluginContext = {
   pluginId: UUID;
   sceneId: UUID;
   organizationId: UUID;
+  projectId: UUID;
 };
 
 export const keyPressTypes = ["PREV", "NEXT"] as const;

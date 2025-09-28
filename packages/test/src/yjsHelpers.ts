@@ -76,6 +76,7 @@ export const simulateServer = async (
       serverPluginApi,
       disposableDocumentManager: new DisposableDocumentManager(),
       organizationId: "orgId",
+      projectId: "projectId",
     });
   };
 
@@ -200,6 +201,7 @@ export const simulateUser = (
       pluginId: plugin.pluginId,
       sceneId: plugin.sceneId,
       organizationId: "orgId",
+      projectId: "projectId",
     },
     setRenderCurrentScene: () => {},
     misc: {
