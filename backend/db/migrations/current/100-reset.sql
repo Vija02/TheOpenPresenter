@@ -1,3 +1,6 @@
+-- 400
+drop table if exists app_public.project_medias;
+
 -- 300
 ALTER TABLE app_public.projects
   DROP COLUMN IF EXISTS cloud_connection_id,
