@@ -219,7 +219,13 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
       organizationId,
       userId,
       parentMediaIdOrUUID,
-    }: { organizationId: string; userId: string; parentMediaIdOrUUID?: string },
+      attachTo,
+    }: {
+      organizationId: string;
+      userId: string;
+      parentMediaIdOrUUID?: string;
+      attachTo?: { projectId: string; pluginId: string };
+    },
   ) {
     const fileSize =
       typeof data === "object" && "byteLength" in data
@@ -238,6 +244,14 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
       organizationId,
       isUserUploaded: false,
     });
+
+    if (attachTo) {
+      await mediaHandler.attachToProject(
+        mediaId,
+        attachTo.projectId,
+        attachTo.pluginId,
+      );
+    }
 
     if (parentMediaIdOrUUID) {
       await mediaHandler.createDependency(parentMediaIdOrUUID, mediaId);

@@ -267,6 +267,8 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
               userId: ctx.userId,
               parentMediaId: extractMediaName(mediaName).mediaId,
               serverPluginApi,
+              projectId: loadedContextData.projectId,
+              pluginId,
               onUploaded: (uploadedMedia, i) => {
                 loadedPlugin.pluginData.thumbnailLinks[i] =
                   uploadedMedia.fileName;
@@ -326,6 +328,8 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
               userId: ctx.userId,
               parentMediaId: extractMediaName(mediaName).mediaId,
               serverPluginApi,
+              projectId: loadedContextData.projectId,
+              pluginId,
               onUploaded: (uploadedMedia, i) => {
                 loadedPlugin.pluginData.thumbnailLinks[i] =
                   uploadedMedia.fileName;
@@ -410,6 +414,10 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
                 {
                   organizationId: loadedContextData.organizationId,
                   userId: ctx.userId,
+                  attachTo: {
+                    projectId: loadedContextData.projectId,
+                    pluginId,
+                  },
                 },
               );
 
@@ -429,6 +437,8 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
                 userId: ctx.userId,
                 parentMediaId: uploadedPdf.mediaId,
                 serverPluginApi,
+                projectId: loadedContextData.projectId,
+                pluginId,
                 onUploaded: (uploadedMedia, i) => {
                   loadedPlugin.pluginData.thumbnailLinks[i] =
                     uploadedMedia.fileName;
@@ -480,6 +490,8 @@ async function uploadImages({
   organizationId,
   userId,
   parentMediaId,
+  projectId,
+  pluginId,
   onUploaded,
 }: {
   output: Uint8Array<ArrayBufferLike>[];
@@ -487,6 +499,8 @@ async function uploadImages({
   organizationId: string;
   userId: string;
   parentMediaId: string;
+  projectId: string;
+  pluginId: string;
   onUploaded: (
     data: Awaited<ReturnType<typeof serverPluginApi.uploadMedia>>,
     i: number,
@@ -503,6 +517,7 @@ async function uploadImages({
         organizationId: organizationId,
         userId: userId,
         parentMediaIdOrUUID: parentMediaId,
+        attachTo: { projectId, pluginId },
       },
     );
     onUploaded(uploadedMedia, i);
