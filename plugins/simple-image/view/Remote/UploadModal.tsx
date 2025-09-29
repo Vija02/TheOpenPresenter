@@ -22,6 +22,8 @@ export const UploadModal = () => {
       headers: {
         "csrf-token": appData.getCSRFToken(),
         "organization-id": pluginApi.pluginContext.organizationId,
+        "project-id": pluginApi.pluginContext.projectId,
+        "plugin-id": pluginApi.pluginContext.pluginId,
       },
       chunkSize: pluginApi.env.getMediaUploadChunkSize(),
     }),

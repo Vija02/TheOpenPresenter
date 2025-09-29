@@ -228,11 +228,14 @@ export default (app: Express) => {
       }
 
       const organizationId = req.headers["organization-id"].toString();
+      const projectId = req.headers["project-id"]?.toString();
+      const pluginId = req.headers["plugin-id"]?.toString();
 
       try {
         const userId = await checkUserAuth(app, {
           organizationId: organizationId,
           sessionId: (req as OurRequest)?.user?.session_id ?? "",
+          projectId,
         });
         return Promise.resolve({
           res,
@@ -240,6 +243,8 @@ export default (app: Express) => {
             originalFileName: upload.metadata?.filename ?? null,
             organizationId,
             userId,
+            projectId: projectId ?? null,
+            pluginId: pluginId ?? null,
           },
         });
       } catch (e) {
@@ -385,7 +390,11 @@ function isValidURL(string: string) {
 
 const checkUserAuth = async (
   app: Express,
-  { organizationId, sessionId }: { organizationId: string; sessionId: string },
+  {
+    organizationId,
+    sessionId,
+    projectId,
+  }: { organizationId: string; sessionId: string; projectId?: string },
 ) => {
   return await withUserPgPool(app, sessionId, async (client) => {
     const {
@@ -396,6 +405,17 @@ const checkUserAuth = async (
     );
     if (!row) {
       throw new Error("Not Authorized");
+    }
+    if (projectId) {
+      const {
+        rows: [projectRow],
+      } = await client.query(
+        "select * from app_public.projects where id = $1",
+        [projectId],
+      );
+      if (!projectRow) {
+        throw new Error("Not Authorized");
+      }
     }
     const {
       rows: [user],

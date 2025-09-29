@@ -1,3 +1,5 @@
+import { uuidFromPluginIdOrUUID } from "@repo/lib";
+import { logger } from "@repo/observability";
 import { MetadataValue } from "@tus/s3-store";
 import { KvStore, TUS_RESUMABLE, Upload } from "@tus/server";
 import { Pool, PoolClient } from "pg";
@@ -18,7 +20,7 @@ export class CustomKVStore<T extends Upload | MetadataValue>
     const {
       rows: [mediaRow],
     } = await this.pgPool.query(
-      "SELECT * FROM app_public.medias WHERE id = $1",
+      "SELECT m.*, pm.project_id, pm.plugin_id FROM app_public.medias m LEFT JOIN app_public.project_medias pm ON m.id = pm.media_id WHERE id = $1",
       [toUUID(splittedKey[0] as TypeId<string>)],
     );
     if (!mediaRow) return undefined;
@@ -33,6 +35,8 @@ export class CustomKVStore<T extends Upload | MetadataValue>
         userId: mediaRow.creator_user_id,
         isUserUploaded: mediaRow.is_user_uploaded ? "1" : "0",
         isComplete: mediaRow.is_complete,
+        projectId: mediaRow.project_id,
+        pluginId: mediaRow.plugin_id,
       } as any,
       storage: undefined,
       creation_date: new Date(mediaRow.created_at).toISOString(),
@@ -85,6 +89,24 @@ export class CustomKVStore<T extends Upload | MetadataValue>
           : true,
       ],
     );
+
+    try {
+      if (file.metadata?.projectId && file.metadata?.pluginId) {
+        await this.pgPool.query(
+          `INSERT INTO app_public.project_medias(project_id, media_id, plugin_id) values($1, $2, $3)`,
+          [
+            file.metadata.projectId,
+            uuid,
+            uuidFromPluginIdOrUUID(file.metadata.pluginId),
+          ],
+        );
+      }
+    } catch (e) {
+      logger.warn(
+        { error: e, mediaId: uuid, metadata: file.metadata },
+        "Failed to create project_medias through Tus upload",
+      );
+    }
   }
 
   async delete(key: string): Promise<void> {
