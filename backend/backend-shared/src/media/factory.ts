@@ -2,6 +2,7 @@ import {
   SUPPORTED_IMAGE_EXTENSIONS,
   uuidFromMediaId,
   uuidFromMediaIdOrUUID,
+  uuidFromPluginIdOrUUID,
 } from "@repo/lib";
 import { logger } from "@repo/observability";
 import { Upload } from "@tus/server";
@@ -226,6 +227,31 @@ export const createMediaHandler = <T extends OurDataStore>(
         logger.error(
           { error },
           "createDependency: Failed to create media dependency",
+        );
+        throw error;
+      }
+    }
+
+    async attachToProject(
+      mediaIdOrUUID: string,
+      projectId: string,
+      pluginId: string,
+    ) {
+      try {
+        await this.pgPool.query(
+          `
+          INSERT INTO app_public.project_medias(project_id, media_id, plugin_id) values($1, $2, $3)  
+        `,
+          [
+            projectId,
+            uuidFromMediaIdOrUUID(mediaIdOrUUID),
+            uuidFromPluginIdOrUUID(pluginId),
+          ],
+        );
+      } catch (error: any) {
+        logger.error(
+          { error },
+          "attachToProject: Failed to attach media to a project",
         );
         throw error;
       }
