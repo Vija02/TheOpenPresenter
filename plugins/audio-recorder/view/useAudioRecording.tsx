@@ -320,6 +320,8 @@ function startUpload(
     headers: {
       "csrf-token": pluginApi.env.getCSRFToken(),
       "organization-id": pluginApi.pluginContext.organizationId,
+      "project-id": pluginApi.pluginContext.projectId,
+      "plugin-id": pluginApi.pluginContext.pluginId,
       "file-extension": "mp3",
       "custom-media-id": mediaId,
     },
