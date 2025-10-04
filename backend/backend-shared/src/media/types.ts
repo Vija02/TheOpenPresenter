@@ -31,6 +31,16 @@ export interface MediaHandlerInterface {
 
   deleteMedia(fullFileId: string): Promise<void>;
   completeMedia(fullFileId: string): Promise<void>;
+
+  createDependency(
+    parentMediaIdOrUUID: string,
+    childMediaIdOrUUID: string,
+  ): Promise<void>;
+  attachToProject(
+    mediaIdOrUUID: string,
+    projectId: string,
+    pluginId: string,
+  ): Promise<void>;
 }
 
 export type MediaDataHandler = {
@@ -45,6 +55,8 @@ export type MediaDataHandler = {
 export type OurMulterRequest = Request & {
   customMulterData?: {
     organizationId?: string;
+    projectId?: string;
+    pluginId?: string;
     userId?: string;
     uploadLength?: number;
     explicitFileExtension?: string;

@@ -327,6 +327,8 @@ export default (app: Express) => {
 
       req.customMulterData = {
         organizationId: req.headers["organization-id"].toString(),
+        projectId: req.headers["project-id"]?.toString(),
+        pluginId: req.headers["plugin-id"]?.toString(),
         uploadLength,
         explicitFileExtension: req.headers["file-extension"]
           ? req.headers["file-extension"].toString()
@@ -349,6 +351,7 @@ export default (app: Express) => {
         const userId = await checkUserAuth(app, {
           organizationId: req.customMulterData.organizationId ?? "",
           sessionId: (req as OurRequest)?.user?.session_id ?? "",
+          projectId: req.customMulterData.projectId ?? "",
         });
         req.customMulterData.userId = userId;
       } catch (e) {

@@ -288,6 +288,17 @@ export const createMulterStorage = (MediaHandler: MediaHandlerConstructor) => {
           organizationId: req.customMulterData?.organizationId!,
           mediaId: req.customMulterData?.mediaId,
         });
+        if (
+          req.customMulterData?.mediaId &&
+          req.customMulterData?.projectId &&
+          req.customMulterData?.pluginId
+        ) {
+          await this.mediaHandler.attachToProject(
+            req.customMulterData.mediaId,
+            req.customMulterData.projectId,
+            req.customMulterData.pluginId,
+          );
+        }
 
         cb(null, { filename: fileName });
       } catch (e) {
