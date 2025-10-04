@@ -47,6 +47,10 @@ type AcceptJoinRequestToOrganizationPayload {
   query: Query
 }
 
+input AllMediaOfProjectsInput {
+  projectIds: [UUID!]
+}
+
 """
 A floating point number that requires more precision than IEEE 754 binary 64
 """
@@ -3127,6 +3131,9 @@ enum ProjectsOrderBy {
 
 """The root query type which gives access points into the data universe."""
 type Query {
+  """Get all the media of a project including its dependencies"""
+  allMediaOfProjects(input: AllMediaOfProjectsInput): [Media]
+
   """Reads and enables pagination through a set of `Category`."""
   categories(
     """Read all values in the set after (below) this cursor."""
