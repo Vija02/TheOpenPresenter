@@ -256,6 +256,19 @@ export const createMediaHandler = <T extends OurDataStore>(
         throw error;
       }
     }
+    async unlinkPlugin(pluginId: string) {
+      try {
+        await this.pgPool.query(
+          `
+          DELETE FROM app_public.project_medias WHERE plugin_id = $1
+        `,
+          [uuidFromPluginIdOrUUID(pluginId)],
+        );
+      } catch (error: any) {
+        logger.error({ error }, "unlinkPlugin: Failed to unlink plugin");
+        throw error;
+      }
+    }
   };
 };
 

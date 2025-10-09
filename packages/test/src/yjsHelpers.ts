@@ -77,6 +77,7 @@ export const simulateServer = async (
       disposableDocumentManager: new DisposableDocumentManager(),
       organizationId: "orgId",
       projectId: "projectId",
+      onPluginDeleted: () => {},
     });
   };
 
