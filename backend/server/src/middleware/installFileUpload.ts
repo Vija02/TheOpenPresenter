@@ -24,8 +24,21 @@ import { TypeId, fromString, toUUID, typeidUnboxed } from "typeid-js";
 import { withUserPgPool } from "../utils/withUserPgPool";
 import { getRootPgPool } from "./installDatabasePools";
 
+export function getMediaObject(app: Express): media.MediaDataHandler {
+  return app.get("mediaObject");
+}
+export function getMediaHandler(app: Express): media.MediaHandlerInterface {
+  return app.get("mediaHandler");
+}
+
 // TODO: File size validation & increase caddy max_size
 export default (app: Express) => {
+  const rootPgPool = getRootPgPool(app);
+  const mediaObject = media[process.env.STORAGE_TYPE as "file" | "s3"];
+  const mediaHandler = new mediaObject.mediaHandler(rootPgPool);
+  app.set("mediaObject", mediaObject);
+  app.set("mediaHandler", mediaHandler);
+
   // Handle serving the media
   if (process.env.STORAGE_PROXY) {
     if (
@@ -65,11 +78,6 @@ export default (app: Express) => {
       res.status(400).send();
       return;
     }
-
-    const rootPgPool = getRootPgPool(app);
-    const mediaHandler = new media[
-      process.env.STORAGE_TYPE as "file" | "s3"
-    ].mediaHandler(rootPgPool);
 
     // If processed file exist, redirect to data URL
     try {
@@ -275,7 +283,6 @@ export default (app: Express) => {
       const mediaId = splittedKey[0];
       const uuid = toUUID(mediaId as TypeId<string>);
 
-      const rootPgPool = app.get("rootPgPool") as Pool;
       await rootPgPool.query(
         `UPDATE app_public.medias
           SET 
