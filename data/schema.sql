@@ -741,6 +741,52 @@ $$;
 
 
 --
+-- Name: tg_project_medias__cleanup_unused_media(); Type: FUNCTION; Schema: app_private; Owner: -
+--
+
+CREATE FUNCTION app_private.tg_project_medias__cleanup_unused_media() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+    AS $$
+declare
+  v_media_id uuid;
+  v_is_user_uploaded boolean;
+  v_has_other_project_medias boolean;
+begin
+  -- Get the media_id from the deleted row
+  v_media_id := OLD.media_id;
+  
+  -- Check if the media is user uploaded
+  select is_user_uploaded into v_is_user_uploaded
+  from app_public.medias
+  where id = v_media_id;
+  
+  -- Only proceed if media exists and is not user uploaded
+  if v_is_user_uploaded is false then
+    -- Check if there are any other project_medias referencing this media
+    select exists(
+      select 1
+      from app_public.project_medias
+      where media_id = v_media_id
+    ) into v_has_other_project_medias;
+    
+    -- If no other project_medias reference this media, clean it up
+    if not v_has_other_project_medias then
+      perform graphile_worker.add_job(
+        'medias__delete',
+        json_build_object(
+          'id', v_media_id
+        )
+      );
+    end if;
+  end if;
+  
+  return OLD;
+end;
+$$;
+
+
+--
 -- Name: tg_project_tags__forbid_if_project_and_tag_within_different_org(); Type: FUNCTION; Schema: app_private; Owner: -
 --
 
@@ -3060,6 +3106,13 @@ CREATE TRIGGER _500_verify_account_on_verified AFTER INSERT OR UPDATE OF is_veri
 
 
 --
+-- Name: project_medias _900_cleanup_unused_media; Type: TRIGGER; Schema: app_public; Owner: -
+--
+
+CREATE TRIGGER _900_cleanup_unused_media AFTER DELETE ON app_public.project_medias FOR EACH ROW EXECUTE FUNCTION app_private.tg_project_medias__cleanup_unused_media();
+
+
+--
 -- Name: user_emails _900_send_verification_email; Type: TRIGGER; Schema: app_public; Owner: -
 --
 
@@ -3860,6 +3913,13 @@ REVOKE ALL ON FUNCTION app_private.tg_media_dependencies__forbid_if_medias_withi
 --
 
 REVOKE ALL ON FUNCTION app_private.tg_organizations__create_default_category() FROM PUBLIC;
+
+
+--
+-- Name: FUNCTION tg_project_medias__cleanup_unused_media(); Type: ACL; Schema: app_private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_private.tg_project_medias__cleanup_unused_media() FROM PUBLIC;
 
 
 --
