@@ -1,8 +1,9 @@
 --! Previous: sha1:97fa53fec16853003b364817956be881c700df79
---! Hash: sha1:a941de5cf704d2aefc940da3fcc693eec6547aa0
+--! Hash: sha1:47794e272808862d0295cdb52a0deffa65c88e30
 
 --! split: 100-reset.sql
--- 100
+-- 200
+drop function if exists app_private.tg_project_medias__cleanup_unused_media() cascade;
 drop table if exists app_public.project_medias;
 
 --! split: 200-project-medias.sql
@@ -34,3 +35,56 @@ create policy delete_own on app_public.project_medias for delete using (app_publ
 grant select on app_public.project_medias to :DATABASE_VISITOR;
 grant insert(project_id, media_id, plugin_id) on app_public.project_medias to :DATABASE_VISITOR;
 grant delete on app_public.project_medias to :DATABASE_VISITOR;
+
+/*====================================*/
+/*============= TRIGGERS =============*/
+/*====================================*/
+
+-- Function to handle cleanup of unused non-user-uploaded media
+create or replace function app_private.tg_project_medias__cleanup_unused_media() returns trigger
+  language plpgsql
+  security definer
+  set search_path to 'pg_catalog', 'public', 'pg_temp'
+as $$
+declare
+  v_media_id uuid;
+  v_is_user_uploaded boolean;
+  v_has_other_project_medias boolean;
+begin
+  -- Get the media_id from the deleted row
+  v_media_id := OLD.media_id;
+  
+  -- Check if the media is user uploaded
+  select is_user_uploaded into v_is_user_uploaded
+  from app_public.medias
+  where id = v_media_id;
+  
+  -- Only proceed if media exists and is not user uploaded
+  if v_is_user_uploaded is false then
+    -- Check if there are any other project_medias referencing this media
+    select exists(
+      select 1
+      from app_public.project_medias
+      where media_id = v_media_id
+    ) into v_has_other_project_medias;
+    
+    -- If no other project_medias reference this media, clean it up
+    if not v_has_other_project_medias then
+      perform graphile_worker.add_job(
+        'medias__delete',
+        json_build_object(
+          'id', v_media_id
+        )
+      );
+    end if;
+  end if;
+  
+  return OLD;
+end;
+$$;
+
+-- Create the trigger
+create trigger _900_cleanup_unused_media
+  after delete on app_public.project_medias
+  for each row
+  execute function app_private.tg_project_medias__cleanup_unused_media();
