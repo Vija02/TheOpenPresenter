@@ -3,7 +3,7 @@
 --
 
 -- Dumped from database version 17.0 (Debian 17.0-1.pgdg120+1)
--- Dumped by pg_dump version 17.2
+-- Dumped by pg_dump version 17.5
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -2281,6 +2281,18 @@ CREATE TABLE app_public.organization_memberships (
 
 
 --
+-- Name: project_medias; Type: TABLE; Schema: app_public; Owner: -
+--
+
+CREATE TABLE app_public.project_medias (
+    project_id uuid NOT NULL,
+    media_id uuid NOT NULL,
+    plugin_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
 -- Name: project_tags; Type: TABLE; Schema: app_public; Owner: -
 --
 
@@ -2754,6 +2766,34 @@ CREATE INDEX organizations_is_public_idx ON app_public.organizations USING btree
 
 
 --
+-- Name: project_medias_media_id_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX project_medias_media_id_idx ON app_public.project_medias USING btree (media_id);
+
+
+--
+-- Name: project_medias_plugin_id_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX project_medias_plugin_id_idx ON app_public.project_medias USING btree (plugin_id);
+
+
+--
+-- Name: project_medias_project_id_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX project_medias_project_id_idx ON app_public.project_medias USING btree (project_id);
+
+
+--
+-- Name: project_medias_project_id_media_id_plugin_id_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE UNIQUE INDEX project_medias_project_id_media_id_plugin_id_idx ON app_public.project_medias USING btree (project_id, media_id, plugin_id);
+
+
+--
 -- Name: project_tags_project_id_idx; Type: INDEX; Schema: app_public; Owner: -
 --
 
@@ -3195,6 +3235,22 @@ ALTER TABLE ONLY app_public.organization_memberships
 
 
 --
+-- Name: project_medias project_medias_media_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.project_medias
+    ADD CONSTRAINT project_medias_media_id_fkey FOREIGN KEY (media_id) REFERENCES app_public.medias(id) ON DELETE CASCADE;
+
+
+--
+-- Name: project_medias project_medias_project_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.project_medias
+    ADD CONSTRAINT project_medias_project_id_fkey FOREIGN KEY (project_id) REFERENCES app_public.projects(id) ON DELETE CASCADE;
+
+
+--
 -- Name: project_tags project_tags_project_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
 --
 
@@ -3295,6 +3351,13 @@ ALTER TABLE app_private.user_secrets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE app_public.categories ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: project_medias delete_own; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY delete_own ON app_public.project_medias FOR DELETE USING (app_public.current_user_can_access_project(project_id));
+
+
+--
 -- Name: project_tags delete_own; Type: POLICY; Schema: app_public; Owner: -
 --
 
@@ -3341,6 +3404,13 @@ CREATE POLICY delete_own_org ON app_public.projects FOR DELETE USING ((organizat
 --
 
 CREATE POLICY delete_own_org ON app_public.tags FOR DELETE USING ((organization_id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids)));
+
+
+--
+-- Name: project_medias insert_own; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY insert_own ON app_public.project_medias FOR INSERT WITH CHECK (app_public.current_user_can_access_project(project_id));
 
 
 --
@@ -3454,6 +3524,12 @@ ALTER TABLE app_public.organization_memberships ENABLE ROW LEVEL SECURITY;
 ALTER TABLE app_public.organizations ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: project_medias; Type: ROW SECURITY; Schema: app_public; Owner: -
+--
+
+ALTER TABLE app_public.project_medias ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: project_tags; Type: ROW SECURITY; Schema: app_public; Owner: -
 --
 
@@ -3512,6 +3588,13 @@ CREATE POLICY select_organization ON app_public.organization_join_requests FOR S
 --
 
 CREATE POLICY select_own ON app_public.medias FOR SELECT USING ((organization_id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids)));
+
+
+--
+-- Name: project_medias select_own; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY select_own ON app_public.project_medias FOR SELECT USING (app_public.current_user_can_access_project(project_id));
 
 
 --
@@ -4324,6 +4407,34 @@ GRANT SELECT ON TABLE app_public.organization_join_requests TO theopenpresenter_
 --
 
 GRANT SELECT ON TABLE app_public.organization_memberships TO theopenpresenter_visitor;
+
+
+--
+-- Name: TABLE project_medias; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT SELECT,DELETE ON TABLE app_public.project_medias TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN project_medias.project_id; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(project_id) ON TABLE app_public.project_medias TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN project_medias.media_id; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(media_id) ON TABLE app_public.project_medias TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN project_medias.plugin_id; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(plugin_id) ON TABLE app_public.project_medias TO theopenpresenter_visitor;
 
 
 --
