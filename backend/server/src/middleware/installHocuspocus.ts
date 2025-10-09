@@ -12,6 +12,7 @@ import { getUpgradeHandlers, getWebsocketMiddlewares } from "../app";
 import { serverPluginApi } from "../pluginManager";
 import { withUserPgPool } from "../utils/withUserPgPool";
 import { getRootPgPool } from "./installDatabasePools";
+import { getMediaHandler } from "./installFileUpload";
 
 const disposableDocumentManager: DisposableDocumentManager =
   new DisposableDocumentManager();
@@ -81,6 +82,10 @@ export default async function installHocuspocus(app: Express) {
         disposableDocumentManager,
         organizationId,
         projectId,
+        onPluginDeleted: (pluginId) => {
+          const mediaHandler = getMediaHandler(app);
+          mediaHandler.unlinkPlugin(pluginId);
+        },
       });
     },
     afterUnloadDocument: async (data) => {

@@ -124,6 +124,7 @@ const handleYjsDocumentLoad = ({
   disposableDocumentManager,
   organizationId,
   projectId,
+  onPluginDeleted,
 }: {
   document: Y.Doc;
   documentName: string;
@@ -132,6 +133,7 @@ const handleYjsDocumentLoad = ({
   disposableDocumentManager: DisposableDocumentManager;
   organizationId: string;
   projectId: string;
+  onPluginDeleted: (pluginId: string) => void;
 }) => {
   const callPluginHooks = <
     T extends {
@@ -328,22 +330,27 @@ const handleYjsDocumentLoad = ({
   };
 
   const handleDeleteScene = (
-    sectionOrScene: ObjectToTypedMap<any>,
-    id: string,
+    deletedSceneOrSection: ObjectToTypedMap<any>,
+    sceneOrSectionId: string,
   ) => {
-    if (sectionOrScene.get("type") === "section") {
-      return;
-    }
-    const sceneId = id;
-
     // Make sure that renderer only have the available scene
     state.get("renderer")?.forEach((renderData) => {
       const sceneKeys = Array.from(renderData.get("children")?.keys() ?? []);
 
-      if (sceneKeys.includes(sceneId)) {
-        renderData.get("children")?.delete(sceneId);
+      if (sceneKeys.includes(sceneOrSectionId)) {
+        renderData.get("children")?.delete(sceneOrSectionId);
       }
     });
+
+    // Handle deletion hook
+    const deletedSceneChildren = deletedSceneOrSection._map
+      .get("children")
+      ?.content.getContent()[0] as ObjectToTypedMap<Scene["children"]>;
+    const deletedPluginIds = Array.from(deletedSceneChildren._map.keys());
+
+    // Callback
+    deletedPluginIds.forEach(onPluginDeleted);
+    // TODO: Call Plugin Hook
 
     // TODO: Remove listeners
   };
