@@ -1,0 +1,35 @@
+// Forward Logs & Traces
+
+otelcol.receiver.otlp "default" {
+  http { }
+
+  output {
+    logs    = [otelcol.exporter.loki.default.input]
+    traces  = [otelcol.exporter.otlp.tempo.input]
+  }
+}
+
+otelcol.exporter.loki "default" {
+  forward_to = [loki.write.loki.receiver]
+}
+
+loki.write "loki" {
+	endpoint {
+		url = string.format(
+			"%s/loki/api/v1/push",
+			coalesce(sys.env("LOKI_HOST"), "localhost:3100"),
+		)
+		headers = {
+			"Authorization" = sys.env("LOKI_AUTH"),
+		}
+	}
+}
+
+otelcol.exporter.otlp "tempo" {
+	client {
+		endpoint = coalesce(sys.env("TEMPO_HOST"), "localhost:4317")
+		headers = {
+			"Authorization" = sys.env("TEMPO_AUTH"),
+		}
+	}
+}

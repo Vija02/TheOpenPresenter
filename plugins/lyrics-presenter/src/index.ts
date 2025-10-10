@@ -5,6 +5,7 @@ import {
   TRPCObject,
   YjsWatcher,
 } from "@repo/base-plugin/server";
+import { logger } from "@repo/observability";
 import axios from "axios";
 import { proxy } from "valtio";
 import { bind } from "valtio-yjs";
@@ -195,15 +196,23 @@ const getAppRouter = (t: TRPCObject) => {
           }),
         )
         .query(async (opts) => {
-          const res = await axios(
-            "https://myworshiplist.com/api/songs?search=" +
-              opts.input.title +
-              (opts.input.page !== null ? `&page=${opts.input.page}` : ""),
-          );
-          return {
-            data: res.data.data,
-            totalPage: res.data.meta.last_page,
-          };
+          try {
+            const res = await axios(
+              "https://myworshiplist.com/api/songs?search=" +
+                opts.input.title +
+                (opts.input.page !== null ? `&page=${opts.input.page}` : ""),
+            );
+            return {
+              data: res.data.data,
+              totalPage: res.data.meta.last_page,
+            };
+          } catch (error) {
+            logger.error(
+              { error, ctx: opts.ctx, input: opts.input },
+              "/lyricsPresenter.search: Error",
+            );
+            throw error;
+          }
         }),
       playlist: t.procedure.query(async () => {
         const res = await axios("https://myworshiplist.com/api/songlists");
