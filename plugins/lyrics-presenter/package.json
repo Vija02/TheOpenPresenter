@@ -18,6 +18,7 @@
     "@react-hook/size": "^2.1.2",
     "@react-hook/window-size": "^3.1.1",
     "@repo/base-plugin": "*",
+    "@repo/observability": "*",
     "@repo/ui": "*",
     "@tanstack/react-query": "^5.62.3",
     "@tiptap/core": "^2.11.7",
