@@ -44,10 +44,10 @@ jobs:
           --name alloy \
           --network host \
           -v ${{ github.workspace }}/config/alloy/minimal.alloy:/etc/alloy/config.alloy \
-          -e LOKI_HOST=${{ secrets.LOKI_HOST }} \
-          -e LOKI_AUTH=${{ secrets.LOKI_AUTH }} \
-          -e TEMPO_HOST=${{ secrets.TEMPO_HOST }} \
-          -e TEMPO_AUTH=${{ secrets.TEMPO_AUTH }} \
+          -e LOKI_HOST="${{ secrets.LOKI_HOST }}" \
+          -e LOKI_AUTH="${{ secrets.LOKI_AUTH }}" \
+          -e TEMPO_HOST="${{ secrets.TEMPO_HOST }}" \
+          -e TEMPO_AUTH="${{ secrets.TEMPO_AUTH }}" \
           grafana/alloy:v1.5.1 \
           run /etc/alloy/config.alloy \
           --storage.path=/var/lib/alloy/data \
