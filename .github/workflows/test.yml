@@ -45,6 +45,21 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
+      - name: Start Alloy with config
+        run: |
+          docker run -d \
+            --name alloy \
+            --network host \
+            -v ${{ github.workspace }}/config/alloy/minimal.alloy:/etc/alloy/config.alloy \
+            -e LOKI_HOST="${{ secrets.LOKI_HOST }}" \
+            -e LOKI_AUTH="${{ secrets.LOKI_AUTH }}" \
+            -e TEMPO_HOST="${{ secrets.TEMPO_HOST }}" \
+            -e TEMPO_AUTH="${{ secrets.TEMPO_AUTH }}" \
+            grafana/alloy:v1.5.1 \
+            run /etc/alloy/config.alloy \
+            --storage.path=/var/lib/alloy/data \
+            --server.http.listen-addr=0.0.0.0:12345 \
+            --stability.level=experimental
       - name: yarn, lint, build and test
         run: |
           cp .env.ci .env
