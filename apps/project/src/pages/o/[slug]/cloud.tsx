@@ -6,7 +6,7 @@ import {
   useSyncCloudConnectionMutation,
 } from "@repo/graphql";
 import { extractError, globalState } from "@repo/lib";
-import { Alert, Button } from "@repo/ui";
+import { Alert, Button, Input } from "@repo/ui";
 import { EventSourcePlus } from "event-source-plus";
 import { useCallback, useState } from "react";
 import { CombinedError } from "urql";
@@ -30,13 +30,18 @@ const OrganizationCloudPage = () => {
     useSelectTargetOrganizationCloudConnectionMutation();
 
   const cloudConnection = data?.organizationBySlug?.cloudConnections.nodes?.[0];
+  const [hostInput, setHostInput] = useState("theopenpresenter.com");
+  const connectedHost = cloudConnection?.host ?? "theopenpresenter.com";
 
   const onConnect = useCallback(() => {
     setIsConnecting(true);
     setError(null);
 
+    const host = hostInput.trim() ?? "theopenpresenter.com";
+    const remoteUrl = host.startsWith("http") ? host : `https://${host}`;
+
     const eventSource = new EventSourcePlus(
-      `/cloud/connect?organizationId=${data?.organizationBySlug?.id}&remote=https://theopenpresenter.com`,
+      `/cloud/connect?organizationId=${data?.organizationBySlug?.id}&remote=${remoteUrl}`,
       {
         retryStrategy: "on-error",
       },
@@ -75,7 +80,7 @@ const OrganizationCloudPage = () => {
         popup?.close();
       },
     });
-  }, [publish, data?.organizationBySlug?.id]);
+  }, [publish, data?.organizationBySlug?.id, hostInput]);
 
   const onSelectOrganization = useCallback(
     async (organizationSlug: string) => {
@@ -145,17 +150,52 @@ const OrganizationCloudPage = () => {
             </div>
 
             {!cloudConnection ? (
+              <div className="space-y-3">
+                <div>
+                  <label
+                    htmlFor="host-input"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Cloud Host
+                  </label>
+                  <Input
+                    data-testid="host-input"
+                    type="text"
+                    value={hostInput}
+                    onChange={(e) => setHostInput(e.target.value)}
+                    placeholder="theopenpresenter.com"
+                    disabled={isConnecting}
+                    className="max-w-md"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Enter the cloud host URL (defaults to theopenpresenter.com)
+                  </p>
+                </div>
               <Button
                 onClick={onConnect}
-                disabled={isConnecting}
+                  disabled={isConnecting || !hostInput.trim()}
                 variant="outline"
               >
                 {isConnecting ? "Connecting..." : "Connect to Cloud"}
               </Button>
+              </div>
             ) : (
+              <div className="space-y-2">
               <p className="text-sm text-gray-600">
                 Successfully connected to cloud
               </p>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Connected Host
+                  </label>
+                  <Input
+                    type="text"
+                    value={connectedHost}
+                    disabled={true}
+                    className="max-w-md bg-gray-50"
+                  />
+                </div>
+              </div>
             )}
           </div>
 
