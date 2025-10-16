@@ -2900,6 +2900,7 @@ type Project {
   categoryId: UUID
   cloudConnectionId: UUID
   cloudLastUpdated: Datetime
+  cloudProjectId: UUID
   cloudShouldSync: Boolean
   createdAt: Datetime!
 
