@@ -56,7 +56,7 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
     const { rows: localProjects } = await withPgClient((pgClient) =>
       pgClient.query(
         `
-          SELECT id, updated_at FROM app_public.projects WHERE id = ANY($1)
+          SELECT cloud_project_id, updated_at FROM app_public.projects WHERE id = ANY($1)
         `,
         [
           projectUpdatedRes.data?.organizationBySlug?.projects.nodes.map(
@@ -66,7 +66,7 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
       ),
     );
 
-    const projectIdsToCreateOrUpdate =
+    const externalProjectIdsToCreateOrUpdate =
       projectUpdatedRes.data?.organizationBySlug?.projects.nodes
         .filter((cloudProject) => {
           if (force_resync) {
@@ -74,7 +74,8 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
           }
 
           const foundInCurrentProject = localProjects.find(
-            (currentProject) => cloudProject.id === currentProject.id,
+            (currentProject) =>
+              cloudProject.id === currentProject.cloud_project_id,
           );
           return (
             !foundInCurrentProject ||
@@ -91,7 +92,7 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
       AllProjectMetadataDocument,
       {
         slug: cloudConnection.target_organization_slug,
-        projectIds: projectIdsToCreateOrUpdate,
+        projectIds: externalProjectIdsToCreateOrUpdate,
       },
     );
 
@@ -201,15 +202,24 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
       tagsMap.push(...newTags);
     }
 
+    // Now handle project data
+
+    const externalProjectsToCreateOrUpdate =
+      res.data?.organizationBySlug?.projects.nodes.filter((externalProject) =>
+        externalProjectIdsToCreateOrUpdate?.includes(externalProject.id),
+      ) ?? [];
+
+    // TODO: Handle deleted projects
+
     // Update metadata
-    await withPgClient(async (pgClient) => {
+    const createdOrUpdatedProjects = await withPgClient(async (pgClient) => {
       await pgClient.query("SET session_replication_role = replica;");
-      await pgClient.query(
+      const { rows: createdOrUpdatedProjects } = await pgClient.query(
         `
-          INSERT INTO app_public.projects (id, organization_id, creator_user_id, slug, created_at, updated_at, name, target_date, category_id, cloud_connection_id, cloud_last_updated)
-            SELECT id, organization_id, creator_user_id, slug, created_at, updated_at, name, target_date, category_id, cloud_connection_id, cloud_last_updated
-            FROM jsonb_to_recordset($1) AS t (id uuid, organization_id uuid, creator_user_id uuid, slug public.citext, created_at timestamp, updated_at timestamp, name text, target_date timestamp, category_id uuid, cloud_connection_id uuid, cloud_last_updated timestamptz)
-            ON CONFLICT (id) DO UPDATE SET 
+          INSERT INTO app_public.projects (organization_id, creator_user_id, slug, created_at, updated_at, name, target_date, category_id, cloud_connection_id, cloud_last_updated, cloud_project_id)
+            SELECT organization_id, creator_user_id, slug, created_at, updated_at, name, target_date, category_id, cloud_connection_id, cloud_last_updated, cloud_project_id
+            FROM jsonb_to_recordset($1) AS t (organization_id uuid, creator_user_id uuid, slug public.citext, created_at timestamp, updated_at timestamp, name text, target_date timestamp, category_id uuid, cloud_connection_id uuid, cloud_last_updated timestamptz, cloud_project_id uuid)
+            ON CONFLICT (organization_id, cloud_project_id) DO UPDATE SET 
               organization_id = excluded.organization_id,
               creator_user_id = excluded.creator_user_id,
               slug = excluded.slug,
@@ -219,36 +229,38 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
               target_date = excluded.target_date,
               category_id = excluded.category_id,
               cloud_connection_id = excluded.cloud_connection_id,
-              cloud_last_updated = excluded.cloud_last_updated
+              cloud_last_updated = excluded.cloud_last_updated,
+              cloud_project_id = excluded.cloud_project_id
+          RETURNING id, cloud_project_id
         `,
         [
           JSON.stringify(
-            res.data?.organizationBySlug?.projects.nodes.map((project) => ({
-              id: project.id,
+            externalProjectsToCreateOrUpdate.map((externalProject) => ({
               organization_id: cloudConnection.organization_id,
               creator_user_id: cloudConnection.creator_user_id,
-              slug: project.slug,
-              created_at: project.createdAt,
-              updated_at: project.updatedAt,
-              name: project.name,
-              target_date: project.targetDate,
+              slug: externalProject.slug,
+              created_at: externalProject.createdAt,
+              updated_at: externalProject.updatedAt,
+              name: externalProject.name,
+              target_date: externalProject.targetDate,
               category_id: categoriesMap.find(
-                (x) => x.name === project.category?.name,
+                (x) => x.name === externalProject.category?.name,
               )?.id,
               cloud_connection_id: cloudConnection.id,
-              cloud_last_updated: project.updatedAt,
+              cloud_last_updated: externalProject.updatedAt,
+              cloud_project_id: externalProject.id,
             })),
           ),
         ],
       );
+      return createdOrUpdatedProjects;
     });
-
-    // TODO: Handle deleted projects
-
-    const projectsToCreateOrUpdate =
-      res.data?.organizationBySlug?.projects.nodes.filter((project) =>
-        projectIdsToCreateOrUpdate?.includes(project.id),
-      ) ?? [];
+    const externalToLocalProjectIdMapping = new Map(
+      createdOrUpdatedProjects.map((localProject) => [
+        localProject.cloud_project_id,
+        localProject.id,
+      ]),
+    );
 
     // Now create the project-tag connection
     await withPgClient((pgClient) =>
@@ -261,9 +273,11 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
         `,
         [
           JSON.stringify(
-            projectsToCreateOrUpdate.flatMap((project) =>
-              project.projectTags.nodes.map((x) => ({
-                project_id: project.id,
+            externalProjectsToCreateOrUpdate.flatMap((externalProject) =>
+              externalProject.projectTags.nodes.map((x) => ({
+                project_id: externalToLocalProjectIdMapping.get(
+                  externalProject.id,
+                ),
                 tag_id: tagsMap.find((tagMap) => tagMap.name === x.tag?.name)
                   ?.id,
               })),
@@ -274,26 +288,31 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
     );
 
     // Remove trailing project tags
-    const { rows: currentProjectTags } = await withPgClient((pgClient) =>
+    const { rows: localProjectTags } = await withPgClient((pgClient) =>
       pgClient.query(
         `
           SELECT * FROM app_public.project_tags WHERE project_id = ANY($1)
         `,
-        [projectIdsToCreateOrUpdate],
+        [
+          externalProjectIdsToCreateOrUpdate?.map((x) =>
+            externalToLocalProjectIdMapping.get(x),
+          ),
+        ],
       ),
     );
-    const projectTagsToCreateOrUpdate = projectsToCreateOrUpdate.flatMap(
-      (project) =>
-        project.projectTags.nodes.map((pt) => ({
-          project_id: project.id,
+    const projectTagsToCreateOrUpdate =
+      externalProjectsToCreateOrUpdate.flatMap((externalProject) =>
+        externalProject.projectTags.nodes.map((pt) => ({
+          project_id: externalToLocalProjectIdMapping.get(externalProject.id),
           tag_id: tagsMap.find((tagMap) => tagMap.name === pt.tag?.name)?.id,
         })),
-    );
-    const projectTagsToDelete = currentProjectTags.filter(
-      (current) =>
+      );
+    const projectTagsToDelete = localProjectTags.filter(
+      (localProjectTag) =>
         !projectTagsToCreateOrUpdate.some(
           (x) =>
-            x.project_id === current.project_id && x.tag_id === current.tag_id,
+            x.project_id === localProjectTag.project_id &&
+            x.tag_id === localProjectTag.tag_id,
         ),
     );
 
@@ -310,11 +329,14 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
       ),
     );
 
-    if (projectIdsToCreateOrUpdate && projectIdsToCreateOrUpdate.length > 0) {
+    if (
+      externalProjectIdsToCreateOrUpdate &&
+      externalProjectIdsToCreateOrUpdate.length > 0
+    ) {
       await Promise.all(
-        projectIdsToCreateOrUpdate.map((id) => {
+        externalProjectIdsToCreateOrUpdate.map((externalProjectId) => {
           return addJob("project__sync_document_cloud_connection", {
-            id,
+            id: externalToLocalProjectIdMapping.get(externalProjectId),
           });
         }),
       );
