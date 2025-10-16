@@ -171,19 +171,19 @@ const OrganizationCloudPage = () => {
                     Enter the cloud host URL (defaults to theopenpresenter.com)
                   </p>
                 </div>
-              <Button
-                onClick={onConnect}
+                <Button
+                  onClick={onConnect}
                   disabled={isConnecting || !hostInput.trim()}
-                variant="outline"
-              >
-                {isConnecting ? "Connecting..." : "Connect to Cloud"}
-              </Button>
+                  variant="outline"
+                >
+                  {isConnecting ? "Connecting..." : "Connect to Cloud"}
+                </Button>
               </div>
             ) : (
               <div className="space-y-2">
-              <p className="text-sm text-gray-600">
-                Successfully connected to cloud
-              </p>
+                <p className="text-sm text-gray-600">
+                  Successfully connected to cloud
+                </p>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Connected Host
@@ -225,6 +225,7 @@ const OrganizationCloudPage = () => {
                             key={orgSlug}
                             onClick={() => onSelectOrganization(orgSlug)}
                             className="block text-left p-3 border border-gray-200 hover:border-gray-300 w-full"
+                            data-testid={`select-org-${orgSlug}`}
                           >
                             <div className="font-medium">{orgSlug}</div>
                           </button>
