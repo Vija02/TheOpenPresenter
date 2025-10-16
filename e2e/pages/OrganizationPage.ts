@@ -65,14 +65,12 @@ export class OrganizationPage {
       .getByTestId("form-item-categoryId")
       .getByRole("combobox");
     this.projectEditModalCategoryOption = (option: string) =>
-      page
-        .getByTestId("form-item-categoryId")
-        .getByRole("option", { name: option });
+      page.getByRole("option", { name: option });
     this.projectEditModalTagsInput = page
       .getByTestId("tag-selector")
       .getByRole("combobox");
     this.projectEditModalTagsOption = (option: string) =>
-      page.getByTestId("tag-selector").getByRole("option", { name: option });
+      page.getByRole("option", { name: option });
     this.projectEditModalSaveButton = page.getByRole("button", {
       name: "Save",
     });
