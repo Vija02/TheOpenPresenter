@@ -42,7 +42,7 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
     const projectDocumentRes = await urqlClient.query<ProjectDocumentQuery>(
       ProjectDocumentDocument,
       {
-        projectId,
+        projectId: projectAndCloudConnection.cloud_project_id,
       },
     );
     if (projectDocumentRes.error) {
@@ -57,10 +57,7 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
             SET document = $1
             WHERE id = $2
         `,
-        [
-          projectDocumentRes.data?.project?.document,
-          projectDocumentRes.data?.project?.id,
-        ],
+        [projectDocumentRes.data?.project?.document, projectId],
       );
     });
   } catch (e) {
