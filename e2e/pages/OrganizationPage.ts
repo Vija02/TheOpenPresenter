@@ -16,6 +16,7 @@ export class OrganizationPage {
   readonly projectEditModalCategoryOption: (option: string) => Locator;
   readonly projectEditModalTagsInput: Locator;
   readonly projectEditModalTagsOption: (option: string) => Locator;
+  readonly projectEditModalTagsRemove: (nth?: number) => Locator;
   readonly projectEditModalSaveButton: Locator;
 
   constructor(public readonly page: Page) {
@@ -71,6 +72,8 @@ export class OrganizationPage {
       .getByRole("combobox");
     this.projectEditModalTagsOption = (option: string) =>
       page.getByRole("option", { name: option });
+    this.projectEditModalTagsRemove = (nth = 0) =>
+      page.locator("[data-testid=tag-remove]").nth(nth);
     this.projectEditModalSaveButton = page.getByRole("button", {
       name: "Save",
     });
