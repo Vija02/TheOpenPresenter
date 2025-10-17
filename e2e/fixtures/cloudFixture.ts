@@ -14,6 +14,7 @@ export const test = base.extend<CloudFixture>({
   loginWithCloudProjects: async ({ e2eCommand }, use) => {
     const fn = async (next: string = "/o/testorg") => {
       await e2eCommand.login({
+        verified: true,
         orgs: [
           {
             name: "TestOrg",
