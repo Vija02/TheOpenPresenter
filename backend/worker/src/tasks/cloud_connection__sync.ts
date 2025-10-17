@@ -6,6 +6,7 @@ import {
   AllProjectUpdatedAtQuery,
 } from "@repo/graphql";
 import { Task } from "graphile-worker";
+import { generateSlug } from "random-word-slugs";
 
 interface CloudConnectionSyncPayload {
   /**
@@ -222,7 +223,6 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
             ON CONFLICT (organization_id, cloud_project_id) DO UPDATE SET 
               organization_id = excluded.organization_id,
               creator_user_id = excluded.creator_user_id,
-              slug = excluded.slug,
               created_at = excluded.created_at,
               updated_at = excluded.updated_at,
               name = excluded.name,
@@ -238,7 +238,7 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
             externalProjectsToCreateOrUpdate.map((externalProject) => ({
               organization_id: cloudConnection.organization_id,
               creator_user_id: cloudConnection.creator_user_id,
-              slug: externalProject.slug,
+              slug: generateSlug(),
               created_at: externalProject.createdAt,
               updated_at: externalProject.updatedAt,
               name: externalProject.name,
