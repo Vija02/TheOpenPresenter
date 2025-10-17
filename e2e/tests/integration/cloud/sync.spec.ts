@@ -1,5 +1,4 @@
 import { expect, test } from "../../../fixtures/cloudFixture";
-import { CloudPage } from "../../../pages/CloudPage";
 import { OrgSettingCategoriesPage } from "../../../pages/OrgSettings/OrgSettingCategoriesPage";
 import { OrgSettingTagsPage } from "../../../pages/OrgSettings/OrgSettingTagsPage";
 import { OrganizationPage } from "../../../pages/OrganizationPage";
@@ -19,6 +18,7 @@ test.describe("Cloud Sync", () => {
     cloudPage,
     loginWithCloudProjects,
   }) => {
+    test.slow();
     await loginWithCloudProjects("/o/testorg/cloud");
 
     const pagePromises: Promise<any>[] = [];
@@ -67,6 +67,9 @@ test.describe("Cloud Sync", () => {
       .projectEditModalCategoryOption("Sunday Morning")
       .click();
     await cloudOrganizationPage.projectEditModalSaveButton.click();
+    await expect(
+      cloudOrganizationPage.projectCards.getByText("Sunday Morning"),
+    ).toBeVisible();
 
     await cloudPage.startSyncButton.click();
     await currentProjectPage.reload({ waitUntil: "domcontentloaded" });
@@ -121,6 +124,8 @@ test.describe("Cloud Sync", () => {
       .click();
     await cloudOrganizationPage.projectEditModalTagsInput.click();
     await cloudOrganizationPage.projectEditModalTagsOption("Tag 1").click();
+    await cloudOrganizationPage.projectEditModalTagsInput.click();
+    await cloudOrganizationPage.projectEditModalTagsOption("Tag 2").click();
     await cloudOrganizationPage.projectEditModalSaveButton.click();
     await expect(
       cloudOrganizationPage.projectCards.getByText("Category 1"),
@@ -133,5 +138,38 @@ test.describe("Cloud Sync", () => {
 
     await expect(currentProjectPage.getByText("Category 1")).toBeInViewport();
     await expect(currentProjectPage.getByText("Tag 1")).toBeInViewport();
+    await expect(currentProjectPage.getByText("Tag 2")).toBeInViewport();
+
+    // 3. Should sync when categories and media deleted
+    // Remove category
+    await cloudCategoryPage.deleteExistingCategoryButton("Category 1").click();
+    await cloudCategoryPage.page.getByTestId("popconfirm-confirm").click();
+    await expect(
+      cloudCategoryPage.page.getByText("Category 1"),
+    ).not.toBeInViewport();
+    // Remove tag
+    await cloudTagPage.deleteExistingTagButton("Tag 1").click();
+    await cloudTagPage.page.getByTestId("popconfirm-confirm").click();
+    await expect(cloudTagPage.page.getByText("Tag 1")).not.toBeInViewport();
+
+    // Update the project to remove tag
+    await cloudOrganizationPage.page.reload();
+    await cloudOrganizationPage.projectCardEditButtonNth(0).click();
+    await cloudOrganizationPage.projectEditModalTagsRemove(0).click();
+    await cloudOrganizationPage.projectEditModalSaveButton.click();
+    await expect(
+      cloudOrganizationPage.page.getByText("Tag 2"),
+    ).not.toBeInViewport();
+
+    await cloudPage.startSyncButton.click();
+    // TODO: Better way to wait until sync is done
+    await page.waitForTimeout(3000);
+    await currentProjectPage.reload({ waitUntil: "domcontentloaded" });
+
+    await expect(
+      currentProjectPage.getByText("Category 1"),
+    ).not.toBeInViewport();
+    await expect(currentProjectPage.getByText("Tag 1")).not.toBeInViewport();
+    await expect(currentProjectPage.getByText("Tag 2")).not.toBeInViewport();
   });
 });
