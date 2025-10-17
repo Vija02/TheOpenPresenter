@@ -36,6 +36,7 @@
     "lodash": "^4.17.21",
     "mjml": "^4.15.3",
     "nodemailer": "^6.9.16",
+    "random-word-slugs": "^0.1.7",
     "tslib": "^2.8.1",
     "typeid-js": "^1.1.0",
     "valtio": "^2.1.2",
