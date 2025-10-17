@@ -1,3 +1,6 @@
+-- 400 
+drop function if exists app_private.tg_tasks__update_project_updated_at() cascade;
+
 -- 300
 ALTER TABLE app_public.projects
   DROP COLUMN IF EXISTS cloud_connection_id,
