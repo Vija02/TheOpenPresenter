@@ -171,5 +171,25 @@ test.describe("Cloud Sync", () => {
     ).not.toBeInViewport();
     await expect(currentProjectPage.getByText("Tag 1")).not.toBeInViewport();
     await expect(currentProjectPage.getByText("Tag 2")).not.toBeInViewport();
+
+    // 4. Should sync delete project
+    await cloudOrganizationPage.projectCardDeleteButtonNth(0).click();
+    await cloudOrganizationPage.page.getByTestId("popconfirm-confirm").click();
+    await expect(
+      cloudOrganizationPage.page.getByText("New edited project name"),
+    ).not.toBeInViewport();
+
+    await cloudPage.startSyncButton.click();
+    // TODO: Better way to wait until sync is done
+    await page.waitForTimeout(3000);
+    await currentProjectPage.reload({ waitUntil: "domcontentloaded" });
+
+    await expect(
+      currentProjectPage.getByText("New edited project name"),
+    ).not.toBeInViewport();
+    // Shouldn't delete ours
+    await expect(currentProjectPage.getByText("TestProject")).toBeInViewport();
+    // Shouldn't delete the one not deleted
+    await expect(currentProjectPage.getByText("SyncProject")).toBeInViewport();
   });
 });
