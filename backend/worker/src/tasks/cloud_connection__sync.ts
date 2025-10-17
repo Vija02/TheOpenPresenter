@@ -57,13 +57,9 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
     const { rows: localProjects } = await withPgClient((pgClient) =>
       pgClient.query(
         `
-          SELECT cloud_project_id, updated_at FROM app_public.projects WHERE id = ANY($1)
+          SELECT id, cloud_project_id, updated_at FROM app_public.projects WHERE cloud_connection_id = $1
         `,
-        [
-          projectUpdatedRes.data?.organizationBySlug?.projects.nodes.map(
-            (x) => x.id,
-          ),
-        ],
+        [cloudConnectionId],
       ),
     );
 
@@ -87,8 +83,6 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
         })
         .map((x) => x.id);
 
-    // TODO: Delete projects that are deleted
-
     const res = await urqlClient.query<AllProjectMetadataQuery>(
       AllProjectMetadataDocument,
       {
@@ -101,7 +95,9 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
       throw res.error;
     }
 
-    // CATEGORIES
+    // ========================================================================== //
+    // =============================== CATEGORIES =============================== //
+    // ========================================================================== //
     const requiredCategories =
       res.data?.organizationBySlug?.projects.nodes
         .map((x) => x.category?.name)
@@ -143,7 +139,9 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
       categoriesMap.push(...newCategories);
     }
 
-    // TAGS
+    // ========================================================================== //
+    // ================================== TAGS ================================== //
+    // ========================================================================== //
     // Tags have multiple fields. But we'll only match based on name here. So the style might look different
     // if we already have something defined locally that has the same name.
     const requiredTags =
@@ -203,14 +201,32 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
       tagsMap.push(...newTags);
     }
 
-    // Now handle project data
-
+    // ========================================================================== //
+    // ========================= Now handle project data ======================== //
+    // ========================================================================== //
     const externalProjectsToCreateOrUpdate =
       res.data?.organizationBySlug?.projects.nodes.filter((externalProject) =>
         externalProjectIdsToCreateOrUpdate?.includes(externalProject.id),
       ) ?? [];
 
-    // TODO: Handle deleted projects
+    // Handle deleted projects
+    const projectIdsToDelete = localProjects
+      .filter(
+        (localProject) =>
+          !projectUpdatedRes.data?.organizationBySlug?.projects.nodes.some(
+            (externalProject) =>
+              externalProject.id === localProject.cloud_project_id,
+          ),
+      )
+      .map((localProject) => localProject.id);
+    await withPgClient((pgClient) =>
+      pgClient.query(
+        `
+          DELETE FROM app_public.projects WHERE id = ANY($1)
+        `,
+        [projectIdsToDelete],
+      ),
+    );
 
     // Update metadata
     const createdOrUpdatedProjects = await withPgClient(async (pgClient) => {
