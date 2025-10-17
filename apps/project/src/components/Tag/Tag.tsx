@@ -60,6 +60,7 @@ export function Tag({
               className="flex items-center px-2 hover:bg-black hover:opacity-30 cursor-pointer"
               onMouseDown={(e) => e.stopPropagation()}
               onClick={onRemove}
+              data-testid="tag-remove"
             >
               <FiX color={calculatedForegroundColor} />
             </div>
