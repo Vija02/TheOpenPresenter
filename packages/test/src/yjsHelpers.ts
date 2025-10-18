@@ -212,7 +212,7 @@ export const simulateUser = (
       canPlayAudio: undefined as any,
       toast: { error: vi.fn() } as any,
       media: {
-        deleteMedia() {
+        permanentlyDeleteMedia() {
           return Promise.resolve();
         },
         completeMedia() {

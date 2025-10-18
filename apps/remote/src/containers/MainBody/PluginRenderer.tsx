@@ -162,7 +162,7 @@ const PluginRenderer = React.memo(
           canPlayAudio,
           toast,
           media: {
-            deleteMedia: (mediaName: string) => {
+            permanentlyDeleteMedia: (mediaName: string) => {
               const splittedKey = mediaName.split(".");
               const mediaId = splittedKey[0];
               const uuid = toUUID(mediaId as TypeId<string>);
