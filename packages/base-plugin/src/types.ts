@@ -148,6 +148,7 @@ export type ZoomLevel = StoreApi<ZoomLevelState>;
 
 export type MediaHandler = {
   // Debt: any type
-  permanentlyDeleteMedia: (id: string) => Promise<any>;
-  completeMedia: (id: string) => Promise<any>;
+  permanentlyDeleteMedia: (mediaId: string) => Promise<any>;
+  completeMedia: (mediaId: string) => Promise<any>;
+  unlinkMediaFromPlugin: (pluginId: string) => Promise<any>;
 };

@@ -249,6 +249,9 @@ const PluginRenderer = React.memo(
             completeMedia: () => {
               return Promise.reject();
             },
+            unlinkMediaFromPlugin: () => {
+              return Promise.reject();
+            },
           },
           logger: childLogger,
           parentContainer: pluginDivRef.current,

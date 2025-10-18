@@ -89,6 +89,7 @@ export function initPluginApi<
       pluginClientStorage: storageManager, // Scoped to plugin
       permanentlyDeleteMedia: misc.media.permanentlyDeleteMedia,
       completeMedia: misc.media.completeMedia,
+      unlinkMediaFromPlugin: misc.media.unlinkMediaFromPlugin,
       resolveMediaUrl,
       resolveProcessedMediaUrl,
       isInternalMedia,
