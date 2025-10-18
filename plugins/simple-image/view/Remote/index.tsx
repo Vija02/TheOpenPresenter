@@ -26,7 +26,7 @@ const ImageRemote = () => {
             pluginData.images[index].mediaId,
             pluginData.images[index].extension,
           );
-          await pluginApi.media.deleteMedia(mediaName);
+          await pluginApi.media.permanentlyDeleteMedia(mediaName);
         }
 
         mutableSceneData.pluginData.images.splice(index, 1);

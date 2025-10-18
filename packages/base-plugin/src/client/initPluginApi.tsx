@@ -87,7 +87,7 @@ export function initPluginApi<
       tusUploadUrl: window.location.origin + "/media/upload/tus",
       formDataUploadUrl: window.location.origin + "/media/upload/form-data",
       pluginClientStorage: storageManager, // Scoped to plugin
-      deleteMedia: misc.media.deleteMedia,
+      permanentlyDeleteMedia: misc.media.permanentlyDeleteMedia,
       completeMedia: misc.media.completeMedia,
       resolveMediaUrl,
       resolveProcessedMediaUrl,

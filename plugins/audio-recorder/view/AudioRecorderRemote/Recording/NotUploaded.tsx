@@ -11,7 +11,7 @@ export const NotUploaded = ({ recording }: { recording: Recording }) => {
   const mutableSceneData = pluginApi.scene.useValtioData();
 
   const handleRemove = useCallback(async () => {
-    await pluginApi.media.deleteMedia(recording.mediaId + ".mp3");
+    await pluginApi.media.permanentlyDeleteMedia(recording.mediaId + ".mp3");
 
     const index = mutableSceneData.pluginData.recordings.findIndex(
       (x) => x.mediaId === recording.mediaId,

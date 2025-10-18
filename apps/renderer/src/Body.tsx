@@ -243,7 +243,7 @@ const PluginRenderer = React.memo(
           toast,
           // These should probably never be called from the renderer
           media: {
-            deleteMedia: () => {
+            permanentlyDeleteMedia: () => {
               return Promise.reject();
             },
             completeMedia: () => {
