@@ -1,0 +1,5 @@
+mutation UnlinkMediaFromPlugin($pluginId: UUID!) {
+  unlinkMediaFromPlugin(input: { pluginId: $pluginId }) {
+    success
+  }
+}

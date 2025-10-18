@@ -4,6 +4,7 @@ import {
   Plugin,
   PluginContext,
   State,
+  UUID,
   WebComponentProps,
   YjsWatcher,
 } from "@repo/base-plugin";
@@ -11,6 +12,7 @@ import {
   RemoteBasePluginQuery,
   useCompleteMediaMutation,
   useDeleteMediaMutation,
+  useUnlinkMediaFromPluginMutation,
 } from "@repo/graphql";
 import { preloader } from "@repo/lib";
 import { logger } from "@repo/observability";
@@ -93,6 +95,7 @@ const PluginRenderer = React.memo(
 
     const [, deleteMedia] = useDeleteMediaMutation();
     const [, completeMedia] = useCompleteMediaMutation();
+    const [, unlinkMediaFromPlugin] = useUnlinkMediaFromPluginMutation();
 
     const pluginContext: PluginContext = useMemo(
       () => ({
@@ -176,6 +179,9 @@ const PluginRenderer = React.memo(
 
               return completeMedia({ id: uuid });
             },
+            unlinkMediaFromPlugin: (pluginId: UUID) => {
+              return unlinkMediaFromPlugin({ pluginId });
+            },
           },
           logger: childLogger,
           parentContainer: pluginDivRef.current,
@@ -197,6 +203,7 @@ const PluginRenderer = React.memo(
       removeError,
       sceneId,
       setAwarenessStateData,
+      unlinkMediaFromPlugin,
       viewData?.tag,
       yjsPluginRendererData,
       yjsPluginSceneData,

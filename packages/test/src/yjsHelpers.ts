@@ -218,6 +218,9 @@ export const simulateUser = (
         completeMedia() {
           return Promise.resolve();
         },
+        unlinkMediaFromPlugin: () => {
+          return Promise.resolve();
+        },
       },
       logger: pino(pino.destination("/dev/null")),
       parentContainer: document.body,
