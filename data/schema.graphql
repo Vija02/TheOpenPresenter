@@ -2133,6 +2133,17 @@ type Mutation {
     input: TransferOrganizationOwnershipInput!
   ): TransferOrganizationOwnershipPayload
 
+  """
+  Use this mutation to unlink a media from a plugin. The media will stay in the user's library unless it is marked as a system media.
+  System media will be deleted once there is no more reference to it.
+  """
+  unlinkMediaFromPlugin(
+    """
+    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.
+    """
+    input: UnlinkMediaFromPluginInput!
+  ): UnlinkMediaFromPluginPayload
+
   """Updates a single `Category` using a unique key and a patch."""
   updateCategory(
     """
@@ -4157,6 +4168,14 @@ input UUIDFilter {
 
   """Not included in the specified list."""
   notIn: [UUID!]
+}
+
+input UnlinkMediaFromPluginInput {
+  pluginId: UUID!
+}
+
+type UnlinkMediaFromPluginPayload {
+  success: Boolean!
 }
 
 """All input for the `updateCategory` mutation."""
