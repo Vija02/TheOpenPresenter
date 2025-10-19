@@ -30,10 +30,21 @@ export const uuidFromMediaId = (mediaId: string) => {
   return toUUID(mediaId as TypeId<string>);
 };
 
-export const uuidFromMediaIdOrUUID = (mediaIdOrUUID: string) => {
-  return mediaIdOrUUID.startsWith("media")
-    ? toUUID(mediaIdOrUUID as TypeId<string>)
-    : mediaIdOrUUID;
+export const uuidFromMediaIdOrUUIDOrMediaName = (
+  mediaIdOrUUIDOrMediaName: string,
+) => {
+  if (mediaIdOrUUIDOrMediaName.startsWith("media")) {
+    if (mediaIdOrUUIDOrMediaName.includes(".")) {
+      // Media Name
+      return extractMediaName(mediaIdOrUUIDOrMediaName).uuid;
+    } else {
+      // Media ID
+      return uuidFromMediaId(mediaIdOrUUIDOrMediaName);
+    }
+  } else {
+    // UUID
+    return mediaIdOrUUIDOrMediaName;
+  }
 };
 
 export const isInternalMedia = (mediaUrl: UniversalURL) => {
