@@ -1,4 +1,3 @@
-import { constructMediaName } from "@repo/lib";
 import { Button, PluginScaffold, PopConfirm, Slide, SlideGrid } from "@repo/ui";
 import { useCallback } from "react";
 import { VscTrash } from "react-icons/vsc";
@@ -22,17 +21,21 @@ const ImageRemote = () => {
       if (pluginData.images[index]) {
         // If internal, delete that media
         if (pluginApi.media.isInternalMedia(pluginData.images[index])) {
-          const mediaName = constructMediaName(
+          await pluginApi.media.unlinkMediaFromPlugin(
+            pluginApi.pluginContext.pluginId,
             pluginData.images[index].mediaId,
-            pluginData.images[index].extension,
           );
-          await pluginApi.media.permanentlyDeleteMedia(mediaName);
         }
 
         mutableSceneData.pluginData.images.splice(index, 1);
       }
     },
-    [mutableSceneData.pluginData.images, pluginApi.media, pluginData.images],
+    [
+      mutableSceneData.pluginData.images,
+      pluginApi.media,
+      pluginApi.pluginContext.pluginId,
+      pluginData.images,
+    ],
   );
 
   return (
