@@ -189,6 +189,8 @@ export default (app: Express) => {
       await rootPgPool.query(
         `INSERT INTO app_public.media_image_sizes (image_media_id, processed_media_id, width, file_type)
           VALUES ($1, $2, $3, $4)
+          ON CONFLICT (image_media_id, width, file_type)
+          DO NOTHING
           `,
         [
           mediaDetails.uuid,
