@@ -41,7 +41,7 @@ export interface MediaHandlerInterface {
     projectId: string,
     pluginId: string,
   ): Promise<void>;
-  unlinkPlugin(pluginId: string): Promise<void>;
+  unlinkPlugin(pluginId: string, mediaIdOrUUID?: string): Promise<void>;
 }
 
 export type MediaDataHandler = {

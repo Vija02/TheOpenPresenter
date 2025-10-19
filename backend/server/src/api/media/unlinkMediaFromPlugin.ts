@@ -18,6 +18,7 @@ export const unlinkMediaFromPlugin = makeExtendSchemaPlugin(() => ({
 
     input UnlinkMediaFromPluginInput {
       pluginId: UUID!
+      mediaUUID: UUID
     }
 
     type UnlinkMediaFromPluginPayload {
@@ -27,13 +28,13 @@ export const unlinkMediaFromPlugin = makeExtendSchemaPlugin(() => ({
   resolvers: {
     Mutation: {
       async unlinkMediaFromPlugin(_mutation, args, context: OurGraphQLContext) {
-        const { pluginId } = args.input;
+        const { pluginId, mediaUUID } = args.input;
         const { rootPgPool } = context;
 
         try {
           await new media[
             process.env.STORAGE_TYPE as "file" | "s3"
-          ].mediaHandler(rootPgPool).unlinkPlugin(pluginId);
+          ].mediaHandler(rootPgPool).unlinkPlugin(pluginId, mediaUUID);
 
           return { success: true };
         } catch (e: any) {

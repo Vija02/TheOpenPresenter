@@ -1,7 +1,7 @@
 import {
   SUPPORTED_IMAGE_EXTENSIONS,
   uuidFromMediaId,
-  uuidFromMediaIdOrUUID,
+  uuidFromMediaIdOrUUIDOrMediaName,
   uuidFromPluginIdOrUUID,
 } from "@repo/lib";
 import { logger } from "@repo/observability";
@@ -212,8 +212,8 @@ export const createMediaHandler = <T extends OurDataStore>(
           INSERT INTO app_public.media_dependencies(parent_media_id, child_media_id) values($1, $2)  
         `,
           [
-            uuidFromMediaIdOrUUID(parentMediaIdOrUUID),
-            uuidFromMediaIdOrUUID(childMediaIdOrUUID),
+            uuidFromMediaIdOrUUIDOrMediaName(parentMediaIdOrUUID),
+            uuidFromMediaIdOrUUIDOrMediaName(childMediaIdOrUUID),
           ],
         );
       } catch (error: any) {
@@ -244,7 +244,7 @@ export const createMediaHandler = <T extends OurDataStore>(
         `,
           [
             projectId,
-            uuidFromMediaIdOrUUID(mediaIdOrUUID),
+            uuidFromMediaIdOrUUIDOrMediaName(mediaIdOrUUID),
             uuidFromPluginIdOrUUID(pluginId),
           ],
         );
@@ -256,14 +256,26 @@ export const createMediaHandler = <T extends OurDataStore>(
         throw error;
       }
     }
-    async unlinkPlugin(pluginId: string) {
+    async unlinkPlugin(pluginId: string, mediaIdOrUUID?: string) {
       try {
-        await this.pgPool.query(
-          `
-          DELETE FROM app_public.project_medias WHERE plugin_id = $1
-        `,
-          [uuidFromPluginIdOrUUID(pluginId)],
-        );
+        if (mediaIdOrUUID) {
+          await this.pgPool.query(
+            `
+            DELETE FROM app_public.project_medias WHERE plugin_id = $1 AND media_id = $2
+          `,
+            [
+              uuidFromPluginIdOrUUID(pluginId),
+              uuidFromMediaIdOrUUIDOrMediaName(mediaIdOrUUID),
+            ],
+          );
+        } else {
+          await this.pgPool.query(
+            `
+            DELETE FROM app_public.project_medias WHERE plugin_id = $1
+          `,
+            [uuidFromPluginIdOrUUID(pluginId)],
+          );
+        }
       } catch (error: any) {
         logger.error({ error }, "unlinkPlugin: Failed to unlink plugin");
         throw error;

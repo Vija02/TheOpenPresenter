@@ -4,7 +4,6 @@ import {
   Plugin,
   PluginContext,
   State,
-  UUID,
   WebComponentProps,
   YjsWatcher,
 } from "@repo/base-plugin";
@@ -14,7 +13,11 @@ import {
   useDeleteMediaMutation,
   useUnlinkMediaFromPluginMutation,
 } from "@repo/graphql";
-import { preloader } from "@repo/lib";
+import {
+  preloader,
+  uuidFromMediaIdOrUUIDOrMediaName,
+  uuidFromPluginIdOrUUID,
+} from "@repo/lib";
 import { logger } from "@repo/observability";
 import {
   useAudioCheck,
@@ -28,7 +31,6 @@ import { useQuery } from "@tanstack/react-query";
 import { cx } from "class-variance-authority";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import { toast } from "react-toastify";
-import { TypeId, toUUID } from "typeid-js";
 import { useDisposable } from "use-disposable";
 import { useRoute } from "wouter";
 import * as Y from "yjs";
@@ -165,22 +167,20 @@ const PluginRenderer = React.memo(
           canPlayAudio,
           toast,
           media: {
-            permanentlyDeleteMedia: (mediaName: string) => {
-              const splittedKey = mediaName.split(".");
-              const mediaId = splittedKey[0];
-              const uuid = toUUID(mediaId as TypeId<string>);
-
+            permanentlyDeleteMedia: (mediaKey: string) => {
+              const uuid = uuidFromMediaIdOrUUIDOrMediaName(mediaKey);
               return deleteMedia({ id: uuid });
             },
-            completeMedia: (mediaName: string) => {
-              const splittedKey = mediaName.split(".");
-              const mediaId = splittedKey[0];
-              const uuid = toUUID(mediaId as TypeId<string>);
-
+            completeMedia: (mediaKey: string) => {
+              const uuid = uuidFromMediaIdOrUUIDOrMediaName(mediaKey);
               return completeMedia({ id: uuid });
             },
-            unlinkMediaFromPlugin: (pluginId: UUID) => {
-              return unlinkMediaFromPlugin({ pluginId });
+            unlinkMediaFromPlugin: (pluginIdOrUuid, mediaKey) => {
+              const mediaUUID = mediaKey
+                ? uuidFromMediaIdOrUUIDOrMediaName(mediaKey)
+                : null;
+              const pluginId = uuidFromPluginIdOrUUID(pluginIdOrUuid);
+              return unlinkMediaFromPlugin({ pluginId, mediaUUID });
             },
           },
           logger: childLogger,
