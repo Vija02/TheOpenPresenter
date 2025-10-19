@@ -29,8 +29,8 @@ export interface MediaHandlerInterface {
     fileName: string;
   }>;
 
-  deleteMedia(fullFileId: string): Promise<void>;
-  completeMedia(fullFileId: string): Promise<void>;
+  deleteMedia(mediaName: string): Promise<void>;
+  completeMedia(mediaName: string): Promise<void>;
 
   createDependency(
     parentMediaIdOrUUID: string,

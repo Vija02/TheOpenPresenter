@@ -150,11 +150,11 @@ export const createMediaHandler = <T extends OurDataStore>(
       }
     }
 
-    async deleteMedia(fullFileId: string) {
+    async deleteMedia(mediaName: string) {
       try {
         return await backOff(
           async () => {
-            await this.store.remove(fullFileId);
+            await this.store.remove(mediaName);
           },
           {
             numOfAttempts: 3,
@@ -176,11 +176,11 @@ export const createMediaHandler = <T extends OurDataStore>(
       }
     }
 
-    async completeMedia(fullFileId: string) {
+    async completeMedia(mediaName: string) {
       try {
         return await backOff(
           async () => {
-            await this.store.complete(fullFileId);
+            await this.store.complete(mediaName);
           },
           {
             numOfAttempts: 3,
