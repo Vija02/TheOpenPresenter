@@ -4171,7 +4171,7 @@ input UUIDFilter {
 }
 
 input UnlinkMediaFromPluginInput {
-  mediaId: UUID
+  mediaUUID: UUID
   pluginId: UUID!
 }
 
