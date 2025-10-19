@@ -11,7 +11,10 @@ export const NotUploaded = ({ recording }: { recording: Recording }) => {
   const mutableSceneData = pluginApi.scene.useValtioData();
 
   const handleRemove = useCallback(async () => {
-    await pluginApi.media.permanentlyDeleteMedia(recording.mediaId + ".mp3");
+    await pluginApi.media.unlinkMediaFromPlugin(
+      pluginApi.pluginContext.pluginId,
+      recording.mediaId ?? "",
+    );
 
     const index = mutableSceneData.pluginData.recordings.findIndex(
       (x) => x.mediaId === recording.mediaId,
@@ -20,6 +23,7 @@ export const NotUploaded = ({ recording }: { recording: Recording }) => {
   }, [
     mutableSceneData.pluginData.recordings,
     pluginApi.media,
+    pluginApi.pluginContext.pluginId,
     recording.mediaId,
   ]);
 
