@@ -3,6 +3,7 @@ import { TypeId, fromUUID, toUUID } from "typeid-js";
 export type InternalMedia = {
   mediaId: string;
   extension: string;
+  host?: string;
 };
 export type UniversalURL = string | InternalMedia;
 
@@ -54,7 +55,9 @@ export const isInternalMedia = (mediaUrl: UniversalURL) => {
 export const resolveMediaUrl = (mediaUrl: UniversalURL) => {
   if (isInternalMedia(mediaUrl)) {
     const mediaName = mediaUrl.mediaId + "." + mediaUrl.extension;
-    return window.location.origin + "/media/data/" + mediaName;
+    return (
+      (mediaUrl.host ?? window.location.origin) + "/media/data/" + mediaName
+    );
   }
   return mediaUrl;
 };
@@ -67,7 +70,7 @@ export const resolveProcessedMediaUrl = ({
   size: number;
 }) => {
   if (isInternalMedia(mediaUrl)) {
-    return `${window.location.origin}/media/processed/${size}/${constructMediaName(mediaUrl.mediaId, mediaUrl.extension)}`;
+    return `${mediaUrl.host ?? window.location.origin}/media/processed/${size}/${constructMediaName(mediaUrl.mediaId, mediaUrl.extension)}`;
   }
 
   return undefined;
