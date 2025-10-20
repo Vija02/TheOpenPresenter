@@ -175,12 +175,16 @@ const PluginRenderer = React.memo(
               const uuid = uuidFromMediaIdOrUUIDOrMediaName(mediaKey);
               return completeMedia({ id: uuid });
             },
-            unlinkMediaFromPlugin: (pluginIdOrUuid, mediaKey) => {
+            unlinkMediaFromPlugin: (mediaKey) => {
               const mediaUUID = mediaKey
                 ? uuidFromMediaIdOrUUIDOrMediaName(mediaKey)
                 : null;
-              const pluginId = uuidFromPluginIdOrUUID(pluginIdOrUuid);
-              return unlinkMediaFromPlugin({ pluginId, mediaUUID });
+              const pluginId = uuidFromPluginIdOrUUID(pluginContext.pluginId);
+              return unlinkMediaFromPlugin({
+                pluginId,
+                mediaUUID,
+                projectId: pluginContext.projectId,
+              });
             },
           },
           logger: childLogger,

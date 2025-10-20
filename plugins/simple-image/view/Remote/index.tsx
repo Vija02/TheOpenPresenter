@@ -22,7 +22,6 @@ const ImageRemote = () => {
         // If internal, delete that media
         if (pluginApi.media.isInternalMedia(pluginData.images[index])) {
           await pluginApi.media.unlinkMediaFromPlugin(
-            pluginApi.pluginContext.pluginId,
             pluginData.images[index].mediaId,
           );
         }
@@ -30,12 +29,7 @@ const ImageRemote = () => {
         mutableSceneData.pluginData.images.splice(index, 1);
       }
     },
-    [
-      mutableSceneData.pluginData.images,
-      pluginApi.media,
-      pluginApi.pluginContext.pluginId,
-      pluginData.images,
-    ],
+    [mutableSceneData.pluginData.images, pluginApi.media, pluginData.images],
   );
 
   return (

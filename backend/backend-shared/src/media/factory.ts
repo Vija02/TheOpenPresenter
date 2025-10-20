@@ -256,26 +256,31 @@ export const createMediaHandler = <T extends OurDataStore>(
         throw error;
       }
     }
-    async unlinkPlugin(pluginId: string, mediaIdOrUUID?: string) {
+    async unlinkPlugin(
+      pluginId: string,
+      extraMetadata?: { mediaIdOrUUID?: string; projectId?: string },
+    ) {
       try {
+        const { mediaIdOrUUID, projectId } = extraMetadata || {};
+        
+        // Build WHERE clause dynamically based on provided parameters
+        const conditions = ["plugin_id = $1"];
+        const params = [uuidFromPluginIdOrUUID(pluginId)];
+        
         if (mediaIdOrUUID) {
-          await this.pgPool.query(
-            `
-            DELETE FROM app_public.project_medias WHERE plugin_id = $1 AND media_id = $2
-          `,
-            [
-              uuidFromPluginIdOrUUID(pluginId),
-              uuidFromMediaIdOrUUIDOrMediaName(mediaIdOrUUID),
-            ],
-          );
-        } else {
-          await this.pgPool.query(
-            `
-            DELETE FROM app_public.project_medias WHERE plugin_id = $1
-          `,
-            [uuidFromPluginIdOrUUID(pluginId)],
-          );
+          conditions.push("media_id = $" + (params.length + 1));
+          params.push(uuidFromMediaIdOrUUIDOrMediaName(mediaIdOrUUID));
         }
+        
+        if (projectId) {
+          conditions.push("project_id = $" + (params.length + 1));
+          params.push(projectId);
+        }
+        
+        await this.pgPool.query(
+          `DELETE FROM app_public.project_medias WHERE ${conditions.join(" AND ")}`,
+          params,
+        );
       } catch (error: any) {
         logger.error({ error }, "unlinkPlugin: Failed to unlink plugin");
         throw error;
