@@ -84,7 +84,7 @@ export default async function installHocuspocus(app: Express) {
         projectId,
         onPluginDeleted: (pluginId) => {
           const mediaHandler = getMediaHandler(app);
-          mediaHandler.unlinkPlugin(pluginId);
+          mediaHandler.unlinkPlugin(pluginId, { projectId });
         },
       });
     },

@@ -150,8 +150,5 @@ export type MediaHandler = {
   // Debt: any type
   permanentlyDeleteMedia: (mediaKey: string) => Promise<any>;
   completeMedia: (mediaKey: string) => Promise<any>;
-  unlinkMediaFromPlugin: (
-    pluginIdOrUUID: string,
-    mediaKey?: string,
-  ) => Promise<any>;
+  unlinkMediaFromPlugin: (mediaKey: string | null) => Promise<any>;
 };

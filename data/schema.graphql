@@ -4173,6 +4173,7 @@ input UUIDFilter {
 input UnlinkMediaFromPluginInput {
   mediaUUID: UUID
   pluginId: UUID!
+  projectId: UUID
 }
 
 type UnlinkMediaFromPluginPayload {
