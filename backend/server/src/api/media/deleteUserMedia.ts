@@ -8,7 +8,7 @@ export const deleteUserMedia = makeExtendSchemaPlugin(() => ({
   typeDefs: gql`
     extend type Mutation {
       """
-      Use this mutation to delete a media
+      Use this mutation to delete a media. This will permanently delete the media
       """
       deleteUserMedia(input: DeleteUserMediaInput!): DeleteUserMediaPayload
     }

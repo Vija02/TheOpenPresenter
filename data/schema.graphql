@@ -2112,7 +2112,9 @@ type Mutation {
     input: DeleteUserEmailInput!
   ): DeleteUserEmailPayload
 
-  """Use this mutation to delete a media"""
+  """
+  Use this mutation to delete a media. This will permanently delete the media
+  """
   deleteUserMedia(
     """
     The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.
