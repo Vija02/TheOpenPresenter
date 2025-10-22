@@ -200,6 +200,11 @@ const onRendererDataCreated = (
   rendererData.set("slideIndex", null);
   rendererData.set("clickCount", null);
   rendererData.set("resolvedSlideIndex", null);
+  rendererData.set("lastClickTimestamp", null);
+  rendererData.set("autoplay", {
+    enabled: false,
+    loopDurationMs: 10000,
+  });
 
   return {};
 };

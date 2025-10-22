@@ -27,6 +27,17 @@ export type PluginBaseData = {
 
 export type DisplayMode = "googleslides" | "image";
 
+export type AutoplayState = {
+  /**
+   * Indicates whether autoplay behaviour is enabled for the renderer.
+   */
+  enabled: boolean;
+  /**
+   * The duration (in milliseconds) between slide transitions while autoplay is enabled.
+   */
+  loopDurationMs: number;
+};
+
 export type PluginRendererData = {
   slideIndex: number | null;
   clickCount: number | null;
@@ -40,4 +51,13 @@ export type PluginRendererData = {
    * By default, googleslides if nothing is selected
    */
   displayMode?: DisplayMode;
+  /**
+   * Epoch timestamp (in milliseconds) of when the slide is clicked
+   * Used to calculate things like autoplay without relying on timers.
+   */
+  lastClickTimestamp: number | null;
+  /**
+   * Image renderer autoplay configuration.
+   */
+  autoplay?: AutoplayState;
 };
