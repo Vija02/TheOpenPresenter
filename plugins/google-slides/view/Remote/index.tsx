@@ -167,7 +167,9 @@ const RemoteHandler = () => {
     if (
       shouldAutoPlay &&
       // TODO: Make this work on google slide display mode too
-      rendererData.displayMode === "image" &&
+      (type === "pdf" ||
+        type === "ppt" ||
+        rendererData.displayMode === "image") &&
       calculatedAutoplaySlideIndex !== null &&
       calculatedAutoplaySlideIndex !== undefined
     ) {
@@ -177,6 +179,7 @@ const RemoteHandler = () => {
     return baseIndex;
   }, [
     shouldAutoPlay,
+    type,
     rendererData.displayMode,
     calculatedAutoplaySlideIndex,
     baseIndex,
