@@ -1,5 +1,7 @@
 import {
+  Alert,
   Button,
+  CheckboxControl,
   Dialog,
   DialogBody,
   DialogContent,
@@ -7,6 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
   Form,
+  NumberInputControl,
   OptionControl,
   useOverlayToggle,
 } from "@repo/ui";
@@ -16,10 +19,14 @@ import { FaCircleInfo } from "react-icons/fa6";
 
 import { DisplayMode } from "../../src/types";
 import { usePluginAPI } from "../pluginApi";
+import { calculateBaseSlideIndex } from "../utils/slideIndex";
+import { calculateSlideIndexFromAutoplay } from "../utils/useAutoplay";
 import { displayTypeMapping } from "./displayTypeMapping";
 
 type SettingsData = {
   displayMode?: DisplayMode;
+  autoplayEnabled: boolean;
+  autoplayLoopDurationSeconds: number;
 };
 
 const SettingsModal = () => {
@@ -29,6 +36,11 @@ const SettingsModal = () => {
   const mutableRendererData = pluginApi.renderer.useValtioData();
   const type = pluginApi.scene.useData((x) => x.pluginData.type);
   const displayMode = pluginApi.renderer.useData((x) => x.displayMode);
+  const autoplay = pluginApi.renderer.useData((x) => x.autoplay);
+
+  const thumbnailLinks = pluginApi.scene.useData(
+    (x) => x.pluginData.thumbnailLinks,
+  );
 
   const handleSubmit = useCallback(
     (rawData: SettingsData) => {
@@ -56,16 +68,54 @@ const SettingsModal = () => {
         mutableRendererData.clickCount = 0;
       }
 
+      // If autoplay just turned on, let's update the time
+      if (!mutableRendererData.autoplay?.enabled && rawData.autoplayEnabled) {
+        mutableRendererData.lastClickTimestamp = Date.now();
+      }
+      // If autoplay just turned off, update the slide index
+      if (mutableRendererData.autoplay?.enabled && !rawData.autoplayEnabled) {
+        const newSlideIndex = calculateSlideIndexFromAutoplay({
+          lastClickTimestamp: mutableRendererData.lastClickTimestamp,
+          loopDurationMs: mutableRendererData.autoplay.loopDurationMs,
+          baseIndex: calculateBaseSlideIndex({
+            ...mutableRendererData,
+            slideCount: thumbnailLinks.length,
+          }),
+          slideCount: thumbnailLinks.length,
+        });
+        mutableRendererData.slideIndex = newSlideIndex;
+        mutableRendererData.clickCount = 0;
+      }
+      if (!mutableRendererData.autoplay) {
+        mutableRendererData.autoplay = {
+          enabled: rawData.autoplayEnabled,
+          loopDurationMs: rawData.autoplayLoopDurationSeconds * 1000,
+        };
+      } else {
+        mutableRendererData.autoplay.enabled = rawData.autoplayEnabled;
+        mutableRendererData.autoplay.loopDurationMs =
+          rawData.autoplayLoopDurationSeconds * 1000;
+      }
+
       resetData?.();
       onToggle?.();
       return Promise.resolve();
     },
-    [mutableRendererData, onToggle, resetData],
+    [mutableRendererData, onToggle, resetData, thumbnailLinks.length],
   );
 
-  const form = useForm({
-    values: { displayMode: displayMode ?? "googleslides" } as SettingsData,
+  const form = useForm<SettingsData>({
+    values: {
+      displayMode: displayMode ?? "googleslides",
+      autoplayEnabled: autoplay?.enabled ?? false,
+      autoplayLoopDurationSeconds: Math.max(
+        1,
+        Math.round((autoplay?.loopDurationMs ?? 10000) / 1000),
+      ),
+    },
   });
+
+  const autoplayEnabled = form.watch("autoplayEnabled");
 
   return (
     <Dialog open={isOpen ?? false} onOpenChange={onToggle ?? (() => {})}>
@@ -116,6 +166,30 @@ const SettingsModal = () => {
                       ),
                     )}
                   />
+
+                  <div>
+                    <h3 className="font-bold text-lg">Autoplay</h3>
+                    <p>*Only works with Image renderer</p>
+                  </div>
+                  <div className="w-full flex flex-col gap-3">
+                    <CheckboxControl
+                      control={form.control}
+                      name="autoplayEnabled"
+                      label="Enable autoplay"
+                      description="Advance slides automatically after the configured interval."
+                    />
+                    <NumberInputControl
+                      control={form.control}
+                      name="autoplayLoopDurationSeconds"
+                      label="Autoplay interval"
+                      unit="s"
+                      min={0.1}
+                      max={600}
+                      step={1}
+                      disabled={!autoplayEnabled}
+                      className="max-w-40"
+                    />
+                  </div>
                   {/* <FormControl>
                     <FormLabel>Display Mode</FormLabel>
                     <Stack

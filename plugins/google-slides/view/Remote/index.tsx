@@ -15,6 +15,8 @@ import { VscSettingsGear } from "react-icons/vsc";
 
 import Renderer from "../Renderer";
 import { usePluginAPI } from "../pluginApi";
+import { calculateBaseSlideIndex } from "../utils/slideIndex";
+import { useAutoplay } from "../utils/useAutoplay";
 import ImportFileModal from "./ImportFile/ImportFileModal";
 import Landing from "./Landing";
 import SettingsModal from "./SettingsModal";
@@ -144,21 +146,41 @@ const RemoteHandler = () => {
 
   const mutableRendererData = pluginApi.renderer.useValtioData();
 
-  const actualSlideIndex = useMemo(
+  const baseIndex = useMemo(
     () =>
       type === "pdf" || type === "ppt" || rendererData.displayMode === "image"
-        ? (rendererData.slideIndex ?? 0) + (rendererData.clickCount ?? 0)
+        ? calculateBaseSlideIndex({
+            ...rendererData,
+            slideCount: thumbnailLinks.length,
+          })
         : rendererData.resolvedSlideIndex !== null
           ? rendererData.resolvedSlideIndex
           : rendererData.slideIndex,
-    [
-      rendererData.clickCount,
-      rendererData.displayMode,
-      rendererData.resolvedSlideIndex,
-      rendererData.slideIndex,
-      type,
-    ],
+    [rendererData, thumbnailLinks.length, type],
   );
+
+  const { shouldAutoPlay, calculatedAutoplaySlideIndex } = useAutoplay(
+    baseIndex ?? 0,
+  );
+
+  const activeIndex = useMemo(() => {
+    if (
+      shouldAutoPlay &&
+      // TODO: Make this work on google slide display mode too
+      rendererData.displayMode === "image" &&
+      calculatedAutoplaySlideIndex !== null &&
+      calculatedAutoplaySlideIndex !== undefined
+    ) {
+      return calculatedAutoplaySlideIndex;
+    }
+
+    return baseIndex;
+  }, [
+    shouldAutoPlay,
+    rendererData.displayMode,
+    calculatedAutoplaySlideIndex,
+    baseIndex,
+  ]);
 
   return (
     <>
@@ -166,11 +188,12 @@ const RemoteHandler = () => {
         <Slide
           key={i}
           heading={`Slide ${i + 1}`}
-          isActive={i === actualSlideIndex}
+          isActive={i === activeIndex}
           onClick={() => {
             mutableRendererData.slideIndex = i;
             mutableRendererData.clickCount = null;
             mutableRendererData.resolvedSlideIndex = null;
+            mutableRendererData.lastClickTimestamp = Date.now();
             pluginApi.renderer.setRenderCurrentScene();
           }}
         >

@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef } from "react";
 
 import { usePluginAPI } from "../../pluginApi";
+import { calculateBaseSlideIndex } from "../../utils/slideIndex";
+import { useAutoplay } from "../../utils/useAutoplay";
 import { ImageRenderView } from "./ImageRenderView";
 
 export const ImageRenderer = () => {
@@ -12,10 +14,30 @@ export const ImageRenderer = () => {
     (x) => x.pluginData.thumbnailLinks,
   );
 
-  const activeIndex = useMemo(
-    () => (slideIndex ?? 0) + (clickCount ?? 0),
-    [clickCount, slideIndex],
+  const baseIndex = useMemo(
+    () =>
+      calculateBaseSlideIndex({
+        slideIndex,
+        clickCount,
+        slideCount: thumbnailLinks.length,
+      }),
+    [clickCount, slideIndex, thumbnailLinks.length],
   );
+
+  const { shouldAutoPlay, calculatedAutoplaySlideIndex } =
+    useAutoplay(baseIndex);
+
+  const activeIndex = useMemo(() => {
+    if (
+      shouldAutoPlay &&
+      calculatedAutoplaySlideIndex !== null &&
+      calculatedAutoplaySlideIndex !== undefined
+    ) {
+      return calculatedAutoplaySlideIndex;
+    }
+
+    return baseIndex;
+  }, [shouldAutoPlay, calculatedAutoplaySlideIndex, baseIndex]);
 
   const setAwarenessStateData = pluginApi.awareness.setAwarenessStateData;
 
