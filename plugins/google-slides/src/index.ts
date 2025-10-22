@@ -5,7 +5,7 @@ import {
   ServerPluginApi,
   TRPCObject,
 } from "@repo/base-plugin/server";
-import { extractMediaName, streamToBuffer } from "@repo/lib";
+import { TypedMap, extractMediaName, streamToBuffer } from "@repo/lib";
 import { logger } from "@repo/observability";
 import axios from "axios";
 import { createProxyMiddleware } from "http-proxy-middleware";
@@ -20,7 +20,7 @@ import {
   remoteWebComponentTag,
   rendererWebComponentTag,
 } from "./consts";
-import { PluginBaseData, PluginRendererData } from "./types";
+import { AutoplayState, PluginBaseData, PluginRendererData } from "./types";
 
 export const init = (
   serverPluginApi: ServerPluginApi<PluginBaseData, PluginRendererData>,
@@ -201,10 +201,11 @@ const onRendererDataCreated = (
   rendererData.set("clickCount", null);
   rendererData.set("resolvedSlideIndex", null);
   rendererData.set("lastClickTimestamp", null);
-  rendererData.set("autoplay", {
-    enabled: false,
-    loopDurationMs: 10000,
-  });
+
+  const autoPlay = new Y.Map() as TypedMap<AutoplayState>;
+  autoPlay.set("enabled", false);
+  autoPlay.set("loopDurationMs", 10000);
+  rendererData.set("autoplay", autoPlay as any);
 
   return {};
 };
