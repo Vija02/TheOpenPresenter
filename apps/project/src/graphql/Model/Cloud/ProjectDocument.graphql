@@ -1,0 +1,6 @@
+query ProjectDocument($projectId: UUID!) {
+  project(id: $projectId) {
+    id
+    document
+  }
+}

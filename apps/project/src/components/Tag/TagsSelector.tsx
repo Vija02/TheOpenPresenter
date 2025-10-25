@@ -21,14 +21,16 @@ export function TagsSelector({
   disabled,
 }: PropTypes) {
   return (
-    <CreatableSelect
-      {...ReactSelectTagsProps()}
-      isMulti
-      onCreateOption={onCreateOption}
-      value={value}
-      onChange={onChange}
-      isDisabled={disabled}
-    />
+    <div data-testid="tag-selector">
+      <CreatableSelect
+        {...ReactSelectTagsProps()}
+        isMulti
+        onCreateOption={onCreateOption}
+        value={value}
+        onChange={onChange}
+        isDisabled={disabled}
+      />
+    </div>
   );
 }
 

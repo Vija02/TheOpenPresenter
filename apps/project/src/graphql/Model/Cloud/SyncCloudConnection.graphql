@@ -1,0 +1,5 @@
+mutation SyncCloudConnection($cloudConnectionId: UUID!, $forceResync: Boolean) {
+  syncCloudConnection(input: { cloudConnectionId: $cloudConnectionId, forceResync: $forceResync }) {
+    success
+  }
+}

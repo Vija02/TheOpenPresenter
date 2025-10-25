@@ -28,6 +28,15 @@
         },
         "description": "A user who can log in to the application."
       },
+      "app_public.cloud_connections": {
+        "attribute": {
+          "session_cookie": {
+            "tags": {
+              "omit": true
+            }
+          }
+        }
+      },
       "app_public.organizations": {
         "tags": {
           "omit": "create,delete"

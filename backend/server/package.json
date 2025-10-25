@@ -23,6 +23,7 @@
     "@repo/backend-shared": "*",
     "@repo/base-plugin": "*",
     "@repo/config": "*",
+    "@repo/graphql": "*",
     "@repo/lib": "*",
     "@repo/observability": "*",
     "@repo/portable-file": "*",
@@ -69,6 +70,7 @@
     "postgraphile-plugin-connection-filter": "^2.3.0",
     "redis": "^4.7.0",
     "serialize-javascript": "^6.0.2",
+    "set-cookie-parser": "^2.7.1",
     "sharp": "^0.34.1",
     "source-map-support": "^0.5.21",
     "ts-node": "^10.9.2",
@@ -82,6 +84,7 @@
   "devDependencies": {
     "@repo/typescript-config": "*",
     "@types/serialize-javascript": "^5.0.4",
+    "@types/set-cookie-parser": "^2",
     "mock-req": "^0.2.0",
     "tsup": "^8.3.6",
     "vitest": "^2.1.8"
