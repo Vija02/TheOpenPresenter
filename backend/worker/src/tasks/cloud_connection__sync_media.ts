@@ -16,7 +16,11 @@ interface CloudConnectionSyncMediaPayload {
   force_resync?: boolean;
 }
 
-// TODO: Currently we can't have 2 same media in the device. At least it won't be attributed to the correct organization
+/**
+ * DEBT: Currently we can't have 2 same media in the device. At least it won't be attributed to the correct organization
+ * In practice, this shouldn't happen as each media should be scoped to an organization
+ * But if a user were to sync between 2 organization in the same system, this would hit
+ */
 const task: Task = async (inPayload, { addJob, withPgClient }) => {
   try {
     const payload: CloudConnectionSyncMediaPayload = inPayload as any;
