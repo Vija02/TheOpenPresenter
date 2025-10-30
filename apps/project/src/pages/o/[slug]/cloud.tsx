@@ -138,11 +138,11 @@ const OrganizationCloudPage = () => {
       <div className="max-w-4xl mx-auto">
         <div className="mb-6">
           <h1 className="text-2xl font-bold mb-1">Cloud Sync</h1>
-          <p className="text-gray-600">
+          <p className="text-secondary">
             Connect and sync your organization with the cloud
           </p>
 
-          <Alert variant="warning" title="Experimental" className="pt-3">
+          <Alert variant="warning" title="Experimental" className="pt-4">
             This feature is highly experimental. Some things might not be
             obvious and might be broken.
           </Alert>
@@ -156,12 +156,12 @@ const OrganizationCloudPage = () => {
 
         <div className="space-y-6">
           {/* Step 1: Connect to Cloud */}
-          <div className="border-b border-gray-200 pb-4">
+          <div className="border-b border-stroke pb-4">
             <div className="flex items-center mb-3">
               <span className="text-sm font-medium text-gray-500 mr-3">1.</span>
               <h2 className="text-lg font-medium">Connect to Cloud</h2>
               {cloudConnection && (
-                <span className="ml-2 text-green-600">✓</span>
+                <span className="ml-2 text-fill-success">✓</span>
               )}
             </div>
 
@@ -170,7 +170,7 @@ const OrganizationCloudPage = () => {
                 <div>
                   <label
                     htmlFor="host-input"
-                    className="block text-sm font-medium text-gray-700 mb-1"
+                    className="block text-sm font-medium text-secondary mb-1"
                   >
                     Cloud Host
                   </label>
@@ -198,11 +198,11 @@ const OrganizationCloudPage = () => {
               </div>
             ) : (
               <div className="space-y-2">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-tertiary">
                   Successfully connected to cloud
                 </p>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-secondary mb-1">
                     Connected Host
                   </label>
                   <Input
@@ -229,20 +229,20 @@ const OrganizationCloudPage = () => {
 
           {/* Step 2: Select Organization */}
           {cloudConnection && (
-            <div className="border-b border-gray-200 pb-4">
+            <div className="border-b border-stroke pb-4">
               <div className="flex items-center mb-3">
                 <span className="text-sm font-medium text-gray-500 mr-3">
                   2.
                 </span>
                 <h2 className="text-lg font-medium">Select Organization</h2>
                 {cloudConnection.targetOrganizationSlug && (
-                  <span className="ml-2 text-green-600">✓</span>
+                  <span className="ml-2 text-fill-success">✓</span>
                 )}
               </div>
 
               {!cloudConnection.targetOrganizationSlug ? (
                 <div>
-                  <p className="text-sm text-gray-600 mb-3">
+                  <p className="text-sm text-secondary mb-3">
                     Available organizations:
                   </p>
                   <div className="space-y-2">
@@ -261,7 +261,7 @@ const OrganizationCloudPage = () => {
                   </div>
                 </div>
               ) : (
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-secondary">
                   Selected organization:{" "}
                   <span className="font-medium">
                     {cloudConnection.targetOrganizationSlug}
