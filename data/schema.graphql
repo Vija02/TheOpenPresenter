@@ -282,6 +282,7 @@ type CloudConnection {
   organization: Organization
   organizationId: UUID!
   organizationList: [String]!
+  sessionCookieExpiry: Datetime!
   syncAll: Boolean
   targetOrganizationSlug: String
   updatedAt: Datetime!

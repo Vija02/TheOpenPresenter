@@ -5,6 +5,7 @@ create table app_public.cloud_connections (
 
   host text not null,
   session_cookie text not null,
+  session_cookie_expiry timestamptz not null,
 
   target_organization_slug text null,
 
