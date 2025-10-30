@@ -1,6 +1,7 @@
 import { SharedOrgLayout } from "@/components/SharedOrgLayout";
 import { useOrganizationSlug } from "@/lib/permissionHooks/organization";
 import {
+  useDeleteCloudConnectionMutation,
   useOrganizationCloudIndexPageQuery,
   useSelectTargetOrganizationCloudConnectionMutation,
   useSyncCloudConnectionMutation,
@@ -9,6 +10,7 @@ import { extractError, globalState } from "@repo/lib";
 import { Alert, Button, Input, Option } from "@repo/ui";
 import { EventSourcePlus } from "event-source-plus";
 import { useCallback, useState } from "react";
+import { GoUnlink } from "react-icons/go";
 import { CombinedError } from "urql";
 
 import "./index.css";
@@ -19,15 +21,18 @@ const OrganizationCloudPage = () => {
   const { data } = query[0];
   const [error, setError] = useState<Error | CombinedError | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
-  const [isSyncing, setIsSyncing] = useState(false);
 
   const { publish } = globalState.modelDataAccess.usePublishAPIChanges({
     token: "page",
   });
 
   const [, syncCloudConnection] = useSyncCloudConnectionMutation();
-  const [, selectTargetOrganizationCloudConnection] =
-    useSelectTargetOrganizationCloudConnectionMutation();
+  const [
+    { fetching: isSyncFetching },
+    selectTargetOrganizationCloudConnection,
+  ] = useSelectTargetOrganizationCloudConnectionMutation();
+  const [{ fetching: isDeleteFetching }, deleteCloudConnection] =
+    useDeleteCloudConnectionMutation();
 
   const cloudConnection = data?.organizationBySlug?.cloudConnections.nodes?.[0];
   const [hostInput, setHostInput] = useState("theopenpresenter.com");
@@ -94,20 +99,16 @@ const OrganizationCloudPage = () => {
 
   const onSync = useCallback(async () => {
     if (cloudConnection) {
-      setIsSyncing(true);
       setError(null);
       try {
         await syncCloudConnection({ cloudConnectionId: cloudConnection.id });
       } catch (err) {
         setError(err as Error);
-      } finally {
-        setIsSyncing(false);
       }
     }
   }, [cloudConnection, syncCloudConnection]);
   const onForceSync = useCallback(async () => {
     if (cloudConnection) {
-      setIsSyncing(true);
       setError(null);
       try {
         await syncCloudConnection({
@@ -116,11 +117,21 @@ const OrganizationCloudPage = () => {
         });
       } catch (err) {
         setError(err as Error);
-      } finally {
-        setIsSyncing(false);
       }
     }
   }, [cloudConnection, syncCloudConnection]);
+
+  const onUnlink = useCallback(async () => {
+    if (cloudConnection) {
+      setError(null);
+      try {
+        await deleteCloudConnection({ id: cloudConnection.id });
+        publish();
+      } catch (err) {
+        setError(err as Error);
+      }
+    }
+  }, [cloudConnection, deleteCloudConnection, publish]);
 
   return (
     <SharedOrgLayout title="Cloud" sharedOrgQuery={query}>
@@ -178,7 +189,8 @@ const OrganizationCloudPage = () => {
                 </div>
                 <Button
                   onClick={onConnect}
-                  disabled={isConnecting || !hostInput.trim()}
+                  disabled={!hostInput.trim()}
+                  isLoading={isConnecting}
                   variant="outline"
                 >
                   {isConnecting ? "Connecting..." : "Connect to Cloud"}
@@ -196,9 +208,20 @@ const OrganizationCloudPage = () => {
                   <Input
                     type="text"
                     value={connectedHost}
-                    disabled={true}
-                    className="max-w-md bg-gray-50"
+                    disabled
+                    className="max-w-md bg-fill-muted-disabled"
                   />
+                </div>
+                <div className="pt-2">
+                  <Button
+                    onClick={onUnlink}
+                    isLoading={isDeleteFetching}
+                    variant="outline"
+                    size="sm"
+                  >
+                    <GoUnlink />
+                    {isDeleteFetching ? "Unlinking..." : "Unlink"}
+                  </Button>
                 </div>
               </div>
             )}
@@ -259,15 +282,19 @@ const OrganizationCloudPage = () => {
               </div>
 
               <div className="stack-row">
-                <Button onClick={onSync} disabled={isSyncing} variant="outline">
-                  {isSyncing ? "Syncing..." : "Start Sync"}
+                <Button
+                  onClick={onSync}
+                  isLoading={isSyncFetching}
+                  variant="outline"
+                >
+                  {isSyncFetching ? "Syncing..." : "Start Sync"}
                 </Button>
                 <Button
                   onClick={onForceSync}
-                  disabled={isSyncing}
+                  isLoading={isSyncFetching}
                   variant="outline"
                 >
-                  {isSyncing ? "Syncing..." : "Force Resync"}
+                  {isSyncFetching ? "Syncing..." : "Force Resync"}
                 </Button>
               </div>
             </div>

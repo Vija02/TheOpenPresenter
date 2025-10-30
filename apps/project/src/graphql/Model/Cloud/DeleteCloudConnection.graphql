@@ -1,0 +1,5 @@
+mutation DeleteCloudConnection($id: UUID!) {
+  deleteCloudConnection(input: { id: $id }) {
+    deletedCloudConnectionNodeId
+  }
+}

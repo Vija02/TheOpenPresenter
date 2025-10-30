@@ -37,7 +37,9 @@ alter table app_public.cloud_connections enable row level security;
 create policy select_own on app_public.cloud_connections for select using (organization_id in (select app_public.current_user_member_organization_ids()));
 create policy update_own_org on app_public.cloud_connections for update using (organization_id in (select app_public.current_user_member_organization_ids()));
 create policy update_only_when_empty on app_public.cloud_connections for update using (target_organization_slug is null);
+create policy delete_own on app_public.cloud_connections for delete using (organization_id in (select app_public.current_user_member_organization_ids()));
 
 -- Grants
 grant select on app_public.cloud_connections to :DATABASE_VISITOR;
 grant update(target_organization_slug) on app_public.cloud_connections to :DATABASE_VISITOR;
+grant delete on app_public.cloud_connections to :DATABASE_VISITOR;
