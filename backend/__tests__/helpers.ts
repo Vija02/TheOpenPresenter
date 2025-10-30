@@ -1,7 +1,7 @@
 import { Pool, PoolClient } from "pg";
 import { afterAll, beforeEach, expect } from "vitest";
 
-const pools = {};
+const pools: Record<string, Pool> = {};
 
 if (!process.env.TEST_DATABASE_URL) {
   throw new Error("Cannot run tests without a TEST_DATABASE_URL");
