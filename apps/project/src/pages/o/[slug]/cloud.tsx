@@ -6,7 +6,7 @@ import {
   useSyncCloudConnectionMutation,
 } from "@repo/graphql";
 import { extractError, globalState } from "@repo/lib";
-import { Alert, Button, Input } from "@repo/ui";
+import { Alert, Button, Input, Option } from "@repo/ui";
 import { EventSourcePlus } from "event-source-plus";
 import { useCallback, useState } from "react";
 import { CombinedError } from "urql";
@@ -221,14 +221,13 @@ const OrganizationCloudPage = () => {
                     {cloudConnection.organizationList.map(
                       (orgSlug) =>
                         orgSlug && (
-                          <button
+                          <Option
                             key={orgSlug}
                             onClick={() => onSelectOrganization(orgSlug)}
-                            className="block text-left p-3 border border-gray-200 hover:border-gray-300 w-full"
+                            title={undefined}
+                            description={orgSlug}
                             data-testid={`select-org-${orgSlug}`}
-                          >
-                            <div className="font-medium">{orgSlug}</div>
-                          </button>
+                          />
                         ),
                     )}
                   </div>
@@ -254,16 +253,18 @@ const OrganizationCloudPage = () => {
                 <h2 className="text-lg font-medium">Sync Data</h2>
               </div>
 
-              <Button onClick={onSync} disabled={isSyncing} variant="outline">
-                {isSyncing ? "Syncing..." : "Start Sync"}
-              </Button>
-              <Button
-                onClick={onForceSync}
-                disabled={isSyncing}
-                variant="outline"
-              >
-                {isSyncing ? "Syncing..." : "Force Resync"}
-              </Button>
+              <div className="stack-row">
+                <Button onClick={onSync} disabled={isSyncing} variant="outline">
+                  {isSyncing ? "Syncing..." : "Start Sync"}
+                </Button>
+                <Button
+                  onClick={onForceSync}
+                  disabled={isSyncing}
+                  variant="outline"
+                >
+                  {isSyncing ? "Syncing..." : "Force Resync"}
+                </Button>
+              </div>
             </div>
           )}
         </div>
