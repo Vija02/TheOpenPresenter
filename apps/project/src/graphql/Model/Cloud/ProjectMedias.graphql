@@ -1,0 +1,12 @@
+query ProjectMedias($projectIds: [UUID!]) {
+  allMediaOfProjects(input: { projectIds: $projectIds }) {
+    id
+    mediaName
+    fileSize
+    fileOffset
+    originalName
+    fileExtension
+    isUserUploaded
+    createdAt
+  }
+}

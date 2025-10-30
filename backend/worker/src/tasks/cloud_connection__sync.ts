@@ -349,6 +349,11 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
       externalProjectIdsToCreateOrUpdate &&
       externalProjectIdsToCreateOrUpdate.length > 0
     ) {
+      await addJob("cloud_connection__sync_media", {
+        cloudConnectionId: cloudConnectionId,
+        externalProjectIds: externalProjectIdsToCreateOrUpdate,
+        force_resync,
+      });
       await Promise.all(
         externalProjectIdsToCreateOrUpdate.map((externalProjectId) => {
           return addJob("project__sync_document_cloud_connection", {
