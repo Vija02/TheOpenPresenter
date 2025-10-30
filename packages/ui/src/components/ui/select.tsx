@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { Check, ChevronDown, X } from "lucide-react";
-import React, { ReactElement, Ref } from "react";
+import React, { JSX, ReactElement, Ref } from "react";
 import { Control } from "react-hook-form";
 import SelectComponent, {
   ClassNamesConfig,
@@ -208,8 +208,16 @@ const DropdownIndicator = (props: DropdownIndicatorProps<OptionType>) => {
 
 const ClearIndicator = (props: ClearIndicatorProps<OptionType>) => {
   return (
-    <components.ClearIndicator {...props}>
-      <X className="h-4 w-4 opacity-50" />
+    <components.ClearIndicator
+      {...props}
+      innerProps={
+        {
+          ...props.innerProps,
+          "data-testid": "clear-indicator",
+        } as JSX.IntrinsicElements["div"]
+      }
+    >
+      <X className="h-4 w-4 opacity-50" data-testid="testing" />
     </components.ClearIndicator>
   );
 };

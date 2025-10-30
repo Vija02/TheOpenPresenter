@@ -1,0 +1,46 @@
+query ProjectMediaInfo($mediaIds: [UUID!]) {
+  mediaImageSizes(filter: { imageMediaId: { in: $mediaIds } }) {
+    nodes {
+      imageMediaId
+      processedMediaId
+      width
+      fileType
+    }
+  }
+  mediaDependencies(
+    filter: {
+      or: [
+        { parentMediaId: { in: $mediaIds } }
+        { childMediaId: { in: $mediaIds } }
+      ]
+    }
+  ) {
+    nodes {
+      parentMediaId
+      childMediaId
+    }
+  }
+  mediaVideoMetadata(
+    filter: {
+      or: [
+        { videoMediaId: { in: $mediaIds } }
+        { hlsMediaId: { in: $mediaIds } }
+        { thumbnailMediaId: { in: $mediaIds } }
+      ]
+    }
+  ) {
+    nodes {
+      videoMediaId
+      hlsMediaId
+      thumbnailMediaId
+      duration
+    }
+  }
+  projectMedias(filter: { mediaId: { in: $mediaIds } }) {
+    nodes {
+      projectId
+      mediaId
+      pluginId
+    }
+  }
+}

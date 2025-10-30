@@ -54,17 +54,15 @@ test.describe("OrganizationPage", () => {
     await loginWithDefaultProject();
 
     await organizationPage.projectCardEditButtonNth(0).click();
-    await page.getByRole("textbox", { name: "Name" }).click();
-    await page.getByRole("textbox", { name: "Name" }).fill("Test Project Name");
+    await organizationPage.projectEditModalNameInput.click();
+    await organizationPage.projectEditModalNameInput.fill("Test Project Name");
 
-    await page
-      .locator("div")
-      .filter({ hasText: /^Uncategorized$/ })
-      .nth(1)
+    await organizationPage.projectEditModalCategoryInput.click();
+    await organizationPage
+      .projectEditModalCategoryOption("Sunday Morning")
       .click();
-    await page.getByRole("option", { name: "Sunday Morning" }).click();
 
-    await page.getByRole("button", { name: "Save" }).click();
+    await organizationPage.projectEditModalSaveButton.click();
 
     await expect(page.getByText("Test Project Name")).toBeInViewport();
     await expect(page.getByText("Sunday Morning")).toBeInViewport();

@@ -72,11 +72,13 @@ const FormItemContext = React.createContext<FormItemContextValue>(
 
 function FormItem({ className, ...props }: React.ComponentProps<"div">) {
   const id = React.useId();
+  const { name } = useFormField();
 
   return (
     <FormItemContext.Provider value={{ id }}>
       <div
         data-slot="form-item"
+        data-testid={`form-item-${name}`}
         className={cn("grid gap-2 w-full", className)}
         {...props}
       />

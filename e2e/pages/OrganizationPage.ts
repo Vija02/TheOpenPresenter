@@ -10,6 +10,15 @@ export class OrganizationPage {
   readonly projectCardPresentButtonNth: (nth?: number) => Locator;
   readonly projectCardDeleteButtonNth: (nth?: number) => Locator;
 
+  readonly projectEditModalNameInput: Locator;
+  readonly projectEditModalTargetDateInput: Locator;
+  readonly projectEditModalCategoryInput: Locator;
+  readonly projectEditModalCategoryOption: (option: string) => Locator;
+  readonly projectEditModalTagsInput: Locator;
+  readonly projectEditModalTagsOption: (option: string) => Locator;
+  readonly projectEditModalTagsRemove: (nth?: number) => Locator;
+  readonly projectEditModalSaveButton: Locator;
+
   constructor(public readonly page: Page) {
     this.newProjectButton = page.getByRole("button", {
       name: "New",
@@ -45,5 +54,28 @@ export class OrganizationPage {
         .nth(nth)
         .getByRole("button")
         .nth(2);
+
+    // Edit modal
+    this.projectEditModalNameInput = page.getByRole("textbox", {
+      name: "Name",
+    });
+    this.projectEditModalTargetDateInput = page
+      .getByTestId("form-item-targetDate")
+      .getByRole("combobox");
+    this.projectEditModalCategoryInput = page
+      .getByTestId("form-item-categoryId")
+      .getByRole("combobox");
+    this.projectEditModalCategoryOption = (option: string) =>
+      page.getByRole("option", { name: option });
+    this.projectEditModalTagsInput = page
+      .getByTestId("tag-selector")
+      .getByRole("combobox");
+    this.projectEditModalTagsOption = (option: string) =>
+      page.getByRole("option", { name: option });
+    this.projectEditModalTagsRemove = (nth = 0) =>
+      page.locator("[data-testid=tag-remove]").nth(nth);
+    this.projectEditModalSaveButton = page.getByRole("button", {
+      name: "Save",
+    });
   }
 }
