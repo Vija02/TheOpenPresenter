@@ -78,6 +78,7 @@ export default (app: Express) => {
             const loginUrl = `${targetCloudUrl}/qr-auth/login?persist-session=1&token=${data.token}&next=/o/`;
 
             let cookieString = "";
+            let cookieExpiry: Date | undefined = new Date();
 
             try {
               await axios.get(loginUrl, { maxRedirects: 0 });
@@ -90,17 +91,24 @@ export default (app: Express) => {
                     { decodeValues: false },
                   );
                   cookieString = `${setCookieHeader[0]?.name}=${setCookieHeader[0]?.value}`;
+                  cookieExpiry = setCookieHeader[0]?.expires;
                 }
               }
-              if (!cookieString) {
+              if (!cookieString || !cookieExpiry) {
                 throw e;
               }
             }
 
             const rootPgPool = getRootPgPool(app);
             await rootPgPool.query(
-              "INSERT INTO app_public.cloud_connections(organization_id, host, session_cookie, creator_user_id) VALUES ($1, $2, $3, $4)",
-              [organizationId, targetCloudUrl, cookieString, userId],
+              "INSERT INTO app_public.cloud_connections(organization_id, host, session_cookie, session_cookie_expiry, creator_user_id) VALUES ($1, $2, $3, $4, $5)",
+              [
+                organizationId,
+                targetCloudUrl,
+                cookieString,
+                cookieExpiry,
+                userId,
+              ],
             );
             controller.abort();
 
@@ -111,9 +119,12 @@ export default (app: Express) => {
             res.end();
           }
         } catch (error) {
-          console.error(error);
+          if (error instanceof AxiosError) {
+            log.error({ error });
+          } else {
+            log.fatal({ error });
+          }
           session.push({ error: "Unexpected error occurred" });
-          log.error({ error });
           res.end();
         }
       },
