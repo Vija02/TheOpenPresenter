@@ -130,6 +130,11 @@ const OrganizationCloudPage = () => {
           <p className="text-gray-600">
             Connect and sync your organization with the cloud
           </p>
+
+          <Alert variant="warning" title="Experimental" className="pt-3">
+            This feature is highly experimental. Some things might not be
+            obvious and might be broken.
+          </Alert>
         </div>
 
         {error && (
