@@ -10,6 +10,7 @@ query OrganizationCloudIndexPage($slug: String!) {
         syncAll
         organizationList
         targetOrganizationSlug
+        sessionCookieExpiry
       }
     }
   }
