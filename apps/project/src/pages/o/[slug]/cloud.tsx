@@ -8,12 +8,44 @@ import {
 } from "@repo/graphql";
 import { extractError, globalState } from "@repo/lib";
 import { Alert, Button, Input, Option } from "@repo/ui";
+import { addDays } from "date-fns";
 import { EventSourcePlus } from "event-source-plus";
 import { useCallback, useState } from "react";
 import { GoUnlink } from "react-icons/go";
 import { CombinedError } from "urql";
 
 import "./index.css";
+
+const SessionExpiryStatus = ({
+  sessionCookieExpiry,
+}: {
+  sessionCookieExpiry: string;
+}) => {
+  const expiryDate = new Date(sessionCookieExpiry);
+  const now = new Date();
+  const isExpired = expiryDate <= now;
+  const msUntilExpiry = expiryDate.getTime() - now.getTime();
+  const daysUntilExpiry = Math.ceil(msUntilExpiry / (1000 * 60 * 60 * 24));
+  const isExpiringSoon = !isExpired && daysUntilExpiry <= 3;
+
+  let statusColor = "text-primary";
+  let statusText = "Session Expires at";
+
+  if (isExpired) {
+    statusColor = "text-red-600";
+    statusText = "Session Expired at";
+  } else if (isExpiringSoon) {
+    statusColor = "text-orange-700";
+    statusText = "Session Expires Soon";
+  }
+
+  return (
+    <div className="text-right">
+      <p className={`text-sm font-medium ${statusColor}`}>{statusText}</p>
+      <p className={`text-sm ${statusColor}`}>{expiryDate.toLocaleString()}</p>
+    </div>
+  );
+};
 
 const OrganizationCloudPage = () => {
   const slug = useOrganizationSlug();
@@ -137,12 +169,21 @@ const OrganizationCloudPage = () => {
     <SharedOrgLayout title="Cloud" sharedOrgQuery={query}>
       <div className="max-w-4xl mx-auto">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold mb-1">Cloud Sync</h1>
-          <p className="text-secondary">
-            Connect and sync your organization with the cloud
-          </p>
+          <div className="flex justify-between items-start mb-4">
+            <div>
+              <h1 className="text-2xl font-bold mb-1">Cloud Sync</h1>
+              <p className="text-secondary">
+                Connect and sync your organization with the cloud
+              </p>
+            </div>
+            {cloudConnection?.sessionCookieExpiry && (
+              <SessionExpiryStatus
+                sessionCookieExpiry={cloudConnection.sessionCookieExpiry}
+              />
+            )}
+          </div>
 
-          <Alert variant="warning" title="Experimental" className="pt-4">
+          <Alert variant="warning" title="Experimental">
             This feature is highly experimental. Some things might not be
             obvious and might be broken.
           </Alert>
