@@ -45,8 +45,10 @@ export const cloudOrganizationList = makeExtendSchemaPlugin(() => ({
             throw res.error;
           }
 
-          return res.data?.currentUser?.organizationMemberships.nodes.map(
-            (x) => x.organization?.slug,
+          return (
+            res.data?.currentUser?.organizationMemberships.nodes.map(
+              (x) => x.organization?.slug,
+            ) ?? []
           );
         } catch (e: any) {
           const { code } = e;
