@@ -836,6 +836,32 @@ $$;
 
 
 --
+-- Name: tg_tasks__update_project_updated_at(); Type: FUNCTION; Schema: app_private; Owner: -
+--
+
+CREATE FUNCTION app_private.tg_tasks__update_project_updated_at() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+    AS $$
+begin
+  update app_public.projects
+  set
+    updated_at = now()
+  where id = COALESCE(NEW.project_id, OLD.project_id);
+  
+  return null;
+end;
+$$;
+
+
+--
+-- Name: FUNCTION tg_tasks__update_project_updated_at(); Type: COMMENT; Schema: app_private; Owner: -
+--
+
+COMMENT ON FUNCTION app_private.tg_tasks__update_project_updated_at() IS 'This trigger should be attached to all entity that is connected to a project. We use this to update the updated_at field in a project';
+
+
+--
 -- Name: tg_user_email_secrets__insert_with_user_email(); Type: FUNCTION; Schema: app_private; Owner: -
 --
 
@@ -1072,7 +1098,11 @@ CREATE TABLE app_public.projects (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     name text DEFAULT ''::text NOT NULL,
     target_date timestamp with time zone,
-    category_id uuid
+    category_id uuid,
+    cloud_connection_id uuid,
+    cloud_last_updated timestamp with time zone,
+    cloud_should_sync boolean,
+    cloud_project_id uuid
 );
 
 
@@ -2221,6 +2251,24 @@ COMMENT ON TABLE app_public.categories IS 'Categories data';
 
 
 --
+-- Name: cloud_connections; Type: TABLE; Schema: app_public; Owner: -
+--
+
+CREATE TABLE app_public.cloud_connections (
+    id uuid DEFAULT public.uuid_generate_v7() NOT NULL,
+    organization_id uuid NOT NULL,
+    host text NOT NULL,
+    session_cookie text NOT NULL,
+    session_cookie_expiry timestamp with time zone NOT NULL,
+    target_organization_slug text,
+    sync_all boolean DEFAULT false,
+    creator_user_id uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
 -- Name: media_dependencies; Type: TABLE; Schema: app_public; Owner: -
 --
 
@@ -2482,6 +2530,14 @@ ALTER TABLE ONLY app_public.categories
 
 
 --
+-- Name: cloud_connections cloud_connections_pkey; Type: CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.cloud_connections
+    ADD CONSTRAINT cloud_connections_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: media_image_metadata media_image_metadata_pkey; Type: CONSTRAINT; Schema: app_public; Owner: -
 --
 
@@ -2679,6 +2735,27 @@ CREATE INDEX categories_organization_id_idx ON app_public.categories USING btree
 
 
 --
+-- Name: cloud_connections_created_at_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX cloud_connections_created_at_idx ON app_public.cloud_connections USING btree (created_at);
+
+
+--
+-- Name: cloud_connections_creator_user_id_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX cloud_connections_creator_user_id_idx ON app_public.cloud_connections USING btree (creator_user_id);
+
+
+--
+-- Name: cloud_connections_organization_id_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE UNIQUE INDEX cloud_connections_organization_id_idx ON app_public.cloud_connections USING btree (organization_id);
+
+
+--
 -- Name: idx_user_emails_primary; Type: INDEX; Schema: app_public; Owner: -
 --
 
@@ -2868,10 +2945,24 @@ CREATE INDEX projects_category_id_idx ON app_public.projects USING btree (catego
 
 
 --
+-- Name: projects_cloud_connection_id_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX projects_cloud_connection_id_idx ON app_public.projects USING btree (cloud_connection_id);
+
+
+--
 -- Name: projects_creator_user_id_idx; Type: INDEX; Schema: app_public; Owner: -
 --
 
 CREATE INDEX projects_creator_user_id_idx ON app_public.projects USING btree (creator_user_id);
+
+
+--
+-- Name: projects_organization_id_cloud_project_id_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE UNIQUE INDEX projects_organization_id_cloud_project_id_idx ON app_public.projects USING btree (organization_id, cloud_project_id);
 
 
 --
@@ -2942,6 +3033,13 @@ CREATE INDEX user_authentications_user_id_idx ON app_public.user_authentications
 --
 
 CREATE TRIGGER _100_timestamps BEFORE INSERT OR UPDATE ON app_public.categories FOR EACH ROW EXECUTE FUNCTION app_private.tg__timestamps();
+
+
+--
+-- Name: cloud_connections _100_timestamps; Type: TRIGGER; Schema: app_public; Owner: -
+--
+
+CREATE TRIGGER _100_timestamps BEFORE INSERT OR UPDATE ON app_public.cloud_connections FOR EACH ROW EXECUTE FUNCTION app_private.tg__timestamps();
 
 
 --
@@ -3026,6 +3124,13 @@ CREATE TRIGGER _200_forbid_if_medias_within_different_org BEFORE INSERT OR UPDAT
 --
 
 CREATE TRIGGER _200_forbid_if_project_and_tag_within_different_org BEFORE INSERT OR UPDATE ON app_public.project_tags FOR EACH ROW EXECUTE FUNCTION app_private.tg_project_tags__forbid_if_project_and_tag_within_different_org();
+
+
+--
+-- Name: project_tags _300_update_project_updated_at; Type: TRIGGER; Schema: app_public; Owner: -
+--
+
+CREATE TRIGGER _300_update_project_updated_at AFTER INSERT OR DELETE OR UPDATE ON app_public.project_tags FOR EACH ROW EXECUTE FUNCTION app_private.tg_tasks__update_project_updated_at();
 
 
 --
@@ -3157,6 +3262,22 @@ ALTER TABLE ONLY app_private.user_secrets
 
 ALTER TABLE ONLY app_public.categories
     ADD CONSTRAINT categories_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES app_public.organizations(id) ON DELETE CASCADE;
+
+
+--
+-- Name: cloud_connections cloud_connections_creator_user_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.cloud_connections
+    ADD CONSTRAINT cloud_connections_creator_user_id_fkey FOREIGN KEY (creator_user_id) REFERENCES app_public.users(id) ON DELETE SET NULL;
+
+
+--
+-- Name: cloud_connections cloud_connections_organization_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.cloud_connections
+    ADD CONSTRAINT cloud_connections_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES app_public.organizations(id) ON DELETE CASCADE;
 
 
 --
@@ -3324,7 +3445,7 @@ ALTER TABLE ONLY app_public.project_tags
 --
 
 ALTER TABLE ONLY app_public.projects
-    ADD CONSTRAINT projects_category_id_fkey FOREIGN KEY (category_id) REFERENCES app_public.categories(id) ON DELETE CASCADE;
+    ADD CONSTRAINT projects_category_id_fkey FOREIGN KEY (category_id) REFERENCES app_public.categories(id) ON DELETE SET NULL;
 
 
 --
@@ -3402,6 +3523,19 @@ ALTER TABLE app_private.user_secrets ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE app_public.categories ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: cloud_connections; Type: ROW SECURITY; Schema: app_public; Owner: -
+--
+
+ALTER TABLE app_public.cloud_connections ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: cloud_connections delete_own; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY delete_own ON app_public.cloud_connections FOR DELETE USING ((organization_id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids)));
+
 
 --
 -- Name: project_medias delete_own; Type: POLICY; Schema: app_public; Owner: -
@@ -3637,6 +3771,13 @@ CREATE POLICY select_organization ON app_public.organization_join_requests FOR S
 
 
 --
+-- Name: cloud_connections select_own; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY select_own ON app_public.cloud_connections FOR SELECT USING ((organization_id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids)));
+
+
+--
 -- Name: medias select_own; Type: POLICY; Schema: app_public; Owner: -
 --
 
@@ -3734,10 +3875,24 @@ CREATE POLICY select_public ON app_public.organizations FOR SELECT USING ((is_pu
 ALTER TABLE app_public.tags ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: cloud_connections update_only_when_empty; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY update_only_when_empty ON app_public.cloud_connections FOR UPDATE USING ((target_organization_slug IS NULL));
+
+
+--
 -- Name: categories update_own_org; Type: POLICY; Schema: app_public; Owner: -
 --
 
 CREATE POLICY update_own_org ON app_public.categories FOR UPDATE USING ((organization_id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids)));
+
+
+--
+-- Name: cloud_connections update_own_org; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY update_own_org ON app_public.cloud_connections FOR UPDATE USING ((organization_id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids)));
 
 
 --
@@ -3934,6 +4089,13 @@ REVOKE ALL ON FUNCTION app_private.tg_project_tags__forbid_if_project_and_tag_wi
 --
 
 REVOKE ALL ON FUNCTION app_private.tg_projects__forbid_if_category_is_not_same_org() FROM PUBLIC;
+
+
+--
+-- Name: FUNCTION tg_tasks__update_project_updated_at(); Type: ACL; Schema: app_private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_private.tg_tasks__update_project_updated_at() FROM PUBLIC;
 
 
 --
@@ -4404,6 +4566,20 @@ GRANT INSERT(name),UPDATE(name) ON TABLE app_public.categories TO theopenpresent
 --
 
 GRANT INSERT(organization_id) ON TABLE app_public.categories TO theopenpresenter_visitor;
+
+
+--
+-- Name: TABLE cloud_connections; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT SELECT,DELETE ON TABLE app_public.cloud_connections TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN cloud_connections.target_organization_slug; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT UPDATE(target_organization_slug) ON TABLE app_public.cloud_connections TO theopenpresenter_visitor;
 
 
 --
