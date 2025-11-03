@@ -40,6 +40,7 @@ interface OptionProps extends VariantProps<typeof optionVariants> {
   disabled?: boolean;
   onClick?: () => void;
   className?: string;
+  testId?: string;
 }
 
 function Option({
@@ -50,6 +51,7 @@ function Option({
   onClick,
   className,
   size,
+  testId,
 }: OptionProps) {
   return (
     <div
@@ -60,6 +62,7 @@ function Option({
         className,
       )}
       onClick={disabled ? undefined : onClick}
+      data-testid={testId}
     >
       <p className="ui--option__title">{title}</p>
       {description && <p className="ui--option__description">{description}</p>}
@@ -67,7 +70,8 @@ function Option({
   );
 }
 
-interface OptionGroupProps<Value = string> extends VariantProps<typeof optionVariants> {
+interface OptionGroupProps<Value = string>
+  extends VariantProps<typeof optionVariants> {
   options: OptionItem<Value>[];
   value?: Value;
   onValueChange?: (value: Value) => void;
@@ -100,7 +104,8 @@ function OptionGroup<Value = string>({
   );
 }
 
-interface OptionControlProps<Value = string> extends VariantProps<typeof optionVariants> {
+interface OptionControlProps<Value = string>
+  extends VariantProps<typeof optionVariants> {
   control: Control<any, any, any>;
   name: string;
   label: string;
