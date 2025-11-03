@@ -295,7 +295,7 @@ const OrganizationCloudPage = () => {
                             onClick={() => onSelectOrganization(orgSlug)}
                             title={undefined}
                             description={orgSlug}
-                            data-testid={`select-org-${orgSlug}`}
+                            testId={`select-org-${orgSlug}`}
                           />
                         ),
                     )}
