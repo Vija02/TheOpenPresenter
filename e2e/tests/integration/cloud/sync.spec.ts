@@ -47,6 +47,8 @@ test.describe("Cloud Sync", () => {
 
     // Setup done. Now let's start sync
     await cloudPage.startSyncButton.click();
+    // TODO: Better way to wait until sync is done
+    await page.waitForTimeout(2000);
 
     const currentProjectPage = await context.newPage();
     await currentProjectPage.goto("/o/testorg");
@@ -72,6 +74,8 @@ test.describe("Cloud Sync", () => {
     ).toBeVisible();
 
     await cloudPage.startSyncButton.click();
+    // TODO: Better way to wait until sync is done
+    await page.waitForTimeout(2000);
     await currentProjectPage.reload({ waitUntil: "domcontentloaded" });
 
     await expect(
@@ -133,7 +137,7 @@ test.describe("Cloud Sync", () => {
 
     await cloudPage.startSyncButton.click();
     // TODO: Better way to wait until sync is done
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(2000);
     await currentProjectPage.reload({ waitUntil: "domcontentloaded" });
 
     await expect(currentProjectPage.getByText("Category 1")).toBeInViewport();
@@ -163,7 +167,7 @@ test.describe("Cloud Sync", () => {
 
     await cloudPage.startSyncButton.click();
     // TODO: Better way to wait until sync is done
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(2000);
     await currentProjectPage.reload({ waitUntil: "domcontentloaded" });
 
     await expect(
@@ -181,7 +185,7 @@ test.describe("Cloud Sync", () => {
 
     await cloudPage.startSyncButton.click();
     // TODO: Better way to wait until sync is done
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(2000);
     await currentProjectPage.reload({ waitUntil: "domcontentloaded" });
 
     await expect(
