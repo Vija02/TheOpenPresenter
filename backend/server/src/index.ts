@@ -96,9 +96,9 @@ async function main() {
   });
 }
 
-main().catch((e) => {
-  logger.fatal({ e }, "Failed to start server!");
+main().catch((err) => {
+  logger.fatal({ err }, "Failed to start server!");
   console.error("Fatal error occurred starting server!");
-  console.error(e);
+  console.error(err);
   process.exit(101);
 });

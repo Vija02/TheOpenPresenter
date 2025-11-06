@@ -220,7 +220,7 @@ async function startStreamUpload({
     await pluginApi.media.pluginClientStorage.getFileHandle(fileName);
 
   mediaRecorder.onerror = (err) => {
-    pluginApi.log.error({ mediaId, error: err }, "Media recorder Error");
+    pluginApi.log.error({ mediaId, err }, "Media recorder Error");
     pluginApi.remote.toast(`Audio Recorder: Failed to record. Error: ${err}`, {
       toastId: "audio-recorder--mediaRecorderError",
     });
@@ -328,19 +328,19 @@ function startUpload(
     metadata: {
       filename: `recording_${new Date().toISOString()}.mp3`,
     },
-    onError(error) {
-      pluginApi.log.error({ error }, "Error when uploading recording");
-      onError(error);
+    onError(err) {
+      pluginApi.log.error({ err }, "Error when uploading recording");
+      onError(err);
       // TODO: Set state
-      if ("originalRequest" in error) {
+      if ("originalRequest" in err) {
         // TODO: Better error handling
         pluginApi.remote.toast.warning(
-          `Audio Recorder: Failed to upload video. Retrying... Error: ${error.message}`,
+          `Audio Recorder: Failed to upload video. Retrying... Error: ${err.message}`,
           { toastId: "audio-recorder--uploadError-originalRequest" },
         );
       } else {
         pluginApi.remote.toast.error(
-          `Audio Recorder: Failed to upload video. Error: ${error.message}`,
+          `Audio Recorder: Failed to upload video. Error: ${err.message}`,
           { toastId: "audio-recorder--uploadError-no-originalRequest" },
         );
       }

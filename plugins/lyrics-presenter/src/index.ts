@@ -206,12 +206,12 @@ const getAppRouter = (t: TRPCObject) => {
               data: res.data.data,
               totalPage: res.data.meta.last_page,
             };
-          } catch (error) {
+          } catch (err) {
             logger.error(
-              { error, ctx: opts.ctx, input: opts.input },
+              { err, ctx: opts.ctx, input: opts.input },
               "/lyricsPresenter.search: Error",
             );
-            throw error;
+            throw err;
           }
         }),
       playlist: t.procedure.query(async () => {

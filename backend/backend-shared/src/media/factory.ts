@@ -107,15 +107,15 @@ export const createMediaHandler = <T extends OurDataStore>(
                   [uuidFromMediaId(mediaId), metadata?.width, metadata?.height],
                 );
               }
-            } catch (error: any) {
-              if (error?.Code === "NoSuchUpload") {
+            } catch (err: any) {
+              if (err?.Code === "NoSuchUpload") {
                 logger.warn(
-                  { error },
+                  { err },
                   "uploadMedia: File not uploaded but resolving function as normal. This probably happens because the file has already been uploaded.",
                 );
                 return { mediaId, fileExtension, fileName: finalFileName };
               }
-              throw error;
+              throw err;
             }
 
             // Update is_complete flag
@@ -132,21 +132,21 @@ export const createMediaHandler = <T extends OurDataStore>(
             return { mediaId, fileExtension, fileName: finalFileName };
           },
           {
-            retry: (error, attemptNumber) => {
+            retry: (err, attemptNumber) => {
               logger.warn(
-                { error, attemptNumber },
+                { err, attemptNumber },
                 "uploadMedia: Failed to upload, retrying...",
               );
               return true;
             },
           },
         );
-      } catch (error) {
+      } catch (err) {
         logger.error(
-          { error },
+          { err },
           "uploadMedia: Failed to upload. Throwing an error",
         );
-        throw error;
+        throw err;
       }
     }
 
@@ -158,21 +158,21 @@ export const createMediaHandler = <T extends OurDataStore>(
           },
           {
             numOfAttempts: 3,
-            retry: (error, attemptNumber) => {
+            retry: (err, attemptNumber) => {
               logger.warn(
-                { error, attemptNumber },
+                { err, attemptNumber },
                 "deleteMedia: Failed to delete, retrying...",
               );
               return true;
             },
           },
         );
-      } catch (error) {
+      } catch (err) {
         logger.error(
-          { error },
+          { err },
           "deleteMedia: Failed to delete. Throwing an error",
         );
-        throw error;
+        throw err;
       }
     }
 
@@ -184,21 +184,21 @@ export const createMediaHandler = <T extends OurDataStore>(
           },
           {
             numOfAttempts: 3,
-            retry: (error, attemptNumber) => {
+            retry: (err, attemptNumber) => {
               logger.warn(
-                { error, attemptNumber },
+                { err, attemptNumber },
                 "completeMedia: Failed to complete, retrying...",
               );
               return true;
             },
           },
         );
-      } catch (error) {
+      } catch (err) {
         logger.error(
-          { error },
+          { err },
           "completeMedia: Failed to complete. Throwing an error",
         );
-        throw error;
+        throw err;
       }
     }
 
@@ -216,19 +216,19 @@ export const createMediaHandler = <T extends OurDataStore>(
             uuidFromMediaIdOrUUIDOrMediaName(childMediaIdOrUUID),
           ],
         );
-      } catch (error: any) {
-        if (error?.code === "23505") {
+      } catch (err: any) {
+        if (err?.code === "23505") {
           logger.info(
-            { error },
+            { err },
             "createDependency: Creating dependency failed but returning the function since it already exists",
           );
           return;
         }
         logger.error(
-          { error },
+          { err },
           "createDependency: Failed to create media dependency",
         );
-        throw error;
+        throw err;
       }
     }
 
@@ -248,12 +248,12 @@ export const createMediaHandler = <T extends OurDataStore>(
             uuidFromPluginIdOrUUID(pluginId),
           ],
         );
-      } catch (error: any) {
+      } catch (err: any) {
         logger.error(
-          { error },
+          { err },
           "attachToProject: Failed to attach media to a project",
         );
-        throw error;
+        throw err;
       }
     }
     async unlinkPlugin(
@@ -262,28 +262,28 @@ export const createMediaHandler = <T extends OurDataStore>(
     ) {
       try {
         const { mediaIdOrUUID, projectId } = extraMetadata || {};
-        
+
         // Build WHERE clause dynamically based on provided parameters
         const conditions = ["plugin_id = $1"];
         const params = [uuidFromPluginIdOrUUID(pluginId)];
-        
+
         if (mediaIdOrUUID) {
           conditions.push("media_id = $" + (params.length + 1));
           params.push(uuidFromMediaIdOrUUIDOrMediaName(mediaIdOrUUID));
         }
-        
+
         if (projectId) {
           conditions.push("project_id = $" + (params.length + 1));
           params.push(projectId);
         }
-        
+
         await this.pgPool.query(
           `DELETE FROM app_public.project_medias WHERE ${conditions.join(" AND ")}`,
           params,
         );
-      } catch (error: any) {
-        logger.error({ error }, "unlinkPlugin: Failed to unlink plugin");
-        throw error;
+      } catch (err: any) {
+        logger.error({ err }, "unlinkPlugin: Failed to unlink plugin");
+        throw err;
       }
     }
   };

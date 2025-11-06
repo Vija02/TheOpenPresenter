@@ -49,9 +49,9 @@ export class OPFSStorageManager {
           create: true,
         });
       }
-    } catch (error) {
-      logger.warn({ error }, "getFileHandle error");
-      console.warn("getFileHandle error:", error);
+    } catch (err) {
+      logger.warn({ err }, "getFileHandle error");
+      console.warn("getFileHandle error:", err);
       return undefined;
     }
   }
@@ -66,7 +66,7 @@ export class OPFSStorageManager {
         return true;
       }
       return false;
-    } catch (error) {
+    } catch (err) {
       return false;
     }
   }
@@ -110,9 +110,9 @@ export class OPFSStorageManager {
 
         return true;
       }
-    } catch (error) {
-      logger.warn({ error }, "writeFile error");
-      console.warn("writeFile error:", error);
+    } catch (err) {
+      logger.warn({ err }, "writeFile error");
+      console.warn("writeFile error:", err);
       return false;
     }
   }
@@ -130,9 +130,9 @@ export class OPFSStorageManager {
         const file = await fileHandle.getFile();
         return file;
       }
-    } catch (error) {
-      logger.warn({ error }, "readFile error");
-      console.warn("readFile error:", error);
+    } catch (err) {
+      logger.warn({ err }, "readFile error");
+      console.warn("readFile error:", err);
       return null;
     }
   }
@@ -155,9 +155,9 @@ export class OPFSStorageManager {
         return files;
       }
       return [];
-    } catch (error) {
-      logger.warn({ error }, "listFiles error");
-      console.warn("listFiles error:", error);
+    } catch (err) {
+      logger.warn({ err }, "listFiles error");
+      console.warn("listFiles error:", err);
       return [];
     }
   }
@@ -170,9 +170,9 @@ export class OPFSStorageManager {
 
         this.callWatcher();
       }
-    } catch (error) {
-      logger.warn({ error }, "removeFile error");
-      console.warn("removeFile error:", error);
+    } catch (err) {
+      logger.warn({ err }, "removeFile error");
+      console.warn("removeFile error:", err);
       return [];
     }
   }
