@@ -212,10 +212,9 @@ export default (app: Express) => {
         301,
         `/media/data/${constructMediaName(processedMediaId, mediaDetails.extension)}`,
       );
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
       logger.error(
-        { error },
+        { err },
         "/media/processed endpoint: width or height not available on image. This should only happen on old data",
       );
       res.status(500).send("Error when processing image");

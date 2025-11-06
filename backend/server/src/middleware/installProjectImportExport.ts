@@ -80,8 +80,8 @@ export default async function installProjectImportExport(app: Express) {
       let parsedData;
       try {
         parsedData = await parseTOPFile(fileStream);
-      } catch (error) {
-        logger.error({ error }, "/projectImport: failed to parse TOP file");
+      } catch (err) {
+        logger.error({ err }, "/projectImport: failed to parse TOP file");
         res.status(400).json({ error: "Invalid TOP file format" });
         return;
       }
@@ -146,18 +146,16 @@ export default async function installProjectImportExport(app: Express) {
           success: true,
           project: insertedProject,
         });
-      } catch (error) {
-        console.error(error);
+      } catch (err) {
         logger.error(
-          { error },
+          { err },
           "/projectImport: failed to insert project into database",
         );
         res.status(500).json({ error: "Failed to import project" });
         return;
       }
-    } catch (error) {
-      console.error(error);
-      logger.error({ error }, "/projectImport: unexpected error");
+    } catch (err) {
+      logger.error({ err }, "/projectImport: unexpected error");
       res.status(500).json({ error: "Internal server error" });
       return;
     }
@@ -228,18 +226,16 @@ export default async function installProjectImportExport(app: Express) {
         );
 
         topFileStream.pipe(res);
-      } catch (error) {
-        console.error("Error creating TOP file:", error);
+      } catch (err) {
         logger.error(
-          { error, projectId },
+          { err, projectId },
           "/projectExport: failed to export TOP file",
         );
         res.status(500).json({ error: "Failed to export file" });
         return;
       }
-    } catch (error) {
-      console.error("Error creating TOP file:", error);
-      logger.error({ error }, "/projectExport: failed to export TOP file");
+    } catch (err) {
+      logger.error({ err }, "/projectExport: failed to export TOP file");
       res.status(500).json({ error: "Failed to export file" });
       return;
     }

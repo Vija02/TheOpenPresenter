@@ -444,16 +444,16 @@ const task: Task = async (inPayload, { withPgClient }) => {
 
       // TODO: Notify
     });
-  } catch (error: any) {
-    if (error?.code === "TRANSCODE_SKIP") {
+  } catch (err: any) {
+    if (err?.code === "TRANSCODE_SKIP") {
       logger.info(
         { mediaId },
         "Skipping HLS transcoding since it has already been done before",
       );
       return;
     }
-    logger.error({ error, mediaId }, "Failed to transcode video to HLS");
-    throw error;
+    logger.error({ err, mediaId }, "Failed to transcode video to HLS");
+    throw err;
   }
 };
 

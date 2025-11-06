@@ -89,15 +89,14 @@ const ImportProjectModal = ({
           publish();
         } else {
           logger.debug(
-            { error: result.error },
+            { err: result.error },
             "Failed to import project, response not ok",
           );
           toast.error(result.error || "Failed to import project");
         }
-      } catch (error) {
+      } catch (err) {
         toast.error("Error importing project");
-        logger.debug({ error }, "Error importing project");
-        console.error("Import error:", error);
+        logger.debug({ err }, "Error importing project");
       } finally {
         setIsLoading(false);
       }

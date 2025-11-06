@@ -285,13 +285,13 @@ export class OurS3Store extends S3Store implements OurDataStore {
             Key: id,
             UploadId: uploadId,
           })
-          .catch((e) => {
-            logger.error({ id, e }, "Failed to abort multipart upload");
+          .catch((err) => {
+            logger.error({ id, err }, "Failed to abort multipart upload");
             /* ignore */
           });
       }
-      await fsProm.rm(this.getIncompletePartPath(id)).catch((e) => {
-        logger.error({ id, e }, "Failed to delete local incomplete part");
+      await fsProm.rm(this.getIncompletePartPath(id)).catch((err) => {
+        logger.error({ id, err }, "Failed to delete local incomplete part");
         /* ignore */
       });
     }
@@ -301,8 +301,8 @@ export class OurS3Store extends S3Store implements OurDataStore {
         Bucket: this.bucket,
         Key: id,
       })
-      .catch((e) => {
-        logger.warn({ id, e }, "Failed to delete object from bucket");
+      .catch((err) => {
+        logger.warn({ id, err }, "Failed to delete object from bucket");
         /* ignore */
       });
 
@@ -347,9 +347,9 @@ export class OurS3Store extends S3Store implements OurDataStore {
             Key: expiredUpload.media_name,
             UploadId: expiredUpload.s3_upload_id,
           })
-          .catch((e) => {
+          .catch((err) => {
             logger.warn(
-              { e },
+              { err },
               "deleteExpired: Failed to abort multipart upload",
             );
             /* ignore */
@@ -362,9 +362,9 @@ export class OurS3Store extends S3Store implements OurDataStore {
       ...rows.map((expiredUpload) =>
         fsProm
           .rm(this.getIncompletePartPath(expiredUpload.media_name))
-          .catch((e) => {
+          .catch((err) => {
             logger.warn(
-              { e },
+              { err },
               "deleteExpired: Failed to delete local incomplete part",
             );
             /* ignore */

@@ -33,8 +33,8 @@ const Player = () => {
       onWarn: (msg) => {
         pluginApi.log.warn({ url, msg }, "Warning on radio playback");
       },
-      onError: (msg, error) => {
-        pluginApi.log.error({ url, msg, error }, "Error on radio playback");
+      onError: (msg, err) => {
+        pluginApi.log.error({ url, msg, err }, "Error on radio playback");
         pluginApi.awareness.setAwarenessStateData({ isError: true });
       },
       metadataTypes: ["ogg"],

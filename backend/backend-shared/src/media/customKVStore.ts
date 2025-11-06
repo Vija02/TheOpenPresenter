@@ -101,9 +101,9 @@ export class CustomKVStore<T extends Upload | MetadataValue>
           ],
         );
       }
-    } catch (e) {
+    } catch (err) {
       logger.warn(
-        { error: e, mediaId: uuid, metadata: file.metadata },
+        { err, mediaId: uuid, metadata: file.metadata },
         "Failed to create project_medias through Tus upload",
       );
     }
