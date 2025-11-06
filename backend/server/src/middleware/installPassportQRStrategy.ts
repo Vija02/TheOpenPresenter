@@ -1,3 +1,4 @@
+import { logger } from "@repo/observability";
 import { createSession } from "better-sse";
 import { Express } from "express";
 import * as redis from "redis";
@@ -31,6 +32,7 @@ export default async (app: Express) => {
   // Make sure we have redis
   if (!client || !subscribeClient || !publishClient) {
     app.use("/qr-auth", (_req, res) => {
+      logger.error("Redis not enabled. This endpoint should not be hit");
       res.status(500).json({
         error: "This authentication method is not enabled in the server",
       });
