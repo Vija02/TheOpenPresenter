@@ -42,8 +42,9 @@ export class EmbeddedPostgresManager {
           name: "theopenpresenter_visitor",
         },
       },
-      migration: config.migration || {
+      migration: {
         gmrcPath: resolve(__dirname, "../../../backend/db/.gmrc.js"),
+        ...config.migration,
       },
     };
 
