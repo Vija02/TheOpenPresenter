@@ -68,7 +68,7 @@ module.exports = {
     "!afterReset.sql",
     {
       _: "command",
-      command: `node ${path.resolve(__dirname, "../worker/install-db-schema.js")}`,
+      command: `node '${path.resolve(__dirname, "../worker/install-db-schema.js")}'`,
     },
   ],
 
