@@ -2,6 +2,7 @@ import {
   SharedLayout_QueryFragment,
   SharedLayout_UserFragment,
 } from "@repo/graphql";
+import { logger } from "@repo/observability";
 import { Button, ErrorAlert, Link } from "@repo/ui";
 import * as React from "react";
 import { CombinedError, UseQueryResponse } from "urql";
@@ -101,6 +102,10 @@ export function SharedLayout({
     return noPad ? inner : <StandardWidth>{inner}</StandardWidth>;
   };
   const [{ data, fetching, error }] = query;
+
+  React.useEffect(() => {
+    logger.info({ err: error }, "Error on page query");
+  }, [error]);
 
   return (
     <>
