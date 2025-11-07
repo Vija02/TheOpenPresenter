@@ -78,7 +78,6 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
             !foundInCurrentProject ||
             new Date(foundInCurrentProject.updated_at).getTime() !==
               new Date(cloudProject.updatedAt).getTime()
-            // TODO: Handle if it's after??
           );
         })
         .map((x) => x.id);
