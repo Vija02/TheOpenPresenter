@@ -66,6 +66,7 @@ jobs:
         CONFIRM_DROP=1 yarn setup
         yarn build
         yarn e2e playwright install --with-deps
+        yarn worker start &
         yarn e2e test
     - uses: actions/upload-artifact@v4
       if: ${{ !cancelled() }}
