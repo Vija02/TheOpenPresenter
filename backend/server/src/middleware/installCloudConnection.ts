@@ -53,6 +53,7 @@ export default (app: Express) => {
         }
       });
     } catch (e) {
+      logger.debug({ query: req.query }, "Invalid query to /cloud/connect");
       session.push({ error: (e as Error)?.message });
       return;
     }
@@ -118,11 +119,14 @@ export default (app: Express) => {
 
             res.end();
           }
-        } catch (error) {
-          if (error instanceof AxiosError) {
-            log.error({ error });
+        } catch (err) {
+          if (err instanceof AxiosError) {
+            log.info({ err }, "Error trying to login cloud connection");
           } else {
-            log.fatal({ error });
+            log.error(
+              { err },
+              "Unknown error trying to login cloud connection",
+            );
           }
           session.push({ error: "Unexpected error occurred" });
           res.end();
@@ -130,12 +134,18 @@ export default (app: Express) => {
       },
       // Check error
       onResponseError(ctx) {
-        log.debug({ error: ctx.error });
+        log.info(
+          { err: ctx.error },
+          "Error connecting to remote server for cloud connection. ResponseError.",
+        );
         session.push({ error: "Error connecting to server" });
         res.end();
       },
       onRequestError(ctx) {
-        log.debug({ error: ctx.error });
+        log.info(
+          { err: ctx.error },
+          "Error connecting to remote server for cloud connection. Request.",
+        );
         session.push({ error: "Error connecting to server" });
         res.end();
       },
