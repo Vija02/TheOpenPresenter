@@ -117,7 +117,7 @@ export function SharedOrgLayout({
         </SidebarItem>
       </div>
     ),
-    [data?.organizationBySlug?.name, slug],
+    [data?.cloudEnabled, data?.organizationBySlug?.name, slug],
   );
 
   return (
