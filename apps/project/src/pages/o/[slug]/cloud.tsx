@@ -8,7 +8,6 @@ import {
 } from "@repo/graphql";
 import { extractError, globalState } from "@repo/lib";
 import { Alert, Button, Input, Option } from "@repo/ui";
-import { addDays } from "date-fns";
 import { EventSourcePlus } from "event-source-plus";
 import { useCallback, useState } from "react";
 import { GoUnlink } from "react-icons/go";
@@ -90,8 +89,12 @@ const OrganizationCloudPage = () => {
           const data = JSON.parse(ev.data);
 
           if (data.authLink) {
-            // TODO: Make this work in tauri: https://tauri.app/plugin/opener/
-            popup = window.open(data.authLink, "popup", "popup=true");
+            if (window.__TAURI__) {
+              const { openPath } = window.__TAURI__.opener;
+              openPath(data.authLink);
+            } else {
+              popup = window.open(data.authLink, "popup", "popup=true");
+            }
           }
           if (data.error) {
             controller.abort();
