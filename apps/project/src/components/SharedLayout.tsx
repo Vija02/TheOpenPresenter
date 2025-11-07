@@ -104,7 +104,9 @@ export function SharedLayout({
   const [{ data, fetching, error }] = query;
 
   React.useEffect(() => {
-    logger.info({ err: error }, "Error on page query");
+    if (error) {
+      logger.info({ err: error }, "Error on page query");
+    }
   }, [error]);
 
   return (
