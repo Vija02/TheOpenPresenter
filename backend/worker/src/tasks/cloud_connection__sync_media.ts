@@ -320,7 +320,6 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
         }
       });
     }
-    // TODO: Media video
   } catch (e) {
     console.error(e);
     // TODO: Update job status on error
