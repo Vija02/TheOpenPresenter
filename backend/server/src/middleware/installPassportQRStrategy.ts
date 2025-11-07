@@ -32,7 +32,9 @@ export default async (app: Express) => {
   // Make sure we have redis
   if (!client || !subscribeClient || !publishClient) {
     app.use("/qr-auth", (_req, res) => {
-      logger.error("Redis not enabled. This endpoint should not be hit");
+      logger.warn(
+        "/qr-auth endpoint hit but Redis is not enabled on this server",
+      );
       res.status(500).json({
         error: "This authentication method is not enabled in the server",
       });
