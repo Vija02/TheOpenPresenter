@@ -1,6 +1,13 @@
 import { Client, cacheExchange, fetchExchange } from "urql";
 
-export const getUrqlClientFromCloudConnection = (cloudConnection: any) => {
+interface CloudConnection {
+  session_cookie: string;
+  host: string;
+}
+
+export const getUrqlClientFromCloudConnection = (
+  cloudConnection: CloudConnection,
+) => {
   const { session_cookie, host } = cloudConnection;
 
   const urqlClient = new Client({
