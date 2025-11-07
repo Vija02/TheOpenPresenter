@@ -9,8 +9,8 @@ export const cloudEnabled = makeExtendSchemaPlugin(() => ({
   resolvers: {
     Query: {
       async cloudEnabled() {
-        // For now, just check that redis runs
-        return !!process.env.REDIS_URL;
+        // DEBT: For now, let's always enable it.
+        return true;
       },
     },
   },
