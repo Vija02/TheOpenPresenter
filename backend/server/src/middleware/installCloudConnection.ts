@@ -156,24 +156,4 @@ export default (app: Express) => {
       res.end();
     });
   });
-
-  // const apiProxy = createProxyMiddleware({
-  //   target: targetCloudUrl,
-  //   changeOrigin: true,
-  //   headers: {
-  //     "x-top-csrf-protection": "1",
-  //     origin: targetCloudUrl,
-  //     // TODO: Insert auth here
-  //   },
-  //   // on: {
-  //   //   proxyReq: (proxyReq) => {
-  //   //     console.log(proxyReq);
-  //   //     if (proxyReq.path.endsWith("/")) {
-  //   //       // proxyReq.path = proxyReq.path.slice(0, -1);
-  //   //     }
-  //   //   },
-  //   // },
-  // });
-
-  // app.use(`/cloud/proxy`, apiProxy);
 };
