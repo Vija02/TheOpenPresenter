@@ -138,7 +138,7 @@ export default (app: Express) => {
           { err: ctx.error },
           "Error connecting to remote server for cloud connection. ResponseError.",
         );
-        session.push({ error: "Error connecting to server" });
+        session.push({ error: "Unable to connect to server" });
         res.end();
       },
       onRequestError(ctx) {
@@ -146,7 +146,7 @@ export default (app: Express) => {
           { err: ctx.error },
           "Error connecting to remote server for cloud connection. Request.",
         );
-        session.push({ error: "Error connecting to server" });
+        session.push({ error: "Unable to connect to server" });
         res.end();
       },
     });
