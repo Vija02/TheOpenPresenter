@@ -85,12 +85,14 @@ export function SharedOrgLayout({
           name="Projects"
           exact
         />
-        <SidebarItem
-          href={`/o/${slug}/cloud`}
-          icon={<FaCloud />}
-          name="Cloud"
-          exact
-        />
+        {data?.cloudEnabled && (
+          <SidebarItem
+            href={`/o/${slug}/cloud`}
+            icon={<FaCloud />}
+            name="Cloud"
+            exact
+          />
+        )}
         <SidebarItem
           baseUrl={`/o/${slug}/settings`}
           href={`/o/${slug}/settings/general`}

@@ -3443,6 +3443,7 @@ type Query {
     """The method to use when ordering `CloudConnection`."""
     orderBy: [CloudConnectionsOrderBy!] = [PRIMARY_KEY_ASC]
   ): CloudConnectionsConnection
+  cloudEnabled: Boolean!
 
   """The currently logged in user (or null if not logged in)."""
   currentUser: User
