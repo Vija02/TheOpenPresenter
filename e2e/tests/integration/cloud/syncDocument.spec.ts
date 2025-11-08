@@ -68,8 +68,8 @@ test.describe("Cloud Document Sync", () => {
     await expect(newPage.getByText("SyncProject2")).toBeVisible();
     await newPage.getByText("SyncProject2").click();
 
-    await expect(newPage.getByText("Shout to the Lord")).toBeVisible({
-      timeout: 5000,
-    });
+    await expect(
+      newPage.getByText("Shout to the Lord", { exact: true }),
+    ).toBeVisible();
   });
 });
