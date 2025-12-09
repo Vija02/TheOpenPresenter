@@ -308,12 +308,12 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
             mediaIdsToActuallyDelete.map(async (row) => {
               try {
                 await mediaHandler.deleteMedia(row.media_name);
-              } catch (error) {
+              } catch (err) {
                 logger.error(
-                  { error, id: row.id },
+                  { err, id: row.id },
                   "Failed to delete media from media sync",
                 );
-                console.error(`Sync: Failed to delete media ${row.id}:`, error);
+                console.error(`Sync: Failed to delete media ${row.id}:`, err);
               }
             }),
           );
