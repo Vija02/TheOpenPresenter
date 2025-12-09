@@ -27,7 +27,7 @@ const logger = pino(
   {
     // TODO: Make level configurable
     level: "trace",
-    serializers: pino.stdSerializers,
+    serializers: { ...pino.stdSerializers, error: pino.stdSerializers.err },
     browser: {
       serialize: true,
       write: ({ msg, time, level, ...attributes }: any) => {
