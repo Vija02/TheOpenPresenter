@@ -114,7 +114,8 @@ export class EmbeddedPostgresManager {
         this.config.roles.authenticator.name,
         this.config.roles.visitor.name,
       );
-      this.migrationManager.runMigrations();
+      console.log("Running migrations...")
+      await this.migrationManager.runMigrations();
     }
   }
 
