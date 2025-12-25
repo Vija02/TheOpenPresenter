@@ -6,6 +6,7 @@ import QRLoginModal from "./QRLoginModal";
 
 export interface SocialLoginOptionsProps {
   next: string;
+  persistSession?: boolean;
   buttonTextFromService?: (service: string) => string;
 }
 
@@ -15,12 +16,15 @@ function defaultButtonTextFromService(service: string) {
 
 export function SocialLoginOptions({
   next,
+  persistSession,
   buttonTextFromService = defaultButtonTextFromService,
 }: SocialLoginOptionsProps) {
+  const persistSessionParam = persistSession ? "&persist-session=1" : "";
+
   return (
     <div className="stack-row justify-center gap-3 w-full">
       <a
-        href={`/auth/google?next=${encodeURIComponent(next)}`}
+        href={`/auth/google?next=${encodeURIComponent(next)}${persistSessionParam}`}
         className="flex-1 hover:bg-gray-100 transition-colors"
       >
         <div className="border border-gray-600 rounded-sm p-2">
@@ -30,7 +34,7 @@ export function SocialLoginOptions({
         </div>
       </a>
       <a
-        href={`/auth/github?next=${encodeURIComponent(next)}`}
+        href={`/auth/github?next=${encodeURIComponent(next)}${persistSessionParam}`}
         className="flex-1 hover:bg-gray-100 transition-colors"
       >
         <div className="border border-gray-600 rounded-sm p-2">
