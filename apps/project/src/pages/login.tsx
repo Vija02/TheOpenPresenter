@@ -5,7 +5,14 @@ import { useResetURQLClient } from "@/urql";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useLoginMutation, useSharedQuery } from "@repo/graphql";
 import { extractError, getCodeFromError } from "@repo/lib";
-import { Alert, Button, Form, InputControl, Link } from "@repo/ui";
+import {
+  Alert,
+  Button,
+  CheckboxControl,
+  Form,
+  InputControl,
+  Link,
+} from "@repo/ui";
 import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
 import { CombinedError } from "urql";
@@ -53,6 +60,7 @@ export default function Home() {
 const formSchema = z.object({
   username: z.string().min(1, "Please enter your e-mail or username"),
   password: z.string().min(1, "Please enter your password"),
+  rememberMe: z.boolean().default(false),
 });
 type FormInputs = z.infer<typeof formSchema>;
 
@@ -73,17 +81,29 @@ function LoginForm({ onSuccessRedirectTo, error, setError }: LoginFormProps) {
     defaultValues: {
       username: "",
       password: "",
+      rememberMe: false,
     },
   });
+
+  const rememberMe = form.watch("rememberMe");
 
   const onSubmit = useCallback(
     async (values: FormInputs) => {
       setError(null);
       try {
-        await login({
-          username: values.username,
-          password: values.password,
-        });
+        await login(
+          {
+            username: values.username,
+            password: values.password,
+          },
+          {
+            fetchOptions: {
+              headers: values.rememberMe
+                ? { "persist-session": "1" }
+                : {},
+            },
+          },
+        );
         // Success: refetch
         resetClient();
         navigate(onSuccessRedirectTo);
@@ -125,6 +145,13 @@ function LoginForm({ onSuccessRedirectTo, error, setError }: LoginFormProps) {
             data-cy="loginpage-input-password"
           />
 
+          <CheckboxControl
+            control={form.control}
+            name="rememberMe"
+            label="Remember me"
+            data-cy="loginpage-input-rememberme"
+          />
+
           <div className="stack-col items-start gap-2">
             <Link asChild>
               <WouterLink href="/forgot" className="text-sm">
@@ -156,7 +183,7 @@ function LoginForm({ onSuccessRedirectTo, error, setError }: LoginFormProps) {
 
           <p className="lineText w-full text-gray-700">Or continue with</p>
 
-          <SocialLoginOptions next={onSuccessRedirectTo} />
+          <SocialLoginOptions next={onSuccessRedirectTo} persistSession={rememberMe} />
         </div>
       </form>
     </Form>
