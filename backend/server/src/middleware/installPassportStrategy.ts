@@ -2,6 +2,7 @@ import { Express, Request, RequestHandler } from "express";
 import passport from "passport";
 
 import { getRootPgPool } from "./installDatabasePools";
+import { getShouldPersistSession } from "./installSession";
 
 interface DbSession {
   uuid: string;
@@ -155,7 +156,9 @@ export default (
               code: "FFFFF",
             });
           }
-          done(null, { session_id: session.uuid });
+          req.login({ session_id: session.uuid }, () => {
+            done(null, { session_id: session.uuid });
+          });
         } catch (e: any) {
           done(e);
         }
@@ -170,11 +173,21 @@ export default (
       next(e);
       return;
     }
+
+    const shouldPersistCookie = getShouldPersistSession(req);
+
     const realAuthDetails =
       typeof authenticateConfig === "function"
         ? authenticateConfig(req)
         : authenticateConfig;
-    const step1Middleware = passport.authenticate(service, realAuthDetails);
+    const step1Middleware = passport.authenticate(service, {
+      ...(shouldPersistCookie
+        ? {
+            state: JSON.stringify({ persistSession: shouldPersistCookie }),
+          }
+        : {}),
+      ...realAuthDetails,
+    });
     step1Middleware(req, res, next);
   });
 

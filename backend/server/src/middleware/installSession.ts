@@ -32,6 +32,27 @@ async function createRedisStore() {
   return new RedisStore({ client });
 }
 
+export function getShouldPersistSession(req: Parameters<RequestHandler>[0]) {
+  if (
+    req.query?.["persist-session"] === "1" ||
+    req.headers?.["persist-session"] === "1"
+  ) {
+    return true;
+  }
+
+  if (req.query?.["state"]) {
+    try {
+      const parsedState = JSON.parse(req.query?.["state"] as string);
+
+      return parsedState.persistSession === true;
+    } catch {
+      return false;
+    }
+  }
+
+  return false;
+}
+
 export default async (app: Express) => {
   const rootPgPool = getRootPgPool(app);
 
@@ -83,10 +104,8 @@ export default async (app: Express) => {
    */
   const wrappedSessionMiddleware: RequestHandler = (req, res, next) => {
     if (req.isSameOrigin) {
-      const shouldPersistCookie =
-        req.query?.["persist-session"] === "1" ||
-        req.headers?.["persist-session"] === "1";
-      getSessionMiddleware(shouldPersistCookie)(req, res, next);
+      const shouldPersistSession = getShouldPersistSession(req);
+      getSessionMiddleware(shouldPersistSession)(req, res, next);
     } else {
       next();
     }
