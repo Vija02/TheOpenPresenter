@@ -57,7 +57,7 @@ export function SocialLoginOptions({
           </div>
         )}
       >
-        <QRLoginModal next={next} />
+        <QRLoginModal next={next} persistSession={persistSession} />
       </OverlayToggle>
     </div>
   );
