@@ -15,9 +15,10 @@ import { useDisposable } from "use-disposable";
 
 export type QRLoginModalPropTypes = {
   next: string;
+  persistSession?: boolean;
 };
 
-const QRLoginModal = ({ next }: QRLoginModalPropTypes) => {
+const QRLoginModal = ({ next, persistSession }: QRLoginModalPropTypes) => {
   const { isOpen, onToggle } = useOverlayToggle();
   const [qrId, setQRId] = useState<string | null>(null);
 
@@ -34,7 +35,10 @@ const QRLoginModal = ({ next }: QRLoginModalPropTypes) => {
               setQRId(data.id);
             }
             if (data.done) {
-              window.location.href = `/qr-auth/login?token=${data.token}&next=${encodeURIComponent(next)}`;
+              const persistSessionParam = persistSession
+                ? "&persist-session=1"
+                : "";
+              window.location.href = `/qr-auth/login?token=${data.token}&next=${encodeURIComponent(next)}${persistSessionParam}`;
             }
           } catch (e) {
             // Keep alive
