@@ -2,6 +2,8 @@ import installAutoLogin from "./installAutoLogin";
 import installCSRFProtection from "./installCSRFProtection";
 import installCloudConnection from "./installCloudConnection";
 import installDatabasePools from "./installDatabasePools";
+import installDeviceHostHandler from "./installDeviceHostHandler";
+import installDeviceServerHandler from "./installDeviceServerHandler";
 import installE2EServerCommand from "./installE2EServerCommand";
 import installErrorHandler from "./installErrorHandler";
 import installFileUpload from "./installFileUpload";
@@ -30,6 +32,8 @@ export {
   installCSRFProtection,
   installCloudConnection,
   installDatabasePools,
+  installDeviceHostHandler,
+  installDeviceServerHandler,
   installE2EServerCommand,
   installErrorHandler,
   installFileUpload,
