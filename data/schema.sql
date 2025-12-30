@@ -2,8 +2,10 @@
 -- PostgreSQL database dump
 --
 
+\restrict LqSSzJ2pNDJfUAnGpmQT2nXcnKJQgA6aEEwTRdmEFzHWeYhOkdO5O6t20nRBT2q
+
 -- Dumped from database version 17.0 (Debian 17.0-1.pgdg120+1)
--- Dumped by pg_dump version 17.5
+-- Dumped by pg_dump version 18.1
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -1212,6 +1214,18 @@ $$;
 
 
 --
+-- Name: current_user_can_access_cloud_connection(uuid); Type: FUNCTION; Schema: app_public; Owner: -
+--
+
+CREATE FUNCTION app_public.current_user_can_access_cloud_connection(cloud_connection_id uuid) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+    AS $$
+  select exists(select 1 from app_public.cloud_connections where id = cloud_connection_id and organization_id in (select app_public.current_user_member_organization_ids()));
+$$;
+
+
+--
 -- Name: current_user_can_access_media(uuid); Type: FUNCTION; Schema: app_public; Owner: -
 --
 
@@ -2335,6 +2349,18 @@ CREATE TABLE app_public.medias (
 
 
 --
+-- Name: organization_active_devices; Type: TABLE; Schema: app_public; Owner: -
+--
+
+CREATE TABLE app_public.organization_active_devices (
+    organization_id uuid NOT NULL,
+    iroh_endpoint_id text NOT NULL,
+    iroh_ticket text NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
 -- Name: organization_invitations; Type: TABLE; Schema: app_public; Owner: -
 --
 
@@ -2854,6 +2880,27 @@ CREATE INDEX medias_organization_id_idx ON app_public.medias USING btree (organi
 
 
 --
+-- Name: organization_active_devices_organization_id_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX organization_active_devices_organization_id_idx ON app_public.organization_active_devices USING btree (organization_id);
+
+
+--
+-- Name: organization_active_devices_organization_id_iroh_endpoint_i_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE UNIQUE INDEX organization_active_devices_organization_id_iroh_endpoint_i_idx ON app_public.organization_active_devices USING btree (organization_id, iroh_endpoint_id);
+
+
+--
+-- Name: organization_active_devices_updated_at_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX organization_active_devices_updated_at_idx ON app_public.organization_active_devices USING btree (updated_at);
+
+
+--
 -- Name: organization_invitations_user_id_idx; Type: INDEX; Schema: app_public; Owner: -
 --
 
@@ -3162,6 +3209,13 @@ CREATE TRIGGER _500_deletion_organization_checks_and_actions BEFORE DELETE ON ap
 
 
 --
+-- Name: cloud_connections _500_gql_notify; Type: TRIGGER; Schema: app_public; Owner: -
+--
+
+CREATE TRIGGER _500_gql_notify AFTER INSERT OR DELETE OR UPDATE ON app_public.cloud_connections FOR EACH ROW EXECUTE FUNCTION app_public.tg__graphql_subscription('cloudConnectionUpdate', 'graphql:cloud_connections');
+
+
+--
 -- Name: users _500_gql_update; Type: TRIGGER; Schema: app_public; Owner: -
 --
 
@@ -3361,6 +3415,14 @@ ALTER TABLE ONLY app_public.medias
 
 
 --
+-- Name: organization_active_devices organization_active_devices_organization_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.organization_active_devices
+    ADD CONSTRAINT organization_active_devices_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES app_public.organizations(id) ON DELETE CASCADE;
+
+
+--
 -- Name: organization_invitations organization_invitations_organization_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
 --
 
@@ -3538,6 +3600,13 @@ CREATE POLICY delete_own ON app_public.cloud_connections FOR DELETE USING ((orga
 
 
 --
+-- Name: organization_active_devices delete_own; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY delete_own ON app_public.organization_active_devices FOR DELETE USING ((organization_id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids)));
+
+
+--
 -- Name: project_medias delete_own; Type: POLICY; Schema: app_public; Owner: -
 --
 
@@ -3591,6 +3660,13 @@ CREATE POLICY delete_own_org ON app_public.projects FOR DELETE USING ((organizat
 --
 
 CREATE POLICY delete_own_org ON app_public.tags FOR DELETE USING ((organization_id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids)));
+
+
+--
+-- Name: organization_active_devices insert_own; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY insert_own ON app_public.organization_active_devices FOR INSERT WITH CHECK ((organization_id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids)));
 
 
 --
@@ -3685,6 +3761,12 @@ ALTER TABLE app_public.media_video_metadata ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE app_public.medias ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: organization_active_devices; Type: ROW SECURITY; Schema: app_public; Owner: -
+--
+
+ALTER TABLE app_public.organization_active_devices ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: organization_invitations; Type: ROW SECURITY; Schema: app_public; Owner: -
@@ -3785,6 +3867,13 @@ CREATE POLICY select_own ON app_public.medias FOR SELECT USING ((organization_id
 
 
 --
+-- Name: organization_active_devices select_own; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY select_own ON app_public.organization_active_devices FOR SELECT USING ((organization_id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids)));
+
+
+--
 -- Name: project_medias select_own; Type: POLICY; Schema: app_public; Owner: -
 --
 
@@ -3879,6 +3968,13 @@ ALTER TABLE app_public.tags ENABLE ROW LEVEL SECURITY;
 --
 
 CREATE POLICY update_only_when_empty ON app_public.cloud_connections FOR UPDATE USING ((target_organization_slug IS NULL));
+
+
+--
+-- Name: organization_active_devices update_own; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY update_own ON app_public.organization_active_devices FOR UPDATE USING ((organization_id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids)));
 
 
 --
@@ -4262,6 +4358,14 @@ GRANT ALL ON FUNCTION app_public.current_user_can_access_category(category_id uu
 
 
 --
+-- Name: FUNCTION current_user_can_access_cloud_connection(cloud_connection_id uuid); Type: ACL; Schema: app_public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_public.current_user_can_access_cloud_connection(cloud_connection_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION app_public.current_user_can_access_cloud_connection(cloud_connection_id uuid) TO theopenpresenter_visitor;
+
+
+--
 -- Name: FUNCTION current_user_can_access_media(media_id uuid); Type: ACL; Schema: app_public; Owner: -
 --
 
@@ -4632,6 +4736,41 @@ GRANT SELECT ON TABLE app_public.medias TO theopenpresenter_visitor;
 
 
 --
+-- Name: TABLE organization_active_devices; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT SELECT,DELETE ON TABLE app_public.organization_active_devices TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN organization_active_devices.organization_id; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(organization_id) ON TABLE app_public.organization_active_devices TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN organization_active_devices.iroh_endpoint_id; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(iroh_endpoint_id) ON TABLE app_public.organization_active_devices TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN organization_active_devices.iroh_ticket; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(iroh_ticket),UPDATE(iroh_ticket) ON TABLE app_public.organization_active_devices TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN organization_active_devices.updated_at; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(updated_at),UPDATE(updated_at) ON TABLE app_public.organization_active_devices TO theopenpresenter_visitor;
+
+
+--
 -- Name: TABLE organization_join_requests; Type: ACL; Schema: app_public; Owner: -
 --
 
@@ -4802,4 +4941,6 @@ ALTER DEFAULT PRIVILEGES FOR ROLE theopenpresenter REVOKE ALL ON FUNCTIONS FROM 
 --
 -- PostgreSQL database dump complete
 --
+
+\unrestrict LqSSzJ2pNDJfUAnGpmQT2nXcnKJQgA6aEEwTRdmEFzHWeYhOkdO5O6t20nRBT2q
 

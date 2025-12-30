@@ -540,6 +540,46 @@ type CreateMediaDependencyPayload {
   query: Query
 }
 
+"""All input for the create `OrganizationActiveDevice` mutation."""
+input CreateOrganizationActiveDeviceInput {
+  """
+  An arbitrary string value with no semantic meaning. Will be included in the
+  payload verbatim. May be used to track mutations by the client.
+  """
+  clientMutationId: String
+
+  """The `OrganizationActiveDevice` to be created by this mutation."""
+  organizationActiveDevice: OrganizationActiveDeviceInput!
+}
+
+"""The output of our create `OrganizationActiveDevice` mutation."""
+type CreateOrganizationActiveDevicePayload {
+  """
+  The exact same `clientMutationId` that was provided in the mutation input,
+  unchanged and unused. May be used by a client to track mutations.
+  """
+  clientMutationId: String
+
+  """
+  Reads a single `Organization` that is related to this `OrganizationActiveDevice`.
+  """
+  organization: Organization
+
+  """The `OrganizationActiveDevice` that was created by this mutation."""
+  organizationActiveDevice: OrganizationActiveDevice
+
+  """An edge for our `OrganizationActiveDevice`. May be used by Relay 1."""
+  organizationActiveDeviceEdge(
+    """The method to use when ordering `OrganizationActiveDevice`."""
+    orderBy: [OrganizationActiveDevicesOrderBy!] = [NATURAL]
+  ): OrganizationActiveDevicesEdge
+
+  """
+  Our root query field type. Allows us to run any query from our mutation payload.
+  """
+  query: Query
+}
+
 """All input for the `createOrganization` mutation."""
 input CreateOrganizationInput {
   """
@@ -2057,6 +2097,14 @@ type Mutation {
     input: CreateOrganizationInput!
   ): CreateOrganizationPayload
 
+  """Creates a single `OrganizationActiveDevice`."""
+  createOrganizationActiveDevice(
+    """
+    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.
+    """
+    input: CreateOrganizationActiveDeviceInput!
+  ): CreateOrganizationActiveDevicePayload
+
   """Creates a single `Project`."""
   createProject(
     """
@@ -2488,6 +2536,42 @@ type Organization {
   name: String!
 
   """
+  Reads and enables pagination through a set of `OrganizationActiveDevice`.
+  """
+  organizationActiveDevices(
+    """Read all values in the set after (below) this cursor."""
+    after: Cursor
+
+    """Read all values in the set before (above) this cursor."""
+    before: Cursor
+
+    """
+    A condition to be used in determining which values should be returned by the collection.
+    """
+    condition: OrganizationActiveDeviceCondition
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: OrganizationActiveDeviceFilter
+
+    """Only read the first `n` values of the set."""
+    first: Int
+
+    """Only read the last `n` values of the set."""
+    last: Int
+
+    """
+    Skip the first `n` values from our `after` cursor, an alternative to cursor
+    based pagination. May not be used with `last`.
+    """
+    offset: Int
+
+    """The method to use when ordering `OrganizationActiveDevice`."""
+    orderBy: [OrganizationActiveDevicesOrderBy!] = [NATURAL]
+  ): OrganizationActiveDevicesConnection!
+
+  """
   Reads and enables pagination through a set of `OrganizationJoinRequest`.
   """
   organizationJoinRequests(
@@ -2627,6 +2711,95 @@ type Organization {
     """The method to use when ordering `Tag`."""
     orderBy: [TagsOrderBy!] = [PRIMARY_KEY_ASC]
   ): TagsConnection!
+}
+
+type OrganizationActiveDevice {
+  irohEndpointId: String!
+  irohTicket: String!
+
+  """
+  Reads a single `Organization` that is related to this `OrganizationActiveDevice`.
+  """
+  organization: Organization
+  organizationId: UUID!
+  updatedAt: Datetime!
+}
+
+"""
+A condition to be used against `OrganizationActiveDevice` object types. All
+fields are tested for equality and combined with a logical ‘and.’
+"""
+input OrganizationActiveDeviceCondition {
+  """Checks for equality with the object’s `organizationId` field."""
+  organizationId: UUID
+
+  """Checks for equality with the object’s `updatedAt` field."""
+  updatedAt: Datetime
+}
+
+"""
+A filter to be used against `OrganizationActiveDevice` object types. All fields are combined with a logical ‘and.’
+"""
+input OrganizationActiveDeviceFilter {
+  """Checks for all expressions in this list."""
+  and: [OrganizationActiveDeviceFilter!]
+
+  """Negates the expression."""
+  not: OrganizationActiveDeviceFilter
+
+  """Checks for any expressions in this list."""
+  or: [OrganizationActiveDeviceFilter!]
+
+  """Filter by the object’s `organizationId` field."""
+  organizationId: UUIDFilter
+
+  """Filter by the object’s `updatedAt` field."""
+  updatedAt: DatetimeFilter
+}
+
+"""An input for mutations affecting `OrganizationActiveDevice`"""
+input OrganizationActiveDeviceInput {
+  irohEndpointId: String!
+  irohTicket: String!
+  organizationId: UUID!
+  updatedAt: Datetime
+}
+
+"""A connection to a list of `OrganizationActiveDevice` values."""
+type OrganizationActiveDevicesConnection {
+  """
+  A list of edges which contains the `OrganizationActiveDevice` and cursor to aid in pagination.
+  """
+  edges: [OrganizationActiveDevicesEdge!]!
+
+  """A list of `OrganizationActiveDevice` objects."""
+  nodes: [OrganizationActiveDevice!]!
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+
+  """
+  The count of *all* `OrganizationActiveDevice` you could get from the connection.
+  """
+  totalCount: Int!
+}
+
+"""A `OrganizationActiveDevice` edge in the connection."""
+type OrganizationActiveDevicesEdge {
+  """A cursor for use in pagination."""
+  cursor: Cursor
+
+  """The `OrganizationActiveDevice` at the end of the edge."""
+  node: OrganizationActiveDevice!
+}
+
+"""Methods to use when ordering `OrganizationActiveDevice`."""
+enum OrganizationActiveDevicesOrderBy {
+  NATURAL
+  ORGANIZATION_ID_ASC
+  ORGANIZATION_ID_DESC
+  UPDATED_AT_ASC
+  UPDATED_AT_DESC
 }
 
 """
@@ -3448,6 +3621,7 @@ type Query {
   """The currently logged in user (or null if not logged in)."""
   currentUser: User
   currentUserCanAccessCategory(categoryId: UUID!): Boolean
+  currentUserCanAccessCloudConnection(cloudConnectionId: UUID!): Boolean
   currentUserCanAccessMedia(mediaId: UUID!): Boolean
   currentUserCanAccessProject(projectId: UUID!): Boolean
   currentUserCanAccessTag(tagId: UUID!): Boolean
@@ -3625,6 +3799,42 @@ type Query {
     orderBy: [MediaOrderBy!] = [PRIMARY_KEY_ASC]
   ): MediaConnection
   organization(id: UUID!): Organization
+
+  """
+  Reads and enables pagination through a set of `OrganizationActiveDevice`.
+  """
+  organizationActiveDevices(
+    """Read all values in the set after (below) this cursor."""
+    after: Cursor
+
+    """Read all values in the set before (above) this cursor."""
+    before: Cursor
+
+    """
+    A condition to be used in determining which values should be returned by the collection.
+    """
+    condition: OrganizationActiveDeviceCondition
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: OrganizationActiveDeviceFilter
+
+    """Only read the first `n` values of the set."""
+    first: Int
+
+    """Only read the last `n` values of the set."""
+    last: Int
+
+    """
+    Skip the first `n` values from our `after` cursor, an alternative to cursor
+    based pagination. May not be used with `last`.
+    """
+    offset: Int
+
+    """The method to use when ordering `OrganizationActiveDevice`."""
+    orderBy: [OrganizationActiveDevicesOrderBy!] = [NATURAL]
+  ): OrganizationActiveDevicesConnection
   organizationBySlug(slug: String!): Organization
 
   """
