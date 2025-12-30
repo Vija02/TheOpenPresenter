@@ -96,19 +96,22 @@ export default (app: Express) => {
     }
 
     try {
-      await axios.post(`${cloudConnection.host}/device/server/ping`, {
-        headers: {
-          "Content-Type": "application/json",
-          Cookie: cloudConnection.session_cookie,
-          "x-top-csrf-protection": "1",
-          origin: cloudConnection.host,
-        },
-        body: JSON.stringify({
+      await axios.post(
+        `${cloudConnection.host}/device/server/ping`,
+        {
           organizationSlug: cloudConnection.target_organization_slug,
           irohEndpointId,
           irohTicket,
-        }),
-      });
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Cookie: cloudConnection.session_cookie,
+            "x-top-csrf-protection": "1",
+            origin: cloudConnection.host,
+          },
+        },
+      );
 
       logger.trace(
         { cloudConnectionId: cloudConnection.id },
