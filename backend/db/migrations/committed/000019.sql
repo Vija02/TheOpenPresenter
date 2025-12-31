@@ -1,5 +1,5 @@
 --! Previous: sha1:44f109ffe59b6c3bd1e9610b53f3926cdfa215cc
---! Hash: sha1:ecf0eb88ce053ea830b4139d51165091216d39cb
+--! Hash: sha1:2a7818516087a6e95fad543016d58b2aec53b34e
 
 --! split: 100-reset.sql
 -- 400
@@ -23,6 +23,7 @@ create table app_public.organization_active_devices (
   iroh_endpoint_id text not null,
 
   iroh_ticket text not null,
+  active_project_ids text[] not null default '{}',
 
   updated_at timestamptz not null default now()
 );
@@ -46,8 +47,8 @@ create policy delete_own on app_public.organization_active_devices for delete us
 
 -- Grants
 grant select on app_public.organization_active_devices to :DATABASE_VISITOR;
-grant insert(organization_id, iroh_endpoint_id, iroh_ticket, updated_at) on app_public.organization_active_devices to :DATABASE_VISITOR;
-grant update(iroh_ticket, updated_at) on app_public.organization_active_devices to :DATABASE_VISITOR;
+grant insert(organization_id, iroh_endpoint_id, iroh_ticket, active_project_ids, updated_at) on app_public.organization_active_devices to :DATABASE_VISITOR;
+grant update(iroh_ticket, active_project_ids, updated_at) on app_public.organization_active_devices to :DATABASE_VISITOR;
 grant delete on app_public.organization_active_devices to :DATABASE_VISITOR;
 
 --! split: 400-cloud_connections_notify.sql

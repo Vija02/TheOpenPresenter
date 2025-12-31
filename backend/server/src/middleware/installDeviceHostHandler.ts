@@ -6,6 +6,7 @@ import { PoolClient } from "pg";
 
 import { getShutdownActions } from "../app";
 import { getRootPgPool } from "./installDatabasePools";
+import { disposableDocumentManager } from "./installHocuspocus";
 
 const PING_INTERVAL_MS = 30000; // 30 seconds
 const JITTER_MAX_MS = 5000; // Maximum jitter of 5 seconds
@@ -96,12 +97,26 @@ export default (app: Express) => {
     }
 
     try {
+      // Get active project ids that belong to this cloud connection's organization
+      const activeProjectIds = disposableDocumentManager.getActiveDocuments();
+
+      // DEBT: Make more efficient?
+      let filteredProjectIds: string[] = [];
+      if (activeProjectIds.length > 0) {
+        const { rows } = await rootPgPool.query<{ id: string }>(
+          `SELECT id FROM app_public.projects WHERE id = ANY($1) AND organization_id = $2`,
+          [activeProjectIds, cloudConnection.organization_id],
+        );
+        filteredProjectIds = rows.map((r) => r.id);
+      }
+
       await axios.post(
         `${cloudConnection.host}/device/server/ping`,
         {
           organizationSlug: cloudConnection.target_organization_slug,
           irohEndpointId,
           irohTicket,
+          activeProjectIds: filteredProjectIds,
         },
         {
           headers: {
@@ -125,6 +140,19 @@ export default (app: Express) => {
     }
   };
 
+  const scheduleNextPing = (cloudConnection: CloudConnection) => {
+    const jitteredInterval = PING_INTERVAL_MS + getJitter();
+    const timeoutId = setTimeout(() => {
+      pingCloudConnection(cloudConnection);
+      // Only schedule next if still active
+      if (activePollers.has(cloudConnection.id)) {
+        scheduleNextPing(cloudConnection);
+      }
+    }, jitteredInterval);
+
+    activePollers.set(cloudConnection.id, timeoutId);
+  };
+
   const startPolling = (cloudConnection: CloudConnection) => {
     // Don't start if already polling
     if (activePollers.has(cloudConnection.id)) {
@@ -141,23 +169,9 @@ export default (app: Express) => {
       pingCloudConnection(cloudConnection);
     }, initialDelay);
 
-    // Set up interval for subsequent pings with jitter
-    const scheduleNextPing = () => {
-      const jitteredInterval = PING_INTERVAL_MS + getJitter();
-      const timeoutId = setTimeout(() => {
-        pingCloudConnection(cloudConnection);
-        // Only schedule next if still active
-        if (activePollers.has(cloudConnection.id)) {
-          scheduleNextPing();
-        }
-      }, jitteredInterval);
-
-      activePollers.set(cloudConnection.id, timeoutId);
-    };
-
     // Schedule the first recurring ping after initial delay + base interval
     setTimeout(() => {
-      scheduleNextPing();
+      scheduleNextPing(cloudConnection);
     }, initialDelay);
 
     // Store a placeholder timeout that will be replaced by scheduleNextPing
@@ -217,6 +231,17 @@ export default (app: Express) => {
       }
     }
 
+    // Trigger ping for current connections
+    Array.from(activePollers.entries()).forEach(
+      ([cloudConnectionId, timeoutId]) => {
+        clearTimeout(timeoutId);
+
+        const cloudConnection = rows.find((x) => x.id === cloudConnectionId)!;
+        pingCloudConnection(cloudConnection);
+        scheduleNextPing(cloudConnection);
+      },
+    );
+
     // Start or update polling for new/existing connections
     for (const cloudConnection of rows) {
       if (!activePollers.has(cloudConnection.id)) {
@@ -260,6 +285,10 @@ export default (app: Express) => {
     });
 
     await listenerClient.query('LISTEN "graphql:cloud_connections"');
+
+    disposableDocumentManager.onDocumentsChange(() => {
+      syncPollingState();
+    });
 
     logger.info("LISTEN setup complete for graphql:cloud_connections");
   };
