@@ -36,18 +36,20 @@ export default (app: Express) => {
     }
 
     // DEBT: This should take just the ticket, and we can infer the endpoint from there
-    const { organizationSlug, irohEndpointId, irohTicket } = parseResult.data;
+    const { organizationSlug, irohEndpointId, irohTicket, activeProjectIds } =
+      parseResult.data;
 
     try {
       await withUserPgPool(app, sessionId, async (client) => {
         await client.query(
-          `INSERT INTO app_public.organization_active_devices (organization_id, iroh_endpoint_id, iroh_ticket, updated_at)
-           VALUES ((SELECT id FROM app_public.organizations WHERE slug = $1), $2, $3, NOW())
+          `INSERT INTO app_public.organization_active_devices (organization_id, iroh_endpoint_id, iroh_ticket, active_project_ids, updated_at)
+           VALUES ((SELECT id FROM app_public.organizations WHERE slug = $1), $2, $3, $4, NOW())
            ON CONFLICT (organization_id, iroh_endpoint_id)
            DO UPDATE SET
              iroh_ticket = EXCLUDED.iroh_ticket,
+             active_project_ids = EXCLUDED.active_project_ids,
              updated_at = NOW()`,
-          [organizationSlug, irohEndpointId, irohTicket],
+          [organizationSlug, irohEndpointId, irohTicket, activeProjectIds],
         );
       });
 

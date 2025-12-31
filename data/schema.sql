@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict LqSSzJ2pNDJfUAnGpmQT2nXcnKJQgA6aEEwTRdmEFzHWeYhOkdO5O6t20nRBT2q
+\restrict oyrajxC8ckn0g2tD6mfHpXRdMdkvBkrO8lUb1ahPCrHwit6sS3Uf8hDQSmCfJKU
 
 -- Dumped from database version 17.0 (Debian 17.0-1.pgdg120+1)
 -- Dumped by pg_dump version 18.1
@@ -2356,6 +2356,7 @@ CREATE TABLE app_public.organization_active_devices (
     organization_id uuid NOT NULL,
     iroh_endpoint_id text NOT NULL,
     iroh_ticket text NOT NULL,
+    active_project_ids text[] DEFAULT '{}'::text[] NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
@@ -4764,6 +4765,13 @@ GRANT INSERT(iroh_ticket),UPDATE(iroh_ticket) ON TABLE app_public.organization_a
 
 
 --
+-- Name: COLUMN organization_active_devices.active_project_ids; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(active_project_ids),UPDATE(active_project_ids) ON TABLE app_public.organization_active_devices TO theopenpresenter_visitor;
+
+
+--
 -- Name: COLUMN organization_active_devices.updated_at; Type: ACL; Schema: app_public; Owner: -
 --
 
@@ -4942,5 +4950,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE theopenpresenter REVOKE ALL ON FUNCTIONS FROM 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict LqSSzJ2pNDJfUAnGpmQT2nXcnKJQgA6aEEwTRdmEFzHWeYhOkdO5O6t20nRBT2q
+\unrestrict oyrajxC8ckn0g2tD6mfHpXRdMdkvBkrO8lUb1ahPCrHwit6sS3Uf8hDQSmCfJKU
 

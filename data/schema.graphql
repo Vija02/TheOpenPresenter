@@ -2714,6 +2714,7 @@ type Organization {
 }
 
 type OrganizationActiveDevice {
+  activeProjectIds: [String]!
   irohEndpointId: String!
   irohTicket: String!
 
@@ -2759,6 +2760,7 @@ input OrganizationActiveDeviceFilter {
 
 """An input for mutations affecting `OrganizationActiveDevice`"""
 input OrganizationActiveDeviceInput {
+  activeProjectIds: [String]
   irohEndpointId: String!
   irohTicket: String!
   organizationId: UUID!
