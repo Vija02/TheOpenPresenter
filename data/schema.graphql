@@ -2731,6 +2731,11 @@ A condition to be used against `OrganizationActiveDevice` object types. All
 fields are tested for equality and combined with a logical ‘and.’
 """
 input OrganizationActiveDeviceCondition {
+  """
+  Filters to records that are active (updated_at within 1m30s of current time)
+  """
+  isActive: Boolean
+
   """Checks for equality with the object’s `organizationId` field."""
   organizationId: UUID
 
