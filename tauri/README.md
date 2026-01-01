@@ -13,8 +13,9 @@ Essentially, the desktop app is:
 ## Getting started
 
 1. Make sure the main project is built
-2. Install the dependencies - `yarn`
-3. Run with `yarn tauri dev`
+2. Follow the [prerequisites from Tauri](https://v2.tauri.app/start/prerequisites/)
+3. Install the dependencies - `yarn`
+4. Run with `yarn tauri dev`
 
 ## What is in the bundle?
 
