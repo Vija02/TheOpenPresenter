@@ -1,5 +1,11 @@
 /* Credits to: https://uiverse.io/alexruix/white-cat-50 */
 
+.ui--loading-full-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 .ui--loading-full {
   width: 48px;
   height: 48px;
@@ -29,6 +35,11 @@
   left: 0;
   border-radius: 4px;
   animation: loading-jump 0.5s linear infinite;
+}
+
+.ui--loading-full-reload {
+  margin-top: 40px;
+  text-align: center;
 }
 
 @keyframes loading-jump {
