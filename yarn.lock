@@ -9004,7 +9004,7 @@ __metadata:
     graphile-worker: "npm:^0.16.6"
     graphql: "npm:^15.9.0"
     helmet: "npm:^7.2.0"
-    http-proxy-middleware: "npm:^3.0.3"
+    http-proxy-middleware: "npm:^3.0.5"
     lodash: "npm:^4.17.21"
     mock-req: "npm:^0.2.0"
     morgan: "npm:^1.10.0"
@@ -9030,6 +9030,7 @@ __metadata:
     vitest: "npm:^2.1.8"
     ws: "npm:^8.18.0"
     yjs: "npm:13.6.26"
+    zod: "npm:^3.25.17"
   languageName: unknown
   linkType: soft
 
@@ -19707,6 +19708,20 @@ __metadata:
     is-plain-object: "npm:^5.0.0"
     micromatch: "npm:^4.0.8"
   checksum: 10c0/c4d68a10d8d42f02e59f7dc8249c98d1ac03aecee177b42c2d8b6a0cb6b71c6688e759e5387f4cdb570150070ca1c6808b38010cbdf67f4500a2e75671a36e05
+  languageName: node
+  linkType: hard
+
+"http-proxy-middleware@npm:^3.0.5":
+  version: 3.0.5
+  resolution: "http-proxy-middleware@npm:3.0.5"
+  dependencies:
+    "@types/http-proxy": "npm:^1.17.15"
+    debug: "npm:^4.3.6"
+    http-proxy: "npm:^1.18.1"
+    is-glob: "npm:^4.0.3"
+    is-plain-object: "npm:^5.0.0"
+    micromatch: "npm:^4.0.8"
+  checksum: 10c0/89ff3c8fe65b22b8042a6173ae1b8f77c5171f7eecf3c8b5d6dcffe3c9d688acae7bcf498cc08d1525f566dc0781efaec4e2ddc49224b1f16f020de7987a446b
   languageName: node
   linkType: hard
 

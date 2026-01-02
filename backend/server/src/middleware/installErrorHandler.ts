@@ -1,3 +1,4 @@
+import { logger } from "@repo/observability";
 import { ErrorRequestHandler, Express } from "express";
 import * as fs from "fs";
 import { TemplateExecutor, template } from "lodash";
@@ -41,6 +42,7 @@ function parseError(
       : 500;
 
   console.error("An unknown error occurred", error);
+  logger.error({ err: error }, "Unknown error. ErrorHandler");
   return {
     message: "An unknown error occurred",
     status: httpCode,

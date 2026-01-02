@@ -1,176 +1,196 @@
-use std::process;
-use std::sync::{Arc, Mutex};
-use std::time::Duration;
-use tauri::path::BaseDirectory;
-use tauri::Manager;
-use tauri::Position;
-use tauri_plugin_shell::process::CommandEvent;
-use tauri_plugin_shell::ShellExt;
-use tokio::time::sleep;
+use std::{
+    net::SocketAddrV4,
+    process,
+    sync::Arc,
+    time::Duration,
+};
 
-async fn wait_for_endpoint(url: &str) -> Result<(), Box<dyn std::error::Error>> {
+use tauri::{path::BaseDirectory, Manager, WebviewWindow, WindowEvent};
+use tauri_plugin_shell::{process::CommandEvent, ShellExt};
+use tokio::{time::sleep, sync::Mutex as TokioMutex};
+
+mod iroh_bridge;
+mod iroh_commands;
+mod renderer_commands;
+
+pub use iroh_commands::{
+    get_iroh_status, get_iroh_ticket, start_iroh_bridge, stop_iroh_bridge,
+    IrohBridgeState, IrohBridgeStatus,
+};
+pub use renderer_commands::open_renderer;
+
+type ChildProcess = Arc<std::sync::Mutex<Option<tauri_plugin_shell::process::CommandChild>>>;
+
+const SERVER_ORG_PAGE_URL: &str = "http://localhost:5678/o/local";
+const SERVER_HOST: &str = "http://localhost:5678";
+pub(crate) const IROH_TARGET_ADDR: &str = "127.0.0.1:5678";
+
+async fn wait_for_endpoint(url: &str) {
     let client = reqwest::Client::new();
-
     loop {
-        match client.get(url).send().await {
-            Ok(response) => {
-                if response.status().is_success() {
-                    return Ok(());
-                }
+        if let Ok(response) = client.get(url).send().await {
+            if response.status().is_success() {
+                return;
             }
-            Err(_) => {}
         }
         sleep(Duration::from_millis(500)).await;
     }
 }
 
-#[tauri::command]
-async fn open_renderer(
-    app: tauri::AppHandle,
-    url: String,
-    mindex: usize,
-) -> Result<(), tauri::Error> {
-    let renderer_window = match app.get_webview_window("renderer") {
-        Some(window) => window,
-        None => tauri::WebviewWindowBuilder::new(
-            &app,
-            "renderer",
-            tauri::WebviewUrl::External(url.parse().unwrap()),
-        )
-        .title("TheOpenPresenter Renderer")
-        .fullscreen(false)
-        .decorations(false)
-        .build()
-        .unwrap(),
-    };
-
-    if let Ok(current_url) = renderer_window.url() {
-        if current_url.to_string() != url {
-            renderer_window
-                .eval(&format!("window.location.replace('{}')", url))
-                .unwrap();
+/// Handles window close event by killing the child process and exiting
+fn handle_close_request(
+    api: &tauri::CloseRequestApi,
+    child: &ChildProcess,
+    window: &WebviewWindow,
+) {
+    if let Some(child_process) = child.lock().unwrap().take() {
+        api.prevent_close();
+        if let Err(e) = child_process.kill() {
+            eprintln!("Failed to kill child process: {}", e);
         }
+        window.close().unwrap();
+        process::exit(0);
     }
-
-    if (renderer_window.is_fullscreen().unwrap()) {
-        renderer_window.set_fullscreen(false);
-    }
-
-    let monitors = app.available_monitors()?;
-    let monitor = monitors.get(mindex).ok_or(tauri::Error::WindowNotFound)?;
-
-    let pos = monitor.position();
-
-    renderer_window.set_position(Position::Physical(tauri::PhysicalPosition {
-        x: pos.x,
-        y: pos.y,
-    }))?;
-    renderer_window.set_fullscreen(true);
-
-    renderer_window.show().unwrap();
-
-    Ok(())
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    // Initialize the iroh bridge state
+    let iroh_bridge_state: IrohBridgeState = Arc::new(TokioMutex::new(None));
+
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![open_renderer])
+        .manage(iroh_bridge_state.clone())
+        .invoke_handler(tauri::generate_handler![
+            open_renderer,
+            get_iroh_status,
+            start_iroh_bridge,
+            stop_iroh_bridge,
+            get_iroh_ticket
+        ])
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(
             tauri_plugin_log::Builder::new()
                 .rotation_strategy(tauri_plugin_log::RotationStrategy::KeepAll)
+                .level(log::LevelFilter::Info)
                 .build(),
         )
-        .setup(|app| {
+        .setup(move |app| {
             let resource_path = app
                 .path()
-                .resolve("node-server/run_server.mjs", BaseDirectory::Resource)?;
-            let sidecar_command = app.shell().sidecar("node").unwrap();
-            let (mut rx, child) = sidecar_command
+                .resolve("node-server/run_server.mjs", BaseDirectory::Home)?;
+
+            let (mut rx, child) = app
+                .shell()
+                .sidecar("node")
+                .expect("Failed to create sidecar")
                 .args([resource_path])
                 .spawn()
                 .expect("Failed to spawn sidecar");
 
-            // Wrap the child process in Arc<Mutex<>> for shared access
-            let child = Arc::new(Mutex::new(Some(child)));
+            let child: ChildProcess = Arc::new(std::sync::Mutex::new(Some(child)));
 
-            // Clone the Arc to move into the async task
-            let child_clone = Arc::clone(&child);
-            let child_clone2 = Arc::clone(&child);
+            let main_window = app.get_webview_window("main").unwrap();
+            let splash_window = app.get_webview_window("splashscreen").unwrap();
 
-            let window = app.get_webview_window("main").unwrap();
-            let window_clone = window.clone();
-
-            // Handle cleaning process when window is closed
-            window.on_window_event(move |event| {
-                if let tauri::WindowEvent::CloseRequested { api, .. } = event {
-                    let mut child_lock = child_clone.lock().unwrap();
-                    if let Some(mut child_process) = child_lock.take() {
-                        api.prevent_close();
-
-                        if let Err(e) = child_process.kill() {
-                            eprintln!("Failed to kill child process: {}", e);
-                        }
-
-                        window_clone.close().unwrap();
-
-                        process::exit(0);
-                    }
+            // Set up close handlers for both windows
+            let (child_for_main, main_window_ref) = (Arc::clone(&child), main_window.clone());
+            main_window.on_window_event(move |event| {
+                if let WindowEvent::CloseRequested { api, .. } = event {
+                    handle_close_request(api, &child_for_main, &main_window_ref);
                 }
             });
 
-            // Log stdout and stderr
+            let (child_for_splash, splash_window_ref) = (Arc::clone(&child), splash_window.clone());
+            splash_window.on_window_event(move |event| {
+                if let WindowEvent::CloseRequested { api, .. } = event {
+                    handle_close_request(api, &child_for_splash, &splash_window_ref);
+                }
+            });
+
+            // Log sidecar stdout and stderr
             tauri::async_runtime::spawn(async move {
                 while let Some(event) = rx.recv().await {
-                    if let CommandEvent::Stdout(line_bytes) = &event {
-                        let line = std::str::from_utf8(&line_bytes).unwrap();
-
-                        log::info!("{}", line);
-                    }
-                    if let CommandEvent::Stderr(line_bytes) = &event {
-                        let line = std::str::from_utf8(&line_bytes).unwrap();
-
-                        log::error!("{}", line);
-                    }
-                }
-            });
-
-            // Show splashscreen until we can reach the endpoint
-            let splash_window = app.get_webview_window("splashscreen").unwrap();
-            let splash_window_clone = splash_window.clone();
-            let splash_window_clone2 = splash_window.clone();
-            let main_window = app.get_webview_window("main").unwrap();
-
-            tauri::async_runtime::spawn(async move {
-                if wait_for_endpoint("http://localhost:5678/o/local")
-                    .await
-                    .is_ok()
-                {
-                    main_window
-                        .eval("window.location.replace('http://localhost:5678/o/local')")
-                        .unwrap();
-                    main_window.show().unwrap();
-                    splash_window_clone.destroy().unwrap();
-                }
-            });
-
-            splash_window.on_window_event(move |event| {
-                if let tauri::WindowEvent::CloseRequested { api, .. } = event {
-                    let mut child_lock = child_clone2.lock().unwrap();
-                    if let Some(mut child_process) = child_lock.take() {
-                        api.prevent_close();
-
-                        if let Err(e) = child_process.kill() {
-                            eprintln!("Failed to kill child process: {}", e);
+                    match &event {
+                        CommandEvent::Stdout(bytes) => {
+                            if let Ok(line) = std::str::from_utf8(bytes) {
+                                log::info!("{}", line);
+                            }
                         }
-
-                        splash_window_clone2.close().unwrap();
-
-                        process::exit(0);
+                        CommandEvent::Stderr(bytes) => {
+                            if let Ok(line) = std::str::from_utf8(bytes) {
+                                log::error!("{}", line);
+                            }
+                        }
+                        _ => {}
                     }
                 }
+            });
+
+            // Get data dir for iroh bridge
+            let data_dir = app.path().app_data_dir()?;
+            let bridge_state_for_startup = iroh_bridge_state.clone();
+
+            // Wait for server and transition from splash to main window
+            // Also start the iroh bridge once the server is ready
+            let splash_to_destroy = splash_window.clone();
+            tauri::async_runtime::spawn(async move {
+                wait_for_endpoint(SERVER_ORG_PAGE_URL).await;
+                
+                // Start the iroh bridge automatically
+                let target_addr: SocketAddrV4 = IROH_TARGET_ADDR.parse().expect("Invalid server address");
+                match iroh_bridge::start_bridge(target_addr, data_dir).await {
+                    Ok(bridge) => {
+                        let (ticket, node_id) = {
+                            let bridge_locked = bridge.lock().await;
+                            (
+                                bridge_locked.ticket().to_string(),
+                                bridge_locked.node_id().to_string()
+                            )
+                        };
+                        log::info!("Iroh bridge started successfully");
+                        log::info!("Connection ticket: {}", ticket);
+                        log::info!("Node ID: {}", node_id);
+                        
+                        let mut state = bridge_state_for_startup.lock().await;
+                        *state = Some(bridge);
+                        
+                        // Send POST request to /device/host/init
+                        let init_url = format!("{}/device/host/init", SERVER_HOST);
+                        let client = reqwest::Client::new();
+                        let init_body = serde_json::json!({
+                            "irohEndpointId": node_id,
+                            "irohTicket": ticket
+                        });
+                        
+                        match client.post(&init_url)
+                            .header("x-top-csrf-protection", "1")
+                            .json(&init_body)
+                            .send()
+                            .await
+                        {
+                            Ok(response) => {
+                                if response.status().is_success() {
+                                    log::info!("Successfully initialized host device with iroh connection info");
+                                } else {
+                                    log::error!("Failed to initialize host device: HTTP {}", response.status());
+                                }
+                            }
+                            Err(e) => {
+                                log::error!("Failed to send init request: {}", e);
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        log::error!("Failed to start iroh bridge: {}", e);
+                    }
+                }
+                
+                main_window
+                    .eval(&format!("window.location.replace('{}')", SERVER_ORG_PAGE_URL))
+                    .unwrap();
+                main_window.show().unwrap();
+                splash_to_destroy.destroy().unwrap();
             });
 
             Ok(())
