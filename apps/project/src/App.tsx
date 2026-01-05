@@ -9,6 +9,7 @@ import LoginPage from "./pages/login";
 import OrganizationPage from "./pages/o";
 import OrganizationSlugPage from "./pages/o/[slug]";
 import OrganizationSlugCloudPage from "./pages/o/[slug]/cloud";
+import OrganizationSlugLatestPage from "./pages/o/[slug]/latest/[type]";
 import OrganizationSlugMediaPage from "./pages/o/[slug]/media";
 import OrganizationSlugSettingsCategoriesPage from "./pages/o/[slug]/settings/categories";
 import OrganizationSlugSettingsDeletePage from "./pages/o/[slug]/settings/delete";
@@ -51,6 +52,9 @@ function App() {
         </Route>
         <Route path="/o/*?">
           <Switch>
+            <Route path="/o/:slug/latest/:type">
+              <OrganizationSlugLatestPage />
+            </Route>
             <Route path="/o/:slug/settings/*?">
               {({ slug }) => (
                 <Switch>
