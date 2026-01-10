@@ -14,7 +14,7 @@ const ImageRenderer = () => {
       style={{
         position: "absolute",
         width: "100vw",
-        height: "100vh",
+        height: "100dvh",
         opacity: imgIndex === i ? 1 : 0,
       }}
     >
