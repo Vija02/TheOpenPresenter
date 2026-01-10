@@ -64,7 +64,7 @@ export const ImageRenderer = () => {
           style={{
             position: "absolute",
             width: "100vw",
-            height: "100vh",
+            height: "100dvh",
             opacity: activeIndex === i ? 1 : 0,
           }}
         >
