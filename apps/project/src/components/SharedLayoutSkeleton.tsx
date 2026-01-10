@@ -7,7 +7,7 @@ import { Link as WouterLink } from "wouter";
 import { Footer } from "./Footer";
 import { StandardWidth } from "./StandardWidth";
 
-export const contentMinHeight = "calc(100vh - 80px)";
+export const contentMinHeight = "calc(100dvh - 80px)";
 
 export interface SharedLayoutSkeletonProps {
   title?: string;

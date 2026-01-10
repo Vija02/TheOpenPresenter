@@ -53,7 +53,7 @@ const Inner = () => {
 
   return (
     <div
-      style={{ width: "100vw", height: "100vh" }}
+      style={{ width: "100vw", height: "100dvh" }}
       tabIndex={0}
       onKeyDown={handleKeyPress}
     >
