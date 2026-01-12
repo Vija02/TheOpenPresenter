@@ -1,0 +1,400 @@
+name: Staging Environment
+
+on:
+  # Trigger when Docker build completes for PRs
+  workflow_run:
+    workflows: ["Build Server Docker Image"]
+    types:
+      - completed
+  # Also trigger on PR close to cleanup
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to deploy (for manual trigger)'
+        required: true
+        type: string
+  schedule:
+    # Run daily at midnight UTC to clean up expired environments
+    - cron: '0 0 * * *'
+
+concurrency:
+  group: staging-${{ github.event.pull_request.number || github.event.inputs.pr_number || github.event.workflow_run.pull_requests[0].number || 'cleanup' }}
+  cancel-in-progress: false
+
+env:
+  SPRITES_API_URL: https://api.sprites.dev/v1
+  SPRITE_NAME_PREFIX: theopenpresenter-staging-pr
+
+jobs:
+  # Deploy staging environment when Docker build completes successfully for a PR
+  deploy:
+    if: >
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'pull_request') ||
+      github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+      pull-requests: write
+
+    outputs:
+      sprite_url: ${{ steps.create-sprite.outputs.sprite_url }}
+      sprite_name: ${{ steps.vars.outputs.sprite_name }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get PR number from workflow_run
+        id: get-pr
+        if: github.event_name == 'workflow_run'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Get PR number from the workflow run
+            const workflowRun = context.payload.workflow_run;
+            
+            // Try to get PR from pull_requests array first
+            if (workflowRun.pull_requests && workflowRun.pull_requests.length > 0) {
+              const prNumber = workflowRun.pull_requests[0].number;
+              core.setOutput('pr_number', prNumber);
+              console.log(`Found PR number from pull_requests: ${prNumber}`);
+              return;
+            }
+            
+            // Fallback: search for PR by head SHA
+            const { data: prs } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              head: `${context.repo.owner}:${workflowRun.head_branch}`
+            });
+            
+            if (prs.length > 0) {
+              const prNumber = prs[0].number;
+              core.setOutput('pr_number', prNumber);
+              console.log(`Found PR number from branch search: ${prNumber}`);
+            } else {
+              core.setFailed('Could not find PR number for this workflow run');
+            }
+
+      - name: Set variables
+        id: vars
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            PR_NUMBER="${{ github.event.inputs.pr_number }}"
+          elif [ "${{ github.event_name }}" == "workflow_run" ]; then
+            PR_NUMBER="${{ steps.get-pr.outputs.pr_number }}"
+          else
+            PR_NUMBER="${{ github.event.pull_request.number }}"
+          fi
+          
+          if [ -z "$PR_NUMBER" ]; then
+            echo "Error: Could not determine PR number"
+            exit 1
+          fi
+          
+          SPRITE_NAME="${{ env.SPRITE_NAME_PREFIX }}-${PR_NUMBER}"
+          echo "pr_number=${PR_NUMBER}" >> $GITHUB_OUTPUT
+          echo "sprite_name=${SPRITE_NAME}" >> $GITHUB_OUTPUT
+          echo "image_tag=pr-${PR_NUMBER}" >> $GITHUB_OUTPUT
+          echo "PR Number: ${PR_NUMBER}"
+          echo "Sprite Name: ${SPRITE_NAME}"
+          echo "Image Tag: pr-${PR_NUMBER}"
+
+      - name: Verify Docker image is available
+        run: |
+          echo "Verifying Docker image ghcr.io/vija02/theopenpresenter_server:${{ steps.vars.outputs.image_tag }} is available..."
+          # Since we're triggered by workflow_run completion, the image should be ready
+          # But let's verify it exists
+          for i in {1..5}; do
+            if docker manifest inspect ghcr.io/vija02/theopenpresenter_server:${{ steps.vars.outputs.image_tag }} > /dev/null 2>&1; then
+              echo "Image is available!"
+              exit 0
+            fi
+            echo "Attempt $i/5: Image not yet available, waiting 10 seconds..."
+            sleep 10
+          done
+          echo "Image not available, failing..."
+          exit 1
+        env:
+          DOCKER_CLI_EXPERIMENTAL: enabled
+
+      - name: Destroy existing sprite (if any)
+        continue-on-error: true
+        run: |
+          echo "Attempting to destroy existing sprite: ${{ steps.vars.outputs.sprite_name }}"
+          curl -s -X DELETE \
+            "${{ env.SPRITES_API_URL }}/sprites/${{ steps.vars.outputs.sprite_name }}" \
+            -H "Authorization: Bearer ${{ secrets.SPRITES_TOKEN }}" \
+            || echo "No existing sprite to destroy or destroy failed (this is OK)"
+
+      - name: Wait for sprite cleanup
+        run: sleep 10
+
+      - name: Create new sprite
+        id: create-sprite
+        run: |
+          echo "Creating sprite: ${{ steps.vars.outputs.sprite_name }}"
+          RESPONSE=$(curl -s -X POST \
+            "${{ env.SPRITES_API_URL }}/sprites" \
+            -H "Authorization: Bearer ${{ secrets.SPRITES_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "name": "${{ steps.vars.outputs.sprite_name }}",
+              "wait_for_capacity": true,
+              "url_settings": {
+                "auth": "public"
+              }
+            }')
+          
+          echo "Response: $RESPONSE"
+          
+          SPRITE_URL=$(echo "$RESPONSE" | jq -r '.url')
+          SPRITE_ID=$(echo "$RESPONSE" | jq -r '.id')
+          
+          if [ "$SPRITE_URL" == "null" ] || [ -z "$SPRITE_URL" ]; then
+            echo "Failed to create sprite"
+            exit 1
+          fi
+          
+          echo "sprite_url=${SPRITE_URL}" >> $GITHUB_OUTPUT
+          echo "sprite_id=${SPRITE_ID}" >> $GITHUB_OUTPUT
+          echo "Sprite created with URL: ${SPRITE_URL}"
+
+      - name: Upload and execute setup script on sprite
+        run: |
+          SPRITE_NAME="${{ steps.vars.outputs.sprite_name }}"
+          SPRITE_URL="${{ steps.create-sprite.outputs.sprite_url }}"
+          IMAGE_TAG="${{ steps.vars.outputs.image_tag }}"
+          TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          
+          echo "=== Uploading setup script to sprite ==="
+          
+          # Read the setup script and base64 encode it
+          SCRIPT_CONTENT=$(base64 -w 0 .github/scripts/staging-setup.sh)
+          
+          # Upload the script to the sprite by decoding it there
+          echo "Uploading script..."
+          curl -s -X POST \
+            "${{ env.SPRITES_API_URL }}/sprites/${SPRITE_NAME}/exec?cmd=bash&cmd=-c&cmd=echo%20${SCRIPT_CONTENT}%20%7C%20base64%20-d%20%3E%20/tmp/staging-setup.sh%20%26%26%20chmod%20%2Bx%20/tmp/staging-setup.sh" \
+            -H "Authorization: Bearer ${{ secrets.SPRITES_TOKEN }}" \
+            --max-time 60
+          
+          echo "=== Executing setup script on sprite ==="
+          
+          # Execute the setup script with arguments
+          # URL encode the command
+          SETUP_CMD="/tmp/staging-setup.sh '${IMAGE_TAG}' '${SPRITE_URL}' '${TIMESTAMP}'"
+          ENCODED_CMD=$(python3 -c "import urllib.parse; print(urllib.parse.quote('''${SETUP_CMD}'''))")
+          
+          curl -s -X POST \
+            "${{ env.SPRITES_API_URL }}/sprites/${SPRITE_NAME}/exec?cmd=bash&cmd=-c&cmd=${ENCODED_CMD}" \
+            -H "Authorization: Bearer ${{ secrets.SPRITES_TOKEN }}" \
+            --max-time 900
+          
+          echo ""
+          echo "=== Setup script execution completed ==="
+
+      - name: Verify deployment
+        run: |
+          SPRITE_URL="${{ steps.create-sprite.outputs.sprite_url }}"
+          echo "Verifying deployment at ${SPRITE_URL}..."
+          
+          # Wait for the application to be ready
+          for i in {1..20}; do
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "${SPRITE_URL}" || echo "000")
+            if [ "$HTTP_CODE" == "200" ] || [ "$HTTP_CODE" == "302" ] || [ "$HTTP_CODE" == "301" ]; then
+              echo "Application is responding with HTTP ${HTTP_CODE}!"
+              exit 0
+            fi
+            echo "Attempt $i/20: HTTP ${HTTP_CODE}, waiting 15 seconds..."
+            sleep 15
+          done
+          
+          echo "Warning: Application may not be fully ready yet, but deployment completed"
+
+      - name: Comment on PR with staging URL
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const spriteUrl = '${{ steps.create-sprite.outputs.sprite_url }}';
+            const prNumber = ${{ steps.vars.outputs.pr_number }};
+            
+            // Find and delete previous staging environment comments
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber
+            });
+            
+            for (const comment of comments.data) {
+              if (comment.body.includes('🚀 Staging Environment Deployed')) {
+                await github.rest.issues.deleteComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: comment.id
+                });
+              }
+            }
+            
+            // Get the commit SHA - for workflow_run it's in the workflow_run object
+            const commitSha = context.payload.workflow_run?.head_sha || context.sha;
+            
+            // Add new comment
+            const body = [
+              '## 🚀 Staging Environment Deployed',
+              '',
+              'Your staging environment is ready!',
+              '',
+              `**URL:** ${spriteUrl}`,
+              '',
+              '**Note:** This environment will be automatically destroyed:',
+              '- When this PR is closed or merged',
+              '- After 7 days of inactivity',
+              '- When new commits are pushed (a new environment will be created)',
+              '',
+              'To manually recreate the environment, re-run the "Staging Environment" workflow.',
+              '',
+              '---',
+              `*Deployed at: ${new Date().toISOString()}*`,
+              `*Commit: ${commitSha}*`
+            ].join('\n');
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body: body
+            });
+
+  # Cleanup when PR is closed or merged
+  cleanup:
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set variables
+        id: vars
+        run: |
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          SPRITE_NAME="${{ env.SPRITE_NAME_PREFIX }}-${PR_NUMBER}"
+          echo "sprite_name=${SPRITE_NAME}" >> $GITHUB_OUTPUT
+
+      - name: Destroy sprite
+        run: |
+          echo "Destroying sprite: ${{ steps.vars.outputs.sprite_name }}"
+          curl -s -X DELETE \
+            "${{ env.SPRITES_API_URL }}/sprites/${{ steps.vars.outputs.sprite_name }}" \
+            -H "Authorization: Bearer ${{ secrets.SPRITES_TOKEN }}" \
+            || echo "Sprite may already be destroyed"
+
+      - name: Comment on PR about cleanup
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = ${{ github.event.pull_request.number }};
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body: `## 🧹 Staging Environment Destroyed
+              
+              The staging environment for this PR has been cleaned up.
+              
+              ---
+              *Cleaned up at: ${new Date().toISOString()}*`
+            });
+
+  # Scheduled cleanup for expired environments (7 days)
+  scheduled-cleanup:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: List and cleanup expired sprites
+        uses: actions/github-script@v7
+        env:
+          SPRITES_TOKEN: ${{ secrets.SPRITES_TOKEN }}
+          SPRITES_API_URL: ${{ env.SPRITES_API_URL }}
+          SPRITE_NAME_PREFIX: ${{ env.SPRITE_NAME_PREFIX }}
+        with:
+          script: |
+            const https = require('https');
+            const { execSync } = require('child_process');
+            
+            const EXPIRATION_DAYS = 7;
+            const now = new Date();
+            const expirationThreshold = new Date(now.getTime() - EXPIRATION_DAYS * 24 * 60 * 60 * 1000);
+            
+            console.log(`Checking for sprites older than ${EXPIRATION_DAYS} days (before ${expirationThreshold.toISOString()})`);
+            
+            // Get list of open PRs
+            const { data: openPRs } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open'
+            });
+            
+            const openPRNumbers = new Set(openPRs.map(pr => pr.number));
+            console.log(`Open PRs: ${Array.from(openPRNumbers).join(', ')}`);
+            
+            // For each open PR, check if its staging environment should be cleaned up
+            for (const prNumber of openPRNumbers) {
+              const spriteName = `${process.env.SPRITE_NAME_PREFIX}-${prNumber}`;
+              
+              try {
+                // Try to get the deployment timestamp from the sprite
+                const timestampResult = execSync(
+                  `curl -s -X POST "${process.env.SPRITES_API_URL}/sprites/${spriteName}/exec?cmd=cat&cmd=/tmp/deployment_timestamp" -H "Authorization: Bearer ${process.env.SPRITES_TOKEN}"`,
+                  { encoding: 'utf-8', timeout: 30000 }
+                ).trim();
+                
+                if (timestampResult) {
+                  const deploymentDate = new Date(timestampResult);
+                  
+                  if (deploymentDate < expirationThreshold) {
+                    console.log(`Sprite ${spriteName} is expired (deployed at ${deploymentDate.toISOString()}). Destroying...`);
+                    
+                    // Destroy the sprite
+                    execSync(
+                      `curl -s -X DELETE "${process.env.SPRITES_API_URL}/sprites/${spriteName}" -H "Authorization: Bearer ${process.env.SPRITES_TOKEN}"`,
+                      { encoding: 'utf-8', timeout: 30000 }
+                    );
+                    
+                    // Comment on the PR
+                    await github.rest.issues.createComment({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      issue_number: prNumber,
+                      body: `## ⏰ Staging Environment Expired
+                      
+                      The staging environment for this PR has been automatically destroyed after ${EXPIRATION_DAYS} days.
+                      
+                      To recreate it, re-run the "Staging Environment" workflow or push a new commit.
+                      
+                      ---
+                      *Expired at: ${new Date().toISOString()}*`
+                    });
+                    
+                    console.log(`Sprite ${spriteName} destroyed and PR commented.`);
+                  } else {
+                    console.log(`Sprite ${spriteName} is still valid (deployed at ${deploymentDate.toISOString()}).`);
+                  }
+                }
+              } catch (error) {
+                console.log(`Could not check sprite ${spriteName}: ${error.message}`);
+              }
+            }
+            
+            console.log('Scheduled cleanup completed.');
