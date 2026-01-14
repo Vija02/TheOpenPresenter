@@ -113,23 +113,30 @@ runs:
         echo "Script URL: ${SCRIPT_URL}"
         
         # Download the script directly on the sprite
-        curl -s -X POST \
+        echo "Executing download command on sprite..."
+        DOWNLOAD_RESPONSE=$(curl -s -X POST \
           "${{ inputs.sprites_api_url }}/sprites/${SPRITE_NAME}/exec" \
           -H "Authorization: Bearer ${{ inputs.sprites_token }}" \
           -H "Content-Type: application/json" \
-          -d "{\"cmd\": [\"bash\", \"-c\", \"curl -fsSL '${SCRIPT_URL}' -o /tmp/staging-setup.sh && chmod +x /tmp/staging-setup.sh\"]}" \
-          --max-time 60
+          -d "{\"cmd\": [\"bash\", \"-c\", \"curl -fsSL '${SCRIPT_URL}' -o /tmp/staging-setup.sh && chmod +x /tmp/staging-setup.sh && echo 'Download successful' && ls -la /tmp/staging-setup.sh\"]}" \
+          --max-time 60)
+        
+        echo "Download response:"
+        echo "$DOWNLOAD_RESPONSE"
+        echo ""
         
         echo "=== Executing setup script on sprite ==="
         
         # Execute the setup script with arguments
-        curl -s -X POST \
+        EXEC_RESPONSE=$(curl -s -X POST \
           "${{ inputs.sprites_api_url }}/sprites/${SPRITE_NAME}/exec" \
           -H "Authorization: Bearer ${{ inputs.sprites_token }}" \
           -H "Content-Type: application/json" \
           -d "{\"cmd\": [\"/tmp/staging-setup.sh\", \"${IMAGE_TAG}\", \"${SPRITE_URL}\", \"${TIMESTAMP}\"]}" \
-          --max-time 900
+          --max-time 900)
         
+        echo "Execution response:"
+        echo "$EXEC_RESPONSE"
         echo ""
         echo "=== Setup script execution completed ==="
 
