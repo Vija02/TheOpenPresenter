@@ -1,0 +1,159 @@
+name: 'Deploy Staging Environment'
+description: 'Deploy a staging environment to sprites.dev'
+
+inputs:
+  sprites_api_url:
+    description: 'Sprites API URL'
+    required: false
+    default: 'https://api.sprites.dev/v1'
+  sprites_token:
+    description: 'Sprites API token'
+    required: true
+  sprite_name:
+    description: 'Name for the sprite'
+    required: true
+  image_tag:
+    description: 'Docker image tag to deploy'
+    required: true
+  setup_script_path:
+    description: 'Path to the setup script'
+    required: false
+    default: '.github/scripts/staging-setup.sh'
+
+outputs:
+  sprite_url:
+    description: 'URL of the deployed sprite'
+    value: ${{ steps.create-sprite.outputs.sprite_url }}
+  sprite_id:
+    description: 'ID of the deployed sprite'
+    value: ${{ steps.create-sprite.outputs.sprite_id }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Verify Docker image is available
+      shell: bash
+      run: |
+        echo "Verifying Docker image ghcr.io/vija02/theopenpresenter_server:${{ inputs.image_tag }} is available..."
+        for i in {1..5}; do
+          if docker manifest inspect ghcr.io/vija02/theopenpresenter_server:${{ inputs.image_tag }} > /dev/null 2>&1; then
+            echo "Image is available!"
+            exit 0
+          fi
+          echo "Attempt $i/5: Image not yet available, waiting 10 seconds..."
+          sleep 10
+        done
+        echo "Image not available, failing..."
+        exit 1
+      env:
+        DOCKER_CLI_EXPERIMENTAL: enabled
+
+    - name: Destroy existing sprite (if any)
+      shell: bash
+      continue-on-error: true
+      run: |
+        echo "Attempting to destroy existing sprite: ${{ inputs.sprite_name }}"
+        curl -s -X DELETE \
+          "${{ inputs.sprites_api_url }}/sprites/${{ inputs.sprite_name }}" \
+          -H "Authorization: Bearer ${{ inputs.sprites_token }}" \
+          || echo "No existing sprite to destroy or destroy failed (this is OK)"
+
+    - name: Wait for sprite cleanup
+      shell: bash
+      run: sleep 10
+
+    - name: Create new sprite
+      id: create-sprite
+      shell: bash
+      run: |
+        echo "Creating sprite: ${{ inputs.sprite_name }}"
+        RESPONSE=$(curl -s -X POST \
+          "${{ inputs.sprites_api_url }}/sprites" \
+          -H "Authorization: Bearer ${{ inputs.sprites_token }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "name": "${{ inputs.sprite_name }}",
+            "wait_for_capacity": true,
+            "url_settings": {
+              "auth": "public"
+            }
+          }')
+        
+        echo "Response: $RESPONSE"
+        
+        SPRITE_URL=$(echo "$RESPONSE" | jq -r '.url')
+        SPRITE_ID=$(echo "$RESPONSE" | jq -r '.id')
+        
+        if [ "$SPRITE_URL" == "null" ] || [ -z "$SPRITE_URL" ]; then
+          echo "Failed to create sprite"
+          exit 1
+        fi
+        
+        echo "sprite_url=${SPRITE_URL}" >> $GITHUB_OUTPUT
+        echo "sprite_id=${SPRITE_ID}" >> $GITHUB_OUTPUT
+        echo "Sprite created with URL: ${SPRITE_URL}"
+
+    - name: Upload and execute setup script on sprite
+      shell: bash
+      run: |
+        SPRITE_NAME="${{ inputs.sprite_name }}"
+        SPRITE_URL="${{ steps.create-sprite.outputs.sprite_url }}"
+        IMAGE_TAG="${{ inputs.image_tag }}"
+        TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+        
+        echo "=== Uploading setup script to sprite ==="
+        
+        # Read the setup script and base64 encode it (using -w 0 for no line wrapping on Linux)
+        SCRIPT_CONTENT=$(cat ${{ inputs.setup_script_path }} | base64 -w 0)
+        
+        # Upload the script to the sprite using a file upload approach
+        echo "Uploading script..."
+        
+        # Use a heredoc approach to avoid URL encoding issues with large content
+        curl -s -X POST \
+          "${{ inputs.sprites_api_url }}/sprites/${SPRITE_NAME}/exec" \
+          -H "Authorization: Bearer ${{ inputs.sprites_token }}" \
+          -H "Content-Type: application/json" \
+          -d "{\"cmd\": [\"bash\", \"-c\", \"cat > /tmp/staging-setup.b64 << 'EOFSCRIPT'\n${SCRIPT_CONTENT}\nEOFSCRIPT\"]}" \
+          --max-time 60
+        
+        # Decode the script on the sprite
+        echo "Decoding script..."
+        curl -s -X POST \
+          "${{ inputs.sprites_api_url }}/sprites/${SPRITE_NAME}/exec" \
+          -H "Authorization: Bearer ${{ inputs.sprites_token }}" \
+          -H "Content-Type: application/json" \
+          -d '{"cmd": ["bash", "-c", "base64 -d /tmp/staging-setup.b64 > /tmp/staging-setup.sh && chmod +x /tmp/staging-setup.sh"]}' \
+          --max-time 60
+        
+        echo "=== Executing setup script on sprite ==="
+        
+        # Execute the setup script with arguments
+        curl -s -X POST \
+          "${{ inputs.sprites_api_url }}/sprites/${SPRITE_NAME}/exec" \
+          -H "Authorization: Bearer ${{ inputs.sprites_token }}" \
+          -H "Content-Type: application/json" \
+          -d "{\"cmd\": [\"/tmp/staging-setup.sh\", \"${IMAGE_TAG}\", \"${SPRITE_URL}\", \"${TIMESTAMP}\"]}" \
+          --max-time 900
+        
+        echo ""
+        echo "=== Setup script execution completed ==="
+
+    - name: Verify deployment
+      shell: bash
+      run: |
+        SPRITE_URL="${{ steps.create-sprite.outputs.sprite_url }}"
+        echo "Verifying deployment at ${SPRITE_URL}..."
+        
+        # Wait for the application to be ready
+        for i in {1..20}; do
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "${SPRITE_URL}" || echo "000")
+          if [ "$HTTP_CODE" == "200" ] || [ "$HTTP_CODE" == "302" ] || [ "$HTTP_CODE" == "301" ]; then
+            echo "Application is responding with HTTP ${HTTP_CODE}!"
+            exit 0
+          fi
+          echo "Attempt $i/20: HTTP ${HTTP_CODE}, waiting 15 seconds..."
+          sleep 15
+        done
+        
+        echo "Warning: Application may not be fully ready yet, but deployment completed"

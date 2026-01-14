@@ -1,0 +1,26 @@
+name: 'Cleanup Staging Environment'
+description: 'Destroy a staging environment on sprites.dev'
+
+inputs:
+  sprites_api_url:
+    description: 'Sprites API URL'
+    required: false
+    default: 'https://api.sprites.dev/v1'
+  sprites_token:
+    description: 'Sprites API token'
+    required: true
+  sprite_name:
+    description: 'Name of the sprite to destroy'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Destroy sprite
+      shell: bash
+      run: |
+        echo "Destroying sprite: ${{ inputs.sprite_name }}"
+        curl -s -X DELETE \
+          "${{ inputs.sprites_api_url }}/sprites/${{ inputs.sprite_name }}" \
+          -H "Authorization: Bearer ${{ inputs.sprites_token }}" \
+          || echo "Sprite may already be destroyed"
