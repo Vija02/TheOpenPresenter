@@ -3,7 +3,7 @@ name: Staging Environment
 on:
   # Trigger when Docker build completes for PRs
   workflow_run:
-    workflows: ["Build Server Docker Image"]
+    workflows: [Build Server Docker Image]
     types:
       - completed
   # Also trigger on PR close to cleanup
