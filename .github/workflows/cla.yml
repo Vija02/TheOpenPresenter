@@ -26,4 +26,5 @@ jobs:
           path-to-document: 'https://github.com/Vija02/TheOpenPresenter/blob/main/public/CLA.md'
           # branch should not be protected
           branch: 'main'
+          allowlist: roomote
 
