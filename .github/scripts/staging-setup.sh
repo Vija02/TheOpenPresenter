@@ -21,16 +21,18 @@ echo "Deployment Timestamp: ${DEPLOYMENT_TIMESTAMP}"
 # Install Docker if not present
 if ! command -v docker &> /dev/null; then
     echo "Installing Docker..."
-    curl -fsSL https://get.docker.com | sh
+    sudo apt-get update
+    sudo apt-get install -y docker.io
 fi
 
-# Start Docker service
-echo "Starting Docker service..."
-sudo systemctl start docker 2>/dev/null || sudo service docker start 2>/dev/null || true
+# Start Docker as a Sprite service (Sprite environments don't use systemd)
+echo "Starting Docker as Sprite service..."
+sprite-env services create docker --cmd /usr/bin/sudo --args /usr/bin/dockerd 2>/dev/null || true
 
 # Wait for Docker to be ready
+echo "Waiting for Docker to start..."
 for i in {1..10}; do
-    if docker info &>/dev/null; then
+    if sudo docker info &>/dev/null; then
         echo "Docker is ready!"
         break
     fi
@@ -40,33 +42,33 @@ done
 
 # Create docker network
 echo "Creating docker network..."
-docker network create staging-network 2>/dev/null || true
+sudo docker network create staging-network 2>/dev/null || true
 
 # Pull images
 echo "Pulling images..."
-docker pull ghcr.io/vija02/theopenpresenter_server:${IMAGE_TAG}
-docker pull ghcr.io/vija02/theopenpresenter_db:main
-docker pull redis:7.4-alpine
-docker pull grafana/alloy:v1.5.1
-docker pull philiplehmann/unoserver:3.0.1-1816
+sudo docker pull ghcr.io/vija02/theopenpresenter_server:${IMAGE_TAG}
+sudo docker pull ghcr.io/vija02/theopenpresenter_db:main
+sudo docker pull redis:7.4-alpine
+sudo docker pull grafana/alloy:v1.5.1
+sudo docker pull philiplehmann/unoserver:3.0.1-1816
 
 # Stop and remove existing containers
 echo "Cleaning up existing containers..."
-docker stop theopenpresenter_server theopenpresenter_worker theopenpresenter_db theopenpresenter_redis theopenpresenter_alloy theopenpresenter_unoserver 2>/dev/null || true
-docker rm theopenpresenter_server theopenpresenter_worker theopenpresenter_db theopenpresenter_redis theopenpresenter_alloy theopenpresenter_unoserver 2>/dev/null || true
+sudo docker stop theopenpresenter_server theopenpresenter_worker theopenpresenter_db theopenpresenter_redis theopenpresenter_alloy theopenpresenter_unoserver 2>/dev/null || true
+sudo docker rm theopenpresenter_server theopenpresenter_worker theopenpresenter_db theopenpresenter_redis theopenpresenter_alloy theopenpresenter_unoserver 2>/dev/null || true
 
 # Remove old volumes to ensure clean state
 echo "Cleaning up old volumes..."
-docker volume rm theopenpresenter-pg-volume theopenpresenter-redis-volume 2>/dev/null || true
+sudo docker volume rm theopenpresenter-pg-volume theopenpresenter-redis-volume 2>/dev/null || true
 
 # Create volumes
 echo "Creating volumes..."
-docker volume create theopenpresenter-pg-volume
-docker volume create theopenpresenter-redis-volume
+sudo docker volume create theopenpresenter-pg-volume
+sudo docker volume create theopenpresenter-redis-volume
 
 # Start PostgreSQL
 echo "Starting PostgreSQL..."
-docker run -d \
+sudo docker run -d \
     --name theopenpresenter_db \
     --network staging-network \
     -e POSTGRES_PASSWORD=stagingpassword \
@@ -78,7 +80,7 @@ docker run -d \
 echo "Waiting for PostgreSQL..."
 sleep 10
 for i in {1..30}; do
-    if docker exec theopenpresenter_db pg_isready -U postgres; then
+    if sudo docker exec theopenpresenter_db pg_isready -U postgres; then
         echo "PostgreSQL is ready!"
         break
     fi
@@ -88,7 +90,7 @@ done
 
 # Start Redis
 echo "Starting Redis..."
-docker run -d \
+sudo docker run -d \
     --name theopenpresenter_redis \
     --network staging-network \
     -v theopenpresenter-redis-volume:/data \
@@ -97,7 +99,7 @@ docker run -d \
 
 # Start Unoserver
 echo "Starting Unoserver..."
-docker run -d \
+sudo docker run -d \
     --name theopenpresenter_unoserver \
     --network staging-network \
     philiplehmann/unoserver:3.0.1-1816
@@ -111,7 +113,7 @@ logging {
 }
 ALLOY_CONFIG
 
-docker run -d \
+sudo docker run -d \
     --name theopenpresenter_alloy \
     --network staging-network \
     -v /tmp/alloy:/etc/alloy \
@@ -123,7 +125,7 @@ docker run -d \
 
 # Start the main server
 echo "Starting TheOpenPresenter server..."
-docker run -d \
+sudo docker run -d \
     --name theopenpresenter_server \
     --network staging-network \
     -p 5678:5678 \
@@ -151,7 +153,7 @@ docker run -d \
 
 # Start the worker
 echo "Starting TheOpenPresenter worker..."
-docker run -d \
+sudo docker run -d \
     --name theopenpresenter_worker \
     --network staging-network \
     -e NODE_ENV=production \
@@ -177,16 +179,20 @@ docker run -d \
 # Store deployment timestamp for expiration tracking
 echo "${DEPLOYMENT_TIMESTAMP}" > /tmp/deployment_timestamp
 
+# Create a checkpoint to preserve the Docker setup across reboots
+echo "Creating checkpoint..."
+sprite-env checkpoints create 2>/dev/null || true
+
 echo "=== Setup complete ==="
 echo "Waiting for services to start..."
 sleep 15
 
 # Check if server is running
 echo "=== Container status ==="
-docker ps
+sudo docker ps
 
 echo "=== Server logs ==="
-docker logs theopenpresenter_server --tail 50 2>&1 || true
+sudo docker logs theopenpresenter_server --tail 50 2>&1 || true
 
 echo "=== Staging environment is ready ==="
 echo "URL: ${SPRITE_URL}"
