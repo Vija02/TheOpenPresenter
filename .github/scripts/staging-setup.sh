@@ -22,7 +22,7 @@ echo "Deployment Timestamp: ${DEPLOYMENT_TIMESTAMP}"
 if ! command -v docker &> /dev/null; then
     echo "Installing Docker..."
     sudo apt-get update
-    sudo apt-get install -y docker.io
+    sudo apt-get install -y docker.io jq
 fi
 
 # Start Docker as a Sprite service (Sprite environments don't use systemd)
