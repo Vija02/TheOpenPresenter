@@ -108,6 +108,7 @@ jobs:
           sprites_token: ${{ secrets.SPRITES_TOKEN }}
           sprite_name: ${{ steps.vars.outputs.sprite_name }}
           image_tag: ${{ steps.vars.outputs.image_tag }}
+          github_ref: ${{ github.head_ref || github.ref_name }}
 
       - name: Comment on PR with staging URL
         uses: actions/github-script@v7

@@ -15,8 +15,11 @@ inputs:
   image_tag:
     description: 'Docker image tag to deploy'
     required: true
+  github_ref:
+    description: 'GitHub ref (branch) to download the setup script from'
+    required: true
   setup_script_path:
-    description: 'Path to the setup script'
+    description: 'Path to the setup script in the repository'
     required: false
     default: '.github/scripts/staging-setup.sh'
 
@@ -93,37 +96,28 @@ runs:
         echo "sprite_id=${SPRITE_ID}" >> $GITHUB_OUTPUT
         echo "Sprite created with URL: ${SPRITE_URL}"
 
-    - name: Upload and execute setup script on sprite
+    - name: Download and execute setup script on sprite
       shell: bash
       run: |
         SPRITE_NAME="${{ inputs.sprite_name }}"
         SPRITE_URL="${{ steps.create-sprite.outputs.sprite_url }}"
         IMAGE_TAG="${{ inputs.image_tag }}"
         TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+        GITHUB_REF="${{ inputs.github_ref }}"
+        SCRIPT_PATH="${{ inputs.setup_script_path }}"
         
-        echo "=== Uploading setup script to sprite ==="
+        # Construct the raw GitHub URL for the setup script
+        SCRIPT_URL="https://raw.githubusercontent.com/vija02/TheOpenPresenter/${GITHUB_REF}/${SCRIPT_PATH}"
         
-        # Read the setup script and base64 encode it (using -w 0 for no line wrapping on Linux)
-        SCRIPT_CONTENT=$(cat ${{ inputs.setup_script_path }} | base64 -w 0)
+        echo "=== Downloading setup script from GitHub ==="
+        echo "Script URL: ${SCRIPT_URL}"
         
-        # Upload the script to the sprite using a file upload approach
-        echo "Uploading script..."
-        
-        # Use a heredoc approach to avoid URL encoding issues with large content
+        # Download the script directly on the sprite
         curl -s -X POST \
           "${{ inputs.sprites_api_url }}/sprites/${SPRITE_NAME}/exec" \
           -H "Authorization: Bearer ${{ inputs.sprites_token }}" \
           -H "Content-Type: application/json" \
-          -d "{\"cmd\": [\"bash\", \"-c\", \"cat > /tmp/staging-setup.b64 << 'EOFSCRIPT'\n${SCRIPT_CONTENT}\nEOFSCRIPT\"]}" \
-          --max-time 60
-        
-        # Decode the script on the sprite
-        echo "Decoding script..."
-        curl -s -X POST \
-          "${{ inputs.sprites_api_url }}/sprites/${SPRITE_NAME}/exec" \
-          -H "Authorization: Bearer ${{ inputs.sprites_token }}" \
-          -H "Content-Type: application/json" \
-          -d '{"cmd": ["bash", "-c", "base64 -d /tmp/staging-setup.b64 > /tmp/staging-setup.sh && chmod +x /tmp/staging-setup.sh"]}' \
+          -d "{\"cmd\": [\"bash\", \"-c\", \"curl -fsSL '${SCRIPT_URL}' -o /tmp/staging-setup.sh && chmod +x /tmp/staging-setup.sh\"]}" \
           --max-time 60
         
         echo "=== Executing setup script on sprite ==="
