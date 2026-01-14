@@ -283,7 +283,7 @@ const PluginRenderer = React.memo(
         key={pluginId}
         style={{
           width: "100vw",
-          height: "100vh",
+          height: "100dvh",
           userSelect: "none",
           pointerEvents: "none",
         }}
