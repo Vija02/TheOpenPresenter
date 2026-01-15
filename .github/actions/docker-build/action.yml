@@ -1,0 +1,71 @@
+name: 'Build Docker Image'
+description: 'Build and push Docker image to GitHub Container Registry'
+
+inputs:
+  registry:
+    description: 'Container registry'
+    required: false
+    default: 'ghcr.io'
+  image_name:
+    description: 'Docker image name'
+    required: true
+  github_token:
+    description: 'GitHub token for registry authentication'
+    required: true
+  dockerfile:
+    description: 'Path to Dockerfile'
+    required: false
+    default: 'production.Dockerfile'
+  build_args:
+    description: 'Build arguments'
+    required: false
+    default: ''
+  cache_registry:
+    description: 'Registry path for build cache'
+    required: false
+    default: ''
+  push_cache:
+    description: 'Whether to push cache (only on main branch)'
+    required: false
+    default: 'false'
+
+outputs:
+  image_tag:
+    description: 'The image tag that was built'
+    value: ${{ steps.meta.outputs.version }}
+  image_tags:
+    description: 'All image tags'
+    value: ${{ steps.meta.outputs.tags }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log into registry ${{ inputs.registry }}
+      uses: docker/login-action@28218f9b04b4f3f62068d7b6ce6ca5b26e35336c
+      with:
+        registry: ${{ inputs.registry }}
+        username: ${{ github.repository_owner }}
+        password: ${{ inputs.github_token }}
+
+    - name: Extract Docker metadata
+      id: meta
+      uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
+      with:
+        images: ${{ inputs.registry }}/${{ github.repository_owner }}/${{ inputs.image_name }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v3.1.1
+      with:
+        file: ${{ inputs.dockerfile }}
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: ${{ inputs.cache_registry != '' && format('type=registry,ref={0}', inputs.cache_registry) || '' }}
+        cache-to: ${{ inputs.push_cache == 'true' && inputs.cache_registry != '' && format('type=registry,ref={0},mode=max,image-manifest=true', inputs.cache_registry) || '' }}
+        build-args: ${{ inputs.build_args }}
