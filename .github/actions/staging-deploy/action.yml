@@ -1,39 +1,67 @@
 name: 'Deploy Staging Environment'
-description: 'Deploy a staging environment to sprites.dev'
+description: 'Deploy a staging environment using uncloud'
 
 inputs:
-  sprites_api_url:
-    description: 'Sprites API URL'
-    required: false
-    default: 'https://api.sprites.dev/v1'
-  sprites_token:
-    description: 'Sprites API token'
+  ssh_private_key:
+    description: 'SSH private key for connecting to the staging server (base64 encoded)'
     required: true
-  sprite_name:
-    description: 'Name for the sprite'
+  server_ip:
+    description: 'IP address of the staging server'
+    required: true
+  deployment_name:
+    description: 'Name for the deployment (e.g., pr-123)'
     required: true
   image_tag:
     description: 'Docker image tag to deploy'
     required: true
-  github_ref:
-    description: 'GitHub ref (branch) to download the setup script from'
-    required: true
-  setup_script_path:
-    description: 'Path to the setup script in the repository'
-    required: false
-    default: '.github/scripts/staging-setup.sh'
 
 outputs:
-  sprite_url:
-    description: 'URL of the deployed sprite'
-    value: ${{ steps.create-sprite.outputs.sprite_url }}
-  sprite_id:
-    description: 'ID of the deployed sprite'
-    value: ${{ steps.create-sprite.outputs.sprite_id }}
+  deployment_url:
+    description: 'URL of the deployed staging environment'
+    value: ${{ steps.get-url.outputs.deployment_url }}
 
 runs:
   using: 'composite'
   steps:
+    - name: Setup SSH
+      shell: bash
+      run: |
+        echo "Setting up SSH configuration..."
+        mkdir -p ~/.ssh
+        echo "${{ inputs.ssh_private_key }}" | base64 -d > ~/.ssh/id_ed25519_staging
+        chmod 600 ~/.ssh/id_ed25519_staging
+        ssh-keyscan ${{ inputs.server_ip }} >> ~/.ssh/known_hosts
+        cat >> ~/.ssh/config << EOF
+        Host uncloud-staging
+          HostName ${{ inputs.server_ip }}
+          User root
+          IdentityFile ~/.ssh/id_ed25519_staging
+        EOF
+        chmod 600 ~/.ssh/config
+        echo "SSH configuration complete"
+
+    - name: Install uncloud CLI
+      shell: bash
+      run: |
+        echo "Installing uncloud CLI..."
+        curl -fsS https://get.uncloud.run/install.sh | sh
+        echo "Uncloud CLI installed successfully"
+        uc version
+
+    - name: Get DNS base domain
+      id: get-dns
+      shell: bash
+      run: |
+        echo "Getting DNS base domain..."
+        # Get the full domain from uc dns show
+        DNS_DOMAIN=$(uc dns show 2>/dev/null | tr -d '[:space:]' || echo "")
+        if [ -z "$DNS_DOMAIN" ]; then
+          echo "Warning: Could not get DNS domain from uc dns show"
+          DNS_DOMAIN="uncld.dev"
+        fi
+        echo "dns_domain=${DNS_DOMAIN}" >> $GITHUB_OUTPUT
+        echo "DNS Domain: ${DNS_DOMAIN}"
+
     - name: Verify Docker image is available
       shell: bash
       run: |
@@ -51,99 +79,201 @@ runs:
       env:
         DOCKER_CLI_EXPERIMENTAL: enabled
 
-    - name: Destroy existing sprite (if any)
+    - name: Destroy existing deployment (if any)
       shell: bash
       continue-on-error: true
       run: |
-        echo "Attempting to destroy existing sprite: ${{ inputs.sprite_name }}"
-        curl -s -X DELETE \
-          "${{ inputs.sprites_api_url }}/sprites/${{ inputs.sprite_name }}" \
-          -H "Authorization: Bearer ${{ inputs.sprites_token }}" \
-          || echo "No existing sprite to destroy or destroy failed (this is OK)"
+        DEPLOYMENT_NAME="${{ inputs.deployment_name }}"
+        echo "Attempting to destroy existing deployment: ${DEPLOYMENT_NAME}"
+        cd /tmp
+        # Create a minimal compose file with the same service names for cleanup
+        cat > compose-cleanup.yaml << EOF
+        services:
+          ${DEPLOYMENT_NAME}-server:
+            image: ghcr.io/vija02/theopenpresenter_server:main
+          ${DEPLOYMENT_NAME}-worker:
+            image: ghcr.io/vija02/theopenpresenter_server:main
+          ${DEPLOYMENT_NAME}-db:
+            image: ghcr.io/vija02/theopenpresenter_db:main
+          ${DEPLOYMENT_NAME}-redis:
+            image: redis:7.4-alpine
+          ${DEPLOYMENT_NAME}-unoserver:
+            image: philiplehmann/unoserver:3.0.1-1816
+          ${DEPLOYMENT_NAME}-alloy:
+            image: grafana/alloy:v1.5.1
+        
+        volumes:
+          ${DEPLOYMENT_NAME}-pg-data:
+          ${DEPLOYMENT_NAME}-redis-data:
+          ${DEPLOYMENT_NAME}-alloy-config:
+        EOF
+        uc down -f compose-cleanup.yaml --volumes --remove-orphans 2>/dev/null || echo "No existing deployment to destroy (this is OK)"
+        rm -f compose-cleanup.yaml
 
-    - name: Wait for sprite cleanup
+    - name: Wait for cleanup
       shell: bash
-      run: sleep 10
+      run: sleep 5
 
-    - name: Create new sprite
-      id: create-sprite
-      shell: bash
-      run: |
-        echo "Creating sprite: ${{ inputs.sprite_name }}"
-        RESPONSE=$(curl -s -X POST \
-          "${{ inputs.sprites_api_url }}/sprites" \
-          -H "Authorization: Bearer ${{ inputs.sprites_token }}" \
-          -H "Content-Type: application/json" \
-          -d '{
-            "name": "${{ inputs.sprite_name }}",
-            "wait_for_capacity": true,
-            "url_settings": {
-              "auth": "public"
-            }
-          }')
-        
-        echo "Response: $RESPONSE"
-        
-        SPRITE_URL=$(echo "$RESPONSE" | jq -r '.url')
-        SPRITE_ID=$(echo "$RESPONSE" | jq -r '.id')
-        
-        if [ "$SPRITE_URL" == "null" ] || [ -z "$SPRITE_URL" ]; then
-          echo "Failed to create sprite"
-          exit 1
-        fi
-        
-        echo "sprite_url=${SPRITE_URL}" >> $GITHUB_OUTPUT
-        echo "sprite_id=${SPRITE_ID}" >> $GITHUB_OUTPUT
-        echo "Sprite created with URL: ${SPRITE_URL}"
-
-    - name: Download and execute setup script on sprite
+    - name: Create compose file for deployment
       shell: bash
       run: |
-        SPRITE_NAME="${{ inputs.sprite_name }}"
-        SPRITE_URL="${{ steps.create-sprite.outputs.sprite_url }}"
+        DEPLOYMENT_NAME="${{ inputs.deployment_name }}"
         IMAGE_TAG="${{ inputs.image_tag }}"
-        TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-        GITHUB_REF="${{ inputs.github_ref }}"
-        SCRIPT_PATH="${{ inputs.setup_script_path }}"
+        DNS_DOMAIN="${{ steps.get-dns.outputs.dns_domain }}"
+        # The service name will be used as the subdomain prefix by uncloud
+        # So the URL will be: https://{deployment_name}-server.{DNS_DOMAIN}
+        DEPLOYMENT_URL="https://${DEPLOYMENT_NAME}-server.${DNS_DOMAIN}"
         
-        # Construct the raw GitHub URL for the setup script
-        SCRIPT_URL="https://raw.githubusercontent.com/vija02/TheOpenPresenter/${GITHUB_REF}/${SCRIPT_PATH}"
+        echo "Creating compose file for deployment: ${DEPLOYMENT_NAME}"
+        echo "Deployment URL will be: ${DEPLOYMENT_URL}"
         
-        echo "=== Downloading setup script from GitHub ==="
-        echo "Script URL: ${SCRIPT_URL}"
+        mkdir -p /tmp/staging-deploy
+        cat > /tmp/staging-deploy/compose.yaml << EOF
+        services:
+          ${DEPLOYMENT_NAME}-server:
+            image: ghcr.io/vija02/theopenpresenter_server:${IMAGE_TAG}
+            pull_policy: always
+            depends_on:
+              ${DEPLOYMENT_NAME}-db:
+                condition: service_healthy
+              ${DEPLOYMENT_NAME}-redis:
+                condition: service_started
+            environment:
+              - NODE_ENV=production
+              - ROOT_DATABASE_URL=postgres://postgres:stagingpassword@${DEPLOYMENT_NAME}-db/template1
+              - REDIS_URL=redis://${DEPLOYMENT_NAME}-redis:6379
+              - DATABASE_HOST=${DEPLOYMENT_NAME}-db
+              - DATABASE_NAME=theopenpresenter_staging
+              - DATABASE_OWNER=theopenpresenter_staging
+              - DATABASE_OWNER_PASSWORD=stagingsecret1
+              - DATABASE_AUTHENTICATOR=theopenpresenter_staging_authenticator
+              - DATABASE_AUTHENTICATOR_PASSWORD=stagingsecret2
+              - DATABASE_VISITOR=theopenpresenter_staging_visitor
+              - SECRET=stagingsecret3
+              - JWT_SECRET=stagingsecret4
+              - PORT=5678
+              - ROOT_URL=${DEPLOYMENT_URL}
+              - STORAGE_TYPE=file
+              - STORAGE_PROXY=local
+              - ENABLED_PLUGINS=lyrics-presenter,simple-image,google-slides,radio,audio-recorder,video-player,worship-pads,embed,timer
+              - PLUGIN_GOOGLE_SLIDES_UNOCONVERT_SERVER=http://${DEPLOYMENT_NAME}-unoserver:3000
+              - OTLP_HOST=http://${DEPLOYMENT_NAME}-alloy:4318
+              - DISABLE_HSTS=1
+            x-ports:
+              - ${DEPLOYMENT_NAME}-server.${DNS_DOMAIN}:5678/https
         
-        # Download the script directly on the sprite
-        echo "Executing download command on sprite..."
-        curl -s -X POST \
-          "${{ inputs.sprites_api_url }}/sprites/${SPRITE_NAME}/exec" \
-          -H "Authorization: Bearer ${{ inputs.sprites_token }}" \
-          -H "Content-Type: application/json" \
-          -d "{\"cmd\": \"curl -fsSL '${SCRIPT_URL}' -o /tmp/staging-setup.sh && chmod +x /tmp/staging-setup.sh && echo 'Download successful' && ls -la /tmp/staging-setup.sh\"}" \
-          --max-time 60 | tr -d '\0'
+          ${DEPLOYMENT_NAME}-worker:
+            image: ghcr.io/vija02/theopenpresenter_server:${IMAGE_TAG}
+            pull_policy: always
+            depends_on:
+              ${DEPLOYMENT_NAME}-db:
+                condition: service_healthy
+            environment:
+              - NODE_ENV=production
+              - ROOT_DATABASE_URL=postgres://postgres:stagingpassword@${DEPLOYMENT_NAME}-db/template1
+              - DATABASE_HOST=${DEPLOYMENT_NAME}-db
+              - DATABASE_NAME=theopenpresenter_staging
+              - DATABASE_OWNER=theopenpresenter_staging
+              - DATABASE_OWNER_PASSWORD=stagingsecret1
+              - DATABASE_AUTHENTICATOR=theopenpresenter_staging_authenticator
+              - DATABASE_AUTHENTICATOR_PASSWORD=stagingsecret2
+              - DATABASE_VISITOR=theopenpresenter_staging_visitor
+              - SECRET=stagingsecret3
+              - JWT_SECRET=stagingsecret4
+              - PORT=5678
+              - ROOT_URL=${DEPLOYMENT_URL}
+              - STORAGE_TYPE=file
+              - STORAGE_PROXY=local
+              - ENABLED_PLUGINS=lyrics-presenter,simple-image,google-slides,radio,audio-recorder,video-player,worship-pads,embed,timer
+              - TARGET=worker
+              - OTLP_HOST=http://${DEPLOYMENT_NAME}-alloy:4318
         
-        echo ""
-        echo "=== Executing setup script on sprite ==="
+          ${DEPLOYMENT_NAME}-db:
+            image: ghcr.io/vija02/theopenpresenter_db:main
+            pull_policy: always
+            environment:
+              - POSTGRES_PASSWORD=stagingpassword
+            volumes:
+              - ${DEPLOYMENT_NAME}-pg-data:/var/lib/postgresql/data
+            command: postgres -c logging_collector=on -c log_destination=stderr
+            healthcheck:
+              test: ["CMD-SHELL", "pg_isready -U postgres"]
+              interval: 5s
+              timeout: 5s
+              retries: 10
         
-        # Execute the setup script with arguments
-        curl -s -X POST \
-          "${{ inputs.sprites_api_url }}/sprites/${SPRITE_NAME}/exec" \
-          -H "Authorization: Bearer ${{ inputs.sprites_token }}" \
-          -H "Content-Type: application/json" \
-          -d "{\"cmd\": \"/tmp/staging-setup.sh ${IMAGE_TAG} ${SPRITE_URL} ${TIMESTAMP}\"}" \
-          --max-time 900 | tr -d '\0'
+          ${DEPLOYMENT_NAME}-redis:
+            image: redis:7.4-alpine
+            pull_policy: missing
+            command: redis-server --save 60 1 --loglevel warning
+            volumes:
+              - ${DEPLOYMENT_NAME}-redis-data:/data
         
-        echo ""
-        echo "=== Setup script execution completed ==="
+          ${DEPLOYMENT_NAME}-unoserver:
+            image: philiplehmann/unoserver:3.0.1-1816
+            pull_policy: missing
+        
+          ${DEPLOYMENT_NAME}-alloy:
+            image: grafana/alloy:v1.5.1
+            pull_policy: missing
+            command:
+              - run
+              - /etc/alloy/config.alloy
+              - --storage.path=/var/lib/alloy/data
+              - --server.http.listen-addr=0.0.0.0:12345
+              - --stability.level=experimental
+            volumes:
+              - ${DEPLOYMENT_NAME}-alloy-config:/etc/alloy
+        
+        volumes:
+          ${DEPLOYMENT_NAME}-pg-data:
+          ${DEPLOYMENT_NAME}-redis-data:
+          ${DEPLOYMENT_NAME}-alloy-config:
+        EOF
+        
+        # Create minimal alloy config
+        mkdir -p /tmp/staging-deploy/alloy
+        cat > /tmp/staging-deploy/alloy/config.alloy << 'ALLOY_EOF'
+        logging {
+            level = "info"
+        }
+        ALLOY_EOF
+        
+        echo "Compose file created at /tmp/staging-deploy/compose.yaml"
+        cat /tmp/staging-deploy/compose.yaml
+
+    - name: Deploy to uncloud
+      shell: bash
+      run: |
+        echo "Deploying to uncloud..."
+        cd /tmp/staging-deploy
+        
+        # Deploy with auto-confirm (non-interactive)
+        uc deploy -f compose.yaml --yes
+        
+        echo "Deployment completed!"
+
+    - name: Get deployment URL
+      id: get-url
+      shell: bash
+      run: |
+        DEPLOYMENT_NAME="${{ inputs.deployment_name }}"
+        DNS_DOMAIN="${{ steps.get-dns.outputs.dns_domain }}"
+        # The URL uses the service name as the subdomain
+        DEPLOYMENT_URL="https://${DEPLOYMENT_NAME}-server.${DNS_DOMAIN}"
+        
+        echo "deployment_url=${DEPLOYMENT_URL}" >> $GITHUB_OUTPUT
+        echo "Deployment URL: ${DEPLOYMENT_URL}"
 
     - name: Verify deployment
       shell: bash
       run: |
-        SPRITE_URL="${{ steps.create-sprite.outputs.sprite_url }}"
-        echo "Verifying deployment at ${SPRITE_URL}..."
+        DEPLOYMENT_URL="${{ steps.get-url.outputs.deployment_url }}"
+        echo "Verifying deployment at ${DEPLOYMENT_URL}..."
         
         # Wait for the application to be ready
         for i in {1..20}; do
-          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "${SPRITE_URL}" || echo "000")
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "${DEPLOYMENT_URL}" || echo "000")
           if [ "$HTTP_CODE" == "200" ] || [ "$HTTP_CODE" == "302" ] || [ "$HTTP_CODE" == "301" ]; then
             echo "Application is responding with HTTP ${HTTP_CODE}!"
             exit 0
@@ -153,3 +283,20 @@ runs:
         done
         
         echo "Warning: Application may not be fully ready yet, but deployment completed"
+
+    - name: Show deployment status
+      shell: bash
+      run: |
+        DEPLOYMENT_NAME="${{ inputs.deployment_name }}"
+        echo "=== Deployment Status ==="
+        uc ls || true
+        echo ""
+        echo "=== Service Details ==="
+        uc inspect ${DEPLOYMENT_NAME}-server || true
+
+    - name: Cleanup SSH keys
+      shell: bash
+      if: always()
+      run: |
+        rm -f ~/.ssh/id_ed25519_staging
+        echo "SSH keys cleaned up"

@@ -23,8 +23,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  SPRITES_API_URL: https://api.sprites.dev/v1
-  SPRITE_NAME_PREFIX: theopenpresenter-staging-pr
+  DEPLOYMENT_NAME_PREFIX: theopenpresenter-staging-pr
   REGISTRY: ghcr.io
   IMAGE_NAME: theopenpresenter_server
 
@@ -71,8 +70,8 @@ jobs:
       pull-requests: write
 
     outputs:
-      sprite_url: ${{ steps.staging-deploy.outputs.sprite_url }}
-      sprite_name: ${{ steps.vars.outputs.sprite_name }}
+      deployment_url: ${{ steps.staging-deploy.outputs.deployment_url }}
+      deployment_name: ${{ steps.vars.outputs.deployment_name }}
 
     steps:
       - name: Checkout repository
@@ -92,29 +91,28 @@ jobs:
             exit 1
           fi
           
-          SPRITE_NAME="${{ env.SPRITE_NAME_PREFIX }}-${PR_NUMBER}"
+          DEPLOYMENT_NAME="${{ env.DEPLOYMENT_NAME_PREFIX }}-${PR_NUMBER}"
           echo "pr_number=${PR_NUMBER}" >> $GITHUB_OUTPUT
-          echo "sprite_name=${SPRITE_NAME}" >> $GITHUB_OUTPUT
+          echo "deployment_name=${DEPLOYMENT_NAME}" >> $GITHUB_OUTPUT
           echo "image_tag=pr-${PR_NUMBER}" >> $GITHUB_OUTPUT
           echo "PR Number: ${PR_NUMBER}"
-          echo "Sprite Name: ${SPRITE_NAME}"
+          echo "Deployment Name: ${DEPLOYMENT_NAME}"
           echo "Image Tag: pr-${PR_NUMBER}"
 
       - name: Deploy staging environment
         id: staging-deploy
         uses: ./.github/actions/staging-deploy
         with:
-          sprites_api_url: ${{ env.SPRITES_API_URL }}
-          sprites_token: ${{ secrets.SPRITES_TOKEN }}
-          sprite_name: ${{ steps.vars.outputs.sprite_name }}
+          ssh_private_key: ${{ secrets.STAGING_SSH_PRIVATE_KEY }}
+          server_ip: ${{ secrets.STAGING_SERVER_IP }}
+          deployment_name: ${{ steps.vars.outputs.deployment_name }}
           image_tag: ${{ steps.vars.outputs.image_tag }}
-          github_ref: ${{ github.head_ref || github.ref_name }}
 
       - name: Comment on PR with staging URL
         uses: actions/github-script@v7
         with:
           script: |
-            const spriteUrl = '${{ steps.staging-deploy.outputs.sprite_url }}';
+            const deploymentUrl = '${{ steps.staging-deploy.outputs.deployment_url }}';
             const prNumber = ${{ steps.vars.outputs.pr_number }};
             
             // Find and delete previous staging environment comments
@@ -140,7 +138,7 @@ jobs:
               '',
               'Your staging environment is ready!',
               '',
-              `**URL:** ${spriteUrl}`,
+              `**URL:** ${deploymentUrl}`,
               '',
               '**Note:** This environment will be automatically destroyed:',
               '- When this PR is closed or merged',
@@ -176,15 +174,15 @@ jobs:
         id: vars
         run: |
           PR_NUMBER="${{ github.event.pull_request.number }}"
-          SPRITE_NAME="${{ env.SPRITE_NAME_PREFIX }}-${PR_NUMBER}"
-          echo "sprite_name=${SPRITE_NAME}" >> $GITHUB_OUTPUT
+          DEPLOYMENT_NAME="${{ env.DEPLOYMENT_NAME_PREFIX }}-${PR_NUMBER}"
+          echo "deployment_name=${DEPLOYMENT_NAME}" >> $GITHUB_OUTPUT
 
       - name: Cleanup staging environment
         uses: ./.github/actions/staging-cleanup
         with:
-          sprites_api_url: ${{ env.SPRITES_API_URL }}
-          sprites_token: ${{ secrets.SPRITES_TOKEN }}
-          sprite_name: ${{ steps.vars.outputs.sprite_name }}
+          ssh_private_key: ${{ secrets.STAGING_SSH_PRIVATE_KEY }}
+          server_ip: ${{ secrets.STAGING_SERVER_IP }}
+          deployment_name: ${{ steps.vars.outputs.deployment_name }}
 
       - name: Comment on PR about cleanup
         uses: actions/github-script@v7
@@ -213,22 +211,42 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: List and cleanup expired sprites
+      - name: Setup SSH
+        run: |
+          echo "Setting up SSH configuration..."
+          mkdir -p ~/.ssh
+          echo "${{ secrets.STAGING_SSH_PRIVATE_KEY }}" | base64 -d > ~/.ssh/id_ed25519_staging
+          chmod 600 ~/.ssh/id_ed25519_staging
+          ssh-keyscan ${{ secrets.STAGING_SERVER_IP }} >> ~/.ssh/known_hosts
+          cat >> ~/.ssh/config << EOF
+          Host uncloud-staging
+            HostName ${{ secrets.STAGING_SERVER_IP }}
+            User root
+            IdentityFile ~/.ssh/id_ed25519_staging
+          EOF
+          chmod 600 ~/.ssh/config
+          echo "SSH configuration complete"
+
+      - name: Install uncloud CLI
+        run: |
+          echo "Installing uncloud CLI..."
+          curl -fsS https://get.uncloud.run/install.sh | sh
+          echo "Uncloud CLI installed successfully"
+          uc version
+
+      - name: List and cleanup expired deployments
         uses: actions/github-script@v7
         env:
-          SPRITES_TOKEN: ${{ secrets.SPRITES_TOKEN }}
-          SPRITES_API_URL: ${{ env.SPRITES_API_URL }}
-          SPRITE_NAME_PREFIX: ${{ env.SPRITE_NAME_PREFIX }}
+          DEPLOYMENT_NAME_PREFIX: ${{ env.DEPLOYMENT_NAME_PREFIX }}
         with:
           script: |
-            const https = require('https');
             const { execSync } = require('child_process');
             
             const EXPIRATION_DAYS = 7;
             const now = new Date();
             const expirationThreshold = new Date(now.getTime() - EXPIRATION_DAYS * 24 * 60 * 60 * 1000);
             
-            console.log(`Checking for sprites older than ${EXPIRATION_DAYS} days (before ${expirationThreshold.toISOString()})`);
+            console.log(`Checking for deployments older than ${EXPIRATION_DAYS} days (before ${expirationThreshold.toISOString()})`);
             
             // Get list of open PRs
             const { data: openPRs } = await github.rest.pulls.list({
@@ -240,52 +258,156 @@ jobs:
             const openPRNumbers = new Set(openPRs.map(pr => pr.number));
             console.log(`Open PRs: ${Array.from(openPRNumbers).join(', ')}`);
             
-            // For each open PR, check if its staging environment should be cleaned up
-            for (const prNumber of openPRNumbers) {
-              const spriteName = `${process.env.SPRITE_NAME_PREFIX}-${prNumber}`;
+            // Get list of all services from uncloud
+            try {
+              const servicesList = execSync('uc ls --json 2>/dev/null || echo "[]"', {
+                encoding: 'utf-8',
+                timeout: 30000
+              }).trim();
               
+              let services = [];
               try {
-                // Try to get the deployment timestamp from the sprite
-                const timestampResult = execSync(
-                  `curl -s -X POST "${process.env.SPRITES_API_URL}/sprites/${spriteName}/exec" -H "Authorization: Bearer ${process.env.SPRITES_TOKEN}" -H "Content-Type: application/json" -d '{"cmd": ["cat", "/tmp/deployment_timestamp"]}'`,
-                  { encoding: 'utf-8', timeout: 30000 }
-                ).trim();
-                
-                if (timestampResult) {
-                  const deploymentDate = new Date(timestampResult);
-                  
-                  if (deploymentDate < expirationThreshold) {
-                    console.log(`Sprite ${spriteName} is expired (deployed at ${deploymentDate.toISOString()}). Destroying...`);
-                    
-                    // Destroy the sprite
-                    execSync(
-                      `curl -s -X DELETE "${process.env.SPRITES_API_URL}/sprites/${spriteName}" -H "Authorization: Bearer ${process.env.SPRITES_TOKEN}"`,
-                      { encoding: 'utf-8', timeout: 30000 }
-                    );
-                    
-                    // Comment on the PR
-                    await github.rest.issues.createComment({
-                      owner: context.repo.owner,
-                      repo: context.repo.repo,
-                      issue_number: prNumber,
-                      body: `## ⏰ Staging Environment Expired
-                      
-                      The staging environment for this PR has been automatically destroyed after ${EXPIRATION_DAYS} days.
-                      
-                      To recreate it, re-run the "Build and Deploy Staging" workflow or push a new commit.
-                      
-                      ---
-                      *Expired at: ${new Date().toISOString()}*`
-                    });
-                    
-                    console.log(`Sprite ${spriteName} destroyed and PR commented.`);
-                  } else {
-                    console.log(`Sprite ${spriteName} is still valid (deployed at ${deploymentDate.toISOString()}).`);
+                services = JSON.parse(servicesList);
+              } catch (e) {
+                console.log('Could not parse services list, skipping cleanup');
+                return;
+              }
+              
+              // Find unique deployment names from service names
+              // Service names are like: theopenpresenter-staging-pr-123-server
+              const deploymentNames = new Set();
+              for (const service of services) {
+                if (service.name && service.name.startsWith(process.env.DEPLOYMENT_NAME_PREFIX)) {
+                  // Extract deployment name (everything before -server, -worker, -db, etc.)
+                  const match = service.name.match(new RegExp(`^(${process.env.DEPLOYMENT_NAME_PREFIX}-\\d+)`));
+                  if (match) {
+                    deploymentNames.add(match[1]);
                   }
                 }
-              } catch (error) {
-                console.log(`Could not check sprite ${spriteName}: ${error.message}`);
               }
+              
+              console.log(`Found ${deploymentNames.size} staging deployments`);
+              
+              for (const deploymentName of deploymentNames) {
+                // Extract PR number from deployment name
+                const match = deploymentName.match(/-(\d+)$/);
+                if (!match) continue;
+                
+                const prNumber = parseInt(match[1], 10);
+                
+                // Check if PR is still open
+                if (!openPRNumbers.has(prNumber)) {
+                  console.log(`Deployment ${deploymentName} belongs to closed PR #${prNumber}. Destroying...`);
+                  
+                  try {
+                    // Create compose file with the same service names for cleanup
+                    execSync(`
+                      mkdir -p /tmp/cleanup-${deploymentName}
+                      cat > /tmp/cleanup-${deploymentName}/compose.yaml << 'EOF'
+            services:
+              ${deploymentName}-server:
+                image: ghcr.io/vija02/theopenpresenter_server:main
+              ${deploymentName}-worker:
+                image: ghcr.io/vija02/theopenpresenter_server:main
+              ${deploymentName}-db:
+                image: ghcr.io/vija02/theopenpresenter_db:main
+              ${deploymentName}-redis:
+                image: redis:7.4-alpine
+              ${deploymentName}-unoserver:
+                image: philiplehmann/unoserver:3.0.1-1816
+              ${deploymentName}-alloy:
+                image: grafana/alloy:v1.5.1
+            
+            volumes:
+              ${deploymentName}-pg-data:
+              ${deploymentName}-redis-data:
+              ${deploymentName}-alloy-config:
+            EOF
+                      cd /tmp/cleanup-${deploymentName}
+                      uc down -f compose.yaml --volumes --remove-orphans --yes
+                    `, {
+                      encoding: 'utf-8',
+                      timeout: 60000
+                    });
+                    
+                    console.log(`Deployment ${deploymentName} destroyed.`);
+                  } catch (error) {
+                    console.log(`Failed to destroy ${deploymentName}: ${error.message}`);
+                  }
+                  continue;
+                }
+                
+                // Find the service to check its creation time
+                const serverService = services.find(s => s.name === `${deploymentName}-server`);
+                if (serverService && serverService.created_at) {
+                  const deploymentDate = new Date(serverService.created_at);
+                  
+                  if (deploymentDate < expirationThreshold) {
+                    console.log(`Deployment ${deploymentName} is expired (created at ${deploymentDate.toISOString()}). Destroying...`);
+                    
+                    try {
+                      // Create compose file with the same service names for cleanup
+                      execSync(`
+                        mkdir -p /tmp/cleanup-${deploymentName}
+                        cat > /tmp/cleanup-${deploymentName}/compose.yaml << 'EOF'
+            services:
+              ${deploymentName}-server:
+                image: ghcr.io/vija02/theopenpresenter_server:main
+              ${deploymentName}-worker:
+                image: ghcr.io/vija02/theopenpresenter_server:main
+              ${deploymentName}-db:
+                image: ghcr.io/vija02/theopenpresenter_db:main
+              ${deploymentName}-redis:
+                image: redis:7.4-alpine
+              ${deploymentName}-unoserver:
+                image: philiplehmann/unoserver:3.0.1-1816
+              ${deploymentName}-alloy:
+                image: grafana/alloy:v1.5.1
+            
+            volumes:
+              ${deploymentName}-pg-data:
+              ${deploymentName}-redis-data:
+              ${deploymentName}-alloy-config:
+            EOF
+                        cd /tmp/cleanup-${deploymentName}
+                        uc down -f compose.yaml --volumes --remove-orphans --yes
+                      `, {
+                        encoding: 'utf-8',
+                        timeout: 60000
+                      });
+                      
+                      // Comment on the PR
+                      await github.rest.issues.createComment({
+                        owner: context.repo.owner,
+                        repo: context.repo.repo,
+                        issue_number: prNumber,
+                        body: `## ⏰ Staging Environment Expired
+                        
+                        The staging environment for this PR has been automatically destroyed after ${EXPIRATION_DAYS} days.
+                        
+                        To recreate it, re-run the "Build and Deploy Staging" workflow or push a new commit.
+                        
+                        ---
+                        *Expired at: ${new Date().toISOString()}*`
+                      });
+                      
+                      console.log(`Deployment ${deploymentName} destroyed and PR commented.`);
+                    } catch (error) {
+                      console.log(`Failed to destroy ${deploymentName}: ${error.message}`);
+                    }
+                  } else {
+                    console.log(`Deployment ${deploymentName} is still valid (created at ${deploymentDate.toISOString()}).`);
+                  }
+                }
+              }
+            } catch (error) {
+              console.log(`Error during cleanup: ${error.message}`);
             }
             
             console.log('Scheduled cleanup completed.');
+
+      - name: Cleanup SSH keys
+        if: always()
+        run: |
+          rm -f ~/.ssh/id_ed25519_staging
+          echo "SSH keys cleaned up"
