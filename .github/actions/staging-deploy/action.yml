@@ -3,7 +3,7 @@ description: 'Deploy a staging environment using uncloud'
 
 inputs:
   ssh_private_key:
-    description: 'SSH private key for connecting to the staging server (base64 encoded)'
+    description: 'SSH private key for connecting to the staging server'
     required: true
   server_ip:
     description: 'IP address of the staging server'
@@ -28,7 +28,7 @@ runs:
       run: |
         echo "Setting up SSH configuration..."
         mkdir -p ~/.ssh
-        echo "${{ inputs.ssh_private_key }}" | base64 -d > ~/.ssh/id_ed25519_staging
+        echo "${{ inputs.ssh_private_key }}" > ~/.ssh/id_ed25519_staging
         chmod 600 ~/.ssh/id_ed25519_staging
         ssh-keyscan ${{ inputs.server_ip }} >> ~/.ssh/known_hosts
         cat >> ~/.ssh/config << EOF
