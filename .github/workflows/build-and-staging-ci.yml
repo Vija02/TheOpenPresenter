@@ -26,6 +26,7 @@ env:
   DEPLOYMENT_NAME_PREFIX: theopenpresenter-staging-pr
   REGISTRY: ghcr.io
   IMAGE_NAME: theopenpresenter_server
+  MIGRATOR_IMAGE_NAME: theopenpresenter_migrator
 
 jobs:
   # Build Docker image for PRs and main branch pushes
@@ -57,12 +58,40 @@ jobs:
           cache_registry: ghcr.io/vija02/theopenpresenter_server:buildcache
           push_cache: ${{ github.event_name == 'push' && 'true' || 'false' }}
 
+  # Build Migrator Docker image (runs in parallel with main build)
+  build-migrator:
+    if: >
+      github.event_name == 'push' ||
+      (github.event_name == 'pull_request' && github.event.action != 'closed') ||
+      github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    outputs:
+      image_tag: ${{ steps.docker-build-migrator.outputs.image_tag }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build and push Migrator Docker image
+        id: docker-build-migrator
+        uses: ./.github/actions/docker-build
+        with:
+          image_name: ${{ env.MIGRATOR_IMAGE_NAME }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          dockerfile: migrator.Dockerfile
+          cache_registry: ghcr.io/vija02/theopenpresenter_migrator:buildcache
+          push_cache: ${{ github.event_name == 'push' && 'true' || 'false' }}
+
   # Deploy staging environment for PRs
   deploy:
     if: >
       (github.event_name == 'pull_request' && github.event.action != 'closed') ||
       (github.event_name == 'workflow_dispatch' && github.event.inputs.pr_number != '')
-    needs: build
+    needs: [build, build-migrator]
     runs-on: ubuntu-latest
     permissions:
       contents: read
