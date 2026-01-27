@@ -234,6 +234,14 @@ jobs:
           echo "Uncloud CLI installed successfully"
           uc -v
 
+      - name: Configure uncloud
+        run: |
+          echo "Configuring uncloud..."
+          mkdir -p ~/.config/uncloud
+          cp .github/uncloud.yaml ~/.config/uncloud/config.yaml
+          sed -i "s/STAGING_SERVER_IP/${{ secrets.STAGING_SERVER_IP }}/g" ~/.config/uncloud/config.yaml
+          echo "Uncloud configuration complete"
+
       - name: List and cleanup expired deployments
         uses: actions/github-script@v7
         env:
