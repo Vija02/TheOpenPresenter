@@ -15,7 +15,7 @@
     "build": "turbo build",
     "clean": "node ./scripts/clean.js",
     "reset": "yarn clean && node ./scripts/delete-env-file.js",
-    "postinstall": "yarn patch-package && node ./scripts/panda.js",
+    "postinstall": "node -e \"process.env.NO_POSTINSTALL===1&&process.exit(1)\" || (yarn patch-package && node ./scripts/panda.js)",
     "--shortcuts to run commands in workspaces--": "",
     "config": "yarn workspace @repo/config",
     "db": "yarn workspace @repo/db",

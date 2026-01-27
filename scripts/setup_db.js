@@ -15,9 +15,6 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 runMain(async () => {
   await checkGit();
 
-  // Ensure server build has been run
-  runSync(yarnCmd, ["server", "build"]);
-
   // Source our environment
   dotenv.config({ path: `${__dirname}/../.env` });
   require(`${__dirname}/../backend/config/extra`);

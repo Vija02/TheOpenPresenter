@@ -8235,6 +8235,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@repo/config@workspace:backend/config"
   dependencies:
+    "@microsoft/api-extractor": "npm:^7.49.2"
     "@repo/typescript-config": "npm:*"
     "@types/node": "npm:^22.3.0"
     dotenv: "npm:^16.4.7"

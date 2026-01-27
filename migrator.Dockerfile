@@ -13,7 +13,6 @@ RUN corepack enable
 # Copy only what's needed for db operations
 COPY package.json yarn.lock .yarnrc.yml /app/
 COPY .yarn/ /app/.yarn
-COPY patches/ /app/patches
 COPY scripts/ /app/scripts
 
 # Only the packages needed for db setup
@@ -21,7 +20,7 @@ COPY backend/config/package.json /app/backend/config/package.json
 COPY backend/db/package.json /app/backend/db/package.json
 COPY packages/typescript-config/package.json /app/packages/typescript-config/package.json
 
-RUN yarn install
+RUN NO_POSTINSTALL=1 yarn
 
 ################################################################################
 # Build stage 2 - Build config package
@@ -40,9 +39,6 @@ RUN yarn workspace @repo/config build
 # Copy db directory (contains migrations and graphile-migrate config)
 COPY backend/db/ /app/backend/db/
 
-# Initialize git for checkGit() in setup_db.js
-RUN git init
-
 ################################################################################
 # Build stage FINAL - Runtime image for migrations
 
@@ -54,6 +50,7 @@ RUN corepack enable
 
 # Install git (required by setup_db.js checkGit function)
 RUN apk add --no-cache git
+RUN git init
 
 # Copy everything from builder
 COPY --from=builder /app/ /app/
