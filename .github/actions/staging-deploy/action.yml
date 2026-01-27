@@ -98,6 +98,8 @@ runs:
         # Create a minimal compose file with the same service names for cleanup
         cat > compose-cleanup.yaml << EOF
         services:
+          ${DEPLOYMENT_NAME}-migrator:
+            image: ghcr.io/vija02/theopenpresenter_migrator:main
           ${DEPLOYMENT_NAME}-server:
             image: ghcr.io/vija02/theopenpresenter_server:main
           ${DEPLOYMENT_NAME}-worker:
@@ -139,10 +141,30 @@ runs:
         mkdir -p /tmp/staging-deploy
         cat > /tmp/staging-deploy/compose.yaml << EOF
         services:
+          ${DEPLOYMENT_NAME}-migrator:
+            image: ghcr.io/vija02/theopenpresenter_migrator:${IMAGE_TAG}
+            pull_policy: always
+            depends_on:
+              ${DEPLOYMENT_NAME}-db:
+                condition: service_healthy
+            environment:
+              - NODE_ENV=production
+              - ROOT_DATABASE_URL=postgres://postgres:stagingpassword@${DEPLOYMENT_NAME}-db/template1
+              - DATABASE_HOST=${DEPLOYMENT_NAME}-db
+              - DATABASE_NAME=theopenpresenter_staging
+              - DATABASE_OWNER=theopenpresenter_staging
+              - DATABASE_OWNER_PASSWORD=stagingsecret1
+              - DATABASE_AUTHENTICATOR=theopenpresenter_staging_authenticator
+              - DATABASE_AUTHENTICATOR_PASSWORD=stagingsecret2
+              - DATABASE_VISITOR=theopenpresenter_staging_visitor
+            command: ["yarn setup:db"]
+        
           ${DEPLOYMENT_NAME}-server:
             image: ghcr.io/vija02/theopenpresenter_server:${IMAGE_TAG}
             pull_policy: always
             depends_on:
+              ${DEPLOYMENT_NAME}-migrator:
+                condition: service_completed_successfully
               ${DEPLOYMENT_NAME}-db:
                 condition: service_healthy
               ${DEPLOYMENT_NAME}-redis:
@@ -175,6 +197,8 @@ runs:
             image: ghcr.io/vija02/theopenpresenter_server:${IMAGE_TAG}
             pull_policy: always
             depends_on:
+              ${DEPLOYMENT_NAME}-migrator:
+                condition: service_completed_successfully
               ${DEPLOYMENT_NAME}-db:
                 condition: service_healthy
             environment:

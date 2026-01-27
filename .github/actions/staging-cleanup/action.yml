@@ -59,6 +59,8 @@ runs:
         mkdir -p /tmp/staging-cleanup
         cat > /tmp/staging-cleanup/compose.yaml << EOF
         services:
+          ${DEPLOYMENT_NAME}-migrator:
+            image: ghcr.io/vija02/theopenpresenter_migrator:main
           ${DEPLOYMENT_NAME}-server:
             image: ghcr.io/vija02/theopenpresenter_server:main
           ${DEPLOYMENT_NAME}-worker:

@@ -342,6 +342,8 @@ jobs:
                       mkdir -p /tmp/cleanup-${deploymentName}
                       cat > /tmp/cleanup-${deploymentName}/compose.yaml << 'EOF'
             services:
+              ${deploymentName}-migrator:
+                image: ghcr.io/vija02/theopenpresenter_migrator:main
               ${deploymentName}-server:
                 image: ghcr.io/vija02/theopenpresenter_server:main
               ${deploymentName}-worker:
@@ -388,6 +390,8 @@ jobs:
                         mkdir -p /tmp/cleanup-${deploymentName}
                         cat > /tmp/cleanup-${deploymentName}/compose.yaml << 'EOF'
             services:
+              ${deploymentName}-migrator:
+                image: ghcr.io/vija02/theopenpresenter_migrator:main
               ${deploymentName}-server:
                 image: ghcr.io/vija02/theopenpresenter_server:main
               ${deploymentName}-worker:
