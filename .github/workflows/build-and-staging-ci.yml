@@ -232,7 +232,7 @@ jobs:
           echo "Installing uncloud CLI..."
           curl -fsS https://get.uncloud.run/install.sh | sh
           echo "Uncloud CLI installed successfully"
-          uc version
+          uc -v
 
       - name: List and cleanup expired deployments
         uses: actions/github-script@v7

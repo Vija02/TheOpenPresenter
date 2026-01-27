@@ -46,7 +46,7 @@ runs:
         echo "Installing uncloud CLI..."
         curl -fsS https://get.uncloud.run/install.sh | sh
         echo "Uncloud CLI installed successfully"
-        uc version
+        uc -v
 
     - name: Get DNS base domain
       id: get-dns
