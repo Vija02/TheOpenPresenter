@@ -157,7 +157,7 @@ runs:
               - DATABASE_AUTHENTICATOR=theopenpresenter_staging_authenticator
               - DATABASE_AUTHENTICATOR_PASSWORD=stagingsecret2
               - DATABASE_VISITOR=theopenpresenter_staging_visitor
-            command: ["yarn setup:db"]
+            command: ["yes | yarn setup:db"]
         
           ${DEPLOYMENT_NAME}-server:
             image: ghcr.io/vija02/theopenpresenter_server:${IMAGE_TAG}
