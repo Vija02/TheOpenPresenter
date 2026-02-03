@@ -18,6 +18,7 @@ COPY scripts/ /app/scripts
 # Only the packages needed for db setup
 COPY backend/config/package.json /app/backend/config/package.json
 COPY backend/db/package.json /app/backend/db/package.json
+COPY backend/worker/package.json /app/backend/worker/package.json
 COPY packages/typescript-config/package.json /app/packages/typescript-config/package.json
 
 RUN NO_POSTINSTALL=1 yarn
@@ -38,6 +39,10 @@ RUN yarn workspace @repo/config build
 
 # Copy db directory (contains migrations and graphile-migrate config)
 COPY backend/db/ /app/backend/db/
+
+# Build worker (required for graphile-worker schema installation)
+COPY backend/worker/ /app/backend/worker/
+RUN yarn workspace @repo/worker build
 
 ################################################################################
 # Build stage FINAL - Runtime image for migrations
