@@ -1,0 +1,95 @@
+name: 'Cleanup Staging Environment'
+description: 'Destroy a staging environment on uncloud'
+
+inputs:
+  ssh_private_key:
+    description: 'SSH private key for connecting to the staging server'
+    required: true
+  server_ip:
+    description: 'IP address of the staging server'
+    required: true
+  deployment_name:
+    description: 'Name of the deployment to destroy'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup SSH
+      shell: bash
+      run: |
+        echo "Setting up SSH configuration..."
+        mkdir -p ~/.ssh
+        echo "${{ inputs.ssh_private_key }}" > ~/.ssh/id_ed25519_staging
+        chmod 600 ~/.ssh/id_ed25519_staging
+        ssh-keyscan ${{ inputs.server_ip }} >> ~/.ssh/known_hosts
+        cat >> ~/.ssh/config << EOF
+        Host uncloud-staging
+          HostName ${{ inputs.server_ip }}
+          User root
+          IdentityFile ~/.ssh/id_ed25519_staging
+        EOF
+        chmod 600 ~/.ssh/config
+        echo "SSH configuration complete"
+
+    - name: Install uncloud CLI
+      shell: bash
+      run: |
+        echo "Installing uncloud CLI..."
+        curl -fsS https://get.uncloud.run/install.sh | sh
+        echo "Uncloud CLI installed successfully"
+        uc -v
+
+    - name: Configure uncloud
+      shell: bash
+      run: |
+        echo "Configuring uncloud..."
+        mkdir -p ~/.config/uncloud
+        cp .github/uncloud.yaml ~/.config/uncloud/config.yaml
+        sed -i "s/STAGING_SERVER_IP/${{ inputs.server_ip }}/g" ~/.config/uncloud/config.yaml
+        echo "Uncloud configuration complete"
+
+    - name: Destroy deployment
+      shell: bash
+      run: |
+        DEPLOYMENT_NAME="${{ inputs.deployment_name }}"
+        echo "Destroying deployment: ${DEPLOYMENT_NAME}"
+        
+        # Create a compose file with the same service names for cleanup
+        mkdir -p /tmp/staging-cleanup
+        cat > /tmp/staging-cleanup/compose.yaml << EOF
+        services:
+          ${DEPLOYMENT_NAME}-migrator:
+            image: ghcr.io/vija02/theopenpresenter_migrator:main
+          ${DEPLOYMENT_NAME}-server:
+            image: ghcr.io/vija02/theopenpresenter_server:main
+          ${DEPLOYMENT_NAME}-worker:
+            image: ghcr.io/vija02/theopenpresenter_server:main
+          ${DEPLOYMENT_NAME}-db:
+            image: ghcr.io/vija02/theopenpresenter_db:main
+          ${DEPLOYMENT_NAME}-redis:
+            image: redis:7.4-alpine
+          ${DEPLOYMENT_NAME}-unoserver:
+            image: philiplehmann/unoserver:3.0.1-1816
+          ${DEPLOYMENT_NAME}-alloy:
+            image: grafana/alloy:v1.5.1
+        
+        volumes:
+          ${DEPLOYMENT_NAME}-pg-data:
+          ${DEPLOYMENT_NAME}-redis-data:
+          ${DEPLOYMENT_NAME}-alloy-config:
+        EOF
+        
+        cd /tmp/staging-cleanup
+        
+        # Destroy the deployment and remove volumes
+        uc down -f compose.yaml --volumes --remove-orphans --yes 2>/dev/null || echo "Deployment may already be destroyed or doesn't exist"
+        
+        echo "Cleanup completed for: ${DEPLOYMENT_NAME}"
+
+    - name: Cleanup SSH keys
+      shell: bash
+      if: always()
+      run: |
+        rm -f ~/.ssh/id_ed25519_staging
+        echo "SSH keys cleaned up"
