@@ -1,27 +1,27 @@
-name: 'Deploy Staging Environment'
-description: 'Deploy a staging environment using uncloud'
+name: "Deploy Staging Environment"
+description: "Deploy a staging environment using uncloud"
 
 inputs:
   ssh_private_key:
-    description: 'SSH private key for connecting to the staging server'
+    description: "SSH private key for connecting to the staging server"
     required: true
   server_ip:
-    description: 'IP address of the staging server'
+    description: "IP address of the staging server"
     required: true
   deployment_name:
-    description: 'Name for the deployment (e.g., pr-123)'
+    description: "Name for the deployment (e.g., pr-123)"
     required: true
   image_tag:
-    description: 'Docker image tag to deploy'
+    description: "Docker image tag to deploy"
     required: true
 
 outputs:
   deployment_url:
-    description: 'URL of the deployed staging environment'
+    description: "URL of the deployed staging environment"
     value: ${{ steps.get-url.outputs.deployment_url }}
 
 runs:
-  using: 'composite'
+  using: "composite"
   steps:
     - name: Setup SSH
       shell: bash
@@ -94,32 +94,12 @@ runs:
       run: |
         DEPLOYMENT_NAME="${{ inputs.deployment_name }}"
         echo "Attempting to destroy existing deployment: ${DEPLOYMENT_NAME}"
-        cd /tmp
-        # Create a minimal compose file with the same service names for cleanup
-        cat > compose-cleanup.yaml << EOF
-        services:
-          ${DEPLOYMENT_NAME}-migrator:
-            image: ghcr.io/vija02/theopenpresenter_migrator:main
-          ${DEPLOYMENT_NAME}-server:
-            image: ghcr.io/vija02/theopenpresenter_server:main
-          ${DEPLOYMENT_NAME}-worker:
-            image: ghcr.io/vija02/theopenpresenter_server:main
-          ${DEPLOYMENT_NAME}-db:
-            image: ghcr.io/vija02/theopenpresenter_db:main
-          ${DEPLOYMENT_NAME}-redis:
-            image: redis:7.4-alpine
-          ${DEPLOYMENT_NAME}-unoserver:
-            image: philiplehmann/unoserver:3.0.1-1816
-          ${DEPLOYMENT_NAME}-alloy:
-            image: grafana/alloy:v1.5.1
-        
-        volumes:
-          ${DEPLOYMENT_NAME}-pg-data:
-          ${DEPLOYMENT_NAME}-redis-data:
-          ${DEPLOYMENT_NAME}-alloy-config:
-        EOF
-        uc down -f compose-cleanup.yaml --volumes --remove-orphans 2>/dev/null || echo "No existing deployment to destroy (this is OK)"
-        rm -f compose-cleanup.yaml
+
+        # Remove all services for this deployment
+        uc rm ${DEPLOYMENT_NAME}-migrator ${DEPLOYMENT_NAME}-server ${DEPLOYMENT_NAME}-worker ${DEPLOYMENT_NAME}-db ${DEPLOYMENT_NAME}-redis ${DEPLOYMENT_NAME}-unoserver ${DEPLOYMENT_NAME}-alloy 2>/dev/null || echo "No existing deployment to destroy (this is OK)"
+
+        # Remove all volumes for this deployment
+        uc volume rm ${DEPLOYMENT_NAME}-pg-data ${DEPLOYMENT_NAME}-redis-data ${DEPLOYMENT_NAME}-alloy-config 2>/dev/null || echo "No existing volumes to remove (this is OK)"
 
     - name: Wait for cleanup
       shell: bash
@@ -134,10 +114,10 @@ runs:
         # The service name will be used as the subdomain prefix by uncloud
         # So the URL will be: https://{deployment_name}-server.{DNS_DOMAIN}
         DEPLOYMENT_URL="https://${DEPLOYMENT_NAME}-server.${DNS_DOMAIN}"
-        
+
         echo "Creating compose file for deployment: ${DEPLOYMENT_NAME}"
         echo "Deployment URL will be: ${DEPLOYMENT_URL}"
-        
+
         mkdir -p /tmp/staging-deploy
         cat > /tmp/staging-deploy/compose.yaml << EOF
         services:
@@ -158,7 +138,7 @@ runs:
               - DATABASE_AUTHENTICATOR_PASSWORD=stagingsecret2
               - DATABASE_VISITOR=theopenpresenter_staging_visitor
             command: ["yes | yarn setup:db"]
-        
+
           ${DEPLOYMENT_NAME}-server:
             image: ghcr.io/vija02/theopenpresenter_server:${IMAGE_TAG}
             pull_policy: always
@@ -192,7 +172,7 @@ runs:
               - DISABLE_HSTS=1
             x-ports:
               - ${DEPLOYMENT_NAME}-server.${DNS_DOMAIN}:5678/https
-        
+
           ${DEPLOYMENT_NAME}-worker:
             image: ghcr.io/vija02/theopenpresenter_server:${IMAGE_TAG}
             pull_policy: always
@@ -220,7 +200,7 @@ runs:
               - ENABLED_PLUGINS=lyrics-presenter,simple-image,google-slides,radio,audio-recorder,video-player,worship-pads,embed,timer
               - TARGET=worker
               - OTLP_HOST=http://${DEPLOYMENT_NAME}-alloy:4318
-        
+
           ${DEPLOYMENT_NAME}-db:
             image: ghcr.io/vija02/theopenpresenter_db:main
             pull_policy: always
@@ -234,18 +214,18 @@ runs:
               interval: 5s
               timeout: 5s
               retries: 10
-        
+
           ${DEPLOYMENT_NAME}-redis:
             image: redis:7.4-alpine
             pull_policy: missing
             command: redis-server --save 60 1 --loglevel warning
             volumes:
               - ${DEPLOYMENT_NAME}-redis-data:/data
-        
+
           ${DEPLOYMENT_NAME}-unoserver:
             image: philiplehmann/unoserver:3.0.1-1816
             pull_policy: missing
-        
+
           ${DEPLOYMENT_NAME}-alloy:
             image: grafana/alloy:v1.5.1
             pull_policy: missing
@@ -257,13 +237,13 @@ runs:
               - --stability.level=experimental
             volumes:
               - ${DEPLOYMENT_NAME}-alloy-config:/etc/alloy
-        
+
         volumes:
           ${DEPLOYMENT_NAME}-pg-data:
           ${DEPLOYMENT_NAME}-redis-data:
           ${DEPLOYMENT_NAME}-alloy-config:
         EOF
-        
+
         # Create minimal alloy config
         mkdir -p /tmp/staging-deploy/alloy
         cat > /tmp/staging-deploy/alloy/config.alloy << 'ALLOY_EOF'
@@ -271,7 +251,7 @@ runs:
             level = "info"
         }
         ALLOY_EOF
-        
+
         echo "Compose file created at /tmp/staging-deploy/compose.yaml"
         cat /tmp/staging-deploy/compose.yaml
 
@@ -280,10 +260,10 @@ runs:
       run: |
         echo "Deploying to uncloud..."
         cd /tmp/staging-deploy
-        
+
         # Deploy with auto-confirm (non-interactive)
         uc deploy -f compose.yaml --yes
-        
+
         echo "Deployment completed!"
 
     - name: Get deployment URL
@@ -294,7 +274,7 @@ runs:
         DNS_DOMAIN="${{ steps.get-dns.outputs.dns_domain }}"
         # The URL uses the service name as the subdomain
         DEPLOYMENT_URL="https://${DEPLOYMENT_NAME}-server.${DNS_DOMAIN}"
-        
+
         echo "deployment_url=${DEPLOYMENT_URL}" >> $GITHUB_OUTPUT
         echo "Deployment URL: ${DEPLOYMENT_URL}"
 
@@ -303,7 +283,7 @@ runs:
       run: |
         DEPLOYMENT_URL="${{ steps.get-url.outputs.deployment_url }}"
         echo "Verifying deployment at ${DEPLOYMENT_URL}..."
-        
+
         # Wait for the application to be ready
         for i in {1..20}; do
           HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "${DEPLOYMENT_URL}" || echo "000")
@@ -314,7 +294,7 @@ runs:
           echo "Attempt $i/20: HTTP ${HTTP_CODE}, waiting 15 seconds..."
           sleep 15
         done
-        
+
         echo "Warning: Application may not be fully ready yet, but deployment completed"
 
     - name: Show deployment status
