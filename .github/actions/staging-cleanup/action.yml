@@ -59,6 +59,6 @@ runs:
         uc rm ${DEPLOYMENT_NAME}-migrator ${DEPLOYMENT_NAME}-server ${DEPLOYMENT_NAME}-worker ${DEPLOYMENT_NAME}-db ${DEPLOYMENT_NAME}-redis ${DEPLOYMENT_NAME}-unoserver ${DEPLOYMENT_NAME}-alloy 2>/dev/null || echo "Deployment may already be destroyed or doesn't exist"
 
         # Remove all volumes for this deployment
-        uc volume rm ${DEPLOYMENT_NAME}-pg-data ${DEPLOYMENT_NAME}-redis-data ${DEPLOYMENT_NAME}-alloy-config 2>/dev/null || echo "Volumes may already be removed or don't exist"
+        yes | uc volume rm ${DEPLOYMENT_NAME}-pg-data ${DEPLOYMENT_NAME}-redis-data ${DEPLOYMENT_NAME}-alloy-config 2>/dev/null || echo "Volumes may already be removed or don't exist"
 
         echo "Cleanup completed for: ${DEPLOYMENT_NAME}"
