@@ -14,7 +14,7 @@ import { withUserPgPool } from "../utils/withUserPgPool";
 import { getRootPgPool } from "./installDatabasePools";
 import { getMediaHandler } from "./installFileUpload";
 
-const disposableDocumentManager: DisposableDocumentManager =
+export const disposableDocumentManager: DisposableDocumentManager =
   new DisposableDocumentManager();
 
 export default async function installHocuspocus(app: Express) {
