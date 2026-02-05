@@ -11,12 +11,12 @@ on:
   workflow_dispatch:
     inputs:
       pr_number:
-        description: 'PR number to deploy (for manual trigger)'
+        description: "PR number to deploy (for manual trigger)"
         required: false
         type: string
   schedule:
     # Run daily at midnight UTC to clean up expired environments
-    - cron: '0 0 * * *'
+    - cron: "0 0 * * *"
 
 concurrency:
   group: staging-${{ github.event.pull_request.number || github.event.inputs.pr_number || github.run_id }}
@@ -114,12 +114,12 @@ jobs:
           else
             PR_NUMBER="${{ github.event.pull_request.number }}"
           fi
-          
+
           if [ -z "$PR_NUMBER" ]; then
             echo "Error: Could not determine PR number"
             exit 1
           fi
-          
+
           DEPLOYMENT_NAME="${{ env.DEPLOYMENT_NAME_PREFIX }}-${PR_NUMBER}"
           echo "pr_number=${PR_NUMBER}" >> $GITHUB_OUTPUT
           echo "deployment_name=${DEPLOYMENT_NAME}" >> $GITHUB_OUTPUT
@@ -143,14 +143,14 @@ jobs:
           script: |
             const deploymentUrl = '${{ steps.staging-deploy.outputs.deployment_url }}';
             const prNumber = ${{ steps.vars.outputs.pr_number }};
-            
+
             // Find and delete previous staging environment comments
             const comments = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: prNumber
             });
-            
+
             for (const comment of comments.data) {
               if (comment.body.includes('🚀 Staging Environment Deployed')) {
                 await github.rest.issues.deleteComment({
@@ -160,7 +160,7 @@ jobs:
                 });
               }
             }
-            
+
             // Add new comment
             const body = [
               '## 🚀 Staging Environment Deployed',
@@ -180,7 +180,7 @@ jobs:
               `*Deployed at: ${new Date().toISOString()}*`,
               `*Commit: ${context.sha}*`
             ].join('\n');
-            
+
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -212,24 +212,6 @@ jobs:
           ssh_private_key: ${{ secrets.STAGING_SSH_PRIVATE_KEY }}
           server_ip: ${{ secrets.STAGING_SERVER_IP }}
           deployment_name: ${{ steps.vars.outputs.deployment_name }}
-
-      - name: Comment on PR about cleanup
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const prNumber = ${{ github.event.pull_request.number }};
-            
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: prNumber,
-              body: `## 🧹 Staging Environment Destroyed
-              
-              The staging environment for this PR has been cleaned up.
-              
-              ---
-              *Cleaned up at: ${new Date().toISOString()}*`
-            });
 
   # Scheduled cleanup for expired environments (7 days)
   scheduled-cleanup:
@@ -278,45 +260,55 @@ jobs:
         with:
           script: |
             const { execSync } = require('child_process');
-            
+
             const EXPIRATION_DAYS = 7;
             const now = new Date();
             const expirationThreshold = new Date(now.getTime() - EXPIRATION_DAYS * 24 * 60 * 60 * 1000);
-            
+
             console.log(`Checking for deployments older than ${EXPIRATION_DAYS} days (before ${expirationThreshold.toISOString()})`);
-            
+
             // Get list of open PRs
             const { data: openPRs } = await github.rest.pulls.list({
               owner: context.repo.owner,
               repo: context.repo.repo,
               state: 'open'
             });
-            
+
             const openPRNumbers = new Set(openPRs.map(pr => pr.number));
             console.log(`Open PRs: ${Array.from(openPRNumbers).join(', ')}`);
-            
+
             // Get list of all services from uncloud
+            // uc ls outputs a table like:
+            // NAME    MODE     REPLICAS   IMAGE          ENDPOINTS
+            // caddy   global   1          caddy:2.10.2
             try {
-              const servicesList = execSync('uc ls --json 2>/dev/null || echo "[]"', {
+              const servicesList = execSync('uc ls 2>/dev/null || echo ""', {
                 encoding: 'utf-8',
                 timeout: 30000
               }).trim();
               
-              let services = [];
-              try {
-                services = JSON.parse(servicesList);
-              } catch (e) {
-                console.log('Could not parse services list, skipping cleanup');
+              if (!servicesList) {
+                console.log('No services found, skipping cleanup');
                 return;
+              }
+              
+              // Parse table output - extract service names from first column
+              const lines = servicesList.split('\n');
+              const serviceNames = [];
+              for (let i = 1; i < lines.length; i++) { // Skip header row
+                const name = lines[i].trim().split(/\s+/)[0];
+                if (name) {
+                  serviceNames.push(name);
+                }
               }
               
               // Find unique deployment names from service names
               // Service names are like: theopenpresenter-staging-pr-123-server
               const deploymentNames = new Set();
-              for (const service of services) {
-                if (service.name && service.name.startsWith(process.env.DEPLOYMENT_NAME_PREFIX)) {
+              for (const name of serviceNames) {
+                if (name.startsWith(process.env.DEPLOYMENT_NAME_PREFIX)) {
                   // Extract deployment name (everything before -server, -worker, -db, etc.)
-                  const match = service.name.match(new RegExp(`^(${process.env.DEPLOYMENT_NAME_PREFIX}-\\d+)`));
+                  const match = name.match(new RegExp(`^(${process.env.DEPLOYMENT_NAME_PREFIX}-\\d+)`));
                   if (match) {
                     deploymentNames.add(match[1]);
                   }
@@ -337,34 +329,14 @@ jobs:
                   console.log(`Deployment ${deploymentName} belongs to closed PR #${prNumber}. Destroying...`);
                   
                   try {
-                    // Create compose file with the same service names for cleanup
-                    execSync(`
-                      mkdir -p /tmp/cleanup-${deploymentName}
-                      cat > /tmp/cleanup-${deploymentName}/compose.yaml << 'EOF'
-            services:
-              ${deploymentName}-migrator:
-                image: ghcr.io/vija02/theopenpresenter_migrator:main
-              ${deploymentName}-server:
-                image: ghcr.io/vija02/theopenpresenter_server:main
-              ${deploymentName}-worker:
-                image: ghcr.io/vija02/theopenpresenter_server:main
-              ${deploymentName}-db:
-                image: ghcr.io/vija02/theopenpresenter_db:main
-              ${deploymentName}-redis:
-                image: redis:7.4-alpine
-              ${deploymentName}-unoserver:
-                image: philiplehmann/unoserver:3.0.1-1816
-              ${deploymentName}-alloy:
-                image: grafana/alloy:v1.5.1
-            
-            volumes:
-              ${deploymentName}-pg-data:
-              ${deploymentName}-redis-data:
-              ${deploymentName}-alloy-config:
-            EOF
-                      cd /tmp/cleanup-${deploymentName}
-                      uc down -f compose.yaml --volumes --remove-orphans --yes
-                    `, {
+                    // Remove all services for this deployment
+                    execSync(`uc rm ${deploymentName}-migrator ${deploymentName}-server ${deploymentName}-worker ${deploymentName}-db ${deploymentName}-redis ${deploymentName}-unoserver ${deploymentName}-alloy 2>/dev/null || echo "Deployment may already be destroyed or doesn't exist"`, {
+                      encoding: 'utf-8',
+                      timeout: 60000
+                    });
+                    
+                    // Remove all volumes for this deployment
+                    execSync(`yes | uc volume rm ${deploymentName}-pg-data ${deploymentName}-redis-data ${deploymentName}-alloy-config 2>/dev/null || echo "Volumes may already be removed or don't exist"`, {
                       encoding: 'utf-8',
                       timeout: 60000
                     });
@@ -376,43 +348,29 @@ jobs:
                   continue;
                 }
                 
-                // Find the service to check its creation time
-                const serverService = services.find(s => s.name === `${deploymentName}-server`);
-                if (serverService && serverService.created_at) {
-                  const deploymentDate = new Date(serverService.created_at);
+                // Check if PR has been inactive for longer than expiration threshold
+                // Use GitHub API since uc ls doesn't provide creation dates
+                try {
+                  const { data: pr } = await github.rest.pulls.get({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    pull_number: prNumber
+                  });
                   
-                  if (deploymentDate < expirationThreshold) {
-                    console.log(`Deployment ${deploymentName} is expired (created at ${deploymentDate.toISOString()}). Destroying...`);
+                  const lastUpdated = new Date(pr.updated_at);
+                  
+                  if (lastUpdated < expirationThreshold) {
+                    console.log(`Deployment ${deploymentName} is expired (PR last updated at ${lastUpdated.toISOString()}). Destroying...`);
                     
                     try {
-                      // Create compose file with the same service names for cleanup
-                      execSync(`
-                        mkdir -p /tmp/cleanup-${deploymentName}
-                        cat > /tmp/cleanup-${deploymentName}/compose.yaml << 'EOF'
-            services:
-              ${deploymentName}-migrator:
-                image: ghcr.io/vija02/theopenpresenter_migrator:main
-              ${deploymentName}-server:
-                image: ghcr.io/vija02/theopenpresenter_server:main
-              ${deploymentName}-worker:
-                image: ghcr.io/vija02/theopenpresenter_server:main
-              ${deploymentName}-db:
-                image: ghcr.io/vija02/theopenpresenter_db:main
-              ${deploymentName}-redis:
-                image: redis:7.4-alpine
-              ${deploymentName}-unoserver:
-                image: philiplehmann/unoserver:3.0.1-1816
-              ${deploymentName}-alloy:
-                image: grafana/alloy:v1.5.1
-            
-            volumes:
-              ${deploymentName}-pg-data:
-              ${deploymentName}-redis-data:
-              ${deploymentName}-alloy-config:
-            EOF
-                        cd /tmp/cleanup-${deploymentName}
-                        uc down -f compose.yaml --volumes --remove-orphans --yes
-                      `, {
+                      // Remove all services for this deployment
+                      execSync(`uc rm ${deploymentName}-migrator ${deploymentName}-server ${deploymentName}-worker ${deploymentName}-db ${deploymentName}-redis ${deploymentName}-unoserver ${deploymentName}-alloy 2>/dev/null || echo "Deployment may already be destroyed or doesn't exist"`, {
+                        encoding: 'utf-8',
+                        timeout: 60000
+                      });
+                      
+                      // Remove all volumes for this deployment
+                      execSync(`yes | uc volume rm ${deploymentName}-pg-data ${deploymentName}-redis-data ${deploymentName}-alloy-config 2>/dev/null || echo "Volumes may already be removed or don't exist"`, {
                         encoding: 'utf-8',
                         timeout: 60000
                       });
@@ -424,7 +382,7 @@ jobs:
                         issue_number: prNumber,
                         body: `## ⏰ Staging Environment Expired
                         
-                        The staging environment for this PR has been automatically destroyed after ${EXPIRATION_DAYS} days.
+                        The staging environment for this PR has been automatically destroyed after ${EXPIRATION_DAYS} days of inactivity.
                         
                         To recreate it, re-run the "Build and Deploy Staging" workflow or push a new commit.
                         
@@ -437,14 +395,16 @@ jobs:
                       console.log(`Failed to destroy ${deploymentName}: ${error.message}`);
                     }
                   } else {
-                    console.log(`Deployment ${deploymentName} is still valid (created at ${deploymentDate.toISOString()}).`);
+                    console.log(`Deployment ${deploymentName} is still valid (PR last updated at ${lastUpdated.toISOString()}).`);
                   }
+                } catch (error) {
+                  console.log(`Failed to check PR #${prNumber}: ${error.message}`);
                 }
               }
             } catch (error) {
               console.log(`Error during cleanup: ${error.message}`);
             }
-            
+
             console.log('Scheduled cleanup completed.');
 
       - name: Cleanup SSH keys
