@@ -36,6 +36,7 @@ const Player = () => {
   const [currentVideoUrl, setCurrentVideoUrl] = useState<string | null>(null);
 
   const [ready, setReady] = useState(false);
+  const [isEnded, setIsEnded] = useState(false);
 
   const ref = useRef<ReactPlayer>(null);
 
@@ -84,6 +85,20 @@ const Player = () => {
 
   const canPlay = pluginApi.audio.useCanPlay({ skipCheck: !isPlaying });
 
+  const isYouTube = useMemo(() => {
+    return currentVideoUrl
+      ? currentVideoUrl.includes("youtube.com") ||
+          currentVideoUrl.includes("youtu.be")
+      : false;
+  }, [currentVideoUrl]);
+
+  // Reset ended state when playing resumes
+  useEffect(() => {
+    if (isPlaying) {
+      setIsEnded(false);
+    }
+  }, [isPlaying]);
+
   const setVideoSeek = useCallback(
     (manual?: boolean) => {
       if (ready) {
@@ -122,46 +137,61 @@ const Player = () => {
   }
 
   return (
-    <ReactPlayer
-      ref={ref}
-      height="100%"
-      width="100%"
-      muted={!canPlay}
-      volume={volume}
-      playing={isPlaying}
-      // TODO: Get this earlier
-      onDuration={(dur) => {
-        const index = mutableSceneData.pluginData.videos.findIndex(
-          (x) => x.id === currentPlayingVideo.videoId,
-        );
-        if (
-          mutableSceneData.pluginData.videos[index]?.metadata.duration !== dur
-        ) {
-          mutableSceneData.pluginData.videos[index]!.metadata.duration = dur;
-        }
-      }}
-      onPlay={() => {
-        pluginApi.awareness.setAwarenessStateData({ isLoading: false });
-      }}
-      onPause={() => {
-        pluginApi.awareness.setAwarenessStateData({ isLoading: false });
-      }}
-      onBuffer={() => {
-        pluginApi.awareness.setAwarenessStateData({ isLoading: true });
-      }}
-      onReady={() => {
-        if (isPlaying) {
+    <div style={{ position: "relative", width: "100%", height: "100%" }}>
+      <ReactPlayer
+        ref={ref}
+        height="100%"
+        width="100%"
+        muted={!canPlay}
+        volume={volume}
+        playing={isPlaying}
+        // TODO: Get this earlier
+        onDuration={(dur) => {
+          const index = mutableSceneData.pluginData.videos.findIndex(
+            (x) => x.id === currentPlayingVideo.videoId,
+          );
+          if (
+            mutableSceneData.pluginData.videos[index]?.metadata.duration !== dur
+          ) {
+            mutableSceneData.pluginData.videos[index]!.metadata.duration = dur;
+          }
+        }}
+        onPlay={() => {
+          pluginApi.awareness.setAwarenessStateData({ isLoading: false });
+        }}
+        onPause={() => {
+          pluginApi.awareness.setAwarenessStateData({ isLoading: false });
+        }}
+        onBuffer={() => {
           pluginApi.awareness.setAwarenessStateData({ isLoading: true });
-        }
-        setReady(true);
-      }}
-      onError={(err, errorData) => {
-        pluginApi.log.error({ err, errorData }, "Error on Video playback");
-      }}
-      onBufferEnd={() => setVideoSeek()}
-      url={currentVideoUrl}
-      config={{ youtube: { playerVars: { controls: 0 } } }}
-    />
+        }}
+        onReady={() => {
+          if (isPlaying) {
+            pluginApi.awareness.setAwarenessStateData({ isLoading: true });
+          }
+          setReady(true);
+        }}
+        onError={(err, errorData) => {
+          pluginApi.log.error({ err, errorData }, "Error on Video playback");
+        }}
+        onBufferEnd={() => setVideoSeek()}
+        onEnded={() => setIsEnded(true)}
+        url={currentVideoUrl}
+        config={{ youtube: { playerVars: { controls: 0 } } }}
+      />
+      {isYouTube && isEnded && (
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "black",
+          }}
+        />
+      )}
+    </div>
   );
 };
 
