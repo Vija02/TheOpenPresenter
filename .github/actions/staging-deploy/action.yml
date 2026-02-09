@@ -99,7 +99,7 @@ runs:
         uc rm ${DEPLOYMENT_NAME}-migrator ${DEPLOYMENT_NAME}-server ${DEPLOYMENT_NAME}-worker ${DEPLOYMENT_NAME}-db ${DEPLOYMENT_NAME}-redis ${DEPLOYMENT_NAME}-unoserver ${DEPLOYMENT_NAME}-alloy 2>/dev/null || echo "No existing deployment to destroy (this is OK)"
 
         # Remove all volumes for this deployment
-        uc volume rm ${DEPLOYMENT_NAME}-pg-data ${DEPLOYMENT_NAME}-redis-data ${DEPLOYMENT_NAME}-alloy-config 2>/dev/null || echo "No existing volumes to remove (this is OK)"
+        yes | uc volume rm ${DEPLOYMENT_NAME}-pg-data ${DEPLOYMENT_NAME}-redis-data ${DEPLOYMENT_NAME}-alloy-config 2>/dev/null || echo "No existing volumes to remove (this is OK)"
 
     - name: Wait for cleanup
       shell: bash
