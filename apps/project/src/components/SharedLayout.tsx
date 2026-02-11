@@ -7,6 +7,7 @@ import { Button, ErrorAlert, Link } from "@repo/ui";
 import * as React from "react";
 import { CombinedError, UseQueryResponse } from "urql";
 import { Link as WouterLink, useLocation } from "wouter";
+import { useSearch } from "wouter";
 
 import { Redirect } from "./Redirect";
 import {
@@ -66,6 +67,9 @@ export function SharedLayout({
   children,
 }: SharedLayoutProps) {
   const [location] = useLocation();
+  const searchString = useSearch();
+  const searchParams = new URLSearchParams(searchString);
+  const hasKiosk = searchParams.has("kiosk");
 
   const forbidsLoggedIn = forbidWhen & AuthRestrict.LOGGED_IN;
   const forbidsLoggedOut = forbidWhen & AuthRestrict.LOGGED_OUT;
@@ -96,7 +100,8 @@ export function SharedLayout({
       !error &&
       forbidsLoggedOut
     ) {
-      return <Redirect href={`/login?next=${encodeURIComponent(location)}`} />;
+      const loginUrl = `/login?next=${encodeURIComponent(location)}${hasKiosk ? "&kiosk" : ""}`;
+      return <Redirect href={loginUrl} />;
     }
 
     return noPad ? inner : <StandardWidth>{inner}</StandardWidth>;
