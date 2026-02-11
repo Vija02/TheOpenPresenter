@@ -29,6 +29,7 @@ export default function Home() {
 
   const [searchParams] = useSearchParams();
   const rawNext = searchParams.get("next");
+  const hasKiosk = searchParams.has("kiosk");
 
   const next: string = isSafe(rawNext?.toString() ?? null)
     ? rawNext!.toString()
@@ -48,6 +49,7 @@ export default function Home() {
                 error={error}
                 setError={setError}
                 onSuccessRedirectTo={next}
+                autoOpenQRLogin={hasKiosk}
               />
             </div>
           </div>
@@ -68,9 +70,15 @@ interface LoginFormProps {
   onSuccessRedirectTo: string;
   error: Error | CombinedError | null;
   setError: (error: Error | CombinedError | null) => void;
+  autoOpenQRLogin?: boolean;
 }
 
-function LoginForm({ onSuccessRedirectTo, error, setError }: LoginFormProps) {
+function LoginForm({
+  onSuccessRedirectTo,
+  error,
+  setError,
+  autoOpenQRLogin,
+}: LoginFormProps) {
   const [, login] = useLoginMutation();
   const [, navigate] = useLocation();
 
@@ -98,9 +106,7 @@ function LoginForm({ onSuccessRedirectTo, error, setError }: LoginFormProps) {
           },
           {
             fetchOptions: {
-              headers: values.rememberMe
-                ? { "persist-session": "1" }
-                : {},
+              headers: values.rememberMe ? { "persist-session": "1" } : {},
             },
           },
         );
@@ -132,7 +138,7 @@ function LoginForm({ onSuccessRedirectTo, error, setError }: LoginFormProps) {
             label="E-mail or Username"
             placeholder="Enter your e-mail or username"
             autoComplete="email username"
-            data-cy="loginpage-input-username"
+            data-testid="loginpage-input-username"
             autoFocus
           />
           <InputControl
@@ -142,14 +148,14 @@ function LoginForm({ onSuccessRedirectTo, error, setError }: LoginFormProps) {
             type="password"
             placeholder="Password"
             autoComplete="current-password"
-            data-cy="loginpage-input-password"
+            data-testid="loginpage-input-password"
           />
 
           <CheckboxControl
             control={form.control}
             name="rememberMe"
             label="Remember me"
-            data-cy="loginpage-input-rememberme"
+            data-testid="loginpage-input-rememberme"
           />
 
           <div className="stack-col items-start gap-2">
@@ -183,7 +189,11 @@ function LoginForm({ onSuccessRedirectTo, error, setError }: LoginFormProps) {
 
           <p className="lineText w-full text-gray-700">Or continue with</p>
 
-          <SocialLoginOptions next={onSuccessRedirectTo} persistSession={rememberMe} />
+          <SocialLoginOptions
+            next={onSuccessRedirectTo}
+            persistSession={rememberMe}
+            autoOpenQRLogin={autoOpenQRLogin}
+          />
         </div>
       </form>
     </Form>

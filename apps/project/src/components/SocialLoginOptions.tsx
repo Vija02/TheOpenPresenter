@@ -1,4 +1,5 @@
 import { OverlayToggle } from "@repo/ui";
+import { useEffect, useRef } from "react";
 import { BsGithub, BsQrCodeScan } from "react-icons/bs";
 import { FcGoogle } from "react-icons/fc";
 
@@ -8,6 +9,7 @@ export interface SocialLoginOptionsProps {
   next: string;
   persistSession?: boolean;
   buttonTextFromService?: (service: string) => string;
+  autoOpenQRLogin?: boolean;
 }
 
 function defaultButtonTextFromService(service: string) {
@@ -18,8 +20,16 @@ export function SocialLoginOptions({
   next,
   persistSession,
   buttonTextFromService = defaultButtonTextFromService,
+  autoOpenQRLogin = false,
 }: SocialLoginOptionsProps) {
   const persistSessionParam = persistSession ? "&persist-session=1" : "";
+  const qrToggleRef = useRef<(() => void) | null>(null);
+
+  useEffect(() => {
+    if (autoOpenQRLogin && qrToggleRef.current) {
+      qrToggleRef.current();
+    }
+  }, [autoOpenQRLogin]);
 
   return (
     <div className="stack-row justify-center gap-3 w-full">
@@ -44,18 +54,21 @@ export function SocialLoginOptions({
         </div>
       </a>
       <OverlayToggle
-        toggler={({ onToggle }) => (
-          <div
-            className="cursor-pointer flex-1 hover:bg-gray-100 transition-colors"
-            onClick={onToggle}
-          >
-            <div className="border border-gray-600 rounded-sm p-2">
-              <div className="center">
-                <BsQrCodeScan className="text-2xl text-black" />
+        toggler={({ onToggle }) => {
+          qrToggleRef.current = onToggle;
+          return (
+            <div
+              className="cursor-pointer flex-1 hover:bg-gray-100 transition-colors"
+              onClick={onToggle}
+            >
+              <div className="border border-gray-600 rounded-sm p-2">
+                <div className="center">
+                  <BsQrCodeScan className="text-2xl text-black" />
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          );
+        }}
       >
         <QRLoginModal next={next} persistSession={persistSession} />
       </OverlayToggle>
