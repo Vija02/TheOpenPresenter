@@ -4,7 +4,7 @@ interface FourOhFourProps {
 
 export function FourOhFour({ loggedIn }: FourOhFourProps) {
   return (
-    <div data-cy="fourohfour-div" className="text-center center mt-[15vh]">
+    <div data-testid="fourohfour-div" className="text-center center mt-[15vh]">
       <div className="stack-col">
         <p className="text-6xl">404</p>
         <p>

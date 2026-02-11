@@ -120,7 +120,7 @@ function ProfileSettingsForm({
           name="name"
           label="Name"
           autoComplete="name"
-          data-cy="settingsprofilepage-input-name"
+          data-testid="settingsprofilepage-input-name"
         />
 
         <InputControl
@@ -128,7 +128,7 @@ function ProfileSettingsForm({
           name="username"
           label="Username"
           autoComplete="username"
-          data-cy="settingsprofilepage-input-username"
+          data-testid="settingsprofilepage-input-username"
         />
 
         {error ? (
@@ -143,7 +143,7 @@ function ProfileSettingsForm({
           type="submit"
           variant="success"
           isLoading={form.formState.isSubmitting}
-          data-cy="settingsprofilepage-submit-button"
+          data-testid="settingsprofilepage-submit-button"
         >
           Update Profile
         </Button>

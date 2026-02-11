@@ -41,7 +41,7 @@ function Email({
   const actions = [
     email.isPrimary && (
       <span
-        data-cy="settingsemails-indicator-primary"
+        data-testid="settingsemails-indicator-primary"
         className="text-orange-500 font-bold"
       >
         Primary
@@ -60,7 +60,7 @@ function Email({
         cancelText="No"
         key="remove"
       >
-        <Button size="sm" variant="link" data-cy="settingsemails-button-delete">
+        <Button size="sm" variant="link" data-testid="settingsemails-button-delete">
           Delete
         </Button>
       </PopConfirm>
@@ -84,7 +84,7 @@ function Email({
         size="sm"
         variant="link"
         onClick={() => makeEmailPrimary({ emailId: email.id })}
-        data-cy="settingsemails-button-makeprimary"
+        data-testid="settingsemails-button-makeprimary"
       >
         Make primary
       </Button>
@@ -93,7 +93,7 @@ function Email({
 
   return (
     <tr
-      data-cy={`settingsemails-emailitem-${email.email.replace(
+      data-testid={`settingsemails-emailitem-${email.email.replace(
         /[^a-zA-Z0-9]/g,
         "-",
       )}`}
@@ -202,7 +202,7 @@ const Settings_Emails = () => {
               variant="success"
               size="sm"
               onClick={() => setShowAddEmailForm(true)}
-              data-cy="settingsemails-button-addemail"
+              data-testid="settingsemails-button-addemail"
             >
               Add another email
             </Button>
@@ -266,7 +266,7 @@ function AddEmailForm({ error, setError, onComplete }: AddEmailFormProps) {
             name="email"
             label="New email"
             autoComplete="email"
-            data-cy="settingsemails-input-email"
+            data-testid="settingsemails-input-email"
           />
 
           {error ? (
@@ -279,7 +279,7 @@ function AddEmailForm({ error, setError, onComplete }: AddEmailFormProps) {
             type="submit"
             variant="success"
             isLoading={form.formState.isSubmitting}
-            data-cy="settingsemails-button-submit"
+            data-testid="settingsemails-button-submit"
           >
             Add email
           </Button>

@@ -150,7 +150,7 @@ export function SharedOrgLayout({
               size="sm"
               variant="link"
               className="text-tertiary"
-              data-cy="header-logout-button"
+              data-testid="header-logout-button"
             >
               Logout
             </Button>

@@ -133,7 +133,7 @@ const Register = () => {
                       name="name"
                       label="Name"
                       autoComplete="name"
-                      data-cy="registerpage-input-name"
+                      data-testid="registerpage-input-name"
                       onChange={(e) => {
                         const newValue = e.target.value as string;
                         const newUsername = newValue
@@ -152,7 +152,7 @@ const Register = () => {
                       name="username"
                       label="Username"
                       autoComplete="username"
-                      data-cy="registerpage-input-username"
+                      data-testid="registerpage-input-username"
                     />
 
                     <InputControl
@@ -161,7 +161,7 @@ const Register = () => {
                       label="E-mail"
                       type="email"
                       autoComplete="email"
-                      data-cy="registerpage-input-email"
+                      data-testid="registerpage-input-email"
                     />
 
                     <InputControl
@@ -171,7 +171,7 @@ const Register = () => {
                       placeholder="Password"
                       type="password"
                       autoComplete="new-password"
-                      data-cy="registerpage-input-password"
+                      data-testid="registerpage-input-password"
                     />
 
                     <WrappedPasswordStrength
@@ -185,7 +185,7 @@ const Register = () => {
                       placeholder="Password"
                       type="password"
                       autoComplete="new-password"
-                      data-cy="registerpage-input-password2"
+                      data-testid="registerpage-input-password2"
                     />
 
                     <Link asChild>
@@ -207,7 +207,7 @@ const Register = () => {
                       type="submit"
                       variant="success"
                       isLoading={form.formState.isSubmitting}
-                      data-cy="registerpage-submit-button"
+                      data-testid="registerpage-submit-button"
                       className="w-full"
                     >
                       Register

@@ -85,7 +85,7 @@ const CreateOrganizationPage = () => {
                   control={form.control}
                   name="name"
                   label="Name"
-                  data-cy="createorganization-input-name"
+                  data-testid="createorganization-input-name"
                 />
 
                 <SlugCheck name={form.watch("name")} />
@@ -97,7 +97,7 @@ const CreateOrganizationPage = () => {
                   >
                     <div className="block">
                       {code === "NUNIQ" ? (
-                        <span data-cy="createorganization-alert-nuniq">
+                        <span data-testid="createorganization-alert-nuniq">
                           That organization name is already in use, please
                           choose a different organization name.
                         </span>
@@ -118,7 +118,7 @@ const CreateOrganizationPage = () => {
                   <Button
                     type="submit"
                     variant="success"
-                    data-cy="createorganization-submit-button"
+                    data-testid="createorganization-submit-button"
                     isLoading={form.formState.isSubmitting}
                   >
                     Create organization
@@ -201,11 +201,11 @@ const SlugCheck = ({ name }: { name: string }) => {
     <>
       <p>
         Your organization URL will be{" "}
-        <span data-cy="createorganization-slug-value">{`${window.location.origin}/o/${slug}`}</span>
+        <span data-testid="createorganization-slug-value">{`${window.location.origin}/o/${slug}`}</span>
       </p>
 
       {existingOrganizationData?.organizationBySlug && (
-        <p className="text-red-500" data-cy="createorganization-hint-nameinuse">
+        <p className="text-red-500" data-testid="createorganization-hint-nameinuse">
           Organization name is already in use
         </p>
       )}
