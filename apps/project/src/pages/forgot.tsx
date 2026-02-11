@@ -66,7 +66,7 @@ const ForgotPassword = () => {
                 label="E-mail"
                 placeholder="Enter your e-mail"
                 autoComplete="email"
-                data-cy="forgotpage-input-username"
+                data-testid="forgotpage-input-username"
                 autoFocus
               />
 
@@ -95,7 +95,7 @@ const ForgotPassword = () => {
               <Button
                 type="submit"
                 variant="success"
-                data-cy="forgotpage-button-submit"
+                data-testid="forgotpage-button-submit"
               >
                 Reset Password
               </Button>

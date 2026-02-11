@@ -131,7 +131,7 @@ export function SharedLayout({
                       size="sm"
                       variant="link"
                       className="text-tertiary"
-                      data-cy="header-login-button"
+                      data-testid="header-login-button"
                     >
                       Sign in
                     </Button>
@@ -142,7 +142,7 @@ export function SharedLayout({
                     <Button
                       size="sm"
                       variant="success"
-                      data-cy="header-register-button"
+                      data-testid="header-register-button"
                     >
                       Sign up for free
                     </Button>
