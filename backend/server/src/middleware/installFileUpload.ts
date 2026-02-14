@@ -15,13 +15,12 @@ import http from "http";
 import { createProxyMiddleware } from "http-proxy-middleware";
 import multer from "multer";
 import os from "os";
-import { Pool } from "pg";
 import sharp from "sharp";
 import { Readable } from "stream";
 import { pipeline } from "stream/promises";
 import { TypeId, fromString, toUUID, typeidUnboxed } from "typeid-js";
 
-import { withUserPgPool } from "../utils/withUserPgPool";
+import { checkUserAuth } from "../utils/auth";
 import { getRootPgPool } from "./installDatabasePools";
 
 export function getMediaObject(app: Express): media.MediaDataHandler {
@@ -395,43 +394,6 @@ function isValidURL(string: string) {
     return false;
   }
 }
-
-const checkUserAuth = async (
-  app: Express,
-  {
-    organizationId,
-    sessionId,
-    projectId,
-  }: { organizationId: string; sessionId: string; projectId?: string },
-) => {
-  return await withUserPgPool(app, sessionId, async (client) => {
-    const {
-      rows: [row],
-    } = await client.query(
-      "select * from app_public.organizations where id = $1",
-      [organizationId],
-    );
-    if (!row) {
-      throw new Error("Not Authorized");
-    }
-    if (projectId) {
-      const {
-        rows: [projectRow],
-      } = await client.query(
-        "select * from app_public.projects where id = $1",
-        [projectId],
-      );
-      if (!projectRow) {
-        throw new Error("Not Authorized");
-      }
-    }
-    const {
-      rows: [user],
-    } = await client.query("select app_public.current_user_id() as id");
-
-    return user.id;
-  });
-};
 
 interface OurRequest extends http.IncomingMessage {
   user: { session_id: string };
