@@ -1,6 +1,7 @@
 import { SharedOrgLayout } from "@/components/SharedOrgLayout";
 import { Tag } from "@/components/Tag";
 import CreateProjectModal from "@/containers/CreateProjectModal";
+import { HostProjects } from "@/containers/Dashboard/HostProjects";
 import EditProjectModal from "@/containers/EditProjectModal";
 import ImportProjectModal from "@/containers/ImportProjectModal";
 import { useOrganizationSlug } from "@/lib/permissionHooks/organization";
@@ -95,6 +96,12 @@ const OrganizationPage = () => {
           </OverlayToggle>
         </div>
       </div>
+
+      <HostProjects
+        organizationActiveDevices={
+          data?.organizationBySlug?.organizationActiveDevices.nodes ?? []
+        }
+      />
 
       <div className="stack-col items-center mb-2 flex-wrap gap-0">
         {emptyProject && <EmptyProject />}

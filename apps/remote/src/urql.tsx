@@ -15,6 +15,7 @@ export const urqlClient = new URQLClient({
     method: "POST",
     headers: {
       "CSRF-Token": appData.getCSRFToken(),
+      ...appData.getProxyConfig().headers,
     },
   },
   preferGetMethod: false,

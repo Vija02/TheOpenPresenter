@@ -10,6 +10,7 @@ export const trpcClient = trpc.createClient({
       url: window.location.origin + "/trpc",
       headers: {
         "csrf-token": appData.getCSRFToken(),
+        ...appData.getProxyConfig().headers,
       },
     }),
   ],
