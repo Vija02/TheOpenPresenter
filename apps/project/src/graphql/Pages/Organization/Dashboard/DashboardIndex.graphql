@@ -21,5 +21,12 @@ query OrganizationDashboardIndexPage($slug: String!) {
         ...Tag
       }
     }
+    organizationActiveDevices(condition: { isActive: true }) {
+      nodes {
+        irohEndpointId
+        irohTicket
+        activeProjectIds
+      }
+    }
   }
 }

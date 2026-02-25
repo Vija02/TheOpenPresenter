@@ -15,6 +15,38 @@ const getOTELEnabled = () => (window as any)?.__APP_DATA__?.ENABLE_OTEL === "1";
 const getCustomEnv = (envName: string) =>
   (window as any)?.__APP_DATA__?.[envName];
 
+export type ProxyConfig = {
+  isProxy: boolean;
+  cloudOrgSlug: string | null;
+  endpointId: string | null;
+  headers: Record<string, string>;
+};
+
+const getProxyConfig = (): ProxyConfig => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const cloudOrgSlug = urlParams.get("pOrg");
+  const endpointId = urlParams.get("pEndpoint");
+
+  if (cloudOrgSlug && endpointId) {
+    return {
+      isProxy: true,
+      cloudOrgSlug,
+      endpointId,
+      headers: {
+        "x-organization-slug": cloudOrgSlug,
+        "x-iroh-endpoint-id": endpointId,
+      },
+    };
+  }
+
+  return {
+    isProxy: false,
+    cloudOrgSlug: null,
+    endpointId: null,
+    headers: {},
+  };
+};
+
 const getPluginData = () =>
   (window as any)?.__APP_DATA__?.pluginData as Record<
     string,
@@ -28,4 +60,5 @@ export const appData = {
   getOTELEnabled,
   getCustomEnv,
   getPluginData,
+  getProxyConfig,
 };

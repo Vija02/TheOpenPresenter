@@ -1,0 +1,13 @@
+query OrganizationDashboardHostProjects($projectIds: [UUID!]) {
+  projects(filter: { id: { in: $projectIds } }) {
+    nodes {
+      id
+      slug
+      name
+      organization {
+        id
+        slug
+      }
+    }
+  }
+}

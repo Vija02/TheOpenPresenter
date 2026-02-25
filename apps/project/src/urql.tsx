@@ -47,7 +47,7 @@ export function resetWebsocketConnection(): void {
   wsClient = createWsClient();
 }
 
-const makeClient = () =>
+const makeClient = (extraHeaders?: Record<string, string>) =>
   new URQLClient({
     url: `${window.location.origin}/graphql`,
     fetchOptions: {
@@ -55,6 +55,7 @@ const makeClient = () =>
       method: "POST",
       headers: {
         "CSRF-Token": appData.getCSRFToken(),
+        ...extraHeaders,
       },
     },
     preferGetMethod: false,
@@ -105,3 +106,16 @@ const makeClient = () =>
       }),
     ],
   });
+
+type SimpleURQLProviderProps = React.PropsWithChildren<{
+  headers: Record<string, string>;
+}>;
+
+export function SimpleURQLProvider({
+  children,
+  headers,
+}: SimpleURQLProviderProps) {
+  const [client] = React.useState(() => makeClient(headers));
+
+  return <Provider value={client}>{children}</Provider>;
+}
