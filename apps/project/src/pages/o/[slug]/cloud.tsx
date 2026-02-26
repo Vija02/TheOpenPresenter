@@ -7,10 +7,20 @@ import {
   useSyncCloudConnectionMutation,
 } from "@repo/graphql";
 import { extractError, globalState } from "@repo/lib";
-import { Alert, Button, Input, Option } from "@repo/ui";
+import {
+  Alert,
+  Button,
+  Input,
+  Option,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+  useDisclosure,
+} from "@repo/ui";
 import { EventSourcePlus } from "event-source-plus";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { GoUnlink } from "react-icons/go";
+import { IoChevronDown } from "react-icons/io5";
 import { CombinedError } from "urql";
 
 import "./index.css";
@@ -68,59 +78,93 @@ const OrganizationCloudPage = () => {
   const cloudConnection = data?.organizationBySlug?.cloudConnections.nodes?.[0];
   const [hostInput, setHostInput] = useState("theopenpresenter.com");
   const connectedHost = cloudConnection?.host ?? "theopenpresenter.com";
+  const [manualAuthLink, setManualAuthLink] = useState<string | null>(null);
+  const connectDropdown = useDisclosure();
 
-  const onConnect = useCallback(() => {
-    setIsConnecting(true);
-    setError(null);
+  const connectionRef = useRef<{
+    controller: AbortController;
+    popup: WindowProxy | null;
+  } | null>(null);
 
-    const host = hostInput.trim() ?? "theopenpresenter.com";
-    const remoteUrl = host.startsWith("http") ? host : `https://${host}`;
+  const onConnect = useCallback(
+    (manual: boolean = false) => {
+      setIsConnecting(true);
+      setError(null);
+      setManualAuthLink(null);
+      connectDropdown.onClose();
 
-    const eventSource = new EventSourcePlus(
-      `/cloud/connect?organizationId=${data?.organizationBySlug?.id}&remote=${remoteUrl}`,
-      {
-        retryStrategy: "on-error",
-      },
-    );
-    let popup: WindowProxy | null;
-    const controller = eventSource.listen({
-      onMessage(ev) {
-        try {
-          const data = JSON.parse(ev.data);
+      const host = hostInput.trim() ?? "theopenpresenter.com";
+      const remoteUrl = host.startsWith("http") ? host : `https://${host}`;
 
-          if (data.authLink) {
-            if (window.__TAURI__) {
-              const { openPath } = window.__TAURI__.opener;
-              openPath(data.authLink);
-            } else {
-              popup = window.open(data.authLink, "popup", "popup=true");
+      const eventSource = new EventSourcePlus(
+        `/cloud/connect?organizationId=${data?.organizationBySlug?.id}&remote=${remoteUrl}`,
+        {
+          retryStrategy: "on-error",
+        },
+      );
+      let popup: WindowProxy | null = null;
+      const controller = eventSource.listen({
+        onMessage(ev) {
+          try {
+            const data = JSON.parse(ev.data);
+
+            if (data.authLink) {
+              if (manual) {
+                setManualAuthLink(data.authLink);
+              } else if (window.__TAURI__) {
+                const { openPath } = window.__TAURI__.opener;
+                openPath(data.authLink);
+              } else {
+                popup = window.open(data.authLink, "popup", "popup=true");
+                if (connectionRef.current) {
+                  connectionRef.current.popup = popup;
+                }
+              }
             }
+            if (data.error) {
+              controller.abort();
+              setError(new Error(data.error));
+              setIsConnecting(false);
+              connectionRef.current = null;
+            }
+            if (data.done) {
+              publish();
+              setIsConnecting(false);
+              setManualAuthLink(null);
+              connectionRef.current = null;
+            }
+          } catch (e) {
+            // Keep alive
           }
-          if (data.error) {
-            controller.abort();
-            setError(new Error(data.error));
-            setIsConnecting(false);
-          }
-          if (data.done) {
-            publish();
-            setIsConnecting(false);
-          }
-        } catch (e) {
-          // Keep alive
-        }
-      },
-      onRequestError(ctx) {
-        setError(ctx.error);
-        setIsConnecting(false);
-        popup?.close();
-      },
-      onResponseError(ctx) {
-        setError(ctx.error ?? new Error("Unknown error occurred"));
-        setIsConnecting(false);
-        popup?.close();
-      },
-    });
-  }, [publish, data?.organizationBySlug?.id, hostInput]);
+        },
+        onRequestError(ctx) {
+          setError(ctx.error);
+          setIsConnecting(false);
+          popup?.close();
+          connectionRef.current = null;
+        },
+        onResponseError(ctx) {
+          setError(ctx.error ?? new Error("Unknown error occurred"));
+          setIsConnecting(false);
+          popup?.close();
+          connectionRef.current = null;
+        },
+      });
+
+      connectionRef.current = { controller, popup };
+    },
+    [publish, data?.organizationBySlug?.id, hostInput, connectDropdown],
+  );
+
+  const onCancelConnect = useCallback(() => {
+    if (connectionRef.current) {
+      connectionRef.current.controller.abort();
+      connectionRef.current.popup?.close();
+      connectionRef.current = null;
+    }
+    setIsConnecting(false);
+    setManualAuthLink(null);
+  }, []);
 
   const onSelectOrganization = useCallback(
     async (organizationSlug: string) => {
@@ -231,14 +275,73 @@ const OrganizationCloudPage = () => {
                     Enter the cloud host URL (defaults to theopenpresenter.com)
                   </p>
                 </div>
-                <Button
-                  onClick={onConnect}
-                  disabled={!hostInput.trim()}
-                  isLoading={isConnecting}
-                  variant="outline"
-                >
-                  {isConnecting ? "Connecting..." : "Connect to Cloud"}
-                </Button>
+                <div className="flex">
+                  <Button
+                    onClick={
+                      isConnecting ? onCancelConnect : () => onConnect(false)
+                    }
+                    disabled={!hostInput.trim()}
+                    isLoading={isConnecting}
+                    variant="outline"
+                    className="rounded-r-none border-r-0 w-36"
+                  >
+                    {isConnecting ? (
+                      <>
+                        <span className="[button:hover_&]:hidden">
+                          Connecting...
+                        </span>
+                        <span className="hidden [button:hover_&]:inline">
+                          Cancel
+                        </span>
+                      </>
+                    ) : (
+                      "Connect to Cloud"
+                    )}
+                  </Button>
+                  <Popover
+                    open={connectDropdown.open}
+                    onOpenChange={connectDropdown.setOpen}
+                  >
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="rounded-l-none px-2"
+                        disabled={!hostInput.trim() || isConnecting}
+                      >
+                        <IoChevronDown />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      align="end"
+                      className="w-48 p-1"
+                      hideCloseButton
+                      hideArrow
+                    >
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full justify-start"
+                        onClick={() => onConnect(true)}
+                      >
+                        Connect manually
+                      </Button>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                {manualAuthLink && (
+                  <Alert variant="info" title="Manual Authentication">
+                    <p className="text-sm mb-2">
+                      Open this link in your browser to authenticate:
+                    </p>
+                    <Input
+                      type="text"
+                      value={manualAuthLink}
+                      readOnly
+                      className="font-mono text-xs bg-background"
+                      onClick={(e) => e.currentTarget.select()}
+                    />
+                  </Alert>
+                )}
               </div>
             ) : (
               <div className="space-y-2">
