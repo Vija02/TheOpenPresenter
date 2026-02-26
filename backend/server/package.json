@@ -47,6 +47,8 @@
     "chalk": "^5.3.0",
     "connect-pg-simple": "^10.0.0",
     "connect-redis": "^7.1.1",
+    "cookie": "^1.1.1",
+    "cookie-signature": "^1.2.2",
     "csurf": "^1.11.0",
     "event-source-plus": "^0.1.12",
     "express": "^4.21.2",
@@ -75,6 +77,7 @@
     "source-map-support": "^0.5.21",
     "ts-node": "^10.9.2",
     "typeid-js": "^1.1.0",
+    "uid-safe": "^2.1.5",
     "valtio": "^2.1.2",
     "valtio-yjs": "^0.6.0",
     "vite-express": "^0.21.1",
@@ -84,8 +87,10 @@
   },
   "devDependencies": {
     "@repo/typescript-config": "*",
+    "@types/cookie-signature": "^1",
     "@types/serialize-javascript": "^5.0.4",
     "@types/set-cookie-parser": "^2",
+    "@types/uid-safe": "^2",
     "mock-req": "^0.2.0",
     "tsup": "^8.3.6",
     "vitest": "^2.1.8"

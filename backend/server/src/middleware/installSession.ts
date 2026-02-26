@@ -6,6 +6,12 @@ import * as redis from "redis";
 import { getWebsocketMiddlewares } from "../app";
 import { getRootPgPool } from "./installDatabasePools";
 
+const SESSION_STORE_KEY = "sessionStore";
+
+export function getSessionStore(app: Express): session.Store {
+  return app.get(SESSION_STORE_KEY);
+}
+
 const { default: RedisStore } = require("connect-redis");
 
 const PgStore = ConnectPgSimple(session);
@@ -79,6 +85,8 @@ export default async (app: Express) => {
         schemaName: "app_private",
         tableName: "connect_pg_simple_sessions",
       });
+
+  app.set(SESSION_STORE_KEY, store);
 
   const getSessionMiddleware = (persistent?: boolean) =>
     session({

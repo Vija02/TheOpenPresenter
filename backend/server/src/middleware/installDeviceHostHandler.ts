@@ -1,12 +1,16 @@
 import { logger } from "@repo/observability";
 import axios from "axios";
 import { json } from "body-parser";
+import cookie from "cookie";
+import signature from "cookie-signature";
 import { Express } from "express";
 import { PoolClient } from "pg";
+import uid from "uid-safe";
 
 import { getShutdownActions } from "../app";
 import { getRootPgPool } from "./installDatabasePools";
 import { disposableDocumentManager } from "./installHocuspocus";
+import { getSessionStore } from "./installSession";
 
 const PING_INTERVAL_MS = 30000; // 30 seconds
 const JITTER_MAX_MS = 5000; // Maximum jitter of 5 seconds
@@ -21,6 +25,7 @@ interface CloudConnection {
   session_cookie: string;
   session_cookie_expiry: Date;
   target_organization_slug: string | null;
+  creator_user_id: string | null;
 }
 
 /**
@@ -39,9 +44,90 @@ export default (app: Express) => {
   let irohTicket: string | null = null;
   let isInitialized = false;
 
-  // This endpoint should be hit before anything starts
-  // The rust code will initialize this
-  // Once it's initialized, we'll start polling the cloud
+  // Cache for host session cookies per cloud connection
+  const hostSessionCookies = new Map<string, string>();
+
+  // Get or create a session cookie for the host to use when proxied requests come back
+  const getHostSessionCookie = async (
+    cloudConnection: CloudConnection,
+  ): Promise<string | null> => {
+    const cached = hostSessionCookies.get(cloudConnection.id);
+    if (cached) {
+      return cached;
+    }
+
+    // If no creator_user_id, we can't create a session
+    if (!cloudConnection.creator_user_id) {
+      logger.debug(
+        { cloudConnectionId: cloudConnection.id },
+        "No creator_user_id for cloud connection, cannot create host session",
+      );
+      return null;
+    }
+
+    try {
+      const { rows } = await rootPgPool.query<{ uuid: string }>(
+        `INSERT INTO app_private.sessions (user_id) VALUES ($1) RETURNING uuid`,
+        [cloudConnection.creator_user_id],
+      );
+
+      if (rows.length === 0) {
+        logger.error(
+          { cloudConnectionId: cloudConnection.id },
+          "Failed to create session - no rows returned",
+        );
+        return null;
+      }
+
+      const sessionUuid = rows[0]!.uuid;
+
+      // Create the session data - following how express-session does it
+      const sid = uid.sync(24);
+      const age = 3 * 24 * 60 * 60 * 1000; // 3 days
+      const sessionData = {
+        cookie: {
+          originalMaxAge: age,
+          expires: new Date(Date.now() + age).toISOString(),
+          httpOnly: true,
+          path: "/",
+          sameSite: "lax",
+        },
+        passport: {
+          user: sessionUuid,
+        },
+      };
+
+      // Store in the session store (Redis or Postgres)
+      const store = getSessionStore(app);
+      await new Promise<void>((resolve, reject) => {
+        store.set(sid, sessionData as any, (err) => {
+          if (err) reject(err);
+          else resolve();
+        });
+      });
+      // Format the cookie
+      const signed = "s:" + signature.sign(sid, process.env.SECRET!);
+      const cookieValue = cookie.serialize("connect.sid", signed);
+      hostSessionCookies.set(cloudConnection.id, cookieValue);
+
+      logger.info(
+        { cloudConnectionId: cloudConnection.id },
+        "Created host session cookie for cloud connection",
+      );
+
+      return cookieValue;
+    } catch (err) {
+      logger.error(
+        { cloudConnectionId: cloudConnection.id, err },
+        "Failed to create host session cookie",
+      );
+      return null;
+    }
+  };
+
+  // This endpoint initializes the device host handler with iroh connection info.
+  // The rust code (Tauri) calls this once on startup.
+  // E2E tests can call it again to trigger an immediate sync of active projects.
   app.post("/device/host/init", json(), async (req, res) => {
     try {
       const { irohEndpointId: endpointId, irohTicket: ticket } = req.body;
@@ -57,27 +143,34 @@ export default (app: Express) => {
         return;
       }
 
+      const wasAlreadyInitialized = isInitialized;
+
       irohEndpointId = endpointId;
       irohTicket = ticket;
       isInitialized = true;
 
       logger.info(
-        { irohEndpointId },
+        { irohEndpointId, wasAlreadyInitialized },
         "Host device initialized with iroh connection info",
       );
 
-      // Start polling now that we're initialized
+      // Sync polling state
       syncPollingState().catch((err) => {
         logger.error(
           { err },
           "Failed to sync polling state after initialization",
         );
       });
-      setupNotifyListener().catch((err) => {
-        logger.error({ err }, "Failed to initialize notify listener");
-      });
 
-      console.log("Device initialized");
+      // Only setup listener on first init
+      if (!wasAlreadyInitialized) {
+        setupNotifyListener().catch((err) => {
+          logger.error({ err }, "Failed to initialize notify listener");
+        });
+        console.log("Device initialized");
+      } else {
+        console.log("Device re-synced");
+      }
 
       res.json({ success: true });
     } catch (err) {
@@ -86,7 +179,43 @@ export default (app: Express) => {
     }
   });
 
-  const pingCloudConnection = async (cloudConnection: CloudConnection) => {
+  // Stop the device host handler - stops all polling and resets state
+  app.post("/device/host/stop", json(), async (req, res) => {
+    try {
+      if (!isInitialized) {
+        res.json({ success: true, message: "Already stopped" });
+        return;
+      }
+
+      logger.info("Stopping device host handler");
+
+      // Stop all polling
+      stopAllPolling();
+
+      // Release listener client
+      if (listenerClient) {
+        listenerClient.release();
+        listenerClient = null;
+      }
+
+      // Reset state
+      irohEndpointId = null;
+      irohTicket = null;
+      isInitialized = false;
+
+      console.log("Device stopped");
+
+      res.json({ success: true });
+    } catch (err) {
+      logger.error({ err }, "Error handling /device/host/stop request");
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  const pingCloudConnection = async (
+    cloudConnection: CloudConnection,
+    hostSessionCookie: string | null,
+  ) => {
     // Don't ping if not initialized
     if (!isInitialized || !irohEndpointId || !irohTicket) {
       logger.trace(
@@ -117,6 +246,7 @@ export default (app: Express) => {
           irohEndpointId,
           irohTicket,
           activeProjectIds: filteredProjectIds,
+          hostSessionCookie,
         },
         {
           headers: {
@@ -142,8 +272,9 @@ export default (app: Express) => {
 
   const scheduleNextPing = (cloudConnection: CloudConnection) => {
     const jitteredInterval = PING_INTERVAL_MS + getJitter();
-    const timeoutId = setTimeout(() => {
-      pingCloudConnection(cloudConnection);
+    const timeoutId = setTimeout(async () => {
+      const hostSessionCookie = await getHostSessionCookie(cloudConnection);
+      pingCloudConnection(cloudConnection, hostSessionCookie);
       // Only schedule next if still active
       if (activePollers.has(cloudConnection.id)) {
         scheduleNextPing(cloudConnection);
@@ -165,8 +296,9 @@ export default (app: Express) => {
 
     // Ping immediately with initial jitter to spread out requests on startup
     const initialDelay = getJitter();
-    setTimeout(() => {
-      pingCloudConnection(cloudConnection);
+    setTimeout(async () => {
+      const hostSessionCookie = await getHostSessionCookie(cloudConnection);
+      pingCloudConnection(cloudConnection, hostSessionCookie);
     }, initialDelay);
 
     // Schedule the first recurring ping after initial delay + base interval
@@ -233,11 +365,12 @@ export default (app: Express) => {
 
     // Trigger ping for current connections
     Array.from(activePollers.entries()).forEach(
-      ([cloudConnectionId, timeoutId]) => {
+      async ([cloudConnectionId, timeoutId]) => {
         clearTimeout(timeoutId);
 
         const cloudConnection = rows.find((x) => x.id === cloudConnectionId)!;
-        pingCloudConnection(cloudConnection);
+        const hostSessionCookie = await getHostSessionCookie(cloudConnection);
+        pingCloudConnection(cloudConnection, hostSessionCookie);
         scheduleNextPing(cloudConnection);
       },
     );
