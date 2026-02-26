@@ -1,7 +1,7 @@
 import { logger } from "@repo/observability";
 import axios from "axios";
 import { json } from "body-parser";
-import cookie from "cookie";
+import * as cookie from "cookie";
 import signature from "cookie-signature";
 import { Express } from "express";
 import { PoolClient } from "pg";
