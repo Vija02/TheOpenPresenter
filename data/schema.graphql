@@ -2715,6 +2715,7 @@ type Organization {
 
 type OrganizationActiveDevice {
   activeProjectIds: [String]!
+  hostSessionCookie: String
   irohEndpointId: String!
   irohTicket: String!
 
@@ -2766,6 +2767,7 @@ input OrganizationActiveDeviceFilter {
 """An input for mutations affecting `OrganizationActiveDevice`"""
 input OrganizationActiveDeviceInput {
   activeProjectIds: [String]
+  hostSessionCookie: String
   irohEndpointId: String!
   irohTicket: String!
   organizationId: UUID!

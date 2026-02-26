@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict oyrajxC8ckn0g2tD6mfHpXRdMdkvBkrO8lUb1ahPCrHwit6sS3Uf8hDQSmCfJKU
+\restrict Y5BwnfqdecJ3uWojUFgQXLcf8dvKmTzT0XSRaLsYjC1dy81b3QDmSPIfXZ8c2iC
 
 -- Dumped from database version 17.0 (Debian 17.0-1.pgdg120+1)
 -- Dumped by pg_dump version 18.1
@@ -2357,7 +2357,8 @@ CREATE TABLE app_public.organization_active_devices (
     iroh_endpoint_id text NOT NULL,
     iroh_ticket text NOT NULL,
     active_project_ids text[] DEFAULT '{}'::text[] NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    host_session_cookie text
 );
 
 
@@ -4779,6 +4780,13 @@ GRANT INSERT(updated_at),UPDATE(updated_at) ON TABLE app_public.organization_act
 
 
 --
+-- Name: COLUMN organization_active_devices.host_session_cookie; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(host_session_cookie),UPDATE(host_session_cookie) ON TABLE app_public.organization_active_devices TO theopenpresenter_visitor;
+
+
+--
 -- Name: TABLE organization_join_requests; Type: ACL; Schema: app_public; Owner: -
 --
 
@@ -4950,5 +4958,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE theopenpresenter REVOKE ALL ON FUNCTIONS FROM 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict oyrajxC8ckn0g2tD6mfHpXRdMdkvBkrO8lUb1ahPCrHwit6sS3Uf8hDQSmCfJKU
+\unrestrict Y5BwnfqdecJ3uWojUFgQXLcf8dvKmTzT0XSRaLsYjC1dy81b3QDmSPIfXZ8c2iC
 

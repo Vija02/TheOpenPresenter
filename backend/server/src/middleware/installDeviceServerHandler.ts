@@ -15,6 +15,7 @@ const activeConnections = new Map<
     process: ChildProcess;
     ticket: string;
     port: number;
+    hostSessionCookie: string;
   }
 >();
 
@@ -62,6 +63,7 @@ const devicePingSchema = z.object({
   irohEndpointId: z.string().min(1),
   irohTicket: z.string().min(1),
   activeProjectIds: z.array(z.string()),
+  hostSessionCookie: z.string(),
 });
 
 export default (app: Express) => {
@@ -119,6 +121,7 @@ export default (app: Express) => {
 
       // Only fetch ticket from DB if we need to create a new connection
       let irohTicket: string | null = null;
+      let hostSessionCookie: string | null = null;
 
       // Check if we need to fetch the ticket and create a new connection
       const needsNewConnection =
@@ -127,10 +130,10 @@ export default (app: Express) => {
         connectionInfo.process.exitCode !== null;
 
       if (needsNewConnection) {
-        // Fetch the ticket from the database
+        // Fetch the ticket and host session cookie from the database
         await withUserPgPool(app, sessionId, async (client) => {
           const ticketResult = await client.query(
-            `SELECT iroh_ticket
+            `SELECT iroh_ticket, host_session_cookie
              FROM app_public.organization_active_devices
              WHERE organization_id = $1 AND iroh_endpoint_id = $2`,
             [organizationId, irohEndpointId],
@@ -144,6 +147,7 @@ export default (app: Express) => {
           }
 
           irohTicket = ticketResult.rows[0].iroh_ticket;
+          hostSessionCookie = ticketResult.rows[0].host_session_cookie;
         });
 
         // Check if ticket changed (if we had an old connection)
@@ -186,6 +190,7 @@ export default (app: Express) => {
             process: dumbpipe,
             ticket: irohTicket!,
             port,
+            hostSessionCookie: hostSessionCookie!,
           };
           activeConnections.set(connectionKey, connectionInfo);
 
@@ -302,12 +307,17 @@ export default (app: Express) => {
             proxyReq.removeHeader("x-organization-slug");
             proxyReq.removeHeader("x-iroh-endpoint-id");
 
+            if (connectionInfo.hostSessionCookie) {
+              proxyReq.setHeader("Cookie", connectionInfo.hostSessionCookie);
+            }
+
             logger.debug(
               {
                 organizationSlug,
                 irohEndpointId,
-                port: connectionInfo!.port,
+                port: connectionInfo.port,
                 path: req.url,
+                hasHostSessionCookie: !!connectionInfo.hostSessionCookie,
               },
               "Proxying request to TCP port",
             );
@@ -367,20 +377,32 @@ export default (app: Express) => {
     }
 
     // DEBT: This should take just the ticket, and we can infer the endpoint from there
-    const { organizationSlug, irohEndpointId, irohTicket, activeProjectIds } =
-      parseResult.data;
+    const {
+      organizationSlug,
+      irohEndpointId,
+      irohTicket,
+      activeProjectIds,
+      hostSessionCookie,
+    } = parseResult.data;
 
     try {
       await withUserPgPool(app, sessionId, async (client) => {
         await client.query(
-          `INSERT INTO app_public.organization_active_devices (organization_id, iroh_endpoint_id, iroh_ticket, active_project_ids, updated_at)
-           VALUES ((SELECT id FROM app_public.organizations WHERE slug = $1), $2, $3, $4, NOW())
+          `INSERT INTO app_public.organization_active_devices (organization_id, iroh_endpoint_id, iroh_ticket, active_project_ids, host_session_cookie, updated_at)
+           VALUES ((SELECT id FROM app_public.organizations WHERE slug = $1), $2, $3, $4, $5, NOW())
            ON CONFLICT (organization_id, iroh_endpoint_id)
            DO UPDATE SET
              iroh_ticket = EXCLUDED.iroh_ticket,
              active_project_ids = EXCLUDED.active_project_ids,
+             host_session_cookie = EXCLUDED.host_session_cookie,
              updated_at = NOW()`,
-          [organizationSlug, irohEndpointId, irohTicket, activeProjectIds],
+          [
+            organizationSlug,
+            irohEndpointId,
+            irohTicket,
+            activeProjectIds,
+            hostSessionCookie,
+          ],
         );
       });
 
