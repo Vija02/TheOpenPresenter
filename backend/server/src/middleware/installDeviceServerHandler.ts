@@ -157,7 +157,7 @@ export default (app: Express) => {
           const proxy = createProxyMiddleware({
             target: `http://localhost:${port}`,
             changeOrigin: true,
-            logger: console as any,
+            logger,
             proxyTimeout: 10_000,
             on: {
               proxyReq: (proxyReq, req) => {
@@ -249,7 +249,6 @@ export default (app: Express) => {
                 connectionInfo!.process.kill();
 
                 if (res && !res.headersSent) {
-                  console.log("HEADER NOT SENT, SENDING 500");
                   res.status(500).json({
                     errors: [
                       {
