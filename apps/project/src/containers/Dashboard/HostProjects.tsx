@@ -1,16 +1,11 @@
 import { useOrganizationSlug } from "@/lib/permissionHooks/organization";
 import { SimpleURQLProvider } from "@/urql";
 import { useOrganizationDashboardHostProjectsQuery } from "@repo/graphql";
-import {
-  Button,
-  Link,
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@repo/ui";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@repo/ui";
 import { createContext, useContext, useMemo, useState } from "react";
 import { FaInfoCircle } from "react-icons/fa";
-import { MdCoPresent } from "react-icons/md";
+
+import { ProjectCard } from "./ProjectCard";
 
 type OrganizationActiveDevice = {
   irohEndpointId: string;
@@ -64,13 +59,18 @@ export const HostProjects = ({
     <HostProjectsContext.Provider value={contextValue}>
       {hasAnyProjects && (
         <div className="flex items-center gap-2 mb-2">
-          <h2 className="text-lg font-semibold">Host Projects</h2>
+          <h2 className="text-2xl font-bold">
+            Projects from your other devices
+          </h2>
           <Tooltip>
             <TooltipTrigger>
               <FaInfoCircle className="text-gray-400 hover:text-gray-600 cursor-help" />
             </TooltipTrigger>
             <TooltipContent>
-              <p></p>
+              <p>
+                These projects are showing here because you have connected them
+                to the cloud
+              </p>
             </TooltipContent>
           </Tooltip>
         </div>
@@ -120,49 +120,22 @@ const HostProjectsDevice = ({ device }: HostProjectsDeviceProps) => {
         const projectSlug = project.slug;
         const orgSlug = project.organization?.slug;
 
+        const linkHref =
+          projectSlug && orgSlug
+            ? `/app/${orgSlug}/${projectSlug}?pOrg=${encodeURIComponent(slug)}&pEndpoint=${encodeURIComponent(device.irohEndpointId)}`
+            : "#";
+        const renderHref =
+          projectSlug && orgSlug
+            ? `/render/${orgSlug}/${projectSlug}?pOrg=${encodeURIComponent(slug)}&pEndpoint=${encodeURIComponent(device.irohEndpointId)}`
+            : "#";
+
         return (
-          <div
+          <ProjectCard
             key={`${device.irohEndpointId}-${project.id}`}
-            className="project--project-card group"
-            role="group"
-          >
-            <div className="flex items-center gap-2 justify-between sm:justify-start">
-              <Link
-                href={
-                  projectSlug && orgSlug
-                    ? `/app/${orgSlug}/${projectSlug}?pOrg=${encodeURIComponent(slug)}&pEndpoint=${encodeURIComponent(device.irohEndpointId)}`
-                    : "#"
-                }
-                className="project--project-card-main-link"
-              >
-                <p className="text-sm">
-                  {project.name !== ""
-                    ? project.name
-                    : projectSlug || project.id}
-                </p>
-                <p className="text-xs text-tertiary font-mono">
-                  {device.irohEndpointId}
-                </p>
-              </Link>
-              <div className="flex">
-                {projectSlug && orgSlug && (
-                  <Link
-                    href={`/render/${orgSlug}/${projectSlug}?pOrg=${encodeURIComponent(slug)}&pEndpoint=${encodeURIComponent(device.irohEndpointId)}`}
-                    isExternal
-                  >
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      role="button"
-                      className="text-tertiary hover:bg-blue-100 hover:text-accent opacity-100 md:opacity-0 group-hover:opacity-100"
-                    >
-                      <MdCoPresent />
-                    </Button>
-                  </Link>
-                )}
-              </div>
-            </div>
-          </div>
+            project={project}
+            linkHref={linkHref}
+            renderHref={renderHref}
+          />
         );
       })}
     </div>
