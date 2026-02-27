@@ -20,8 +20,8 @@ import { IconType } from "react-icons/lib";
 import { MdOutlineOndemandVideo } from "react-icons/md";
 import { PiMusicNotesSimple, PiPresentationChart } from "react-icons/pi";
 import { typeidUnboxed } from "typeid-js";
-import { useLocation } from "wouter";
 
+import { useNavigateWithParams } from "../../../hooks/useNavigateWithParams";
 import "./index.css";
 
 const sceneCategoriesConfig: Record<SceneCategories, IconType> = {
@@ -33,7 +33,7 @@ const sceneCategoriesConfig: Record<SceneCategories, IconType> = {
 const SidebarAddSceneModal = () => {
   const { isOpen, onToggle, resetData } = useOverlayToggle();
 
-  const [, navigate] = useLocation();
+  const navigate = useNavigateWithParams();
 
   const [selectedCategory, setSelectedCategory] = useState("All");
 

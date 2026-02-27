@@ -10,6 +10,7 @@ import {
   useOverlayToggle,
 } from "@repo/ui";
 import { useMemo } from "react";
+import { useSearch } from "wouter";
 
 import { onPresentClick } from "./desktopPresent";
 import { useAllWindows } from "./useAllWindows";
@@ -22,6 +23,7 @@ const PresentMonitorModal = () => {
   const { refetch: refetchWindow } = useAllWindows();
 
   const { orgSlug, projectSlug } = usePluginMetaData();
+  const search = useSearch();
 
   return (
     <Dialog open={isOpen ?? false} onOpenChange={onToggle ?? (() => {})}>
@@ -34,7 +36,7 @@ const PresentMonitorModal = () => {
             <div
               key={i}
               onClick={async () => {
-                await onPresentClick(orgSlug, projectSlug, i);
+                await onPresentClick(orgSlug, projectSlug, i, search);
                 setTimeout(async () => {
                   await refetchWindow();
                 }, 2000);
@@ -70,6 +72,7 @@ const PresentMonitorModalWrapper = ({
   );
 
   const { orgSlug, projectSlug } = usePluginMetaData();
+  const search = useSearch();
 
   return (
     <>
@@ -78,7 +81,7 @@ const PresentMonitorModalWrapper = ({
           <PresentButtonElement
             onClick={() => {
               if (monitors?.length === 1) {
-                onPresentClick(orgSlug, projectSlug);
+                onPresentClick(orgSlug, projectSlug, 0, search);
               } else {
                 onToggle();
               }
