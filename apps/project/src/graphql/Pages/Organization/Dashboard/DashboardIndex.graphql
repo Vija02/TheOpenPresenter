@@ -24,7 +24,6 @@ query OrganizationDashboardIndexPage($slug: String!) {
     organizationActiveDevices(condition: { isActive: true }) {
       nodes {
         irohEndpointId
-        irohTicket
         activeProjectIds
       }
     }
