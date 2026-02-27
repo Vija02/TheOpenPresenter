@@ -3,6 +3,7 @@ import { Button, Link } from "@repo/ui";
 import { cx } from "class-variance-authority";
 import { lazy } from "react";
 import { MdCoPresent, MdOutlineCancelPresentation } from "react-icons/md";
+import { useSearch } from "wouter";
 
 import "./index.css";
 
@@ -10,6 +11,7 @@ const PresentMonitorModalWrapper = lazy(() => import("./PresentMonitorModal"));
 
 export const PresentButton = ({ isMobile }: { isMobile?: boolean }) => {
   const { orgSlug, projectSlug } = usePluginMetaData();
+  const search = useSearch();
 
   const PresentButtonElement = ({ onClick }: { onClick?: () => void }) => (
     <Button
@@ -43,9 +45,13 @@ export const PresentButton = ({ isMobile }: { isMobile?: boolean }) => {
     );
   }
 
+  const renderHref = search
+    ? `/render/${orgSlug}/${projectSlug}?${search}`
+    : `/render/${orgSlug}/${projectSlug}`;
+
   return (
     <Link
-      href={`/render/${orgSlug}/${projectSlug}`}
+      href={renderHref}
       isExternal
       className="rt--present-button-link"
       variant="unstyled"

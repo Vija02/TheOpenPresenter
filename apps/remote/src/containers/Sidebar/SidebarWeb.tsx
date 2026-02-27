@@ -9,6 +9,7 @@ import { RiRemoteControlLine } from "react-icons/ri";
 import { VscAdd } from "react-icons/vsc";
 import { useLocation } from "wouter";
 
+import { useNavigateWithParams } from "../../hooks/useNavigateWithParams";
 import DebugDrawer from "./Debug/DebugDrawer";
 import { PresentButton } from "./PresentButton";
 import { RendererWarning } from "./RendererWarning";
@@ -18,7 +19,8 @@ import "./SidebarWeb.css";
 
 const SidebarWeb = () => {
   const data = useData();
-  const [location, navigate] = useLocation();
+  const [location] = useLocation();
+  const navigate = useNavigateWithParams();
   const { awarenessData } = useAwareness();
 
   return (

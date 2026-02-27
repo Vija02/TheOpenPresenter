@@ -3,13 +3,15 @@ import { useData, usePluginData } from "@repo/shared";
 import { useEffect, useMemo } from "react";
 import { useLocation } from "wouter";
 
+import { useNavigateWithParams } from "../../hooks/useNavigateWithParams";
 import Footer from "../Footer";
 import { EmptyScene } from "./EmptyScene";
 import SceneRenderer from "./SceneRenderer";
 import "./index.css";
 
 const MainBody = () => {
-  const [location, navigate] = useLocation();
+  const [location] = useLocation();
+  const navigate = useNavigateWithParams();
 
   const data = useData();
   const mainState = usePluginData().mainState!;
