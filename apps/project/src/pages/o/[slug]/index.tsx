@@ -1,7 +1,7 @@
 import { SharedOrgLayout } from "@/components/SharedOrgLayout";
-import { Tag } from "@/components/Tag";
 import CreateProjectModal from "@/containers/CreateProjectModal";
 import { HostProjects } from "@/containers/Dashboard/HostProjects";
+import { ProjectCard } from "@/containers/Dashboard/ProjectCard";
 import EditProjectModal from "@/containers/EditProjectModal";
 import ImportProjectModal from "@/containers/ImportProjectModal";
 import { useOrganizationSlug } from "@/lib/permissionHooks/organization";
@@ -12,19 +12,9 @@ import {
   useOrganizationDashboardIndexPageQuery,
 } from "@repo/graphql";
 import { globalState } from "@repo/lib";
-import {
-  Button,
-  DateDisplay,
-  DateDisplayRelative,
-  Link,
-  OverlayToggle,
-  PopConfirm,
-} from "@repo/ui";
-import { format } from "date-fns";
+import { Button, OverlayToggle, PopConfirm } from "@repo/ui";
 import { useCallback, useMemo } from "react";
 import { FaFileImport, FaPlus } from "react-icons/fa";
-import { IoCloudDoneOutline } from "react-icons/io5";
-import { MdCoPresent } from "react-icons/md";
 import { VscEdit, VscTrash } from "react-icons/vsc";
 import { toast } from "react-toastify";
 
@@ -109,9 +99,16 @@ const OrganizationPage = () => {
           <ProjectCard
             key={project.id}
             project={project}
-            organizationId={data?.organizationBySlug?.id}
-            categories={data?.organizationBySlug?.categories.nodes ?? []}
-            handleDeleteProject={handleDeleteProject}
+            linkHref={`/app/${slug}/${project.slug}`}
+            renderHref={`/render/${slug}/${project.slug}`}
+            actions={
+              <DashboardProjectActions
+                project={project}
+                organizationId={data?.organizationBySlug?.id}
+                categories={data?.organizationBySlug?.categories.nodes ?? []}
+                handleDeleteProject={handleDeleteProject}
+              />
+            }
           />
         ))}
       </div>
@@ -144,7 +141,7 @@ const EmptyProject = () => {
   );
 };
 
-const ProjectCard = ({
+const DashboardProjectActions = ({
   project,
   organizationId,
   categories,
@@ -155,96 +152,45 @@ const ProjectCard = ({
   categories: CategoryFragment[];
   handleDeleteProject: (projectId: string) => void;
 }) => {
-  const slug = useOrganizationSlug();
   return (
-    <div
-      key={project.id}
-      className="project--project-card group"
-      role="group"
-      data-testid="project-card"
-    >
-      <div className="flex items-center gap-2 justify-between sm:justify-start">
-        {project.cloudConnectionId && <IoCloudDoneOutline />}
-        <Link
-          href={`/app/${slug}/${project.slug}`}
-          className="project--project-card-main-link"
-        >
-          {project.targetDate && (
-            <DateDisplay
-              date={new Date(project.targetDate)}
-              formatToken="do MMM yyyy"
-              className="text-sm font-bold sm:font-medium"
-            />
-          )}
-          <p className={`${project.targetDate ? "text-xs" : "text-sm"}`}>
-            {project.name !== ""
-              ? project.name
-              : project.targetDate
-                ? ""
-                : `Untitled (${format(new Date(project.createdAt), "do MMM yyyy")})`}
-          </p>
-          <p className="text-xs text-tertiary">{project.category?.name}</p>
-        </Link>
-        <div className="flex">
-          <Link href={`/render/${slug}/${project.slug}`} isExternal>
-            <Button
-              variant="ghost"
-              size="sm"
-              role="button"
-              className="text-tertiary hover:bg-blue-100 hover:text-accent opacity-100 md:opacity-0 group-hover:opacity-100"
-            >
-              <MdCoPresent />
-            </Button>
-          </Link>
-          <OverlayToggle
-            toggler={({ onToggle }) => (
-              <Button
-                variant="ghost"
-                size="sm"
-                role="button"
-                className="text-tertiary hover:bg-blue-100 hover:text-accent opacity-100 md:opacity-0 group-hover:opacity-100"
-                onClick={onToggle}
-              >
-                <VscEdit />
-              </Button>
-            )}
+    <>
+      <OverlayToggle
+        toggler={({ onToggle }) => (
+          <Button
+            variant="ghost"
+            size="sm"
+            role="button"
+            className="text-tertiary hover:bg-blue-100 hover:text-accent opacity-100 md:opacity-0 group-hover:opacity-100"
+            onClick={onToggle}
           >
-            <EditProjectModal
-              project={project}
-              organizationId={organizationId}
-              categories={categories}
-            />
-          </OverlayToggle>
+            <VscEdit />
+          </Button>
+        )}
+      >
+        <EditProjectModal
+          project={project}
+          organizationId={organizationId}
+          categories={categories}
+        />
+      </OverlayToggle>
 
-          <PopConfirm
-            title={`Are you sure you want to delete this project? This action is not reversible.`}
-            onConfirm={() => handleDeleteProject(project.id)}
-            okText="Yes"
-            cancelText="No"
-            key="remove"
-          >
-            <Button
-              variant="ghost"
-              size="sm"
-              role="button"
-              className="text-tertiary hover:bg-red-50 hover:text-red-400 opacity-100 md:opacity-0 group-hover:opacity-100"
-            >
-              <VscTrash />
-            </Button>
-          </PopConfirm>
-        </div>
-      </div>
-      <div className="flex flex-col-reverse sm:flex-row gap-1 sm:gap-4 items-start sm:items-center">
-        <div className="flex gap-1">
-          {project.projectTags.nodes.map((projectTag, i) => (
-            <Tag key={i} tag={projectTag.tag!} />
-          ))}
-        </div>
-        <p className="text-primary text-xs text-right">
-          Updated <DateDisplayRelative date={new Date(project.updatedAt)} />
-        </p>
-      </div>
-    </div>
+      <PopConfirm
+        title={`Are you sure you want to delete this project? This action is not reversible.`}
+        onConfirm={() => handleDeleteProject(project.id)}
+        okText="Yes"
+        cancelText="No"
+        key="remove"
+      >
+        <Button
+          variant="ghost"
+          size="sm"
+          role="button"
+          className="text-tertiary hover:bg-red-50 hover:text-red-400 opacity-100 md:opacity-0 group-hover:opacity-100"
+        >
+          <VscTrash />
+        </Button>
+      </PopConfirm>
+    </>
   );
 };
 
