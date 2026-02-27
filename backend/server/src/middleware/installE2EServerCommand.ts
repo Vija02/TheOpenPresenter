@@ -131,7 +131,7 @@ async function runCommand(
     if (!username.startsWith("testuser")) {
       throw new Error("Test user usernames may only start with 'testuser'");
     }
-    const user = await reallyCreateUser(rootPgPool, {
+    const user = await getOrCreateUser(rootPgPool, {
       username,
       email,
       verified,
@@ -159,7 +159,7 @@ async function runCommand(
       next = "/",
       orgs = [],
     } = payload;
-    const user = await reallyCreateUser(rootPgPool, {
+    const user = await getOrCreateUser(rootPgPool, {
       username,
       email,
       verified,
@@ -167,7 +167,7 @@ async function runCommand(
       avatarUrl,
       password,
     });
-    const otherUser = await reallyCreateUser(rootPgPool, {
+    const otherUser = await getOrCreateUser(rootPgPool, {
       username: "testuser_other",
       email: "testuser_other@example.com",
       name: "testuser_other",
@@ -296,16 +296,18 @@ async function runCommand(
       );
     }
 
-    // Get organization ID and target organization's owner user ID
+    // Get organization ID, original org's owner, and target org's owner user ID
     const {
       rows: [result],
     } = await rootPgPool.query(
       `SELECT 
          o.id AS org_id,
-         om.user_id AS target_owner_user_id
+         org_om.user_id AS org_owner_user_id,
+         target_om.user_id AS target_owner_user_id
        FROM app_public.organizations o
+       JOIN app_public.organization_memberships org_om ON org_om.organization_id = o.id AND org_om.is_owner = true
        CROSS JOIN app_public.organizations target_o
-       JOIN app_public.organization_memberships om ON om.organization_id = target_o.id AND om.is_owner = true
+       JOIN app_public.organization_memberships target_om ON target_om.organization_id = target_o.id AND target_om.is_owner = true
        WHERE o.slug = $1 AND target_o.slug = $2
        LIMIT 1`,
       [organizationSlug, targetOrganizationSlug],
@@ -313,6 +315,12 @@ async function runCommand(
 
     if (!result?.org_id) {
       throw new Error(`Organization not found: ${organizationSlug}`);
+    }
+
+    if (!result?.org_owner_user_id) {
+      throw new Error(
+        `Could not find owner for organization: ${organizationSlug}`,
+      );
     }
 
     if (!result?.target_owner_user_id) {
@@ -347,7 +355,7 @@ async function runCommand(
         "http://localhost:5678",
         sessionCookie,
         targetOrganizationSlug,
-        result.target_owner_user_id,
+        result.org_owner_user_id,
       ],
     );
 
@@ -375,7 +383,7 @@ async function runCommand(
   }
 }
 
-async function reallyCreateUser(
+async function getOrCreateUser(
   rootPgPool: Pool,
   {
     username,
@@ -393,6 +401,17 @@ async function reallyCreateUser(
     password?: string;
   },
 ) {
+  // First try to find existing user
+  const { rows: existingUsers } = await rootPgPool.query(
+    `SELECT * FROM app_public.users WHERE username = $1`,
+    [username],
+  );
+
+  if (existingUsers.length > 0) {
+    return existingUsers[0];
+  }
+
+  // Create new user if not found
   const {
     rows: [user],
   } = await rootPgPool.query(
