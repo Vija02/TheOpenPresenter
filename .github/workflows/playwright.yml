@@ -2,9 +2,9 @@ name: Playwright Tests
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [main, master]
   pull_request:
-    branches: [ main, master ]
+    branches: [main, master]
   workflow_dispatch:
 
 jobs:
@@ -40,37 +40,39 @@ jobs:
           - "0.0.0.0:8379:3000"
 
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
-      with:
-        node-version: lts/*
-    - name: Start Alloy with config
-      run: |
-        docker run -d \
-          --name alloy \
-          --network host \
-          -v ${{ github.workspace }}/config/alloy/minimal.alloy:/etc/alloy/config.alloy \
-          -e LOKI_HOST="${{ secrets.LOKI_HOST }}" \
-          -e LOKI_AUTH="${{ secrets.LOKI_AUTH }}" \
-          -e TEMPO_HOST="${{ secrets.TEMPO_HOST }}" \
-          -e TEMPO_AUTH="${{ secrets.TEMPO_AUTH }}" \
-          grafana/alloy:v1.5.1 \
-          run /etc/alloy/config.alloy \
-          --storage.path=/var/lib/alloy/data \
-          --server.http.listen-addr=0.0.0.0:12345 \
-          --stability.level=experimental
-    - name: yarn, lint, build and test
-      run: |
-        cp .env.ci .env
-        yarn --no-immutable
-        CONFIRM_DROP=1 yarn setup
-        yarn build
-        yarn e2e playwright install --with-deps
-        yarn worker start &
-        yarn e2e test
-    - uses: actions/upload-artifact@v4
-      if: ${{ !cancelled() }}
-      with:
-        name: playwright-report
-        path: e2e/playwright-report/
-        retention-days: 30
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+      - name: Start Alloy with config
+        run: |
+          docker run -d \
+            --name alloy \
+            --network host \
+            -v ${{ github.workspace }}/config/alloy/minimal.alloy:/etc/alloy/config.alloy \
+            -e LOKI_HOST="${{ secrets.LOKI_HOST }}" \
+            -e LOKI_AUTH="${{ secrets.LOKI_AUTH }}" \
+            -e TEMPO_HOST="${{ secrets.TEMPO_HOST }}" \
+            -e TEMPO_AUTH="${{ secrets.TEMPO_AUTH }}" \
+            grafana/alloy:v1.5.1 \
+            run /etc/alloy/config.alloy \
+            --storage.path=/var/lib/alloy/data \
+            --server.http.listen-addr=0.0.0.0:12345 \
+            --stability.level=experimental
+      - name: Install dumbpipe
+        run: curl -sL https://www.dumbpipe.dev/install.sh | sh
+      - name: yarn, lint, build and test
+        run: |
+          cp .env.ci .env
+          yarn --no-immutable
+          CONFIRM_DROP=1 yarn setup
+          yarn build
+          yarn e2e playwright install --with-deps
+          yarn worker start &
+          yarn e2e test
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: e2e/playwright-report/
+          retention-days: 30
