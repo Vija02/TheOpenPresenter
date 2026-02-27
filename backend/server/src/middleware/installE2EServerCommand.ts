@@ -2,6 +2,15 @@ import { urlencoded } from "body-parser";
 import { Express, Request, RequestHandler, Response } from "express";
 import { Pool } from "pg";
 
+import {
+  DEFAULT_MOCK_HOST_CONFIG,
+  clearAllActiveDevices,
+  getMockHostDeviceStatus,
+  startMockHostDevice,
+  stopMockHostDevice,
+  syncMockHostDevice,
+} from "../utils/mockHostDevice";
+import { createSessionCookie } from "../utils/sessionCookie";
 import { getRootPgPool } from "./installDatabasePools";
 
 export default (app: Express) => {
@@ -250,6 +259,116 @@ async function runCommand(
       "update app_public.users SET is_verified = TRUE where username = $1",
       [username],
     );
+    return { success: true };
+  } else if (command === "startMockHostDevice") {
+    const { serverHost, serverPort } = payload || {};
+    const config = {
+      serverHost: serverHost ?? DEFAULT_MOCK_HOST_CONFIG.serverHost,
+      serverPort: serverPort ?? DEFAULT_MOCK_HOST_CONFIG.serverPort,
+    };
+    const { irohEndpointId, irohTicket } = await startMockHostDevice(config);
+    return { success: true, irohEndpointId, irohTicket };
+  } else if (command === "stopMockHostDevice") {
+    const { serverHost, serverPort } = payload || {};
+    const config = {
+      serverHost: serverHost ?? DEFAULT_MOCK_HOST_CONFIG.serverHost,
+      serverPort: serverPort ?? DEFAULT_MOCK_HOST_CONFIG.serverPort,
+    };
+    await stopMockHostDevice(config);
+    return { success: true };
+  } else if (command === "syncMockHostDevice") {
+    const { serverHost, serverPort } = payload || {};
+    const config = {
+      serverHost: serverHost ?? DEFAULT_MOCK_HOST_CONFIG.serverHost,
+      serverPort: serverPort ?? DEFAULT_MOCK_HOST_CONFIG.serverPort,
+    };
+    await syncMockHostDevice(config);
+    return { success: true };
+  } else if (command === "getMockHostDeviceStatus") {
+    return getMockHostDeviceStatus();
+  } else if (command === "createCloudConnection") {
+    // Create a cloud connection for E2E testing (localhost only)
+    const { organizationSlug, targetOrganizationSlug } = payload;
+
+    if (!organizationSlug || !targetOrganizationSlug) {
+      throw new Error(
+        "organizationSlug and targetOrganizationSlug are required",
+      );
+    }
+
+    // Get organization ID and target organization's owner user ID
+    const {
+      rows: [result],
+    } = await rootPgPool.query(
+      `SELECT 
+         o.id AS org_id,
+         om.user_id AS target_owner_user_id
+       FROM app_public.organizations o
+       CROSS JOIN app_public.organizations target_o
+       JOIN app_public.organization_memberships om ON om.organization_id = target_o.id AND om.is_owner = true
+       WHERE o.slug = $1 AND target_o.slug = $2
+       LIMIT 1`,
+      [organizationSlug, targetOrganizationSlug],
+    );
+
+    if (!result?.org_id) {
+      throw new Error(`Organization not found: ${organizationSlug}`);
+    }
+
+    if (!result?.target_owner_user_id) {
+      throw new Error(
+        `Could not find owner for target organization: ${targetOrganizationSlug}`,
+      );
+    }
+
+    // Create a session cookie for the target org's owner
+    const sessionCookie = await createSessionCookie(
+      req.app as Express,
+      rootPgPool,
+      {
+        userId: result.target_owner_user_id,
+      },
+    );
+
+    if (!sessionCookie) {
+      throw new Error("Failed to create session cookie");
+    }
+
+    // Insert cloud connection (localhost only for E2E testing)
+    const {
+      rows: [connection],
+    } = await rootPgPool.query(
+      `INSERT INTO app_public.cloud_connections 
+       (organization_id, host, session_cookie, session_cookie_expiry, target_organization_slug, creator_user_id)
+       VALUES ($1, $2, $3, NOW() + INTERVAL '1 day', $4, $5)
+       RETURNING id`,
+      [
+        result.org_id,
+        "http://localhost:5678",
+        sessionCookie,
+        targetOrganizationSlug,
+        result.target_owner_user_id,
+      ],
+    );
+
+    return { success: true, connectionId: connection.id };
+  } else if (command === "deleteCloudConnections") {
+    // Delete cloud connections for an organization
+    const { organizationSlug } = payload;
+
+    if (!organizationSlug) {
+      throw new Error("organizationSlug is required");
+    }
+
+    await rootPgPool.query(
+      `DELETE FROM app_public.cloud_connections
+       WHERE organization_id = (SELECT id FROM app_public.organizations WHERE slug = $1)`,
+      [organizationSlug],
+    );
+
+    return { success: true };
+  } else if (command === "clearAllActiveDevices") {
+    await clearAllActiveDevices(req.app);
     return { success: true };
   } else {
     throw new Error(`Command '${command}' not understood.`);
