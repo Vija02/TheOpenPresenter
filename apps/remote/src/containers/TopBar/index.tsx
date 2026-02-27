@@ -1,3 +1,4 @@
+import { appData } from "@repo/lib";
 import { useData, usePluginData, usePluginMetaData } from "@repo/shared";
 import { Button, Link, OverlayToggle, PopConfirm } from "@repo/ui";
 import { cx } from "class-variance-authority";
@@ -13,6 +14,12 @@ import "./index.css";
 export const TopBar = () => {
   const [location] = useLocation();
   const { orgSlug, pluginMetaData } = usePluginMetaData();
+
+  // When in proxy mode, use the cloud org slug for navigation back to projects
+  const proxyConfig = appData.getProxyConfig();
+  const projectsOrgSlug = proxyConfig.isProxy
+    ? proxyConfig.cloudOrgSlug
+    : orgSlug;
 
   const data = useData();
   const mainState = usePluginData().mainState!;
@@ -31,7 +38,10 @@ export const TopBar = () => {
     <div className="rt--top-bar">
       <div className="rt--top-bar--left">
         <div className="rt--top-bar--breadcrumb">
-          <Link href={`/o/${orgSlug}`} className="rt--top-bar--breadcrumb-link">
+          <Link
+            href={`/o/${projectsOrgSlug}`}
+            className="rt--top-bar--breadcrumb-link"
+          >
             Projects
           </Link>
           <span className="text-tertiary">/</span>
@@ -49,7 +59,7 @@ export const TopBar = () => {
             <ProjectSettingsModal />
           </OverlayToggle>
         </div>
-        <Link href={`/o/${orgSlug}`} className="rt--top-bar--back-link">
+        <Link href={`/o/${projectsOrgSlug}`} className="rt--top-bar--back-link">
           <VscArrowLeft />
         </Link>
         {selectedScene && (
