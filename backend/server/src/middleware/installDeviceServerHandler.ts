@@ -5,8 +5,9 @@ import { Express } from "express";
 import { createProxyMiddleware } from "http-proxy-middleware";
 import { z } from "zod";
 
-import { getUpgradeHandlers } from "../app";
+import { getShutdownActions, getUpgradeHandlers } from "../app";
 import { withUserPgPool } from "../utils/withUserPgPool";
+import { getRootPgPool } from "./installDatabasePools";
 import { findAvailablePort, releasePort, waitForPort } from "./portManager";
 
 type ConnectionInfo = {
@@ -461,5 +462,79 @@ export default (app: Express) => {
         socket.destroy();
       }
     },
+  });
+
+  // Cleanup stale connections every 5 minutes
+  const CLEANUP_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+
+  const cleanupStaleConnections = async () => {
+    const rootPgPool = getRootPgPool(app);
+
+    try {
+      // Delete stale entries and return the deleted rows with org slug
+      const { rows: deletedDevices } = await rootPgPool.query<{
+        organization_slug: string;
+        iroh_endpoint_id: string;
+      }>(`
+        DELETE FROM app_public.organization_active_devices d
+        USING app_public.organizations o
+        WHERE d.organization_id = o.id
+          AND d.updated_at <= NOW() - INTERVAL '90 seconds'
+        RETURNING o.slug as organization_slug, d.iroh_endpoint_id
+      `);
+
+      if (deletedDevices.length > 0) {
+        logger.info(
+          { count: deletedDevices.length },
+          "Deleted stale organization_active_devices entries",
+        );
+      }
+
+      // Skip connection cleanup if no active connections
+      if (activeConnections.size === 0) {
+        return;
+      }
+
+      // Clean up dumbpipe connections for deleted devices
+      for (const device of deletedDevices) {
+        const connectionKey = `${device.organization_slug}:${device.iroh_endpoint_id}`;
+        const connectionInfo = activeConnections.get(connectionKey);
+
+        if (connectionInfo) {
+          logger.info(
+            { connectionKey },
+            "Cleaning up stale dumbpipe connection - device no longer active in database",
+          );
+
+          connectionInfo.process.kill();
+          activeConnections.delete(connectionKey);
+          releasePort(connectionInfo.port);
+        }
+      }
+    } catch (err) {
+      logger.error({ err }, "Failed to cleanup stale connections");
+    }
+  };
+
+  const cleanupInterval = setInterval(
+    cleanupStaleConnections,
+    CLEANUP_INTERVAL_MS,
+  );
+
+  // Register cleanup on shutdown
+  const shutdownActions = getShutdownActions(app);
+  shutdownActions.push(() => {
+    clearInterval(cleanupInterval);
+
+    // Clean up all active connections on shutdown
+    for (const [connectionKey, connectionInfo] of activeConnections) {
+      logger.info(
+        { connectionKey },
+        "Cleaning up dumbpipe connection on shutdown",
+      );
+      connectionInfo.process.kill();
+      releasePort(connectionInfo.port);
+    }
+    activeConnections.clear();
   });
 };
