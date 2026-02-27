@@ -26,11 +26,31 @@ interface CloudConnection {
 }
 
 /**
+ * Check if device host handler should be enabled.
+ * Runs in dev/test, or in production only if ENABLE_PROXY_DEVICE_ON_PRODUCTION is set.
+ */
+const isEnabled = (): boolean => {
+  const nodeEnv = process.env.NODE_ENV || "";
+  if (["development", "test"].includes(nodeEnv)) {
+    return true;
+  }
+  // In production, only enable if explicitly set (e.g., Tauri app)
+  return process.env.ENABLE_PROXY_DEVICE_ON_PRODUCTION === "1";
+};
+
+/**
  * This middleware runs code for a host device - Meaning an instance like the desktop app
  * When a project is connected to the cloud, we want to notify them of our existence
  * For this, we open up an iroh endpoint & poll it to the cloud
  */
 export default (app: Express) => {
+  // Only run in dev/test, or in production if explicitly enabled (Tauri)
+  if (!isEnabled()) {
+    logger.debug(
+      "Device host handler disabled (production without ENABLE_PROXY_DEVICE_ON_PRODUCTION)",
+    );
+    return;
+  }
   const rootPgPool = getRootPgPool(app);
   const shutdownActions = getShutdownActions(app);
 
