@@ -53,6 +53,12 @@ const OrganizationPage = () => {
 
   return (
     <SharedOrgLayout title="Dashboard" sharedOrgQuery={query}>
+      <HostProjects
+        organizationActiveDevices={
+          data?.organizationBySlug?.organizationActiveDevices.nodes ?? []
+        }
+      />
+
       <div className="flex items-center justify-between mb-3">
         <h1 className="text-2xl font-bold mb-0">Projects</h1>
         <div className="stack-row">
@@ -86,12 +92,6 @@ const OrganizationPage = () => {
           </OverlayToggle>
         </div>
       </div>
-
-      <HostProjects
-        organizationActiveDevices={
-          data?.organizationBySlug?.organizationActiveDevices.nodes ?? []
-        }
-      />
 
       <div className="stack-col items-center mb-2 flex-wrap gap-0">
         {emptyProject && <EmptyProject />}
