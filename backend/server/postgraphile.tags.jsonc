@@ -72,6 +72,20 @@
           }
         }
       },
+      "app_public.organization_active_devices": {
+        "attribute": {
+          "iroh_ticket": {
+            "tags": {
+              "omit": true
+            }
+          },
+          "host_session_cookie": {
+            "tags": {
+              "omit": true
+            }
+          }
+        }
+      },
       "app_public.user_emails": {
         "tags": {
           /*
