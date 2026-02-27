@@ -101,6 +101,81 @@ export class E2ECommandAPI {
     payload?: { username?: string },
   ): Promise<{ success: true }>;
 
+  /**
+   * Starts a mock host device that mimics Tauri behavior.
+   * Starts dumbpipe and calls /device/host/init.
+   * After that, installDeviceHostHandler handles all the polling automatically.
+   */
+  async serverCommand(
+    command: "startMockHostDevice",
+    payload?: {
+      serverHost?: string;
+      serverPort?: number;
+    },
+  ): Promise<{
+    success: true;
+    irohEndpointId: string;
+    irohTicket: string;
+  }>;
+
+  /**
+   * Stop the mock host device.
+   */
+  async serverCommand(
+    command: "stopMockHostDevice",
+  ): Promise<{ success: true }>;
+
+  /**
+   * Trigger an immediate sync of the device host handler.
+   * This updates active project IDs without waiting for the polling interval.
+   * Useful for E2E tests.
+   */
+  async serverCommand(
+    command: "syncMockHostDevice",
+  ): Promise<{ success: true }>;
+
+  /**
+   * Get status of the mock host device.
+   */
+  async serverCommand(
+    command: "stopMockHostDevice",
+  ): Promise<{ success: true }>;
+
+  /**
+   * Get status of the mock host device.
+   */
+  async serverCommand(
+    command: "getMockHostDeviceStatus",
+  ): Promise<{ running: false } | { running: true; irohEndpointId: string }>;
+
+  /**
+   * Create a cloud connection for E2E testing (localhost only).
+   * This is what allows an org to share projects with another org.
+   */
+  async serverCommand(
+    command: "createCloudConnection",
+    payload: {
+      organizationSlug: string;
+      targetOrganizationSlug: string;
+    },
+  ): Promise<{ success: true; connectionId: string }>;
+
+  /**
+   * Delete cloud connections for an organization.
+   */
+  async serverCommand(
+    command: "deleteCloudConnections",
+    payload: { organizationSlug: string },
+  ): Promise<{ success: true }>;
+
+  /**
+   * Clear all organization_active_devices entries.
+   * Used for test cleanup.
+   */
+  async serverCommand(command: "clearAllActiveDevices"): Promise<{
+    success: true;
+  }>;
+
   async serverCommand(command: string, payload?: any): Promise<any> {
     const res = await this.request.get(
       `/E2EServerCommand?command=${encodeURIComponent(command)}${

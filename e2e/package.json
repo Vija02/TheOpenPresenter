@@ -4,9 +4,11 @@
   "version": "0.0.0",
   "devDependencies": {
     "@playwright/test": "^1.52.0",
-    "@types/node": "^22.15.18"
+    "@types/node": "^22.15.18",
+    "tsx": "^4.7.0"
   },
   "scripts": {
-    "test": "playwright test"
+    "test": "playwright test",
+    "mock-host-device": "tsx scripts/mockHostDevice.ts"
   }
 }
