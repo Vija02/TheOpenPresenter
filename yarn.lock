@@ -9361,6 +9361,7 @@ __metadata:
     tailwindcss-patch: "npm:^7.1.1"
     typescript: "npm:^5.7.2"
     unplugin-tailwindcss-mangle: "npm:^4.1.1"
+    urql: "npm:^5.0.1"
     vite: "npm:6.3.5"
     vite-plugin-dts: "npm:^4.5.4"
     zod: "npm:^3.25.17"
