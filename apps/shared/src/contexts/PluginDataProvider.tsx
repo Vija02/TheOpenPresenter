@@ -8,6 +8,7 @@ import type {
   State,
   YState,
 } from "@repo/base-plugin";
+import { appData } from "@repo/lib";
 import { ErrorAlert, LoadingFull } from "@repo/ui";
 import { useQuery } from "@tanstack/react-query";
 import React, {
@@ -140,6 +141,9 @@ const initializeHocuspocusProvider = (projectId: string) => {
       name: projectId,
       // Here only to force authentication
       token: " ",
+      parameters: {
+        ...appData.getProxyConfig().headers,
+      },
       onAuthenticationFailed: () => {
         reject(new Error("Authentication Failed"));
       },

@@ -6,18 +6,19 @@ import { createProxyMiddleware } from "http-proxy-middleware";
 import * as net from "net";
 import { z } from "zod";
 
+import { getUpgradeHandlers } from "../app";
 import { withUserPgPool } from "../utils/withUserPgPool";
 
+type ConnectionInfo = {
+  process: ChildProcess;
+  ticket: string;
+  port: number;
+  hostSessionCookie: string;
+  proxy: any; // http-proxy-middleware RequestHandler
+};
+
 // Store active dumbpipe connections: key is "organizationSlug:irohEndpointId"
-const activeConnections = new Map<
-  string,
-  {
-    process: ChildProcess;
-    ticket: string;
-    port: number;
-    hostSessionCookie: string;
-  }
->();
+const activeConnections = new Map<string, ConnectionInfo>();
 
 // Track used ports to avoid conflicts
 const usedPorts = new Set<number>();
@@ -67,11 +68,18 @@ const devicePingSchema = z.object({
 });
 
 export default (app: Express) => {
-  // This runs on all requests and checks for the header
   app.use(async (req, res, next) => {
-    const shouldProxy =
-      !!req.headers["x-organization-slug"] &&
-      !!req.headers["x-iroh-endpoint-id"];
+    const url = new URL(req.url ?? "", `http://${req.headers.host}`);
+
+    // Check headers first (for HTTP requests), then query params (for WebSocket)
+    const organizationSlug =
+      (req.headers["x-organization-slug"] as string) ||
+      url.searchParams.get("x-organization-slug");
+    const irohEndpointId =
+      (req.headers["x-iroh-endpoint-id"] as string) ||
+      url.searchParams.get("x-iroh-endpoint-id");
+
+    const shouldProxy = !!organizationSlug && !!irohEndpointId;
 
     if (!shouldProxy) {
       return next();
@@ -82,18 +90,6 @@ export default (app: Express) => {
     // If no session id, then not logged in
     if (!sessionId) {
       res.status(401).json({ error: "Not authenticated" });
-      return;
-    }
-
-    // Get organization slug and endpoint ID from headers
-    const organizationSlug = req.headers["x-organization-slug"] as string;
-    const irohEndpointId = req.headers["x-iroh-endpoint-id"] as string;
-
-    if (!organizationSlug || !irohEndpointId) {
-      res.status(400).json({
-        error:
-          "Missing required headers: x-organization-slug, x-iroh-endpoint-id",
-      });
       return;
     }
 
@@ -135,7 +131,7 @@ export default (app: Express) => {
           const ticketResult = await client.query(
             `SELECT iroh_ticket, host_session_cookie
              FROM app_public.organization_active_devices
-             WHERE organization_id = $1 AND iroh_endpoint_id = $2`,
+             WHERE organization_id = $1 AND iroh_endpoint_id = $2 AND updated_at > NOW() - INTERVAL '90 seconds'`,
             [organizationId, irohEndpointId],
           );
 
@@ -143,12 +139,22 @@ export default (app: Express) => {
             ticketResult.rows.length === 0 ||
             !ticketResult.rows[0].iroh_ticket
           ) {
-            throw new Error("Device not found or not active");
+            res.status(500).json({
+              errors: [
+                {
+                  code: "EPROXYUNKNOWN",
+                  message: "Device not found or not active",
+                },
+              ],
+            });
+            return;
           }
 
           irohTicket = ticketResult.rows[0].iroh_ticket;
           hostSessionCookie = ticketResult.rows[0].host_session_cookie;
         });
+
+        if (!irohTicket || !hostSessionCookie) return;
 
         // Check if ticket changed (if we had an old connection)
         const ticketChanged =
@@ -185,12 +191,123 @@ export default (app: Express) => {
             irohTicket!,
           ]);
 
+          // Create proxy for this connection
+          const proxy = createProxyMiddleware({
+            target: `http://localhost:${port}`,
+            changeOrigin: true,
+            logger: console as any,
+            proxyTimeout: 10_000,
+            on: {
+              proxyReq: (proxyReq, req) => {
+                // Strip proxy headers to prevent infinite loops
+                proxyReq.removeHeader("x-organization-slug");
+                proxyReq.removeHeader("x-iroh-endpoint-id");
+
+                // Strip proxy query parameters (for WebSocket connections)
+                if (req.url) {
+                  const reqUrl = new URL(req.url, `http://${req.headers.host}`);
+                  reqUrl.searchParams.delete("x-organization-slug");
+                  reqUrl.searchParams.delete("x-iroh-endpoint-id");
+                  proxyReq.path = reqUrl.pathname + reqUrl.search;
+                }
+
+                if (hostSessionCookie) {
+                  proxyReq.setHeader("Cookie", hostSessionCookie);
+                }
+
+                logger.debug(
+                  {
+                    organizationSlug,
+                    irohEndpointId,
+                    port,
+                    path: req.url,
+                    hasHostSessionCookie: !!hostSessionCookie,
+                  },
+                  "Proxying request to TCP port",
+                );
+              },
+              proxyRes: (proxyRes) => {
+                logger.debug(
+                  {
+                    organizationSlug,
+                    irohEndpointId,
+                    statusCode: proxyRes.statusCode,
+                  },
+                  "Received response from TCP port",
+                );
+              },
+              proxyReqWs: (proxyReq) => {
+                if (hostSessionCookie) {
+                  proxyReq.setHeader("Cookie", hostSessionCookie);
+                }
+                logger.debug(
+                  {
+                    organizationSlug,
+                    irohEndpointId,
+                    port,
+                  },
+                  "Proxying WebSocket upgrade",
+                );
+              },
+              econnreset: (err, req, res: any) => {
+                // This should not be reached because we have a 10s timeout
+                logger.error(
+                  { err, organizationSlug, irohEndpointId },
+                  "ECONNRESET - unexpected, should not be reached due to timeout",
+                );
+                if (res && !res.headersSent) {
+                  res.status(500).json({
+                    errors: [
+                      {
+                        code: "EPROXYUNREACHABLE",
+                        message: "Host unreachable",
+                      },
+                    ],
+                  });
+                }
+              },
+              error: (err: any, req, res: any) => {
+                const isTimeout = err?.code === "ECONNRESET";
+
+                if (isTimeout) {
+                  logger.info(
+                    { err, organizationSlug, irohEndpointId },
+                    "Proxy timeout - socket hang up",
+                  );
+                } else {
+                  logger.error(
+                    { err, organizationSlug, irohEndpointId },
+                    "Proxy error",
+                  );
+                }
+
+                // Clean up the connection when host is unreachable
+                activeConnections.delete(connectionKey);
+                releasePort(port);
+                connectionInfo!.process.kill();
+
+                if (res && !res.headersSent) {
+                  console.log("HEADER NOT SENT, SENDING 500");
+                  res.status(500).json({
+                    errors: [
+                      {
+                        code: "EPROXYUNREACHABLE",
+                        message: "Host unreachable",
+                      },
+                    ],
+                  });
+                }
+              },
+            },
+          });
+
           // Store the connection
           connectionInfo = {
             process: dumbpipe,
             ticket: irohTicket!,
             port,
             hostSessionCookie: hostSessionCookie!,
+            proxy,
           };
           activeConnections.set(connectionKey, connectionInfo);
 
@@ -281,7 +398,7 @@ export default (app: Express) => {
 
       const portAvailable = await waitForPort(connectionInfo.port);
       if (!portAvailable) {
-        logger.error(
+        logger.fatal(
           {
             organizationSlug,
             irohEndpointId,
@@ -289,59 +406,19 @@ export default (app: Express) => {
           },
           "TCP port not available after timeout",
         );
-        res.status(500).json({ error: "Failed to connect to device" });
+        res.status(500).json({
+          errors: [
+            {
+              code: "EPROXYUNREACHABLE",
+              message: "Unable to get TCP port",
+            },
+          ],
+        });
         return;
       }
 
-      // Create proxy middleware for this specific request
-      // Using http-proxy-middleware with TCP connection
-      // Path is passed through exactly as-is (no rewriting)
-      const proxy = createProxyMiddleware({
-        target: `http://localhost:${connectionInfo.port}`,
-        changeOrigin: true,
-        // No pathRewrite - path is passed through exactly
-        logger: console as any,
-        on: {
-          proxyReq: (proxyReq, req, res) => {
-            // Strip proxy headers to prevent infinite loops
-            proxyReq.removeHeader("x-organization-slug");
-            proxyReq.removeHeader("x-iroh-endpoint-id");
-
-            if (connectionInfo.hostSessionCookie) {
-              proxyReq.setHeader("Cookie", connectionInfo.hostSessionCookie);
-            }
-
-            logger.debug(
-              {
-                organizationSlug,
-                irohEndpointId,
-                port: connectionInfo.port,
-                path: req.url,
-                hasHostSessionCookie: !!connectionInfo.hostSessionCookie,
-              },
-              "Proxying request to TCP port",
-            );
-          },
-          proxyRes: (proxyRes, req, res) => {
-            logger.debug(
-              {
-                organizationSlug,
-                irohEndpointId,
-                statusCode: proxyRes.statusCode,
-              },
-              "Received response from TCP port",
-            );
-          },
-          error: (err, req, res) => {
-            logger.error(
-              { err, organizationSlug, irohEndpointId },
-              "Proxy error",
-            );
-          },
-        },
-      });
-
-      proxy(req, res, next);
+      // Use the proxy from the connection
+      connectionInfo.proxy(req, res, next);
     } catch (err) {
       logger.error(
         { err, organizationSlug, irohEndpointId },
@@ -412,5 +489,47 @@ export default (app: Express) => {
       logger.error({ err }, "Failed to process device ping");
       res.status(500).json({ error: "Failed to update device status" });
     }
+  });
+
+  // WebSocket upgrade handler for proxy connections
+  const upgradeHandlers = getUpgradeHandlers(app);
+  upgradeHandlers.push({
+    name: "DeviceProxy",
+    check(req) {
+      const url = new URL(req.url ?? "", `http://${req.headers.host}`);
+      const organizationSlug = url.searchParams.get("x-organization-slug");
+      const irohEndpointId = url.searchParams.get("x-iroh-endpoint-id");
+      return !!organizationSlug && !!irohEndpointId;
+    },
+    async upgrade(req, socket, head) {
+      try {
+        const url = new URL(req.url ?? "", `http://${req.headers.host}`);
+        const organizationSlug = url.searchParams.get("x-organization-slug")!;
+        const irohEndpointId = url.searchParams.get("x-iroh-endpoint-id")!;
+
+        const connectionKey = `${organizationSlug}:${irohEndpointId}`;
+        const connectionInfo = activeConnections.get(connectionKey);
+
+        if (!connectionInfo) {
+          logger.warn(
+            { organizationSlug, irohEndpointId },
+            "No connection info for WebSocket proxy - HTTP request must establish connection first",
+          );
+          socket.destroy();
+          return;
+        }
+
+        // Strip proxy query params from URL
+        url.searchParams.delete("x-organization-slug");
+        url.searchParams.delete("x-iroh-endpoint-id");
+        req.url = url.pathname + url.search;
+
+        // Use the proxy from the connection
+        connectionInfo.proxy.upgrade!(req, socket as any, head);
+      } catch (err) {
+        logger.error({ err }, "Failed to handle WebSocket proxy upgrade");
+        socket.destroy();
+      }
+    },
   });
 };
