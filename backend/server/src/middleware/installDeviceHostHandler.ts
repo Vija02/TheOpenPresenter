@@ -1,16 +1,13 @@
 import { logger } from "@repo/observability";
 import axios from "axios";
 import { json } from "body-parser";
-import * as cookie from "cookie";
-import signature from "cookie-signature";
 import { Express } from "express";
 import { PoolClient } from "pg";
-import uid from "uid-safe";
 
 import { getShutdownActions } from "../app";
+import { createSessionCookie } from "../utils/sessionCookie";
 import { getRootPgPool } from "./installDatabasePools";
 import { disposableDocumentManager } from "./installHocuspocus";
-import { getSessionStore } from "./installSession";
 
 const PING_INTERVAL_MS = 30000; // 30 seconds
 const JITTER_MAX_MS = 5000; // Maximum jitter of 5 seconds
@@ -65,64 +62,19 @@ export default (app: Express) => {
       return null;
     }
 
-    try {
-      const { rows } = await rootPgPool.query<{ uuid: string }>(
-        `INSERT INTO app_private.sessions (user_id) VALUES ($1) RETURNING uuid`,
-        [cloudConnection.creator_user_id],
-      );
+    const cookieValue = await createSessionCookie(app, rootPgPool, {
+      userId: cloudConnection.creator_user_id,
+    });
 
-      if (rows.length === 0) {
-        logger.error(
-          { cloudConnectionId: cloudConnection.id },
-          "Failed to create session - no rows returned",
-        );
-        return null;
-      }
-
-      const sessionUuid = rows[0]!.uuid;
-
-      // Create the session data - following how express-session does it
-      const sid = uid.sync(24);
-      const age = 3 * 24 * 60 * 60 * 1000; // 3 days
-      const sessionData = {
-        cookie: {
-          originalMaxAge: age,
-          expires: new Date(Date.now() + age).toISOString(),
-          httpOnly: true,
-          path: "/",
-          sameSite: "lax",
-        },
-        passport: {
-          user: sessionUuid,
-        },
-      };
-
-      // Store in the session store (Redis or Postgres)
-      const store = getSessionStore(app);
-      await new Promise<void>((resolve, reject) => {
-        store.set(sid, sessionData as any, (err) => {
-          if (err) reject(err);
-          else resolve();
-        });
-      });
-      // Format the cookie
-      const signed = "s:" + signature.sign(sid, process.env.SECRET!);
-      const cookieValue = cookie.serialize("connect.sid", signed);
+    if (cookieValue) {
       hostSessionCookies.set(cloudConnection.id, cookieValue);
-
       logger.info(
         { cloudConnectionId: cloudConnection.id },
         "Created host session cookie for cloud connection",
       );
-
-      return cookieValue;
-    } catch (err) {
-      logger.error(
-        { cloudConnectionId: cloudConnection.id, err },
-        "Failed to create host session cookie",
-      );
-      return null;
     }
+
+    return cookieValue;
   };
 
   // This endpoint initializes the device host handler with iroh connection info.
