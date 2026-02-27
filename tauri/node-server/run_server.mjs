@@ -86,6 +86,7 @@ async function main() {
   const finalEnv = {
     NODE_ENV: "production",
     AUTO_LOGIN: "1",
+    ENABLE_PROXY_DEVICE_ON_PRODUCTION: "1",
 
     // DB settings
     DATABASE_HOST: `localhost:${PORT}`,
