@@ -23,3 +23,19 @@ CSRFErr.networkError = { result: { errors: [{ code: "EBADCSRFTOKEN" }] } };
 export const CSRFError: StoryObj = {
   args: { error: CSRFErr },
 };
+
+const ProxyErr = new Error("");
+// @ts-ignore
+ProxyErr.networkError = { result: { errors: [{ code: "EPROXYUNREACHABLE" }] } };
+export const ProxyUnreachableError: StoryObj = {
+  args: { error: ProxyErr },
+};
+
+const ProxyUnknownErr = new Error("");
+// @ts-ignore
+ProxyUnknownErr.networkError = {
+  result: { errors: [{ code: "EPROXYUNKNOWN" }] },
+};
+export const ProxyUnknownError: StoryObj = {
+  args: { error: ProxyUnknownErr },
+};

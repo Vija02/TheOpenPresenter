@@ -4,7 +4,7 @@ import {
   useRemoteBasePluginQuery,
   useRendererBasePluginQuery,
 } from "@repo/graphql";
-import { ErrorOccurred, LoadingFull } from "@repo/ui";
+import { ErrorAlert, LoadingFull } from "@repo/ui";
 import React, { createContext, useContext } from "react";
 
 type PluginMetaDataProviderType = {
@@ -48,7 +48,7 @@ export function PluginMetaDataProvider({
 
   if (error) {
     console.error(error);
-    return <ErrorOccurred />;
+    return <ErrorAlert error={error} />;
   }
 
   if (loading && !pluginMetaData) {
