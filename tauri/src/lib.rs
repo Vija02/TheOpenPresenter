@@ -78,7 +78,7 @@ pub fn run() {
         .setup(move |app| {
             let resource_path = app
                 .path()
-                .resolve("node-server/run_server.mjs", BaseDirectory::Home)?;
+                .resolve("node-server/run_server.mjs", BaseDirectory::Resource)?;
 
             let (mut rx, child) = app
                 .shell()
