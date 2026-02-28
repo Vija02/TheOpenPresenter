@@ -94,7 +94,7 @@ const ResetPage = () => {
                     control={form.control}
                     name="token"
                     label="Enter your reset token:"
-                    data-cy="resetpage-input-token"
+                    data-testid="resetpage-input-token"
                   />
 
                   <InputControl
@@ -104,7 +104,7 @@ const ResetPage = () => {
                     placeholder="Password"
                     autoComplete="new-password"
                     type="password"
-                    data-cy="resetpage-input-password"
+                    data-testid="resetpage-input-password"
                   />
 
                   <WrappedPasswordStrength password={form.watch("password")} />
@@ -116,7 +116,7 @@ const ResetPage = () => {
                     placeholder="Password"
                     autoComplete="new-password"
                     type="password"
-                    data-cy="resetpage-input-password2"
+                    data-testid="resetpage-input-password2"
                   />
 
                   {error ? (
@@ -132,7 +132,7 @@ const ResetPage = () => {
                     type="submit"
                     variant="success"
                     isLoading={form.formState.isSubmitting}
-                    data-cy="resetpage-button-submit"
+                    data-testid="resetpage-button-submit"
                     className="w-full"
                   >
                     Reset password

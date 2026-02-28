@@ -21,7 +21,7 @@ const Renderer = () => {
   return (
     <iframe
       style={{
-        height: "100vh",
+        height: "100dvh",
         width: "100vw",
       }}
       sandbox="allow-scripts allow-same-origin allow-presentation"

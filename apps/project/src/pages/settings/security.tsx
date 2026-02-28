@@ -78,7 +78,7 @@ const Settings_Security = () => {
               label="Old/Current password"
               autoComplete="old-password password"
               type="password"
-              data-cy="settingsecuritypage-input-password"
+              data-testid="settingsecuritypage-input-password"
             />
 
             <InputControl
@@ -87,7 +87,7 @@ const Settings_Security = () => {
               label="New password"
               autoComplete="new-password"
               type="password"
-              data-cy="settingsecuritypage-input-password2"
+              data-testid="settingsecuritypage-input-password2"
             />
 
             <div>
@@ -111,7 +111,7 @@ const Settings_Security = () => {
               type="submit"
               variant="success"
               isLoading={form.formState.isSubmitting}
-              data-cy="settingsecuritypage-submit-button"
+              data-testid="settingsecuritypage-submit-button"
             >
               Change Password
             </Button>

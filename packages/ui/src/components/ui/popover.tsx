@@ -28,8 +28,13 @@ function PopoverContent({
   className,
   align = "center",
   sideOffset = 4,
+  hideCloseButton = false,
+  hideArrow = false,
   ...props
-}: React.ComponentProps<typeof PopoverPrimitive.Content>) {
+}: React.ComponentProps<typeof PopoverPrimitive.Content> & {
+  hideCloseButton?: boolean;
+  hideArrow?: boolean;
+}) {
   // Debt: Rename this context to be generic
   const container = useDialogPortalContainerContext();
 
@@ -47,14 +52,18 @@ function PopoverContent({
         {...props}
       >
         {props.children}
-        <PopoverPrimitive.Close
-          className="ui--popover__close"
-          aria-label="Close"
-        >
-          <XIcon />
-          <span className="sr-only">Close</span>
-        </PopoverPrimitive.Close>
-        <PopoverPrimitive.Arrow className="ui--popover__arrow" />
+        {!hideCloseButton && (
+          <PopoverPrimitive.Close
+            className="ui--popover__close"
+            aria-label="Close"
+          >
+            <XIcon />
+            <span className="sr-only">Close</span>
+          </PopoverPrimitive.Close>
+        )}
+        {!hideArrow && (
+          <PopoverPrimitive.Arrow className="ui--popover__arrow" />
+        )}
       </PopoverPrimitive.Content>
     </PopoverPrimitive.Portal>
   );

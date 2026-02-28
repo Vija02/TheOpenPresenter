@@ -72,7 +72,7 @@ const VerifyPage = () => {
                     control={form.control}
                     name="code"
                     label="Please enter your email verification code"
-                    data-cy="verifypage-input-code"
+                    data-testid="verifypage-input-code"
                   />
 
                   {error ? (
@@ -88,7 +88,7 @@ const VerifyPage = () => {
                     type="submit"
                     variant="success"
                     isLoading={form.formState.isSubmitting}
-                    data-cy="verifypage-button-submit"
+                    data-testid="verifypage-button-submit"
                     className="w-full"
                   >
                     Submit

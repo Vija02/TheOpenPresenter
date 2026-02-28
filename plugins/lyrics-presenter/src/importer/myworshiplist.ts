@@ -31,7 +31,7 @@ const cleanWhiteSpace = (content: string[]) => {
 const removeAuxiliaryText = (content: string[]) => {
   return content.filter((songLine) => {
     const match1 = songLine.match(
-      /^(\s*)repeat(\s*)(verse|bridge|pre-? ?chorus|chorus|end|tag|intro)? ?(\d+)?(.*)$/i,
+      /^(\s*)repeat(\s*)(verse|bridge|pre-? ?chorus|chorus|end|tag|intro) ?(\d+)?(.*)$/i,
     );
 
     if (match1 && match1?.length > 0) {

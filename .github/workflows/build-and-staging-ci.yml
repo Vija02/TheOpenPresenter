@@ -1,0 +1,414 @@
+name: Build and Deploy Staging
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "PR number to deploy (for manual trigger)"
+        required: false
+        type: string
+  schedule:
+    # Run daily at midnight UTC to clean up expired environments
+    - cron: "0 0 * * *"
+
+concurrency:
+  group: staging-${{ github.event.pull_request.number || github.event.inputs.pr_number || github.run_id }}
+  cancel-in-progress: false
+
+env:
+  DEPLOYMENT_NAME_PREFIX: theopenpresenter-staging-pr
+  REGISTRY: ghcr.io
+  IMAGE_NAME: theopenpresenter_server
+  MIGRATOR_IMAGE_NAME: theopenpresenter_migrator
+
+jobs:
+  # Build Docker image for PRs and main branch pushes
+  build:
+    if: >
+      github.event_name == 'push' ||
+      (github.event_name == 'pull_request' && github.event.action != 'closed') ||
+      github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    outputs:
+      image_tag: ${{ steps.docker-build.outputs.image_tag }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build and push Docker image
+        id: docker-build
+        uses: ./.github/actions/docker-build
+        with:
+          image_name: ${{ env.IMAGE_NAME }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          dockerfile: production.Dockerfile
+          build_args: SHA=${{ github.sha }}
+          cache_registry: ghcr.io/vija02/theopenpresenter_server:buildcache
+          push_cache: ${{ github.event_name == 'push' && 'true' || 'false' }}
+
+  # Build Migrator Docker image (runs in parallel with main build)
+  build-migrator:
+    if: >
+      github.event_name == 'push' ||
+      (github.event_name == 'pull_request' && github.event.action != 'closed') ||
+      github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    outputs:
+      image_tag: ${{ steps.docker-build-migrator.outputs.image_tag }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build and push Migrator Docker image
+        id: docker-build-migrator
+        uses: ./.github/actions/docker-build
+        with:
+          image_name: ${{ env.MIGRATOR_IMAGE_NAME }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          dockerfile: migrator.Dockerfile
+          cache_registry: ghcr.io/vija02/theopenpresenter_migrator:buildcache
+          push_cache: ${{ github.event_name == 'push' && 'true' || 'false' }}
+
+  # Deploy staging environment for PRs
+  deploy:
+    if: >
+      (github.event_name == 'pull_request' && github.event.action != 'closed') ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.pr_number != '')
+    needs: [build, build-migrator]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+      pull-requests: write
+
+    outputs:
+      deployment_url: ${{ steps.staging-deploy.outputs.deployment_url }}
+      deployment_name: ${{ steps.vars.outputs.deployment_name }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set variables
+        id: vars
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            PR_NUMBER="${{ github.event.inputs.pr_number }}"
+          else
+            PR_NUMBER="${{ github.event.pull_request.number }}"
+          fi
+
+          if [ -z "$PR_NUMBER" ]; then
+            echo "Error: Could not determine PR number"
+            exit 1
+          fi
+
+          DEPLOYMENT_NAME="${{ env.DEPLOYMENT_NAME_PREFIX }}-${PR_NUMBER}"
+          echo "pr_number=${PR_NUMBER}" >> $GITHUB_OUTPUT
+          echo "deployment_name=${DEPLOYMENT_NAME}" >> $GITHUB_OUTPUT
+          echo "image_tag=pr-${PR_NUMBER}" >> $GITHUB_OUTPUT
+          echo "PR Number: ${PR_NUMBER}"
+          echo "Deployment Name: ${DEPLOYMENT_NAME}"
+          echo "Image Tag: pr-${PR_NUMBER}"
+
+      - name: Deploy staging environment
+        id: staging-deploy
+        uses: ./.github/actions/staging-deploy
+        with:
+          ssh_private_key: ${{ secrets.STAGING_SSH_PRIVATE_KEY }}
+          server_ip: ${{ secrets.STAGING_SERVER_IP }}
+          deployment_name: ${{ steps.vars.outputs.deployment_name }}
+          image_tag: ${{ steps.vars.outputs.image_tag }}
+
+      - name: Comment on PR with staging URL
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const deploymentUrl = '${{ steps.staging-deploy.outputs.deployment_url }}';
+            const prNumber = ${{ steps.vars.outputs.pr_number }};
+
+            // Find and delete previous staging environment comments
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber
+            });
+
+            for (const comment of comments.data) {
+              if (comment.body.includes('🚀 Staging Environment Deployed')) {
+                await github.rest.issues.deleteComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: comment.id
+                });
+              }
+            }
+
+            // Add new comment
+            const body = [
+              '## 🚀 Staging Environment Deployed',
+              '',
+              'Your staging environment is ready!',
+              '',
+              `**URL:** ${deploymentUrl}`,
+              '',
+              '**Note:** This environment will be automatically destroyed:',
+              '- When this PR is closed or merged',
+              '- After 7 days of inactivity',
+              '- When new commits are pushed (a new environment will be created)',
+              '',
+              'To manually recreate the environment, re-run the "Build and Deploy Staging" workflow.',
+              '',
+              '---',
+              `*Deployed at: ${new Date().toISOString()}*`,
+              `*Commit: ${context.sha}*`
+            ].join('\n');
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body: body
+            });
+
+  # Cleanup when PR is closed or merged
+  cleanup:
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set variables
+        id: vars
+        run: |
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          DEPLOYMENT_NAME="${{ env.DEPLOYMENT_NAME_PREFIX }}-${PR_NUMBER}"
+          echo "deployment_name=${DEPLOYMENT_NAME}" >> $GITHUB_OUTPUT
+
+      - name: Cleanup staging environment
+        uses: ./.github/actions/staging-cleanup
+        with:
+          ssh_private_key: ${{ secrets.STAGING_SSH_PRIVATE_KEY }}
+          server_ip: ${{ secrets.STAGING_SERVER_IP }}
+          deployment_name: ${{ steps.vars.outputs.deployment_name }}
+
+  # Scheduled cleanup for expired environments (7 days)
+  scheduled-cleanup:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
+        run: |
+          echo "Setting up SSH configuration..."
+          mkdir -p ~/.ssh
+          echo "${{ secrets.STAGING_SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519_staging
+          chmod 600 ~/.ssh/id_ed25519_staging
+          ssh-keyscan ${{ secrets.STAGING_SERVER_IP }} >> ~/.ssh/known_hosts
+          cat >> ~/.ssh/config << EOF
+          Host uncloud-staging
+            HostName ${{ secrets.STAGING_SERVER_IP }}
+            User root
+            IdentityFile ~/.ssh/id_ed25519_staging
+          EOF
+          chmod 600 ~/.ssh/config
+          echo "SSH configuration complete"
+
+      - name: Install uncloud CLI
+        run: |
+          echo "Installing uncloud CLI..."
+          curl -fsS https://get.uncloud.run/install.sh | sh
+          echo "Uncloud CLI installed successfully"
+          uc -v
+
+      - name: Configure uncloud
+        run: |
+          echo "Configuring uncloud..."
+          mkdir -p ~/.config/uncloud
+          cp .github/uncloud.yaml ~/.config/uncloud/config.yaml
+          sed -i "s/STAGING_SERVER_IP/${{ secrets.STAGING_SERVER_IP }}/g" ~/.config/uncloud/config.yaml
+          echo "Uncloud configuration complete"
+
+      - name: List and cleanup expired deployments
+        uses: actions/github-script@v7
+        env:
+          DEPLOYMENT_NAME_PREFIX: ${{ env.DEPLOYMENT_NAME_PREFIX }}
+        with:
+          script: |
+            const { execSync } = require('child_process');
+
+            const EXPIRATION_DAYS = 7;
+            const now = new Date();
+            const expirationThreshold = new Date(now.getTime() - EXPIRATION_DAYS * 24 * 60 * 60 * 1000);
+
+            console.log(`Checking for deployments older than ${EXPIRATION_DAYS} days (before ${expirationThreshold.toISOString()})`);
+
+            // Get list of open PRs
+            const { data: openPRs } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open'
+            });
+
+            const openPRNumbers = new Set(openPRs.map(pr => pr.number));
+            console.log(`Open PRs: ${Array.from(openPRNumbers).join(', ')}`);
+
+            // Get list of all services from uncloud
+            // uc ls outputs a table like:
+            // NAME    MODE     REPLICAS   IMAGE          ENDPOINTS
+            // caddy   global   1          caddy:2.10.2
+            try {
+              const servicesList = execSync('uc ls 2>/dev/null || echo ""', {
+                encoding: 'utf-8',
+                timeout: 30000
+              }).trim();
+              
+              if (!servicesList) {
+                console.log('No services found, skipping cleanup');
+                return;
+              }
+              
+              // Parse table output - extract service names from first column
+              const lines = servicesList.split('\n');
+              const serviceNames = [];
+              for (let i = 1; i < lines.length; i++) { // Skip header row
+                const name = lines[i].trim().split(/\s+/)[0];
+                if (name) {
+                  serviceNames.push(name);
+                }
+              }
+              
+              // Find unique deployment names from service names
+              // Service names are like: theopenpresenter-staging-pr-123-server
+              const deploymentNames = new Set();
+              for (const name of serviceNames) {
+                if (name.startsWith(process.env.DEPLOYMENT_NAME_PREFIX)) {
+                  // Extract deployment name (everything before -server, -worker, -db, etc.)
+                  const match = name.match(new RegExp(`^(${process.env.DEPLOYMENT_NAME_PREFIX}-\\d+)`));
+                  if (match) {
+                    deploymentNames.add(match[1]);
+                  }
+                }
+              }
+              
+              console.log(`Found ${deploymentNames.size} staging deployments`);
+              
+              for (const deploymentName of deploymentNames) {
+                // Extract PR number from deployment name
+                const match = deploymentName.match(/-(\d+)$/);
+                if (!match) continue;
+                
+                const prNumber = parseInt(match[1], 10);
+                
+                // Check if PR is still open
+                if (!openPRNumbers.has(prNumber)) {
+                  console.log(`Deployment ${deploymentName} belongs to closed PR #${prNumber}. Destroying...`);
+                  
+                  try {
+                    // Remove all services for this deployment
+                    execSync(`uc rm ${deploymentName}-migrator ${deploymentName}-server ${deploymentName}-worker ${deploymentName}-db ${deploymentName}-redis ${deploymentName}-unoserver ${deploymentName}-alloy 2>/dev/null || echo "Deployment may already be destroyed or doesn't exist"`, {
+                      encoding: 'utf-8',
+                      timeout: 60000
+                    });
+                    
+                    // Remove all volumes for this deployment
+                    execSync(`yes | uc volume rm ${deploymentName}-pg-data ${deploymentName}-redis-data ${deploymentName}-alloy-config 2>/dev/null || echo "Volumes may already be removed or don't exist"`, {
+                      encoding: 'utf-8',
+                      timeout: 60000
+                    });
+                    
+                    console.log(`Deployment ${deploymentName} destroyed.`);
+                  } catch (error) {
+                    console.log(`Failed to destroy ${deploymentName}: ${error.message}`);
+                  }
+                  continue;
+                }
+                
+                // Check if PR has been inactive for longer than expiration threshold
+                // Use GitHub API since uc ls doesn't provide creation dates
+                try {
+                  const { data: pr } = await github.rest.pulls.get({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    pull_number: prNumber
+                  });
+                  
+                  const lastUpdated = new Date(pr.updated_at);
+                  
+                  if (lastUpdated < expirationThreshold) {
+                    console.log(`Deployment ${deploymentName} is expired (PR last updated at ${lastUpdated.toISOString()}). Destroying...`);
+                    
+                    try {
+                      // Remove all services for this deployment
+                      execSync(`uc rm ${deploymentName}-migrator ${deploymentName}-server ${deploymentName}-worker ${deploymentName}-db ${deploymentName}-redis ${deploymentName}-unoserver ${deploymentName}-alloy 2>/dev/null || echo "Deployment may already be destroyed or doesn't exist"`, {
+                        encoding: 'utf-8',
+                        timeout: 60000
+                      });
+                      
+                      // Remove all volumes for this deployment
+                      execSync(`yes | uc volume rm ${deploymentName}-pg-data ${deploymentName}-redis-data ${deploymentName}-alloy-config 2>/dev/null || echo "Volumes may already be removed or don't exist"`, {
+                        encoding: 'utf-8',
+                        timeout: 60000
+                      });
+                      
+                      // Comment on the PR
+                      await github.rest.issues.createComment({
+                        owner: context.repo.owner,
+                        repo: context.repo.repo,
+                        issue_number: prNumber,
+                        body: `## ⏰ Staging Environment Expired
+                        
+                        The staging environment for this PR has been automatically destroyed after ${EXPIRATION_DAYS} days of inactivity.
+                        
+                        To recreate it, re-run the "Build and Deploy Staging" workflow or push a new commit.
+                        
+                        ---
+                        *Expired at: ${new Date().toISOString()}*`
+                      });
+                      
+                      console.log(`Deployment ${deploymentName} destroyed and PR commented.`);
+                    } catch (error) {
+                      console.log(`Failed to destroy ${deploymentName}: ${error.message}`);
+                    }
+                  } else {
+                    console.log(`Deployment ${deploymentName} is still valid (PR last updated at ${lastUpdated.toISOString()}).`);
+                  }
+                } catch (error) {
+                  console.log(`Failed to check PR #${prNumber}: ${error.message}`);
+                }
+              }
+            } catch (error) {
+              console.log(`Error during cleanup: ${error.message}`);
+            }
+
+            console.log('Scheduled cleanup completed.');
+
+      - name: Cleanup SSH keys
+        if: always()
+        run: |
+          rm -f ~/.ssh/id_ed25519_staging
+          echo "SSH keys cleaned up"

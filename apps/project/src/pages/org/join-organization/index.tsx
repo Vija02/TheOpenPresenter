@@ -171,7 +171,7 @@ const JoinOrganizationPage = () => {
                       title="Error: Failed to request to join organization"
                     >
                       {code === "NUNIQ" ? (
-                        <span data-cy="joinorganization-alert-nuniq">
+                        <span data-testid="joinorganization-alert-nuniq">
                           You are already a member of this organization.
                         </span>
                       ) : (
@@ -190,7 +190,7 @@ const JoinOrganizationPage = () => {
                     <Button
                       type="submit"
                       variant="success"
-                      data-cy="joinorganization-submit-button"
+                      data-testid="joinorganization-submit-button"
                       disabled={form.watch("selectedOrgId") === ""}
                       isLoading={form.formState.isSubmitting}
                     >
