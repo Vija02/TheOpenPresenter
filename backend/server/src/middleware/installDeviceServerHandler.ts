@@ -177,6 +177,9 @@ export default (app: Express) => {
                   proxyReq.setHeader("Cookie", hostSessionCookie);
                 }
 
+                // Bypass CSRF checks on the device server
+                proxyReq.setHeader("x-top-csrf-protection", "1");
+
                 logger.debug(
                   {
                     organizationSlug,
@@ -202,6 +205,8 @@ export default (app: Express) => {
                 if (hostSessionCookie) {
                   proxyReq.setHeader("Cookie", hostSessionCookie);
                 }
+                // Bypass CSRF checks on the device server
+                proxyReq.setHeader("x-top-csrf-protection", "1");
                 logger.debug(
                   {
                     organizationSlug,
