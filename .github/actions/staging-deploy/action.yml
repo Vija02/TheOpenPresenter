@@ -307,6 +307,13 @@ runs:
         echo "=== Service Details ==="
         uc inspect ${DEPLOYMENT_NAME}-server || true
 
+    - name: Docker system prune
+      shell: bash
+      run: |
+        echo "Cleaning up unused Docker resources on staging server..."
+        ssh uncloud-staging "docker system prune -f" || echo "Docker prune failed (non-critical)"
+        echo "Docker cleanup complete"
+
     - name: Cleanup SSH keys
       shell: bash
       if: always()
