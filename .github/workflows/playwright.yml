@@ -59,10 +59,10 @@ jobs:
             --storage.path=/var/lib/alloy/data \
             --server.http.listen-addr=0.0.0.0:12345 \
             --stability.level=experimental
-    - name: Install dumbpipe
-      run: |
-        curl -sL https://www.dumbpipe.dev/install.sh | sh
-        sudo mv dumbpipe /usr/local/bin/
+      - name: Install dumbpipe
+        run: |
+          curl -sL https://www.dumbpipe.dev/install.sh | sh
+          sudo mv dumbpipe /usr/local/bin/
       - name: yarn, lint, build and test
         run: |
           cp .env.ci .env
