@@ -273,6 +273,12 @@ RUN echo -e "NODE_ENV=$NODE_ENV\nROOT_URL=$ROOT_URL" > /app/.env
 
 FROM node:22-alpine
 
+# Install dumbpipe
+RUN apk add --no-cache curl && \
+    curl -sL https://www.dumbpipe.dev/install.sh | sh && \
+    mv dumbpipe /usr/local/bin/ && \
+    apk del curl
+
 EXPOSE $PORT
 WORKDIR /app/
 
