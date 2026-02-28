@@ -112,8 +112,8 @@ const OrganizationCloudPage = () => {
               if (manual) {
                 setManualAuthLink(data.authLink);
               } else if (window.__TAURI__) {
-                const { openPath } = window.__TAURI__.opener;
-                openPath(data.authLink);
+                const { openUrl } = window.__TAURI__.opener;
+                openUrl(data.authLink);
               } else {
                 popup = window.open(data.authLink, "popup", "popup=true");
                 if (connectionRef.current) {
