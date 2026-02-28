@@ -8,7 +8,7 @@ export class HostProjectsPage {
   constructor(page: Page) {
     this.page = page;
     this.hostProjectsHeading = page.getByRole("heading", {
-      name: "Host Projects",
+      name: "Projects from your other devices",
     });
     this.hostProjectCards = page.locator(".project--project-card");
   }
