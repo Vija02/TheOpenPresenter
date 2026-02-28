@@ -51,3 +51,5 @@ loadedPlugins
 
 nft_results
 node_modules_nft
+.gemini/
+gha-creds-*.json
