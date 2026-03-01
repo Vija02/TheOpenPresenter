@@ -165,14 +165,17 @@ test.describe("Lyrics Presenter Plugin - Visual Regression", () => {
     await expect(page.getByTestId("slide-container").first()).toBeVisible();
 
     // Click on the slide to select it
-    await page.getByTestId("slide-container").nth(1).click();
+    await page.getByTestId("slide-container").nth(0).click();
 
     // Open presenter view
     const presentedPage = await projectPage.present();
     await presentedPage.waitForLoadState("networkidle");
 
     // DOM snapshot for full song view - default style
-    await expect(presentedPage.locator("body")).toMatchAriaSnapshot();
+    const defaultDom = await presentedPage
+      .locator("lyrics-presenter-renderer")
+      .innerHTML();
+    expect(defaultDom).toMatchSnapshot("full-song-default.txt");
 
     // Change to light mode for variety
     await lyricsPlugin.openStyleSettings();
@@ -182,6 +185,9 @@ test.describe("Lyrics Presenter Plugin - Visual Regression", () => {
     await presentedPage.waitForTimeout(200);
 
     // DOM snapshot for full song view - light mode
-    await expect(presentedPage.locator("body")).toMatchAriaSnapshot();
+    const lightDom = await presentedPage
+      .locator("lyrics-presenter-renderer")
+      .innerHTML();
+    expect(lightDom).toMatchSnapshot("full-song-light.txt");
   });
 });
