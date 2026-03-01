@@ -18,8 +18,8 @@ export const test = base.extend<ProjectFixture>({
     const organizationPage = new OrganizationPage(page);
     await use(organizationPage);
   },
-  projectPage: async ({ page }, use) => {
-    const projectPage = new ProjectPage(page);
+  projectPage: async ({ page, context }, use) => {
+    const projectPage = new ProjectPage(page, context);
     await use(projectPage);
   },
   lyricsPlugin: async ({ page }, use) => {

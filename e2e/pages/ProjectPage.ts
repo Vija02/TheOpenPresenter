@@ -1,4 +1,4 @@
-import { type Locator, type Page } from "@playwright/test";
+import { type BrowserContext, type Locator, type Page } from "@playwright/test";
 
 const pluginsList = [
   "Embed",
@@ -17,7 +17,10 @@ export class ProjectPage {
   readonly newSceneAddButton: Locator;
   readonly presentButton: Locator;
 
-  constructor(public readonly page: Page) {
+  constructor(
+    public readonly page: Page,
+    public readonly context: BrowserContext,
+  ) {
     this.newSceneButton = page.getByRole("button", { name: "Add New Scene" });
     this.newSceneAddButton = page.getByRole("button", { name: "Add Scene" });
     this.presentButton = page.getByRole("button", { name: "Present" });
@@ -35,8 +38,9 @@ export class ProjectPage {
   }
 
   async present() {
-    const page2Promise = this.page.waitForEvent("popup");
-    await this.presentButton.click();
-    return await page2Promise;
+    const url = await this.presentButton.locator("..").getAttribute("href");
+    const newPage = await this.context.newPage();
+    await newPage.goto(url!);
+    return newPage;
   }
 }
