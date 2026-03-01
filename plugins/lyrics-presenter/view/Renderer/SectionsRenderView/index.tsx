@@ -100,10 +100,35 @@ const SectionsRenderViewAutoSize = React.memo(
 
     const padding = usePadding(slideStyle, { width, height });
 
+    // CContainer dimensions after padding
+    const containerWidth = width - padding[3] - padding[1];
+    const containerHeight = height - padding[0] - padding[2];
+
+    // Calculate viewBox height to match container aspect ratio
+    const scaledHeight =
+      measuredData.width * (containerHeight / containerWidth);
+
+    // Extra height available for vertical positioning (capped at 0 for height-constrained content)
+    const extraHeight = Math.max(0, scaledHeight - measuredData.height);
+
+    // Calculate viewBox Y offset based on vertical alignment
+    const viewBoxY = useMemo(() => {
+      switch (slideStyle.verticalAlign) {
+        case "top":
+          return extraHeight / 2;
+        case "bottom":
+          return -extraHeight / 2;
+        case "center":
+        default:
+          return 0;
+      }
+    }, [extraHeight, slideStyle.verticalAlign]);
+
     const viewBox = useMemo(
-      () => [0, 0, measuredData.width, measuredData.height].join(" "),
-      [measuredData.height, measuredData.width],
+      () => [0, viewBoxY, measuredData.width, measuredData.height].join(" "),
+      [viewBoxY, measuredData.width, measuredData.height],
     );
+
     return (
       <>
         {slideStyle.debugPadding && <DebugPadding padding={padding} />}
@@ -160,9 +185,24 @@ const SectionsRenderViewManualFontSize = React.memo(
 
     const padding = usePadding(slideStyle, { width, height });
 
+    const justifyClass = useMemo(() => {
+      switch (slideStyle.verticalAlign) {
+        case "top":
+          return "justify-start";
+        case "bottom":
+          return "justify-end";
+        case "center":
+        default:
+          return "justify-center";
+      }
+    }, [slideStyle.verticalAlign]);
+
     return (
       <div
-        className="flex flex-col items-center justify-center h-full overflow-hidden relative"
+        className={cn(
+          "flex flex-col items-center h-full overflow-hidden relative",
+          justifyClass,
+        )}
         style={{
           padding: padding.map((x) => x + "px").join(" "),
           fontSize: width / 280, // Magic number to get the pt scale right
