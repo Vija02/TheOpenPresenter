@@ -22,9 +22,18 @@ import {
 import { useCallback, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { FaBold, FaItalic, FaLink } from "react-icons/fa6";
+import {
+  TbLayoutAlignBottom,
+  TbLayoutAlignMiddle,
+  TbLayoutAlignTop,
+} from "react-icons/tb";
 
 import { getSlideStyle } from "../../../src/slideStyle";
-import { SlideStyle, slideStyleValidator } from "../../../src/types";
+import {
+  SlideStyle,
+  slideStyleValidator,
+  verticalAlignments,
+} from "../../../src/types";
 import { usePluginAPI } from "../../pluginApi";
 import { MobilePreview } from "../RemoteEditSongModal/MobilePreview";
 import { SongViewSlides } from "../SongViewSlides";
@@ -180,6 +189,33 @@ const StyleSettingModal = () => {
                   </div>
 
                   <h3 className="text-xl font-bold mt-5">Placement</h3>
+                  <div className="flex flex-row items-center gap-2">
+                    <FormLabel className="mb-0 shrink-0">
+                      Vertical Align:{" "}
+                    </FormLabel>
+                    <ToggleGroup
+                      type="single"
+                      value={data.verticalAlign}
+                      onValueChange={(val) => {
+                        if (val) {
+                          form.setValue(
+                            "verticalAlign",
+                            val as (typeof verticalAlignments)[number],
+                          );
+                        }
+                      }}
+                    >
+                      <ToggleGroupItem value="top" aria-label="Align top">
+                        <TbLayoutAlignTop />
+                      </ToggleGroupItem>
+                      <ToggleGroupItem value="center" aria-label="Align center">
+                        <TbLayoutAlignMiddle />
+                      </ToggleGroupItem>
+                      <ToggleGroupItem value="bottom" aria-label="Align bottom">
+                        <TbLayoutAlignBottom />
+                      </ToggleGroupItem>
+                    </ToggleGroup>
+                  </div>
                   <div className="[&>*]:flex">
                     <ToggleControl
                       control={form.control}
