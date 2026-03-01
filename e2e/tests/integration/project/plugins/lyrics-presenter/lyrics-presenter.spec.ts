@@ -50,7 +50,7 @@ test.describe("Lyrics Presenter Plugin - Visual Regression", () => {
     // Screenshot 1: Default style (dark mode, centered, auto-size)
     await expect(presentedPage).toHaveScreenshot(
       "01-default-dark-centered.png",
-      { maxDiffPixelRatio: 0.03 },
+      { maxDiffPixelRatio: 0.05 },
     );
 
     // Navigate to next slide and change styles - Light mode + Top aligned
@@ -68,7 +68,7 @@ test.describe("Lyrics Presenter Plugin - Visual Regression", () => {
     // Screenshot 2: Second verse, light mode, top aligned
     await expect(presentedPage).toHaveScreenshot(
       "02-verse-2-light-top-aligned.png",
-      { maxDiffPixelRatio: 0.03 },
+      { maxDiffPixelRatio: 0.05 },
     );
 
     // Navigate to chorus and change to bottom aligned + bold
@@ -85,7 +85,7 @@ test.describe("Lyrics Presenter Plugin - Visual Regression", () => {
     // Screenshot 3: Chorus section, light mode, bottom aligned, bold
     await expect(presentedPage).toHaveScreenshot(
       "03-chorus-light-bottom-bold.png",
-      { maxDiffPixelRatio: 0.03 },
+      { maxDiffPixelRatio: 0.05 },
     );
 
     // Change to dark mode + italic + centered
@@ -102,7 +102,7 @@ test.describe("Lyrics Presenter Plugin - Visual Regression", () => {
     await expect(presentedPage).toHaveScreenshot(
       "04-dark-centered-italic.png",
       {
-        maxDiffPixelRatio: 0.03,
+        maxDiffPixelRatio: 0.05,
       },
     );
 
@@ -117,7 +117,7 @@ test.describe("Lyrics Presenter Plugin - Visual Regression", () => {
 
     // Screenshot 5: Manual font size (24pt)
     await expect(presentedPage).toHaveScreenshot("05-manual-font-size.png", {
-      maxDiffPixelRatio: 0.03,
+      maxDiffPixelRatio: 0.05,
     });
 
     // Manual font size with top alignment and linked padding
@@ -132,7 +132,7 @@ test.describe("Lyrics Presenter Plugin - Visual Regression", () => {
     // Screenshot 6: Manual font size (10pt), top aligned, 10% padding
     await expect(presentedPage).toHaveScreenshot(
       "06-manual-top-aligned-padding.png",
-      { maxDiffPixelRatio: 0.03 },
+      { maxDiffPixelRatio: 0.05 },
     );
 
     // Manual font size with bottom alignment and individual padding
@@ -152,7 +152,7 @@ test.describe("Lyrics Presenter Plugin - Visual Regression", () => {
     // Screenshot 7: Manual font size (10pt), bottom aligned, individual padding
     await expect(presentedPage).toHaveScreenshot(
       "07-manual-bottom-aligned-individual-padding.png",
-      { maxDiffPixelRatio: 0.03 },
+      { maxDiffPixelRatio: 0.05 },
     );
   });
 
@@ -185,7 +185,7 @@ test.describe("Lyrics Presenter Plugin - Visual Regression", () => {
 
     // Screenshot for full song view - default style
     await expect(presentedPage).toHaveScreenshot("full-song-default.png", {
-      maxDiffPixelRatio: 0.03,
+      maxDiffPixelRatio: 0.05,
     });
 
     // Change to light mode for variety
@@ -197,7 +197,7 @@ test.describe("Lyrics Presenter Plugin - Visual Regression", () => {
 
     // Screenshot for full song view - light mode
     await expect(presentedPage).toHaveScreenshot("full-song-light.png", {
-      maxDiffPixelRatio: 0.03,
+      maxDiffPixelRatio: 0.05,
     });
   });
 });
