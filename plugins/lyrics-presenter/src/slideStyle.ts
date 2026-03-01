@@ -13,6 +13,7 @@ export const getSlideStyle = (
       `-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"`,
     lineHeight: slideStyle?.lineHeight ?? 1,
     isDarkMode: slideStyle?.isDarkMode ?? true,
+    verticalAlign: slideStyle?.verticalAlign ?? "center",
     padding: slideStyle?.padding ?? 4,
     paddingIsLinked: slideStyle?.paddingIsLinked ?? true,
     leftPadding: slideStyle?.leftPadding ?? 4,

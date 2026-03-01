@@ -40,6 +40,10 @@ const paddingValidator = z
     return Number.isNaN(num) ? 0 : num;
   })
   .optional();
+
+export const verticalAlignments = ["top", "center", "bottom"] as const;
+export type VerticalAlignment = (typeof verticalAlignments)[number];
+
 export const slideStyleValidator = z.object({
   autoSize: z.boolean().optional(),
   fontSize: z.string().or(z.number()).optional(),
@@ -55,6 +59,7 @@ export const slideStyleValidator = z.object({
     })
     .optional(),
   isDarkMode: z.boolean().optional(),
+  verticalAlign: z.enum(verticalAlignments).optional(),
   padding: paddingValidator,
   paddingIsLinked: z.boolean().optional(),
   leftPadding: paddingValidator,
