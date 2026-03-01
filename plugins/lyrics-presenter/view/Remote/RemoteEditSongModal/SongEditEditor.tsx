@@ -45,7 +45,10 @@ const SongEditEditor = ({
   }, [editor, initialContent]);
 
   return (
-    <div className="rounded-sm border border-stroke px-3 py-2 w-full">
+    <div
+      className="rounded-sm border border-stroke px-3 py-2 w-full"
+      data-testid="ly-song-editor"
+    >
       <EditorContent editor={editor} />
     </div>
   );
