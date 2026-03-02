@@ -14,8 +14,12 @@ type Project = NonNullable<
   | NonNullable<RendererBasePluginQuery["publicProject"]>["nodes"][number]
 >;
 
+type PluginMeta =
+  | RendererBasePluginQuery["pluginMeta"]
+  | RemoteBasePluginQuery["pluginMeta"];
+
 type PluginMetaDataProviderType = {
-  pluginMetaData: RendererBasePluginQuery | RemoteBasePluginQuery | null;
+  pluginMeta: PluginMeta | null;
   project: Project | null;
   orgId: string;
   orgSlug: string;
@@ -25,7 +29,7 @@ type PluginMetaDataProviderType = {
 };
 
 const initialData: PluginMetaDataProviderType = {
-  pluginMetaData: null,
+  pluginMeta: null,
   project: null,
   orgId: "",
   orgSlug: "",
@@ -114,7 +118,7 @@ export function PluginMetaDataProvider({
   return (
     <PluginMetaDataContext.Provider
       value={{
-        pluginMetaData: pluginMetaData ?? null,
+        pluginMeta: pluginMetaData?.pluginMeta ?? null,
         project,
         orgId: organizationId,
         orgSlug,

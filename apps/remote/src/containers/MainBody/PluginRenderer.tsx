@@ -8,7 +8,6 @@ import {
   YjsWatcher,
 } from "@repo/base-plugin";
 import {
-  RemoteBasePluginQuery,
   useCompleteMediaMutation,
   useDeleteMediaMutation,
   useUnlinkMediaFromPluginMutation,
@@ -49,10 +48,7 @@ const PluginRenderer = React.memo(
     pluginInfo: Plugin<Record<string, any>>;
   }) => {
     const pluginDivRef = useRef<HTMLDivElement>(null);
-    const pluginMetaData = usePluginMetaData()
-      .pluginMetaData as RemoteBasePluginQuery;
-    const orgId = usePluginMetaData().orgId;
-    const projectId = usePluginMetaData().projectId;
+    const { pluginMeta, orgId, projectId } = usePluginMetaData();
     const {
       getYJSPluginRenderer,
       getYJSPluginSceneData,
@@ -77,13 +73,14 @@ const PluginRenderer = React.memo(
 
     const [match] = useRoute(`/${sceneId}`);
 
-    const viewData = useMemo(
-      () =>
-        pluginMetaData?.pluginMeta.registeredRemoteView.find(
+    const viewData = useMemo(() => {
+      if (pluginMeta && "registeredRemoteView" in pluginMeta) {
+        return pluginMeta.registeredRemoteView.find(
           (x) => x.pluginName === pluginInfo.plugin,
-        ),
-      [pluginInfo.plugin, pluginMetaData?.pluginMeta.registeredRemoteView],
-    );
+        );
+      }
+      return undefined;
+    }, [pluginInfo.plugin, pluginMeta]);
 
     const { canPlayAudio } = useAudioCheck();
     const { addError, removeError } = useError();
