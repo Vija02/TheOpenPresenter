@@ -15,7 +15,17 @@ query RendererBasePlugin($orgSlug: String!, $projectSlug: String!) {
       nodes {
         id
         name
+        isPublic
       }
+    }
+  }
+
+  publicProject: projects(condition: { slug: $projectSlug, isPublic: true }) {
+    nodes {
+      id
+      name
+      isPublic
+      organizationId
     }
   }
 }

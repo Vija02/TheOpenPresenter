@@ -13,7 +13,7 @@ import "./index.css";
 
 export const TopBar = () => {
   const [location] = useLocation();
-  const { orgSlug, pluginMetaData } = usePluginMetaData();
+  const { orgSlug, project } = usePluginMetaData();
 
   // When in proxy mode, use the cloud org slug for navigation back to projects
   const proxyConfig = appData.getProxyConfig();
@@ -27,11 +27,6 @@ export const TopBar = () => {
   const selectedScene = useMemo(
     () => (data.data[location.slice(1)] ? location.slice(1) : null),
     [data.data, location],
-  );
-
-  const project = useMemo(
-    () => pluginMetaData?.organizationBySlug?.projects.nodes[0],
-    [pluginMetaData?.organizationBySlug?.projects.nodes],
   );
 
   return (
