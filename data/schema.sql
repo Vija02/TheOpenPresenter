@@ -2,16 +2,16 @@
 -- PostgreSQL database dump
 --
 
-\restrict Y5BwnfqdecJ3uWojUFgQXLcf8dvKmTzT0XSRaLsYjC1dy81b3QDmSPIfXZ8c2iC
+\restrict EB9tgRfpgFYToS78cNTubEUiPHaIioUMKqTuvHa2n1HJL5X2byUBIVGEPYPj2dz
 
--- Dumped from database version 17.0 (Debian 17.0-1.pgdg120+1)
--- Dumped by pg_dump version 18.1
+-- Dumped from database version 17.4
+-- Dumped by pg_dump version 18.3 (Homebrew)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
 SET transaction_timeout = 0;
-SET client_encoding = 'UTF8';
+SET client_encoding = 'SQL_ASCII';
 SET standard_conforming_strings = on;
 SELECT pg_catalog.set_config('search_path', '', false);
 SET check_function_bodies = false;
@@ -1104,7 +1104,8 @@ CREATE TABLE app_public.projects (
     cloud_connection_id uuid,
     cloud_last_updated timestamp with time zone,
     cloud_should_sync boolean,
-    cloud_project_id uuid
+    cloud_project_id uuid,
+    is_public boolean DEFAULT false
 );
 
 
@@ -3008,6 +3009,13 @@ CREATE INDEX projects_creator_user_id_idx ON app_public.projects USING btree (cr
 
 
 --
+-- Name: projects_is_public_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX projects_is_public_idx ON app_public.projects USING btree (is_public);
+
+
+--
 -- Name: projects_organization_id_cloud_project_id_idx; Type: INDEX; Schema: app_public; Owner: -
 --
 
@@ -3960,6 +3968,13 @@ CREATE POLICY select_public ON app_public.organizations FOR SELECT USING ((is_pu
 
 
 --
+-- Name: projects select_public; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY select_public ON app_public.projects FOR SELECT USING ((is_public IS TRUE));
+
+
+--
 -- Name: tags; Type: ROW SECURITY; Schema: app_public; Owner: -
 --
 
@@ -4289,6 +4304,13 @@ GRANT INSERT(target_date),UPDATE(target_date) ON TABLE app_public.projects TO th
 --
 
 GRANT INSERT(category_id),UPDATE(category_id) ON TABLE app_public.projects TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN projects.is_public; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(is_public),UPDATE(is_public) ON TABLE app_public.projects TO theopenpresenter_visitor;
 
 
 --
@@ -4958,5 +4980,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE theopenpresenter REVOKE ALL ON FUNCTIONS FROM 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict Y5BwnfqdecJ3uWojUFgQXLcf8dvKmTzT0XSRaLsYjC1dy81b3QDmSPIfXZ8c2iC
+\unrestrict EB9tgRfpgFYToS78cNTubEUiPHaIioUMKqTuvHa2n1HJL5X2byUBIVGEPYPj2dz
 

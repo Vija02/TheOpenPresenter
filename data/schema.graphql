@@ -3140,6 +3140,7 @@ type Project {
   creatorUserId: UUID
   document: String
   id: UUID!
+  isPublic: Boolean
   name: String!
 
   """Reads a single `Organization` that is related to this `Project`."""
@@ -3234,6 +3235,9 @@ input ProjectCondition {
   """Checks for equality with the object’s `id` field."""
   id: UUID
 
+  """Checks for equality with the object’s `isPublic` field."""
+  isPublic: Boolean
+
   """Checks for equality with the object’s `organizationId` field."""
   organizationId: UUID
 
@@ -3266,6 +3270,9 @@ input ProjectFilter {
   """Filter by the object’s `id` field."""
   id: UUIDFilter
 
+  """Filter by the object’s `isPublic` field."""
+  isPublic: BooleanFilter
+
   """Negates the expression."""
   not: ProjectFilter
 
@@ -3289,6 +3296,7 @@ input ProjectFilter {
 input ProjectInput {
   categoryId: UUID
   creatorUserId: UUID
+  isPublic: Boolean
   name: String
   organizationId: UUID!
   slug: String!
@@ -3395,6 +3403,7 @@ Represents an update to a `Project`. Fields that are set will be updated.
 """
 input ProjectPatch {
   categoryId: UUID
+  isPublic: Boolean
   name: String
   slug: String
   targetDate: Datetime
@@ -3534,6 +3543,8 @@ enum ProjectsOrderBy {
   CREATOR_USER_ID_DESC
   ID_ASC
   ID_DESC
+  IS_PUBLIC_ASC
+  IS_PUBLIC_DESC
   NATURAL
   ORGANIZATION_ID_ASC
   ORGANIZATION_ID_DESC
