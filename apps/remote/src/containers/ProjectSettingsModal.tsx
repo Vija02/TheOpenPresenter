@@ -3,6 +3,7 @@ import { useUpdateProjectMutation } from "@repo/graphql";
 import { usePluginMetaData } from "@repo/shared";
 import {
   Button,
+  CheckboxControl,
   Dialog,
   DialogBody,
   DialogContent,
@@ -23,6 +24,7 @@ import { useExportProject } from "../api/useExportProject";
 
 const formSchema = z.object({
   name: z.string(),
+  isPublic: z.boolean(),
 });
 
 const ProjectSettingsModal = () => {
@@ -51,8 +53,8 @@ const ProjectSettingsModal = () => {
   const [{ fetching: loading }, updateProject] = useUpdateProjectMutation();
 
   const handleSubmit = useCallback(
-    async ({ name }: { name: string }) => {
-      updateProject({ id: project?.id, name }).then(() => {
+    async ({ name, isPublic }: { name: string; isPublic: boolean }) => {
+      updateProject({ id: project?.id, name, isPublic }).then(() => {
         refetch();
 
         resetData?.();
@@ -65,6 +67,7 @@ const ProjectSettingsModal = () => {
     resolver: zodResolver(formSchema),
     values: {
       name: project?.name ?? "",
+      isPublic: project?.isPublic ?? false,
     },
   });
 
@@ -77,8 +80,14 @@ const ProjectSettingsModal = () => {
               <DialogTitle>Edit Project</DialogTitle>
             </DialogHeader>
             <DialogBody>
-              <div className="stack-col items-start py-2">
+              <div className="stack-col items-start py-2 gap-4">
                 <InputControl control={form.control} label="Name" name="name" />
+                <CheckboxControl
+                  control={form.control}
+                  name="isPublic"
+                  label="Make project public"
+                  description="When enabled, anyone with the link can view this project"
+                />
               </div>
             </DialogBody>
             <DialogFooter className="justify-between">
