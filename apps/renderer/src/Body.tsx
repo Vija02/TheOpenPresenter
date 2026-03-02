@@ -7,7 +7,6 @@ import {
   WebComponentProps,
   YjsWatcher,
 } from "@repo/base-plugin";
-import { RendererBasePluginQuery } from "@repo/graphql";
 import { preloader } from "@repo/lib";
 import { logger } from "@repo/observability";
 import {
@@ -124,10 +123,7 @@ const SceneRenderer = React.memo(({ sceneId }: { sceneId: string }) => {
 const PluginRenderer = React.memo(
   ({ pluginId, sceneId }: { pluginId: string; sceneId: string }) => {
     const pluginDivRef = useRef<HTMLDivElement>(null);
-    const pluginMetaData = usePluginMetaData()
-      .pluginMetaData as RendererBasePluginQuery;
-    const orgId = usePluginMetaData().orgId;
-    const projectId = usePluginMetaData().projectId;
+    const { pluginMeta, orgId, projectId } = usePluginMetaData();
     const {
       getYJSPluginRenderer,
       getYJSPluginSceneData,
@@ -156,13 +152,14 @@ const PluginRenderer = React.memo(
       () => (mainState.data[sceneId] as Scene).children[pluginId],
       [sceneId, mainState.data, pluginId],
     );
-    const tag = useMemo(
-      () =>
-        pluginMetaData?.pluginMeta.registeredRendererView.find(
+    const tag = useMemo(() => {
+      if (pluginMeta && "registeredRendererView" in pluginMeta) {
+        return pluginMeta.registeredRendererView.find(
           (x) => x.pluginName === pluginInfo?.plugin,
-        )?.tag,
-      [pluginInfo?.plugin, pluginMetaData?.pluginMeta.registeredRendererView],
-    );
+        )?.tag;
+      }
+      return undefined;
+    }, [pluginInfo?.plugin, pluginMeta]);
 
     const { canPlayAudio } = useAudioCheck();
     const { addError, removeError } = useError();

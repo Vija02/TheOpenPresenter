@@ -1,5 +1,4 @@
 import { Scene, SceneCategories, sceneCategories } from "@repo/base-plugin";
-import { RemoteBasePluginQuery } from "@repo/graphql";
 import { usePluginData, usePluginMetaData } from "@repo/shared";
 import {
   Badge,
@@ -38,11 +37,13 @@ const SidebarAddSceneModal = () => {
   const [selectedCategory, setSelectedCategory] = useState("All");
 
   const mainState = usePluginData().mainState!;
-  const pluginMetaData = usePluginMetaData()
-    .pluginMetaData as RemoteBasePluginQuery;
+  const { pluginMeta } = usePluginMetaData();
+
+  const remotePluginMeta =
+    pluginMeta && "registeredRemoteView" in pluginMeta ? pluginMeta : null;
 
   const [selectedPlugin, setSelectedPlugin] = useState<string | null>(null);
-  const selectedSceneCreator = pluginMetaData?.pluginMeta.sceneCreator.find(
+  const selectedSceneCreator = remotePluginMeta?.sceneCreator.find(
     (x) => x.pluginName === selectedPlugin,
   );
 
@@ -117,23 +118,25 @@ const SidebarAddSceneModal = () => {
                     <div className="rt--sidebar-add-scene-modal-plugins">
                       <OptionGroup
                         size="sm"
-                        options={pluginMetaData?.pluginMeta.sceneCreator
-                          .filter((x) => x.categories.includes(category))
-                          .map((sceneCreator) => ({
-                            title: (
-                              <div className="rt--sidebar-add-scene-modal-plugin-header">
-                                {sceneCreator.title}
-                                {sceneCreator.isExperimental && (
-                                  <Badge size="sm">EXPERIMENTAL</Badge>
-                                )}
-                                {sceneCreator.isStarred && (
-                                  <FaStar className="rt--sidebar-add-scene-modal-star-icon" />
-                                )}
-                              </div>
-                            ),
-                            description: sceneCreator.description,
-                            value: sceneCreator.pluginName,
-                          }))}
+                        options={
+                          remotePluginMeta?.sceneCreator
+                            .filter((x) => x.categories.includes(category))
+                            .map((sceneCreator) => ({
+                              title: (
+                                <div className="rt--sidebar-add-scene-modal-plugin-header">
+                                  {sceneCreator.title}
+                                  {sceneCreator.isExperimental && (
+                                    <Badge size="sm">EXPERIMENTAL</Badge>
+                                  )}
+                                  {sceneCreator.isStarred && (
+                                    <FaStar className="rt--sidebar-add-scene-modal-star-icon" />
+                                  )}
+                                </div>
+                              ),
+                              description: sceneCreator.description,
+                              value: sceneCreator.pluginName,
+                            })) ?? []
+                        }
                         value={selectedPlugin}
                         onValueChange={(val) => setSelectedPlugin(val)}
                       />
