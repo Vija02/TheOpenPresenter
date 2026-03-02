@@ -14,7 +14,7 @@ import {
   InputControl,
   useOverlayToggle,
 } from "@repo/ui";
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { PiExportLight } from "react-icons/pi";
 import { toast } from "react-toastify";
@@ -30,12 +30,7 @@ const formSchema = z.object({
 const ProjectSettingsModal = () => {
   const { isOpen, onToggle, resetData } = useOverlayToggle();
 
-  const { pluginMetaData, refetch } = usePluginMetaData();
-
-  const project = useMemo(
-    () => pluginMetaData?.organizationBySlug?.projects.nodes[0],
-    [pluginMetaData?.organizationBySlug?.projects.nodes],
-  );
+  const { project, refetch } = usePluginMetaData();
   const { mutateAsync: exportProject, isPending: exportLoading } =
     useExportProject(project?.id);
   const onExport = useCallback(() => {

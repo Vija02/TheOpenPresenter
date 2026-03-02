@@ -5,10 +5,18 @@ import {
   useRendererBasePluginQuery,
 } from "@repo/graphql";
 import { ErrorAlert, LoadingFull } from "@repo/ui";
-import React, { createContext, useContext } from "react";
+import React, { createContext, useContext, useMemo } from "react";
+
+type Project = NonNullable<
+  | NonNullable<
+      RendererBasePluginQuery["organizationBySlug"]
+    >["projects"]["nodes"][number]
+  | NonNullable<RendererBasePluginQuery["publicProject"]>["nodes"][number]
+>;
 
 type PluginMetaDataProviderType = {
   pluginMetaData: RendererBasePluginQuery | RemoteBasePluginQuery | null;
+  project: Project | null;
   orgId: string;
   orgSlug: string;
   projectSlug: string;
@@ -18,6 +26,7 @@ type PluginMetaDataProviderType = {
 
 const initialData: PluginMetaDataProviderType = {
   pluginMetaData: null,
+  project: null,
   orgId: "",
   orgSlug: "",
   projectSlug: "",
@@ -46,6 +55,47 @@ export function PluginMetaDataProvider({
     },
   );
 
+  const project = useMemo(() => {
+    if (
+      pluginMetaData?.organizationBySlug?.projects.nodes &&
+      pluginMetaData?.organizationBySlug?.projects.nodes.length > 0
+    ) {
+      return pluginMetaData?.organizationBySlug?.projects.nodes[0];
+    }
+    if (
+      pluginMetaData?.publicProject?.nodes &&
+      pluginMetaData?.publicProject?.nodes.length > 0
+    ) {
+      return pluginMetaData?.publicProject?.nodes[0];
+    }
+    return null;
+  }, [
+    pluginMetaData?.organizationBySlug?.projects.nodes,
+    pluginMetaData?.publicProject?.nodes,
+  ]);
+
+  const projectId = project?.id ?? null;
+
+  const organizationId = useMemo(() => {
+    if (
+      pluginMetaData?.organizationBySlug?.projects.nodes &&
+      pluginMetaData?.organizationBySlug?.projects.nodes.length > 0
+    ) {
+      return pluginMetaData?.organizationBySlug?.id;
+    }
+    if (
+      pluginMetaData?.publicProject?.nodes &&
+      pluginMetaData?.publicProject?.nodes.length > 0
+    ) {
+      return pluginMetaData?.publicProject.nodes[0].organizationId;
+    }
+    return null;
+  }, [
+    pluginMetaData?.organizationBySlug?.id,
+    pluginMetaData?.organizationBySlug?.projects.nodes,
+    pluginMetaData?.publicProject?.nodes,
+  ]);
+
   if (error) {
     console.error(error);
     return <ErrorAlert error={error} />;
@@ -55,11 +105,8 @@ export function PluginMetaDataProvider({
     return <LoadingFull />;
   }
 
-  // Check that project doesn't exist
-  if (
-    !pluginMetaData?.organizationBySlug?.projects.nodes ||
-    pluginMetaData.organizationBySlug.projects.nodes.length === 0
-  ) {
+  // Handle project doesn't exist
+  if (!projectId) {
     window.location.href = `/o/${orgSlug}`;
     return <p>Project does not exist. Redirecting...</p>;
   }
@@ -68,10 +115,11 @@ export function PluginMetaDataProvider({
     <PluginMetaDataContext.Provider
       value={{
         pluginMetaData: pluginMetaData ?? null,
-        orgId: pluginMetaData.organizationBySlug.id,
+        project,
+        orgId: organizationId,
         orgSlug,
         projectSlug,
-        projectId: pluginMetaData?.organizationBySlug?.projects.nodes[0]?.id,
+        projectId: projectId,
         refetch,
       }}
     >
