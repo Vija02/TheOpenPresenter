@@ -4,6 +4,7 @@ mutation UpdateProject(
   $slug: String
   $targetDate: Datetime
   $categoryId: UUID
+  $isPublic: Boolean
 ) {
   updateProject(
     input: {
@@ -13,6 +14,7 @@ mutation UpdateProject(
         slug: $slug
         targetDate: $targetDate
         categoryId: $categoryId
+        isPublic: $isPublic
       }
     }
   ) {
