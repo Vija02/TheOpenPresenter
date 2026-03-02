@@ -1,0 +1,45 @@
+---
+---
+
+<form class="mt-8" data-aos="fade-down" data-aos-delay="300" id="cta-form">
+  <div
+    class="flex flex-col sm:flex-row justify-center max-w-sm mx-auto sm:max-w-md md:mx-0"
+  >
+    <input
+      type="text"
+      class="form-input w-full mb-2 sm:mb-0 sm:mr-2"
+      placeholder="E-mail address"
+      aria-label="E-mail address"
+      id="cta-email"
+      name="email"
+    />
+    <a
+      class="btn text-white bg-teal-500 hover:bg-teal-400 shrink-0"
+      href="/register"
+      id="cta-submit"
+    >
+      Try now
+    </a>
+  </div>
+</form>
+
+<script>
+  const form = document.getElementById("cta-form");
+  const emailInput = document.getElementById("cta-email") as HTMLInputElement;
+  const submitLink = document.getElementById("cta-submit") as HTMLAnchorElement;
+
+  if (form && emailInput && submitLink) {
+    // Update the link href when email changes
+    emailInput.addEventListener("input", () => {
+      const email = encodeURIComponent(emailInput.value);
+      submitLink.href = `/register?email=${email}`;
+    });
+
+    // Handle form submission
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const email = encodeURIComponent(emailInput.value);
+      window.location.href = `/register?email=${email}`;
+    });
+  }
+</script>

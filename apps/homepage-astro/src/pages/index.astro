@@ -1,0 +1,22 @@
+---
+import DefaultLayout from "../layouts/DefaultLayout.astro";
+import PageIllustration from "../components/PageIllustration.astro";
+import HeroHome from "../components/HeroHome.astro";
+import FeaturesBlocks from "../components/FeaturesBlocks.astro";
+import TestimonialsBlocks from "../components/TestimonialsBlocks.astro";
+import CtaContact from "../components/CtaContact.astro";
+---
+
+<DefaultLayout>
+  <!-- Page illustration -->
+  <div
+    class="relative max-w-6xl mx-auto h-0 pointer-events-none -z-1"
+    aria-hidden="true"
+  >
+    <PageIllustration />
+  </div>
+  <HeroHome />
+  <FeaturesBlocks />
+  <TestimonialsBlocks />
+  <CtaContact />
+</DefaultLayout>
