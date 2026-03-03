@@ -1,7 +1,6 @@
 import { Express } from "express";
 import { createServer } from "http";
-import next from "next";
-import { parse } from "url";
+import path from "path";
 
 import { getUpgradeHandlers } from "../app";
 
@@ -11,60 +10,50 @@ if (!process.env.NODE_ENV) {
 
 const isDev = process.env.NODE_ENV === "development";
 
+const HOMEPAGE_ASTRO_DIR = path.resolve(
+  __dirname,
+  "../../../apps/homepage-astro",
+);
+
 export default async function installSSR(app: Express) {
-  const fakeHttpServer = createServer();
-  const nextApp = next({
-    dev: isDev,
-    dir: `${__dirname}/../../../apps/homepage`,
-    quiet: !isDev,
-    // Don't specify 'conf' key
-
-    // Trick Next.js into adding its upgrade handler here, so we can extract
-    // it. Calling `getUpgradeHandler()` is insufficient because that doesn't
-    // handle the assets.
-    httpServer: fakeHttpServer,
-  });
-  const handlerPromise = (async () => {
-    await nextApp.prepare();
-    return nextApp.getRequestHandler();
-  })();
-  handlerPromise.catch((e) => {
-    console.error("Error occurred starting Next.js; aborting process");
-    console.error(e);
-    process.exit(1);
-  });
-  app.get("*", async (req, res) => {
-    const handler = await handlerPromise;
-    const parsedUrl = parse(req.url, true);
-    handler(req, res, {
-      ...parsedUrl,
-      query: {
-        ...parsedUrl.query,
-        CSRF_TOKEN: req.csrfToken(),
-        // See 'next.config.js':
-        ROOT_URL: process.env.ROOT_URL || "http://localhost:5678",
-        T_AND_C_URL: process.env.T_AND_C_URL,
-      },
-    });
-  });
-
-  // Now handle websockets
-  if (!(nextApp as any).getServer) {
-    console.warn(
-      `Our Next.js workaround for getting the upgrade handler without giving Next.js dominion over all websockets might no longer work - nextApp.getServer (private API) is no more.`
-    );
+  if (isDev) {
+    await installAstroDev(app);
   } else {
-    await (nextApp as any).getServer();
+    await installAstroProd(app);
   }
-  const nextJsUpgradeHandler = fakeHttpServer.listeners("upgrade")[0] as any;
-  if (nextJsUpgradeHandler) {
+}
+
+async function installAstroDev(app: Express) {
+  const { dev } = await import("astro");
+
+  const fakeHttpServer = createServer();
+
+  const devServer = await dev({
+    vite: { server: { hmr: { server: fakeHttpServer } } },
+    root: HOMEPAGE_ASTRO_DIR,
+    logLevel: "warn",
+  });
+
+  const upgradeHandler = fakeHttpServer.listeners("upgrade")[0] as any;
+  if (upgradeHandler) {
     const upgradeHandlers = getUpgradeHandlers(app);
     upgradeHandlers.push({
-      name: "Next.js",
+      name: "Homepage Handler",
       check(req) {
-        return req.url?.includes("/_next/") ?? false;
+        return (req.url === "/" || req.url?.startsWith("/")) ?? false;
       },
-      upgrade: nextJsUpgradeHandler,
+      upgrade: upgradeHandler,
     });
   }
+
+  app.use((req, res) => {
+    devServer.handle(req, res);
+  });
+}
+
+async function installAstroProd(app: Express) {
+  const distPath = path.join(HOMEPAGE_ASTRO_DIR, "dist");
+
+  const express = await import("express");
+  app.use(express.default.static(distPath));
 }
