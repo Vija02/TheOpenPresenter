@@ -66,13 +66,6 @@ jobs:
           # Cleanup
           rm -rf node_modules_nft
 
-          # And Next.js stuff
-          cp -r apps/homepage/.next/standalone/apps/homepage homepage_temp
-          cp -r apps/homepage/.next/static next_static_temp
-          rm -rf apps/homepage
-          mv homepage_temp apps/homepage
-          mv next_static_temp apps/homepage/.next/static
-
           cd tauri
           yarn --no-immutable
 

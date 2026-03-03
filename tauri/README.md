@@ -27,7 +27,7 @@ Essentially, the desktop app is:
   - Everything in `backend/server`, `backend/db` (graphile-migrate), and `backend/worker` (graphile-worker)
   - Its dependencies
 - Frontend build
-  - Remote, Renderer + Next.js
+  - Remote, Renderer + homepage
   - Served by the server
 
 ## What actually happens when I run the app?
