@@ -54,7 +54,7 @@
     "eslint": "^8.57.1",
     "postcss-nested": "^7.0.2",
     "tailwindcss": "^4.1.10",
-    "typescript": "5.7.2",
+    "typescript": "5.9.3",
     "vite": "6.3.5",
     "vite-plugin-externalize-dependencies": "^1.0.1"
   }

@@ -34,7 +34,7 @@
     "@types/pg": "^8.6.6",
     "@types/tar": "^6.1.11",
     "tsup": "^8.3.6",
-    "typescript": "^5.7.2"
+    "typescript": "^5.9.3"
   },
   "peerDependencies": {
     "@napi-rs/triples": "^1.2.0"

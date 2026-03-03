@@ -38,6 +38,6 @@
     "@repo/typescript-config": "*",
     "@types/loadjs": "^4",
     "tsup": "^8.3.6",
-    "typescript": "^5.7.2"
+    "typescript": "^5.9.3"
   }
 }

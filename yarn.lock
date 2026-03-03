@@ -7965,7 +7965,7 @@ __metadata:
     react-use: "npm:^17.5.1"
     tslib: "npm:^2.8.1"
     typeid-js: "npm:^1.1.0"
-    typescript: "npm:^5.7.2"
+    typescript: "npm:^5.9.3"
     ua-parser-js: "npm:^1.0.39"
     valtio: "npm:^2.1.2"
     valtio-yjs: "npm:^0.6.0"
@@ -7984,7 +7984,7 @@ __metadata:
     "@types/node": "npm:^22.3.0"
     dotenv: "npm:^16.4.7"
     tsup: "npm:^8.3.6"
-    typescript: "npm:5.7.2"
+    typescript: "npm:5.9.3"
   languageName: unknown
   linkType: soft
 
@@ -8028,7 +8028,7 @@ __metadata:
     platformdirs: "npm:^4.3.8-rc3"
     tar: "npm:^7.4.3"
     tsup: "npm:^8.3.6"
-    typescript: "npm:^5.7.2"
+    typescript: "npm:^5.9.3"
   peerDependencies:
     "@napi-rs/triples": ^1.2.0
   languageName: unknown
@@ -8046,7 +8046,7 @@ __metadata:
     eslint-plugin-only-warn: "npm:^1.1.0"
     eslint-plugin-react-hooks: "npm:^5.1.0"
     eslint-plugin-react-refresh: "npm:^0.4.16"
-    typescript: "npm:5.7.2"
+    typescript: "npm:5.9.3"
   languageName: unknown
   linkType: soft
 
@@ -8079,7 +8079,7 @@ __metadata:
     astro: "npm:^5.17.1"
     sass: "npm:^1.82.0"
     tailwindcss: "npm:^4.1.10"
-    typescript: "npm:5.7.2"
+    typescript: "npm:5.9.3"
   languageName: unknown
   linkType: soft
 
@@ -8108,7 +8108,7 @@ __metadata:
     react-dom: "npm:^19.1.0"
     sass: "npm:^1.82.0"
     tailwindcss: "npm:^4.1.10"
-    typescript: "npm:5.7.2"
+    typescript: "npm:5.9.3"
   languageName: unknown
   linkType: soft
 
@@ -8128,7 +8128,7 @@ __metadata:
     tslib: "npm:^2.8.1"
     tsup: "npm:^8.3.6"
     typeid-js: "npm:^1.1.0"
-    typescript: "npm:^5.7.2"
+    typescript: "npm:^5.9.3"
     urql: "npm:^5.0.1"
     use-pubsub-js: "npm:^1.0.7"
     yjs: "npm:13.6.26"
@@ -8163,7 +8163,7 @@ __metadata:
     pino: "npm:^9.6.0"
     tslib: "npm:^2.8.1"
     tsup: "npm:^8.3.6"
-    typescript: "npm:^5.7.2"
+    typescript: "npm:^5.9.3"
   languageName: unknown
   linkType: soft
 
@@ -8200,7 +8200,7 @@ __metadata:
     react: "npm:^19.1.0"
     react-dom: "npm:^19.1.0"
     react-icons: "npm:^5.4.0"
-    tus-js-client: "npm:^5.0.0-pre1"
+    tus-js-client: "npm:^5.0.0-pre2"
     use-elapsed-time: "npm:^3.0.4"
     valtio: "npm:^2.1.2"
     valtio-yjs: "npm:^0.6.0"
@@ -8553,7 +8553,7 @@ __metadata:
     better-sqlite3: "npm:^12.1.1"
     react: "npm:^19.1.0"
     tsup: "npm:^8.3.6"
-    typescript: "npm:^5.7.2"
+    typescript: "npm:^5.9.3"
     yauzl: "npm:^3.2.0"
   languageName: unknown
   linkType: soft
@@ -8609,7 +8609,7 @@ __metadata:
     react-toastify: "npm:^11.0.5"
     slugify: "npm:^1.6.6"
     tailwindcss: "npm:^4.1.10"
-    typescript: "npm:5.7.2"
+    typescript: "npm:5.9.3"
     urql: "npm:^5.0.1"
     use-debounce: "npm:^10.0.4"
     use-disposable: "npm:^1.0.4"
@@ -8661,7 +8661,7 @@ __metadata:
     react18-json-view: "npm:^0.2.8"
     tailwindcss: "npm:^4.1.10"
     typeid-js: "npm:^1.1.0"
-    typescript: "npm:5.7.2"
+    typescript: "npm:5.9.3"
     urql: "npm:^5.0.1"
     use-disposable: "npm:^1.0.4"
     vite: "npm:6.3.5"
@@ -8707,7 +8707,7 @@ __metadata:
     react-error-boundary: "npm:^4.1.2"
     react-qr-code: "npm:^2.0.15"
     react-toastify: "npm:^10.0.6"
-    typescript: "npm:5.7.2"
+    typescript: "npm:5.9.3"
     urql: "npm:^5.0.1"
     use-disposable: "npm:^1.0.4"
     vite: "npm:6.3.5"
@@ -8826,7 +8826,7 @@ __metadata:
     react: "npm:^19.1.0"
     react-dom: "npm:^19.1.0"
     rollup-plugin-postcss: "npm:^4.0.2"
-    typescript: "npm:5.7.2"
+    typescript: "npm:5.9.3"
     ua-parser-js: "npm:^1.0.39"
     uuid: "npm:^11.0.3"
     valtio: "npm:^2.1.2"
@@ -8861,7 +8861,7 @@ __metadata:
     tslib: "npm:^2.8.1"
     tsup: "npm:^8.3.6"
     typeid-js: "npm:^1.1.0"
-    typescript: "npm:^5.7.2"
+    typescript: "npm:^5.9.3"
     uuid: "npm:^11.0.3"
     valtio: "npm:^2.1.2"
     valtio-yjs: "npm:^0.6.0"
@@ -8936,7 +8936,7 @@ __metadata:
     tailwind-merge: "npm:^3.3.1"
     tailwindcss: "npm:^4.1.10"
     tailwindcss-patch: "npm:^7.1.1"
-    typescript: "npm:^5.7.2"
+    typescript: "npm:^5.9.3"
     unplugin-tailwindcss-mangle: "npm:^4.1.1"
     urql: "npm:^5.0.1"
     vite: "npm:6.3.5"
@@ -30597,7 +30597,7 @@ __metadata:
     prettier: "npm:^3.4.2"
     tailwindcss: "npm:^4.1.10"
     turbo: "npm:^2.3.3"
-    typescript: "npm:5.7.2"
+    typescript: "npm:5.9.3"
     vitest: "npm:^2.1.8"
   languageName: unknown
   linkType: soft
@@ -31190,7 +31190,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tus-js-client@npm:^5.0.0-pre1":
+"tus-js-client@npm:^5.0.0-pre2":
   version: 5.0.0-pre2
   resolution: "tus-js-client@npm:5.0.0-pre2"
   dependencies:
@@ -31349,27 +31349,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@npm:5.7.2":
-  version: 5.7.2
-  resolution: "typescript@npm:5.7.2"
-  bin:
-    tsc: bin/tsc
-    tsserver: bin/tsserver
-  checksum: 10c0/a873118b5201b2ef332127ef5c63fb9d9c155e6fdbe211cbd9d8e65877283797cca76546bad742eea36ed7efbe3424a30376818f79c7318512064e8625d61622
-  languageName: node
-  linkType: hard
-
-"typescript@npm:5.8.2":
-  version: 5.8.2
-  resolution: "typescript@npm:5.8.2"
-  bin:
-    tsc: bin/tsc
-    tsserver: bin/tsserver
-  checksum: 10c0/5c4f6fbf1c6389b6928fe7b8fcd5dc73bb2d58cd4e3883f1d774ed5bd83b151cbac6b7ecf11723de56d4676daeba8713894b1e9af56174f2f9780ae7848ec3c6
-  languageName: node
-  linkType: hard
-
-"typescript@npm:^5.0.2, typescript@npm:^5.7.2":
+"typescript@npm:5.9.3":
   version: 5.9.3
   resolution: "typescript@npm:5.9.3"
   bin:
@@ -31379,27 +31359,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@patch:typescript@npm%3A5.7.2#optional!builtin<compat/typescript>":
-  version: 5.7.2
-  resolution: "typescript@patch:typescript@npm%3A5.7.2#optional!builtin<compat/typescript>::version=5.7.2&hash=74658d"
-  bin:
-    tsc: bin/tsc
-    tsserver: bin/tsserver
-  checksum: 10c0/c891ccf04008bc1305ba34053db951f8a4584b4a1bf2f68fd972c4a354df3dc5e62c8bfed4f6ac2d12e5b3b1c49af312c83a651048f818cd5b4949d17baacd79
-  languageName: node
-  linkType: hard
-
-"typescript@patch:typescript@npm%3A5.8.2#optional!builtin<compat/typescript>":
-  version: 5.8.2
-  resolution: "typescript@patch:typescript@npm%3A5.8.2#optional!builtin<compat/typescript>::version=5.8.2&hash=74658d"
-  bin:
-    tsc: bin/tsc
-    tsserver: bin/tsserver
-  checksum: 10c0/8a6cd29dfb59bd5a978407b93ae0edb530ee9376a5b95a42ad057a6f80ffb0c410489ccd6fe48d1d0dfad6e8adf5d62d3874bbd251f488ae30e11a1ce6dabd28
-  languageName: node
-  linkType: hard
-
-"typescript@patch:typescript@npm%3A^5.0.2#optional!builtin<compat/typescript>, typescript@patch:typescript@npm%3A^5.7.2#optional!builtin<compat/typescript>":
+"typescript@patch:typescript@npm%3A5.9.3#optional!builtin<compat/typescript>":
   version: 5.9.3
   resolution: "typescript@patch:typescript@npm%3A5.9.3#optional!builtin<compat/typescript>::version=5.9.3&hash=74658d"
   bin:

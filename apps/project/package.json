@@ -57,7 +57,7 @@
     "@vitejs/plugin-react-swc": "^3.7.2",
     "eslint": "^8.57.1",
     "tailwindcss": "^4.1.10",
-    "typescript": "5.7.2",
+    "typescript": "5.9.3",
     "vite": "6.3.5"
   }
 }
