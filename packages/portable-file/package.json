@@ -31,6 +31,6 @@
     "@types/better-sqlite3": "^7.6.13",
     "@types/yauzl": "^2.10.3",
     "tsup": "^8.3.6",
-    "typescript": "^5.7.2"
+    "typescript": "^5.9.3"
   }
 }

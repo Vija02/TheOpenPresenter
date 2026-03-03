@@ -40,7 +40,7 @@
     "patch-package": "^8.0.0",
     "prettier": "^3.4.2",
     "turbo": "^2.3.3",
-    "typescript": "5.7.2",
+    "typescript": "5.9.3",
     "vitest": "^2.1.8"
   },
   "engines": {
@@ -62,7 +62,8 @@
     "graphql": "15.9",
     "pg-connection-string": "2.x",
     "react": "19.1.0",
-    "react-dom": "19.1.0"
+    "react-dom": "19.1.0",
+    "typescript": "5.9.3"
   },
   "overrides": {
     "@types/react": "^19.1.2",
