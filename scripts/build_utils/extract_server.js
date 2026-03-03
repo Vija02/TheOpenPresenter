@@ -8,7 +8,7 @@ const files = [
   "./backend/server/dist/index.js",
   ...workerTasks.map((x) => path.join("./backend/worker/dist/tasks", x)),
   "./node_modules/graphile-worker/dist/cli.js",
-  "./node_modules/graphile-migrate/dist/cli.js"
+  "./node_modules/graphile-migrate/dist/cli.js",
 ];
 
 (async () => {
@@ -16,6 +16,10 @@ const files = [
     const { fileList } = await nodeFileTrace(files, {
       ignore: (prop) =>
         !prop.startsWith("node_modules") || prop.includes("/@repo/"),
+      // Node.js 22+ supports the "module-sync" export condition which takes
+      // priority over "default" for require(). We need to include it here
+      // so nft traces to the correct files (e.g., async-function/require.mjs)
+      conditions: ["node", "module-sync"],
     });
 
     fs.mkdirSync("./nft_results", { recursive: true });
