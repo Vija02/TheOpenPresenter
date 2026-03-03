@@ -44,12 +44,6 @@ const run = () => {
     path.join(nodeModulesPath, ".yarn-state.yml"),
     path.join(targetDir, nodeModulesPath, ".yarn-state.yml"),
   );
-  // Get next specifically due to its complicated require setup. We'll get problems otherwise
-  fs.cpSync(
-    path.join(nodeModulesPath, "next"),
-    path.join(targetDir, nodeModulesPath, "next"),
-    { recursive: true, verbatimSymlinks: true },
-  );
   // And ffmpeg since it's not detected
   fs.cpSync(
     path.join(nodeModulesPath, "ffmpeg-static"),
