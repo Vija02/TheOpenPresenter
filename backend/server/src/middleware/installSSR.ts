@@ -12,7 +12,7 @@ const isDev = process.env.NODE_ENV === "development";
 
 const HOMEPAGE_ASTRO_DIR = path.resolve(
   __dirname,
-  "../../../apps/homepage-astro",
+  "../../../apps/homepage",
 );
 
 export default async function installSSR(app: Express) {
