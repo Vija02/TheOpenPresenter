@@ -3,6 +3,4 @@ node_modules
 /data/schema.graphql
 /data/schema.sql
 /packages/graphql/index.*
-/apps/homepage/.next
-.next
 .yarn

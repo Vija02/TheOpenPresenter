@@ -24,7 +24,7 @@ COPY .yarn/ /app/.yarn
 COPY patches/ /app/patches
 COPY scripts/ /app/scripts
 
-COPY apps/homepage-astro/package.json /app/apps/homepage-astro/package.json
+COPY apps/homepage/package.json /app/apps/homepage/package.json
 COPY apps/project/package.json /app/apps/project/package.json
 COPY apps/remote/package.json /app/apps/remote/package.json
 COPY apps/renderer/package.json /app/apps/renderer/package.json
@@ -122,8 +122,8 @@ ARG ROOT_URL
 COPY apps/shared/ /app/apps/shared/
 RUN yarn shared build
 
-COPY apps/homepage-astro/ /app/apps/homepage-astro/
-RUN yarn workspace @repo/homepage-astro build
+COPY apps/homepage/ /app/apps/homepage/
+RUN yarn workspace @repo/homepage build
 
 COPY apps/project/ /app/apps/project/
 RUN yarn project build
@@ -215,8 +215,8 @@ COPY --from=builder-client /app/apps/remote/.env.production /app/apps/remote/
 COPY --from=builder-client /app/apps/renderer/package.json /app/apps/renderer/
 COPY --from=builder-client /app/apps/renderer/dist/ /app/apps/renderer/dist/
 COPY --from=builder-client /app/apps/renderer/.env.production /app/apps/renderer/
-COPY --from=builder-client /app/apps/homepage-astro/package.json /app/apps/homepage-astro/package.json
-COPY --from=builder-client /app/apps/homepage-astro/dist/ /app/apps/homepage-astro/dist/
+COPY --from=builder-client /app/apps/homepage/package.json /app/apps/homepage/package.json
+COPY --from=builder-client /app/apps/homepage/dist/ /app/apps/homepage/dist/
 
 COPY --from=builder-server /app/backend/server/package.json /app/backend/server/
 COPY --from=builder-server /app/backend/server/postgraphile.tags.jsonc /app/backend/server/
