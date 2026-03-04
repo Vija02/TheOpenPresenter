@@ -1,5 +1,7 @@
 ---
+import { Image } from "astro:assets";
 import CtaForm from "./CtaForm.astro";
+import landingImg from "../assets/images/landing_img.png";
 ---
 
 <section>
@@ -129,9 +131,9 @@ import CtaForm from "./CtaForm.astro";
               </radialGradient>
             </defs>
           </svg>
-          <img
+          <Image
             class="inline w-full text-center items-center max-w-[500px] md:block md:absolute md:top-20 md:w-[410px] md:max-w-none lg:block lg:w-full lg:top-1/4"
-            src="/images/landing_img.png"
+            src={landingImg}
             alt="landing"
             loading="eager"
           />
