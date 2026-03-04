@@ -311,6 +311,13 @@ runs:
       shell: bash
       run: |
         echo "Cleaning up unused Docker resources on staging server..."
+
+        # Remove PR-specific images for this deployment
+        IMAGE_TAG="${{ inputs.image_tag }}"
+        echo "Removing images with tag: ${IMAGE_TAG}"
+        ssh uncloud-staging "docker images --format '{{.Repository}}:{{.Tag}}' | grep ':${IMAGE_TAG}$' | xargs -r docker rmi -f" || echo "No PR images to remove (this is OK)"
+
+        # General system prune for other unused resources
         ssh uncloud-staging "docker system prune -f" || echo "Docker prune failed (non-critical)"
         echo "Docker cleanup complete"
 
