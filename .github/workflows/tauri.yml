@@ -61,7 +61,6 @@ jobs:
           # Move the node_modules
           rm -rf node_modules
           cp -r ./node_modules_nft/node_modules ./node_modules
-          cp -r ./apps/homepage/.next/standalone/node_modules/* ./node_modules
 
           # Cleanup
           rm -rf node_modules_nft

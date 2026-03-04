@@ -5,7 +5,6 @@
   try {
     await rimraf(globSync(`${__dirname}/../*/dist`));
     await rimraf(globSync(`${__dirname}/../*/tsconfig.tsbuildinfo`));
-    await rimraf(globSync(`${__dirname}/../apps/homepage/.next`));
     console.log("Deleted");
   } catch (e) {
     console.error("Failed to clean up, perhaps rimraf isn't installed?");

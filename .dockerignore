@@ -14,7 +14,6 @@ uploads/
 *docker-compose*
 
 **/.DS_Store
-**/.next
 **/node_modules
 **/dist
 **/__tests__
