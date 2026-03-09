@@ -22,6 +22,24 @@ const OTEL_SEV_NUM_FROM_PINO_LEVEL: { [level: number]: SeverityNumber } = {
 
 // @ts-ignore
 const isTestEnv = typeof vitest !== "undefined";
+const isDevEnv = process.env.NODE_ENV === "development";
+const isBrowser = typeof window !== "undefined";
+
+const getNodeDestination = () => {
+  if (isDevEnv) {
+    // In dev mode, use pino-pretty for nice console output
+    return pino.transport({
+      target: "pino-pretty",
+      options: {
+        colorize: true,
+      },
+    });
+  }
+  // In production, silence logs (OTEL instrumentation handles them)
+  return process.platform === "win32"
+    ? pino.destination(require("os").tmpdir() + "/nul")
+    : pino.destination("/dev/null");
+};
 
 const logger = pino(
   {
@@ -45,11 +63,7 @@ const logger = pino(
   // In Node, the destination will be instrumented by opentelemetry
   // So setting the destination to /dev/null stops it from logging to the console
   // Browser doesn't have pino.destination, so we can just pass undefined
-  typeof window !== "undefined" && !isTestEnv
-    ? undefined
-    : process.platform === "win32"
-      ? pino.destination(require("os").tmpdir() + "/nul")
-      : pino.destination("/dev/null"),
+  isBrowser && !isTestEnv ? undefined : getNodeDestination(),
 );
 
 export { logger };
