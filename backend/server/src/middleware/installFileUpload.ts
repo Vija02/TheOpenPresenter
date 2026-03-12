@@ -299,7 +299,9 @@ export default (app: Express) => {
     },
   });
   const tusUploadServer = express();
-  tusUploadServer.all("*", server.handle.bind(server));
+  tusUploadServer.all("*", (req, res) => {
+    server.handle(req, res);
+  });
 
   app.use("/media/upload/tus", tusUploadServer);
 
