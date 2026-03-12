@@ -1,6 +1,6 @@
 import {
   SUPPORTED_IMAGE_EXTENSIONS,
-  uuidFromMediaId,
+  SUPPORTED_VIDEO_EXTENSIONS,
   uuidFromMediaIdOrUUIDOrMediaName,
   uuidFromPluginIdOrUUID,
 } from "@repo/lib";
@@ -11,7 +11,6 @@ import { Request } from "express";
 import { StorageEngine } from "multer";
 import { Pool, PoolClient } from "pg";
 import sharp from "sharp";
-import { PassThrough } from "stream";
 import { TypeId, toUUID, typeidUnboxed } from "typeid-js";
 
 import { OurDataStore } from "./OurDataStore";
@@ -65,48 +64,8 @@ export const createMediaHandler = <T extends OurDataStore>(
 
             await this.store.create(upload);
             try {
-              // Debt: Make the image processing code easier to read
-              const isImage = SUPPORTED_IMAGE_EXTENSIONS.includes(
-                "." + fileExtension.toLowerCase(),
-              );
-
-              // Pipe to passthrough and prep to pipe to metadata
-              const passthrough = new PassThrough();
-              file.pipe(passthrough);
-
-              const getMetadataPromise = new Promise<sharp.Metadata | void>(
-                async (resolve, reject) => {
-                  if (!isImage) {
-                    resolve();
-                    return;
-                  }
-                  file.pipe(
-                    sharp().metadata((err, metadata) => {
-                      if (err) reject(err);
-                      resolve(metadata);
-                    }),
-                  );
-                },
-              );
-
-              // Then we can start the stream process
               // Write to storage
-              await this.store.write(passthrough, upload.id, 0);
-
-              // If image, then let's add some metadata
-              if (isImage) {
-                const metadata = await getMetadataPromise;
-
-                await this.pgPool.query(
-                  `INSERT INTO app_public.media_image_metadata (image_media_id, width, height)
-                    VALUES ($1, $2, $3) ON CONFLICT (image_media_id) DO UPDATE 
-                    SET 
-                      width = $2,
-                      height = $3
-                    `,
-                  [uuidFromMediaId(mediaId), metadata?.width, metadata?.height],
-                );
-              }
+              await this.store.write(file, upload.id, 0);
             } catch (err: any) {
               if (err?.Code === "NoSuchUpload") {
                 logger.warn(
@@ -128,6 +87,9 @@ export const createMediaHandler = <T extends OurDataStore>(
             `,
               [true, uuid],
             );
+
+            // Process media (image metadata extraction, video transcoding)
+            await this.processCompletedMedia(finalFileName, { isUserUploaded });
 
             return { mediaId, fileExtension, fileName: finalFileName };
           },
@@ -284,6 +246,65 @@ export const createMediaHandler = <T extends OurDataStore>(
       } catch (err: any) {
         logger.error({ err }, "unlinkPlugin: Failed to unlink plugin");
         throw err;
+      }
+    }
+
+    async queueVideoTranscode(mediaUUID: string) {
+      // TODO:
+    }
+
+    async processCompletedMedia(
+      mediaName: string,
+      options?: { isUserUploaded?: boolean },
+    ) {
+      const splittedKey = mediaName.split(".");
+      const mediaId = splittedKey[0]!;
+      const fileExtension = splittedKey[1]!;
+      const uuid = toUUID(mediaId as TypeId<string>);
+
+      const isImage = SUPPORTED_IMAGE_EXTENSIONS.includes(
+        "." + fileExtension.toLowerCase(),
+      );
+      const isVideo = SUPPORTED_VIDEO_EXTENSIONS.includes(
+        "." + fileExtension.toLowerCase(),
+      );
+
+      // For images: extract and store metadata
+      if (isImage) {
+        try {
+          const readable = await this.store.getReadable(mediaName);
+          const metadata = await new Promise<sharp.Metadata>(
+            (resolve, reject) => {
+              readable.pipe(
+                sharp().metadata((err, metadata) => {
+                  if (err) reject(err);
+                  resolve(metadata);
+                }),
+              );
+            },
+          );
+
+          await this.pgPool.query(
+            `INSERT INTO app_public.media_image_metadata (image_media_id, width, height)
+              VALUES ($1, $2, $3) ON CONFLICT (image_media_id) DO UPDATE 
+              SET 
+                width = $2,
+                height = $3
+              `,
+            [uuid, metadata?.width, metadata?.height],
+          );
+        } catch (err) {
+          logger.error(
+            { err, mediaName },
+            "processCompletedMedia: Failed to extract image metadata",
+          );
+          throw err;
+        }
+      }
+
+      // For videos: queue transcoding (if user-uploaded)
+      if (isVideo && options?.isUserUploaded !== false) {
+        await this.queueVideoTranscode(uuid);
       }
     }
   };
