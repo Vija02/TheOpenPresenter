@@ -21,3 +21,27 @@ export const SUPPORTED_IMAGE_EXTENSIONS = [
   ".tif",
   ".tiff",
 ];
+
+export const SUPPORTED_VIDEO_EXTENSIONS = [
+  // MP4
+  ".mp4",
+  ".m4v",
+  // WebM
+  ".webm",
+  // MOV
+  ".mov",
+  // AVI
+  ".avi",
+  // MKV
+  ".mkv",
+  // WMV
+  ".wmv",
+  // FLV
+  ".flv",
+  // MPEG
+  ".mpeg",
+  ".mpg",
+  // 3GP
+  ".3gp",
+  ".3g2",
+];
