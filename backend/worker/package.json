@@ -21,6 +21,7 @@
     "@repo/base-plugin": "*",
     "@repo/config": "*",
     "@repo/lib": "*",
+    "@repo/observability": "*",
     "@types/html-to-text": "^9.0.4",
     "@types/lodash": "^4.17.13",
     "@types/mjml": "^4.7.4",
