@@ -3,5 +3,12 @@ fragment MediaWithMediaDependency on Media {
   ...Media
   dependencies: mediaDependenciesByParentMediaId {
     totalCount
+    nodes {
+      childMedia {
+        id
+        mediaName
+        fileExtension
+      }
+    }
   }
 }

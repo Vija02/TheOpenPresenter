@@ -26,10 +26,14 @@ import prettyBytes from "pretty-bytes";
 import { useCallback, useMemo, useState } from "react";
 import {
   VscCheck,
+  VscFile,
+  VscFileMedia,
   VscFolder,
   VscLinkExternal,
+  VscPlay,
   VscTrash,
 } from "react-icons/vsc";
+import ReactPlayer from "react-player";
 import { toast } from "react-toastify";
 
 const OrganizationMediaPage = () => {
@@ -104,7 +108,6 @@ const EmptyMedia = () => {
   );
 };
 
-// Browser-supported image extensions (subset of SUPPORTED_IMAGE_EXTENSIONS)
 const BROWSER_SUPPORTED_IMAGE_EXTENSIONS = [
   ".jpg",
   ".jpeg",
@@ -117,12 +120,54 @@ const BROWSER_SUPPORTED_IMAGE_EXTENSIONS = [
   ".gif",
   ".svg",
 ];
+// TODO: Make play HLS
+const BROWSER_SUPPORTED_VIDEO_EXTENSIONS = [".mp4", ".m4v", ".webm", ".mov"];
+const PDF_EXTENSIONS = [".pdf"];
 
-const isImageFile = (extension: string | null | undefined): boolean => {
-  if (!extension) return false;
+const normalizeExtension = (extension: string | null | undefined): string => {
+  if (!extension) return "";
   const ext = extension.startsWith(".") ? extension : `.${extension}`;
-  return BROWSER_SUPPORTED_IMAGE_EXTENSIONS.includes(ext.toLowerCase());
+  return ext.toLowerCase();
 };
+
+const isExtensionInList = (
+  extension: string | null | undefined,
+  list: string[],
+): boolean => {
+  const ext = normalizeExtension(extension);
+  return ext !== "" && list.includes(ext);
+};
+
+const isImageFile = (extension: string | null | undefined): boolean =>
+  isExtensionInList(extension, BROWSER_SUPPORTED_IMAGE_EXTENSIONS);
+
+const isVideoFile = (extension: string | null | undefined): boolean =>
+  isExtensionInList(extension, BROWSER_SUPPORTED_VIDEO_EXTENSIONS);
+
+const isPdfFile = (extension: string | null | undefined): boolean =>
+  isExtensionInList(extension, PDF_EXTENSIONS);
+
+const StaticPreview = ({
+  thumbnailUrl,
+  alt,
+  fallbackIcon: FallbackIcon,
+}: {
+  thumbnailUrl: string | null;
+  alt: string;
+  fallbackIcon: React.ComponentType<{ className?: string }>;
+}) => (
+  <div className="aspect-video bg-gray-100 flex items-center justify-center overflow-hidden relative">
+    {thumbnailUrl ? (
+      <img
+        src={thumbnailUrl}
+        alt={alt}
+        className="w-full h-full object-contain"
+      />
+    ) : (
+      <FallbackIcon className="w-12 h-12 text-gray-400" />
+    )}
+  </div>
+);
 
 const MediaCard = ({ media }: { media: MediaWithMediaDependencyFragment }) => {
   const { publish } = globalState.modelDataAccess.usePublishAPIChanges({
@@ -171,18 +216,90 @@ const MediaCard = ({ media }: { media: MediaWithMediaDependencyFragment }) => {
   }, [media.fileSize]);
 
   const isImage = isImageFile(media.fileExtension);
+  const isVideo = isVideoFile(media.fileExtension);
+  const isPdf = isPdfFile(media.fileExtension);
+  const isOther = !isImage && !isVideo && !isPdf;
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+
+  const mediaUrl = useMemo(
+    () => resolveMediaUrl(extractMediaName(media.mediaName)),
+    [media.mediaName],
+  );
+
+  // Find thumbnail from dependencies (first image dependency)
+  const thumbnailUrl = useMemo(() => {
+    if (!isVideo && !isPdf && !isOther) return null;
+    const imageDependency = media.dependencies.nodes.find((dep) =>
+      isImageFile(dep.childMedia?.fileExtension),
+    );
+    if (imageDependency?.childMedia) {
+      return resolveMediaUrl(
+        extractMediaName(imageDependency.childMedia.mediaName),
+      );
+    }
+    return null;
+  }, [isVideo, isPdf, isOther, media.dependencies.nodes]);
 
   return (
     <div className="bg-white border border-gray-300 overflow-hidden flex flex-col h-full">
       {/* Image preview */}
       {isImage && (
-        <div className="aspect-video bg-gray-100 flex items-center justify-center overflow-hidden">
-          <img
-            src={resolveMediaUrl(extractMediaName(media.mediaName))}
-            alt={media.originalName ?? media.mediaName}
-            className="w-full h-full object-contain"
-          />
+        <StaticPreview
+          thumbnailUrl={mediaUrl}
+          alt={media.originalName ?? media.mediaName}
+          fallbackIcon={VscFileMedia}
+        />
+      )}
+
+      {/* Video preview */}
+      {isVideo && (
+        <div className="aspect-video bg-gray-900 flex items-center justify-center overflow-hidden relative">
+          {isVideoPlaying ? (
+            <ReactPlayer
+              src={mediaUrl}
+              width="100%"
+              height="100%"
+              controls
+              playing
+              onEnded={() => setIsVideoPlaying(false)}
+            />
+          ) : (
+            <button
+              onClick={() => setIsVideoPlaying(true)}
+              className="absolute inset-0 flex items-center justify-center group"
+              title="Play video"
+            >
+              {thumbnailUrl && (
+                <img
+                  src={thumbnailUrl}
+                  alt={media.originalName ?? media.mediaName}
+                  className="absolute inset-0 w-full h-full object-contain"
+                />
+              )}
+              <div className="z-10 flex items-center justify-center w-16 h-16 bg-white/90 group-hover:bg-white rounded-full transition-colors">
+                <VscPlay className="w-8 h-8 text-gray-800 ml-1" />
+              </div>
+            </button>
+          )}
         </div>
+      )}
+
+      {/* PDF preview */}
+      {isPdf && (
+        <StaticPreview
+          thumbnailUrl={thumbnailUrl}
+          alt={media.originalName ?? media.mediaName}
+          fallbackIcon={VscFile}
+        />
+      )}
+
+      {/* Other file types preview */}
+      {isOther && (
+        <StaticPreview
+          thumbnailUrl={thumbnailUrl}
+          alt={media.originalName ?? media.mediaName}
+          fallbackIcon={VscFileMedia}
+        />
       )}
 
       {/* Header with status indicator */}
