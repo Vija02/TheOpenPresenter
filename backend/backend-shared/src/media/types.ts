@@ -45,6 +45,11 @@ export interface MediaHandlerInterface {
     pluginId: string,
     extraMetadata?: { mediaIdOrUUID?: string; projectId?: string },
   ): Promise<void>;
+
+  processCompletedMedia(
+    mediaName: string,
+    options?: { isUserUploaded?: boolean },
+  ): Promise<void>;
 }
 
 export type MediaDataHandler = {

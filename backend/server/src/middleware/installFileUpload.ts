@@ -291,6 +291,10 @@ export default (app: Express) => {
         [true, uuid],
       );
 
+      await mediaHandler.processCompletedMedia(upload.id, {
+        isUserUploaded: true,
+      });
+
       return res;
     },
   });
