@@ -7,7 +7,7 @@ import {
   useMediaDependenciesOfParentQuery,
   useOrganizationMediaIndexPageQuery,
 } from "@repo/graphql";
-import { globalState } from "@repo/lib";
+import { extractMediaName, globalState, resolveMediaUrl } from "@repo/lib";
 import {
   Button,
   Checkbox,
@@ -104,6 +104,26 @@ const EmptyMedia = () => {
   );
 };
 
+// Browser-supported image extensions (subset of SUPPORTED_IMAGE_EXTENSIONS)
+const BROWSER_SUPPORTED_IMAGE_EXTENSIONS = [
+  ".jpg",
+  ".jpeg",
+  ".jpe",
+  ".jif",
+  ".jfif",
+  ".png",
+  ".webp",
+  ".avif",
+  ".gif",
+  ".svg",
+];
+
+const isImageFile = (extension: string | null | undefined): boolean => {
+  if (!extension) return false;
+  const ext = extension.startsWith(".") ? extension : `.${extension}`;
+  return BROWSER_SUPPORTED_IMAGE_EXTENSIONS.includes(ext.toLowerCase());
+};
+
 const MediaCard = ({ media }: { media: MediaWithMediaDependencyFragment }) => {
   const { publish } = globalState.modelDataAccess.usePublishAPIChanges({
     token: "page",
@@ -150,8 +170,21 @@ const MediaCard = ({ media }: { media: MediaWithMediaDependencyFragment }) => {
     return "Unknown";
   }, [media.fileSize]);
 
+  const isImage = isImageFile(media.fileExtension);
+
   return (
     <div className="bg-white border border-gray-300 overflow-hidden flex flex-col h-full">
+      {/* Image preview */}
+      {isImage && (
+        <div className="aspect-video bg-gray-100 flex items-center justify-center overflow-hidden">
+          <img
+            src={resolveMediaUrl(extractMediaName(media.mediaName))}
+            alt={media.originalName ?? media.mediaName}
+            className="w-full h-full object-contain"
+          />
+        </div>
+      )}
+
       {/* Header with status indicator */}
       <div className="p-3 border-b border-gray-200">
         <div className="flex items-center justify-between mb-2">
