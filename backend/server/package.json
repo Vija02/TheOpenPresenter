@@ -73,7 +73,7 @@
     "redis": "^4.7.0",
     "serialize-javascript": "^6.0.2",
     "set-cookie-parser": "^2.7.1",
-    "sharp": "^0.34.1",
+    "sharp": "0.34.5",
     "source-map-support": "^0.5.21",
     "ts-node": "^10.9.2",
     "typeid-js": "^1.1.0",
