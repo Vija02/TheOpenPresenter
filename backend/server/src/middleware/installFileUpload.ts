@@ -1,6 +1,7 @@
 import { media } from "@repo/backend-shared";
 import {
   ALLOWED_IMAGE_WIDTH,
+  SUPPORTED_IMAGE_EXTENSIONS,
   constructMediaName,
   extractMediaName,
   mediaIdFromUUID,
@@ -72,8 +73,9 @@ export default (app: Express) => {
       return;
     }
 
-    // TODO: extension
-    if (!["jpg", "png", "webp"].includes(mediaDetails.extension)) {
+    if (
+      !SUPPORTED_IMAGE_EXTENSIONS.includes(`.${mediaDetails.extension}` as any)
+    ) {
       res.status(400).send();
       return;
     }
