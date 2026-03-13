@@ -426,7 +426,10 @@ const task: Task = async (inPayload, { withPgClient }) => {
       await new Promise<void>((resolve, reject) => {
         return ffmpeg(localFilePath)
           .outputOptions([
-            `-c:v h264`,
+            `-c:v libx264`,
+            `-profile:v main`,
+            `-level:v 4.0`,
+            `-pix_fmt yuv420p`,
             `-b:v ${resolutionData.videoBitrate}`,
             `-c:a aac`,
             `-b:a ${resolutionData.audioBitrate}`,
