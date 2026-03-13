@@ -463,8 +463,8 @@ const task: Task = async (inPayload, { withPgClient }) => {
           .on("end", () => {
             resolve();
           })
-          .on("error", (err) => {
-            reject(err);
+          .on("error", (err, stdout, stderr) => {
+            reject({ err, stdout, stderr });
           })
           .run();
       });
