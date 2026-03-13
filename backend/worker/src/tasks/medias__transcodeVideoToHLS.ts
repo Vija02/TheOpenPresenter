@@ -5,18 +5,14 @@ import ffmpeg from "fluent-ffmpeg";
 import { readdirSync } from "fs";
 import { Task } from "graphile-worker";
 import fs, { createReadStream, mkdirSync, rmdirSync } from "node:fs";
-import { pipeline } from "node:stream/promises";
-import os from "os";
 import path from "path";
 import { typeidUnboxed } from "typeid-js";
 
 import {
-  extractMetadata,
+  prepareMediaForTranscode,
   processAndUploadThumbnail,
   updateTranscodeProgress,
 } from "../transcode";
-
-const baseDir = path.join(os.tmpdir(), "videoTranscode");
 
 interface MediasTranscodeVideoToHLSPayload {
   id: string;
@@ -64,10 +60,6 @@ const task: Task = async (inPayload, { withPgClient }) => {
   const { id: mediaId } = payload;
 
   try {
-    let mediaDir: string = "";
-    let localFilePath: string = "";
-
-    // Update status to processing, stage to downloading
     await updateTranscodeProgress(withPgClient, mediaId, {
       status: "processing",
       progress: 0,
@@ -75,84 +67,13 @@ const task: Task = async (inPayload, { withPgClient }) => {
       stageProgress: 0,
     });
 
-    // Let's get the info first
-    const { mediaRow, existingThumbnailMediaId } = await withPgClient(
-      async (pgClient) => {
-        const {
-          rows: [mediaRow],
-        } = await pgClient.query(
-          `select * from app_public.medias where id = $1`,
-          [mediaId],
-        );
-
-        if (!mediaRow) {
-          logger.error(
-            { mediaId },
-            "Error transcoding HLS because media not found",
-          );
-          throw new Error("Missing media");
-        }
-
-        const {
-          rows: [mediaVideoMetadataRow],
-        } = await pgClient.query(
-          `select * from app_public.media_video_metadata where video_media_id = $1`,
-          [mediaId],
-        );
-
-        // Don't transcode again if it's already done
-        if (mediaVideoMetadataRow?.transcode_status === "completed") {
-          throw {
-            code: "TRANSCODE_SKIP",
-            message:
-              "Skipping transcode task since it video has already been transcoded",
-          };
-        }
-
-        const mediaName = mediaRow.media_name;
-        const existingThumbnailMediaId =
-          mediaVideoMetadataRow?.thumbnail_media_id;
-        mediaDir = path.join(baseDir, mediaName);
-
-        fs.mkdirSync(mediaDir, { recursive: true });
-
-        localFilePath = path.join(mediaDir, mediaName);
-
-        // Download file if doesn't exist yet
-        if (!fs.existsSync(localFilePath)) {
-          const writeStream = fs.createWriteStream(localFilePath);
-          try {
-            const mediaHandler = new media[
-              process.env.STORAGE_TYPE as "file" | "s3"
-            ].mediaHandler(pgClient);
-
-            const readable = await mediaHandler.store.getReadable(mediaName);
-
-            logger.trace(
-              { mediaId, mediaName, localFilePath },
-              "Downloading media file",
-            );
-            await pipeline(readable, writeStream);
-            logger.trace(
-              { mediaId, mediaName, localFilePath },
-              "Media file downloaded!",
-            );
-          } catch (error) {
-            writeStream.close();
-            fs.rmSync(localFilePath, { force: true });
-            logger.error(
-              { mediaId, mediaName, localFilePath },
-              "Failed to download file for converting to HLS",
-            );
-            throw error;
-          }
-        }
-
-        return { mediaRow, existingThumbnailMediaId };
-      },
-    );
-
-    const metadata = await extractMetadata(localFilePath);
+    const {
+      mediaRow,
+      existingThumbnailMediaId,
+      mediaDir,
+      localFilePath,
+      metadata,
+    } = await prepareMediaForTranscode({ withPgClient, mediaId });
 
     if (!existingThumbnailMediaId) {
       await processAndUploadThumbnail({
@@ -432,7 +353,7 @@ const task: Task = async (inPayload, { withPgClient }) => {
     }
 
     // ========================================================================== //
-    // === All resolutions transcoded & uploaded, now create master m3u8 ======= //
+    // ==== All resolutions transcoded & uploaded, now create master m3u8 ======= //
     // ========================================================================== //
     // Update to finalizing stage
     await updateTranscodeProgress(withPgClient, mediaId, {

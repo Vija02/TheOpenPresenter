@@ -16,9 +16,9 @@ export interface TranscodeProgressUpdate {
   completedResolutions?: string[];
 }
 
-export type WithPgClient = (
-  callback: (pgClient: any) => Promise<void>,
-) => Promise<void>;
+export type WithPgClient = <T>(
+  callback: (pgClient: any) => Promise<T>,
+) => Promise<T>;
 
 export const updateTranscodeProgress = async (
   withPgClient: WithPgClient,
