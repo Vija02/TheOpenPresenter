@@ -1,5 +1,9 @@
 import { media } from "@repo/backend-shared";
-import { constructMediaName, extractMediaName, uuidFromMediaId } from "@repo/lib";
+import {
+  constructMediaName,
+  extractMediaName,
+  uuidFromMediaId,
+} from "@repo/lib";
 import { logger } from "@repo/observability";
 import ffmpegPath from "ffmpeg-static";
 import ffprobe from "ffprobe-static";
@@ -11,7 +15,6 @@ import { pipeline } from "node:stream/promises";
 import os from "os";
 import path from "path";
 import { typeidUnboxed } from "typeid-js";
-
 
 if (ffmpegPath) {
   ffmpeg.setFfmpegPath(ffmpegPath);
@@ -163,7 +166,6 @@ const updateTranscodeProgress = async (
   });
 };
 
-// TODO: We need to make sure it's only run once
 const task: Task = async (inPayload, { withPgClient }) => {
   const payload: MediasTranscodeVideoToHLSPayload = inPayload as any;
   const { id: mediaId } = payload;
@@ -316,9 +318,7 @@ const task: Task = async (inPayload, { withPgClient }) => {
 
     const resolutionMapToFile: Record<string, string> = {};
 
-    // ========================================================================== //
-    // ======================= Pre-generate all m3u8 files ====================== //
-    // ========================================================================== //
+    // Pre-generate all m3u8 filenames
     const resolutionM3u8Files: Record<string, string> = {};
     for (const resolutionData of resolutions) {
       resolutionM3u8Files[resolutionData.title] =
@@ -329,43 +329,7 @@ const task: Task = async (inPayload, { withPgClient }) => {
     const masterFilePath = path.join(mediaDir, masterMediaId + ".m3u8");
     const masterUuid = uuidFromMediaId(masterMediaId);
 
-    // Build master file content
-    let masterFileContent = `#EXTM3U\n#EXT-X-VERSION:3\n`;
-    // Iterate in highest first order for the master playlist
-    for (const resolutionData of [...resolutions].reverse()) {
-      masterFileContent += `#EXT-X-STREAM-INF:BANDWIDTH=${resolutionData.bandwidth},RESOLUTION=${resolutionData.resolution}\n${`/media/data/${resolutionM3u8Files[resolutionData.title]}`}\n`;
-    }
-    fs.writeFileSync(masterFilePath, masterFileContent);
-    const masterFileSize = fs.statSync(masterFilePath).size;
-
-    // Upload master m3u8 file first
-    logger.trace({ mediaId, localFilePath }, "Uploading master m3u8");
-    await withPgClient(async (pgClient) => {
-      const mediaHandler = new media[
-        process.env.STORAGE_TYPE as "file" | "s3"
-      ].mediaHandler(pgClient);
-
-      await mediaHandler.uploadMedia({
-        file: createReadStream(masterFilePath),
-        userId: mediaRow.user_id,
-        organizationId: mediaRow.organization_id,
-        isUserUploaded: false,
-        fileSize: masterFileSize,
-        fileExtension: "m3u8",
-        mediaId: masterMediaId,
-      });
-      await mediaHandler.createDependency(mediaId, masterUuid);
-    });
-    logger.trace({ mediaId, localFilePath }, "Done uploading master m3u8");
-
-    // Now we can handle each resolution m8u8
-
-    // Calculate expected number of .ts segments based on duration and HLS_TIME
-    const expectedSegmentCount = Math.ceil(
-      (metadata.duration ?? 0) / HLS_SEGMENT_DURATION,
-    );
-
-    
+    // Now we can handle each resolution m3u8
 
     // Calculate progress: 90% for transcoding+uploading (split across resolutions), 10% for finalization
     const transcodeProgressWeight = 90;
@@ -407,6 +371,7 @@ const task: Task = async (inPayload, { withPgClient }) => {
             { mediaId, localFilePath, resolution: resolutionData.title },
             "This resolution has been transcoded, skipping",
           );
+
           // Update progress to reflect this resolution is complete
           await updateTranscodeProgress(withPgClient, mediaId, {
             progress: resolutionBaseProgress + perResolutionWeight,
@@ -443,10 +408,7 @@ const task: Task = async (inPayload, { withPgClient }) => {
           ])
           .output(`${resolutionDir}/index.m3u8`)
           .on("progress", (progress) => {
-            // progress.percent is the ffmpeg progress for this resolution (0-100)
             const ffmpegPercent = progress.percent ?? 0;
-            // For transcoding, we use 0-80% of the per-resolution weight
-            // (remaining 20% is for uploading)
             const transcodeWeight = perResolutionWeight * 0.8;
             const overallProgress =
               resolutionBaseProgress + (ffmpegPercent / 100) * transcodeWeight;
@@ -509,9 +471,6 @@ const task: Task = async (inPayload, { withPgClient }) => {
 
       resolutionMapToFile[resolutionData.title] = resolutionM3u8File;
 
-      // Upload this resolution's files immediately after transcoding
-      // This allows the player to start using this resolution ASAP
-      // Update stage to uploading
       const transcodeWeight = perResolutionWeight * 0.8;
       const uploadWeight = perResolutionWeight * 0.2;
       await updateTranscodeProgress(withPgClient, mediaId, {
@@ -584,17 +543,16 @@ const task: Task = async (inPayload, { withPgClient }) => {
             extractMediaName(tsFile).uuid,
           );
         }
-        // Link master m3u8 to this resolution's m3u8
-        await mediaHandler.createDependency(masterUuid, resolutionM3u8Uuid);
 
         logger.trace(
           { mediaId, resolution: resolutionData.title },
-          "Created media dependencies for resolution",
+          "Created media dependencies for .ts files to resolution m3u8",
         );
       });
 
       // Mark this resolution as completed
       completedResolutions.push(resolutionData.title);
+
       const completedProgress = (i + 1) * perResolutionWeight;
       await updateTranscodeProgress(withPgClient, mediaId, {
         progress: completedProgress,
@@ -612,7 +570,7 @@ const task: Task = async (inPayload, { withPgClient }) => {
     }
 
     // ========================================================================== //
-    // === All resolutions transcoded & uploaded, now finalize (dependencies, thumbnail, metadata) == //
+    // === All resolutions transcoded & uploaded, now create master m3u8 ======= //
     // ========================================================================== //
     // Update to finalizing stage
     await updateTranscodeProgress(withPgClient, mediaId, {
@@ -622,6 +580,53 @@ const task: Task = async (inPayload, { withPgClient }) => {
       currentResolution: null,
       completedResolutions,
     });
+
+    // Build and upload the master m3u8 file
+    let masterFileContent = `#EXTM3U\n#EXT-X-VERSION:3\n`;
+    for (const resolutionData of [...resolutions].reverse()) {
+      masterFileContent += `#EXT-X-STREAM-INF:BANDWIDTH=${resolutionData.bandwidth},RESOLUTION=${resolutionData.resolution}\n${`/media/data/${resolutionM3u8Files[resolutionData.title]}`}\n`;
+    }
+    fs.writeFileSync(masterFilePath, masterFileContent);
+    const masterFileSize = fs.statSync(masterFilePath).size;
+
+    logger.trace(
+      { mediaId, localFilePath, completedResolutions },
+      "Uploading master m3u8",
+    );
+    await withPgClient(async (pgClient) => {
+      const mediaHandler = new media[
+        process.env.STORAGE_TYPE as "file" | "s3"
+      ].mediaHandler(pgClient);
+
+      await mediaHandler.uploadMedia({
+        file: createReadStream(masterFilePath),
+        userId: mediaRow.user_id,
+        organizationId: mediaRow.organization_id,
+        isUserUploaded: false,
+        fileSize: masterFileSize,
+        fileExtension: "m3u8",
+        mediaId: masterMediaId,
+      });
+
+      // Create dependency from main media to master
+      await mediaHandler.createDependency(mediaId, masterUuid);
+
+      // Create dependencies from master to each resolution's m3u8
+      for (const resolutionData of resolutions) {
+        const resolutionM3u8File = resolutionM3u8Files[resolutionData.title]!;
+        const resolutionM3u8Uuid = extractMediaName(resolutionM3u8File).uuid;
+        await mediaHandler.createDependency(masterUuid, resolutionM3u8Uuid);
+      }
+
+      logger.trace(
+        { mediaId, completedResolutions },
+        "Created dependencies from master m3u8 to all resolution m3u8 files",
+      );
+    });
+    logger.trace(
+      { mediaId, localFilePath, completedResolutions },
+      "Done uploading master m3u8",
+    );
 
     // Remove local files
     logger.trace({ mediaId, localFilePath }, "Deleting local files");
@@ -633,13 +638,10 @@ const task: Task = async (inPayload, { withPgClient }) => {
     await withPgClient(async (pgClient) => {
       await pgClient.query(
         `UPDATE app_public.media_video_metadata 
-         SET hls_media_id = $2, 
-             transcode_status = 'completed', transcode_progress = 100
+         SET transcode_status = 'completed', transcode_progress = 100, hls_media_id = $2
          WHERE video_media_id = $1`,
         [mediaId, masterUuid],
       );
-
-      // TODO: Notify
     });
   } catch (err: any) {
     if (err?.code === "TRANSCODE_SKIP") {

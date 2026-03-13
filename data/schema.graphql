@@ -1214,6 +1214,11 @@ type InviteToOrganizationPayload {
   query: Query
 }
 
+"""
+The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+"""
+scalar JSON
+
 input LoginInput {
   password: String!
   username: String!
@@ -1450,6 +1455,40 @@ type Media {
 
   """Reads and enables pagination through a set of `MediaVideoMetadatum`."""
   mediaVideoMetadataByHlsMediaId(
+    """Read all values in the set after (below) this cursor."""
+    after: Cursor
+
+    """Read all values in the set before (above) this cursor."""
+    before: Cursor
+
+    """
+    A condition to be used in determining which values should be returned by the collection.
+    """
+    condition: MediaVideoMetadatumCondition
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: MediaVideoMetadatumFilter
+
+    """Only read the first `n` values of the set."""
+    first: Int
+
+    """Only read the last `n` values of the set."""
+    last: Int
+
+    """
+    Skip the first `n` values from our `after` cursor, an alternative to cursor
+    based pagination. May not be used with `last`.
+    """
+    offset: Int
+
+    """The method to use when ordering `MediaVideoMetadatum`."""
+    orderBy: [MediaVideoMetadataOrderBy!] = [PRIMARY_KEY_ASC]
+  ): MediaVideoMetadataConnection!
+
+  """Reads and enables pagination through a set of `MediaVideoMetadatum`."""
+  mediaVideoMetadataByMp4MediaId(
     """Read all values in the set after (below) this cursor."""
     after: Cursor
 
@@ -1956,6 +1995,8 @@ type MediaVideoMetadataEdge {
 enum MediaVideoMetadataOrderBy {
   HLS_MEDIA_ID_ASC
   HLS_MEDIA_ID_DESC
+  MP4_MEDIA_ID_ASC
+  MP4_MEDIA_ID_DESC
   NATURAL
   PRIMARY_KEY_ASC
   PRIMARY_KEY_DESC
@@ -1973,8 +2014,18 @@ type MediaVideoMetadatum {
   hlsMediaId: UUID
 
   """Reads a single `Media` that is related to this `MediaVideoMetadatum`."""
+  mp4Media: Media
+  mp4MediaId: UUID
+
+  """Reads a single `Media` that is related to this `MediaVideoMetadatum`."""
   thumbnailMedia: Media
   thumbnailMediaId: UUID
+  transcodeCompletedResolutions: JSON!
+  transcodeCurrentResolution: String
+  transcodeProgress: Int!
+  transcodeStage: VideoTranscodeStage!
+  transcodeStageProgress: Int!
+  transcodeStatus: VideoTranscodeStatus!
 
   """Reads a single `Media` that is related to this `MediaVideoMetadatum`."""
   videoMedia: Media
@@ -1988,6 +2039,9 @@ are tested for equality and combined with a logical ‘and.’
 input MediaVideoMetadatumCondition {
   """Checks for equality with the object’s `hlsMediaId` field."""
   hlsMediaId: UUID
+
+  """Checks for equality with the object’s `mp4MediaId` field."""
+  mp4MediaId: UUID
 
   """Checks for equality with the object’s `thumbnailMediaId` field."""
   thumbnailMediaId: UUID
@@ -2005,6 +2059,9 @@ input MediaVideoMetadatumFilter {
 
   """Filter by the object’s `hlsMediaId` field."""
   hlsMediaId: UUIDFilter
+
+  """Filter by the object’s `mp4MediaId` field."""
+  mp4MediaId: UUIDFilter
 
   """Negates the expression."""
   not: MediaVideoMetadatumFilter
@@ -5420,4 +5477,20 @@ type VerifyEmailPayload {
   """
   query: Query
   success: Boolean
+}
+
+enum VideoTranscodeStage {
+  COMPLETED
+  DOWNLOADING
+  FINALIZING
+  PENDING
+  TRANSCODING
+  UPLOADING
+}
+
+enum VideoTranscodeStatus {
+  COMPLETED
+  FAILED
+  PENDING
+  PROCESSING
 }

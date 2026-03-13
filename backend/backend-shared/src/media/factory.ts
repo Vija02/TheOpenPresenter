@@ -250,7 +250,50 @@ export const createMediaHandler = <T extends OurDataStore>(
     }
 
     async queueVideoTranscode(mediaUUID: string) {
-      // TODO:
+      const transcodePipeline = process.env.VIDEO_TRANSCODE_PIPELINE || "hls";
+
+      // TODO: Handle mp4 & skip if not needed
+
+      const taskName =
+        transcodePipeline === "mp4"
+          ? "medias__transcodeVideoToMP4"
+          : "medias__transcodeVideoToHLS";
+
+      const jobKey = `video_transcode_${mediaUUID}`;
+
+      try {
+        // Create initial metadata row
+        await this.pgPool.query(
+          `
+          INSERT INTO app_public.media_video_metadata (video_media_id)
+          VALUES ($1)
+          ON CONFLICT (video_media_id) DO NOTHING
+        `,
+          [mediaUUID],
+        );
+
+        await this.pgPool.query(
+          `
+          SELECT graphile_worker.add_job(
+            $1,
+            payload := $2::json,
+            queue_name := $3,
+            job_key := $4
+          );
+        `,
+          [taskName, JSON.stringify({ id: mediaUUID }), jobKey, jobKey],
+        );
+        logger.info(
+          { mediaUUID, taskName, jobKey },
+          "Queued video transcoding job",
+        );
+      } catch (err) {
+        logger.error(
+          { err, mediaUUID, taskName },
+          "Failed to queue video transcoding job",
+        );
+        throw err;
+      }
     }
 
     async processCompletedMedia(
