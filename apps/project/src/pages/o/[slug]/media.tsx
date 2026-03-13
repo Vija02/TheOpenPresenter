@@ -147,6 +147,9 @@ const isVideoFile = (extension: string | null | undefined): boolean =>
 const isPdfFile = (extension: string | null | undefined): boolean =>
   isExtensionInList(extension, PDF_EXTENSIONS);
 
+const isHlsFile = (extension: string | null | undefined): boolean =>
+  isExtensionInList(extension, [".m3u8"]);
+
 const StaticPreview = ({
   thumbnailUrl,
   alt,
@@ -240,6 +243,22 @@ const MediaCard = ({ media }: { media: MediaWithMediaDependencyFragment }) => {
     return null;
   }, [isVideo, isPdf, isOther, media.dependencies.nodes]);
 
+  const hlsUrl = useMemo(() => {
+    if (!isVideo) return null;
+    const hlsDependency = media.dependencies.nodes.find((dep) =>
+      isHlsFile(dep.childMedia?.fileExtension),
+    );
+    if (hlsDependency?.childMedia) {
+      return resolveMediaUrl(
+        extractMediaName(hlsDependency.childMedia.mediaName),
+      );
+    }
+    return null;
+  }, [isVideo, media.dependencies.nodes]);
+
+  // Use HLS URL if available, otherwise fall back to original media URL
+  const videoUrl = hlsUrl ?? mediaUrl;
+
   return (
     <div className="bg-white border border-gray-300 overflow-hidden flex flex-col h-full">
       {/* Image preview */}
@@ -256,7 +275,7 @@ const MediaCard = ({ media }: { media: MediaWithMediaDependencyFragment }) => {
         <div className="aspect-video bg-gray-900 flex items-center justify-center overflow-hidden relative">
           {isVideoPlaying ? (
             <ReactPlayer
-              src={mediaUrl}
+              src={videoUrl}
               width="100%"
               height="100%"
               controls
