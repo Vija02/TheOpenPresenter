@@ -283,19 +283,6 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
         process.env.STORAGE_TYPE as "file" | "s3"
       ].mediaHandler(this.app.get("rootPgPool")).store.getReadable(mediaName);
     },
-    queueVideoTranscode: async (mediaUUID: string) => {
-      const pool = this.app.get("rootPgPool") as Pool;
-      await pool.query(
-        `
-        select graphile_worker.add_job(
-          'medias__transcodeVideoToHLS',
-          payload := $1::json,
-          queue_name := $2
-        );  
-      `,
-        [JSON.stringify({ id: mediaUUID }), `video_transcode_${mediaUUID}`],
-      );
-    },
     getVideoMetadata: async (mediaUUID: string) => {
       const pool = this.app.get("rootPgPool") as Pool;
       const {
@@ -306,18 +293,43 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
       `,
         [mediaUUID],
       );
-      return row
-        ? {
-            videoMediaId: row.video_media_id as string,
-            hlsMediaId: row.hls_media_id as string,
-            thumbnailMediaId: row.thumbnail_media_id as string,
-            // Debt: What if we change the file extension?
-            hlsMediaName: mediaIdFromUUID(row.hls_media_id as string) + ".m3u8",
-            thumbnailMediaName:
-              mediaIdFromUUID(row.thumbnail_media_id as string) + ".jpg",
-            duration: row.duration as number,
-          }
-        : undefined;
+      if (!row) {
+        return undefined;
+      }
+
+      const result: {
+        videoMediaId: string;
+        hlsMediaId?: string;
+        hlsMediaName?: string;
+        mp4MediaId?: string;
+        mp4MediaName?: string;
+        thumbnailMediaId?: string;
+        thumbnailMediaName?: string;
+        duration: number;
+      } = {
+        videoMediaId: row.video_media_id as string,
+        duration: row.duration as number,
+      };
+
+      if (row.thumbnail_media_id) {
+        result.thumbnailMediaId = row.thumbnail_media_id as string;
+        result.thumbnailMediaName =
+          mediaIdFromUUID(row.thumbnail_media_id as string) + ".jpg";
+      }
+
+      if (row.hls_media_id) {
+        result.hlsMediaId = row.hls_media_id as string;
+        result.hlsMediaName =
+          mediaIdFromUUID(row.hls_media_id as string) + ".m3u8";
+      }
+
+      if (row.mp4_media_id) {
+        result.mp4MediaId = row.mp4_media_id as string;
+        result.mp4MediaName =
+          mediaIdFromUUID(row.mp4_media_id as string) + ".mp4";
+      }
+
+      return result;
     },
   };
 }

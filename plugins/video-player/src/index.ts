@@ -5,8 +5,9 @@ import {
   RegisterOnRendererDataLoaded,
   ServerPluginApi,
   TRPCObject,
+  YjsWatcher,
 } from "@repo/base-plugin/server";
-import { TypedArray, TypedMap, YjsWatcher, extractMediaName } from "@repo/lib";
+import { TypedArray, TypedMap, extractMediaName } from "@repo/lib";
 import { logger as rawLogger } from "@repo/observability";
 import getYouTubeID from "get-youtube-id";
 import { proxy } from "valtio";
@@ -104,11 +105,11 @@ const onPluginDataLoaded = (
       try {
         let metadata = await serverPluginApi.media.getVideoMetadata(videoUUID);
 
-        if (!metadata) {
+        if (!metadata || !metadata.hlsMediaId) {
           const interval = setInterval(async () => {
             metadata = await serverPluginApi.media.getVideoMetadata(videoUUID);
 
-            if (metadata) {
+            if (metadata && metadata.hlsMediaId) {
               clearInterval(interval);
               resolve(metadata);
             }
@@ -133,22 +134,14 @@ const onPluginDataLoaded = (
         const videoMediaName = splittedUrl[splittedUrl.length - 1]!;
         const { uuid: videoUUID } = extractMediaName(videoMediaName);
 
-        // Request transcode if not yet
-        if (!internalVideo.transcodeRequested) {
-          logger.trace({ videoUUID }, "Queuing video transcode");
-          await serverPluginApi.media.queueVideoTranscode(videoUUID);
-          (data.pluginData.videos[i] as InternalVideo).transcodeRequested =
-            true;
-        }
-
         // If not yet done, let's check
-        if (internalVideo.transcodeRequested && !internalVideo.hlsMediaName) {
+        if (!internalVideo.hlsMediaName) {
           logger.trace({ videoUUID }, "Checking transcode status");
           checkTranscoded(videoUUID).then((metadata) => {
             (data.pluginData.videos[i] as InternalVideo).hlsMediaName =
-              metadata.hlsMediaName;
+              metadata.hlsMediaName ?? null;
             (data.pluginData.videos[i] as InternalVideo).thumbnailMediaName =
-              metadata.thumbnailMediaName;
+              metadata.thumbnailMediaName ?? null;
             (data.pluginData.videos[i] as InternalVideo).metadata.duration =
               metadata.duration;
           });
@@ -157,12 +150,17 @@ const onPluginDataLoaded = (
     }
   };
 
-  // TODO: Watch newly added videos
+  // Run on load
   run();
+
+  // Watch for newly added videos
+  const yjsWatcher = new YjsWatcher(pluginInfo as Y.Map<any>);
+  yjsWatcher.watchYjs((x: Plugin<PluginBaseData>) => x.pluginData.videos, run);
 
   return {
     dispose: () => {
       unbind();
+      yjsWatcher.dispose();
     },
   };
 };
@@ -227,7 +225,7 @@ const getAppRouter = (t: TRPCObject) => {
               res.results.filter((x) => x.type === "Video") as YTNodes.Video[]
             ).map((x: YTNodes.Video) => ({
               ...x,
-              duration: x.duration
+              duration: x.duration,
             })) as unknown as YTNodes.Video[],
             refinements: res.refinements,
           };

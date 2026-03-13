@@ -2,16 +2,16 @@
 -- PostgreSQL database dump
 --
 
-\restrict EB9tgRfpgFYToS78cNTubEUiPHaIioUMKqTuvHa2n1HJL5X2byUBIVGEPYPj2dz
+\restrict GpTbKccclIMMKiG6NiOgj1vePAfh7Txrshe3jcFhf2UU0PIiMWRdQ51mJQnvn7N
 
--- Dumped from database version 17.4
--- Dumped by pg_dump version 18.3 (Homebrew)
+-- Dumped from database version 17.0 (Debian 17.0-1.pgdg120+1)
+-- Dumped by pg_dump version 18.1
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
 SET transaction_timeout = 0;
-SET client_encoding = 'SQL_ASCII';
+SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SELECT pg_catalog.set_config('search_path', '', false);
 SET check_function_bodies = false;
@@ -101,6 +101,32 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA public;
 --
 
 COMMENT ON EXTENSION "uuid-ossp" IS 'generate universally unique identifiers (UUIDs)';
+
+
+--
+-- Name: video_transcode_stage; Type: TYPE; Schema: app_public; Owner: -
+--
+
+CREATE TYPE app_public.video_transcode_stage AS ENUM (
+    'pending',
+    'downloading',
+    'transcoding',
+    'uploading',
+    'finalizing',
+    'completed'
+);
+
+
+--
+-- Name: video_transcode_status; Type: TYPE; Schema: app_public; Owner: -
+--
+
+CREATE TYPE app_public.video_transcode_status AS ENUM (
+    'pending',
+    'processing',
+    'completed',
+    'failed'
+);
 
 
 --
@@ -2324,7 +2350,14 @@ CREATE TABLE app_public.media_video_metadata (
     video_media_id uuid NOT NULL,
     hls_media_id uuid,
     thumbnail_media_id uuid,
-    duration numeric(10,2)
+    duration numeric(10,2),
+    mp4_media_id uuid,
+    transcode_status app_public.video_transcode_status DEFAULT 'pending'::app_public.video_transcode_status NOT NULL,
+    transcode_progress integer DEFAULT 0 NOT NULL,
+    transcode_current_resolution text,
+    transcode_stage app_public.video_transcode_stage DEFAULT 'pending'::app_public.video_transcode_stage NOT NULL,
+    transcode_stage_progress integer DEFAULT 0 NOT NULL,
+    transcode_completed_resolutions jsonb DEFAULT '[]'::jsonb NOT NULL
 );
 
 
@@ -2845,6 +2878,13 @@ CREATE INDEX media_image_sizes_processed_media_id_idx ON app_public.media_image_
 --
 
 CREATE INDEX media_video_metadata_hls_media_id_idx ON app_public.media_video_metadata USING btree (hls_media_id);
+
+
+--
+-- Name: media_video_metadata_mp4_media_id_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX media_video_metadata_mp4_media_id_idx ON app_public.media_video_metadata USING btree (mp4_media_id);
 
 
 --
@@ -3390,6 +3430,14 @@ ALTER TABLE ONLY app_public.media_image_sizes
 
 ALTER TABLE ONLY app_public.media_video_metadata
     ADD CONSTRAINT media_video_metadata_hls_media_id_fkey FOREIGN KEY (hls_media_id) REFERENCES app_public.medias(id) ON DELETE SET NULL;
+
+
+--
+-- Name: media_video_metadata media_video_metadata_mp4_media_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.media_video_metadata
+    ADD CONSTRAINT media_video_metadata_mp4_media_id_fkey FOREIGN KEY (mp4_media_id) REFERENCES app_public.medias(id) ON DELETE SET NULL;
 
 
 --
@@ -4980,5 +5028,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE theopenpresenter REVOKE ALL ON FUNCTIONS FROM 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict EB9tgRfpgFYToS78cNTubEUiPHaIioUMKqTuvHa2n1HJL5X2byUBIVGEPYPj2dz
+\unrestrict GpTbKccclIMMKiG6NiOgj1vePAfh7Txrshe3jcFhf2UU0PIiMWRdQ51mJQnvn7N
 
