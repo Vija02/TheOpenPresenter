@@ -48,15 +48,14 @@ const killProcess = async (pg) => {
 };
 
 async function main() {
-  const { EmbeddedPostgresManager, getAppDataPaths, getGraphilePaths } = await import(
-    "./theopenpresenter/packages/embedded-postgres/dist/index.js"
-  );
-  
+  const { EmbeddedPostgresManager, getAppDataPaths, getGraphilePaths } =
+    await import("./theopenpresenter/packages/embedded-postgres/dist/index.js");
+
   const { uploadsPath, envPath } = getAppDataPaths(appDataFolderName);
   const { graphileWorkerJsPath } = getGraphilePaths(
-    path.resolve(import.meta.dirname, "./theopenpresenter")
+    path.resolve(import.meta.dirname, "./theopenpresenter"),
   );
-  
+
   const pg = new EmbeddedPostgresManager({
     appDataFolderName,
     projectRoot: path.resolve(import.meta.dirname, "./theopenpresenter"),
@@ -109,6 +108,9 @@ async function main() {
     STORAGE_TYPE: "file",
     STORAGE_PROXY: "local",
     UPLOADS_PATH: uploadsPath,
+
+    // VIDEO
+    VIDEO_TRANSCODE_PIPELINE: "mp4",
 
     // PLUGINS
     ENABLED_PLUGINS:
