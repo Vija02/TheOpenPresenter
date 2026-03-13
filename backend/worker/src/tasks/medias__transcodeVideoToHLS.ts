@@ -185,7 +185,7 @@ const task: Task = async (inPayload, { withPgClient }) => {
             `-f hls`,
             `-hls_time ${HLS_SEGMENT_DURATION}`,
             `-hls_list_size 0`,
-            `-preset medium`,
+            `-preset fast`,
             `-crf 24`,
             `-hls_segment_filename ${resolutionDir}/%d.ts`,
           ])
