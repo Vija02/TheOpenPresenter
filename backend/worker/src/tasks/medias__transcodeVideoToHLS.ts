@@ -1,12 +1,6 @@
 import { media } from "@repo/backend-shared";
-import {
-  constructMediaName,
-  extractMediaName,
-  uuidFromMediaId,
-} from "@repo/lib";
+import { extractMediaName, uuidFromMediaId } from "@repo/lib";
 import { logger } from "@repo/observability";
-import ffmpegPath from "ffmpeg-static";
-import ffprobe from "ffprobe-static";
 import ffmpeg from "fluent-ffmpeg";
 import { readdirSync } from "fs";
 import { Task } from "graphile-worker";
@@ -16,54 +10,20 @@ import os from "os";
 import path from "path";
 import { typeidUnboxed } from "typeid-js";
 
-if (ffmpegPath) {
-  ffmpeg.setFfmpegPath(ffmpegPath);
-}
-ffmpeg.setFfprobePath(ffprobe.path);
+import {
+  extractMetadata,
+  processAndUploadThumbnail,
+  updateTranscodeProgress,
+} from "../transcode";
 
 const baseDir = path.join(os.tmpdir(), "videoTranscode");
 
-const extractMetadata = (inputPath: string) => {
-  return new Promise<{
-    width?: number;
-    height?: number;
-    duration?: number;
-    bitrate?: number;
-  }>((resolve, reject) =>
-    ffmpeg.ffprobe(inputPath, (err, metadata) => {
-      if (err) {
-        reject(err);
-        return;
-      }
-
-      const videoStream = metadata.streams.find(
-        (stream) => stream.codec_type === "video",
-      );
-      if (!videoStream) {
-        reject(new Error("No video stream found"));
-        return;
-      }
-
-      resolve({
-        width: videoStream.width,
-        height: videoStream.height,
-        duration: metadata.format.duration,
-        bitrate: metadata.format.bit_rate,
-      });
-    }),
-  );
-};
-
 interface MediasTranscodeVideoToHLSPayload {
-  /**
-   * Media id
-   */
   id: string;
 }
 
 const HLS_SEGMENT_DURATION = 10;
 
-// Ordered smallest to largest - important so we process smallest first so users can start viewing ASAP
 const allResolutions = [
   {
     title: "360p",
@@ -98,73 +58,6 @@ const allResolutions = [
     bandwidth: "5565000",
   },
 ];
-
-// Types for detailed progress tracking
-type TranscodeStatus = "pending" | "processing" | "completed" | "failed";
-type TranscodeStage =
-  | "pending"
-  | "downloading"
-  | "transcoding"
-  | "uploading"
-  | "finalizing"
-  | "completed";
-
-interface TranscodeProgressUpdate {
-  status?: TranscodeStatus;
-  progress?: number;
-  stage?: TranscodeStage;
-  stageProgress?: number;
-  currentResolution?: string | null;
-  completedResolutions?: string[];
-}
-
-// Helper to update transcode progress in the database
-const updateTranscodeProgress = async (
-  withPgClient: (callback: (pgClient: any) => Promise<void>) => Promise<void>,
-  mediaId: string,
-  update: TranscodeProgressUpdate,
-) => {
-  await withPgClient(async (pgClient) => {
-    const sets: string[] = [];
-    const values: any[] = [];
-    let paramIndex = 1;
-
-    if (update.status !== undefined) {
-      sets.push(`transcode_status = $${paramIndex++}`);
-      values.push(update.status);
-    }
-    if (update.progress !== undefined) {
-      sets.push(`transcode_progress = $${paramIndex++}`);
-      values.push(Math.min(100, Math.max(0, Math.round(update.progress))));
-    }
-    if (update.stage !== undefined) {
-      sets.push(`transcode_stage = $${paramIndex++}`);
-      values.push(update.stage);
-    }
-    if (update.stageProgress !== undefined) {
-      sets.push(`transcode_stage_progress = $${paramIndex++}`);
-      values.push(Math.min(100, Math.max(0, Math.round(update.stageProgress))));
-    }
-    if (update.currentResolution !== undefined) {
-      sets.push(`transcode_current_resolution = $${paramIndex++}`);
-      values.push(update.currentResolution);
-    }
-    if (update.completedResolutions !== undefined) {
-      sets.push(`transcode_completed_resolutions = $${paramIndex++}::jsonb`);
-      values.push(JSON.stringify(update.completedResolutions));
-    }
-
-    if (sets.length === 0) return;
-
-    values.push(mediaId);
-    await pgClient.query(
-      `UPDATE app_public.media_video_metadata 
-       SET ${sets.join(", ")} 
-       WHERE video_media_id = $${paramIndex}`,
-      values,
-    );
-  });
-};
 
 const task: Task = async (inPayload, { withPgClient }) => {
   const payload: MediasTranscodeVideoToHLSPayload = inPayload as any;
@@ -261,46 +154,15 @@ const task: Task = async (inPayload, { withPgClient }) => {
 
     const metadata = await extractMetadata(localFilePath);
 
-    // Generate and upload thumbnail first so users can see a preview
-    // Skip if thumbnail was already generated
     if (!existingThumbnailMediaId) {
-      logger.trace({ mediaId }, "Starting processing thumbnail");
-      const { mediaId: thumbnailMediaId, mediaName: thumbnailMediaName } =
-        await generateThumbnail({
-          inputPath: localFilePath,
-          folder: mediaDir,
-        });
-      const thumbnailFilePath = path.join(mediaDir, thumbnailMediaName);
-      const thumbnailFileSize = fs.statSync(thumbnailFilePath).size;
-      await withPgClient(async (pgClient) => {
-        const mediaHandler = new media[
-          process.env.STORAGE_TYPE as "file" | "s3"
-        ].mediaHandler(pgClient);
-
-        await mediaHandler.uploadMedia({
-          file: createReadStream(thumbnailFilePath),
-          userId: mediaRow.user_id,
-          organizationId: mediaRow.organization_id,
-          isUserUploaded: false,
-          fileSize: thumbnailFileSize,
-          fileExtension: "jpg",
-          mediaId: thumbnailMediaId,
-        });
-        await mediaHandler.createDependency(
-          mediaId,
-          uuidFromMediaId(thumbnailMediaId),
-        );
-        await pgClient.query(
-          `UPDATE app_public.media_video_metadata 
-           SET thumbnail_media_id = $2, duration = $3
-           WHERE video_media_id = $1`,
-          [mediaId, uuidFromMediaId(thumbnailMediaId), metadata.duration],
-        );
+      await processAndUploadThumbnail({
+        withPgClient,
+        videoMediaId: mediaId,
+        inputPath: localFilePath,
+        folder: mediaDir,
+        duration: metadata.duration,
+        mediaRow,
       });
-      logger.trace(
-        { mediaId, thumbnailMediaName },
-        "Finished processing thumbnail",
-      );
     } else {
       logger.trace(
         { mediaId, existingThumbnailMediaId },
@@ -661,34 +523,5 @@ const task: Task = async (inPayload, { withPgClient }) => {
     throw err;
   }
 };
-
-async function generateThumbnail({
-  inputPath,
-  folder,
-}: {
-  inputPath: string;
-  folder: string;
-}) {
-  const mediaId = typeidUnboxed("media");
-  const mediaName = constructMediaName(mediaId, "jpg");
-
-  return new Promise<{ mediaId: string; mediaName: string }>(
-    (resolve, reject) => {
-      ffmpeg(inputPath)
-        .screenshot({
-          timestamps: ["50%"],
-          folder,
-          filename: mediaName,
-          size: "360x?",
-        })
-        .on("end", () => {
-          resolve({ mediaId, mediaName });
-        })
-        .on("error", (err) => {
-          reject(err);
-        });
-    },
-  );
-}
 
 module.exports = task;
