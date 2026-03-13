@@ -252,8 +252,6 @@ export const createMediaHandler = <T extends OurDataStore>(
     async queueVideoTranscode(mediaUUID: string) {
       const transcodePipeline = process.env.VIDEO_TRANSCODE_PIPELINE || "hls";
 
-      // TODO: Handle mp4 & skip if not needed
-
       const taskName =
         transcodePipeline === "mp4"
           ? "medias__transcodeVideoToMP4"
