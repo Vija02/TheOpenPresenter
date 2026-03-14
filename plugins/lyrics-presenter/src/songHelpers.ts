@@ -1,4 +1,5 @@
 import { GroupedData, groupData, removeChords } from "./processLyrics";
+import { applySectionOrder } from "./sectionOrder";
 
 export const cleanWhiteSpace = (content: string[]) => {
   return content.map((x) => x.replace(/\s+/g, " ").trim());
@@ -30,14 +31,23 @@ export const suppressStartAndEndEmptyLines = (groupedData: GroupedData) => {
   }));
 };
 
-export const processSong = (content: string) => {
+export const processSong = (
+  content: string,
+  sectionOrder?: string[] | null,
+) => {
+  const cleanedData = processSongWithoutArrangement(content);
+  return applySectionOrder(cleanedData, sectionOrder);
+};
+
+export const processSongWithoutArrangement = (content: string) => {
   const cleanData = cleanWhiteSpace(
     removeChords(content.split(/<br>|\n/gm) ?? []),
   );
 
   const groupedData = groupData(cleanData);
+  const cleanedData = suppressStartAndEndEmptyLines(groupedData);
 
-  return suppressStartAndEndEmptyLines(groupedData);
+  return cleanedData;
 };
 
 export const getMaxIndex = (

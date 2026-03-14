@@ -87,6 +87,7 @@ export const displayTypeSettings: Record<
 };
 export const songSettingValidator = z.object({
   displayType: z.enum(displayTypes),
+  sectionOrder: z.array(z.string()).nullable().optional(),
 });
 export type SongSetting = z.infer<typeof songSettingValidator>;
 

@@ -39,7 +39,10 @@ const FullSongRenderer = ({ song }: { song: Song }) => {
   const pluginApi = usePluginAPI();
   const slideStyle = pluginApi.scene.useData((x) => x.pluginData.style);
 
-  const groupedData = useMemo(() => processSong(song.content), [song.content]);
+  const groupedData = useMemo(
+    () => processSong(song.content, song.setting.sectionOrder),
+    [song.content, song.setting.sectionOrder],
+  );
 
   return (
     <FullSongRenderView
@@ -59,7 +62,10 @@ const SectionsRenderer = ({
   const pluginApi = usePluginAPI();
   const slideStyle = pluginApi.scene.useData((x) => x.pluginData.style);
 
-  const groupedData = useMemo(() => processSong(song.content), [song.content]);
+  const groupedData = useMemo(
+    () => processSong(song.content, song.setting.sectionOrder),
+    [song.content, song.setting.sectionOrder],
+  );
 
   return (
     <SectionsRenderView
