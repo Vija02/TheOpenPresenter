@@ -51,7 +51,12 @@ const SongViewInner = React.memo(({ song }: { song: Song }) => {
         <div className="flex">
           <OverlayToggle
             toggler={({ onToggle }) => (
-              <Button size="sm" variant="ghost" onClick={onToggle}>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={onToggle}
+                data-testid="ly-edit-song"
+              >
                 <VscEdit />
               </Button>
             )}
