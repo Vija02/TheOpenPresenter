@@ -18,7 +18,10 @@ export const SongViewSlides = ({
   isPreview?: boolean;
   slideStyle: SlideStyle;
 }) => {
-  const groupedData = useMemo(() => processSong(song.content), [song.content]);
+  const groupedData = useMemo(
+    () => processSong(song.content, song.setting.sectionOrder),
+    [song.content, song.setting.sectionOrder],
+  );
 
   if (song.setting.displayType === "sections") {
     return (

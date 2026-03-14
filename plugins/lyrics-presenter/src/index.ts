@@ -81,7 +81,10 @@ export const init = (
 
       const currentSong = songs.find((x) => x.id === currentSongId);
       const currentSongMaxIndex = getMaxIndex(
-        processSong(currentSong?.content ?? ""),
+        processSong(
+          currentSong?.content ?? "",
+          currentSong?.setting?.sectionOrder,
+        ),
       );
 
       // Then handle next
@@ -110,9 +113,11 @@ export const init = (
           const prevSongId =
             songIds[songIds.findIndex((x) => x === currentSongId) - 1];
           if (prevSongId) {
+            const prevSong = songs.find((x) => x.id === prevSongId);
             const prevSongMaxIndex = getMaxIndex(
               processSong(
-                songs.find((x) => x.id === prevSongId)?.content ?? "",
+                prevSong?.content ?? "",
+                prevSong?.setting?.sectionOrder,
               ),
             );
             document.transact(() => {
@@ -227,3 +232,4 @@ const getAppRouter = (t: TRPCObject) => {
 export type AppRouter = ReturnType<typeof getAppRouter>;
 
 export * from "./types";
+export * from "./sectionOrder";
