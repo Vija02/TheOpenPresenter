@@ -171,22 +171,24 @@ export const ArrangeTab = ({
 
   const handleRemoveSection = (index: number) => {
     const newItems = orderedItems.filter((_, i) => i !== index);
-    if (newItems.length === 0) {
-      // Reset to default (null) when all items removed
-      setOrderedItems(
-        availableSections.map((s) => ({ id: generateId(), section: s })),
-      );
-      onSectionOrderChange(null);
-    } else {
-      updateOrder(newItems);
-    }
+    updateOrder(newItems);
   };
 
   const handleReset = () => {
+    const defaultItems = availableSections.map((s) => ({
+      id: generateId(),
+      section: s,
+    }));
+    setOrderedItems(defaultItems);
     onSectionOrderChange(null);
   };
 
-  const isCustomOrder = sectionOrder !== null && sectionOrder.length > 0;
+  const isCustomOrder = useMemo(() => {
+    if (orderedItems.length !== availableSections.length) return true;
+    return orderedItems.some(
+      (item, index) => item.section !== availableSections[index],
+    );
+  }, [orderedItems, availableSections]);
 
   return (
     <div className="flex-1 flex flex-col gap-4">
@@ -221,7 +223,10 @@ export const ArrangeTab = ({
           <p className="text-xs text-secondary mb-2">
             Drag or click to add to the arrangement
           </p>
-          <div className="flex flex-wrap gap-2 mb-4">
+          <div
+            className="flex flex-wrap gap-2 mb-4"
+            data-testid="ly-available-sections"
+          >
             {availableSections.map((section) => (
               <DraggableAvailableSection
                 key={section}
@@ -264,6 +269,7 @@ const DroppableArea = ({
     <div
       ref={setNodeRef}
       className="flex flex-col gap-1 min-h-[60px] p-2 border border-stroke rounded bg-surface-secondary transition-colors"
+      data-testid="ly-arrangement-dropzone"
     >
       {orderedItems.length === 0 ? (
         <p className="text-sm text-tertiary py-2 text-center">
@@ -314,6 +320,7 @@ const DraggableAvailableSection = ({
         "flex items-center gap-1 px-3 py-1.5 rounded border border-stroke bg-surface-primary select-none cursor-grab hover:border-primary hover:bg-surface-primary-hover transition-colors",
         isDragging && "shadow-lg border-primary z-50",
       )}
+      data-testid={`ly-available-section-${section}`}
       {...attributes}
       {...listeners}
       onClick={(e) => {
@@ -359,6 +366,7 @@ const SortableChip = ({ id, section, onRemove }: SortableChipProps) => {
         isDragging && "opacity-50 shadow-lg z-50",
         !isDragging && "cursor-grab",
       )}
+      data-testid="ly-arrangement-item"
       {...attributes}
       {...listeners}
     >
@@ -371,6 +379,7 @@ const SortableChip = ({ id, section, onRemove }: SortableChipProps) => {
           onRemove();
         }}
         size="xs"
+        data-testid="ly-arrangement-item-remove"
         onPointerDown={(e) => e.stopPropagation()}
       >
         <VscClose />

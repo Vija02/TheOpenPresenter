@@ -65,7 +65,16 @@ const RemoteEditSongModal = ({
         mutableRendererData.currentIndex = 0;
       }
 
-      mutableSceneData.pluginData.songs[index]!.setting = setting;
+      // Convert empty sectionOrder to null (use default)
+      const normalizedSetting = {
+        ...setting,
+        sectionOrder:
+          setting.sectionOrder && setting.sectionOrder.length > 0
+            ? setting.sectionOrder
+            : null,
+      };
+
+      mutableSceneData.pluginData.songs[index]!.setting = normalizedSetting;
       mutableSceneData.pluginData.songs[index]!.title = title;
       mutableSceneData.pluginData.songs[index]!.content = content;
 
