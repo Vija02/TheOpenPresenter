@@ -113,6 +113,62 @@ const syncRenderDataForScene = ({
 };
 
 /**
+ * Observes a Yjs state for plain JSON objects/arrays being inserted instead of Y.Map/Y.Array.
+ * Only runs in development mode.
+ * This helps detect programming errors where plain objects are accidentally inserted into Yjs.
+ */
+
+const checkForPlainJson = (value: unknown, path: string) => {
+  if (value === null || value === undefined) return;
+  if (typeof value !== "object") return;
+
+  // Check if it's a Yjs type (Y.Map, Y.Array, Y.Text, etc.)
+  if (value instanceof Y.AbstractType) return;
+
+  // It's a plain object or array - log a warning
+  const isArray = Array.isArray(value);
+  console.warn(
+    `[YjsState] Plain ${isArray ? "Array" : "JSON object"} detected instead of ${isArray ? "Y.Array" : "Y.Map"}. In most cases, this is unintended and will lead to hard to debug bugs.`,
+    {
+      path,
+      value,
+      hint: `Use ${isArray ? "new Y.Array()" : "new Y.Map()"} instead of plain ${isArray ? "[]" : "{}"}`,
+    },
+  );
+  console.trace("Stack trace for plain JSON insertion:");
+};
+const observeForPlainJson = (state: YState) => {
+  if (process.env.NODE_ENV !== "development") return;
+
+  state.observeDeep((events) => {
+    for (const event of events) {
+      const path = event.path.join(".");
+
+      // Check for map changes (keys)
+      if (event.keys) {
+        event.keys.forEach((change, key) => {
+          if (change.action === "add" || change.action === "update") {
+            const value = (event.target as Y.Map<any>).get(key);
+            checkForPlainJson(value, path ? `${path}.${key}` : key);
+          }
+        });
+      }
+
+      // Check for array changes (delta)
+      if (event.delta) {
+        for (const delta of event.delta) {
+          if (delta.insert && Array.isArray(delta.insert)) {
+            delta.insert.forEach((value, index) => {
+              checkForPlainJson(value, `${path}[${index}]`);
+            });
+          }
+        }
+      }
+    }
+  });
+};
+
+/**
  * This function should be called when the Yjs document is loaded
  * This handles everything from calling the plugin hooks to doing any operation we need to it
  */
@@ -395,6 +451,9 @@ const handleYjsDocumentLoad = ({
   });
 
   // TODO: Need to handle multiple plugin in 1 scene (adding, removing)
+
+  // Monitor for plain JSON insertions in development mode
+  observeForPlainJson(state);
 };
 
 export const YjsState = {
