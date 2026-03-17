@@ -16,14 +16,26 @@ export type RemoteViewWebComponentConfig = {
   alwaysRender?: boolean;
 };
 
-export type RegisterOnPluginDataCreated<PluginDataType = any> = (
+export type RegisterOnPluginDataCreated<
+  PluginDataType = any,
+  RendererDataType = any,
+> = (
   entryData: ObjectToTypedMap<Plugin<PluginDataType>>,
   pluginContext: PluginContext,
+  extras: {
+    getRendererData: () => Record<string, ObjectToTypedMap<RendererDataType>>;
+  },
 ) => IDisposable;
 
-export type RegisterOnPluginDataLoaded<PluginDataType = any> = (
+export type RegisterOnPluginDataLoaded<
+  PluginDataType = any,
+  RendererDataType = any,
+> = (
   entryData: ObjectToTypedMap<Plugin<PluginDataType>>,
   pluginContext: PluginContext,
+  extras: {
+    getRendererData: () => Record<string, ObjectToTypedMap<RendererDataType>>;
+  },
 ) => IDisposable;
 
 export type RegisterOnRendererDataCreated<RendererDataType = any> = (

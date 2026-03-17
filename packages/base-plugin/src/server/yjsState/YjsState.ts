@@ -281,6 +281,20 @@ const handleYjsDocumentLoad = ({
     });
 
     for (const [pluginId, pluginInfo] of children?.entries() ?? []) {
+      const getRendererData = () => {
+        const rendererDataForPlugin: Record<string, ObjectToTypedMap<any>> = {};
+        state.get("renderer")?.forEach((renderData, rendererId) => {
+          const pluginRendererData = renderData
+            .get("children")
+            ?.get(sceneId)
+            ?.get(pluginId);
+          if (pluginRendererData) {
+            rendererDataForPlugin[rendererId] = pluginRendererData;
+          }
+        });
+        return rendererDataForPlugin;
+      };
+
       if (isJustCreated) {
         callPluginHooks({
           registeredHooks: registeredOnPluginDataCreated,
@@ -294,6 +308,7 @@ const handleYjsDocumentLoad = ({
               organizationId,
               projectId,
             },
+            { getRendererData },
           ],
         });
       }
@@ -308,6 +323,9 @@ const handleYjsDocumentLoad = ({
             sceneId,
             organizationId,
             projectId,
+          },
+          {
+            getRendererData,
           },
         ],
       });
