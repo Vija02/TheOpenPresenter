@@ -336,7 +336,7 @@ jobs:
                     });
                     
                     // Remove all volumes for this deployment
-                    execSync(`yes | uc volume rm ${deploymentName}-pg-data ${deploymentName}-redis-data ${deploymentName}-alloy-config 2>/dev/null || echo "Volumes may already be removed or don't exist"`, {
+                    execSync(`yes | uc volume rm ${deploymentName}-pg-data ${deploymentName}-redis-data ${deploymentName}-alloy-config ${deploymentName}-uploads 2>/dev/null || echo "Volumes may already be removed or don't exist"`, {
                       encoding: 'utf-8',
                       timeout: 60000
                     });
@@ -370,7 +370,7 @@ jobs:
                       });
                       
                       // Remove all volumes for this deployment
-                      execSync(`yes | uc volume rm ${deploymentName}-pg-data ${deploymentName}-redis-data ${deploymentName}-alloy-config 2>/dev/null || echo "Volumes may already be removed or don't exist"`, {
+                      execSync(`yes | uc volume rm ${deploymentName}-pg-data ${deploymentName}-redis-data ${deploymentName}-alloy-config ${deploymentName}-uploads 2>/dev/null || echo "Volumes may already be removed or don't exist"`, {
                         encoding: 'utf-8',
                         timeout: 60000
                       });
