@@ -45,6 +45,7 @@ COPY packages/typescript-config/package.json /app/packages/typescript-config/pac
 COPY packages/tailwind-config/package.json /app/packages/tailwind-config/package.json
 COPY packages/test/package.json /app/packages/test/package.json
 COPY packages/ui/package.json /app/packages/ui/package.json
+COPY packages/video/package.json /app/packages/video/package.json
 COPY plugins/embed/package.json /app/plugins/embed/package.json
 COPY plugins/timer/package.json /app/plugins/timer/package.json
 COPY plugins/google-slides/package.json /app/plugins/google-slides/package.json
@@ -94,6 +95,9 @@ RUN yarn workspace @repo/base-plugin build
 
 COPY packages/ui/ /app/packages/ui/
 RUN yarn workspace @repo/ui build
+
+COPY packages/video/ /app/packages/video/
+RUN yarn workspace @repo/video build
 
 RUN node scripts/build_utils/extract_core.js
 
@@ -205,6 +209,7 @@ COPY --from=builder-core /app/packages/portable-file/ /app/packages/portable-fil
 COPY --from=builder-core /app/packages/lib/ /app/packages/lib/
 COPY --from=builder-core /app/backend/backend-shared/ /app/backend/backend-shared/
 COPY --from=builder-core /app/packages/base-plugin/ /app/packages/base-plugin/
+COPY --from=builder-core /app/packages/video/ /app/packages/video/
 COPY backend/db/ /app/backend/db/
 
 COPY --from=builder-client /app/apps/project/package.json /app/apps/project/
