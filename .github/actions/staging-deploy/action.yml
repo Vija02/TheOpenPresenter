@@ -171,7 +171,7 @@ runs:
               - OTLP_HOST=http://${DEPLOYMENT_NAME}-alloy:4318
               - DISABLE_HSTS=1
             volumes:
-              - ${DEPLOYMENT_NAME}-uploads:/app/backend/uploads
+              - ${DEPLOYMENT_NAME}-uploads:/app/uploads
             x-ports:
               - ${DEPLOYMENT_NAME}-server.${DNS_DOMAIN}:5678/https
 
@@ -203,7 +203,7 @@ runs:
               - TARGET=worker
               - OTLP_HOST=http://${DEPLOYMENT_NAME}-alloy:4318
             volumes:
-              - ${DEPLOYMENT_NAME}-uploads:/app/backend/uploads
+              - ${DEPLOYMENT_NAME}-uploads:/app/uploads
 
           ${DEPLOYMENT_NAME}-db:
             image: ghcr.io/vija02/theopenpresenter_db:main
