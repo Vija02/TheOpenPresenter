@@ -6,15 +6,14 @@ import {
   VolumeBar,
   useDisclosure,
 } from "@repo/ui";
-import { useState } from "react";
+import { Video } from "@repo/video";
+import { useCallback, useState } from "react";
 import { MdCloudUpload } from "react-icons/md";
-import ReactPlayer from "react-player/lazy";
+import ReactPlayer from "react-player";
 import "react-scrubber/lib/scrubber.css";
 import { typeidUnboxed } from "typeid-js";
 
-import type { Video } from "../../src/types";
 import { usePluginAPI } from "../pluginApi";
-// import { trpc } from "../trpc";
 import UploadVideoModal from "./UploadVideoModal";
 import VideoCard from "./VideoCard";
 import YoutubeSearchModal from "./YoutubeSearchModal";
@@ -43,10 +42,24 @@ const VideoPlayerRemote = () => {
   const mutableRendererData = pluginApi.renderer.useValtioData();
 
   const videos = pluginApi.scene.useData((x) => x.pluginData.videos);
-  const volume = pluginApi.renderer.useData((x) => x.volume);
+  const videoStates = pluginApi.renderer.useData((x) => x.videoStates);
+
+  // Get volume from first video state (they all share the same volume)
+  const firstVideoState = Object.values(videoStates)[0];
+  const volume = firstVideoState?.volume ?? null;
 
   const [input, setInput] = useState("");
   const [isError, setIsError] = useState(false);
+
+  // Update volume for all video states
+  const onVolumeChange = useCallback(
+    (v: number) => {
+      for (const videoId of Object.keys(mutableRendererData.videoStates)) {
+        mutableRendererData.videoStates[videoId]!.volume = v;
+      }
+    },
+    [mutableRendererData],
+  );
 
   // const { refetch: getRes } = trpc.videoPlayer.youtubeMetadata.useQuery(
   //   { ytVideoUrl: input },
@@ -54,7 +67,7 @@ const VideoPlayerRemote = () => {
   // );
 
   const onSearch = async () => {
-    const reactPlayerCanPlay = ReactPlayer.canPlay(input);
+    const reactPlayerCanPlay = ReactPlayer.canPlay?.(input);
 
     const metadata: Video["metadata"] = {};
 
@@ -110,12 +123,9 @@ const VideoPlayerRemote = () => {
       }
       body={
         <>
-          <VolumeBar
-            volume={volume}
-            onChange={(v) => {
-              mutableRendererData.volume = v;
-            }}
-          />
+          {volume !== null && (
+            <VolumeBar volume={volume} onChange={onVolumeChange} />
+          )}
 
           <div className="stack-col items-stretch w-full flex-1 p-3 overflow-auto">
             <form

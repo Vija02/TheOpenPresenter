@@ -2,6 +2,7 @@ import {
   ObjectToTypedMap,
   Plugin,
   PluginContext,
+  RegisterOnPluginDataLoaded,
   RegisterOnRendererDataLoaded,
   ServerPluginApi,
   TRPCObject,
@@ -9,6 +10,11 @@ import {
 } from "@repo/base-plugin/server";
 import { TypedArray, TypedMap, extractMediaName } from "@repo/lib";
 import { logger as rawLogger } from "@repo/observability";
+import {
+  InternalVideo,
+  VideoPlaybackState,
+  createVideoPlaybackState,
+} from "@repo/video";
 import getYouTubeID from "get-youtube-id";
 import { proxy } from "valtio";
 import { bind } from "valtio-yjs";
@@ -22,7 +28,11 @@ import {
   remoteWebComponentTag,
   rendererWebComponentTag,
 } from "./consts";
-import { InternalVideo, PluginBaseData, PluginRendererData } from "./types";
+import {
+  migratePluginDataV1ToV2,
+  migrateRendererDataV1ToV2,
+} from "./migrate/v1";
+import { PluginBaseData, PluginRendererData } from "./types";
 
 // TODO: HACK: Remove this soon
 let hack_serverPluginApi: ServerPluginApi;
@@ -80,10 +90,12 @@ const onPluginDataCreated = (
   return {};
 };
 
-const onPluginDataLoaded = (
-  pluginInfo: ObjectToTypedMap<Plugin<PluginBaseData>>,
-  context: PluginContext,
-) => {
+const onPluginDataLoaded: RegisterOnPluginDataLoaded<
+  PluginBaseData,
+  PluginRendererData
+> = (pluginInfo, context, { getRendererData }) => {
+  migratePluginDataV1ToV2(pluginInfo);
+
   const logger = rawLogger.child({
     context,
     plugin: pluginInfo.get("plugin"),
@@ -94,6 +106,37 @@ const onPluginDataLoaded = (
   const unbind = bind(data, pluginInfo as any);
 
   const serverPluginApi = hack_serverPluginApi;
+
+  // Ensure video states exist for all videos in all renderers
+  const ensureVideoStatesInAllRenderers = () => {
+    const renderers = getRendererData();
+    const videos = data.pluginData.videos;
+
+    for (const rendererData of Object.values(renderers)) {
+      const videoStatesMap = rendererData.get("videoStates");
+      if (!videoStatesMap) continue;
+
+      for (const video of videos) {
+        if (!videoStatesMap.has(video.id)) {
+          // Get volume from first existing video state, or default to 1
+          const firstState = videoStatesMap.values().next().value;
+          const currentVolume = firstState?.get("volume") ?? 1;
+
+          const newState = createVideoPlaybackState({ volume: currentVolume });
+
+          const stateMap = new Y.Map() as TypedMap<VideoPlaybackState>;
+          stateMap.set("uid", newState.uid);
+          stateMap.set("isPlaying", newState.isPlaying);
+          stateMap.set("volume", newState.volume);
+          stateMap.set("seek", newState.seek);
+          stateMap.set("startedAt", newState.startedAt);
+          stateMap.set("onFinishBehaviour", newState.onFinishBehaviour);
+
+          videoStatesMap.set(video.id, stateMap);
+        }
+      }
+    }
+  };
 
   const checkTranscoded = async (videoUUID: string) => {
     // DEBT: Change to listen rather than polling
@@ -152,10 +195,17 @@ const onPluginDataLoaded = (
 
   // Run on load
   run();
+  ensureVideoStatesInAllRenderers();
 
   // Watch for newly added videos
   const yjsWatcher = new YjsWatcher(pluginInfo as Y.Map<any>);
-  yjsWatcher.watchYjs((x: Plugin<PluginBaseData>) => x.pluginData.videos, run);
+  yjsWatcher.watchYjs(
+    (x: Plugin<PluginBaseData>) => x.pluginData.videos,
+    () => {
+      run();
+      ensureVideoStatesInAllRenderers();
+    },
+  );
 
   return {
     dispose: () => {
@@ -168,10 +218,8 @@ const onPluginDataLoaded = (
 const onRendererDataCreated = (
   rendererData: ObjectToTypedMap<PluginRendererData>,
 ) => {
-  rendererData.set("currentPlayingVideo", null);
-  rendererData.set("videoSeeks", new Y.Map<any>() as TypedMap<any>);
-  rendererData.set("isPlaying", false);
-  rendererData.set("volume", 1);
+  rendererData.set("activeVideoId", null);
+  rendererData.set("videoStates", new Y.Map<any>() as TypedMap<any>);
 
   return {};
 };
@@ -181,11 +229,23 @@ const onRendererDataLoaded: RegisterOnRendererDataLoaded<PluginRendererData> = (
   _context,
   { onSceneVisibilityChange },
 ) => {
+  migrateRendererDataV1ToV2(rendererData);
+
   const yjsWatcher = new YjsWatcher(rendererData as Y.Map<any>);
+
+  // Watch videoStates for audio playing state
   yjsWatcher.watchYjs(
-    (x: PluginRendererData) => x.isPlaying,
+    (x: PluginRendererData) => x.videoStates,
     () => {
-      rendererData.set("__audioIsPlaying", rendererData.get("isPlaying"));
+      const activeVideoId = rendererData.get("activeVideoId");
+      if (activeVideoId) {
+        const videoState = rendererData.get("videoStates")?.get(activeVideoId);
+        const isPlaying = videoState?.get("isPlaying");
+
+        rendererData.set("__audioIsPlaying", isPlaying);
+      } else {
+        rendererData.set("__audioIsPlaying", false);
+      }
     },
   );
 
