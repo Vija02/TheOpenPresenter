@@ -42,7 +42,6 @@ const UploadVideoModal = () => {
       isInternalVideo: true,
       hlsMediaName: null,
       thumbnailMediaName: null,
-      transcodeRequested: false,
     });
     onToggle?.();
     resetData?.();

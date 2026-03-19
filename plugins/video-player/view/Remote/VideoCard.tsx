@@ -1,16 +1,19 @@
 import { Button, LogoFavicon } from "@repo/ui";
+import { InternalVideo, Video, VideoPlaybackState } from "@repo/video";
+import {
+  computePlaybackState,
+  useComputedPlaybackState,
+  useVideoControls,
+} from "@repo/video/client";
 import { useCallback, useMemo } from "react";
-import { FaPause, FaPlay, FaYoutube } from "react-icons/fa";
+import { FaPause, FaPlay, FaStop, FaYoutube } from "react-icons/fa";
 import { IoMdClose } from "react-icons/io";
-import { MdHls } from "react-icons/md";
+import { MdHls, MdLoop } from "react-icons/md";
 import { VscDebugRestart } from "react-icons/vsc";
 import { Scrubber } from "react-scrubber";
 
-import { InternalVideo, Video } from "../../src/types";
-import { calculateActualSeek } from "../calculateActualSeek";
 import { usePluginAPI } from "../pluginApi";
 import { VideoThumbnail } from "./VideoThumbnail";
-import { useSeek } from "./useSeek";
 
 // TODO: Handle if no duration
 const VideoCard = ({ video }: { video: Video }) => {
@@ -21,93 +24,90 @@ const VideoCard = ({ video }: { video: Video }) => {
 
   const setRenderCurrentScene = pluginApi.renderer.setRenderCurrentScene;
 
-  const isPlaying = pluginApi.renderer.useData((x) => x.isPlaying);
-  const videoId = pluginApi.renderer.useData(
-    (x) => x.currentPlayingVideo?.videoId,
+  const activeVideoId = pluginApi.renderer.useData((x) => x.activeVideoId);
+  const videoStates = pluginApi.renderer.useData((x) => x.videoStates);
+  const playbackState: VideoPlaybackState | null = useMemo(
+    () => videoStates[video.id] ?? null,
+    [video.id, videoStates],
   );
-  const currentVideoIsPlaying = useMemo(
-    () => isPlaying && videoId === video.id,
-    [isPlaying, video.id, videoId],
+  const { isPlaying, currentSeek, isEnded } = useComputedPlaybackState(
+    playbackState,
+    video.metadata.duration,
+  );
+  const isActive = useMemo(
+    () => activeVideoId === video.id,
+    [activeVideoId, video.id],
   );
 
-  const seek = useSeek(video, currentVideoIsPlaying);
+  const videoControls = useVideoControls(
+    useCallback(
+      () => mutableRendererData.videoStates[video.id] ?? null,
+      [mutableRendererData.videoStates, video.id],
+    ),
+    mutableRendererData.videoStates[video.id]!,
+    video.metadata.duration ?? 0,
+  );
+
+  const pauseOtherVideos = useCallback(() => {
+    for (const [videoId, state] of Object.entries(
+      mutableRendererData.videoStates,
+    )) {
+      if (videoId !== video.id && state.isPlaying) {
+        const vid = mutableSceneData.pluginData.videos.find(
+          (v) => v.id === videoId,
+        );
+        const duration = vid?.metadata.duration ?? 0;
+        const { currentSeek } = computePlaybackState(state, duration);
+        mutableRendererData.videoStates[videoId]!.uid =
+          Math.random().toString();
+        mutableRendererData.videoStates[videoId]!.seek = currentSeek;
+        mutableRendererData.videoStates[videoId]!.isPlaying = false;
+        mutableRendererData.videoStates[videoId]!.startedAt = Date.now();
+      }
+    }
+  }, [mutableRendererData, mutableSceneData.pluginData.videos, video.id]);
 
   const onTogglePlay = useCallback(() => {
-    // Before we pause/play, if we have any currently playing video
-    // We need to update the seek timings
-    if (mutableRendererData.currentPlayingVideo && isPlaying) {
-      const videoDuration = mutableSceneData.pluginData.videos.find(
-        (v) => v.id === mutableRendererData.currentPlayingVideo!.videoId,
-      )?.metadata.duration;
-      const finalSeek = calculateActualSeek(
-        mutableRendererData.currentPlayingVideo,
-        videoDuration ?? 0,
-      );
+    if (!mutableRendererData.videoStates[video.id]) return;
 
-      mutableRendererData.videoSeeks[
-        mutableRendererData.currentPlayingVideo!.videoId
-      ] = finalSeek;
-    }
-
-    if (currentVideoIsPlaying) {
-      mutableRendererData.isPlaying = false;
+    if (isPlaying) {
+      videoControls.pause();
     } else {
-      mutableRendererData.isPlaying = true;
-      mutableRendererData.currentPlayingVideo = {
-        uid: Math.random().toString(),
-        playFrom: mutableRendererData.videoSeeks[video.id] ?? 0,
-        startedAt: new Date().getTime(),
-        videoId: video.id,
-      };
+      // Pause other videos first
+      pauseOtherVideos();
+
+      mutableRendererData.activeVideoId = video.id;
+      videoControls.play();
       setRenderCurrentScene();
     }
   }, [
-    currentVideoIsPlaying,
-    isPlaying,
-    mutableRendererData,
-    mutableSceneData.pluginData.videos,
-    setRenderCurrentScene,
     video.id,
+    isPlaying,
+    pauseOtherVideos,
+    mutableRendererData,
+    setRenderCurrentScene,
+    videoControls,
   ]);
 
-  const onSeekHandle = useCallback(
-    (v: number) => {
-      mutableRendererData.videoSeeks[video.id] = v;
+  const onDelete = useCallback(() => {
+    const index = mutableSceneData.pluginData.videos.findIndex(
+      (x) => x.id === video.id,
+    );
 
-      mutableRendererData.currentPlayingVideo!.uid = Math.random().toString();
-      mutableRendererData.currentPlayingVideo!.playFrom = v;
-      mutableRendererData.currentPlayingVideo!.startedAt = new Date().getTime();
+    mutableSceneData.pluginData.videos.splice(index, 1);
 
-      mutableRendererData.currentPlayingVideo!.wasPlayingBeforeSeek =
-        mutableRendererData.currentPlayingVideo!.wasPlayingBeforeSeek ||
-        currentVideoIsPlaying;
+    // Clean up state
+    delete mutableRendererData.videoStates[video.id];
 
-      mutableRendererData.isPlaying = false;
-    },
-    [currentVideoIsPlaying, mutableRendererData, video.id],
-  );
-  const onSeekEnd = useCallback(
-    (v: number) => {
-      mutableRendererData.videoSeeks[video.id] = v;
-
-      mutableRendererData.currentPlayingVideo!.uid = Math.random().toString();
-      mutableRendererData.currentPlayingVideo!.playFrom = v;
-      mutableRendererData.currentPlayingVideo!.startedAt = new Date().getTime();
-
-      if (mutableRendererData.currentPlayingVideo?.wasPlayingBeforeSeek) {
-        mutableRendererData.isPlaying = true;
-        mutableRendererData.currentPlayingVideo!.wasPlayingBeforeSeek = null;
-      }
-    },
-    [mutableRendererData, video.id],
-  );
+    // Clear active video if this was the active one
+    if (mutableRendererData.activeVideoId === video.id) {
+      mutableRendererData.activeVideoId = null;
+    }
+  }, [mutableSceneData, mutableRendererData, video.id]);
 
   const borderClass = useMemo(
-    () =>
-      currentVideoIsPlaying
-        ? "border border-red-500"
-        : "border border-black/20",
-    [currentVideoIsPlaying],
+    () => (isActive ? "border border-red-500" : "border border-black/20"),
+    [isActive],
   );
 
   return (
@@ -137,38 +137,23 @@ const VideoCard = ({ video }: { video: Video }) => {
                 )}
             </div>
             <div className="stack-row">
+              <Button variant="outline" size="sm" onClick={videoControls.stop}>
+                <FaStop />
+              </Button>
               <Button
-                variant="outline"
+                variant={
+                  playbackState?.onFinishBehaviour === "loop"
+                    ? "default"
+                    : "outline"
+                }
                 size="sm"
-                onClick={() => {
-                  onSeekEnd(0);
-                  if (!currentVideoIsPlaying) {
-                    onTogglePlay();
-                  }
-                }}
+                onClick={videoControls.toggleLoop}
               >
-                <VscDebugRestart />
+                <MdLoop />
               </Button>
             </div>
           </div>
-          <Button
-            variant="ghost"
-            onClick={() => {
-              const index = mutableSceneData.pluginData.videos.findIndex(
-                (x) => x.id === video.id,
-              );
-
-              mutableSceneData.pluginData.videos.splice(index, 1);
-
-              if (
-                mutableRendererData.currentPlayingVideo?.videoId === video.id
-              ) {
-                mutableRendererData.currentPlayingVideo = null;
-                mutableRendererData.isPlaying = false;
-                delete mutableRendererData.videoSeeks[video.id];
-              }
-            }}
-          >
+          <Button variant="ghost" onClick={onDelete}>
             <IoMdClose className="text-2xl cursor-pointer" />
           </Button>
         </div>
@@ -178,21 +163,25 @@ const VideoCard = ({ video }: { video: Video }) => {
         <div className="stack-row w-full gap-3">
           <Button
             onClick={onTogglePlay}
-            variant={currentVideoIsPlaying ? "default" : "outline"}
-            className={
-              currentVideoIsPlaying ? "border-1 border-fill-default" : ""
-            }
+            variant={isPlaying ? "default" : "outline"}
+            className={isPlaying ? "border-1 border-fill-default" : ""}
           >
-            {currentVideoIsPlaying ? <FaPause /> : <FaPlay />}
+            {isPlaying ? (
+              <FaPause />
+            ) : isEnded ? (
+              <VscDebugRestart />
+            ) : (
+              <FaPlay />
+            )}
           </Button>
           <div className="w-full flex items-center">
             <Scrubber
               min={0}
               max={0.999999}
-              value={seek}
-              onScrubChange={onSeekHandle}
-              onScrubEnd={onSeekEnd}
-              onScrubStart={onSeekHandle}
+              value={currentSeek}
+              onScrubChange={videoControls.updateSeeking}
+              onScrubEnd={videoControls.endSeeking}
+              onScrubStart={videoControls.startSeeking}
             />
           </div>
         </div>
