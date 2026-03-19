@@ -99,7 +99,7 @@ runs:
         uc rm ${DEPLOYMENT_NAME}-migrator ${DEPLOYMENT_NAME}-server ${DEPLOYMENT_NAME}-worker ${DEPLOYMENT_NAME}-db ${DEPLOYMENT_NAME}-redis ${DEPLOYMENT_NAME}-unoserver ${DEPLOYMENT_NAME}-alloy 2>/dev/null || echo "No existing deployment to destroy (this is OK)"
 
         # Remove all volumes for this deployment
-        yes | uc volume rm ${DEPLOYMENT_NAME}-pg-data ${DEPLOYMENT_NAME}-redis-data ${DEPLOYMENT_NAME}-alloy-config 2>/dev/null || echo "No existing volumes to remove (this is OK)"
+        yes | uc volume rm ${DEPLOYMENT_NAME}-pg-data ${DEPLOYMENT_NAME}-redis-data ${DEPLOYMENT_NAME}-alloy-config ${DEPLOYMENT_NAME}-uploads 2>/dev/null || echo "No existing volumes to remove (this is OK)"
 
     - name: Wait for cleanup
       shell: bash
@@ -170,6 +170,8 @@ runs:
               - PLUGIN_GOOGLE_SLIDES_UNOCONVERT_SERVER=http://${DEPLOYMENT_NAME}-unoserver:3000
               - OTLP_HOST=http://${DEPLOYMENT_NAME}-alloy:4318
               - DISABLE_HSTS=1
+            volumes:
+              - ${DEPLOYMENT_NAME}-uploads:/app/backend/uploads
             x-ports:
               - ${DEPLOYMENT_NAME}-server.${DNS_DOMAIN}:5678/https
 
@@ -200,6 +202,8 @@ runs:
               - ENABLED_PLUGINS=lyrics-presenter,simple-image,google-slides,radio,audio-recorder,video-player,worship-pads,embed,timer
               - TARGET=worker
               - OTLP_HOST=http://${DEPLOYMENT_NAME}-alloy:4318
+            volumes:
+              - ${DEPLOYMENT_NAME}-uploads:/app/backend/uploads
 
           ${DEPLOYMENT_NAME}-db:
             image: ghcr.io/vija02/theopenpresenter_db:main
@@ -242,6 +246,7 @@ runs:
           ${DEPLOYMENT_NAME}-pg-data:
           ${DEPLOYMENT_NAME}-redis-data:
           ${DEPLOYMENT_NAME}-alloy-config:
+          ${DEPLOYMENT_NAME}-uploads:
         EOF
 
         # Create minimal alloy config
