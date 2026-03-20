@@ -1,0 +1,21 @@
+query OrganizationMediaForPicker(
+  $organizationId: UUID!
+  $condition: MediaCondition
+) {
+  organization(id: $organizationId) {
+    id
+    medias(orderBy: CREATED_AT_DESC, condition: $condition) {
+      nodes {
+        id
+        ...MediaWithMediaDependency
+        videoMetadata: mediaVideoMetadataByVideoMediaId(first: 1) {
+          nodes {
+            duration
+            hlsMediaId
+            thumbnailMediaId
+          }
+        }
+      }
+    }
+  }
+}

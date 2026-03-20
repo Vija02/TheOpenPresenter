@@ -1,3 +1,4 @@
+import { MediaPickerProvider } from "@repo/base-plugin/client";
 import {
   AudioCheckProvider,
   AwarenessProvider,
@@ -5,6 +6,7 @@ import {
   PluginDataProvider,
   PluginMetaDataProvider,
   useHandleKeyPress,
+  usePluginMetaData,
 } from "@repo/shared";
 import { useEffect } from "react";
 import { Route, Switch, useParams } from "wouter";
@@ -39,12 +41,21 @@ function Root() {
         <AudioCheckProvider>
           <PluginDataProvider type="remote">
             <AwarenessProvider>
-              <Inner />
+              <MediaPickerWrapper>
+                <Inner />
+              </MediaPickerWrapper>
             </AwarenessProvider>
           </PluginDataProvider>
         </AudioCheckProvider>
       </ErrorProvider>
     </PluginMetaDataProvider>
+  );
+}
+
+function MediaPickerWrapper({ children }: { children: React.ReactNode }) {
+  const { orgId } = usePluginMetaData();
+  return (
+    <MediaPickerProvider organizationId={orgId}>{children}</MediaPickerProvider>
   );
 }
 

@@ -1,9 +1,9 @@
-import { ObjectToTypedMap } from "@repo/lib";
+import type { ObjectToTypedMap } from "@repo/lib";
 import type { Logger } from "pino";
-import { toast as ReactToast } from "react-toastify";
-import UAParser from "ua-parser-js";
-import * as awarenessProtocol from "y-protocols/awareness.js";
-import { StoreApi } from "zustand";
+import type { toast as ReactToast } from "react-toastify";
+import type { IResult } from "ua-parser-js";
+import type { Awareness } from "y-protocols/awareness.js";
+import type { StoreApi } from "zustand";
 
 export type { ObjectToTypedMap };
 
@@ -75,7 +75,7 @@ export interface IDisposable {
 // ================================ Awareness =============================== //
 // ========================================================================== //
 export type AwarenessContext = {
-  awarenessObj: awarenessProtocol.Awareness;
+  awarenessObj: Awareness;
   currentUserId: string;
 };
 
@@ -96,7 +96,7 @@ export type AwarenessStore<T extends object = {}> = T & {
 export type AwarenessUserData = {
   id: string;
   type: "remote" | "renderer";
-  userAgentInfo: UAParser.IResult;
+  userAgentInfo: IResult;
   errors: string[];
   state: AwarenessState;
 };
@@ -111,6 +111,7 @@ export type MiscProps = {
   canPlayAudio: CanPlayAudio;
   toast: typeof ReactToast;
   media: MediaHandler;
+  mediaPicker: MediaPicker;
   logger: Logger;
   parentContainer: HTMLElement | null;
 };
@@ -151,4 +152,26 @@ export type MediaHandler = {
   permanentlyDeleteMedia: (mediaKey: string) => Promise<any>;
   completeMedia: (mediaKey: string) => Promise<any>;
   unlinkMediaFromPlugin: (mediaKey: string | null) => Promise<any>;
+};
+
+export type MediaType = "video" | "image" | "audio" | "all";
+
+export type MediaPickerOptions = {
+  type?: MediaType;
+  title?: string;
+};
+
+export type MediaPickerResult = {
+  id: string;
+  mediaName: string;
+  originalName: string | null;
+  fileExtension: string | null;
+  url: string;
+  thumbnailUrl?: string;
+  hlsMediaName?: string | null;
+  duration?: number | null;
+};
+
+export type MediaPicker = {
+  show: (options?: MediaPickerOptions) => Promise<MediaPickerResult | null>;
 };
