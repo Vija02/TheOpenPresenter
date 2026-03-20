@@ -30,8 +30,9 @@ async function importWithRetry(
       }
     } catch (error: any) {
       if (attempt === maxAttempts) {
+        console.error(error);
         throw new Error(
-          `Failed to load module after ${maxAttempts} attempts: ${"message" in error ? error?.message : JSON.stringify(error)}`,
+          `Failed to load module after ${maxAttempts} attempts: ${"message" in error ? error?.message : JSON.stringify(error)}. Module: ${moduleUrl}`,
         );
       }
 
