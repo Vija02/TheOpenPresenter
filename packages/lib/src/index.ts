@@ -2,6 +2,7 @@ export * from "./appData";
 export * from "./constants";
 export * from "./errors";
 export * from "./globalState";
+export * from "./mediaTypeUtil";
 export * from "./mediaUtil";
 export * from "./preloader";
 export * from "./streamToBuffer";
