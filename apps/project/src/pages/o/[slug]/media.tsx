@@ -7,7 +7,15 @@ import {
   useMediaDependenciesOfParentQuery,
   useOrganizationMediaIndexPageQuery,
 } from "@repo/graphql";
-import { extractMediaName, globalState, resolveMediaUrl } from "@repo/lib";
+import {
+  extractMediaName,
+  globalState,
+  isBrowserSupportedImageFile,
+  isBrowserSupportedVideoFile,
+  isExtensionInList,
+  isHlsFile,
+  resolveMediaUrl,
+} from "@repo/lib";
 import {
   Button,
   Checkbox,
@@ -108,47 +116,8 @@ const EmptyMedia = () => {
   );
 };
 
-const BROWSER_SUPPORTED_IMAGE_EXTENSIONS = [
-  ".jpg",
-  ".jpeg",
-  ".jpe",
-  ".jif",
-  ".jfif",
-  ".png",
-  ".webp",
-  ".avif",
-  ".gif",
-  ".svg",
-];
-// TODO: Make play HLS
-const BROWSER_SUPPORTED_VIDEO_EXTENSIONS = [".mp4", ".m4v", ".webm", ".mov"];
-const PDF_EXTENSIONS = [".pdf"];
-
-const normalizeExtension = (extension: string | null | undefined): string => {
-  if (!extension) return "";
-  const ext = extension.startsWith(".") ? extension : `.${extension}`;
-  return ext.toLowerCase();
-};
-
-const isExtensionInList = (
-  extension: string | null | undefined,
-  list: string[],
-): boolean => {
-  const ext = normalizeExtension(extension);
-  return ext !== "" && list.includes(ext);
-};
-
-const isImageFile = (extension: string | null | undefined): boolean =>
-  isExtensionInList(extension, BROWSER_SUPPORTED_IMAGE_EXTENSIONS);
-
-const isVideoFile = (extension: string | null | undefined): boolean =>
-  isExtensionInList(extension, BROWSER_SUPPORTED_VIDEO_EXTENSIONS);
-
 const isPdfFile = (extension: string | null | undefined): boolean =>
-  isExtensionInList(extension, PDF_EXTENSIONS);
-
-const isHlsFile = (extension: string | null | undefined): boolean =>
-  isExtensionInList(extension, [".m3u8"]);
+  isExtensionInList(extension, [".pdf"]);
 
 const StaticPreview = ({
   thumbnailUrl,
@@ -218,8 +187,8 @@ const MediaCard = ({ media }: { media: MediaWithMediaDependencyFragment }) => {
     return "Unknown";
   }, [media.fileSize]);
 
-  const isImage = isImageFile(media.fileExtension);
-  const isVideo = isVideoFile(media.fileExtension);
+  const isImage = isBrowserSupportedImageFile(media.fileExtension);
+  const isVideo = isBrowserSupportedVideoFile(media.fileExtension);
   const isPdf = isPdfFile(media.fileExtension);
   const isOther = !isImage && !isVideo && !isPdf;
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
@@ -233,7 +202,7 @@ const MediaCard = ({ media }: { media: MediaWithMediaDependencyFragment }) => {
   const thumbnailUrl = useMemo(() => {
     if (!isVideo && !isPdf && !isOther) return null;
     const imageDependency = media.dependencies.nodes.find((dep) =>
-      isImageFile(dep.childMedia?.fileExtension),
+      isBrowserSupportedImageFile(dep.childMedia?.fileExtension),
     );
     if (imageDependency?.childMedia) {
       return resolveMediaUrl(
