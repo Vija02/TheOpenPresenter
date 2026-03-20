@@ -250,6 +250,13 @@ const PluginRenderer = React.memo(
               return Promise.reject();
             },
           },
+          mediaPicker: {
+            show: () => {
+              return Promise.reject(
+                new Error("Media picker not available in renderer"),
+              );
+            },
+          },
           logger: childLogger,
           parentContainer: pluginDivRef.current,
         },

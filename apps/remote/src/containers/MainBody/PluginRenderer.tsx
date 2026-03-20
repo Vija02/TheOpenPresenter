@@ -7,6 +7,7 @@ import {
   WebComponentProps,
   YjsWatcher,
 } from "@repo/base-plugin";
+import { useMediaPicker } from "@repo/base-plugin/client";
 import {
   useCompleteMediaMutation,
   useDeleteMediaMutation,
@@ -91,6 +92,8 @@ const PluginRenderer = React.memo(
       },
       [pluginId, sceneId, setAwarenessState],
     );
+
+    const mediaPicker = useMediaPicker();
 
     const [, deleteMedia] = useDeleteMediaMutation();
     const [, completeMedia] = useCompleteMediaMutation();
@@ -184,6 +187,7 @@ const PluginRenderer = React.memo(
               });
             },
           },
+          mediaPicker,
           logger: childLogger,
           parentContainer: pluginDivRef.current,
         },
@@ -198,6 +202,7 @@ const PluginRenderer = React.memo(
       error,
       getYJSPluginRenderer,
       isSuccess,
+      mediaPicker,
       pluginContext,
       pluginInfo.plugin,
       provider,

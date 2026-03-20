@@ -21,7 +21,7 @@ import {
   DecorateRouterRecord,
   Router,
 } from "@trpc/server/unstable-core-do-not-import";
-import { pino, destination } from "pino";
+import { destination, pino } from "pino";
 import { typeidUnboxed } from "typeid-js";
 import { v4 } from "uuid";
 import { proxy } from "valtio";
@@ -220,6 +220,11 @@ export const simulateUser = (
         },
         unlinkMediaFromPlugin: () => {
           return Promise.resolve();
+        },
+      },
+      mediaPicker: {
+        show: () => {
+          return Promise.resolve(null);
         },
       },
       logger: pino(destination("/dev/null")),

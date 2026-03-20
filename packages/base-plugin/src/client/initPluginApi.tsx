@@ -141,6 +141,9 @@ export function initPluginApi<
         );
       },
     },
+    mediaPicker: {
+      show: misc.mediaPicker.show,
+    },
     log: misc.logger,
     error: {
       addError: misc.errorHandler.addError,
