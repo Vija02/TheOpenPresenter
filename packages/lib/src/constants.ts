@@ -45,3 +45,22 @@ export const SUPPORTED_VIDEO_EXTENSIONS = [
   ".3gp",
   ".3g2",
 ];
+
+export const SUPPORTED_AUDIO_EXTENSIONS = [
+  // MP3
+  ".mp3",
+  // WAV
+  ".wav",
+  // OGG
+  ".ogg",
+  // AAC/M4A
+  ".m4a",
+  ".aac",
+  // FLAC
+  ".flac",
+  // WMA
+  ".wma",
+  // AIFF
+  ".aiff",
+  ".aif",
+];
