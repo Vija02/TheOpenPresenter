@@ -1,3 +1,4 @@
+import { VideoTranscodeStatus } from "@repo/graphql";
 import {
   extractMediaName,
   isAudioFile,
@@ -6,12 +7,19 @@ import {
   isExtensionInList,
   isImageFile,
   isVideoFile,
+  isVideoReady,
   mediaIdFromUUID,
   resolveMediaUrl,
   resolveProcessedMediaUrl,
 } from "@repo/lib";
 import React, { useMemo, useState } from "react";
-import { VscFile, VscFileMedia, VscMusic, VscPlay } from "react-icons/vsc";
+import {
+  VscFile,
+  VscFileMedia,
+  VscLoading,
+  VscMusic,
+  VscPlay,
+} from "react-icons/vsc";
 
 import { cn } from "./lib/utils";
 
@@ -24,6 +32,8 @@ export type MediaPreviewData = {
   videoMetadata?: {
     thumbnailMediaId?: string | null;
     hlsMediaId?: string | null;
+    transcodeStatus?: VideoTranscodeStatus | null;
+    transcodeProgress?: number | null;
   } | null;
   // Dependencies for fallback thumbnail
   dependencies?: {
@@ -48,6 +58,7 @@ export type MediaPreviewProps = {
   playButtonClassName?: string;
   iconClassName?: string;
   processedImageSize?: number;
+  showProcessingOverlay?: boolean;
 };
 
 const isPdfFile = (extension: string | null | undefined): boolean =>
@@ -63,6 +74,36 @@ const getFallbackIcon = (
   return VscFileMedia;
 };
 
+const getVideoStatusText = (
+  videoMetadata: MediaPreviewData["videoMetadata"],
+): string | null => {
+  if (!videoMetadata) return "Processing...";
+
+  switch (videoMetadata.transcodeStatus) {
+    case VideoTranscodeStatus.Pending:
+      return "Queued";
+    case VideoTranscodeStatus.Processing:
+      return `Processing ${videoMetadata.transcodeProgress ?? 0}%`;
+    case VideoTranscodeStatus.Failed:
+      return "Failed";
+    case VideoTranscodeStatus.Completed:
+      return null;
+    default:
+      return null;
+  }
+};
+
+const ProcessingOverlay: React.FC<{ statusText: string | null }> = ({
+  statusText,
+}) => (
+  <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center gap-1">
+    <VscLoading className="text-xl text-white animate-spin" />
+    {statusText && (
+      <span className="text-[10px] text-white font-medium">{statusText}</span>
+    )}
+  </div>
+);
+
 export const MediaPreview: React.FC<MediaPreviewProps> = ({
   media,
   videoPlayerComponent: VideoPlayer,
@@ -71,6 +112,7 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
   playButtonClassName,
   iconClassName,
   processedImageSize = 300,
+  showProcessingOverlay = true,
 }) => {
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
 
@@ -82,6 +124,12 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
   );
   const isImage = isImageFile(media.fileExtension);
   const isVideo = isVideoFile(media.fileExtension);
+
+  // Video is processing if it's a video file and not ready
+  const isVideoProcessing = isVideo && !isVideoReady(media);
+  const videoStatusText = isVideo
+    ? getVideoStatusText(media.videoMetadata)
+    : null;
 
   const FallbackIcon = getFallbackIcon(media.fileExtension);
 
@@ -167,15 +215,19 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
         ) : (
           <FallbackIcon className={defaultIconClassName} />
         )}
-        <button
-          onClick={() => setIsVideoPlaying(true)}
-          className={defaultPlayButtonClassName}
-          title="Play video"
-        >
-          <div className="flex items-center justify-center size-12 bg-white/90 rounded-full transition-colors">
-            <VscPlay className="text-2xl text-gray-800 ml-0.5" />
-          </div>
-        </button>
+        {showProcessingOverlay && isVideoProcessing ? (
+          <ProcessingOverlay statusText={videoStatusText} />
+        ) : (
+          <button
+            onClick={() => setIsVideoPlaying(true)}
+            className={defaultPlayButtonClassName}
+            title="Play video"
+          >
+            <div className="flex items-center justify-center size-12 bg-white/90 rounded-full transition-colors">
+              <VscPlay className="text-2xl text-gray-800 ml-0.5" />
+            </div>
+          </button>
+        )}
       </div>
     );
   }
@@ -188,6 +240,9 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
           <img src={thumbnailUrl} alt={alt} className={defaultMediaClassName} />
         ) : (
           <FallbackIcon className={defaultIconClassName} />
+        )}
+        {showProcessingOverlay && isVideoProcessing && (
+          <ProcessingOverlay statusText={videoStatusText} />
         )}
       </div>
     );

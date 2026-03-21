@@ -1,3 +1,4 @@
+import { VideoTranscodeStatus } from "@repo/graphql";
 import type { Meta, StoryObj } from "@storybook/react";
 
 import { MediaPreview, MediaPreviewData } from "../MediaPreview";
@@ -42,6 +43,19 @@ const mockVideoWithThumbnail: MediaPreviewData = {
   videoMetadata: {
     thumbnailMediaId: "019d0dba-a0ab-7aaa-bdc0-24a37e89679f",
     hlsMediaId: null,
+    transcodeStatus: VideoTranscodeStatus.Completed,
+  },
+};
+
+const mockVideoProcessing: MediaPreviewData = {
+  mediaName: "media_01km6vn85bfanbvfzqp67a6d3v.mp4",
+  originalName: "Processing Video.mp4",
+  fileExtension: ".mp4",
+  videoMetadata: {
+    thumbnailMediaId: "019d0dba-a0ab-7aaa-bdc0-24a37e89679f",
+    hlsMediaId: null,
+    transcodeStatus: VideoTranscodeStatus.Processing,
+    transcodeProgress: 45,
   },
 };
 
@@ -78,6 +92,18 @@ export const Image: Story = {
 export const VideoWithThumbnail: Story = {
   args: {
     media: mockVideoWithThumbnail,
+    className: "size-full",
+  },
+  render: (args) => (
+    <PreviewContainer>
+      <MediaPreview {...args} />
+    </PreviewContainer>
+  ),
+};
+
+export const VideoProcessing: Story = {
+  args: {
+    media: mockVideoProcessing,
     className: "size-full",
   },
   render: (args) => (

@@ -1,4 +1,7 @@
+import { VideoTranscodeStatus } from "@repo/graphql";
 import { TypeId, fromUUID, toUUID } from "typeid-js";
+
+import { isVideoFile } from "./mediaTypeUtil";
 
 export type InternalMedia = {
   mediaId: string;
@@ -74,4 +77,16 @@ export const resolveProcessedMediaUrl = ({
   }
 
   return undefined;
+};
+
+export const isVideoReady = (media: {
+  fileExtension?: string | null;
+  videoMetadata?: {
+    transcodeStatus?: VideoTranscodeStatus | null;
+  } | null;
+}): boolean => {
+  if (!isVideoFile(media.fileExtension)) return true;
+  const videoMeta = media.videoMetadata;
+  if (!videoMeta) return false;
+  return videoMeta.transcodeStatus === VideoTranscodeStatus.Completed;
 };
