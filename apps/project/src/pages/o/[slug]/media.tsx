@@ -7,15 +7,7 @@ import {
   useMediaDependenciesOfParentQuery,
   useOrganizationMediaIndexPageQuery,
 } from "@repo/graphql";
-import {
-  extractMediaName,
-  globalState,
-  isBrowserSupportedImageFile,
-  isBrowserSupportedVideoFile,
-  isExtensionInList,
-  isHlsFile,
-  resolveMediaUrl,
-} from "@repo/lib";
+import { globalState } from "@repo/lib";
 import {
   Button,
   Checkbox,
@@ -26,6 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
   Link,
+  MediaPreview,
   OverlayToggle,
   PopConfirm,
   useOverlayToggle,
@@ -34,15 +27,29 @@ import prettyBytes from "pretty-bytes";
 import { useCallback, useMemo, useState } from "react";
 import {
   VscCheck,
-  VscFile,
-  VscFileMedia,
   VscFolder,
   VscLinkExternal,
-  VscPlay,
   VscTrash,
 } from "react-icons/vsc";
 import ReactPlayer from "react-player";
 import { toast } from "react-toastify";
+
+const VideoPlayerComponent = ({
+  src,
+  onEnded,
+}: {
+  src: string;
+  onEnded?: () => void;
+}) => (
+  <ReactPlayer
+    src={src}
+    width="100%"
+    height="100%"
+    controls
+    playing
+    onEnded={onEnded}
+  />
+);
 
 const OrganizationMediaPage = () => {
   const slug = useOrganizationSlug();
@@ -116,31 +123,6 @@ const EmptyMedia = () => {
   );
 };
 
-const isPdfFile = (extension: string | null | undefined): boolean =>
-  isExtensionInList(extension, [".pdf"]);
-
-const StaticPreview = ({
-  thumbnailUrl,
-  alt,
-  fallbackIcon: FallbackIcon,
-}: {
-  thumbnailUrl: string | null;
-  alt: string;
-  fallbackIcon: React.ComponentType<{ className?: string }>;
-}) => (
-  <div className="aspect-video bg-gray-100 flex items-center justify-center overflow-hidden relative">
-    {thumbnailUrl ? (
-      <img
-        src={thumbnailUrl}
-        alt={alt}
-        className="w-full h-full object-contain"
-      />
-    ) : (
-      <FallbackIcon className="w-12 h-12 text-gray-400" />
-    )}
-  </div>
-);
-
 const MediaCard = ({ media }: { media: MediaWithMediaDependencyFragment }) => {
   const { publish } = globalState.modelDataAccess.usePublishAPIChanges({
     token: "page",
@@ -187,108 +169,15 @@ const MediaCard = ({ media }: { media: MediaWithMediaDependencyFragment }) => {
     return "Unknown";
   }, [media.fileSize]);
 
-  const isImage = isBrowserSupportedImageFile(media.fileExtension);
-  const isVideo = isBrowserSupportedVideoFile(media.fileExtension);
-  const isPdf = isPdfFile(media.fileExtension);
-  const isOther = !isImage && !isVideo && !isPdf;
-  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
-
-  const mediaUrl = useMemo(
-    () => resolveMediaUrl(extractMediaName(media.mediaName)),
-    [media.mediaName],
-  );
-
-  // Find thumbnail from dependencies (first image dependency)
-  const thumbnailUrl = useMemo(() => {
-    if (!isVideo && !isPdf && !isOther) return null;
-    const imageDependency = media.dependencies.nodes.find((dep) =>
-      isBrowserSupportedImageFile(dep.childMedia?.fileExtension),
-    );
-    if (imageDependency?.childMedia) {
-      return resolveMediaUrl(
-        extractMediaName(imageDependency.childMedia.mediaName),
-      );
-    }
-    return null;
-  }, [isVideo, isPdf, isOther, media.dependencies.nodes]);
-
-  const hlsUrl = useMemo(() => {
-    if (!isVideo) return null;
-    const hlsDependency = media.dependencies.nodes.find((dep) =>
-      isHlsFile(dep.childMedia?.fileExtension),
-    );
-    if (hlsDependency?.childMedia) {
-      return resolveMediaUrl(
-        extractMediaName(hlsDependency.childMedia.mediaName),
-      );
-    }
-    return null;
-  }, [isVideo, media.dependencies.nodes]);
-
-  // Use HLS URL if available, otherwise fall back to original media URL
-  const videoUrl = hlsUrl ?? mediaUrl;
-
   return (
     <div className="bg-white border border-gray-300 overflow-hidden flex flex-col h-full">
-      {/* Image preview */}
-      {isImage && (
-        <StaticPreview
-          thumbnailUrl={mediaUrl}
-          alt={media.originalName ?? media.mediaName}
-          fallbackIcon={VscFileMedia}
-        />
-      )}
-
-      {/* Video preview */}
-      {isVideo && (
-        <div className="aspect-video bg-gray-900 flex items-center justify-center overflow-hidden relative">
-          {isVideoPlaying ? (
-            <ReactPlayer
-              src={videoUrl}
-              width="100%"
-              height="100%"
-              controls
-              playing
-              onEnded={() => setIsVideoPlaying(false)}
-            />
-          ) : (
-            <button
-              onClick={() => setIsVideoPlaying(true)}
-              className="absolute inset-0 flex items-center justify-center group"
-              title="Play video"
-            >
-              {thumbnailUrl && (
-                <img
-                  src={thumbnailUrl}
-                  alt={media.originalName ?? media.mediaName}
-                  className="absolute inset-0 w-full h-full object-contain"
-                />
-              )}
-              <div className="z-10 flex items-center justify-center w-16 h-16 bg-white/90 group-hover:bg-white rounded-full transition-colors">
-                <VscPlay className="w-8 h-8 text-gray-800 ml-1" />
-              </div>
-            </button>
-          )}
-        </div>
-      )}
-
-      {/* PDF preview */}
-      {isPdf && (
-        <StaticPreview
-          thumbnailUrl={thumbnailUrl}
-          alt={media.originalName ?? media.mediaName}
-          fallbackIcon={VscFile}
-        />
-      )}
-
-      {/* Other file types preview */}
-      {isOther && (
-        <StaticPreview
-          thumbnailUrl={thumbnailUrl}
-          alt={media.originalName ?? media.mediaName}
-          fallbackIcon={VscFileMedia}
-        />
-      )}
+      <MediaPreview
+        media={media}
+        videoPlayerComponent={VideoPlayerComponent}
+        className="aspect-video bg-gray-100"
+        mediaClassName="object-contain"
+        iconClassName="size-12 text-gray-400"
+      />
 
       {/* Header with status indicator */}
       <div className="p-3 border-b border-gray-200">
