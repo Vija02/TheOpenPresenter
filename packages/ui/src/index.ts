@@ -33,6 +33,7 @@ export * from "./Error";
 export * from "./Loading";
 export * from "./Logo";
 export * from "./LogoFavicon";
+export * from "./MediaPreview";
 export * from "./OverlayToggle";
 export * from "./PasswordStrength";
 export * from "./PopConfirm";
