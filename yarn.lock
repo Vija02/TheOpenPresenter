@@ -8448,6 +8448,7 @@ __metadata:
   resolution: "@repo/base-plugin@workspace:packages/base-plugin"
   dependencies:
     "@repo/backend-shared": "npm:*"
+    "@repo/graphql": "npm:*"
     "@repo/lib": "npm:*"
     "@repo/observability": "npm:*"
     "@repo/typescript-config": "npm:*"
@@ -8461,6 +8462,7 @@ __metadata:
     pino: "npm:^9.6.0"
     pkgroll: "npm:2.5.1"
     react: "npm:^19.1.0"
+    react-icons: "npm:^5.4.0"
     react-toastify: "npm:^10.0.6"
     react-use: "npm:^17.5.1"
     tslib: "npm:^2.8.1"
@@ -9377,6 +9379,7 @@ __metadata:
     "@react-hook/size": "npm:^2.1.2"
     "@repo/base-plugin": "npm:*"
     "@repo/eslint-config": "npm:*"
+    "@repo/graphql": "npm:*"
     "@repo/lib": "npm:*"
     "@repo/tailwind-config": "npm:*"
     "@storybook/addon-essentials": "npm:^8.6.14"
