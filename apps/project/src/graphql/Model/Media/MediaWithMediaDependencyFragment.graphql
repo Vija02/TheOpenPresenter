@@ -1,6 +1,19 @@
 fragment MediaWithMediaDependency on Media {
   id
   ...Media
+  imageMetadata: mediaImageMetadatumByImageMediaId {
+    width
+    height
+  }
+  videoMetadata: mediaVideoMetadatumByVideoMediaId {
+    duration
+    hlsMediaId
+    thumbnailMediaId
+    transcodeStatus
+    transcodeProgress
+    transcodeStage
+    transcodeStageProgress
+  }
   dependencies: mediaDependenciesByParentMediaId {
     totalCount
     nodes {

@@ -8,13 +8,6 @@ query OrganizationMediaForPicker(
       nodes {
         id
         ...MediaWithMediaDependency
-        videoMetadata: mediaVideoMetadataByVideoMediaId(first: 1) {
-          nodes {
-            duration
-            hlsMediaId
-            thumbnailMediaId
-          }
-        }
       }
     }
   }
