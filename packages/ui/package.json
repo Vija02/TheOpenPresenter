@@ -56,6 +56,7 @@
     "@radix-ui/react-tooltip": "^1.2.7",
     "@react-hook/size": "^2.1.2",
     "@repo/base-plugin": "*",
+    "@repo/graphql": "*",
     "@repo/lib": "*",
     "@repo/tailwind-config": "*",
     "autoprefixer": "^10.4.21",
