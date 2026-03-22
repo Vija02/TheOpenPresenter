@@ -2,6 +2,8 @@ import { preloader } from "@repo/lib";
 import { ErrorAlert } from "@repo/ui";
 import "@repo/ui/css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import "@uppy/core/dist/style.min.css";
+import "@uppy/dashboard/dist/style.min.css";
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { ErrorBoundary } from "react-error-boundary";
