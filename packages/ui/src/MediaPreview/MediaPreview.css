@@ -1,0 +1,89 @@
+.ui--media-preview-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+}
+
+.ui--media-preview-media {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ui--media-preview-icon {
+  font-size: 1.5rem;
+  line-height: 2rem;
+  color: var(--tertiary, #9ca3af);
+}
+
+.ui--media-preview-play-button {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background-color: transparent;
+  border: none;
+  padding: 0;
+}
+
+.ui--media-preview-play-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  background-color: rgba(255, 255, 255, 0.9);
+  border-radius: 9999px;
+  transition: background-color 0.15s;
+}
+
+.ui--media-preview-play-icon-wrapper:hover {
+  background-color: rgba(255, 255, 255, 1);
+}
+
+.ui--media-preview-play-icon {
+  font-size: 1.5rem;
+  line-height: 2rem;
+  color: #1f2937;
+  margin-left: 0.125rem;
+}
+
+/* Processing Overlay */
+.ui--media-preview-processing-overlay {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+}
+
+.ui--media-preview-processing-spinner {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+  color: white;
+  animation: spin 1s linear infinite;
+}
+
+.ui--media-preview-processing-text {
+  font-size: 10px;
+  color: white;
+  font-weight: 500;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

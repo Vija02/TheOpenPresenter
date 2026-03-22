@@ -21,7 +21,8 @@ import {
   VscPlay,
 } from "react-icons/vsc";
 
-import { cn } from "./lib/utils";
+import { cn } from "../lib/utils";
+import "./MediaPreview.css";
 
 // Generic media type
 export type MediaPreviewData = {
@@ -96,10 +97,10 @@ const getVideoStatusText = (
 const ProcessingOverlay: React.FC<{ statusText: string | null }> = ({
   statusText,
 }) => (
-  <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center gap-1">
-    <VscLoading className="text-xl text-white animate-spin" />
+  <div className="ui--media-preview-processing-overlay">
+    <VscLoading className="ui--media-preview-processing-spinner" />
     {statusText && (
-      <span className="text-[10px] text-white font-medium">{statusText}</span>
+      <span className="ui--media-preview-processing-text">{statusText}</span>
     )}
   </div>
 );
@@ -180,20 +181,14 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
 
   const alt = media.originalName ?? media.mediaName;
 
-  const containerClassName = cn(
-    "relative flex items-center justify-center overflow-hidden",
-    className,
-  );
+  const containerClassName = cn("ui--media-preview-container", className);
 
-  const defaultMediaClassName = cn("size-full object-cover", mediaClassName);
+  const defaultMediaClassName = cn("ui--media-preview-media", mediaClassName);
 
-  const defaultIconClassName = cn(
-    "text-2xl text-[var(--tertiary,#9ca3af)]",
-    iconClassName,
-  );
+  const defaultIconClassName = cn("ui--media-preview-icon", iconClassName);
 
   const defaultPlayButtonClassName = cn(
-    "absolute inset-0 flex items-center justify-center cursor-pointer bg-transparent border-none p-0",
+    "ui--media-preview-play-button",
     playButtonClassName,
   );
 
@@ -223,8 +218,8 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
             className={defaultPlayButtonClassName}
             title="Play video"
           >
-            <div className="flex items-center justify-center size-12 bg-white/90 rounded-full transition-colors">
-              <VscPlay className="text-2xl text-gray-800 ml-0.5" />
+            <div className="ui--media-preview-play-icon-wrapper">
+              <VscPlay className="ui--media-preview-play-icon" />
             </div>
           </button>
         )}

@@ -114,45 +114,6 @@ export const getMediaCardStyle = (
 export const mediaPreviewContainerStyle: CSSProperties = {
   aspectRatio: "16/9",
   backgroundColor: "var(--surface-secondary)",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  overflow: "hidden",
-  position: "relative",
-};
-
-export const mediaImageStyle: CSSProperties = {
-  width: "100%",
-  height: "100%",
-  objectFit: "cover",
-};
-
-export const mediaIconStyle: CSSProperties = {
-  fontSize: "24px",
-  color: "var(--tertiary)",
-};
-
-export const processingOverlayStyle: CSSProperties = {
-  position: "absolute",
-  inset: 0,
-  backgroundColor: "rgba(0, 0, 0, 0.5)",
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: "4px",
-};
-
-export const spinnerStyle: CSSProperties = {
-  fontSize: "20px",
-  color: "white",
-  animation: "spin 1s linear infinite",
-};
-
-export const statusTextStyle: CSSProperties = {
-  fontSize: "10px",
-  color: "white",
-  fontWeight: 500,
 };
 
 export const mediaNameContainerStyle: CSSProperties = {
@@ -176,11 +137,3 @@ export const mediaNameTextStyle: CSSProperties = {
   overflow: "hidden",
   textOverflow: "ellipsis",
 };
-
-// CSS keyframes for spinner animation
-export const spinKeyframes = `
-  @keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-  }
-`;
