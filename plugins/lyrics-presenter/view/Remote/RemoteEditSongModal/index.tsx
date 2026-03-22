@@ -217,7 +217,9 @@ const RemoteEditSongModal = ({
                     <h3 className="text-lg font-medium text-center mb-2">
                       Preview
                     </h3>
-                    <SlideGrid forceWidth={200}>{preview}</SlideGrid>
+                    <SlideGrid pluginAPI={pluginApi} forceWidth={200}>
+                      {preview}
+                    </SlideGrid>
                   </div>
                 </div>
               </Tabs>

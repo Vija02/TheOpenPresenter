@@ -1,23 +1,25 @@
 import useSize from "@react-hook/size";
-import { PluginAPIContext } from "@repo/base-plugin/client";
-import { createContext, useContext, useMemo, useRef } from "react";
+import type { initPluginApi } from "@repo/base-plugin/client";
+import { createContext, useMemo, useRef } from "react";
 import { useStore } from "zustand";
 
 import { mapZoomToRange } from "./mapZoomToRange";
 
+type PluginAPI = ReturnType<typeof initPluginApi>;
+
 type PropTypes = {
   children?: React.ReactNode;
   forceWidth?: number;
+  pluginAPI?: PluginAPI | null;
 };
 
-export const SlideGrid = ({ children, forceWidth }: PropTypes) => {
+export const SlideGrid = ({ children, forceWidth, pluginAPI }: PropTypes) => {
   const target = useRef<any>(null);
   const [width] = useSize(target);
 
-  const val = useContext(PluginAPIContext);
-  const { zoomLevel } = val.pluginAPI
+  const { zoomLevel } = pluginAPI
     ? // Breaks the rule of hook, but this should be a one time condition
-      useStore(val.pluginAPI.remote.zoomLevel)
+      useStore(pluginAPI.remote.zoomLevel)
     : { zoomLevel: 0.5 };
 
   const pixelValue = useMemo(

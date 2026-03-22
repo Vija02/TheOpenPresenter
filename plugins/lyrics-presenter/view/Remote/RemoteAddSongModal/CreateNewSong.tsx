@@ -126,7 +126,7 @@ export const CreateNewSong = ({
           </div>
           <div className="hidden md:block stack-col basis-52">
             <h3 className="text-lg font-medium text-center mb-2">Preview</h3>
-            <SlideGrid forceWidth={200}>
+            <SlideGrid pluginAPI={pluginApi} forceWidth={200}>
               <SongViewSlides
                 song={previewSong}
                 slideStyle={slideStyle}

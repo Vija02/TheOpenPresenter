@@ -1,11 +1,13 @@
-import { PluginAPIContext } from "@repo/base-plugin/client";
+import type { initPluginApi } from "@repo/base-plugin/client";
 import { cx } from "class-variance-authority";
-import { use, useContext, useMemo } from "react";
+import { use, useMemo } from "react";
 import { useStore } from "zustand";
 
 import "./Slide.css";
 import { CustomSizeContext } from "./SlideGrid";
 import { mapZoomToRange } from "./mapZoomToRange";
+
+type PluginAPI = ReturnType<typeof initPluginApi>;
 
 type PropTypes = {
   heading?: string;
@@ -16,6 +18,7 @@ type PropTypes = {
   children?:
     | React.ReactNode
     | (({ width }: { width: string }) => React.ReactNode);
+  pluginAPI?: PluginAPI | null;
 };
 
 export const Slide = ({
@@ -25,12 +28,12 @@ export const Slide = ({
   aspectRatio = 16 / 9,
   onClick,
   children,
+  pluginAPI,
 }: PropTypes) => {
   const { forceWidth, containerWidth } = use(CustomSizeContext);
-  const val = useContext(PluginAPIContext);
-  const { zoomLevel } = val.pluginAPI
+  const { zoomLevel } = pluginAPI
     ? // Breaks the rule of hook, but this should be a one time condition
-      useStore(val.pluginAPI.remote.zoomLevel)
+      useStore(pluginAPI.remote.zoomLevel)
     : { zoomLevel: 0.5 };
 
   const width = useMemo(
