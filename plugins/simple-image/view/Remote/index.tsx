@@ -38,13 +38,14 @@ const ImageRemote = () => {
       toolbar={<UploadModal />}
       body={
         <div className="p-3 w-full">
-          <SlideGrid>
+          <SlideGrid pluginAPI={pluginApi}>
             {pluginData.images.map((imgSrc, i) => (
               <div
                 key={pluginApi.media.resolveMediaUrl(imgSrc)}
                 className="stack-col items-stretch justify-center"
               >
                 <Slide
+                  pluginAPI={pluginApi}
                   isActive={i === imgIndex}
                   onClick={() => {
                     rendererData.imgIndex = i;

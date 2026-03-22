@@ -263,7 +263,9 @@ const StyleSettingModal = () => {
                 <div className="hidden md:flex flex-col basis-[200px] gap-2">
                   <h3 className="text-lg font-medium text-center">Preview</h3>
 
-                  <SlideGrid forceWidth={200}>{preview}</SlideGrid>
+                  <SlideGrid pluginAPI={pluginApi} forceWidth={200}>
+                    {preview}
+                  </SlideGrid>
 
                   <div className="flex justify-center [&>*]:w-auto">
                     <CheckboxControl

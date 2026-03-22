@@ -1,6 +1,6 @@
-import { UniversalURL } from "@repo/base-plugin";
 import {
   ALLOWED_IMAGE_WIDTH,
+  UniversalURL,
   isInternalMedia,
   resolveMediaUrl,
   resolveProcessedMediaUrl,

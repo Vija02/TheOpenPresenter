@@ -76,7 +76,7 @@ const SongViewInner = React.memo(({ song }: { song: Song }) => {
           </PopConfirm>
         </div>
       </div>
-      <SlideGrid>
+      <SlideGrid pluginAPI={pluginApi}>
         <SongViewSlides song={song} slideStyle={slideStyle} />
       </SlideGrid>
     </div>

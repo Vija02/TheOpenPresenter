@@ -3,9 +3,11 @@ import { Button, SlideGrid, cn } from "@repo/ui";
 import { useMemo, useState } from "react";
 import { FaChevronUp } from "react-icons/fa6";
 
+import { usePluginAPI } from "../../pluginApi";
 import "./MobilePreview.css";
 
 export const MobilePreview = ({ preview }: { preview: React.ReactNode }) => {
+  const pluginApi = usePluginAPI();
   const [previewOpen, setPreviewOpen] = useState<boolean | null>(null);
   const windowWidth = useWindowWidth();
 
@@ -43,7 +45,9 @@ export const MobilePreview = ({ preview }: { preview: React.ReactNode }) => {
                 : "",
           )}
         >
-          <SlideGrid forceWidth={width}>{preview}</SlideGrid>
+          <SlideGrid pluginAPI={pluginApi} forceWidth={width}>
+            {preview}
+          </SlideGrid>
         </div>
       </div>
     </div>

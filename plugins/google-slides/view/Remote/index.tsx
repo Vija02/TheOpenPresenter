@@ -105,7 +105,7 @@ const Remote = () => {
       }
       body={
         <div className="p-3 w-full">
-          <SlideGrid>
+          <SlideGrid pluginAPI={pluginApi}>
             <RemoteHandler />
           </SlideGrid>
 
@@ -190,6 +190,7 @@ const RemoteHandler = () => {
       {thumbnailLinks.map((thumbnailLink, i) => (
         <Slide
           key={i}
+          pluginAPI={pluginApi}
           heading={`Slide ${i + 1}`}
           isActive={i === activeIndex}
           onClick={() => {

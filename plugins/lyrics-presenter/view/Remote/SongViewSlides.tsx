@@ -75,6 +75,7 @@ const Sections = ({
           return (
             <Slide
               key={`${i}_${j}`}
+              pluginAPI={pluginApi}
               heading={j !== 0 ? heading + " (cont.)" : heading}
               headingIsFaded={j !== 0}
               isActive={
@@ -123,6 +124,7 @@ const FullSong = ({
 
   return (
     <Slide
+      pluginAPI={pluginApi}
       isActive={!isPreview && song.id === activeSongId}
       onClick={
         isPreview
