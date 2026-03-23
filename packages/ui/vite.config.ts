@@ -27,11 +27,7 @@ export default defineConfig({
     },
     rollupOptions: {
       // Exclude peer dependencies from the bundle to reduce bundle size
-      external: [
-        "react/jsx-runtime",
-        ...Object.keys(peerDependencies),
-        "@repo/base-plugin/client",
-      ],
+      external: ["react/jsx-runtime", ...Object.keys(peerDependencies)],
     },
   },
   resolve: {
