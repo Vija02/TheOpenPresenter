@@ -1,4 +1,3 @@
-import type { initPluginApi } from "@repo/base-plugin/client";
 import { cx } from "class-variance-authority";
 import { use, useMemo } from "react";
 import { useStore } from "zustand";
@@ -6,8 +5,7 @@ import { useStore } from "zustand";
 import "./Slide.css";
 import { CustomSizeContext } from "./SlideGrid";
 import { mapZoomToRange } from "./mapZoomToRange";
-
-type PluginAPI = ReturnType<typeof initPluginApi>;
+import type { PluginAPI } from "./types";
 
 type PropTypes = {
   heading?: string;

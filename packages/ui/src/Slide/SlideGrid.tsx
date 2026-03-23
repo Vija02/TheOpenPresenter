@@ -1,11 +1,9 @@
 import useSize from "@react-hook/size";
-import type { initPluginApi } from "@repo/base-plugin/client";
 import { createContext, useMemo, useRef } from "react";
 import { useStore } from "zustand";
 
 import { mapZoomToRange } from "./mapZoomToRange";
-
-type PluginAPI = ReturnType<typeof initPluginApi>;
+import type { PluginAPI } from "./types";
 
 type PropTypes = {
   children?: React.ReactNode;
