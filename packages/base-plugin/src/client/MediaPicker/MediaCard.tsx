@@ -1,15 +1,8 @@
 import { isVideoFile } from "@repo/lib";
 import { MediaPreview } from "@repo/ui";
-import React, { useState } from "react";
+import React from "react";
 import { VscPlay } from "react-icons/vsc";
 
-import {
-  getMediaCardStyle,
-  mediaNameContainerStyle,
-  mediaNameTextStyle,
-  mediaPreviewContainerStyle,
-  videoIconStyle,
-} from "./styles";
 import { MediaWithMetadata } from "./types";
 
 export type MediaCardProps = {
@@ -25,25 +18,21 @@ export const MediaCard: React.FC<MediaCardProps> = ({
 }) => {
   const isVideo = isVideoFile(media.fileExtension);
 
-  const [isHovered, setIsHovered] = useState(false);
-
   return (
     <div
       onClick={disabled ? undefined : onClick}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      style={getMediaCardStyle(isHovered, !!disabled)}
+      className={`bp--media-card ${disabled ? "bp--media-card--disabled" : ""}`}
     >
-      <div style={mediaPreviewContainerStyle}>
+      <div className="bp--media-card__preview">
         <MediaPreview media={media} />
       </div>
 
       <div
-        style={mediaNameContainerStyle}
+        className="bp--media-card__info"
         title={media.originalName ?? media.mediaName}
       >
-        {isVideo && <VscPlay style={videoIconStyle} />}
-        <span style={mediaNameTextStyle}>
+        {isVideo && <VscPlay className="bp--media-card__icon" />}
+        <span className="bp--media-card__name">
           {media.originalName || media.mediaName}
         </span>
       </div>

@@ -33,8 +33,12 @@
         "types": "./dist/client.d.ts",
         "default": "./dist/client.cjs"
       }
-    }
+    },
+    "./client/css": "./dist/client.css"
   },
+  "sideEffects": [
+    "**/*.css"
+  ],
   "scripts": {
     "build": "vite build",
     "dev": "vite build --watch"
@@ -75,8 +79,11 @@
     "zustand": "^5.0.2"
   },
   "devDependencies": {
+    "@repo/tailwind-config": "*",
     "@repo/typescript-config": "*",
+    "@tailwindcss/vite": "^4.1.10",
     "@vitejs/plugin-react-swc": "^3.7.2",
+    "tailwindcss": "^4.1.10",
     "typescript": "^5.9.3",
     "vite": "6.3.5",
     "vite-plugin-dts": "^4.5.4"

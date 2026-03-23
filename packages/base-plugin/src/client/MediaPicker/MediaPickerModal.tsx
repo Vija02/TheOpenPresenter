@@ -11,27 +11,21 @@ import {
   mediaIdFromUUID,
   resolveMediaUrl,
 } from "@repo/lib";
+import {
+  Button,
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@repo/ui";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { VscCloudUpload } from "react-icons/vsc";
 
 import { MediaPickerOptionsInternal, MediaPickerResult } from "../../types";
 import { MediaCard } from "./MediaCard";
 import { UploadMediaModal } from "./UploadMediaModal";
-import {
-  cancelButtonStyle,
-  closeButtonStyle,
-  emptyStateStyle,
-  headerActionsStyle,
-  loadingStyle,
-  mediaGridStyle,
-  modalBackdropStyle,
-  modalContainerStyle,
-  modalContentStyle,
-  modalFooterStyle,
-  modalHeaderStyle,
-  modalTitleStyle,
-  uploadButtonStyle,
-} from "./styles";
 import { MediaWithMetadata } from "./types";
 import { filterMediaByType } from "./utils";
 
@@ -161,61 +155,51 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
 
   const title = options?.title ?? "Select Media";
 
-  if (!isOpen) return null;
-
   return (
-    <div style={modalBackdropStyle} onClick={onClose}>
-      <div style={modalContainerStyle} onClick={(e) => e.stopPropagation()}>
-        {/* Header */}
-        <div style={modalHeaderStyle}>
-          <h2 style={modalTitleStyle}>{title}</h2>
-          <div style={headerActionsStyle}>
-            <button
-              onClick={() => setIsUploadModalOpen(true)}
-              style={uploadButtonStyle}
-            >
+    <>
+      <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+        <DialogContent size="3xl" className="bp--media-picker-dialog">
+          <DialogHeader className="bp--media-picker-header">
+            <DialogTitle>{title}</DialogTitle>
+            <Button onClick={() => setIsUploadModalOpen(true)}>
               <VscCloudUpload />
               Upload
-            </button>
-            <button onClick={onClose} style={closeButtonStyle}>
-              &times;
-            </button>
-          </div>
-        </div>
+            </Button>
+          </DialogHeader>
 
-        {/* Content */}
-        <div style={modalContentStyle}>
-          {!data && <div style={loadingStyle}>Loading media...</div>}
+          <DialogBody className="bp--media-picker-body">
+            {!data && (
+              <div className="bp--media-picker-empty">Loading media...</div>
+            )}
 
-          {data && filteredMedia.length === 0 && (
-            <div style={emptyStateStyle}>
-              No media found
-              {options?.type && options.type !== "all" && (
-                <> of type &quot;{options.type}&quot;</>
-              )}
+            {data && filteredMedia.length === 0 && (
+              <div className="bp--media-picker-empty">
+                No media found
+                {options?.type && options.type !== "all" && (
+                  <> of type &quot;{options.type}&quot;</>
+                )}
+              </div>
+            )}
+
+            <div className="bp--media-picker-grid">
+              {filteredMedia.map((media) => (
+                <MediaCard
+                  key={media.id}
+                  media={media}
+                  onClick={() => handleSelect(media)}
+                  disabled={!isVideoReady(media)}
+                />
+              ))}
             </div>
-          )}
+          </DialogBody>
 
-          <div style={mediaGridStyle}>
-            {filteredMedia.map((media) => (
-              <MediaCard
-                key={media.id}
-                media={media}
-                onClick={() => handleSelect(media)}
-                disabled={!isVideoReady(media)}
-              />
-            ))}
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div style={modalFooterStyle}>
-          <button onClick={onClose} style={cancelButtonStyle}>
-            Cancel
-          </button>
-        </div>
-      </div>
-
+          <DialogFooter>
+            <Button variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       {/* Upload Modal */}
       {isUploadModalOpen && (
         <div onClick={(e) => e.stopPropagation()}>
@@ -232,6 +216,6 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
           />
         </div>
       )}
-    </div>
+    </>
   );
 };

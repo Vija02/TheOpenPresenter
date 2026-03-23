@@ -1,6 +1,13 @@
 import { appData } from "@repo/lib";
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@repo/ui";
 import Uppy from "@uppy/core";
-import { DashboardModal, useUppyEvent } from "@uppy/react";
+import { Dashboard, useUppyEvent } from "@uppy/react";
 import Tus from "@uppy/tus";
 import React, { useEffect, useMemo, useState } from "react";
 
@@ -83,12 +90,15 @@ export const UploadMediaModal: React.FC<UploadMediaModalProps> = ({
   });
 
   return (
-    <DashboardModal
-      open={isOpen}
-      onRequestClose={onClose}
-      closeAfterFinish
-      closeModalOnClickOutside
-      uppy={uppy}
-    />
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent size="2xl" className="bp--upload-dialog">
+        <DialogHeader>
+          <DialogTitle>Upload Media</DialogTitle>
+        </DialogHeader>
+        <DialogBody className="bp--upload-dialog-body">
+          <Dashboard uppy={uppy} proudlyDisplayPoweredByUppy={false} />
+        </DialogBody>
+      </DialogContent>
+    </Dialog>
   );
 };
