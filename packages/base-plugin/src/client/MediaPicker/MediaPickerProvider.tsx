@@ -1,31 +1,43 @@
 import React, { useCallback, useRef, useState } from "react";
 
-import { MediaPickerOptions, MediaPickerResult } from "../../types";
+import { MediaPickerOptionsInternal, MediaPickerResult } from "../../types";
 import { MediaPickerContext } from "./MediaPickerContext";
 import { MediaPickerModal } from "./MediaPickerModal";
 
 export type MediaPickerProviderProps = {
   children: React.ReactNode;
-  organizationId: string;
 };
 
 type ModalState = {
   isOpen: boolean;
-  options?: MediaPickerOptions;
+  options: MediaPickerOptionsInternal;
   resolve?: (result: MediaPickerResult | null) => void;
+};
+
+const baseModalState = {
+  isOpen: false,
+  options: {
+    pluginContext: {
+      organizationId: "",
+      pluginId: "",
+      projectId: "",
+      sceneId: "",
+    },
+  },
 };
 
 export const MediaPickerProvider: React.FC<MediaPickerProviderProps> = ({
   children,
-  organizationId,
 }) => {
-  const [modalState, setModalState] = useState<ModalState>({ isOpen: false });
+  const [modalState, setModalState] = useState<ModalState>(baseModalState);
   const resolveRef = useRef<
     ((result: MediaPickerResult | null) => void) | null
   >(null);
 
   const show = useCallback(
-    (options?: MediaPickerOptions): Promise<MediaPickerResult | null> => {
+    (
+      options: MediaPickerOptionsInternal,
+    ): Promise<MediaPickerResult | null> => {
       return new Promise((resolve) => {
         resolveRef.current = resolve;
         setModalState({
@@ -42,7 +54,7 @@ export const MediaPickerProvider: React.FC<MediaPickerProviderProps> = ({
       resolveRef.current(null);
       resolveRef.current = null;
     }
-    setModalState({ isOpen: false });
+    setModalState(baseModalState);
   }, []);
 
   const handleSelect = useCallback((result: MediaPickerResult) => {
@@ -50,7 +62,7 @@ export const MediaPickerProvider: React.FC<MediaPickerProviderProps> = ({
       resolveRef.current(result);
       resolveRef.current = null;
     }
-    setModalState({ isOpen: false });
+    setModalState(baseModalState);
   }, []);
 
   return (
@@ -60,7 +72,6 @@ export const MediaPickerProvider: React.FC<MediaPickerProviderProps> = ({
         isOpen={modalState.isOpen}
         onClose={handleClose}
         onSelect={handleSelect}
-        organizationId={organizationId}
         options={modalState.options}
       />
     </MediaPickerContext.Provider>
