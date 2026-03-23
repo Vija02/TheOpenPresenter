@@ -1,3 +1,4 @@
+import "@repo/base-plugin/client/css";
 import { preloader } from "@repo/lib";
 import { ErrorAlert } from "@repo/ui";
 import "@repo/ui/css";
