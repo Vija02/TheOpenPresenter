@@ -15,6 +15,7 @@ import { Map as YMap } from "yjs";
 
 import {
   AwarenessContext,
+  MediaPickerOptions,
   MiscProps,
   ObjectToTypedMap,
   Plugin,
@@ -142,7 +143,11 @@ export function initPluginApi<
       },
     },
     mediaPicker: {
-      show: misc.mediaPicker.show,
+      show: (options?: MediaPickerOptions) =>
+        misc.mediaPicker.show({
+          ...options,
+          pluginContext,
+        }),
     },
     log: misc.logger,
     error: {

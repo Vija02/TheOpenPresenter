@@ -41,13 +41,21 @@ export const modalTitleStyle: CSSProperties = {
   fontWeight: 600,
 };
 
+// Close button styles - matches ui--button__ghost with icon size
 export const closeButtonStyle: CSSProperties = {
+  width: "36px",
+  height: "36px",
   background: "none",
   border: "none",
-  fontSize: "24px",
+  borderRadius: "4px",
+  fontSize: "20px",
   cursor: "pointer",
-  padding: "4px",
-  lineHeight: 1,
+  padding: 0,
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  color: "var(--primary)",
+  transition: "all 0.15s",
 };
 
 // Modal content styles
@@ -82,13 +90,23 @@ export const modalFooterStyle: CSSProperties = {
   justifyContent: "flex-end",
 };
 
+// Cancel button styles - matches ui--button__outline
 export const cancelButtonStyle: CSSProperties = {
-  padding: "8px 16px",
-  backgroundColor: "#f3f4f6",
-  border: "1px solid #d1d5db",
-  borderRadius: "6px",
+  height: "36px",
+  padding: "0 16px",
+  backgroundColor: "var(--surface-primary)",
+  color: "var(--primary)",
+  border: "1px solid var(--stroke)",
+  borderRadius: "4px",
   cursor: "pointer",
   fontSize: "14px",
+  fontWeight: 500,
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  whiteSpace: "nowrap",
+  transition: "all 0.15s",
+  boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
 };
 
 // MediaCard styles
@@ -136,4 +154,30 @@ export const videoIconStyle: CSSProperties = {
 export const mediaNameTextStyle: CSSProperties = {
   overflow: "hidden",
   textOverflow: "ellipsis",
+};
+
+// Upload button styles - matches ui--button__default
+export const uploadButtonStyle: CSSProperties = {
+  height: "36px",
+  padding: "0 16px",
+  backgroundColor: "var(--fill-default)",
+  color: "var(--fill-default-fg)",
+  border: "none",
+  borderRadius: "4px",
+  cursor: "pointer",
+  fontSize: "14px",
+  fontWeight: 500,
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: "8px",
+  whiteSpace: "nowrap",
+  transition: "all 0.15s",
+  boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+};
+
+export const headerActionsStyle: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: "12px",
 };

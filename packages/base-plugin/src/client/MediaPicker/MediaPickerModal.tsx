@@ -11,14 +11,17 @@ import {
   mediaIdFromUUID,
   resolveMediaUrl,
 } from "@repo/lib";
-import React, { useCallback, useEffect, useMemo } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { VscCloudUpload } from "react-icons/vsc";
 
-import { MediaPickerOptions, MediaPickerResult } from "../../types";
+import { MediaPickerOptionsInternal, MediaPickerResult } from "../../types";
 import { MediaCard } from "./MediaCard";
+import { UploadMediaModal } from "./UploadMediaModal";
 import {
   cancelButtonStyle,
   closeButtonStyle,
   emptyStateStyle,
+  headerActionsStyle,
   loadingStyle,
   mediaGridStyle,
   modalBackdropStyle,
@@ -27,6 +30,7 @@ import {
   modalFooterStyle,
   modalHeaderStyle,
   modalTitleStyle,
+  uploadButtonStyle,
 } from "./styles";
 import { MediaWithMetadata } from "./types";
 import { filterMediaByType } from "./utils";
@@ -35,17 +39,18 @@ export type MediaPickerModalProps = {
   isOpen: boolean;
   onClose: () => void;
   onSelect: (result: MediaPickerResult) => void;
-  organizationId: string;
-  options?: MediaPickerOptions;
+  options: MediaPickerOptionsInternal;
 };
 
 export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
   isOpen,
   onClose,
   onSelect,
-  organizationId,
   options,
 }) => {
+  const { organizationId, projectId, pluginId } = options.pluginContext;
+
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [{ data }, refetch] = useOrganizationMediaForPickerQuery({
     variables: {
       organizationId,
@@ -164,9 +169,18 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
         {/* Header */}
         <div style={modalHeaderStyle}>
           <h2 style={modalTitleStyle}>{title}</h2>
-          <button onClick={onClose} style={closeButtonStyle}>
-            &times;
-          </button>
+          <div style={headerActionsStyle}>
+            <button
+              onClick={() => setIsUploadModalOpen(true)}
+              style={uploadButtonStyle}
+            >
+              <VscCloudUpload />
+              Upload
+            </button>
+            <button onClick={onClose} style={closeButtonStyle}>
+              &times;
+            </button>
+          </div>
         </div>
 
         {/* Content */}
@@ -201,6 +215,23 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Upload Modal */}
+      {isUploadModalOpen && (
+        <div onClick={(e) => e.stopPropagation()}>
+          <UploadMediaModal
+            isOpen={isUploadModalOpen}
+            onClose={() => setIsUploadModalOpen(false)}
+            onUploadComplete={() => {
+              refetch({ requestPolicy: "network-only" });
+            }}
+            organizationId={organizationId}
+            projectId={projectId}
+            pluginId={pluginId}
+            mediaType={options?.type}
+          />
+        </div>
+      )}
     </div>
   );
 };

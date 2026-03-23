@@ -161,6 +161,10 @@ export type MediaPickerOptions = {
   title?: string;
 };
 
+export type MediaPickerOptionsInternal = MediaPickerOptions & {
+  pluginContext: PluginContext;
+};
+
 export type MediaPickerResult = {
   id: string;
   mediaName: string;
@@ -173,5 +177,7 @@ export type MediaPickerResult = {
 };
 
 export type MediaPicker = {
-  show: (options?: MediaPickerOptions) => Promise<MediaPickerResult | null>;
+  show: (
+    options: MediaPickerOptionsInternal,
+  ) => Promise<MediaPickerResult | null>;
 };
