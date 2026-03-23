@@ -8451,26 +8451,40 @@ __metadata:
     "@repo/graphql": "npm:*"
     "@repo/lib": "npm:*"
     "@repo/observability": "npm:*"
+    "@repo/tailwind-config": "npm:*"
     "@repo/typescript-config": "npm:*"
+    "@repo/ui": "npm:*"
+    "@tailwindcss/vite": "npm:^4.1.10"
     "@trpc/server": "npm:^11.1.2"
     "@types/express": "npm:^5.0.0"
     "@types/react": "npm:^19.1.2"
     "@types/ua-parser-js": "npm:^0.7.39"
+    "@uppy/core": "npm:4.3.0"
+    "@uppy/dashboard": "npm:4.1.3"
+    "@uppy/drag-drop": "npm:4.0.5"
+    "@uppy/file-input": "npm:4.0.4"
+    "@uppy/progress-bar": "npm:4.0.2"
+    "@uppy/react": "npm:4.0.4"
+    "@uppy/status-bar": "npm:4.0.5"
+    "@uppy/tus": "npm:4.1.5"
+    "@vitejs/plugin-react-swc": "npm:^3.7.2"
     express: "npm:^4.21.2"
     fast-deep-equal: "npm:^3.1.3"
     pg: "npm:^8.12.0"
     pino: "npm:^9.6.0"
-    pkgroll: "npm:2.5.1"
     react: "npm:^19.1.0"
     react-icons: "npm:^5.4.0"
     react-toastify: "npm:^10.0.6"
     react-use: "npm:^17.5.1"
+    tailwindcss: "npm:^4.1.10"
     tslib: "npm:^2.8.1"
     typeid-js: "npm:^1.1.0"
     typescript: "npm:^5.9.3"
     ua-parser-js: "npm:^1.0.39"
     valtio: "npm:^2.1.2"
     valtio-yjs: "npm:^0.6.0"
+    vite: "npm:6.3.5"
+    vite-plugin-dts: "npm:^4.5.4"
     y-protocols: "npm:^1.0.6"
     yjs: "npm:13.6.26"
     zustand: "npm:^5.0.2"
@@ -8741,10 +8755,10 @@ __metadata:
     "@types/postcss-prefix-selector": "npm:^1.16.3"
     "@types/react": "npm:^19.1.2"
     "@types/react-dom": "npm:^19.1.3"
-    "@uppy/core": "npm:^4.3.0"
-    "@uppy/dashboard": "npm:^4.1.3"
-    "@uppy/react": "npm:^4.0.4"
-    "@uppy/tus": "npm:^4.1.5"
+    "@uppy/core": "npm:4.3.0"
+    "@uppy/dashboard": "npm:4.1.3"
+    "@uppy/react": "npm:4.0.4"
+    "@uppy/tus": "npm:4.1.5"
     "@vitejs/plugin-react-swc": "npm:^3.7.2"
     autoprefixer: "npm:^10.4.21"
     axios: "npm:^1.10.0"
@@ -8883,10 +8897,10 @@ __metadata:
     "@types/postcss-prefix-selector": "npm:^1.16.3"
     "@types/react": "npm:^19.1.2"
     "@types/react-dom": "npm:^19.1.3"
-    "@uppy/core": "npm:^4.3.0"
-    "@uppy/dashboard": "npm:^4.1.3"
-    "@uppy/react": "npm:^4.0.4"
-    "@uppy/tus": "npm:^4.1.5"
+    "@uppy/core": "npm:4.3.0"
+    "@uppy/dashboard": "npm:4.1.3"
+    "@uppy/react": "npm:4.0.4"
+    "@uppy/tus": "npm:4.1.5"
     "@vitejs/plugin-react-swc": "npm:^3.7.2"
     autoprefixer: "npm:^10.4.21"
     eslint: "npm:^8.57.1"
@@ -8954,10 +8968,10 @@ __metadata:
     "@trpc/server": "npm:^11.1.2"
     "@types/postcss-prefix-selector": "npm:^1.16.3"
     "@types/react": "npm:^19.1.2"
-    "@uppy/core": "npm:^4.3.0"
-    "@uppy/dashboard": "npm:^4.1.3"
-    "@uppy/react": "npm:^4.0.4"
-    "@uppy/tus": "npm:^4.1.5"
+    "@uppy/core": "npm:4.3.0"
+    "@uppy/dashboard": "npm:4.1.3"
+    "@uppy/react": "npm:4.0.4"
+    "@uppy/tus": "npm:4.1.5"
     "@vitejs/plugin-react-swc": "npm:^3.7.2"
     autoprefixer: "npm:^10.4.21"
     concurrently: "npm:^9.1.2"
@@ -13336,7 +13350,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@uppy/core@npm:^4.3.0":
+"@uppy/core@npm:4.3.0":
   version: 4.3.0
   resolution: "@uppy/core@npm:4.3.0"
   dependencies:
@@ -13352,7 +13366,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@uppy/dashboard@npm:^4.1.3":
+"@uppy/dashboard@npm:4.1.3":
   version: 4.1.3
   resolution: "@uppy/dashboard@npm:4.1.3"
   dependencies:
@@ -13374,6 +13388,30 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@uppy/drag-drop@npm:4.0.5":
+  version: 4.0.5
+  resolution: "@uppy/drag-drop@npm:4.0.5"
+  dependencies:
+    "@uppy/utils": "npm:^6.0.5"
+    preact: "npm:^10.5.13"
+  peerDependencies:
+    "@uppy/core": ^4.3.0
+  checksum: 10c0/f1d538a5705727308ff4b72c8b3499896f53f258442fa6be82959ae4a3dbb63ce81ddc2a1c1a28b231c9e5aaa56163e9d05747995344e24615f23822c294aff6
+  languageName: node
+  linkType: hard
+
+"@uppy/file-input@npm:4.0.4":
+  version: 4.0.4
+  resolution: "@uppy/file-input@npm:4.0.4"
+  dependencies:
+    "@uppy/utils": "npm:^6.0.5"
+    preact: "npm:^10.5.13"
+  peerDependencies:
+    "@uppy/core": ^4.3.0
+  checksum: 10c0/a66bbe63cb542668c7a22ec8e94abfcc2372683498d4bb2b95b4bed2ee869e135a5b56634ce7329e1fda1a7bdc7a5cb2262b1227d68af7f2f139bc38c4e1098e
+  languageName: node
+  linkType: hard
+
 "@uppy/informer@npm:^4.1.2":
   version: 4.1.2
   resolution: "@uppy/informer@npm:4.1.2"
@@ -13383,6 +13421,18 @@ __metadata:
   peerDependencies:
     "@uppy/core": ^4.3.0
   checksum: 10c0/e47104875b5bd07dea5cfb9785b484b7023feac8d0f88d633f174dd38574887d489d8e0dbcacd0068fe634478593ccfd1269af8c975b1bbd416b342dafac5945
+  languageName: node
+  linkType: hard
+
+"@uppy/progress-bar@npm:4.0.2":
+  version: 4.0.2
+  resolution: "@uppy/progress-bar@npm:4.0.2"
+  dependencies:
+    "@uppy/utils": "npm:^6.0.5"
+    preact: "npm:^10.5.13"
+  peerDependencies:
+    "@uppy/core": ^4.3.0
+  checksum: 10c0/caa5f3f3ac0b620f08c647320593793ae3f6b0cdb1af9306453f9406a54fb88b2e1bfa02fe054e72dca3b058c5b95dbfb9a529e4814286fbde86b12a89747699
   languageName: node
   linkType: hard
 
@@ -13401,7 +13451,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@uppy/react@npm:^4.0.4":
+"@uppy/react@npm:4.0.4":
   version: 4.0.4
   resolution: "@uppy/react@npm:4.0.4"
   dependencies:
@@ -13430,7 +13480,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@uppy/status-bar@npm:^4.0.5":
+"@uppy/status-bar@npm:4.0.5, @uppy/status-bar@npm:^4.0.5":
   version: 4.0.5
   resolution: "@uppy/status-bar@npm:4.0.5"
   dependencies:
@@ -13463,7 +13513,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@uppy/tus@npm:^4.1.5":
+"@uppy/tus@npm:4.1.5":
   version: 4.1.5
   resolution: "@uppy/tus@npm:4.1.5"
   dependencies:
