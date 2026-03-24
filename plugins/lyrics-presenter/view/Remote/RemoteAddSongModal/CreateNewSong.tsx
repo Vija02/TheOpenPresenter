@@ -14,6 +14,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { removeChords } from "../../../src/processLyrics";
+import { getSlideStyle } from "../../../src/slideStyle";
 import {
   DisplayType,
   Song,
@@ -31,7 +32,8 @@ export const CreateNewSong = ({
   onChange: (song: Song) => void;
 }) => {
   const pluginApi = usePluginAPI();
-  const slideStyle = pluginApi.scene.useData((x) => x.pluginData.style) ?? {};
+  const globalStyle = pluginApi.scene.useData((x) => x.pluginData.style);
+  const slideStyle = useMemo(() => getSlideStyle(globalStyle), [globalStyle]);
 
   const form = useForm({
     resolver: zodResolver(

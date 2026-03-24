@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 
 import { Song } from "../../src";
-import { getSlideStyle } from "../../src/slideStyle";
+import { getMergedSlideStyle } from "../../src/slideStyle";
 import { processSong } from "../../src/songHelpers";
 import { usePluginAPI } from "../pluginApi";
 import FullSongRenderView from "./FullSongRenderView";
@@ -37,7 +37,7 @@ const Renderer = () => {
 
 const FullSongRenderer = ({ song }: { song: Song }) => {
   const pluginApi = usePluginAPI();
-  const slideStyle = pluginApi.scene.useData((x) => x.pluginData.style);
+  const globalStyle = pluginApi.scene.useData((x) => x.pluginData.style);
 
   const groupedData = useMemo(
     () => processSong(song.content, song.setting.sectionOrder),
@@ -47,7 +47,7 @@ const FullSongRenderer = ({ song }: { song: Song }) => {
   return (
     <FullSongRenderView
       groupedData={groupedData}
-      slideStyle={getSlideStyle(slideStyle)}
+      slideStyle={getMergedSlideStyle(globalStyle, song.styleOverride)}
     />
   );
 };
@@ -60,7 +60,7 @@ const SectionsRenderer = ({
   currentIndex: number;
 }) => {
   const pluginApi = usePluginAPI();
-  const slideStyle = pluginApi.scene.useData((x) => x.pluginData.style);
+  const globalStyle = pluginApi.scene.useData((x) => x.pluginData.style);
 
   const groupedData = useMemo(
     () => processSong(song.content, song.setting.sectionOrder),
@@ -72,7 +72,7 @@ const SectionsRenderer = ({
       key={currentIndex}
       groupedData={groupedData}
       currentIndex={currentIndex}
-      slideStyle={getSlideStyle(slideStyle)}
+      slideStyle={getMergedSlideStyle(globalStyle, song.styleOverride)}
     />
   );
 };

@@ -1,10 +1,13 @@
 import { Button, OverlayToggle, PopConfirm, SlideGrid } from "@repo/ui";
-import React, { useCallback } from "react";
+import React, { useCallback, useMemo } from "react";
+import { MdStyle } from "react-icons/md";
 import { VscEdit, VscTrash } from "react-icons/vsc";
 
+import { getMergedSlideStyle } from "../../src/slideStyle";
 import { Song } from "../../src/types";
 import { usePluginAPI } from "../pluginApi";
 import RemoteEditSongModal from "./RemoteEditSongModal";
+import SongStyleOverrideModal from "./SongStyleOverrideModal";
 import { SongViewSlides } from "./SongViewSlides";
 
 const SongView = React.memo(({ song }: { song: Song }) => {
@@ -36,13 +39,18 @@ const SongView = React.memo(({ song }: { song: Song }) => {
 const SongViewInner = React.memo(({ song }: { song: Song }) => {
   const pluginApi = usePluginAPI();
   const mutableSceneData = pluginApi.scene.useValtioData();
-  const slideStyle = pluginApi.scene.useData((x) => x.pluginData.style) ?? {};
+  const globalStyle = pluginApi.scene.useData((x) => x.pluginData.style);
 
   const handleRemove = useCallback(() => {
     const pluginData = mutableSceneData.pluginData;
 
     pluginData.songs = pluginData.songs.filter((s) => s.id !== song.id);
   }, [mutableSceneData.pluginData, song.id]);
+
+  const slideStyle = useMemo(
+    () => getMergedSlideStyle(globalStyle, song.styleOverride),
+    [globalStyle, song.styleOverride],
+  );
 
   return (
     <div className="pb-4">
@@ -62,6 +70,21 @@ const SongViewInner = React.memo(({ song }: { song: Song }) => {
             )}
           >
             <RemoteEditSongModal song={song} />
+          </OverlayToggle>
+          <OverlayToggle
+            toggler={({ onToggle }) => (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={onToggle}
+                data-testid="ly-style-song"
+                title="Style Override"
+              >
+                <MdStyle />
+              </Button>
+            )}
+          >
+            <SongStyleOverrideModal song={song} />
           </OverlayToggle>
           <PopConfirm
             title={`Are you sure you want to remove this song?`}
