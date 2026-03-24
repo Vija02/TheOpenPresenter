@@ -1,41 +1,57 @@
 import { extractMediaName } from "@repo/lib";
-import { Skeleton, cn } from "@repo/ui";
+import { MediaPreview, MediaPreviewData, Skeleton, cn } from "@repo/ui";
+import { InternalVideo, Video } from "@repo/video";
 import { useMemo } from "react";
 
-import { InternalVideo, Video } from "../../src";
-import { usePluginAPI } from "../pluginApi";
-
 export const VideoThumbnail = ({ video }: { video: Video }) => {
-  const pluginApi = usePluginAPI();
+  const mediaPreviewData: MediaPreviewData | null = useMemo(() => {
+    if (!video.isInternalVideo) return null;
 
-  const url = useMemo(() => {
-    if (video.isInternalVideo && (video as InternalVideo).thumbnailMediaName) {
-      return pluginApi.media.resolveMediaUrl(
-        extractMediaName((video as InternalVideo).thumbnailMediaName!),
-      );
-    }
-    if (video.metadata.thumbnailUrl) {
-      return video.metadata.thumbnailUrl;
-    }
-    return null;
-  }, [pluginApi.media, video]);
+    const internalVideo = video as InternalVideo;
+    const urlParts = internalVideo.url.split("/");
+    const mediaName = urlParts[urlParts.length - 1] ?? "";
+
+    return {
+      mediaName,
+      fileExtension: extractMediaName(mediaName).extension,
+      videoMetadata: {
+        thumbnailMediaId: internalVideo.thumbnailMediaName
+          ? extractMediaName(internalVideo.thumbnailMediaName).uuid
+          : null,
+        hlsMediaId: internalVideo.hlsMediaName
+          ? extractMediaName(internalVideo.hlsMediaName).uuid
+          : null,
+      },
+    };
+  }, [video]);
+
+  const externalThumbnailUrl = useMemo(() => {
+    if (video.isInternalVideo) return null;
+    return video.metadata.thumbnailUrl ?? null;
+  }, [video]);
 
   return (
     <div className="relative">
-      {url ? (
-        <img
-          src={url}
-          className={cn(
-            "aspect-video w-full md:w-[300px] h-full shrink-0 rounded-lg",
-          )}
-        />
-      ) : (
-        <Skeleton
-          className={cn(
-            "aspect-video w-full md:w-[300px] h-full shrink-0 rounded-lg",
-          )}
-        />
-      )}
+      <div
+        className={cn(
+          "aspect-video w-full md:w-[300px] h-full shrink-0 rounded-lg overflow-hidden",
+        )}
+      >
+        {mediaPreviewData ? (
+          <MediaPreview
+            media={mediaPreviewData}
+            showProcessingOverlay={false}
+          />
+        ) : externalThumbnailUrl ? (
+          <img
+            src={externalThumbnailUrl}
+            className="w-full h-full object-cover"
+            alt={video.metadata.title ?? "Video thumbnail"}
+          />
+        ) : (
+          <Skeleton className="w-full h-full" />
+        )}
+      </div>
       {video.metadata.duration !== undefined && (
         <div className="absolute bottom-2 right-2 bg-gray-900 opacity-90 text-white rounded-sm px-1 text-xs font-bold">
           {formatDuration(video.metadata.duration)}
