@@ -6,10 +6,9 @@ import {
   VolumeBar,
   useDisclosure,
 } from "@repo/ui";
-import { Video } from "@repo/video";
+import { Video, canPlay } from "@repo/video";
 import { useCallback, useState } from "react";
 import { MdCloudUpload } from "react-icons/md";
-import ReactPlayer from "react-player";
 import "react-scrubber/lib/scrubber.css";
 import { typeidUnboxed } from "typeid-js";
 
@@ -67,7 +66,7 @@ const VideoPlayerRemote = () => {
   // );
 
   const onSearch = async () => {
-    const reactPlayerCanPlay = ReactPlayer.canPlay?.(input);
+    const reactPlayerCanPlay = canPlay(input);
 
     const metadata: Video["metadata"] = {};
 
