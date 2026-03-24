@@ -45,11 +45,23 @@ export default (app: Express) => {
       process.env.STORAGE_PROXY === "local" &&
       process.env.STORAGE_TYPE === "file"
     ) {
-      app.use(`/media/data`, staticMiddleware(media.UPLOADS_PATH));
+      app.use(
+        `/media/data`,
+        staticMiddleware(media.UPLOADS_PATH, {
+          immutable: true,
+          maxAge: "1y",
+        }),
+      );
     } else if (isValidURL(process.env.STORAGE_PROXY)) {
       const apiProxy = createProxyMiddleware({
         target: process.env.STORAGE_PROXY,
         changeOrigin: true,
+        on: {
+          proxyRes: (proxyRes) => {
+            proxyRes.headers["cache-control"] =
+              "public, max-age=31536000, immutable";
+          },
+        },
       });
       app.use(`/media/data`, apiProxy);
     }
