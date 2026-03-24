@@ -1,5 +1,6 @@
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react-swc";
+import { builtinModules } from "node:module";
 import { resolve } from "node:path";
 import { defineConfig } from "vite";
 import dts from "vite-plugin-dts";
@@ -28,6 +29,13 @@ export default defineConfig({
     },
     rollupOptions: {
       external: (id) => {
+        // Externalize Node.js built-in modules
+        if (
+          builtinModules.includes(id) ||
+          builtinModules.includes(id.replace("node:", ""))
+        ) {
+          return true;
+        }
         // Externalize all dependencies including subpath imports
         const deps = [
           ...Object.keys(dependencies),
