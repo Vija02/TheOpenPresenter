@@ -11,7 +11,7 @@ const files = [
   "./packages/observability/initTracing.js",
   "./backend/backend-shared/dist/index.js",
   "./packages/base-plugin/dist/index.js",
-  "./packages/base-plugin/dist/server/index.js",
+  "./packages/base-plugin/dist/server.js",
 ];
 
 (async () => {
