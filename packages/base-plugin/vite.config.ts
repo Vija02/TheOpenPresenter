@@ -13,7 +13,6 @@ export default defineConfig({
     tailwindcss(),
     dts({
       exclude: ["**/*.test.ts", "**/*.test.tsx"],
-      rollupTypes: true,
     }),
   ],
   build: {

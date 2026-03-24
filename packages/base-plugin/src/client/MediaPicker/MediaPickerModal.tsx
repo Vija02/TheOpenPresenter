@@ -4,7 +4,6 @@ import {
 } from "@repo/graphql";
 import {
   extractMediaName,
-  isHlsFile,
   isImageFile,
   isVideoFile,
   isVideoReady,
@@ -22,6 +21,7 @@ import {
 } from "@repo/ui";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { VscCloudUpload } from "react-icons/vsc";
+import { typeidUnboxed } from "typeid-js";
 
 import { MediaPickerOptionsInternal, MediaPickerResult } from "../../types";
 import { MediaCard } from "./MediaCard";
@@ -90,64 +90,69 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
 
       const mediaUrl = resolveMediaUrl(extractMediaName(media.mediaName));
 
-      // Find thumbnail from dependencies (first image dependency)
-      let thumbnailUrl: string | undefined;
-      let hlsMediaName: string | null = null;
-      let duration: number | null = null;
-
-      if (isVideoFile(media.fileExtension)) {
-        // Get video metadata (duration, hls, thumbnail from video metadata)
-        const videoMeta = media.videoMetadata;
-        if (videoMeta) {
-          duration = parseFloat(videoMeta.duration);
-
-          // Get HLS from video metadata
-          if (videoMeta.hlsMediaId) {
-            hlsMediaName = mediaIdFromUUID(videoMeta.hlsMediaId) + ".m3u8";
-          }
-
-          // Get thumbnail from video metadata
-          if (videoMeta.thumbnailMediaId) {
-            const thumbnailMediaName =
-              mediaIdFromUUID(videoMeta.thumbnailMediaId) + ".jpg";
-            thumbnailUrl = resolveMediaUrl(
-              extractMediaName(thumbnailMediaName),
-            );
-          }
-        }
-
-        // Fallback to dependencies if not in metadata
-        if (!thumbnailUrl) {
-          const imageDependency = media.dependencies.nodes.find((dep) =>
-            isImageFile(dep.childMedia?.fileExtension),
-          );
-          if (imageDependency?.childMedia) {
-            thumbnailUrl = resolveMediaUrl(
-              extractMediaName(imageDependency.childMedia.mediaName),
-            );
-          }
-        }
-
-        if (!hlsMediaName) {
-          const hlsDependency = media.dependencies.nodes.find((dep) =>
-            isHlsFile(dep.childMedia?.fileExtension),
-          );
-          if (hlsDependency?.childMedia) {
-            hlsMediaName = hlsDependency.childMedia.mediaName;
-          }
-        }
-      }
-
-      onSelect({
+      const result: Parameters<typeof onSelect>[0] = {
         id: media.id,
         mediaName: media.mediaName,
         originalName: media.originalName,
         fileExtension: media.fileExtension,
         url: mediaUrl,
-        thumbnailUrl,
-        hlsMediaName,
-        duration,
-      });
+      };
+
+      if (isVideoFile(media.fileExtension)) {
+        const videoMeta = media.videoMetadata;
+
+        let hlsMediaName: string | null = null;
+        let thumbnailMediaName: string | null = null;
+        let duration: number | null = null;
+
+        if (videoMeta) {
+          if (videoMeta.hlsMediaId) {
+            hlsMediaName = mediaIdFromUUID(videoMeta.hlsMediaId) + ".m3u8";
+          }
+          if (videoMeta.thumbnailMediaId) {
+            thumbnailMediaName =
+              mediaIdFromUUID(videoMeta.thumbnailMediaId) + ".jpg";
+          }
+          duration = parseFloat(videoMeta.duration);
+        }
+
+        result.internalVideo = {
+          id: typeidUnboxed("video"),
+          url: result.url,
+          isInternalVideo: true,
+          hlsMediaName: hlsMediaName,
+          thumbnailMediaName: thumbnailMediaName,
+          metadata: {
+            title: result.originalName ?? result.mediaName,
+            ...(thumbnailMediaName
+              ? {
+                  thumbnailUrl: resolveMediaUrl(
+                    extractMediaName(thumbnailMediaName),
+                  ),
+                }
+              : {}),
+            ...(duration
+              ? {
+                  duration,
+                }
+              : {}),
+          },
+        };
+      }
+
+      // Check for child thumbnail from dependencies (fallback for any media type)
+      const imageDependency = media.dependencies.nodes.find((dep) =>
+        isImageFile(dep.childMedia?.fileExtension),
+      );
+      if (imageDependency?.childMedia) {
+        result.extraMeta = {
+          childThumbnailUrl: resolveMediaUrl(
+            extractMediaName(imageDependency.childMedia.mediaName),
+          ),
+        };
+      }
+
+      onSelect(result);
     },
     [onSelect],
   );

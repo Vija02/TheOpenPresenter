@@ -16,21 +16,21 @@
     },
     "./server": {
       "import": {
-        "types": "./dist/server.d.ts",
+        "types": "./dist/server/index.d.ts",
         "default": "./dist/server.js"
       },
       "require": {
-        "types": "./dist/server.d.ts",
+        "types": "./dist/server/index.d.ts",
         "default": "./dist/server.cjs"
       }
     },
     "./client": {
       "import": {
-        "types": "./dist/client.d.ts",
+        "types": "./dist/client/index.d.ts",
         "default": "./dist/client.js"
       },
       "require": {
-        "types": "./dist/client.d.ts",
+        "types": "./dist/client/index.d.ts",
         "default": "./dist/client.cjs"
       }
     },
@@ -45,6 +45,7 @@
   },
   "dependencies": {
     "@repo/backend-shared": "*",
+    "@repo/base-types": "*",
     "@repo/graphql": "*",
     "@repo/lib": "*",
     "@repo/observability": "*",
