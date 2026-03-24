@@ -1,3 +1,4 @@
+import type { InternalVideo } from "@repo/base-types";
 import type { ObjectToTypedMap } from "@repo/lib";
 import type { Logger } from "pino";
 import type { toast as ReactToast } from "react-toastify";
@@ -171,9 +172,10 @@ export type MediaPickerResult = {
   originalName: string | null;
   fileExtension: string | null;
   url: string;
-  thumbnailUrl?: string;
-  hlsMediaName?: string | null;
-  duration?: number | null;
+  internalVideo?: InternalVideo;
+  extraMeta?: {
+    childThumbnailUrl?: string;
+  };
 };
 
 export type MediaPicker = {
