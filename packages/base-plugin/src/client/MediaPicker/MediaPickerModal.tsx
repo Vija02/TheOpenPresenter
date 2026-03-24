@@ -99,8 +99,7 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
         // Get video metadata (duration, hls, thumbnail from video metadata)
         const videoMeta = media.videoMetadata;
         if (videoMeta) {
-          duration =
-            typeof videoMeta.duration === "number" ? videoMeta.duration : null;
+          duration = parseFloat(videoMeta.duration);
 
           // Get HLS from video metadata
           if (videoMeta.hlsMediaId) {
