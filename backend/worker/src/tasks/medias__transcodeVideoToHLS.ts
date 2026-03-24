@@ -24,7 +24,8 @@ const allResolutions = [
   {
     title: "360p",
     threshold: 360,
-    resolution: "640x360",
+    width: 640,
+    height: 360,
     videoBitrate: "800k",
     audioBitrate: "96k",
     bandwidth: "958000",
@@ -32,7 +33,8 @@ const allResolutions = [
   {
     title: "480p",
     threshold: 480,
-    resolution: "842x480",
+    width: 842,
+    height: 480,
     videoBitrate: "1400k",
     audioBitrate: "128k",
     bandwidth: "1635000",
@@ -40,7 +42,8 @@ const allResolutions = [
   {
     title: "720p",
     threshold: 720,
-    resolution: "1280x720",
+    width: 1280,
+    height: 720,
     videoBitrate: "2800k",
     audioBitrate: "128k",
     bandwidth: "3134000",
@@ -48,12 +51,47 @@ const allResolutions = [
   {
     title: "1080p",
     threshold: 1080,
-    resolution: "1920x1080",
+    width: 1920,
+    height: 1080,
     videoBitrate: "5000k",
     audioBitrate: "192k",
     bandwidth: "5565000",
   },
 ];
+
+function getScaleFilter(
+  resolutionData: (typeof allResolutions)[0],
+  isPortrait: boolean,
+): string {
+  if (isPortrait) {
+    // Portrait: scale width to fit, height auto-calculated
+    return `scale=${resolutionData.height}:-2`;
+  } else {
+    // Landscape: scale height to fit, width auto-calculated
+    return `scale=-2:${resolutionData.height}`;
+  }
+}
+
+function getResolutionString(
+  resolutionData: (typeof allResolutions)[0],
+  isPortrait: boolean,
+  sourceWidth: number,
+  sourceHeight: number,
+): string {
+  if (isPortrait) {
+    // For portrait, width is the threshold-based dimension
+    const targetWidth = resolutionData.height;
+    const targetHeight = Math.round((targetWidth * sourceHeight) / sourceWidth);
+    // Ensure even numbers
+    return `${targetWidth}x${targetHeight % 2 === 0 ? targetHeight : targetHeight + 1}`;
+  } else {
+    // For landscape, height is the threshold-based dimension
+    const targetHeight = resolutionData.height;
+    const targetWidth = Math.round((targetHeight * sourceWidth) / sourceHeight);
+    // Ensure even numbers
+    return `${targetWidth % 2 === 0 ? targetWidth : targetWidth + 1}x${targetHeight}`;
+  }
+}
 
 const task: Task = async (inPayload, { withPgClient }) => {
   const payload: MediasTranscodeVideoToHLSPayload = inPayload as any;
@@ -98,6 +136,11 @@ const task: Task = async (inPayload, { withPgClient }) => {
     const resolutions = allResolutions.filter(
       (x) => x.threshold <= minResolution,
     );
+
+    // Determine if video is portrait (height > width)
+    const sourceWidth = metadata.width ?? 1920;
+    const sourceHeight = metadata.height ?? 1080;
+    const isPortrait = sourceHeight > sourceWidth;
 
     const resolutionMapToFile: Record<string, string> = {};
 
@@ -172,6 +215,7 @@ const task: Task = async (inPayload, { withPgClient }) => {
 
       // Transcode
       await new Promise<void>((resolve, reject) => {
+        const scaleFilter = getScaleFilter(resolutionData, isPortrait);
         return ffmpeg(localFilePath)
           .outputOptions([
             `-c:v libx264`,
@@ -181,7 +225,7 @@ const task: Task = async (inPayload, { withPgClient }) => {
             `-b:v ${resolutionData.videoBitrate}`,
             `-c:a aac`,
             `-b:a ${resolutionData.audioBitrate}`,
-            `-vf scale=${resolutionData.resolution}`,
+            `-vf ${scaleFilter}`,
             `-f hls`,
             `-hls_time ${HLS_SEGMENT_DURATION}`,
             `-hls_list_size 0`,
@@ -367,7 +411,13 @@ const task: Task = async (inPayload, { withPgClient }) => {
     // Build and upload the master m3u8 file
     let masterFileContent = `#EXTM3U\n#EXT-X-VERSION:3\n`;
     for (const resolutionData of [...resolutions].reverse()) {
-      masterFileContent += `#EXT-X-STREAM-INF:BANDWIDTH=${resolutionData.bandwidth},RESOLUTION=${resolutionData.resolution}\n${`/media/data/${resolutionM3u8Files[resolutionData.title]}`}\n`;
+      const resolutionString = getResolutionString(
+        resolutionData,
+        isPortrait,
+        sourceWidth,
+        sourceHeight,
+      );
+      masterFileContent += `#EXT-X-STREAM-INF:BANDWIDTH=${resolutionData.bandwidth},RESOLUTION=${resolutionString}\n${`/media/data/${resolutionM3u8Files[resolutionData.title]}`}\n`;
     }
     fs.writeFileSync(masterFilePath, masterFileContent);
     const masterFileSize = fs.statSync(masterFilePath).size;

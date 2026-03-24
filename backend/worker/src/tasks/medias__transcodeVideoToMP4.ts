@@ -39,6 +39,16 @@ const resolutionPresets = [
   },
 ];
 
+function getScaleFilter(outputSize: number, isPortrait: boolean): string {
+  if (isPortrait) {
+    // Portrait: scale width to fit, height auto-calculated
+    return `scale=${outputSize}:-2`;
+  } else {
+    // Landscape: scale height to fit, width auto-calculated
+    return `scale=-2:${outputSize}`;
+  }
+}
+
 const task: Task = async (inPayload, { withPgClient }) => {
   const payload: MediasTranscodeVideoToMP4Payload = inPayload as any;
   const { id: mediaId } = payload;
@@ -129,20 +139,25 @@ const task: Task = async (inPayload, { withPgClient }) => {
       );
     }
 
+    const videoWidth = metadata.width ?? 1920;
     const videoHeight = metadata.height ?? 1080;
+    const isPortrait = videoHeight > videoWidth;
+
+    // For portrait videos, use width as the constraining dimension
+    const minDimension = isPortrait ? videoWidth : videoHeight;
     const preset =
-      resolutionPresets.find((p) => videoHeight >= p.maxHeight) ||
+      resolutionPresets.find((p) => minDimension >= p.maxHeight) ||
       resolutionPresets[resolutionPresets.length - 1]!;
 
-    const outputHeight = Math.min(videoHeight, preset.maxHeight);
-    const scaleFilter = `scale=-2:${outputHeight}`;
+    const outputSize = Math.min(minDimension, preset.maxHeight);
+    const scaleFilter = getScaleFilter(outputSize, isPortrait);
 
     const transcodedMediaId = typeidUnboxed("media");
     const transcodedFileName = `${transcodedMediaId}.mp4`;
     const transcodedFilePath = path.join(mediaDir, transcodedFileName);
 
     logger.trace(
-      { mediaId, localFilePath, outputHeight, preset: preset.title },
+      { mediaId, localFilePath, outputSize, isPortrait, preset: preset.title },
       "Starting MP4 transcoding",
     );
 
