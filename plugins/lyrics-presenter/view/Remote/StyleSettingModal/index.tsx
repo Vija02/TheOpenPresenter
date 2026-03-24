@@ -1,7 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Button,
-  CheckboxControl,
   Dialog,
   DialogBody,
   DialogContent,
@@ -9,34 +8,18 @@ import {
   DialogHeader,
   DialogTitle,
   Form,
-  FormLabel,
-  NumberInputControl,
-  OptionControl,
-  SelectControl,
   SlideGrid,
-  ToggleControl,
-  ToggleGroup,
-  ToggleGroupItem,
   useOverlayToggle,
 } from "@repo/ui";
 import { useCallback, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
-import { FaBold, FaItalic, FaLink } from "react-icons/fa6";
-import {
-  TbLayoutAlignBottom,
-  TbLayoutAlignMiddle,
-  TbLayoutAlignTop,
-} from "react-icons/tb";
 
 import { getSlideStyle } from "../../../src/slideStyle";
-import {
-  SlideStyle,
-  slideStyleValidator,
-  verticalAlignments,
-} from "../../../src/types";
+import { SlideStyle, slideStyleValidator } from "../../../src/types";
 import { usePluginAPI } from "../../pluginApi";
 import { MobilePreview } from "../RemoteEditSongModal/MobilePreview";
 import { SongViewSlides } from "../SongViewSlides";
+import { StyleFields, StylePreviewControls } from "./StyleFields";
 
 const StyleSettingModal = () => {
   const { isOpen, onToggle, resetData } = useOverlayToggle();
@@ -100,165 +83,12 @@ const StyleSettingModal = () => {
             </DialogHeader>
             <DialogBody className="px-3 md:px-6">
               <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex-1 flex flex-col items-start gap-4">
-                  <h3 className="text-xl font-bold">General</h3>
-                  <SelectControl
+                <div className="flex-1">
+                  <StyleFields
                     control={form.control}
-                    name="isDarkMode"
-                    label="Theme"
-                    options={[
-                      { label: "Dark", value: true },
-                      { label: "Light", value: false },
-                    ]}
-                    isSearchable={false}
+                    data={data}
+                    setValue={form.setValue}
                   />
-
-                  <h3 className="text-xl font-bold mt-5">Text style</h3>
-                  <div className="w-full">
-                    <OptionControl
-                      control={form.control}
-                      name="autoSize"
-                      label="Font Type"
-                      options={[
-                        {
-                          title: "Auto fit",
-                          description: "Fit your lyrics in the available space",
-                          value: true,
-                        },
-                        {
-                          title: "Manual",
-                          description: "Manually set the size of your fonts",
-                          value: false,
-                        },
-                      ]}
-                    />
-                  </div>
-
-                  {!data.autoSize && (
-                    <NumberInputControl
-                      control={form.control}
-                      name="fontSize"
-                      label="Font Size"
-                      unit="pt"
-                      min={0}
-                      step={0.5}
-                      className="max-w-40"
-                    />
-                  )}
-
-                  <NumberInputControl
-                    control={form.control}
-                    name="lineHeight"
-                    label="Line Height"
-                    min={0}
-                    step={0.1}
-                    className="max-w-40"
-                  />
-
-                  <div className="flex flex-row items-center gap-2">
-                    <FormLabel className="mb-0 shrink-0">Style: </FormLabel>
-                    <ToggleGroup
-                      type="multiple"
-                      value={
-                        [
-                          data.fontWeight === "600" && "bold",
-                          data.fontStyle === "italic" && "italic",
-                        ].filter((x) => x) as string[]
-                      }
-                      onValueChange={(val) => {
-                        form.setValue(
-                          "fontWeight",
-                          val.includes("bold") ? "600" : "400",
-                        );
-                        form.setValue(
-                          "fontStyle",
-                          val.includes("italic") ? "italic" : "normal",
-                        );
-                      }}
-                    >
-                      <ToggleGroupItem value="bold" aria-label="Toggle bold">
-                        <FaBold />
-                      </ToggleGroupItem>
-                      <ToggleGroupItem
-                        value="italic"
-                        aria-label="Toggle italic"
-                      >
-                        <FaItalic />
-                      </ToggleGroupItem>
-                    </ToggleGroup>
-                  </div>
-
-                  <h3 className="text-xl font-bold mt-5">Placement</h3>
-                  <div className="flex flex-row items-center gap-2">
-                    <FormLabel className="mb-0 shrink-0">
-                      Vertical Align:{" "}
-                    </FormLabel>
-                    <ToggleGroup
-                      type="single"
-                      value={data.verticalAlign}
-                      onValueChange={(val) => {
-                        if (val) {
-                          form.setValue(
-                            "verticalAlign",
-                            val as (typeof verticalAlignments)[number],
-                          );
-                        }
-                      }}
-                    >
-                      <ToggleGroupItem value="top" aria-label="Align top">
-                        <TbLayoutAlignTop />
-                      </ToggleGroupItem>
-                      <ToggleGroupItem value="center" aria-label="Align center">
-                        <TbLayoutAlignMiddle />
-                      </ToggleGroupItem>
-                      <ToggleGroupItem value="bottom" aria-label="Align bottom">
-                        <TbLayoutAlignBottom />
-                      </ToggleGroupItem>
-                    </ToggleGroup>
-                  </div>
-                  <div className="[&>*]:flex">
-                    <ToggleControl
-                      control={form.control}
-                      name="paddingIsLinked"
-                      label="Padding"
-                      className="flex-row"
-                    >
-                      <FaLink />
-                    </ToggleControl>
-                  </div>
-
-                  {data.paddingIsLinked ? (
-                    <NumberInputControl
-                      control={form.control}
-                      name="padding"
-                      unit="%"
-                      min={0}
-                      max={100}
-                      step={0.5}
-                      className="max-w-40"
-                    />
-                  ) : (
-                    <div className="flex flex-col gap-4 sm:flex-row sm:gap-2">
-                      {(
-                        [
-                          { name: "leftPadding", label: "Left" },
-                          { name: "topPadding", label: "Top" },
-                          { name: "rightPadding", label: "Right" },
-                          { name: "bottomPadding", label: "Bottom" },
-                        ] as const
-                      ).map(({ name, label }) => (
-                        <NumberInputControl
-                          control={form.control}
-                          name={name}
-                          label={label}
-                          unit="%"
-                          min={0}
-                          max={100}
-                          step={0.5}
-                        />
-                      ))}
-                    </div>
-                  )}
                 </div>
                 <div className="hidden md:flex flex-col basis-[200px] gap-2">
                   <h3 className="text-lg font-medium text-center">Preview</h3>
@@ -267,13 +97,7 @@ const StyleSettingModal = () => {
                     {preview}
                   </SlideGrid>
 
-                  <div className="flex justify-center [&>*]:w-auto">
-                    <CheckboxControl
-                      control={form.control}
-                      name="debugPadding"
-                      label="Show Padding"
-                    />
-                  </div>
+                  <StylePreviewControls control={form.control} />
                 </div>
               </div>
             </DialogBody>

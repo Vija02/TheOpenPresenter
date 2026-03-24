@@ -1,10 +1,10 @@
 import { Slide } from "@repo/ui";
 import { useMemo } from "react";
 
-import { SlideStyle, Song } from "../../src";
 import { GroupedData } from "../../src/processLyrics";
 import { getSlideStyle } from "../../src/slideStyle";
 import { processSong } from "../../src/songHelpers";
+import { SlideStyle, Song } from "../../src/types";
 import FullSongRenderView from "../Renderer/FullSongRenderView";
 import SectionsRenderView from "../Renderer/SectionsRenderView";
 import { usePluginAPI } from "../pluginApi";

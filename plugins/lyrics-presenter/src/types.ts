@@ -21,6 +21,7 @@ export type Song = {
   author?: string | null;
   album?: string | null;
   setting: SongSetting;
+  styleOverride?: SlideStyle | null;
 
   _imported: boolean;
   // If this exist then this song is imported.

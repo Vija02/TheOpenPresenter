@@ -25,6 +25,7 @@ import { useCallback, useMemo } from "react";
 import { useForm } from "react-hook-form";
 
 import { removeChords } from "../../../src/processLyrics";
+import { getMergedSlideStyle } from "../../../src/slideStyle";
 import { Song, displayTypeSettings } from "../../../src/types";
 import { usePluginAPI } from "../../pluginApi";
 import { SongViewSlides } from "../SongViewSlides";
@@ -110,6 +111,11 @@ const RemoteEditSongModal = ({
   // Automatically update section order when section titles change
   useUpdateSectionOrderOnEdit(form);
 
+  const mergedSlideStyle = useMemo(
+    () => getMergedSlideStyle(slideStyle, song.styleOverride),
+    [slideStyle, song.styleOverride],
+  );
+
   const preview = useMemo(
     () => (
       <SongViewSlides
@@ -118,11 +124,11 @@ const RemoteEditSongModal = ({
           setting: data,
           content: data.content,
         }}
-        slideStyle={slideStyle ?? {}}
+        slideStyle={mergedSlideStyle}
         isPreview
       />
     ),
-    [data, slideStyle, song],
+    [data, mergedSlideStyle, song],
   );
 
   return (
