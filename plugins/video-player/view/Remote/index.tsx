@@ -8,7 +8,7 @@ import {
 } from "@repo/ui";
 import { Video, canPlay } from "@repo/video";
 import { useCallback, useState } from "react";
-import { MdCloudUpload } from "react-icons/md";
+import { MdCloudUpload, MdVideoLibrary } from "react-icons/md";
 import "react-scrubber/lib/scrubber.css";
 import { typeidUnboxed } from "typeid-js";
 
@@ -106,19 +106,35 @@ const VideoPlayerRemote = () => {
   };
   const disclosureProps = useDisclosure();
 
+  const handleMediaPicker = useCallback(async () => {
+    const result = await pluginApi.mediaPicker.show({
+      type: "video",
+      title: "Select Video",
+    });
+
+    if (result && result.internalVideo) {
+      mutableSceneData.pluginData.videos.push(result.internalVideo);
+    }
+  }, [pluginApi.mediaPicker, mutableSceneData.pluginData.videos]);
+
   return (
     <PluginScaffold
       title="Video Player"
       toolbar={
-        <OverlayToggle
-          toggler={({ onToggle }) => (
-            <Button size="xs" variant="pill" onClick={onToggle}>
-              <MdCloudUpload /> Upload video
-            </Button>
-          )}
-        >
-          <UploadVideoModal />
-        </OverlayToggle>
+        <div className="stack-row gap-2">
+          <Button size="xs" variant="pill" onClick={handleMediaPicker}>
+            <MdVideoLibrary /> Media Library
+          </Button>
+          <OverlayToggle
+            toggler={({ onToggle }) => (
+              <Button size="xs" variant="pill" onClick={onToggle}>
+                <MdCloudUpload /> Upload video
+              </Button>
+            )}
+          >
+            <UploadVideoModal />
+          </OverlayToggle>
+        </div>
       }
       body={
         <>
