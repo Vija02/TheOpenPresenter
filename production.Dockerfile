@@ -38,6 +38,7 @@ COPY packages/base-plugin/package.json /app/packages/base-plugin/package.json
 COPY packages/eslint-config/package.json /app/packages/eslint-config/package.json
 COPY packages/graphql/package.json /app/packages/graphql/package.json
 COPY packages/portable-file/package.json /app/packages/portable-file/package.json
+COPY packages/base-types/package.json /app/packages/base-types/package.json
 COPY packages/lib/package.json /app/packages/lib/package.json
 COPY packages/observability/package.json /app/packages/observability/package.json
 COPY packages/prettier-config/package.json /app/packages/prettier-config/package.json
@@ -80,6 +81,9 @@ RUN yarn workspace @repo/config build
 
 COPY packages/portable-file/ /app/packages/portable-file/
 RUN yarn workspace @repo/portable-file build
+
+COPY packages/base-types/ /app/packages/base-types/
+RUN yarn workspace @repo/base-types build
 
 COPY packages/lib/ /app/packages/lib/
 RUN yarn workspace @repo/lib build
@@ -206,6 +210,7 @@ COPY --from=builder-core /app/packages/graphql/ /app/packages/graphql/
 COPY --from=builder-core /app/backend/config/ /app/backend/config/
 COPY --from=builder-core /app/packages/observability/ /app/packages/observability/
 COPY --from=builder-core /app/packages/portable-file/ /app/packages/portable-file/
+COPY --from=builder-core /app/packages/base-types/ /app/packages/base-types/
 COPY --from=builder-core /app/packages/lib/ /app/packages/lib/
 COPY --from=builder-core /app/backend/backend-shared/ /app/backend/backend-shared/
 COPY --from=builder-core /app/packages/base-plugin/ /app/packages/base-plugin/
