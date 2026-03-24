@@ -6,12 +6,13 @@
   overflow: hidden;
   width: 100%;
   height: 100%;
+  background-color: black;
 }
 
 .ui--media-preview-media {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
 }
 
 .ui--media-preview-icon {
