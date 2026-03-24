@@ -9391,7 +9391,6 @@ __metadata:
     "@radix-ui/react-toggle-group": "npm:^1.1.10"
     "@radix-ui/react-tooltip": "npm:^1.2.7"
     "@react-hook/size": "npm:^2.1.2"
-    "@repo/base-plugin": "npm:*"
     "@repo/eslint-config": "npm:*"
     "@repo/graphql": "npm:*"
     "@repo/lib": "npm:*"
