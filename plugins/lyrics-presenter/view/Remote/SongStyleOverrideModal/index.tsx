@@ -200,25 +200,6 @@ const SongStyleOverrideModal = ({ song }: SongStyleOverrideModalProps) => {
             <DialogBody className="px-3 md:px-6">
               <div className="flex flex-col md:flex-row gap-4">
                 <div className="flex-1">
-                  <div className="flex items-center justify-between w-full mb-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground">
-                        Override the global slide styles for this song only.
-                        Changes here will only affect this song.
-                      </p>
-                    </div>
-                    {hasOverrides && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={handleResetAll}
-                      >
-                        Reset All to Global
-                      </Button>
-                    )}
-                  </div>
-
                   <StyleFields
                     control={form.control}
                     data={data}
@@ -242,13 +223,27 @@ const SongStyleOverrideModal = ({ song }: SongStyleOverrideModalProps) => {
             <DialogFooter className="pl-lyrics--preview-shadow pt-0 px-0 pb-3">
               <div className="flex flex-col w-full">
                 <MobilePreview preview={preview} />
-                <div className="stack-row px-3 md:px-6 pt-3 justify-end">
-                  <Button type="submit" variant="success">
-                    Save
-                  </Button>
-                  <Button type="button" variant="outline" onClick={onToggle}>
-                    Close
-                  </Button>
+                <div className="stack-row px-3 md:px-6 pt-3 justify-between">
+                  <div>
+                    {hasOverrides && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleResetAll}
+                      >
+                        Reset All to Global
+                      </Button>
+                    )}
+                  </div>
+                  <div className="stack-row">
+                    <Button type="submit" variant="success">
+                      Save
+                    </Button>
+                    <Button type="button" variant="outline" onClick={onToggle}>
+                      Close
+                    </Button>
+                  </div>
                 </div>
               </div>
             </DialogFooter>
