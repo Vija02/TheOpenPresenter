@@ -45,6 +45,9 @@ const paddingValidator = z
 export const verticalAlignments = ["top", "center", "bottom"] as const;
 export type VerticalAlignment = (typeof verticalAlignments)[number];
 
+export const backgroundTypes = ["solid", "video"] as const;
+export type BackgroundType = (typeof backgroundTypes)[number];
+
 export const slideStyleValidator = z.object({
   autoSize: z.boolean().optional(),
   fontSize: z.string().or(z.number()).optional(),
@@ -59,7 +62,10 @@ export const slideStyleValidator = z.object({
       return Number.isNaN(num) ? 1 : num;
     })
     .optional(),
-  isDarkMode: z.boolean().optional(),
+  textColor: z.string().optional(),
+  backgroundType: z.enum(backgroundTypes).optional(),
+  backgroundColor: z.string().optional(),
+  backgroundVideoMediaId: z.string().nullable().optional(),
   verticalAlign: z.enum(verticalAlignments).optional(),
   padding: paddingValidator,
   paddingIsLinked: z.boolean().optional(),

@@ -1,6 +1,7 @@
 import {
   Button,
   CheckboxControl,
+  ColorPickerControl,
   FormLabel,
   NumberInputControl,
   OptionControl,
@@ -22,7 +23,11 @@ import {
   TbLayoutAlignTop,
 } from "react-icons/tb";
 
-import { SlideStyle, verticalAlignments } from "../../../src/types";
+import {
+  SlideStyle,
+  backgroundTypes,
+  verticalAlignments,
+} from "../../../src/types";
 
 export type StyleFieldsProps = {
   control: Control<SlideStyle>;
@@ -226,34 +231,19 @@ export const StyleFields = ({
         </OverrideFieldWrapper>
 
         <h4 className="text-lg font-semibold mt-4">Text Color</h4>
-        <OverrideFieldWrapper isOverridden={isFieldOverridden("isDarkMode")}>
+        <OverrideFieldWrapper isOverridden={isFieldOverridden("textColor")}>
           <div className="flex flex-col items-start gap-2">
             <div className="flex items-center gap-2">
-              <FormLabel className="mb-0 shrink-0">Color Mode</FormLabel>
+              <FormLabel className="mb-0 shrink-0">Text Color</FormLabel>
               {isOverrideMode && (
                 <OverrideIndicator
-                  isOverridden={isFieldOverridden("isDarkMode")}
-                  onReset={() => handleResetFields(["isDarkMode"])}
-                  label="Color Mode"
+                  isOverridden={isFieldOverridden("textColor")}
+                  onReset={() => handleResetFields(["textColor"])}
+                  label="Text Color"
                 />
               )}
             </div>
-            <SelectControl
-              control={control}
-              name="isDarkMode"
-              label=""
-              options={[
-                {
-                  label: "Light text (for dark backgrounds)",
-                  value: true,
-                },
-                {
-                  label: "Dark text (for light backgrounds)",
-                  value: false,
-                },
-              ]}
-              isSearchable={false}
-            />
+            <ColorPickerControl control={control} name="textColor" label="" />
           </div>
         </OverrideFieldWrapper>
       </TabsContent>
@@ -389,30 +379,85 @@ export const StyleFields = ({
         value="background"
         className="flex flex-col items-start gap-4"
       >
-        <OverrideFieldWrapper isOverridden={isFieldOverridden("isDarkMode")}>
+        <OverrideFieldWrapper
+          isOverridden={isFieldOverridden("backgroundType")}
+        >
           <div className="flex flex-col items-start gap-2">
             <div className="flex items-center gap-2">
-              <FormLabel className="mb-0 shrink-0">Background Theme</FormLabel>
+              <FormLabel className="mb-0 shrink-0">Background Type</FormLabel>
               {isOverrideMode && (
                 <OverrideIndicator
-                  isOverridden={isFieldOverridden("isDarkMode")}
-                  onReset={() => handleResetFields(["isDarkMode"])}
-                  label="Background Theme"
+                  isOverridden={isFieldOverridden("backgroundType")}
+                  onReset={() => handleResetFields(["backgroundType"])}
+                  label="Background Type"
                 />
               )}
             </div>
             <SelectControl
               control={control}
-              name="isDarkMode"
+              name="backgroundType"
               label=""
-              options={[
-                { label: "Dark", value: true },
-                { label: "Light", value: false },
-              ]}
+              options={backgroundTypes.map((type) => ({
+                label: type === "solid" ? "Solid Color" : "Video",
+                value: type,
+              }))}
               isSearchable={false}
             />
           </div>
         </OverrideFieldWrapper>
+
+        {data.backgroundType === "solid" && (
+          <OverrideFieldWrapper
+            isOverridden={isFieldOverridden("backgroundColor")}
+          >
+            <div className="flex flex-col items-start gap-2">
+              <div className="flex items-center gap-2">
+                <FormLabel className="mb-0 shrink-0">
+                  Background Color
+                </FormLabel>
+                {isOverrideMode && (
+                  <OverrideIndicator
+                    isOverridden={isFieldOverridden("backgroundColor")}
+                    onReset={() => handleResetFields(["backgroundColor"])}
+                    label="Background Color"
+                  />
+                )}
+              </div>
+              <ColorPickerControl
+                control={control}
+                name="backgroundColor"
+                label=""
+                alpha
+              />
+            </div>
+          </OverrideFieldWrapper>
+        )}
+
+        {data.backgroundType === "video" && (
+          <OverrideFieldWrapper
+            isOverridden={isFieldOverridden("backgroundVideoMediaId")}
+          >
+            <div className="flex flex-col items-start gap-2">
+              <div className="flex items-center gap-2">
+                <FormLabel className="mb-0 shrink-0">
+                  Background Video
+                </FormLabel>
+                {isOverrideMode && (
+                  <OverrideIndicator
+                    isOverridden={isFieldOverridden("backgroundVideoMediaId")}
+                    onReset={() =>
+                      handleResetFields(["backgroundVideoMediaId"])
+                    }
+                    label="Background Video"
+                  />
+                )}
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Video background selection coming soon
+              </p>
+            </div>
+          </OverrideFieldWrapper>
+        )}
       </TabsContent>
     </Tabs>
   );

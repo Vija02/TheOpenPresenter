@@ -1,4 +1,4 @@
-import { SlideStyle } from "./types";
+import { BackgroundType, SlideStyle } from "./types";
 
 const defaultSlideStyle: Required<SlideStyle> = {
   autoSize: true,
@@ -7,7 +7,10 @@ const defaultSlideStyle: Required<SlideStyle> = {
   fontStyle: "normal",
   fontFamily: `-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"`,
   lineHeight: 1,
-  isDarkMode: true,
+  textColor: "#FFFFFF",
+  backgroundType: "solid" as BackgroundType,
+  backgroundColor: "#000000",
+  backgroundVideoMediaId: null,
   verticalAlign: "center",
   padding: 4,
   paddingIsLinked: true,
@@ -28,7 +31,14 @@ export const getSlideStyle = (
     fontStyle: slideStyle?.fontStyle ?? defaultSlideStyle.fontStyle,
     fontFamily: slideStyle?.fontFamily ?? defaultSlideStyle.fontFamily,
     lineHeight: slideStyle?.lineHeight ?? defaultSlideStyle.lineHeight,
-    isDarkMode: slideStyle?.isDarkMode ?? defaultSlideStyle.isDarkMode,
+    textColor: slideStyle?.textColor ?? defaultSlideStyle.textColor,
+    backgroundType:
+      slideStyle?.backgroundType ?? defaultSlideStyle.backgroundType,
+    backgroundColor:
+      slideStyle?.backgroundColor ?? defaultSlideStyle.backgroundColor,
+    backgroundVideoMediaId:
+      slideStyle?.backgroundVideoMediaId ??
+      defaultSlideStyle.backgroundVideoMediaId,
     verticalAlign: slideStyle?.verticalAlign ?? defaultSlideStyle.verticalAlign,
     padding: slideStyle?.padding ?? defaultSlideStyle.padding,
     paddingIsLinked:
@@ -66,7 +76,11 @@ export const getMergedSlideStyle = (
     fontStyle: styleOverride.fontStyle ?? baseStyle.fontStyle,
     fontFamily: styleOverride.fontFamily ?? baseStyle.fontFamily,
     lineHeight: styleOverride.lineHeight ?? baseStyle.lineHeight,
-    isDarkMode: styleOverride.isDarkMode ?? baseStyle.isDarkMode,
+    textColor: styleOverride.textColor ?? baseStyle.textColor,
+    backgroundType: styleOverride.backgroundType ?? baseStyle.backgroundType,
+    backgroundColor: styleOverride.backgroundColor ?? baseStyle.backgroundColor,
+    backgroundVideoMediaId:
+      styleOverride.backgroundVideoMediaId ?? baseStyle.backgroundVideoMediaId,
     verticalAlign: styleOverride.verticalAlign ?? baseStyle.verticalAlign,
     padding: styleOverride.padding ?? baseStyle.padding,
     paddingIsLinked: styleOverride.paddingIsLinked ?? baseStyle.paddingIsLinked,
