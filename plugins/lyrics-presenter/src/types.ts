@@ -1,3 +1,4 @@
+import { InternalVideo } from "@repo/video";
 import { z } from "zod";
 
 export type MyWorshipListImportSetting = {
@@ -31,6 +32,7 @@ export type Song = {
 export type PluginBaseData = {
   style?: SlideStyle;
   songs: Song[];
+  videoBackgrounds: InternalVideo[];
 };
 
 const paddingValidator = z

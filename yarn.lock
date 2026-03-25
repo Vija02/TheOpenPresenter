@@ -8811,6 +8811,7 @@ __metadata:
     "@repo/tailwind-config": "npm:*"
     "@repo/typescript-config": "npm:*"
     "@repo/ui": "npm:*"
+    "@repo/video": "npm:*"
     "@tailwindcss/vite": "npm:^4.1.10"
     "@tanstack/react-query": "npm:^5.62.3"
     "@tiptap/core": "npm:^2.11.7"
@@ -9429,6 +9430,7 @@ __metadata:
     lucide-react: "npm:^0.511.0"
     nodemon: "npm:^3.1.7"
     react: "npm:^19.1.0"
+    react-colorful: "npm:^5.6.1"
     react-dom: "npm:^19.1.0"
     react-hook-form: "npm:^7.57.0"
     react-icons: "npm:^5.4.0"
@@ -28525,6 +28527,16 @@ __metadata:
     "@types/react":
       optional: true
   checksum: 10c0/27673f639c5d6296342a2a888436b31a5d602faeaae01be83b2beb98ff568b0a3d1514f5cc50fcacf3ac50b9c0b9d2fb423b0c001a8f5f1a22816671409e2616
+  languageName: node
+  linkType: hard
+
+"react-colorful@npm:^5.6.1":
+  version: 5.6.1
+  resolution: "react-colorful@npm:5.6.1"
+  peerDependencies:
+    react: ">=16.8.0"
+    react-dom: ">=16.8.0"
+  checksum: 10c0/48eb73cf71e10841c2a61b6b06ab81da9fffa9876134c239bfdebcf348ce2a47e56b146338e35dfb03512c85966bfc9a53844fc56bc50154e71f8daee59ff6f0
   languageName: node
   linkType: hard
 

@@ -135,6 +135,7 @@ export const init = (
 
 const onPluginDataCreated = (pluginInfo: ObjectToTypedMap<Plugin>) => {
   pluginInfo.get("pluginData")?.set("songs", new Y.Array());
+  pluginInfo.get("pluginData")?.set("videoBackgrounds", new Y.Array());
 
   return {};
 };

@@ -7,12 +7,13 @@ import { GroupedData } from "../../../src/processLyrics";
 import partition from "../../partition.js";
 import { DebugPadding } from "../DebugPadding.js";
 import { usePadding } from "../usePadding";
+import { useVideoBackgroundThumbnail } from "../useVideoBackgroundThumbnail";
 import { getSvgMeasurement } from "./cache";
 
 type FullSongRenderViewProps = {
   groupedData: GroupedData;
   slideStyle: Required<SlideStyle>;
-  hasVideoBackground?: boolean;
+  renderVideoThumbnail?: boolean;
 };
 
 // TODO: Optimize based on font size rather than horizontally.
@@ -21,10 +22,15 @@ const FullSongRenderView = React.memo(
   ({
     groupedData,
     slideStyle,
-    hasVideoBackground,
+    renderVideoThumbnail = false,
   }: FullSongRenderViewProps) => {
     const target = React.useRef<any>(null);
     const [width, height] = useSize(target);
+
+    const backgroundImageUrl = useVideoBackgroundThumbnail(
+      slideStyle,
+      renderVideoThumbnail,
+    );
 
     // We measure everything first
     const groupMeasurements = useMemo(
@@ -67,9 +73,23 @@ const FullSongRenderView = React.memo(
 
     const padding = usePadding(slideStyle, { width, height });
 
-    const backgroundColor = hasVideoBackground
-      ? "transparent"
-      : slideStyle.backgroundColor;
+    const backgroundStyle = useMemo(() => {
+      if (slideStyle.backgroundType === "video") {
+        if (backgroundImageUrl) {
+          return {
+            backgroundImage: `url(${backgroundImageUrl})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          };
+        }
+        return { backgroundColor: "transparent" };
+      }
+      return { backgroundColor: slideStyle.backgroundColor };
+    }, [
+      slideStyle.backgroundType,
+      slideStyle.backgroundColor,
+      backgroundImageUrl,
+    ]);
 
     return (
       <div
@@ -78,7 +98,7 @@ const FullSongRenderView = React.memo(
           width: "100%",
           height: "100%",
           position: "relative",
-          backgroundColor,
+          ...backgroundStyle,
         }}
       >
         {slideStyle.debugPadding && <DebugPadding padding={padding} />}

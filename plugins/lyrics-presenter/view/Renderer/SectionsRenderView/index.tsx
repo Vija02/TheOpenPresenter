@@ -6,13 +6,14 @@ import { SlideStyle } from "../../../src";
 import { GroupedData } from "../../../src/processLyrics";
 import { DebugPadding } from "../DebugPadding";
 import { usePadding } from "../usePadding";
+import { useVideoBackgroundThumbnail } from "../useVideoBackgroundThumbnail";
 import { getSvgMeasurement } from "./cache";
 
 type SectionsRenderViewProps = {
   groupedData: GroupedData;
   currentIndex: number;
   slideStyle: Required<SlideStyle>;
-  hasVideoBackground?: boolean;
+  renderVideoThumbnail?: boolean;
 };
 
 const SectionsRenderView = (props: SectionsRenderViewProps) => {
@@ -34,10 +35,20 @@ const SectionsRenderView = (props: SectionsRenderViewProps) => {
 
 const SectionsRenderViewWrapper = React.memo(
   (props: SectionsRenderViewProps) => {
-    const { groupedData, currentIndex, slideStyle, hasVideoBackground } = props;
+    const {
+      groupedData,
+      currentIndex,
+      slideStyle,
+      renderVideoThumbnail = false,
+    } = props;
 
     const target = React.useRef<any>(null);
     const size = useSize(target);
+
+    const backgroundImageUrl = useVideoBackgroundThumbnail(
+      slideStyle,
+      renderVideoThumbnail,
+    );
 
     const textLines = useMemo(() => {
       let counter = 0;
@@ -53,9 +64,23 @@ const SectionsRenderViewWrapper = React.memo(
       return groupedData[index]?.slides[currentIndex - counter] ?? [];
     }, [currentIndex, groupedData]);
 
-    const backgroundStyle = hasVideoBackground
-      ? { backgroundColor: "transparent" }
-      : { backgroundColor: slideStyle.backgroundColor };
+    const backgroundStyle = useMemo(() => {
+      if (slideStyle.backgroundType === "video") {
+        if (backgroundImageUrl) {
+          return {
+            backgroundImage: `url(${backgroundImageUrl})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          };
+        }
+        return { backgroundColor: "transparent" };
+      }
+      return { backgroundColor: slideStyle.backgroundColor };
+    }, [
+      slideStyle.backgroundType,
+      slideStyle.backgroundColor,
+      backgroundImageUrl,
+    ]);
 
     return (
       <div ref={target} className="h-full relative" style={backgroundStyle}>
