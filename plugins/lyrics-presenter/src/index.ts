@@ -165,13 +165,50 @@ const onPluginDataLoaded = (pluginInfo: ObjectToTypedMap<Plugin>) => {
     }
   };
 
+  const cleanupUnusedVideoBackgrounds = () => {
+    const usedVideoIds = new Set<string>();
+
+    // Check global style
+    const globalStyleVideoId = data.pluginData.style?.backgroundVideoMediaId;
+    if (globalStyleVideoId) {
+      usedVideoIds.add(globalStyleVideoId);
+    }
+
+    // Check all song style overrides
+    for (const song of data.pluginData.songs) {
+      const songVideoId = song.styleOverride?.backgroundVideoMediaId;
+      if (songVideoId) {
+        usedVideoIds.add(songVideoId);
+      }
+    }
+
+    // Remove any videoBackgrounds that are not in use
+    const videoBackgrounds = data.pluginData.videoBackgrounds;
+    for (let i = videoBackgrounds.length - 1; i >= 0; i--) {
+      const video = videoBackgrounds[i];
+      if (video && !usedVideoIds.has(video.id)) {
+        videoBackgrounds.splice(i, 1);
+      }
+    }
+  };
+
   // Handle on load
   handleImportSong();
+  cleanupUnusedVideoBackgrounds();
 
   const yjsWatcher = new YjsWatcher(pluginInfo as Y.Map<any>);
   yjsWatcher.watchYjs(
     (x: Plugin<PluginBaseData>) => x.pluginData.songs,
     handleImportSong,
+  );
+
+  yjsWatcher.watchYjs(
+    (x: Plugin<PluginBaseData>) => x.pluginData.songs,
+    cleanupUnusedVideoBackgrounds,
+  );
+  yjsWatcher.watchYjs(
+    (x: Plugin<PluginBaseData>) => x.pluginData.style,
+    cleanupUnusedVideoBackgrounds,
   );
 
   return {
