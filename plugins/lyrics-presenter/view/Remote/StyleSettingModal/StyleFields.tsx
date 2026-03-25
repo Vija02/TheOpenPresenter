@@ -237,7 +237,6 @@ export const StyleFields = ({
           </div>
         </OverrideFieldWrapper>
 
-        <h4 className="text-lg font-semibold mt-4">Text Color</h4>
         <OverrideFieldWrapper isOverridden={isFieldOverridden("textColor")}>
           <div className="flex flex-col items-start gap-2">
             <div className="flex items-center gap-2">
@@ -250,7 +249,12 @@ export const StyleFields = ({
                 />
               )}
             </div>
-            <ColorPickerControl control={control} name="textColor" label="" />
+            <ColorPickerControl
+              control={control}
+              name="textColor"
+              label=""
+              alpha
+            />
           </div>
         </OverrideFieldWrapper>
       </TabsContent>
