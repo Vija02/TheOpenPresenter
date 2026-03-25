@@ -14,7 +14,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 
-import { getMergedSlideStyle } from "../../../src/slideStyle";
+import { getMergedSlideStyle, getSlideStyle } from "../../../src/slideStyle";
 import { SlideStyle, Song, slideStyleValidator } from "../../../src/types";
 import { usePluginAPI } from "../../pluginApi";
 import { MobilePreview } from "../RemoteEditSongModal/MobilePreview";
@@ -32,8 +32,13 @@ const SongStyleOverrideModal = ({ song }: SongStyleOverrideModalProps) => {
   const { isOpen, onToggle, resetData } = useOverlayToggle();
 
   const pluginApi = usePluginAPI();
-  const globalStyle = pluginApi.scene.useData((x) => x.pluginData.style);
+  const rawglobalStyle = pluginApi.scene.useData((x) => x.pluginData.style);
   const mutableSceneData = pluginApi.scene.useValtioData();
+
+  const globalStyle = useMemo(
+    () => getSlideStyle(rawglobalStyle),
+    [rawglobalStyle],
+  );
 
   const [localOverride, setLocalOverride] = useState<SlideStyle | null>(
     song.styleOverride ?? null,
