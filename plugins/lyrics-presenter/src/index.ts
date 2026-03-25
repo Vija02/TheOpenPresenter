@@ -19,6 +19,7 @@ import {
 } from "./consts";
 import { getSongData } from "./data";
 import { convertMWLData } from "./importer/myworshiplist";
+import { migratePluginDataV1ToV2 } from "./migrate/v1";
 import { getMaxIndex, processSong } from "./songHelpers";
 import {
   MyWorshipListImportedData,
@@ -141,6 +142,10 @@ const onPluginDataCreated = (pluginInfo: ObjectToTypedMap<Plugin>) => {
 };
 
 const onPluginDataLoaded = (pluginInfo: ObjectToTypedMap<Plugin>) => {
+  migratePluginDataV1ToV2(
+    pluginInfo as ObjectToTypedMap<Plugin<PluginBaseData>>,
+  );
+
   const data = proxy(pluginInfo.toJSON() as Plugin<PluginBaseData>);
   const unbind = bind(data, pluginInfo as any);
 
