@@ -65,6 +65,8 @@ export const slideStyleValidator = z.object({
     })
     .optional(),
   textColor: z.string().optional(),
+  textShadow: z.boolean().optional(),
+  textOutline: z.boolean().optional(),
   backgroundType: z.enum(backgroundTypes).optional(),
   backgroundColor: z.string().optional(),
   backgroundVideoMediaId: z.string().nullable().optional(),

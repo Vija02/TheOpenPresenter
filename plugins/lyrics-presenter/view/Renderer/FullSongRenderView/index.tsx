@@ -73,6 +73,16 @@ const FullSongRenderView = React.memo(
 
     const padding = usePadding(slideStyle, { width, height });
 
+    // Calculate scale factor for text effects
+    const containerWidth = width - padding[3] - padding[1];
+    const viewBoxWidth = biggestWidth * partitionNum;
+    const scaleFactor = containerWidth / viewBoxWidth;
+    // Shadow blur in pixels - scales with the container size
+    const shadowBlur1 = 1 * scaleFactor;
+    const shadowBlur2 = 2 * scaleFactor;
+    // Stroke width stays constant in viewBox units (doesn't scale with screen size)
+    const strokeWidth = 0.02;
+
     const backgroundStyle = useMemo(() => {
       if (slideStyle.backgroundType === "video") {
         if (backgroundImageUrl) {
@@ -103,7 +113,7 @@ const FullSongRenderView = React.memo(
       >
         {slideStyle.debugPadding && <DebugPadding padding={padding} />}
         <svg
-          viewBox={[0, 0, biggestWidth * partitionNum, maxRawHeight].join(" ")}
+          viewBox={[0, 0, viewBoxWidth, maxRawHeight].join(" ")}
           xmlns="http://www.w3.org/2000/svg"
           style={{
             width: `calc(100% - ${padding[3]}px - ${padding[1]}px)`,
@@ -115,6 +125,49 @@ const FullSongRenderView = React.memo(
             top: padding[0],
           }}
         >
+          {/* Shadow layer - rendered first, behind the main text */}
+          {slideStyle.textShadow &&
+            partitionedData.map((partition, i) => {
+              const xPosition = `${biggestWidth * i}px`;
+              return (
+                <text
+                  key={`shadow-${i}`}
+                  x={xPosition}
+                  style={{
+                    fontSize: "1rem",
+                    fontWeight: slideStyle.fontWeight,
+                    fontStyle: slideStyle.fontStyle,
+                    fontFamily: slideStyle.fontFamily,
+                    textShadow: `0 0 ${shadowBlur1}px rgba(0,0,0,0.9), 0 0 ${shadowBlur2}px rgba(0,0,0,0.6)`,
+                  }}
+                  fill={slideStyle.textColor}
+                >
+                  {partition.map(({ heading, slides }) =>
+                    [
+                      <tspan
+                        key="heading"
+                        x={xPosition}
+                        dy="2rem"
+                        fontSize="0.6rem"
+                      >
+                        {heading}
+                      </tspan>,
+                    ].concat(
+                      slides.flat().map((x, j) => (
+                        <tspan
+                          key={j}
+                          x={xPosition}
+                          dy={j === 0 ? "1.2rem" : slideStyle.lineHeight + "em"}
+                        >
+                          {x}
+                        </tspan>
+                      )),
+                    ),
+                  )}
+                </text>
+              );
+            })}
+          {/* Main text layer */}
           {partitionedData.map((partition, i) => {
             const xPosition = `${biggestWidth * i}px`;
             return (
@@ -126,6 +179,11 @@ const FullSongRenderView = React.memo(
                   fontWeight: slideStyle.fontWeight,
                   fontStyle: slideStyle.fontStyle,
                   fontFamily: slideStyle.fontFamily,
+                  stroke: slideStyle.textOutline ? "black" : undefined,
+                  strokeWidth: slideStyle.textOutline
+                    ? `${strokeWidth}em`
+                    : undefined,
+                  paintOrder: "stroke fill",
                 }}
                 fill={slideStyle.textColor}
               >

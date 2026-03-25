@@ -257,6 +257,45 @@ export const StyleFields = ({
             />
           </div>
         </OverrideFieldWrapper>
+
+        <OverrideFieldWrapper
+          isOverridden={
+            isFieldOverridden("textShadow") || isFieldOverridden("textOutline")
+          }
+        >
+          <div className="flex flex-col items-start gap-2">
+            <div className="flex items-center gap-2">
+              <FormLabel className="mb-0 shrink-0">Text Effects</FormLabel>
+              {isOverrideMode && (
+                <OverrideIndicator
+                  isOverridden={
+                    isFieldOverridden("textShadow") ||
+                    isFieldOverridden("textOutline")
+                  }
+                  onReset={() =>
+                    handleResetFields(["textShadow", "textOutline"])
+                  }
+                  label="Text Effects"
+                />
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Improve text visibility over video backgrounds
+            </p>
+            <div className="flex flex-col gap-2">
+              <CheckboxControl
+                control={control}
+                name="textShadow"
+                label="Text Shadow"
+              />
+              <CheckboxControl
+                control={control}
+                name="textOutline"
+                label="Text Outline"
+              />
+            </div>
+          </div>
+        </OverrideFieldWrapper>
       </TabsContent>
 
       {/* Placement Tab */}
