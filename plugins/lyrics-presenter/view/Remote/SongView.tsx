@@ -1,7 +1,6 @@
 import { Button, OverlayToggle, PopConfirm, SlideGrid } from "@repo/ui";
 import React, { useCallback, useMemo } from "react";
-import { MdStyle } from "react-icons/md";
-import { VscEdit, VscTrash } from "react-icons/vsc";
+import { VscEdit, VscPaintcan, VscTrash } from "react-icons/vsc";
 
 import { getMergedSlideStyle } from "../../src/slideStyle";
 import { Song } from "../../src/types";
@@ -80,7 +79,7 @@ const SongViewInner = React.memo(({ song }: { song: Song }) => {
                 data-testid="ly-style-song"
                 title="Style Override"
               >
-                <MdStyle />
+                <VscPaintcan />
               </Button>
             )}
           >
