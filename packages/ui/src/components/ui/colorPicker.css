@@ -1,0 +1,185 @@
+@reference "@repo/tailwind-config/index.css";
+
+@layer base {
+  .ui--color-picker {
+    @apply flex items-center gap-4;
+  }
+
+  .ui--color-picker__swatch {
+    @apply h-12 w-12 border border-stroke shadow-none relative overflow-hidden shrink-0;
+  }
+
+  .ui--color-picker__swatch-checkerboard {
+    position: absolute;
+    inset: 0;
+    opacity: 0.2;
+    background-image: linear-gradient(45deg, #ccc 25%, transparent 25%),
+      linear-gradient(-45deg, #ccc 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #ccc 75%),
+      linear-gradient(-45deg, transparent 75%, #ccc 75%);
+    background-size: 8px 8px;
+    background-position:
+      0 0,
+      0 4px,
+      4px -4px,
+      -4px 0px;
+  }
+
+  .ui--color-picker__popover {
+    @apply p-3;
+    width: 320px !important;
+  }
+
+  .ui--color-picker__content {
+    @apply flex flex-col gap-3;
+  }
+
+  .ui--color-picker__picker-wrapper {
+    @apply relative;
+  }
+
+  .ui--color-picker__eyedropper {
+    @apply absolute -top-1.5 -left-1 z-10 h-7 w-7 flex items-center gap-1 bg-transparent;
+  }
+
+  .ui--color-picker__eyedropper:hover {
+    @apply bg-transparent;
+  }
+
+  .ui--color-picker__hex-picker {
+    width: 100% !important;
+    height: auto !important;
+    aspect-ratio: 1 / 1;
+  }
+
+  .ui--color-picker__format-row {
+    @apply flex gap-2;
+  }
+
+  .ui--color-picker__format-select {
+    @apply shrink-0;
+  }
+
+  /* Make the select smaller */
+  .ui--color-picker__format-select > div:first-child {
+    min-height: 1.5rem !important;
+    @apply py-0 text-xs;
+  }
+
+  .ui--color-picker__format-input {
+    @apply flex-1 rounded-sm text-xs uppercase;
+    height: 1.5rem;
+    padding-inline: 0.25rem !important;
+  }
+
+  .ui--color-picker__rgb-inputs {
+    @apply flex items-center flex-1;
+  }
+
+  .ui--color-picker__rgb-input {
+    @apply flex-1 text-center text-xs;
+    height: 1.5rem;
+    min-width: 0;
+    padding-inline: 0.25rem !important;
+  }
+
+  .ui--color-picker__rgba-input {
+    @apply flex-1 text-center text-xs;
+    height: 1.5rem;
+    min-width: 0;
+    padding-inline: 0.25rem !important;
+  }
+
+  .ui--color-picker__rgb-input--first {
+    @apply rounded-l-sm rounded-r-none;
+  }
+
+  .ui--color-picker__rgb-input--middle {
+    @apply rounded-none border-x-0;
+  }
+
+  .ui--color-picker__rgb-input--last {
+    @apply rounded-l-none rounded-r-sm;
+  }
+
+  .ui--color-picker__input-wrapper {
+    @apply relative flex-1;
+  }
+
+  .ui--color-picker__external-input {
+    @apply h-12 uppercase;
+  }
+
+  .ui--color-picker__error {
+    @apply text-fill-destructive text-sm;
+  }
+}
+
+/* react-colorful customizations */
+.ui--color-picker__content .react-colorful {
+  align-items: flex-end;
+}
+
+.ui--color-picker__content .react-colorful__hue {
+  order: -1;
+  height: 14px;
+  width: calc(100% - 30px);
+  border-radius: 9999px;
+}
+
+.ui--color-picker__content .react-colorful__saturation {
+  margin: 12px 0 0;
+  border-radius: 8px;
+  border-bottom: none;
+  width: 100%;
+}
+
+.ui--color-picker__content .react-colorful__saturation-pointer {
+  width: 20px;
+  height: 20px;
+  border-radius: 9999px;
+}
+
+.ui--color-picker__content .react-colorful__hue-pointer {
+  width: 14px;
+  height: 14px;
+  border-radius: 9999px;
+}
+
+.ui--color-picker__content .react-colorful__alpha {
+  height: 14px;
+  width: 100%;
+  border-radius: 9999px;
+  margin-top: 12px;
+  position: relative;
+  overflow: hidden;
+}
+
+.ui--color-picker__content .react-colorful__alpha-pointer {
+  width: 14px;
+  height: 14px;
+  border-radius: 9999px;
+}
+
+/* Alpha bar checkerboard background - using pseudo element behind the gradient */
+.ui--color-picker__content .react-colorful__alpha::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background-image: linear-gradient(45deg, #aaa 25%, transparent 25%),
+    linear-gradient(-45deg, #aaa 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #aaa 75%),
+    linear-gradient(-45deg, transparent 75%, #aaa 75%);
+  background-size: 6px 6px;
+  background-position:
+    0 0,
+    0 3px,
+    3px -3px,
+    -3px 0px;
+  z-index: 0;
+}
+
+.ui--color-picker__content .react-colorful__alpha-gradient {
+  z-index: 1;
+}
