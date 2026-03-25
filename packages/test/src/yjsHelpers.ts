@@ -210,6 +210,7 @@ export const simulateUser = (
       zoomLevel: undefined as any,
       errorHandler: { addError: () => {}, removeError: () => {} },
       canPlayAudio: undefined as any,
+      overlay: { getType: () => null, subscribe: () => () => {} },
       toast: { error: vi.fn() } as any,
       media: {
         permanentlyDeleteMedia() {
