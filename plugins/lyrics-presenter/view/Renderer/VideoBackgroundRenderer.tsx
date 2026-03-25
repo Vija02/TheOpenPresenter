@@ -88,7 +88,11 @@ const VideoBackgroundItem = ({ video, isActive }: VideoBackgroundItemProps) => {
       style={videoStyle}
       className={cx(isActive ? "transition-fade-in" : "transition-fade-out")}
     >
-      <VideoPlayer video={video} playbackState={playbackStateRef.current} />
+      <VideoPlayer
+        video={video}
+        playbackState={playbackStateRef.current}
+        forceLoop
+      />
     </div>
   );
 };
