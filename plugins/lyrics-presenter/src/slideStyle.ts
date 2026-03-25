@@ -8,6 +8,8 @@ const defaultSlideStyle: Required<SlideStyle> = {
   fontFamily: `-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"`,
   lineHeight: 1,
   textColor: "#FFFFFF",
+  textShadow: true,
+  textOutline: true,
   backgroundType: "solid" as BackgroundType,
   backgroundColor: "#000000",
   backgroundVideoMediaId: null,
@@ -32,6 +34,8 @@ export const getSlideStyle = (
     fontFamily: slideStyle?.fontFamily ?? defaultSlideStyle.fontFamily,
     lineHeight: slideStyle?.lineHeight ?? defaultSlideStyle.lineHeight,
     textColor: slideStyle?.textColor ?? defaultSlideStyle.textColor,
+    textShadow: slideStyle?.textShadow ?? defaultSlideStyle.textShadow,
+    textOutline: slideStyle?.textOutline ?? defaultSlideStyle.textOutline,
     backgroundType:
       slideStyle?.backgroundType ?? defaultSlideStyle.backgroundType,
     backgroundColor:
@@ -77,6 +81,8 @@ export const getMergedSlideStyle = (
     fontFamily: styleOverride.fontFamily ?? baseStyle.fontFamily,
     lineHeight: styleOverride.lineHeight ?? baseStyle.lineHeight,
     textColor: styleOverride.textColor ?? baseStyle.textColor,
+    textShadow: styleOverride.textShadow ?? baseStyle.textShadow,
+    textOutline: styleOverride.textOutline ?? baseStyle.textOutline,
     backgroundType: styleOverride.backgroundType ?? baseStyle.backgroundType,
     backgroundColor: styleOverride.backgroundColor ?? baseStyle.backgroundColor,
     backgroundVideoMediaId:

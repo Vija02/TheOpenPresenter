@@ -153,6 +153,15 @@ const SectionsRenderViewAutoSize = React.memo(
       [viewBoxY, measuredData.width, measuredData.height],
     );
 
+    // Calculate scale factor for text effects
+    // The SVG scales from viewBox coordinates to container size
+    const scaleFactor = containerWidth / measuredData.width;
+    // Shadow blur in pixels - scales with the container size
+    const shadowBlur1 = 1 * scaleFactor;
+    const shadowBlur2 = 2 * scaleFactor;
+    // Stroke width stays constant in viewBox units (doesn't scale with screen size)
+    const strokeWidth = 0.02;
+
     return (
       <>
         {slideStyle.debugPadding && <DebugPadding padding={padding} />}
@@ -169,6 +178,32 @@ const SectionsRenderViewAutoSize = React.memo(
             top: padding[0],
           }}
         >
+          {/* Shadow layer - rendered first, behind the main text */}
+          {slideStyle.textShadow && (
+            <text
+              x="0%"
+              style={{
+                fontFamily: slideStyle.fontFamily,
+                fontSize: "1rem",
+                fontWeight: slideStyle.fontWeight,
+                fontStyle: slideStyle.fontStyle,
+                textAnchor: "middle",
+                textShadow: `0 0 ${shadowBlur1}px rgba(0,0,0,0.9), 0 0 ${shadowBlur2}px rgba(0,0,0,0.6)`,
+              }}
+              fill={slideStyle.textColor}
+            >
+              {textLines?.map((x, i) => (
+                <tspan
+                  key={i}
+                  x="50%"
+                  dy={i === 0 ? "1em" : slideStyle.lineHeight + "em"}
+                >
+                  {x}
+                </tspan>
+              ))}
+            </text>
+          )}
+          {/* Main text layer */}
           <text
             x="0%"
             style={{
@@ -177,6 +212,11 @@ const SectionsRenderViewAutoSize = React.memo(
               fontWeight: slideStyle.fontWeight,
               fontStyle: slideStyle.fontStyle,
               textAnchor: "middle",
+              stroke: slideStyle.textOutline ? "black" : undefined,
+              strokeWidth: slideStyle.textOutline
+                ? `${strokeWidth}em`
+                : undefined,
+              paintOrder: "stroke fill",
             }}
             fill={slideStyle.textColor}
           >
@@ -209,6 +249,13 @@ const SectionsRenderViewManualFontSize = React.memo(
 
     const padding = usePadding(slideStyle, { width, height });
 
+    const baseFontSize = width / 280; // Magic number to get the pt scale right
+    const actualFontSize = baseFontSize * Number(slideStyle.fontSize);
+    // Scale shadow proportionally to the rendered font size
+    const shadowBlur1 = actualFontSize * 0.06;
+    const shadowBlur2 = actualFontSize * 0.12;
+    const strokeWidth = actualFontSize * 0.02;
+
     const justifyClass = useMemo(() => {
       switch (slideStyle.verticalAlign) {
         case "top":
@@ -229,7 +276,7 @@ const SectionsRenderViewManualFontSize = React.memo(
         )}
         style={{
           padding: padding.map((x) => x + "px").join(" "),
-          fontSize: width / 280, // Magic number to get the pt scale right
+          fontSize: baseFontSize,
         }}
       >
         {slideStyle.debugPadding && <DebugPadding padding={padding} />}
@@ -242,6 +289,13 @@ const SectionsRenderViewManualFontSize = React.memo(
             fontFamily: slideStyle.fontFamily,
             lineHeight: slideStyle.lineHeight,
             color: slideStyle.textColor,
+            textShadow: slideStyle.textShadow
+              ? `0 0 ${shadowBlur1}px rgba(0,0,0,0.9), 0 0 ${shadowBlur2}px rgba(0,0,0,0.6)`
+              : undefined,
+            WebkitTextStroke: slideStyle.textOutline
+              ? `${strokeWidth}px black`
+              : undefined,
+            paintOrder: "stroke fill",
           }}
         >
           {textLines.map((x, i, all) => (
