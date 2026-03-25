@@ -1,3 +1,4 @@
+import { cx } from "class-variance-authority";
 import { useMemo } from "react";
 
 import { Song } from "../../src";
@@ -29,6 +30,7 @@ const Renderer = () => {
 
 const SlideRenderer = () => {
   const pluginApi = usePluginAPI();
+  const overlayType = pluginApi.renderer.useOverlayType();
   const data = pluginApi.renderer.useData((x) => x);
   const songId = useMemo(() => data.songId, [data.songId]);
   const currentIndex = useMemo(() => data.currentIndex, [data.currentIndex]);
@@ -37,21 +39,34 @@ const SlideRenderer = () => {
 
   const song = songs.find((x) => x.id === songId);
 
-  if (!song) {
-    return null;
-  }
-  if (song.setting.displayType === "fullSong") {
-    return <FullSongRenderer song={song} />;
-  }
+  const isCleared = overlayType === "clear";
 
-  if (currentIndex === undefined || currentIndex === null) {
-    return null;
-  }
-  if (song.setting.displayType === "sections") {
-    return <SectionsRenderer song={song} currentIndex={currentIndex} />;
-  }
+  const renderContent = () => {
+    if (!song) {
+      return null;
+    }
+    if (song.setting.displayType === "fullSong") {
+      return <FullSongRenderer song={song} />;
+    }
 
-  return null;
+    if (currentIndex === undefined || currentIndex === null) {
+      return null;
+    }
+    if (song.setting.displayType === "sections") {
+      return <SectionsRenderer song={song} currentIndex={currentIndex} />;
+    }
+
+    return null;
+  };
+
+  return (
+    <div
+      className={cx(isCleared ? "transition-fade-out" : "transition-fade-in")}
+      style={{ width: "100%", height: "100%" }}
+    >
+      {renderContent()}
+    </div>
+  );
 };
 
 const FullSongRenderer = ({ song }: { song: Song }) => {
