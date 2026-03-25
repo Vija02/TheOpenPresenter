@@ -101,6 +101,23 @@ export const TopBar = () => {
           size="sm"
           className={cx(
             "rt--top-bar--overlay-btn",
+            data.renderer["1"]!.overlay?.type === "clear" &&
+              "rt--top-bar--selected",
+          )}
+          onClick={() => {
+            if (mainState.renderer["1"]!.overlay?.type === "clear") {
+              mainState.renderer["1"]!.overlay = null;
+            } else {
+              mainState.renderer["1"]!.overlay = { type: "clear" };
+            }
+          }}
+        >
+          Clear
+        </Button>
+        <Button
+          size="sm"
+          className={cx(
+            "rt--top-bar--overlay-btn",
             data.renderer["1"]!.overlay?.type === "black" &&
               "rt--top-bar--selected",
           )}

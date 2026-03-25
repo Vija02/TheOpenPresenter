@@ -1,6 +1,7 @@
 import {
   AwarenessContext,
   AwarenessStateData,
+  OverlayInfo,
   Plugin,
   PluginContext,
   State,
@@ -127,6 +128,17 @@ const PluginRenderer = React.memo(
       },
     });
 
+    const [overlay] = useState<OverlayInfo>({
+      getType: () => {
+        const renderer = getYJSPluginRenderer();
+        return renderer?.get("overlay")?.get("type") ?? null;
+      },
+      subscribe: (callback: () => void) => {
+        yjsWatcher?.watchYjs((x: State) => x.renderer["1"]?.overlay, callback);
+        return () => {};
+      },
+    });
+
     const Element = useMemo(() => {
       if (!viewData?.tag) {
         return (
@@ -165,6 +177,7 @@ const PluginRenderer = React.memo(
           zoomLevel: zoomLevelStore,
           errorHandler: { addError, removeError },
           canPlayAudio,
+          overlay,
           toast,
           media: {
             permanentlyDeleteMedia: (mediaKey: string) => {
@@ -203,6 +216,7 @@ const PluginRenderer = React.memo(
       getYJSPluginRenderer,
       isSuccess,
       mediaPicker,
+      overlay,
       pluginContext,
       pluginInfo.plugin,
       provider,

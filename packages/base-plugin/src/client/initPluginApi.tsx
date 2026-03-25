@@ -118,6 +118,12 @@ export function initPluginApi<
           : O;
       },
       setRenderCurrentScene,
+      useOverlayType: () => {
+        return useSyncExternalStore(
+          misc.overlay.subscribe,
+          misc.overlay.getType,
+        );
+      },
     },
     remote: {
       usePluginInView: () => {

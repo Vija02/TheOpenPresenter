@@ -1,6 +1,7 @@
 import {
   AwarenessContext,
   AwarenessStateData,
+  OverlayInfo,
   PluginContext,
   Scene,
   State,
@@ -199,6 +200,17 @@ const PluginRenderer = React.memo(
       },
     });
 
+    const [overlay] = useState<OverlayInfo>({
+      getType: () => {
+        const renderer = getYJSPluginRenderer();
+        return renderer?.get("overlay")?.get("type") ?? null;
+      },
+      subscribe: (callback: () => void) => {
+        yjsWatcher?.watchYjs((x: State) => x.renderer["1"]?.overlay, callback);
+        return () => {};
+      },
+    });
+
     const TagElement = useMemo(() => {
       if (!tag) {
         return (
@@ -237,6 +249,7 @@ const PluginRenderer = React.memo(
           zoomLevel: {} as any, // This should never be called
           errorHandler: { addError, removeError },
           canPlayAudio,
+          overlay,
           toast,
           // These should probably never be called from the renderer
           media: {
@@ -269,6 +282,7 @@ const PluginRenderer = React.memo(
       error,
       getYJSPluginRenderer,
       isSuccess,
+      overlay,
       pluginContext,
       pluginInfo?.plugin,
       provider,

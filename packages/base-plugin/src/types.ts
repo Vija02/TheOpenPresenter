@@ -49,7 +49,7 @@ export type Renderer = Record<string, RenderData>;
 
 export type RenderData<T = Record<string, any>> = {
   currentScene: UUID | null;
-  overlay: { type: "black" | "white" } | null;
+  overlay: { type: "black" | "white" | "clear" } | null;
   children: Record<UUID, Record<UUID, T>>;
 };
 
@@ -110,6 +110,7 @@ export type MiscProps = {
   zoomLevel: ZoomLevel;
   errorHandler: ErrorHandler;
   canPlayAudio: CanPlayAudio;
+  overlay: OverlayInfo;
   toast: typeof ReactToast;
   media: MediaHandler;
   mediaPicker: MediaPicker;
@@ -134,6 +135,13 @@ export type CanPlayAudio = {
   value: boolean;
   _rawValue: boolean;
   isChecking: boolean;
+  subscribe: (callback: () => void) => () => void;
+};
+
+export type OverlayType = "black" | "white" | "clear" | null;
+
+export type OverlayInfo = {
+  getType: () => OverlayType;
   subscribe: (callback: () => void) => () => void;
 };
 
