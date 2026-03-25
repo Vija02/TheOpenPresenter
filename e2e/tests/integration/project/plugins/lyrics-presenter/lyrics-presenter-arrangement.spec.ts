@@ -33,7 +33,9 @@ test.describe("Lyrics Presenter Plugin - Arrangement Feature", () => {
     await lyricsPlugin.addCustomSong("Amazing Grace", TEST_SONG_CONTENT);
 
     // Wait for song to be added
-    await expect(page.getByText("Amazing grace how sweet the")).toBeVisible();
+    await expect(
+      page.getByText("Amazing grace how sweet the").first(),
+    ).toBeVisible();
 
     // Click the edit button to open the edit modal
     await page.getByTestId("ly-edit-song").click();

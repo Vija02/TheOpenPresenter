@@ -38,7 +38,9 @@ test.describe("Lyrics Presenter Plugin - Visual Regression", () => {
     await projectPage.createPlugin("Lyrics Presenter");
     await lyricsPlugin.addCustomSong("Amazing Grace", TEST_SONG_CONTENT);
 
-    await expect(page.getByText("Amazing grace how sweet the")).toBeVisible();
+    await expect(
+      page.getByText("Amazing grace how sweet the").first(),
+    ).toBeVisible();
     await expect(page.getByTestId("slide-container").first()).toBeVisible();
 
     await page.getByTestId("slide-container").nth(0).click();
@@ -173,7 +175,7 @@ test.describe("Lyrics Presenter Plugin - Visual Regression", () => {
     );
 
     // Wait for song to be added
-    await expect(page.getByText("Amazing Grace Full")).toBeVisible();
+    await expect(page.getByText("Amazing Grace Full").first()).toBeVisible();
     await expect(page.getByTestId("slide-container").first()).toBeVisible();
 
     // Click on the slide to select it
