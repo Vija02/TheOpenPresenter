@@ -38,19 +38,21 @@ test.describe("Cloud Document Sync", () => {
     await originalProjectPage.getByText("SyncProject2").click();
 
     // Create lyrics plugin and add specific content
-    const originalProjectPageObj = new ProjectPage(originalProjectPage);
+    const originalProjectPageObj = new ProjectPage(
+      originalProjectPage,
+      context,
+    );
     const originalLyricsPlugin = new LyricsPlugin(originalProjectPage);
 
     await originalProjectPageObj.createPlugin("Lyrics Presenter");
     await originalLyricsPlugin.addSong("Shout to the Lord");
 
     await expect(
-      originalProjectPage.getByText(
-        "Shout to the Lord all the earth let us sing",
-        {
+      originalProjectPage
+        .getByText("Shout to the Lord all the earth let us sing", {
           exact: true,
-        },
-      ),
+        })
+        .first(),
     ).toBeVisible();
     // Wait for it to be saved
     await page.waitForTimeout(2000);

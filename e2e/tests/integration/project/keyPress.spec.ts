@@ -27,9 +27,11 @@ test.describe("Key Press Navigation", () => {
     await presentedPage.waitForLoadState("networkidle");
 
     await expect(
-      presentedPage.getByText("Shout to the Lord all the earth let us sing", {
-        exact: true,
-      }),
+      presentedPage
+        .getByText("Shout to the Lord all the earth let us sing", {
+          exact: true,
+        })
+        .first(),
     ).toBeVisible();
 
     await presentedPage.click("body");
@@ -37,30 +39,33 @@ test.describe("Key Press Navigation", () => {
     // Now, test the key presses
     await presentedPage.keyboard.press("ArrowLeft");
     await expect(
-      presentedPage.getByText(
-        "My Jesus, My Savior, Lord there is none like you",
-        {
+      presentedPage
+        .getByText("My Jesus, My Savior, Lord there is none like you", {
           exact: true,
-        },
-      ),
+        })
+        .first(),
     ).toBeVisible();
 
     // Go to next song
     await presentedPage.keyboard.press("ArrowRight");
     await presentedPage.keyboard.press("ArrowRight");
     await expect(
-      presentedPage.getByText("I lay my life down at Your feet", {
-        exact: true,
-      }),
+      presentedPage
+        .getByText("I lay my life down at Your feet", {
+          exact: true,
+        })
+        .first(),
     ).toBeVisible();
 
     // Now try to keyboard press in remote
     await page.click(".rt--top-bar"); // Click on an empty spot to focus
     await page.keyboard.press("ArrowRight");
     await expect(
-      presentedPage.getByText("One way, Jesus", {
-        exact: true,
-      }),
+      presentedPage
+        .getByText("One way, Jesus", {
+          exact: true,
+        })
+        .first(),
     ).toBeVisible();
   });
 

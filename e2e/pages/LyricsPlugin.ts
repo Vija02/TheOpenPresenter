@@ -13,7 +13,7 @@ export class LyricsPlugin {
     this.addToListFormButton = page.getByRole("button", {
       name: "Add to list",
     });
-    this.styleButton = page.getByRole("button", { name: "Style" });
+    this.styleButton = page.getByRole("button", { name: "Style", exact: true });
     this.saveStyleButton = page.getByRole("button", { name: "Save" });
   }
 
