@@ -6,7 +6,8 @@ import {
   VolumeBar,
   useDisclosure,
 } from "@repo/ui";
-import { Video, canPlay } from "@repo/video";
+import { Video } from "@repo/video";
+import { canPlay } from "@repo/video/client";
 import { useCallback, useState } from "react";
 import { MdCloudUpload, MdVideoLibrary } from "react-icons/md";
 import "react-scrubber/lib/scrubber.css";
