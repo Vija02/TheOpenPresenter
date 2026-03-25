@@ -22,6 +22,7 @@ export type VideoPlayerProps = {
   onError?: (error: Error, data?: unknown) => void;
   onEnded?: () => void;
   config?: Config;
+  forceLoop?: boolean;
 };
 
 export const VideoPlayer = ({
@@ -32,6 +33,7 @@ export const VideoPlayer = ({
   onError,
   onEnded,
   config,
+  forceLoop,
 }: VideoPlayerProps) => {
   const pluginApi = usePluginAPI();
 
@@ -50,6 +52,7 @@ export const VideoPlayer = ({
 
   const [ready, setReady] = useState(false);
   const ref = useRef<HTMLVideoElement>(null);
+  const hasInitialSeekRef = useRef(false);
 
   const { videoUrl, isYouTube } = useVideoUrl(video);
 
@@ -61,6 +64,11 @@ export const VideoPlayer = ({
 
   const setVideoSeek = useCallback(
     (manual?: boolean) => {
+      // If forceLoop is enabled and we've already done the initial seek, skip further seeking
+      if (forceLoop && hasInitialSeekRef.current) {
+        return;
+      }
+
       if (ready && playbackState && videoDuration) {
         const {
           isPlaying: computedPlaying,
@@ -74,10 +82,11 @@ export const VideoPlayer = ({
         if (manual || Math.abs(currentTime - targetTimeSeconds) > tolerance) {
           if (ref.current) ref.current.currentTime = targetTimeSeconds;
           if (computedPlaying) ref.current?.play();
+          hasInitialSeekRef.current = true;
         }
       }
     },
-    [playbackState, videoDuration, ready],
+    [playbackState, videoDuration, ready, forceLoop],
   );
   const uid = useMemo(() => playbackState.uid, [playbackState.uid]);
 
@@ -101,6 +110,7 @@ export const VideoPlayer = ({
         muted={muted || !canPlay}
         volume={volume}
         playing={isPlaying}
+        loop={forceLoop}
         onDurationChange={() => {
           const player = ref.current;
           if (!player) return;
