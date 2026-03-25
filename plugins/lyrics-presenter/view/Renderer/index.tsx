@@ -6,9 +6,28 @@ import { processSong } from "../../src/songHelpers";
 import { usePluginAPI } from "../pluginApi";
 import FullSongRenderView from "./FullSongRenderView";
 import SectionsRenderView from "./SectionsRenderView";
+import VideoBackgroundRenderer from "./VideoBackgroundRenderer";
 import "./index.css";
 
 const Renderer = () => {
+  return (
+    <div style={{ position: "relative", width: "100%", height: "100%" }}>
+      <VideoBackgroundRenderer />
+      <div
+        style={{
+          position: "relative",
+          zIndex: 1,
+          width: "100%",
+          height: "100%",
+        }}
+      >
+        <SlideRenderer />
+      </div>
+    </div>
+  );
+};
+
+const SlideRenderer = () => {
   const pluginApi = usePluginAPI();
   const data = pluginApi.renderer.useData((x) => x);
   const songId = useMemo(() => data.songId, [data.songId]);
@@ -45,14 +64,9 @@ const FullSongRenderer = ({ song }: { song: Song }) => {
   );
 
   const slideStyle = getMergedSlideStyle(globalStyle, song.styleOverride);
-  const hasVideoBackground = slideStyle.backgroundType === "video";
 
   return (
-    <FullSongRenderView
-      groupedData={groupedData}
-      slideStyle={slideStyle}
-      hasVideoBackground={hasVideoBackground}
-    />
+    <FullSongRenderView groupedData={groupedData} slideStyle={slideStyle} />
   );
 };
 
@@ -72,7 +86,6 @@ const SectionsRenderer = ({
   );
 
   const slideStyle = getMergedSlideStyle(globalStyle, song.styleOverride);
-  const hasVideoBackground = slideStyle.backgroundType === "video";
 
   return (
     <SectionsRenderView
@@ -80,7 +93,6 @@ const SectionsRenderer = ({
       groupedData={groupedData}
       currentIndex={currentIndex}
       slideStyle={slideStyle}
-      hasVideoBackground={hasVideoBackground}
     />
   );
 };

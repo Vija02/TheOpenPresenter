@@ -23,6 +23,7 @@
     "@repo/base-plugin": "*",
     "@repo/observability": "*",
     "@repo/ui": "*",
+    "@repo/video": "*",
     "@tanstack/react-query": "^5.62.3",
     "@tiptap/core": "^2.11.7",
     "@tiptap/extension-document": "^2.11.7",

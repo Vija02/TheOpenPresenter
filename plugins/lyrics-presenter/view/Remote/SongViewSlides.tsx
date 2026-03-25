@@ -97,6 +97,7 @@ const Sections = ({
                 groupedData={groupedData}
                 currentIndex={currentIndex}
                 slideStyle={getSlideStyle(slideStyle)}
+                renderVideoThumbnail
               />
             </Slide>
           );
@@ -140,6 +141,7 @@ const FullSong = ({
       <FullSongRenderView
         groupedData={groupedData}
         slideStyle={getSlideStyle(slideStyle)}
+        renderVideoThumbnail
       />
     </Slide>
   );

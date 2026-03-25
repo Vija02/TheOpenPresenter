@@ -1,8 +1,11 @@
+import { extractMediaName } from "@repo/lib";
 import {
   Button,
   CheckboxControl,
   ColorPickerControl,
   FormLabel,
+  MediaPreview,
+  MediaPreviewData,
   NumberInputControl,
   OptionControl,
   SelectControl,
@@ -14,6 +17,8 @@ import {
   ToggleGroup,
   ToggleGroupItem,
 } from "@repo/ui";
+import { InternalVideo } from "@repo/video";
+import { useCallback, useMemo } from "react";
 import { Control, UseFormSetValue } from "react-hook-form";
 import { FaBold, FaItalic, FaLink } from "react-icons/fa6";
 import { MdOutlineSettingsBackupRestore } from "react-icons/md";
@@ -22,12 +27,14 @@ import {
   TbLayoutAlignMiddle,
   TbLayoutAlignTop,
 } from "react-icons/tb";
+import { VscAdd, VscTrash } from "react-icons/vsc";
 
 import {
   SlideStyle,
   backgroundTypes,
   verticalAlignments,
 } from "../../../src/types";
+import { usePluginAPI } from "../../pluginApi";
 
 export type StyleFieldsProps = {
   control: Control<SlideStyle>;
@@ -434,29 +441,13 @@ export const StyleFields = ({
         )}
 
         {data.backgroundType === "video" && (
-          <OverrideFieldWrapper
-            isOverridden={isFieldOverridden("backgroundVideoMediaId")}
-          >
-            <div className="flex flex-col items-start gap-2">
-              <div className="flex items-center gap-2">
-                <FormLabel className="mb-0 shrink-0">
-                  Background Video
-                </FormLabel>
-                {isOverrideMode && (
-                  <OverrideIndicator
-                    isOverridden={isFieldOverridden("backgroundVideoMediaId")}
-                    onReset={() =>
-                      handleResetFields(["backgroundVideoMediaId"])
-                    }
-                    label="Background Video"
-                  />
-                )}
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Video background selection coming soon
-              </p>
-            </div>
-          </OverrideFieldWrapper>
+          <VideoBackgroundSelector
+            setValue={setValue}
+            currentVideoMediaId={data.backgroundVideoMediaId ?? null}
+            isOverrideMode={isOverrideMode}
+            isFieldOverridden={isFieldOverridden("backgroundVideoMediaId")}
+            onResetField={() => handleResetFields(["backgroundVideoMediaId"])}
+          />
         )}
       </TabsContent>
     </Tabs>
@@ -475,6 +466,193 @@ export const StylePreviewControls = ({
         name="debugPadding"
         label="Show Padding"
       />
+    </div>
+  );
+};
+
+type VideoBackgroundSelectorProps = {
+  setValue: UseFormSetValue<SlideStyle>;
+  currentVideoMediaId: string | null;
+  isOverrideMode: boolean;
+  isFieldOverridden: boolean;
+  onResetField: () => void;
+};
+
+const VideoBackgroundSelector = ({
+  setValue,
+  currentVideoMediaId,
+  isOverrideMode,
+  isFieldOverridden,
+  onResetField,
+}: VideoBackgroundSelectorProps) => {
+  const pluginApi = usePluginAPI();
+  const videoBackgrounds = pluginApi.scene.useData(
+    (x) => x.pluginData.videoBackgrounds,
+  );
+  const globalStyle = pluginApi.scene.useData((x) => x.pluginData.style);
+  const songs = pluginApi.scene.useData((x) => x.pluginData.songs);
+  const mutableSceneData = pluginApi.scene.useValtioData();
+
+  const currentVideo = currentVideoMediaId
+    ? (videoBackgrounds.find((v) => v.id === currentVideoMediaId) ?? null)
+    : null;
+
+  const handleImportVideo = useCallback(async () => {
+    const result = await pluginApi.mediaPicker.show({
+      type: "video",
+      title: "Select Background Video",
+    });
+
+    if (result?.internalVideo) {
+      const existingVideo = mutableSceneData.pluginData.videoBackgrounds.find(
+        (v) => v.url === result.internalVideo!.url,
+      );
+
+      if (existingVideo) {
+        setValue("backgroundVideoMediaId", existingVideo.id);
+      } else {
+        mutableSceneData.pluginData.videoBackgrounds.push(result.internalVideo);
+        setValue("backgroundVideoMediaId", result.internalVideo.id);
+      }
+    }
+  }, [
+    pluginApi.mediaPicker,
+    mutableSceneData.pluginData.videoBackgrounds,
+    setValue,
+  ]);
+
+  const handleRemoveVideo = useCallback(() => {
+    if (!currentVideoMediaId) return;
+
+    setValue("backgroundVideoMediaId", null);
+
+    const isUsedByGlobalStyle =
+      globalStyle?.backgroundVideoMediaId === currentVideoMediaId;
+
+    const isUsedBySongOverride = songs.some(
+      (song) =>
+        song.styleOverride?.backgroundVideoMediaId === currentVideoMediaId,
+    );
+
+    // Only remove from videoBackgrounds if no one else is using it
+    if (!isUsedByGlobalStyle && !isUsedBySongOverride) {
+      const index = mutableSceneData.pluginData.videoBackgrounds.findIndex(
+        (v) => v.id === currentVideoMediaId,
+      );
+      if (index !== -1) {
+        mutableSceneData.pluginData.videoBackgrounds.splice(index, 1);
+      }
+    }
+  }, [
+    currentVideoMediaId,
+    mutableSceneData.pluginData.videoBackgrounds,
+    setValue,
+    globalStyle?.backgroundVideoMediaId,
+    songs,
+  ]);
+
+  return (
+    <OverrideFieldWrapper isOverridden={isFieldOverridden}>
+      <div className="flex flex-col items-start gap-2">
+        <div className="flex items-center gap-2">
+          <FormLabel className="mb-0 shrink-0">Background Video</FormLabel>
+          {isOverrideMode && (
+            <OverrideIndicator
+              isOverridden={isFieldOverridden}
+              onReset={onResetField}
+              label="Background Video"
+            />
+          )}
+        </div>
+
+        {currentVideo ? (
+          <VideoBackgroundCard
+            video={currentVideo}
+            onRemove={handleRemoveVideo}
+            onChangeVideo={handleImportVideo}
+          />
+        ) : (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleImportVideo}
+          >
+            <VscAdd className="mr-1" />
+            Import Video
+          </Button>
+        )}
+      </div>
+    </OverrideFieldWrapper>
+  );
+};
+
+type VideoBackgroundCardProps = {
+  video: InternalVideo;
+  onRemove: () => void;
+  onChangeVideo: () => void;
+};
+
+const VideoBackgroundCard = ({
+  video,
+  onRemove,
+  onChangeVideo,
+}: VideoBackgroundCardProps) => {
+  const mediaPreviewData: MediaPreviewData | null = useMemo(() => {
+    const urlParts = video.url.split("/");
+    const mediaName = urlParts[urlParts.length - 1] ?? "";
+
+    return {
+      mediaName,
+      fileExtension: extractMediaName(mediaName).extension,
+      videoMetadata: {
+        thumbnailMediaId: video.thumbnailMediaName
+          ? extractMediaName(video.thumbnailMediaName).uuid
+          : null,
+        hlsMediaId: video.hlsMediaName
+          ? extractMediaName(video.hlsMediaName).uuid
+          : null,
+      },
+    };
+  }, [video]);
+
+  return (
+    <div className="border rounded-lg overflow-hidden max-w-[200px]">
+      <div className="aspect-video bg-gray-100">
+        <MediaPreview
+          media={mediaPreviewData}
+          showProcessingOverlay={false}
+          className="w-full h-full"
+        />
+      </div>
+
+      <div className="p-2">
+        <span
+          className="text-xs truncate block mb-2"
+          title={video.metadata.title ?? "Untitled"}
+        >
+          {video.metadata.title ?? "Untitled"}
+        </span>
+        <div className="flex gap-1">
+          <Button
+            type="button"
+            size="xs"
+            variant="outline"
+            onClick={onChangeVideo}
+          >
+            Change
+          </Button>
+          <Button
+            type="button"
+            size="xs"
+            variant="ghost"
+            onClick={onRemove}
+            title="Remove video"
+          >
+            <VscTrash className="w-3 h-3" />
+          </Button>
+        </div>
+      </div>
     </div>
   );
 };
