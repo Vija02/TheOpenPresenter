@@ -68,29 +68,55 @@ export class LyricsPlugin {
     await this.styleButton.click();
   }
 
-  async setTheme(theme: "Dark" | "Light") {
-    const combobox = this.page
-      .getByTestId("form-item-isDarkMode")
-      .getByRole("combobox")
-      .locator("..");
+  // Tab navigation
+  async goToTextTab() {
+    await this.page.getByRole("tab", { name: "Text" }).click();
+  }
 
-    await combobox.click();
-    await this.page.getByRole("option", { name: theme }).click();
+  async goToPlacementTab() {
+    await this.page.getByRole("tab", { name: "Placement" }).click();
+  }
+
+  async goToBackgroundTab() {
+    await this.page.getByRole("tab", { name: "Background" }).click();
+  }
+
+  // Text tab methods
+  async setTextColor(color: string) {
+    await this.goToTextTab();
+    const colorInput = this.page
+      .getByTestId("form-item-textColor")
+      .locator("input");
+    await colorInput.fill(color);
+  }
+
+  async toggleTextShadow() {
+    await this.goToTextTab();
+    await this.page.getByLabel("Text Shadow").click();
+  }
+
+  async toggleTextOutline() {
+    await this.goToTextTab();
+    await this.page.getByLabel("Text Outline").click();
   }
 
   async setVerticalAlign(align: "top" | "center" | "bottom") {
+    await this.goToPlacementTab();
     await this.page.getByLabel(`Align ${align}`).click();
   }
 
   async toggleBold() {
+    await this.goToTextTab();
     await this.page.getByLabel("Toggle bold").click();
   }
 
   async toggleItalic() {
+    await this.goToTextTab();
     await this.page.getByLabel("Toggle italic").click();
   }
 
   async setAutoSize(autoSize: boolean) {
+    await this.goToTextTab();
     if (autoSize) {
       await this.page.getByText("Auto fit").click();
     } else {
@@ -99,13 +125,31 @@ export class LyricsPlugin {
   }
 
   async setFontSize(size: number) {
+    await this.goToTextTab();
     await this.page
       .getByTestId("form-item-fontSize")
       .locator("input")
       .fill(size.toString());
   }
 
+  // Background tab methods
+  async setBackgroundType(type: "Solid Color" | "Video") {
+    await this.goToBackgroundTab();
+    await this.page.getByTestId("form-item-backgroundType").click();
+    await this.page.getByRole("option", { name: type }).click();
+  }
+
+  async setBackgroundColor(color: string) {
+    await this.goToBackgroundTab();
+    const colorInput = this.page
+      .getByTestId("form-item-backgroundColor")
+      .locator("input");
+    await colorInput.fill(color);
+  }
+
+  // Placement tab methods
   async setPadding(padding: number) {
+    await this.goToPlacementTab();
     await this.page
       .getByTestId("form-item-padding")
       .locator("input")
@@ -113,6 +157,7 @@ export class LyricsPlugin {
   }
 
   async togglePaddingLink() {
+    await this.goToPlacementTab();
     await this.page
       .getByTestId("form-item-paddingIsLinked")
       .getByRole("button")
@@ -125,6 +170,7 @@ export class LyricsPlugin {
     right?: number;
     bottom?: number;
   }) {
+    await this.goToPlacementTab();
     if (padding.left !== undefined) {
       await this.page
         .getByTestId("form-item-leftPadding")

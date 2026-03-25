@@ -49,31 +49,29 @@ test.describe("Lyrics Presenter Plugin - Visual Regression", () => {
     const presentedPage = await projectPage.present();
     await presentedPage.waitForLoadState("networkidle");
 
-    // Screenshot 1: Default style (dark mode, centered, auto-size)
-    await expect(presentedPage).toHaveScreenshot(
-      "01-default-dark-centered.png",
-      { maxDiffPixelRatio: 0.05 },
-    );
+    // Screenshot 1: Default style (black background, white text, centered)
+    await expect(presentedPage).toHaveScreenshot("01-default-style.png", {
+      maxDiffPixelRatio: 0.05,
+    });
 
-    // Navigate to next slide and change styles - Light mode + Top aligned
+    // Navigate to next slide and change text color + top aligned
     await presentedPage.click("body");
     await presentedPage.keyboard.press("ArrowRight");
     await presentedPage.waitForTimeout(300);
 
     await lyricsPlugin.openStyleSettings();
-    await lyricsPlugin.setTheme("Light");
+    await lyricsPlugin.setTextColor("#ffff00");
     await lyricsPlugin.setVerticalAlign("top");
     await lyricsPlugin.saveStyleSettings();
 
     await presentedPage.waitForTimeout(200);
 
-    // Screenshot 2: Second verse, light mode, top aligned
-    await expect(presentedPage).toHaveScreenshot(
-      "02-verse-2-light-top-aligned.png",
-      { maxDiffPixelRatio: 0.05 },
-    );
+    // Screenshot 2: Yellow text, top aligned
+    await expect(presentedPage).toHaveScreenshot("02-yellow-text-top.png", {
+      maxDiffPixelRatio: 0.05,
+    });
 
-    // Navigate to chorus and change to bottom aligned + bold
+    // Navigate to chorus, bottom aligned + bold
     await presentedPage.keyboard.press("ArrowRight");
     await presentedPage.waitForTimeout(300);
 
@@ -84,46 +82,60 @@ test.describe("Lyrics Presenter Plugin - Visual Regression", () => {
 
     await presentedPage.waitForTimeout(200);
 
-    // Screenshot 3: Chorus section, light mode, bottom aligned, bold
-    await expect(presentedPage).toHaveScreenshot(
-      "03-chorus-light-bottom-bold.png",
-      { maxDiffPixelRatio: 0.05 },
-    );
-
-    // Change to dark mode + italic + centered
-    await lyricsPlugin.openStyleSettings();
-    await lyricsPlugin.setTheme("Dark");
-    await lyricsPlugin.setVerticalAlign("center");
-    await lyricsPlugin.toggleBold(); // toggle off bold
-    await lyricsPlugin.toggleItalic();
-    await lyricsPlugin.saveStyleSettings();
-
-    await presentedPage.waitForTimeout(200);
-
-    // Screenshot 4: Dark mode, centered, italic
-    await expect(presentedPage).toHaveScreenshot(
-      "04-dark-centered-italic.png",
-      {
-        maxDiffPixelRatio: 0.05,
-      },
-    );
-
-    // Change to manual font size
-    await lyricsPlugin.openStyleSettings();
-    await lyricsPlugin.setAutoSize(false);
-    await lyricsPlugin.setFontSize(24);
-    await lyricsPlugin.toggleItalic(); // toggle off italic
-    await lyricsPlugin.saveStyleSettings();
-
-    await presentedPage.waitForTimeout(200);
-
-    // Screenshot 5: Manual font size (24pt)
-    await expect(presentedPage).toHaveScreenshot("05-manual-font-size.png", {
+    // Screenshot 3: Yellow text, bottom aligned, bold
+    await expect(presentedPage).toHaveScreenshot("03-yellow-bottom-bold.png", {
       maxDiffPixelRatio: 0.05,
     });
 
-    // Manual font size with top alignment and linked padding
+    // Change to italic + centered + text shadow
     await lyricsPlugin.openStyleSettings();
+    await lyricsPlugin.setVerticalAlign("center");
+    await lyricsPlugin.toggleBold(); // toggle off bold
+    await lyricsPlugin.toggleItalic();
+    await lyricsPlugin.toggleTextShadow();
+    await lyricsPlugin.saveStyleSettings();
+
+    await presentedPage.waitForTimeout(200);
+
+    // Screenshot 4: Yellow text, centered, italic, with shadow
+    await expect(presentedPage).toHaveScreenshot(
+      "04-yellow-centered-italic-shadow.png",
+      { maxDiffPixelRatio: 0.05 },
+    );
+
+    // Add text outline + blue background
+    await lyricsPlugin.openStyleSettings();
+    await lyricsPlugin.toggleTextOutline();
+    await lyricsPlugin.setBackgroundColor("#1e3a8a");
+    await lyricsPlugin.saveStyleSettings();
+
+    await presentedPage.waitForTimeout(200);
+
+    // Screenshot 5: Blue background, yellow text with shadow and outline
+    await expect(presentedPage).toHaveScreenshot(
+      "05-blue-bg-yellow-shadow-outline.png",
+      { maxDiffPixelRatio: 0.05 },
+    );
+
+    // Manual font size + remove effects
+    await lyricsPlugin.openStyleSettings();
+    await lyricsPlugin.setAutoSize(false);
+    await lyricsPlugin.setFontSize(24);
+    await lyricsPlugin.toggleItalic(); // toggle off
+    await lyricsPlugin.toggleTextShadow(); // toggle off
+    await lyricsPlugin.toggleTextOutline(); // toggle off
+    await lyricsPlugin.saveStyleSettings();
+
+    await presentedPage.waitForTimeout(200);
+
+    // Screenshot 6: Manual font size (24pt), blue background
+    await expect(presentedPage).toHaveScreenshot("06-manual-font-size.png", {
+      maxDiffPixelRatio: 0.05,
+    });
+
+    // Top aligned with padding
+    await lyricsPlugin.openStyleSettings();
+    await lyricsPlugin.setTextColor("#ffffff");
     await lyricsPlugin.setVerticalAlign("top");
     await lyricsPlugin.setFontSize(10);
     await lyricsPlugin.setPadding(10);
@@ -131,13 +143,12 @@ test.describe("Lyrics Presenter Plugin - Visual Regression", () => {
 
     await presentedPage.waitForTimeout(200);
 
-    // Screenshot 6: Manual font size (10pt), top aligned, 10% padding
-    await expect(presentedPage).toHaveScreenshot(
-      "06-manual-top-aligned-padding.png",
-      { maxDiffPixelRatio: 0.05 },
-    );
+    // Screenshot 7: Manual font (10pt), top aligned, 10% padding
+    await expect(presentedPage).toHaveScreenshot("07-manual-top-padding.png", {
+      maxDiffPixelRatio: 0.05,
+    });
 
-    // Manual font size with bottom alignment and individual padding
+    // Bottom aligned with individual padding
     await lyricsPlugin.openStyleSettings();
     await lyricsPlugin.setVerticalAlign("bottom");
     await lyricsPlugin.togglePaddingLink();
@@ -151,9 +162,9 @@ test.describe("Lyrics Presenter Plugin - Visual Regression", () => {
 
     await presentedPage.waitForTimeout(200);
 
-    // Screenshot 7: Manual font size (10pt), bottom aligned, individual padding
+    // Screenshot 8: Manual font (10pt), bottom aligned, individual padding
     await expect(presentedPage).toHaveScreenshot(
-      "07-manual-bottom-aligned-individual-padding.png",
+      "08-manual-bottom-individual-padding.png",
       { maxDiffPixelRatio: 0.05 },
     );
   });
@@ -190,14 +201,15 @@ test.describe("Lyrics Presenter Plugin - Visual Regression", () => {
       maxDiffPixelRatio: 0.05,
     });
 
-    // Change to light mode for variety
+    // Change to light background for variety
     await lyricsPlugin.openStyleSettings();
-    await lyricsPlugin.setTheme("Light");
+    await lyricsPlugin.setBackgroundColor("#f0f0f0");
+    await lyricsPlugin.setTextColor("#000000");
     await lyricsPlugin.saveStyleSettings();
 
     await presentedPage.waitForTimeout(200);
 
-    // Screenshot for full song view - light mode
+    // Screenshot for full song view - light background
     await expect(presentedPage).toHaveScreenshot("full-song-light.png", {
       maxDiffPixelRatio: 0.05,
     });
