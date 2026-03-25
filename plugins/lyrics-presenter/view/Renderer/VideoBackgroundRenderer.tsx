@@ -69,6 +69,7 @@ const VideoBackgroundItem = ({ video, isActive }: VideoBackgroundItemProps) => {
       onFinishBehaviour: "loop",
       muted: true,
       volume: 0,
+      startedAt: 0,
     });
   }
 
