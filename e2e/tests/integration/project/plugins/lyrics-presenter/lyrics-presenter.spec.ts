@@ -205,6 +205,8 @@ test.describe("Lyrics Presenter Plugin - Visual Regression", () => {
     await lyricsPlugin.openStyleSettings();
     await lyricsPlugin.setBackgroundColor("#f0f0f0");
     await lyricsPlugin.setTextColor("#000000");
+    await lyricsPlugin.toggleTextOutline();
+    await lyricsPlugin.toggleTextShadow();
     await lyricsPlugin.saveStyleSettings();
 
     await presentedPage.waitForTimeout(200);
