@@ -62,14 +62,34 @@ const dialogContentVariants = cva("ui--dialog-content", {
   },
 });
 
+type InteractOutsideEvent = Parameters<
+  NonNullable<
+    React.ComponentProps<typeof DialogPrimitive.Content>["onInteractOutside"]
+  >
+>[0];
+
 function DialogContent({
   className,
   children,
   size,
+  onInteractOutside,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> &
   VariantProps<typeof dialogContentVariants>) {
   const container = useDialogPortalContainerContext();
+
+  // Handle interact outside - prevent closing if clicking on another dialog/modal
+  const handleInteractOutside = React.useCallback(
+    (event: InteractOutsideEvent) => {
+      const target = event.target as HTMLElement;
+      if (target?.closest('[data-slot="dialog-content"]')) {
+        event.preventDefault();
+        return;
+      }
+      onInteractOutside?.(event);
+    },
+    [onInteractOutside],
+  );
 
   return (
     <DialogPortal
@@ -82,6 +102,7 @@ function DialogContent({
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(dialogContentVariants({ size, className }))}
+        onInteractOutside={handleInteractOutside}
         {...props}
       >
         <DialogPrimitive.Description className="hidden" />
