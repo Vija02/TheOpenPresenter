@@ -12,6 +12,7 @@ type SectionsRenderViewProps = {
   groupedData: GroupedData;
   currentIndex: number;
   slideStyle: Required<SlideStyle>;
+  hasVideoBackground?: boolean;
 };
 
 const SectionsRenderView = (props: SectionsRenderViewProps) => {
@@ -33,7 +34,7 @@ const SectionsRenderView = (props: SectionsRenderViewProps) => {
 
 const SectionsRenderViewWrapper = React.memo(
   (props: SectionsRenderViewProps) => {
-    const { groupedData, currentIndex, slideStyle } = props;
+    const { groupedData, currentIndex, slideStyle, hasVideoBackground } = props;
 
     const target = React.useRef<any>(null);
     const size = useSize(target);
@@ -52,14 +53,12 @@ const SectionsRenderViewWrapper = React.memo(
       return groupedData[index]?.slides[currentIndex - counter] ?? [];
     }, [currentIndex, groupedData]);
 
+    const backgroundStyle = hasVideoBackground
+      ? { backgroundColor: "transparent" }
+      : { backgroundColor: slideStyle.backgroundColor };
+
     return (
-      <div
-        ref={target}
-        className={cn(
-          "h-full relative",
-          slideStyle.isDarkMode ? "bg-black" : "bg-white",
-        )}
-      >
+      <div ref={target} className="h-full relative" style={backgroundStyle}>
         {slideStyle.autoSize ? (
           <SectionsRenderViewAutoSize
             {...props}
@@ -154,7 +153,7 @@ const SectionsRenderViewAutoSize = React.memo(
               fontStyle: slideStyle.fontStyle,
               textAnchor: "middle",
             }}
-            fill={slideStyle.isDarkMode ? "white" : "rgb(26, 32, 44)"}
+            fill={slideStyle.textColor}
           >
             {textLines?.map((x, i) => (
               <tspan
@@ -210,16 +209,14 @@ const SectionsRenderViewManualFontSize = React.memo(
       >
         {slideStyle.debugPadding && <DebugPadding padding={padding} />}
         <div
-          className={cn(
-            "text-center max-h-full",
-            slideStyle.isDarkMode ? "text-white" : "text-[rgb(26, 32, 44)]",
-          )}
+          className="text-center max-h-full"
           style={{
             fontWeight: slideStyle.fontWeight,
             fontStyle: slideStyle.fontStyle,
             fontSize: slideStyle.fontSize + "em",
             fontFamily: slideStyle.fontFamily,
             lineHeight: slideStyle.lineHeight,
+            color: slideStyle.textColor,
           }}
         >
           {textLines.map((x, i, all) => (

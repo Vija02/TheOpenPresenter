@@ -12,12 +12,17 @@ import { getSvgMeasurement } from "./cache";
 type FullSongRenderViewProps = {
   groupedData: GroupedData;
   slideStyle: Required<SlideStyle>;
+  hasVideoBackground?: boolean;
 };
 
 // TODO: Optimize based on font size rather than horizontally.
 // (Because column widths can be quite different, making us lose precious space)
 const FullSongRenderView = React.memo(
-  ({ groupedData, slideStyle }: FullSongRenderViewProps) => {
+  ({
+    groupedData,
+    slideStyle,
+    hasVideoBackground,
+  }: FullSongRenderViewProps) => {
     const target = React.useRef<any>(null);
     const [width, height] = useSize(target);
 
@@ -62,6 +67,10 @@ const FullSongRenderView = React.memo(
 
     const padding = usePadding(slideStyle, { width, height });
 
+    const backgroundColor = hasVideoBackground
+      ? "transparent"
+      : slideStyle.backgroundColor;
+
     return (
       <div
         ref={target}
@@ -69,7 +78,7 @@ const FullSongRenderView = React.memo(
           width: "100%",
           height: "100%",
           position: "relative",
-          backgroundColor: slideStyle.isDarkMode ? "black" : "white",
+          backgroundColor,
         }}
       >
         {slideStyle.debugPadding && <DebugPadding padding={padding} />}
@@ -98,7 +107,7 @@ const FullSongRenderView = React.memo(
                   fontStyle: slideStyle.fontStyle,
                   fontFamily: slideStyle.fontFamily,
                 }}
-                fill={slideStyle.isDarkMode ? "white" : "rgb(26, 32, 44)"}
+                fill={slideStyle.textColor}
               >
                 {partition.map(({ heading, slides }) =>
                   [

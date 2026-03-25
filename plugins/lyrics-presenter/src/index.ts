@@ -233,4 +233,3 @@ export type AppRouter = ReturnType<typeof getAppRouter>;
 
 export * from "./types";
 export * from "./sectionOrder";
-export * from "./slideStyle";

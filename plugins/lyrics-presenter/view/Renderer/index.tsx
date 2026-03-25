@@ -44,10 +44,14 @@ const FullSongRenderer = ({ song }: { song: Song }) => {
     [song.content, song.setting.sectionOrder],
   );
 
+  const slideStyle = getMergedSlideStyle(globalStyle, song.styleOverride);
+  const hasVideoBackground = slideStyle.backgroundType === "video";
+
   return (
     <FullSongRenderView
       groupedData={groupedData}
-      slideStyle={getMergedSlideStyle(globalStyle, song.styleOverride)}
+      slideStyle={slideStyle}
+      hasVideoBackground={hasVideoBackground}
     />
   );
 };
@@ -67,12 +71,16 @@ const SectionsRenderer = ({
     [song.content, song.setting.sectionOrder],
   );
 
+  const slideStyle = getMergedSlideStyle(globalStyle, song.styleOverride);
+  const hasVideoBackground = slideStyle.backgroundType === "video";
+
   return (
     <SectionsRenderView
       key={currentIndex}
       groupedData={groupedData}
       currentIndex={currentIndex}
-      slideStyle={getMergedSlideStyle(globalStyle, song.styleOverride)}
+      slideStyle={slideStyle}
+      hasVideoBackground={hasVideoBackground}
     />
   );
 };
