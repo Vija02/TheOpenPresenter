@@ -14,7 +14,7 @@ type ModalState = {
   resolve?: (result: MediaPickerResult | null) => void;
 };
 
-const baseModalState = {
+const baseModalState: ModalState = {
   isOpen: false,
   options: {
     pluginContext: {
@@ -23,6 +23,7 @@ const baseModalState = {
       projectId: "",
       sceneId: "",
     },
+    portalContainer: null,
   },
 };
 

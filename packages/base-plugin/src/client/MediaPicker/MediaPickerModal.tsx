@@ -17,6 +17,7 @@ import {
   DialogContent,
   DialogFooter,
   DialogHeader,
+  DialogPortalContainerContext,
   DialogTitle,
 } from "@repo/ui";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
@@ -158,9 +159,10 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
   );
 
   const title = options?.title ?? "Select Media";
+  const portalContainer = options?.portalContainer;
 
   return (
-    <>
+    <DialogPortalContainerContext.Provider value={portalContainer ?? null}>
       <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
         <DialogContent size="3xl" className="bp--media-picker-dialog">
           <DialogHeader className="bp--media-picker-header">
@@ -220,6 +222,6 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
           />
         </div>
       )}
-    </>
+    </DialogPortalContainerContext.Provider>
   );
 };
