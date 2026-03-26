@@ -168,6 +168,7 @@ export type MediaType = "video" | "image" | "audio" | "all";
 export type MediaPickerOptions = {
   type?: MediaType;
   title?: string;
+  portalContainer?: HTMLElement | null;
 };
 
 export type MediaPickerOptionsInternal = MediaPickerOptions & {

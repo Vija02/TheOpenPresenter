@@ -151,6 +151,7 @@ export function initPluginApi<
     mediaPicker: {
       show: (options?: MediaPickerOptions) =>
         misc.mediaPicker.show({
+          portalContainer: misc.parentContainer,
           ...options,
           pluginContext,
         }),

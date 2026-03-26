@@ -18,7 +18,7 @@ import {
   ToggleGroupItem,
 } from "@repo/ui";
 import { InternalVideo } from "@repo/video";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import { Control, UseFormSetValue } from "react-hook-form";
 import { FaBold, FaItalic, FaLink } from "react-icons/fa6";
 import { MdOutlineSettingsBackupRestore } from "react-icons/md";
@@ -540,10 +540,13 @@ const VideoBackgroundSelector = ({
     ? (videoBackgrounds.find((v) => v.id === currentVideoMediaId) ?? null)
     : null;
 
+  const divRef = useRef<HTMLDivElement>(null);
+
   const handleImportVideo = useCallback(async () => {
     const result = await pluginApi.mediaPicker.show({
       type: "video",
       title: "Select Background Video",
+      portalContainer: divRef.current,
     });
 
     if (result?.internalVideo) {
@@ -596,7 +599,7 @@ const VideoBackgroundSelector = ({
 
   return (
     <OverrideFieldWrapper isOverridden={isFieldOverridden}>
-      <div className="flex flex-col items-start gap-2">
+      <div ref={divRef} className="flex flex-col items-start gap-2">
         <div className="flex items-center gap-2">
           <FormLabel className="mb-0 shrink-0">Background Video</FormLabel>
           {isOverrideMode && (
