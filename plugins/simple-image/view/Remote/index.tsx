@@ -133,7 +133,7 @@ const ImageRemote = () => {
           <SlideGrid pluginAPI={pluginApi}>
             {pluginData.images.map((imgSrc, i) => (
               <Slide
-                key={pluginApi.media.resolveMediaUrl(imgSrc)}
+                key={`${i}-${pluginApi.media.resolveMediaUrl(imgSrc)}`}
                 pluginAPI={pluginApi}
                 heading={`Image ${i + 1}`}
                 headingRight={
