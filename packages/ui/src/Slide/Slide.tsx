@@ -10,6 +10,7 @@ import type { PluginAPI } from "./types";
 type PropTypes = {
   heading?: string;
   headingIsFaded?: boolean;
+  headingRight?: React.ReactNode;
   isActive?: boolean;
   aspectRatio?: number;
   onClick?: () => void;
@@ -22,6 +23,7 @@ type PropTypes = {
 export const Slide = ({
   heading,
   headingIsFaded,
+  headingRight,
   isActive,
   aspectRatio = 16 / 9,
   onClick,
@@ -49,16 +51,21 @@ export const Slide = ({
       data-testid="slide-container"
     >
       <div className="overflow-hidden">
-        {heading && (
-          <p
-            className={cx([
-              "ui--slide-test",
-              headingIsFaded ? "font-normal" : "font-bold",
-              headingIsFaded ? "text-gray-600" : "text-inherit",
-            ])}
-          >
-            {heading}
-          </p>
+        {(heading || headingRight) && (
+          <div className="flex items-center justify-between gap-2">
+            <p
+              className={cx([
+                "ui--slide-test",
+                headingIsFaded ? "font-normal" : "font-bold",
+                headingIsFaded ? "text-gray-600" : "text-inherit",
+              ])}
+            >
+              {heading}
+            </p>
+            {headingRight && (
+              <div className="flex items-center">{headingRight}</div>
+            )}
+          </div>
         )}
         <div
           className={cx([
