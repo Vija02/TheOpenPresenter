@@ -1,3 +1,4 @@
+import { extractMediaName } from "@repo/lib";
 import {
   Button,
   OverlayToggle,
@@ -8,13 +9,13 @@ import {
 } from "@repo/ui";
 import { useCallback, useMemo } from "react";
 import { FaChevronDown, FaChevronUp } from "react-icons/fa6";
+import { MdPhotoLibrary } from "react-icons/md";
 import { VscSettingsGear, VscTrash } from "react-icons/vsc";
 
 import ImageRenderView from "../Renderer/ImageRenderView";
 import { usePluginAPI } from "../pluginApi";
 import { useAutoplay } from "../utils/useAutoplay";
 import { SettingsModal } from "./SettingsModal";
-import { UploadModal } from "./UploadModal";
 import "./index.css";
 
 const ImageRemote = () => {
@@ -95,6 +96,18 @@ const ImageRemote = () => {
     [mutableSceneData.pluginData.images, rendererData],
   );
 
+  const handleMediaPicker = useCallback(async () => {
+    const result = await pluginApi.mediaPicker.show({
+      type: "image",
+      title: "Select Image",
+    });
+
+    if (result) {
+      const { mediaId, extension } = extractMediaName(result.mediaName);
+      mutableSceneData.pluginData.images.push({ mediaId, extension });
+    }
+  }, [pluginApi.mediaPicker, mutableSceneData.pluginData.images]);
+
   return (
     <PluginScaffold
       title="Simple Image"
@@ -110,7 +123,11 @@ const ImageRemote = () => {
           <SettingsModal />
         </OverlayToggle>
       }
-      toolbar={<UploadModal />}
+      toolbar={
+        <Button size="xs" variant="pill" onClick={handleMediaPicker}>
+          <MdPhotoLibrary /> Add Image
+        </Button>
+      }
       body={
         <div className="p-3 w-full">
           <SlideGrid pluginAPI={pluginApi}>
