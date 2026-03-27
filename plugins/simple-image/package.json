@@ -16,6 +16,7 @@
     "@r2wc/react-to-web-component": "^2.0.3",
     "@repo/base-plugin": "*",
     "@repo/lib": "*",
+    "@repo/observability": "*",
     "@repo/ui": "*",
     "@tanstack/react-query": "^5.62.3",
     "@trpc/client": "^11.1.2",
@@ -29,6 +30,7 @@
     "@uppy/tus": "4.1.5",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "react-hook-form": "^7.57.0",
     "react-icons": "^5.4.0",
     "yjs": "13.6.26"
   },
