@@ -27,7 +27,7 @@ const ImageRenderer = () => {
 
   return images.map((imgSrc, i) => (
     <div
-      key={pluginApi.media.resolveMediaUrl(imgSrc)}
+      key={`${i}-${pluginApi.media.resolveMediaUrl(imgSrc)}`}
       style={{
         position: "absolute",
         width: "100vw",
