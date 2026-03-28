@@ -5,13 +5,17 @@ import { cx } from "class-variance-authority";
 import { sortBy } from "lodash-es";
 import { FaMicrophoneLines } from "react-icons/fa6";
 import { MdCoPresent, MdVolumeUp } from "react-icons/md";
+import { MdTune } from "react-icons/md";
 import { RiRemoteControlLine } from "react-icons/ri";
 import { VscAdd } from "react-icons/vsc";
 import { useLocation } from "wouter";
 
+import { useRendererSelection } from "../../contexts/rendererSelection";
 import { useNavigateWithParams } from "../../hooks/useNavigateWithParams";
 import DebugDrawer from "./Debug/DebugDrawer";
 import { PresentButton } from "./PresentButton";
+import RendererManagementModal from "./RendererManagement/RendererManagementModal";
+import RendererSelector from "./RendererManagement/RendererSelector";
 import { RendererWarning } from "./RendererWarning";
 import { ResizableBoxWrapper } from "./ResizableBoxWrapper";
 import SidebarAddSceneModal from "./SidebarAddSceneModal";
@@ -22,6 +26,7 @@ const SidebarWeb = () => {
   const [location] = useLocation();
   const navigate = useNavigateWithParams();
   const { awarenessData } = useAwareness();
+  const { selectedRendererId } = useRendererSelection();
 
   return (
     <div className="rt--sidebar-web-container">
@@ -34,10 +39,10 @@ const SidebarWeb = () => {
                 ([, value]) => value.order,
               ).map(([id, value]) => {
                 const audioIsPlaying = !!Object.values(
-                  data.renderer["1"]?.children[id] ?? {},
+                  data.renderer[selectedRendererId]?.children[id] ?? {},
                 ).find((x: PluginRendererState) => x.__audioIsPlaying);
                 const audioIsRecording = !!Object.values(
-                  data.renderer["1"]?.children[id] ?? {},
+                  data.renderer[selectedRendererId]?.children[id] ?? {},
                 ).find((x: PluginRendererState) => x.__audioIsRecording);
 
                 const isLoading = awarenessData.find(
@@ -61,7 +66,8 @@ const SidebarWeb = () => {
                     )}
                   >
                     <div>
-                      {data.renderer["1"]?.currentScene === id && (
+                      {data.renderer[selectedRendererId]?.currentScene ===
+                        id && (
                         <div className="rt--sidebar-web-current-scene-indicator" />
                       )}
                       {audioIsPlaying && <MdVolumeUp />}
@@ -90,6 +96,23 @@ const SidebarWeb = () => {
 
               <PresentButton />
             </div>
+          </div>
+          <div className="rt--sidebar-web-renderer-section">
+            <RendererSelector />
+            <OverlayToggle
+              toggler={({ onToggle }) => (
+                <Button
+                  onClick={onToggle}
+                  variant="ghost"
+                  size="mini"
+                  title="Manage Renderers"
+                >
+                  <MdTune />
+                </Button>
+              )}
+            >
+              <RendererManagementModal />
+            </OverlayToggle>
           </div>
           <div className="rt--sidebar-web-stats">
             <div>

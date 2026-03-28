@@ -6,8 +6,8 @@ import {
   PluginMetaDataProvider,
 } from "@repo/shared";
 import { useHandleKeyPress } from "@repo/shared";
-import { lazy, useEffect } from "react";
-import { Route, Switch, useParams } from "wouter";
+import { lazy, useEffect, useMemo } from "react";
+import { Route, Switch, useParams, useSearch } from "wouter";
 
 import { Body } from "./Body";
 
@@ -26,8 +26,14 @@ export default App;
 
 function Root() {
   const params = useParams();
+  const search = useSearch();
 
   const { orgSlug, projectSlug } = params;
+
+  const rendererId = useMemo(() => {
+    const searchParams = new URLSearchParams(search);
+    return searchParams.get("renderer") || "1";
+  }, [search]);
 
   return (
     <PluginMetaDataProvider
@@ -37,7 +43,7 @@ function Root() {
     >
       <ErrorProvider>
         <AudioCheckProvider>
-          <PluginDataProvider type="renderer">
+          <PluginDataProvider type="renderer" rendererId={rendererId}>
             <AwarenessProvider>
               <Inner />
             </AwarenessProvider>

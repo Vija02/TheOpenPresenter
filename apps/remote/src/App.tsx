@@ -13,6 +13,7 @@ import { Route, Switch, useParams } from "wouter";
 import "./App.css";
 import CentralContainer from "./containers/CentralContainer";
 import { TopBar } from "./containers/TopBar";
+import { useRendererSelection } from "./contexts/rendererSelection";
 
 function App() {
   return (
@@ -27,6 +28,7 @@ export default App;
 
 function Root() {
   const params = useParams();
+  const { selectedRendererId } = useRendererSelection();
 
   const { orgSlug, projectSlug } = params;
 
@@ -38,7 +40,7 @@ function Root() {
     >
       <ErrorProvider>
         <AudioCheckProvider>
-          <PluginDataProvider type="remote">
+          <PluginDataProvider type="remote" rendererId={selectedRendererId}>
             <AwarenessProvider>
               <MediaPickerWrapper>
                 <Inner />

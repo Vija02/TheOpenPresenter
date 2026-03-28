@@ -12,6 +12,7 @@ import {
 import { useMemo } from "react";
 import { useSearch } from "wouter";
 
+import { useRendererSelection } from "../../../contexts/rendererSelection";
 import { onPresentClick } from "./desktopPresent";
 import { useAllWindows } from "./useAllWindows";
 import { useAvailableMonitors } from "./useAvailableMonitors";
@@ -24,6 +25,7 @@ const PresentMonitorModal = () => {
 
   const { orgSlug, projectSlug } = usePluginMetaData();
   const search = useSearch();
+  const { selectedRendererId } = useRendererSelection();
 
   return (
     <Dialog open={isOpen ?? false} onOpenChange={onToggle ?? (() => {})}>
@@ -36,7 +38,13 @@ const PresentMonitorModal = () => {
             <div
               key={i}
               onClick={async () => {
-                await onPresentClick(orgSlug, projectSlug, i, search);
+                await onPresentClick(
+                  orgSlug,
+                  projectSlug,
+                  i,
+                  search,
+                  selectedRendererId,
+                );
                 setTimeout(async () => {
                   await refetchWindow();
                 }, 2000);
@@ -73,6 +81,7 @@ const PresentMonitorModalWrapper = ({
 
   const { orgSlug, projectSlug } = usePluginMetaData();
   const search = useSearch();
+  const { selectedRendererId } = useRendererSelection();
 
   return (
     <>
@@ -81,7 +90,13 @@ const PresentMonitorModalWrapper = ({
           <PresentButtonElement
             onClick={() => {
               if (monitors?.length === 1) {
-                onPresentClick(orgSlug, projectSlug, 0, search);
+                onPresentClick(
+                  orgSlug,
+                  projectSlug,
+                  0,
+                  search,
+                  selectedRendererId,
+                );
               } else {
                 onToggle();
               }

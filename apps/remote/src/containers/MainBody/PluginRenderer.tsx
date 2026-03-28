@@ -4,6 +4,7 @@ import {
   OverlayInfo,
   Plugin,
   PluginContext,
+  RenderData,
   State,
   WebComponentProps,
   YjsWatcher,
@@ -15,6 +16,7 @@ import {
   useUnlinkMediaFromPluginMutation,
 } from "@repo/graphql";
 import {
+  TypedMap,
   preloader,
   uuidFromMediaIdOrUUIDOrMediaName,
   uuidFromPluginIdOrUUID,
@@ -36,6 +38,7 @@ import { useDisposable } from "use-disposable";
 import { useRoute } from "wouter";
 import * as Y from "yjs";
 
+import { useRendererSelection } from "../../contexts/rendererSelection";
 import { zoomLevelStore } from "../../contexts/zoomLevel";
 import { trpcClient } from "../../trpc";
 
@@ -58,11 +61,13 @@ const PluginRenderer = React.memo(
       mainYMap,
       currentUserId,
     } = usePluginData();
+    const { selectedRendererId } = useRendererSelection();
 
+    // Include selectedRendererId in deps to recreate watcher when renderer changes
     const yjsWatcher = useDisposable(() => {
       const watcher = new YjsWatcher(mainYMap! as Y.Map<any>);
       return [watcher, () => watcher.dispose()];
-    }, [mainYMap]);
+    }, [mainYMap, selectedRendererId]);
 
     const [yjsPluginSceneData] = useState(
       getYJSPluginSceneData(sceneId, pluginId),
@@ -70,7 +75,8 @@ const PluginRenderer = React.memo(
 
     // Renderer is added through the server and requires an extra update. So we use a watcher here
     const yjsPluginRendererData = yjsWatcher?.useYjs<any>(
-      (x: State) => x.renderer?.["1"]?.children?.[sceneId]?.[pluginId],
+      (x: State) =>
+        x.renderer?.[selectedRendererId]?.children?.[sceneId]?.[pluginId],
     );
 
     const [match] = useRoute(`/${sceneId}`);
@@ -128,16 +134,28 @@ const PluginRenderer = React.memo(
       },
     });
 
-    const [overlay] = useState<OverlayInfo>({
-      getType: () => {
-        const renderer = getYJSPluginRenderer();
-        return renderer?.get("overlay")?.get("type") ?? null;
-      },
-      subscribe: (callback: () => void) => {
-        yjsWatcher?.watchYjs((x: State) => x.renderer["1"]?.overlay, callback);
-        return () => {};
-      },
-    });
+    const overlay = useMemo<OverlayInfo>(
+      () => ({
+        getType: () => {
+          const renderer = getYJSPluginRenderer(selectedRendererId);
+          return (
+            (
+              renderer?.get("overlay") as any as TypedMap<
+                NonNullable<RenderData["overlay"]>
+              >
+            )?.get("type") ?? null
+          );
+        },
+        subscribe: (callback: () => void) => {
+          yjsWatcher?.watchYjs(
+            (x: State) => x.renderer[selectedRendererId]?.overlay,
+            callback,
+          );
+          return () => {};
+        },
+      }),
+      [getYJSPluginRenderer, selectedRendererId, yjsWatcher],
+    );
 
     const Element = useMemo(() => {
       if (!viewData?.tag) {
@@ -166,7 +184,7 @@ const PluginRenderer = React.memo(
         } satisfies AwarenessContext,
         pluginContext,
         setRenderCurrentScene: () => {
-          const renderer = getYJSPluginRenderer();
+          const renderer = getYJSPluginRenderer(selectedRendererId);
           if (renderer?.get("currentScene") !== sceneId) {
             renderer?.set("currentScene", sceneId);
           }
@@ -222,6 +240,7 @@ const PluginRenderer = React.memo(
       provider,
       removeError,
       sceneId,
+      selectedRendererId,
       setAwarenessStateData,
       unlinkMediaFromPlugin,
       viewData?.tag,

@@ -93,7 +93,11 @@ export const addPlugin = async <
   PluginRendererDataType extends Record<any, any> = any,
 >(
   yState: YState,
-  { pluginName, sceneName = "" }: { pluginName: string; sceneName?: string },
+  {
+    pluginName,
+    sceneName = "",
+    rendererId = "1",
+  }: { pluginName: string; sceneName?: string; rendererId?: string },
 ) => {
   const t = createTraverser<State>(yState);
 
@@ -128,16 +132,16 @@ export const addPlugin = async <
 
   // For renderer, we want to watch because it could be delayed with the delayLoad option
   let rendererData: ObjectToTypedMap<PluginRendererDataType> = (t(
-    (x) => x.renderer["1"]?.children[sceneId]?.[pluginId],
+    (x) => x.renderer[rendererId]?.children[sceneId]?.[pluginId],
   ) ?? {}) as ObjectToTypedMap<PluginRendererDataType>;
   let rendererDataValtio = proxy({} as PluginRendererDataType);
 
   const yjsWatcher = new YjsWatcher(yState as Y.Map<any>);
   yjsWatcher.watchYjs(
-    (x: State) => x.renderer["1"]?.children[sceneId]?.[pluginId],
+    (x: State) => x.renderer[rendererId]?.children[sceneId]?.[pluginId],
     () => {
       const newRenderer = t(
-        (x) => x.renderer["1"]?.children[sceneId]?.[pluginId],
+        (x) => x.renderer[rendererId]?.children[sceneId]?.[pluginId],
       ) as ObjectToTypedMap<PluginRendererDataType>;
 
       if (newRenderer !== undefined) {
