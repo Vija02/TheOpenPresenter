@@ -2,13 +2,10 @@ import {
   AwarenessContext,
   ObjectToTypedMap,
   Plugin,
-  PluginContext,
+  RegisterOnPluginDataLoaded,
   ServerPluginApi,
-  State,
   TRPCObject,
-  YState,
   YjsWatcher,
-  createTraverser,
 } from "@repo/base-plugin/server";
 import { logger as rawLogger } from "@repo/observability";
 import { proxy } from "valtio";
@@ -65,10 +62,10 @@ const onPluginDataCreated = (
   return {};
 };
 
-const onPluginDataLoaded = (
-  pluginInfo: ObjectToTypedMap<Plugin<PluginBaseData>>,
-  context: PluginContext,
-) => {
+const onPluginDataLoaded: RegisterOnPluginDataLoaded<
+  PluginBaseData,
+  PluginRendererData
+> = (pluginInfo, context, { getRendererData }) => {
   const logger = rawLogger.child({
     context,
     plugin: pluginInfo.get("plugin"),
@@ -189,30 +186,28 @@ const onPluginDataLoaded = (
   // And also anytime a user changes
   pluginInfo.doc?.awareness.on("change", handleCurrentData);
 
-  const yState = pluginInfo.parent?.parent?.parent?.parent as YState;
-  const traverseState = createTraverser<State>(yState);
-  const rendererData = traverseState(
-    (x) =>
-      x.renderer["1"]?.children[context.sceneId]![
-        context.pluginId
-      ] as PluginRendererData,
-  );
+  const updateAudioIsRecordingOnAllRenderers = () => {
+    const isRecording = data.pluginData.recordings.some(
+      (r) => r.status === "recording",
+    );
+
+    const renderers = getRendererData();
+    for (const rendererData of Object.values(renderers)) {
+      if (rendererData.get("__audioIsRecording") !== isRecording) {
+        logger.debug(
+          { isRecording },
+          "Toggling `__audioIsRecording` on renderer",
+        );
+        rendererData.set("__audioIsRecording", isRecording);
+      }
+    }
+  };
 
   // Let's watch the data and update __audioIsRecording
-  const t = createTraverser<Plugin<PluginBaseData>>(pluginInfo);
   const yjsWatcher = new YjsWatcher(pluginInfo as Y.Map<any>);
   yjsWatcher.watchYjs(
     (x: Plugin<PluginBaseData>) => x.pluginData.recordings,
-    () => {
-      const val = t((y) => y.pluginData.recordings)
-        .toJSON()
-        .some((y) => y.status === "recording");
-
-      if (rendererData.get("__audioIsRecording") !== val) {
-        logger.debug({ isRecording: val }, "Toggling `__audioIsRecording`");
-        rendererData?.set("__audioIsRecording", val);
-      }
-    },
+    updateAudioIsRecordingOnAllRenderers,
   );
 
   return {

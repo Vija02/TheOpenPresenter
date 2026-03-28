@@ -72,6 +72,10 @@
   @apply font-medium text-lg;
 }
 
+.rt--sidebar-web-renderer-section {
+  @apply stack-row justify-center items-center gap-2 px-2 py-1 border-t-1 border-t-gray-200 shrink-0;
+}
+
 .rt--sidebar-web-debug-section button {
   @apply w-full;
 }

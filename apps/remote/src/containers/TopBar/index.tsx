@@ -7,6 +7,7 @@ import { RxCross1 } from "react-icons/rx";
 import { VscArrowLeft, VscSettingsGear, VscTrash } from "react-icons/vsc";
 import { useLocation } from "wouter";
 
+import { useRendererSelection } from "../../contexts/rendererSelection";
 import ProjectSettingsModal from "../ProjectSettingsModal";
 import SceneSettingsModal from "../SceneSettingsModal";
 import "./index.css";
@@ -14,6 +15,7 @@ import "./index.css";
 export const TopBar = () => {
   const [location] = useLocation();
   const { orgSlug, project } = usePluginMetaData();
+  const { selectedRendererId } = useRendererSelection();
 
   // When in proxy mode, use the cloud org slug for navigation back to projects
   const proxyConfig = appData.getProxyConfig();
@@ -83,8 +85,10 @@ export const TopBar = () => {
               <PopConfirm
                 onConfirm={() => {
                   delete mainState.data[selectedScene];
-                  if (mainState.renderer["1"]?.currentScene === selectedScene) {
-                    mainState.renderer["1"]!.currentScene = null;
+                  for (const renderer of Object.values(mainState.renderer)) {
+                    if (renderer?.currentScene === selectedScene) {
+                      renderer!.currentScene = null;
+                    }
                   }
                 }}
               >
@@ -101,14 +105,18 @@ export const TopBar = () => {
           size="sm"
           className={cx(
             "rt--top-bar--overlay-btn",
-            data.renderer["1"]!.overlay?.type === "clear" &&
+            data.renderer[selectedRendererId]?.overlay?.type === "clear" &&
               "rt--top-bar--selected",
           )}
           onClick={() => {
-            if (mainState.renderer["1"]!.overlay?.type === "clear") {
-              mainState.renderer["1"]!.overlay = null;
+            if (
+              mainState.renderer[selectedRendererId]?.overlay?.type === "clear"
+            ) {
+              mainState.renderer[selectedRendererId]!.overlay = null;
             } else {
-              mainState.renderer["1"]!.overlay = { type: "clear" };
+              mainState.renderer[selectedRendererId]!.overlay = {
+                type: "clear",
+              };
             }
           }}
         >
@@ -118,25 +126,29 @@ export const TopBar = () => {
           size="sm"
           className={cx(
             "rt--top-bar--overlay-btn",
-            data.renderer["1"]!.overlay?.type === "black" &&
+            data.renderer[selectedRendererId]?.overlay?.type === "black" &&
               "rt--top-bar--selected",
           )}
           onClick={() => {
-            if (mainState.renderer["1"]!.overlay?.type === "black") {
-              mainState.renderer["1"]!.overlay = null;
+            if (
+              mainState.renderer[selectedRendererId]?.overlay?.type === "black"
+            ) {
+              mainState.renderer[selectedRendererId]!.overlay = null;
             } else {
-              mainState.renderer["1"]!.overlay = { type: "black" };
+              mainState.renderer[selectedRendererId]!.overlay = {
+                type: "black",
+              };
             }
           }}
           data-testid=""
         >
           Black
         </Button>
-        {mainState.renderer["1"]!.overlay !== null && (
+        {mainState.renderer[selectedRendererId]?.overlay !== null && (
           <Button
             size="sm"
             onClick={() => {
-              mainState.renderer["1"]!.overlay = null;
+              mainState.renderer[selectedRendererId]!.overlay = null;
             }}
           >
             <RxCross1 />

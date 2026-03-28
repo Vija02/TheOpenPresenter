@@ -72,6 +72,10 @@
   @apply font-medium text-base;
 }
 
+.rt--sidebar-mobile-renderer-section {
+  @apply stack-col justify-center items-center gap-1 px-1 py-1 border-t-1 border-t-gray-200 shrink-0;
+}
+
 .rt--sidebar-mobile-debug-section {
   @apply stack-col gap-0;
 }

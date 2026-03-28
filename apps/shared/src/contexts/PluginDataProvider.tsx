@@ -34,6 +34,7 @@ type PluginDataProviderType = {
   mainYMap: YState | null;
   currentUserId: string | null;
   mainState: State | null;
+  rendererId: string;
   getYJSPluginSceneData: (
     sceneId: string,
     pluginId: string,
@@ -41,8 +42,11 @@ type PluginDataProviderType = {
   getYJSPluginRendererData: (
     sceneId: string,
     pluginId: string,
+    overrideRendererId?: string,
   ) => ObjectToTypedMap<Record<string, any>> | undefined;
-  getYJSPluginRenderer: () => ObjectToTypedMap<RenderData> | undefined;
+  getYJSPluginRenderer: (
+    overrideRendererId?: string,
+  ) => ObjectToTypedMap<RenderData> | undefined;
 };
 
 const initialData: PluginDataProviderType = {
@@ -50,6 +54,7 @@ const initialData: PluginDataProviderType = {
   mainYMap: null,
   currentUserId: null,
   mainState: null,
+  rendererId: "1",
   getYJSPluginSceneData: () => undefined,
   getYJSPluginRendererData: () => undefined,
   getYJSPluginRenderer: () => undefined,
@@ -62,9 +67,11 @@ function PluginDataProviderInner({
   children,
   provider,
   currentUserId,
+  rendererId,
 }: React.PropsWithChildren<{
   provider: HocuspocusProvider;
   currentUserId: string;
+  rendererId: string;
 }>) {
   const [bound, setBound] = useState(false);
   const mainYMap = useMemo(
@@ -94,20 +101,25 @@ function PluginDataProviderInner({
       [mainYMap],
     );
   const getYJSPluginRendererData = useCallback(
-    (sceneId: string, pluginId: string) => {
+    (sceneId: string, pluginId: string, overrideRendererId?: string) => {
+      const effectiveRendererId = overrideRendererId ?? rendererId;
       const pluginRenderData = mainYMap
         .get("renderer")
-        ?.get("1")
+        ?.get(effectiveRendererId)
         ?.get("children")
         ?.get(sceneId)
         ?.get(pluginId);
       return pluginRenderData;
     },
-    [mainYMap],
+    [mainYMap, rendererId],
   );
-  const getYJSPluginRenderer = useCallback(() => {
-    return mainYMap.get("renderer")?.get("1");
-  }, [mainYMap]);
+  const getYJSPluginRenderer = useCallback(
+    (overrideRendererId?: string) => {
+      const effectiveRendererId = overrideRendererId ?? rendererId;
+      return mainYMap.get("renderer")?.get(effectiveRendererId);
+    },
+    [mainYMap, rendererId],
+  );
 
   return (
     <PluginDataContext.Provider
@@ -116,6 +128,7 @@ function PluginDataProviderInner({
         mainYMap,
         currentUserId,
         mainState,
+        rendererId,
         getYJSPluginSceneData,
         getYJSPluginRendererData,
         getYJSPluginRenderer,
@@ -163,9 +176,11 @@ const initializeHocuspocusProvider = (projectId: string) => {
 export const PluginDataProvider = ({
   children,
   type,
+  rendererId = "1",
 }: {
   children: React.ReactNode;
   type: "remote" | "renderer";
+  rendererId?: string;
 }) => {
   const projectId = usePluginMetaData().projectId;
   const [currentUserId] = useState(v4());
@@ -229,7 +244,11 @@ export const PluginDataProvider = ({
   }
 
   return (
-    <PluginDataProviderInner provider={provider} currentUserId={currentUserId}>
+    <PluginDataProviderInner
+      provider={provider}
+      currentUserId={currentUserId}
+      rendererId={rendererId}
+    >
       {children}
     </PluginDataProviderInner>
   );

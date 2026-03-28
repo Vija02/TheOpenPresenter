@@ -450,6 +450,112 @@ const handleYjsDocumentLoad = ({
     });
   });
 
+  // Handle when new renderers are added
+  const handleNewRenderer = (
+    renderData: ObjectToTypedMap<RenderData>,
+    _rendererId: string,
+  ) => {
+    // Go through all existing scenes and set up render data for this new renderer
+    dataMap?.forEach((sectionOrScene_, sceneId) => {
+      const sectionOrScene = sectionOrScene_ as ObjectToTypedMap<any>;
+      if (sectionOrScene.get("type") === "section") {
+        return;
+      }
+
+      const scene = sectionOrScene as ObjectToTypedMap<
+        Scene<Record<string, any>>
+      >;
+
+      document?.transact(() => {
+        // Make sure that the scene & plugin is reflected in `renderer`
+        YjsState.syncRenderDataForScene({
+          renderData,
+          scene,
+          sceneId,
+          onRendererDataCreated: ({
+            pluginId,
+            pluginInfo,
+            rendererPluginMap,
+          }) => {
+            callPluginHooks({
+              registeredHooks: registeredOnRendererDataCreated,
+              hookName: "onRendererDataCreated",
+              pluginInfo,
+              callbackProps: [
+                rendererPluginMap,
+                {
+                  pluginId,
+                  sceneId,
+                  organizationId,
+                  projectId,
+                },
+              ],
+            });
+          },
+        });
+      });
+
+      // Handle scene change on this renderer
+      renderData.observe((ev) => {
+        if (ev.keysChanged.has("currentScene")) {
+          const previousScene = ev.changes.keys.get("currentScene")?.oldValue;
+          const newScene = renderData.get("currentScene");
+
+          registeredSceneVisibilityChangeEventHandler.forEach((handler) => {
+            if (handler.sceneId === previousScene) {
+              handler.callback(false);
+            } else if (handler.sceneId === newScene) {
+              handler.callback(true);
+            }
+          });
+        }
+      });
+
+      // Handle renderer load for all plugins in this scene
+      const sceneChildrenEntries = Array.from(
+        scene.get("children")?.entries()!,
+      );
+      for (const [pluginId, pluginInfo] of sceneChildrenEntries) {
+        callPluginHooks({
+          registeredHooks: registeredOnRendererDataLoaded,
+          hookName: "onRendererDataLoaded",
+          pluginInfo,
+          callbackProps: [
+            renderData.get("children")?.get(sceneId)?.get(pluginId),
+            {
+              pluginId,
+              sceneId,
+              organizationId,
+              projectId,
+            },
+            {
+              onSceneVisibilityChange: (callback) => {
+                // Register callback
+                registeredSceneVisibilityChangeEventHandler.push({
+                  sceneId,
+                  pluginId,
+                  callback,
+                });
+              },
+            },
+          ],
+        });
+      }
+    });
+  };
+
+  // Observe for new renderers being added
+  state.get("renderer")?.observe((event) => {
+    event.keys.forEach((value, rendererId) => {
+      if (value.action === "add") {
+        const renderData = state.get("renderer")?.get(rendererId);
+        if (renderData) {
+          handleNewRenderer(renderData, rendererId);
+        }
+      }
+    });
+  });
+
   // TODO: Need to handle multiple plugin in 1 scene (adding, removing)
 
   // Monitor for plain JSON insertions in development mode

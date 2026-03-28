@@ -5,9 +5,13 @@ export const onPresentClick = async (
   projectSlug: string,
   monitorIndex: number = 0,
   search?: string,
+  rendererId: string = "1",
 ) => {
   const basePath = `/render/${orgSlug}/${projectSlug}`;
-  const fullPath = search ? `${basePath}?${search}` : basePath;
+  const rendererParam = `renderer=${rendererId}`;
+  const fullPath = search
+    ? `${basePath}?${search}&${rendererParam}`
+    : `${basePath}?${rendererParam}`;
 
   await core.invoke("open_renderer", {
     url: window.location.origin + fullPath,

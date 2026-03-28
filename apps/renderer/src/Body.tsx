@@ -3,12 +3,13 @@ import {
   AwarenessStateData,
   OverlayInfo,
   PluginContext,
+  RenderData,
   Scene,
   State,
   WebComponentProps,
   YjsWatcher,
 } from "@repo/base-plugin";
-import { preloader } from "@repo/lib";
+import { TypedMap, preloader } from "@repo/lib";
 import { logger } from "@repo/observability";
 import {
   useAudioCheck,
@@ -30,12 +31,21 @@ import * as Y from "yjs";
 
 import { trpcClient } from "./trpc";
 
+const useRendererId = () => {
+  const { rendererId } = usePluginData();
+  return rendererId;
+};
+
 const Landing = lazy(() => import("./Landing"));
 
 export const Body = () => {
   const data = useData();
+  const rendererId = useRendererId();
 
-  const currentRenderer = useMemo(() => data.renderer["1"], [data.renderer]);
+  const currentRenderer = useMemo(
+    () => data.renderer[rendererId],
+    [data.renderer, rendererId],
+  );
   const currentScene = useMemo(
     () => currentRenderer?.currentScene,
     [currentRenderer?.currentScene],
@@ -57,7 +67,11 @@ export const Body = () => {
 
 const Overlay = () => {
   const data = useData();
-  const currentRenderer = useMemo(() => data.renderer["1"], [data.renderer]);
+  const rendererId = useRendererId();
+  const currentRenderer = useMemo(
+    () => data.renderer[rendererId],
+    [data.renderer, rendererId],
+  );
 
   const { ref, animationClassName, isRendered } = useAnimatePresence({
     visible: currentRenderer?.overlay?.type === "black",
@@ -86,8 +100,12 @@ const Overlay = () => {
 // TEST: All scenes should be rendered but only the main one shown
 const SceneRenderer = React.memo(({ sceneId }: { sceneId: string }) => {
   const data = useData();
+  const rendererId = useRendererId();
 
-  const currentRenderer = useMemo(() => data.renderer["1"], [data.renderer]);
+  const currentRenderer = useMemo(
+    () => data.renderer[rendererId],
+    [data.renderer, rendererId],
+  );
   const currentScene = useMemo(
     () => currentRenderer?.currentScene,
     [currentRenderer?.currentScene],
@@ -131,12 +149,14 @@ const PluginRenderer = React.memo(
       provider,
       mainYMap,
       currentUserId,
+      rendererId,
     } = usePluginData();
 
+    // Include rendererId in deps to recreate watcher when renderer changes
     const yjsWatcher = useDisposable(() => {
       const watcher = new YjsWatcher(mainYMap! as Y.Map<any>);
       return [watcher, () => watcher.dispose()];
-    }, [mainYMap]);
+    }, [mainYMap, rendererId]);
 
     const [yjsPluginSceneData] = useState(
       getYJSPluginSceneData(sceneId, pluginId),
@@ -144,7 +164,7 @@ const PluginRenderer = React.memo(
 
     // Renderer is added through the server and requires an extra update. So we use a watcher here
     const yjsPluginRendererData = yjsWatcher?.useYjs<any>(
-      (x: State) => x.renderer?.["1"]?.children?.[sceneId]?.[pluginId],
+      (x: State) => x.renderer?.[rendererId]?.children?.[sceneId]?.[pluginId],
     );
 
     const mainState = usePluginData().mainState!;
@@ -200,16 +220,28 @@ const PluginRenderer = React.memo(
       },
     });
 
-    const [overlay] = useState<OverlayInfo>({
-      getType: () => {
-        const renderer = getYJSPluginRenderer();
-        return renderer?.get("overlay")?.get("type") ?? null;
-      },
-      subscribe: (callback: () => void) => {
-        yjsWatcher?.watchYjs((x: State) => x.renderer["1"]?.overlay, callback);
-        return () => {};
-      },
-    });
+    const overlay = useMemo<OverlayInfo>(
+      () => ({
+        getType: () => {
+          const renderer = getYJSPluginRenderer(rendererId);
+          return (
+            (
+              renderer?.get("overlay") as any as TypedMap<
+                NonNullable<RenderData["overlay"]>
+              >
+            )?.get("type") ?? null
+          );
+        },
+        subscribe: (callback: () => void) => {
+          yjsWatcher?.watchYjs(
+            (x: State) => x.renderer[rendererId]?.overlay,
+            callback,
+          );
+          return () => {};
+        },
+      }),
+      [getYJSPluginRenderer, rendererId, yjsWatcher],
+    );
 
     const TagElement = useMemo(() => {
       if (!tag) {
@@ -238,7 +270,7 @@ const PluginRenderer = React.memo(
         } satisfies AwarenessContext,
         pluginContext,
         setRenderCurrentScene: () => {
-          const renderer = getYJSPluginRenderer();
+          const renderer = getYJSPluginRenderer(rendererId);
           if (renderer?.get("currentScene") !== sceneId) {
             renderer?.set("currentScene", sceneId);
           }
@@ -287,6 +319,7 @@ const PluginRenderer = React.memo(
       pluginInfo?.plugin,
       provider,
       removeError,
+      rendererId,
       sceneId,
       setAwarenessStateData,
       tag,

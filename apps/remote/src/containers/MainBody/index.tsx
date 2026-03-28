@@ -3,6 +3,7 @@ import { useData, usePluginData } from "@repo/shared";
 import { useEffect, useMemo } from "react";
 import { useLocation } from "wouter";
 
+import { useRendererSelection } from "../../contexts/rendererSelection";
 import { useNavigateWithParams } from "../../hooks/useNavigateWithParams";
 import Footer from "../Footer";
 import { EmptyScene } from "./EmptyScene";
@@ -12,6 +13,7 @@ import "./index.css";
 const MainBody = () => {
   const [location] = useLocation();
   const navigate = useNavigateWithParams();
+  const { selectedRendererId } = useRendererSelection();
 
   const data = useData();
   const mainState = usePluginData().mainState!;
@@ -29,7 +31,7 @@ const MainBody = () => {
 
   // On load, select the scene that is active if available
   useEffect(() => {
-    const currentScene = mainState.renderer["1"]?.currentScene;
+    const currentScene = mainState.renderer[selectedRendererId]?.currentScene;
     if (!selectedScene) {
       if (currentScene) {
         navigate(`/${currentScene}`, { replace: true });
@@ -37,7 +39,7 @@ const MainBody = () => {
         navigate(`/${scenes[0]![0]}`, { replace: true });
       }
     }
-  }, [mainState.renderer, navigate, scenes, selectedScene]);
+  }, [mainState.renderer, navigate, scenes, selectedRendererId, selectedScene]);
 
   return (
     <div className="rt--main-body-container">
