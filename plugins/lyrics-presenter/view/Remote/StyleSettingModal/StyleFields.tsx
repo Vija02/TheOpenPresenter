@@ -61,7 +61,7 @@ const OverrideIndicator = ({
       type="button"
       variant="ghost"
       size="icon"
-      className="h-5 w-5 text-muted-foreground hover:text-destructive"
+      className="h-5 w-5 text-secondary hover:text-fill-warning-hover"
       onClick={onReset}
       title={`Reset ${label ?? "this field"} to use global style`}
     >
@@ -279,7 +279,7 @@ export const StyleFields = ({
                 />
               )}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-secondary">
               Improve text visibility over video backgrounds
             </p>
             <div className="flex flex-col gap-2">
