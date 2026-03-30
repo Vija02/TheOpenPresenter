@@ -224,13 +224,7 @@ const PluginRenderer = React.memo(
       () => ({
         getType: () => {
           const renderer = getYJSPluginRenderer(rendererId);
-          return (
-            (
-              renderer?.get("overlay") as any as TypedMap<
-                NonNullable<RenderData["overlay"]>
-              >
-            )?.get("type") ?? null
-          );
+          return renderer?.get("overlay")?.get("type") ?? null;
         },
         subscribe: (callback: () => void) => {
           yjsWatcher?.watchYjs(

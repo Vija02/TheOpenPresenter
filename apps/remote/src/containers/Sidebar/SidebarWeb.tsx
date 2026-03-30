@@ -3,15 +3,17 @@ import { useAwareness, useData } from "@repo/shared";
 import { Button, OverlayToggle } from "@repo/ui";
 import { cx } from "class-variance-authority";
 import { sortBy } from "lodash-es";
+import { useMemo } from "react";
 import { FaMicrophoneLines } from "react-icons/fa6";
 import { MdCoPresent, MdVolumeUp } from "react-icons/md";
 import { MdTune } from "react-icons/md";
 import { RiRemoteControlLine } from "react-icons/ri";
-import { VscAdd } from "react-icons/vsc";
+import { VscAdd, VscEyeClosed } from "react-icons/vsc";
 import { useLocation } from "wouter";
 
 import { useRendererSelection } from "../../contexts/rendererSelection";
 import { useNavigateWithParams } from "../../hooks/useNavigateWithParams";
+import { getSceneOwnershipStatus } from "../../util/sceneOwnership";
 import DebugDrawer from "./Debug/DebugDrawer";
 import { PresentButton } from "./PresentButton";
 import RendererManagementModal from "./RendererManagement/RendererManagementModal";
@@ -28,6 +30,11 @@ const SidebarWeb = () => {
   const { awarenessData } = useAwareness();
   const { selectedRendererId } = useRendererSelection();
 
+  const ownedScenes = useMemo(
+    () => data.renderer[selectedRendererId]?.ownedScenes,
+    [data.renderer, selectedRendererId],
+  );
+
   return (
     <div className="rt--sidebar-web-container">
       <ResizableBoxWrapper>
@@ -38,6 +45,15 @@ const SidebarWeb = () => {
                 Object.entries(data.data),
                 ([, value]) => value.order,
               ).map(([id, value]) => {
+                const { owned, visible } = getSceneOwnershipStatus(
+                  ownedScenes,
+                  id,
+                );
+
+                if (!owned) {
+                  return null;
+                }
+
                 const audioIsPlaying = !!Object.values(
                   data.renderer[selectedRendererId]?.children[id] ?? {},
                 ).find((x: PluginRendererState) => x.__audioIsPlaying);
@@ -63,6 +79,7 @@ const SidebarWeb = () => {
                       location.includes(id)
                         ? "rt--sidebar-web-scene-item__active"
                         : "rt--sidebar-web-scene-item__inactive",
+                      !visible && "opacity-50",
                     )}
                   >
                     <div>
@@ -76,9 +93,14 @@ const SidebarWeb = () => {
                       )}
                       <p>{value.name}</p>
                     </div>
-                    {isLoading && (
-                      <div className="rt--sidebar-web-loading-indicator" />
-                    )}
+                    <div>
+                      {isLoading && (
+                        <div className="rt--sidebar-web-loading-indicator" />
+                      )}
+                      {!visible && (
+                        <VscEyeClosed className="rt--sidebar-web-hidden-icon" />
+                      )}
+                    </div>
                   </div>
                 );
               })}

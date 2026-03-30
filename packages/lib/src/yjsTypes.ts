@@ -12,16 +12,13 @@ export interface TypedMap<Data extends Record<string, unknown>>
   doc: Document | null;
 }
 
-export type ObjectToTypedMap<T> =
-  T extends Array<any>
-    ? TypedArray<T>
+export type ObjectToTypedMap<T> = T extends null | undefined
+  ? T
+  : T extends Array<infer Item>
+    ? TypedArray<ObjectToTypedMap<Item>[]>
     : T extends Record<any, any>
       ? TypedMap<{
-          [K in keyof T]: T[K] extends Array<any>
-            ? TypedArray<T[K]>
-            : T[K] extends Record<any, any>
-              ? ObjectToTypedMap<T[K]>
-              : T[K];
+          [K in keyof T]: ObjectToTypedMap<T[K]>;
         }>
       : T;
 

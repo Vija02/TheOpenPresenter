@@ -3,15 +3,17 @@ import { useAwareness, useData } from "@repo/shared";
 import { Button, OverlayToggle } from "@repo/ui";
 import { cx } from "class-variance-authority";
 import { sortBy } from "lodash-es";
+import { useMemo } from "react";
 import { FaMicrophoneLines } from "react-icons/fa6";
 import { MdCoPresent, MdVolumeUp } from "react-icons/md";
 import { MdTune } from "react-icons/md";
 import { RiRemoteControlLine } from "react-icons/ri";
-import { VscAdd } from "react-icons/vsc";
+import { VscAdd, VscEyeClosed } from "react-icons/vsc";
 import { useLocation } from "wouter";
 
 import { useRendererSelection } from "../../contexts/rendererSelection";
 import { useNavigateWithParams } from "../../hooks/useNavigateWithParams";
+import { getSceneOwnershipStatus } from "../../util/sceneOwnership";
 import DebugDrawer from "./Debug/DebugDrawer";
 import { PresentButton } from "./PresentButton";
 import RendererManagementModal from "./RendererManagement/RendererManagementModal";
@@ -27,6 +29,11 @@ const SidebarMobile = () => {
   const { awarenessData } = useAwareness();
   const { selectedRendererId } = useRendererSelection();
 
+  const ownedScenes = useMemo(
+    () => data.renderer[selectedRendererId]?.ownedScenes,
+    [data.renderer, selectedRendererId],
+  );
+
   return (
     <div className="rt--sidebar-mobile-container">
       <div className="rt--sidebar-mobile-scene-container">
@@ -34,6 +41,15 @@ const SidebarMobile = () => {
           <div className="rt--sidebar-mobile-scene-container">
             {sortBy(Object.entries(data.data), ([, value]) => value.order).map(
               ([id, value]) => {
+                const { owned, visible } = getSceneOwnershipStatus(
+                  ownedScenes,
+                  id,
+                );
+
+                if (!owned) {
+                  return null;
+                }
+
                 const audioIsPlaying = !!Object.values(
                   data.renderer[selectedRendererId]?.children[id] ?? {},
                 ).find((x: PluginRendererState) => x.__audioIsPlaying);
@@ -56,22 +72,29 @@ const SidebarMobile = () => {
                       location.includes(id)
                         ? "rt--sidebar-mobile-scene-item__active"
                         : "rt--sidebar-mobile-scene-item__inactive",
+                      !visible && "opacity-50",
                     )}
                     onClick={() => {
                       navigate(`/${id}`);
                     }}
                   >
-                    {isLoading && (
-                      <div className="rt--sidebar-mobile-loading-indicator" />
-                    )}
-                    {data.renderer[selectedRendererId]?.currentScene === id && (
-                      <div className="rt--sidebar-mobile-current-scene-indicator" />
-                    )}
-                    <p>{value.name}</p>
+                    <div>
+                      {isLoading && (
+                        <div className="rt--sidebar-mobile-loading-indicator" />
+                      )}
+                      {data.renderer[selectedRendererId]?.currentScene ===
+                        id && (
+                        <div className="rt--sidebar-mobile-current-scene-indicator" />
+                      )}
+                      <p>{value.name}</p>
+                    </div>
                     <div>
                       {audioIsPlaying && <MdVolumeUp />}
                       {audioIsRecording && (
                         <FaMicrophoneLines className="rt--sidebar-mobile-recording-icon" />
+                      )}
+                      {!visible && (
+                        <VscEyeClosed className="rt--sidebar-mobile-hidden-icon" />
                       )}
                     </div>
                   </div>

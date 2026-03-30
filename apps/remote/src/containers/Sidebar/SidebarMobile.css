@@ -44,8 +44,16 @@
   @apply text-xs text-center break-words w-full font-medium text-ellipsis overflow-hidden;
 }
 
+.rt--sidebar-mobile-scene-item > div:first-child {
+  @apply stack-row items-center gap-1;
+}
+
 .rt--sidebar-mobile-scene-item > div:last-child {
-  @apply stack-row;
+  @apply stack-row items-center gap-1;
+}
+
+.rt--sidebar-mobile-scene-item .rt--sidebar-mobile-hidden-icon {
+  @apply text-tertiary;
 }
 
 .rt--sidebar-mobile-scene-item .rt--sidebar-mobile-recording-icon {
