@@ -1,7 +1,12 @@
 import { OwnedScene } from "@repo/base-plugin";
+import { ObjectToTypedMap } from "@repo/lib";
 
 export const getSceneOwnershipStatus = (
-  ownedScenes: Record<string, OwnedScene> | null | undefined,
+  ownedScenes:
+    | ObjectToTypedMap<Record<string, OwnedScene>>
+    | Record<string, OwnedScene>
+    | null
+    | undefined,
   sceneId: string,
 ): { owned: boolean; visible: boolean } => {
   // If ownedScenes is null, renderer owns all and all are visible
@@ -9,10 +14,17 @@ export const getSceneOwnershipStatus = (
     return { owned: true, visible: true };
   }
 
-  const owned = ownedScenes[sceneId];
+  const owned =
+    "get" in ownedScenes
+      ? ownedScenes?.get(sceneId)
+      : (ownedScenes?.[sceneId] ?? null);
+
   if (!owned) {
     return { owned: false, visible: false };
   }
 
-  return { owned: true, visible: owned.visible };
+  return {
+    owned: true,
+    visible: "get" in owned ? owned.get("visible") : owned.visible,
+  };
 };
