@@ -15,9 +15,9 @@ export const getSceneOwnershipStatus = (
   }
 
   const owned =
-    "get" in ownedScenes
+    "get" in ownedScenes && typeof ownedScenes.get === "function"
       ? ownedScenes?.get(sceneId)
-      : (ownedScenes?.[sceneId] ?? null);
+      : ((ownedScenes as Record<string, OwnedScene>)?.[sceneId] ?? null);
 
   if (!owned) {
     return { owned: false, visible: false };
@@ -25,6 +25,9 @@ export const getSceneOwnershipStatus = (
 
   return {
     owned: true,
-    visible: "get" in owned ? owned.get("visible") : owned.visible,
+    visible:
+      ("get" in owned && typeof owned.get === "function"
+        ? owned.get("visible")
+        : (owned as OwnedScene).visible) ?? false,
   };
 };
