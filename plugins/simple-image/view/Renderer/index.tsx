@@ -30,8 +30,8 @@ const ImageRenderer = () => {
       key={`${i}-${pluginApi.media.resolveMediaUrl(imgSrc)}`}
       style={{
         position: "absolute",
-        width: "100vw",
-        height: "100dvh",
+        width: "100%",
+        height: "100%",
         opacity: activeIndex === i ? 1 : 0,
       }}
     >
