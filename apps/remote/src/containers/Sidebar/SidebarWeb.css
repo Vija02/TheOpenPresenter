@@ -44,6 +44,14 @@
   @apply stack-row overflow-hidden;
 }
 
+.rt--sidebar-web-scene-item > div:last-child {
+  @apply stack-row items-center gap-1;
+}
+
+.rt--sidebar-web-scene-item .rt--sidebar-web-hidden-icon {
+  @apply text-tertiary;
+}
+
 .rt--sidebar-web-scene-item .rt--sidebar-web-recording-icon {
   @apply text-red-600;
 }

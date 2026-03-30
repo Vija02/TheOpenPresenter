@@ -5,6 +5,7 @@ import * as Y from "yjs";
 
 import {
   ObjectToTypedMap,
+  OwnedScene,
   Plugin,
   RenderData,
   Scene,
@@ -32,6 +33,8 @@ const createEmptyState = () => {
         currentScene: null,
         overlay: null,
         children: {},
+        layout: null,
+        ownedScenes: null,
       },
     },
   } satisfies State);
@@ -88,6 +91,14 @@ const syncRenderDataForScene = ({
           Record<string, Record<string, any>>
         >,
       );
+
+    // Add scene to ownedScenes for renderers with explicit ownership
+    const ownedScenes = renderData.get("ownedScenes");
+    if (ownedScenes !== null && ownedScenes !== undefined) {
+      const ownedSceneEntry = new Y.Map();
+      ownedSceneEntry.set("visible", true);
+      ownedScenes.set(sceneId, ownedSceneEntry as ObjectToTypedMap<OwnedScene>);
+    }
   } else {
     // Otherwise, this means that either the scene already exists
     // Or that we don't need to do anything if the plugin is also already there

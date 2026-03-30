@@ -47,10 +47,15 @@ export type Plugin<T = Record<string, any>> = {
 
 export type Renderer = Record<string, RenderData>;
 
+export type OwnedScene = {
+  visible: boolean;
+};
+
 export type RenderData<T = Record<string, any>> = {
   currentScene: UUID | null;
   overlay: { type: "black" | "white" | "clear" } | null;
   children: Record<UUID, Record<UUID, T>>;
+  ownedScenes: Record<UUID, OwnedScene> | null;
 };
 
 export type PluginRendererState = {

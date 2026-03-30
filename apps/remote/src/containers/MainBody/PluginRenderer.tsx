@@ -41,6 +41,7 @@ import * as Y from "yjs";
 import { useRendererSelection } from "../../contexts/rendererSelection";
 import { zoomLevelStore } from "../../contexts/zoomLevel";
 import { trpcClient } from "../../trpc";
+import { getSceneOwnershipStatus } from "../../util/sceneOwnership";
 
 const PluginRenderer = React.memo(
   ({
@@ -138,13 +139,7 @@ const PluginRenderer = React.memo(
       () => ({
         getType: () => {
           const renderer = getYJSPluginRenderer(selectedRendererId);
-          return (
-            (
-              renderer?.get("overlay") as any as TypedMap<
-                NonNullable<RenderData["overlay"]>
-              >
-            )?.get("type") ?? null
-          );
+          return renderer?.get("overlay")?.get("type") ?? null;
         },
         subscribe: (callback: () => void) => {
           yjsWatcher?.watchYjs(
@@ -185,6 +180,11 @@ const PluginRenderer = React.memo(
         pluginContext,
         setRenderCurrentScene: () => {
           const renderer = getYJSPluginRenderer(selectedRendererId);
+          const ownedScenes = renderer?.get("ownedScenes");
+          // Don't allow setting currentScene to a hidden scene
+          if (!getSceneOwnershipStatus(ownedScenes, sceneId).visible) {
+            return;
+          }
           if (renderer?.get("currentScene") !== sceneId) {
             renderer?.set("currentScene", sceneId);
           }
