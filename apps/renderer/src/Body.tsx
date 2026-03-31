@@ -1,15 +1,17 @@
 import {
   AwarenessContext,
   AwarenessStateData,
+  LayoutItem,
   OverlayInfo,
   PluginContext,
-  RenderData,
+  RendererLayout,
   Scene,
+  SceneLayoutPosition,
   State,
   WebComponentProps,
-  YjsWatcher,
+  YjsWatcher
 } from "@repo/base-plugin";
-import { TypedMap, preloader } from "@repo/lib";
+import { preloader } from "@repo/lib";
 import { logger } from "@repo/observability";
 import {
   useAudioCheck,
@@ -50,6 +52,40 @@ export const Body = () => {
     () => currentRenderer?.currentScene,
     [currentRenderer?.currentScene],
   );
+  const layout = useMemo(
+    () => currentRenderer?.layout as RendererLayout | null | undefined,
+    [currentRenderer?.layout],
+  );
+
+  if (layout?.enabled) {
+    return (
+      <>
+        <Overlay />
+        <LayoutContainer layout={layout}>
+          {layout.items.map((item: LayoutItem) => {
+            if (item.type === "screenItem") {
+              return (
+                <ScreenRenderer
+                  key={item.id}
+                  sourceRendererId={item.sourceRendererId}
+                  layoutPosition={item.position}
+                />
+              );
+            }
+
+            return (
+              <SceneRenderer
+                key={item.id}
+                sceneId={item.sceneId!}
+                sourceRendererId={item.sourceRendererId}
+                layoutPosition={item.position}
+              />
+            );
+          })}
+        </LayoutContainer>
+      </>
+    );
+  }
 
   if (!currentScene) {
     return <Landing />;
@@ -97,50 +133,185 @@ const Overlay = () => {
   );
 };
 
-// TEST: All scenes should be rendered but only the main one shown
-const SceneRenderer = React.memo(({ sceneId }: { sceneId: string }) => {
-  const data = useData();
-  const rendererId = useRendererId();
+// Enforces aspect ratio and centers content
+const LayoutContainer = React.memo(
+  ({
+    layout,
+    children,
+  }: {
+    layout: RendererLayout;
+    children: React.ReactNode;
+  }) => {
+    const aspectWidth = layout.aspectRatio?.width ?? 16;
+    const aspectHeight = layout.aspectRatio?.height ?? 9;
 
-  const currentRenderer = useMemo(
-    () => data.renderer[rendererId],
-    [data.renderer, rendererId],
-  );
-  const currentScene = useMemo(
-    () => currentRenderer?.currentScene,
-    [currentRenderer?.currentScene],
-  );
-
-  return (
-    <div
-      style={{ position: "absolute", zIndex: currentScene === sceneId ? 1 : 0 }}
-      {...(currentScene === sceneId
-        ? {
-            "data-testid": "current-scene",
-          }
-        : {})}
-    >
+    return (
       <div
-        className={cx(
-          currentScene === sceneId
-            ? "transition-fade-in"
-            : "transition-fade-out delay-[400ms]",
-        )}
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: "#000",
+        }}
       >
-        {Object.keys(currentRenderer?.children[sceneId] ?? {}).map(
-          (pluginId) => (
-            <ErrorBoundary key={pluginId} FallbackComponent={ErrorAlert}>
-              <PluginRenderer pluginId={pluginId} sceneId={sceneId} />
-            </ErrorBoundary>
-          ),
-        )}
+        <div
+          style={{
+            position: "relative",
+            width: "100%",
+            height: "100%",
+            maxWidth: `calc(100vh * ${aspectWidth} / ${aspectHeight})`,
+            maxHeight: `calc(100vw * ${aspectHeight} / ${aspectWidth})`,
+            aspectRatio: `${aspectWidth} / ${aspectHeight}`,
+            overflow: "hidden",
+          }}
+        >
+          {children}
+        </div>
       </div>
-    </div>
-  );
-});
+    );
+  },
+);
+
+// Mirror another renderer's current scene
+const ScreenRenderer = React.memo(
+  ({
+    sourceRendererId,
+    layoutPosition,
+  }: {
+    sourceRendererId: string;
+    layoutPosition: SceneLayoutPosition;
+  }) => {
+    const data = useData();
+
+    const sourceRenderer = useMemo(
+      () => data.renderer[sourceRendererId],
+      [data.renderer, sourceRendererId],
+    );
+    const currentSceneId = useMemo(
+      () => sourceRenderer?.currentScene,
+      [sourceRenderer?.currentScene],
+    );
+
+    if (!currentSceneId) {
+      return null;
+    }
+
+    return (
+      <SceneRenderer
+        sceneId={currentSceneId}
+        sourceRendererId={sourceRendererId}
+        layoutPosition={layoutPosition}
+      />
+    );
+  },
+);
+
+// Renders a scene, optionally at a specific layout position & renderer
+const SceneRenderer = React.memo(
+  ({
+    sceneId,
+    sourceRendererId,
+    layoutPosition,
+  }: {
+    sceneId: string;
+    sourceRendererId?: string;
+    layoutPosition?: SceneLayoutPosition;
+  }) => {
+    const data = useData();
+    const rendererId = useRendererId();
+
+    // Use source renderer if specified, otherwise use current renderer
+    const effectiveRendererId = sourceRendererId || rendererId;
+
+    const currentRenderer = useMemo(
+      () => data.renderer[rendererId],
+      [data.renderer, rendererId],
+    );
+    const sourceRenderer = useMemo(
+      () => data.renderer[effectiveRendererId],
+      [data.renderer, effectiveRendererId],
+    );
+    const currentScene = useMemo(
+      () => currentRenderer?.currentScene,
+      [currentRenderer?.currentScene],
+    );
+
+    const pluginIds = useMemo(
+      () => Object.keys(sourceRenderer?.children[sceneId] ?? {}),
+      [sourceRenderer?.children, sceneId],
+    );
+
+    const isCurrentScene = currentScene === sceneId;
+    const isLayoutMode = !!layoutPosition;
+
+    const containerStyle: React.CSSProperties = isLayoutMode
+      ? {
+          // Layout mode
+          position: "absolute",
+          left: `${layoutPosition.x}%`,
+          top: `${layoutPosition.y}%`,
+          width: `${layoutPosition.width}%`,
+          height: `${layoutPosition.height}%`,
+          overflow: "hidden",
+        }
+      : {
+          // Normal mode
+          position: "absolute",
+          zIndex: isCurrentScene ? 1 : 0,
+        };
+
+    return (
+      <div
+        style={containerStyle}
+        {...(isCurrentScene
+          ? {
+              "data-testid": "current-scene",
+            }
+          : {})}
+      >
+        <div
+          className={cx(
+            // Only apply fade transitions in normal mode
+            !isLayoutMode &&
+              (isCurrentScene
+                ? "transition-fade-in"
+                : "transition-fade-out delay-[400ms]"),
+            "w-full h-full",
+          )}
+        >
+          {pluginIds.map((pluginId) => (
+            <ErrorBoundary key={pluginId} FallbackComponent={ErrorAlert}>
+              <PluginRenderer
+                pluginId={pluginId}
+                sceneId={sceneId}
+                sourceRendererId={effectiveRendererId}
+                layoutPosition={layoutPosition}
+              />
+            </ErrorBoundary>
+          ))}
+        </div>
+      </div>
+    );
+  },
+);
 
 const PluginRenderer = React.memo(
-  ({ pluginId, sceneId }: { pluginId: string; sceneId: string }) => {
+  ({
+    pluginId,
+    sceneId,
+    sourceRendererId,
+    layoutPosition,
+  }: {
+    pluginId: string;
+    sceneId: string;
+    sourceRendererId?: string;
+    layoutPosition?: SceneLayoutPosition;
+  }) => {
     const pluginDivRef = useRef<HTMLDivElement>(null);
     const { pluginMeta, orgId, projectId } = usePluginMetaData();
     const {
@@ -152,11 +323,13 @@ const PluginRenderer = React.memo(
       rendererId,
     } = usePluginData();
 
+    const effectiveRendererId = sourceRendererId || rendererId;
+
     // Include rendererId in deps to recreate watcher when renderer changes
     const yjsWatcher = useDisposable(() => {
       const watcher = new YjsWatcher(mainYMap! as Y.Map<any>);
       return [watcher, () => watcher.dispose()];
-    }, [mainYMap, rendererId]);
+    }, [mainYMap, effectiveRendererId]);
 
     const [yjsPluginSceneData] = useState(
       getYJSPluginSceneData(sceneId, pluginId),
@@ -164,7 +337,8 @@ const PluginRenderer = React.memo(
 
     // Renderer is added through the server and requires an extra update. So we use a watcher here
     const yjsPluginRendererData = yjsWatcher?.useYjs<any>(
-      (x: State) => x.renderer?.[rendererId]?.children?.[sceneId]?.[pluginId],
+      (x: State) =>
+        x.renderer?.[effectiveRendererId]?.children?.[sceneId]?.[pluginId],
     );
 
     const mainState = usePluginData().mainState!;
@@ -327,8 +501,8 @@ const PluginRenderer = React.memo(
         id={`pl-${pluginInfo?.plugin}`}
         key={pluginId}
         style={{
-          width: "100vw",
-          height: "100dvh",
+          width: layoutPosition ? "100%" : "100vw",
+          height: layoutPosition ? "100%" : "100dvh",
           userSelect: "none",
           pointerEvents: "none",
         }}
