@@ -201,14 +201,11 @@ const LayoutEditorModal = ({
                   (drag to move, drag corners to resize)
                 </span>
               </p>
-              {/* {rendererLayout && (
-                <InteractiveLayoutEditor
-                  aspectRatio={rendererLayout.aspectRatio}
-                  items={rendererLayout.items}
-                  scenes={data.data}
-                  onItemPositionChange={handlePositionChange}
-                />
-              )} */}
+              <InteractiveLayoutEditor
+                aspectRatio={rendererLayout.aspectRatio}
+                items={rendererLayoutItems}
+                onItemPositionChange={handlePositionChange}
+              />
             </div>
           </div>
         </DialogBody>
