@@ -4,13 +4,14 @@ import {
   ServerPluginApi,
   TRPCObject,
 } from "@repo/base-plugin/server";
+import * as Y from "yjs";
 
 import {
   pluginName,
   remoteWebComponentTag,
   rendererWebComponentTag,
 } from "./consts";
-import { PluginBaseData, PluginRendererData } from "./types";
+import { PluginRendererData } from "./types";
 
 export const init = (serverPluginApi: ServerPluginApi) => {
   serverPluginApi.registerTrpcAppRouter(getAppRouter);
@@ -18,7 +19,7 @@ export const init = (serverPluginApi: ServerPluginApi) => {
   serverPluginApi.onRendererDataCreated(pluginName, onRendererDataCreated);
   serverPluginApi.registerSceneCreator(pluginName, {
     title: "Timer",
-    description: "Show a timer on the screen",
+    description: "Timer with rundown, wrap-up colors, and multiple modes",
     categories: ["Display"],
   });
 
@@ -40,11 +41,16 @@ export const init = (serverPluginApi: ServerPluginApi) => {
   );
 };
 
-const onPluginDataCreated = (
-  pluginInfo: ObjectToTypedMap<Plugin<PluginBaseData>>,
-) => {
-  // 5m timer
-  pluginInfo.get("pluginData")?.set("timerDuration", 5 * 60 * 1000);
+const onPluginDataCreated = (pluginInfo: ObjectToTypedMap<Plugin>) => {
+  const pluginData = pluginInfo.get("pluginData");
+
+  // Initialize empty timers array (client will add default timer if needed)
+  pluginData?.set("timers", new Y.Array());
+
+  // Set default settings
+  pluginData?.set("showProgressBar", true);
+  pluginData?.set("defaultWrapUpYellow", 60);
+  pluginData?.set("defaultWrapUpRed", 30);
 
   return {};
 };
@@ -52,8 +58,11 @@ const onPluginDataCreated = (
 const onRendererDataCreated = (
   rendererData: ObjectToTypedMap<Partial<PluginRendererData>>,
 ) => {
+  rendererData.set("activeTimerIndex", 0);
   rendererData.set("isRunning", false);
   rendererData.set("timeStarted", null);
+  rendererData.set("timeAdjustment", 0);
+  rendererData.set("isBlackout", false);
 
   return {};
 };
@@ -65,3 +74,4 @@ const getAppRouter = (t: TRPCObject) => {
 export type AppRouter = ReturnType<typeof getAppRouter>;
 
 export * from "./types";
+export * from "./timerUtils";

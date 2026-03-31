@@ -1,10 +1,69 @@
-export type PluginBaseData = {
-  // Millisecond
-  timerDuration: number;
+// Timer display modes
+export type TimerMode =
+  | "countdown"
+  | "countup"
+  | "timeOfDay"
+  | "countdownTod"
+  | "countupTod";
+
+// What happens when timer reaches zero
+export type OvertimeBehavior = "stop" | "continue" | "hide";
+
+// Individual timer in the rundown
+export type TimerItem = {
+  id: string;
+  title: string;
+  // Duration in milliseconds
+  duration: number;
+  // How the timer is displayed
+  mode: TimerMode;
+  // What happens at zero
+  overtimeBehavior: OvertimeBehavior;
+  // Seconds before end to turn yellow (warning)
+  wrapUpYellow: number;
+  // Seconds before end to turn red (critical)
+  wrapUpRed: number;
 };
 
+// Scene data - persisted configuration
+export type PluginBaseData = {
+  timers: TimerItem[];
+  // Whether to show progress bar on renderer
+  showProgressBar: boolean;
+  // Default wrap-up times for new timers (in seconds)
+  defaultWrapUpYellow: number;
+  defaultWrapUpRed: number;
+};
+
+// Renderer data - runtime state
 export type PluginRendererData = {
+  // Which timer is currently selected/displayed
+  activeTimerIndex: number;
+  // Whether the timer is running
   isRunning: boolean;
-  // Unix timestamp
+  // Unix timestamp when timer was started (null if not running)
   timeStarted: number | null;
+  // Time adjustment from tweak/nudge (in milliseconds, can be negative)
+  timeAdjustment: number;
+  // Whether display is blacked out
+  isBlackout: boolean;
+};
+
+// Color states for the timer display
+export type TimerColorState = "normal" | "yellow" | "red" | "overtime";
+
+// Timer mode labels for UI
+export const TIMER_MODE_LABELS: Record<TimerMode, string> = {
+  countdown: "Countdown",
+  countup: "Count Up",
+  timeOfDay: "Time of Day",
+  countdownTod: "Countdown + ToD",
+  countupTod: "Count Up + ToD",
+};
+
+// Overtime behavior labels for UI
+export const OVERTIME_BEHAVIOR_LABELS: Record<OvertimeBehavior, string> = {
+  stop: "Stop at Zero",
+  continue: "Continue (Negative)",
+  hide: "Hide at Zero",
 };

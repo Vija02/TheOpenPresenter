@@ -8930,6 +8930,7 @@ __metadata:
   resolution: "@repo/plugin-timer@workspace:plugins/timer"
   dependencies:
     "@r2wc/react-to-web-component": "npm:^2.0.3"
+    "@react-hook/size": "npm:^2.1.2"
     "@repo/base-plugin": "npm:*"
     "@repo/eslint-config": "npm:*"
     "@repo/prettier-config": "npm:*"
@@ -8941,6 +8942,7 @@ __metadata:
     "@trpc/client": "npm:^11.1.2"
     "@trpc/react-query": "npm:^11.1.2"
     "@trpc/server": "npm:^11.1.2"
+    "@types/lodash-es": "npm:^4.17.12"
     "@types/postcss-prefix-selector": "npm:^1.16.3"
     "@types/react": "npm:^19.1.2"
     "@types/react-dom": "npm:^19.1.3"
@@ -8948,11 +8950,13 @@ __metadata:
     autoprefixer: "npm:^10.4.21"
     concurrently: "npm:^9.1.2"
     eslint: "npm:^8.57.1"
+    lodash-es: "npm:^4.17.21"
+    ohash: "npm:^2.0.11"
     pkgroll: "npm:2.5.1"
     postcss-prefix-selector: "npm:^2.1.1"
     react: "npm:^19.1.0"
-    react-countdown: "npm:^2.3.6"
     react-dom: "npm:^19.1.0"
+    react-icons: "npm:^5.4.0"
     vite: "npm:6.3.5"
     yjs: "npm:13.6.26"
   languageName: unknown
@@ -28036,7 +28040,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"prop-types@npm:15.x, prop-types@npm:^15, prop-types@npm:^15.5.8, prop-types@npm:^15.6.0, prop-types@npm:^15.6.2, prop-types@npm:^15.7.2, prop-types@npm:^15.8.1":
+"prop-types@npm:15.x, prop-types@npm:^15, prop-types@npm:^15.5.8, prop-types@npm:^15.6.0, prop-types@npm:^15.6.2, prop-types@npm:^15.8.1":
   version: 15.8.1
   resolution: "prop-types@npm:15.8.1"
   dependencies:
@@ -28535,18 +28539,6 @@ __metadata:
     react: ">=16.8.0"
     react-dom: ">=16.8.0"
   checksum: 10c0/48eb73cf71e10841c2a61b6b06ab81da9fffa9876134c239bfdebcf348ce2a47e56b146338e35dfb03512c85966bfc9a53844fc56bc50154e71f8daee59ff6f0
-  languageName: node
-  linkType: hard
-
-"react-countdown@npm:^2.3.6":
-  version: 2.3.6
-  resolution: "react-countdown@npm:2.3.6"
-  dependencies:
-    prop-types: "npm:^15.7.2"
-  peerDependencies:
-    react: ">= 15"
-    react-dom: ">= 15"
-  checksum: 10c0/defb75cb9802c499eb0d5f6c8c6e4269de1005f9c05d5162bccf45063782fd2f5f87acd95d11f70e623fa75085a546b9d0fb0df27c5287ed6a86334342d903cf
   languageName: node
   linkType: hard
 
