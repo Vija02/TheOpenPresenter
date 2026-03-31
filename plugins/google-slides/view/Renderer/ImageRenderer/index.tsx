@@ -14,6 +14,9 @@ export const ImageRenderer = () => {
     (x) => x.pluginData.thumbnailLinks,
   );
 
+  // Get derivation offset for confidence monitor mode
+  const derivationOffset = pluginApi.renderer.useDerivationOffset();
+
   const baseIndex = useMemo(
     () =>
       calculateBaseSlideIndex({
@@ -28,16 +31,35 @@ export const ImageRenderer = () => {
     useAutoplay(baseIndex);
 
   const activeIndex = useMemo(() => {
+    let index: number;
     if (
       shouldAutoPlay &&
       calculatedAutoplaySlideIndex !== null &&
       calculatedAutoplaySlideIndex !== undefined
     ) {
-      return calculatedAutoplaySlideIndex;
+      index = calculatedAutoplaySlideIndex;
+    } else {
+      index = baseIndex;
     }
 
-    return baseIndex;
-  }, [shouldAutoPlay, calculatedAutoplaySlideIndex, baseIndex]);
+    // Apply derivation offset
+    if (derivationOffset !== 0) {
+      const derivedIndex = index + derivationOffset;
+      // Return -1 if out of bounds (shows nothing)
+      if (derivedIndex < 0 || derivedIndex >= thumbnailLinks.length) {
+        return -1;
+      }
+      return derivedIndex;
+    }
+
+    return index;
+  }, [
+    shouldAutoPlay,
+    calculatedAutoplaySlideIndex,
+    baseIndex,
+    derivationOffset,
+    thumbnailLinks.length,
+  ]);
 
   const setAwarenessStateData = pluginApi.awareness.setAwarenessStateData;
 

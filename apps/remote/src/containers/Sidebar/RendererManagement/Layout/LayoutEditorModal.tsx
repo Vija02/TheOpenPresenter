@@ -143,20 +143,20 @@ const LayoutEditorModal = ({
     [mainState.renderer, rendererId],
   );
 
-  // const handleDerivationChange = useCallback(
-  //   (itemId: string, offset: number | null) => {
-  //     const renderer = mainState.renderer[rendererId];
-  //     if (!renderer?.layout?.items) return;
+  const handleDerivationChange = useCallback(
+    (itemId: string, offset: number | null) => {
+      const renderer = mainState.renderer[rendererId];
+      if (!renderer?.layout?.items) return;
 
-  //     const item = renderer.layout.items.find(
-  //       (item: LayoutItem) => item.id === itemId,
-  //     );
-  //     if (item) {
-  //       item.derivation = offset !== null ? { offset } : null;
-  //     }
-  //   },
-  //   [mainState.renderer, rendererId],
-  // );
+      const item = renderer.layout.items.find(
+        (item: LayoutItem) => item.id === itemId,
+      );
+      if (item) {
+        item.derivation = offset !== null ? { offset } : null;
+      }
+    },
+    [mainState.renderer, rendererId],
+  );
 
   return (
     <Dialog open={isOpen} onOpenChange={() => onClose()}>
@@ -191,6 +191,7 @@ const LayoutEditorModal = ({
                 items={rendererLayoutItems}
                 rendererId={rendererId}
                 onRemove={handleRemoveItem}
+                onDerivationChange={handleDerivationChange}
               />
             </div>
 

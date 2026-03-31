@@ -124,6 +124,8 @@ export function initPluginApi<
           misc.overlay.getType,
         );
       },
+      useDerivation: () => misc.derivation ?? null,
+      useDerivationOffset: () => misc.derivation?.offset ?? 0,
     },
     remote: {
       usePluginInView: () => {

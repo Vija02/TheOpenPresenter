@@ -11,9 +11,15 @@ import VideoBackgroundRenderer from "./VideoBackgroundRenderer";
 import "./index.css";
 
 const Renderer = () => {
+  const pluginApi = usePluginAPI();
+  // Get derivation config to check if we should hide background
+  const derivation = pluginApi.renderer.useDerivation();
+  const isDerived = derivation !== null;
+
   return (
     <div style={{ position: "relative", width: "100%", height: "100%" }}>
-      <VideoBackgroundRenderer />
+      {/* Hide video background when derived (e.g., confidence monitor showing next slide) */}
+      {!isDerived && <VideoBackgroundRenderer />}
       <div
         style={{
           position: "relative",
@@ -33,11 +39,42 @@ const SlideRenderer = () => {
   const overlayType = pluginApi.renderer.useOverlayType();
   const data = pluginApi.renderer.useData((x) => x);
   const songId = useMemo(() => data.songId, [data.songId]);
-  const currentIndex = useMemo(() => data.currentIndex, [data.currentIndex]);
+  const baseCurrentIndex = useMemo(
+    () => data.currentIndex,
+    [data.currentIndex],
+  );
+
+  // Get derivation offset for confidence monitor mode
+  const derivationOffset = pluginApi.renderer.useDerivationOffset();
 
   const songs = pluginApi.scene.useData((x) => x.pluginData.songs);
 
   const song = songs.find((x) => x.id === songId);
+
+  // Process song to get total slide count for bounds checking
+  const groupedData = useMemo(
+    () =>
+      song ? processSong(song.content, song.setting.sectionOrder) : undefined,
+    [song],
+  );
+  const totalSlides = groupedData?.length ?? 0;
+
+  // Apply derivation offset to currentIndex
+  // Returns null if derived index is out of bounds (to show nothing)
+  const currentIndex = useMemo(() => {
+    if (baseCurrentIndex === undefined || baseCurrentIndex === null) {
+      return baseCurrentIndex;
+    }
+    if (derivationOffset === 0) {
+      return baseCurrentIndex;
+    }
+    const derivedIndex = baseCurrentIndex + derivationOffset;
+    // Return null if out of bounds (shows nothing for "next slide" on last slide)
+    if (derivedIndex < 0 || derivedIndex >= totalSlides) {
+      return null;
+    }
+    return derivedIndex;
+  }, [baseCurrentIndex, derivationOffset, totalSlides]);
 
   const isCleared = overlayType === "clear";
 

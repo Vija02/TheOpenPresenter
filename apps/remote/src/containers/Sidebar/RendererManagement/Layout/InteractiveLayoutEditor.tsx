@@ -241,6 +241,7 @@ const InteractiveLayoutEditor = ({
           const color = colors[index % colors.length]!;
           const isSelected = selectedId === item.id;
           const position = item.position;
+          const hasDerivation = item.derivation !== null;
 
           // Display label
           const displayLabel = isScreenItem
@@ -256,6 +257,7 @@ const InteractiveLayoutEditor = ({
                 isScreenItem ? "border-purple-400" : color.border,
                 isSelected &&
                   `ring-2 ${isScreenItem ? "ring-purple-500" : color.selected}`,
+                hasDerivation && "border-dashed",
                 dragState?.id === item.id ? "cursor-grabbing" : "cursor-grab",
               )}
               style={{
@@ -271,6 +273,12 @@ const InteractiveLayoutEditor = ({
               <span className="truncate px-1 pointer-events-none">
                 {displayLabel}
               </span>
+              {hasDerivation && (
+                <span className="text-[10px] text-gray-600 pointer-events-none">
+                  {item.derivation!.offset > 0 ? "+" : ""}
+                  {item.derivation!.offset}
+                </span>
+              )}
 
               {/* Resize handles - only show when selected */}
               {isSelected && (

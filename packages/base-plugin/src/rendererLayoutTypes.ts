@@ -23,10 +23,15 @@ export type SceneLayoutPosition = {
   height: number; // height (%)
 };
 
+export type DerivationConfig = {
+  offset: number;
+};
+
 export type LayoutItemBase = {
   id: UUID;
   position: SceneLayoutPosition;
   label?: string;
+  derivation: DerivationConfig | null;
 };
 
 export type SceneLayoutItem = LayoutItemBase & {
@@ -38,6 +43,7 @@ export type SceneLayoutItem = LayoutItemBase & {
 export type ScreenLayoutItem = LayoutItemBase & {
   type: "screenItem";
   sourceRendererId: string;
+  sceneOverrides?: Record<UUID, DerivationConfig | null>;
 };
 
 export type LayoutItem = SceneLayoutItem | ScreenLayoutItem;
