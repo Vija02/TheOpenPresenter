@@ -163,44 +163,34 @@ export function formatDurationForInput(ms: number): string {
 
 /**
  * Get the color state of the timer based on mode and time values
- * For countdown: based on remaining time
- * For countup: based on how close elapsed is to duration
+ * For countdown: based on remaining time percentage
+ * For countup: based on elapsed time percentage
+ * @param wrapUpYellowPercent - Percentage of duration remaining to turn yellow (0-100)
+ * @param wrapUpRedPercent - Percentage of duration remaining to turn red (0-100)
  */
 export function getTimerColorState(
   mode: TimerMode,
   duration: number,
   remaining: number,
   elapsed: number,
-  wrapUpYellowSeconds: number,
-  wrapUpRedSeconds: number,
+  wrapUpYellowPercent: number,
+  wrapUpRedPercent: number,
 ): TimerColorState {
-  // For countup modes, calculate "remaining until duration" from elapsed
-  if (mode === "countup" || mode === "countupTod") {
-    const remainingUntilDuration = duration - elapsed;
-    const remainingSeconds = remainingUntilDuration / 1000;
+  if (duration <= 0) return "normal";
 
-    if (remainingSeconds <= 0) {
-      return "overtime";
-    }
-    if (remainingSeconds <= wrapUpRedSeconds) {
-      return "red";
-    }
-    if (remainingSeconds <= wrapUpYellowSeconds) {
-      return "yellow";
-    }
-    return "normal";
-  }
+  // Calculate percentage remaining (0-100)
+  const percentRemaining =
+    mode === "countup" || mode === "countupTod"
+      ? ((duration - elapsed) / duration) * 100
+      : (remaining / duration) * 100;
 
-  // For countdown modes, use remaining time directly
-  const remainingSeconds = remaining / 1000;
-
-  if (remainingSeconds <= 0) {
+  if (percentRemaining <= 0) {
     return "overtime";
   }
-  if (remainingSeconds <= wrapUpRedSeconds) {
+  if (percentRemaining <= wrapUpRedPercent) {
     return "red";
   }
-  if (remainingSeconds <= wrapUpYellowSeconds) {
+  if (percentRemaining <= wrapUpYellowPercent) {
     return "yellow";
   }
   return "normal";
@@ -295,8 +285,8 @@ export function hasTimeOfDay(mode: TimerMode): boolean {
  */
 export function createDefaultTimer(
   id: string,
-  defaultWrapUpYellow: number = 60,
-  defaultWrapUpRed: number = 30,
+  defaultWrapUpYellow: number = 15,
+  defaultWrapUpRed: number = 5,
 ): TimerItem {
   return {
     id,
