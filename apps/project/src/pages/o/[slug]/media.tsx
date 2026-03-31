@@ -9,6 +9,7 @@ import {
 } from "@repo/graphql";
 import { globalState } from "@repo/lib";
 import {
+  Badge,
   Button,
   Checkbox,
   Dialog,
@@ -74,7 +75,12 @@ const OrganizationMediaPage = () => {
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-primary">Media Library</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-3xl font-bold text-primary">Media Library</h1>
+            <Badge variant="default" size="sm">
+              Beta
+            </Badge>
+          </div>
           <div className="flex items-center gap-3 bg-gray-50 px-4 py-2 rounded-lg border">
             <span className="text-sm font-medium text-secondary">
               Show system files

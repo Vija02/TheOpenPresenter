@@ -9,6 +9,7 @@ import * as React from "react";
 import { useEffect } from "react";
 import { FaCloud } from "react-icons/fa";
 import { IoMdArrowBack, IoMdSettings } from "react-icons/io";
+import { MdPermMedia } from "react-icons/md";
 import { PiProjectorScreenChartLight } from "react-icons/pi";
 import { RxHamburgerMenu } from "react-icons/rx";
 import { UseQueryResponse } from "urql";
@@ -93,6 +94,12 @@ export function SharedOrgLayout({
             exact
           />
         )}
+        <SidebarItem
+          href={`/o/${slug}/media`}
+          icon={<MdPermMedia />}
+          name="Media"
+          exact
+        />
         <SidebarItem
           baseUrl={`/o/${slug}/settings`}
           href={`/o/${slug}/settings/general`}
