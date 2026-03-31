@@ -108,13 +108,17 @@ const VideoPlayerRemote = () => {
   const disclosureProps = useDisclosure();
 
   const handleMediaPicker = useCallback(async () => {
-    const result = await pluginApi.mediaPicker.show({
+    const results = await pluginApi.mediaPicker.show({
       type: "video",
       title: "Select Video",
     });
 
-    if (result && result.internalVideo) {
-      mutableSceneData.pluginData.videos.push(result.internalVideo);
+    if (results) {
+      for (const result of results) {
+        if (result.internalVideo) {
+          mutableSceneData.pluginData.videos.push(result.internalVideo);
+        }
+      }
     }
   }, [pluginApi.mediaPicker, mutableSceneData.pluginData.videos]);
 

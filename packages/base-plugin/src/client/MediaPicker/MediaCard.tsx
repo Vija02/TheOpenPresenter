@@ -7,21 +7,23 @@ import { MediaWithMetadata } from "./types";
 
 export type MediaCardProps = {
   media: MediaWithMetadata;
-  onClick: () => void;
+  onClick: (e: React.MouseEvent) => void;
   disabled?: boolean;
+  selected?: boolean;
 };
 
 export const MediaCard: React.FC<MediaCardProps> = ({
   media,
   onClick,
   disabled,
+  selected,
 }) => {
   const isVideo = isVideoFile(media.fileExtension);
 
   return (
     <div
-      onClick={disabled ? undefined : onClick}
-      className={`bp--media-card ${disabled ? "bp--media-card--disabled" : ""}`}
+      onClick={disabled ? undefined : (e) => onClick(e)}
+      className={`bp--media-card ${disabled ? "bp--media-card--disabled" : ""} ${selected ? "bp--media-card--selected" : ""}`}
     >
       <div className="bp--media-card__preview">
         <MediaPreview media={media} />

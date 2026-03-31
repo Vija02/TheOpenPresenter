@@ -33,7 +33,7 @@ import { filterMediaByType } from "./utils";
 export type MediaPickerModalProps = {
   isOpen: boolean;
   onClose: () => void;
-  onSelect: (result: MediaPickerResult) => void;
+  onSelect: (results: MediaPickerResult[]) => void;
   options: MediaPickerOptionsInternal;
 };
 
@@ -46,6 +46,7 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
   const { organizationId, projectId, pluginId } = options.pluginContext;
 
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [{ data }, refetch] = useOrganizationMediaForPickerQuery({
     variables: {
       organizationId,
@@ -84,14 +85,18 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
     return () => clearInterval(interval);
   }, [isOpen, hasProcessingVideos, refetch]);
 
-  const handleSelect = useCallback(
-    (media: MediaWithMetadata) => {
-      // Don't allow selection of videos that aren't ready
-      if (!isVideoReady(media)) return;
+  // Reset selection when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setSelectedIds(new Set());
+    }
+  }, [isOpen]);
 
+  const buildResult = useCallback(
+    (media: MediaWithMetadata): MediaPickerResult => {
       const mediaUrl = resolveMediaUrl(extractMediaName(media.mediaName));
 
-      const result: Parameters<typeof onSelect>[0] = {
+      const result: MediaPickerResult = {
         id: media.id,
         mediaName: media.mediaName,
         originalName: media.originalName,
@@ -153,10 +158,43 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
         };
       }
 
-      onSelect(result);
+      return result;
     },
-    [onSelect],
+    [],
   );
+
+  const allowMultiple = options?.multiple ?? true;
+
+  const handleClick = useCallback(
+    (media: MediaWithMetadata, e: React.MouseEvent) => {
+      // Don't allow selection of videos that aren't ready
+      if (!isVideoReady(media)) return;
+
+      const isMultiSelect = allowMultiple && e.shiftKey;
+
+      if (isMultiSelect) {
+        setSelectedIds((prev) => {
+          const newSet = new Set(prev);
+          if (newSet.has(media.id)) {
+            newSet.delete(media.id);
+          } else {
+            newSet.add(media.id);
+          }
+          return newSet;
+        });
+      } else {
+        onSelect([buildResult(media)]);
+      }
+    },
+    [onSelect, buildResult, allowMultiple],
+  );
+
+  const handleDone = useCallback(() => {
+    const results = filteredMedia
+      .filter((media) => selectedIds.has(media.id))
+      .map(buildResult);
+    onSelect(results);
+  }, [filteredMedia, selectedIds, buildResult, onSelect]);
 
   const title = options?.title ?? "Select Media";
   const portalContainer = options?.portalContainer;
@@ -192,17 +230,30 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
                 <MediaCard
                   key={media.id}
                   media={media}
-                  onClick={() => handleSelect(media)}
+                  onClick={(e) => handleClick(media, e)}
                   disabled={!isVideoReady(media)}
+                  selected={selectedIds.has(media.id)}
                 />
               ))}
             </div>
           </DialogBody>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
+          <DialogFooter className="bp--media-picker-footer">
+            {allowMultiple ? (
+              <span className="bp--media-picker-tip">
+                Tip: Hold Shift while clicking to select multiple items
+              </span>
+            ) : (
+              <span />
+            )}
+            <div className="bp--media-picker-footer-buttons">
+              <Button variant="outline" onClick={onClose}>
+                Cancel
+              </Button>
+              {selectedIds.size > 0 && (
+                <Button onClick={handleDone}>Add ({selectedIds.size})</Button>
+              )}
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -22,6 +22,15 @@
   background-color: var(--surface-primary);
 }
 
+.bp--media-card--selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.bp--media-card--selected:hover {
+  border-color: var(--accent);
+}
+
 .bp--media-card__preview {
   aspect-ratio: 16 / 9;
   background-color: var(--surface-secondary);
@@ -76,6 +85,23 @@
   text-align: center;
   padding: 40px 0;
   color: var(--secondary);
+}
+
+.bp--media-picker-footer {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.bp--media-picker-tip {
+  font-size: 12px;
+  color: var(--secondary);
+}
+
+.bp--media-picker-footer-buttons {
+  display: flex;
+  gap: 8px;
 }
 
 .bp--upload-dialog {
