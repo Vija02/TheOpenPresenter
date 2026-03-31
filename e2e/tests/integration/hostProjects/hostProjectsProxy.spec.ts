@@ -31,6 +31,6 @@ test.describe("Host Projects - Proxy", () => {
     await page.waitForLoadState("networkidle");
 
     // Verify
-    await expect(page.getByTitle("Timer")).toBeVisible();
+    await expect(page.getByTitle("Timer", { exact: true })).toBeVisible();
   });
 });
