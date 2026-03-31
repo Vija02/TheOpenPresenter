@@ -49,8 +49,8 @@ const onPluginDataCreated = (pluginInfo: ObjectToTypedMap<Plugin>) => {
 
   // Set default settings
   pluginData?.set("showProgressBar", true);
-  pluginData?.set("defaultWrapUpYellow", 60);
-  pluginData?.set("defaultWrapUpRed", 30);
+  pluginData?.set("defaultWrapUpYellow", 15);
+  pluginData?.set("defaultWrapUpRed", 5);
 
   return {};
 };

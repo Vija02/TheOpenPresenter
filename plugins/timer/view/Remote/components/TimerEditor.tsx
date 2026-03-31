@@ -160,10 +160,10 @@ export const TimerEditor = ({
               />
             </div>
 
-            {/* Wrap-up times */}
+            {/* Wrap-up percentages */}
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="wrapUpYellow">Yellow at (seconds)</Label>
+                <Label htmlFor="wrapUpYellow">Yellow at (%)</Label>
                 <Input
                   id="wrapUpYellow"
                   type="number"
@@ -173,10 +173,11 @@ export const TimerEditor = ({
                     setWrapUpYellow(Number.isNaN(val) ? 0 : val);
                   }}
                   min={0}
+                  max={100}
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="wrapUpRed">Red at (seconds)</Label>
+                <Label htmlFor="wrapUpRed">Red at (%)</Label>
                 <Input
                   id="wrapUpRed"
                   type="number"
@@ -186,6 +187,7 @@ export const TimerEditor = ({
                     setWrapUpRed(Number.isNaN(val) ? 0 : val);
                   }}
                   min={0}
+                  max={100}
                 />
               </div>
             </div>

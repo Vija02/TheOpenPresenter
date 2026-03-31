@@ -19,9 +19,9 @@ export type TimerItem = {
   mode: TimerMode;
   // What happens at zero
   overtimeBehavior: OvertimeBehavior;
-  // Seconds before end to turn yellow (warning)
+  // Percentage of duration remaining to turn yellow (0-100)
   wrapUpYellow: number;
-  // Seconds before end to turn red (critical)
+  // Percentage of duration remaining to turn red (0-100)
   wrapUpRed: number;
 };
 
@@ -30,7 +30,7 @@ export type PluginBaseData = {
   timers: TimerItem[];
   // Whether to show progress bar on renderer
   showProgressBar: boolean;
-  // Default wrap-up times for new timers (in seconds)
+  // Default wrap-up percentages for new timers (0-100)
   defaultWrapUpYellow: number;
   defaultWrapUpRed: number;
 };
