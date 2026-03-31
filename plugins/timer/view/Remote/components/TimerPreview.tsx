@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 
 import {
+  calculateEffectiveTimerState,
   calculateProgress,
-  calculateTimeElapsed,
-  calculateTimeRemaining,
   getDisplayTime,
   getTimerColor,
   getTimerColorState,
@@ -12,19 +11,33 @@ import {
 import { TimerItem } from "../../../src/types";
 
 type TimerPreviewProps = {
-  timer: TimerItem | undefined;
+  timers: TimerItem[];
+  baseTimerIndex: number;
   isRunning: boolean;
   timeStarted: number | null;
   timeAdjustment: number;
 };
 
 export const TimerPreview = ({
-  timer,
+  timers,
+  baseTimerIndex,
   isRunning,
   timeStarted,
   timeAdjustment,
 }: TimerPreviewProps) => {
   const [, setTick] = useState(0);
+
+  // Calculate effective timer state (handles auto-next)
+  const { effectiveTimerIndex, effectiveRemaining, effectiveElapsed } =
+    calculateEffectiveTimerState(
+      timers,
+      baseTimerIndex,
+      timeStarted,
+      isRunning,
+      timeAdjustment,
+    );
+
+  const timer = timers[effectiveTimerIndex];
 
   // Force re-render every 100ms when running or showing time of day
   useEffect(() => {
@@ -50,13 +63,8 @@ export const TimerPreview = ({
     );
   }
 
-  const remaining = calculateTimeRemaining(
-    timer.duration,
-    timeStarted,
-    isRunning,
-    timeAdjustment,
-  );
-  const elapsed = calculateTimeElapsed(timeStarted, isRunning, timeAdjustment);
+  const remaining = effectiveRemaining;
+  const elapsed = effectiveElapsed;
 
   const colorState = getTimerColorState(
     timer.mode,

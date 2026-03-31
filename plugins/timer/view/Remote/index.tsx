@@ -38,9 +38,6 @@ const Remote = () => {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
 
-  // Get current timer
-  const activeTimer = timers[activeTimerIndex];
-
   // Add default timer if empty on mount
   useEffect(() => {
     if (timers.length === 0) {
@@ -237,7 +234,8 @@ const Remote = () => {
         <div className="p-3 w-full space-y-4">
           {/* Timer Preview */}
           <TimerPreview
-            timer={activeTimer}
+            timers={timers}
+            baseTimerIndex={activeTimerIndex}
             isRunning={isRunning}
             timeStarted={timeStarted}
             timeAdjustment={timeAdjustment}
@@ -275,8 +273,10 @@ const Remote = () => {
             </div>
             <TimerList
               timers={timers}
-              activeIndex={activeTimerIndex}
+              baseTimerIndex={activeTimerIndex}
               isRunning={isRunning}
+              timeStarted={timeStarted}
+              timeAdjustment={timeAdjustment}
               onSelect={handleSelectTimer}
               onEdit={handleEditTimer}
               onDelete={handleDeleteTimer}

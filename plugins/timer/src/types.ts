@@ -7,7 +7,7 @@ export type TimerMode =
   | "countupTod";
 
 // What happens when timer reaches zero
-export type OvertimeBehavior = "stop" | "continue" | "hide";
+export type OvertimeBehavior = "stop" | "continue" | "hide" | "next";
 
 // Individual timer in the rundown
 export type TimerItem = {
@@ -66,4 +66,5 @@ export const OVERTIME_BEHAVIOR_LABELS: Record<OvertimeBehavior, string> = {
   stop: "Stop at Zero",
   continue: "Continue (Negative)",
   hide: "Hide at Zero",
+  next: "Start Next Timer",
 };
