@@ -9163,6 +9163,7 @@ __metadata:
     react-error-boundary: "npm:^4.1.2"
     react-hook-form: "npm:^7.57.0"
     react-icons: "npm:^5.4.0"
+    react-qr-code: "npm:^2.0.15"
     react-resizable: "npm:^3.0.5"
     react-toastify: "npm:^10.0.6"
     react18-json-view: "npm:^0.2.8"
