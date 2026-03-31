@@ -57,7 +57,14 @@ const SlideRenderer = () => {
       song ? processSong(song.content, song.setting.sectionOrder) : undefined,
     [song],
   );
-  const totalSlides = groupedData?.length ?? 0;
+
+  const totalSlides = useMemo(
+    () =>
+      groupedData
+        ?.map((x) => x.slides.length)
+        .reduce((acc, val) => acc + val, 0) ?? 0,
+    [groupedData],
+  );
 
   // Apply derivation offset to currentIndex
   // Returns null if derived index is out of bounds (to show nothing)
