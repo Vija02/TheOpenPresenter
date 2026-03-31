@@ -1,4 +1,9 @@
-import { TimerColorState, TimerItem, TimerMode } from "./types";
+import {
+  OvertimeBehavior,
+  TimerColorState,
+  TimerItem,
+  TimerMode,
+} from "./types";
 
 /**
  * Calculate the remaining time for a countdown timer
@@ -244,7 +249,7 @@ export function getDisplayTime(
   mode: TimerMode,
   remaining: number,
   elapsed: number,
-  overtimeBehavior: "stop" | "continue" | "hide",
+  overtimeBehavior: OvertimeBehavior,
 ): string {
   switch (mode) {
     case "countdown":
@@ -252,6 +257,7 @@ export function getDisplayTime(
       if (remaining <= 0) {
         switch (overtimeBehavior) {
           case "stop":
+          case "next":
             return "0:00";
           case "continue":
             return formatTime(remaining);
@@ -304,4 +310,81 @@ export function createDefaultTimer(
  */
 export function generateId(): string {
   return Math.random().toString(36).substring(2, 11);
+}
+
+/**
+ * Calculate the effective timer index and time remaining when using auto-next.
+ * This allows us to infer the current timer state without mutating data.
+ *
+ * @returns Object with effectiveTimerIndex, effectiveRemaining, effectiveElapsed, and isStopped
+ */
+export function calculateEffectiveTimerState(
+  timers: TimerItem[],
+  baseTimerIndex: number,
+  timeStarted: number | null,
+  isRunning: boolean,
+  timeAdjustment: number,
+): {
+  effectiveTimerIndex: number;
+  effectiveRemaining: number;
+  effectiveElapsed: number;
+  isStopped: boolean;
+} {
+  if (!isRunning || timeStarted === null || timers.length === 0) {
+    const timer = timers[baseTimerIndex];
+    return {
+      effectiveTimerIndex: baseTimerIndex,
+      effectiveRemaining: timer ? timer.duration + timeAdjustment : 0,
+      effectiveElapsed: Math.max(0, timeAdjustment),
+      isStopped: true,
+    };
+  }
+
+  const now = Date.now();
+  let totalElapsed = now - timeStarted + timeAdjustment;
+  let currentIndex = baseTimerIndex;
+
+  // Walk through timers, consuming time for those with "next" behavior
+  while (currentIndex < timers.length) {
+    const timer = timers[currentIndex];
+    if (!timer) break;
+
+    const timerDuration = timer.duration;
+
+    // If this timer hasn't finished yet, or doesn't auto-advance
+    if (totalElapsed < timerDuration || timer.overtimeBehavior !== "next") {
+      // This is our effective timer
+      const effectiveRemaining = timerDuration - totalElapsed;
+      return {
+        effectiveTimerIndex: currentIndex,
+        effectiveRemaining,
+        effectiveElapsed: totalElapsed,
+        isStopped: false,
+      };
+    }
+
+    // Timer has finished and has "next" behavior, move to next timer
+    totalElapsed -= timerDuration;
+    currentIndex++;
+  }
+
+  // We've gone past all timers - stay on the last timer
+  // At this point, totalElapsed is the time elapsed since the last timer started
+  const lastIndex = timers.length - 1;
+  const lastTimer = timers[lastIndex];
+  if (lastTimer) {
+    return {
+      effectiveTimerIndex: lastIndex,
+      effectiveRemaining: lastTimer.duration - totalElapsed,
+      effectiveElapsed: totalElapsed,
+      isStopped: lastTimer.overtimeBehavior !== "continue",
+    };
+  }
+
+  return {
+    effectiveTimerIndex: baseTimerIndex,
+    effectiveRemaining: 0,
+    effectiveElapsed: totalElapsed,
+    isStopped: true,
+  };
 }

@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import {
+  calculateEffectiveTimerState,
   calculateProgress,
-  calculateTimeElapsed,
-  calculateTimeRemaining,
   hasTimeOfDay as checkHasTimeOfDay,
   formatTimeOfDay,
   getDisplayTime,
@@ -31,8 +30,8 @@ const Renderer = () => {
   const showProgressBar =
     pluginApi.scene.useData((x) => x.pluginData.showProgressBar) ?? true;
 
-  // Renderer data
-  const activeTimerIndex =
+  // Renderer data (base values from state)
+  const baseTimerIndex =
     pluginApi.renderer.useData((x) => x.activeTimerIndex) ?? 0;
   const isRunning = pluginApi.renderer.useData((x) => x.isRunning) ?? false;
   const timeStarted = pluginApi.renderer.useData((x) => x.timeStarted);
@@ -40,8 +39,18 @@ const Renderer = () => {
     pluginApi.renderer.useData((x) => x.timeAdjustment) ?? 0;
   const isBlackout = pluginApi.renderer.useData((x) => x.isBlackout) ?? false;
 
-  // Get active timer
-  const activeTimer: TimerItem | undefined = timers[activeTimerIndex];
+  // Calculate effective timer state (handles auto-next without mutation)
+  const { effectiveTimerIndex, effectiveRemaining, effectiveElapsed } =
+    calculateEffectiveTimerState(
+      timers,
+      baseTimerIndex,
+      timeStarted,
+      isRunning,
+      timeAdjustment,
+    );
+
+  // Get the effective active timer
+  const activeTimer: TimerItem | undefined = timers[effectiveTimerIndex];
 
   // Force re-render every 100ms when running or showing time of day
   const activeTimerMode = activeTimer?.mode;
@@ -60,18 +69,9 @@ const Renderer = () => {
     return () => clearInterval(interval);
   }, [isRunning, activeTimerMode]);
 
-  // Calculate time values - recalculate on every tick
-
-  const remaining = activeTimer
-    ? calculateTimeRemaining(
-        activeTimer.duration,
-        timeStarted,
-        isRunning,
-        timeAdjustment,
-      )
-    : 0;
-
-  const elapsed = calculateTimeElapsed(timeStarted, isRunning, timeAdjustment);
+  // Use the effective values for display
+  const remaining = effectiveRemaining;
+  const elapsed = effectiveElapsed;
 
   const displayTime = activeTimer
     ? getDisplayTime(

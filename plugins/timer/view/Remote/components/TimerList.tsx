@@ -1,18 +1,25 @@
-import { Button, PopConfirm } from "@repo/ui";
+import { Badge, Button, PopConfirm } from "@repo/ui";
+import { useEffect, useState } from "react";
 import {
+  VscArrowRight,
   VscChevronDown,
   VscChevronUp,
   VscEdit,
   VscTrash,
 } from "react-icons/vsc";
 
-import { formatDurationForInput } from "../../../src/timerUtils";
+import {
+  calculateEffectiveTimerState,
+  formatDurationForInput,
+} from "../../../src/timerUtils";
 import { TimerItem } from "../../../src/types";
 
 type TimerListProps = {
   timers: TimerItem[];
-  activeIndex: number;
+  baseTimerIndex: number;
   isRunning: boolean;
+  timeStarted: number | null;
+  timeAdjustment: number;
   onSelect: (index: number) => void;
   onEdit: (index: number) => void;
   onDelete: (index: number) => void;
@@ -22,14 +29,37 @@ type TimerListProps = {
 
 export const TimerList = ({
   timers,
-  activeIndex,
+  baseTimerIndex,
   isRunning,
+  timeStarted,
+  timeAdjustment,
   onSelect,
   onEdit,
   onDelete,
   onMoveUp,
   onMoveDown,
 }: TimerListProps) => {
+  const [, setTick] = useState(0);
+
+  // Force re-render every 100ms when running to update effective index
+  useEffect(() => {
+    if (!isRunning) return;
+
+    const interval = setInterval(() => {
+      setTick((t) => t + 1);
+    }, 100);
+
+    return () => clearInterval(interval);
+  }, [isRunning]);
+
+  // Calculate effective timer index
+  const { effectiveTimerIndex } = calculateEffectiveTimerState(
+    timers,
+    baseTimerIndex,
+    timeStarted,
+    isRunning,
+    timeAdjustment,
+  );
   if (timers.length === 0) {
     return (
       <div className="text-center text-gray-500 py-8">
@@ -41,7 +71,7 @@ export const TimerList = ({
   return (
     <div className="space-y-1">
       {timers.map((timer, index) => {
-        const isActive = index === activeIndex;
+        const isActive = index === effectiveTimerIndex;
 
         return (
           <div
@@ -65,6 +95,33 @@ export const TimerList = ({
                 {timer.title || "Untitled"}
               </div>
             </div>
+
+            {/* At Zero Behavior */}
+            {timer.overtimeBehavior === "stop" && (
+              <Badge
+                variant="default"
+                className="text-[10px] px-1.5 py-0 h-5 shrink-0"
+              >
+                no-proceed
+              </Badge>
+            )}
+            {timer.overtimeBehavior === "continue" && (
+              <Badge
+                variant="destructive"
+                className="text-[10px] px-1.5 py-0 h-5 shrink-0"
+              >
+                count overflow
+              </Badge>
+            )}
+            {timer.overtimeBehavior === "next" && (
+              <Badge
+                variant="default"
+                className="text-[10px] px-1.5 py-0 h-5 shrink-0"
+              >
+                <VscArrowRight className="w-3 h-3 mr-0.5" />
+                auto-proceed
+              </Badge>
+            )}
 
             {/* Duration */}
             <span className="text-sm font-mono text-muted-foreground">
