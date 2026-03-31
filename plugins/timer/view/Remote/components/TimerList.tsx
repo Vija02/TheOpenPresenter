@@ -92,8 +92,18 @@ export const TimerList = ({
 
             {/* Timer info */}
             <div className="flex-1 min-w-0">
-              <div className="font-medium truncate text-sm">
-                {timer.title || "Untitled"}
+              <div className="flex items-center gap-2">
+                <span className="font-medium truncate text-sm">
+                  {timer.title || "Untitled"}
+                </span>
+                {timer.mode === "countdownToTime" && timer.targetTime && (
+                  <Badge
+                    variant="info"
+                    className="text-[10px] px-1.5 py-0 h-5 shrink-0 font-mono"
+                  >
+                    Countdown to {timer.targetTime}
+                  </Badge>
+                )}
               </div>
             </div>
 
