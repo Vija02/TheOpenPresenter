@@ -180,7 +180,26 @@ export function getTimerColorState(
   elapsed: number,
   wrapUpYellowPercent: number,
   wrapUpRedPercent: number,
+  targetTime?: string | null,
 ): TimerColorState {
+  // For countdownToTime, use time-based thresholds (duration acts as the "total" reference)
+  if (mode === "countdownToTime") {
+    const timeToTarget = calculateTimeToTarget(targetTime ?? null);
+    if (timeToTarget <= 0) {
+      return "overtime";
+    }
+    // Use duration as reference for percentage calculation
+    if (duration <= 0) return "normal";
+    const percentRemaining = (timeToTarget / duration) * 100;
+    if (percentRemaining <= wrapUpRedPercent) {
+      return "red";
+    }
+    if (percentRemaining <= wrapUpYellowPercent) {
+      return "yellow";
+    }
+    return "normal";
+  }
+
   if (duration <= 0) return "normal";
 
   // Calculate percentage remaining (0-100)
@@ -227,8 +246,19 @@ export function calculateProgress(
   duration: number,
   remaining: number,
   elapsed: number,
+  targetTime?: string | null,
 ): number {
   if (duration <= 0) return 100;
+
+  // For countdownToTime, calculate progress based on time to target
+  if (mode === "countdownToTime") {
+    const timeToTarget = calculateTimeToTarget(targetTime ?? null);
+    if (timeToTarget <= 0) return 100;
+    // Use duration as the "total" reference for progress
+    const elapsedFromDuration = duration - timeToTarget;
+    const progress = (elapsedFromDuration / duration) * 100;
+    return Math.max(0, Math.min(100, progress));
+  }
 
   // For countup modes, use elapsed time directly
   if (mode === "countup" || mode === "countupTod") {
@@ -250,6 +280,7 @@ export function getDisplayTime(
   remaining: number,
   elapsed: number,
   overtimeBehavior: OvertimeBehavior,
+  targetTime?: string | null,
 ): string {
   switch (mode) {
     case "countdown":
@@ -274,6 +305,21 @@ export function getDisplayTime(
     case "timeOfDay": {
       return formatTimeOfDay();
     }
+    case "countdownToTime": {
+      const timeToTarget = calculateTimeToTarget(targetTime ?? null);
+      if (timeToTarget <= 0) {
+        switch (overtimeBehavior) {
+          case "stop":
+          case "next":
+            return "0:00";
+          case "continue":
+            return formatTime(timeToTarget);
+          case "hide":
+            return "";
+        }
+      }
+      return formatTime(timeToTarget);
+    }
     default:
       return formatTime(remaining);
   }
@@ -283,7 +329,114 @@ export function getDisplayTime(
  * Check if the timer mode shows time of day
  */
 export function hasTimeOfDay(mode: TimerMode): boolean {
-  return mode === "countdownTod" || mode === "countupTod";
+  return (
+    mode === "countdownTod" ||
+    mode === "countupTod" ||
+    mode === "countdownToTime"
+  );
+}
+
+/**
+ * Parse a target time string (HH:MM or HH:MM:SS) to milliseconds from midnight
+ */
+export function parseTargetTime(timeStr: string): number | null {
+  const match = timeStr.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+  if (!match) return null;
+
+  const hours = parseInt(match[1]!, 10);
+  const minutes = parseInt(match[2]!, 10);
+  const seconds = match[3] ? parseInt(match[3], 10) : 0;
+
+  if (
+    hours < 0 ||
+    hours > 23 ||
+    minutes < 0 ||
+    minutes > 59 ||
+    seconds < 0 ||
+    seconds > 59
+  ) {
+    return null;
+  }
+
+  return (hours * 3600 + minutes * 60 + seconds) * 1000;
+}
+
+/**
+ * Calculate remaining time until a target time of day
+ * Returns milliseconds remaining (always positive, wraps to next day if needed)
+ */
+export function calculateTimeToTarget(targetTime: string | null): number {
+  if (!targetTime) return 0;
+
+  const targetMs = parseTargetTime(targetTime);
+  if (targetMs === null) return 0;
+
+  const now = new Date();
+  const currentMs =
+    (now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds()) * 1000 +
+    now.getMilliseconds();
+
+  let remaining = targetMs - currentMs;
+
+  // If target time has passed today, wrap to tomorrow
+  if (remaining < 0) {
+    const msInDay = 24 * 60 * 60 * 1000;
+    remaining += msInDay;
+  }
+
+  return remaining;
+}
+
+/**
+ * Check if a target time has been crossed since a given start time
+ * Returns the milliseconds elapsed since crossing, or null if not crossed yet
+ */
+export function getTimeSinceTargetCrossed(
+  targetTime: string | null,
+  startedAt: number,
+): number | null {
+  if (!targetTime) return null;
+
+  const targetMs = parseTargetTime(targetTime);
+  if (targetMs === null) return null;
+
+  const now = new Date();
+  const startDate = new Date(startedAt);
+
+  // Get time-of-day in ms for both start and now
+  const startTimeOfDay =
+    (startDate.getHours() * 3600 +
+      startDate.getMinutes() * 60 +
+      startDate.getSeconds()) *
+      1000 +
+    startDate.getMilliseconds();
+  const nowTimeOfDay =
+    (now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds()) * 1000 +
+    now.getMilliseconds();
+
+  // Check if we started before target and are now at or after target (same day)
+  if (startTimeOfDay < targetMs && nowTimeOfDay >= targetMs) {
+    return nowTimeOfDay - targetMs;
+  }
+
+  // Check if we've crossed midnight and passed target on the new day
+  // This handles: started at 23:00, target is 02:00, now is 02:30
+  if (startTimeOfDay > nowTimeOfDay && nowTimeOfDay >= targetMs) {
+    return nowTimeOfDay - targetMs;
+  }
+
+  // Check if we've been running for more than a day (edge case)
+  const elapsedMs = now.getTime() - startedAt;
+  const msInDay = 24 * 60 * 60 * 1000;
+  if (elapsedMs >= msInDay) {
+    // We've definitely crossed the target at least once
+    // Calculate time since the most recent crossing
+    return nowTimeOfDay >= targetMs
+      ? nowTimeOfDay - targetMs
+      : msInDay - targetMs + nowTimeOfDay;
+  }
+
+  return null;
 }
 
 /**
@@ -302,6 +455,7 @@ export function createDefaultTimer(
     overtimeBehavior: "stop",
     wrapUpYellow: defaultWrapUpYellow,
     wrapUpRed: defaultWrapUpRed,
+    targetTime: null,
   };
 }
 
@@ -332,6 +486,16 @@ export function calculateEffectiveTimerState(
 } {
   if (!isRunning || timeStarted === null || timers.length === 0) {
     const timer = timers[baseTimerIndex];
+    // For countdownToTime mode when not running, show the time to target
+    if (timer?.mode === "countdownToTime") {
+      const timeToTarget = calculateTimeToTarget(timer.targetTime);
+      return {
+        effectiveTimerIndex: baseTimerIndex,
+        effectiveRemaining: timeToTarget,
+        effectiveElapsed: 0,
+        isStopped: true,
+      };
+    }
     return {
       effectiveTimerIndex: baseTimerIndex,
       effectiveRemaining: timer ? timer.duration + timeAdjustment : 0,
@@ -343,11 +507,41 @@ export function calculateEffectiveTimerState(
   const now = Date.now();
   let totalElapsed = now - timeStarted + timeAdjustment;
   let currentIndex = baseTimerIndex;
+  // Track the effective start time for the current timer in the chain
+  let effectiveStartTime = timeStarted;
 
   // Walk through timers, consuming time for those with "next" behavior
   while (currentIndex < timers.length) {
     const timer = timers[currentIndex];
     if (!timer) break;
+
+    // Handle countdownToTime mode specially
+    if (timer.mode === "countdownToTime") {
+      const timeToTarget = calculateTimeToTarget(timer.targetTime);
+      const timeSinceCrossed = getTimeSinceTargetCrossed(
+        timer.targetTime,
+        effectiveStartTime,
+      );
+      const isComplete = timeSinceCrossed !== null;
+
+      // If not complete or doesn't auto-advance, this is our timer
+      if (!isComplete || timer.overtimeBehavior !== "next") {
+        return {
+          effectiveTimerIndex: currentIndex,
+          effectiveRemaining: timeToTarget,
+          effectiveElapsed: timer.duration - timeToTarget,
+          isStopped: false,
+        };
+      }
+
+      // Timer is complete and has "next" behavior, move to next timer
+      // Use the time since target was crossed as elapsed for next timer
+      totalElapsed = timeSinceCrossed;
+      // Update effective start time for next timer
+      effectiveStartTime = now - timeSinceCrossed;
+      currentIndex++;
+      continue;
+    }
 
     const timerDuration = timer.duration;
 
@@ -365,6 +559,8 @@ export function calculateEffectiveTimerState(
 
     // Timer has finished and has "next" behavior, move to next timer
     totalElapsed -= timerDuration;
+    // Update effective start time for next timer
+    effectiveStartTime = now - totalElapsed;
     currentIndex++;
   }
 
@@ -373,6 +569,16 @@ export function calculateEffectiveTimerState(
   const lastIndex = timers.length - 1;
   const lastTimer = timers[lastIndex];
   if (lastTimer) {
+    // Handle countdownToTime for the last timer
+    if (lastTimer.mode === "countdownToTime") {
+      const timeToTarget = calculateTimeToTarget(lastTimer.targetTime);
+      return {
+        effectiveTimerIndex: lastIndex,
+        effectiveRemaining: timeToTarget,
+        effectiveElapsed: lastTimer.duration - timeToTarget,
+        isStopped: lastTimer.overtimeBehavior !== "continue",
+      };
+    }
     return {
       effectiveTimerIndex: lastIndex,
       effectiveRemaining: lastTimer.duration - totalElapsed,

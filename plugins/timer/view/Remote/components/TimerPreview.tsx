@@ -73,6 +73,7 @@ export const TimerPreview = ({
     elapsed,
     timer.wrapUpYellow,
     timer.wrapUpRed,
+    timer.targetTime,
   );
   const color = getTimerColor(colorState);
   const progress = calculateProgress(
@@ -80,6 +81,7 @@ export const TimerPreview = ({
     timer.duration,
     remaining,
     elapsed,
+    timer.targetTime,
   );
 
   const displayTime = getDisplayTime(
@@ -87,6 +89,7 @@ export const TimerPreview = ({
     remaining,
     elapsed,
     timer.overtimeBehavior,
+    timer.targetTime,
   );
 
   return (

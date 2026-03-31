@@ -60,6 +60,7 @@ export const TimerEditor = ({
     useState<OvertimeBehavior>("stop");
   const [wrapUpYellow, setWrapUpYellow] = useState(defaultWrapUpYellow);
   const [wrapUpRed, setWrapUpRed] = useState(defaultWrapUpRed);
+  const [targetTime, setTargetTime] = useState("");
 
   // Reset form when timer changes
   useEffect(() => {
@@ -70,6 +71,7 @@ export const TimerEditor = ({
       setOvertimeBehavior(timer.overtimeBehavior);
       setWrapUpYellow(timer.wrapUpYellow);
       setWrapUpRed(timer.wrapUpRed);
+      setTargetTime(timer.targetTime ?? "");
     } else {
       // Reset to defaults for new timer
       setTitle("");
@@ -78,6 +80,7 @@ export const TimerEditor = ({
       setOvertimeBehavior("stop");
       setWrapUpYellow(defaultWrapUpYellow);
       setWrapUpRed(defaultWrapUpRed);
+      setTargetTime("");
     }
   }, [timer, defaultWrapUpYellow, defaultWrapUpRed]);
 
@@ -95,6 +98,7 @@ export const TimerEditor = ({
       overtimeBehavior,
       wrapUpYellow,
       wrapUpRed,
+      targetTime: mode === "countdownToTime" ? targetTime || null : null,
     });
     onClose();
   };
@@ -144,6 +148,22 @@ export const TimerEditor = ({
                 }
               />
             </div>
+
+            {/* Target Time - only for countdownToTime mode */}
+            {mode === "countdownToTime" && (
+              <div className="grid gap-2">
+                <Label htmlFor="targetTime">Target Time</Label>
+                <Input
+                  id="targetTime"
+                  value={targetTime}
+                  onChange={(e) => setTargetTime(e.target.value)}
+                  placeholder="14:30 or 14:30:00"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Time of day to count down to (24-hour format)
+                </p>
+              </div>
+            )}
 
             {/* Overtime Behavior */}
             <div className="grid gap-2">

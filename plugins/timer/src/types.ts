@@ -4,7 +4,8 @@ export type TimerMode =
   | "countup"
   | "timeOfDay"
   | "countdownTod"
-  | "countupTod";
+  | "countupTod"
+  | "countdownToTime";
 
 // What happens when timer reaches zero
 export type OvertimeBehavior = "stop" | "continue" | "hide" | "next";
@@ -23,6 +24,9 @@ export type TimerItem = {
   wrapUpYellow: number;
   // Percentage of duration remaining to turn red (0-100)
   wrapUpRed: number;
+  // Target time for countdownToTime mode (HH:MM:SS format, e.g., "14:30:00")
+  // Using null instead of undefined for valtio-yjs compatibility
+  targetTime: string | null;
 };
 
 // Scene data - persisted configuration
@@ -59,12 +63,13 @@ export const TIMER_MODE_LABELS: Record<TimerMode, string> = {
   timeOfDay: "Time of Day",
   countdownTod: "Countdown + ToD",
   countupTod: "Count Up + ToD",
+  countdownToTime: "Countdown to Time",
 };
 
 // Overtime behavior labels for UI
 export const OVERTIME_BEHAVIOR_LABELS: Record<OvertimeBehavior, string> = {
   stop: "Stop at Zero",
-  continue: "Continue (Negative)",
+  continue: "Continue to negative",
   hide: "Hide at Zero",
-  next: "Start Next Timer",
+  next: "Auto proceed next timer",
 };
