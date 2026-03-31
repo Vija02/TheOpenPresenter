@@ -4,23 +4,37 @@ import { cx } from "class-variance-authority";
 import { useMemo } from "react";
 
 import { useRendererSelection } from "../../../contexts/rendererSelection";
+import { getSceneOwnershipStatus } from "../../../util/sceneOwnership";
 
 const RendererSelector = () => {
   const data = useData();
   const { selectedRendererId, setSelectedRendererId } = useRendererSelection();
 
-  const rendererIds = useMemo(
-    () => Object.keys(data.renderer).sort(),
-    [data.renderer],
-  );
+  // Get renderer IDs that have at least one owned scene
+  const rendererIdsWithScenes = useMemo(() => {
+    const sceneIds = Object.entries(data.data)
+      .filter(([, value]) => value.type === "scene")
+      .map(([id]) => id);
 
-  if (rendererIds.length <= 1) {
+    return Object.keys(data.renderer)
+      .sort()
+      .filter((rendererId) => {
+        const renderer = data.renderer[rendererId];
+
+        return sceneIds.some(
+          (sceneId) =>
+            getSceneOwnershipStatus(renderer?.ownedScenes, sceneId).owned,
+        );
+      });
+  }, [data.renderer, data.data]);
+
+  if (rendererIdsWithScenes.length <= 1) {
     return null;
   }
 
   return (
     <div className="flex gap-1">
-      {rendererIds.map((rendererId) => (
+      {rendererIdsWithScenes.map((rendererId) => (
         <Button
           key={rendererId}
           size="mini"
