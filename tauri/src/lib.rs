@@ -19,6 +19,11 @@ pub use iroh_commands::{
 };
 pub use renderer_commands::open_renderer;
 
+#[tauri::command]
+fn get_local_ip() -> Option<String> {
+    local_ip_address::local_ip().ok().map(|ip| ip.to_string())
+}
+
 type ChildProcess = Arc<std::sync::Mutex<Option<tauri_plugin_shell::process::CommandChild>>>;
 
 const SERVER_ORG_PAGE_URL: &str = "http://localhost:5678/o/local";
@@ -65,7 +70,8 @@ pub fn run() {
             get_iroh_status,
             start_iroh_bridge,
             stop_iroh_bridge,
-            get_iroh_ticket
+            get_iroh_ticket,
+            get_local_ip
         ])
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_opener::init())

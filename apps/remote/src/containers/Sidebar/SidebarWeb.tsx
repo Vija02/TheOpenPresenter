@@ -5,8 +5,7 @@ import { cx } from "class-variance-authority";
 import { sortBy } from "lodash-es";
 import { useMemo } from "react";
 import { FaMicrophoneLines } from "react-icons/fa6";
-import { MdCoPresent, MdVolumeUp } from "react-icons/md";
-import { MdTune } from "react-icons/md";
+import { MdCoPresent, MdShare, MdTune, MdVolumeUp } from "react-icons/md";
 import { RiRemoteControlLine } from "react-icons/ri";
 import { VscAdd, VscEyeClosed } from "react-icons/vsc";
 import { useLocation } from "wouter";
@@ -20,6 +19,7 @@ import RendererManagementModal from "./RendererManagement/RendererManagementModa
 import RendererSelector from "./RendererManagement/RendererSelector";
 import { RendererWarning } from "./RendererWarning";
 import { ResizableBoxWrapper } from "./ResizableBoxWrapper";
+import ShareQRModal from "./ShareQRModal";
 import SidebarAddSceneModal from "./SidebarAddSceneModal";
 import "./SidebarWeb.css";
 
@@ -134,6 +134,20 @@ const SidebarWeb = () => {
               )}
             >
               <RendererManagementModal />
+            </OverlayToggle>
+            <OverlayToggle
+              toggler={({ onToggle }) => (
+                <Button
+                  onClick={onToggle}
+                  variant="ghost"
+                  size="mini"
+                  title="Share Project"
+                >
+                  <MdShare />
+                </Button>
+              )}
+            >
+              <ShareQRModal />
             </OverlayToggle>
           </div>
           <div className="rt--sidebar-web-stats">
