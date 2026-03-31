@@ -60,9 +60,11 @@ const Remote = () => {
       // Pause - store current adjustment
       mutableRendererData.isRunning = false;
     } else {
-      // Start - record start time and reset adjustment
+      // Start - align to the beginning of the current second so timer syncs with TOD
+      const now = Date.now();
+      const alignedTime = Math.floor(now / 1000) * 1000;
       mutableRendererData.isRunning = true;
-      mutableRendererData.timeStarted = Date.now();
+      mutableRendererData.timeStarted = alignedTime;
       mutableRendererData.timeAdjustment = 0;
     }
   }, [isRunning, mutableRendererData]);
