@@ -6,6 +6,8 @@ import type { IResult } from "ua-parser-js";
 import type { Awareness } from "y-protocols/awareness.js";
 import type { StoreApi } from "zustand";
 
+import { RendererLayout } from "./rendererLayoutTypes";
+
 export type { ObjectToTypedMap };
 
 export type UUID = string;
@@ -56,6 +58,7 @@ export type RenderData<T = Record<string, any>> = {
   overlay: { type: "black" | "white" | "clear" } | null;
   children: Record<UUID, Record<UUID, T>>;
   ownedScenes: Record<UUID, OwnedScene> | null;
+  layout: RendererLayout | null;
 };
 
 export type PluginRendererState = {
