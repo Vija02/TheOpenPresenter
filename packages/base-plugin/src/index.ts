@@ -1,4 +1,5 @@
 export * from "./types";
+export * from "./rendererLayoutTypes";
 export {
   YjsWatcher,
   createTraverser,

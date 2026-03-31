@@ -1,10 +1,15 @@
-import { OwnedScene, RenderData, StateData } from "@repo/base-plugin";
+import {
+  OwnedScene,
+  RenderData,
+  RendererLayout,
+  StateData,
+} from "@repo/base-plugin";
 import { usePluginData } from "@repo/shared";
 import { Button, Checkbox, PopConfirm } from "@repo/ui";
 import { cx } from "class-variance-authority";
 import { sortBy } from "lodash-es";
 import { useCallback, useMemo } from "react";
-import { VscEye, VscEyeClosed, VscTrash } from "react-icons/vsc";
+import { VscEye, VscEyeClosed, VscSettings, VscTrash } from "react-icons/vsc";
 
 import { getSceneOwnershipStatus } from "../../../util/sceneOwnership";
 
@@ -25,7 +30,7 @@ const RendererCard = ({
 }: RendererCardProps) => {
   const mainState = usePluginData().mainState!;
 
-  // const hasLayout = !!renderer?.layout?.enabled;
+  const hasLayout = !!renderer?.layout?.enabled;
 
   // Process stateData to get sorted scenes
   const scenes = useMemo(() => {
@@ -87,29 +92,29 @@ const RendererCard = ({
     [ensureOwnedScenesInitialized],
   );
 
-  // const handleToggleLayout = useCallback(
-  //   (enabled: boolean) => {
-  //     const rendererState = mainState.renderer[rendererId];
-  //     if (!rendererState) return;
+  const handleToggleLayout = useCallback(
+    (enabled: boolean) => {
+      const rendererState = mainState.renderer[rendererId];
+      if (!rendererState) return;
 
-  //     if (enabled) {
-  //       if (!rendererState.layout) {
-  //         rendererState.layout = {
-  //           enabled: true,
-  //           aspectRatio: { width: 16, height: 9 },
-  //           items: [],
-  //         } satisfies RendererLayout;
-  //       } else {
-  //         rendererState.layout.enabled = true;
-  //       }
-  //     } else {
-  //       if (rendererState.layout) {
-  //         rendererState.layout.enabled = false;
-  //       }
-  //     }
-  //   },
-  //   [mainState.renderer, rendererId],
-  // );
+      if (enabled) {
+        if (!rendererState.layout) {
+          rendererState.layout = {
+            enabled: true,
+            aspectRatio: { width: 16, height: 9 },
+            items: [],
+          } satisfies RendererLayout;
+        } else {
+          rendererState.layout.enabled = true;
+        }
+      } else {
+        if (rendererState.layout) {
+          rendererState.layout.enabled = false;
+        }
+      }
+    },
+    [mainState.renderer, rendererId],
+  );
 
   return (
     <div className="border rounded p-4 flex flex-col gap-3 flex-1 min-w-[280px]">
@@ -185,7 +190,7 @@ const RendererCard = ({
         )}
       </div>
 
-      {/* <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center justify-between gap-2">
         <label className="flex items-center gap-2 text-sm cursor-pointer">
           <Checkbox
             checked={hasLayout}
@@ -203,7 +208,7 @@ const RendererCard = ({
             Configure
           </Button>
         )}
-      </div> */}
+      </div>
     </div>
   );
 };
