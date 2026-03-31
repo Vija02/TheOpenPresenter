@@ -177,6 +177,7 @@ export type MediaPickerOptions = {
   type?: MediaType;
   title?: string;
   portalContainer?: HTMLElement | null;
+  multiple?: boolean;
 };
 
 export type MediaPickerOptionsInternal = MediaPickerOptions & {
@@ -198,5 +199,5 @@ export type MediaPickerResult = {
 export type MediaPicker = {
   show: (
     options: MediaPickerOptionsInternal,
-  ) => Promise<MediaPickerResult | null>;
+  ) => Promise<MediaPickerResult[] | null>;
 };

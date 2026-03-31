@@ -97,14 +97,16 @@ const ImageRemote = () => {
   );
 
   const handleMediaPicker = useCallback(async () => {
-    const result = await pluginApi.mediaPicker.show({
+    const results = await pluginApi.mediaPicker.show({
       type: "image",
       title: "Select Image",
     });
 
-    if (result) {
-      const { mediaId, extension } = extractMediaName(result.mediaName);
-      mutableSceneData.pluginData.images.push({ mediaId, extension });
+    if (results) {
+      for (const result of results) {
+        const { mediaId, extension } = extractMediaName(result.mediaName);
+        mutableSceneData.pluginData.images.push({ mediaId, extension });
+      }
     }
   }, [pluginApi.mediaPicker, mutableSceneData.pluginData.images]);
 

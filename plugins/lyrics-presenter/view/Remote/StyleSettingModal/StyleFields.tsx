@@ -543,12 +543,14 @@ const VideoBackgroundSelector = ({
   const divRef = useRef<HTMLDivElement>(null);
 
   const handleImportVideo = useCallback(async () => {
-    const result = await pluginApi.mediaPicker.show({
+    const results = await pluginApi.mediaPicker.show({
       type: "video",
       title: "Select Background Video",
       portalContainer: divRef.current,
+      multiple: false,
     });
 
+    const result = results?.[0];
     if (result?.internalVideo) {
       const existingVideo = mutableSceneData.pluginData.videoBackgrounds.find(
         (v) => v.url === result.internalVideo!.url,

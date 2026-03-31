@@ -32,13 +32,13 @@ export const MediaPickerProvider: React.FC<MediaPickerProviderProps> = ({
 }) => {
   const [modalState, setModalState] = useState<ModalState>(baseModalState);
   const resolveRef = useRef<
-    ((result: MediaPickerResult | null) => void) | null
+    ((result: MediaPickerResult[] | null) => void) | null
   >(null);
 
   const show = useCallback(
     (
       options: MediaPickerOptionsInternal,
-    ): Promise<MediaPickerResult | null> => {
+    ): Promise<MediaPickerResult[] | null> => {
       return new Promise((resolve) => {
         resolveRef.current = resolve;
         setModalState({
@@ -58,9 +58,9 @@ export const MediaPickerProvider: React.FC<MediaPickerProviderProps> = ({
     setModalState(baseModalState);
   }, []);
 
-  const handleSelect = useCallback((result: MediaPickerResult) => {
+  const handleSelect = useCallback((results: MediaPickerResult[]) => {
     if (resolveRef.current) {
-      resolveRef.current(result);
+      resolveRef.current(results);
       resolveRef.current = null;
     }
     setModalState(baseModalState);
