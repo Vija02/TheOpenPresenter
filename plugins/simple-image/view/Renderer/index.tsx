@@ -10,20 +10,43 @@ const ImageRenderer = () => {
 
   const images = pluginApi.scene.useData((x) => x.pluginData.images);
 
+  // Get derivation offset for confidence monitor mode
+  const derivationOffset = pluginApi.renderer.useDerivationOffset();
+
   const { shouldAutoPlay, calculatedAutoplaySlideIndex } = useAutoplay(
     imgIndex ?? 0,
   );
 
   const activeIndex = useMemo(() => {
+    let index: number | undefined;
     if (
       shouldAutoPlay &&
       calculatedAutoplaySlideIndex !== null &&
       calculatedAutoplaySlideIndex !== undefined
     ) {
-      return calculatedAutoplaySlideIndex;
+      index = calculatedAutoplaySlideIndex;
+    } else {
+      index = imgIndex;
     }
-    return imgIndex;
-  }, [shouldAutoPlay, calculatedAutoplaySlideIndex, imgIndex]);
+
+    // Apply derivation offset
+    if (derivationOffset !== 0 && index !== undefined) {
+      const derivedIndex = index + derivationOffset;
+      // Return -1 if out of bounds (shows nothing)
+      if (derivedIndex < 0 || derivedIndex >= images.length) {
+        return -1;
+      }
+      return derivedIndex;
+    }
+
+    return index;
+  }, [
+    shouldAutoPlay,
+    calculatedAutoplaySlideIndex,
+    imgIndex,
+    derivationOffset,
+    images.length,
+  ]);
 
   return images.map((imgSrc, i) => (
     <div

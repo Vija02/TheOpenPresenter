@@ -6,7 +6,7 @@ import type { IResult } from "ua-parser-js";
 import type { Awareness } from "y-protocols/awareness.js";
 import type { StoreApi } from "zustand";
 
-import { RendererLayout } from "./rendererLayoutTypes";
+import { DerivationConfig, RendererLayout } from "./rendererLayoutTypes";
 
 export type { ObjectToTypedMap };
 
@@ -124,6 +124,7 @@ export type MiscProps = {
   mediaPicker: MediaPicker;
   logger: Logger;
   parentContainer: HTMLElement | null;
+  derivation?: DerivationConfig | null;
 };
 
 export type WebComponentProps<TrpcClient> = {

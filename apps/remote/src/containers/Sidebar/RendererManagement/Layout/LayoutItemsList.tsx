@@ -7,14 +7,14 @@ type LayoutItemsListProps = {
   items: LayoutItem[];
   rendererId: string;
   onRemove: (itemId: string) => void;
-  // onDerivationChange: (itemId: string, offset: number | null) => void;
+  onDerivationChange: (itemId: string, offset: number | null) => void;
 };
 
 const LayoutItemsList = ({
   items,
   rendererId,
   onRemove,
-  // onDerivationChange,
+  onDerivationChange,
 }: LayoutItemsListProps) => {
   const data = useData();
 
@@ -24,7 +24,12 @@ const LayoutItemsList = ({
 
   return (
     <div className="flex flex-col gap-2 items-start w-full">
-      <p className="font-medium text-sm">Active Elements</p>
+      <p className="font-medium text-sm">
+        Active Elements
+        <span className="ml-2 text-xs px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded-full font-normal">
+          Beta
+        </span>
+      </p>
       <div className="flex flex-col gap-1 w-full">
         {items.map((item) => {
           const isScreenItem = item.type === "screenItem";
@@ -52,15 +57,15 @@ const LayoutItemsList = ({
                     </span>
                   </>
                 )}
-                {/* {item.derivation && (
+                {item.derivation && (
                   <span className="text-xs px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded">
                     {item.derivation.offset > 0 ? "+" : ""}
                     {item.derivation.offset}
                   </span>
-                )} */}
+                )}
               </div>
               <div className="flex items-center gap-2">
-                {/* <select
+                <select
                   className="text-xs border rounded px-2 py-1"
                   value={item.derivation?.offset ?? "none"}
                   onChange={(e) => {
@@ -74,7 +79,7 @@ const LayoutItemsList = ({
                   <option value="none">Current</option>
                   <option value="-1">-1 (Previous)</option>
                   <option value="1">+1 (Next)</option>
-                </select> */}
+                </select>
                 <Button
                   size="sm"
                   variant="ghost"

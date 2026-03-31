@@ -1,6 +1,7 @@
 import {
   AwarenessContext,
   AwarenessStateData,
+  DerivationConfig,
   LayoutItem,
   OverlayInfo,
   PluginContext,
@@ -9,7 +10,7 @@ import {
   SceneLayoutPosition,
   State,
   WebComponentProps,
-  YjsWatcher
+  YjsWatcher,
 } from "@repo/base-plugin";
 import { preloader } from "@repo/lib";
 import { logger } from "@repo/observability";
@@ -69,6 +70,8 @@ export const Body = () => {
                   key={item.id}
                   sourceRendererId={item.sourceRendererId}
                   layoutPosition={item.position}
+                  derivation={item.derivation}
+                  sceneOverrides={item.sceneOverrides}
                 />
               );
             }
@@ -79,6 +82,7 @@ export const Body = () => {
                 sceneId={item.sceneId!}
                 sourceRendererId={item.sourceRendererId}
                 layoutPosition={item.position}
+                derivation={item.derivation}
               />
             );
           })}
@@ -182,9 +186,13 @@ const ScreenRenderer = React.memo(
   ({
     sourceRendererId,
     layoutPosition,
+    derivation,
+    sceneOverrides,
   }: {
     sourceRendererId: string;
     layoutPosition: SceneLayoutPosition;
+    derivation?: DerivationConfig | null;
+    sceneOverrides?: Record<string, DerivationConfig | null>;
   }) => {
     const data = useData();
 
@@ -201,11 +209,18 @@ const ScreenRenderer = React.memo(
       return null;
     }
 
+    // Check for scene-specific derivation override
+    const effectiveDerivation =
+      sceneOverrides?.[currentSceneId] !== undefined
+        ? sceneOverrides[currentSceneId]
+        : derivation;
+
     return (
       <SceneRenderer
         sceneId={currentSceneId}
         sourceRendererId={sourceRendererId}
         layoutPosition={layoutPosition}
+        derivation={effectiveDerivation}
       />
     );
   },
@@ -217,10 +232,12 @@ const SceneRenderer = React.memo(
     sceneId,
     sourceRendererId,
     layoutPosition,
+    derivation,
   }: {
     sceneId: string;
     sourceRendererId?: string;
     layoutPosition?: SceneLayoutPosition;
+    derivation?: DerivationConfig | null;
   }) => {
     const data = useData();
     const rendererId = useRendererId();
@@ -291,6 +308,7 @@ const SceneRenderer = React.memo(
                 sceneId={sceneId}
                 sourceRendererId={effectiveRendererId}
                 layoutPosition={layoutPosition}
+                derivation={derivation}
               />
             </ErrorBoundary>
           ))}
@@ -306,11 +324,13 @@ const PluginRenderer = React.memo(
     sceneId,
     sourceRendererId,
     layoutPosition,
+    derivation,
   }: {
     pluginId: string;
     sceneId: string;
     sourceRendererId?: string;
     layoutPosition?: SceneLayoutPosition;
+    derivation?: DerivationConfig | null;
   }) => {
     const pluginDivRef = useRef<HTMLDivElement>(null);
     const { pluginMeta, orgId, projectId } = usePluginMetaData();
@@ -472,6 +492,7 @@ const PluginRenderer = React.memo(
           },
           logger: childLogger,
           parentContainer: pluginDivRef.current,
+          derivation: derivation ?? null,
         },
       } satisfies WebComponentProps<any>);
     }, [
@@ -479,6 +500,7 @@ const PluginRenderer = React.memo(
       canPlayAudio,
       childLogger,
       currentUserId,
+      derivation,
       error,
       getYJSPluginRenderer,
       isSuccess,
