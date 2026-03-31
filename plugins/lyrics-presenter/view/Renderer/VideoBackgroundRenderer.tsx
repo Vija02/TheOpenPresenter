@@ -4,7 +4,6 @@ import {
   createVideoPlaybackState,
 } from "@repo/video";
 import { VideoPlayer } from "@repo/video/client";
-import { cx } from "class-variance-authority";
 import { CSSProperties, useMemo, useRef } from "react";
 
 import { getMergedSlideStyle } from "../../src/slideStyle";
@@ -81,13 +80,12 @@ const VideoBackgroundItem = ({ video, isActive }: VideoBackgroundItemProps) => {
     height: "100%",
     zIndex: isActive ? 1 : 0,
     pointerEvents: "none",
+    opacity: isActive ? 1 : 0,
+    transition: "opacity 300ms ease-in-out",
   };
 
   return (
-    <div
-      style={videoStyle}
-      className={cx(isActive ? "transition-fade-in" : "transition-fade-out")}
-    >
+    <div style={videoStyle}>
       <VideoPlayer
         video={video}
         playbackState={playbackStateRef.current}
