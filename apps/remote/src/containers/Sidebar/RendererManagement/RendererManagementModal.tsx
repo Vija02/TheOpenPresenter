@@ -14,6 +14,7 @@ import { useCallback, useMemo, useState } from "react";
 import { VscAdd } from "react-icons/vsc";
 
 import { useRendererSelection } from "../../../contexts/rendererSelection";
+import LayoutEditorModal from "./Layout/LayoutEditorModal";
 import RendererCard from "./RendererCard";
 
 const RendererManagementModal = () => {
@@ -60,6 +61,16 @@ const RendererManagementModal = () => {
     },
     [mainState.renderer, selectedRendererId, setSelectedRendererId],
   );
+
+  if (layoutEditorRendererId) {
+    return (
+      <LayoutEditorModal
+        isOpen={isOpen ?? false}
+        rendererId={layoutEditorRendererId}
+        onClose={() => setLayoutEditorRendererId(null)}
+      />
+    );
+  }
 
   return (
     <Dialog open={isOpen ?? false} onOpenChange={onToggle ?? (() => {})}>
