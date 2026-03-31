@@ -79,6 +79,7 @@ const Renderer = () => {
         remaining,
         elapsed,
         activeTimer.overtimeBehavior,
+        activeTimer.targetTime,
       )
     : "";
   const hasTitle = !!activeTimer?.title;
@@ -95,6 +96,7 @@ const Renderer = () => {
         elapsed,
         activeTimer.wrapUpYellow,
         activeTimer.wrapUpRed,
+        activeTimer.targetTime,
       )
     : "normal";
   const timerColor = getTimerColor(colorState);
@@ -106,6 +108,7 @@ const Renderer = () => {
         activeTimer.duration,
         remaining,
         elapsed,
+        activeTimer.targetTime,
       )
     : 0;
 

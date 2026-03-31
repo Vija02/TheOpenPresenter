@@ -2,7 +2,11 @@ import { Button, PluginScaffold } from "@repo/ui";
 import { useCallback, useEffect, useState } from "react";
 import { VscAdd } from "react-icons/vsc";
 
-import { createDefaultTimer, generateId } from "../../src/timerUtils";
+import {
+  calculateEffectiveTimerState,
+  createDefaultTimer,
+  generateId,
+} from "../../src/timerUtils";
 import { TimerItem } from "../../src/types";
 import { usePluginAPI } from "../pluginApi";
 import { TimerEditor } from "./components/TimerEditor";
@@ -37,6 +41,14 @@ const Remote = () => {
   // Editor modal state
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
+
+  const { effectiveTimerIndex } = calculateEffectiveTimerState(
+    timers,
+    activeTimerIndex,
+    timeStarted,
+    isRunning,
+    timeAdjustment,
+  );
 
   // Add default timer if empty on mount
   useEffect(() => {
@@ -73,22 +85,24 @@ const Remote = () => {
   }, [mutableRendererData]);
 
   const handlePrevious = useCallback(() => {
-    if (activeTimerIndex > 0) {
-      mutableRendererData.activeTimerIndex = activeTimerIndex - 1;
-      mutableRendererData.isRunning = false;
-      mutableRendererData.timeStarted = null;
+    if (effectiveTimerIndex > 0) {
+      mutableRendererData.activeTimerIndex = effectiveTimerIndex - 1;
+      const now = Date.now();
+      const alignedTime = Math.floor(now / 1000) * 1000;
+      mutableRendererData.timeStarted = alignedTime;
       mutableRendererData.timeAdjustment = 0;
     }
-  }, [activeTimerIndex, mutableRendererData]);
+  }, [effectiveTimerIndex, mutableRendererData]);
 
   const handleNext = useCallback(() => {
-    if (activeTimerIndex < timers.length - 1) {
-      mutableRendererData.activeTimerIndex = activeTimerIndex + 1;
-      mutableRendererData.isRunning = false;
-      mutableRendererData.timeStarted = null;
+    if (effectiveTimerIndex < timers.length - 1) {
+      mutableRendererData.activeTimerIndex = effectiveTimerIndex + 1;
+      const now = Date.now();
+      const alignedTime = Math.floor(now / 1000) * 1000;
+      mutableRendererData.timeStarted = alignedTime;
       mutableRendererData.timeAdjustment = 0;
     }
-  }, [activeTimerIndex, timers.length, mutableRendererData]);
+  }, [effectiveTimerIndex, timers.length, mutableRendererData]);
 
   const handleNudge = useCallback(
     (ms: number) => {
@@ -108,14 +122,15 @@ const Remote = () => {
   // Timer list actions
   const handleSelectTimer = useCallback(
     (index: number) => {
-      if (index !== activeTimerIndex) {
+      if (index !== effectiveTimerIndex) {
         mutableRendererData.activeTimerIndex = index;
-        mutableRendererData.isRunning = false;
+        mutableRendererData.isRunning =
+          timers[index]?.mode === "countdownToTime";
         mutableRendererData.timeStarted = null;
         mutableRendererData.timeAdjustment = 0;
       }
     },
-    [activeTimerIndex, mutableRendererData],
+    [effectiveTimerIndex, mutableRendererData, timers],
   );
 
   const handleEditTimer = useCallback((index: number) => {
@@ -128,8 +143,8 @@ const Remote = () => {
       mutableSceneData.pluginData.timers.splice(index, 1);
 
       // Adjust active index if needed
-      if (activeTimerIndex >= timers.length - 1 && activeTimerIndex > 0) {
-        mutableRendererData.activeTimerIndex = activeTimerIndex - 1;
+      if (effectiveTimerIndex >= timers.length - 1 && effectiveTimerIndex > 0) {
+        mutableRendererData.activeTimerIndex = effectiveTimerIndex - 1;
       }
       // Reset timer state
       mutableRendererData.isRunning = false;
@@ -137,7 +152,7 @@ const Remote = () => {
       mutableRendererData.timeAdjustment = 0;
     },
     [
-      activeTimerIndex,
+      effectiveTimerIndex,
       timers.length,
       mutableSceneData.pluginData.timers,
       mutableRendererData,
@@ -153,14 +168,18 @@ const Remote = () => {
         mutableSceneData.pluginData.timers.splice(index - 1, 0, timer);
 
         // Update active index if it was affected
-        if (activeTimerIndex === index) {
+        if (effectiveTimerIndex === index) {
           mutableRendererData.activeTimerIndex = index - 1;
-        } else if (activeTimerIndex === index - 1) {
+        } else if (effectiveTimerIndex === index - 1) {
           mutableRendererData.activeTimerIndex = index;
         }
       }
     },
-    [activeTimerIndex, mutableSceneData.pluginData.timers, mutableRendererData],
+    [
+      effectiveTimerIndex,
+      mutableSceneData.pluginData.timers,
+      mutableRendererData,
+    ],
   );
 
   const handleMoveDown = useCallback(
@@ -172,15 +191,15 @@ const Remote = () => {
         mutableSceneData.pluginData.timers.splice(index + 1, 0, timer);
 
         // Update active index if it was affected
-        if (activeTimerIndex === index) {
+        if (effectiveTimerIndex === index) {
           mutableRendererData.activeTimerIndex = index + 1;
-        } else if (activeTimerIndex === index + 1) {
+        } else if (effectiveTimerIndex === index + 1) {
           mutableRendererData.activeTimerIndex = index;
         }
       }
     },
     [
-      activeTimerIndex,
+      effectiveTimerIndex,
       timers.length,
       mutableSceneData.pluginData.timers,
       mutableRendererData,
@@ -209,6 +228,7 @@ const Remote = () => {
           overtimeBehavior: timerData.overtimeBehavior ?? "stop",
           wrapUpYellow: timerData.wrapUpYellow ?? defaultWrapUpYellow,
           wrapUpRed: timerData.wrapUpRed ?? defaultWrapUpRed,
+          targetTime: null,
         };
         mutableSceneData.pluginData.timers.push(newTimer);
       }
@@ -246,8 +266,8 @@ const Remote = () => {
             isRunning={isRunning}
             isBlackout={isBlackout}
             hasTimers={timers.length > 0}
-            canGoPrevious={activeTimerIndex > 0}
-            canGoNext={activeTimerIndex < timers.length - 1}
+            canGoPrevious={effectiveTimerIndex > 0}
+            canGoNext={effectiveTimerIndex < timers.length - 1}
             onPlayPause={handlePlayPause}
             onReset={handleReset}
             onPrevious={handlePrevious}

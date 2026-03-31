@@ -4,6 +4,7 @@ import {
   VscArrowRight,
   VscChevronDown,
   VscChevronUp,
+  VscDebugPause,
   VscEdit,
   VscTrash,
 } from "react-icons/vsc";
@@ -102,6 +103,7 @@ export const TimerList = ({
                 variant="default"
                 className="text-[10px] px-1.5 py-0 h-5 shrink-0"
               >
+                <VscDebugPause className="w-3 h-3 mr-0.5" />
                 no-proceed
               </Badge>
             )}
