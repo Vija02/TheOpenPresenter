@@ -37,9 +37,18 @@ export const VideoPlayer = ({
 }: VideoPlayerProps) => {
   const pluginApi = usePluginAPI();
 
-  const videoDuration = video?.metadata.duration;
-  const volume = playbackState.volume ?? 1;
-  const muted = playbackState.muted ?? false;
+  const videoDuration = useMemo(
+    () => video?.metadata.duration,
+    [video?.metadata.duration],
+  );
+  const volume = useMemo(
+    () => playbackState.volume ?? 1,
+    [playbackState.volume],
+  );
+  const muted = useMemo(
+    () => playbackState.muted ?? false,
+    [playbackState.muted],
+  );
 
   const { isPlaying, isEnded } = useComputedPlaybackState(
     playbackState,
@@ -69,7 +78,7 @@ export const VideoPlayer = ({
         return;
       }
 
-      if (ready && playbackState && videoDuration) {
+      if (ready && playbackState.uid && videoDuration) {
         const {
           isPlaying: computedPlaying,
           currentTimeSeconds: computerCurrentTimeSeconds,
@@ -86,7 +95,7 @@ export const VideoPlayer = ({
         }
       }
     },
-    [playbackState, videoDuration, ready, forceLoop],
+    [playbackState.uid, videoDuration, ready, forceLoop],
   );
   const uid = useMemo(() => playbackState.uid, [playbackState.uid]);
 
