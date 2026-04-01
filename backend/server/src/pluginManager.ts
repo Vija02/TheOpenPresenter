@@ -93,7 +93,9 @@ const _linkPlugin = async (pluginName: string) => {
     }
 
     const localPluginDir = path.resolve(`${__dirname}/../../../plugins/`);
-    const localPluginDirData = fs.readdirSync(localPluginDir);
+    const localPluginDirData = fs
+      .readdirSync(localPluginDir)
+      .filter((name) => !name.startsWith(".") && !name.endsWith(".md"));
     if (localPluginDirData.includes(pluginName)) {
       fs.symlinkSync(
         path.resolve(localPluginDir, pluginName),
