@@ -57,7 +57,7 @@ const ShareQRModal = () => {
       }
     }
 
-    const baseUrl = `${origin}/remote/${orgSlug}/${projectSlug}`;
+    const baseUrl = `${origin}/app/${orgSlug}/${projectSlug}`;
     return search ? `${baseUrl}?${search}` : baseUrl;
   }, [orgSlug, projectSlug, search, localIp]);
 
