@@ -56,6 +56,7 @@ function download(data: string, filename: string, type: string) {
 const Remote = () => {
   const pluginApi = usePluginAPI();
   const songs = pluginApi.scene.useData((x) => x.pluginData.songs);
+  const mutableSceneData = pluginApi.scene.useValtioData();
 
   const onExport = useCallback(() => {
     songs.forEach((song) => {
@@ -63,6 +64,16 @@ const Remote = () => {
       download(convertedData, `${song.title.replace(/ /g, "_")}.xml`, "xml");
     });
   }, [songs]);
+
+  const swapSongs = useCallback(
+    (a: number, b: number) => {
+      const s = mutableSceneData.pluginData.songs;
+      const temp = s[a]!;
+      s[a] = s[b]!;
+      s[b] = temp;
+    },
+    [mutableSceneData.pluginData.songs],
+  );
 
   return (
     <PluginScaffold
@@ -96,8 +107,19 @@ const Remote = () => {
       }
       body={
         <div className="p-3 w-full">
-          {songs.map((song) => (
-            <SongView key={song.id} song={song} />
+          {songs.map((song, index) => (
+            <SongView
+              key={song.id}
+              song={song}
+              onMoveUp={
+                index > 0 ? () => swapSongs(index, index - 1) : undefined
+              }
+              onMoveDown={
+                index < songs.length - 1
+                  ? () => swapSongs(index, index + 1)
+                  : undefined
+              }
+            />
           ))}
           <OverlayToggle
             toggler={({ onToggle }) => (
