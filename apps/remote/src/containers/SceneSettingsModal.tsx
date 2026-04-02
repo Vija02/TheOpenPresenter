@@ -12,8 +12,10 @@ import {
   InputControl,
   useOverlayToggle,
 } from "@repo/ui";
-import { useCallback } from "react";
+import { sortBy } from "lodash-es";
+import { useCallback, useMemo } from "react";
 import { useForm } from "react-hook-form";
+import { VscArrowDown, VscArrowUp } from "react-icons/vsc";
 import z from "zod";
 
 export type SceneSettingsModalPropTypes = { selectedScene: string };
@@ -27,6 +29,34 @@ const SceneSettingsModal = ({ selectedScene }: SceneSettingsModalPropTypes) => {
 
   const data = useData();
   const mainState = usePluginData().mainState!;
+
+  const sortedSceneIds = useMemo(
+    () =>
+      sortBy(Object.entries(data.data), ([, value]) => value.order).map(
+        ([id]) => id,
+      ),
+    [data.data],
+  );
+
+  const currentIndex = sortedSceneIds.indexOf(selectedScene);
+
+  const handleMoveUp = useCallback(() => {
+    if (currentIndex <= 0) return;
+    const neighborId = sortedSceneIds[currentIndex - 1]!;
+    const currentOrder = mainState.data[selectedScene]!.order;
+    const neighborOrder = mainState.data[neighborId]!.order;
+    mainState.data[selectedScene]!.order = neighborOrder;
+    mainState.data[neighborId]!.order = currentOrder;
+  }, [currentIndex, mainState.data, selectedScene, sortedSceneIds]);
+
+  const handleMoveDown = useCallback(() => {
+    if (currentIndex >= sortedSceneIds.length - 1) return;
+    const neighborId = sortedSceneIds[currentIndex + 1]!;
+    const currentOrder = mainState.data[selectedScene]!.order;
+    const neighborOrder = mainState.data[neighborId]!.order;
+    mainState.data[selectedScene]!.order = neighborOrder;
+    mainState.data[neighborId]!.order = currentOrder;
+  }, [currentIndex, mainState.data, selectedScene, sortedSceneIds]);
 
   const handleSubmit = useCallback(
     ({ name }: { name: string }) => {
@@ -56,6 +86,27 @@ const SceneSettingsModal = ({ selectedScene }: SceneSettingsModalPropTypes) => {
             <DialogBody>
               <div className="stack-col items-start py-2">
                 <InputControl control={form.control} label="Name" name="name" />
+                <div className="flex items-center gap-2 w-full">
+                  <span className="text-sm font-medium">Reorder</span>
+                  <Button
+                    type="button"
+                    size="xs"
+                    variant="outline"
+                    onClick={handleMoveUp}
+                    disabled={currentIndex <= 0}
+                  >
+                    <VscArrowUp />
+                  </Button>
+                  <Button
+                    type="button"
+                    size="xs"
+                    variant="outline"
+                    onClick={handleMoveDown}
+                    disabled={currentIndex >= sortedSceneIds.length - 1}
+                  >
+                    <VscArrowDown />
+                  </Button>
+                </div>
               </div>
             </DialogBody>
             <DialogFooter>
