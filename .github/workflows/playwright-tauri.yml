@@ -82,7 +82,7 @@ jobs:
           ENABLE_E2E_COMMANDS=1 \
           PLUGIN_GOOGLE_SLIDES_UNOCONVERT_SERVER=http://localhost:8379 \
           DISPLAY=:99 \
-            tauri/target/debug/TheOpenPresenter &
+            tauri/target/debug/theopenpresenter-app &
           echo "Waiting for server to be ready..."
           timeout 120 bash -c 'until curl -sf http://localhost:5678 >/dev/null 2>&1; do sleep 2; done'
           echo "Server is ready!"
