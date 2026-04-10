@@ -81,7 +81,7 @@ jobs:
           cd tauri
           yarn --no-immutable
           yarn prebuild
-          yarn tauri build --debug
+          yarn tauri build --debug --no-bundle
 
       - name: Install Playwright browsers
         run: yarn e2e playwright install --with-deps
