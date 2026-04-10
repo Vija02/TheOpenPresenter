@@ -65,17 +65,6 @@ jobs:
           yarn --no-immutable
           yarn build
 
-      - name: Extract and optimize node_modules for Tauri
-        run: |
-          node scripts/build_utils/extract_core.js
-          node scripts/build_utils/extract_server.js
-          node scripts/build_utils/extract_plugins.js
-          node scripts/build_utils/extract_tauri.js
-          node scripts/build_utils/copy_deps.js
-          rm -rf node_modules
-          cp -r ./node_modules_nft/node_modules ./node_modules
-          rm -rf node_modules_nft
-
       - name: Build Tauri (debug)
         run: |
           cd tauri
