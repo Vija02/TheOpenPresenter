@@ -1,0 +1,111 @@
+name: Playwright Tauri Tests
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  test:
+    timeout-minutes: 90
+    runs-on: ubuntu-latest
+    env:
+      CI: true
+
+    services:
+      unoserver:
+        image: philiplehmann/unoserver:3.0.1-1816
+        ports:
+          - "0.0.0.0:8379:3000"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: yarn
+          cache-dependency-path: |
+            yarn.lock
+            tauri/yarn.lock
+            tauri/node-server/yarn.lock
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: tauri
+
+      - name: Install Linux system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            build-essential \
+            libssl-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            xvfb
+
+      - name: Install dumbpipe
+        run: |
+          curl -sL https://www.dumbpipe.dev/install.sh | sh
+          sudo mv dumbpipe /usr/local/bin/
+
+      - name: Build TOP project
+        env:
+          TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+          TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
+        run: |
+          cp .env.ci .env
+          yarn --no-immutable
+          yarn build
+
+      - name: Extract and optimize node_modules for Tauri
+        run: |
+          node scripts/build_utils/extract_core.js
+          node scripts/build_utils/extract_server.js
+          node scripts/build_utils/extract_plugins.js
+          node scripts/build_utils/extract_tauri.js
+          node scripts/build_utils/copy_deps.js
+          rm -rf node_modules
+          cp -r ./node_modules_nft/node_modules ./node_modules
+          rm -rf node_modules_nft
+
+      - name: Build Tauri (debug)
+        run: |
+          cd tauri
+          yarn --no-immutable
+          yarn prebuild
+          yarn tauri build --debug
+
+      - name: Install Playwright browsers
+        run: yarn e2e playwright install --with-deps
+
+      - name: Start Tauri app
+        run: |
+          Xvfb :99 -screen 0 1280x720x24 &
+          export DISPLAY=:99
+          ENABLE_E2E_COMMANDS=1 \
+          PLUGIN_GOOGLE_SLIDES_UNOCONVERT_SERVER=http://localhost:8379 \
+          DISPLAY=:99 \
+            tauri/target/debug/TheOpenPresenter &
+          echo "Waiting for server to be ready..."
+          timeout 120 bash -c 'until curl -sf http://localhost:5678 >/dev/null 2>&1; do sleep 2; done'
+          echo "Server is ready!"
+
+      - name: Run Playwright tests
+        run: yarn e2e test --config playwright.tauri.config.ts
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-tauri-report
+          path: |
+            e2e/playwright-report/
+            e2e/test-results/
+          retention-days: 30

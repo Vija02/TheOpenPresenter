@@ -84,7 +84,14 @@ async function main() {
 
   const finalEnv = {
     NODE_ENV: "production",
-    AUTO_LOGIN: "1",
+    ...(process.env.ENABLE_E2E_COMMANDS ? {} : { AUTO_LOGIN: "1" }),
+    ...(process.env.ENABLE_E2E_COMMANDS ? { ENABLE_E2E_COMMANDS: "1" } : {}),
+    ...(process.env.PLUGIN_GOOGLE_SLIDES_UNOCONVERT_SERVER
+      ? {
+          PLUGIN_GOOGLE_SLIDES_UNOCONVERT_SERVER:
+            process.env.PLUGIN_GOOGLE_SLIDES_UNOCONVERT_SERVER,
+        }
+      : {}),
     ENABLE_PROXY_DEVICE_ON_PRODUCTION: "1",
 
     // DB settings
