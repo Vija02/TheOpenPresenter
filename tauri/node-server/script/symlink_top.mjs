@@ -1,10 +1,14 @@
 import { promises as fs } from "fs";
-import { join, resolve } from "path";
+import { fileURLToPath } from "url";
+import { dirname, join, resolve } from "path";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 async function createSymlinks() {
-  // Configure these paths
-  const sourceDir = join("../../", "theopenpresenter");
-  const targetDir = join("node-server", "theopenpresenter");
+  // Script is at tauri/node-server/script/symlink_top.mjs
+  // Project root is 3 levels up from the script file
+  const sourceDir = resolve(__dirname, "../../..");
+  const targetDir = resolve(__dirname, "../theopenpresenter");
   const excludeFolder = "tauri";
 
   try {
