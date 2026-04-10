@@ -1,4 +1,5 @@
 import { ServerPluginApiPrivate } from "@repo/base-plugin/server";
+import { logger } from "@repo/observability";
 import aki from "aki-plugin-manager";
 import { Express } from "express";
 import fs, { readdirSync, statSync } from "fs";
@@ -33,8 +34,12 @@ export const initPlugins = async (app: Express) => {
       try {
         // TODO: Handle non-local plugin
         await _linkPlugin(pluginName);
-      } catch (e) {
-        console.error(e);
+      } catch (err) {
+        logger.error(
+          { err },
+          `Failed to install the '${pluginName}' plugin. Skipping...`,
+        );
+        console.error(err);
         console.error(
           `ERROR: Failed to install the '${pluginName}' plugin. Skipping...`,
         );
@@ -66,8 +71,12 @@ export const initPlugins = async (app: Express) => {
             `Plugin ${pluginName} does not have an init function`,
           );
         }
-      } catch (e) {
-        console.error(e);
+      } catch (err) {
+        logger.error(
+          { err },
+          `Plugin '${pluginName}' installed but failed to call the init function. Skipping...`,
+        );
+        console.error(err);
         console.error(
           `ERROR: Plugin '${pluginName}' installed but failed to call the init function. Skipping...`,
         );
@@ -77,8 +86,9 @@ export const initPlugins = async (app: Express) => {
     console.log(
       `${chalk.green(`${initializedPlugins.length} plugins initialized!`)} ${chalk.gray(initializedPlugins.map(([name, version]) => `${name}@${version}`).join(", "))}\n`,
     );
-  } catch (e) {
-    console.error(e);
+  } catch (err) {
+    logger.error({ err }, "Failed to initialize plugins");
+    console.error(err);
     console.error("ERROR: Failed to initialize plugins");
   }
 };
@@ -102,10 +112,12 @@ const _linkPlugin = async (pluginName: string) => {
         path.resolve(pluginsPath, pluginName),
       );
     } else {
+      logger.warn(`Linking local plugin '${pluginName}' failed`);
       console.warn(`Linking local plugin '${pluginName}' failed`);
     }
-  } catch (e) {
-    console.error(e);
+  } catch (err) {
+    logger.error({ err }, `Failed to link plugin '${pluginName}'`);
+    console.error(err);
     console.error(`ERROR: Failed to link plugin '${pluginName}'`);
   }
 };
