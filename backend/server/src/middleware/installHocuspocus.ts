@@ -1,6 +1,7 @@
 import { Server } from "@hocuspocus/server";
 import type { YState } from "@repo/base-plugin";
 import { DisposableDocumentManager, YjsState } from "@repo/base-plugin/server";
+import { logger } from "@repo/observability";
 import { Express } from "express";
 import { IncomingMessage, ServerResponse } from "http";
 import { Middleware } from "postgraphile";
@@ -110,29 +111,38 @@ export default async function installHocuspocus(app: Express) {
         console.log(error);
       });
 
-      const dummyRes = new ServerResponse(request);
+      try {
+        const dummyRes = new ServerResponse(request);
 
-      await applyMiddleware(
-        websocketMiddlewares as Middleware<IncomingMessage, ServerResponse>[],
-        request,
-        dummyRes,
-      );
-
-      // Everyone needs to be logged in
-      if (!request?.user?.session_id) {
-        incoming.close(
-          401,
-          JSON.stringify({
-            message:
-              "You do not have permission to use this WebSocket connection",
-          }),
+        await applyMiddleware(
+          websocketMiddlewares as Middleware<IncomingMessage, ServerResponse>[],
+          request,
+          dummyRes,
         );
-        return;
-      }
 
-      Server.handleConnection(incoming, request, {
-        session_id: request.user.session_id,
-      });
+        // Everyone needs to be logged in
+        if (!request?.user?.session_id) {
+          incoming.close(
+            4401,
+            JSON.stringify({
+              message:
+                "You do not have permission to use this WebSocket connection",
+            }),
+          );
+          return;
+        }
+
+        Server.handleConnection(incoming, request, {
+          session_id: request.user.session_id,
+        });
+      } catch (err) {
+        logger.error({ err }, "Error handling WebSocket connection");
+        try {
+          incoming.close(4500, "Internal server error");
+        } catch {
+          incoming.terminate();
+        }
+      }
     },
   );
 

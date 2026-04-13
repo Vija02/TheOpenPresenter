@@ -161,7 +161,7 @@ const initializeHocuspocusProvider = (projectId: string) => {
         reject(new Error("Authentication Failed"));
       },
       onClose: (data) => {
-        if (data.event.code === 401) {
+        if (data.event.code === 4401) {
           reject(new Error("Authentication Failed"));
         }
       },
