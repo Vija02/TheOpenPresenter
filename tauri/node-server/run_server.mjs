@@ -40,7 +40,14 @@ const runCommand = async (command, args, options) => {
 };
 
 const appDataFolderName = "TheOpenPresenter";
-const nodeBinaryPath = path.resolve("./node");
+
+const sidecarNodePath = path.resolve(
+  import.meta.dirname,
+  process.platform === "win32" ? "../node.exe" : "../node",
+);
+const nodeBinaryPath = fs.existsSync(sidecarNodePath)
+  ? sidecarNodePath
+  : process.execPath;
 
 const killProcess = async (pg) => {
   await pg.stop();
