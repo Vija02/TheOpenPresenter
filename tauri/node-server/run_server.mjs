@@ -92,7 +92,7 @@ async function main() {
   }
 
   const finalEnv = {
-    NODE_ENV: "production",
+    NODE_ENV: process.env.ENABLE_E2E_COMMANDS ? "test" : "production",
     ...(process.env.ENABLE_E2E_COMMANDS ? {} : { AUTO_LOGIN: "1" }),
     ...(process.env.ENABLE_E2E_COMMANDS ? { ENABLE_E2E_COMMANDS: "1" } : {}),
     ...(process.env.PLUGIN_GOOGLE_SLIDES_UNOCONVERT_SERVER
