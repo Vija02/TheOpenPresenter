@@ -9,6 +9,16 @@ import { getShutdownActions, getUpgradeHandlers, makeApp } from "./app";
 
 const isDev = process.env.NODE_ENV === "development";
 
+process.on("uncaughtException", (err) => {
+  logger.fatal({ err }, "Uncaught exception — shutting down");
+  process.exit(1);
+});
+
+process.on("unhandledRejection", (reason) => {
+  logger.fatal({ err: reason }, "Unhandled promise rejection — shutting down");
+  process.exit(1);
+});
+
 async function main() {
   logger.info("Starting server");
   const { default: chalk } = await import("chalk");
