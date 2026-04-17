@@ -9080,6 +9080,7 @@ __metadata:
     "@fontsource-variable/source-sans-3": "npm:^5.1.0"
     "@hookform/resolvers": "npm:^5.1.1"
     "@react-hook/window-size": "npm:^3.1.1"
+    "@repo/base-plugin": "npm:*"
     "@repo/config": "npm:*"
     "@repo/eslint-config": "npm:*"
     "@repo/graphql": "npm:*"
