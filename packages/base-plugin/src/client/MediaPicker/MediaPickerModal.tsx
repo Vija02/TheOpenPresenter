@@ -1,7 +1,4 @@
-import {
-  VideoTranscodeStatus,
-  useOrganizationMediaForPickerQuery,
-} from "@repo/graphql";
+import { useOrganizationMediaForPickerQuery } from "@repo/graphql";
 import {
   extractMediaName,
   isImageFile,
@@ -9,6 +6,7 @@ import {
   isVideoReady,
   mediaIdFromUUID,
   resolveMediaUrl,
+  useVideoProcessingStatus,
 } from "@repo/lib";
 import {
   Button,
@@ -47,6 +45,7 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
 
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
   const [{ data }, refetch] = useOrganizationMediaForPickerQuery({
     variables: {
       organizationId,
@@ -55,42 +54,25 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
     pause: !isOpen,
   });
 
-  const filteredMedia = useMemo(() => {
+  // Filter media by type
+  const rawFilteredMedia = useMemo(() => {
     const allMedia =
       (data?.organization?.medias.nodes as MediaWithMetadata[]) ?? [];
     return filterMediaByType(allMedia, options?.type ?? "all");
   }, [data, options?.type]);
 
-  // Check if any videos are still processing
-  const hasProcessingVideos = useMemo(() => {
-    return filteredMedia.some((media) => {
-      if (!isVideoFile(media.fileExtension)) return false;
-      const videoMeta = media.videoMetadata;
-      if (!videoMeta) return true;
-      return (
-        videoMeta.transcodeStatus === VideoTranscodeStatus.Pending ||
-        videoMeta.transcodeStatus === VideoTranscodeStatus.Processing
-      );
-    });
-  }, [filteredMedia]);
+  const { mediaList: filteredMedia, resetOverrides } = useVideoProcessingStatus(
+    rawFilteredMedia,
+    { enabled: isOpen },
+  );
 
-  // Poll for updates when there are processing videos
-  useEffect(() => {
-    if (!isOpen || !hasProcessingVideos) return;
-
-    const interval = setInterval(() => {
-      refetch({ requestPolicy: "network-only" });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [isOpen, hasProcessingVideos, refetch]);
-
-  // Reset selection when modal closes
+  // Reset selection and overrides when modal closes
   useEffect(() => {
     if (!isOpen) {
       setSelectedIds(new Set());
+      resetOverrides();
     }
-  }, [isOpen]);
+  }, [isOpen, resetOverrides]);
 
   const buildResult = useCallback(
     (media: MediaWithMetadata): MediaPickerResult => {

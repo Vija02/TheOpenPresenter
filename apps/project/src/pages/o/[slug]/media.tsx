@@ -7,7 +7,7 @@ import {
   useMediaDependenciesOfParentQuery,
   useOrganizationMediaIndexPageQuery,
 } from "@repo/graphql";
-import { globalState } from "@repo/lib";
+import { globalState, useVideoProcessingStatus } from "@repo/lib";
 import {
   Badge,
   Button,
@@ -65,10 +65,15 @@ const OrganizationMediaPage = () => {
   });
   const { data } = query[0];
 
-  const emptyMedia = useMemo(
-    () => data?.organizationBySlug?.medias.nodes.length === 0,
-    [data?.organizationBySlug?.medias.nodes.length],
+  // Raw media list from the query
+  const rawMediaList = useMemo(
+    () => data?.organizationBySlug?.medias.nodes ?? [],
+    [data?.organizationBySlug?.medias.nodes],
   );
+
+  const { mediaList } = useVideoProcessingStatus(rawMediaList);
+
+  const emptyMedia = useMemo(() => mediaList.length === 0, [mediaList.length]);
 
   return (
     <SharedOrgLayout title="Dashboard" sharedOrgQuery={query}>
@@ -103,7 +108,7 @@ const OrganizationMediaPage = () => {
 
         {/* Media grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
-          {data?.organizationBySlug?.medias.nodes.map((media) => (
+          {mediaList.map((media) => (
             <MediaCard key={media.id} media={media} />
           ))}
         </div>

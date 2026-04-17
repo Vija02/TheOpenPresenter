@@ -1,0 +1,16 @@
+query MediaVideoProcessingStatus($mediaIds: [UUID!]!) {
+  medias(filter: { id: { in: $mediaIds } }) {
+    nodes {
+      id
+      videoMetadata: mediaVideoMetadatumByVideoMediaId {
+        transcodeStatus
+        transcodeProgress
+        transcodeStage
+        transcodeStageProgress
+        hlsMediaId
+        thumbnailMediaId
+        duration
+      }
+    }
+  }
+}
