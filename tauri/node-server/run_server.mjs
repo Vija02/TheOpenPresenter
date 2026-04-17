@@ -47,7 +47,9 @@ const sidecarNodePath = path.resolve(
 );
 const nodeBinaryPath = fs.existsSync(sidecarNodePath)
   ? sidecarNodePath
-  : process.execPath;
+  : fs.existsSync(process.execPath)
+    ? process.execPath
+    : "node";
 
 const killProcess = async (pg) => {
   await pg.stop();
@@ -155,7 +157,7 @@ async function main() {
       "../crontab",
     ],
     {
-      cwd: path.resolve("node-server/theopenpresenter/backend/worker/dist"),
+      cwd: path.resolve(import.meta.dirname, "theopenpresenter/backend/worker/dist"),
       env: finalEnv,
     },
   );
@@ -166,10 +168,10 @@ async function main() {
     [
       "-r",
       "@repo/config/extra",
-      path.resolve("node-server/theopenpresenter/backend/server/dist/index.js"),
+      path.resolve(import.meta.dirname, "theopenpresenter/backend/server/dist/index.js"),
     ],
     {
-      cwd: path.resolve("node-server/theopenpresenter"),
+      cwd: path.resolve(import.meta.dirname, "theopenpresenter"),
       env: finalEnv,
     },
   );
