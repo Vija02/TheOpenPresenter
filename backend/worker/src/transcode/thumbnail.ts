@@ -33,6 +33,7 @@ export const processAndUploadThumbnail = async ({
     await generateThumbnail({
       inputPath,
       folder,
+      duration,
     });
 
   const thumbnailFilePath = path.join(folder, thumbnailMediaName);
