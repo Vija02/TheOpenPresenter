@@ -1,5 +1,6 @@
 import { SharedOrgLayout } from "@/components/SharedOrgLayout";
 import { useOrganizationSlug } from "@/lib/permissionHooks/organization";
+import { UploadMediaModal } from "@repo/base-plugin/client";
 import {
   MediaWithMediaDependencyFragment,
   useCompleteMediaMutation,
@@ -24,10 +25,13 @@ import {
   PopConfirm,
   useOverlayToggle,
 } from "@repo/ui";
+import "@uppy/core/dist/style.min.css";
+import "@uppy/dashboard/dist/style.min.css";
 import prettyBytes from "pretty-bytes";
 import { useCallback, useMemo, useState } from "react";
 import {
   VscCheck,
+  VscCloudUpload,
   VscFolder,
   VscLinkExternal,
   VscTrash,
@@ -56,6 +60,7 @@ const OrganizationMediaPage = () => {
   const slug = useOrganizationSlug();
 
   const [showSystemFiles, setShowSystemFiles] = useState(false);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 
   const query = useOrganizationMediaIndexPageQuery({
     variables: {
@@ -63,7 +68,9 @@ const OrganizationMediaPage = () => {
       condition: showSystemFiles ? {} : { isUserUploaded: true },
     },
   });
-  const { data } = query[0];
+  const [{ data }, refetch] = query;
+
+  const organizationId = data?.organizationBySlug?.id;
 
   // Raw media list from the query
   const rawMediaList = useMemo(
@@ -74,6 +81,14 @@ const OrganizationMediaPage = () => {
   const { mediaList } = useVideoProcessingStatus(rawMediaList);
 
   const emptyMedia = useMemo(() => mediaList.length === 0, [mediaList.length]);
+
+  const handleUploadComplete = useCallback(() => {
+    refetch({ requestPolicy: "network-only" });
+  }, [refetch]);
+
+  const handleUploadModalClose = useCallback(() => {
+    setIsUploadModalOpen(false);
+  }, []);
 
   return (
     <SharedOrgLayout title="Dashboard" sharedOrgQuery={query}>
@@ -86,16 +101,22 @@ const OrganizationMediaPage = () => {
               Beta
             </Badge>
           </div>
-          <div className="flex items-center gap-3 bg-gray-50 px-4 py-2 rounded-lg border">
-            <span className="text-sm font-medium text-secondary">
-              Show system files
-            </span>
-            <Checkbox
-              checked={showSystemFiles}
-              onCheckedChange={(checked) =>
-                setShowSystemFiles(checked === true)
-              }
-            />
+          <div className="flex items-center gap-4">
+            <Button onClick={() => setIsUploadModalOpen(true)}>
+              <VscCloudUpload className="w-4 h-4" />
+              Upload
+            </Button>
+            <div className="flex items-center gap-3 bg-gray-50 px-4 py-2 rounded-lg border">
+              <span className="text-sm font-medium text-secondary">
+                Show system files
+              </span>
+              <Checkbox
+                checked={showSystemFiles}
+                onCheckedChange={(checked) =>
+                  setShowSystemFiles(checked === true)
+                }
+              />
+            </div>
           </div>
         </div>
 
@@ -113,6 +134,16 @@ const OrganizationMediaPage = () => {
           ))}
         </div>
       </div>
+
+      {/* Upload Modal */}
+      {isUploadModalOpen && organizationId && (
+        <UploadMediaModal
+          isOpen={isUploadModalOpen}
+          onClose={handleUploadModalClose}
+          onUploadComplete={handleUploadComplete}
+          organizationId={organizationId}
+        />
+      )}
     </SharedOrgLayout>
   );
 };

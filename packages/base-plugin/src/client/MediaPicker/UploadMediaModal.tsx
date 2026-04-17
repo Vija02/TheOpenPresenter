@@ -18,8 +18,8 @@ export type UploadMediaModalProps = {
   onClose: () => void;
   onUploadComplete: () => void;
   organizationId: string;
-  projectId: string;
-  pluginId: string;
+  projectId?: string;
+  pluginId?: string;
   mediaType?: MediaType;
 };
 
@@ -61,8 +61,8 @@ export const UploadMediaModal: React.FC<UploadMediaModalProps> = ({
       headers: {
         "csrf-token": appData.getCSRFToken(),
         "organization-id": organizationId,
-        "project-id": projectId,
-        "plugin-id": pluginId,
+        ...(projectId ? { "project-id": projectId } : {}),
+        ...(pluginId ? { "plugin-id": pluginId } : {}),
       },
       chunkSize: appData.getMediaUploadChunkSize(),
     }),
