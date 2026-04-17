@@ -4,7 +4,7 @@ ARG NODE_ENV="production"
 ################################################################################
 # Build stage 1 - Dependencies (minimal for db operations)
 
-FROM node:22-alpine AS deps
+FROM node:24.15.0-alpine3.23 AS deps
 
 WORKDIR /app/
 
@@ -45,7 +45,7 @@ COPY backend/worker/ /app/backend/worker/
 ################################################################################
 # Build stage FINAL - Runtime image for migrations
 
-FROM node:22-alpine
+FROM node:24.15.0-alpine3.23
 
 WORKDIR /app/
 
