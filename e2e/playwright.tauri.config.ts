@@ -12,8 +12,17 @@ import { defineConfig, devices } from "@playwright/test";
  *
  * On CI this is handled by .github/workflows/playwright-tauri.yml.
  */
+process.env.PLAYWRIGHT_TAURI = "1";
+
 export default defineConfig({
   testDir: "./tests",
+  testIgnore: [
+    "**/cloud/sync.spec.ts",
+    "**/cloud/syncDocument.spec.ts",
+    "**/hostProjects/hostProjectsDashboard.spec.ts",
+    "**/hostProjects/hostProjectsProxy.spec.ts",
+    "**/organization.spec.ts",
+  ],
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
@@ -29,12 +38,5 @@ export default defineConfig({
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
     },
-    {
-      name: "firefox",
-      use: { ...devices["Desktop Firefox"] },
-    },
   ],
-  // No webServer — the Tauri binary is started before Playwright runs.
-  // Tauri embeds PostgreSQL, runs migrations, and starts the worker and
-  // server automatically on port 5678.
 });
