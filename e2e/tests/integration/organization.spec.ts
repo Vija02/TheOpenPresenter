@@ -29,6 +29,8 @@ test.describe("OrganizationPage", () => {
     organizationPage,
     loginDefault,
   }) => {
+    test.skip(!!process.env.PLAYWRIGHT_TAURI, "Skipped in Tauri E2E tests");
+
     await loginDefault();
 
     await organizationPage.importButton.click();
