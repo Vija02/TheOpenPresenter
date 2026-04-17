@@ -42,15 +42,6 @@ export const extractMetadata = (inputPath: string): Promise<VideoMetadata> => {
             duration = parseInt(h) * 3600 + parseInt(m) * 60 + parseFloat(s);
           }
         }
-        console.log({
-          width: parseInt(videoMatch[1] ?? ""),
-          height: parseInt(videoMatch[2] ?? ""),
-          duration,
-          bitrate: bitrateMatch
-            ? parseInt(bitrateMatch[1] ?? "") * 1000
-            : undefined,
-        });
-
         resolve({
           width: parseInt(videoMatch[1] ?? ""),
           height: parseInt(videoMatch[2] ?? ""),
@@ -67,9 +58,11 @@ export const extractMetadata = (inputPath: string): Promise<VideoMetadata> => {
 export const generateThumbnail = ({
   inputPath,
   folder,
+  duration,
 }: {
   inputPath: string;
   folder: string;
+  duration?: number;
 }) => {
   const mediaId = typeidUnboxed("media");
   const mediaName = constructMediaName(mediaId, "jpg");
@@ -78,7 +71,8 @@ export const generateThumbnail = ({
     (resolve, reject) => {
       ffmpeg(inputPath)
         .screenshot({
-          timestamps: ["50%"],
+          // Use absolute seconds to avoid fluent-ffmpeg's internal ffprobe call
+          timestamps: [duration ? duration * 0.5 : 0],
           folder,
           filename: mediaName,
           size: "360x?",
