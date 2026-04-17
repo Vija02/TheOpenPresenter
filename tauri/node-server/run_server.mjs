@@ -92,9 +92,9 @@ async function main() {
   }
 
   const finalEnv = {
-    NODE_ENV: process.env.ENABLE_E2E_COMMANDS ? "test" : "production",
-    ...(process.env.ENABLE_E2E_COMMANDS ? {} : { AUTO_LOGIN: "1" }),
-    ...(process.env.ENABLE_E2E_COMMANDS ? { ENABLE_E2E_COMMANDS: "1" } : {}),
+    NODE_ENV: "production",
+    AUTO_LOGIN: "1",
+    ENABLE_E2E_COMMANDS: process.env.ENABLE_E2E_COMMANDS ? "1" : "0",
     ...(process.env.PLUGIN_GOOGLE_SLIDES_UNOCONVERT_SERVER
       ? {
           PLUGIN_GOOGLE_SLIDES_UNOCONVERT_SERVER:
@@ -157,7 +157,10 @@ async function main() {
       "../crontab",
     ],
     {
-      cwd: path.resolve(import.meta.dirname, "theopenpresenter/backend/worker/dist"),
+      cwd: path.resolve(
+        import.meta.dirname,
+        "theopenpresenter/backend/worker/dist",
+      ),
       env: finalEnv,
     },
   );
@@ -168,7 +171,10 @@ async function main() {
     [
       "-r",
       "@repo/config/extra",
-      path.resolve(import.meta.dirname, "theopenpresenter/backend/server/dist/index.js"),
+      path.resolve(
+        import.meta.dirname,
+        "theopenpresenter/backend/server/dist/index.js",
+      ),
     ],
     {
       cwd: path.resolve(import.meta.dirname, "theopenpresenter"),

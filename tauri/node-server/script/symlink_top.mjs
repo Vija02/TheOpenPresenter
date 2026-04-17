@@ -1,12 +1,10 @@
 import { promises as fs } from "fs";
+import { dirname, resolve } from "path";
 import { fileURLToPath } from "url";
-import { dirname, join, resolve } from "path";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 async function createSymlinks() {
-  // Script is at tauri/node-server/script/symlink_top.mjs
-  // Project root is 3 levels up from the script file
   const sourceDir = resolve(__dirname, "../../..");
   const targetDir = resolve(__dirname, "../theopenpresenter");
   const excludeFolder = "tauri";
@@ -16,7 +14,9 @@ async function createSymlinks() {
     try {
       const targetFiles = await fs.readdir(targetDir);
       if (targetFiles.length > 0) {
-        console.log("Target directory already exists and has content, skipping symlink creation");
+        console.log(
+          "Target directory already exists and has content, skipping symlink creation",
+        );
         return;
       }
     } catch (err) {
