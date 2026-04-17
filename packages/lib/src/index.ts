@@ -7,6 +7,7 @@ export * from "./mediaUtil";
 export * from "./preloader";
 export * from "./streamToBuffer";
 export * from "./useInjectScript";
+export * from "./useVideoProcessingStatus";
 export * from "./uuidUtils";
 export * from "./yjsTypes";
 export * from "./YjsWatcher";
