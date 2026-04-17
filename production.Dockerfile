@@ -9,7 +9,7 @@ ARG SHA
 ################################################################################
 # Build stage 1 - Dependencies
 
-FROM node:22-alpine3.20 AS deps
+FROM node:24.15.0-alpine3.23 AS deps
 # Import our shared args
 ARG NODE_ENV
 ARG ROOT_URL
@@ -189,7 +189,7 @@ RUN node scripts/build_utils/copy_deps.js
 ################################################################################
 # Build stage 7 - Combine deps and build, taking only needed files
 
-FROM node:22-alpine3.20 AS clean
+FROM node:24.15.0-alpine3.23 AS clean
 # Import our shared args
 ARG NODE_ENV
 ARG ROOT_URL
@@ -277,7 +277,7 @@ RUN echo -e "NODE_ENV=$NODE_ENV\nROOT_URL=$ROOT_URL" > /app/.env
 ################################################################################
 # Build stage FINAL - COPY everything
 
-FROM node:22-alpine3.20
+FROM node:24.15.0-alpine3.23
 
 # Install dumbpipe
 RUN apk add --no-cache curl && \
