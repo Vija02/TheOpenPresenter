@@ -92,8 +92,9 @@ async function main() {
   }
 
   const finalEnv = {
-    NODE_ENV: "production",
-    AUTO_LOGIN: "1",
+    NODE_ENV: process.env.ENABLE_E2E_COMMANDS ? "test" : "production",
+    // Disable auto login for test
+    AUTO_LOGIN: process.env.ENABLE_E2E_COMMANDS ? "0" : "1",
     ENABLE_E2E_COMMANDS: process.env.ENABLE_E2E_COMMANDS ? "1" : "0",
     ...(process.env.PLUGIN_GOOGLE_SLIDES_UNOCONVERT_SERVER
       ? {
