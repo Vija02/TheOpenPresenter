@@ -10,7 +10,7 @@ import {
   Form,
   NumberInputControl,
   OptionControl,
-  useOverlayToggle
+  useOverlayToggle,
 } from "@repo/ui";
 import { useCallback } from "react";
 import { useForm } from "react-hook-form";
@@ -119,77 +119,79 @@ const SettingsModal = () => {
   return (
     <Dialog open={isOpen ?? false} onOpenChange={onToggle ?? (() => {})}>
       <Form {...form}>
-        <DialogContent size="3xl" asChild>
-          <form onSubmit={form.handleSubmit(handleSubmit)}>
-            <DialogHeader>
-              <DialogTitle>Slides Settings</DialogTitle>
-            </DialogHeader>
-            <DialogBody>
-              <div className="flex flex-col md:flex-row gap-3">
-                <div className="stack-col items-start flex-1">
-                  <OptionControl
-                    control={form.control}
-                    label="Display Mode"
-                    name="displayMode"
-                    options={[
-                      {
-                        title: "Google Slides",
-                        description: (
-                          <>
-                            Uses the Google Slides embed renderer <br />
-                            <div className="mt-2 flex gap-1 italic">
-                              <FaCircleInfo className="m-1 shrink-0" />
-                              Preserves the most functionality but takes the
-                              longest to load
-                            </div>
-                          </>
-                        ),
-                        value: "googleslides" satisfies DisplayMode,
-                      },
-                      {
-                        title: "Image",
-                        description: (
-                          <>
-                            Renders the presentation as images <br />
-                            <div className="mt-2 flex gap-1 italic">
-                              <FaCircleInfo className="m-1 shrink-0" />
-                              Doesn't allow animations but is faster to load
-                            </div>
-                          </>
-                        ),
-                        value: "image" satisfies DisplayMode,
-                      },
-                    ].filter((x) =>
-                      displayTypeMapping[x.value as DisplayMode].includes(
-                        type ?? "googleslides",
+        <DialogContent
+          size="3xl"
+          render={<form onSubmit={form.handleSubmit(handleSubmit)} />}
+        >
+          <DialogHeader>
+            <DialogTitle>Slides Settings</DialogTitle>
+          </DialogHeader>
+          <DialogBody>
+            <div className="flex flex-col md:flex-row gap-3">
+              <div className="stack-col items-start flex-1">
+                <OptionControl
+                  control={form.control}
+                  label="Display Mode"
+                  name="displayMode"
+                  options={[
+                    {
+                      title: "Google Slides",
+                      description: (
+                        <>
+                          Uses the Google Slides embed renderer <br />
+                          <div className="mt-2 flex gap-1 italic">
+                            <FaCircleInfo className="m-1 shrink-0" />
+                            Preserves the most functionality but takes the
+                            longest to load
+                          </div>
+                        </>
                       ),
-                    )}
-                  />
+                      value: "googleslides" satisfies DisplayMode,
+                    },
+                    {
+                      title: "Image",
+                      description: (
+                        <>
+                          Renders the presentation as images <br />
+                          <div className="mt-2 flex gap-1 italic">
+                            <FaCircleInfo className="m-1 shrink-0" />
+                            Doesn't allow animations but is faster to load
+                          </div>
+                        </>
+                      ),
+                      value: "image" satisfies DisplayMode,
+                    },
+                  ].filter((x) =>
+                    displayTypeMapping[x.value as DisplayMode].includes(
+                      type ?? "googleslides",
+                    ),
+                  )}
+                />
 
-                  <div>
-                    <h3 className="font-bold text-lg">Autoplay</h3>
-                    <p>*Only works with Image renderer</p>
-                  </div>
-                  <div className="w-full flex flex-col gap-3">
-                    <CheckboxControl
-                      control={form.control}
-                      name="autoplayEnabled"
-                      label="Enable autoplay"
-                      description="Advance slides automatically after the configured interval."
-                    />
-                    <NumberInputControl
-                      control={form.control}
-                      name="autoplayLoopDurationSeconds"
-                      label="Autoplay interval"
-                      unit="s"
-                      min={0.1}
-                      max={600}
-                      step={1}
-                      disabled={!autoplayEnabled}
-                      className="max-w-40"
-                    />
-                  </div>
-                  {/* <FormControl>
+                <div>
+                  <h3 className="font-bold text-lg">Autoplay</h3>
+                  <p>*Only works with Image renderer</p>
+                </div>
+                <div className="w-full flex flex-col gap-3">
+                  <CheckboxControl
+                    control={form.control}
+                    name="autoplayEnabled"
+                    label="Enable autoplay"
+                    description="Advance slides automatically after the configured interval."
+                  />
+                  <NumberInputControl
+                    control={form.control}
+                    name="autoplayLoopDurationSeconds"
+                    label="Autoplay interval"
+                    unit="s"
+                    min={0.1}
+                    max={600}
+                    step={1}
+                    disabled={!autoplayEnabled}
+                    className="max-w-40"
+                  />
+                </div>
+                {/* <FormControl>
                     <FormLabel>Display Mode</FormLabel>
                     <Stack
                       direction={{ base: "column", md: "row" }}
@@ -227,18 +229,17 @@ const SettingsModal = () => {
                         ))}
                     </Stack>
                   </FormControl> */}
-                </div>
               </div>
-            </DialogBody>
-            <DialogFooter>
-              <Button type="submit" variant="success">
-                Save
-              </Button>
-              <Button variant="outline" onClick={onToggle}>
-                Close
-              </Button>
-            </DialogFooter>
-          </form>
+            </div>
+          </DialogBody>
+          <DialogFooter>
+            <Button type="submit" variant="success">
+              Save
+            </Button>
+            <Button variant="outline" onClick={onToggle}>
+              Close
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Form>
     </Dialog>

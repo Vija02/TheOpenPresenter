@@ -138,112 +138,114 @@ const RemoteEditSongModal = ({
       {...props}
     >
       <Form {...form}>
-        <DialogContent size="3xl" asChild className="gap-0 h-[85vh]">
-          <form onSubmit={form.handleSubmit(handleSubmit)}>
-            <DialogHeader className="px-3 md:px-6 pb-4">
-              <DialogTitle>Edit song "{song.title}"</DialogTitle>
-            </DialogHeader>
-            <DialogBody className="px-3 md:px-6 pb-4">
-              <Tabs defaultValue="content">
-                <TabsList className="mb-2">
-                  <TabsTrigger value="content">Content</TabsTrigger>
-                  <TabsTrigger value="arrange">Arrange</TabsTrigger>
-                </TabsList>
+        <DialogContent
+          size="3xl"
+          className="gap-0 h-[85vh]"
+          render={<form onSubmit={form.handleSubmit(handleSubmit)} />}
+        >
+          <DialogHeader className="px-3 md:px-6 pb-4">
+            <DialogTitle>Edit song "{song.title}"</DialogTitle>
+          </DialogHeader>
+          <DialogBody className="px-3 md:px-6 pb-4">
+            <Tabs defaultValue="content">
+              <TabsList className="mb-2">
+                <TabsTrigger value="content">Content</TabsTrigger>
+                <TabsTrigger value="arrange">Arrange</TabsTrigger>
+              </TabsList>
 
-                <div className="flex flex-col md:flex-row gap-3">
-                  <TabsContent value="content">
-                    <div className="stack-col flex-1 items-start">
-                      <InputControl
-                        name="title"
-                        label="Title"
-                        control={form.control}
-                      />
-                      <OptionControl
-                        name="displayType"
-                        label="Display Type"
-                        control={form.control}
-                        options={Object.entries(displayTypeSettings).map(
-                          ([key, { label, description }]) => ({
-                            title: label,
-                            description,
-                            value: key,
-                          }),
-                        )}
-                      />
+              <div className="flex flex-col md:flex-row gap-3">
+                <TabsContent value="content">
+                  <div className="stack-col flex-1 items-start">
+                    <InputControl
+                      name="title"
+                      label="Title"
+                      control={form.control}
+                    />
+                    <OptionControl
+                      name="displayType"
+                      label="Display Type"
+                      control={form.control}
+                      options={Object.entries(displayTypeSettings).map(
+                        ([key, { label, description }]) => ({
+                          title: label,
+                          description,
+                          value: key,
+                        }),
+                      )}
+                    />
 
-                      <FormField
-                        control={form.control}
-                        name="content"
-                        render={({ field }) => (
-                          <FormItem>
-                            <LyricFormLabel
-                              onRemoveChords={() => {
-                                form.setValue(
-                                  "content",
-                                  removeChords(data.content.split("\n")).join(
-                                    "\n",
-                                  ),
-                                );
-                              }}
-                              canReset={data.content !== originalContent}
-                              onReset={() => {
-                                form.setValue("content", originalContent);
+                    <FormField
+                      control={form.control}
+                      name="content"
+                      render={({ field }) => (
+                        <FormItem>
+                          <LyricFormLabel
+                            onRemoveChords={() => {
+                              form.setValue(
+                                "content",
+                                removeChords(data.content.split("\n")).join(
+                                  "\n",
+                                ),
+                              );
+                            }}
+                            canReset={data.content !== originalContent}
+                            onReset={() => {
+                              form.setValue("content", originalContent);
+                            }}
+                          />
+                          <FormControl>
+                            <SongEditEditor
+                              initialContent={data.content
+                                .split("\n")
+                                .map((x) => `<p>${x}</p>`)
+                                .join("")}
+                              onChange={(val) => {
+                                form.setValue("content", val);
                               }}
                             />
-                            <FormControl>
-                              <SongEditEditor
-                                initialContent={data.content
-                                  .split("\n")
-                                  .map((x) => `<p>${x}</p>`)
-                                  .join("")}
-                                onChange={(val) => {
-                                  form.setValue("content", val);
-                                }}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </TabsContent>
-
-                  <TabsContent value="arrange">
-                    <ArrangeTab
-                      content={data.content}
-                      sectionOrder={data.sectionOrder ?? null}
-                      onSectionOrderChange={(order: string[] | null) => {
-                        form.setValue("sectionOrder", order);
-                      }}
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
-                  </TabsContent>
-
-                  {/* Preview */}
-                  <div className="stack-col basis-[200px] hidden md:block">
-                    <h3 className="text-lg font-medium text-center mb-2">
-                      Preview
-                    </h3>
-                    <SlideGrid pluginAPI={pluginApi} forceWidth={200}>
-                      {preview}
-                    </SlideGrid>
                   </div>
-                </div>
-              </Tabs>
-            </DialogBody>
-            <DialogFooter className="pl-lyrics--preview-shadow pt-0 px-0 pb-3">
-              <div className="flex flex-col w-full">
-                <MobilePreview preview={preview} />
-                <div className="stack-row px-3 md:px-6 pt-3 justify-end">
-                  <Button type="submit" variant="success">
-                    Save
-                  </Button>
-                  <Button variant="outline" onClick={onToggle}>
-                    Close
-                  </Button>
+                </TabsContent>
+
+                <TabsContent value="arrange">
+                  <ArrangeTab
+                    content={data.content}
+                    sectionOrder={data.sectionOrder ?? null}
+                    onSectionOrderChange={(order: string[] | null) => {
+                      form.setValue("sectionOrder", order);
+                    }}
+                  />
+                </TabsContent>
+
+                {/* Preview */}
+                <div className="stack-col basis-[200px] hidden md:block">
+                  <h3 className="text-lg font-medium text-center mb-2">
+                    Preview
+                  </h3>
+                  <SlideGrid pluginAPI={pluginApi} forceWidth={200}>
+                    {preview}
+                  </SlideGrid>
                 </div>
               </div>
-            </DialogFooter>
-          </form>
+            </Tabs>
+          </DialogBody>
+          <DialogFooter className="pl-lyrics--preview-shadow pt-0 px-0 pb-3">
+            <div className="flex flex-col w-full">
+              <MobilePreview preview={preview} />
+              <div className="stack-row px-3 md:px-6 pt-3 justify-end">
+                <Button type="submit" variant="success">
+                  Save
+                </Button>
+                <Button variant="outline" onClick={onToggle}>
+                  Close
+                </Button>
+              </div>
+            </div>
+          </DialogFooter>
         </DialogContent>
       </Form>
     </Dialog>

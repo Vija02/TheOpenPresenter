@@ -1,26 +1,53 @@
 @reference "@repo/tailwind-config/index.css";
 
 @layer base {
-  .ui--dialog-overlay {
-    @apply data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0;
-    @apply fixed inset-0 z-50 bg-black/50;
+  .ui--dialog-portal {
+    @apply fixed inset-0 z-50;
   }
 
-  .ui--dialog-content {
-    @apply bg-surface-primary data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95;
-    @apply fixed top-[50%] left-[50%] z-50 grid w-full translate-x-[-50%] translate-y-[-50%];
-    @apply gap-4 border shadow-lg duration-200;
+  .ui--dialog-backdrop {
+    @apply fixed inset-0 z-50 bg-black/50;
+    @apply transition-opacity duration-150 ease-out;
+    opacity: 1;
+
+    @starting-style {
+      opacity: 0;
+    }
+  }
+  .ui--dialog-backdrop[data-ending-style] {
+    @apply transition-opacity duration-100 ease-in;
+    opacity: 0;
+  }
+
+  .ui--dialog-popup {
+    @apply bg-surface-primary;
+    @apply fixed top-[50%] left-[50%] z-50 w-full;
+    @apply gap-4 border shadow-lg;
+    @apply max-w-full h-dvh md:h-auto md:max-h-11/12 md:rounded-lg;
+    @apply flex flex-col;
+    @apply transition-[opacity,transform] duration-150 ease-out;
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+
+    @starting-style {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0.95);
+    }
+  }
+  .ui--dialog-popup[data-ending-style] {
+    @apply transition-[opacity,transform] duration-100 ease-in;
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.95);
+  }
+
+  .ui--dialog-popup > form {
+    @apply bg-surface-primary;
+    @apply gap-4 border shadow-lg;
     @apply max-w-full h-dvh md:h-auto md:max-h-11/12 md:rounded-lg;
     @apply flex flex-col;
   }
-  .ui--dialog-content > form {
-    @apply bg-surface-primary data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95;
-    @apply fixed top-[50%] left-[50%] z-50 grid w-full translate-x-[-50%] translate-y-[-50%];
-    @apply gap-4 border shadow-lg duration-200;
-    @apply max-w-full h-dvh md:h-auto md:max-h-11/12 md:rounded-lg;
-    @apply flex flex-col;
-  }
-  .ui--dialog-content__close {
+
+  .ui--dialog-popup__close {
     @apply ring-offset-surface-primary focus:ring-ring;
     @apply absolute top-4 right-4 rounded-xs opacity-70 cursor-pointer transition-opacity hover:opacity-100;
     @apply focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none;

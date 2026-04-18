@@ -30,8 +30,8 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {
   render: (args) => (
     <Dialog {...args}>
-      <DialogTrigger asChild>
-        <Button variant="outline">Open Dialog</Button>
+      <DialogTrigger render={<Button variant="outline" />}>
+        Open Dialog
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -55,8 +55,8 @@ export const Default: Story = {
 export const WithoutDescription: Story = {
   render: (args) => (
     <Dialog {...args}>
-      <DialogTrigger asChild>
-        <Button variant="outline">Open Simple Dialog</Button>
+      <DialogTrigger render={<Button variant="outline" />}>
+        Open Simple Dialog
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -78,8 +78,8 @@ export const Sizes: Story = {
     <div className="space-y-4">
       {["sm", "md", "lg", "xl", "2xl", "3xl"].map((size) => (
         <Dialog key={size}>
-          <DialogTrigger asChild>
-            <Button variant="outline">{size.toUpperCase()} Dialog</Button>
+          <DialogTrigger render={<Button variant="outline" />}>
+            {size.toUpperCase()} Dialog
           </DialogTrigger>
           <DialogContent size={size as any}>
             <DialogHeader>
@@ -104,7 +104,7 @@ export const Sizes: Story = {
 export const Controlled: Story = {
   render: () => {
     const [open, setOpen] = useState(false);
-    
+
     return (
       <div className="space-y-4">
         <Button onClick={() => setOpen(true)}>Open Controlled Dialog</Button>
