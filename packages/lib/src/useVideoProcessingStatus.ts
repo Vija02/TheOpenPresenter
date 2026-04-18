@@ -3,7 +3,7 @@ import {
   VideoTranscodeStatus,
   useMediaVideoProcessingStatusQuery,
 } from "@repo/graphql";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { isVideoFile } from "./mediaTypeUtil";
 
@@ -105,9 +105,9 @@ export function useVideoProcessingStatus<T extends MediaWithVideoMetadata>(
     });
   }, [mediaList, videoMetadataOverrides]);
 
-  const resetOverrides = () => {
+  const resetOverrides = useCallback(() => {
     setVideoMetadataOverrides(new Map());
-  };
+  }, []);
 
   return {
     mediaList: mediaListWithUpdates,
