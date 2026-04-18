@@ -544,7 +544,7 @@ function processHtml(html: string) {
       /https:\\\/\\\/([^.]+?)\.googleusercontent\.com/g,
       "/plugin/google-slides/staticProxy/$1",
     )
-    .replace(/src="\//, 'src="https://docs.google.com/');
+    .replace(/src="\//, 'src="/plugin/google-slides/staticScripts/');
 }
 
 export type AppRouter = ReturnType<ReturnType<typeof getAppRouter>>;
