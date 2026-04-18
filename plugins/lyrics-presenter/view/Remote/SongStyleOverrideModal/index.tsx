@@ -192,67 +192,70 @@ const SongStyleOverrideModal = ({ song }: SongStyleOverrideModalProps) => {
   return (
     <Dialog open={isOpen ?? false} onOpenChange={onToggle ?? (() => {})}>
       <Form {...form}>
-        <DialogContent size="3xl" asChild>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleSubmit();
-            }}
-          >
-            <DialogHeader className="px-3 md:px-6">
-              <DialogTitle>Style Override - "{song.title}"</DialogTitle>
-            </DialogHeader>
-            <DialogBody className="px-3 md:px-6">
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex-1">
-                  <StyleFields
-                    control={form.control}
-                    data={data}
-                    setValue={handleSetValue}
-                    isOverrideMode
-                    currentOverride={localOverride}
-                    onResetFields={handleResetFields}
-                  />
+        <DialogContent
+          size="3xl"
+          render={
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSubmit();
+              }}
+            />
+          }
+        >
+          <DialogHeader className="px-3 md:px-6">
+            <DialogTitle>Style Override - "{song.title}"</DialogTitle>
+          </DialogHeader>
+          <DialogBody className="px-3 md:px-6">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex-1">
+                <StyleFields
+                  control={form.control}
+                  data={data}
+                  setValue={handleSetValue}
+                  isOverrideMode
+                  currentOverride={localOverride}
+                  onResetFields={handleResetFields}
+                />
+              </div>
+              <div className="hidden md:flex flex-col basis-[200px] gap-2">
+                <h3 className="text-lg font-medium text-center">Preview</h3>
+
+                <SlideGrid pluginAPI={pluginApi} forceWidth={200}>
+                  {preview}
+                </SlideGrid>
+
+                <StylePreviewControls control={form.control} />
+              </div>
+            </div>
+          </DialogBody>
+          <DialogFooter className="pl-lyrics--preview-shadow pt-0 px-0 pb-3">
+            <div className="flex flex-col w-full">
+              <MobilePreview preview={preview} />
+              <div className="stack-row px-3 md:px-6 pt-3 justify-between">
+                <div>
+                  {hasOverrides && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleResetAll}
+                    >
+                      Reset All to Global
+                    </Button>
+                  )}
                 </div>
-                <div className="hidden md:flex flex-col basis-[200px] gap-2">
-                  <h3 className="text-lg font-medium text-center">Preview</h3>
-
-                  <SlideGrid pluginAPI={pluginApi} forceWidth={200}>
-                    {preview}
-                  </SlideGrid>
-
-                  <StylePreviewControls control={form.control} />
+                <div className="stack-row">
+                  <Button type="submit" variant="success">
+                    Save
+                  </Button>
+                  <Button type="button" variant="outline" onClick={onToggle}>
+                    Close
+                  </Button>
                 </div>
               </div>
-            </DialogBody>
-            <DialogFooter className="pl-lyrics--preview-shadow pt-0 px-0 pb-3">
-              <div className="flex flex-col w-full">
-                <MobilePreview preview={preview} />
-                <div className="stack-row px-3 md:px-6 pt-3 justify-between">
-                  <div>
-                    {hasOverrides && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={handleResetAll}
-                      >
-                        Reset All to Global
-                      </Button>
-                    )}
-                  </div>
-                  <div className="stack-row">
-                    <Button type="submit" variant="success">
-                      Save
-                    </Button>
-                    <Button type="button" variant="outline" onClick={onToggle}>
-                      Close
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </DialogFooter>
-          </form>
+            </div>
+          </DialogFooter>
         </DialogContent>
       </Form>
     </Dialog>

@@ -69,42 +69,43 @@ const ProjectSettingsModal = () => {
   return (
     <Dialog open={isOpen ?? false} onOpenChange={onToggle ?? (() => {})}>
       <Form {...form}>
-        <DialogContent size="sm" asChild>
-          <form onSubmit={form.handleSubmit(handleSubmit)}>
-            <DialogHeader>
-              <DialogTitle>Edit Project</DialogTitle>
-            </DialogHeader>
-            <DialogBody>
-              <div className="stack-col items-start py-2 gap-4">
-                <InputControl control={form.control} label="Name" name="name" />
-                <CheckboxControl
-                  control={form.control}
-                  name="isPublic"
-                  label="Make project public"
-                  description="When enabled, anyone with the link can view this project"
-                />
-              </div>
-            </DialogBody>
-            <DialogFooter className="justify-between">
-              <div>
-                <Button
-                  variant="outline"
-                  onClick={onExport}
-                  isLoading={exportLoading}
-                >
-                  <PiExportLight /> Export Project
-                </Button>
-              </div>
-              <div className="stack-row">
-                <Button type="submit" isLoading={loading}>
-                  Save
-                </Button>
-                <Button variant="outline" onClick={onToggle}>
-                  Close
-                </Button>
-              </div>
-            </DialogFooter>
-          </form>
+        <DialogContent
+          size="sm"
+          render={<form onSubmit={form.handleSubmit(handleSubmit)} />}
+        >
+          <DialogHeader>
+            <DialogTitle>Edit Project</DialogTitle>
+          </DialogHeader>
+          <DialogBody>
+            <div className="stack-col items-start py-2 gap-4">
+              <InputControl control={form.control} label="Name" name="name" />
+              <CheckboxControl
+                control={form.control}
+                name="isPublic"
+                label="Make project public"
+                description="When enabled, anyone with the link can view this project"
+              />
+            </div>
+          </DialogBody>
+          <DialogFooter className="justify-between">
+            <div>
+              <Button
+                variant="outline"
+                onClick={onExport}
+                isLoading={exportLoading}
+              >
+                <PiExportLight /> Export Project
+              </Button>
+            </div>
+            <div className="stack-row">
+              <Button type="submit" isLoading={loading}>
+                Save
+              </Button>
+              <Button variant="outline" onClick={onToggle}>
+                Close
+              </Button>
+            </div>
+          </DialogFooter>
         </DialogContent>
       </Form>
     </Dialog>

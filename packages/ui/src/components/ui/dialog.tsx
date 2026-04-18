@@ -1,6 +1,5 @@
 import { cn } from "@/lib/utils";
-import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { Slottable } from "@radix-ui/react-slot";
+import { Dialog as BaseDialog } from "@base-ui/react/dialog";
 import { type VariantProps, cva } from "class-variance-authority";
 import { XIcon } from "lucide-react";
 import * as React from "react";
@@ -8,43 +7,57 @@ import * as React from "react";
 import "./dialog.css";
 
 function Dialog({
+  children,
   ...props
-}: React.ComponentProps<typeof DialogPrimitive.Root>) {
-  return <DialogPrimitive.Root data-slot="dialog" {...props} />;
+}: React.ComponentProps<typeof BaseDialog.Root>) {
+  return (
+    <BaseDialog.Root data-slot="dialog" {...props}>
+      {children}
+    </BaseDialog.Root>
+  );
 }
 
 function DialogTrigger({
   ...props
-}: React.ComponentProps<typeof DialogPrimitive.Trigger>) {
-  return <DialogPrimitive.Trigger data-slot="dialog-trigger" {...props} />;
+}: React.ComponentProps<typeof BaseDialog.Trigger>) {
+  return <BaseDialog.Trigger data-slot="dialog-trigger" {...props} />;
 }
 
 function DialogPortal({
-  ...props
-}: React.ComponentProps<typeof DialogPrimitive.Portal>) {
-  return <DialogPrimitive.Portal data-slot="dialog-portal" {...props} />;
-}
-
-function DialogClose({
-  ...props
-}: React.ComponentProps<typeof DialogPrimitive.Close>) {
-  return <DialogPrimitive.Close data-slot="dialog-close" {...props} />;
-}
-
-function DialogOverlay({
   className,
+  keepMounted = false,
   ...props
-}: React.ComponentProps<typeof DialogPrimitive.Overlay>) {
+}: React.ComponentProps<typeof BaseDialog.Portal>) {
   return (
-    <DialogPrimitive.Overlay
-      data-slot="dialog-overlay"
-      className={cn("ui--dialog-overlay", className)}
+    <BaseDialog.Portal
+      data-slot="dialog-portal"
+      className={cn("ui--dialog-portal", className)}
+      keepMounted={keepMounted}
       {...props}
     />
   );
 }
 
-const dialogContentVariants = cva("ui--dialog-content", {
+function DialogClose({
+  ...props
+}: React.ComponentProps<typeof BaseDialog.Close>) {
+  return <BaseDialog.Close data-slot="dialog-close" {...props} />;
+}
+
+function DialogBackdrop({
+  className,
+  ...props
+}: React.ComponentProps<typeof BaseDialog.Backdrop>) {
+  return (
+    <BaseDialog.Backdrop
+      data-slot="dialog-backdrop"
+      className={cn("ui--dialog-backdrop", className)}
+      {...props}
+    />
+  );
+}
+
+const dialogPopupVariants = cva("ui--dialog-popup", {
   variants: {
     size: {
       default: "md:max-w-md",
@@ -62,56 +75,29 @@ const dialogContentVariants = cva("ui--dialog-content", {
   },
 });
 
-type InteractOutsideEvent = Parameters<
-  NonNullable<
-    React.ComponentProps<typeof DialogPrimitive.Content>["onInteractOutside"]
-  >
->[0];
-
 function DialogContent({
   className,
   children,
   size,
-  onInteractOutside,
   ...props
-}: React.ComponentProps<typeof DialogPrimitive.Content> &
-  VariantProps<typeof dialogContentVariants>) {
+}: React.ComponentProps<typeof BaseDialog.Popup> &
+  VariantProps<typeof dialogPopupVariants>) {
   const container = useDialogPortalContainerContext();
 
-  // Handle interact outside - prevent closing if clicking on another dialog/modal
-  const handleInteractOutside = React.useCallback(
-    (event: InteractOutsideEvent) => {
-      const target = event.target as HTMLElement;
-      if (target?.closest('[data-slot="dialog-content"]')) {
-        event.preventDefault();
-        return;
-      }
-      onInteractOutside?.(event);
-    },
-    [onInteractOutside],
-  );
-
   return (
-    <DialogPortal
-      data-slot="dialog-portal"
-      container={
-        container ?? (typeof window !== "undefined" ? document.body : undefined)
-      }
-    >
-      <DialogOverlay />
-      <DialogPrimitive.Content
+    <DialogPortal container={container ?? undefined}>
+      <DialogBackdrop />
+      <BaseDialog.Popup
         data-slot="dialog-content"
-        className={cn(dialogContentVariants({ size, className }))}
-        onInteractOutside={handleInteractOutside}
+        className={cn(dialogPopupVariants({ size, className }))}
         {...props}
       >
-        <DialogPrimitive.Description className="hidden" />
-        <Slottable>{children}</Slottable>
-        <DialogPrimitive.Close className="ui--dialog-content__close">
+        {children}
+        <BaseDialog.Close className="ui--dialog-popup__close">
           <XIcon />
           <span className="sr-only">Close</span>
-        </DialogPrimitive.Close>
-      </DialogPrimitive.Content>
+        </BaseDialog.Close>
+      </BaseDialog.Popup>
     </DialogPortal>
   );
 }
@@ -149,12 +135,10 @@ function DialogFooter({ className, ...props }: React.ComponentProps<"div">) {
 function DialogTitle({
   className,
   ...props
-}: React.ComponentProps<typeof DialogPrimitive.Title>) {
+}: React.ComponentProps<typeof BaseDialog.Title>) {
   return (
-    <DialogPrimitive.Title
+    <BaseDialog.Title
       data-slot="dialog-title"
-      tabIndex={0}
-      autoFocus
       className={cn("ui--dialog-title", className)}
       {...props}
     />
@@ -164,9 +148,9 @@ function DialogTitle({
 function DialogDescription({
   className,
   ...props
-}: React.ComponentProps<typeof DialogPrimitive.Description>) {
+}: React.ComponentProps<typeof BaseDialog.Description>) {
   return (
-    <DialogPrimitive.Description
+    <BaseDialog.Description
       data-slot="dialog-description"
       className={cn("ui--dialog-description", className)}
       {...props}
@@ -180,6 +164,10 @@ const DialogPortalContainerContext = React.createContext<HTMLElement | null>(
 const useDialogPortalContainerContext = () =>
   React.useContext(DialogPortalContainerContext);
 
+// Re-export with aliases for backwards compatibility
+const DialogOverlay = DialogBackdrop;
+const DialogPopup = DialogContent;
+
 export {
   Dialog,
   DialogClose,
@@ -189,7 +177,9 @@ export {
   DialogBody,
   DialogFooter,
   DialogOverlay,
+  DialogBackdrop,
   DialogPortal,
+  DialogPopup,
   DialogTitle,
   DialogTrigger,
   DialogPortalContainerContext,

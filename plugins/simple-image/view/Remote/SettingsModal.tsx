@@ -79,48 +79,49 @@ export const SettingsModal = () => {
   return (
     <Dialog open={isOpen ?? false} onOpenChange={onToggle ?? (() => {})}>
       <Form {...form}>
-        <DialogContent size="xl" asChild>
-          <form onSubmit={form.handleSubmit(handleSubmit)}>
-            <DialogHeader>
-              <DialogTitle>Image Settings</DialogTitle>
-            </DialogHeader>
-            <DialogBody>
-              <div className="flex flex-col gap-3">
-                <div className="stack-col items-start flex-1">
-                  <div>
-                    <h3 className="font-bold text-lg">Autoplay</h3>
-                  </div>
-                  <div className="w-full flex flex-col gap-3">
-                    <CheckboxControl
-                      control={form.control}
-                      name="autoplayEnabled"
-                      label="Enable autoplay"
-                      description="Advance images automatically after the configured interval."
-                    />
-                    <NumberInputControl
-                      control={form.control}
-                      name="autoplayLoopDurationSeconds"
-                      label="Autoplay interval"
-                      unit="s"
-                      min={0.1}
-                      max={600}
-                      step={1}
-                      disabled={!autoplayEnabled}
-                      className="max-w-40"
-                    />
-                  </div>
+        <DialogContent
+          size="xl"
+          render={<form onSubmit={form.handleSubmit(handleSubmit)} />}
+        >
+          <DialogHeader>
+            <DialogTitle>Image Settings</DialogTitle>
+          </DialogHeader>
+          <DialogBody>
+            <div className="flex flex-col gap-3">
+              <div className="stack-col items-start flex-1">
+                <div>
+                  <h3 className="font-bold text-lg">Autoplay</h3>
+                </div>
+                <div className="w-full flex flex-col gap-3">
+                  <CheckboxControl
+                    control={form.control}
+                    name="autoplayEnabled"
+                    label="Enable autoplay"
+                    description="Advance images automatically after the configured interval."
+                  />
+                  <NumberInputControl
+                    control={form.control}
+                    name="autoplayLoopDurationSeconds"
+                    label="Autoplay interval"
+                    unit="s"
+                    min={0.1}
+                    max={600}
+                    step={1}
+                    disabled={!autoplayEnabled}
+                    className="max-w-40"
+                  />
                 </div>
               </div>
-            </DialogBody>
-            <DialogFooter>
-              <Button type="submit" variant="success">
-                Save
-              </Button>
-              <Button variant="outline" onClick={onToggle}>
-                Close
-              </Button>
-            </DialogFooter>
-          </form>
+            </div>
+          </DialogBody>
+          <DialogFooter>
+            <Button type="submit" variant="success">
+              Save
+            </Button>
+            <Button variant="outline" onClick={onToggle}>
+              Close
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Form>
     </Dialog>

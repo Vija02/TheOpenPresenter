@@ -78,44 +78,45 @@ const SceneSettingsModal = ({ selectedScene }: SceneSettingsModalPropTypes) => {
   return (
     <Dialog open={isOpen ?? false} onOpenChange={onToggle ?? (() => {})}>
       <Form {...form}>
-        <DialogContent size="sm" asChild>
-          <form onSubmit={form.handleSubmit(handleSubmit)}>
-            <DialogHeader>
-              <DialogTitle>Scene Settings</DialogTitle>
-            </DialogHeader>
-            <DialogBody>
-              <div className="stack-col items-start py-2">
-                <InputControl control={form.control} label="Name" name="name" />
-                <div className="flex items-center gap-2 w-full">
-                  <span className="text-sm font-medium">Reorder</span>
-                  <Button
-                    type="button"
-                    size="xs"
-                    variant="outline"
-                    onClick={handleMoveUp}
-                    disabled={currentIndex <= 0}
-                  >
-                    <VscArrowUp />
-                  </Button>
-                  <Button
-                    type="button"
-                    size="xs"
-                    variant="outline"
-                    onClick={handleMoveDown}
-                    disabled={currentIndex >= sortedSceneIds.length - 1}
-                  >
-                    <VscArrowDown />
-                  </Button>
-                </div>
+        <DialogContent
+          size="sm"
+          render={<form onSubmit={form.handleSubmit(handleSubmit)} />}
+        >
+          <DialogHeader>
+            <DialogTitle>Scene Settings</DialogTitle>
+          </DialogHeader>
+          <DialogBody>
+            <div className="stack-col items-start py-2">
+              <InputControl control={form.control} label="Name" name="name" />
+              <div className="flex items-center gap-2 w-full">
+                <span className="text-sm font-medium">Reorder</span>
+                <Button
+                  type="button"
+                  size="xs"
+                  variant="outline"
+                  onClick={handleMoveUp}
+                  disabled={currentIndex <= 0}
+                >
+                  <VscArrowUp />
+                </Button>
+                <Button
+                  type="button"
+                  size="xs"
+                  variant="outline"
+                  onClick={handleMoveDown}
+                  disabled={currentIndex >= sortedSceneIds.length - 1}
+                >
+                  <VscArrowDown />
+                </Button>
               </div>
-            </DialogBody>
-            <DialogFooter>
-              <Button type="submit">Save</Button>
-              <Button variant="outline" onClick={onToggle}>
-                Close
-              </Button>
-            </DialogFooter>
-          </form>
+            </div>
+          </DialogBody>
+          <DialogFooter>
+            <Button type="submit">Save</Button>
+            <Button variant="outline" onClick={onToggle}>
+              Close
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Form>
     </Dialog>

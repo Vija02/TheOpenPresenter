@@ -103,97 +103,94 @@ const CreateProjectModal = ({
   return (
     <Dialog open={isOpen ?? false} onOpenChange={onToggle}>
       <Form {...form}>
-        <DialogContent className="max-w-2xl" asChild>
-          <form onSubmit={form.handleSubmit(handleSubmit)}>
-            <DialogHeader>
-              <DialogTitle>New Project</DialogTitle>
-            </DialogHeader>
-            <DialogBody>
-              <InputControl
-                control={form.control}
-                name="name"
-                label="Name"
-                placeholder={namePlaceholder}
+        <DialogContent
+          className="max-w-2xl"
+          render={<form onSubmit={form.handleSubmit(handleSubmit)} />}
+        >
+          <DialogHeader>
+            <DialogTitle>New Project</DialogTitle>
+          </DialogHeader>
+          <DialogBody>
+            <InputControl
+              control={form.control}
+              name="name"
+              label="Name"
+              placeholder={namePlaceholder}
+            />
+
+            <FormField
+              control={form.control}
+              name="targetDate"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Service Time</FormLabel>
+                  <FormControl>
+                    <Select
+                      {...ReactSelectDateProps}
+                      value={
+                        field.value
+                          ? {
+                              value: field.value,
+                              label: formatHumanReadableDate(field.value),
+                            }
+                          : null
+                      }
+                      onChange={(val) => {
+                        field.onChange(val);
+                      }}
+                      isClearable
+                      isSearchable={false}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <SelectControl
+              control={form.control}
+              name="categoryId"
+              label="Category"
+              options={[
+                { label: "Uncategorized", value: UNCATEGORIZED },
+              ].concat(categories.map((x) => ({ label: x.name, value: x.id })))}
+            />
+
+            <div>
+              <FormLabel className="mb-2">Tags</FormLabel>
+              <TagsSelector
+                value={selectedTagIds.map((tagId) => ({
+                  value: allTagByOrganization?.find((tag) => tag.id === tagId),
+                  label:
+                    allTagByOrganization?.find((tag) => tag.id === tagId)
+                      ?.name ?? "",
+                }))}
+                onChange={(val) => {
+                  const selectedIds: string[] =
+                    val.map((x: any) => x.value.id) ?? [];
+
+                  setSelectedTagIds(selectedIds);
+                }}
+                onCreateOption={async (optionName: string) => {
+                  await createTag({
+                    name: optionName,
+                    organizationId: organizationId,
+                  });
+                  refetchTags?.();
+                }}
               />
-
-              <FormField
-                control={form.control}
-                name="targetDate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Service Time</FormLabel>
-                    <FormControl>
-                      <Select
-                        {...ReactSelectDateProps}
-                        value={
-                          field.value
-                            ? {
-                                value: field.value,
-                                label: formatHumanReadableDate(field.value),
-                              }
-                            : null
-                        }
-                        onChange={(val) => {
-                          field.onChange(val);
-                        }}
-                        isClearable
-                        isSearchable={false}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <SelectControl
-                control={form.control}
-                name="categoryId"
-                label="Category"
-                options={[
-                  { label: "Uncategorized", value: UNCATEGORIZED },
-                ].concat(
-                  categories.map((x) => ({ label: x.name, value: x.id })),
-                )}
-              />
-
-              <div>
-                <FormLabel className="mb-2">Tags</FormLabel>
-                <TagsSelector
-                  value={selectedTagIds.map((tagId) => ({
-                    value: allTagByOrganization?.find(
-                      (tag) => tag.id === tagId,
-                    ),
-                    label:
-                      allTagByOrganization?.find((tag) => tag.id === tagId)
-                        ?.name ?? "",
-                  }))}
-                  onChange={(val) => {
-                    const selectedIds: string[] =
-                      val.map((x: any) => x.value.id) ?? [];
-
-                    setSelectedTagIds(selectedIds);
-                  }}
-                  onCreateOption={async (optionName: string) => {
-                    await createTag({
-                      name: optionName,
-                      organizationId: organizationId,
-                    });
-                    refetchTags?.();
-                  }}
-                />
-              </div>
-            </DialogBody>
-            <DialogFooter>
-              <div className="flex gap-2">
-                <Button type="submit" variant="success">
-                  Save
-                </Button>
-                <Button variant="outline" onClick={onToggle}>
-                  Close
-                </Button>
-              </div>
-            </DialogFooter>
-          </form>
+            </div>
+          </DialogBody>
+          <DialogFooter>
+            <div className="flex gap-2">
+              <Button type="submit" variant="success">
+                Save
+              </Button>
+              <Button variant="outline" onClick={onToggle}>
+                Close
+              </Button>
+            </div>
+          </DialogFooter>
         </DialogContent>
       </Form>
     </Dialog>
