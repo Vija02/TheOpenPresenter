@@ -18,7 +18,13 @@ import {
   DialogPortalContainerContext,
   DialogTitle,
 } from "@repo/ui";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { VscCloudUpload } from "react-icons/vsc";
 import { typeidUnboxed } from "typeid-js";
 
@@ -67,11 +73,13 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
   );
 
   // Reset selection and overrides when modal closes
+  const prevIsOpenRef = useRef(isOpen);
   useEffect(() => {
-    if (!isOpen) {
+    if (prevIsOpenRef.current && !isOpen) {
       setSelectedIds(new Set());
       resetOverrides();
     }
+    prevIsOpenRef.current = isOpen;
   }, [isOpen, resetOverrides]);
 
   const buildResult = useCallback(
