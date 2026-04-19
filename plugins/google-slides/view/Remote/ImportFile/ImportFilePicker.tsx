@@ -1,3 +1,4 @@
+import { useOverlayToggle } from "@repo/ui";
 import { FcGoogle } from "react-icons/fc";
 
 import { usePluginAPI } from "../../pluginApi";
@@ -11,31 +12,22 @@ export const ImportFilePicker = () => {
   const pluginApi = usePluginAPI();
   const pluginContext = pluginApi.pluginContext;
 
+  const { onToggle } = useOverlayToggle();
+
   const mutableSceneData = pluginApi.scene.useValtioData();
 
   const selectSlideMutation = trpc.googleslides.selectSlide.useMutation();
   return (
     <div className="flex gap-2 w-full max-w-lg flex-wrap">
       <SlidePicker
-        onFileSelected={(data, token) => {
-          const picker = google.picker;
-          if (data[picker.Response.ACTION] === "picked") {
-            if (
-              data[picker.Response.DOCUMENTS] &&
-              data[picker.Response.DOCUMENTS]!.length > 0
-            ) {
-              const docs = data[picker.Response.DOCUMENTS]![0]!;
-
-              const id = docs[picker.Document.ID];
-
-              selectSlideMutation.mutate({
-                pluginId: pluginContext.pluginId,
-                presentationId: id,
-                token: token,
-              });
-              mutableSceneData.pluginData._isFetching = true;
-            }
-          }
+        onFileSelected={(doc, token) => {
+          selectSlideMutation.mutate({
+            pluginId: pluginContext.pluginId,
+            presentationId: doc.id,
+            token: token,
+          });
+          mutableSceneData.pluginData._isFetching = true;
+          onToggle?.();
         }}
       >
         {({ isLoading, openPicker }) => (
