@@ -97,7 +97,6 @@ export const init = (
     );
   });
 
-  // DEBT: Maybe we can cache this
   const apiProxy = createProxyMiddleware({
     pathRewrite: (path) => {
       return "/" + path.split("/").slice(2).join("/");
@@ -109,12 +108,22 @@ export const init = (
       proxyReq: (proxyReq) => {
         proxyReq.removeHeader("Referer");
       },
+      proxyRes: (proxyRes) => {
+        proxyRes.headers["cache-control"] =
+          "public, max-age=31536000, immutable";
+      },
     },
     changeOrigin: true,
   });
   const apiProxyScripts = createProxyMiddleware({
     target: "https://docs.google.com",
     changeOrigin: true,
+    on: {
+      proxyRes: (proxyRes) => {
+        proxyRes.headers["cache-control"] =
+          "public, max-age=31536000, immutable";
+      },
+    },
   });
 
   serverPluginApi.registerPrivateRoute(pluginName, "staticProxy", apiProxy);
