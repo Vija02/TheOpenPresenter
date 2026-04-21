@@ -1,4 +1,4 @@
-import { media } from "@repo/backend-shared";
+import { job, media } from "@repo/backend-shared";
 import { mediaIdFromUUID } from "@repo/lib";
 import { Express, RequestHandler } from "express";
 import { Pool } from "pg";
@@ -332,6 +332,20 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
       return result;
     },
   };
+
+  public async runJobAndAwait<TPayload extends object, TResult = unknown>(
+    taskIdentifier: string,
+    payload: TPayload,
+    options?: job.AwaitJobOptions,
+  ): Promise<job.JobResult<TResult>> {
+    const pgPool = this.app.get("rootPgPool") as Pool;
+    return job.addJobAndAwait<TPayload, TResult>(
+      pgPool,
+      taskIdentifier,
+      payload,
+      options,
+    );
+  }
 }
 
 // Class to access the data in ServerPluginApi
