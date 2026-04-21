@@ -142,6 +142,7 @@ const RemoteHandler = () => {
     (x) => x.pluginData.thumbnailLinks,
   );
   const type = pluginApi.scene.useData((x) => x.pluginData.type);
+  const isFetching = pluginApi.scene.useData((x) => x.pluginData._isFetching);
   const rendererData = pluginApi.renderer.useData((x) => x);
 
   const mutableRendererData = pluginApi.renderer.useValtioData();
@@ -202,7 +203,9 @@ const RemoteHandler = () => {
           }}
         >
           {({ width }) =>
-            thumbnailLink && thumbnailLink !== "" ? (
+            isFetching || !thumbnailLink || thumbnailLink === "" ? (
+              <Skeleton className="h-full" />
+            ) : (
               <div className="center">
                 <UniversalImage
                   src={extractMediaName(thumbnailLink)}
@@ -210,8 +213,6 @@ const RemoteHandler = () => {
                   width={width}
                 />
               </div>
-            ) : (
-              <Skeleton className="h-full" />
             )
           }
         </Slide>
