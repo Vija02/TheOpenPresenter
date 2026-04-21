@@ -131,3 +131,31 @@ export async function notifyJobFailure(
     error,
   });
 }
+
+// ============================================================================
+// Task Payload and Result Types
+// ============================================================================
+
+export interface PdfToImagesPayload extends AwaitableJobPayload {
+  pdfMediaName: string;
+  organizationId: string;
+  userId: string;
+  parentMediaId: string;
+  projectId: string;
+  pluginId: string;
+  preGeneratedMediaIds?: string[];
+}
+
+export interface PdfToImagesResult {
+  imageFileNames: string[];
+  pageCount: number;
+}
+
+export interface DeleteBatchPayload extends AwaitableJobPayload {
+  mediaNames: string[];
+}
+
+export interface DeleteBatchResult {
+  deletedCount: number;
+  failedCount: number;
+}

@@ -346,6 +346,17 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
       options,
     );
   }
+
+  public async addJob<TPayload extends object>(
+    taskIdentifier: string,
+    payload: TPayload,
+  ): Promise<void> {
+    const pgPool = this.app.get("rootPgPool") as Pool;
+    await pgPool.query(`SELECT graphile_worker.add_job($1, $2::json)`, [
+      taskIdentifier,
+      JSON.stringify(payload),
+    ]);
+  }
 }
 
 // Class to access the data in ServerPluginApi
