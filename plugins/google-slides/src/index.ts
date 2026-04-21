@@ -20,6 +20,9 @@ import {
   remoteWebComponentTag,
   rendererWebComponentTag,
 } from "./consts";
+import { cacheGoogleUserContentImages } from "./googleSlides/cacheGoogleSlideImage";
+import { processHtml } from "./googleSlides/processHtml";
+import { deleteOldThumbnails, processPdfToThumbnails } from "./shared";
 import { AutoplayState, PluginBaseData, PluginRendererData } from "./types";
 
 export const init = (
@@ -189,6 +192,9 @@ const onPluginDataLoaded = (
     }
   }
 
+  // Reset fetching state on load
+  data.pluginData._isFetching = false;
+
   loadedPlugins[context.pluginId] = data;
   loadedContext[context.pluginId] = context;
   loadedYjsData[context.pluginId] = pluginInfo;
@@ -236,21 +242,18 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
           }
 
           const log = logger.child({ pluginId, mediaName });
+          const loadedPlugin = loadedPlugins[pluginId]!;
+          const loadedContextData = loadedContext[pluginId]!;
+
           try {
-            const loadedPlugin = loadedPlugins[pluginId]!;
-            const loadedContextData = loadedContext[pluginId]!;
+            deleteOldThumbnails(
+              serverPluginApi,
+              loadedPlugin.pluginData.thumbnailLinks,
+            );
 
-            if (loadedPlugin.pluginData.thumbnailLinks.length > 0) {
-              await Promise.all(
-                loadedPlugin.pluginData.thumbnailLinks.map((mediaId) =>
-                  serverPluginApi.deleteMedia(mediaId).catch((err) => {
-                    log.error({ err }, "Failed to delete media");
-                  }),
-                ),
-              );
-            }
-
+            // Get PPT and convert to PDF using unoconvert
             const pptMedia = await serverPluginApi.media.getMedia(mediaName);
+            log.info("Converting PPT to PDF via unoconvert...");
 
             const res = await axios.post(
               process.env.PLUGIN_GOOGLE_SLIDES_UNOCONVERT_SERVER! +
@@ -259,39 +262,33 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
               { responseType: "arraybuffer" },
             );
 
-            const pdfMedia = res.data;
+            const pdfBuffer = Buffer.from(res.data);
+            log.info("PPT converted to PDF");
 
-            log.info("Converting...");
+            const { fileNames, workerPromise } = await processPdfToThumbnails({
+              serverPluginApi,
+              pdfBuffer,
+              parentMediaId: extractMediaName(mediaName).mediaId,
+              organizationId: loadedContextData.organizationId,
+              userId: ctx.userId,
+              projectId: loadedContextData.projectId,
+              pluginId,
+              loadedPlugin,
+              log,
+            });
 
-            const output = await convertPdf(Buffer.from(pdfMedia));
-
-            log.info("Convert done, uploading...");
-
+            // Update plugin data immediately with pre-generated file names
+            loadedPlugin.pluginData._isFetching = true;
             loadedPlugin.pluginData.fetchId = typeidUnboxed("fetch");
             loadedPlugin.pluginData.type = "ppt";
             loadedPlugin.pluginData.presentationId = "";
             loadedPlugin.pluginData.pageIds = [];
-            loadedPlugin.pluginData.thumbnailLinks = new Array(
-              output.length,
-            ).fill("");
+            loadedPlugin.pluginData.thumbnailLinks = fileNames;
             loadedPlugin.pluginData.html = "";
 
-            await uploadImages({
-              output,
-              organizationId: loadedContextData.organizationId,
-              userId: ctx.userId,
-              parentMediaId: extractMediaName(mediaName).mediaId,
-              serverPluginApi,
-              projectId: loadedContextData.projectId,
-              pluginId,
-              onUploaded: (uploadedMedia, i) => {
-                loadedPlugin.pluginData.thumbnailLinks[i] =
-                  uploadedMedia.fileName;
-              },
-            });
-
-            log.info("Uploading done");
+            await workerPromise;
           } catch (err) {
+            loadedPlugin.pluginData._isFetching = false;
             log.error({ err }, "Failed to select ppt");
             throw err;
           }
@@ -304,57 +301,47 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
           }),
         )
         .mutation(async ({ input: { pluginId, mediaName }, ctx }) => {
-          // TODO: Validate file
           const log = logger.child({ pluginId, mediaName });
-          try {
-            const loadedPlugin = loadedPlugins[pluginId]!;
-            const loadedContextData = loadedContext[pluginId]!;
+          const loadedPlugin = loadedPlugins[pluginId]!;
+          const loadedContextData = loadedContext[pluginId]!;
 
-            if (loadedPlugin.pluginData.thumbnailLinks.length > 0) {
-              await Promise.all(
-                loadedPlugin.pluginData.thumbnailLinks.map((mediaId) =>
-                  serverPluginApi.deleteMedia(mediaId).catch((err) => {
-                    log.error({ err }, "Failed to delete media");
-                  }),
-                ),
-              );
-            }
+          try {
+            loadedPlugin.pluginData._isFetching = true;
+
+            deleteOldThumbnails(
+              serverPluginApi,
+              loadedPlugin.pluginData.thumbnailLinks,
+            );
 
             const media = await serverPluginApi.media.getMedia(mediaName);
+            const pdfBuffer = await streamToBuffer(media);
 
-            log.info("Converting...");
+            const { fileNames, workerPromise } = await processPdfToThumbnails({
+              serverPluginApi,
+              pdfBuffer,
+              pdfMediaName: mediaName,
+              organizationId: loadedContextData.organizationId,
+              userId: ctx.userId,
+              projectId: loadedContextData.projectId,
+              pluginId,
+              loadedPlugin,
+              log,
+            });
 
-            const output = await convertPdf(await streamToBuffer(media));
-
-            log.info("Convert done, uploading...");
-
+            // Update plugin data
             loadedPlugin.pluginData.fetchId = typeidUnboxed("fetch");
             loadedPlugin.pluginData.type = "pdf";
             loadedPlugin.pluginData.presentationId = "";
             loadedPlugin.pluginData.pageIds = [];
-            loadedPlugin.pluginData.thumbnailLinks = new Array(
-              output.length,
-            ).fill("");
+            loadedPlugin.pluginData.thumbnailLinks = fileNames;
             loadedPlugin.pluginData.html = "";
 
-            await uploadImages({
-              output,
-              organizationId: loadedContextData.organizationId,
-              userId: ctx.userId,
-              parentMediaId: extractMediaName(mediaName).mediaId,
-              serverPluginApi,
-              projectId: loadedContextData.projectId,
-              pluginId,
-              onUploaded: (uploadedMedia, i) => {
-                loadedPlugin.pluginData.thumbnailLinks[i] =
-                  uploadedMedia.fileName;
-              },
-            });
-
-            log.info("Uploading done");
+            await workerPromise;
           } catch (err) {
             log.error({ err }, "Failed to select pdf");
             throw err;
+          } finally {
+            loadedPlugin.pluginData._isFetching = false;
           }
         }),
       selectSlide: t.procedure
@@ -368,51 +355,37 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
         .mutation(
           async ({ input: { pluginId, presentationId, token }, ctx }) => {
             const log = logger.child({ pluginId, presentationId });
+            const loadedPlugin = loadedPlugins[pluginId]!;
+            const loadedContextData = loadedContext[pluginId]!;
+            const loadedYjs = loadedYjsData[pluginId]!;
 
             try {
-              // TODO: Validation
-              const loadedPlugin = loadedPlugins[pluginId]!;
-              const loadedContextData = loadedContext[pluginId]!;
-              const loadedYjs = loadedYjsData[pluginId]!;
+              loadedPlugin.pluginData._isFetching = true;
 
-              const presentationDataRes = await axios(
-                `https://slides.googleapis.com/v1/presentations/${presentationId}`,
-                {
-                  headers: { Authorization: `Bearer ${token}` },
-                },
+              deleteOldThumbnails(
+                serverPluginApi,
+                loadedPlugin.pluginData.thumbnailLinks,
               );
+
+              // Fetch presentation data and HTML embed in parallel
+              const [presentationDataRes, htmlData] = await Promise.all([
+                axios(
+                  `https://slides.googleapis.com/v1/presentations/${presentationId}`,
+                  {
+                    headers: { Authorization: `Bearer ${token}` },
+                  },
+                ),
+                axios(
+                  `https://docs.google.com/presentation/d/${presentationId}/embed?rm=minimal`,
+                  {
+                    headers: { Authorization: `Bearer ${token}` },
+                  },
+                ),
+              ]);
 
               const pageIds = presentationDataRes.data.slides.map(
                 (page: any) => page.objectId,
               );
-
-              const htmlData = await axios(
-                `https://docs.google.com/presentation/d/${presentationId}/embed?rm=minimal`,
-                {
-                  headers: { Authorization: `Bearer ${token}` },
-                },
-              );
-
-              if (loadedPlugin.pluginData.thumbnailLinks.length > 0) {
-                await Promise.all(
-                  loadedPlugin.pluginData.thumbnailLinks.map((mediaId) =>
-                    serverPluginApi.deleteMedia(mediaId).catch((err) => {
-                      log.error({ err }, "Failed to delete media");
-                    }),
-                  ),
-                );
-              }
-
-              loadedYjs.doc?.transact(() => {
-                loadedPlugin.pluginData.fetchId = typeidUnboxed("fetch");
-                loadedPlugin.pluginData.type = "googleslides";
-                loadedPlugin.pluginData.presentationId = presentationId;
-                loadedPlugin.pluginData.pageIds = pageIds;
-                loadedPlugin.pluginData.thumbnailLinks = new Array(
-                  pageIds.length,
-                ).fill("");
-                loadedPlugin.pluginData.html = processHtml(htmlData.data);
-              });
 
               log.info("Downloading PDF");
               const pdfRes = await axios(
@@ -423,138 +396,62 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
                 },
               );
               const pdfBuffer = Buffer.from(pdfRes.data);
-              const uploadPdfPromise = serverPluginApi.uploadMedia(
-                pdfBuffer,
-                "pdf",
-                {
+
+              log.info("Downloaded PDF. Size: " + pdfBuffer.length);
+
+              // Process PDF to thumbnails
+              const { fileNames, uploadedPdfMediaId, workerPromise } =
+                await processPdfToThumbnails({
+                  serverPluginApi,
+                  pdfBuffer,
                   organizationId: loadedContextData.organizationId,
                   userId: ctx.userId,
-                  attachTo: {
-                    projectId: loadedContextData.projectId,
-                    pluginId,
-                  },
+                  projectId: loadedContextData.projectId,
+                  pluginId,
+                  loadedPlugin,
+                  log,
+                });
+
+              // Extract and cache Google user content images from HTML
+              log.info("Caching Google user content images...");
+              const urlMapping = await cacheGoogleUserContentImages(
+                htmlData.data,
+                {
+                  serverPluginApi,
+                  organizationId: loadedContextData.organizationId,
+                  userId: ctx.userId,
+                  parentMediaId: uploadedPdfMediaId,
+                  projectId: loadedContextData.projectId,
+                  pluginId,
                 },
               );
+              log.info("Google user content images cached");
 
-              log.info("Downloaded. Size: " + pdfBuffer.length);
-
-              log.info("Converting...");
-
-              const output = await convertPdf(pdfBuffer);
-
-              log.info("Convert done, uploading...");
-
-              const uploadedPdf = await uploadPdfPromise;
-
-              await uploadImages({
-                output,
-                organizationId: loadedContextData.organizationId,
-                userId: ctx.userId,
-                parentMediaId: uploadedPdf.mediaId,
-                serverPluginApi,
-                projectId: loadedContextData.projectId,
-                pluginId,
-                onUploaded: (uploadedMedia, i) => {
-                  loadedPlugin.pluginData.thumbnailLinks[i] =
-                    uploadedMedia.fileName;
-                },
+              // Update plugin data with presentation info, HTML, and pre-generated thumbnails
+              loadedYjs.doc?.transact(() => {
+                loadedPlugin.pluginData.fetchId = typeidUnboxed("fetch");
+                loadedPlugin.pluginData.type = "googleslides";
+                loadedPlugin.pluginData.presentationId = presentationId;
+                loadedPlugin.pluginData.pageIds = pageIds;
+                loadedPlugin.pluginData.thumbnailLinks = fileNames;
+                loadedPlugin.pluginData.html = processHtml(
+                  htmlData.data,
+                  urlMapping,
+                );
               });
 
-              log.info("Uploading done");
-
-              return {};
+              await workerPromise;
             } catch (err) {
               log.error({ err }, "Failed to select slide");
               throw err;
+            } finally {
+              loadedPlugin.pluginData._isFetching = false;
             }
           },
         ),
     },
   });
 };
-
-async function convertPdf(pdfBuffer: Buffer | ArrayBuffer | Uint8Array) {
-  const mupdf = await import("mupdf");
-
-  const doc = mupdf.Document.openDocument(pdfBuffer, "application/pdf");
-  const totalPage = doc.countPages();
-  let scale = -1;
-  const output = Array.from(new Array(totalPage)).map((_, i) => {
-    const page = doc.loadPage(i);
-    if (scale === -1) {
-      const bounds = page.getBounds();
-      const pageWidth = bounds[2] - bounds[0];
-
-      const targetWidth = 1920;
-
-      scale = targetWidth / pageWidth;
-    }
-    const pixmap = page.toPixmap(
-      mupdf.Matrix.scale(scale, scale),
-      mupdf.ColorSpace.DeviceRGB,
-    );
-    return pixmap.asJPEG(80, false);
-  });
-
-  return output;
-}
-
-async function uploadImages({
-  output,
-  serverPluginApi,
-  organizationId,
-  userId,
-  parentMediaId,
-  projectId,
-  pluginId,
-  onUploaded,
-}: {
-  output: Uint8Array<ArrayBufferLike>[];
-  serverPluginApi: ServerPluginApi<any, any>;
-  organizationId: string;
-  userId: string;
-  parentMediaId: string;
-  projectId: string;
-  pluginId: string;
-  onUploaded: (
-    data: Awaited<ReturnType<typeof serverPluginApi.uploadMedia>>,
-    i: number,
-  ) => void;
-}) {
-  // DEBT: Make this runnable somewhere else
-  // The problem is, if that's the case then we'll need to store the token
-  // TODO: Problem if we run this again while still running
-  output.forEach(async (img, i) => {
-    const uploadedMedia = await serverPluginApi.uploadMedia(
-      Buffer.from(img),
-      "jpg",
-      {
-        organizationId: organizationId,
-        userId: userId,
-        parentMediaIdOrUUID: parentMediaId,
-        attachTo: { projectId, pluginId },
-      },
-    );
-    onUploaded(uploadedMedia, i);
-  });
-}
-
-function processHtml(html: string) {
-  return html
-    .replace(
-      /\/static\/presentation\/client\//g,
-      "/plugin/google-slides/staticScripts/static/presentation/client/",
-    )
-    .replace(
-      /https:\/\/([^.]+?)\.googleusercontent\.com/g,
-      "/plugin/google-slides/staticProxy/$1",
-    )
-    .replace(
-      /https:\\\/\\\/([^.]+?)\.googleusercontent\.com/g,
-      "/plugin/google-slides/staticProxy/$1",
-    )
-    .replace(/src="\//, 'src="/plugin/google-slides/staticScripts/');
-}
 
 export type AppRouter = ReturnType<ReturnType<typeof getAppRouter>>;
 
