@@ -118,6 +118,7 @@ export function initPluginApi<
           : O;
       },
       setRenderCurrentScene,
+      triggerKeyPress: misc.triggerKeyPress,
       useOverlayType: () => {
         return useSyncExternalStore(
           misc.overlay.subscribe,

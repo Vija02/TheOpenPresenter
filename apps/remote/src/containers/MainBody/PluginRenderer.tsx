@@ -1,10 +1,10 @@
 import {
   AwarenessContext,
   AwarenessStateData,
+  KeyPressType,
   OverlayInfo,
   Plugin,
   PluginContext,
-  RenderData,
   State,
   WebComponentProps,
   YjsWatcher,
@@ -13,10 +13,10 @@ import { useMediaPicker } from "@repo/base-plugin/client";
 import {
   useCompleteMediaMutation,
   useDeleteMediaMutation,
+  useKeyPressMutation,
   useUnlinkMediaFromPluginMutation,
 } from "@repo/graphql";
 import {
-  TypedMap,
   preloader,
   uuidFromMediaIdOrUUIDOrMediaName,
   uuidFromPluginIdOrUUID,
@@ -106,6 +106,18 @@ const PluginRenderer = React.memo(
     const [, deleteMedia] = useDeleteMediaMutation();
     const [, completeMedia] = useCompleteMediaMutation();
     const [, unlinkMediaFromPlugin] = useUnlinkMediaFromPluginMutation();
+    const [, keyPressMutate] = useKeyPressMutation();
+
+    const triggerKeyPress = useCallback(
+      (keyType: KeyPressType) => {
+        keyPressMutate({
+          keyType,
+          projectId,
+          rendererId: selectedRendererId,
+        });
+      },
+      [keyPressMutate, projectId, selectedRendererId],
+    );
 
     const pluginContext: PluginContext = useMemo(
       () => ({
@@ -192,6 +204,7 @@ const PluginRenderer = React.memo(
         trpcClient,
         misc: {
           setAwarenessStateData,
+          triggerKeyPress,
           zoomLevel: zoomLevelStore,
           errorHandler: { addError, removeError },
           canPlayAudio,
@@ -242,6 +255,7 @@ const PluginRenderer = React.memo(
       sceneId,
       selectedRendererId,
       setAwarenessStateData,
+      triggerKeyPress,
       unlinkMediaFromPlugin,
       viewData?.tag,
       yjsPluginRendererData,
