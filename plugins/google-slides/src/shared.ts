@@ -1,10 +1,16 @@
 import { job } from "@repo/backend-shared";
-import { Plugin, ServerPluginApi } from "@repo/base-plugin/server";
+import { ServerPluginApi } from "@repo/base-plugin/server";
 import { extractMediaName, uuidFromMediaId } from "@repo/lib";
 import { logger } from "@repo/observability";
 import { typeidUnboxed } from "typeid-js";
 
-import { PluginBaseData } from "./types";
+interface PdfProcessingContext {
+  serverPluginApi: ServerPluginApi;
+  organizationId: string;
+  userId: string;
+  projectId: string;
+  pluginId: string;
+}
 
 export const deleteOldThumbnails = (
   serverPluginApi: ServerPluginApi,
@@ -24,15 +30,8 @@ export const deleteOldThumbnails = (
 
 /**
  * Count pages in a PDF and pre-generate media IDs for each page.
- * This allows us to update Yjs with the file names before the worker completes.
  */
-export async function countPdfPagesAndGenerateMediaIds(
-  pdfBuffer: Buffer,
-): Promise<{
-  pageCount: number;
-  mediaIds: string[];
-  fileNames: string[];
-}> {
+async function countPdfPagesAndGenerateMediaIds(pdfBuffer: Buffer) {
   const mupdf = await import("mupdf");
   const doc = mupdf.Document.openDocument(pdfBuffer, "application/pdf");
   const pageCount = doc.countPages();
@@ -49,45 +48,15 @@ export async function countPdfPagesAndGenerateMediaIds(
   return { pageCount, mediaIds, fileNames };
 }
 
-export interface ProcessPdfToThumbnailsParams {
-  serverPluginApi: ServerPluginApi;
-  pdfBuffer: Buffer;
-  /** The media name of the PDF file (for existing PDFs) or undefined if PDF needs to be uploaded */
-  pdfMediaName?: string;
-  parentMediaId?: string;
-  organizationId: string;
-  userId: string;
-  projectId: string;
-  pluginId: string;
-  loadedPlugin: Plugin<PluginBaseData>;
-  log: typeof logger;
-}
-
-export interface ProcessPdfToThumbnailsResult {
-  /** Pre-generated thumbnail file names */
-  fileNames: string[];
-  pageCount: number;
-  uploadedPdfMediaId: string;
-  uploadedPdfFileName: string;
-  workerPromise: Promise<void>;
-}
-
 /**
- * Process a PDF buffer into thumbnails using a background worker.
- * Optionally uploads the PDF if not already uploaded
+ * Upload PDF (if needed) and prepare media IDs for thumbnails.
  */
-export async function processPdfToThumbnails({
-  serverPluginApi,
-  pdfBuffer,
-  pdfMediaName,
-  parentMediaId,
-  organizationId,
-  userId,
-  projectId,
-  pluginId,
-  loadedPlugin,
-  log,
-}: ProcessPdfToThumbnailsParams): Promise<ProcessPdfToThumbnailsResult> {
+export async function uploadPdfAndPrepare(
+  ctx: PdfProcessingContext,
+  pdfBuffer: Buffer,
+  pdfMediaName?: string,
+  parentMediaId?: string,
+) {
   const { mediaIds, fileNames, pageCount } =
     await countPdfPagesAndGenerateMediaIds(pdfBuffer);
 
@@ -95,40 +64,60 @@ export async function processPdfToThumbnails({
   let uploadedPdfFileName: string;
 
   if (pdfMediaName) {
-    // Just extract
     const { mediaId } = extractMediaName(pdfMediaName);
     uploadedPdfMediaId = uuidFromMediaId(mediaId);
     uploadedPdfFileName = pdfMediaName;
   } else {
-    // Upload PDF if not already uploaded
-    const uploadedPdf = await serverPluginApi.uploadMedia(pdfBuffer, "pdf", {
-      organizationId,
-      userId,
-      parentMediaIdOrUUID: parentMediaId,
-      attachTo: { projectId, pluginId },
-    });
+    const uploadedPdf = await ctx.serverPluginApi.uploadMedia(
+      pdfBuffer,
+      "pdf",
+      {
+        organizationId: ctx.organizationId,
+        userId: ctx.userId,
+        parentMediaIdOrUUID: parentMediaId,
+        attachTo: { projectId: ctx.projectId, pluginId: ctx.pluginId },
+      },
+    );
     uploadedPdfMediaId = uploadedPdf.mediaId;
     uploadedPdfFileName = uploadedPdf.fileName;
   }
 
+  return {
+    fileNames,
+    mediaIds,
+    pageCount,
+    uploadedPdfMediaId,
+    uploadedPdfFileName,
+  };
+}
+
+/**
+ * Start the background worker for thumbnail generation.
+ */
+export function startThumbnailWorker(
+  ctx: PdfProcessingContext,
+  pdfMediaName: string,
+  mediaIds: string[],
+  parentMediaId: string,
+  log: typeof logger,
+): Promise<void> {
   log.info("Starting PDF to thumbnails worker");
 
-  const workerPromise = serverPluginApi
+  return ctx.serverPluginApi
     .runJobAndAwait<job.PdfToImagesPayload, job.PdfToImagesResult>(
       "medias__pdf_to_images",
       {
-        pdfMediaName: uploadedPdfFileName,
-        organizationId,
-        userId,
-        parentMediaId: uploadedPdfMediaId,
-        projectId,
-        pluginId,
+        pdfMediaName,
+        organizationId: ctx.organizationId,
+        userId: ctx.userId,
+        parentMediaId,
+        projectId: ctx.projectId,
+        pluginId: ctx.pluginId,
         preGeneratedMediaIds: mediaIds,
       },
-      { timeoutMs: 5 * 60 * 1000 }, // 5 minute timeout
+      { timeoutMs: 5 * 60 * 1000 },
     )
     .then((result) => {
-      loadedPlugin.pluginData._isFetching = false;
       if (result.success) {
         log.info("PDF to thumbnails worker completed");
       } else {
@@ -136,9 +125,36 @@ export async function processPdfToThumbnails({
       }
     })
     .catch((err: unknown) => {
-      loadedPlugin.pluginData._isFetching = false;
       log.error({ err }, "PDF to thumbnails worker failed");
     });
+}
+
+/**
+ * Process a PDF buffer into thumbnails using a background worker.
+ * Convenience function that combines uploadPdfAndPrepare and startThumbnailWorker.
+ */
+export async function processPdfToThumbnails(
+  ctx: PdfProcessingContext,
+  pdfBuffer: Buffer,
+  log: typeof logger,
+  pdfMediaName?: string,
+  parentMediaId?: string,
+) {
+  const {
+    fileNames,
+    mediaIds,
+    pageCount,
+    uploadedPdfMediaId,
+    uploadedPdfFileName,
+  } = await uploadPdfAndPrepare(ctx, pdfBuffer, pdfMediaName, parentMediaId);
+
+  const workerPromise = startThumbnailWorker(
+    ctx,
+    uploadedPdfFileName,
+    mediaIds,
+    uploadedPdfMediaId,
+    log,
+  );
 
   return {
     fileNames,
