@@ -3,11 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePluginAPI } from "../../pluginApi";
 import RenderView, { RenderViewHandle } from "./RenderView";
 
-export const GoogleSlideRenderer = ({
-  shouldUpdateResolvedSlideIndex = false,
-}: {
-  shouldUpdateResolvedSlideIndex?: boolean;
-}) => {
+export const GoogleSlideRenderer = () => {
   const ref = useRef<RenderViewHandle>(null);
 
   const [localClickCount, setLocalClickCount] = useState(0);
@@ -18,9 +14,11 @@ export const GoogleSlideRenderer = ({
   const setAwarenessStateData = pluginApi.awareness.setAwarenessStateData;
   const slideIndex = pluginApi.renderer.useData((x) => x.slideIndex);
   const clickCount = pluginApi.renderer.useData((x) => x.clickCount);
-  const mutableRendererData = pluginApi.renderer.useValtioData();
 
-  const pageIds = pluginApi.scene.useData((x) => x.pluginData.pageIds);
+  const slideClickCounts = pluginApi.scene.useData(
+    (x) => x.pluginData.slideClickCounts,
+  );
+  const slideCount = slideClickCounts?.length ?? 0;
 
   // Get derivation offset for confidence monitor mode
   const derivationOffset = pluginApi.renderer.useDerivationOffset();
@@ -40,22 +38,14 @@ export const GoogleSlideRenderer = ({
     }
     const newIndex = baseIndex + derivationOffset;
     // Return -1 if out of bounds (shows nothing)
-    if (newIndex < 0 || newIndex >= pageIds.length) {
+    if (newIndex < 0 || newIndex >= slideCount) {
       return -1;
     }
     return newIndex;
-  }, [slideIndex, derivationOffset, pageIds.length]);
+  }, [slideIndex, derivationOffset, slideCount]);
 
   // Track if we're out of bounds due to derivation offset
   const isOutOfBounds = derivedSlideIndex === -1;
-
-  const updateResolvedSlideIndex = useCallback(
-    (newSlideId: string) => {
-      const newSlideIndex = pageIds.findIndex((x) => x === newSlideId);
-      mutableRendererData.resolvedSlideIndex = newSlideIndex;
-    },
-    [mutableRendererData, pageIds],
-  );
 
   const update = useCallback(() => {
     if (clickCount !== null) {
@@ -64,30 +54,17 @@ export const GoogleSlideRenderer = ({
       Array.from(new Array(offset)).forEach(() => {
         if (clickCount > localClickCount) {
           setTimeout(() => {
-            const newSlideId = ref.current?.next();
-            // DEBT: We check if the offset is 1 because we don't want to run this on load
-            // But maybe we can handle this better by checking the previous loaded state
-            if (shouldUpdateResolvedSlideIndex && offset === 1 && newSlideId) {
-              updateResolvedSlideIndex(newSlideId);
-            }
+            ref.current?.next();
           }, 50);
         } else {
           setTimeout(() => {
-            const newSlideId = ref.current?.prev();
-            if (shouldUpdateResolvedSlideIndex && offset === 1 && newSlideId) {
-              updateResolvedSlideIndex(newSlideId);
-            }
+            ref.current?.prev();
           }, 50);
         }
       });
       setLocalClickCount(clickCount);
     }
-  }, [
-    clickCount,
-    localClickCount,
-    shouldUpdateResolvedSlideIndex,
-    updateResolvedSlideIndex,
-  ]);
+  }, [clickCount, localClickCount]);
 
   useEffect(() => {
     setAwarenessStateData({ isLoading: true });

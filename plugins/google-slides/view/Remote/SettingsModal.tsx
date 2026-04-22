@@ -18,7 +18,7 @@ import { FaCircleInfo } from "react-icons/fa6";
 
 import { DisplayMode } from "../../src/types";
 import { usePluginAPI } from "../pluginApi";
-import { calculateBaseSlideIndex } from "../utils/slideIndex";
+import { calculateResolvedSlideIndex } from "../utils/slideIndex";
 import { calculateSlideIndexFromAutoplay } from "../utils/useAutoplay";
 import { displayTypeMapping } from "./displayTypeMapping";
 
@@ -40,30 +40,35 @@ const SettingsModal = () => {
   const thumbnailLinks = pluginApi.scene.useData(
     (x) => x.pluginData.thumbnailLinks,
   );
+  const slideClickCounts = pluginApi.scene.useData(
+    (x) => x.pluginData.slideClickCounts,
+  );
 
   const handleSubmit = useCallback(
     (rawData: SettingsData) => {
       mutableRendererData.displayMode = rawData.displayMode;
 
-      // If changing to image
+      // If changing to image mode, keep the current resolved slide as the new slideIndex
       if (
         mutableRendererData.displayMode === "googleslides" &&
         rawData.displayMode === "image"
       ) {
-        mutableRendererData.slideIndex = mutableRendererData.resolvedSlideIndex;
+        // Calculate the resolved slide index using slideClickCounts
+        const currentSlide = calculateResolvedSlideIndex({
+          slideIndex: mutableRendererData.slideIndex,
+          clickCount: mutableRendererData.clickCount,
+          slideCount: thumbnailLinks.length,
+          slideClickCounts: slideClickCounts ?? [],
+        });
+        mutableRendererData.slideIndex = Math.max(0, currentSlide);
+        mutableRendererData.clickCount = 0;
       }
-      // Handle the reverse
+      // Handle the reverse - switching from image to googleslides
       if (
         mutableRendererData.displayMode === "image" &&
         rawData.displayMode === "googleslides"
       ) {
-        mutableRendererData.resolvedSlideIndex =
-          (mutableRendererData.slideIndex ?? 0) +
-          (mutableRendererData.clickCount ?? 0);
-        mutableRendererData.slideIndex =
-          (mutableRendererData.slideIndex ?? 0) +
-          (mutableRendererData.clickCount ?? 0);
-
+        // Reset click count when switching to Google Slides mode
         mutableRendererData.clickCount = 0;
       }
 
@@ -76,8 +81,9 @@ const SettingsModal = () => {
         const newSlideIndex = calculateSlideIndexFromAutoplay({
           lastClickTimestamp: mutableRendererData.lastClickTimestamp,
           loopDurationMs: mutableRendererData.autoplay.loopDurationMs,
-          baseIndex: calculateBaseSlideIndex({
-            ...mutableRendererData,
+          baseIndex: calculateResolvedSlideIndex({
+            slideIndex: mutableRendererData.slideIndex,
+            clickCount: mutableRendererData.clickCount,
             slideCount: thumbnailLinks.length,
           }),
           slideCount: thumbnailLinks.length,
@@ -100,7 +106,13 @@ const SettingsModal = () => {
       onToggle?.();
       return Promise.resolve();
     },
-    [mutableRendererData, onToggle, resetData, thumbnailLinks.length],
+    [
+      mutableRendererData,
+      onToggle,
+      resetData,
+      slideClickCounts,
+      thumbnailLinks.length,
+    ],
   );
 
   const form = useForm<SettingsData>({

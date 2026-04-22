@@ -15,8 +15,12 @@ export type PluginBaseData = {
 
   /** The google presentation objectId */
   presentationId: string;
-  /** The google page objectIds of the presentation */
-  pageIds: string[];
+  /**
+   * The number of clicks/animations per slide.
+   * Index corresponds to slide index, value is the click count for that slide.
+   * A value of 0 means no animations (just show slide, then move to next).
+   */
+  slideClickCounts: number[];
   /** Links to the preview images of the presentation  */
   thumbnailLinks: string[];
 
@@ -41,11 +45,6 @@ export type AutoplayState = {
 export type PluginRendererData = {
   slideIndex: number | null;
   clickCount: number | null;
-  /**
-   * We store this based on what the click returns to us.
-   * Used to display on the remote which slide is currently used
-   */
-  resolvedSlideIndex: number | null;
   /**
    * What mode should we render the slides with.
    * By default, googleslides if nothing is selected

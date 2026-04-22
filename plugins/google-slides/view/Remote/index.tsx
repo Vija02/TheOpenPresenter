@@ -13,9 +13,8 @@ import { useMemo } from "react";
 import { FaArrowLeft, FaArrowRight } from "react-icons/fa";
 import { VscSettingsGear } from "react-icons/vsc";
 
-import Renderer from "../Renderer";
 import { usePluginAPI } from "../pluginApi";
-import { calculateBaseSlideIndex } from "../utils/slideIndex";
+import { calculateResolvedSlideIndex } from "../utils/slideIndex";
 import { useAutoplay } from "../utils/useAutoplay";
 import ImportFileModal from "./ImportFile/ImportFileModal";
 import Landing from "./Landing";
@@ -24,8 +23,6 @@ import "./index.css";
 
 const Remote = () => {
   const pluginApi = usePluginAPI();
-
-  const mutableRendererData = pluginApi.renderer.useValtioData();
 
   const fetchId = pluginApi.scene.useData((x) => x.pluginData.fetchId);
   const isFetching = pluginApi.scene.useData((x) => x.pluginData._isFetching);
@@ -75,12 +72,7 @@ const Remote = () => {
               size="xs"
               variant="pill"
               onClick={() => {
-                if (mutableRendererData.slideIndex == null) {
-                  mutableRendererData.slideIndex = 0;
-                } else {
-                  mutableRendererData.clickCount =
-                    (mutableRendererData.clickCount ?? 0) - 1;
-                }
+                pluginApi.renderer.triggerKeyPress("PREV");
               }}
             >
               <FaArrowLeft />
@@ -90,12 +82,7 @@ const Remote = () => {
               size="xs"
               variant="pill"
               onClick={() => {
-                if (mutableRendererData.slideIndex == null) {
-                  mutableRendererData.slideIndex = 0;
-                } else {
-                  mutableRendererData.clickCount =
-                    (mutableRendererData.clickCount ?? 0) + 1;
-                }
+                pluginApi.renderer.triggerKeyPress("NEXT");
               }}
             >
               <FaArrowRight /> Right
@@ -108,31 +95,9 @@ const Remote = () => {
           <SlideGrid pluginAPI={pluginApi}>
             <RemoteHandler />
           </SlideGrid>
-
-          <ResolvedSlideHandler />
         </div>
       }
     />
-  );
-};
-
-const ResolvedSlideHandler = () => {
-  const pluginApi = usePluginAPI();
-  const type = pluginApi.scene.useData((x) => x.pluginData.type);
-  const slideIndex = pluginApi.renderer.useData((x) => x.slideIndex);
-  const displayMode = pluginApi.renderer.useData((x) => x.displayMode);
-
-  if (type === "pdf" || type === "ppt" || displayMode === "image") {
-    return null;
-  }
-
-  // We render this to calculate what slide is currently selected through clicking
-  return (
-    <div className="content-hidden">
-      {slideIndex !== undefined && slideIndex !== null && (
-        <Renderer shouldUpdateResolvedSlideIndex />
-      )}
-    </div>
   );
 };
 
@@ -140,6 +105,9 @@ const RemoteHandler = () => {
   const pluginApi = usePluginAPI();
   const thumbnailLinks = pluginApi.scene.useData(
     (x) => x.pluginData.thumbnailLinks,
+  );
+  const slideClickCounts = pluginApi.scene.useData(
+    (x) => x.pluginData.slideClickCounts,
   );
   const type = pluginApi.scene.useData((x) => x.pluginData.type);
   const isFetching = pluginApi.scene.useData((x) => x.pluginData._isFetching);
@@ -149,15 +117,18 @@ const RemoteHandler = () => {
 
   const baseIndex = useMemo(
     () =>
-      type === "pdf" || type === "ppt" || rendererData.displayMode === "image"
-        ? calculateBaseSlideIndex({
-            ...rendererData,
-            slideCount: thumbnailLinks.length,
-          })
-        : rendererData.resolvedSlideIndex !== null
-          ? rendererData.resolvedSlideIndex
-          : rendererData.slideIndex,
-    [rendererData, thumbnailLinks.length, type],
+      calculateResolvedSlideIndex({
+        slideIndex: rendererData.slideIndex,
+        clickCount: rendererData.clickCount,
+        slideCount: thumbnailLinks.length,
+        slideClickCounts:
+          type === "pdf" ||
+          type === "ppt" ||
+          rendererData.displayMode === "image"
+            ? undefined
+            : (slideClickCounts ?? []),
+      }),
+    [rendererData, thumbnailLinks.length, slideClickCounts, type],
   );
 
   const { shouldAutoPlay, calculatedAutoplaySlideIndex } = useAutoplay(
@@ -197,7 +168,6 @@ const RemoteHandler = () => {
           onClick={() => {
             mutableRendererData.slideIndex = i;
             mutableRendererData.clickCount = null;
-            mutableRendererData.resolvedSlideIndex = null;
             mutableRendererData.lastClickTimestamp = Date.now();
             pluginApi.renderer.setRenderCurrentScene();
           }}
