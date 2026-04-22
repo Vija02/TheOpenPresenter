@@ -15,6 +15,7 @@ import { bind } from "valtio-yjs";
 import * as Y from "yjs";
 import z from "zod";
 
+import { clampClickCount } from "./clickCountUtils";
 import {
   pluginName,
   remoteWebComponentTag,
@@ -22,6 +23,7 @@ import {
 } from "./consts";
 import { cacheGoogleUserContentImages } from "./googleSlides/cacheGoogleSlideImage";
 import { processHtml } from "./googleSlides/processHtml";
+import { extractSlideData } from "./googleSlides/slideDataExtractor";
 import { deleteOldThumbnails, processPdfToThumbnails } from "./shared";
 import { AutoplayState, PluginBaseData, PluginRendererData } from "./types";
 
@@ -138,22 +140,27 @@ export const init = (
 
   serverPluginApi.registerKeyPressHandler(
     pluginName,
-    (keyType, { rendererData }) => {
+    (keyType, { rendererData, pluginData }) => {
       const slideIndex = rendererData.get("slideIndex");
       const clickCount = rendererData.get("clickCount");
+      const slideClickCounts =
+        (pluginData.get("slideClickCounts")?.toJSON() as number[]) ?? [];
 
       if (slideIndex === null || slideIndex === undefined) {
         rendererData.set("slideIndex", 0);
         return;
       }
 
-      if (keyType === "NEXT") {
-        // TODO: We need to somehow fix the issue when clickCount passes through the slide first/last slide
-        // In which case the local click count goes out of sync with the state
-        rendererData.set("clickCount", (clickCount ?? 0) + 1);
-      } else {
-        rendererData.set("clickCount", (clickCount ?? 0) - 1);
-      }
+      const newClickCount =
+        keyType === "NEXT" ? (clickCount ?? 0) + 1 : (clickCount ?? 0) - 1;
+
+      const clampedClickCount = clampClickCount({
+        clickCount: newClickCount,
+        slideIndex,
+        slideClickCounts,
+      });
+
+      rendererData.set("clickCount", clampedClickCount);
     },
   );
 };
@@ -161,7 +168,7 @@ export const init = (
 const onPluginDataCreated = (pluginInfo: ObjectToTypedMap<Plugin>) => {
   pluginInfo.get("pluginData")?.set("fetchId", null);
   pluginInfo.get("pluginData")?.set("presentationId", "");
-  pluginInfo.get("pluginData")?.set("pageIds", new Y.Array());
+  pluginInfo.get("pluginData")?.set("slideClickCounts", new Y.Array());
   pluginInfo.get("pluginData")?.set("thumbnailLinks", new Y.Array());
   pluginInfo.get("pluginData")?.set("_isFetching", false);
 
@@ -192,6 +199,25 @@ const onPluginDataLoaded = (
     }
   }
 
+  // Migrate: Extract slideClickCounts from HTML if not present
+  if (
+    (!data.pluginData.slideClickCounts ||
+      data.pluginData.slideClickCounts.length === 0) &&
+    data.pluginData.html
+  ) {
+    const slideData = extractSlideData(data.pluginData.html);
+    if (slideData) {
+      data.pluginData.slideClickCounts = slideData.slides.map(
+        (slide) => slide.clickCount,
+      );
+    }
+  }
+
+  // Initialize slideClickCounts if still not present
+  if (!data.pluginData.slideClickCounts) {
+    data.pluginData.slideClickCounts = [];
+  }
+
   // Reset fetching state on load
   data.pluginData._isFetching = false;
 
@@ -214,7 +240,6 @@ const onRendererDataCreated = (
 ) => {
   rendererData.set("slideIndex", null);
   rendererData.set("clickCount", null);
-  rendererData.set("resolvedSlideIndex", null);
   rendererData.set("lastClickTimestamp", null);
 
   const autoPlay = new Y.Map() as TypedMap<AutoplayState>;
@@ -278,11 +303,13 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
             });
 
             // Update plugin data immediately with pre-generated file names
+            // For PPT, no animation spupport for now. Each slide set to 0 click
+            const slideClickCounts = fileNames.map(() => 0);
             loadedPlugin.pluginData._isFetching = true;
             loadedPlugin.pluginData.fetchId = typeidUnboxed("fetch");
             loadedPlugin.pluginData.type = "ppt";
             loadedPlugin.pluginData.presentationId = "";
-            loadedPlugin.pluginData.pageIds = [];
+            loadedPlugin.pluginData.slideClickCounts = slideClickCounts;
             loadedPlugin.pluginData.thumbnailLinks = fileNames;
             loadedPlugin.pluginData.html = "";
 
@@ -329,10 +356,12 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
             });
 
             // Update plugin data
+            // For PDF, each slide has 0 click animations (no animation support)
+            const slideClickCounts = fileNames.map(() => 0);
             loadedPlugin.pluginData.fetchId = typeidUnboxed("fetch");
             loadedPlugin.pluginData.type = "pdf";
             loadedPlugin.pluginData.presentationId = "";
-            loadedPlugin.pluginData.pageIds = [];
+            loadedPlugin.pluginData.slideClickCounts = slideClickCounts;
             loadedPlugin.pluginData.thumbnailLinks = fileNames;
             loadedPlugin.pluginData.html = "";
 
@@ -367,24 +396,12 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
                 loadedPlugin.pluginData.thumbnailLinks,
               );
 
-              // Fetch presentation data and HTML embed in parallel
-              const [presentationDataRes, htmlData] = await Promise.all([
-                axios(
-                  `https://slides.googleapis.com/v1/presentations/${presentationId}`,
-                  {
-                    headers: { Authorization: `Bearer ${token}` },
-                  },
-                ),
-                axios(
-                  `https://docs.google.com/presentation/d/${presentationId}/embed?rm=minimal`,
-                  {
-                    headers: { Authorization: `Bearer ${token}` },
-                  },
-                ),
-              ]);
-
-              const pageIds = presentationDataRes.data.slides.map(
-                (page: any) => page.objectId,
+              // Fetch HTML embed
+              const htmlData = await axios(
+                `https://docs.google.com/presentation/d/${presentationId}/embed?rm=minimal`,
+                {
+                  headers: { Authorization: `Bearer ${token}` },
+                },
               );
 
               log.info("Downloading PDF");
@@ -427,17 +444,26 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
               );
               log.info("Google user content images cached");
 
+              // Process HTML and extract slide data
+              const processedHtml = processHtml(htmlData.data, urlMapping);
+              const slideData = extractSlideData(processedHtml);
+              const slideClickCounts = slideData
+                ? slideData.slides.map((slide) => slide.clickCount)
+                : [];
+
+              log.info(
+                { slideCount: slideClickCounts.length },
+                "Extracted slide click counts",
+              );
+
               // Update plugin data with presentation info, HTML, and pre-generated thumbnails
               loadedYjs.doc?.transact(() => {
                 loadedPlugin.pluginData.fetchId = typeidUnboxed("fetch");
                 loadedPlugin.pluginData.type = "googleslides";
                 loadedPlugin.pluginData.presentationId = presentationId;
-                loadedPlugin.pluginData.pageIds = pageIds;
+                loadedPlugin.pluginData.slideClickCounts = slideClickCounts;
                 loadedPlugin.pluginData.thumbnailLinks = fileNames;
-                loadedPlugin.pluginData.html = processHtml(
-                  htmlData.data,
-                  urlMapping,
-                );
+                loadedPlugin.pluginData.html = processedHtml;
               });
 
               await workerPromise;

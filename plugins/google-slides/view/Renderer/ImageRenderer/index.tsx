@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef } from "react";
 
 import { usePluginAPI } from "../../pluginApi";
-import { calculateBaseSlideIndex } from "../../utils/slideIndex";
+import { calculateResolvedSlideIndex } from "../../utils/slideIndex";
 import { useAutoplay } from "../../utils/useAutoplay";
 import { ImageRenderView } from "./ImageRenderView";
 
@@ -19,7 +19,7 @@ export const ImageRenderer = () => {
 
   const baseIndex = useMemo(
     () =>
-      calculateBaseSlideIndex({
+      calculateResolvedSlideIndex({
         slideIndex,
         clickCount,
         slideCount: thumbnailLinks.length,
