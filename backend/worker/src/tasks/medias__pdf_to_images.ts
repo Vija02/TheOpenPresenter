@@ -1,4 +1,5 @@
 import { job, media } from "@repo/backend-shared";
+import { logger } from "@repo/observability";
 import { Task } from "graphile-worker";
 import { createReadStream } from "node:fs";
 import fs from "node:fs";
@@ -10,7 +11,7 @@ import { typeidUnboxed } from "typeid-js";
  * Worker task that converts a PDF to images (JPEG).
  * Uses mupdf to render each page as an image, then uploads them.
  */
-const task: Task = async (inPayload, { withPgClient, logger }) => {
+const task: Task = async (inPayload, { withPgClient }) => {
   const payload: job.PdfToImagesPayload = inPayload as any;
   const {
     pdfMediaName,
@@ -23,10 +24,11 @@ const task: Task = async (inPayload, { withPgClient, logger }) => {
     __completionKey,
   } = payload;
 
+  const log = logger.child({ pdfMediaName, projectId, pluginId });
   const workDir = path.join(os.tmpdir(), `pdf-to-images-${Date.now()}`);
 
   try {
-    logger.info(`Starting PDF to images conversion: ${pdfMediaName}`);
+    log.info("Starting PDF to images conversion");
 
     // Create temp directory
     fs.mkdirSync(workDir, { recursive: true });
@@ -45,14 +47,14 @@ const task: Task = async (inPayload, { withPgClient, logger }) => {
       return Buffer.concat(chunks);
     });
 
-    logger.info(`PDF downloaded: ${pdfMediaName}, size: ${pdfBuffer.length}`);
+    log.info({ size: pdfBuffer.length }, "PDF downloaded");
 
     // Convert PDF to images using mupdf
     const mupdf = await import("mupdf");
     const doc = mupdf.Document.openDocument(pdfBuffer, "application/pdf");
     const totalPages = doc.countPages();
 
-    logger.info(`PDF loaded: ${pdfMediaName}, pages: ${totalPages}`);
+    log.info({ totalPages }, "PDF loaded");
 
     let scale = -1;
     const imageBuffers: Uint8Array[] = [];
@@ -79,51 +81,58 @@ const task: Task = async (inPayload, { withPgClient, logger }) => {
       );
     }
 
-    logger.info(`PDF converted to images, uploading ${totalPages} pages`);
+    log.info({ totalPages }, "PDF converted to images, uploading");
 
-    // Upload images
-    const imageFileNames: string[] = [];
+    // Prepare upload data (write temp files and generate media IDs)
+    const uploadData = imageBuffers.map((imageBuffer, i) => {
+      const mediaId = preGeneratedMediaIds?.[i] ?? typeidUnboxed("media");
+      const localPath = path.join(workDir, `${mediaId}.jpg`);
+      fs.writeFileSync(localPath, imageBuffer);
+      const fileSize = fs.statSync(localPath).size;
+      return { mediaId, localPath, fileSize, pageIndex: i };
+    });
 
-    await withPgClient(async (pgClient) => {
+    // Upload images in parallel
+    const imageFileNames = await withPgClient(async (pgClient) => {
       const mediaHandler = new media[
         process.env.STORAGE_TYPE as "file" | "s3"
       ].mediaHandler(pgClient);
 
-      for (let i = 0; i < imageBuffers.length; i++) {
-        const imageBuffer = imageBuffers[i]!;
-        const mediaId = preGeneratedMediaIds?.[i] ?? typeidUnboxed("media");
-        const localPath = path.join(workDir, `${mediaId}.jpg`);
+      const results = await Promise.all(
+        uploadData.map(async ({ mediaId, localPath, fileSize, pageIndex }) => {
+          // Upload
+          const { fileName } = await mediaHandler.uploadMedia({
+            file: createReadStream(localPath),
+            fileExtension: "jpg",
+            fileSize,
+            userId,
+            organizationId,
+            isUserUploaded: false,
+            mediaId,
+          });
 
-        // Write to temp file
-        fs.writeFileSync(localPath, imageBuffer);
-        const fileSize = fs.statSync(localPath).size;
+          // Create dependency to parent
+          await mediaHandler.createDependency(parentMediaId, mediaId);
 
-        // Upload
-        const { fileName } = await mediaHandler.uploadMedia({
-          file: createReadStream(localPath),
-          fileExtension: "jpg",
-          fileSize,
-          userId,
-          organizationId,
-          isUserUploaded: false,
-          mediaId,
-        });
+          // Attach to project/plugin
+          await mediaHandler.attachToProject(mediaId, projectId, pluginId);
 
-        // Create dependency to parent
-        await mediaHandler.createDependency(parentMediaId, mediaId);
+          log.debug(
+            { page: pageIndex + 1, totalPages, fileName },
+            "Uploaded page",
+          );
 
-        // Attach to project/plugin
-        await mediaHandler.attachToProject(mediaId, projectId, pluginId);
+          return { fileName, pageIndex };
+        }),
+      );
 
-        imageFileNames.push(fileName);
-
-        logger.debug(`Uploaded page ${i + 1}/${totalPages}: ${fileName}`);
-      }
+      // Sort by pageIndex to maintain order
+      return results
+        .sort((a, b) => a.pageIndex - b.pageIndex)
+        .map((r) => r.fileName);
     });
 
-    logger.info(
-      `PDF to images completed: ${pdfMediaName}, ${imageFileNames.length} images`,
-    );
+    log.info({ imageCount: imageFileNames.length }, "PDF to images completed");
 
     const result: job.PdfToImagesResult = {
       imageFileNames,
@@ -132,14 +141,14 @@ const task: Task = async (inPayload, { withPgClient, logger }) => {
 
     // Notify completion
     await job.notifyJobSuccess(withPgClient, __completionKey, result);
-  } catch (error: any) {
-    logger.error(`Failed to convert PDF to images: ${pdfMediaName}`);
+  } catch (err: any) {
+    log.error({ err }, "Failed to convert PDF to images");
     await job.notifyJobFailure(
       withPgClient,
       __completionKey,
-      error.message || "Unknown error",
+      err.message || "Unknown error",
     );
-    throw error;
+    throw err;
   } finally {
     // Cleanup temp directory
     if (fs.existsSync(workDir)) {
