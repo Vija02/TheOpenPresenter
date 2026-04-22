@@ -91,33 +91,52 @@ function getFileExtension(contentType: string, url: string): string {
   return "bin";
 }
 
-async function downloadAndUploadImage({
-  decodedUrl,
-  serverPluginApi,
-  organizationId,
-  userId,
-  parentMediaId,
-  projectId,
-  pluginId,
-}: {
+interface DownloadedImage {
+  originalString: string;
   decodedUrl: string;
-  serverPluginApi: ServerPluginApi<any, any>;
-  organizationId: string;
-  userId: string;
-  parentMediaId: string;
-  projectId: string;
-  pluginId: string;
-}): Promise<string> {
-  const response = await axios.get(decodedUrl, {
-    responseType: "arraybuffer",
-  });
+  buffer: Buffer;
+  extension: string;
+}
 
-  const contentType = response.headers["content-type"] || "";
-  const extension = getFileExtension(contentType, decodedUrl);
+async function downloadImageFromGoogle(
+  originalString: string,
+  decodedUrl: string,
+): Promise<DownloadedImage | null> {
+  try {
+    const response = await axios.get(decodedUrl, {
+      responseType: "arraybuffer",
+    });
 
+    const contentType = response.headers["content-type"] || "";
+    const extension = getFileExtension(contentType, decodedUrl);
+
+    return {
+      originalString,
+      decodedUrl,
+      buffer: Buffer.from(response.data),
+      extension,
+    };
+  } catch (err) {
+    logger.warn(
+      { err, originalString, decodedUrl },
+      "Failed to download image",
+    );
+    return null;
+  }
+}
+
+async function uploadImage(
+  image: DownloadedImage,
+  serverPluginApi: ServerPluginApi<any, any>,
+  organizationId: string,
+  userId: string,
+  parentMediaId: string,
+  projectId: string,
+  pluginId: string,
+): Promise<string> {
   const uploadedMedia = await serverPluginApi.uploadMedia(
-    Buffer.from(response.data),
-    extension,
+    image.buffer,
+    image.extension,
     {
       organizationId,
       userId,
@@ -127,6 +146,91 @@ async function downloadAndUploadImage({
   );
 
   return `/media/data/${uploadedMedia.fileName}`;
+}
+
+export interface ImageUploadContext {
+  serverPluginApi: ServerPluginApi<any, any>;
+  organizationId: string;
+  userId: string;
+  projectId: string;
+  pluginId: string;
+}
+
+export function createImageProcessor(
+  html: string,
+  ctx: ImageUploadContext,
+): {
+  setParentMediaId: (parentMediaId: string) => void;
+  result: Promise<Map<string, string>>;
+} {
+  const urlMap = extractGoogleUserContentUrls(html);
+  const resultMapping = new Map<string, string>();
+
+  logger.trace({ urlCount: urlMap.size }, "Found Google user content URLs");
+
+  let parentMediaId: string | null = null;
+  let resolveParentMediaId: ((id: string) => void) | null = null;
+  const parentMediaIdPromise = new Promise<string>((resolve) => {
+    resolveParentMediaId = resolve;
+  });
+
+  const setParentMediaId = (id: string) => {
+    parentMediaId = id;
+    resolveParentMediaId?.(id);
+  };
+
+  // Process each image: download, wait for parentMediaId, then upload
+  const processImage = async (
+    originalString: string,
+    decodedUrl: string,
+  ): Promise<void> => {
+    // Start download immediately
+    const image = await downloadImageFromGoogle(originalString, decodedUrl);
+
+    if (!image) {
+      // Download failed, use proxy
+      const proxyUrl = createProxyUrl(decodedUrl);
+      if (proxyUrl) {
+        resultMapping.set(originalString, proxyUrl);
+      }
+      return;
+    }
+
+    // Wait for parentMediaId before uploading
+    const mediaId = parentMediaId ?? (await parentMediaIdPromise);
+
+    try {
+      const localUrl = await uploadImage(
+        image,
+        ctx.serverPluginApi,
+        ctx.organizationId,
+        ctx.userId,
+        mediaId,
+        ctx.projectId,
+        ctx.pluginId,
+      );
+      resultMapping.set(originalString, localUrl);
+      logger.trace({ originalString, localUrl }, "Uploaded image");
+    } catch (err) {
+      logger.warn(
+        { err, originalString },
+        "Failed to upload image, using proxy",
+      );
+      const proxyUrl = createProxyUrl(decodedUrl);
+      if (proxyUrl) {
+        resultMapping.set(originalString, proxyUrl);
+      }
+    }
+  };
+
+  // Start all downloads immediately, uploads wait for parentMediaId
+  const result = Promise.all(
+    Array.from(urlMap.entries()).map(([originalString, decodedUrl]) =>
+      processImage(originalString, decodedUrl),
+    ),
+  ).then(() => resultMapping);
+
+  return { setParentMediaId, result };
 }
 
 /**
@@ -147,53 +251,4 @@ function createProxyUrl(decodedUrl: string): string | null {
   );
 
   return `/plugin/${pluginName}/staticProxy/${subdomain}${path}`;
-}
-
-/**
- * Extracts Google user content URLs from HTML, downloads them,
- * uploads to media system, and returns a mapping for replacement
- */
-export async function cacheGoogleUserContentImages(
-  html: string,
-  params: {
-    serverPluginApi: ServerPluginApi<any, any>;
-    organizationId: string;
-    userId: string;
-    parentMediaId: string;
-    projectId: string;
-    pluginId: string;
-  },
-): Promise<Map<string, string>> {
-  const urlMap = extractGoogleUserContentUrls(html);
-  const resultMapping = new Map<string, string>();
-
-  logger.trace({ urlCount: urlMap.size }, "Found Google user content URLs");
-
-  await Promise.all(
-    Array.from(urlMap.entries()).map(async ([originalString, decodedUrl]) => {
-      try {
-        const localUrl = await downloadAndUploadImage({
-          decodedUrl,
-          ...params,
-        });
-        resultMapping.set(originalString, localUrl);
-        logger.trace(
-          { originalString, decodedUrl, localUrl },
-          "Uploaded image",
-        );
-      } catch (err) {
-        logger.warn(
-          { err, originalString, decodedUrl },
-          "Failed to download/upload image, using proxy",
-        );
-
-        const proxyUrl = createProxyUrl(decodedUrl);
-        if (proxyUrl) {
-          resultMapping.set(originalString, proxyUrl);
-        }
-      }
-    }),
-  );
-
-  return resultMapping;
 }

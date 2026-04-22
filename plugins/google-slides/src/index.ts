@@ -21,10 +21,15 @@ import {
   remoteWebComponentTag,
   rendererWebComponentTag,
 } from "./consts";
-import { cacheGoogleUserContentImages } from "./googleSlides/cacheGoogleSlideImage";
+import { createImageProcessor } from "./googleSlides/cacheGoogleSlideImage";
 import { processHtml } from "./googleSlides/processHtml";
-import { extractSlideData } from "./googleSlides/slideDataExtractor";
-import { deleteOldThumbnails, processPdfToThumbnails } from "./shared";
+import { extractSlideData } from "./googleSlides/slideData/slideDataExtractor";
+import {
+  deleteOldThumbnails,
+  processPdfToThumbnails,
+  startThumbnailWorker,
+  uploadPdfAndPrepare,
+} from "./shared";
 import { AutoplayState, PluginBaseData, PluginRendererData } from "./types";
 
 export const init = (
@@ -290,17 +295,19 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
             const pdfBuffer = Buffer.from(res.data);
             log.info("PPT converted to PDF");
 
-            const { fileNames, workerPromise } = await processPdfToThumbnails({
-              serverPluginApi,
+            const { fileNames, workerPromise } = await processPdfToThumbnails(
+              {
+                serverPluginApi,
+                organizationId: loadedContextData.organizationId,
+                userId: ctx.userId,
+                projectId: loadedContextData.projectId,
+                pluginId,
+              },
               pdfBuffer,
-              parentMediaId: extractMediaName(mediaName).mediaId,
-              organizationId: loadedContextData.organizationId,
-              userId: ctx.userId,
-              projectId: loadedContextData.projectId,
-              pluginId,
-              loadedPlugin,
               log,
-            });
+              undefined,
+              extractMediaName(mediaName).mediaId,
+            );
 
             // Update plugin data immediately with pre-generated file names
             // For PPT, no animation spupport for now. Each slide set to 0 click
@@ -343,17 +350,18 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
             const media = await serverPluginApi.media.getMedia(mediaName);
             const pdfBuffer = await streamToBuffer(media);
 
-            const { fileNames, workerPromise } = await processPdfToThumbnails({
-              serverPluginApi,
+            const { fileNames, workerPromise } = await processPdfToThumbnails(
+              {
+                serverPluginApi,
+                organizationId: loadedContextData.organizationId,
+                userId: ctx.userId,
+                projectId: loadedContextData.projectId,
+                pluginId,
+              },
               pdfBuffer,
-              pdfMediaName: mediaName,
-              organizationId: loadedContextData.organizationId,
-              userId: ctx.userId,
-              projectId: loadedContextData.projectId,
-              pluginId,
-              loadedPlugin,
               log,
-            });
+              mediaName,
+            );
 
             // Update plugin data
             // For PDF, each slide has 0 click animations (no animation support)
@@ -389,14 +397,15 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
             const loadedYjs = loadedYjsData[pluginId]!;
 
             try {
-              loadedPlugin.pluginData._isFetching = true;
+              const startTime = Date.now();
 
               deleteOldThumbnails(
                 serverPluginApi,
                 loadedPlugin.pluginData.thumbnailLinks,
               );
 
-              // Fetch HTML embed
+              // Step 1: Fetch HTML embed
+              log.info("Fetching HTML embed");
               const htmlData = await axios(
                 `https://docs.google.com/presentation/d/${presentationId}/embed?rm=minimal`,
                 {
@@ -404,7 +413,24 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
                 },
               );
 
-              log.info("Downloading PDF");
+              const ctx_media = {
+                serverPluginApi,
+                organizationId: loadedContextData.organizationId,
+                userId: ctx.userId,
+                projectId: loadedContextData.projectId,
+                pluginId,
+              };
+
+              // Step 2: Start image downloads immediately
+              log.info(
+                "Starting image downloads and PDF download in parallel...",
+              );
+              const imageProcessor = createImageProcessor(
+                htmlData.data,
+                ctx_media,
+              );
+
+              // Step 3: Download PDF in parallel with image downloads
               const pdfRes = await axios(
                 `https://docs.google.com/feeds/download/presentations/Export?id=${presentationId}&exportFormat=pdf`,
                 {
@@ -413,36 +439,35 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
                 },
               );
               const pdfBuffer = Buffer.from(pdfRes.data);
+              log.info(`Downloaded PDF (${pdfBuffer.length} bytes)`);
 
-              log.info("Downloaded PDF. Size: " + pdfBuffer.length);
+              // Step 4: Upload PDF (blocking - needed for parentMediaId)
+              const {
+                fileNames,
+                mediaIds,
+                uploadedPdfMediaId,
+                uploadedPdfFileName,
+              } = await uploadPdfAndPrepare(ctx_media, pdfBuffer);
 
-              // Process PDF to thumbnails
-              const { fileNames, uploadedPdfMediaId, workerPromise } =
-                await processPdfToThumbnails({
-                  serverPluginApi,
-                  pdfBuffer,
-                  organizationId: loadedContextData.organizationId,
-                  userId: ctx.userId,
-                  projectId: loadedContextData.projectId,
-                  pluginId,
-                  loadedPlugin,
+              log.info("PDF uploaded. Signaling image uploads to start...");
+
+              // Signal image processor that parentMediaId is ready
+              // This allows any completed downloads to start uploading immediately
+              imageProcessor.setParentMediaId(uploadedPdfMediaId);
+
+              // Step 5: Run thumbnail worker in parallel with remaining image uploads
+              const [_, urlMapping] = await Promise.all([
+                startThumbnailWorker(
+                  ctx_media,
+                  uploadedPdfFileName,
+                  mediaIds,
+                  uploadedPdfMediaId,
                   log,
-                });
+                ),
+                imageProcessor.result,
+              ]);
 
-              // Extract and cache Google user content images from HTML
-              log.info("Caching Google user content images...");
-              const urlMapping = await cacheGoogleUserContentImages(
-                htmlData.data,
-                {
-                  serverPluginApi,
-                  organizationId: loadedContextData.organizationId,
-                  userId: ctx.userId,
-                  parentMediaId: uploadedPdfMediaId,
-                  projectId: loadedContextData.projectId,
-                  pluginId,
-                },
-              );
-              log.info("Google user content images cached");
+              log.info("All images processed");
 
               // Process HTML and extract slide data
               const processedHtml = processHtml(htmlData.data, urlMapping);
@@ -451,13 +476,9 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
                 ? slideData.slides.map((slide) => slide.clickCount)
                 : [];
 
-              log.info(
-                { slideCount: slideClickCounts.length },
-                "Extracted slide click counts",
-              );
-
               // Update plugin data with presentation info, HTML, and pre-generated thumbnails
               loadedYjs.doc?.transact(() => {
+                loadedPlugin.pluginData._isFetching = true;
                 loadedPlugin.pluginData.fetchId = typeidUnboxed("fetch");
                 loadedPlugin.pluginData.type = "googleslides";
                 loadedPlugin.pluginData.presentationId = presentationId;
@@ -466,7 +487,15 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
                 loadedPlugin.pluginData.html = processedHtml;
               });
 
-              await workerPromise;
+              const elapsed = Date.now() - startTime;
+              log.info(
+                {
+                  durationMs: elapsed,
+                  slideCount: slideClickCounts.length,
+                  cachedImages: urlMapping.size,
+                },
+                `Google Slides import completed in ${elapsed}ms`,
+              );
             } catch (err) {
               log.error({ err }, "Failed to select slide");
               throw err;
