@@ -211,6 +211,7 @@ export const simulateUser = (
     setRenderCurrentScene: () => {},
     misc: {
       setAwarenessStateData: () => {},
+      triggerKeyPress: () => {},
       zoomLevel: undefined as any,
       errorHandler: { addError: () => {}, removeError: () => {} },
       canPlayAudio: undefined as any,
