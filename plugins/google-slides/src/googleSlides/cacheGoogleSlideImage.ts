@@ -23,11 +23,15 @@ function decodeEscapes(str: string): string {
 
 /**
  * Extracts all unique googleusercontent.com URLs from HTML
- * Returns a map of original string (as it appears in HTML) -> decoded URL
- * Handles mixed escaping like: https:\/\/...\/path\x3ds2048?key\x3dxxx
+ * Returns a map of original strings (as they appear in HTML) grouped by their decoded URL
+ * This ensures we only download each unique image once, even if it appears with different escaping
  */
-function extractGoogleUserContentUrls(html: string): Map<string, string> {
-  const urlMap = new Map<string, string>();
+function extractGoogleUserContentUrls(html: string): {
+  decodedToOriginals: Map<string, string[]>;
+  originalToDecoded: Map<string, string>;
+} {
+  const decodedToOriginals = new Map<string, string[]>();
+  const originalToDecoded = new Map<string, string>();
 
   // Match URLs that may contain:
   // - \/ (escaped slashes)
@@ -55,10 +59,21 @@ function extractGoogleUserContentUrls(html: string): Map<string, string> {
     );
 
     const decodedUrl = decodeEscapes(originalString);
-    urlMap.set(originalString, decodedUrl);
+
+    // Group original strings by their decoded URL
+    const existingOriginals = decodedToOriginals.get(decodedUrl);
+    if (existingOriginals) {
+      if (!existingOriginals.includes(originalString)) {
+        existingOriginals.push(originalString);
+      }
+    } else {
+      decodedToOriginals.set(decodedUrl, [originalString]);
+    }
+
+    originalToDecoded.set(originalString, decodedUrl);
   }
 
-  return urlMap;
+  return { decodedToOriginals, originalToDecoded };
 }
 
 /**
@@ -163,10 +178,17 @@ export function createImageProcessor(
   setParentMediaId: (parentMediaId: string) => void;
   result: Promise<Map<string, string>>;
 } {
-  const urlMap = extractGoogleUserContentUrls(html);
+  const { decodedToOriginals, originalToDecoded } =
+    extractGoogleUserContentUrls(html);
   const resultMapping = new Map<string, string>();
 
-  logger.trace({ urlCount: urlMap.size }, "Found Google user content URLs");
+  logger.trace(
+    {
+      uniqueUrlCount: decodedToOriginals.size,
+      totalUrlCount: originalToDecoded.size,
+    },
+    "Found Google user content URLs",
+  );
 
   let parentMediaId: string | null = null;
   let resolveParentMediaId: ((id: string) => void) | null = null;
@@ -179,19 +201,24 @@ export function createImageProcessor(
     resolveParentMediaId?.(id);
   };
 
-  // Process each image: download, wait for parentMediaId, then upload
-  const processImage = async (
-    originalString: string,
+  // Process each unique image: download once, then map all original strings to the result
+  const processUniqueImage = async (
     decodedUrl: string,
+    originalStrings: string[],
   ): Promise<void> => {
-    // Start download immediately
-    const image = await downloadImageFromGoogle(originalString, decodedUrl);
+    // Use the first original string for the download (they all decode to the same URL)
+    const image = await downloadImageFromGoogle(
+      originalStrings[0]!,
+      decodedUrl,
+    );
 
     if (!image) {
-      // Download failed, use proxy
+      // Download failed, use proxy for all original strings
       const proxyUrl = createProxyUrl(decodedUrl);
       if (proxyUrl) {
-        resultMapping.set(originalString, proxyUrl);
+        for (const originalString of originalStrings) {
+          resultMapping.set(originalString, proxyUrl);
+        }
       }
       return;
     }
@@ -209,24 +236,30 @@ export function createImageProcessor(
         ctx.projectId,
         ctx.pluginId,
       );
-      resultMapping.set(originalString, localUrl);
-      logger.trace({ originalString, localUrl }, "Uploaded image");
-    } catch (err) {
-      logger.warn(
-        { err, originalString },
-        "Failed to upload image, using proxy",
+      // Map all original strings to the same uploaded URL
+      for (const originalString of originalStrings) {
+        resultMapping.set(originalString, localUrl);
+      }
+      logger.trace(
+        { decodedUrl, localUrl, originalCount: originalStrings.length },
+        "Uploaded image",
       );
+    } catch (err) {
+      logger.warn({ err, decodedUrl }, "Failed to upload image, using proxy");
       const proxyUrl = createProxyUrl(decodedUrl);
       if (proxyUrl) {
-        resultMapping.set(originalString, proxyUrl);
+        for (const originalString of originalStrings) {
+          resultMapping.set(originalString, proxyUrl);
+        }
       }
     }
   };
 
   // Start all downloads immediately, uploads wait for parentMediaId
   const result = Promise.all(
-    Array.from(urlMap.entries()).map(([originalString, decodedUrl]) =>
-      processImage(originalString, decodedUrl),
+    Array.from(decodedToOriginals.entries()).map(
+      ([decodedUrl, originalStrings]) =>
+        processUniqueImage(decodedUrl, originalStrings),
     ),
   ).then(() => resultMapping);
 
