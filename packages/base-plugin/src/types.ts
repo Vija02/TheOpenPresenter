@@ -115,7 +115,7 @@ export type AwarenessUserData = {
 // ========================================================================== //
 export type MiscProps = {
   setAwarenessStateData: (state: AwarenessStateData) => void;
-  triggerKeyPress: (keyType: KeyPressType) => void;
+  triggerKeyPress: (keyType: KeyPressType, sceneId?: string) => void;
   zoomLevel: ZoomLevel;
   errorHandler: ErrorHandler;
   canPlayAudio: CanPlayAudio;

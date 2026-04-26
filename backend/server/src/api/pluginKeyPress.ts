@@ -26,6 +26,7 @@ export const pluginKeyPress = makeExtendSchemaPlugin(() => ({
       keyType: String!
       projectId: String!
       rendererId: String!
+      sceneId: String
     }
 
     type PluginKeyPressPayload {
@@ -35,7 +36,12 @@ export const pluginKeyPress = makeExtendSchemaPlugin(() => ({
   resolvers: {
     Mutation: {
       async pluginKeyPress(_mutation, args, context: OurGraphQLContext) {
-        const { keyType, projectId, rendererId } = args.input;
+        const {
+          keyType,
+          projectId,
+          rendererId,
+          sceneId: inputSceneId,
+        } = args.input;
         const { pgClient } = context;
 
         if (!keyPressTypes.includes(keyType)) {
@@ -64,9 +70,12 @@ export const pluginKeyPress = makeExtendSchemaPlugin(() => ({
 
           const traverser = createTraverser<State>(state);
 
-          const sceneId = traverser(
-            (x) => x.renderer[rendererId]?.currentScene!,
-          );
+          const sceneId =
+            inputSceneId ??
+            traverser((x) => x.renderer[rendererId]?.currentScene);
+
+          if (!sceneId) return null;
+
           const renderer = traverser(
             (x) => x.renderer[rendererId]?.children[sceneId]!,
           );
@@ -92,6 +101,7 @@ export const pluginKeyPress = makeExtendSchemaPlugin(() => ({
                     pluginId,
                     sceneId,
                     organizationId: projectRow.organization_id,
+                    projectId,
                   },
                 },
                 () => {
