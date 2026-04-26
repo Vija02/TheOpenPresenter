@@ -109,11 +109,12 @@ const PluginRenderer = React.memo(
     const [, keyPressMutate] = useKeyPressMutation();
 
     const triggerKeyPress = useCallback(
-      (keyType: KeyPressType) => {
+      (keyType: KeyPressType, sceneId?: string) => {
         keyPressMutate({
           keyType,
           projectId,
           rendererId: selectedRendererId,
+          sceneId,
         });
       },
       [keyPressMutate, projectId, selectedRendererId],

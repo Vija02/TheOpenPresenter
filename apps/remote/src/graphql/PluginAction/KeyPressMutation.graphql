@@ -2,9 +2,15 @@ mutation KeyPress(
   $keyType: String!
   $projectId: String!
   $rendererId: String!
+  $sceneId: String
 ) {
   pluginKeyPress(
-    input: { keyType: $keyType, projectId: $projectId, rendererId: $rendererId }
+    input: {
+      keyType: $keyType
+      projectId: $projectId
+      rendererId: $rendererId
+      sceneId: $sceneId
+    }
   ) {
     success
   }

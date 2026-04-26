@@ -3170,6 +3170,7 @@ input PluginKeyPressInput {
   keyType: String!
   projectId: String!
   rendererId: String!
+  sceneId: String
 }
 
 type PluginKeyPressPayload {
