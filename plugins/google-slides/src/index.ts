@@ -15,7 +15,6 @@ import { bind } from "valtio-yjs";
 import * as Y from "yjs";
 import z from "zod";
 
-import { clampClickCount } from "./clickCountUtils";
 import {
   pluginName,
   remoteWebComponentTag,
@@ -24,13 +23,28 @@ import {
 import { createImageProcessor } from "./googleSlides/cacheGoogleSlideImage";
 import { processHtml } from "./googleSlides/processHtml";
 import { extractSlideData } from "./googleSlides/slideData/slideDataExtractor";
+import { migratePluginDataV1ToV2 } from "./migrate/v1";
 import {
   deleteOldThumbnails,
   processPdfToThumbnails,
   startThumbnailWorker,
   uploadPdfAndPrepare,
 } from "./shared";
-import { AutoplayState, PluginBaseData, PluginRendererData } from "./types";
+import {
+  createSlideRef,
+  getClickCountForSlide,
+  parseSlideRef,
+} from "./slideOrderUtils";
+import {
+  AutoplayState,
+  BaseImportData,
+  GoogleSlidesImportData,
+  ImportData,
+  PdfImportData,
+  PluginBaseData,
+  PluginRendererData,
+  PptImportData,
+} from "./types";
 
 export const init = (
   serverPluginApi: ServerPluginApi<PluginBaseData, PluginRendererData>,
@@ -84,23 +98,30 @@ export const init = (
     rendererWebComponentTag,
   );
   serverPluginApi.registerPrivateRoute(pluginName, "proxy", (req, res) => {
-    if (!req.query?.pluginId) {
+    if (!req.query?.pluginId || !req.query?.importId) {
       res.sendStatus(400);
       return;
     }
     // TODO: Authentication
 
-    const key = req.query.pluginId as string;
+    const pluginId = req.query.pluginId as string;
+    const importId = req.query.importId as string;
 
-    const loadedPlugin = loadedPlugins[key];
+    const loadedPlugin = loadedPlugins[pluginId];
 
     if (!loadedPlugin) {
       res.sendStatus(404);
       return;
     }
 
+    const importData = loadedPlugin.pluginData.imports[importId];
+    if (!importData || importData.type !== "googleslides") {
+      res.sendStatus(404);
+      return;
+    }
+
     res.send(
-      loadedPlugin?.pluginData.html?.replace(
+      importData.html?.replace(
         /nonce="(.+?)"/g,
         `nonce="${res.locals.nonce}"`,
       ) ?? "",
@@ -146,36 +167,55 @@ export const init = (
   serverPluginApi.registerKeyPressHandler(
     pluginName,
     (keyType, { rendererData, pluginData }) => {
-      const slideIndex = rendererData.get("slideIndex");
-      const clickCount = rendererData.get("clickCount");
-      const slideClickCounts =
-        (pluginData.get("slideClickCounts")?.toJSON() as number[]) ?? [];
+      const pluginDataJson = pluginData.toJSON() as PluginBaseData;
+      const currentSlideIndex = rendererData.get("currentSlideIndex") ?? 0;
+      const currentClickCount = rendererData.get("currentClickCount") ?? 0;
+      const totalSlides = pluginDataJson.slideOrder?.length ?? 0;
 
-      if (slideIndex === null || slideIndex === undefined) {
-        rendererData.set("slideIndex", 0);
+      if (totalSlides === 0) {
         return;
       }
 
-      const newClickCount =
-        keyType === "NEXT" ? (clickCount ?? 0) + 1 : (clickCount ?? 0) - 1;
+      const maxClicksForCurrentSlide = getClickCountForSlide(
+        pluginDataJson,
+        currentSlideIndex,
+      );
 
-      const clampedClickCount = clampClickCount({
-        clickCount: newClickCount,
-        slideIndex,
-        slideClickCounts,
-      });
+      if (keyType === "NEXT") {
+        if (currentClickCount < maxClicksForCurrentSlide) {
+          rendererData.set("currentClickCount", currentClickCount + 1);
+        } else if (currentSlideIndex < totalSlides - 1) {
+          rendererData.set("currentSlideIndex", currentSlideIndex + 1);
+          rendererData.set("currentClickCount", 0);
+        }
+        // Else: at last slide with all animations shown, do nothing
+      } else if (keyType === "PREV") {
+        if (currentClickCount > 0) {
+          rendererData.set("currentClickCount", currentClickCount - 1);
+        } else if (currentSlideIndex > 0) {
+          const prevSlideIndex = currentSlideIndex - 1;
+          const maxClicksForPrevSlide = getClickCountForSlide(
+            pluginDataJson,
+            prevSlideIndex,
+          );
+          rendererData.set("currentSlideIndex", prevSlideIndex);
+          rendererData.set("currentClickCount", maxClicksForPrevSlide);
+        }
+        // Else: at first slide with click count 0, do nothing
+      } else {
+        logger.warn("Unknown keyType");
+      }
 
-      rendererData.set("clickCount", clampedClickCount);
+      rendererData.set("lastClickTimestamp", Date.now());
     },
   );
 };
 
 const onPluginDataCreated = (pluginInfo: ObjectToTypedMap<Plugin>) => {
-  pluginInfo.get("pluginData")?.set("fetchId", null);
-  pluginInfo.get("pluginData")?.set("presentationId", "");
-  pluginInfo.get("pluginData")?.set("slideClickCounts", new Y.Array());
-  pluginInfo.get("pluginData")?.set("thumbnailLinks", new Y.Array());
-  pluginInfo.get("pluginData")?.set("_isFetching", false);
+  const pluginData = pluginInfo.get("pluginData");
+
+  pluginData?.set("imports", new Y.Map());
+  pluginData?.set("slideOrder", new Y.Array());
 
   return {};
 };
@@ -192,39 +232,17 @@ const onPluginDataLoaded = (
   pluginInfo: ObjectToTypedMap<Plugin<PluginBaseData>>,
   context: PluginContext,
 ) => {
-  const data = proxy(pluginInfo.toJSON() as Plugin<PluginBaseData>);
+  migratePluginDataV1ToV2(pluginInfo);
+
+  const rawData = pluginInfo.toJSON() as Plugin<PluginBaseData>;
+
+  const data = proxy(rawData);
   const unbind = bind(data, pluginInfo as any);
 
-  // Migrate from old type
-  if (!data.pluginData.fetchId) {
-    if (data.pluginData.presentationId !== "") {
-      data.pluginData.fetchId = typeidUnboxed("fetch");
-    } else {
-      data.pluginData.fetchId = null;
-    }
+  // TODO: Handle this better
+  for (const importData of Object.values(data.pluginData.imports)) {
+    importData._isFetching = false;
   }
-
-  // Migrate: Extract slideClickCounts from HTML if not present
-  if (
-    (!data.pluginData.slideClickCounts ||
-      data.pluginData.slideClickCounts.length === 0) &&
-    data.pluginData.html
-  ) {
-    const slideData = extractSlideData(data.pluginData.html);
-    if (slideData) {
-      data.pluginData.slideClickCounts = slideData.slides.map(
-        (slide) => slide.clickCount,
-      );
-    }
-  }
-
-  // Initialize slideClickCounts if still not present
-  if (!data.pluginData.slideClickCounts) {
-    data.pluginData.slideClickCounts = [];
-  }
-
-  // Reset fetching state on load
-  data.pluginData._isFetching = false;
 
   loadedPlugins[context.pluginId] = data;
   loadedContext[context.pluginId] = context;
@@ -243,8 +261,8 @@ const onPluginDataLoaded = (
 const onRendererDataCreated = (
   rendererData: ObjectToTypedMap<Partial<PluginRendererData>>,
 ) => {
-  rendererData.set("slideIndex", null);
-  rendererData.set("clickCount", null);
+  rendererData.set("currentSlideIndex", null);
+  rendererData.set("currentClickCount", null);
   rendererData.set("lastClickTimestamp", null);
 
   const autoPlay = new Y.Map() as TypedMap<AutoplayState>;
@@ -256,6 +274,118 @@ const onRendererDataCreated = (
 };
 
 const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
+  const cleanupThumbnails = (thumbnails: string[]) => {
+    if (thumbnails.length > 0) {
+      deleteOldThumbnails(serverPluginApi, thumbnails);
+    }
+  };
+  function getBaseImport(type: ImportData["type"]): BaseImportData {
+    return {
+      importId: typeidUnboxed("import"),
+      type,
+      fetchId: typeidUnboxed("fetch"),
+      thumbnailLinks: [],
+      slideClickCounts: [],
+      slideIds: [],
+      _isFetching: true,
+    };
+  }
+
+  const buildReplacedSlideOrder = (
+    oldOrder: string[],
+    replaceImportId: string,
+    newImportId: string,
+    newSlideCount: number,
+  ): string[] => {
+    const survivingIndices = new Set<number>();
+    const rebuilt: string[] = [];
+    let lastSurvivingPos = -1;
+
+    for (const ref of oldOrder) {
+      const { importId, slideIndex } = parseSlideRef(ref);
+
+      // Refs from other imports stay exactly where they are.
+      if (importId !== replaceImportId) {
+        rebuilt.push(ref);
+        continue;
+      }
+
+      // Drop slides that no longer exist or that we've already kept.
+      const slideStillExists = slideIndex < newSlideCount;
+      const alreadyKept = survivingIndices.has(slideIndex);
+      if (!slideStillExists || alreadyKept) continue;
+
+      // Keep, rewriting to the new import id.
+      survivingIndices.add(slideIndex);
+      rebuilt.push(createSlideRef(newImportId, slideIndex));
+      lastSurvivingPos = rebuilt.length - 1;
+    }
+
+    // Append brand-new slides after the last surviving slide of this import.
+    const newSlides: string[] = [];
+    for (let i = 0; i < newSlideCount; i++) {
+      if (!survivingIndices.has(i)) {
+        newSlides.push(createSlideRef(newImportId, i));
+      }
+    }
+    if (newSlides.length > 0) {
+      const insertAt =
+        lastSurvivingPos >= 0 ? lastSurvivingPos + 1 : rebuilt.length;
+      rebuilt.splice(insertAt, 0, ...newSlides);
+    }
+
+    return rebuilt;
+  };
+
+  /**
+   * Handles both appending & replacing
+   */
+  const finalizeImport = ({
+    loadedPlugin,
+    newImportId,
+    slideCount,
+    replaceImportId,
+  }: {
+    loadedPlugin: Plugin<PluginBaseData>;
+    newImportId: string;
+    slideCount: number;
+    replaceImportId?: string;
+  }) => {
+    const oldImport = replaceImportId
+      ? loadedPlugin.pluginData.imports[replaceImportId]
+      : undefined;
+
+    // Append functionality
+    if (!replaceImportId || !oldImport) {
+      const newRefs = Array.from({ length: slideCount }, (_, i) =>
+        createSlideRef(newImportId, i),
+      );
+      loadedPlugin.pluginData.slideOrder = [
+        ...loadedPlugin.pluginData.slideOrder,
+        ...newRefs,
+      ];
+      return;
+    }
+
+    // Replace functionality
+
+    // 1. Drop the old import from the imports map.
+    const { [replaceImportId]: _removed, ...remainingImports } =
+      loadedPlugin.pluginData.imports;
+    loadedPlugin.pluginData.imports = remainingImports;
+
+    // 2. Rebuild slideOrder, preserving manual ordering.
+    loadedPlugin.pluginData.slideOrder = buildReplacedSlideOrder(
+      loadedPlugin.pluginData.slideOrder,
+      replaceImportId,
+      newImportId,
+      slideCount,
+    );
+
+    // 3. Clean up the thumbnails of the slides that are gone.
+    cleanupThumbnails(oldImport.thumbnailLinks);
+  };
+
   return t.router({
     googleslides: {
       selectPpt: t.procedure
@@ -263,147 +393,184 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
           z.object({
             pluginId: z.string(),
             mediaName: z.string(),
+            replaceImportId: z.string().optional(),
           }),
         )
-        .mutation(async ({ input: { pluginId, mediaName }, ctx }) => {
-          // TODO: Validate file
-          if (!process.env.PLUGIN_GOOGLE_SLIDES_UNOCONVERT_SERVER) {
-            throw new Error("Not available");
-          }
+        .mutation(
+          async ({ input: { pluginId, mediaName, replaceImportId }, ctx }) => {
+            if (!process.env.PLUGIN_GOOGLE_SLIDES_UNOCONVERT_SERVER) {
+              throw new Error("Not available");
+            }
 
-          const log = logger.child({ pluginId, mediaName });
-          const loadedPlugin = loadedPlugins[pluginId]!;
-          const loadedContextData = loadedContext[pluginId]!;
+            const log = logger.child({ pluginId, mediaName, replaceImportId });
+            const loadedPlugin = loadedPlugins[pluginId]!;
+            const loadedContextData = loadedContext[pluginId]!;
 
-          try {
-            deleteOldThumbnails(
-              serverPluginApi,
-              loadedPlugin.pluginData.thumbnailLinks,
-            );
+            const newImport = getBaseImport("ppt") as PptImportData;
+            loadedPlugin.pluginData.imports[newImport.importId] = newImport;
 
-            // Get PPT and convert to PDF using unoconvert
-            const pptMedia = await serverPluginApi.media.getMedia(mediaName);
-            log.info("Converting PPT to PDF via unoconvert...");
+            try {
+              const pptMedia = await serverPluginApi.media.getMedia(mediaName);
+              log.info("Converting PPT to PDF via unoconvert...");
 
-            const res = await axios.post(
-              process.env.PLUGIN_GOOGLE_SLIDES_UNOCONVERT_SERVER! +
-                "/convert?convertTo=pdf",
-              pptMedia,
-              { responseType: "arraybuffer" },
-            );
+              const res = await axios.post(
+                process.env.PLUGIN_GOOGLE_SLIDES_UNOCONVERT_SERVER! +
+                  "/convert?convertTo=pdf",
+                pptMedia,
+                { responseType: "arraybuffer" },
+              );
 
-            const pdfBuffer = Buffer.from(res.data);
-            log.info("PPT converted to PDF");
+              const pdfBuffer = Buffer.from(res.data);
+              log.info("PPT converted to PDF");
 
-            const { fileNames, workerPromise } = await processPdfToThumbnails(
-              {
-                serverPluginApi,
-                organizationId: loadedContextData.organizationId,
-                userId: ctx.userId,
-                projectId: loadedContextData.projectId,
-                pluginId,
-              },
-              pdfBuffer,
-              log,
-              undefined,
-              extractMediaName(mediaName).mediaId,
-            );
+              const { fileNames, workerPromise } = await processPdfToThumbnails(
+                {
+                  serverPluginApi,
+                  organizationId: loadedContextData.organizationId,
+                  userId: ctx.userId,
+                  projectId: loadedContextData.projectId,
+                  pluginId,
+                },
+                pdfBuffer,
+                log,
+                undefined,
+                extractMediaName(mediaName).mediaId,
+              );
 
-            // Update plugin data immediately with pre-generated file names
-            // For PPT, no animation spupport for now. Each slide set to 0 click
-            const slideClickCounts = fileNames.map(() => 0);
-            loadedPlugin.pluginData._isFetching = true;
-            loadedPlugin.pluginData.fetchId = typeidUnboxed("fetch");
-            loadedPlugin.pluginData.type = "ppt";
-            loadedPlugin.pluginData.presentationId = "";
-            loadedPlugin.pluginData.slideClickCounts = slideClickCounts;
-            loadedPlugin.pluginData.thumbnailLinks = fileNames;
-            loadedPlugin.pluginData.html = "";
+              loadedPlugin.pluginData.imports[
+                newImport.importId
+              ]!.thumbnailLinks = fileNames;
+              loadedPlugin.pluginData.imports[
+                newImport.importId
+              ]!.slideClickCounts = fileNames.map(() => 0);
+              loadedPlugin.pluginData.imports[newImport.importId]!.slideIds =
+                fileNames.map((_, i) => String(i));
 
-            await workerPromise;
-          } catch (err) {
-            loadedPlugin.pluginData._isFetching = false;
-            log.error({ err }, "Failed to select ppt");
-            throw err;
-          }
-        }),
+              // Wait for thumbnails to be uploaded
+              await workerPromise;
+
+              loadedPlugin.pluginData.imports[newImport.importId]!._isFetching =
+                false;
+
+              finalizeImport({
+                loadedPlugin,
+                newImportId: newImport.importId,
+                slideCount: fileNames.length,
+                replaceImportId,
+              });
+
+              return { importId: newImport.importId };
+            } catch (err) {
+              const { [newImport.importId]: _, ...remaining } =
+                loadedPlugin.pluginData.imports;
+              loadedPlugin.pluginData.imports = remaining;
+              log.error({ err }, "Failed to import ppt");
+              throw err;
+            }
+          },
+        ),
+
       selectPdf: t.procedure
         .input(
           z.object({
             pluginId: z.string(),
             mediaName: z.string(),
+            replaceImportId: z.string().optional(),
           }),
         )
-        .mutation(async ({ input: { pluginId, mediaName }, ctx }) => {
-          const log = logger.child({ pluginId, mediaName });
-          const loadedPlugin = loadedPlugins[pluginId]!;
-          const loadedContextData = loadedContext[pluginId]!;
+        .mutation(
+          async ({ input: { pluginId, mediaName, replaceImportId }, ctx }) => {
+            const log = logger.child({ pluginId, mediaName, replaceImportId });
+            const loadedPlugin = loadedPlugins[pluginId]!;
+            const loadedContextData = loadedContext[pluginId]!;
 
-          try {
-            loadedPlugin.pluginData._isFetching = true;
+            const newImport = getBaseImport("pdf") as PdfImportData;
+            loadedPlugin.pluginData.imports[newImport.importId] = newImport;
 
-            deleteOldThumbnails(
-              serverPluginApi,
-              loadedPlugin.pluginData.thumbnailLinks,
-            );
+            try {
+              const media = await serverPluginApi.media.getMedia(mediaName);
+              const pdfBuffer = await streamToBuffer(media);
 
-            const media = await serverPluginApi.media.getMedia(mediaName);
-            const pdfBuffer = await streamToBuffer(media);
+              const { fileNames, workerPromise } = await processPdfToThumbnails(
+                {
+                  serverPluginApi,
+                  organizationId: loadedContextData.organizationId,
+                  userId: ctx.userId,
+                  projectId: loadedContextData.projectId,
+                  pluginId,
+                },
+                pdfBuffer,
+                log,
+                mediaName,
+              );
 
-            const { fileNames, workerPromise } = await processPdfToThumbnails(
-              {
-                serverPluginApi,
-                organizationId: loadedContextData.organizationId,
-                userId: ctx.userId,
-                projectId: loadedContextData.projectId,
-                pluginId,
-              },
-              pdfBuffer,
-              log,
-              mediaName,
-            );
+              loadedPlugin.pluginData.imports[
+                newImport.importId
+              ]!.thumbnailLinks = fileNames;
+              loadedPlugin.pluginData.imports[
+                newImport.importId
+              ]!.slideClickCounts = fileNames.map(() => 0);
+              loadedPlugin.pluginData.imports[newImport.importId]!.slideIds =
+                fileNames.map((_, i) => String(i));
 
-            // Update plugin data
-            // For PDF, each slide has 0 click animations (no animation support)
-            const slideClickCounts = fileNames.map(() => 0);
-            loadedPlugin.pluginData.fetchId = typeidUnboxed("fetch");
-            loadedPlugin.pluginData.type = "pdf";
-            loadedPlugin.pluginData.presentationId = "";
-            loadedPlugin.pluginData.slideClickCounts = slideClickCounts;
-            loadedPlugin.pluginData.thumbnailLinks = fileNames;
-            loadedPlugin.pluginData.html = "";
+              // Wait for thumbnails to be uploaded
+              await workerPromise;
 
-            await workerPromise;
-          } catch (err) {
-            log.error({ err }, "Failed to select pdf");
-            throw err;
-          } finally {
-            loadedPlugin.pluginData._isFetching = false;
-          }
-        }),
+              loadedPlugin.pluginData.imports[newImport.importId]!._isFetching =
+                false;
+
+              finalizeImport({
+                loadedPlugin,
+                newImportId: newImport.importId,
+                slideCount: fileNames.length,
+                replaceImportId,
+              });
+
+              return { importId: newImport.importId };
+            } catch (err) {
+              const { [newImport.importId]: _, ...remaining } =
+                loadedPlugin.pluginData.imports;
+              loadedPlugin.pluginData.imports = remaining;
+              log.error({ err }, "Failed to import pdf");
+              throw err;
+            }
+          },
+        ),
+
       selectSlide: t.procedure
         .input(
           z.object({
             pluginId: z.string(),
             presentationId: z.string(),
             token: z.string(),
+            replaceImportId: z.string().optional(),
           }),
         )
         .mutation(
-          async ({ input: { pluginId, presentationId, token }, ctx }) => {
-            const log = logger.child({ pluginId, presentationId });
+          async ({
+            input: { pluginId, presentationId, token, replaceImportId },
+            ctx,
+          }) => {
+            const log = logger.child({
+              pluginId,
+              presentationId,
+              replaceImportId,
+            });
             const loadedPlugin = loadedPlugins[pluginId]!;
             const loadedContextData = loadedContext[pluginId]!;
             const loadedYjs = loadedYjsData[pluginId]!;
 
+            const startTime = Date.now();
+
+            const newImport: GoogleSlidesImportData = {
+              ...getBaseImport("googleslides"),
+              type: "googleslides",
+              presentationId,
+              html: "",
+            };
+            loadedPlugin.pluginData.imports[newImport.importId] = newImport;
+
             try {
-              const startTime = Date.now();
-
-              deleteOldThumbnails(
-                serverPluginApi,
-                loadedPlugin.pluginData.thumbnailLinks,
-              );
-
               // Step 1: Fetch HTML embed
               log.info("Fetching HTML embed");
               const htmlData = await axios(
@@ -441,7 +608,7 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
               const pdfBuffer = Buffer.from(pdfRes.data);
               log.info(`Downloaded PDF (${pdfBuffer.length} bytes)`);
 
-              // Step 4: Upload PDF (blocking - needed for parentMediaId)
+              // Step 4: Upload PDF
               const {
                 fileNames,
                 mediaIds,
@@ -450,9 +617,6 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
               } = await uploadPdfAndPrepare(ctx_media, pdfBuffer);
 
               log.info("PDF uploaded. Signaling image uploads to start...");
-
-              // Signal image processor that parentMediaId is ready
-              // This allows any completed downloads to start uploading immediately
               imageProcessor.setParentMediaId(uploadedPdfMediaId);
 
               // Step 5: Run thumbnail worker in parallel with remaining image uploads
@@ -472,19 +636,38 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
               // Process HTML and extract slide data
               const processedHtml = processHtml(htmlData.data, urlMapping);
               const slideData = extractSlideData(processedHtml);
+
+              const slideIds = slideData
+                ? slideData.slides.map((slide) => slide.slideId)
+                : fileNames.map((_, i) => String(i));
               const slideClickCounts = slideData
                 ? slideData.slides.map((slide) => slide.clickCount)
-                : [];
+                : fileNames.map(() => 0);
 
-              // Update plugin data with presentation info, HTML, and pre-generated thumbnails
               loadedYjs.doc?.transact(() => {
-                loadedPlugin.pluginData._isFetching = true;
-                loadedPlugin.pluginData.fetchId = typeidUnboxed("fetch");
-                loadedPlugin.pluginData.type = "googleslides";
-                loadedPlugin.pluginData.presentationId = presentationId;
-                loadedPlugin.pluginData.slideClickCounts = slideClickCounts;
-                loadedPlugin.pluginData.thumbnailLinks = fileNames;
-                loadedPlugin.pluginData.html = processedHtml;
+                loadedPlugin.pluginData.imports[
+                  newImport.importId
+                ]!.thumbnailLinks = fileNames;
+                loadedPlugin.pluginData.imports[
+                  newImport.importId
+                ]!.slideClickCounts = slideClickCounts;
+                loadedPlugin.pluginData.imports[newImport.importId]!.slideIds =
+                  slideIds;
+                (
+                  loadedPlugin.pluginData.imports[
+                    newImport.importId
+                  ]! as GoogleSlidesImportData
+                ).html = processedHtml;
+                loadedPlugin.pluginData.imports[
+                  newImport.importId
+                ]!._isFetching = false;
+
+                finalizeImport({
+                  loadedPlugin,
+                  newImportId: newImport.importId,
+                  slideCount: fileNames.length,
+                  replaceImportId,
+                });
               });
 
               const elapsed = Date.now() - startTime;
@@ -496,11 +679,14 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
                 },
                 `Google Slides import completed in ${elapsed}ms`,
               );
+
+              return { importId: newImport.importId };
             } catch (err) {
-              log.error({ err }, "Failed to select slide");
+              const { [newImport.importId]: _, ...remaining } =
+                loadedPlugin.pluginData.imports;
+              loadedPlugin.pluginData.imports = remaining;
+              log.error({ err }, "Failed to import google slide");
               throw err;
-            } finally {
-              loadedPlugin.pluginData._isFetching = false;
             }
           },
         ),

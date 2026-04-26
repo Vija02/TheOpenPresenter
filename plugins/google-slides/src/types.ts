@@ -1,35 +1,81 @@
 export type ImportType = "googleslides" | "pdf" | "ppt";
+export type DisplayMode = "googleslides" | "image";
 
-export type PluginBaseData = {
+/**
+ * Base import data - all imports have these properties
+ */
+export interface BaseImportData {
+  /** Unique ID for this import */
+  importId: string;
+  /** Used to detect when data changes (e.g., when we refetch) */
+  fetchId: string;
+  /** Type of import */
+  type: ImportType;
+  /** Links to the preview images, indexed by slide index within this import */
+  thumbnailLinks: string[];
   /**
-   * An ID generated whenever we fetch the data.
-   * We use this as a key to know when the data changes (eg: When we refetch the data)
-   */
-  fetchId: string | null;
-
-  /**
-   * The type of file imported
-   * By default, googleslides
-   */
-  type?: ImportType;
-
-  /** The google presentation objectId */
-  presentationId: string;
-  /**
-   * The number of clicks/animations per slide.
+   * The number of clicks/animations per slide within this import.
    * Index corresponds to slide index, value is the click count for that slide.
    * A value of 0 means no animations (just show slide, then move to next).
    */
   slideClickCounts: number[];
-  /** Links to the preview images of the presentation  */
-  thumbnailLinks: string[];
-
-  html?: string;
-
+  /**
+   * Stable IDs for each slide within this import.
+   * For Google Slides: extracted Google ObjectIds.
+   * For PDF/PPT: generated at import time (e.g., "0", "1", "2").
+   */
+  slideIds: string[];
+  /** Whether this import is currently being fetched/processed */
   _isFetching?: boolean;
+  /** Per-import display mode preference */
+  displayMode?: DisplayMode;
+}
+
+export interface GoogleSlidesImportData extends BaseImportData {
+  type: "googleslides";
+  /** The Google presentation objectId */
+  presentationId: string;
+  /** Processed HTML for rendering slides */
+  html: string;
+}
+
+export interface PdfImportData extends BaseImportData {
+  type: "pdf";
+}
+
+export interface PptImportData extends BaseImportData {
+  type: "ppt";
+}
+
+export type ImportData = GoogleSlidesImportData | PdfImportData | PptImportData;
+
+// ============================================================================
+// Plugin Data Types
+// ============================================================================
+
+/**
+ * Main plugin data stored in Yjs
+ */
+export type PluginBaseData = {
+  /** Map of importId -> ImportData */
+  imports: Record<string, ImportData>;
+
+  /**
+   * Ordered list of slide references in format "importId:slideIndex"
+   */
+  slideOrder: string[];
+
+  /**
+   * Global display mode override.
+   * When set, overrides per-import displayMode for all slides.
+   * null/undefined = use per-import default
+   */
+  displayModeOverride?: DisplayMode | null;
 };
 
-export type DisplayMode = "googleslides" | "image";
+// ============================================================================
+// Renderer Data Types
+// ============================================================================
 
 export type AutoplayState = {
   /**
@@ -43,20 +89,34 @@ export type AutoplayState = {
 };
 
 export type PluginRendererData = {
-  slideIndex: number | null;
-  clickCount: number | null;
+  currentSlideIndex: number | null;
+  currentClickCount: number | null;
   /**
-   * What mode should we render the slides with.
-   * By default, googleslides if nothing is selected
-   */
-  displayMode?: DisplayMode;
-  /**
-   * Epoch timestamp (in milliseconds) of when the slide is clicked
+   * Epoch timestamp (in milliseconds) of when the slide was last clicked.
    * Used to calculate things like autoplay without relying on timers.
    */
   lastClickTimestamp: number | null;
   /**
-   * Image renderer autoplay configuration.
+   * Autoplay configuration
    */
   autoplay?: AutoplayState;
 };
+
+// ============================================================================
+// Helper Types
+// ============================================================================
+
+export interface SlideReference {
+  importId: string;
+  slideIndex: number;
+}
+
+export interface ResolvedSlide {
+  importData: ImportData;
+  rawRef: string;
+  ref: SlideReference;
+  globalSlideIndex: number;
+  localSlideIndex: number;
+  thumbnailUrl: string;
+  clickCount: number;
+}
