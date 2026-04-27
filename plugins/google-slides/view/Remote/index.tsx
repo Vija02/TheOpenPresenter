@@ -13,9 +13,12 @@ import { useMemo } from "react";
 import { FaArrowLeft, FaArrowRight } from "react-icons/fa";
 import { VscSettingsGear } from "react-icons/vsc";
 
+import { resolveSlide } from "../../src/slideOrderUtils";
 import { usePluginAPI } from "../pluginApi";
-import { calculateResolvedSlideIndex } from "../utils/slideIndex";
-import { useAutoplay } from "../utils/useAutoplay";
+import {
+  computeGlobalSlideClickCount,
+  useAutoplay,
+} from "../utils/useAutoplay";
 import ImportFileModal from "./ImportFile/ImportFileModal";
 import Landing from "./Landing";
 import SettingsModal from "./SettingsModal";
@@ -24,14 +27,22 @@ import "./index.css";
 const Remote = () => {
   const pluginApi = usePluginAPI();
 
-  const fetchId = pluginApi.scene.useData((x) => x.pluginData.fetchId);
-  const isFetching = pluginApi.scene.useData((x) => x.pluginData._isFetching);
+  const sceneId = pluginApi.pluginContext.sceneId;
+  const pluginData = pluginApi.scene.useData((x) => x.pluginData);
 
-  if (!!isFetching && !fetchId) {
+  const hasSlides = (pluginData.slideOrder?.length ?? 0) > 0;
+
+  const isAnyImportFetching = useMemo(() => {
+    return Object.values(pluginData.imports).some(
+      (importData) => importData._isFetching,
+    );
+  }, [pluginData.imports]);
+
+  if (isAnyImportFetching && !hasSlides) {
     return <LoadingFull />;
   }
 
-  if (!fetchId) {
+  if (!hasSlides) {
     return <Landing />;
   }
 
@@ -72,7 +83,7 @@ const Remote = () => {
               size="xs"
               variant="pill"
               onClick={() => {
-                pluginApi.renderer.triggerKeyPress("PREV");
+                pluginApi.renderer.triggerKeyPress("PREV", sceneId);
               }}
             >
               <FaArrowLeft />
@@ -82,7 +93,7 @@ const Remote = () => {
               size="xs"
               variant="pill"
               onClick={() => {
-                pluginApi.renderer.triggerKeyPress("NEXT");
+                pluginApi.renderer.triggerKeyPress("NEXT", sceneId);
               }}
             >
               <FaArrowRight /> Right
@@ -103,82 +114,62 @@ const Remote = () => {
 
 const RemoteHandler = () => {
   const pluginApi = usePluginAPI();
-  const thumbnailLinks = pluginApi.scene.useData(
-    (x) => x.pluginData.thumbnailLinks,
-  );
-  const slideClickCounts = pluginApi.scene.useData(
-    (x) => x.pluginData.slideClickCounts,
-  );
-  const type = pluginApi.scene.useData((x) => x.pluginData.type);
-  const isFetching = pluginApi.scene.useData((x) => x.pluginData._isFetching);
+
+  const pluginData = pluginApi.scene.useData((x) => x.pluginData);
   const rendererData = pluginApi.renderer.useData((x) => x);
 
   const mutableRendererData = pluginApi.renderer.useValtioData();
 
-  const baseIndex = useMemo(
-    () =>
-      calculateResolvedSlideIndex({
-        slideIndex: rendererData.slideIndex,
-        clickCount: rendererData.clickCount,
-        slideCount: thumbnailLinks.length,
-        slideClickCounts:
-          type === "pdf" ||
-          type === "ppt" ||
-          rendererData.displayMode === "image"
-            ? undefined
-            : (slideClickCounts ?? []),
-      }),
-    [rendererData, thumbnailLinks.length, slideClickCounts, type],
+  const resolvedSlides = pluginData.slideOrder
+    .map((_, i) => resolveSlide(pluginData, i))
+    .filter((x) => !!x);
+
+  const baseIndex = rendererData.currentSlideIndex ?? 0;
+  const baseClickCount = rendererData.currentClickCount ?? 0;
+
+  const globalSlideClickCount = useMemo(
+    () => computeGlobalSlideClickCount(pluginData, rendererData.displayModes),
+    [pluginData, rendererData.displayModes],
   );
 
-  const { shouldAutoPlay, calculatedAutoplaySlideIndex } = useAutoplay(
-    baseIndex ?? 0,
-  );
+  const { shouldAutoPlay, calculatedAutoplaySlideIndex } = useAutoplay({
+    baseIndex,
+    baseClickCount,
+    globalSlideClickCount,
+  });
 
   const activeIndex = useMemo(() => {
-    if (
-      shouldAutoPlay &&
-      // TODO: Make this work on google slide display mode too
-      (type === "pdf" ||
-        type === "ppt" ||
-        rendererData.displayMode === "image") &&
-      calculatedAutoplaySlideIndex !== null &&
-      calculatedAutoplaySlideIndex !== undefined
-    ) {
+    if (shouldAutoPlay && calculatedAutoplaySlideIndex !== null) {
       return calculatedAutoplaySlideIndex;
     }
 
     return baseIndex;
-  }, [
-    shouldAutoPlay,
-    type,
-    rendererData.displayMode,
-    calculatedAutoplaySlideIndex,
-    baseIndex,
-  ]);
+  }, [shouldAutoPlay, calculatedAutoplaySlideIndex, baseIndex]);
 
   return (
     <>
-      {thumbnailLinks.map((thumbnailLink, i) => (
+      {resolvedSlides.map((slide, i) => (
         <Slide
-          key={i}
+          key={slide.rawRef}
           pluginAPI={pluginApi}
           heading={`Slide ${i + 1}`}
           isActive={i === activeIndex}
           onClick={() => {
-            mutableRendererData.slideIndex = i;
-            mutableRendererData.clickCount = null;
+            mutableRendererData.currentSlideIndex = i;
+            mutableRendererData.currentClickCount = null;
             mutableRendererData.lastClickTimestamp = Date.now();
             pluginApi.renderer.setRenderCurrentScene();
           }}
         >
           {({ width }) =>
-            isFetching || !thumbnailLink || thumbnailLink === "" ? (
+            slide.importData._isFetching ||
+            !slide.thumbnailUrl ||
+            slide.thumbnailUrl === "" ? (
               <Skeleton className="h-full" />
             ) : (
               <div className="center">
                 <UniversalImage
-                  src={extractMediaName(thumbnailLink)}
+                  src={extractMediaName(slide.thumbnailUrl)}
                   imgProp={{ style: { width: "100%" } }}
                   width={width}
                 />

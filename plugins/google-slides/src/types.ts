@@ -2,6 +2,16 @@ export type ImportType = "googleslides" | "pdf" | "ppt";
 export type DisplayMode = "googleslides" | "image";
 
 /**
+ * Default display mode for each import type.
+ * Used when an import has no explicit override in renderer's `displayModes`.
+ */
+export const DEFAULT_DISPLAY_MODE_BY_TYPE: Record<ImportType, DisplayMode> = {
+  googleslides: "googleslides",
+  pdf: "image",
+  ppt: "image",
+};
+
+/**
  * Base import data - all imports have these properties
  */
 export interface BaseImportData {
@@ -27,8 +37,6 @@ export interface BaseImportData {
   slideIds: string[];
   /** Whether this import is currently being fetched/processed */
   _isFetching?: boolean;
-  /** Per-import display mode preference */
-  displayMode?: DisplayMode;
 }
 
 export interface GoogleSlidesImportData extends BaseImportData {
@@ -64,13 +72,6 @@ export type PluginBaseData = {
    * Ordered list of slide references in format "importId:slideIndex"
    */
   slideOrder: string[];
-
-  /**
-   * Global display mode override.
-   * When set, overrides per-import displayMode for all slides.
-   * null/undefined = use per-import default
-   */
-  displayModeOverride?: DisplayMode | null;
 };
 
 // ============================================================================
@@ -100,6 +101,10 @@ export type PluginRendererData = {
    * Autoplay configuration
    */
   autoplay?: AutoplayState;
+  /**
+   * Per-import display mode, keyed by importId.
+   */
+  displayModes?: Record<string, DisplayMode>;
 };
 
 // ============================================================================
