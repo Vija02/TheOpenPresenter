@@ -11,18 +11,24 @@ import {
 
 import { ImportFilePicker } from "./ImportFilePicker";
 
-const ImportFileModal = () => {
+type Props = {
+  replaceImportId?: string;
+};
+
+const ImportFileModal = ({ replaceImportId }: Props) => {
   const { isOpen, onToggle } = useOverlayToggle();
 
   return (
     <Dialog open={isOpen ?? false} onOpenChange={onToggle ?? (() => {})}>
       <DialogContent size="lg">
         <DialogHeader>
-          <DialogTitle>Replace slide</DialogTitle>
+          <DialogTitle>
+            {replaceImportId ? "Replace slide" : "Add slide"}
+          </DialogTitle>
         </DialogHeader>
         <DialogBody>
           <p className="font-medium">Select source:</p>
-          <ImportFilePicker />
+          <ImportFilePicker replaceImportId={replaceImportId} />
         </DialogBody>
         <DialogFooter>
           <Button variant="outline" onClick={onToggle}>
