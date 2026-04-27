@@ -227,10 +227,20 @@ const loadedYjsData: Record<
   string,
   ObjectToTypedMap<Plugin<PluginBaseData>>
 > = {};
+const loadedRendererDataGetter: Record<
+  string,
+  () => Record<string, ObjectToTypedMap<PluginRendererData>>
+> = {};
 
 const onPluginDataLoaded = (
   pluginInfo: ObjectToTypedMap<Plugin<PluginBaseData>>,
   context: PluginContext,
+  extras: {
+    getRendererData: () => Record<
+      string,
+      ObjectToTypedMap<PluginRendererData>
+    >;
+  },
 ) => {
   migratePluginDataV1ToV2(pluginInfo);
 
@@ -247,12 +257,14 @@ const onPluginDataLoaded = (
   loadedPlugins[context.pluginId] = data;
   loadedContext[context.pluginId] = context;
   loadedYjsData[context.pluginId] = pluginInfo;
+  loadedRendererDataGetter[context.pluginId] = extras.getRendererData;
 
   return {
     dispose: () => {
       delete loadedPlugins[context.pluginId];
       delete loadedContext[context.pluginId];
       delete loadedYjsData[context.pluginId];
+      delete loadedRendererDataGetter[context.pluginId];
       unbind();
     },
   };
@@ -279,10 +291,14 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
       deleteOldThumbnails(serverPluginApi, thumbnails);
     }
   };
-  function getBaseImport(type: ImportData["type"]): BaseImportData {
+  function getBaseImport(
+    type: ImportData["type"],
+    name?: string,
+  ): BaseImportData {
     return {
       importId: typeidUnboxed("import"),
       type,
+      name,
       fetchId: typeidUnboxed("fetch"),
       thumbnailLinks: [],
       slideClickCounts: [],
@@ -393,11 +409,15 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
           z.object({
             pluginId: z.string(),
             mediaName: z.string(),
+            name: z.string().optional(),
             replaceImportId: z.string().optional(),
           }),
         )
         .mutation(
-          async ({ input: { pluginId, mediaName, replaceImportId }, ctx }) => {
+          async ({
+            input: { pluginId, mediaName, name, replaceImportId },
+            ctx,
+          }) => {
             if (!process.env.PLUGIN_GOOGLE_SLIDES_UNOCONVERT_SERVER) {
               throw new Error("Not available");
             }
@@ -406,7 +426,7 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
             const loadedPlugin = loadedPlugins[pluginId]!;
             const loadedContextData = loadedContext[pluginId]!;
 
-            const newImport = getBaseImport("ppt") as PptImportData;
+            const newImport = getBaseImport("ppt", name) as PptImportData;
             loadedPlugin.pluginData.imports[newImport.importId] = newImport;
 
             try {
@@ -475,16 +495,20 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
           z.object({
             pluginId: z.string(),
             mediaName: z.string(),
+            name: z.string().optional(),
             replaceImportId: z.string().optional(),
           }),
         )
         .mutation(
-          async ({ input: { pluginId, mediaName, replaceImportId }, ctx }) => {
+          async ({
+            input: { pluginId, mediaName, name, replaceImportId },
+            ctx,
+          }) => {
             const log = logger.child({ pluginId, mediaName, replaceImportId });
             const loadedPlugin = loadedPlugins[pluginId]!;
             const loadedContextData = loadedContext[pluginId]!;
 
-            const newImport = getBaseImport("pdf") as PdfImportData;
+            const newImport = getBaseImport("pdf", name) as PdfImportData;
             loadedPlugin.pluginData.imports[newImport.importId] = newImport;
 
             try {
@@ -543,12 +567,13 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
             pluginId: z.string(),
             presentationId: z.string(),
             token: z.string(),
+            name: z.string().optional(),
             replaceImportId: z.string().optional(),
           }),
         )
         .mutation(
           async ({
-            input: { pluginId, presentationId, token, replaceImportId },
+            input: { pluginId, presentationId, token, name, replaceImportId },
             ctx,
           }) => {
             const log = logger.child({
@@ -563,7 +588,7 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
             const startTime = Date.now();
 
             const newImport: GoogleSlidesImportData = {
-              ...getBaseImport("googleslides"),
+              ...getBaseImport("googleslides", name),
               type: "googleslides",
               presentationId,
               html: "",
