@@ -17,6 +17,8 @@ export const DEFAULT_DISPLAY_MODE_BY_TYPE: Record<ImportType, DisplayMode> = {
 export interface BaseImportData {
   /** Unique ID for this import */
   importId: string;
+  /** Human-readable name for this import */
+  name?: string;
   /** Used to detect when data changes (e.g., when we refetch) */
   fetchId: string;
   /** Type of import */
