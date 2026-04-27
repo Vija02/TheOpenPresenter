@@ -8,13 +8,15 @@ import { PDFUploadModal } from "./PDFUploadModal";
 import { PPTUploadModal } from "./PPTUploadModal";
 import { SlidePicker } from "./SlidePicker";
 
-export const ImportFilePicker = () => {
+type Props = {
+  replaceImportId?: string;
+};
+
+export const ImportFilePicker = ({ replaceImportId }: Props) => {
   const pluginApi = usePluginAPI();
   const pluginContext = pluginApi.pluginContext;
 
   const { onToggle } = useOverlayToggle();
-
-  const mutableSceneData = pluginApi.scene.useValtioData();
 
   const selectSlideMutation = trpc.googleslides.selectSlide.useMutation();
   return (
@@ -25,8 +27,9 @@ export const ImportFilePicker = () => {
             pluginId: pluginContext.pluginId,
             presentationId: doc.id,
             token: token,
+            name: doc.name,
+            replaceImportId,
           });
-          mutableSceneData.pluginData._isFetching = true;
           onToggle?.();
         }}
       >
@@ -41,8 +44,8 @@ export const ImportFilePicker = () => {
           </div>
         )}
       </SlidePicker>
-      <PDFUploadModal />
-      <PPTUploadModal />
+      <PDFUploadModal replaceImportId={replaceImportId} />
+      <PPTUploadModal replaceImportId={replaceImportId} />
     </div>
   );
 };

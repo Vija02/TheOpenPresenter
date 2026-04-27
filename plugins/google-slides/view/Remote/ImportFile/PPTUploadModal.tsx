@@ -10,7 +10,11 @@ import { usePluginAPI } from "../../pluginApi";
 import { trpc } from "../../trpc";
 import { PickerCard } from "../component/PickerCard";
 
-export const PPTUploadModal = () => {
+type Props = {
+  replaceImportId?: string;
+};
+
+export const PPTUploadModal = ({ replaceImportId }: Props) => {
   const pluginApi = usePluginAPI();
 
   const { open, onToggle, onClose } = useDisclosure();
@@ -39,7 +43,9 @@ export const PPTUploadModal = () => {
 
     await selectPpt({
       mediaName: fileName ?? "",
+      name: file?.name,
       pluginId: pluginApi.pluginContext.pluginId,
+      replaceImportId,
     });
     onClose();
   });

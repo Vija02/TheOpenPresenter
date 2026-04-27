@@ -236,10 +236,7 @@ const onPluginDataLoaded = (
   pluginInfo: ObjectToTypedMap<Plugin<PluginBaseData>>,
   context: PluginContext,
   extras: {
-    getRendererData: () => Record<
-      string,
-      ObjectToTypedMap<PluginRendererData>
-    >;
+    getRendererData: () => Record<string, ObjectToTypedMap<PluginRendererData>>;
   },
 ) => {
   migratePluginDataV1ToV2(pluginInfo);
@@ -715,6 +712,59 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
             }
           },
         ),
+
+      removeImport: t.procedure
+        .input(
+          z.object({
+            pluginId: z.string(),
+            importId: z.string(),
+          }),
+        )
+        .mutation(async ({ input: { pluginId, importId } }) => {
+          const loadedPlugin = loadedPlugins[pluginId]!;
+          const loadedYjs = loadedYjsData[pluginId]!;
+          const getRendererData = loadedRendererDataGetter[pluginId];
+
+          const importData = loadedPlugin.pluginData.imports[importId];
+          if (!importData) return;
+
+          deleteOldThumbnails(serverPluginApi, importData.thumbnailLinks);
+
+          loadedYjs.doc?.transact(() => {
+            // 1. Drop the import data
+            const { [importId]: _, ...remainingImports } =
+              loadedPlugin.pluginData.imports;
+            loadedPlugin.pluginData.imports = remainingImports;
+
+            // 2. Strip slideOrder
+            loadedPlugin.pluginData.slideOrder =
+              loadedPlugin.pluginData.slideOrder.filter(
+                (ref) => parseSlideRef(ref).importId !== importId,
+              );
+
+            const newSlideCount = loadedPlugin.pluginData.slideOrder.length;
+
+            // 3. Clean up renderer state
+            const rendererMap = getRendererData?.() ?? {};
+            for (const rendererData of Object.values(rendererMap)) {
+              const displayModes = rendererData.get("displayModes");
+              if (displayModes && displayModes.has(importId)) {
+                displayModes.delete(importId);
+              }
+
+              // Clamp currentSlideIndex / currentClickCount to the new range.
+              const currentIdx = rendererData.get("currentSlideIndex") ?? 0;
+              if (newSlideCount === 0) {
+                rendererData.set("currentSlideIndex", null);
+                rendererData.set("currentClickCount", null);
+              } else if (currentIdx >= newSlideCount) {
+                rendererData.set("currentSlideIndex", newSlideCount - 1);
+                rendererData.set("currentClickCount", 0);
+              }
+            }
+          });
+        }),
+
     },
   });
 };

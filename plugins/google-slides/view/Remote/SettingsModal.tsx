@@ -1,4 +1,8 @@
 import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
   Button,
   CheckboxControl,
   Dialog,
@@ -10,20 +14,39 @@ import {
   Form,
   NumberInputControl,
   OptionControl,
+  OverlayToggle,
+  PopConfirm,
   useOverlayToggle,
 } from "@repo/ui";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { useForm } from "react-hook-form";
-import { FaCircleInfo } from "react-icons/fa6";
+import { FaFilePdf } from "react-icons/fa";
+import { FaArrowsRotate, FaCircleInfo, FaTrash } from "react-icons/fa6";
+import { RiFilePpt2Fill } from "react-icons/ri";
+import { SiGoogleslides } from "react-icons/si";
 
-import { DisplayMode } from "../../src/types";
+import {
+  DEFAULT_DISPLAY_MODE_BY_TYPE,
+  DisplayMode,
+  ImportType,
+} from "../../src/types";
 import { usePluginAPI } from "../pluginApi";
-import { calculateResolvedSlideIndex } from "../utils/slideIndex";
-import { calculateSlideIndexFromAutoplay } from "../utils/useAutoplay";
+import { trpc } from "../trpc";
+import {
+  calculateAutoplayPosition,
+  computeGlobalSlideClickCount,
+} from "../utils/useAutoplay";
+import ImportFileModal from "./ImportFile/ImportFileModal";
 import { displayTypeMapping } from "./displayTypeMapping";
 
+const IMPORT_TYPE_ICON: Record<ImportType, React.ReactNode> = {
+  googleslides: <SiGoogleslides className="size-5 shrink-0 text-[#F4B400]" />,
+  pdf: <FaFilePdf className="size-5 shrink-0 text-[#F52102]" />,
+  ppt: <RiFilePpt2Fill className="size-5 shrink-0 text-[#CC4A34]" />,
+};
+
 type SettingsData = {
-  displayMode?: DisplayMode;
+  displayModes: Record<string, DisplayMode>;
   autoplayEnabled: boolean;
   autoplayLoopDurationSeconds: number;
 };
@@ -33,63 +56,69 @@ const SettingsModal = () => {
 
   const pluginApi = usePluginAPI();
   const mutableRendererData = pluginApi.renderer.useValtioData();
-  const type = pluginApi.scene.useData((x) => x.pluginData.type);
-  const displayMode = pluginApi.renderer.useData((x) => x.displayMode);
-  const autoplay = pluginApi.renderer.useData((x) => x.autoplay);
 
-  const thumbnailLinks = pluginApi.scene.useData(
-    (x) => x.pluginData.thumbnailLinks,
+  const { mutate: removeImport } = trpc.googleslides.removeImport.useMutation();
+
+  const pluginData = pluginApi.scene.useData((x) => x.pluginData);
+  const autoplay = pluginApi.renderer.useData((x) => x.autoplay);
+  const rendererDisplayModes = pluginApi.renderer.useData(
+    (x) => x.displayModes,
   );
-  const slideClickCounts = pluginApi.scene.useData(
-    (x) => x.pluginData.slideClickCounts,
+
+  const importsList = useMemo(
+    () => Object.values(pluginData.imports ?? {}),
+    [pluginData.imports],
   );
+
+  const currentDisplayModes = useMemo(() => {
+    const result: Record<string, DisplayMode> = {};
+    for (const imp of importsList) {
+      result[imp.importId] =
+        rendererDisplayModes?.[imp.importId] ??
+        DEFAULT_DISPLAY_MODE_BY_TYPE[imp.type];
+    }
+    return result;
+  }, [importsList, rendererDisplayModes]);
 
   const handleSubmit = useCallback(
     (rawData: SettingsData) => {
-      mutableRendererData.displayMode = rawData.displayMode;
-
-      // If changing to image mode, keep the current resolved slide as the new slideIndex
-      if (
-        mutableRendererData.displayMode === "googleslides" &&
-        rawData.displayMode === "image"
-      ) {
-        // Calculate the resolved slide index using slideClickCounts
-        const currentSlide = calculateResolvedSlideIndex({
-          slideIndex: mutableRendererData.slideIndex,
-          clickCount: mutableRendererData.clickCount,
-          slideCount: thumbnailLinks.length,
-          slideClickCounts: slideClickCounts ?? [],
-        });
-        mutableRendererData.slideIndex = Math.max(0, currentSlide);
-        mutableRendererData.clickCount = 0;
+      // Apply per-import display mode changes
+      let anyDisplayModeChanged = false;
+      for (const imp of importsList) {
+        const newMode = rawData.displayModes?.[imp.importId];
+        const oldMode = currentDisplayModes[imp.importId];
+        if (newMode && newMode !== oldMode) {
+          if (!mutableRendererData.displayModes) {
+            mutableRendererData.displayModes = {};
+          }
+          mutableRendererData.displayModes[imp.importId] = newMode;
+          anyDisplayModeChanged = true;
+        }
       }
-      // Handle the reverse - switching from image to googleslides
-      if (
-        mutableRendererData.displayMode === "image" &&
-        rawData.displayMode === "googleslides"
-      ) {
-        // Reset click count when switching to Google Slides mode
-        mutableRendererData.clickCount = 0;
+
+      // When switching display modes, reset click count
+      if (anyDisplayModeChanged) {
+        mutableRendererData.currentClickCount = 0;
       }
 
       // If autoplay just turned on, let's update the time
       if (!mutableRendererData.autoplay?.enabled && rawData.autoplayEnabled) {
         mutableRendererData.lastClickTimestamp = Date.now();
       }
-      // If autoplay just turned off, update the slide index
+      // If autoplay just turned off, freeze at the current autoplay position
       if (mutableRendererData.autoplay?.enabled && !rawData.autoplayEnabled) {
-        const newSlideIndex = calculateSlideIndexFromAutoplay({
+        const newPos = calculateAutoplayPosition({
           lastClickTimestamp: mutableRendererData.lastClickTimestamp,
           loopDurationMs: mutableRendererData.autoplay.loopDurationMs,
-          baseIndex: calculateResolvedSlideIndex({
-            slideIndex: mutableRendererData.slideIndex,
-            clickCount: mutableRendererData.clickCount,
-            slideCount: thumbnailLinks.length,
-          }),
-          slideCount: thumbnailLinks.length,
+          baseIndex: mutableRendererData.currentSlideIndex ?? 0,
+          baseClickCount: mutableRendererData.currentClickCount ?? 0,
+          globalSlideClickCount: computeGlobalSlideClickCount(
+            pluginData,
+            mutableRendererData.displayModes,
+          ),
         });
-        mutableRendererData.slideIndex = newSlideIndex;
-        mutableRendererData.clickCount = 0;
+        mutableRendererData.currentSlideIndex = newPos.slideIndex;
+        mutableRendererData.currentClickCount = newPos.clickCount;
       }
       if (!mutableRendererData.autoplay) {
         mutableRendererData.autoplay = {
@@ -107,17 +136,18 @@ const SettingsModal = () => {
       return Promise.resolve();
     },
     [
+      currentDisplayModes,
+      importsList,
       mutableRendererData,
       onToggle,
+      pluginData,
       resetData,
-      slideClickCounts,
-      thumbnailLinks.length,
     ],
   );
 
   const form = useForm<SettingsData>({
     values: {
-      displayMode: displayMode ?? "googleslides",
+      displayModes: currentDisplayModes,
       autoplayEnabled: autoplay?.enabled ?? false,
       autoplayLoopDurationSeconds: Math.max(
         1,
@@ -127,6 +157,16 @@ const SettingsModal = () => {
   });
 
   const autoplayEnabled = form.watch("autoplayEnabled");
+
+  const handleDeleteImport = useCallback(
+    (importId: string) => {
+      removeImport({
+        pluginId: pluginApi.pluginContext.pluginId,
+        importId,
+      });
+    },
+    [removeImport, pluginApi.pluginContext.pluginId],
+  );
 
   return (
     <Dialog open={isOpen ?? false} onOpenChange={onToggle ?? (() => {})}>
@@ -139,51 +179,9 @@ const SettingsModal = () => {
             <DialogTitle>Slides Settings</DialogTitle>
           </DialogHeader>
           <DialogBody>
-            <div className="flex flex-col md:flex-row gap-3">
-              <div className="stack-col items-start flex-1">
-                <OptionControl
-                  control={form.control}
-                  label="Display Mode"
-                  name="displayMode"
-                  options={[
-                    {
-                      title: "Google Slides",
-                      description: (
-                        <>
-                          Uses the Google Slides embed renderer <br />
-                          <div className="mt-2 flex gap-1 italic">
-                            <FaCircleInfo className="m-1 shrink-0" />
-                            Preserves the most functionality but takes the
-                            longest to load
-                          </div>
-                        </>
-                      ),
-                      value: "googleslides" satisfies DisplayMode,
-                    },
-                    {
-                      title: "Image",
-                      description: (
-                        <>
-                          Renders the presentation as images <br />
-                          <div className="mt-2 flex gap-1 italic">
-                            <FaCircleInfo className="m-1 shrink-0" />
-                            Doesn't allow animations but is faster to load
-                          </div>
-                        </>
-                      ),
-                      value: "image" satisfies DisplayMode,
-                    },
-                  ].filter((x) =>
-                    displayTypeMapping[x.value as DisplayMode].includes(
-                      type ?? "googleslides",
-                    ),
-                  )}
-                />
-
-                <div>
-                  <h3 className="font-bold text-lg">Autoplay</h3>
-                  <p>*Only works with Image renderer</p>
-                </div>
+            <div className="flex flex-col gap-4">
+              <div>
+                <h3 className="font-bold text-lg mb-2">Autoplay</h3>
                 <div className="w-full flex flex-col gap-3">
                   <CheckboxControl
                     control={form.control}
@@ -191,57 +189,140 @@ const SettingsModal = () => {
                     label="Enable autoplay"
                     description="Advance slides automatically after the configured interval."
                   />
-                  <NumberInputControl
-                    control={form.control}
-                    name="autoplayLoopDurationSeconds"
-                    label="Autoplay interval"
-                    unit="s"
-                    min={0.1}
-                    max={600}
-                    step={1}
-                    disabled={!autoplayEnabled}
-                    className="max-w-40"
-                  />
+                  {autoplayEnabled && (
+                    <NumberInputControl
+                      control={form.control}
+                      name="autoplayLoopDurationSeconds"
+                      label="Autoplay interval"
+                      unit="s"
+                      min={0.1}
+                      max={600}
+                      step={1}
+                      className="max-w-40"
+                    />
+                  )}
                 </div>
-                {/* <FormControl>
-                    <FormLabel>Display Mode</FormLabel>
-                    <Stack
-                      direction={{ base: "column", md: "row" }}
-                      alignItems="stretch"
-                      marginBottom={2}
-                      flexWrap="wrap"
-                    >
-                      {
-                        .map(({ title, description, val }, i) => (
-                          <Box
-                            key={i}
-                            cursor="pointer"
-                            border="1px solid"
-                            borderColor={
-                              values.displayMode === val
-                                ? "blue.400"
-                                : "gray.200"
-                            }
-                            rounded="sm"
-                            p={2}
-                            _hover={{ borderColor: "blue.400" }}
-                            onClick={() => {
-                              setFieldValue("displayMode", val);
-                            }}
-                            width="100%"
-                            flex={1}
-                          >
-                            <Text fontWeight="bold" fontSize="md">
-                              {title}
-                            </Text>
-                            <Text fontSize="sm" color="gray.600">
-                              {description}
-                            </Text>
-                          </Box>
-                        ))}
-                    </Stack>
-                  </FormControl> */}
               </div>
+
+              {importsList.length > 0 && (
+                <div>
+                  <h3 className="font-bold text-lg mb-2">Imports</h3>
+                  <div className="flex flex-col gap-3">
+                    {importsList.map((imp, idx) => {
+                      const displayTitle = imp.name ?? `Import ${idx + 1}`;
+                      const filteredOptions = [
+                        {
+                          title: "Google Slides",
+                          description: (
+                            <>
+                              Uses the Google Slides embed renderer <br />
+                              <div className="mt-2 flex gap-1 italic">
+                                <FaCircleInfo className="m-1 shrink-0" />
+                                Preserves the most functionality but takes the
+                                longest to load
+                              </div>
+                            </>
+                          ),
+                          value: "googleslides" satisfies DisplayMode,
+                        },
+                        {
+                          title: "Image",
+                          description: (
+                            <>
+                              Renders the presentation as images <br />
+                              <div className="mt-2 flex gap-1 italic">
+                                <FaCircleInfo className="m-1 shrink-0" />
+                                Doesn't allow animations but is faster to load
+                              </div>
+                            </>
+                          ),
+                          value: "image" satisfies DisplayMode,
+                        },
+                      ].filter((x) =>
+                        displayTypeMapping[x.value as DisplayMode].includes(
+                          imp.type,
+                        ),
+                      );
+                      return (
+                        <div
+                          key={imp.importId}
+                          className="flex flex-col gap-2 border border-gray-200 rounded p-3"
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2 min-w-0">
+                              {IMPORT_TYPE_ICON[imp.type]}
+                              <h4
+                                className="font-medium truncate"
+                                title={displayTitle}
+                              >
+                                {displayTitle}
+                              </h4>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <OverlayToggle
+                                toggler={({ onToggle }) => (
+                                  <Button
+                                    type="button"
+                                    size="xs"
+                                    variant="outline"
+                                    onClick={onToggle}
+                                  >
+                                    <FaArrowsRotate />
+                                    Replace
+                                  </Button>
+                                )}
+                              >
+                                <ImportFileModal
+                                  replaceImportId={imp.importId}
+                                />
+                              </OverlayToggle>
+                              <PopConfirm
+                                title="Delete this import?"
+                                description={`"${displayTitle}" and all of its slides will be removed.`}
+                                okText="Delete"
+                                onConfirm={() =>
+                                  handleDeleteImport(imp.importId)
+                                }
+                              >
+                                <Button
+                                  type="button"
+                                  size="xs"
+                                  variant="outline"
+                                >
+                                  <FaTrash />
+                                  Delete
+                                </Button>
+                              </PopConfirm>
+                            </div>
+                          </div>
+                          {filteredOptions.length > 1 && (
+                            <Accordion type="single" collapsible>
+                              <AccordionItem
+                                value="advanced"
+                                className="border-0"
+                              >
+                                <AccordionTrigger className="py-1 text-sm">
+                                  Advanced
+                                </AccordionTrigger>
+                                <AccordionContent className="pt-2">
+                                  <OptionControl
+                                    control={form.control}
+                                    label="Display Mode"
+                                    name={
+                                      `displayModes.${imp.importId}` as `displayModes.${string}`
+                                    }
+                                    options={filteredOptions}
+                                  />
+                                </AccordionContent>
+                              </AccordionItem>
+                            </Accordion>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           </DialogBody>
           <DialogFooter>
