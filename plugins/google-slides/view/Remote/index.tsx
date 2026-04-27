@@ -10,7 +10,7 @@ import {
   UniversalImage,
 } from "@repo/ui";
 import { useMemo } from "react";
-import { FaArrowLeft, FaArrowRight } from "react-icons/fa";
+import { FaArrowLeft, FaArrowRight, FaPlus } from "react-icons/fa";
 import { VscSettingsGear } from "react-icons/vsc";
 
 import { resolveSlide } from "../../src/slideOrderUtils";
@@ -65,16 +65,6 @@ const Remote = () => {
       }
       toolbar={
         <div className="stack-row gap-x-4 gap-y-2 flex-wrap">
-          <OverlayToggle
-            toggler={({ onToggle }) => (
-              <Button size="xs" variant="pill" onClick={onToggle}>
-                Replace Slide
-              </Button>
-            )}
-          >
-            <ImportFileModal />
-          </OverlayToggle>
-
           <div className="stack-row">
             <span className="hidden sm:inline font-bold text-white text-xs">
               Navigate:
@@ -178,6 +168,18 @@ const RemoteHandler = () => {
           }
         </Slide>
       ))}
+      <OverlayToggle
+        toggler={({ onToggle }) => (
+          <Slide pluginAPI={pluginApi} heading="⠀" onClick={onToggle}>
+            <div className="group h-full w-full flex flex-col items-center justify-center gap-2 border-2 border-dashed border-tertiary text-tertiary hover:border-secondary hover:text-secondary hover:bg-black/5 transition-colors">
+              <FaPlus className="size-6" />
+              <span className="text-sm font-medium">Add slide</span>
+            </div>
+          </Slide>
+        )}
+      >
+        <ImportFileModal />
+      </OverlayToggle>
     </>
   );
 };
