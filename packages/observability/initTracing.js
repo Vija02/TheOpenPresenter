@@ -19,7 +19,8 @@ if (process.env.OTLP_HOST) {
     diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.ERROR);
     const resource = new Resource({
       [ATTR_SERVICE_NAME]: "theopenpresenter-server",
-      [ATTR_DEPLOYMENT_ENVIRONMENT_NAME]: process.env.NODE_ENV,
+      [ATTR_DEPLOYMENT_ENVIRONMENT_NAME]:
+        process.env.DEPLOYMENT_ENV || process.env.NODE_ENV,
     });
 
     const traceExporter = new OTLPTraceExporter({

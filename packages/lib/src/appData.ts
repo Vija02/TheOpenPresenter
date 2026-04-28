@@ -11,6 +11,8 @@ const getMediaUploadChunkSize = () => {
   return Infinity;
 };
 const getOTELEnabled = () => (window as any)?.__APP_DATA__?.ENABLE_OTEL === "1";
+const getDeploymentEnv = (): string | undefined =>
+  (window as any)?.__APP_DATA__?.DEPLOYMENT_ENV;
 
 const getCustomEnv = (envName: string) =>
   (window as any)?.__APP_DATA__?.[envName];
@@ -58,6 +60,7 @@ export const appData = {
   getCSRFToken,
   getMediaUploadChunkSize,
   getOTELEnabled,
+  getDeploymentEnv,
   getCustomEnv,
   getPluginData,
   getProxyConfig,

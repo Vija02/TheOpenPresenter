@@ -1,6 +1,8 @@
+import { appData } from "@repo/lib";
 import { initBrowser } from "@repo/observability/initBrowser";
 
 initBrowser(
   "theopenpresenter-remote",
-  import.meta.env.DEV ? "development" : "production",
+  appData.getDeploymentEnv() ??
+    (import.meta.env.DEV ? "development" : "production"),
 );
