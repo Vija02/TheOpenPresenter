@@ -1,24 +1,41 @@
+import { useMemo } from "react";
+
+import { getEffectiveDisplayMode } from "../../src/types";
 import { usePluginAPI } from "../pluginApi";
 import { GoogleSlideRenderer } from "./GoogleSlideRenderer";
 import { ImageRenderer } from "./ImageRenderer";
 
 const Renderer = () => {
   const pluginApi = usePluginAPI();
-  const fetchId = pluginApi.scene.useData((x) => x.pluginData.fetchId);
-  const type = pluginApi.scene.useData((x) => x.pluginData.type);
-  const isFetching = pluginApi.scene.useData((x) => x.pluginData._isFetching);
-  const displayMode = pluginApi.renderer.useData((x) => x.displayMode);
+  const pluginData = pluginApi.scene.useData((x) => x.pluginData);
+  const rendererDisplayModes = pluginApi.renderer.useData(
+    (x) => x.displayModes,
+  );
 
-  // Don't render if no fetchId or if still fetching
-  if (!fetchId || isFetching) {
+  const hasSlides = (pluginData.slideOrder?.length ?? 0) > 0;
+
+  const googleSlidesImports = useMemo(() => {
+    return Object.values(pluginData.imports).filter(
+      (imp) =>
+        !imp._isFetching &&
+        imp.type === "googleslides" &&
+        getEffectiveDisplayMode(imp, rendererDisplayModes) === "googleslides",
+    );
+  }, [pluginData.imports, rendererDisplayModes]);
+
+  if (!hasSlides) {
     return null;
   }
 
-  if (type === "pdf" || type === "ppt" || displayMode === "image") {
-    return <ImageRenderer key={fetchId} />;
-  }
+  return (
+    <>
+      <ImageRenderer />
 
-  return <GoogleSlideRenderer key={fetchId} />;
+      {googleSlidesImports.map((imp) => (
+        <GoogleSlideRenderer key={imp.fetchId} importId={imp.importId} />
+      ))}
+    </>
+  );
 };
 
 export default Renderer;

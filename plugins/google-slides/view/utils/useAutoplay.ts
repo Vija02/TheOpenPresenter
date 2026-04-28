@@ -31,6 +31,44 @@ export const computeGlobalSlideClickCount = (
   return result;
 };
 
+export const totalStepCount = (globalSlideClickCount: number[]): number =>
+  globalSlideClickCount.reduce((sum, n) => sum + n + 1, 0);
+
+export const toFlatPosition = (
+  slideIndex: number,
+  clickCount: number,
+  globalSlideClickCount: number[],
+): number => {
+  if (globalSlideClickCount.length === 0) return 0;
+  const safeIndex = Math.min(
+    Math.max(0, slideIndex),
+    globalSlideClickCount.length - 1,
+  );
+  let pos = 0;
+  for (let i = 0; i < safeIndex; i++) {
+    pos += (globalSlideClickCount[i] ?? 0) + 1;
+  }
+  const slideStepCount = globalSlideClickCount[safeIndex] ?? 0;
+  pos += Math.min(Math.max(0, clickCount), slideStepCount);
+  return pos;
+};
+
+export const fromFlatPosition = (
+  pos: number,
+  globalSlideClickCount: number[],
+): AutoplayPosition | null => {
+  if (pos < 0) return null;
+  let remaining = pos;
+  for (let i = 0; i < globalSlideClickCount.length; i++) {
+    const stepCount = (globalSlideClickCount[i] ?? 0) + 1;
+    if (remaining < stepCount) {
+      return { slideIndex: i, clickCount: remaining };
+    }
+    remaining -= stepCount;
+  }
+  return null;
+};
+
 export const calculateAutoplayPosition = ({
   lastClickTimestamp,
   loopDurationMs,
@@ -48,35 +86,23 @@ export const calculateAutoplayPosition = ({
     return { slideIndex: baseIndex, clickCount: baseClickCount };
   }
 
-  const totalSteps = globalSlideClickCount.reduce((sum, n) => sum + n + 1, 0);
-
-  // Convert (baseIndex, baseClickCount) to a flat step position.
-  let basePos = 0;
-  const safeBaseIndex = Math.min(
-    Math.max(0, baseIndex),
-    globalSlideClickCount.length - 1,
+  const total = totalStepCount(globalSlideClickCount);
+  const basePos = toFlatPosition(
+    baseIndex,
+    baseClickCount,
+    globalSlideClickCount,
   );
-  for (let i = 0; i < safeBaseIndex; i++) {
-    basePos += (globalSlideClickCount[i] ?? 0) + 1;
-  }
-  const baseSlideClickCount = globalSlideClickCount[safeBaseIndex] ?? 0;
-  basePos += Math.min(Math.max(0, baseClickCount), baseSlideClickCount);
 
   const elapsed = Math.max(0, Date.now() - lastClickTimestamp);
   const stepDelta = Math.floor(elapsed / loopDurationMs);
-  const newPos = (basePos + stepDelta) % totalSteps;
+  const newPos = (basePos + stepDelta) % total;
 
-  // Convert flat position back to (slideIndex, clickCount).
-  let remaining = newPos;
-  for (let i = 0; i < globalSlideClickCount.length; i++) {
-    const stepCount = (globalSlideClickCount[i] ?? 0) + 1;
-    if (remaining < stepCount) {
-      return { slideIndex: i, clickCount: remaining };
+  return (
+    fromFlatPosition(newPos, globalSlideClickCount) ?? {
+      slideIndex: 0,
+      clickCount: 0,
     }
-    remaining -= stepCount;
-  }
-
-  return { slideIndex: 0, clickCount: 0 };
+  );
 };
 
 export const useAutoplay = ({

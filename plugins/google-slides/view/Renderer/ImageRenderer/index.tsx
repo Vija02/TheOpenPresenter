@@ -1,65 +1,36 @@
 import { useCallback, useEffect, useMemo, useRef } from "react";
 
+import { resolveSlide } from "../../../src/slideOrderUtils";
+import { ResolvedSlide, getEffectiveDisplayMode } from "../../../src/types";
 import { usePluginAPI } from "../../pluginApi";
-import { calculateResolvedSlideIndex } from "../../utils/slideIndex";
-import { useAutoplay } from "../../utils/useAutoplay";
+import { useDisplayedSlide } from "../../utils/useDisplayedSlide";
 import { ImageRenderView } from "./ImageRenderView";
 
 export const ImageRenderer = () => {
   const pluginApi = usePluginAPI();
-  const slideIndex = pluginApi.renderer.useData((x) => x.slideIndex);
-  const clickCount = pluginApi.renderer.useData((x) => x.clickCount);
-
-  const thumbnailLinks = pluginApi.scene.useData(
-    (x) => x.pluginData.thumbnailLinks,
+  const pluginData = pluginApi.scene.useData((x) => x.pluginData);
+  const rendererDisplayModes = pluginApi.renderer.useData(
+    (x) => x.displayModes,
   );
 
-  // Get derivation offset for confidence monitor mode
-  const derivationOffset = pluginApi.renderer.useDerivationOffset();
+  const { globalSlideIndex } = useDisplayedSlide();
 
-  const baseIndex = useMemo(
-    () =>
-      calculateResolvedSlideIndex({
-        slideIndex,
-        clickCount,
-        slideCount: thumbnailLinks.length,
-      }),
-    [clickCount, slideIndex, thumbnailLinks.length],
-  );
-
-  const { shouldAutoPlay, calculatedAutoplaySlideIndex } =
-    useAutoplay(baseIndex);
-
-  const activeIndex = useMemo(() => {
-    let index: number;
-    if (
-      shouldAutoPlay &&
-      calculatedAutoplaySlideIndex !== null &&
-      calculatedAutoplaySlideIndex !== undefined
-    ) {
-      index = calculatedAutoplaySlideIndex;
-    } else {
-      index = baseIndex;
+  const renderableSlides = useMemo(() => {
+    const slides: { slide: ResolvedSlide; globalIndex: number }[] = [];
+    for (let i = 0; i < pluginData.slideOrder.length; i++) {
+      const resolved = resolveSlide(pluginData, i);
+      if (!resolved) continue;
+      if (!resolved.thumbnailUrl) continue;
+      const mode = getEffectiveDisplayMode(
+        resolved.importData,
+        rendererDisplayModes,
+      );
+      // Only render slides that has the image display mode
+      if (mode !== "image") continue;
+      slides.push({ slide: resolved, globalIndex: i });
     }
-
-    // Apply derivation offset
-    if (derivationOffset !== 0) {
-      const derivedIndex = index + derivationOffset;
-      // Return -1 if out of bounds (shows nothing)
-      if (derivedIndex < 0 || derivedIndex >= thumbnailLinks.length) {
-        return -1;
-      }
-      return derivedIndex;
-    }
-
-    return index;
-  }, [
-    shouldAutoPlay,
-    calculatedAutoplaySlideIndex,
-    baseIndex,
-    derivationOffset,
-    thumbnailLinks.length,
-  ]);
+    return slides;
+  }, [pluginData, rendererDisplayModes]);
 
   const setAwarenessStateData = pluginApi.awareness.setAwarenessStateData;
 
@@ -72,30 +43,29 @@ export const ImageRenderer = () => {
   const onLoad = useCallback(() => {
     loadedCount.current++;
 
-    if (loadedCount.current === thumbnailLinks.length) {
+    if (loadedCount.current === renderableSlides.length) {
       pluginApi.awareness.setAwarenessStateData({ isLoading: false });
     }
-  }, [pluginApi.awareness, thumbnailLinks.length]);
+  }, [pluginApi.awareness, renderableSlides.length]);
 
-  return thumbnailLinks.map(
-    (imgSrc, i) =>
-      imgSrc &&
-      imgSrc !== "" && (
-        <div
-          key={imgSrc}
-          style={{
-            position: "absolute",
-            width: "100%",
-            height: "100%",
-            opacity: activeIndex === i ? 1 : 0,
-          }}
-        >
-          <ImageRenderView
-            src={imgSrc}
-            isActive={activeIndex === i}
-            onLoad={onLoad}
-          />
-        </div>
-      ),
-  );
+  return renderableSlides.map(({ slide, globalIndex }) => {
+    const isActive = globalSlideIndex === globalIndex;
+    return (
+      <div
+        key={slide.rawRef}
+        style={{
+          position: "absolute",
+          width: "100%",
+          height: "100%",
+          opacity: isActive ? 1 : 0,
+        }}
+      >
+        <ImageRenderView
+          src={slide.thumbnailUrl}
+          isActive={isActive}
+          onLoad={onLoad}
+        />
+      </div>
+    );
+  });
 };
