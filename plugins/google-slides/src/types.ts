@@ -11,6 +11,13 @@ export const DEFAULT_DISPLAY_MODE_BY_TYPE: Record<ImportType, DisplayMode> = {
   ppt: "image",
 };
 
+export const getEffectiveDisplayMode = (
+  importData: ImportData,
+  displayModes: Record<string, DisplayMode> | undefined,
+): DisplayMode =>
+  displayModes?.[importData.importId] ??
+  DEFAULT_DISPLAY_MODE_BY_TYPE[importData.type];
+
 /**
  * Base import data - all imports have these properties
  */
