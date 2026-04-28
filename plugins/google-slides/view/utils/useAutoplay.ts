@@ -2,9 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 
 import { resolveSlide } from "../../src/slideOrderUtils";
 import {
-  DEFAULT_DISPLAY_MODE_BY_TYPE,
   DisplayMode,
   PluginBaseData,
+  getEffectiveDisplayMode,
 } from "../../src/types";
 import { usePluginAPI } from "../pluginApi";
 
@@ -25,9 +25,7 @@ export const computeGlobalSlideClickCount = (
       result.push(0);
       continue;
     }
-    const mode =
-      displayModes?.[resolved.importData.importId] ??
-      DEFAULT_DISPLAY_MODE_BY_TYPE[resolved.importData.type];
+    const mode = getEffectiveDisplayMode(resolved.importData, displayModes);
     result.push(mode === "googleslides" ? resolved.clickCount : 0);
   }
   return result;

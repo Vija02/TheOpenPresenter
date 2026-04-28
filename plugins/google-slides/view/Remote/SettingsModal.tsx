@@ -26,9 +26,9 @@ import { RiFilePpt2Fill } from "react-icons/ri";
 import { SiGoogleslides } from "react-icons/si";
 
 import {
-  DEFAULT_DISPLAY_MODE_BY_TYPE,
   DisplayMode,
   ImportType,
+  getEffectiveDisplayMode,
 } from "../../src/types";
 import { usePluginAPI } from "../pluginApi";
 import { trpc } from "../trpc";
@@ -70,15 +70,16 @@ const SettingsModal = () => {
     [pluginData.imports],
   );
 
-  const currentDisplayModes = useMemo(() => {
-    const result: Record<string, DisplayMode> = {};
-    for (const imp of importsList) {
-      result[imp.importId] =
-        rendererDisplayModes?.[imp.importId] ??
-        DEFAULT_DISPLAY_MODE_BY_TYPE[imp.type];
-    }
-    return result;
-  }, [importsList, rendererDisplayModes]);
+  const currentDisplayModes = useMemo(
+    () =>
+      Object.fromEntries(
+        importsList.map((imp) => [
+          imp.importId,
+          getEffectiveDisplayMode(imp, rendererDisplayModes),
+        ]),
+      ) as Record<string, DisplayMode>,
+    [importsList, rendererDisplayModes],
+  );
 
   const handleSubmit = useCallback(
     (rawData: SettingsData) => {
