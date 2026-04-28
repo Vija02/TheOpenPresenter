@@ -136,6 +136,10 @@ jobs:
           server_ip: ${{ secrets.STAGING_SERVER_IP }}
           deployment_name: ${{ steps.vars.outputs.deployment_name }}
           image_tag: ${{ steps.vars.outputs.image_tag }}
+          loki_host: ${{ secrets.LOKI_HOST }}
+          loki_auth: ${{ secrets.LOKI_AUTH }}
+          tempo_host: ${{ secrets.TEMPO_HOST }}
+          tempo_auth: ${{ secrets.TEMPO_AUTH }}
 
       - name: Comment on PR with staging URL
         uses: actions/github-script@v7
@@ -336,7 +340,7 @@ jobs:
                     });
                     
                     // Remove all volumes for this deployment
-                    execSync(`yes | uc volume rm ${deploymentName}-pg-data ${deploymentName}-redis-data ${deploymentName}-alloy-config ${deploymentName}-uploads 2>/dev/null || echo "Volumes may already be removed or don't exist"`, {
+                    execSync(`yes | uc volume rm ${deploymentName}-pg-data ${deploymentName}-redis-data ${deploymentName}-uploads 2>/dev/null || echo "Volumes may already be removed or don't exist"`, {
                       encoding: 'utf-8',
                       timeout: 60000
                     });
@@ -370,7 +374,7 @@ jobs:
                       });
                       
                       // Remove all volumes for this deployment
-                      execSync(`yes | uc volume rm ${deploymentName}-pg-data ${deploymentName}-redis-data ${deploymentName}-alloy-config ${deploymentName}-uploads 2>/dev/null || echo "Volumes may already be removed or don't exist"`, {
+                      execSync(`yes | uc volume rm ${deploymentName}-pg-data ${deploymentName}-redis-data ${deploymentName}-uploads 2>/dev/null || echo "Volumes may already be removed or don't exist"`, {
                         encoding: 'utf-8',
                         timeout: 60000
                       });

@@ -14,6 +14,22 @@ inputs:
   image_tag:
     description: "Docker image tag to deploy"
     required: true
+  loki_host:
+    description: "Loki endpoint URL (Alloy)"
+    required: false
+    default: ""
+  loki_auth:
+    description: "Authorization header for Loki (Alloy)"
+    required: false
+    default: ""
+  tempo_host:
+    description: "Tempo OTLP endpoint (Alloy)"
+    required: false
+    default: ""
+  tempo_auth:
+    description: "Authorization header for Tempo (Alloy)"
+    required: false
+    default: ""
 
 outputs:
   deployment_url:
@@ -99,7 +115,7 @@ runs:
         uc rm ${DEPLOYMENT_NAME}-migrator ${DEPLOYMENT_NAME}-server ${DEPLOYMENT_NAME}-worker ${DEPLOYMENT_NAME}-db ${DEPLOYMENT_NAME}-redis ${DEPLOYMENT_NAME}-unoserver ${DEPLOYMENT_NAME}-alloy 2>/dev/null || echo "No existing deployment to destroy (this is OK)"
 
         # Remove all volumes for this deployment
-        yes | uc volume rm ${DEPLOYMENT_NAME}-pg-data ${DEPLOYMENT_NAME}-redis-data ${DEPLOYMENT_NAME}-alloy-config ${DEPLOYMENT_NAME}-uploads 2>/dev/null || echo "No existing volumes to remove (this is OK)"
+        yes | uc volume rm ${DEPLOYMENT_NAME}-pg-data ${DEPLOYMENT_NAME}-redis-data ${DEPLOYMENT_NAME}-uploads 2>/dev/null || echo "No existing volumes to remove (this is OK)"
 
     - name: Wait for cleanup
       shell: bash
@@ -111,6 +127,12 @@ runs:
         DEPLOYMENT_NAME="${{ inputs.deployment_name }}"
         IMAGE_TAG="${{ inputs.image_tag }}"
         DNS_DOMAIN="${{ steps.get-dns.outputs.dns_domain }}"
+        # Alloy remote-backend env (sourced from GitHub secrets via the parent workflow).
+        # Only the four used by config/alloy/minimal.alloy are wired.
+        LOKI_HOST="${{ inputs.loki_host }}"
+        LOKI_AUTH="${{ inputs.loki_auth }}"
+        TEMPO_HOST="${{ inputs.tempo_host }}"
+        TEMPO_AUTH="${{ inputs.tempo_auth }}"
         # The service name will be used as the subdomain prefix by uncloud
         # So the URL will be: https://{deployment_name}-server.{DNS_DOMAIN}
         DEPLOYMENT_URL="https://${DEPLOYMENT_NAME}-server.${DNS_DOMAIN}"
@@ -236,29 +258,35 @@ runs:
           ${DEPLOYMENT_NAME}-alloy:
             image: grafana/alloy:v1.5.1
             pull_policy: missing
+            environment:
+              - LOKI_HOST=${LOKI_HOST}
+              - LOKI_AUTH=${LOKI_AUTH}
+              - TEMPO_HOST=${TEMPO_HOST}
+              - TEMPO_AUTH=${TEMPO_AUTH}
             command:
               - run
               - /etc/alloy/config.alloy
               - --storage.path=/var/lib/alloy/data
               - --server.http.listen-addr=0.0.0.0:12345
               - --stability.level=experimental
-            volumes:
-              - ${DEPLOYMENT_NAME}-alloy-config:/etc/alloy
+            configs:
+              - source: ${DEPLOYMENT_NAME}-alloy-config
+                target: /etc/alloy/config.alloy
+                mode: 0444
 
         volumes:
           ${DEPLOYMENT_NAME}-pg-data:
           ${DEPLOYMENT_NAME}-redis-data:
-          ${DEPLOYMENT_NAME}-alloy-config:
           ${DEPLOYMENT_NAME}-uploads:
+
+        configs:
+          ${DEPLOYMENT_NAME}-alloy-config:
+            content: |
         EOF
 
-        # Create minimal alloy config
-        mkdir -p /tmp/staging-deploy/alloy
-        cat > /tmp/staging-deploy/alloy/config.alloy << 'ALLOY_EOF'
-        logging {
-            level = "info"
-        }
-        ALLOY_EOF
+        # Append config/alloy/minimal.alloy as the value of `content: |`,
+        # indented 6 spaces so it nests under the block scalar.
+        sed 's/^/      /' config/alloy/minimal.alloy >> /tmp/staging-deploy/compose.yaml
 
         echo "Compose file created at /tmp/staging-deploy/compose.yaml"
         cat /tmp/staging-deploy/compose.yaml
