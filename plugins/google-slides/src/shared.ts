@@ -12,17 +12,17 @@ interface PdfProcessingContext {
   pluginId: string;
 }
 
-export const deleteOldThumbnails = (
+export const deleteOldMedia = (
   serverPluginApi: ServerPluginApi,
-  thumbnailLinks: string[],
+  mediaNames: string[],
 ) => {
-  if (thumbnailLinks.length === 0) return;
+  if (mediaNames.length === 0) return;
 
   serverPluginApi
     .runJobAndAwait<
       job.DeleteBatchPayload,
       job.DeleteBatchResult
-    >("medias__delete_batch", { mediaNames: thumbnailLinks }, { timeoutMs: 60000 })
+    >("medias__delete_batch", { mediaNames }, { timeoutMs: 60000 })
     .catch((err) => {
       logger.error({ err }, "Failed to delete old media");
     });
