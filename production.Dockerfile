@@ -49,7 +49,7 @@ COPY packages/ui/package.json /app/packages/ui/package.json
 COPY packages/video/package.json /app/packages/video/package.json
 COPY plugins/embed/package.json /app/plugins/embed/package.json
 COPY plugins/timer/package.json /app/plugins/timer/package.json
-COPY plugins/google-slides/package.json /app/plugins/google-slides/package.json
+COPY plugins/slides/package.json /app/plugins/slides/package.json
 COPY plugins/lyrics-presenter/package.json /app/plugins/lyrics-presenter/package.json
 COPY plugins/simple-image/package.json /app/plugins/simple-image/package.json
 COPY plugins/audio-recorder/package.json /app/plugins/audio-recorder/package.json
@@ -153,8 +153,8 @@ RUN yarn workspace @repo/plugin-embed build
 COPY plugins/timer/ /app/plugins/timer/
 RUN yarn workspace @repo/plugin-timer build
 
-COPY plugins/google-slides/ /app/plugins/google-slides/
-RUN yarn workspace @repo/plugin-google-slides build
+COPY plugins/slides/ /app/plugins/slides/
+RUN yarn workspace @repo/plugin-slides build
 
 COPY plugins/lyrics-presenter/ /app/plugins/lyrics-presenter/
 RUN yarn workspace @repo/plugin-lyrics-presenter build
@@ -245,9 +245,9 @@ COPY --from=builder-plugin /app/plugins/embed/out/ /app/plugins/embed/out/
 COPY --from=builder-plugin /app/plugins/timer/package.json /app/plugins/timer/
 COPY --from=builder-plugin /app/plugins/timer/dist/ /app/plugins/timer/dist/
 COPY --from=builder-plugin /app/plugins/timer/out/ /app/plugins/timer/out/
-COPY --from=builder-plugin /app/plugins/google-slides/package.json /app/plugins/google-slides/
-COPY --from=builder-plugin /app/plugins/google-slides/dist/ /app/plugins/google-slides/dist/
-COPY --from=builder-plugin /app/plugins/google-slides/out/ /app/plugins/google-slides/out/
+COPY --from=builder-plugin /app/plugins/slides/package.json /app/plugins/slides/
+COPY --from=builder-plugin /app/plugins/slides/dist/ /app/plugins/slides/dist/
+COPY --from=builder-plugin /app/plugins/slides/out/ /app/plugins/slides/out/
 COPY --from=builder-plugin /app/plugins/lyrics-presenter/package.json /app/plugins/lyrics-presenter/
 COPY --from=builder-plugin /app/plugins/lyrics-presenter/dist/ /app/plugins/lyrics-presenter/dist/
 COPY --from=builder-plugin /app/plugins/lyrics-presenter/out/ /app/plugins/lyrics-presenter/out/

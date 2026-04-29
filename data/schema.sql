@@ -2,10 +2,10 @@
 -- PostgreSQL database dump
 --
 
-\restrict 7y02tfUgSSHDibgHBN3akyMqLoC50PSTzyM1s8xoMtIb7oFJLKjraJ2bVBHY4NE
+\restrict AqcMKVH59dHmTIzPaWHhCHcqwjbJMxkZFlMd6YBXXPPlxcuI83XhlEAEHyTYgHD
 
 -- Dumped from database version 17.0 (Debian 17.0-1.pgdg120+1)
--- Dumped by pg_dump version 18.1
+-- Dumped by pg_dump version 18.3
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -5028,5 +5028,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE theopenpresenter REVOKE ALL ON FUNCTIONS FROM 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 7y02tfUgSSHDibgHBN3akyMqLoC50PSTzyM1s8xoMtIb7oFJLKjraJ2bVBHY4NE
+\unrestrict AqcMKVH59dHmTIzPaWHhCHcqwjbJMxkZFlMd6YBXXPPlxcuI83XhlEAEHyTYgHD
 

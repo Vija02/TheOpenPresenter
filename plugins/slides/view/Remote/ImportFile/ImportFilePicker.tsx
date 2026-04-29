@@ -18,7 +18,7 @@ export const ImportFilePicker = ({ replaceImportId }: Props) => {
 
   const { onToggle } = useOverlayToggle();
 
-  const selectSlideMutation = trpc.googleslides.selectSlide.useMutation();
+  const selectSlideMutation = trpc.slides.selectSlide.useMutation();
   return (
     <div className="flex gap-2 w-full max-w-lg flex-wrap">
       <SlidePicker
