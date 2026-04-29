@@ -751,6 +751,11 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
             deleteOldMedia(serverPluginApi, [importData.pdfMediaName]);
           }
 
+          const oldSlideOrder = [...loadedPlugin.pluginData.slideOrder];
+          const newSlideOrder = oldSlideOrder.filter(
+            (ref) => parseSlideRef(ref).importId !== importId,
+          );
+
           loadedYjs.doc?.transact(() => {
             // 1. Drop the import data
             const { [importId]: _, ...remainingImports } =
@@ -758,14 +763,9 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
             loadedPlugin.pluginData.imports = remainingImports;
 
             // 2. Strip slideOrder
-            loadedPlugin.pluginData.slideOrder =
-              loadedPlugin.pluginData.slideOrder.filter(
-                (ref) => parseSlideRef(ref).importId !== importId,
-              );
+            loadedPlugin.pluginData.slideOrder = newSlideOrder;
 
-            const newSlideCount = loadedPlugin.pluginData.slideOrder.length;
-
-            // 3. Clean up renderer state
+            // 3. Update renderer state
             const rendererMap = getRendererData?.() ?? {};
             for (const rendererData of Object.values(rendererMap)) {
               const displayModes = rendererData.get("displayModes");
@@ -773,14 +773,18 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
                 displayModes.delete(importId);
               }
 
-              // Clamp currentSlideIndex / currentClickCount to the new range.
-              const currentIdx = rendererData.get("currentSlideIndex") ?? 0;
-              if (newSlideCount === 0) {
+              const currentIdx = rendererData.get("currentSlideIndex");
+              if (currentIdx === null || currentIdx === undefined) continue;
+
+              const oldRef = oldSlideOrder[currentIdx];
+              const newIdx =
+                oldRef !== undefined ? newSlideOrder.indexOf(oldRef) : -1;
+
+              if (newIdx === -1) {
                 rendererData.set("currentSlideIndex", null);
                 rendererData.set("currentClickCount", null);
-              } else if (currentIdx >= newSlideCount) {
-                rendererData.set("currentSlideIndex", newSlideCount - 1);
-                rendererData.set("currentClickCount", 0);
+              } else {
+                rendererData.set("currentSlideIndex", newIdx);
               }
             }
           });
