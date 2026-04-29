@@ -638,6 +638,10 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
                 uploadedPdfFileName,
               } = await uploadPdfAndPrepare(ctx_media, pdfBuffer);
 
+              loadedPlugin.pluginData.imports[
+                newImport.importId
+              ]!.thumbnailLinks = fileNames;
+
               log.info("PDF uploaded. Signaling image uploads to start...");
               imageProcessor.setParentMediaId(uploadedPdfMediaId);
 
@@ -659,6 +663,13 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
               const processedHtml = processHtml(htmlData.data, urlMapping);
               const slideData = extractSlideData(processedHtml);
 
+              if (!slideData) {
+                log.error(
+                  { processedHtml },
+                  "Unable to extract data from slide",
+                );
+              }
+
               const slideIds = slideData
                 ? slideData.slides.map((slide) => slide.slideId)
                 : fileNames.map((_, i) => String(i));
@@ -667,9 +678,6 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
                 : fileNames.map(() => 0);
 
               loadedYjs.doc?.transact(() => {
-                loadedPlugin.pluginData.imports[
-                  newImport.importId
-                ]!.thumbnailLinks = fileNames;
                 loadedPlugin.pluginData.imports[
                   newImport.importId
                 ]!.slideClickCounts = slideClickCounts;
