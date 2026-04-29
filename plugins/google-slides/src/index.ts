@@ -25,7 +25,7 @@ import { processHtml } from "./googleSlides/processHtml";
 import { extractSlideData } from "./googleSlides/slideData/slideDataExtractor";
 import { migratePluginDataV1ToV2 } from "./migrate/v1";
 import {
-  deleteOldThumbnails,
+  deleteOldMedia,
   processPdfToThumbnails,
   startThumbnailWorker,
   uploadPdfAndPrepare,
@@ -283,9 +283,9 @@ const onRendererDataCreated = (
 };
 
 const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
-  const cleanupThumbnails = (thumbnails: string[]) => {
-    if (thumbnails.length > 0) {
-      deleteOldThumbnails(serverPluginApi, thumbnails);
+  const cleanupImportMedia = (importData: ImportData) => {
+    if (importData.pdfMediaName) {
+      deleteOldMedia(serverPluginApi, [importData.pdfMediaName]);
     }
   };
   function getBaseImport(
@@ -395,8 +395,8 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
       slideCount,
     );
 
-    // 3. Clean up the thumbnails of the slides that are gone.
-    cleanupThumbnails(oldImport.thumbnailLinks);
+    // 3. Clean up the thumbnails and uploaded PDF
+    cleanupImportMedia(oldImport);
   };
 
   return t.router({
@@ -440,19 +440,20 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
               const pdfBuffer = Buffer.from(res.data);
               log.info("PPT converted to PDF");
 
-              const { fileNames, workerPromise } = await processPdfToThumbnails(
-                {
-                  serverPluginApi,
-                  organizationId: loadedContextData.organizationId,
-                  userId: ctx.userId,
-                  projectId: loadedContextData.projectId,
-                  pluginId,
-                },
-                pdfBuffer,
-                log,
-                undefined,
-                extractMediaName(mediaName).mediaId,
-              );
+              const { fileNames, workerPromise, uploadedPdfFileName } =
+                await processPdfToThumbnails(
+                  {
+                    serverPluginApi,
+                    organizationId: loadedContextData.organizationId,
+                    userId: ctx.userId,
+                    projectId: loadedContextData.projectId,
+                    pluginId,
+                  },
+                  pdfBuffer,
+                  log,
+                  undefined,
+                  extractMediaName(mediaName).mediaId,
+                );
 
               loadedPlugin.pluginData.imports[
                 newImport.importId
@@ -462,6 +463,9 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
               ]!.slideClickCounts = fileNames.map(() => 0);
               loadedPlugin.pluginData.imports[newImport.importId]!.slideIds =
                 fileNames.map((_, i) => String(i));
+              loadedPlugin.pluginData.imports[
+                newImport.importId
+              ]!.pdfMediaName = uploadedPdfFileName;
 
               // Wait for thumbnails to be uploaded
               await workerPromise;
@@ -512,19 +516,23 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
               const media = await serverPluginApi.media.getMedia(mediaName);
               const pdfBuffer = await streamToBuffer(media);
 
-              const { fileNames, workerPromise } = await processPdfToThumbnails(
-                {
-                  serverPluginApi,
-                  organizationId: loadedContextData.organizationId,
-                  userId: ctx.userId,
-                  projectId: loadedContextData.projectId,
-                  pluginId,
-                },
-                pdfBuffer,
-                log,
-                mediaName,
-              );
+              const { fileNames, workerPromise, uploadedPdfFileName } =
+                await processPdfToThumbnails(
+                  {
+                    serverPluginApi,
+                    organizationId: loadedContextData.organizationId,
+                    userId: ctx.userId,
+                    projectId: loadedContextData.projectId,
+                    pluginId,
+                  },
+                  pdfBuffer,
+                  log,
+                  mediaName,
+                );
 
+              loadedPlugin.pluginData.imports[
+                newImport.importId
+              ]!.pdfMediaName = uploadedPdfFileName;
               loadedPlugin.pluginData.imports[
                 newImport.importId
               ]!.thumbnailLinks = fileNames;
@@ -641,6 +649,9 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
               loadedPlugin.pluginData.imports[
                 newImport.importId
               ]!.thumbnailLinks = fileNames;
+              loadedPlugin.pluginData.imports[
+                newImport.importId
+              ]!.pdfMediaName = uploadedPdfFileName;
 
               log.info("PDF uploaded. Signaling image uploads to start...");
               imageProcessor.setParentMediaId(uploadedPdfMediaId);
@@ -736,7 +747,9 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
           const importData = loadedPlugin.pluginData.imports[importId];
           if (!importData) return;
 
-          deleteOldThumbnails(serverPluginApi, importData.thumbnailLinks);
+          if (importData.pdfMediaName) {
+            deleteOldMedia(serverPluginApi, [importData.pdfMediaName]);
+          }
 
           loadedYjs.doc?.transact(() => {
             // 1. Drop the import data
