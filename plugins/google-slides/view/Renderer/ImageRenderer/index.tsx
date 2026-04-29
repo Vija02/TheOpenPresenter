@@ -6,7 +6,13 @@ import { usePluginAPI } from "../../pluginApi";
 import { useDisplayedSlide } from "../../utils/useDisplayedSlide";
 import { ImageRenderView } from "./ImageRenderView";
 
-export const ImageRenderer = () => {
+const IMAGE_RENDERER_ID = "__image_renderer__";
+
+interface ImageRendererProps {
+  onLoadingChange: (id: string, isLoading: boolean) => void;
+}
+
+export const ImageRenderer = ({ onLoadingChange }: ImageRendererProps) => {
   const pluginApi = usePluginAPI();
   const pluginData = pluginApi.scene.useData((x) => x.pluginData);
   const rendererDisplayModes = pluginApi.renderer.useData(
@@ -32,21 +38,26 @@ export const ImageRenderer = () => {
     return slides;
   }, [pluginData, rendererDisplayModes]);
 
-  const setAwarenessStateData = pluginApi.awareness.setAwarenessStateData;
+  const loadedIds = useRef<Set<string>>(new Set());
 
   useEffect(() => {
-    setAwarenessStateData({ isLoading: true });
-  }, [setAwarenessStateData]);
-
-  const loadedCount = useRef(0);
-
-  const onLoad = useCallback(() => {
-    loadedCount.current++;
-
-    if (loadedCount.current === renderableSlides.length) {
-      pluginApi.awareness.setAwarenessStateData({ isLoading: false });
+    const validIds = new Set(renderableSlides.map(({ slide }) => slide.rawRef));
+    for (const id of loadedIds.current) {
+      if (!validIds.has(id)) loadedIds.current.delete(id);
     }
-  }, [pluginApi.awareness, renderableSlides.length]);
+  }, [renderableSlides]);
+
+  const onLoad = useCallback(
+    (slideId: string) => {
+      loadedIds.current.add(slideId);
+
+      const allLoaded = renderableSlides.every(({ slide }) =>
+        loadedIds.current.has(slide.rawRef),
+      );
+      onLoadingChange(IMAGE_RENDERER_ID, !allLoaded);
+    },
+    [renderableSlides, onLoadingChange],
+  );
 
   return renderableSlides.map(({ slide, globalIndex }) => {
     const isActive = globalSlideIndex === globalIndex;
@@ -63,7 +74,7 @@ export const ImageRenderer = () => {
         <ImageRenderView
           src={slide.thumbnailUrl}
           isActive={isActive}
-          onLoad={onLoad}
+          onLoad={() => onLoad(slide.rawRef)}
         />
       </div>
     );
