@@ -58,7 +58,7 @@ const SettingsModal = () => {
   const pluginApi = usePluginAPI();
   const mutableRendererData = pluginApi.renderer.useValtioData();
 
-  const { mutate: removeImport } = trpc.googleslides.removeImport.useMutation();
+  const { mutate: removeImport } = trpc.slides.removeImport.useMutation();
 
   const pluginData = pluginApi.scene.useData((x) => x.pluginData);
   const autoplay = pluginApi.renderer.useData((x) => x.autoplay);

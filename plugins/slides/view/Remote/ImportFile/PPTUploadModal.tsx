@@ -4,7 +4,7 @@ import Uppy from "@uppy/core";
 import { DashboardModal, useUppyEvent } from "@uppy/react";
 import Tus from "@uppy/tus";
 import { useState } from "react";
-import { FaFilePdf } from "react-icons/fa";
+import { RiFilePpt2Fill } from "react-icons/ri";
 
 import { usePluginAPI } from "../../pluginApi";
 import { trpc } from "../../trpc";
@@ -14,7 +14,7 @@ type Props = {
   replaceImportId?: string;
 };
 
-export const PDFUploadModal = ({ replaceImportId }: Props) => {
+export const PPTUploadModal = ({ replaceImportId }: Props) => {
   const pluginApi = usePluginAPI();
 
   const { open, onToggle, onClose } = useDisclosure();
@@ -22,7 +22,7 @@ export const PDFUploadModal = ({ replaceImportId }: Props) => {
 
   const [uppy] = useState(() =>
     new Uppy({
-      restrictions: { allowedFileTypes: [".pdf"] },
+      restrictions: { allowedFileTypes: [".ppt", ".pptx"] },
     }).use(Tus, {
       endpoint: pluginApi.media.tusUploadUrl,
       headers: {
@@ -35,14 +35,14 @@ export const PDFUploadModal = ({ replaceImportId }: Props) => {
     }),
   );
 
-  const { mutate: selectPdf, isPending } =
-    trpc.googleslides.selectPdf.useMutation();
+  const { mutate: selectPpt, isPending } =
+    trpc.slides.selectPpt.useMutation();
 
   useUppyEvent(uppy, "upload-success", (file) => {
     const splitted = file?.tus?.uploadUrl?.split("/");
     const fileName = splitted?.[splitted.length - 1];
 
-    selectPdf({
+    selectPpt({
       mediaName: fileName ?? "",
       name: file?.name,
       pluginId: pluginApi.pluginContext.pluginId,
@@ -56,8 +56,8 @@ export const PDFUploadModal = ({ replaceImportId }: Props) => {
     <div className="flex justify-center flex-1">
       <PickerCard
         onClick={onToggle}
-        icon={<FaFilePdf className="size-10 text-[#F52102]" />}
-        text="PDF"
+        icon={<RiFilePpt2Fill className="size-10 text-[#CC4A34]" />}
+        text="Powerpoint"
         isLoading={isPending}
       />
       <DashboardModal

@@ -23,7 +23,6 @@ import {
 import { createImageProcessor } from "./googleSlides/cacheGoogleSlideImage";
 import { processHtml } from "./googleSlides/processHtml";
 import { extractSlideData } from "./googleSlides/slideData/slideDataExtractor";
-import { migratePluginDataV1ToV2 } from "./migrate/v1";
 import {
   deleteOldMedia,
   processPdfToThumbnails,
@@ -239,8 +238,6 @@ const onPluginDataLoaded = (
     getRendererData: () => Record<string, ObjectToTypedMap<PluginRendererData>>;
   },
 ) => {
-  migratePluginDataV1ToV2(pluginInfo);
-
   const rawData = pluginInfo.toJSON() as Plugin<PluginBaseData>;
 
   const data = proxy(rawData);
@@ -402,7 +399,7 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
   };
 
   return t.router({
-    googleslides: {
+    slides: {
       selectPpt: t.procedure
         .input(
           z.object({

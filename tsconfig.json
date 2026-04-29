@@ -11,7 +11,7 @@
     { "path": "packages/lib" },
     { "path": "packages/ui" },
 
-    { "path": "plugins/google-slides" },
+    { "path": "plugins/slides" },
     { "path": "plugins/lyrics-presenter" },
     { "path": "plugins/simple-image" },
     { "path": "plugins/embed" },
