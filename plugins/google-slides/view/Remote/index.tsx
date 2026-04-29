@@ -2,6 +2,7 @@ import { extractMediaName } from "@repo/lib";
 import {
   Button,
   LoadingFull,
+  LoadingInline,
   OverlayToggle,
   PluginScaffold,
   Skeleton,
@@ -172,7 +173,9 @@ const RemoteHandler = () => {
       ))}
       {/* Render skeletons when importing */}
       {fetchingImports.flatMap((importData, importIdx) => {
-        const count = Math.max(importData.thumbnailLinks?.length ?? 0, 1);
+        const knownCount = importData.thumbnailLinks?.length ?? 0;
+        const isUnknownCount = knownCount === 0;
+        const count = isUnknownCount ? 1 : knownCount;
         const prevCount = fetchingImports
           .slice(0, importIdx)
           .reduce(
@@ -183,9 +186,23 @@ const RemoteHandler = () => {
           <Slide
             key={`fetching-${importData.importId}-${i}`}
             pluginAPI={pluginApi}
-            heading={`Slide ${resolvedSlides.length + prevCount + i + 1}`}
+            heading={
+              isUnknownCount
+                ? "⠀"
+                : `Slide ${resolvedSlides.length + prevCount + i + 1}`
+            }
           >
-            {() => <Skeleton className="h-full" />}
+            {() => (
+              <div className="relative h-full w-full">
+                <Skeleton className="h-full w-full" />
+                {isUnknownCount && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-secondary">
+                    <LoadingInline className="size-6" />
+                    <span className="text-sm font-medium">Importing...</span>
+                  </div>
+                )}
+              </div>
+            )}
           </Slide>
         ));
       })}
