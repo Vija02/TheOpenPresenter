@@ -1,5 +1,5 @@
 import { appData } from "@repo/lib";
-import { useDisclosure } from "@repo/ui";
+import { useDisclosure, useOverlayToggle } from "@repo/ui";
 import Uppy from "@uppy/core";
 import { DashboardModal, useUppyEvent } from "@uppy/react";
 import Tus from "@uppy/tus";
@@ -18,6 +18,7 @@ export const PPTUploadModal = ({ replaceImportId }: Props) => {
   const pluginApi = usePluginAPI();
 
   const { open, onToggle, onClose } = useDisclosure();
+  const { onToggle: onParentToggle } = useOverlayToggle();
 
   const [uppy] = useState(() =>
     new Uppy({
@@ -34,20 +35,21 @@ export const PPTUploadModal = ({ replaceImportId }: Props) => {
     }),
   );
 
-  const { mutateAsync: selectPpt, isPending } =
+  const { mutate: selectPpt, isPending } =
     trpc.googleslides.selectPpt.useMutation();
 
-  useUppyEvent(uppy, "upload-success", async (file) => {
+  useUppyEvent(uppy, "upload-success", (file) => {
     const splitted = file?.tus?.uploadUrl?.split("/");
     const fileName = splitted?.[splitted.length - 1];
 
-    await selectPpt({
+    selectPpt({
       mediaName: fileName ?? "",
       name: file?.name,
       pluginId: pluginApi.pluginContext.pluginId,
       replaceImportId,
     });
     onClose();
+    onParentToggle?.();
   });
 
   return (
