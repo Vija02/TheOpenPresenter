@@ -114,6 +114,14 @@ const RemoteHandler = () => {
     .map((_, i) => resolveSlide(pluginData, i))
     .filter((x) => !!x);
 
+  const fetchingImports = useMemo(
+    () =>
+      Object.values(pluginData.imports).filter(
+        (importData) => importData._isFetching,
+      ),
+    [pluginData.imports],
+  );
+
   const baseIndex = rendererData.currentSlideIndex ?? 0;
   const baseClickCount = rendererData.currentClickCount ?? 0;
 
@@ -151,23 +159,36 @@ const RemoteHandler = () => {
             pluginApi.renderer.setRenderCurrentScene();
           }}
         >
-          {({ width }) =>
-            slide.importData._isFetching ||
-            !slide.thumbnailUrl ||
-            slide.thumbnailUrl === "" ? (
-              <Skeleton className="h-full" />
-            ) : (
-              <div className="center">
-                <UniversalImage
-                  src={extractMediaName(slide.thumbnailUrl)}
-                  imgProp={{ style: { width: "100%" } }}
-                  width={width}
-                />
-              </div>
-            )
-          }
+          {({ width }) => (
+            <div className="center">
+              <UniversalImage
+                src={extractMediaName(slide.thumbnailUrl)}
+                imgProp={{ style: { width: "100%" } }}
+                width={width}
+              />
+            </div>
+          )}
         </Slide>
       ))}
+      {/* Render skeletons when importing */}
+      {fetchingImports.flatMap((importData, importIdx) => {
+        const count = Math.max(importData.thumbnailLinks?.length ?? 0, 1);
+        const prevCount = fetchingImports
+          .slice(0, importIdx)
+          .reduce(
+            (acc, imp) => acc + Math.max(imp.thumbnailLinks?.length ?? 0, 1),
+            0,
+          );
+        return Array.from({ length: count }, (_, i) => (
+          <Slide
+            key={`fetching-${importData.importId}-${i}`}
+            pluginAPI={pluginApi}
+            heading={`Slide ${resolvedSlides.length + prevCount + i + 1}`}
+          >
+            {() => <Skeleton className="h-full" />}
+          </Slide>
+        ));
+      })}
       <OverlayToggle
         toggler={({ onToggle }) => (
           <Slide pluginAPI={pluginApi} heading="⠀" onClick={onToggle}>
