@@ -7,14 +7,19 @@ import { useIframeSync } from "./useIframeSync";
 
 interface GoogleSlideRendererProps {
   importId: string;
+  onLoadingChange: (id: string, isLoading: boolean) => void;
+  onUnmount: (id: string) => void;
 }
 
-export const GoogleSlideRenderer = ({ importId }: GoogleSlideRendererProps) => {
+export const GoogleSlideRenderer = ({
+  importId,
+  onLoadingChange,
+  onUnmount,
+}: GoogleSlideRendererProps) => {
   const ref = useRef<RenderViewHandle>(null);
   const [loaded, setLoaded] = useState(false);
 
   const pluginApi = usePluginAPI();
-  const setAwarenessStateData = pluginApi.awareness.setAwarenessStateData;
 
   const slideSrc = useMemo(() => {
     return (
@@ -41,10 +46,13 @@ export const GoogleSlideRenderer = ({ importId }: GoogleSlideRendererProps) => {
     targetClickCount: effectiveClickCount,
   });
 
-  // TODO: This needs to account for the other ones too
   useEffect(() => {
-    setAwarenessStateData({ isLoading: !loaded });
-  }, [loaded, setAwarenessStateData]);
+    onLoadingChange(importId, !loaded);
+  }, [loaded, importId, onLoadingChange]);
+
+  useEffect(() => {
+    return () => onUnmount(importId);
+  }, [importId, onUnmount]);
 
   return (
     <div
