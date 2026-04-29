@@ -51,7 +51,7 @@ export const initPlugins = async (app: Express) => {
       try {
         statSync(path.join(pluginsPath, name));
       } catch (e) {
-        fs.rmSync(path.join(pluginsPath, name), { recursive: true });
+        fs.unlinkSync(path.join(pluginsPath, name));
       }
     }
 
