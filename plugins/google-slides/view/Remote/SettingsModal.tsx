@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
   Form,
+  LoadingInline,
   NumberInputControl,
   OptionControl,
   OverlayToggle,
@@ -68,6 +69,20 @@ const SettingsModal = () => {
   const importsList = useMemo(
     () => Object.values(pluginData.imports ?? {}),
     [pluginData.imports],
+  );
+
+  const replacingImportIds = useMemo(() => {
+    const set = new Set<string>();
+    for (const imp of importsList) {
+      if (imp._isFetching && imp.replaceImportId) set.add(imp.replaceImportId);
+    }
+    return set;
+  }, [importsList]);
+
+  const visibleImports = useMemo(
+    () =>
+      importsList.filter((imp) => !(imp._isFetching && imp.replaceImportId)),
+    [importsList],
   );
 
   const currentDisplayModes = useMemo(
@@ -205,12 +220,15 @@ const SettingsModal = () => {
                 </div>
               </div>
 
-              {importsList.length > 0 && (
+              {visibleImports.length > 0 && (
                 <div>
                   <h3 className="font-bold text-lg mb-2">Imports</h3>
                   <div className="flex flex-col gap-3">
-                    {importsList.map((imp, idx) => {
+                    {visibleImports.map((imp, idx) => {
                       const displayTitle = imp.name ?? `Import ${idx + 1}`;
+                      const isBeingReplaced = replacingImportIds.has(
+                        imp.importId,
+                      );
                       const filteredOptions = [
                         {
                           title: "Google Slides",
@@ -258,6 +276,11 @@ const SettingsModal = () => {
                               >
                                 {displayTitle}
                               </h4>
+                              {isBeingReplaced && (
+                                <span className="text-xs italic text-secondary shrink-0">
+                                  Replacing...
+                                </span>
+                              )}
                             </div>
                             <div className="flex items-center gap-2 shrink-0">
                               <OverlayToggle
@@ -266,9 +289,14 @@ const SettingsModal = () => {
                                     type="button"
                                     size="xs"
                                     variant="outline"
+                                    disabled={isBeingReplaced}
                                     onClick={onToggle}
                                   >
-                                    <FaArrowsRotate />
+                                    {isBeingReplaced ? (
+                                      <LoadingInline className="size-3" />
+                                    ) : (
+                                      <FaArrowsRotate />
+                                    )}
                                     Replace
                                   </Button>
                                 )}
@@ -289,6 +317,7 @@ const SettingsModal = () => {
                                   type="button"
                                   size="xs"
                                   variant="outline"
+                                  disabled={isBeingReplaced}
                                 >
                                   <FaTrash />
                                   Delete
