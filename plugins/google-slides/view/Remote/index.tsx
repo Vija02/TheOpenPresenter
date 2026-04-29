@@ -123,6 +123,19 @@ const RemoteHandler = () => {
     [pluginData.imports],
   );
 
+  const replacingImportIds = useMemo(() => {
+    const set = new Set<string>();
+    for (const imp of fetchingImports) {
+      if (imp.replaceImportId) set.add(imp.replaceImportId);
+    }
+    return set;
+  }, [fetchingImports]);
+
+  const appendingFetchingImports = useMemo(
+    () => fetchingImports.filter((imp) => !imp.replaceImportId),
+    [fetchingImports],
+  );
+
   const baseIndex = rendererData.currentSlideIndex ?? 0;
   const baseClickCount = rendererData.currentClickCount ?? 0;
 
@@ -147,36 +160,44 @@ const RemoteHandler = () => {
 
   return (
     <>
-      {resolvedSlides.map((slide, i) => (
-        <Slide
-          key={slide.rawRef}
-          pluginAPI={pluginApi}
-          heading={`Slide ${i + 1}`}
-          isActive={i === activeIndex}
-          onClick={() => {
-            mutableRendererData.currentSlideIndex = i;
-            mutableRendererData.currentClickCount = null;
-            mutableRendererData.lastClickTimestamp = Date.now();
-            pluginApi.renderer.setRenderCurrentScene();
-          }}
-        >
-          {({ width }) => (
-            <div className="center">
-              <UniversalImage
-                src={extractMediaName(slide.thumbnailUrl)}
-                imgProp={{ style: { width: "100%" } }}
-                width={width}
-              />
-            </div>
-          )}
-        </Slide>
-      ))}
+      {resolvedSlides.map((slide, i) => {
+        const isReplacing = replacingImportIds.has(slide.ref.importId);
+        return (
+          <Slide
+            key={slide.rawRef}
+            pluginAPI={pluginApi}
+            heading={`Slide ${i + 1}`}
+            isActive={i === activeIndex}
+            onClick={() => {
+              mutableRendererData.currentSlideIndex = i;
+              mutableRendererData.currentClickCount = null;
+              mutableRendererData.lastClickTimestamp = Date.now();
+              pluginApi.renderer.setRenderCurrentScene();
+            }}
+          >
+            {({ width }) => (
+              <div className="center relative h-full w-full">
+                <UniversalImage
+                  src={extractMediaName(slide.thumbnailUrl)}
+                  imgProp={{ style: { width: "100%" } }}
+                  width={width}
+                />
+                {isReplacing && (
+                  <div className="absolute bottom-1 right-1 flex items-center justify-center rounded-full bg-black/60 p-1 text-white">
+                    <LoadingInline className="size-3" />
+                  </div>
+                )}
+              </div>
+            )}
+          </Slide>
+        );
+      })}
       {/* Render skeletons when importing */}
-      {fetchingImports.flatMap((importData, importIdx) => {
+      {appendingFetchingImports.flatMap((importData, importIdx) => {
         const knownCount = importData.thumbnailLinks?.length ?? 0;
         const isUnknownCount = knownCount === 0;
         const count = isUnknownCount ? 1 : knownCount;
-        const prevCount = fetchingImports
+        const prevCount = appendingFetchingImports
           .slice(0, importIdx)
           .reduce(
             (acc, imp) => acc + Math.max(imp.thumbnailLinks?.length ?? 0, 1),

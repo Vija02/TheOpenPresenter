@@ -291,6 +291,7 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
   function getBaseImport(
     type: ImportData["type"],
     name?: string,
+    replaceImportId?: string,
   ): BaseImportData {
     return {
       importId: typeidUnboxed("import"),
@@ -301,6 +302,7 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
       slideClickCounts: [],
       slideIds: [],
       _isFetching: true,
+      ...(replaceImportId && { replaceImportId }),
     };
   }
 
@@ -423,7 +425,11 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
             const loadedPlugin = loadedPlugins[pluginId]!;
             const loadedContextData = loadedContext[pluginId]!;
 
-            const newImport = getBaseImport("ppt", name) as PptImportData;
+            const newImport = getBaseImport(
+              "ppt",
+              name,
+              replaceImportId,
+            ) as PptImportData;
             loadedPlugin.pluginData.imports[newImport.importId] = newImport;
 
             try {
@@ -509,7 +515,11 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
             const loadedPlugin = loadedPlugins[pluginId]!;
             const loadedContextData = loadedContext[pluginId]!;
 
-            const newImport = getBaseImport("pdf", name) as PdfImportData;
+            const newImport = getBaseImport(
+              "pdf",
+              name,
+              replaceImportId,
+            ) as PdfImportData;
             loadedPlugin.pluginData.imports[newImport.importId] = newImport;
 
             try {
@@ -593,7 +603,7 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
             const startTime = Date.now();
 
             const newImport: GoogleSlidesImportData = {
-              ...getBaseImport("googleslides", name),
+              ...getBaseImport("googleslides", name, replaceImportId),
               type: "googleslides",
               presentationId,
               html: "",
@@ -790,6 +800,33 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
           });
         }),
 
+      // // Move a slide in the order
+      // moveSlide: t.procedure
+      //   .input(
+      //     z.object({
+      //       pluginId: z.string(),
+      //       fromIndex: z.number(),
+      //       toIndex: z.number(),
+      //     }),
+      //   )
+      //   .mutation(async ({ input: { pluginId, fromIndex, toIndex } }) => {
+      //     const loadedPlugin = loadedPlugins[pluginId]!;
+      //     const slideOrder = [...loadedPlugin.pluginData.slideOrder];
+
+      //     if (
+      //       fromIndex < 0 ||
+      //       fromIndex >= slideOrder.length ||
+      //       toIndex < 0 ||
+      //       toIndex >= slideOrder.length
+      //     ) {
+      //       return;
+      //     }
+
+      //     const [removed] = slideOrder.splice(fromIndex, 1);
+      //     slideOrder.splice(toIndex, 0, removed!);
+
+      //     loadedPlugin.pluginData.slideOrder = slideOrder;
+      //   }),
     },
   });
 };

@@ -48,6 +48,8 @@ export interface BaseImportData {
   pdfMediaName?: string;
   /** Whether this import is currently being fetched/processed */
   _isFetching?: boolean;
+  /** If replacing an existing import, shows the id */
+  replaceImportId?: string;
 }
 
 export interface GoogleSlidesImportData extends BaseImportData {
