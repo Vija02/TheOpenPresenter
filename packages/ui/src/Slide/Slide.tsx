@@ -49,6 +49,7 @@ export const Slide = ({
       className={cx(["flex justify-center", { "cursor-pointer": !!onClick }])}
       onClick={onClick}
       data-testid="slide-container"
+      aria-current={isActive ? "true" : undefined}
     >
       <div className="overflow-hidden">
         {(heading || headingRight) && (
