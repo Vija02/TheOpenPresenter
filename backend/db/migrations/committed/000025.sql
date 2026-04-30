@@ -1,5 +1,5 @@
 --! Previous: sha1:fe9dd350f7c646a2a5f1dc3dc648ead4e8e3335e
---! Hash: sha1:2ca434a6c21bcb58b92a247f5f0a7ef90f074514
+--! Hash: sha1:971681ff51d76229a367a109d22928f0a3ffcc55
 
 --! split: 100-reset.sql
 -- 200
@@ -78,7 +78,8 @@ create trigger _500_gql_notify
   for each row
   execute procedure app_public.tg__graphql_subscription(
     'screenUpdate',
-    'graphql:screens'
+    'graphql:screens:$1',
+    'id'
   );
 
 create function app_public.current_user_can_access_screen(screen_id uuid) returns boolean as $$

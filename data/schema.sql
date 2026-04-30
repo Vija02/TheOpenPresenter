@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict l6WoTraRY2eL65ejgobCrcVkG1Z511Yb1Gr9WxcZwmRi3MDFPhONWcUy5L5FeKg
+\restrict 2pYIsGsXm3RWfcQDecNGBu1AVXgcH45EwhdKYKAFLZYuauGVofcV0CChlM1eIE6
 
 -- Dumped from database version 17.0 (Debian 17.0-1.pgdg120+1)
 -- Dumped by pg_dump version 18.3
@@ -3374,7 +3374,7 @@ CREATE TRIGGER _500_gql_notify AFTER INSERT OR DELETE OR UPDATE ON app_public.cl
 -- Name: screens _500_gql_notify; Type: TRIGGER; Schema: app_public; Owner: -
 --
 
-CREATE TRIGGER _500_gql_notify AFTER INSERT OR DELETE OR UPDATE ON app_public.screens FOR EACH ROW EXECUTE FUNCTION app_public.tg__graphql_subscription('screenUpdate', 'graphql:screens');
+CREATE TRIGGER _500_gql_notify AFTER INSERT OR DELETE OR UPDATE ON app_public.screens FOR EACH ROW EXECUTE FUNCTION app_public.tg__graphql_subscription('screenUpdate', 'graphql:screens:$1', 'id');
 
 
 --
@@ -5240,5 +5240,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE theopenpresenter REVOKE ALL ON FUNCTIONS FROM 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict l6WoTraRY2eL65ejgobCrcVkG1Z511Yb1Gr9WxcZwmRi3MDFPhONWcUy5L5FeKg
+\unrestrict 2pYIsGsXm3RWfcQDecNGBu1AVXgcH45EwhdKYKAFLZYuauGVofcV0CChlM1eIE6
 
