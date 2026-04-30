@@ -10,12 +10,14 @@ import { lazy, useEffect, useMemo } from "react";
 import { Route, Switch, useParams, useSearch } from "wouter";
 
 import { Body } from "./Body";
+import { Screen } from "./Screen";
 
 const TauriHandler = lazy(() => import("./TauriHandler"));
 
 function App() {
   return (
     <Switch>
+      <Route path="/s/:orgSlug/:screenSlug" component={Screen} />
       <Route nest path="/:orgSlug/:projectSlug" component={Root} />
       <Route component={RedirectToOrg} />
     </Switch>
@@ -45,7 +47,7 @@ function Root() {
         <AudioCheckProvider>
           <PluginDataProvider type="renderer" rendererId={rendererId}>
             <AwarenessProvider>
-              <Inner />
+              <AppInner />
             </AwarenessProvider>
           </PluginDataProvider>
         </AudioCheckProvider>
@@ -54,7 +56,7 @@ function Root() {
   );
 }
 
-const Inner = () => {
+export const AppInner = () => {
   const handleKeyPress = useHandleKeyPress();
 
   return (

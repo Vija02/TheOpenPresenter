@@ -1,0 +1,36 @@
+query RendererScreen($orgSlug: String!, $screenSlug: String!) {
+  organizationBySlug(slug: $orgSlug) {
+    id
+    slug
+    screens(condition: { slug: $screenSlug }) {
+      nodes {
+        id
+        name
+        slug
+        currentProjectId
+        currentRendererId
+        currentProject {
+          id
+          slug
+          name
+        }
+      }
+    }
+  }
+}
+
+subscription ScreenUpdated($screenId: UUID!) {
+  screenUpdated(screenId: $screenId) {
+    event
+    screen {
+      id
+      currentProjectId
+      currentRendererId
+      currentProject {
+        id
+        slug
+        name
+      }
+    }
+  }
+}
