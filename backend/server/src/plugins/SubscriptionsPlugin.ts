@@ -54,6 +54,26 @@ const currentUserTopicFromContext = async (
 };
 
 /*
+ * Resolves the per-row PG NOTIFY channel for a single screen.
+ */
+const screenTopicFromArgs = async (
+  args: { screenId: string },
+  context: { [key: string]: any },
+  _resolveInfo: GraphQLResolveInfo
+) => {
+  const {
+    rows: [row],
+  } = await context.pgClient.query(
+    "select app_public.current_user_can_access_screen($1::uuid) as allowed",
+    [args.screenId]
+  );
+  if (!row?.allowed) {
+    throw new Error("You do not have access to this screen");
+  }
+  return `graphql:screens:${args.screenId}`;
+};
+
+/*
  * This plugin adds a number of custom subscriptions to our schema. By making
  * sure our subscriptions are tightly focussed we can ensure that our schema
  * remains scalable and that developers do not get overwhelmed with too many
@@ -75,6 +95,11 @@ const SubscriptionsPlugin = makeExtendSchemaPlugin((build) => {
         event: String # Part of the NOTIFY payload
       }
 
+      type ScreenSubscriptionPayload {
+        screen: Screen # Populated by our resolver below
+        event: String # Part of the NOTIFY payload
+      }
+
       extend type Subscription {
         """
         Triggered when the logged in user's record is updated in some way.
@@ -82,11 +107,21 @@ const SubscriptionsPlugin = makeExtendSchemaPlugin((build) => {
         currentUserUpdated: UserSubscriptionPayload @pgSubscription(topic: ${embed(
           currentUserTopicFromContext
         )})
+
+        """
+        Triggered when the screen is updated in some way.
+        """
+        screenUpdated(screenId: UUID!): ScreenSubscriptionPayload @pgSubscription(topic: ${embed(
+          screenTopicFromArgs
+        )})
       }
     `,
     resolvers: {
       UserSubscriptionPayload: {
         user: recordByIdFromTable(build, sql.fragment`app_public.users`),
+      },
+      ScreenSubscriptionPayload: {
+        screen: recordByIdFromTable(build, sql.fragment`app_public.screens`),
       },
     },
   };
