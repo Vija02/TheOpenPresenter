@@ -4818,16 +4818,7 @@ type Subscription {
   """Triggered when the logged in user's record is updated in some way."""
   currentUserUpdated: UserSubscriptionPayload
 
-  """
-  Triggered when the screen with the given `screenId` is inserted,
-  updated, or deleted. Backed by the `_500_gql_notify` trigger on
-  `app_public.screens`, which publishes to a per-row channel
-  (`graphql:screens:<id>`); the resolver authorises the caller via
-  `current_user_can_access_screen` and subscribes to that channel
-  only, so an update to one screen never wakes up listeners on
-  another. The payload's `screen` is null when the row was deleted
-  (or RLS-filtered, though authorisation already prevents the latter).
-  """
+  """Triggered when the screen is updated in some way."""
   screenUpdated(screenId: UUID!): ScreenSubscriptionPayload
 }
 
