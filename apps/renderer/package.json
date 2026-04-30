@@ -19,6 +19,7 @@
     "@trpc/react-query": "^11.1.2",
     "class-variance-authority": "^0.7.1",
     "graphql": "^15.9.0",
+    "graphql-ws": "^5.16.0",
     "react": "^19.1.0",
     "react-animate-presence": "^1.0.8",
     "react-dom": "^19.1.0",

@@ -1,12 +1,26 @@
 import { appData } from "@repo/lib";
 import type { OperationDefinitionNode } from "graphql";
+import { Client as WSClient, createClient as createWSClient } from "graphql-ws";
 import { toast } from "react-toastify";
 import {
   Client as URQLClient,
   cacheExchange,
   errorExchange,
   fetchExchange,
+  subscriptionExchange,
 } from "urql";
+
+let wsClient: WSClient = createWsClient();
+
+function createWsClient() {
+  const url = `${window.location.origin.replace(/^http/, "ws")}/graphql`;
+  return createWSClient({ url });
+}
+
+export function resetWebsocketConnection(): void {
+  wsClient.dispose();
+  wsClient = createWsClient();
+}
 
 export const urqlClient = new URQLClient({
   url: `${window.location.origin}/graphql`,
@@ -23,6 +37,17 @@ export const urqlClient = new URQLClient({
   exchanges: [
     cacheExchange,
     fetchExchange,
+    subscriptionExchange({
+      forwardSubscription(request) {
+        const input = { ...request, query: request.query || "" };
+        return {
+          subscribe(sink) {
+            const unsubscribe = wsClient.subscribe(input, sink);
+            return { unsubscribe };
+          },
+        };
+      },
+    }),
     errorExchange({
       onError: ({ graphQLErrors, networkError }, operation) => {
         const operationDefinitionNode = operation.query.definitions.find(
