@@ -4819,12 +4819,16 @@ type Subscription {
   currentUserUpdated: UserSubscriptionPayload
 
   """
-  Triggered when any screen row in the database is inserted, updated,
-  or deleted. The payload's `screen` is fetched on the server and
-  gated by RLS, so subscribers only see screens they have access to.
-  Renderers in screen mode filter to their own screen id client-side.
+  Triggered when the screen with the given `screenId` is inserted,
+  updated, or deleted. Backed by the `_500_gql_notify` trigger on
+  `app_public.screens`, which publishes to a per-row channel
+  (`graphql:screens:<id>`); the resolver authorises the caller via
+  `current_user_can_access_screen` and subscribes to that channel
+  only, so an update to one screen never wakes up listeners on
+  another. The payload's `screen` is null when the row was deleted
+  (or RLS-filtered, though authorisation already prevents the latter).
   """
-  screenUpdated: ScreenSubscriptionPayload
+  screenUpdated(screenId: UUID!): ScreenSubscriptionPayload
 }
 
 input SyncCloudConnectionInput {
