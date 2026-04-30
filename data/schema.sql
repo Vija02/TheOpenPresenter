@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict AqcMKVH59dHmTIzPaWHhCHcqwjbJMxkZFlMd6YBXXPPlxcuI83XhlEAEHyTYgHD
+\restrict l6WoTraRY2eL65ejgobCrcVkG1Z511Yb1Gr9WxcZwmRi3MDFPhONWcUy5L5FeKg
 
 -- Dumped from database version 17.0 (Debian 17.0-1.pgdg120+1)
 -- Dumped by pg_dump version 18.3
@@ -1277,6 +1277,23 @@ $$;
 
 
 --
+-- Name: current_user_can_access_screen(uuid); Type: FUNCTION; Schema: app_public; Owner: -
+--
+
+CREATE FUNCTION app_public.current_user_can_access_screen(screen_id uuid) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+    AS $$
+  select exists(
+    select 1
+    from app_public.screens
+    where id = screen_id
+      and organization_id in (select app_public.current_user_member_organization_ids())
+  );
+$$;
+
+
+--
 -- Name: current_user_can_access_tag(uuid); Type: FUNCTION; Schema: app_public; Owner: -
 --
 
@@ -2469,6 +2486,43 @@ COMMENT ON TABLE app_public.project_tags IS 'Many to many relation from project 
 
 
 --
+-- Name: screens; Type: TABLE; Schema: app_public; Owner: -
+--
+
+CREATE TABLE app_public.screens (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    organization_id uuid NOT NULL,
+    name text NOT NULL,
+    slug public.citext NOT NULL,
+    current_project_id uuid,
+    current_renderer_id text DEFAULT '1'::text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: TABLE screens; Type: COMMENT; Schema: app_public; Owner: -
+--
+
+COMMENT ON TABLE app_public.screens IS 'A persistent display identity in an organization. Configured once on the device, then any project can be assigned to it remotely.';
+
+
+--
+-- Name: COLUMN screens.current_project_id; Type: COMMENT; Schema: app_public; Owner: -
+--
+
+COMMENT ON COLUMN app_public.screens.current_project_id IS 'Project currently shown on this screen, or NULL if idle.';
+
+
+--
+-- Name: COLUMN screens.current_renderer_id; Type: COMMENT; Schema: app_public; Owner: -
+--
+
+COMMENT ON COLUMN app_public.screens.current_renderer_id IS 'Which renderer slot inside the assigned project to render.';
+
+
+--
 -- Name: tags; Type: TABLE; Schema: app_public; Owner: -
 --
 
@@ -2717,6 +2771,22 @@ ALTER TABLE ONLY app_public.projects
 
 ALTER TABLE ONLY app_public.projects
     ADD CONSTRAINT projects_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: screens screens_organization_id_slug_key; Type: CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.screens
+    ADD CONSTRAINT screens_organization_id_slug_key UNIQUE (organization_id, slug);
+
+
+--
+-- Name: screens screens_pkey; Type: CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.screens
+    ADD CONSTRAINT screens_pkey PRIMARY KEY (id);
 
 
 --
@@ -3091,6 +3161,34 @@ CREATE INDEX projects_updated_at_idx ON app_public.projects USING btree (updated
 
 
 --
+-- Name: screens_current_project_id_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX screens_current_project_id_idx ON app_public.screens USING btree (current_project_id);
+
+
+--
+-- Name: screens_name_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX screens_name_idx ON app_public.screens USING btree (name);
+
+
+--
+-- Name: screens_organization_id_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX screens_organization_id_idx ON app_public.screens USING btree (organization_id);
+
+
+--
+-- Name: screens_slug_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX screens_slug_idx ON app_public.screens USING btree (slug);
+
+
+--
 -- Name: tags_name_organization_id_idx; Type: INDEX; Schema: app_public; Owner: -
 --
 
@@ -3158,6 +3256,13 @@ CREATE TRIGGER _100_timestamps BEFORE INSERT OR UPDATE ON app_public.project_tag
 --
 
 CREATE TRIGGER _100_timestamps BEFORE INSERT OR UPDATE ON app_public.projects FOR EACH ROW EXECUTE FUNCTION app_private.tg__timestamps();
+
+
+--
+-- Name: screens _100_timestamps; Type: TRIGGER; Schema: app_public; Owner: -
+--
+
+CREATE TRIGGER _100_timestamps BEFORE INSERT OR UPDATE ON app_public.screens FOR EACH ROW EXECUTE FUNCTION app_private.tg__timestamps();
 
 
 --
@@ -3263,6 +3368,13 @@ CREATE TRIGGER _500_deletion_organization_checks_and_actions BEFORE DELETE ON ap
 --
 
 CREATE TRIGGER _500_gql_notify AFTER INSERT OR DELETE OR UPDATE ON app_public.cloud_connections FOR EACH ROW EXECUTE FUNCTION app_public.tg__graphql_subscription('cloudConnectionUpdate', 'graphql:cloud_connections');
+
+
+--
+-- Name: screens _500_gql_notify; Type: TRIGGER; Schema: app_public; Owner: -
+--
+
+CREATE TRIGGER _500_gql_notify AFTER INSERT OR DELETE OR UPDATE ON app_public.screens FOR EACH ROW EXECUTE FUNCTION app_public.tg__graphql_subscription('screenUpdate', 'graphql:screens');
 
 
 --
@@ -3585,6 +3697,22 @@ ALTER TABLE ONLY app_public.projects
 
 
 --
+-- Name: screens screens_current_project_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.screens
+    ADD CONSTRAINT screens_current_project_id_fkey FOREIGN KEY (current_project_id) REFERENCES app_public.projects(id) ON DELETE SET NULL;
+
+
+--
+-- Name: screens screens_organization_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.screens
+    ADD CONSTRAINT screens_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES app_public.organizations(id) ON DELETE CASCADE;
+
+
+--
 -- Name: tags tags_organization_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
 --
 
@@ -3679,6 +3807,13 @@ CREATE POLICY delete_own ON app_public.project_tags FOR DELETE USING (app_public
 
 
 --
+-- Name: screens delete_own; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY delete_own ON app_public.screens FOR DELETE USING ((organization_id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids)));
+
+
+--
 -- Name: user_authentications delete_own; Type: POLICY; Schema: app_public; Owner: -
 --
 
@@ -3732,6 +3867,13 @@ CREATE POLICY insert_own ON app_public.organization_active_devices FOR INSERT WI
 --
 
 CREATE POLICY insert_own ON app_public.project_medias FOR INSERT WITH CHECK (app_public.current_user_can_access_project(project_id));
+
+
+--
+-- Name: screens insert_own; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY insert_own ON app_public.screens FOR INSERT WITH CHECK ((organization_id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids)));
 
 
 --
@@ -3869,6 +4011,12 @@ ALTER TABLE app_public.project_tags ENABLE ROW LEVEL SECURITY;
 ALTER TABLE app_public.projects ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: screens; Type: ROW SECURITY; Schema: app_public; Owner: -
+--
+
+ALTER TABLE app_public.screens ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: users select_all; Type: POLICY; Schema: app_public; Owner: -
 --
 
@@ -3950,6 +4098,13 @@ CREATE POLICY select_own ON app_public.project_tags FOR SELECT USING (app_public
 --
 
 CREATE POLICY select_own ON app_public.projects FOR SELECT USING ((organization_id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids)));
+
+
+--
+-- Name: screens select_own; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY select_own ON app_public.screens FOR SELECT USING ((organization_id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids)));
 
 
 --
@@ -4040,6 +4195,13 @@ CREATE POLICY update_only_when_empty ON app_public.cloud_connections FOR UPDATE 
 --
 
 CREATE POLICY update_own ON app_public.organization_active_devices FOR UPDATE USING ((organization_id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids)));
+
+
+--
+-- Name: screens update_own; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY update_own ON app_public.screens FOR UPDATE USING ((organization_id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids)));
 
 
 --
@@ -4451,6 +4613,14 @@ GRANT ALL ON FUNCTION app_public.current_user_can_access_media(media_id uuid) TO
 
 REVOKE ALL ON FUNCTION app_public.current_user_can_access_project(project_id uuid) FROM PUBLIC;
 GRANT ALL ON FUNCTION app_public.current_user_can_access_project(project_id uuid) TO theopenpresenter_visitor;
+
+
+--
+-- Name: FUNCTION current_user_can_access_screen(screen_id uuid); Type: ACL; Schema: app_public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_public.current_user_can_access_screen(screen_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION app_public.current_user_can_access_screen(screen_id uuid) TO theopenpresenter_visitor;
 
 
 --
@@ -4920,6 +5090,48 @@ GRANT INSERT(tag_id) ON TABLE app_public.project_tags TO theopenpresenter_visito
 
 
 --
+-- Name: TABLE screens; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT SELECT,DELETE ON TABLE app_public.screens TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN screens.organization_id; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(organization_id) ON TABLE app_public.screens TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN screens.name; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(name),UPDATE(name) ON TABLE app_public.screens TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN screens.slug; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(slug),UPDATE(slug) ON TABLE app_public.screens TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN screens.current_project_id; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(current_project_id),UPDATE(current_project_id) ON TABLE app_public.screens TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN screens.current_renderer_id; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(current_renderer_id),UPDATE(current_renderer_id) ON TABLE app_public.screens TO theopenpresenter_visitor;
+
+
+--
 -- Name: TABLE tags; Type: ACL; Schema: app_public; Owner: -
 --
 
@@ -5028,5 +5240,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE theopenpresenter REVOKE ALL ON FUNCTIONS FROM 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict AqcMKVH59dHmTIzPaWHhCHcqwjbJMxkZFlMd6YBXXPPlxcuI83XhlEAEHyTYgHD
+\unrestrict l6WoTraRY2eL65ejgobCrcVkG1Z511Yb1Gr9WxcZwmRi3MDFPhONWcUy5L5FeKg
 
