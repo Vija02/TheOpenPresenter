@@ -738,6 +738,47 @@ type CreateProjectTagPayload {
   tag: Tag
 }
 
+"""All input for the create `Screen` mutation."""
+input CreateScreenInput {
+  """
+  An arbitrary string value with no semantic meaning. Will be included in the
+  payload verbatim. May be used to track mutations by the client.
+  """
+  clientMutationId: String
+
+  """The `Screen` to be created by this mutation."""
+  screen: ScreenInput!
+}
+
+"""The output of our create `Screen` mutation."""
+type CreateScreenPayload {
+  """
+  The exact same `clientMutationId` that was provided in the mutation input,
+  unchanged and unused. May be used by a client to track mutations.
+  """
+  clientMutationId: String
+
+  """Reads a single `Project` that is related to this `Screen`."""
+  currentProject: Project
+
+  """Reads a single `Organization` that is related to this `Screen`."""
+  organization: Organization
+
+  """
+  Our root query field type. Allows us to run any query from our mutation payload.
+  """
+  query: Query
+
+  """The `Screen` that was created by this mutation."""
+  screen: Screen
+
+  """An edge for our `Screen`. May be used by Relay 1."""
+  screenEdge(
+    """The method to use when ordering `Screen`."""
+    orderBy: [ScreensOrderBy!] = [PRIMARY_KEY_ASC]
+  ): ScreensEdge
+}
+
 """All input for the create `Tag` mutation."""
 input CreateTagInput {
   """
@@ -1049,6 +1090,46 @@ type DeleteProjectTagPayload {
 
   """Reads a single `Tag` that is related to this `ProjectTag`."""
   tag: Tag
+}
+
+"""All input for the `deleteScreen` mutation."""
+input DeleteScreenInput {
+  """
+  An arbitrary string value with no semantic meaning. Will be included in the
+  payload verbatim. May be used to track mutations by the client.
+  """
+  clientMutationId: String
+  id: UUID!
+}
+
+"""The output of our delete `Screen` mutation."""
+type DeleteScreenPayload {
+  """
+  The exact same `clientMutationId` that was provided in the mutation input,
+  unchanged and unused. May be used by a client to track mutations.
+  """
+  clientMutationId: String
+
+  """Reads a single `Project` that is related to this `Screen`."""
+  currentProject: Project
+  deletedScreenNodeId: ID
+
+  """Reads a single `Organization` that is related to this `Screen`."""
+  organization: Organization
+
+  """
+  Our root query field type. Allows us to run any query from our mutation payload.
+  """
+  query: Query
+
+  """The `Screen` that was deleted by this mutation."""
+  screen: Screen
+
+  """An edge for our `Screen`. May be used by Relay 1."""
+  screenEdge(
+    """The method to use when ordering `Screen`."""
+    orderBy: [ScreensOrderBy!] = [PRIMARY_KEY_ASC]
+  ): ScreensEdge
 }
 
 """All input for the `deleteTag` mutation."""
@@ -2186,6 +2267,14 @@ type Mutation {
     input: CreateProjectTagInput!
   ): CreateProjectTagPayload
 
+  """Creates a single `Screen`."""
+  createScreen(
+    """
+    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.
+    """
+    input: CreateScreenInput!
+  ): CreateScreenPayload
+
   """Creates a single `Tag`."""
   createTag(
     """
@@ -2243,6 +2332,14 @@ type Mutation {
     """
     input: DeleteProjectTagInput!
   ): DeleteProjectTagPayload
+
+  """Deletes a single `Screen` using a unique key."""
+  deleteScreen(
+    """
+    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.
+    """
+    input: DeleteScreenInput!
+  ): DeleteScreenPayload
 
   """Deletes a single `Tag` using a unique key."""
   deleteTag(
@@ -2455,6 +2552,14 @@ type Mutation {
     """
     input: UpdateProjectInput!
   ): UpdateProjectPayload
+
+  """Updates a single `Screen` using a unique key and a patch."""
+  updateScreen(
+    """
+    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.
+    """
+    input: UpdateScreenInput!
+  ): UpdateScreenPayload
 
   """Updates a single `Tag` using a unique key and a patch."""
   updateTag(
@@ -2733,6 +2838,40 @@ type Organization {
     """The method to use when ordering `Project`."""
     orderBy: [ProjectsOrderBy!] = [PRIMARY_KEY_ASC]
   ): ProjectsConnection!
+
+  """Reads and enables pagination through a set of `Screen`."""
+  screens(
+    """Read all values in the set after (below) this cursor."""
+    after: Cursor
+
+    """Read all values in the set before (above) this cursor."""
+    before: Cursor
+
+    """
+    A condition to be used in determining which values should be returned by the collection.
+    """
+    condition: ScreenCondition
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: ScreenFilter
+
+    """Only read the first `n` values of the set."""
+    first: Int
+
+    """Only read the last `n` values of the set."""
+    last: Int
+
+    """
+    Skip the first `n` values from our `after` cursor, an alternative to cursor
+    based pagination. May not be used with `last`.
+    """
+    offset: Int
+
+    """The method to use when ordering `Screen`."""
+    orderBy: [ScreensOrderBy!] = [PRIMARY_KEY_ASC]
+  ): ScreensConnection!
   slug: String!
 
   """Reads and enables pagination through a set of `Tag`."""
@@ -3272,6 +3411,40 @@ type Project {
     """The method to use when ordering `ProjectTag`."""
     orderBy: [ProjectTagsOrderBy!] = [PRIMARY_KEY_ASC]
   ): ProjectTagsConnection!
+
+  """Reads and enables pagination through a set of `Screen`."""
+  screensByCurrentProjectId(
+    """Read all values in the set after (below) this cursor."""
+    after: Cursor
+
+    """Read all values in the set before (above) this cursor."""
+    before: Cursor
+
+    """
+    A condition to be used in determining which values should be returned by the collection.
+    """
+    condition: ScreenCondition
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: ScreenFilter
+
+    """Only read the first `n` values of the set."""
+    first: Int
+
+    """Only read the last `n` values of the set."""
+    last: Int
+
+    """
+    Skip the first `n` values from our `after` cursor, an alternative to cursor
+    based pagination. May not be used with `last`.
+    """
+    offset: Int
+
+    """The method to use when ordering `Screen`."""
+    orderBy: [ScreensOrderBy!] = [PRIMARY_KEY_ASC]
+  ): ScreensConnection!
   slug: String!
   targetDate: Datetime
   updatedAt: Datetime!
@@ -3698,6 +3871,7 @@ type Query {
   currentUserCanAccessCloudConnection(cloudConnectionId: UUID!): Boolean
   currentUserCanAccessMedia(mediaId: UUID!): Boolean
   currentUserCanAccessProject(projectId: UUID!): Boolean
+  currentUserCanAccessScreen(screenId: UUID!): Boolean
   currentUserCanAccessTag(tagId: UUID!): Boolean
   media(id: UUID!): Media
 
@@ -4121,6 +4295,42 @@ type Query {
     """The method to use when ordering `Project`."""
     orderBy: [ProjectsOrderBy!] = [PRIMARY_KEY_ASC]
   ): ProjectsConnection
+  screen(id: UUID!): Screen
+  screenByOrganizationIdAndSlug(organizationId: UUID!, slug: String!): Screen
+
+  """Reads and enables pagination through a set of `Screen`."""
+  screens(
+    """Read all values in the set after (below) this cursor."""
+    after: Cursor
+
+    """Read all values in the set before (above) this cursor."""
+    before: Cursor
+
+    """
+    A condition to be used in determining which values should be returned by the collection.
+    """
+    condition: ScreenCondition
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: ScreenFilter
+
+    """Only read the first `n` values of the set."""
+    first: Int
+
+    """Only read the last `n` values of the set."""
+    last: Int
+
+    """
+    Skip the first `n` values from our `after` cursor, an alternative to cursor
+    based pagination. May not be used with `last`.
+    """
+    offset: Int
+
+    """The method to use when ordering `Screen`."""
+    orderBy: [ScreensOrderBy!] = [PRIMARY_KEY_ASC]
+  ): ScreensConnection
   tag(id: UUID!): Tag
 
   """Reads and enables pagination through a set of `Tag`."""
@@ -4324,6 +4534,152 @@ type SceneCreator {
 }
 
 """
+A persistent display identity in an organization. Configured once on the device, then any project can be assigned to it remotely.
+"""
+type Screen {
+  createdAt: Datetime!
+
+  """Reads a single `Project` that is related to this `Screen`."""
+  currentProject: Project
+
+  """Project currently shown on this screen, or NULL if idle."""
+  currentProjectId: UUID
+
+  """Which renderer slot inside the assigned project to render."""
+  currentRendererId: String!
+  id: UUID!
+  name: String!
+
+  """Reads a single `Organization` that is related to this `Screen`."""
+  organization: Organization
+  organizationId: UUID!
+  slug: String!
+  updatedAt: Datetime!
+}
+
+"""
+A condition to be used against `Screen` object types. All fields are tested for equality and combined with a logical ‘and.’
+"""
+input ScreenCondition {
+  """Checks for equality with the object’s `currentProjectId` field."""
+  currentProjectId: UUID
+
+  """Checks for equality with the object’s `id` field."""
+  id: UUID
+
+  """Checks for equality with the object’s `name` field."""
+  name: String
+
+  """Checks for equality with the object’s `organizationId` field."""
+  organizationId: UUID
+
+  """Checks for equality with the object’s `slug` field."""
+  slug: String
+}
+
+"""
+A filter to be used against `Screen` object types. All fields are combined with a logical ‘and.’
+"""
+input ScreenFilter {
+  """Checks for all expressions in this list."""
+  and: [ScreenFilter!]
+
+  """Filter by the object’s `currentProjectId` field."""
+  currentProjectId: UUIDFilter
+
+  """Filter by the object’s `id` field."""
+  id: UUIDFilter
+
+  """Filter by the object’s `name` field."""
+  name: StringFilter
+
+  """Negates the expression."""
+  not: ScreenFilter
+
+  """Checks for any expressions in this list."""
+  or: [ScreenFilter!]
+
+  """Filter by the object’s `organizationId` field."""
+  organizationId: UUIDFilter
+
+  """Filter by the object’s `slug` field."""
+  slug: StringFilter
+}
+
+"""An input for mutations affecting `Screen`"""
+input ScreenInput {
+  """Project currently shown on this screen, or NULL if idle."""
+  currentProjectId: UUID
+
+  """Which renderer slot inside the assigned project to render."""
+  currentRendererId: String
+  name: String!
+  organizationId: UUID!
+  slug: String!
+}
+
+"""
+Represents an update to a `Screen`. Fields that are set will be updated.
+"""
+input ScreenPatch {
+  """Project currently shown on this screen, or NULL if idle."""
+  currentProjectId: UUID
+
+  """Which renderer slot inside the assigned project to render."""
+  currentRendererId: String
+  name: String
+  slug: String
+}
+
+type ScreenSubscriptionPayload {
+  event: String
+  screen: Screen
+}
+
+"""A connection to a list of `Screen` values."""
+type ScreensConnection {
+  """
+  A list of edges which contains the `Screen` and cursor to aid in pagination.
+  """
+  edges: [ScreensEdge!]!
+
+  """A list of `Screen` objects."""
+  nodes: [Screen!]!
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+
+  """The count of *all* `Screen` you could get from the connection."""
+  totalCount: Int!
+}
+
+"""A `Screen` edge in the connection."""
+type ScreensEdge {
+  """A cursor for use in pagination."""
+  cursor: Cursor
+
+  """The `Screen` at the end of the edge."""
+  node: Screen!
+}
+
+"""Methods to use when ordering `Screen`."""
+enum ScreensOrderBy {
+  CURRENT_PROJECT_ID_ASC
+  CURRENT_PROJECT_ID_DESC
+  ID_ASC
+  ID_DESC
+  NAME_ASC
+  NAME_DESC
+  NATURAL
+  ORGANIZATION_ID_ASC
+  ORGANIZATION_ID_DESC
+  PRIMARY_KEY_ASC
+  PRIMARY_KEY_DESC
+  SLUG_ASC
+  SLUG_DESC
+}
+
+"""
 A filter to be used against String fields. All fields are combined with a logical ‘and.’
 """
 input StringFilter {
@@ -4461,6 +4817,14 @@ The root subscription type: contains realtime events you can subscribe to with t
 type Subscription {
   """Triggered when the logged in user's record is updated in some way."""
   currentUserUpdated: UserSubscriptionPayload
+
+  """
+  Triggered when any screen row in the database is inserted, updated,
+  or deleted. The payload's `screen` is fetched on the server and
+  gated by RLS, so subscribers only see screens they have access to.
+  Renderers in screen mode filter to their own screen id client-side.
+  """
+  screenUpdated: ScreenSubscriptionPayload
 }
 
 input SyncCloudConnectionInput {
@@ -4908,6 +5272,50 @@ type UpdateProjectPayload {
   Our root query field type. Allows us to run any query from our mutation payload.
   """
   query: Query
+}
+
+"""All input for the `updateScreen` mutation."""
+input UpdateScreenInput {
+  """
+  An arbitrary string value with no semantic meaning. Will be included in the
+  payload verbatim. May be used to track mutations by the client.
+  """
+  clientMutationId: String
+  id: UUID!
+
+  """
+  An object where the defined keys will be set on the `Screen` being updated.
+  """
+  patch: ScreenPatch!
+}
+
+"""The output of our update `Screen` mutation."""
+type UpdateScreenPayload {
+  """
+  The exact same `clientMutationId` that was provided in the mutation input,
+  unchanged and unused. May be used by a client to track mutations.
+  """
+  clientMutationId: String
+
+  """Reads a single `Project` that is related to this `Screen`."""
+  currentProject: Project
+
+  """Reads a single `Organization` that is related to this `Screen`."""
+  organization: Organization
+
+  """
+  Our root query field type. Allows us to run any query from our mutation payload.
+  """
+  query: Query
+
+  """The `Screen` that was updated by this mutation."""
+  screen: Screen
+
+  """An edge for our `Screen`. May be used by Relay 1."""
+  screenEdge(
+    """The method to use when ordering `Screen`."""
+    orderBy: [ScreensOrderBy!] = [PRIMARY_KEY_ASC]
+  ): ScreensEdge
 }
 
 """All input for the `updateTag` mutation."""
