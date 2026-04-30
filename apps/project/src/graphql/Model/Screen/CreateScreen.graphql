@@ -1,0 +1,20 @@
+mutation CreateScreen(
+  $organizationId: UUID!
+  $name: String!
+  $slug: String!
+) {
+  createScreen(
+    input: {
+      screen: {
+        organizationId: $organizationId
+        name: $name
+        slug: $slug
+      }
+    }
+  ) {
+    screen {
+      id
+      ...Screen
+    }
+  }
+}

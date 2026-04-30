@@ -1,0 +1,5 @@
+mutation DeleteScreen($id: UUID!) {
+  deleteScreen(input: { id: $id }) {
+    deletedScreenNodeId
+  }
+}

@@ -1,0 +1,24 @@
+mutation UpdateScreen(
+  $id: UUID!
+  $name: String
+  $slug: String
+  $currentProjectId: UUID
+  $currentRendererId: String
+) {
+  updateScreen(
+    input: {
+      id: $id
+      patch: {
+        name: $name
+        slug: $slug
+        currentProjectId: $currentProjectId
+        currentRendererId: $currentRendererId
+      }
+    }
+  ) {
+    screen {
+      id
+      ...Screen
+    }
+  }
+}
