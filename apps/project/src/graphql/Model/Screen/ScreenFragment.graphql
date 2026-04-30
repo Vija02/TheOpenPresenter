@@ -1,0 +1,14 @@
+fragment Screen on Screen {
+  id
+  name
+  slug
+  currentProjectId
+  currentRendererId
+  currentProject {
+    id
+    name
+    slug
+  }
+  createdAt
+  updatedAt
+}
