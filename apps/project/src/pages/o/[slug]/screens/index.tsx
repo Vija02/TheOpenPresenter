@@ -9,10 +9,11 @@ import {
   useUpdateScreenMutation,
 } from "@repo/graphql";
 import { extractError, globalState } from "@repo/lib";
-import { Alert, Badge, Button, Input, PopConfirm } from "@repo/ui";
+import { Alert, Badge, Button, Input, Link, PopConfirm } from "@repo/ui";
 import { format } from "date-fns";
 import { useCallback, useMemo, useState } from "react";
 import { FaPlus } from "react-icons/fa";
+import { MdCoPresent } from "react-icons/md";
 import { VscTrash } from "react-icons/vsc";
 import { toast } from "react-toastify";
 import slugify from "slugify";
@@ -199,16 +200,24 @@ const ScreenRow = ({
           <h3 className="text-lg font-medium truncate">{screen.name}</h3>
           <p className="text-sm text-tertiary">{screen.slug}</p>
         </div>
-        <PopConfirm
-          title="Delete this screen?"
-          okText="Delete"
-          okButtonProps={{ variant: "destructive" }}
-          onConfirm={() => onDelete(screen.id)}
-        >
-          <Button variant="ghost" size="sm">
-            <VscTrash />
-          </Button>
-        </PopConfirm>
+        <div className="flex items-center gap-2">
+          <Link href={`/o/${orgSlug}/screens/${screen.slug}/control`}>
+            <Button variant="outline" size="sm">
+              <MdCoPresent />
+              Control
+            </Button>
+          </Link>
+          <PopConfirm
+            title="Delete this screen?"
+            okText="Delete"
+            okButtonProps={{ variant: "destructive" }}
+            onConfirm={() => onDelete(screen.id)}
+          >
+            <Button variant="ghost" size="sm">
+              <VscTrash />
+            </Button>
+          </PopConfirm>
+        </div>
       </div>
 
       <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
