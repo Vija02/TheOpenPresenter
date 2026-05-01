@@ -11,6 +11,8 @@ import {
 } from "@repo/shared";
 import { ErrorAlert, LoadingFull } from "@repo/ui";
 import { useEffect } from "react";
+import { PiTelevision } from "react-icons/pi";
+import QRCode from "react-qr-code";
 import { useParams } from "wouter";
 
 import { AppInner } from "./App";
@@ -57,9 +59,10 @@ export function Screen() {
 
   if (!screen.currentProject) {
     return (
-      <ScreenMessage
-        title={screen.name}
-        body="Waiting for a project to be assigned…"
+      <ScreenIdle
+        orgSlug={orgSlug}
+        screenName={screen.name}
+        screenSlug={screen.slug}
       />
     );
   }
@@ -104,9 +107,41 @@ function RendererRoot({
   );
 }
 
-const ScreenMessage = ({ title, body }: { title: string; body?: string }) => (
-  <div className="flex h-dvh w-screen flex-col items-center justify-center gap-2 bg-black p-8 text-center text-white">
-    <div className="text-3xl font-semibold">{title}</div>
-    {body && <div className="opacity-70">{body}</div>}
-  </div>
-);
+const ScreenIdle = ({
+  orgSlug,
+  screenName,
+  screenSlug,
+}: {
+  orgSlug: string;
+  screenName: string;
+  screenSlug: string;
+}) => {
+  const controlUrl = `${window.location.origin}/o/${orgSlug}/screens/${screenSlug}/control`;
+
+  return (
+    <div className="flex h-dvh w-screen flex-col bg-black text-white">
+      <div className="flex flex-1 flex-col items-center justify-center gap-6 p-8">
+        <PiTelevision className="size-20" />
+        <div className="text-center">
+          <div className="text-4xl font-semibold">{screenName}</div>
+          <div className="mt-2 text-base opacity-50">Waiting for a project</div>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-5 border-t border-white/10 bg-black/60 p-5">
+        <div className="rounded-md bg-white p-2">
+          <QRCode value={controlUrl} size={96} />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="text-xs uppercase tracking-[0.2em] opacity-50">
+            Scan to control
+          </div>
+          <div className="mt-1 text-lg font-semibold">{screenName}</div>
+          <div className="truncate font-mono text-xs opacity-40">
+            {controlUrl}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};

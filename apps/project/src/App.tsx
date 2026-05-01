@@ -12,6 +12,7 @@ import OrganizationSlugCloudPage from "./pages/o/[slug]/cloud";
 import OrganizationSlugLatestPage from "./pages/o/[slug]/latest/[type]";
 import OrganizationSlugMediaPage from "./pages/o/[slug]/media";
 import OrganizationSlugScreensPage from "./pages/o/[slug]/screens";
+import OrganizationSlugScreenControlPage from "./pages/o/[slug]/screens/[screenSlug]/control";
 import OrganizationSlugSettingsCategoriesPage from "./pages/o/[slug]/settings/categories";
 import OrganizationSlugSettingsDeletePage from "./pages/o/[slug]/settings/delete";
 import OrganizationSlugSettingsGeneralPage from "./pages/o/[slug]/settings/general";
@@ -89,8 +90,20 @@ function App() {
             <Route path="/o/:slug/cloud">
               <OrganizationSlugCloudPage />
             </Route>
-            <Route path="/o/:slug/screens">
-              <OrganizationSlugScreensPage />
+            <Route path="/o/:slug/screens/*?">
+              {({ slug }) => (
+                <Switch>
+                  <Route path="/o/:slug/screens/:screenSlug/control">
+                    <OrganizationSlugScreenControlPage />
+                  </Route>
+                  <Route path="/o/:slug/screens">
+                    <OrganizationSlugScreensPage />
+                  </Route>
+                  <Route path="/o/:slug/screens/*?">
+                    <Redirect href={`/o/${slug}/screens`} />
+                  </Route>
+                </Switch>
+              )}
             </Route>
             <Route path="/o/:slug">
               <OrganizationSlugPage />
