@@ -283,5 +283,5 @@ function createProxyUrl(decodedUrl: string): string | null {
     "",
   );
 
-  return `/plugin/${pluginName}/staticProxy/${subdomain}${path}`;
+  return `/plugin/${pluginName}/gslide/userUploads/${subdomain}${path}`;
 }

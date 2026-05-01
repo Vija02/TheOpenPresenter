@@ -24,7 +24,7 @@ export const GoogleSlideRenderer = ({
   const slideSrc = useMemo(() => {
     return (
       window.location.origin +
-      `/plugin/slides/proxy?pluginId=${pluginApi.pluginContext.pluginId}&importId=${importId}`
+      `/plugin/slides/gslide/proxy?pluginId=${pluginApi.pluginContext.pluginId}&importId=${importId}`
     );
   }, [pluginApi.pluginContext.pluginId, importId]);
 
