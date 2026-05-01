@@ -1,5 +1,8 @@
 import { pluginName } from "../consts";
 
+const scriptsPrefix = `/plugin/${pluginName}/gslide/gscripts`;
+const userUploadsPrefix = `/plugin/${pluginName}/gslide/userUploads`;
+
 /**
  * Processes HTML to replace Google URLs with local/proxy URLs
  * @param html - The raw HTML from Google
@@ -9,13 +12,17 @@ export function processHtml(
   html: string,
   urlMapping?: Map<string, string>,
 ): string {
-  // Handle scripts
+  const scriptsPrefixEscaped = scriptsPrefix.replace(/\//g, "\\/");
+  const userUploadsPrefixEscaped = userUploadsPrefix.replace(/\//g, "\\/");
+
   let processed = html
     .replace(
-      /\/static\/presentation\/client\//g,
-      `/plugin/${pluginName}/gslide/gscripts/static/presentation/client/`,
+      /(?<!gscripts)\/static\/presentation\/client\//g,
+      `${scriptsPrefix}/static/presentation/client/`,
     )
-    .replace(/src="\//, `src="/plugin/${pluginName}/gslide/gscripts/`);
+    .replace(/src="\//, `src="${scriptsPrefix}/`)
+    .replace(/https:\/\/docs\.google\.com/g, scriptsPrefix)
+    .replace(/https:\\\/\\\/docs\.google\.com/g, scriptsPrefixEscaped);
 
   // Now handle images/media
   if (urlMapping && urlMapping.size > 0) {
@@ -26,11 +33,11 @@ export function processHtml(
     processed = processed
       .replace(
         /https:\/\/([^.]+?)\.googleusercontent\.com/g,
-        `/plugin/${pluginName}/gslide/userUploads/$1`,
+        `${userUploadsPrefix}/$1`,
       )
       .replace(
         /https:\\\/\\\/([^.]+?)\.googleusercontent\.com/g,
-        `/plugin/${pluginName}/gslide/userUploads/$1`,
+        `${userUploadsPrefixEscaped}\\/$1`,
       );
   }
 
