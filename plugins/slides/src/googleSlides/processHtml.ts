@@ -13,9 +13,9 @@ export function processHtml(
   let processed = html
     .replace(
       /\/static\/presentation\/client\//g,
-      `/plugin/${pluginName}/staticScripts/static/presentation/client/`,
+      `/plugin/${pluginName}/gslide/gscripts/static/presentation/client/`,
     )
-    .replace(/src="\//, `src="/plugin/${pluginName}/staticScripts/`);
+    .replace(/src="\//, `src="/plugin/${pluginName}/gslide/gscripts/`);
 
   // Now handle images/media
   if (urlMapping && urlMapping.size > 0) {
@@ -26,11 +26,11 @@ export function processHtml(
     processed = processed
       .replace(
         /https:\/\/([^.]+?)\.googleusercontent\.com/g,
-        `/plugin/${pluginName}/staticProxy/$1`,
+        `/plugin/${pluginName}/gslide/userUploads/$1`,
       )
       .replace(
         /https:\\\/\\\/([^.]+?)\.googleusercontent\.com/g,
-        `/plugin/${pluginName}/staticProxy/$1`,
+        `/plugin/${pluginName}/gslide/userUploads/$1`,
       );
   }
 

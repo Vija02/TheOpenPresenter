@@ -96,7 +96,7 @@ export const init = (
     pluginName,
     rendererWebComponentTag,
   );
-  serverPluginApi.registerPrivateRoute(pluginName, "proxy", (req, res) => {
+  serverPluginApi.registerPrivateRoute(pluginName, "gslide/proxy", (req, res) => {
     if (!req.query?.pluginId || !req.query?.importId) {
       res.sendStatus(400);
       return;
@@ -156,10 +156,14 @@ export const init = (
     },
   });
 
-  serverPluginApi.registerPrivateRoute(pluginName, "staticProxy", apiProxy);
   serverPluginApi.registerPrivateRoute(
     pluginName,
-    "staticScripts",
+    "gslide/userUploads",
+    apiProxy,
+  );
+  serverPluginApi.registerPrivateRoute(
+    pluginName,
+    "gslide/gscripts",
     apiProxyScripts,
   );
 
