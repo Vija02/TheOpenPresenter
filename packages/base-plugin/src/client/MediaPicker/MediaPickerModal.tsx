@@ -189,6 +189,8 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
   const title = options?.title ?? "Select Media";
   const portalContainer = options?.portalContainer;
 
+  if (!isOpen) return null;
+
   return (
     <DialogPortalContainerContext.Provider value={portalContainer ?? null}>
       <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
