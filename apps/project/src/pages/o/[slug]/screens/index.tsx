@@ -1,25 +1,17 @@
 import { SharedOrgLayout } from "@/components/SharedOrgLayout";
 import { useOrganizationSlug } from "@/lib/permissionHooks/organization";
 import {
-  OrganizationScreensIndexPageQuery,
   ScreenFragment,
   useCreateScreenMutation,
-  useDeleteScreenMutation,
   useOrganizationScreensIndexPageQuery,
-  useUpdateScreenMutation,
 } from "@repo/graphql";
 import { extractError, globalState } from "@repo/lib";
-import { Alert, Badge, Button, Input, Link, PopConfirm } from "@repo/ui";
-import { format } from "date-fns";
-import { useCallback, useMemo, useState } from "react";
+import { Alert, Badge, Button, Input, Link } from "@repo/ui";
+import { useCallback, useState } from "react";
 import { FaPlus } from "react-icons/fa";
-import { MdCoPresent } from "react-icons/md";
-import { VscTrash } from "react-icons/vsc";
+import { VscChevronRight } from "react-icons/vsc";
 import { toast } from "react-toastify";
 import slugify from "slugify";
-
-const buildScreenRendererUrl = (orgSlug: string, screenSlug: string) =>
-  `${window.location.origin}/render/s/${orgSlug}/${screenSlug}`;
 
 const OrganizationScreensPage = () => {
   const orgSlug = useOrganizationSlug();
@@ -34,8 +26,6 @@ const OrganizationScreensPage = () => {
   });
 
   const [, createScreen] = useCreateScreenMutation();
-  const [, updateScreen] = useUpdateScreenMutation();
-  const [, deleteScreen] = useDeleteScreenMutation();
 
   const [newName, setNewName] = useState("");
   const [newSlug, setNewSlug] = useState("");
@@ -43,7 +33,6 @@ const OrganizationScreensPage = () => {
 
   const organizationId = data?.organizationBySlug?.id;
   const screens = data?.organizationBySlug?.screens.nodes ?? [];
-  const projects = data?.organizationBySlug?.projects.nodes ?? [];
 
   const onCreate = useCallback(async () => {
     if (!organizationId || !newName.trim()) return;
@@ -70,34 +59,6 @@ const OrganizationScreensPage = () => {
     }
   }, [organizationId, newName, newSlug, createScreen, publish]);
 
-  const onAssign = useCallback(
-    async (screenId: string, projectId: string | null) => {
-      try {
-        await updateScreen({
-          id: screenId,
-          currentProjectId: projectId,
-        });
-        publish();
-      } catch (e: any) {
-        toast.error("Failed to assign: " + e.message);
-      }
-    },
-    [updateScreen, publish],
-  );
-
-  const onDelete = useCallback(
-    async (id: string) => {
-      try {
-        await deleteScreen({ id });
-        publish();
-        toast.success("Screen deleted");
-      } catch (e: any) {
-        toast.error("Failed to delete: " + e.message);
-      }
-    },
-    [deleteScreen, publish],
-  );
-
   return (
     <SharedOrgLayout title="Screens" sharedOrgQuery={query}>
       <div className="max-w-4xl mx-auto">
@@ -113,6 +74,15 @@ const OrganizationScreensPage = () => {
             with the screen URL. Then, assign any project here and it will
             switch automatically.
           </p>
+          <div className="mt-3">
+            <Link
+              href={`/o/${orgSlug}/screens/guests`}
+              className="text-sm text-primary inline-flex items-center gap-1 hover:underline"
+            >
+              Manage registered guests
+              <VscChevronRight />
+            </Link>
+          </div>
         </div>
 
         {error && (
@@ -152,14 +122,7 @@ const OrganizationScreensPage = () => {
             <p className="text-secondary text-sm">No screens yet.</p>
           )}
           {screens.map((screen) => (
-            <ScreenRow
-              key={screen.id}
-              screen={screen}
-              orgSlug={orgSlug}
-              projects={projects}
-              onAssign={onAssign}
-              onDelete={onDelete}
-            />
+            <ScreenRow key={screen.id} screen={screen} orgSlug={orgSlug} />
           ))}
         </div>
       </div>
@@ -169,94 +132,29 @@ const OrganizationScreensPage = () => {
 
 export default OrganizationScreensPage;
 
-type ScreenProject = NonNullable<
-  OrganizationScreensIndexPageQuery["organizationBySlug"]
->["projects"]["nodes"][number];
-
 type ScreenRowProps = {
   screen: ScreenFragment;
   orgSlug: string;
-  projects: readonly ScreenProject[];
-  onAssign: (screenId: string, projectId: string | null) => void;
-  onDelete: (id: string) => void;
 };
 
-const ScreenRow = ({
-  screen,
-  orgSlug,
-  projects,
-  onAssign,
-  onDelete,
-}: ScreenRowProps) => {
-  const url = useMemo(
-    () => buildScreenRendererUrl(orgSlug, screen.slug),
-    [orgSlug, screen.slug],
-  );
-
+const ScreenRow = ({ screen, orgSlug }: ScreenRowProps) => {
+  const current = screen.currentProject;
   return (
-    <div className="border border-stroke rounded p-4">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1 min-w-0">
+    <Link
+      href={`/o/${orgSlug}/screens/${screen.slug}/admin`}
+      className="block border border-stroke rounded p-4 hover:bg-gray-50 transition-colors"
+    >
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
           <h3 className="text-lg font-medium truncate">{screen.name}</h3>
-          <p className="text-sm text-tertiary">{screen.slug}</p>
+          <p className="text-sm text-tertiary truncate">
+            {current
+              ? `Showing: ${current.name !== "" ? current.name : "Untitled"}`
+              : "Idle — nothing assigned"}
+          </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Link href={`/o/${orgSlug}/screens/${screen.slug}/control`}>
-            <Button variant="outline" size="sm">
-              <MdCoPresent />
-              Control
-            </Button>
-          </Link>
-          <PopConfirm
-            title="Delete this screen?"
-            okText="Delete"
-            okButtonProps={{ variant: "destructive" }}
-            onConfirm={() => onDelete(screen.id)}
-          >
-            <Button variant="ghost" size="sm">
-              <VscTrash />
-            </Button>
-          </PopConfirm>
-        </div>
+        <VscChevronRight className="shrink-0 text-tertiary" />
       </div>
-
-      <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-secondary mb-1">
-            Currently showing
-          </label>
-          <select
-            value={screen.currentProjectId ?? ""}
-            onChange={(e) =>
-              onAssign(screen.id, e.target.value === "" ? null : e.target.value)
-            }
-            className="border border-stroke rounded px-2 py-1 w-full bg-background"
-          >
-            <option value="">— Unassigned —</option>
-            {projects.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name !== ""
-                  ? p.name
-                  : p.targetDate
-                    ? ""
-                    : `Untitled (${format(new Date(p.createdAt), "do MMM yyyy")})`}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-secondary mb-1">
-            Screen URL
-          </label>
-          <Input
-            type="text"
-            value={url}
-            readOnly
-            className="font-mono text-xs"
-            onClick={(e) => e.currentTarget.select()}
-          />
-        </div>
-      </div>
-    </div>
+    </Link>
   );
 };
