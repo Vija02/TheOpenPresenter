@@ -1,0 +1,5 @@
+mutation DeleteScreenGuest($id: UUID!) {
+  deleteScreenGuest(input: { id: $id }) {
+    uuid
+  }
+}

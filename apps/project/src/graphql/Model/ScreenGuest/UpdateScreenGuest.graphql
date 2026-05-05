@@ -1,0 +1,22 @@
+mutation UpdateScreenGuest(
+  $id: UUID!
+  $displayName: String
+  $passcode: String
+  $email: String
+  $isActive: Boolean
+) {
+  updateScreenGuest(
+    input: {
+      id: $id
+      displayName: $displayName
+      passcode: $passcode
+      email: $email
+      isActive: $isActive
+    }
+  ) {
+    screenGuest {
+      id
+      ...ScreenGuest
+    }
+  }
+}

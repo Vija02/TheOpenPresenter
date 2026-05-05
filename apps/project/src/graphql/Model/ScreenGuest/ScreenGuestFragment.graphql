@@ -1,0 +1,16 @@
+fragment ScreenGuest on ScreenGuest {
+  id
+  organizationId
+  displayName
+  email
+  isActive
+  expiresAt
+  createdBy
+  userByCreatedBy {
+    id
+    username
+    name
+  }
+  createdAt
+  updatedAt
+}
