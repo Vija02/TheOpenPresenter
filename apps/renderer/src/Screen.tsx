@@ -24,7 +24,6 @@ export function Screen() {
 
   const [{ data, fetching, error }, refetch] = useRendererScreenQuery({
     variables: { orgSlug, screenSlug },
-    requestPolicy: "cache-and-network",
   });
 
   const screen = data?.organizationBySlug?.screens.nodes[0];

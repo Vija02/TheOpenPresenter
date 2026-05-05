@@ -27,7 +27,6 @@ const OrganizationSlugScreenLoginPage = () => {
 
   const query = useScreenLoginPageQuery({
     variables: { orgSlug, screenSlug },
-    requestPolicy: "cache-and-network",
   });
   const [{ data, fetching }] = query;
 

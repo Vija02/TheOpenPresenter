@@ -19,7 +19,6 @@ const OrganizationGuestsPage = () => {
   const orgSlug = useOrganizationSlug();
   const query = useOrganizationScreenGuestsIndexPageQuery({
     variables: { slug: orgSlug },
-    requestPolicy: "cache-and-network",
   });
   const { data } = query[0];
 
