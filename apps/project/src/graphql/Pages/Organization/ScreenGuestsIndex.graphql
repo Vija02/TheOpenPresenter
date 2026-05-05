@@ -1,0 +1,14 @@
+query OrganizationScreenGuestsIndexPage($slug: String!) {
+  ...SharedOrganization
+
+  organizationBySlug(slug: $slug) {
+    id
+    name
+    screenGuests(orderBy: [DISPLAY_NAME_ASC]) {
+      nodes {
+        id
+        ...ScreenGuest
+      }
+    }
+  }
+}
