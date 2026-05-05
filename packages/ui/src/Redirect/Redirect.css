@@ -1,0 +1,31 @@
+@reference "@repo/tailwind-config/index.css";
+
+@layer base {
+  .ui--redirect {
+    @apply stack-col items-start gap-2 p-4;
+  }
+
+  .ui--redirect-heading {
+    @apply text-2xl font-bold mb-5;
+  }
+
+  .ui--redirect-row {
+    @apply h-5;
+  }
+
+  .ui--redirect-row-1 {
+    @apply w-4/5;
+  }
+
+  .ui--redirect-row-2 {
+    @apply w-full;
+  }
+
+  .ui--redirect-row-3 {
+    @apply w-[90%];
+  }
+
+  .ui--redirect-row-4 {
+    @apply w-1/2;
+  }
+}

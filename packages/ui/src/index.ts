@@ -38,6 +38,7 @@ export * from "./MediaPreview";
 export * from "./OverlayToggle";
 export * from "./PasswordStrength";
 export * from "./PopConfirm";
+export * from "./Redirect/Redirect";
 export * from "./Slide";
 export * from "./withSuspense";
 export * from "./UniversalImage";
