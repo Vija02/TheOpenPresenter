@@ -12,12 +12,12 @@ import { FaPlus } from "react-icons/fa";
 import { VscChevronRight } from "react-icons/vsc";
 import { toast } from "react-toastify";
 import slugify from "slugify";
+import { Link as WouterLink } from "wouter";
 
 const OrganizationScreensPage = () => {
   const orgSlug = useOrganizationSlug();
   const query = useOrganizationScreensIndexPageQuery({
     variables: { slug: orgSlug },
-    requestPolicy: "cache-and-network",
   });
   const { data } = query[0];
 
@@ -75,12 +75,14 @@ const OrganizationScreensPage = () => {
             switch automatically.
           </p>
           <div className="mt-3">
-            <Link
-              href={`/o/${orgSlug}/screens/guests`}
-              className="text-sm text-primary inline-flex items-center gap-1 hover:underline"
-            >
-              Manage registered guests
-              <VscChevronRight />
+            <Link asChild>
+              <WouterLink
+                href={`/o/${orgSlug}/screens/guests`}
+                className="text-sm text-primary inline-flex items-center gap-1 hover:underline"
+              >
+                Manage registered guests
+                <VscChevronRight />
+              </WouterLink>
             </Link>
           </div>
         </div>
@@ -140,21 +142,23 @@ type ScreenRowProps = {
 const ScreenRow = ({ screen, orgSlug }: ScreenRowProps) => {
   const current = screen.currentProject;
   return (
-    <Link
-      href={`/o/${orgSlug}/screens/${screen.slug}/admin`}
-      className="block border border-stroke rounded p-4 hover:bg-gray-50 transition-colors"
-    >
-      <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <h3 className="text-lg font-medium truncate">{screen.name}</h3>
-          <p className="text-sm text-tertiary truncate">
-            {current
-              ? `Showing: ${current.name !== "" ? current.name : "Untitled"}`
-              : "Idle — nothing assigned"}
-          </p>
+    <Link asChild>
+      <WouterLink
+        href={`/o/${orgSlug}/screens/${screen.slug}/admin`}
+        className="block border border-stroke rounded p-4 hover:bg-gray-50 transition-colors"
+      >
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <h3 className="text-lg font-medium truncate">{screen.name}</h3>
+            <p className="text-sm text-tertiary truncate">
+              {current
+                ? `Showing: ${current.name !== "" ? current.name : "Untitled"}`
+                : "Idle — nothing assigned"}
+            </p>
+          </div>
+          <VscChevronRight className="shrink-0 text-tertiary" />
         </div>
-        <VscChevronRight className="shrink-0 text-tertiary" />
-      </div>
+      </WouterLink>
     </Link>
   );
 };
