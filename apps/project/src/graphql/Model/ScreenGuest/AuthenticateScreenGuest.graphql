@@ -1,0 +1,10 @@
+mutation AuthenticateScreenGuest(
+  $organizationId: UUID!
+  $passcode: String!
+) {
+  authenticateScreenGuest(
+    input: { organizationId: $organizationId, passcode: $passcode }
+  ) {
+    success
+  }
+}

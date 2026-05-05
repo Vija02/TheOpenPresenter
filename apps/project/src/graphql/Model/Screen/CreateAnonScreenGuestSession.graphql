@@ -1,0 +1,10 @@
+mutation CreateAnonScreenGuestSession(
+  $screenId: UUID!
+  $displayName: String
+) {
+  createAnonScreenGuestSession(
+    input: { screenId: $screenId, displayName: $displayName }
+  ) {
+    success
+  }
+}

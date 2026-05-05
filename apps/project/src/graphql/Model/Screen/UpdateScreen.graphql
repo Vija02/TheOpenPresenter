@@ -4,6 +4,18 @@ mutation UpdateScreen(
   $slug: String
   $currentProjectId: UUID
   $currentRendererId: String
+  $registeredGuestEnabled: Boolean
+  $registeredGuestOnEmptyPolicy: ScreenOnEmptyPolicy
+  $registeredGuestOnTakeoverPolicy: ScreenOnTakeoverPolicy
+  $registeredGuestOnTakeoverAfterSeconds: Int
+  $anonGuestEnabled: Boolean
+  $anonGuestOnEmptyPolicy: ScreenOnEmptyPolicy
+  $anonGuestOnTakeoverPolicy: ScreenOnTakeoverPolicy
+  $anonGuestOnTakeoverAfterSeconds: Int
+  $idlePolicy: ScreenIdlePolicy
+  $idleAfterSeconds: Int
+  $unassignAfterIdleSeconds: Int
+  $showBarOnIdle: Boolean
 ) {
   updateScreen(
     input: {
@@ -13,6 +25,18 @@ mutation UpdateScreen(
         slug: $slug
         currentProjectId: $currentProjectId
         currentRendererId: $currentRendererId
+        registeredGuestEnabled: $registeredGuestEnabled
+        registeredGuestOnEmptyPolicy: $registeredGuestOnEmptyPolicy
+        registeredGuestOnTakeoverPolicy: $registeredGuestOnTakeoverPolicy
+        registeredGuestOnTakeoverAfterSeconds: $registeredGuestOnTakeoverAfterSeconds
+        anonGuestEnabled: $anonGuestEnabled
+        anonGuestOnEmptyPolicy: $anonGuestOnEmptyPolicy
+        anonGuestOnTakeoverPolicy: $anonGuestOnTakeoverPolicy
+        anonGuestOnTakeoverAfterSeconds: $anonGuestOnTakeoverAfterSeconds
+        idlePolicy: $idlePolicy
+        idleAfterSeconds: $idleAfterSeconds
+        unassignAfterIdleSeconds: $unassignAfterIdleSeconds
+        showBarOnIdle: $showBarOnIdle
       }
     }
   ) {

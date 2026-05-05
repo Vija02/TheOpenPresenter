@@ -1,0 +1,9 @@
+fragment ScreenGuestSession on ScreenGuestSession {
+  id
+  organizationId
+  kind
+  displayName
+  createdAt
+  lastSeenAt
+  expiresAt
+}

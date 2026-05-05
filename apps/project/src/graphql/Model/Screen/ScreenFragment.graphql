@@ -2,6 +2,7 @@ fragment Screen on Screen {
   id
   name
   slug
+  organizationId
   currentProjectId
   currentRendererId
   currentProject {
@@ -9,6 +10,18 @@ fragment Screen on Screen {
     name
     slug
   }
+  registeredGuestEnabled
+  registeredGuestOnEmptyPolicy
+  registeredGuestOnTakeoverPolicy
+  registeredGuestOnTakeoverAfterSeconds
+  anonGuestEnabled
+  anonGuestOnEmptyPolicy
+  anonGuestOnTakeoverPolicy
+  anonGuestOnTakeoverAfterSeconds
+  idlePolicy
+  idleAfterSeconds
+  unassignAfterIdleSeconds
+  showBarOnIdle
   createdAt
   updatedAt
 }

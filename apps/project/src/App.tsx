@@ -96,6 +96,9 @@ function App() {
                   <Route path="/o/:slug/screens/:screenSlug/control">
                     <OrganizationSlugScreenControlPage />
                   </Route>
+                  <Route path="/o/:slug/screens/:screenSlug/login">
+                    <OrganizationSlugScreenLoginPage />
+                  </Route>
                   <Route path="/o/:slug/screens">
                     <OrganizationSlugScreensPage />
                   </Route>

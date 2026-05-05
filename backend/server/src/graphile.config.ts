@@ -22,6 +22,9 @@ const { default: PgPubsub } = require("@graphile/pg-pubsub");
 export interface OurGraphQLContext {
   pgClient: PoolClient;
   sessionId: string | null;
+  screenGuestSessionId: string | null;
+  screenGuestSessionOrganizationId: string | null;
+  req: Request;
   rootPgPool: Pool;
   login(user: any): Promise<void>;
   logout(): Promise<void>;
@@ -32,6 +35,15 @@ declare global {
     interface User {
       session_id: string;
     }
+  }
+}
+
+declare module "express-session" {
+  interface SessionData {
+    screenGuestSession?: {
+      id: string;
+      organizationId: string;
+    };
   }
 }
 
@@ -239,6 +251,9 @@ export function getPostGraphileOptions({
           [sessionId],
         );
       }
+      const screenGuestSessionId = uuidOrNull(
+        req.session?.screenGuestSession?.id,
+      );
       return {
         // Everyone uses the "visitor" role currently
         role: process.env.DATABASE_VISITOR,
@@ -250,6 +265,7 @@ export function getPostGraphileOptions({
          * names reducing the amount of code you need to write.
          */
         "jwt.claims.session_id": sessionId,
+        "jwt.claims.screen_guest_session_id": screenGuestSessionId,
       };
     },
 
@@ -264,6 +280,16 @@ export function getPostGraphileOptions({
       return {
         // The current session id
         sessionId: uuidOrNull(req.user?.session_id),
+
+        // The active screen guest session, if any
+        screenGuestSessionId: uuidOrNull(req.session?.screenGuestSession?.id),
+        screenGuestSessionOrganizationId: uuidOrNull(
+          req.session?.screenGuestSession?.organizationId,
+        ),
+
+        // Underlying request
+        // To read/write session blob
+        req,
 
         // Needed so passport can write to the database
         rootPgPool,

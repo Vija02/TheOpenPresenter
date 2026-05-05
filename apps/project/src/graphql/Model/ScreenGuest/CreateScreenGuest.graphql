@@ -1,0 +1,20 @@
+mutation CreateScreenGuest(
+  $organizationId: UUID!
+  $displayName: String!
+  $passcode: String!
+  $email: String
+) {
+  createScreenGuest(
+    input: {
+      organizationId: $organizationId
+      displayName: $displayName
+      passcode: $passcode
+      email: $email
+    }
+  ) {
+    screenGuest {
+      id
+      ...ScreenGuest
+    }
+  }
+}
