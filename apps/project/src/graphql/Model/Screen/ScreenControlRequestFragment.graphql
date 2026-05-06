@@ -1,0 +1,21 @@
+fragment ScreenControlRequest on ScreenControlRequest {
+  id
+  screenId
+  screenGuestSessionId
+  screenGuestSession {
+    id
+    kind
+    displayName
+  }
+  requestType
+  status
+  note
+  resolvedAt
+  resolvedByUserId
+  resolvedByUser {
+    id
+    username
+    name
+  }
+  createdAt
+}

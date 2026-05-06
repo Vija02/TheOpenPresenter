@@ -34,7 +34,12 @@ const OrganizationSlugScreenLoginPage = () => {
   const organizationId = meta?.organizationId ?? null;
   const orgName = meta?.organizationName ?? null;
   const currentUserId = data?.currentUser?.id ?? null;
-  const currentScreenGuestSessionId = data?.currentScreenGuestSessionId ?? null;
+  const currentSession = data?.currentScreenGuestSession ?? null;
+
+  const sessionMatchesThisScreen =
+    !!currentSession &&
+    !!meta?.screenId &&
+    currentSession.screenId === meta.screenId;
   const isMember = useMemo(() => {
     if (!organizationId) return false;
     const memberships = data?.currentUser?.organizationMemberships?.nodes ?? [];
@@ -45,7 +50,7 @@ const OrganizationSlugScreenLoginPage = () => {
   const loginHref = `/o/${orgSlug}/screens/${screenSlug}/login`;
 
   const shouldRedirect =
-    !!currentScreenGuestSessionId || (!!currentUserId && isMember);
+    sessionMatchesThisScreen || (!!currentUserId && isMember);
 
   const wrongAccount = !!currentUserId && !!organizationId && !isMember;
 
@@ -118,7 +123,7 @@ const OrganizationSlugScreenLoginPage = () => {
             }
           />
         )}
-        {currentScreenGuestSessionId && (
+        {sessionMatchesThisScreen && (
           <GuestSignOutFooter
             onSignedOut={() => {
               setLocation(`/o/${orgSlug}/screens/${screenSlug}/login`, {
