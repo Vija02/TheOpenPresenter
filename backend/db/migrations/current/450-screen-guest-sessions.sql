@@ -15,6 +15,9 @@ create table app_public.screen_guest_sessions (
 /*====================================*/
 /*============== Indexes =============*/
 /*====================================*/
+create unique index on app_public.screen_guest_sessions (screen_guest_id)
+  where screen_guest_id is not null;
+  
 create index on app_public.screen_guest_sessions (organization_id);
 create index on app_public.screen_guest_sessions (screen_guest_id);
 

@@ -58,6 +58,10 @@ begin
     (organization_id, kind, display_name, screen_guest_id)
   values
     (p_organization_id, 'registered', v_entry.display_name, v_entry.id)
+  on conflict (screen_guest_id) where screen_guest_id is not null
+  do update set
+    display_name = excluded.display_name,
+    last_seen_at = now()
   returning * into v_session;
 
   return v_session;
