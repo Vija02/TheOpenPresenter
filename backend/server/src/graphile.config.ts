@@ -43,6 +43,7 @@ declare module "express-session" {
     screenGuestSession?: {
       id: string;
       organizationId: string;
+      screenId: string;
     };
   }
 }

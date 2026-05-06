@@ -1,5 +1,7 @@
 create table app_public.screen_guest_sessions (
   id uuid primary key default gen_random_uuid(),
+  
+  screen_id uuid not null references app_public.screens(id) on delete cascade,
   organization_id uuid not null references app_public.organizations(id) on delete cascade,
   screen_guest_id uuid references app_public.screen_guests(id) on delete set null,
 
@@ -15,9 +17,10 @@ create table app_public.screen_guest_sessions (
 /*====================================*/
 /*============== Indexes =============*/
 /*====================================*/
-create unique index on app_public.screen_guest_sessions (screen_guest_id)
+create unique index on app_public.screen_guest_sessions (screen_id, screen_guest_id)
   where screen_guest_id is not null;
   
+create index on app_public.screen_guest_sessions (screen_id);
 create index on app_public.screen_guest_sessions (organization_id);
 create index on app_public.screen_guest_sessions (screen_guest_id);
 

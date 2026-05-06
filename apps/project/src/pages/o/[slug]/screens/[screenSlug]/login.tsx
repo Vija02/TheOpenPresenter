@@ -42,9 +42,12 @@ const OrganizationSlugScreenLoginPage = () => {
   }, [organizationId, data?.currentUser]);
 
   const controlHref = `/o/${orgSlug}/screens/${screenSlug}/control`;
+  const loginHref = `/o/${orgSlug}/screens/${screenSlug}/login`;
 
   const shouldRedirect =
     !!currentScreenGuestSessionId || (!!currentUserId && isMember);
+
+  const wrongAccount = !!currentUserId && !!organizationId && !isMember;
 
   if (fetching) {
     return <LoadingFull />;
@@ -88,9 +91,25 @@ const OrganizationSlugScreenLoginPage = () => {
           </p>
           <h1 className="text-2xl font-bold">{orgName ?? "Sign in"}</h1>
         </div>
+        {wrongAccount && (
+          <Alert
+            variant="destructive"
+            title="You're signed in to a different account"
+            className="mb-4"
+          >
+            Your current account isn't a member of this organization, so it
+            can't control this screen.{" "}
+            <Link
+              href={`/logout?next=${encodeURIComponent(loginHref)}`}
+              className="underline"
+            >
+              Sign out
+            </Link>{" "}
+            to use a different account, or continue as a guest below.
+          </Alert>
+        )}
         {organizationId && meta?.screenId && (
           <GuestLoginForm
-            organizationId={organizationId}
             screenId={meta.screenId}
             allowsAnon={meta?.allowsAnon ?? false}
             allowsRegistered={meta?.allowsRegistered ?? false}
@@ -114,13 +133,11 @@ const OrganizationSlugScreenLoginPage = () => {
 };
 
 const GuestLoginForm = ({
-  organizationId,
   screenId,
   allowsAnon,
   allowsRegistered,
   onLoggedIn,
 }: {
-  organizationId: string;
   screenId: string;
   allowsAnon: boolean;
   allowsRegistered: boolean;
@@ -148,7 +165,7 @@ const GuestLoginForm = ({
           return;
         }
         const result = await authPasscode({
-          organizationId,
+          screenId,
           passcode: passcode.trim(),
         });
         if (result.error) {
@@ -183,7 +200,6 @@ const GuestLoginForm = ({
     passcode,
     authPasscode,
     createGuest,
-    organizationId,
     screenId,
     onLoggedIn,
   ]);

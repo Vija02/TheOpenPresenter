@@ -1,9 +1,9 @@
 mutation AuthenticateScreenGuest(
-  $organizationId: UUID!
+  $screenId: UUID!
   $passcode: String!
 ) {
   authenticateScreenGuest(
-    input: { organizationId: $organizationId, passcode: $passcode }
+    input: { screenId: $screenId, passcode: $passcode }
   ) {
     success
   }
