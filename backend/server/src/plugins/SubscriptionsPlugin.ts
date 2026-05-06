@@ -74,6 +74,70 @@ const screenTopicFromArgs = async (
 };
 
 /*
+ * Per-row PG NOTIFY channel for a screen_control_request
+ */
+const screenControlRequestTopicFromArgs = async (
+  args: { requestId: string },
+  context: { [key: string]: any },
+  _resolveInfo: GraphQLResolveInfo
+) => {
+  const {
+    rows: [row],
+  } = await context.pgClient.query(
+    `
+      select exists(
+        select 1
+        from app_public.screen_control_requests r
+        join app_public.screens s on s.id = r.screen_id
+        where r.id = $1
+          and (
+            r.screen_guest_session_id = app_public.current_screen_guest_session_id()
+            or s.organization_id in (select app_public.current_user_member_organization_ids())
+          )
+      ) as allowed
+    `,
+    [args.requestId]
+  );
+  if (!row?.allowed) {
+    throw new Error("You do not have access to this control request");
+  }
+  return `graphql:scr_req:${args.requestId}`;
+};
+
+/*
+ * Per-row PG NOTIFY channel for the active controller of a screen
+ */
+const screenActiveControllerTopicFromArgs = async (
+  args: { screenId: string },
+  context: { [key: string]: any },
+  _resolveInfo: GraphQLResolveInfo
+) => {
+  const {
+    rows: [row],
+  } = await context.pgClient.query(
+    "select app_public.current_user_can_access_screen($1::uuid) as allowed",
+    [args.screenId]
+  );
+  if (!row?.allowed) {
+    const {
+      rows: [seat],
+    } = await context.pgClient.query(
+      `
+        select 1
+        from app_public.screen_active_controllers ac
+        where ac.screen_id = $1
+          and ac.screen_guest_session_id = app_public.current_screen_guest_session_id()
+      `,
+      [args.screenId]
+    );
+    if (!seat) {
+      throw new Error("You do not have access to this screen's controller");
+    }
+  }
+  return `graphql:scr_ctl:${args.screenId}`;
+};
+
+/*
  * This plugin adds a number of custom subscriptions to our schema. By making
  * sure our subscriptions are tightly focussed we can ensure that our schema
  * remains scalable and that developers do not get overwhelmed with too many
@@ -100,6 +164,16 @@ const SubscriptionsPlugin = makeExtendSchemaPlugin((build) => {
         event: String # Part of the NOTIFY payload
       }
 
+      type ScreenControlRequestSubscriptionPayload {
+        request: ScreenControlRequest
+        event: String
+      }
+
+      type ScreenActiveControllerSubscriptionPayload {
+        activeController: ScreenActiveController
+        event: String
+      }
+
       extend type Subscription {
         """
         Triggered when the logged in user's record is updated in some way.
@@ -114,6 +188,24 @@ const SubscriptionsPlugin = makeExtendSchemaPlugin((build) => {
         screenUpdated(screenId: UUID!): ScreenSubscriptionPayload @pgSubscription(topic: ${embed(
           screenTopicFromArgs
         )})
+
+        """
+        Triggered when a control request changes status.
+        """
+        screenControlRequestUpdated(
+          requestId: UUID!
+        ): ScreenControlRequestSubscriptionPayload @pgSubscription(topic: ${embed(
+          screenControlRequestTopicFromArgs
+        )})
+
+        """
+        Triggered when the active controller for a screen changes.
+        """
+        screenActiveControllerUpdated(
+          screenId: UUID!
+        ): ScreenActiveControllerSubscriptionPayload @pgSubscription(topic: ${embed(
+          screenActiveControllerTopicFromArgs
+        )})
       }
     `,
     resolvers: {
@@ -122,6 +214,19 @@ const SubscriptionsPlugin = makeExtendSchemaPlugin((build) => {
       },
       ScreenSubscriptionPayload: {
         screen: recordByIdFromTable(build, sql.fragment`app_public.screens`),
+      },
+      ScreenControlRequestSubscriptionPayload: {
+        request: recordByIdFromTable(
+          build,
+          sql.fragment`app_public.screen_control_requests`
+        ),
+      },
+      ScreenActiveControllerSubscriptionPayload: {
+        activeController: recordByIdFromTable(
+          build,
+          sql.fragment`app_public.screen_active_controllers`,
+          "screen_id"
+        ),
       },
     },
   };
@@ -141,7 +246,8 @@ interface TgGraphQLSubscriptionPayload {
 
 function recordByIdFromTable(
   build: Build,
-  sqlTable: SQL
+  sqlTable: SQL,
+  idColumn: string = "id"
 ): AugmentedGraphQLFieldResolver<TgGraphQLSubscriptionPayload, any> {
   const { pgSql: sql } = build;
   return async (
@@ -154,7 +260,9 @@ function recordByIdFromTable(
       sqlTable,
       (tableAlias: SQL, sqlBuilder: QueryBuilder) => {
         sqlBuilder.where(
-          sql.fragment`${tableAlias}.id = ${sql.value(event.subject)}`
+          sql.fragment`${tableAlias}.${sql.identifier(idColumn)} = ${sql.value(
+            event.subject
+          )}`
         );
       }
     );
