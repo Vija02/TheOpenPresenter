@@ -1,0 +1,19 @@
+subscription ScreenActiveControllerUpdated($screenId: UUID!) {
+  screenActiveControllerUpdated(screenId: $screenId) {
+    event
+    activeController {
+      screenId
+      ...ScreenActiveController
+    }
+  }
+}
+
+subscription ScreenControlRequestUpdated($requestId: UUID!) {
+  screenControlRequestUpdated(requestId: $requestId) {
+    event
+    request {
+      id
+      ...ScreenControlRequest
+    }
+  }
+}

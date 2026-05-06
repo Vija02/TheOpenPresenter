@@ -1,0 +1,12 @@
+fragment ScreenActiveController on ScreenActiveController {
+  screenId
+  screenGuestSessionId
+  screenGuestSession {
+    id
+    kind
+    displayName
+  }
+  acquiredAt
+  lastInputAt
+  expiresAt
+}

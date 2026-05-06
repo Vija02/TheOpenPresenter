@@ -2,6 +2,10 @@ query ScreenLoginPage($orgSlug: String!, $screenSlug: String!) {
   ...SharedLayout_Query
 
   currentScreenGuestSessionId
+  currentScreenGuestSession {
+    id
+    screenId
+  }
 
   screenLoginMetadata(pOrgSlug: $orgSlug, pScreenSlug: $screenSlug) {
     organizationId

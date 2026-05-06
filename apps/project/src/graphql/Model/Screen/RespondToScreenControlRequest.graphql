@@ -1,0 +1,17 @@
+mutation RespondToScreenControlRequest(
+  $requestId: UUID!
+  $approved: Boolean!
+) {
+  respondToScreenControlRequest(
+    input: { requestId: $requestId, approved: $approved }
+  ) {
+    request {
+      id
+      ...ScreenControlRequest
+    }
+    activeController {
+      screenId
+      ...ScreenActiveController
+    }
+  }
+}

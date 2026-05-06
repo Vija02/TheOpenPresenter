@@ -1,0 +1,12 @@
+mutation RequestScreenControl($screenId: UUID!, $note: String) {
+  requestScreenControl(input: { screenId: $screenId, note: $note }) {
+    request {
+      id
+      ...ScreenControlRequest
+    }
+    activeController {
+      screenId
+      ...ScreenActiveController
+    }
+  }
+}
