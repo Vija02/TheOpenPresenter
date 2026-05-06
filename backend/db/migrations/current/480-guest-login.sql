@@ -35,16 +35,29 @@ comment on function app_public.screen_login_metadata(text, text) is
   E'Get the data required to login as guest.';
 
 create function app_private.authenticate_screen_guest(
-  p_organization_id uuid,
+  p_screen_id uuid,
   p_secret text
 ) returns app_public.screen_guest_sessions as $$
 declare
+  v_screen app_public.screens;
   v_entry app_public.screen_guests;
   v_session app_public.screen_guest_sessions;
 begin
+  select * into v_screen
+  from app_public.screens
+  where id = p_screen_id;
+
+  if v_screen is null then
+    raise exception 'Screen not found' using errcode = 'NTFND';
+  end if;
+
+  if not v_screen.registered_guest_enabled then
+    raise exception 'This screen does not accept registered guests' using errcode = 'DENID';
+  end if;
+
   select * into v_entry
   from app_public.screen_guests
-  where organization_id = p_organization_id
+  where organization_id = v_screen.organization_id
     and is_active
     and (expires_at is null or expires_at > now())
     and passcode_hash = crypt(p_secret, passcode_hash)
@@ -55,10 +68,10 @@ begin
   end if;
 
   insert into app_public.screen_guest_sessions
-    (organization_id, kind, display_name, screen_guest_id)
+    (screen_id, organization_id, kind, display_name, screen_guest_id)
   values
-    (p_organization_id, 'registered', v_entry.display_name, v_entry.id)
-  on conflict (screen_guest_id) where screen_guest_id is not null
+    (p_screen_id, v_screen.organization_id, 'registered', v_entry.display_name, v_entry.id)
+  on conflict (screen_id, screen_guest_id) where screen_guest_id is not null
   do update set
     display_name = excluded.display_name,
     last_seen_at = now()

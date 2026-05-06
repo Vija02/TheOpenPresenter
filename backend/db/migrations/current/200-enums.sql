@@ -17,15 +17,3 @@ create type app_public.screen_guest_session_kind as enum (
   'registered'
 );
 
--- TODO: Double check
-create type app_public.screen_control_request_purpose as enum (
-  'acquire',
-  'takeover'
-);
-create type app_public.screen_control_request_status as enum (
-  'pending',
-  'approved',
-  'denied',
-  'expired',
-  'cancelled'
-);

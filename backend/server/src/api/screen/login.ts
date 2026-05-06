@@ -37,7 +37,7 @@ const screenLoginPlugin = makeExtendSchemaPlugin(() => ({
     }
 
     input AuthenticateScreenGuestInput {
-      organizationId: UUID!
+      screenId: UUID!
       """
       Email or passcode
       """
@@ -82,11 +82,11 @@ const screenLoginPlugin = makeExtendSchemaPlugin(() => ({
         } = await rootPgPool.query(
           `
             insert into app_public.screen_guest_sessions
-              (organization_id, kind, display_name)
-            values ($1, 'anon', $2)
+              (screen_id, organization_id, kind, display_name)
+            values ($1, $2, 'anon', $3)
             returning id
           `,
-          [organizationId, displayName ?? null],
+          [screenId, organizationId, displayName ?? null],
         );
 
         // Store on the cookie so subsequent requests authenticate as this guest.
@@ -94,6 +94,7 @@ const screenLoginPlugin = makeExtendSchemaPlugin(() => ({
           req.session.screenGuestSession = {
             id: created.id,
             organizationId,
+            screenId,
           };
         }
 
@@ -106,37 +107,38 @@ const screenLoginPlugin = makeExtendSchemaPlugin(() => ({
         context: OurGraphQLContext,
       ) {
         const { rootPgPool, req } = context;
-        const { organizationId, passcode } = args.input;
+        const { screenId, passcode } = args.input;
 
         const {
-          rows: [allowedRow],
+          rows: [screenRow],
         } = await rootPgPool.query(
           `
-            select exists(
-              select 1 from app_public.screens
-              where organization_id = $1
-                and registered_guest_enabled = true
-            ) as allowed
+            select organization_id, registered_guest_enabled
+            from app_public.screens
+            where id = $1
           `,
-          [organizationId],
+          [screenId],
         );
-        if (!allowedRow?.allowed) {
-          throw new Error(
-            "This organization has no screens accepting registered guests",
-          );
+        if (!screenRow) {
+          throw new Error("Screen not found");
         }
+        if (!screenRow.registered_guest_enabled) {
+          throw new Error("This screen does not accept registered guests");
+        }
+
         const {
           rows: [created],
         } = await rootPgPool.query(
           `select id from app_private.authenticate_screen_guest($1, $2)`,
-          [organizationId, passcode],
+          [screenId, passcode],
         );
 
         // Store on the cookie so subsequent requests authenticate as this guest.
         if (req.session) {
           req.session.screenGuestSession = {
             id: created.id,
-            organizationId,
+            organizationId: screenRow.organization_id,
+            screenId,
           };
         }
 
