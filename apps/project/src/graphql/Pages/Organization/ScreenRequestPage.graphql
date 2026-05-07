@@ -1,0 +1,6 @@
+query OrganizationScreenRequestPage(
+  $slug: String!
+  $screenSlug: String!
+) {
+  ...SharedScreenGuest
+}

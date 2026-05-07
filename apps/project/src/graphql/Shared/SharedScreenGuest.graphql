@@ -1,0 +1,29 @@
+fragment SharedScreenGuest on Query {
+  # Main Shared
+  ...SharedLayout_Query
+
+  currentScreenGuestSession {
+    id
+    kind
+    screenId
+  }
+
+  organizationBySlug(slug: $slug) {
+    id
+    name
+    screens(condition: { slug: $screenSlug }) {
+      nodes {
+        id
+        ...Screen
+        screenActiveController {
+          screenId
+          ...ScreenActiveController
+        }
+      }
+    }
+  }
+}
+
+query SharedScreenGuest($slug: String!, $screenSlug: String!) {
+  ...SharedScreenGuest
+}

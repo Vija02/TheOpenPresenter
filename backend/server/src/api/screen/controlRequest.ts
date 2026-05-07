@@ -2,10 +2,11 @@ import { gql, makeExtendSchemaPlugin } from "graphile-utils";
 
 import { OurGraphQLContext } from "../../graphile.config";
 import {
+  ScreenControlResultIdentifiers,
   ScreenGuestSessionKind,
   isMemberOfOrg,
-  loadResponsePayload,
-  loadResultPayloads,
+  resolveActiveController,
+  resolveRequest,
   resolveScreenControlPolicy,
 } from "./helpers";
 
@@ -35,11 +36,11 @@ const screenControlRequestPlugin = makeExtendSchemaPlugin(() => ({
       """
       Set when the policy required manual approval.
       """
-      request: ScreenControlRequest
+      request: ScreenControlRequest @pgField
       """
       Set when control is granted.
       """
-      activeController: ScreenActiveController
+      activeController: ScreenActiveController @pgField
     }
 
     input RespondToScreenControlRequestInput {
@@ -47,8 +48,8 @@ const screenControlRequestPlugin = makeExtendSchemaPlugin(() => ({
       approved: Boolean!
     }
     type RespondToScreenControlRequestPayload {
-      request: ScreenControlRequest!
-      activeController: ScreenActiveController
+      request: ScreenControlRequest! @pgField
+      activeController: ScreenActiveController @pgField
     }
   `,
   resolvers: {
@@ -57,7 +58,6 @@ const screenControlRequestPlugin = makeExtendSchemaPlugin(() => ({
         _mutation,
         args,
         context: OurGraphQLContext,
-        resolveInfo,
       ) {
         const { pgClient, rootPgPool, sessionId, screenGuestSessionId, req } =
           context;
@@ -90,7 +90,9 @@ const screenControlRequestPlugin = makeExtendSchemaPlugin(() => ({
           ? await isMemberOfOrg(pgClient, screenRow.organization_id)
           : false;
         if (isOrgMember) {
-          return { data: { request: null, activeController: null } };
+          return {
+            data: { screenId: null, requestId: null } as ScreenControlResultIdentifiers,
+          };
         }
 
         if (!screenGuestSessionId) {
@@ -128,10 +130,9 @@ const screenControlRequestPlugin = makeExtendSchemaPlugin(() => ({
         const alreadyControlled =
           screenRow.active_session_id === screenGuestSessionId;
         if (alreadyControlled) {
-          return await loadResultPayloads(resolveInfo, {
-            screenId,
-            requestId: null,
-          });
+          return {
+            data: { screenId, requestId: null } as ScreenControlResultIdentifiers,
+          };
         }
 
         // Now let's get the policy
@@ -163,10 +164,9 @@ const screenControlRequestPlugin = makeExtendSchemaPlugin(() => ({
             `,
             [screenId, screenGuestSessionId],
           );
-          return await loadResultPayloads(resolveInfo, {
-            screenId,
-            requestId: null,
-          });
+          return {
+            data: { screenId, requestId: null } as ScreenControlResultIdentifiers,
+          };
         }
 
         // Otherwise, we request control to admin
@@ -187,17 +187,15 @@ const screenControlRequestPlugin = makeExtendSchemaPlugin(() => ({
           ],
         );
 
-        return await loadResultPayloads(resolveInfo, {
-          screenId,
-          requestId: requestRow.id,
-        });
+        return {
+          data: { screenId, requestId: requestRow.id } as ScreenControlResultIdentifiers,
+        };
       },
 
       async respondToScreenControlRequest(
         _mutation,
         args,
         context: OurGraphQLContext,
-        resolveInfo,
       ) {
         const { pgClient, rootPgPool } = context;
         const { requestId, approved } = args.input;
@@ -241,10 +239,12 @@ const screenControlRequestPlugin = makeExtendSchemaPlugin(() => ({
             `,
             [requestId, userRow.id],
           );
-          return await loadResponsePayload(resolveInfo, {
-            requestId,
-            screenId: reqRow.screen_id,
-          });
+          return {
+            data: {
+              screenId: reqRow.screen_id,
+              requestId,
+            } as ScreenControlResultIdentifiers,
+          };
         }
 
         // If approve
@@ -274,11 +274,23 @@ const screenControlRequestPlugin = makeExtendSchemaPlugin(() => ({
           [requestId, userRow.id],
         );
 
-        return await loadResponsePayload(resolveInfo, {
-          requestId,
-          screenId: reqRow.screen_id,
-        });
+        return {
+          data: {
+            screenId: reqRow.screen_id,
+            requestId,
+          } as ScreenControlResultIdentifiers,
+        };
       },
+    },
+
+    RequestScreenControlPayload: {
+      activeController: resolveActiveController,
+      request: resolveRequest,
+    },
+
+    RespondToScreenControlRequestPayload: {
+      activeController: resolveActiveController,
+      request: resolveRequest,
     },
   },
 }));

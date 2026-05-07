@@ -46,11 +46,13 @@ const OrganizationSlugScreenLoginPage = () => {
     return memberships.some((m) => m.organization?.id === organizationId);
   }, [organizationId, data?.currentUser]);
 
-  const controlHref = `/o/${orgSlug}/screens/${screenSlug}/control`;
+  const memberHref = `/o/${orgSlug}/screens/${screenSlug}/control`;
+  const requestHref = `/o/${orgSlug}/screens/${screenSlug}/request`;
   const loginHref = `/o/${orgSlug}/screens/${screenSlug}/login`;
 
   const shouldRedirect =
     sessionMatchesThisScreen || (!!currentUserId && isMember);
+  const redirectHref = !!currentUserId && isMember ? memberHref : requestHref;
 
   const wrongAccount = !!currentUserId && !!organizationId && !isMember;
 
@@ -59,7 +61,7 @@ const OrganizationSlugScreenLoginPage = () => {
   }
 
   if (shouldRedirect) {
-    return <Redirect href={controlHref} replace />;
+    return <Redirect href={redirectHref} replace external />;
   }
 
   // No guest access
@@ -118,9 +120,7 @@ const OrganizationSlugScreenLoginPage = () => {
             screenId={meta.screenId}
             allowsAnon={meta?.allowsAnon ?? false}
             allowsRegistered={meta?.allowsRegistered ?? false}
-            onLoggedIn={() =>
-              setLocation(`${controlHref}?autoClaim=1`, { replace: true })
-            }
+            onLoggedIn={() => setLocation(requestHref, { replace: true })}
           />
         )}
         {sessionMatchesThisScreen && (

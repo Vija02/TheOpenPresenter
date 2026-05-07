@@ -71,62 +71,6 @@ export async function isMemberOfOrg(
   return !!row?.is_member;
 }
 
-export async function loadResultPayloads(
-  resolveInfo: any,
-  ids: { screenId: string; requestId: string | null },
-) {
-  const { selectGraphQLResultFromTable } = resolveInfo.graphile;
-  const { pgSql: sql } = resolveInfo.graphile.build;
-
-  const acRows = await selectGraphQLResultFromTable(
-    sql.fragment`app_public.screen_active_controllers`,
-    (alias: any, qb: any) => {
-      qb.where(sql.fragment`${alias}.screen_id = ${sql.value(ids.screenId)}`);
-    },
-  );
-  let reqRows: any[] = [];
-  if (ids.requestId) {
-    reqRows = await selectGraphQLResultFromTable(
-      sql.fragment`app_public.screen_control_requests`,
-      (alias: any, qb: any) => {
-        qb.where(sql.fragment`${alias}.id = ${sql.value(ids.requestId)}`);
-      },
-    );
-  }
-  return {
-    data: {
-      activeController: acRows[0] ?? null,
-      request: reqRows[0] ?? null,
-    },
-  };
-}
-
-export async function loadResponsePayload(
-  resolveInfo: any,
-  ids: { requestId: string; screenId: string },
-) {
-  const { selectGraphQLResultFromTable } = resolveInfo.graphile;
-  const { pgSql: sql } = resolveInfo.graphile.build;
-  const reqRows = await selectGraphQLResultFromTable(
-    sql.fragment`app_public.screen_control_requests`,
-    (alias: any, qb: any) => {
-      qb.where(sql.fragment`${alias}.id = ${sql.value(ids.requestId)}`);
-    },
-  );
-  const acRows = await selectGraphQLResultFromTable(
-    sql.fragment`app_public.screen_active_controllers`,
-    (alias: any, qb: any) => {
-      qb.where(sql.fragment`${alias}.screen_id = ${sql.value(ids.screenId)}`);
-    },
-  );
-  return {
-    data: {
-      request: reqRows[0] ?? null,
-      activeController: acRows[0] ?? null,
-    },
-  };
-}
-
 export async function loadScreenPayload(resolveInfo: any, screenId: string) {
   const { selectGraphQLResultFromTable } = resolveInfo.graphile;
   const { pgSql: sql } = resolveInfo.graphile.build;
@@ -138,3 +82,46 @@ export async function loadScreenPayload(resolveInfo: any, screenId: string) {
   );
   return { data: { screen: rows[0] } };
 }
+
+export type ScreenControlResultIdentifiers = {
+  screenId: string | null;
+  requestId: string | null;
+};
+
+export const resolveActiveController = async (
+  parent: any,
+  _args: any,
+  _context: any,
+  resolveInfo: any,
+) => {
+  const { selectGraphQLResultFromTable, build } = resolveInfo.graphile;
+  const sql = build.pgSql;
+  const screenId: string | null = parent?.data?.screenId ?? null;
+  if (!screenId) return null;
+  const [row] = await selectGraphQLResultFromTable(
+    sql.fragment`app_public.screen_active_controllers`,
+    (alias: any, qb: any) => {
+      qb.where(sql.fragment`${alias}.screen_id = ${sql.value(screenId)}`);
+    },
+  );
+  return row ?? null;
+};
+
+export const resolveRequest = async (
+  parent: any,
+  _args: any,
+  _context: any,
+  resolveInfo: any,
+) => {
+  const { selectGraphQLResultFromTable, build } = resolveInfo.graphile;
+  const sql = build.pgSql;
+  const requestId: string | null = parent?.data?.requestId ?? null;
+  if (!requestId) return null;
+  const [row] = await selectGraphQLResultFromTable(
+    sql.fragment`app_public.screen_control_requests`,
+    (alias: any, qb: any) => {
+      qb.where(sql.fragment`${alias}.id = ${sql.value(requestId)}`);
+    },
+  );
+  return row ?? null;
+};

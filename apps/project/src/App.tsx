@@ -13,7 +13,9 @@ import OrganizationSlugLatestPage from "./pages/o/[slug]/latest/[type]";
 import OrganizationSlugMediaPage from "./pages/o/[slug]/media";
 import OrganizationSlugScreensPage from "./pages/o/[slug]/screens";
 import OrganizationSlugScreenControlPage from "./pages/o/[slug]/screens/[screenSlug]/control";
+import OrganizationSlugScreenEndedPage from "./pages/o/[slug]/screens/[screenSlug]/ended";
 import OrganizationSlugScreenLoginPage from "./pages/o/[slug]/screens/[screenSlug]/login";
+import OrganizationSlugScreenRequestPage from "./pages/o/[slug]/screens/[screenSlug]/request";
 import OrganizationSlugGuestsPage from "./pages/o/[slug]/screens/guests";
 import OrganizationSlugSettingsCategoriesPage from "./pages/o/[slug]/settings/categories";
 import OrganizationSlugSettingsDeletePage from "./pages/o/[slug]/settings/delete";
@@ -101,8 +103,14 @@ function App() {
                   <Route path="/o/:slug/screens/:screenSlug/control">
                     <OrganizationSlugScreenControlPage />
                   </Route>
+                  <Route path="/o/:slug/screens/:screenSlug/request">
+                    <OrganizationSlugScreenRequestPage />
+                  </Route>
                   <Route path="/o/:slug/screens/:screenSlug/login">
                     <OrganizationSlugScreenLoginPage />
+                  </Route>
+                  <Route path="/o/:slug/screens/:screenSlug/ended">
+                    <OrganizationSlugScreenEndedPage />
                   </Route>
                   <Route path="/o/:slug/screens">
                     <OrganizationSlugScreensPage />
