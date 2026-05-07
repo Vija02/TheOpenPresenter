@@ -16,9 +16,10 @@ export type UploadMediaParam = {
   originalFileName?: string;
   creationDate?: string;
   isUserUploaded?: boolean;
+  isGuest?: boolean;
 
   // Other meta
-  userId: string;
+  userId: string | null;
   organizationId: string;
 };
 
@@ -67,6 +68,7 @@ export type OurMulterRequest = Request & {
     projectId?: string;
     pluginId?: string;
     userId?: string;
+    isGuest?: boolean;
     uploadLength?: number;
     explicitFileExtension?: string;
     mediaId?: string;

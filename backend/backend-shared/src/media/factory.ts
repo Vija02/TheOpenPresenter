@@ -44,6 +44,7 @@ export const createMediaHandler = <T extends OurDataStore>(
       mediaId = typeidUnboxed("media"),
       originalFileName,
       isUserUploaded,
+      isGuest,
     }: UploadMediaParam) {
       const finalFileName = mediaId + "." + fileExtension;
       try {
@@ -59,6 +60,7 @@ export const createMediaHandler = <T extends OurDataStore>(
                 userId,
                 organizationId,
                 isUserUploaded: isUserUploaded ? "1" : "0",
+                isGuest: isGuest ? "1" : "0",
               },
             });
 
@@ -376,9 +378,10 @@ export const createMulterStorage = (MediaHandler: MediaHandlerConstructor) => {
           fileSize: req.customMulterData?.uploadLength!,
           originalFileName: file.originalname,
           // These should be validated on the calling method
-          userId: req.customMulterData?.userId!,
+          userId: req.customMulterData?.userId ?? null,
           organizationId: req.customMulterData?.organizationId!,
           mediaId: req.customMulterData?.mediaId,
+          isGuest: req.customMulterData?.isGuest,
         });
         if (
           req.customMulterData?.mediaId &&

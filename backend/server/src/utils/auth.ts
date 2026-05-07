@@ -7,34 +7,45 @@ export const checkUserAuth = async (
   {
     organizationId,
     sessionId,
+    screenGuestSessionId,
     projectId,
-  }: { organizationId: string; sessionId: string; projectId?: string },
-) => {
-  return await withUserPgPool(app, sessionId, async (client) => {
-    const {
-      rows: [row],
-    } = await client.query(
-      "select * from app_public.organizations where id = $1",
-      [organizationId],
-    );
-    if (!row) {
-      throw new Error("Not Authorized");
-    }
-    if (projectId) {
+  }: {
+    organizationId: string;
+    sessionId: string;
+    screenGuestSessionId?: string;
+    projectId?: string;
+  },
+): Promise<string | null> => {
+  return await withUserPgPool(
+    app,
+    sessionId,
+    async (client) => {
       const {
-        rows: [projectRow],
+        rows: [row],
       } = await client.query(
-        "select * from app_public.projects where id = $1",
-        [projectId],
+        "select * from app_public.organizations where id = $1",
+        [organizationId],
       );
-      if (!projectRow) {
+      if (!row) {
         throw new Error("Not Authorized");
       }
-    }
-    const {
-      rows: [user],
-    } = await client.query("select app_public.current_user_id() as id");
+      if (projectId) {
+        const {
+          rows: [projectRow],
+        } = await client.query(
+          "select * from app_public.projects where id = $1",
+          [projectId],
+        );
+        if (!projectRow) {
+          throw new Error("Not Authorized");
+        }
+      }
+      const {
+        rows: [user],
+      } = await client.query("select app_public.current_user_id() as id");
 
-    return user.id;
-  });
+      return user.id ?? null;
+    },
+    screenGuestSessionId,
+  );
 };
