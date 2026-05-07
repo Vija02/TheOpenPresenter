@@ -17,6 +17,7 @@ const task: Task = async (inPayload, { withPgClient }) => {
     pdfMediaName,
     organizationId,
     userId,
+    isGuest,
     parentMediaId,
     projectId,
     pluginId,
@@ -108,6 +109,7 @@ const task: Task = async (inPayload, { withPgClient }) => {
             userId,
             organizationId,
             isUserUploaded: false,
+            isGuest,
             mediaId,
           });
 
