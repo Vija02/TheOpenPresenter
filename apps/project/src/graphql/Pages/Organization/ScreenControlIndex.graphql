@@ -2,13 +2,7 @@ query OrganizationScreenControlIndexPage(
   $slug: String!
   $screenSlug: String!
 ) {
-  ...SharedOrganization
-
-  currentScreenGuestSessionId
-  currentScreenGuestSession {
-    id
-    kind
-  }
+  ...SharedScreenGuest
 
   organizationBySlug(slug: $slug) {
     id
@@ -23,10 +17,28 @@ query OrganizationScreenControlIndexPage(
         }
       }
     }
-    projects(orderBy: [TARGET_DATE_DESC, UPDATED_AT_DESC]) {
+  }
+
+  # Cross-org project picker for the controller
+  currentUser {
+    id
+    organizationMemberships(first: 20) {
       nodes {
         id
-        ...Project
+        organization {
+          id
+          name
+          slug
+          projects(
+            condition: { isTemporary: false }
+            orderBy: [TARGET_DATE_DESC, UPDATED_AT_DESC]
+          ) {
+            nodes {
+              id
+              ...Project
+            }
+          }
+        }
       }
     }
   }
