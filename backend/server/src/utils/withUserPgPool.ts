@@ -5,9 +5,9 @@ import { getAuthPgPool } from "../middleware/installDatabasePools";
 
 export const withUserPgPool = async <T extends any>(
   app: Express,
-  sessionId: string,
+  sessionId: string | null,
   fn: (client: PoolClient) => Promise<T> | T,
-  screenGuestSessionId?: string,
+  screenGuestSessionId?: string | null,
 ): Promise<T> => {
   const authPgPool = getAuthPgPool(app);
 
@@ -20,7 +20,11 @@ export const withUserPgPool = async <T extends any>(
          set_config('role', $1::text, true),
          set_config('jwt.claims.session_id', $2::text, true),
          set_config('jwt.claims.screen_guest_session_id', $3::text, true)`,
-      [process.env.DATABASE_VISITOR, sessionId, screenGuestSessionId ?? ""],
+      [
+        process.env.DATABASE_VISITOR,
+        sessionId ?? "",
+        screenGuestSessionId ?? "",
+      ],
     );
     const res = await fn(client);
 

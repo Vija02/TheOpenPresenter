@@ -29,17 +29,28 @@ export default async function installHocuspocus(app: Express) {
       );
     },
     onAuthenticate: async (data) => {
-      await withUserPgPool(app, data.context.session_id, async (client) => {
-        const {
-          rows: [row],
-        } = await client.query(
-          "select * from app_public.projects where id = $1",
-          [data.documentName],
-        );
-        if (!row) {
-          throw new Error("Not Authorized");
-        }
-      });
+      const sessionId: string | null = data.context.session_id ?? null;
+      const screenGuestSessionId: string | null =
+        data.context.screen_guest_session_id ?? null;
+      if (!sessionId && !screenGuestSessionId) {
+        throw new Error("Not Authorized");
+      }
+      await withUserPgPool(
+        app,
+        sessionId,
+        async (client) => {
+          const {
+            rows: [row],
+          } = await client.query(
+            "select 1 from app_public.projects where id = $1",
+            [data.documentName],
+          );
+          if (!row) {
+            throw new Error("Not Authorized");
+          }
+        },
+        screenGuestSessionId,
+      );
     },
     onLoadDocument: async (data) => {
       const rootPgPool = getRootPgPool(app);
@@ -120,8 +131,10 @@ export default async function installHocuspocus(app: Express) {
           dummyRes,
         );
 
-        // Everyone needs to be logged in
-        if (!request?.user?.session_id) {
+        const sessionId = request.user?.session_id ?? null;
+        const screenGuestSessionId =
+          request.session?.screenGuestSession?.id ?? null;
+        if (!sessionId && !screenGuestSessionId) {
           incoming.close(
             4401,
             JSON.stringify({
@@ -133,7 +146,8 @@ export default async function installHocuspocus(app: Express) {
         }
 
         Server.handleConnection(incoming, request, {
-          session_id: request.user.session_id,
+          session_id: sessionId,
+          screen_guest_session_id: screenGuestSessionId,
         });
       } catch (err) {
         logger.error({ err }, "Error handling WebSocket connection");
@@ -179,5 +193,8 @@ const applyMiddleware = async (
 };
 
 interface OurRequest extends IncomingMessage {
-  user: { session_id: string };
+  user?: { session_id: string };
+  session?: {
+    screenGuestSession?: { id?: string | null } | null;
+  };
 }
