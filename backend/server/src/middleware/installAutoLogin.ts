@@ -11,7 +11,9 @@ export default (app: Express) => {
     app.use(async (req, _res, next) => {
       const login = (user: any) =>
         new Promise<void>((resolve, reject) => {
-          req.login(user, (err) => (err ? reject(err) : resolve()));
+          req.login(user, { session: true, keepSessionInfo: true }, (err) =>
+            err ? reject(err) : resolve(),
+          );
         });
 
       const rootPgPool = getRootPgPool(app);
