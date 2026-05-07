@@ -98,23 +98,6 @@ const OrganizationSlugScreenLoginPage = () => {
           </p>
           <h1 className="text-2xl font-bold">{orgName ?? "Sign in"}</h1>
         </div>
-        {wrongAccount && (
-          <Alert
-            variant="destructive"
-            title="You're signed in to a different account"
-            className="mb-4"
-          >
-            Your current account isn't a member of this organization, so it
-            can't control this screen.{" "}
-            <Link
-              href={`/logout?next=${encodeURIComponent(loginHref)}`}
-              className="underline"
-            >
-              Sign out
-            </Link>{" "}
-            to use a different account, or continue as a guest below.
-          </Alert>
-        )}
         {organizationId && meta?.screenId && (
           <GuestLoginForm
             screenId={meta.screenId}
@@ -122,6 +105,30 @@ const OrganizationSlugScreenLoginPage = () => {
             allowsRegistered={meta?.allowsRegistered ?? false}
             onLoggedIn={() => setLocation(requestHref, { replace: true })}
           />
+        )}
+        {wrongAccount && (
+          <p className="mt-3 text-xs text-secondary text-center">
+            Admin of {orgName ?? "this organization"}?{" "}
+            <Link
+              href={`/logout?next=${encodeURIComponent(loginHref)}`}
+              className="underline"
+            >
+              Switch accounts
+            </Link>
+            .
+          </p>
+        )}
+        {!currentUserId && (
+          <p className="mt-3 text-xs text-secondary text-center">
+            Admin of {orgName ?? "this organization"}?{" "}
+            <Link
+              href={`/login?next=${encodeURIComponent(loginHref)}`}
+              className="underline"
+            >
+              Sign in
+            </Link>
+            .
+          </p>
         )}
         {sessionMatchesThisScreen && (
           <GuestSignOutFooter
@@ -216,10 +223,10 @@ const GuestLoginForm = ({
       </h2>
       <p className="text-sm text-secondary mb-3">
         {allowsAnon && allowsRegistered
-          ? "Continue as a guest, or sign in with the passcode an organization member gave you."
+          ? "Continue as a guest, or sign in with passcode."
           : allowsAnon
             ? "Continue as a guest to control this screen."
-            : "Sign in with the passcode an organization member gave you."}
+            : "Sign in with passcode."}
       </p>
 
       {allowsAnon && allowsRegistered && (
