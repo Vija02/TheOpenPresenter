@@ -156,9 +156,13 @@ export default (
               code: "FFFFF",
             });
           }
-          req.login({ session_id: session.uuid }, () => {
-            done(null, { session_id: session.uuid });
-          });
+          req.login(
+            { session_id: session.uuid },
+            { session: true, keepSessionInfo: true },
+            () => {
+              done(null, { session_id: session.uuid });
+            },
+          );
         } catch (e: any) {
           done(e);
         }

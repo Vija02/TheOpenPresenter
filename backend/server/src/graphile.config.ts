@@ -298,7 +298,9 @@ export function getPostGraphileOptions({
         // Use this to tell Passport.js we're logged in
         login: (user: any) =>
           new Promise<void>((resolve, reject) => {
-            req.login(user, (err) => (err ? reject(err) : resolve()));
+            req.login(user, { session: true, keepSessionInfo: true }, (err) =>
+              err ? reject(err) : resolve(),
+            );
           }),
 
         logout: () => {

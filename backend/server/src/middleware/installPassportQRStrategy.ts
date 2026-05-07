@@ -122,8 +122,12 @@ export default async (app: Express) => {
       return;
     }
 
-    req.login({ session_id: value }, () => {
-      res.redirect(returnTo || "/o");
-    });
+    req.login(
+      { session_id: value },
+      { session: true, keepSessionInfo: true },
+      () => {
+        res.redirect(returnTo || "/o");
+      },
+    );
   });
 };
