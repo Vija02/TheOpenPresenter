@@ -254,6 +254,8 @@ export default (app: Express) => {
         const userId = await checkUserAuth(app, {
           organizationId: organizationId,
           sessionId: (req as OurRequest)?.user?.session_id ?? "",
+          screenGuestSessionId: (req as OurRequest)?.session?.screenGuestSession
+            ?.id,
           projectId,
         });
         return Promise.resolve({
@@ -264,6 +266,8 @@ export default (app: Express) => {
             userId,
             projectId: projectId ?? null,
             pluginId: pluginId ?? null,
+            isUserUploaded: userId ? "1" : "0",
+            isGuest: userId ? "0" : "1",
           },
         });
       } catch (e) {
@@ -303,8 +307,9 @@ export default (app: Express) => {
         [true, uuid],
       );
 
+      const isUserUploaded = upload.metadata?.isUserUploaded === "1";
       await mediaHandler.processCompletedMedia(upload.id, {
-        isUserUploaded: true,
+        isUserUploaded,
       });
 
       return res;
@@ -375,9 +380,12 @@ export default (app: Express) => {
         const userId = await checkUserAuth(app, {
           organizationId: req.customMulterData.organizationId ?? "",
           sessionId: (req as OurRequest)?.user?.session_id ?? "",
+          screenGuestSessionId: (req as OurRequest)?.session?.screenGuestSession
+            ?.id,
           projectId: req.customMulterData.projectId ?? "",
         });
-        req.customMulterData.userId = userId;
+        req.customMulterData.userId = userId ?? undefined;
+        req.customMulterData.isGuest = userId == null;
       } catch (e) {
         res.status(403).send("You are not allowed to do this action.");
         return;
@@ -416,5 +424,6 @@ function isValidURL(string: string) {
 }
 
 interface OurRequest extends http.IncomingMessage {
-  user: { session_id: string };
+  user?: { session_id: string };
+  session?: { screenGuestSession?: { id?: string } };
 }

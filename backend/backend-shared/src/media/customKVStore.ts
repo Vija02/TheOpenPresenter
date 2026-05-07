@@ -59,10 +59,11 @@ export class CustomKVStore<T extends Upload | MetadataValue>
 
     const file = "file" in value ? value.file : (value as Upload);
 
+    const tags = file.metadata?.isGuest === "1" ? ["guest"] : [];
     await this.pgPool.query(
       `INSERT INTO app_public.medias(
-        id, media_name, file_size, file_offset, original_name, file_extension, organization_id, creator_user_id, s3_upload_id, is_user_uploaded
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) ON CONFLICT (id) DO UPDATE 
+        id, media_name, file_size, file_offset, original_name, file_extension, organization_id, creator_user_id, s3_upload_id, is_user_uploaded, tags
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) ON CONFLICT (id) DO UPDATE
       SET 
         media_name = $2,
         file_size = $3,
@@ -87,6 +88,7 @@ export class CustomKVStore<T extends Upload | MetadataValue>
         file.metadata?.isUserUploaded
           ? file.metadata?.isUserUploaded === "1"
           : true,
+        tags,
       ],
     );
 
