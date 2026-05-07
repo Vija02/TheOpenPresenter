@@ -139,7 +139,8 @@ export async function notifyJobFailure(
 export interface PdfToImagesPayload extends AwaitableJobPayload {
   pdfMediaName: string;
   organizationId: string;
-  userId: string;
+  userId: string | null;
+  isGuest?: boolean;
   parentMediaId: string;
   projectId: string;
   pluginId: string;

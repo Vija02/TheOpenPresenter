@@ -144,7 +144,7 @@ async function uploadImage(
   image: DownloadedImage,
   serverPluginApi: ServerPluginApi<any, any>,
   organizationId: string,
-  userId: string,
+  userId: string | null,
   parentMediaId: string,
   projectId: string,
   pluginId: string,
@@ -155,6 +155,7 @@ async function uploadImage(
     {
       organizationId,
       userId,
+      isGuest: userId == null,
       parentMediaIdOrUUID: parentMediaId,
       attachTo: { projectId, pluginId },
     },
@@ -166,7 +167,7 @@ async function uploadImage(
 export interface ImageUploadContext {
   serverPluginApi: ServerPluginApi<any, any>;
   organizationId: string;
-  userId: string;
+  userId: string | null;
   projectId: string;
   pluginId: string;
 }
