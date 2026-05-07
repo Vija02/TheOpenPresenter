@@ -9,6 +9,7 @@ fragment Screen on Screen {
     id
     name
     slug
+    isTemporary
   }
   registeredGuestEnabled
   registeredGuestOnEmptyPolicy

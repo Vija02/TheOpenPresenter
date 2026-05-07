@@ -2,6 +2,7 @@ fragment Project on Project {
   id
   name
   slug
+  isTemporary
   category {
     id
     name

@@ -1,0 +1,8 @@
+mutation CreateTemporaryProject($screenId: UUID!) {
+  createTemporaryProject(input: { screenId: $screenId }) {
+    project {
+      id
+      ...Project
+    }
+  }
+}

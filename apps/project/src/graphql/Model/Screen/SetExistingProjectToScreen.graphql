@@ -1,0 +1,10 @@
+mutation SetExistingProjectToScreen($screenId: UUID!, $projectId: UUID) {
+  setExistingProjectToScreen(
+    input: { screenId: $screenId, projectId: $projectId }
+  ) {
+    screen {
+      id
+      ...Screen
+    }
+  }
+}

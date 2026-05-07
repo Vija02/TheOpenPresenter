@@ -1,154 +1,258 @@
-import { SharedOrgLayout } from "@/components/SharedOrgLayout";
 import { Tag } from "@/components/Tag";
+import { AdminGuestPageNotice } from "@/containers/ScreenGuest/AdminGuestPageNotice";
+import { ControlPageHeader } from "@/containers/ScreenGuest/ControlPageHeader";
+import { SharedScreenGuestLayout } from "@/containers/ScreenGuest/SharedScreenGuestLayout";
 import { useOrganizationSlug } from "@/lib/permissionHooks/organization";
 import {
+  Exact,
+  OrganizationScreenControlIndexPageQuery,
+  OrganizationScreenControlIndexPageQueryVariables,
   ProjectFragment,
+  useCreateTemporaryProjectMutation,
   useOrganizationScreenControlIndexPageQuery,
-  useUpdateScreenMutation,
+  useSetExistingProjectToScreenMutation,
 } from "@repo/graphql";
 import { globalState } from "@repo/lib";
-import { Alert, Button, DateDisplay, DateDisplayRelative } from "@repo/ui";
+import { Alert, Button, DateDisplay } from "@repo/ui";
 import { format } from "date-fns";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { IoCloudDoneOutline } from "react-icons/io5";
-import { VscCheck, VscClose } from "react-icons/vsc";
+import { VscAdd, VscCheck } from "react-icons/vsc";
 import { toast } from "react-toastify";
-import { Redirect, useLocation, useParams } from "wouter";
+import { UseQueryResponse } from "urql";
+import { useParams } from "wouter";
 
 const OrganizationSlugScreenControlPage = () => {
   const orgSlug = useOrganizationSlug();
   const params = useParams();
   const screenSlug = params.screenSlug!;
-  const [, setLocation] = useLocation();
+  const requestHref = `/o/${orgSlug}/screens/${screenSlug}/request`;
 
   const query = useOrganizationScreenControlIndexPageQuery({
     variables: { slug: orgSlug, screenSlug },
-    requestPolicy: "cache-and-network",
   });
-  const [{ data, fetching }] = query;
+
+  return (
+    <SharedScreenGuestLayout
+      query={query}
+      title={(s) => `Control · ${s.name}`}
+      redirectIf={({ guestHasControl }) =>
+        guestHasControl ? null : requestHref
+      }
+    >
+      {({ isMember, currentScreenGuestSessionId }) => (
+        <ControlPageInner
+          query={query}
+          orgSlug={orgSlug}
+          screenSlug={screenSlug}
+          isMember={isMember}
+          currentScreenGuestSessionId={currentScreenGuestSessionId}
+        />
+      )}
+    </SharedScreenGuestLayout>
+  );
+};
+
+type InnerPropTypes = {
+  query: UseQueryResponse<
+    OrganizationScreenControlIndexPageQuery,
+    Exact<OrganizationScreenControlIndexPageQueryVariables>
+  >;
+  orgSlug: string;
+  screenSlug: string;
+  isMember: boolean;
+  currentScreenGuestSessionId: string | null;
+};
+
+type OrgGroup = {
+  id: string;
+  name: string;
+  slug: string;
+  projects: ProjectFragment[];
+};
+
+const ControlPageInner = ({
+  query,
+  orgSlug,
+  screenSlug,
+  isMember,
+  currentScreenGuestSessionId,
+}: InnerPropTypes) => {
+  const [{ data }, refetch] = query;
+  const screen = data!.organizationBySlug!.screens.nodes[0]!;
+  const screenId = screen.id;
+  const currentProjectId = screen.currentProjectId ?? null;
+  const isLoggedIn = !!data?.currentUser;
+
+  // TODO: Display this better
+  const orgGroups = useMemo<OrgGroup[]>(() => {
+    const memberships = data?.currentUser?.organizationMemberships?.nodes ?? [];
+    return memberships
+      .map((m) => {
+        const org = m.organization;
+        if (!org) return null;
+        return {
+          id: org.id,
+          name: org.name,
+          slug: org.slug ?? "",
+          projects: org.projects.nodes,
+        };
+      })
+      .filter((g): g is OrgGroup => g !== null && g.projects.length > 0);
+  }, [data?.currentUser]);
 
   const { publish } = globalState.modelDataAccess.usePublishAPIChanges({
     token: "page",
   });
-  const [{ fetching: updating }, updateScreen] = useUpdateScreenMutation();
-
-  const screen = data?.organizationBySlug?.screens.nodes[0];
-  const projects = data?.organizationBySlug?.projects.nodes ?? [];
-  const currentProjectId = screen?.currentProjectId ?? null;
+  const [{ fetching: assigning }, setExistingProjectToScreen] =
+    useSetExistingProjectToScreenMutation();
+  const [{ fetching: creating }, createTemporaryProject] =
+    useCreateTemporaryProjectMutation();
 
   const handleSelect = useCallback(
-    async (projectId: string, projectSlug: string) => {
-      if (!screen) return;
+    async (project: ProjectFragment, projectOrgSlug: string) => {
       try {
-        await updateScreen({ id: screen.id, currentProjectId: projectId });
+        const res = await setExistingProjectToScreen({
+          screenId,
+          projectId: project.id,
+        });
+        if (res.error) throw res.error;
         publish();
-        toast.success("Screen updated");
-        setLocation(`/app/${orgSlug}/${projectSlug}`);
+        const search = window.location.search;
+        window.location.href = `/app/${projectOrgSlug}/${project.slug}${search}`;
       } catch (e: any) {
         toast.error("Failed to assign: " + e.message);
       }
     },
-    [screen, updateScreen, publish, setLocation, orgSlug],
+    [screenId, setExistingProjectToScreen, publish],
   );
 
-  const handleUnassign = useCallback(async () => {
-    if (!screen) return;
+  const handleCreateTemporary = useCallback(async () => {
     try {
-      await updateScreen({ id: screen.id, currentProjectId: null });
+      const res = await createTemporaryProject({ screenId });
+      if (res.error) throw res.error;
       publish();
-      toast.success("Screen unassigned");
+      const project = res.data?.createTemporaryProject?.project;
+
+      const search = window.location.search;
+      window.location.href = `/app/${orgSlug}/${project?.slug}${search}`;
     } catch (e: any) {
-      toast.error("Failed to unassign: " + e.message);
+      toast.error("Failed to create temporary project: " + e.message);
     }
-  }, [screen, updateScreen, publish]);
+  }, [screenId, createTemporaryProject, publish, orgSlug]);
 
-  if (!fetching && data && !screen) {
-    return <Redirect href={`/o/${orgSlug}/screens`} />;
-  }
+  const handleSignedOut = useCallback(() => {
+    refetch({ requestPolicy: "network-only" });
+  }, [refetch]);
+
+  const loginHref = `/login?next=${encodeURIComponent(
+    `/o/${orgSlug}/screens/${screenSlug}/control`,
+  )}`;
 
   return (
-    <SharedOrgLayout
-      title={screen ? `Control · ${screen.name}` : "Screen control"}
-      sharedOrgQuery={query}
-    >
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-4">
-          <p className="text-sm text-tertiary uppercase tracking-wide">
-            Screen control
-          </p>
-          <h1 className="text-2xl font-bold">{screen?.name ?? ""}</h1>
-        </div>
+    <div className="max-w-4xl mx-auto p-4">
+      <ControlPageHeader
+        screenName={screen.name ?? ""}
+        isMember={isMember}
+        guestSignedIn={!!currentScreenGuestSessionId}
+        onSignedOut={handleSignedOut}
+      />
 
-        <CurrentlyShowing
-          screen={screen}
-          updating={updating}
-          onUnassign={handleUnassign}
-        />
+      <AdminGuestPageNotice
+        isMember={isMember}
+        orgSlug={orgSlug}
+        screenSlug={screenSlug}
+      />
 
-        <div className="mb-3 mt-6">
-          <h2 className="text-lg font-semibold">Pick a project</h2>
-          <p className="text-sm text-secondary">
-            Tap a project to display it on this screen and open it for control.
-          </p>
-        </div>
-
-        {projects.length === 0 && (
-          <Alert variant="default" title="No projects yet">
-            Create a project from the dashboard first.
-          </Alert>
-        )}
-
-        <div className="flex flex-col gap-2">
-          {projects.map((project) => (
-            <ControlProjectCard
-              key={project.id}
-              project={project}
-              isCurrent={project.id === currentProjectId}
-              disabled={updating}
-              onSelect={handleSelect}
-            />
-          ))}
-        </div>
-      </div>
-    </SharedOrgLayout>
-  );
-};
-
-const CurrentlyShowing = ({
-  screen,
-  updating,
-  onUnassign,
-}: {
-  screen?: { currentProject?: { id: string; name: string; slug: string } | null } | null;
-  updating: boolean;
-  onUnassign: () => void;
-}) => {
-  const current = screen?.currentProject;
-  return (
-    <div className="border border-stroke rounded p-3 flex items-center justify-between gap-3">
-      <div className="min-w-0">
-        <p className="text-xs text-tertiary uppercase tracking-wide">
-          Currently showing
-        </p>
-        {current ? (
-          <p className="font-medium truncate">
-            {current.name !== "" ? current.name : "Untitled"}
-          </p>
-        ) : (
-          <p className="text-secondary italic">Nothing assigned</p>
-        )}
-      </div>
-      {current && (
+      <div className="mt-3">
         <Button
           variant="outline"
           size="sm"
-          onClick={onUnassign}
-          isLoading={updating}
+          onClick={handleCreateTemporary}
+          isLoading={creating}
         >
-          <VscClose />
-          Unassign
+          <VscAdd />
+          Create temporary project
         </Button>
-      )}
+      </div>
+
+      <div className="mt-6">
+        {isLoggedIn ? (
+          <UserProjectsPicker
+            orgGroups={orgGroups}
+            currentProjectId={currentProjectId}
+            assigning={assigning}
+            onSelect={handleSelect}
+          />
+        ) : (
+          <Alert variant="default" title="Sign in to pick from your projects">
+            <p className="mb-3">
+              You can keep using the screen as a guest, or sign in to your
+              account to pick from any project across the organizations you
+              belong to.
+            </p>
+            <Button asChild variant="outline" size="sm">
+              <a href={loginHref}>Sign in</a>
+            </Button>
+          </Alert>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const UserProjectsPicker = ({
+  orgGroups,
+  currentProjectId,
+  assigning,
+  onSelect,
+}: {
+  orgGroups: OrgGroup[];
+  currentProjectId: string | null;
+  assigning: boolean;
+  onSelect: (project: ProjectFragment, projectOrgSlug: string) => void;
+}) => {
+  if (orgGroups.length === 0) {
+    return (
+      <Alert variant="default" title="No projects yet">
+        No organization found.
+      </Alert>
+    );
+  }
+
+  const showOrgHeadings = orgGroups.length > 1;
+
+  return (
+    <div>
+      <div className="mb-3">
+        <h2 className="text-lg font-semibold">Pick a project</h2>
+        <p className="text-sm text-secondary">
+          Tap a project to display it on this screen.
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-4">
+        {orgGroups.map((group) => (
+          <div key={group.id}>
+            {showOrgHeadings && (
+              <p className="text-xs text-tertiary uppercase tracking-wide mb-2">
+                {group.name}
+              </p>
+            )}
+            <div className="flex flex-col gap-2">
+              {group.projects.map((project) => (
+                <ControlProjectCard
+                  key={project.id}
+                  project={project}
+                  isCurrent={project.id === currentProjectId}
+                  disabled={assigning}
+                  onSelect={() => onSelect(project, group.slug)}
+                />
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
@@ -162,13 +266,13 @@ const ControlProjectCard = ({
   project: ProjectFragment;
   isCurrent: boolean;
   disabled: boolean;
-  onSelect: (projectId: string, projectSlug: string) => void;
+  onSelect: () => void;
 }) => {
   return (
     <button
       type="button"
       disabled={disabled}
-      onClick={() => onSelect(project.id, project.slug)}
+      onClick={onSelect}
       className={`text-left border rounded p-3 transition-colors disabled:opacity-60 disabled:cursor-not-allowed ${
         isCurrent
           ? "border-accent bg-blue-50 hover:bg-blue-100"
@@ -213,9 +317,6 @@ const ControlProjectCard = ({
             </div>
           )}
         </div>
-        <p className="text-xs text-tertiary whitespace-nowrap">
-          Updated <DateDisplayRelative date={new Date(project.updatedAt)} />
-        </p>
       </div>
     </button>
   );
