@@ -1,3 +1,4 @@
+import { AdminGuestPageNotice } from "@/containers/ScreenGuest/AdminGuestPageNotice";
 import { ControlPageHeader } from "@/containers/ScreenGuest/ControlPageHeader";
 import {
   ScreenGuestAuthContext,
@@ -20,7 +21,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { VscPerson } from "react-icons/vsc";
 import { toast } from "react-toastify";
 import { UseQueryResponse } from "urql";
-import { Link, useParams } from "wouter";
+import { useParams } from "wouter";
 
 const OrganizationSlugScreenRequestPage = () => {
   const orgSlug = useOrganizationSlug();
@@ -187,18 +188,11 @@ const RequestPageInner = ({
         onSignedOut={refetch}
       />
 
-      {isMember && (
-        <Alert variant="default" title="You're an organisation member">
-          This is the guest-facing request page. Go to the{" "}
-          <Link
-            href={`/o/${orgSlug}/screens/${screenSlug}/admin`}
-            className="underline"
-          >
-            admin page
-          </Link>{" "}
-          for more controls.
-        </Alert>
-      )}
+      <AdminGuestPageNotice
+        isMember={isMember}
+        orgSlug={orgSlug}
+        screenSlug={screenSlug}
+      />
 
       <GuestRequestPanel screen={screen} refetch={refetch} />
     </div>
