@@ -7,7 +7,7 @@ import { typeidUnboxed } from "typeid-js";
 interface PdfProcessingContext {
   serverPluginApi: ServerPluginApi;
   organizationId: string;
-  userId: string;
+  userId: string | null;
   projectId: string;
   pluginId: string;
 }
@@ -74,6 +74,7 @@ export async function uploadPdfAndPrepare(
       {
         organizationId: ctx.organizationId,
         userId: ctx.userId,
+        isGuest: ctx.userId == null,
         parentMediaIdOrUUID: parentMediaId,
         attachTo: { projectId: ctx.projectId, pluginId: ctx.pluginId },
       },
@@ -110,6 +111,7 @@ export function startThumbnailWorker(
         pdfMediaName,
         organizationId: ctx.organizationId,
         userId: ctx.userId,
+        isGuest: ctx.userId == null,
         parentMediaId,
         projectId: ctx.projectId,
         pluginId: ctx.pluginId,

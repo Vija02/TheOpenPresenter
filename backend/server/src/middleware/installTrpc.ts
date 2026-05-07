@@ -9,21 +9,28 @@ import { getRootPgPool } from "./installDatabasePools";
 export default async function installTrpc(app: Express) {
   const createContext = async ({
     req,
-    res,
-  }: trpcExpress.CreateExpressContextOptions) => {
-    const {
-      rows: [{ user_id }],
-    } = await getRootPgPool(app).query(
-      "select user_id from app_private.sessions where uuid = $1",
-      [req.user?.session_id],
-    );
+  }: trpcExpress.CreateExpressContextOptions): Promise<TRPCContext> => {
+    const sessionId = req.user?.session_id ?? null;
+    const screenGuestSessionId =
+      (req.session as any)?.screenGuestSession?.id ?? null;
 
-    if (!user_id) {
+    let userId: string | null = null;
+    if (sessionId) {
+      const {
+        rows: [row],
+      } = await getRootPgPool(app).query(
+        "select user_id from app_private.sessions where uuid = $1",
+        [sessionId],
+      );
+      userId = row?.user_id ?? null;
+    }
+
+    if (!userId && !screenGuestSessionId) {
       throw new TRPCError({ code: "UNAUTHORIZED" });
     }
 
     return {
-      userId: user_id,
+      userId,
     };
   };
 

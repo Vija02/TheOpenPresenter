@@ -218,11 +218,13 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
     {
       organizationId,
       userId,
+      isGuest,
       parentMediaIdOrUUID,
       attachTo,
     }: {
       organizationId: string;
-      userId: string;
+      userId: string | null;
+      isGuest?: boolean;
       parentMediaIdOrUUID?: string;
       attachTo?: { projectId: string; pluginId: string };
     },
@@ -243,6 +245,7 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
       userId,
       organizationId,
       isUserUploaded: false,
+      isGuest,
     });
 
     if (attachTo) {
