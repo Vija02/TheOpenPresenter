@@ -20,7 +20,7 @@ query RendererBasePlugin($orgSlug: String!, $projectSlug: String!) {
     }
   }
 
-  publicProject: projects(condition: { slug: $projectSlug, isPublic: true }) {
+  publicOrGuestProject: projects(condition: { slug: $projectSlug }) {
     nodes {
       id
       name
