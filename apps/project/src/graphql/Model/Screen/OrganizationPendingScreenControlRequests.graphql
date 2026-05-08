@@ -1,0 +1,19 @@
+query OrganizationPendingScreenControlRequests($organizationId: UUID!) {
+  organization(id: $organizationId) {
+    id
+    screens {
+      nodes {
+        id
+        screenControlRequests(
+          filter: { status: { equalTo: PENDING } }
+          orderBy: [CREATED_AT_ASC]
+        ) {
+          nodes {
+            id
+            ...ScreenControlRequest
+          }
+        }
+      }
+    }
+  }
+}

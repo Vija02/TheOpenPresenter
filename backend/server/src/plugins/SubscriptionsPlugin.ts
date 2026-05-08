@@ -105,6 +105,52 @@ const screenControlRequestTopicFromArgs = async (
 };
 
 /*
+ * Per-screen PG NOTIFY channel for the screen's pending request list
+ */
+const screenControlRequestsTopicFromArgs = async (
+  args: { screenId: string },
+  context: { [key: string]: any },
+  _resolveInfo: GraphQLResolveInfo
+) => {
+  const {
+    rows: [row],
+  } = await context.pgClient.query(
+    "select app_public.current_user_can_access_screen($1::uuid) as allowed",
+    [args.screenId]
+  );
+  if (!row?.allowed) {
+    throw new Error("You do not have access to this screen");
+  }
+  return `graphql:scr_reqs:${args.screenId}`;
+};
+
+/*
+ * Per-organization PG NOTIFY channel for the org's pending-request list
+ */
+const organizationPendingScreenControlRequestsTopicFromArgs = async (
+  args: { organizationId: string },
+  context: { [key: string]: any },
+  _resolveInfo: GraphQLResolveInfo
+) => {
+  const {
+    rows: [row],
+  } = await context.pgClient.query(
+    `
+      select exists(
+        select 1
+        from app_public.current_user_member_organization_ids() as id
+        where id = $1::uuid
+      ) as allowed
+    `,
+    [args.organizationId]
+  );
+  if (!row?.allowed) {
+    throw new Error("You do not have access to this organization");
+  }
+  return `graphql:org_scr_reqs:${args.organizationId}`;
+};
+
+/*
  * Per-row PG NOTIFY channel for the active controller of a screen
  */
 const screenActiveControllerTopicFromArgs = async (
@@ -196,6 +242,26 @@ const SubscriptionsPlugin = makeExtendSchemaPlugin((build) => {
           requestId: UUID!
         ): ScreenControlRequestSubscriptionPayload @pgSubscription(topic: ${embed(
           screenControlRequestTopicFromArgs
+        )})
+
+        """
+        Triggered when any control request for the given screen is
+        created, updated, or deleted.
+        """
+        screenControlRequestsUpdated(
+          screenId: UUID!
+        ): ScreenControlRequestSubscriptionPayload @pgSubscription(topic: ${embed(
+          screenControlRequestsTopicFromArgs
+        )})
+
+        """
+        Triggered when any control request for any screen owned by the
+        given organization is created, updated, or deleted.
+        """
+        organizationPendingScreenControlRequestsUpdated(
+          organizationId: UUID!
+        ): ScreenControlRequestSubscriptionPayload @pgSubscription(topic: ${embed(
+          organizationPendingScreenControlRequestsTopicFromArgs
         )})
 
         """

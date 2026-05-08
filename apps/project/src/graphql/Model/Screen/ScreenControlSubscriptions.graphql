@@ -17,3 +17,23 @@ subscription ScreenControlRequestUpdated($requestId: UUID!) {
     }
   }
 }
+
+subscription ScreenControlRequestsUpdated($screenId: UUID!) {
+  screenControlRequestsUpdated(screenId: $screenId) {
+    event
+    request {
+      id
+      ...ScreenControlRequest
+    }
+  }
+}
+
+subscription OrganizationPendingScreenControlRequestsUpdated($organizationId: UUID!) {
+  organizationPendingScreenControlRequestsUpdated(organizationId: $organizationId) {
+    event
+    request {
+      id
+      ...ScreenControlRequest
+    }
+  }
+}

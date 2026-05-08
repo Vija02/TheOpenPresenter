@@ -18,4 +18,13 @@ fragment ScreenControlRequest on ScreenControlRequest {
     name
   }
   createdAt
+  screen {
+    id
+    name
+    slug
+    anonGuestOnTakeoverPolicy
+    anonGuestOnTakeoverAfterSeconds
+    registeredGuestOnTakeoverPolicy
+    registeredGuestOnTakeoverAfterSeconds
+  }
 }

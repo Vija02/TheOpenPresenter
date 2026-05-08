@@ -61,3 +61,51 @@ create trigger _510_gql_notify
     'graphql:scr_req:$1',
     'id'
   );
+
+create trigger _511_gql_per_screen_notify
+  after insert or update or delete on app_public.screen_control_requests
+  for each row
+  execute procedure app_public.tg__graphql_subscription(
+    'screenControlRequestsUpdate',
+    'graphql:scr_reqs:$1',
+    'screen_id'
+  );
+
+-- Per-organization notify
+create or replace function app_private.tg__notify_org_screen_control_request()
+  returns trigger
+  security definer
+  set search_path to pg_catalog, public, pg_temp
+  language plpgsql
+as $$
+declare
+  v_record record;
+  v_org_id uuid;
+begin
+  if (TG_OP = 'DELETE') then
+    v_record := OLD;
+  else
+    v_record := NEW;
+  end if;
+  select organization_id
+    into v_org_id
+    from app_public.screens
+    where id = v_record.screen_id;
+  if v_org_id is not null then
+    perform pg_notify(
+      'graphql:org_scr_reqs:' || v_org_id::text,
+      json_build_object(
+        'event', 'organizationPendingScreenControlRequestsUpdate',
+        'subject', v_record.id,
+        'id', v_record.id
+      )::text
+    );
+  end if;
+  return v_record;
+end;
+$$;
+
+create trigger _512_gql_per_org_notify
+  after insert or update or delete on app_public.screen_control_requests
+  for each row
+  execute procedure app_private.tg__notify_org_screen_control_request();
