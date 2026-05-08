@@ -72,14 +72,11 @@ const OrganizationGuestsPage = () => {
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-1">
             <h1 className="text-2xl font-bold">Registered guests</h1>
-            <Badge variant="default" size="sm">
-              Beta
-            </Badge>
           </div>
           <p className="text-secondary">
-            People who can authenticate at a screen with a passcode. Each entry
-            unlocks access on screens whose access policy allows registered
-            guests.
+            People who can authenticate at a screen with a passcode or just
+            their email. Each entry unlocks access on screens whose access
+            policy allows registered guests.
           </p>
         </div>
 
@@ -93,7 +90,7 @@ const OrganizationGuestsPage = () => {
           <h2 className="text-lg font-medium mb-3">Add a guest</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
             <Input
-              placeholder="Display name (e.g. Volunteer)"
+              placeholder="Name"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
             />
