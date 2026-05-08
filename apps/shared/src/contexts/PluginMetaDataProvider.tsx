@@ -11,7 +11,9 @@ type Project = NonNullable<
   | NonNullable<
       RendererBasePluginQuery["organizationBySlug"]
     >["projects"]["nodes"][number]
-  | NonNullable<RendererBasePluginQuery["publicProject"]>["nodes"][number]
+  | NonNullable<
+      RendererBasePluginQuery["publicOrGuestProject"]
+    >["nodes"][number]
 >;
 
 type PluginMeta =
@@ -67,15 +69,15 @@ export function PluginMetaDataProvider({
       return pluginMetaData?.organizationBySlug?.projects.nodes[0];
     }
     if (
-      pluginMetaData?.publicProject?.nodes &&
-      pluginMetaData?.publicProject?.nodes.length > 0
+      pluginMetaData?.publicOrGuestProject?.nodes &&
+      pluginMetaData?.publicOrGuestProject?.nodes.length > 0
     ) {
-      return pluginMetaData?.publicProject?.nodes[0];
+      return pluginMetaData?.publicOrGuestProject?.nodes[0];
     }
     return null;
   }, [
     pluginMetaData?.organizationBySlug?.projects.nodes,
-    pluginMetaData?.publicProject?.nodes,
+    pluginMetaData?.publicOrGuestProject?.nodes,
   ]);
 
   const projectId = project?.id ?? null;
@@ -88,16 +90,16 @@ export function PluginMetaDataProvider({
       return pluginMetaData?.organizationBySlug?.id;
     }
     if (
-      pluginMetaData?.publicProject?.nodes &&
-      pluginMetaData?.publicProject?.nodes.length > 0
+      pluginMetaData?.publicOrGuestProject?.nodes &&
+      pluginMetaData?.publicOrGuestProject?.nodes.length > 0
     ) {
-      return pluginMetaData?.publicProject.nodes[0].organizationId;
+      return pluginMetaData?.publicOrGuestProject.nodes[0].organizationId;
     }
     return null;
   }, [
     pluginMetaData?.organizationBySlug?.id,
     pluginMetaData?.organizationBySlug?.projects.nodes,
-    pluginMetaData?.publicProject?.nodes,
+    pluginMetaData?.publicOrGuestProject?.nodes,
   ]);
 
   if (error) {
