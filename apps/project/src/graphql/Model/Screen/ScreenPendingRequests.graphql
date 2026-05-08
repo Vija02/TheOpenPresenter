@@ -1,0 +1,14 @@
+query ScreenPendingRequests($screenId: UUID!) {
+  screen(id: $screenId) {
+    id
+    screenControlRequests(
+      filter: { status: { equalTo: PENDING } }
+      orderBy: [CREATED_AT_ASC]
+    ) {
+      nodes {
+        id
+        ...ScreenControlRequest
+      }
+    }
+  }
+}

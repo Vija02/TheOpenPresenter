@@ -71,18 +71,6 @@ export async function isMemberOfOrg(
   return !!row?.is_member;
 }
 
-export async function loadScreenPayload(resolveInfo: any, screenId: string) {
-  const { selectGraphQLResultFromTable } = resolveInfo.graphile;
-  const { pgSql: sql } = resolveInfo.graphile.build;
-  const rows = await selectGraphQLResultFromTable(
-    sql.fragment`app_public.screens`,
-    (alias: any, qb: any) => {
-      qb.where(sql.fragment`${alias}.id = ${sql.value(screenId)}`);
-    },
-  );
-  return { data: { screen: rows[0] } };
-}
-
 export type ScreenControlResultIdentifiers = {
   screenId: string | null;
   requestId: string | null;

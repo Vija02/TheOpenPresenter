@@ -1,4 +1,5 @@
 import { SharedOrgLayout } from "@/components/SharedOrgLayout";
+import { PendingRequestsPanel } from "@/containers/Screen/PendingRequestsPanel";
 import { useOrganizationSlug } from "@/lib/permissionHooks/organization";
 import {
   ScreenFragment,
@@ -91,6 +92,12 @@ const OrganizationScreensPage = () => {
           <Alert variant="destructive" title="Error" className="mb-4">
             {extractError(error).message}
           </Alert>
+        )}
+
+        {organizationId && (
+          <div className="mb-6">
+            <PendingRequestsPanel organizationId={organizationId} />
+          </div>
         )}
 
         <div className="border border-stroke rounded p-4 mb-6">
