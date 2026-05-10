@@ -1,0 +1,34 @@
+@reference "@repo/tailwind-config/index.css";
+
+@layer base {
+  .ui--switch {
+    /* Base styles */
+    @apply inline-flex shrink-0 items-center rounded-full border border-transparent shadow-xs outline-none;
+    @apply transition-all cursor-pointer;
+
+    /* Sizes */
+    @apply data-[size=default]:h-[1.15rem] data-[size=default]:w-8;
+    @apply data-[size=sm]:h-3.5 data-[size=sm]:w-6;
+
+    /* Background states */
+    @apply data-[state=unchecked]:bg-fill-muted;
+    @apply data-[state=checked]:bg-fill-default;
+
+    /* Focus styles */
+    @apply focus-visible:outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-2;
+
+    /* Disabled state */
+    @apply disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .ui--switch-thumb {
+    /* Base styles */
+    @apply pointer-events-none block rounded-full bg-surface-primary ring-0 transition-transform;
+
+    /* Sizes (follow parent's data-size) */
+    @apply group-data-[size=default]/switch:size-4 group-data-[size=sm]/switch:size-3;
+
+    /* Translate based on checked state */
+    @apply data-[state=checked]:translate-x-[calc(100%-2px)] data-[state=unchecked]:translate-x-0;
+  }
+}
