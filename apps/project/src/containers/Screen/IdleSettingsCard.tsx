@@ -1,6 +1,8 @@
 import { ScreenFragment, ScreenIdlePolicy } from "@repo/graphql";
 import { NumberInput, Select } from "@repo/ui";
 
+import { formatSeconds, parseSeconds } from "./shared";
+
 export type IdlePatch = Partial<{
   idlePolicy: ScreenIdlePolicy;
   idleAfterSeconds: number | null;
@@ -12,9 +14,6 @@ const idlePolicyOptions: { label: string; value: ScreenIdlePolicy }[] = [
   { label: "Do nothing", value: ScreenIdlePolicy.DoNothing },
   { label: "Unassign the seat", value: ScreenIdlePolicy.Unassign },
 ];
-
-const formatSeconds = (v: number) => `${v}s`;
-const parseSeconds = (s: string) => parseFloat(s.replace(/s\s*$/i, ""));
 
 export const IdleSettingsCard = ({
   screen,
