@@ -1,18 +1,22 @@
 import { useLogoutScreenGuestSessionMutation } from "@repo/graphql";
-import { Badge, Button } from "@repo/ui";
+import { Badge, Button, Link } from "@repo/ui";
 import { useCallback } from "react";
+import { VscSettingsGear } from "react-icons/vsc";
 import { toast } from "react-toastify";
+import { Link as WouterLink } from "wouter";
 
 export const ControlPageHeader = ({
   screenName,
   isMember,
   guestSignedIn,
   onSignedOut,
+  adminHref,
 }: {
   screenName: string;
   isMember: boolean;
   guestSignedIn: boolean;
   onSignedOut?: () => void;
+  adminHref?: string;
 }) => {
   const [{ fetching: loggingOut }, logoutGuest] =
     useLogoutScreenGuestSessionMutation();
@@ -20,7 +24,7 @@ export const ControlPageHeader = ({
   const handleSignOut = useCallback(async () => {
     const res = await logoutGuest({});
     if (res.error) {
-      toast.error("Sign out failed: " + res.error.message);
+      toast.error("Failed to release screen: " + res.error.message);
       return;
     }
     onSignedOut?.();
@@ -39,6 +43,16 @@ export const ControlPageHeader = ({
             Guest
           </Badge>
         )}
+        {isMember && adminHref && (
+          <Link asChild variant="unstyled" className="ml-auto">
+            <WouterLink href={adminHref}>
+              <Button size="sm">
+                <VscSettingsGear />
+                Admin panel
+              </Button>
+            </WouterLink>
+          </Link>
+        )}
         {!isMember && guestSignedIn && (
           <Button
             variant="ghost"
@@ -47,7 +61,7 @@ export const ControlPageHeader = ({
             onClick={handleSignOut}
             isLoading={loggingOut}
           >
-            Sign out
+            Release screen
           </Button>
         )}
       </div>

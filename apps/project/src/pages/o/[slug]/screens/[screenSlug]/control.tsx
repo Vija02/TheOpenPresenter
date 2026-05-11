@@ -1,5 +1,4 @@
-import { Tag } from "@/components/Tag";
-import { AdminGuestPageNotice } from "@/containers/ScreenGuest/AdminGuestPageNotice";
+import { ProjectCard } from "@/containers/Dashboard/ProjectCard";
 import { ControlPageHeader } from "@/containers/ScreenGuest/ControlPageHeader";
 import { SharedScreenGuestLayout } from "@/containers/ScreenGuest/SharedScreenGuestLayout";
 import { useOrganizationSlug } from "@/lib/permissionHooks/organization";
@@ -13,11 +12,9 @@ import {
   useSetExistingProjectToScreenMutation,
 } from "@repo/graphql";
 import { globalState } from "@repo/lib";
-import { Alert, Button, DateDisplay } from "@repo/ui";
-import { format } from "date-fns";
+import { Alert, Button, Link } from "@repo/ui";
 import { useCallback, useMemo } from "react";
-import { IoCloudDoneOutline } from "react-icons/io5";
-import { VscAdd, VscCheck } from "react-icons/vsc";
+import { VscAdd, VscArrowRight, VscCheck } from "react-icons/vsc";
 import { toast } from "react-toastify";
 import { UseQueryResponse } from "urql";
 import { useParams } from "wouter";
@@ -26,7 +23,6 @@ const OrganizationSlugScreenControlPage = () => {
   const orgSlug = useOrganizationSlug();
   const params = useParams();
   const screenSlug = params.screenSlug!;
-  const requestHref = `/o/${orgSlug}/screens/${screenSlug}/request`;
 
   const query = useOrganizationScreenControlIndexPageQuery({
     variables: { slug: orgSlug, screenSlug },
@@ -36,9 +32,6 @@ const OrganizationSlugScreenControlPage = () => {
     <SharedScreenGuestLayout
       query={query}
       title={(s) => `Control · ${s.name}`}
-      redirectIf={({ guestHasControl }) =>
-        guestHasControl ? null : requestHref
-      }
     >
       {({ isMember, currentScreenGuestSessionId }) => (
         <ControlPageInner
@@ -156,46 +149,74 @@ const ControlPageInner = ({
         isMember={isMember}
         guestSignedIn={!!currentScreenGuestSessionId}
         onSignedOut={handleSignedOut}
+        adminHref={
+          isMember ? `/o/${orgSlug}/screens/${screenSlug}/admin` : undefined
+        }
       />
 
-      <AdminGuestPageNotice
-        isMember={isMember}
-        orgSlug={orgSlug}
-        screenSlug={screenSlug}
-      />
-
-      <div className="mt-3">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleCreateTemporary}
-          isLoading={creating}
-        >
-          <VscAdd />
-          Create temporary project
-        </Button>
-      </div>
+      {screen.currentProject && (
+        <Link asChild variant="unstyled" className="block">
+          <a
+            href={`/app/${orgSlug}/${screen.currentProject.slug}${
+              typeof window !== "undefined" ? window.location.search : ""
+            }`}
+          >
+            <div className="border-2 border-accent rounded-lg p-5 bg-blue-50 hover:bg-blue-100 transition-colors flex items-center justify-between gap-4">
+              <div className="min-w-0">
+                <p className="text-xs text-accent uppercase tracking-wide font-semibold flex items-center gap-1">
+                  <VscCheck />
+                  Currently showing
+                </p>
+                <p className="text-xl sm:text-2xl font-bold truncate mt-1">
+                  {screen.currentProject.name !== ""
+                    ? screen.currentProject.name
+                    : "Untitled project"}
+                </p>
+              </div>
+              <Button size="lg" className="shrink-0 text-base h-12 px-6">
+                Open project
+                <VscArrowRight />
+              </Button>
+            </div>
+          </a>
+        </Link>
+      )}
 
       <div className="mt-6">
-        {isLoggedIn ? (
-          <UserProjectsPicker
-            orgGroups={orgGroups}
-            currentProjectId={currentProjectId}
-            assigning={assigning}
-            onSelect={handleSelect}
+        <div className="mb-3">
+          <h2 className="text-lg font-semibold">Pick a project</h2>
+          <p className="text-sm text-secondary">
+            Tap a project to display it on this screen, or start with a blank
+            one.
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <CreateTemporaryCard
+            onSelect={handleCreateTemporary}
+            disabled={creating}
           />
-        ) : (
-          <Alert variant="default" title="Sign in to pick from your projects">
-            <p className="mb-3">
-              You can keep using the screen as a guest, or sign in to your
-              account to pick from any project across the organizations you
-              belong to.
-            </p>
-            <Button asChild variant="outline" size="sm">
-              <a href={loginHref}>Sign in</a>
-            </Button>
-          </Alert>
-        )}
+
+          {isLoggedIn ? (
+            <UserProjectsPicker
+              orgGroups={orgGroups}
+              currentProjectId={currentProjectId}
+              assigning={assigning}
+              onSelect={handleSelect}
+            />
+          ) : (
+            <Alert variant="default" title="Sign in to pick from your projects">
+              <p className="mb-3">
+                You can keep using the screen as a guest, or sign in to your
+                account to pick from any project across the organizations you
+                belong to.
+              </p>
+              <Button asChild variant="outline" size="sm">
+                <a href={loginHref}>Sign in</a>
+              </Button>
+            </Alert>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -212,59 +233,52 @@ const UserProjectsPicker = ({
   assigning: boolean;
   onSelect: (project: ProjectFragment, projectOrgSlug: string) => void;
 }) => {
-  if (orgGroups.length === 0) {
-    return (
-      <Alert variant="default" title="No projects yet">
-        No organization found.
-      </Alert>
-    );
-  }
+  if (orgGroups.length === 0) return null;
 
   const showOrgHeadings = orgGroups.length > 1;
 
   return (
-    <div>
-      <div className="mb-3">
-        <h2 className="text-lg font-semibold">Pick a project</h2>
-        <p className="text-sm text-secondary">
-          Tap a project to display it on this screen.
-        </p>
-      </div>
-
-      <div className="flex flex-col gap-4">
-        {orgGroups.map((group) => (
-          <div key={group.id}>
-            {showOrgHeadings && (
-              <p className="text-xs text-tertiary uppercase tracking-wide mb-2">
-                {group.name}
-              </p>
-            )}
-            <div className="flex flex-col gap-2">
-              {group.projects.map((project) => (
-                <ControlProjectCard
-                  key={project.id}
-                  project={project}
-                  isCurrent={project.id === currentProjectId}
-                  disabled={assigning}
-                  onSelect={() => onSelect(project, group.slug)}
-                />
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
+    <>
+      {orgGroups.map((group) => (
+        <div key={group.id} className="flex flex-col gap-2">
+          {showOrgHeadings && (
+            <p className="text-xs text-tertiary uppercase tracking-wide mt-2">
+              {group.name}
+            </p>
+          )}
+          {group.projects.map((project) => {
+            const href = `/app/${group.slug}/${project.slug}`;
+            return (
+              <ProjectCard
+                key={project.id}
+                project={project}
+                linkHref={href}
+                onLinkClick={async (e) => {
+                  e.preventDefault();
+                  if (assigning) return;
+                  await onSelect(project, group.slug);
+                }}
+                actions={
+                  project.id === currentProjectId ? (
+                    <span className="inline-flex items-center gap-1 px-2 text-xs font-semibold text-accent whitespace-nowrap">
+                      <VscCheck />
+                      Showing now
+                    </span>
+                  ) : null
+                }
+              />
+            );
+          })}
+        </div>
+      ))}
+    </>
   );
 };
 
-const ControlProjectCard = ({
-  project,
-  isCurrent,
+const CreateTemporaryCard = ({
   disabled,
   onSelect,
 }: {
-  project: ProjectFragment;
-  isCurrent: boolean;
   disabled: boolean;
   onSelect: () => void;
 }) => {
@@ -273,50 +287,17 @@ const ControlProjectCard = ({
       type="button"
       disabled={disabled}
       onClick={onSelect}
-      className={`text-left border rounded p-3 transition-colors disabled:opacity-60 disabled:cursor-not-allowed ${
-        isCurrent
-          ? "border-accent bg-blue-50 hover:bg-blue-100"
-          : "border-stroke bg-white hover:bg-gray-50"
-      }`}
+      className="text-left border border-fill-magic rounded p-3 transition-colors cursor-pointer hover:bg-fill-magic/10 disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-3"
     >
-      <div className="flex items-start gap-3">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            {project.cloudConnectionId && (
-              <IoCloudDoneOutline className="shrink-0 text-tertiary" />
-            )}
-            {project.targetDate && (
-              <DateDisplay
-                date={new Date(project.targetDate)}
-                formatToken="do MMM yyyy"
-                className="text-sm font-bold"
-              />
-            )}
-            {isCurrent && (
-              <span className="inline-flex items-center gap-1 text-xs font-semibold text-accent">
-                <VscCheck />
-                Showing now
-              </span>
-            )}
-          </div>
-          <p className={`${project.targetDate ? "text-sm" : "text-base"}`}>
-            {project.name !== ""
-              ? project.name
-              : project.targetDate
-                ? ""
-                : `Untitled (${format(new Date(project.createdAt), "do MMM yyyy")})`}
-          </p>
-          {project.category?.name && (
-            <p className="text-xs text-tertiary">{project.category.name}</p>
-          )}
-          {project.projectTags.nodes.length > 0 && (
-            <div className="mt-1 flex flex-wrap gap-1">
-              {project.projectTags.nodes.map((projectTag, i) => (
-                <Tag key={i} tag={projectTag.tag!} />
-              ))}
-            </div>
-          )}
-        </div>
+      <VscAdd className="shrink-0 text-fill-magic" />
+      <div className="min-w-0">
+        <p className="text-base text-fill-magic font-medium">
+          Create temporary project
+        </p>
+        <p className="text-xs text-tertiary">
+          A fresh empty project. It will be deleted once you stop using it on
+          this screen.
+        </p>
       </div>
     </button>
   );
