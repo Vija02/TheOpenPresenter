@@ -65,13 +65,11 @@ const OrganizationSlugScreenDetailPage = () => {
       sharedOrgQuery={query}
     >
       <div className="max-w-4xl mx-auto">
-        <div className="mb-4 flex items-center gap-2">
+        <div className="mb-4">
           <Link asChild>
             <WouterLink href={`/o/${orgSlug}/screens`}>
-              <Button variant="ghost" size="sm">
-                <VscArrowLeft />
-                Back to screens
-              </Button>
+              <VscArrowLeft />
+              Back to screens
             </WouterLink>
           </Link>
         </div>

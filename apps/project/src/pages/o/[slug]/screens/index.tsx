@@ -66,21 +66,22 @@ const OrganizationScreensPage = () => {
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-1">
             <h1 className="text-2xl font-bold">Screens</h1>
-            <Badge variant="default" size="sm">
-              Beta
-            </Badge>
           </div>
-          <p className="text-secondary">
+          <p className="text-secondary mb-3">
             Persistent displays in your organization. Set up the device once
             with the screen URL. Then, assign any project here and it will
             switch automatically.
           </p>
+          <Alert
+            variant="default"
+            size="sm"
+            title="Screens are a beta feature"
+            subtitle="Behaviour and settings may change. Please report any issues you run into."
+            className="mb-4"
+          />
           <div className="mt-3">
             <Link asChild>
-              <WouterLink
-                href={`/o/${orgSlug}/screens/guests`}
-                className="text-sm text-primary inline-flex items-center gap-1 hover:underline"
-              >
+              <WouterLink href={`/o/${orgSlug}/screens/guests`}>
                 Manage registered guests
                 <VscChevronRight />
               </WouterLink>
