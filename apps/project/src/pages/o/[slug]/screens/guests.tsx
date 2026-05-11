@@ -15,6 +15,7 @@ import { useCallback, useState } from "react";
 import { FaPlus } from "react-icons/fa";
 import { VscArrowLeft, VscEdit, VscTrash } from "react-icons/vsc";
 import { toast } from "react-toastify";
+import { Link as WouterLink } from "wouter";
 
 const OrganizationGuestsPage = () => {
   const orgSlug = useOrganizationSlug();
@@ -61,12 +62,11 @@ const OrganizationGuestsPage = () => {
     <SharedOrgLayout title="Guest access" sharedOrgQuery={query}>
       <div className="max-w-4xl mx-auto">
         <div className="mb-4">
-          <Link
-            href={`/o/${orgSlug}/screens`}
-            className="text-sm text-secondary inline-flex items-center gap-1 hover:underline"
-          >
-            <VscArrowLeft />
-            Back to screens
+          <Link asChild>
+            <WouterLink href={`/o/${orgSlug}/screens`}>
+              <VscArrowLeft />
+              Back to screens
+            </WouterLink>
           </Link>
         </div>
 
