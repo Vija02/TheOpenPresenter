@@ -1,6 +1,7 @@
 import { gql, makeExtendSchemaPlugin } from "graphile-utils";
 
 import { OurGraphQLContext } from "../../graphile.config";
+import { cleanupScreenGuestSession } from "./helpers";
 
 const screenLoginPlugin = makeExtendSchemaPlugin(() => ({
   typeDefs: gql`
@@ -154,10 +155,7 @@ const screenLoginPlugin = makeExtendSchemaPlugin(() => ({
         const sessionId = req?.session?.screenGuestSession?.id;
 
         if (sessionId) {
-          await rootPgPool.query(
-            `delete from app_public.screen_guest_sessions where id = $1`,
-            [sessionId],
-          );
+          await cleanupScreenGuestSession(rootPgPool, sessionId);
         }
 
         if (req?.session) {

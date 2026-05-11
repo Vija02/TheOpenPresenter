@@ -5,6 +5,7 @@ import { Strategy as GitHubStrategy } from "passport-github2";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 
 import { getWebsocketMiddlewares } from "../app";
+import { cleanupScreenGuestSession } from "../api/screen/helpers";
 import { getRootPgPool } from "./installDatabasePools";
 import installPassportQRStrategy from "./installPassportQRStrategy";
 import installPassportStrategy from "./installPassportStrategy";
@@ -48,10 +49,7 @@ export default async (app: Express) => {
         const guestSessionId = req.session?.screenGuestSession?.id;
         if (!guestSessionId) return;
         try {
-          await getRootPgPool(app).query(
-            `delete from app_public.screen_guest_sessions where id = $1`,
-            [guestSessionId],
-          );
+          await cleanupScreenGuestSession(getRootPgPool(app), guestSessionId);
         } catch {
           // best-effort: don't block logout on cleanup failure
         }

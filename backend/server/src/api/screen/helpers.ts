@@ -1,6 +1,31 @@
+import { Pool } from "pg";
+
 import { OurGraphQLContext } from "../../graphile.config";
 
 export type ScreenGuestSessionKind = "anon" | "registered";
+
+export async function cleanupScreenGuestSession(
+  pool: Pool,
+  sessionId: string,
+): Promise<void> {
+  await pool.query(
+    `
+      update app_public.screens
+      set current_project_id = null
+      where id = (
+        select screen_id
+        from app_public.screen_active_controllers
+        where screen_guest_session_id = $1
+      )
+        and current_project_id is not null
+    `,
+    [sessionId],
+  );
+  await pool.query(
+    `delete from app_public.screen_guest_sessions where id = $1`,
+    [sessionId],
+  );
+}
 
 export type OnEmptyPolicy = "allow" | "request";
 export type OnTakeoverPolicy = "allow" | "request" | "timer";
