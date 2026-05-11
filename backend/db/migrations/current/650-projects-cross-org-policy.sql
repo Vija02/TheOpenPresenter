@@ -16,8 +16,9 @@ create policy select_as_screen_current_for_guest_seat on app_public.projects
     exists (
       select 1
       from app_public.screens s
+      join app_public.screen_active_controllers ac on ac.screen_id = s.id
       where s.current_project_id = projects.id
-        -- Access for guests
-        and s.id = (app_public.current_screen_guest_session()).screen_id
+        -- Access only for the guest who currently holds the seat
+        and ac.screen_guest_session_id = app_public.current_screen_guest_session_id()
     )
   );
