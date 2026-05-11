@@ -23,6 +23,7 @@ const OrganizationSlugScreenControlPage = () => {
   const orgSlug = useOrganizationSlug();
   const params = useParams();
   const screenSlug = params.screenSlug!;
+  const requestHref = `/o/${orgSlug}/screens/${screenSlug}/request`;
 
   const query = useOrganizationScreenControlIndexPageQuery({
     variables: { slug: orgSlug, screenSlug },
@@ -32,6 +33,9 @@ const OrganizationSlugScreenControlPage = () => {
     <SharedScreenGuestLayout
       query={query}
       title={(s) => `Control · ${s.name}`}
+      redirectIf={({ guestHasControl, isMember }) =>
+        guestHasControl || isMember ? null : requestHref
+      }
     >
       {({ isMember, currentScreenGuestSessionId }) => (
         <ControlPageInner
