@@ -49,7 +49,11 @@ test("Register", async () => {
 
     // Additional props to add to `req` (e.g. `user: {session_id: '...'}`)
     {
-      login: vi.fn((_user, cb) => process.nextTick(cb)),
+      login: vi.fn((_user, optionsOrCb, maybeCb) => {
+        const cb =
+          typeof optionsOrCb === "function" ? optionsOrCb : maybeCb;
+        process.nextTick(cb);
+      }),
     },
 
     // This function runs all your test assertions:
