@@ -22,7 +22,7 @@ import {
   useUpdateScreenMutation,
 } from "@repo/graphql";
 import { globalState } from "@repo/lib";
-import { Badge, Button, Link, OverlayToggle, PopConfirm } from "@repo/ui";
+import { Button, Link, OverlayToggle, PopConfirm } from "@repo/ui";
 import { useCallback, useEffect } from "react";
 import { VscArrowLeft, VscRocket, VscTrash } from "react-icons/vsc";
 import { toast } from "react-toastify";
@@ -195,13 +195,7 @@ const ScreenAdminInner = ({
     <>
       <div className="mb-6 flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <h1 className="text-2xl font-bold truncate">{screen.name}</h1>
-            <Badge variant="default" size="sm">
-              Beta
-            </Badge>
-          </div>
-          <p className="text-sm text-tertiary">{screen.slug}</p>
+          <h1 className="text-2xl font-bold truncate">{screen.name}</h1>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <OverlayToggle
@@ -214,16 +208,6 @@ const ScreenAdminInner = ({
           >
             <SetupModal orgSlug={orgSlug} screen={screen} />
           </OverlayToggle>
-          <PopConfirm
-            title="Delete this screen?"
-            okText="Delete"
-            okButtonProps={{ variant: "destructive" }}
-            onConfirm={onDelete}
-          >
-            <Button variant="ghost" size="sm">
-              <VscTrash />
-            </Button>
-          </PopConfirm>
         </div>
       </div>
 
@@ -251,6 +235,31 @@ const ScreenAdminInner = ({
         <IdleSettingsCard screen={screen} onUpdate={onUpdatePolicy} />
 
         <GuestPermissionsCard screen={screen} onUpdate={onUpdatePolicy} />
+
+        <h2 className="text-lg font-semibold pt-8">Danger zone</h2>
+        <div className="border border-fill-destructive/50 rounded">
+          <div className="flex items-center justify-between gap-4 p-4">
+            <div className="min-w-0">
+              <p className="font-semibold">Delete this screen</p>
+              <p className="text-sm text-secondary">
+                Once you delete a screen, all screen sessions will be ended. To
+                reuse the same QR code, you will need to recreate a screen with
+                the same slug.
+              </p>
+            </div>
+            <PopConfirm
+              title="Delete this screen?"
+              okText="Delete"
+              okButtonProps={{ variant: "destructive" }}
+              onConfirm={onDelete}
+            >
+              <Button variant="destructive" size="sm">
+                <VscTrash />
+                Delete screen
+              </Button>
+            </PopConfirm>
+          </div>
+        </div>
       </div>
     </>
   );
