@@ -5,7 +5,7 @@ import { cx } from "class-variance-authority";
 import { useMemo } from "react";
 import { RxCross1 } from "react-icons/rx";
 import { VscArrowLeft, VscSettingsGear, VscTrash } from "react-icons/vsc";
-import { useLocation } from "wouter";
+import { useLocation, useSearch } from "wouter";
 
 import { useRendererSelection } from "../../contexts/rendererSelection";
 import ProjectSettingsModal from "../ProjectSettingsModal";
@@ -14,14 +14,24 @@ import "./index.css";
 
 export const TopBar = () => {
   const [location] = useLocation();
-  const { orgSlug, project } = usePluginMetaData();
+  const { orgSlug, project, screenGuestSession } = usePluginMetaData();
   const { selectedRendererId } = useRendererSelection();
+  const search = useSearch();
 
   // When in proxy mode, use the cloud org slug for navigation back to projects
   const proxyConfig = appData.getProxyConfig();
   const projectsOrgSlug = proxyConfig.isProxy
     ? proxyConfig.cloudOrgSlug
     : orgSlug;
+
+  const guestScreen = screenGuestSession?.screen ?? null;
+  const appendSearch = (href: string) => (search ? `${href}?${search}` : href);
+  const backHref = guestScreen?.organization?.slug
+    ? appendSearch(
+        `/o/${guestScreen.organization.slug}/screens/${guestScreen.slug}/control`,
+      )
+    : appendSearch(`/o/${projectsOrgSlug}`);
+  const backLabel = guestScreen ? "Screen control" : "Projects";
 
   const data = useData();
   const mainState = usePluginData().mainState!;
@@ -35,11 +45,8 @@ export const TopBar = () => {
     <div className="rt--top-bar">
       <div className="rt--top-bar--left">
         <div className="rt--top-bar--breadcrumb">
-          <Link
-            href={`/o/${projectsOrgSlug}`}
-            className="rt--top-bar--breadcrumb-link"
-          >
-            Projects
+          <Link href={backHref} className="rt--top-bar--breadcrumb-link">
+            {backLabel}
           </Link>
           <span className="text-tertiary">/</span>
           <OverlayToggle
@@ -56,7 +63,7 @@ export const TopBar = () => {
             <ProjectSettingsModal />
           </OverlayToggle>
         </div>
-        <Link href={`/o/${projectsOrgSlug}`} className="rt--top-bar--back-link">
+        <Link href={backHref} className="rt--top-bar--back-link">
           <VscArrowLeft />
         </Link>
         {selectedScene && (

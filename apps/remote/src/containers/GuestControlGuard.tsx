@@ -1,23 +1,13 @@
-import {
-  useRemoteBasePluginQuery,
-  useScreenActiveControllerUpdatedSubscription,
-} from "@repo/graphql";
+import { useScreenActiveControllerUpdatedSubscription } from "@repo/graphql";
+import { usePluginMetaData } from "@repo/shared";
 import { ReactNode, useEffect, useRef } from "react";
-import { useParams } from "wouter";
+import { useSearch } from "wouter";
 
 // Handle if/when guest session is terminated
 export function GuestControlGuard({ children }: { children: ReactNode }) {
-  const { orgSlug, projectSlug } = useParams<{
-    orgSlug: string;
-    projectSlug: string;
-  }>();
-
-  const [{ data }] = useRemoteBasePluginQuery({
-    variables: { orgSlug: orgSlug ?? "", projectSlug: projectSlug ?? "" },
-    pause: !orgSlug || !projectSlug,
-  });
-  const session = data?.currentScreenGuestSession ?? null;
+  const { screenGuestSession: session } = usePluginMetaData();
   const screen = session?.screen ?? null;
+  const search = useSearch();
 
   const [acSubResult] = useScreenActiveControllerUpdatedSubscription({
     variables: { screenId: screen?.id ?? "" },
@@ -36,10 +26,9 @@ export function GuestControlGuard({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!revoked || !screen?.organization?.slug || !screen.slug) return;
-    window.location.replace(
-      `/o/${screen.organization.slug}/screens/${screen.slug}/ended`,
-    );
-  }, [revoked, screen]);
+    const base = `/o/${screen.organization.slug}/screens/${screen.slug}/ended`;
+    window.location.replace(search ? `${base}?${search}` : base);
+  }, [revoked, screen, search]);
 
   return <>{children}</>;
 }
