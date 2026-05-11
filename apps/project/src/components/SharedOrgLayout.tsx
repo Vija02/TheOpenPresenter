@@ -10,7 +10,10 @@ import { useEffect } from "react";
 import { FaCloud } from "react-icons/fa";
 import { IoMdArrowBack, IoMdSettings } from "react-icons/io";
 import { MdPermMedia } from "react-icons/md";
-import { PiProjectorScreenChartLight } from "react-icons/pi";
+import {
+  PiProjectorScreenChartLight,
+  PiTelevisionSimple,
+} from "react-icons/pi";
 import { RxHamburgerMenu } from "react-icons/rx";
 import { UseQueryResponse } from "urql";
 import { Link as WouterLink } from "wouter";
@@ -85,6 +88,11 @@ export function SharedOrgLayout({
           icon={<PiProjectorScreenChartLight />}
           name="Projects"
           exact
+        />
+        <SidebarItem
+          href={`/o/${slug}/screens`}
+          icon={<PiTelevisionSimple />}
+          name="Screens"
         />
         {data?.cloudEnabled && (
           <SidebarItem
