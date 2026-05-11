@@ -2,15 +2,16 @@ import { Tag } from "@/components/Tag";
 import { ProjectFragment } from "@repo/graphql";
 import { Button, DateDisplay, DateDisplayRelative, Link } from "@repo/ui";
 import { format } from "date-fns";
-import { ReactNode } from "react";
+import { MouseEvent, ReactNode } from "react";
 import { IoCloudDoneOutline } from "react-icons/io5";
 import { MdCoPresent } from "react-icons/md";
 
 type ProjectCardProps = {
   project: ProjectFragment;
   linkHref: string;
-  renderHref: string;
+  renderHref?: string;
   actions?: ReactNode;
+  onLinkClick?: (e: MouseEvent<HTMLAnchorElement>) => void;
 };
 
 export const ProjectCard = ({
@@ -18,6 +19,7 @@ export const ProjectCard = ({
   linkHref,
   renderHref,
   actions,
+  onLinkClick,
 }: ProjectCardProps) => {
   return (
     <div
@@ -28,7 +30,11 @@ export const ProjectCard = ({
     >
       <div className="flex items-center gap-2 justify-between sm:justify-start">
         {project.cloudConnectionId && <IoCloudDoneOutline />}
-        <Link href={linkHref} className="project--project-card-main-link">
+        <Link
+          href={linkHref}
+          onClick={onLinkClick}
+          className="project--project-card-main-link"
+        >
           {project.targetDate && (
             <DateDisplay
               date={new Date(project.targetDate)}
@@ -46,16 +52,18 @@ export const ProjectCard = ({
           <p className="text-xs text-tertiary">{project.category?.name}</p>
         </Link>
         <div className="flex">
-          <Link href={renderHref} isExternal>
-            <Button
-              variant="ghost"
-              size="sm"
-              role="button"
-              className="text-tertiary hover:bg-blue-100 hover:text-accent opacity-100 md:opacity-0 group-hover:opacity-100"
-            >
-              <MdCoPresent />
-            </Button>
-          </Link>
+          {renderHref && (
+            <Link href={renderHref} isExternal>
+              <Button
+                variant="ghost"
+                size="sm"
+                role="button"
+                className="text-tertiary hover:bg-blue-100 hover:text-accent opacity-100 md:opacity-0 group-hover:opacity-100"
+              >
+                <MdCoPresent />
+              </Button>
+            </Link>
+          )}
           {actions}
         </div>
       </div>

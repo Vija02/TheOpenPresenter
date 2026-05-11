@@ -8,6 +8,16 @@ subscription ScreenActiveControllerUpdated($screenId: UUID!) {
   }
 }
 
+subscription AdminScreenUpdated($screenId: UUID!) {
+  screenUpdated(screenId: $screenId) {
+    event
+    screen {
+      id
+      ...Screen
+    }
+  }
+}
+
 subscription ScreenControlRequestUpdated($requestId: UUID!) {
   screenControlRequestUpdated(requestId: $requestId) {
     event
