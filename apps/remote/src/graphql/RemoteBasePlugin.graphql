@@ -28,6 +28,21 @@ query RemoteBasePlugin($orgSlug: String!, $projectSlug: String!) {
       organizationId
     }
   }
+
+  currentScreenGuestSession {
+    id
+    screen {
+      id
+      slug
+      organization {
+        id
+        slug
+      }
+      screenActiveController {
+        screenGuestSessionId
+      }
+    }
+  }
 }
 
 fragment BaseRemotePluginMeta on PluginMeta {

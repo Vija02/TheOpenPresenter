@@ -12,6 +12,7 @@ import { Route, Switch, useParams } from "wouter";
 
 import "./App.css";
 import CentralContainer from "./containers/CentralContainer";
+import { GuestControlGuard } from "./containers/GuestControlGuard";
 import { TopBar } from "./containers/TopBar";
 import { useRendererSelection } from "./contexts/rendererSelection";
 
@@ -39,15 +40,17 @@ function Root() {
       type="remote"
     >
       <ErrorProvider>
-        <AudioCheckProvider>
-          <PluginDataProvider type="remote" rendererId={selectedRendererId}>
-            <AwarenessProvider>
-              <MediaPickerWrapper>
-                <Inner />
-              </MediaPickerWrapper>
-            </AwarenessProvider>
-          </PluginDataProvider>
-        </AudioCheckProvider>
+        <GuestControlGuard>
+          <AudioCheckProvider>
+            <PluginDataProvider type="remote" rendererId={selectedRendererId}>
+              <AwarenessProvider>
+                <MediaPickerWrapper>
+                  <Inner />
+                </MediaPickerWrapper>
+              </AwarenessProvider>
+            </PluginDataProvider>
+          </AudioCheckProvider>
+        </GuestControlGuard>
       </ErrorProvider>
     </PluginMetaDataProvider>
   );
