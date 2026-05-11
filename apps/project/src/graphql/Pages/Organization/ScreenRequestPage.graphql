@@ -3,4 +3,23 @@ query OrganizationScreenRequestPage(
   $screenSlug: String!
 ) {
   ...SharedScreenGuest
+
+  organizationBySlug(slug: $slug) {
+    id
+    screens(condition: { slug: $screenSlug }) {
+      nodes {
+        id
+        screenControlRequests(
+          filter: { status: { equalTo: PENDING } }
+          orderBy: [CREATED_AT_DESC]
+          first: 1
+        ) {
+          nodes {
+            id
+            ...ScreenControlRequest
+          }
+        }
+      }
+    }
+  }
 }
