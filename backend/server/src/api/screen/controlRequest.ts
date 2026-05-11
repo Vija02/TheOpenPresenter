@@ -54,11 +54,7 @@ const screenControlRequestPlugin = makeExtendSchemaPlugin(() => ({
   `,
   resolvers: {
     Mutation: {
-      async requestScreenControl(
-        _mutation,
-        args,
-        context: OurGraphQLContext,
-      ) {
+      async requestScreenControl(_mutation, args, context: OurGraphQLContext) {
         const { pgClient, rootPgPool, sessionId, screenGuestSessionId, req } =
           context;
         const { screenId, note } = args.input;
@@ -91,7 +87,10 @@ const screenControlRequestPlugin = makeExtendSchemaPlugin(() => ({
           : false;
         if (isOrgMember) {
           return {
-            data: { screenId: null, requestId: null } as ScreenControlResultIdentifiers,
+            data: {
+              screenId: null,
+              requestId: null,
+            } as ScreenControlResultIdentifiers,
           };
         }
 
@@ -131,7 +130,10 @@ const screenControlRequestPlugin = makeExtendSchemaPlugin(() => ({
           screenRow.active_session_id === screenGuestSessionId;
         if (alreadyControlled) {
           return {
-            data: { screenId, requestId: null } as ScreenControlResultIdentifiers,
+            data: {
+              screenId,
+              requestId: null,
+            } as ScreenControlResultIdentifiers,
           };
         }
 
@@ -159,13 +161,15 @@ const screenControlRequestPlugin = makeExtendSchemaPlugin(() => ({
               values ($1, $2)
               on conflict (screen_id) do update
                 set screen_guest_session_id = excluded.screen_guest_session_id,
-                    acquired_at = now(),
-                    last_input_at = now()
+                    acquired_at = now()
             `,
             [screenId, screenGuestSessionId],
           );
           return {
-            data: { screenId, requestId: null } as ScreenControlResultIdentifiers,
+            data: {
+              screenId,
+              requestId: null,
+            } as ScreenControlResultIdentifiers,
           };
         }
 
@@ -188,7 +192,10 @@ const screenControlRequestPlugin = makeExtendSchemaPlugin(() => ({
         );
 
         return {
-          data: { screenId, requestId: requestRow.id } as ScreenControlResultIdentifiers,
+          data: {
+            screenId,
+            requestId: requestRow.id,
+          } as ScreenControlResultIdentifiers,
         };
       },
 
@@ -256,8 +263,7 @@ const screenControlRequestPlugin = makeExtendSchemaPlugin(() => ({
             values ($1, $2)
             on conflict (screen_id) do update
               set screen_guest_session_id = excluded.screen_guest_session_id,
-                  acquired_at = now(),
-                  last_input_at = now()
+                  acquired_at = now()
           `,
           [reqRow.screen_id, reqRow.screen_guest_session_id],
         );

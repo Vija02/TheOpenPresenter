@@ -36,3 +36,15 @@ create policy select_member on app_public.screen_guest_sessions
 
 -- Grants
 grant select on app_public.screen_guest_sessions to :DATABASE_VISITOR;
+
+/*====================================*/
+/*============= TRIGGERS =============*/
+/*====================================*/
+create trigger _500_gql_notify_last_seen
+  after update of last_seen_at on app_public.screen_guest_sessions
+  for each row
+  execute procedure app_public.tg__graphql_subscription(
+    'screenActiveControllerUpdate',
+    'graphql:scr_ctl:$1',
+    'screen_id'
+  );

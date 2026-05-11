@@ -5,8 +5,8 @@ fragment ScreenActiveController on ScreenActiveController {
     id
     kind
     displayName
+    lastSeenAt
   }
   acquiredAt
-  lastInputAt
   expiresAt
 }

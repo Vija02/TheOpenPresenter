@@ -6,7 +6,6 @@ create table app_public.screen_active_controllers (
   screen_guest_session_id uuid not null references app_public.screen_guest_sessions(id) on delete cascade,
 
   acquired_at timestamptz not null default now(),
-  last_input_at timestamptz not null default now(),
   expires_at timestamptz
 );
 
