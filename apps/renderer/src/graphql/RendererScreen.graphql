@@ -9,10 +9,21 @@ query RendererScreen($orgSlug: String!, $screenSlug: String!) {
         slug
         currentProjectId
         currentRendererId
+        idlePolicy
+        idleAfterSeconds
+        unassignAfterIdleSeconds
+        showBarOnIdle
         currentProject {
           id
           slug
           name
+        }
+        screenActiveController {
+          screenId
+          screenGuestSession {
+            id
+            lastSeenAt
+          }
         }
       }
     }
@@ -26,10 +37,27 @@ subscription ScreenUpdated($screenId: UUID!) {
       id
       currentProjectId
       currentRendererId
+      idlePolicy
+      idleAfterSeconds
+      unassignAfterIdleSeconds
+      showBarOnIdle
       currentProject {
         id
         slug
         name
+      }
+    }
+  }
+}
+
+subscription RendererScreenActiveControllerUpdated($screenId: UUID!) {
+  screenActiveControllerUpdated(screenId: $screenId) {
+    event
+    activeController {
+      screenId
+      screenGuestSession {
+        id
+        lastSeenAt
       }
     }
   }

@@ -1,4 +1,5 @@
 import {
+  useRendererScreenActiveControllerUpdatedSubscription,
   useRendererScreenQuery,
   useScreenUpdatedSubscription,
 } from "@repo/graphql";
@@ -10,7 +11,7 @@ import {
   PluginMetaDataProvider,
 } from "@repo/shared";
 import { ErrorAlert, LoadingFull } from "@repo/ui";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { PiTelevision } from "react-icons/pi";
 import QRCode from "react-qr-code";
 import { useParams } from "wouter";
@@ -40,6 +41,14 @@ export function Screen() {
     refetch({ requestPolicy: "network-only" });
   }, [subResult.data, refetch]);
 
+  // Detect idle controls
+  const [acSubResult] = useRendererScreenActiveControllerUpdatedSubscription({
+    pause: !screenId,
+    variables: { screenId: screenId! },
+  });
+  const subActiveController =
+    acSubResult.data?.screenActiveControllerUpdated?.activeController;
+
   if (fetching && !data) {
     return <LoadingFull />;
   }
@@ -67,14 +76,35 @@ export function Screen() {
   }
 
   const key = `${screen.currentProject.id}::${screen.currentRendererId}`;
+  const showBar = screen.showBarOnIdle;
+  const idleAfterSec =
+    screen.idleAfterSeconds && screen.idleAfterSeconds > 0
+      ? screen.idleAfterSeconds
+      : null;
+  const activeController =
+    subActiveController !== undefined
+      ? subActiveController
+      : (screen.screenActiveController ?? null);
+  const lastSeenAt = activeController?.screenGuestSession?.lastSeenAt ?? null;
 
   return (
-    <RendererRoot
-      key={key}
-      orgSlug={orgSlug}
-      projectSlug={screen.currentProject.slug}
-      rendererId={screen.currentRendererId}
-    />
+    <>
+      <RendererRoot
+        key={key}
+        orgSlug={orgSlug}
+        projectSlug={screen.currentProject.slug}
+        rendererId={screen.currentRendererId}
+      />
+      {showBar && idleAfterSec !== null && lastSeenAt && (
+        <IdleBar
+          lastSeenAt={lastSeenAt}
+          idleAfterSec={idleAfterSec}
+          orgSlug={orgSlug}
+          screenSlug={screen.slug}
+          screenName={screen.name}
+        />
+      )}
+    </>
   );
 }
 
@@ -106,6 +136,70 @@ function RendererRoot({
   );
 }
 
+const ScanToControlBar = ({
+  orgSlug,
+  screenSlug,
+  screenName,
+}: {
+  orgSlug: string;
+  screenSlug: string;
+  screenName: string;
+}) => {
+  const controlUrl = `${window.location.origin}/o/${orgSlug}/screens/${screenSlug}/control`;
+  return (
+    <div className="flex items-center gap-5 border-t border-white/10 bg-black/80 p-5 text-white">
+      <div className="rounded-md bg-white p-2">
+        <QRCode value={controlUrl} size={96} />
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="text-xs uppercase tracking-[0.2em] opacity-50">
+          Scan to control
+        </div>
+        <div className="mt-1 text-lg font-semibold">{screenName}</div>
+        <div className="truncate font-mono text-xs opacity-40">
+          {controlUrl}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const IdleBar = ({
+  lastSeenAt,
+  idleAfterSec,
+  orgSlug,
+  screenSlug,
+  screenName,
+}: {
+  lastSeenAt: string;
+  idleAfterSec: number;
+  orgSlug: string;
+  screenSlug: string;
+  screenName: string;
+}) => {
+  const idleAtMs = new Date(lastSeenAt).getTime() + idleAfterSec * 1000;
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const handle = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(handle);
+  }, []);
+  const isIdle = now >= idleAtMs;
+  return (
+    <div
+      className={
+        "pointer-events-none fixed inset-x-0 bottom-0 z-50 transition-transform duration-500 ease-out " +
+        (isIdle ? "translate-y-0" : "translate-y-full")
+      }
+    >
+      <ScanToControlBar
+        orgSlug={orgSlug}
+        screenSlug={screenSlug}
+        screenName={screenName}
+      />
+    </div>
+  );
+};
+
 const ScreenIdle = ({
   orgSlug,
   screenName,
@@ -115,8 +209,6 @@ const ScreenIdle = ({
   screenName: string;
   screenSlug: string;
 }) => {
-  const controlUrl = `${window.location.origin}/o/${orgSlug}/screens/${screenSlug}/control`;
-
   return (
     <div className="flex h-dvh w-screen flex-col bg-black text-white">
       <div className="flex flex-1 flex-col items-center justify-center gap-6 p-8">
@@ -126,21 +218,11 @@ const ScreenIdle = ({
           <div className="mt-2 text-base opacity-50">Waiting for a project</div>
         </div>
       </div>
-
-      <div className="flex items-center gap-5 border-t border-white/10 bg-black/60 p-5">
-        <div className="rounded-md bg-white p-2">
-          <QRCode value={controlUrl} size={96} />
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="text-xs uppercase tracking-[0.2em] opacity-50">
-            Scan to control
-          </div>
-          <div className="mt-1 text-lg font-semibold">{screenName}</div>
-          <div className="truncate font-mono text-xs opacity-40">
-            {controlUrl}
-          </div>
-        </div>
-      </div>
+      <ScanToControlBar
+        orgSlug={orgSlug}
+        screenSlug={screenSlug}
+        screenName={screenName}
+      />
     </div>
   );
 };
