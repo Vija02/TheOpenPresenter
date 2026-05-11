@@ -67,6 +67,12 @@
   --fill-warning-disabled: rgba(255, 184, 0, 0.4);
   --fill-warning-fg: rgba(37, 26, 0, 1);
 
+  --fill-magic: rgba(124, 58, 237, 1);
+  --fill-magic-hover: rgba(109, 40, 217, 1);
+  --fill-magic-selected: rgba(91, 33, 182, 1);
+  --fill-magic-disabled: rgba(124, 58, 237, 0.4);
+  --fill-magic-fg: white;
+
   /* Other misc colors */
   --stroke: var(--gray-300);
   --stroke-emphasis: var(--gray-600);
@@ -171,6 +177,12 @@
   --color-fill-warning-selected: var(--fill-warning-selected);
   --color-fill-warning-disabled: var(--fill-warning-disabled);
   --color-fill-warning-fg: var(--fill-warning-fg);
+
+  --color-fill-magic: var(--fill-magic);
+  --color-fill-magic-hover: var(--fill-magic-hover);
+  --color-fill-magic-selected: var(--fill-magic-selected);
+  --color-fill-magic-disabled: var(--fill-magic-disabled);
+  --color-fill-magic-fg: var(--fill-magic-fg);
 
   /* Other misc colors */
   --color-stroke: var(--stroke);
