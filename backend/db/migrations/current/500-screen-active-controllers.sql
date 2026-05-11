@@ -21,6 +21,12 @@ alter table app_public.screen_active_controllers enable row level security;
 
 create policy select_guest_session on app_public.screen_active_controllers
   for select using (screen_guest_session_id = app_public.current_screen_guest_session_id());
+-- Any guest of the same screen can see who currently holds the seat.
+-- So that we know what behaviour to do
+create policy select_same_screen_guest on app_public.screen_active_controllers
+  for select using (
+    screen_id = (app_public.current_screen_guest_session()).screen_id
+  );
 create policy select_own on app_public.screen_active_controllers
   for select using (
     screen_id in (

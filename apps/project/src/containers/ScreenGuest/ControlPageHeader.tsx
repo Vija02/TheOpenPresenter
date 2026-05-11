@@ -24,7 +24,7 @@ export const ControlPageHeader = ({
   const handleSignOut = useCallback(async () => {
     const res = await logoutGuest({});
     if (res.error) {
-      toast.error("Failed to release screen: " + res.error.message);
+      toast.error("Failed to end session: " + res.error.message);
       return;
     }
     onSignedOut?.();
@@ -61,7 +61,7 @@ export const ControlPageHeader = ({
             onClick={handleSignOut}
             isLoading={loggingOut}
           >
-            Release screen
+            End session
           </Button>
         )}
       </div>
