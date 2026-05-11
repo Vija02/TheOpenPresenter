@@ -1,6 +1,7 @@
 import { AuthRestrict, SharedLayout } from "@/components/SharedLayout";
 import { useOrganizationSlug } from "@/lib/permissionHooks/organization";
 import {
+  ScreenActiveControllerFragment,
   ScreenFragment,
   SharedScreenGuestQuery,
   useLogoutScreenGuestSessionMutation,
@@ -12,7 +13,7 @@ import { UseQueryResponse } from "urql";
 import { Link as WouterLink, useParams } from "wouter";
 
 export type SharedScreenGuestScreen = ScreenFragment & {
-  screenActiveController?: { screenGuestSessionId?: string | null } | null;
+  screenActiveController: ScreenActiveControllerFragment | null;
 };
 
 export type ScreenGuestAuthContext = {
