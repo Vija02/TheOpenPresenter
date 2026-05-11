@@ -5,7 +5,7 @@ import {
   ScreenFragment,
 } from "@repo/graphql";
 import { Button, DateDisplayRelative, Link } from "@repo/ui";
-import { VscAdd, VscChromeClose, VscFile } from "react-icons/vsc";
+import { VscAdd, VscChromeClose, VscFile, VscWarning } from "react-icons/vsc";
 import { Link as WouterLink } from "wouter";
 
 import {
@@ -35,7 +35,7 @@ export const ScreenStatusCard = ({
   updating: boolean;
   creatingTemporary: boolean;
   onAssign: (projectId: string | null) => void | Promise<void>;
-  onRelease: () => void;
+  onRelease: () => void | Promise<void>;
   onCreateTemporaryProject: () => void;
 }) => {
   const idleThresholdSec =
@@ -201,6 +201,14 @@ export const ScreenStatusCard = ({
             New temporary project
           </Button>
         </div>
+        {activeController && (
+          <div className="mb-2 flex items-start gap-2 px-3 py-2 rounded border border-amber-300 bg-amber-50 text-sm text-amber-900">
+            <VscWarning className="mt-0.5 shrink-0" />
+            <span>
+              Selecting a project will automatically end the current guest session.
+            </span>
+          </div>
+        )}
         {recentProjects.length === 0 ? (
           <p className="text-sm text-tertiary italic">
             No recent projects yet.
@@ -217,6 +225,9 @@ export const ScreenStatusCard = ({
                   onLinkClick={async (e) => {
                     e.preventDefault();
                     try {
+                      if (activeController) {
+                        await onRelease();
+                      }
                       await onAssign(project.id);
                     } finally {
                       window.location.href = href;
