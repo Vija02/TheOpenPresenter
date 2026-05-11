@@ -1,11 +1,11 @@
 import { ProjectCard } from "@/containers/Dashboard/ProjectCard";
 import { ControlPageHeader } from "@/containers/ScreenGuest/ControlPageHeader";
-import { SharedScreenGuestLayout } from "@/containers/ScreenGuest/SharedScreenGuestLayout";
+import {
+  SharedScreenGuestLayout,
+  SharedScreenGuestScreen,
+} from "@/containers/ScreenGuest/SharedScreenGuestLayout";
 import { useOrganizationSlug } from "@/lib/permissionHooks/organization";
 import {
-  Exact,
-  OrganizationScreenControlIndexPageQuery,
-  OrganizationScreenControlIndexPageQueryVariables,
   ProjectFragment,
   useCreateTemporaryProjectMutation,
   useOrganizationScreenControlIndexPageQuery,
@@ -16,8 +16,14 @@ import { Alert, Button, Link } from "@repo/ui";
 import { useCallback, useMemo } from "react";
 import { VscAdd, VscArrowRight, VscCheck } from "react-icons/vsc";
 import { toast } from "react-toastify";
-import { UseQueryResponse } from "urql";
 import { Link as WouterLink, useParams } from "wouter";
+
+type ControlPageQuery = ReturnType<
+  typeof useOrganizationScreenControlIndexPageQuery
+>;
+
+const errorMessage = (e: unknown): string =>
+  e instanceof Error ? e.message : String(e);
 
 const OrganizationSlugScreenControlPage = () => {
   const orgSlug = useOrganizationSlug();
@@ -37,11 +43,12 @@ const OrganizationSlugScreenControlPage = () => {
         guestHasControl || isMember ? null : requestHref
       }
     >
-      {({ isMember, currentScreenGuestSessionId }) => (
+      {({ screen, isMember, currentScreenGuestSessionId }) => (
         <ControlPageInner
           query={query}
           orgSlug={orgSlug}
           screenSlug={screenSlug}
+          screen={screen}
           isMember={isMember}
           currentScreenGuestSessionId={currentScreenGuestSessionId}
         />
@@ -51,12 +58,10 @@ const OrganizationSlugScreenControlPage = () => {
 };
 
 type InnerPropTypes = {
-  query: UseQueryResponse<
-    OrganizationScreenControlIndexPageQuery,
-    Exact<OrganizationScreenControlIndexPageQueryVariables>
-  >;
+  query: ControlPageQuery;
   orgSlug: string;
   screenSlug: string;
+  screen: SharedScreenGuestScreen;
   isMember: boolean;
   currentScreenGuestSessionId: string | null;
 };
@@ -72,11 +77,11 @@ const ControlPageInner = ({
   query,
   orgSlug,
   screenSlug,
+  screen,
   isMember,
   currentScreenGuestSessionId,
 }: InnerPropTypes) => {
   const [{ data }, refetch] = query;
-  const screen = data!.organizationBySlug!.screens.nodes[0]!;
   const screenId = screen.id;
   const currentProjectId = screen.currentProjectId ?? null;
   const isLoggedIn = !!data?.currentUser;
@@ -117,8 +122,8 @@ const ControlPageInner = ({
         publish();
         const search = window.location.search;
         window.location.href = `/app/${projectOrgSlug}/${project.slug}${search}`;
-      } catch (e: any) {
-        toast.error("Failed to assign: " + e.message);
+      } catch (e) {
+        toast.error("Failed to assign: " + errorMessage(e));
       }
     },
     [screenId, setExistingProjectToScreen, publish],
@@ -133,8 +138,8 @@ const ControlPageInner = ({
 
       const search = window.location.search;
       window.location.href = `/app/${orgSlug}/${project?.slug}${search}`;
-    } catch (e: any) {
-      toast.error("Failed to create temporary project: " + e.message);
+    } catch (e) {
+      toast.error("Failed to create temporary project: " + errorMessage(e));
     }
   }, [screenId, createTemporaryProject, publish, orgSlug]);
 
