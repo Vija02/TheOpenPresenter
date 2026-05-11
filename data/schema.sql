@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict CfNBIDnoWrrTfEsBJ1CyZ44AH5urW6nDacakeWoo8InhO2JNoCuxzVkVNTMieiH
+\restrict T5O4KOrV4FeIAN1QeyZRRoT2aV7bICuh11397bFrGng55mjZ3dk8HgiiJ1LU4TU
 
 -- Dumped from database version 17.0 (Debian 17.0-1.pgdg120+1)
 -- Dumped by pg_dump version 18.3
@@ -104,6 +104,84 @@ COMMENT ON EXTENSION "uuid-ossp" IS 'generate universally unique identifiers (UU
 
 
 --
+-- Name: screen_control_request_status; Type: TYPE; Schema: app_public; Owner: -
+--
+
+CREATE TYPE app_public.screen_control_request_status AS ENUM (
+    'pending',
+    'approved',
+    'denied'
+);
+
+
+--
+-- Name: screen_control_request_type; Type: TYPE; Schema: app_public; Owner: -
+--
+
+CREATE TYPE app_public.screen_control_request_type AS ENUM (
+    'acquire',
+    'takeover'
+);
+
+
+--
+-- Name: screen_guest_session_kind; Type: TYPE; Schema: app_public; Owner: -
+--
+
+CREATE TYPE app_public.screen_guest_session_kind AS ENUM (
+    'anon',
+    'registered'
+);
+
+
+--
+-- Name: screen_idle_policy; Type: TYPE; Schema: app_public; Owner: -
+--
+
+CREATE TYPE app_public.screen_idle_policy AS ENUM (
+    'do_nothing',
+    'unassign'
+);
+
+
+--
+-- Name: screen_login_info; Type: TYPE; Schema: app_public; Owner: -
+--
+
+CREATE TYPE app_public.screen_login_info AS (
+	organization_id uuid,
+	organization_name text,
+	organization_slug text,
+	screen_id uuid,
+	screen_name text,
+	screen_slug text,
+	allows_anon boolean,
+	allows_registered boolean
+);
+
+
+--
+-- Name: screen_on_empty_policy; Type: TYPE; Schema: app_public; Owner: -
+--
+
+CREATE TYPE app_public.screen_on_empty_policy AS ENUM (
+    'allow',
+    'request'
+);
+
+
+--
+-- Name: screen_on_takeover_policy; Type: TYPE; Schema: app_public; Owner: -
+--
+
+CREATE TYPE app_public.screen_on_takeover_policy AS ENUM (
+    'allow',
+    'request',
+    'timer'
+);
+
+
+--
 -- Name: video_transcode_stage; Type: TYPE; Schema: app_public; Owner: -
 --
 
@@ -144,6 +222,98 @@ $$;
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
+
+--
+-- Name: screen_guest_sessions; Type: TABLE; Schema: app_public; Owner: -
+--
+
+CREATE TABLE app_public.screen_guest_sessions (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    screen_id uuid NOT NULL,
+    organization_id uuid NOT NULL,
+    screen_guest_id uuid,
+    display_name text,
+    kind app_public.screen_guest_session_kind NOT NULL,
+    last_seen_at timestamp with time zone DEFAULT now() NOT NULL,
+    expires_at timestamp with time zone DEFAULT (now() + '24:00:00'::interval) NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: authenticate_screen_guest(uuid, text); Type: FUNCTION; Schema: app_private; Owner: -
+--
+
+CREATE FUNCTION app_private.authenticate_screen_guest(p_screen_id uuid, p_secret text) RETURNS app_public.screen_guest_sessions
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+    AS $$
+declare
+  v_screen app_public.screens;
+  v_entry app_public.screen_guests;
+  v_session app_public.screen_guest_sessions;
+begin
+  select * into v_screen
+  from app_public.screens
+  where id = p_screen_id;
+
+  if v_screen is null then
+    raise exception 'Screen not found' using errcode = 'NTFND';
+  end if;
+
+  if not v_screen.registered_guest_enabled then
+    raise exception 'This screen does not accept registered guests' using errcode = 'DENID';
+  end if;
+
+  select * into v_entry
+  from app_public.screen_guests
+  where organization_id = v_screen.organization_id
+    and is_active
+    and (expires_at is null or expires_at > now())
+    and passcode_hash = crypt(p_secret, passcode_hash)
+  limit 1;
+
+  if v_entry is null then
+    raise exception 'Unrecognized email or passcode' using errcode = 'CREDS';
+  end if;
+
+  insert into app_public.screen_guest_sessions
+    (screen_id, organization_id, kind, display_name, screen_guest_id)
+  values
+    (p_screen_id, v_screen.organization_id, 'registered', v_entry.display_name, v_entry.id)
+  on conflict (screen_id, screen_guest_id) where screen_guest_id is not null
+  do update set
+    display_name = excluded.display_name,
+    last_seen_at = now()
+  returning * into v_session;
+
+  return v_session;
+end;
+$$;
+
+
+--
+-- Name: current_session_can_control_screen(uuid); Type: FUNCTION; Schema: app_private; Owner: -
+--
+
+CREATE FUNCTION app_private.current_session_can_control_screen(p_screen_id uuid) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+    AS $$
+  select
+    exists(
+      select 1 from app_public.screens s
+      where s.id = p_screen_id
+        and s.organization_id in (select app_public.current_user_member_organization_ids())
+    )
+    or
+    exists(
+      select 1 from app_public.screen_active_controllers ac
+      where ac.screen_id = p_screen_id
+        and ac.screen_guest_session_id = app_public.current_screen_guest_session_id()
+    );
+$$;
+
 
 --
 -- Name: users; Type: TABLE; Schema: app_public; Owner: -
@@ -707,6 +877,73 @@ COMMENT ON FUNCTION app_private.tg__add_job() IS 'Useful shortcut to create a jo
 
 
 --
+-- Name: tg__delete_temp_project_on_unassign(); Type: FUNCTION; Schema: app_private; Owner: -
+--
+
+CREATE FUNCTION app_private.tg__delete_temp_project_on_unassign() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+    AS $$
+declare
+  prev_project_id uuid;
+begin
+  if tg_op = 'UPDATE' then
+    if old.current_project_id is not null
+       and new.current_project_id is distinct from old.current_project_id then
+      prev_project_id := old.current_project_id;
+    end if;
+  elsif tg_op = 'DELETE' then
+    prev_project_id := old.current_project_id;
+  end if;
+
+  if prev_project_id is not null then
+    delete from app_public.projects
+    where id = prev_project_id
+      and is_temporary = true;
+  end if;
+
+  return null;
+end;
+$$;
+
+
+--
+-- Name: tg__notify_org_screen_control_request(); Type: FUNCTION; Schema: app_private; Owner: -
+--
+
+CREATE FUNCTION app_private.tg__notify_org_screen_control_request() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+    AS $$
+declare
+  v_record record;
+  v_org_id uuid;
+begin
+  if (TG_OP = 'DELETE') then
+    v_record := OLD;
+  else
+    v_record := NEW;
+  end if;
+  select organization_id
+    into v_org_id
+    from app_public.screens
+    where id = v_record.screen_id;
+  if v_org_id is not null then
+    perform pg_notify(
+      'graphql:org_scr_reqs:' || v_org_id::text,
+      json_build_object(
+        'event', 'organizationPendingScreenControlRequestsUpdate',
+        'subject', v_record.id,
+        'id', v_record.id
+      )::text
+    );
+  end if;
+  return v_record;
+end;
+$$;
+
+
+--
 -- Name: tg__timestamps(); Type: FUNCTION; Schema: app_private; Owner: -
 --
 
@@ -1131,8 +1368,16 @@ CREATE TABLE app_public.projects (
     cloud_last_updated timestamp with time zone,
     cloud_should_sync boolean,
     cloud_project_id uuid,
-    is_public boolean DEFAULT false
+    is_public boolean DEFAULT false,
+    is_temporary boolean DEFAULT false NOT NULL
 );
+
+
+--
+-- Name: COLUMN projects.is_temporary; Type: COMMENT; Schema: app_public; Owner: -
+--
+
+COMMENT ON COLUMN app_public.projects.is_temporary IS 'True when this project was created up by a screen guest user';
 
 
 --
@@ -1189,6 +1434,142 @@ begin
     values(v_org.id, app_public.current_user_id(), true, true);
   return v_org;
 end;
+$$;
+
+
+--
+-- Name: screen_guests; Type: TABLE; Schema: app_public; Owner: -
+--
+
+CREATE TABLE app_public.screen_guests (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    organization_id uuid NOT NULL,
+    display_name text NOT NULL,
+    email text,
+    passcode_hash text NOT NULL,
+    is_active boolean DEFAULT true NOT NULL,
+    expires_at timestamp with time zone,
+    created_by uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: TABLE screen_guests; Type: COMMENT; Schema: app_public; Owner: -
+--
+
+COMMENT ON TABLE app_public.screen_guests IS 'Registered guest identities scoped to an organization.';
+
+
+--
+-- Name: COLUMN screen_guests.passcode_hash; Type: COMMENT; Schema: app_public; Owner: -
+--
+
+COMMENT ON COLUMN app_public.screen_guests.passcode_hash IS '@omit';
+
+
+--
+-- Name: create_screen_guest(uuid, text, text, text); Type: FUNCTION; Schema: app_public; Owner: -
+--
+
+CREATE FUNCTION app_public.create_screen_guest(organization_id uuid, display_name text, passcode text, email text DEFAULT NULL::text) RETURNS app_public.screen_guests
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+    AS $$
+#variable_conflict use_variable
+declare
+  result app_public.screen_guests;
+  v_user_id uuid := app_public.current_user_id();
+begin
+  if v_user_id is null
+     or organization_id not in (select app_public.current_user_member_organization_ids())
+  then
+    raise exception 'You must be a member of the organization to manage guest access' using errcode = 'NACES';
+  end if;
+
+  if length(coalesce(passcode, '')) < 4 then
+    raise exception 'Passcode must be at least 4 characters' using errcode = 'BADPC';
+  end if;
+
+  insert into app_public.screen_guests
+    (organization_id, display_name, email, passcode_hash, created_by)
+  values
+    (organization_id, display_name, nullif(email, ''), crypt(passcode, gen_salt('bf')), v_user_id)
+  returning * into result;
+
+  return result;
+end;
+$$;
+
+
+--
+-- Name: create_temporary_project(uuid); Type: FUNCTION; Schema: app_public; Owner: -
+--
+
+CREATE FUNCTION app_public.create_temporary_project(screen_id uuid) RETURNS app_public.projects
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+    AS $$
+declare
+  v_screen app_public.screens;
+  v_project app_public.projects;
+  v_slug text;
+begin
+  if not app_private.current_session_can_control_screen(screen_id) then
+    raise exception 'You do not have control of this screen' using errcode = 'NACES';
+  end if;
+
+  select * into v_screen from app_public.screens where id = screen_id;
+  if v_screen.id is null then
+    raise exception 'Screen not found' using errcode = 'NTFND';
+  end if;
+
+  v_slug := 'temp-' || replace(gen_random_uuid()::text, '-', '');
+
+  insert into app_public.projects (
+    organization_id,
+    creator_user_id,
+    name,
+    slug,
+    is_temporary
+  ) values (
+    v_screen.organization_id,
+    app_public.current_user_id(),
+    'Temporary project',
+    v_slug,
+    true
+  ) returning * into v_project;
+
+  update app_public.screens
+  set current_project_id = v_project.id
+  where id = screen_id;
+
+  return v_project;
+end;
+$$;
+
+
+--
+-- Name: current_screen_guest_session(); Type: FUNCTION; Schema: app_public; Owner: -
+--
+
+CREATE FUNCTION app_public.current_screen_guest_session() RETURNS app_public.screen_guest_sessions
+    LANGUAGE sql STABLE
+    AS $$
+  select s.* from app_public.screen_guest_sessions s
+  where s.id = app_public.current_screen_guest_session_id();
+$$;
+
+
+--
+-- Name: current_screen_guest_session_id(); Type: FUNCTION; Schema: app_public; Owner: -
+--
+
+CREATE FUNCTION app_public.current_screen_guest_session_id() RETURNS uuid
+    LANGUAGE sql STABLE
+    AS $$
+  select nullif(current_setting('jwt.claims.screen_guest_session_id', true), '')::uuid;
 $$;
 
 
@@ -1368,6 +1749,37 @@ begin
   ) then
     delete from app_public.organizations where id = organization_id;
   end if;
+end;
+$$;
+
+
+--
+-- Name: delete_screen_guest(uuid); Type: FUNCTION; Schema: app_public; Owner: -
+--
+
+CREATE FUNCTION app_public.delete_screen_guest(id uuid) RETURNS uuid
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+    AS $$
+#variable_conflict use_variable
+declare
+  v_user_id uuid := app_public.current_user_id();
+  v_entry app_public.screen_guests;
+begin
+  select sg.* into v_entry
+  from app_public.screen_guests sg
+  where sg.id = id;
+  if v_entry is null then
+    return id;
+  end if;
+  if v_user_id is null
+     or v_entry.organization_id not in (select app_public.current_user_member_organization_ids())
+  then
+    raise exception 'You must be a member of the organization to manage guest access' using errcode = 'NACES';
+  end if;
+
+  delete from app_public.screen_guests sg where sg.id = id;
+  return id;
 end;
 $$;
 
@@ -1705,6 +2117,179 @@ $$;
 
 
 --
+-- Name: screens; Type: TABLE; Schema: app_public; Owner: -
+--
+
+CREATE TABLE app_public.screens (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    organization_id uuid NOT NULL,
+    name text NOT NULL,
+    slug public.citext NOT NULL,
+    current_project_id uuid,
+    current_renderer_id text DEFAULT '1'::text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    registered_guest_enabled boolean DEFAULT false NOT NULL,
+    registered_guest_on_empty_policy app_public.screen_on_empty_policy DEFAULT 'request'::app_public.screen_on_empty_policy NOT NULL,
+    registered_guest_on_takeover_policy app_public.screen_on_takeover_policy DEFAULT 'request'::app_public.screen_on_takeover_policy NOT NULL,
+    registered_guest_on_takeover_after_seconds integer,
+    anon_guest_enabled boolean DEFAULT false NOT NULL,
+    anon_guest_on_empty_policy app_public.screen_on_empty_policy DEFAULT 'request'::app_public.screen_on_empty_policy NOT NULL,
+    anon_guest_on_takeover_policy app_public.screen_on_takeover_policy DEFAULT 'request'::app_public.screen_on_takeover_policy NOT NULL,
+    anon_guest_on_takeover_after_seconds integer,
+    idle_policy app_public.screen_idle_policy DEFAULT 'do_nothing'::app_public.screen_idle_policy NOT NULL,
+    idle_after_seconds integer,
+    unassign_after_idle_seconds integer,
+    show_bar_on_idle boolean DEFAULT false NOT NULL
+);
+
+
+--
+-- Name: TABLE screens; Type: COMMENT; Schema: app_public; Owner: -
+--
+
+COMMENT ON TABLE app_public.screens IS 'A persistent display identity in an organization. Configured once on the device, then any project can be assigned to it remotely.';
+
+
+--
+-- Name: COLUMN screens.current_project_id; Type: COMMENT; Schema: app_public; Owner: -
+--
+
+COMMENT ON COLUMN app_public.screens.current_project_id IS 'Project currently shown on this screen, or NULL if idle.';
+
+
+--
+-- Name: COLUMN screens.current_renderer_id; Type: COMMENT; Schema: app_public; Owner: -
+--
+
+COMMENT ON COLUMN app_public.screens.current_renderer_id IS 'Which renderer slot inside the assigned project to render.';
+
+
+--
+-- Name: COLUMN screens.registered_guest_enabled; Type: COMMENT; Schema: app_public; Owner: -
+--
+
+COMMENT ON COLUMN app_public.screens.registered_guest_enabled IS 'Master switch for the registered-guest path on this screen. When false, registered guests cannot sign in or claim control regardless of the on_empty/on_takeover policies.';
+
+
+--
+-- Name: COLUMN screens.registered_guest_on_empty_policy; Type: COMMENT; Schema: app_public; Owner: -
+--
+
+COMMENT ON COLUMN app_public.screens.registered_guest_on_empty_policy IS 'Registered guests claiming a vacant seat (consulted only when registered_guest_enabled = true). allow | request.';
+
+
+--
+-- Name: COLUMN screens.registered_guest_on_takeover_policy; Type: COMMENT; Schema: app_public; Owner: -
+--
+
+COMMENT ON COLUMN app_public.screens.registered_guest_on_takeover_policy IS 'Registered guests requesting control while another session holds the seat (consulted only when registered_guest_enabled = true). allow | request | timer.';
+
+
+--
+-- Name: COLUMN screens.registered_guest_on_takeover_after_seconds; Type: COMMENT; Schema: app_public; Owner: -
+--
+
+COMMENT ON COLUMN app_public.screens.registered_guest_on_takeover_after_seconds IS 'For registered_guest_on_takeover_policy = ''timer'', how many seconds the active controller has to respond before the takeover is auto-granted.';
+
+
+--
+-- Name: COLUMN screens.anon_guest_enabled; Type: COMMENT; Schema: app_public; Owner: -
+--
+
+COMMENT ON COLUMN app_public.screens.anon_guest_enabled IS 'Master switch for the anonymous-guest path on this screen. When false, anonymous guests cannot sign in or claim control regardless of the on_empty/on_takeover policies.';
+
+
+--
+-- Name: COLUMN screens.anon_guest_on_empty_policy; Type: COMMENT; Schema: app_public; Owner: -
+--
+
+COMMENT ON COLUMN app_public.screens.anon_guest_on_empty_policy IS 'Anonymous guests claiming a vacant seat (consulted only when anon_guest_enabled = true). allow | request.';
+
+
+--
+-- Name: COLUMN screens.anon_guest_on_takeover_policy; Type: COMMENT; Schema: app_public; Owner: -
+--
+
+COMMENT ON COLUMN app_public.screens.anon_guest_on_takeover_policy IS 'Anonymous guests requesting control while another session holds the seat (consulted only when anon_guest_enabled = true). allow | request | timer.';
+
+
+--
+-- Name: COLUMN screens.anon_guest_on_takeover_after_seconds; Type: COMMENT; Schema: app_public; Owner: -
+--
+
+COMMENT ON COLUMN app_public.screens.anon_guest_on_takeover_after_seconds IS 'For anon_guest_on_takeover_policy = ''timer'', how many seconds the active controller has to respond before the takeover is auto-granted.';
+
+
+--
+-- Name: COLUMN screens.idle_policy; Type: COMMENT; Schema: app_public; Owner: -
+--
+
+COMMENT ON COLUMN app_public.screens.idle_policy IS 'What happens to the active controller seat when it stops sending input. do_nothing | unassign.';
+
+
+--
+-- Name: COLUMN screens.idle_after_seconds; Type: COMMENT; Schema: app_public; Owner: -
+--
+
+COMMENT ON COLUMN app_public.screens.idle_after_seconds IS 'Seconds from last input after which the seat is considered idle.';
+
+
+--
+-- Name: COLUMN screens.unassign_after_idle_seconds; Type: COMMENT; Schema: app_public; Owner: -
+--
+
+COMMENT ON COLUMN app_public.screens.unassign_after_idle_seconds IS 'Additional seconds after the seat becomes idle before it is auto-unassigned. Only consulted when idle_policy = ''unassign''.';
+
+
+--
+-- Name: COLUMN screens.show_bar_on_idle; Type: COMMENT; Schema: app_public; Owner: -
+--
+
+COMMENT ON COLUMN app_public.screens.show_bar_on_idle IS 'When true, the renderer overlays an idle indicator bar once the seat is past idle_after_seconds.';
+
+
+--
+-- Name: release_screen_control(uuid); Type: FUNCTION; Schema: app_public; Owner: -
+--
+
+CREATE FUNCTION app_public.release_screen_control(screen_id uuid) RETURNS app_public.screens
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+    AS $$
+declare
+  result app_public.screens;
+  guest_id uuid;
+begin
+  if not app_private.current_session_can_control_screen(screen_id) then
+    raise exception 'You do not have control of this screen' using errcode = 'NACES';
+  end if;
+
+  -- Remove active controller
+  delete from app_public.screen_active_controllers ac
+  where ac.screen_id = release_screen_control.screen_id
+  returning ac.screen_guest_session_id into guest_id;
+
+  if guest_id is not null then
+    -- Revoke session too
+    delete from app_public.screen_guest_sessions where id = guest_id;
+  end if;
+  
+  update app_public.screens
+  set current_project_id = null
+  where id = release_screen_control.screen_id
+  returning * into result;
+
+  if not found then
+    raise exception 'Screen not found' using errcode = 'NTFND';
+  end if;
+
+  return result;
+end;
+$$;
+
+
+--
 -- Name: remove_from_organization(uuid, uuid); Type: FUNCTION; Schema: app_public; Owner: -
 --
 
@@ -1880,6 +2465,79 @@ $$;
 --
 
 COMMENT ON FUNCTION app_public.resend_email_verification_code(email_id uuid) IS 'If you didn''t receive the verification code for this email, we can resend it. We silently cap the rate of resends on the backend, so calls to this function may not result in another email being sent if it has been called recently.';
+
+
+--
+-- Name: screen_login_metadata(text, text); Type: FUNCTION; Schema: app_public; Owner: -
+--
+
+CREATE FUNCTION app_public.screen_login_metadata(p_org_slug text, p_screen_slug text) RETURNS app_public.screen_login_info
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+    AS $$
+  select
+    o.id,
+    o.name,
+    o.slug,
+    s.id,
+    s.name,
+    s.slug,
+    s.anon_guest_enabled as allows_anon,
+    s.registered_guest_enabled as allows_registered
+  from app_public.screens s
+  join app_public.organizations o on o.id = s.organization_id
+  where o.slug = p_org_slug
+    and s.slug = p_screen_slug
+    and (s.anon_guest_enabled or s.registered_guest_enabled);
+$$;
+
+
+--
+-- Name: FUNCTION screen_login_metadata(p_org_slug text, p_screen_slug text); Type: COMMENT; Schema: app_public; Owner: -
+--
+
+COMMENT ON FUNCTION app_public.screen_login_metadata(p_org_slug text, p_screen_slug text) IS 'Get the data required to login as guest.';
+
+
+--
+-- Name: set_existing_project_to_screen(uuid, uuid); Type: FUNCTION; Schema: app_public; Owner: -
+--
+
+CREATE FUNCTION app_public.set_existing_project_to_screen(screen_id uuid, project_id uuid DEFAULT NULL::uuid) RETURNS app_public.screens
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+    AS $$
+declare
+  result app_public.screens;
+begin
+  if not app_private.current_session_can_control_screen(screen_id) then
+    raise exception 'You do not have control of this screen' using errcode = 'NACES';
+  end if;
+
+  if project_id is not null then
+    if not exists (
+      select 1
+      from app_public.screens s, app_public.projects p
+      where s.id = screen_id
+        and p.id = project_id
+        and (
+          p.organization_id = s.organization_id
+          or p.organization_id in (select app_public.current_user_member_organization_ids())
+          or p.is_public is true
+        )
+    ) then
+      raise exception 'Project not accessible' using errcode = 'NTFND';
+    end if;
+  end if;
+
+  update app_public.screens
+  set current_project_id = project_id
+  where id = screen_id
+  returning * into result;
+
+  return result;
+end;
+$$;
 
 
 --
@@ -2125,6 +2783,51 @@ begin
     end if;
   end if;
   return null;
+end;
+$$;
+
+
+--
+-- Name: update_screen_guest(uuid, text, text, text, boolean); Type: FUNCTION; Schema: app_public; Owner: -
+--
+
+CREATE FUNCTION app_public.update_screen_guest(id uuid, display_name text DEFAULT NULL::text, passcode text DEFAULT NULL::text, email text DEFAULT NULL::text, is_active boolean DEFAULT NULL::boolean) RETURNS app_public.screen_guests
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+    AS $$
+#variable_conflict use_variable
+declare
+  result app_public.screen_guests;
+  v_user_id uuid := app_public.current_user_id();
+  v_entry app_public.screen_guests;
+begin
+  select sg.* into v_entry
+  from app_public.screen_guests sg
+  where sg.id = id;
+
+  if v_entry is null then
+    raise exception 'Screen guest not found' using errcode = 'NTFND';
+  end if;
+  if v_user_id is null
+     or v_entry.organization_id not in (select app_public.current_user_member_organization_ids())
+  then
+    raise exception 'You must be a member of the organization to manage guest access' using errcode = 'NACES';
+  end if;
+
+  if passcode is not null and length(passcode) < 4 then
+    raise exception 'Passcode must be at least 4 characters' using errcode = 'BADPC';
+  end if;
+
+  update app_public.screen_guests sg
+  set display_name = coalesce(display_name, sg.display_name),
+      email = case when email is null then sg.email else nullif(email, '') end,
+      passcode_hash = case when passcode is null then sg.passcode_hash else crypt(passcode, gen_salt('bf')) end,
+      is_active = coalesce(is_active, sg.is_active),
+      updated_at = now()
+  where sg.id = id
+  returning sg.* into result;
+
+  return result;
 end;
 $$;
 
@@ -2395,7 +3098,8 @@ CREATE TABLE app_public.medias (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     s3_upload_id text,
     is_complete boolean DEFAULT false NOT NULL,
-    is_user_uploaded boolean DEFAULT true NOT NULL
+    is_user_uploaded boolean DEFAULT true NOT NULL,
+    tags text[] DEFAULT '{}'::text[] NOT NULL
 );
 
 
@@ -2486,40 +3190,33 @@ COMMENT ON TABLE app_public.project_tags IS 'Many to many relation from project 
 
 
 --
--- Name: screens; Type: TABLE; Schema: app_public; Owner: -
+-- Name: screen_active_controllers; Type: TABLE; Schema: app_public; Owner: -
 --
 
-CREATE TABLE app_public.screens (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    organization_id uuid NOT NULL,
-    name text NOT NULL,
-    slug public.citext NOT NULL,
-    current_project_id uuid,
-    current_renderer_id text DEFAULT '1'::text NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL
+CREATE TABLE app_public.screen_active_controllers (
+    screen_id uuid NOT NULL,
+    id uuid GENERATED ALWAYS AS (screen_id) STORED,
+    screen_guest_session_id uuid NOT NULL,
+    acquired_at timestamp with time zone DEFAULT now() NOT NULL,
+    expires_at timestamp with time zone
 );
 
 
 --
--- Name: TABLE screens; Type: COMMENT; Schema: app_public; Owner: -
+-- Name: screen_control_requests; Type: TABLE; Schema: app_public; Owner: -
 --
 
-COMMENT ON TABLE app_public.screens IS 'A persistent display identity in an organization. Configured once on the device, then any project can be assigned to it remotely.';
-
-
---
--- Name: COLUMN screens.current_project_id; Type: COMMENT; Schema: app_public; Owner: -
---
-
-COMMENT ON COLUMN app_public.screens.current_project_id IS 'Project currently shown on this screen, or NULL if idle.';
-
-
---
--- Name: COLUMN screens.current_renderer_id; Type: COMMENT; Schema: app_public; Owner: -
---
-
-COMMENT ON COLUMN app_public.screens.current_renderer_id IS 'Which renderer slot inside the assigned project to render.';
+CREATE TABLE app_public.screen_control_requests (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    screen_id uuid NOT NULL,
+    screen_guest_session_id uuid NOT NULL,
+    request_type app_public.screen_control_request_type NOT NULL,
+    status app_public.screen_control_request_status DEFAULT 'pending'::app_public.screen_control_request_status NOT NULL,
+    note text,
+    resolved_by_user_id uuid,
+    resolved_at timestamp with time zone,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
 
 
 --
@@ -2774,6 +3471,38 @@ ALTER TABLE ONLY app_public.projects
 
 
 --
+-- Name: screen_active_controllers screen_active_controllers_pkey; Type: CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.screen_active_controllers
+    ADD CONSTRAINT screen_active_controllers_pkey PRIMARY KEY (screen_id);
+
+
+--
+-- Name: screen_control_requests screen_control_requests_pkey; Type: CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.screen_control_requests
+    ADD CONSTRAINT screen_control_requests_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: screen_guest_sessions screen_guest_sessions_pkey; Type: CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.screen_guest_sessions
+    ADD CONSTRAINT screen_guest_sessions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: screen_guests screen_guests_pkey; Type: CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.screen_guests
+    ADD CONSTRAINT screen_guests_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: screens screens_organization_id_slug_key; Type: CONSTRAINT; Schema: app_public; Owner: -
 --
 
@@ -2993,6 +3722,13 @@ CREATE INDEX medias_organization_id_idx ON app_public.medias USING btree (organi
 
 
 --
+-- Name: medias_tags_gin_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX medias_tags_gin_idx ON app_public.medias USING gin (tags);
+
+
+--
 -- Name: organization_active_devices_organization_id_idx; Type: INDEX; Schema: app_public; Owner: -
 --
 
@@ -3126,6 +3862,13 @@ CREATE INDEX projects_is_public_idx ON app_public.projects USING btree (is_publi
 
 
 --
+-- Name: projects_is_temporary_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX projects_is_temporary_idx ON app_public.projects USING btree (is_temporary);
+
+
+--
 -- Name: projects_organization_id_cloud_project_id_idx; Type: INDEX; Schema: app_public; Owner: -
 --
 
@@ -3158,6 +3901,104 @@ CREATE INDEX projects_target_date_idx ON app_public.projects USING btree (target
 --
 
 CREATE INDEX projects_updated_at_idx ON app_public.projects USING btree (updated_at);
+
+
+--
+-- Name: screen_active_controllers_screen_guest_session_id_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX screen_active_controllers_screen_guest_session_id_idx ON app_public.screen_active_controllers USING btree (screen_guest_session_id);
+
+
+--
+-- Name: screen_control_requests_created_at_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX screen_control_requests_created_at_idx ON app_public.screen_control_requests USING btree (created_at);
+
+
+--
+-- Name: screen_control_requests_resolved_by_user_id_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX screen_control_requests_resolved_by_user_id_idx ON app_public.screen_control_requests USING btree (resolved_by_user_id);
+
+
+--
+-- Name: screen_control_requests_screen_guest_session_id_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX screen_control_requests_screen_guest_session_id_idx ON app_public.screen_control_requests USING btree (screen_guest_session_id);
+
+
+--
+-- Name: screen_control_requests_screen_id_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX screen_control_requests_screen_id_idx ON app_public.screen_control_requests USING btree (screen_id);
+
+
+--
+-- Name: screen_control_requests_status_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX screen_control_requests_status_idx ON app_public.screen_control_requests USING btree (status);
+
+
+--
+-- Name: screen_guest_sessions_organization_id_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX screen_guest_sessions_organization_id_idx ON app_public.screen_guest_sessions USING btree (organization_id);
+
+
+--
+-- Name: screen_guest_sessions_screen_guest_id_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX screen_guest_sessions_screen_guest_id_idx ON app_public.screen_guest_sessions USING btree (screen_guest_id);
+
+
+--
+-- Name: screen_guest_sessions_screen_id_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX screen_guest_sessions_screen_id_idx ON app_public.screen_guest_sessions USING btree (screen_id);
+
+
+--
+-- Name: screen_guest_sessions_screen_id_screen_guest_id_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE UNIQUE INDEX screen_guest_sessions_screen_id_screen_guest_id_idx ON app_public.screen_guest_sessions USING btree (screen_id, screen_guest_id) WHERE (screen_guest_id IS NOT NULL);
+
+
+--
+-- Name: screen_guests_created_at_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX screen_guests_created_at_idx ON app_public.screen_guests USING btree (created_at);
+
+
+--
+-- Name: screen_guests_created_by_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX screen_guests_created_by_idx ON app_public.screen_guests USING btree (created_by);
+
+
+--
+-- Name: screen_guests_display_name_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX screen_guests_display_name_idx ON app_public.screen_guests USING btree (display_name);
+
+
+--
+-- Name: screen_guests_organization_id_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX screen_guests_organization_id_idx ON app_public.screen_guests USING btree (organization_id);
 
 
 --
@@ -3259,6 +4100,13 @@ CREATE TRIGGER _100_timestamps BEFORE INSERT OR UPDATE ON app_public.projects FO
 
 
 --
+-- Name: screen_guests _100_timestamps; Type: TRIGGER; Schema: app_public; Owner: -
+--
+
+CREATE TRIGGER _100_timestamps BEFORE INSERT OR UPDATE ON app_public.screen_guests FOR EACH ROW EXECUTE FUNCTION app_private.tg__timestamps();
+
+
+--
 -- Name: screens _100_timestamps; Type: TRIGGER; Schema: app_public; Owner: -
 --
 
@@ -3357,6 +4205,20 @@ CREATE TRIGGER _500_audit_removed AFTER DELETE ON app_public.user_emails FOR EAC
 
 
 --
+-- Name: screens _500_delete_temp_project_on_screen_delete; Type: TRIGGER; Schema: app_public; Owner: -
+--
+
+CREATE TRIGGER _500_delete_temp_project_on_screen_delete AFTER DELETE ON app_public.screens FOR EACH ROW WHEN ((old.current_project_id IS NOT NULL)) EXECUTE FUNCTION app_private.tg__delete_temp_project_on_unassign();
+
+
+--
+-- Name: screens _500_delete_temp_project_on_unassign; Type: TRIGGER; Schema: app_public; Owner: -
+--
+
+CREATE TRIGGER _500_delete_temp_project_on_unassign AFTER UPDATE OF current_project_id ON app_public.screens FOR EACH ROW WHEN ((old.current_project_id IS DISTINCT FROM new.current_project_id)) EXECUTE FUNCTION app_private.tg__delete_temp_project_on_unassign();
+
+
+--
 -- Name: users _500_deletion_organization_checks_and_actions; Type: TRIGGER; Schema: app_public; Owner: -
 --
 
@@ -3371,10 +4233,24 @@ CREATE TRIGGER _500_gql_notify AFTER INSERT OR DELETE OR UPDATE ON app_public.cl
 
 
 --
+-- Name: screen_active_controllers _500_gql_notify; Type: TRIGGER; Schema: app_public; Owner: -
+--
+
+CREATE TRIGGER _500_gql_notify AFTER INSERT OR DELETE OR UPDATE ON app_public.screen_active_controllers FOR EACH ROW EXECUTE FUNCTION app_public.tg__graphql_subscription('screenActiveControllerUpdate', 'graphql:scr_ctl:$1', 'screen_id');
+
+
+--
 -- Name: screens _500_gql_notify; Type: TRIGGER; Schema: app_public; Owner: -
 --
 
 CREATE TRIGGER _500_gql_notify AFTER INSERT OR DELETE OR UPDATE ON app_public.screens FOR EACH ROW EXECUTE FUNCTION app_public.tg__graphql_subscription('screenUpdate', 'graphql:screens:$1', 'id');
+
+
+--
+-- Name: screen_guest_sessions _500_gql_notify_last_seen; Type: TRIGGER; Schema: app_public; Owner: -
+--
+
+CREATE TRIGGER _500_gql_notify_last_seen AFTER UPDATE OF last_seen_at ON app_public.screen_guest_sessions FOR EACH ROW EXECUTE FUNCTION app_public.tg__graphql_subscription('screenActiveControllerUpdate', 'graphql:scr_ctl:$1', 'screen_id');
 
 
 --
@@ -3424,6 +4300,27 @@ CREATE TRIGGER _500_send_email AFTER INSERT ON app_public.organization_join_requ
 --
 
 CREATE TRIGGER _500_verify_account_on_verified AFTER INSERT OR UPDATE OF is_verified ON app_public.user_emails FOR EACH ROW WHEN ((new.is_verified IS TRUE)) EXECUTE FUNCTION app_public.tg_user_emails__verify_account_on_verified();
+
+
+--
+-- Name: screen_control_requests _510_gql_notify; Type: TRIGGER; Schema: app_public; Owner: -
+--
+
+CREATE TRIGGER _510_gql_notify AFTER INSERT OR DELETE OR UPDATE ON app_public.screen_control_requests FOR EACH ROW EXECUTE FUNCTION app_public.tg__graphql_subscription('screenControlRequestUpdate', 'graphql:scr_req:$1', 'id');
+
+
+--
+-- Name: screen_control_requests _511_gql_per_screen_notify; Type: TRIGGER; Schema: app_public; Owner: -
+--
+
+CREATE TRIGGER _511_gql_per_screen_notify AFTER INSERT OR DELETE OR UPDATE ON app_public.screen_control_requests FOR EACH ROW EXECUTE FUNCTION app_public.tg__graphql_subscription('screenControlRequestsUpdate', 'graphql:scr_reqs:$1', 'screen_id');
+
+
+--
+-- Name: screen_control_requests _512_gql_per_org_notify; Type: TRIGGER; Schema: app_public; Owner: -
+--
+
+CREATE TRIGGER _512_gql_per_org_notify AFTER INSERT OR DELETE OR UPDATE ON app_public.screen_control_requests FOR EACH ROW EXECUTE FUNCTION app_private.tg__notify_org_screen_control_request();
 
 
 --
@@ -3694,6 +4591,86 @@ ALTER TABLE ONLY app_public.projects
 
 ALTER TABLE ONLY app_public.projects
     ADD CONSTRAINT projects_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES app_public.organizations(id) ON DELETE CASCADE;
+
+
+--
+-- Name: screen_active_controllers screen_active_controllers_screen_guest_session_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.screen_active_controllers
+    ADD CONSTRAINT screen_active_controllers_screen_guest_session_id_fkey FOREIGN KEY (screen_guest_session_id) REFERENCES app_public.screen_guest_sessions(id) ON DELETE CASCADE;
+
+
+--
+-- Name: screen_active_controllers screen_active_controllers_screen_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.screen_active_controllers
+    ADD CONSTRAINT screen_active_controllers_screen_id_fkey FOREIGN KEY (screen_id) REFERENCES app_public.screens(id) ON DELETE CASCADE;
+
+
+--
+-- Name: screen_control_requests screen_control_requests_resolved_by_user_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.screen_control_requests
+    ADD CONSTRAINT screen_control_requests_resolved_by_user_id_fkey FOREIGN KEY (resolved_by_user_id) REFERENCES app_public.users(id) ON DELETE SET NULL;
+
+
+--
+-- Name: screen_control_requests screen_control_requests_screen_guest_session_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.screen_control_requests
+    ADD CONSTRAINT screen_control_requests_screen_guest_session_id_fkey FOREIGN KEY (screen_guest_session_id) REFERENCES app_public.screen_guest_sessions(id) ON DELETE CASCADE;
+
+
+--
+-- Name: screen_control_requests screen_control_requests_screen_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.screen_control_requests
+    ADD CONSTRAINT screen_control_requests_screen_id_fkey FOREIGN KEY (screen_id) REFERENCES app_public.screens(id) ON DELETE CASCADE;
+
+
+--
+-- Name: screen_guest_sessions screen_guest_sessions_organization_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.screen_guest_sessions
+    ADD CONSTRAINT screen_guest_sessions_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES app_public.organizations(id) ON DELETE CASCADE;
+
+
+--
+-- Name: screen_guest_sessions screen_guest_sessions_screen_guest_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.screen_guest_sessions
+    ADD CONSTRAINT screen_guest_sessions_screen_guest_id_fkey FOREIGN KEY (screen_guest_id) REFERENCES app_public.screen_guests(id) ON DELETE SET NULL;
+
+
+--
+-- Name: screen_guest_sessions screen_guest_sessions_screen_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.screen_guest_sessions
+    ADD CONSTRAINT screen_guest_sessions_screen_id_fkey FOREIGN KEY (screen_id) REFERENCES app_public.screens(id) ON DELETE CASCADE;
+
+
+--
+-- Name: screen_guests screen_guests_created_by_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.screen_guests
+    ADD CONSTRAINT screen_guests_created_by_fkey FOREIGN KEY (created_by) REFERENCES app_public.users(id) ON DELETE SET NULL;
+
+
+--
+-- Name: screen_guests screen_guests_organization_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.screen_guests
+    ADD CONSTRAINT screen_guests_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES app_public.organizations(id) ON DELETE CASCADE;
 
 
 --
@@ -4011,6 +4988,30 @@ ALTER TABLE app_public.project_tags ENABLE ROW LEVEL SECURITY;
 ALTER TABLE app_public.projects ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: screen_active_controllers; Type: ROW SECURITY; Schema: app_public; Owner: -
+--
+
+ALTER TABLE app_public.screen_active_controllers ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: screen_control_requests; Type: ROW SECURITY; Schema: app_public; Owner: -
+--
+
+ALTER TABLE app_public.screen_control_requests ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: screen_guest_sessions; Type: ROW SECURITY; Schema: app_public; Owner: -
+--
+
+ALTER TABLE app_public.screen_guest_sessions ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: screen_guests; Type: ROW SECURITY; Schema: app_public; Owner: -
+--
+
+ALTER TABLE app_public.screen_guests ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: screens; Type: ROW SECURITY; Schema: app_public; Owner: -
 --
 
@@ -4021,6 +5022,53 @@ ALTER TABLE app_public.screens ENABLE ROW LEVEL SECURITY;
 --
 
 CREATE POLICY select_all ON app_public.users FOR SELECT USING (true);
+
+
+--
+-- Name: projects select_as_screen_current_for_guest_seat; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY select_as_screen_current_for_guest_seat ON app_public.projects FOR SELECT USING ((EXISTS ( SELECT 1
+   FROM (app_public.screens s
+     JOIN app_public.screen_active_controllers ac ON ((ac.screen_id = s.id)))
+  WHERE ((s.current_project_id = projects.id) AND (ac.screen_guest_session_id = app_public.current_screen_guest_session_id())))));
+
+
+--
+-- Name: projects select_as_screen_current_for_org_member; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY select_as_screen_current_for_org_member ON app_public.projects FOR SELECT USING ((EXISTS ( SELECT 1
+   FROM app_public.screens s
+  WHERE ((s.current_project_id = projects.id) AND (s.organization_id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids))))));
+
+
+--
+-- Name: organizations select_for_guest_session; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY select_for_guest_session ON app_public.organizations FOR SELECT USING ((id = (app_public.current_screen_guest_session()).organization_id));
+
+
+--
+-- Name: screens select_for_guest_session; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY select_for_guest_session ON app_public.screens FOR SELECT USING ((id = (app_public.current_screen_guest_session()).screen_id));
+
+
+--
+-- Name: screen_active_controllers select_guest_session; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY select_guest_session ON app_public.screen_active_controllers FOR SELECT USING ((screen_guest_session_id = app_public.current_screen_guest_session_id()));
+
+
+--
+-- Name: screen_control_requests select_guest_session; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY select_guest_session ON app_public.screen_control_requests FOR SELECT USING ((screen_guest_session_id = app_public.current_screen_guest_session_id()));
 
 
 --
@@ -4049,6 +5097,20 @@ CREATE POLICY select_member ON app_public.organization_memberships FOR SELECT US
 --
 
 CREATE POLICY select_member ON app_public.organizations FOR SELECT USING ((id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids)));
+
+
+--
+-- Name: screen_guest_sessions select_member; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY select_member ON app_public.screen_guest_sessions FOR SELECT USING ((organization_id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids)));
+
+
+--
+-- Name: screen_guests select_member; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY select_member ON app_public.screen_guests FOR SELECT USING ((organization_id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids)));
 
 
 --
@@ -4098,6 +5160,24 @@ CREATE POLICY select_own ON app_public.project_tags FOR SELECT USING (app_public
 --
 
 CREATE POLICY select_own ON app_public.projects FOR SELECT USING ((organization_id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids)));
+
+
+--
+-- Name: screen_active_controllers select_own; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY select_own ON app_public.screen_active_controllers FOR SELECT USING ((screen_id IN ( SELECT screens.id
+   FROM app_public.screens
+  WHERE (screens.organization_id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids)))));
+
+
+--
+-- Name: screen_control_requests select_own; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY select_own ON app_public.screen_control_requests FOR SELECT USING ((screen_id IN ( SELECT screens.id
+   FROM app_public.screens
+  WHERE (screens.organization_id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids)))));
 
 
 --
@@ -4175,6 +5255,20 @@ CREATE POLICY select_public ON app_public.organizations FOR SELECT USING ((is_pu
 --
 
 CREATE POLICY select_public ON app_public.projects FOR SELECT USING ((is_public IS TRUE));
+
+
+--
+-- Name: screen_active_controllers select_same_screen_guest; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY select_same_screen_guest ON app_public.screen_active_controllers FOR SELECT USING ((screen_id = (app_public.current_screen_guest_session()).screen_id));
+
+
+--
+-- Name: screen_guest_sessions select_self; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY select_self ON app_public.screen_guest_sessions FOR SELECT USING ((id = app_public.current_screen_guest_session_id()));
 
 
 --
@@ -4296,6 +5390,27 @@ REVOKE ALL ON FUNCTION app_private.assert_valid_password(new_password text) FROM
 
 
 --
+-- Name: TABLE screen_guest_sessions; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT SELECT ON TABLE app_public.screen_guest_sessions TO theopenpresenter_visitor;
+
+
+--
+-- Name: FUNCTION authenticate_screen_guest(p_screen_id uuid, p_secret text); Type: ACL; Schema: app_private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_private.authenticate_screen_guest(p_screen_id uuid, p_secret text) FROM PUBLIC;
+
+
+--
+-- Name: FUNCTION current_session_can_control_screen(p_screen_id uuid); Type: ACL; Schema: app_private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_private.current_session_can_control_screen(p_screen_id uuid) FROM PUBLIC;
+
+
+--
 -- Name: TABLE users; Type: ACL; Schema: app_public; Owner: -
 --
 
@@ -4370,6 +5485,20 @@ REVOKE ALL ON FUNCTION app_private.tg__add_audit_job() FROM PUBLIC;
 --
 
 REVOKE ALL ON FUNCTION app_private.tg__add_job() FROM PUBLIC;
+
+
+--
+-- Name: FUNCTION tg__delete_temp_project_on_unassign(); Type: ACL; Schema: app_private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_private.tg__delete_temp_project_on_unassign() FROM PUBLIC;
+
+
+--
+-- Name: FUNCTION tg__notify_org_screen_control_request(); Type: ACL; Schema: app_private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_private.tg__notify_org_screen_control_request() FROM PUBLIC;
 
 
 --
@@ -4568,6 +5697,45 @@ GRANT ALL ON FUNCTION app_public.create_organization(slug public.citext, name te
 
 
 --
+-- Name: TABLE screen_guests; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT SELECT ON TABLE app_public.screen_guests TO theopenpresenter_visitor;
+
+
+--
+-- Name: FUNCTION create_screen_guest(organization_id uuid, display_name text, passcode text, email text); Type: ACL; Schema: app_public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_public.create_screen_guest(organization_id uuid, display_name text, passcode text, email text) FROM PUBLIC;
+GRANT ALL ON FUNCTION app_public.create_screen_guest(organization_id uuid, display_name text, passcode text, email text) TO theopenpresenter_visitor;
+
+
+--
+-- Name: FUNCTION create_temporary_project(screen_id uuid); Type: ACL; Schema: app_public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_public.create_temporary_project(screen_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION app_public.create_temporary_project(screen_id uuid) TO theopenpresenter_visitor;
+
+
+--
+-- Name: FUNCTION current_screen_guest_session(); Type: ACL; Schema: app_public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_public.current_screen_guest_session() FROM PUBLIC;
+GRANT ALL ON FUNCTION app_public.current_screen_guest_session() TO theopenpresenter_visitor;
+
+
+--
+-- Name: FUNCTION current_screen_guest_session_id(); Type: ACL; Schema: app_public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_public.current_screen_guest_session_id() FROM PUBLIC;
+GRANT ALL ON FUNCTION app_public.current_screen_guest_session_id() TO theopenpresenter_visitor;
+
+
+--
 -- Name: FUNCTION current_session_id(); Type: ACL; Schema: app_public; Owner: -
 --
 
@@ -4664,6 +5832,14 @@ GRANT ALL ON FUNCTION app_public.delete_organization(organization_id uuid) TO th
 
 
 --
+-- Name: FUNCTION delete_screen_guest(id uuid); Type: ACL; Schema: app_public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_public.delete_screen_guest(id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION app_public.delete_screen_guest(id uuid) TO theopenpresenter_visitor;
+
+
+--
 -- Name: FUNCTION forgot_password(email public.citext); Type: ACL; Schema: app_public; Owner: -
 --
 
@@ -4742,6 +5918,140 @@ GRANT ALL ON FUNCTION app_public.organizations_public_search(search_string text)
 
 
 --
+-- Name: TABLE screens; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT SELECT,DELETE ON TABLE app_public.screens TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN screens.organization_id; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(organization_id) ON TABLE app_public.screens TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN screens.name; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(name),UPDATE(name) ON TABLE app_public.screens TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN screens.slug; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(slug),UPDATE(slug) ON TABLE app_public.screens TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN screens.current_project_id; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(current_project_id),UPDATE(current_project_id) ON TABLE app_public.screens TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN screens.current_renderer_id; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(current_renderer_id),UPDATE(current_renderer_id) ON TABLE app_public.screens TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN screens.registered_guest_enabled; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT UPDATE(registered_guest_enabled) ON TABLE app_public.screens TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN screens.registered_guest_on_empty_policy; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT UPDATE(registered_guest_on_empty_policy) ON TABLE app_public.screens TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN screens.registered_guest_on_takeover_policy; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT UPDATE(registered_guest_on_takeover_policy) ON TABLE app_public.screens TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN screens.registered_guest_on_takeover_after_seconds; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT UPDATE(registered_guest_on_takeover_after_seconds) ON TABLE app_public.screens TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN screens.anon_guest_enabled; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT UPDATE(anon_guest_enabled) ON TABLE app_public.screens TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN screens.anon_guest_on_empty_policy; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT UPDATE(anon_guest_on_empty_policy) ON TABLE app_public.screens TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN screens.anon_guest_on_takeover_policy; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT UPDATE(anon_guest_on_takeover_policy) ON TABLE app_public.screens TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN screens.anon_guest_on_takeover_after_seconds; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT UPDATE(anon_guest_on_takeover_after_seconds) ON TABLE app_public.screens TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN screens.idle_policy; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT UPDATE(idle_policy) ON TABLE app_public.screens TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN screens.idle_after_seconds; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT UPDATE(idle_after_seconds) ON TABLE app_public.screens TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN screens.unassign_after_idle_seconds; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT UPDATE(unassign_after_idle_seconds) ON TABLE app_public.screens TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN screens.show_bar_on_idle; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT UPDATE(show_bar_on_idle) ON TABLE app_public.screens TO theopenpresenter_visitor;
+
+
+--
+-- Name: FUNCTION release_screen_control(screen_id uuid); Type: ACL; Schema: app_public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_public.release_screen_control(screen_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION app_public.release_screen_control(screen_id uuid) TO theopenpresenter_visitor;
+
+
+--
 -- Name: FUNCTION remove_from_organization(organization_id uuid, user_id uuid); Type: ACL; Schema: app_public; Owner: -
 --
 
@@ -4771,6 +6081,22 @@ GRANT ALL ON FUNCTION app_public.request_join_to_organization(organization_id uu
 
 REVOKE ALL ON FUNCTION app_public.resend_email_verification_code(email_id uuid) FROM PUBLIC;
 GRANT ALL ON FUNCTION app_public.resend_email_verification_code(email_id uuid) TO theopenpresenter_visitor;
+
+
+--
+-- Name: FUNCTION screen_login_metadata(p_org_slug text, p_screen_slug text); Type: ACL; Schema: app_public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_public.screen_login_metadata(p_org_slug text, p_screen_slug text) FROM PUBLIC;
+GRANT ALL ON FUNCTION app_public.screen_login_metadata(p_org_slug text, p_screen_slug text) TO theopenpresenter_visitor;
+
+
+--
+-- Name: FUNCTION set_existing_project_to_screen(screen_id uuid, project_id uuid); Type: ACL; Schema: app_public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_public.set_existing_project_to_screen(screen_id uuid, project_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION app_public.set_existing_project_to_screen(screen_id uuid, project_id uuid) TO theopenpresenter_visitor;
 
 
 --
@@ -4827,6 +6153,14 @@ GRANT ALL ON FUNCTION app_public.transfer_organization_billing_contact(organizat
 
 REVOKE ALL ON FUNCTION app_public.transfer_organization_ownership(organization_id uuid, user_id uuid) FROM PUBLIC;
 GRANT ALL ON FUNCTION app_public.transfer_organization_ownership(organization_id uuid, user_id uuid) TO theopenpresenter_visitor;
+
+
+--
+-- Name: FUNCTION update_screen_guest(id uuid, display_name text, passcode text, email text, is_active boolean); Type: ACL; Schema: app_public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_public.update_screen_guest(id uuid, display_name text, passcode text, email text, is_active boolean) FROM PUBLIC;
+GRANT ALL ON FUNCTION app_public.update_screen_guest(id uuid, display_name text, passcode text, email text, is_active boolean) TO theopenpresenter_visitor;
 
 
 --
@@ -5090,45 +6424,17 @@ GRANT INSERT(tag_id) ON TABLE app_public.project_tags TO theopenpresenter_visito
 
 
 --
--- Name: TABLE screens; Type: ACL; Schema: app_public; Owner: -
+-- Name: TABLE screen_active_controllers; Type: ACL; Schema: app_public; Owner: -
 --
 
-GRANT SELECT,DELETE ON TABLE app_public.screens TO theopenpresenter_visitor;
-
-
---
--- Name: COLUMN screens.organization_id; Type: ACL; Schema: app_public; Owner: -
---
-
-GRANT INSERT(organization_id) ON TABLE app_public.screens TO theopenpresenter_visitor;
+GRANT SELECT ON TABLE app_public.screen_active_controllers TO theopenpresenter_visitor;
 
 
 --
--- Name: COLUMN screens.name; Type: ACL; Schema: app_public; Owner: -
+-- Name: TABLE screen_control_requests; Type: ACL; Schema: app_public; Owner: -
 --
 
-GRANT INSERT(name),UPDATE(name) ON TABLE app_public.screens TO theopenpresenter_visitor;
-
-
---
--- Name: COLUMN screens.slug; Type: ACL; Schema: app_public; Owner: -
---
-
-GRANT INSERT(slug),UPDATE(slug) ON TABLE app_public.screens TO theopenpresenter_visitor;
-
-
---
--- Name: COLUMN screens.current_project_id; Type: ACL; Schema: app_public; Owner: -
---
-
-GRANT INSERT(current_project_id),UPDATE(current_project_id) ON TABLE app_public.screens TO theopenpresenter_visitor;
-
-
---
--- Name: COLUMN screens.current_renderer_id; Type: ACL; Schema: app_public; Owner: -
---
-
-GRANT INSERT(current_renderer_id),UPDATE(current_renderer_id) ON TABLE app_public.screens TO theopenpresenter_visitor;
+GRANT SELECT ON TABLE app_public.screen_control_requests TO theopenpresenter_visitor;
 
 
 --
@@ -5240,5 +6546,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE theopenpresenter REVOKE ALL ON FUNCTIONS FROM 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict CfNBIDnoWrrTfEsBJ1CyZ44AH5urW6nDacakeWoo8InhO2JNoCuxzVkVNTMieiH
+\unrestrict T5O4KOrV4FeIAN1QeyZRRoT2aV7bICuh11397bFrGng55mjZ3dk8HgiiJ1LU4TU
 
