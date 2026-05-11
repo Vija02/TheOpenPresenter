@@ -17,7 +17,7 @@ import { useCallback, useMemo } from "react";
 import { VscAdd, VscArrowRight, VscCheck } from "react-icons/vsc";
 import { toast } from "react-toastify";
 import { UseQueryResponse } from "urql";
-import { useParams } from "wouter";
+import { Link as WouterLink, useParams } from "wouter";
 
 const OrganizationSlugScreenControlPage = () => {
   const orgSlug = useOrganizationSlug();
@@ -211,9 +211,13 @@ const ControlPageInner = ({
                 account to pick from any project across the organizations you
                 belong to.
               </p>
-              <Button asChild variant="outline" size="sm">
-                <a href={loginHref}>Sign in</a>
-              </Button>
+              <Link asChild variant="unstyled">
+                <WouterLink href={loginHref}>
+                  <Button variant="outline" size="sm">
+                    Sign in
+                  </Button>
+                </WouterLink>
+              </Link>
             </Alert>
           )}
         </div>
