@@ -165,6 +165,17 @@ const screenControlRequestPlugin = makeExtendSchemaPlugin(() => ({
             `,
             [screenId, screenGuestSessionId],
           );
+          if (isTakeover) {
+            await rootPgPool.query(
+              `
+                update app_public.screens
+                set current_project_id = null
+                where id = $1
+                  and current_project_id is not null
+              `,
+              [screenId],
+            );
+          }
           return {
             data: {
               screenId,
@@ -215,6 +226,7 @@ const screenControlRequestPlugin = makeExtendSchemaPlugin(() => ({
             select r.id,
                    r.screen_id,
                    r.screen_guest_session_id,
+                   r.request_type,
                    r.status
             from app_public.screen_control_requests r
             join app_public.screens s on s.id = r.screen_id
@@ -268,6 +280,18 @@ const screenControlRequestPlugin = makeExtendSchemaPlugin(() => ({
           `,
           [reqRow.screen_id, reqRow.screen_guest_session_id],
         );
+
+        if (reqRow.request_type === "takeover") {
+          await rootPgPool.query(
+            `
+              update app_public.screens
+              set current_project_id = null
+              where id = $1
+                and current_project_id is not null
+            `,
+            [reqRow.screen_id],
+          );
+        }
 
         // And update the request
         await rootPgPool.query(
