@@ -35,10 +35,8 @@ export function SharedLayoutSkeleton({
 
   return (
     <div>
-      <StandardWidth style={{ background: "black", height: "80px" }}>
-        <div
-          className="w-full h-full flex justify-between items-center flex-wrap"
-        >
+      <StandardWidth style={{ background: "black", minHeight: "80px" }}>
+        <div className="w-full h-full flex justify-between items-center flex-wrap gap-y-2">
           {navbarLeft}
           <WouterLink href="/">
             <Logo height="40px" />
