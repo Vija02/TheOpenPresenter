@@ -196,6 +196,7 @@ export const ScreenStatusCard = ({
             size="sm"
             onClick={onCreateTemporaryProject}
             isLoading={creatingTemporary}
+            className="border-fill-magic text-fill-magic hover:bg-fill-magic/10 hover:text-fill-magic"
           >
             <VscAdd />
             New temporary project

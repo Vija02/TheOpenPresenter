@@ -1,4 +1,3 @@
-import { AdminGuestPageNotice } from "@/containers/ScreenGuest/AdminGuestPageNotice";
 import { ControlPageHeader } from "@/containers/ScreenGuest/ControlPageHeader";
 import {
   ScreenGuestAuthContext,
@@ -37,18 +36,11 @@ const OrganizationSlugScreenRequestPage = () => {
     <SharedScreenGuestLayout
       query={query}
       title={(s) => `Request · ${s.name}`}
-      redirectIf={({ guestHasControl }) =>
-        guestHasControl ? controlHref : null
+      redirectIf={({ guestHasControl, isMember }) =>
+        guestHasControl || isMember ? controlHref : null
       }
     >
-      {(ctx) => (
-        <AutoClaimHandler
-          ctx={ctx}
-          query={query}
-          orgSlug={orgSlug}
-          screenSlug={screenSlug}
-        />
-      )}
+      {(ctx) => <AutoClaimHandler ctx={ctx} query={query} />}
     </SharedScreenGuestLayout>
   );
 };
@@ -59,16 +51,9 @@ type AutoClaimHandlerPropTypes = {
     OrganizationScreenRequestPageQuery,
     Exact<OrganizationScreenRequestPageQueryVariables>
   >;
-  orgSlug: string;
-  screenSlug: string;
 };
 
-const AutoClaimHandler = ({
-  ctx,
-  query,
-  orgSlug,
-  screenSlug,
-}: AutoClaimHandlerPropTypes) => {
+const AutoClaimHandler = ({ ctx, query }: AutoClaimHandlerPropTypes) => {
   const [, refetch] = query;
   const {
     screen,
@@ -153,8 +138,6 @@ const AutoClaimHandler = ({
   return (
     <RequestPageInner
       screen={screen}
-      orgSlug={orgSlug}
-      screenSlug={screenSlug}
       isMember={isMember}
       currentScreenGuestSessionId={currentScreenGuestSessionId}
       refetch={handleRefetch}
@@ -164,8 +147,6 @@ const AutoClaimHandler = ({
 
 type RequestPageInnerPropTypes = {
   screen: SharedScreenGuestScreen;
-  orgSlug: string;
-  screenSlug: string;
   isMember: boolean;
   currentScreenGuestSessionId: string | null;
   refetch: () => void;
@@ -173,8 +154,6 @@ type RequestPageInnerPropTypes = {
 
 const RequestPageInner = ({
   screen,
-  orgSlug,
-  screenSlug,
   isMember,
   currentScreenGuestSessionId,
   refetch,
@@ -186,12 +165,6 @@ const RequestPageInner = ({
         isMember={isMember}
         guestSignedIn={!!currentScreenGuestSessionId}
         onSignedOut={refetch}
-      />
-
-      <AdminGuestPageNotice
-        isMember={isMember}
-        orgSlug={orgSlug}
-        screenSlug={screenSlug}
       />
 
       <GuestRequestPanel screen={screen} refetch={refetch} />
