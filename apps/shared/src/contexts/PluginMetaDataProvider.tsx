@@ -20,6 +20,10 @@ type PluginMeta =
   | RendererBasePluginQuery["pluginMeta"]
   | RemoteBasePluginQuery["pluginMeta"];
 
+export type ScreenGuestSession = NonNullable<
+  RemoteBasePluginQuery["currentScreenGuestSession"]
+>;
+
 type PluginMetaDataProviderType = {
   pluginMeta: PluginMeta | null;
   project: Project | null;
@@ -27,6 +31,7 @@ type PluginMetaDataProviderType = {
   orgSlug: string;
   projectSlug: string;
   projectId: string;
+  screenGuestSession: ScreenGuestSession | null;
   refetch: () => void;
 };
 
@@ -37,6 +42,7 @@ const initialData: PluginMetaDataProviderType = {
   orgSlug: "",
   projectSlug: "",
   projectId: "",
+  screenGuestSession: null,
   refetch: () => {},
 };
 
@@ -82,6 +88,11 @@ export function PluginMetaDataProvider({
 
   const projectId = project?.id ?? null;
 
+  const screenGuestSession: ScreenGuestSession | null =
+    pluginMetaData && "currentScreenGuestSession" in pluginMetaData
+      ? (pluginMetaData.currentScreenGuestSession ?? null)
+      : null;
+
   const organizationId = useMemo(() => {
     if (
       pluginMetaData?.organizationBySlug?.projects.nodes &&
@@ -126,6 +137,7 @@ export function PluginMetaDataProvider({
         orgSlug,
         projectSlug,
         projectId: projectId,
+        screenGuestSession,
         refetch,
       }}
     >
