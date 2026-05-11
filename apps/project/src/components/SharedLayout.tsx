@@ -123,32 +123,30 @@ export function SharedLayout({
         navbarLeft={navbarLeft}
         navbarRight={
           navbarRight ?? (
-            <div className="flex flex-wrap gap-6">
-              <div className="stack-row items-center gap-6">
-                <Link asChild>
-                  <WouterLink href="/login">
-                    <Button
-                      size="sm"
-                      variant="link"
-                      className="text-tertiary"
-                      data-testid="header-login-button"
-                    >
-                      Sign in
-                    </Button>
-                  </WouterLink>
-                </Link>
-                <Link asChild>
-                  <WouterLink href="/register">
-                    <Button
-                      size="sm"
-                      variant="success"
-                      data-testid="header-register-button"
-                    >
-                      Sign up for free
-                    </Button>
-                  </WouterLink>
-                </Link>
-              </div>
+            <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+              <Link asChild>
+                <WouterLink href="/login">
+                  <Button
+                    size="sm"
+                    variant="link"
+                    className="text-tertiary"
+                    data-testid="header-login-button"
+                  >
+                    Sign in
+                  </Button>
+                </WouterLink>
+              </Link>
+              <Link asChild>
+                <WouterLink href="/register">
+                  <Button
+                    size="sm"
+                    variant="success"
+                    data-testid="header-register-button"
+                  >
+                    Sign up for free
+                  </Button>
+                </WouterLink>
+              </Link>
             </div>
           )
         }
