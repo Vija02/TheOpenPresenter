@@ -5,6 +5,7 @@ import { Strategy as GitHubStrategy } from "passport-github2";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 
 import { getWebsocketMiddlewares } from "../app";
+import { getRootPgPool } from "./installDatabasePools";
 import installPassportQRStrategy from "./installPassportQRStrategy";
 import installPassportStrategy from "./installPassportStrategy";
 
@@ -28,6 +29,49 @@ export default async (app: Express) => {
   const passportSessionMiddleware = passport.session();
   app.use(passportSessionMiddleware);
   getWebsocketMiddlewares(app).push(passportSessionMiddleware);
+
+  // Wrap logout so it logout guest session as well
+  app.use((req, _res, next) => {
+    const originalLogout = req.logout.bind(req);
+
+    const wrappedLogout = (
+      optionsOrCb?:
+        | Parameters<Express.Request["logout"]>[0]
+        | ((err?: Error) => void),
+      maybeCb?: (err?: Error) => void,
+    ): void => {
+      const cb = typeof optionsOrCb === "function" ? optionsOrCb : maybeCb;
+      const options =
+        typeof optionsOrCb === "function" ? undefined : optionsOrCb;
+
+      const cleanup = async () => {
+        const guestSessionId = req.session?.screenGuestSession?.id;
+        if (!guestSessionId) return;
+        try {
+          await getRootPgPool(app).query(
+            `delete from app_public.screen_guest_sessions where id = $1`,
+            [guestSessionId],
+          );
+        } catch {
+          // best-effort: don't block logout on cleanup failure
+        }
+        if (req.session) {
+          req.session.screenGuestSession = undefined;
+        }
+      };
+
+      cleanup().finally(() => {
+        if (options !== undefined) {
+          originalLogout(options, (err) => cb?.(err));
+        } else {
+          originalLogout((err) => cb?.(err));
+        }
+      });
+    };
+
+    req.logout = wrappedLogout as Express.Request["logout"];
+    next();
+  });
 
   app.get("/logout", (req, res) => {
     req.logout(() => {
