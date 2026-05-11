@@ -6,10 +6,10 @@ import {
   useLogoutScreenGuestSessionMutation,
   useScreenActiveControllerUpdatedSubscription,
 } from "@repo/graphql";
-import { LoadingFull, Redirect } from "@repo/ui";
+import { Button, Link, LoadingFull, Redirect } from "@repo/ui";
 import { ReactNode, useEffect, useMemo, useRef } from "react";
 import { UseQueryResponse } from "urql";
-import { useParams } from "wouter";
+import { Link as WouterLink, useParams } from "wouter";
 
 export type SharedScreenGuestScreen = ScreenFragment & {
   screenActiveController?: { screenGuestSessionId?: string | null } | null;
@@ -138,11 +138,27 @@ export function SharedScreenGuestLayout({
     return <Redirect href={crossRedirect} replace />;
   }
 
+  const navbarRight = currentUserId ? (
+    <Link asChild>
+      <WouterLink href="/logout">
+        <Button
+          size="sm"
+          variant="link"
+          className="text-tertiary"
+          data-testid="header-logout-button"
+        >
+          Logout
+        </Button>
+      </WouterLink>
+    </Link>
+  ) : undefined;
+
   return (
     <SharedLayout
       title={title(screen)}
       query={query}
       forbidWhen={AuthRestrict.NEVER}
+      navbarRight={navbarRight}
     >
       {children(ctx)}
     </SharedLayout>
