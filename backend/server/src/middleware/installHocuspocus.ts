@@ -122,6 +122,25 @@ export default async function installHocuspocus(app: Express) {
         console.log(error);
       });
 
+      // Store var here to reduce load on DB
+      let lastSeenBumpAt = 0;
+      incoming.on("message", () => {
+        const guestId = request.session?.screenGuestSession?.id;
+        if (!guestId) return;
+        const now = Date.now();
+        if (now - lastSeenBumpAt < 15_000) return;
+        lastSeenBumpAt = now;
+        const rootPgPool = getRootPgPool(app);
+        rootPgPool
+          .query(
+            "update app_public.screen_guest_sessions set last_seen_at = now() where id = $1 and last_seen_at < now() - interval '15 seconds'",
+            [guestId],
+          )
+          .catch((err) => {
+            logger.warn({ err }, "Failed to bump guest last_seen_at");
+          });
+      });
+
       try {
         const dummyRes = new ServerResponse(request);
 
