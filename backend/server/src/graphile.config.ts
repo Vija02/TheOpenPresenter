@@ -245,6 +245,9 @@ export function getPostGraphileOptions({
      */
     async pgSettings(req) {
       const sessionId = uuidOrNull(req.user?.session_id);
+      const screenGuestSessionId = uuidOrNull(
+        req.session?.screenGuestSession?.id,
+      );
       if (sessionId) {
         // Update the last_active timestamp (but only do it at most once every 15 seconds to avoid too much churn).
         await rootPgPool.query(
@@ -252,9 +255,12 @@ export function getPostGraphileOptions({
           [sessionId],
         );
       }
-      const screenGuestSessionId = uuidOrNull(
-        req.session?.screenGuestSession?.id,
-      );
+      if (screenGuestSessionId) {
+        await rootPgPool.query(
+          "UPDATE app_public.screen_guest_sessions SET last_seen_at = NOW() WHERE id = $1 AND last_seen_at < NOW() - INTERVAL '15 seconds'",
+          [screenGuestSessionId],
+        );
+      }
       return {
         // Everyone uses the "visitor" role currently
         role: process.env.DATABASE_VISITOR,

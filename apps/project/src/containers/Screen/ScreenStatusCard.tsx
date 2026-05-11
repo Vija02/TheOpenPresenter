@@ -8,7 +8,10 @@ import { Button, DateDisplayRelative, Link } from "@repo/ui";
 import { VscAdd, VscChromeClose, VscFile } from "react-icons/vsc";
 import { Link as WouterLink } from "wouter";
 
-import { useTickingRemainingSeconds } from "./shared";
+import {
+  useTickingElapsedSeconds,
+  useTickingRemainingSeconds,
+} from "./shared";
 
 const QUICK_SELECT_LIMIT = 4;
 
@@ -47,19 +50,19 @@ export const ScreenStatusCard = ({
       ? screen.unassignAfterIdleSeconds
       : null;
 
-  const lastInputMs = activeController
-    ? new Date(activeController.lastInputAt).getTime()
-    : null;
+  const lastSeenAt = activeController?.screenGuestSession?.lastSeenAt ?? null;
+  const lastSeenMs = lastSeenAt ? new Date(lastSeenAt).getTime() : null;
   const idleAtMs =
-    lastInputMs !== null && idleThresholdSec !== null
-      ? lastInputMs + idleThresholdSec * 1000
+    lastSeenMs !== null && idleThresholdSec !== null
+      ? lastSeenMs + idleThresholdSec * 1000
       : null;
   const unassignAtMs =
-    lastInputMs !== null && idleThresholdSec !== null && unassignSec !== null
-      ? lastInputMs + (idleThresholdSec + unassignSec) * 1000
+    lastSeenMs !== null && idleThresholdSec !== null && unassignSec !== null
+      ? lastSeenMs + (idleThresholdSec + unassignSec) * 1000
       : null;
   const idleRemaining = useTickingRemainingSeconds(idleAtMs);
   const unassignRemaining = useTickingRemainingSeconds(unassignAtMs);
+  const secondsSinceSeen = useTickingElapsedSeconds(lastSeenMs);
   const isIdle = idleAtMs !== null && idleRemaining === 0;
 
   const controlHref = `/o/${orgSlug}/screens/${screenSlug}/control`;
@@ -110,14 +113,19 @@ export const ScreenStatusCard = ({
                   )}
                 </p>
                 <p className="text-xs text-tertiary">
-                  Acquired{" "}
+                  Started{" "}
                   <DateDisplayRelative
                     date={new Date(activeController.acquiredAt)}
                   />
-                  {" · last input "}
-                  <DateDisplayRelative
-                    date={new Date(activeController.lastInputAt)}
-                  />
+                  {lastSeenAt &&
+                    (secondsSinceSeen === 0 ? (
+                      <> · just seen</>
+                    ) : (
+                      <>
+                        {" · last seen "}
+                        <DateDisplayRelative date={new Date(lastSeenAt)} />
+                      </>
+                    ))}
                   {!isIdle && idleAtMs !== null && (
                     <> · idle in {idleRemaining}s</>
                   )}
