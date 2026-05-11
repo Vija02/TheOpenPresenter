@@ -6,21 +6,19 @@ import {
 } from "@/containers/ScreenGuest/SharedScreenGuestLayout";
 import { useOrganizationSlug } from "@/lib/permissionHooks/organization";
 import {
-  Exact,
-  OrganizationScreenRequestPageQuery,
-  OrganizationScreenRequestPageQueryVariables,
   ScreenControlRequestFragment,
   ScreenFragment,
+  useOrganizationScreenRequestPageQuery,
   useRequestScreenControlMutation,
   useScreenControlRequestUpdatedSubscription,
-  useSharedScreenGuestQuery,
 } from "@repo/graphql";
 import { Alert, Button } from "@repo/ui";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { VscPerson } from "react-icons/vsc";
 import { toast } from "react-toastify";
-import { UseQueryResponse } from "urql";
 import { useParams } from "wouter";
+
+type RequestPageQuery = ReturnType<typeof useOrganizationScreenRequestPageQuery>;
 
 const OrganizationSlugScreenRequestPage = () => {
   const orgSlug = useOrganizationSlug();
@@ -28,7 +26,7 @@ const OrganizationSlugScreenRequestPage = () => {
   const screenSlug = params.screenSlug!;
   const controlHref = `/o/${orgSlug}/screens/${screenSlug}/control`;
 
-  const query = useSharedScreenGuestQuery({
+  const query = useOrganizationScreenRequestPageQuery({
     variables: { slug: orgSlug, screenSlug },
   });
 
@@ -47,20 +45,21 @@ const OrganizationSlugScreenRequestPage = () => {
 
 type AutoClaimHandlerPropTypes = {
   ctx: ScreenGuestAuthContext;
-  query: UseQueryResponse<
-    OrganizationScreenRequestPageQuery,
-    Exact<OrganizationScreenRequestPageQueryVariables>
-  >;
+  query: RequestPageQuery;
 };
 
 const AutoClaimHandler = ({ ctx, query }: AutoClaimHandlerPropTypes) => {
-  const [, refetch] = query;
+  const [{ data }, refetch] = query;
   const {
     screen,
     isMember,
     currentScreenGuestSessionId,
     currentScreenGuestSessionKind,
   } = ctx;
+
+  const initialPendingRequest: ScreenControlRequestFragment | null =
+    data?.organizationBySlug?.screens.nodes[0]?.screenControlRequests
+      .nodes[0] ?? null;
 
   const handleRefetch = useCallback(() => {
     refetch({ requestPolicy: "network-only" });
@@ -85,7 +84,7 @@ const AutoClaimHandler = ({ ctx, query }: AutoClaimHandlerPropTypes) => {
     screen.registeredGuestOnTakeoverPolicy,
     seatOccupied,
   ]);
-  const shouldAutoClaim = activePolicy === "ALLOW";
+  const shouldAutoClaim = activePolicy === "ALLOW" && !initialPendingRequest;
 
   const [, requestControl] = useRequestScreenControlMutation();
   const [autoClaimError, setAutoClaimError] = useState<string | null>(null);
@@ -141,6 +140,7 @@ const AutoClaimHandler = ({ ctx, query }: AutoClaimHandlerPropTypes) => {
       isMember={isMember}
       currentScreenGuestSessionId={currentScreenGuestSessionId}
       refetch={handleRefetch}
+      initialPendingRequest={initialPendingRequest}
     />
   );
 };
@@ -150,6 +150,7 @@ type RequestPageInnerPropTypes = {
   isMember: boolean;
   currentScreenGuestSessionId: string | null;
   refetch: () => void;
+  initialPendingRequest: ScreenControlRequestFragment | null;
 };
 
 const RequestPageInner = ({
@@ -157,6 +158,7 @@ const RequestPageInner = ({
   isMember,
   currentScreenGuestSessionId,
   refetch,
+  initialPendingRequest,
 }: RequestPageInnerPropTypes) => {
   return (
     <div className="max-w-4xl mx-auto p-4">
@@ -167,7 +169,11 @@ const RequestPageInner = ({
         onSignedOut={refetch}
       />
 
-      <GuestRequestPanel screen={screen} refetch={refetch} />
+      <GuestRequestPanel
+        screen={screen}
+        refetch={refetch}
+        initialPendingRequest={initialPendingRequest}
+      />
     </div>
   );
 };
@@ -175,9 +181,11 @@ const RequestPageInner = ({
 const GuestRequestPanel = ({
   screen,
   refetch,
+  initialPendingRequest,
 }: {
   screen: ScreenFragment;
   refetch: () => void;
+  initialPendingRequest: ScreenControlRequestFragment | null;
 }) => {
   const screenId = screen.id;
 
@@ -186,7 +194,7 @@ const GuestRequestPanel = ({
 
   const [error, setError] = useState<string | null>(null);
   const [pendingRequest, setPendingRequest] =
-    useState<ScreenControlRequestFragment | null>(null);
+    useState<ScreenControlRequestFragment | null>(initialPendingRequest);
 
   const [reqSubResult] = useScreenControlRequestUpdatedSubscription({
     pause: !pendingRequest,
@@ -225,7 +233,7 @@ const GuestRequestPanel = ({
       toast.success("You now control this screen.");
       refetch();
     } else if (data?.request) {
-      setPendingRequest(data.request as ScreenControlRequestFragment);
+      setPendingRequest(data.request);
     } else {
       refetch();
     }

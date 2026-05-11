@@ -191,9 +191,10 @@ const screenControlRequestPlugin = makeExtendSchemaPlugin(() => ({
           ],
         );
 
+        // screenId is intentionally null here, the request is pending,
         return {
           data: {
-            screenId,
+            screenId: null,
             requestId: requestRow.id,
           } as ScreenControlResultIdentifiers,
         };
