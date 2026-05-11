@@ -1,0 +1,8 @@
+mutation ReleaseScreenControl($screenId: UUID!) {
+  releaseScreenControl(input: { screenId: $screenId }) {
+    screen {
+      id
+      ...Screen
+    }
+  }
+}

@@ -1,0 +1,32 @@
+query OrganizationScreenDetailPage($slug: String!, $screenSlug: String!) {
+  ...SharedOrganization
+
+  organizationBySlug(slug: $slug) {
+    id
+    screens(condition: { slug: $screenSlug }) {
+      nodes {
+        id
+        ...Screen
+        screenActiveController {
+          screenId
+          ...ScreenActiveController
+        }
+        screenControlRequests(
+          filter: { status: { equalTo: PENDING } }
+          orderBy: [CREATED_AT_ASC]
+        ) {
+          nodes {
+            id
+            ...ScreenControlRequest
+          }
+        }
+      }
+    }
+    projects(orderBy: [TARGET_DATE_DESC, UPDATED_AT_DESC]) {
+      nodes {
+        id
+        ...Project
+      }
+    }
+  }
+}
