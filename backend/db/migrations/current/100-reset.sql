@@ -1,6 +1,10 @@
 -- 750 (create-temporary-project.sql)
 drop function if exists app_public.create_temporary_project(uuid) cascade;
 
+-- 730 (screen-current-project-triggers.sql)
+drop trigger if exists _500_delete_temp_project_on_unassign on app_public.screens;
+drop function if exists app_private.tg__delete_temp_project_on_unassign() cascade;
+
 -- 720 (screen-functions.sql)
 drop function if exists app_public.ping_screen_control(uuid) cascade;
 drop function if exists app_public.release_screen_control(uuid) cascade;

@@ -4,7 +4,6 @@ create function app_public.release_screen_control(
 declare
   result app_public.screens;
   guest_id uuid;
-  prev_project_id uuid;
 begin
   if not app_private.current_session_can_control_screen(screen_id) then
     raise exception 'You do not have control of this screen' using errcode = 'NACES';
@@ -19,12 +18,7 @@ begin
     -- Revoke session too
     delete from app_public.screen_guest_sessions where id = guest_id;
   end if;
-
-  select s.current_project_id into prev_project_id
-  from app_public.screens s
-  where s.id = release_screen_control.screen_id;
-
-  -- Then unassign the screen
+  
   update app_public.screens
   set current_project_id = null
   where id = release_screen_control.screen_id
@@ -32,12 +26,6 @@ begin
 
   if not found then
     raise exception 'Screen not found' using errcode = 'NTFND';
-  end if;
-
-  -- Delete temporary project
-  if prev_project_id is not null then
-    delete from app_public.projects
-    where id = prev_project_id and is_temporary;
   end if;
 
   return result;
