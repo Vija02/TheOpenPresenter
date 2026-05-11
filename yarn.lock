@@ -10162,6 +10162,7 @@ __metadata:
     class-variance-authority: "npm:^0.7.1"
     eslint: "npm:^8.57.1"
     graphql: "npm:^15.9.0"
+    graphql-ws: "npm:^5.16.0"
     lodash-es: "npm:^4.17.21"
     postcss-nested: "npm:^7.0.2"
     react: "npm:^19.1.0"
