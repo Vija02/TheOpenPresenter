@@ -170,19 +170,22 @@ const ControlPageInner = ({
               typeof window !== "undefined" ? window.location.search : ""
             }`}
           >
-            <div className="border-2 border-accent rounded-lg p-5 bg-blue-50 hover:bg-blue-100 transition-colors flex items-center justify-between gap-4">
+            <div className="border-2 border-accent rounded-lg p-3 sm:p-5 bg-blue-50 hover:bg-blue-100 transition-colors flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
               <div className="min-w-0">
                 <p className="text-xs text-accent uppercase tracking-wide font-semibold flex items-center gap-1">
                   <VscCheck />
                   Currently showing
                 </p>
-                <p className="text-xl sm:text-2xl font-bold truncate mt-1">
+                <p className="text-lg sm:text-2xl font-bold truncate mt-1">
                   {screen.currentProject.name !== ""
                     ? screen.currentProject.name
                     : "Untitled project"}
                 </p>
               </div>
-              <Button size="lg" className="shrink-0 text-base h-12 px-6">
+              <Button
+                size="lg"
+                className="shrink-0 w-full sm:w-auto text-base h-11 sm:h-12 sm:px-6"
+              >
                 Open project
                 <VscArrowRight />
               </Button>
