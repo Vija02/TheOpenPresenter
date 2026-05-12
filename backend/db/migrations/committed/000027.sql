@@ -1,5 +1,5 @@
 --! Previous: sha1:b79d240154b65f496a921d2326b2b6bd8af6c6c3
---! Hash: sha1:954d55ac6364319eda40cb3f50ab43c4bad1a6f6
+--! Hash: sha1:54ab7358a5100eb551740a6f38ae91992f17f649
 
 --! split: 100-reset.sql
 -- 750 (create-temporary-project.sql)
@@ -205,6 +205,10 @@ create index on app_public.screen_guests (created_by);
 
 create index on app_public.screen_guests (display_name);
 create index on app_public.screen_guests (created_at);
+
+create unique index screen_guests_org_email_uniq_idx
+  on app_public.screen_guests (organization_id, lower(email))
+  where email is not null;
 
 /*====================================*/
 /*========= Standard Triggers ========*/
@@ -458,6 +462,7 @@ begin
     raise exception 'This screen does not accept registered guests' using errcode = 'DENID';
   end if;
 
+  -- Try passcode first (stronger credential).
   select * into v_entry
   from app_public.screen_guests
   where organization_id = v_screen.organization_id
@@ -465,6 +470,17 @@ begin
     and (expires_at is null or expires_at > now())
     and passcode_hash = crypt(p_secret, passcode_hash)
   limit 1;
+
+  if v_entry is null and coalesce(p_secret, '') <> '' then
+    select * into v_entry
+    from app_public.screen_guests
+    where organization_id = v_screen.organization_id
+      and is_active
+      and (expires_at is null or expires_at > now())
+      and email is not null
+      and lower(email) = lower(p_secret)
+    limit 1;
+  end if;
 
   if v_entry is null then
     raise exception 'Unrecognized email or passcode' using errcode = 'CREDS';

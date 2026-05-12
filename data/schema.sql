@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict T5O4KOrV4FeIAN1QeyZRRoT2aV7bICuh11397bFrGng55mjZ3dk8HgiiJ1LU4TU
+\restrict XwFNIKSNf66sSg3hZTeGI9w2uBIk2pci53ZTUaCwK7zynUubjb7eda7lIPaVP2q
 
 -- Dumped from database version 17.0 (Debian 17.0-1.pgdg120+1)
 -- Dumped by pg_dump version 18.3
@@ -265,6 +265,7 @@ begin
     raise exception 'This screen does not accept registered guests' using errcode = 'DENID';
   end if;
 
+  -- Try passcode first (stronger credential).
   select * into v_entry
   from app_public.screen_guests
   where organization_id = v_screen.organization_id
@@ -272,6 +273,17 @@ begin
     and (expires_at is null or expires_at > now())
     and passcode_hash = crypt(p_secret, passcode_hash)
   limit 1;
+
+  if v_entry is null and coalesce(p_secret, '') <> '' then
+    select * into v_entry
+    from app_public.screen_guests
+    where organization_id = v_screen.organization_id
+      and is_active
+      and (expires_at is null or expires_at > now())
+      and email is not null
+      and lower(email) = lower(p_secret)
+    limit 1;
+  end if;
 
   if v_entry is null then
     raise exception 'Unrecognized email or passcode' using errcode = 'CREDS';
@@ -3995,6 +4007,13 @@ CREATE INDEX screen_guests_display_name_idx ON app_public.screen_guests USING bt
 
 
 --
+-- Name: screen_guests_org_email_uniq_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE UNIQUE INDEX screen_guests_org_email_uniq_idx ON app_public.screen_guests USING btree (organization_id, lower(email)) WHERE (email IS NOT NULL);
+
+
+--
 -- Name: screen_guests_organization_id_idx; Type: INDEX; Schema: app_public; Owner: -
 --
 
@@ -6546,5 +6565,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE theopenpresenter REVOKE ALL ON FUNCTIONS FROM 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict T5O4KOrV4FeIAN1QeyZRRoT2aV7bICuh11397bFrGng55mjZ3dk8HgiiJ1LU4TU
+\unrestrict XwFNIKSNf66sSg3hZTeGI9w2uBIk2pci53ZTUaCwK7zynUubjb7eda7lIPaVP2q
 
