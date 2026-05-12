@@ -8,23 +8,33 @@ export async function cleanupScreenGuestSession(
   pool: Pool,
   sessionId: string,
 ): Promise<void> {
-  await pool.query(
-    `
-      update app_public.screens
-      set current_project_id = null
-      where id = (
-        select screen_id
-        from app_public.screen_active_controllers
-        where screen_guest_session_id = $1
-      )
-        and current_project_id is not null
-    `,
-    [sessionId],
-  );
-  await pool.query(
-    `delete from app_public.screen_guest_sessions where id = $1`,
-    [sessionId],
-  );
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    await client.query(
+      `
+        update app_public.screens
+        set current_project_id = null
+        where id in (
+          select screen_id
+          from app_public.screen_active_controllers
+          where screen_guest_session_id = $1
+        )
+          and current_project_id is not null
+      `,
+      [sessionId],
+    );
+    await client.query(
+      `delete from app_public.screen_guest_sessions where id = $1`,
+      [sessionId],
+    );
+    await client.query("COMMIT");
+  } catch (e) {
+    await client.query("ROLLBACK").catch(() => {});
+    throw e;
+  } finally {
+    client.release();
+  }
 }
 
 export type OnEmptyPolicy = "allow" | "request";
