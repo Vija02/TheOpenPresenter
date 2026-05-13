@@ -159,6 +159,11 @@ test.describe("Screen renderer reflects project selection", () => {
       // to /app/<orgSlug>/temp-<uuid>.
       await expect(page).toHaveURL(new RegExp(`/app/${ORG_SLUG}/temp-`));
 
+      const tempProjectSlug = new URL(page.url()).pathname
+        .split("/")
+        .pop()!;
+      expect(tempProjectSlug).toMatch(/^temp-/);
+
       await projectPage.createPlugin("Lyrics Presenter");
       await lyricsPlugin.addCustomSong(
         "Renderer Temp Song",
@@ -170,6 +175,16 @@ test.describe("Screen renderer reflects project selection", () => {
       await expect(renderer.currentScene).toBeVisible();
       await expect(renderer.lyricsContainer.first()).toBeVisible();
       await expect(rendererPage.getByText(TEMP_MARKER).first()).toBeVisible();
+
+      // Temporary projects must not appear on the org dashboard.
+      await page.goto(`/o/${ORG_SLUG}`);
+      await expect(
+        page.getByRole("heading", { name: "Projects" }),
+      ).toBeVisible();
+      await expect(page.getByTestId("project-card")).toHaveCount(0);
+      await expect(
+        page.locator(`a[href*="/${tempProjectSlug}"]`),
+      ).toHaveCount(0);
     } finally {
       await rendererPage.close();
     }
