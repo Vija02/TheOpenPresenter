@@ -5,6 +5,7 @@ import { createReadStream } from "node:fs";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import pLimit from "p-limit";
 import { typeidUnboxed } from "typeid-js";
 
 /**
@@ -93,31 +94,36 @@ const task: Task = async (inPayload, { withPgClient }) => {
       return { mediaId, localPath, fileSize, pageIndex: i };
     });
 
-    // Upload images in parallel
-    const imageFileNames = await withPgClient(async (pgClient) => {
-      const mediaHandler = new media[
-        process.env.STORAGE_TYPE as "file" | "s3"
-      ].mediaHandler(pgClient);
+    const limit = pLimit(10);
 
-      const results = await Promise.all(
-        uploadData.map(async ({ mediaId, localPath, fileSize, pageIndex }) => {
-          // Upload
-          const { fileName } = await mediaHandler.uploadMedia({
-            file: createReadStream(localPath),
-            fileExtension: "jpg",
-            fileSize,
-            userId,
-            organizationId,
-            isUserUploaded: false,
-            isGuest,
-            mediaId,
+    const results = await Promise.all(
+      uploadData.map(({ mediaId, localPath, fileSize, pageIndex }) =>
+        limit(async () => {
+          const fileName = await withPgClient(async (pgClient) => {
+            const mediaHandler = new media[
+              process.env.STORAGE_TYPE as "file" | "s3"
+            ].mediaHandler(pgClient);
+
+            // Upload
+            const { fileName } = await mediaHandler.uploadMedia({
+              file: createReadStream(localPath),
+              fileExtension: "jpg",
+              fileSize,
+              userId,
+              organizationId,
+              isUserUploaded: false,
+              isGuest,
+              mediaId,
+            });
+
+            // Create dependency to parent
+            await mediaHandler.createDependency(parentMediaId, mediaId);
+
+            // Attach to project/plugin
+            await mediaHandler.attachToProject(mediaId, projectId, pluginId);
+
+            return fileName;
           });
-
-          // Create dependency to parent
-          await mediaHandler.createDependency(parentMediaId, mediaId);
-
-          // Attach to project/plugin
-          await mediaHandler.attachToProject(mediaId, projectId, pluginId);
 
           log.debug(
             { page: pageIndex + 1, totalPages, fileName },
@@ -126,13 +132,13 @@ const task: Task = async (inPayload, { withPgClient }) => {
 
           return { fileName, pageIndex };
         }),
-      );
+      ),
+    );
 
-      // Sort by pageIndex to maintain order
-      return results
-        .sort((a, b) => a.pageIndex - b.pageIndex)
-        .map((r) => r.fileName);
-    });
+    // Sort by pageIndex to maintain order
+    const imageFileNames = results
+      .sort((a, b) => a.pageIndex - b.pageIndex)
+      .map((r) => r.fileName);
 
     log.info({ imageCount: imageFileNames.length }, "PDF to images completed");
 
