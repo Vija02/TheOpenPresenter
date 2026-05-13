@@ -114,11 +114,10 @@ const ControlPageInner = ({
   const handleSelect = useCallback(
     async (project: ProjectFragment, projectOrgSlug: string) => {
       try {
-        const res = await setExistingProjectToScreen({
+        await setExistingProjectToScreen({
           screenId,
           projectId: project.id,
         });
-        if (res.error) throw res.error;
         publish();
         const search = window.location.search;
         window.location.href = `/app/${projectOrgSlug}/${project.slug}${search}`;
@@ -132,9 +131,8 @@ const ControlPageInner = ({
   const handleCreateTemporary = useCallback(async () => {
     try {
       const res = await createTemporaryProject({ screenId });
-      if (res.error) throw res.error;
       publish();
-      const project = res.data?.createTemporaryProject?.project;
+      const project = res?.createTemporaryProject?.project;
 
       const search = window.location.search;
       window.location.href = `/app/${orgSlug}/${project?.slug}${search}`;

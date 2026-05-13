@@ -49,12 +49,15 @@ const ProjectSettingsModal = () => {
 
   const handleSubmit = useCallback(
     async ({ name, isPublic }: { name: string; isPublic: boolean }) => {
-      updateProject({ id: project?.id, name, isPublic }).then(() => {
+      try {
+        await updateProject({ id: project?.id, name, isPublic });
         refetch();
 
         resetData?.();
         onToggle?.();
-      });
+      } catch (e: any) {
+        toast.error("Failed to update project: " + (e?.message ?? String(e)));
+      }
     },
     [onToggle, project?.id, refetch, resetData, updateProject],
   );

@@ -38,6 +38,8 @@ export const useHandleKeyPress = () => {
             : "PREV",
         projectId: projectId,
         rendererId,
+      }).catch((e) => {
+        console.warn("Error triggering keyPress", e);
       });
       e.preventDefault();
     }

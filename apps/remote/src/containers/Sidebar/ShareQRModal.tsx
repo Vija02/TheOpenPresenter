@@ -15,6 +15,7 @@ import {
 import { core } from "@tauri-apps/api";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import QRCode from "react-qr-code";
+import { toast } from "react-toastify";
 import { useSearch } from "wouter";
 
 const ShareQRModal = () => {
@@ -26,13 +27,18 @@ const ShareQRModal = () => {
   const [{ fetching: loading }, updateProject] = useUpdateProjectMutation();
 
   const handlePublicToggle = useCallback(
-    (checked: boolean) => {
-      updateProject({
-        id: project?.id,
-        isPublic: checked,
-      }).then(() => {
+    async (checked: boolean) => {
+      try {
+        await updateProject({
+          id: project?.id,
+          isPublic: checked,
+        });
         refetch();
-      });
+      } catch (e: any) {
+        toast.error(
+          "Failed to update public status: " + (e?.message ?? String(e)),
+        );
+      }
     },
     [project?.id, refetch, updateProject],
   );

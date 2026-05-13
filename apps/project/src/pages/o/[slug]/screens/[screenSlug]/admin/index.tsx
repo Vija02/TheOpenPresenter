@@ -155,9 +155,8 @@ const ScreenAdminInner = ({
   const onCreateTemporaryProject = useCallback(async () => {
     try {
       const res = await createTemporaryProject({ screenId: screen.id });
-      if (res.error) throw res.error;
       publish();
-      const newSlug = res.data?.createTemporaryProject?.project?.slug;
+      const newSlug = res?.createTemporaryProject?.project?.slug;
       if (newSlug) {
         window.location.href = `/app/${orgSlug}/${newSlug}`;
         return;
