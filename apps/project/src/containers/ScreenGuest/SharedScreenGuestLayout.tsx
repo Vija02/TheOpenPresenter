@@ -102,6 +102,12 @@ export function SharedScreenGuestLayout({
     return <LoadingFull />;
   }
 
+  if (controllerRevoked) {
+    return (
+      <Redirect href={`/o/${orgSlug}/screens/${screenSlug}/ended`} replace />
+    );
+  }
+
   // Logged in but not a member of this org and no guest session
   if (currentUserId && !effectiveGuestSessionId && !isMember) {
     return <Redirect href={loginHref} replace />;
@@ -118,12 +124,6 @@ export function SharedScreenGuestLayout({
   // Processing
   if (!screen || shouldKickDisabledRole) {
     return <LoadingFull />;
-  }
-
-  if (controllerRevoked) {
-    return (
-      <Redirect href={`/o/${orgSlug}/screens/${screenSlug}/ended`} replace />
-    );
   }
 
   const ctx: ScreenGuestAuthContext = {

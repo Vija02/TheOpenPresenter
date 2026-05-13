@@ -10,6 +10,8 @@ export class ScreenAdminPage {
   readonly approveButton: Locator;
   readonly denyButton: Locator;
 
+  readonly endGuestSessionButton: Locator;
+
   readonly advancedSettingsHeading: Locator;
   readonly dangerZoneHeading: Locator;
 
@@ -33,6 +35,10 @@ export class ScreenAdminPage {
 
     this.approveButton = page.getByRole("button", { name: "Approve" });
     this.denyButton = page.getByRole("button", { name: "Deny" });
+
+    this.endGuestSessionButton = page.getByRole("button", {
+      name: "End guest session",
+    });
 
     this.advancedSettingsHeading = page.getByRole("heading", {
       name: "Advanced settings",

@@ -3,6 +3,7 @@ import { type Locator, type Page } from "@playwright/test";
 export class ScreenControlPage {
   readonly pickProjectHeading: Locator;
   readonly createTemporaryProjectButton: Locator;
+  readonly endSessionButton: Locator;
 
   constructor(public readonly page: Page) {
     this.pickProjectHeading = page.getByRole("heading", {
@@ -11,6 +12,7 @@ export class ScreenControlPage {
     this.createTemporaryProjectButton = page.getByRole("button", {
       name: "Create temporary project",
     });
+    this.endSessionButton = page.getByRole("button", { name: "End session" });
   }
 
   async goto(orgSlug: string, screenSlug: string) {
