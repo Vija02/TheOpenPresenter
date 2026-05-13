@@ -185,12 +185,20 @@ const useControllerRevoked = ({
     variables: { screenId: screen?.id ?? "" },
     pause: !guestHasControl,
   });
-  const lastAcEventRef = useRef<unknown>(null);
+  const lastAcKeyRef = useRef<string | null>(null);
   useEffect(() => {
     const payload = acSubResult.data?.screenActiveControllerUpdated;
     if (!payload) return;
-    if (lastAcEventRef.current === payload) return;
-    lastAcEventRef.current = payload;
+    const ac = payload.activeController;
+    // Don't refetch if only last_seen_at changes
+    const key = [
+      payload.event ?? "",
+      ac?.screenGuestSessionId ?? "",
+      ac?.acquiredAt ?? "",
+      ac?.expiresAt ?? "",
+    ].join("|");
+    if (lastAcKeyRef.current === key) return;
+    lastAcKeyRef.current = key;
     refetch();
   }, [acSubResult.data, refetch]);
 
