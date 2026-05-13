@@ -60,6 +60,14 @@ export class E2ECommandAPI {
   ): Promise<{ success: true }>;
 
   /**
+   * Deletes a single user by username. Username must start with 'testuser'.
+   */
+  async serverCommand(
+    command: "clearUserByUsername",
+    payload: { username: string },
+  ): Promise<{ success: true }>;
+
+  /**
    * Creates a verified or unverified user, bypassing all safety checks.
    * Redirects to `next`.
    *
