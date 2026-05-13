@@ -5,6 +5,7 @@ const WORKER_TAG = `w${process.env.TEST_WORKER_INDEX ?? "0"}`;
 const ORG_SLUG = `testorg-session-${WORKER_TAG}`;
 const SCREEN_SLUG = `testscreen-session-${WORKER_TAG}`;
 const ORG_NAME = `TestOrg Session ${WORKER_TAG}`;
+const USERNAME = `testuser_session_${WORKER_TAG}`;
 
 test.describe("Screen session", () => {
   test.describe.configure({ mode: "serial" });
@@ -12,6 +13,9 @@ test.describe("Screen session", () => {
   test.beforeEach(async ({ e2eCommand }) => {
     await e2eCommand.serverCommand("clearOrganizationBySlug", {
       slug: ORG_SLUG,
+    });
+    await e2eCommand.serverCommand("clearUserByUsername", {
+      username: USERNAME,
     });
   });
 
@@ -25,6 +29,7 @@ test.describe("Screen session", () => {
     const owner = await setupOrgOwnerContext({
       orgSlug: ORG_SLUG,
       orgName: ORG_NAME,
+      username: USERNAME,
     });
     const ctx = await setupScreen({
       orgSlug: ORG_SLUG,

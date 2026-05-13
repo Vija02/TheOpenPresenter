@@ -128,6 +128,18 @@ async function runCommand(
       [slug],
     );
     return { success: true };
+  } else if (command === "clearUserByUsername") {
+    const { username } = payload || {};
+    if (!username || !String(username).startsWith("testuser")) {
+      throw new Error(
+        "clearUserByUsername requires a username starting with 'testuser'",
+      );
+    }
+    await rootPgPool.query(
+      "delete from app_public.users where username = $1",
+      [username],
+    );
+    return { success: true };
   } else if (command === "createUser") {
     if (!payload) {
       throw new Error("Payload required");

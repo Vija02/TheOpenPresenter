@@ -4,6 +4,7 @@ export class ScreenControlPage {
   readonly pickProjectHeading: Locator;
   readonly createTemporaryProjectButton: Locator;
   readonly endSessionButton: Locator;
+  readonly adminPanelButton: Locator;
 
   constructor(public readonly page: Page) {
     this.pickProjectHeading = page.getByRole("heading", {
@@ -13,6 +14,7 @@ export class ScreenControlPage {
       name: "Create temporary project",
     });
     this.endSessionButton = page.getByRole("button", { name: "End session" });
+    this.adminPanelButton = page.getByRole("button", { name: "Admin panel" });
   }
 
   async goto(orgSlug: string, screenSlug: string) {
