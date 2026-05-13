@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict XwFNIKSNf66sSg3hZTeGI9w2uBIk2pci53ZTUaCwK7zynUubjb7eda7lIPaVP2q
+\restrict C6m2H2h3oas0ajZ2GMkgxLUcLMpf4ofIfXugEj579V6YXxlNvBuEm4CiZ0z8s8X
 
 -- Dumped from database version 17.0 (Debian 17.0-1.pgdg120+1)
 -- Dumped by pg_dump version 18.3
@@ -4665,7 +4665,7 @@ ALTER TABLE ONLY app_public.screen_guest_sessions
 --
 
 ALTER TABLE ONLY app_public.screen_guest_sessions
-    ADD CONSTRAINT screen_guest_sessions_screen_guest_id_fkey FOREIGN KEY (screen_guest_id) REFERENCES app_public.screen_guests(id) ON DELETE SET NULL;
+    ADD CONSTRAINT screen_guest_sessions_screen_guest_id_fkey FOREIGN KEY (screen_guest_id) REFERENCES app_public.screen_guests(id) ON DELETE CASCADE;
 
 
 --
@@ -6565,5 +6565,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE theopenpresenter REVOKE ALL ON FUNCTIONS FROM 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict XwFNIKSNf66sSg3hZTeGI9w2uBIk2pci53ZTUaCwK7zynUubjb7eda7lIPaVP2q
+\unrestrict C6m2H2h3oas0ajZ2GMkgxLUcLMpf4ofIfXugEj579V6YXxlNvBuEm4CiZ0z8s8X
 

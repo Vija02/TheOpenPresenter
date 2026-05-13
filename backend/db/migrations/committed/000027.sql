@@ -1,5 +1,5 @@
 --! Previous: sha1:b79d240154b65f496a921d2326b2b6bd8af6c6c3
---! Hash: sha1:54ab7358a5100eb551740a6f38ae91992f17f649
+--! Hash: sha1:e162aeb29716d40c3aded5e7c565b28fec3a54fe
 
 --! split: 100-reset.sql
 -- 750 (create-temporary-project.sql)
@@ -351,7 +351,7 @@ create table app_public.screen_guest_sessions (
   
   screen_id uuid not null references app_public.screens(id) on delete cascade,
   organization_id uuid not null references app_public.organizations(id) on delete cascade,
-  screen_guest_id uuid references app_public.screen_guests(id) on delete set null,
+  screen_guest_id uuid references app_public.screen_guests(id) on delete cascade,
 
   display_name text,
   kind app_public.screen_guest_session_kind not null,
