@@ -173,7 +173,9 @@ export const createMediaHandler = <T extends OurDataStore>(
       try {
         await this.pgPool.query(
           `
-          INSERT INTO app_public.media_dependencies(parent_media_id, child_media_id) values($1, $2)  
+          INSERT INTO app_public.media_dependencies(parent_media_id, child_media_id)
+          VALUES($1, $2)
+          ON CONFLICT (parent_media_id, child_media_id) DO NOTHING
         `,
           [
             uuidFromMediaIdOrUUIDOrMediaName(parentMediaIdOrUUID),
@@ -181,13 +183,6 @@ export const createMediaHandler = <T extends OurDataStore>(
           ],
         );
       } catch (err: any) {
-        if (err?.code === "23505") {
-          logger.info(
-            { err },
-            "createDependency: Creating dependency failed but returning the function since it already exists",
-          );
-          return;
-        }
         logger.error(
           { err },
           "createDependency: Failed to create media dependency",
@@ -204,7 +199,9 @@ export const createMediaHandler = <T extends OurDataStore>(
       try {
         await this.pgPool.query(
           `
-          INSERT INTO app_public.project_medias(project_id, media_id, plugin_id) values($1, $2, $3)  
+          INSERT INTO app_public.project_medias(project_id, media_id, plugin_id)
+          VALUES($1, $2, $3)
+          ON CONFLICT (project_id, media_id, plugin_id) DO NOTHING
         `,
           [
             projectId,
