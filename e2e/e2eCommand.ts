@@ -52,6 +52,14 @@ export class E2ECommandAPI {
   }>;
 
   /**
+   * Deletes a single organization
+   */
+  async serverCommand(
+    command: "clearOrganizationBySlug",
+    payload: { slug: string },
+  ): Promise<{ success: true }>;
+
+  /**
    * Creates a verified or unverified user, bypassing all safety checks.
    * Redirects to `next`.
    *
@@ -176,6 +184,43 @@ export class E2ECommandAPI {
     success: true;
   }>;
 
+  /**
+   * Create or upsert a screen in an organization. If the org doesn't exist, it is created
+   */
+  async serverCommand(
+    command: "setupScreen",
+    payload?: {
+      orgSlug?: string;
+      orgName?: string;
+      slug?: string;
+      name?: string;
+      anonEnabled?: boolean;
+      anonOnEmpty?: "allow" | "request";
+      anonOnTakeover?: "allow" | "request" | "timer";
+      registeredEnabled?: boolean;
+      registeredOnEmpty?: "allow" | "request";
+      registeredOnTakeover?: "allow" | "request" | "timer";
+    },
+  ): Promise<{
+    success: true;
+    screenId: string;
+    screenSlug: string;
+    organizationId: string;
+  }>;
+
+  /**
+   * Insert a registered screen guest
+   */
+  async serverCommand(
+    command: "setupScreenGuest",
+    payload: {
+      orgSlug: string;
+      displayName: string;
+      passcode: string;
+      email?: string | null;
+    },
+  ): Promise<{ success: true; screenGuestId: string }>;
+
   async serverCommand(command: string, payload?: any): Promise<any> {
     const res = await this.request.get(
       `/E2EServerCommand?command=${encodeURIComponent(command)}${
@@ -183,6 +228,6 @@ export class E2ECommandAPI {
       }`,
     );
 
-    return res.body;
+    return res.json();
   }
 }
