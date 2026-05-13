@@ -12,10 +12,18 @@ const onEmptyOptions: { label: string; value: ScreenOnEmptyPolicy }[] = [
   { label: "Require approval", value: ScreenOnEmptyPolicy.Request },
 ];
 
-const onTakeoverOptions: { label: string; value: ScreenOnTakeoverPolicy }[] = [
+const onTakeoverOptions: {
+  label: string;
+  value: ScreenOnTakeoverPolicy;
+  isDisabled?: boolean;
+}[] = [
   { label: "Allow", value: ScreenOnTakeoverPolicy.Allow },
   { label: "Require approval", value: ScreenOnTakeoverPolicy.Request },
-  { label: "Timer auto-grant", value: ScreenOnTakeoverPolicy.Timer },
+  {
+    label: "Timer auto-grant (coming soon)",
+    value: ScreenOnTakeoverPolicy.Timer,
+    isDisabled: true,
+  },
 ];
 
 export type GuestAccessPatch = Partial<{
