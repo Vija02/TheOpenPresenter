@@ -2,7 +2,6 @@ mutation UpdateScreen(
   $id: UUID!
   $name: String
   $slug: String
-  $currentProjectId: UUID
   $currentRendererId: String
   $registeredGuestEnabled: Boolean
   $registeredGuestOnEmptyPolicy: ScreenOnEmptyPolicy
@@ -23,7 +22,6 @@ mutation UpdateScreen(
       patch: {
         name: $name
         slug: $slug
-        currentProjectId: $currentProjectId
         currentRendererId: $currentRendererId
         registeredGuestEnabled: $registeredGuestEnabled
         registeredGuestOnEmptyPolicy: $registeredGuestOnEmptyPolicy
