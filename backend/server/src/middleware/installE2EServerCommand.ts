@@ -116,6 +116,18 @@ async function runCommand(
       "delete from app_public.organizations where slug like 'test%'",
     );
     return { success: true };
+  } else if (command === "clearOrganizationBySlug") {
+    const { slug } = payload || {};
+    if (!slug || !String(slug).startsWith("test")) {
+      throw new Error(
+        "clearOrganizationBySlug requires a slug starting with 'test'",
+      );
+    }
+    await rootPgPool.query(
+      "delete from app_public.organizations where slug = $1",
+      [slug],
+    );
+    return { success: true };
   } else if (command === "createUser") {
     if (!payload) {
       throw new Error("Payload required");
@@ -378,6 +390,139 @@ async function runCommand(
   } else if (command === "clearAllActiveDevices") {
     await clearAllActiveDevices(req.app);
     return { success: true };
+  } else if (command === "setupScreen") {
+    const {
+      orgSlug = "testorg",
+      orgName = "TestOrg",
+      slug: screenSlug = "testscreen",
+      name = "Test Screen",
+      anonEnabled = false,
+      anonOnEmpty = "request",
+      anonOnTakeover = "request",
+      registeredEnabled = false,
+      registeredOnEmpty = "request",
+      registeredOnTakeover = "request",
+    } = payload || {};
+    if (!String(orgSlug).startsWith("test")) {
+      throw new Error("setupScreen orgSlug must start with 'test'");
+    }
+    if (!String(screenSlug).startsWith("test")) {
+      throw new Error("setupScreen slug must start with 'test'");
+    }
+
+    // Find or create the org. If missing, we spin up a dedicated test owner
+    // (cleaned up by clearTestUsers) so the org has a member and can satisfy
+    // RLS for the create_organization call.
+    let { rows: orgRows } = await rootPgPool.query(
+      `select id from app_public.organizations where slug = $1`,
+      [orgSlug],
+    );
+    if (orgRows.length === 0) {
+      const owner = await getOrCreateUser(rootPgPool, {
+        username: "testuser_setup",
+        email: "testuser_setup@example.com",
+        verified: true,
+        name: "Test Setup Owner",
+        password: "TestUserPassword",
+      });
+      const ownerSession = await createSession(rootPgPool, owner.id);
+      const client = await rootPgPool.connect();
+      try {
+        await client.query("begin");
+        await client.query(
+          "select set_config('jwt.claims.session_id', $1, true)",
+          [ownerSession.uuid],
+        );
+        const { rows } = await client.query(
+          "select * from app_public.create_organization($1, $2) as org",
+          [orgSlug, orgName],
+        );
+        await client.query("commit");
+        orgRows = rows;
+      } catch (e) {
+        await client.query("rollback").catch(() => {});
+        throw e;
+      } finally {
+        client.release();
+      }
+    }
+    const orgId = orgRows[0].id;
+
+    const {
+      rows: [screen],
+    } = await rootPgPool.query(
+      `
+        insert into app_public.screens
+          (organization_id, name, slug,
+           anon_guest_enabled, anon_guest_on_empty_policy, anon_guest_on_takeover_policy,
+           registered_guest_enabled, registered_guest_on_empty_policy, registered_guest_on_takeover_policy)
+        values ($1, $2, $3,
+                $4, $5::app_public.screen_on_empty_policy, $6::app_public.screen_on_takeover_policy,
+                $7, $8::app_public.screen_on_empty_policy, $9::app_public.screen_on_takeover_policy)
+        on conflict (organization_id, slug) do update set
+          name = excluded.name,
+          anon_guest_enabled = excluded.anon_guest_enabled,
+          anon_guest_on_empty_policy = excluded.anon_guest_on_empty_policy,
+          anon_guest_on_takeover_policy = excluded.anon_guest_on_takeover_policy,
+          registered_guest_enabled = excluded.registered_guest_enabled,
+          registered_guest_on_empty_policy = excluded.registered_guest_on_empty_policy,
+          registered_guest_on_takeover_policy = excluded.registered_guest_on_takeover_policy
+        returning id, slug
+      `,
+      [
+        orgId,
+        name,
+        screenSlug,
+        anonEnabled,
+        anonOnEmpty,
+        anonOnTakeover,
+        registeredEnabled,
+        registeredOnEmpty,
+        registeredOnTakeover,
+      ],
+    );
+    return {
+      success: true,
+      screenId: screen.id,
+      screenSlug: screen.slug,
+      organizationId: orgId,
+    };
+  } else if (command === "setupScreenGuest") {
+    const {
+      orgSlug,
+      displayName,
+      passcode,
+      email = null,
+    } = payload || {};
+    if (!orgSlug || !displayName || !passcode) {
+      throw new Error(
+        "setupScreenGuest requires { orgSlug, displayName, passcode }",
+      );
+    }
+    if (String(passcode).length < 4) {
+      throw new Error("passcode must be at least 4 characters");
+    }
+    const {
+      rows: [org],
+    } = await rootPgPool.query(
+      `select id from app_public.organizations where slug = $1`,
+      [orgSlug],
+    );
+    if (!org) {
+      throw new Error(`Organization not found: ${orgSlug}`);
+    }
+    const {
+      rows: [guest],
+    } = await rootPgPool.query(
+      `
+        insert into app_public.screen_guests
+          (organization_id, display_name, email, passcode_hash)
+        values ($1, $2, nullif($3, ''), crypt($4, gen_salt('bf')))
+        returning id
+      `,
+      [org.id, displayName, email, passcode],
+    );
+    return { success: true, screenGuestId: guest.id };
   } else {
     throw new Error(`Command '${command}' not understood.`);
   }
