@@ -1,7 +1,6 @@
 import { extractMediaName } from "@repo/lib";
 import {
   Button,
-  LoadingFull,
   LoadingInline,
   OverlayToggle,
   PluginScaffold,
@@ -39,11 +38,7 @@ const Remote = () => {
     );
   }, [pluginData.imports]);
 
-  if (isAnyImportFetching && !hasSlides) {
-    return <LoadingFull />;
-  }
-
-  if (!hasSlides) {
+  if (!hasSlides && !isAnyImportFetching) {
     return <Landing />;
   }
 
