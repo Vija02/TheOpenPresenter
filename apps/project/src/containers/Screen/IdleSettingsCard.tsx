@@ -10,9 +10,17 @@ export type IdlePatch = Partial<{
   showBarOnIdle: boolean;
 }>;
 
-const idlePolicyOptions: { label: string; value: ScreenIdlePolicy }[] = [
+const idlePolicyOptions: {
+  label: string;
+  value: ScreenIdlePolicy;
+  isDisabled?: boolean;
+}[] = [
   { label: "Do nothing", value: ScreenIdlePolicy.DoNothing },
-  { label: "Unassign the seat", value: ScreenIdlePolicy.Unassign },
+  {
+    label: "Unassign the screen (coming soon)",
+    value: ScreenIdlePolicy.Unassign,
+    isDisabled: true,
+  },
 ];
 
 export const IdleSettingsCard = ({
