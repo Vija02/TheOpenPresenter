@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict C6m2H2h3oas0ajZ2GMkgxLUcLMpf4ofIfXugEj579V6YXxlNvBuEm4CiZ0z8s8X
+\restrict 2gDtKwFTVTpJ4hgCW6lDWsoHzZtcrtEmKpuXzeUKarqdPy2VliahMtchsJbdRMX
 
 -- Dumped from database version 17.0 (Debian 17.0-1.pgdg120+1)
 -- Dumped by pg_dump version 18.3
@@ -3930,6 +3930,13 @@ CREATE INDEX screen_control_requests_created_at_idx ON app_public.screen_control
 
 
 --
+-- Name: screen_control_requests_one_pending_per_session; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE UNIQUE INDEX screen_control_requests_one_pending_per_session ON app_public.screen_control_requests USING btree (screen_id, screen_guest_session_id) WHERE (status = 'pending'::app_public.screen_control_request_status);
+
+
+--
 -- Name: screen_control_requests_resolved_by_user_id_idx; Type: INDEX; Schema: app_public; Owner: -
 --
 
@@ -5968,7 +5975,7 @@ GRANT INSERT(slug),UPDATE(slug) ON TABLE app_public.screens TO theopenpresenter_
 -- Name: COLUMN screens.current_project_id; Type: ACL; Schema: app_public; Owner: -
 --
 
-GRANT INSERT(current_project_id),UPDATE(current_project_id) ON TABLE app_public.screens TO theopenpresenter_visitor;
+GRANT INSERT(current_project_id) ON TABLE app_public.screens TO theopenpresenter_visitor;
 
 
 --
@@ -6565,5 +6572,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE theopenpresenter REVOKE ALL ON FUNCTIONS FROM 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict C6m2H2h3oas0ajZ2GMkgxLUcLMpf4ofIfXugEj579V6YXxlNvBuEm4CiZ0z8s8X
+\unrestrict 2gDtKwFTVTpJ4hgCW6lDWsoHzZtcrtEmKpuXzeUKarqdPy2VliahMtchsJbdRMX
 

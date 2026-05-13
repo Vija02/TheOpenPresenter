@@ -19,6 +19,7 @@ import {
   useOrganizationScreenDetailPageQuery,
   useReleaseScreenControlMutation,
   useScreenActiveControllerUpdatedSubscription,
+  useSetExistingProjectToScreenMutation,
   useUpdateScreenMutation,
 } from "@repo/graphql";
 import { globalState } from "@repo/lib";
@@ -29,11 +30,7 @@ import { toast } from "react-toastify";
 import { UseQueryResponse } from "urql";
 import { Redirect, Link as WouterLink, useLocation, useParams } from "wouter";
 
-type ScreenAdminPatch = IdlePatch &
-  GuestAccessPatch &
-  Partial<{
-    currentProjectId: string | null;
-  }>;
+type ScreenAdminPatch = IdlePatch & GuestAccessPatch;
 
 type OrgScreenDetailQuery = UseQueryResponse<OrganizationScreenDetailPageQuery>;
 
@@ -122,7 +119,9 @@ const ScreenAdminInner = ({
   const { publish } = globalState.modelDataAccess.usePublishAPIChanges({
     token: "page",
   });
-  const [{ fetching: updating }, updateScreen] = useUpdateScreenMutation();
+  const [, updateScreen] = useUpdateScreenMutation();
+  const [{ fetching: assigning }, setExistingProjectToScreen] =
+    useSetExistingProjectToScreenMutation();
   const [, deleteScreen] = useDeleteScreenMutation();
   const [, releaseScreenControl] = useReleaseScreenControlMutation();
   const [{ fetching: creatingTemporary }, createTemporaryProject] =
@@ -131,13 +130,16 @@ const ScreenAdminInner = ({
   const onAssign = useCallback(
     async (projectId: string | null) => {
       try {
-        await updateScreen({ id: screen.id, currentProjectId: projectId });
+        await setExistingProjectToScreen({
+          screenId: screen.id,
+          projectId,
+        });
         publish();
       } catch (e: any) {
         toast.error("Failed to assign: " + e.message);
       }
     },
-    [screen.id, updateScreen, publish],
+    [screen.id, setExistingProjectToScreen, publish],
   );
 
   const onUpdatePolicy = useCallback(
@@ -220,7 +222,7 @@ const ScreenAdminInner = ({
           screen={screen}
           projects={projects}
           activeController={screen.screenActiveController ?? null}
-          updating={updating}
+          updating={assigning}
           creatingTemporary={creatingTemporary}
           onAssign={onAssign}
           onRelease={onRelease}

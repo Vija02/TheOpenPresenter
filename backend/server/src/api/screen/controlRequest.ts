@@ -211,7 +211,31 @@ const screenControlRequestPlugin = makeExtendSchemaPlugin(() => ({
             };
           }
 
-          // Otherwise, we request control to admin
+          // Return existing request if any
+          const {
+            rows: [existingRequest],
+          } = await client.query(
+            `
+              select id
+              from app_public.screen_control_requests
+              where screen_id = $1
+                and screen_guest_session_id = $2
+                and status = 'pending'
+              limit 1
+            `,
+            [screenId, screenGuestSessionId],
+          );
+          if (existingRequest) {
+            await client.query("COMMIT");
+            return {
+              data: {
+                screenId: null,
+                requestId: existingRequest.id,
+              } as ScreenControlResultIdentifiers,
+            };
+          }
+
+          // Otherwise, we request control to admin.
           const {
             rows: [requestRow],
           } = await client.query(

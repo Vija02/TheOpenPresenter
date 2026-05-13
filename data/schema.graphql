@@ -5944,9 +5944,6 @@ input ScreenPatch {
   """
   anonGuestOnTakeoverPolicy: ScreenOnTakeoverPolicy
 
-  """Project currently shown on this screen, or NULL if idle."""
-  currentProjectId: UUID
-
   """Which renderer slot inside the assigned project to render."""
   currentRendererId: String
 
