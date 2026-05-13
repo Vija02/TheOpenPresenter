@@ -54,7 +54,7 @@ const CreateOrganizationPage = () => {
         const slug = slugify(name || "", {
           lower: true,
         });
-        const { data } = await createOrganization({
+        const data = await createOrganization({
           name,
           slug,
         });

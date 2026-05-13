@@ -3,7 +3,6 @@ import { useOrganizationSlug } from "@/lib/permissionHooks/organization";
 import {
   useAuthenticateScreenGuestMutation,
   useCreateAnonScreenGuestSessionMutation,
-  useLogoutScreenGuestSessionMutation,
   useScreenLoginPageQuery,
 } from "@repo/graphql";
 import {
@@ -17,6 +16,7 @@ import {
 } from "@repo/ui";
 import { useCallback, useMemo, useState } from "react";
 import { VscPerson } from "react-icons/vsc";
+import { CombinedError } from "urql";
 import { Link, useLocation, useParams } from "wouter";
 
 const OrganizationSlugScreenLoginPage = () => {
@@ -130,15 +130,6 @@ const OrganizationSlugScreenLoginPage = () => {
             .
           </p>
         )}
-        {sessionMatchesThisScreen && (
-          <GuestSignOutFooter
-            onSignedOut={() => {
-              setLocation(`/o/${orgSlug}/screens/${screenSlug}/login`, {
-                replace: true,
-              });
-            }}
-          />
-        )}
       </div>
     </SharedLayout>
   );
@@ -176,33 +167,26 @@ const GuestLoginForm = ({
           setError("Enter your email or passcode.");
           return;
         }
-        const result = await authPasscode({
+        await authPasscode({
           screenId,
           passcode: passcode.trim(),
         });
-        if (result.error) {
-          setError(
-            result.error.graphQLErrors?.[0]?.message ??
-              "Incorrect email or passcode.",
-          );
-          return;
-        }
       } else {
-        const result = await createGuest({
+        await createGuest({
           screenId,
           displayName: displayName.trim() || undefined,
         });
-        if (result.error) {
-          setError(
-            result.error.graphQLErrors?.[0]?.message ??
-              "Couldn't start a guest session.",
-          );
-          return;
-        }
       }
       onLoggedIn();
     } catch (e: any) {
-      setError(e.message ?? "Sign in failed");
+      const err = e as CombinedError;
+      const fallback =
+        mode === "passcode"
+          ? "Incorrect email or passcode."
+          : "Couldn't start a guest session.";
+      setError(
+        err.graphQLErrors?.[0]?.message ?? err.message ?? fallback,
+      );
     } finally {
       setSubmitting(false);
     }
@@ -274,25 +258,6 @@ const GuestLoginForm = ({
       >
         <VscPerson />
         {mode === "passcode" ? "Sign in" : "Continue"}
-      </Button>
-    </div>
-  );
-};
-
-const GuestSignOutFooter = ({ onSignedOut }: { onSignedOut: () => void }) => {
-  const [{ fetching }, logoutGuest] = useLogoutScreenGuestSessionMutation();
-  return (
-    <div className="mt-4 text-center">
-      <Button
-        variant="ghost"
-        size="sm"
-        isLoading={fetching}
-        onClick={async () => {
-          const res = await logoutGuest({});
-          if (!res.error) onSignedOut();
-        }}
-      >
-        Sign out of guest session
       </Button>
     </div>
   );

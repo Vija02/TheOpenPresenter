@@ -1,14 +1,19 @@
-import { OperationDefinitionNode } from "graphql";
-import { useMemo } from "react";
+import { DocumentNode, OperationDefinitionNode } from "graphql";
+import { useCallback, useMemo } from "react";
 import {
   AnyVariables,
+  OperationContext,
+  OperationResult,
+  TypedDocumentNode,
+  UseMutationState,
   UseQueryArgs,
   UseQueryResponse,
+  useMutation as useMutationT,
   useQuery as useQueryT,
 } from "urql";
 import { useSubscribe } from "use-pubsub-js";
 
-// Re-export everything from urql except useQuery
+// Re-export everything from urql except useQuery and useMutation
 export * from "@urql/core";
 
 export {
@@ -37,7 +42,6 @@ export {
   type UseSubscriptionResponse,
   type UseSubscriptionState,
   useClient,
-  useMutation,
   useSubscription,
 } from "urql";
 
@@ -69,4 +73,41 @@ export function useQuery<
   });
 
   return [queryState, refetch];
+}
+
+export type UseApolloMutationExecute<
+  Data = any,
+  Variables extends AnyVariables = AnyVariables,
+> = (
+  variables: Variables,
+  context?: Partial<OperationContext>,
+) => Promise<OperationResult<Data, Variables>["data"]>;
+
+export type UseApolloMutationResponse<
+  Data = any,
+  Variables extends AnyVariables = AnyVariables,
+> = [UseMutationState<Data, Variables>, UseApolloMutationExecute<Data, Variables>];
+
+// Patch urql's useMutation to throw on error and resolve with data directly,
+// matching Apollo's mutate() behaviour.
+export function useMutation<
+  Data = any,
+  Variables extends AnyVariables = AnyVariables,
+>(
+  query: DocumentNode | TypedDocumentNode<Data, Variables> | string,
+): UseApolloMutationResponse<Data, Variables> {
+  const [state, execute] = useMutationT<Data, Variables>(query);
+
+  const executeMutation = useCallback<UseApolloMutationExecute<Data, Variables>>(
+    async (variables, context) => {
+      const res = await execute(variables, context);
+      if (res.error) {
+        throw res.error;
+      }
+      return res.data;
+    },
+    [execute],
+  );
+
+  return [state, executeMutation];
 }

@@ -89,7 +89,7 @@ const CreateProjectModal = ({
         tags: selectedTagIds,
         targetDate: data.targetDate ? data.targetDate.toDateString() : null,
       }).then((x) => {
-        const projectSlug = x.data?.createFullProject?.project?.slug;
+        const projectSlug = x?.createFullProject?.project?.slug;
 
         window.location.href = `/app/${slug}/${projectSlug}`;
       });

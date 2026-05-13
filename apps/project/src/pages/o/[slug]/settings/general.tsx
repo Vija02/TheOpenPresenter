@@ -75,7 +75,7 @@ const OrganizationSettingsIndexPageInner = ({
     async (values: FormInputs) => {
       try {
         setError(null);
-        const { data } = await updateOrganization({
+        const data = await updateOrganization({
           input: {
             id: organization.id,
             patch: {

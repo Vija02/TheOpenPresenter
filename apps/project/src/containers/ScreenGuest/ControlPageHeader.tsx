@@ -22,9 +22,11 @@ export const ControlPageHeader = ({
     useLogoutScreenGuestSessionMutation();
 
   const handleSignOut = useCallback(async () => {
-    const res = await logoutGuest({});
-    if (res.error) {
-      toast.error("Failed to end session: " + res.error.message);
+    try {
+      await logoutGuest({});
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.error("Failed to end session: " + msg);
       return;
     }
     onSignedOut?.();

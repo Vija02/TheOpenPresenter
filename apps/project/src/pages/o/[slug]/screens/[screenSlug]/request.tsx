@@ -16,6 +16,7 @@ import { Alert, Button } from "@repo/ui";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { VscPerson } from "react-icons/vsc";
 import { toast } from "react-toastify";
+import { CombinedError } from "urql";
 import { useParams } from "wouter";
 
 type RequestPageQuery = ReturnType<typeof useOrganizationScreenRequestPageQuery>;
@@ -97,22 +98,24 @@ const AutoClaimHandler = ({ ctx, query }: AutoClaimHandlerPropTypes) => {
 
     let cancelled = false;
     (async () => {
-      const res = await requestControl({ screenId: screen.id });
-      if (cancelled) return;
-      if (res.error) {
+      try {
+        const res = await requestControl({ screenId: screen.id });
+        if (cancelled) return;
+        const data = res?.requestScreenControl;
+        if (data?.activeController) {
+          toast.success("You now control this screen.");
+        }
+        handleRefetch();
+      } catch (e) {
+        if (cancelled) return;
+        const err = e as CombinedError;
         setAutoClaimError(
-          res.error.graphQLErrors?.[0]?.message ??
-            res.error.message ??
+          err.graphQLErrors?.[0]?.message ??
+            err.message ??
             "Failed to claim control",
         );
         handleRefetch();
-        return;
       }
-      const data = res.data?.requestScreenControl;
-      if (data?.activeController) {
-        toast.success("You now control this screen.");
-      }
-      handleRefetch();
     })();
     return () => {
       cancelled = true;
@@ -218,23 +221,24 @@ const GuestRequestPanel = ({
   }, [reqSubResult.data, refetch]);
 
   const submitRequest = useCallback(async () => {
-    const res = await requestControl({ screenId });
-    if (res.error) {
+    try {
+      const res = await requestControl({ screenId });
+      const data = res?.requestScreenControl;
+      if (data?.activeController) {
+        toast.success("You now control this screen.");
+        refetch();
+      } else if (data?.request) {
+        setPendingRequest(data.request);
+      } else {
+        refetch();
+      }
+    } catch (e) {
+      const err = e as CombinedError;
       setError(
-        res.error.graphQLErrors?.[0]?.message ??
-          res.error.message ??
+        err.graphQLErrors?.[0]?.message ??
+          err.message ??
           "Failed to request control",
       );
-      refetch();
-      return;
-    }
-    const data = res.data?.requestScreenControl;
-    if (data?.activeController) {
-      toast.success("You now control this screen.");
-      refetch();
-    } else if (data?.request) {
-      setPendingRequest(data.request);
-    } else {
       refetch();
     }
   }, [requestControl, screenId, refetch]);
