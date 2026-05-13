@@ -31,13 +31,17 @@ test.describe("Slides Plugin", () => {
     // Upload the file
     await uppyUploadFile("./dummyFiles/dummySlide.pdf");
 
+    const secondSlide = page
+      .getByTestId("slide-container")
+      .filter({ hasText: /^Slide 2$/ });
+
     // Wait for image to be uploaded
-    await expect(
-      page.getByTestId("slide-container").nth(1).getByRole("img"),
-    ).toBeInViewport({ timeout: 20 * 1000 });
+    await expect(secondSlide.getByRole("img")).toBeInViewport({
+      timeout: 20 * 1000,
+    });
 
     // Present it & open
-    await page.getByTestId("slide-container").nth(1).click();
+    await secondSlide.click();
     const presentedPage = await projectPage.present();
     await presentedPage.waitForLoadState("networkidle");
 
@@ -70,13 +74,17 @@ test.describe("Slides Plugin", () => {
     // Upload the file
     await uppyUploadFile("./dummyFiles/dummySlide.pptx");
 
+    const secondSlide = page
+      .getByTestId("slide-container")
+      .filter({ hasText: /^Slide 2$/ });
+
     // Wait for image to be uploaded
-    await expect(
-      page.getByTestId("slide-container").nth(1).getByRole("img"),
-    ).toBeInViewport({ timeout: 20 * 1000 });
+    await expect(secondSlide.getByRole("img")).toBeInViewport({
+      timeout: 20 * 1000,
+    });
 
     // Present it & open
-    await page.getByTestId("slide-container").nth(1).click();
+    await secondSlide.click();
     const presentedPage = await projectPage.present();
     await presentedPage.waitForLoadState("networkidle");
 
