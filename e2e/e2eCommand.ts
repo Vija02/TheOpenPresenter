@@ -26,7 +26,18 @@ export class E2ECommandAPI {
     orgs?: {
       name: string;
       slug: string;
-      projects?: { name: string; slug: string }[];
+      projects?: {
+        name: string;
+        slug: string;
+        /** Pre-populates the project's Y.Doc with the given scenes */
+        scenes?: {
+          pluginName: string;
+          pluginData: Record<string, any>;
+          rendererPluginData?: Record<string, any>;
+          activate?: boolean;
+          name?: string;
+        }[];
+      }[];
       owner?: boolean;
     }[];
   }) {

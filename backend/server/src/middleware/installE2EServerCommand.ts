@@ -1,6 +1,11 @@
+import { YjsState } from "@repo/base-plugin/server";
 import { urlencoded } from "body-parser";
 import { Express, Request, RequestHandler, Response } from "express";
 import { Pool } from "pg";
+import { typeidUnboxed } from "typeid-js";
+import { proxy } from "valtio";
+import { bind } from "valtio-yjs";
+import * as Y from "yjs";
 
 import {
   DEFAULT_MOCK_HOST_CONFIG,
@@ -12,6 +17,74 @@ import {
 } from "../utils/mockHostDevice";
 import { createSessionCookie } from "../utils/sessionCookie";
 import { getRootPgPool } from "./installDatabasePools";
+
+type LoginScene = {
+  pluginName: string;
+  pluginData: Record<string, any>;
+  rendererPluginData?: Record<string, any>;
+  activate?: boolean;
+  name?: string;
+};
+
+type LoginProject = {
+  name: string;
+  slug: string;
+  scenes?: LoginScene[];
+};
+
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * Build a Yjs document update populated with the given scenes.
+ */
+const buildProjectDocument = async (
+  scenes: LoginScene[],
+): Promise<Buffer> => {
+  const yDoc = YjsState.createEmptyState();
+  const state = yDoc.getMap();
+
+  const mainState = proxy({} as any);
+  const unbind = bind(mainState, state as any);
+
+  let order = 0;
+  let activeSceneId: string | null = null;
+  const renderChildren: Record<string, Record<string, any>> = {};
+
+  for (const scene of scenes) {
+    const sceneId = typeidUnboxed("scene");
+    const pluginId = typeidUnboxed("plugin");
+    order += 1;
+    mainState.data[sceneId] = {
+      name: scene.name ?? "",
+      order,
+      type: "scene",
+      children: {
+        [pluginId]: {
+          plugin: scene.pluginName,
+          order: 1,
+          pluginData: scene.pluginData,
+        },
+      },
+    };
+    if (scene.rendererPluginData) {
+      renderChildren[sceneId] = { [pluginId]: scene.rendererPluginData };
+    }
+    if (scene.activate && !activeSceneId) {
+      activeSceneId = sceneId;
+    }
+  }
+
+  for (const [sceneId, sceneChildren] of Object.entries(renderChildren)) {
+    mainState.renderer["1"].children[sceneId] = sceneChildren;
+  }
+  if (activeSceneId) {
+    mainState.renderer["1"].currentScene = activeSceneId;
+  }
+
+  await wait(0);
+  unbind();
+  return Buffer.from(Y.encodeStateAsUpdate(yDoc));
+};
 
 export default (app: Express) => {
   // Only enable this in test/development mode
@@ -201,6 +274,7 @@ async function runCommand(
     const session = await createSession(rootPgPool, user.id);
     const otherSession = await createSession(rootPgPool, otherUser.id);
 
+    const projectsToPopulate: { id: string; scenes: LoginScene[] }[] = [];
     const client = await rootPgPool.connect();
     try {
       await client.query("begin");
@@ -222,7 +296,7 @@ async function runCommand(
             }: {
               name: string;
               slug: string;
-              projects?: { name: string; slug: string }[];
+              projects?: LoginProject[];
               owner?: boolean;
             }) => {
               if (!owner) {
@@ -249,12 +323,18 @@ async function runCommand(
               }
 
               for (const project of projects) {
-                await client.query(
-                  `
-                  select app_public.create_full_project($1, $2, $3, $4);
-                `,
+                const {
+                  rows: [created],
+                } = await client.query(
+                  `select * from app_public.create_full_project($1, $2, $3, $4) as p`,
                   [organization.id, project.name, project.slug, []],
                 );
+                if (project.scenes && project.scenes.length > 0) {
+                  projectsToPopulate.push({
+                    id: created.id,
+                    scenes: project.scenes,
+                  });
+                }
               }
             },
           ),
@@ -264,6 +344,16 @@ async function runCommand(
       }
     } finally {
       await client.release();
+    }
+
+    // Pre-populate project Y.Docs outside the user-session transaction so the
+    // `document` bytea bypasses the visitor column grants.
+    for (const { id, scenes } of projectsToPopulate) {
+      const update = await buildProjectDocument(scenes);
+      await rootPgPool.query(
+        "update app_public.projects set document = $1 where id = $2",
+        [update, id],
+      );
     }
 
     req.login({ session_id: session.uuid }, () => {
