@@ -311,46 +311,47 @@ const task: Task = async (inPayload, { withPgClient }) => {
         { mediaId, localFilePath, resolution: resolutionData.title },
         "Uploading resolution files",
       );
-      await withPgClient(async (pgClient) => {
-        const mediaHandler = new media[
-          process.env.STORAGE_TYPE as "file" | "s3"
-        ].mediaHandler(pgClient);
 
-        const allFilesToUpload = fs.readdirSync(resolutionDir);
-        const m3u8FileToUpload = allFilesToUpload.find((x) =>
-          x.match(/^media(.+).m3u8$/),
-        )!;
-        const tsFilesToUpload = allFilesToUpload.filter(
-          (x) => !x.match(/^media(.+).m3u8$/),
-        );
-        const resolutionM3u8Uuid = extractMediaName(m3u8FileToUpload).uuid;
+      const mediaHandler = new media[
+        process.env.STORAGE_TYPE as "file" | "s3"
+      ].mediaHandler(withPgClient);
 
-        for (let j = 0; j < allFilesToUpload.length; j++) {
-          const fileToUpload = allFilesToUpload[j]!;
-          const { mediaId: mediaIdToUpload, extension: extensionToUpload } =
-            extractMediaName(fileToUpload);
+      const allFilesToUpload = fs.readdirSync(resolutionDir);
+      const m3u8FileToUpload = allFilesToUpload.find((x) =>
+        x.match(/^media(.+).m3u8$/),
+      )!;
+      const tsFilesToUpload = allFilesToUpload.filter(
+        (x) => !x.match(/^media(.+).m3u8$/),
+      );
+      const resolutionM3u8Uuid = extractMediaName(m3u8FileToUpload).uuid;
 
-          const fileSizeToUpload = fs.statSync(
-            path.join(resolutionDir, fileToUpload),
-          ).size;
+      for (let j = 0; j < allFilesToUpload.length; j++) {
+        const fileToUpload = allFilesToUpload[j]!;
+        const { mediaId: mediaIdToUpload, extension: extensionToUpload } =
+          extractMediaName(fileToUpload);
 
-          await mediaHandler.uploadMedia({
-            file: createReadStream(path.join(resolutionDir, fileToUpload)),
-            userId: mediaRow.user_id,
-            organizationId: mediaRow.organization_id,
-            isUserUploaded: false,
-            fileSize: fileSizeToUpload,
-            fileExtension: extensionToUpload,
-            mediaId: mediaIdToUpload,
-          });
+        const fileSizeToUpload = fs.statSync(
+          path.join(resolutionDir, fileToUpload),
+        ).size;
 
-          // Update upload progress within this resolution
-          const uploadStageProgress = ((j + 1) / allFilesToUpload.length) * 100;
-          const overallProgress =
-            resolutionBaseProgress +
-            transcodeWeight +
-            (uploadStageProgress / 100) * uploadWeight;
-          await pgClient.query(
+        await mediaHandler.uploadMedia({
+          file: createReadStream(path.join(resolutionDir, fileToUpload)),
+          userId: mediaRow.user_id,
+          organizationId: mediaRow.organization_id,
+          isUserUploaded: false,
+          fileSize: fileSizeToUpload,
+          fileExtension: extensionToUpload,
+          mediaId: mediaIdToUpload,
+        });
+
+        // Update upload progress within this resolution
+        const uploadStageProgress = ((j + 1) / allFilesToUpload.length) * 100;
+        const overallProgress =
+          resolutionBaseProgress +
+          transcodeWeight +
+          (uploadStageProgress / 100) * uploadWeight;
+        await withPgClient((client) =>
+          client.query(
             `UPDATE app_public.media_video_metadata 
              SET transcode_progress = $1, transcode_stage_progress = $2 
              WHERE video_media_id = $3`,
@@ -359,8 +360,8 @@ const task: Task = async (inPayload, { withPgClient }) => {
               Math.round(uploadStageProgress),
               mediaId,
             ],
-          );
-        }
+          ),
+        );
 
         // Create dependencies immediately after uploading this resolution's files
         // Link each .ts file to the resolution's m3u8
@@ -375,7 +376,7 @@ const task: Task = async (inPayload, { withPgClient }) => {
           { mediaId, resolution: resolutionData.title },
           "Created media dependencies for .ts files to resolution m3u8",
         );
-      });
+      }
 
       // Mark this resolution as completed
       completedResolutions.push(resolutionData.title);
@@ -426,36 +427,36 @@ const task: Task = async (inPayload, { withPgClient }) => {
       { mediaId, localFilePath, completedResolutions },
       "Uploading master m3u8",
     );
-    await withPgClient(async (pgClient) => {
-      const mediaHandler = new media[
-        process.env.STORAGE_TYPE as "file" | "s3"
-      ].mediaHandler(pgClient);
 
-      await mediaHandler.uploadMedia({
-        file: createReadStream(masterFilePath),
-        userId: mediaRow.user_id,
-        organizationId: mediaRow.organization_id,
-        isUserUploaded: false,
-        fileSize: masterFileSize,
-        fileExtension: "m3u8",
-        mediaId: masterMediaId,
-      });
+    const mediaHandler = new media[
+      process.env.STORAGE_TYPE as "file" | "s3"
+    ].mediaHandler(withPgClient);
 
-      // Create dependency from main media to master
-      await mediaHandler.createDependency(mediaId, masterUuid);
-
-      // Create dependencies from master to each resolution's m3u8
-      for (const resolutionData of resolutions) {
-        const resolutionM3u8File = resolutionM3u8Files[resolutionData.title]!;
-        const resolutionM3u8Uuid = extractMediaName(resolutionM3u8File).uuid;
-        await mediaHandler.createDependency(masterUuid, resolutionM3u8Uuid);
-      }
-
-      logger.trace(
-        { mediaId, completedResolutions },
-        "Created dependencies from master m3u8 to all resolution m3u8 files",
-      );
+    await mediaHandler.uploadMedia({
+      file: createReadStream(masterFilePath),
+      userId: mediaRow.user_id,
+      organizationId: mediaRow.organization_id,
+      isUserUploaded: false,
+      fileSize: masterFileSize,
+      fileExtension: "m3u8",
+      mediaId: masterMediaId,
     });
+
+    // Create dependency from main media to master
+    await mediaHandler.createDependency(mediaId, masterUuid);
+
+    // Create dependencies from master to each resolution's m3u8
+    for (const resolutionData of resolutions) {
+      const resolutionM3u8File = resolutionM3u8Files[resolutionData.title]!;
+      const resolutionM3u8Uuid = extractMediaName(resolutionM3u8File).uuid;
+      await mediaHandler.createDependency(masterUuid, resolutionM3u8Uuid);
+    }
+
+    logger.trace(
+      { mediaId, completedResolutions },
+      "Created dependencies from master m3u8 to all resolution m3u8 files",
+    );
+
     logger.trace(
       { mediaId, localFilePath, completedResolutions },
       "Done uploading master m3u8",
@@ -468,14 +469,14 @@ const task: Task = async (inPayload, { withPgClient }) => {
     logger.trace({ mediaId, localFilePath }, "Local file deleted");
 
     // Save HLS media to the metadata table and mark as completed
-    await withPgClient(async (pgClient) => {
-      await pgClient.query(
+    await withPgClient((client) =>
+      client.query(
         `UPDATE app_public.media_video_metadata 
          SET transcode_status = 'completed', transcode_progress = 100, hls_media_id = $2
          WHERE video_media_id = $1`,
         [mediaId, masterUuid],
-      );
-    });
+      ),
+    );
   } catch (err: any) {
     if (err?.code === "TRANSCODE_SKIP") {
       logger.info(

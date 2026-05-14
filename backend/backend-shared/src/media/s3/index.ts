@@ -1,10 +1,9 @@
-import { Pool, PoolClient } from "pg";
-
 import { createMediaHandler, createMulterStorage } from "../factory";
 import { MediaDataHandler } from "../types";
+import { WithPgClient } from "../../types";
 import { OurS3Store } from "./OurS3Store";
 
-const createS3Store = (pgPool: Pool | PoolClient) => {
+const createS3Store = (withPgClient: WithPgClient) => {
   return new OurS3Store(
     {
       s3ClientConfig: {
@@ -22,7 +21,7 @@ const createS3Store = (pgPool: Pool | PoolClient) => {
       },
       expirationPeriodInMilliseconds: 6 * 60 * 60 * 1000, // 6h
     },
-    pgPool,
+    withPgClient,
   );
 };
 

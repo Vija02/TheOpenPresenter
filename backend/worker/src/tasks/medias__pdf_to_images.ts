@@ -29,6 +29,10 @@ const task: Task = async (inPayload, { withPgClient }) => {
   const log = logger.child({ pdfMediaName, projectId, pluginId });
   const workDir = path.join(os.tmpdir(), `pdf-to-images-${Date.now()}`);
 
+  const mediaHandler = new media[
+    process.env.STORAGE_TYPE as "file" | "s3"
+  ].mediaHandler(withPgClient);
+
   try {
     log.info("Starting PDF to images conversion");
 
@@ -36,18 +40,12 @@ const task: Task = async (inPayload, { withPgClient }) => {
     fs.mkdirSync(workDir, { recursive: true });
 
     // Download the PDF
-    const pdfBuffer = await withPgClient(async (pgClient) => {
-      const mediaHandler = new media[
-        process.env.STORAGE_TYPE as "file" | "s3"
-      ].mediaHandler(pgClient);
-
-      const readable = await mediaHandler.store.getReadable(pdfMediaName);
-      const chunks: Buffer[] = [];
-      for await (const chunk of readable) {
-        chunks.push(Buffer.from(chunk));
-      }
-      return Buffer.concat(chunks);
-    });
+    const readable = await mediaHandler.store.getReadable(pdfMediaName);
+    const chunks: Buffer[] = [];
+    for await (const chunk of readable) {
+      chunks.push(Buffer.from(chunk));
+    }
+    const pdfBuffer = Buffer.concat(chunks);
 
     log.info({ size: pdfBuffer.length }, "PDF downloaded");
 
@@ -99,31 +97,23 @@ const task: Task = async (inPayload, { withPgClient }) => {
     const results = await Promise.all(
       uploadData.map(({ mediaId, localPath, fileSize, pageIndex }) =>
         limit(async () => {
-          const fileName = await withPgClient(async (pgClient) => {
-            const mediaHandler = new media[
-              process.env.STORAGE_TYPE as "file" | "s3"
-            ].mediaHandler(pgClient);
-
-            // Upload
-            const { fileName } = await mediaHandler.uploadMedia({
-              file: createReadStream(localPath),
-              fileExtension: "jpg",
-              fileSize,
-              userId,
-              organizationId,
-              isUserUploaded: false,
-              isGuest,
-              mediaId,
-            });
-
-            // Create dependency to parent
-            await mediaHandler.createDependency(parentMediaId, mediaId);
-
-            // Attach to project/plugin
-            await mediaHandler.attachToProject(mediaId, projectId, pluginId);
-
-            return fileName;
+          // Upload
+          const { fileName } = await mediaHandler.uploadMedia({
+            file: createReadStream(localPath),
+            fileExtension: "jpg",
+            fileSize,
+            userId,
+            organizationId,
+            isUserUploaded: false,
+            isGuest,
+            mediaId,
           });
+
+          // Create dependency to parent
+          await mediaHandler.createDependency(parentMediaId, mediaId);
+
+          // Attach to project/plugin
+          await mediaHandler.attachToProject(mediaId, projectId, pluginId);
 
           log.debug(
             { page: pageIndex + 1, totalPages, fileName },

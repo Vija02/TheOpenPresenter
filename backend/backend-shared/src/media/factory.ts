@@ -9,7 +9,6 @@ import { Upload } from "@tus/server";
 import { backOff } from "exponential-backoff";
 import { Request } from "express";
 import { StorageEngine } from "multer";
-import { Pool, PoolClient } from "pg";
 import sharp from "sharp";
 import { TypeId, toUUID, typeidUnboxed } from "typeid-js";
 
@@ -21,17 +20,18 @@ import {
   OurMulterRequest,
   UploadMediaParam,
 } from "./types";
+import { WithPgClient } from "../types";
 
 export const createMediaHandler = <T extends OurDataStore>(
-  createStore: (pgPool: Pool | PoolClient) => T,
+  createStore: (withPgClient: WithPgClient) => T,
 ) => {
   return class MediaHandler implements MediaHandlerInterface {
     store: T;
-    pgPool: Pool | PoolClient;
+    withPgClient: WithPgClient;
 
-    constructor(pgPool: Pool | PoolClient) {
-      this.store = createStore(pgPool);
-      this.pgPool = pgPool;
+    constructor(withPgClient: WithPgClient) {
+      this.store = createStore(withPgClient);
+      this.withPgClient = withPgClient;
     }
 
     async uploadMedia({
@@ -81,13 +81,15 @@ export const createMediaHandler = <T extends OurDataStore>(
 
             // Update is_complete flag
             const uuid = toUUID(mediaId as TypeId<string>);
-            await this.pgPool.query(
-              `UPDATE app_public.medias
+            await this.withPgClient((client) =>
+              client.query(
+                `UPDATE app_public.medias
               SET 
                 is_complete = $1
               WHERE id = $2
             `,
-              [true, uuid],
+                [true, uuid],
+              ),
             );
 
             // Process media (image metadata extraction, video transcoding)
@@ -171,16 +173,18 @@ export const createMediaHandler = <T extends OurDataStore>(
       childMediaIdOrUUID: string,
     ) {
       try {
-        await this.pgPool.query(
-          `
-          INSERT INTO app_public.media_dependencies(parent_media_id, child_media_id)
-          VALUES($1, $2)
-          ON CONFLICT (parent_media_id, child_media_id) DO NOTHING
-        `,
-          [
-            uuidFromMediaIdOrUUIDOrMediaName(parentMediaIdOrUUID),
-            uuidFromMediaIdOrUUIDOrMediaName(childMediaIdOrUUID),
-          ],
+        await this.withPgClient((client) =>
+          client.query(
+            `
+            INSERT INTO app_public.media_dependencies(parent_media_id, child_media_id)
+            VALUES($1, $2)
+            ON CONFLICT (parent_media_id, child_media_id) DO NOTHING
+          `,
+            [
+              uuidFromMediaIdOrUUIDOrMediaName(parentMediaIdOrUUID),
+              uuidFromMediaIdOrUUIDOrMediaName(childMediaIdOrUUID),
+            ],
+          ),
         );
       } catch (err: any) {
         logger.error(
@@ -197,17 +201,19 @@ export const createMediaHandler = <T extends OurDataStore>(
       pluginId: string,
     ) {
       try {
-        await this.pgPool.query(
-          `
-          INSERT INTO app_public.project_medias(project_id, media_id, plugin_id)
-          VALUES($1, $2, $3)
-          ON CONFLICT (project_id, media_id, plugin_id) DO NOTHING
-        `,
-          [
-            projectId,
-            uuidFromMediaIdOrUUIDOrMediaName(mediaIdOrUUID),
-            uuidFromPluginIdOrUUID(pluginId),
-          ],
+        await this.withPgClient((client) =>
+          client.query(
+            `
+            INSERT INTO app_public.project_medias(project_id, media_id, plugin_id)
+            VALUES($1, $2, $3)
+            ON CONFLICT (project_id, media_id, plugin_id) DO NOTHING
+          `,
+            [
+              projectId,
+              uuidFromMediaIdOrUUIDOrMediaName(mediaIdOrUUID),
+              uuidFromPluginIdOrUUID(pluginId),
+            ],
+          ),
         );
       } catch (err: any) {
         logger.error(
@@ -238,9 +244,11 @@ export const createMediaHandler = <T extends OurDataStore>(
           params.push(projectId);
         }
 
-        await this.pgPool.query(
-          `DELETE FROM app_public.project_medias WHERE ${conditions.join(" AND ")}`,
-          params,
+        await this.withPgClient((client) =>
+          client.query(
+            `DELETE FROM app_public.project_medias WHERE ${conditions.join(" AND ")}`,
+            params,
+          ),
         );
       } catch (err: any) {
         logger.error({ err }, "unlinkPlugin: Failed to unlink plugin");
@@ -260,17 +268,20 @@ export const createMediaHandler = <T extends OurDataStore>(
 
       try {
         // Create initial metadata row
-        await this.pgPool.query(
-          `
+        await this.withPgClient((client) =>
+          client.query(
+            `
           INSERT INTO app_public.media_video_metadata (video_media_id)
           VALUES ($1)
           ON CONFLICT (video_media_id) DO NOTHING
         `,
-          [mediaUUID],
+            [mediaUUID],
+          ),
         );
 
-        await this.pgPool.query(
-          `
+        await this.withPgClient((client) =>
+          client.query(
+            `
           SELECT graphile_worker.add_job(
             $1,
             payload := $2::json,
@@ -278,7 +289,8 @@ export const createMediaHandler = <T extends OurDataStore>(
             job_key := $4
           );
         `,
-          [taskName, JSON.stringify({ id: mediaUUID }), jobKey, jobKey],
+            [taskName, JSON.stringify({ id: mediaUUID }), jobKey, jobKey],
+          ),
         );
         logger.info(
           { mediaUUID, taskName, jobKey },
@@ -324,14 +336,16 @@ export const createMediaHandler = <T extends OurDataStore>(
             },
           );
 
-          await this.pgPool.query(
-            `INSERT INTO app_public.media_image_metadata (image_media_id, width, height)
+          await this.withPgClient((client) =>
+            client.query(
+              `INSERT INTO app_public.media_image_metadata (image_media_id, width, height)
               VALUES ($1, $2, $3) ON CONFLICT (image_media_id) DO UPDATE 
               SET 
                 width = $2,
                 height = $3
               `,
-            [uuid, metadata?.width, metadata?.height],
+              [uuid, metadata?.width, metadata?.height],
+            ),
           );
         } catch (err) {
           logger.error(
@@ -354,8 +368,8 @@ export const createMulterStorage = (MediaHandler: MediaHandlerConstructor) => {
   return class MulterFileStorage implements StorageEngine {
     mediaHandler: MediaHandlerInterface;
 
-    constructor(pgPool: Pool | PoolClient) {
-      this.mediaHandler = new MediaHandler(pgPool);
+    constructor(withPgClient: WithPgClient) {
+      this.mediaHandler = new MediaHandler(withPgClient);
     }
 
     async _handleFile(

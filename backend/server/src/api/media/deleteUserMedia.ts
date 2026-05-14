@@ -3,6 +3,7 @@ import { gql, makeExtendSchemaPlugin } from "graphile-utils";
 
 import { OurGraphQLContext } from "../../graphile.config";
 import { ERROR_MESSAGE_OVERRIDES } from "../../utils/handleErrors";
+import { withPgClientFromPool } from "../../utils/withPgClientFromPool";
 
 export const deleteUserMedia = makeExtendSchemaPlugin(() => ({
   typeDefs: gql`
@@ -26,6 +27,7 @@ export const deleteUserMedia = makeExtendSchemaPlugin(() => ({
       async deleteUserMedia(_mutation, args, context: OurGraphQLContext) {
         const { id } = args.input;
         const { pgClient, rootPgPool } = context;
+        const rootWithPgClient = withPgClientFromPool(rootPgPool);
 
         const {
           rows: [mediaRow],
@@ -44,7 +46,7 @@ export const deleteUserMedia = makeExtendSchemaPlugin(() => ({
         try {
           await new media[
             process.env.STORAGE_TYPE as "file" | "s3"
-          ].mediaHandler(rootPgPool).deleteMedia(mediaRow.media_name);
+          ].mediaHandler(rootWithPgClient).deleteMedia(mediaRow.media_name);
 
           return { success: true };
         } catch (e: any) {

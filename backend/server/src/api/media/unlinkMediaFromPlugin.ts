@@ -3,6 +3,7 @@ import { gql, makeExtendSchemaPlugin } from "graphile-utils";
 
 import { OurGraphQLContext } from "../../graphile.config";
 import { ERROR_MESSAGE_OVERRIDES } from "../../utils/handleErrors";
+import { withPgClientFromPool } from "../../utils/withPgClientFromPool";
 
 export const unlinkMediaFromPlugin = makeExtendSchemaPlugin(() => ({
   typeDefs: gql`
@@ -31,11 +32,12 @@ export const unlinkMediaFromPlugin = makeExtendSchemaPlugin(() => ({
       async unlinkMediaFromPlugin(_mutation, args, context: OurGraphQLContext) {
         const { pluginId, projectId, mediaUUID } = args.input;
         const { rootPgPool } = context;
+        const rootWithPgClient = withPgClientFromPool(rootPgPool);
 
         try {
           await new media[
             process.env.STORAGE_TYPE as "file" | "s3"
-          ].mediaHandler(rootPgPool).unlinkPlugin(pluginId, {
+          ].mediaHandler(rootWithPgClient).unlinkPlugin(pluginId, {
             projectId,
             mediaIdOrUUID: mediaUUID,
           });
