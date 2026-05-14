@@ -1,6 +1,6 @@
 import express from "express";
 import fs from "fs";
-import { Pool } from "pg";
+import { PoolClient } from "pg";
 import { describe, expect, it, vi } from "vitest";
 
 import {
@@ -11,10 +11,16 @@ import {
   withRootDb,
 } from "../../db/__tests__/helpers";
 import * as media from "../src/media";
+import { WithPgClient } from "../src/types";
 import {
   createMedia,
   createMediaDependency,
 } from "./../../../packages/test/src/mediaHelper";
+
+const makeWithPgClient =
+  (client: PoolClient): WithPgClient =>
+  (cb) =>
+    cb(client);
 
 describe("Media Dependency Remove", () => {
   it("should remove child media when the parent is removed in s3 storage", async () => {
@@ -47,7 +53,7 @@ describe("Media Dependency Remove", () => {
 
       // Then let's trigger delete
       await new media[process.env.STORAGE_TYPE!].mediaHandler(
-        client,
+        makeWithPgClient(client),
       ).deleteMedia(m1.mediaName);
 
       // Let's check
@@ -91,7 +97,7 @@ describe("Media Dependency Remove", () => {
 
       // Then let's trigger delete
       await new media[process.env.STORAGE_TYPE!].mediaHandler(
-        client,
+        makeWithPgClient(client),
       ).deleteMedia(m1.mediaName);
 
       // Let's check
