@@ -1,4 +1,4 @@
-import { job, media } from "@repo/backend-shared";
+import { WithPgClient, job, media } from "@repo/backend-shared";
 import { mediaIdFromUUID } from "@repo/lib";
 import { Express, RequestHandler } from "express";
 import { Pool } from "pg";
@@ -14,6 +14,17 @@ import {
   RemoteViewWebComponentConfig,
 } from "./serverPluginTypes";
 import { TRPCObject } from "./types";
+
+const withPgClientFromPool = (pool: Pool): WithPgClient => {
+  return async (callback) => {
+    const client = await pool.connect();
+    try {
+      return await callback(client);
+    } finally {
+      client.release();
+    }
+  };
+};
 
 export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
   protected registeredTrpcAppRouter: ((t: TRPCObject) => any)[] = [];
@@ -236,7 +247,7 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
 
     const mediaHandler = new media[
       process.env.STORAGE_TYPE as "file" | "s3"
-    ].mediaHandler(this.app.get("rootPgPool"));
+    ].mediaHandler(withPgClientFromPool(this.app.get("rootPgPool") as Pool));
 
     const { mediaId, fileName } = await mediaHandler.uploadMedia({
       file: stream.Readable.from(data),
@@ -272,7 +283,7 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
     try {
       // TODO: Permission?
       await new media[process.env.STORAGE_TYPE as "file" | "s3"].mediaHandler(
-        this.app.get("rootPgPool"),
+        withPgClientFromPool(this.app.get("rootPgPool") as Pool),
       ).deleteMedia(fullFileId);
       return { success: true };
     } catch (e) {
@@ -284,7 +295,9 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
     getMedia: async (mediaName: string) => {
       return await new media[
         process.env.STORAGE_TYPE as "file" | "s3"
-      ].mediaHandler(this.app.get("rootPgPool")).store.getReadable(mediaName);
+      ].mediaHandler(
+        withPgClientFromPool(this.app.get("rootPgPool") as Pool),
+      ).store.getReadable(mediaName);
     },
     getVideoMetadata: async (mediaUUID: string) => {
       const pool = this.app.get("rootPgPool") as Pool;
