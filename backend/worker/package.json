@@ -8,7 +8,7 @@
     }
   },
   "scripts": {
-    "gw": "cd dist && NODE_OPTIONS=\"${NODE_OPTIONS:-} -r @repo/config/env\" graphile-worker --crontab ../crontab",
+    "gw": "cd dist && OTEL_SERVICE_NAME=\"${OTEL_SERVICE_NAME:-theopenpresenter-worker}\" NODE_OPTIONS=\"${NODE_OPTIONS:-} -r @repo/config/env -r @repo/observability/initTracing\" graphile-worker --crontab ../crontab",
     "dev": "concurrently --kill-others --names \"TS Watch,Worker\" --prefix \"({name})\" --prefix-colors \"orangeBright.bold,blueBright.bold\" \"yarn build:watch\" \"yarn run:watch\"",
     "build": "pkgroll --export-condition=node --conditions=node",
     "build:watch": "pkgroll --export-condition=node --conditions=node --watch",
