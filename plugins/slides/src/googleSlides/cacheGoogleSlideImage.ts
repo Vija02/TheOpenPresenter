@@ -1,6 +1,7 @@
 import { ServerPluginApi } from "@repo/base-plugin/server";
 import { logger } from "@repo/observability";
 import axios from "axios";
+import pLimit from "p-limit";
 
 import { pluginName } from "../consts";
 
@@ -257,10 +258,11 @@ export function createImageProcessor(
   };
 
   // Start all downloads immediately, uploads wait for parentMediaId
+  const limit = pLimit(8);
   const result = Promise.all(
     Array.from(decodedToOriginals.entries()).map(
       ([decodedUrl, originalStrings]) =>
-        processUniqueImage(decodedUrl, originalStrings),
+        limit(() => processUniqueImage(decodedUrl, originalStrings)),
     ),
   ).then(() => resultMapping);
 

@@ -92,7 +92,7 @@ const task: Task = async (inPayload, { withPgClient }) => {
       return { mediaId, localPath, fileSize, pageIndex: i };
     });
 
-    const limit = pLimit(10);
+    const limit = pLimit(15);
 
     const results = await Promise.all(
       uploadData.map(({ mediaId, localPath, fileSize, pageIndex }) =>

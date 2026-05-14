@@ -9913,6 +9913,7 @@ __metadata:
     eslint: "npm:^8.57.1"
     http-proxy-middleware: "npm:^3.0.3"
     mupdf: "npm:^1.3.5"
+    p-limit: "npm:^3.1.0"
     pkgroll: "npm:2.5.1"
     postcss-prefix-selector: "npm:^2.1.1"
     react: "npm:^19.1.0"
