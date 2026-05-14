@@ -22,6 +22,7 @@ import { pipeline } from "stream/promises";
 import { TypeId, fromString, toUUID, typeidUnboxed } from "typeid-js";
 
 import { checkUserAuth } from "../utils/auth";
+import { withPgClientFromPool } from "../utils/withPgClientFromPool";
 import { getRootPgPool } from "./installDatabasePools";
 
 export function getMediaObject(app: Express): media.MediaDataHandler {
@@ -34,8 +35,9 @@ export function getMediaHandler(app: Express): media.MediaHandlerInterface {
 // TODO: File size validation & increase caddy max_size
 export default (app: Express) => {
   const rootPgPool = getRootPgPool(app);
+  const rootWithPgClient = withPgClientFromPool(rootPgPool);
   const mediaObject = media[process.env.STORAGE_TYPE as "file" | "s3"];
-  const mediaHandler = new mediaObject.mediaHandler(rootPgPool);
+  const mediaHandler = new mediaObject.mediaHandler(rootWithPgClient);
   app.set("mediaObject", mediaObject);
   app.set("mediaHandler", mediaHandler);
 
@@ -238,7 +240,7 @@ export default (app: Express) => {
   const server = new Server({
     path: "/media/upload/tus",
     datastore: media[process.env.STORAGE_TYPE as "file" | "s3"].createTusStore(
-      getRootPgPool(app),
+      rootWithPgClient,
     ),
     respectForwardedHeaders: true,
     onUploadCreate: async (req, res, upload) => {
@@ -327,7 +329,7 @@ export default (app: Express) => {
   // ================================== //
   const upload = multer({
     storage: new media[process.env.STORAGE_TYPE as "file" | "s3"].multerStorage(
-      getRootPgPool(app),
+      rootWithPgClient,
     ),
   });
 

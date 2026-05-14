@@ -1,4 +1,4 @@
-import { media } from "@repo/backend-shared";
+import { WithPgClient, media } from "@repo/backend-shared";
 import { logger } from "@repo/observability";
 import fs from "node:fs";
 import { pipeline } from "node:stream/promises";
@@ -6,7 +6,6 @@ import os from "os";
 import path from "path";
 
 import { VideoMetadata, extractMetadata } from "./ffmpeg";
-import { WithPgClient } from "./progress";
 
 const baseDir = path.join(os.tmpdir(), "videoTranscode");
 
@@ -88,34 +87,32 @@ export const downloadMediaFile = async ({
   const localFilePath = path.join(mediaDir, mediaName);
 
   if (!fs.existsSync(localFilePath)) {
-    await withPgClient(async (pgClient) => {
-      const writeStream = fs.createWriteStream(localFilePath);
-      try {
-        const mediaHandler = new media[
-          process.env.STORAGE_TYPE as "file" | "s3"
-        ].mediaHandler(pgClient);
+    const writeStream = fs.createWriteStream(localFilePath);
+    try {
+      const mediaHandler = new media[
+        process.env.STORAGE_TYPE as "file" | "s3"
+      ].mediaHandler(withPgClient);
 
-        const readable = await mediaHandler.store.getReadable(mediaName);
+      const readable = await mediaHandler.store.getReadable(mediaName);
 
-        logger.trace(
-          { mediaId, mediaName, localFilePath },
-          "Downloading media file",
-        );
-        await pipeline(readable, writeStream);
-        logger.trace(
-          { mediaId, mediaName, localFilePath },
-          "Media file downloaded!",
-        );
-      } catch (error) {
-        writeStream.close();
-        fs.rmSync(localFilePath, { force: true });
-        logger.error(
-          { mediaId, mediaName, localFilePath },
-          "Failed to download file for transcoding",
-        );
-        throw error;
-      }
-    });
+      logger.trace(
+        { mediaId, mediaName, localFilePath },
+        "Downloading media file",
+      );
+      await pipeline(readable, writeStream);
+      logger.trace(
+        { mediaId, mediaName, localFilePath },
+        "Media file downloaded!",
+      );
+    } catch (error) {
+      writeStream.close();
+      fs.rmSync(localFilePath, { force: true });
+      logger.error(
+        { mediaId, mediaName, localFilePath },
+        "Failed to download file for transcoding",
+      );
+      throw error;
+    }
   }
 
   const metadata = await extractMetadata(localFilePath);

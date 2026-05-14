@@ -1,20 +1,20 @@
 import { FileStore } from "@tus/file-store";
-import { Pool, PoolClient } from "pg";
 import { TypeId, toUUID } from "typeid-js";
 
 import { OurDataStore } from "../OurDataStore";
 import { getFileIdsToDeleteFromID } from "../dependencyRemove";
+import { WithPgClient } from "../../types";
 
 export class OurFileStore extends FileStore implements OurDataStore {
-  protected pgPool: Pool | PoolClient;
+  protected withPgClient: WithPgClient;
 
   constructor(
     options: ConstructorParameters<typeof FileStore>[0],
-    pgPool: Pool | PoolClient,
+    withPgClient: WithPgClient,
   ) {
     super(options);
 
-    this.pgPool = pgPool;
+    this.withPgClient = withPgClient;
   }
 
   async getReadable(id: string) {
@@ -26,18 +26,23 @@ export class OurFileStore extends FileStore implements OurDataStore {
     const mediaId = splittedKey[0];
     const uuid = toUUID(mediaId as TypeId<string>);
 
-    await this.pgPool.query(
-      `UPDATE app_public.medias
-        SET 
-          is_complete = $1
-        WHERE id = $2
-      `,
-      [true, uuid],
+    await this.withPgClient((client) =>
+      client.query(
+        `UPDATE app_public.medias
+          SET
+            is_complete = $1
+          WHERE id = $2
+        `,
+        [true, uuid],
+      ),
     );
   }
 
   public async remove(id: string): Promise<void> {
-    const fileIdsToDelete = await getFileIdsToDeleteFromID(this.pgPool, id);
+    const fileIdsToDelete = await getFileIdsToDeleteFromID(
+      this.withPgClient,
+      id,
+    );
 
     await Promise.all(
       fileIdsToDelete.map((fileIdToDelete) => super.remove(fileIdToDelete)),
@@ -49,17 +54,20 @@ export class OurFileStore extends FileStore implements OurDataStore {
       return 0;
     }
 
-    const { rows } = await this.pgPool.query(
-      `SELECT 
-          id, media_name
-        FROM 
-          app_public.medias 
-        WHERE 
-          is_complete is false AND 
-          now() > created_at + (interval '1 millisecond' * $1)
-      `,
-      [this.getExpiration()],
-    );
+    const rows = await this.withPgClient(async (client) => {
+      const result = await client.query(
+        `SELECT
+            id, media_name
+          FROM
+            app_public.medias
+          WHERE
+            is_complete is false AND
+            now() > created_at + (interval '1 millisecond' * $1)
+        `,
+        [this.getExpiration()],
+      );
+      return result.rows;
+    });
 
     await Promise.all(
       rows.map((row) =>

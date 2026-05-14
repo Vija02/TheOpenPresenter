@@ -81,45 +81,41 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
         mediaIdsToAdd?.includes(x?.id),
       ) ?? [];
 
-    await withPgClient(async (pgClient) => {
-      const mediaHandler = new media[
-        process.env.STORAGE_TYPE as "file" | "s3"
-      ].mediaHandler(pgClient);
+    const mediaHandler = new media[
+      process.env.STORAGE_TYPE as "file" | "s3"
+    ].mediaHandler(withPgClient);
 
-      // TODO: Do this in an easier to retry fashion?
-      // Make sure it's idempotent. Maybe need to handle partially uploaded file
-      await Promise.all(
-        mediasToAdd.map((media) => {
-          const { mediaId, extension } = extractMediaName(
-            media?.mediaName ?? "",
-          );
-          const module =
-            new URL(cloudConnection.host).protocol === "https:" ? https : http;
+    // TODO: Do this in an easier to retry fashion?
+    // Make sure it's idempotent. Maybe need to handle partially uploaded file
+    await Promise.all(
+      mediasToAdd.map((media) => {
+        const { mediaId, extension } = extractMediaName(media?.mediaName ?? "");
+        const module =
+          new URL(cloudConnection.host).protocol === "https:" ? https : http;
 
-          return module.get(
-            resolveMediaUrl({
+        return module.get(
+          resolveMediaUrl({
+            mediaId,
+            extension,
+            host: cloudConnection.host,
+          }),
+          (stream) => {
+            return mediaHandler.uploadMedia({
+              file: stream,
+              fileExtension: media?.fileExtension,
+              fileSize: media?.fileSize,
+              // Attach to the user who created the cloud connection
+              userId: cloudConnection.creator_user_id,
+              organizationId: cloudConnection.organization_id,
+              creationDate: media?.createdAt,
               mediaId,
-              extension,
-              host: cloudConnection.host,
-            }),
-            (stream) => {
-              return mediaHandler.uploadMedia({
-                file: stream,
-                fileExtension: media?.fileExtension,
-                fileSize: media?.fileSize,
-                // Attach to the user who created the cloud connection
-                userId: cloudConnection.creator_user_id,
-                organizationId: cloudConnection.organization_id,
-                creationDate: media?.createdAt,
-                mediaId,
-                originalFileName: media?.originalName,
-                isUserUploaded: media?.isUserUploaded,
-              });
-            },
-          );
-        }),
-      );
-    });
+              originalFileName: media?.originalName,
+              isUserUploaded: media?.isUserUploaded,
+            });
+          },
+        );
+      }),
+    );
 
     // Now let's get all the metadata so we can sync them too
     const projectMediaInfoRes = await urqlClient.query<ProjectMediaInfoQuery>(
@@ -132,13 +128,16 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
       throw projectMediaInfoRes.error;
     }
 
-    // We only need to sync one way
-
-    // Sync media dependencies
-    await withPgClient((pgClient) =>
-      pgClient.query(
+    // We only need to sync one way.
+    //
+    // Sync all four metadata tables atomically so a partial failure can't
+    // leave dependencies pointing at media that lacks video/image metadata,
+    // or project_medias referencing media whose dependency graph is missing.
+    await media.withTransaction(withPgClient, async (client) => {
+      // Sync media dependencies
+      await client.query(
         `
-          INSERT INTO app_public.media_dependencies(parent_media_id, child_media_id) 
+          INSERT INTO app_public.media_dependencies(parent_media_id, child_media_id)
             SELECT parent_media_id, child_media_id
               FROM jsonb_to_recordset($1) AS t (parent_media_id uuid, child_media_id uuid)
             ON CONFLICT DO NOTHING;
@@ -151,13 +150,11 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
             })),
           ),
         ],
-      ),
-    );
-    // Sync media image sizes
-    await withPgClient((pgClient) =>
-      pgClient.query(
+      );
+      // Sync media image sizes
+      await client.query(
         `
-          INSERT INTO app_public.media_image_sizes(image_media_id, processed_media_id, width, file_type) 
+          INSERT INTO app_public.media_image_sizes(image_media_id, processed_media_id, width, file_type)
             SELECT image_media_id, processed_media_id, width, file_type
               FROM jsonb_to_recordset($1) AS t (image_media_id uuid, processed_media_id uuid, width int, file_type text)
             ON CONFLICT DO NOTHING;
@@ -172,13 +169,11 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
             })),
           ),
         ],
-      ),
-    );
-    // Sync media video metadata
-    await withPgClient((pgClient) =>
-      pgClient.query(
+      );
+      // Sync media video metadata
+      await client.query(
         `
-          INSERT INTO app_public.media_video_metadata(video_media_id, hls_media_id, thumbnail_media_id, duration) 
+          INSERT INTO app_public.media_video_metadata(video_media_id, hls_media_id, thumbnail_media_id, duration)
             SELECT video_media_id, hls_media_id, thumbnail_media_id, duration
               FROM jsonb_to_recordset($1) AS t (video_media_id uuid, hls_media_id uuid, thumbnail_media_id uuid, duration numeric)
             ON CONFLICT DO NOTHING;
@@ -193,16 +188,15 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
             })),
           ),
         ],
-      ),
-    );
-    // Sync project media
-    await withPgClient((pgClient) =>
-      pgClient.query(
+      );
+
+      // Sync project media
+      await client.query(
         `
-          INSERT INTO app_public.project_medias(project_id, media_id, plugin_id) 
-            SELECT 
-              p.id AS project_id, 
-              t.media_id, 
+          INSERT INTO app_public.project_medias(project_id, media_id, plugin_id)
+            SELECT
+              p.id AS project_id,
+              t.media_id,
               t.plugin_id
             FROM jsonb_to_recordset($1) AS t (cloud_project_id uuid, media_id uuid, plugin_id uuid)
             JOIN app_public.projects p ON p.cloud_project_id = t.cloud_project_id
@@ -219,8 +213,8 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
             ),
           ),
         ],
-      ),
-    );
+      );
+    });
     // Sync deletion
     const { rows: localProjectMedias } = await withPgClient((pgClient) =>
       pgClient.query(
@@ -285,9 +279,9 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
       (localMediaId) => !allMediaIds?.includes(localMediaId),
     );
     if (mediaIdsToDelete.length > 0) {
-      await withPgClient(async (pgClient) => {
-        // Find user-uploaded media that aren't being used in any projects
-        const { rows: mediaIdsToActuallyDelete } = await pgClient.query(
+      // Find user-uploaded media that aren't being used in any projects
+      const mediaIdsToActuallyDelete = await withPgClient(async (pgClient) => {
+        const { rows } = await pgClient.query(
           `
             SELECT m.id, m.media_name
             FROM app_public.medias m
@@ -298,27 +292,28 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
           `,
           [mediaIdsToDelete],
         );
-
-        if (mediaIdsToActuallyDelete.length > 0) {
-          const mediaHandler = new media[
-            process.env.STORAGE_TYPE as "file" | "s3"
-          ].mediaHandler(pgClient);
-
-          await Promise.all(
-            mediaIdsToActuallyDelete.map(async (row) => {
-              try {
-                await mediaHandler.deleteMedia(row.media_name);
-              } catch (err) {
-                logger.error(
-                  { err, id: row.id },
-                  "Failed to delete media from media sync",
-                );
-                console.error(`Sync: Failed to delete media ${row.id}:`, err);
-              }
-            }),
-          );
-        }
+        return rows;
       });
+
+      if (mediaIdsToActuallyDelete.length > 0) {
+        const mediaHandler = new media[
+          process.env.STORAGE_TYPE as "file" | "s3"
+        ].mediaHandler(withPgClient);
+
+        await Promise.all(
+          mediaIdsToActuallyDelete.map(async (row) => {
+            try {
+              await mediaHandler.deleteMedia(row.media_name);
+            } catch (err) {
+              logger.error(
+                { err, id: row.id },
+                "Failed to delete media from media sync",
+              );
+              console.error(`Sync: Failed to delete media ${row.id}:`, err);
+            }
+          }),
+        );
+      }
     }
   } catch (e) {
     console.error(e);

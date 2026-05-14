@@ -2,27 +2,31 @@ import { uuidFromPluginIdOrUUID } from "@repo/lib";
 import { logger } from "@repo/observability";
 import { MetadataValue } from "@tus/s3-store";
 import { KvStore, TUS_RESUMABLE, Upload } from "@tus/server";
-import { Pool, PoolClient } from "pg";
 import { TypeId, toUUID } from "typeid-js";
+
+import { WithPgClient } from "../types";
 
 export class CustomKVStore<T extends Upload | MetadataValue>
   implements KvStore<T>
 {
-  pgPool: Pool | PoolClient;
+  withPgClient: WithPgClient;
 
-  constructor(pgPool: Pool | PoolClient) {
-    this.pgPool = pgPool;
+  constructor(withPgClient: WithPgClient) {
+    this.withPgClient = withPgClient;
   }
 
   async get(key: string): Promise<T | undefined> {
     const splittedKey = key.split(".");
 
-    const {
-      rows: [mediaRow],
-    } = await this.pgPool.query(
-      "SELECT m.*, pm.project_id, pm.plugin_id FROM app_public.medias m LEFT JOIN app_public.project_medias pm ON m.id = pm.media_id WHERE id = $1",
-      [toUUID(splittedKey[0] as TypeId<string>)],
-    );
+    const mediaRow = await this.withPgClient(async (client) => {
+      const {
+        rows: [row],
+      } = await client.query(
+        "SELECT m.*, pm.project_id, pm.plugin_id FROM app_public.medias m LEFT JOIN app_public.project_medias pm ON m.id = pm.media_id WHERE id = $1",
+        [toUUID(splittedKey[0] as TypeId<string>)],
+      );
+      return row;
+    });
     if (!mediaRow) return undefined;
 
     const newObj = {
@@ -60,55 +64,58 @@ export class CustomKVStore<T extends Upload | MetadataValue>
     const file = "file" in value ? value.file : (value as Upload);
 
     const tags = file.metadata?.isGuest === "1" ? ["guest"] : [];
-    await this.pgPool.query(
-      `INSERT INTO app_public.medias(
-        id, media_name, file_size, file_offset, original_name, file_extension, organization_id, creator_user_id, s3_upload_id, is_user_uploaded, tags
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) ON CONFLICT (id) DO UPDATE
-      SET 
-        media_name = $2,
-        file_size = $3,
-        file_offset = $4,
-        original_name = $5,
-        file_extension = $6,
-        organization_id = $7,
-        creator_user_id = $8,
-        s3_upload_id = $9,
-        is_user_uploaded = $10
-      `,
-      [
-        uuid,
-        key,
-        file.size,
-        file.offset,
-        file.metadata?.originalFileName ?? "",
-        extension,
-        file.metadata?.organizationId,
-        file.metadata?.userId,
-        "upload-id" in value ? value["upload-id"] : null,
-        file.metadata?.isUserUploaded
-          ? file.metadata?.isUserUploaded === "1"
-          : true,
-        tags,
-      ],
-    );
 
-    try {
-      if (file.metadata?.projectId && file.metadata?.pluginId) {
-        await this.pgPool.query(
-          `INSERT INTO app_public.project_medias(project_id, media_id, plugin_id) values($1, $2, $3)`,
-          [
-            file.metadata.projectId,
-            uuid,
-            uuidFromPluginIdOrUUID(file.metadata.pluginId),
-          ],
+    await this.withPgClient(async (client) => {
+      await client.query(
+        `INSERT INTO app_public.medias(
+          id, media_name, file_size, file_offset, original_name, file_extension, organization_id, creator_user_id, s3_upload_id, is_user_uploaded, tags
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) ON CONFLICT (id) DO UPDATE
+        SET
+          media_name = $2,
+          file_size = $3,
+          file_offset = $4,
+          original_name = $5,
+          file_extension = $6,
+          organization_id = $7,
+          creator_user_id = $8,
+          s3_upload_id = $9,
+          is_user_uploaded = $10
+        `,
+        [
+          uuid,
+          key,
+          file.size,
+          file.offset,
+          file.metadata?.originalFileName ?? "",
+          extension,
+          file.metadata?.organizationId,
+          file.metadata?.userId,
+          "upload-id" in value ? value["upload-id"] : null,
+          file.metadata?.isUserUploaded
+            ? file.metadata?.isUserUploaded === "1"
+            : true,
+          tags,
+        ],
+      );
+
+      try {
+        if (file.metadata?.projectId && file.metadata?.pluginId) {
+          await client.query(
+            `INSERT INTO app_public.project_medias(project_id, media_id, plugin_id) values($1, $2, $3)`,
+            [
+              file.metadata.projectId,
+              uuid,
+              uuidFromPluginIdOrUUID(file.metadata.pluginId),
+            ],
+          );
+        }
+      } catch (err) {
+        logger.warn(
+          { err, mediaId: uuid, metadata: file.metadata },
+          "Failed to create project_medias through Tus upload",
         );
       }
-    } catch (err) {
-      logger.warn(
-        { err, mediaId: uuid, metadata: file.metadata },
-        "Failed to create project_medias through Tus upload",
-      );
-    }
+    });
   }
 
   async delete(key: string): Promise<void> {
@@ -116,15 +123,18 @@ export class CustomKVStore<T extends Upload | MetadataValue>
     const mediaId = splittedKey[0];
     const uuid = toUUID(mediaId as TypeId<string>);
 
-    await this.pgPool.query("DELETE FROM app_public.medias WHERE id = $1", [
-      uuid,
-    ]);
+    await this.withPgClient((client) =>
+      client.query("DELETE FROM app_public.medias WHERE id = $1", [uuid]),
+    );
   }
 
   async list(): Promise<Array<string>> {
-    const { rows } = await this.pgPool.query(
-      "SELECT media_name FROM app_public.medias",
-    );
+    const rows = await this.withPgClient(async (client) => {
+      const result = await client.query(
+        "SELECT media_name FROM app_public.medias",
+      );
+      return result.rows;
+    });
     return rows.map((x) => x.media_name);
   }
 }

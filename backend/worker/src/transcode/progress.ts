@@ -1,3 +1,5 @@
+import { WithPgClient } from "@repo/backend-shared";
+
 export type TranscodeStatus = "pending" | "processing" | "completed" | "failed";
 export type TranscodeStage =
   | "pending"
@@ -15,10 +17,6 @@ export interface TranscodeProgressUpdate {
   currentResolution?: string | null;
   completedResolutions?: string[];
 }
-
-export type WithPgClient = <T>(
-  callback: (pgClient: any) => Promise<T>,
-) => Promise<T>;
 
 export const updateTranscodeProgress = async (
   withPgClient: WithPgClient,

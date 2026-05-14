@@ -1,22 +1,22 @@
 import path from "path";
-import { Pool, PoolClient } from "pg";
 
 import { CustomKVStore } from "../customKVStore";
 import { createMediaHandler, createMulterStorage } from "../factory";
 import { MediaDataHandler } from "../types";
+import { WithPgClient } from "../../types";
 import { OurFileStore } from "./OurFileStore";
 
 export const UPLOADS_PATH =
   process.env.UPLOADS_PATH ?? path.resolve(__dirname, "../../../uploads");
 
-const createFileStore = (pgPool: Pool | PoolClient) => {
+const createFileStore = (withPgClient: WithPgClient) => {
   return new OurFileStore(
     {
       directory: UPLOADS_PATH,
-      configstore: new CustomKVStore(pgPool),
+      configstore: new CustomKVStore(withPgClient),
       expirationPeriodInMilliseconds: 6 * 60 * 60 * 1000, // 6h
     },
-    pgPool,
+    withPgClient,
   );
 };
 

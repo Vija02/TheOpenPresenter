@@ -8,24 +8,24 @@ import { Readable } from "node:stream";
 import stream, { promises as streamProm } from "node:stream";
 import os from "os";
 import path from "path";
-import { Pool, PoolClient } from "pg";
 import { TypeId, toUUID } from "typeid-js";
 
 import { OurDataStore } from "../OurDataStore";
 import { CustomKVStore } from "../customKVStore";
 import { getFileIdsToDeleteFromID } from "../dependencyRemove";
+import { WithPgClient } from "../../types";
 
 const log = debug("tus-node-server:stores:s3store");
 
 export class OurS3Store extends S3Store implements OurDataStore {
-  protected pgPool: Pool | PoolClient;
+  protected withPgClient: WithPgClient;
   protected configstore: KvStore<MetadataValue>;
 
-  constructor(options: Options, pgPool: Pool | PoolClient) {
+  constructor(options: Options, withPgClient: WithPgClient) {
     super(options);
 
-    this.pgPool = pgPool;
-    this.configstore = new CustomKVStore<MetadataValue>(pgPool);
+    this.withPgClient = withPgClient;
+    this.configstore = new CustomKVStore<MetadataValue>(withPgClient);
   }
 
   async getReadable(id: string) {
@@ -80,13 +80,15 @@ export class OurS3Store extends S3Store implements OurDataStore {
     const mediaId = splittedKey[0];
     const uuid = toUUID(mediaId as TypeId<string>);
 
-    await this.pgPool.query(
-      `UPDATE app_public.medias
-        SET 
-          is_complete = $1
-        WHERE id = $2
-      `,
-      [true, uuid],
+    await this.withPgClient((client) =>
+      client.query(
+        `UPDATE app_public.medias
+          SET
+            is_complete = $1
+          WHERE id = $2
+        `,
+        [true, uuid],
+      ),
     );
   }
 
@@ -256,7 +258,10 @@ export class OurS3Store extends S3Store implements OurDataStore {
   }
 
   public async remove(id: string): Promise<void> {
-    const fileIdsToDelete = await getFileIdsToDeleteFromID(this.pgPool, id);
+    const fileIdsToDelete = await getFileIdsToDeleteFromID(
+      this.withPgClient,
+      id,
+    );
 
     if (fileIdsToDelete.length > 1) {
       logger.info(
@@ -311,9 +316,9 @@ export class OurS3Store extends S3Store implements OurDataStore {
     const uuid = toUUID(mediaId as TypeId<string>);
 
     // Remove metadata from DB
-    await this.pgPool.query(`DELETE FROM app_public.medias WHERE id = $1`, [
-      uuid,
-    ]);
+    await this.withPgClient((client) =>
+      client.query(`DELETE FROM app_public.medias WHERE id = $1`, [uuid]),
+    );
   }
 
   async deleteExpired(): Promise<number> {
@@ -321,18 +326,21 @@ export class OurS3Store extends S3Store implements OurDataStore {
       return 0;
     }
 
-    const { rows } = await this.pgPool.query(
-      `SELECT 
-          id, media_name, s3_upload_id
-        FROM 
-          app_public.medias 
-        WHERE 
-          is_complete is false AND 
-          now() > created_at + (interval '1 millisecond' * $1) AND
-          s3_upload_id is not null
-      `,
-      [this.getExpiration()],
-    );
+    const rows = await this.withPgClient(async (client) => {
+      const result = await client.query(
+        `SELECT
+            id, media_name, s3_upload_id
+          FROM
+            app_public.medias
+          WHERE
+            is_complete is false AND
+            now() > created_at + (interval '1 millisecond' * $1) AND
+            s3_upload_id is not null
+        `,
+        [this.getExpiration()],
+      );
+      return result.rows;
+    });
 
     logger.info({ rows }, "Deleting expired media");
 
@@ -380,9 +388,11 @@ export class OurS3Store extends S3Store implements OurDataStore {
         rows.map((row) => row.id),
         1000,
       ).map((chunk) =>
-        this.pgPool.query(`DELETE FROM app_public.medias WHERE id = ANY($1)`, [
-          chunk,
-        ]),
+        this.withPgClient((client) =>
+          client.query(`DELETE FROM app_public.medias WHERE id = ANY($1)`, [
+            chunk,
+          ]),
+        ),
       ),
     );
 

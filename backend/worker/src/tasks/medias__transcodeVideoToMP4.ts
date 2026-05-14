@@ -99,14 +99,14 @@ const task: Task = async (inPayload, { withPgClient }) => {
         fs.rmSync(mediaDir, { recursive: true });
       }
 
-      await withPgClient(async (pgClient) => {
-        await pgClient.query(
+      await withPgClient((client) =>
+        client.query(
           `UPDATE app_public.media_video_metadata 
-           SET mp4_media_id = $2, transcode_status = 'completed', transcode_progress = 100
-           WHERE video_media_id = $1`,
+         SET mp4_media_id = $2, transcode_status = 'completed', transcode_progress = 100
+         WHERE video_media_id = $1`,
           [mediaId, mediaId],
-        );
-      });
+        ),
+      );
 
       return;
     }
@@ -220,41 +220,41 @@ const task: Task = async (inPayload, { withPgClient }) => {
       currentResolution: preset.title,
     });
 
-    await withPgClient(async (pgClient) => {
-      const mediaHandler = new media[
-        process.env.STORAGE_TYPE as "file" | "s3"
-      ].mediaHandler(pgClient);
+    const mediaHandler = new media[
+      process.env.STORAGE_TYPE as "file" | "s3"
+    ].mediaHandler(withPgClient);
 
-      logger.trace({ mediaId, transcodedFilePath }, "Uploading transcoded MP4");
-      await mediaHandler.uploadMedia({
-        file: createReadStream(transcodedFilePath),
-        userId: mediaRow.user_id,
-        organizationId: mediaRow.organization_id,
-        isUserUploaded: false,
-        fileSize: transcodedFileSize,
-        fileExtension: "mp4",
-        mediaId: transcodedMediaId,
-      });
-      logger.trace(
-        { mediaId, transcodedFilePath },
-        "Done uploading transcoded MP4",
-      );
+    logger.trace({ mediaId, transcodedFilePath }, "Uploading transcoded MP4");
+    await mediaHandler.uploadMedia({
+      file: createReadStream(transcodedFilePath),
+      userId: mediaRow.user_id,
+      organizationId: mediaRow.organization_id,
+      isUserUploaded: false,
+      fileSize: transcodedFileSize,
+      fileExtension: "mp4",
+      mediaId: transcodedMediaId,
+    });
+    logger.trace(
+      { mediaId, transcodedFilePath },
+      "Done uploading transcoded MP4",
+    );
 
-      await mediaHandler.createDependency(mediaId, transcodedUuid);
-      logger.trace(
-        { mediaId, transcodedUuid },
-        "Created media dependency for transcoded MP4",
-      );
+    await mediaHandler.createDependency(mediaId, transcodedUuid);
+    logger.trace(
+      { mediaId, transcodedUuid },
+      "Created media dependency for transcoded MP4",
+    );
 
-      await pgClient.query(
-        `UPDATE app_public.media_video_metadata 
+    await withPgClient(async (client) => {
+      await client.query(
+        `UPDATE app_public.media_video_metadata
          SET mp4_media_id = $2, transcode_status = 'completed', transcode_progress = 100
          WHERE video_media_id = $1`,
         [mediaId, transcodedUuid],
       );
-
-      logger.trace({ mediaId }, "Saved video metadata to database");
     });
+
+    logger.trace({ mediaId }, "Saved video metadata to database");
 
     logger.trace({ mediaId, localFilePath }, "Deleting local files");
     fs.rmSync(mediaDir, { recursive: true });
