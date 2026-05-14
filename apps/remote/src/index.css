@@ -19,7 +19,7 @@ html {
   position: absolute;
   width: 6px;
   height: 100%;
-  z-index: 100;
+  z-index: 25;
 }
 
 .react-resizable-handle-e {
