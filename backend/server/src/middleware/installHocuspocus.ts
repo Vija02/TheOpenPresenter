@@ -32,25 +32,31 @@ export default async function installHocuspocus(app: Express) {
       const sessionId: string | null = data.context.session_id ?? null;
       const screenGuestSessionId: string | null =
         data.context.screen_guest_session_id ?? null;
-      if (!sessionId && !screenGuestSessionId) {
-        throw new Error("Not Authorized");
-      }
-      await withUserPgPool(
+
+      const { isPublic } = await withUserPgPool(
         app,
         sessionId,
         async (client) => {
           const {
             rows: [row],
           } = await client.query(
-            "select 1 from app_public.projects where id = $1",
+            "select is_public from app_public.projects where id = $1",
             [data.documentName],
           );
           if (!row) {
             throw new Error("Not Authorized");
           }
+          return { isPublic: !!row.is_public };
         },
         screenGuestSessionId,
       );
+
+      if (!sessionId && !screenGuestSessionId) {
+        if (!isPublic) {
+          throw new Error("Not Authorized");
+        }
+        data.connection.readOnly = true;
+      }
     },
     onLoadDocument: async (data) => {
       const rootPgPool = getRootPgPool(app);
@@ -153,16 +159,6 @@ export default async function installHocuspocus(app: Express) {
         const sessionId = request.user?.session_id ?? null;
         const screenGuestSessionId =
           request.session?.screenGuestSession?.id ?? null;
-        if (!sessionId && !screenGuestSessionId) {
-          incoming.close(
-            4401,
-            JSON.stringify({
-              message:
-                "You do not have permission to use this WebSocket connection",
-            }),
-          );
-          return;
-        }
 
         Server.handleConnection(incoming, request, {
           session_id: sessionId,
