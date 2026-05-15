@@ -188,6 +188,35 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
     onSelect(results);
   }, [filteredMedia, selectedIds, buildResult, onSelect]);
 
+  const buildResultFromUpload = useCallback(
+    (mediaName: string, originalName: string | null): MediaPickerResult => {
+      const parsed = extractMediaName(mediaName);
+      const url = resolveMediaUrl(parsed);
+      const result: MediaPickerResult = {
+        id: parsed.uuid,
+        mediaName,
+        originalName,
+        fileExtension: parsed.extension,
+        url,
+      };
+      const { extension } = parsed;
+      if (isVideoFile(extension)) {
+        result.internalVideo = {
+          id: typeidUnboxed("video"),
+          url,
+          isInternalVideo: true,
+          hlsMediaName: null,
+          thumbnailMediaName: null,
+          metadata: {
+            title: originalName ?? mediaName,
+          },
+        };
+      }
+      return result;
+    },
+    [],
+  );
+
   const title = options?.title ?? "Select Media";
   const portalContainer = options?.portalContainer;
 
@@ -268,13 +297,40 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
           <UploadMediaModal
             isOpen={isUploadModalOpen}
             onClose={() => setIsUploadModalOpen(false)}
-            onUploadComplete={() => {
+            onUploadComplete={(uploadedList) => {
               refetch({ requestPolicy: "network-only" });
+
+              const picked: MediaPickerResult[] = [];
+              for (const uploaded of uploadedList) {
+                if (!uploaded.mediaName) continue;
+                const ext = uploaded.mediaName.split(".").pop() ?? "";
+                // Videos require explicit opt-in (autoPickVideo)
+                // because they may still be processing (HLS/thumbnail)
+                // after upload.
+                const isVideoUpload =
+                  options?.type === "video" || isVideoFile(ext);
+                const allowAutoPick =
+                  !isVideoUpload || !!options?.autoPickVideo;
+                if (!allowAutoPick) continue;
+                picked.push(
+                  buildResultFromUpload(
+                    uploaded.mediaName,
+                    uploaded.originalName,
+                  ),
+                );
+              }
+
+              if (picked.length === 0) return;
+              // Respect `multiple: false`
+              const finalPicks =
+                options?.multiple === false ? picked.slice(0, 1) : picked;
+              onSelect(finalPicks);
             }}
             organizationId={organizationId}
             projectId={projectId}
             pluginId={pluginId}
             mediaType={options?.type}
+            multiple={allowMultiple}
           />
         </div>
       )}

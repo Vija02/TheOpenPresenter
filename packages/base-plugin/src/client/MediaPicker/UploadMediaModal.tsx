@@ -13,14 +13,20 @@ import React, { useEffect, useMemo, useState } from "react";
 
 import { MediaType } from "../../types";
 
+export type UploadedMediaInfo = {
+  mediaName: string;
+  originalName: string | null;
+};
+
 export type UploadMediaModalProps = {
   isOpen: boolean;
   onClose: () => void;
-  onUploadComplete: () => void;
+  onUploadComplete: (uploaded: UploadedMediaInfo[]) => void;
   organizationId: string;
   projectId?: string;
   pluginId?: string;
   mediaType?: MediaType;
+  multiple?: boolean;
 };
 
 const getAllowedFileTypes = (mediaType?: MediaType): string[] | undefined => {
@@ -49,16 +55,19 @@ export const UploadMediaModal: React.FC<UploadMediaModalProps> = ({
   projectId,
   pluginId,
   mediaType,
+  multiple = true,
 }) => {
   const allowedFileTypes = useMemo(
     () => getAllowedFileTypes(mediaType),
     [mediaType],
   );
+  const maxNumberOfFiles = multiple ? null : 1;
 
   const [uppy] = useState(() =>
     new Uppy({
       restrictions: {
         allowedFileTypes,
+        maxNumberOfFiles,
       },
     }).use(Tus, {
       endpoint: window.location.origin + "/media/upload/tus",
@@ -72,25 +81,28 @@ export const UploadMediaModal: React.FC<UploadMediaModalProps> = ({
     }),
   );
 
-  // Update restrictions when mediaType changes
+  // Update restrictions when inputs change
   useEffect(() => {
     uppy.setOptions({
       restrictions: {
         allowedFileTypes,
+        maxNumberOfFiles,
       },
     });
-  }, [uppy, allowedFileTypes]);
-
-  useUppyEvent(uppy, "upload-success", () => {
-    onUploadComplete();
-  });
+  }, [uppy, allowedFileTypes, maxNumberOfFiles]);
 
   useUppyEvent(uppy, "complete", (result) => {
-    if (result.successful && result.successful.length > 0) {
-      // Clear files after successful upload
-      uppy.cancelAll();
-      onClose();
-    }
+    if (!result.successful || result.successful.length === 0) return;
+
+    const uploaded: UploadedMediaInfo[] = result.successful.map((file) => {
+      const uploadUrl = file?.tus?.uploadUrl ?? "";
+      const mediaName = uploadUrl.split("/").pop() ?? "";
+      return { mediaName, originalName: file?.name ?? null };
+    });
+
+    uppy.cancelAll();
+    onUploadComplete(uploaded);
+    onClose();
   });
 
   return (

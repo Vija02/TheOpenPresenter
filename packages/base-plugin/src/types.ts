@@ -181,6 +181,7 @@ export type MediaPickerOptions = {
   title?: string;
   portalContainer?: HTMLElement | null;
   multiple?: boolean;
+  autoPickVideo?: boolean;
 };
 
 export type MediaPickerOptionsInternal = MediaPickerOptions & {
