@@ -204,7 +204,7 @@ const RemoteHandler = () => {
             pluginAPI={pluginApi}
             heading={
               isUnknownCount
-                ? "⠀"
+                ? ""
                 : `Slide ${resolvedSlides.length + prevCount + i + 1}`
             }
           >
@@ -224,7 +224,7 @@ const RemoteHandler = () => {
       })}
       <OverlayToggle
         toggler={({ onToggle }) => (
-          <Slide pluginAPI={pluginApi} heading="⠀" onClick={onToggle}>
+          <Slide pluginAPI={pluginApi} heading="" onClick={onToggle}>
             <div className="group h-full w-full flex flex-col items-center justify-center gap-2 border-2 border-dashed border-tertiary text-tertiary hover:border-secondary hover:text-secondary hover:bg-black/5 transition-colors">
               <FaPlus className="size-6" />
               <span className="text-sm font-medium">Add slide</span>
