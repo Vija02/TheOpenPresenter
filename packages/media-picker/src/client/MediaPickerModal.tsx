@@ -344,13 +344,40 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
           <UploadMediaModal
             isOpen={isUploadModalOpen}
             onClose={() => setIsUploadModalOpen(false)}
-            onUploadComplete={() => {
+            onUploadComplete={(uploadedList) => {
               refetch({ requestPolicy: "network-only" });
+
+              const picked: MediaPickerResult[] = [];
+              for (const uploaded of uploadedList) {
+                if (!uploaded.mediaName) continue;
+                const ext = uploaded.mediaName.split(".").pop() ?? "";
+                // Videos require explicit opt-in (autoPickVideo)
+                // because they may still be processing (HLS/thumbnail)
+                // after upload.
+                const isVideoUpload =
+                  options?.type === "video" || isVideoFile(ext);
+                const allowAutoPick =
+                  !isVideoUpload || !!options?.autoPickVideo;
+                if (!allowAutoPick) continue;
+                picked.push(
+                  buildResultFromUpload(
+                    uploaded.mediaName,
+                    uploaded.originalName,
+                  ),
+                );
+              }
+
+              if (picked.length === 0) return;
+              // Respect `multiple: false`
+              const finalPicks =
+                options?.multiple === false ? picked.slice(0, 1) : picked;
+              onSelect(finalPicks);
             }}
             organizationId={organizationId}
             projectId={projectId}
             pluginId={pluginId}
             mediaType={options?.type}
+            multiple={allowMultiple}
           />
         </div>
       )}
