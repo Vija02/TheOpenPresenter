@@ -36,6 +36,42 @@
   background-color: var(--surface-secondary);
 }
 
+.bp--media-card--upload {
+  display: flex;
+  flex-direction: column;
+  border-style: dashed;
+  border-width: 2px;
+  border-color: var(--stroke);
+  background-color: transparent;
+  color: var(--secondary);
+}
+
+.bp--media-card--upload:hover {
+  border-color: var(--accent);
+  background-color: var(--surface-primary-hover);
+  color: var(--accent);
+}
+
+.bp--media-card__preview--upload {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background-color: transparent;
+}
+
+.bp--media-card__upload-icon {
+  width: 28px;
+  height: 28px;
+}
+
+.bp--media-card__upload-label {
+  font-size: 13px;
+  font-weight: 500;
+}
+
 .bp--media-card__info {
   padding: 8px;
   font-size: 12px;

@@ -232,15 +232,6 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
         >
           <DialogHeader className="bp--media-picker-header">
             <DialogTitle>{title}</DialogTitle>
-            {!isPublicAccess && (
-              <Button
-                onClick={() => setIsUploadModalOpen(true)}
-                data-testid="media-picker-upload-button"
-              >
-                <VscCloudUpload />
-                Upload
-              </Button>
-            )}
           </DialogHeader>
 
           <DialogBody className="bp--media-picker-body">
@@ -268,6 +259,18 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
                 )}
 
                 <div className="bp--media-picker-grid">
+                  <div
+                    className="bp--media-card bp--media-card--upload"
+                    onClick={() => setIsUploadModalOpen(true)}
+                    data-testid="media-picker-upload-card"
+                  >
+                    <div className="bp--media-card__preview bp--media-card__preview--upload">
+                      <VscCloudUpload className="bp--media-card__upload-icon" />
+                      <span className="bp--media-card__upload-label">
+                        Upload new
+                      </span>
+                    </div>
+                  </div>
                   {filteredMedia.map((media) => (
                     <MediaCard
                       key={media.id}
