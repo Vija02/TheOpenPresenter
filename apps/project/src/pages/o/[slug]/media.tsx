@@ -1,6 +1,6 @@
 import { SharedOrgLayout } from "@/components/SharedOrgLayout";
 import { useOrganizationSlug } from "@/lib/permissionHooks/organization";
-import { UploadMediaModal } from "@repo/base-plugin/client";
+import { UploadMediaModal } from "@repo/media-picker/client";
 import {
   MediaWithMediaDependencyFragment,
   useCompleteMediaMutation,

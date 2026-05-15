@@ -1,11 +1,15 @@
+import {
+  MediaPickerOptionsInternal,
+  MediaPickerResult,
+} from "@repo/base-plugin";
+import { MediaPickerContext } from "@repo/base-plugin/client";
 import React, { useCallback, useRef, useState } from "react";
 
-import { MediaPickerOptionsInternal, MediaPickerResult } from "../../types";
-import { MediaPickerContext } from "./MediaPickerContext";
 import { MediaPickerModal } from "./MediaPickerModal";
 
 export type MediaPickerProviderProps = {
   children: React.ReactNode;
+  isPublicAccess?: boolean;
 };
 
 type ModalState = {
@@ -29,6 +33,7 @@ const baseModalState: ModalState = {
 
 export const MediaPickerProvider: React.FC<MediaPickerProviderProps> = ({
   children,
+  isPublicAccess = false,
 }) => {
   const [modalState, setModalState] = useState<ModalState>(baseModalState);
   const resolveRef = useRef<
@@ -74,6 +79,7 @@ export const MediaPickerProvider: React.FC<MediaPickerProviderProps> = ({
         onClose={handleClose}
         onSelect={handleSelect}
         options={modalState.options}
+        isPublicAccess={isPublicAccess}
       />
     </MediaPickerContext.Provider>
   );

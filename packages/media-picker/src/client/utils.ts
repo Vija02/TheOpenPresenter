@@ -1,6 +1,6 @@
+import { MediaType } from "@repo/base-plugin";
 import { isAudioFile, isImageFile, isVideoFile } from "@repo/lib";
 
-import { MediaType } from "../../types";
 import { MediaWithMetadata } from "./types";
 
 export const filterMediaByType = (

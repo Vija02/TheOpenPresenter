@@ -1,4 +1,4 @@
-import { MediaPickerProvider } from "@repo/base-plugin/client";
+import { MediaPickerProvider } from "@repo/media-picker/client";
 import {
   AudioCheckProvider,
   AwarenessProvider,

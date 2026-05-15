@@ -1,3 +1,4 @@
+import { MediaType } from "@repo/base-plugin";
 import { appData } from "@repo/lib";
 import {
   Dialog,
@@ -10,8 +11,6 @@ import Uppy from "@uppy/core";
 import { Dashboard, useUppyEvent } from "@uppy/react";
 import Tus from "@uppy/tus";
 import React, { useEffect, useMemo, useState } from "react";
-
-import { MediaType } from "../../types";
 
 export type UploadMediaModalProps = {
   isOpen: boolean;
