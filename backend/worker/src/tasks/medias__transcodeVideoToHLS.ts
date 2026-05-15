@@ -192,6 +192,7 @@ const task: Task = async (inPayload, { withPgClient }) => {
         );
         if (existingM3u8File) {
           resolutionMapToFile[resolutionData.title] = existingM3u8File;
+          resolutionM3u8Files[resolutionData.title] = existingM3u8File;
           completedResolutions.push(resolutionData.title);
           logger.trace(
             { mediaId, localFilePath, resolution: resolutionData.title },
