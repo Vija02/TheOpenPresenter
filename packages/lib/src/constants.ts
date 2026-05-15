@@ -109,3 +109,7 @@ export const BROWSER_SUPPORTED_AUDIO_EXTENSIONS = [
 ];
 
 export const HLS_EXTENSIONS = [".m3u8"];
+
+export const SUPPORTED_PDF_EXTENSIONS = [".pdf"];
+
+export const SUPPORTED_PPT_EXTENSIONS = [".ppt", ".pptx"];
