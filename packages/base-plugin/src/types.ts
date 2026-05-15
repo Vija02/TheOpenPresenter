@@ -126,6 +126,7 @@ export type MiscProps = {
   logger: Logger;
   parentContainer: HTMLElement | null;
   derivation?: DerivationConfig | null;
+  isPublicAccess: boolean;
 };
 
 export type WebComponentProps<TrpcClient> = {

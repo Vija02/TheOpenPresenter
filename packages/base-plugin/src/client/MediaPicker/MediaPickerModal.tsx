@@ -39,6 +39,7 @@ export type MediaPickerModalProps = {
   onClose: () => void;
   onSelect: (results: MediaPickerResult[]) => void;
   options: MediaPickerOptionsInternal;
+  isPublicAccess?: boolean;
 };
 
 export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
@@ -46,6 +47,7 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
   onClose,
   onSelect,
   options,
+  isPublicAccess = false,
 }) => {
   const { organizationId, projectId, pluginId } = options.pluginContext;
 
@@ -57,7 +59,7 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
       organizationId,
       condition: { isUserUploaded: true },
     },
-    pause: !isOpen,
+    pause: !isOpen || isPublicAccess,
   });
 
   // Filter media by type
@@ -197,41 +199,52 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
         <DialogContent size="3xl" className="bp--media-picker-dialog">
           <DialogHeader className="bp--media-picker-header">
             <DialogTitle>{title}</DialogTitle>
-            <Button onClick={() => setIsUploadModalOpen(true)}>
-              <VscCloudUpload />
-              Upload
-            </Button>
+            {!isPublicAccess && (
+              <Button onClick={() => setIsUploadModalOpen(true)}>
+                <VscCloudUpload />
+                Upload
+              </Button>
+            )}
           </DialogHeader>
 
           <DialogBody className="bp--media-picker-body">
-            {!data && (
-              <div className="bp--media-picker-empty">Loading media...</div>
-            )}
-
-            {data && filteredMedia.length === 0 && (
+            {isPublicAccess ? (
               <div className="bp--media-picker-empty">
-                No media found
-                {options?.type && options.type !== "all" && (
-                  <> of type &quot;{options.type}&quot;</>
-                )}
+                <p>Media isn't available when viewing a project publicly.</p>
+                <p>Sign in to browse and select media for this project.</p>
               </div>
-            )}
+            ) : (
+              <>
+                {!data && (
+                  <div className="bp--media-picker-empty">Loading media...</div>
+                )}
 
-            <div className="bp--media-picker-grid">
-              {filteredMedia.map((media) => (
-                <MediaCard
-                  key={media.id}
-                  media={media}
-                  onClick={(e) => handleClick(media, e)}
-                  disabled={!isVideoReady(media)}
-                  selected={selectedIds.has(media.id)}
-                />
-              ))}
-            </div>
+                {data && filteredMedia.length === 0 && (
+                  <div className="bp--media-picker-empty">
+                    No media found
+                    {options?.type && options.type !== "all" && (
+                      <> of type &quot;{options.type}&quot;</>
+                    )}
+                  </div>
+                )}
+
+                <div className="bp--media-picker-grid">
+                  {filteredMedia.map((media) => (
+                    <MediaCard
+                      key={media.id}
+                      media={media}
+                      onClick={(e) => handleClick(media, e)}
+                      disabled={!isVideoReady(media)}
+                      selected={selectedIds.has(media.id)}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
           </DialogBody>
 
           <DialogFooter className="bp--media-picker-footer">
-            {allowMultiple ? (
+            {!isPublicAccess && allowMultiple ? (
               <span className="bp--media-picker-tip">
                 Tip: Hold Shift while clicking to select multiple items
               </span>
@@ -240,9 +253,9 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
             )}
             <div className="bp--media-picker-footer-buttons">
               <Button variant="outline" onClick={onClose}>
-                Cancel
+                {isPublicAccess ? "Close" : "Cancel"}
               </Button>
-              {selectedIds.size > 0 && (
+              {!isPublicAccess && selectedIds.size > 0 && (
                 <Button onClick={handleDone}>Add ({selectedIds.size})</Button>
               )}
             </div>

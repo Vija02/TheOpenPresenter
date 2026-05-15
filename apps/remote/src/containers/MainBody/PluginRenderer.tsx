@@ -54,7 +54,8 @@ const PluginRenderer = React.memo(
     pluginInfo: Plugin<Record<string, any>>;
   }) => {
     const pluginDivRef = useRef<HTMLDivElement>(null);
-    const { pluginMeta, orgId, projectId } = usePluginMetaData();
+    const { pluginMeta, orgId, projectId, isPublicAccess } =
+      usePluginMetaData();
     const {
       getYJSPluginRenderer,
       getYJSPluginSceneData,
@@ -235,6 +236,7 @@ const PluginRenderer = React.memo(
           mediaPicker,
           logger: childLogger,
           parentContainer: pluginDivRef.current,
+          isPublicAccess,
         },
       } satisfies WebComponentProps<any>);
     }, [
@@ -246,6 +248,7 @@ const PluginRenderer = React.memo(
       deleteMedia,
       error,
       getYJSPluginRenderer,
+      isPublicAccess,
       isSuccess,
       mediaPicker,
       overlay,

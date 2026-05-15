@@ -77,6 +77,7 @@ export function initPluginApi<
   return {
     env: appData,
     pluginContext,
+    isPublicAccess: misc.isPublicAccess,
     awareness: {
       awarenessObj: awarenessContext.awarenessObj,
       currentUserId: awarenessContext.currentUserId,
