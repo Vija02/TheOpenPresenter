@@ -18,6 +18,11 @@ const SongEditEditor = ({
     onUpdate: (e) => {
       onChange(e.editor.getText({ blockSeparator: "\n" }));
     },
+    editorProps: {
+      transformPastedText: (text) => text.replace(/\u00A0/g, " "),
+      transformPastedHTML: (html) =>
+        html.replace(/&nbsp;/gi, " ").replace(/\u00A0/g, " "),
+    },
     extensions: [
       Document,
       Paragraph.extend({
