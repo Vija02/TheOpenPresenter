@@ -111,6 +111,7 @@ const VideoPlayerRemote = () => {
     const results = await pluginApi.mediaPicker.show({
       type: "video",
       title: "Select Video",
+      autoPickVideo: true,
     });
 
     if (results) {
