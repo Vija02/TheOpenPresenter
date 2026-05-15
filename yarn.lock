@@ -9465,14 +9465,6 @@ __metadata:
     "@types/express": "npm:^5.0.0"
     "@types/react": "npm:^19.1.2"
     "@types/ua-parser-js": "npm:^0.7.39"
-    "@uppy/core": "npm:4.3.0"
-    "@uppy/dashboard": "npm:4.1.3"
-    "@uppy/drag-drop": "npm:4.0.5"
-    "@uppy/file-input": "npm:4.0.4"
-    "@uppy/progress-bar": "npm:4.0.2"
-    "@uppy/react": "npm:4.0.4"
-    "@uppy/status-bar": "npm:4.0.5"
-    "@uppy/tus": "npm:4.1.5"
     "@vitejs/plugin-react-swc": "npm:^3.7.2"
     express: "npm:^4.21.2"
     fast-deep-equal: "npm:^3.1.3"
@@ -9638,6 +9630,41 @@ __metadata:
     yjs: "npm:13.6.26"
     yjs-types: "npm:^0.0.1"
     zustand: "npm:^5.0.2"
+  languageName: unknown
+  linkType: soft
+
+"@repo/media-picker@npm:*, @repo/media-picker@workspace:packages/media-picker":
+  version: 0.0.0-use.local
+  resolution: "@repo/media-picker@workspace:packages/media-picker"
+  dependencies:
+    "@repo/base-plugin": "npm:*"
+    "@repo/graphql": "npm:*"
+    "@repo/lib": "npm:*"
+    "@repo/tailwind-config": "npm:*"
+    "@repo/typescript-config": "npm:*"
+    "@repo/ui": "npm:*"
+    "@repo/video": "npm:*"
+    "@tailwindcss/vite": "npm:^4.1.10"
+    "@types/react": "npm:^19.1.2"
+    "@uppy/core": "npm:4.3.0"
+    "@uppy/dashboard": "npm:4.1.3"
+    "@uppy/drag-drop": "npm:4.0.5"
+    "@uppy/file-input": "npm:4.0.4"
+    "@uppy/progress-bar": "npm:4.0.2"
+    "@uppy/react": "npm:4.0.4"
+    "@uppy/status-bar": "npm:4.0.5"
+    "@uppy/tus": "npm:4.1.5"
+    "@vitejs/plugin-react-swc": "npm:^3.7.2"
+    react: "npm:^19.1.0"
+    react-icons: "npm:^5.4.0"
+    tailwindcss: "npm:^4.1.10"
+    tslib: "npm:^2.8.1"
+    typeid-js: "npm:^1.1.0"
+    typescript: "npm:^5.9.3"
+    vite: "npm:6.3.5"
+    vite-plugin-dts: "npm:^4.5.4"
+  peerDependencies:
+    react-player: ^3.4.0
   languageName: unknown
   linkType: soft
 
@@ -10089,6 +10116,7 @@ __metadata:
     "@repo/eslint-config": "npm:*"
     "@repo/graphql": "npm:*"
     "@repo/lib": "npm:*"
+    "@repo/media-picker": "npm:*"
     "@repo/observability": "npm:*"
     "@repo/prettier-config": "npm:*"
     "@repo/typescript-config": "npm:*"
@@ -10143,6 +10171,7 @@ __metadata:
     "@repo/eslint-config": "npm:*"
     "@repo/graphql": "npm:*"
     "@repo/lib": "npm:*"
+    "@repo/media-picker": "npm:*"
     "@repo/observability": "npm:*"
     "@repo/plugin-lyrics-presenter": "npm:*"
     "@repo/prettier-config": "npm:*"
