@@ -1,8 +1,4 @@
-import {
-  extractMediaName,
-  mediaIdFromUUID,
-  resolveMediaUrl,
-} from "@repo/lib";
+import { extractMediaName, mediaIdFromUUID, resolveMediaUrl } from "@repo/lib";
 import {
   Dialog,
   DialogBody,
@@ -52,7 +48,7 @@ export const MediaPreviewDialog: React.FC<MediaPreviewDialogProps> = ({
         </DialogHeader>
         <DialogBody className="bp--media-preview-dialog-body">
           <div className="bp--media-preview-dialog-player">
-            <PreviewVideoPlayer src={videoUrl} controls playing />
+            <PreviewVideoPlayer src={videoUrl} controls playing muted />
           </div>
         </DialogBody>
       </DialogContent>

@@ -208,6 +208,7 @@
 .bp--media-preview-dialog {
   display: flex;
   flex-direction: column;
+  min-width: 90vw;
 }
 
 .bp--media-preview-dialog-body {
