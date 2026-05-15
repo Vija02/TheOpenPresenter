@@ -28,11 +28,24 @@ import React, {
 import { VscCloudUpload } from "react-icons/vsc";
 import { typeidUnboxed } from "typeid-js";
 
-import { MediaPickerOptionsInternal, MediaPickerResult } from "../../types";
+import {
+  MediaPickerOptionsInternal,
+  MediaPickerResult,
+  MediaType,
+} from "../../types";
 import { MediaCard } from "./MediaCard";
 import { UploadMediaModal } from "./UploadMediaModal";
 import { MediaWithMetadata } from "./types";
 import { filterMediaByType } from "./utils";
+
+const TYPE_LABELS: Record<MediaType, { plural: string; singular: string }> = {
+  all: { plural: "media", singular: "file" },
+  video: { plural: "videos", singular: "video" },
+  image: { plural: "images", singular: "image" },
+  audio: { plural: "audio files", singular: "audio file" },
+  pdf: { plural: "PDFs", singular: "PDF" },
+  ppt: { plural: "PowerPoints", singular: "PowerPoint" },
+};
 
 export type MediaPickerModalProps = {
   isOpen: boolean;
@@ -220,6 +233,9 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
   const title = options?.title ?? "Select Media";
   const portalContainer = options?.portalContainer;
 
+  const typeLabel = TYPE_LABELS[options?.type ?? "all"];
+  const isEmpty = !!data && filteredMedia.length === 0;
+
   if (!isOpen) return null;
 
   return (
@@ -243,50 +259,58 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
                 <p>Media isn't available when viewing a project publicly.</p>
                 <p>Sign in to browse and select media for this project.</p>
               </div>
+            ) : !data ? (
+              <div className="bp--media-picker-empty">Loading media...</div>
+            ) : isEmpty ? (
+              <div
+                className="bp--media-picker-empty-state"
+                data-testid="media-picker-empty-state"
+              >
+                <VscCloudUpload className="bp--media-picker-empty-state__icon" />
+                <h3 className="bp--media-picker-empty-state__title">
+                  No {typeLabel.plural} yet
+                </h3>
+                <p className="bp--media-picker-empty-state__description">
+                  Upload a {typeLabel.singular} to get started.
+                </p>
+                <Button
+                  size="lg"
+                  onClick={() => setIsUploadModalOpen(true)}
+                  data-testid="media-picker-upload-button"
+                >
+                  <VscCloudUpload />
+                  Upload {typeLabel.singular}
+                </Button>
+              </div>
             ) : (
-              <>
-                {!data && (
-                  <div className="bp--media-picker-empty">Loading media...</div>
-                )}
-
-                {data && filteredMedia.length === 0 && (
-                  <div className="bp--media-picker-empty">
-                    No media found
-                    {options?.type && options.type !== "all" && (
-                      <> of type &quot;{options.type}&quot;</>
-                    )}
+              <div className="bp--media-picker-grid">
+                <div
+                  className="bp--media-card bp--media-card--upload"
+                  onClick={() => setIsUploadModalOpen(true)}
+                  data-testid="media-picker-upload-card"
+                >
+                  <div className="bp--media-card__preview bp--media-card__preview--upload">
+                    <VscCloudUpload className="bp--media-card__upload-icon" />
+                    <span className="bp--media-card__upload-label">
+                      Upload new
+                    </span>
                   </div>
-                )}
-
-                <div className="bp--media-picker-grid">
-                  <div
-                    className="bp--media-card bp--media-card--upload"
-                    onClick={() => setIsUploadModalOpen(true)}
-                    data-testid="media-picker-upload-card"
-                  >
-                    <div className="bp--media-card__preview bp--media-card__preview--upload">
-                      <VscCloudUpload className="bp--media-card__upload-icon" />
-                      <span className="bp--media-card__upload-label">
-                        Upload new
-                      </span>
-                    </div>
-                  </div>
-                  {filteredMedia.map((media) => (
-                    <MediaCard
-                      key={media.id}
-                      media={media}
-                      onClick={(e) => handleClick(media, e)}
-                      disabled={!isVideoReady(media)}
-                      selected={selectedIds.has(media.id)}
-                    />
-                  ))}
                 </div>
-              </>
+                {filteredMedia.map((media) => (
+                  <MediaCard
+                    key={media.id}
+                    media={media}
+                    onClick={(e) => handleClick(media, e)}
+                    disabled={!isVideoReady(media)}
+                    selected={selectedIds.has(media.id)}
+                  />
+                ))}
+              </div>
             )}
           </DialogBody>
 
           <DialogFooter className="bp--media-picker-footer">
-            {!isPublicAccess && allowMultiple ? (
+            {!isPublicAccess && allowMultiple && !isEmpty ? (
               <span className="bp--media-picker-tip">
                 Tip: Hold Shift while clicking to select multiple items
               </span>
