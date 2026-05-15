@@ -6,6 +6,7 @@ import {
   PluginDataProvider,
   PluginMetaDataProvider,
   useHandleKeyPress,
+  usePluginMetaData,
 } from "@repo/shared";
 import { useEffect } from "react";
 import { Route, Switch, useParams } from "wouter";
@@ -57,7 +58,12 @@ function Root() {
 }
 
 function MediaPickerWrapper({ children }: { children: React.ReactNode }) {
-  return <MediaPickerProvider>{children}</MediaPickerProvider>;
+  const { isPublicAccess } = usePluginMetaData();
+  return (
+    <MediaPickerProvider isPublicAccess={isPublicAccess}>
+      {children}
+    </MediaPickerProvider>
+  );
 }
 
 const Inner = () => {

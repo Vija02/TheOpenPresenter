@@ -24,6 +24,8 @@ export type ScreenGuestSession = NonNullable<
   RemoteBasePluginQuery["currentScreenGuestSession"]
 >;
 
+export type CurrentUser = NonNullable<RemoteBasePluginQuery["currentUser"]>;
+
 type PluginMetaDataProviderType = {
   pluginMeta: PluginMeta | null;
   project: Project | null;
@@ -31,7 +33,9 @@ type PluginMetaDataProviderType = {
   orgSlug: string;
   projectSlug: string;
   projectId: string;
+  currentUser: CurrentUser | null;
   screenGuestSession: ScreenGuestSession | null;
+  isPublicAccess: boolean;
   refetch: () => void;
 };
 
@@ -42,7 +46,9 @@ const initialData: PluginMetaDataProviderType = {
   orgSlug: "",
   projectSlug: "",
   projectId: "",
+  currentUser: null,
   screenGuestSession: null,
+  isPublicAccess: false,
   refetch: () => {},
 };
 
@@ -88,10 +94,15 @@ export function PluginMetaDataProvider({
 
   const projectId = project?.id ?? null;
 
+  const currentUser: CurrentUser | null = pluginMetaData?.currentUser ?? null;
+
   const screenGuestSession: ScreenGuestSession | null =
     pluginMetaData && "currentScreenGuestSession" in pluginMetaData
       ? (pluginMetaData.currentScreenGuestSession ?? null)
       : null;
+
+  const isPublicAccess =
+    !currentUser && !screenGuestSession && !!project?.isPublic;
 
   const organizationId = useMemo(() => {
     if (
@@ -137,7 +148,9 @@ export function PluginMetaDataProvider({
         orgSlug,
         projectSlug,
         projectId: projectId,
+        currentUser,
         screenGuestSession,
+        isPublicAccess,
         refetch,
       }}
     >
