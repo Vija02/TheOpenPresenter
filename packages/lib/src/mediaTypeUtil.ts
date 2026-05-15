@@ -8,6 +8,8 @@ import {
   HLS_EXTENSIONS,
   SUPPORTED_AUDIO_EXTENSIONS,
   SUPPORTED_IMAGE_EXTENSIONS,
+  SUPPORTED_PDF_EXTENSIONS,
+  SUPPORTED_PPT_EXTENSIONS,
   SUPPORTED_VIDEO_EXTENSIONS,
 } from "./constants";
 
@@ -39,6 +41,10 @@ export const isAudioFile = (extension: string | null | undefined): boolean =>
   isExtensionInList(extension, SUPPORTED_AUDIO_EXTENSIONS);
 export const isHlsFile = (extension: string | null | undefined): boolean =>
   isExtensionInList(extension, HLS_EXTENSIONS);
+export const isPdfFile = (extension: string | null | undefined): boolean =>
+  isExtensionInList(extension, SUPPORTED_PDF_EXTENSIONS);
+export const isPptFile = (extension: string | null | undefined): boolean =>
+  isExtensionInList(extension, SUPPORTED_PPT_EXTENSIONS);
 
 // ============================================================================
 // Browser-supported file type detection functions

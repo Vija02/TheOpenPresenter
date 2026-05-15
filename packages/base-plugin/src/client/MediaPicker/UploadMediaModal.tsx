@@ -31,6 +31,10 @@ const getAllowedFileTypes = (mediaType?: MediaType): string[] | undefined => {
       return ["image/*"];
     case "audio":
       return ["audio/*"];
+    case "pdf":
+      return [".pdf"];
+    case "ppt":
+      return [".ppt", ".pptx"];
     case "all":
     default:
       return undefined; // Allow all file types

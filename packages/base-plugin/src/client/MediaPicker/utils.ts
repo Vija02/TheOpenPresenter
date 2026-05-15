@@ -1,4 +1,10 @@
-import { isAudioFile, isImageFile, isVideoFile } from "@repo/lib";
+import {
+  isAudioFile,
+  isImageFile,
+  isPdfFile,
+  isPptFile,
+  isVideoFile,
+} from "@repo/lib";
 
 import { MediaType } from "../../types";
 import { MediaWithMetadata } from "./types";
@@ -18,6 +24,10 @@ export const filterMediaByType = (
         return isImageFile(ext);
       case "audio":
         return isAudioFile(ext);
+      case "pdf":
+        return isPdfFile(ext);
+      case "ppt":
+        return isPptFile(ext);
       default:
         return true;
     }
