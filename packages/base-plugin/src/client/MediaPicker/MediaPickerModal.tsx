@@ -225,11 +225,18 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
   return (
     <DialogPortalContainerContext.Provider value={portalContainer ?? null}>
       <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-        <DialogContent size="3xl" className="bp--media-picker-dialog">
+        <DialogContent
+          size="3xl"
+          className="bp--media-picker-dialog"
+          data-testid="media-picker-dialog"
+        >
           <DialogHeader className="bp--media-picker-header">
             <DialogTitle>{title}</DialogTitle>
             {!isPublicAccess && (
-              <Button onClick={() => setIsUploadModalOpen(true)}>
+              <Button
+                onClick={() => setIsUploadModalOpen(true)}
+                data-testid="media-picker-upload-button"
+              >
                 <VscCloudUpload />
                 Upload
               </Button>
@@ -238,7 +245,10 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
 
           <DialogBody className="bp--media-picker-body">
             {isPublicAccess ? (
-              <div className="bp--media-picker-empty">
+              <div
+                className="bp--media-picker-empty"
+                data-testid="media-picker-public-access-notice"
+              >
                 <p>Media isn't available when viewing a project publicly.</p>
                 <p>Sign in to browse and select media for this project.</p>
               </div>
