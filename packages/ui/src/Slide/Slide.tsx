@@ -52,7 +52,7 @@ export const Slide = ({
       aria-current={isActive ? "true" : undefined}
     >
       <div className="overflow-hidden">
-        {(heading || headingRight) && (
+        {(heading !== undefined || headingRight) && (
           <div className="flex items-center justify-between gap-2">
             <p
               className={cx([
@@ -61,7 +61,7 @@ export const Slide = ({
                 headingIsFaded ? "text-gray-600" : "text-inherit",
               ])}
             >
-              {heading}
+              {heading || "\u00A0"}
             </p>
             {headingRight && (
               <div className="flex items-center">{headingRight}</div>
