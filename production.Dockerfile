@@ -40,6 +40,7 @@ COPY packages/graphql/package.json /app/packages/graphql/package.json
 COPY packages/portable-file/package.json /app/packages/portable-file/package.json
 COPY packages/base-types/package.json /app/packages/base-types/package.json
 COPY packages/lib/package.json /app/packages/lib/package.json
+COPY packages/media-picker/package.json /app/packages/media-picker/package.json
 COPY packages/observability/package.json /app/packages/observability/package.json
 COPY packages/prettier-config/package.json /app/packages/prettier-config/package.json
 COPY packages/typescript-config/package.json /app/packages/typescript-config/package.json
@@ -102,6 +103,9 @@ RUN yarn workspace @repo/ui build
 
 COPY packages/video/ /app/packages/video/
 RUN yarn workspace @repo/video build
+
+COPY packages/media-picker/ /app/packages/media-picker/
+RUN yarn workspace @repo/media-picker build
 
 RUN node scripts/build_utils/extract_core.js
 
@@ -215,6 +219,7 @@ COPY --from=builder-core /app/packages/lib/ /app/packages/lib/
 COPY --from=builder-core /app/backend/backend-shared/ /app/backend/backend-shared/
 COPY --from=builder-core /app/packages/base-plugin/ /app/packages/base-plugin/
 COPY --from=builder-core /app/packages/video/ /app/packages/video/
+COPY --from=builder-core /app/packages/media-picker/ /app/packages/media-picker/
 COPY backend/db/ /app/backend/db/
 
 COPY --from=builder-client /app/apps/project/package.json /app/apps/project/

@@ -1,5 +1,6 @@
 import "@fontsource-variable/inter";
 import "@fontsource-variable/source-sans-3";
+import "@repo/media-picker/client/css";
 import { ErrorAlert } from "@repo/ui";
 import "@repo/ui/css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";

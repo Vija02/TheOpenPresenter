@@ -1,5 +1,6 @@
 import "@repo/base-plugin/client/css";
 import { preloader } from "@repo/lib";
+import "@repo/media-picker/client/css";
 import { ErrorAlert } from "@repo/ui";
 import "@repo/ui/css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";

@@ -1,3 +1,4 @@
+import { MediaType } from "@repo/base-plugin";
 import { appData } from "@repo/lib";
 import {
   Dialog,
@@ -11,7 +12,10 @@ import { Dashboard, useUppyEvent } from "@uppy/react";
 import Tus from "@uppy/tus";
 import React, { useEffect, useMemo, useState } from "react";
 
-import { MediaType } from "../../types";
+export type UploadedMediaInfo = {
+  mediaName: string;
+  originalName: string | null;
+};
 
 export type UploadedMediaInfo = {
   mediaName: string;

@@ -42,6 +42,7 @@
     "@repo/eslint-config": "*",
     "@repo/graphql": "*",
     "@repo/lib": "*",
+    "@repo/media-picker": "*",
     "@repo/plugin-lyrics-presenter": "*",
     "@repo/prettier-config": "*",
     "@repo/shared": "*",

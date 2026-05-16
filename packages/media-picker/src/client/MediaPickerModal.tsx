@@ -1,3 +1,8 @@
+import {
+  MediaPickerOptionsInternal,
+  MediaPickerResult,
+  MediaType,
+} from "@repo/base-plugin";
 import { useOrganizationMediaForPickerQuery } from "@repo/graphql";
 import {
   extractMediaName,
@@ -28,12 +33,8 @@ import React, {
 import { VscCloudUpload } from "react-icons/vsc";
 import { typeidUnboxed } from "typeid-js";
 
-import {
-  MediaPickerOptionsInternal,
-  MediaPickerResult,
-  MediaType,
-} from "../../types";
 import { MediaCard } from "./MediaCard";
+import { MediaPreviewDialog } from "./MediaPreviewDialog";
 import { UploadMediaModal } from "./UploadMediaModal";
 import { MediaWithMetadata } from "./types";
 import { filterMediaByType } from "./utils";
@@ -66,6 +67,9 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
 
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [previewMedia, setPreviewMedia] = useState<MediaWithMetadata | null>(
+    null,
+  );
 
   const [{ data }, refetch] = useOrganizationMediaForPickerQuery({
     variables: {
@@ -92,6 +96,7 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
   useEffect(() => {
     if (prevIsOpenRef.current && !isOpen) {
       setSelectedIds(new Set());
+      setPreviewMedia(null);
       resetOverrides();
     }
     prevIsOpenRef.current = isOpen;
@@ -301,6 +306,7 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
                     key={media.id}
                     media={media}
                     onClick={(e) => handleClick(media, e)}
+                    onPreview={(m) => setPreviewMedia(m)}
                     disabled={!isVideoReady(media)}
                     selected={selectedIds.has(media.id)}
                   />
@@ -328,6 +334,12 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {/* Preview Dialog */}
+      <MediaPreviewDialog
+        media={previewMedia}
+        isOpen={previewMedia !== null}
+        onClose={() => setPreviewMedia(null)}
+      />
       {/* Upload Modal */}
       {isUploadModalOpen && (
         <div onClick={(e) => e.stopPropagation()}>

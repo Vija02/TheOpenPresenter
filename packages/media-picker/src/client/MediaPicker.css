@@ -1,4 +1,5 @@
 .bp--media-card {
+  position: relative;
   border: 1px solid var(--stroke);
   border-radius: 6px;
   overflow: hidden;
@@ -32,8 +33,38 @@
 }
 
 .bp--media-card__preview {
+  position: relative;
   aspect-ratio: 16 / 9;
   background-color: var(--surface-secondary);
+}
+
+.bp--media-card__preview-button {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background-color: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s, background-color 0.15s, transform 0.15s;
+  font-size: 14px;
+}
+
+.bp--media-card:hover .bp--media-card__preview-button,
+.bp--media-card__preview-button:focus-visible {
+  opacity: 1;
+}
+
+.bp--media-card__preview-button:hover {
+  background-color: rgba(0, 0, 0, 0.8);
+  transform: scale(1.05);
 }
 
 .bp--media-card--upload {
@@ -172,6 +203,23 @@
 .bp--media-picker-footer-buttons {
   display: flex;
   gap: 8px;
+}
+
+.bp--media-preview-dialog {
+  display: flex;
+  flex-direction: column;
+  min-width: 90vw;
+}
+
+.bp--media-preview-dialog-body {
+  padding: 0;
+}
+
+.bp--media-preview-dialog-player {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #000;
 }
 
 .bp--upload-dialog {
