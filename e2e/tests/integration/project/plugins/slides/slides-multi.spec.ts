@@ -24,7 +24,11 @@ test.describe("Slides Plugin - Multiple Imports", () => {
       .filter({ has: page.locator("img") });
 
     // --- Upload first import (PDF) from the Landing ---
-    await page.locator("div").filter({ hasText: /^PDF$/ }).click();
+    await page.getByText("PDF", { exact: true }).click();
+    await page
+      .getByTestId("media-picker-upload-button")
+      .or(page.getByTestId("media-picker-upload-card"))
+      .click();
     await uppyUploadFile("./dummyFiles/dummySlide.pdf");
 
     // Wait until the first import has been processed
@@ -34,9 +38,10 @@ test.describe("Slides Plugin - Multiple Imports", () => {
 
     // --- Upload second import (PPTX) via the "Add slide" Slide ---
     await page.getByText("Add slide", { exact: true }).click();
+    await page.getByText("Powerpoint", { exact: true }).click();
     await page
-      .locator("div")
-      .filter({ hasText: /^Powerpoint$/ })
+      .getByTestId("media-picker-upload-button")
+      .or(page.getByTestId("media-picker-upload-card"))
       .click();
     await uppyUploadFile("./dummyFiles/dummySlide.pptx");
 
@@ -109,7 +114,11 @@ test.describe("Slides Plugin - Multiple Imports", () => {
       .filter({ has: page.locator("img") });
 
     // --- Upload first import (PDF) ---
-    await page.locator("div").filter({ hasText: /^PDF$/ }).click();
+    await page.getByText("PDF", { exact: true }).click();
+    await page
+      .getByTestId("media-picker-upload-button")
+      .or(page.getByTestId("media-picker-upload-card"))
+      .click();
     await uppyUploadFile("./dummyFiles/dummySlide.pdf");
 
     await expect(renderedSlides.first()).toBeVisible({ timeout: 20 * 1000 });
@@ -118,9 +127,10 @@ test.describe("Slides Plugin - Multiple Imports", () => {
 
     // --- Upload second import (PPTX) ---
     await page.getByText("Add slide", { exact: true }).click();
+    await page.getByText("Powerpoint", { exact: true }).click();
     await page
-      .locator("div")
-      .filter({ hasText: /^Powerpoint$/ })
+      .getByTestId("media-picker-upload-button")
+      .or(page.getByTestId("media-picker-upload-card"))
       .click();
     await uppyUploadFile("./dummyFiles/dummySlide.pptx");
 
