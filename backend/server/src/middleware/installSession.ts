@@ -29,6 +29,7 @@ if (!SECRET) {
 const MAXIMUM_SESSION_DURATION_IN_MILLISECONDS =
   parseInt(process.env.MAXIMUM_SESSION_DURATION_IN_MILLISECONDS || "", 10) ||
   3 * DAY;
+const PERSISTENT_SESSION_MAX_AGE_MS = 400 * DAY; // Browser max
 
 async function createRedisStore() {
   const client = redis.createClient({
@@ -57,6 +58,17 @@ export function getShouldPersistSession(req: Parameters<RequestHandler>[0]) {
   }
 
   return false;
+}
+
+/**
+ * Mutate the loaded session's cookie maxAge so the eventual Set-Cookie matches
+ * the persist-session preference for THIS request.
+ */
+export function applySessionMaxAge(req: Parameters<RequestHandler>[0]) {
+  if (!req.session) return;
+  req.session.cookie.maxAge = getShouldPersistSession(req)
+    ? PERSISTENT_SESSION_MAX_AGE_MS
+    : MAXIMUM_SESSION_DURATION_IN_MILLISECONDS;
 }
 
 export default async (app: Express) => {
@@ -95,7 +107,7 @@ export default async (app: Express) => {
       resave: false,
       cookie: {
         maxAge: persistent
-          ? 400 * DAY // Browser max
+          ? PERSISTENT_SESSION_MAX_AGE_MS
           : MAXIMUM_SESSION_DURATION_IN_MILLISECONDS,
         httpOnly: true, // default
         sameSite: "lax", // Cannot be 'strict' otherwise OAuth won't work.

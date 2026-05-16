@@ -4,6 +4,8 @@ import { Express } from "express";
 import * as redis from "redis";
 import { typeidUnboxed } from "typeid-js";
 
+import { applySessionMaxAge } from "./installSession";
+
 async function createRedisClient() {
   const client = redis.createClient({
     url: process.env.REDIS_URL,
@@ -122,6 +124,7 @@ export default async (app: Express) => {
       return;
     }
 
+    applySessionMaxAge(req);
     req.login(
       { session_id: value },
       { session: true, keepSessionInfo: true },
