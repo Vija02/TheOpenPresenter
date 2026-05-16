@@ -363,21 +363,21 @@ const task: Task = async (inPayload, { withPgClient }) => {
             ],
           ),
         );
+      }
 
-        // Create dependencies immediately after uploading this resolution's files
-        // Link each .ts file to the resolution's m3u8
-        for (const tsFile of tsFilesToUpload) {
-          await mediaHandler.createDependency(
-            resolutionM3u8Uuid,
-            extractMediaName(tsFile).uuid,
-          );
-        }
-
-        logger.trace(
-          { mediaId, resolution: resolutionData.title },
-          "Created media dependencies for .ts files to resolution m3u8",
+      // All .ts files and the resolution m3u8 are now uploaded, so it is
+      // safe to link each .ts file as a dependency of the m3u8.
+      for (const tsFile of tsFilesToUpload) {
+        await mediaHandler.createDependency(
+          resolutionM3u8Uuid,
+          extractMediaName(tsFile).uuid,
         );
       }
+
+      logger.trace(
+        { mediaId, resolution: resolutionData.title },
+        "Created media dependencies for .ts files to resolution m3u8",
+      );
 
       // Mark this resolution as completed
       completedResolutions.push(resolutionData.title);
