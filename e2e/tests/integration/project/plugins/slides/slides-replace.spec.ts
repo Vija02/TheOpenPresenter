@@ -27,7 +27,11 @@ test.describe("Slides Plugin - Replace Import", () => {
       page.getByTestId("slide-container").nth(i).locator("img").first();
 
     // --- Upload import A: dummySlide.pdf (2 pages: A1, A2) ---
-    await page.locator("div").filter({ hasText: /^PDF$/ }).click();
+    await page.getByText("PDF", { exact: true }).click();
+    await page
+      .getByTestId("media-picker-upload-button")
+      .or(page.getByTestId("media-picker-upload-card"))
+      .click();
     await uppyUploadFile("./dummyFiles/dummySlide.pdf");
 
     await expect(renderedSlides.first()).toBeVisible({ timeout: 20 * 1000 });
@@ -40,7 +44,11 @@ test.describe("Slides Plugin - Replace Import", () => {
 
     // --- Upload import B: dummySlide.pdf again (2 pages: B1, B2) ---
     await page.getByText("Add slide", { exact: true }).click();
-    await page.locator("div").filter({ hasText: /^PDF$/ }).click();
+    await page.getByText("PDF", { exact: true }).click();
+    await page
+      .getByTestId("media-picker-upload-button")
+      .or(page.getByTestId("media-picker-upload-card"))
+      .click();
     await uppyUploadFile("./dummyFiles/dummySlide.pdf");
 
     await expect
@@ -94,7 +102,11 @@ test.describe("Slides Plugin - Replace Import", () => {
     await firstReplaceButton.click();
 
     // Pick PDF in the replace modal and upload the new file
-    await page.locator("div").filter({ hasText: /^PDF$/ }).click();
+    await page.getByText("PDF", { exact: true }).click();
+    await page
+      .getByTestId("media-picker-upload-button")
+      .or(page.getByTestId("media-picker-upload-card"))
+      .click();
     await uppyUploadFile("./dummyFiles/dummySlide2.pdf");
 
     // --- While the replace is in progress ---

@@ -26,7 +26,13 @@ test.describe("Slides Plugin", () => {
     await expect(page.getByText("PDF")).toBeVisible();
     await expect(page.getByText("Powerpoint")).toBeVisible();
 
-    await page.locator("div").filter({ hasText: /^PDF$/ }).click();
+    await page.getByText("PDF", { exact: true }).click();
+
+    // Open the uploader from the MediaPicker (empty state or grid)
+    await page
+      .getByTestId("media-picker-upload-button")
+      .or(page.getByTestId("media-picker-upload-card"))
+      .click();
 
     // Upload the file
     await uppyUploadFile("./dummyFiles/dummySlide.pdf");
@@ -62,9 +68,12 @@ test.describe("Slides Plugin", () => {
     await expect(page.getByText("PDF")).toBeVisible();
     await expect(page.getByText("Powerpoint")).toBeVisible();
 
+    await page.getByText("Powerpoint", { exact: true }).click();
+
+    // Open the uploader from the MediaPicker (empty state or grid)
     await page
-      .locator("div")
-      .filter({ hasText: /^Powerpoint$/ })
+      .getByTestId("media-picker-upload-button")
+      .or(page.getByTestId("media-picker-upload-card"))
       .click();
 
     // Upload the file
