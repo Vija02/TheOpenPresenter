@@ -44,6 +44,8 @@ const TYPE_LABELS: Record<MediaType, { plural: string; singular: string }> = {
   video: { plural: "videos", singular: "video" },
   image: { plural: "images", singular: "image" },
   audio: { plural: "audio files", singular: "audio file" },
+  pdf: { plural: "PDFs", singular: "PDF" },
+  ppt: { plural: "PowerPoints", singular: "PowerPoint" },
 };
 
 export type MediaPickerModalProps = {
@@ -295,7 +297,7 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
                   <div className="bp--media-card__preview bp--media-card__preview--upload">
                     <VscCloudUpload className="bp--media-card__upload-icon" />
                     <span className="bp--media-card__upload-label">
-                      Upload
+                      Upload new
                     </span>
                   </div>
                 </div>

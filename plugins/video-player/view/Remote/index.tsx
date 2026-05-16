@@ -1,7 +1,6 @@
 import {
   Button,
   Input,
-  OverlayToggle,
   PluginScaffold,
   VolumeBar,
   useDisclosure,
@@ -9,12 +8,11 @@ import {
 import { Video } from "@repo/video";
 import { canPlay } from "@repo/video/client";
 import { useCallback, useState } from "react";
-import { MdCloudUpload, MdVideoLibrary } from "react-icons/md";
+import { MdVideoLibrary } from "react-icons/md";
 import "react-scrubber/lib/scrubber.css";
 import { typeidUnboxed } from "typeid-js";
 
 import { usePluginAPI } from "../pluginApi";
-import UploadVideoModal from "./UploadVideoModal";
 import VideoCard from "./VideoCard";
 import YoutubeSearchModal from "./YoutubeSearchModal";
 import "./index.css";
@@ -131,15 +129,6 @@ const VideoPlayerRemote = () => {
           <Button size="xs" variant="pill" onClick={handleMediaPicker}>
             <MdVideoLibrary /> Media Library
           </Button>
-          <OverlayToggle
-            toggler={({ onToggle }) => (
-              <Button size="xs" variant="pill" onClick={onToggle}>
-                <MdCloudUpload /> Upload video
-              </Button>
-            )}
-          >
-            <UploadVideoModal />
-          </OverlayToggle>
         </div>
       }
       body={

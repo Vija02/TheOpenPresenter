@@ -1,9 +1,5 @@
-import { appData } from "@repo/lib";
-import { useDisclosure, useOverlayToggle } from "@repo/ui";
-import Uppy from "@uppy/core";
-import { DashboardModal, useUppyEvent } from "@uppy/react";
-import Tus from "@uppy/tus";
-import { useState } from "react";
+import { useOverlayToggle } from "@repo/ui";
+import { useCallback } from "react";
 import { FaFilePdf } from "react-icons/fa";
 
 import { usePluginAPI } from "../../pluginApi";
@@ -17,55 +13,43 @@ type Props = {
 export const PDFUploadModal = ({ replaceImportId }: Props) => {
   const pluginApi = usePluginAPI();
 
-  const { open, onToggle, onClose } = useDisclosure();
   const { onToggle: onParentToggle } = useOverlayToggle();
-
-  const [uppy] = useState(() =>
-    new Uppy({
-      restrictions: { allowedFileTypes: [".pdf"] },
-    }).use(Tus, {
-      endpoint: pluginApi.media.tusUploadUrl,
-      headers: {
-        "csrf-token": appData.getCSRFToken(),
-        "organization-id": pluginApi.pluginContext.organizationId,
-        "project-id": pluginApi.pluginContext.projectId,
-        "plugin-id": pluginApi.pluginContext.pluginId,
-      },
-      chunkSize: pluginApi.env.getMediaUploadChunkSize(),
-    }),
-  );
 
   const { mutate: selectPdf, isPending } =
     trpc.slides.selectPdf.useMutation();
 
-  useUppyEvent(uppy, "upload-success", (file) => {
-    const splitted = file?.tus?.uploadUrl?.split("/");
-    const fileName = splitted?.[splitted.length - 1];
+  const handleClick = useCallback(async () => {
+    const results = await pluginApi.mediaPicker.show({
+      type: "pdf",
+      title: "Select or Upload PDF",
+      multiple: false,
+    });
+
+    const result = results?.[0];
+    if (!result) return;
 
     selectPdf({
-      mediaName: fileName ?? "",
-      name: file?.name,
+      mediaName: result.mediaName,
+      name: result.originalName ?? undefined,
       pluginId: pluginApi.pluginContext.pluginId,
       replaceImportId,
     });
-    onClose();
     onParentToggle?.();
-  });
+  }, [
+    pluginApi.mediaPicker,
+    pluginApi.pluginContext.pluginId,
+    selectPdf,
+    replaceImportId,
+    onParentToggle,
+  ]);
 
   return (
     <div className="flex justify-center flex-1">
       <PickerCard
-        onClick={onToggle}
+        onClick={handleClick}
         icon={<FaFilePdf className="size-10 text-[#F52102]" />}
         text="PDF"
         isLoading={isPending}
-      />
-      <DashboardModal
-        open={open}
-        onRequestClose={onToggle}
-        closeAfterFinish
-        closeModalOnClickOutside
-        uppy={uppy}
       />
     </div>
   );

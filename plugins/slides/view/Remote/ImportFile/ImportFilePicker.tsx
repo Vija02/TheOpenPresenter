@@ -1,4 +1,6 @@
+import { PublicAccessNoticeDialog } from "@repo/base-plugin/client";
 import { useOverlayToggle } from "@repo/ui";
+import { useState } from "react";
 import { FcGoogle } from "react-icons/fc";
 
 import { usePluginAPI } from "../../pluginApi";
@@ -15,8 +17,11 @@ type Props = {
 export const ImportFilePicker = ({ replaceImportId }: Props) => {
   const pluginApi = usePluginAPI();
   const pluginContext = pluginApi.pluginContext;
+  const isPublicAccess = pluginApi.isPublicAccess;
 
   const { onToggle } = useOverlayToggle();
+
+  const [showSlidesPublicNotice, setShowSlidesPublicNotice] = useState(false);
 
   const selectSlideMutation = trpc.slides.selectSlide.useMutation();
   return (
@@ -36,7 +41,13 @@ export const ImportFilePicker = ({ replaceImportId }: Props) => {
         {({ isLoading, openPicker }) => (
           <div className="flex justify-center flex-1">
             <PickerCard
-              onClick={openPicker}
+              onClick={() => {
+                if (isPublicAccess) {
+                  setShowSlidesPublicNotice(true);
+                  return;
+                }
+                openPicker();
+              }}
               icon={<FcGoogle className="size-10" />}
               text="Google Slides"
               isLoading={isLoading}
@@ -46,6 +57,10 @@ export const ImportFilePicker = ({ replaceImportId }: Props) => {
       </SlidePicker>
       <PDFUploadModal replaceImportId={replaceImportId} />
       <PPTUploadModal replaceImportId={replaceImportId} />
+      <PublicAccessNoticeDialog
+        isOpen={showSlidesPublicNotice}
+        onClose={() => setShowSlidesPublicNotice(false)}
+      />
     </div>
   );
 };

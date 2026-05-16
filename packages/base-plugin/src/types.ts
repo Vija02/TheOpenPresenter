@@ -126,6 +126,7 @@ export type MiscProps = {
   logger: Logger;
   parentContainer: HTMLElement | null;
   derivation?: DerivationConfig | null;
+  isPublicAccess: boolean;
 };
 
 export type WebComponentProps<TrpcClient> = {
@@ -173,7 +174,7 @@ export type MediaHandler = {
   unlinkMediaFromPlugin: (mediaKey: string | null) => Promise<any>;
 };
 
-export type MediaType = "video" | "image" | "audio" | "all";
+export type MediaType = "video" | "image" | "audio" | "pdf" | "ppt" | "all";
 
 export type MediaPickerOptions = {
   type?: MediaType;
