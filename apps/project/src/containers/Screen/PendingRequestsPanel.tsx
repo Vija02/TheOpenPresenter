@@ -162,18 +162,15 @@ const PendingRequestRow = ({
     return new Date(req.createdAt).getTime() + after * 1000;
   }, [
     req.requestType,
-    req.createdAt,
+    req.screen,
     req.screenGuestSession?.kind,
-    req.screen?.anonGuestOnTakeoverPolicy,
-    req.screen?.anonGuestOnTakeoverAfterSeconds,
-    req.screen?.registeredGuestOnTakeoverPolicy,
-    req.screen?.registeredGuestOnTakeoverAfterSeconds,
+    req.createdAt,
   ]);
 
   const remainingSeconds = useTickingRemainingSeconds(autoApproveAtMs);
 
   return (
-    <div className="flex items-center justify-between gap-3 bg-white rounded border border-amber-200 p-3">
+    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 bg-white rounded border border-amber-200 p-3">
       <div className="min-w-0">
         <p className="font-medium">
           {req.screenGuestSession?.displayName ?? "Anonymous guest"}
