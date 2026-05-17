@@ -35,6 +35,8 @@ const QRLoginModal = ({ next, persistSession }: QRLoginModalPropTypes) => {
               setQRId(data.id);
             }
             if (data.done) {
+              controller.abort();
+
               const persistSessionParam = persistSession
                 ? "&persist-session=1"
                 : "";
@@ -69,6 +71,10 @@ const QRLoginModal = ({ next, persistSession }: QRLoginModalPropTypes) => {
                   className="h-auto max-w-full w-full max-h-[256px]"
                   value={`${window.location.origin}/qr-auth/auth?id=${qrId}`}
                 />
+                {/* Hidden URL */}
+                <span hidden data-testid="qrlogin-auth-url">
+                  {`${window.location.origin}/qr-auth/auth?id=${qrId}`}
+                </span>
               </div>
             )}
           </div>

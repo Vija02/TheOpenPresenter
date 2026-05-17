@@ -9,6 +9,7 @@ import { Middleware, PostGraphileOptions, makePluginHook } from "postgraphile";
 import ConnectionFilterPlugin from "postgraphile-plugin-connection-filter";
 import { makePgSmartTagsFromFilePlugin } from "postgraphile/plugins";
 
+import { applySessionMaxAge } from "./middleware/installSession";
 import APIPlugin from "./plugins/APIPlugin";
 import OrdersPlugin from "./plugins/Orders";
 import PassportLoginPlugin from "./plugins/PassportLoginPlugin";
@@ -304,6 +305,7 @@ export function getPostGraphileOptions({
         // Use this to tell Passport.js we're logged in
         login: (user: any) =>
           new Promise<void>((resolve, reject) => {
+            applySessionMaxAge(req);
             req.login(user, { session: true, keepSessionInfo: true }, (err) =>
               err ? reject(err) : resolve(),
             );

@@ -2,7 +2,7 @@ import { Express, Request, RequestHandler } from "express";
 import passport from "passport";
 
 import { getRootPgPool } from "./installDatabasePools";
-import { getShouldPersistSession } from "./installSession";
+import { applySessionMaxAge, getShouldPersistSession } from "./installSession";
 
 interface DbSession {
   uuid: string;
@@ -156,6 +156,7 @@ export default (
               code: "FFFFF",
             });
           }
+          applySessionMaxAge(req);
           req.login(
             { session_id: session.uuid },
             { session: true, keepSessionInfo: true },

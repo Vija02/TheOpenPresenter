@@ -60,6 +60,7 @@ export function SocialLoginOptions({
             <div
               className="cursor-pointer flex-1 hover:bg-gray-100 transition-colors"
               onClick={onToggle}
+              data-testid="loginpage-qr-button"
             >
               <div className="border border-gray-600 rounded-sm p-2">
                 <div className="center">
