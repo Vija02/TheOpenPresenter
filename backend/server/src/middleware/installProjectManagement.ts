@@ -13,6 +13,8 @@ const paths = [
   "/invitations",
   "/o",
   "/org",
+  "/setup",
+  "/qr",
   "/settings",
   "/forgot",
   "/login",

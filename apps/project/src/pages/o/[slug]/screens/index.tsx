@@ -1,18 +1,14 @@
 import { SharedOrgLayout } from "@/components/SharedOrgLayout";
+import CreateScreenModal from "@/containers/Screen/CreateScreenModal";
 import { PendingRequestsPanel } from "@/containers/Screen/PendingRequestsPanel";
 import { useOrganizationSlug } from "@/lib/permissionHooks/organization";
 import {
   ScreenFragment,
-  useCreateScreenMutation,
   useOrganizationScreensIndexPageQuery,
 } from "@repo/graphql";
-import { extractError, globalState } from "@repo/lib";
-import { Alert, Badge, Button, Input, Link } from "@repo/ui";
-import { useCallback, useState } from "react";
+import { Alert, Button, Link, OverlayToggle } from "@repo/ui";
 import { FaPlus } from "react-icons/fa";
 import { VscChevronRight } from "react-icons/vsc";
-import { toast } from "react-toastify";
-import slugify from "slugify";
 import { Link as WouterLink } from "wouter";
 
 const OrganizationScreensPage = () => {
@@ -22,119 +18,79 @@ const OrganizationScreensPage = () => {
   });
   const { data } = query[0];
 
-  const { publish } = globalState.modelDataAccess.usePublishAPIChanges({
-    token: "page",
-  });
-
-  const [, createScreen] = useCreateScreenMutation();
-
-  const [newName, setNewName] = useState("");
-  const [newSlug, setNewSlug] = useState("");
-  const [error, setError] = useState<Error | null>(null);
-
   const organizationId = data?.organizationBySlug?.id;
   const screens = data?.organizationBySlug?.screens.nodes ?? [];
 
-  const onCreate = useCallback(async () => {
-    if (!organizationId || !newName.trim()) return;
-    setError(null);
-    try {
-      const slug = newSlug.trim()
-        ? slugify(newSlug, {
-            lower: true,
-          })
-        : slugify(newName, {
-            lower: true,
-          });
-      await createScreen({
-        organizationId,
-        name: newName.trim(),
-        slug,
-      });
-      setNewName("");
-      setNewSlug("");
-      publish();
-      toast.success("Screen created");
-    } catch (e: any) {
-      setError(e);
-    }
-  }, [organizationId, newName, newSlug, createScreen, publish]);
-
   return (
     <SharedOrgLayout title="Screens" sharedOrgQuery={query}>
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-6">
-          <div className="flex items-center gap-2 mb-1">
-            <h1 className="text-2xl font-bold">Screens</h1>
-          </div>
-          <p className="text-secondary mb-3">
-            Persistent displays in your organization. Set up the device once
-            with the screen URL. Then, assign any project here and it will
-            switch automatically.
-          </p>
-          <Alert
-            variant="default"
-            size="sm"
-            title="Screens are a beta feature"
-            subtitle="Behaviour and settings may change. Please report any issues you run into."
-            className="mb-4"
-          />
-          <div className="mt-3">
-            <Link asChild>
-              <WouterLink href={`/o/${orgSlug}/screens/guests`}>
-                Manage registered guests
-                <VscChevronRight />
-              </WouterLink>
-            </Link>
-          </div>
-        </div>
-
-        {error && (
-          <Alert variant="destructive" title="Error" className="mb-4">
-            {extractError(error).message}
-          </Alert>
-        )}
-
-        {organizationId && (
-          <div className="mb-6">
-            <PendingRequestsPanel organizationId={organizationId} />
-          </div>
-        )}
-
-        <div className="border border-stroke rounded p-4 mb-6">
-          <h2 className="text-lg font-medium mb-3">Add a screen</h2>
-          <div className="flex flex-col md:flex-row gap-2">
-            <Input
-              placeholder="Name (e.g. Main Auditorium)"
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              className="flex-1"
-            />
-            <Input
-              placeholder="Slug (auto if blank)"
-              value={newSlug}
-              onChange={(e) => setNewSlug(e.target.value)}
-              className="md:w-64"
-            />
-            <Button
-              variant="success"
-              onClick={onCreate}
-              disabled={!newName.trim()}
+      <Alert
+        variant="default"
+        size="sm"
+        title="Screens are a beta feature"
+        subtitle="Behaviour and settings may change. Please report any issues you run into."
+        className="mb-2"
+      />
+      <div className="flex items-center justify-between mb-3">
+        <h1 className="text-2xl font-bold mb-0">Screens</h1>
+        <div className="stack-row">
+          {organizationId && (
+            <OverlayToggle
+              toggler={({ onToggle }) => (
+                <Button variant="success" size="sm" onClick={onToggle}>
+                  <FaPlus />
+                  New
+                </Button>
+              )}
             >
-              <FaPlus />
-              Create
-            </Button>
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          {screens.length === 0 && (
-            <p className="text-secondary text-sm">No screens yet.</p>
+              <CreateScreenModal organizationId={organizationId} />
+            </OverlayToggle>
           )}
-          {screens.map((screen) => (
-            <ScreenRow key={screen.id} screen={screen} orgSlug={orgSlug} />
-          ))}
         </div>
+      </div>
+
+      <div className="mb-6">
+        <p className="text-secondary mb-3">
+          Persistent displays in your organization. Set up the device once with
+          the screen URL. Then, assign any project here and it will switch
+          automatically.
+        </p>
+        <div className="mt-3">
+          <Link asChild>
+            <WouterLink href={`/o/${orgSlug}/screens/guests`}>
+              Manage registered guests
+              <VscChevronRight />
+            </WouterLink>
+          </Link>
+        </div>
+      </div>
+
+      {organizationId && (
+        <div className="mb-6">
+          <PendingRequestsPanel organizationId={organizationId} />
+        </div>
+      )}
+
+      <div className="space-y-3 mb-6">
+        {screens.length === 0 && (
+          <div className="border border-dashed border-stroke rounded p-6 text-center">
+            <p className="text-secondary mb-3">No screens yet.</p>
+            {organizationId && (
+              <OverlayToggle
+                toggler={({ onToggle }) => (
+                  <Button variant="success" onClick={onToggle}>
+                    <FaPlus />
+                    New screen
+                  </Button>
+                )}
+              >
+                <CreateScreenModal organizationId={organizationId} />
+              </OverlayToggle>
+            )}
+          </div>
+        )}
+        {screens.map((screen) => (
+          <ScreenRow key={screen.id} screen={screen} orgSlug={orgSlug} />
+        ))}
       </div>
     </SharedOrgLayout>
   );

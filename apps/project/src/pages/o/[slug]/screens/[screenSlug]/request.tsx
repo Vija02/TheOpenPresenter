@@ -19,7 +19,9 @@ import { toast } from "react-toastify";
 import { CombinedError } from "urql";
 import { useParams } from "wouter";
 
-type RequestPageQuery = ReturnType<typeof useOrganizationScreenRequestPageQuery>;
+type RequestPageQuery = ReturnType<
+  typeof useOrganizationScreenRequestPageQuery
+>;
 
 const OrganizationSlugScreenRequestPage = () => {
   const orgSlug = useOrganizationSlug();
@@ -164,7 +166,7 @@ const RequestPageInner = ({
   initialPendingRequest,
 }: RequestPageInnerPropTypes) => {
   return (
-    <div className="max-w-4xl mx-auto p-4">
+    <>
       <ControlPageHeader
         screenName={screen.name ?? ""}
         isMember={isMember}
@@ -177,7 +179,7 @@ const RequestPageInner = ({
         refetch={refetch}
         initialPendingRequest={initialPendingRequest}
       />
-    </div>
+    </>
   );
 };
 

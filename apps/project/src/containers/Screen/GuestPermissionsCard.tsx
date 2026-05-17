@@ -99,7 +99,19 @@ export const GuestPermissionsCard = ({
         it from someone who already does. Org members always have full access.
       </p>
 
-      <div className="overflow-x-auto">
+      {/* Mobile: stacked per-role sections */}
+      <div className="md:hidden space-y-4">
+        {columns.map((col) => (
+          <RoleSection
+            key={col.key}
+            column={col}
+            onUpdate={onUpdate}
+          />
+        ))}
+      </div>
+
+      {/* md+: table layout */}
+      <div className="hidden md:block overflow-x-auto">
         <table className="w-full border-collapse text-sm">
           <thead>
             <tr className="text-left text-secondary align-top">
@@ -205,6 +217,88 @@ export const GuestPermissionsCard = ({
             </tr>
           </tbody>
         </table>
+      </div>
+    </div>
+  );
+};
+
+const RoleSection = ({
+  column: col,
+  onUpdate,
+}: {
+  column: RoleColumn;
+  onUpdate: (patch: GuestAccessPatch) => void;
+}) => {
+  const disabled = !col.enabled;
+  return (
+    <div className="border border-stroke rounded p-3">
+      <div className="flex items-center justify-between gap-2">
+        <span className="font-medium">{col.label}</span>
+        <Switch
+          checked={col.enabled}
+          onCheckedChange={(next) => {
+            if (next === col.enabled) return;
+            onUpdate(col.patchEnabled(next));
+          }}
+        />
+      </div>
+      <p className="text-xs text-tertiary mt-1">{col.description}</p>
+
+      <div className="mt-3 space-y-3">
+        <div>
+          <p className="text-sm font-medium">Nobody in control</p>
+          <p className="text-xs text-tertiary mb-1">
+            Taking control of the screen when no one else is.
+          </p>
+          <Select
+            value={
+              onEmptyOptions.find((o) => o.value === col.onEmptyPolicy) ?? null
+            }
+            options={onEmptyOptions}
+            isSearchable={false}
+            isClearable={false}
+            isDisabled={disabled}
+            onChange={(opt) => {
+              if (opt) onUpdate(col.patchOnEmpty(opt.value));
+            }}
+          />
+        </div>
+
+        <div>
+          <p className="text-sm font-medium">Take over</p>
+          <p className="text-xs text-tertiary mb-1">
+            Taking control from someone who is already controlling the screen.
+          </p>
+          <Select
+            value={
+              onTakeoverOptions.find(
+                (o) => o.value === col.onTakeoverPolicy,
+              ) ?? null
+            }
+            options={onTakeoverOptions}
+            isSearchable={false}
+            isClearable={false}
+            isDisabled={disabled}
+            onChange={(opt) => {
+              if (opt) onUpdate(col.patchOnTakeover(opt.value));
+            }}
+          />
+          {col.onTakeoverPolicy === ScreenOnTakeoverPolicy.Timer && (
+            <NumberInput
+              value={col.onTakeoverAfterSeconds ?? undefined}
+              min={1}
+              step={1}
+              precision={0}
+              formatValue={formatSeconds}
+              parseValue={parseSeconds}
+              disabled={disabled}
+              className="mt-2 w-full"
+              onChange={(v) =>
+                onUpdate(col.patchOnTakeoverSeconds(v ?? null))
+              }
+            />
+          )}
+        </div>
       </div>
     </div>
   );

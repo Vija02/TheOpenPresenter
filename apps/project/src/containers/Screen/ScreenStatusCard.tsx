@@ -86,7 +86,7 @@ export const ScreenStatusCard = ({
 
   return (
     <div className="border border-stroke rounded p-4">
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
         <div className="flex items-start gap-2 min-w-0">
           <span
             className={[
@@ -155,7 +155,7 @@ export const ScreenStatusCard = ({
             )}
           </div>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center flex-wrap gap-2 md:shrink-0">
           {activeController ? (
             <Button variant="outline" size="sm" onClick={onRelease}>
               <VscChromeClose />
@@ -187,7 +187,7 @@ export const ScreenStatusCard = ({
       </div>
 
       <div className="mt-4 border-t border-stroke pt-3">
-        <div className="flex items-center justify-between gap-2 mb-2">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
           <p className="text-xs uppercase tracking-wide text-tertiary">
             Quick select
           </p>

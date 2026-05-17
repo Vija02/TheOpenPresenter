@@ -61,25 +61,23 @@ const OrganizationSlugScreenDetailPage = () => {
       title={screen ? screen.name : "Screen"}
       sharedOrgQuery={query}
     >
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-4">
-          <Link asChild>
-            <WouterLink href={`/o/${orgSlug}/screens`}>
-              <VscArrowLeft />
-              Back to screens
-            </WouterLink>
-          </Link>
-        </div>
-
-        {screen && (
-          <ScreenAdminInner
-            orgSlug={orgSlug}
-            screenSlug={screenSlug}
-            screen={screen}
-            query={query}
-          />
-        )}
+      <div className="mb-4">
+        <Link asChild>
+          <WouterLink href={`/o/${orgSlug}/screens`}>
+            <VscArrowLeft />
+            Back to screens
+          </WouterLink>
+        </Link>
       </div>
+
+      {screen && (
+        <ScreenAdminInner
+          orgSlug={orgSlug}
+          screenSlug={screenSlug}
+          screen={screen}
+          query={query}
+        />
+      )}
     </SharedOrgLayout>
   );
 };
@@ -192,9 +190,11 @@ const ScreenAdminInner = ({
 
   return (
     <>
-      <div className="mb-6 flex items-start justify-between gap-3">
+      <div className="mb-6 flex flex-col md:flex-row md:items-start md:justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="text-2xl font-bold truncate">{screen.name}</h1>
+          <h1 className="text-2xl font-bold break-words md:truncate">
+            {screen.name}
+          </h1>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <OverlayToggle
@@ -237,7 +237,7 @@ const ScreenAdminInner = ({
 
         <h2 className="text-lg font-semibold pt-8">Danger zone</h2>
         <div className="border border-fill-destructive/50 rounded">
-          <div className="flex items-center justify-between gap-4 p-4">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4 p-4">
             <div className="min-w-0">
               <p className="font-semibold">Delete this screen</p>
               <p className="text-sm text-secondary">
@@ -252,7 +252,7 @@ const ScreenAdminInner = ({
               okButtonProps={{ variant: "destructive" }}
               onConfirm={onDelete}
             >
-              <Button variant="destructive" size="sm">
+              <Button variant="destructive" size="sm" className="self-start md:self-auto shrink-0">
                 <VscTrash />
                 Delete screen
               </Button>
