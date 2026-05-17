@@ -35,6 +35,8 @@ const QRLoginModal = ({ next, persistSession }: QRLoginModalPropTypes) => {
               setQRId(data.id);
             }
             if (data.done) {
+              controller.abort();
+
               const persistSessionParam = persistSession
                 ? "&persist-session=1"
                 : "";
