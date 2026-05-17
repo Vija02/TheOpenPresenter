@@ -78,6 +78,7 @@ test.describe("Login remember-me cookie expiry", () => {
     browser,
     page,
   }) => {
+    test.skip(!!process.env.PLAYWRIGHT_TAURI, "Skipped in Tauri E2E tests");
     await runQrLoginUiFlow({ browser, page, rememberMe: true });
 
     const session = (await page.context().cookies()).find(
@@ -93,6 +94,7 @@ test.describe("Login remember-me cookie expiry", () => {
     browser,
     page,
   }) => {
+    test.skip(!!process.env.PLAYWRIGHT_TAURI, "Skipped in Tauri E2E tests");
     await runQrLoginUiFlow({ browser, page, rememberMe: false });
 
     const session = (await page.context().cookies()).find(
