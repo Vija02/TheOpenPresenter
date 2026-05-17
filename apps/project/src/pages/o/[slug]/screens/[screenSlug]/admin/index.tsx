@@ -61,25 +61,23 @@ const OrganizationSlugScreenDetailPage = () => {
       title={screen ? screen.name : "Screen"}
       sharedOrgQuery={query}
     >
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-4">
-          <Link asChild>
-            <WouterLink href={`/o/${orgSlug}/screens`}>
-              <VscArrowLeft />
-              Back to screens
-            </WouterLink>
-          </Link>
-        </div>
-
-        {screen && (
-          <ScreenAdminInner
-            orgSlug={orgSlug}
-            screenSlug={screenSlug}
-            screen={screen}
-            query={query}
-          />
-        )}
+      <div className="mb-4">
+        <Link asChild>
+          <WouterLink href={`/o/${orgSlug}/screens`}>
+            <VscArrowLeft />
+            Back to screens
+          </WouterLink>
+        </Link>
       </div>
+
+      {screen && (
+        <ScreenAdminInner
+          orgSlug={orgSlug}
+          screenSlug={screenSlug}
+          screen={screen}
+          query={query}
+        />
+      )}
     </SharedOrgLayout>
   );
 };

@@ -62,79 +62,77 @@ const OrganizationScreensPage = () => {
 
   return (
     <SharedOrgLayout title="Screens" sharedOrgQuery={query}>
-      <div className="max-w-4xl mx-auto">
+      <div className="mb-6">
+        <div className="flex items-center gap-2 mb-1">
+          <h1 className="text-2xl font-bold">Screens</h1>
+        </div>
+        <p className="text-secondary mb-3">
+          Persistent displays in your organization. Set up the device once with
+          the screen URL. Then, assign any project here and it will switch
+          automatically.
+        </p>
+        <Alert
+          variant="default"
+          size="sm"
+          title="Screens are a beta feature"
+          subtitle="Behaviour and settings may change. Please report any issues you run into."
+          className="mb-4"
+        />
+        <div className="mt-3">
+          <Link asChild>
+            <WouterLink href={`/o/${orgSlug}/screens/guests`}>
+              Manage registered guests
+              <VscChevronRight />
+            </WouterLink>
+          </Link>
+        </div>
+      </div>
+
+      {error && (
+        <Alert variant="destructive" title="Error" className="mb-4">
+          {extractError(error).message}
+        </Alert>
+      )}
+
+      {organizationId && (
         <div className="mb-6">
-          <div className="flex items-center gap-2 mb-1">
-            <h1 className="text-2xl font-bold">Screens</h1>
-          </div>
-          <p className="text-secondary mb-3">
-            Persistent displays in your organization. Set up the device once
-            with the screen URL. Then, assign any project here and it will
-            switch automatically.
-          </p>
-          <Alert
-            variant="default"
-            size="sm"
-            title="Screens are a beta feature"
-            subtitle="Behaviour and settings may change. Please report any issues you run into."
-            className="mb-4"
+          <PendingRequestsPanel organizationId={organizationId} />
+        </div>
+      )}
+
+      <div className="border border-stroke rounded p-4 mb-6">
+        <h2 className="text-lg font-medium mb-3">Add a screen</h2>
+        <div className="flex flex-col md:flex-row gap-2">
+          <Input
+            placeholder="Name (e.g. Main Auditorium)"
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            className="flex-1"
           />
-          <div className="mt-3">
-            <Link asChild>
-              <WouterLink href={`/o/${orgSlug}/screens/guests`}>
-                Manage registered guests
-                <VscChevronRight />
-              </WouterLink>
-            </Link>
-          </div>
+          <Input
+            placeholder="Slug (auto if blank)"
+            value={newSlug}
+            onChange={(e) => setNewSlug(e.target.value)}
+            className="md:w-64"
+          />
+          <Button
+            variant="success"
+            onClick={onCreate}
+            disabled={!newName.trim()}
+          >
+            <FaPlus />
+            Create
+          </Button>
         </div>
+      </div>
 
-        {error && (
-          <Alert variant="destructive" title="Error" className="mb-4">
-            {extractError(error).message}
-          </Alert>
+      <div className="space-y-3">
+        {screens.length === 0 && (
+          <p className="text-secondary text-sm">No screens yet.</p>
         )}
-
-        {organizationId && (
-          <div className="mb-6">
-            <PendingRequestsPanel organizationId={organizationId} />
-          </div>
-        )}
-
-        <div className="border border-stroke rounded p-4 mb-6">
-          <h2 className="text-lg font-medium mb-3">Add a screen</h2>
-          <div className="flex flex-col md:flex-row gap-2">
-            <Input
-              placeholder="Name (e.g. Main Auditorium)"
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              className="flex-1"
-            />
-            <Input
-              placeholder="Slug (auto if blank)"
-              value={newSlug}
-              onChange={(e) => setNewSlug(e.target.value)}
-              className="md:w-64"
-            />
-            <Button
-              variant="success"
-              onClick={onCreate}
-              disabled={!newName.trim()}
-            >
-              <FaPlus />
-              Create
-            </Button>
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          {screens.length === 0 && (
-            <p className="text-secondary text-sm">No screens yet.</p>
-          )}
-          {screens.map((screen) => (
-            <ScreenRow key={screen.id} screen={screen} orgSlug={orgSlug} />
-          ))}
-        </div>
+        {screens.map((screen) => (
+          <ScreenRow key={screen.id} screen={screen} orgSlug={orgSlug} />
+        ))}
       </div>
     </SharedOrgLayout>
   );

@@ -60,80 +60,78 @@ const OrganizationGuestsPage = () => {
 
   return (
     <SharedOrgLayout title="Guest access" sharedOrgQuery={query}>
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-4">
-          <Link asChild>
-            <WouterLink href={`/o/${orgSlug}/screens`}>
-              <VscArrowLeft />
-              Back to screens
-            </WouterLink>
-          </Link>
-        </div>
+      <div className="mb-4">
+        <Link asChild>
+          <WouterLink href={`/o/${orgSlug}/screens`}>
+            <VscArrowLeft />
+            Back to screens
+          </WouterLink>
+        </Link>
+      </div>
 
+      <div className="mb-6">
+        <div className="flex items-center gap-2 mb-1">
+          <h1 className="text-2xl font-bold">Registered guests</h1>
+        </div>
+        <p className="text-secondary">
+          People who can authenticate at a screen with a passcode or just their
+          email. Each entry unlocks access on screens whose access policy allows
+          registered guests.
+        </p>
+      </div>
+
+      {error && (
+        <Alert variant="destructive" title="Error" className="mb-4">
+          {extractError(error).message}
+        </Alert>
+      )}
+
+      {organizationId && (
         <div className="mb-6">
-          <div className="flex items-center gap-2 mb-1">
-            <h1 className="text-2xl font-bold">Registered guests</h1>
-          </div>
-          <p className="text-secondary">
-            People who can authenticate at a screen with a passcode or just
-            their email. Each entry unlocks access on screens whose access
-            policy allows registered guests.
-          </p>
+          <PendingRequestsPanel organizationId={organizationId} />
         </div>
+      )}
 
-        {error && (
-          <Alert variant="destructive" title="Error" className="mb-4">
-            {extractError(error).message}
-          </Alert>
+      <div className="border border-stroke rounded p-4 mb-6">
+        <h2 className="text-lg font-medium mb-3">Add a guest</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+          <Input
+            placeholder="Name"
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+          />
+          <Input
+            placeholder="Passcode (min 4 chars)"
+            value={newPasscode}
+            type="text"
+            onChange={(e) => setNewPasscode(e.target.value)}
+          />
+          <Input
+            placeholder="Email (optional)"
+            value={newEmail}
+            type="email"
+            onChange={(e) => setNewEmail(e.target.value)}
+          />
+        </div>
+        <div className="mt-3">
+          <Button
+            variant="success"
+            onClick={onCreate}
+            disabled={!newName.trim() || newPasscode.length < 4}
+          >
+            <FaPlus />
+            Add guest
+          </Button>
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        {entries.length === 0 && (
+          <p className="text-secondary text-sm">No registered guests yet.</p>
         )}
-
-        {organizationId && (
-          <div className="mb-6">
-            <PendingRequestsPanel organizationId={organizationId} />
-          </div>
-        )}
-
-        <div className="border border-stroke rounded p-4 mb-6">
-          <h2 className="text-lg font-medium mb-3">Add a guest</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-            <Input
-              placeholder="Name"
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-            />
-            <Input
-              placeholder="Passcode (min 4 chars)"
-              value={newPasscode}
-              type="text"
-              onChange={(e) => setNewPasscode(e.target.value)}
-            />
-            <Input
-              placeholder="Email (optional)"
-              value={newEmail}
-              type="email"
-              onChange={(e) => setNewEmail(e.target.value)}
-            />
-          </div>
-          <div className="mt-3">
-            <Button
-              variant="success"
-              onClick={onCreate}
-              disabled={!newName.trim() || newPasscode.length < 4}
-            >
-              <FaPlus />
-              Add guest
-            </Button>
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          {entries.length === 0 && (
-            <p className="text-secondary text-sm">No registered guests yet.</p>
-          )}
-          {entries.map((entry) => (
-            <GuestRow key={entry.id} entry={entry} />
-          ))}
-        </div>
+        {entries.map((entry) => (
+          <GuestRow key={entry.id} entry={entry} />
+        ))}
       </div>
     </SharedOrgLayout>
   );

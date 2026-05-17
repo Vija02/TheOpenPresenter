@@ -32,23 +32,19 @@ const OrganizationSlugScreenEndedPage = () => {
       query={query}
       forbidWhen={AuthRestrict.NEVER}
     >
-      <div className="max-w-md mx-auto p-4">
-        <div className="mb-4">
-          <p className="text-sm text-tertiary uppercase tracking-wide">
-            Screen control
-          </p>
-          <h1 className="text-2xl font-bold">
-            {screenName ?? "Session ended"}
-          </h1>
-        </div>
-        <Alert variant="default" title="Your session has ended">
-          You no longer control this screen. To request control again,{" "}
-          <Link href={loginHref} className="underline">
-            sign back in
-          </Link>
-          .
-        </Alert>
+      <div className="mb-4">
+        <p className="text-sm text-tertiary uppercase tracking-wide">
+          Screen control
+        </p>
+        <h1 className="text-2xl font-bold">{screenName ?? "Session ended"}</h1>
       </div>
+      <Alert variant="default" title="Your session has ended">
+        You no longer control this screen. To request control again,{" "}
+        <Link href={loginHref} className="underline">
+          sign back in
+        </Link>
+        .
+      </Alert>
     </SharedLayout>
   );
 };

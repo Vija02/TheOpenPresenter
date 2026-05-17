@@ -150,7 +150,7 @@ const ControlPageInner = ({
   )}`;
 
   return (
-    <div className="max-w-4xl mx-auto p-4">
+    <>
       <ControlPageHeader
         screenName={screen.name ?? ""}
         isMember={isMember}
@@ -232,7 +232,7 @@ const ControlPageInner = ({
           )}
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

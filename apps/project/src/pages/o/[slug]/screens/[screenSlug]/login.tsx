@@ -72,65 +72,61 @@ const OrganizationSlugScreenLoginPage = () => {
         query={query}
         forbidWhen={AuthRestrict.NEVER}
       >
-        <div className="max-w-md mx-auto p-4">
-          <Alert variant="destructive" title="Screen not available">
-            This screen either doesn't exist or isn't accessible without an
-            admin account. If you have an account,{" "}
-            <Link
-              href={`/login?next=${encodeURIComponent(`/o/${orgSlug}/screens/${screenSlug}/admin`)}`}
-              className="underline"
-            >
-              sign in
-            </Link>
-            .
-          </Alert>
-        </div>
+        <Alert variant="destructive" title="Screen not available">
+          This screen either doesn't exist or isn't accessible without an admin
+          account. If you have an account,{" "}
+          <Link
+            href={`/login?next=${encodeURIComponent(`/o/${orgSlug}/screens/${screenSlug}/admin`)}`}
+            className="underline"
+          >
+            sign in
+          </Link>
+          .
+        </Alert>
       </SharedLayout>
     );
   }
 
   return (
     <SharedLayout title="Sign in" query={query} forbidWhen={AuthRestrict.NEVER}>
-      <div className="max-w-md mx-auto p-4">
-        <div className="mb-4">
-          <p className="text-sm text-tertiary uppercase tracking-wide">
-            Screen control
-          </p>
-          <h1 className="text-2xl font-bold">{orgName ?? "Sign in"}</h1>
-        </div>
-        {organizationId && meta?.screenId && (
-          <GuestLoginForm
-            screenId={meta.screenId}
-            allowsAnon={meta?.allowsAnon ?? false}
-            allowsRegistered={meta?.allowsRegistered ?? false}
-            onLoggedIn={() => setLocation(requestHref, { replace: true })}
-          />
-        )}
-        {wrongAccount && (
-          <p className="mt-3 text-xs text-secondary text-center">
-            Admin of {orgName ?? "this organization"}?{" "}
-            <Link
-              href={`/logout?next=${encodeURIComponent(loginHref)}`}
-              className="underline"
-            >
-              Switch accounts
-            </Link>
-            .
-          </p>
-        )}
-        {!currentUserId && (
-          <p className="mt-3 text-xs text-secondary text-center">
-            Admin of {orgName ?? "this organization"}?{" "}
-            <Link
-              href={`/login?next=${encodeURIComponent(loginHref)}`}
-              className="underline"
-            >
-              Sign in
-            </Link>
-            .
-          </p>
-        )}
+      <div className="mb-4">
+        <p className="text-sm text-tertiary uppercase tracking-wide">
+          Screen control
+        </p>
+        <h1 className="text-2xl font-bold">{orgName ?? "Sign in"}</h1>
       </div>
+      {organizationId && meta?.screenId && (
+        <GuestLoginForm
+          screenId={meta.screenId}
+          allowsAnon={meta?.allowsAnon ?? false}
+          allowsRegistered={meta?.allowsRegistered ?? false}
+          onLoggedIn={() => setLocation(requestHref, { replace: true })}
+        />
+      )}
+      {wrongAccount && (
+        <p className="mt-3 text-xs text-secondary text-center">
+          Admin of {orgName ?? "this organization"}?{" "}
+          <Link
+            href={`/logout?next=${encodeURIComponent(loginHref)}`}
+            className="underline"
+          >
+            Switch accounts
+          </Link>
+          .
+        </p>
+      )}
+      {!currentUserId && (
+        <p className="mt-3 text-xs text-secondary text-center">
+          Admin of {orgName ?? "this organization"}?{" "}
+          <Link
+            href={`/login?next=${encodeURIComponent(loginHref)}`}
+            className="underline"
+          >
+            Sign in
+          </Link>
+          .
+        </p>
+      )}
     </SharedLayout>
   );
 };
@@ -184,9 +180,7 @@ const GuestLoginForm = ({
         mode === "passcode"
           ? "Incorrect email or passcode."
           : "Couldn't start a guest session.";
-      setError(
-        err.graphQLErrors?.[0]?.message ?? err.message ?? fallback,
-      );
+      setError(err.graphQLErrors?.[0]?.message ?? err.message ?? fallback);
     } finally {
       setSubmitting(false);
     }
