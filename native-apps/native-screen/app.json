@@ -1,0 +1,54 @@
+{
+  "expo": {
+    "plugins": [
+      [
+        "@react-native-tvos/config-tv",
+        {
+          "androidTVBanner": "./assets/images/icon-1280x720.png",
+          "androidTVIcon": "./assets/images/icon-512x512.png",
+          "appleTVImages": {
+            "icon": "./assets/images/icon-1280x768.png",
+            "iconSmall": "./assets/images/icon-400x240.png",
+            "iconSmall2x": "./assets/images/icon-800x480.png",
+            "topShelf": "./assets/images/icon-1920x720.png",
+            "topShelf2x": "./assets/images/icon-3840x1440.png",
+            "topShelfWide": "./assets/images/icon-2320x720.png",
+            "topShelfWide2x": "./assets/images/icon-4640x1440.png"
+          }
+        }
+      ],
+      "expo-router",
+      "./plugins/withCleartextTraffic.js",
+      "expo-font",
+      "expo-web-browser"
+    ],
+    "orientation": "landscape",
+    "icon": "./assets/images/icon.png",
+    "scheme": "theopenpresenter",
+    "name": "TheOpenPresenter",
+    "slug": "TheOpenPresenter",
+    "android": {
+      "package": "com.vija02.TheOpenPresenter",
+      "splash": {
+        "image": "./assets/images/icon-1920x720.png"
+      }
+    },
+    "ios": {
+      "bundleIdentifier": "com.vija02.TheOpenPresenter",
+      "splash": {
+        "image": "./assets/images/icon-1920x720.png"
+      }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "09bdb3b3-3908-4a18-8150-67162c608b16"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/09bdb3b3-3908-4a18-8150-67162c608b16"
+    }
+  }
+}
