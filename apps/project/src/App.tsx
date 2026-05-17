@@ -28,12 +28,14 @@ import OrgCreateOrganizationPage from "./pages/org/create-organization";
 import OrgJoinOrganizationPage from "./pages/org/join-organization";
 import OrgJoinOrganizationAcceptPage from "./pages/org/join-organization/accept";
 import OrgOverviewPage from "./pages/org/overview";
+import QrScreenSelectPage from "./pages/qr/screen-select";
 import RegisterPage from "./pages/register";
 import ResetPage from "./pages/reset";
 import SettingsDeletePage from "./pages/settings/delete";
 import SettingsEmailsPage from "./pages/settings/emails";
 import SettingsProfilePage from "./pages/settings/profile";
 import SettingsSecurityPage from "./pages/settings/security";
+import SetupScreenPage from "./pages/setup";
 import VerifyPage from "./pages/verify";
 
 // ========================================================================== //
@@ -183,6 +185,12 @@ function App() {
         </Route>
         <Route path="/login">
           <LoginPage />
+        </Route>
+        <Route path="/setup">
+          <SetupScreenPage />
+        </Route>
+        <Route path="/qr/screen-select">
+          <QrScreenSelectPage />
         </Route>
         <Route path="/register">
           <RegisterPage />

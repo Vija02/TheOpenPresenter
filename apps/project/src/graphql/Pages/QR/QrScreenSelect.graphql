@@ -1,0 +1,24 @@
+query QrScreenSelectPage {
+  ...SharedLayout_Query
+
+  currentUser {
+    id
+    organizationMemberships(first: 20) {
+      nodes {
+        id
+        organization {
+          id
+          name
+          slug
+          screens(orderBy: [NAME_ASC]) {
+            nodes {
+              id
+              name
+              slug
+            }
+          }
+        }
+      }
+    }
+  }
+}
