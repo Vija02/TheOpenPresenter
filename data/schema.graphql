@@ -2679,6 +2679,14 @@ type Mutation {
     """
     input: RespondToScreenControlRequestInput!
   ): RespondToScreenControlRequestPayload
+
+  """Trigger a key press on the project currently assigned to a screen"""
+  screenKeyPress(
+    """
+    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.
+    """
+    input: ScreenKeyPressInput!
+  ): ScreenKeyPressPayload
   setExistingProjectToScreen(
     """
     The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.
@@ -5896,6 +5904,16 @@ input ScreenInput {
   name: String!
   organizationId: UUID!
   slug: String!
+}
+
+input ScreenKeyPressInput {
+  keyType: String!
+  sceneId: String
+  screenId: UUID!
+}
+
+type ScreenKeyPressPayload {
+  success: Boolean!
 }
 
 type ScreenLoginInfo {
