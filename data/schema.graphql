@@ -4632,6 +4632,11 @@ type Query {
     """The method to use when ordering `ScreenActiveController`."""
     orderBy: [ScreenActiveControllersOrderBy!] = [PRIMARY_KEY_ASC]
   ): ScreenActiveControllersConnection
+
+  """
+  Resolve a screen access code to the slugs needed to navigate to its control page. Returns null when the code does not match any screen.
+  """
+  screenByCode(pCode: String!): ScreenByCodeResult
   screenByOrganizationIdAndSlug(organizationId: UUID!, slug: String!): Screen
   screenControlRequest(id: UUID!): ScreenControlRequest
 
@@ -5060,6 +5065,11 @@ type Screen {
   Anonymous guests requesting control while another session holds the seat (consulted only when anon_guest_enabled = true). allow | request | timer.
   """
   anonGuestOnTakeoverPolicy: ScreenOnTakeoverPolicy!
+
+  """
+  Short, globally-unique code visitors can type at /connect to reach this screen's control page
+  """
+  code: String!
   createdAt: Datetime!
 
   """Reads a single `Project` that is related to this `Screen`."""
@@ -5319,6 +5329,11 @@ enum ScreenActiveControllersOrderBy {
   SCREEN_GUEST_SESSION_ID_DESC
   SCREEN_ID_ASC
   SCREEN_ID_DESC
+}
+
+type ScreenByCodeResult {
+  organizationSlug: String
+  screenSlug: String
 }
 
 """
