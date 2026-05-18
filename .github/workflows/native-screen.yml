@@ -1,0 +1,50 @@
+name: TOP TV EAS Update
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'native-apps/native-screen/**'
+      - '.github/workflows/native-screen.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: native-screen-update-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+jobs:
+  eas-update:
+    name: EAS Update (production)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: native-apps/native-screen
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: native-apps/native-screen/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Publish EAS Update
+        env:
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+        run: |
+          # Take just the first line of the commit message for the update note.
+          message=$(printf '%s' "${COMMIT_MESSAGE}" | head -n 1)
+          if [ -z "$message" ]; then message="Production update"; fi
+          npx eas-cli update \
+            --branch production \
+            --platform all \
+            --environment production \
+            --message "$message" \
+            --non-interactive
