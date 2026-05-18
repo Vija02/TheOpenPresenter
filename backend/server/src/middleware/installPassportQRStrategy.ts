@@ -76,9 +76,10 @@ const publishAndRedirect = async (
   publishClient: RedisClient,
   channel: string,
   message: string,
+  successUrl = "/qr-login-success",
 ) => {
   const success = await publishClient.publish(channel, message);
-  res.redirect(success ? "/qr-login-success" : "/qr-login-failed");
+  res.redirect(success ? successUrl : "/qr-login-failed");
 };
 
 export default async (app: Express) => {
@@ -244,6 +245,7 @@ export default async (app: Express) => {
         screen: { screenId, screenSlug, orgSlug },
         loginToken,
       }),
+      `/o/${orgSlug}/screens/${screenSlug}/control`,
     );
   });
 };
