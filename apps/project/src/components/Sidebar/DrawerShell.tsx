@@ -1,4 +1,4 @@
-import { Sheet, SheetContent, SheetHeader, useOverlayToggle } from "@repo/ui";
+import { Sheet, SheetContent, useOverlayToggle } from "@repo/ui";
 import * as React from "react";
 
 export type DrawerShellPropTypes = {
@@ -10,8 +10,7 @@ export const DrawerShell = ({ children, ...props }: DrawerShellPropTypes) => {
 
   return (
     <Sheet open={isOpen ?? false} onOpenChange={onToggle} {...props}>
-      <SheetContent side="left" className="p-0">
-        <SheetHeader></SheetHeader>
+      <SheetContent side="left" className="p-0" hideCloseButton>
         {children}
       </SheetContent>
     </Sheet>
