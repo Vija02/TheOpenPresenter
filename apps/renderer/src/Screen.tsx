@@ -10,13 +10,13 @@ import {
   PluginDataProvider,
   PluginMetaDataProvider,
 } from "@repo/shared";
-import { ErrorAlert, LoadingFull } from "@repo/ui";
+import { ErrorAlert, LoadingFull, Logo } from "@repo/ui";
 import { useEffect, useState } from "react";
-import { PiTelevision } from "react-icons/pi";
 import QRCode from "react-qr-code";
 import { useParams } from "wouter";
 
 import { AppInner } from "./App";
+import "./Screen.css";
 
 export function Screen() {
   const params = useParams();
@@ -71,6 +71,7 @@ export function Screen() {
         orgSlug={orgSlug}
         screenName={screen.name}
         screenSlug={screen.slug}
+        screenCode={screen.code}
       />
     );
   }
@@ -101,7 +102,7 @@ export function Screen() {
           idleAfterSec={idleAfterSec}
           orgSlug={orgSlug}
           screenSlug={screen.slug}
-          screenName={screen.name}
+          screenCode={screen.code}
         />
       )}
     </>
@@ -136,30 +137,107 @@ function RendererRoot({
   );
 }
 
+const useNow = (intervalMs = 1000) => {
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const handle = setInterval(() => setNow(new Date()), intervalMs);
+    return () => clearInterval(handle);
+  }, [intervalMs]);
+  return now;
+};
+
+const Clock = () => {
+  const now = useNow(1000);
+  const hh = String(now.getHours()).padStart(2, "0");
+  const mm = String(now.getMinutes()).padStart(2, "0");
+  const ss = String(now.getSeconds()).padStart(2, "0");
+  const date = now.toLocaleDateString(undefined, {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
+  return (
+    <div className="text-right tabular-nums">
+      <div className="flex items-baseline justify-end gap-1.5 leading-none">
+        <span className="text-5xl font-normal tracking-tighter">
+          {hh}
+          <span className="opacity-30">:</span>
+          {mm}
+        </span>
+        <span className="text-xl font-normal tracking-tight opacity-40">
+          {ss}
+        </span>
+      </div>
+      <div className="mt-2.5 text-[11px] font-medium uppercase tracking-[0.25em] opacity-50">
+        {date}
+      </div>
+    </div>
+  );
+};
+
+const CONNECT_HOST = `${window.location.host}/connect`;
+
 const ScanToControlBar = ({
   orgSlug,
   screenSlug,
-  screenName,
+  screenCode,
 }: {
   orgSlug: string;
   screenSlug: string;
-  screenName: string;
+  screenCode: string;
 }) => {
   const controlUrl = `${window.location.origin}/o/${orgSlug}/screens/${screenSlug}/control`;
   return (
-    <div className="flex items-center gap-5 border-t border-white/10 bg-black/80 p-5 text-white">
-      <div className="rounded-md bg-white p-2">
-        <QRCode value={controlUrl} size={96} />
+    <div className="flex items-center gap-6 border-t border-white/10 bg-black/30 p-5 text-white backdrop-blur-xl backdrop-saturate-150">
+      {/* Option 1: scan */}
+      <div className="flex items-center gap-4">
+        <div className="rounded-md bg-white p-2">
+          <QRCode value={controlUrl} size={88} />
+        </div>
+        <div>
+          <div className="text-[11px] font-medium uppercase tracking-[0.25em] opacity-50">
+            Scan to control
+          </div>
+          <div className="mt-1 text-sm opacity-70">
+            Point your phone camera here
+          </div>
+        </div>
       </div>
+
+      {/* OR divider */}
+      <div className="flex flex-col items-center self-stretch px-1 opacity-40">
+        <div className="flex-1 w-px bg-white/20" />
+        <div className="my-2 text-[10px] font-medium uppercase tracking-[0.25em]">
+          or
+        </div>
+        <div className="flex-1 w-px bg-white/20" />
+      </div>
+
+      {/* Option 2: enter code */}
       <div className="min-w-0 flex-1">
-        <div className="text-xs uppercase tracking-[0.2em] opacity-50">
-          Scan to control
+        <div className="text-[11px] font-medium uppercase tracking-[0.25em] opacity-50">
+          Go to
         </div>
-        <div className="mt-1 text-lg font-semibold">{screenName}</div>
-        <div className="truncate font-mono text-xs opacity-40">
-          {controlUrl}
+        <div className="mt-1 font-mono text-sm opacity-70">{CONNECT_HOST}</div>
+        <div className="mt-2 flex items-center gap-2">
+          <span className="text-[10px] font-medium uppercase tracking-[0.25em] opacity-40">
+            Code
+          </span>
+          <div className="flex gap-1.5">
+            {screenCode.split("").map((digit, i) => (
+              <span
+                key={i}
+                className="flex h-9 w-8 items-center justify-center rounded-md border border-white/10 bg-white/5 font-mono text-xl tabular-nums"
+              >
+                {digit}
+              </span>
+            ))}
+          </div>
         </div>
       </div>
+
+      <div className="hidden h-16 w-px bg-white/10 sm:block" />
+      <Clock />
     </div>
   );
 };
@@ -169,13 +247,13 @@ const IdleBar = ({
   idleAfterSec,
   orgSlug,
   screenSlug,
-  screenName,
+  screenCode,
 }: {
   lastSeenAt: string;
   idleAfterSec: number;
   orgSlug: string;
   screenSlug: string;
-  screenName: string;
+  screenCode: string;
 }) => {
   const idleAtMs = new Date(lastSeenAt).getTime() + idleAfterSec * 1000;
   const [now, setNow] = useState(() => Date.now());
@@ -194,7 +272,7 @@ const IdleBar = ({
       <ScanToControlBar
         orgSlug={orgSlug}
         screenSlug={screenSlug}
-        screenName={screenName}
+        screenCode={screenCode}
       />
     </div>
   );
@@ -204,25 +282,52 @@ const ScreenIdle = ({
   orgSlug,
   screenName,
   screenSlug,
+  screenCode,
 }: {
   orgSlug: string;
   screenName: string;
   screenSlug: string;
+  screenCode: string;
 }) => {
   return (
-    <div className="flex h-dvh w-screen flex-col bg-black text-white">
-      <div className="flex flex-1 flex-col items-center justify-center gap-6 p-8">
-        <PiTelevision className="size-20" />
+    <div className="relative flex h-dvh w-screen flex-col overflow-hidden bg-[#08090c] text-white">
+      {/* Animated gradient orbs */}
+      <div className="pointer-events-none absolute inset-0">
+        <div className="screen-idle-orb screen-idle-orb--blue" />
+        <div className="screen-idle-orb screen-idle-orb--purple" />
+        <div className="screen-idle-orb screen-idle-orb--pink" />
+        <div className="screen-idle-orb screen-idle-orb--teal" />
+      </div>
+
+      {/* Vignette */}
+      <div className="screen-idle-vignette" />
+
+      {/* Content */}
+      <div className="relative z-10 flex flex-1 flex-col items-center justify-center gap-6 p-8">
+        {/* Corner marks */}
+        <div className="pointer-events-none absolute left-6 top-6 h-10 w-10 border-l border-t border-white/30" />
+        <div className="pointer-events-none absolute right-6 top-6 h-10 w-10 border-r border-t border-white/30" />
+        <div className="pointer-events-none absolute bottom-6 left-6 h-10 w-10 border-b border-l border-white/30" />
+        <div className="pointer-events-none absolute bottom-6 right-6 h-10 w-10 border-b border-r border-white/30" />
+
+        <Logo height={56} />
         <div className="text-center">
-          <div className="text-4xl font-semibold">{screenName}</div>
-          <div className="mt-2 text-base opacity-50">Waiting for a project</div>
+          <div className="text-5xl font-semibold tracking-tight md:text-6xl">
+            {screenName}
+          </div>
+          <div className="mt-4 screen-idle-standby text-[11px] font-bold uppercase tracking-[0.45em] text-white/60">
+            Awaiting input
+          </div>
         </div>
       </div>
-      <ScanToControlBar
-        orgSlug={orgSlug}
-        screenSlug={screenSlug}
-        screenName={screenName}
-      />
+
+      <div className="relative z-10">
+        <ScanToControlBar
+          orgSlug={orgSlug}
+          screenSlug={screenSlug}
+          screenCode={screenCode}
+        />
+      </div>
     </div>
   );
 };

@@ -1,0 +1,135 @@
+/*============================================*/
+/*================ KEYFRAMES =================*/
+/*============================================*/
+@keyframes screen-idle-orb-1 {
+  0%,
+  100% {
+    transform: translate3d(-8%, -6%, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(18%, 14%, 0) scale(1.2);
+  }
+}
+@keyframes screen-idle-orb-2 {
+  0%,
+  100% {
+    transform: translate3d(12%, 4%, 0) scale(1.1);
+  }
+  50% {
+    transform: translate3d(-14%, -10%, 0) scale(0.95);
+  }
+}
+@keyframes screen-idle-orb-3 {
+  0%,
+  100% {
+    transform: translate3d(0%, 8%, 0) scale(0.95);
+  }
+  50% {
+    transform: translate3d(-18%, -14%, 0) scale(1.15);
+  }
+}
+@keyframes screen-idle-orb-4 {
+  0%,
+  100% {
+    transform: translate3d(6%, -4%, 0) scale(1.05);
+  }
+  50% {
+    transform: translate3d(-8%, 12%, 0) scale(1.25);
+  }
+}
+@keyframes screen-idle-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+/*============================================*/
+/*================== ORBS ====================*/
+/*============================================*/
+.screen-idle-orb {
+  position: absolute;
+  border-radius: 9999px;
+  pointer-events: none;
+  filter: blur(110px);
+}
+
+.screen-idle-orb--blue {
+  top: -25%;
+  left: -25%;
+  width: 70vmax;
+  height: 70vmax;
+  opacity: 0.8;
+  background: radial-gradient(
+    circle,
+    rgba(56, 120, 255, 0.7) 0%,
+    rgba(56, 120, 255, 0) 70%
+  );
+  animation: screen-idle-orb-1 22s ease-in-out infinite;
+}
+
+.screen-idle-orb--purple {
+  top: -33%;
+  right: -25%;
+  width: 65vmax;
+  height: 65vmax;
+  opacity: 0.75;
+  background: radial-gradient(
+    circle,
+    rgba(168, 85, 247, 0.7) 0%,
+    rgba(168, 85, 247, 0) 70%
+  );
+  animation: screen-idle-orb-2 28s ease-in-out infinite;
+}
+
+.screen-idle-orb--pink {
+  bottom: -25%;
+  left: 25%;
+  width: 60vmax;
+  height: 60vmax;
+  opacity: 0.7;
+  background: radial-gradient(
+    circle,
+    rgba(236, 72, 153, 0.65) 0%,
+    rgba(236, 72, 153, 0) 70%
+  );
+  animation: screen-idle-orb-3 26s ease-in-out infinite;
+}
+
+.screen-idle-orb--teal {
+  bottom: -33%;
+  right: -25%;
+  width: 55vmax;
+  height: 55vmax;
+  opacity: 0.65;
+  background: radial-gradient(
+    circle,
+    rgba(45, 212, 191, 0.6) 0%,
+    rgba(45, 212, 191, 0) 70%
+  );
+  animation: screen-idle-orb-4 32s ease-in-out infinite;
+}
+
+/*============================================*/
+/*================ VIGNETTE ==================*/
+/*============================================*/
+.screen-idle-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 35%,
+    rgba(0, 0, 0, 0.65) 100%
+  );
+}
+
+/*============================================*/
+/*================ STANDBY ===================*/
+/*============================================*/
+.screen-idle-standby {
+  animation: screen-idle-pulse 4s ease-in-out infinite;
+}
