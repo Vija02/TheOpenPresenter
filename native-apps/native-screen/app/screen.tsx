@@ -184,10 +184,6 @@ export default function Screen() {
 							<QRCode size={getQrSize()} value={controlUrl} />
 						</View>
 
-						<Text style={styles.qrUrl} numberOfLines={1}>
-							{controlUrl.replace(/^https?:\/\//, "")}
-						</Text>
-
 						<Text style={styles.menuHint}>Press Back to close</Text>
 					</Pressable>
 				</Pressable>
