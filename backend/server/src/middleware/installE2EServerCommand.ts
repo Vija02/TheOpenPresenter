@@ -569,7 +569,7 @@ async function runCommand(
           registered_guest_enabled = excluded.registered_guest_enabled,
           registered_guest_on_empty_policy = excluded.registered_guest_on_empty_policy,
           registered_guest_on_takeover_policy = excluded.registered_guest_on_takeover_policy
-        returning id, slug
+        returning id, slug, code
       `,
       [
         orgId,
@@ -587,6 +587,7 @@ async function runCommand(
       success: true,
       screenId: screen.id,
       screenSlug: screen.slug,
+      screenCode: screen.code,
       organizationId: orgId,
     };
   } else if (command === "setupScreenGuest") {

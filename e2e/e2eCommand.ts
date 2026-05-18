@@ -224,6 +224,7 @@ export class E2ECommandAPI {
     success: true;
     screenId: string;
     screenSlug: string;
+    screenCode: string;
     organizationId: string;
   }>;
 
