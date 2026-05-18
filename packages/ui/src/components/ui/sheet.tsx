@@ -1,39 +1,55 @@
 import { cn } from "@/lib/utils";
-import * as SheetPrimitive from "@radix-ui/react-dialog";
+import { Dialog as BaseDialog } from "@base-ui/react/dialog";
 import { XIcon } from "lucide-react";
 import * as React from "react";
 
 import { useDialogPortalContainerContext } from "./dialog";
 import "./sheet.css";
 
-function Sheet({ ...props }: React.ComponentProps<typeof SheetPrimitive.Root>) {
-  return <SheetPrimitive.Root data-slot="sheet" {...props} />;
+function Sheet({
+  children,
+  ...props
+}: React.ComponentProps<typeof BaseDialog.Root>) {
+  return (
+    <BaseDialog.Root data-slot="sheet" {...props}>
+      {children}
+    </BaseDialog.Root>
+  );
 }
 
 function SheetTrigger({
   ...props
-}: React.ComponentProps<typeof SheetPrimitive.Trigger>) {
-  return <SheetPrimitive.Trigger data-slot="sheet-trigger" {...props} />;
+}: React.ComponentProps<typeof BaseDialog.Trigger>) {
+  return <BaseDialog.Trigger data-slot="sheet-trigger" {...props} />;
 }
 
 function SheetClose({
   ...props
-}: React.ComponentProps<typeof SheetPrimitive.Close>) {
-  return <SheetPrimitive.Close data-slot="sheet-close" {...props} />;
+}: React.ComponentProps<typeof BaseDialog.Close>) {
+  return <BaseDialog.Close data-slot="sheet-close" {...props} />;
 }
 
 function SheetPortal({
+  className,
+  keepMounted = false,
   ...props
-}: React.ComponentProps<typeof SheetPrimitive.Portal>) {
-  return <SheetPrimitive.Portal data-slot="sheet-portal" {...props} />;
+}: React.ComponentProps<typeof BaseDialog.Portal>) {
+  return (
+    <BaseDialog.Portal
+      data-slot="sheet-portal"
+      className={cn("ui--sheet-portal", className)}
+      keepMounted={keepMounted}
+      {...props}
+    />
+  );
 }
 
 function SheetOverlay({
   className,
   ...props
-}: React.ComponentProps<typeof SheetPrimitive.Overlay>) {
+}: React.ComponentProps<typeof BaseDialog.Backdrop>) {
   return (
-    <SheetPrimitive.Overlay
+    <BaseDialog.Backdrop
       data-slot="sheet-overlay"
       className={cn("ui--sheet-overlay", className)}
       {...props}
@@ -45,21 +61,18 @@ function SheetContent({
   className,
   children,
   side = "right",
+  hideCloseButton = false,
   ...props
-}: React.ComponentProps<typeof SheetPrimitive.Content> & {
+}: React.ComponentProps<typeof BaseDialog.Popup> & {
   side?: "top" | "right" | "bottom" | "left";
+  hideCloseButton?: boolean;
 }) {
   const container = useDialogPortalContainerContext();
 
   return (
-    <SheetPortal
-      data-slot="sheet-portal"
-      container={
-        container ?? (typeof window !== "undefined" ? document.body : undefined)
-      }
-    >
+    <SheetPortal container={container ?? undefined}>
       <SheetOverlay />
-      <SheetPrimitive.Content
+      <BaseDialog.Popup
         data-slot="sheet-content"
         className={cn(
           "ui--sheet-content",
@@ -72,11 +85,13 @@ function SheetContent({
         {...props}
       >
         {children}
-        <SheetPrimitive.Close className={cn("ui--sheet-close")}>
-          <XIcon className="size-4" />
-          <span className="sr-only">Close</span>
-        </SheetPrimitive.Close>
-      </SheetPrimitive.Content>
+        {!hideCloseButton && (
+          <BaseDialog.Close className={cn("ui--sheet-close")}>
+            <XIcon className="size-4" />
+            <span className="sr-only">Close</span>
+          </BaseDialog.Close>
+        )}
+      </BaseDialog.Popup>
     </SheetPortal>
   );
 }
@@ -104,9 +119,9 @@ function SheetFooter({ className, ...props }: React.ComponentProps<"div">) {
 function SheetTitle({
   className,
   ...props
-}: React.ComponentProps<typeof SheetPrimitive.Title>) {
+}: React.ComponentProps<typeof BaseDialog.Title>) {
   return (
-    <SheetPrimitive.Title
+    <BaseDialog.Title
       data-slot="sheet-title"
       className={cn("ui--sheet-title", className)}
       {...props}
@@ -117,9 +132,9 @@ function SheetTitle({
 function SheetDescription({
   className,
   ...props
-}: React.ComponentProps<typeof SheetPrimitive.Description>) {
+}: React.ComponentProps<typeof BaseDialog.Description>) {
   return (
-    <SheetPrimitive.Description
+    <BaseDialog.Description
       data-slot="sheet-description"
       className={cn("ui--sheet-description", className)}
       {...props}
@@ -136,4 +151,6 @@ export {
   SheetFooter,
   SheetTitle,
   SheetDescription,
+  SheetPortal,
+  SheetOverlay,
 };
