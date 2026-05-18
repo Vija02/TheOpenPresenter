@@ -25,30 +25,32 @@
     "orientation": "landscape",
     "icon": "./assets/images/icon.png",
     "scheme": "theopenpresenter",
-    "name": "TheOpenPresenter",
-    "slug": "TheOpenPresenter",
+    "name": "TheOpenPresenter TV",
+    "slug": "TheOpenPresenter-tv",
     "android": {
-      "package": "com.vija02.TheOpenPresenter",
+      "package": "com.theopenpresenter.tv",
       "splash": {
         "image": "./assets/images/icon-1920x720.png"
       }
     },
     "ios": {
-      "bundleIdentifier": "com.vija02.TheOpenPresenter",
+      "bundleIdentifier": "com.theopenpresenter.tv",
       "splash": {
         "image": "./assets/images/icon-1920x720.png"
-      }
-    },
-    "extra": {
-      "eas": {
-        "projectId": "09bdb3b3-3908-4a18-8150-67162c608b16"
       }
     },
     "runtimeVersion": {
       "policy": "appVersion"
     },
+    "owner": "vija02",
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "1336fc03-9568-45c6-b040-85142bd386b0"
+      }
+    },
     "updates": {
-      "url": "https://u.expo.dev/09bdb3b3-3908-4a18-8150-67162c608b16"
+      "url": "https://u.expo.dev/1336fc03-9568-45c6-b040-85142bd386b0"
     }
   }
 }
