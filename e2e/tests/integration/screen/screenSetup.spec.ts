@@ -32,6 +32,7 @@ test.describe("Setup screen QR flow", () => {
     setupOrgOwnerContext,
     setupScreen,
   }) => {
+    test.skip(!!process.env.PLAYWRIGHT_TAURI, "Skipped in Tauri E2E tests");
     const owner = await setupOrgOwnerContext({
       orgSlug: ORG_SLUG,
       orgName: ORG_NAME,
@@ -77,6 +78,7 @@ test.describe("Setup screen QR flow", () => {
     setupOrgOwnerContext,
     setupScreen,
   }) => {
+    test.skip(!!process.env.PLAYWRIGHT_TAURI, "Skipped in Tauri E2E tests");
     await setupOrgOwnerContext({
       orgSlug: ORG_SLUG,
       orgName: ORG_NAME,
