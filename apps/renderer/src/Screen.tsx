@@ -159,16 +159,16 @@ const Clock = () => {
   return (
     <div className="text-right tabular-nums">
       <div className="flex items-baseline justify-end gap-1.5 leading-none">
-        <span className="text-5xl font-normal tracking-tighter">
+        <span className="text-5xl font-normal tracking-tight">
           {hh}
-          <span className="opacity-30">:</span>
+          <span className="opacity-80">:</span>
           {mm}
         </span>
         <span className="text-xl font-normal tracking-tight opacity-40">
           {ss}
         </span>
       </div>
-      <div className="mt-2.5 text-[11px] font-medium uppercase tracking-[0.25em] opacity-50">
+      <div className="mt-2.5 text-xs font-medium uppercase tracking-[0.25em] opacity-50">
         {date}
       </div>
     </div>
@@ -220,7 +220,7 @@ const ScanToControlBar = ({
         </div>
         <div className="mt-1 font-mono text-sm opacity-70">{CONNECT_HOST}</div>
         <div className="mt-2 flex items-center gap-2">
-          <span className="text-[10px] font-medium uppercase tracking-[0.25em] opacity-40">
+          <span className="text-[11px] font-medium uppercase tracking-[0.25em] opacity-40">
             Code
           </span>
           <div className="flex gap-1.5">
