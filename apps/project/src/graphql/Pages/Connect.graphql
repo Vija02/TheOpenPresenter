@@ -1,0 +1,6 @@
+query ScreenByCode($code: String!) {
+  screenByCode(pCode: $code) {
+    organizationSlug
+    screenSlug
+  }
+}

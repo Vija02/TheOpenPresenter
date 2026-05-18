@@ -7,6 +7,7 @@ query RendererScreen($orgSlug: String!, $screenSlug: String!) {
         id
         name
         slug
+        code
         currentProjectId
         currentRendererId
         idlePolicy

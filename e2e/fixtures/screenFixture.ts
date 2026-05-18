@@ -27,6 +27,7 @@ type ScreenContext = {
   orgSlug: string;
   screenSlug: string;
   screenId: string;
+  screenCode: string;
 };
 
 type ScreenGuestContext = {
@@ -83,6 +84,7 @@ export const test = base.extend<ScreenFixture>({
         orgSlug: payload.orgSlug,
         screenSlug: result.screenSlug,
         screenId: result.screenId,
+        screenCode: result.screenCode,
       };
     };
     await use(fn);

@@ -1,0 +1,55 @@
+@reference "@repo/tailwind-config/index.css";
+
+@layer base {
+  .ui--otp {
+    @apply flex items-center gap-2;
+    @apply has-[:disabled]:opacity-50;
+  }
+
+  .ui--otp-input {
+    @apply disabled:cursor-not-allowed;
+  }
+
+  .ui--otp-group {
+    @apply flex items-center;
+  }
+
+  .ui--otp-slot {
+    @apply relative flex h-9 w-9 items-center justify-center text-sm shadow-xs transition-all outline-none;
+    @apply border-y border-r border-stroke;
+    @apply first:rounded-l-sm first:border-l last:rounded-r-sm;
+    @apply data-[active=true]:z-10 data-[active=true]:border-ring data-[active=true]:ring-ring/50 data-[active=true]:ring-[3px];
+    @apply aria-invalid:border-fill-destructive;
+    @apply aria-invalid:data-[active=true]:border-fill-destructive aria-invalid:data-[active=true]:ring-fill-destructive/20;
+  }
+
+  .ui--otp-caret {
+    @apply pointer-events-none absolute inset-0 flex items-center justify-center;
+  }
+
+  .ui--otp-caret-bar {
+    @apply h-4 w-px animate-caret-blink bg-primary duration-1000;
+  }
+
+  .ui--otp-separator {
+    @apply flex items-center justify-center text-tertiary;
+  }
+}
+
+@layer utilities {
+  @keyframes caret-blink {
+    0%,
+    70%,
+    100% {
+      opacity: 1;
+    }
+    20%,
+    50% {
+      opacity: 0;
+    }
+  }
+
+  .animate-caret-blink {
+    animation: caret-blink 1.25s ease-out infinite;
+  }
+}

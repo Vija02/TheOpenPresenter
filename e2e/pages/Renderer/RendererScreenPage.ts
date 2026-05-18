@@ -6,7 +6,7 @@ export class RendererScreenPage {
   readonly lyricsContainer: Locator;
 
   constructor(public readonly page: Page) {
-    this.idleMessage = page.getByText("Waiting for a project");
+    this.idleMessage = page.getByText("Awaiting input");
     this.currentScene = page.getByTestId("current-scene");
     this.lyricsContainer = page.locator("#pl-lyrics-presenter");
   }

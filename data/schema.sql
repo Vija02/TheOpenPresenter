@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 2gDtKwFTVTpJ4hgCW6lDWsoHzZtcrtEmKpuXzeUKarqdPy2VliahMtchsJbdRMX
+\restrict dWuao8Piw0jQbMptjeJD3mKylgZbDBp4UivuMCcdLX5R78UebdpZgQb6lbMCcfk
 
 -- Dumped from database version 17.0 (Debian 17.0-1.pgdg120+1)
 -- Dumped by pg_dump version 18.3
@@ -101,6 +101,16 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA public;
 --
 
 COMMENT ON EXTENSION "uuid-ossp" IS 'generate universally unique identifiers (UUIDs)';
+
+
+--
+-- Name: screen_by_code_result; Type: TYPE; Schema: app_public; Owner: -
+--
+
+CREATE TYPE app_public.screen_by_code_result AS (
+	organization_slug public.citext,
+	screen_slug public.citext
+);
 
 
 --
@@ -324,6 +334,37 @@ CREATE FUNCTION app_private.current_session_can_control_screen(p_screen_id uuid)
       where ac.screen_id = p_screen_id
         and ac.screen_guest_session_id = app_public.current_screen_guest_session_id()
     );
+$$;
+
+
+--
+-- Name: generate_screen_code(); Type: FUNCTION; Schema: app_private; Owner: -
+--
+
+CREATE FUNCTION app_private.generate_screen_code() RETURNS text
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+    AS $$
+declare
+  -- Crockford-style alphabet minus U (kept simple): no 0, 1, I, L, O.
+  v_chars constant text := '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
+  v_len   constant int  := length(v_chars);
+  v_code  text;
+  v_tries int := 0;
+begin
+  loop
+    v_code := '';
+    for _i in 1..4 loop
+      v_code := v_code || substr(v_chars, 1 + floor(random() * v_len)::int, 1);
+    end loop;
+    exit when not exists (select 1 from app_public.screens where code = v_code);
+    v_tries := v_tries + 1;
+    if v_tries > 1000 then
+      raise exception 'Unable to generate unique screen code after 1000 attempts';
+    end if;
+  end loop;
+  return v_code;
+end;
 $$;
 
 
@@ -1108,6 +1149,24 @@ begin
     raise exception 'Cannot assign this category to this project since they below to different organization' using errcode='CRORG';
   end if;
   return NEW;
+end;
+$$;
+
+
+--
+-- Name: tg_screens__set_code(); Type: FUNCTION; Schema: app_private; Owner: -
+--
+
+CREATE FUNCTION app_private.tg_screens__set_code() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+begin
+  -- Clients have no insert/update grant on this column, but be defensive
+  -- against superuser inserts that omit it.
+  if new.code is null then
+    new.code := app_private.generate_screen_code();
+  end if;
+  return new;
 end;
 $$;
 
@@ -2152,7 +2211,8 @@ CREATE TABLE app_public.screens (
     idle_policy app_public.screen_idle_policy DEFAULT 'do_nothing'::app_public.screen_idle_policy NOT NULL,
     idle_after_seconds integer,
     unassign_after_idle_seconds integer,
-    show_bar_on_idle boolean DEFAULT false NOT NULL
+    show_bar_on_idle boolean DEFAULT false NOT NULL,
+    code public.citext NOT NULL
 );
 
 
@@ -2259,6 +2319,13 @@ COMMENT ON COLUMN app_public.screens.unassign_after_idle_seconds IS 'Additional 
 --
 
 COMMENT ON COLUMN app_public.screens.show_bar_on_idle IS 'When true, the renderer overlays an idle indicator bar once the seat is past idle_after_seconds.';
+
+
+--
+-- Name: COLUMN screens.code; Type: COMMENT; Schema: app_public; Owner: -
+--
+
+COMMENT ON COLUMN app_public.screens.code IS 'Short, globally-unique code visitors can type at /connect to reach this screen''s control page';
 
 
 --
@@ -2477,6 +2544,29 @@ $$;
 --
 
 COMMENT ON FUNCTION app_public.resend_email_verification_code(email_id uuid) IS 'If you didn''t receive the verification code for this email, we can resend it. We silently cap the rate of resends on the backend, so calls to this function may not result in another email being sent if it has been called recently.';
+
+
+--
+-- Name: screen_by_code(text); Type: FUNCTION; Schema: app_public; Owner: -
+--
+
+CREATE FUNCTION app_public.screen_by_code(p_code text) RETURNS app_public.screen_by_code_result
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+    AS $$
+  select o.slug, s.slug
+    from app_public.screens s
+    join app_public.organizations o on o.id = s.organization_id
+   where s.code = p_code
+   limit 1;
+$$;
+
+
+--
+-- Name: FUNCTION screen_by_code(p_code text); Type: COMMENT; Schema: app_public; Owner: -
+--
+
+COMMENT ON FUNCTION app_public.screen_by_code(p_code text) IS 'Resolve a screen access code to the slugs needed to navigate to its control page. Returns null when the code does not match any screen.';
 
 
 --
@@ -4028,6 +4118,13 @@ CREATE INDEX screen_guests_organization_id_idx ON app_public.screen_guests USING
 
 
 --
+-- Name: screens_code_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE UNIQUE INDEX screens_code_idx ON app_public.screens USING btree (code);
+
+
+--
 -- Name: screens_current_project_id_idx; Type: INDEX; Schema: app_public; Owner: -
 --
 
@@ -4165,6 +4262,13 @@ CREATE TRIGGER _100_timestamps BEFORE INSERT OR UPDATE ON app_public.user_emails
 --
 
 CREATE TRIGGER _100_timestamps BEFORE INSERT OR UPDATE ON app_public.users FOR EACH ROW EXECUTE FUNCTION app_private.tg__timestamps();
+
+
+--
+-- Name: screens _150_set_screen_code; Type: TRIGGER; Schema: app_public; Owner: -
+--
+
+CREATE TRIGGER _150_set_screen_code BEFORE INSERT ON app_public.screens FOR EACH ROW EXECUTE FUNCTION app_private.tg_screens__set_code();
 
 
 --
@@ -5437,6 +5541,13 @@ REVOKE ALL ON FUNCTION app_private.current_session_can_control_screen(p_screen_i
 
 
 --
+-- Name: FUNCTION generate_screen_code(); Type: ACL; Schema: app_private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_private.generate_screen_code() FROM PUBLIC;
+
+
+--
 -- Name: TABLE users; Type: ACL; Schema: app_public; Owner: -
 --
 
@@ -5567,6 +5678,13 @@ REVOKE ALL ON FUNCTION app_private.tg_project_tags__forbid_if_project_and_tag_wi
 --
 
 REVOKE ALL ON FUNCTION app_private.tg_projects__forbid_if_category_is_not_same_org() FROM PUBLIC;
+
+
+--
+-- Name: FUNCTION tg_screens__set_code(); Type: ACL; Schema: app_private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_private.tg_screens__set_code() FROM PUBLIC;
 
 
 --
@@ -6110,6 +6228,14 @@ GRANT ALL ON FUNCTION app_public.resend_email_verification_code(email_id uuid) T
 
 
 --
+-- Name: FUNCTION screen_by_code(p_code text); Type: ACL; Schema: app_public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_public.screen_by_code(p_code text) FROM PUBLIC;
+GRANT ALL ON FUNCTION app_public.screen_by_code(p_code text) TO theopenpresenter_visitor;
+
+
+--
 -- Name: FUNCTION screen_login_metadata(p_org_slug text, p_screen_slug text); Type: ACL; Schema: app_public; Owner: -
 --
 
@@ -6572,5 +6698,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE theopenpresenter REVOKE ALL ON FUNCTIONS FROM 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 2gDtKwFTVTpJ4hgCW6lDWsoHzZtcrtEmKpuXzeUKarqdPy2VliahMtchsJbdRMX
+\unrestrict dWuao8Piw0jQbMptjeJD3mKylgZbDBp4UivuMCcdLX5R78UebdpZgQb6lbMCcfk
 
