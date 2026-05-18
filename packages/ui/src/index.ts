@@ -11,6 +11,7 @@ export * from "./components/ui/creatableSelect";
 export * from "./components/ui/dialog";
 export * from "./components/ui/form";
 export * from "./components/ui/input";
+export * from "./components/ui/inputOTP";
 export * from "./components/ui/numberInput";
 export * from "./components/ui/option";
 export * from "./components/ui/label";

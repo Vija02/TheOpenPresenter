@@ -3,6 +3,7 @@ import NProgress from "nprogress";
 import { useEffect } from "react";
 import { Redirect, Route, Switch, useLocation, useSearchParams } from "wouter";
 
+import ConnectPage from "./pages/connect";
 import ForgotPage from "./pages/forgot";
 import InvitationsAcceptPage from "./pages/invitations/accept";
 import LoginPage from "./pages/login";
@@ -179,6 +180,9 @@ function App() {
               <Redirect href="/settings/profile" />
             </Route>
           </Switch>
+        </Route>
+        <Route path="/connect">
+          <ConnectPage />
         </Route>
         <Route path="/forgot">
           <ForgotPage />

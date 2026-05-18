@@ -14,6 +14,7 @@ const paths = [
   "/o",
   "/org",
   "/setup",
+  "/connect",
   "/qr",
   "/settings",
   "/forgot",
