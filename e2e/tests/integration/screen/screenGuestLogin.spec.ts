@@ -32,7 +32,7 @@ test.describe("Screen guest login", () => {
     await expect(page).toHaveURL(
       new RegExp(`/o/${ctx.orgSlug}/screens/${ctx.screenSlug}/control`),
     );
-    await expect(screenControlPage.openProjectHeading).toBeVisible();
+    await expect(screenControlPage.createTemporaryProjectButton).toBeVisible();
   });
 
   test("registered guest signs in with passcode and reaches control", async ({
@@ -60,7 +60,7 @@ test.describe("Screen guest login", () => {
     await expect(page).toHaveURL(
       new RegExp(`/o/${ctx.orgSlug}/screens/${ctx.screenSlug}/control`),
     );
-    await expect(screenControlPage.openProjectHeading).toBeVisible();
+    await expect(screenControlPage.createTemporaryProjectButton).toBeVisible();
   });
 
   test("registered guest signs in with email and reaches control", async ({
@@ -88,7 +88,7 @@ test.describe("Screen guest login", () => {
     await expect(page).toHaveURL(
       new RegExp(`/o/${ctx.orgSlug}/screens/${ctx.screenSlug}/control`),
     );
-    await expect(screenControlPage.openProjectHeading).toBeVisible();
+    await expect(screenControlPage.createTemporaryProjectButton).toBeVisible();
   });
 
   test("email match is case-insensitive", async ({
@@ -115,7 +115,7 @@ test.describe("Screen guest login", () => {
     await expect(page).toHaveURL(
       new RegExp(`/o/${ctx.orgSlug}/screens/${ctx.screenSlug}/control`),
     );
-    await expect(screenControlPage.openProjectHeading).toBeVisible();
+    await expect(screenControlPage.createTemporaryProjectButton).toBeVisible();
   });
 
   test("wrong passcode shows an error and stays on login", async ({

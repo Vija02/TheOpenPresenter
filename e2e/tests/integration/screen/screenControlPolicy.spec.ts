@@ -54,7 +54,7 @@ test.describe("Screen control policy", () => {
     await expect(page).toHaveURL(
       new RegExp(`/o/${ctx.orgSlug}/screens/${ctx.screenSlug}/control`),
     );
-    await expect(screenControlPage.openProjectHeading).toBeVisible();
+    await expect(screenControlPage.createTemporaryProjectButton).toBeVisible();
     await expect(adminScreenPage.pendingPanelHeading).toBeHidden();
   });
 
@@ -136,7 +136,7 @@ test.describe("Screen control policy", () => {
     await expect(page).toHaveURL(
       new RegExp(`/o/${ctx.orgSlug}/screens/${ctx.screenSlug}/control`),
     );
-    await expect(screenControlPage.openProjectHeading).toBeVisible();
+    await expect(screenControlPage.createTemporaryProjectButton).toBeVisible();
     await expect(adminScreenPage.pendingPanelHeading).toBeHidden();
   });
 
