@@ -1,6 +1,8 @@
+import { OrgHeading } from "@/components/OrgHeading";
 import { SharedLayoutLoggedIn } from "@/components/SharedLayoutLoggedIn";
 import CreateScreenModal from "@/containers/Screen/CreateScreenModal";
 import { useQrScreenSelectPageQuery } from "@repo/graphql";
+import { globalState } from "@repo/lib";
 import {
   Alert,
   Avatar,
@@ -9,7 +11,7 @@ import {
   LoadingInline,
   OverlayToggle,
 } from "@repo/ui";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { FaPlus } from "react-icons/fa";
 import { PiTelevisionSimple } from "react-icons/pi";
 import { VscChevronRight } from "react-icons/vsc";
@@ -49,9 +51,24 @@ const QrScreenSelectPage = () => {
     [id],
   );
 
-  const allOrgs = (data?.currentUser?.organizationMemberships?.nodes ?? [])
-    .map((m) => m.organization)
-    .filter((org): org is NonNullable<typeof org> => !!org);
+  const lastSelectedOrganizationId =
+    globalState.organization.useLastSelectedOrganizationId(
+      (x) => x.lastSelectedOrganizationId,
+    );
+
+  const allOrgs = useMemo(() => {
+    const orgs = (data?.currentUser?.organizationMemberships?.nodes ?? [])
+      .map((m) => m.organization)
+      .filter((org): org is NonNullable<typeof org> => !!org);
+
+    if (!lastSelectedOrganizationId) return orgs;
+
+    return [...orgs].sort((a, b) => {
+      if (a.id === lastSelectedOrganizationId) return -1;
+      if (b.id === lastSelectedOrganizationId) return 1;
+      return 0;
+    });
+  }, [data?.currentUser?.organizationMemberships?.nodes, lastSelectedOrganizationId]);
 
   const orgsWithScreens = allOrgs.filter(
     (org) => (org.screens?.nodes?.length ?? 0) > 0,
@@ -114,16 +131,7 @@ type OrgSectionProps = {
 const OrgSection = ({ org, screens, onSelect }: OrgSectionProps) => {
   return (
     <section>
-      <div className="flex items-center gap-2 px-1 mb-2">
-        <Avatar className="size-6">
-          <AvatarFallback>
-            {org.name?.charAt(0)?.toUpperCase() ?? "?"}
-          </AvatarFallback>
-        </Avatar>
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-tertiary">
-          {org.name}
-        </h2>
-      </div>
+      <OrgHeading name={org.name} />
       <div className="border border-stroke rounded-lg overflow-hidden divide-y divide-stroke bg-white">
         {screens.map((screen) => (
           <button
