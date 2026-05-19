@@ -192,7 +192,7 @@ const EmptyNoScreens = ({ orgs }: EmptyNoScreensProps) => {
         <p className="font-medium mb-1">No screens yet</p>
         <p className="text-secondary text-sm mb-5">
           Create your first screen in{" "}
-          <span className="font-medium text-primary">{orgs[0].name}</span> to
+          <span className="font-medium text-primary">{orgs[0]!.name}</span> to
           get started.
         </p>
         <OverlayToggle
@@ -203,7 +203,7 @@ const EmptyNoScreens = ({ orgs }: EmptyNoScreensProps) => {
             </Button>
           )}
         >
-          <CreateScreenModal organizationId={orgs[0].id} />
+          <CreateScreenModal organizationId={orgs[0]!.id} />
         </OverlayToggle>
       </div>
     );
