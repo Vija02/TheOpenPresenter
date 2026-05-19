@@ -1,0 +1,131 @@
+name: TOP TV (Vega) Build
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'native-apps/vega-screen/**'
+      - '.github/workflows/vega-screen.yml'
+  pull_request:
+    paths:
+      - 'native-apps/vega-screen/**'
+      - '.github/workflows/vega-screen.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: vega-screen-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Pinned SDK. Bump this when you upgrade locally via `vega sdk install <version>`.
+  VEGA_SDK_VERSION: '0.22.6759'
+
+jobs:
+  build:
+    name: Build (Release)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: native-apps/vega-screen
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # vega-screen doesn't have its own .nvmrc; use the repo root one (lts/*).
+          node-version-file: .nvmrc
+          cache: 'npm'
+          cache-dependency-path: native-apps/vega-screen/package-lock.json
+
+      # --- Vega SDK ----------------------------------------------------------
+      # Cache the entire ~/vega tree (CLI + installed SDK packages) keyed on
+      - name: Restore Vega SDK cache
+        id: vega-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/vega
+          key: vega-sdk-${{ runner.os }}-${{ env.VEGA_SDK_VERSION }}
+
+      - name: Install Vega CLI + SDK
+        if: steps.vega-cache.outputs.cache-hit != 'true'
+        working-directory: ${{ github.workspace }}
+        run: |
+          set -euo pipefail
+          # Public bootstrap script for the Vega Version Manager. Installs the
+          # `vega` CLI into ~/vega/bin and writes shell env into ~/vega/env.
+          curl -fsSL https://sdk-installer.vega.labcollab.net/get_vvm.sh | bash
+          # Pull env into the current shell so we can call `vega` immediately.
+          # shellcheck disable=SC1091
+          source "$HOME/vega/env"
+          vega --version
+          vega sdk install "$VEGA_SDK_VERSION"
+          vega sdk use "$VEGA_SDK_VERSION"
+
+      - name: Export Vega env for subsequent steps
+        run: |
+          set -euo pipefail
+          if [ ! -f "$HOME/vega/env" ]; then
+            echo "::error::$HOME/vega/env not found — Vega install failed or cache is corrupt."
+            exit 1
+          fi
+          # Source in a subshell, then dump the resulting PATH and any VEGA_*
+          # exports. This avoids brittle text parsing of the env file.
+          # shellcheck disable=SC1091
+          env_before=$(env)
+          # shellcheck disable=SC1091
+          source "$HOME/vega/env"
+          env_after=$(env)
+          comm -13 <(printf '%s\n' "$env_before" | sort) \
+                   <(printf '%s\n' "$env_after"  | sort) \
+            | while IFS='=' read -r key val; do
+                case "$key" in
+                  PATH) echo "$val" | tr ':' '\n' | while read -r p; do
+                          [ -n "$p" ] && echo "$p" >> "$GITHUB_PATH"
+                        done ;;
+                  ''|_|SHLVL|PWD|OLDPWD) : ;;
+                  *)    echo "$key=$val" >> "$GITHUB_ENV" ;;
+                esac
+              done
+
+      - name: Verify Vega install
+        run: |
+          vega --version
+          vega sdk list-installed
+
+      # --- App build ---------------------------------------------------------
+      - name: Install npm dependencies
+        # postinstall (scripts/link-hermesc.js) wires up the hermesc shim that
+        # the Amazon Devices CLI/SDK combo currently requires. See script for
+        # background.
+        run: npm ci --no-audit --no-fund
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm test -- --ci
+
+      - name: Build release .vpkg
+        run: npm run build:release
+
+      - name: Locate built packages
+        id: pkgs
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          mapfile -t pkgs < <(find build/private/kepler -type f -name '*.vpkg' | sort)
+          if [ "${#pkgs[@]}" -eq 0 ]; then
+            echo "::error::No .vpkg files were produced."
+            exit 1
+          fi
+          printf 'Built packages:\n'
+          printf '  %s\n' "${pkgs[@]}"
+
+      - name: Upload .vpkg artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: vega-screen-vpkgs-${{ github.sha }}
+          path: native-apps/vega-screen/build/private/kepler/**/*.vpkg
+          if-no-files-found: error
+          retention-days: 14
