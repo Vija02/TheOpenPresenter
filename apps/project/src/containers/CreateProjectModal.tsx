@@ -8,6 +8,7 @@ import {
   useCreateTagMutation,
 } from "@repo/graphql";
 import { globalState } from "@repo/lib";
+import { logger } from "@repo/observability";
 import {
   Button,
   Dialog,
@@ -42,9 +43,16 @@ const formSchema = z.object({
 
 type FormInputs = z.infer<typeof formSchema>;
 
+export type CreatedProject = {
+  id: string;
+  slug: string;
+  organization?: { id: string; slug: string } | null;
+};
+
 export type CreateProjectModalPropTypes = {
   organizationId: string;
   categories: CategoryFragment[];
+  onCreated?: (project: CreatedProject) => Promise<void> | void;
 };
 
 const UNCATEGORIZED = "uncategorized";
@@ -52,6 +60,7 @@ const UNCATEGORIZED = "uncategorized";
 const CreateProjectModal = ({
   organizationId,
   categories,
+  onCreated,
 }: CreateProjectModalPropTypes) => {
   const { isOpen, onToggle, resetData } = useOverlayToggle();
 
@@ -88,16 +97,36 @@ const CreateProjectModal = ({
           data.categoryId === UNCATEGORIZED ? undefined : data.categoryId,
         tags: selectedTagIds,
         targetDate: data.targetDate ? data.targetDate.toDateString() : null,
-      }).then((x) => {
-        const projectSlug = x?.createFullProject?.project?.slug;
+      }).then(async (x) => {
+        const project = x?.createFullProject?.project;
+        if (!project) return;
 
-        window.location.href = `/app/${slug}/${projectSlug}`;
+        if (onCreated) {
+          try {
+            await onCreated(project);
+          } catch (e) {
+            logger.error("CreateProjectModal onCreated failed:", e);
+          }
+        }
+
+        const projectSlug = project.slug;
+        const projectOrgSlug = project.organization?.slug ?? slug;
+
+        window.location.href = `/app/${projectOrgSlug}/${projectSlug}`;
       });
 
       onToggle?.();
       resetData?.();
     },
-    [createProject, onToggle, organizationId, resetData, selectedTagIds, slug],
+    [
+      createProject,
+      onToggle,
+      organizationId,
+      resetData,
+      selectedTagIds,
+      slug,
+      onCreated,
+    ],
   );
 
   return (
