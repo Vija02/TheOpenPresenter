@@ -43,7 +43,7 @@ test.describe("Screen session", () => {
     await expect(page).toHaveURL(
       new RegExp(`/o/${ctx.orgSlug}/screens/${ctx.screenSlug}/control`),
     );
-    await expect(screenControlPage.pickProjectHeading).toBeVisible();
+    await expect(screenControlPage.openProjectHeading).toBeVisible();
 
     const adminScreenPage = new ScreenAdminPage(owner.page);
     await adminScreenPage.goto(ctx.orgSlug, ctx.screenSlug);
@@ -74,7 +74,7 @@ test.describe("Screen session", () => {
     await expect(page).toHaveURL(
       new RegExp(`/o/${ctx.orgSlug}/screens/${ctx.screenSlug}/control`),
     );
-    await expect(screenControlPage.pickProjectHeading).toBeVisible();
+    await expect(screenControlPage.openProjectHeading).toBeVisible();
 
     await screenControlPage.endSessionButton.click();
 

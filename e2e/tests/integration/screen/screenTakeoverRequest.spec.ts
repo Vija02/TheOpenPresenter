@@ -49,7 +49,7 @@ test.describe("Screen takeover request", () => {
     await expect(page).toHaveURL(
       new RegExp(`/o/${ctx.orgSlug}/screens/${ctx.screenSlug}/control`),
     );
-    await expect(screenControlPage.pickProjectHeading).toBeVisible();
+    await expect(screenControlPage.openProjectHeading).toBeVisible();
 
     // Guest B in a fresh browser context — seat occupied + "request" takeover
     // policy => stays on /request and must click "Request control".
@@ -75,7 +75,7 @@ test.describe("Screen takeover request", () => {
       await expect(guestBPage).toHaveURL(
         new RegExp(`/o/${ctx.orgSlug}/screens/${ctx.screenSlug}/control`),
       );
-      await expect(controlB.pickProjectHeading).toBeVisible();
+      await expect(controlB.openProjectHeading).toBeVisible();
 
       // Guest A loses control and is redirected to /ended.
       await expect(page).toHaveURL(

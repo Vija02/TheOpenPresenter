@@ -1,14 +1,14 @@
 import { type Locator, type Page } from "@playwright/test";
 
 export class ScreenControlPage {
-  readonly pickProjectHeading: Locator;
+  readonly openProjectHeading: Locator;
   readonly createTemporaryProjectButton: Locator;
   readonly endSessionButton: Locator;
   readonly adminPanelButton: Locator;
 
   constructor(public readonly page: Page) {
-    this.pickProjectHeading = page.getByRole("heading", {
-      name: "Pick a project",
+    this.openProjectHeading = page.getByRole("heading", {
+      name: "Open a project",
     });
     this.createTemporaryProjectButton = page.getByRole("button", {
       name: "Create temporary project",
