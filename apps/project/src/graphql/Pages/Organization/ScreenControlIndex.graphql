@@ -17,6 +17,12 @@ query OrganizationScreenControlIndexPage(
         }
       }
     }
+    categories {
+      nodes {
+        id
+        ...Category
+      }
+    }
   }
 
   # Cross-org project picker for the controller
@@ -36,6 +42,12 @@ query OrganizationScreenControlIndexPage(
             nodes {
               id
               ...Project
+            }
+          }
+          categories {
+            nodes {
+              id
+              ...Category
             }
           }
         }
