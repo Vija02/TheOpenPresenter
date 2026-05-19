@@ -1,17 +1,37 @@
 import { SharedLayoutLoggedIn } from "@/components/SharedLayoutLoggedIn";
-import { StandardWidth } from "@/components/StandardWidth";
+import CreateScreenModal from "@/containers/Screen/CreateScreenModal";
 import { useQrScreenSelectPageQuery } from "@repo/graphql";
-import { Alert, Avatar, AvatarFallback, Option } from "@repo/ui";
+import {
+  Alert,
+  Avatar,
+  AvatarFallback,
+  Button,
+  LoadingInline,
+  OverlayToggle,
+} from "@repo/ui";
 import { useCallback } from "react";
+import { FaPlus } from "react-icons/fa";
 import { PiTelevisionSimple } from "react-icons/pi";
 import { VscChevronRight } from "react-icons/vsc";
 import { useSearchParams } from "wouter";
+
+type OrgInfo = {
+  id: string;
+  name: string;
+  slug: string;
+};
+
+type ScreenInfo = {
+  id: string;
+  name: string;
+  slug: string;
+};
 
 const QrScreenSelectPage = () => {
   const [searchParams] = useSearchParams();
   const id = searchParams.get("id");
   const query = useQrScreenSelectPageQuery();
-  const [{ data }] = query;
+  const [{ data, fetching }] = query;
 
   const onSelect = useCallback(
     (orgSlug: string, screenSlug: string, screenId: string) => {
@@ -29,83 +49,211 @@ const QrScreenSelectPage = () => {
     [id],
   );
 
-  const orgsWithScreens = (
-    data?.currentUser?.organizationMemberships?.nodes ?? []
-  )
+  const allOrgs = (data?.currentUser?.organizationMemberships?.nodes ?? [])
     .map((m) => m.organization)
-    .filter((org): org is NonNullable<typeof org> => !!org)
-    .filter((org) => (org.screens?.nodes?.length ?? 0) > 0);
+    .filter((org): org is NonNullable<typeof org> => !!org);
+
+  const orgsWithScreens = allOrgs.filter(
+    (org) => (org.screens?.nodes?.length ?? 0) > 0,
+  );
 
   return (
-    <SharedLayoutLoggedIn title="Pick a screen" query={query}>
-      {!id ? (
-        <div className="max-w-md mx-auto">
+    <SharedLayoutLoggedIn title="Select Screen" query={query}>
+      <div className="max-w-lg mx-auto py-4 sm:py-8">
+        {!id ? (
           <Alert variant="destructive" title="Missing id">
             No screen-select session id was provided in the URL.
           </Alert>
-        </div>
-      ) : (
-        <div>
-          <h1 className="text-2xl font-bold mb-1">Pick a screen</h1>
-          <p className="text-secondary text-sm mb-1">
-            Select a screen to setup on your device.
-          </p>
-
-          {orgsWithScreens.length === 0 ? (
-            <div className="border border-stroke rounded p-6 text-center">
-              <PiTelevisionSimple
-                className="mx-auto mb-2 text-tertiary"
-                size={28}
-              />
+        ) : (
+          <>
+            <header className="text-center mb-8">
+              <h1 className="text-2xl font-bold mb-2">Connect this TV</h1>
               <p className="text-secondary text-sm">
-                You don't have access to any screens.
+                Create or pick a screen from your organization to assign to your
+                TV.
               </p>
-            </div>
-          ) : (
-            <div className="space-y-6">
-              {orgsWithScreens.map((org) => (
-                <div key={org.id}>
-                  <div className="stack-row mb-2">
-                    <Avatar className="size-6">
-                      <AvatarFallback>
-                        {org.name?.charAt(0)?.toUpperCase() ?? "?"}
-                      </AvatarFallback>
-                    </Avatar>
-                    <h2 className="text-sm font-medium text-tertiary">
-                      {org.name}
-                    </h2>
-                  </div>
-                  <div className="space-y-2">
-                    {org.screens.nodes.map((screen) => (
-                      <Option
-                        key={screen.id}
-                        size="lg"
-                        onClick={() =>
-                          onSelect(org.slug, screen.slug, screen.id)
-                        }
-                        title={
-                          <span className="flex items-center justify-between gap-3">
-                            <span className="flex items-center gap-3 min-w-0">
-                              <PiTelevisionSimple
-                                className="shrink-0 text-tertiary"
-                                size={20}
-                              />
-                              <span className="truncate">{screen.name}</span>
-                            </span>
-                            <VscChevronRight className="shrink-0 text-tertiary" />
-                          </span>
-                        }
-                      />
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+            </header>
+
+            {fetching && !data ? (
+              <div className="flex justify-center py-12">
+                <LoadingInline />
+              </div>
+            ) : orgsWithScreens.length === 0 ? (
+              allOrgs.length === 0 ? (
+                <EmptyNoAccess />
+              ) : (
+                <EmptyNoScreens orgs={allOrgs} />
+              )
+            ) : (
+              <div className="space-y-6">
+                {allOrgs.map((org) => (
+                  <OrgSection
+                    key={org.id}
+                    org={org}
+                    screens={org.screens?.nodes ?? []}
+                    onSelect={onSelect}
+                  />
+                ))}
+              </div>
+            )}
+          </>
+        )}
+      </div>
     </SharedLayoutLoggedIn>
   );
 };
 
 export default QrScreenSelectPage;
+
+type OrgSectionProps = {
+  org: OrgInfo;
+  screens: ReadonlyArray<ScreenInfo>;
+  onSelect: (orgSlug: string, screenSlug: string, screenId: string) => void;
+};
+
+const OrgSection = ({ org, screens, onSelect }: OrgSectionProps) => {
+  return (
+    <section>
+      <div className="flex items-center gap-2 px-1 mb-2">
+        <Avatar className="size-6">
+          <AvatarFallback>
+            {org.name?.charAt(0)?.toUpperCase() ?? "?"}
+          </AvatarFallback>
+        </Avatar>
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-tertiary">
+          {org.name}
+        </h2>
+      </div>
+      <div className="border border-stroke rounded-lg overflow-hidden divide-y divide-stroke bg-white">
+        {screens.map((screen) => (
+          <button
+            key={screen.id}
+            type="button"
+            onClick={() => onSelect(org.slug, screen.slug, screen.id)}
+            className="w-full flex items-center gap-3 p-4 text-left cursor-pointer hover:bg-gray-50 active:bg-gray-100 transition-colors"
+          >
+            <div className="flex items-center justify-center size-10 rounded-md bg-gray-100 shrink-0">
+              <PiTelevisionSimple className="text-tertiary" size={20} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="font-medium truncate">{screen.name}</p>
+              <p className="text-xs text-tertiary truncate">
+                Tap to select this screen
+              </p>
+            </div>
+            <VscChevronRight className="shrink-0 text-tertiary" size={18} />
+          </button>
+        ))}
+        <OverlayToggle
+          toggler={({ onToggle }) => (
+            <button
+              type="button"
+              onClick={onToggle}
+              className="w-full flex items-center gap-3 p-4 text-left cursor-pointer hover:bg-gray-50 active:bg-gray-100 transition-colors"
+            >
+              <div className="flex items-center justify-center size-10 rounded-md border border-dashed border-stroke shrink-0">
+                <FaPlus className="text-tertiary" size={14} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="font-medium truncate text-tertiary">
+                  Create new screen
+                </p>
+              </div>
+            </button>
+          )}
+        >
+          <CreateScreenModal organizationId={org.id} />
+        </OverlayToggle>
+      </div>
+    </section>
+  );
+};
+
+const EmptyNoAccess = () => (
+  <div className="border border-stroke rounded-lg p-8 text-center bg-white">
+    <p className="font-medium mb-1">No screens available</p>
+    <p className="text-secondary text-sm">
+      You don't have access to any organizations with screens.
+    </p>
+  </div>
+);
+
+type EmptyNoScreensProps = {
+  orgs: ReadonlyArray<OrgInfo>;
+};
+
+const EmptyNoScreens = ({ orgs }: EmptyNoScreensProps) => {
+  if (orgs.length === 1) {
+    return (
+      <div className="border border-dashed border-stroke rounded-lg p-6 sm:p-8 text-center bg-white">
+        <div className="inline-flex items-center justify-center size-12 rounded-full bg-gray-100 mb-3">
+          <PiTelevisionSimple className="text-tertiary" size={22} />
+        </div>
+        <p className="font-medium mb-1">No screens yet</p>
+        <p className="text-secondary text-sm mb-5">
+          Create your first screen in{" "}
+          <span className="font-medium text-primary">{orgs[0].name}</span> to
+          get started.
+        </p>
+        <OverlayToggle
+          toggler={({ onToggle }) => (
+            <Button variant="success" onClick={onToggle}>
+              <FaPlus />
+              Create screen
+            </Button>
+          )}
+        >
+          <CreateScreenModal organizationId={orgs[0].id} />
+        </OverlayToggle>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="border border-dashed border-stroke rounded-lg p-6 text-center bg-white mb-4">
+        <div className="inline-flex items-center justify-center size-12 rounded-full bg-gray-100 mb-3">
+          <PiTelevisionSimple className="text-tertiary" size={22} />
+        </div>
+        <p className="font-medium mb-1">No screens yet</p>
+        <p className="text-secondary text-sm">
+          Pick an organization to create your first screen.
+        </p>
+      </div>
+      <h2 className="text-xs font-semibold uppercase tracking-wide text-tertiary px-1 mb-2">
+        Your organizations
+      </h2>
+      <div className="border border-stroke rounded-lg overflow-hidden divide-y divide-stroke bg-white">
+        {orgs.map((org) => (
+          <OverlayToggle
+            key={org.id}
+            toggler={({ onToggle }) => (
+              <button
+                type="button"
+                onClick={onToggle}
+                className="w-full flex items-center gap-3 p-4 text-left cursor-pointer hover:bg-gray-50 active:bg-gray-100 transition-colors"
+              >
+                <Avatar className="size-10 shrink-0">
+                  <AvatarFallback>
+                    {org.name?.charAt(0)?.toUpperCase() ?? "?"}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium truncate">{org.name}</p>
+                  <p className="text-xs text-tertiary truncate">
+                    Create a new screen
+                  </p>
+                </div>
+                <div className="flex items-center justify-center size-8 rounded-full bg-gray-100 shrink-0">
+                  <FaPlus className="text-tertiary" size={12} />
+                </div>
+              </button>
+            )}
+          >
+            <CreateScreenModal organizationId={org.id} />
+          </OverlayToggle>
+        ))}
+      </div>
+    </div>
+  );
+};

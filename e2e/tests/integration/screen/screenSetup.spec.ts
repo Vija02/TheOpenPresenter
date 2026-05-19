@@ -1,3 +1,4 @@
+import { E2ECommandAPI } from "../../../e2eCommand";
 import { expect, test } from "../../../fixtures/screenFixture";
 import { QrScreenSelectPage } from "../../../pages/QrScreenSelectPage";
 import { ScreenControlPage } from "../../../pages/ScreenGuest/ScreenControlPage";
@@ -131,5 +132,131 @@ test.describe("Setup screen QR flow", () => {
     } finally {
       await phoneContext.close();
     }
+  });
+
+  test("phone with no organizations sees the no-access empty state", async ({
+    browser,
+    page,
+    e2eCommand,
+  }) => {
+    test.skip(!!process.env.PLAYWRIGHT_TAURI, "Skipped in Tauri E2E tests");
+    await e2eCommand.serverCommand("clearUserByUsername", {
+      username: USERNAME,
+    });
+
+    const setupPage = new SetupScreenDevicePage(page);
+    await setupPage.goto();
+    const authPath = toRelative(await setupPage.getAuthUrl());
+
+    const phoneContext = await browser.newContext();
+    const phonePage = await phoneContext.newPage();
+    try {
+      const api = new E2ECommandAPI(phonePage, phoneContext.request);
+      await api.login({
+        username: USERNAME,
+        orgs: [],
+        next: "/",
+      });
+
+      await phonePage.goto(authPath);
+      await expect(phonePage).toHaveURL(/\/qr\/screen-select\?id=/);
+
+      const phonePicker = new QrScreenSelectPage(phonePage);
+      await expect(phonePicker.heading).toBeVisible();
+      await expect(phonePicker.noAccessMessage).toBeVisible();
+    } finally {
+      await phoneContext.close();
+    }
+  });
+
+  test("phone with org but no screens can create one and complete setup", async ({
+    page,
+    setupOrgOwnerContext,
+  }) => {
+    test.skip(!!process.env.PLAYWRIGHT_TAURI, "Skipped in Tauri E2E tests");
+    const newScreenName = `Empty State Screen ${WORKER_TAG}`;
+
+    const owner = await setupOrgOwnerContext({
+      orgSlug: ORG_SLUG,
+      orgName: ORG_NAME,
+      username: USERNAME,
+    });
+    const phonePage = owner.page;
+
+    const setupPage = new SetupScreenDevicePage(page);
+    await setupPage.goto();
+    const authPath = toRelative(await setupPage.getAuthUrl());
+
+    await phonePage.goto(authPath);
+    await expect(phonePage).toHaveURL(/\/qr\/screen-select\?id=/);
+
+    const phonePicker = new QrScreenSelectPage(phonePage);
+    await expect(phonePicker.heading).toBeVisible();
+    await expect(phonePicker.noScreensYetMessage).toBeVisible();
+    await expect(phonePicker.createScreenButton).toBeVisible();
+
+    await phonePicker.createScreenButton.click();
+    await expect(phonePicker.newScreenDialog).toBeVisible();
+    await phonePicker.fillNewScreenForm(newScreenName);
+    await phonePicker.newScreenSubmitButton.click();
+    await expect(phonePicker.newScreenDialog).toBeHidden();
+
+    await expect(phonePicker.screenOption(newScreenName)).toBeVisible();
+    await phonePicker.screenOption(newScreenName).click();
+
+    const phoneControl = new ScreenControlPage(phonePage);
+    await expect(phonePage).toHaveURL(
+      new RegExp(`/o/${ORG_SLUG}/screens/[^/]+/control`),
+    );
+    await expect(phoneControl.pickProjectHeading).toBeVisible();
+    await expect(page).toHaveURL(
+      new RegExp(`/render/s/${ORG_SLUG}/[^/]+`),
+    );
+  });
+
+  test("phone with existing screens can create another via the in-section row", async ({
+    page,
+    setupOrgOwnerContext,
+    setupScreen,
+  }) => {
+    test.skip(!!process.env.PLAYWRIGHT_TAURI, "Skipped in Tauri E2E tests");
+    const additionalScreenName = `Additional Screen ${WORKER_TAG}`;
+
+    const owner = await setupOrgOwnerContext({
+      orgSlug: ORG_SLUG,
+      orgName: ORG_NAME,
+      username: USERNAME,
+    });
+    await setupScreen({
+      orgSlug: ORG_SLUG,
+      slug: SCREEN_SLUG,
+      name: SCREEN_NAME,
+    });
+    const phonePage = owner.page;
+
+    const setupPage = new SetupScreenDevicePage(page);
+    await setupPage.goto();
+    const authPath = toRelative(await setupPage.getAuthUrl());
+
+    await phonePage.goto(authPath);
+    await expect(phonePage).toHaveURL(/\/qr\/screen-select\?id=/);
+
+    const phonePicker = new QrScreenSelectPage(phonePage);
+    await expect(phonePicker.heading).toBeVisible();
+    await expect(phonePicker.screenOption(SCREEN_NAME)).toBeVisible();
+
+    // Existing org section should also expose a "Create new screen" row.
+    const createRow = phonePicker.createNewScreenRow(ORG_NAME);
+    await expect(createRow).toBeVisible();
+    await createRow.click();
+
+    await expect(phonePicker.newScreenDialog).toBeVisible();
+    await phonePicker.fillNewScreenForm(additionalScreenName);
+    await phonePicker.newScreenSubmitButton.click();
+    await expect(phonePicker.newScreenDialog).toBeHidden();
+
+    // Both screens should be present afterwards.
+    await expect(phonePicker.screenOption(SCREEN_NAME)).toBeVisible();
+    await expect(phonePicker.screenOption(additionalScreenName)).toBeVisible();
   });
 });
