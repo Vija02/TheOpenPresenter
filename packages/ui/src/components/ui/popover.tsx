@@ -75,4 +75,48 @@ function PopoverAnchor({
   return <PopoverPrimitive.Anchor data-slot="popover-anchor" {...props} />;
 }
 
-export { Popover, PopoverTrigger, PopoverClose, PopoverContent, PopoverAnchor };
+type PopoverMenuItemProps = Omit<React.ComponentProps<"button">, "children"> & {
+  label: React.ReactNode;
+  description?: React.ReactNode;
+  icon?: React.ReactNode;
+};
+
+function PopoverMenuItem({
+  label,
+  description,
+  icon,
+  className,
+  type = "button",
+  ...props
+}: PopoverMenuItemProps) {
+  return (
+    <PopoverClose asChild>
+      <button
+        type={type}
+        data-slot="popover-menu-item"
+        className={cn(
+          "flex w-full items-start gap-2 px-3 py-2 text-sm text-left rounded transition-colors cursor-pointer hover:bg-surface-primary-hover focus:bg-surface-primary-hover focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed",
+          className,
+        )}
+        {...props}
+      >
+        {icon && <span className="shrink-0 mt-0.5">{icon}</span>}
+        <div className="min-w-0 flex-1">
+          <p className="font-medium">{label}</p>
+          {description && (
+            <p className="text-xs text-tertiary">{description}</p>
+          )}
+        </div>
+      </button>
+    </PopoverClose>
+  );
+}
+
+export {
+  Popover,
+  PopoverTrigger,
+  PopoverClose,
+  PopoverContent,
+  PopoverAnchor,
+  PopoverMenuItem,
+};
