@@ -48,7 +48,7 @@ export const ControlPageHeader = ({
         {isMember && adminHref && (
           <Link asChild variant="unstyled" className="ml-auto">
             <WouterLink href={adminHref}>
-              <Button size="sm">
+              <Button size="sm" variant="outline">
                 <VscSettingsGear />
                 Admin panel
               </Button>
