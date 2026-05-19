@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict dWuao8Piw0jQbMptjeJD3mKylgZbDBp4UivuMCcdLX5R78UebdpZgQb6lbMCcfk
+\restrict akvfEhgeXxofY9ScQO8ZmIs4Knk4uobQstA7ew9cjVCgV5fm9PweuCh21CnUyqr
 
 -- Dumped from database version 17.0 (Debian 17.0-1.pgdg120+1)
 -- Dumped by pg_dump version 18.3
@@ -1158,7 +1158,8 @@ $$;
 --
 
 CREATE FUNCTION app_private.tg_screens__set_code() RETURNS trigger
-    LANGUAGE plpgsql
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp'
     AS $$
 begin
   -- Clients have no insert/update grant on this column, but be defensive
@@ -6698,5 +6699,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE theopenpresenter REVOKE ALL ON FUNCTIONS FROM 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict dWuao8Piw0jQbMptjeJD3mKylgZbDBp4UivuMCcdLX5R78UebdpZgQb6lbMCcfk
+\unrestrict akvfEhgeXxofY9ScQO8ZmIs4Knk4uobQstA7ew9cjVCgV5fm9PweuCh21CnUyqr
 
