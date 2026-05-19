@@ -98,7 +98,7 @@ test.describe("Screen renderer reflects project selection", () => {
 
       // Assign project 1 via /control. Admin tab redirects to /app/...
       await screenControlPage.goto(ctx.orgSlug, ctx.screenSlug);
-      await expect(screenControlPage.pickProjectHeading).toBeVisible();
+      await expect(screenControlPage.openProjectHeading).toBeVisible();
       await page.getByText(PROJECT_ONE_NAME, { exact: true }).first().click();
       await expect(page).toHaveURL(
         new RegExp(`/app/${ORG_SLUG}/${PROJECT_ONE_SLUG}`),
@@ -114,7 +114,7 @@ test.describe("Screen renderer reflects project selection", () => {
 
       // Switch to project 2 via /control.
       await screenControlPage.goto(ctx.orgSlug, ctx.screenSlug);
-      await expect(screenControlPage.pickProjectHeading).toBeVisible();
+      await expect(screenControlPage.openProjectHeading).toBeVisible();
       await page.getByText(PROJECT_TWO_NAME, { exact: true }).first().click();
       await expect(page).toHaveURL(
         new RegExp(`/app/${ORG_SLUG}/${PROJECT_TWO_SLUG}`),
@@ -152,7 +152,7 @@ test.describe("Screen renderer reflects project selection", () => {
       await expect(renderer.idleMessage).toBeVisible();
 
       await screenControlPage.goto(ctx.orgSlug, ctx.screenSlug);
-      await expect(screenControlPage.pickProjectHeading).toBeVisible();
+      await expect(screenControlPage.openProjectHeading).toBeVisible();
       await screenControlPage.createTemporaryProjectButton.click();
 
       // createTemporaryProject sets current_project_id and redirects

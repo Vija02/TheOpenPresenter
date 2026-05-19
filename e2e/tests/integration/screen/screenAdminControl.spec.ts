@@ -44,7 +44,7 @@ test.describe("Screen admin on /control", () => {
     await expect(page).toHaveURL(
       new RegExp(`/o/${ctx.orgSlug}/screens/${ctx.screenSlug}/control`),
     );
-    await expect(screenControlPage.pickProjectHeading).toBeVisible();
+    await expect(screenControlPage.openProjectHeading).toBeVisible();
   });
 
   test("org member reaches /control even while an anon guest holds control", async ({
@@ -77,13 +77,13 @@ test.describe("Screen admin on /control", () => {
       await expect(guestPage).toHaveURL(
         new RegExp(`/o/${ctx.orgSlug}/screens/${ctx.screenSlug}/control`),
       );
-      await expect(guestControl.pickProjectHeading).toBeVisible();
+      await expect(guestControl.openProjectHeading).toBeVisible();
 
       await screenControlPage.goto(ctx.orgSlug, ctx.screenSlug);
       await expect(page).toHaveURL(
         new RegExp(`/o/${ctx.orgSlug}/screens/${ctx.screenSlug}/control`),
       );
-      await expect(screenControlPage.pickProjectHeading).toBeVisible();
+      await expect(screenControlPage.openProjectHeading).toBeVisible();
     } finally {
       await guestContext.close();
     }
@@ -115,7 +115,7 @@ test.describe("Screen admin on /control", () => {
     });
 
     await screenControlPage.goto(ctx.orgSlug, ctx.screenSlug);
-    await expect(screenControlPage.pickProjectHeading).toBeVisible();
+    await expect(screenControlPage.openProjectHeading).toBeVisible();
 
     await expect(
       page.getByText("Admin Project Alpha", { exact: true }).first(),

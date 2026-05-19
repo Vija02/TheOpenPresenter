@@ -64,7 +64,7 @@ test.describe("Setup screen QR flow", () => {
     await expect(phonePage).toHaveURL(
       new RegExp(`/o/${ctx.orgSlug}/screens/${ctx.screenSlug}/control`),
     );
-    await expect(phoneControl.pickProjectHeading).toBeVisible();
+    await expect(phoneControl.openProjectHeading).toBeVisible();
 
     // Display device's SSE receives the login token and ends up on the
     // renderer. /qr-auth/login is a transient hop along the way.
@@ -123,7 +123,7 @@ test.describe("Setup screen QR flow", () => {
       await expect(phonePage).toHaveURL(
         new RegExp(`/o/${ctx.orgSlug}/screens/${ctx.screenSlug}/control`),
       );
-      await expect(phoneControl.pickProjectHeading).toBeVisible();
+      await expect(phoneControl.openProjectHeading).toBeVisible();
 
       // Display device's SSE eventually fires and the renderer takes over.
       await expect(page).toHaveURL(
@@ -208,7 +208,7 @@ test.describe("Setup screen QR flow", () => {
     await expect(phonePage).toHaveURL(
       new RegExp(`/o/${ORG_SLUG}/screens/[^/]+/control`),
     );
-    await expect(phoneControl.pickProjectHeading).toBeVisible();
+    await expect(phoneControl.openProjectHeading).toBeVisible();
     await expect(page).toHaveURL(
       new RegExp(`/render/s/${ORG_SLUG}/[^/]+`),
     );

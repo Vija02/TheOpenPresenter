@@ -51,7 +51,7 @@ test.describe("Connect page", () => {
     await expect(page).toHaveURL(
       new RegExp(`/o/${ctx.orgSlug}/screens/${ctx.screenSlug}/control`),
     );
-    await expect(screenControlPage.pickProjectHeading).toBeVisible();
+    await expect(screenControlPage.openProjectHeading).toBeVisible();
   });
 
   test("non-matching code shows 'No screen found' error", async ({
