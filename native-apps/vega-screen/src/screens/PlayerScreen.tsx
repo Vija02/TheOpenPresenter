@@ -353,6 +353,9 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   qrCard: {
+    width: '44%',
+    minWidth: 440,
+    maxWidth: 620,
     backgroundColor: '#14171d',
     borderRadius: 22,
     paddingVertical: 26,
