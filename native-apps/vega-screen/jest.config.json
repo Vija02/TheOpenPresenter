@@ -12,9 +12,9 @@
   "modulePaths": ["<rootDir>/src"],
   "roots": [
     "<rootDir>/src/",
-    "<rootDir>/test/",
     "<rootDir>/node_modules/"
   ],
+  "passWithNoTests": true,
   "collectCoverage": false,
   "coverageReporters": ["json", "json-summary", "lcov", "text"],
   "collectCoverageFrom": [

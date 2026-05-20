@@ -21,7 +21,6 @@
   },
   "dependencies": {
     "@amazon-devices/react-native-async-storage__async-storage": "^2.0.1758683737",
-    "@amazon-devices/react-native-cookies__cookies": "^1.0.1758683737",
     "@amazon-devices/react-native-kepler": "^2.0.0",
     "@amazon-devices/react-native-qrcode-svg": "^2.0.1758683737",
     "@amazon-devices/react-native-safe-area-context": "^2.0.1758683737",
