@@ -153,15 +153,18 @@ test.describe("Screen renderer reflects project selection", () => {
 
       await screenControlPage.goto(ctx.orgSlug, ctx.screenSlug);
       await expect(screenControlPage.openProjectHeading).toBeVisible();
-      await screenControlPage.createTemporaryProjectButton.click();
+      await screenControlPage.newProjectDropdownButton.click();
+      await page
+        .getByRole("button", {
+          name: /Temporary project.*Deleted once you stop using it/,
+        })
+        .click();
 
       // createTemporaryProject sets current_project_id and redirects
       // to /app/<orgSlug>/temp-<uuid>.
       await expect(page).toHaveURL(new RegExp(`/app/${ORG_SLUG}/temp-`));
 
-      const tempProjectSlug = new URL(page.url()).pathname
-        .split("/")
-        .pop()!;
+      const tempProjectSlug = new URL(page.url()).pathname.split("/").pop()!;
       expect(tempProjectSlug).toMatch(/^temp-/);
 
       await projectPage.createPlugin("Lyrics Presenter");
@@ -182,9 +185,9 @@ test.describe("Screen renderer reflects project selection", () => {
         page.getByRole("heading", { name: "Projects" }),
       ).toBeVisible();
       await expect(page.getByTestId("project-card")).toHaveCount(0);
-      await expect(
-        page.locator(`a[href*="/${tempProjectSlug}"]`),
-      ).toHaveCount(0);
+      await expect(page.locator(`a[href*="/${tempProjectSlug}"]`)).toHaveCount(
+        0,
+      );
     } finally {
       await rendererPage.close();
     }
