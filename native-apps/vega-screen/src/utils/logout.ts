@@ -1,4 +1,4 @@
-import CookieManager from '@amazon-devices/react-native-cookies__cookies';
+import {CookieManager} from '@amazon-devices/webview';
 
 import {navigate} from './navigation';
 import {queryClient} from './queryClient';

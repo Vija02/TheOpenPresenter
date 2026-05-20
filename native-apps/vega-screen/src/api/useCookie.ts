@@ -1,4 +1,4 @@
-import CookieManager from '@amazon-devices/react-native-cookies__cookies';
+import {CookieManager} from '@amazon-devices/webview';
 import {useQuery} from '@tanstack/react-query';
 
 import {getRootUrl} from '../utils/rootUrl';
