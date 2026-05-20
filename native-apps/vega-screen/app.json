@@ -1,5 +1,5 @@
 {
   "//": "The declared app name must follow this pattern to be KRL-compatible",
-  "name": "com.theopenpresenter.tv.vega.main",
+  "name": "com.theopenpresenter.tv.main",
   "displayName": "theopenpresentertv"
 }

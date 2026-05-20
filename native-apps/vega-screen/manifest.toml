@@ -3,11 +3,11 @@ schema-version = 1
 [package]
 title = "TheOpenPresenter TV in Vega"
 version = "0.1.0"
-id = "com.theopenpresenter.tv.vega"
+id = "com.theopenpresenter.tv"
 
 [components]
 [[components.interactive]]
-id = "com.theopenpresenter.tv.vega.main"
+id = "com.theopenpresenter.tv.main"
 runtime-module = "/com.amazon.kepler.keplerscript.runtime.loader_2@IKeplerScript_2_0"
 launch-type = "singleton"
 categories = ["com.amazon.category.main"]
