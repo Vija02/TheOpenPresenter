@@ -355,7 +355,17 @@ const UserProjectsPicker = ({
 
   const [showOthers, setShowOthers] = useState(false);
 
-  if (orgGroups.length === 0) return null;
+  if (orgGroups.length === 0) {
+    return (
+      <div className="border border-dashed border-default rounded-lg p-4 text-center text-sm text-secondary">
+        <p className="font-medium text-primary">No projects yet</p>
+        <p className="mt-1">
+          Use the <span className="font-semibold">New</span> button above to
+          create your first project.
+        </p>
+      </div>
+    );
+  }
 
   const renderGroup = (group: OrgGroup, showHeading: boolean) => (
     <div key={group.id} className="flex flex-col gap-2">
