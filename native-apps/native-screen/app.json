@@ -20,6 +20,7 @@
       ],
       "expo-router",
       "./plugins/withCleartextTraffic.js",
+      "./plugins/withLeanbackRequired.js",
       "expo-font",
       "expo-web-browser"
     ],
