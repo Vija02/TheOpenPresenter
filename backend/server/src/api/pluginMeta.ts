@@ -21,6 +21,7 @@ export const pluginMeta = makeExtendSchemaPlugin(() => ({
       title: String!
       description: String!
       categories: [String!]!
+      organizationTypes: [OrganizationType!]
       isExperimental: Boolean
       isStarred: Boolean
     }
@@ -56,6 +57,7 @@ export const pluginMeta = makeExtendSchemaPlugin(() => ({
               title: x.sceneCreatorMeta.title,
               description: x.sceneCreatorMeta.description,
               categories: x.sceneCreatorMeta.categories,
+              organizationTypes: x.sceneCreatorMeta.organizationTypeWhitelist,
               isExperimental: x.sceneCreatorMeta.isExperimental,
               isStarred: x.sceneCreatorMeta.isStarred,
             })),

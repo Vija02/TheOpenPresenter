@@ -11,6 +11,7 @@ query RendererBasePlugin($orgSlug: String!, $projectSlug: String!) {
 
   organizationBySlug(slug: $orgSlug) {
     id
+    organizationType
     projects(condition: { slug: $projectSlug }) {
       nodes {
         id
@@ -34,6 +35,7 @@ fragment BaseRendererPluginMeta on PluginMeta {
   sceneCreator {
     title
     pluginName
+    organizationTypes
   }
   registeredRendererView {
     pluginName

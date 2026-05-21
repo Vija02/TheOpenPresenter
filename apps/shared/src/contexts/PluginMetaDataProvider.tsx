@@ -1,4 +1,5 @@
 import {
+  OrganizationType,
   RemoteBasePluginQuery,
   RendererBasePluginQuery,
   useRemoteBasePluginQuery,
@@ -31,6 +32,7 @@ type PluginMetaDataProviderType = {
   project: Project | null;
   orgId: string;
   orgSlug: string;
+  organizationType: OrganizationType | null;
   projectSlug: string;
   projectId: string;
   currentUser: CurrentUser | null;
@@ -44,6 +46,7 @@ const initialData: PluginMetaDataProviderType = {
   project: null,
   orgId: "",
   orgSlug: "",
+  organizationType: null,
   projectSlug: "",
   projectId: "",
   currentUser: null,
@@ -146,6 +149,8 @@ export function PluginMetaDataProvider({
         project,
         orgId: organizationId,
         orgSlug,
+        organizationType:
+          pluginMetaData?.organizationBySlug?.organizationType ?? null,
         projectSlug,
         projectId: projectId,
         currentUser,
