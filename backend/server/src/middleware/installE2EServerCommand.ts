@@ -1,4 +1,5 @@
 import { YjsState } from "@repo/base-plugin/server";
+import { OrganizationType } from "@repo/graphql";
 import { urlencoded } from "body-parser";
 import { Express, Request, RequestHandler, Response } from "express";
 import { Pool, PoolClient } from "pg";
@@ -290,11 +291,13 @@ async function runCommand(
               slug,
               projects = [],
               owner = true,
+              organizationType,
             }: {
               name: string;
               slug: string;
               projects?: LoginProject[];
               owner?: boolean;
+              organizationType?: OrganizationType;
             }) => {
               if (!owner) {
                 await setSession(otherSession);
@@ -303,6 +306,7 @@ async function runCommand(
                 client,
                 slug,
                 name,
+                organizationType,
               );
               if (!owner) {
                 await client.query(
@@ -687,13 +691,13 @@ async function createTestOrganization(
   slug: string,
   name: string,
   // Default to church
-  organizationType: "church" | "venue" = "church",
+  organizationType: OrganizationType = OrganizationType.Church,
 ) {
   const {
     rows: [organization],
   } = await client.query(
     "select * from app_public.create_organization($1, $2, $3::app_public.organization_type)",
-    [slug, name, organizationType],
+    [slug, name, organizationType.toLowerCase()],
   );
   return organization;
 }
