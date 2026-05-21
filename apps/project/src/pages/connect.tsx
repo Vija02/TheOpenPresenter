@@ -106,7 +106,11 @@ function ConnectForm() {
                   <InputOTP
                     maxLength={4}
                     pattern={OTP_PATTERN}
-                    autoComplete="one-time-code"
+                    inputMode="text"
+                    autoComplete="off"
+                    autoCapitalize="characters"
+                    autoCorrect="off"
+                    spellCheck={false}
                     autoFocus
                     data-testid="connectpage-input-code"
                     containerClassName="justify-center gap-3"
