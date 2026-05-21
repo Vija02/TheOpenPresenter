@@ -609,6 +609,7 @@ input CreateOrganizationInput {
   """
   clientMutationId: String
   name: String!
+  organizationType: OrganizationType
   slug: String!
 }
 
@@ -3023,6 +3024,9 @@ type Organization {
     orderBy: [OrganizationMembershipsOrderBy!] = [PRIMARY_KEY_ASC]
   ): OrganizationMembershipsConnection!
 
+  """The kind of organization this is (e.g. church, venue)"""
+  organizationType: OrganizationType!
+
   """Reads and enables pagination through a set of `Project`."""
   projects(
     """Read all values in the set after (below) this cursor."""
@@ -3534,7 +3538,15 @@ Represents an update to a `Organization`. Fields that are set will be updated.
 input OrganizationPatch {
   isPublic: Boolean
   name: String
+
+  """The kind of organization this is (e.g. church, venue)"""
+  organizationType: OrganizationType
   slug: String
+}
+
+enum OrganizationType {
+  CHURCH
+  VENUE
 }
 
 """A connection to a list of `Organization` values."""

@@ -4,8 +4,18 @@ fragment CreatedOrganization on Organization {
   slug
 }
 
-mutation CreateOrganization($name: String!, $slug: String!) {
-  createOrganization(input: { name: $name, slug: $slug }) {
+mutation CreateOrganization(
+  $name: String!
+  $slug: String!
+  $organizationType: OrganizationType
+) {
+  createOrganization(
+    input: {
+      name: $name
+      slug: $slug
+      organizationType: $organizationType
+    }
+  ) {
     organization {
       id
       ...CreatedOrganization

@@ -10,5 +10,6 @@ fragment OrganizationSettingsGeneralInfo on Query {
     name
     slug
     isPublic
+    organizationType
   }
 }
