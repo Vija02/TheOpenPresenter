@@ -9500,6 +9500,7 @@ __metadata:
   resolution: "@repo/e2e@workspace:e2e"
   dependencies:
     "@playwright/test": "npm:^1.52.0"
+    "@repo/graphql": "npm:*"
     "@types/node": "npm:^25.7.0"
     tsx: "npm:^4.7.0"
   languageName: unknown

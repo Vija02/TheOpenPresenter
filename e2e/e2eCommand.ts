@@ -1,4 +1,5 @@
 import type { APIRequestContext, Page } from "@playwright/test";
+import type { OrganizationType } from "@repo/graphql";
 
 type User = {
   id: string;
@@ -26,6 +27,8 @@ export class E2ECommandAPI {
     orgs?: {
       name: string;
       slug: string;
+      /** Defaults to church when omitted */
+      organizationType?: OrganizationType;
       projects?: {
         name: string;
         slug: string;
