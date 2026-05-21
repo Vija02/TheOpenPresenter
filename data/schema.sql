@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict akvfEhgeXxofY9ScQO8ZmIs4Knk4uobQstA7ew9cjVCgV5fm9PweuCh21CnUyqr
+\restrict jkvsaGcGZhmLXyu0WbDYHPmBm1SXs0BZ9OQhXIfxhBBJHOYf3b2QU2jrkOXvoh9
 
 -- Dumped from database version 17.0 (Debian 17.0-1.pgdg120+1)
 -- Dumped by pg_dump version 18.3
@@ -101,6 +101,16 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA public;
 --
 
 COMMENT ON EXTENSION "uuid-ossp" IS 'generate universally unique identifiers (UUIDs)';
+
+
+--
+-- Name: organization_type; Type: TYPE; Schema: app_public; Owner: -
+--
+
+CREATE TYPE app_public.organization_type AS ENUM (
+    'church',
+    'venue'
+);
 
 
 --
@@ -1483,15 +1493,23 @@ CREATE TABLE app_public.organizations (
     slug public.citext NOT NULL,
     name text NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    is_public boolean DEFAULT false
+    is_public boolean DEFAULT false,
+    organization_type app_public.organization_type DEFAULT 'venue'::app_public.organization_type NOT NULL
 );
 
 
 --
--- Name: create_organization(public.citext, text); Type: FUNCTION; Schema: app_public; Owner: -
+-- Name: COLUMN organizations.organization_type; Type: COMMENT; Schema: app_public; Owner: -
 --
 
-CREATE FUNCTION app_public.create_organization(slug public.citext, name text) RETURNS app_public.organizations
+COMMENT ON COLUMN app_public.organizations.organization_type IS 'The kind of organization this is (e.g. church, venue)';
+
+
+--
+-- Name: create_organization(public.citext, text, app_public.organization_type); Type: FUNCTION; Schema: app_public; Owner: -
+--
+
+CREATE FUNCTION app_public.create_organization(slug public.citext, name text, organization_type app_public.organization_type DEFAULT 'venue'::app_public.organization_type) RETURNS app_public.organizations
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO 'pg_catalog', 'public', 'pg_temp'
     AS $$
@@ -1501,9 +1519,15 @@ begin
   if app_public.current_user_id() is null then
     raise exception 'You must log in to create an organization' using errcode = 'LOGIN';
   end if;
-  insert into app_public.organizations (slug, name) values (slug, name) returning * into v_org;
+  insert into app_public.organizations (slug, name, organization_type)
+    values (
+      create_organization.slug,
+      create_organization.name,
+      create_organization.organization_type
+    )
+    returning * into v_org;
   insert into app_public.organization_memberships (organization_id, user_id, is_owner, is_billing_contact)
-    values(v_org.id, app_public.current_user_id(), true, true);
+    values (v_org.id, app_public.current_user_id(), true, true);
   return v_org;
 end;
 $$;
@@ -5834,11 +5858,18 @@ GRANT UPDATE(is_public) ON TABLE app_public.organizations TO theopenpresenter_vi
 
 
 --
--- Name: FUNCTION create_organization(slug public.citext, name text); Type: ACL; Schema: app_public; Owner: -
+-- Name: COLUMN organizations.organization_type; Type: ACL; Schema: app_public; Owner: -
 --
 
-REVOKE ALL ON FUNCTION app_public.create_organization(slug public.citext, name text) FROM PUBLIC;
-GRANT ALL ON FUNCTION app_public.create_organization(slug public.citext, name text) TO theopenpresenter_visitor;
+GRANT UPDATE(organization_type) ON TABLE app_public.organizations TO theopenpresenter_visitor;
+
+
+--
+-- Name: FUNCTION create_organization(slug public.citext, name text, organization_type app_public.organization_type); Type: ACL; Schema: app_public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_public.create_organization(slug public.citext, name text, organization_type app_public.organization_type) FROM PUBLIC;
+GRANT ALL ON FUNCTION app_public.create_organization(slug public.citext, name text, organization_type app_public.organization_type) TO theopenpresenter_visitor;
 
 
 --
@@ -6699,5 +6730,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE theopenpresenter REVOKE ALL ON FUNCTIONS FROM 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict akvfEhgeXxofY9ScQO8ZmIs4Knk4uobQstA7ew9cjVCgV5fm9PweuCh21CnUyqr
+\unrestrict jkvsaGcGZhmLXyu0WbDYHPmBm1SXs0BZ9OQhXIfxhBBJHOYf3b2QU2jrkOXvoh9
 

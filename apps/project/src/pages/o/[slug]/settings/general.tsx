@@ -1,4 +1,5 @@
 import { SharedOrgLayout } from "@/components/SharedOrgLayout";
+import { organizationTypeOptions } from "@/lib/organizationType";
 import {
   useOrganizationLoading,
   useOrganizationSlug,
@@ -8,11 +9,19 @@ import {
   Exact,
   OrganizationSettingsGeneralPageQuery,
   OrganizationSettingsGeneralPageQueryVariables,
+  OrganizationType,
   useOrganizationSettingsGeneralPageQuery,
   useUpdateOrganizationMutation,
 } from "@repo/graphql";
 import { extractError } from "@repo/lib";
-import { Alert, Button, CheckboxControl, Form, InputControl } from "@repo/ui";
+import {
+  Alert,
+  Button,
+  CheckboxControl,
+  Form,
+  InputControl,
+  OptionControl,
+} from "@repo/ui";
 import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
@@ -48,6 +57,10 @@ const formSchema = z.object({
   name: z.string().min(1, "Organization name must not be empty"),
   slug: z.string().min(2, "Slug must be at least 2 characters long"),
   isPublic: z.boolean().optional(),
+  organizationType: z.nativeEnum(OrganizationType, {
+    required_error: "Please choose what kind of organization this is",
+    invalid_type_error: "Please choose what kind of organization this is",
+  }),
 });
 
 type FormInputs = z.infer<typeof formSchema>;
@@ -56,7 +69,7 @@ const OrganizationSettingsIndexPageInner = ({
   query: [{ data }],
 }: PropTypes) => {
   const organization = data?.organizationBySlug!;
-  const { name, slug, isPublic } = organization;
+  const { name, slug, isPublic, organizationType } = organization;
   const [, navigate] = useLocation();
 
   const [, updateOrganization] = useUpdateOrganizationMutation();
@@ -68,6 +81,7 @@ const OrganizationSettingsIndexPageInner = ({
       slug,
       name,
       isPublic: isPublic ?? false,
+      organizationType: organizationType ?? OrganizationType.Venue,
     },
   });
 
@@ -82,6 +96,7 @@ const OrganizationSettingsIndexPageInner = ({
               slug: values.slug,
               name: values.name,
               isPublic: values.isPublic,
+              organizationType: values.organizationType,
             },
           },
         });
@@ -107,7 +122,7 @@ const OrganizationSettingsIndexPageInner = ({
         className="stack-col items-start gap-4"
       >
         <h1 className="text-2xl font-bold">General Settings</h1>
-        <div className="stack-col items-start w-full max-w-xl">
+        <div className="stack-col items-start w-full max-w-xl gap-6">
           {!userHaveAccess && (
             <Alert variant="warning" title="No access" className="mb-4">
               You must be an owner or the billing contact to edit these settings
@@ -130,10 +145,21 @@ const OrganizationSettingsIndexPageInner = ({
             className="w-full"
           />
 
+          <OptionControl<OrganizationType>
+            control={form.control}
+            name="organizationType"
+            label="Organization type"
+            description="This helps us tailor TheOpenPresenter to how you'll use it."
+            options={organizationTypeOptions}
+            disabled={!userHaveAccess}
+            className="w-full"
+          />
+
           <CheckboxControl
             control={form.control}
             name="isPublic"
-            label="Is Public"
+            label="Make organization public"
+            description="When enabled, other people can search for this organization and request to join it. Leave it off to keep the organization invite-only."
             disabled={!userHaveAccess}
           />
 

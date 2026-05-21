@@ -1,8 +1,10 @@
 import { Redirect } from "@/components/Redirect";
 import { SharedLayoutLoggedIn } from "@/components/SharedLayoutLoggedIn";
+import { organizationTypeOptions } from "@/lib/organizationType";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   CreatedOrganizationFragment,
+  OrganizationType,
   useCreateOrganizationMutation,
   useOrganizationBySlugQuery,
   useSharedQuery,
@@ -17,6 +19,7 @@ import {
   Button,
   Form,
   InputControl,
+  OptionControl,
 } from "@repo/ui";
 import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -28,6 +31,10 @@ import * as z from "zod";
 
 const formSchema = z.object({
   name: z.string().min(1, "Please choose a name for the organization"),
+  organizationType: z.nativeEnum(OrganizationType, {
+    required_error: "Please choose what kind of organization this is",
+    invalid_type_error: "Please choose what kind of organization this is",
+  }),
 });
 type FormInputs = z.infer<typeof formSchema>;
 
@@ -38,6 +45,7 @@ const CreateOrganizationPage = () => {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
+      organizationType: OrganizationType.Venue,
     },
   });
 
@@ -50,13 +58,14 @@ const CreateOrganizationPage = () => {
     async (values: FormInputs) => {
       setError(null);
       try {
-        const { name } = values;
+        const { name, organizationType } = values;
         const slug = slugify(name || "", {
           lower: true,
         });
         const data = await createOrganization({
           name,
           slug,
+          organizationType,
         });
         setError(null);
         setOrganization(data?.createOrganization?.organization || null);
@@ -89,6 +98,16 @@ const CreateOrganizationPage = () => {
                 />
 
                 <SlugCheck name={form.watch("name")} />
+
+                <div className="my-4">
+                  <OptionControl<OrganizationType>
+                    control={form.control}
+                    name="organizationType"
+                    label="What kind of organization is this?"
+                    description="This helps us tailor TheOpenPresenter to how you'll use it. You can change this later."
+                    options={organizationTypeOptions}
+                  />
+                </div>
 
                 {error ? (
                   <Alert
@@ -205,7 +224,10 @@ const SlugCheck = ({ name }: { name: string }) => {
       </p>
 
       {existingOrganizationData?.organizationBySlug && (
-        <p className="text-red-500" data-testid="createorganization-hint-nameinuse">
+        <p
+          className="text-red-500"
+          data-testid="createorganization-hint-nameinuse"
+        >
           Organization name is already in use
         </p>
       )}
