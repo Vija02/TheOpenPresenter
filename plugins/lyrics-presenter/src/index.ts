@@ -5,6 +5,7 @@ import {
   TRPCObject,
   YjsWatcher,
 } from "@repo/base-plugin/server";
+import { OrganizationType } from "@repo/graphql";
 import { logger } from "@repo/observability";
 import axios from "axios";
 import { proxy } from "valtio";
@@ -39,6 +40,7 @@ export const init = (
     title: "Lyrics Presenter",
     description: "Display song lyrics to the screen",
     categories: ["Display"],
+    organizationTypeWhitelist: [OrganizationType.Church],
     isStarred: true,
   });
 

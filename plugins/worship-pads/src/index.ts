@@ -6,6 +6,7 @@ import {
   TRPCObject,
   getStaticPath,
 } from "@repo/base-plugin/server";
+import { OrganizationType } from "@repo/graphql";
 import { TypedArray, YjsWatcher } from "@repo/lib";
 import { proxy } from "valtio";
 import { bind } from "valtio-yjs";
@@ -27,6 +28,7 @@ export const init = (serverPluginApi: ServerPluginApi) => {
     title: "Worship Pads",
     description: "Play an ambient pad to back your worship session",
     categories: ["Audio"],
+    organizationTypeWhitelist: [OrganizationType.Church],
   });
 
   serverPluginApi.serveStatic(pluginName, "out");
