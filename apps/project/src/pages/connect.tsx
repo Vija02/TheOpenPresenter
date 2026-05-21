@@ -25,7 +25,7 @@ const OTP_PATTERN = "^[2-9a-hjkmnp-zA-HJKMNP-Z]*$";
 const CODE_REGEX = /^[2-9A-HJKMNP-Z]{4}$/;
 
 const formSchema = z.object({
-  code: z
+  screenCode: z
     .string()
     .transform((s) => s.trim().toUpperCase())
     .refine((s) => CODE_REGEX.test(s), "Enter the 4-character code"),
@@ -55,7 +55,7 @@ function ConnectForm() {
 
   const form = useForm({
     resolver: zodResolver(formSchema),
-    defaultValues: { code: "" },
+    defaultValues: { screenCode: "" },
   });
 
   const onSubmit = useCallback(
@@ -65,7 +65,7 @@ function ConnectForm() {
         const result = await client
           .query(
             ScreenByCodeDocument,
-            { code: values.code },
+            { code: values.screenCode },
             { requestPolicy: "network-only" },
           )
           .toPromise();
@@ -77,7 +77,7 @@ function ConnectForm() {
 
         const found = result.data?.screenByCode;
         if (!found?.organizationSlug || !found?.screenSlug) {
-          form.setError("code", {
+          form.setError("screenCode", {
             type: "manual",
             message: "No screen found with that code",
           });
@@ -98,7 +98,7 @@ function ConnectForm() {
         <div className="stack-col items-start gap-4">
           <FormField
             control={form.control}
-            name="code"
+            name="screenCode"
             render={({ field }) => (
               <FormItem className="w-full justify-items-center">
                 <FormLabel>Screen code</FormLabel>
@@ -113,6 +113,10 @@ function ConnectForm() {
                     spellCheck={false}
                     autoFocus
                     data-testid="connectpage-input-code"
+                    data-form-type="other"
+                    data-1p-ignore
+                    data-lpignore="true"
+                    data-bwignore
                     containerClassName="justify-center gap-3"
                     value={field.value ?? ""}
                     onChange={(v) => field.onChange(v.toUpperCase())}
