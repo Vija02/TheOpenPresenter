@@ -13,6 +13,7 @@ import QRCode from "react-native-qrcode-svg"
 import { RFValue } from "react-native-responsive-fontsize"
 import { WebView } from "react-native-webview"
 import { useCookie } from "../api/useCookie"
+import { fetchScreenCode } from "../utils/fetchScreenCode"
 import { logout } from "../utils/logout"
 import { getRootUrl } from "../utils/rootUrl"
 import { getScreen } from "../utils/screen"
@@ -31,6 +32,14 @@ export default function Screen() {
 	const webViewRef = useRef<WebView>(null)
 	const [menuOpen, setMenuOpen] = useState(false)
 	const [qrOpen, setQrOpen] = useState(false)
+	const [screenCode, setScreenCode] = useState<string | null>(null)
+
+	useEffect(() => {
+		if (!qrOpen || screenCode || !screen) return
+		fetchScreenCode(getRootUrl(), screen.orgSlug, screen.screenSlug).then(
+			setScreenCode,
+		)
+	}, [qrOpen, screenCode, screen])
 
 	useEffect(() => {
 		if (isLoading) return
@@ -76,6 +85,7 @@ export default function Screen() {
 	const controlUrl = screen
 		? `${getRootUrl()}/o/${screen.orgSlug}/screens/${screen.screenSlug}/control`
 		: ""
+	const connectHost = `${getRootUrl().replace(/^https?:\/\//, "")}/connect`
 
 	if (!cookie || !screen) {
 		return null
@@ -183,6 +193,25 @@ export default function Screen() {
 						<View style={styles.qrFrame}>
 							<QRCode size={getQrSize()} value={controlUrl} />
 						</View>
+
+						{screenCode && (
+							<View style={styles.codeBlock}>
+								<Text style={styles.codeEyebrow}>OR ENTER CODE</Text>
+								<Text style={styles.codeConnectHost}>
+									Go to <Text style={styles.codeConnectHostMono}>{connectHost}</Text>
+								</Text>
+								<View style={styles.codeRow}>
+									<Text style={styles.codeLabel}>CODE</Text>
+									<View style={styles.codeDigits}>
+										{screenCode.split("").map((digit, i) => (
+											<View key={i} style={styles.codeDigit}>
+												<Text style={styles.codeDigitText}>{digit}</Text>
+											</View>
+										))}
+									</View>
+								</View>
+							</View>
+						)}
 
 						<Text style={styles.menuHint}>Press Back to close</Text>
 					</Pressable>
@@ -398,5 +427,59 @@ const styles = StyleSheet.create({
 		marginTop: 16,
 		letterSpacing: 0.3,
 		maxWidth: "100%",
+	},
+	codeBlock: {
+		marginTop: 18,
+		alignItems: "center",
+		gap: 6,
+	},
+	codeEyebrow: {
+		color: "#5a6068",
+		fontSize: RFValue(7),
+		fontWeight: "700",
+		letterSpacing: 2,
+	},
+	codeConnectHost: {
+		color: "#9aa3b2",
+		fontSize: RFValue(9),
+		fontWeight: "500",
+	},
+	codeConnectHostMono: {
+		color: "#f2f3f5",
+		fontFamily: "monospace",
+		fontWeight: "600",
+	},
+	codeRow: {
+		flexDirection: "row",
+		alignItems: "center",
+		gap: 12,
+		marginTop: 6,
+	},
+	codeLabel: {
+		color: "#7a8090",
+		fontSize: RFValue(8),
+		fontWeight: "700",
+		letterSpacing: 1.5,
+	},
+	codeDigits: {
+		flexDirection: "row",
+		gap: 6,
+	},
+	codeDigit: {
+		minWidth: RFValue(18),
+		paddingVertical: RFValue(4),
+		paddingHorizontal: RFValue(6),
+		borderRadius: RFValue(6),
+		borderWidth: 1,
+		borderColor: "rgba(255,255,255,0.1)",
+		backgroundColor: "rgba(255,255,255,0.05)",
+		alignItems: "center",
+		justifyContent: "center",
+	},
+	codeDigitText: {
+		color: "#f2f3f5",
+		fontFamily: "monospace",
+		fontSize: RFValue(13),
+		fontWeight: "600",
 	},
 })
