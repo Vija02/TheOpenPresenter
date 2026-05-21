@@ -21,6 +21,15 @@
       "expo-router",
       "./plugins/withCleartextTraffic.js",
       "./plugins/withLeanbackRequired.js",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/brand.png",
+          "backgroundColor": "#000000",
+          "imageWidth": 400,
+          "resizeMode": "contain"
+        }
+      ],
       "expo-font",
       "expo-web-browser"
     ],
@@ -29,17 +38,12 @@
     "scheme": "theopenpresenter",
     "name": "TheOpenPresenter TV",
     "slug": "TheOpenPresenter-tv",
+    "version": "1.0.1",
     "android": {
-      "package": "com.theopenpresenter.tv",
-      "splash": {
-        "image": "./assets/images/icon-1920x720.png"
-      }
+      "package": "com.theopenpresenter.tv"
     },
     "ios": {
-      "bundleIdentifier": "com.theopenpresenter.tv",
-      "splash": {
-        "image": "./assets/images/icon-1920x720.png"
-      }
+      "bundleIdentifier": "com.theopenpresenter.tv"
     },
     "runtimeVersion": {
       "policy": "appVersion"
