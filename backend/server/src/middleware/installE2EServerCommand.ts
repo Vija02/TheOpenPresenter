@@ -1,7 +1,7 @@
 import { YjsState } from "@repo/base-plugin/server";
 import { urlencoded } from "body-parser";
 import { Express, Request, RequestHandler, Response } from "express";
-import { Pool } from "pg";
+import { Pool, PoolClient } from "pg";
 import { typeidUnboxed } from "typeid-js";
 import { proxy } from "valtio";
 import { bind } from "valtio-yjs";
@@ -37,9 +37,7 @@ const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 /**
  * Build a Yjs document update populated with the given scenes.
  */
-const buildProjectDocument = async (
-  scenes: LoginScene[],
-): Promise<Buffer> => {
+const buildProjectDocument = async (scenes: LoginScene[]): Promise<Buffer> => {
   const yDoc = YjsState.createEmptyState();
   const state = yDoc.getMap();
 
@@ -208,10 +206,9 @@ async function runCommand(
         "clearUserByUsername requires a username starting with 'testuser'",
       );
     }
-    await rootPgPool.query(
-      "delete from app_public.users where username = $1",
-      [username],
-    );
+    await rootPgPool.query("delete from app_public.users where username = $1", [
+      username,
+    ]);
     return { success: true };
   } else if (command === "createUser") {
     if (!payload) {
@@ -302,11 +299,10 @@ async function runCommand(
               if (!owner) {
                 await setSession(otherSession);
               }
-              const {
-                rows: [organization],
-              } = await client.query(
-                "select * from app_public.create_organization($1, $2)",
-                [slug, name],
+              const organization = await createTestOrganization(
+                client,
+                slug,
+                name,
               );
               if (!owner) {
                 await client.query(
@@ -535,12 +531,13 @@ async function runCommand(
           "select set_config('jwt.claims.session_id', $1, true)",
           [ownerSession.uuid],
         );
-        const { rows } = await client.query(
-          "select * from app_public.create_organization($1, $2) as org",
-          [orgSlug, orgName],
+        const organization = await createTestOrganization(
+          client,
+          orgSlug,
+          orgName,
         );
         await client.query("commit");
-        orgRows = rows;
+        orgRows = [organization];
       } catch (e) {
         await client.query("rollback").catch(() => {});
         throw e;
@@ -591,12 +588,7 @@ async function runCommand(
       organizationId: orgId,
     };
   } else if (command === "setupScreenGuest") {
-    const {
-      orgSlug,
-      displayName,
-      passcode,
-      email = null,
-    } = payload || {};
+    const { orgSlug, displayName, passcode, email = null } = payload || {};
     if (!orgSlug || !displayName || !passcode) {
       throw new Error(
         "setupScreenGuest requires { orgSlug, displayName, passcode }",
@@ -688,6 +680,22 @@ async function createSession(rootPgPool: Pool, userId: string) {
     [userId],
   );
   return session;
+}
+
+async function createTestOrganization(
+  client: PoolClient,
+  slug: string,
+  name: string,
+  // Default to church
+  organizationType: "church" | "venue" = "church",
+) {
+  const {
+    rows: [organization],
+  } = await client.query(
+    "select * from app_public.create_organization($1, $2, $3::app_public.organization_type)",
+    [slug, name, organizationType],
+  );
+  return organization;
 }
 
 async function getUserEmailSecrets(rootPgPool: Pool, email: string) {
