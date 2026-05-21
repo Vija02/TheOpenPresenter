@@ -37,13 +37,23 @@ const SidebarAddSceneModal = () => {
   const [selectedCategory, setSelectedCategory] = useState("All");
 
   const mainState = usePluginData().mainState!;
-  const { pluginMeta } = usePluginMetaData();
+  const { pluginMeta, organizationType } = usePluginMetaData();
 
   const remotePluginMeta =
     pluginMeta && "registeredRemoteView" in pluginMeta ? pluginMeta : null;
 
+  // If no orgType, show everything, otherwise filter
+  const visibleSceneCreators =
+    remotePluginMeta?.sceneCreator.filter(
+      (x) =>
+        !organizationType ||
+        !x.organizationTypes ||
+        x.organizationTypes.length === 0 ||
+        x.organizationTypes.includes(organizationType),
+    ) ?? [];
+
   const [selectedPlugin, setSelectedPlugin] = useState<string | null>(null);
-  const selectedSceneCreator = remotePluginMeta?.sceneCreator.find(
+  const selectedSceneCreator = visibleSceneCreators?.find(
     (x) => x.pluginName === selectedPlugin,
   );
 
@@ -119,7 +129,7 @@ const SidebarAddSceneModal = () => {
                       <OptionGroup
                         size="sm"
                         options={
-                          remotePluginMeta?.sceneCreator
+                          visibleSceneCreators
                             .filter((x) => x.categories.includes(category))
                             .map((sceneCreator) => ({
                               title: (

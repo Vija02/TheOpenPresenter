@@ -5050,6 +5050,7 @@ type SceneCreator {
   description: String!
   isExperimental: Boolean
   isStarred: Boolean
+  organizationTypes: [OrganizationType!]
   pluginName: String!
   title: String!
 }

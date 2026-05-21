@@ -1,4 +1,5 @@
 import { WithPgClient, job, media } from "@repo/backend-shared";
+import { OrganizationType } from "@repo/graphql";
 import { mediaIdFromUUID } from "@repo/lib";
 import { Express, RequestHandler } from "express";
 import { Pool } from "pg";
@@ -79,6 +80,7 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
       title: string;
       description: string;
       categories: SceneCategories[];
+      organizationTypeWhitelist?: OrganizationType[];
       isExperimental?: boolean;
       isStarred?: boolean;
     };
@@ -187,6 +189,7 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
       title: string;
       description: string;
       categories: SceneCategories[];
+      organizationTypeWhitelist?: OrganizationType[];
       isExperimental?: boolean;
       isStarred?: boolean;
     },

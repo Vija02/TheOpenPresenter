@@ -11,6 +11,7 @@ query RemoteBasePlugin($orgSlug: String!, $projectSlug: String!) {
 
   organizationBySlug(slug: $orgSlug) {
     id
+    organizationType
     projects(condition: { slug: $projectSlug }) {
       nodes {
         id
@@ -51,6 +52,7 @@ fragment BaseRemotePluginMeta on PluginMeta {
     pluginName
     description
     categories
+    organizationTypes
     isExperimental
     isStarred
   }
