@@ -57,7 +57,10 @@ export const pluginMeta = makeExtendSchemaPlugin(() => ({
               title: x.sceneCreatorMeta.title,
               description: x.sceneCreatorMeta.description,
               categories: x.sceneCreatorMeta.categories,
-              organizationTypes: x.sceneCreatorMeta.organizationTypeWhitelist,
+              organizationTypes:
+                x.sceneCreatorMeta.organizationTypeWhitelist?.map((x) =>
+                  x.toLowerCase(),
+                ) ?? null,
               isExperimental: x.sceneCreatorMeta.isExperimental,
               isStarred: x.sceneCreatorMeta.isStarred,
             })),
