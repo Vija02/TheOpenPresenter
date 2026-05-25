@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict jkvsaGcGZhmLXyu0WbDYHPmBm1SXs0BZ9OQhXIfxhBBJHOYf3b2QU2jrkOXvoh9
+\restrict aaIpdIba9sSnX4AFVeWscaJsrFifny9fKW4jwRVJjcbo3W0kyLZdAq27RqDYZDh
 
 -- Dumped from database version 17.0 (Debian 17.0-1.pgdg120+1)
 -- Dumped by pg_dump version 18.3
@@ -1061,7 +1061,14 @@ CREATE FUNCTION app_private.tg_organizations__create_default_category() RETURNS 
     SET search_path TO 'pg_catalog', 'public', 'pg_temp'
     AS $$
 begin
-  insert into app_public.categories(organization_id, name) VALUES(NEW.id, 'Sunday Morning');
+  if NEW.organization_type = 'venue' then
+    insert into app_public.categories(organization_id, name) values
+      (NEW.id, 'Workshop'),
+      (NEW.id, 'Meeting');
+  else
+    insert into app_public.categories(organization_id, name) values
+      (NEW.id, 'Sunday Morning');
+  end if;
 
   return NEW;
 end;
@@ -6730,5 +6737,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE theopenpresenter REVOKE ALL ON FUNCTIONS FROM 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict jkvsaGcGZhmLXyu0WbDYHPmBm1SXs0BZ9OQhXIfxhBBJHOYf3b2QU2jrkOXvoh9
+\unrestrict aaIpdIba9sSnX4AFVeWscaJsrFifny9fKW4jwRVJjcbo3W0kyLZdAq27RqDYZDh
 
