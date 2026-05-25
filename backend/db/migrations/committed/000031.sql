@@ -1,5 +1,5 @@
 --! Previous: sha1:866165b89cc78112e7c5d82ac29564873f8d21c9
---! Hash: sha1:e721036a50430d798fd4827d62b817b3ada63ea2
+--! Hash: sha1:7a935abc049a4e6a5c1596e07f09e6fccc4a6faa
 
 --! split: 100-reset.sql
 -- 400
@@ -56,3 +56,20 @@ begin
   return v_org;
 end;
 $$ language plpgsql volatile security definer set search_path = pg_catalog, public, pg_temp;
+
+--! split: 500-default-category-by-org-type.sql
+-- Create default category based on org type
+create or replace function app_private.tg_organizations__create_default_category() returns trigger as $$
+begin
+  if NEW.organization_type = 'venue' then
+    insert into app_public.categories(organization_id, name) values
+      (NEW.id, 'Workshop'),
+      (NEW.id, 'Meeting');
+  else
+    insert into app_public.categories(organization_id, name) values
+      (NEW.id, 'Sunday Morning');
+  end if;
+
+  return NEW;
+end;
+$$ language plpgsql volatile security definer set search_path to pg_catalog, public, pg_temp;
