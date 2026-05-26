@@ -44,7 +44,7 @@ const Remote = () => {
 
   return (
     <PluginScaffold
-      title="Google Slides"
+      title="Slides"
       postToolbar={
         <>
           <OverlayToggle
