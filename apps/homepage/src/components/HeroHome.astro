@@ -8,32 +8,97 @@ import landingImg from "../assets/images/landing_img.png";
   <div class="max-w-6xl mx-auto px-4 sm:px-6">
     <div class="pt-32 pb-10 md:pt-40 md:pb-16">
       <!-- Hero content -->
-      <div
-        class="md:grid md:grid-cols-12 md:gap-12 lg:gap-20 items-center"
-      >
+      <div class="md:grid md:grid-cols-12 md:gap-12 lg:gap-20 items-center">
         <!-- Content -->
         <div
           class="md:col-span-7 lg:col-span-6 mb-8 md:mb-0 text-center md:text-left"
         >
           <h1
-            class="h1 lg:text-6xl mb-4 font-red-hat-display font-black"
+            class="h1 lg:text-4xl mb-2 font-red-hat-display font-black leading-tight"
             data-aos="fade-down"
           >
-            Your media, on any screen
+            Let guests present to your screen from
+            <span
+              class="bg-clip-text text-transparent bg-gradient-to-r from-teal-400 to-purple-500"
+              >their devices</span
+            >
           </h1>
           <p
-            class="text-xl text-gray-600 dark:text-gray-400"
+            class="text-lg lg:text-xl mb-4 font-red-hat-display font-bold text-gray-700 dark:text-gray-300 leading-tight"
             data-aos="fade-down"
-            data-aos-delay="150"
+            data-aos-delay="75"
           >
-            Open-source Presentation System to present your content seamlessly,
-            wherever you are. Control from your phone and display to any number
-            of screens with ease.
+            Without cables, apps, or help
           </p>
-          <!-- CTA form -->
-          <CtaForm />
+          <!-- Mobile-only CTA: opens the demo on this device (no scan). -->
+          <div
+            id="init-demo-mobile-cta"
+            class="hidden mt-8 text-center md:text-left"
+          >
+            <button
+              type="button"
+              id="init-demo-mobile-start"
+              class="btn text-white bg-teal-500 hover:bg-teal-400 shrink-0 cursor-pointer"
+            >
+              Try the live demo
+            </button>
+            <p
+              id="init-demo-mobile-status"
+              class="mt-3 text-sm text-gray-500 dark:text-gray-400"
+            >
+              Runs right here in your browser — no install needed.
+            </p>
+          </div>
+          <!-- QR pairing (desktop). Swaps to <CtaForm /> once the phone has
+               scanned and the renderer has loaded below. -->
+          <div
+            id="init-demo-qr-block"
+            class="mt-8 flex flex-col items-center text-center md:flex-row md:items-center md:text-left md:gap-5"
+            data-aos="fade-down"
+            data-aos-delay="300"
+          >
+            <div
+              id="init-demo-qr-wrap"
+              class="shrink-0 inline-flex items-center justify-center rounded-lg bg-white p-3 shadow-lg ring-1 ring-gray-200"
+              style="width: 224px; height: 224px;"
+            >
+              <canvas
+                id="init-demo-qr"
+                width="200"
+                height="200"
+                aria-label="QR code — scan to start the demo"></canvas>
+              <span
+                id="init-demo-qr-loading"
+                class="text-sm text-gray-500"
+                style="display: none;"
+              >
+                Loading Demo…
+              </span>
+              <!-- Hidden URL (mirrors the QR target so E2E / debugging can
+                   read it without OCR-ing the QR image). -->
+              <span hidden id="init-demo-qr-url" data-testid="init-demo-qr-url"
+              ></span>
+            </div>
+            <div class="mt-3 md:mt-0">
+              <p
+                id="init-demo-status"
+                class="text-base font-semibold text-gray-800 dark:text-gray-200"
+              >
+                Scan to try the live demo
+              </p>
+              <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                Open the QR with your phone. Your screen will follow along right
+                here.
+              </p>
+            </div>
+          </div>
+          <!-- Sign-up CTA, hidden until the demo has been started -->
+          <div id="init-demo-cta-block" class="hidden">
+            <CtaForm />
+          </div>
           <ul
-            class="max-w-sm sm:max-w-md mx-auto md:max-w-none text-gray-600 dark:text-gray-400 mt-8 -mb-2 text-left"
+            id="init-demo-features"
+            class="hidden max-w-sm sm:max-w-md mx-auto md:max-w-none text-gray-600 dark:text-gray-400 mt-8 -mb-2 text-left"
             data-aos="fade-down"
             data-aos-delay="450"
           >
@@ -114,8 +179,7 @@ import landingImg from "../assets/images/landing_img.png";
                 gradientTransform="rotate(90 -77 317) scale(189.054)"
               >
                 <stop stop-color="#667EEA"></stop>
-                <stop offset="1" stop-color="#667EEA" stop-opacity=".01"
-                ></stop>
+                <stop offset="1" stop-color="#667EEA" stop-opacity=".01"></stop>
               </radialGradient>
               <radialGradient
                 id="piphoneill_paint1_radial"
@@ -126,13 +190,12 @@ import landingImg from "../assets/images/landing_img.png";
                 gradientTransform="rotate(90 99 339) scale(189.054)"
               >
                 <stop stop-color="#9F7AEA"></stop>
-                <stop offset="1" stop-color="#9F7AEA" stop-opacity=".01"
-                ></stop>
+                <stop offset="1" stop-color="#9F7AEA" stop-opacity=".01"></stop>
               </radialGradient>
             </defs>
           </svg>
           <Image
-            class="inline w-full text-center items-center max-w-[500px] md:block md:absolute md:top-20 md:w-[410px] md:max-w-none lg:block lg:w-full lg:top-1/4"
+            class="inline w-full max-w-[500px] mx-auto md:block md:absolute md:top-20 md:left-1/2 md:-translate-x-1/2 md:w-[410px] md:max-w-none md:mx-0 lg:block lg:w-full lg:top-1/8"
             src={landingImg}
             alt="landing"
             loading="eager"
@@ -142,3 +205,204 @@ import landingImg from "../assets/images/landing_img.png";
     </div>
   </div>
 </section>
+
+<!-- Renderer section. Stays hidden until /init-demo has been scanned; the
+     script populates the iframe src and scrolls this block into view. -->
+<section id="init-demo-renderer-section" class="hidden">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 pt-8 md:pt-16 pb-16">
+    <div
+      class="overflow-hidden rounded-xl shadow-2xl ring-1 ring-gray-200 dark:ring-gray-800"
+      style="aspect-ratio: 16 / 9; background: #000;"
+    >
+      <iframe
+        id="init-demo-renderer-iframe"
+        title="Live demo renderer"
+        allow="autoplay; fullscreen"
+        style="width: 100%; height: 100%; border: 0;"></iframe>
+    </div>
+    <!-- Embedded remote control (mobile only) — gives phone users a way to
+         drive the demo without a second device. -->
+    <div
+      id="init-demo-remote-wrap"
+      class="hidden mt-6 overflow-hidden rounded-xl shadow-xl ring-1 ring-gray-200 dark:ring-gray-800"
+      style="height: 70vh; background: #fff;"
+    >
+      <iframe
+        id="init-demo-remote-iframe"
+        title="Live demo remote"
+        allow="autoplay; fullscreen; clipboard-read; clipboard-write"
+        style="width: 100%; height: 100%; border: 0;"></iframe>
+    </div>
+    <div class="mt-8 text-center">
+      <p
+        class="text-lg font-red-hat-display font-bold text-gray-700 dark:text-gray-300 mb-4"
+      >
+        Like what you see? Set up your own presentation.
+      </p>
+      <a
+        class="btn text-white bg-teal-500 hover:bg-teal-400 shrink-0"
+        href="/register"
+      >
+        Sign up free
+      </a>
+    </div>
+  </div>
+</section>
+
+<script>
+  // Drives the QR pairing flow on the hero
+  type DonePayload = {
+    done: true;
+    orgSlug: string;
+    projectSlug: string;
+  };
+  type IdPayload = { id: string };
+
+  import QRCode from "qrcode";
+
+  const canvas = document.getElementById(
+    "init-demo-qr",
+  ) as HTMLCanvasElement | null;
+  const loadingEl = document.getElementById("init-demo-qr-loading");
+  const statusEl = document.getElementById("init-demo-status");
+  const qrBlock = document.getElementById("init-demo-qr-block");
+  const ctaBlock = document.getElementById("init-demo-cta-block");
+  const rendererSection = document.getElementById("init-demo-renderer-section");
+  const rendererIframe = document.getElementById(
+    "init-demo-renderer-iframe",
+  ) as HTMLIFrameElement | null;
+  const mobileCtaEl = document.getElementById("init-demo-mobile-cta");
+  const mobileStartBtn = document.getElementById(
+    "init-demo-mobile-start",
+  ) as HTMLButtonElement | null;
+  const mobileStatusEl = document.getElementById("init-demo-mobile-status");
+  const remoteWrap = document.getElementById("init-demo-remote-wrap");
+  const remoteIframe = document.getElementById(
+    "init-demo-remote-iframe",
+  ) as HTMLIFrameElement | null;
+
+  // Treat anything that lacks a fine pointer or is narrow as "mobile"
+  const isMobile =
+    window.matchMedia("(max-width: 768px)").matches ||
+    window.matchMedia("(pointer: coarse)").matches;
+
+  const setStatus = (text: string) => {
+    if (statusEl) statusEl.textContent = text;
+  };
+
+  const renderQr = async (url: string) => {
+    if (!canvas) return;
+    try {
+      await QRCode.toCanvas(canvas, url, {
+        width: 200,
+        margin: 1,
+        color: { dark: "#0f172a", light: "#ffffff" },
+      });
+      if (loadingEl) loadingEl.style.display = "none";
+      canvas.style.display = "block";
+    } catch (err) {
+      console.error("QR render failed:", err);
+      setStatus("Couldn't render the QR code. Reload to try again.");
+    }
+  };
+
+  const swapInRenderer = (payload: DonePayload) => {
+    if (!rendererSection || !rendererIframe) return;
+    const rendererUrl = `/render/${encodeURIComponent(payload.orgSlug)}/${encodeURIComponent(payload.projectSlug)}`;
+    rendererIframe.src = rendererUrl;
+    rendererSection.classList.remove("hidden");
+
+    // QR has done its job — replace it with the sign-up CTA + features list.
+    if (qrBlock) qrBlock.classList.add("hidden");
+    if (mobileCtaEl) mobileCtaEl.classList.add("hidden");
+    if (ctaBlock) ctaBlock.classList.remove("hidden");
+    const featuresEl = document.getElementById("init-demo-features");
+    if (featuresEl) featuresEl.classList.remove("hidden");
+
+    // Embed the remote control inline on mobile so the visitor has a way to
+    // drive the demo without a separate device.
+    const showRemote = isMobile && remoteWrap && remoteIframe;
+    if (showRemote) {
+      remoteIframe!.src = `/app/${encodeURIComponent(payload.orgSlug)}/${encodeURIComponent(payload.projectSlug)}`;
+      remoteWrap!.classList.remove("hidden");
+    }
+
+    // Defer scroll a tick so layout settles after the section un-hides
+    requestAnimationFrame(() => {
+      rendererSection.scrollIntoView({
+        behavior: "smooth",
+        block: showRemote ? "start" : "center",
+      });
+    });
+  };
+
+  if (canvas) {
+    if (isMobile) {
+      // Hide the QR UI; show the mobile button + status copy.
+      if (qrBlock) qrBlock.classList.add("hidden");
+      if (mobileCtaEl) mobileCtaEl.classList.remove("hidden");
+      if (mobileStartBtn) mobileStartBtn.disabled = true; // re-enabled once we have an id
+      if (mobileStartBtn) {
+        mobileStartBtn.addEventListener("click", () => {
+          const targetStr = mobileStartBtn.dataset.target;
+          if (!targetStr) return;
+          mobileStartBtn.disabled = true;
+          mobileStartBtn.textContent = "Starting…";
+          if (mobileStatusEl)
+            mobileStatusEl.textContent = "Provisioning a demo project…";
+          // Trigger the same endpoint the QR would have hit
+          fetch(targetStr, { redirect: "manual" }).catch((err) => {
+            console.error("[init-demo] mobile fetch failed:", err);
+            if (mobileStatusEl)
+              mobileStatusEl.textContent =
+                "Couldn't start the demo. Reload to try again.";
+            mobileStartBtn.disabled = false;
+            mobileStartBtn.textContent = "Try the live demo";
+          });
+        });
+      }
+    } else {
+      canvas.style.display = "none";
+      if (loadingEl) loadingEl.style.display = "inline";
+    }
+
+    const source = new EventSource("/init-demo/request");
+    source.addEventListener("message", (ev) => {
+      try {
+        const payload = JSON.parse(ev.data) as IdPayload | DonePayload;
+        if ("id" in payload) {
+          const target = new URL(
+            `/init-demo?id=${encodeURIComponent(payload.id)}`,
+            window.location.origin,
+          );
+          const targetStr = target.toString();
+          console.log("[init-demo] QR target:", targetStr);
+
+          if (isMobile) {
+            // No QR; wait for the user to press the button.
+            if (mobileStartBtn) {
+              mobileStartBtn.disabled = false;
+              mobileStartBtn.dataset.target = targetStr;
+            }
+          } else {
+            renderQr(targetStr);
+            const qrUrlEl = document.getElementById("init-demo-qr-url");
+            if (qrUrlEl) qrUrlEl.textContent = targetStr;
+          }
+        } else if (payload.done) {
+          swapInRenderer(payload);
+          source.close();
+        }
+      } catch (err) {
+        console.error("Bad SSE payload:", ev.data, err);
+      }
+    });
+    source.addEventListener("error", () => {
+      // EventSource auto-reconnects; only surface a message if we never got an id.
+      if (canvas.style.display === "none") {
+        setStatus("Couldn't reach the demo server. Try again in a moment.");
+      }
+    });
+    window.addEventListener("beforeunload", () => source.close());
+  }
+</script>
