@@ -24,9 +24,14 @@ export const ImageRenderView = ({ src, isActive, onLoad }: PropType) => {
     [],
   );
 
+  // Handle external url
+  const resolvedSrc = /^https?:\/\//.test(src)
+    ? src
+    : pluginApi.media.resolveMediaUrl(extractMediaName(src));
+
   return (
     <UniversalImage
-      src={pluginApi.media.resolveMediaUrl(extractMediaName(src))}
+      src={resolvedSrc}
       isActive={isActive}
       imgProp={{
         style,
