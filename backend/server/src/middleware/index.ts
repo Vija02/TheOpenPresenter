@@ -10,6 +10,7 @@ import installFileUpload from "./installFileUpload";
 import installForceSSL from "./installForceSSL";
 import installHelmet from "./installHelmet";
 import installHocuspocus from "./installHocuspocus";
+import installInitDemo from "./installInitDemo";
 import installLogging from "./installLogging";
 import installObservability from "./installObservability";
 import installPassport from "./installPassport";
@@ -40,6 +41,7 @@ export {
   installForceSSL,
   installHelmet,
   installHocuspocus,
+  installInitDemo,
   installLogging,
   installObservability,
   installPassport,
