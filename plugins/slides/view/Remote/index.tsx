@@ -173,7 +173,11 @@ const RemoteHandler = () => {
             {({ width }) => (
               <div className="center relative h-full w-full">
                 <UniversalImage
-                  src={extractMediaName(slide.thumbnailUrl)}
+                  src={
+                    /^https?:\/\//.test(slide.thumbnailUrl)
+                      ? slide.thumbnailUrl
+                      : extractMediaName(slide.thumbnailUrl)
+                  }
                   imgProp={{ style: { width: "100%" } }}
                   width={width}
                 />
