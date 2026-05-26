@@ -150,6 +150,7 @@ export async function makeApp({
   await middleware.installFileUpload(app);
   await middleware.installProjectImportExport(app);
   await middleware.installTrpc(app);
+  await middleware.installInitDemo(app);
   await middleware.installPostGraphile(app);
   await middleware.installRemote(app, httpServer!);
   await middleware.installRenderer(app, httpServer!);
