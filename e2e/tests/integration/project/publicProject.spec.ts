@@ -12,6 +12,7 @@ test.describe("Public Project", () => {
   test("can toggle a project public and open it from an unauthenticated browser", async ({
     page,
     browser,
+    projectPage,
     loginAndGoToProject,
   }) => {
     await loginAndGoToProject();
@@ -66,6 +67,48 @@ test.describe("Public Project", () => {
       await expect(
         unauthPage.getByRole("heading", { name: "Login" }),
       ).not.toBeVisible();
+
+      const unauthSceneItems = unauthPage.locator(
+        ".rt--sidebar-wrapper-web .rt--sidebar-web-scene-item",
+      );
+      await expect(unauthSceneItems).toHaveCount(0);
+
+      // While the unauthenticated viewer is still connected, have the owner
+      // create a new scene from their authenticated remote. The unauth
+      // viewer should observe the new scene appear in real time via sync.
+      await projectPage.createPlugin("Video Player");
+      await expect(page.getByText("Search or enter URL:")).toBeVisible();
+
+      // The new "Video Player" scene should now sync over to the unauth view.
+      await expect(unauthSceneItems).toHaveCount(1);
+      await expect(unauthSceneItems.first()).toContainText("Video Player");
+
+      // Now verify the reverse direction: the unauthenticated viewer mutates
+      // the shared document and the owner observes the change in real time.
+      await unauthSceneItems.first().click();
+
+      await unauthPage
+        .locator(".rt--top-bar--scene-settings-icon")
+        .click();
+      const unauthSceneDialog = unauthPage.getByRole("dialog");
+      await expect(
+        unauthSceneDialog.getByRole("heading", { name: "Scene Settings" }),
+      ).toBeVisible();
+
+      const unauthSceneNameInput = unauthSceneDialog.getByLabel("Name");
+      await unauthSceneNameInput.fill("Renamed By Public Viewer");
+      await unauthSceneDialog.getByRole("button", { name: "Save" }).click();
+      await expect(
+        unauthSceneDialog.getByRole("heading", { name: "Scene Settings" }),
+      ).not.toBeVisible();
+
+      // The owner's sidebar should reflect the unauth viewer's rename.
+      const ownerSceneItems = page.locator(
+        ".rt--sidebar-wrapper-web .rt--sidebar-web-scene-item",
+      );
+      await expect(ownerSceneItems.first()).toContainText(
+        "Renamed By Public Viewer",
+      );
     } finally {
       await unauthContext.close();
     }
