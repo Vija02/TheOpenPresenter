@@ -101,6 +101,31 @@ export default async function installHocuspocus(app: Express) {
     },
     afterUnloadDocument: async (data) => {
       disposableDocumentManager.disposeDocument(data.documentName);
+
+      // Clean up temporary demo projects once they have no active connections. 
+      const rootPgPool = getRootPgPool(app);
+      try {
+        const { rowCount } = await rootPgPool.query(
+          `delete from app_public.projects
+           where id = $1
+             and is_temporary = true
+             and organization_id = (
+               select id from app_public.organizations where slug = 'demo'
+             )`,
+          [data.documentName],
+        );
+        if (rowCount && rowCount > 0) {
+          logger.info(
+            { projectId: data.documentName },
+            "Deleted temporary demo project after unload",
+          );
+        }
+      } catch (err) {
+        logger.error(
+          { err, projectId: data.documentName },
+          "Failed to delete temporary demo project after unload",
+        );
+      }
     },
   });
 
