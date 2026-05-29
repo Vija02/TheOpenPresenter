@@ -55,10 +55,12 @@ export class LyricsPlugin {
       await this.page.getByText("Full Song").click();
     }
 
-    const editor = this.page.getByTestId("ly-song-editor");
+    const editor = this.page
+      .getByTestId("ly-song-editor")
+      .locator('[contenteditable="true"]');
     await editor.click();
-    await this.page.keyboard.press("Control+A");
-    await this.page.keyboard.press("Backspace");
+    await editor.press("ControlOrMeta+a");
+    await editor.press("Backspace");
     await editor.pressSequentially(content);
 
     await this.addToListFormButton.click();
