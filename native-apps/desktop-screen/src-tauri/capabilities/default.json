@@ -1,0 +1,12 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Permissions shared by the main and settings windows",
+  "windows": ["main", "settings"],
+  "permissions": [
+    "core:default",
+    "opener:default",
+    "store:default",
+    "autostart:default"
+  ]
+}
