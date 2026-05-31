@@ -238,4 +238,4 @@ echo "  binary:    $BIN_DIR/$APP_NAME"
 echo "  launcher:  $APP_DIR/$APP_NAME.desktop"
 echo ""
 echo "Run it:"
-echo "  $APP_NAME
+echo "  $APP_NAME"
