@@ -13,7 +13,7 @@
       <button
         type="button"
         id="mobile-menu-toggle"
-        class="flex items-center justify-center w-10 h-10 rounded-md text-gray-200 hover:bg-gray-800 transition-colors"
+        class="flex items-center justify-center w-10 h-10 rounded-md text-gray-200 hover:bg-gray-800 transition-colors cursor-pointer touch-manipulation"
         aria-label="Open menu"
         aria-expanded="false"
         aria-controls="mobile-menu-panel"
@@ -73,31 +73,40 @@
 </div>
 
 <script>
-  const toggle = document.getElementById("mobile-menu-toggle");
-  const panel = document.getElementById("mobile-menu-panel");
+  function initMobileMenu() {
+    const toggle = document.getElementById("mobile-menu-toggle");
+    const panel = document.getElementById("mobile-menu-panel");
+    if (!toggle || !panel) return;
 
-  if (toggle && panel) {
-    const close = () => {
-      panel.classList.add("hidden");
-      toggle.setAttribute("aria-expanded", "false");
+    const isOpen = () => !panel.classList.contains("hidden");
+
+    const setOpen = (open: boolean) => {
+      panel.classList.toggle("hidden", !open);
+      toggle.setAttribute("aria-expanded", open ? "true" : "false");
     };
 
-    toggle.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const open = panel.classList.toggle("hidden") === false;
-      toggle.setAttribute("aria-expanded", open ? "true" : "false");
-    });
+    toggle.addEventListener("click", () => setOpen(!isOpen()));
 
-    // Close when clicking anywhere outside the menu.
-    document.addEventListener("click", (e) => {
-      if (panel.classList.contains("hidden")) return;
-      const target = e.target as Node;
-      if (!panel.contains(target) && !toggle.contains(target)) close();
-    });
+    const onOutside = (e: Event) => {
+      if (!isOpen()) return;
+      const target = e.target as Node | null;
+      if (target && (panel.contains(target) || toggle.contains(target))) return;
+      setOpen(false);
+    };
+    document.addEventListener("pointerdown", onOutside);
+    document.addEventListener("click", onOutside);
 
     // Close on Escape for keyboard users.
     document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") close();
+      if (e.key === "Escape") setOpen(false);
     });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initMobileMenu, {
+      once: true,
+    });
+  } else {
+    initMobileMenu();
   }
 </script>
