@@ -63,6 +63,74 @@ case "$ARCH" in
     exit 1
     ;;
 esac
+
+# ---------------------------------------------------------------------------
+# Offer reinstall / uninstall.
+# ---------------------------------------------------------------------------
+if [ -e "$HOME/.local/bin/$APP_NAME" ]; then
+  __have_tty=0
+  if exec 3</dev/tty 2>/dev/null; then
+    __have_tty=1
+  fi
+
+  __action="r"
+  if [ "$__have_tty" = "1" ]; then
+    echo ""
+    echo "$DISPLAY_NAME is already installed."
+    echo "  (R)einstall - overwrite the binary + launcher, leave app data alone"
+    echo "  (U)ninstall - remove the binary + launcher (optionally app data too)"
+    echo "  (Q)uit"
+    printf "Choice [R/u/q]: "
+    read -r __action <&3 || __action="r"
+    echo ""
+  fi
+
+  case "${__action}" in
+    [Uu]*)
+      echo "Uninstalling..."
+      rm -f "$HOME/.local/bin/$APP_NAME"
+      rm -f "$HOME/.local/share/applications/$APP_NAME.desktop"
+      rm -f "$HOME/.local/share/icons/hicolor/256x256/apps/$APP_NAME.png"
+      if command -v update-desktop-database >/dev/null 2>&1; then
+        update-desktop-database -q "$HOME/.local/share/applications" 2>/dev/null || true
+      fi
+
+      __purge="n"
+      if [ "$__have_tty" = "1" ]; then
+        echo ""
+        echo "Removed the installer's files. Would you like to remove app data?"
+        printf "Remove that too? [y/N]: "
+        read -r __purge <&3 || __purge="n"
+        echo ""
+      fi
+      case "${__purge}" in
+        [Yy]*)
+          rm -rf "$HOME/.local/share/com.theopenpresenter.desktop"
+          rm -rf "$HOME/.cache/com.theopenpresenter.desktop"
+          find "$HOME/.config/autostart" -maxdepth 1 \
+            \( -iname "*theopenpresenter*.desktop" -o -iname "*desktop-screen*.desktop" \) \
+            -delete 2>/dev/null || true
+          echo "Removed app data + autostart entries."
+          ;;
+      esac
+
+      [ "$__have_tty" = "1" ] && exec 3<&-
+      echo "Uninstalled $DISPLAY_NAME."
+      exit 0
+      ;;
+    [Qq]*)
+      [ "$__have_tty" = "1" ] && exec 3<&-
+      echo "Aborted."
+      exit 0
+      ;;
+    *)
+      # Reinstall (default) — fall through to the install flow below.
+      [ "$__have_tty" = "1" ] && exec 3<&-
+      echo "Reinstalling..."
+      ;;
+  esac
+fi
+
 # Resolve the most recent `vX.Y.Z` tag from the GitHub Releases API. The
 # repo uses a unified `v*` tag scheme — see `tagging.md`. We could use
 # `/releases/latest/download/...` but going through the API lets us skip
