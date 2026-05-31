@@ -45,7 +45,7 @@ export default async function installHelmet(app: Express) {
           "blob:",
         ],
         "media-src": ["*"],
-        "img-src": ["*"],
+        "img-src": ["*", "data:"],
       }).filter(
         process.env.DISABLE_HSTS
           ? ([key]) => key !== "upgrade-insecure-requests"
@@ -109,11 +109,7 @@ export default async function installHelmet(app: Express) {
       process.env.NODE_ENV === "development" ? DEV_NONCE : crypto.randomUUID();
     res.locals.nonce = nonce;
 
-    return helmet(getOptions(nonce))(
-      req,
-      res,
-      next,
-    );
+    return helmet(getOptions(nonce))(req, res, next);
   });
 }
 
