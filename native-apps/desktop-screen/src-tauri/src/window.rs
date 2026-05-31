@@ -153,13 +153,11 @@ fn apply_screen_visible(app: &AppHandle, visible: bool) -> tauri::Result<()> {
 fn apply_screen_visible(app: &AppHandle, visible: bool) -> tauri::Result<()> {
     if let Some(w) = app.get_webview_window("main") {
         if visible {
-            let pinned = apply_stored_monitor(app, &w);
+            apply_stored_monitor(app, &w);
             w.show()?;
             w.unminimize()?;
             w.set_focus()?;
-            if pinned {
-                let _ = w.set_fullscreen(true);
-            }
+            let _ = w.set_fullscreen(true);
             // Restore the user's mute choice when showing.
             set_main_muted(&w, is_user_muted(app));
         } else {
@@ -171,24 +169,23 @@ fn apply_screen_visible(app: &AppHandle, visible: bool) -> tauri::Result<()> {
 }
 
 #[cfg(not(target_os = "macos"))]
-fn apply_stored_monitor(app: &AppHandle, w: &WebviewWindow) -> bool {
+fn apply_stored_monitor(app: &AppHandle, w: &WebviewWindow) {
     let Some(name) = stored_monitor_pref(app) else {
-        return false;
+        return;
     };
     let Ok(monitors) = w.available_monitors() else {
-        return false;
+        return;
     };
     let Some(target) = monitors
         .iter()
         .find(|m| m.name().map(|n| n == &name).unwrap_or(false))
     else {
-        return false;
+        return;
     };
     let pos = *target.position();
     let size = *target.size();
     let _ = w.set_position(PhysicalPosition::new(pos.x, pos.y));
     let _ = w.set_size(PhysicalSize::new(size.width, size.height));
-    true
 }
 
 #[cfg(not(target_os = "macos"))]
@@ -262,4 +259,28 @@ pub fn navigate_main(app: AppHandle, url: String) -> Result<(), String> {
             .map_err(|e| e.to_string())?;
         Ok(())
     }
+}
+
+// ---------------------------------------------------------------------------
+// Esc-to-hide (Linux: WebKit2GTK key handler)
+// ---------------------------------------------------------------------------
+#[cfg(target_os = "linux")]
+pub(crate) fn install_esc_handler(app: &AppHandle) {
+    let Some(w) = app.get_webview_window("main") else {
+        return;
+    };
+    let app_for_handler = app.clone();
+    let _ = w.with_webview(move |webview| {
+        use gtk::gdk;
+        use gtk::glib;
+        use gtk::prelude::WidgetExt;
+        let wv = webview.inner();
+        wv.connect_key_press_event(move |_, event_key| {
+            if event_key.keyval() == gdk::keys::constants::Escape {
+                let _ = set_screen_visible(&app_for_handler, false);
+                return glib::Propagation::Stop;
+            }
+            glib::Propagation::Proceed
+        });
+    });
 }

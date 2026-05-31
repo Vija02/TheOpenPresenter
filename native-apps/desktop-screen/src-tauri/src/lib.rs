@@ -9,7 +9,9 @@ mod window;
 
 use tauri::{Emitter, Manager, WindowEvent};
 use tauri_plugin_autostart::ManagerExt;
-use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, ShortcutState};
+#[cfg(not(target_os = "linux"))]
+use tauri_plugin_global_shortcut::GlobalShortcutExt;
+use tauri_plugin_global_shortcut::{Code, ShortcutState};
 
 use state::{InitialMainUrl, MuteState, PairingState};
 
@@ -49,6 +51,9 @@ pub fn run() {
         .manage(MuteState::default())
         .setup(|app| {
             tray::setup_tray(app.handle())?;
+
+            #[cfg(target_os = "linux")]
+            window::install_esc_handler(app.handle());
 
             if let Some(w) = app.get_webview_window("main") {
                 if let Ok(url) = w.url() {
@@ -100,6 +105,7 @@ pub fn run() {
                 }
             }
 
+            #[cfg(not(target_os = "linux"))]
             if window.label() == "main" {
                 if let WindowEvent::Focused(focused) = event {
                     let gsm = window.app_handle().global_shortcut();
