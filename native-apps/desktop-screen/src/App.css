@@ -416,6 +416,23 @@ body,
   color: #e74c3c;
   font-size: 12px;
 }
+
+.host-wait-banner {
+  background: rgba(255, 159, 10, 0.12);
+  border-bottom: 1px solid rgba(255, 159, 10, 0.4);
+  color: #ff9f0a;
+  padding: 12px 20px;
+  font-size: 12px;
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+.host-wait-banner strong {
+  color: #ff9f0a;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
 .settings-form-error {
   position: sticky;
   bottom: 16px;
