@@ -3,7 +3,7 @@ name: Desktop Screen App — Build & Release
 on:
   push:
     branches: [main]
-    tags: ['desktop-screen-v*']
+    tags: ['v*']
   pull_request:
     paths:
       - 'native-apps/desktop-screen/**'
