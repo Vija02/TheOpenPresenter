@@ -38,6 +38,8 @@ anyhow = "1"
 # Linux: Needed so we can support mute
 [target.'cfg(target_os = "linux")'.dependencies]
 webkit2gtk = { version = "=2.0.2", features = ["v2_30"] }
+# To get esc working
+gtk = "0.18"
 
 # Windows: Needed so we can support mute
 [target.'cfg(windows)'.dependencies]
