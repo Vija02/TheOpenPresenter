@@ -129,28 +129,36 @@ case "$distro_key" in
     $SUDO apt-get install -y \
       libwebkit2gtk-4.1-0 libgtk-3-0 libsoup-3.0-0 libgnutls30 \
       libayatana-appindicator3-1 \
-      gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-libav \
+      gstreamer1.0-plugins-base gstreamer1.0-plugins-good \
+      gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly \
+      gstreamer1.0-libav gstreamer1.0-vaapi \
       curl ca-certificates
     ;;
   *fedora*|*rhel*|*centos*)
     $SUDO dnf install -y \
       webkit2gtk4.1 gtk3 libsoup3 gnutls \
       libayatana-appindicator-gtk3 \
-      gstreamer1-plugins-base gstreamer1-plugins-good gstreamer1-libav \
+      gstreamer1-plugins-base gstreamer1-plugins-good \
+      gstreamer1-plugins-bad-free gstreamer1-plugins-ugly \
+      gstreamer1-libav gstreamer1-vaapi \
       curl ca-certificates
     ;;
   *arch*)
     $SUDO pacman -Syu --noconfirm --needed \
       webkit2gtk-4.1 gtk3 libsoup3 gnutls \
       libayatana-appindicator \
-      gst-plugins-base gst-plugins-good gst-libav \
+      gst-plugins-base gst-plugins-good \
+      gst-plugins-bad gst-plugins-ugly \
+      gst-libav gstreamer-vaapi \
       curl ca-certificates
     ;;
   *suse*|*opensuse*)
     $SUDO zypper --non-interactive install \
       libwebkit2gtk-4_1-0 libgtk-3-0 libsoup-3_0-0 libgnutls30 \
       libayatana-appindicator3-1 \
-      gstreamer-plugins-base gstreamer-plugins-good gstreamer-plugins-libav \
+      gstreamer-plugins-base gstreamer-plugins-good \
+      gstreamer-plugins-bad gstreamer-plugins-ugly \
+      gstreamer-plugins-libav gstreamer-plugins-vaapi \
       curl ca-certificates
     ;;
   *)
