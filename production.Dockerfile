@@ -239,6 +239,8 @@ COPY --from=builder-server /app/backend/server/.env.production /app/backend/serv
 COPY --from=builder-server /app/backend/server/dist/ /app/backend/server/dist/
 COPY --from=builder-server /app/backend/server/scripts/ /app/backend/server/scripts/
 COPY --from=builder-server /app/backend/server/public/ /app/backend/server/public/
+# Copy for linux install script
+COPY native-apps/desktop-screen/install.sh /app/backend/server/public/install.sh
 COPY --from=builder-server /app/backend/worker/package.json /app/backend/worker/
 COPY --from=builder-server /app/backend/worker/crontab /app/backend/worker/
 COPY --from=builder-server /app/backend/worker/templates/ /app/backend/worker/templates/
