@@ -1,3 +1,4 @@
+import { type UnlistenFn, listen } from "@tauri-apps/api/event";
 import { useEffect, useState } from "react";
 
 import { type Screen, getRootUrl, getScreen } from "../utils/config";
@@ -7,10 +8,17 @@ import { Setup } from "./Setup";
 
 type Stage = "loading" | "login" | "picker" | "paired";
 
+type HostWait = {
+  status: "waiting" | "ready";
+  attempt?: number;
+  rootUrl?: string;
+};
+
 export function Settings() {
   const rootUrl = getRootUrl();
   const [stage, setStage] = useState<Stage>("loading");
   const [screen, setScreen] = useState<Screen | null>(null);
+  const [hostWait, setHostWait] = useState<HostWait | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -32,20 +40,43 @@ export function Settings() {
     };
   }, []);
 
+  // Reachability banner
+  useEffect(() => {
+    let unlisten: UnlistenFn | null = null;
+    listen<HostWait>("host-wait", (e) => {
+      setHostWait(e.payload);
+    })
+      .then((u) => {
+        unlisten = u;
+      })
+      .catch(() => {});
+    return () => {
+      unlisten?.();
+    };
+  }, []);
+
+  const banner =
+    hostWait?.status === "waiting" ? (
+      <div className="host-wait-banner" role="status">
+        <strong>Waiting for host…</strong>
+        <span>
+          {hostWait.rootUrl ?? rootUrl} hasn't responded yet (attempt{" "}
+          {hostWait.attempt}). Retrying every 5 seconds.
+        </span>
+      </div>
+    ) : null;
+
+  let content;
   if (stage === "loading") {
-    return (
+    content = (
       <div className="settings-loading">
         <span>Loading…</span>
       </div>
     );
-  }
-
-  if (stage === "login") {
-    return <Setup onLoggedIn={() => setStage("picker")} />;
-  }
-
-  if (stage === "picker") {
-    return (
+  } else if (stage === "login") {
+    content = <Setup onLoggedIn={() => setStage("picker")} />;
+  } else if (stage === "picker") {
+    content = (
       <ScreenPicker
         onNeedLogin={() => setStage("login")}
         onSelected={(s) => {
@@ -54,25 +85,30 @@ export function Settings() {
         }}
       />
     );
-  }
-
-  if (!screen) {
-    return (
+  } else if (!screen) {
+    content = (
       <div className="settings-loading">
         <span>Loading…</span>
       </div>
     );
+  } else {
+    content = (
+      <PairedSettings
+        rootUrl={rootUrl}
+        screen={screen}
+        onChangeScreen={() => setStage("picker")}
+        onLoggedOut={() => {
+          setScreen(null);
+          setStage("login");
+        }}
+      />
+    );
   }
 
   return (
-    <PairedSettings
-      rootUrl={rootUrl}
-      screen={screen}
-      onChangeScreen={() => setStage("picker")}
-      onLoggedOut={() => {
-        setScreen(null);
-        setStage("login");
-      }}
-    />
+    <>
+      {banner}
+      {content}
+    </>
   );
 }

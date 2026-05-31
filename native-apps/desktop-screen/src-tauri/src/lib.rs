@@ -65,11 +65,19 @@ pub fn run() {
 
             // The main render window is hidden by default. If the user has
             // enabled OS-level autostart, we treat this launch as a kiosk
-            // launch and show it on top of the Settings window
+            // launch and show it on top of the Settings window.
+            //
+            // When `requireHostReachable` is also on, the show is deferred
+            // until a background poll confirms the server is up
             let handle = app.handle().clone();
             let autostart_enabled = handle.autolaunch().is_enabled().unwrap_or(false);
             if autostart_enabled {
-                if let Some(w) = handle.get_webview_window("main") {
+                if host::stored_require_host_reachable(&handle) {
+                    let app_for_task = handle.clone();
+                    tauri::async_runtime::spawn(async move {
+                        host::wait_for_host_and_show(app_for_task).await;
+                    });
+                } else if let Some(w) = handle.get_webview_window("main") {
                     let _ = w.show();
                     let _ = w.set_focus();
                     let _ = handle.emit("screen-visibility", true);
