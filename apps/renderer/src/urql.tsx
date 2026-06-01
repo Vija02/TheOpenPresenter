@@ -1,4 +1,5 @@
 import { appData } from "@repo/lib";
+import { retryExchange } from "@urql/exchange-retry";
 import type { OperationDefinitionNode } from "graphql";
 import { Client as WSClient, createClient as createWSClient } from "graphql-ws";
 import { toast } from "react-toastify";
@@ -14,7 +15,12 @@ let wsClient: WSClient = createWsClient();
 
 function createWsClient() {
   const url = `${window.location.origin.replace(/^http/, "ws")}/graphql`;
-  return createWSClient({ url });
+  return createWSClient({
+    url,
+    keepAlive: 30_000,
+    retryAttempts: Infinity,
+    shouldRetry: () => true,
+  });
 }
 
 export function resetWebsocketConnection(): void {
@@ -36,6 +42,13 @@ export const urqlClient = new URQLClient({
   requestPolicy: "cache-and-network",
   exchanges: [
     cacheExchange,
+    retryExchange({
+      initialDelayMs: 1000,
+      maxDelayMs: 15_000,
+      randomDelay: true,
+      maxNumberAttempts: Infinity,
+      retryIf: (error) => !!error.networkError,
+    }),
     fetchExchange,
     subscriptionExchange({
       forwardSubscription(request) {
