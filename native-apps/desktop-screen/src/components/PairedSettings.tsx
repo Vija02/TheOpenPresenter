@@ -18,8 +18,7 @@ import { ScreenWindowCard } from "./settings/ScreenWindowCard";
 import { StartupCard } from "./settings/StartupCard";
 import { StatusCard } from "./settings/StatusCard";
 import { WhereToShowCard } from "./settings/WhereToShowCard";
-import { useHostReachability } from "./settings/hooks";
-import type { MonitorInfo } from "./settings/types";
+import { useHostReachability, useMonitors } from "./settings/hooks";
 
 type Props = {
   rootUrl: string;
@@ -35,23 +34,22 @@ export function PairedSettings({
   onLoggedOut,
 }: Props) {
   const [loaded, setLoaded] = useState(false);
-  const [monitors, setMonitors] = useState<MonitorInfo[]>([]);
   const [values, setValues] = useState<SettingsValues>(DEFAULT_SETTINGS);
   const [formError, setFormError] = useState<string | null>(null);
 
   const { status: hostStatus, error: hostError } = useHostReachability(rootUrl);
+  const monitorsLive = useMonitors();
+  const monitors = monitorsLive ?? [];
 
-  // Load monitors + persisted settings + actual autostart state on mount.
+  // Load persisted settings + actual autostart state on mount.
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const mons = await invoke<MonitorInfo[]>("list_monitors");
         const stored = await getSettings();
         // Authoritative source for autostart is the OS plugin
         const autostart = await isAutostartEnabled().catch(() => false);
         if (cancelled) return;
-        setMonitors(mons);
         setValues({ ...stored, autostart });
         setLoaded(true);
       } catch (e) {

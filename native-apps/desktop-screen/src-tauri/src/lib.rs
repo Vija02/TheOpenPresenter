@@ -63,6 +63,11 @@ pub fn run() {
                 }
             }
 
+            let app_for_monitors = app.handle().clone();
+            tauri::async_runtime::spawn(async move {
+                monitor::watch_monitors(app_for_monitors).await;
+            });
+
             // The main render window is hidden by default. If the user has
             // enabled OS-level autostart, we treat this launch as a kiosk
             // launch and show it on top of the Settings window.
@@ -77,16 +82,18 @@ pub fn run() {
                     tauri::async_runtime::spawn(async move {
                         host::wait_for_host_and_show(app_for_task).await;
                     });
-                } else if let Some(w) = handle.get_webview_window("main") {
-                    let _ = w.show();
-                    let _ = w.set_focus();
-                    let _ = handle.emit("screen-visibility", true);
+                } else {
+                    let _ = window::set_screen_visible(&handle, true);
                 }
             } else {
-                // macOS can't mute a hidden render window, so we don't keep one around
                 #[cfg(target_os = "macos")]
                 if let Some(w) = handle.get_webview_window("main") {
                     let _ = w.close();
+                    let _ = handle.emit("screen-visibility", false);
+                }
+                #[cfg(not(target_os = "macos"))]
+                {
+                    let _ = window::set_screen_visible(&handle, false);
                 }
             }
             Ok(())

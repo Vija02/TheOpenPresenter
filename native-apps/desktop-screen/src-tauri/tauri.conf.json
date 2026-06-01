@@ -27,9 +27,9 @@
         "title": "TheOpenPresenter Screen",
         "width": 1280,
         "height": 800,
-        "fullscreen": true,
         "visible": false,
-        "focus": false
+        "focus": false,
+        "decorations": false
       }
     ],
     "security": {
