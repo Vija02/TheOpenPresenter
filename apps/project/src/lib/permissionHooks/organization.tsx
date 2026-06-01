@@ -1,4 +1,4 @@
-import { SharedOrganizationFragment } from "@repo/graphql";
+import { OrganizationType, SharedOrganizationFragment } from "@repo/graphql";
 import { ErrorAlert, FourOhFour, LoadingFull } from "@repo/ui";
 import React from "react";
 import { UseQueryResponse } from "urql";
@@ -7,6 +7,20 @@ import { useParams } from "wouter";
 export function useOrganizationSlug() {
   const { slug: rawSlug } = useParams();
   return String(rawSlug);
+}
+
+export type OrganizationContextValue = {
+  organizationType: OrganizationType | null;
+};
+
+const OrganizationContext = React.createContext<OrganizationContextValue>({
+  organizationType: null,
+});
+
+export const OrganizationProvider = OrganizationContext.Provider;
+
+export function useOrganizationType(): OrganizationType | null {
+  return React.useContext(OrganizationContext).organizationType;
 }
 
 export function useOrganizationLoading(

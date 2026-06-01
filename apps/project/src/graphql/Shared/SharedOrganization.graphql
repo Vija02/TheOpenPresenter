@@ -15,6 +15,7 @@ fragment SharedOrganization on Query {
   organizationBySlug(slug: $slug) {
     id
     name
+    organizationType
   }
 }
 
