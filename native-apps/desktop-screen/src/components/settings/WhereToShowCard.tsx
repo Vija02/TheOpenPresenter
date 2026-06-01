@@ -8,6 +8,9 @@ type Props = {
 
 /** Monitor selector */
 export function WhereToShowCard({ monitors, value, onChange }: Props) {
+  const orphaned =
+    value !== "current" && !monitors.some((m) => m.name === value);
+
   return (
     <section className="settings-card">
       <h2>Where to show</h2>
@@ -25,6 +28,11 @@ export function WhereToShowCard({ monitors, value, onChange }: Props) {
             {`Monitor ${i + 1}${m.is_primary ? " (primary)" : ""} — ${m.width}×${m.height} — ${m.name}`}
           </option>
         ))}
+        {orphaned && (
+          <option key={value} value={value} disabled>
+            {`${value} — disconnected`}
+          </option>
+        )}
       </select>
     </section>
   );

@@ -2,7 +2,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { type UnlistenFn, listen } from "@tauri-apps/api/event";
 import { useEffect, useState } from "react";
 
-import type { HostStatus } from "./types";
+import type { HostStatus, MonitorInfo } from "./types";
 
 const useTauriLiveState = <T>(
   initialCommand: string,
@@ -66,6 +66,34 @@ export const useScreenMute = (): {
   );
 
   return { supported, muted };
+};
+
+export const useMonitors = (): MonitorInfo[] | null => {
+  const [monitors, setMonitors] = useState<MonitorInfo[] | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    let unlisten: UnlistenFn | null = null;
+    const refresh = async () => {
+      try {
+        const mons = await invoke<MonitorInfo[]>("list_monitors");
+        if (!cancelled) setMonitors(mons);
+      } catch {}
+    };
+    (async () => {
+      await refresh();
+      unlisten = await listen("monitors-changed", () => {
+        refresh();
+      });
+      if (cancelled && unlisten) unlisten();
+    })();
+    return () => {
+      cancelled = true;
+      unlisten?.();
+    };
+  }, []);
+
+  return monitors;
 };
 
 /** One-shot host reachability check, re-fires whenever `rootUrl` changes. */

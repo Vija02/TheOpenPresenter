@@ -1,5 +1,7 @@
+use std::time::Duration;
+
 use serde::Serialize;
-use tauri::{AppHandle, Manager, PhysicalPosition, PhysicalSize};
+use tauri::{AppHandle, Emitter, Manager, PhysicalPosition, PhysicalSize};
 
 #[derive(Serialize)]
 pub struct MonitorInfo {
@@ -9,6 +11,52 @@ pub struct MonitorInfo {
     x: i32,
     y: i32,
     is_primary: bool,
+}
+
+type MonitorSig = (String, u32, u32, i32, i32);
+
+fn monitor_signatures(app: &AppHandle) -> Vec<MonitorSig> {
+    let w = app
+        .get_webview_window("settings")
+        .or_else(|| app.get_webview_window("main"));
+    let Some(w) = w else {
+        return vec![];
+    };
+    let Ok(monitors) = w.available_monitors() else {
+        return vec![];
+    };
+    monitors
+        .into_iter()
+        .map(|m| {
+            let name = m.name().cloned().unwrap_or_default();
+            let size = m.size();
+            let pos = m.position();
+            (name, size.width, size.height, pos.x, pos.y)
+        })
+        .collect()
+}
+
+/// Long-running background task: poll the OS monitor list every ~5s, emit
+/// `monitors-changed` when the signature changes, and re-apply kiosk
+/// geometry if the kiosk is currently visible (so a re-plugged monitor
+/// snaps the window back to its configured display).
+pub(crate) async fn watch_monitors(app: AppHandle) {
+    let mut last = monitor_signatures(&app);
+    loop {
+        tokio::time::sleep(Duration::from_secs(5)).await;
+        let now = monitor_signatures(&app);
+        if now == last {
+            continue;
+        }
+        last = now;
+        let _ = app.emit("monitors-changed", ());
+
+        if let Some(w) = app.get_webview_window("main") {
+            if w.is_visible().unwrap_or(false) {
+                let _ = crate::window::set_screen_visible(&app, true);
+            }
+        }
+    }
 }
 
 #[tauri::command]
