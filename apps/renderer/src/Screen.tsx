@@ -52,7 +52,7 @@ export function Screen() {
   if (fetching && !data) {
     return <LoadingFull />;
   }
-  if (error) {
+  if (error && !data) {
     return <ErrorAlert error={error} />;
   }
 
