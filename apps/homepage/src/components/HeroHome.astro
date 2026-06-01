@@ -80,6 +80,38 @@ import landingImg from "../assets/images/landing_img.png";
               ></span>
             </div>
             <div class="mt-3 md:mt-0">
+              <!-- Small arrow pointing back at the QR (desktop only) -->
+              <svg
+                class="hidden md:block overflow-visible text-teal-500 -mb-1"
+                aria-hidden="true"
+                width="56"
+                height="56"
+                viewBox="0 0 48 48"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <defs>
+                  <marker
+                    id="qr-arrow-head"
+                    viewBox="0 0 10 10"
+                    refX="9"
+                    refY="5"
+                    markerWidth="5"
+                    markerHeight="5"
+                    orient="auto"
+                    markerUnits="strokeWidth"
+                  >
+                    <path d="M0,0 L10,5 L0,10 z" fill="currentColor"></path>
+                  </marker>
+                </defs>
+                <path
+                  d="M30 44 C 30 28, 22 14, -10 14"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  fill="none"
+                  marker-end="url(#qr-arrow-head)"></path>
+              </svg>
               <p
                 id="init-demo-status"
                 class="text-base font-semibold text-gray-800 dark:text-gray-200"
@@ -87,8 +119,7 @@ import landingImg from "../assets/images/landing_img.png";
                 Scan to try the live demo
               </p>
               <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                Open the QR with your phone. Your screen will follow along right
-                here.
+                Control this page from your phone just like your guests would
               </p>
             </div>
           </div>
