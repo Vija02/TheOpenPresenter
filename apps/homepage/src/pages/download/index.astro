@@ -64,23 +64,29 @@ import PageIllustration from "../../components/PageIllustration.astro";
 
         <!-- Download options -->
         <div class="flex flex-col gap-8">
-          <!-- TV App -->
+          <!-- Kiosk App (TV + Desktop) -->
           <div
             class="rounded-lg border border-gray-200 dark:border-gray-800 p-8"
             data-aos="fade-up"
           >
-            <h2 class="h3 font-red-hat-display mb-2">TV App</h2>
+            <h2 class="h3 font-red-hat-display mb-2">Kiosk App</h2>
             <p class="text-gray-600 dark:text-gray-400 mb-8">
-              Install on a supported TV device to turn any TV or monitor into a
-              permanent, always-on display for TheOpenPresenter. Perfect
-              for keeping the presenter view up on a dedicated screen.
+              Turn any TV, monitor, or computer into a permanent,
+              always-on display for TheOpenPresenter. Pair once via QR,
+              pick which screen, and the device boots straight into a
+              fullscreen render every time.
             </p>
 
-            <!-- Platforms -->
-            <div class="grid gap-8 md:grid-cols-2">
+            <!-- TV platforms -->
+            <h3
+              class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-4"
+            >
+              On a TV
+            </h3>
+            <div class="grid gap-8 md:grid-cols-2 mb-10">
               <!-- Fire TV -->
               <div>
-                <h3 class="font-medium text-lg mb-3">Fire TV</h3>
+                <h4 class="font-medium text-lg mb-3">Fire TV</h4>
                 <a
                   class="inline-block transition duration-150 ease-in-out hover:opacity-80"
                   href="https://www.amazon.com/dp/B0GZG5HFSY"
@@ -111,7 +117,7 @@ import PageIllustration from "../../components/PageIllustration.astro";
 
               <!-- Android TV / Google TV -->
               <div>
-                <h3 class="font-medium text-lg mb-3">Android TV / Google TV</h3>
+                <h4 class="font-medium text-lg mb-3">Android TV / Google TV</h4>
                 <a
                   class="inline-block transition duration-150 ease-in-out hover:opacity-80"
                   href="https://play.google.com/store/apps/details?id=com.theopenpresenter.tv"
@@ -141,6 +147,76 @@ import PageIllustration from "../../components/PageIllustration.astro";
                 </ul>
               </div>
             </div>
+
+            <!-- Desktop platforms -->
+            <h3
+              class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-4"
+            >
+              On a computer
+            </h3>
+            <div class="grid gap-8 md:grid-cols-2">
+              <!-- Windows -->
+              <div>
+                <h4 class="font-medium text-lg mb-3">Windows</h4>
+                <a
+                  class="inline-flex items-center justify-center gap-3 px-6 py-3 rounded-md bg-gray-900 hover:bg-gray-700 text-white dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200 font-medium shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition duration-150 ease-in-out"
+                  href="https://github.com/Vija02/TheOpenPresenter/releases/download/desktop-screen-nightly/desktop-screen-windows-x86_64-setup.exe"
+                >
+                  <svg
+                    class="w-6 h-6 fill-current"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-13.051-1.851"
+                    ></path>
+                  </svg>
+                  <span class="flex flex-col items-start leading-tight text-left">
+                    <span class="text-xs opacity-80">Download for</span>
+                    <span class="text-base font-semibold">Windows (64-bit)</span>
+                  </span>
+                </a>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-3">
+                  Or get the <a
+                    class="text-teal-500 hover:underline"
+                    href="https://github.com/Vija02/TheOpenPresenter/releases/download/desktop-screen-nightly/desktop-screen-windows-x86_64.msi"
+                    >.msi installer</a
+                  > for enterprise deployment.
+                </p>
+              </div>
+
+              <!-- macOS -->
+              <div>
+                <h4 class="font-medium text-lg mb-3">macOS</h4>
+                <a
+                  class="inline-flex items-center justify-center gap-3 px-6 py-3 rounded-md bg-gray-900 hover:bg-gray-700 text-white dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200 font-medium shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition duration-150 ease-in-out"
+                  href="https://github.com/Vija02/TheOpenPresenter/releases/download/desktop-screen-nightly/desktop-screen-macos-aarch64.dmg"
+                >
+                  <svg
+                    class="w-6 h-6 fill-current"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.07-.5-2.05-.51-3.18 0-1.41.62-2.16.44-3.02-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"
+                    ></path>
+                  </svg>
+                  <span class="flex flex-col items-start leading-tight text-left">
+                    <span class="text-xs opacity-80">Download for</span>
+                    <span class="text-base font-semibold">macOS (Apple Silicon)</span>
+                  </span>
+                </a>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-3">
+                  On an Intel Mac? Get the <a
+                    class="text-teal-500 hover:underline"
+                    href="https://github.com/Vija02/TheOpenPresenter/releases/download/desktop-screen-nightly/desktop-screen-macos-x86_64.dmg"
+                    >Intel build</a
+                  > instead.
+                </p>
+              </div>
+            </div>
           </div>
 
           <!-- Local App -->
@@ -162,7 +238,7 @@ import PageIllustration from "../../components/PageIllustration.astro";
               <div>
                 <h3 class="font-medium text-lg mb-3">Windows</h3>
                 <a
-                  class="inline-flex items-center justify-center gap-3 px-6 py-3 rounded-md bg-teal-500 hover:bg-teal-400 text-white font-medium shadow-sm transition duration-150 ease-in-out"
+                  class="inline-flex items-center justify-center gap-3 px-6 py-3 rounded-md bg-gray-900 hover:bg-gray-700 text-white dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200 font-medium shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition duration-150 ease-in-out"
                   href="https://github.com/Vija02/TheOpenPresenter/releases/download/nightly/TheOpenPresenter_0.1.0_x64-setup.exe"
                 >
                   <svg
