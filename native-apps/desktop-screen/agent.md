@@ -21,8 +21,9 @@ server, so the SameSite=Lax session cookie rides along.
   surface here.
 - `state.rs` — typed wrappers for shared state (`PairingState`,
   `InitialMainUrl`, `MuteState`).
-- `platform.rs` — Linux env fixups (GStreamer / WebKit) for packaged
-  builds.
+- `platform.rs` — Linux env fixups (WebKit DMABUF renderer disable in
+  VMs; GStreamer feature-rank to promote the `va` hardware decoder over
+  `avdec_h264` so HLS/MSE video doesn't fall back to software decode).
 - `tray.rs` — system tray icon, menu, and the `screen-visibility` listener
   that keeps Show/Hide enabled-state honest.
 - `window.rs` — settings + main window lifecycle (`set_screen_visible`,
@@ -125,6 +126,47 @@ and the Rust readers (`host.rs::stored_root_url`,
 are no longer separate `screen.json` / `settings.json` / `host.json`
 files; old references are stale.
 
+## Visibility invariant — single applier rule
+
+The kiosk's visible/hidden state has three coupled side effects (audio
+mute, monitor positioning, the `screen-visibility` event) and it's
+easy to drive them out of sync if you change visibility from more than
+one place. **`window::set_screen_visible(app, visible)` is the only
+function that should change visibility.** It calls
+`apply_screen_visible` (which applies mute + monitor + fullscreen as a
+unit) and emits `screen-visibility`.
+
+Concrete corollaries:
+
+- Don't call `w.show()` / `w.hide()` / `w.close()` on the `main` window
+  outside `apply_screen_visible`. The `CloseRequested` handler in
+  `lib.rs` routes through `set_screen_visible(false)` for this reason.
+- **Startup** drives the initial state explicitly. If autostart is on,
+  `set_screen_visible(true)` (or the host-wait poller). If autostart is
+  off, `set_screen_visible(false)` — without this, `tauri.conf.json`'s
+  `visible: false` hides the *window* but the WebView2 / WebKit2GTK
+  process is still alive, the React bundle still loads, MainScreen.tsx
+  still auto-navigates to the kiosk URL, and the page autoplays audio
+  from a hidden window. `set_screen_visible(false)` mutes the webview
+  and emits the canonical event so the Settings UI doesn't start out
+  claiming the kiosk is shown.
+- **`apply_monitor`** must not change visibility. If the window is
+  hidden, the new monitor pref is already in the store and
+  `apply_stored_monitor` will read it on the next show — short-circuit
+  early. If you do the exit-FS → reposition → re-enter-FS dance against
+  a hidden window, `set_fullscreen(true)` un-hides it and you flash the
+  kiosk on screen.
+- **`clear_session`** routes through `set_screen_visible(false)` before
+  doing cookie / navigation work. Don't call `w.hide()` + manually emit
+  the event — the webview won't be muted and Settings hooks can desync.
+- **Pairing gate.** `set_screen_visible(true)` is silently downgraded to
+  `false` when no screen is paired (`screen.{orgSlug,screenSlug}` absent
+  in the store). Otherwise autostart / host-wait / tray would pop the
+  kiosk window on first boot to show MainScreen's "Not paired" filler
+  on top of the Settings UI the user actually needs. Re-pairing
+  doesn't auto-show the kiosk — the user clicks "Open screen" (or the
+  tray) once paired, and the gate now lets it through.
+
 ## IPC event taxonomy
 
 Emitted from Rust, consumed in React:
@@ -139,6 +181,17 @@ Emitted from Rust, consumed in React:
   `set_screen_muted`.
 - `host-wait` (`{ status: "waiting" | "ready", attempt?, rootUrl? }`) —
   emitted by the reachability gate poller.
+- `monitors-changed` (`()`) — emitted by `monitor::watch_monitors` (a
+  background task spawned in `lib.rs::setup`) whenever the OS monitor
+  list signature changes (plug, unplug, resolution / arrangement
+  change). Tauri v2 doesn't expose a cross-platform monitor-change
+  event, so the watcher polls `available_monitors()` every ~2 seconds
+  and diffs by `(name, width, height, x, y)`. The watcher also
+  re-applies kiosk geometry when the kiosk is currently visible —
+  `apply_stored_monitor` is a no-op when the saved monitor name no
+  longer matches a connected output, so unplug + re-plug naturally
+  re-snaps the window. Frontend listens via the `useMonitors` hook
+  (`src/components/settings/hooks.ts`).
 
 When adding new events, follow the `<noun>-<state>` pattern and emit them
 through a single helper (like `set_screen_visible` does) so callers can't
@@ -163,8 +216,15 @@ checkbox). To add a new setting:
 - **No WM-specific code on Linux** (`i3-msg`, sway IPC, KWin scripting,
   etc.). User rejected this explicitly. Keep cross-platform helpers like
   the hide-before-reposition pattern instead.
-- **No `set_decorations(false)`** to fake kiosk. `set_fullscreen(true)`
-  hides decorations on all three platforms.
+- **No `set_decorations(false)` on Linux / Windows.** `set_fullscreen(true)`
+  hides decorations there and is well-behaved. macOS is the exception:
+  Cocoa's `toggleFullScreen:` creates a Mission Control Space bound to
+  whichever display Cocoa picks (often disagreeing with `set_position` on
+  multi-monitor setups → kiosk reliably opens on the wrong screen).
+  `window.rs::create_main_window` on macOS uses
+  `decorations(false) + always_on_top(true) + explicit position + size` —
+  same pattern OpenLP uses for its display window. Don't reintroduce
+  `set_fullscreen(true)` on macOS without revisiting that.
 - **No emojis** in code, UI text, or commit messages unless the user
   explicitly asks.
 - **Don't write new files** that don't earn their place. The eight-file
