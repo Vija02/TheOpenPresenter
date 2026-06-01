@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Node / V8 JITs into RWX memory at runtime. Apple's hardened
+         runtime blocks that by default; re-open it just enough that
+         V8 can keep running inside a notarised bundle. -->
+    <key>com.apple.security.cs.allow-jit</key>
+    <true/>
+    <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+    <true/>
+
+    <!-- The bundle ships native node modules (.node addons) and
+         embedded-postgres binaries — none of which are signed by our
+         Developer ID. Without this, dyld refuses to load them under
+         hardened runtime. -->
+    <key>com.apple.security.cs.disable-library-validation</key>
+    <true/>
+</dict>
+</plist>
