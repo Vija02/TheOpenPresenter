@@ -39,15 +39,15 @@ fn stored_root_url(app: &AppHandle) -> String {
 
 pub(crate) fn stored_require_host_reachable(app: &AppHandle) -> bool {
     let Ok(store) = app.store(STORE_FILE) else {
-        return false;
+        return true;
     };
     let Some(settings) = store.get("settings") else {
-        return false;
+        return true;
     };
     settings
         .get("requireHostReachable")
         .and_then(|v| v.as_bool())
-        .unwrap_or(false)
+        .unwrap_or(true)
 }
 
 /// Background task: poll the configured host until reachable, then show the
