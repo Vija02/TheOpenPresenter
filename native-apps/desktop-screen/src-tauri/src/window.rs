@@ -259,9 +259,31 @@ fn stored_monitor_pref(app: &AppHandle) -> Option<String> {
     }
 }
 
+fn is_screen_paired(app: &AppHandle) -> bool {
+    let Ok(store) = app.store("config.json") else {
+        return false;
+    };
+    let Some(screen) = store.get("screen") else {
+        return false;
+    };
+    let non_empty = |k: &str| {
+        screen
+            .get(k)
+            .and_then(|v| v.as_str())
+            .map(|s| !s.is_empty())
+            .unwrap_or(false)
+    };
+    non_empty("orgSlug") && non_empty("screenSlug")
+}
+
 pub(crate) fn set_screen_visible(app: &AppHandle, visible: bool) -> tauri::Result<()> {
-    apply_screen_visible(app, visible)?;
-    let _ = app.emit("screen-visibility", visible);
+    let target = if visible && !is_screen_paired(app) {
+        false
+    } else {
+        visible
+    };
+    apply_screen_visible(app, target)?;
+    let _ = app.emit("screen-visibility", target);
     Ok(())
 }
 
