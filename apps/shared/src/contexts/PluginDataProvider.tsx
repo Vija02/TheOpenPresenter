@@ -193,7 +193,8 @@ export const PluginDataProvider = ({
   } = useQuery({
     queryKey: ["provider", projectId],
     queryFn: () => initializeHocuspocusProvider(projectId),
-    retry: false,
+    retry: (_failureCount, err) =>
+      !/Authentication Failed/i.test((err as Error)?.message ?? ""),
   });
   const { errors } = useError();
 
