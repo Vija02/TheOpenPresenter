@@ -8,47 +8,93 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+env:
+  TURBO_UI: "false"
+  CI: "true"
+
 jobs:
   test-dev-workflow:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'yarn'
-          
+
       - name: Enable corepack and install yarn
         run: |
           corepack enable
           corepack use yarn
-          
+
       - name: Install dependencies
         run: yarn install --no-immutable
-          
-      - name: Start local-dev in background
+
+      - name: Prepare log directory
+        run: mkdir -p .ci-logs
+
+      - name: Start local-dev (own session) and wait for Postgres
         run: |
-          yarn local-dev &
-          LOCAL_DEV_PID=$!
-          
-          # Now test yarn dev
-          yarn dev &
-          DEV_PID=$!
-          
-          # Wait for dev server to start
-          timeout 300 bash -c 'until curl -s http://localhost:5678 > /dev/null; do sleep 2; done' || {
-            echo "Dev server failed to start within 5 minutes"
-            kill $DEV_PID || true
-            kill $LOCAL_DEV_PID || true
+          set -euo pipefail
+
+          setsid bash -c '
+            echo $$ > .ci-logs/local-dev.pgid
+            exec yarn local-dev
+          ' > .ci-logs/local-dev.log 2>&1 < /dev/null &
+
+          echo "Waiting up to 180s for Postgres on localhost:7949..."
+          if ! timeout 180 bash -c 'until (echo > /dev/tcp/localhost/7949) 2>/dev/null; do sleep 2; done'; then
+            echo "::error::Postgres did not come up within 180s"
+            echo "=== local-dev.log (tail) ==="
+            tail -n 500 .ci-logs/local-dev.log || true
             exit 1
-          }
-          
-          # Clean up both processes
-          kill $DEV_PID || true
-          kill $LOCAL_DEV_PID || true
-          wait $DEV_PID || true
-          wait $LOCAL_DEV_PID || true
+          fi
+          echo "Postgres is up."
+
+      - name: Start yarn dev and wait for HTTP
+        run: |
+          set -euo pipefail
+
+          setsid bash -c '
+            echo $$ > .ci-logs/dev.pgid
+            exec yarn dev
+          ' > .ci-logs/dev.log 2>&1 < /dev/null &
+
+          echo "Waiting up to 300s for http://localhost:5678..."
+          if ! timeout 300 bash -c 'until curl -fsS http://localhost:5678 > /dev/null; do sleep 2; done'; then
+            echo "::error::Dev server did not respond within 300s"
+            echo "=== local-dev.log (tail) ==="
+            tail -n 500 .ci-logs/local-dev.log || true
+            echo "=== dev.log (tail) ==="
+            tail -n 500 .ci-logs/dev.log || true
+            exit 1
+          fi
+          echo "Dev server is responding."
+
+      - name: Upload CI logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dev-workflow-logs
+          path: .ci-logs/
+          if-no-files-found: ignore
+
+      - name: Tear down background processes
+        if: always()
+        run: |
+          # Signal whole pgroups (negative pid) so turbo + all watchers go down.
+          for f in .ci-logs/dev.pgid .ci-logs/local-dev.pgid; do
+            [ -f "$f" ] || continue
+            pgid=$(cat "$f" 2>/dev/null || true)
+            [ -n "$pgid" ] && kill -TERM -"$pgid" 2>/dev/null || true
+          done
+          sleep 5
+          for f in .ci-logs/dev.pgid .ci-logs/local-dev.pgid; do
+            [ -f "$f" ] || continue
+            pgid=$(cat "$f" 2>/dev/null || true)
+            [ -n "$pgid" ] && kill -KILL -"$pgid" 2>/dev/null || true
+          done
