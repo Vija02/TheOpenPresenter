@@ -119,8 +119,17 @@ import landingImg from "../assets/images/landing_img.png";
                 Scan to try the live demo
               </p>
               <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                Control this page from your phone just like your guests would
+                You will then be able to control this page from your phone just
+                like your guests would
               </p>
+              <button
+                type="button"
+                id="init-demo-no-phone"
+                class="mt-3 text-sm font-medium text-teal-600 hover:text-teal-500 underline cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:no-underline"
+                disabled
+              >
+                Don't have your phone? Try it right here.
+              </button>
             </div>
           </div>
           <!-- Sign-up CTA, hidden until the demo has been started -->
@@ -240,29 +249,37 @@ import landingImg from "../assets/images/landing_img.png";
 <!-- Renderer section. Stays hidden until /init-demo has been scanned; the
      script populates the iframe src and scrolls this block into view. -->
 <section id="init-demo-renderer-section" class="hidden">
-  <div class="max-w-6xl mx-auto px-4 sm:px-6 pt-8 md:pt-16 pb-16">
+  <!-- Renderer + remote row breaks out of the usual max-w-6xl so the demo
+       can fill the screen on wide displays. The CTA below stays constrained. -->
+  <div class="px-4 sm:px-6 pt-8 md:pt-16 pb-16">
     <div
-      class="overflow-hidden rounded-xl shadow-2xl ring-1 ring-gray-200 dark:ring-gray-800"
-      style="aspect-ratio: 16 / 9; background: #000;"
+      class="flex flex-col md:flex-row md:items-center md:justify-center md:gap-6"
     >
-      <iframe
-        id="init-demo-renderer-iframe"
-        title="Live demo renderer"
-        allow="autoplay; fullscreen"
-        style="width: 100%; height: 100%; border: 0;"></iframe>
-    </div>
-    <!-- Embedded remote control (mobile only) — gives phone users a way to
-         drive the demo without a second device. -->
-    <div
-      id="init-demo-remote-wrap"
-      class="hidden mt-6 overflow-hidden rounded-xl shadow-xl ring-1 ring-gray-200 dark:ring-gray-800"
-      style="height: 70vh; background: #fff;"
-    >
-      <iframe
-        id="init-demo-remote-iframe"
-        title="Live demo remote"
-        allow="autoplay; fullscreen; clipboard-read; clipboard-write"
-        style="width: 100%; height: 100%; border: 0;"></iframe>
+      <div
+        class="w-full md:flex-1 md:min-w-0 md:max-w-7xl overflow-hidden rounded-xl shadow-2xl ring-1 ring-gray-200 dark:ring-gray-800"
+        style="aspect-ratio: 16 / 9; background: #000;"
+      >
+        <iframe
+          id="init-demo-renderer-iframe"
+          title="Live demo renderer"
+          allow="autoplay; fullscreen"
+          style="width: 100%; height: 100%; border: 0;"></iframe>
+      </div>
+      <!-- Embedded remote control — gives visitors driving the demo on this
+           device (mobile, or desktop opt-in) a way to control it without a
+           separate phone. Rendered as a phone-shaped frame; sits beside the
+           renderer on desktop, below it on mobile. -->
+      <div
+        id="init-demo-remote-wrap"
+        class="hidden mt-6 md:mt-0 mx-auto md:mx-0 w-full max-w-[360px] max-md:max-h-[calc(100vh_-_(100vw_-_2rem)*9/16_-_2rem_-_1.5rem_-_2rem)] md:max-h-screen md:max-w-none md:w-[clamp(280px,22vw,420px)] md:shrink-0 overflow-hidden rounded-[2rem] shadow-xl ring-1 ring-gray-200 dark:ring-gray-800"
+        style="aspect-ratio: 9 / 19.5; background: #fff;"
+      >
+        <iframe
+          id="init-demo-remote-iframe"
+          title="Live demo remote"
+          allow="autoplay; fullscreen; clipboard-read; clipboard-write"
+          style="width: 100%; height: 100%; border: 0;"></iframe>
+      </div>
     </div>
     <div class="mt-8 text-center">
       <p
@@ -311,11 +328,19 @@ import landingImg from "../assets/images/landing_img.png";
   const remoteIframe = document.getElementById(
     "init-demo-remote-iframe",
   ) as HTMLIFrameElement | null;
+  const noPhoneBtn = document.getElementById(
+    "init-demo-no-phone",
+  ) as HTMLButtonElement | null;
 
   // Treat anything that lacks a fine pointer or is narrow as "mobile"
   const isMobile =
     window.matchMedia("(max-width: 768px)").matches ||
     window.matchMedia("(pointer: coarse)").matches;
+
+  // When true, the renderer + remote get embedded on this device instead of
+  // expecting the phone to drive it. Always true on mobile; opt-in on desktop
+  // via the "don't have your phone" button.
+  let useInlineRemote = isMobile;
 
   const setStatus = (text: string) => {
     if (statusEl) statusEl.textContent = text;
@@ -350,19 +375,23 @@ import landingImg from "../assets/images/landing_img.png";
     const featuresEl = document.getElementById("init-demo-features");
     if (featuresEl) featuresEl.classList.remove("hidden");
 
-    // Embed the remote control inline on mobile so the visitor has a way to
-    // drive the demo without a separate device.
-    const showRemote = isMobile && remoteWrap && remoteIframe;
+    const showRemote = useInlineRemote && remoteWrap && remoteIframe;
     if (showRemote) {
       remoteIframe!.src = `/app/${encodeURIComponent(payload.orgSlug)}/${encodeURIComponent(payload.projectSlug)}`;
       remoteWrap!.classList.remove("hidden");
+    } else {
+      const rendererWrap = rendererIframe.parentElement as HTMLElement | null;
+      if (rendererWrap) {
+        rendererWrap.style.maxWidth =
+          "min(calc((100vh - 12rem) * 16 / 9), 80rem)";
+      }
     }
 
     // Defer scroll a tick so layout settles after the section un-hides
     requestAnimationFrame(() => {
       rendererSection.scrollIntoView({
         behavior: "smooth",
-        block: showRemote ? "start" : "center",
+        block: "start",
       });
     });
   };
@@ -395,6 +424,24 @@ import landingImg from "../assets/images/landing_img.png";
     } else {
       canvas.style.display = "none";
       if (loadingEl) loadingEl.style.display = "inline";
+      if (noPhoneBtn) {
+        noPhoneBtn.addEventListener("click", () => {
+          const targetStr = noPhoneBtn.dataset.target;
+          if (!targetStr) return;
+          noPhoneBtn.disabled = true;
+          noPhoneBtn.textContent = "Starting…";
+          useInlineRemote = true;
+          setStatus("Provisioning a demo project…");
+          fetch(targetStr, { redirect: "manual" }).catch((err) => {
+            console.error("[init-demo] desktop fallback fetch failed:", err);
+            setStatus("Couldn't start the demo. Reload to try again.");
+            noPhoneBtn.disabled = false;
+            noPhoneBtn.textContent =
+              "Don't have your phone? Try it right here.";
+            useInlineRemote = false;
+          });
+        });
+      }
     }
 
     const source = new EventSource("/init-demo/request");
@@ -419,6 +466,10 @@ import landingImg from "../assets/images/landing_img.png";
             renderQr(targetStr);
             const qrUrlEl = document.getElementById("init-demo-qr-url");
             if (qrUrlEl) qrUrlEl.textContent = targetStr;
+            if (noPhoneBtn) {
+              noPhoneBtn.disabled = false;
+              noPhoneBtn.dataset.target = targetStr;
+            }
           }
         } else if (payload.done) {
           swapInRenderer(payload);
