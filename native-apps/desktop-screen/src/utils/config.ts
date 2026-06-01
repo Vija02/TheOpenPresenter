@@ -109,7 +109,7 @@ export type SettingsValues = {
 export const DEFAULT_SETTINGS: SettingsValues = {
   monitor: "current",
   autostart: false,
-  requireHostReachable: false,
+  requireHostReachable: true,
 };
 
 export const getSettings = async (): Promise<SettingsValues> => {
