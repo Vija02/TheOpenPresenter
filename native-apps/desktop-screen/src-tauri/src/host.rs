@@ -74,10 +74,30 @@ pub(crate) async fn wait_for_host_and_show(app: AppHandle) {
                 json!({ "status": "ready", "attempt": attempt, "rootUrl": root_url }),
             );
 
-            // Before revealing the kiosk window, reload the webview
+            // Before revealing the kiosk window, reset its content.
             #[cfg(not(target_os = "macos"))]
             if let Some(w) = app.get_webview_window("main") {
-                let _ = w.eval("window.location.reload()");
+                let initial = app
+                    .state::<crate::state::InitialMainUrl>()
+                    .0
+                    .lock()
+                    .ok()
+                    .and_then(|g| g.clone());
+                let js = if let Some(url) = initial {
+                    let escaped = url.replace('\\', "\\\\").replace('\'', "\\'");
+                    format!(
+                        "document.documentElement.innerHTML='';\
+                         document.documentElement.style.background='#000';\
+                         window.location.replace('{}')",
+                        escaped
+                    )
+                } else {
+                    "document.documentElement.innerHTML='';\
+                     document.documentElement.style.background='#000';\
+                     window.location.reload()"
+                        .to_string()
+                };
+                let _ = w.eval(&js);
             }
 
             let _ = crate::window::set_screen_visible(&app, true);
