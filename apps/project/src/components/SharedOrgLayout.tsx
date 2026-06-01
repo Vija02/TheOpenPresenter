@@ -1,4 +1,5 @@
 import {
+  OrganizationProvider,
   useOrganizationLoading,
   useOrganizationSlug,
 } from "@/lib/permissionHooks/organization";
@@ -139,6 +140,13 @@ export function SharedOrgLayout({
     [data?.currentUser?.organizationMemberships?.nodes],
   );
 
+  const organizationContextValue = React.useMemo(
+    () => ({
+      organizationType: data?.organizationBySlug?.organizationType ?? null,
+    }),
+    [data?.organizationBySlug?.organizationType],
+  );
+
   const navbar = React.useMemo(
     () => (
       <div className="w-full md:w-[250px] self-stretch border-r border-stroke">
@@ -235,50 +243,52 @@ export function SharedOrgLayout({
 
   return (
     <globalState.modelDataAccess.TagProvider key="TagProvider" slug={slug}>
-      <SharedLayout
-        forbidWhen={AuthRestrict.LOGGED_OUT}
-        noPad
-        query={sharedOrgQuery}
-        {...props}
-        navbarLeft={
-          isMobile && (
-            <OverlayToggle
-              toggler={({ onToggle }) => (
-                <Button
-                  variant="ghost"
-                  className="hover:bg-transparent"
-                  onClick={onToggle}
-                >
-                  <RxHamburgerMenu className="size-6 text-gray-400" />
-                </Button>
-              )}
-            >
-              <DrawerShell>{navbar}</DrawerShell>
-            </OverlayToggle>
-          )
-        }
-        navbarRight={
-          <WouterLink href={`/logout`}>
-            <Button
-              size="sm"
-              variant="link"
-              className="text-tertiary"
-              data-testid="header-logout-button"
-            >
-              Logout
-            </Button>
-          </WouterLink>
-        }
-      >
-        {organizationLoadingElement || (
-          <div className="flex" style={{ minHeight: contentMinHeight }}>
-            {!isMobile && navbar}
-            <StandardWidth style={{ width: "100%" }}>
-              {props.children}
-            </StandardWidth>
-          </div>
-        )}
-      </SharedLayout>
+      <OrganizationProvider value={organizationContextValue}>
+        <SharedLayout
+          forbidWhen={AuthRestrict.LOGGED_OUT}
+          noPad
+          query={sharedOrgQuery}
+          {...props}
+          navbarLeft={
+            isMobile && (
+              <OverlayToggle
+                toggler={({ onToggle }) => (
+                  <Button
+                    variant="ghost"
+                    className="hover:bg-transparent"
+                    onClick={onToggle}
+                  >
+                    <RxHamburgerMenu className="size-6 text-gray-400" />
+                  </Button>
+                )}
+              >
+                <DrawerShell>{navbar}</DrawerShell>
+              </OverlayToggle>
+            )
+          }
+          navbarRight={
+            <WouterLink href={`/logout`}>
+              <Button
+                size="sm"
+                variant="link"
+                className="text-tertiary"
+                data-testid="header-logout-button"
+              >
+                Logout
+              </Button>
+            </WouterLink>
+          }
+        >
+          {organizationLoadingElement || (
+            <div className="flex" style={{ minHeight: contentMinHeight }}>
+              {!isMobile && navbar}
+              <StandardWidth style={{ width: "100%" }}>
+                {props.children}
+              </StandardWidth>
+            </div>
+          )}
+        </SharedLayout>
+      </OrganizationProvider>
     </globalState.modelDataAccess.TagProvider>
   );
 }

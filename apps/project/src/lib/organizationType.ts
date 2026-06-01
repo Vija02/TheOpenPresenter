@@ -15,3 +15,23 @@ export const organizationTypeOptions: OptionItem<OrganizationType>[] = [
       "A church, place of worship, or any other religious organization.",
   },
 ];
+
+type OrgTypeLabel = {
+  projectDate: string;
+};
+
+const churchLabels: OrgTypeLabel = {
+  projectDate: "Service Time",
+};
+
+const venueLabels: OrgTypeLabel = {
+  projectDate: "Event Date",
+};
+
+export const getOrgTypeLabels = (
+  organizationType?: OrganizationType | null,
+): OrgTypeLabel => {
+  if (organizationType === OrganizationType.Church) return churchLabels;
+  if (organizationType === OrganizationType.Venue) return venueLabels;
+  return venueLabels;
+};

@@ -1,6 +1,10 @@
 import { ReactSelectDateProps } from "@/components/DatePicker/datePickerReactSelect";
 import { TagsSelector } from "@/components/Tag/TagsSelector";
-import { useOrganizationSlug } from "@/lib/permissionHooks/organization";
+import { getOrgTypeLabels } from "@/lib/organizationType";
+import {
+  useOrganizationSlug,
+  useOrganizationType,
+} from "@/lib/permissionHooks/organization";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   CategoryFragment,
@@ -62,6 +66,7 @@ const CreateProjectModal = ({
   categories,
   onCreated,
 }: CreateProjectModalPropTypes) => {
+  const labels = getOrgTypeLabels(useOrganizationType());
   const { isOpen, onToggle, resetData } = useOverlayToggle();
 
   const [, createProject] = useCreateProjectMutation();
@@ -152,7 +157,7 @@ const CreateProjectModal = ({
               name="targetDate"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Service Time</FormLabel>
+                  <FormLabel>{labels.projectDate}</FormLabel>
                   <FormControl>
                     <Select
                       {...ReactSelectDateProps}
