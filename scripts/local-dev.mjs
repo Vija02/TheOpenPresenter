@@ -40,7 +40,7 @@ async function runLocalDev() {
 
   try {
     const { EmbeddedPostgresManager } = await import("@repo/embedded-postgres");
-    runDb(EmbeddedPostgresManager);
+    await runDb(EmbeddedPostgresManager);
   } catch (e) {
     if (e.code === "ERR_MODULE_NOT_FOUND") {
       console.log("📦 Embedded Postgres is not built. Building now...");
@@ -52,11 +52,14 @@ async function runLocalDev() {
       const { EmbeddedPostgresManager } = await import(
         "@repo/embedded-postgres"
       );
-      runDb(EmbeddedPostgresManager);
+      await runDb(EmbeddedPostgresManager);
     } else {
       throw e;
     }
   }
 }
 
-runLocalDev();
+runLocalDev().catch((err) => {
+  console.error("local-dev failed:", err);
+  process.exit(1);
+});
