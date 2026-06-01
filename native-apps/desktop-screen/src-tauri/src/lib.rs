@@ -20,6 +20,7 @@ pub fn run() {
     #[cfg(target_os = "linux")]
     {
         platform::fix_webkit_vm_rendering();
+        platform::tune_media_pipeline();
     }
 
     tauri::Builder::default()

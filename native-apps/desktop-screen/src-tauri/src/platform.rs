@@ -20,3 +20,14 @@ pub fn fix_webkit_vm_rendering() {
         std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
     }
 }
+
+/// Promote the modern GStreamer `va` hardware decoders
+#[cfg(target_os = "linux")]
+pub fn tune_media_pipeline() {
+    if std::env::var_os("GST_PLUGIN_FEATURE_RANK").is_none() {
+        std::env::set_var(
+            "GST_PLUGIN_FEATURE_RANK",
+            "vah264dec:MAX,vah265dec:MAX,vavp9dec:MAX,vavp8dec:MAX,vaapidecodebin:NONE",
+        );
+    }
+}
