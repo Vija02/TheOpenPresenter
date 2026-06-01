@@ -1,3 +1,5 @@
+import { openUrl } from "@tauri-apps/plugin-opener";
+
 import type { Screen } from "../../utils/config";
 import type { HostStatus } from "./types";
 
@@ -22,6 +24,17 @@ export function StatusCard({ rootUrl, hostStatus, hostError, screen }: Props) {
         ? "Unreachable"
         : "Checking…";
 
+  const trimmedRoot = rootUrl.replace(/\/+$/, "");
+  const remoteUrl =
+    trimmedRoot && screen.orgSlug && screen.screenSlug
+      ? `${trimmedRoot}/o/${screen.orgSlug}/screens/${screen.screenSlug}/control`
+      : "";
+
+  const openControlPanel = () => {
+    if (!remoteUrl) return;
+    openUrl(remoteUrl).catch(() => {});
+  };
+
   return (
     <section className="settings-card">
       <h2>Status</h2>
@@ -38,6 +51,16 @@ export function StatusCard({ rootUrl, hostStatus, hostError, screen }: Props) {
         <dt>Paired screen</dt>
         <dd className="settings-dd-mono">{screenLabel}</dd>
       </dl>
+      <div className="settings-actions" style={{ marginTop: "1rem" }}>
+        <button
+          className="settings-btn"
+          onClick={openControlPanel}
+          disabled={!remoteUrl}
+          title={remoteUrl || undefined}
+        >
+          Open control panel ↗
+        </button>
+      </div>
     </section>
   );
 }
