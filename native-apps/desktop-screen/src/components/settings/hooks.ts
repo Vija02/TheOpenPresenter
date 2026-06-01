@@ -96,7 +96,6 @@ export const useMonitors = (): MonitorInfo[] | null => {
   return monitors;
 };
 
-/** One-shot host reachability check, re-fires whenever `rootUrl` changes. */
 export const useHostReachability = (
   rootUrl: string,
 ): { status: HostStatus; error: string | null } => {
@@ -110,20 +109,50 @@ export const useHostReachability = (
       return;
     }
     let cancelled = false;
-    setStatus("checking");
-    setError(null);
-    invoke<boolean>("check_host", { url: rootUrl })
-      .then((ok) => {
-        if (cancelled) return;
-        setStatus(ok ? "ok" : "down");
-      })
-      .catch((e) => {
-        if (cancelled) return;
-        setStatus("down");
-        setError(String(e));
-      });
+    let unlisten: UnlistenFn | null = null;
+
+    const check = async (showChecking: boolean) => {
+      if (showChecking && !cancelled) {
+        setStatus("checking");
+        setError(null);
+      }
+      try {
+        const ok = await invoke<boolean>("check_host", { url: rootUrl });
+        if (!cancelled) setStatus(ok ? "ok" : "down");
+      } catch (e) {
+        if (!cancelled) {
+          setStatus("down");
+          setError(String(e));
+        }
+      }
+    };
+
+    check(true);
+    const interval = setInterval(() => check(false), 15000);
+
+    (async () => {
+      unlisten = await listen<{ status: string; rootUrl?: string }>(
+        "host-wait",
+        (e) => {
+          if (cancelled) return;
+          // Only react when the event refers to the URL we're watching.
+          // The Rust poller carries `rootUrl` on "ready" events.
+          if (e.payload.rootUrl && e.payload.rootUrl !== rootUrl) return;
+          if (e.payload.status === "ready") {
+            setStatus("ok");
+            setError(null);
+          } else if (e.payload.status === "waiting") {
+            setStatus("checking");
+          }
+        },
+      );
+      if (cancelled && unlisten) unlisten();
+    })();
+
     return () => {
       cancelled = true;
+      clearInterval(interval);
+      unlisten?.();
     };
   }, [rootUrl]);
 
