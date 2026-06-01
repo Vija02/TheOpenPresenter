@@ -270,9 +270,9 @@ pub async fn clear_session(
 
     #[cfg(not(target_os = "macos"))]
     {
-        if let Some(w) = app.get_webview_window("main") {
-            let _ = w.hide();
+        let _ = crate::window::set_screen_visible(&app, false);
 
+        if let Some(w) = app.get_webview_window("main") {
             if let Ok(url) = Url::parse(&root_url) {
                 if let Ok(cookies) = w.cookies_for_url(url) {
                     for c in cookies {
@@ -288,7 +288,6 @@ pub async fn clear_session(
                     .map_err(|e| e.to_string())?;
             }
         }
-        let _ = app.emit("screen-visibility", false);
         Ok(())
     }
 }

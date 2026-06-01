@@ -40,22 +40,19 @@ pub fn list_monitors(window: tauri::WebviewWindow) -> Result<Vec<MonitorInfo>, S
         .collect())
 }
 
-/// Kiosk-mode apply: move the main "screen" window to the chosen monitor
-/// and fullscreen it there.
+/// Kiosk-mode apply: move the main "screen" window to the chosen monitor.
 ///
-/// Sequence (most-frequent failure modes in parentheses):
+/// Per-platform sequence:
 ///
-///   1. Exit fullscreen — `set_position` is silently dropped while the
-///      window is fullscreen on Win/macOS (window stays put).
-///   2. Wait ~150ms for the exit transition to settle on platforms that
-///      animate it (race: move issued mid-transition is ignored).
-///   3. Set both position AND size to the target monitor's rect. Position
-///      alone leaves the window's *centre* potentially on the old display,
-///      and most WMs choose the fullscreen monitor by centre.
-///   4. Brief settle, then re-enter fullscreen.
-///
-/// Standard fullscreen hides decorations on all three platforms — no extra
-/// `set_decorations(false)` needed.
+/// - **macOS** — `set_position` + `set_size`. No native fullscreen toggle:
+///   the kiosk window is borderless + always-on-top (see
+///   `window.rs::create_main_window`) so it covers the target monitor
+///   without entering a Mission Control Space. Cocoa's Space-binding
+///   semantics make `toggleFullScreen:` unreliable on multi-monitor setups.
+/// - **Linux / Windows** — exit fullscreen → wait for the transition to
+///   settle → set position + size → re-enter fullscreen. Position alone
+///   leaves the window's *centre* potentially on the old display, and most
+///   WMs pick the fullscreen monitor by centre.
 ///
 /// Caveat: some Linux WMs (notably tiling ones like i3 / sway) own window
 /// placement via their own container model and ignore `set_position` for
@@ -63,7 +60,8 @@ pub fn list_monitors(window: tauri::WebviewWindow) -> Result<Vec<MonitorInfo>, S
 /// window via the WM's native binding.
 #[tauri::command]
 pub async fn apply_monitor(app: AppHandle, monitor_name: String) -> Result<(), String> {
-    // On macOS the render window may be closed (hidden state)
+    // On macOS the render window may be closed (hidden state); nothing to
+    // move yet — the next show will create it on the chosen monitor.
     let Some(main) = app.get_webview_window("main") else {
         return Ok(());
     };
@@ -76,17 +74,35 @@ pub async fn apply_monitor(app: AppHandle, monitor_name: String) -> Result<(), S
     let pos = *target.position();
     let size = *target.size();
 
-    if main.is_fullscreen().unwrap_or(false) {
-        main.set_fullscreen(false).map_err(|e| e.to_string())?;
-        tokio::time::sleep(std::time::Duration::from_millis(150)).await;
+    #[cfg(target_os = "macos")]
+    {
+        // Borderless + always-on-top; native fullscreen Space is
+        // deliberately skipped
+        main.set_position(PhysicalPosition::new(pos.x, pos.y))
+            .map_err(|e| e.to_string())?;
+        main.set_size(PhysicalSize::new(size.width, size.height))
+            .map_err(|e| e.to_string())?;
     }
 
-    main.set_position(PhysicalPosition::new(pos.x, pos.y))
-        .map_err(|e| e.to_string())?;
-    main.set_size(PhysicalSize::new(size.width, size.height))
-        .map_err(|e| e.to_string())?;
+    #[cfg(not(target_os = "macos"))]
+    {
+        // Don't touch a hidden window. The user just changed the monitor
+        // pref via Settings
+        if !main.is_visible().unwrap_or(false) {
+            return Ok(());
+        }
 
-    tokio::time::sleep(std::time::Duration::from_millis(50)).await;
-    main.set_fullscreen(true).map_err(|e| e.to_string())?;
+        if main.is_fullscreen().unwrap_or(false) {
+            main.set_fullscreen(false).map_err(|e| e.to_string())?;
+            tokio::time::sleep(std::time::Duration::from_millis(150)).await;
+        }
+        main.set_position(PhysicalPosition::new(pos.x, pos.y))
+            .map_err(|e| e.to_string())?;
+        main.set_size(PhysicalSize::new(size.width, size.height))
+            .map_err(|e| e.to_string())?;
+        tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+        main.set_fullscreen(true).map_err(|e| e.to_string())?;
+    }
+
     Ok(())
 }

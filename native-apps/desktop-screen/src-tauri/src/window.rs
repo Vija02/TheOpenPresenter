@@ -1,10 +1,18 @@
 //! Window management: the settings window, the main render window's
 //! lifecycle / visibility / navigation, and webview audio (mute).
 //!
-//! Linux/Windows keep a single persistent `main` render window and hide it
-//! (plus mute) when "off". macOS has no per-webview mute API, so the render
-//! window is transient there — created on show, closed on hide — and a
-//! persistent hidden `auth` helper window carries the session cookie.
+//! Per-platform render path:
+//!
+//! - **Linux / Windows** — single persistent `main` webview window, hidden
+//!   + muted when "off".
+//! - **macOS** — WKWebView has no per-webview mute API, so the render
+//!   window is transient (created on show, closed on hide). A persistent
+//!   hidden `auth` helper carries the session cookie. The render window
+//!   uses borderless + positioned-to-target-monitor instead of native
+//!   fullscreen — Cocoa's `toggleFullScreen:` creates a Mission Control
+//!   Space bound to whichever display it picks, which disagrees with
+//!   `set_position` on multi-monitor setups (kiosk reliably lands on the
+//!   wrong screen). See `create_main_window` below.
 
 use tauri::{AppHandle, Emitter, Manager, PhysicalPosition, PhysicalSize, WebviewWindow};
 use tauri_plugin_store::StoreExt;
@@ -35,11 +43,9 @@ pub fn open_settings(app: AppHandle) -> Result<(), String> {
 // Audio (mute)
 // ---------------------------------------------------------------------------
 
-/// Mute/unmute the whole render webview natively
-///
-/// macOS has no public per-webview mute API. On that
-/// platform we instead close the window to stop audio (see `set_screen_visible`)
-/// and the Settings mute button is hidden (`mute_supported` returns false).
+/// Mute/unmute the whole render webview natively (Linux / Windows).
+/// macOS has no public per-webview mute API; the render window is destroyed
+/// to silence audio (see `set_screen_visible`).
 #[allow(unused_variables)]
 fn set_main_muted(w: &WebviewWindow, muted: bool) {
     #[cfg(target_os = "linux")]
@@ -94,14 +100,61 @@ pub fn is_screen_muted(app: AppHandle) -> Result<bool, String> {
 
 /// (macOS) Build the render window fresh. macOS can't mute a live webview, so
 /// the render window only exists while visible.
+///
+/// Deliberately NOT using native macOS fullscreen (`set_fullscreen(true)` →
+/// `NSWindow.toggleFullScreen:`) because it creates a Mission Control Space
+/// bound to whichever display Cocoa thinks the window belongs to — which
+/// disagrees with `set_position` in multi-monitor setups, so the kiosk
+/// reliably lands on the wrong screen
 #[cfg(target_os = "macos")]
 fn create_main_window(app: &AppHandle) -> tauri::Result<WebviewWindow> {
     use tauri::{WebviewUrl, WebviewWindowBuilder};
+    let ((x, y), (w, h)) = target_geometry(app).unwrap_or(((0, 0), (1280, 800)));
     WebviewWindowBuilder::new(app, "main", WebviewUrl::App("index.html".into()))
         .title("TheOpenPresenter Screen")
-        .inner_size(1280.0, 800.0)
+        .position(x as f64, y as f64)
+        .inner_size(w as f64, h as f64)
+        .decorations(false)
+        .resizable(false)
+        .always_on_top(true)
         .visible(true)
         .build()
+}
+
+/// (macOS) Resolve the chosen monitor's absolute (x, y) + (w, h). Falls back
+/// to the primary monitor when the user hasn't picked one or the saved name
+/// no longer matches a connected output
+#[cfg(target_os = "macos")]
+fn target_geometry(app: &AppHandle) -> Option<((i32, i32), (u32, u32))> {
+    let settings = app.get_webview_window("settings")?;
+    let monitors = settings.available_monitors().ok()?;
+    if monitors.is_empty() {
+        return None;
+    }
+
+    let pref = stored_monitor_pref(app);
+    let chosen = pref
+        .as_deref()
+        .and_then(|name| {
+            monitors
+                .iter()
+                .find(|m| m.name().map(|n| n == name).unwrap_or(false))
+        })
+        .or_else(|| {
+            let primary_name = settings
+                .primary_monitor()
+                .ok()
+                .flatten()
+                .and_then(|m| m.name().cloned());
+            primary_name
+                .as_deref()
+                .and_then(|n| monitors.iter().find(|m| m.name() == Some(&n.to_string())))
+        })
+        .or_else(|| monitors.first())?;
+
+    let pos = *chosen.position();
+    let size = *chosen.size();
+    Some(((pos.x, pos.y), (size.width, size.height)))
 }
 
 /// (macOS) A hidden helper window parked on the server origin, used purely to
@@ -133,6 +186,10 @@ fn apply_screen_visible(app: &AppHandle, visible: bool) -> tauri::Result<()> {
     if visible {
         match app.get_webview_window("main") {
             Some(w) => {
+                if let Some(((x, y), (gw, gh))) = target_geometry(app) {
+                    let _ = w.set_position(PhysicalPosition::new(x, y));
+                    let _ = w.set_size(PhysicalSize::new(gw, gh));
+                }
                 w.show()?;
                 w.unminimize()?;
                 w.set_focus()?;
@@ -188,15 +245,17 @@ fn apply_stored_monitor(app: &AppHandle, w: &WebviewWindow) {
     let _ = w.set_size(PhysicalSize::new(size.width, size.height));
 }
 
-#[cfg(not(target_os = "macos"))]
+/// Read the user's monitor preference from `config.json`. Returns None when
+/// the pref is missing, blank, or set to "current" (the explicit "stay on
+/// whichever display the window already has" sentinel).
 fn stored_monitor_pref(app: &AppHandle) -> Option<String> {
     let store = app.store("config.json").ok()?;
     let settings = store.get("settings")?;
-    let monitor = settings.get("monitor")?.as_str()?;
+    let monitor = settings.get("monitor")?.as_str()?.to_string();
     if monitor == "current" || monitor.is_empty() {
         None
     } else {
-        Some(monitor.to_string())
+        Some(monitor)
     }
 }
 
