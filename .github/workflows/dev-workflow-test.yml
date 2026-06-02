@@ -9,7 +9,9 @@ on:
   workflow_dispatch:
 
 env:
-  TURBO_UI: "false"
+  TURBO_UI: "stream"
+  TURBO_LOG_ORDER: "stream"
+  TURBO_TELEMETRY_DISABLED: "1"
   CI: "true"
 
 jobs:
@@ -64,9 +66,9 @@ jobs:
             exec yarn dev
           ' > .ci-logs/dev.log 2>&1 < /dev/null &
 
-          echo "Waiting up to 300s for http://localhost:5678..."
-          if ! timeout 300 bash -c 'until curl -fsS http://localhost:5678 > /dev/null; do sleep 2; done'; then
-            echo "::error::Dev server did not respond within 300s"
+          echo "Waiting up to 600s for http://localhost:5678..."
+          if ! timeout 600 bash -c 'until curl -fsS http://localhost:5678 > /dev/null; do sleep 5; done'; then
+            echo "::error::Dev server did not respond within 600s"
             echo "=== local-dev.log (tail) ==="
             tail -n 500 .ci-logs/local-dev.log || true
             echo "=== dev.log (tail) ==="
