@@ -83,15 +83,21 @@ jobs:
       # Linux: `--no-bundle` skips deb/AppImage/rpm packaging — install.sh
       # downloads a single binary.
       # Windows / macOS: default bundle (NSIS+MSI / DMG+.app respectively).
-      - name: tauri build
+      - name: tauri build (signed)
+        if: github.event_name != 'pull_request'
         shell: bash
         env:
-          APPLE_CERTIFICATE: ${{ github.event_name != 'pull_request' && secrets.APPLE_CERTIFICATE || '' }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ github.event_name != 'pull_request' && secrets.APPLE_CERTIFICATE_PASSWORD || '' }}
-          APPLE_SIGNING_IDENTITY: ${{ github.event_name != 'pull_request' && secrets.APPLE_SIGNING_IDENTITY || '' }}
-          APPLE_ID: ${{ github.event_name != 'pull_request' && secrets.APPLE_ID || '' }}
-          APPLE_PASSWORD: ${{ github.event_name != 'pull_request' && secrets.APPLE_PASSWORD || '' }}
-          APPLE_TEAM_ID: ${{ github.event_name != 'pull_request' && secrets.APPLE_TEAM_ID || '' }}
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: npm run tauri build -- ${{ matrix.tauri_args }} --verbose
+
+      - name: tauri build (unsigned)
+        if: github.event_name == 'pull_request'
+        shell: bash
         run: npm run tauri build -- ${{ matrix.tauri_args }} --verbose
 
       - name: Stage outputs
