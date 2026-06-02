@@ -54,7 +54,7 @@ const PluginRenderer = React.memo(
     pluginInfo: Plugin<Record<string, any>>;
   }) => {
     const pluginDivRef = useRef<HTMLDivElement>(null);
-    const { pluginMeta, orgId, projectId, isPublicAccess } =
+    const { pluginMeta, orgId, projectId, isPublicAccess, organizationType } =
       usePluginMetaData();
     const {
       getYJSPluginRenderer,
@@ -237,6 +237,7 @@ const PluginRenderer = React.memo(
           logger: childLogger,
           parentContainer: pluginDivRef.current,
           isPublicAccess,
+          organizationType,
         },
       } satisfies WebComponentProps<any>);
     }, [
@@ -251,6 +252,7 @@ const PluginRenderer = React.memo(
       isPublicAccess,
       isSuccess,
       mediaPicker,
+      organizationType,
       overlay,
       pluginContext,
       pluginInfo.plugin,
