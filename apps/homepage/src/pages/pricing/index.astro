@@ -1,0 +1,553 @@
+---
+import DefaultLayout from "../../layouts/DefaultLayout.astro";
+import PageIllustration from "../../components/PageIllustration.astro";
+import CtaContact from "../../components/CtaContact.astro";
+---
+
+<DefaultLayout
+  title="Pricing | TheOpenPresenter"
+  description="Free to start. £79/month per room for venues with paying clients and guest presenters."
+>
+  <!-- Page illustration -->
+  <div
+    class="relative max-w-6xl mx-auto h-0 pointer-events-none -z-1"
+    aria-hidden="true"
+  >
+    <PageIllustration />
+  </div>
+
+  <section class="relative">
+    <div class="relative max-w-6xl mx-auto px-4 sm:px-6">
+      <div class="pt-32 pb-12 md:pt-40 md:pb-16">
+        <!-- Page header -->
+        <div class="max-w-3xl mx-auto text-center">
+          <h1 class="h1 font-red-hat-display mb-4" data-aos="fade-down">
+            Start free. Upgrade when you need to.
+          </h1>
+          <p
+            class="text-xl text-gray-600 dark:text-gray-400"
+            data-aos="fade-down"
+            data-aos-delay="150"
+          >
+            Free covers signage and getting set up. Move to Business once your
+            venue starts hosting guest presenters.
+          </p>
+        </div>
+
+        <!-- Pricing cards -->
+        <div class="max-w-5xl mx-auto mt-12 md:mt-16 grid gap-6 md:grid-cols-2">
+          <!-- Free tier -->
+          <div
+            class="flex flex-col rounded-lg border border-gray-200 dark:border-gray-800 p-8 bg-white dark:bg-gray-900"
+            data-aos="fade-up"
+          >
+            <div class="mb-6">
+              <h2 class="h3 font-red-hat-display mb-1">Free</h2>
+              <p class="text-sm text-gray-600 dark:text-gray-400">
+                For signage, small rooms, and anyone trying us out.
+              </p>
+            </div>
+            <div class="mb-1">
+              <span class="text-4xl font-extrabold font-red-hat-display">
+                &pound;0
+              </span>
+              <span class="text-gray-600 dark:text-gray-400 ml-1">
+                forever
+              </span>
+            </div>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">
+              no time limit &middot; no card needed
+            </p>
+            <a
+              class="btn-sm text-white bg-gray-700 hover:bg-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 w-full mb-6 justify-center"
+              href="/register"
+            >
+              Sign up free
+            </a>
+            <ul class="text-sm text-gray-600 dark:text-gray-400 space-y-2">
+              <li class="flex items-start">
+                <svg
+                  class="w-3 h-3 mt-1.5 mr-2 shrink-0 fill-current text-teal-500"
+                  viewBox="0 0 12 12"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M10.28 2.28L3.989 8.575 1.695 6.28A1 1 0 00.28 7.695l3 3a1 1 0 001.414 0l7-7A1 1 0 0010.28 2.28z"
+                  ></path>
+                </svg>
+                <span>Up to 5 connected displays</span>
+              </li>
+              <li class="flex items-start">
+                <svg
+                  class="w-3 h-3 mt-1.5 mr-2 shrink-0 fill-current text-teal-500"
+                  viewBox="0 0 12 12"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M10.28 2.28L3.989 8.575 1.695 6.28A1 1 0 00.28 7.695l3 3a1 1 0 001.414 0l7-7A1 1 0 0010.28 2.28z"
+                  ></path>
+                </svg>
+                <span>1 GB storage</span>
+              </li>
+              <li class="flex items-start">
+                <svg
+                  class="w-3 h-3 mt-1.5 mr-2 shrink-0 fill-current text-teal-500"
+                  viewBox="0 0 12 12"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M10.28 2.28L3.989 8.575 1.695 6.28A1 1 0 00.28 7.695l3 3a1 1 0 001.414 0l7-7A1 1 0 0010.28 2.28z"
+                  ></path>
+                </svg>
+                <span>All official plugins</span>
+              </li>
+              <li class="flex items-start">
+                <svg
+                  class="w-3 h-3 mt-1.5 mr-2 shrink-0 fill-current text-teal-500"
+                  viewBox="0 0 12 12"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M10.28 2.28L3.989 8.575 1.695 6.28A1 1 0 00.28 7.695l3 3a1 1 0 001.414 0l7-7A1 1 0 0010.28 2.28z"
+                  ></path>
+                </svg>
+                <span>Multi-controller, real-time collaboration</span>
+              </li>
+              <li class="flex items-start">
+                <svg
+                  class="w-3 h-3 mt-1.5 mr-2 shrink-0 fill-current text-teal-500"
+                  viewBox="0 0 12 12"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M10.28 2.28L3.989 8.575 1.695 6.28A1 1 0 00.28 7.695l3 3a1 1 0 001.414 0l7-7A1 1 0 0010.28 2.28z"
+                  ></path>
+                </svg>
+                <span>Community support</span>
+              </li>
+              <li class="flex items-start text-gray-500 dark:text-gray-500">
+                <span class="w-3 mr-2 shrink-0 text-center">&middot;</span>
+                <span>Includes TheOpenPresenter branding</span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Business tier (recommended) -->
+          <div
+            class="relative flex flex-col rounded-lg border-2 border-teal-500 p-8 bg-white dark:bg-gray-900 shadow-lg"
+            data-aos="fade-up"
+            data-aos-delay="150"
+          >
+            <span
+              class="absolute -top-3 left-1/2 -translate-x-1/2 bg-teal-500 text-white text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wide"
+            >
+              For venues with guests
+            </span>
+            <div class="mb-6">
+              <h2 class="h3 font-red-hat-display mb-1">Business</h2>
+              <p class="text-sm text-gray-600 dark:text-gray-400">
+                For venues with paying clients and guest presenters.
+              </p>
+            </div>
+            <div class="mb-1">
+              <span class="text-4xl font-extrabold font-red-hat-display">
+                &pound;79
+              </span>
+              <span class="text-gray-600 dark:text-gray-400 ml-1">
+                / month
+              </span>
+            </div>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">
+              per room &middot; or &pound;790/year (2 months free)
+            </p>
+            <a
+              class="btn-sm text-white bg-teal-500 hover:bg-teal-400 w-full mb-6 justify-center"
+              href="/register?plan=business"
+            >
+              Start a Business room
+            </a>
+            <p
+              class="text-xs uppercase tracking-wide font-semibold text-gray-500 dark:text-gray-400 mb-3"
+            >
+              Everything in Free, plus
+            </p>
+            <ul class="text-sm text-gray-700 dark:text-gray-300 space-y-2">
+              <li class="flex items-start">
+                <svg
+                  class="w-3 h-3 mt-1.5 mr-2 shrink-0 fill-current text-teal-500"
+                  viewBox="0 0 12 12"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M10.28 2.28L3.989 8.575 1.695 6.28A1 1 0 00.28 7.695l3 3a1 1 0 001.414 0l7-7A1 1 0 0010.28 2.28z"
+                  ></path>
+                </svg>
+                <span>
+                  <strong>Guest portal.</strong> Send a link, your guest
+                  uploads and presents from their own device
+                </span>
+              </li>
+              <li class="flex items-start">
+                <svg
+                  class="w-3 h-3 mt-1.5 mr-2 shrink-0 fill-current text-teal-500"
+                  viewBox="0 0 12 12"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M10.28 2.28L3.989 8.575 1.695 6.28A1 1 0 00.28 7.695l3 3a1 1 0 001.414 0l7-7A1 1 0 0010.28 2.28z"
+                  ></path>
+                </svg>
+                <span>Custom branding on the guest portal</span>
+              </li>
+              <li class="flex items-start">
+                <svg
+                  class="w-3 h-3 mt-1.5 mr-2 shrink-0 fill-current text-teal-500"
+                  viewBox="0 0 12 12"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M10.28 2.28L3.989 8.575 1.695 6.28A1 1 0 00.28 7.695l3 3a1 1 0 001.414 0l7-7A1 1 0 0010.28 2.28z"
+                  ></path>
+                </svg>
+                <span>
+                  Drive main screen, confidence monitor, and signage from
+                  one synchronised show
+                </span>
+              </li>
+              <li class="flex items-start">
+                <svg
+                  class="w-3 h-3 mt-1.5 mr-2 shrink-0 fill-current text-teal-500"
+                  viewBox="0 0 12 12"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M10.28 2.28L3.989 8.575 1.695 6.28A1 1 0 00.28 7.695l3 3a1 1 0 001.414 0l7-7A1 1 0 0010.28 2.28z"
+                  ></path>
+                </svg>
+                <span>Multi-room management dashboard</span>
+              </li>
+              <li class="flex items-start">
+                <svg
+                  class="w-3 h-3 mt-1.5 mr-2 shrink-0 fill-current text-teal-500"
+                  viewBox="0 0 12 12"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M10.28 2.28L3.989 8.575 1.695 6.28A1 1 0 00.28 7.695l3 3a1 1 0 001.414 0l7-7A1 1 0 0010.28 2.28z"
+                  ></path>
+                </svg>
+                <span>50 GB storage per room</span>
+              </li>
+              <li class="flex items-start">
+                <svg
+                  class="w-3 h-3 mt-1.5 mr-2 shrink-0 fill-current text-teal-500"
+                  viewBox="0 0 12 12"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M10.28 2.28L3.989 8.575 1.695 6.28A1 1 0 00.28 7.695l3 3a1 1 0 001.414 0l7-7A1 1 0 0010.28 2.28z"
+                  ></path>
+                </svg>
+                <span>Priority email support</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- 30-day money-back guarantee (low-key trust strip) -->
+        <div
+          class="max-w-4xl mx-auto mt-8 rounded-lg border border-gray-200 dark:border-gray-800 px-5 py-4 flex flex-col md:flex-row md:items-center gap-3 text-sm text-gray-600 dark:text-gray-400 text-center md:text-left"
+          data-aos="fade-up"
+        >
+          <div
+            class="flex items-center justify-center md:justify-start gap-2 shrink-0"
+          >
+            <svg
+              class="w-5 h-5 text-teal-500 shrink-0"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true"
+            >
+              <path
+                d="M12 2.5l8 3v6.2c0 4.7-3.3 8.6-8 9.8-4.7-1.2-8-5.1-8-9.8V5.5l8-3z"
+              ></path>
+              <path d="M9 12.2l2.2 2.2L15.5 10"></path>
+            </svg>
+            <span class="font-medium text-gray-900 dark:text-gray-100"
+              >30-day money-back guarantee</span
+            >
+          </div>
+          <span class="flex-1">
+            Try Business risk-free. If it doesn't fit your venue, email us and
+            we'll refund every penny.
+          </span>
+        </div>
+
+        <!-- Founding customer banner -->
+        <div
+          class="max-w-4xl mx-auto mt-6 rounded-lg bg-teal-50 dark:bg-teal-500/10 border border-teal-200 dark:border-teal-500/30 p-5 flex flex-col md:flex-row md:items-center gap-4"
+          data-aos="fade-up"
+        >
+          <div
+            class="flex-shrink-0 w-10 h-10 rounded-full bg-teal-500/15 dark:bg-teal-500/20 flex items-center justify-center text-teal-600 dark:text-teal-400"
+            aria-hidden="true"
+          >
+            <svg
+              class="w-5 h-5 fill-current"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+              ></path>
+            </svg>
+          </div>
+          <div class="flex-1">
+            <p class="font-semibold text-gray-900 dark:text-gray-100 mb-1">
+              Founding customer rate: &pound;49/month per room
+            </p>
+            <p class="text-sm text-gray-600 dark:text-gray-400">
+              The first 10 Business customers lock in &pound;49/month per room
+              for the life of the subscription. Get in touch to claim a spot.
+            </p>
+          </div>
+          <a
+            class="btn-sm text-white bg-teal-500 hover:bg-teal-400 shrink-0 justify-center"
+            href="mailto:hello@theopenpresenter.com?subject=Founding%20customer%20rate"
+          >
+            Claim a spot
+          </a>
+        </div>
+
+        <!-- Custom tier -->
+        <div
+          class="max-w-4xl mx-auto mt-6 rounded-lg border border-gray-200 dark:border-gray-800 p-5 flex flex-col md:flex-row md:items-center gap-4"
+          data-aos="fade-up"
+        >
+          <div class="flex-1">
+            <p class="font-semibold text-gray-900 dark:text-gray-100 mb-1">
+              Custom plans for chains, white-label, and self-hosted
+            </p>
+            <p class="text-sm text-gray-600 dark:text-gray-400">
+              Multi-site, supported on-prem, custom plugins, SLA, phone
+              support, security review. Talk to us about what you need.
+            </p>
+          </div>
+          <a
+            class="btn-sm text-white bg-gray-700 hover:bg-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 shrink-0 justify-center"
+            href="mailto:hello@theopenpresenter.com?subject=Custom%20plan"
+          >
+            Get a quote
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- What counts as a room -->
+  <section class="relative">
+    <div class="relative max-w-6xl mx-auto px-4 sm:px-6">
+      <div class="pb-12 md:pb-20">
+        <div class="max-w-3xl mx-auto">
+          <h2 class="h2 font-red-hat-display mb-4" data-aos="fade-up">
+            What counts as a "room"?
+          </h2>
+          <p
+            class="text-gray-600 dark:text-gray-400 mb-4"
+            data-aos="fade-up"
+            data-aos-delay="100"
+          >
+            A room is one logical presentation context. One synchronised show
+            across as many physical screens as that room needs (main screen,
+            confidence monitor, side panels, lobby signage). One booking, one
+            guest, one show.
+          </p>
+          <p
+            class="text-gray-600 dark:text-gray-400"
+            data-aos="fade-up"
+            data-aos-delay="150"
+          >
+            If you have two rooms running independent presentations at the
+            same time, that's two rooms. Most small venues need 1&ndash;3.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="relative">
+    <div class="relative max-w-6xl mx-auto px-4 sm:px-6">
+      <div class="pb-12 md:pb-20">
+        <div class="max-w-3xl mx-auto">
+          <h2 class="h2 font-red-hat-display mb-8" data-aos="fade-up">
+            Pricing FAQ
+          </h2>
+          <div class="flex flex-col gap-4">
+            <details
+              class="rounded-lg border border-gray-200 dark:border-gray-800 p-5 group"
+              data-aos="fade-up"
+            >
+              <summary
+                class="cursor-pointer font-medium text-gray-900 dark:text-gray-100 flex items-center justify-between"
+              >
+                <span>Can I stay on Free forever?</span>
+                <span
+                  class="ml-4 text-gray-400 group-open:rotate-45 transition-transform"
+                  aria-hidden="true">+</span
+                >
+              </summary>
+              <p class="text-sm text-gray-600 dark:text-gray-400 mt-3">
+                Yes. Free covers signage and basic presentation use with no
+                time limit. Most people move to Business for one of two
+                reasons: they need the guest portal (a link your guest
+                presenters use to upload and run their own slides), or they
+                want to run a main screen, confidence monitor, and signage
+                together as one synchronised show.
+              </p>
+            </details>
+
+            <details
+              class="rounded-lg border border-gray-200 dark:border-gray-800 p-5 group"
+              data-aos="fade-up"
+            >
+              <summary
+                class="cursor-pointer font-medium text-gray-900 dark:text-gray-100 flex items-center justify-between"
+              >
+                <span>How many displays can one room run?</span>
+                <span
+                  class="ml-4 text-gray-400 group-open:rotate-45 transition-transform"
+                  aria-hidden="true">+</span
+                >
+              </summary>
+              <p class="text-sm text-gray-600 dark:text-gray-400 mt-3">
+                As many as you need. Main screen, confidence monitor, and
+                signage all run from one synchronised show. There's a soft
+                cap in place to prevent abuse, but real venues never get
+                close. If yours might, email us with what you're running and
+                we'll work it out.
+              </p>
+            </details>
+
+            <details
+              class="rounded-lg border border-gray-200 dark:border-gray-800 p-5 group"
+              data-aos="fade-up"
+            >
+              <summary
+                class="cursor-pointer font-medium text-gray-900 dark:text-gray-100 flex items-center justify-between"
+              >
+                <span>Do I have to bring my own hardware?</span>
+                <span
+                  class="ml-4 text-gray-400 group-open:rotate-45 transition-transform"
+                  aria-hidden="true">+</span
+                >
+              </summary>
+              <p class="text-sm text-gray-600 dark:text-gray-400 mt-3">
+                You can. TheOpenPresenter runs on any device with a modern
+                browser. A Fire TV Stick, Chromecast, or mini PC all work. If
+                you'd rather we handle it, we can supply hardware at cost
+                with a small setup fee. Get in touch.
+              </p>
+            </details>
+
+            <details
+              class="rounded-lg border border-gray-200 dark:border-gray-800 p-5 group"
+              data-aos="fade-up"
+            >
+              <summary
+                class="cursor-pointer font-medium text-gray-900 dark:text-gray-100 flex items-center justify-between"
+              >
+                <span>Is there a discount for paying annually?</span>
+                <span
+                  class="ml-4 text-gray-400 group-open:rotate-45 transition-transform"
+                  aria-hidden="true">+</span
+                >
+              </summary>
+              <p class="text-sm text-gray-600 dark:text-gray-400 mt-3">
+                Yes. &pound;790/year per room, which works out to two months
+                free compared with monthly billing.
+              </p>
+            </details>
+
+            <details
+              class="rounded-lg border border-gray-200 dark:border-gray-800 p-5 group"
+              data-aos="fade-up"
+            >
+              <summary
+                class="cursor-pointer font-medium text-gray-900 dark:text-gray-100 flex items-center justify-between"
+              >
+                <span>What about houses of worship?</span>
+                <span
+                  class="ml-4 text-gray-400 group-open:rotate-45 transition-transform"
+                  aria-hidden="true">+</span
+                >
+              </summary>
+              <p class="text-sm text-gray-600 dark:text-gray-400 mt-3">
+                Smaller houses of worship get TheOpenPresenter free under our
+                sponsorship programme.
+                <a
+                  href="mailto:hello@theopenpresenter.com?subject=House%20of%20worship%20sponsorship"
+                  class="text-teal-600 dark:text-teal-400 hover:underline font-medium"
+                  >Email us</a
+                > about your congregation and we'll send the application.
+              </p>
+            </details>
+
+            <details
+              class="rounded-lg border border-gray-200 dark:border-gray-800 p-5 group"
+              data-aos="fade-up"
+            >
+              <summary
+                class="cursor-pointer font-medium text-gray-900 dark:text-gray-100 flex items-center justify-between"
+              >
+                <span>One-off event? Do you offer a day rate?</span>
+                <span
+                  class="ml-4 text-gray-400 group-open:rotate-45 transition-transform"
+                  aria-hidden="true">+</span
+                >
+              </summary>
+              <p class="text-sm text-gray-600 dark:text-gray-400 mt-3">
+                Yes. &pound;29/day per room covers a single event (24 hours)
+                with full Business features, including the guest portal.
+                Great for conferences, weddings, and single-day room hires.
+                <a
+                  href="mailto:hello@theopenpresenter.com?subject=Day%20licence"
+                  class="text-teal-600 dark:text-teal-400 hover:underline font-medium"
+                  >Email us</a
+                > with the date and we'll set it up. If you run more than
+                2&ndash;3 event days a month, monthly Business works out
+                cheaper.
+              </p>
+            </details>
+
+            <details
+              class="rounded-lg border border-gray-200 dark:border-gray-800 p-5 group"
+              data-aos="fade-up"
+            >
+              <summary
+                class="cursor-pointer font-medium text-gray-900 dark:text-gray-100 flex items-center justify-between"
+              >
+                <span>Can I cancel anytime?</span>
+                <span
+                  class="ml-4 text-gray-400 group-open:rotate-45 transition-transform"
+                  aria-hidden="true">+</span
+                >
+              </summary>
+              <p class="text-sm text-gray-600 dark:text-gray-400 mt-3">
+                Yes. Cancel any time from your dashboard. New Business
+                subscriptions also come with a 30-day money-back guarantee.
+              </p>
+            </details>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <CtaContact />
+</DefaultLayout>
