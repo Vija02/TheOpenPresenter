@@ -333,7 +333,7 @@ const PluginRenderer = React.memo(
     derivation?: DerivationConfig | null;
   }) => {
     const pluginDivRef = useRef<HTMLDivElement>(null);
-    const { pluginMeta, orgId, projectId, isPublicAccess } =
+    const { pluginMeta, orgId, projectId, isPublicAccess, organizationType } =
       usePluginMetaData();
     const {
       getYJSPluginRenderer,
@@ -495,6 +495,8 @@ const PluginRenderer = React.memo(
           parentContainer: pluginDivRef.current,
           derivation: derivation ?? null,
           isPublicAccess,
+          organizationType,
+          triggerKeyPress: () => {},
         },
       } satisfies WebComponentProps<any>);
     }, [
@@ -507,6 +509,7 @@ const PluginRenderer = React.memo(
       getYJSPluginRenderer,
       isPublicAccess,
       isSuccess,
+      organizationType,
       overlay,
       pluginContext,
       pluginInfo?.plugin,

@@ -1,4 +1,5 @@
 import type { InternalVideo } from "@repo/base-types";
+import type { OrganizationType } from "@repo/graphql";
 import type { ObjectToTypedMap } from "@repo/lib";
 import type { Logger } from "pino";
 import type { toast as ReactToast } from "react-toastify";
@@ -127,6 +128,7 @@ export type MiscProps = {
   parentContainer: HTMLElement | null;
   derivation?: DerivationConfig | null;
   isPublicAccess: boolean;
+  organizationType: OrganizationType | null;
 };
 
 export type WebComponentProps<TrpcClient> = {
