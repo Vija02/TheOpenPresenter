@@ -4755,6 +4755,41 @@ type Query {
     """The method to use when ordering `ScreenGuest`."""
     orderBy: [ScreenGuestsOrderBy!] = [PRIMARY_KEY_ASC]
   ): ScreenGuestsConnection
+  screenHeartbeat(screenId: UUID!): ScreenHeartbeat
+
+  """Reads and enables pagination through a set of `ScreenHeartbeat`."""
+  screenHeartbeats(
+    """Read all values in the set after (below) this cursor."""
+    after: Cursor
+
+    """Read all values in the set before (above) this cursor."""
+    before: Cursor
+
+    """
+    A condition to be used in determining which values should be returned by the collection.
+    """
+    condition: ScreenHeartbeatCondition
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: ScreenHeartbeatFilter
+
+    """Only read the first `n` values of the set."""
+    first: Int
+
+    """Only read the last `n` values of the set."""
+    last: Int
+
+    """
+    Skip the first `n` values from our `after` cursor, an alternative to cursor
+    based pagination. May not be used with `last`.
+    """
+    offset: Int
+
+    """The method to use when ordering `ScreenHeartbeat`."""
+    orderBy: [ScreenHeartbeatsOrderBy!] = [PRIMARY_KEY_ASC]
+  ): ScreenHeartbeatsConnection
 
   """Get the data required to login as guest."""
   screenLoginMetadata(pOrgSlug: String!, pScreenSlug: String!): ScreenLoginInfo
@@ -5236,6 +5271,43 @@ type Screen {
     """The method to use when ordering `ScreenGuestSession`."""
     orderBy: [ScreenGuestSessionsOrderBy!] = [PRIMARY_KEY_ASC]
   ): ScreenGuestSessionsConnection!
+
+  """Reads a single `ScreenHeartbeat` that is related to this `Screen`."""
+  screenHeartbeat: ScreenHeartbeat
+
+  """Reads and enables pagination through a set of `ScreenHeartbeat`."""
+  screenHeartbeats(
+    """Read all values in the set after (below) this cursor."""
+    after: Cursor
+
+    """Read all values in the set before (above) this cursor."""
+    before: Cursor
+
+    """
+    A condition to be used in determining which values should be returned by the collection.
+    """
+    condition: ScreenHeartbeatCondition
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: ScreenHeartbeatFilter
+
+    """Only read the first `n` values of the set."""
+    first: Int
+
+    """Only read the last `n` values of the set."""
+    last: Int
+
+    """
+    Skip the first `n` values from our `after` cursor, an alternative to cursor
+    based pagination. May not be used with `last`.
+    """
+    offset: Int
+
+    """The method to use when ordering `ScreenHeartbeat`."""
+    orderBy: [ScreenHeartbeatsOrderBy!] = [PRIMARY_KEY_ASC]
+  ): ScreenHeartbeatsConnection! @deprecated(reason: "Please use screenHeartbeat instead")
 
   """
   When true, the renderer overlays an idle indicator bar once the seat is past idle_after_seconds.
@@ -5917,6 +5989,84 @@ enum ScreenGuestsOrderBy {
   PRIMARY_KEY_DESC
 }
 
+type ScreenHeartbeat {
+  id: UUID
+  lastSeenByAdminAt: Datetime
+  lastSeenByGuestAt: Datetime
+
+  """Reads a single `Screen` that is related to this `ScreenHeartbeat`."""
+  screen: Screen
+  screenId: UUID!
+}
+
+"""
+A condition to be used against `ScreenHeartbeat` object types. All fields are
+tested for equality and combined with a logical ‘and.’
+"""
+input ScreenHeartbeatCondition {
+  """Checks for equality with the object’s `screenId` field."""
+  screenId: UUID
+}
+
+"""
+A filter to be used against `ScreenHeartbeat` object types. All fields are combined with a logical ‘and.’
+"""
+input ScreenHeartbeatFilter {
+  """Checks for all expressions in this list."""
+  and: [ScreenHeartbeatFilter!]
+
+  """Negates the expression."""
+  not: ScreenHeartbeatFilter
+
+  """Checks for any expressions in this list."""
+  or: [ScreenHeartbeatFilter!]
+
+  """Filter by the object’s `screenId` field."""
+  screenId: UUIDFilter
+}
+
+type ScreenHeartbeatSubscriptionPayload {
+  event: String
+  heartbeat: ScreenHeartbeat
+}
+
+"""A connection to a list of `ScreenHeartbeat` values."""
+type ScreenHeartbeatsConnection {
+  """
+  A list of edges which contains the `ScreenHeartbeat` and cursor to aid in pagination.
+  """
+  edges: [ScreenHeartbeatsEdge!]!
+
+  """A list of `ScreenHeartbeat` objects."""
+  nodes: [ScreenHeartbeat!]!
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+
+  """
+  The count of *all* `ScreenHeartbeat` you could get from the connection.
+  """
+  totalCount: Int!
+}
+
+"""A `ScreenHeartbeat` edge in the connection."""
+type ScreenHeartbeatsEdge {
+  """A cursor for use in pagination."""
+  cursor: Cursor
+
+  """The `ScreenHeartbeat` at the end of the edge."""
+  node: ScreenHeartbeat!
+}
+
+"""Methods to use when ordering `ScreenHeartbeat`."""
+enum ScreenHeartbeatsOrderBy {
+  NATURAL
+  PRIMARY_KEY_ASC
+  PRIMARY_KEY_DESC
+  SCREEN_ID_ASC
+  SCREEN_ID_DESC
+}
+
 enum ScreenIdlePolicy {
   DO_NOTHING
   UNASSIGN
@@ -6339,6 +6489,9 @@ type Subscription {
   created, updated, or deleted.
   """
   screenControlRequestsUpdated(screenId: UUID!): ScreenControlRequestSubscriptionPayload
+
+  """Triggered when the screen's heartbeat is bumped."""
+  screenHeartbeatUpdated(screenId: UUID!): ScreenHeartbeatSubscriptionPayload
 
   """Triggered when the screen is updated in some way."""
   screenUpdated(screenId: UUID!): ScreenSubscriptionPayload

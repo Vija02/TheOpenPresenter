@@ -2,10 +2,10 @@
 -- PostgreSQL database dump
 --
 
-\restrict vMFPkuEUxK7t9jrVfKRdbA9buOfM0Mcng9vYzgtvGxy2S0OdOcWBdqJQUfGQoZs
+\restrict SqxrAR9MB7vbejLhdgMSPGEQLgUZbGbabtITkAhs5PTMXdp8jE73JfAOcGfCj5H
 
 -- Dumped from database version 17.0 (Debian 17.0-1.pgdg120+1)
--- Dumped by pg_dump version 18.3
+-- Dumped by pg_dump version 18.4
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -937,6 +937,24 @@ $$;
 --
 
 COMMENT ON FUNCTION app_private.tg__add_job() IS 'Useful shortcut to create a job on insert/update. Pass the task name as the first trigger argument, and optionally the queue name as the second argument. The record id will automatically be available on the JSON payload.';
+
+
+--
+-- Name: tg__bump_screen_heartbeat_on_project_set(); Type: FUNCTION; Schema: app_private; Owner: -
+--
+
+CREATE FUNCTION app_private.tg__bump_screen_heartbeat_on_project_set() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+    AS $$
+begin
+  insert into app_public.screen_heartbeats (screen_id, last_seen_by_admin_at)
+  values (new.id, now())
+  on conflict (screen_id) do update
+    set last_seen_by_admin_at = excluded.last_seen_by_admin_at;
+  return null;
+end;
+$$;
 
 
 --
@@ -3354,6 +3372,18 @@ CREATE TABLE app_public.screen_control_requests (
 
 
 --
+-- Name: screen_heartbeats; Type: TABLE; Schema: app_public; Owner: -
+--
+
+CREATE TABLE app_public.screen_heartbeats (
+    screen_id uuid NOT NULL,
+    id uuid GENERATED ALWAYS AS (screen_id) STORED,
+    last_seen_by_guest_at timestamp with time zone,
+    last_seen_by_admin_at timestamp with time zone
+);
+
+
+--
 -- Name: tags; Type: TABLE; Schema: app_public; Owner: -
 --
 
@@ -3634,6 +3664,14 @@ ALTER TABLE ONLY app_public.screen_guest_sessions
 
 ALTER TABLE ONLY app_public.screen_guests
     ADD CONSTRAINT screen_guests_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: screen_heartbeats screen_heartbeats_pkey; Type: CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.screen_heartbeats
+    ADD CONSTRAINT screen_heartbeats_pkey PRIMARY KEY (screen_id);
 
 
 --
@@ -4402,6 +4440,13 @@ CREATE TRIGGER _500_gql_notify AFTER INSERT OR DELETE OR UPDATE ON app_public.sc
 
 
 --
+-- Name: screen_heartbeats _500_gql_notify; Type: TRIGGER; Schema: app_public; Owner: -
+--
+
+CREATE TRIGGER _500_gql_notify AFTER INSERT OR UPDATE ON app_public.screen_heartbeats FOR EACH ROW EXECUTE FUNCTION app_public.tg__graphql_subscription('screenHeartbeatUpdate', 'graphql:scr_hb:$1', 'screen_id');
+
+
+--
 -- Name: screens _500_gql_notify; Type: TRIGGER; Schema: app_public; Owner: -
 --
 
@@ -4483,6 +4528,20 @@ CREATE TRIGGER _511_gql_per_screen_notify AFTER INSERT OR DELETE OR UPDATE ON ap
 --
 
 CREATE TRIGGER _512_gql_per_org_notify AFTER INSERT OR DELETE OR UPDATE ON app_public.screen_control_requests FOR EACH ROW EXECUTE FUNCTION app_private.tg__notify_org_screen_control_request();
+
+
+--
+-- Name: screens _600_bump_heartbeat_on_project_assign; Type: TRIGGER; Schema: app_public; Owner: -
+--
+
+CREATE TRIGGER _600_bump_heartbeat_on_project_assign AFTER INSERT ON app_public.screens FOR EACH ROW WHEN ((new.current_project_id IS NOT NULL)) EXECUTE FUNCTION app_private.tg__bump_screen_heartbeat_on_project_set();
+
+
+--
+-- Name: screens _600_bump_heartbeat_on_project_change; Type: TRIGGER; Schema: app_public; Owner: -
+--
+
+CREATE TRIGGER _600_bump_heartbeat_on_project_change AFTER UPDATE OF current_project_id ON app_public.screens FOR EACH ROW WHEN (((new.current_project_id IS NOT NULL) AND (new.current_project_id IS DISTINCT FROM old.current_project_id))) EXECUTE FUNCTION app_private.tg__bump_screen_heartbeat_on_project_set();
 
 
 --
@@ -4836,6 +4895,14 @@ ALTER TABLE ONLY app_public.screen_guests
 
 
 --
+-- Name: screen_heartbeats screen_heartbeats_screen_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.screen_heartbeats
+    ADD CONSTRAINT screen_heartbeats_screen_id_fkey FOREIGN KEY (screen_id) REFERENCES app_public.screens(id) ON DELETE CASCADE;
+
+
+--
 -- Name: screens screens_current_project_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
 --
 
@@ -5174,6 +5241,12 @@ ALTER TABLE app_public.screen_guest_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE app_public.screen_guests ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: screen_heartbeats; Type: ROW SECURITY; Schema: app_public; Owner: -
+--
+
+ALTER TABLE app_public.screen_heartbeats ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: screens; Type: ROW SECURITY; Schema: app_public; Owner: -
 --
 
@@ -5213,10 +5286,26 @@ CREATE POLICY select_for_guest_session ON app_public.organizations FOR SELECT US
 
 
 --
+-- Name: screen_heartbeats select_for_guest_session; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY select_for_guest_session ON app_public.screen_heartbeats FOR SELECT USING ((screen_id = (app_public.current_screen_guest_session()).screen_id));
+
+
+--
 -- Name: screens select_for_guest_session; Type: POLICY; Schema: app_public; Owner: -
 --
 
 CREATE POLICY select_for_guest_session ON app_public.screens FOR SELECT USING ((id = (app_public.current_screen_guest_session()).screen_id));
+
+
+--
+-- Name: screen_heartbeats select_for_org_member; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY select_for_org_member ON app_public.screen_heartbeats FOR SELECT USING ((screen_id IN ( SELECT screens.id
+   FROM app_public.screens
+  WHERE (screens.organization_id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids)))));
 
 
 --
@@ -5654,6 +5743,13 @@ REVOKE ALL ON FUNCTION app_private.tg__add_audit_job() FROM PUBLIC;
 --
 
 REVOKE ALL ON FUNCTION app_private.tg__add_job() FROM PUBLIC;
+
+
+--
+-- Name: FUNCTION tg__bump_screen_heartbeat_on_project_set(); Type: ACL; Schema: app_private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_private.tg__bump_screen_heartbeat_on_project_set() FROM PUBLIC;
 
 
 --
@@ -6629,6 +6725,13 @@ GRANT SELECT ON TABLE app_public.screen_control_requests TO theopenpresenter_vis
 
 
 --
+-- Name: TABLE screen_heartbeats; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT SELECT ON TABLE app_public.screen_heartbeats TO theopenpresenter_visitor;
+
+
+--
 -- Name: TABLE tags; Type: ACL; Schema: app_public; Owner: -
 --
 
@@ -6737,5 +6840,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE theopenpresenter REVOKE ALL ON FUNCTIONS FROM 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict vMFPkuEUxK7t9jrVfKRdbA9buOfM0Mcng9vYzgtvGxy2S0OdOcWBdqJQUfGQoZs
+\unrestrict SqxrAR9MB7vbejLhdgMSPGEQLgUZbGbabtITkAhs5PTMXdp8jE73JfAOcGfCj5H
 

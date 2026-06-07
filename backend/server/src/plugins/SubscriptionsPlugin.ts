@@ -1,7 +1,8 @@
 import { Build } from "graphile-build";
 import { QueryBuilder, SQL } from "graphile-build-pg";
 import {
-  embed /*, AugmentedGraphQLFieldResolver */,
+  embed,
+  /*, AugmentedGraphQLFieldResolver */
   gql,
   makeExtendSchemaPlugin,
 } from "graphile-utils";
@@ -9,18 +10,19 @@ import {
 import { GraphQLResolveInfo } from "graphql";
 
 import { OurGraphQLContext } from "../graphile.config";
+
 type GraphileHelpers = any;
 type AugmentedGraphQLFieldResolver<
   TSource,
   TContext,
-  TArgs = { [argName: string]: any }
+  TArgs = { [argName: string]: any },
 > = (
   parent: TSource,
   args: TArgs,
   context: TContext,
   info: GraphQLResolveInfo & {
     graphile: GraphileHelpers;
-  }
+  },
 ) => any;
 
 /*
@@ -34,7 +36,7 @@ type AugmentedGraphQLFieldResolver<
 const currentUserTopicFromContext = async (
   _args: {},
   context: { [key: string]: any },
-  _resolveInfo: GraphQLResolveInfo
+  _resolveInfo: GraphQLResolveInfo,
 ) => {
   let userId: number | null = null;
   if (context.sessionId /* fail fast */) {
@@ -42,7 +44,7 @@ const currentUserTopicFromContext = async (
     const {
       rows: [user],
     } = await context.pgClient.query(
-      "select app_public.current_user_id() as id"
+      "select app_public.current_user_id() as id",
     );
     userId = user?.id;
   }
@@ -59,13 +61,13 @@ const currentUserTopicFromContext = async (
 const screenTopicFromArgs = async (
   args: { screenId: string },
   context: { [key: string]: any },
-  _resolveInfo: GraphQLResolveInfo
+  _resolveInfo: GraphQLResolveInfo,
 ) => {
   const {
     rows: [row],
   } = await context.pgClient.query(
     "select app_public.current_user_can_access_screen($1::uuid) as allowed",
-    [args.screenId]
+    [args.screenId],
   );
   if (!row?.allowed) {
     throw new Error("You do not have access to this screen");
@@ -79,7 +81,7 @@ const screenTopicFromArgs = async (
 const screenControlRequestTopicFromArgs = async (
   args: { requestId: string },
   context: { [key: string]: any },
-  _resolveInfo: GraphQLResolveInfo
+  _resolveInfo: GraphQLResolveInfo,
 ) => {
   const {
     rows: [row],
@@ -96,7 +98,7 @@ const screenControlRequestTopicFromArgs = async (
           )
       ) as allowed
     `,
-    [args.requestId]
+    [args.requestId],
   );
   if (!row?.allowed) {
     throw new Error("You do not have access to this control request");
@@ -110,13 +112,13 @@ const screenControlRequestTopicFromArgs = async (
 const screenControlRequestsTopicFromArgs = async (
   args: { screenId: string },
   context: { [key: string]: any },
-  _resolveInfo: GraphQLResolveInfo
+  _resolveInfo: GraphQLResolveInfo,
 ) => {
   const {
     rows: [row],
   } = await context.pgClient.query(
     "select app_public.current_user_can_access_screen($1::uuid) as allowed",
-    [args.screenId]
+    [args.screenId],
   );
   if (!row?.allowed) {
     throw new Error("You do not have access to this screen");
@@ -130,7 +132,7 @@ const screenControlRequestsTopicFromArgs = async (
 const organizationPendingScreenControlRequestsTopicFromArgs = async (
   args: { organizationId: string },
   context: { [key: string]: any },
-  _resolveInfo: GraphQLResolveInfo
+  _resolveInfo: GraphQLResolveInfo,
 ) => {
   const {
     rows: [row],
@@ -142,7 +144,7 @@ const organizationPendingScreenControlRequestsTopicFromArgs = async (
         where id = $1::uuid
       ) as allowed
     `,
-    [args.organizationId]
+    [args.organizationId],
   );
   if (!row?.allowed) {
     throw new Error("You do not have access to this organization");
@@ -156,13 +158,13 @@ const organizationPendingScreenControlRequestsTopicFromArgs = async (
 const screenActiveControllerTopicFromArgs = async (
   args: { screenId: string },
   context: { [key: string]: any },
-  _resolveInfo: GraphQLResolveInfo
+  _resolveInfo: GraphQLResolveInfo,
 ) => {
   const {
     rows: [row],
   } = await context.pgClient.query(
     "select app_public.current_user_can_access_screen($1::uuid) as allowed",
-    [args.screenId]
+    [args.screenId],
   );
   if (!row?.allowed) {
     const {
@@ -174,13 +176,46 @@ const screenActiveControllerTopicFromArgs = async (
         where ac.screen_id = $1
           and ac.screen_guest_session_id = app_public.current_screen_guest_session_id()
       `,
-      [args.screenId]
+      [args.screenId],
     );
     if (!seat) {
       throw new Error("You do not have access to this screen's controller");
     }
   }
   return `graphql:scr_ctl:${args.screenId}`;
+};
+
+/*
+ * Per-row PG NOTIFY channel for a screen's heartbeat
+ */
+const screenHeartbeatTopicFromArgs = async (
+  args: { screenId: string },
+  context: { [key: string]: any },
+  _resolveInfo: GraphQLResolveInfo,
+) => {
+  const {
+    rows: [row],
+  } = await context.pgClient.query(
+    "select app_public.current_user_can_access_screen($1::uuid) as allowed",
+    [args.screenId],
+  );
+  if (!row?.allowed) {
+    const {
+      rows: [guest],
+    } = await context.pgClient.query(
+      `
+        select 1
+        from app_public.screen_guest_sessions
+        where id = app_public.current_screen_guest_session_id()
+          and screen_id = $1
+      `,
+      [args.screenId],
+    );
+    if (!guest) {
+      throw new Error("You do not have access to this screen's heartbeat");
+    }
+  }
+  return `graphql:scr_hb:${args.screenId}`;
 };
 
 /*
@@ -220,19 +255,24 @@ const SubscriptionsPlugin = makeExtendSchemaPlugin((build) => {
         event: String
       }
 
+      type ScreenHeartbeatSubscriptionPayload {
+        heartbeat: ScreenHeartbeat
+        event: String
+      }
+
       extend type Subscription {
         """
         Triggered when the logged in user's record is updated in some way.
         """
         currentUserUpdated: UserSubscriptionPayload @pgSubscription(topic: ${embed(
-          currentUserTopicFromContext
+          currentUserTopicFromContext,
         )})
 
         """
         Triggered when the screen is updated in some way.
         """
         screenUpdated(screenId: UUID!): ScreenSubscriptionPayload @pgSubscription(topic: ${embed(
-          screenTopicFromArgs
+          screenTopicFromArgs,
         )})
 
         """
@@ -241,7 +281,7 @@ const SubscriptionsPlugin = makeExtendSchemaPlugin((build) => {
         screenControlRequestUpdated(
           requestId: UUID!
         ): ScreenControlRequestSubscriptionPayload @pgSubscription(topic: ${embed(
-          screenControlRequestTopicFromArgs
+          screenControlRequestTopicFromArgs,
         )})
 
         """
@@ -251,7 +291,7 @@ const SubscriptionsPlugin = makeExtendSchemaPlugin((build) => {
         screenControlRequestsUpdated(
           screenId: UUID!
         ): ScreenControlRequestSubscriptionPayload @pgSubscription(topic: ${embed(
-          screenControlRequestsTopicFromArgs
+          screenControlRequestsTopicFromArgs,
         )})
 
         """
@@ -261,7 +301,7 @@ const SubscriptionsPlugin = makeExtendSchemaPlugin((build) => {
         organizationPendingScreenControlRequestsUpdated(
           organizationId: UUID!
         ): ScreenControlRequestSubscriptionPayload @pgSubscription(topic: ${embed(
-          organizationPendingScreenControlRequestsTopicFromArgs
+          organizationPendingScreenControlRequestsTopicFromArgs,
         )})
 
         """
@@ -270,7 +310,16 @@ const SubscriptionsPlugin = makeExtendSchemaPlugin((build) => {
         screenActiveControllerUpdated(
           screenId: UUID!
         ): ScreenActiveControllerSubscriptionPayload @pgSubscription(topic: ${embed(
-          screenActiveControllerTopicFromArgs
+          screenActiveControllerTopicFromArgs,
+        )})
+
+        """
+        Triggered when the screen's heartbeat is bumped.
+        """
+        screenHeartbeatUpdated(
+          screenId: UUID!
+        ): ScreenHeartbeatSubscriptionPayload @pgSubscription(topic: ${embed(
+          screenHeartbeatTopicFromArgs,
         )})
       }
     `,
@@ -284,14 +333,21 @@ const SubscriptionsPlugin = makeExtendSchemaPlugin((build) => {
       ScreenControlRequestSubscriptionPayload: {
         request: recordByIdFromTable(
           build,
-          sql.fragment`app_public.screen_control_requests`
+          sql.fragment`app_public.screen_control_requests`,
         ),
       },
       ScreenActiveControllerSubscriptionPayload: {
         activeController: recordByIdFromTable(
           build,
           sql.fragment`app_public.screen_active_controllers`,
-          "screen_id"
+          "screen_id",
+        ),
+      },
+      ScreenHeartbeatSubscriptionPayload: {
+        heartbeat: recordByIdFromTable(
+          build,
+          sql.fragment`app_public.screen_heartbeats`,
+          "screen_id",
         ),
       },
     },
@@ -313,24 +369,24 @@ interface TgGraphQLSubscriptionPayload {
 function recordByIdFromTable(
   build: Build,
   sqlTable: SQL,
-  idColumn: string = "id"
+  idColumn: string = "id",
 ): AugmentedGraphQLFieldResolver<TgGraphQLSubscriptionPayload, any> {
   const { pgSql: sql } = build;
   return async (
     event: TgGraphQLSubscriptionPayload,
     _args: {},
     _context: OurGraphQLContext,
-    { graphile: { selectGraphQLResultFromTable } }
+    { graphile: { selectGraphQLResultFromTable } },
   ) => {
     const rows = await selectGraphQLResultFromTable(
       sqlTable,
       (tableAlias: SQL, sqlBuilder: QueryBuilder) => {
         sqlBuilder.where(
           sql.fragment`${tableAlias}.${sql.identifier(idColumn)} = ${sql.value(
-            event.subject
-          )}`
+            event.subject,
+          )}`,
         );
-      }
+      },
     );
     return rows[0];
   };
