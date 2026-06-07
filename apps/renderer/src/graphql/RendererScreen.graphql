@@ -26,6 +26,11 @@ query RendererScreen($orgSlug: String!, $screenSlug: String!) {
             lastSeenAt
           }
         }
+        screenHeartbeat {
+          screenId
+          lastSeenByGuestAt
+          lastSeenByAdminAt
+        }
       }
     }
   }
@@ -60,6 +65,17 @@ subscription RendererScreenActiveControllerUpdated($screenId: UUID!) {
         id
         lastSeenAt
       }
+    }
+  }
+}
+
+subscription RendererScreenHeartbeatUpdated($screenId: UUID!) {
+  screenHeartbeatUpdated(screenId: $screenId) {
+    event
+    heartbeat {
+      screenId
+      lastSeenByGuestAt
+      lastSeenByAdminAt
     }
   }
 }

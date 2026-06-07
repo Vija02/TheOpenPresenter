@@ -156,6 +156,7 @@ export async function makeApp({
   await middleware.installRenderer(app, httpServer!);
   await middleware.installProjectManagement(app, httpServer!);
   await middleware.installHocuspocus(app);
+  await middleware.installScreenControlSweeper(app);
   await middleware.installSSR(app);
 
   /*

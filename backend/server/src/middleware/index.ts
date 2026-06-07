@@ -23,6 +23,7 @@ import installRemote from "./installRemote";
 import installRenderer from "./installRenderer";
 import installSSR from "./installSSR";
 import installSameOrigin from "./installSameOrigin";
+import installScreenControlSweeper from "./installScreenControlSweeper";
 import installSession from "./installSession";
 import installSharedStatic from "./installSharedStatic";
 import installTrpc from "./installTrpc";
@@ -54,6 +55,7 @@ export {
   installRenderer,
   installSSR,
   installSameOrigin,
+  installScreenControlSweeper,
   installSession,
   installSharedStatic,
   installTrpc,

@@ -1,5 +1,6 @@
 import {
   useRendererScreenActiveControllerUpdatedSubscription,
+  useRendererScreenHeartbeatUpdatedSubscription,
   useRendererScreenQuery,
   useScreenUpdatedSubscription,
 } from "@repo/graphql";
@@ -17,6 +18,22 @@ import { useParams } from "wouter";
 
 import { AppInner } from "./App";
 import "./Screen.css";
+
+function pickMostRecent(
+  ...values: (string | null | undefined)[]
+): string | null {
+  let bestMs = -Infinity;
+  let bestIso: string | null = null;
+  for (const v of values) {
+    if (!v) continue;
+    const t = new Date(v).getTime();
+    if (Number.isFinite(t) && t > bestMs) {
+      bestMs = t;
+      bestIso = v;
+    }
+  }
+  return bestIso;
+}
 
 export function Screen() {
   const params = useParams();
@@ -48,6 +65,12 @@ export function Screen() {
   });
   const subActiveController =
     acSubResult.data?.screenActiveControllerUpdated?.activeController;
+
+  const [hbSubResult] = useRendererScreenHeartbeatUpdatedSubscription({
+    pause: !screenId,
+    variables: { screenId: screenId! },
+  });
+  const subHeartbeat = hbSubResult.data?.screenHeartbeatUpdated?.heartbeat;
 
   if (fetching && !data) {
     return <LoadingFull />;
@@ -86,7 +109,13 @@ export function Screen() {
     subActiveController !== undefined
       ? subActiveController
       : (screen.screenActiveController ?? null);
-  const lastSeenAt = activeController?.screenGuestSession?.lastSeenAt ?? null;
+
+  const heartbeat = subHeartbeat ?? screen.screenHeartbeat ?? null;
+  const lastSeenAt = pickMostRecent(
+    heartbeat?.lastSeenByGuestAt ?? null,
+    heartbeat?.lastSeenByAdminAt ?? null,
+    activeController?.screenGuestSession?.lastSeenAt ?? null,
+  );
 
   return (
     <>
@@ -96,7 +125,7 @@ export function Screen() {
         projectSlug={screen.currentProject.slug}
         rendererId={screen.currentRendererId}
       />
-      {showBar && idleAfterSec !== null && lastSeenAt && (
+      {showBar && idleAfterSec !== null && (
         <IdleBar
           lastSeenAt={lastSeenAt}
           idleAfterSec={idleAfterSec}
@@ -249,13 +278,16 @@ const IdleBar = ({
   screenSlug,
   screenCode,
 }: {
-  lastSeenAt: string;
+  lastSeenAt: string | null;
   idleAfterSec: number;
   orgSlug: string;
   screenSlug: string;
   screenCode: string;
 }) => {
-  const idleAtMs = new Date(lastSeenAt).getTime() + idleAfterSec * 1000;
+  const idleAtMs =
+    lastSeenAt === null
+      ? 0
+      : new Date(lastSeenAt).getTime() + idleAfterSec * 1000;
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const handle = setInterval(() => setNow(Date.now()), 1000);

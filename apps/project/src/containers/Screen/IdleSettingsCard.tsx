@@ -17,9 +17,8 @@ const idlePolicyOptions: {
 }[] = [
   { label: "Do nothing", value: ScreenIdlePolicy.DoNothing },
   {
-    label: "Unassign the screen (coming soon)",
+    label: "Unassign the screen",
     value: ScreenIdlePolicy.Unassign,
-    isDisabled: true,
   },
 ];
 

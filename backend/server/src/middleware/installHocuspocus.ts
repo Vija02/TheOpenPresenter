@@ -18,6 +18,17 @@ import { getMediaHandler } from "./installFileUpload";
 export const disposableDocumentManager: DisposableDocumentManager =
   new DisposableDocumentManager();
 
+const HEARTBEAT_THROTTLE_MS = 15_000;
+const heartbeatThrottle = new Map<string, number>();
+/** Throttles hearbeat. Returns true if can bump */
+const throttleHeartbeatCanBump = (key: string): boolean => {
+  const now = Date.now();
+  const last = heartbeatThrottle.get(key) ?? 0;
+  if (now - last < HEARTBEAT_THROTTLE_MS) return false;
+  heartbeatThrottle.set(key, now);
+  return true;
+};
+
 export default async function installHocuspocus(app: Express) {
   Server.configure({
     name: "Hocuspocus Server",
@@ -99,10 +110,74 @@ export default async function installHocuspocus(app: Express) {
         },
       });
     },
+    // Signal heartbeat to screens
+    onChange: async (data) => {
+      const ctx = data.context as {
+        session_id?: string | null;
+        screen_guest_session_id?: string | null;
+        screen_id?: string | null;
+      };
+      const rootPgPool = getRootPgPool(app);
+
+      // Handle guest
+      if (ctx.screen_guest_session_id) {
+        const guestId = ctx.screen_guest_session_id;
+        const screenId = ctx.screen_id ?? null;
+
+        // Update guest's last_seen_at
+        if (throttleHeartbeatCanBump(`guest-session:${guestId}`)) {
+          rootPgPool
+            .query(
+              "update app_public.screen_guest_sessions set last_seen_at = now() where id = $1 and last_seen_at < now() - interval '15 seconds'",
+              [guestId],
+            )
+            .catch((err) => {
+              logger.warn({ err }, "Failed to bump guest last_seen_at");
+            });
+        }
+        if (screenId && throttleHeartbeatCanBump(`guest-hb:${screenId}`)) {
+          rootPgPool
+            .query(
+              `insert into app_public.screen_heartbeats (screen_id, last_seen_by_guest_at)
+               values ($1, now())
+               on conflict (screen_id) do update
+                 set last_seen_by_guest_at = excluded.last_seen_by_guest_at
+                 where coalesce(screen_heartbeats.last_seen_by_guest_at, '-infinity'::timestamptz)
+                       < now() - interval '15 seconds'`,
+              [screenId],
+            )
+            .catch((err) => {
+              logger.warn({ err }, "Failed to bump screen heartbeat (guest)");
+            });
+        }
+        return;
+      }
+
+      // Handle admin
+      if (ctx.session_id) {
+        const key = `admin-hb:${ctx.session_id}:${data.documentName}`;
+        if (!throttleHeartbeatCanBump(key)) return;
+        rootPgPool
+          .query(
+            `insert into app_public.screen_heartbeats (screen_id, last_seen_by_admin_at)
+             select s.id, now()
+             from app_public.screens s
+             where s.current_project_id = $1
+             on conflict (screen_id) do update
+               set last_seen_by_admin_at = excluded.last_seen_by_admin_at
+               where coalesce(screen_heartbeats.last_seen_by_admin_at, '-infinity'::timestamptz)
+                     < now() - interval '15 seconds'`,
+            [data.documentName],
+          )
+          .catch((err) => {
+            logger.warn({ err }, "Failed to bump screen heartbeat (admin)");
+          });
+      }
+    },
     afterUnloadDocument: async (data) => {
       disposableDocumentManager.disposeDocument(data.documentName);
 
-      // Clean up temporary demo projects once they have no active connections. 
+      // Clean up temporary demo projects once they have no active connections.
       const rootPgPool = getRootPgPool(app);
       try {
         const { rowCount } = await rootPgPool.query(
@@ -146,25 +221,6 @@ export default async function installHocuspocus(app: Express) {
         console.log(error);
       });
 
-      // Store var here to reduce load on DB
-      let lastSeenBumpAt = 0;
-      incoming.on("message", () => {
-        const guestId = request.session?.screenGuestSession?.id;
-        if (!guestId) return;
-        const now = Date.now();
-        if (now - lastSeenBumpAt < 15_000) return;
-        lastSeenBumpAt = now;
-        const rootPgPool = getRootPgPool(app);
-        rootPgPool
-          .query(
-            "update app_public.screen_guest_sessions set last_seen_at = now() where id = $1 and last_seen_at < now() - interval '15 seconds'",
-            [guestId],
-          )
-          .catch((err) => {
-            logger.warn({ err }, "Failed to bump guest last_seen_at");
-          });
-      });
-
       try {
         const dummyRes = new ServerResponse(request);
 
@@ -177,10 +233,12 @@ export default async function installHocuspocus(app: Express) {
         const sessionId = request.user?.session_id ?? null;
         const screenGuestSessionId =
           request.session?.screenGuestSession?.id ?? null;
+        const screenId = request.session?.screenGuestSession?.screenId ?? null;
 
         Server.handleConnection(incoming, request, {
           session_id: sessionId,
           screen_guest_session_id: screenGuestSessionId,
+          screen_id: screenId,
         });
       } catch (err) {
         logger.error({ err }, "Error handling WebSocket connection");
@@ -228,6 +286,9 @@ const applyMiddleware = async (
 interface OurRequest extends IncomingMessage {
   user?: { session_id: string };
   session?: {
-    screenGuestSession?: { id?: string | null } | null;
+    screenGuestSession?: {
+      id?: string | null;
+      screenId?: string | null;
+    } | null;
   };
 }
