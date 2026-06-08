@@ -8,7 +8,6 @@ import {
   Link,
   Popover,
   PopoverContent,
-  PopoverMenuItem,
   PopoverTrigger,
 } from "@repo/ui";
 import { cx } from "class-variance-authority";
@@ -118,10 +117,6 @@ const WebPresentButton = ({
 
   const refresh = () => refetchScreens({ requestPolicy: "network-only" });
 
-  const handleOpenInNewTab = () => {
-    window.open(renderHref, "_blank", "noopener,noreferrer");
-  };
-
   const handlePresent = async (screenId: string, screenName: string) => {
     try {
       await setExistingProjectToScreen({ screenId, projectId });
@@ -163,12 +158,23 @@ const WebPresentButton = ({
         hideCloseButton
         onOpenAutoFocus={(e) => e.preventDefault()}
       >
-        <PopoverMenuItem
-          label="Open in new tab"
-          description="Show the presentation in a new browser tab"
-          icon={<MdOpenInNew />}
-          onClick={handleOpenInNewTab}
-        />
+        <Link
+          href={renderHref}
+          isExternal
+          variant="unstyled"
+          onClick={() => setOpen(false)}
+          className="flex w-full items-start gap-2 px-3 py-2 text-sm text-left rounded transition-colors cursor-pointer hover:bg-surface-primary-hover focus:bg-surface-primary-hover focus:outline-none"
+        >
+          <span className="shrink-0 mt-0.5">
+            <MdOpenInNew />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="font-medium">Open in new tab</p>
+            <p className="text-xs text-tertiary">
+              Show the presentation in a new browser tab
+            </p>
+          </div>
+        </Link>
 
         <div className="px-3 pt-3 pb-1 text-xs font-medium text-tertiary">
           Present to a screen
