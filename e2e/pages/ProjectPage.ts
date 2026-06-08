@@ -41,7 +41,10 @@ export class ProjectPage {
   }
 
   async present() {
-    const url = await this.presentButton.locator("..").getAttribute("href");
+    await this.presentButton.click();
+    const url = await this.page
+      .getByRole("link", { name: "Open in new tab" })
+      .getAttribute("href");
     const newPage = await this.context.newPage();
     await newPage.goto(url!);
     return newPage;
