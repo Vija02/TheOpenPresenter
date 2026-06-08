@@ -5,40 +5,43 @@
 [![Uptime](https://img.shields.io/uptimerobot/status/m797995489-5997105577a220e528307298)](https://stats.uptimerobot.com/Lehx3qwROA)
 
 **TheOpenPresenter** is an ambitious project aiming to be the final presenter software you'll ever need.
-It achieves this through its modular architecture, allowing for endless customization and feature based on every specific needs.
+It achieves this through its modular architecture, allowing for endless customization and features tailored to your specific needs.
 
 [Try it now!](https://theopenpresenter.com)
 
-## This project is under development 🏗️
+## Status: Production ready, actively developed
 
-Status: **Alpha**
-
-At this current time, the project is under heavy development work. You are able to use it through https://theopenpresenter.com and I personally use it every week. However, use at your own risk as things might break.
+TheOpenPresenter is stable and in production use today. It runs live every week at real venues, and you can use it now through https://theopenpresenter.com. Development is active and ongoing, with new features and improvements landing regularly.
 
 ### Developer wiki
 
-We maintain a separate wiki page at https://docs.theopenpresenter.com. Please refer to this site for anything technical relating this project. If anything is unclear or missing, please do contact us and we'll try our best to explain it better.
+We maintain a separate wiki page at https://docs.theopenpresenter.com. Please refer to this site for anything technical relating to this project. If anything is unclear or missing, please do contact us and we'll try our best to explain it better.
 
 ## What is TheOpenPresenter?
 
-**Our mission is to provide the most user-friendly solution to present any media in a church setting.**
+**Our mission is to provide the most user-friendly solution to present any media to any of your screens.**
 
 ✅ Present in any device that can run a browser  
 ✅ Collaborate & control presentation from anywhere  
 ✅ Play video from various sources (Youtube, local, etc)  
 ✅ Organize your past and future presentation sessions   
 ✅ Record audio and save it for future playback  
-🟨 Import & display lyrics from various sources with ease (currently only MyWorshipList)  
-🟨 Display slides from many different sources (currently only Powerpoint, Google Slides and PDFs)  
-🟨 Offline app support - Alpha (currently only for Windows)  
+✅ Import & display lyrics from various sources with ease  
+✅ Display slides from many different sources   
+🟨 Offline app support - Beta (currently only for Windows)  
 
-Last but not least, the code for TheOpenPresenter will always be Open Source. We also promise to keep a hosted version of TheOpenPresenter free for small churches for as long as possible, the ones that will benefit from this project the most.
+Last but not least, the code for TheOpenPresenter will always be Open Source. We also promise to keep a hosted version of TheOpenPresenter free for those that will benefit from it the most such as small churches and select non-profit organizations.
 
 ### Who is it for?
 
-If you regularly present slides or lyrics to a congregation - no matter how small or big it is, TheOpenPresenter is for you. 
+If you put content on a screen in front of people, TheOpenPresenter is for you. We see it used across a few kinds of venues:
 
-However, do note that this project is build with the focus on smaller congregations. As such, more advanced features might take land futher on in the development cycle.
+- **Coworking spaces & community halls** - let guests and members present from their own devices, no cables or setup help needed.
+- **Event venues** - hand presenting clients a link and let them run their own slides, photos, or videos.
+- **Houses of worship** - present lyrics, slides, and media to your congregation, with multiple people collaborating in real time.
+- **Camps & conferences** - drive a main screen, confidence monitor, and signage from one synchronised show.
+
+The project is built with a focus on smaller venues. More advanced, enterprise-grade features may land further on in the development cycle.
 
 ## Every Contribution Makes a Difference
 
