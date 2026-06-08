@@ -1,23 +1,29 @@
 ---
 ---
 
-<!-- Sign-up CTA -->
 <section class="bg-gray-100 dark:bg-gray-800">
   <div class="max-w-6xl mx-auto px-4 sm:px-6">
     <div
       class="py-16 md:py-20 flex flex-col md:flex-row md:items-center md:justify-between gap-8 text-center md:text-left"
     >
-      <h2
-        class="h3 font-red-hat-display font-black leading-tight"
-        data-aos="fade-up"
-      >
-        Ready to level up your screen?<br />
-        <span
-          class="inline-block pb-1 bg-clip-text text-transparent bg-gradient-to-r from-teal-400 to-purple-500"
+      <div data-aos="fade-up">
+        <h2
+          class="h3 font-red-hat-display font-black leading-tight"
         >
-          Start for free today
-        </span>
-      </h2>
+          Set up your first room.<br />
+          <span
+            class="inline-block pb-1 bg-clip-text text-transparent bg-gradient-to-r from-teal-400 to-purple-500"
+          >
+            Free to start.
+          </span>
+        </h2>
+        <p
+          class="mt-3 text-gray-600 dark:text-gray-400"
+        >
+          Connect a screen, send a link, let your guests present. Takes about
+          ten minutes.
+        </p>
+      </div>
       <div
         class="flex flex-col sm:flex-row justify-center md:justify-end gap-3 shrink-0"
         data-aos="fade-up"
@@ -34,7 +40,7 @@
           href="#"
           data-init-demo-jump
         >
-          View live demo
+          Try the live demo
         </a>
       </div>
     </div>
@@ -42,15 +48,5 @@
 </section>
 
 <script>
-  // "View live demo" link → scroll back to the hero
-  document
-    .querySelectorAll<HTMLAnchorElement>("[data-init-demo-jump]")
-    .forEach((el) => {
-      el.addEventListener("click", (e) => {
-        e.preventDefault();
-        document
-          .querySelector("section")
-          ?.scrollIntoView({ behavior: "smooth", block: "start" });
-      });
-    });
+  import "../scripts/demo-jump";
 </script>
