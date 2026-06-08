@@ -172,6 +172,31 @@ export default async function installHocuspocus(app: Express) {
           .catch((err) => {
             logger.warn({ err }, "Failed to bump screen heartbeat (admin)");
           });
+        return;
+      }
+
+      // Handle heartbeat for public projects
+      if (throttleHeartbeatCanBump(`public-hb:${data.documentName}`)) {
+        rootPgPool
+          .query(
+            `insert into app_public.screen_heartbeats (screen_id, last_seen_by_guest_at)
+             select s.id, now()
+             from app_public.screens s
+             join app_public.projects p on p.id = s.current_project_id
+             where s.current_project_id = $1
+               and p.is_public is true
+             on conflict (screen_id) do update
+               set last_seen_by_guest_at = excluded.last_seen_by_guest_at
+               where coalesce(screen_heartbeats.last_seen_by_guest_at, '-infinity'::timestamptz)
+                     < now() - interval '15 seconds'`,
+            [data.documentName],
+          )
+          .catch((err) => {
+            logger.warn(
+              { err },
+              "Failed to bump screen heartbeat (public guest)",
+            );
+          });
       }
     },
     afterUnloadDocument: async (data) => {
