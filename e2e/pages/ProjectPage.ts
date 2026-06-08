@@ -41,12 +41,41 @@ export class ProjectPage {
   }
 
   async present() {
-    await this.presentButton.click();
-    const url = await this.page
-      .getByRole("link", { name: "Open in new tab" })
-      .getAttribute("href");
+    // The Present button opens a popover; "Open in new tab" is a link whose
+    // href is the renderer URL.
+    await this.openPresentMenu();
+    const url = await this.openInNewTabLink.getAttribute("href");
     const newPage = await this.context.newPage();
     await newPage.goto(url!);
     return newPage;
+  }
+
+  // --- Present popover ---
+
+  async openPresentMenu() {
+    await this.presentButton.click();
+  }
+
+  get openInNewTabLink(): Locator {
+    return this.page.getByRole("link", { name: "Open in new tab" });
+  }
+
+  /** A screen row's "present to this screen" button, matched by screen name. */
+  presentScreenOption(screenName: string): Locator {
+    return this.page.getByRole("button", { name: screenName });
+  }
+
+  get presentingHereIndicator(): Locator {
+    return this.page.getByText("Presenting here");
+  }
+
+  get stopPresentingButton(): Locator {
+    return this.page.getByRole("button", {
+      name: "Stop presenting to this screen",
+    });
+  }
+
+  get noScreensSetUpLink(): Locator {
+    return this.page.getByRole("link", { name: "Set up a screen" });
   }
 }
