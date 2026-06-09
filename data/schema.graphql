@@ -5425,6 +5425,9 @@ type ScreenByCodeResult {
 A condition to be used against `Screen` object types. All fields are tested for equality and combined with a logical ‘and.’
 """
 input ScreenCondition {
+  """Checks for equality with the object’s `code` field."""
+  code: String
+
   """Checks for equality with the object’s `currentProjectId` field."""
   currentProjectId: UUID
 
@@ -5633,6 +5636,9 @@ A filter to be used against `Screen` object types. All fields are combined with 
 input ScreenFilter {
   """Checks for all expressions in this list."""
   and: [ScreenFilter!]
+
+  """Filter by the object’s `code` field."""
+  code: StringFilter
 
   """Filter by the object’s `currentProjectId` field."""
   currentProjectId: UUIDFilter
@@ -6217,6 +6223,8 @@ type ScreensEdge {
 
 """Methods to use when ordering `Screen`."""
 enum ScreensOrderBy {
+  CODE_ASC
+  CODE_DESC
   CURRENT_PROJECT_ID_ASC
   CURRENT_PROJECT_ID_DESC
   ID_ASC

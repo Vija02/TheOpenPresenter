@@ -110,6 +110,7 @@ const _linkPlugin = async (pluginName: string) => {
       fs.symlinkSync(
         path.resolve(localPluginDir, pluginName),
         path.resolve(pluginsPath, pluginName),
+        process.platform === "win32" ? "junction" : "dir",
       );
     } else {
       logger.warn(`Linking local plugin '${pluginName}' failed`);
