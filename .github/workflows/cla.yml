@@ -25,6 +25,6 @@ jobs:
           path-to-signatures: 'signatures/version1/cla.json'
           path-to-document: 'https://github.com/Vija02/TheOpenPresenter/blob/main/public/CLA.md'
           # branch should not be protected
-          branch: 'main'
+          branch: 'cla-signatures'
           allowlist: roomote
 
