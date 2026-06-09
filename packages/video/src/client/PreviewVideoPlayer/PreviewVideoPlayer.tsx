@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import ReactPlayer from "react-player";
 import { Config } from "react-player/types";
 
@@ -23,14 +23,26 @@ export const PreviewVideoPlayer: React.FC<PreviewVideoPlayerProps> = ({
   onEnded,
   config,
 }) => {
+  const [isPlaying, setIsPlaying] = useState(playing);
+  const [volume, setVolume] = useState(1);
+  const [isMuted, setIsMuted] = useState(muted ?? false);
+
   return (
     <ReactPlayer
       src={src}
       controls={controls}
-      playing={playing}
-      muted={muted}
+      playing={isPlaying}
+      volume={volume}
+      muted={isMuted}
       width={width}
       height={height}
+      onPlay={() => setIsPlaying(true)}
+      onPause={() => setIsPlaying(false)}
+      onVolumeChange={(e) => {
+        const el = e.currentTarget;
+        setVolume(el.volume);
+        setIsMuted(el.muted);
+      }}
       onEnded={onEnded}
       config={config}
     />
