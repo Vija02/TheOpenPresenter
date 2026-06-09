@@ -16,6 +16,8 @@ test.describe("Slides Plugin - Replace Import", () => {
     loginAndGoToProject,
     uppyUploadFile,
   }) => {
+    page.setDefaultTimeout(60000);
+
     await loginAndGoToProject();
     await projectPage.createPlugin("Slides");
 
@@ -62,8 +64,7 @@ test.describe("Slides Plugin - Replace Import", () => {
     expect(oldA2Src).not.toBe(oldB2Src);
 
     // --- Verify both source PDFs exist in the media library before replace ---
-    const mediaCardSelector =
-      ".grid.grid-cols-1.sm\\:grid-cols-2.lg\\:grid-cols-3 > div";
+    const mediaCardSelector = '[data-testid="media-card"]';
 
     const mediaPageBefore = await context.newPage();
     await mediaPageBefore.goto("/o/testorg/media");

@@ -10,12 +10,8 @@ export class MediaPage {
 
   constructor(public readonly page: Page) {
     this.uploadButton = page.getByRole("button", { name: "Upload" });
-    this.mediaGrid = page.locator(
-      ".grid.grid-cols-1.sm\\:grid-cols-2.lg\\:grid-cols-3",
-    );
-    this.mediaCards = page.locator(
-      ".grid.grid-cols-1.sm\\:grid-cols-2.lg\\:grid-cols-3 > div",
-    );
+    this.mediaGrid = page.locator("[data-virtuoso-scroller]");
+    this.mediaCards = page.locator('[data-testid="media-card"]');
 
     // Uppy Dashboard
     this.uppyDashboard = page.locator(".uppy-Dashboard");
