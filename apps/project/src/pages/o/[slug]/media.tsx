@@ -48,16 +48,31 @@ const VideoPlayerComponent = ({
 }: {
   src: string;
   onEnded?: () => void;
-}) => (
-  <ReactPlayer
-    src={src}
-    width="100%"
-    height="100%"
-    controls
-    playing
-    onEnded={onEnded}
-  />
-);
+}) => {
+  const [playing, setPlaying] = useState(true);
+  const [volume, setVolume] = useState(1);
+  const [muted, setMuted] = useState(false);
+
+  return (
+    <ReactPlayer
+      src={src}
+      width="100%"
+      height="100%"
+      controls
+      playing={playing}
+      volume={volume}
+      muted={muted}
+      onPlay={() => setPlaying(true)}
+      onPause={() => setPlaying(false)}
+      onVolumeChange={(e) => {
+        const el = e.currentTarget;
+        setVolume(el.volume);
+        setMuted(el.muted);
+      }}
+      onEnded={onEnded}
+    />
+  );
+};
 
 const gridComponents: GridComponents = {
   List: forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
