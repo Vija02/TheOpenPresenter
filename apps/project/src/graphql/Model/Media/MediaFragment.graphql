@@ -5,4 +5,5 @@ fragment Media on Media {
   fileSize
   fileExtension
   isComplete
+  createdAt
 }

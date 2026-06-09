@@ -1,6 +1,5 @@
 import { SharedOrgLayout } from "@/components/SharedOrgLayout";
 import { useOrganizationSlug } from "@/lib/permissionHooks/organization";
-import { UploadMediaModal } from "@repo/media-picker/client";
 import {
   MediaWithMediaDependencyFragment,
   useCompleteMediaMutation,
@@ -9,6 +8,7 @@ import {
   useOrganizationMediaIndexPageQuery,
 } from "@repo/graphql";
 import { globalState, useVideoProcessingStatus } from "@repo/lib";
+import { UploadMediaModal } from "@repo/media-picker/client";
 import {
   Badge,
   Button,
@@ -30,9 +30,12 @@ import "@uppy/dashboard/dist/style.min.css";
 import prettyBytes from "pretty-bytes";
 import { useCallback, useMemo, useState } from "react";
 import {
+  VscCalendar,
   VscCheck,
   VscCloudUpload,
+  VscDatabase,
   VscFolder,
+  VscLink,
   VscLinkExternal,
   VscTrash,
 } from "react-icons/vsc";
@@ -97,9 +100,6 @@ const OrganizationMediaPage = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <h1 className="text-3xl font-bold text-primary">Media Library</h1>
-            <Badge variant="default" size="sm">
-              Beta
-            </Badge>
           </div>
           <div className="flex items-center gap-4">
             <Button onClick={() => setIsUploadModalOpen(true)}>
@@ -211,69 +211,40 @@ const MediaCard = ({ media }: { media: MediaWithMediaDependencyFragment }) => {
     return "Unknown";
   }, [media.fileSize]);
 
+  const createdDate = useMemo(() => {
+    if (!media.createdAt) {
+      return null;
+    }
+
+    return new Date(media.createdAt).toLocaleDateString(undefined, {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  }, [media.createdAt]);
+
   return (
-    <div className="bg-white border border-gray-300 overflow-hidden flex flex-col h-full">
-      <MediaPreview
-        media={media}
-        videoPlayerComponent={VideoPlayerComponent}
-        className="aspect-video bg-gray-100"
-        mediaClassName="object-contain"
-        iconClassName="size-12 text-gray-400"
-      />
-
-      {/* Header with status indicator */}
-      <div className="p-3 border-b border-gray-200">
-        <div className="flex items-center justify-between mb-2">
-          <h3
-            className="font-semibold text-primary truncate flex-1 mr-2"
-            title={media.mediaName}
-          >
-            {media.mediaName}
-          </h3>
-          <div
-            className={`inline-flex items-center px-2 py-1 text-xs font-medium ${
-              media.isComplete
-                ? "bg-green-100 text-green-800"
-                : "bg-yellow-100 text-yellow-800"
-            }`}
-          >
-            {media.isComplete ? "Complete" : "Processing"}
-          </div>
-        </div>
-
-        <p
-          className="text-sm text-secondary truncate"
+    <div className="group bg-white border border-gray-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden flex flex-col h-full">
+      <div className="relative flex items-center px-2 py-1.5 border-b border-gray-100">
+        <h3
+          className="flex-1 min-w-0 font-semibold text-sm text-primary truncate"
           title={
             media.originalName === "" || media.originalName === null
-              ? "No original name"
+              ? media.mediaName
               : media.originalName
           }
         >
-          Original: {media.originalName === "" ? "-" : media.originalName}
-        </p>
-      </div>
+          {media.originalName === "" || media.originalName === null
+            ? media.mediaName
+            : media.originalName}
+        </h3>
 
-      {/* Content */}
-      <div className="p-3 space-y-2 flex-1">
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-tertiary">File Size</span>
-          <span className="font-medium text-primary">{fileSize}</span>
-        </div>
-
-        <MediaDependencyPanel
-          totalCount={media.dependencies.totalCount}
-          parentMediaId={media.id}
-        />
-      </div>
-
-      {/* Actions */}
-      <div className="px-3 py-2 bg-gray-50 border-t border-gray-200 mt-auto">
-        <div className="flex items-center justify-center gap-1">
+        <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-0.5 pl-12 bg-gradient-to-l from-white from-60% via-white to-transparent opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
           {!media.isComplete && (
             <Button
               variant="ghost"
               size="sm"
-              className="text-secondary hover:bg-green-100 hover:text-green-700"
+              className="text-secondary hover:bg-green-50 hover:text-green-700"
               isLoading={completeIsLoading}
               onClick={() => handleCompleteMedia(media.id)}
               title="Mark as complete"
@@ -286,7 +257,7 @@ const MediaCard = ({ media }: { media: MediaWithMediaDependencyFragment }) => {
             <Button
               variant="ghost"
               size="sm"
-              className="text-secondary hover:bg-blue-100 hover:text-blue-700"
+              className="text-secondary hover:bg-blue-50 hover:text-blue-700"
               title="Open file"
             >
               <VscLinkExternal className="w-4 h-4" />
@@ -303,12 +274,49 @@ const MediaCard = ({ media }: { media: MediaWithMediaDependencyFragment }) => {
             <Button
               variant="ghost"
               size="sm"
-              className="text-secondary hover:bg-red-100 hover:text-red-700"
+              className="text-secondary hover:bg-red-50 hover:text-red-700"
               title="Delete file"
             >
               <VscTrash className="w-4 h-4" />
             </Button>
           </PopConfirm>
+        </div>
+      </div>
+
+      <div className="aspect-video bg-gray-100">
+        <MediaPreview
+          media={media}
+          videoPlayerComponent={VideoPlayerComponent}
+          className="size-full"
+          mediaClassName="object-contain"
+          iconClassName="size-12 text-gray-400"
+        />
+      </div>
+
+      {/* Meta */}
+      <div className="p-2 mt-auto flex items-center flex-wrap gap-2">
+        {createdDate && (
+          <span className="inline-flex items-center gap-1 text-xs font-medium text-secondary">
+            <VscCalendar className="w-3 h-3" />
+            {createdDate}
+          </span>
+        )}
+
+        {!media.isComplete && (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm bg-yellow-100 text-xs font-medium text-yellow-700">
+            Processing
+          </span>
+        )}
+
+        <div className="ml-auto flex items-center gap-2">
+          <MediaDependencyPanel
+            totalCount={media.dependencies.totalCount}
+            parentMediaId={media.id}
+          />
+          <span className="inline-flex items-center gap-1 text-xs font-medium text-secondary">
+            <VscDatabase className="w-3 h-3" />
+            {fileSize}
+          </span>
         </div>
       </div>
     </div>
@@ -331,17 +339,12 @@ const MediaDependencyPanel = ({
       isLazy
       toggler={({ onToggle }) => (
         <button
-          className="w-full text-left p-2 bg-blue-50 hover:bg-blue-100 border border-blue-200"
+          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm bg-blue-50 hover:bg-blue-100 text-xs font-medium text-blue-700 cursor-pointer"
           onClick={onToggle}
+          title={`${totalCount} ${totalCount === 1 ? "dependency" : "dependencies"}`}
         >
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-blue-700">
-              Dependencies
-            </span>
-            <span className="text-xs bg-blue-200 text-blue-800 px-2 py-1">
-              {totalCount}
-            </span>
-          </div>
+          <VscLink className="w-3 h-3" />
+          {totalCount}
         </button>
       )}
     >
