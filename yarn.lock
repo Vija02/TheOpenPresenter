@@ -10118,6 +10118,7 @@ __metadata:
     react-qr-code: "npm:^2.0.15"
     react-select: "npm:^5.10.1"
     react-toastify: "npm:^11.0.5"
+    react-virtuoso: "npm:^4.12.3"
     slugify: "npm:^1.6.6"
     tailwindcss: "npm:^4.1.10"
     typescript: "npm:5.9.3"
@@ -29975,6 +29976,16 @@ __metadata:
     react: "*"
     react-dom: "*"
   checksum: 10c0/3d6a8f46539b32698d31600239e72b5c23376a5343d0d687c6520e14532ed7f5c72c9b99d222be4eeacb0401ce3ae763d5648d0476440c8b4a6afbd56dc98bfa
+  languageName: node
+  linkType: hard
+
+"react-virtuoso@npm:^4.12.3":
+  version: 4.18.7
+  resolution: "react-virtuoso@npm:4.18.7"
+  peerDependencies:
+    react: ">=16 || >=17 || >= 18 || >= 19"
+    react-dom: ">=16 || >=17 || >= 18 || >=19"
+  checksum: 10c0/ab0c7c75cc35e1e4ec8f6cf871f3085459574606ffd94507d90f9fccbc9dde504859a80c48eebf97a9f5997ad70afae030e34b6a3ad29a9d0f48a8ae9276e050
   languageName: node
   linkType: hard
 
