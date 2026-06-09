@@ -10,7 +10,6 @@ import {
 import { globalState, useVideoProcessingStatus } from "@repo/lib";
 import { UploadMediaModal } from "@repo/media-picker/client";
 import {
-  Badge,
   Button,
   Checkbox,
   Dialog,
@@ -28,7 +27,7 @@ import {
 import "@uppy/core/dist/style.min.css";
 import "@uppy/dashboard/dist/style.min.css";
 import prettyBytes from "pretty-bytes";
-import { useCallback, useMemo, useState } from "react";
+import { forwardRef, useCallback, useMemo, useState } from "react";
 import {
   VscCalendar,
   VscCheck,
@@ -41,6 +40,7 @@ import {
 } from "react-icons/vsc";
 import ReactPlayer from "react-player";
 import { toast } from "react-toastify";
+import { GridComponents, VirtuosoGrid } from "react-virtuoso";
 
 const VideoPlayerComponent = ({
   src,
@@ -58,6 +58,21 @@ const VideoPlayerComponent = ({
     onEnded={onEnded}
   />
 );
+
+const gridComponents: GridComponents = {
+  List: forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+    ({ children, ...props }, ref) => (
+      <div ref={ref} {...props} className="flex flex-wrap">
+        {children}
+      </div>
+    ),
+  ),
+  Item: ({ children, ...props }) => (
+    <div {...props} className="w-full sm:w-1/2 lg:w-1/3 xl:w-1/4 2xl:w-1/5 p-2">
+      {children}
+    </div>
+  ),
+};
 
 const OrganizationMediaPage = () => {
   const slug = useOrganizationSlug();
@@ -121,18 +136,22 @@ const OrganizationMediaPage = () => {
         </div>
 
         {/* Empty state */}
-        {emptyMedia && (
+        {emptyMedia ? (
           <div className="flex justify-center py-12">
             <EmptyMedia />
           </div>
+        ) : (
+          /* Virtualized media grid (keeps the page's window scroll) */
+          <VirtuosoGrid
+            useWindowScroll
+            data={mediaList}
+            components={gridComponents}
+            computeItemKey={(_index, media) => media.id}
+            itemContent={(_index, media) => <MediaCard media={media} />}
+            increaseViewportBy={{ top: 1200, bottom: 1200 }}
+            className="-mx-2"
+          />
         )}
-
-        {/* Media grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
-          {mediaList.map((media) => (
-            <MediaCard key={media.id} media={media} />
-          ))}
-        </div>
       </div>
 
       {/* Upload Modal */}
