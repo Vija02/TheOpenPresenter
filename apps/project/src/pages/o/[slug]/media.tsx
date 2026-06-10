@@ -27,7 +27,13 @@ import {
 import "@uppy/core/dist/style.min.css";
 import "@uppy/dashboard/dist/style.min.css";
 import prettyBytes from "pretty-bytes";
-import { forwardRef, useCallback, useMemo, useState } from "react";
+import {
+  HTMLAttributes,
+  forwardRef,
+  useCallback,
+  useMemo,
+  useState,
+} from "react";
 import {
   VscCalendar,
   VscCheck,
@@ -75,7 +81,7 @@ const VideoPlayerComponent = ({
 };
 
 const gridComponents: GridComponents = {
-  List: forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+  List: forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
     ({ children, ...props }, ref) => (
       <div ref={ref} {...props} className="flex flex-wrap">
         {children}
@@ -258,7 +264,10 @@ const MediaCard = ({ media }: { media: MediaWithMediaDependencyFragment }) => {
   }, [media.createdAt]);
 
   return (
-    <div className="group bg-white border border-gray-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden flex flex-col h-full">
+    <div
+      data-testid="media-card"
+      className="group bg-white border border-gray-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden flex flex-col h-full"
+    >
       <div className="relative flex items-center px-2 py-1.5 border-b border-gray-100">
         <h3
           className="flex-1 min-w-0 font-semibold text-sm text-primary truncate"
