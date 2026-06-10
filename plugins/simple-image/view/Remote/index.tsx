@@ -133,12 +133,6 @@ const ImageRemote = () => {
       body={
         <div className="p-3 w-full">
           <SlideGrid pluginAPI={pluginApi}>
-            <Slide pluginAPI={pluginApi} heading="" onClick={handleMediaPicker}>
-              <div className="group h-full w-full flex flex-col items-center justify-center gap-2 border-2 border-dashed border-tertiary text-tertiary hover:border-secondary hover:text-secondary hover:bg-black/5 transition-colors cursor-pointer">
-                <FaPlus className="size-6" />
-                <span className="text-sm font-medium">Add image</span>
-              </div>
-            </Slide>
             {pluginData.images.map((imgSrc, i) => (
               <Slide
                 key={`${i}-${pluginApi.media.resolveMediaUrl(imgSrc)}`}
@@ -200,6 +194,12 @@ const ImageRemote = () => {
                 )}
               </Slide>
             ))}
+            <Slide pluginAPI={pluginApi} heading="" onClick={handleMediaPicker}>
+              <div className="group h-full w-full flex flex-col items-center justify-center gap-2 border-2 border-dashed border-tertiary text-tertiary hover:border-secondary hover:text-secondary hover:bg-black/5 transition-colors cursor-pointer">
+                <FaPlus className="size-6" />
+                <span className="text-sm font-medium">Add image</span>
+              </div>
+            </Slide>
           </SlideGrid>
         </div>
       }
