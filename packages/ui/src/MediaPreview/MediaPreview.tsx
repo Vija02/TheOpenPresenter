@@ -65,6 +65,9 @@ export type MediaPreviewProps = {
 const isPdfFile = (extension: string | null | undefined): boolean =>
   isExtensionInList(extension, [".pdf"]);
 
+const isPngFile = (extension: string | null | undefined): boolean =>
+  isExtensionInList(extension, [".png"]);
+
 const getFallbackIcon = (
   fileExtension: string | null | undefined,
 ): React.ComponentType<{ className?: string }> => {
@@ -125,6 +128,7 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
   );
   const isImage = isImageFile(media.fileExtension);
   const isVideo = isVideoFile(media.fileExtension);
+  const isPng = isPngFile(media.fileExtension);
 
   // Video is processing if it's a video file and not ready
   const isVideoProcessing = isVideo && !isVideoReady(media);
@@ -246,7 +250,12 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
   // Case 4: Browser-supported image (show directly)
   if (isBrowserSupportedImage) {
     return (
-      <div className={containerClassName}>
+      <div
+        className={cn(
+          isPng && "ui--media-preview-checkerboard",
+          containerClassName,
+        )}
+      >
         <img src={mediaUrl} alt={alt} className={defaultMediaClassName} />
       </div>
     );
