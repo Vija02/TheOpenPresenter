@@ -10303,6 +10303,7 @@ __metadata:
     set-cookie-parser: "npm:^2.7.1"
     sharp: "npm:0.34.5"
     source-map-support: "npm:^0.5.21"
+    stripe: "npm:^22.2.0"
     ts-node: "npm:^10.9.2"
     tsup: "npm:^8.3.6"
     typeid-js: "npm:^1.1.0"
@@ -32344,6 +32345,18 @@ __metadata:
   version: 2.0.1
   resolution: "strip-json-comments@npm:2.0.1"
   checksum: 10c0/b509231cbdee45064ff4f9fd73609e2bcc4e84a4d508e9dd0f31f70356473fde18abfb5838c17d56fb236f5a06b102ef115438de0600b749e818a35fbbc48c43
+  languageName: node
+  linkType: hard
+
+"stripe@npm:^22.2.0":
+  version: 22.2.0
+  resolution: "stripe@npm:22.2.0"
+  peerDependencies:
+    "@types/node": ">=18"
+  peerDependenciesMeta:
+    "@types/node":
+      optional: true
+  checksum: 10c0/4e633c6b2ebfb333fcf99dbea805ed38f92262ab8c94a99a329915aa73cab8fa51a130ac7e19bf744a2564c935e8ecc09fd86238f2db22bb70bfb9529b77b1f1
   languageName: node
   linkType: hard
 
