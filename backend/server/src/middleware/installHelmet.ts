@@ -40,6 +40,8 @@ export default async function installHelmet(app: Express) {
           // ES Module shim
           "https://ga.jspm.io",
           "https://esm.sh",
+          // Stripe
+          "https://js.stripe.com",
           // Nonce for general usage
           `'nonce-${nonce}'`,
           "blob:",

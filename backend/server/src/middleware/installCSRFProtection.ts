@@ -24,6 +24,9 @@ export default (app: Express) => {
     ) {
       // Bypass CSRF for GraphiQL
       next();
+    } else if (req.method === "POST" && req.path === "/stripe/webhook") {
+      // Bypass CSRF for Stripe webhook
+      next();
     } else {
       csrfProtection(req, res, next);
     }
