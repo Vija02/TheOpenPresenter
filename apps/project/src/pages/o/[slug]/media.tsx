@@ -133,11 +133,13 @@ const OrganizationMediaPage = () => {
     <SharedOrgLayout title="Dashboard" sharedOrgQuery={query}>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
-            <h1 className="text-3xl font-bold text-primary">Media Library</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-primary">
+              Media Library
+            </h1>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4">
             <Button onClick={() => setIsUploadModalOpen(true)}>
               <VscCloudUpload className="w-4 h-4" />
               Upload
@@ -337,21 +339,24 @@ const MediaCard = ({ media }: { media: MediaWithMediaDependencyFragment }) => {
       </div>
 
       {/* Meta */}
-      <div className="p-2 mt-auto flex items-center flex-wrap gap-2">
+      <div className="p-2 mt-auto flex items-center gap-2">
         {createdDate && (
-          <span className="inline-flex items-center gap-1 text-xs font-medium text-secondary">
-            <VscCalendar className="w-3 h-3" />
-            {createdDate}
+          <span
+            className="inline-flex items-center gap-1 text-xs font-medium text-secondary min-w-0"
+            title={createdDate}
+          >
+            <VscCalendar className="w-3 h-3 shrink-0" />
+            <span className="truncate">{createdDate}</span>
           </span>
         )}
 
         {!media.isComplete && (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm bg-yellow-100 text-xs font-medium text-yellow-700">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm bg-yellow-100 text-xs font-medium text-yellow-700 shrink-0">
             Processing
           </span>
         )}
 
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-2 shrink-0">
           <MediaDependencyPanel
             totalCount={media.dependencies.totalCount}
             parentMediaId={media.id}
@@ -409,7 +414,7 @@ const MediaDependencyModal = ({
 
   return (
     <Dialog open={isOpen ?? false} onOpenChange={onToggle ?? (() => {})}>
-      <DialogContent size="2xl">
+      <DialogContent size="3xl">
         <DialogHeader>
           <DialogTitle>Media Dependencies</DialogTitle>
         </DialogHeader>
@@ -418,7 +423,7 @@ const MediaDependencyModal = ({
             <p className="text-sm text-secondary">
               These files depend on the selected media file:
             </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-96 overflow-y-auto">
+            <div className="grid grid-cols-1 xs:grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 overflow-y-auto">
               {data?.mediaDependencies?.nodes.map((mediaDependency) => (
                 <MediaCard
                   key={mediaDependency.childMedia?.id}
