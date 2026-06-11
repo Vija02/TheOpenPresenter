@@ -76,6 +76,7 @@
     "set-cookie-parser": "^2.7.1",
     "sharp": "0.34.5",
     "source-map-support": "^0.5.21",
+    "stripe": "^22.2.0",
     "ts-node": "^10.9.2",
     "typeid-js": "^1.1.0",
     "uid-safe": "^2.1.5",
