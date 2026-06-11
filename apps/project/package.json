@@ -17,6 +17,8 @@
     "@repo/base-plugin": "*",
     "@repo/media-picker": "*",
     "@repo/observability": "*",
+    "@stripe/react-stripe-js": "^6.6.0",
+    "@stripe/stripe-js": "^9.8.0",
     "@tanstack/react-query": "^5.62.3",
     "date-fns": "^4.1.0",
     "event-source-plus": "^0.1.12",
