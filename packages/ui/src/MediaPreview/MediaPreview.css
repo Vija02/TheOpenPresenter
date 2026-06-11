@@ -15,6 +15,21 @@
   object-fit: contain;
 }
 
+.ui--media-preview-checkerboard {
+  background-color: white;
+  background-image:
+    linear-gradient(45deg, #ccc 25%, transparent 25%),
+    linear-gradient(-45deg, #ccc 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #ccc 75%),
+    linear-gradient(-45deg, transparent 75%, #ccc 75%);
+  background-size: 16px 16px;
+  background-position:
+    0 0,
+    0 8px,
+    8px -8px,
+    -8px 0;
+}
+
 .ui--media-preview-icon {
   font-size: 1.5rem;
   line-height: 2rem;
