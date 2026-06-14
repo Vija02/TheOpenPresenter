@@ -24,18 +24,31 @@ const Player = () => {
     };
     const player = new IcecastMetadataPlayer(url!, {
       enableLogging: true,
+      playbackMethod: "html5",
       onPlay: () => {
         setLocalIsPlaying(true);
       },
       onStop: () => {
         setLocalIsPlaying(false);
       },
-      onWarn: (msg) => {
-        pluginApi.log.warn({ url, msg }, "Warning on radio playback");
+      onWarn: (...messages) => {
+        pluginApi.log.warn({ url, messages }, "Warning on radio playback");
       },
       onError: (msg, err) => {
-        pluginApi.log.error({ url, msg, err }, "Error on radio playback");
+        pluginApi.log.error(
+          { url, msg, err: err?.message ?? String(err ?? "") },
+          "Error on radio playback",
+        );
         pluginApi.awareness.setAwarenessStateData({ isError: true });
+      },
+      onRetry: () => {
+        pluginApi.log.warn({ url }, "Retrying radio connection");
+      },
+      onRetryTimeout: () => {
+        pluginApi.log.error({ url }, "Radio retry attempts timed out");
+      },
+      onStreamEnd: () => {
+        pluginApi.log.warn({ url }, "Radio stream ended");
       },
       metadataTypes: ["ogg"],
       audioElement,
