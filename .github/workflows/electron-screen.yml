@@ -1,0 +1,128 @@
+name: Electron Screen App - Build & Release
+
+on:
+  push:
+    branches: [main]
+    tags: ['electron-screen-v*']
+  pull_request:
+    paths:
+      - 'native-apps/electron-screen/**'
+      - '.github/workflows/electron-screen.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: electron-screen-build-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build (${{ matrix.label }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - label: linux-x86_64
+            runner: ubuntu-22.04
+          - label: linux-aarch64
+            runner: ubuntu-22.04-arm
+
+    runs-on: ${{ matrix.runner }}
+    defaults:
+      run:
+        working-directory: native-apps/electron-screen
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: native-apps/electron-screen/package-lock.json
+
+      # rpm: required for the rpm target. libarchive-tools: provides bsdtar,
+      # required by electron-builder's fpm for the pacman target.
+      - name: Install packaging tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends rpm libarchive-tools
+
+      - name: npm ci
+        run: npm ci --no-audit --no-fund
+
+      # esbuild (electron-vite) does not type-check, so do it explicitly.
+      - name: Type check
+        shell: bash
+        run: |
+          npx tsc --noEmit -p tsconfig.node.json
+          npx tsc --noEmit -p tsconfig.web.json
+
+      - name: Build (electron-vite)
+        run: npm run build
+
+      # electron-builder downloads its own fpm/AppImage tooling; no extra system
+      # packages are needed on the GitHub-hosted runners. macOS builds are left
+      # unsigned (no certificates configured) — disable auto-discovery so it does
+      # not fail looking for one.
+      # No target args: builds every target listed under `linux` in
+      # electron-builder.yml (AppImage, deb, rpm, pacman, tar.gz).
+      - name: Package (electron-builder)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx electron-builder --linux --publish never
+
+      - name: Stage outputs
+        run: |
+          set -euo pipefail
+          mkdir -p out
+          find dist -maxdepth 1 -type f \
+            \( -name '*.deb' -o -name '*.rpm' -o -name '*.pacman' \
+               -o -name '*.AppImage' -o -name '*.tar.gz' \) \
+            -exec cp {} out/ \;
+          ls -la out/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: electron-screen-${{ matrix.label }}
+          path: native-apps/electron-screen/out/
+          if-no-files-found: error
+          retention-days: 14
+
+  release:
+    name: Release
+    needs: build
+    if: github.ref == 'refs/heads/main' || github.ref_type == 'tag'
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: List artifacts
+        run: ls -la artifacts
+
+      - name: Nightly release (main pushes)
+        if: github.ref == 'refs/heads/main'
+        uses: andelf/nightly-release@main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: electron-screen-nightly
+          name: 'Electron Screen Nightly $$'
+          prerelease: true
+          body: 'Nightly build of TheOpenPresenter Electron Screen. Use with caution.'
+          files: |
+            artifacts/*
+
+      - name: Tagged release
+        if: github.ref_type == 'tag'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          generate_release_notes: true
+          files: |
+            artifacts/*

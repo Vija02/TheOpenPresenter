@@ -1,0 +1,36 @@
+{
+  "name": "electron-screen",
+  "private": true,
+  "version": "0.1.0",
+  "description": "TheOpenPresenter Screen",
+  "homepage": "https://theopenpresenter.com",
+  "author": {
+    "name": "TheOpenPresenter",
+    "email": "hello@theopenpresenter.com"
+  },
+  "main": "out/main/index.js",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "preview": "electron-vite preview",
+    "pack": "npm run build && electron-builder --dir",
+    "dist": "npm run build && electron-builder"
+  },
+  "dependencies": {
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "qrcode.react": "^4.2.0",
+    "koffi": "^2.9.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "@vitejs/plugin-react": "^4.6.0",
+    "electron": "^33.4.0",
+    "electron-builder": "^25.1.8",
+    "electron-vite": "^2.3.0",
+    "typescript": "~5.8.3",
+    "vite": "^5.4.0"
+  }
+}
