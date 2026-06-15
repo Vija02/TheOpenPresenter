@@ -33,6 +33,7 @@ type PluginMetaDataProviderType = {
   orgId: string;
   orgSlug: string;
   organizationType: OrganizationType | null;
+  experimentalFeaturesEnabled: boolean;
   projectSlug: string;
   projectId: string;
   currentUser: CurrentUser | null;
@@ -47,6 +48,7 @@ const initialData: PluginMetaDataProviderType = {
   orgId: "",
   orgSlug: "",
   organizationType: null,
+  experimentalFeaturesEnabled: false,
   projectSlug: "",
   projectId: "",
   currentUser: null,
@@ -151,6 +153,7 @@ export function PluginMetaDataProvider({
         orgSlug,
         organizationType:
           pluginMetaData?.organizationBySlug?.organizationType ?? null,
+        experimentalFeaturesEnabled: pluginMetaData?.organizationBySlug?.experimentalFeaturesEnabled ?? false,
         projectSlug,
         projectId: projectId,
         currentUser,

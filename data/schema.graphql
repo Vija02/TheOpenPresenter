@@ -2878,6 +2878,9 @@ type Organization {
   createdAt: Datetime!
   currentUserIsBillingContact: Boolean
   currentUserIsOwner: Boolean
+
+  """Whether an organization has enabled experimental features."""
+  experimentalFeaturesEnabled: Boolean!
   id: UUID!
   isPublic: Boolean
 
@@ -3536,6 +3539,8 @@ enum OrganizationMembershipsOrderBy {
 Represents an update to a `Organization`. Fields that are set will be updated.
 """
 input OrganizationPatch {
+  """Whether an organization has enabled experimental features."""
+  experimentalFeaturesEnabled: Boolean
   isPublic: Boolean
   name: String
 

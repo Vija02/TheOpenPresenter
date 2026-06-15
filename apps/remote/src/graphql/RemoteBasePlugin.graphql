@@ -12,6 +12,7 @@ query RemoteBasePlugin($orgSlug: String!, $projectSlug: String!) {
   organizationBySlug(slug: $orgSlug) {
     id
     organizationType
+    experimentalFeaturesEnabled
     projects(condition: { slug: $projectSlug }) {
       nodes {
         id

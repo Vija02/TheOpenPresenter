@@ -2,16 +2,16 @@
 -- PostgreSQL database dump
 --
 
-\restrict SqxrAR9MB7vbejLhdgMSPGEQLgUZbGbabtITkAhs5PTMXdp8jE73JfAOcGfCj5H
+\restrict GRBcN9SVUvekjg15RLSurIGyOxnUBm4CyeIMenOAoLuBgprmcIvjmgT9AsutF4l
 
--- Dumped from database version 17.0 (Debian 17.0-1.pgdg120+1)
--- Dumped by pg_dump version 18.4
+-- Dumped from database version 17.4
+-- Dumped by pg_dump version 17.10
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
 SET transaction_timeout = 0;
-SET client_encoding = 'UTF8';
+SET client_encoding = 'WIN1252';
 SET standard_conforming_strings = on;
 SELECT pg_catalog.set_config('search_path', '', false);
 SET check_function_bodies = false;
@@ -706,7 +706,7 @@ declare
   v_avatar_url text;
   v_user_authentication_id uuid;
 begin
-  -- Extract data from the userâ€™s OAuth profile data.
+  -- Extract data from the user’s OAuth profile data.
   v_email := f_profile ->> 'email';
   v_name := f_profile ->> 'name';
   v_username := f_profile ->> 'username';
@@ -748,7 +748,7 @@ begin
     avatar_url => v_avatar_url
   );
 
-  -- Insert the userâ€™s private account data (e.g. OAuth tokens)
+  -- Insert the user’s private account data (e.g. OAuth tokens)
   insert into app_public.user_authentications (user_id, service, identifier, details) values
     (v_user.id, f_service, f_identifier, f_profile) returning id into v_user_authentication_id;
   insert into app_private.user_authentication_secrets (user_authentication_id, details) values
@@ -1519,7 +1519,8 @@ CREATE TABLE app_public.organizations (
     name text NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     is_public boolean DEFAULT false,
-    organization_type app_public.organization_type DEFAULT 'venue'::app_public.organization_type NOT NULL
+    organization_type app_public.organization_type DEFAULT 'venue'::app_public.organization_type NOT NULL,
+    experimental_features_enabled boolean DEFAULT false NOT NULL
 );
 
 
@@ -1528,6 +1529,13 @@ CREATE TABLE app_public.organizations (
 --
 
 COMMENT ON COLUMN app_public.organizations.organization_type IS 'The kind of organization this is (e.g. church, venue)';
+
+
+--
+-- Name: COLUMN organizations.experimental_features_enabled; Type: COMMENT; Schema: app_public; Owner: -
+--
+
+COMMENT ON COLUMN app_public.organizations.experimental_features_enabled IS 'Whether an organization has enabled experimental features.';
 
 
 --
@@ -5968,6 +5976,13 @@ GRANT UPDATE(organization_type) ON TABLE app_public.organizations TO theopenpres
 
 
 --
+-- Name: COLUMN organizations.experimental_features_enabled; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT UPDATE(experimental_features_enabled) ON TABLE app_public.organizations TO theopenpresenter_visitor;
+
+
+--
 -- Name: FUNCTION create_organization(slug public.citext, name text, organization_type app_public.organization_type); Type: ACL; Schema: app_public; Owner: -
 --
 
@@ -6840,5 +6855,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE theopenpresenter REVOKE ALL ON FUNCTIONS FROM 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict SqxrAR9MB7vbejLhdgMSPGEQLgUZbGbabtITkAhs5PTMXdp8jE73JfAOcGfCj5H
+\unrestrict GRBcN9SVUvekjg15RLSurIGyOxnUBm4CyeIMenOAoLuBgprmcIvjmgT9AsutF4l
 
