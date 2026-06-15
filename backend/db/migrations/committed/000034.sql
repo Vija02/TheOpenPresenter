@@ -1,7 +1,10 @@
 --! Previous: sha1:4864a32a5efd145265d0edee743610105644d0a7
---! Hash: sha1:1ea0e0542a67a454bc441e5fa30add04a8674644
+--! Hash: sha1:86ccdc677db263f3cddd92882cc8e17bb95ccde2
 
 --! split: 1-current.sql
+ALTER TABLE app_public.organizations 
+DROP COLUMN IF EXISTS experimental_features_enabled;
+
 ALTER TABLE app_public.organizations 
 ADD COLUMN experimental_features_enabled boolean DEFAULT false NOT NULL;
 
