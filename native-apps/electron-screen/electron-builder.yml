@@ -9,6 +9,9 @@ files:
   - package.json
 asarUnpack:
   - node_modules/koffi/**
+extraResources:
+  - from: packaging/icon.png
+    to: icon.png
 mac:
   target:
     - dmg
