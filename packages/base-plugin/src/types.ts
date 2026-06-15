@@ -129,6 +129,7 @@ export type MiscProps = {
   derivation?: DerivationConfig | null;
   isPublicAccess: boolean;
   organizationType: OrganizationType | null;
+  experimentalFeaturesEnabled: boolean;
 };
 
 export type WebComponentProps<TrpcClient> = {

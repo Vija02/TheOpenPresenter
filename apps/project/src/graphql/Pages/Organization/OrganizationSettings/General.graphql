@@ -11,5 +11,6 @@ fragment OrganizationSettingsGeneralInfo on Query {
     slug
     isPublic
     organizationType
+    experimentalFeaturesEnabled
   }
 }

@@ -61,6 +61,7 @@ const formSchema = z.object({
     required_error: "Please choose what kind of organization this is",
     invalid_type_error: "Please choose what kind of organization this is",
   }),
+  experimentalFeaturesEnabled: z.boolean().optional(),
 });
 
 type FormInputs = z.infer<typeof formSchema>;
@@ -82,6 +83,7 @@ const OrganizationSettingsIndexPageInner = ({
       name,
       isPublic: isPublic ?? false,
       organizationType: organizationType ?? OrganizationType.Venue,
+      experimentalFeaturesEnabled: organization.experimentalFeaturesEnabled ?? false,
     },
   });
 
@@ -97,6 +99,7 @@ const OrganizationSettingsIndexPageInner = ({
               name: values.name,
               isPublic: values.isPublic,
               organizationType: values.organizationType,
+              experimentalFeaturesEnabled: values.experimentalFeaturesEnabled,
             },
           },
         });
@@ -163,6 +166,14 @@ const OrganizationSettingsIndexPageInner = ({
             disabled={!userHaveAccess}
           />
 
+          <CheckboxControl
+            control={form.control}
+            name="experimentalFeaturesEnabled"
+            label="Enable experimental features"
+            description="Turn this on to access beta features before they are widely released."
+            disabled={!userHaveAccess}
+          />
+          
           {error ? (
             <Alert variant="destructive" title="Error updating organization">
               {extractError(error).message}

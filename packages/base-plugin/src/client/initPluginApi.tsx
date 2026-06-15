@@ -80,6 +80,7 @@ export function initPluginApi<
     isPublicAccess: misc.isPublicAccess,
     org: {
       organizationType: misc.organizationType,
+      experimentalFeaturesEnabled: misc.experimentalFeaturesEnabled,
     },
     awareness: {
       awarenessObj: awarenessContext.awarenessObj,

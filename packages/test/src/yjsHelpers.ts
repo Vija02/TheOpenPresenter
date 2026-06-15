@@ -237,6 +237,7 @@ export const simulateUser = (
       parentContainer: document.body,
       isPublicAccess: false,
       organizationType: null,
+      experimentalFeaturesEnabled: false,
     },
     trpcClient: null,
   } as WebComponentProps<any>;
