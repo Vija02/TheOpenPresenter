@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict aiueOaxZIgfJ8GvEcTC9QJ4yKhe5MttUS1nWdOmuqHzvdqNc97DTAgmnfUa6nkx
+\restrict JgvkAkEDKbAACCEAJ3r7UzHNmhnI3aYlBg1zK0XDAvSracftoEFFcb9Q0dm9gTR
 
 -- Dumped from database version 17.0 (Debian 17.0-1.pgdg120+1)
 -- Dumped by pg_dump version 18.4
@@ -6855,5 +6855,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE theopenpresenter REVOKE ALL ON FUNCTIONS FROM 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict aiueOaxZIgfJ8GvEcTC9QJ4yKhe5MttUS1nWdOmuqHzvdqNc97DTAgmnfUa6nkx
+\unrestrict JgvkAkEDKbAACCEAJ3r7UzHNmhnI3aYlBg1zK0XDAvSracftoEFFcb9Q0dm9gTR
 
