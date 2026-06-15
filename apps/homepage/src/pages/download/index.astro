@@ -66,7 +66,7 @@ import PageIllustration from "../../components/PageIllustration.astro";
         <div class="flex flex-col gap-8">
           <!-- Kiosk App (TV + Desktop) -->
           <div
-            class="rounded-lg border border-gray-200 dark:border-gray-800 p-8"
+            class="relative z-20 rounded-lg border border-gray-200 dark:border-gray-800 p-8"
             data-aos="fade-up"
           >
             <h2 class="h3 font-red-hat-display mb-2">Kiosk App</h2>
@@ -216,6 +216,100 @@ import PageIllustration from "../../components/PageIllustration.astro";
                   > instead.
                 </p>
               </div>
+
+              <!-- Linux -->
+              <div>
+                <h4 class="font-medium text-lg mb-3">Linux</h4>
+                <details class="group relative inline-block text-left">
+                  <summary
+                    class="inline-flex items-center justify-center gap-3 px-6 py-3 rounded-md bg-gray-900 hover:bg-gray-700 text-white dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200 font-medium shadow-sm hover:shadow-lg transition duration-150 ease-in-out cursor-pointer list-none [&::-webkit-details-marker]:hidden"
+                  >
+                    <svg
+                      class="w-6 h-6 fill-current"
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M17.61.455a3.41 3.41 0 0 0-3.41 3.41 3.41 3.41 0 0 0 3.41 3.41 3.41 3.41 0 0 0 3.41-3.41 3.41 3.41 0 0 0-3.41-3.41zM12.92.8C8.923.777 5.137 2.941 3.148 6.451a4.5 4.5 0 0 1 .26-.007 4.92 4.92 0 0 1 2.585.737A8.316 8.316 0 0 1 12.688 3.6 4.944 4.944 0 0 1 13.723.834 11.008 11.008 0 0 0 12.92.8zm9.226 4.994a4.915 4.915 0 0 1-1.918 2.246 8.36 8.36 0 0 1-.273 8.303 4.89 4.89 0 0 1 1.632 2.54 11.156 11.156 0 0 0 .559-13.089zM3.41 7.932A3.41 3.41 0 0 0 0 11.342a3.41 3.41 0 0 0 3.41 3.409 3.41 3.41 0 0 0 3.41-3.41 3.41 3.41 0 0 0-3.41-3.41zm2.027 7.866a4.908 4.908 0 0 1-2.915.358 11.1 11.1 0 0 0 7.991 6.698 11.234 11.234 0 0 0 2.422.249 4.879 4.879 0 0 1-.999-2.85 8.484 8.484 0 0 1-.836-.136 8.304 8.304 0 0 1-5.663-4.32zm11.405.928a3.41 3.41 0 0 0-3.41 3.41 3.41 3.41 0 0 0 3.41 3.41 3.41 3.41 0 0 0 3.41-3.41 3.41 3.41 0 0 0-3.41-3.41z"
+                      ></path>
+                    </svg>
+                    <span class="flex flex-col items-start leading-tight text-left">
+                      <span class="text-xs opacity-80">Download for</span>
+                      <span class="text-base font-semibold">Linux</span>
+                    </span>
+                    <svg
+                      class="w-4 h-4 fill-current opacity-70 transition-transform duration-150 group-open:rotate-180"
+                      viewBox="0 0 20 20"
+                      xmlns="http://www.w3.org/2000/svg"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.17l3.71-3.94a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06z"
+                      ></path>
+                    </svg>
+                  </summary>
+                  <div
+                    class="absolute left-0 z-30 mt-2 w-72 origin-top-left rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg overflow-hidden"
+                  >
+                    <a
+                      class="flex items-baseline justify-between gap-4 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                      href="https://github.com/Vija02/TheOpenPresenter/releases/download/electron-screen-nightly/TheOpenPresenterScreen-x86_64.AppImage"
+                    >
+                      <span class="font-medium text-gray-900 dark:text-gray-100"
+                        >AppImage</span
+                      >
+                      <span class="text-xs text-gray-500 dark:text-gray-400"
+                        >Any distro</span
+                      >
+                    </a>
+                    <a
+                      class="flex items-baseline justify-between gap-4 px-4 py-3 border-t border-gray-100 dark:border-gray-700/60 hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                      href="https://github.com/Vija02/TheOpenPresenter/releases/download/electron-screen-nightly/electron-screen-amd64.deb"
+                    >
+                      <span class="font-medium text-gray-900 dark:text-gray-100"
+                        >.deb</span
+                      >
+                      <span class="text-xs text-gray-500 dark:text-gray-400"
+                        >Debian / Ubuntu</span
+                      >
+                    </a>
+                    <a
+                      class="flex items-baseline justify-between gap-4 px-4 py-3 border-t border-gray-100 dark:border-gray-700/60 hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                      href="https://github.com/Vija02/TheOpenPresenter/releases/download/electron-screen-nightly/electron-screen-x86_64.rpm"
+                    >
+                      <span class="font-medium text-gray-900 dark:text-gray-100"
+                        >.rpm</span
+                      >
+                      <span class="text-xs text-gray-500 dark:text-gray-400"
+                        >Fedora / openSUSE</span
+                      >
+                    </a>
+                    <a
+                      class="flex items-baseline justify-between gap-4 px-4 py-3 border-t border-gray-100 dark:border-gray-700/60 hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                      href="https://github.com/Vija02/TheOpenPresenter/releases/download/electron-screen-nightly/electron-screen-x64.pacman"
+                    >
+                      <span class="font-medium text-gray-900 dark:text-gray-100"
+                        >.pacman</span
+                      >
+                      <span class="text-xs text-gray-500 dark:text-gray-400"
+                        >Arch / Manjaro</span
+                      >
+                    </a>
+                    <a
+                      class="flex items-baseline justify-between gap-4 px-4 py-3 border-t border-gray-100 dark:border-gray-700/60 hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                      href="https://github.com/Vija02/TheOpenPresenter/releases/download/electron-screen-nightly/electron-screen-x64.tar.gz"
+                    >
+                      <span class="font-medium text-gray-900 dark:text-gray-100"
+                        >.tar.gz</span
+                      >
+                      <span class="text-xs text-gray-500 dark:text-gray-400"
+                        >Portable</span
+                      >
+                    </a>
+                  </div>
+                </details>
+              </div>
             </div>
           </div>
 
@@ -270,4 +364,8 @@ import PageIllustration from "../../components/PageIllustration.astro";
       </div>
     </div>
   </section>
+
+  <script>
+    import "../../scripts/download-dropdown";
+  </script>
 </DefaultLayout>

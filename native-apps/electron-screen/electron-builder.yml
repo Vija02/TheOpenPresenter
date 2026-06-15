@@ -28,6 +28,9 @@ linux:
   desktop:
     entry:
       Name: TheOpenPresenter Screen
+  artifactName: ${name}-${arch}.${ext}
+appImage:
+  artifactName: ${productName}-${arch}.${ext}
 # The chrome-sandbox SUID fix is needed for every package type that installs the
 # unpacked app to /opt (deb, rpm, pacman). AppImage and tar.gz are not installed
 # by a package manager, so they have no post-install hook.
