@@ -23,8 +23,10 @@ jobs:
         include:
           - label: linux-x86_64
             runner: ubuntu-22.04
+            arch: x64
           - label: linux-aarch64
-            runner: ubuntu-22.04-arm
+            runner: ubuntu-22.04
+            arch: arm64
 
     runs-on: ${{ matrix.runner }}
     defaults:
@@ -64,12 +66,13 @@ jobs:
       # packages are needed on the GitHub-hosted runners. macOS builds are left
       # unsigned (no certificates configured) — disable auto-discovery so it does
       # not fail looking for one.
-      # No target args: builds every target listed under `linux` in
-      # electron-builder.yml (AppImage, deb, rpm, pacman, tar.gz).
+      # Builds every target listed under `linux` in electron-builder.yml
+      # (AppImage, deb, rpm, pacman, tar.gz) for the matrix arch. Both arches
+      # build on x64 runners; arm64 is cross-built (see matrix note above).
       - name: Package (electron-builder)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx electron-builder --linux --publish never
+        run: npx electron-builder --linux --${{ matrix.arch }} --publish never
 
       - name: Stage outputs
         run: |
