@@ -8,6 +8,10 @@
     "name": "TheOpenPresenter",
     "email": "hello@theopenpresenter.com"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TheOpenPresenter/TheOpenPresenter.git"
+  },
   "main": "out/main/index.js",
   "scripts": {
     "dev": "electron-vite dev",
