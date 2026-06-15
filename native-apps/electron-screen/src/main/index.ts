@@ -1,8 +1,7 @@
 import { BrowserWindow, app } from "electron";
 import { existsSync } from "fs";
-import { homedir } from "os";
-import { join } from "path";
 
+import { APP_ID, xdgAutostartPath } from "./appInfo";
 import { startClicker } from "./clicker";
 import { storedRequireHostReachable, waitForHostAndShow } from "./host";
 import { registerIPC } from "./ipc";
@@ -56,7 +55,7 @@ if (!gotLock) {
   app.on("second-instance", () => showSettingsWindow());
 
   app.whenReady().then(() => {
-    app.setAppUserModelId("com.theopenpresenter.electron-screen");
+    app.setAppUserModelId(APP_ID);
 
     createSettingsWindow();
     createMainWindow();
@@ -112,10 +111,6 @@ if (!gotLock) {
 // ---------------------------------------------------------------------------
 // Helpers (exported for reuse if needed)
 // ---------------------------------------------------------------------------
-
-function xdgAutostartPath(): string {
-  return join(homedir(), ".config", "autostart", "electron-screen.desktop");
-}
 
 export function isLinuxAutostartEnabled(): boolean {
   return process.platform === "linux" && existsSync(xdgAutostartPath());

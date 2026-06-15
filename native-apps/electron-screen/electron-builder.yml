@@ -1,8 +1,8 @@
 appId: com.theopenpresenter.desktop-universal
-productName: TheOpenPresenter Screen
+productName: TheOpenPresenterScreen
 executableName: theopenpresenter-screen
 directories:
-  buildResources: build
+  buildResources: packaging
   output: dist
 files:
   - out/**
@@ -29,14 +29,14 @@ linux:
 # unpacked app to /opt (deb, rpm, pacman). AppImage and tar.gz are not installed
 # by a package manager, so they have no post-install hook.
 deb:
-  afterInstall: build/postinst.sh
-  afterRemove: build/postrm.sh
+  afterInstall: packaging/postinst.sh
+  afterRemove: packaging/postrm.sh
 rpm:
-  afterInstall: build/postinst.sh
-  afterRemove: build/postrm.sh
+  afterInstall: packaging/postinst.sh
+  afterRemove: packaging/postrm.sh
 pacman:
-  afterInstall: build/postinst.sh
-  afterRemove: build/postrm.sh
+  afterInstall: packaging/postinst.sh
+  afterRemove: packaging/postrm.sh
 win:
   target:
     - nsis
