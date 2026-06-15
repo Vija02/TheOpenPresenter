@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, unlinkSync, writeFileSync } from "fs";
 import { homedir } from "os";
 import { join } from "path";
 
+import { xdgAutostartPath } from "./appInfo";
 import { resetClickerScreen } from "./clicker";
 import { checkHost } from "./host";
 import { applyMonitor, listMonitors } from "./monitor";
@@ -24,10 +25,6 @@ import {
 // ---------------------------------------------------------------------------
 // Linux XDG autostart helpers
 // ---------------------------------------------------------------------------
-
-function xdgAutostartPath(): string {
-  return join(homedir(), ".config", "autostart", "electron-screen.desktop");
-}
 
 function enableLinuxAutostart(): void {
   const dir = join(homedir(), ".config", "autostart");
