@@ -3,7 +3,7 @@ name: Electron Screen App - Build & Release
 on:
   push:
     branches: [main]
-    tags: ['electron-screen-v*']
+    tags: ['v*']
   pull_request:
     paths:
       - 'native-apps/electron-screen/**'
