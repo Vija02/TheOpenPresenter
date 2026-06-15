@@ -1,5 +1,5 @@
 import { spawnSync } from "child_process";
-import { BrowserWindow, globalShortcut, screen } from "electron";
+import { BrowserWindow, app, globalShortcut, screen } from "electron";
 import { join } from "path";
 
 import { store } from "./store";
@@ -7,6 +7,10 @@ import { store } from "./store";
 const PRELOAD_PATH = join(__dirname, "../preload/index.js");
 const RENDERER_URL = process.env["ELECTRON_RENDERER_URL"];
 const RENDERER_HTML = join(__dirname, "../renderer/index.html");
+
+export const ICON_PATH = app.isPackaged
+  ? join(process.resourcesPath, "icon.png")
+  : join(__dirname, "../../packaging/icon.png");
 
 function loadWindow(
   win: BrowserWindow,
@@ -62,6 +66,7 @@ export function createSettingsWindow(): BrowserWindow {
     minWidth: 400,
     minHeight: 500,
     title: "TheOpenPresenter Screen — Settings",
+    icon: ICON_PATH,
     webPreferences: {
       preload: PRELOAD_PATH,
       contextIsolation: true,
@@ -87,6 +92,7 @@ export function createMainWindow(): BrowserWindow {
     show: false,
     backgroundColor: "#000000",
     title: "TheOpenPresenter Screen",
+    icon: ICON_PATH,
     webPreferences: {
       preload: PRELOAD_PATH,
       contextIsolation: true,

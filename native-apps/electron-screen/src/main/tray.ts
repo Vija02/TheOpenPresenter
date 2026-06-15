@@ -1,17 +1,14 @@
 import { Menu, Tray, app, nativeImage } from "electron";
-import { join } from "path";
 
-import { showSettingsWindow } from "./windows";
+import { ICON_PATH, showSettingsWindow } from "./windows";
 
 let tray: Tray | null = null;
 
 export function setupTray(): void {
-  let icon = nativeImage.createEmpty();
-  try {
-    const iconPath = join(__dirname, "../../resources/tray-icon.png");
-    const loaded = nativeImage.createFromPath(iconPath);
-    if (!loaded.isEmpty()) icon = loaded;
-  } catch {}
+  let icon = nativeImage.createFromPath(ICON_PATH);
+  // Tray icons are small; scale the 512px app icon down so it renders crisply.
+  if (icon.isEmpty()) icon = nativeImage.createEmpty();
+  else icon = icon.resize({ width: 24, height: 24 });
 
   tray = new Tray(icon);
   tray.setToolTip("TheOpenPresenter Screen");
