@@ -77,17 +77,17 @@ jobs:
       - name: Stage outputs
         run: |
           set -euo pipefail
-          mkdir -p out
+          mkdir -p release-files
           find dist -maxdepth 1 -type f \
             \( -name '*.deb' -o -name '*.rpm' -o -name '*.pacman' \
                -o -name '*.AppImage' -o -name '*.tar.gz' \) \
-            -exec cp {} out/ \;
-          ls -la out/
+            -exec cp {} release-files/ \;
+          ls -la release-files/
 
       - uses: actions/upload-artifact@v4
         with:
           name: electron-screen-${{ matrix.label }}
-          path: native-apps/electron-screen/out/
+          path: native-apps/electron-screen/release-files/
           if-no-files-found: error
           retention-days: 14
 
@@ -118,7 +118,11 @@ jobs:
           prerelease: true
           body: 'Nightly build of TheOpenPresenter Electron Screen. Use with caution.'
           files: |
-            artifacts/*
+            artifacts/*.deb
+            artifacts/*.rpm
+            artifacts/*.pacman
+            artifacts/*.AppImage
+            artifacts/*.tar.gz
 
       - name: Tagged release
         if: github.ref_type == 'tag'
@@ -128,4 +132,8 @@ jobs:
           name: ${{ github.ref_name }}
           generate_release_notes: true
           files: |
-            artifacts/*
+            artifacts/*.deb
+            artifacts/*.rpm
+            artifacts/*.pacman
+            artifacts/*.AppImage
+            artifacts/*.tar.gz
