@@ -37,20 +37,26 @@ const SidebarAddSceneModal = () => {
   const [selectedCategory, setSelectedCategory] = useState("All");
 
   const mainState = usePluginData().mainState!;
-  const { pluginMeta, organizationType } = usePluginMetaData();
+  const { pluginMeta, organizationType, experimentalFeaturesEnabled } = usePluginMetaData();
 
   const remotePluginMeta =
     pluginMeta && "registeredRemoteView" in pluginMeta ? pluginMeta : null;
 
   // If no orgType, show everything, otherwise filter
   const visibleSceneCreators =
-    remotePluginMeta?.sceneCreator.filter(
-      (x) =>
+    remotePluginMeta?.sceneCreator.filter((x) => {
+      // org check
+      const matchesOrg =
         !organizationType ||
         !x.organizationTypes ||
         x.organizationTypes.length === 0 ||
-        x.organizationTypes.includes(organizationType),
-    ) ?? [];
+        x.organizationTypes.includes(organizationType);
+
+      // new experimental check
+      const matchesExperimental = !x.isExperimental || experimentalFeaturesEnabled;
+
+      return matchesOrg && matchesExperimental;
+    }) ?? [];
 
   const [selectedPlugin, setSelectedPlugin] = useState<string | null>(null);
   const selectedSceneCreator = visibleSceneCreators?.find(
