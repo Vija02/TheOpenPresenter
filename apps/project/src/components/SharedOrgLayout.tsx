@@ -21,7 +21,7 @@ import { useEffect } from "react";
 import { FaCheck, FaCloud } from "react-icons/fa";
 import { IoMdArrowBack, IoMdSettings } from "react-icons/io";
 import { LuChevronsUpDown } from "react-icons/lu";
-import { MdPermMedia } from "react-icons/md";
+import { MdCreditCard, MdPermMedia } from "react-icons/md";
 import {
   PiProjectorScreenChartLight,
   PiTelevisionSimple,
@@ -212,6 +212,12 @@ export function SharedOrgLayout({
           href={`/o/${slug}/media`}
           icon={<MdPermMedia />}
           name="Media"
+          exact
+        />
+        <SidebarItem
+          href={`/o/${slug}/billing`}
+          icon={<MdCreditCard />}
+          name="Billing"
           exact
         />
         <SidebarItem

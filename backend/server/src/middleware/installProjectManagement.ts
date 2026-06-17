@@ -84,6 +84,9 @@ function transformer(html: string, req: Request) {
       MEDIA_UPLOAD_CHUNK_SIZE: process.env.MEDIA_UPLOAD_CHUNK_SIZE,
       ENABLE_OTEL: !!process.env.OTLP_HOST ? "1" : undefined,
       DEPLOYMENT_ENV: process.env.DEPLOYMENT_ENV,
+      STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY,
+      STRIPE_PRICE_ID_MONTHLY: process.env.STRIPE_PRICE_ID_MONTHLY,
+      STRIPE_PRICE_ID_ANNUAL: process.env.STRIPE_PRICE_ID_ANNUAL,
     } as Record<string, string>,
   ].reduce((acc, val) => ({ ...acc, ...val }), {} as Record<string, string>);
 

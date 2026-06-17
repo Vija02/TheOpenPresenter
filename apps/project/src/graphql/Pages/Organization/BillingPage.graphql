@@ -1,0 +1,18 @@
+query OrganizationBillingPage($slug: String!) {
+  ...SharedOrganization
+
+  organizationBySlug(slug: $slug) {
+    id
+    currentUserIsOwner
+    currentUserIsBillingContact
+    billingInfo {
+      plan
+      subscriptionStatus
+      currentPeriodEnd
+      subscribedRoomCount
+      billingInterval
+      cancelAtPeriodEnd
+      cancelAt
+    }
+  }
+}
