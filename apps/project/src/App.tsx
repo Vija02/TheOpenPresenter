@@ -11,6 +11,7 @@ import OrganizationPage from "./pages/o";
 import OrganizationSlugPage from "./pages/o/[slug]";
 import OrganizationSlugCloudPage from "./pages/o/[slug]/cloud";
 import OrganizationSlugLatestPage from "./pages/o/[slug]/latest/[type]";
+import OrganizationSlugBillingPage from "./pages/o/[slug]/billing";
 import OrganizationSlugMediaPage from "./pages/o/[slug]/media";
 import OrganizationSlugScreensPage from "./pages/o/[slug]/screens";
 import OrganizationSlugScreenAdminPage from "./pages/o/[slug]/screens/[screenSlug]/admin";
@@ -91,6 +92,9 @@ function App() {
                   </Route>
                 </Switch>
               )}
+            </Route>
+            <Route path="/o/:slug/billing">
+              <OrganizationSlugBillingPage />
             </Route>
             <Route path="/o/:slug/media">
               <OrganizationSlugMediaPage />

@@ -1,4 +1,5 @@
 import installAutoLogin from "./installAutoLogin";
+import installStripe from "./installStripe";
 import installCSRFProtection from "./installCSRFProtection";
 import installCloudConnection from "./installCloudConnection";
 import installDatabasePools from "./installDatabasePools";
@@ -58,6 +59,7 @@ export {
   installScreenControlSweeper,
   installSession,
   installSharedStatic,
+  installStripe,
   installTrpc,
   installWorkerUtils,
 };

@@ -17,6 +17,15 @@ const getDeploymentEnv = (): string | undefined =>
 const getCustomEnv = (envName: string) =>
   (window as any)?.__APP_DATA__?.[envName];
 
+const getStripePublishableKey = (): string | undefined =>
+  (window as any)?.__APP_DATA__?.STRIPE_PUBLISHABLE_KEY;
+
+const getStripePriceIdMonthly = (): string | undefined =>
+  (window as any)?.__APP_DATA__?.STRIPE_PRICE_ID_MONTHLY;
+
+const getStripePriceIdAnnual = (): string | undefined =>
+  (window as any)?.__APP_DATA__?.STRIPE_PRICE_ID_ANNUAL;
+
 export type ProxyConfig = {
   isProxy: boolean;
   cloudOrgSlug: string | null;
@@ -64,4 +73,7 @@ export const appData = {
   getCustomEnv,
   getPluginData,
   getProxyConfig,
+  getStripePublishableKey,
+  getStripePriceIdMonthly,
+  getStripePriceIdAnnual,
 };
