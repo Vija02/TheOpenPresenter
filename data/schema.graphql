@@ -2808,6 +2808,11 @@ type Mutation {
 }
 
 type Organization {
+  """
+  Current billing plan and Stripe subscription status for the organization.
+  """
+  billingInfo: OrganizationBillingInfo
+
   """Reads and enables pagination through a set of `Category`."""
   categories(
     """Read all values in the set after (below) this cursor."""
@@ -3294,6 +3299,16 @@ enum OrganizationActiveDevicesOrderBy {
   ORGANIZATION_ID_DESC
   UPDATED_AT_ASC
   UPDATED_AT_DESC
+}
+
+type OrganizationBillingInfo {
+  billingInterval: String
+  cancelAt: Datetime
+  cancelAtPeriodEnd: Boolean
+  currentPeriodEnd: Datetime
+  plan: String
+  subscribedRoomCount: Int
+  subscriptionStatus: String
 }
 
 """

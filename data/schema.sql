@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict JgvkAkEDKbAACCEAJ3r7UzHNmhnI3aYlBg1zK0XDAvSracftoEFFcb9Q0dm9gTR
+\restrict msxFI2aIPhfUfSlrmSPU3gytY8warXGepB4HLM36MJGTtxvgcT7QoilYOvHFBms
 
 -- Dumped from database version 17.0 (Debian 17.0-1.pgdg120+1)
 -- Dumped by pg_dump version 18.4
@@ -101,6 +101,21 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA public;
 --
 
 COMMENT ON EXTENSION "uuid-ossp" IS 'generate universally unique identifiers (UUIDs)';
+
+
+--
+-- Name: organization_billing_info; Type: TYPE; Schema: app_public; Owner: -
+--
+
+CREATE TYPE app_public.organization_billing_info AS (
+	plan text,
+	subscription_status text,
+	current_period_end timestamp with time zone,
+	subscribed_room_count integer,
+	billing_interval text,
+	cancel_at_period_end boolean,
+	cancel_at timestamp with time zone
+);
 
 
 --
@@ -2201,6 +2216,38 @@ $$;
 
 
 --
+-- Name: organizations_billing_info(app_public.organizations); Type: FUNCTION; Schema: app_public; Owner: -
+--
+
+CREATE FUNCTION app_public.organizations_billing_info(org app_public.organizations) RETURNS app_public.organization_billing_info
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+    AS $$
+  select
+    coalesce(b.plan, 'free')::text,
+    b.stripe_subscription_status,
+    b.stripe_current_period_end,
+    coalesce(b.subscribed_room_count, 0),
+    coalesce(b.billing_interval, 'month')::text,
+    coalesce(b.cancel_at_period_end, false),
+    b.cancel_at
+  from app_public.organizations o
+  left join app_private.organization_billing b on b.organization_id = o.id
+  where o.id = org.id
+    and o.id in (
+      select app_public.current_user_member_organization_ids()
+    );
+$$;
+
+
+--
+-- Name: FUNCTION organizations_billing_info(org app_public.organizations); Type: COMMENT; Schema: app_public; Owner: -
+--
+
+COMMENT ON FUNCTION app_public.organizations_billing_info(org app_public.organizations) IS 'Current billing plan and Stripe subscription status for the organization.';
+
+
+--
 -- Name: organizations_current_user_is_billing_contact(app_public.organizations); Type: FUNCTION; Schema: app_public; Owner: -
 --
 
@@ -3058,6 +3105,27 @@ CREATE TABLE app_private.connect_pg_simple_sessions (
 
 
 --
+-- Name: organization_billing; Type: TABLE; Schema: app_private; Owner: -
+--
+
+CREATE TABLE app_private.organization_billing (
+    organization_id uuid NOT NULL,
+    stripe_customer_id text,
+    stripe_subscription_id text,
+    stripe_subscription_status text,
+    stripe_price_id text,
+    stripe_current_period_end timestamp with time zone,
+    plan text DEFAULT 'free'::text NOT NULL,
+    subscribed_room_count integer DEFAULT 0 NOT NULL,
+    billing_interval text DEFAULT 'month'::text NOT NULL,
+    cancel_at_period_end boolean DEFAULT false NOT NULL,
+    cancel_at timestamp with time zone,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
 -- Name: unregistered_email_password_resets; Type: TABLE; Schema: app_private; Owner: -
 --
 
@@ -3456,6 +3524,30 @@ COMMENT ON COLUMN app_public.user_authentications.identifier IS 'A unique identi
 --
 
 COMMENT ON COLUMN app_public.user_authentications.details IS 'Additional profile details extracted from this login method';
+
+
+--
+-- Name: organization_billing organization_billing_pkey; Type: CONSTRAINT; Schema: app_private; Owner: -
+--
+
+ALTER TABLE ONLY app_private.organization_billing
+    ADD CONSTRAINT organization_billing_pkey PRIMARY KEY (organization_id);
+
+
+--
+-- Name: organization_billing organization_billing_stripe_customer_id_key; Type: CONSTRAINT; Schema: app_private; Owner: -
+--
+
+ALTER TABLE ONLY app_private.organization_billing
+    ADD CONSTRAINT organization_billing_stripe_customer_id_key UNIQUE (stripe_customer_id);
+
+
+--
+-- Name: organization_billing organization_billing_stripe_subscription_id_key; Type: CONSTRAINT; Schema: app_private; Owner: -
+--
+
+ALTER TABLE ONLY app_private.organization_billing
+    ADD CONSTRAINT organization_billing_stripe_subscription_id_key UNIQUE (stripe_subscription_id);
 
 
 --
@@ -4266,6 +4358,13 @@ CREATE INDEX user_authentications_user_id_idx ON app_public.user_authentications
 
 
 --
+-- Name: organization_billing _100_timestamps; Type: TRIGGER; Schema: app_private; Owner: -
+--
+
+CREATE TRIGGER _100_timestamps BEFORE INSERT OR UPDATE ON app_private.organization_billing FOR EACH ROW EXECUTE FUNCTION app_private.tg__timestamps();
+
+
+--
 -- Name: categories _100_timestamps; Type: TRIGGER; Schema: app_public; Owner: -
 --
 
@@ -4564,6 +4663,14 @@ CREATE TRIGGER _900_cleanup_unused_media AFTER DELETE ON app_public.project_medi
 --
 
 CREATE TRIGGER _900_send_verification_email AFTER INSERT ON app_public.user_emails FOR EACH ROW WHEN ((new.is_verified IS FALSE)) EXECUTE FUNCTION app_private.tg__add_job('user_emails__send_verification');
+
+
+--
+-- Name: organization_billing organization_billing_organization_id_fkey; Type: FK CONSTRAINT; Schema: app_private; Owner: -
+--
+
+ALTER TABLE ONLY app_private.organization_billing
+    ADD CONSTRAINT organization_billing_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES app_public.organizations(id) ON DELETE CASCADE;
 
 
 --
@@ -6188,6 +6295,14 @@ GRANT ALL ON FUNCTION app_public.organization_for_invitation(invitation_id uuid,
 
 
 --
+-- Name: FUNCTION organizations_billing_info(org app_public.organizations); Type: ACL; Schema: app_public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_public.organizations_billing_info(org app_public.organizations) FROM PUBLIC;
+GRANT ALL ON FUNCTION app_public.organizations_billing_info(org app_public.organizations) TO theopenpresenter_visitor;
+
+
+--
 -- Name: FUNCTION organizations_current_user_is_billing_contact(org app_public.organizations); Type: ACL; Schema: app_public; Owner: -
 --
 
@@ -6855,5 +6970,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE theopenpresenter REVOKE ALL ON FUNCTIONS FROM 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict JgvkAkEDKbAACCEAJ3r7UzHNmhnI3aYlBg1zK0XDAvSracftoEFFcb9Q0dm9gTR
+\unrestrict msxFI2aIPhfUfSlrmSPU3gytY8warXGepB4HLM36MJGTtxvgcT7QoilYOvHFBms
 
