@@ -44,11 +44,10 @@ export class ProjectPage {
     // The Present button opens a popover; "Open in new tab" is a link whose
     // href is the renderer URL.
     await this.openPresentMenu();
-    const [newPage] = await Promise.all([
-      this.context.waitForEvent("page"),
-      this.openInNewTabLink.click(),
-    ]);
-    await newPage.waitForLoadState();
+    const url = await this.openInNewTabLink.getAttribute("href");
+    await this.closePresentMenu();
+    const newPage = await this.context.newPage();
+    await newPage.goto(url!);
     return newPage;
   }
 
@@ -56,6 +55,11 @@ export class ProjectPage {
 
   async openPresentMenu() {
     await this.presentButton.click();
+  }
+
+  async closePresentMenu() {
+    await this.page.keyboard.press("Escape");
+    await this.openInNewTabLink.waitFor({ state: "hidden" });
   }
 
   get openInNewTabLink(): Locator {
