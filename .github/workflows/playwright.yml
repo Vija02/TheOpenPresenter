@@ -11,6 +11,11 @@ jobs:
   test:
     timeout-minutes: 60
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shardIndex: [1, 2, 3, 4]
+        shardTotal: [4]
     env:
       CI: true
       POSTGRES_USER: postgres
@@ -71,12 +76,38 @@ jobs:
           yarn build
           yarn e2e playwright install --with-deps
           yarn worker start &
-          yarn e2e test
-      - uses: actions/upload-artifact@v4
+          yarn e2e test --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
+      - name: Upload blob report
+        uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:
+          name: blob-report-${{ matrix.shardIndex }}
+          path: e2e/blob-report/
+          retention-days: 1
+
+  merge-reports:
+    # Merge the per-shard blob reports into a single HTML report.
+    if: ${{ !cancelled() }}
+    needs: [test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+      - name: Install dependencies
+        run: yarn --no-immutable
+      - name: Download blob reports
+        uses: actions/download-artifact@v4
+        with:
+          path: e2e/all-blob-reports
+          pattern: blob-report-*
+          merge-multiple: true
+      - name: Merge into HTML report
+        run: yarn e2e playwright merge-reports --reporter html ./all-blob-reports
+      - name: Upload HTML report
+        uses: actions/upload-artifact@v4
+        with:
           name: playwright-report
-          path: |
-            e2e/playwright-report/
-            e2e/test-results/
+          path: e2e/playwright-report/
           retention-days: 30
