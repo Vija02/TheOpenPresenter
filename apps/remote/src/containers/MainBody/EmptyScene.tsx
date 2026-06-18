@@ -10,7 +10,6 @@ import { typeidUnboxed } from "typeid-js";
 
 import { useNavigateWithParams } from "../../../src/hooks/useNavigateWithParams";
 
-// grab the same icons from the modal
 const sceneCategoriesConfig: Record<SceneCategories, IconType> = {
   Display: PiPresentationChart,
   Media: MdOutlineOndemandVideo,
