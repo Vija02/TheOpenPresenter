@@ -57,13 +57,18 @@ jobs:
           fi
           echo "Postgres is up."
 
-      - name: Start yarn dev and wait for HTTP
+      - name: Build all workspaces
+        run: |
+          set -o pipefail
+          yarn build 2>&1 | tee .ci-logs/build.log
+
+      - name: Start server (dev) and wait for HTTP
         run: |
           set -euo pipefail
 
           setsid bash -c '
             echo $$ > .ci-logs/dev.pgid
-            exec yarn dev
+            exec yarn server dev
           ' > .ci-logs/dev.log 2>&1 < /dev/null &
 
           echo "Waiting up to 600s for http://localhost:5678..."
