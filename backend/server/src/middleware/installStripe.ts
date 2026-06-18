@@ -246,6 +246,9 @@ export default async function installStripe(app: Express): Promise<void> {
           mode: "subscription",
           ui_mode: "embedded_page",
           line_items: [{ price: priceId, quantity: roomCount }],
+          automatic_tax: { enabled: true },
+          tax_id_collection: { enabled: true },
+          customer_update: { address: "auto", name: "auto" },
           return_url: `${process.env.ROOT_URL}/o/${slug}/billing?session_id={CHECKOUT_SESSION_ID}`,
         });
 
@@ -341,6 +344,8 @@ export default async function installStripe(app: Express): Promise<void> {
 
         const preview = await stripe.invoices.createPreview({
           subscription: subscriptionId,
+          // Include VAT in the quote so it matches what's actually charged.
+          automatic_tax: { enabled: true },
           subscription_details: {
             items: [{ id: itemId, quantity: roomCount }],
             proration_behavior: "always_invoice",
