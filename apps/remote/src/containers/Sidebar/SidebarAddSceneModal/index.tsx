@@ -45,17 +45,16 @@ const SidebarAddSceneModal = () => {
   // If no orgType, show everything, otherwise filter
   const visibleSceneCreators =
     remotePluginMeta?.sceneCreator.filter((x) => {
-      // org check
+
       const matchesOrg =
         !organizationType ||
         !x.organizationTypes ||
         x.organizationTypes.length === 0 ||
         x.organizationTypes.includes(organizationType);
 
-      // new experimental check
-      const matchesExperimental = !x.isExperimental || experimentalFeaturesEnabled;
+      const matchExperimentalOnlyWhenEnabled = !x.isExperimental || experimentalFeaturesEnabled;
 
-      return matchesOrg && matchesExperimental;
+      return matchesOrg && matchExperimentalOnlyWhenEnabled;
     }) ?? [];
 
   const [selectedPlugin, setSelectedPlugin] = useState<string | null>(null);
