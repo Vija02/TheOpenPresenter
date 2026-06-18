@@ -6,6 +6,7 @@ import { useMemo } from "react";
 import { RxCross1 } from "react-icons/rx";
 import { VscArrowLeft, VscSettingsGear, VscTrash } from "react-icons/vsc";
 import { useLocation, useSearch } from "wouter";
+import { OrganizationType } from "@repo/graphql";
 
 import { useRendererSelection } from "../../contexts/rendererSelection";
 import ProjectSettingsModal from "../ProjectSettingsModal";
@@ -14,7 +15,7 @@ import "./index.css";
 
 export const TopBar = () => {
   const [location] = useLocation();
-  const { orgSlug, project, screenGuestSession } = usePluginMetaData();
+  const { orgSlug, project, screenGuestSession, organizationType } = usePluginMetaData(); 
   const { selectedRendererId } = useRendererSelection();
   const search = useSearch();
 
@@ -93,7 +94,7 @@ export const TopBar = () => {
                 onConfirm={() => {
                   delete mainState.data[selectedScene];
                   for (const renderer of Object.values(mainState.renderer)) {
-                    if (renderer?.currentScene === selectedScene) {
+                    if (renderer?.currentScene === selectedScene) { 
                       renderer!.currentScene = null;
                     }
                   }
@@ -108,6 +109,7 @@ export const TopBar = () => {
         )}
       </div>
       <div className="rt--top-bar--right">
+        {organizationType !== OrganizationType.Venue && (
         <Button
           size="sm"
           className={cx(
@@ -129,6 +131,8 @@ export const TopBar = () => {
         >
           Clear
         </Button>
+        )}
+
         <Button
           size="sm"
           className={cx(
