@@ -53,8 +53,16 @@ import landingImg from "../assets/images/landing_img.png";
               id="init-demo-mobile-status"
               class="mt-3 text-sm text-gray-500 dark:text-gray-400"
             >
-              Runs right here in your browser — no install needed.
+              Runs right here in your browser - no install needed.
             </p>
+            <button
+              type="button"
+              id="init-demo-mobile-qr-toggle"
+              class="mt-2 block mx-auto md:mx-0 text-xs text-gray-400 hover:text-gray-500 dark:text-gray-500 dark:hover:text-gray-400 underline cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:no-underline"
+              disabled
+            >
+              Show QR code to open on another screen
+            </button>
           </div>
           <!-- QR pairing (desktop). Swaps to <CtaForm /> once the phone has
                scanned and the renderer has loaded below. -->
@@ -331,6 +339,9 @@ import landingImg from "../assets/images/landing_img.png";
     "init-demo-mobile-start",
   ) as HTMLButtonElement | null;
   const mobileStatusEl = document.getElementById("init-demo-mobile-status");
+  const mobileQrToggle = document.getElementById(
+    "init-demo-mobile-qr-toggle",
+  ) as HTMLButtonElement | null;
   const remoteWrap = document.getElementById("init-demo-remote-wrap");
   const remoteIframe = document.getElementById(
     "init-demo-remote-iframe",
@@ -409,6 +420,26 @@ import landingImg from "../assets/images/landing_img.png";
       if (qrBlock) qrBlock.classList.add("hidden");
       if (mobileCtaEl) mobileCtaEl.classList.remove("hidden");
       if (mobileStartBtn) mobileStartBtn.disabled = true; // re-enabled once we have an id
+      // The "don't have your phone" fallback is desktop-only
+      if (noPhoneBtn) noPhoneBtn.classList.add("hidden");
+      // Toggle the QR panel so phone users can show the code on another screen.
+      if (mobileQrToggle) {
+        mobileQrToggle.addEventListener("click", () => {
+          const targetStr = mobileQrToggle.dataset.target;
+          if (!targetStr || !qrBlock) return;
+          if (qrBlock.classList.contains("hidden")) {
+            qrBlock.classList.remove("hidden");
+            renderQr(targetStr);
+            const qrUrlEl = document.getElementById("init-demo-qr-url");
+            if (qrUrlEl) qrUrlEl.textContent = targetStr;
+            mobileQrToggle.textContent = "Hide QR code";
+          } else {
+            qrBlock.classList.add("hidden");
+            mobileQrToggle.textContent =
+              "Show QR code to open on another screen";
+          }
+        });
+      }
       if (mobileStartBtn) {
         mobileStartBtn.addEventListener("click", () => {
           const targetStr = mobileStartBtn.dataset.target;
@@ -468,6 +499,10 @@ import landingImg from "../assets/images/landing_img.png";
             if (mobileStartBtn) {
               mobileStartBtn.disabled = false;
               mobileStartBtn.dataset.target = targetStr;
+            }
+            if (mobileQrToggle) {
+              mobileQrToggle.disabled = false;
+              mobileQrToggle.dataset.target = targetStr;
             }
           } else {
             renderQr(targetStr);
