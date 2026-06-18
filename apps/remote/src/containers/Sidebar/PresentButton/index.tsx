@@ -12,6 +12,7 @@ import {
 } from "@repo/ui";
 import { cx } from "class-variance-authority";
 import { lazy, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   MdCheckCircle,
   MdCoPresent,
@@ -142,6 +143,14 @@ const WebPresentButton = ({
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
+      {open &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-40 bg-black/10"
+            onClick={() => setOpen(false)}
+          />,
+          document.body,
+        )}
       <PopoverTrigger asChild>
         <Button
           className={cx(["rt--present-button"])}
