@@ -44,9 +44,11 @@ export class ProjectPage {
     // The Present button opens a popover; "Open in new tab" is a link whose
     // href is the renderer URL.
     await this.openPresentMenu();
-    const url = await this.openInNewTabLink.getAttribute("href");
-    const newPage = await this.context.newPage();
-    await newPage.goto(url!);
+    const [newPage] = await Promise.all([
+      this.context.waitForEvent("page"),
+      this.openInNewTabLink.click(),
+    ]);
+    await newPage.waitForLoadState();
     return newPage;
   }
 
