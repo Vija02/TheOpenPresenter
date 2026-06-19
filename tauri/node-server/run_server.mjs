@@ -118,7 +118,7 @@ async function main() {
 
     // CORE
     PORT: "5678",
-    ROOT_URL: "http://localhost:5678",
+    ROOT_URL: process.env.ROOT_URL ?? "http://localhost:5678",
     SECRET: "cookie_secret",
     GRAPHILE_TURBO: "1",
 

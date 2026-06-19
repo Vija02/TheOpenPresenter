@@ -14,12 +14,6 @@ jobs:
     env:
       CI: true
 
-    services:
-      unoserver:
-        image: philiplehmann/unoserver:3.0.1-1816
-        ports:
-          - "0.0.0.0:8379:3000"
-
     steps:
       - uses: actions/checkout@v4
 
@@ -56,6 +50,12 @@ jobs:
           curl -sL https://www.dumbpipe.dev/install.sh | sh
           sudo mv dumbpipe /usr/local/bin/
 
+      - name: Install cloudflared
+        run: |
+          curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o cloudflared
+          chmod +x cloudflared
+          sudo mv cloudflared /usr/local/bin/
+
       - name: Build TOP project
         env:
           TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
@@ -79,8 +79,18 @@ jobs:
         run: |
           Xvfb :99 -screen 0 1280x720x24 &
           export DISPLAY=:99
+          # Setup Cloudflared (Tunnel for testing PPT)
+          cloudflared tunnel --url http://localhost:5678 > /tmp/cloudflared.log 2>&1 &
+          TUNNEL_URL=""
+          for i in $(seq 1 30); do
+            TUNNEL_URL=$(grep -oE 'https://[a-z0-9-]+\.trycloudflare\.com' /tmp/cloudflared.log | head -1 || true)
+            [ -n "$TUNNEL_URL" ] && break
+            sleep 1
+          done
+          if [ -z "$TUNNEL_URL" ]; then echo "Failed to obtain cloudflared URL"; cat /tmp/cloudflared.log; exit 1; fi
+          echo "Public ROOT_URL: $TUNNEL_URL"
           ENABLE_E2E_COMMANDS=1 \
-          PLUGIN_GOOGLE_SLIDES_UNOCONVERT_SERVER=http://localhost:8379 \
+          ROOT_URL=$TUNNEL_URL \
           DISPLAY=:99 \
             tauri/target/debug/theopenpresenter-app &
           echo "Waiting for server to be ready..."
