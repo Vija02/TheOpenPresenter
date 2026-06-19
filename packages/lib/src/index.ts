@@ -4,6 +4,7 @@ export * from "./errors";
 export * from "./globalState";
 export * from "./mediaTypeUtil";
 export * from "./mediaUtil";
+export * from "./network";
 export * from "./preloader";
 export * from "./streamToBuffer";
 export * from "./useInjectScript";

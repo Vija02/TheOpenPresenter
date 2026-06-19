@@ -5,7 +5,12 @@ import {
   ServerPluginApi,
   TRPCObject,
 } from "@repo/base-plugin/server";
-import { TypedMap, extractMediaName, streamToBuffer } from "@repo/lib";
+import {
+  TypedMap,
+  extractMediaName,
+  isPubliclyAccessibleUrl,
+  streamToBuffer,
+} from "@repo/lib";
 import { logger } from "@repo/observability";
 import axios from "axios";
 import { createProxyMiddleware } from "http-proxy-middleware";
@@ -24,7 +29,7 @@ import { createImageProcessor } from "./googleSlides/cacheGoogleSlideImage";
 import { processHtml } from "./googleSlides/processHtml";
 import { extractSlideData } from "./googleSlides/slideData/slideDataExtractor";
 import { convertPptToPdfViaOfficeOnline } from "./office/convertPptToPdf";
-import { isOnline, isPubliclyAccessibleUrl } from "./office/network";
+import { isOnline } from "./office/network";
 import {
   deleteOldMedia,
   processPdfToThumbnails,
