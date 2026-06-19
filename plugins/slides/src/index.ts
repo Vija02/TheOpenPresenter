@@ -470,7 +470,7 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
                 );
                 if (proxyRes.status !== 200 || !proxyRes.data?.url) {
                   throw new Error(
-                    "Converting PowerPoint on a local network isn't available on this device yet.",
+                    "Unable to convert PowerPoint on this device. Please make sure you are connected the internet.",
                   );
                 }
                 publicPptUrl = proxyRes.data.url as string;
@@ -532,7 +532,7 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
               const { [newImport.importId]: _, ...remaining } =
                 loadedPlugin.pluginData.imports;
               loadedPlugin.pluginData.imports = remaining;
-              log.error({ err }, "Failed to import ppt");
+              log.error({ err }, "Failed to import PPT");
               throw err;
             }
           },

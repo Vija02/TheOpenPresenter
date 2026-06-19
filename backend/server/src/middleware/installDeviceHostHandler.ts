@@ -207,25 +207,22 @@ export default (app: Express) => {
         res.status(400).json({ error: "mediaName is required" });
         return;
       }
-
-      const mintRes = await axios.post(
-        `${baseUrl.replace(/\/$/, "")}/media-proxy/mint`,
-        { ticket: irohTicket, mediaName },
-        {
-          headers: { "Content-Type": "application/json" },
-          validateStatus: () => true,
-        },
-      );
-      if (mintRes.status !== 200 || !mintRes.data?.url) {
-        logger.error(
-          { status: mintRes.status },
-          "Failed to mint media proxy url from cloud",
+      try {
+        const mintRes = await axios.post(
+          `${baseUrl.replace(/\/$/, "")}/media-proxy/mint`,
+          { ticket: irohTicket, mediaName },
+          {
+            headers: {
+              "x-top-csrf-protection": "1",
+            },
+          },
         );
-        res.status(502).json({ error: "Failed to mint proxy url" });
-        return;
-      }
 
-      res.json({ url: mintRes.data.url });
+        res.json({ url: mintRes.data.url });
+      } catch (err) {
+        logger.error({ err }, "Failed to mint media proxy url from cloud");
+        res.status(502).json({ error: "Failed to mint proxy url" });
+      }
     } catch (err) {
       logger.error(
         { err },
