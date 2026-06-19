@@ -28,16 +28,27 @@ export const PDFUploadModal = ({ replaceImportId }: Props) => {
     const result = results?.[0];
     if (!result) return;
 
-    selectPdf({
-      mediaName: result.mediaName,
-      name: result.originalName ?? undefined,
-      pluginId: pluginApi.pluginContext.pluginId,
-      replaceImportId,
-    });
+    selectPdf(
+      {
+        mediaName: result.mediaName,
+        name: result.originalName ?? undefined,
+        pluginId: pluginApi.pluginContext.pluginId,
+        replaceImportId,
+      },
+      {
+        onError: (err) => {
+          pluginApi.remote.toast.error(
+            `Failed to import PDF: ${err.message}`,
+            { toastId: "slides--pdfImportError" },
+          );
+        },
+      },
+    );
     onParentToggle?.();
   }, [
     pluginApi.mediaPicker,
     pluginApi.pluginContext.pluginId,
+    pluginApi.remote,
     selectPdf,
     replaceImportId,
     onParentToggle,
