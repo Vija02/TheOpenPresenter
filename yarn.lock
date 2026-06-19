@@ -9908,6 +9908,7 @@ __metadata:
     concurrently: "npm:^9.1.2"
     eslint: "npm:^8.57.1"
     http-proxy-middleware: "npm:^3.0.3"
+    ipaddr.js: "npm:^1.9.1"
     mupdf: "npm:^1.3.5"
     p-limit: "npm:^3.1.0"
     pkgroll: "npm:2.5.1"
@@ -22439,7 +22440,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ipaddr.js@npm:1.9.1":
+"ipaddr.js@npm:1.9.1, ipaddr.js@npm:^1.9.1":
   version: 1.9.1
   resolution: "ipaddr.js@npm:1.9.1"
   checksum: 10c0/0486e775047971d3fdb5fb4f063829bac45af299ae0b82dcf3afa2145338e08290563a2a70f34b732d795ecc8311902e541a8530eeb30d75860a78ff4e94ce2a

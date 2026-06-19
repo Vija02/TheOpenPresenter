@@ -24,6 +24,7 @@ import { createImageProcessor } from "./googleSlides/cacheGoogleSlideImage";
 import { processHtml } from "./googleSlides/processHtml";
 import { extractSlideData } from "./googleSlides/slideData/slideDataExtractor";
 import { convertPptToPdfViaOfficeOnline } from "./office/convertPptToPdf";
+import { isOnline, isPubliclyAccessibleUrl } from "./office/network";
 import {
   deleteOldMedia,
   processPdfToThumbnails,
@@ -97,36 +98,40 @@ export const init = (
     pluginName,
     rendererWebComponentTag,
   );
-  serverPluginApi.registerPrivateRoute(pluginName, "gslide/proxy", (req, res) => {
-    if (!req.query?.pluginId || !req.query?.importId) {
-      res.sendStatus(400);
-      return;
-    }
-    // TODO: Authentication
+  serverPluginApi.registerPrivateRoute(
+    pluginName,
+    "gslide/proxy",
+    (req, res) => {
+      if (!req.query?.pluginId || !req.query?.importId) {
+        res.sendStatus(400);
+        return;
+      }
+      // TODO: Authentication
 
-    const pluginId = req.query.pluginId as string;
-    const importId = req.query.importId as string;
+      const pluginId = req.query.pluginId as string;
+      const importId = req.query.importId as string;
 
-    const loadedPlugin = loadedPlugins[pluginId];
+      const loadedPlugin = loadedPlugins[pluginId];
 
-    if (!loadedPlugin) {
-      res.sendStatus(404);
-      return;
-    }
+      if (!loadedPlugin) {
+        res.sendStatus(404);
+        return;
+      }
 
-    const importData = loadedPlugin.pluginData.imports[importId];
-    if (!importData || importData.type !== "googleslides") {
-      res.sendStatus(404);
-      return;
-    }
+      const importData = loadedPlugin.pluginData.imports[importId];
+      if (!importData || importData.type !== "googleslides") {
+        res.sendStatus(404);
+        return;
+      }
 
-    res.send(
-      importData.html?.replace(
-        /nonce="(.+?)"/g,
-        `nonce="${res.locals.nonce}"`,
-      ) ?? "",
-    );
-  });
+      res.send(
+        importData.html?.replace(
+          /nonce="(.+?)"/g,
+          `nonce="${res.locals.nonce}"`,
+        ) ?? "",
+      );
+    },
+  );
 
   const apiProxy = createProxyMiddleware({
     pathRewrite: (path) => {
@@ -437,8 +442,27 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
             loadedPlugin.pluginData.imports[newImport.importId] = newImport;
 
             try {
-              const publicPptUrl = `${process.env.ROOT_URL}/media/data/${mediaName}`;
-              log.info({ publicPptUrl }, "Converting PPT to PDF via Office Online...");
+              const rootUrl = process.env.ROOT_URL;
+              let publicPptUrl: string;
+
+              if (isPubliclyAccessibleUrl(rootUrl)) {
+                publicPptUrl = `${rootUrl}/media/data/${mediaName}`;
+              } else {
+                if (!(await isOnline())) {
+                  throw new Error(
+                    "Converting PowerPoint isn't available offline yet. Please connect to the internet and try again.",
+                  );
+                }
+                // TODO: Proxy
+                throw new Error(
+                  "Converting PowerPoint on a local network isn't supported yet.",
+                );
+              }
+
+              log.info(
+                { publicPptUrl },
+                "Converting PPT to PDF via Office Online...",
+              );
 
               const pdfBuffer = await convertPptToPdfViaOfficeOnline(
                 publicPptUrl,
