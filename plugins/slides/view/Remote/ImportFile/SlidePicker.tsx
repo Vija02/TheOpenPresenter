@@ -74,6 +74,10 @@ export const SlidePicker = ({
     setIsPickerVisible(false);
   }, []);
 
+  const handleOAuthError = useCallback(() => {
+    setIsPickerVisible(false);
+  }, []);
+
   const handleOAuthResponse = useCallback((event: OAuthResponseEvent) => {
     accessTokenRef.current = event.detail.access_token;
   }, []);
@@ -81,7 +85,7 @@ export const SlidePicker = ({
   return (
     <>
       {children({
-        isLoading: false,
+        isLoading: isPickerVisible,
         openPicker,
       })}
 
@@ -91,6 +95,7 @@ export const SlidePicker = ({
           app-id={appId}
           onPicked={handlePicked}
           onCanceled={handleCanceled}
+          onOauthError={handleOAuthError}
           onOauthResponse={handleOAuthResponse}
         >
           <DrivePickerDocsView
