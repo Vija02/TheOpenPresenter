@@ -23,6 +23,7 @@ import {
 import { createImageProcessor } from "./googleSlides/cacheGoogleSlideImage";
 import { processHtml } from "./googleSlides/processHtml";
 import { extractSlideData } from "./googleSlides/slideData/slideDataExtractor";
+import { convertPptToPdfViaOfficeOnline } from "./office/convertPptToPdf";
 import {
   deleteOldMedia,
   processPdfToThumbnails,
@@ -418,8 +419,10 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
             input: { pluginId, mediaName, name, replaceImportId },
             ctx,
           }) => {
-            if (!process.env.PLUGIN_GOOGLE_SLIDES_UNOCONVERT_SERVER) {
-              throw new Error("Not available");
+            if (!process.env.ROOT_URL) {
+              throw new Error(
+                "ROOT_URL env var missing. It is required so Office Online can fetch the uploaded file.",
+              );
             }
 
             const log = logger.child({ pluginId, mediaName, replaceImportId });
@@ -434,17 +437,13 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
             loadedPlugin.pluginData.imports[newImport.importId] = newImport;
 
             try {
-              const pptMedia = await serverPluginApi.media.getMedia(mediaName);
-              log.info("Converting PPT to PDF via unoconvert...");
+              const publicPptUrl = `${process.env.ROOT_URL}/media/data/${mediaName}`;
+              log.info({ publicPptUrl }, "Converting PPT to PDF via Office Online...");
 
-              const res = await axios.post(
-                process.env.PLUGIN_GOOGLE_SLIDES_UNOCONVERT_SERVER! +
-                  "/convert?convertTo=pdf",
-                pptMedia,
-                { responseType: "arraybuffer" },
+              const pdfBuffer = await convertPptToPdfViaOfficeOnline(
+                publicPptUrl,
+                log,
               );
-
-              const pdfBuffer = Buffer.from(res.data);
               log.info("PPT converted to PDF");
 
               const { fileNames, workerPromise, uploadedPdfFileName } =
