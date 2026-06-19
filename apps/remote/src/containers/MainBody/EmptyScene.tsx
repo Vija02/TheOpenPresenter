@@ -60,10 +60,9 @@ export const EmptyScene = () => {
 
   return (
     <div className="p-4 prose max-w-none">
-      <h2 className="mt-2">Add component</h2>
-      <p>
-        There is nothing in your project yet. Select a component below to start
-        presenting.
+      <h2 className="mt-2" style={{marginBottom: "0.25em"}}>Add component</h2>
+      <p style={{marginBottom: "-0.75em"}}>
+        Select a component below to add it to your project.
       </p>
 
       {/* keep the menu from getting too wide on big screens */}
@@ -76,7 +75,7 @@ export const EmptyScene = () => {
           if (categoryPlugins.length === 0) return null;
 
           return (
-            <div key={category} className="flex flex-col gap-3">
+            <div style={{marginBottom: "-0.75em"}} key={category} className="flex flex-col gap-3">
               <div className="flex items-center gap-2 text-xl font-bold text-gray-800">
                 {React.createElement(sceneCategoriesConfig[category], {
                   fontSize: 24,
@@ -91,7 +90,7 @@ export const EmptyScene = () => {
                   >
                     {/* put exactly 1 option per OptionGroup so it fills the cell perfectly */}
                     <OptionGroup
-                      size="sm"
+                      size="md"
                       options={[
                         {
                           title: (
