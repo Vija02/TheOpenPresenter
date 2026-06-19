@@ -147,6 +147,7 @@ export async function makeApp({
   await middleware.installCloudConnection(app);
   await middleware.installDeviceHostHandler(app);
   await middleware.installDeviceServerHandler(app);
+  await middleware.installMediaProxyHandler(app);
   await middleware.installFileUpload(app);
   await middleware.installStripe(app);
   await middleware.installProjectImportExport(app);
