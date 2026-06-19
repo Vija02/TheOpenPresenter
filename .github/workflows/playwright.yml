@@ -39,11 +39,6 @@ jobs:
           - "0.0.0.0:6379:6379"
         options: --health-cmd "redis-cli ping" --health-interval 10s --health-timeout 5s --health-retries 5
 
-      unoserver:
-        image: philiplehmann/unoserver:3.0.1-1816
-        ports:
-          - "0.0.0.0:8379:3000"
-
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -68,9 +63,26 @@ jobs:
         run: |
           curl -sL https://www.dumbpipe.dev/install.sh | sh
           sudo mv dumbpipe /usr/local/bin/
+      - name: Install cloudflared
+        run: |
+          curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o cloudflared
+          chmod +x cloudflared
+          sudo mv cloudflared /usr/local/bin/
       - name: yarn, lint, build and test
         run: |
           cp .env.ci .env
+          # Setup Cloudflared (Tunnel for testing PPT)
+          cloudflared tunnel --url http://localhost:5678 > /tmp/cloudflared.log 2>&1 &
+          TUNNEL_URL=""
+          for i in $(seq 1 30); do
+            TUNNEL_URL=$(grep -oE 'https://[a-z0-9-]+\.trycloudflare\.com' /tmp/cloudflared.log | head -1 || true)
+            [ -n "$TUNNEL_URL" ] && break
+            sleep 1
+          done
+          if [ -z "$TUNNEL_URL" ]; then echo "Failed to obtain cloudflared URL"; cat /tmp/cloudflared.log; exit 1; fi
+          echo "Public ROOT_URL: $TUNNEL_URL"
+          sed -i "s|^ROOT_URL=.*|ROOT_URL=$TUNNEL_URL|" .env
+
           yarn --no-immutable
           CONFIRM_DROP=1 yarn setup
           yarn build

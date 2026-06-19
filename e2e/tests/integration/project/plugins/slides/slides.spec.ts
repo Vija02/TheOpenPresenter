@@ -89,7 +89,7 @@ test.describe("Slides Plugin", () => {
 
     // Wait for image to be uploaded
     await expect(secondSlide.getByRole("img")).toBeInViewport({
-      timeout: 20 * 1000,
+      timeout: 60 * 1000,
     });
 
     // Present it & open
