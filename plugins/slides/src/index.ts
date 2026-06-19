@@ -458,10 +458,22 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
                     "Converting PowerPoint isn't available offline yet. Please connect to the internet and try again.",
                   );
                 }
-                // TODO: Proxy
-                throw new Error(
-                  "Converting PowerPoint on a local network isn't supported yet.",
+                // Local/self-host with internet access:
+                // Proxy our files through cloud server
+                const proxyRes = await axios.post(
+                  `${rootUrl}/device/host/media-proxy-url`,
+                  { mediaName },
+                  {
+                    headers: { "x-top-csrf-protection": "1" },
+                    validateStatus: () => true,
+                  },
                 );
+                if (proxyRes.status !== 200 || !proxyRes.data?.url) {
+                  throw new Error(
+                    "Converting PowerPoint on a local network isn't available on this device yet.",
+                  );
+                }
+                publicPptUrl = proxyRes.data.url as string;
               }
 
               log.info(
