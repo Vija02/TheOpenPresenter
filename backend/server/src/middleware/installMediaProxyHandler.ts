@@ -21,6 +21,7 @@ export default (app: Express) => {
   const enabled = isPubliclyAccessibleUrl(process.env.ROOT_URL);
   if (enabled) {
     logger.debug("Media proxy handler enabled");
+  } else {
     return;
   }
 
