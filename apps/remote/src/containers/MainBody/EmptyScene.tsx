@@ -1,6 +1,6 @@
 import { Scene, SceneCategories, sceneCategories } from "@repo/base-plugin";
 import { usePluginData, usePluginMetaData } from "@repo/shared";
-import { Badge, OptionGroup } from "@repo/ui";
+import { Badge, Option, OptionGroup } from "@repo/ui";
 import React from "react";
 import { FaStar } from "react-icons/fa";
 import { IconType } from "react-icons/lib";
@@ -85,32 +85,23 @@ export const EmptyScene = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 auto-rows-fr">
                 {categoryPlugins.map((sceneCreator) => (
                   <div 
-                    key={sceneCreator.pluginName} 
-                    className="flex flex-col h-full [&>div]:flex-1 [&_[role=radio]]:h-full [&_label]:h-full [&_button]:h-full"
+                    key={sceneCreator.pluginName}
+                    onClick={() => addPlugin(sceneCreator.pluginName, sceneCreator.title)}
+                    className="flex flex-col h-full border border-gray-200 rounded-lg hover:border-gray-400 hover:bg-gray-50 transition-colors cursor-pointer"
                   >
-                    {/* put exactly 1 option per OptionGroup so it fills the cell perfectly */}
-                    <OptionGroup
-                      size="md"
-                      options={[
-                        {
-                          title: (
-                            <div className="flex items-center gap-2">
-                              {sceneCreator.title}
-                              {sceneCreator.isExperimental && (
-                                <Badge size="sm">EXPERIMENTAL</Badge>
-                              )}
-                              {sceneCreator.isStarred && (
-                                <FaStar className="text-yellow-400" />
-                              )}
-                            </div>
-                          ),
-                          description: sceneCreator.description,
-                          value: sceneCreator.pluginName,
-                        },
-                      ]}
-                      onValueChange={() => {
-                        addPlugin(sceneCreator.pluginName, sceneCreator.title);
-                      }}
+                    <Option
+                      title={
+                        <div className="flex items-center gap-2">
+                          {sceneCreator.title}
+                          {sceneCreator.isExperimental && (
+                            <Badge size="sm">EXPERIMENTAL</Badge>
+                          )}
+                          {sceneCreator.isStarred && (
+                            <FaStar className="text-yellow-400" />
+                          )}
+                        </div>
+                      }
+                      description={sceneCreator.description}
                     />
                   </div>
                 ))}
