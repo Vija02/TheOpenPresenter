@@ -1,6 +1,6 @@
 import { Scene, SceneCategories, sceneCategories } from "@repo/base-plugin";
 import { usePluginData, usePluginMetaData } from "@repo/shared";
-import { Badge, Option, OptionGroup } from "@repo/ui";
+import { Badge, Option } from "@repo/ui";
 import React from "react";
 import { FaStar } from "react-icons/fa";
 import { IconType } from "react-icons/lib";
@@ -60,13 +60,13 @@ export const EmptyScene = () => {
 
   return (
     <div className="p-4 prose max-w-none">
-      <h2 className="mt-2" style={{marginBottom: "0.25em"}}>Add component</h2>
-      <p style={{marginBottom: "-0.75em"}}>
+      <h2 className="mt-2 mb-2">Add component</h2>
+      <p>
         Select a component below to add it to your project.
       </p>
 
       {/* keep the menu from getting too wide on big screens */}
-      <div className="not-prose my-8 flex flex-col gap-8 max-w-5xl">
+      <div className="mt-5 not-prose my-8 flex flex-col gap-5 max-w-5xl">
         {sceneCategories.map((category) => {
           const categoryPlugins = visibleSceneCreators.filter((creator) =>
             creator.categories.includes(category)
@@ -75,7 +75,7 @@ export const EmptyScene = () => {
           if (categoryPlugins.length === 0) return null;
 
           return (
-            <div style={{marginBottom: "-0.75em"}} key={category} className="flex flex-col gap-3">
+            <div key={category} className="flex flex-col gap-3">
               <div className="flex items-center gap-2 text-xl font-bold text-gray-800">
                 {React.createElement(sceneCategoriesConfig[category], {
                   fontSize: 24,
