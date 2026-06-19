@@ -93,6 +93,7 @@ async function main() {
 
   const finalEnv = {
     NODE_ENV: process.env.ENABLE_E2E_COMMANDS ? "test" : "production",
+    LOG_LOCALLY: "1",
     // Disable auto login for test
     AUTO_LOGIN: process.env.ENABLE_E2E_COMMANDS ? "0" : "1",
     ENABLE_E2E_COMMANDS: process.env.ENABLE_E2E_COMMANDS ? "1" : "0",

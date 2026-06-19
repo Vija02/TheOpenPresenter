@@ -23,11 +23,12 @@ const OTEL_SEV_NUM_FROM_PINO_LEVEL: { [level: number]: SeverityNumber } = {
 // @ts-ignore
 const isTestEnv = typeof vitest !== "undefined";
 const isDevEnv = process.env.NODE_ENV === "development";
+const isLogLocally = process.env.LOG_LOCALLY === "1";
 const isBrowser = typeof window !== "undefined";
 
 const getNodeDestination = () => {
-  if (isDevEnv) {
-    // In dev mode, use pino-pretty for nice console output
+  if (isDevEnv || isLogLocally) {
+    // Use pino-pretty for nice console output
     return pino.transport({
       target: "pino-pretty",
       options: {
