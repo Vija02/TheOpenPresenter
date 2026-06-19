@@ -184,6 +184,57 @@ export default (app: Express) => {
     }
   });
 
+  // A custom endpoint to get cloud to proxy a local media file
+  // Cloud will return us a url that can be used to access the file
+  app.post("/device/host/media-proxy-url", json(), async (req, res) => {
+    try {
+      const baseUrl = process.env.MEDIA_PROXY_BASE_URL;
+      if (!baseUrl) {
+        res
+          .status(400)
+          .json({ error: "MEDIA_PROXY_BASE_URL is not configured" });
+        return;
+      }
+      if (!isInitialized || !irohTicket) {
+        res
+          .status(409)
+          .json({ error: "iroh connection is not initialized on this device" });
+        return;
+      }
+
+      const { mediaName } = req.body ?? {};
+      if (!mediaName || typeof mediaName !== "string") {
+        res.status(400).json({ error: "mediaName is required" });
+        return;
+      }
+
+      const mintRes = await axios.post(
+        `${baseUrl.replace(/\/$/, "")}/media-proxy/mint`,
+        { ticket: irohTicket, mediaName },
+        {
+          headers: { "Content-Type": "application/json" },
+          validateStatus: () => true,
+        },
+      );
+      if (mintRes.status !== 200 || !mintRes.data?.url) {
+        logger.error(
+          { status: mintRes.status },
+          "Failed to mint media proxy url from cloud",
+        );
+        res.status(502).json({ error: "Failed to mint proxy url" });
+        return;
+      }
+
+      res.json({ url: mintRes.data.url });
+    } catch (err) {
+      logger.error(
+        { err },
+        "Error handling /device/host/media-proxy-url request",
+      );
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   const pingCloudConnection = async (
     cloudConnection: CloudConnection,
     hostSessionCookie: string | null,

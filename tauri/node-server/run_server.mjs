@@ -139,6 +139,8 @@ async function main() {
 
     // ETC
     STATIC_FILES_PATH: "https://static.theopenpresenter.com",
+    // Cloud base used to tunnel local media out to Office Online for PPT conversion
+    MEDIA_PROXY_BASE_URL: "https://theopenpresenter.com",
     // Allows us to access through http
     DISABLE_HSTS: "1",
     // Allows access from any origin

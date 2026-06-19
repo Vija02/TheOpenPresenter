@@ -27,6 +27,7 @@ import installSameOrigin from "./installSameOrigin";
 import installScreenControlSweeper from "./installScreenControlSweeper";
 import installSession from "./installSession";
 import installSharedStatic from "./installSharedStatic";
+import installMediaProxyHandler from "./installMediaProxyHandler";
 import installTrpc from "./installTrpc";
 import installWorkerUtils from "./installWorkerUtils";
 
@@ -59,6 +60,7 @@ export {
   installScreenControlSweeper,
   installSession,
   installSharedStatic,
+  installMediaProxyHandler,
   installStripe,
   installTrpc,
   installWorkerUtils,

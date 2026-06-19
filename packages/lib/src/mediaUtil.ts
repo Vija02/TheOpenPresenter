@@ -1,5 +1,5 @@
 import { VideoTranscodeStatus } from "@repo/graphql";
-import { TypeId, fromUUID, toUUID } from "typeid-js";
+import { TypeId, fromString, fromUUID, toUUID } from "typeid-js";
 
 import { isVideoFile } from "./mediaTypeUtil";
 
@@ -20,6 +20,18 @@ export const extractMediaName = (mediaName: string) => {
   const uuid = uuidFromMediaId(mediaId);
 
   return { uuid, mediaId, extension };
+};
+
+export const isValidMediaName = (mediaName: string): boolean => {
+  try {
+    const { mediaId, extension } = extractMediaName(mediaName);
+    if (!/^[a-z0-9]{1,12}$/i.test(extension)) return false;
+    // Throws on an invalid typeid
+    fromString(mediaId, "media");
+    return true;
+  } catch {
+    return false;
+  }
 };
 
 export const mediaIdFromUUID = (uuid: string) => {
