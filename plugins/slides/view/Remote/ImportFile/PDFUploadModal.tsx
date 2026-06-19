@@ -15,7 +15,7 @@ export const PDFUploadModal = ({ replaceImportId }: Props) => {
 
   const { onToggle: onParentToggle } = useOverlayToggle();
 
-  const { mutate: selectPdf, isPending } =
+  const { mutateAsync: selectPdf, isPending } =
     trpc.slides.selectPdf.useMutation();
 
   const handleClick = useCallback(async () => {
@@ -28,22 +28,19 @@ export const PDFUploadModal = ({ replaceImportId }: Props) => {
     const result = results?.[0];
     if (!result) return;
 
-    selectPdf(
-      {
+    try {
+      await selectPdf({
         mediaName: result.mediaName,
         name: result.originalName ?? undefined,
         pluginId: pluginApi.pluginContext.pluginId,
         replaceImportId,
-      },
-      {
-        onError: (err) => {
-          pluginApi.remote.toast.error(
-            `Failed to import PDF: ${err.message}`,
-            { toastId: "slides--pdfImportError" },
-          );
-        },
-      },
-    );
+      });
+    } catch (err: any) {
+      pluginApi.remote.toast.error(`Failed to import PDF: ${err?.message}`, {
+        toastId: "slides--pdfImportError",
+      });
+    }
+
     onParentToggle?.();
   }, [
     pluginApi.mediaPicker,
