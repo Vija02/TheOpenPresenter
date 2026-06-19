@@ -15,8 +15,7 @@ export const PPTUploadModal = ({ replaceImportId }: Props) => {
 
   const { onToggle: onParentToggle } = useOverlayToggle();
 
-  const { mutate: selectPpt, isPending } =
-    trpc.slides.selectPpt.useMutation();
+  const { mutate: selectPpt, isPending } = trpc.slides.selectPpt.useMutation();
 
   const handleClick = useCallback(async () => {
     const results = await pluginApi.mediaPicker.show({
@@ -28,16 +27,27 @@ export const PPTUploadModal = ({ replaceImportId }: Props) => {
     const result = results?.[0];
     if (!result) return;
 
-    selectPpt({
-      mediaName: result.mediaName,
-      name: result.originalName ?? undefined,
-      pluginId: pluginApi.pluginContext.pluginId,
-      replaceImportId,
-    });
+    selectPpt(
+      {
+        mediaName: result.mediaName,
+        name: result.originalName ?? undefined,
+        pluginId: pluginApi.pluginContext.pluginId,
+        replaceImportId,
+      },
+      {
+        onError: (err) => {
+          pluginApi.remote.toast.error(
+            `Failed to import PowerPoint: ${err.message}`,
+            { toastId: "slides--pptImportError" },
+          );
+        },
+      },
+    );
     onParentToggle?.();
   }, [
     pluginApi.mediaPicker,
     pluginApi.pluginContext.pluginId,
+    pluginApi.remote,
     selectPpt,
     replaceImportId,
     onParentToggle,
