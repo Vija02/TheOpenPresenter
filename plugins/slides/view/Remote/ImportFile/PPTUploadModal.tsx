@@ -1,4 +1,5 @@
 import { useOverlayToggle } from "@repo/ui";
+import { TRPCError } from "@trpc/server";
 import { useCallback } from "react";
 import { RiFilePpt2Fill } from "react-icons/ri";
 
@@ -15,7 +16,8 @@ export const PPTUploadModal = ({ replaceImportId }: Props) => {
 
   const { onToggle: onParentToggle } = useOverlayToggle();
 
-  const { mutate: selectPpt, isPending } = trpc.slides.selectPpt.useMutation();
+  const { mutateAsync: selectPpt, isPending } =
+    trpc.slides.selectPpt.useMutation();
 
   const handleClick = useCallback(async () => {
     const results = await pluginApi.mediaPicker.show({
@@ -27,22 +29,19 @@ export const PPTUploadModal = ({ replaceImportId }: Props) => {
     const result = results?.[0];
     if (!result) return;
 
-    selectPpt(
-      {
+    try {
+      await selectPpt({
         mediaName: result.mediaName,
         name: result.originalName ?? undefined,
         pluginId: pluginApi.pluginContext.pluginId,
         replaceImportId,
-      },
-      {
-        onError: (err) => {
-          pluginApi.remote.toast.error(
-            `Failed to import PowerPoint: ${err.message}`,
-            { toastId: "slides--pptImportError" },
-          );
-        },
-      },
-    );
+      });
+    } catch (err: any) {
+      pluginApi.remote.toast.error(
+        `Failed to import PowerPoint: ${err?.message}`,
+        { toastId: "slides--pptImportError" },
+      );
+    }
     onParentToggle?.();
   }, [
     pluginApi.mediaPicker,
