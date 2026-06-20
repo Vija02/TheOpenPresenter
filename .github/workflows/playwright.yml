@@ -80,8 +80,8 @@ jobs:
             sleep 1
           done
           if [ -z "$TUNNEL_URL" ]; then echo "Failed to obtain cloudflared URL"; cat /tmp/cloudflared.log; exit 1; fi
-          echo "Public ROOT_URL: $TUNNEL_URL"
-          sed -i "s|^ROOT_URL=.*|ROOT_URL=$TUNNEL_URL|" .env
+          echo "PUBLIC_ROOT_URL: $TUNNEL_URL"
+          echo "PUBLIC_ROOT_URL=$TUNNEL_URL" >> .env
 
           yarn --no-immutable
           CONFIRM_DROP=1 yarn setup

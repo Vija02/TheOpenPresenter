@@ -118,7 +118,7 @@ async function main() {
 
     // CORE
     PORT: "5678",
-    ROOT_URL: process.env.ROOT_URL ?? "http://localhost:5678",
+    ROOT_URL: "http://localhost:5678",
     SECRET: "cookie_secret",
     GRAPHILE_TURBO: "1",
 
@@ -146,6 +146,12 @@ async function main() {
     DISABLE_HSTS: "1",
     // Allows access from any origin
     ALLOW_ANY_ORIGIN: "1",
+
+    // Public base for outbound media fetch (e.g. Office Online), without
+    // changing ROOT_URL. Only set in special setups (e.g. CI tunnel).
+    ...(process.env.PUBLIC_ROOT_URL
+      ? { PUBLIC_ROOT_URL: process.env.PUBLIC_ROOT_URL }
+      : {}),
 
     ...envOverride,
   };
