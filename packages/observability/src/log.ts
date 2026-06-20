@@ -22,9 +22,10 @@ const OTEL_SEV_NUM_FROM_PINO_LEVEL: { [level: number]: SeverityNumber } = {
 
 // @ts-ignore
 const isTestEnv = typeof vitest !== "undefined";
-const isDevEnv = process.env.NODE_ENV === "development";
-const isLogLocally = process.env.LOG_LOCALLY === "1";
 const isBrowser = typeof window !== "undefined";
+const hasProcess = typeof process !== "undefined";
+const isDevEnv = hasProcess && process.env.NODE_ENV === "development";
+const isLogLocally = hasProcess && process.env.LOG_LOCALLY === "1";
 
 const getNodeDestination = () => {
   if (isDevEnv || isLogLocally) {
