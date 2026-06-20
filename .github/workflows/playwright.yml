@@ -44,6 +44,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: lts/*
+          cache: yarn
       - name: Start Alloy with config
         run: |
           docker run -d \
@@ -68,6 +69,12 @@ jobs:
           curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o cloudflared
           chmod +x cloudflared
           sudo mv cloudflared /usr/local/bin/
+      - name: Cache Playwright browsers
+        id: pw-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/yarn.lock') }}
       - name: yarn, lint, build and test
         run: |
           cp .env.ci .env
@@ -86,7 +93,11 @@ jobs:
           yarn --no-immutable
           CONFIRM_DROP=1 yarn setup
           yarn build
-          yarn e2e playwright install --with-deps
+          if [ "${{ steps.pw-cache.outputs.cache-hit }}" == "true" ]; then
+            yarn e2e playwright install-deps
+          else
+            yarn e2e playwright install --with-deps
+          fi
           yarn worker start &
           yarn e2e test --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
       - name: Upload blob report
@@ -107,6 +118,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: lts/*
+          cache: yarn
       - name: Install dependencies
         run: yarn --no-immutable
       - name: Download blob reports
