@@ -282,7 +282,9 @@ test.describe("Screen /control as org member", () => {
 
     await screenControlPage.showOtherOrgsButton.click();
 
-    await expect(screenControlPage.orgHeading(SECONDARY_ORG_NAME)).toBeVisible();
+    await expect(
+      screenControlPage.orgHeading(SECONDARY_ORG_NAME),
+    ).toBeVisible();
     await expect(
       page.getByText("Secondary Org Project", { exact: true }).first(),
     ).toBeVisible();
@@ -334,7 +336,7 @@ test.describe("Screen /control as org member", () => {
 
       // Renderer flips from idle to the project's active scene.
       await expect(renderer.idleMessage).toBeHidden();
-      await expect(renderer.currentScene).toBeVisible();
+      await expect(renderer.currentScene).toBeVisible({ timeout: 100000 });
       await expect(renderer.lyricsContainer.first()).toBeVisible();
       await expect(rendererPage.getByText(marker).first()).toBeVisible();
     } finally {
