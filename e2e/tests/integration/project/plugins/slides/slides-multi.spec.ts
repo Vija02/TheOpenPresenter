@@ -76,7 +76,7 @@ test.describe("Slides Plugin - Multiple Imports", () => {
     ).toBeVisible();
 
     // The trailing "Add slide" placeholder is still there after both imports
-    await expect(page.getByText("Add slide", { exact: true })).toBeVisible();
+    await expect(page.locator("slides-remote").getByText("Add slide", { exact: true })).toBeVisible();
 
     // --- Visually verify both imports render correctly on the present page ---
 
