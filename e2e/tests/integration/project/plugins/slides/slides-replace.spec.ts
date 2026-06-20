@@ -112,13 +112,12 @@ test.describe("Slides Plugin - Replace Import", () => {
 
     // --- While the replace is in progress ---
 
-    // The import being replaced shows a "Replacing..." indicator
     const replacingIndicator = page.getByText("Replacing...", { exact: true });
-    await expect(replacingIndicator).toBeVisible({ timeout: 15 * 1000 });
-
-    // Its Replace and Delete buttons are disabled while replacing
-    await expect(firstReplaceButton).toBeDisabled();
-    await expect(firstDeleteButton).toBeDisabled();
+    await Promise.all([
+      expect(replacingIndicator).toBeVisible({ timeout: 15 * 1000 }),
+      expect(firstReplaceButton).toBeDisabled({ timeout: 15 * 1000 }),
+      expect(firstDeleteButton).toBeDisabled({ timeout: 15 * 1000 }),
+    ]);
 
     // --- Wait for the replace to finish ---
 
