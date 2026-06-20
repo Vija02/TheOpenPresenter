@@ -88,9 +88,9 @@ jobs:
             sleep 1
           done
           if [ -z "$TUNNEL_URL" ]; then echo "Failed to obtain cloudflared URL"; cat /tmp/cloudflared.log; exit 1; fi
-          echo "Public ROOT_URL: $TUNNEL_URL"
+          echo "PUBLIC_ROOT_URL: $TUNNEL_URL"
           ENABLE_E2E_COMMANDS=1 \
-          ROOT_URL=$TUNNEL_URL \
+          PUBLIC_ROOT_URL=$TUNNEL_URL \
           DISPLAY=:99 \
             tauri/target/debug/theopenpresenter-app &
           echo "Waiting for server to be ready..."

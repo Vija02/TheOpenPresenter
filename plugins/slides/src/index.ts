@@ -447,7 +447,8 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
             loadedPlugin.pluginData.imports[newImport.importId] = newImport;
 
             try {
-              const rootUrl = process.env.ROOT_URL;
+              const rootUrl =
+                process.env.PUBLIC_ROOT_URL ?? process.env.ROOT_URL;
               let publicPptUrl: string;
 
               if (isPubliclyAccessibleUrl(rootUrl)) {
