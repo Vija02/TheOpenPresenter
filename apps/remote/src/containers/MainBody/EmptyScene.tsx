@@ -84,26 +84,22 @@ export const EmptyScene = () => {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 auto-rows-fr">
                 {categoryPlugins.map((sceneCreator) => (
-                  <div 
+                  <Option
                     key={sceneCreator.pluginName}
                     onClick={() => addPlugin(sceneCreator.pluginName, sceneCreator.title)}
-                    className="flex flex-col h-full border border-gray-200 rounded-lg hover:border-gray-400 hover:bg-gray-50 transition-colors cursor-pointer"
-                  >
-                    <Option
-                      title={
-                        <div className="flex items-center gap-2">
-                          {sceneCreator.title}
-                          {sceneCreator.isExperimental && (
-                            <Badge size="sm">EXPERIMENTAL</Badge>
-                          )}
-                          {sceneCreator.isStarred && (
-                            <FaStar className="text-yellow-400" />
-                          )}
-                        </div>
-                      }
-                      description={sceneCreator.description}
-                    />
-                  </div>
+                    title={
+                      <div className="flex items-center gap-2">
+                        {sceneCreator.title}
+                        {sceneCreator.isExperimental && (
+                          <Badge size="sm">EXPERIMENTAL</Badge>
+                        )}
+                        {sceneCreator.isStarred && (
+                          <FaStar className="text-yellow-400" />
+                        )}
+                      </div>
+                    }
+                    description={sceneCreator.description}
+                  />
                 ))}
               </div>
             </div>
