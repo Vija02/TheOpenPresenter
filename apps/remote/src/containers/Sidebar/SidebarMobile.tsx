@@ -19,7 +19,6 @@ import RendererManagementModal from "./RendererManagement/RendererManagementModa
 import RendererSelector from "./RendererManagement/RendererSelector";
 import { RendererWarning } from "./RendererWarning";
 import ShareQRModal from "./ShareQRModal";
-import SidebarAddSceneModal from "./SidebarAddSceneModal";
 import "./SidebarMobile.css";
 
 const SidebarMobile = () => {
@@ -103,16 +102,24 @@ const SidebarMobile = () => {
             )}
           </div>
           <div className="rt--sidebar-mobile-actions">
-            <OverlayToggle
-              toggler={({ onToggle }) => (
-                <Button onClick={onToggle} variant="success" size="mini">
-                  <VscAdd />
-                  Add
-                </Button>
+            <div
+              onClick={() => {
+                if (location !== "/new") {
+                  navigate("/new");
+                }
+              }}
+              className={cx(
+                "rt--sidebar-mobile-scene-item",
+                location === "/new"
+                  ? "rt--sidebar-mobile-scene-item__active"
+                  : "rt--sidebar-mobile-scene-item__inactive",
               )}
             >
-              <SidebarAddSceneModal />
-            </OverlayToggle>
+              <div>
+                <VscAdd />
+                <p>Add</p>
+              </div>
+            </div>
 
             <PresentButton isMobile />
           </div>
