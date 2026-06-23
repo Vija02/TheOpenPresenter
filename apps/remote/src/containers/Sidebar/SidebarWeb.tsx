@@ -20,7 +20,6 @@ import RendererSelector from "./RendererManagement/RendererSelector";
 import { RendererWarning } from "./RendererWarning";
 import { ResizableBoxWrapper } from "./ResizableBoxWrapper";
 import ShareQRModal from "./ShareQRModal";
-import SidebarAddSceneModal from "./SidebarAddSceneModal";
 import "./SidebarWeb.css";
 
 const SidebarWeb = () => {
@@ -105,16 +104,26 @@ const SidebarWeb = () => {
                 );
               })}
             </div>
+            
             <div className="rt--sidebar-web-actions">
-              <OverlayToggle
-                toggler={({ onToggle }) => (
-                  <Button variant="success" onClick={onToggle}>
-                    <VscAdd /> Add New Scene
-                  </Button>
+              <div
+                onClick={() => {
+                  if (location !== "/new") {
+                    navigate("/new");
+                  }
+                }}
+                className={cx(
+                  "rt--sidebar-web-scene-item",
+                  location === "/new"
+                    ? "rt--sidebar-web-scene-item__active"
+                    : "rt--sidebar-web-scene-item__inactive",
                 )}
               >
-                <SidebarAddSceneModal />
-              </OverlayToggle>
+                <div>
+                  <VscAdd />
+                  <p>Add New Scene</p>
+                </div>
+              </div>
 
               <PresentButton />
             </div>
