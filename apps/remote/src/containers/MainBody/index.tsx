@@ -6,7 +6,7 @@ import { useLocation } from "wouter";
 import { useRendererSelection } from "../../contexts/rendererSelection";
 import { useNavigateWithParams } from "../../hooks/useNavigateWithParams";
 import Footer from "../Footer";
-import { EmptyScene } from "./EmptyScene";
+import { NewScene } from "./NewScene";
 import SceneRenderer from "./SceneRenderer";
 import "./index.css";
 
@@ -29,17 +29,24 @@ const MainBody = () => {
     [data.data],
   );
 
-  // On load, select the scene that is active if available
+  // On load, figure out where the user should go
   useEffect(() => {
+    // if we are already on the /new page, stop here
+    if (location === "/new") return;
+
     const currentScene = mainState.renderer[selectedRendererId]?.currentScene;
+    
     if (!selectedScene) {
-      if (currentScene) {
+      if (scenes.length === 0) {
+        // if empty project then teleport them to the /new page
+        navigate("/new", { replace: true });
+      } else if (currentScene) {
         navigate(`/${currentScene}`, { replace: true });
       } else if (scenes.length > 0) {
         navigate(`/${scenes[0]![0]}`, { replace: true });
       }
     }
-  }, [mainState.renderer, navigate, scenes, selectedRendererId, selectedScene]);
+  }, [mainState.renderer, navigate, scenes, selectedRendererId, selectedScene, location]);
 
   return (
     <div className="rt--main-body-container">
@@ -51,7 +58,7 @@ const MainBody = () => {
             value={value as Scene}
           />
         ))}
-        {scenes.length === 0 && <EmptyScene />}
+        {location === "/new" && <NewScene />}
       </div>
       <Footer />
     </div>
