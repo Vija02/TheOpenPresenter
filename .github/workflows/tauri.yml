@@ -118,7 +118,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          APP="tauri/target/release/bundle/macos/TheOpenPresenter.app"
+          APP="tauri/target/release/bundle/macos/TheOpenPresenter Studio.app"
           ENT="tauri/entitlements.plist"
 
           if [ ! -d "$APP" ]; then
