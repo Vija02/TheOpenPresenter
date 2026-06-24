@@ -133,9 +133,10 @@ jobs:
           security create-keychain -p "$KEY_PASS" "$KEYCHAIN"
           security unlock-keychain -p "$KEY_PASS" "$KEYCHAIN"
 
-          CERT_FILE=$(mktemp)
-          echo "$APPLE_CERTIFICATE" | base64 -d > "$CERT_FILE"
+          CERT_FILE="$(mktemp).p12"
+          echo "$APPLE_CERTIFICATE" | tr -d '[:space:]' | base64 -D > "$CERT_FILE"
           security import "$CERT_FILE" \
+            -f pkcs12 \
             -P "$APPLE_CERTIFICATE_PASSWORD" \
             -T /usr/bin/codesign \
             -k "$KEYCHAIN"
