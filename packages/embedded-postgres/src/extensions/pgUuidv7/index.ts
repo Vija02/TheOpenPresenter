@@ -19,6 +19,11 @@ const precompiledBinary = [
     arch: "arm64",
     binaryPath: "darwin_arm64.dylib",
   },
+  {
+    platform: "darwin",
+    arch: "x64",
+    binaryPath: "darwin_x86_64.dylib",
+  },
 ];
 
 // Debt: We need to change this manually when we upgrade our PG version
