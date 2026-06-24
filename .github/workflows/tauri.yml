@@ -49,12 +49,18 @@ jobs:
         env:
           TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
           TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
-          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          # SIGN-only trio. The notarisation trio
+          # (APPLE_ID / APPLE_PASSWORD / APPLE_TEAM_ID) is deliberately
+          # absent so Tauri's auto-sign signs the main binaries but
+          # SKIPS notarisation
+          #
+          # TEMP: signing on PR builds so we can verify the deep-sign
+          # pipeline before merging. Re-gate to non-PR (add the
+          # `github.event_name != 'pull_request' && ... || ''` guard
+          # back) once the run is green.
+          APPLE_CERTIFICATE:          ${{ secrets.APPLE_CERTIFICATE }}
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_SIGNING_IDENTITY:     ${{ secrets.APPLE_SIGNING_IDENTITY }}
         run: |
           # Build TOP
           cp .env.ci .env
@@ -82,6 +88,131 @@ jobs:
           yarn tauri build --verbose
 
           echo "tauri_path=$(pwd)" >> "$GITHUB_ENV"
+
+      # Tauri's built-in signing handles Contents/MacOS/* + the outer .app
+      # only. This bundle ships many native binaries inside
+      # Contents/Resources/ (node_modules from node-server, plus
+      # @embedded-postgres / sharp / better-sqlite3 / ffmpeg-static /
+      # esbuild / fsevents) — every one of those must be code-signed
+      # with hardened runtime + secure timestamp + our entitlements for
+      # notarisation to accept the bundle.
+      #
+      # So: walk every Mach-O in Resources/, sign it, then re-sign the
+      # outer .app (its signature was invalidated by the Resources
+      # changes), then submit to notarytool and staple. Finally rebuild
+      # the DMG from the now-stapled .app so the .dmg artifact contains
+      # the production-ready bundle.
+      # TEMP: PR-gating removed so we can verify the deep-sign pipeline
+      # before merging. Re-add `&& github.event_name != 'pull_request'`
+      # to the `if:` once the run is green.
+      - name: Deep-sign bundle resources + notarise (macOS)
+        if: runner.os == 'macOS'
+        shell: bash
+        env:
+          APPLE_CERTIFICATE:          ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY:     ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID:                   ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD:             ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID:              ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          set -euo pipefail
+
+          APP="tauri/target/release/bundle/macos/TheOpenPresenter.app"
+          ENT="tauri/entitlements.plist"
+
+          if [ ! -d "$APP" ]; then
+            echo "Bundle not found at $APP - nothing to sign."
+            exit 0
+          fi
+
+          # Tauri's auto-sign step uses an ephemeral keychain and deletes
+          # it on exit. Set up a fresh one for our deep-sign + DMG signing.
+          KEY_PASS=$(openssl rand -base64 12)
+          KEYCHAIN="$HOME/Library/Keychains/deep-sign.keychain-db"
+          security create-keychain -p "$KEY_PASS" "$KEYCHAIN"
+          security unlock-keychain -p "$KEY_PASS" "$KEYCHAIN"
+
+          CERT_FILE=$(mktemp)
+          echo "$APPLE_CERTIFICATE" | base64 -d > "$CERT_FILE"
+          security import "$CERT_FILE" \
+            -P "$APPLE_CERTIFICATE_PASSWORD" \
+            -T /usr/bin/codesign \
+            -k "$KEYCHAIN"
+          rm "$CERT_FILE"
+          security set-key-partition-list \
+            -S apple-tool:,apple:,codesign: -s -k "$KEY_PASS" "$KEYCHAIN"
+          security list-keychain -d user -s \
+            "$HOME/Library/Keychains/login.keychain-db" "$KEYCHAIN"
+
+          echo "::group::Deep-signing Mach-O binaries in Contents/Resources/"
+          # find ... -print0 + read -d '' to survive paths with spaces.
+          while IFS= read -r -d '' f; do
+            if file "$f" | grep -qE 'Mach-O'; then
+              echo "  $f"
+              codesign --force --options runtime --timestamp \
+                --entitlements "$ENT" \
+                --keychain "$KEYCHAIN" \
+                --sign "$APPLE_SIGNING_IDENTITY" "$f"
+            fi
+          done < <(find "$APP/Contents/Resources" -type f -print0)
+          echo "::endgroup::"
+
+          echo "Re-signing outer .app (Resources changes invalidated its sig)..."
+          codesign --force --options runtime --timestamp \
+            --entitlements "$ENT" \
+            --keychain "$KEYCHAIN" \
+            --sign "$APPLE_SIGNING_IDENTITY" "$APP"
+
+          echo "Verifying signature..."
+          codesign --verify --deep --strict --verbose=2 "$APP"
+
+          echo "Notarising .app (Apple usually takes 5–15 min)..."
+          ZIP="$(mktemp -u).zip"
+          ditto -c -k --keepParent "$APP" "$ZIP"
+          xcrun notarytool submit "$ZIP" \
+            --apple-id "$APPLE_ID" \
+            --team-id "$APPLE_TEAM_ID" \
+            --password "$APPLE_PASSWORD" \
+            --wait
+          rm -f "$ZIP"
+
+          echo "Stapling ticket onto .app..."
+          xcrun stapler staple "$APP"
+
+          # Rebuild the DMG — the one Tauri produced contains the
+          # pre-deep-sign, pre-staple .app.
+          DMG_DIR="tauri/target/release/bundle/dmg"
+          mkdir -p "$DMG_DIR"
+          EXISTING_DMG=$(ls "$DMG_DIR"/*.dmg 2>/dev/null | head -1 || true)
+          if [ -n "${EXISTING_DMG:-}" ]; then
+            DMG_NAME="$EXISTING_DMG"
+            rm -f "$EXISTING_DMG"
+          else
+            DMG_NAME="$DMG_DIR/TheOpenPresenter_0.1.0_aarch64.dmg"
+          fi
+
+          echo "Rebuilding DMG at $DMG_NAME..."
+          hdiutil create -volname "TheOpenPresenter" \
+            -srcfolder "$APP" \
+            -ov -format UDZO \
+            "$DMG_NAME"
+
+          echo "Signing + notarising DMG..."
+          codesign --force --timestamp \
+            --keychain "$KEYCHAIN" \
+            --sign "$APPLE_SIGNING_IDENTITY" \
+            "$DMG_NAME"
+          xcrun notarytool submit "$DMG_NAME" \
+            --apple-id "$APPLE_ID" \
+            --team-id "$APPLE_TEAM_ID" \
+            --password "$APPLE_PASSWORD" \
+            --wait
+          xcrun stapler staple "$DMG_NAME"
+
+          security delete-keychain "$KEYCHAIN"
+          echo "Done — signed, notarised, stapled."
+
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
