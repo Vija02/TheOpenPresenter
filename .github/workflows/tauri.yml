@@ -23,9 +23,9 @@ jobs:
           - platform: 'macos-latest'
             args: '--target aarch64-apple-darwin'
             rust_targets: 'aarch64-apple-darwin'
-          - platform: 'macos-15-intel'
-            args: '--target x86_64-apple-darwin'
-            rust_targets: 'x86_64-apple-darwin'
+          # - platform: 'macos-15-intel'
+          #   args: '--target x86_64-apple-darwin'
+          #   rust_targets: 'x86_64-apple-darwin'
 
     runs-on: ${{ matrix.platform }}
     steps:
@@ -53,14 +53,9 @@ jobs:
           # (APPLE_ID / APPLE_PASSWORD / APPLE_TEAM_ID) is deliberately
           # absent so Tauri's auto-sign signs the main binaries but
           # SKIPS notarisation
-          #
-          # TEMP: signing on PR builds so we can verify the deep-sign
-          # pipeline before merging. Re-gate to non-PR (add the
-          # `github.event_name != 'pull_request' && ... || ''` guard
-          # back) once the run is green.
-          APPLE_CERTIFICATE:          ${{ secrets.APPLE_CERTIFICATE }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          APPLE_SIGNING_IDENTITY:     ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_CERTIFICATE:          ${{ github.event_name != 'pull_request' && secrets.APPLE_CERTIFICATE || '' }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ github.event_name != 'pull_request' && secrets.APPLE_CERTIFICATE_PASSWORD || '' }}
+          APPLE_SIGNING_IDENTITY:     ${{ github.event_name != 'pull_request' && secrets.APPLE_SIGNING_IDENTITY || '' }}
         run: |
           # Build TOP
           cp .env.ci .env
@@ -102,11 +97,8 @@ jobs:
       # changes), then submit to notarytool and staple. Finally rebuild
       # the DMG from the now-stapled .app so the .dmg artifact contains
       # the production-ready bundle.
-      # TEMP: PR-gating removed so we can verify the deep-sign pipeline
-      # before merging. Re-add `&& github.event_name != 'pull_request'`
-      # to the `if:` once the run is green.
       - name: Deep-sign bundle resources + notarise (macOS)
-        if: runner.os == 'macOS'
+        if: runner.os == 'macOS' && github.event_name != 'pull_request'
         shell: bash
         env:
           APPLE_CERTIFICATE:          ${{ secrets.APPLE_CERTIFICATE }}
