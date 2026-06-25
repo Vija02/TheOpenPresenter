@@ -1,4 +1,4 @@
-export type ImportType = "googleslides" | "pdf" | "ppt";
+export type ImportType = "googleslides" | "pdf" | "ppt" | "image";
 export type DisplayMode = "googleslides" | "image";
 
 /**
@@ -9,6 +9,7 @@ export const DEFAULT_DISPLAY_MODE_BY_TYPE: Record<ImportType, DisplayMode> = {
   googleslides: "googleslides",
   pdf: "image",
   ppt: "image",
+  image: "image",
 };
 
 export const getEffectiveDisplayMode = (
@@ -68,7 +69,11 @@ export interface PptImportData extends BaseImportData {
   type: "ppt";
 }
 
-export type ImportData = GoogleSlidesImportData | PdfImportData | PptImportData;
+export interface ImageImportData extends BaseImportData {
+  type: "image";
+}
+
+export type ImportData = GoogleSlidesImportData | PdfImportData | PptImportData | ImageImportData;
 
 // ============================================================================
 // Plugin Data Types

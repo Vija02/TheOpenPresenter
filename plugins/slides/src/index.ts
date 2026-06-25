@@ -50,6 +50,7 @@ import {
   PluginBaseData,
   PluginRendererData,
   PptImportData,
+  ImageImportData,
 } from "./types";
 
 export const init = (
@@ -617,6 +618,56 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
             }
           },
         ),
+      
+      selectImage: t.procedure
+        .input(
+          z.object({
+            pluginId: z.string(),
+            mediaName: z.string(),
+            name: z.string().optional(),
+            replaceImportId: z.string().optional(),
+          }),
+        )
+        .mutation(
+          async ({
+            input: { pluginId, mediaName, name, replaceImportId },
+          }) => {
+            const log = logger.child({ pluginId, mediaName, replaceImportId });
+            const loadedPlugin = loadedPlugins[pluginId]!;
+
+            const newImport = getBaseImport(
+              "image",
+              name,
+              replaceImportId,
+            ) as ImageImportData;
+            
+            loadedPlugin.pluginData.imports[newImport.importId] = newImport;
+
+            try {
+              loadedPlugin.pluginData.imports[newImport.importId]!.thumbnailLinks = [mediaName];
+              loadedPlugin.pluginData.imports[newImport.importId]!.slideClickCounts = [0];
+              loadedPlugin.pluginData.imports[newImport.importId]!.slideIds = ["0"];
+              
+              loadedPlugin.pluginData.imports[newImport.importId]!._isFetching = false;
+
+              finalizeImport({
+                loadedPlugin,
+                newImportId: newImport.importId,
+                slideCount: 1,
+                replaceImportId,
+              });
+
+              return { importId: newImport.importId };
+            } catch (err) {
+              const { [newImport.importId]: _, ...remaining } =
+                loadedPlugin.pluginData.imports;
+              loadedPlugin.pluginData.imports = remaining;
+              log.error({ err }, "Failed to import image");
+              throw err;
+            }
+          },
+        ),
+
 
       selectSlide: t.procedure
         .input(
