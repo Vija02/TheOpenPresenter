@@ -89,6 +89,25 @@ export class MigrationManager {
     console.log("Database migrations completed");
   }
 
+  async installWorkerSchema(): Promise<void> {
+    const { nodeBinaryPath = "node", gmrcPath } = this.config;
+
+    if (!gmrcPath) {
+      throw new Error("gmrcPath is required to install the worker schema");
+    }
+
+    const scriptPath = path.resolve(
+      path.dirname(gmrcPath),
+      "../worker/install-db-schema.js",
+    );
+
+    console.log("Installing graphile-worker schema...");
+    await runCommand(nodeBinaryPath, [scriptPath], {
+      env: this.buildEnv({ GM_DBURL: this.databaseUrls.databaseUrl }),
+    });
+    console.log("graphile-worker schema installed");
+  }
+
   async watchMigrations(): Promise<void> {
     const { nodeBinaryPath = "node", gmrcPath } = this.config;
 
