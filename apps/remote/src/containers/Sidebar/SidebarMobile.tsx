@@ -100,8 +100,7 @@ const SidebarMobile = () => {
                 );
               },
             )}
-          </div>
-          <div className="rt--sidebar-mobile-actions">
+
             <div
               onClick={() => {
                 if (location !== "/new") {
@@ -111,8 +110,8 @@ const SidebarMobile = () => {
               className={cx(
                 "rt--sidebar-mobile-scene-item",
                 location === "/new"
-                  ? "rt--sidebar-mobile-scene-item__active"
-                  : "rt--sidebar-mobile-scene-item__inactive",
+                  ? "rt--sidebar-mobile-scene-item__active pointer-events-none"
+                  : "rt--sidebar-mobile-scene-item__inactive cursor-pointer",
               )}
             >
               <div>
@@ -120,7 +119,10 @@ const SidebarMobile = () => {
                 <p>Add</p>
               </div>
             </div>
-
+            
+          </div>
+          
+          <div className="rt--sidebar-mobile-actions">
             <PresentButton isMobile />
           </div>
         </div>
