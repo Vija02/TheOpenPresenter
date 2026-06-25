@@ -5,6 +5,7 @@ import installCloudConnection from "./installCloudConnection";
 import installDatabasePools from "./installDatabasePools";
 import installDeviceHostHandler from "./installDeviceHostHandler";
 import installDeviceServerHandler from "./installDeviceServerHandler";
+import installDiagnostics from "./installDiagnostics";
 import installE2EServerCommand from "./installE2EServerCommand";
 import installErrorHandler from "./installErrorHandler";
 import installFileUpload from "./installFileUpload";
@@ -38,6 +39,7 @@ export {
   installDatabasePools,
   installDeviceHostHandler,
   installDeviceServerHandler,
+  installDiagnostics,
   installE2EServerCommand,
   installErrorHandler,
   installFileUpload,
