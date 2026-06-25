@@ -1,3 +1,5 @@
+import path from "path";
+
 import type { DatabaseUrls, MigrationConfig } from "../types/index.js";
 import { runCommand } from "../utils/command.js";
 import { getGraphilePaths } from "../utils/paths.js";
@@ -23,6 +25,20 @@ export class MigrationManager {
     this.databaseVisitor = databaseVisitor;
   }
 
+  /**
+   * Set PATH for gmrc
+   */
+  private buildEnv(extra: Record<string, string>): Record<string, string> {
+    const env: Record<string, string> = { ...extra };
+    const { nodeBinaryPath } = this.config;
+    if (nodeBinaryPath && nodeBinaryPath !== "node") {
+      const nodeDir = path.dirname(path.resolve(nodeBinaryPath));
+      const sep = process.platform === "win32" ? ";" : ":";
+      env.PATH = `${nodeDir}${sep}${process.env.PATH ?? ""}`;
+    }
+    return env;
+  }
+
   async resetDatabase(): Promise<void> {
     const { nodeBinaryPath = "node", gmrcPath } = this.config;
 
@@ -37,12 +53,12 @@ export class MigrationManager {
       nodeBinaryPath,
       [graphileMigrateJsPath, "-c", gmrcPath, "reset", "--erase"],
       {
-        env: {
+        env: this.buildEnv({
           DATABASE_URL: this.databaseUrls.databaseUrl,
           ROOT_DATABASE_URL: this.databaseUrls.rootDatabaseUrl,
           DATABASE_AUTHENTICATOR: this.databaseAuthenticator,
           DATABASE_VISITOR: this.databaseVisitor,
-        },
+        }),
       },
     );
     console.log("Database schema reset completed");
@@ -62,12 +78,12 @@ export class MigrationManager {
       nodeBinaryPath,
       [graphileMigrateJsPath, "-c", gmrcPath, "migrate"],
       {
-        env: {
+        env: this.buildEnv({
           DATABASE_URL: this.databaseUrls.databaseUrl,
           ROOT_DATABASE_URL: this.databaseUrls.rootDatabaseUrl,
           DATABASE_AUTHENTICATOR: this.databaseAuthenticator,
           DATABASE_VISITOR: this.databaseVisitor,
-        },
+        }),
       },
     );
     console.log("Database migrations completed");
@@ -87,12 +103,12 @@ export class MigrationManager {
       nodeBinaryPath,
       [graphileMigrateJsPath, "-c", gmrcPath, "watch"],
       {
-        env: {
+        env: this.buildEnv({
           DATABASE_URL: this.databaseUrls.databaseUrl,
           ROOT_DATABASE_URL: this.databaseUrls.rootDatabaseUrl,
           DATABASE_AUTHENTICATOR: this.databaseAuthenticator,
           DATABASE_VISITOR: this.databaseVisitor,
-        },
+        }),
       },
     );
   }
