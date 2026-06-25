@@ -1,6 +1,7 @@
 import EmbeddedPostgres from "embedded-postgres";
 import { existsSync } from "fs";
-import { resolve } from "path";
+import { rm, writeFile } from "fs/promises";
+import { join, resolve } from "path";
 import type { Client } from "pg";
 
 import { ExtensionManager } from "./extensions/index.js";
@@ -68,6 +69,53 @@ export class EmbeddedPostgresManager {
     console.log("Initializing embedded PostgreSQL...");
 
     // Create EmbeddedPostgres instance
+    this.createPgInstance();
+
+    // Install extensions first (before starting PostgreSQL)
+    await this.extensionManager.installExtensions();
+
+    // initdb creates the data dir as its first step, so the dir merely existing
+    // does NOT mean setup finished (roles + first migration come later). We only
+    // treat init as complete once a marker is written at the end of
+    // performInitialSetup(). If the dir exists but the marker is missing, this is
+    // either (a) a cluster created before the marker existed, or (b) a run that
+    // was interrupted mid-setup. We must not blindly wipe - (a) holds real user
+    // data — so we boot it and check whether the required roles exist:
+    //   - roles present  -> healthy, just backfill the marker
+    //   - roles missing  -> incomplete init, safe to wipe and redo
+    if (
+      existsSync(this.config.databaseDir) &&
+      !existsSync(this.getInitMarkerPath())
+    ) {
+      const healthy = await this.verifyClusterHealthy();
+      if (healthy) {
+        console.log(
+          "Existing database predates the init marker; backfilling marker.",
+        );
+        await this.writeInitMarker();
+      } else {
+        console.warn(
+          "Detected an incomplete PostgreSQL initialization (required roles missing); removing the partial data dir and reinitializing...",
+        );
+        await rm(this.config.databaseDir, { recursive: true, force: true });
+        // Recreate the instance so it cleanly re-runs initdb on the empty dir.
+        this.createPgInstance();
+      }
+    }
+
+    const needsInitialization = !existsSync(this.config.databaseDir);
+
+    if (needsInitialization) {
+      console.log("Database not found, performing initial setup...");
+      await this.performInitialSetup();
+      await this.writeInitMarker();
+    }
+
+    this._isInitialized = true;
+    console.log("Database initialization completed");
+  }
+
+  private createPgInstance(): void {
     this.pg = new EmbeddedPostgres({
       databaseDir: this.config.databaseDir,
       user: "postgres",
@@ -75,19 +123,61 @@ export class EmbeddedPostgresManager {
       port: this.config.port,
       persistent: this.config.persistent,
     });
+  }
 
-    // Install extensions first (before starting PostgreSQL)
-    await this.extensionManager.installExtensions();
+  private getInitMarkerPath(): string {
+    return join(this.config.databaseDir, ".top-init-complete");
+  }
 
-    const needsInitialization = !existsSync(this.config.databaseDir);
+  private async writeInitMarker(): Promise<void> {
+    await writeFile(this.getInitMarkerPath(), `${new Date().toISOString()}\n`);
+  }
 
-    if (needsInitialization) {
-      console.log("Database not found, performing initial setup...");
-      await this.performInitialSetup();
+  private async verifyClusterHealthy(): Promise<boolean> {
+    if (!this.pg) {
+      return false;
     }
 
-    this._isInitialized = true;
-    console.log("Database initialization completed");
+    const startedHere = !this._isRunning;
+    let client: Client | null = null;
+    try {
+      if (startedHere) {
+        await this.pg.start();
+        this._isRunning = true;
+      }
+
+      client = this.pg.getPgClient();
+      if (!client) {
+        return false;
+      }
+      await client.connect();
+
+      const requiredRoles = [
+        this.config.roles.owner.name,
+        this.config.roles.authenticator.name,
+        this.config.roles.visitor.name,
+      ];
+      const { rows } = await client.query(
+        "SELECT rolname FROM pg_roles WHERE rolname = ANY($1)",
+        [requiredRoles],
+      );
+      return rows.length === requiredRoles.length;
+    } catch (err) {
+      console.warn("Cluster health check failed:", err);
+      return false;
+    } finally {
+      if (client) {
+        try {
+          await client.end();
+        } catch {
+          // ignore
+        }
+      }
+      if (startedHere && this._isRunning) {
+        await this.pg.stop();
+        this._isRunning = false;
+      }
+    }
   }
 
   async start(): Promise<void> {
