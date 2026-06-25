@@ -103,20 +103,17 @@ const SidebarWeb = () => {
                   </div>
                 );
               })}
-            </div>
-            
-            <div className="rt--sidebar-web-actions">
+
+              {/* Seamless Add New Scene Block */}
               <div
                 onClick={() => {
-                  if (location !== "/new") {
-                    navigate("/new");
-                  }
+                  if (location !== "/new") navigate("/new");
                 }}
                 className={cx(
                   "rt--sidebar-web-scene-item",
                   location === "/new"
-                    ? "rt--sidebar-web-scene-item__active"
-                    : "rt--sidebar-web-scene-item__inactive",
+                    ? "rt--sidebar-web-scene-item__active pointer-events-none"
+                    : "rt--sidebar-web-scene-item__inactive cursor-pointer"
                 )}
               >
                 <div>
@@ -125,9 +122,13 @@ const SidebarWeb = () => {
                 </div>
               </div>
 
+            </div>
+
+            <div className="rt--sidebar-web-actions">
               <PresentButton />
             </div>
           </div>
+          
           <div className="rt--sidebar-web-renderer-section">
             <RendererSelector />
             <OverlayToggle
