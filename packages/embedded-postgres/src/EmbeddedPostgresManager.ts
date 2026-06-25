@@ -2,7 +2,7 @@ import EmbeddedPostgres from "embedded-postgres";
 import { existsSync } from "fs";
 import { rm, writeFile } from "fs/promises";
 import { join, resolve } from "path";
-import type { Client } from "pg";
+import { Client } from "pg";
 
 import { ExtensionManager } from "./extensions/index.js";
 import { MigrationManager } from "./migration/index.js";
@@ -206,6 +206,44 @@ export class EmbeddedPostgresManager {
       );
       console.log("Running migrations...")
       await this.migrationManager.runMigrations();
+
+      // Safety net
+      await this.ensureWorkerSchema();
+    }
+  }
+
+  // Ensures the graphile-worker schema exists
+  private async ensureWorkerSchema(): Promise<void> {
+    if (!this.migrationManager) {
+      return;
+    }
+
+    const client = new Client({
+      connectionString: this.getDatabaseUrls().databaseUrl,
+    });
+
+    let exists = false;
+    try {
+      await client.connect();
+      const { rows } = await client.query(
+        "SELECT 1 FROM pg_namespace WHERE nspname = $1",
+        ["graphile_worker"],
+      );
+      exists = rows.length > 0;
+    } catch (err) {
+      console.warn("Failed to check for graphile-worker schema:", err);
+      return;
+    } finally {
+      try {
+        await client.end();
+      } catch {
+        // ignore
+      }
+    }
+
+    if (!exists) {
+      console.warn("graphile-worker schema is missing; installing it now...");
+      await this.migrationManager.installWorkerSchema();
     }
   }
 
