@@ -2,7 +2,7 @@ import EmbeddedPostgres from "embedded-postgres";
 import { existsSync } from "fs";
 import { rm, writeFile } from "fs/promises";
 import { join, resolve } from "path";
-import { Client } from "pg";
+import type { Client } from "pg";
 
 import { ExtensionManager } from "./extensions/index.js";
 import { MigrationManager } from "./migration/index.js";
@@ -214,13 +214,11 @@ export class EmbeddedPostgresManager {
 
   // Ensures the graphile-worker schema exists
   private async ensureWorkerSchema(): Promise<void> {
-    if (!this.migrationManager) {
+    if (!this.migrationManager || !this.pg) {
       return;
     }
 
-    const client = new Client({
-      connectionString: this.getDatabaseUrls().databaseUrl,
-    });
+    const client: Client = this.pg.getPgClient(this.config.databaseName);
 
     let exists = false;
     try {
