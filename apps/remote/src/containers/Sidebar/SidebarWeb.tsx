@@ -104,7 +104,6 @@ const SidebarWeb = () => {
                 );
               })}
 
-              {/* Seamless Add New Scene Block */}
               <div
                 onClick={() => {
                   if (location !== "/new") navigate("/new");
