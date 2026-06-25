@@ -44,18 +44,50 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.rust_targets }}
-      - name: yarn, lint, build and test
+          
+      - name: yarn, lint, build and test (signed)
+        if: github.event_name != 'pull_request'
         shell: bash
         env:
           TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
           TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
-          # SIGN-only trio. The notarisation trio
-          # (APPLE_ID / APPLE_PASSWORD / APPLE_TEAM_ID) is deliberately
-          # absent so Tauri's auto-sign signs the main binaries but
-          # SKIPS notarisation
-          APPLE_CERTIFICATE:          ${{ github.event_name != 'pull_request' && secrets.APPLE_CERTIFICATE || '' }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ github.event_name != 'pull_request' && secrets.APPLE_CERTIFICATE_PASSWORD || '' }}
-          APPLE_SIGNING_IDENTITY:     ${{ github.event_name != 'pull_request' && secrets.APPLE_SIGNING_IDENTITY || '' }}
+          APPLE_CERTIFICATE:          ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY:     ${{ secrets.APPLE_SIGNING_IDENTITY }}
+        run: |
+          # Build TOP
+          cp .env.ci .env
+          yarn --no-immutable
+          yarn build
+
+          # Reduce size
+          node scripts/build_utils/extract_core.js
+          node scripts/build_utils/extract_server.js
+          node scripts/build_utils/extract_plugins.js
+          node scripts/build_utils/extract_tauri.js
+          node scripts/build_utils/copy_deps.js
+
+          # Move the node_modules
+          rm -rf node_modules
+          cp -r ./node_modules_nft/node_modules ./node_modules
+
+          # Cleanup
+          rm -rf node_modules_nft
+
+          cd tauri
+          yarn --no-immutable
+
+          yarn prebuild
+          yarn tauri build --verbose
+
+          echo "tauri_path=$(pwd)" >> "$GITHUB_ENV"
+
+      - name: yarn, lint, build and test (unsigned)
+        if: github.event_name == 'pull_request'
+        shell: bash
+        env:
+          TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+          TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
         run: |
           # Build TOP
           cp .env.ci .env
