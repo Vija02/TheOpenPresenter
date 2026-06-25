@@ -10,6 +10,7 @@
     "core:default",
     "opener:default",
     "shell:default",
+    "dialog:default",
     "log:default",
     "core:window:allow-available-monitors",
     "core:window:allow-current-monitor",
