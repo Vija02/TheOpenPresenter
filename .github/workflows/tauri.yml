@@ -267,9 +267,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: nightly
-          name: 'Desktop App Nightly Release $$'
+          name: 'TheOpenPresenter Studio Nightly Release $$'
           prerelease: true
-          body: 'This is a nightly release of TheOpenPresenter desktop app. Please use with caution.'
+          body: 'This is a nightly release of TheOpenPresenter Studio. Please use with caution.'
           files: |
             /home/runner/work/TheOpenPresenter/TheOpenPresenter/artifacts/**/*.exe
             /home/runner/work/TheOpenPresenter/TheOpenPresenter/artifacts/**/*.msi
