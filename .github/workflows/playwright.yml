@@ -62,7 +62,13 @@ jobs:
             --stability.level=experimental
       - name: Install dumbpipe
         run: |
-          curl -sL https://www.dumbpipe.dev/install.sh | sh
+          for i in 1 2 3 4 5; do
+            curl -fsSL https://www.dumbpipe.dev/install.sh | sh && break
+            echo "dumbpipe install attempt $i failed, retrying..."
+            rm -f dumbpipe
+            sleep $((i * 3))
+          done
+          test -f dumbpipe || { echo "dumbpipe install failed after retries"; exit 1; }
           sudo mv dumbpipe /usr/local/bin/
       - name: Install cloudflared
         run: |
