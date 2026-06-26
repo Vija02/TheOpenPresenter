@@ -60,9 +60,9 @@ runs:
       shell: bash
       run: |
         echo "Installing uncloud CLI..."
-        curl -fsS https://get.uncloud.run/install.sh | sh
+        curl -fsS https://get.uncloud.run/install.sh | VERSION=v0.20.0 sh
         echo "Uncloud CLI installed successfully"
-        uc -v
+        uc version
 
     - name: Configure uncloud
       shell: bash
