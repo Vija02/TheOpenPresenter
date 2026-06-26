@@ -4,14 +4,13 @@ import { rm, writeFile } from "fs/promises";
 import { join, resolve } from "path";
 import type { Client } from "pg";
 
+
+
 import { ExtensionManager } from "./extensions/index.js";
 import { MigrationManager } from "./migration/index.js";
-import type {
-  ConnectionInfo,
-  DatabaseUrls,
-  EmbeddedPostgresConfig,
-} from "./types/index.js";
+import type { ConnectionInfo, DatabaseUrls, EmbeddedPostgresConfig } from "./types/index.js";
 import { getAppDataPaths } from "./utils/paths.js";
+
 
 export class EmbeddedPostgresManager {
   private pg: any | null = null;
@@ -204,11 +203,12 @@ export class EmbeddedPostgresManager {
         this.config.roles.authenticator.name,
         this.config.roles.visitor.name,
       );
-      console.log("Running migrations...")
-      await this.migrationManager.runMigrations();
 
       // Safety net
       await this.ensureWorkerSchema();
+
+      console.log("Running migrations...");
+      await this.migrationManager.runMigrations();
     }
   }
 
