@@ -50,8 +50,8 @@ const removeAuxiliaryText = (content: string[]) => {
 const convertHeading = (content: string[]) => {
   return content.map((val) => {
     const matches = val.match(
-      /^(\s*)\[?(verse|bridge|pre-? ?chorus|chorus|end|ending|outro|tag|instrumental|interlude|intro) ?(\d+)?\]?(\s*)$/i,
+      /^(\s*)\[?(verse|bridge|pre-? ?chorus|chorus|end|ending|outro|tag|instrumental|interlude|intro) ?(\d+)? ?:?\]?(\s*)$/i,
     );
-    return matches ? "[" + val.replace(/[\[\]]/g, "") + "]" : val;
+    return matches ? "[" + val.replace(/[\[\]:]/g, "").trim() + "]" : val;
   });
 };
