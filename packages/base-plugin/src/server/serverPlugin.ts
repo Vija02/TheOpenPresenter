@@ -7,6 +7,13 @@ import stream from "stream";
 
 import { SceneCategories } from "../types";
 import {
+  ChatCompletionOptions,
+  ChatMessage,
+  chatCompletion,
+  chatCompletionStream,
+  isAIConfigured,
+} from "./ai";
+import {
   RegisterKeyPressHandlerCallback,
   RegisterOnPluginDataCreated,
   RegisterOnPluginDataLoaded,
@@ -293,6 +300,19 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
       return { success: false };
     }
   }
+
+  public ai = {
+    isConfigured: (): boolean => isAIConfigured(),
+    chatCompletion: (
+      messages: ChatMessage[],
+      options?: ChatCompletionOptions,
+    ): Promise<string> => chatCompletion(messages, options),
+    chatCompletionStream: (
+      messages: ChatMessage[],
+      options?: ChatCompletionOptions,
+    ): AsyncGenerator<string, void, unknown> =>
+      chatCompletionStream(messages, options),
+  };
 
   public media = {
     getMedia: async (mediaName: string) => {
