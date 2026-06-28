@@ -46,6 +46,9 @@ services:
       - STRIPE_PUBLISHABLE_KEY=$STRIPE_PUBLISHABLE_KEY
       - STRIPE_PRICE_ID_MONTHLY=$STRIPE_PRICE_ID_MONTHLY
       - STRIPE_PRICE_ID_ANNUAL=$STRIPE_PRICE_ID_ANNUAL
+      - AI_API_KEY=$AI_API_KEY
+      - AI_BASE_URL=$AI_BASE_URL
+      - AI_MODEL=$AI_MODEL
     volumes:
       - ./uploads:/app/uploads
     labels:

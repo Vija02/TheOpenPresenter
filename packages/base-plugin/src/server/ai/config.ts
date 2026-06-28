@@ -42,10 +42,10 @@ export const getProvider = (name?: string): AIProviderConfig => {
     const apiKey = process.env[`${prefix}API_KEY`];
     if (apiKey) {
       const baseURL = (
-        process.env[`${prefix}BASE_URL`] ?? DEFAULTS.baseURL
+        process.env[`${prefix}BASE_URL`] || DEFAULTS.baseURL
       ).replace(/\/+$/, "");
       const model =
-        process.env[`${prefix}MODEL`] ?? process.env.AI_MODEL ?? DEFAULTS.model;
+        process.env[`${prefix}MODEL`] || process.env.AI_MODEL || DEFAULTS.model;
       return { apiKey, baseURL, model };
     }
     // Named provider not configured -> fall back to the default provider below.
@@ -58,11 +58,11 @@ export const getProvider = (name?: string): AIProviderConfig => {
     );
   }
 
-  const baseURL = (process.env.AI_BASE_URL ?? DEFAULTS.baseURL).replace(
+  const baseURL = (process.env.AI_BASE_URL || DEFAULTS.baseURL).replace(
     /\/+$/,
     "",
   );
-  const model = process.env.AI_MODEL ?? DEFAULTS.model;
+  const model = process.env.AI_MODEL || DEFAULTS.model;
 
   return { apiKey, baseURL, model };
 };
