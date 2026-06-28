@@ -101,6 +101,10 @@ export const CreateNewSong = ({
               render={({ field }) => (
                 <FormItem>
                   <LyricFormLabel
+                    content={data.content}
+                    onFormatted={(val) => {
+                      form.setValue("content", val);
+                    }}
                     onRemoveChords={() => {
                       form.setValue(
                         "content",
