@@ -1,0 +1,127 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`convertMWLData > formats 'Praise' (praise-chords) 1`] = `
+"[Unknown]
+VAMP
+Let everything that has breath
+Praise the Lord
+Praise the Lord
+
+[VERSE 1]
+.x00
+I’ll praise in the valley
+.x05/x00 x00
+Praise on the mountain
+. x07/x00
+I’ll praise when I’m sure
+.x05/x00 x00
+Praise when I’m doubting
+.x00
+I’ll praise when outnumbered
+.x05/x00 x00
+Praise when surrounded
+. x07/x11 x05/x00
+Cause praise is the waters
+. x00
+My enemies drown in
+
+[PRE-CHORUS]
+. x07
+As long as I’m breathing
+.x05
+I’ve got a reason to
+
+[CHORUS]
+.x09m x05 x00
+Praise the Lord
+. x07
+Oh my soul
+.x09m x05 x00
+Praise the Lord
+. x07
+Oh my soul
+
+[VERSE 2]
+.x00
+I’ll praise when I feel it
+.x05/x00 x00
+I’ll praise when I don’t
+. x07/x00
+I’ll praise cause I know
+.x05/x00 x00
+You’re still in control
+.x00
+My praise is a weapon
+.x05/x00 x00
+It’s more than a sound
+. x07/x11 x05/x00
+My praise is the shout
+. x00
+That brings Jericho down
+
+[BRIDGE]
+.x00
+I’ll praise cause you’re sovereign
+Praise cause you reign
+Praise cause you rose and defeated the grave
+I’ll praise cause you’re faithful
+Praise cause you’re true
+Praise cause there’s nobody greater than you
+"
+`;
+
+exports[`convertMWLData > formats 'Who Else' (who-else-chords) 1`] = `
+"[VERSE 1]
+. x00 x07
+I am an instrument of exaltation
+. x09m7 x07
+And I was born to lift Your name above all names
+. x00 x07
+You hear the melody of all creation
+. x09m7 x07
+But there's a song of praise that only I can bring
+
+[CHORUS]
+. x00 x02m7
+Who else is worthy? Who else is worthy?
+. x09m7 x052
+There is no one, only You, Jesus
+. x00 x02m7
+Who else is worthy? Who else is worthy?
+. x09m7 x052
+There is no one, only You, Jesus
+
+[VERSE 2]
+. x00 x07
+You are the infinite God of the ages
+. x09m7 x07
+Yet You chose to make my heart Your dwelling place
+. x00 x07
+You healed my brokenness, showed me Your glory
+. x09m7 x07
+So I have songs of thanks not even angels sing
+
+[BRIDGE 1]
+. x052 x07
+Lamb of God, anointed one
+. x09m7
+Who was and is and is to come
+. x00sus x00 x07
+Seated on the throne above
+Ho-ly, ho-ly
+
+. x052 x07
+Righteous One who shed His blood
+. x09m7
+You proved to us the Father's love
+. x00sus x00 x07
+Jesus Christ, be lifted up
+Ho-ly, ho-ly
+
+[TAG]
+. x09m7 x052
+There is no one, only You, Jesus
+. x09m7 x052
+There is no one, only You, Jesus
+"
+`;
