@@ -18,6 +18,7 @@ import {
   remoteWebComponentTag,
   rendererWebComponentTag,
 } from "./consts";
+import { formatLyricsStream } from "./ai/formatLyrics";
 import { getSongData } from "./data";
 import { convertMWLData } from "./importer/myworshiplist";
 import { migratePluginDataV1ToV2 } from "./migrate/v1";
@@ -33,6 +34,70 @@ export const init = (
   serverPluginApi: ServerPluginApi<PluginBaseData, PluginRendererData>,
 ) => {
   serverPluginApi.registerTrpcAppRouter(getAppRouter);
+
+  serverPluginApi.registerPrivateRoute(pluginName, "ai/format", (req, res) => {
+    if (req.method !== "POST") {
+      res.sendStatus(405);
+      return;
+    }
+
+    const chunks: Buffer[] = [];
+    req.on("data", (chunk) => chunks.push(chunk as Buffer));
+    req.on("end", async () => {
+      let content = "";
+      let linesPerSlide: number | undefined;
+      try {
+        const parsed = JSON.parse(Buffer.concat(chunks).toString() || "{}");
+        content = typeof parsed.content === "string" ? parsed.content : "";
+        linesPerSlide =
+          typeof parsed.linesPerSlide === "number"
+            ? parsed.linesPerSlide
+            : undefined;
+      } catch {
+        res.sendStatus(400);
+        return;
+      }
+      if (!content.trim()) {
+        res.sendStatus(400);
+        return;
+      }
+
+      res.writeHead(200, {
+        "Content-Type": "text/event-stream",
+        // no-transform also disables compression middleware buffering
+        "Cache-Control": "no-cache, no-transform",
+        Connection: "keep-alive",
+        // Don't buffer SSE
+        "X-Accel-Buffering": "no",
+      });
+      res.flushHeaders?.();
+
+      try {
+        for await (const delta of formatLyricsStream(serverPluginApi, content, {
+          linesPerSlide,
+        })) {
+          res.write(`data: ${JSON.stringify({ delta })}\n\n`);
+        }
+        res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
+      } catch (err) {
+        logger.error(
+          { err },
+          "/plugin/lyrics-presenter/ai/format: stream error",
+        );
+        res.write(
+          `data: ${JSON.stringify({
+            error: (err as Error).message || "AI formatting failed",
+          })}\n\n`,
+        );
+      } finally {
+        res.end();
+      }
+    });
+    req.on("error", () => {
+      if (!res.headersSent) res.sendStatus(400);
+      else res.end();
+    });
+  });
   serverPluginApi.onPluginDataCreated(pluginName, onPluginDataCreated);
   serverPluginApi.onPluginDataLoaded(pluginName, onPluginDataLoaded);
   serverPluginApi.onRendererDataCreated(pluginName, onRendererDataCreated);
