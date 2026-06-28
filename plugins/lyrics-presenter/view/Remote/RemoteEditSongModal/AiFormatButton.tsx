@@ -85,7 +85,7 @@ export const AiFormatButton = ({
     }
   };
 
-  const isDisabled = isStreaming || content.trim().length === 0;
+  const isDisabled = isStreaming || content?.trim().length === 0;
 
   return (
     <div className="stack-row gap-1">
