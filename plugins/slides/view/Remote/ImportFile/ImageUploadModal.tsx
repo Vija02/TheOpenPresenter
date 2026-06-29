@@ -21,17 +21,18 @@ export const ImageUploadModal = ({ replaceImportId }: Props) => {
   const handleClick = useCallback(async () => {
     const results = await pluginApi.mediaPicker.show({
       type: "image",
-      title: "Select or Upload Image",
-      multiple: false,
+      title: replaceImportId ? "Select Image" : "Select Images",
+      multiple: !replaceImportId,
     });
 
-    const result = results?.[0];
-    if (!result) return;
+    if (!results || results.length === 0) return;
 
     try {
       await selectImage({
-        mediaName: result.mediaName,
-        name: result.originalName ?? undefined,
+        images: results.map((r) => ({
+          mediaName: r.mediaName,
+          name: r.originalName ?? undefined,
+        })),
         pluginId: pluginApi.pluginContext.pluginId,
         replaceImportId,
       });

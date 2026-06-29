@@ -623,46 +623,57 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
         .input(
           z.object({
             pluginId: z.string(),
-            mediaName: z.string(),
-            name: z.string().optional(),
+            images: z.array(
+              z.object({
+                mediaName: z.string(),
+                name: z.string().optional(),
+              })
+            ),
             replaceImportId: z.string().optional(),
           }),
         )
         .mutation(
-          async ({
-            input: { pluginId, mediaName, name, replaceImportId },
-          }) => {
-            const log = logger.child({ pluginId, mediaName, replaceImportId });
+          async ({ input: { pluginId, images, replaceImportId } }) => {
+            const log = logger.child({ pluginId, replaceImportId });
             const loadedPlugin = loadedPlugins[pluginId]!;
 
-            const newImport = getBaseImport(
-              "image",
-              name,
-              replaceImportId,
-            ) as ImageImportData;
-            
-            loadedPlugin.pluginData.imports[newImport.importId] = newImport;
+            const newImportIds: string[] = [];
+            let currentReplaceId = replaceImportId;
 
             try {
-              loadedPlugin.pluginData.imports[newImport.importId]!.thumbnailLinks = [mediaName];
-              loadedPlugin.pluginData.imports[newImport.importId]!.slideClickCounts = [0];
-              loadedPlugin.pluginData.imports[newImport.importId]!.slideIds = ["0"];
-              
-              loadedPlugin.pluginData.imports[newImport.importId]!._isFetching = false;
+              for (const img of images) {
+                const newImport = getBaseImport(
+                  "image",
+                  img.name,
+                  currentReplaceId,
+                ) as ImageImportData;
+                
+                loadedPlugin.pluginData.imports[newImport.importId] = newImport;
 
-              finalizeImport({
-                loadedPlugin,
-                newImportId: newImport.importId,
-                slideCount: 1,
-                replaceImportId,
-              });
+                loadedPlugin.pluginData.imports[newImport.importId]!.thumbnailLinks = [img.mediaName];
+                loadedPlugin.pluginData.imports[newImport.importId]!.slideClickCounts = [0];
+                loadedPlugin.pluginData.imports[newImport.importId]!.slideIds = ["0"];
+                loadedPlugin.pluginData.imports[newImport.importId]!._isFetching = false;
 
-              return { importId: newImport.importId };
+                finalizeImport({
+                  loadedPlugin,
+                  newImportId: newImport.importId,
+                  slideCount: 1,
+                  replaceImportId: currentReplaceId,
+                });
+
+                newImportIds.push(newImport.importId);
+                currentReplaceId = undefined;
+              }
+
+              return { importIds: newImportIds };
             } catch (err) {
-              const { [newImport.importId]: _, ...remaining } =
-                loadedPlugin.pluginData.imports;
-              loadedPlugin.pluginData.imports = remaining;
-              log.error({ err }, "Failed to import image");
+              // rollback something fails
+              for (const id of newImportIds) {
+                const { [id]: _, ...remaining } = loadedPlugin.pluginData.imports;
+                loadedPlugin.pluginData.imports = remaining;
+              }
+              log.error({ err }, "Failed to import image(s)");
               throw err;
             }
           },
