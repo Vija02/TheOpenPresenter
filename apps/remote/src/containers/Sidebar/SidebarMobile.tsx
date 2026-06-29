@@ -108,20 +108,16 @@ const SidebarMobile = () => {
                 }
               }}
               className={cx(
-                "rt--sidebar-mobile-scene-item",
+                "rt--sidebar-mobile-scene-item items-center",
                 location === "/new"
                   ? "rt--sidebar-mobile-scene-item__active pointer-events-none"
                   : "rt--sidebar-mobile-scene-item__inactive cursor-pointer",
               )}
             >
-              <div>
-                <VscAdd />
-                <p>Add</p>
-              </div>
+              <VscAdd size={22} />
+              <p>Add</p>
             </div>
-            
           </div>
-          
           <div className="rt--sidebar-mobile-actions">
             <PresentButton isMobile />
           </div>

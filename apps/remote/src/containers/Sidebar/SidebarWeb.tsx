@@ -117,7 +117,7 @@ const SidebarWeb = () => {
               >
                 <div>
                   <VscAdd />
-                  <p>Add New Scene</p>
+                  <p>Add Component</p>
                 </div>
               </div>
 
