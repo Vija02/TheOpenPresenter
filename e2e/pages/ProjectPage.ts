@@ -16,28 +16,26 @@ export class ProjectPage {
   readonly newSceneButton: Locator;
   readonly newSceneAddButton: Locator;
   readonly presentButton: Locator;
-  readonly addSceneModal: Locator;
 
   constructor(
     public readonly page: Page,
     public readonly context: BrowserContext,
   ) {
-    this.newSceneButton = page.getByRole("button", { name: "Add New Scene" });
+    this.newSceneButton = page.getByRole("button", { name: /^Add( Component)?$/ });
     this.newSceneAddButton = page.getByRole("button", { name: "Add Scene" });
     this.presentButton = page.getByRole("button", { name: "Present" });
-    this.addSceneModal = page.getByLabel("Add scene");
   }
 
   async createPlugin(plugin: (typeof pluginsList)[number]) {
     await this.newSceneButton.click();
 
-    await this.addSceneModal.getByText(plugin, { exact: true }).click();
+    await this.page.getByText(plugin, { exact: true }).click();
 
     await this.newSceneAddButton.click();
   }
 
   pluginOption(plugin: (typeof pluginsList)[number]): Locator {
-    return this.addSceneModal.getByText(plugin, { exact: true });
+    return this.page.getByText(plugin, { exact: true });
   }
 
   async present() {
