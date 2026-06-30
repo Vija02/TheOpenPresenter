@@ -2,7 +2,7 @@ import { OrganizationType } from "@repo/graphql";
 
 import { expect, test } from "../../../fixtures/projectFixture";
 
-test.describe("Add Scene modal: organization type filtering", () => {
+test.describe("Add Scene page: organization type filtering", () => {
   test.beforeEach(
     async ({ e2eCommand }) =>
       await Promise.all([
