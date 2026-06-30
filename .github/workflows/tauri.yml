@@ -67,9 +67,17 @@ jobs:
           node scripts/build_utils/extract_tauri.js
           node scripts/build_utils/copy_deps.js
 
-          # Move the node_modules
+          # Move the node_modules.
+          # NFT deliberately excludes our @repo/* workspace packages (see the
+          # `ignore` in scripts/build_utils/extract_*.js), so the trimmed
+          # node_modules has none of them. Restore @repo after the swap, exactly
+          # like production.Dockerfile does — otherwise the bundled server fails
+          # at runtime with "Cannot find module '@repo/observability'" (and the
+          # other @repo/* packages).
+          mv node_modules/@repo ./.atrepo_tmp
           rm -rf node_modules
           cp -r ./node_modules_nft/node_modules ./node_modules
+          mv ./.atrepo_tmp node_modules/@repo
 
           # Cleanup
           rm -rf node_modules_nft
@@ -101,9 +109,17 @@ jobs:
           node scripts/build_utils/extract_tauri.js
           node scripts/build_utils/copy_deps.js
 
-          # Move the node_modules
+          # Move the node_modules.
+          # NFT deliberately excludes our @repo/* workspace packages (see the
+          # `ignore` in scripts/build_utils/extract_*.js), so the trimmed
+          # node_modules has none of them. Restore @repo after the swap, exactly
+          # like production.Dockerfile does — otherwise the bundled server fails
+          # at runtime with "Cannot find module '@repo/observability'" (and the
+          # other @repo/* packages).
+          mv node_modules/@repo ./.atrepo_tmp
           rm -rf node_modules
           cp -r ./node_modules_nft/node_modules ./node_modules
+          mv ./.atrepo_tmp node_modules/@repo
 
           # Cleanup
           rm -rf node_modules_nft
@@ -296,27 +312,38 @@ jobs:
             }
           }
           if (-not $exe) { Write-Error 'Installed app exe not found'; exit 1 }
-          Write-Host "Launching $($exe.FullName)"
+          Write-Host "Found app at $($exe.FullName)"
+          $root = $exe.Directory.FullName
+          $node = Join-Path $root 'node.exe'
+          $server = Join-Path $root 'node-server\run_server.mjs'
+          if (-not (Test-Path $node))   { Write-Error "Bundled node.exe not found at $node"; exit 1 }
+          if (-not (Test-Path $server)) { Write-Error "run_server.mjs not found at $server"; exit 1 }
 
-          # Launch DE-ELEVATED for postgres
-          $out = Join-Path $env:RUNNER_TEMP 'app-out.log'
-          $wrapper = Join-Path $env:RUNNER_TEMP 'launch.cmd'
-          # The Rust side logs the bundled node-server output, so redirecting the
-          # app's stdout/stderr captures a startup crash
-          "`"$($exe.FullName)`" > `"$out`" 2>&1" | Out-File -FilePath $wrapper -Encoding ascii
+          $u = 'topsmoke'
+          $pw = 'Sm0ke!Test#2026'
+          if (-not (Get-LocalUser -Name $u -ErrorAction SilentlyContinue)) {
+            New-LocalUser -Name $u -Password (ConvertTo-SecureString $pw -AsPlainText -Force) `
+              -AccountNeverExpires -PasswordNeverExpires -UserMayNotChangePassword | Out-Null
+          }
+          Add-LocalGroupMember -Group 'Users' -Member $u -ErrorAction SilentlyContinue
+
+          $dir = 'C:\smoke'
+          New-Item -ItemType Directory -Path $dir -Force | Out-Null
+          icacls $dir /grant '*S-1-1-0:(OI)(CI)F' | Out-Null
+          $out = Join-Path $dir 'app-out.log'
+          $wrapper = Join-Path $dir 'launch.cmd'
+          "`"$node`" `"$server`" > `"$out`" 2>&1" | Out-File -FilePath $wrapper -Encoding ascii
           New-Item -ItemType File -Path $out -Force | Out-Null
-          # runas /trustlevel can't exec a .cmd directly — run it via cmd.exe.
-          # ($wrapper lives in RUNNER_TEMP, which has no spaces.)
-          runas /trustlevel:0x20000 "cmd /c `"$wrapper`""
-          if ($LASTEXITCODE -ne 0) { Write-Error "runas failed ($LASTEXITCODE)"; exit 1 }
+
+          $taskName = 'TopSmoke'
+          $action = New-ScheduledTaskAction -Execute 'cmd.exe' -Argument "/c `"$wrapper`""
+          Register-ScheduledTask -TaskName $taskName -Action $action `
+            -User $u -Password $pw -RunLevel Limited -Force | Out-Null
+          Start-ScheduledTask -TaskName $taskName
 
           # First boot extracts + initialises embedded Postgres, so give it time.
           $ok = $false
-          $seen = $false
           foreach ($i in 1..90) {
-            $p = Get-Process -Name 'TheOpenPresenter*' -ErrorAction SilentlyContinue
-            if ($p) { $seen = $true }
-            elseif ($seen) { Write-Host 'App process exited early'; break }
             try {
               Invoke-WebRequest http://localhost:5678 -UseBasicParsing -TimeoutSec 2 | Out-Null
               $ok = $true; break
@@ -324,8 +351,10 @@ jobs:
           }
 
           # Teardown so the step returns cleanly.
-          Get-Process -Name 'TheOpenPresenter*' -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+          Stop-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
+          Unregister-ScheduledTask -TaskName $taskName -Confirm:$false -ErrorAction SilentlyContinue
           Get-Process node,postgres -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+          Remove-LocalUser -Name $u -ErrorAction SilentlyContinue
 
           Write-Host '----- app output -----'; if (Test-Path $out) { Get-Content $out }
 
