@@ -298,21 +298,22 @@ jobs:
           if (-not $exe) { Write-Error 'Installed app exe not found'; exit 1 }
           Write-Host "Launching $($exe.FullName)"
 
-          # Capture the app's stdout/stderr — the Rust side logs the bundled
-          # node-server output here, so a startup crash (e.g. pino-pretty) is
-          # visible in the job log on failure.
+          # Launch DE-ELEVATED for postgres
           $out = Join-Path $env:RUNNER_TEMP 'app-out.log'
-          $err = Join-Path $env:RUNNER_TEMP 'app-err.log'
-          $proc = Start-Process -FilePath $exe.FullName `
-            -RedirectStandardOutput $out -RedirectStandardError $err -PassThru
+          $wrapper = Join-Path $env:RUNNER_TEMP 'launch.cmd'
+          # The Rust side logs the bundled node-server output, so redirecting the
+          # app's stdout/stderr captures a startup crash
+          "`"$($exe.FullName)`" > `"$out`" 2>&1" | Out-File -FilePath $wrapper -Encoding ascii
+          New-Item -ItemType File -Path $out -Force | Out-Null
+          runas /trustlevel:0x20000 $wrapper
 
           # First boot extracts + initialises embedded Postgres, so give it time.
           $ok = $false
+          $seen = $false
           foreach ($i in 1..90) {
-            if ($proc.HasExited) {
-              Write-Host "App process exited early (code $($proc.ExitCode))"
-              break
-            }
+            $p = Get-Process -Name 'TheOpenPresenter*' -ErrorAction SilentlyContinue
+            if ($p) { $seen = $true }
+            elseif ($seen) { Write-Host 'App process exited early'; break }
             try {
               Invoke-WebRequest http://localhost:5678 -UseBasicParsing -TimeoutSec 2 | Out-Null
               $ok = $true; break
@@ -320,12 +321,10 @@ jobs:
           }
 
           # Teardown so the step returns cleanly.
-          if (-not $proc.HasExited) { Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue }
-          Get-Process node -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
-          Get-Process postgres -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+          Get-Process -Name 'TheOpenPresenter*' -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+          Get-Process node,postgres -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
 
-          Write-Host '----- app stdout -----'; if (Test-Path $out) { Get-Content $out }
-          Write-Host '----- app stderr -----'; if (Test-Path $err) { Get-Content $err }
+          Write-Host '----- app output -----'; if (Test-Path $out) { Get-Content $out }
 
           if (-not $ok) { Write-Error 'App did not open port 5678 within timeout'; exit 1 }
           Write-Host 'Smoke test passed: port 5678 responded.'
