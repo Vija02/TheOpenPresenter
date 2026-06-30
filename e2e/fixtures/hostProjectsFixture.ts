@@ -76,7 +76,7 @@ export const test = base.extend<HostProjectsFixture>({
       // Use a SEPARATE browser context to avoid sharing cookies with viewer
       state.hostContext = await browser.newContext();
       state.hostPage = await state.hostContext.newPage();
-
+      
       // Login as host user in the separate context
       const hostProjectUrl = "/app/testhostorg/hostproject1";
       await state.hostPage.goto(
@@ -93,12 +93,13 @@ export const test = base.extend<HostProjectsFixture>({
       // Add a plugin so the project has some content
       // Otherwise, the document won't be registered
       await state.hostPage
-        .getByRole("button", { name: "Add New Scene" })
+        .getByRole("button", { name: /^Add( Component)?$/ })
         .click();
+      
       await state.hostPage
-        .getByLabel("Add scene")
         .getByText("Timer", { exact: true })
         .click();
+      
       await state.hostPage.getByRole("button", { name: "Add Scene" }).click();
 
       return {
