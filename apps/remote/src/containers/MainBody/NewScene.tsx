@@ -8,7 +8,7 @@ import { MdOutlineOndemandVideo } from "react-icons/md";
 import { PiMusicNotesSimple, PiPresentationChart } from "react-icons/pi";
 import { typeidUnboxed } from "typeid-js";
 
-import { useNavigateWithParams } from "../../../src/hooks/useNavigateWithParams";
+import { useNavigateWithParams } from "../../hooks/useNavigateWithParams";
 
 const sceneCategoriesConfig: Record<SceneCategories, IconType> = {
   Display: PiPresentationChart,
@@ -16,7 +16,7 @@ const sceneCategoriesConfig: Record<SceneCategories, IconType> = {
   Audio: PiMusicNotesSimple,
 };
 
-export const EmptyScene = () => {
+export const NewScene = () => {
   const navigate = useNavigateWithParams();
   const mainState = usePluginData().mainState!;
 
@@ -65,7 +65,7 @@ export const EmptyScene = () => {
         Select a component below to add it to your project.
       </p>
 
-      {/* keep the menu from getting too wide on big screens */}
+      {/* stop the menu from stretching on big monitors */}
       <div className="mt-5 not-prose my-8 flex flex-col gap-5 max-w-5xl">
         {sceneCategories.map((category) => {
           const categoryPlugins = visibleSceneCreators.filter((creator) =>
