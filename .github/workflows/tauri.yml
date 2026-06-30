@@ -305,7 +305,10 @@ jobs:
           # app's stdout/stderr captures a startup crash
           "`"$($exe.FullName)`" > `"$out`" 2>&1" | Out-File -FilePath $wrapper -Encoding ascii
           New-Item -ItemType File -Path $out -Force | Out-Null
-          runas /trustlevel:0x20000 $wrapper
+          # runas /trustlevel can't exec a .cmd directly — run it via cmd.exe.
+          # ($wrapper lives in RUNNER_TEMP, which has no spaces.)
+          runas /trustlevel:0x20000 "cmd /c `"$wrapper`""
+          if ($LASTEXITCODE -ne 0) { Write-Error "runas failed ($LASTEXITCODE)"; exit 1 }
 
           # First boot extracts + initialises embedded Postgres, so give it time.
           $ok = $false
