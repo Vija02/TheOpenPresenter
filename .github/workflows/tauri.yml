@@ -290,7 +290,8 @@ jobs:
           foreach ($r in $roots) {
             if (Test-Path $r) {
               $exe = Get-ChildItem -Path $r -Filter '*.exe' -File |
-                Where-Object { $_.Name -notlike 'Uninstall*' } | Select-Object -First 1
+                Where-Object { $_.Name -like 'TheOpenPresenter*' -and $_.Name -notlike 'Uninstall*' } |
+                Select-Object -First 1
               if ($exe) { break }
             }
           }
