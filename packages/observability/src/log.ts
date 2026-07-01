@@ -29,13 +29,17 @@ const isLogLocally = hasProcess && process.env.LOG_LOCALLY === "1";
 
 const getNodeDestination = () => {
   if (isDevEnv || isLogLocally) {
-    // Use pino-pretty for nice console output
-    return pino.transport({
-      target: "pino-pretty",
-      options: {
-        colorize: true,
-      },
-    });
+    try {
+      return pino.transport({
+        target: "pino-pretty",
+        options: {
+          colorize: true,
+        },
+      });
+    } catch {
+      // pino-pretty could not resolve due to NFT. Catch it so we never crash because of this
+      return pino.destination(1);
+    }
   }
   // In production, silence logs (OTEL instrumentation handles them)
   return process.platform === "win32"

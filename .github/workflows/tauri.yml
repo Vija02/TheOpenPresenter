@@ -67,9 +67,17 @@ jobs:
           node scripts/build_utils/extract_tauri.js
           node scripts/build_utils/copy_deps.js
 
-          # Move the node_modules
+          # Move the node_modules.
+          # NFT deliberately excludes our @repo/* workspace packages (see the
+          # `ignore` in scripts/build_utils/extract_*.js), so the trimmed
+          # node_modules has none of them. Restore @repo after the swap, exactly
+          # like production.Dockerfile does — otherwise the bundled server fails
+          # at runtime with "Cannot find module '@repo/observability'" (and the
+          # other @repo/* packages).
+          mv node_modules/@repo ./.atrepo_tmp
           rm -rf node_modules
           cp -r ./node_modules_nft/node_modules ./node_modules
+          mv ./.atrepo_tmp node_modules/@repo
 
           # Cleanup
           rm -rf node_modules_nft
@@ -101,9 +109,17 @@ jobs:
           node scripts/build_utils/extract_tauri.js
           node scripts/build_utils/copy_deps.js
 
-          # Move the node_modules
+          # Move the node_modules.
+          # NFT deliberately excludes our @repo/* workspace packages (see the
+          # `ignore` in scripts/build_utils/extract_*.js), so the trimmed
+          # node_modules has none of them. Restore @repo after the swap, exactly
+          # like production.Dockerfile does — otherwise the bundled server fails
+          # at runtime with "Cannot find module '@repo/observability'" (and the
+          # other @repo/* packages).
+          mv node_modules/@repo ./.atrepo_tmp
           rm -rf node_modules
           cp -r ./node_modules_nft/node_modules ./node_modules
+          mv ./.atrepo_tmp node_modules/@repo
 
           # Cleanup
           rm -rf node_modules_nft
@@ -248,6 +264,129 @@ jobs:
             /Users/runner/work/TheOpenPresenter/TheOpenPresenter/tauri/target/release/bundle/dmg/TheOpenPresenter Studio_0.1.0_aarch64.dmg
             /Users/runner/work/TheOpenPresenter/TheOpenPresenter/tauri/target/release/bundle/dmg/TheOpenPresenter Studio_0.1.0_x64.dmg
             /Users/runner/work/TheOpenPresenter/TheOpenPresenter/tauri/target/release/bundle/macos/TheOpenPresenter Studio.app
+
+  # Installs the real Windows artifact, launches it, and test for port 5678
+  smoke-test-windows:
+    name: Smoke test (Windows install + boot)
+    needs: build
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - name: Download Windows artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: tauri-windows-latest
+          path: artifact
+
+      - name: Install silently
+        shell: pwsh
+        run: |
+          $msi = Get-ChildItem -Path artifact -Recurse -Filter '*.msi' | Select-Object -First 1
+          if (-not $msi) { Write-Error 'MSI not found in artifact'; exit 1 }
+          Write-Host "Installing $($msi.FullName)"
+          $log = Join-Path $env:RUNNER_TEMP 'msi-install.log'
+          $p = Start-Process msiexec.exe `
+            -ArgumentList '/i', "`"$($msi.FullName)`"", '/quiet', '/norestart', '/l*v', "`"$log`"" `
+            -PassThru -Wait
+          Write-Host "msiexec exit code: $($p.ExitCode)"
+          if ($p.ExitCode -ne 0) {
+            Write-Host '----- msi install log -----'; if (Test-Path $log) { Get-Content $log }
+            Write-Error "MSI install failed ($($p.ExitCode))"; exit 1
+          }
+
+      - name: Launch app and wait for port 5678
+        shell: pwsh
+        run: |
+          $roots = @(
+            "$env:ProgramFiles\TheOpenPresenter Studio",
+            "${env:ProgramFiles(x86)}\TheOpenPresenter Studio",
+            "$env:LOCALAPPDATA\Programs\TheOpenPresenter Studio"
+          )
+          $exe = $null
+          foreach ($r in $roots) {
+            if (Test-Path $r) {
+              $exe = Get-ChildItem -Path $r -Filter '*.exe' -File |
+                Where-Object { $_.Name -like 'TheOpenPresenter*' -and $_.Name -notlike 'Uninstall*' } |
+                Select-Object -First 1
+              if ($exe) { break }
+            }
+          }
+          if (-not $exe) { Write-Error 'Installed app exe not found'; exit 1 }
+          Write-Host "Found app at $($exe.FullName)"
+          $root = $exe.Directory.FullName
+          $node = Join-Path $root 'node.exe'
+          $server = Join-Path $root 'node-server\run_server.mjs'
+          if (-not (Test-Path $node))   { Write-Error "Bundled node.exe not found at $node"; exit 1 }
+          if (-not (Test-Path $server)) { Write-Error "run_server.mjs not found at $server"; exit 1 }
+
+          $u = 'topsmoke'
+          $pw = 'Sm0ke!Test#2026'
+          if (-not (Get-LocalUser -Name $u -ErrorAction SilentlyContinue)) {
+            New-LocalUser -Name $u -Password (ConvertTo-SecureString $pw -AsPlainText -Force) `
+              -AccountNeverExpires -PasswordNeverExpires -UserMayNotChangePassword | Out-Null
+          }
+          Add-LocalGroupMember -Group 'Users' -Member $u -ErrorAction SilentlyContinue
+
+          $dir = 'C:\smoke'
+          New-Item -ItemType Directory -Path $dir -Force | Out-Null
+          icacls $dir /grant '*S-1-1-0:(OI)(CI)F' | Out-Null
+          $out = Join-Path $dir 'app-out.log'
+          $wrapper = Join-Path $dir 'launch.cmd'
+          "`"$node`" `"$server`" > `"$out`" 2>&1" | Out-File -FilePath $wrapper -Encoding ascii
+          New-Item -ItemType File -Path $out -Force | Out-Null
+
+          $ru = "$env:COMPUTERNAME\$u"
+          $sid = (New-Object System.Security.Principal.NTAccount($ru)).Translate([System.Security.Principal.SecurityIdentifier]).Value
+          $inf = Join-Path $dir 'secpol.inf'
+          $sdb = Join-Path $dir 'secpol.sdb'
+          secedit /export /cfg $inf /areas USER_RIGHTS | Out-Null
+          $cfg = Get-Content $inf
+          if ($cfg -match '^SeBatchLogonRight') {
+            $cfg = $cfg -replace '^(SeBatchLogonRight\s*=.*)$', "`$1,*$sid"
+          } else {
+            $cfg = $cfg -replace '^(\[Privilege Rights\])$', "`$1`r`nSeBatchLogonRight = *$sid"
+          }
+          Set-Content -Path $inf -Value $cfg -Encoding Unicode
+          secedit /configure /db $sdb /cfg $inf /areas USER_RIGHTS | Out-Null
+
+          $taskName = 'TopSmoke'
+          # schtasks (not Register-ScheduledTask): with /ru /rp it auto-grants the
+          # "log on as a batch job" right and is the most reliable way to run as
+          # another account non-interactively on the runner. $wrapper has no
+          # spaces (C:\smoke\...), so /tr needs no inner quoting.
+          schtasks /create /tn $taskName /tr "cmd /c $wrapper" /sc once /st 00:00 /ru $ru /rp $pw /rl limited /f
+          if ($LASTEXITCODE -ne 0) { Write-Error "schtasks /create failed ($LASTEXITCODE)"; exit 1 }
+          schtasks /run /tn $taskName
+          if ($LASTEXITCODE -ne 0) { Write-Error "schtasks /run failed ($LASTEXITCODE)"; exit 1 }
+
+          # Report task status so a launch failure is visible even if the task
+          # never writes to the log. Last Result 0x0 = ok; 0x41303 = not yet run;
+          # anything else points at why cmd/node didn't start.
+          Start-Sleep -Seconds 8
+          Write-Host '----- task status -----'
+          schtasks /query /tn $taskName /v /fo LIST | Select-String 'Status:|Last Result:|Run As User:'
+
+          # First boot extracts + initialises embedded Postgres, so give it time.
+          $ok = $false
+          foreach ($i in 1..90) {
+            try {
+              Invoke-WebRequest http://localhost:5678 -UseBasicParsing -TimeoutSec 2 | Out-Null
+              $ok = $true; break
+            } catch { Start-Sleep -Seconds 2 }
+          }
+
+          # Teardown so the step returns cleanly.
+          Write-Host '----- final task status -----'
+          schtasks /query /tn $taskName /v /fo LIST | Select-String 'Status:|Last Result:'
+          schtasks /end /tn $taskName 2>$null
+          schtasks /delete /tn $taskName /f 2>$null
+          Get-Process node,postgres -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+          Remove-LocalUser -Name $u -ErrorAction SilentlyContinue
+
+          Write-Host '----- app output -----'; if (Test-Path $out) { Get-Content $out }
+
+          if (-not $ok) { Write-Error 'App did not open port 5678 within timeout'; exit 1 }
+          Write-Host 'Smoke test passed: port 5678 responded.'
 
   release:
     permissions:
