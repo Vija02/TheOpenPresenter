@@ -1,0 +1,29 @@
+---
+import DefaultLayout from "../layouts/DefaultLayout.astro";
+import PageIllustration from "../components/PageIllustration.astro";
+import ChurchHero from "../components/church/ChurchHero.astro";
+import ChurchSundayService from "../components/church/ChurchSundayService.astro";
+import ChurchMidweek from "../components/church/ChurchMidweek.astro";
+import ChurchWaysToUse from "../components/church/ChurchWaysToUse.astro";
+import ChurchPlugins from "../components/church/ChurchPlugins.astro";
+import ChurchCta from "../components/church/ChurchCta.astro";
+---
+
+<DefaultLayout
+  title="TheOpenPresenter for Churches"
+  description="Easy lyrics import with AI formatting, control your service from any device, and present anywhere with just a TV stick. Free to start."
+>
+  <!-- Page illustration -->
+  <div
+    class="relative max-w-6xl mx-auto h-0 pointer-events-none -z-1"
+    aria-hidden="true"
+  >
+    <PageIllustration />
+  </div>
+  <ChurchHero />
+  <ChurchSundayService />
+  <ChurchMidweek />
+  <ChurchWaysToUse />
+  <ChurchPlugins />
+  <ChurchCta />
+</DefaultLayout>
