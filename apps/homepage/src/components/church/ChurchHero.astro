@@ -1,0 +1,150 @@
+---
+import { Image } from "astro:assets";
+import landingImg from "../../assets/images/landing_img.png";
+---
+
+<section>
+  <div class="max-w-6xl mx-auto px-4 sm:px-6">
+    <div class="pt-32 pb-10 md:pb-16">
+      <!-- Hero content -->
+      <div class="md:grid md:grid-cols-12 md:gap-12 lg:gap-20 items-center">
+        <!-- Content -->
+        <div
+          class="md:col-span-7 lg:col-span-6 mb-8 md:mb-0 text-center md:text-left"
+        >
+          <h1
+            class="h1 lg:text-4xl mb-3 font-red-hat-display font-black leading-tight"
+            data-aos="fade-down"
+            data-aos-delay="50"
+          >
+            <span
+              class="bg-clip-text text-transparent bg-gradient-to-r from-teal-400 to-purple-500"
+              >Modern, free and open</span
+            > presentation software for your church
+          </h1>
+          <p
+            class="text-lg lg:text-xl mb-6 text-gray-700 dark:text-gray-300 leading-relaxed"
+            data-aos="fade-down"
+            data-aos-delay="100"
+          >
+            Our mission is to help small churches simplify multimedia. We want to give back precious time to volunteers to focus on ministries that matter most.
+          </p>
+          <div
+            class="flex flex-col sm:flex-row justify-center md:justify-start gap-3"
+            data-aos="fade-down"
+            data-aos-delay="150"
+          >
+            <a
+              class="btn text-white bg-teal-500 hover:bg-teal-400 shrink-0"
+              href="/register"
+            >
+              Sign up free
+            </a>
+            <a
+              class="btn text-teal-500 bg-white hover:bg-gray-50 border border-teal-500 dark:bg-transparent dark:hover:bg-gray-700 shrink-0"
+              href="#"
+              data-init-demo-jump
+            >
+              Try the live demo
+            </a>
+          </div>
+          <ul
+            class="max-w-sm sm:max-w-md mx-auto md:max-w-none text-gray-600 dark:text-gray-400 mt-8 -mb-2 text-left"
+            data-aos="fade-down"
+            data-aos-delay="200"
+          >
+            <li class="flex items-center mb-2">
+              <svg
+                class="w-3 h-3 fill-current text-teal-400 mr-2 shrink-0"
+                viewBox="0 0 12 12"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M10.28 2.28L3.989 8.575 1.695 6.28A1 1 0 00.28 7.695l3 3a1 1 0 001.414 0l7-7A1 1 0 0010.28 2.28z"
+                ></path>
+              </svg>
+              <span>Designed to be used by volunteers</span>
+            </li>
+            <li class="flex items-center mb-2">
+              <svg
+                class="w-3 h-3 fill-current text-teal-400 mr-2 shrink-0"
+                viewBox="0 0 12 12"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M10.28 2.28L3.989 8.575 1.695 6.28A1 1 0 00.28 7.695l3 3a1 1 0 001.414 0l7-7A1 1 0 0010.28 2.28z"
+                ></path>
+              </svg>
+              <span>Open-source and free cloud for small churches</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Mockup -->
+        <div
+          class="md:col-span-5 lg:col-span-6 text-center md:text-right h-full"
+          data-aos="fade-up"
+          data-aos-delay="300"
+        >
+          <!-- Glow illustration -->
+          <svg
+            class="absolute mr-12 mt-32 pointer-events-none -z-1 dark:opacity-40"
+            aria-hidden="true"
+            width="678"
+            height="634"
+            viewBox="0 0 678 634"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <circle
+              cx="240"
+              cy="394"
+              r="240"
+              fill="url(#church_paint0_radial)"
+              fill-opacity=".4"></circle>
+            <circle
+              cx="438"
+              cy="240"
+              r="240"
+              fill="url(#church_paint1_radial)"
+              fill-opacity=".6"></circle>
+            <defs>
+              <radialGradient
+                id="church_paint0_radial"
+                cx="0"
+                cy="0"
+                r="1"
+                gradientUnits="userSpaceOnUse"
+                gradientTransform="rotate(90 -77 317) scale(189.054)"
+              >
+                <stop stop-color="#667EEA"></stop>
+                <stop offset="1" stop-color="#667EEA" stop-opacity=".01"></stop>
+              </radialGradient>
+              <radialGradient
+                id="church_paint1_radial"
+                cx="0"
+                cy="0"
+                r="1"
+                gradientUnits="userSpaceOnUse"
+                gradientTransform="rotate(90 99 339) scale(189.054)"
+              >
+                <stop stop-color="#9F7AEA"></stop>
+                <stop offset="1" stop-color="#9F7AEA" stop-opacity=".01"></stop>
+              </radialGradient>
+            </defs>
+          </svg>
+          <Image
+            class="inline w-full max-w-[500px] mx-auto md:block md:absolute md:top-20 md:left-1/2 md:-translate-x-1/2 md:w-[410px] md:max-w-none md:mx-0 lg:block lg:w-full lg:top-1/8"
+            src={landingImg}
+            alt="TheOpenPresenter running a church service"
+            loading="eager"
+          />
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  import "../../scripts/demo-jump";
+</script>
