@@ -9,6 +9,8 @@ const files = [
   ...workerTasks.map((x) => path.join("./backend/worker/dist/tasks", x)),
   "./node_modules/graphile-worker/dist/cli.js",
   "./node_modules/graphile-migrate/dist/cli.js",
+  // pino-pretty is loaded by pino's transport via a runtime string target
+  require.resolve("pino-pretty"),
 ];
 
 (async () => {
