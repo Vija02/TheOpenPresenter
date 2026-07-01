@@ -335,8 +335,21 @@ jobs:
           "`"$node`" `"$server`" > `"$out`" 2>&1" | Out-File -FilePath $wrapper -Encoding ascii
           New-Item -ItemType File -Path $out -Force | Out-Null
 
-          $taskName = 'TopSmoke'
           $ru = "$env:COMPUTERNAME\$u"
+          $sid = (New-Object System.Security.Principal.NTAccount($ru)).Translate([System.Security.Principal.SecurityIdentifier]).Value
+          $inf = Join-Path $dir 'secpol.inf'
+          $sdb = Join-Path $dir 'secpol.sdb'
+          secedit /export /cfg $inf /areas USER_RIGHTS | Out-Null
+          $cfg = Get-Content $inf
+          if ($cfg -match '^SeBatchLogonRight') {
+            $cfg = $cfg -replace '^(SeBatchLogonRight\s*=.*)$', "`$1,*$sid"
+          } else {
+            $cfg = $cfg -replace '^(\[Privilege Rights\])$', "`$1`r`nSeBatchLogonRight = *$sid"
+          }
+          Set-Content -Path $inf -Value $cfg -Encoding Unicode
+          secedit /configure /db $sdb /cfg $inf /areas USER_RIGHTS | Out-Null
+
+          $taskName = 'TopSmoke'
           # schtasks (not Register-ScheduledTask): with /ru /rp it auto-grants the
           # "log on as a batch job" right and is the most reliable way to run as
           # another account non-interactively on the runner. $wrapper has no
