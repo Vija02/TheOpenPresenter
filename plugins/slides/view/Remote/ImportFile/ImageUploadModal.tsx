@@ -56,7 +56,7 @@ export const ImageUploadModal = ({ replaceImportId }: Props) => {
     <div className="flex justify-center flex-1">
       <PickerCard
         onClick={handleClick}
-        icon={<FaImage className="size-10 text-[#4285F4]" />}
+        icon={<FaImage className="size-10 text-[#515151]" />}
         text="Image"
         isLoading={isPending}
       />
