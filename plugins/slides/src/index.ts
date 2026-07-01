@@ -50,6 +50,7 @@ import {
   PluginBaseData,
   PluginRendererData,
   PptImportData,
+  ImageImportData,
 } from "./types";
 
 export const init = (
@@ -617,6 +618,67 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
             }
           },
         ),
+      
+      selectImage: t.procedure
+        .input(
+          z.object({
+            pluginId: z.string(),
+            images: z.array(
+              z.object({
+                mediaName: z.string(),
+                name: z.string().optional(),
+              })
+            ),
+            replaceImportId: z.string().optional(),
+          }),
+        )
+        .mutation(
+          async ({ input: { pluginId, images, replaceImportId } }) => {
+            const log = logger.child({ pluginId, replaceImportId });
+            const loadedPlugin = loadedPlugins[pluginId]!;
+
+            const newImportIds: string[] = [];
+            let currentReplaceId = replaceImportId;
+
+            try {
+              for (const img of images) {
+                const newImport = getBaseImport(
+                  "image",
+                  img.name,
+                  currentReplaceId,
+                ) as ImageImportData;
+                
+                loadedPlugin.pluginData.imports[newImport.importId] = newImport;
+
+                loadedPlugin.pluginData.imports[newImport.importId]!.thumbnailLinks = [img.mediaName];
+                loadedPlugin.pluginData.imports[newImport.importId]!.slideClickCounts = [0];
+                loadedPlugin.pluginData.imports[newImport.importId]!.slideIds = ["0"];
+                loadedPlugin.pluginData.imports[newImport.importId]!._isFetching = false;
+
+                finalizeImport({
+                  loadedPlugin,
+                  newImportId: newImport.importId,
+                  slideCount: 1,
+                  replaceImportId: currentReplaceId,
+                });
+
+                newImportIds.push(newImport.importId);
+                currentReplaceId = undefined;
+              }
+
+              return { importIds: newImportIds };
+            } catch (err) {
+              // rollback something fails
+              for (const id of newImportIds) {
+                const { [id]: _, ...remaining } = loadedPlugin.pluginData.imports;
+                loadedPlugin.pluginData.imports = remaining;
+              }
+              log.error({ err }, "Failed to import image(s)");
+              throw err;
+            }
+          },
+        ),
+
 
       selectSlide: t.procedure
         .input(

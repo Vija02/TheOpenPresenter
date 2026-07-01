@@ -9,6 +9,7 @@ import { PickerCard } from "../component/PickerCard";
 import { PDFUploadModal } from "./PDFUploadModal";
 import { PPTUploadModal } from "./PPTUploadModal";
 import { SlidePicker } from "./SlidePicker";
+import { ImageUploadModal } from "./ImageUploadModal";
 
 type Props = {
   replaceImportId?: string;
@@ -55,8 +56,11 @@ export const ImportFilePicker = ({ replaceImportId }: Props) => {
           </div>
         )}
       </SlidePicker>
+      
       <PDFUploadModal replaceImportId={replaceImportId} />
       <PPTUploadModal replaceImportId={replaceImportId} />
+      <ImageUploadModal replaceImportId={replaceImportId} />
+
       <PublicAccessNoticeDialog
         isOpen={showSlidesPublicNotice}
         onClose={() => setShowSlidesPublicNotice(false)}

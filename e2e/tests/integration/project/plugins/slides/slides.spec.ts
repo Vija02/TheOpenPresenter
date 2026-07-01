@@ -100,4 +100,49 @@ test.describe("Slides Plugin", () => {
     // Match screenshot
     await expect(presentedPage).toHaveScreenshot();
   });
+
+  test("can upload image and it is shown", async ({
+    page,
+    projectPage,
+    loginAndGoToProject,
+    uppyUploadFile,
+  }) => {
+    await loginAndGoToProject();
+
+    await projectPage.createPlugin("Slides");
+
+    await expect(page.getByRole("heading")).toContainText(
+      "Welcome to Slides Presenter",
+    );
+    await expect(page.getByText("Image", { exact: true })).toBeVisible();
+
+    await page.getByText("Image", { exact: true }).click();
+
+    // Open the uploader from the MediaPicker
+    await page
+      .getByTestId("media-picker-upload-button")
+      .or(page.getByTestId("media-picker-upload-card"))
+      .click();
+
+    // Upload the file
+    await uppyUploadFile("./dummyFiles/dummyImage.jpg");
+
+    const firstSlide = page
+      .getByTestId("slide-container")
+      .filter({ hasText: /^Slide 1$/ });
+
+    // Wait for image to be uploaded
+    await expect(firstSlide.getByRole("img")).toBeInViewport({
+      timeout: 20 * 1000,
+    });
+
+    // Present it & open
+    await firstSlide.click();
+    const presentedPage = await projectPage.present();
+    await presentedPage.waitForLoadState("networkidle");
+
+    // Match screenshot
+    await expect(presentedPage).toHaveScreenshot();
+  });
+
 });
