@@ -336,10 +336,22 @@ jobs:
           New-Item -ItemType File -Path $out -Force | Out-Null
 
           $taskName = 'TopSmoke'
-          $action = New-ScheduledTaskAction -Execute 'cmd.exe' -Argument "/c `"$wrapper`""
-          Register-ScheduledTask -TaskName $taskName -Action $action `
-            -User $u -Password $pw -RunLevel Limited -Force | Out-Null
-          Start-ScheduledTask -TaskName $taskName
+          $ru = "$env:COMPUTERNAME\$u"
+          # schtasks (not Register-ScheduledTask): with /ru /rp it auto-grants the
+          # "log on as a batch job" right and is the most reliable way to run as
+          # another account non-interactively on the runner. $wrapper has no
+          # spaces (C:\smoke\...), so /tr needs no inner quoting.
+          schtasks /create /tn $taskName /tr "cmd /c $wrapper" /sc once /st 00:00 /ru $ru /rp $pw /rl limited /f
+          if ($LASTEXITCODE -ne 0) { Write-Error "schtasks /create failed ($LASTEXITCODE)"; exit 1 }
+          schtasks /run /tn $taskName
+          if ($LASTEXITCODE -ne 0) { Write-Error "schtasks /run failed ($LASTEXITCODE)"; exit 1 }
+
+          # Report task status so a launch failure is visible even if the task
+          # never writes to the log. Last Result 0x0 = ok; 0x41303 = not yet run;
+          # anything else points at why cmd/node didn't start.
+          Start-Sleep -Seconds 8
+          Write-Host '----- task status -----'
+          schtasks /query /tn $taskName /v /fo LIST | Select-String 'Status:|Last Result:|Run As User:'
 
           # First boot extracts + initialises embedded Postgres, so give it time.
           $ok = $false
@@ -351,8 +363,10 @@ jobs:
           }
 
           # Teardown so the step returns cleanly.
-          Stop-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
-          Unregister-ScheduledTask -TaskName $taskName -Confirm:$false -ErrorAction SilentlyContinue
+          Write-Host '----- final task status -----'
+          schtasks /query /tn $taskName /v /fo LIST | Select-String 'Status:|Last Result:'
+          schtasks /end /tn $taskName 2>$null
+          schtasks /delete /tn $taskName /f 2>$null
           Get-Process node,postgres -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
           Remove-LocalUser -Name $u -ErrorAction SilentlyContinue
 
