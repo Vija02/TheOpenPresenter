@@ -372,6 +372,77 @@ jobs:
           if (-not $ok) { Write-Error 'App did not open port 5678 within timeout'; exit 1 }
           Write-Host 'Smoke test passed: port 5678 responded.'
 
+  # macOS counterpart (run the whole thing unlike windows)
+  smoke-test-macos:
+    name: Smoke test (macOS install + boot)
+    needs: build
+    runs-on: macos-latest
+    timeout-minutes: 20
+    steps:
+      - name: Download macOS artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: 'tauri-macos-latest--target aarch64-apple-darwin'
+          path: artifact
+
+      - name: Launch app and wait for port 5678
+        shell: bash
+        run: |
+          set -uo pipefail
+
+          DMG=$(find artifact -name '*.dmg' | head -1)
+          APP=""
+          if [ -n "$DMG" ]; then
+            echo "Mounting $DMG"
+            MP=$(mktemp -d)
+            hdiutil attach "$DMG" -mountpoint "$MP" -nobrowse -quiet
+            SRC=$(find "$MP" -maxdepth 1 -name '*.app' | head -1)
+            APP="$RUNNER_TEMP/TheOpenPresenter Studio.app"
+            rm -rf "$APP"
+            ditto "$SRC" "$APP"
+            hdiutil detach "$MP" -quiet || true
+          else
+            APP=$(find artifact -maxdepth 3 -name '*.app' -type d | head -1)
+          fi
+          [ -n "$APP" ] && [ -d "$APP" ] || { echo 'No .app found in artifact'; exit 1; }
+          echo "App: $APP"
+
+          # Sign everything
+          xattr -cr "$APP" || true
+          while IFS= read -r -d '' f; do
+            if file "$f" | grep -q 'Mach-O'; then
+              codesign --force --sign - --timestamp=none "$f" >/dev/null 2>&1 || true
+            fi
+          done < <(find "$APP" -type f -print0)
+          codesign --force --deep --sign - --timestamp=none "$APP" >/dev/null 2>&1 || true
+
+          BIN=$(find "$APP/Contents/MacOS" -maxdepth 1 -type f | head -1)
+          [ -n "$BIN" ] || { echo 'No binary in Contents/MacOS'; exit 1; }
+          chmod +x "$BIN" || true
+          echo "Launching $BIN"
+
+          OUT=$(mktemp)
+          "$BIN" > "$OUT" 2>&1 &
+          PID=$!
+
+          # First boot extracts + initialises embedded Postgres, so give it time.
+          ok=0
+          for i in $(seq 1 90); do
+            if ! kill -0 "$PID" 2>/dev/null; then echo 'app exited early'; break; fi
+            if curl -sf http://localhost:5678 >/dev/null 2>&1; then ok=1; break; fi
+            sleep 2
+          done
+
+          # Teardown so the step returns cleanly.
+          kill "$PID" 2>/dev/null || true
+          pkill -f run_server.mjs 2>/dev/null || true
+          pkill -f postgres 2>/dev/null || true
+
+          echo '----- app output -----'; cat "$OUT" 2>/dev/null || true
+
+          [ "$ok" = 1 ] || { echo 'App did not open port 5678 within timeout'; exit 1; }
+          echo 'Smoke test passed: port 5678 responded.'
+
   release:
     permissions:
       contents: write
