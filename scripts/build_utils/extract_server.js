@@ -10,7 +10,7 @@ const files = [
   "./node_modules/graphile-worker/dist/cli.js",
   "./node_modules/graphile-migrate/dist/cli.js",
   // pino-pretty is loaded by pino's transport via a runtime string target
-  require.resolve("pino-pretty"),
+  "./node_modules/pino-pretty/index.js",
 ];
 
 (async () => {
