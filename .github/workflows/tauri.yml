@@ -67,17 +67,9 @@ jobs:
           node scripts/build_utils/extract_tauri.js
           node scripts/build_utils/copy_deps.js
 
-          # Move the node_modules.
-          # NFT deliberately excludes our @repo/* workspace packages (see the
-          # `ignore` in scripts/build_utils/extract_*.js), so the trimmed
-          # node_modules has none of them. Restore @repo after the swap, exactly
-          # like production.Dockerfile does — otherwise the bundled server fails
-          # at runtime with "Cannot find module '@repo/observability'" (and the
-          # other @repo/* packages).
-          mv node_modules/@repo ./.atrepo_tmp
+          # Move the node_modules
           rm -rf node_modules
           cp -r ./node_modules_nft/node_modules ./node_modules
-          mv ./.atrepo_tmp node_modules/@repo
 
           # Cleanup
           rm -rf node_modules_nft
@@ -109,17 +101,9 @@ jobs:
           node scripts/build_utils/extract_tauri.js
           node scripts/build_utils/copy_deps.js
 
-          # Move the node_modules.
-          # NFT deliberately excludes our @repo/* workspace packages (see the
-          # `ignore` in scripts/build_utils/extract_*.js), so the trimmed
-          # node_modules has none of them. Restore @repo after the swap, exactly
-          # like production.Dockerfile does — otherwise the bundled server fails
-          # at runtime with "Cannot find module '@repo/observability'" (and the
-          # other @repo/* packages).
-          mv node_modules/@repo ./.atrepo_tmp
+          # Move the node_modules
           rm -rf node_modules
           cp -r ./node_modules_nft/node_modules ./node_modules
-          mv ./.atrepo_tmp node_modules/@repo
 
           # Cleanup
           rm -rf node_modules_nft
