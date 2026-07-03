@@ -416,8 +416,10 @@ jobs:
           done < <(find "$APP" -type f -print0)
           codesign --force --deep --sign - --timestamp=none "$APP" >/dev/null 2>&1 || true
 
-          BIN=$(find "$APP/Contents/MacOS" -maxdepth 1 -type f | head -1)
-          [ -n "$BIN" ] || { echo 'No binary in Contents/MacOS'; exit 1; }
+          # Contents/MacOS holds the real app binary AND the `node` sidecar
+          # (externalBin). Exclude node so we launch the app, not the REPL.
+          BIN=$(find "$APP/Contents/MacOS" -maxdepth 1 -type f ! -name 'node' | head -1)
+          [ -n "$BIN" ] || { echo 'No app binary in Contents/MacOS'; exit 1; }
           chmod +x "$BIN" || true
           echo "Launching $BIN"
 
