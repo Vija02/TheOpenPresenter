@@ -1,0 +1,87 @@
+---
+import DefaultLayout from "../../../layouts/DefaultLayout.astro";
+import PageIllustration from "../../../components/PageIllustration.astro";
+
+// Stripe Payment Link (pay-what-you-want). Update here if it changes.
+const STRIPE_PAYMENT_LINK = "https://donate.stripe.com/7sYbJ16yN2d1bYt1SScEw00";
+---
+
+<DefaultLayout
+  title="Donate | TheOpenPresenter"
+  description="Support TheOpenPresenter and help keep the small-church scholarship free for churches that need it."
+>
+  <!-- Page illustration -->
+  <div
+    class="relative max-w-6xl mx-auto h-0 pointer-events-none -z-1"
+    aria-hidden="true"
+  >
+    <PageIllustration />
+  </div>
+
+  <section class="relative">
+    <div class="relative max-w-6xl mx-auto px-4 sm:px-6">
+      <div class="pt-24 pb-12 md:pt-28 md:pb-20">
+        <!-- Header -->
+        <div class="max-w-3xl mx-auto text-center">
+          <h1 class="h2 font-red-hat-display mb-4" data-aos="fade-down">
+            Help fund the Scholarship program
+          </h1>
+          <p
+            class="text-xl text-gray-600 dark:text-gray-400"
+            data-aos="fade-down"
+            data-aos-delay="150"
+          >
+            We keep the full cloud plan free for small churches through our
+            scholarship program. If you would like to help fund this program, your donation keeps it free for the next church.
+            There's never any obligation.
+          </p>
+        </div>
+
+        <!-- Donation card -->
+        <div
+          class="max-w-xl mx-auto mt-10 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-800 shadow-xl p-8 text-center"
+          data-aos="fade-up"
+          data-aos-delay="200"
+        >
+          <h2 class="font-red-hat-display text-2xl font-black mb-2">
+            Give what you can
+          </h2>
+          <p class="text-gray-600 dark:text-gray-400 mb-6">
+            You choose the amount on the next step. Every bit helps cover hosting
+            and AI credits for churches on the scholarship.
+          </p>
+
+          <a
+            class="btn text-white bg-teal-500 hover:bg-teal-400 w-full"
+            href={STRIPE_PAYMENT_LINK}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Donate with Stripe
+          </a>
+
+          <!-- Secured by Stripe -->
+          <div
+            class="flex items-center justify-center gap-2 mt-5 text-sm text-gray-500 dark:text-gray-400"
+          >
+            <svg class="w-4 h-4 fill-current shrink-0" viewBox="0 0 24 24">
+              <path
+                d="M12 1l9 4v6c0 5.55-3.84 10.74-9 12-5.16-1.26-9-6.45-9-12V5l9-4zm0 6a3 3 0 0 0-3 3v1H8v6h8v-6h-1v-1a3 3 0 0 0-3-3zm0 2a1 1 0 0 1 1 1v1h-2v-1a1 1 0 0 1 1-1z"
+              ></path>
+            </svg>
+            Secure payment powered by Stripe
+          </div>
+        </div>
+
+        <p
+          class="max-w-xl mx-auto mt-6 text-center text-sm text-gray-500 dark:text-gray-400"
+          data-aos="fade-up"
+          data-aos-delay="250"
+        >
+          Donations are voluntary and non-refundable. TheOpenPresenter is not a
+          registered charity, so donations are not tax-deductible.
+        </p>
+      </div>
+    </div>
+  </section>
+</DefaultLayout>
