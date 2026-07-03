@@ -83,13 +83,37 @@
       </div>
     </div>
     <div class="mt-8 text-center">
-      <button
-        type="button"
-        id="cqp-fullscreen"
-        class="btn text-white bg-teal-500 hover:bg-teal-400 shrink-0 cursor-pointer"
-      >
-        Open in full screen
-      </button>
+      <div class="flex flex-wrap items-center justify-center gap-3">
+        <button
+          type="button"
+          id="cqp-fullscreen"
+          class="btn text-white bg-teal-500 hover:bg-teal-400 shrink-0 cursor-pointer"
+        >
+          Open in full screen
+        </button>
+        <button
+          type="button"
+          id="cqp-more-devices"
+          class="btn text-teal-400 bg-transparent border border-teal-500 hover:bg-teal-500/10 shrink-0 cursor-pointer"
+        >
+          Open on more devices
+        </button>
+      </div>
+      <div id="cqp-more-qr" class="hidden mt-6 flex flex-col items-center">
+        <div
+          class="inline-flex items-center justify-center rounded-lg bg-white p-3 shadow-lg ring-1 ring-black/5"
+          style="width: 184px; height: 184px;"
+        >
+          <canvas
+            id="cqp-more-qr-canvas"
+            width="160"
+            height="160"
+            aria-label="QR code — scan to control from another device"></canvas>
+        </div>
+        <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+          Scan to control from another device
+        </p>
+      </div>
     </div>
   </div>
 </section>
@@ -128,11 +152,51 @@
     });
   }
 
+  const moreDevicesBtn = document.getElementById(
+    "cqp-more-devices",
+  ) as HTMLButtonElement | null;
+  const moreQrPanel = document.getElementById("cqp-more-qr");
+  const moreQrCanvas = document.getElementById(
+    "cqp-more-qr-canvas",
+  ) as HTMLCanvasElement | null;
+
+  // The remote/app URL for the current demo, set once a phone pairs. Scanning
+  // it opens another remote controller for the same project.
+  let remoteUrl: string | null = null;
+
+  const renderMoreQr = async () => {
+    if (!moreQrCanvas || !remoteUrl) return;
+    try {
+      await QRCode.toCanvas(moreQrCanvas, remoteUrl, {
+        width: 160,
+        margin: 1,
+        color: { dark: "#0f172a", light: "#ffffff" },
+      });
+    } catch (err) {
+      console.error("more-devices QR render failed:", err);
+    }
+  };
+
+  if (moreDevicesBtn) {
+    moreDevicesBtn.addEventListener("click", async () => {
+      if (!moreQrPanel) return;
+      if (moreQrPanel.classList.contains("hidden")) {
+        await renderMoreQr();
+        moreQrPanel.classList.remove("hidden");
+        moreDevicesBtn.textContent = "Hide device QR";
+      } else {
+        moreQrPanel.classList.add("hidden");
+        moreDevicesBtn.textContent = "Open on more devices";
+      }
+    });
+  }
+
   // Append the lyrics template to a /init-demo target URL.
   const withTemplate = (targetStr: string) => {
     try {
       const u = new URL(targetStr);
       u.searchParams.set("template", "lyrics");
+      u.searchParams.set("organizationType", "church");
       return u.toString();
     } catch {
       return targetStr;
@@ -166,7 +230,8 @@
 
   const swapInRenderer = (payload: DonePayload) => {
     if (!rendererSection || !rendererIframe) return;
-    rendererIframe.src = `/render/${encodeURIComponent(payload.orgSlug)}/${encodeURIComponent(payload.projectSlug)}`;
+    rendererIframe.src = `/render/${encodeURIComponent(payload.orgSlug)}/${encodeURIComponent(payload.projectSlug)}?organizationType=church`;
+    remoteUrl = `${window.location.origin}/app/${encodeURIComponent(payload.orgSlug)}/${encodeURIComponent(payload.projectSlug)}?organizationType=church`;
     rendererSection.classList.remove("hidden");
 
     if (qrBlock) qrBlock.classList.add("hidden");
