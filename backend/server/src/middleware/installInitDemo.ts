@@ -248,6 +248,7 @@ export default async (app: Express) => {
   app.get("/init-demo", async (req, res) => {
     const pairId = req.query.id?.toString();
     const template = req.query.template?.toString();
+    const organizationType = req.query.organizationType?.toString();
 
     try {
       const { rows: orgRows } = await rootPgPool.query(
@@ -317,7 +318,10 @@ export default async (app: Express) => {
         }
       }
 
-      res.redirect(`/app/${DEMO_ORG_SLUG}/${project.slug}`);
+      const appUrl = organizationType
+        ? `/app/${DEMO_ORG_SLUG}/${project.slug}?organizationType=${encodeURIComponent(organizationType)}`
+        : `/app/${DEMO_ORG_SLUG}/${project.slug}`;
+      res.redirect(appUrl);
     } catch (err: any) {
       logger.error({ err, pairId }, "/init-demo failed");
       res

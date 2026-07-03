@@ -129,6 +129,19 @@ export function PluginMetaDataProvider({
     pluginMetaData?.publicOrGuestProject?.nodes,
   ]);
 
+  // Allow overriding the organization type
+  const organizationTypeOverride = useMemo<OrganizationType | null>(() => {
+    if (typeof window === "undefined") return null;
+    const raw = new URLSearchParams(window.location.search).get(
+      "organizationType",
+    );
+    if (!raw) return null;
+    const match = Object.values(OrganizationType).find(
+      (value) => value.toLowerCase() === raw.toLowerCase(),
+    );
+    return (match as OrganizationType | undefined) ?? null;
+  }, []);
+
   if (error) {
     console.error(error);
     return <ErrorAlert error={error} />;
@@ -152,7 +165,9 @@ export function PluginMetaDataProvider({
         orgId: organizationId,
         orgSlug,
         organizationType:
-          pluginMetaData?.organizationBySlug?.organizationType ?? null,
+          organizationTypeOverride ??
+          pluginMetaData?.organizationBySlug?.organizationType ??
+          null,
         experimentalFeaturesEnabled: pluginMetaData?.organizationBySlug?.experimentalFeaturesEnabled ?? false,
         projectSlug,
         projectId: projectId,
