@@ -39,6 +39,10 @@ type SlidesPluginData = {
 type VideoPluginData = {
   videos: Video[];
 };
+type LyricsPluginData = {
+  songs: unknown[];
+  videoBackgrounds: unknown[];
+};
 
 /**
  * Slug of the seeded organization that owns every demo project. The row is
@@ -65,7 +69,7 @@ const DEMO_SLIDE_COUNT = 5;
 type DemoScene = {
   name?: string;
   pluginName: string;
-  pluginData: VideoPluginData | SlidesPluginData;
+  pluginData: VideoPluginData | SlidesPluginData | LyricsPluginData;
   activate?: boolean;
 };
 
@@ -168,6 +172,23 @@ const buildDemoScenes = (): DemoScene[] => {
   return [slidesScene, videoPlayerScene];
 };
 
+/**
+ * Build a minimal demo with just an empty Lyrics plugin
+ */
+const buildLyricsScenes = (): DemoScene[] => {
+  const lyricsScene: DemoScene = {
+    name: "Lyrics",
+    pluginName: "lyrics-presenter",
+    activate: true,
+    pluginData: {
+      songs: [],
+      videoBackgrounds: [],
+    } satisfies LyricsPluginData,
+  };
+
+  return [lyricsScene];
+};
+
 export default async (app: Express) => {
   const rootPgPool = getRootPgPool(app);
 
@@ -226,6 +247,7 @@ export default async (app: Express) => {
   // We also clean it up in a cronjob for projects over 1 day old
   app.get("/init-demo", async (req, res) => {
     const pairId = req.query.id?.toString();
+    const template = req.query.template?.toString();
 
     try {
       const { rows: orgRows } = await rootPgPool.query(
@@ -263,7 +285,9 @@ export default async (app: Express) => {
         "/init-demo created demo project",
       );
 
-      const update = await buildProjectDocument(buildDemoScenes());
+      const scenes =
+        template === "lyrics" ? buildLyricsScenes() : buildDemoScenes();
+      const update = await buildProjectDocument(scenes);
       await rootPgPool.query(
         "update app_public.projects set document = $1 where id = $2",
         [update, project.id],

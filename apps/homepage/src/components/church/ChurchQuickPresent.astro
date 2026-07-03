@@ -1,0 +1,226 @@
+---
+---
+
+<section class="bg-gray-950 border-y border-white/10">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6">
+    <div class="py-12 md:py-20" data-aos="fade-up">
+      <div class="text-center">
+        <h2 class="h2 font-red-hat-display text-white mb-3">
+          Need to present now?
+        </h2>
+        <p class="text-lg text-indigo-100 max-w-2xl mx-auto mb-8">
+          Service starting and nothing is ready? Scan the code to open a
+          ready-to-go lyrics project - then control this screen from your phone.
+          No account needed.
+        </p>
+      </div>
+
+      <!-- Phone: this quick-start needs a computer/screen to present on. -->
+      <div id="cqp-mobile-notice" class="hidden">
+        <div
+          class="mx-auto max-w-md rounded-xl bg-white/5 border border-white/10 p-6 text-center"
+        >
+          <p class="text-white font-semibold mb-1">Best on a computer</p>
+          <p class="text-sm text-indigo-200">
+            Open this page on your church's computer or screen. You'll get a QR
+            code to scan with your phone and control what's shown.
+          </p>
+        </div>
+      </div>
+
+      <!-- QR pairing (desktop). -->
+      <div
+        id="cqp-qr-block"
+        class="flex flex-col items-center text-center md:flex-row md:items-center md:justify-center md:text-left md:gap-6"
+      >
+        <div
+          id="cqp-qr-wrap"
+          class="shrink-0 inline-flex items-center justify-center rounded-lg bg-white p-3 shadow-lg ring-1 ring-black/5"
+          style="width: 224px; height: 224px;"
+        >
+          <canvas
+            id="cqp-qr"
+            width="200"
+            height="200"
+            aria-label="QR code — scan to start presenting"></canvas>
+          <span
+            id="cqp-qr-loading"
+            class="text-sm text-gray-500"
+            style="display: none;"
+          >
+            Loading…
+          </span>
+          <span hidden id="cqp-qr-url" data-testid="cqp-qr-url"></span>
+        </div>
+        <div class="mt-4 md:mt-0">
+          <p id="cqp-status" class="text-base font-semibold text-white">
+            Scan to start presenting
+          </p>
+          <p class="mt-1 text-sm text-indigo-200">
+            You'll get a blank lyrics project and can control this screen from
+            your phone.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Renderer section. Stays hidden until a phone scans the QR and pairs; the
+     script populates the iframe and scrolls this block into view. -->
+<section id="cqp-renderer-section" class="hidden">
+  <div class="px-4 sm:px-6 pt-8 md:pt-16 pb-16">
+    <div class="flex justify-center">
+      <div
+        class="w-full max-w-7xl overflow-hidden rounded-xl shadow-2xl ring-1 ring-gray-200 dark:ring-gray-800"
+        style="aspect-ratio: 16 / 9; background: #000;"
+      >
+        <iframe
+          id="cqp-renderer-iframe"
+          title="Live lyrics renderer"
+          allow="autoplay; fullscreen"
+          style="width: 100%; height: 100%; border: 0;"></iframe>
+      </div>
+    </div>
+    <div class="mt-8 text-center">
+      <button
+        type="button"
+        id="cqp-fullscreen"
+        class="btn text-white bg-teal-500 hover:bg-teal-400 shrink-0 cursor-pointer"
+      >
+        Open in full screen
+      </button>
+    </div>
+  </div>
+</section>
+
+<script>
+  // Drives the QR pairing flow for the church "present now" section.
+  // Seeds a lyrics-only project (?template=lyrics). Desktop only — on a phone
+  // there's nothing to present on, so we just show a "use a computer" notice.
+  type DonePayload = {
+    done: true;
+    orgSlug: string;
+    projectSlug: string;
+  };
+  type IdPayload = { id: string };
+
+  import QRCode from "qrcode";
+
+  const canvas = document.getElementById("cqp-qr") as HTMLCanvasElement | null;
+  const loadingEl = document.getElementById("cqp-qr-loading");
+  const statusEl = document.getElementById("cqp-status");
+  const qrBlock = document.getElementById("cqp-qr-block");
+  const mobileNotice = document.getElementById("cqp-mobile-notice");
+  const rendererSection = document.getElementById("cqp-renderer-section");
+  const rendererIframe = document.getElementById(
+    "cqp-renderer-iframe",
+  ) as HTMLIFrameElement | null;
+  const fullscreenBtn = document.getElementById(
+    "cqp-fullscreen",
+  ) as HTMLButtonElement | null;
+
+  if (fullscreenBtn) {
+    fullscreenBtn.addEventListener("click", () => {
+      const el = rendererIframe as any;
+      if (el?.requestFullscreen) el.requestFullscreen();
+      else if (el?.webkitRequestFullscreen) el.webkitRequestFullscreen();
+    });
+  }
+
+  // Append the lyrics template to a /init-demo target URL.
+  const withTemplate = (targetStr: string) => {
+    try {
+      const u = new URL(targetStr);
+      u.searchParams.set("template", "lyrics");
+      return u.toString();
+    } catch {
+      return targetStr;
+    }
+  };
+
+  // Treat anything that lacks a fine pointer or is narrow as "mobile"
+  const isMobile =
+    window.matchMedia("(max-width: 768px)").matches ||
+    window.matchMedia("(pointer: coarse)").matches;
+
+  const setStatus = (text: string) => {
+    if (statusEl) statusEl.textContent = text;
+  };
+
+  const renderQr = async (url: string) => {
+    if (!canvas) return;
+    try {
+      await QRCode.toCanvas(canvas, url, {
+        width: 200,
+        margin: 1,
+        color: { dark: "#0f172a", light: "#ffffff" },
+      });
+      if (loadingEl) loadingEl.style.display = "none";
+      canvas.style.display = "block";
+    } catch (err) {
+      console.error("QR render failed:", err);
+      setStatus("Couldn't render the QR code. Reload to try again.");
+    }
+  };
+
+  const swapInRenderer = (payload: DonePayload) => {
+    if (!rendererSection || !rendererIframe) return;
+    rendererIframe.src = `/render/${encodeURIComponent(payload.orgSlug)}/${encodeURIComponent(payload.projectSlug)}`;
+    rendererSection.classList.remove("hidden");
+
+    if (qrBlock) qrBlock.classList.add("hidden");
+
+    const rendererWrap = rendererIframe.parentElement as HTMLElement | null;
+    if (rendererWrap) {
+      rendererWrap.style.maxWidth = "min(calc((100vh - 12rem) * 16 / 9), 80rem)";
+    }
+
+    requestAnimationFrame(() => {
+      rendererSection.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+  };
+
+  if (canvas) {
+    if (isMobile) {
+      // Phone: no demo here. Point them at a computer.
+      if (qrBlock) qrBlock.classList.add("hidden");
+      if (mobileNotice) mobileNotice.classList.remove("hidden");
+    } else {
+      canvas.style.display = "none";
+      if (loadingEl) loadingEl.style.display = "inline";
+
+      const source = new EventSource("/init-demo/request");
+      source.addEventListener("message", (ev) => {
+        try {
+          const payload = JSON.parse(ev.data) as IdPayload | DonePayload;
+          if ("id" in payload) {
+            const target = new URL(
+              `/init-demo?id=${encodeURIComponent(payload.id)}`,
+              window.location.origin,
+            );
+            const targetStr = withTemplate(target.toString());
+            console.log("[cqp] QR target:", targetStr);
+            renderQr(targetStr);
+            const qrUrlEl = document.getElementById("cqp-qr-url");
+            if (qrUrlEl) qrUrlEl.textContent = targetStr;
+          } else if (payload.done) {
+            swapInRenderer(payload);
+            source.close();
+          }
+        } catch (err) {
+          console.error("Bad SSE payload:", ev.data, err);
+        }
+      });
+      source.addEventListener("error", () => {
+        if (canvas.style.display === "none") {
+          setStatus("Couldn't reach the server. Try again in a moment.");
+        }
+      });
+      window.addEventListener("beforeunload", () => source.close());
+    }
+  }
+</script>
