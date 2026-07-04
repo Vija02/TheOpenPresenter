@@ -14,6 +14,11 @@ import {
   isAIConfigured,
 } from "./ai";
 import {
+  PluginDb,
+  RegisteredMigration,
+  createPluginDb,
+} from "./pluginDatabase";
+import {
   RegisterKeyPressHandlerCallback,
   RegisterOnPluginDataCreated,
   RegisterOnPluginDataLoaded,
@@ -109,6 +114,7 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
     pluginName: string;
     envVars: Record<string, string>;
   }[] = [];
+  protected registeredMigrations: RegisteredMigration[] = [];
 
   private app: Express;
 
@@ -231,6 +237,21 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
     envVars: Record<string, string>,
   ) {
     this.registeredEnvToViews.push({ pluginName, envVars });
+  }
+
+  public registerMigrations(pluginName: string, migrationsPath: string) {
+    this.registeredMigrations.push({ pluginName, migrationsPath });
+  }
+
+  public getPluginDb(pluginName: string): PluginDb {
+    const pool = this.app.get("rootPgPool") as Pool | undefined;
+    if (!pool) {
+      throw new Error(
+        "rootPgPool is not available yet. getPluginDb() must be called at " +
+          "request/runtime, after the database pools are installed.",
+      );
+    }
+    return createPluginDb(pool, pluginName);
   }
 
   public async uploadMedia(
@@ -450,5 +471,8 @@ export class ServerPluginApiPrivate extends ServerPluginApi {
   }
   getRegisteredEnvToViews() {
     return this.registeredEnvToViews;
+  }
+  getRegisteredMigrations() {
+    return this.registeredMigrations;
   }
 }
