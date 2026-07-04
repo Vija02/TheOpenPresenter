@@ -5,7 +5,7 @@ import { Duplex } from "stream";
 
 import { cloudflareIps } from "./cloudflare";
 import * as middleware from "./middleware";
-import { initPlugins } from "./pluginManager";
+import { initPlugins, migratePluginDatabases } from "./pluginManager";
 import { ShutdownAction, makeShutdownActions } from "./shutdownActions";
 import { sanitizeEnv } from "./utils";
 
@@ -125,6 +125,10 @@ export async function makeApp({
    * operate very rapidly to enable quick as possible server startup.
    */
   await middleware.installDatabasePools(app);
+  // Plugins are initialized (in initPlugins above) before the database pools
+  // exist, so we apply their registered SQL migrations here, once the root pool
+  // is available.
+  await migratePluginDatabases(app);
   await middleware.installWorkerUtils(app);
   await middleware.installHelmet(app);
   await middleware.installSameOrigin(app);

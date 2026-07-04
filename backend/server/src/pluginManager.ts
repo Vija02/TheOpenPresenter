@@ -1,9 +1,14 @@
-import { ServerPluginApiPrivate } from "@repo/base-plugin/server";
+import {
+  ServerPluginApiPrivate,
+  runPluginMigrations,
+} from "@repo/base-plugin/server";
 import { logger } from "@repo/observability";
 import aki from "aki-plugin-manager";
 import { Express } from "express";
 import fs, { readdirSync, statSync } from "fs";
 import path from "path";
+
+import { getRootPgPool } from "./middleware/installDatabasePools";
 
 export const pluginsPath =
   process.env.PLUGINS_PATH ??
@@ -120,5 +125,34 @@ const _linkPlugin = async (pluginName: string) => {
     logger.error({ err }, `Failed to link plugin '${pluginName}'`);
     console.error(err);
     console.error(`ERROR: Failed to link plugin '${pluginName}'`);
+  }
+};
+
+/**
+ * Applies every plugin's registered SQL migrations. Must run AFTER
+ * `installDatabasePools` (plugins register their migrations during
+ * `initPlugins`, but `rootPgPool` only exists once the pools are installed).
+ */
+export const migratePluginDatabases = async (app: Express) => {
+  if (!serverPluginApi) {
+    throw new Error("initPlugins() must run before migratePluginDatabases()");
+  }
+
+  const rootPgPool = getRootPgPool(app);
+  const migrations = serverPluginApi.getRegisteredMigrations();
+
+  if (migrations.length === 0) {
+    return;
+  }
+
+  console.log("\nRunning plugin migrations...");
+  try {
+    await runPluginMigrations(rootPgPool, migrations, logger);
+    console.log("Plugin migrations complete.\n");
+  } catch (err) {
+    logger.error({ err }, "Plugin migrations failed");
+    console.error(err);
+    console.error("ERROR: Plugin migrations failed");
+    throw err;
   }
 };
