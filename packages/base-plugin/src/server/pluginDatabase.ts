@@ -106,6 +106,67 @@ export const createPluginDb = (pool: Pool, pluginName: string): PluginDb => {
   return { schema, query, withClient, withTransaction };
 };
 
+export const listenToChannel = (
+  pool: Pool,
+  channel: string,
+  onPayload: (payload: string) => void,
+): (() => void) => {
+  let client: PoolClient | null = null;
+  let stopped = false;
+  let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+
+  const scheduleReconnect = () => {
+    if (stopped) return;
+    if (reconnectTimer) clearTimeout(reconnectTimer);
+    reconnectTimer = setTimeout(() => void connect(), 2000);
+  };
+
+  const connect = async () => {
+    if (stopped) return;
+    try {
+      const c = await pool.connect();
+      client = c;
+      c.on("notification", (msg) => {
+        if (msg.channel === channel && msg.payload != null) {
+          onPayload(msg.payload);
+        }
+      });
+      c.on("error", () => {
+        try {
+          c.release(true);
+        } catch {
+          // ignore
+        }
+        if (client === c) client = null;
+        scheduleReconnect();
+      });
+      await c.query(`LISTEN ${quoteIdent(channel)}`);
+    } catch {
+      scheduleReconnect();
+    }
+  };
+
+  void connect();
+
+  return () => {
+    stopped = true;
+    if (reconnectTimer) clearTimeout(reconnectTimer);
+    const c = client;
+    client = null;
+    if (c) {
+      c.query(`UNLISTEN ${quoteIdent(channel)}`)
+        .catch(() => {})
+        .finally(() => {
+          try {
+            c.release();
+          } catch {
+            // ignore
+          }
+        });
+    }
+  };
+};
+
 // ---------------------------------------------------------------------------
 // Migrations
 // ---------------------------------------------------------------------------
