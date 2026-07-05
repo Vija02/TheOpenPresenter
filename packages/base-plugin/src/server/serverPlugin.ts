@@ -17,6 +17,7 @@ import {
   PluginDb,
   RegisteredMigration,
   createPluginDb,
+  listenToChannel,
 } from "./pluginDatabase";
 import {
   RegisterKeyPressHandlerCallback,
@@ -252,6 +253,20 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
       );
     }
     return createPluginDb(pool, pluginName);
+  }
+
+  public pgListen(
+    channel: string,
+    onPayload: (payload: string) => void,
+  ): () => void {
+    const pool = this.app.get("rootPgPool") as Pool | undefined;
+    if (!pool) {
+      throw new Error(
+        "rootPgPool is not available yet. pgListen() must be called at " +
+          "request/runtime, after the database pools are installed.",
+      );
+    }
+    return listenToChannel(pool, channel, onPayload);
   }
 
   public async uploadMedia(
