@@ -25,9 +25,9 @@ export class ProjectPage {
   }
 
   async createPlugin(plugin: (typeof pluginsList)[number]) {
-    await this.newSceneButton.click();
+    await this.newSceneButton.click({ force: true });
 
-    await this.page.getByText(plugin, { exact: true }).click();
+    await this.page.getByText(plugin, { exact: true }).click({ force: true });
   }
 
   pluginOption(plugin: (typeof pluginsList)[number]): Locator {
