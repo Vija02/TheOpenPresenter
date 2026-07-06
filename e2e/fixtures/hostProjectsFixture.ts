@@ -92,10 +92,7 @@ export const test = base.extend<HostProjectsFixture>({
 
       // Add a plugin so the project has some content
       // Otherwise, the document won't be registered
-      await state.hostPage
-        .getByText(/^Add Component$/)
-        .click({ force: true });
-      
+
       await state.hostPage
         .getByText("Timer", { exact: true })
         .click({ force: true });

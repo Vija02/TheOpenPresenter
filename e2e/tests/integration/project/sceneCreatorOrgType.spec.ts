@@ -27,8 +27,6 @@ test.describe("Add Scene page: organization type filtering", () => {
       next: "/app/testchurch/testproject",
     });
 
-    await projectPage.newSceneButton.click({ force: true });
-
     await expect(projectPage.pluginOption("Lyrics Presenter")).toBeVisible();
     await expect(projectPage.pluginOption("Worship Pads")).toBeVisible();
     // Sanity check: a non-restricted plugin is still listed.
@@ -50,8 +48,6 @@ test.describe("Add Scene page: organization type filtering", () => {
       ],
       next: "/app/testvenue/testproject",
     });
-
-    await projectPage.newSceneButton.click({ force: true });
 
     await expect(projectPage.pluginOption("Lyrics Presenter")).toHaveCount(0);
     await expect(projectPage.pluginOption("Worship Pads")).toHaveCount(0);
