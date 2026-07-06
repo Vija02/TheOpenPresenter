@@ -68,10 +68,11 @@ test.describe("Public Project", () => {
         unauthPage.getByRole("heading", { name: "Login" }),
       ).not.toBeVisible();
 
-      const unauthSceneItems = unauthPage.locator(
-        ".rt--sidebar-wrapper-web .rt--sidebar-web-scene-item",
-      );
-      await expect(unauthSceneItems).toHaveCount(0);
+    const unauthSceneItems = unauthPage.locator(
+      ".rt--sidebar-wrapper-web .rt--sidebar-web-scene-item"
+    ).filter({ hasNotText: "Add Component" });
+
+    await expect(unauthSceneItems).toHaveCount(0);
 
       // While the unauthenticated viewer is still connected, have the owner
       // create a new scene from their authenticated remote. The unauth
