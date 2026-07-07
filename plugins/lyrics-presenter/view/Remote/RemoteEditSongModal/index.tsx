@@ -28,6 +28,7 @@ import { removeChords } from "../../../src/processLyrics";
 import { getMergedSlideStyle } from "../../../src/slideStyle";
 import { Song, displayTypeSettings } from "../../../src/types";
 import { usePluginAPI } from "../../pluginApi";
+import { useSongbookSync } from "../../useSongbookSync";
 import { SongViewSlides } from "../SongViewSlides";
 import { ArrangeTab } from "./ArrangeTab";
 import { LyricFormLabel } from "./LyricFormLabel";
@@ -48,6 +49,7 @@ const RemoteEditSongModal = ({
   const slideStyle = pluginApi.scene.useData((x) => x.pluginData.style);
   const mutableSceneData = pluginApi.scene.useValtioData();
   const mutableRendererData = pluginApi.renderer.useValtioData();
+  const { saveToSongbook } = useSongbookSync();
 
   const handleSubmit = useCallback(
     ({ title, content, ...setting }: SongFormData) => {
@@ -79,6 +81,15 @@ const RemoteEditSongModal = ({
       mutableSceneData.pluginData.songs[index]!.title = title;
       mutableSceneData.pluginData.songs[index]!.content = content;
 
+      if (song.songbookId) {
+        void saveToSongbook({
+          ...song,
+          title,
+          content,
+          setting: normalizedSetting,
+        });
+      }
+
       resetData?.();
       onToggle?.();
       return Promise.resolve();
@@ -89,6 +100,7 @@ const RemoteEditSongModal = ({
       onToggle,
       resetData,
       song,
+      saveToSongbook,
     ],
   );
 

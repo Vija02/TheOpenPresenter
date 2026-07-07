@@ -24,6 +24,8 @@ export type Song = {
   setting: SongSetting;
   styleOverride?: SlideStyle | null;
 
+  songbookId?: string;
+
   _imported: boolean;
   // If this exist then this song is imported.
   import?: MyWorshipListImportSetting;
@@ -33,6 +35,20 @@ export type PluginBaseData = {
   style?: SlideStyle;
   songs: Song[];
   videoBackgrounds: InternalVideo[];
+};
+
+// A saved-song library row
+export type SavedSong = {
+  id: string;
+  title: string;
+  author: string | null;
+  album: string | null;
+  source: string;
+  externalId: string | null;
+  song: Song;
+  videoBackgrounds: InternalVideo[];
+  createdAt: string;
+  updatedAt: string;
 };
 
 const paddingValidator = z
