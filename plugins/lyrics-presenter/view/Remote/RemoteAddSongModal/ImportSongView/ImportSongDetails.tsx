@@ -6,16 +6,16 @@ import { SectionHeading } from "../SectionHeading";
 type ImportSongDetailsProps = {
   importSongTitle: string | null;
   setImportSongTitle: Dispatch<SetStateAction<string | null>>;
-  addToSongbook: boolean;
-  setAddToSongbook: Dispatch<SetStateAction<boolean>>;
+  saveToSongbook: boolean;
+  setSaveToSongbook: Dispatch<SetStateAction<boolean>>;
 };
 
 // The top section
 export const ImportSongDetails = ({
   importSongTitle,
   setImportSongTitle,
-  addToSongbook,
-  setAddToSongbook,
+  saveToSongbook,
+  setSaveToSongbook,
 }: ImportSongDetailsProps) => (
   <div className="stack-col items-stretch gap-2 mb-3">
     <SectionHeading>Song name</SectionHeading>
@@ -29,8 +29,8 @@ export const ImportSongDetails = ({
     <label className="stack-row items-center gap-2 cursor-pointer select-none">
       <input
         type="checkbox"
-        checked={addToSongbook}
-        onChange={(e) => setAddToSongbook(e.target.checked)}
+        checked={saveToSongbook}
+        onChange={(e) => setSaveToSongbook(e.target.checked)}
       />
       <span className="text-sm">Save to songbook</span>
     </label>
