@@ -24,7 +24,6 @@
   }
   li.selected a {
     border: rgba(128, 128, 128, 0.4) 1px solid;
-    /* color: white; */
     min-width: 32px;
   }
   li.disabled a {

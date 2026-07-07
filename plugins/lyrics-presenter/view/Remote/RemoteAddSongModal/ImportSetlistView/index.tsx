@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { typeidUnboxed } from "typeid-js";
 
 import { AddSongFooter } from "../AddSongFooter";
-import { Setlist } from "../ImportPlaylist";
+import { Setlist } from "../MainView/ImportPlaylist";
 import { useAddSongScene } from "../useAddSongScene";
 import { SetlistSongDetail } from "./SetlistSongDetail";
 import { SetlistSongRow } from "./SetlistSongRow";
