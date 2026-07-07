@@ -18,7 +18,7 @@ export const ImportSongView = ({ mwlId }: { mwlId: number }) => {
     null,
   );
   const [isEditingLyrics, setIsEditingLyrics] = useState(false);
-  const [addToSongbook, setAddToSongbook] = useState(true);
+  const [saveToSongbook, setSaveToSongbook] = useState(true);
 
   const mwlSongQuery = trpc.lyricsPresenter.getSong.useQuery({ id: mwlId });
 
@@ -43,44 +43,28 @@ export const ImportSongView = ({ mwlId }: { mwlId: number }) => {
   }, [mwlSongQuery.data, importSongTitle, importSongContent]);
 
   const submit = () => {
-    if (mwlSongQuery.data) {
-      const imported: Song = {
-        id: typeidUnboxed(),
-        title: importSongTitle ?? mwlSongQuery.data.title,
-        author: mwlSongQuery.data.author,
-        content: importSongContent ?? mwlSongQuery.data.content,
-        _imported: true,
-        addToSongbook,
-        import: {
-          type: "myworshiplist",
-          meta: { id: mwlId },
-          importedData: {
-            id: mwlId,
-            title: mwlSongQuery.data.title,
-            author: mwlSongQuery.data.author,
-            year: null,
-            content: mwlSongQuery.data.content,
-            original_chord: "",
-          },
+    if (!mwlSongQuery.data) return;
+    const imported: Song = {
+      id: typeidUnboxed(),
+      title: importSongTitle ?? mwlSongQuery.data.title,
+      author: mwlSongQuery.data.author,
+      content: importSongContent ?? mwlSongQuery.data.content,
+      _imported: true,
+      import: {
+        type: "myworshiplist",
+        meta: { id: mwlId },
+        importedData: {
+          id: mwlId,
+          title: mwlSongQuery.data.title,
+          author: mwlSongQuery.data.author,
+          year: null,
+          content: mwlSongQuery.data.content,
+          original_chord: "",
         },
-        setting: { displayType: "sections" },
-      };
-      addSong(imported, addToSongbook);
-    } else {
-      // Not fetched yet. The server hydrates & saves it
-      addSong(
-        {
-          id: typeidUnboxed(),
-          title: "",
-          content: "",
-          _imported: false,
-          addToSongbook,
-          import: { type: "myworshiplist", meta: { id: mwlId } },
-          setting: { displayType: "sections" },
-        },
-        false,
-      );
-    }
+      },
+      setting: { displayType: "sections" },
+    };
+    addSong(imported, saveToSongbook);
     close();
   };
 
@@ -96,8 +80,8 @@ export const ImportSongView = ({ mwlId }: { mwlId: number }) => {
           <ImportSongDetails
             importSongTitle={importSongTitle}
             setImportSongTitle={setImportSongTitle}
-            addToSongbook={addToSongbook}
-            setAddToSongbook={setAddToSongbook}
+            saveToSongbook={saveToSongbook}
+            setSaveToSongbook={setSaveToSongbook}
           />
           {isEditingLyrics ? (
             <LyricsEditor
@@ -120,7 +104,11 @@ export const ImportSongView = ({ mwlId }: { mwlId: number }) => {
       )}
 
       <AddSongFooter>
-        <Button variant="success" onClick={submit}>
+        <Button
+          variant="success"
+          disabled={!mwlSongQuery.data}
+          onClick={submit}
+        >
           Import
         </Button>
         <Button variant="outline" onClick={close}>
