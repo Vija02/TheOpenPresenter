@@ -5,12 +5,14 @@ import {
   VscArrowUp,
   VscEdit,
   VscPaintcan,
+  VscSave,
   VscTrash,
 } from "react-icons/vsc";
 
 import { getMergedSlideStyle } from "../../src/slideStyle";
 import { Song } from "../../src/types";
 import { usePluginAPI } from "../pluginApi";
+import { useSongbookSync } from "../useSongbookSync";
 import RemoteEditSongModal from "./RemoteEditSongModal";
 import SongStyleOverrideModal from "./SongStyleOverrideModal";
 import { SongViewSlides } from "./SongViewSlides";
@@ -54,12 +56,26 @@ const SongViewInner = React.memo(
     const pluginApi = usePluginAPI();
     const mutableSceneData = pluginApi.scene.useValtioData();
     const globalStyle = pluginApi.scene.useData((x) => x.pluginData.style);
+    const { saveToSongbook } = useSongbookSync();
+
+    const isLinked = !!song.songbookId;
 
     const handleRemove = useCallback(() => {
       const pluginData = mutableSceneData.pluginData;
 
       pluginData.songs = pluginData.songs.filter((s) => s.id !== song.id);
     }, [mutableSceneData.pluginData, song.id]);
+
+    const handleSaveToSongbook = useCallback(async () => {
+      const index = mutableSceneData.pluginData.songs.findIndex(
+        (s) => s.id === song.id,
+      );
+      if (index < 0) return;
+      const sceneSong = mutableSceneData.pluginData.songs[index]!;
+      // Create a new songbook entry and link this scene song to it
+      const id = await saveToSongbook(sceneSong);
+      if (id) sceneSong.songbookId = id;
+    }, [mutableSceneData.pluginData.songs, song.id, saveToSongbook]);
 
     const slideStyle = useMemo(
       () => getMergedSlideStyle(globalStyle, song.styleOverride),
@@ -70,7 +86,28 @@ const SongViewInner = React.memo(
       <div className="pb-4">
         <div className="flex items-center gap-2 mb-2">
           <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center">
-            <p className="text-xl mb-0 font-bold">{song.title}</p>
+            <div className="flex items-center gap-2">
+              <p className="text-xl mb-0 font-bold">{song.title}</p>
+              {!isLinked && (
+                <button
+                  type="button"
+                  onClick={handleSaveToSongbook}
+                  title="Save to songbook"
+                  data-testid="ly-save-song"
+                  className="group inline-flex items-center gap-1 text-xs font-medium text-secondary border rounded px-1.5 py-0.5 cursor-pointer hover:text-primary hover:border-primary"
+                >
+                  <VscSave />
+                  <span className="grid">
+                    <span className="col-start-1 row-start-1 text-center group-hover:invisible">
+                      Unsaved
+                    </span>
+                    <span className="col-start-1 row-start-1 text-center invisible group-hover:visible">
+                      Save
+                    </span>
+                  </span>
+                </button>
+              )}
+            </div>
             <div className="flex">
               <OverlayToggle
                 toggler={({ onToggle }) => (
