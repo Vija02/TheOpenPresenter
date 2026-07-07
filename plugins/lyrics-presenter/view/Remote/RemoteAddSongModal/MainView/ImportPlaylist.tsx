@@ -42,6 +42,7 @@ export const ImportPlaylist = ({
           {playlistData?.data.map((playlist: any) => (
             <div
               key={playlist.id}
+              data-testid="ly-setlist-card"
               className="w-56 shrink-0 p-2 cursor-pointer rounded border border-stroke hover:bg-surface-primary-hover"
               onClick={() => onSelectSetlist(playlist)}
             >

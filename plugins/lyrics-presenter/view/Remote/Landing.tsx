@@ -1,7 +1,8 @@
 import { Button, OverlayToggle } from "@repo/ui";
-import { VscAdd } from "react-icons/vsc";
+import { VscAdd, VscBook } from "react-icons/vsc";
 
 import RemoteAddSongModal from "./RemoteAddSongModal";
+import SongbookModal from "./SongbookModal";
 
 const Landing = () => {
   return (
@@ -29,6 +30,22 @@ const Landing = () => {
           )}
         >
           <RemoteAddSongModal />
+        </OverlayToggle>
+
+        <OverlayToggle
+          toggler={({ onToggle }) => (
+            <Button
+              onClick={onToggle}
+              variant="outline"
+              className="w-full"
+              data-testid="ly-browse-songbook"
+            >
+              <VscBook />
+              Browse songbook
+            </Button>
+          )}
+        >
+          <SongbookModal />
         </OverlayToggle>
       </div>
     </div>

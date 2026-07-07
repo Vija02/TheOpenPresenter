@@ -1,12 +1,13 @@
 import { Button, OverlayToggle, PluginScaffold } from "@repo/ui";
 import { useCallback } from "react";
 import { PiExportLight } from "react-icons/pi";
-import { VscAdd, VscPaintcan } from "react-icons/vsc";
+import { VscAdd, VscBook, VscPaintcan } from "react-icons/vsc";
 
 import { removeChords } from "../../src/processLyrics";
 import { Song } from "../../src/types";
 import { usePluginAPI } from "../pluginApi";
 import RemoteAddSongModal from "./RemoteAddSongModal";
+import SongbookModal from "./SongbookModal";
 import SongView from "./SongView";
 import StyleSettingModal from "./StyleSettingModal";
 
@@ -99,6 +100,21 @@ const Remote = () => {
             )}
           >
             <StyleSettingModal />
+          </OverlayToggle>
+          <OverlayToggle
+            toggler={({ onToggle }) => (
+              <Button
+                size="xs"
+                variant="pill"
+                onClick={onToggle}
+                data-testid="ly-songbook-button"
+              >
+                <VscBook />
+                Songbook
+              </Button>
+            )}
+          >
+            <SongbookModal />
           </OverlayToggle>
           <Button size="xs" variant="pill" onClick={onExport}>
             <PiExportLight /> Export
