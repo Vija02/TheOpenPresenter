@@ -17,6 +17,7 @@ import { useForm } from "react-hook-form";
 import { getMergedSlideStyle, getSlideStyle } from "../../../src/slideStyle";
 import { SlideStyle, Song, slideStyleValidator } from "../../../src/types";
 import { usePluginAPI } from "../../pluginApi";
+import { useSongbookSync } from "../../useSongbookSync";
 import { MobilePreview } from "../RemoteEditSongModal/MobilePreview";
 import { SongViewSlides } from "../SongViewSlides";
 import {
@@ -34,6 +35,7 @@ const SongStyleOverrideModal = ({ song }: SongStyleOverrideModalProps) => {
   const pluginApi = usePluginAPI();
   const rawglobalStyle = pluginApi.scene.useData((x) => x.pluginData.style);
   const mutableSceneData = pluginApi.scene.useValtioData();
+  const { saveToSongbook } = useSongbookSync();
 
   const globalStyle = useMemo(
     () => getSlideStyle(rawglobalStyle),
@@ -110,19 +112,23 @@ const SongStyleOverrideModal = ({ song }: SongStyleOverrideModalProps) => {
     });
 
     const hasOverrides = Object.keys(cleanedOverride).length > 0;
-    mutableSceneData.pluginData.songs[index]!.styleOverride = hasOverrides
-      ? cleanedOverride
-      : null;
+    const newStyleOverride = hasOverrides ? cleanedOverride : null;
+    mutableSceneData.pluginData.songs[index]!.styleOverride = newStyleOverride;
+
+    if (song.songbookId) {
+      void saveToSongbook({ ...song, styleOverride: newStyleOverride });
+    }
 
     resetData?.();
     onToggle?.();
   }, [
     mutableSceneData.pluginData.songs,
-    song.id,
+    song,
     onToggle,
     resetData,
     form,
     globalStyle,
+    saveToSongbook,
   ]);
 
   const handleResetFields = useCallback(
