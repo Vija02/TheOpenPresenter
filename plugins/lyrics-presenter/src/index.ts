@@ -1,39 +1,54 @@
 import {
   ObjectToTypedMap,
   Plugin,
+  PluginContext,
   ServerPluginApi,
   TRPCObject,
   YjsWatcher,
 } from "@repo/base-plugin/server";
 import { OrganizationType } from "@repo/graphql";
 import { logger } from "@repo/observability";
+import { InternalVideo } from "@repo/video";
 import axios from "axios";
+import path from "path";
 import { proxy } from "valtio";
 import { bind } from "valtio-yjs";
 import * as Y from "yjs";
 import z from "zod";
 
+import { formatLyricsStream } from "./ai/formatLyrics";
 import {
   pluginName,
   remoteWebComponentTag,
   rendererWebComponentTag,
 } from "./consts";
-import { formatLyricsStream } from "./ai/formatLyrics";
 import { getSongData } from "./data";
 import { convertMWLData } from "./importer/myworshiplist";
 import { migratePluginDataV1ToV2 } from "./migrate/v1";
 import { getMaxIndex, processSong } from "./songHelpers";
 import {
-  MyWorshipListImportedData,
-  PluginBaseData,
-  PluginRendererData,
-  Song,
-} from "./types";
+  deleteSavedSong,
+  ensureSongbookListener,
+  insertSavedSong,
+  listSavedSongs,
+  registerLoadedPlugin,
+  resolveContext,
+  syncSongsFromSongbook,
+  unregisterLoadedPlugin,
+  updateSavedSong,
+} from "./songbook";
+import { PluginBaseData, PluginRendererData, Song } from "./types";
+
+let serverPluginApiRef:
+  | ServerPluginApi<PluginBaseData, PluginRendererData>
+  | undefined;
 
 export const init = (
   serverPluginApi: ServerPluginApi<PluginBaseData, PluginRendererData>,
 ) => {
-  serverPluginApi.registerTrpcAppRouter(getAppRouter);
+  serverPluginApiRef = serverPluginApi;
+
+  serverPluginApi.registerTrpcAppRouter(getAppRouter(serverPluginApi));
 
   serverPluginApi.registerPrivateRoute(pluginName, "ai/format", (req, res) => {
     if (req.method !== "POST") {
@@ -98,6 +113,12 @@ export const init = (
       else res.end();
     });
   });
+
+  serverPluginApi.registerMigrations(
+    pluginName,
+    path.join(__dirname, "../migrations"),
+  );
+
   serverPluginApi.onPluginDataCreated(pluginName, onPluginDataCreated);
   serverPluginApi.onPluginDataLoaded(pluginName, onPluginDataLoaded);
   serverPluginApi.onRendererDataCreated(pluginName, onRendererDataCreated);
@@ -208,7 +229,10 @@ const onPluginDataCreated = (pluginInfo: ObjectToTypedMap<Plugin>) => {
   return {};
 };
 
-const onPluginDataLoaded = (pluginInfo: ObjectToTypedMap<Plugin>) => {
+const onPluginDataLoaded = (
+  pluginInfo: ObjectToTypedMap<Plugin>,
+  context: PluginContext,
+) => {
   migratePluginDataV1ToV2(
     pluginInfo as ObjectToTypedMap<Plugin<PluginBaseData>>,
   );
@@ -216,26 +240,8 @@ const onPluginDataLoaded = (pluginInfo: ObjectToTypedMap<Plugin>) => {
   const data = proxy(pluginInfo.toJSON() as Plugin<PluginBaseData>);
   const unbind = bind(data, pluginInfo as any);
 
-  const handleImportSong = async () => {
-    for (const song of data.pluginData.songs) {
-      if (!song._imported && !!song.import) {
-        const songData: MyWorshipListImportedData = await getSongData(
-          song.import.meta.id,
-        );
-
-        // Store for cache
-        const newContent = convertMWLData(songData.content);
-        song.import.importedData = { ...songData, content: newContent };
-
-        // Now we store it into the various fields
-        song.title = songData.title;
-        song.content = newContent;
-        song.author = songData.author;
-
-        song._imported = true;
-      }
-    }
-  };
+  registerLoadedPlugin(context, data);
+  if (serverPluginApiRef) ensureSongbookListener(serverPluginApiRef);
 
   const cleanupUnusedVideoBackgrounds = () => {
     const usedVideoIds = new Set<string>();
@@ -264,16 +270,19 @@ const onPluginDataLoaded = (pluginInfo: ObjectToTypedMap<Plugin>) => {
     }
   };
 
-  // Handle on load
-  handleImportSong();
-  cleanupUnusedVideoBackgrounds();
+  // On load, do some tidying up work
+  void (async () => {
+    if (serverPluginApiRef) {
+      await syncSongsFromSongbook(
+        serverPluginApiRef,
+        context.organizationId,
+        data,
+      );
+    }
+    cleanupUnusedVideoBackgrounds();
+  })();
 
   const yjsWatcher = new YjsWatcher(pluginInfo as Y.Map<any>);
-  yjsWatcher.watchYjs(
-    (x: Plugin<PluginBaseData>) => x.pluginData.songs,
-    handleImportSong,
-  );
-
   yjsWatcher.watchYjs(
     (x: Plugin<PluginBaseData>) => x.pluginData.songs,
     cleanupUnusedVideoBackgrounds,
@@ -285,6 +294,7 @@ const onPluginDataLoaded = (pluginInfo: ObjectToTypedMap<Plugin>) => {
 
   return {
     dispose: () => {
+      unregisterLoadedPlugin(context.pluginId);
       unbind();
       yjsWatcher.dispose();
     },
@@ -300,46 +310,123 @@ const onRendererDataCreated = (
   return {};
 };
 
-const getAppRouter = (t: TRPCObject) => {
-  return t.router({
-    lyricsPresenter: {
-      search: t.procedure
-        .input(
-          z.object({
-            title: z.string(),
-            page: z.number().optional(),
-          }),
-        )
-        .query(async (opts) => {
-          try {
-            const res = await axios(
-              "https://myworshiplist.com/api/songs?search=" +
-                opts.input.title +
-                (opts.input.page !== null ? `&page=${opts.input.page}` : ""),
-            );
+const getAppRouter =
+  (serverPluginApi: ServerPluginApi<PluginBaseData, PluginRendererData>) =>
+  (t: TRPCObject) => {
+    return t.router({
+      lyricsPresenter: {
+        savedSongs: {
+          list: t.procedure
+            .input(z.object({ pluginId: z.string() }))
+            .query(async ({ input }) => {
+              const { organizationId } = resolveContext(input.pluginId);
+              return listSavedSongs(serverPluginApi, organizationId);
+            }),
+
+          save: t.procedure
+            .input(
+              z.object({
+                pluginId: z.string(),
+                songbookId: z.string().optional(),
+                song: z
+                  .object({
+                    title: z.string().default(""),
+                    content: z.string().default(""),
+                    author: z.string().nullish(),
+                    album: z.string().nullish(),
+                  })
+                  .passthrough(),
+                videoBackgrounds: z.array(z.any()).optional(),
+              }),
+            )
+            .mutation(async ({ input, ctx }) => {
+              const { organizationId } = resolveContext(input.pluginId);
+              const song = input.song as Song;
+              const videoBackgrounds = (input.videoBackgrounds ??
+                []) as InternalVideo[];
+
+              if (input.songbookId) {
+                await updateSavedSong(
+                  serverPluginApi,
+                  input.songbookId,
+                  organizationId,
+                  { song, videoBackgrounds },
+                );
+                return { id: input.songbookId };
+              }
+
+              const id = await insertSavedSong(serverPluginApi, {
+                organizationId,
+                userId: ctx.userId,
+                song,
+                videoBackgrounds,
+              });
+              return { id };
+            }),
+
+          remove: t.procedure
+            .input(z.object({ pluginId: z.string(), id: z.string() }))
+            .mutation(async ({ input }) => {
+              const { organizationId } = resolveContext(input.pluginId);
+              await deleteSavedSong(serverPluginApi, organizationId, input.id);
+              return { success: true };
+            }),
+        },
+
+        // MyWorshipList integration
+        myworshiplist: {
+          search: t.procedure
+            .input(
+              z.object({
+                title: z.string(),
+                page: z.number().optional(),
+              }),
+            )
+            .query(async (opts) => {
+              try {
+                const res = await axios(
+                  "https://myworshiplist.com/api/songs?search=" +
+                    encodeURIComponent(opts.input.title) +
+                    (opts.input.page !== null
+                      ? `&page=${opts.input.page}`
+                      : ""),
+                );
+                return {
+                  data: res.data.data,
+                  totalPage: res.data.meta.last_page,
+                };
+              } catch (err) {
+                logger.error(
+                  { err, ctx: opts.ctx, input: opts.input },
+                  "/lyricsPresenter.myworshiplist.search: Error",
+                );
+                throw err;
+              }
+            }),
+
+          getSong: t.procedure
+            .input(z.object({ id: z.number() }))
+            .query(async ({ input }) => {
+              const songData = await getSongData(input.id);
+              return {
+                title: (songData.title ?? "") as string,
+                author: (songData.author ?? null) as string | null,
+                content: convertMWLData(songData.content),
+              };
+            }),
+
+          playlist: t.procedure.query(async () => {
+            const res = await axios("https://myworshiplist.com/api/songlists");
             return {
               data: res.data.data,
-              totalPage: res.data.meta.last_page,
             };
-          } catch (err) {
-            logger.error(
-              { err, ctx: opts.ctx, input: opts.input },
-              "/lyricsPresenter.search: Error",
-            );
-            throw err;
-          }
-        }),
-      playlist: t.procedure.query(async () => {
-        const res = await axios("https://myworshiplist.com/api/songlists");
-        return {
-          data: res.data.data,
-        };
-      }),
-    },
-  });
-};
+          }),
+        },
+      },
+    });
+  };
 
-export type AppRouter = ReturnType<typeof getAppRouter>;
+export type AppRouter = ReturnType<ReturnType<typeof getAppRouter>>;
 
 export * from "./types";
 export * from "./sectionOrder";

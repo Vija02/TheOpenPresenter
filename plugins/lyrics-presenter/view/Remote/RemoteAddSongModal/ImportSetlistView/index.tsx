@@ -21,7 +21,9 @@ const SongLyricsLoader = ({
   mwlId: number;
   onLoaded: (data: SetlistImportData) => void;
 }) => {
-  const { data } = trpc.lyricsPresenter.getSong.useQuery({ id: mwlId });
+  const { data } = trpc.lyricsPresenter.myworshiplist.getSong.useQuery({
+    id: mwlId,
+  });
   useEffect(() => {
     if (data) {
       onLoaded({

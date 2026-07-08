@@ -20,7 +20,9 @@ export const ImportSongView = ({ mwlId }: { mwlId: number }) => {
   const [isEditingLyrics, setIsEditingLyrics] = useState(false);
   const [saveToSongbook, setSaveToSongbook] = useState(true);
 
-  const mwlSongQuery = trpc.lyricsPresenter.getSong.useQuery({ id: mwlId });
+  const mwlSongQuery = trpc.lyricsPresenter.myworshiplist.getSong.useQuery({
+    id: mwlId,
+  });
 
   // Seed the editable fields once the lyrics arrive
   useEffect(() => {
