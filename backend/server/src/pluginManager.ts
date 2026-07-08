@@ -54,7 +54,7 @@ export const initPlugins = async (app: Express) => {
     // Cleanup plugins before we continue
     for (const name of readdirSync(pluginsPath)) {
       try {
-        statSync(path.join(pluginsPath, name));
+        statSync(path.join(pluginsPath, name, "package.json"));
       } catch (e) {
         fs.unlinkSync(path.join(pluginsPath, name));
       }
