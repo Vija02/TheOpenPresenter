@@ -37,11 +37,9 @@ create table saved_song (
 create index on saved_song (organization_id);
 create index on saved_song (created_by_user_id);
 -- Browse an org's whole library, most-recently-updated first.
-create index saved_song_organization_id_idx
-  on saved_song (organization_id, updated_at desc);
+create index on saved_song (organization_id, updated_at desc);
 -- Case-insensitive title lookup / search within an org.
-create index saved_song_title_idx
-  on saved_song (organization_id, lower(title));
+create index on saved_song (organization_id, lower(title));
 
 /*====================================*/
 /*========= Standard Triggers ========*/
@@ -73,8 +71,7 @@ create table recent_song (
 /*====================================*/
 create index on recent_song (organization_id);
 -- Most-recently-used first, per org.
-create index recent_song_last_used_idx
-  on recent_song (organization_id, created_at desc);
+create index on recent_song (organization_id, created_at desc);
 
 -- ---------------------------------------------------------------------------
 -- Misc.
