@@ -23,7 +23,9 @@ export const AddSongFooter = ({
 }) => (
   <AddSongFooterPortal>
     <div className="flex flex-col w-full">
-      {preview !== undefined && <MobilePreview preview={preview} />}
+      {preview !== undefined && preview !== null && (
+        <MobilePreview preview={preview} />
+      )}
       <div className="stack-row pt-3 px-3 md:px-6 self-end items-center">
         {children}
       </div>
