@@ -4,13 +4,18 @@ import { typeidUnboxed } from "typeid-js";
 
 import { SavedSong, Song } from "../../../src";
 import { usePluginAPI } from "../../pluginApi";
+import { trpc } from "../../trpc";
 import { useSongbookSync } from "../../useSongbookSync";
 
 export const useAddSongScene = () => {
   const pluginApi = usePluginAPI();
   const pluginInfo = pluginApi.scene.useValtioData();
+  const pluginId = pluginApi.pluginContext.pluginId;
   const { saveToSongbook } = useSongbookSync();
   const { onToggle, resetData } = useOverlayToggle();
+
+  const recordRecentMutation =
+    trpc.lyricsPresenter.savedSongs.recordRecent.useMutation();
 
   const close = useCallback(() => {
     onToggle?.();
@@ -33,8 +38,9 @@ export const useAddSongScene = () => {
         id: typeidUnboxed(),
         songbookId: saved.id,
       });
+      recordRecentMutation.mutate({ pluginId, savedSongId: saved.id });
     },
-    [pluginInfo],
+    [pluginInfo, pluginId, recordRecentMutation],
   );
 
   // Push a song to the scene. When `save` is set, also save it to the songbook
@@ -49,10 +55,11 @@ export const useAddSongScene = () => {
             (s) => s.id === song.id,
           );
           if (idx >= 0) pluginInfo.pluginData.songs[idx]!.songbookId = id;
+          recordRecentMutation.mutate({ pluginId, savedSongId: id });
         });
       }
     },
-    [pluginInfo, saveToSongbook],
+    [pluginInfo, pluginId, recordRecentMutation, saveToSongbook],
   );
 
   return { close, addLinkedSavedSong, addSong };

@@ -8,5 +8,7 @@ export {
   insertSavedSong,
   updateSavedSong,
   deleteSavedSong,
+  recordRecentSong,
+  listRecentSongs,
 } from "./db";
 export { syncSongsFromSongbook, ensureSongbookListener } from "./sync";

@@ -8,6 +8,7 @@ import { SongViewSlides } from "../../SongViewSlides";
 import { AddSongFooter } from "../AddSongFooter";
 import { useAddSongScene } from "../useAddSongScene";
 import { ImportPlaylist, Setlist } from "./ImportPlaylist";
+import { RecentSongs } from "./RecentSongs";
 import { SearchSong } from "./SearchSong";
 
 type MainViewProps = {
@@ -25,8 +26,10 @@ export const MainView = ({ onImportSong, onSelectSetlist }: MainViewProps) => {
   );
   const [isSearching, setIsSearching] = useState(false);
   const [setlistOpen, setSetlistOpen] = useState(true);
+  const [recentOpen, setRecentOpen] = useState(true);
   useEffect(() => {
     setSetlistOpen(!isSearching);
+    setRecentOpen(!isSearching);
   }, [isSearching]);
 
   const submit = () => {
@@ -54,6 +57,13 @@ export const MainView = ({ onImportSong, onSelectSetlist }: MainViewProps) => {
         setSelectedSavedSong={setSelectedSavedSong}
         onSelectImportSong={onImportSong}
         onSearchingChange={setIsSearching}
+      />
+
+      <RecentSongs
+        selectedSavedSong={selectedSavedSong}
+        setSelectedSavedSong={setSelectedSavedSong}
+        open={recentOpen}
+        onToggleOpen={() => setRecentOpen((o) => !o)}
       />
 
       <ImportPlaylist

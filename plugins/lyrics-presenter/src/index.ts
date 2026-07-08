@@ -30,7 +30,9 @@ import {
   deleteSavedSong,
   ensureSongbookListener,
   insertSavedSong,
+  listRecentSongs,
   listSavedSongs,
+  recordRecentSong,
   registerLoadedPlugin,
   resolveContext,
   syncSongsFromSongbook,
@@ -388,6 +390,30 @@ const getAppRouter =
                 authOf(ctx),
                 organizationId,
                 input.id,
+              );
+              return { success: true };
+            }),
+
+          recent: t.procedure
+            .input(z.object({ pluginId: z.string() }))
+            .query(async ({ input, ctx }) => {
+              const { organizationId } = resolveContext(input.pluginId);
+              return listRecentSongs(
+                serverPluginApi,
+                authOf(ctx),
+                organizationId,
+              );
+            }),
+
+          recordRecent: t.procedure
+            .input(z.object({ pluginId: z.string(), savedSongId: z.string() }))
+            .mutation(async ({ input, ctx }) => {
+              const { organizationId } = resolveContext(input.pluginId);
+              await recordRecentSong(
+                serverPluginApi,
+                authOf(ctx),
+                organizationId,
+                input.savedSongId,
               );
               return { success: true };
             }),

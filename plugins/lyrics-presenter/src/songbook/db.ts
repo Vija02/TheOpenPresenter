@@ -172,3 +172,58 @@ export const fetchSavedSongsByIds = async (
   }
   return byId;
 };
+
+// ---------------------------------------------------------------------------
+// Recently-used songs
+// ---------------------------------------------------------------------------
+
+export const recordRecentSong = async (
+  api: Api,
+  auth: RequestAuth,
+  organizationId: string,
+  savedSongId: string,
+): Promise<void> => {
+  const db = api.getPluginDb(pluginName, auth);
+  await db.query(
+    `insert into recent_song (organization_id, saved_song_id)
+     values ($1, $2)`,
+    [organizationId, savedSongId],
+  );
+};
+
+export const listRecentSongs = async (
+  api: Api,
+  auth: RequestAuth,
+  organizationId: string,
+  limit = 8,
+): Promise<Array<SavedSong & { usedAt: string }>> => {
+  const db = api.getPluginDb(pluginName, auth);
+  const { rows } = await db.query(
+    `select ss.id,
+            ss.title,
+            ss.author,
+            ss.album,
+            ss.source,
+            ss.external_id       as "externalId",
+            ss.song,
+            ss.video_backgrounds as "videoBackgrounds",
+            ss.created_at        as "createdAt",
+            ss.updated_at        as "updatedAt",
+            latest.created_at    as "usedAt"
+       from (
+         select distinct on (rs.saved_song_id)
+                rs.saved_song_id,
+                rs.created_at
+           from recent_song rs
+          where rs.organization_id = $1
+            and rs.saved_song_id is not null
+          order by rs.saved_song_id, rs.created_at desc
+       ) latest
+       join saved_song ss on ss.id = latest.saved_song_id
+      where ss.organization_id = $1
+      order by latest.created_at desc
+      limit $2`,
+    [organizationId, limit],
+  );
+  return rows as Array<SavedSong & { usedAt: string }>;
+};
