@@ -12,7 +12,9 @@ import type { Logger } from "pino";
  * tracked per-plugin inside the plugin's own schema (`__migrations` table), so
  * plugins have fully independent migration streams
  *
- * Plugins read/write them through `getPluginDb()` using the root (owner) pool.
+ * Plugins read/write them through `getPluginDb()` (as the visitor role, with
+ * RLS enforced) or, for trusted server-side work, `getDangerousRootPluginDb()`
+ * (owner role, RLS bypassed).
  */
 
 export interface RegisteredMigration {
@@ -22,6 +24,17 @@ export interface RegisteredMigration {
 
 const quoteIdent = (identifier: string): string =>
   `"${identifier.replace(/"/g, '""')}"`;
+
+const substituteMigrationPlaceholders = (sql: string): string => {
+  if (!sql.includes(":DATABASE_VISITOR")) return sql;
+  const visitor = process.env.DATABASE_VISITOR;
+  if (!visitor) {
+    throw new Error(
+      "Plugin migration references :DATABASE_VISITOR but DATABASE_VISITOR is not set.",
+    );
+  }
+  return sql.replace(/:DATABASE_VISITOR\b/g, quoteIdent(visitor));
+};
 
 export const pluginSchemaName = (pluginName: string): string => {
   const sanitized = pluginName
@@ -46,6 +59,11 @@ const pluginSearchPath = (schema: string): string =>
 // Runtime data access
 // ---------------------------------------------------------------------------
 
+export interface PluginDbAuth {
+  sessionId: string | null;
+  screenGuestSessionId: string | null;
+}
+
 export interface PluginDb {
   /** The plugin's dedicated schema, e.g. "plugin_lyrics_presenter". */
   readonly schema: string;
@@ -60,11 +78,15 @@ export interface PluginDb {
   withTransaction<T>(callback: (client: PoolClient) => Promise<T>): Promise<T>;
 }
 
-export const createPluginDb = (pool: Pool, pluginName: string): PluginDb => {
+export const createPluginDb = (
+  pool: Pool,
+  pluginName: string,
+  asUser?: PluginDbAuth,
+): PluginDb => {
   const schema = pluginSchemaName(pluginName);
   const searchPath = pluginSearchPath(schema);
 
-  const withClient = async <T>(
+  const withOwnerClient = async <T>(
     callback: (client: PoolClient) => Promise<T>,
   ): Promise<T> => {
     const client = await pool.connect();
@@ -82,10 +104,55 @@ export const createPluginDb = (pool: Pool, pluginName: string): PluginDb => {
     }
   };
 
-  const withTransaction = async <T>(
+  // As-user mode: run inside a transaction as the unprivileged visitor role
+  const withUserClient = async <T>(
+    auth: PluginDbAuth,
+    callback: (client: PoolClient) => Promise<T>,
+  ): Promise<T> => {
+    const visitorRole = process.env.DATABASE_VISITOR;
+    if (!visitorRole) {
+      throw new Error(
+        "DATABASE_VISITOR is not set; cannot run plugin queries as the request user.",
+      );
+    }
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      await client.query(
+        "SELECT set_config('jwt.claims.session_id', $1, true)",
+        [auth.sessionId ?? ""],
+      );
+      await client.query(
+        "SELECT set_config('jwt.claims.screen_guest_session_id', $1, true)",
+        [auth.screenGuestSessionId ?? ""],
+      );
+      await client.query("SELECT set_config('role', $1, true)", [visitorRole]);
+      await client.query(`SET LOCAL search_path TO ${searchPath}`);
+      const result = await callback(client);
+      await client.query("COMMIT");
+      return result;
+    } catch (err) {
+      try {
+        await client.query("ROLLBACK");
+      } catch {
+        // ignore — releasing regardless
+      }
+      throw err;
+    } finally {
+      client.release();
+    }
+  };
+
+  const withClient = <T>(
     callback: (client: PoolClient) => Promise<T>,
   ): Promise<T> =>
-    withClient(async (client) => {
+    asUser ? withUserClient(asUser, callback) : withOwnerClient(callback);
+
+  const withTransaction = async <T>(
+    callback: (client: PoolClient) => Promise<T>,
+  ): Promise<T> => {
+    if (asUser) return withUserClient(asUser, callback);
+    return withOwnerClient(async (client) => {
       await client.query("BEGIN");
       try {
         const result = await callback(client);
@@ -96,6 +163,7 @@ export const createPluginDb = (pool: Pool, pluginName: string): PluginDb => {
         throw err;
       }
     });
+  };
 
   const query = async <T extends QueryResultRow = any>(
     text: string,
@@ -258,7 +326,7 @@ const migrateOnePlugin = async (
           await client.query(
             `SET LOCAL search_path TO ${pluginSearchPath(schema)}`,
           );
-          await client.query(file.sql);
+          await client.query(substituteMigrationPlaceholders(file.sql));
           await client.query(
             `INSERT INTO ${quoteIdent(schema)}.__migrations (filename, hash)
              VALUES ($1, $2)`,

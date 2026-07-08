@@ -15,6 +15,7 @@ import {
 } from "./ai";
 import {
   PluginDb,
+  PluginDbAuth,
   RegisteredMigration,
   createPluginDb,
   listenToChannel,
@@ -244,12 +245,25 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
     this.registeredMigrations.push({ pluginName, migrationsPath });
   }
 
-  public getPluginDb(pluginName: string): PluginDb {
+  public getPluginDb(pluginName: string, asUser: PluginDbAuth): PluginDb {
+    const pool = this.app.get("authPgPool") as Pool | undefined;
+    if (!pool) {
+      throw new Error(
+        "authPgPool is not available yet. getPluginDb() must be called at " +
+          "request/runtime, after the database pools are installed.",
+      );
+    }
+    return createPluginDb(pool, pluginName, asUser);
+  }
+
+  // DANGER: plugin storage access as the database owner, which BYPASSES Row
+  // Level Security
+  public getDangerousRootPluginDb(pluginName: string): PluginDb {
     const pool = this.app.get("rootPgPool") as Pool | undefined;
     if (!pool) {
       throw new Error(
-        "rootPgPool is not available yet. getPluginDb() must be called at " +
-          "request/runtime, after the database pools are installed.",
+        "rootPgPool is not available yet. getDangerousRootPluginDb() must be " +
+          "called at request/runtime, after the database pools are installed.",
       );
     }
     return createPluginDb(pool, pluginName);

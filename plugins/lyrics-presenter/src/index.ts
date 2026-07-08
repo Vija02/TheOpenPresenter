@@ -313,14 +313,27 @@ const onRendererDataCreated = (
 const getAppRouter =
   (serverPluginApi: ServerPluginApi<PluginBaseData, PluginRendererData>) =>
   (t: TRPCObject) => {
+    // Per-request auth forwarded to as-user (RLS) songbook queries.
+    const authOf = (ctx: {
+      sessionId: string | null;
+      screenGuestSessionId: string | null;
+    }) => ({
+      sessionId: ctx.sessionId,
+      screenGuestSessionId: ctx.screenGuestSessionId,
+    });
+
     return t.router({
       lyricsPresenter: {
         savedSongs: {
           list: t.procedure
             .input(z.object({ pluginId: z.string() }))
-            .query(async ({ input }) => {
+            .query(async ({ input, ctx }) => {
               const { organizationId } = resolveContext(input.pluginId);
-              return listSavedSongs(serverPluginApi, organizationId);
+              return listSavedSongs(
+                serverPluginApi,
+                authOf(ctx),
+                organizationId,
+              );
             }),
 
           save: t.procedure
@@ -341,6 +354,7 @@ const getAppRouter =
             )
             .mutation(async ({ input, ctx }) => {
               const { organizationId } = resolveContext(input.pluginId);
+              const auth = authOf(ctx);
               const song = input.song as Song;
               const videoBackgrounds = (input.videoBackgrounds ??
                 []) as InternalVideo[];
@@ -348,6 +362,7 @@ const getAppRouter =
               if (input.songbookId) {
                 await updateSavedSong(
                   serverPluginApi,
+                  auth,
                   input.songbookId,
                   organizationId,
                   { song, videoBackgrounds },
@@ -355,7 +370,7 @@ const getAppRouter =
                 return { id: input.songbookId };
               }
 
-              const id = await insertSavedSong(serverPluginApi, {
+              const id = await insertSavedSong(serverPluginApi, auth, {
                 organizationId,
                 userId: ctx.userId,
                 song,
@@ -366,9 +381,14 @@ const getAppRouter =
 
           remove: t.procedure
             .input(z.object({ pluginId: z.string(), id: z.string() }))
-            .mutation(async ({ input }) => {
+            .mutation(async ({ input, ctx }) => {
               const { organizationId } = resolveContext(input.pluginId);
-              await deleteSavedSong(serverPluginApi, organizationId, input.id);
+              await deleteSavedSong(
+                serverPluginApi,
+                authOf(ctx),
+                organizationId,
+                input.id,
+              );
               return { success: true };
             }),
         },

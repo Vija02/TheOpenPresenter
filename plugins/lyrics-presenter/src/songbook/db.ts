@@ -2,7 +2,7 @@ import { InternalVideo } from "@repo/video";
 
 import { pluginName } from "../consts";
 import { SavedSong, Song } from "../types";
-import { Api, SavedSongEntry } from "./types";
+import { Api, RequestAuth, SavedSongEntry } from "./types";
 
 // Get key we can rely on from the Song object
 const deriveSavedSongKey = (
@@ -21,9 +21,10 @@ const deriveSavedSongKey = (
 
 export const listSavedSongs = async (
   api: Api,
+  auth: RequestAuth,
   organizationId: string,
 ): Promise<SavedSong[]> => {
-  const db = api.getPluginDb(pluginName);
+  const db = api.getPluginDb(pluginName, auth);
   const { rows } = await db.query(
     `select id,
             title,
@@ -46,6 +47,7 @@ export const listSavedSongs = async (
 
 export const insertSavedSong = async (
   api: Api,
+  auth: RequestAuth,
   {
     organizationId,
     userId,
@@ -59,7 +61,7 @@ export const insertSavedSong = async (
   },
 ): Promise<string> => {
   const { source, externalId } = deriveSavedSongKey(song);
-  const db = api.getPluginDb(pluginName);
+  const db = api.getPluginDb(pluginName, auth);
   const {
     rows: [row],
   } = await db.query<{ id: string }>(
@@ -86,11 +88,12 @@ export const insertSavedSong = async (
 
 export const updateSavedSong = async (
   api: Api,
+  auth: RequestAuth,
   songbookId: string,
   organizationId: string,
   { song, videoBackgrounds }: { song: Song; videoBackgrounds: InternalVideo[] },
 ): Promise<void> => {
-  const db = api.getPluginDb(pluginName);
+  const db = api.getPluginDb(pluginName, auth);
   await db.query(
     `update saved_song set
        title             = $1,
@@ -116,10 +119,11 @@ export const updateSavedSong = async (
 
 export const deleteSavedSong = async (
   api: Api,
+  auth: RequestAuth,
   organizationId: string,
   id: string,
 ): Promise<void> => {
-  const db = api.getPluginDb(pluginName);
+  const db = api.getPluginDb(pluginName, auth);
   await db.query(
     `delete from saved_song where id = $1 and organization_id = $2`,
     [id, organizationId],
@@ -131,7 +135,7 @@ export const fetchSavedSong = async (
   id: string,
   organizationId: string,
 ): Promise<SavedSongEntry | null> => {
-  const db = api.getPluginDb(pluginName);
+  const db = api.getDangerousRootPluginDb(pluginName);
   const {
     rows: [row],
   } = await db.query<SavedSongEntry>(
@@ -149,7 +153,7 @@ export const fetchSavedSongsByIds = async (
   organizationId: string,
   ids: string[],
 ): Promise<Map<string, SavedSongEntry>> => {
-  const db = api.getPluginDb(pluginName);
+  const db = api.getDangerousRootPluginDb(pluginName);
   const { rows } = await db.query<{ id: string } & SavedSongEntry>(
     `select id,
             song,
