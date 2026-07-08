@@ -13,19 +13,9 @@ import { FaPlus } from "react-icons/fa";
 import { VscArrowLeft } from "react-icons/vsc";
 
 import { AddSongFooterContext } from "./AddSongFooter";
-import { CreateSongView } from "./CreateSongView";
-import { Setlist } from "./MainView/ImportPlaylist";
-import { ImportSetlistView } from "./ImportSetlistView";
-import { ImportSongView } from "./ImportSongView";
-import { MainView } from "./MainView";
+import RemoteAddSongBody, { Route } from "./RemoteAddSongBody";
 
-type Route =
-  | { view: "main" }
-  | { view: "importSong"; mwlId: number }
-  | { view: "importSetlist"; setlist: Setlist }
-  | { view: "create" };
-
-const TITLES: Record<Route["view"], string> = {
+export const TITLES: Record<Route["view"], string> = {
   main: "Add song(s)",
   importSong: "Import a song",
   importSetlist: "Import a setlist",
@@ -71,23 +61,7 @@ const RemoteAddSongModal = () => {
           </DialogHeader>
 
           <DialogBody className="overflow-x-hidden pt-0 flex-1 flex flex-col min-h-0">
-            {route.view === "main" && (
-              <MainView
-                onImportSong={(mwlId) =>
-                  setRoute({ view: "importSong", mwlId })
-                }
-                onSelectSetlist={(setlist) =>
-                  setRoute({ view: "importSetlist", setlist })
-                }
-              />
-            )}
-            {route.view === "importSong" && (
-              <ImportSongView mwlId={route.mwlId} />
-            )}
-            {route.view === "importSetlist" && (
-              <ImportSetlistView setlist={route.setlist} />
-            )}
-            {route.view === "create" && <CreateSongView />}
+            <RemoteAddSongBody route={route} setRoute={setRoute} />
           </DialogBody>
 
           <DialogFooter className="pl-lyrics--preview-shadow pt-0 px-0 pb-3">

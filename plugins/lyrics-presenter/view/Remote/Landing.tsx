@@ -1,54 +1,97 @@
-import { Button, OverlayToggle } from "@repo/ui";
-import { VscAdd, VscBook } from "react-icons/vsc";
+import {
+  Button,
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  OverlayToggleContext,
+} from "@repo/ui";
+import { useCallback, useMemo, useState } from "react";
+import { VscArrowLeft } from "react-icons/vsc";
 
-import RemoteAddSongModal from "./RemoteAddSongModal";
-import SongbookModal from "./SongbookModal";
+import { TITLES } from "./RemoteAddSongModal";
+import { AddSongFooterContext } from "./RemoteAddSongModal/AddSongFooter";
+import { MainView } from "./RemoteAddSongModal/MainView";
+import RemoteAddSongBody, {
+  Route,
+} from "./RemoteAddSongModal/RemoteAddSongBody";
 
 const Landing = () => {
+  const [route, setRoute] = useState<Route>({ view: "main" });
+  const [landingFooterEl, setLandingFooterEl] = useState<HTMLDivElement | null>(
+    null,
+  );
+  const [modalFooterEl, setModalFooterEl] = useState<HTMLDivElement | null>(
+    null,
+  );
+
+  const isModalOpen = route.view !== "main";
+
+  const close = useCallback(() => setRoute({ view: "main" }), []);
+
+  const overlayValue = useMemo(
+    () => ({ isOpen: isModalOpen, onToggle: close }),
+    [isModalOpen, close],
+  );
+
   return (
-    <div className="center mt-10 p-2">
-      <div className="stack-col">
-        <h2 className="text-center mb-4 text-3xl font-bold">
-          Welcome to Lyrics Presenter
-        </h2>
+    <>
+      {/* Landing content: the main view stays inline */}
+      <AddSongFooterContext.Provider value={landingFooterEl}>
+        <div className="w-full max-w-full p-3">
+          <MainView
+            onImportSong={(mwlId) => setRoute({ view: "importSong", mwlId })}
+            onSelectSetlist={(setlist) =>
+              setRoute({ view: "importSetlist", setlist })
+            }
+          />
+          <div ref={setLandingFooterEl} className="w-full" />
+        </div>
+      </AddSongFooterContext.Provider>
 
-        <p className="text-center mb-4 text-secondary">
-          Song list empty. Add a new song to start presenting.
-        </p>
-
-        <OverlayToggle
-          toggler={({ onToggle }) => (
-            <Button
-              onClick={onToggle}
-              variant="success"
-              className="w-full"
-              data-testid="ly-landing-add-song"
+      {/* Sub-routes open in their own modal */}
+      <OverlayToggleContext.Provider value={overlayValue}>
+        <AddSongFooterContext.Provider value={modalFooterEl}>
+          <Dialog
+            open={isModalOpen}
+            onOpenChange={(open) => {
+              if (!open) close();
+            }}
+          >
+            <DialogContent
+              size="full"
+              className="gap-0 md:max-w-[90vw] md:min-h-[85vh]"
             >
-              <VscAdd />
-              Add a song to the list
-            </Button>
-          )}
-        >
-          <RemoteAddSongModal />
-        </OverlayToggle>
+              <DialogHeader className="pb-4">
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={close}
+                    title="Back"
+                  >
+                    <VscArrowLeft />
+                  </Button>
+                  <DialogTitle>{TITLES[route.view]}</DialogTitle>
+                </div>
+              </DialogHeader>
 
-        <OverlayToggle
-          toggler={({ onToggle }) => (
-            <Button
-              onClick={onToggle}
-              variant="outline"
-              className="w-full"
-              data-testid="ly-browse-songbook"
-            >
-              <VscBook />
-              Browse songbook
-            </Button>
-          )}
-        >
-          <SongbookModal />
-        </OverlayToggle>
-      </div>
-    </div>
+              <DialogBody className="overflow-x-hidden pt-0 flex-1 flex flex-col min-h-0">
+                {isModalOpen && (
+                  <RemoteAddSongBody route={route} setRoute={setRoute} />
+                )}
+              </DialogBody>
+
+              <DialogFooter className="pl-lyrics--preview-shadow pt-0 px-0 pb-3">
+                <div ref={setModalFooterEl} className="w-full" />
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </AddSongFooterContext.Provider>
+      </OverlayToggleContext.Provider>
+    </>
   );
 };
 export default Landing;
