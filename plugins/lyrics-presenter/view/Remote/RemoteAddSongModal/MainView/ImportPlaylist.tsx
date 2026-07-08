@@ -19,7 +19,7 @@ export const ImportPlaylist = ({
   onToggleOpen: () => void;
 }) => {
   const { data: playlistData, isLoading } =
-    trpc.lyricsPresenter.playlist.useQuery();
+    trpc.lyricsPresenter.myworshiplist.playlist.useQuery();
 
   return (
     <div className="min-w-0 mb-4">

@@ -36,7 +36,7 @@ export const SearchSong = ({
   });
 
   const { data: songData, isLoading: isSearchLoading } =
-    trpc.lyricsPresenter.search.useQuery(
+    trpc.lyricsPresenter.myworshiplist.search.useQuery(
       { title: debouncedSearchInput, page: pageOffset + 1 },
       { enabled: hasQuery },
     );
