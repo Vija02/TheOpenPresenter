@@ -1,17 +1,28 @@
 import { resolveMediaUrl } from "@repo/lib";
-import { useMemo } from "react";
+import { InternalVideo } from "@repo/video";
+import { createContext, useContext, useMemo } from "react";
 
 import { SlideStyle } from "../../src/index.js";
 import { usePluginAPI } from "../pluginApi";
+
+/**
+ * When set, previews resolve background videos from this list instead of the
+ * scene's `videoBackgrounds`
+ */
+export const PreviewVideoBackgroundsContext = createContext<
+  InternalVideo[] | null
+>(null);
 
 export const useVideoBackgroundThumbnail = (
   slideStyle: Required<SlideStyle>,
   enabled: boolean,
 ) => {
   const pluginApi = usePluginAPI();
-  const videoBackgrounds = pluginApi.scene.useData(
+  const sceneVideoBackgrounds = pluginApi.scene.useData(
     (x) => x.pluginData.videoBackgrounds,
   );
+  const previewVideoBackgrounds = useContext(PreviewVideoBackgroundsContext);
+  const videoBackgrounds = previewVideoBackgrounds ?? sceneVideoBackgrounds;
 
   return useMemo(() => {
     if (!enabled) return null;

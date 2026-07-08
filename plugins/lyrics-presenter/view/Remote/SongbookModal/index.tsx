@@ -118,6 +118,7 @@ const SongbookModal = () => {
                   <SongViewSlides
                     song={previewSong.song}
                     slideStyle={previewSlideStyle}
+                    videoBackgrounds={previewSong.videoBackgrounds}
                     isPreview
                   />
                 </SlideGrid>

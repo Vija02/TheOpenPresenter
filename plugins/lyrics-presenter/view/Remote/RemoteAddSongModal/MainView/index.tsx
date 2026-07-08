@@ -45,6 +45,7 @@ export const MainView = ({ onImportSong, onSelectSetlist }: MainViewProps) => {
         globalStyle,
         selectedSavedSong.song.styleOverride,
       )}
+      videoBackgrounds={selectedSavedSong.videoBackgrounds}
       isPreview
     />
   ) : null;
