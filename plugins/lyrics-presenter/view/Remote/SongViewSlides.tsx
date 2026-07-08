@@ -1,5 +1,6 @@
 import { Slide } from "@repo/ui";
-import { useMemo } from "react";
+import { InternalVideo } from "@repo/video";
+import { Fragment, useMemo } from "react";
 
 import { GroupedData } from "../../src/processLyrics";
 import { getSlideStyle } from "../../src/slideStyle";
@@ -7,41 +8,52 @@ import { processSong } from "../../src/songHelpers";
 import { SlideStyle, Song } from "../../src/types";
 import FullSongRenderView from "../Renderer/FullSongRenderView";
 import SectionsRenderView from "../Renderer/SectionsRenderView";
+import { PreviewVideoBackgroundsContext } from "../Renderer/useVideoBackgroundThumbnail";
 import { usePluginAPI } from "../pluginApi";
 
 export const SongViewSlides = ({
   song,
   isPreview = false,
   slideStyle,
+  videoBackgrounds,
 }: {
   song: Song;
   isPreview?: boolean;
   slideStyle: SlideStyle;
+  // Pass this to handle previewing without it being in the data itself
+  videoBackgrounds?: InternalVideo[];
 }) => {
   const groupedData = useMemo(
     () => processSong(song.content, song.setting.sectionOrder),
     [song.content, song.setting.sectionOrder],
   );
 
-  if (song.setting.displayType === "sections") {
-    return (
+  const content =
+    song.setting.displayType === "sections" ? (
       <Sections
         song={song}
         groupedData={groupedData}
         isPreview={isPreview}
         slideStyle={slideStyle}
       />
-    );
-  } else if (song.setting.displayType === "fullSong") {
-    return (
+    ) : song.setting.displayType === "fullSong" ? (
       <FullSong
         song={song}
         groupedData={groupedData}
         isPreview={isPreview}
         slideStyle={slideStyle}
       />
+    ) : null;
+
+  // Only override for previews that actually pass saved video backgrounds
+  if (isPreview && videoBackgrounds) {
+    return (
+      <PreviewVideoBackgroundsContext.Provider value={videoBackgrounds}>
+        {content}
+      </PreviewVideoBackgroundsContext.Provider>
     );
   }
+  return <Fragment>{content}</Fragment>;
 };
 
 const Sections = ({

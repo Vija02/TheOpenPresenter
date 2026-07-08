@@ -80,6 +80,7 @@ export const SetlistSongDetail = ({
                 globalStyle,
                 matchedSong.song.styleOverride,
               )}
+              videoBackgrounds={matchedSong.videoBackgrounds}
               isPreview
             />
           </SlideGrid>
