@@ -113,7 +113,7 @@ const SongbookModal = () => {
               </div>
             </DialogHeader>
             <DialogBody className="px-3 md:px-6 pb-4">
-              <div className="max-h-[65vh] overflow-y-auto">
+              <div className="overflow-y-auto">
                 <SlideGrid pluginAPI={pluginApi}>
                   <SongViewSlides
                     song={previewSong.song}
@@ -154,7 +154,7 @@ const SongbookModal = () => {
                       No songs match &quot;{search}&quot;.
                     </p>
                   ) : (
-                    <div className="stack-col items-stretch gap-0 max-h-[60vh] overflow-y-auto">
+                    <div className="stack-col items-stretch gap-0 overflow-y-auto">
                       {filteredSongs.map((saved) => (
                         <div
                           key={saved.id}
