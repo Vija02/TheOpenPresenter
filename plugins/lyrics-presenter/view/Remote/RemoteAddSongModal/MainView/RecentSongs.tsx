@@ -32,10 +32,10 @@ export const RecentSongs = ({
       <button
         type="button"
         onClick={onToggleOpen}
-        className="flex items-center gap-2 w-full text-left"
+        className="flex items-center gap-2 w-full text-left cursor-pointer"
       >
         {open ? <VscChevronDown /> : <VscChevronRight />}
-        <p className="font-bold">Recent</p>
+        <p className="font-bold">Recently used songs</p>
       </button>
 
       {open && (
