@@ -5,6 +5,7 @@ import { VscChevronDown, VscChevronRight } from "react-icons/vsc";
 import { SavedSong } from "../../../../src";
 import { usePluginAPI } from "../../../pluginApi";
 import { trpc } from "../../../trpc";
+import { SavedSongPreview } from "./SavedSongPreview";
 
 export const RecentSongs = ({
   selectedSavedSong,
@@ -43,21 +44,30 @@ export const RecentSongs = ({
           {recentSongs.map((saved) => {
             const isSelected = selectedSavedSong?.id === saved.id;
             return (
-              <div
-                key={saved.id}
-                data-testid="ly-recent-song"
-                onClick={() => setSelectedSavedSong(saved)}
-                className={`cursor-pointer py-1 px-1 hover:bg-surface-primary-hover ${
-                  isSelected ? "bg-surface-primary-active" : ""
-                }`}
-              >
-                <p className="text-xs text-secondary leading-4">
-                  <DateDisplayRelative date={new Date(saved.usedAt)} />
-                </p>
-                <p className="leading-4">{saved.title || "Untitled"}</p>
-                <p className="text-xs text-secondary">
-                  {saved.author ? saved.author : "-"}
-                </p>
+              <div key={saved.id}>
+                <div
+                  data-testid="ly-recent-song"
+                  onClick={() => setSelectedSavedSong(saved)}
+                  className={`cursor-pointer py-1 px-1 ${
+                    isSelected
+                      ? "bg-surface-primary-active"
+                      : "hover:bg-surface-primary-hover"
+                  }`}
+                >
+                  <p className="text-xs text-secondary leading-4">
+                    <DateDisplayRelative date={new Date(saved.usedAt)} />
+                  </p>
+                  <p className="leading-4">{saved.title || "Untitled"}</p>
+                  <p className="text-xs text-secondary">
+                    {saved.author ? saved.author : "-"}
+                  </p>
+                </div>
+                {isSelected && (
+                  <SavedSongPreview
+                    saved={saved}
+                    onClose={() => setSelectedSavedSong(null)}
+                  />
+                )}
               </div>
             );
           })}

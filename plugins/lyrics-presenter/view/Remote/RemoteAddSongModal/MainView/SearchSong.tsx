@@ -7,6 +7,7 @@ import { useDebounce } from "use-debounce";
 import { SavedSong } from "../../../../src";
 import { usePluginAPI } from "../../../pluginApi";
 import { trpc } from "../../../trpc";
+import { SavedSongPreview } from "./SavedSongPreview";
 import "./SearchSong.css";
 
 export const SearchSong = ({
@@ -123,33 +124,41 @@ export const SearchSong = ({
                 </p>
               )}
               {localResults.map((saved) => (
-                <div
-                  key={`local-${saved.id}`}
-                  className={cn(
-                    "cursor-pointer py-1 px-1 hover:bg-surface-primary-hover",
-                    selectedSavedSong?.id === saved.id &&
-                      "bg-surface-primary-active",
+                <div key={`local-${saved.id}`}>
+                  <div
+                    className={cn(
+                      "cursor-pointer py-1 px-1",
+                      selectedSavedSong?.id === saved.id
+                        ? "bg-surface-primary-active"
+                        : "hover:bg-surface-primary-hover",
+                    )}
+                    onClick={() => {
+                      setSelectedSavedSong(saved);
+                    }}
+                  >
+                    <p className="leading-4">
+                      {/* @ts-ignore */}
+                      <Highlighter
+                        searchWords={[debouncedSearchInput]}
+                        autoEscape={true}
+                        textToHighlight={saved.title || "Untitled"}
+                      />
+                    </p>
+                    <p className="text-xs text-secondary">
+                      {/* @ts-ignore */}
+                      <Highlighter
+                        searchWords={[debouncedSearchInput]}
+                        autoEscape={true}
+                        textToHighlight={saved.author ? saved.author : "-"}
+                      />
+                    </p>
+                  </div>
+                  {selectedSavedSong?.id === saved.id && (
+                    <SavedSongPreview
+                      saved={saved}
+                      onClose={() => setSelectedSavedSong(null)}
+                    />
                   )}
-                  onClick={() => {
-                    setSelectedSavedSong(saved);
-                  }}
-                >
-                  <p className="leading-4">
-                    {/* @ts-ignore */}
-                    <Highlighter
-                      searchWords={[debouncedSearchInput]}
-                      autoEscape={true}
-                      textToHighlight={saved.title || "Untitled"}
-                    />
-                  </p>
-                  <p className="text-xs text-secondary">
-                    {/* @ts-ignore */}
-                    <Highlighter
-                      searchWords={[debouncedSearchInput]}
-                      autoEscape={true}
-                      textToHighlight={saved.author ? saved.author : "-"}
-                    />
-                  </p>
                 </div>
               ))}
             </div>
