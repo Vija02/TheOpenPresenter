@@ -70,7 +70,12 @@ export const SearchSong = ({
   );
 
   return (
-    <div className="w-full gap-2 flex flex-col">
+    <div
+      className={cn(
+        "w-full gap-2 flex flex-col",
+        hasQuery && "flex-1 min-h-0",
+      )}
+    >
       <div className="relative">
         <Input
           ref={focusElement}
@@ -89,7 +94,7 @@ export const SearchSong = ({
             <button
               type="button"
               onClick={() => setSearchInput("")}
-              className="text-secondary hover:text-primary p-1"
+              className="text-secondary hover:text-primary p-1 cursor-pointer"
               title="Clear search"
             >
               <VscClose />
@@ -99,7 +104,7 @@ export const SearchSong = ({
       </div>
 
       {hasQuery && (
-        <div className="max-h-[65vh] overflow-y-auto">
+        <div className="flex-1 min-h-0 overflow-y-auto">
           {savedSongsQuery.isLoading && (
             <div className="stack-col gap-1">
               {Array.from(new Array(8)).map((_, i) => (

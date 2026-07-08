@@ -50,7 +50,7 @@ export const MainView = ({ onImportSong, onSelectSetlist }: MainViewProps) => {
   ) : null;
 
   return (
-    <div className="stack-col items-stretch gap-4 min-w-0">
+    <div className="stack-col items-stretch gap-4 min-w-0 flex-1 min-h-0">
       <SearchSong
         initialValue={null}
         selectedSavedSong={selectedSavedSong}

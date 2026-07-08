@@ -26,7 +26,7 @@ export const ImportPlaylist = ({
       <button
         type="button"
         onClick={onToggleOpen}
-        className="flex items-center gap-2 w-full text-left"
+        className="flex items-center gap-2 w-full text-left cursor-pointer"
       >
         {open ? <VscChevronDown /> : <VscChevronRight />}
         <p className="font-bold">Import a setlist</p>
