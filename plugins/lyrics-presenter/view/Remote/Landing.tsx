@@ -20,9 +20,6 @@ import RemoteAddSongBody, {
 
 const Landing = () => {
   const [route, setRoute] = useState<Route>({ view: "main" });
-  const [landingFooterEl, setLandingFooterEl] = useState<HTMLDivElement | null>(
-    null,
-  );
   const [modalFooterEl, setModalFooterEl] = useState<HTMLDivElement | null>(
     null,
   );
@@ -39,17 +36,14 @@ const Landing = () => {
   return (
     <>
       {/* Landing content: the main view stays inline */}
-      <AddSongFooterContext.Provider value={landingFooterEl}>
-        <div className="w-full max-w-full p-3">
-          <MainView
-            onImportSong={(mwlId) => setRoute({ view: "importSong", mwlId })}
-            onSelectSetlist={(setlist) =>
-              setRoute({ view: "importSetlist", setlist })
-            }
-          />
-          <div ref={setLandingFooterEl} className="w-full" />
-        </div>
-      </AddSongFooterContext.Provider>
+      <div className="w-full max-w-full p-3">
+        <MainView
+          onImportSong={(mwlId) => setRoute({ view: "importSong", mwlId })}
+          onSelectSetlist={(setlist) =>
+            setRoute({ view: "importSetlist", setlist })
+          }
+        />
+      </div>
 
       {/* Sub-routes open in their own modal */}
       <OverlayToggleContext.Provider value={overlayValue}>
