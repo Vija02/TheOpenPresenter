@@ -6,9 +6,10 @@ import { VscAdd, VscBook, VscPaintcan } from "react-icons/vsc";
 import { removeChords } from "../../src/processLyrics";
 import { Song } from "../../src/types";
 import { usePluginAPI } from "../pluginApi";
+import Landing from "./Landing";
 import RemoteAddSongModal from "./RemoteAddSongModal";
-import SongbookModal from "./SongbookModal";
 import SongView from "./SongView";
+import SongbookModal from "./SongbookModal";
 import StyleSettingModal from "./StyleSettingModal";
 
 const processContent = (content: string) => {
@@ -122,37 +123,41 @@ const Remote = () => {
         </>
       }
       body={
-        <div className="p-3 w-full">
-          {songs.map((song, index) => (
-            <SongView
-              key={song.id}
-              song={song}
-              onMoveUp={
-                index > 0 ? () => swapSongs(index, index - 1) : undefined
-              }
-              onMoveDown={
-                index < songs.length - 1
-                  ? () => swapSongs(index, index + 1)
-                  : undefined
-              }
-            />
-          ))}
-          <OverlayToggle
-            toggler={({ onToggle }) => (
-              <Button
-                size="sm"
-                variant="success"
-                onClick={onToggle}
-                data-testid="ly-add-song"
-              >
-                <VscAdd />
-                Add Song
-              </Button>
-            )}
-          >
-            <RemoteAddSongModal />
-          </OverlayToggle>
-        </div>
+        songs.length === 0 ? (
+          <Landing />
+        ) : (
+          <div className="p-3 w-full overflow-y-auto">
+            {songs.map((song, index) => (
+              <SongView
+                key={song.id}
+                song={song}
+                onMoveUp={
+                  index > 0 ? () => swapSongs(index, index - 1) : undefined
+                }
+                onMoveDown={
+                  index < songs.length - 1
+                    ? () => swapSongs(index, index + 1)
+                    : undefined
+                }
+              />
+            ))}
+            <OverlayToggle
+              toggler={({ onToggle }) => (
+                <Button
+                  size="sm"
+                  variant="success"
+                  onClick={onToggle}
+                  data-testid="ly-add-song"
+                >
+                  <VscAdd />
+                  Add Song
+                </Button>
+              )}
+            >
+              <RemoteAddSongModal />
+            </OverlayToggle>
+          </div>
+        )
       }
     />
   );
