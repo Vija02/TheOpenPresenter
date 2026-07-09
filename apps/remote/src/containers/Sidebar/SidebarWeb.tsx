@@ -108,6 +108,7 @@ const SidebarWeb = () => {
                 onClick={() => {
                   if (location !== "/new") navigate("/new");
                 }}
+                data-testid="add-scene"
                 className={cx(
                   "rt--sidebar-web-scene-item rt--sidebar-web-scene-add",
                   location === "/new"
