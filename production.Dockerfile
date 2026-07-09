@@ -258,6 +258,7 @@ COPY --from=builder-plugin /app/plugins/slides/out/ /app/plugins/slides/out/
 COPY --from=builder-plugin /app/plugins/lyrics-presenter/package.json /app/plugins/lyrics-presenter/
 COPY --from=builder-plugin /app/plugins/lyrics-presenter/dist/ /app/plugins/lyrics-presenter/dist/
 COPY --from=builder-plugin /app/plugins/lyrics-presenter/out/ /app/plugins/lyrics-presenter/out/
+COPY --from=builder-plugin /app/plugins/lyrics-presenter/migrations/ /app/plugins/lyrics-presenter/migrations/
 COPY --from=builder-plugin /app/plugins/simple-image/package.json /app/plugins/simple-image/
 COPY --from=builder-plugin /app/plugins/simple-image/dist/ /app/plugins/simple-image/dist/
 COPY --from=builder-plugin /app/plugins/simple-image/out/ /app/plugins/simple-image/out/
