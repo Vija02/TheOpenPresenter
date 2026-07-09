@@ -109,7 +109,7 @@ const SidebarWeb = () => {
                   if (location !== "/new") navigate("/new");
                 }}
                 className={cx(
-                  "rt--sidebar-web-scene-item",
+                  "rt--sidebar-web-scene-item rt--sidebar-web-scene-add",
                   location === "/new"
                     ? "rt--sidebar-web-scene-item__active pointer-events-none"
                     : "rt--sidebar-web-scene-item__inactive cursor-pointer"
@@ -117,7 +117,7 @@ const SidebarWeb = () => {
               >
                 <div>
                   <VscAdd />
-                  <p>Add Component</p>
+                  <p>Add</p>
                 </div>
               </div>
 
