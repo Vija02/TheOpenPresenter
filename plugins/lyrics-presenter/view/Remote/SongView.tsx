@@ -145,7 +145,7 @@ const SongViewInner = React.memo(
                 cancelText="No"
                 key="remove"
               >
-                <Button size="sm" variant="ghost">
+                <Button size="sm" variant="ghost" data-testid="ly-remove-song">
                   <VscTrash />
                 </Button>
               </PopConfirm>
