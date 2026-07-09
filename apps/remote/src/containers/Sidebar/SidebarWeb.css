@@ -20,6 +20,10 @@
   @apply overflow-auto;
 }
 
+.rt--sidebar-web-scene-item.rt--sidebar-web-scene-add {
+  @apply justify-center;
+}
+
 .rt--sidebar-web-scene-item {
   @apply stack-row cursor-pointer py-2 px-2 hover:bg-gray-300 relative justify-between;
 }

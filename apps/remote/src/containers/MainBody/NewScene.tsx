@@ -8,6 +8,7 @@ import { MdOutlineOndemandVideo } from "react-icons/md";
 import { PiMusicNotesSimple, PiPresentationChart } from "react-icons/pi";
 import { typeidUnboxed } from "typeid-js";
 
+import { useIsMobile } from "../../hooks/useIsMobile";
 import { useNavigateWithParams } from "../../hooks/useNavigateWithParams";
 
 const sceneCategoriesConfig: Record<SceneCategories, IconType> = {
@@ -19,8 +20,10 @@ const sceneCategoriesConfig: Record<SceneCategories, IconType> = {
 export const NewScene = () => {
   const navigate = useNavigateWithParams();
   const mainState = usePluginData().mainState!;
+  const isMobile = useIsMobile();
 
-  const { pluginMeta, organizationType, experimentalFeaturesEnabled } = usePluginMetaData();
+  const { pluginMeta, organizationType, experimentalFeaturesEnabled } =
+    usePluginMetaData();
 
   const remotePluginMeta =
     pluginMeta && "registeredRemoteView" in pluginMeta ? pluginMeta : null;
@@ -33,18 +36,20 @@ export const NewScene = () => {
         x.organizationTypes.length === 0 ||
         x.organizationTypes.includes(organizationType);
 
-      const matchExperimentalOnlyWhenEnabled = !x.isExperimental || experimentalFeaturesEnabled;
+      const matchExperimentalOnlyWhenEnabled =
+        !x.isExperimental || experimentalFeaturesEnabled;
 
       return matchesOrg && matchExperimentalOnlyWhenEnabled;
     }) ?? [];
 
   const addPlugin = (pluginName: string, pluginTitle: string) => {
     const sceneId = typeidUnboxed("scene");
-    
+
     mainState.data[sceneId] = {
       name: pluginTitle,
       order:
-        (Math.max(0, ...Object.values(mainState.data).map((x) => x.order)) ?? 0) + 1,
+        (Math.max(0, ...Object.values(mainState.data).map((x) => x.order)) ??
+          0) + 1,
       type: "scene",
       children: {
         [typeidUnboxed("plugin")]: {
@@ -61,15 +66,13 @@ export const NewScene = () => {
   return (
     <div className="p-4 prose max-w-none">
       <h2 className="mt-2 mb-2">Add component</h2>
-      <p>
-        Select a component below to add it to your project.
-      </p>
+      <p>Select a component below to add it to your project.</p>
 
       {/* stop the menu from stretching on big monitors */}
       <div className="mt-5 not-prose my-8 flex flex-col gap-5 max-w-5xl">
         {sceneCategories.map((category) => {
           const categoryPlugins = visibleSceneCreators.filter((creator) =>
-            creator.categories.includes(category)
+            creator.categories.includes(category),
           );
 
           if (categoryPlugins.length === 0) return null;
@@ -82,11 +85,13 @@ export const NewScene = () => {
                 })}
                 <h3>{category}</h3>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 auto-rows-fr">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 auto-rows-fr">
                 {categoryPlugins.map((sceneCreator) => (
                   <Option
                     key={sceneCreator.pluginName}
-                    onClick={() => addPlugin(sceneCreator.pluginName, sceneCreator.title)}
+                    onClick={() =>
+                      addPlugin(sceneCreator.pluginName, sceneCreator.title)
+                    }
                     title={
                       <div className="flex items-center gap-2">
                         {sceneCreator.title}
@@ -98,6 +103,7 @@ export const NewScene = () => {
                         )}
                       </div>
                     }
+                    size={isMobile ? "sm" : "default"}
                     description={sceneCreator.description}
                   />
                 ))}
