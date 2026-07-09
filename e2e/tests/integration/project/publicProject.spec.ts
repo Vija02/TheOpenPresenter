@@ -60,19 +60,19 @@ test.describe("Public Project", () => {
       await unauthPage.goto("/app/testorg/testproject");
 
       // The remote should load the public project — not redirect to login.
-      await expect(
-        unauthPage.locator(".rt--top-bar--project-name"),
-      ).toHaveText(/TestProject/);
+      await expect(unauthPage.locator(".rt--top-bar--project-name")).toHaveText(
+        /TestProject/,
+      );
       await expect(unauthPage).toHaveURL(/\/app\/testorg\/testproject/);
       await expect(
         unauthPage.getByRole("heading", { name: "Login" }),
       ).not.toBeVisible();
 
-    const unauthSceneItems = unauthPage.locator(
-      ".rt--sidebar-wrapper-web .rt--sidebar-web-scene-item"
-    ).filter({ hasNotText: "Add Component" });
+      const unauthSceneItems = unauthPage
+        .locator(".rt--sidebar-wrapper-web .rt--sidebar-web-scene-item")
+        .filter({ hasNotText: "Add" });
 
-    await expect(unauthSceneItems).toHaveCount(0);
+      await expect(unauthSceneItems).toHaveCount(0);
 
       // While the unauthenticated viewer is still connected, have the owner
       // create a new scene from their authenticated remote. The unauth
@@ -88,9 +88,7 @@ test.describe("Public Project", () => {
       // the shared document and the owner observes the change in real time.
       await unauthSceneItems.first().click();
 
-      await unauthPage
-        .locator(".rt--top-bar--scene-settings-icon")
-        .click();
+      await unauthPage.locator(".rt--top-bar--scene-settings-icon").click();
       const unauthSceneDialog = unauthPage.getByRole("dialog");
       await expect(
         unauthSceneDialog.getByRole("heading", { name: "Scene Settings" }),
@@ -150,9 +148,9 @@ test.describe("Public Project", () => {
 
       // Wait for the public project Remote to render and the video
       // player plugin scene to mount.
-      await expect(
-        unauthPage.locator(".rt--top-bar--project-name"),
-      ).toHaveText(/TestProject/);
+      await expect(unauthPage.locator(".rt--top-bar--project-name")).toHaveText(
+        /TestProject/,
+      );
       const mediaLibraryButton = unauthPage.getByRole("button", {
         name: "Media Library",
       });
