@@ -42,11 +42,15 @@ export const SavedSongPreview = ({
       )}
     >
       <div className="overflow-hidden">
-        <div className="relative flex items-end gap-3 border-l-3 border-fill-info bg-surface-secondary px-3 py-2">
+        <div
+          data-testid="ly-song-preview"
+          className="relative flex items-end gap-3 border-l-3 border-fill-info bg-surface-secondary px-3 py-2"
+        >
           <button
             type="button"
             onClick={onClose}
             title="Close"
+            data-testid="ly-song-preview-close"
             className="absolute right-1 top-1 cursor-pointer p-1 text-secondary hover:text-primary"
           >
             <VscClose />

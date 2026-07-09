@@ -3,36 +3,103 @@ import { type Locator, type Page } from "@playwright/test";
 export class LyricsPlugin {
   readonly searchSongTitleInput: Locator;
   readonly addToListFormButton: Locator;
+  readonly importFormButton: Locator;
   readonly styleButton: Locator;
   readonly saveStyleButton: Locator;
 
   constructor(public readonly page: Page) {
-    this.searchSongTitleInput = page.getByRole("textbox", {
-      name: "Song title...",
-    });
+    // The unified search box (songbook + MyWorshipList import).
+    this.searchSongTitleInput = page.getByPlaceholder("Search songs...");
     this.addToListFormButton = page.getByRole("button", {
       name: "Add to list",
+    });
+    this.importFormButton = page.getByRole("button", {
+      name: "Import",
+      exact: true,
     });
     this.styleButton = page.getByRole("button", { name: "Style", exact: true });
     this.saveStyleButton = page.getByRole("button", { name: "Save" });
   }
 
-  async addSong(songName: string) {
-    const addSongButton = await Promise.race([
-      this.page.waitForSelector(`[data-testid="ly-landing-add-song"]`),
-      this.page.waitForSelector(`[data-testid="ly-add-song"]`),
-    ]);
+  // ---------------------------------------------------------------------------
+  // Add-song modal
+  // ---------------------------------------------------------------------------
 
-    await addSongButton.click();
+  /** The currently-open dialog (modal add-song, or a Landing sub-route). */
+  get dialog(): Locator {
+    return this.page.getByRole("dialog");
+  }
 
-    await this.searchSongTitleInput.fill(songName);
-
+  /**
+   * The add-song UI lives in two places that share the same MainView:
+   *  - a fresh plugin (0 songs) renders it inline in the Landing;
+   *  - once songs exist, the body "Add Song" button opens it in a modal.
+   * Resolve whichever is current (opening the modal when songs exist) and
+   * return the Locator to scope add-song interactions to.
+   */
+  async openAddSurface(): Promise<Locator> {
+    // Wait for the remote body to settle into one of the two states.
     await this.page
-      .getByRole("paragraph")
+      .locator('[data-testid="ly-add-song"], [data-testid="ly-landing"]')
+      .first()
+      .waitFor();
+
+    const addSongButton = this.page.getByTestId("ly-add-song");
+    if (await addSongButton.count()) {
+      await addSongButton.click();
+      return this.dialog;
+    }
+    // Fresh plugin — the inline Landing is the add surface.
+    return this.page.getByTestId("ly-landing");
+  }
+
+  /**
+   * Open the full add-song modal via the always-present toolbar button. Use
+   * this when you need the create flow — only the modal exposes "Create new
+   * song". Returns the dialog scope.
+   */
+  async openAddModal(): Promise<Locator> {
+    await this.page.getByTestId("ly-toolbar-add-song").click();
+    return this.dialog;
+  }
+
+  /**
+   * Import a single song from MyWorshipList: search for it, pick the result
+   * (which opens the "Import a song" view), then confirm with Import.
+   * NOTE: hits the live MyWorshipList API.
+   */
+  async addSong(songName: string) {
+    const scope = await this.openAddSurface();
+    await scope.getByPlaceholder("Search songs...").fill(songName);
+
+    // Target the MyWorshipList "Import" section specifically — the search also
+    // renders Songbook matches (and recent songs), which we must not pick here.
+    await scope
+      .getByTestId("ly-import-result")
       .filter({ hasText: songName })
+      .first()
       .click();
 
-    await this.addToListFormButton.click();
+    // Import view: wait for the lyrics to load, then confirm.
+    await this.dialog
+      .getByRole("button", { name: "Import", exact: true })
+      .click();
+  }
+
+  /**
+   * Import a song but stop before confirming — leaves the "Import a song" view
+   * open so a test can toggle "Save to songbook", edit, etc.
+   */
+  async openImportSong(songName: string) {
+    const scope = await this.openAddSurface();
+    await scope.getByPlaceholder("Search songs...").fill(songName);
+    await scope
+      .getByTestId("ly-import-result")
+      .filter({ hasText: songName })
+      .first()
+      .click();
+    // Wait for the import view to hydrate (the editable title appears).
+    await this.dialog.getByPlaceholder("Song name").first().waitFor();
   }
 
   async addCustomSong(
@@ -40,22 +107,17 @@ export class LyricsPlugin {
     content: string,
     displayType: "sections" | "fullSong" = "sections",
   ) {
-    const addSongButton = await Promise.race([
-      this.page.waitForSelector(`[data-testid="ly-landing-add-song"]`),
-      this.page.waitForSelector(`[data-testid="ly-add-song"]`),
-    ]);
+    // Creating a song is only available from the modal (not the Landing).
+    const dialog = await this.openAddModal();
 
-    await addSongButton.click();
-
-    await this.page.getByRole("button", { name: "Create a new song" }).click();
-
-    await this.page.getByLabel("Title").fill(title);
+    await dialog.getByRole("button", { name: "Create new song" }).click();
+    await dialog.getByLabel("Title").fill(title);
 
     if (displayType === "fullSong") {
-      await this.page.getByText("Full Song").click();
+      await dialog.getByText("Full Song").click();
     }
 
-    const editor = this.page
+    const editor = dialog
       .getByTestId("ly-song-editor")
       .locator('[contenteditable="true"]');
     await editor.click();
@@ -63,8 +125,68 @@ export class LyricsPlugin {
     await editor.press("Backspace");
     await editor.pressSequentially(content);
 
-    await this.addToListFormButton.click();
+    await dialog.getByRole("button", { name: "Add to list" }).click();
   }
+
+  /**
+   * Import a setlist: pick the first setlist card, then confirm with Import.
+   * NOTE: hits the live MyWorshipList API.
+   */
+  async importFirstSetlist() {
+    const scope = await this.openAddSurface();
+    // The setlist cards are shown by default under "Import a setlist".
+    const firstCard = scope.getByTestId("ly-setlist-card").first();
+    await firstCard.click();
+    await this.dialog
+      .getByRole("button", { name: "Import", exact: true })
+      .click();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Songbook (per-song save + browse modal)
+  // ---------------------------------------------------------------------------
+
+  /** Save an unlinked song to the songbook via its "Unsaved" → Save badge. */
+  async saveSongToSongbook(index = 0) {
+    await this.page.getByTestId("ly-save-song").nth(index).click();
+  }
+
+  savedBadge(index = 0): Locator {
+    return this.page.getByTestId("ly-save-song").nth(index);
+  }
+
+  async openSongbookModal() {
+    const button = await Promise.race([
+      this.page.waitForSelector(`[data-testid="ly-songbook-button"]`),
+      this.page.waitForSelector(`[data-testid="ly-browse-songbook"]`),
+    ]);
+    await button.click();
+  }
+
+  songbookRow(title: string): Locator {
+    return this.page.getByTestId("ly-songbook-row").filter({ hasText: title });
+  }
+
+  async songbookAddToList(title: string) {
+    await this.songbookRow(title)
+      .getByRole("button", { name: "Add", exact: true })
+      .click();
+  }
+
+  async songbookDelete(title: string) {
+    await this.songbookRow(title)
+      .getByRole("button", { name: "Delete" })
+      .click();
+    await this.page.getByRole("button", { name: "Yes" }).click();
+  }
+
+  async closeDialog() {
+    await this.page.keyboard.press("Escape");
+  }
+
+  // ---------------------------------------------------------------------------
+  // Style settings
+  // ---------------------------------------------------------------------------
 
   async openStyleSettings() {
     await this.styleButton.click();

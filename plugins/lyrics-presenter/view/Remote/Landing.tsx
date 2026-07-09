@@ -36,7 +36,7 @@ const Landing = () => {
   return (
     <>
       {/* Landing content: the main view stays inline */}
-      <div className="w-full max-w-full p-3">
+      <div className="w-full max-w-full p-3" data-testid="ly-landing">
         <MainView
           onImportSong={(mwlId) => setRoute({ view: "importSong", mwlId })}
           onSelectSetlist={(setlist) =>

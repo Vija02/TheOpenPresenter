@@ -126,6 +126,7 @@ export const SearchSong = ({
               {localResults.map((saved) => (
                 <div key={`local-${saved.id}`}>
                   <div
+                    data-testid="ly-songbook-result"
                     className={cn(
                       "cursor-pointer py-1 px-1",
                       selectedSavedSong?.id === saved.id
@@ -176,6 +177,7 @@ export const SearchSong = ({
               {myWorshipListResults.map((x: any) => (
                 <div
                   key={`mwl-${x.id}`}
+                  data-testid="ly-import-result"
                   className="cursor-pointer py-1 px-1 hover:bg-surface-primary-hover"
                   onClick={() => onSelectImportSong(x.id)}
                 >

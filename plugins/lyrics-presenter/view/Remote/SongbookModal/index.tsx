@@ -193,12 +193,13 @@ const SongbookModal = () => {
                             </Button>
                             <PopConfirm
                               title="Delete this song from your songbook?"
-                              onConfirm={() =>
+                              onConfirm={(e) => {
+                                e?.stopPropagation();
                                 removeMutation.mutate({
                                   pluginId,
                                   id: saved.id,
-                                })
-                              }
+                                });
+                              }}
                               okText="Yes"
                               cancelText="No"
                               key="remove"

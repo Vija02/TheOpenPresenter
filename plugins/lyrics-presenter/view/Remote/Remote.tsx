@@ -84,7 +84,12 @@ const Remote = () => {
         <>
           <OverlayToggle
             toggler={({ onToggle }) => (
-              <Button size="xs" variant="pill" onClick={onToggle}>
+              <Button
+                size="xs"
+                variant="pill"
+                onClick={onToggle}
+                data-testid="ly-toolbar-add-song"
+              >
                 <VscAdd />
                 Add
               </Button>
