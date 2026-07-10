@@ -79,9 +79,10 @@ function DialogContent({
   className,
   children,
   size,
+  hideCloseButton = false,
   ...props
 }: React.ComponentProps<typeof BaseDialog.Popup> &
-  VariantProps<typeof dialogPopupVariants>) {
+  VariantProps<typeof dialogPopupVariants> & { hideCloseButton?: boolean }) {
   const container = useDialogPortalContainerContext();
 
   return (
@@ -93,10 +94,12 @@ function DialogContent({
         {...props}
       >
         {children}
-        <BaseDialog.Close className="ui--dialog-popup__close">
-          <XIcon />
-          <span className="sr-only">Close</span>
-        </BaseDialog.Close>
+        {!hideCloseButton && (
+          <BaseDialog.Close className="ui--dialog-popup__close">
+            <XIcon />
+            <span className="sr-only">Close</span>
+          </BaseDialog.Close>
+        )}
       </BaseDialog.Popup>
     </DialogPortal>
   );

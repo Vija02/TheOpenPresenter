@@ -31,6 +31,8 @@ export default async function installTrpc(app: Express) {
 
     return {
       userId,
+      sessionId,
+      screenGuestSessionId,
     };
   };
 

@@ -13,18 +13,18 @@ import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { removeChords } from "../../../src/processLyrics";
-import { getSlideStyle } from "../../../src/slideStyle";
+import { removeChords } from "../../../../src/processLyrics";
+import { getSlideStyle } from "../../../../src/slideStyle";
 import {
   DisplayType,
   Song,
   displayTypeSettings,
   songSettingValidator,
-} from "../../../src/types";
-import { usePluginAPI } from "../../pluginApi";
-import { LyricFormLabel } from "../RemoteEditSongModal/LyricFormLabel";
-import SongEditEditor from "../RemoteEditSongModal/SongEditEditor";
-import { SongViewSlides } from "../SongViewSlides";
+} from "../../../../src/types";
+import { usePluginAPI } from "../../../pluginApi";
+import { LyricFormLabel } from "../../RemoteEditSongModal/LyricFormLabel";
+import SongEditEditor from "../../RemoteEditSongModal/SongEditEditor";
+import { SongViewSlides } from "../../SongViewSlides";
 
 export const CreateNewSong = ({
   onChange,
@@ -98,7 +98,7 @@ export const CreateNewSong = ({
             <FormField
               control={form.control}
               name="content"
-              render={({ field }) => (
+              render={() => (
                 <FormItem>
                   <LyricFormLabel
                     content={data.content}

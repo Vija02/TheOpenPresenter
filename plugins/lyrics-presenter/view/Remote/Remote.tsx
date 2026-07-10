@@ -1,13 +1,15 @@
 import { Button, OverlayToggle, PluginScaffold } from "@repo/ui";
 import { useCallback } from "react";
 import { PiExportLight } from "react-icons/pi";
-import { VscAdd, VscPaintcan } from "react-icons/vsc";
+import { VscAdd, VscBook, VscPaintcan } from "react-icons/vsc";
 
 import { removeChords } from "../../src/processLyrics";
 import { Song } from "../../src/types";
 import { usePluginAPI } from "../pluginApi";
+import Landing from "./Landing";
 import RemoteAddSongModal from "./RemoteAddSongModal";
 import SongView from "./SongView";
+import SongbookModal from "./SongbookModal";
 import StyleSettingModal from "./StyleSettingModal";
 
 const processContent = (content: string) => {
@@ -82,7 +84,12 @@ const Remote = () => {
         <>
           <OverlayToggle
             toggler={({ onToggle }) => (
-              <Button size="xs" variant="pill" onClick={onToggle}>
+              <Button
+                size="xs"
+                variant="pill"
+                onClick={onToggle}
+                data-testid="ly-toolbar-add-song"
+              >
                 <VscAdd />
                 Add
               </Button>
@@ -100,43 +107,62 @@ const Remote = () => {
           >
             <StyleSettingModal />
           </OverlayToggle>
+          <OverlayToggle
+            toggler={({ onToggle }) => (
+              <Button
+                size="xs"
+                variant="pill"
+                onClick={onToggle}
+                data-testid="ly-songbook-button"
+              >
+                <VscBook />
+                Songbook
+              </Button>
+            )}
+          >
+            <SongbookModal />
+          </OverlayToggle>
           <Button size="xs" variant="pill" onClick={onExport}>
             <PiExportLight /> Export
           </Button>
         </>
       }
       body={
-        <div className="p-3 w-full">
-          {songs.map((song, index) => (
-            <SongView
-              key={song.id}
-              song={song}
-              onMoveUp={
-                index > 0 ? () => swapSongs(index, index - 1) : undefined
-              }
-              onMoveDown={
-                index < songs.length - 1
-                  ? () => swapSongs(index, index + 1)
-                  : undefined
-              }
-            />
-          ))}
-          <OverlayToggle
-            toggler={({ onToggle }) => (
-              <Button
-                size="sm"
-                variant="success"
-                onClick={onToggle}
-                data-testid="ly-add-song"
-              >
-                <VscAdd />
-                Add Song
-              </Button>
-            )}
-          >
-            <RemoteAddSongModal />
-          </OverlayToggle>
-        </div>
+        songs.length === 0 ? (
+          <Landing />
+        ) : (
+          <div className="p-3 w-full overflow-y-auto">
+            {songs.map((song, index) => (
+              <SongView
+                key={song.id}
+                song={song}
+                onMoveUp={
+                  index > 0 ? () => swapSongs(index, index - 1) : undefined
+                }
+                onMoveDown={
+                  index < songs.length - 1
+                    ? () => swapSongs(index, index + 1)
+                    : undefined
+                }
+              />
+            ))}
+            <OverlayToggle
+              toggler={({ onToggle }) => (
+                <Button
+                  size="sm"
+                  variant="success"
+                  onClick={onToggle}
+                  data-testid="ly-add-song"
+                >
+                  <VscAdd />
+                  Add Song
+                </Button>
+              )}
+            >
+              <RemoteAddSongModal />
+            </OverlayToggle>
+          </div>
+        )
       }
     />
   );

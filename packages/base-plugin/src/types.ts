@@ -121,6 +121,7 @@ export type MiscProps = {
   errorHandler: ErrorHandler;
   canPlayAudio: CanPlayAudio;
   overlay: OverlayInfo;
+  currentScene: CurrentSceneInfo;
   toast: typeof ReactToast;
   media: MediaHandler;
   mediaPicker: MediaPicker;
@@ -156,6 +157,11 @@ export type OverlayType = "black" | "white" | "clear" | null;
 
 export type OverlayInfo = {
   getType: () => OverlayType;
+  subscribe: (callback: () => void) => () => void;
+};
+
+export type CurrentSceneInfo = {
+  get: () => string | null;
   subscribe: (callback: () => void) => () => void;
 };
 

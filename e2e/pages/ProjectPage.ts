@@ -19,7 +19,7 @@ export class ProjectPage {
     public readonly page: Page,
     public readonly context: BrowserContext,
   ) {
-    this.newSceneButton = page.getByText(/^Add Component$/);
+    this.newSceneButton = page.getByTestId("add-scene");
     this.presentButton = page.getByRole("button", { name: "Present" });
   }
 

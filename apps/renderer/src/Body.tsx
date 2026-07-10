@@ -1,6 +1,7 @@
 import {
   AwarenessContext,
   AwarenessStateData,
+  CurrentSceneInfo,
   DerivationConfig,
   LayoutItem,
   OverlayInfo,
@@ -431,6 +432,23 @@ const PluginRenderer = React.memo(
       [getYJSPluginRenderer, rendererId, yjsWatcher],
     );
 
+    const currentScene = useMemo<CurrentSceneInfo>(
+      () => ({
+        get: () => {
+          const renderer = getYJSPluginRenderer(rendererId);
+          return renderer?.get("currentScene") ?? null;
+        },
+        subscribe: (callback: () => void) => {
+          yjsWatcher?.watchYjs(
+            (x: State) => x.renderer[rendererId]?.currentScene,
+            callback,
+          );
+          return () => {};
+        },
+      }),
+      [getYJSPluginRenderer, rendererId, yjsWatcher],
+    );
+
     const TagElement = useMemo(() => {
       if (!tag) {
         return (
@@ -470,6 +488,7 @@ const PluginRenderer = React.memo(
           errorHandler: { addError, removeError },
           canPlayAudio,
           overlay,
+          currentScene,
           toast,
           // These should probably never be called from the renderer
           media: {
@@ -512,6 +531,7 @@ const PluginRenderer = React.memo(
       organizationType,
       experimentalFeaturesEnabled,
       overlay,
+      currentScene,
       pluginContext,
       pluginInfo?.plugin,
       provider,

@@ -54,7 +54,7 @@ export const simulateServer = async (
       ...serverPluginApi.getRegisteredTrpcAppRouter().map((x) => x(trpc)),
     );
     const createCaller = trpc.createCallerFactory(mergedRouters);
-    return createCaller({ userId: "testUserId" }) as DecorateRouterRecord<
+    return createCaller({ userId: "testUserId", sessionId: "testSessionId", screenGuestSessionId: "testScreenGuestSessionId" }) as DecorateRouterRecord<
       ExtractRouterRecord<T>
     >;
   };
@@ -216,6 +216,7 @@ export const simulateUser = (
       errorHandler: { addError: () => {}, removeError: () => {} },
       canPlayAudio: undefined as any,
       overlay: { getType: () => null, subscribe: () => () => {} },
+      currentScene: { get: () => null, subscribe: () => () => {} },
       toast: { error: vi.fn() } as any,
       media: {
         permanentlyDeleteMedia() {
