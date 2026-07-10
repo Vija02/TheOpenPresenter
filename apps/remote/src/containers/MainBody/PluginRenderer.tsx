@@ -1,6 +1,7 @@
 import {
   AwarenessContext,
   AwarenessStateData,
+  CurrentSceneInfo,
   KeyPressType,
   OverlayInfo,
   Plugin,
@@ -54,7 +55,14 @@ const PluginRenderer = React.memo(
     pluginInfo: Plugin<Record<string, any>>;
   }) => {
     const pluginDivRef = useRef<HTMLDivElement>(null);
-    const { pluginMeta, orgId, projectId, isPublicAccess, organizationType, experimentalFeaturesEnabled } = usePluginMetaData();
+    const {
+      pluginMeta,
+      orgId,
+      projectId,
+      isPublicAccess,
+      organizationType,
+      experimentalFeaturesEnabled,
+    } = usePluginMetaData();
     const {
       getYJSPluginRenderer,
       getYJSPluginSceneData,
@@ -79,7 +87,6 @@ const PluginRenderer = React.memo(
       (x: State) =>
         x.renderer?.[selectedRendererId]?.children?.[sceneId]?.[pluginId],
     );
-
     const [match] = useRoute(`/${sceneId}`);
 
     const viewData = useMemo(() => {
@@ -165,6 +172,23 @@ const PluginRenderer = React.memo(
       [getYJSPluginRenderer, selectedRendererId, yjsWatcher],
     );
 
+    const currentScene = useMemo<CurrentSceneInfo>(
+      () => ({
+        get: () => {
+          const renderer = getYJSPluginRenderer(selectedRendererId);
+          return renderer?.get("currentScene") ?? null;
+        },
+        subscribe: (callback: () => void) => {
+          yjsWatcher?.watchYjs(
+            (x: State) => x.renderer[selectedRendererId]?.currentScene,
+            callback,
+          );
+          return () => {};
+        },
+      }),
+      [getYJSPluginRenderer, selectedRendererId, yjsWatcher],
+    );
+
     const Element = useMemo(() => {
       if (!viewData?.tag) {
         return (
@@ -210,6 +234,7 @@ const PluginRenderer = React.memo(
           errorHandler: { addError, removeError },
           canPlayAudio,
           overlay,
+          currentScene,
           toast,
           media: {
             permanentlyDeleteMedia: (mediaKey: string) => {
@@ -255,6 +280,7 @@ const PluginRenderer = React.memo(
       organizationType,
       experimentalFeaturesEnabled,
       overlay,
+      currentScene,
       pluginContext,
       pluginInfo.plugin,
       provider,

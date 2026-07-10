@@ -130,6 +130,12 @@ export function initPluginApi<
           misc.overlay.getType,
         );
       },
+      useCurrentScene: () => {
+        return useSyncExternalStore(
+          misc.currentScene.subscribe,
+          misc.currentScene.get,
+        );
+      },
       useDerivation: () => misc.derivation ?? null,
       useDerivationOffset: () => misc.derivation?.offset ?? 0,
     },
