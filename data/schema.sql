@@ -2,16 +2,16 @@
 -- PostgreSQL database dump
 --
 
-\restrict msxFI2aIPhfUfSlrmSPU3gytY8warXGepB4HLM36MJGTtxvgcT7QoilYOvHFBms
+\restrict ubswlcudeIJ2N52iDbFjwQ9wjqQbYC2wSZ0zDm9MI13pQWgNZfbc7Kof4dfWfSE
 
--- Dumped from database version 17.0 (Debian 17.0-1.pgdg120+1)
--- Dumped by pg_dump version 18.4
+-- Dumped from database version 17.4
+-- Dumped by pg_dump version 17.10
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
 SET transaction_timeout = 0;
-SET client_encoding = 'UTF8';
+SET client_encoding = 'WIN1252';
 SET standard_conforming_strings = on;
 SELECT pg_catalog.set_config('search_path', '', false);
 SET check_function_bodies = false;
@@ -721,7 +721,7 @@ declare
   v_avatar_url text;
   v_user_authentication_id uuid;
 begin
-  -- Extract data from the userâ€™s OAuth profile data.
+  -- Extract data from the user’s OAuth profile data.
   v_email := f_profile ->> 'email';
   v_name := f_profile ->> 'name';
   v_username := f_profile ->> 'username';
@@ -763,7 +763,7 @@ begin
     avatar_url => v_avatar_url
   );
 
-  -- Insert the userâ€™s private account data (e.g. OAuth tokens)
+  -- Insert the user’s private account data (e.g. OAuth tokens)
   insert into app_public.user_authentications (user_id, service, identifier, details) values
     (v_user.id, f_service, f_identifier, f_profile) returning id into v_user_authentication_id;
   insert into app_private.user_authentication_secrets (user_authentication_id, details) values
@@ -6970,5 +6970,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE theopenpresenter REVOKE ALL ON FUNCTIONS FROM 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict msxFI2aIPhfUfSlrmSPU3gytY8warXGepB4HLM36MJGTtxvgcT7QoilYOvHFBms
+\unrestrict ubswlcudeIJ2N52iDbFjwQ9wjqQbYC2wSZ0zDm9MI13pQWgNZfbc7Kof4dfWfSE
 

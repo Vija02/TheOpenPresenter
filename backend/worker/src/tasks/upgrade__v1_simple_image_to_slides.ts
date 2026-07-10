@@ -43,7 +43,17 @@ const task: Task = async (_, { withPgClient }) => {
                 // map old images to slides arrays
                 images.forEach((img: any, index: number) => {
                   slideOrder.push(`${importId}:${index}`);
-                  thumbnailLinks.push(typeof img === "string" ? img : (img?.url || ""));
+                  
+                  let imgUrl = "";
+                  if (typeof img === "string") {
+                    imgUrl = img;
+                  } else if (img?.mediaId && img?.extension) {
+                    imgUrl = `${img.mediaId}.${img.extension}`;
+                  } else if (img?.url) {
+                    imgUrl = img.url;
+                  }
+                  
+                  thumbnailLinks.push(imgUrl);
                   slideClickCounts.push(0);
                   slideIds.push(typeidUnboxed());
                 });
@@ -73,6 +83,7 @@ const task: Task = async (_, { withPgClient }) => {
                 }
 
                 plugin.plugin = "slides";
+                scene.name = "Slides"; 
 
               } catch (e) {
                 console.error("simple image: failed to migrate to slides format", e);
