@@ -19,6 +19,11 @@ const createS3Store = (withPgClient: WithPgClient) => {
         requestChecksumCalculation: "WHEN_REQUIRED",
         responseChecksumValidation: "WHEN_REQUIRED",
       },
+      // Must exactly divide the client's MEDIA_UPLOAD_CHUNK_SIZE (100MB) so every
+      // non-trailing multipart part is the same size. Some S3-compatible providers
+      // (R2/MinIO) reject CompleteMultipartUpload otherwise with
+      // "All non-trailing parts must have the same length."
+      partSize: 10 * 1000 * 1000, // 10MB -> 100MB / 10MB = 10 uniform parts per chunk
       expirationPeriodInMilliseconds: 6 * 60 * 60 * 1000, // 6h
     },
     withPgClient,
