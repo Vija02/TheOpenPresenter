@@ -15,5 +15,6 @@
     { "path": "plugins/lyrics-presenter" },
     { "path": "plugins/simple-image" },
     { "path": "plugins/embed" },
+    { "path": "plugins/bible" },
   ]
 }

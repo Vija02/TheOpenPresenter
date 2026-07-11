@@ -57,6 +57,7 @@ COPY plugins/audio-recorder/package.json /app/plugins/audio-recorder/package.jso
 COPY plugins/video-player/package.json /app/plugins/video-player/package.json
 COPY plugins/radio/package.json /app/plugins/radio/package.json
 COPY plugins/worship-pads/package.json /app/plugins/worship-pads/package.json
+COPY plugins/bible/package.json /app/plugins/bible/package.json
 
 RUN yarn install
 
@@ -178,6 +179,9 @@ RUN yarn workspace @repo/plugin-radio build
 COPY plugins/worship-pads/ /app/plugins/worship-pads/
 RUN yarn workspace @repo/plugin-worship-pads build
 
+COPY plugins/bible/ /app/plugins/bible/
+RUN yarn workspace @repo/plugin-bible build
+
 RUN node scripts/build_utils/extract_plugins.js
 
 ################################################################################
@@ -274,6 +278,10 @@ COPY --from=builder-plugin /app/plugins/radio/out/ /app/plugins/radio/out/
 COPY --from=builder-plugin /app/plugins/worship-pads/package.json /app/plugins/worship-pads/
 COPY --from=builder-plugin /app/plugins/worship-pads/dist/ /app/plugins/worship-pads/dist/
 COPY --from=builder-plugin /app/plugins/worship-pads/out/ /app/plugins/worship-pads/out/
+COPY --from=builder-plugin /app/plugins/bible/package.json /app/plugins/bible/
+COPY --from=builder-plugin /app/plugins/bible/dist/ /app/plugins/bible/dist/
+COPY --from=builder-plugin /app/plugins/bible/out/ /app/plugins/bible/out/
+COPY --from=builder-plugin /app/plugins/bible/migrations/ /app/plugins/bible/migrations/
 
 # Shared args shouldn't be overridable at runtime (because they're baked into
 # the built JS).
