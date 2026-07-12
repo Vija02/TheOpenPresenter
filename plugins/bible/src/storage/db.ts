@@ -1,0 +1,184 @@
+import { pluginName } from "../consts";
+import { deriveAbbreviation } from "../helpers/abbreviation";
+import { BibleBookMeta, LookupResult } from "../types";
+import { Api, ChapterInput, RequestAuth, TranslationSummary } from "./types";
+
+export const listTranslations = async (
+  api: Api,
+  auth: RequestAuth,
+  organizationId: string,
+): Promise<TranslationSummary[]> => {
+  const db = api.getPluginDb(pluginName, auth);
+  const { rows } = await db.query(
+    `select id,
+            name,
+            abbreviation,
+            language,
+            book_count as "bookCount",
+            books,
+            updated_at as "updatedAt"
+       from translation
+      where organization_id = $1 or organization_id is null
+      order by lower(name) asc`,
+    [organizationId],
+  );
+  return rows as TranslationSummary[];
+};
+
+export const createTranslation = async (
+  api: Api,
+  auth: RequestAuth,
+  {
+    organizationId,
+    userId,
+    name,
+    abbreviation,
+    language,
+    format,
+    books,
+    chapters,
+  }: {
+    organizationId: string;
+    userId: string | null;
+    name: string;
+    abbreviation: string | null;
+    language: string;
+    format: string;
+    books: BibleBookMeta[];
+    chapters: ChapterInput[];
+  },
+): Promise<string> => {
+  const db = api.getPluginDb(pluginName, auth);
+  const {
+    rows: [row],
+  } = await db.query<{ id: string }>(
+    `with new_t as (
+       insert into translation
+         (organization_id, created_by_user_id, name, abbreviation,
+          language, format, book_count, books)
+       values ($1, $2, $3, $4, $5, $6, $7, $8::jsonb)
+       returning id
+     ), ins_ch as (
+       insert into translation_chapter
+         (translation_id, organization_id, book, book_number, chapter, verses)
+       select nt.id, $1, c.book, c.book_number, c.chapter, c.verses
+         from new_t nt,
+              jsonb_to_recordset($9::jsonb)
+                as c(book text, book_number int, chapter int, verses jsonb)
+       returning 1
+     )
+     select id from new_t`,
+    [
+      organizationId,
+      userId,
+      name,
+      abbreviation,
+      language,
+      format,
+      books.length,
+      JSON.stringify(books),
+      JSON.stringify(
+        chapters.map((c) => ({
+          book: c.book,
+          book_number: c.bookNumber,
+          chapter: c.chapter,
+          verses: c.verses,
+        })),
+      ),
+    ],
+  );
+  return row!.id;
+};
+
+export const deleteTranslation = async (
+  api: Api,
+  auth: RequestAuth,
+  organizationId: string,
+  id: string,
+): Promise<void> => {
+  const db = api.getPluginDb(pluginName, auth);
+  // chapters cascade via FK
+  await db.query(
+    `delete from translation where id = $1 and organization_id = $2`,
+    [id, organizationId],
+  );
+};
+
+/** Resolves the passage */
+export const resolveFromDb = async (
+  api: Api,
+  auth: RequestAuth,
+  {
+    organizationId,
+    translationId,
+    bookName,
+    bookNumber,
+    chapter,
+    verseStart,
+    verseEnd,
+  }: {
+    organizationId: string;
+    translationId: string;
+    bookName: string;
+    bookNumber: number;
+    chapter: number;
+    verseStart?: number;
+    verseEnd?: number;
+  },
+): Promise<LookupResult> => {
+  const db = api.getPluginDb(pluginName, auth);
+
+  const {
+    rows: [meta],
+  } = await db.query<{ name: string; abbreviation: string | null }>(
+    `select name, abbreviation from translation
+      where id = $1 and (organization_id = $2 or organization_id is null)
+      limit 1`,
+    [translationId, organizationId],
+  );
+  if (!meta) throw new Error("Translation not found");
+
+  const {
+    rows: [row],
+  } = await db.query<{ verses: { v: number; t: string }[] }>(
+    `select verses from translation_chapter
+      where translation_id = $1 and book_number = $2 and chapter = $3
+        and (organization_id = $4 or organization_id is null)
+      limit 1`,
+    [translationId, bookNumber, chapter, organizationId],
+  );
+  if (!row) {
+    throw new Error(`${bookName} ${chapter} is not in this translation`);
+  }
+
+  const all = (row.verses ?? []).sort((a, b) => a.v - b.v);
+  let selected = all;
+  if (verseStart != null) {
+    const end = verseEnd ?? verseStart;
+    selected = all.filter((x) => x.v >= verseStart && x.v <= end);
+  }
+  if (selected.length === 0) {
+    throw new Error(`No verses found for ${bookName} ${chapter}`);
+  }
+
+  const refVerses =
+    verseStart != null
+      ? `${chapter}:${verseStart}${
+          verseEnd != null && verseEnd !== verseStart ? `-${verseEnd}` : ""
+        }`
+      : `${chapter}`;
+
+  return {
+    reference: `${bookName} ${refVerses}`,
+    translationId,
+    translationName: meta.name,
+    translationAbbreviation: meta.abbreviation ?? deriveAbbreviation(meta.name),
+    verses: selected.map((x) => ({
+      bookId: String(bookNumber),
+      bookName,
+      chapter,
+      verse: x.v,
+      text: x.t,
+    })),
+  };
+};
