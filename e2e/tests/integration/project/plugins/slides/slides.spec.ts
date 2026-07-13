@@ -29,10 +29,6 @@ test.describe("Slides Plugin", () => {
     await page.getByText("PDF", { exact: true }).click();
 
     // Open the uploader from the MediaPicker (empty state or grid)
-    await page
-      .getByTestId("media-picker-upload-button")
-      .or(page.getByTestId("media-picker-upload-card"))
-      .click();
 
     // Upload the file
     await uppyUploadFile("./dummyFiles/dummySlide.pdf");
@@ -75,10 +71,6 @@ test.describe("Slides Plugin", () => {
     await page.getByText("Powerpoint", { exact: true }).click();
 
     // Open the uploader from the MediaPicker (empty state or grid)
-    await page
-      .getByTestId("media-picker-upload-button")
-      .or(page.getByTestId("media-picker-upload-card"))
-      .click();
 
     // Upload the file
     await uppyUploadFile("./dummyFiles/dummySlide.pptx");
@@ -119,10 +111,6 @@ test.describe("Slides Plugin", () => {
     await page.getByText("Image", { exact: true }).click();
 
     // Open the uploader from the MediaPicker
-    await page
-      .getByTestId("media-picker-upload-button")
-      .or(page.getByTestId("media-picker-upload-card"))
-      .click();
 
     // Upload the file
     await uppyUploadFile("./dummyFiles/dummyImage.jpg");

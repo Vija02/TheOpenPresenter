@@ -242,3 +242,24 @@
   border: none;
   border-radius: 0;
 }
+
+.bp--dropzone-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Force Uppy DragDrop to be full width */
+.bp--dropzone-container .uppy-DragDrop-container {
+  width: 100% !important;
+  border: 2px dashed #e5e7eb; /* Light grey border */
+  border-radius: 8px;
+  background-color: #f9fafb;
+  padding: 20px;
+  text-align: center;
+  transition: border-color 0.2s;
+}
+
+.bp--dropzone-container .uppy-DragDrop-container:hover {
+  border-color: #3b82f6; /* Blue border on hover */
+}
