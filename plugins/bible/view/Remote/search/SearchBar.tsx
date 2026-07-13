@@ -15,7 +15,7 @@ import {
 } from "../../../src/types";
 import { usePluginAPI } from "../../pluginApi";
 import { trpc } from "../../trpc";
-import TranslationsModal from "../translations/TranslationsModal";
+import SettingsModal from "../translations/SettingsModal";
 import { useCustomTranslations } from "../translations/customTranslations";
 import BiblePicker from "./BiblePicker";
 import { parseReferenceInIndex, suggestBooks } from "./bookIndex";
@@ -329,14 +329,14 @@ const SearchBar = () => {
               <Button
                 variant="outline"
                 onClick={onToggle}
-                title="Manage your translations"
-                data-testid="bible-manage-translations"
+                title="Settings"
+                data-testid="bible-settings"
               >
                 <VscGear />
               </Button>
             )}
           >
-            <TranslationsModal />
+            <SettingsModal />
           </OverlayToggle>
         </div>
       </div>

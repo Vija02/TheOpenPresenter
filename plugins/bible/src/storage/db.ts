@@ -1,7 +1,13 @@
 import { pluginName } from "../consts";
 import { deriveAbbreviation } from "../helpers/abbreviation";
 import { BibleBookMeta, LookupResult } from "../types";
-import { Api, ChapterInput, RequestAuth, TranslationSummary } from "./types";
+import {
+  Api,
+  BiblePreferences,
+  ChapterInput,
+  RequestAuth,
+  TranslationSummary,
+} from "./types";
 
 export const listTranslations = async (
   api: Api,
@@ -181,4 +187,55 @@ export const resolveFromDb = async (
       text: x.t,
     })),
   };
+};
+
+export const getPreferences = async (
+  api: Api,
+  auth: RequestAuth,
+  organizationId: string,
+): Promise<BiblePreferences> => {
+  const db = api.getPluginDb(pluginName, auth);
+  const { rows } = await db.query(
+    `select languages,
+            translation_ids as "translationIds",
+            primary_translation_id as "primaryTranslationId"
+       from bible_preference
+      where organization_id = $1
+      limit 1`,
+    [organizationId],
+  );
+  const row = rows[0];
+  return {
+    languages: (row?.languages as string[]) ?? [],
+    translationIds: (row?.translationIds as string[]) ?? [],
+    primaryTranslationId: (row?.primaryTranslationId as string | null) ?? null,
+  };
+};
+
+export const setPreferences = async (
+  api: Api,
+  auth: RequestAuth,
+  args: {
+    organizationId: string;
+    languages: string[];
+    translationIds: string[];
+    primaryTranslationId: string | null;
+  },
+): Promise<void> => {
+  const db = api.getPluginDb(pluginName, auth);
+  await db.query(
+    `insert into bible_preference
+        (organization_id, languages, translation_ids, primary_translation_id)
+      values ($1, $2::jsonb, $3::jsonb, $4)
+      on conflict (organization_id) do update set
+        languages = excluded.languages,
+        translation_ids = excluded.translation_ids,
+        primary_translation_id = excluded.primary_translation_id`,
+    [
+      args.organizationId,
+      JSON.stringify(args.languages),
+      JSON.stringify(args.translationIds),
+      args.primaryTranslationId,
+    ],
+  );
 };

@@ -27,8 +27,10 @@ import { getPassageSlideCount } from "./helpers/slides";
 import {
   createTranslation,
   deleteTranslation,
+  getPreferences,
   listTranslations,
   resolveFromDb,
+  setPreferences,
 } from "./storage";
 import { BiblePassage, PluginBaseData, PluginRendererData } from "./types";
 
@@ -264,6 +266,36 @@ const getAppRouter =
                 organizationId,
                 input.id,
               );
+              return { success: true };
+            }),
+        },
+
+        // Per-organization preferences
+        preferences: {
+          get: t.procedure
+            .input(z.object({ pluginId: z.string() }))
+            .query(async ({ input, ctx }) => {
+              const { organizationId } = resolveContext(input.pluginId);
+              return getPreferences(serverPluginApi, authOf(ctx), organizationId);
+            }),
+
+          set: t.procedure
+            .input(
+              z.object({
+                pluginId: z.string(),
+                languages: z.array(z.string()),
+                translationIds: z.array(z.string()),
+                primaryTranslationId: z.string().nullish(),
+              }),
+            )
+            .mutation(async ({ input, ctx }) => {
+              const { organizationId } = resolveContext(input.pluginId);
+              await setPreferences(serverPluginApi, authOf(ctx), {
+                organizationId,
+                languages: input.languages,
+                translationIds: input.translationIds,
+                primaryTranslationId: input.primaryTranslationId ?? null,
+              });
               return { success: true };
             }),
         },

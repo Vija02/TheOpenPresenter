@@ -25,3 +25,9 @@ export type TranslationSummary = {
   books: BibleBookMeta[];
   updatedAt: string;
 };
+
+export type BiblePreferences = {
+  languages: string[];
+  translationIds: string[];
+  primaryTranslationId: string | null;
+};
