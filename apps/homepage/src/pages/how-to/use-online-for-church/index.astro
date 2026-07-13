@@ -1,0 +1,563 @@
+---
+import { Image } from "astro:assets";
+import DefaultLayout from "../../../layouts/DefaultLayout.astro";
+import PageIllustration from "../../../components/PageIllustration.astro";
+import createChurchImg from "../../../assets/images/how-to/use-online-for-church/create-church.png";
+import createProjectImg from "../../../assets/images/how-to/use-online-for-church/create-project.png";
+import addLyricsComponentImg from "../../../assets/images/how-to/use-online-for-church/add-lyrics-component.png";
+import searchSongImg from "../../../assets/images/how-to/use-online-for-church/search-song.png";
+import importSongImg from "../../../assets/images/how-to/use-online-for-church/import-song.png";
+import presentNewTabImg from "../../../assets/images/how-to/use-online-for-church/present-new-tab.png";
+import controlPhoneImg from "../../../assets/images/how-to/use-online-for-church/control-phone.png";
+
+const steps = [
+  { id: "register", label: "Register your account" },
+  { id: "create-church", label: "Create your church" },
+  { id: "create-project", label: "Create a project for Sunday" },
+  { id: "add-lyrics", label: "Add lyrics" },
+  { id: "present", label: "Present to the screen" },
+  { id: "control-phone", label: "Control from your phone" },
+];
+---
+
+<DefaultLayout
+  title="How to use the online version of TheOpenPresenter for church"
+  description="A step-by-step guide for churches: register an account, create your church, build a Sunday project, add song lyrics, and present to the screen, all from your browser."
+>
+  <!-- Page illustration -->
+  <div
+    class="relative max-w-6xl mx-auto h-0 pointer-events-none -z-1"
+    aria-hidden="true"
+  >
+    <PageIllustration />
+  </div>
+
+  <section class="relative">
+    <div class="relative max-w-5xl mx-auto px-4 sm:px-6">
+      <div class="pt-32 pb-12 md:pt-40 md:pb-20">
+        <!-- Header -->
+        <div class="pb-10 md:pb-12">
+          <a
+            href="/how-to"
+            class="flex w-fit items-center text-sm text-teal-500 hover:underline mb-4"
+          >
+            <svg
+              class="w-3 h-3 fill-current shrink-0 mr-2 rotate-180"
+              viewBox="0 0 12 12"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M6.602 11l-.976-.997 3.831-3.905H0V4.749h9.457L5.626.844 6.602 0 12 5.5z"
+              ></path>
+            </svg>
+            All how-to guides
+          </a>
+          <div
+            class="inline-flex items-center text-sm font-semibold tracking-wide uppercase text-teal-500 mb-2"
+          >
+            For churches &bull; 10 min read
+          </div>
+          <h1
+            class="text-3xl sm:text-4xl md:text-5xl font-black tracking-tighter font-red-hat-display mb-4 break-words"
+          >
+            How to use the online version of TheOpenPresenter for church
+          </h1>
+          <p
+            class="text-xl text-gray-600 dark:text-gray-300"
+          >
+            This guide walks you through everything you need to run your Sunday
+            service from your browser, no install required. You'll register an
+            account, set up your church, build a project for the week, add your
+            song lyrics, and put it up on the screen.
+          </p>
+        </div>
+
+        <!-- Before you start -->
+        <div
+          class="rounded-lg bg-teal-50 dark:bg-teal-500/10 border border-teal-200 dark:border-teal-500/30 p-5 mb-12 flex gap-4 items-start"
+        >
+          <div
+            class="shrink-0 w-10 h-10 rounded-full bg-teal-500/15 dark:bg-teal-500/20 flex items-center justify-center text-teal-600 dark:text-teal-400"
+            aria-hidden="true"
+          >
+            <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
+              <path
+                d="M11 7h2v2h-2V7zm0 4h2v6h-2v-6zm1-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"
+              ></path>
+            </svg>
+          </div>
+          <div>
+            <p class="font-semibold text-gray-900 dark:text-gray-100 mb-1">
+              Before you start
+            </p>
+            <p class="text-sm text-gray-600 dark:text-gray-300">
+              You only need a computer with a web browser and an internet
+              connection. Because the online version runs entirely in your
+              browser, a good, stable internet connection is important,
+              especially on Sunday while you're presenting live.
+            </p>
+          </div>
+        </div>
+
+        <!-- Table of contents -->
+        <nav class="mb-12" aria-label="Steps in this guide">
+          <p
+            class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-300 mb-3"
+          >
+            What you'll do
+          </p>
+          <ol class="grid gap-2">
+            {
+              steps.map((step, i) => (
+                <li>
+                  <a
+                    href={`#${step.id}`}
+                    class="flex items-center gap-3 text-gray-700 dark:text-gray-300 hover:text-teal-500 transition-colors"
+                  >
+                    <span class="shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-800 text-xs font-bold">
+                      {i + 1}
+                    </span>
+                    {step.label}
+                  </a>
+                </li>
+              ))
+            }
+          </ol>
+        </nav>
+
+        <!-- ===================== STEP 1 ===================== -->
+        <article id="register" class="scroll-mt-24 mb-16">
+          <div class="flex items-center gap-4 mb-4">
+            <div
+              class="flex items-center justify-center w-12 h-12 rounded-full text-white font-red-hat-display font-black text-xl bg-linear-to-tr from-teal-500 to-teal-400 shrink-0"
+            >
+              1
+            </div>
+            <h2 class="h3 font-red-hat-display">Register your account</h2>
+          </div>
+
+          <p class="text-lg text-gray-600 dark:text-gray-300 mb-4">
+            Head to the sign-up page and create your free account. This is the
+            login you'll use to prepare and run every service.
+          </p>
+
+          <ol
+            class="list-decimal list-outside pl-5 space-y-3 text-gray-600 dark:text-gray-300 mb-6"
+          >
+            <li>
+              Go to{" "}
+              <a
+                href="/register"
+                class="text-teal-600 dark:text-teal-400 hover:underline font-medium"
+                >the register page</a
+              >.
+            </li>
+            <li>
+              Fill in your <strong class="font-semibold">Name</strong>,{" "}
+              <strong class="font-semibold">Username</strong>,{" "}
+              <strong class="font-semibold">E-mail</strong>, and a{" "}
+              <strong class="font-semibold">Password</strong> (you'll confirm
+              the password a second time). A username is suggested for you
+              automatically as you type your name, you can keep it or change
+              it.
+            </li>
+            <li>
+              Click <strong class="font-semibold">Register</strong>. You'll be
+              taken straight into TheOpenPresenter.
+            </li>
+            <li>
+              Check your inbox and confirm your email address when prompted, so
+              you don't lose access to your account later.
+            </li>
+          </ol>
+
+          <div
+            class="rounded-md bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-800 p-4 text-sm text-gray-600 dark:text-gray-300"
+          >
+            <span class="font-semibold text-gray-900 dark:text-gray-100"
+              >Tip:</span
+            > Each volunteer can register their own account. Once your church is set
+            up, you can add them to the organization so the whole team shares the
+            same projects and songs.
+          </div>
+        </article>
+
+        <!-- ===================== STEP 2 ===================== -->
+        <article
+          id="create-church"
+          class="scroll-mt-24 mb-16"
+        >
+          <div class="flex items-center gap-4 mb-4">
+            <div
+              class="flex items-center justify-center w-12 h-12 rounded-full text-white font-red-hat-display font-black text-xl bg-linear-to-tr from-purple-500 to-purple-400 shrink-0"
+            >
+              2
+            </div>
+            <h2 class="h3 font-red-hat-display">Create your church</h2>
+          </div>
+
+          <p class="text-lg text-gray-600 dark:text-gray-300 mb-4">
+            Right after registering, you'll be asked to create an organization.
+            This is your church's home in TheOpenPresenter, where all your
+            projects live.
+          </p>
+
+          <ol
+            class="list-decimal list-outside pl-5 space-y-3 text-gray-600 dark:text-gray-300 mb-6"
+          >
+            <li>
+              On the <strong class="font-semibold">Create organization</strong>
+              {" "}screen, enter your church's{" "}
+              <strong class="font-semibold">Name</strong>. A web address (URL)
+              is generated from the name automatically, you'll see a preview of
+              it below the field.
+            </li>
+            <li>
+              Under <em>"What kind of organization is this?"</em>, select{" "}
+              <strong class="font-semibold">House of Worship</strong>.
+            </li>
+            <li>
+              Click <strong class="font-semibold">Create organization</strong>.
+            </li>
+          </ol>
+
+          <Image
+            src={createChurchImg}
+            alt="The Create organization screen with the name set to My Church and House of Worship selected as the organization type"
+            class="rounded-lg border border-gray-200 dark:border-gray-800 shadow-sm w-full max-w-xl mx-auto h-auto mb-6 block"
+          />
+
+          <div
+            class="rounded-md bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-800 p-4 text-sm text-gray-600 dark:text-gray-300"
+          >
+            <span class="font-semibold text-gray-900 dark:text-gray-100"
+              >Why this matters:</span
+            > Choosing <strong class="font-semibold">House of Worship</strong> tailors
+            TheOpenPresenter for church use, for example, projects use a "Service
+            Time" and church-focused tools like the Lyrics Presenter are switched
+            on. You can change the type later if you need to.
+          </div>
+        </article>
+
+        <!-- ===================== STEP 3 ===================== -->
+        <article
+          id="create-project"
+          class="scroll-mt-24 mb-16"
+        >
+          <div class="flex items-center gap-4 mb-4">
+            <div
+              class="flex items-center justify-center w-12 h-12 rounded-full text-white font-red-hat-display font-black text-xl bg-linear-to-tr from-indigo-500 to-indigo-400 shrink-0"
+            >
+              3
+            </div>
+            <h2 class="h3 font-red-hat-display">Create a project for Sunday</h2>
+          </div>
+
+          <p class="text-lg text-gray-600 dark:text-gray-300 mb-4">
+            A <strong class="font-semibold">project</strong> is a single
+            service or event, think of it as "this Sunday's service." You'll
+            make a new project each week and fill it with everything you want to
+            show: song lyrics, announcements, the sermon, and more. This is how
+            you prepare ahead of time.
+          </p>
+
+          <ol
+            class="list-decimal list-outside pl-5 space-y-3 text-gray-600 dark:text-gray-300 mb-6"
+          >
+            <li>
+              From your church dashboard, click{" "}
+              <strong class="font-semibold">New project</strong> (there's also a
+              quick <strong class="font-semibold">New</strong> button at the top
+              right).
+            </li>
+            <li>
+              Give the project a <strong class="font-semibold">Name</strong>,
+              such as "Sunday Service &ndash; 13 Jul". If you leave it blank,
+              it's named with today's date.
+            </li>
+            <li>
+              Set the <strong class="font-semibold">Service Time</strong> for
+              the service. You can optionally add a{" "}
+              <strong class="font-semibold">Category</strong> and{" "}
+              <strong class="font-semibold">Tags</strong> to keep things
+              organized week to week.
+            </li>
+            <li>
+              Click <strong class="font-semibold">Save</strong>. The project
+              opens in the editor, ready for you to add content.
+            </li>
+          </ol>
+
+          <Image
+            src={createProjectImg}
+            alt="The Projects page with the New Project dialog open, showing Name, Service Time, Category and Tags fields and a Save button"
+            class="rounded-lg border border-gray-200 dark:border-gray-800 shadow-sm w-full max-w-xl mx-auto h-auto mb-6 block"
+          />
+
+          <div
+            class="rounded-md bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-800 p-4 text-sm text-gray-600 dark:text-gray-300"
+          >
+            <span class="font-semibold text-gray-900 dark:text-gray-100"
+              >Tip:</span
+            > Prepare during the week from any device. Everything is saved to the
+            cloud automatically, so the project will be ready and waiting when you
+            open it on Sunday.
+          </div>
+        </article>
+
+        <!-- ===================== STEP 4 ===================== -->
+        <article id="add-lyrics" class="scroll-mt-24 mb-16">
+          <div class="flex items-center gap-4 mb-4">
+            <div
+              class="flex items-center justify-center w-12 h-12 rounded-full text-white font-red-hat-display font-black text-xl bg-linear-to-tr from-pink-500 to-pink-400 shrink-0"
+            >
+              4
+            </div>
+            <h2 class="h3 font-red-hat-display">Add lyrics</h2>
+          </div>
+
+          <p class="text-lg text-gray-600 dark:text-gray-300 mb-4">
+            Let's add the songs for your worship set. Lyrics live in the{" "}
+            <strong class="font-semibold">Lyrics Presenter</strong>, which shows
+            song words on the screen one section at a time.
+          </p>
+
+          <ol
+            class="list-decimal list-outside pl-5 space-y-3 text-gray-600 dark:text-gray-300 mb-6"
+          >
+            <li>
+              In your project's editor, click{" "}
+              <strong class="font-semibold">Add</strong> and choose{" "}
+              <strong class="font-semibold">Lyrics Presenter</strong> from the
+              Display section.
+            </li>
+            <li>
+              The <strong class="font-semibold">Add song(s)</strong> window
+              opens. You have a few ways to add a song:
+              <ul
+                class="list-disc list-outside pl-5 space-y-2 mt-2 text-gray-600 dark:text-gray-300"
+              >
+                <li>
+                  <strong class="font-semibold">Search</strong>, type a song
+                  title into the search box to find it in your Songbook (songs
+                  you've saved before) or import it from the online song
+                  library.
+                </li>
+                <li>
+                  <strong class="font-semibold">Create new song</strong>, click
+                  this to type or paste the lyrics in yourself.
+                </li>
+              </ul>
+            </li>
+            <li>
+              <strong class="font-semibold">Example, importing
+                "Praise":</strong
+              > Type <strong class="font-semibold">Praise</strong> into the
+              search box and pick it from the song library. The{" "}
+              <strong class="font-semibold">Import a song</strong> window opens
+              with the lyrics already filled in and split into sections like{" "}
+              <code
+                class="px-1 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-sm"
+                >Verse 1</code
+              >
+              and <code
+                class="px-1 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-sm"
+                >Chorus</code
+              >. Each section becomes its own slide on the screen.
+            </li>
+            <li>
+              Want to tidy the formatting? Click{" "}
+              <strong class="font-semibold">AI Format</strong> (the magic-wand
+              button) and it will clean up the words into neat verses and
+              choruses for you.
+            </li>
+            <li>
+              Tick <strong class="font-semibold">Save to songbook</strong> if
+              you want to reuse this song next time, then click{" "}
+              <strong class="font-semibold">Import</strong> to add it to your
+              set. Repeat for each song you need.
+            </li>
+          </ol>
+
+          <div class="grid gap-4 sm:grid-cols-3 items-start mb-6">
+            <Image
+              src={addLyricsComponentImg}
+              alt="The Add component screen with Lyrics Presenter highlighted under the Display section"
+              class="rounded-lg border border-gray-200 dark:border-gray-800 shadow-sm w-full h-auto"
+            />
+
+            <Image
+              src={searchSongImg}
+              alt="Searching for the song Praise in the Add song window, showing Songbook results and Import results from MyWorshipList with a matching song highlighted"
+              class="rounded-lg border border-gray-200 dark:border-gray-800 shadow-sm w-full h-auto"
+            />
+
+            <Image
+              src={importSongImg}
+              alt="The Add song window showing an imported song with lyric slides, a Save to songbook checkbox, an AI Format button and an Import button"
+              class="rounded-lg border border-gray-200 dark:border-gray-800 shadow-sm w-full h-auto"
+            />
+          </div>
+
+          <div
+            class="rounded-md bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-800 p-4 text-sm text-gray-600 dark:text-gray-300"
+          >
+            <span class="font-semibold text-gray-900 dark:text-gray-100"
+              >Tip:</span
+            > Keep one line of thought per slide. Shorter sections are easier for
+            the congregation to read and easier for you to follow along while presenting.
+          </div>
+        </article>
+
+        <!-- ===================== STEP 5 ===================== -->
+        <article id="present" class="scroll-mt-24 mb-16">
+          <div class="flex items-center gap-4 mb-4">
+            <div
+              class="flex items-center justify-center w-12 h-12 rounded-full text-white font-red-hat-display font-black text-xl bg-linear-to-tr from-amber-500 to-amber-400 shrink-0"
+            >
+              5
+            </div>
+            <h2 class="h3 font-red-hat-display">Present to the screen</h2>
+          </div>
+
+          <p class="text-lg text-gray-600 dark:text-gray-300 mb-4">
+            On Sunday, open your project on the computer that's connected to your
+            TV or projector. You'll control what's shown from the editor, and the
+            words appear on a separate screen for the congregation.
+          </p>
+
+          <ol
+            class="list-decimal list-outside pl-5 space-y-3 text-gray-600 dark:text-gray-300 mb-6"
+          >
+            <li>
+              Open this week's project, then click the{" "}
+              <strong class="font-semibold">Present</strong> button.
+            </li>
+            <li>
+              Choose <strong class="font-semibold">Open in new tab</strong>.
+              This opens the audience view, the actual slides, in a separate
+              browser tab.
+            </li>
+            <li>
+              Drag that new tab onto your TV/projector screen, then make it{" "}
+              <strong class="font-semibold">full screen</strong> by pressing{" "}
+              <kbd
+                class="px-1.5 py-0.5 rounded border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-800 text-xs font-semibold"
+                >F11</kbd
+              > on Windows/Linux (or Control + Command + F on a Mac). This hides
+              the browser bars so only the slides are visible.
+            </li>
+            <li>
+              Back in the editor tab, click a song section to send it to the
+              screen. The congregation sees the words update instantly. Move
+              through the set as the service goes on.
+            </li>
+          </ol>
+
+          <Image
+            src={presentNewTabImg}
+            alt="The Lyrics Presenter editor with the Present menu open, highlighting the Open in new tab option"
+            class="rounded-lg border border-gray-200 dark:border-gray-800 shadow-sm w-full max-w-xl mx-auto h-auto mb-6 block"
+          />
+
+          <div
+            class="rounded-md bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-800 p-4 text-sm text-gray-600 dark:text-gray-300"
+          >
+            <span class="font-semibold text-gray-900 dark:text-gray-100"
+              >Tip:</span
+            > Keep the editor tab on your control screen and the full-screen tab on
+            the projector. That way the congregation only ever sees the slides, never
+            your controls.
+          </div>
+        </article>
+
+        <!-- ===================== STEP 6 (optional) ===================== -->
+        <article id="control-phone" class="scroll-mt-24 mb-16">
+          <div class="flex items-center gap-4 mb-4">
+            <div
+              class="flex items-center justify-center w-12 h-12 rounded-full text-white font-red-hat-display font-black text-xl bg-linear-to-tr from-sky-500 to-sky-400 shrink-0"
+            >
+              6
+            </div>
+            <h2 class="h3 font-red-hat-display">
+              Control from your phone (optional)
+            </h2>
+          </div>
+
+          <p class="text-lg text-gray-600 dark:text-gray-300 mb-4">
+            Don't want to be stuck at the computer? You can control the
+            presentation from your phone and change slides from anywhere in the
+            room. The full-screen output stays on your TV or projector, while
+            your phone becomes the remote.
+          </p>
+
+          <ol
+            class="list-decimal list-outside pl-5 space-y-3 text-gray-600 dark:text-gray-300 mb-6"
+          >
+            <li>
+              In the editor, click the{" "}
+              <strong class="font-semibold">Share</strong> icon at the
+              bottom-left of the screen. The{" "}
+              <strong class="font-semibold">Share Project</strong> window opens
+              with a QR code.
+            </li>
+            <li>
+              Tick <strong class="font-semibold">Make project public</strong> so
+              your phone can open the project without needing to log in.
+            </li>
+            <li>
+              Scan the QR code with your phone's camera and open the link. The
+              same project opens on your phone.
+            </li>
+            <li>
+              On your phone, tap a song section to send it to the screen, just
+              like you would on the computer. The slides update instantly.
+            </li>
+          </ol>
+
+          <Image
+            src={controlPhoneImg}
+            alt="The Share Project window showing a QR code to open the project on another device, with the Make project public checkbox ticked"
+            class="rounded-lg border border-gray-200 dark:border-gray-800 shadow-sm w-full max-w-xl mx-auto h-auto mb-6 block"
+          />
+
+          <div
+            class="rounded-md bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-800 p-4 text-sm text-gray-600 dark:text-gray-300"
+          >
+            <span class="font-semibold text-gray-900 dark:text-gray-100"
+              >Tip:</span
+            > Share the QR code with more than one person so your team can take turns
+            controlling the service. Untick{" "}
+            <strong class="font-semibold">Make project public</strong> afterwards
+            if you'd rather keep the project private.
+          </div>
+        </article>
+
+        <!-- Wrap up / CTA -->
+        <div
+          class="rounded-lg border border-gray-200 dark:border-gray-800 p-8 text-center"
+        >
+          <h2 class="h4 font-red-hat-display mb-2">That's it, you're ready for Sunday</h2>
+          <p class="text-gray-600 dark:text-gray-300 mb-6">
+            Register once, prepare your project during the week, and present with
+            a couple of clicks. Ready to try it with your church?
+          </p>
+          <div class="flex flex-wrap items-center justify-center gap-3">
+            <a
+              href="/register"
+              class="btn text-white bg-teal-500 hover:bg-teal-400 shrink-0"
+            >
+              Create your free account
+            </a>
+            <a
+              href="/church"
+              class="btn text-teal-500 bg-transparent border border-teal-500 hover:bg-teal-500/10 shrink-0"
+            >
+              Learn more
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</DefaultLayout>

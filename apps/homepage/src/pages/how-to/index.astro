@@ -1,0 +1,104 @@
+---
+import DefaultLayout from "../../layouts/DefaultLayout.astro";
+import PageIllustration from "../../components/PageIllustration.astro";
+
+// Add new how-to guides here to have them show up on this hub page.
+const guides = [
+  {
+    href: "/how-to/use-online-for-church",
+    category: "For churches",
+    title: "How to use the online version of TheOpenPresenter for church",
+    description:
+      "A step-by-step walkthrough: register an account, create your church, build a Sunday project, add lyrics, and present to the screen.",
+    minutes: 10,
+  },
+];
+---
+
+<DefaultLayout
+  title="How-to guides | TheOpenPresenter"
+  description="Step-by-step guides to help you get the most out of TheOpenPresenter."
+>
+  <!-- Page illustration -->
+  <div
+    class="relative max-w-6xl mx-auto h-0 pointer-events-none -z-1"
+    aria-hidden="true"
+  >
+    <PageIllustration />
+  </div>
+
+  <section class="relative">
+    <div class="relative max-w-6xl mx-auto px-4 sm:px-6">
+      <div class="pt-32 pb-12 md:pt-40 md:pb-20">
+        <!-- Page header -->
+        <div class="max-w-3xl mx-auto text-center pb-12 md:pb-16">
+          <div
+            class="inline-flex items-center text-sm font-semibold tracking-wide uppercase text-teal-500 mb-2"
+          >
+            How-to guides
+          </div>
+          <h1 class="h2 font-red-hat-display mb-4 break-words">
+            Learn TheOpenPresenter, step by step
+          </h1>
+          <p
+            class="text-xl text-gray-600 dark:text-gray-300"
+          >
+            Practical, click-by-click guides that take you from sign up to
+            showing content on the screen.
+          </p>
+        </div>
+
+        <!-- Guides list -->
+        <div class="max-w-5xl mx-auto grid gap-6">
+          {
+            guides.map((guide) => (
+              <a
+                href={guide.href}
+                class="group block rounded-lg border border-gray-200 dark:border-gray-800 p-6 md:p-8 hover:border-teal-400 dark:hover:border-teal-500 transition-colors"
+              >
+                <div class="flex items-center gap-3 mb-2">
+                  <span class="inline-flex items-center text-xs font-semibold tracking-wide uppercase text-teal-500">
+                    {guide.category}
+                  </span>
+                  <span class="text-gray-300 dark:text-gray-700">&bull;</span>
+                  <span class="text-xs text-gray-500 dark:text-gray-300">
+                    {guide.minutes} min read
+                  </span>
+                </div>
+                <h2 class="text-xl md:text-2xl font-red-hat-display font-black mb-2 group-hover:text-teal-500 transition-colors">
+                  {guide.title}
+                </h2>
+                <p class="text-gray-600 dark:text-gray-300 mb-4">
+                  {guide.description}
+                </p>
+                <span class="inline-flex items-center text-teal-500 font-medium">
+                  Read the guide
+                  <svg
+                    class="w-3 h-3 fill-current shrink-0 ml-2 group-hover:translate-x-1 transition-transform"
+                    viewBox="0 0 12 12"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path d="M6.602 11l-.976-.997 3.831-3.905H0V4.749h9.457L5.626.844 6.602 0 12 5.5z" />
+                  </svg>
+                </span>
+              </a>
+            ))
+          }
+        </div>
+
+        <!-- Help note -->
+        <div class="max-w-3xl mx-auto text-center mt-12">
+          <p class="text-gray-600 dark:text-gray-300">
+            Can't find what you're looking for? Email us at{" "}
+            <a
+              href="mailto:support@theopenpresenter.com"
+              class="text-teal-600 dark:text-teal-400 hover:underline font-medium"
+            >
+              support@theopenpresenter.com
+            </a>.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+</DefaultLayout>
