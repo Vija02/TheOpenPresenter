@@ -35,7 +35,8 @@ import { typeidUnboxed } from "typeid-js";
 
 import { MediaCard } from "./MediaCard";
 import { MediaPreviewDialog } from "./MediaPreviewDialog";
-import { UploadMediaModal } from "./UploadMediaModal";
+import { UploadMediaModal, UploadedMediaInfo } from "./UploadMediaModal";
+import { Dropzone } from "./Dropzone";
 import { MediaWithMetadata } from "./types";
 import { filterMediaByType } from "./utils";
 
@@ -235,6 +236,31 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
     [],
   );
 
+  const handleUploadComplete = useCallback(
+    (uploadedList: UploadedMediaInfo[]) => {
+      refetch({ requestPolicy: "network-only" });
+
+      const picked: MediaPickerResult[] = [];
+      for (const uploaded of uploadedList) {
+        if (!uploaded.mediaName) continue;
+        const ext = uploaded.mediaName.split(".").pop() ?? "";
+        const isVideoUpload = options?.type === "video" || isVideoFile(ext);
+        const allowAutoPick = !isVideoUpload || !!options?.autoPickVideo;
+        if (!allowAutoPick) continue;
+        picked.push(
+          buildResultFromUpload(uploaded.mediaName, uploaded.originalName),
+        );
+      }
+
+      if (picked.length === 0) return;
+      // Respect `multiple: false`
+      const finalPicks =
+        options?.multiple === false ? picked.slice(0, 1) : picked;
+      onSelect(finalPicks);
+    },
+    [refetch, options, buildResultFromUpload, onSelect],
+  );
+
   const title = options?.title ?? "Select Media";
   const portalContainer = options?.portalContainer;
 
@@ -278,39 +304,41 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
                 <p className="bp--media-picker-empty-state__description">
                   Upload a {typeLabel.singular} to get started.
                 </p>
-                <Button
-                  size="lg"
-                  onClick={() => setIsUploadModalOpen(true)}
-                  data-testid="media-picker-upload-button"
-                >
-                  <VscCloudUpload />
-                  Upload {typeLabel.singular}
-                </Button>
+                {!isPublicAccess && (
+                  <Dropzone
+                    onUploadComplete={handleUploadComplete}
+                    organizationId={organizationId}
+                    projectId={projectId}
+                    pluginId={pluginId}
+                    mediaType={options?.type}
+                    multiple={allowMultiple}
+                  />
+                )}
               </div>
             ) : (
-              <div className="bp--media-picker-grid">
-                <div
-                  className="bp--media-card bp--media-card--upload"
-                  onClick={() => setIsUploadModalOpen(true)}
-                  data-testid="media-picker-upload-card"
-                >
-                  <div className="bp--media-card__preview bp--media-card__preview--upload">
-                    <VscCloudUpload className="bp--media-card__upload-icon" />
-                    <span className="bp--media-card__upload-label">
-                      Upload new
-                    </span>
-                  </div>
-                </div>
-                {filteredMedia.map((media) => (
-                  <MediaCard
-                    key={media.id}
-                    media={media}
-                    onClick={(e) => handleClick(media, e)}
-                    onPreview={(m) => setPreviewMedia(m)}
-                    disabled={!isVideoReady(media)}
-                    selected={selectedIds.has(media.id)}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {!isPublicAccess && (
+                  <Dropzone
+                    onUploadComplete={handleUploadComplete}
+                    organizationId={organizationId}
+                    projectId={projectId}
+                    pluginId={pluginId}
+                    mediaType={options?.type}
+                    multiple={allowMultiple}
                   />
-                ))}
+                )}
+                <div className="bp--media-picker-grid">
+                  {filteredMedia.map((media) => (
+                    <MediaCard
+                      key={media.id}
+                      media={media}
+                      onClick={(e) => handleClick(media, e)}
+                      onPreview={(m) => setPreviewMedia(m)}
+                      disabled={!isVideoReady(media)}
+                      selected={selectedIds.has(media.id)}
+                    />
+                  ))}
+                </div>
               </div>
             )}
           </DialogBody>
@@ -340,41 +368,13 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
         isOpen={previewMedia !== null}
         onClose={() => setPreviewMedia(null)}
       />
-      {/* Upload Modal */}
+      {/* Upload Modal (Kept for backwards compatibility if triggered elsewhere) */}
       {isUploadModalOpen && (
         <div onClick={(e) => e.stopPropagation()}>
           <UploadMediaModal
             isOpen={isUploadModalOpen}
             onClose={() => setIsUploadModalOpen(false)}
-            onUploadComplete={(uploadedList) => {
-              refetch({ requestPolicy: "network-only" });
-
-              const picked: MediaPickerResult[] = [];
-              for (const uploaded of uploadedList) {
-                if (!uploaded.mediaName) continue;
-                const ext = uploaded.mediaName.split(".").pop() ?? "";
-                // Videos require explicit opt-in (autoPickVideo)
-                // because they may still be processing (HLS/thumbnail)
-                // after upload.
-                const isVideoUpload =
-                  options?.type === "video" || isVideoFile(ext);
-                const allowAutoPick =
-                  !isVideoUpload || !!options?.autoPickVideo;
-                if (!allowAutoPick) continue;
-                picked.push(
-                  buildResultFromUpload(
-                    uploaded.mediaName,
-                    uploaded.originalName,
-                  ),
-                );
-              }
-
-              if (picked.length === 0) return;
-              // Respect `multiple: false`
-              const finalPicks =
-                options?.multiple === false ? picked.slice(0, 1) : picked;
-              onSelect(finalPicks);
-            }}
+            onUploadComplete={handleUploadComplete}
             organizationId={organizationId}
             projectId={projectId}
             pluginId={pluginId}
