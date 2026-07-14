@@ -77,7 +77,6 @@ export const Dropzone: React.FC<DropzoneProps> = ({
     <div className="bp--dropzone-container" style={{ marginBottom: "16px" }}>
       <Dashboard 
         uppy={uppy} 
-        inline={true} 
         height={300}
         proudlyDisplayPoweredByUppy={false}
       />
