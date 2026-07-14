@@ -79,7 +79,6 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
     pause: !isOpen || isPublicAccess,
   });
 
-  // Filter media by type
   const rawFilteredMedia = useMemo(() => {
     const allMedia =
       (data?.organization?.medias.nodes as MediaWithMetadata[]) ?? [];
@@ -91,7 +90,6 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
     { enabled: isOpen },
   );
 
-  // Reset selection and overrides when modal closes
   const prevIsOpenRef = useRef(isOpen);
   useEffect(() => {
     if (prevIsOpenRef.current && !isOpen) {
@@ -156,7 +154,6 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
         };
       }
 
-      // Check for child thumbnail from dependencies (fallback for any media type)
       const imageDependency = media.dependencies.nodes.find((dep) =>
         isImageFile(dep.childMedia?.fileExtension),
       );
@@ -177,7 +174,6 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
 
   const handleClick = useCallback(
     (media: MediaWithMetadata, e: React.MouseEvent) => {
-      // Don't allow selection of videos that aren't ready
       if (!isVideoReady(media)) return;
 
       const isMultiSelect = allowMultiple && e.shiftKey;
@@ -252,7 +248,6 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
       }
 
       if (picked.length === 0) return;
-      // Respect `multiple: false`
       const finalPicks =
         options?.multiple === false ? picked.slice(0, 1) : picked;
       onSelect(finalPicks);
@@ -291,29 +286,9 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
               </div>
             ) : !data ? (
               <div className="bp--media-picker-empty">Loading media...</div>
-            ) : isEmpty ? (
-              <div
-                className="bp--media-picker-empty-state"
-                data-testid="media-picker-empty-state"
-              >
-                <VscCloudUpload className="bp--media-picker-empty-state__icon" />
-                <h3 className="bp--media-picker-empty-state__title">
-                  No {typeLabel.plural} yet
-                </h3>
-                <p className="bp--media-picker-empty-state__description">
-                  Upload a {typeLabel.singular} to get started.
-                </p>
-                <Dropzone
-                  onUploadComplete={handleUploadComplete}
-                  organizationId={organizationId}
-                  projectId={projectId}
-                  pluginId={pluginId}
-                  mediaType={options?.type}
-                  multiple={allowMultiple}
-                />
-              </div>
             ) : (
-              <div className="bp--media-picker-content">
+              <div className="flex flex-col gap-2">
+                {/* 1. Dropzone Always Top */}
                 <Dropzone
                   onUploadComplete={handleUploadComplete}
                   organizationId={organizationId}
@@ -322,17 +297,39 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
                   mediaType={options?.type}
                   multiple={allowMultiple}
                 />
-                <div className="bp--media-picker-grid">
-                  {filteredMedia.map((media) => (
-                    <MediaCard
-                      key={media.id}
-                      media={media}
-                      onClick={(e) => handleClick(media, e)}
-                      onPreview={(m) => setPreviewMedia(m)}
-                      disabled={!isVideoReady(media)}
-                      selected={selectedIds.has(media.id)}
-                    />
-                  ))}
+
+                {/* 2. Your Library Section */}
+                <div className="flex flex-col gap-3">
+                  <h3 className="text-lg font-semibold text-gray-800">
+                    Your Library
+                  </h3>
+                  {isEmpty ? (
+                    <div
+                      className="flex flex-col items-center justify-center p-10" 
+                      data-testid="media-picker-empty-state"
+                    >
+                      <VscCloudUpload className="size-12 text-gray-400 mb-3" />
+                      <h4 className="text-lg font-medium text-gray-700 m-0">
+                        No {typeLabel.plural} yet
+                      </h4>
+                      <p className="text-sm text-gray-500 mt-1">
+                        Use the Dropzone above to upload a {typeLabel.singular}.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="bp--media-picker-grid">
+                      {filteredMedia.map((media) => (
+                        <MediaCard
+                          key={media.id}
+                          media={media}
+                          onClick={(e) => handleClick(media, e)}
+                          onPreview={(m) => setPreviewMedia(m)}
+                          disabled={!isVideoReady(media)}
+                          selected={selectedIds.has(media.id)}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -357,7 +354,6 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      {/* Preview Dialog */}
       <MediaPreviewDialog
         media={previewMedia}
         isOpen={previewMedia !== null}
