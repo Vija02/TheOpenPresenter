@@ -32,6 +32,10 @@ export default async function installHelmet(app: Express) {
           ROOT_URL.replace(/^http/, "ws"),
           // For tauri
           "ipc:",
+          // Google Analytics (GA4) measurement endpoints
+          "https://*.google-analytics.com",
+          "https://*.analytics.google.com",
+          "https://*.googletagmanager.com",
         ],
         "script-src": [
           ...(contentSecurityPolicy.getDefaultDirectives()[
@@ -42,6 +46,8 @@ export default async function installHelmet(app: Express) {
           "https://esm.sh",
           // Stripe
           "https://js.stripe.com",
+          // Google Analytics (gtag.js)
+          "https://*.googletagmanager.com",
           // Nonce for general usage
           `'nonce-${nonce}'`,
           "blob:",
