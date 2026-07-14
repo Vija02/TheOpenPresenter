@@ -205,6 +205,12 @@
   gap: 8px;
 }
 
+.bp--media-picker-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
 .bp--media-preview-dialog {
   display: flex;
   flex-direction: column;

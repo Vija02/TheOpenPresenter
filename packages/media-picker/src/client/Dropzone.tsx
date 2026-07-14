@@ -1,7 +1,7 @@
 import { MediaType } from "@repo/base-plugin";
 import { appData } from "@repo/lib";
 import Uppy from "@uppy/core";
-import { DragDrop, useUppyEvent } from "@uppy/react";
+import { Dashboard, useUppyEvent } from "@uppy/react";
 import Tus from "@uppy/tus";
 import React, { useEffect, useMemo, useState } from "react";
 import { UploadedMediaInfo } from "./UploadMediaModal";
@@ -75,16 +75,12 @@ export const Dropzone: React.FC<DropzoneProps> = ({
 
   return (
     <div className="bp--dropzone-container" style={{ marginBottom: "16px" }}>
-    <DragDrop 
-      uppy={uppy} 
-      locale={{
-        strings: {
-          dropHereOr: 'Drop files here or %{browse}',
-          browse: 'browse',
-        },
-        pluralize: (n) => n,
-      }}
-    />
+      <Dashboard 
+        uppy={uppy} 
+        inline={true} 
+        height={300}
+        proudlyDisplayPoweredByUppy={false}
+      />
     </div>
   );
 };

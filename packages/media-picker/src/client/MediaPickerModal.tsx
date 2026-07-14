@@ -35,7 +35,7 @@ import { typeidUnboxed } from "typeid-js";
 
 import { MediaCard } from "./MediaCard";
 import { MediaPreviewDialog } from "./MediaPreviewDialog";
-import { UploadMediaModal, UploadedMediaInfo } from "./UploadMediaModal";
+import { UploadedMediaInfo } from "./UploadMediaModal";
 import { Dropzone } from "./Dropzone";
 import { MediaWithMetadata } from "./types";
 import { filterMediaByType } from "./utils";
@@ -66,7 +66,6 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
 }) => {
   const { organizationId, projectId, pluginId } = options.pluginContext;
 
-  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [previewMedia, setPreviewMedia] = useState<MediaWithMetadata | null>(
     null,
@@ -304,29 +303,25 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
                 <p className="bp--media-picker-empty-state__description">
                   Upload a {typeLabel.singular} to get started.
                 </p>
-                {!isPublicAccess && (
-                  <Dropzone
-                    onUploadComplete={handleUploadComplete}
-                    organizationId={organizationId}
-                    projectId={projectId}
-                    pluginId={pluginId}
-                    mediaType={options?.type}
-                    multiple={allowMultiple}
-                  />
-                )}
+                <Dropzone
+                  onUploadComplete={handleUploadComplete}
+                  organizationId={organizationId}
+                  projectId={projectId}
+                  pluginId={pluginId}
+                  mediaType={options?.type}
+                  multiple={allowMultiple}
+                />
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                {!isPublicAccess && (
-                  <Dropzone
-                    onUploadComplete={handleUploadComplete}
-                    organizationId={organizationId}
-                    projectId={projectId}
-                    pluginId={pluginId}
-                    mediaType={options?.type}
-                    multiple={allowMultiple}
-                  />
-                )}
+              <div className="bp--media-picker-content">
+                <Dropzone
+                  onUploadComplete={handleUploadComplete}
+                  organizationId={organizationId}
+                  projectId={projectId}
+                  pluginId={pluginId}
+                  mediaType={options?.type}
+                  multiple={allowMultiple}
+                />
                 <div className="bp--media-picker-grid">
                   {filteredMedia.map((media) => (
                     <MediaCard
@@ -368,21 +363,6 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
         isOpen={previewMedia !== null}
         onClose={() => setPreviewMedia(null)}
       />
-      {/* Upload Modal (Kept for backwards compatibility if triggered elsewhere) */}
-      {isUploadModalOpen && (
-        <div onClick={(e) => e.stopPropagation()}>
-          <UploadMediaModal
-            isOpen={isUploadModalOpen}
-            onClose={() => setIsUploadModalOpen(false)}
-            onUploadComplete={handleUploadComplete}
-            organizationId={organizationId}
-            projectId={projectId}
-            pluginId={pluginId}
-            mediaType={options?.type}
-            multiple={allowMultiple}
-          />
-        </div>
-      )}
     </DialogPortalContainerContext.Provider>
   );
 };
