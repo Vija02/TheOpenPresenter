@@ -18,7 +18,6 @@ export const test = base.extend<MediaFixture>({
         page.getByRole("button", { name: "browse files" }).click(),
       ]);
       await fileChooser.setFiles(fileName);
-      await page.getByRole("button", { name: "Upload 1 file" }).click();
     };
 
     await use(upload);
