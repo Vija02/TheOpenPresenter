@@ -188,7 +188,7 @@ runs:
               - ROOT_URL=${DEPLOYMENT_URL}
               - STORAGE_TYPE=file
               - STORAGE_PROXY=local
-              - ENABLED_PLUGINS=lyrics-presenter,simple-image,slides,radio,audio-recorder,video-player,worship-pads,embed,timer
+              - ENABLED_PLUGINS=lyrics-presenter,slides,radio,audio-recorder,video-player,worship-pads,embed,timer
               - PLUGIN_GOOGLE_SLIDES_CLIENT_ID=69245303872-fo9ap9sv2a6a5oiim2aqsk1hnnrmkkdk.apps.googleusercontent.com
               - PLUGIN_GOOGLE_SLIDES_UNOCONVERT_SERVER=http://${DEPLOYMENT_NAME}-unoserver:3000
               - OTLP_HOST=http://${DEPLOYMENT_NAME}-alloy:4318
@@ -223,7 +223,7 @@ runs:
               - ROOT_URL=${DEPLOYMENT_URL}
               - STORAGE_TYPE=file
               - STORAGE_PROXY=local
-              - ENABLED_PLUGINS=lyrics-presenter,simple-image,slides,radio,audio-recorder,video-player,worship-pads,embed,timer
+              - ENABLED_PLUGINS=lyrics-presenter,slides,radio,audio-recorder,video-player,worship-pads,embed,timer
               - TARGET=worker
               - OTLP_HOST=http://${DEPLOYMENT_NAME}-alloy:4318
               - DEPLOYMENT_ENV=staging
