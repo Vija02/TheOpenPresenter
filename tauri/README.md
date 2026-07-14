@@ -102,7 +102,6 @@ Logging & error handling:
 - Error not logged nor shown when node initialization fails
 
 Cross origin: 
-- Simple image: Link is hardcoded, so it doesn't load
 - Audio recorder: navigator.mediaDevices only available on http
 
 Nice to have:

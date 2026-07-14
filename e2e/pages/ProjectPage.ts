@@ -5,7 +5,6 @@ const pluginsList = [
   "Slides",
   "Lyrics Presenter",
   "Timer",
-  "Simple Image",
   "Video Player",
   "Audio Recorder",
   "Radio",

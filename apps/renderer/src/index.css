@@ -10,7 +10,7 @@ body {
 }
 
 .landing {
-  @apply h-full text-white p-10 md:p-20 border-[10px] border-orange-500;
+  @apply h-full text-white p-10 md:p-20;
 
   h1 {
     @apply text-orange-500 uppercase font-extrabold;
@@ -18,24 +18,18 @@ body {
     @apply max-w-md md:max-w-xl;
   }
   p {
-    @apply text-lg md:text-3xl;
+    @apply text-2xl;
   }
 
   @media (orientation: landscape) and (max-height: 540px) {
     @apply p-10 flex gap-10;
 
-    h1 {
-      @apply text-4xl;
-    }
     p {
       @apply text-xl;
     }
   }
 
   @media (orientation: landscape) and (max-height: 350px) {
-    h1 {
-      @apply text-2xl;
-    }
     p {
       @apply text-lg;
     }
