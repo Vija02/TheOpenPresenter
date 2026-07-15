@@ -2,12 +2,12 @@
 import DefaultLayout from "../../../layouts/DefaultLayout.astro";
 import PageIllustration from "../../../components/PageIllustration.astro";
 
-const SCHOLARSHIP_EMAIL = "scholarship@theopenpresenter.com";
-const MAILTO = `mailto:${SCHOLARSHIP_EMAIL}?subject=${encodeURIComponent("Scholarship application")}`;
+const SPONSORSHIP_EMAIL = "sponsorship@theopenpresenter.com";
+const MAILTO = `mailto:${SPONSORSHIP_EMAIL}?subject=${encodeURIComponent("Sponsorship application")}`;
 ---
 
 <DefaultLayout
-  title="Small-church scholarship | TheOpenPresenter"
+  title="Small-church sponsorship | TheOpenPresenter"
   description="The full TheOpenPresenter cloud plan, free for small churches. Read why we offer it, who qualifies, and how to apply."
 >
   <!-- Page illustration -->
@@ -34,7 +34,7 @@ const MAILTO = `mailto:${SCHOLARSHIP_EMAIL}?subject=${encodeURIComponent("Schola
             data-aos="fade-down"
             data-aos-delay="50"
           >
-            The small-church scholarship
+            The small-church sponsorship
           </h1>
           <p
             class="text-xl text-gray-600 dark:text-gray-400"
@@ -63,7 +63,7 @@ const MAILTO = `mailto:${SCHOLARSHIP_EMAIL}?subject=${encodeURIComponent("Schola
             </p>
             <p>
               We started in a small church too, so we happily bear the cost. This
-              scholarship is our small part in helping your church do what
+              sponsorship is our small part in helping your church do what
               matters most. There's never any obligation. If you're ever able to
               give back you're welcome to
               <a
@@ -176,20 +176,20 @@ const MAILTO = `mailto:${SCHOLARSHIP_EMAIL}?subject=${encodeURIComponent("Schola
             How to apply
           </h2>
           <p class="text-gray-700 dark:text-gray-300 mb-6 max-w-xl mx-auto">
-            Send us an email with the subject <strong>Scholarship application</strong>
-            and tell us a little about your church: Who you are, roughly how many
-            attend, and how you'd use TheOpenPresenter. We'll get you set up.
+            Send us an email with the subject <strong>Sponsorship application</strong>
+            and tell us a little about your church: <b>Who you are</b>, <b>roughly how many
+            attend</b>, and <b>how you'd use TheOpenPresenter</b>. We'll get you set up.
           </p>
           <a class="btn text-white bg-teal-500 hover:bg-teal-400" href={MAILTO}>
-            Email {SCHOLARSHIP_EMAIL}
+            Email {SPONSORSHIP_EMAIL}
           </a>
           <p class="text-sm text-gray-500 dark:text-gray-400 mt-4">
             Or email us directly at
             <a
               class="text-teal-600 dark:text-teal-400 hover:underline font-medium"
-              href={MAILTO}>{SCHOLARSHIP_EMAIL}</a
+              href={MAILTO}>{SPONSORSHIP_EMAIL}</a
             >
-            with the subject "Scholarship application".
+            with the subject "Sponsorship application".
           </p>
         </div>
       </div>
