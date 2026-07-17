@@ -15,11 +15,11 @@ import { VscSettingsGear } from "react-icons/vsc";
 
 import { resolveSlide } from "../../src/slideOrderUtils";
 import { usePluginAPI } from "../pluginApi";
+import { trpc } from "../trpc";
 import {
   computeGlobalSlideClickCount,
   useAutoplay,
 } from "../utils/useAutoplay";
-import ImportFileModal from "./ImportFile/ImportFileModal";
 import Landing from "./Landing";
 import SettingsModal from "./SettingsModal";
 import "./index.css";
@@ -105,6 +105,10 @@ const RemoteHandler = () => {
   const rendererData = pluginApi.renderer.useData((x) => x);
 
   const mutableRendererData = pluginApi.renderer.useValtioData();
+
+  const { mutateAsync: selectPdf } = trpc.slides.selectPdf.useMutation();
+  const { mutateAsync: selectPpt } = trpc.slides.selectPpt.useMutation();
+  const { mutateAsync: selectImage } = trpc.slides.selectImage.useMutation();
 
   const resolvedSlides = pluginData.slideOrder
     .map((_, i) => resolveSlide(pluginData, i))
@@ -226,18 +230,72 @@ const RemoteHandler = () => {
           </Slide>
         ));
       })}
-      <OverlayToggle
-        toggler={({ onToggle }) => (
-          <Slide pluginAPI={pluginApi} heading="" onClick={onToggle}>
-            <div className="group h-full w-full flex flex-col items-center justify-center gap-2 border-2 border-dashed border-tertiary text-tertiary hover:border-secondary hover:text-secondary hover:bg-black/5 transition-colors">
-              <FaPlus className="size-6" />
-              <span className="text-sm font-medium">Add slide</span>
-            </div>
-          </Slide>
-        )}
+      
+      <Slide
+        pluginAPI={pluginApi}
+        heading=""
+        onClick={async () => {
+          if (pluginApi.isPublicAccess) {
+            pluginApi.remote.toast.error("Sign in to upload media.");
+            return;
+          }
+
+          try {
+            // Wait for the user to select files in the modal
+            const results = await pluginApi.mediaPicker.show({
+              type: "all",
+              multiple: true,
+            });
+
+            if (!results || results.length === 0) return;
+
+            const images: any[] = [];
+            const pdfs: any[] = [];
+            const ppts: any[] = [];
+
+            for (const file of results) {
+              const ext = file.fileExtension?.toLowerCase() || file.mediaName?.split(".").pop()?.toLowerCase() || "";
+              const fileData = {
+                mediaName: file.mediaName,
+                name: file.originalName ?? undefined,
+              };
+
+              if (["jpg", "jpeg", "png", "gif", "webp"].includes(ext)) {
+                images.push(fileData);
+              } else if (ext === "pdf") {
+                pdfs.push(fileData);
+              } else if (["ppt", "pptx"].includes(ext)) {
+                ppts.push(fileData);
+              }
+            }
+
+            const promises: Promise<any>[] = [];
+            const pluginId = pluginApi.pluginContext.pluginId;
+
+            if (images.length > 0) {
+              promises.push(selectImage({ images, pluginId }));
+            }
+            for (const pdf of pdfs) {
+              promises.push(selectPdf({ ...pdf, pluginId }));
+            }
+            for (const ppt of ppts) {
+              promises.push(selectPpt({ ...ppt, pluginId }));
+            }
+
+            await Promise.all(promises);
+          } catch (err: any) {
+            // ignore if the user just clicked cancel or closed the modal
+            if (err !== "cancelled") {
+              pluginApi.remote.toast.error(`Failed to process media: ${err?.message || err}`);
+            }
+          }
+        }}
       >
-        <ImportFileModal />
-      </OverlayToggle>
+        <div className="group h-full w-full flex flex-col items-center justify-center gap-2 border-2 border-dashed border-tertiary text-tertiary hover:border-secondary hover:text-secondary hover:bg-black/5 transition-colors cursor-pointer">
+          <FaPlus className="size-6" />
+          <span className="text-sm font-medium">Add slide</span>
+        </div>
+      </Slide>
     </>
   );
 };
