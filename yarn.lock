@@ -9410,6 +9410,7 @@ __metadata:
     express: "npm:^4.21.2"
     multer: "npm:^1.4.5-lts.1"
     pg: "npm:^8.12.0"
+    random-word-slugs: "npm:^0.1.7"
     sharp: "npm:0.34.5"
     tsup: "npm:^8.3.6"
     typeid-js: "npm:^1.1.0"
