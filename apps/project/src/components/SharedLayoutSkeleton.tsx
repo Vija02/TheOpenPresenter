@@ -27,7 +27,7 @@ export function SharedLayoutSkeleton({
   children,
 }: SharedLayoutSkeletonProps) {
   const finalTitle =
-    overrideTitle ?? (title ? `${title} — ${projectName}` : projectName);
+    overrideTitle ?? (title ? `${title} | ${projectName}` : projectName);
 
   useEffect(() => {
     document.title = finalTitle;
