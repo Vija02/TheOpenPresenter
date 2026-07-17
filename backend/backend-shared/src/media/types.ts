@@ -18,6 +18,7 @@ export type UploadMediaParam = {
   creationDate?: string;
   isUserUploaded?: boolean;
   isGuest?: boolean;
+  skipProcessing?: boolean;
 
   // Other meta
   userId: string | null;
