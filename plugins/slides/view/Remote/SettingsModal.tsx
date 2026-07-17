@@ -15,13 +15,12 @@ import {
   LoadingInline,
   NumberInputControl,
   OptionControl,
-  OverlayToggle,
   PopConfirm,
   useOverlayToggle,
 } from "@repo/ui";
 import { useCallback, useMemo } from "react";
 import { useForm } from "react-hook-form";
-import { FaFilePdf } from "react-icons/fa";
+import { FaFilePdf, FaImage } from "react-icons/fa";
 import { FaArrowsRotate, FaCircleInfo, FaTrash } from "react-icons/fa6";
 import { RiFilePpt2Fill } from "react-icons/ri";
 import { SiGoogleslides } from "react-icons/si";
@@ -37,13 +36,13 @@ import {
   calculateAutoplayPosition,
   computeGlobalSlideClickCount,
 } from "../utils/useAutoplay";
-import ImportFileModal from "./ImportFile/ImportFileModal";
 import { displayTypeMapping } from "./displayTypeMapping";
 
 const IMPORT_TYPE_ICON: Record<ImportType, React.ReactNode> = {
   googleslides: <SiGoogleslides className="size-5 shrink-0 text-[#F4B400]" />,
   pdf: <FaFilePdf className="size-5 shrink-0 text-[#F52102]" />,
   ppt: <RiFilePpt2Fill className="size-5 shrink-0 text-[#CC4A34]" />,
+  image: <FaImage className="size-5 shrink-0 text-[#4285F4]" />,
 };
 
 type SettingsData = {
@@ -59,6 +58,9 @@ const SettingsModal = () => {
   const mutableRendererData = pluginApi.renderer.useValtioData();
 
   const { mutate: removeImport } = trpc.slides.removeImport.useMutation();
+  const { mutateAsync: selectPdf } = trpc.slides.selectPdf.useMutation();
+  const { mutateAsync: selectPpt } = trpc.slides.selectPpt.useMutation();
+  const { mutateAsync: selectImage } = trpc.slides.selectImage.useMutation();
 
   const pluginData = pluginApi.scene.useData((x) => x.pluginData);
   const autoplay = pluginApi.renderer.useData((x) => x.autoplay);
@@ -271,7 +273,7 @@ const SettingsModal = () => {
                             <div className="flex items-center gap-2 min-w-0">
                               {IMPORT_TYPE_ICON[imp.type]}
                               <h4
-                                className="font-medium truncate"
+                                className="font-bold truncate"
                                 title={displayTitle}
                               >
                                 {displayTitle}
@@ -283,28 +285,58 @@ const SettingsModal = () => {
                               )}
                             </div>
                             <div className="flex items-center gap-2 shrink-0">
-                              <OverlayToggle
-                                toggler={({ onToggle }) => (
-                                  <Button
-                                    type="button"
-                                    size="xs"
-                                    variant="outline"
-                                    disabled={isBeingReplaced}
-                                    onClick={onToggle}
-                                  >
-                                    {isBeingReplaced ? (
-                                      <LoadingInline className="size-3" />
-                                    ) : (
-                                      <FaArrowsRotate />
-                                    )}
-                                    Replace
-                                  </Button>
-                                )}
+                              <Button
+                                type="button"
+                                size="xs"
+                                variant="outline"
+                                disabled={isBeingReplaced}
+                                onClick={async () => {
+                                  if (pluginApi.isPublicAccess) {
+                                    pluginApi.remote.toast.error("Sign in to upload media.");
+                                    return;
+                                  }
+
+                                  try {
+                                    const results = await pluginApi.mediaPicker.show({
+                                      type: "all",
+                                      multiple: false,
+                                    });
+
+                                    if (!results || results.length === 0) return;
+
+                                    const file = results[0];
+                                    if (!file) return;
+
+                                    const ext = file.fileExtension?.toLowerCase() || file.mediaName?.split(".").pop()?.toLowerCase() || "";
+                                    const fileData = {
+                                      mediaName: file.mediaName,
+                                      name: file.originalName ?? undefined,
+                                    };
+
+                                    const pluginId = pluginApi.pluginContext.pluginId;
+                                    const replaceImportId = imp.importId;
+
+                                    if (["jpg", "jpeg", "png", "gif", "webp"].includes(ext)) {
+                                      await selectImage({ images: [fileData], pluginId, replaceImportId });
+                                    } else if (ext === "pdf") {
+                                      await selectPdf({ ...fileData, pluginId, replaceImportId });
+                                    } else if (["ppt", "pptx"].includes(ext)) {
+                                      await selectPpt({ ...fileData, pluginId, replaceImportId });
+                                    }
+                                  } catch (err: any) {
+                                    if (err !== "cancelled") {
+                                      pluginApi.remote.toast.error(`Failed to replace media: ${err?.message || err}`);
+                                    }
+                                  }
+                                }}
                               >
-                                <ImportFileModal
-                                  replaceImportId={imp.importId}
-                                />
-                              </OverlayToggle>
+                                {isBeingReplaced ? (
+                                  <LoadingInline className="size-3" />
+                                ) : (
+                                  <FaArrowsRotate />
+                                )}
+                                Replace
+                              </Button>
                               <PopConfirm
                                 title="Delete this import?"
                                 description={`"${displayTitle}" and all of its slides will be removed.`}
