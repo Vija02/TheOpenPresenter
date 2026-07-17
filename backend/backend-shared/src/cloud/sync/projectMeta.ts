@@ -36,7 +36,12 @@ export const syncProjectMeta = async (
     categoriesMap,
     tagsMap,
   }: SyncProjectMetaParams,
-): Promise<{ mapping: Map<string, string>; deletedCount: number }> => {
+): Promise<{
+  mapping: Map<string, string>;
+  deletedCount: number;
+  addedCount: number;
+  updatedCount: number;
+}> => {
   // Delete local projects whose cloud project no longer exists
   const projectIdsToDelete = localProjects
     .filter(
@@ -69,7 +74,9 @@ export const syncProjectMeta = async (
             cloud_connection_id = excluded.cloud_connection_id,
             cloud_last_updated = excluded.cloud_last_updated,
             cloud_project_id = excluded.cloud_project_id
-        RETURNING id, cloud_project_id
+        -- (xmax = 0) is true for freshly INSERTed rows and false for rows that
+        -- hit the ON CONFLICT UPDATE path, letting us split added vs updated.
+        RETURNING id, cloud_project_id, (xmax::text::bigint = 0) AS inserted
       `,
       [
         JSON.stringify(
@@ -100,6 +107,11 @@ export const syncProjectMeta = async (
       localProject.id,
     ]),
   );
+
+  const addedCount = createdOrUpdatedProjects.filter(
+    (row) => row.inserted,
+  ).length;
+  const updatedCount = createdOrUpdatedProjects.length - addedCount;
 
   // Create the project-tag connections
   await withPgClient((pgClient) =>
@@ -172,5 +184,7 @@ export const syncProjectMeta = async (
   return {
     mapping: externalToLocalProjectIdMapping,
     deletedCount: projectIdsToDelete.length,
+    addedCount,
+    updatedCount,
   };
 };

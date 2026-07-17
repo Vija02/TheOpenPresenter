@@ -104,6 +104,23 @@ export const completeSyncRunProjects = async (
   );
 };
 
+export const setSyncRunProjectCounts = async (
+  withPgClient: WithPgClient,
+  runId: string,
+  counts: { added: number; updated: number },
+): Promise<void> => {
+  await withPgClient((pgClient) =>
+    pgClient.query(
+      `
+        UPDATE app_public.cloud_sync_runs
+          SET added_projects = $2, updated_projects = $3
+          WHERE id = $1
+      `,
+      [runId, counts.added, counts.updated],
+    ),
+  );
+};
+
 export const setSyncRunDeletions = async (
   withPgClient: WithPgClient,
   runId: string,

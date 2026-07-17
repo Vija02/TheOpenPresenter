@@ -194,23 +194,33 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
       { projectCount: externalProjectsToCreateOrUpdate.length },
       "Syncing project metadata",
     );
-    const { mapping: externalToLocalProjectIdMapping, deletedCount } =
-      await cloud.syncProjectMeta(withPgClient, {
-        cloudConnection: {
-          id: cloudConnection.id,
-          organization_id: cloudConnection.organization_id,
-          creator_user_id: cloudConnection.creator_user_id,
-        },
-        localProjects,
-        allExternalProjectIds,
-        externalProjects: externalProjectsToCreateOrUpdate,
-        categoriesMap,
-        tagsMap,
-      });
+    const {
+      mapping: externalToLocalProjectIdMapping,
+      deletedCount,
+      addedCount,
+      updatedCount,
+    } = await cloud.syncProjectMeta(withPgClient, {
+      cloudConnection: {
+        id: cloudConnection.id,
+        organization_id: cloudConnection.organization_id,
+        creator_user_id: cloudConnection.creator_user_id,
+      },
+      localProjects,
+      allExternalProjectIds,
+      externalProjects: externalProjectsToCreateOrUpdate,
+      categoriesMap,
+      tagsMap,
+    });
     await cloud.setSyncRunDeletions(withPgClient, syncRunId, deletedCount);
+    await cloud.setSyncRunProjectCounts(withPgClient, syncRunId, {
+      added: addedCount,
+      updated: updatedCount,
+    });
     log.info(
       {
         mappedProjectCount: externalToLocalProjectIdMapping.size,
+        addedCount,
+        updatedCount,
         deletedCount,
       },
       "Synced project metadata",

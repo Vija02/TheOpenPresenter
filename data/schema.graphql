@@ -433,6 +433,8 @@ enum CloudSyncItemStatus {
 }
 
 type CloudSyncRun {
+  addedProjects: Int!
+
   """
   Reads a single `CloudConnection` that is related to this `CloudSyncRun`.
   """
@@ -461,6 +463,7 @@ type CloudSyncRun {
   totalMedia: Int!
   totalProjects: Int!
   updatedAt: Datetime!
+  updatedProjects: Int!
 }
 
 """
