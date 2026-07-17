@@ -19,8 +19,8 @@ interface CloudConnectionSyncMediaPayload {
   syncRunId?: string;
 }
 
-// TODO: Change limit depending on the media backend target
-const MEDIA_UPLOAD_CONCURRENCY = 5;
+const MEDIA_UPLOAD_CONCURRENCY =
+  (process.env.STORAGE_TYPE as "file" | "s3") === "file" ? 20 : 5;
 
 const setMediaStatus = async (
   withPgClient: WithPgClient,
