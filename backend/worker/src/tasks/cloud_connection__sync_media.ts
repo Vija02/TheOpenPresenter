@@ -22,21 +22,6 @@ interface CloudConnectionSyncMediaPayload {
 const MEDIA_UPLOAD_CONCURRENCY =
   (process.env.STORAGE_TYPE as "file" | "s3") === "file" ? 20 : 5;
 
-const setMediaStatus = async (
-  withPgClient: WithPgClient,
-  syncRunId: string | undefined,
-  status: "syncing" | "synced" | "failed",
-) => {
-  if (!syncRunId) {
-    return;
-  }
-  try {
-    await cloud.setSyncRunMediaStatus(withPgClient, syncRunId, status);
-  } catch (e) {
-    console.error("Failed to update cloud sync media status", e);
-  }
-};
-
 /**
  * DEBT: Currently we can't have 2 same media in the device. At least it won't be attributed to the correct organization
  * In practice, this shouldn't happen as each media should be scoped to an organization
@@ -48,8 +33,36 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
   // Maybe make the record, don't finish upload. And then finish & complete it -- separate task?
   const { cloudConnectionId, externalProjectIds, force_resync, syncRunId } =
     payload;
+
+  const log = logger.child({
+    task: "cloud_connection__sync_media",
+    cloudConnectionId,
+    syncRunId,
+    forceResync: !!force_resync,
+    externalProjectCount: externalProjectIds?.length ?? 0,
+  });
+  const startedAt = Date.now();
+
+  const setMediaStatus = async (
+    withPgClient: WithPgClient,
+    syncRunId: string | undefined,
+    status: "syncing" | "synced" | "failed",
+  ) => {
+    if (!syncRunId) {
+      return;
+    }
+    try {
+      await cloud.setSyncRunMediaStatus(withPgClient, syncRunId, status);
+    } catch (err) {
+      log.error({ err }, "Failed to update cloud sync media status");
+    }
+  };
+
+  log.info("Starting media sync");
+
   try {
     await setMediaStatus(withPgClient, syncRunId, "syncing");
+    log.debug("Set sync run media status to syncing");
 
     const {
       rows: [cloudConnection],
@@ -64,15 +77,24 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
       ),
     );
     if (!cloudConnection) {
-      console.error("Cloud connection not found; aborting");
+      log.error("Cloud connection not found; aborting");
       await setMediaStatus(withPgClient, syncRunId, "failed");
       return;
     }
     if (!cloudConnection.target_organization_slug) {
-      console.error("Target organization slug not available; aborting");
+      log.error("Target organization slug not available; aborting");
       await setMediaStatus(withPgClient, syncRunId, "failed");
       return;
     }
+
+    log.info(
+      {
+        host: cloudConnection.host,
+        targetOrganizationSlug: cloudConnection.target_organization_slug,
+        organizationId: cloudConnection.organization_id,
+      },
+      "Cloud connection loaded",
+    );
 
     const urqlClient = cloud.getUrqlClientFromCloudConnection(cloudConnection);
 
@@ -83,7 +105,11 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
     >;
     const allMedias: AllMediaNode[] = [];
     let after: string | null | undefined = undefined;
+    let page = 0;
+    log.info("Fetching remote media library (paginated)");
     do {
+      page += 1;
+      log.debug({ page, after }, "Fetching media page");
       const allMediaRes = await urqlClient.query<AllMediaQuery>(
         AllMediaDocument,
         {
@@ -93,9 +119,14 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
         },
       );
       if (allMediaRes.error) {
+        log.error(
+          { page, err: allMediaRes.error },
+          "Failed to fetch remote media page",
+        );
         throw allMediaRes.error;
       }
       const connection = allMediaRes.data?.organizationBySlug?.medias;
+      const pageNodeCount = connection?.nodes?.length ?? 0;
       for (const node of connection?.nodes ?? []) {
         if (node) {
           allMedias.push(node);
@@ -104,8 +135,22 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
       const next = connection?.pageInfo.hasNextPage
         ? connection?.pageInfo.endCursor
         : undefined;
+      log.debug(
+        {
+          page,
+          pageNodeCount,
+          accumulated: allMedias.length,
+          hasNextPage: !!next,
+        },
+        "Fetched media page",
+      );
       after = next as any;
     } while (after);
+
+    log.info(
+      { pages: page, remoteMediaCount: allMedias.length },
+      "Fetched remote media library",
+    );
 
     const allMediaIds = allMedias.map((x) => x.id);
 
@@ -125,6 +170,15 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
 
     const mediasToAdd = allMedias.filter((x) => mediaIdsToAdd.includes(x.id));
 
+    log.info(
+      {
+        remoteMediaCount: allMediaIds.length,
+        localMediaCount: localMediaIds.length,
+        toAddCount: mediasToAdd.length,
+      },
+      "Computed media diff",
+    );
+
     const mediaHandler = new media[
       process.env.STORAGE_TYPE as "file" | "s3"
     ].mediaHandler(withPgClient);
@@ -133,6 +187,15 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
     const totalBytes = mediasToAdd.reduce(
       (sum, m) => sum + Number(m?.fileSize ?? 0),
       0,
+    );
+    log.info(
+      {
+        toAddCount: mediasToAdd.length,
+        totalBytes,
+        storageType: process.env.STORAGE_TYPE,
+        concurrency: MEDIA_UPLOAD_CONCURRENCY,
+      },
+      "Prepared media upload batch",
     );
     if (syncRunId) {
       await withPgClient((pgClient) =>
@@ -160,8 +223,8 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
             [syncRunId, downloadedBytes],
           ),
         );
-      } catch (e) {
-        console.error("Failed to update downloaded bytes", e);
+      } catch (err) {
+        log.error({ err }, "Failed to update downloaded bytes");
       }
     };
     const flushInterval = syncRunId
@@ -173,6 +236,12 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
     // TODO: Do this in an easier to retry fashion?
     // Make sure it's idempotent. Maybe need to handle partially uploaded file
     const limit = pLimit(MEDIA_UPLOAD_CONCURRENCY);
+    let uploadedCount = 0;
+    let failedCount = 0;
+    log.info(
+      { toAddCount: mediasToAdd.length },
+      "Starting media downloads/uploads",
+    );
     try {
       await Promise.all(
         mediasToAdd.map((media) =>
@@ -180,10 +249,19 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
             const { mediaId, extension } = extractMediaName(
               media?.mediaName ?? "",
             );
+            const mediaLog = log.child({
+              mediaId,
+              mediaName: media?.mediaName,
+            });
             const module =
               new URL(cloudConnection.host).protocol === "https:"
                 ? https
                 : http;
+
+            mediaLog.debug(
+              { fileSize: media?.fileSize },
+              "Downloading media from cloud",
+            );
 
             return new Promise<void>((resolve, reject) => {
               const request = module.get(
@@ -201,7 +279,10 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
                       cb(null, chunk);
                     },
                   });
-                  stream.on("error", reject);
+                  stream.on("error", (err) => {
+                    mediaLog.warn({ err }, "Media download stream errored");
+                    reject(err);
+                  });
                   const countedStream = stream.pipe(counter);
                   Promise.resolve(
                     mediaHandler.uploadMedia({
@@ -233,22 +314,47 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
                           ),
                         );
                       }
+                      uploadedCount += 1;
+                      mediaLog.debug(
+                        { uploadedCount, toAddCount: mediasToAdd.length },
+                        "Media uploaded",
+                      );
                       resolve();
                     })
-                    .catch(reject);
+                    .catch((err) => {
+                      failedCount += 1;
+                      mediaLog.warn({ err }, "Failed to upload media");
+                      reject(err);
+                    });
                 },
               );
-              request.on("error", reject);
+              request.on("error", (err) => {
+                failedCount += 1;
+                mediaLog.warn({ err }, "Media download request errored");
+                reject(err);
+              });
             });
           }),
         ),
       );
+      log.info({ uploadedCount }, "Finished media uploads");
+    } catch (err) {
+      log.error(
+        { err, uploadedCount, failedCount },
+        "Media upload batch failed",
+      );
+      throw err;
     } finally {
       if (flushInterval) clearInterval(flushInterval);
       await flushDownloadedBytes();
+      log.debug({ downloadedBytes }, "Flushed final downloaded bytes");
     }
 
     // Now let's get all the metadata so we can sync them too
+    log.info(
+      { mediaIdCount: allMediaIds.length },
+      "Fetching media metadata from cloud",
+    );
     const projectMediaInfoRes = await urqlClient.query<ProjectMediaInfoQuery>(
       ProjectMediaInfoDocument,
       {
@@ -256,14 +362,31 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
       },
     );
     if (projectMediaInfoRes.error) {
+      log.error(
+        { err: projectMediaInfoRes.error },
+        "Failed to fetch media metadata",
+      );
       throw projectMediaInfoRes.error;
     }
+
+    const metadataCounts = {
+      dependencies:
+        projectMediaInfoRes.data?.mediaDependencies?.nodes.length ?? 0,
+      imageSizes: projectMediaInfoRes.data?.mediaImageSizes?.nodes.length ?? 0,
+      imageMetadata:
+        projectMediaInfoRes.data?.mediaImageMetadata?.nodes.length ?? 0,
+      videoMetadata:
+        projectMediaInfoRes.data?.mediaVideoMetadata?.nodes.length ?? 0,
+      projectMedias: projectMediaInfoRes.data?.projectMedias?.nodes.length ?? 0,
+    };
+    log.info(metadataCounts, "Fetched media metadata");
 
     // We only need to sync one way.
     //
     // Sync all four metadata tables atomically so a partial failure can't
     // leave dependencies pointing at media that lacks video/image metadata,
     // or project_medias referencing media whose dependency graph is missing.
+    log.info("Syncing media metadata tables (transaction)");
     await media.withTransaction(withPgClient, async (client) => {
       // Sync media dependencies
       await client.query(
@@ -375,6 +498,8 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
         ],
       );
     });
+    log.info(metadataCounts, "Synced media metadata tables");
+
     // Sync deletion
     const { rows: localProjectMedias } = await withPgClient((pgClient) =>
       pgClient.query(
@@ -401,6 +526,15 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
       );
     });
 
+    log.info(
+      {
+        localProjectMediaCount: localProjectMedias.length,
+        externalProjectMediaCount: externalProjectMedias.length,
+        toDeleteCount: projectMediasToDelete.length,
+      },
+      "Computed project_medias to delete",
+    );
+
     if (projectMediasToDelete.length > 0) {
       await withPgClient((pgClient) =>
         pgClient.query(
@@ -422,6 +556,10 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
           ],
         ),
       );
+      log.info(
+        { deletedCount: projectMediasToDelete.length },
+        "Deleted stale project_medias",
+      );
     }
 
     /**
@@ -437,6 +575,10 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
     // This will ensure we check it properly
     const mediaIdsToDelete = localMediaIds.filter(
       (localMediaId) => !allMediaIds?.includes(localMediaId),
+    );
+    log.info(
+      { candidateCount: mediaIdsToDelete.length },
+      "Computed local media absent from remote",
     );
     if (mediaIdsToDelete.length > 0) {
       // Find user-uploaded media that aren't being used in any projects
@@ -455,30 +597,51 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
         return rows;
       });
 
+      log.info(
+        {
+          candidateCount: mediaIdsToDelete.length,
+          toDeleteCount: mediaIdsToActuallyDelete.length,
+        },
+        "Resolved user-uploaded media to delete",
+      );
+
       if (mediaIdsToActuallyDelete.length > 0) {
         const mediaHandler = new media[
           process.env.STORAGE_TYPE as "file" | "s3"
         ].mediaHandler(withPgClient);
 
+        let deletedCount = 0;
         await Promise.all(
           mediaIdsToActuallyDelete.map(async (row) => {
             try {
               await mediaHandler.deleteMedia(row.media_name);
+              deletedCount += 1;
+              log.debug(
+                { id: row.id, mediaName: row.media_name },
+                "Deleted media from storage",
+              );
             } catch (err) {
-              logger.error(
-                { err, id: row.id },
+              log.error(
+                { err, id: row.id, mediaName: row.media_name },
                 "Failed to delete media from media sync",
               );
-              console.error(`Sync: Failed to delete media ${row.id}:`, err);
             }
           }),
+        );
+        log.info(
+          { deletedCount, attemptedCount: mediaIdsToActuallyDelete.length },
+          "Deleted removed media",
         );
       }
     }
 
     await setMediaStatus(withPgClient, syncRunId, "synced");
-  } catch (e) {
-    console.error(e);
+    log.info(
+      { durationMs: Date.now() - startedAt },
+      "Media sync completed successfully",
+    );
+  } catch (err) {
+    log.error({ err, durationMs: Date.now() - startedAt }, "Media sync failed");
     await setMediaStatus(withPgClient, syncRunId, "failed");
   }
 };
