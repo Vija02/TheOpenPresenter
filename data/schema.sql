@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict xLVJGEWtPT2bOk9p1ig646Ip4Kf4p8FNTvoacD49nKjnot1bC2iOeMaDo3guZDB
+\restrict 5sIz3t89ziKUZX62eyqa8rPEszVdWzlJhE3cWp8TmCNJ0gSoiR5zMbGQBS4ySOH
 
 -- Dumped from database version 17.0 (Debian 17.0-1.pgdg120+1)
 -- Dumped by pg_dump version 18.4
@@ -3297,6 +3297,8 @@ CREATE TABLE app_public.cloud_sync_runs (
     failed_projects integer DEFAULT 0 NOT NULL,
     projects_to_delete integer DEFAULT 0 NOT NULL,
     deleted_projects integer DEFAULT 0 NOT NULL,
+    added_projects integer DEFAULT 0 NOT NULL,
+    updated_projects integer DEFAULT 0 NOT NULL,
     media_status app_public.cloud_sync_item_status DEFAULT 'pending'::app_public.cloud_sync_item_status NOT NULL,
     total_media integer DEFAULT 0 NOT NULL,
     synced_media integer DEFAULT 0 NOT NULL,
@@ -7095,5 +7097,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE theopenpresenter REVOKE ALL ON FUNCTIONS FROM 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict xLVJGEWtPT2bOk9p1ig646Ip4Kf4p8FNTvoacD49nKjnot1bC2iOeMaDo3guZDB
+\unrestrict 5sIz3t89ziKUZX62eyqa8rPEszVdWzlJhE3cWp8TmCNJ0gSoiR5zMbGQBS4ySOH
 

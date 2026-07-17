@@ -1,5 +1,5 @@
 --! Previous: sha1:9eeecdd61211937f20a41bb61e6adc3d964fbf2e
---! Hash: sha1:7b218d57cb9b1830f6fb9e99bb50cf8f3eac975a
+--! Hash: sha1:8b8b0001917a853437f878f21aa801cf2f07c16d
 
 --! split: 1-current.sql
 -- Enter migration here
@@ -44,6 +44,8 @@ create table app_public.cloud_sync_runs (
   failed_projects integer not null default 0,
   projects_to_delete integer not null default 0,
   deleted_projects integer not null default 0,
+  added_projects integer not null default 0,
+  updated_projects integer not null default 0,
 
   -- Media
   media_status app_public.cloud_sync_item_status not null default 'pending',

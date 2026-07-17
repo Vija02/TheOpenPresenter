@@ -19,6 +19,8 @@ query OrganizationCloudIndexPage($slug: String!) {
             totalProjects
             projectsToSync
             syncedProjects
+            addedProjects
+            updatedProjects
             failedProjects
             projectsToDelete
             deletedProjects
