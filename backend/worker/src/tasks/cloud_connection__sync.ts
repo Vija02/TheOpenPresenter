@@ -5,6 +5,7 @@ import {
   AllProjectUpdatedAtDocument,
   AllProjectUpdatedAtQuery,
 } from "@repo/graphql";
+import { logger } from "@repo/observability";
 import { Task } from "graphile-worker";
 
 interface CloudConnectionSyncPayload {
@@ -17,10 +18,19 @@ interface CloudConnectionSyncPayload {
 
 // TODO: Consider if categories or tags changes
 const task: Task = async (inPayload, { addJob, withPgClient }) => {
+  const payload: CloudConnectionSyncPayload = inPayload as any;
+  const { id: cloudConnectionId, force_resync } = payload;
+
+  let log = logger.child({
+    task: "cloud_connection__sync",
+    cloudConnectionId,
+    forceResync: !!force_resync,
+  });
+  const startedAt = Date.now();
+  log.info("Starting cloud connection sync");
+
   let syncRunId: string | undefined;
   try {
-    const payload: CloudConnectionSyncPayload = inPayload as any;
-    const { id: cloudConnectionId, force_resync } = payload;
     const {
       rows: [cloudConnection],
     } = await withPgClient((pgClient) =>
@@ -34,13 +44,22 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
       ),
     );
     if (!cloudConnection) {
-      console.error("Cloud connection not found; aborting");
+      log.error("Cloud connection not found; aborting");
       return;
     }
     if (!cloudConnection.target_organization_slug) {
-      console.error("Target organization slug not available; aborting");
+      log.error("Target organization slug not available; aborting");
       return;
     }
+
+    log.info(
+      {
+        host: cloudConnection.host,
+        targetOrganizationSlug: cloudConnection.target_organization_slug,
+        organizationId: cloudConnection.organization_id,
+      },
+      "Cloud connection loaded",
+    );
 
     // Start tracking
     syncRunId = await cloud.createSyncRun(withPgClient, {
@@ -48,9 +67,12 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
       cloudConnectionId: cloudConnection.id,
       forceResync: !!force_resync,
     });
+    log = log.child({ syncRunId });
+    log.info("Created sync run");
 
     const urqlClient = cloud.getUrqlClientFromCloudConnection(cloudConnection);
     // First, we get the updated_at so we know which ones need to be updated/created
+    log.info("Fetching remote project updated_at list");
     const projectUpdatedRes = await urqlClient.query<AllProjectUpdatedAtQuery>(
       AllProjectUpdatedAtDocument,
       {
@@ -58,6 +80,10 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
       },
     );
     if (projectUpdatedRes.error) {
+      log.error(
+        { err: projectUpdatedRes.error },
+        "Failed to fetch remote project updated_at list",
+      );
       throw projectUpdatedRes.error;
     }
 
@@ -68,6 +94,10 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
         `,
         [cloudConnectionId],
       ),
+    );
+    log.debug(
+      { localProjectCount: localProjects.length },
+      "Loaded local projects",
     );
 
     const externalProjectIdsToCreateOrUpdate =
@@ -94,6 +124,15 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
         (x) => x.id,
       ) ?? [];
 
+    log.info(
+      {
+        totalRemoteProjects: allExternalProjectIds.length,
+        toCreateOrUpdate: externalProjectIdsToCreateOrUpdate.length,
+      },
+      "Computed projects to create/update",
+    );
+
+    log.info("Fetching full project metadata");
     const res = await urqlClient.query<AllProjectMetadataQuery>(
       AllProjectMetadataDocument,
       {
@@ -103,6 +142,7 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
     );
 
     if (res.error) {
+      log.error({ err: res.error }, "Failed to fetch project metadata");
       throw res.error;
     }
 
@@ -123,6 +163,10 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
       cloudConnection.organization_id,
       requiredCategories,
     );
+    log.info(
+      { requiredCategoryCount: requiredCategories.length },
+      "Synced categories",
+    );
 
     // ========================================================================== //
     // ================================== TAGS ================================== //
@@ -137,6 +181,7 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
       requiredTags,
       res.data?.organizationBySlug?.tags.nodes ?? [],
     );
+    log.info({ requiredTagCount: requiredTags.length }, "Synced tags");
 
     // ========================================================================== //
     // ========================= Now handle project meta ======================== //
@@ -145,6 +190,10 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
       res.data?.organizationBySlug?.projects.nodes.filter((externalProject) =>
         externalProjectIdsToCreateOrUpdate.includes(externalProject.id),
       ) ?? [];
+    log.info(
+      { projectCount: externalProjectsToCreateOrUpdate.length },
+      "Syncing project metadata",
+    );
     const { mapping: externalToLocalProjectIdMapping, deletedCount } =
       await cloud.syncProjectMeta(withPgClient, {
         cloudConnection: {
@@ -159,35 +208,60 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
         tagsMap,
       });
     await cloud.setSyncRunDeletions(withPgClient, syncRunId, deletedCount);
+    log.info(
+      {
+        mappedProjectCount: externalToLocalProjectIdMapping.size,
+        deletedCount,
+      },
+      "Synced project metadata",
+    );
 
     // ========================================================================== //
     // ========================== Project document sync ========================= //
     // ========================================================================== //
     // Documents only need re-syncing for projects that were created/updated
     if (externalProjectIdsToCreateOrUpdate.length > 0) {
+      log.info(
+        { projectCount: externalProjectIdsToCreateOrUpdate.length },
+        "Syncing project documents",
+      );
+      let documentSyncedCount = 0;
+      let documentFailedCount = 0;
       await Promise.all(
         externalProjectIdsToCreateOrUpdate.map(async (externalProjectId) => {
           const localProjectId =
             externalToLocalProjectIdMapping.get(externalProjectId);
           if (!localProjectId) {
+            log.debug(
+              { externalProjectId },
+              "Skipping document sync; no local project mapping",
+            );
             return;
           }
           try {
             await cloud.syncProjectDocument(withPgClient, localProjectId);
             await cloud.bumpSyncRunSyncedProjects(withPgClient, syncRunId!);
+            documentSyncedCount += 1;
+            log.debug({ localProjectId }, "Synced project document");
           } catch (documentErr) {
-            console.error(
-              `Failed to sync document for project ${localProjectId}`,
-              documentErr,
+            documentFailedCount += 1;
+            log.warn(
+              { err: documentErr, localProjectId },
+              "Failed to sync document for project",
             );
             await cloud.bumpSyncRunFailedProjects(withPgClient, syncRunId!);
           }
         }),
       );
+      log.info(
+        { documentSyncedCount, documentFailedCount },
+        "Finished syncing project documents",
+      );
     }
 
     // Project phase (categories, tags, meta, documents) is complete
     await cloud.completeSyncRunProjects(withPgClient, syncRunId);
+    log.info("Project sync phase complete");
 
     // Trigger media sync
     await addJob("cloud_connection__sync_media", {
@@ -196,13 +270,23 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
       force_resync,
       syncRunId,
     });
+    log.info(
+      {
+        externalProjectCount: allExternalProjectIds.length,
+        durationMs: Date.now() - startedAt,
+      },
+      "Enqueued media sync; project sync done",
+    );
   } catch (e) {
-    console.error(e);
+    log.error(
+      { err: e, durationMs: Date.now() - startedAt },
+      "Cloud connection sync failed",
+    );
     if (syncRunId) {
       try {
         await cloud.failSyncRun(withPgClient, syncRunId, e);
       } catch (updateErr) {
-        console.error("Failed to mark cloud sync run as failed", updateErr);
+        log.error({ err: updateErr }, "Failed to mark cloud sync run as failed");
       }
     }
   }
