@@ -7,6 +7,13 @@ query ProjectMediaInfo($mediaIds: [UUID!]) {
       fileType
     }
   }
+  mediaImageMetadata(filter: { imageMediaId: { in: $mediaIds } }) {
+    nodes {
+      imageMediaId
+      width
+      height
+    }
+  }
   mediaDependencies(
     filter: {
       or: [
@@ -34,6 +41,7 @@ query ProjectMediaInfo($mediaIds: [UUID!]) {
       hlsMediaId
       thumbnailMediaId
       duration
+      transcodeStatus
     }
   }
   projectMedias(filter: { mediaId: { in: $mediaIds } }) {

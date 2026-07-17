@@ -9394,6 +9394,7 @@ __metadata:
   resolution: "@repo/backend-shared@workspace:backend/backend-shared"
   dependencies:
     "@microsoft/api-extractor": "npm:^7.49.2"
+    "@repo/graphql": "npm:*"
     "@repo/lib": "npm:*"
     "@repo/observability": "npm:*"
     "@repo/typescript-config": "npm:*"
