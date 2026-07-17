@@ -2,16 +2,16 @@
 -- PostgreSQL database dump
 --
 
-\restrict ubswlcudeIJ2N52iDbFjwQ9wjqQbYC2wSZ0zDm9MI13pQWgNZfbc7Kof4dfWfSE
+\restrict xLVJGEWtPT2bOk9p1ig646Ip4Kf4p8FNTvoacD49nKjnot1bC2iOeMaDo3guZDB
 
--- Dumped from database version 17.4
--- Dumped by pg_dump version 17.10
+-- Dumped from database version 17.0 (Debian 17.0-1.pgdg120+1)
+-- Dumped by pg_dump version 18.4
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
 SET transaction_timeout = 0;
-SET client_encoding = 'WIN1252';
+SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SELECT pg_catalog.set_config('search_path', '', false);
 SET check_function_bodies = false;
@@ -101,6 +101,30 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA public;
 --
 
 COMMENT ON EXTENSION "uuid-ossp" IS 'generate universally unique identifiers (UUIDs)';
+
+
+--
+-- Name: cloud_sync_item_status; Type: TYPE; Schema: app_public; Owner: -
+--
+
+CREATE TYPE app_public.cloud_sync_item_status AS ENUM (
+    'pending',
+    'syncing',
+    'synced',
+    'failed'
+);
+
+
+--
+-- Name: cloud_sync_run_status; Type: TYPE; Schema: app_public; Owner: -
+--
+
+CREATE TYPE app_public.cloud_sync_run_status AS ENUM (
+    'pending',
+    'in_progress',
+    'completed',
+    'failed'
+);
 
 
 --
@@ -721,7 +745,7 @@ declare
   v_avatar_url text;
   v_user_authentication_id uuid;
 begin
-  -- Extract data from the user’s OAuth profile data.
+  -- Extract data from the userâ€™s OAuth profile data.
   v_email := f_profile ->> 'email';
   v_name := f_profile ->> 'name';
   v_username := f_profile ->> 'username';
@@ -763,7 +787,7 @@ begin
     avatar_url => v_avatar_url
   );
 
-  -- Insert the user’s private account data (e.g. OAuth tokens)
+  -- Insert the userâ€™s private account data (e.g. OAuth tokens)
   insert into app_public.user_authentications (user_id, service, identifier, details) values
     (v_user.id, f_service, f_identifier, f_profile) returning id into v_user_authentication_id;
   insert into app_private.user_authentication_secrets (user_authentication_id, details) values
@@ -3258,6 +3282,35 @@ CREATE TABLE app_public.cloud_connections (
 
 
 --
+-- Name: cloud_sync_runs; Type: TABLE; Schema: app_public; Owner: -
+--
+
+CREATE TABLE app_public.cloud_sync_runs (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    organization_id uuid NOT NULL,
+    cloud_connection_id uuid NOT NULL,
+    force_resync boolean DEFAULT false NOT NULL,
+    status app_public.cloud_sync_run_status DEFAULT 'pending'::app_public.cloud_sync_run_status NOT NULL,
+    total_projects integer DEFAULT 0 NOT NULL,
+    projects_to_sync integer DEFAULT 0 NOT NULL,
+    synced_projects integer DEFAULT 0 NOT NULL,
+    failed_projects integer DEFAULT 0 NOT NULL,
+    projects_to_delete integer DEFAULT 0 NOT NULL,
+    deleted_projects integer DEFAULT 0 NOT NULL,
+    media_status app_public.cloud_sync_item_status DEFAULT 'pending'::app_public.cloud_sync_item_status NOT NULL,
+    total_media integer DEFAULT 0 NOT NULL,
+    synced_media integer DEFAULT 0 NOT NULL,
+    total_bytes bigint DEFAULT 0 NOT NULL,
+    downloaded_bytes bigint DEFAULT 0 NOT NULL,
+    error text,
+    started_at timestamp with time zone,
+    completed_at timestamp with time zone,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
 -- Name: media_dependencies; Type: TABLE; Schema: app_public; Owner: -
 --
 
@@ -3615,6 +3668,14 @@ ALTER TABLE ONLY app_public.cloud_connections
 
 
 --
+-- Name: cloud_sync_runs cloud_sync_runs_pkey; Type: CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.cloud_sync_runs
+    ADD CONSTRAINT cloud_sync_runs_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: media_image_metadata media_image_metadata_pkey; Type: CONSTRAINT; Schema: app_public; Owner: -
 --
 
@@ -3886,6 +3947,27 @@ CREATE INDEX cloud_connections_creator_user_id_idx ON app_public.cloud_connectio
 --
 
 CREATE UNIQUE INDEX cloud_connections_organization_id_idx ON app_public.cloud_connections USING btree (organization_id);
+
+
+--
+-- Name: cloud_sync_runs_cloud_connection_id_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX cloud_sync_runs_cloud_connection_id_idx ON app_public.cloud_sync_runs USING btree (cloud_connection_id);
+
+
+--
+-- Name: cloud_sync_runs_created_at_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX cloud_sync_runs_created_at_idx ON app_public.cloud_sync_runs USING btree (created_at);
+
+
+--
+-- Name: cloud_sync_runs_organization_id_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX cloud_sync_runs_organization_id_idx ON app_public.cloud_sync_runs USING btree (organization_id);
 
 
 --
@@ -4379,6 +4461,13 @@ CREATE TRIGGER _100_timestamps BEFORE INSERT OR UPDATE ON app_public.cloud_conne
 
 
 --
+-- Name: cloud_sync_runs _100_timestamps; Type: TRIGGER; Schema: app_public; Owner: -
+--
+
+CREATE TRIGGER _100_timestamps BEFORE INSERT OR UPDATE ON app_public.cloud_sync_runs FOR EACH ROW EXECUTE FUNCTION app_private.tg__timestamps();
+
+
+--
 -- Name: medias _100_timestamps; Type: TRIGGER; Schema: app_public; Owner: -
 --
 
@@ -4727,6 +4816,22 @@ ALTER TABLE ONLY app_public.cloud_connections
 
 ALTER TABLE ONLY app_public.cloud_connections
     ADD CONSTRAINT cloud_connections_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES app_public.organizations(id) ON DELETE CASCADE;
+
+
+--
+-- Name: cloud_sync_runs cloud_sync_runs_cloud_connection_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.cloud_sync_runs
+    ADD CONSTRAINT cloud_sync_runs_cloud_connection_id_fkey FOREIGN KEY (cloud_connection_id) REFERENCES app_public.cloud_connections(id) ON DELETE CASCADE;
+
+
+--
+-- Name: cloud_sync_runs cloud_sync_runs_organization_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.cloud_sync_runs
+    ADD CONSTRAINT cloud_sync_runs_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES app_public.organizations(id) ON DELETE CASCADE;
 
 
 --
@@ -5098,6 +5203,12 @@ ALTER TABLE app_public.categories ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE app_public.cloud_connections ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: cloud_sync_runs; Type: ROW SECURITY; Schema: app_public; Owner: -
+--
+
+ALTER TABLE app_public.cloud_sync_runs ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: cloud_connections delete_own; Type: POLICY; Schema: app_public; Owner: -
@@ -5491,6 +5602,13 @@ CREATE POLICY select_organization ON app_public.organization_join_requests FOR S
 --
 
 CREATE POLICY select_own ON app_public.cloud_connections FOR SELECT USING ((organization_id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids)));
+
+
+--
+-- Name: cloud_sync_runs select_own; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY select_own ON app_public.cloud_sync_runs FOR SELECT USING ((organization_id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids)));
 
 
 --
@@ -6680,6 +6798,13 @@ GRANT UPDATE(target_organization_slug) ON TABLE app_public.cloud_connections TO 
 
 
 --
+-- Name: TABLE cloud_sync_runs; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT SELECT ON TABLE app_public.cloud_sync_runs TO theopenpresenter_visitor;
+
+
+--
 -- Name: TABLE media_dependencies; Type: ACL; Schema: app_public; Owner: -
 --
 
@@ -6970,5 +7095,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE theopenpresenter REVOKE ALL ON FUNCTIONS FROM 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict ubswlcudeIJ2N52iDbFjwQ9wjqQbYC2wSZ0zDm9MI13pQWgNZfbc7Kof4dfWfSE
+\unrestrict xLVJGEWtPT2bOk9p1ig646Ip4Kf4p8FNTvoacD49nKjnot1bC2iOeMaDo3guZDB
 
