@@ -197,9 +197,8 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
                       mediaId,
                       originalFileName: media?.originalName,
                       isUserUploaded: media?.isUserUploaded,
-                      // Bytes are already processed on the source; the sync copies
-                      // derivative files + metadata separately, so don't reprocess.
-                      isProcessed: true,
+                      // Don't reprocess
+                      skipProcessing: true,
                     }),
                   )
                     .then(async () => {
