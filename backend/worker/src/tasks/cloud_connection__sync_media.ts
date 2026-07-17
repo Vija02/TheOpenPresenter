@@ -1,9 +1,9 @@
 import { cloud, media } from "@repo/backend-shared";
 import {
+  AllMediaDocument,
+  AllMediaQuery,
   ProjectMediaInfoDocument,
   ProjectMediaInfoQuery,
-  ProjectMediasDocument,
-  ProjectMediasQuery,
 } from "@repo/graphql";
 import { extractMediaName, resolveMediaUrl } from "@repo/lib";
 import { logger } from "@repo/observability";
@@ -68,23 +68,46 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
       await setMediaStatus(withPgClient, syncRunId, "failed");
       return;
     }
-
-    // Get all the medias from the project ids
-    // TODO: Update to get from all media rather than just those linked to project
-    const urqlClient = cloud.getUrqlClientFromCloudConnection(cloudConnection);
-    const projectMediasRes = await urqlClient.query<ProjectMediasQuery>(
-      ProjectMediasDocument,
-      {
-        projectIds: externalProjectIds,
-      },
-    );
-    if (projectMediasRes.error) {
-      throw projectMediasRes.error;
+    if (!cloudConnection.target_organization_slug) {
+      console.error("Target organization slug not available; aborting");
+      await setMediaStatus(withPgClient, syncRunId, "failed");
+      return;
     }
 
-    const allMediaIds = projectMediasRes.data?.allMediaOfProjects?.map(
-      (x) => x?.id,
-    );
+    const urqlClient = cloud.getUrqlClientFromCloudConnection(cloudConnection);
+
+    type AllMediaNode = NonNullable<
+      NonNullable<
+        NonNullable<AllMediaQuery["organizationBySlug"]>["medias"]
+      >["nodes"][number]
+    >;
+    const allMedias: AllMediaNode[] = [];
+    let after: string | null | undefined = undefined;
+    do {
+      const allMediaRes = await urqlClient.query<AllMediaQuery>(
+        AllMediaDocument,
+        {
+          slug: cloudConnection.target_organization_slug,
+          first: 500,
+          after,
+        },
+      );
+      if (allMediaRes.error) {
+        throw allMediaRes.error;
+      }
+      const connection = allMediaRes.data?.organizationBySlug?.medias;
+      for (const node of connection?.nodes ?? []) {
+        if (node) {
+          allMedias.push(node);
+        }
+      }
+      const next = connection?.pageInfo.hasNextPage
+        ? connection?.pageInfo.endCursor
+        : undefined;
+      after = next as any;
+    } while (after);
+
+    const allMediaIds = allMedias.map((x) => x.id);
 
     const { rows: localMediaIdRows } = await withPgClient((pgClient) =>
       pgClient.query(
@@ -98,14 +121,9 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
     );
     const localMediaIds = localMediaIdRows.map((x) => x.id);
 
-    const mediaIdsToAdd = allMediaIds?.filter(
-      (x) => !localMediaIds.includes(x),
-    );
+    const mediaIdsToAdd = allMediaIds.filter((x) => !localMediaIds.includes(x));
 
-    const mediasToAdd =
-      projectMediasRes.data?.allMediaOfProjects?.filter((x) =>
-        mediaIdsToAdd?.includes(x?.id),
-      ) ?? [];
+    const mediasToAdd = allMedias.filter((x) => mediaIdsToAdd.includes(x.id));
 
     const mediaHandler = new media[
       process.env.STORAGE_TYPE as "file" | "s3"
@@ -234,7 +252,7 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
     const projectMediaInfoRes = await urqlClient.query<ProjectMediaInfoQuery>(
       ProjectMediaInfoDocument,
       {
-        mediaIds: projectMediasRes.data?.allMediaOfProjects?.map((x) => x?.id),
+        mediaIds: allMediaIds,
       },
     );
     if (projectMediaInfoRes.error) {

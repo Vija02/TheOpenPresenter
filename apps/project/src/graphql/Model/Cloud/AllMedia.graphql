@@ -1,0 +1,21 @@
+query AllMedia($slug: String!, $first: Int, $after: Cursor) {
+  organizationBySlug(slug: $slug) {
+    id
+    medias(first: $first, after: $after) {
+      nodes {
+        id
+        mediaName
+        fileSize
+        fileOffset
+        originalName
+        fileExtension
+        isUserUploaded
+        createdAt
+      }
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+    }
+  }
+}
