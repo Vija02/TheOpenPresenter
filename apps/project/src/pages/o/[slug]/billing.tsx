@@ -24,7 +24,7 @@ import {
 import { loadStripe } from "@stripe/stripe-js";
 import type { Stripe } from "@stripe/stripe-js";
 import axios from "axios";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { MdCheck, MdCreditCard, MdOpenInNew, MdStar } from "react-icons/md";
 import { UseQueryResponse } from "urql";
 import { useSearch } from "wouter";
@@ -74,30 +74,12 @@ function stripePost(url: string, body: unknown) {
 }
 
 const PRICE_MONTHLY_GBP = 79;
+// Annual is no longer sold; kept only to display existing annual subscriptions.
 const PRICE_ANNUAL_GBP = 790;
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
-const PLANS = [
-  {
-    label: "Monthly",
-    pricePerRoom: PRICE_MONTHLY_GBP,
-    unit: "/mo",
-    badge: null,
-    note: "Billed monthly · cancel anytime",
-    priceIdKey: "STRIPE_PRICE_ID_MONTHLY" as const,
-  },
-  {
-    label: "Annual",
-    pricePerRoom: PRICE_ANNUAL_GBP,
-    unit: "/yr",
-    badge: "Best value",
-    note: "Billed annually · 2 months free",
-    priceIdKey: "STRIPE_PRICE_ID_ANNUAL" as const,
-  },
-] as const;
-
 const FEATURES = [
   "Guest portal for your guests",
   "Custom branding & logo",
@@ -117,8 +99,12 @@ const FAQ_ITEMS = [
     a: "Free includes up to 5 connected displays, 1 GB storage, all official plugins, unlimited presentations, and no time limit. No credit card required.",
   },
   {
-    q: "What's the difference between Monthly and Annual billing?",
-    a: `Monthly costs £${PRICE_MONTHLY_GBP}/room/month. Annual costs £${PRICE_ANNUAL_GBP}/room/year. That's saving you the equivalent of 2 months compared to paying monthly. The full annual amount is charged upfront.`,
+    q: "How much does a room cost?",
+    a: `Each room is £${PRICE_MONTHLY_GBP}/month, billed monthly. You can add or remove rooms at any time, and cancel whenever you like.`,
+  },
+  {
+    q: "Can I buy a room instead of subscribing?",
+    a: "Yes. A Lifetime room is a one-time purchase: pay once and it's yours for good, with no subscription. Buying several at once is cheaper per room. Lifetime rooms sit alongside any monthly rooms you have.",
   },
   {
     q: "How does proration work when I change room count?",
@@ -126,11 +112,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "What happens when I cancel?",
-    a: 'Your Business plan stays active until the end of your current billing period. After that, your organization moves to the Free plan automatically. We don\'t issue refunds for remaining time. To reactivate, click "Manage subscription". You can resume from the Stripe portal at any time before the period ends.',
-  },
-  {
-    q: "Can I switch between Monthly and Annual billing?",
-    a: 'Yes. Click "Manage subscription" to switch billing cycles in the Stripe portal. Switching from monthly to annual issues a prorated credit for the remainder of your month and charges the annual rate. Switching from annual to monthly takes effect at your next renewal.',
+    a: 'Your Cloud plan stays active until the end of your current billing period. After that, your organization moves to the Free plan automatically. We don\'t issue refunds for remaining time. To reactivate, click "Manage subscription". You can resume from the Stripe portal at any time before the period ends.',
   },
 ];
 
@@ -201,6 +183,7 @@ function BillingPageInner({
     ? new Date(billingInfo.currentPeriodEnd)
     : null;
   const subscribedRoomCount = billingInfo?.subscribedRoomCount ?? 0;
+  const lifetimeRoomCount = billingInfo?.lifetimeRoomCount ?? 0;
   const billingInterval = billingInfo?.billingInterval ?? "month";
   const scheduledCancel = billingInfo?.cancelAtPeriodEnd ?? false;
   const serverCancelAt = billingInfo?.cancelAt
@@ -234,8 +217,9 @@ function BillingPageInner({
         ) : (
           <>
             {sessionId && (
-              <Alert variant="success" title="Subscription activated">
-                Your Business plan is now active. Thank you!
+              <Alert variant="success" title="Payment successful">
+                Thank you! Your purchase is being applied and will appear here
+                in a moment.
               </Alert>
             )}
             {!canManage && (
@@ -249,6 +233,7 @@ function BillingPageInner({
               periodEnd={periodEnd}
               isActive={isActive}
               subscribedRoomCount={subscribedRoomCount}
+              lifetimeRoomCount={lifetimeRoomCount}
               billingInterval={billingInterval}
               scheduledCancel={scheduledCancel}
               serverCancelAt={serverCancelAt}
@@ -257,7 +242,9 @@ function BillingPageInner({
               slug={slug}
             />
 
-            {!isActive && canManage && <UpgradeSection org={org} slug={slug} />}
+            {canManage && (
+              <UpgradePanel org={org} slug={slug} isActive={isActive} />
+            )}
           </>
         )}
       </div>
@@ -274,6 +261,7 @@ function PlanOverviewCard({
   periodEnd,
   isActive,
   subscribedRoomCount,
+  lifetimeRoomCount,
   billingInterval,
   scheduledCancel,
   serverCancelAt,
@@ -285,6 +273,7 @@ function PlanOverviewCard({
   periodEnd: Date | null;
   isActive: boolean;
   subscribedRoomCount: number;
+  lifetimeRoomCount: number;
   billingInterval: string;
   scheduledCancel: boolean;
   serverCancelAt: Date | null;
@@ -292,6 +281,8 @@ function PlanOverviewCard({
   org: OrgData;
   slug: string;
 }) {
+  const hasLifetime = lifetimeRoomCount > 0;
+
   // Portal
   const [portalLoading, setPortalLoading] = useState(false);
 
@@ -432,14 +423,20 @@ function PlanOverviewCard({
         <div className="flex items-center gap-2.5">
           <MdCreditCard className="size-5 text-tertiary shrink-0" />
           <h2 className="font-semibold text-primary">
-            {isActive ? "Business plan" : "Free plan"}
+            {isActive ? "Cloud plan" : hasLifetime ? "Lifetime" : "Free plan"}
           </h2>
         </div>
         <div className="flex items-center gap-2">
           {isActive && (
             <span className="inline-flex items-center gap-1 rounded-full bg-teal-100 px-2.5 py-0.5 text-xs font-semibold text-teal-800 dark:bg-teal-500/20 dark:text-teal-300">
               <MdStar className="size-3" />
-              Business
+              Cloud
+            </span>
+          )}
+          {hasLifetime && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-teal-100 px-2.5 py-0.5 text-xs font-semibold text-teal-800 dark:bg-teal-500/20 dark:text-teal-300">
+              <MdStar className="size-3" />
+              Lifetime
             </span>
           )}
           {status && status !== "active" && (
@@ -480,12 +477,30 @@ function PlanOverviewCard({
               {effectivePeriodEnd ? formatDate(effectivePeriodEnd) : "-"}
             </Stat>
           </div>
+        ) : hasLifetime ? (
+          <div className="grid grid-cols-2 gap-x-8 gap-y-5 sm:grid-cols-4">
+            <Stat label="Displays">Unlimited</Stat>
+            <Stat label="Storage">50 GB / room</Stat>
+            <Stat label="Plugins">All included</Stat>
+            <Stat label="Support">Priority</Stat>
+          </div>
         ) : (
           <div className="grid grid-cols-2 gap-x-8 gap-y-5 sm:grid-cols-4">
             <Stat label="Displays">Up to 5</Stat>
             <Stat label="Storage">1 GB</Stat>
             <Stat label="Plugins">All included</Stat>
             <Stat label="Support">Community</Stat>
+          </div>
+        )}
+
+        {hasLifetime && (
+          <div className="mt-5 flex flex-wrap items-center gap-2 text-sm">
+            <MdStar className="size-4 text-teal-500 shrink-0" />
+            <span className="font-medium text-primary">
+              {lifetimeRoomCount} lifetime{" "}
+              {lifetimeRoomCount === 1 ? "room" : "rooms"} owned
+            </span>
+            <span className="text-tertiary">· yours forever, no renewal</span>
           </div>
         )}
 
@@ -632,7 +647,7 @@ function PlanOverviewCard({
         </div>
       )}
 
-      {/* Portal + cancel (Business only) */}
+      {/* Portal + cancel (Cloud only) */}
       {isActive && canManage && (
         <div className="p-6 space-y-4">
           <div>
@@ -646,8 +661,7 @@ function PlanOverviewCard({
               Manage subscription
             </Button>
             <p className="mt-1.5 text-xs text-tertiary">
-              Switch billing cycle, update payment method, billing address, or
-              download invoices.
+              Update payment method, billing address, or download invoices.
             </p>
           </div>
 
@@ -665,7 +679,7 @@ function PlanOverviewCard({
           {(cancelPhase === "confirming" || cancelPhase === "cancelling") && (
             <div className="rounded-md border border-red-200 bg-red-50 p-4 space-y-3 dark:border-red-900/40 dark:bg-red-950/20">
               <p className="text-sm font-semibold text-primary">
-                Cancel your Business subscription?
+                Cancel your Cloud subscription?
               </p>
               <p className="text-sm text-secondary">
                 Your plan stays active until{" "}
@@ -710,7 +724,7 @@ function PlanOverviewCard({
             cancelPhase !== "confirming" &&
             cancelPhase !== "cancelling" && (
               <Alert variant="warning" title="Subscription cancelled">
-                Your Business plan will remain active until{" "}
+                Your Cloud plan will remain active until{" "}
                 {effectivePeriodEnd
                   ? formatDate(effectivePeriodEnd)
                   : "the end of the billing period"}
@@ -723,55 +737,110 @@ function PlanOverviewCard({
   );
 }
 
+function UpgradePanel({
+  org,
+  slug,
+  isActive,
+}: {
+  org: OrgData;
+  slug: string;
+  isActive: boolean;
+}) {
+  // Already subscribed monthly? Monthly room changes happen in the overview,
+  // so only Lifetime is offered here. Otherwise let them switch between the two.
+  const [mode, setMode] = useState<"monthly" | "lifetime">(
+    isActive ? "lifetime" : "monthly",
+  );
+
+  return (
+    <section className="space-y-6">
+      <div className="border-t border-stroke pt-6">
+        <h2 className="text-lg font-semibold text-primary">
+          {isActive ? "Own rooms for life" : "Add rooms"}
+        </h2>
+        <p className="mt-1 text-sm text-secondary">Everything in Free, plus:</p>
+        <ul className="mt-3 columns-1 sm:columns-2 sm:gap-x-8">
+          {FEATURES.map((f) => (
+            <li
+              key={f}
+              className="flex items-start gap-2 text-sm text-secondary break-inside-avoid mb-1.5"
+            >
+              <MdCheck className="size-4 shrink-0 text-teal-500 mt-0.5" />
+              {f}
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {!isActive && (
+        <div className="flex w-full rounded-lg border border-stroke bg-surface-secondary p-1">
+          <button
+            type="button"
+            onClick={() => setMode("monthly")}
+            className={`flex-1 px-6 py-2.5 text-base font-semibold rounded-md cursor-pointer transition-colors ${
+              mode === "monthly"
+                ? "bg-surface-primary text-primary shadow-sm"
+                : "text-secondary hover:text-primary"
+            }`}
+          >
+            Monthly
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode("lifetime")}
+            className={`flex-1 px-6 py-2.5 text-base font-semibold rounded-md cursor-pointer transition-colors ${
+              mode === "lifetime"
+                ? "bg-surface-primary text-primary shadow-sm"
+                : "text-secondary hover:text-primary"
+            }`}
+          >
+            Lifetime
+          </button>
+        </div>
+      )}
+
+      {mode === "monthly" ? (
+        <UpgradeSection org={org} slug={slug} />
+      ) : (
+        <LifetimeSection org={org} slug={slug} />
+      )}
+    </section>
+  );
+}
+
 function UpgradeSection({ org, slug }: { org: OrgData; slug: string }) {
-  const [selectedPlan, setSelectedPlan] = useState<
-    (typeof PLANS)[number] | null
-  >(null);
   const [roomCount, setRoomCount] = useState(1);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const resetCheckout = useCallback(() => {
-    setSelectedPlan(null);
-    setClientSecret(null);
-  }, []);
+  const total = PRICE_MONTHLY_GBP * roomCount;
 
-  const startCheckout = useCallback(
-    async (plan: (typeof PLANS)[number]) => {
-      if (selectedPlan?.label === plan.label && clientSecret) {
-        resetCheckout();
-        return;
-      }
-      const priceId =
-        plan.priceIdKey === "STRIPE_PRICE_ID_MONTHLY"
-          ? appData.getStripePriceIdMonthly()
-          : appData.getStripePriceIdAnnual();
-      if (!priceId) {
-        setError(`${plan.priceIdKey} is not configured on the server.`);
-        return;
-      }
-      setLoading(true);
-      setError(null);
-      setClientSecret(null);
-      setSelectedPlan(plan);
-      try {
-        const { data } = await stripePost("/stripe/create-checkout-session", {
-          organizationId: org.id,
-          slug,
-          priceId,
-          quantity: roomCount,
-        });
-        setClientSecret(data.clientSecret);
-      } catch (e: any) {
-        setError(apiError(e, "Failed to start checkout"));
-        setSelectedPlan(null);
-      } finally {
-        setLoading(false);
-      }
-    },
-    [org.id, slug, roomCount, selectedPlan, clientSecret, resetCheckout],
-  );
+  const resetCheckout = useCallback(() => setClientSecret(null), []);
+
+  const startCheckout = useCallback(async () => {
+    const priceId = appData.getStripePriceIdMonthly();
+    if (!priceId) {
+      setError("STRIPE_PRICE_ID_MONTHLY is not configured on the server.");
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    setClientSecret(null);
+    try {
+      const { data } = await stripePost("/stripe/create-checkout-session", {
+        organizationId: org.id,
+        slug,
+        priceId,
+        quantity: roomCount,
+      });
+      setClientSecret(data.clientSecret);
+    } catch (e: any) {
+      setError(apiError(e, "Failed to start checkout"));
+    } finally {
+      setLoading(false);
+    }
+  }, [org.id, slug, roomCount]);
 
   const stripeOptions = useMemo(
     () => (clientSecret ? { clientSecret } : null),
@@ -780,31 +849,13 @@ function UpgradeSection({ org, slug }: { org: OrgData; slug: string }) {
 
   return (
     <section className="space-y-6">
-      <div className="border-t border-stroke pt-6">
-        <h2 className="text-lg font-semibold text-primary">
-          Upgrade to Business
-        </h2>
-        <p className="mt-1 text-sm text-secondary">Everything in Free, plus:</p>
-        <ul className="mt-3 space-y-1.5">
-          {FEATURES.map((f) => (
-            <li
-              key={f}
-              className="flex items-center gap-2 text-sm text-secondary"
-            >
-              <MdCheck className="size-4 shrink-0 text-teal-500" />
-              {f}
-            </li>
-          ))}
-        </ul>
-      </div>
-
       <div className="rounded-md border border-stroke bg-surface-primary p-5 space-y-5">
         {/* Room picker */}
         <div className="flex items-center justify-between gap-4">
           <div>
             <p className="font-medium text-primary text-sm">How many rooms?</p>
             <p className="text-xs text-secondary mt-0.5">
-              Each room is a separate live presentation session.
+              Billed monthly. Cancel anytime.
             </p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
@@ -837,52 +888,177 @@ function UpgradeSection({ org, slug }: { org: OrgData; slug: string }) {
           </div>
         </div>
 
-        {/* Plan cards */}
-        <div className="grid gap-3 sm:grid-cols-2">
-          {PLANS.map((plan) => {
-            const total = plan.pricePerRoom * roomCount;
-            const isSelected = selectedPlan?.label === plan.label;
-            return (
-              <button
-                key={plan.label}
-                type="button"
-                onClick={() => startCheckout(plan)}
-                disabled={loading}
-                className={`relative rounded-md border-2 p-4 text-left transition-all cursor-pointer disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 ${
-                  isSelected
-                    ? "border-teal-500 bg-teal-50 dark:bg-teal-500/10"
-                    : "border-stroke hover:border-teal-400 hover:bg-surface-primary-hover"
-                }`}
-              >
-                {plan.badge && (
-                  <span className="absolute -top-2.5 right-3 rounded-full bg-teal-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
-                    {plan.badge}
-                  </span>
-                )}
-                <p className="text-xs font-semibold uppercase tracking-wide text-tertiary">
-                  {plan.label}
-                </p>
-                <p className="mt-1.5 text-2xl font-bold text-primary">
-                  £{total}
-                  <span className="text-sm font-normal text-secondary">
-                    {plan.unit}
-                  </span>
-                </p>
-                {roomCount > 1 && (
-                  <p className="mt-0.5 text-xs text-secondary">
-                    £{plan.pricePerRoom} × {roomCount} rooms
-                  </p>
-                )}
-                <p className="mt-2 text-xs text-secondary">{plan.note}</p>
-                {isSelected && (
-                  <p className="mt-2 text-xs font-semibold text-teal-600 dark:text-teal-400">
-                    {clientSecret ? "Checkout open below ↓" : "Loading…"}
-                  </p>
-                )}
-              </button>
-            );
-          })}
+        {/* Price + subscribe */}
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <p className="text-2xl font-bold text-primary">
+              £{total}
+              <span className="text-sm font-normal text-secondary">/mo</span>
+            </p>
+            {roomCount > 1 && (
+              <p className="mt-0.5 text-xs text-secondary">
+                £{PRICE_MONTHLY_GBP} × {roomCount} rooms
+              </p>
+            )}
+          </div>
+          <Button
+            variant="default"
+            onClick={startCheckout}
+            isLoading={loading}
+            disabled={loading || !!clientSecret}
+          >
+            Subscribe
+          </Button>
         </div>
+        <p className="text-xs text-tertiary">
+          Includes AI tools: auto-formatted slides, generated backgrounds, and
+          smart lyric &amp; scripture lookup.
+        </p>
+      </div>
+
+      {error && (
+        <Alert variant="destructive" title="Checkout error">
+          {error}
+        </Alert>
+      )}
+
+      {stripeOptions && (
+        <div className="rounded-md border border-stroke overflow-hidden">
+          <EmbeddedCheckoutProvider
+            stripe={getStripe()}
+            options={stripeOptions}
+          >
+            <EmbeddedCheckout />
+          </EmbeddedCheckoutProvider>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function LifetimeSection({ org, slug }: { org: OrgData; slug: string }) {
+  const [roomCount, setRoomCount] = useState(1);
+  const [preview, setPreview] = useState<{
+    unitAmount: number;
+    total: number;
+    currency: string;
+  } | null>(null);
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Refresh the tiered price whenever the room count changes.
+  useEffect(() => {
+    let cancelled = false;
+    setClientSecret(null);
+    stripePost("/stripe/preview-lifetime", {
+      organizationId: org.id,
+      quantity: roomCount,
+    })
+      .then(({ data }) => {
+        if (!cancelled) {
+          setPreview({
+            unitAmount: data.unitAmount,
+            total: data.total,
+            currency: data.currency,
+          });
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setPreview(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [org.id, roomCount]);
+
+  const startCheckout = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    setClientSecret(null);
+    try {
+      const { data } = await stripePost("/stripe/create-lifetime-checkout", {
+        organizationId: org.id,
+        slug,
+        quantity: roomCount,
+      });
+      setClientSecret(data.clientSecret);
+    } catch (e: any) {
+      setError(apiError(e, "Failed to start checkout"));
+    } finally {
+      setLoading(false);
+    }
+  }, [org.id, slug, roomCount]);
+
+  const stripeOptions = useMemo(
+    () => (clientSecret ? { clientSecret } : null),
+    [clientSecret],
+  );
+
+  return (
+    <section className="space-y-6">
+      <div className="rounded-md border border-stroke bg-surface-primary p-5 space-y-5">
+        {/* Room picker */}
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="font-medium text-primary text-sm">How many rooms?</p>
+            <p className="text-xs text-secondary mt-0.5">
+              £790 each for 2–4, £590 each for 5+.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              aria-label="Remove a room"
+              onClick={() => setRoomCount((n) => Math.max(1, n - 1))}
+              disabled={roomCount <= 1}
+              className="w-8 h-8 rounded-md border border-stroke flex items-center justify-center text-primary hover:bg-surface-primary-hover disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer font-medium"
+            >
+              -
+            </button>
+            <span className="w-10 text-center font-bold text-primary text-lg tabular-nums">
+              {roomCount}
+            </span>
+            <button
+              type="button"
+              aria-label="Add a room"
+              onClick={() => setRoomCount((n) => n + 1)}
+              className="w-8 h-8 rounded-md border border-stroke flex items-center justify-center text-primary hover:bg-surface-primary-hover cursor-pointer font-medium"
+            >
+              +
+            </button>
+          </div>
+        </div>
+
+        {/* Price + buy */}
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <p className="text-2xl font-bold text-primary">
+              {preview ? formatCurrency(preview.total, preview.currency) : "…"}
+              <span className="text-sm font-normal text-secondary">
+                {" "}
+                one-time
+              </span>
+            </p>
+            {preview && roomCount > 1 && (
+              <p className="mt-0.5 text-xs text-secondary">
+                {formatCurrency(preview.unitAmount, preview.currency)} ×{" "}
+                {roomCount} rooms
+              </p>
+            )}
+          </div>
+          <Button
+            variant="default"
+            onClick={startCheckout}
+            isLoading={loading}
+            disabled={loading || !!clientSecret}
+          >
+            Buy for life
+          </Button>
+        </div>
+        <p className="text-xs text-tertiary">
+          Includes 1 year of AI tools and priority support.
+        </p>
       </div>
 
       {error && (

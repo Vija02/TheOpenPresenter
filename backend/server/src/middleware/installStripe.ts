@@ -10,6 +10,7 @@ import { getRootPgPool } from "./installDatabasePools";
 // STRIPE_PUBLISHABLE_KEY
 // STRIPE_PRICE_ID_MONTHLY
 // STRIPE_PRICE_ID_ANNUAL
+// STRIPE_PRODUCT_ID_LIFETIME
 
 // Values attached to the request by the middlewares below.
 declare global {
@@ -32,6 +33,26 @@ function getStripe(): Stripe {
   }
   // apiVersion omitted. Uses the SDK's built-in latest version
   return new Stripe(process.env.STRIPE_SECRET_KEY);
+}
+
+// ---------------------------------------------------------------------------
+// Lifetime (one-time) pricing
+// ---------------------------------------------------------------------------
+// Per-purchase volume tiers. Amounts are in the smallest currency unit (pence).
+// The unit price is chosen from the quantity in a SINGLE purchase (not the
+// rooms already owned), and every unit in that purchase is billed at that rate.
+const LIFETIME_CURRENCY = "gbp";
+const LIFETIME_TIERS = [
+  { minQuantity: 5, unitAmount: 59000 },
+  { minQuantity: 2, unitAmount: 79000 },
+  { minQuantity: 1, unitAmount: 99000 },
+] as const;
+
+function lifetimeUnitAmount(quantity: number): number {
+  const tier = LIFETIME_TIERS.find((t) => quantity >= t.minQuantity);
+  return (
+    tier?.unitAmount ?? LIFETIME_TIERS[LIFETIME_TIERS.length - 1]!.unitAmount
+  );
 }
 
 async function verifyOrgAccess(
@@ -142,6 +163,54 @@ async function upsertSubscription(
       customerId,
     ],
   );
+}
+
+async function recordLifetimePurchase(
+  app: Express,
+  session: Stripe.Checkout.Session,
+): Promise<void> {
+  const pool = getRootPgPool(app);
+  const organizationId = session.metadata?.organizationId;
+  const quantity = Math.max(
+    1,
+    Math.floor(Number(session.metadata?.quantity) || 1),
+  );
+
+  if (!organizationId) {
+    logger.error(
+      { sessionId: session.id },
+      "lifetime checkout completed without organizationId metadata",
+    );
+    return;
+  }
+
+  const inserted = await pool.query(
+    `insert into app_private.organization_lifetime_purchases
+       (stripe_checkout_session_id, organization_id, stripe_payment_intent_id, quantity, amount_total, currency)
+     values ($1, $2, $3, $4, $5, $6)
+     on conflict (stripe_checkout_session_id) do nothing
+     returning stripe_checkout_session_id`,
+    [
+      session.id,
+      organizationId,
+      (session.payment_intent as string) ?? null,
+      quantity,
+      session.amount_total ?? null,
+      session.currency ?? null,
+    ],
+  );
+
+  // Only add to the owned-room count the first time we process this session.
+  if (inserted.rowCount && inserted.rowCount > 0) {
+    await pool.query(
+      `insert into app_private.organization_billing (organization_id, lifetime_room_count)
+       values ($1, $2)
+       on conflict (organization_id) do update
+         set lifetime_room_count = app_private.organization_billing.lifetime_room_count + excluded.lifetime_room_count,
+             updated_at = now()`,
+      [organizationId, quantity],
+    );
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -255,6 +324,89 @@ export default async function installStripe(app: Express): Promise<void> {
         res.json({ clientSecret: session.client_secret });
       } catch (err: any) {
         logger.error({ err }, "create-checkout-session error");
+        res.status(500).json({ error: err.message });
+      }
+    },
+  );
+
+  // ------------------------------------------------------------------
+  // Returns the price for a one-time Lifetime purchase of N rooms.
+  // Body: { organizationId, quantity }
+  // Returns: { quantity, unitAmount, total, currency }
+  // ------------------------------------------------------------------
+  app.post("/stripe/preview-lifetime", ...orgScoped, async (req, res) => {
+    const { quantity } = req.body as { quantity?: number };
+    const roomCount = Math.max(1, Math.floor(Number(quantity) || 1));
+    const unitAmount = lifetimeUnitAmount(roomCount);
+    res.json({
+      quantity: roomCount,
+      unitAmount,
+      total: unitAmount * roomCount,
+      currency: LIFETIME_CURRENCY,
+    });
+  });
+
+  // ------------------------------------------------------------------
+  // Creates an embedded Checkout session for a one-time Lifetime purchase.
+  // Body: { organizationId, slug, quantity }
+  // Returns: { clientSecret }
+  // ------------------------------------------------------------------
+  app.post(
+    "/stripe/create-lifetime-checkout",
+    ...orgScoped,
+    async (req, res) => {
+      const { slug, quantity } = req.body as {
+        slug?: string;
+        quantity?: number;
+      };
+      if (!slug) {
+        res.status(400).json({ error: "slug is required" });
+        return;
+      }
+
+      const roomCount = Math.max(1, Math.floor(Number(quantity) || 1));
+      const unitAmount = lifetimeUnitAmount(roomCount);
+      const metadata = {
+        organizationId: req.organizationId!,
+        kind: "lifetime",
+        quantity: String(roomCount),
+      };
+
+      const lifetimeProductId = process.env.STRIPE_PRODUCT_ID_LIFETIME;
+      const priceData: Stripe.Checkout.SessionCreateParams.LineItem.PriceData =
+        {
+          currency: LIFETIME_CURRENCY,
+          unit_amount: unitAmount,
+          ...(lifetimeProductId
+            ? { product: lifetimeProductId }
+            : { product_data: { name: "TheOpenPresenter Lifetime room" } }),
+        };
+
+      try {
+        const stripe = req.stripe!;
+        const customerId = await getOrCreateStripeCustomer(
+          app,
+          stripe,
+          req.sessionId!,
+          req.organizationId!,
+        );
+
+        const session = await stripe.checkout.sessions.create({
+          customer: customerId,
+          mode: "payment",
+          ui_mode: "embedded_page",
+          line_items: [{ quantity: roomCount, price_data: priceData }],
+          automatic_tax: { enabled: true },
+          tax_id_collection: { enabled: true },
+          customer_update: { address: "auto", name: "auto" },
+          payment_intent_data: { metadata },
+          metadata,
+          return_url: `${process.env.ROOT_URL}/o/${slug}/billing?session_id={CHECKOUT_SESSION_ID}`,
+        });
+
+        res.json({ clientSecret: session.client_secret });
+      } catch (err: any) {
+        logger.error({ err }, "create-lifetime-checkout error");
         res.status(500).json({ error: err.message });
       }
     },
@@ -497,6 +649,11 @@ export default async function installStripe(app: Express): Promise<void> {
                 subscription,
                 session.customer as string,
               );
+            } else if (
+              session.mode === "payment" &&
+              session.metadata?.kind === "lifetime"
+            ) {
+              await recordLifetimePurchase(app, session);
             }
             break;
           }

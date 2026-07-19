@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 5sIz3t89ziKUZX62eyqa8rPEszVdWzlJhE3cWp8TmCNJ0gSoiR5zMbGQBS4ySOH
+\restrict xMXrOis722s0LXz60bQRV6NeZACnmtUx6wf9h7NorbZ9DwpkmGRgHMvtwg9BFeh
 
 -- Dumped from database version 17.0 (Debian 17.0-1.pgdg120+1)
 -- Dumped by pg_dump version 18.4
@@ -138,7 +138,9 @@ CREATE TYPE app_public.organization_billing_info AS (
 	subscribed_room_count integer,
 	billing_interval text,
 	cancel_at_period_end boolean,
-	cancel_at timestamp with time zone
+	cancel_at timestamp with time zone,
+	lifetime_room_count integer,
+	effective_room_count integer
 );
 
 
@@ -2254,7 +2256,9 @@ CREATE FUNCTION app_public.organizations_billing_info(org app_public.organizatio
     coalesce(b.subscribed_room_count, 0),
     coalesce(b.billing_interval, 'month')::text,
     coalesce(b.cancel_at_period_end, false),
-    b.cancel_at
+    b.cancel_at,
+    coalesce(b.lifetime_room_count, 0),
+    coalesce(b.subscribed_room_count, 0) + coalesce(b.lifetime_room_count, 0)
   from app_public.organizations o
   left join app_private.organization_billing b on b.organization_id = o.id
   where o.id = org.id
@@ -3145,7 +3149,23 @@ CREATE TABLE app_private.organization_billing (
     cancel_at_period_end boolean DEFAULT false NOT NULL,
     cancel_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    lifetime_room_count integer DEFAULT 0 NOT NULL
+);
+
+
+--
+-- Name: organization_lifetime_purchases; Type: TABLE; Schema: app_private; Owner: -
+--
+
+CREATE TABLE app_private.organization_lifetime_purchases (
+    stripe_checkout_session_id text NOT NULL,
+    organization_id uuid NOT NULL,
+    stripe_payment_intent_id text,
+    quantity integer NOT NULL,
+    amount_total integer,
+    currency text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 
@@ -3606,6 +3626,14 @@ ALTER TABLE ONLY app_private.organization_billing
 
 
 --
+-- Name: organization_lifetime_purchases organization_lifetime_purchases_pkey; Type: CONSTRAINT; Schema: app_private; Owner: -
+--
+
+ALTER TABLE ONLY app_private.organization_lifetime_purchases
+    ADD CONSTRAINT organization_lifetime_purchases_pkey PRIMARY KEY (stripe_checkout_session_id);
+
+
+--
 -- Name: connect_pg_simple_sessions session_pkey; Type: CONSTRAINT; Schema: app_private; Owner: -
 --
 
@@ -3907,6 +3935,13 @@ ALTER TABLE ONLY app_public.users
 
 ALTER TABLE ONLY app_public.users
     ADD CONSTRAINT users_username_key UNIQUE (username);
+
+
+--
+-- Name: organization_lifetime_purchases_organization_id_idx; Type: INDEX; Schema: app_private; Owner: -
+--
+
+CREATE INDEX organization_lifetime_purchases_organization_id_idx ON app_private.organization_lifetime_purchases USING btree (organization_id);
 
 
 --
@@ -4762,6 +4797,14 @@ CREATE TRIGGER _900_send_verification_email AFTER INSERT ON app_public.user_emai
 
 ALTER TABLE ONLY app_private.organization_billing
     ADD CONSTRAINT organization_billing_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES app_public.organizations(id) ON DELETE CASCADE;
+
+
+--
+-- Name: organization_lifetime_purchases organization_lifetime_purchases_organization_id_fkey; Type: FK CONSTRAINT; Schema: app_private; Owner: -
+--
+
+ALTER TABLE ONLY app_private.organization_lifetime_purchases
+    ADD CONSTRAINT organization_lifetime_purchases_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES app_public.organizations(id) ON DELETE CASCADE;
 
 
 --
@@ -7097,5 +7140,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE theopenpresenter REVOKE ALL ON FUNCTIONS FROM 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 5sIz3t89ziKUZX62eyqa8rPEszVdWzlJhE3cWp8TmCNJ0gSoiR5zMbGQBS4ySOH
+\unrestrict xMXrOis722s0LXz60bQRV6NeZACnmtUx6wf9h7NorbZ9DwpkmGRgHMvtwg9BFeh
 
