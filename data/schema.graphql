@@ -3506,6 +3506,8 @@ type OrganizationBillingInfo {
   cancelAt: Datetime
   cancelAtPeriodEnd: Boolean
   currentPeriodEnd: Datetime
+  effectiveRoomCount: Int
+  lifetimeRoomCount: Int
   plan: String
   subscribedRoomCount: Int
   subscriptionStatus: String

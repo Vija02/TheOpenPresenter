@@ -10,6 +10,8 @@ query OrganizationBillingPage($slug: String!) {
       subscriptionStatus
       currentPeriodEnd
       subscribedRoomCount
+      lifetimeRoomCount
+      effectiveRoomCount
       billingInterval
       cancelAtPeriodEnd
       cancelAt
