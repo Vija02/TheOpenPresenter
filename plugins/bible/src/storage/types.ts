@@ -24,6 +24,8 @@ export type TranslationSummary = {
   bookCount: number;
   books: BibleBookMeta[];
   updatedAt: string;
+  // null = standalone upload, listed as its own row
+  catalogId: string | null;
 };
 
 export type BiblePreferences = {

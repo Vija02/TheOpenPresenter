@@ -22,7 +22,8 @@ export const listTranslations = async (
             language,
             book_count as "bookCount",
             books,
-            updated_at as "updatedAt"
+            updated_at as "updatedAt",
+            catalog_id as "catalogId"
        from translation
       where organization_id = $1 or organization_id is null
       order by lower(name) asc`,
@@ -43,6 +44,7 @@ export const createTranslation = async (
     format,
     books,
     chapters,
+    catalogId,
   }: {
     organizationId: string;
     userId: string | null;
@@ -52,17 +54,29 @@ export const createTranslation = async (
     format: string;
     books: BibleBookMeta[];
     chapters: ChapterInput[];
+    catalogId?: string | null;
   },
 ): Promise<string> => {
   const db = api.getPluginDb(pluginName, auth);
+
+  // Re-uploading for the same catalog entry replaces the previous copy
+  // (chapters cascade via FK), keeping the unique index satisfied.
+  if (catalogId) {
+    await db.query(
+      `delete from translation
+        where organization_id = $1 and catalog_id = $2`,
+      [organizationId, catalogId],
+    );
+  }
+
   const {
     rows: [row],
   } = await db.query<{ id: string }>(
     `with new_t as (
        insert into translation
          (organization_id, created_by_user_id, name, abbreviation,
-          language, format, book_count, books)
-       values ($1, $2, $3, $4, $5, $6, $7, $8::jsonb)
+          language, format, book_count, books, catalog_id)
+       values ($1, $2, $3, $4, $5, $6, $7, $8::jsonb, $10)
        returning id
      ), ins_ch as (
        insert into translation_chapter
@@ -91,6 +105,7 @@ export const createTranslation = async (
           verses: c.verses,
         })),
       ),
+      catalogId ?? null,
     ],
   );
   return row!.id;
@@ -189,6 +204,10 @@ export const resolveFromDb = async (
   };
 };
 
+/** Languages the catalog is filtered to on first run. */
+export const DEFAULT_LANGUAGES = ["en"] as const;
+export const DEFAULT_TRANSLATION_ID = "eng_kjv";
+
 export const getPreferences = async (
   api: Api,
   auth: RequestAuth,
@@ -205,10 +224,19 @@ export const getPreferences = async (
     [organizationId],
   );
   const row = rows[0];
+
+  if (!row) {
+    return {
+      languages: [...DEFAULT_LANGUAGES],
+      translationIds: [DEFAULT_TRANSLATION_ID],
+      primaryTranslationId: DEFAULT_TRANSLATION_ID,
+    };
+  }
+
   return {
-    languages: (row?.languages as string[]) ?? [],
-    translationIds: (row?.translationIds as string[]) ?? [],
-    primaryTranslationId: (row?.primaryTranslationId as string | null) ?? null,
+    languages: (row.languages as string[]) ?? [],
+    translationIds: (row.translationIds as string[]) ?? [],
+    primaryTranslationId: (row.primaryTranslationId as string | null) ?? null,
   };
 };
 

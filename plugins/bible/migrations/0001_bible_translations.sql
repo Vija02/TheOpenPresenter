@@ -19,6 +19,8 @@ create table translation (
   format     text not null default 'manual',
   book_count int  not null default 0,
 
+  catalog_id text,
+
   -- Book index in the translation's native language, e.g.
   --   [{ "n": 1, "name": "1. Mose", "abbr": ["1Mo"], "chapters": [31, 25, ...] }, ...]
   -- `n` = canonical 1..66 book number (language-independent key); `name`/`abbr` = native
@@ -33,6 +35,8 @@ create table translation (
 -- Indexes
 create index on translation (organization_id);
 create index on translation (organization_id, lower(name));
+create unique index on translation (organization_id, catalog_id)
+  where catalog_id is not null;
 
 -- Triggers
 create trigger _100_timestamps
