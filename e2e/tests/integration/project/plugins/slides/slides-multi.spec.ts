@@ -24,7 +24,6 @@ test.describe("Slides Plugin - Multiple Imports", () => {
       .filter({ has: page.locator("img") });
 
     // --- Upload first import (PDF) from the Landing ---
-    await page.getByText("PDF", { exact: true }).click();
     await uppyUploadFile("./dummyFiles/dummySlide.pdf");
 
     // Wait until the first import has been processed
@@ -34,7 +33,6 @@ test.describe("Slides Plugin - Multiple Imports", () => {
 
     // --- Upload second import (PPTX) via the "Add slide" Slide ---
     await page.getByText("Add slide", { exact: true }).click();
-    await page.getByText("Powerpoint", { exact: true }).click();
     await uppyUploadFile("./dummyFiles/dummySlide.pptx");
 
     // Wait until the PPTX has finished processing and added more slides
@@ -106,7 +104,6 @@ test.describe("Slides Plugin - Multiple Imports", () => {
       .filter({ has: page.locator("img") });
 
     // --- Upload first import (PDF) ---
-    await page.getByText("PDF", { exact: true }).click();
     await uppyUploadFile("./dummyFiles/dummySlide.pdf");
 
     await expect(renderedSlides.first()).toBeVisible({ timeout: 20 * 1000 });
@@ -115,7 +112,6 @@ test.describe("Slides Plugin - Multiple Imports", () => {
 
     // --- Upload second import (PPTX) ---
     await page.getByText("Add slide", { exact: true }).click();
-    await page.getByText("Powerpoint", { exact: true }).click();
     await uppyUploadFile("./dummyFiles/dummySlide.pptx");
 
     await expect
