@@ -18,6 +18,7 @@
     "@r2wc/react-to-web-component": "^2.0.3",
     "@repo/base-plugin": "*",
     "@repo/lib": "*",
+    "@repo/media-picker": "*",
     "@repo/observability": "*",
     "@repo/ui": "*",
     "@tanstack/react-query": "^5.62.3",
