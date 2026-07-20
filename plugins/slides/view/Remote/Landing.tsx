@@ -24,7 +24,6 @@ const Landing = () => {
   const handleUploadComplete = async (
     uploadedFiles: { mediaName: string; originalName: string | null }[]
   ) => {
-    console.log("DROP FIRED:", uploadedFiles);
     if (!uploadedFiles || uploadedFiles.length === 0) return;
     setIsProcessing(true);
 
