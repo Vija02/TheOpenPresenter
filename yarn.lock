@@ -9851,6 +9851,7 @@ __metadata:
     "@repo/base-plugin": "npm:*"
     "@repo/eslint-config": "npm:*"
     "@repo/lib": "npm:*"
+    "@repo/media-picker": "npm:*"
     "@repo/observability": "npm:*"
     "@repo/prettier-config": "npm:*"
     "@repo/tailwind-config": "npm:*"
