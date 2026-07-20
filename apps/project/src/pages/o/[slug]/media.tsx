@@ -24,8 +24,8 @@ import {
   PopConfirm,
   useOverlayToggle,
 } from "@repo/ui";
-import "@uppy/core/dist/style.min.css";
-import "@uppy/dashboard/dist/style.min.css";
+import "@uppy/core/css/style.min.css";
+import "@uppy/dashboard/css/style.min.css";
 import prettyBytes from "pretty-bytes";
 import {
   HTMLAttributes,
