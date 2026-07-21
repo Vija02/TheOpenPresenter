@@ -97,6 +97,7 @@ const renderVerse = (verse: ChapterVerse): string => {
   }
   return parts
     .join(" ")
+    .replace(/¶/g, "")
     .replace(/\s*\n\s*/g, " ")
     .replace(/\s+/g, " ")
     .trim();
