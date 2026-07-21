@@ -9,6 +9,7 @@ create table bible_preference (
   languages jsonb not null default '[]'::jsonb,
   translation_ids jsonb not null default '[]'::jsonb,
   primary_translation_id text,
+  favorite_translation_ids jsonb not null default '[]'::jsonb,
 
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()

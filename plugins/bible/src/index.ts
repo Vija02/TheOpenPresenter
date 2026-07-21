@@ -346,6 +346,7 @@ const getAppRouter =
                 languages: z.array(z.string()),
                 translationIds: z.array(z.string()),
                 primaryTranslationId: z.string().nullish(),
+                favoriteIds: z.array(z.string()).default([]),
               }),
             )
             .mutation(async ({ input, ctx }) => {
@@ -355,6 +356,7 @@ const getAppRouter =
                 languages: input.languages,
                 translationIds: input.translationIds,
                 primaryTranslationId: input.primaryTranslationId ?? null,
+                favoriteIds: input.favoriteIds,
               });
               return { success: true };
             }),

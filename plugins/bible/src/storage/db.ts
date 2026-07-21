@@ -217,7 +217,8 @@ export const getPreferences = async (
   const { rows } = await db.query(
     `select languages,
             translation_ids as "translationIds",
-            primary_translation_id as "primaryTranslationId"
+            primary_translation_id as "primaryTranslationId",
+            favorite_translation_ids as "favoriteIds"
        from bible_preference
       where organization_id = $1
       limit 1`,
@@ -230,6 +231,7 @@ export const getPreferences = async (
       languages: [...DEFAULT_LANGUAGES],
       translationIds: [DEFAULT_TRANSLATION_ID],
       primaryTranslationId: DEFAULT_TRANSLATION_ID,
+      favoriteIds: [DEFAULT_TRANSLATION_ID],
     };
   }
 
@@ -237,6 +239,7 @@ export const getPreferences = async (
     languages: (row.languages as string[]) ?? [],
     translationIds: (row.translationIds as string[]) ?? [],
     primaryTranslationId: (row.primaryTranslationId as string | null) ?? null,
+    favoriteIds: (row.favoriteIds as string[]) ?? [],
   };
 };
 
@@ -248,22 +251,26 @@ export const setPreferences = async (
     languages: string[];
     translationIds: string[];
     primaryTranslationId: string | null;
+    favoriteIds: string[];
   },
 ): Promise<void> => {
   const db = api.getPluginDb(pluginName, auth);
   await db.query(
     `insert into bible_preference
-        (organization_id, languages, translation_ids, primary_translation_id)
-      values ($1, $2::jsonb, $3::jsonb, $4)
+        (organization_id, languages, translation_ids, primary_translation_id,
+         favorite_translation_ids)
+      values ($1, $2::jsonb, $3::jsonb, $4, $5::jsonb)
       on conflict (organization_id) do update set
         languages = excluded.languages,
         translation_ids = excluded.translation_ids,
-        primary_translation_id = excluded.primary_translation_id`,
+        primary_translation_id = excluded.primary_translation_id,
+        favorite_translation_ids = excluded.favorite_translation_ids`,
     [
       args.organizationId,
       JSON.stringify(args.languages),
       JSON.stringify(args.translationIds),
       args.primaryTranslationId,
+      JSON.stringify(args.favoriteIds),
     ],
   );
 };

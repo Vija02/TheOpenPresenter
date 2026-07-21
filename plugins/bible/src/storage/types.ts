@@ -32,4 +32,5 @@ export type BiblePreferences = {
   languages: string[];
   translationIds: string[];
   primaryTranslationId: string | null;
+  favoriteIds: string[];
 };
