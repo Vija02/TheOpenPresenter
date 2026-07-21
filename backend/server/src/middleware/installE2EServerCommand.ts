@@ -188,6 +188,11 @@ async function runCommand(
       "delete from app_public.organizations where slug like 'test%'",
     );
     return { success: true };
+  } else if (command === "clearBibleData") {
+    await rootPgPool.query("delete from plugin_bible.translation_chapter");
+    await rootPgPool.query("delete from plugin_bible.translation");
+    await rootPgPool.query("delete from plugin_bible.bible_preference");
+    return { success: true };
   } else if (command === "clearOrganizationBySlug") {
     const { slug } = payload || {};
     if (!slug || !String(slug).startsWith("test")) {

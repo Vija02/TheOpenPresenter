@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<XMLBIBLE biblename="E2E Test Bible" lang="en">
+  <BIBLEBOOK bnumber="43" bname="John">
+    <CHAPTER cnumber="3">
+      <VERS vnumber="16">E2E custom translation verse text</VERS>
+    </CHAPTER>
+  </BIBLEBOOK>
+</XMLBIBLE>

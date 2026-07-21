@@ -1,0 +1,27 @@
+@import "@repo/tailwind-config/index.css";
+
+.bible-transition-fade-in {
+  animation: bible-fade-in 0.25s ease-in forwards;
+}
+
+.bible-transition-fade-out {
+  animation: bible-fade-out 0.25s ease-out forwards;
+}
+
+@keyframes bible-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes bible-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}

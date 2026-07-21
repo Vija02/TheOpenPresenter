@@ -9715,6 +9715,50 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@repo/plugin-bible@workspace:plugins/bible":
+  version: 0.0.0-use.local
+  resolution: "@repo/plugin-bible@workspace:plugins/bible"
+  dependencies:
+    "@r2wc/react-to-web-component": "npm:^2.0.3"
+    "@react-hook/size": "npm:^2.1.2"
+    "@repo/base-plugin": "npm:*"
+    "@repo/eslint-config": "npm:*"
+    "@repo/observability": "npm:*"
+    "@repo/prettier-config": "npm:*"
+    "@repo/tailwind-config": "npm:*"
+    "@repo/typescript-config": "npm:*"
+    "@repo/ui": "npm:*"
+    "@tailwindcss/vite": "npm:^4.1.10"
+    "@tanstack/react-query": "npm:^5.62.3"
+    "@trpc/client": "npm:^11.1.2"
+    "@trpc/react-query": "npm:^11.1.2"
+    "@trpc/server": "npm:^11.1.2"
+    "@types/lodash-es": "npm:^4.17.12"
+    "@types/postcss-prefix-selector": "npm:^1.16.3"
+    "@types/react": "npm:^19.1.2"
+    "@types/react-dom": "npm:^19.1.3"
+    "@vitejs/plugin-react-swc": "npm:^3.7.2"
+    autoprefixer: "npm:^10.4.21"
+    axios: "npm:^1.10.0"
+    bible-passage-reference-parser: "npm:^3.2.0"
+    concurrently: "npm:^9.1.2"
+    eslint: "npm:^8.57.1"
+    free-use-bible-api: "npm:^0.2.0"
+    lodash-es: "npm:^4.17.21"
+    pkgroll: "npm:2.5.1"
+    postcss-prefix-selector: "npm:^2.1.1"
+    react: "npm:^19.1.0"
+    react-dom: "npm:^19.1.0"
+    react-icons: "npm:^5.4.0"
+    typeid-js: "npm:^1.1.0"
+    valtio: "npm:^2.1.2"
+    valtio-yjs: "npm:^0.6.0"
+    vite: "npm:6.3.5"
+    yjs: "npm:13.6.26"
+    zod: "npm:^3.25.17"
+  languageName: unknown
+  linkType: soft
+
 "@repo/plugin-embed@workspace:plugins/embed":
   version: 0.0.0-use.local
   resolution: "@repo/plugin-embed@workspace:plugins/embed"
@@ -16104,6 +16148,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"bible-passage-reference-parser@npm:^3.2.0":
+  version: 3.2.0
+  resolution: "bible-passage-reference-parser@npm:3.2.0"
+  checksum: 10c0/0ea26feff399827bbc501b2f45ffaf709658cf3885004dd00cf0613f061112af4fe4244afec3334a57422861e601d473f52ddaa44fa6a7a800d5d29b2657edef
+  languageName: node
+  linkType: hard
+
 "bignumber.js@npm:^9.0.0":
   version: 9.1.2
   resolution: "bignumber.js@npm:9.1.2"
@@ -20776,6 +20827,13 @@ __metadata:
   version: 4.3.7
   resolution: "fraction.js@npm:4.3.7"
   checksum: 10c0/df291391beea9ab4c263487ffd9d17fed162dbb736982dee1379b2a8cc94e4e24e46ed508c6d278aded9080ba51872f1bc5f3a5fd8d7c74e5f105b508ac28711
+  languageName: node
+  linkType: hard
+
+"free-use-bible-api@npm:^0.2.0":
+  version: 0.2.0
+  resolution: "free-use-bible-api@npm:0.2.0"
+  checksum: 10c0/2af667545197ac0d21154e077e7307106404f4cef6cbeab4a1e8c3898103fae71c6d3881d094402de5c0cea9fe418aaea422dba6ae5cc08270a59a669a2d435a
   languageName: node
   linkType: hard
 
