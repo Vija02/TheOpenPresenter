@@ -12,6 +12,7 @@ import { StorageEngine } from "multer";
 import sharp from "sharp";
 import { TypeId, toUUID, typeidUnboxed } from "typeid-js";
 
+import { WithPgClient } from "../types";
 import { OurDataStore } from "./OurDataStore";
 import { multerProcessFileName } from "./helper";
 import {
@@ -20,7 +21,6 @@ import {
   OurMulterRequest,
   UploadMediaParam,
 } from "./types";
-import { WithPgClient } from "../types";
 
 export const createMediaHandler = <T extends OurDataStore>(
   createStore: (withPgClient: WithPgClient) => T,
@@ -45,6 +45,7 @@ export const createMediaHandler = <T extends OurDataStore>(
       originalFileName,
       isUserUploaded,
       isGuest,
+      skipProcessing = false,
     }: UploadMediaParam) {
       const finalFileName = mediaId + "." + fileExtension;
       try {
@@ -92,8 +93,12 @@ export const createMediaHandler = <T extends OurDataStore>(
               ),
             );
 
-            // Process media (image metadata extraction, video transcoding)
-            await this.processCompletedMedia(finalFileName, { isUserUploaded });
+            if (!skipProcessing) {
+              // Process media (image metadata extraction, video transcoding)
+              await this.processCompletedMedia(finalFileName, {
+                isUserUploaded,
+              });
+            }
 
             return { mediaId, fileExtension, fileName: finalFileName };
           },

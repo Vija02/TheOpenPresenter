@@ -278,6 +278,39 @@ type ChangePasswordPayload {
 }
 
 type CloudConnection {
+  """Reads and enables pagination through a set of `CloudSyncRun`."""
+  cloudSyncRuns(
+    """Read all values in the set after (below) this cursor."""
+    after: Cursor
+
+    """Read all values in the set before (above) this cursor."""
+    before: Cursor
+
+    """
+    A condition to be used in determining which values should be returned by the collection.
+    """
+    condition: CloudSyncRunCondition
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: CloudSyncRunFilter
+
+    """Only read the first `n` values of the set."""
+    first: Int
+
+    """Only read the last `n` values of the set."""
+    last: Int
+
+    """
+    Skip the first `n` values from our `after` cursor, an alternative to cursor
+    based pagination. May not be used with `last`.
+    """
+    offset: Int
+
+    """The method to use when ordering `CloudSyncRun`."""
+    orderBy: [CloudSyncRunsOrderBy!] = [PRIMARY_KEY_ASC]
+  ): CloudSyncRunsConnection!
   createdAt: Datetime!
 
   """Reads a single `User` that is related to this `CloudConnection`."""
@@ -383,6 +416,139 @@ enum CloudConnectionsOrderBy {
   CREATED_AT_DESC
   CREATOR_USER_ID_ASC
   CREATOR_USER_ID_DESC
+  ID_ASC
+  ID_DESC
+  NATURAL
+  ORGANIZATION_ID_ASC
+  ORGANIZATION_ID_DESC
+  PRIMARY_KEY_ASC
+  PRIMARY_KEY_DESC
+}
+
+enum CloudSyncItemStatus {
+  FAILED
+  PENDING
+  SYNCED
+  SYNCING
+}
+
+type CloudSyncRun {
+  addedProjects: Int!
+
+  """
+  Reads a single `CloudConnection` that is related to this `CloudSyncRun`.
+  """
+  cloudConnection: CloudConnection
+  cloudConnectionId: UUID!
+  completedAt: Datetime
+  createdAt: Datetime!
+  deletedProjects: Int!
+  downloadedBytes: BigInt!
+  error: String
+  failedProjects: Int!
+  forceResync: Boolean!
+  id: UUID!
+  mediaStatus: CloudSyncItemStatus!
+
+  """Reads a single `Organization` that is related to this `CloudSyncRun`."""
+  organization: Organization
+  organizationId: UUID!
+  projectsToDelete: Int!
+  projectsToSync: Int!
+  startedAt: Datetime
+  status: CloudSyncRunStatus!
+  syncedMedia: Int!
+  syncedProjects: Int!
+  totalBytes: BigInt!
+  totalMedia: Int!
+  totalProjects: Int!
+  updatedAt: Datetime!
+  updatedProjects: Int!
+}
+
+"""
+A condition to be used against `CloudSyncRun` object types. All fields are
+tested for equality and combined with a logical ‘and.’
+"""
+input CloudSyncRunCondition {
+  """Checks for equality with the object’s `cloudConnectionId` field."""
+  cloudConnectionId: UUID
+
+  """Checks for equality with the object’s `createdAt` field."""
+  createdAt: Datetime
+
+  """Checks for equality with the object’s `id` field."""
+  id: UUID
+
+  """Checks for equality with the object’s `organizationId` field."""
+  organizationId: UUID
+}
+
+"""
+A filter to be used against `CloudSyncRun` object types. All fields are combined with a logical ‘and.’
+"""
+input CloudSyncRunFilter {
+  """Checks for all expressions in this list."""
+  and: [CloudSyncRunFilter!]
+
+  """Filter by the object’s `cloudConnectionId` field."""
+  cloudConnectionId: UUIDFilter
+
+  """Filter by the object’s `createdAt` field."""
+  createdAt: DatetimeFilter
+
+  """Filter by the object’s `id` field."""
+  id: UUIDFilter
+
+  """Negates the expression."""
+  not: CloudSyncRunFilter
+
+  """Checks for any expressions in this list."""
+  or: [CloudSyncRunFilter!]
+
+  """Filter by the object’s `organizationId` field."""
+  organizationId: UUIDFilter
+}
+
+enum CloudSyncRunStatus {
+  COMPLETED
+  FAILED
+  IN_PROGRESS
+  PENDING
+}
+
+"""A connection to a list of `CloudSyncRun` values."""
+type CloudSyncRunsConnection {
+  """
+  A list of edges which contains the `CloudSyncRun` and cursor to aid in pagination.
+  """
+  edges: [CloudSyncRunsEdge!]!
+
+  """A list of `CloudSyncRun` objects."""
+  nodes: [CloudSyncRun!]!
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+
+  """The count of *all* `CloudSyncRun` you could get from the connection."""
+  totalCount: Int!
+}
+
+"""A `CloudSyncRun` edge in the connection."""
+type CloudSyncRunsEdge {
+  """A cursor for use in pagination."""
+  cursor: Cursor
+
+  """The `CloudSyncRun` at the end of the edge."""
+  node: CloudSyncRun!
+}
+
+"""Methods to use when ordering `CloudSyncRun`."""
+enum CloudSyncRunsOrderBy {
+  CLOUD_CONNECTION_ID_ASC
+  CLOUD_CONNECTION_ID_DESC
+  CREATED_AT_ASC
+  CREATED_AT_DESC
   ID_ASC
   ID_DESC
   NATURAL
@@ -2880,6 +3046,40 @@ type Organization {
     """The method to use when ordering `CloudConnection`."""
     orderBy: [CloudConnectionsOrderBy!] = [PRIMARY_KEY_ASC]
   ): CloudConnectionsConnection!
+
+  """Reads and enables pagination through a set of `CloudSyncRun`."""
+  cloudSyncRuns(
+    """Read all values in the set after (below) this cursor."""
+    after: Cursor
+
+    """Read all values in the set before (above) this cursor."""
+    before: Cursor
+
+    """
+    A condition to be used in determining which values should be returned by the collection.
+    """
+    condition: CloudSyncRunCondition
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: CloudSyncRunFilter
+
+    """Only read the first `n` values of the set."""
+    first: Int
+
+    """Only read the last `n` values of the set."""
+    last: Int
+
+    """
+    Skip the first `n` values from our `after` cursor, an alternative to cursor
+    based pagination. May not be used with `last`.
+    """
+    offset: Int
+
+    """The method to use when ordering `CloudSyncRun`."""
+    orderBy: [CloudSyncRunsOrderBy!] = [PRIMARY_KEY_ASC]
+  ): CloudSyncRunsConnection!
   createdAt: Datetime!
   currentUserIsBillingContact: Boolean
   currentUserIsOwner: Boolean
@@ -3306,6 +3506,8 @@ type OrganizationBillingInfo {
   cancelAt: Datetime
   cancelAtPeriodEnd: Boolean
   currentPeriodEnd: Datetime
+  effectiveRoomCount: Int
+  lifetimeRoomCount: Int
   plan: String
   subscribedRoomCount: Int
   subscriptionStatus: String
@@ -4193,6 +4395,41 @@ type Query {
     orderBy: [CloudConnectionsOrderBy!] = [PRIMARY_KEY_ASC]
   ): CloudConnectionsConnection
   cloudEnabled: Boolean!
+  cloudSyncRun(id: UUID!): CloudSyncRun
+
+  """Reads and enables pagination through a set of `CloudSyncRun`."""
+  cloudSyncRuns(
+    """Read all values in the set after (below) this cursor."""
+    after: Cursor
+
+    """Read all values in the set before (above) this cursor."""
+    before: Cursor
+
+    """
+    A condition to be used in determining which values should be returned by the collection.
+    """
+    condition: CloudSyncRunCondition
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: CloudSyncRunFilter
+
+    """Only read the first `n` values of the set."""
+    first: Int
+
+    """Only read the last `n` values of the set."""
+    last: Int
+
+    """
+    Skip the first `n` values from our `after` cursor, an alternative to cursor
+    based pagination. May not be used with `last`.
+    """
+    offset: Int
+
+    """The method to use when ordering `CloudSyncRun`."""
+    orderBy: [CloudSyncRunsOrderBy!] = [PRIMARY_KEY_ASC]
+  ): CloudSyncRunsConnection
   currentScreenGuestSession: ScreenGuestSession
   currentScreenGuestSessionId: UUID
 

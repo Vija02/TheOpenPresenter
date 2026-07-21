@@ -112,7 +112,7 @@ runs:
         echo "Attempting to destroy existing deployment: ${DEPLOYMENT_NAME}"
 
         # Remove all services for this deployment
-        uc rm ${DEPLOYMENT_NAME}-migrator ${DEPLOYMENT_NAME}-server ${DEPLOYMENT_NAME}-worker ${DEPLOYMENT_NAME}-db ${DEPLOYMENT_NAME}-redis ${DEPLOYMENT_NAME}-unoserver ${DEPLOYMENT_NAME}-alloy 2>/dev/null || echo "No existing deployment to destroy (this is OK)"
+        uc rm ${DEPLOYMENT_NAME}-migrator ${DEPLOYMENT_NAME}-server ${DEPLOYMENT_NAME}-worker ${DEPLOYMENT_NAME}-db ${DEPLOYMENT_NAME}-redis ${DEPLOYMENT_NAME}-alloy 2>/dev/null || echo "No existing deployment to destroy (this is OK)"
 
         # Remove all volumes for this deployment
         yes | uc volume rm ${DEPLOYMENT_NAME}-pg-data ${DEPLOYMENT_NAME}-redis-data ${DEPLOYMENT_NAME}-uploads 2>/dev/null || echo "No existing volumes to remove (this is OK)"
@@ -188,9 +188,8 @@ runs:
               - ROOT_URL=${DEPLOYMENT_URL}
               - STORAGE_TYPE=file
               - STORAGE_PROXY=local
-              - ENABLED_PLUGINS=lyrics-presenter,simple-image,slides,radio,audio-recorder,video-player,worship-pads,embed,timer
+              - ENABLED_PLUGINS=lyrics-presenter,slides,radio,audio-recorder,video-player,worship-pads,embed,timer
               - PLUGIN_GOOGLE_SLIDES_CLIENT_ID=69245303872-fo9ap9sv2a6a5oiim2aqsk1hnnrmkkdk.apps.googleusercontent.com
-              - PLUGIN_GOOGLE_SLIDES_UNOCONVERT_SERVER=http://${DEPLOYMENT_NAME}-unoserver:3000
               - OTLP_HOST=http://${DEPLOYMENT_NAME}-alloy:4318
               - DEPLOYMENT_ENV=staging
               - DISABLE_HSTS=1
@@ -223,7 +222,7 @@ runs:
               - ROOT_URL=${DEPLOYMENT_URL}
               - STORAGE_TYPE=file
               - STORAGE_PROXY=local
-              - ENABLED_PLUGINS=lyrics-presenter,simple-image,slides,radio,audio-recorder,video-player,worship-pads,embed,timer
+              - ENABLED_PLUGINS=lyrics-presenter,slides,radio,audio-recorder,video-player,worship-pads,embed,timer
               - TARGET=worker
               - OTLP_HOST=http://${DEPLOYMENT_NAME}-alloy:4318
               - DEPLOYMENT_ENV=staging
@@ -250,10 +249,6 @@ runs:
             command: redis-server --save 60 1 --loglevel warning
             volumes:
               - ${DEPLOYMENT_NAME}-redis-data:/data
-
-          ${DEPLOYMENT_NAME}-unoserver:
-            image: philiplehmann/unoserver:3.0.1-1816
-            pull_policy: missing
 
           ${DEPLOYMENT_NAME}-alloy:
             image: grafana/alloy:v1.5.1

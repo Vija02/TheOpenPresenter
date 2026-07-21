@@ -18,7 +18,7 @@ import {
   useDisclosure,
 } from "@repo/ui";
 import { EventSourcePlus } from "event-source-plus";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { GoUnlink } from "react-icons/go";
 import { IoChevronDown } from "react-icons/io5";
 import { CombinedError } from "urql";
@@ -56,12 +56,287 @@ const SessionExpiryStatus = ({
   );
 };
 
+const STATUS_STYLES: Record<string, { dot: string; label: string }> = {
+  PENDING: { dot: "bg-gray-400", label: "Pending" },
+  SYNCING: { dot: "bg-blue-500 animate-pulse", label: "Syncing" },
+  IN_PROGRESS: { dot: "bg-blue-500 animate-pulse", label: "In progress" },
+  SYNCED: { dot: "bg-green-500", label: "Synced" },
+  COMPLETED: { dot: "bg-green-500", label: "Completed" },
+  FAILED: { dot: "bg-red-500", label: "Failed" },
+};
+
+const StatusBadge = ({ status }: { status: string }) => {
+  const style = STATUS_STYLES[status] ?? {
+    dot: "bg-gray-400",
+    label: status,
+  };
+  return (
+    <span className="inline-flex items-center gap-1.5 text-xs font-medium">
+      <span className={`h-2 w-2 rounded-full ${style.dot}`} />
+      {style.label}
+    </span>
+  );
+};
+
+type SyncRun = {
+  id: string;
+  status: string;
+  forceResync: boolean;
+  totalProjects: number;
+  projectsToSync: number;
+  syncedProjects: number;
+  addedProjects: number;
+  updatedProjects: number;
+  failedProjects: number;
+  projectsToDelete: number;
+  deletedProjects: number;
+  mediaStatus: string;
+  totalMedia: number;
+  syncedMedia: number;
+  // bigint fields arrive as strings over GraphQL
+  totalBytes: number | string;
+  downloadedBytes: number | string;
+  error?: string | null;
+  startedAt?: string | null;
+  completedAt?: string | null;
+  createdAt: string;
+};
+
+const formatBytes = (bytes: number) => {
+  if (!bytes || bytes < 0) return "0 B";
+  const units = ["B", "KB", "MB", "GB", "TB"];
+  const i = Math.min(
+    units.length - 1,
+    Math.floor(Math.log(bytes) / Math.log(1024)),
+  );
+  const value = bytes / Math.pow(1024, i);
+  return `${value.toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
+};
+
+const PROJECT_TERMINAL = new Set(["COMPLETED", "FAILED"]);
+const MEDIA_TERMINAL = new Set(["SYNCED", "FAILED"]);
+
+type SyncPhase = "projects" | "media" | "done";
+
+type SyncRunState = {
+  status: string;
+  mediaStatus: string;
+  isActive: boolean;
+  isTerminal: boolean;
+  phase: SyncPhase;
+};
+
+const getRunState = (run: {
+  status: string;
+  mediaStatus: string;
+}): SyncRunState => {
+  const status = String(run.status);
+  const mediaStatus = String(run.mediaStatus);
+
+  const projectFailed = status === "FAILED";
+  const projectDone = status === "COMPLETED";
+  const mediaTerminal = MEDIA_TERMINAL.has(mediaStatus);
+
+  const isActive =
+    !PROJECT_TERMINAL.has(status) || (projectDone && !mediaTerminal);
+
+  const phase: SyncPhase = projectFailed
+    ? "done"
+    : !projectDone
+      ? "projects"
+      : mediaTerminal
+        ? "done"
+        : "media";
+
+  return {
+    status,
+    mediaStatus,
+    isActive,
+    isTerminal: !isActive,
+    phase,
+  };
+};
+
+const SyncProgress = ({ run }: { run: SyncRun }) => {
+  const status = String(run.status);
+  const total = run.totalProjects;
+  const toSync = run.projectsToSync;
+  const synced = run.syncedProjects;
+  const failed = run.failedProjects;
+  const toDelete = run.projectsToDelete;
+  const deleted = run.deletedProjects;
+  const added = run.addedProjects ?? 0;
+  const updated = run.updatedProjects ?? 0;
+  // Projects that already existed locally and were up to date (nothing to do).
+  const alreadyUpToDate = Math.max(0, total - toSync);
+  const hasChanges = added > 0 || updated > 0 || deleted > 0 || failed > 0;
+  const syncPercent = toSync > 0 ? Math.round((synced / toSync) * 100) : 100;
+  const syncBarColor =
+    status === "FAILED"
+      ? "bg-red-500"
+      : synced >= toSync
+        ? "bg-green-500"
+        : "bg-blue-500";
+
+  const mediaStatus = String(run.mediaStatus);
+  const mediaTotal = run.totalMedia ?? 0;
+  const mediaSynced = run.syncedMedia ?? 0;
+  const mediaBytesTotal = Number(run.totalBytes ?? 0);
+  const mediaBytesDownloaded = Number(run.downloadedBytes ?? 0);
+  // Prefer byte-based progress (reflects "how much is left"); fall back to
+  // file counts when byte totals aren't known.
+  const mediaPercent =
+    mediaBytesTotal > 0
+      ? Math.min(
+          100,
+          Math.round((mediaBytesDownloaded / mediaBytesTotal) * 100),
+        )
+      : mediaTotal > 0
+        ? Math.round((mediaSynced / mediaTotal) * 100)
+        : 0;
+  const mediaBarColor =
+    mediaStatus === "FAILED"
+      ? "bg-red-500"
+      : mediaStatus === "SYNCED"
+        ? "bg-green-500"
+        : "bg-blue-500";
+
+  return (
+    <div className="mt-4 rounded-lg border border-stroke p-4">
+      <div className="flex items-center gap-2 mb-3">
+        <span className="text-sm font-medium">Latest sync</span>
+        {run.forceResync && (
+          <span className="text-xs text-tertiary">(force resync)</span>
+        )}
+      </div>
+
+      <div className="flex items-center justify-between text-xs">
+        <span className="text-secondary">
+          Projects <span className="text-tertiary">({total} total)</span>
+        </span>
+        <StatusBadge status={status} />
+      </div>
+      {toSync > 0 && (
+        <div className="mt-1">
+          <div className="mb-1 flex items-center justify-between text-xs text-secondary">
+            <span>Syncing</span>
+            <span>
+              {synced} / {toSync}
+              {failed > 0 && (
+                <span className="text-red-600"> · {failed} failed</span>
+              )}
+            </span>
+          </div>
+          <div className="h-2 w-full overflow-hidden rounded-full bg-fill-muted-disabled">
+            <div
+              className={`h-full rounded-full transition-all ${syncBarColor}`}
+              style={{ width: `${syncPercent}%` }}
+            />
+          </div>
+        </div>
+      )}
+      {toSync === 0 && failed > 0 && (
+        <div className="mt-1 text-xs text-red-600">{failed} failed</div>
+      )}
+      {toDelete > 0 && (
+        <div className="mt-1 flex items-center justify-between text-xs text-secondary">
+          <span>Deleting</span>
+          <span>
+            {deleted} / {toDelete}
+          </span>
+        </div>
+      )}
+
+      {/* Explicit sentence of what happened to projects this run */}
+      <div className="mt-2 text-xs text-secondary">
+        {total} {total === 1 ? "project" : "projects"} synced
+        {hasChanges ? (
+          <>
+            {added > 0 && (
+              <>
+                ,{" "}
+                <span className="font-medium text-green-600">
+                  {added} added
+                </span>
+              </>
+            )}
+            {updated > 0 && (
+              <>
+                ,{" "}
+                <span className="font-medium text-primary">
+                  {updated} updated
+                </span>
+              </>
+            )}
+            {deleted > 0 && (
+              <>
+                ,{" "}
+                <span className="font-medium text-red-600">
+                  {deleted} deleted
+                </span>
+              </>
+            )}
+            {failed > 0 && (
+              <>
+                ,{" "}
+                <span className="font-medium text-red-600">
+                  {failed} failed
+                </span>
+              </>
+            )}
+          </>
+        ) : (
+          <>
+            {" · "}
+            <span className="text-tertiary">{alreadyUpToDate} unchanged</span>
+          </>
+        )}
+      </div>
+
+      <div className="mt-3">
+        <div className="mb-1 flex items-center justify-between text-xs">
+          <span className="text-secondary">
+            Media
+            {mediaTotal > 0 && (
+              <span className="ml-1 text-tertiary">
+                {mediaBytesTotal > 0 && (
+                  <>
+                    {formatBytes(mediaBytesDownloaded)} /{" "}
+                    {formatBytes(mediaBytesTotal)}
+                    {" · "}
+                  </>
+                )}
+                {mediaSynced} / {mediaTotal} files
+              </span>
+            )}
+          </span>
+          <StatusBadge status={mediaStatus} />
+        </div>
+        {mediaTotal > 0 && (
+          <div className="h-2 w-full overflow-hidden rounded-full bg-fill-muted-disabled">
+            <div
+              className={`h-full rounded-full transition-all ${mediaBarColor}`}
+              style={{ width: `${mediaPercent}%` }}
+            />
+          </div>
+        )}
+      </div>
+
+      {run.error && (
+        <p className="mt-2 text-xs text-red-600 break-words">{run.error}</p>
+      )}
+    </div>
+  );
+};
+
 const OrganizationCloudPage = () => {
   const slug = useOrganizationSlug();
   const query = useOrganizationCloudIndexPageQuery({ variables: { slug } });
   const { data } = query[0];
+  const reexecuteQuery = query[1];
   const [error, setError] = useState<Error | CombinedError | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [pollActive, setPollActive] = useState(false);
 
   const { publish } = globalState.modelDataAccess.usePublishAPIChanges({
     token: "page",
@@ -80,6 +355,33 @@ const OrganizationCloudPage = () => {
   const connectedHost = cloudConnection?.host ?? "theopenpresenter.com";
   const [manualAuthLink, setManualAuthLink] = useState<string | null>(null);
   const connectDropdown = useDisclosure();
+  const syncDropdown = useDisclosure();
+
+  const latestRun = cloudConnection?.cloudSyncRuns?.nodes?.[0] ?? null;
+
+  const runState = latestRun
+    ? getRunState({
+        status: String(latestRun.status),
+        mediaStatus: String(latestRun.mediaStatus),
+      })
+    : null;
+  const isRunActive = runState?.isActive ?? false;
+  const isRunTerminal = runState?.isTerminal ?? false;
+
+  // Poll while a sync run is active
+  useEffect(() => {
+    if (!pollActive && !isRunActive) return;
+    const interval = setInterval(() => {
+      reexecuteQuery({ requestPolicy: "network-only" });
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [pollActive, isRunActive, reexecuteQuery]);
+
+  useEffect(() => {
+    if (pollActive && isRunTerminal) {
+      setPollActive(false);
+    }
+  }, [pollActive, isRunTerminal]);
 
   const connectionRef = useRef<{
     controller: AbortController;
@@ -181,11 +483,13 @@ const OrganizationCloudPage = () => {
       setError(null);
       try {
         await syncCloudConnection({ cloudConnectionId: cloudConnection.id });
+        setPollActive(true);
+        reexecuteQuery({ requestPolicy: "network-only" });
       } catch (err) {
         setError(err as Error);
       }
     }
-  }, [cloudConnection, syncCloudConnection]);
+  }, [cloudConnection, syncCloudConnection, reexecuteQuery]);
   const onForceSync = useCallback(async () => {
     if (cloudConnection) {
       setError(null);
@@ -194,11 +498,13 @@ const OrganizationCloudPage = () => {
           cloudConnectionId: cloudConnection.id,
           forceResync: true,
         });
+        setPollActive(true);
+        reexecuteQuery({ requestPolicy: "network-only" });
       } catch (err) {
         setError(err as Error);
       }
     }
-  }, [cloudConnection, syncCloudConnection]);
+  }, [cloudConnection, syncCloudConnection, reexecuteQuery]);
 
   const onUnlink = useCallback(async () => {
     if (cloudConnection) {
@@ -229,11 +535,6 @@ const OrganizationCloudPage = () => {
               />
             )}
           </div>
-
-          <Alert variant="warning" title="Experimental">
-            This feature is highly experimental. Some things might not be
-            obvious and might be broken.
-          </Alert>
         </div>
 
         {error && (
@@ -428,22 +729,51 @@ const OrganizationCloudPage = () => {
                 <h2 className="text-lg font-medium">Sync Data</h2>
               </div>
 
-              <div className="stack-row">
+              <div className="flex">
                 <Button
                   onClick={onSync}
-                  isLoading={isSyncFetching}
+                  isLoading={isSyncFetching || isRunActive}
+                  disabled={isSyncFetching || isRunActive}
                   variant="outline"
+                  className="rounded-r-none border-r-0"
                 >
-                  {isSyncFetching ? "Syncing..." : "Start Sync"}
+                  {isSyncFetching || isRunActive ? "Syncing..." : "Start Sync"}
                 </Button>
-                <Button
-                  onClick={onForceSync}
-                  isLoading={isSyncFetching}
-                  variant="outline"
+                <Popover
+                  open={syncDropdown.open}
+                  onOpenChange={syncDropdown.setOpen}
                 >
-                  {isSyncFetching ? "Syncing..." : "Force Resync"}
-                </Button>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="rounded-l-none px-2"
+                      disabled={isSyncFetching || isRunActive}
+                    >
+                      <IoChevronDown />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    align="end"
+                    className="w-48 p-1"
+                    hideCloseButton
+                    hideArrow
+                  >
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start"
+                      onClick={() => {
+                        syncDropdown.onClose();
+                        onForceSync();
+                      }}
+                    >
+                      Force resync
+                    </Button>
+                  </PopoverContent>
+                </Popover>
               </div>
+
+              {latestRun && <SyncProgress run={latestRun as SyncRun} />}
             </div>
           )}
         </div>

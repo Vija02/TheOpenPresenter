@@ -216,6 +216,7 @@ export const simulateUser = (
       errorHandler: { addError: () => {}, removeError: () => {} },
       canPlayAudio: undefined as any,
       overlay: { getType: () => null, subscribe: () => () => {} },
+      currentScene: { get: () => null, subscribe: () => () => {} },
       toast: { error: vi.fn() } as any,
       media: {
         permanentlyDeleteMedia() {

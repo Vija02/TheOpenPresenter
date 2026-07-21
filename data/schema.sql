@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict msxFI2aIPhfUfSlrmSPU3gytY8warXGepB4HLM36MJGTtxvgcT7QoilYOvHFBms
+\restrict xMXrOis722s0LXz60bQRV6NeZACnmtUx6wf9h7NorbZ9DwpkmGRgHMvtwg9BFeh
 
 -- Dumped from database version 17.0 (Debian 17.0-1.pgdg120+1)
 -- Dumped by pg_dump version 18.4
@@ -104,6 +104,30 @@ COMMENT ON EXTENSION "uuid-ossp" IS 'generate universally unique identifiers (UU
 
 
 --
+-- Name: cloud_sync_item_status; Type: TYPE; Schema: app_public; Owner: -
+--
+
+CREATE TYPE app_public.cloud_sync_item_status AS ENUM (
+    'pending',
+    'syncing',
+    'synced',
+    'failed'
+);
+
+
+--
+-- Name: cloud_sync_run_status; Type: TYPE; Schema: app_public; Owner: -
+--
+
+CREATE TYPE app_public.cloud_sync_run_status AS ENUM (
+    'pending',
+    'in_progress',
+    'completed',
+    'failed'
+);
+
+
+--
 -- Name: organization_billing_info; Type: TYPE; Schema: app_public; Owner: -
 --
 
@@ -114,7 +138,9 @@ CREATE TYPE app_public.organization_billing_info AS (
 	subscribed_room_count integer,
 	billing_interval text,
 	cancel_at_period_end boolean,
-	cancel_at timestamp with time zone
+	cancel_at timestamp with time zone,
+	lifetime_room_count integer,
+	effective_room_count integer
 );
 
 
@@ -2230,7 +2256,9 @@ CREATE FUNCTION app_public.organizations_billing_info(org app_public.organizatio
     coalesce(b.subscribed_room_count, 0),
     coalesce(b.billing_interval, 'month')::text,
     coalesce(b.cancel_at_period_end, false),
-    b.cancel_at
+    b.cancel_at,
+    coalesce(b.lifetime_room_count, 0),
+    coalesce(b.subscribed_room_count, 0) + coalesce(b.lifetime_room_count, 0)
   from app_public.organizations o
   left join app_private.organization_billing b on b.organization_id = o.id
   where o.id = org.id
@@ -3121,7 +3149,23 @@ CREATE TABLE app_private.organization_billing (
     cancel_at_period_end boolean DEFAULT false NOT NULL,
     cancel_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    lifetime_room_count integer DEFAULT 0 NOT NULL
+);
+
+
+--
+-- Name: organization_lifetime_purchases; Type: TABLE; Schema: app_private; Owner: -
+--
+
+CREATE TABLE app_private.organization_lifetime_purchases (
+    stripe_checkout_session_id text NOT NULL,
+    organization_id uuid NOT NULL,
+    stripe_payment_intent_id text,
+    quantity integer NOT NULL,
+    amount_total integer,
+    currency text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 
@@ -3252,6 +3296,37 @@ CREATE TABLE app_public.cloud_connections (
     target_organization_slug text,
     sync_all boolean DEFAULT false,
     creator_user_id uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: cloud_sync_runs; Type: TABLE; Schema: app_public; Owner: -
+--
+
+CREATE TABLE app_public.cloud_sync_runs (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    organization_id uuid NOT NULL,
+    cloud_connection_id uuid NOT NULL,
+    force_resync boolean DEFAULT false NOT NULL,
+    status app_public.cloud_sync_run_status DEFAULT 'pending'::app_public.cloud_sync_run_status NOT NULL,
+    total_projects integer DEFAULT 0 NOT NULL,
+    projects_to_sync integer DEFAULT 0 NOT NULL,
+    synced_projects integer DEFAULT 0 NOT NULL,
+    failed_projects integer DEFAULT 0 NOT NULL,
+    projects_to_delete integer DEFAULT 0 NOT NULL,
+    deleted_projects integer DEFAULT 0 NOT NULL,
+    added_projects integer DEFAULT 0 NOT NULL,
+    updated_projects integer DEFAULT 0 NOT NULL,
+    media_status app_public.cloud_sync_item_status DEFAULT 'pending'::app_public.cloud_sync_item_status NOT NULL,
+    total_media integer DEFAULT 0 NOT NULL,
+    synced_media integer DEFAULT 0 NOT NULL,
+    total_bytes bigint DEFAULT 0 NOT NULL,
+    downloaded_bytes bigint DEFAULT 0 NOT NULL,
+    error text,
+    started_at timestamp with time zone,
+    completed_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
@@ -3551,6 +3626,14 @@ ALTER TABLE ONLY app_private.organization_billing
 
 
 --
+-- Name: organization_lifetime_purchases organization_lifetime_purchases_pkey; Type: CONSTRAINT; Schema: app_private; Owner: -
+--
+
+ALTER TABLE ONLY app_private.organization_lifetime_purchases
+    ADD CONSTRAINT organization_lifetime_purchases_pkey PRIMARY KEY (stripe_checkout_session_id);
+
+
+--
 -- Name: connect_pg_simple_sessions session_pkey; Type: CONSTRAINT; Schema: app_private; Owner: -
 --
 
@@ -3612,6 +3695,14 @@ ALTER TABLE ONLY app_public.categories
 
 ALTER TABLE ONLY app_public.cloud_connections
     ADD CONSTRAINT cloud_connections_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: cloud_sync_runs cloud_sync_runs_pkey; Type: CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.cloud_sync_runs
+    ADD CONSTRAINT cloud_sync_runs_pkey PRIMARY KEY (id);
 
 
 --
@@ -3847,6 +3938,13 @@ ALTER TABLE ONLY app_public.users
 
 
 --
+-- Name: organization_lifetime_purchases_organization_id_idx; Type: INDEX; Schema: app_private; Owner: -
+--
+
+CREATE INDEX organization_lifetime_purchases_organization_id_idx ON app_private.organization_lifetime_purchases USING btree (organization_id);
+
+
+--
 -- Name: sessions_user_id_idx; Type: INDEX; Schema: app_private; Owner: -
 --
 
@@ -3886,6 +3984,27 @@ CREATE INDEX cloud_connections_creator_user_id_idx ON app_public.cloud_connectio
 --
 
 CREATE UNIQUE INDEX cloud_connections_organization_id_idx ON app_public.cloud_connections USING btree (organization_id);
+
+
+--
+-- Name: cloud_sync_runs_cloud_connection_id_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX cloud_sync_runs_cloud_connection_id_idx ON app_public.cloud_sync_runs USING btree (cloud_connection_id);
+
+
+--
+-- Name: cloud_sync_runs_created_at_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX cloud_sync_runs_created_at_idx ON app_public.cloud_sync_runs USING btree (created_at);
+
+
+--
+-- Name: cloud_sync_runs_organization_id_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX cloud_sync_runs_organization_id_idx ON app_public.cloud_sync_runs USING btree (organization_id);
 
 
 --
@@ -4379,6 +4498,13 @@ CREATE TRIGGER _100_timestamps BEFORE INSERT OR UPDATE ON app_public.cloud_conne
 
 
 --
+-- Name: cloud_sync_runs _100_timestamps; Type: TRIGGER; Schema: app_public; Owner: -
+--
+
+CREATE TRIGGER _100_timestamps BEFORE INSERT OR UPDATE ON app_public.cloud_sync_runs FOR EACH ROW EXECUTE FUNCTION app_private.tg__timestamps();
+
+
+--
 -- Name: medias _100_timestamps; Type: TRIGGER; Schema: app_public; Owner: -
 --
 
@@ -4674,6 +4800,14 @@ ALTER TABLE ONLY app_private.organization_billing
 
 
 --
+-- Name: organization_lifetime_purchases organization_lifetime_purchases_organization_id_fkey; Type: FK CONSTRAINT; Schema: app_private; Owner: -
+--
+
+ALTER TABLE ONLY app_private.organization_lifetime_purchases
+    ADD CONSTRAINT organization_lifetime_purchases_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES app_public.organizations(id) ON DELETE CASCADE;
+
+
+--
 -- Name: sessions sessions_user_id_fkey; Type: FK CONSTRAINT; Schema: app_private; Owner: -
 --
 
@@ -4727,6 +4861,22 @@ ALTER TABLE ONLY app_public.cloud_connections
 
 ALTER TABLE ONLY app_public.cloud_connections
     ADD CONSTRAINT cloud_connections_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES app_public.organizations(id) ON DELETE CASCADE;
+
+
+--
+-- Name: cloud_sync_runs cloud_sync_runs_cloud_connection_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.cloud_sync_runs
+    ADD CONSTRAINT cloud_sync_runs_cloud_connection_id_fkey FOREIGN KEY (cloud_connection_id) REFERENCES app_public.cloud_connections(id) ON DELETE CASCADE;
+
+
+--
+-- Name: cloud_sync_runs cloud_sync_runs_organization_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.cloud_sync_runs
+    ADD CONSTRAINT cloud_sync_runs_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES app_public.organizations(id) ON DELETE CASCADE;
 
 
 --
@@ -5098,6 +5248,12 @@ ALTER TABLE app_public.categories ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE app_public.cloud_connections ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: cloud_sync_runs; Type: ROW SECURITY; Schema: app_public; Owner: -
+--
+
+ALTER TABLE app_public.cloud_sync_runs ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: cloud_connections delete_own; Type: POLICY; Schema: app_public; Owner: -
@@ -5491,6 +5647,13 @@ CREATE POLICY select_organization ON app_public.organization_join_requests FOR S
 --
 
 CREATE POLICY select_own ON app_public.cloud_connections FOR SELECT USING ((organization_id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids)));
+
+
+--
+-- Name: cloud_sync_runs select_own; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY select_own ON app_public.cloud_sync_runs FOR SELECT USING ((organization_id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids)));
 
 
 --
@@ -6680,6 +6843,13 @@ GRANT UPDATE(target_organization_slug) ON TABLE app_public.cloud_connections TO 
 
 
 --
+-- Name: TABLE cloud_sync_runs; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT SELECT ON TABLE app_public.cloud_sync_runs TO theopenpresenter_visitor;
+
+
+--
 -- Name: TABLE media_dependencies; Type: ACL; Schema: app_public; Owner: -
 --
 
@@ -6970,5 +7140,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE theopenpresenter REVOKE ALL ON FUNCTIONS FROM 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict msxFI2aIPhfUfSlrmSPU3gytY8warXGepB4HLM36MJGTtxvgcT7QoilYOvHFBms
+\unrestrict xMXrOis722s0LXz60bQRV6NeZACnmtUx6wf9h7NorbZ9DwpkmGRgHMvtwg9BFeh
 

@@ -5,8 +5,8 @@ import {
   AllProjectUpdatedAtDocument,
   AllProjectUpdatedAtQuery,
 } from "@repo/graphql";
+import { logger } from "@repo/observability";
 import { Task } from "graphile-worker";
-import { generateSlug } from "random-word-slugs";
 
 interface CloudConnectionSyncPayload {
   /**
@@ -18,9 +18,19 @@ interface CloudConnectionSyncPayload {
 
 // TODO: Consider if categories or tags changes
 const task: Task = async (inPayload, { addJob, withPgClient }) => {
+  const payload: CloudConnectionSyncPayload = inPayload as any;
+  const { id: cloudConnectionId, force_resync } = payload;
+
+  let log = logger.child({
+    task: "cloud_connection__sync",
+    cloudConnectionId,
+    forceResync: !!force_resync,
+  });
+  const startedAt = Date.now();
+  log.info("Starting cloud connection sync");
+
+  let syncRunId: string | undefined;
   try {
-    const payload: CloudConnectionSyncPayload = inPayload as any;
-    const { id: cloudConnectionId, force_resync } = payload;
     const {
       rows: [cloudConnection],
     } = await withPgClient((pgClient) =>
@@ -34,16 +44,35 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
       ),
     );
     if (!cloudConnection) {
-      console.error("Cloud connection not found; aborting");
+      log.error("Cloud connection not found; aborting");
       return;
     }
     if (!cloudConnection.target_organization_slug) {
-      console.error("Target organization slug not available; aborting");
+      log.error("Target organization slug not available; aborting");
       return;
     }
 
+    log.info(
+      {
+        host: cloudConnection.host,
+        targetOrganizationSlug: cloudConnection.target_organization_slug,
+        organizationId: cloudConnection.organization_id,
+      },
+      "Cloud connection loaded",
+    );
+
+    // Start tracking
+    syncRunId = await cloud.createSyncRun(withPgClient, {
+      organizationId: cloudConnection.organization_id,
+      cloudConnectionId: cloudConnection.id,
+      forceResync: !!force_resync,
+    });
+    log = log.child({ syncRunId });
+    log.info("Created sync run");
+
     const urqlClient = cloud.getUrqlClientFromCloudConnection(cloudConnection);
     // First, we get the updated_at so we know which ones need to be updated/created
+    log.info("Fetching remote project updated_at list");
     const projectUpdatedRes = await urqlClient.query<AllProjectUpdatedAtQuery>(
       AllProjectUpdatedAtDocument,
       {
@@ -51,6 +80,10 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
       },
     );
     if (projectUpdatedRes.error) {
+      log.error(
+        { err: projectUpdatedRes.error },
+        "Failed to fetch remote project updated_at list",
+      );
       throw projectUpdatedRes.error;
     }
 
@@ -61,6 +94,10 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
         `,
         [cloudConnectionId],
       ),
+    );
+    log.debug(
+      { localProjectCount: localProjects.length },
+      "Loaded local projects",
     );
 
     const externalProjectIdsToCreateOrUpdate =
@@ -80,8 +117,22 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
               new Date(cloudProject.updatedAt).getTime()
           );
         })
-        .map((x) => x.id);
+        .map((x) => x.id) ?? [];
 
+    const allExternalProjectIds =
+      projectUpdatedRes.data?.organizationBySlug?.projects.nodes.map(
+        (x) => x.id,
+      ) ?? [];
+
+    log.info(
+      {
+        totalRemoteProjects: allExternalProjectIds.length,
+        toCreateOrUpdate: externalProjectIdsToCreateOrUpdate.length,
+      },
+      "Computed projects to create/update",
+    );
+
+    log.info("Fetching full project metadata");
     const res = await urqlClient.query<AllProjectMetadataQuery>(
       AllProjectMetadataDocument,
       {
@@ -91,8 +142,14 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
     );
 
     if (res.error) {
+      log.error({ err: res.error }, "Failed to fetch project metadata");
       throw res.error;
     }
+
+    await cloud.setSyncRunProjectTargets(withPgClient, syncRunId, {
+      total: allExternalProjectIds.length,
+      toSync: externalProjectIdsToCreateOrUpdate.length,
+    });
 
     // ========================================================================== //
     // =============================== CATEGORIES =============================== //
@@ -101,269 +158,147 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
       res.data?.organizationBySlug?.projects.nodes
         .map((x) => x.category?.name)
         .filter((name): name is string => name != null) || [];
-
-    const categoriesMap: { id: string; name: string }[] = [];
-    const { rows: currentCategories } = await withPgClient((pgClient) =>
-      pgClient.query(
-        `
-          SELECT * FROM app_public.categories WHERE name = ANY($1) AND organization_id = $2
-        `,
-        [requiredCategories, cloudConnection.organization_id],
-      ),
+    const categoriesMap = await cloud.syncCategories(
+      withPgClient,
+      cloudConnection.organization_id,
+      requiredCategories,
     );
-    categoriesMap.push(...currentCategories);
-
-    // Create missing categories
-    const existingCategoryNames = new Set(categoriesMap.map((cat) => cat.name));
-    const missingCategories = Array.from(
-      new Set(
-        requiredCategories.filter((name) => !existingCategoryNames.has(name)),
-      ),
+    log.info(
+      { requiredCategoryCount: requiredCategories.length },
+      "Synced categories",
     );
-
-    if (missingCategories.length > 0) {
-      const { rows: newCategories } = await withPgClient((pgClient) =>
-        pgClient.query(
-          `
-            INSERT INTO app_public.categories (name, organization_id)
-            SELECT name, $1
-            FROM unnest($2::text[]) AS name
-            RETURNING *
-          `,
-          [cloudConnection.organization_id, missingCategories],
-        ),
-      );
-
-      // Add newly created categories to the categoriesMap
-      categoriesMap.push(...newCategories);
-    }
 
     // ========================================================================== //
     // ================================== TAGS ================================== //
     // ========================================================================== //
-    // Tags have multiple fields. But we'll only match based on name here. So the style might look different
-    // if we already have something defined locally that has the same name.
     const requiredTags =
       res.data?.organizationBySlug?.projects.nodes
         .flatMap((x) => x.projectTags.nodes.flatMap((y) => y.tag?.name))
         .filter((name): name is string => name != null) || [];
-
-    const tagsMap: { id: string; name: string }[] = [];
-    const { rows: currentTags } = await withPgClient((pgClient) =>
-      pgClient.query(
-        `
-          SELECT * FROM app_public.tags WHERE name = ANY($1) AND organization_id = $2
-        `,
-        [requiredTags, cloudConnection.organization_id],
-      ),
+    const tagsMap = await cloud.syncTags(
+      withPgClient,
+      cloudConnection.organization_id,
+      requiredTags,
+      res.data?.organizationBySlug?.tags.nodes ?? [],
     );
-    tagsMap.push(...currentTags);
-
-    // Create missing tags
-    const existingTagNames = new Set(tagsMap.map((cat) => cat.name));
-    const missingTags = Array.from(
-      new Set(requiredTags.filter((name) => !existingTagNames.has(name))),
-    );
-
-    const missingTagsFullData = missingTags.map(
-      (missingTag) =>
-        res.data?.organizationBySlug?.tags.nodes.find(
-          (tag) => tag.name === missingTag,
-        )!,
-    );
-
-    if (missingTags.length > 0) {
-      const { rows: newTags } = await withPgClient((pgClient) =>
-        pgClient.query(
-          `
-            INSERT INTO app_public.tags (name, description, background_color, foreground_color, variant, organization_id)
-              SELECT name, description, background_color, foreground_color, variant, organization_id
-              FROM jsonb_to_recordset($1) AS t (name text, description text, background_color text, foreground_color text, variant text, organization_id uuid)
-            RETURNING *
-          `,
-          [
-            JSON.stringify(
-              missingTagsFullData.map((tag) => ({
-                name: tag.name,
-                description: tag.description,
-                background_color: tag.backgroundColor,
-                foreground_color: tag.foregroundColor,
-                variant: tag.variant,
-                organization_id: cloudConnection.organization_id,
-              })),
-            ),
-          ],
-        ),
-      );
-
-      // Add newly created tags to the tagsMap
-      tagsMap.push(...newTags);
-    }
+    log.info({ requiredTagCount: requiredTags.length }, "Synced tags");
 
     // ========================================================================== //
-    // ========================= Now handle project data ======================== //
+    // ========================= Now handle project meta ======================== //
     // ========================================================================== //
     const externalProjectsToCreateOrUpdate =
       res.data?.organizationBySlug?.projects.nodes.filter((externalProject) =>
-        externalProjectIdsToCreateOrUpdate?.includes(externalProject.id),
+        externalProjectIdsToCreateOrUpdate.includes(externalProject.id),
       ) ?? [];
-
-    // Handle deleted projects
-    const projectIdsToDelete = localProjects
-      .filter(
-        (localProject) =>
-          !projectUpdatedRes.data?.organizationBySlug?.projects.nodes.some(
-            (externalProject) =>
-              externalProject.id === localProject.cloud_project_id,
-          ),
-      )
-      .map((localProject) => localProject.id);
-    await withPgClient((pgClient) =>
-      pgClient.query(
-        `
-          DELETE FROM app_public.projects WHERE id = ANY($1)
-        `,
-        [projectIdsToDelete],
-      ),
+    log.info(
+      { projectCount: externalProjectsToCreateOrUpdate.length },
+      "Syncing project metadata",
     );
-
-    // Update metadata
-    const createdOrUpdatedProjects = await withPgClient(async (pgClient) => {
-      await pgClient.query("SET session_replication_role = replica;");
-      const { rows: createdOrUpdatedProjects } = await pgClient.query(
-        `
-          INSERT INTO app_public.projects (organization_id, creator_user_id, slug, created_at, updated_at, name, target_date, category_id, cloud_connection_id, cloud_last_updated, cloud_project_id)
-            SELECT organization_id, creator_user_id, slug, created_at, updated_at, name, target_date, category_id, cloud_connection_id, cloud_last_updated, cloud_project_id
-            FROM jsonb_to_recordset($1) AS t (organization_id uuid, creator_user_id uuid, slug public.citext, created_at timestamp, updated_at timestamp, name text, target_date timestamp, category_id uuid, cloud_connection_id uuid, cloud_last_updated timestamptz, cloud_project_id uuid)
-            ON CONFLICT (organization_id, cloud_project_id) DO UPDATE SET 
-              organization_id = excluded.organization_id,
-              creator_user_id = excluded.creator_user_id,
-              created_at = excluded.created_at,
-              updated_at = excluded.updated_at,
-              name = excluded.name,
-              target_date = excluded.target_date,
-              category_id = excluded.category_id,
-              cloud_connection_id = excluded.cloud_connection_id,
-              cloud_last_updated = excluded.cloud_last_updated,
-              cloud_project_id = excluded.cloud_project_id
-          RETURNING id, cloud_project_id
-        `,
-        [
-          JSON.stringify(
-            externalProjectsToCreateOrUpdate.map((externalProject) => ({
-              organization_id: cloudConnection.organization_id,
-              creator_user_id: cloudConnection.creator_user_id,
-              slug: generateSlug(),
-              created_at: externalProject.createdAt,
-              updated_at: externalProject.updatedAt,
-              name: externalProject.name,
-              target_date: externalProject.targetDate,
-              category_id: categoriesMap.find(
-                (x) => x.name === externalProject.category?.name,
-              )?.id,
-              cloud_connection_id: cloudConnection.id,
-              cloud_last_updated: externalProject.updatedAt,
-              cloud_project_id: externalProject.id,
-            })),
-          ),
-        ],
-      );
-      return createdOrUpdatedProjects;
+    const {
+      mapping: externalToLocalProjectIdMapping,
+      deletedCount,
+      addedCount,
+      updatedCount,
+    } = await cloud.syncProjectMeta(withPgClient, {
+      cloudConnection: {
+        id: cloudConnection.id,
+        organization_id: cloudConnection.organization_id,
+        creator_user_id: cloudConnection.creator_user_id,
+      },
+      localProjects,
+      allExternalProjectIds,
+      externalProjects: externalProjectsToCreateOrUpdate,
+      categoriesMap,
+      tagsMap,
     });
-    const externalToLocalProjectIdMapping = new Map(
-      createdOrUpdatedProjects.map((localProject) => [
-        localProject.cloud_project_id,
-        localProject.id,
-      ]),
+    await cloud.setSyncRunDeletions(withPgClient, syncRunId, deletedCount);
+    await cloud.setSyncRunProjectCounts(withPgClient, syncRunId, {
+      added: addedCount,
+      updated: updatedCount,
+    });
+    log.info(
+      {
+        mappedProjectCount: externalToLocalProjectIdMapping.size,
+        addedCount,
+        updatedCount,
+        deletedCount,
+      },
+      "Synced project metadata",
     );
 
-    // Now create the project-tag connection
-    await withPgClient((pgClient) =>
-      pgClient.query(
-        `
-          INSERT INTO app_public.project_tags (project_id, tag_id)
-            SELECT project_id, tag_id
-            FROM jsonb_to_recordset($1) AS t (project_id uuid, tag_id uuid)
-          ON CONFLICT DO NOTHING
-        `,
-        [
-          JSON.stringify(
-            externalProjectsToCreateOrUpdate.flatMap((externalProject) =>
-              externalProject.projectTags.nodes.map((x) => ({
-                project_id: externalToLocalProjectIdMapping.get(
-                  externalProject.id,
-                ),
-                tag_id: tagsMap.find((tagMap) => tagMap.name === x.tag?.name)
-                  ?.id,
-              })),
-            ),
-          ),
-        ],
-      ),
-    );
-
-    // Remove trailing project tags
-    const { rows: localProjectTags } = await withPgClient((pgClient) =>
-      pgClient.query(
-        `
-          SELECT * FROM app_public.project_tags WHERE project_id = ANY($1)
-        `,
-        [
-          externalProjectIdsToCreateOrUpdate?.map((x) =>
-            externalToLocalProjectIdMapping.get(x),
-          ),
-        ],
-      ),
-    );
-    const projectTagsToCreateOrUpdate =
-      externalProjectsToCreateOrUpdate.flatMap((externalProject) =>
-        externalProject.projectTags.nodes.map((pt) => ({
-          project_id: externalToLocalProjectIdMapping.get(externalProject.id),
-          tag_id: tagsMap.find((tagMap) => tagMap.name === pt.tag?.name)?.id,
-        })),
+    // ========================================================================== //
+    // ========================== Project document sync ========================= //
+    // ========================================================================== //
+    // Documents only need re-syncing for projects that were created/updated
+    if (externalProjectIdsToCreateOrUpdate.length > 0) {
+      log.info(
+        { projectCount: externalProjectIdsToCreateOrUpdate.length },
+        "Syncing project documents",
       );
-    const projectTagsToDelete = localProjectTags.filter(
-      (localProjectTag) =>
-        !projectTagsToCreateOrUpdate.some(
-          (x) =>
-            x.project_id === localProjectTag.project_id &&
-            x.tag_id === localProjectTag.tag_id,
-        ),
-    );
-
-    await withPgClient((pgClient) =>
-      pgClient.query(
-        `
-          DELETE FROM app_public.project_tags WHERE 
-            (project_id, tag_id) IN (
-              SELECT project_id, tag_id
-                FROM jsonb_to_recordset($1) AS t (project_id uuid, tag_id uuid)
-            )
-        `,
-        [JSON.stringify(projectTagsToDelete)],
-      ),
-    );
-
-    if (
-      externalProjectIdsToCreateOrUpdate &&
-      externalProjectIdsToCreateOrUpdate.length > 0
-    ) {
-      await addJob("cloud_connection__sync_media", {
-        cloudConnectionId: cloudConnectionId,
-        externalProjectIds: externalProjectIdsToCreateOrUpdate,
-        force_resync,
-      });
+      let documentSyncedCount = 0;
+      let documentFailedCount = 0;
       await Promise.all(
-        externalProjectIdsToCreateOrUpdate.map((externalProjectId) => {
-          return addJob("project__sync_document_cloud_connection", {
-            id: externalToLocalProjectIdMapping.get(externalProjectId),
-          });
+        externalProjectIdsToCreateOrUpdate.map(async (externalProjectId) => {
+          const localProjectId =
+            externalToLocalProjectIdMapping.get(externalProjectId);
+          if (!localProjectId) {
+            log.debug(
+              { externalProjectId },
+              "Skipping document sync; no local project mapping",
+            );
+            return;
+          }
+          try {
+            await cloud.syncProjectDocument(withPgClient, localProjectId);
+            await cloud.bumpSyncRunSyncedProjects(withPgClient, syncRunId!);
+            documentSyncedCount += 1;
+            log.debug({ localProjectId }, "Synced project document");
+          } catch (documentErr) {
+            documentFailedCount += 1;
+            log.warn(
+              { err: documentErr, localProjectId },
+              "Failed to sync document for project",
+            );
+            await cloud.bumpSyncRunFailedProjects(withPgClient, syncRunId!);
+          }
         }),
       );
+      log.info(
+        { documentSyncedCount, documentFailedCount },
+        "Finished syncing project documents",
+      );
     }
+
+    // Project phase (categories, tags, meta, documents) is complete
+    await cloud.completeSyncRunProjects(withPgClient, syncRunId);
+    log.info("Project sync phase complete");
+
+    // Trigger media sync
+    await addJob("cloud_connection__sync_media", {
+      cloudConnectionId: cloudConnectionId,
+      externalProjectIds: allExternalProjectIds,
+      force_resync,
+      syncRunId,
+    });
+    log.info(
+      {
+        externalProjectCount: allExternalProjectIds.length,
+        durationMs: Date.now() - startedAt,
+      },
+      "Enqueued media sync; project sync done",
+    );
   } catch (e) {
-    console.error(e);
-    // TODO: Update job status on error
+    log.error(
+      { err: e, durationMs: Date.now() - startedAt },
+      "Cloud connection sync failed",
+    );
+    if (syncRunId) {
+      try {
+        await cloud.failSyncRun(withPgClient, syncRunId, e);
+      } catch (updateErr) {
+        log.error({ err: updateErr }, "Failed to mark cloud sync run as failed");
+      }
+    }
   }
 };
 

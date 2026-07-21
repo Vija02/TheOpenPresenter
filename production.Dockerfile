@@ -52,7 +52,6 @@ COPY plugins/embed/package.json /app/plugins/embed/package.json
 COPY plugins/timer/package.json /app/plugins/timer/package.json
 COPY plugins/slides/package.json /app/plugins/slides/package.json
 COPY plugins/lyrics-presenter/package.json /app/plugins/lyrics-presenter/package.json
-COPY plugins/simple-image/package.json /app/plugins/simple-image/package.json
 COPY plugins/audio-recorder/package.json /app/plugins/audio-recorder/package.json
 COPY plugins/video-player/package.json /app/plugins/video-player/package.json
 COPY plugins/radio/package.json /app/plugins/radio/package.json
@@ -164,9 +163,6 @@ RUN yarn workspace @repo/plugin-slides build
 COPY plugins/lyrics-presenter/ /app/plugins/lyrics-presenter/
 RUN yarn workspace @repo/plugin-lyrics-presenter build
 
-COPY plugins/simple-image/ /app/plugins/simple-image/
-RUN yarn workspace @repo/plugin-simple-image build
-
 COPY plugins/audio-recorder/ /app/plugins/audio-recorder/
 RUN yarn workspace @repo/plugin-audio-recorder build
 
@@ -263,9 +259,6 @@ COPY --from=builder-plugin /app/plugins/lyrics-presenter/package.json /app/plugi
 COPY --from=builder-plugin /app/plugins/lyrics-presenter/dist/ /app/plugins/lyrics-presenter/dist/
 COPY --from=builder-plugin /app/plugins/lyrics-presenter/out/ /app/plugins/lyrics-presenter/out/
 COPY --from=builder-plugin /app/plugins/lyrics-presenter/migrations/ /app/plugins/lyrics-presenter/migrations/
-COPY --from=builder-plugin /app/plugins/simple-image/package.json /app/plugins/simple-image/
-COPY --from=builder-plugin /app/plugins/simple-image/dist/ /app/plugins/simple-image/dist/
-COPY --from=builder-plugin /app/plugins/simple-image/out/ /app/plugins/simple-image/out/
 COPY --from=builder-plugin /app/plugins/audio-recorder/package.json /app/plugins/audio-recorder/
 COPY --from=builder-plugin /app/plugins/audio-recorder/dist/ /app/plugins/audio-recorder/dist/
 COPY --from=builder-plugin /app/plugins/audio-recorder/out/ /app/plugins/audio-recorder/out/

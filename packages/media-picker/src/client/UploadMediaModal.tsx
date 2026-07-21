@@ -1,5 +1,4 @@
 import { MediaType } from "@repo/base-plugin";
-import { appData } from "@repo/lib";
 import {
   Dialog,
   DialogBody,
@@ -7,15 +6,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@repo/ui";
-import Uppy from "@uppy/core";
-import { Dashboard, useUppyEvent } from "@uppy/react";
-import Tus from "@uppy/tus";
-import React, { useEffect, useMemo, useState } from "react";
-
-export type UploadedMediaInfo = {
-  mediaName: string;
-  originalName: string | null;
-};
+import React from "react";
+import { Dropzone } from "./Dropzone";
 
 export type UploadedMediaInfo = {
   mediaName: string;
@@ -33,24 +25,6 @@ export type UploadMediaModalProps = {
   multiple?: boolean;
 };
 
-const getAllowedFileTypes = (mediaType?: MediaType): string[] | undefined => {
-  switch (mediaType) {
-    case "video":
-      return ["video/*"];
-    case "image":
-      return ["image/*"];
-    case "audio":
-      return ["audio/*"];
-    case "pdf":
-      return [".pdf"];
-    case "ppt":
-      return [".ppt", ".pptx"];
-    case "all":
-    default:
-      return undefined; // Allow all file types
-  }
-};
-
 export const UploadMediaModal: React.FC<UploadMediaModalProps> = ({
   isOpen,
   onClose,
@@ -61,54 +35,6 @@ export const UploadMediaModal: React.FC<UploadMediaModalProps> = ({
   mediaType,
   multiple = true,
 }) => {
-  const allowedFileTypes = useMemo(
-    () => getAllowedFileTypes(mediaType),
-    [mediaType],
-  );
-  const maxNumberOfFiles = multiple ? null : 1;
-
-  const [uppy] = useState(() =>
-    new Uppy({
-      restrictions: {
-        allowedFileTypes,
-        maxNumberOfFiles,
-      },
-    }).use(Tus, {
-      endpoint: window.location.origin + "/media/upload/tus",
-      headers: {
-        "csrf-token": appData.getCSRFToken(),
-        "organization-id": organizationId,
-        ...(projectId ? { "project-id": projectId } : {}),
-        ...(pluginId ? { "plugin-id": pluginId } : {}),
-      },
-      chunkSize: appData.getMediaUploadChunkSize(),
-    }),
-  );
-
-  // Update restrictions when inputs change
-  useEffect(() => {
-    uppy.setOptions({
-      restrictions: {
-        allowedFileTypes,
-        maxNumberOfFiles,
-      },
-    });
-  }, [uppy, allowedFileTypes, maxNumberOfFiles]);
-
-  useUppyEvent(uppy, "complete", (result) => {
-    if (!result.successful || result.successful.length === 0) return;
-
-    const uploaded: UploadedMediaInfo[] = result.successful.map((file) => {
-      const uploadUrl = file?.tus?.uploadUrl ?? "";
-      const mediaName = uploadUrl.split("/").pop() ?? "";
-      return { mediaName, originalName: file?.name ?? null };
-    });
-
-    uppy.cancelAll();
-    onUploadComplete(uploaded);
-    onClose();
-  });
-
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent size="2xl" className="bp--upload-dialog">
@@ -116,7 +42,17 @@ export const UploadMediaModal: React.FC<UploadMediaModalProps> = ({
           <DialogTitle>Upload Media</DialogTitle>
         </DialogHeader>
         <DialogBody className="bp--upload-dialog-body">
-          <Dashboard uppy={uppy} proudlyDisplayPoweredByUppy={false} />
+          <Dropzone
+            onUploadComplete={(results) => {
+              onUploadComplete(results);
+              onClose(); // Automatically close the modal when Dropzone triggers completion
+            }}
+            organizationId={organizationId}
+            projectId={projectId}
+            pluginId={pluginId}
+            mediaType={mediaType}
+            multiple={multiple}
+          />
         </DialogBody>
       </DialogContent>
     </Dialog>

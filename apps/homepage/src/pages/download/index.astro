@@ -15,7 +15,7 @@ import PageIllustration from "../../components/PageIllustration.astro";
     <div class="relative max-w-6xl mx-auto px-4 sm:px-6">
       <div class="pt-32 pb-12 md:pt-40 md:pb-20">
         <!-- Page header -->
-        <div class="max-w-3xl">
+        <div class="max-w-3xl mb-10">
           <h1 class="h1 font-red-hat-display mb-4" data-aos="fade-down">
             Download
           </h1>
@@ -62,19 +62,242 @@ import PageIllustration from "../../components/PageIllustration.astro";
           </div>
         </div>
 
-        <!-- Download options -->
-        <div class="flex flex-col gap-8">
-          <!-- Kiosk App (TV + Desktop) -->
-          <div
-            class="relative z-20 rounded-lg border border-gray-200 dark:border-gray-800 p-8"
-            data-aos="fade-up"
-          >
-            <h2 class="h3 font-red-hat-display mb-2">Kiosk App</h2>
-            <p class="text-gray-600 dark:text-gray-400 mb-8 max-w-3xl">
-              Turn any TV, monitor, or computer into a permanent, always-on
-              display for TheOpenPresenter. Pair once via QR, pick which screen,
-              and the device boots straight into a fullscreen render every time.
+        <!-- Questionnaire -->
+        <div
+          id="download-questionnaire"
+          class="max-w-3xl rounded-lg border border-gray-200 dark:border-gray-800 p-8 mb-10"
+          data-aos="fade-up"
+        >
+          <h2 class="h3 font-red-hat-display mb-2">
+            Find the right app for you
+          </h2>
+          <p class="text-gray-600 dark:text-gray-400 mb-8">
+            Answer a couple of quick questions and we'll point you to the right
+            app.
+          </p>
+
+          <!-- Step: start -->
+          <div data-step="start">
+            <p class="font-medium text-gray-900 dark:text-gray-100 mb-4">
+              1. What are you using TheOpenPresenter for?
             </p>
+            <div class="grid gap-4 sm:grid-cols-2">
+              <button
+                type="button"
+                class="q-option group cursor-pointer text-left rounded-lg border border-gray-200 dark:border-gray-700 p-6 sm:p-7 hover:border-teal-500 dark:hover:border-teal-400 transition duration-150 ease-in-out"
+                data-goto="church"
+              >
+                <span
+                  class="block text-lg font-semibold text-gray-900 dark:text-gray-100 group-hover:text-teal-600 dark:group-hover:text-teal-400"
+                  >A church</span
+                >
+                <span class="block text-base text-gray-500 dark:text-gray-400 mt-1.5"
+                  >Worship services, sermons, lyrics</span
+                >
+              </button>
+              <button
+                type="button"
+                class="q-option group cursor-pointer text-left rounded-lg border border-gray-200 dark:border-gray-700 p-6 sm:p-7 hover:border-teal-500 dark:hover:border-teal-400 transition duration-150 ease-in-out"
+                data-goto="commercial"
+              >
+                <span
+                  class="block text-lg font-semibold text-gray-900 dark:text-gray-100 group-hover:text-teal-600 dark:group-hover:text-teal-400"
+                  >Commercial / business</span
+                >
+                <span class="block text-base text-gray-500 dark:text-gray-400 mt-1.5"
+                  >Venues, offices, meeting spaces</span
+                >
+              </button>
+            </div>
+          </div>
+
+          <!-- Step: church -->
+          <div
+            data-step="church"
+            class="mt-8 pt-8 border-t border-gray-100 dark:border-gray-800"
+            hidden
+          >
+            <p class="font-medium text-gray-900 dark:text-gray-100 mb-4">
+              2. How do you want to run it?
+            </p>
+            <div class="grid gap-4 sm:grid-cols-2">
+              <button
+                type="button"
+                class="q-option group cursor-pointer text-left rounded-lg border border-gray-200 dark:border-gray-700 p-6 sm:p-7 hover:border-teal-500 dark:hover:border-teal-400 transition duration-150 ease-in-out"
+                data-result="studio"
+              >
+                <span
+                  class="block text-lg font-semibold text-gray-900 dark:text-gray-100 group-hover:text-teal-600 dark:group-hover:text-teal-400"
+                  >Replace my current software</span
+                >
+                <span class="block text-base text-gray-500 dark:text-gray-400 mt-1.5"
+                  >Move off ProPresenter or similar, run it on my own
+                  machine</span
+                >
+              </button>
+              <button
+                type="button"
+                class="q-option group cursor-pointer text-left rounded-lg border border-gray-200 dark:border-gray-700 p-6 sm:p-7 hover:border-teal-500 dark:hover:border-teal-400 transition duration-150 ease-in-out"
+                data-result="kiosk"
+              >
+                <span
+                  class="block text-lg font-semibold text-gray-900 dark:text-gray-100 group-hover:text-teal-600 dark:group-hover:text-teal-400"
+                  >Fully in the cloud</span
+                >
+                <span class="block text-base text-gray-500 dark:text-gray-400 mt-1.5"
+                  >Control from the web, just need a display device</span
+                >
+              </button>
+            </div>
+          </div>
+
+          <!-- Step: commercial -->
+          <div
+            data-step="commercial"
+            class="mt-8 pt-8 border-t border-gray-100 dark:border-gray-800"
+            hidden
+          >
+            <p class="font-medium text-gray-900 dark:text-gray-100 mb-4">
+              2. Where will you be running it?
+            </p>
+            <div class="grid gap-4 sm:grid-cols-2">
+              <button
+                type="button"
+                class="q-option group cursor-pointer text-left rounded-lg border border-gray-200 dark:border-gray-700 p-6 sm:p-7 hover:border-teal-500 dark:hover:border-teal-400 transition duration-150 ease-in-out"
+                data-result="studio"
+              >
+                <span
+                  class="block text-lg font-semibold text-gray-900 dark:text-gray-100 group-hover:text-teal-600 dark:group-hover:text-teal-400"
+                  >An event venue</span
+                >
+                <span class="block text-base text-gray-500 dark:text-gray-400 mt-1.5"
+                  >Live events, a dedicated operator running the show</span
+                >
+              </button>
+              <button
+                type="button"
+                class="q-option group cursor-pointer text-left rounded-lg border border-gray-200 dark:border-gray-700 p-6 sm:p-7 hover:border-teal-500 dark:hover:border-teal-400 transition duration-150 ease-in-out"
+                data-result="kiosk"
+              >
+                <span
+                  class="block text-lg font-semibold text-gray-900 dark:text-gray-100 group-hover:text-teal-600 dark:group-hover:text-teal-400"
+                  >A meeting room</span
+                >
+                <span class="block text-base text-gray-500 dark:text-gray-400 mt-1.5"
+                  >Always-on display, controlled remotely from the web</span
+                >
+              </button>
+            </div>
+          </div>
+
+          <!-- Result: studio -->
+          <div
+            data-result-panel="studio"
+            class="mt-8 pt-8 border-t border-gray-100 dark:border-gray-800"
+            hidden
+          >
+            <p
+              class="text-xs font-semibold uppercase tracking-wide text-teal-600 dark:text-teal-400 mb-2"
+            >
+              We recommend
+            </p>
+            <h3 class="h4 font-red-hat-display mb-2">TheOpenPresenter Studio</h3>
+            <p class="text-gray-600 dark:text-gray-400 mb-6">
+              Runs the full suite natively on your computer, self-contained on a
+              single machine. The best fit for replacing your current presentation
+              software or running a live event.
+            </p>
+            <div class="flex flex-wrap gap-3">
+              <button
+                type="button"
+                class="q-scroll cursor-pointer inline-flex items-center justify-center gap-2 px-6 py-3 rounded-md bg-gray-900 hover:bg-gray-700 text-white dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200 font-medium shadow-sm hover:shadow-lg transition duration-150 ease-in-out"
+                data-scroll="#studio"
+              >
+                Get Studio
+              </button>
+              <button
+                type="button"
+                class="q-restart cursor-pointer inline-flex items-center justify-center gap-2 px-6 py-3 rounded-md border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-teal-500 dark:hover:border-teal-400 font-medium transition duration-150 ease-in-out"
+              >
+                Start over
+              </button>
+            </div>
+          </div>
+
+          <!-- Result: kiosk -->
+          <div
+            data-result-panel="kiosk"
+            class="mt-8 pt-8 border-t border-gray-100 dark:border-gray-800"
+            hidden
+          >
+            <p
+              class="text-xs font-semibold uppercase tracking-wide text-teal-600 dark:text-teal-400 mb-2"
+            >
+              We recommend
+            </p>
+            <h3 class="h4 font-red-hat-display mb-2">Kiosk App</h3>
+            <p class="text-gray-600 dark:text-gray-400 mb-6">
+              Turn any TV, monitor, or computer into an always-on display. You
+              control everything from the web and the device just shows your
+              content, perfect for a fully cloud-based setup.
+            </p>
+            <div class="flex flex-wrap gap-3">
+              <button
+                type="button"
+                class="q-scroll cursor-pointer inline-flex items-center justify-center gap-2 px-6 py-3 rounded-md bg-gray-900 hover:bg-gray-700 text-white dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200 font-medium shadow-sm hover:shadow-lg transition duration-150 ease-in-out"
+                data-scroll="#kiosk"
+              >
+                Get the Kiosk App
+              </button>
+              <button
+                type="button"
+                class="q-restart cursor-pointer inline-flex items-center justify-center gap-2 px-6 py-3 rounded-md border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-teal-500 dark:hover:border-teal-400 font-medium transition duration-150 ease-in-out"
+              >
+                Start over
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Choose manually -->
+        <div id="choose" class="mt-2 scroll-mt-24" data-aos="fade-up">
+          <h2 class="h4 font-red-hat-display mb-2">Or choose manually</h2>
+          <p class="text-gray-600 dark:text-gray-400 mb-6">
+            Prefer to decide yourself? Expand an app to see all its downloads.
+          </p>
+
+          <!-- Download options -->
+          <div class="flex flex-col gap-6">
+            <!-- Kiosk App (TV + Desktop) -->
+            <details
+              id="kiosk"
+              class="group relative z-20 rounded-lg border border-gray-200 dark:border-gray-800 scroll-mt-24"
+            >
+              <summary
+                class="flex items-start justify-between gap-4 p-8 cursor-pointer list-none [&::-webkit-details-marker]:hidden"
+              >
+                <span class="block">
+                  <span class="block h3 font-red-hat-display mb-2">Kiosk App</span
+                  >
+                  <span class="block text-gray-600 dark:text-gray-400 max-w-3xl">
+                    Turn any TV, monitor, or computer into a permanent, always-on
+                    display for TheOpenPresenter. Pair once via QR, pick which
+                    screen, and the device boots straight into a fullscreen render
+                    every time.
+                  </span>
+                </span>
+                <svg
+                  class="w-5 h-5 mt-1 flex-shrink-0 fill-current text-gray-400 transition-transform duration-150 group-open:rotate-180"
+                  viewBox="0 0 20 20"
+                  xmlns="http://www.w3.org/2000/svg"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.17l3.71-3.94a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06z"
+                  ></path>
+                </svg>
+              </summary>
+              <div class="px-8 pb-8">
 
             <!-- TV platforms -->
             <h3
@@ -92,6 +315,9 @@ import PageIllustration from "../../components/PageIllustration.astro";
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Get TheOpenPresenter on Amazon Appstore"
+                  data-download="kiosk"
+                  data-platform="firetv"
+                  data-variant="amazon-appstore"
                 >
                   <img
                     src="/images/amazon-appstore-badge-english-black.png"
@@ -123,6 +349,9 @@ import PageIllustration from "../../components/PageIllustration.astro";
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Get TheOpenPresenter on Google Play"
+                  data-download="kiosk"
+                  data-platform="androidtv"
+                  data-variant="google-play"
                 >
                   <img
                     src="/svg/googleplay.svg"
@@ -160,6 +389,9 @@ import PageIllustration from "../../components/PageIllustration.astro";
                 <a
                   class="inline-flex items-center justify-center gap-3 px-6 py-3 rounded-md bg-gray-900 hover:bg-gray-700 text-white dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200 font-medium shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition duration-150 ease-in-out"
                   href="https://github.com/Vija02/TheOpenPresenter/releases/download/desktop-screen-nightly/desktop-screen-windows-x86_64-setup.exe"
+                  data-download="kiosk"
+                  data-platform="windows"
+                  data-variant="exe"
                 >
                   <svg
                     class="w-6 h-6 fill-current"
@@ -183,6 +415,9 @@ import PageIllustration from "../../components/PageIllustration.astro";
                   Or get the <a
                     class="text-teal-500 hover:underline"
                     href="https://github.com/Vija02/TheOpenPresenter/releases/download/desktop-screen-nightly/desktop-screen-windows-x86_64.msi"
+                    data-download="kiosk"
+                    data-platform="windows"
+                    data-variant="msi"
                     >.msi installer</a
                   > for enterprise deployment.
                 </p>
@@ -194,6 +429,9 @@ import PageIllustration from "../../components/PageIllustration.astro";
                 <a
                   class="inline-flex items-center justify-center gap-3 px-6 py-3 rounded-md bg-gray-900 hover:bg-gray-700 text-white dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200 font-medium shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition duration-150 ease-in-out"
                   href="https://github.com/Vija02/TheOpenPresenter/releases/download/desktop-screen-nightly/desktop-screen-macos-aarch64.dmg"
+                  data-download="kiosk"
+                  data-platform="macos"
+                  data-variant="dmg-aarch64"
                 >
                   <svg
                     class="w-6 h-6 fill-current"
@@ -218,6 +456,9 @@ import PageIllustration from "../../components/PageIllustration.astro";
                   On an Intel Mac? Get the <a
                     class="text-teal-500 hover:underline"
                     href="https://github.com/Vija02/TheOpenPresenter/releases/download/desktop-screen-nightly/desktop-screen-macos-x86_64.dmg"
+                    data-download="kiosk"
+                    data-platform="macos"
+                    data-variant="dmg-x86_64"
                     >Intel build</a
                   > instead.
                 </p>
@@ -226,7 +467,10 @@ import PageIllustration from "../../components/PageIllustration.astro";
               <!-- Linux -->
               <div>
                 <h4 class="font-medium text-lg mb-3">Linux</h4>
-                <details class="group relative inline-block text-left">
+                <details
+                  data-autoclose
+                  class="group relative inline-block text-left"
+                >
                   <summary
                     class="inline-flex items-center justify-center gap-3 px-6 py-3 rounded-md bg-gray-900 hover:bg-gray-700 text-white dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200 font-medium shadow-sm hover:shadow-lg transition duration-150 ease-in-out cursor-pointer list-none [&::-webkit-details-marker]:hidden"
                   >
@@ -263,6 +507,9 @@ import PageIllustration from "../../components/PageIllustration.astro";
                     <a
                       class="flex items-baseline justify-between gap-4 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50"
                       href="https://github.com/Vija02/TheOpenPresenter/releases/download/electron-screen-nightly/TheOpenPresenterScreen-x86_64.AppImage"
+                      data-download="kiosk"
+                      data-platform="linux"
+                      data-variant="appimage"
                     >
                       <span class="font-medium text-gray-900 dark:text-gray-100"
                         >AppImage</span
@@ -274,6 +521,9 @@ import PageIllustration from "../../components/PageIllustration.astro";
                     <a
                       class="flex items-baseline justify-between gap-4 px-4 py-3 border-t border-gray-100 dark:border-gray-700/60 hover:bg-gray-50 dark:hover:bg-gray-700/50"
                       href="https://github.com/Vija02/TheOpenPresenter/releases/download/electron-screen-nightly/electron-screen-amd64.deb"
+                      data-download="kiosk"
+                      data-platform="linux"
+                      data-variant="deb"
                     >
                       <span class="font-medium text-gray-900 dark:text-gray-100"
                         >.deb</span
@@ -285,6 +535,9 @@ import PageIllustration from "../../components/PageIllustration.astro";
                     <a
                       class="flex items-baseline justify-between gap-4 px-4 py-3 border-t border-gray-100 dark:border-gray-700/60 hover:bg-gray-50 dark:hover:bg-gray-700/50"
                       href="https://github.com/Vija02/TheOpenPresenter/releases/download/electron-screen-nightly/electron-screen-x86_64.rpm"
+                      data-download="kiosk"
+                      data-platform="linux"
+                      data-variant="rpm"
                     >
                       <span class="font-medium text-gray-900 dark:text-gray-100"
                         >.rpm</span
@@ -296,6 +549,9 @@ import PageIllustration from "../../components/PageIllustration.astro";
                     <a
                       class="flex items-baseline justify-between gap-4 px-4 py-3 border-t border-gray-100 dark:border-gray-700/60 hover:bg-gray-50 dark:hover:bg-gray-700/50"
                       href="https://github.com/Vija02/TheOpenPresenter/releases/download/electron-screen-nightly/electron-screen-x64.pacman"
+                      data-download="kiosk"
+                      data-platform="linux"
+                      data-variant="pacman"
                     >
                       <span class="font-medium text-gray-900 dark:text-gray-100"
                         >.pacman</span
@@ -307,6 +563,9 @@ import PageIllustration from "../../components/PageIllustration.astro";
                     <a
                       class="flex items-baseline justify-between gap-4 px-4 py-3 border-t border-gray-100 dark:border-gray-700/60 hover:bg-gray-50 dark:hover:bg-gray-700/50"
                       href="https://github.com/Vija02/TheOpenPresenter/releases/download/electron-screen-nightly/electron-screen-x64.tar.gz"
+                      data-download="kiosk"
+                      data-platform="linux"
+                      data-variant="tar.gz"
                     >
                       <span class="font-medium text-gray-900 dark:text-gray-100"
                         >.tar.gz</span
@@ -319,23 +578,39 @@ import PageIllustration from "../../components/PageIllustration.astro";
                 </details>
               </div>
             </div>
-          </div>
+              </div>
+            </details>
 
-          <!-- Local App -->
-          <div
-            id="studio"
-            class="rounded-lg border border-gray-200 dark:border-gray-800 p-8 scroll-mt-24"
-            data-aos="fade-up"
-            data-aos-delay="150"
-          >
-            <h2 class="h3 font-red-hat-display mb-2">
-              TheOpenPresenter Studio
-            </h2>
-            <p class="text-gray-600 dark:text-gray-400 mb-8 max-w-3xl">
-              Run the full TheOpenPresenter suite natively on your computer.
-              Useful if you want everything self-contained on a single machine
-              without relying on the web.
-            </p>
+            <!-- Local App -->
+            <details
+              id="studio"
+              class="group rounded-lg border border-gray-200 dark:border-gray-800 scroll-mt-24"
+            >
+              <summary
+                class="flex items-start justify-between gap-4 p-8 cursor-pointer list-none [&::-webkit-details-marker]:hidden"
+              >
+                <span class="block">
+                  <span class="block h3 font-red-hat-display mb-2"
+                    >TheOpenPresenter Studio</span
+                  >
+                  <span class="block text-gray-600 dark:text-gray-400 max-w-3xl">
+                    Run the full TheOpenPresenter suite natively on your computer.
+                    Useful if you want everything self-contained on a single
+                    machine without relying on the web.
+                  </span>
+                </span>
+                <svg
+                  class="w-5 h-5 mt-1 flex-shrink-0 fill-current text-gray-400 transition-transform duration-150 group-open:rotate-180"
+                  viewBox="0 0 20 20"
+                  xmlns="http://www.w3.org/2000/svg"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.17l3.71-3.94a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06z"
+                  ></path>
+                </svg>
+              </summary>
+              <div class="px-8 pb-8">
 
             <!-- Platforms -->
             <div class="grid gap-8 md:grid-cols-2">
@@ -345,6 +620,9 @@ import PageIllustration from "../../components/PageIllustration.astro";
                 <a
                   class="inline-flex items-center justify-center gap-3 px-6 py-3 rounded-md bg-gray-900 hover:bg-gray-700 text-white dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200 font-medium shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition duration-150 ease-in-out"
                   href="https://github.com/Vija02/TheOpenPresenter/releases/download/nightly/TheOpenPresenter.Studio_0.1.0_x64-setup.exe"
+                  data-download="studio"
+                  data-platform="windows"
+                  data-variant="exe"
                 >
                   <svg
                     class="w-6 h-6 fill-current"
@@ -368,6 +646,9 @@ import PageIllustration from "../../components/PageIllustration.astro";
                   Or get the <a
                     class="text-teal-500 hover:underline"
                     href="https://github.com/Vija02/TheOpenPresenter/releases/download/nightly/TheOpenPresenter.Studio_0.1.0_x64_en-US.msi"
+                    data-download="studio"
+                    data-platform="windows"
+                    data-variant="msi"
                     >.msi installer</a
                   > for enterprise deployment.
                 </p>
@@ -408,6 +689,8 @@ import PageIllustration from "../../components/PageIllustration.astro";
                 </span>
               </div>
             </div>
+              </div>
+            </details>
           </div>
         </div>
       </div>
@@ -416,5 +699,7 @@ import PageIllustration from "../../components/PageIllustration.astro";
 
   <script>
     import "../../scripts/download-dropdown";
+    import "../../scripts/download-questionnaire";
+    import "../../scripts/download-analytics";
   </script>
 </DefaultLayout>

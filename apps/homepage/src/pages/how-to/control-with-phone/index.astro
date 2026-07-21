@@ -1,0 +1,326 @@
+---
+import { Image } from "astro:assets";
+import DefaultLayout from "../../../layouts/DefaultLayout.astro";
+import PageIllustration from "../../../components/PageIllustration.astro";
+import shareIconImg from "../../../assets/images/how-to/control-with-phone/share-icon.png";
+import shareQrCodeImg from "../../../assets/images/how-to/control-with-phone/share-qr-code.png";
+import phoneViewImg from "../../../assets/images/how-to/control-with-phone/phone-view.png";
+
+const steps = [
+  { id: "open-project", label: "Open your project" },
+  { id: "scan-qr", label: "Scan the QR code" },
+  { id: "open-directly", label: "Or open it on your phone directly" },
+  { id: "control", label: "Control from your phone" },
+];
+---
+
+<DefaultLayout
+  title="How to control TheOpenPresenter from your phone"
+  description="Turn your phone into a remote for TheOpenPresenter: scan the QR code or open your project on your phone, optionally make it public, and change slides from anywhere in the room."
+>
+  <!-- Page illustration -->
+  <div
+    class="relative max-w-6xl mx-auto h-0 pointer-events-none -z-1"
+    aria-hidden="true"
+  >
+    <PageIllustration />
+  </div>
+
+  <section class="relative">
+    <div class="relative max-w-5xl mx-auto px-4 sm:px-6">
+      <div class="pt-32 pb-12 md:pt-40 md:pb-20">
+        <!-- Header -->
+        <div class="pb-10 md:pb-12">
+          <a
+            href="/how-to"
+            class="flex w-fit items-center text-sm text-teal-500 hover:underline mb-4"
+          >
+            <svg
+              class="w-3 h-3 fill-current shrink-0 mr-2 rotate-180"
+              viewBox="0 0 12 12"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M6.602 11l-.976-.997 3.831-3.905H0V4.749h9.457L5.626.844 6.602 0 12 5.5z"
+              ></path>
+            </svg>
+            All how-to guides
+          </a>
+          <div
+            class="inline-flex items-center text-sm font-semibold tracking-wide uppercase text-teal-500 mb-2"
+          >
+            For churches &bull; 3 min read
+          </div>
+          <h1
+            class="text-3xl sm:text-4xl md:text-5xl font-black tracking-tighter font-red-hat-display mb-4 break-words"
+          >
+            How to control TheOpenPresenter from your phone
+          </h1>
+          <p
+            class="text-xl text-gray-600 dark:text-gray-300"
+          >
+            Don't want to be stuck at the computer? Your phone can become a
+            remote for your presentation, so you can change slides from anywhere
+            in the room. The full-screen output stays on your TV or projector,
+            while you control it from your hand.
+          </p>
+        </div>
+
+        <!-- Before you start -->
+        <div
+          class="rounded-lg bg-teal-50 dark:bg-teal-500/10 border border-teal-200 dark:border-teal-500/30 p-5 mb-12 flex gap-4 items-start"
+        >
+          <div
+            class="shrink-0 w-10 h-10 rounded-full bg-teal-500/15 dark:bg-teal-500/20 flex items-center justify-center text-teal-600 dark:text-teal-400"
+            aria-hidden="true"
+          >
+            <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
+              <path
+                d="M11 7h2v2h-2V7zm0 4h2v6h-2v-6zm1-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"
+              ></path>
+            </svg>
+          </div>
+          <div>
+            <p class="font-semibold text-gray-900 dark:text-gray-100 mb-1">
+              Before you start
+            </p>
+            <p class="text-sm text-gray-600 dark:text-gray-300">
+              This guide assumes you already have a church and a project set up.
+              If you don't yet, follow our{" "}
+              <a
+                href="/how-to/use-online-for-church"
+                class="text-teal-600 dark:text-teal-400 hover:underline font-medium"
+                >guide on using the online version for church</a
+              >{" "}
+              first, it walks you through registering, creating your church,
+              building a project, adding lyrics, and presenting. This guide only
+              covers the part where you use your phone as the remote.
+            </p>
+          </div>
+        </div>
+
+        <!-- Table of contents -->
+        <nav class="mb-12" aria-label="Steps in this guide">
+          <p
+            class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-300 mb-3"
+          >
+            What you'll do
+          </p>
+          <ol class="grid gap-2">
+            {
+              steps.map((step, i) => (
+                <li>
+                  <a
+                    href={`#${step.id}`}
+                    class="flex items-center gap-3 text-gray-700 dark:text-gray-300 hover:text-teal-500 transition-colors"
+                  >
+                    <span class="shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-800 text-xs font-bold">
+                      {i + 1}
+                    </span>
+                    {step.label}
+                  </a>
+                </li>
+              ))
+            }
+          </ol>
+        </nav>
+
+        <!-- ===================== STEP 1 ===================== -->
+        <article id="open-project" class="scroll-mt-24 mb-16">
+          <div class="flex items-center gap-4 mb-4">
+            <div
+              class="flex items-center justify-center w-12 h-12 rounded-full text-white font-red-hat-display font-black text-xl bg-linear-to-tr from-teal-500 to-teal-400 shrink-0"
+            >
+              1
+            </div>
+            <h2 class="h3 font-red-hat-display">Open your project</h2>
+          </div>
+
+          <p class="text-lg text-gray-600 dark:text-gray-300 mb-4">
+            On your computer, open the project you want to run, exactly the way
+            you normally would. Get it presenting to your TV or projector as
+            usual. If you're not sure how, our{" "}
+            <a
+              href="/how-to/use-online-for-church"
+              class="text-teal-600 dark:text-teal-400 hover:underline font-medium"
+              >online version guide</a
+            >{" "}
+            covers the whole flow. Once it's up and running, you're ready to add
+            your phone as a remote.
+          </p>
+        </article>
+
+        <!-- ===================== STEP 2 ===================== -->
+        <article id="scan-qr" class="scroll-mt-24 mb-16">
+          <div class="flex items-center gap-4 mb-4">
+            <div
+              class="flex items-center justify-center w-12 h-12 rounded-full text-white font-red-hat-display font-black text-xl bg-linear-to-tr from-purple-500 to-purple-400 shrink-0"
+            >
+              2
+            </div>
+            <h2 class="h3 font-red-hat-display">Scan the QR code</h2>
+          </div>
+
+          <p class="text-lg text-gray-600 dark:text-gray-300 mb-4">
+            The quickest way to get the project onto your phone is to scan a QR
+            code straight from the editor.
+          </p>
+
+          <ol
+            class="list-decimal list-outside pl-5 space-y-3 text-gray-600 dark:text-gray-300 mb-6"
+          >
+            <li>
+              In the editor, click the{" "}
+              <strong class="font-semibold">Share</strong> icon near the
+              bottom-left of the screen.
+            </li>
+            <li>
+              The <strong class="font-semibold">Share Project</strong> window
+              opens with a QR code.
+            </li>
+            <li>
+              Don't want to log in on your phone, or want to hand the remote to
+              a volunteer who doesn't have an account? Tick{" "}
+              <strong class="font-semibold">Make project public</strong> and
+              anyone with the link can open and control it, no login needed.
+            </li>
+            <li>
+              Point your phone's camera at the QR code and tap the link that
+              appears. The same project opens on your phone.
+            </li>
+          </ol>
+
+          <div class="grid gap-4 sm:grid-cols-2 items-start mb-6">
+            <Image
+              src={shareIconImg}
+              alt="The Lyrics Presenter editor with a red arrow pointing at the Share icon near the bottom-left of the screen"
+              class="rounded-lg border border-gray-200 dark:border-gray-800 shadow-sm w-full h-auto"
+            />
+
+            <Image
+              src={shareQrCodeImg}
+              alt="The Share Project window showing a QR code to open the project on another device, with the Make project public checkbox"
+              class="rounded-lg border border-gray-200 dark:border-gray-800 shadow-sm w-full h-auto"
+            />
+          </div>
+
+          <div
+            class="rounded-md bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-800 p-4 text-sm text-gray-600 dark:text-gray-300"
+          >
+            <span class="font-semibold text-gray-900 dark:text-gray-100"
+              >Tip:</span
+            > Untick <strong class="font-semibold">Make project public</strong>
+            {" "}afterwards if you'd rather keep the project private once the
+            service is over.
+          </div>
+        </article>
+
+        <!-- ===================== STEP 3 ===================== -->
+        <article id="open-directly" class="scroll-mt-24 mb-16">
+          <div class="flex items-center gap-4 mb-4">
+            <div
+              class="flex items-center justify-center w-12 h-12 rounded-full text-white font-red-hat-display font-black text-xl bg-linear-to-tr from-indigo-500 to-indigo-400 shrink-0"
+            >
+              3
+            </div>
+            <h2 class="h3 font-red-hat-display">
+              Or open it on your phone directly
+            </h2>
+          </div>
+
+          <p class="text-lg text-gray-600 dark:text-gray-300 mb-4">
+            The QR code is just a shortcut, there's nothing special about it.
+            Your phone opens TheOpenPresenter in exactly the same way your
+            computer does, so you can skip the QR code entirely if you like.
+          </p>
+
+          <ol
+            class="list-decimal list-outside pl-5 space-y-3 text-gray-600 dark:text-gray-300 mb-6"
+          >
+            <li>
+              Open your phone's web browser and go to TheOpenPresenter, then log
+              in with the same account you use on your computer.
+            </li>
+            <li>
+              Open your church and tap the same project you're running. It opens
+              on your phone, ready to control.
+            </li>
+          </ol>
+
+          <div
+            class="rounded-md bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-800 p-4 text-sm text-gray-600 dark:text-gray-300"
+          >
+            <span class="font-semibold text-gray-900 dark:text-gray-100"
+              >Tip:</span
+            > Because everything lives in the cloud, your phone and your computer
+            stay perfectly in sync. Whatever you do on one shows up on the other
+            instantly.
+          </div>
+        </article>
+
+        <!-- ===================== STEP 4 ===================== -->
+        <article id="control" class="scroll-mt-24 mb-16">
+          <div class="flex items-center gap-4 mb-4">
+            <div
+              class="flex items-center justify-center w-12 h-12 rounded-full text-white font-red-hat-display font-black text-xl bg-linear-to-tr from-amber-500 to-amber-400 shrink-0"
+            >
+              4
+            </div>
+            <h2 class="h3 font-red-hat-display">Control from your phone</h2>
+          </div>
+
+          <p class="text-lg text-gray-600 dark:text-gray-300 mb-4">
+            Once the project is open on your phone, it works just like it does on
+            the computer, only in a layout that fits your screen. Tap a song
+            section to send it to the screen, and the congregation sees the words
+            update instantly. Walk around the room, lead from the front, and
+            change slides from wherever you are.
+          </p>
+
+          <Image
+            src={phoneViewImg}
+            alt="The Lyrics Presenter open on a phone, showing song sections stacked in a narrow mobile layout with the current slide highlighted"
+            class="rounded-lg border border-gray-200 dark:border-gray-800 shadow-sm w-full max-w-xs mx-auto h-auto mb-6 block"
+          />
+
+          <div
+            class="rounded-md bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-800 p-4 text-sm text-gray-600 dark:text-gray-300"
+          >
+            <span class="font-semibold text-gray-900 dark:text-gray-100"
+              >Tip:</span
+            > Share the QR code with more than one person so your team can take
+            turns controlling the service from their own phones.
+          </div>
+        </article>
+
+        <!-- Wrap up / CTA -->
+        <div
+          class="rounded-lg border border-gray-200 dark:border-gray-800 p-8 text-center"
+        >
+          <h2 class="h4 font-red-hat-display mb-2">
+            That's it, your phone is the remote
+          </h2>
+          <p class="text-gray-600 dark:text-gray-300 mb-6">
+            Scan the QR code or open the project on your phone, and control the
+            whole service from anywhere in the room. New to TheOpenPresenter?
+            Start with the full walkthrough.
+          </p>
+          <div class="flex flex-wrap items-center justify-center gap-3">
+            <a
+              href="/how-to/use-online-for-church"
+              class="btn text-white bg-teal-500 hover:bg-teal-400 shrink-0"
+            >
+              Read the full guide
+            </a>
+            <a
+              href="/church"
+              class="btn text-teal-500 bg-transparent border border-teal-500 hover:bg-teal-500/10 shrink-0"
+            >
+              Learn more
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</DefaultLayout>
