@@ -8,12 +8,16 @@ import {
   DialogTitle,
   OverlayToggle,
   Select,
-  Switch,
   cn,
   useOverlayToggle,
 } from "@repo/ui";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { VscCloudUpload, VscStarEmpty, VscStarFull } from "react-icons/vsc";
+import {
+  VscClose,
+  VscCloudUpload,
+  VscStarEmpty,
+  VscStarFull,
+} from "react-icons/vsc";
 
 import type { CatalogTranslation } from "../../../src/catalog";
 import { usePluginAPI } from "../../pluginApi";
@@ -53,20 +57,29 @@ const SCOPES = [
 
 type RowProps = {
   t: CatalogTranslation;
-  isSelected: boolean;
   isPrimary: boolean;
-  onToggle: (id: string) => void;
-  onMakePrimary: (id: string) => void;
+  isSecondary: boolean;
+  isFavorite: boolean;
+  onSelectPrimary: (id: string) => void;
+  onToggleParallel: (id: string) => void;
+  onRemove: (id: string) => void;
+  onToggleFavorite: (id: string) => void;
 };
 
-// One catalog row. Shared by the pinned "selected" section and the paginated
-// list so both render identically.
+// One catalog row. Shared by the "Selected" and "All translations" sections so
+// every translation renders identically. Controls, left-to-right:
+//   ★ favorite     — pins the row to the top for quick access
+//   Add parallel   — enables it as a secondary shown alongside the primary
+//   Use            — makes it the sole primary (rightmost, primary action)
 const TranslationRow = ({
   t,
-  isSelected,
   isPrimary,
-  onToggle,
-  onMakePrimary,
+  isSecondary,
+  isFavorite,
+  onSelectPrimary,
+  onToggleParallel,
+  onRemove,
+  onToggleFavorite,
 }: RowProps) => {
   const usable = isUsable(t);
   const badge = BADGE[t.availability];
@@ -74,16 +87,37 @@ const TranslationRow = ({
     <div
       className={cn(
         "flex items-center gap-3 px-3 py-2",
-        usable ? "cursor-pointer" : "opacity-80",
-        isSelected ? "bg-blue-50" : "bg-surface-primary hover:bg-gray-50",
+        isPrimary
+          ? "bg-blue-50"
+          : isSecondary
+            ? "bg-blue-50/60"
+            : "bg-surface-primary hover:bg-gray-50",
       )}
-      onClick={() => usable && onToggle(t.id)}
     >
+      <button
+        type="button"
+        title={isFavorite ? "Remove from favorites" : "Add to favorites"}
+        aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
+        onClick={(e) => {
+          e.stopPropagation();
+          onToggleFavorite(t.id);
+        }}
+        className={cn(
+          "shrink-0 p-1 rounded cursor-pointer",
+          isFavorite ? "text-yellow-500" : "text-secondary hover:text-gray-700",
+        )}
+      >
+        {isFavorite ? <VscStarFull /> : <VscStarEmpty />}
+      </button>
+
       <div className="min-w-0 flex-1">
         <p className="font-medium truncate">
           {t.name}
           {t.abbreviation ? (
-            <span className="text-secondary font-normal"> · {t.abbreviation}</span>
+            <span className="text-secondary font-normal">
+              {" "}
+              · {t.abbreviation}
+            </span>
           ) : null}
         </p>
         <p className="text-xs text-secondary flex items-center gap-1.5">
@@ -99,22 +133,61 @@ const TranslationRow = ({
           {t.languageLabel}
         </p>
       </div>
+
       {usable ? (
-        <button
-          type="button"
-          title={isPrimary ? "Primary translation" : "Set as primary"}
-          onClick={(e) => {
-            e.stopPropagation();
-            onMakePrimary(t.id);
-          }}
-          className={cn(
-            "flex items-center gap-1 text-xs px-2 py-1 rounded shrink-0",
-            isPrimary ? "text-yellow-500" : "text-secondary hover:text-gray-700",
-          )}
-        >
-          {isPrimary ? <VscStarFull /> : <VscStarEmpty />}
-          {isPrimary ? "Primary" : "Make primary"}
-        </button>
+        isPrimary || isSecondary ? (
+          <div className="flex items-center gap-2 shrink-0">
+            <span
+              className={cn(
+                "inline-block px-1.5 py-0.5 rounded text-[10px] font-medium",
+                isPrimary
+                  ? "bg-blue-600 text-white"
+                  : "bg-blue-100 text-blue-700",
+              )}
+            >
+              {isPrimary ? "Primary" : "Parallel"}
+            </span>
+            {!isPrimary && (
+              <button
+                type="button"
+                title="Remove from selection"
+                aria-label="Remove from selection"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRemove(t.id);
+                }}
+                className="shrink-0 p-1 rounded cursor-pointer text-secondary hover:text-red-600 hover:bg-red-50"
+              >
+                <VscClose />
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="flex items-center gap-1 shrink-0">
+            <Button
+              size="xs"
+              variant="ghost"
+              title="Show alongside the primary translation"
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleParallel(t.id);
+              }}
+            >
+              Parallel
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              title="Use this as the primary translation"
+              onClick={(e) => {
+                e.stopPropagation();
+                onSelectPrimary(t.id);
+              }}
+            >
+              Use
+            </Button>
+          </div>
+        )
       ) : (
         <OverlayToggle
           toggler={({ onToggle: openUploads }) => (
@@ -140,26 +213,23 @@ const TranslationRow = ({
           />
         </OverlayToggle>
       )}
-      <Switch
-        size="sm"
-        checked={isSelected}
-        disabled={!usable}
-        onCheckedChange={() => onToggle(t.id)}
-        onClick={(e) => e.stopPropagation()}
-        aria-label={`Use ${t.name}`}
-        className="shrink-0"
-      />
     </div>
   );
 };
 
+const SectionHeader = ({ label }: { label: string }) => (
+  <div className="px-3 py-1.5 bg-gray-50 text-[11px] font-semibold uppercase tracking-wide text-secondary">
+    {label}
+  </div>
+);
+
 // The main configuration surface for the Bible plugin: browse the catalog of
 // translations (public + copyrighted-needs-upload + your uploads), filter by
-// language, and choose which to present (one primary + others in parallel).
+// language, favourite the ones you use often (pinned to the top), pick one
+// primary translation and optionally show others in parallel.
 //
 // Backend-centric: filtering, sorting and pagination all happen server-side, so
-// the client only ever holds the current page plus the (few) selected rows —
-// never the full ~2,300-entry catalog.
+// the client only ever holds the current page plus the (few) pinned rows.
 const SettingsModal = () => {
   const { isOpen, onToggle } = useOverlayToggle();
   const pluginApi = usePluginAPI();
@@ -169,6 +239,7 @@ const SettingsModal = () => {
   const [languages, setLanguages] = useState<string[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [primaryId, setPrimaryId] = useState<string | null>(null);
+  const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [onlyUsable, setOnlyUsable] = useState(false);
@@ -189,11 +260,15 @@ const SettingsModal = () => {
     { pluginId },
     { refetchOnWindowFocus: false },
   );
-  // Metadata for the selected rows, so they can be pinned on top regardless of
-  // which page (or filter) they'd fall under.
-  const selectedQuery = trpc.bible.catalog.byIds.useQuery(
-    { pluginId, ids: selectedIds },
-    { enabled: selectedIds.length > 0, refetchOnWindowFocus: false },
+  // Metadata for the pinned rows (selected + favourites), so they stay on top
+  // regardless of which page (or filter) they'd otherwise fall under.
+  const pinnedIds = useMemo(
+    () => Array.from(new Set([...selectedIds, ...favoriteIds])),
+    [selectedIds, favoriteIds],
+  );
+  const pinnedQuery = trpc.bible.catalog.byIds.useQuery(
+    { pluginId, ids: pinnedIds },
+    { enabled: pinnedIds.length > 0, refetchOnWindowFocus: false },
   );
   const listQuery = trpc.bible.catalog.list.useInfiniteQuery(
     {
@@ -216,6 +291,7 @@ const SettingsModal = () => {
     setLanguages(prefsQuery.data.languages);
     setSelectedIds(prefsQuery.data.translationIds);
     setPrimaryId(prefsQuery.data.primaryTranslationId);
+    setFavoriteIds(prefsQuery.data.favoriteIds ?? []);
   }, [prefsQuery.data]);
 
   const languageOptions = useMemo(
@@ -223,18 +299,32 @@ const SettingsModal = () => {
     [languagesQuery.data],
   );
 
-  // Remember metadata for every row we've seen (list pages + byIds), so a newly
-  // toggled row can move into the pinned section instantly without waiting for
-  // byIds to refetch (avoids a flash where it briefly disappears).
+  // Remember metadata for every row we've seen (list pages + pinned byIds), so
+  // a newly toggled row can move between sections instantly without waiting for
+  // a refetch (avoids a flash where it briefly disappears).
   const metaCache = useRef(new Map<string, CatalogTranslation>());
   useMemo(() => {
     for (const page of listQuery.data?.pages ?? []) {
       for (const t of page.items) metaCache.current.set(t.id, t);
     }
-    for (const t of selectedQuery.data ?? []) metaCache.current.set(t.id, t);
-  }, [listQuery.data, selectedQuery.data]);
+    for (const t of pinnedQuery.data ?? []) metaCache.current.set(t.id, t);
+  }, [listQuery.data, pinnedQuery.data]);
 
-  const toggleSelected = (id: string) => {
+  // "Use" makes a translation the sole primary (replacing any parallels).
+  const selectPrimary = (id: string) => {
+    setSaved(false);
+    if (primaryId === id) {
+      // Clicking the current primary again clears the selection.
+      setPrimaryId(null);
+      setSelectedIds((prev) => prev.filter((x) => x !== id));
+      return;
+    }
+    setPrimaryId(id);
+    setSelectedIds([id]);
+  };
+
+  // "Add parallel" enables an extra translation shown alongside the primary.
+  const toggleParallel = (id: string) => {
     setSaved(false);
     setSelectedIds((prev) => {
       if (prev.includes(id)) {
@@ -242,15 +332,23 @@ const SettingsModal = () => {
         if (primaryId === id) setPrimaryId(next[0] ?? null);
         return next;
       }
-      if (primaryId === null) setPrimaryId(id);
       return [...prev, id];
     });
   };
 
-  const makePrimary = (id: string) => {
+  const toggleFavorite = (id: string) => {
     setSaved(false);
-    setPrimaryId(id);
-    setSelectedIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
+    setFavoriteIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+  };
+
+  // Remove a translation from the selection (X on a Selected row). Clears the
+  // primary too when it was the one removed.
+  const removeSelected = (id: string) => {
+    setSaved(false);
+    setSelectedIds((prev) => prev.filter((x) => x !== id));
+    if (primaryId === id) setPrimaryId(null);
   };
 
   // Pinned selected rows: primary first, then in selection order.
@@ -263,30 +361,40 @@ const SettingsModal = () => {
       if (b.id === primaryId) return 1;
       return selectedIds.indexOf(a.id) - selectedIds.indexOf(b.id);
     });
-    // listQuery/selectedQuery data are deps so the cache reads stay fresh.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedIds, primaryId, listQuery.data, selectedQuery.data]);
+  }, [selectedIds, primaryId, listQuery.data, pinnedQuery.data]);
 
-  // Paginated list rows, with selected rows filtered out (they're pinned above).
-  const listRows = useMemo(() => {
+  // Favourited translations that aren't already selected — rendered at the top
+  // of the "All translations" list for quick access.
+  const favoriteRows = useMemo(() => {
     const sel = new Set(selectedIds);
+    return favoriteIds
+      .filter((id) => !sel.has(id))
+      .map((id) => metaCache.current.get(id))
+      .filter((t): t is CatalogTranslation => Boolean(t));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [favoriteIds, selectedIds, listQuery.data, pinnedQuery.data]);
+
+  // Paginated list rows, with selected + favourite rows filtered out (they're
+  // pinned above).
+  const listRows = useMemo(() => {
+    const excluded = new Set([...selectedIds, ...favoriteIds]);
     const seen = new Set<string>();
     const out: CatalogTranslation[] = [];
     for (const page of listQuery.data?.pages ?? []) {
       for (const t of page.items) {
-        if (sel.has(t.id) || seen.has(t.id)) continue;
+        if (excluded.has(t.id) || seen.has(t.id)) continue;
         seen.add(t.id);
         out.push(t);
       }
     }
     return out;
-  }, [listQuery.data, selectedIds]);
+  }, [listQuery.data, selectedIds, favoriteIds]);
 
   const total = listQuery.data?.pages[0]?.total ?? 0;
 
   const { hasNextPage, isFetchingNextPage, fetchNextPage } = listQuery;
 
-  // How many rows are loaded (across pages) vs. how many match on the server.
   const loadedCount = useMemo(
     () =>
       (listQuery.data?.pages ?? []).reduce(
@@ -296,9 +404,6 @@ const SettingsModal = () => {
     [listQuery.data],
   );
 
-  // Infinite scroll: auto-load the next page when scrolled near the bottom.
-  // Listening to the scroll element's own onScroll avoids the
-  // IntersectionObserver-root-in-a-modal ambiguity that failed before.
   const listRef = useRef<HTMLDivElement | null>(null);
   const onListScroll = () => {
     const el = listRef.current;
@@ -308,9 +413,6 @@ const SettingsModal = () => {
     }
   };
 
-  // If the loaded rows don't fill the container there's no scrollbar to drive
-  // infinite loading, so keep fetching until it overflows or the list is
-  // exhausted (covers narrow filters / tall viewports without a "Load more").
   useEffect(() => {
     const el = listRef.current;
     if (!el || !hasNextPage || isFetchingNextPage) return;
@@ -325,14 +427,18 @@ const SettingsModal = () => {
         languages,
         translationIds: selectedIds,
         primaryTranslationId: primaryId,
+        favoriteIds,
       });
       setSaved(true);
+      onToggle?.();
     } finally {
       setSaving(false);
     }
   };
 
   const loading = listQuery.isLoading || prefsQuery.isLoading;
+  // A primary translation is always required before saving.
+  const needsPrimary = !primaryId;
 
   return (
     <Dialog open={isOpen ?? false} onOpenChange={onToggle ?? (() => {})}>
@@ -411,42 +517,73 @@ const SettingsModal = () => {
                 className="border border-stroke rounded flex-1 min-h-0 overflow-y-auto divide-y divide-stroke"
               >
                 {loading && (
-                    <p className="text-sm text-secondary px-3 py-4">
-                      Loading catalog…
-                    </p>
-                  )}
+                  <p className="text-sm text-secondary px-3 py-4">
+                    Loading catalog…
+                  </p>
+                )}
 
-                  {!loading &&
-                    selectedRows.map((t) => (
+                {!loading && selectedRows.length > 0 && (
+                  <>
+                    <SectionHeader label="Selected" />
+                    {selectedRows.map((t) => (
                       <TranslationRow
                         key={`sel-${t.id}`}
                         t={t}
-                        isSelected
                         isPrimary={primaryId === t.id}
-                        onToggle={toggleSelected}
-                        onMakePrimary={makePrimary}
+                        isSecondary={primaryId !== t.id}
+                        isFavorite={favoriteIds.includes(t.id)}
+                        onSelectPrimary={selectPrimary}
+                        onToggleParallel={toggleParallel}
+                        onRemove={removeSelected}
+                        onToggleFavorite={toggleFavorite}
                       />
                     ))}
+                  </>
+                )}
 
-                  {!loading &&
-                    listRows.map((t) => (
-                      <TranslationRow
-                        key={t.id}
-                        t={t}
-                        isSelected={false}
-                        isPrimary={primaryId === t.id}
-                        onToggle={toggleSelected}
-                        onMakePrimary={makePrimary}
-                      />
-                    ))}
+                {!loading &&
+                  (favoriteRows.length > 0 || listRows.length > 0) && (
+                    <>
+                      {selectedRows.length > 0 && (
+                        <SectionHeader label="All translations" />
+                      )}
+                      {favoriteRows.map((t) => (
+                        <TranslationRow
+                          key={`fav-${t.id}`}
+                          t={t}
+                          isPrimary={false}
+                          isSecondary={false}
+                          isFavorite
+                          onSelectPrimary={selectPrimary}
+                          onToggleParallel={toggleParallel}
+                          onRemove={removeSelected}
+                          onToggleFavorite={toggleFavorite}
+                        />
+                      ))}
+                      {listRows.map((t) => (
+                        <TranslationRow
+                          key={t.id}
+                          t={t}
+                          isPrimary={false}
+                          isSecondary={false}
+                          isFavorite={favoriteIds.includes(t.id)}
+                          onSelectPrimary={selectPrimary}
+                          onToggleParallel={toggleParallel}
+                          onRemove={removeSelected}
+                          onToggleFavorite={toggleFavorite}
+                        />
+                      ))}
+                    </>
+                  )}
 
-                  {!loading &&
-                    selectedRows.length === 0 &&
-                    listRows.length === 0 && (
-                      <p className="text-sm text-secondary px-3 py-4">
-                        No translations match your filters.
-                      </p>
-                    )}
+                {!loading &&
+                  selectedRows.length === 0 &&
+                  favoriteRows.length === 0 &&
+                  listRows.length === 0 && (
+                    <p className="text-sm text-secondary px-3 py-4">
+                      No translations match your filters.
+                    </p>
+                  )}
               </div>
 
               {!loading && (
@@ -463,11 +600,18 @@ const SettingsModal = () => {
         </DialogBody>
 
         <DialogFooter className="pt-0 pb-3 justify-end items-center gap-2">
-          {saved && <span className="text-sm text-green-600">Saved</span>}
+          {needsPrimary && (
+            <span className="text-sm text-red-600">
+              Pick a primary translation (Use) to save
+            </span>
+          )}
+          {saved && !needsPrimary && (
+            <span className="text-sm text-green-600">Saved</span>
+          )}
           <Button variant="outline" onClick={onToggle}>
             Close
           </Button>
-          <Button onClick={save} disabled={saving}>
+          <Button onClick={save} disabled={saving || needsPrimary}>
             {saving ? "Saving..." : "Save"}
           </Button>
         </DialogFooter>

@@ -86,7 +86,7 @@ const TranslationsModal = ({
       });
 
       await refetch();
-      await utils.bible.catalog.list.invalidate();
+      await utils.bible.catalog.invalidate();
       setStatus(
         attaching
           ? `Attached to "${name}" (${parsed.books.length} books). It's ready to use.`
@@ -107,7 +107,7 @@ const TranslationsModal = ({
     try {
       await removeMutation.mutateAsync({ pluginId, id });
       await refetch();
-      await utils.bible.catalog.list.invalidate();
+      await utils.bible.catalog.invalidate();
       setStatus(null);
     } catch (err) {
       setError((err as Error).message || "Failed to remove translation.");
