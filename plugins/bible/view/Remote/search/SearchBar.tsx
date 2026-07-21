@@ -3,10 +3,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { VscGear, VscListSelection, VscSearch } from "react-icons/vsc";
 import { typeidUnboxed } from "typeid-js";
 
-import {
-  defaultTranslationId,
-  translations,
-} from "../../../src/builtin/translations";
 import { getStandardBooks } from "../../../src/builtin/versification";
 import {
   BibleBookIndex,
@@ -20,20 +16,18 @@ import { useCustomTranslations } from "../translations/customTranslations";
 import BiblePicker from "./BiblePicker";
 import { parseReferenceInIndex, suggestBooks } from "./bookIndex";
 
+type ReferenceInput = {
+  translationId: string;
+  bookName: string;
+  bookNumber: number;
+  chapter: number;
+  verseStart?: number;
+  verseEnd?: number;
+};
+
 type Submitted =
-  | { kind: "builtin"; reference: string; translation: string }
-  | {
-      kind: "custom";
-      input: {
-        pluginId: string;
-        translationId: string;
-        bookName: string;
-        bookNumber: number;
-        chapter: number;
-        verseStart?: number;
-        verseEnd?: number;
-      };
-    };
+  | { kind: "custom"; input: ReferenceInput & { pluginId: string } }
+  | { kind: "catalog"; input: ReferenceInput };
 
 const SearchBar = () => {
   const pluginApi = usePluginAPI();
@@ -44,11 +38,33 @@ const SearchBar = () => {
     pluginId,
   } = useCustomTranslations();
 
+  // Catalog translations the org selected in Settings.
+  const prefsQuery = trpc.bible.preferences.get.useQuery(
+    { pluginId },
+    { refetchOnWindowFocus: false },
+  );
+  const selectedCatalogIds = useMemo(() => {
+    const ids = prefsQuery.data?.translationIds ?? [];
+    return ids.filter((id) => !getCustom(id));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prefsQuery.data, customTranslations]);
+
+  const catalogMetaQuery = trpc.bible.catalog.byIds.useQuery(
+    { pluginId, ids: selectedCatalogIds },
+    { enabled: selectedCatalogIds.length > 0, refetchOnWindowFocus: false },
+  );
+  // Only translations we can actually serve; "upload required" ones can't
+  // resolve until their text has been uploaded.
+  const publicCatalog = useMemo(
+    () => (catalogMetaQuery.data ?? []).filter((t) => t.source === "helloao"),
+    [catalogMetaQuery.data],
+  );
+
   const inputRef = useRef<HTMLInputElement>(null);
   const processedTokenRef = useRef(0);
 
   const [input, setInput] = useState("");
-  const [translation, setTranslation] = useState<string>(defaultTranslationId);
+  const [translation, setTranslation] = useState<string>("");
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const [token, setToken] = useState(0);
@@ -56,33 +72,49 @@ const SearchBar = () => {
   const [submitted, setSubmitted] = useState<Submitted | null>(null);
 
   const customSelected = getCustom(translation);
+  const catalogSelected = useMemo(
+    () => publicCatalog.find((t) => t.id === translation),
+    [publicCatalog, translation],
+  );
+
+  // Seed the picker once options are known: the org's primary translation if
+  // it's usable, otherwise the first thing available.
+  useEffect(() => {
+    if (translation && (customSelected || catalogSelected)) return;
+    const primary = prefsQuery.data?.primaryTranslationId ?? null;
+    const usableIds = [
+      ...publicCatalog.map((t) => t.id),
+      ...customTranslations.map((t) => t.id),
+    ];
+    const next =
+      primary && usableIds.includes(primary) ? primary : usableIds[0];
+    if (next && next !== translation) setTranslation(next);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prefsQuery.data, publicCatalog, customTranslations]);
+
+  // Native book index for the selected catalog translation (fetched lazily).
+  const catalogBooksQuery = trpc.bible.catalog.books.useQuery(
+    { translationId: translation },
+    { enabled: !!catalogSelected, refetchOnWindowFocus: false },
+  );
 
   const translationName = useMemo(() => {
     if (customSelected) return customSelected.name;
-    return translations.find((t) => t.id === translation)?.name ?? translation;
-  }, [customSelected, translation]);
+    if (catalogSelected) return catalogSelected.name;
+    return translation;
+  }, [customSelected, catalogSelected, translation]);
 
-  // Index that drives autocomplete AND the drill-down grid for the selected
-  // translation. Custom translations carry their own index from the server.
-  const bookIndex = useMemo<BibleBookIndex>(
-    () => (customSelected ? customSelected.books : getStandardBooks()),
-    [customSelected],
-  );
+  // Index that drives autocomplete AND the drill-down grid. Uploaded and
+  // catalog translations both carry their own native index.
+  const bookIndex = useMemo<BibleBookIndex>(() => {
+    if (customSelected) return customSelected.books;
+    if (catalogSelected) return catalogBooksQuery.data ?? [];
+    return getStandardBooks();
+  }, [customSelected, catalogSelected, catalogBooksQuery.data]);
 
   const suggestions = useMemo(
     () => (open ? suggestBooks(bookIndex, input) : []),
     [open, input, bookIndex],
-  );
-
-  const lookup = trpc.bible.lookup.useQuery(
-    submitted?.kind === "builtin"
-      ? { reference: submitted.reference, translation: submitted.translation }
-      : { reference: "", translation: defaultTranslationId },
-    {
-      enabled: submitted?.kind === "builtin",
-      retry: false,
-      refetchOnWindowFocus: false,
-    },
   );
 
   const resolveCustom = trpc.bible.resolveCustom.useQuery(
@@ -97,6 +129,17 @@ const SearchBar = () => {
         },
     {
       enabled: submitted?.kind === "custom",
+      retry: false,
+      refetchOnWindowFocus: false,
+    },
+  );
+
+  const resolveCatalog = trpc.bible.resolveCatalog.useQuery(
+    submitted?.kind === "catalog"
+      ? submitted.input
+      : { translationId: "", bookName: "", bookNumber: 0, chapter: 0 },
+    {
+      enabled: submitted?.kind === "catalog",
       retry: false,
       refetchOnWindowFocus: false,
     },
@@ -127,17 +170,17 @@ const SearchBar = () => {
   // Add the passage as soon as the active resolution succeeds.
   useEffect(() => {
     if (!submitted) return;
-    const q = submitted.kind === "builtin" ? lookup : resolveCustom;
+    const q = submitted.kind === "custom" ? resolveCustom : resolveCatalog;
     if (q.isSuccess && q.data && processedTokenRef.current !== token) {
       processedTokenRef.current = token;
       addPassage(q.data);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    lookup.isSuccess,
-    lookup.data,
     resolveCustom.isSuccess,
     resolveCustom.data,
+    resolveCatalog.isSuccess,
+    resolveCatalog.data,
     submitted,
     token,
   ]);
@@ -150,30 +193,35 @@ const SearchBar = () => {
     setActiveIndex(-1);
     setLocalError(null);
 
-    if (customSelected) {
-      const parsed = parseReferenceInIndex(customSelected.books, trimmed);
-      if (!parsed) {
-        setLocalError(`Could not understand "${trimmed}"`);
-        return;
-      }
-      setToken((t) => t + 1);
-      setSubmitted({
-        kind: "custom",
-        input: {
-          pluginId,
-          translationId: customSelected.id,
-          bookName: parsed.book.name,
-          bookNumber: parsed.book.n,
-          chapter: parsed.chapter,
-          verseStart: parsed.verseStart,
-          verseEnd: parsed.verseEnd,
-        },
-      });
+    if (!customSelected && !catalogSelected) {
+      setLocalError("Pick a translation in Settings first.");
+      return;
+    }
+    if (bookIndex.length === 0) {
+      setLocalError("Loading translation, try again in a moment…");
+      return;
+    }
+
+    const parsed = parseReferenceInIndex(bookIndex, trimmed);
+    if (!parsed) {
+      setLocalError(`Could not understand "${trimmed}"`);
       return;
     }
 
     setToken((t) => t + 1);
-    setSubmitted({ kind: "builtin", reference: trimmed, translation });
+    const refInput: ReferenceInput = {
+      translationId: translation,
+      bookName: parsed.book.name,
+      bookNumber: parsed.book.n,
+      chapter: parsed.chapter,
+      verseStart: parsed.verseStart,
+      verseEnd: parsed.verseEnd,
+    };
+    setSubmitted(
+      customSelected
+        ? { kind: "custom", input: { ...refInput, pluginId } }
+        : { kind: "catalog", input: refInput },
+    );
   };
 
   const selectSuggestion = (book: BibleBookMeta) => {
@@ -213,10 +261,12 @@ const SearchBar = () => {
   const activeQuery =
     submitted?.kind === "custom"
       ? resolveCustom
-      : submitted?.kind === "builtin"
-        ? lookup
+      : submitted?.kind === "catalog"
+        ? resolveCatalog
         : null;
   const isSearching = !!submitted && !!activeQuery?.isFetching;
+  const hasTranslations =
+    customTranslations.length > 0 || publicCatalog.length > 0;
   const errorMessage =
     localError ??
     (submitted && activeQuery?.isError
@@ -277,7 +327,9 @@ const SearchBar = () => {
           value={translation}
           onChange={(e) => setTranslation(e.target.value)}
           aria-label="Translation"
+          disabled={!hasTranslations}
         >
+          {!hasTranslations && <option value="">No translations yet</option>}
           {customTranslations.length > 0 && (
             <optgroup label="Your translations">
               {customTranslations.map((t) => (
@@ -287,13 +339,15 @@ const SearchBar = () => {
               ))}
             </optgroup>
           )}
-          <optgroup label="Open (bible-api)">
-            {translations.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name}
-              </option>
-            ))}
-          </optgroup>
+          {publicCatalog.length > 0 && (
+            <optgroup label="Added translations">
+              {publicCatalog.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
+            </optgroup>
+          )}
         </select>
 
         <div className="flex gap-2">

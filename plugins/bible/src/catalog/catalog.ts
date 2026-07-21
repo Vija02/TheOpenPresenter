@@ -112,7 +112,10 @@ export const buildCatalog = async (
 
   // 2) Beblia listing (metadata only). Drop anything helloao already covers.
   for (const t of BEBLIA_TRANSLATIONS) {
-    if (t.abbreviation && takenAbbr.has(`${t.languageKey}:${norm(t.abbreviation)}`)) {
+    if (
+      t.abbreviation &&
+      takenAbbr.has(`${t.languageKey}:${norm(t.abbreviation)}`)
+    ) {
       continue;
     }
     // Name-level dedupe for entries whose abbreviation didn't match (e.g. the
@@ -122,7 +125,9 @@ export const buildCatalog = async (
     const known = namesByLang.get(t.languageKey);
     if (
       bname &&
-      known?.some((n) => n.length > 3 && (bname.includes(n) || n.includes(bname)))
+      known?.some(
+        (n) => n.length > 3 && (bname.includes(n) || n.includes(bname)),
+      )
     ) {
       continue;
     }
@@ -180,4 +185,80 @@ export const catalogByIds = async (
   const wanted = new Set(ids);
   const all = await buildCatalog(uploads);
   return all.filter((t) => wanted.has(t.id));
+};
+
+// ---------------------------------------------------------------------------
+// Server-side query
+// ---------------------------------------------------------------------------
+
+export type CatalogQuery = {
+  query?: string;
+  languageKeys?: string[];
+  onlyUsable?: boolean;
+  excludeIds?: string[];
+  offset?: number;
+  limit?: number;
+};
+
+export type CatalogPage = {
+  items: CatalogTranslation[];
+  total: number;
+  nextOffset: number | null;
+};
+
+const PAGE_MAX = 100;
+const PAGE_DEFAULT = 50;
+
+const matchesQuery = (t: CatalogTranslation, opts: CatalogQuery): boolean => {
+  if (opts.languageKeys?.length && !opts.languageKeys.includes(t.languageKey)) {
+    return false;
+  }
+  if (opts.onlyUsable && t.availability === "upload") return false;
+  const q = opts.query?.trim().toLowerCase();
+  if (q) {
+    const hay = `${t.name} ${t.abbreviation ?? ""}`.toLowerCase();
+    if (!hay.includes(q)) return false;
+  }
+  return true;
+};
+
+export const queryCatalog = async (
+  uploads: TranslationSummary[],
+  opts: CatalogQuery,
+): Promise<CatalogPage> => {
+  const all = await buildCatalog(uploads);
+  const exclude = new Set(opts.excludeIds ?? []);
+
+  const filtered = all
+    .filter((t) => !exclude.has(t.id) && matchesQuery(t, opts))
+    .sort(
+      (a, b) => a.popularity - b.popularity || a.name.localeCompare(b.name),
+    );
+
+  const offset = Math.max(0, Math.trunc(opts.offset ?? 0));
+  const limit = Math.min(
+    PAGE_MAX,
+    Math.max(1, Math.trunc(opts.limit ?? PAGE_DEFAULT)),
+  );
+  const items = filtered.slice(offset, offset + limit);
+  const end = offset + items.length;
+  return {
+    items,
+    total: filtered.length,
+    nextOffset: end < filtered.length ? end : null,
+  };
+};
+
+/** Distinct languages in the catalog, labelled and sorted */
+export const catalogLanguages = async (
+  uploads: TranslationSummary[],
+): Promise<{ value: string; label: string }[]> => {
+  const all = await buildCatalog(uploads);
+  const byKey = new Map<string, string>();
+  for (const t of all) {
+    if (!byKey.has(t.languageKey)) byKey.set(t.languageKey, t.languageLabel);
+  }
+  return Array.from(byKey.entries())
+    .map(([value, label]) => ({ value, label }))
+    .sort((a, b) => a.label.localeCompare(b.label));
 };

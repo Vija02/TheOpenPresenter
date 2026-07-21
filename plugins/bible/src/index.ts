@@ -12,9 +12,10 @@ import * as Y from "yjs";
 import z from "zod";
 
 import {
-  buildCatalog,
   catalogByIds,
+  catalogLanguages,
   fetchHelloaoBooks,
+  queryCatalog,
   resolveHelloaoPassage,
 } from "./catalog";
 import {
@@ -255,7 +256,39 @@ const getAppRouter =
 
         // Unified catalog: helloao (public) + uploads
         catalog: {
+          // Server-side filtered / sorted / paginated catalog page. The client
+          // never loads the full ~2,300-entry catalog.
           list: t.procedure
+            .input(
+              z.object({
+                pluginId: z.string(),
+                query: z.string().optional(),
+                languageKeys: z.array(z.string()).optional(),
+                onlyUsable: z.boolean().optional(),
+                excludeIds: z.array(z.string()).optional(),
+                cursor: z.number().optional(),
+                limit: z.number().optional(),
+              }),
+            )
+            .query(async ({ input, ctx }) => {
+              const { organizationId } = resolveContext(input.pluginId);
+              const uploads = await listTranslations(
+                serverPluginApi,
+                authOf(ctx),
+                organizationId,
+              );
+              return queryCatalog(uploads, {
+                query: input.query,
+                languageKeys: input.languageKeys,
+                onlyUsable: input.onlyUsable,
+                excludeIds: input.excludeIds,
+                offset: input.cursor,
+                limit: input.limit,
+              });
+            }),
+
+          // Distinct languages present in the catalog (drives the filter).
+          languages: t.procedure
             .input(z.object({ pluginId: z.string() }))
             .query(async ({ input, ctx }) => {
               const { organizationId } = resolveContext(input.pluginId);
@@ -264,7 +297,7 @@ const getAppRouter =
                 authOf(ctx),
                 organizationId,
               );
-              return buildCatalog(uploads);
+              return catalogLanguages(uploads);
             }),
 
           // Metadata for a specific set of ids (used by the search bar).
