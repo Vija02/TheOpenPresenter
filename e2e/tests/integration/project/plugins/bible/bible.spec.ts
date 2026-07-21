@@ -73,6 +73,11 @@ test.describe.serial("Bible Plugin", () => {
     await expect(page.getByTestId("slide-container").first()).toContainText(
       "For God so loved the world",
     );
+    await page.getByTestId("slide-container").first().click();
+
+    const presentedPage = await projectPage.present();
+    await presentedPage.waitForLoadState("networkidle");
+    await expect(presentedPage).toHaveScreenshot();
   });
 
   test("can browse and add a verse range", async ({
