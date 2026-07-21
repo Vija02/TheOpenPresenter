@@ -74,7 +74,7 @@ const PassageView = React.memo(
             <p className="text-xl mb-0 font-bold">{passage.reference}</p>
             <p className="text-xs text-secondary">{passage.translationName}</p>
           </div>
-          <div className="flex ml-auto">
+          <div className="flex items-center gap-1 ml-auto">
             <Button
               size="xs"
               variant="ghost"
@@ -101,7 +101,7 @@ const PassageView = React.memo(
               key="remove"
             >
               <Button
-                size="sm"
+                size="xs"
                 variant="ghost"
                 data-testid="bible-remove-passage"
               >

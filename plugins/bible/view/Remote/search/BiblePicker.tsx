@@ -30,11 +30,14 @@ const BiblePicker = ({ index, translationName, onPick }: BiblePickerProps) => {
   const [range, setRange] = useState<{ start: number; end: number } | null>(
     null,
   );
+  // The next verse tap then starts a fresh selection so the left bound can be re-picked
+  const [complete, setComplete] = useState(false);
 
   const reset = () => {
     setBook(null);
     setChapter(null);
     setRange(null);
+    setComplete(false);
   };
 
   const verseCount = useMemo(() => {
@@ -52,8 +55,17 @@ const BiblePicker = ({ index, translationName, onPick }: BiblePickerProps) => {
   };
 
   const onVerseTap = (v: number) => {
-    if (!range || v < range.start) setRange({ start: v, end: v });
-    else setRange({ start: range.start, end: v });
+    if (!range || complete) {
+      setRange({ start: v, end: v });
+      setComplete(false);
+      return;
+    }
+    // Second tap extends from the anchor, in either direction, and finalizes.
+    setRange({
+      start: Math.min(range.start, v),
+      end: Math.max(range.start, v),
+    });
+    setComplete(true);
   };
 
   const pendingReference =
@@ -89,6 +101,7 @@ const BiblePicker = ({ index, translationName, onPick }: BiblePickerProps) => {
                     onClick={() => {
                       setChapter(null);
                       setRange(null);
+                      setComplete(false);
                     }}
                   >
                     {book.name}
@@ -165,7 +178,8 @@ const BiblePicker = ({ index, translationName, onPick }: BiblePickerProps) => {
                 )}
               </div>
               <p className="text-xs text-secondary">
-                Tap a verse to select it, then tap another to extend the range.
+                Tap a verse to select it, tap another to extend the range, then
+                tap again to start over.
               </p>
             </div>
           )}

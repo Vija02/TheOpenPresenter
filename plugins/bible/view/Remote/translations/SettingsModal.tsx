@@ -234,6 +234,7 @@ const SettingsModal = () => {
   const { isOpen, onToggle } = useOverlayToggle();
   const pluginApi = usePluginAPI();
   const pluginId = pluginApi.pluginContext.pluginId;
+  const utils = trpc.useUtils();
 
   // Draft state seeded from saved prefs once loaded.
   const [languages, setLanguages] = useState<string[]>([]);
@@ -429,6 +430,7 @@ const SettingsModal = () => {
         primaryTranslationId: primaryId,
         favoriteIds,
       });
+      await utils.bible.preferences.get.invalidate();
       setSaved(true);
       onToggle?.();
     } finally {

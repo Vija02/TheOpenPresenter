@@ -1,6 +1,6 @@
 import { Button, OverlayToggle, cn } from "@repo/ui";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { VscGear, VscListSelection, VscSearch } from "react-icons/vsc";
+import { VscListSelection, VscSearch } from "react-icons/vsc";
 import { typeidUnboxed } from "typeid-js";
 
 import { getStandardBooks } from "../../../src/builtin/versification";
@@ -11,7 +11,6 @@ import {
 } from "../../../src/types";
 import { usePluginAPI } from "../../pluginApi";
 import { trpc } from "../../trpc";
-import SettingsModal from "../translations/SettingsModal";
 import { useCustomTranslations } from "../translations/customTranslations";
 import BiblePicker from "./BiblePicker";
 import { parseReferenceInIndex, suggestBooks } from "./bookIndex";
@@ -53,44 +52,30 @@ const SearchBar = () => {
     { pluginId, ids: selectedCatalogIds },
     { enabled: selectedCatalogIds.length > 0, refetchOnWindowFocus: false },
   );
-  // Only translations we can actually serve; "upload required" ones can't
-  // resolve until their text has been uploaded.
-  const publicCatalog = useMemo(
-    () => (catalogMetaQuery.data ?? []).filter((t) => t.source === "helloao"),
-    [catalogMetaQuery.data],
-  );
 
   const inputRef = useRef<HTMLInputElement>(null);
   const processedTokenRef = useRef(0);
 
   const [input, setInput] = useState("");
-  const [translation, setTranslation] = useState<string>("");
+  // The translation used for lookups is always the org's primary preference.
+  const translation = prefsQuery.data?.primaryTranslationId ?? "";
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const [token, setToken] = useState(0);
   const [localError, setLocalError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState<Submitted | null>(null);
 
-  const customSelected = getCustom(translation);
-  const catalogSelected = useMemo(
-    () => publicCatalog.find((t) => t.id === translation),
-    [publicCatalog, translation],
+  // Resolve the primary preference to something we can look up
+  const primaryMeta = useMemo(
+    () => (catalogMetaQuery.data ?? []).find((t) => t.id === translation),
+    [catalogMetaQuery.data, translation],
   );
-
-  // Seed the picker once options are known: the org's primary translation if
-  // it's usable, otherwise the first thing available.
-  useEffect(() => {
-    if (translation && (customSelected || catalogSelected)) return;
-    const primary = prefsQuery.data?.primaryTranslationId ?? null;
-    const usableIds = [
-      ...publicCatalog.map((t) => t.id),
-      ...customTranslations.map((t) => t.id),
-    ];
-    const next =
-      primary && usableIds.includes(primary) ? primary : usableIds[0];
-    if (next && next !== translation) setTranslation(next);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [prefsQuery.data, publicCatalog, customTranslations]);
+  const uploadId = getCustom(translation)?.id ?? primaryMeta?.uploadId ?? null;
+  const uploadSelected = uploadId ? getCustom(uploadId) : undefined;
+  const catalogSelected =
+    !uploadSelected && primaryMeta?.source === "helloao"
+      ? primaryMeta
+      : undefined;
 
   // Native book index for the selected catalog translation (fetched lazily).
   const catalogBooksQuery = trpc.bible.catalog.books.useQuery(
@@ -99,18 +84,18 @@ const SearchBar = () => {
   );
 
   const translationName = useMemo(() => {
-    if (customSelected) return customSelected.name;
+    if (uploadSelected) return uploadSelected.name;
     if (catalogSelected) return catalogSelected.name;
-    return translation;
-  }, [customSelected, catalogSelected, translation]);
+    return primaryMeta?.name ?? translation;
+  }, [uploadSelected, catalogSelected, primaryMeta, translation]);
 
   // Index that drives autocomplete AND the drill-down grid. Uploaded and
   // catalog translations both carry their own native index.
   const bookIndex = useMemo<BibleBookIndex>(() => {
-    if (customSelected) return customSelected.books;
+    if (uploadSelected) return uploadSelected.books;
     if (catalogSelected) return catalogBooksQuery.data ?? [];
     return getStandardBooks();
-  }, [customSelected, catalogSelected, catalogBooksQuery.data]);
+  }, [uploadSelected, catalogSelected, catalogBooksQuery.data]);
 
   const suggestions = useMemo(
     () => (open ? suggestBooks(bookIndex, input) : []),
@@ -193,7 +178,7 @@ const SearchBar = () => {
     setActiveIndex(-1);
     setLocalError(null);
 
-    if (!customSelected && !catalogSelected) {
+    if (!uploadSelected && !catalogSelected) {
       setLocalError("Pick a translation in Settings first.");
       return;
     }
@@ -210,7 +195,7 @@ const SearchBar = () => {
 
     setToken((t) => t + 1);
     const refInput: ReferenceInput = {
-      translationId: translation,
+      translationId: uploadSelected ? uploadSelected.id : translation,
       bookName: parsed.book.name,
       bookNumber: parsed.book.n,
       chapter: parsed.chapter,
@@ -218,7 +203,7 @@ const SearchBar = () => {
       verseEnd: parsed.verseEnd,
     };
     setSubmitted(
-      customSelected
+      uploadSelected
         ? { kind: "custom", input: { ...refInput, pluginId } }
         : { kind: "catalog", input: refInput },
     );
@@ -265,8 +250,6 @@ const SearchBar = () => {
         ? resolveCatalog
         : null;
   const isSearching = !!submitted && !!activeQuery?.isFetching;
-  const hasTranslations =
-    customTranslations.length > 0 || publicCatalog.length > 0;
   const errorMessage =
     localError ??
     (submitted && activeQuery?.isError
@@ -322,34 +305,6 @@ const SearchBar = () => {
           )}
         </div>
 
-        <select
-          className="h-9 border border-stroke rounded px-2 bg-surface-primary sm:w-56"
-          value={translation}
-          onChange={(e) => setTranslation(e.target.value)}
-          aria-label="Translation"
-          disabled={!hasTranslations}
-        >
-          {!hasTranslations && <option value="">No translations yet</option>}
-          {customTranslations.length > 0 && (
-            <optgroup label="Your translations">
-              {customTranslations.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name}
-                </option>
-              ))}
-            </optgroup>
-          )}
-          {publicCatalog.length > 0 && (
-            <optgroup label="Added translations">
-              {publicCatalog.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name}
-                </option>
-              ))}
-            </optgroup>
-          )}
-        </select>
-
         <div className="flex gap-2">
           <Button
             onClick={() => addByReference(input)}
@@ -377,20 +332,6 @@ const SearchBar = () => {
               translationName={translationName}
               onPick={addByReference}
             />
-          </OverlayToggle>
-          <OverlayToggle
-            toggler={({ onToggle }) => (
-              <Button
-                variant="outline"
-                onClick={onToggle}
-                title="Settings"
-                data-testid="bible-settings"
-              >
-                <VscGear />
-              </Button>
-            )}
-          >
-            <SettingsModal />
           </OverlayToggle>
         </div>
       </div>

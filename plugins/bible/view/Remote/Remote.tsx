@@ -1,12 +1,13 @@
 import { Button, OverlayToggle, PluginScaffold } from "@repo/ui";
 import { useCallback } from "react";
-import { VscPaintcan } from "react-icons/vsc";
+import { VscGear, VscPaintcan } from "react-icons/vsc";
 
 import { usePluginAPI } from "../pluginApi";
 import Landing from "./Landing";
 import PassageView from "./PassageView";
-import SearchBar from "./search/SearchBar";
 import StyleModal from "./StyleModal";
+import SearchBar from "./search/SearchBar";
+import SettingsModal from "./translations/SettingsModal";
 
 const Remote = () => {
   const pluginApi = usePluginAPI();
@@ -27,16 +28,34 @@ const Remote = () => {
     <PluginScaffold
       title="Bible"
       toolbar={
-        <OverlayToggle
-          toggler={({ onToggle }) => (
-            <Button size="xs" variant="pill" onClick={onToggle}>
-              <VscPaintcan />
-              Style
-            </Button>
-          )}
-        >
-          <StyleModal />
-        </OverlayToggle>
+        <div className="flex items-center gap-2">
+          <OverlayToggle
+            toggler={({ onToggle }) => (
+              <Button
+                size="xs"
+                variant="pill"
+                onClick={onToggle}
+                title="Translations"
+                data-testid="bible-settings"
+              >
+                <VscGear />
+                Translations
+              </Button>
+            )}
+          >
+            <SettingsModal />
+          </OverlayToggle>
+          <OverlayToggle
+            toggler={({ onToggle }) => (
+              <Button size="xs" variant="pill" onClick={onToggle}>
+                <VscPaintcan />
+                Style
+              </Button>
+            )}
+          >
+            <StyleModal />
+          </OverlayToggle>
+        </div>
       }
       body={
         <div className="flex flex-col h-full w-full">
