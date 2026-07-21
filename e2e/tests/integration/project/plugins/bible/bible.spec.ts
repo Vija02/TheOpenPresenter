@@ -1,3 +1,5 @@
+import type { Page } from "@playwright/test";
+
 import { expect, test } from "../../../../../fixtures/projectFixture";
 import type { ProjectPage } from "../../../../../pages/ProjectPage";
 
@@ -24,6 +26,24 @@ const selectTranslation = async (projectPage: ProjectPage, name: string) => {
     .filter({ hasText: name })
     .getByRole("button", { name: "Use" })
     .click();
+};
+
+const attachTranslationToCatalog = async (page: Page, name: string) => {
+  const settings = page.getByRole("dialog", { name: "Bible Settings" });
+  await settings
+    .getByTestId("bible-translation-row")
+    .filter({ hasText: name })
+    .getByRole("button", { name: "Upload" })
+    .click();
+
+  const uploadDialog = page.getByRole("dialog", {
+    name: `Upload ${name}`,
+  });
+  await expect(uploadDialog).toBeVisible();
+
+  await uploadDialog
+    .locator('input[type="file"]')
+    .setInputFiles("./dummyFiles/bible-test-translation.xml");
 };
 
 test.describe.serial("Bible Plugin", () => {
@@ -149,11 +169,9 @@ test.describe.serial("Bible Plugin", () => {
       uploadDialog.getByText("No translations uploaded yet."),
     ).toBeVisible();
 
-    const [fileChooser] = await Promise.all([
-      page.waitForEvent("filechooser"),
-      uploadDialog.getByTestId("bible-upload-translation").click(),
-    ]);
-    await fileChooser.setFiles("./dummyFiles/bible-test-translation.xml");
+    await uploadDialog
+      .locator('input[type="file"]')
+      .setInputFiles("./dummyFiles/bible-test-translation.xml");
 
     await expect(
       uploadDialog.getByText('Added "E2E Test Bible"'),
@@ -177,6 +195,46 @@ test.describe.serial("Bible Plugin", () => {
 
     await expect(page.getByText("John 3:16").first()).toBeVisible();
     await expect(page.getByText("E2E Test Bible").first()).toBeVisible();
+    await expect(page.getByTestId("slide-container").first()).toContainText(
+      "E2E custom translation verse text",
+    );
+  });
+
+  test("can attach and use a catalog translation", async ({
+    page,
+    projectPage,
+    loginAndGoToProject,
+  }) => {
+    await setupBiblePlugin({ loginAndGoToProject, projectPage });
+
+    await page.getByTestId("bible-settings").click();
+    const settings = page.getByRole("dialog", { name: "Bible Settings" });
+    await expect(settings).toBeVisible();
+
+    await settings
+      .getByPlaceholder("Search by name or abbreviation...")
+      .fill("hcsb");
+    const catalogName = "English HCSB 2004 - Copyrighted Only For Website";
+    await expect(settings.getByText(catalogName)).toBeVisible();
+
+    await attachTranslationToCatalog(page, catalogName);
+
+    await expect(
+      settings
+        .getByTestId("bible-translation-row")
+        .filter({ hasText: catalogName })
+        .getByText("Uploaded"),
+    ).toBeVisible();
+
+    await selectTranslation(projectPage, catalogName);
+    await settings.getByRole("button", { name: "Save" }).click();
+    await expect(settings).toBeHidden();
+
+    await page.getByTestId("bible-search-input").fill("John 3:16");
+    await page.getByTestId("bible-search-add").click();
+
+    await expect(page.getByText("John 3:16").first()).toBeVisible();
+    await expect(page.getByText(catalogName).first()).toBeVisible();
     await expect(page.getByTestId("slide-container").first()).toContainText(
       "E2E custom translation verse text",
     );
