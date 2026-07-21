@@ -85,6 +85,7 @@ const TranslationRow = ({
   const badge = BADGE[t.availability];
   return (
     <div
+      data-testid="bible-translation-row"
       className={cn(
         "flex items-center gap-3 px-3 py-2",
         isPrimary

@@ -66,6 +66,13 @@ export class E2ECommandAPI {
   }>;
 
   /**
+   * Clears Bible plugin test data.
+   */
+  async serverCommand(command: "clearBibleData"): Promise<{
+    success: true;
+  }>;
+
+  /**
    * Deletes a single organization
    */
   async serverCommand(

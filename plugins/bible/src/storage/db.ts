@@ -1,4 +1,4 @@
-import { pluginName } from "../consts";
+import { DEFAULT_TRANSLATION_ID, pluginName } from "../consts";
 import { deriveAbbreviation } from "../helpers/abbreviation";
 import { BibleBookMeta, LookupResult } from "../types";
 import {
@@ -206,7 +206,6 @@ export const resolveFromDb = async (
 
 /** Languages the catalog is filtered to on first run. */
 export const DEFAULT_LANGUAGES = ["en"] as const;
-export const DEFAULT_TRANSLATION_ID = "eng_kjv";
 
 export const getPreferences = async (
   api: Api,

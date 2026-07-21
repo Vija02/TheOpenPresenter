@@ -4,6 +4,7 @@ import { VscListSelection, VscSearch } from "react-icons/vsc";
 import { typeidUnboxed } from "typeid-js";
 
 import { getStandardBooks } from "../../../src/builtin/versification";
+import { DEFAULT_TRANSLATION_ID } from "../../../src/consts";
 import {
   BibleBookIndex,
   BibleBookMeta,
@@ -43,7 +44,9 @@ const SearchBar = () => {
     { refetchOnWindowFocus: false },
   );
   const selectedCatalogIds = useMemo(() => {
-    const ids = prefsQuery.data?.translationIds ?? [];
+    const ids = prefsQuery.data?.translationIds?.length
+      ? prefsQuery.data.translationIds
+      : [DEFAULT_TRANSLATION_ID];
     return ids.filter((id) => !getCustom(id));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [prefsQuery.data, customTranslations]);
@@ -58,7 +61,10 @@ const SearchBar = () => {
 
   const [input, setInput] = useState("");
   // The translation used for lookups is always the org's primary preference.
-  const translation = prefsQuery.data?.primaryTranslationId ?? "";
+  const translation =
+    prefsQuery.data?.primaryTranslationId ??
+    prefsQuery.data?.translationIds?.[0] ??
+    DEFAULT_TRANSLATION_ID;
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const [token, setToken] = useState(0);
@@ -72,15 +78,17 @@ const SearchBar = () => {
   );
   const uploadId = getCustom(translation)?.id ?? primaryMeta?.uploadId ?? null;
   const uploadSelected = uploadId ? getCustom(uploadId) : undefined;
-  const catalogSelected =
-    !uploadSelected && primaryMeta?.source === "helloao"
-      ? primaryMeta
-      : undefined;
+  const catalogSelected = !uploadSelected ? primaryMeta : undefined;
+  const canUseCatalogTranslation =
+    !!catalogSelected || translation === DEFAULT_TRANSLATION_ID;
 
   // Native book index for the selected catalog translation (fetched lazily).
   const catalogBooksQuery = trpc.bible.catalog.books.useQuery(
     { translationId: translation },
-    { enabled: !!catalogSelected, refetchOnWindowFocus: false },
+    {
+      enabled: canUseCatalogTranslation,
+      refetchOnWindowFocus: false,
+    },
   );
 
   const translationName = useMemo(() => {
@@ -178,7 +186,7 @@ const SearchBar = () => {
     setActiveIndex(-1);
     setLocalError(null);
 
-    if (!uploadSelected && !catalogSelected) {
+    if (!uploadSelected && !canUseCatalogTranslation) {
       setLocalError("Pick a translation in Settings first.");
       return;
     }
