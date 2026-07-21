@@ -106,6 +106,46 @@ test.describe.serial("Bible Plugin", () => {
     );
   });
 
+  test("can move passages up and down and delete them", async ({
+    page,
+    projectPage,
+    loginAndGoToProject,
+  }) => {
+    await setupBiblePlugin({ loginAndGoToProject, projectPage });
+
+    await page.getByTestId("bible-search-input").fill("John 3:16");
+    await page.getByTestId("bible-search-add").click();
+    await expect(page.getByTestId("slide-container").first()).toContainText(
+      "For God so loved the world",
+    );
+
+    await page.getByTestId("bible-search-input").fill("John 3:17");
+    await page.getByTestId("bible-search-add").click();
+
+    const passages = page.getByTestId("slide-container");
+    await expect(passages.first()).toContainText("John 3:16");
+    await expect(passages.nth(1)).toContainText("John 3:17");
+
+    await page.getByRole("button", { name: "Move down" }).first().click();
+
+    await expect(passages.first()).toContainText("John 3:17");
+    await expect(passages.nth(1)).toContainText("John 3:16");
+
+    await page.getByRole("button", { name: "Move up" }).nth(1).click();
+
+    await expect(passages.first()).toContainText("John 3:16");
+    await expect(passages.nth(1)).toContainText("John 3:17");
+
+    await page.getByTestId("bible-remove-passage").first().click();
+    await expect(
+      page.getByText("Are you sure you want to remove this passage?"),
+    ).toBeVisible();
+    await page.getByTestId("popconfirm-confirm").click();
+
+    await expect(passages).toHaveCount(1);
+    await expect(passages.first()).toContainText("John 3:17");
+  });
+
   test("can filter translations by language and use a different translation", async ({
     page,
     projectPage,
