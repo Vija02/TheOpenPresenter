@@ -11,8 +11,12 @@ import path from "path";
 import * as Y from "yjs";
 import z from "zod";
 
-import { lookupPassage } from "./builtin/bibleApi";
-import { defaultTranslationId } from "./builtin/translations";
+import {
+  buildCatalog,
+  catalogByIds,
+  fetchHelloaoBooks,
+  resolveHelloaoPassage,
+} from "./catalog";
 import {
   pluginName,
   remoteWebComponentTag,
@@ -193,29 +197,6 @@ const getAppRouter =
 
     return t.router({
       bible: {
-        // Built-in translations: resolved via bible-api by reference
-        lookup: t.procedure
-          .input(
-            z.object({
-              reference: z.string().min(1),
-              translation: z.string().optional(),
-            }),
-          )
-          .query(async ({ input }) => {
-            try {
-              return await lookupPassage(
-                input.reference,
-                input.translation ?? defaultTranslationId,
-              );
-            } catch (err) {
-              logger.error(
-                { err, input },
-                "/bible.lookup: failed to resolve passage",
-              );
-              throw err;
-            }
-          }),
-
         // Uploaded translations
         translations: {
           list: t.procedure
@@ -239,6 +220,7 @@ const getAppRouter =
                 format: z.string().default("manual"),
                 books: z.array(bookMetaSchema),
                 chapters: z.array(chapterSchema),
+                catalogId: z.string().nullish(),
               }),
             )
             .mutation(async ({ input, ctx }) => {
@@ -252,6 +234,7 @@ const getAppRouter =
                 format: input.format,
                 books: input.books,
                 chapters: input.chapters,
+                catalogId: input.catalogId ?? null,
               });
               return { id };
             }),
@@ -267,6 +250,50 @@ const getAppRouter =
                 input.id,
               );
               return { success: true };
+            }),
+        },
+
+        // Unified catalog: helloao (public) + uploads
+        catalog: {
+          list: t.procedure
+            .input(z.object({ pluginId: z.string() }))
+            .query(async ({ input, ctx }) => {
+              const { organizationId } = resolveContext(input.pluginId);
+              const uploads = await listTranslations(
+                serverPluginApi,
+                authOf(ctx),
+                organizationId,
+              );
+              return buildCatalog(uploads);
+            }),
+
+          // Metadata for a specific set of ids (used by the search bar).
+          byIds: t.procedure
+            .input(z.object({ pluginId: z.string(), ids: z.array(z.string()) }))
+            .query(async ({ input, ctx }) => {
+              if (input.ids.length === 0) return [];
+              const { organizationId } = resolveContext(input.pluginId);
+              const uploads = await listTranslations(
+                serverPluginApi,
+                authOf(ctx),
+                organizationId,
+              );
+              return catalogByIds(input.ids, uploads);
+            }),
+
+          // Native book index for a helloao translation (drives search + picker).
+          books: t.procedure
+            .input(z.object({ translationId: z.string() }))
+            .query(async ({ input }) => {
+              try {
+                return await fetchHelloaoBooks(input.translationId);
+              } catch (err) {
+                logger.error(
+                  { err, input },
+                  "/bible.catalog.books: failed to load books",
+                );
+                throw err;
+              }
             }),
         },
 
@@ -333,6 +360,37 @@ const getAppRouter =
               throw err;
             }
           }),
+
+        // Resolve a reference against a helloao (public catalog) translation
+        resolveCatalog: t.procedure
+          .input(
+            z.object({
+              translationId: z.string(),
+              bookName: z.string(),
+              bookNumber: z.number(),
+              chapter: z.number(),
+              verseStart: z.number().optional(),
+              verseEnd: z.number().optional(),
+            }),
+          )
+          .query(async ({ input }) => {
+            try {
+              return await resolveHelloaoPassage({
+                translationId: input.translationId,
+                bookName: input.bookName,
+                bookNumber: input.bookNumber,
+                chapter: input.chapter,
+                verseStart: input.verseStart,
+                verseEnd: input.verseEnd,
+              });
+            } catch (err) {
+              logger.error(
+                { err, input },
+                "/bible.resolveCatalog: failed to resolve passage",
+              );
+              throw err;
+            }
+          }),
       },
     });
   };
@@ -341,5 +399,3 @@ export type AppRouter = ReturnType<ReturnType<typeof getAppRouter>>;
 
 export * from "./types";
 export * from "./style/style";
-export * from "./builtin/translations";
-export * from "./builtin/bibleApi";

@@ -1,2 +1,1 @@
-export * from "./translations";
-export * from "./bibleApi";
+export * from "./versification";

@@ -9737,10 +9737,10 @@ __metadata:
     "@types/react-dom": "npm:^19.1.3"
     "@vitejs/plugin-react-swc": "npm:^3.7.2"
     autoprefixer: "npm:^10.4.21"
-    axios: "npm:^1.10.0"
     bible-passage-reference-parser: "npm:^3.2.0"
     concurrently: "npm:^9.1.2"
     eslint: "npm:^8.57.1"
+    free-use-bible-api: "npm:^0.2.0"
     lodash-es: "npm:^4.17.21"
     pkgroll: "npm:2.5.1"
     postcss-prefix-selector: "npm:^2.1.1"
@@ -20859,6 +20859,13 @@ __metadata:
   version: 4.3.7
   resolution: "fraction.js@npm:4.3.7"
   checksum: 10c0/df291391beea9ab4c263487ffd9d17fed162dbb736982dee1379b2a8cc94e4e24e46ed508c6d278aded9080ba51872f1bc5f3a5fd8d7c74e5f105b508ac28711
+  languageName: node
+  linkType: hard
+
+"free-use-bible-api@npm:^0.2.0":
+  version: 0.2.0
+  resolution: "free-use-bible-api@npm:0.2.0"
+  checksum: 10c0/2af667545197ac0d21154e077e7307106404f4cef6cbeab4a1e8c3898103fae71c6d3881d094402de5c0cea9fe418aaea422dba6ae5cc08270a59a669a2d435a
   languageName: node
   linkType: hard
 

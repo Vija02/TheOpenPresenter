@@ -13,7 +13,7 @@ export type BibleVerse = {
   text: string;
 };
 
-/** Result shape shared by every lookup path (bible-api, DB, local) */
+/** Result shape shared by every lookup path (helloao catalog, DB) */
 export type LookupResult = {
   reference: string;
   translationId: string;
