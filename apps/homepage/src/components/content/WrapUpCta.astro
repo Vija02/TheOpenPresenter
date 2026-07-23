@@ -1,0 +1,41 @@
+---
+interface Props {
+  title: string;
+  buttons?: { label: string; href: string; variant?: "primary" | "secondary" }[];
+  class?: string;
+}
+
+const { title, buttons = [], class: className = "" } = Astro.props;
+---
+
+<div
+  class:list={[
+    "rounded-lg border border-gray-200 dark:border-gray-800 p-8 text-center",
+    className,
+  ]}
+>
+  <h2 class="h4 font-red-hat-display mb-2">{title}</h2>
+  <div class="text-gray-600 dark:text-gray-300 mb-6 max-w-2xl mx-auto">
+    <slot />
+  </div>
+  {
+    buttons.length > 0 && (
+      <div class="flex flex-wrap items-center justify-center gap-3">
+        {buttons.map((b) => (
+          <a
+            href={b.href}
+            class:list={[
+              "btn shrink-0",
+              b.variant === "secondary"
+                ? "text-teal-500 bg-transparent border border-teal-500 hover:bg-teal-500/10"
+                : "text-white bg-teal-500 hover:bg-teal-400",
+            ]}
+          >
+            {b.label}
+          </a>
+        ))}
+      </div>
+    )
+  }
+  <slot name="footer" />
+</div>

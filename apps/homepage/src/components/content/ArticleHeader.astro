@@ -1,0 +1,36 @@
+---
+import ArrowIcon from "./ArrowIcon.astro";
+
+interface Props {
+  backHref: string;
+  backLabel: string;
+  category: string;
+  minutes: number;
+  title: string;
+}
+
+const { backHref, backLabel, category, minutes, title } = Astro.props;
+---
+
+<div class="pb-10 md:pb-12">
+  <a
+    href={backHref}
+    class="flex w-fit items-center text-sm text-teal-500 hover:underline mb-4"
+  >
+    <ArrowIcon class="w-3 h-3 fill-current shrink-0 mr-2 rotate-180" />
+    {backLabel}
+  </a>
+  <div
+    class="inline-flex items-center text-sm font-semibold tracking-wide uppercase text-teal-500 mb-2"
+  >
+    {category} &bull; {minutes} min read
+  </div>
+  <h1
+    class="text-3xl sm:text-4xl md:text-5xl font-black tracking-tighter font-red-hat-display mb-4 break-words"
+  >
+    {title}
+  </h1>
+  <p class="text-xl text-gray-600 dark:text-gray-300">
+    <slot />
+  </p>
+</div>

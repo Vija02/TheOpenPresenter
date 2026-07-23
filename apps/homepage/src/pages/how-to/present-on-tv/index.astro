@@ -1,7 +1,13 @@
 ---
-import { Image } from "astro:assets";
-import DefaultLayout from "../../../layouts/DefaultLayout.astro";
-import PageIllustration from "../../../components/PageIllustration.astro";
+import ArticleLayout from "../../../components/content/ArticleLayout.astro";
+import ArticleHeader from "../../../components/content/ArticleHeader.astro";
+import Callout from "../../../components/content/Callout.astro";
+import StepsNav from "../../../components/content/StepsNav.astro";
+import Step from "../../../components/content/Step.astro";
+import Figure from "../../../components/content/Figure.astro";
+import FigureGrid from "../../../components/content/FigureGrid.astro";
+import Tip from "../../../components/content/Tip.astro";
+import WrapUpCta from "../../../components/content/WrapUpCta.astro";
 import installAppImg from "../../../assets/images/how-to/present-on-tv/install-app.png";
 import loginQrImg from "../../../assets/images/how-to/present-on-tv/login-qr.png";
 import createScreenEmptyImg from "../../../assets/images/how-to/present-on-tv/create-screen-empty.png";
@@ -21,512 +27,344 @@ const steps = [
 ];
 ---
 
-<DefaultLayout
+<ArticleLayout
   title="How to use a TV stick to present"
   description="Run TheOpenPresenter from a TV stick instead of a laptop: get a compatible Fire TV, Google TV or Android TV device, install the app, scan a QR code to log in, assign a screen, and present from your project."
 >
-  <!-- Page illustration -->
-  <div
-    class="relative max-w-6xl mx-auto h-0 pointer-events-none -z-1"
-    aria-hidden="true"
+  <ArticleHeader
+    backHref="/how-to"
+    backLabel="All how-to guides"
+    category="For churches"
+    minutes={5}
+    title="How to use a TV stick to present"
   >
-    <PageIllustration />
-  </div>
+    No laptop, no cables, no fuss. With a small TV stick plugged into
+    your screen, TheOpenPresenter runs straight on the TV. For small
+    gatherings, whoever is leading just brings the stick, plugs it in,
+    and controls everything from their phone or computer.
+  </ArticleHeader>
 
-  <section class="relative">
-    <div class="relative max-w-5xl mx-auto px-4 sm:px-6">
-      <div class="pt-32 pb-12 md:pt-40 md:pb-20">
-        <!-- Header -->
-        <div class="pb-10 md:pb-12">
-          <a
-            href="/how-to"
-            class="flex w-fit items-center text-sm text-teal-500 hover:underline mb-4"
-          >
-            <svg
-              class="w-3 h-3 fill-current shrink-0 mr-2 rotate-180"
-              viewBox="0 0 12 12"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M6.602 11l-.976-.997 3.831-3.905H0V4.749h9.457L5.626.844 6.602 0 12 5.5z"
-              ></path>
-            </svg>
-            All how-to guides
-          </a>
-          <div
-            class="inline-flex items-center text-sm font-semibold tracking-wide uppercase text-teal-500 mb-2"
-          >
-            For churches &bull; 5 min read
-          </div>
-          <h1
-            class="text-3xl sm:text-4xl md:text-5xl font-black tracking-tighter font-red-hat-display mb-4 break-words"
-          >
-            How to use a TV stick to present
-          </h1>
-          <p class="text-xl text-gray-600 dark:text-gray-300">
-            No laptop, no cables, no fuss. With a small TV stick plugged into
-            your screen, TheOpenPresenter runs straight on the TV. For small
-            gatherings, whoever is leading just brings the stick, plugs it in,
-            and controls everything from their phone or computer.
-          </p>
-        </div>
+  <Callout>
+    This guide assumes you already have an organization and a project set up.
+    If you don't yet, follow our{" "}
+    <a
+      href="/how-to/use-online-for-church"
+      class="text-teal-600 dark:text-teal-400 hover:underline font-medium"
+      >guide on using the online version for church</a
+    >{" "}
+    first. You'll also need a TV or projector with a spare HDMI port and Wi-Fi
+    in the room.
+  </Callout>
 
-        <!-- Before you start -->
-        <div
-          class="rounded-lg bg-teal-50 dark:bg-teal-500/10 border border-teal-200 dark:border-teal-500/30 p-5 mb-12 flex gap-4 items-start"
-        >
-          <div
-            class="shrink-0 w-10 h-10 rounded-full bg-teal-500/15 dark:bg-teal-500/20 flex items-center justify-center text-teal-600 dark:text-teal-400"
-            aria-hidden="true"
-          >
-            <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
-              <path
-                d="M11 7h2v2h-2V7zm0 4h2v6h-2v-6zm1-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"
-              ></path>
-            </svg>
-          </div>
-          <div>
-            <p class="font-semibold text-gray-900 dark:text-gray-100 mb-1">
-              Before you start
-            </p>
-            <p class="text-sm text-gray-600 dark:text-gray-300">
-              This guide assumes you already have an organization and a project
-              set up. If you don't yet, follow our{" "}
-              <a
-                href="/how-to/use-online-for-church"
-                class="text-teal-600 dark:text-teal-400 hover:underline font-medium"
-                >guide on using the online version for church</a
-              >{" "}
-              first. You'll also need a TV or projector with a spare HDMI port
-              and Wi-Fi in the room.
-            </p>
-          </div>
-        </div>
+  <StepsNav steps={steps} />
 
-        <!-- Table of contents -->
-        <nav class="mb-12" aria-label="Steps in this guide">
-          <p
-            class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-300 mb-3"
-          >
-            What you'll do
-          </p>
-          <ol class="grid gap-2">
-            {
-              steps.map((step, i) => (
-                <li>
-                  <a
-                    href={`#${step.id}`}
-                    class="flex items-center gap-3 text-gray-700 dark:text-gray-300 hover:text-teal-500 transition-colors"
-                  >
-                    <span class="shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-800 text-xs font-bold">
-                      {i + 1}
-                    </span>
-                    {step.label}
-                  </a>
-                </li>
-              ))
-            }
-          </ol>
-        </nav>
+  <Step id="get-tv-stick" number={1} title="Get a compatible TV stick">
+    <p class="text-lg text-gray-600 dark:text-gray-300 mb-4">
+      A TV stick is a small device that plugs into your TV's HDMI port and
+      turns any screen into a smart TV. TheOpenPresenter runs as an app on
+      the stick, so this is all you need to carry to your gathering. Any of
+      the following will work:
+    </p>
 
-        <!-- ===================== STEP 1 ===================== -->
-        <article id="get-tv-stick" class="scroll-mt-24 mb-16">
-          <div class="flex items-center gap-4 mb-4">
-            <div
-              class="flex items-center justify-center w-12 h-12 rounded-full text-white font-red-hat-display font-black text-xl bg-linear-to-tr from-teal-500 to-teal-400 shrink-0"
-            >
-              1
-            </div>
-            <h2 class="h3 font-red-hat-display">Get a compatible TV stick</h2>
-          </div>
+    <ul
+      class="list-disc list-outside pl-5 space-y-2 text-gray-600 dark:text-gray-300 mb-6"
+    >
+      <li>
+        <strong class="font-semibold">Amazon Fire TV</strong> (Fire TV
+        Stick)
+      </li>
+      <li>
+        <strong class="font-semibold">Google TV</strong> (such as the
+        Chromecast with Google TV)
+      </li>
+      <li><strong class="font-semibold">Android TV</strong> devices</li>
+    </ul>
 
-          <p class="text-lg text-gray-600 dark:text-gray-300 mb-4">
-            A TV stick is a small device that plugs into your TV's HDMI port and
-            turns any screen into a smart TV. TheOpenPresenter runs as an app on
-            the stick, so this is all you need to carry to your gathering. Any of
-            the following will work:
-          </p>
+    <p class="text-lg text-gray-600 dark:text-gray-300 mb-6">
+      Check the up-to-date list of supported devices on our{" "}
+      <a
+        href="https://theopenpresenter.com/download/"
+        class="text-teal-600 dark:text-teal-400 hover:underline font-medium"
+        >download page</a
+      >. We're adding more platforms (like Samsung TVs) over time, so it's
+      worth a look before you buy.
+    </p>
 
-          <ul
-            class="list-disc list-outside pl-5 space-y-2 text-gray-600 dark:text-gray-300 mb-6"
-          >
-            <li>
-              <strong class="font-semibold">Amazon Fire TV</strong> (Fire TV
-              Stick)
-            </li>
-            <li>
-              <strong class="font-semibold">Google TV</strong> (such as the
-              Chromecast with Google TV)
-            </li>
-            <li><strong class="font-semibold">Android TV</strong> devices</li>
-          </ul>
+    <Tip>
+      Set the stick up once at home, connect it to your church's Wi-Fi, and
+      it's ready to go. On the day, you only need to plug it in and switch the
+      TV to the right HDMI input.
+    </Tip>
+  </Step>
 
-          <p class="text-lg text-gray-600 dark:text-gray-300 mb-6">
-            Check the up-to-date list of supported devices on our{" "}
-            <a
-              href="https://theopenpresenter.com/download/"
-              class="text-teal-600 dark:text-teal-400 hover:underline font-medium"
-              >download page</a
-            >. We're adding more platforms (like Samsung TVs) over time, so it's
-            worth a look before you buy.
-          </p>
+  <Step id="install-app" number={2} title="Install the TheOpenPresenter app">
+    <p class="text-lg text-gray-600 dark:text-gray-300 mb-4">
+      On the TV stick, open its app store and search for{" "}
+      <strong class="font-semibold">TheOpenPresenter</strong>.
+    </p>
 
-          <div
-            class="rounded-md bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-800 p-4 text-sm text-gray-600 dark:text-gray-300"
-          >
-            <span class="font-semibold text-gray-900 dark:text-gray-100"
-              >Tip:</span
-            > Set the stick up once at home, connect it to your church's Wi-Fi, and
-            it's ready to go. On the day, you only need to plug it in and switch the
-            TV to the right HDMI input.
-          </div>
-        </article>
+    <ol
+      class="list-decimal list-outside pl-5 space-y-3 text-gray-600 dark:text-gray-300 mb-6"
+    >
+      <li>
+        Open the app store on your device (the{" "}
+        <strong class="font-semibold">Amazon Appstore</strong> on Fire TV,
+        or <strong class="font-semibold">Google Play</strong> on Google TV
+        and Android TV).
+      </li>
+      <li>
+        Search for{" "}
+        <strong class="font-semibold">TheOpenPresenter</strong> and select
+        it.
+      </li>
+      <li>
+        Choose <strong class="font-semibold">Get App</strong> (or{" "}
+        <strong class="font-semibold">Install</strong>), then open it. The
+        app is free to download.
+      </li>
+    </ol>
 
-        <!-- ===================== STEP 2 ===================== -->
-        <article id="install-app" class="scroll-mt-24 mb-16">
-          <div class="flex items-center gap-4 mb-4">
-            <div
-              class="flex items-center justify-center w-12 h-12 rounded-full text-white font-red-hat-display font-black text-xl bg-linear-to-tr from-purple-500 to-purple-400 shrink-0"
-            >
-              2
-            </div>
-            <h2 class="h3 font-red-hat-display">
-              Install the TheOpenPresenter app
-            </h2>
-          </div>
+    <Figure
+      src={installAppImg}
+      alt="The TheOpenPresenter app listing on the Amazon Appstore, showing it is free to download with a Get App button"
+      size="xl"
+      class="mb-6"
+    />
 
-          <p class="text-lg text-gray-600 dark:text-gray-300 mb-4">
-            On the TV stick, open its app store and search for{" "}
-            <strong class="font-semibold">TheOpenPresenter</strong>.
-          </p>
+    <Tip>
+      Can't find the app on your device? Double-check that your device is on
+      our{" "}
+      <a
+        href="https://theopenpresenter.com/download/"
+        class="text-teal-600 dark:text-teal-400 hover:underline font-medium"
+        >download page</a
+      >, which always links to the right store for each platform.
+    </Tip>
+  </Step>
 
-          <ol
-            class="list-decimal list-outside pl-5 space-y-3 text-gray-600 dark:text-gray-300 mb-6"
-          >
-            <li>
-              Open the app store on your device (the{" "}
-              <strong class="font-semibold">Amazon Appstore</strong> on Fire TV,
-              or <strong class="font-semibold">Google Play</strong> on Google TV
-              and Android TV).
-            </li>
-            <li>
-              Search for{" "}
-              <strong class="font-semibold">TheOpenPresenter</strong> and select
-              it.
-            </li>
-            <li>
-              Choose <strong class="font-semibold">Get App</strong> (or{" "}
-              <strong class="font-semibold">Install</strong>), then open it. The
-              app is free to download.
-            </li>
-          </ol>
+  <Step id="login-qr" number={3} title="Scan the QR code to log in">
+    <p class="text-lg text-gray-600 dark:text-gray-300 mb-4">
+      Typing an email and password with a TV remote is painful, so the app
+      lets you log in by scanning a QR code instead. When you open the app,
+      the <strong class="font-semibold">Set up this device</strong> screen
+      shows a QR code on the TV.
+    </p>
 
-          <Image
-            src={installAppImg}
-            alt="The TheOpenPresenter app listing on the Amazon Appstore, showing it is free to download with a Get App button"
-            class="rounded-lg border border-gray-200 dark:border-gray-800 shadow-sm w-full max-w-xl h-auto mx-auto block mb-6"
-          />
+    <ol
+      class="list-decimal list-outside pl-5 space-y-3 text-gray-600 dark:text-gray-300 mb-6"
+    >
+      <li>Open the camera app on your phone.</li>
+      <li>
+        Point it at the QR code on the TV and tap the link that appears.
+      </li>
+      <li>
+        Sign in with the same TheOpenPresenter account you use on your
+        computer, then confirm to link the device.
+      </li>
+    </ol>
 
-          <div
-            class="rounded-md bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-800 p-4 text-sm text-gray-600 dark:text-gray-300"
-          >
-            <span class="font-semibold text-gray-900 dark:text-gray-100"
-              >Tip:</span
-            > Can't find the app on your device? Double-check that your device is on
-            our{" "}
-            <a
-              href="https://theopenpresenter.com/download/"
-              class="text-teal-600 dark:text-teal-400 hover:underline font-medium"
-              >download page</a
-            >, which always links to the right store for each platform.
-          </div>
-        </article>
+    <p class="text-lg text-gray-600 dark:text-gray-300 mb-6">
+      The TV shows <em>Waiting for sign-in…</em> and signs in
+      automatically the moment you finish on your phone.
+    </p>
 
-        <!-- ===================== STEP 3 ===================== -->
-        <article id="login-qr" class="scroll-mt-24 mb-16">
-          <div class="flex items-center gap-4 mb-4">
-            <div
-              class="flex items-center justify-center w-12 h-12 rounded-full text-white font-red-hat-display font-black text-xl bg-linear-to-tr from-indigo-500 to-indigo-400 shrink-0"
-            >
-              3
-            </div>
-            <h2 class="h3 font-red-hat-display">Scan the QR code to log in</h2>
-          </div>
+    <Figure
+      src={loginQrImg}
+      alt="The Set up this device screen on the TV, with a QR code to scan and three steps: open your camera, point it at the code, sign in and link your account"
+      size="2xl"
+      class="mb-6"
+    />
 
-          <p class="text-lg text-gray-600 dark:text-gray-300 mb-4">
-            Typing an email and password with a TV remote is painful, so the app
-            lets you log in by scanning a QR code instead. When you open the app,
-            the <strong class="font-semibold">Set up this device</strong> screen
-            shows a QR code on the TV.
-          </p>
+    <Tip>
+      You only have to do this once per device. The TV stays logged in for
+      next time.
+    </Tip>
+  </Step>
 
-          <ol
-            class="list-decimal list-outside pl-5 space-y-3 text-gray-600 dark:text-gray-300 mb-6"
-          >
-            <li>Open the camera app on your phone.</li>
-            <li>
-              Point it at the QR code on the TV and tap the link that appears.
-            </li>
-            <li>
-              Sign in with the same TheOpenPresenter account you use on your
-              computer, then confirm to link the device.
-            </li>
-          </ol>
+  <Step id="select-screen" number={4} title="Select or create a screen">
+    <p class="text-lg text-gray-600 dark:text-gray-300 mb-4">
+      A <strong class="font-semibold">screen</strong> is TheOpenPresenter's
+      name for an output display. Assigning this TV to a screen is what lets
+      you send your slides to it later. After logging in, the{" "}
+      <strong class="font-semibold">Connect this TV</strong> screen asks you
+      to create or pick a screen from your organization.
+    </p>
 
-          <p class="text-lg text-gray-600 dark:text-gray-300 mb-6">
-            The TV shows <em>Waiting for sign-in…</em> and signs in
-            automatically the moment you finish on your phone.
-          </p>
+    <p class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">
+      If you don't have a screen yet
+    </p>
+    <ol
+      class="list-decimal list-outside pl-5 space-y-3 text-gray-600 dark:text-gray-300 mb-6"
+    >
+      <li>
+        You'll see <strong class="font-semibold">No screens yet</strong>.
+        Click <strong class="font-semibold">Create screen</strong>.
+      </li>
+      <li>
+        In the <strong class="font-semibold">New Screen</strong> window,
+        give it a clear <strong class="font-semibold">Name</strong>, for
+        example <em>Main Screen</em> or <em>Meeting room</em>. You can
+        leave <strong class="font-semibold">Slug</strong> blank, it's
+        filled in from the name.
+      </li>
+      <li>Click <strong class="font-semibold">Create</strong>.</li>
+    </ol>
 
-          <Image
-            src={loginQrImg}
-            alt="The Set up this device screen on the TV, with a QR code to scan and three steps: open your camera, point it at the code, sign in and link your account"
-            class="rounded-lg border border-gray-200 dark:border-gray-800 shadow-sm w-full max-w-2xl h-auto mx-auto block mb-6"
-          />
+    <FigureGrid cols={2}>
+      <Figure
+        src={createScreenEmptyImg}
+        alt="The Connect this TV screen showing No screens yet, with a red arrow pointing at the Create screen button"
+      />
+      <Figure
+        src={newScreenDialogImg}
+        alt="The New Screen window with a Name field set to Main Screen, an optional Slug field, and a Create button"
+      />
+    </FigureGrid>
 
-          <div
-            class="rounded-md bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-800 p-4 text-sm text-gray-600 dark:text-gray-300"
-          >
-            <span class="font-semibold text-gray-900 dark:text-gray-100"
-              >Tip:</span
-            > You only have to do this once per device. The TV stays logged in for
-            next time.
-          </div>
-        </article>
+    <p class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">
+      If you already have a screen
+    </p>
+    <p class="text-lg text-gray-600 dark:text-gray-300 mb-4">
+      Pick it from the list under your organization and tap it to assign
+      this TV to it. You can also choose{" "}
+      <strong class="font-semibold">Create new screen</strong> to add
+      another one.
+    </p>
 
-        <!-- ===================== STEP 4 ===================== -->
-        <article id="select-screen" class="scroll-mt-24 mb-16">
-          <div class="flex items-center gap-4 mb-4">
-            <div
-              class="flex items-center justify-center w-12 h-12 rounded-full text-white font-red-hat-display font-black text-xl bg-linear-to-tr from-sky-500 to-sky-400 shrink-0"
-            >
-              4
-            </div>
-            <h2 class="h3 font-red-hat-display">Select or create a screen</h2>
-          </div>
+    <Figure
+      src={selectScreenImg}
+      alt="The Connect this TV screen listing an existing screen called Main Screen under the organization, with a red arrow pointing at it to select it"
+      size="lg"
+      class="mb-6"
+    />
 
-          <p class="text-lg text-gray-600 dark:text-gray-300 mb-4">
-            A <strong class="font-semibold">screen</strong> is TheOpenPresenter's
-            name for an output display. Assigning this TV to a screen is what lets
-            you send your slides to it later. After logging in, the{" "}
-            <strong class="font-semibold">Connect this TV</strong> screen asks you
-            to create or pick a screen from your organization.
-          </p>
+    <Tip>
+      Give each screen a name that matches where it lives in the room. If you
+      add a second TV later, clear names make it obvious which output you're
+      sending to.
+    </Tip>
 
-          <p class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">
-            If you don't have a screen yet
-          </p>
-          <ol
-            class="list-decimal list-outside pl-5 space-y-3 text-gray-600 dark:text-gray-300 mb-6"
-          >
-            <li>
-              You'll see <strong class="font-semibold">No screens yet</strong>.
-              Click <strong class="font-semibold">Create screen</strong>.
-            </li>
-            <li>
-              In the <strong class="font-semibold">New Screen</strong> window,
-              give it a clear <strong class="font-semibold">Name</strong>, for
-              example <em>Main Screen</em> or <em>Meeting room</em>. You can
-              leave <strong class="font-semibold">Slug</strong> blank, it's
-              filled in from the name.
-            </li>
-            <li>Click <strong class="font-semibold">Create</strong>.</li>
-          </ol>
+    <p class="text-lg text-gray-600 dark:text-gray-300 mt-6 mb-4">
+      Once you assign the screen, your phone opens the{" "}
+      <strong class="font-semibold">Screen Control</strong> panel for it,
+      ready for you to open a project. The TV is now connected and waiting
+      for input.
+    </p>
 
-          <div class="grid gap-4 sm:grid-cols-2 items-start mb-6">
-            <Image
-              src={createScreenEmptyImg}
-              alt="The Connect this TV screen showing No screens yet, with a red arrow pointing at the Create screen button"
-              class="rounded-lg border border-gray-200 dark:border-gray-800 shadow-sm w-full h-auto"
-            />
-            <Image
-              src={newScreenDialogImg}
-              alt="The New Screen window with a Name field set to Main Screen, an optional Slug field, and a Create button"
-              class="rounded-lg border border-gray-200 dark:border-gray-800 shadow-sm w-full h-auto"
-            />
-          </div>
+    <Figure
+      src={screenControlImg}
+      alt="The Screen Control panel for Meeting room on a phone, with an Open a project list and a New button to create a project"
+      size="lg"
+    />
+  </Step>
 
-          <p class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">
-            If you already have a screen
-          </p>
-          <p class="text-lg text-gray-600 dark:text-gray-300 mb-4">
-            Pick it from the list under your organization and tap it to assign
-            this TV to it. You can also choose{" "}
-            <strong class="font-semibold">Create new screen</strong> to add
-            another one.
-          </p>
+  <Step id="present" number={5} title="Present to your TV">
+    <p class="text-lg text-gray-600 dark:text-gray-300 mb-4">
+      With the TV assigned to a screen, there are two easy ways to get your
+      slides onto it.
+    </p>
 
-          <Image
-            src={selectScreenImg}
-            alt="The Connect this TV screen listing an existing screen called Main Screen under the organization, with a red arrow pointing at it to select it"
-            class="rounded-lg border border-gray-200 dark:border-gray-800 shadow-sm w-full max-w-lg h-auto mx-auto block mb-6"
-          />
+    <p class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">
+      From the screen's control panel
+    </p>
+    <p class="text-lg text-gray-600 dark:text-gray-300 mb-6">
+      This is the panel you land on right after assigning the screen in
+      step 4. Under <strong class="font-semibold">Open a project</strong>,
+      pick an existing project or use{" "}
+      <strong class="font-semibold">New</strong> to start one. It appears on
+      the TV straight away, and you control the slides from your phone.
+    </p>
 
-          <div
-            class="rounded-md bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-800 p-4 text-sm text-gray-600 dark:text-gray-300"
-          >
-            <span class="font-semibold text-gray-900 dark:text-gray-100"
-              >Tip:</span
-            > Give each screen a name that matches where it lives in the room. If you
-            add a second TV later, clear names make it obvious which output you're
-            sending to.
-          </div>
+    <p class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">
+      From a project you already have open
+    </p>
+    <p class="text-lg text-gray-600 dark:text-gray-300 mb-4">
+      On your computer or phone, open the project and click{" "}
+      <strong class="font-semibold">Present</strong>. Under{" "}
+      <strong class="font-semibold">Present to a screen</strong>, choose the
+      screen you assigned to this TV (for example{" "}
+      <em>Meeting room</em>). Your slides appear on the TV straight away.
+    </p>
 
-          <p class="text-lg text-gray-600 dark:text-gray-300 mt-6 mb-4">
-            Once you assign the screen, your phone opens the{" "}
-            <strong class="font-semibold">Screen Control</strong> panel for it,
-            ready for you to open a project. The TV is now connected and waiting
-            for input.
-          </p>
+    <Figure
+      src={presentDropdownImg}
+      alt="The Present menu in the editor showing Open in new tab and, under Present to a screen, a screen called Meeting room marked Idle, with a red arrow pointing at it"
+      size="sm"
+      center={false}
+      class="mb-8"
+    />
 
-          <Image
-            src={screenControlImg}
-            alt="The Screen Control panel for Meeting room on a phone, with an Open a project list and a New button to create a project"
-            class="rounded-lg border border-gray-200 dark:border-gray-800 shadow-sm w-full max-w-lg h-auto mx-auto block"
-          />
-        </article>
+    <p class="text-lg text-gray-600 dark:text-gray-300 mb-4">
+      <strong class="font-semibold">Need the control panel again later?</strong>{" "}
+      While nothing is being presented, the TV shows an{" "}
+      <strong class="font-semibold">Awaiting input</strong> screen with a QR
+      code. Scan it (or go to{" "}
+      <strong class="font-semibold">theopenpresenter.com/connect</strong> and
+      enter the code shown on the TV) to reopen that screen's control panel
+      on any phone, no computer needed.
+    </p>
 
-        <!-- ===================== STEP 5 ===================== -->
-        <article id="present" class="scroll-mt-24 mb-16">
-          <div class="flex items-center gap-4 mb-4">
-            <div
-              class="flex items-center justify-center w-12 h-12 rounded-full text-white font-red-hat-display font-black text-xl bg-linear-to-tr from-amber-500 to-amber-400 shrink-0"
-            >
-              5
-            </div>
-            <h2 class="h3 font-red-hat-display">Present to your TV</h2>
-          </div>
+    <Figure
+      src={tvIdleImg}
+      alt="The idle TV screen titled Main Screen, Awaiting input, with a Scan to control QR code, the URL theopenpresenter.com/connect, and a short code"
+      size="2xl"
+      class="mb-6"
+    />
 
-          <p class="text-lg text-gray-600 dark:text-gray-300 mb-4">
-            With the TV assigned to a screen, there are two easy ways to get your
-            slides onto it.
-          </p>
+    <p class="text-lg text-gray-600 dark:text-gray-300">
+      Want to run everything from your phone? See our{" "}
+      <a
+        href="/how-to/control-with-phone"
+        class="text-teal-600 dark:text-teal-400 hover:underline font-medium"
+        >guide on controlling from your phone</a
+      >.
+    </p>
+  </Step>
 
-          <p class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">
-            From the screen's control panel
-          </p>
-          <p class="text-lg text-gray-600 dark:text-gray-300 mb-6">
-            This is the panel you land on right after assigning the screen in
-            step 4. Under <strong class="font-semibold">Open a project</strong>,
-            pick an existing project or use{" "}
-            <strong class="font-semibold">New</strong> to start one. It appears on
-            the TV straight away, and you control the slides from your phone.
-          </p>
+  <Step id="manage" number={6} title="Unassign when you're done">
+    <p class="text-lg text-gray-600 dark:text-gray-300 mb-4">
+      When the service is over, you can tidy up without touching the TV or
+      its remote.
+    </p>
 
-          <p class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">
-            From a project you already have open
-          </p>
-          <p class="text-lg text-gray-600 dark:text-gray-300 mb-4">
-            On your computer or phone, open the project and click{" "}
-            <strong class="font-semibold">Present</strong>. Under{" "}
-            <strong class="font-semibold">Present to a screen</strong>, choose the
-            screen you assigned to this TV (for example{" "}
-            <em>Meeting room</em>). Your slides appear on the TV straight away.
-          </p>
+    <p class="text-lg text-gray-600 dark:text-gray-300 mb-6">
+      <strong class="font-semibold">Unassign the project</strong> to
+      disconnect it from the screen, freeing the TV up for the next project
+      or the next gathering. The TV goes back to its{" "}
+      <em>Awaiting input</em> screen. You can unassign from the{" "}
+      <strong class="font-semibold">Screen Control</strong> panel, or
+      straight from the project you were presenting.
+    </p>
 
-          <Image
-            src={presentDropdownImg}
-            alt="The Present menu in the editor showing Open in new tab and, under Present to a screen, a screen called Meeting room marked Idle, with a red arrow pointing at it"
-            class="rounded-lg border border-gray-200 dark:border-gray-800 shadow-sm w-full max-w-sm h-auto mb-8"
-          />
+    <Tip class="mb-6">
+      Don't want to remember this every week? Open the screen's settings and
+      turn on <strong class="font-semibold">auto-unassign</strong>, and the
+      screen frees itself automatically once you're done.
+    </Tip>
 
-          <p class="text-lg text-gray-600 dark:text-gray-300 mb-4">
-            <strong class="font-semibold">Need the control panel again later?</strong>{" "}
-            While nothing is being presented, the TV shows an{" "}
-            <strong class="font-semibold">Awaiting input</strong> screen with a QR
-            code. Scan it (or go to{" "}
-            <strong class="font-semibold">theopenpresenter.com/connect</strong> and
-            enter the code shown on the TV) to reopen that screen's control panel
-            on any phone, no computer needed.
-          </p>
+    <p class="text-lg text-gray-600 dark:text-gray-300">
+      That's it. Next time, just plug the stick in, present to the same
+      screen, and you're live again.
+    </p>
+  </Step>
 
-          <Image
-            src={tvIdleImg}
-            alt="The idle TV screen titled Main Screen, Awaiting input, with a Scan to control QR code, the URL theopenpresenter.com/connect, and a short code"
-            class="rounded-lg border border-gray-200 dark:border-gray-800 shadow-sm w-full max-w-2xl h-auto mx-auto block mb-6"
-          />
-
-          <p class="text-lg text-gray-600 dark:text-gray-300">
-            Want to run everything from your phone? See our{" "}
-            <a
-              href="/how-to/control-with-phone"
-              class="text-teal-600 dark:text-teal-400 hover:underline font-medium"
-              >guide on controlling from your phone</a
-            >.
-          </p>
-        </article>
-
-        <!-- ===================== STEP 6 ===================== -->
-        <article id="manage" class="scroll-mt-24 mb-16">
-          <div class="flex items-center gap-4 mb-4">
-            <div
-              class="flex items-center justify-center w-12 h-12 rounded-full text-white font-red-hat-display font-black text-xl bg-linear-to-tr from-rose-500 to-rose-400 shrink-0"
-            >
-              6
-            </div>
-            <h2 class="h3 font-red-hat-display">
-              Unassign when you're done
-            </h2>
-          </div>
-
-          <p class="text-lg text-gray-600 dark:text-gray-300 mb-4">
-            When the service is over, you can tidy up without touching the TV or
-            its remote.
-          </p>
-
-          <p class="text-lg text-gray-600 dark:text-gray-300 mb-6">
-            <strong class="font-semibold">Unassign the project</strong> to
-            disconnect it from the screen, freeing the TV up for the next project
-            or the next gathering. The TV goes back to its{" "}
-            <em>Awaiting input</em> screen. You can unassign from the{" "}
-            <strong class="font-semibold">Screen Control</strong> panel, or
-            straight from the project you were presenting.
-          </p>
-
-          <div
-            class="rounded-md bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-800 p-4 text-sm text-gray-600 dark:text-gray-300 mb-6"
-          >
-            <span class="font-semibold text-gray-900 dark:text-gray-100"
-              >Tip:</span
-            > Don't want to remember this every week? Open the screen's settings and
-            turn on <strong class="font-semibold">auto-unassign</strong>, and the
-            screen frees itself automatically once you're done.
-          </div>
-
-          <p class="text-lg text-gray-600 dark:text-gray-300">
-            That's it. Next time, just plug the stick in, present to the same
-            screen, and you're live again.
-          </p>
-        </article>
-
-        <!-- Wrap up / CTA -->
-        <div
-          class="rounded-lg border border-gray-200 dark:border-gray-800 p-8 text-center"
-        >
-          <h2 class="h4 font-red-hat-display mb-2">
-            Just bring the stick
-          </h2>
-          <p class="text-gray-600 dark:text-gray-300 mb-6">
-            A TV stick, your church Wi-Fi, and a phone in your pocket is all it
-            takes to run a gathering, no laptop required. New to
-            TheOpenPresenter? Start with the full walkthrough.
-          </p>
-          <div class="flex flex-wrap items-center justify-center gap-3">
-            <a
-              href="https://theopenpresenter.com/download/"
-              class="btn text-white bg-teal-500 hover:bg-teal-400 shrink-0"
-            >
-              See supported devices
-            </a>
-            <a
-              href="/how-to/use-online-for-church"
-              class="btn text-teal-500 bg-transparent border border-teal-500 hover:bg-teal-500/10 shrink-0"
-            >
-              Read the full guide
-            </a>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-</DefaultLayout>
+  <WrapUpCta
+    title="Just bring the stick"
+    buttons={[
+      {
+        label: "See supported devices",
+        href: "https://theopenpresenter.com/download/",
+        variant: "primary",
+      },
+      {
+        label: "Read the full guide",
+        href: "/how-to/use-online-for-church",
+        variant: "secondary",
+      },
+    ]}
+  >
+    A TV stick, your church Wi-Fi, and a phone in your pocket is all it
+    takes to run a gathering, no laptop required. New to
+    TheOpenPresenter? Start with the full walkthrough.
+  </WrapUpCta>
+</ArticleLayout>

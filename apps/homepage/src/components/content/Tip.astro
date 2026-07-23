@@ -1,0 +1,18 @@
+---
+interface Props {
+  label?: string;
+  class?: string;
+}
+
+const { label = "Tip", class: className = "" } = Astro.props;
+---
+
+<div
+  class:list={[
+    "rounded-md bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-800 p-4 text-sm text-gray-600 dark:text-gray-300",
+    className,
+  ]}
+>
+  <span class="font-semibold text-gray-900 dark:text-gray-100">{label}:</span>
+  <slot />
+</div>

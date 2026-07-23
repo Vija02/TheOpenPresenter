@@ -1,0 +1,46 @@
+---
+// Numbered step article with a gradient number badge.
+// The badge colour cycles through this palette by step number, so guides stay
+// visually consistent. Pass `color` to override (e.g. "from-teal-500 to-teal-400").
+const GRADIENTS = [
+  "from-teal-500 to-teal-400",
+  "from-purple-500 to-purple-400",
+  "from-indigo-500 to-indigo-400",
+  "from-sky-500 to-sky-400",
+  "from-amber-500 to-amber-400",
+  "from-rose-500 to-rose-400",
+];
+
+interface Props {
+  id: string;
+  number: number;
+  title: string;
+  color?: string;
+  class?: string;
+}
+
+const {
+  id,
+  number,
+  title,
+  color,
+  class: className = "mb-16",
+} = Astro.props;
+
+const gradient = color ?? GRADIENTS[(number - 1) % GRADIENTS.length];
+---
+
+<article id={id} class:list={["scroll-mt-24", className]}>
+  <div class="flex items-center gap-4 mb-4">
+    <div
+      class:list={[
+        "flex items-center justify-center w-12 h-12 rounded-full text-white font-red-hat-display font-black text-xl bg-linear-to-tr shrink-0",
+        gradient,
+      ]}
+    >
+      {number}
+    </div>
+    <h2 class="h3 font-red-hat-display">{title}</h2>
+  </div>
+  <slot />
+</article>

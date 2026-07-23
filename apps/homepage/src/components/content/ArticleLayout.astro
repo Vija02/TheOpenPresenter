@@ -1,0 +1,32 @@
+---
+import DefaultLayout from "../../layouts/DefaultLayout.astro";
+import PageIllustration from "../PageIllustration.astro";
+
+interface Props {
+  title?: string;
+  description?: string;
+  // Inner content max width. Article pages use "5xl"; listing/hub pages use "6xl".
+  width?: "5xl" | "6xl";
+}
+
+const { title, description, width = "5xl" } = Astro.props;
+const widthClass = width === "6xl" ? "max-w-6xl" : "max-w-5xl";
+---
+
+<DefaultLayout title={title} description={description}>
+  <!-- Page illustration -->
+  <div
+    class="relative max-w-6xl mx-auto h-0 pointer-events-none -z-1"
+    aria-hidden="true"
+  >
+    <PageIllustration />
+  </div>
+
+  <section class="relative">
+    <div class:list={["relative mx-auto px-4 sm:px-6", widthClass]}>
+      <div class="pt-32 pb-12 md:pt-40 md:pb-20">
+        <slot />
+      </div>
+    </div>
+  </section>
+</DefaultLayout>
