@@ -93,8 +93,8 @@ const ScreenShareRemote = () => {
                     Share your screen live
                   </h2>
                   <p className="text-sm text-tertiary leading-relaxed">
-                    Stream a window, browser tab, or your entire display to every
-                    output screen in real time.
+                    Stream a window, browser tab, or your entire display to
+                    every output screen in real time.
                   </p>
                 </div>
                 <Button
@@ -161,7 +161,9 @@ const ScreenShareRemote = () => {
               <div className="stack-row items-center justify-between gap-3 p-3 rounded-sm border border-fill-warning/50 bg-fill-warning/10">
                 <div className="stack-row items-center gap-2.5 text-fill-warning-fg text-sm">
                   <FaUsers className="shrink-0" />
-                  <span>Another operator is currently sharing their screen.</span>
+                  <span>
+                    Another operator is currently sharing their screen.
+                  </span>
                 </div>
                 <div className="stack-row items-center gap-2 shrink-0">
                   <Button
@@ -193,10 +195,11 @@ const ScreenShareRemote = () => {
           {/* You are the active sharer */}
           {isSharer && (
             <div className="stack-col items-stretch gap-2 rounded-sm border border-stroke bg-surface-primary p-3">
-                <div className="stack-row items-center justify-between">
-                  <div className="stack-row items-center gap-2 text-sm font-medium text-primary">
-                    <FaDesktop className="text-tertiary" /> Your shared screen
-                  </div>
+              <div className="stack-row items-center justify-between">
+                <div className="stack-row items-center gap-2 text-sm font-medium text-primary">
+                  <FaDesktop className="text-tertiary" /> Your shared screen
+                </div>
+                {isLive ? (
                   <span className="stack-row items-center gap-1.5 rounded-sm bg-fill-destructive px-2 py-0.5 text-xs font-semibold text-fill-destructive-fg">
                     <span className="relative flex h-2 w-2">
                       <span className="absolute inline-flex h-full w-full rounded-full bg-fill-destructive-fg opacity-75 animate-ping" />
@@ -204,14 +207,23 @@ const ScreenShareRemote = () => {
                     </span>
                     LIVE
                   </span>
-                </div>
-                {previewStream ? (
-                  <VideoPreview stream={previewStream} />
                 ) : (
-                  <div className="flex aspect-video w-full items-center justify-center rounded-sm bg-gray-900 text-sm text-white/70">
-                    Starting preview…
-                  </div>
+                  <Button
+                    size="xs"
+                    variant="default"
+                    onClick={() => pluginApi.renderer.setRenderCurrentScene()}
+                  >
+                    Go live
+                  </Button>
                 )}
+              </div>
+              {previewStream ? (
+                <VideoPreview stream={previewStream} />
+              ) : (
+                <div className="flex aspect-video w-full items-center justify-center rounded-sm bg-gray-900 text-sm text-white/70">
+                  Starting preview…
+                </div>
+              )}
             </div>
           )}
         </div>
