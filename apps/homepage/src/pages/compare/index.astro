@@ -1,0 +1,67 @@
+---
+import ArticleLayout from "../../components/content/ArticleLayout.astro";
+import ContentCard from "../../components/content/ContentCard.astro";
+
+// Add new comparison pages here to have them show up on this hub page.
+const comparisons = [
+  {
+    href: "/compare/propresenter-alternative",
+    category: "Comparison",
+    title: "Free ProPresenter alternative: TheOpenPresenter",
+    description:
+      "An honest, side-by-side look at TheOpenPresenter versus ProPresenter, where the free, open source, web-based option is a real replacement, and where ProPresenter still wins.",
+    minutes: 9,
+  },
+];
+---
+
+<ArticleLayout
+  title="Comparisons | TheOpenPresenter"
+  description="Honest, side-by-side comparisons of TheOpenPresenter against other church presentation software."
+  width="6xl"
+>
+  <!-- Page header -->
+  <div class="max-w-3xl mx-auto text-center pb-12 md:pb-16">
+    <div
+      class="inline-flex items-center text-sm font-semibold tracking-wide uppercase text-teal-500 mb-2"
+    >
+      Comparisons
+    </div>
+    <h1 class="h2 font-red-hat-display mb-4 break-words">
+      How TheOpenPresenter compares
+    </h1>
+    <p class="text-xl text-gray-600 dark:text-gray-300">
+      Straight, no-spin comparisons against other presentation software,
+      including where the other tool is the better choice.
+    </p>
+  </div>
+
+  <!-- Comparisons list -->
+  <div class="max-w-5xl mx-auto grid gap-6">
+    {
+      comparisons.map((item) => (
+        <ContentCard
+          href={item.href}
+          category={item.category}
+          minutes={item.minutes}
+          title={item.title}
+          description={item.description}
+          cta="Read the comparison"
+        />
+      ))
+    }
+  </div>
+
+  <!-- Help note -->
+  <div class="max-w-3xl mx-auto text-center mt-12">
+    <p class="text-gray-600 dark:text-gray-300">
+      Comparing us against something not listed here? Email us at{" "}
+      <a
+        href="mailto:support@theopenpresenter.com"
+        class="text-teal-600 dark:text-teal-400 hover:underline font-medium"
+      >
+        support@theopenpresenter.com
+      </a>.
+    </p>
+  </div>
+</ArticleLayout>
