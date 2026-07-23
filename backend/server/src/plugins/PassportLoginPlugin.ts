@@ -1,7 +1,8 @@
-import { gql, makeExtendSchemaPlugin, Resolvers } from "graphile-utils";
+import { Resolvers, gql, makeExtendSchemaPlugin } from "graphile-utils";
 
 import { OurGraphQLContext } from "../graphile.config";
 import { ERROR_MESSAGE_OVERRIDES } from "../utils/handleErrors";
+import { assertValidCaptcha } from "../utils/verifyCaptcha";
 
 const PassportLoginPlugin = makeExtendSchemaPlugin((build) => {
   const typeDefs = gql`
@@ -11,6 +12,7 @@ const PassportLoginPlugin = makeExtendSchemaPlugin((build) => {
       password: String!
       name: String
       avatarUrl: String
+      turnstileToken: String
     }
 
     type RegisterPayload {
@@ -28,6 +30,35 @@ const PassportLoginPlugin = makeExtendSchemaPlugin((build) => {
 
     type LogoutPayload {
       success: Boolean
+    }
+
+    """
+    All input for the \`forgotPassword\` mutation.
+    """
+    input ForgotPasswordInput {
+      """
+      An arbitrary string value with no semantic meaning. Will be included in the
+      payload verbatim. May be used to track mutations by the client.
+      """
+      clientMutationId: String
+
+      email: String!
+
+      """
+      A Cloudflare Turnstile token. Required when captcha is enabled on the server.
+      """
+      turnstileToken: String
+    }
+
+    """
+    The output of our \`forgotPassword\` mutation.
+    """
+    type ForgotPasswordPayload {
+      """
+      The exact same \`clientMutationId\` that was provided in the mutation input,
+      unchanged and unused. May be used by a client to track mutations.
+      """
+      clientMutationId: String
     }
 
     """
@@ -80,6 +111,11 @@ const PassportLoginPlugin = makeExtendSchemaPlugin((build) => {
       logout: LogoutPayload
 
       """
+      If you've forgotten your password, give us one of your email addresses and we'll send you a reset token.
+      """
+      forgotPassword(input: ForgotPasswordInput!): ForgotPasswordPayload
+
+      """
       After triggering forgotPassword, you'll be sent a reset token. Combine this with your user ID and a new password to reset your password.
       """
       resetPassword(input: ResetPasswordInput!): ResetPasswordPayload
@@ -89,8 +125,12 @@ const PassportLoginPlugin = makeExtendSchemaPlugin((build) => {
     Mutation: {
       async register(_mutation, args, context: OurGraphQLContext, resolveInfo) {
         const { selectGraphQLResultFromTable } = resolveInfo.graphile;
-        const { username, password, email, name, avatarUrl } = args.input;
-        const { rootPgPool, login, pgClient } = context;
+        const { username, password, email, name, avatarUrl, turnstileToken } =
+          args.input;
+        const { rootPgPool, login, pgClient, req } = context;
+
+        await assertValidCaptcha(turnstileToken, req?.ip);
+
         try {
           // Create a user and create a session for it in the proccess
           const {
@@ -113,7 +153,7 @@ const PassportLoginPlugin = makeExtendSchemaPlugin((build) => {
             )
             select new_user.id as user_id, new_session.uuid as session_id
             from new_user, new_session`,
-            [username, email, name, avatarUrl, password]
+            [username, email, name, avatarUrl, password],
           );
 
           if (!details || !details.user_id) {
@@ -126,7 +166,7 @@ const PassportLoginPlugin = makeExtendSchemaPlugin((build) => {
             // Store into transaction
             await pgClient.query(
               `select set_config('jwt.claims.session_id', $1, true)`,
-              [details.session_id]
+              [details.session_id],
             );
 
             // Tell Passport.js we're logged in
@@ -139,9 +179,9 @@ const PassportLoginPlugin = makeExtendSchemaPlugin((build) => {
             sql.fragment`app_public.users`,
             (tableAlias, sqlBuilder) => {
               sqlBuilder.where(
-                sql.fragment`${tableAlias}.id = ${sql.value(details.user_id)}`
+                sql.fragment`${tableAlias}.id = ${sql.value(details.user_id)}`,
               );
-            }
+            },
           );
           return {
             data: row,
@@ -158,7 +198,7 @@ const PassportLoginPlugin = makeExtendSchemaPlugin((build) => {
             throw e;
           } else {
             console.error(
-              "Unrecognised error in PassportLoginPlugin; replacing with sanitized version"
+              "Unrecognised error in PassportLoginPlugin; replacing with sanitized version",
             );
             console.error(e);
             throw Object.assign(new Error("Registration failed"), {
@@ -177,7 +217,7 @@ const PassportLoginPlugin = makeExtendSchemaPlugin((build) => {
             rows: [session],
           } = await rootPgPool.query(
             `select sessions.* from app_private.login($1, $2) sessions where not (sessions is null)`,
-            [username, password]
+            [username, password],
           );
 
           if (!session) {
@@ -194,7 +234,7 @@ const PassportLoginPlugin = makeExtendSchemaPlugin((build) => {
           // Get session_id from PG
           await pgClient.query(
             `select set_config('jwt.claims.session_id', $1, true)`,
-            [session.uuid]
+            [session.uuid],
           );
 
           // Fetch the data that was requested from GraphQL, and return it
@@ -203,9 +243,9 @@ const PassportLoginPlugin = makeExtendSchemaPlugin((build) => {
             sql.fragment`app_public.users`,
             (tableAlias, sqlBuilder) => {
               sqlBuilder.where(
-                sql.fragment`${tableAlias}.id = app_public.current_user_id()`
+                sql.fragment`${tableAlias}.id = app_public.current_user_id()`,
               );
-            }
+            },
           );
           return {
             data: row,
@@ -233,11 +273,32 @@ const PassportLoginPlugin = makeExtendSchemaPlugin((build) => {
         };
       },
 
+      async forgotPassword(
+        _mutation,
+        args,
+        context: OurGraphQLContext,
+        _resolveInfo,
+      ) {
+        const { rootPgPool, req } = context;
+        const { email, clientMutationId, turnstileToken } = args.input;
+
+        await assertValidCaptcha(turnstileToken, req?.ip);
+
+        await rootPgPool.query(
+          `select app_public.forgot_password($1::citext)`,
+          [email],
+        );
+
+        return {
+          clientMutationId,
+        };
+      },
+
       async resetPassword(
         _mutation,
         args,
         context: OurGraphQLContext,
-        _resolveInfo
+        _resolveInfo,
       ) {
         const { rootPgPool } = context;
         const { userId, resetToken, newPassword, clientMutationId } =
@@ -252,7 +313,7 @@ const PassportLoginPlugin = makeExtendSchemaPlugin((build) => {
           rows: [row],
         } = await rootPgPool.query(
           `select app_private.reset_password($1::uuid, $2::text, $3::text) as success`,
-          [userId, resetToken, newPassword]
+          [userId, resetToken, newPassword],
         );
 
         return {

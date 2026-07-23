@@ -48,10 +48,12 @@ export default async function installHelmet(app: Express) {
           "https://js.stripe.com",
           // Google Analytics (gtag.js)
           "https://*.googletagmanager.com",
+          "https://challenges.cloudflare.com",
           // Nonce for general usage
           `'nonce-${nonce}'`,
           "blob:",
         ],
+        "frame-src": ["'self'", "https://challenges.cloudflare.com"],
         "media-src": ["*"],
         "img-src": ["*", "data:"],
       }).filter(

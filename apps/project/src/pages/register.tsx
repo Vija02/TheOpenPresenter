@@ -1,5 +1,10 @@
 import { Redirect } from "@/components/Redirect";
 import { SharedLayout } from "@/components/SharedLayout";
+import {
+  Turnstile,
+  TurnstileRef,
+  getTurnstileSiteKey,
+} from "@/components/Turnstile";
 import { WrappedPasswordStrength } from "@/components/WrappedPasswordStrength";
 import { useResetURQLClient } from "@/urql";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,7 +15,7 @@ import {
   getExceptionFromError,
 } from "@repo/lib";
 import { Alert, Button, Form, InputControl, Link } from "@repo/ui";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { CombinedError } from "urql";
 import { Link as WouterLink, useLocation, useSearchParams } from "wouter";
@@ -57,6 +62,10 @@ const Register = () => {
   const [, register] = useRegisterMutation();
   const resetClient = useResetURQLClient();
 
+  const captchaEnabled = !!getTurnstileSiteKey();
+  const turnstileRef = useRef<TurnstileRef>(null);
+  const turnstileTokenRef = useRef<string | null>(null);
+
   const redirectTo = "/o/";
 
   const form = useForm<FormInputs>({
@@ -72,17 +81,28 @@ const Register = () => {
 
   const onSubmit = useCallback(
     async (values: FormInputs) => {
+      const turnstileToken = turnstileTokenRef.current;
+      if (captchaEnabled && !turnstileToken) {
+        setError(
+          new Error("Please complete the captcha challenge before continuing."),
+        );
+        return;
+      }
+      setError(null);
       try {
         await register({
           username: values.username,
           email: values.email,
           password: values.password,
           name: values.name,
+          turnstileToken,
         });
         // Success: refetch
         resetClient();
         navigate(redirectTo);
       } catch (e: any) {
+        turnstileTokenRef.current = null;
+        turnstileRef.current?.reset();
         const code = getCodeFromError(e);
         const exception = getExceptionFromError(e);
         const fields: any =
@@ -112,7 +132,7 @@ const Register = () => {
         }
       }
     },
-    [register, resetClient, navigate, form],
+    [register, resetClient, navigate, form, captchaEnabled],
   );
 
   return (
@@ -193,6 +213,13 @@ const Register = () => {
                         Already have an account? Sign in
                       </WouterLink>
                     </Link>
+
+                    <Turnstile
+                      ref={turnstileRef}
+                      onToken={(token) => {
+                        turnstileTokenRef.current = token;
+                      }}
+                    />
 
                     {error ? (
                       <Alert

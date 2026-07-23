@@ -3,6 +3,7 @@ mutation Register(
   $password: String!
   $email: String!
   $name: String
+  $turnstileToken: String
 ) {
   register(
     input: {
@@ -10,6 +11,7 @@ mutation Register(
       password: $password
       email: $email
       name: $name
+      turnstileToken: $turnstileToken
     }
   ) {
     user {

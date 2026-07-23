@@ -87,6 +87,7 @@ function transformer(html: string, req: Request) {
       STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY,
       STRIPE_PRICE_ID_MONTHLY: process.env.STRIPE_PRICE_ID_MONTHLY,
       STRIPE_PRICE_ID_ANNUAL: process.env.STRIPE_PRICE_ID_ANNUAL,
+      TURNSTILE_SITE_KEY: process.env.TURNSTILE_SITE_KEY,
     } as Record<string, string>,
   ].reduce((acc, val) => ({ ...acc, ...val }), {} as Record<string, string>);
 

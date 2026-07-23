@@ -26,6 +26,9 @@ const getStripePriceIdMonthly = (): string | undefined =>
 const getStripePriceIdAnnual = (): string | undefined =>
   (window as any)?.__APP_DATA__?.STRIPE_PRICE_ID_ANNUAL;
 
+const getTurnstileSiteKey = (): string | undefined =>
+  (window as any)?.__APP_DATA__?.TURNSTILE_SITE_KEY || undefined;
+
 export type ProxyConfig = {
   isProxy: boolean;
   cloudOrgSlug: string | null;
@@ -76,4 +79,5 @@ export const appData = {
   getStripePublishableKey,
   getStripePriceIdMonthly,
   getStripePriceIdAnnual,
+  getTurnstileSiteKey,
 };
