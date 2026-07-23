@@ -9,17 +9,18 @@ import {
   readSignals,
   signalFieldKey,
 } from "../signaling";
-import {
-  SenderPeer,
-  randomSessionId,
-  senderSessions,
-} from "./senderSession";
+import { SenderPeer, randomSessionId, senderSessions } from "./senderSession";
 
 export type ViewerState = {
   userId: string;
   connectionState: RTCPeerConnectionState;
   type?: "remote" | "renderer";
 };
+
+const isDisplayMediaSupported =
+  typeof navigator !== "undefined" &&
+  !!navigator.mediaDevices &&
+  typeof navigator.mediaDevices.getDisplayMedia === "function";
 
 export const useScreenShareSender = () => {
   const pluginApi = usePluginAPI();
@@ -100,6 +101,12 @@ export const useScreenShareSender = () => {
 
   const startShare = useCallback(async () => {
     setCaptureError(null);
+    if (!isDisplayMediaSupported) {
+      setCaptureError(
+        "Screen sharing isn't supported on this device or browser. Open this on a desktop browser (Chrome, Edge, or Firefox) to share your screen.",
+      );
+      return;
+    }
     let stream: MediaStream;
     try {
       stream = await navigator.mediaDevices.getDisplayMedia({
@@ -304,6 +311,7 @@ export const useScreenShareSender = () => {
     outputScreenCount,
     captureError,
     iceLoading: iceServersQuery.isLoading,
+    isSupported: isDisplayMediaSupported,
     startShare,
     stopShare,
     stopSharedScreen,
