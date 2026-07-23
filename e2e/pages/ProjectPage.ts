@@ -10,6 +10,7 @@ const pluginsList = [
   "Radio",
   "Worship Pads",
   "Bible",
+  "Screen Share",
 ] as const;
 
 export class ProjectPage {
