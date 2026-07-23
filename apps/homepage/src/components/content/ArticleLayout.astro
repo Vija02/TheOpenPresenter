@@ -2,15 +2,24 @@
 import DefaultLayout from "../../layouts/DefaultLayout.astro";
 import PageIllustration from "../PageIllustration.astro";
 
+const WIDTHS = {
+  "2xl": "max-w-2xl",
+  "3xl": "max-w-3xl",
+  "4xl": "max-w-4xl",
+  "5xl": "max-w-5xl",
+  "6xl": "max-w-6xl",
+};
+
 interface Props {
   title?: string;
   description?: string;
-  // Inner content max width. Article pages use "5xl"; listing/hub pages use "6xl".
-  width?: "5xl" | "6xl";
+  // Inner content max width. Article pages default to "4xl" for a comfortable
+  // reading measure; listing/hub pages pass "6xl" for their wider card grids.
+  width?: keyof typeof WIDTHS;
 }
 
-const { title, description, width = "5xl" } = Astro.props;
-const widthClass = width === "6xl" ? "max-w-6xl" : "max-w-5xl";
+const { title, description, width = "4xl" } = Astro.props;
+const widthClass = WIDTHS[width] ?? WIDTHS["4xl"];
 ---
 
 <DefaultLayout title={title} description={description}>

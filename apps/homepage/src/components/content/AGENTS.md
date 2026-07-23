@@ -12,7 +12,7 @@ rather than inlining a one-off.
 
 ## House style (applies to all)
 
-- Tailer (Tailwind v4) utility classes; teal is the accent (`teal-500`).
+- Tailwind v4 utility classes; teal is the accent (`teal-500`).
 - Body copy: `text-gray-600 dark:text-gray-300`. Headings: `font-red-hat-display`.
 - **No em dashes** in copy (house rule). Also avoid the words "genuinely" and
   "honestly" — they read as AI filler.
@@ -85,7 +85,9 @@ deep) it is `../../../components/content/`. From a hub page like
 Wraps `DefaultLayout` + the page illustration + the section/width shell.
 Replaces the boilerplate every page opened with.
 - `title?`, `description?` — forwarded to `<title>` / `<meta description>`.
-- `width?`: `"5xl"` (default, article pages) or `"6xl"` (listing/hub pages).
+- `width?`: content max width — `"2xl" | "3xl" | "4xl" | "5xl" | "6xl"`.
+  Default `"4xl"` (a comfortable reading measure for article pages). Hub/listing
+  pages pass `"6xl"` for their wider card grids.
 - Slot: page body.
 
 ### ArticleHeader
