@@ -1,0 +1,35 @@
+---
+interface Props {
+  steps: { id: string; label: string }[];
+  heading?: string;
+  class?: string;
+}
+
+const { steps, heading = "What you'll do", class: className = "mb-12" } =
+  Astro.props;
+---
+
+<nav class:list={[className]} aria-label="Steps in this guide">
+  <p
+    class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-300 mb-3"
+  >
+    {heading}
+  </p>
+  <ol class="grid gap-2">
+    {
+      steps.map((step, i) => (
+        <li>
+          <a
+            href={`#${step.id}`}
+            class="flex items-center gap-3 text-gray-700 dark:text-gray-300 hover:text-teal-500 transition-colors"
+          >
+            <span class="shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-800 text-xs font-bold">
+              {i + 1}
+            </span>
+            {step.label}
+          </a>
+        </li>
+      ))
+    }
+  </ol>
+</nav>

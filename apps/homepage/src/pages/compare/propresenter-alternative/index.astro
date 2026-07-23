@@ -1,0 +1,568 @@
+---
+import ArticleLayout from "../../../components/content/ArticleLayout.astro";
+import ArticleHeader from "../../../components/content/ArticleHeader.astro";
+import WrapUpCta from "../../../components/content/WrapUpCta.astro";
+
+const comparison = [
+  {
+    feature: "Price",
+    pp: "Paid license",
+    top: "Free / open source (AGPL 3.0)",
+    winner: "top",
+  },
+  {
+    feature: "Maturity",
+    pp: "Very mature, battle-tested",
+    top: "Younger, actively developed",
+    winner: "pp",
+  },
+  {
+    feature: "Real-time collaboration (multiple operators)",
+    pp: "No, single operator",
+    top: "Yes, multiple controllers at once",
+    winner: "top",
+  },
+  {
+    feature: "Control from phone / tablet",
+    pp: "Yes (Remote app)",
+    top: "Yes, any browser, nothing to install",
+    winner: "top",
+  },
+  {
+    feature: "Web-based (no install)",
+    pp: "No, native app",
+    top: "Yes, runs in any browser",
+    winner: "top",
+  },
+  {
+    feature: "Google Slides sync",
+    pp: "No",
+    top: "Yes, sync directly",
+    winner: "top",
+  },
+  { feature: "PowerPoint import", pp: "Yes", top: "Yes", winner: "tie" },
+  {
+    feature: "Bible / scripture display",
+    pp: "Yes",
+    top: "Yes, 2,300+ translations + custom upload",
+    winner: "tie",
+  },
+  { feature: "Embed a live web page", pp: "No", top: "Yes", winner: "top" },
+  {
+    feature: "Video (YouTube / Vimeo / upload)",
+    pp: "Yes",
+    top: "Yes",
+    winner: "tie",
+  },
+  {
+    feature: "Video backgrounds behind lyrics",
+    pp: "Yes",
+    top: "Yes",
+    winner: "tie",
+  },
+  {
+    feature: "Countdown / timer / rundown",
+    pp: "Yes",
+    top: "Yes",
+    winner: "tie",
+  },
+  {
+    feature: "Screen share to the output",
+    pp: "Limited",
+    top: "Yes",
+    winner: "top",
+  },
+  {
+    feature: "Multiple independent outputs",
+    pp: "Yes",
+    top: "Yes, each can show different content",
+    winner: "tie",
+  },
+  {
+    feature: "Digital signage / always-on TV",
+    pp: "Partial",
+    top: "Yes",
+    winner: "top",
+  },
+  { feature: "AI lyric formatting", pp: "No", top: "Yes", winner: "top" },
+  { feature: "Self-host / own your data", pp: "No", top: "Yes", winner: "top" },
+  {
+    feature: "Stage display / confidence monitor",
+    pp: "Yes, mature designer",
+    top: "Beta",
+    winner: "pp",
+  },
+  {
+    feature: "Lower thirds / overlays / props",
+    pp: "Yes",
+    top: "No",
+    winner: "pp",
+  },
+  { feature: "SDI / pro video output", pp: "Yes", top: "No", winner: "pp" },
+  { feature: "NDI (network video)", pp: "Yes", top: "No", winner: "pp" },
+  {
+    feature: "Transitions",
+    pp: "Rich library",
+    top: "Fade only",
+    winner: "pp",
+  },
+  {
+    feature: "Macros / MIDI / show control",
+    pp: "Yes",
+    top: "No",
+    winner: "pp",
+  },
+  {
+    feature: "Scheduling / cue system",
+    pp: "Yes",
+    top: "Not yet",
+    winner: "pp",
+  },
+  {
+    feature: "Planning Center integration",
+    pp: "Yes",
+    top: "No",
+    winner: "pp",
+  },
+  {
+    feature: "CCLI / SongSelect import + reporting",
+    pp: "Yes",
+    top: "No",
+    winner: "pp",
+  },
+];
+
+const faqs = [
+  {
+    q: "Is TheOpenPresenter really free?",
+    a: "Yes. It's open source under AGPL 3.0, so you can self-host it for free forever. The hosted cloud version is free for small churches, and free entirely (storage and AI included) for churches under 50 weekly attendance via our sponsorship programme.",
+  },
+  {
+    q: "Can it fully replace ProPresenter?",
+    a: "For most small-to-mid churches, yes. If you depend on SDI/NDI video output, a built-in cue/scheduling system, or a Planning Center and CCLI SongSelect workflow, not yet. Those are areas where ProPresenter is still ahead.",
+  },
+  {
+    q: "Does it run on Mac and Windows?",
+    a: "It runs in any modern browser, so any OS works. There's also a desktop app, TheOpenPresenter Studio, for a native offline experience, plus TV apps for Fire TV and Android TV.",
+  },
+  {
+    q: "Can I import my ProPresenter files?",
+    a: "You can bring content in via PowerPoint import and Google Slides sync. For song lyrics, our AI formatting lets you paste them in and have them formatted into slides in an instant, so moving your library over is quick.",
+  },
+  {
+    q: "Can multiple people control it at once?",
+    a: "Yes, in real time, from separate devices. This is one of the biggest differences from ProPresenter.",
+  },
+  {
+    q: "What about video output for cameras / broadcast?",
+    a: "This is where ProPresenter is stronger. We don't offer SDI or NDI professional video I/O yet, so for large-production stages ProPresenter remains the better tool.",
+  },
+  {
+    q: "Does it work with Planning Center?",
+    a: "Not yet. If your church runs everything through Planning Center Online, that's currently a reason to stay on ProPresenter. PCO integration is something we're watching, but it isn't here today.",
+  },
+  {
+    q: "Does it handle CCLI / SongSelect?",
+    a: "No. You can import lyrics from other sources or add them yourself, but there's no SongSelect import or CCLI usage reporting. If copyright reporting is part of your workflow, ProPresenter is stronger here.",
+  },
+  {
+    q: "Can I use it for digital signage too?",
+    a: "Yes. Because it runs in a browser on a TV stick and can loop slides, images, and web pages, the same setup can drive lobby or announcement screens during the week.",
+  },
+];
+---
+
+<ArticleLayout
+  title="Free ProPresenter Alternative (Open Source) | TheOpenPresenter"
+  description="Looking for a free ProPresenter alternative? TheOpenPresenter is open source, web-based, and collaborative, with an honest look at where ProPresenter still wins."
+>
+  <ArticleHeader
+    backHref="/compare"
+    backLabel="All comparisons"
+    category="Comparison"
+    minutes={9}
+    title="Free ProPresenter alternative: TheOpenPresenter"
+  >
+    ProPresenter is the industry standard for a reason. It's mature, powerful,
+    and runs on stages far bigger than most churches will ever need. But it's
+    also paid, licensed per machine, and heavier than a lot of teams actually
+    require.
+  </ArticleHeader>
+
+  <p class="text-lg text-gray-600 dark:text-gray-300 mb-12">
+    If you're looking for a free, open-source alternative, something a volunteer
+    can run from a phone, that doesn't tie you to one licensed Mac at the front,
+    this page lays out where TheOpenPresenter is a real replacement, and, just
+    as importantly, where ProPresenter is still the better choice.
+  </p>
+
+  <!-- At a glance -->
+  <h2 class="text-2xl md:text-3xl font-black font-red-hat-display mb-6">
+    At a glance
+  </h2>
+  <div class="grid gap-6 md:grid-cols-2 mb-16">
+    <div
+      class="rounded-lg border border-teal-200 dark:border-teal-500/30 bg-teal-50 dark:bg-teal-500/10 p-6"
+    >
+      <p class="font-semibold text-gray-900 dark:text-gray-100 mb-4">
+        TheOpenPresenter is a strong alternative if you want:
+      </p>
+      <ul class="space-y-3 text-gray-600 dark:text-gray-300">
+        <li class="flex gap-3">
+          <span class="text-teal-500 shrink-0">&#10003;</span>
+          Software that's free and open source (AGPL 3.0), with no per-machine license
+        </li>
+        <li class="flex gap-3">
+          <span class="text-teal-500 shrink-0">&#10003;</span>
+          To build and control presentations from a phone, tablet, or any browser
+        </li>
+        <li class="flex gap-3">
+          <span class="text-teal-500 shrink-0">&#10003;</span>
+          Multiple people running the same screen at once, in real time
+        </li>
+        <li class="flex gap-3">
+          <span class="text-teal-500 shrink-0">&#10003;</span>
+          Google Slides synced straight onto the screen
+        </li>
+        <li class="flex gap-3">
+          <span class="text-teal-500 shrink-0">&#10003;</span>
+          A simple setup for a small church or mid-week group
+        </li>
+      </ul>
+    </div>
+
+    <div class="rounded-lg border border-gray-200 dark:border-gray-800 p-6">
+      <p class="font-semibold text-gray-900 dark:text-gray-100 mb-4">
+        Stick with ProPresenter if you need:
+      </p>
+      <ul class="space-y-3 text-gray-600 dark:text-gray-300">
+        <li class="flex gap-3">
+          <span class="text-gray-400 shrink-0">&bull;</span>
+          SDI/NDI and professional video I/O for a broadcast or large-production
+          stage
+        </li>
+        <li class="flex gap-3">
+          <span class="text-gray-400 shrink-0">&bull;</span>
+          A built-in scheduling and cue system for tightly-timed services
+        </li>
+        <li class="flex gap-3">
+          <span class="text-gray-400 shrink-0">&bull;</span>
+          Planning Center and CCLI SongSelect built into your workflow
+        </li>
+        <li class="flex gap-3">
+          <span class="text-gray-400 shrink-0">&bull;</span>
+          The deep feature maturity that comes from years of development
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Feature comparison -->
+  <h2 class="text-2xl md:text-3xl font-black font-red-hat-display mb-6">
+    Feature comparison
+  </h2>
+  <div class="overflow-x-auto mb-6">
+    <table class="w-full text-left border-collapse">
+      <thead>
+        <tr>
+          <th
+            class="py-3 pr-4 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-300"
+          ></th>
+          <th
+            class="py-3 px-4 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-300"
+          >
+            ProPresenter
+          </th>
+          <th
+            class="py-3 pl-4 text-xs font-semibold uppercase tracking-wide text-teal-500"
+          >
+            TheOpenPresenter
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {
+          comparison.map((row) => (
+            <tr class="border-t border-gray-200 dark:border-gray-800 align-top">
+              <td class="py-3 pr-4 font-medium text-gray-900 dark:text-gray-100">
+                {row.feature}
+              </td>
+              <td
+                class={
+                  row.winner === "pp"
+                    ? "py-3 px-4 font-bold text-gray-900 dark:text-white"
+                    : "py-3 px-4 text-gray-600 dark:text-gray-300"
+                }
+              >
+                {row.pp}
+              </td>
+              <td
+                class={
+                  row.winner === "top"
+                    ? "py-3 pl-4 font-bold text-teal-600 dark:text-teal-400"
+                    : "py-3 pl-4 text-gray-600 dark:text-gray-300"
+                }
+              >
+                {row.top}
+              </td>
+            </tr>
+          ))
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <p class="text-gray-600 dark:text-gray-300 mb-16">
+    We've highlighted the wins on each side deliberately. ProPresenter is
+    clearly ahead on pro video (SDI/NDI), lower thirds, transitions,
+    macros/MIDI, cueing, a mature stage display, and the two integrations
+    churches ask about most: <strong class="font-semibold"
+      >Planning Center and CCLI SongSelect</strong
+    >. TheOpenPresenter is ahead on price, real-time collaboration, web/phone
+    control, Google Slides, screen share, digital signage, and openness. Which
+    column matters more depends entirely on your church.
+  </p>
+
+  <!-- Where ProPresenter is still better -->
+  <h2 class="text-2xl md:text-3xl font-black font-red-hat-display mb-4">
+    Where ProPresenter is still better, and who should stay
+  </h2>
+  <p class="text-lg text-gray-600 dark:text-gray-300 mb-6">
+    We're not going to pretend otherwise:
+  </p>
+  <ul class="space-y-4 text-gray-600 dark:text-gray-300 mb-6">
+    <li class="flex gap-3">
+      <span class="text-gray-400 shrink-0">&bull;</span>
+      <span>
+        <strong class="font-semibold text-gray-900 dark:text-gray-100"
+          >You run a large-production stage.</strong
+        > If you're feeding SDI or NDI to cameras, a broadcast mixer, or a big LED
+        wall, ProPresenter's pro video I/O is built for that and we're not there
+        yet.
+      </span>
+    </li>
+    <li class="flex gap-3">
+      <span class="text-gray-400 shrink-0">&bull;</span>
+      <span>
+        <strong class="font-semibold text-gray-900 dark:text-gray-100"
+          >You rely on a cue/scheduling system.</strong
+        > ProPresenter lets you script a tightly-timed service with cues. We don't
+        have that yet. It's on the roadmap, but "yet" is the honest word.
+      </span>
+    </li>
+    <li class="flex gap-3">
+      <span class="text-gray-400 shrink-0">&bull;</span>
+      <span>
+        <strong class="font-semibold text-gray-900 dark:text-gray-100"
+          >You live in Planning Center.</strong
+        > If your service order, songs, and volunteers already flow through Planning
+        Center Online, ProPresenter imports straight from it. We don't integrate
+        with PCO yet, so you'd build the service in TheOpenPresenter directly.
+      </span>
+    </li>
+    <li class="flex gap-3">
+      <span class="text-gray-400 shrink-0">&bull;</span>
+      <span>
+        <strong class="font-semibold text-gray-900 dark:text-gray-100"
+          >You rely on CCLI SongSelect and reporting.</strong
+        > ProPresenter pulls songs from SongSelect and helps with copyright reporting.
+        We don't. You import lyrics from other sources or add them yourself, and
+        we don't track CCLI usage.
+      </span>
+    </li>
+    <li class="flex gap-3">
+      <span class="text-gray-400 shrink-0">&bull;</span>
+      <span>
+        <strong class="font-semibold text-gray-900 dark:text-gray-100"
+          >You need years of edge-case polish.</strong
+        > ProPresenter has been refined over a long time. For the most demanding
+        setups, that maturity shows.
+      </span>
+    </li>
+  </ul>
+  <p class="text-gray-600 dark:text-gray-300 mb-16">
+    If that's you, TheOpenPresenter isn't the right switch today. Bookmark us
+    and check back.
+  </p>
+
+  <!-- Where TheOpenPresenter wins -->
+  <h2 class="text-2xl md:text-3xl font-black font-red-hat-display mb-4">
+    Where TheOpenPresenter wins
+  </h2>
+  <p class="text-lg text-gray-600 dark:text-gray-300 mb-8">
+    For most small and mid-sized churches, the things below matter more than SDI
+    ever will:
+  </p>
+
+  <div class="space-y-8 mb-16">
+    <div>
+      <h3 class="text-xl font-red-hat-display font-black mb-2">
+        It's free and open source
+      </h3>
+      <p class="text-gray-600 dark:text-gray-300">
+        No license to buy, no per-machine cost. It's AGPL 3.0, so you can
+        self-host it, read the code, and it can never be taken away from you.
+        For churches under 50 weekly attendance, the full cloud plan is free
+        through our <a
+          href="/church/sponsorship"
+          class="text-teal-600 dark:text-teal-400 hover:underline font-medium"
+          >sponsorship programme</a
+        >, storage and AI credits included.
+      </p>
+    </div>
+
+    <div>
+      <h3 class="text-xl font-red-hat-display font-black mb-2">
+        Anyone can run it, from anything
+      </h3>
+      <p class="text-gray-600 dark:text-gray-300">
+        ProPresenter lives on one licensed machine at the front.
+        TheOpenPresenter runs in a browser and is controlled from a phone,
+        tablet, or laptop. Your worship leader can advance lyrics from the stage
+        while someone else fixes a typo from the back row, at the same time,
+        with nothing to install.
+      </p>
+    </div>
+
+    <div>
+      <h3 class="text-xl font-red-hat-display font-black mb-2">
+        Real collaboration
+      </h3>
+      <p class="text-gray-600 dark:text-gray-300">
+        Several people can control the same presentation simultaneously, in real
+        time. Prepare the service together during the week; run it together on
+        Sunday. No single indispensable operator.
+      </p>
+    </div>
+
+    <div>
+      <h3 class="text-xl font-red-hat-display font-black mb-2">
+        Google Slides, synced
+      </h3>
+      <p class="text-gray-600 dark:text-gray-300">
+        Build announcements and sermon slides in Google Slides, where your team
+        already works, and sync them straight onto the screen. ProPresenter
+        can't import Google Slides at all.
+      </p>
+    </div>
+
+    <div>
+      <h3 class="text-xl font-red-hat-display font-black mb-2">
+        Share any screen, live
+      </h3>
+      <p class="text-gray-600 dark:text-gray-300">
+        Push an operator's screen straight to the output over the network, handy
+        for a last-minute website, a live document, or anything not built as a
+        slide.
+      </p>
+    </div>
+
+    <div>
+      <h3 class="text-xl font-red-hat-display font-black mb-2">
+        Doubles as digital signage
+      </h3>
+      <p class="text-gray-600 dark:text-gray-300">
+        Because it runs in a browser on a TV stick and can loop slides, images,
+        and embedded web pages, the same setup drives lobby screens or
+        announcement displays through the week, not just Sunday.
+      </p>
+    </div>
+
+    <div>
+      <h3 class="text-xl font-red-hat-display font-black mb-2">
+        No laptop required
+      </h3>
+      <p class="text-gray-600 dark:text-gray-300">
+        Plug a Fire TV Stick, Chromecast, or Android TV device into the screen
+        and present straight to the TV. <a
+          href="/how-to/present-on-tv"
+          class="text-teal-600 dark:text-teal-400 hover:underline font-medium"
+          >See how</a
+        >.
+      </p>
+    </div>
+  </div>
+
+  <!-- Switching from ProPresenter -->
+  <h2 class="text-2xl md:text-3xl font-black font-red-hat-display mb-4">
+    Switching from ProPresenter
+  </h2>
+  <p class="text-lg text-gray-600 dark:text-gray-300 mb-6">
+    You don't have to rip everything out at once:
+  </p>
+  <ol
+    class="list-decimal list-outside pl-5 space-y-3 text-gray-600 dark:text-gray-300 mb-6"
+  >
+    <li>
+      <strong class="font-semibold">Start free.</strong>
+      <a
+        href="/register"
+        class="text-teal-600 dark:text-teal-400 hover:underline font-medium"
+        >Create an account</a
+      >. No card, no commitment.
+    </li>
+    <li>
+      <strong class="font-semibold">Bring your existing slides.</strong>
+      Import PowerPoint files, or sync from Google Slides. Add your song lyrics.
+    </li>
+    <li>
+      <strong class="font-semibold">Connect a screen</strong>, a browser on any
+      device, or a TV stick. <a
+        href="/how-to/use-online-for-church"
+        class="text-teal-600 dark:text-teal-400 hover:underline font-medium"
+        >Setup guide</a
+      >.
+    </li>
+    <li>
+      <strong class="font-semibold">Run one service as a trial</strong> alongside
+      ProPresenter. Keep the old setup as backup until you're confident.
+    </li>
+  </ol>
+  <p class="text-gray-600 dark:text-gray-300 mb-16">
+    Most teams find a single mid-week meeting is the low-risk way to test it
+    before trusting it with a Sunday.
+  </p>
+
+  <!-- FAQ -->
+  <h2 class="text-2xl md:text-3xl font-black font-red-hat-display mb-6">
+    Frequently asked questions
+  </h2>
+  <div class="space-y-6 mb-16">
+    {
+      faqs.map((faq) => (
+        <div class="border-b border-gray-200 dark:border-gray-800 pb-6">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+            {faq.q}
+          </h3>
+          <p class="text-gray-600 dark:text-gray-300">{faq.a}</p>
+        </div>
+      ))
+    }
+  </div>
+
+  <!-- Try it free / CTA -->
+  <WrapUpCta
+    title="Try it free"
+    buttons={[
+      { label: "Try it online now", href: "/register", variant: "primary" },
+      { label: "See the church plan", href: "/church", variant: "secondary" },
+    ]}
+  >
+    If you're a small church that wants presentation software without the
+    license fee, that a volunteer can run from a phone, that your whole team can
+    use at once. TheOpenPresenter is built for you.
+    <p slot="footer" class="text-sm text-gray-500 dark:text-gray-400 mt-6">
+      Free to start, no card needed. Or read <a
+        href="/how-to/use-online-for-church"
+        class="text-teal-600 dark:text-teal-400 hover:underline font-medium"
+        >how to get set up for church</a
+      >.
+    </p>
+  </WrapUpCta>
+
+  <p class="text-gray-600 dark:text-gray-300 mt-10 text-center italic">
+    Honest verdict: if you need SDI/NDI, cue-based scheduling, or a Planning
+    Center and CCLI workflow, stay on ProPresenter for now. For everyone else,
+    there's no reason to keep paying.
+  </p>
+</ArticleLayout>

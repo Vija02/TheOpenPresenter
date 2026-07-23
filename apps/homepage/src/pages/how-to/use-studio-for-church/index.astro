@@ -1,7 +1,13 @@
 ---
-import { Image } from "astro:assets";
-import DefaultLayout from "../../../layouts/DefaultLayout.astro";
-import PageIllustration from "../../../components/PageIllustration.astro";
+import ArticleLayout from "../../../components/content/ArticleLayout.astro";
+import ArticleHeader from "../../../components/content/ArticleHeader.astro";
+import Callout from "../../../components/content/Callout.astro";
+import StepsNav from "../../../components/content/StepsNav.astro";
+import Step from "../../../components/content/Step.astro";
+import Figure from "../../../components/content/Figure.astro";
+import FigureGrid from "../../../components/content/FigureGrid.astro";
+import Tip from "../../../components/content/Tip.astro";
+import WrapUpCta from "../../../components/content/WrapUpCta.astro";
 import installWelcomeImg from "../../../assets/images/how-to/use-studio-for-church/install-welcome.png";
 import installLocationImg from "../../../assets/images/how-to/use-studio-for-church/install-location.png";
 import installCompleteImg from "../../../assets/images/how-to/use-studio-for-church/install-complete.png";
@@ -21,501 +27,320 @@ const steps = [
 ];
 ---
 
-<DefaultLayout
+<ArticleLayout
   title="How to use TheOpenPresenter Studio for church"
   description="A step-by-step guide to TheOpenPresenter Studio, the free, open source desktop app: download it, install it, build your service, and present from your own laptop, no account needed."
 >
-  <!-- Page illustration -->
-  <div
-    class="relative max-w-6xl mx-auto h-0 pointer-events-none -z-1"
-    aria-hidden="true"
+  <ArticleHeader
+    backHref="/how-to"
+    backLabel="All how-to guides"
+    category="For churches"
+    minutes={7}
+    title="How to use TheOpenPresenter Studio for church"
   >
-    <PageIllustration />
+    TheOpenPresenter Studio is the free, open source desktop version of
+    the app. It runs entirely on your own laptop or PC, works offline,
+    and needs no account, the closest fit if you're replacing software
+    like ProPresenter or EasyWorship. This guide shows you how to install
+    it and run your first Sunday service.
+  </ArticleHeader>
+
+  <Callout>
+    Studio is available for Windows today, with macOS on the way. You'll want
+    the laptop or PC that sits at the front of your church, and a TV or
+    projector to connect to. Because everything runs on your own machine, you
+    don't need an internet connection to present. It's still good to be online
+    when you can, though, some features like importing lyrics from the online
+    song library need an internet connection.
+  </Callout>
+
+  <StepsNav steps={steps} />
+
+  <Step id="download" number={1} title="Download Studio">
+    <p class="text-lg text-gray-600 dark:text-gray-300 mb-4">
+      Studio is a free download. There's nothing to buy and no license to
+      sign up for.
+    </p>
+
+    <ol
+      class="list-decimal list-outside pl-5 space-y-3 text-gray-600 dark:text-gray-300 mb-6"
+    >
+      <li>
+        Go to the{" "}
+        <a
+          href="/download#studio"
+          class="text-teal-600 dark:text-teal-400 hover:underline font-medium"
+          >downloads page</a
+        >.
+      </li>
+      <li>
+        Under <strong class="font-semibold">TheOpenPresenter Studio</strong>,
+        download the Windows installer (the{" "}
+        <strong class="font-semibold">.exe</strong>). There's also an{" "}
+        <strong class="font-semibold">.msi</strong> if your church manages
+        installs centrally.
+      </li>
+      <li>
+        On a Mac? Studio for macOS is coming soon, so check back on the
+        downloads page.
+      </li>
+    </ol>
+
+    <Tip label="Good to know">
+      Studio is the whole app packaged as one desktop program. Like the rest
+      of the project, it's completely free and open source.
+    </Tip>
+  </Step>
+
+  <Step id="install" number={2} title="Install and open it">
+    <ol
+      class="list-decimal list-outside pl-5 space-y-3 text-gray-600 dark:text-gray-300 mb-6"
+    >
+      <li>
+        Run the installer you just downloaded. When the setup window
+        appears, click <strong class="font-semibold">Next</strong> to
+        begin.
+      </li>
+      <li>
+        Choose where to install it (the default location is fine for most
+        people), then continue through the installer.
+      </li>
+      <li>
+        When you see <strong class="font-semibold">Installation Complete</strong>,
+        you're done. Open{" "}
+        <strong class="font-semibold">TheOpenPresenter Studio</strong> from
+        your Start menu or desktop.
+      </li>
+      <li>
+        The first time you open it, give it a moment to start up. Studio
+        runs its own private copy of TheOpenPresenter behind the scenes, so
+        the very first launch takes a little longer.
+      </li>
+    </ol>
+
+    <FigureGrid cols={3}>
+      <Figure
+        src={installWelcomeImg}
+        alt="The TheOpenPresenter Studio setup welcome screen with a Next button"
+      />
+      <Figure
+        src={installLocationImg}
+        alt="The installer's Choose Install Location screen showing the destination folder"
+      />
+      <Figure
+        src={installCompleteImg}
+        alt="The installer's Installation Complete screen with a green progress bar"
+      />
+    </FigureGrid>
+
+    <Tip label="That's it">
+      No account, no sign up, and no internet needed to get going. Everything
+      you create is stored on your own computer.
+    </Tip>
+  </Step>
+
+  <Step id="create-project" number={3} title="Create a project for Sunday">
+    <p class="text-lg text-gray-600 dark:text-gray-300 mb-4">
+      A <strong class="font-semibold">project</strong> is a single service
+      or event, think of it as "this Sunday's service." You'll make a new
+      project each week and fill it with everything you want to show: song
+      lyrics, announcements, the sermon, and more.
+    </p>
+
+    <ol
+      class="list-decimal list-outside pl-5 space-y-3 text-gray-600 dark:text-gray-300 mb-6"
+    >
+      <li>
+        From the <strong class="font-semibold">Projects</strong> page,
+        click <strong class="font-semibold">New project</strong>.
+      </li>
+      <li>
+        Give the project a <strong class="font-semibold">Name</strong>,
+        such as "Sunday Service, 13 Jul". If you leave it blank, it's named
+        with today's date.
+      </li>
+      <li>
+        Set the <strong class="font-semibold">Service Time</strong> for the
+        service. You can optionally add a{" "}
+        <strong class="font-semibold">Category</strong> and{" "}
+        <strong class="font-semibold">Tags</strong> to keep things
+        organized week to week.
+      </li>
+      <li>
+        Click <strong class="font-semibold">Save</strong>. The project
+        opens in the editor, ready for you to add content.
+      </li>
+    </ol>
+
+    <Figure
+      src={createProjectImg}
+      alt="The Projects page with the New Project dialog open, showing Name, Service Time, Category and Tags fields and a Save button"
+      size="xl"
+      class="mb-6"
+    />
+  </Step>
+
+  <Step id="add-lyrics" number={4} title="Add lyrics">
+    <p class="text-lg text-gray-600 dark:text-gray-300 mb-4">
+      Let's add the songs for your worship set. Lyrics live in the{" "}
+      <strong class="font-semibold">Lyrics Presenter</strong>, which shows
+      song words on the screen one section at a time.
+    </p>
+
+    <ol
+      class="list-decimal list-outside pl-5 space-y-3 text-gray-600 dark:text-gray-300 mb-6"
+    >
+      <li>
+        In your project's editor, click{" "}
+        <strong class="font-semibold">Add component</strong> and choose{" "}
+        <strong class="font-semibold">Lyrics Presenter</strong> from the
+        Display section.
+      </li>
+      <li>
+        The <strong class="font-semibold">Add song(s)</strong> window opens.
+        You have a few ways to add a song:
+        <ul
+          class="list-disc list-outside pl-5 space-y-2 mt-2 text-gray-600 dark:text-gray-300"
+        >
+          <li>
+            <strong class="font-semibold">Search</strong>, type a song
+            title into the search box to find it in your Songbook (songs
+            you've saved before) or import it from the online song library.
+          </li>
+          <li>
+            <strong class="font-semibold">Create new song</strong>, click
+            this to type or paste the lyrics in yourself.
+          </li>
+        </ul>
+      </li>
+      <li>
+        <strong class="font-semibold">Example, importing "Praise":</strong>
+        Type <strong class="font-semibold">Praise</strong> into the search
+        box and pick it from the song library. The{" "}
+        <strong class="font-semibold">Import a song</strong> window opens
+        with the lyrics already filled in and split into sections like{" "}
+        <code
+          class="px-1 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-sm"
+          >Verse 1</code
+        >
+        and <code
+          class="px-1 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-sm"
+          >Chorus</code
+        >. Each section becomes its own slide on the screen.
+      </li>
+      <li>
+        Want to tidy the formatting? Click{" "}
+        <strong class="font-semibold">AI Format</strong> (the magic-wand
+        button) and it will clean up the words into neat verses and
+        choruses for you.
+      </li>
+      <li>
+        Tick <strong class="font-semibold">Save to songbook</strong> if you
+        want to reuse this song next time, then click{" "}
+        <strong class="font-semibold">Import</strong> to add it to your set.
+        Repeat for each song you need.
+      </li>
+    </ol>
+
+    <FigureGrid cols={3}>
+      <Figure
+        src={addLyricsComponentImg}
+        alt="The Add component screen with Lyrics Presenter highlighted under the Display section"
+      />
+      <Figure
+        src={searchSongImg}
+        alt="Searching for the song Praise in the Add song window, showing Songbook results and Import results from MyWorshipList with a matching song highlighted"
+      />
+      <Figure
+        src={importSongImg}
+        alt="The Add song window showing an imported song with lyric slides, a Save to songbook checkbox, an AI Format button and an Import button"
+      />
+    </FigureGrid>
+
+    <Tip>
+      Keep one line of thought per slide. Shorter sections are easier for the
+      congregation to read and easier for you to follow along while presenting.
+    </Tip>
+  </Step>
+
+  <Step id="present" number={5} title="Present to your screen">
+    <p class="text-lg text-gray-600 dark:text-gray-300 mb-4">
+      On Sunday, present straight from Studio to your TV or projector.
+    </p>
+
+    <ol
+      class="list-decimal list-outside pl-5 space-y-3 text-gray-600 dark:text-gray-300 mb-6"
+    >
+      <li>
+        Connect your TV or projector to the computer, and set your display
+        to <strong class="font-semibold">extend</strong> (so the projector
+        is a second screen, not a mirror of your laptop).
+      </li>
+      <li>
+        Open this week's project and click the{" "}
+        <strong class="font-semibold">Present</strong> button.
+      </li>
+      <li>
+        In the <strong class="font-semibold">Select monitor</strong> list,
+        choose the display that's your TV or projector (for example,{" "}
+        <strong class="font-semibold">DISPLAY2</strong>). The lyrics fill
+        that screen while you keep the controls on your laptop.
+      </li>
+      <li>
+        Click a song section to send it to the screen. Move through the set
+        as the service goes on, and stop presenting when you're done.
+      </li>
+    </ol>
+
+    <Figure
+      src={presentMonitorImg}
+      alt="The Lyrics Presenter editor with the Present button and the Select monitor dialog listing DISPLAY1 and DISPLAY2"
+      size="2xl"
+      class="mb-6"
+    />
+
+    <Tip>
+      Because Studio runs offline, your service keeps working even if the
+      church internet drops out mid-song.
+    </Tip>
+  </Step>
+
+  <Step id="cloud" number={6} title="Connect to the cloud (optional)">
+    <p class="text-lg text-gray-600 dark:text-gray-300 mb-4">
+      Studio works completely offline, but you can connect it to the cloud
+      whenever you want to work together as a team.
+    </p>
+
+    <p class="text-lg text-gray-600 dark:text-gray-300">
+      Once connected, your team can help build the service from their own
+      devices, and you can control the show from your phone, just like the
+      online version. If you're happy working on one machine, you can skip
+      this entirely.
+    </p>
+  </Step>
+
+  <WrapUpCta
+    title="Ready to try Studio?"
+    buttons={[
+      { label: "Download Studio", href: "/download#studio", variant: "primary" },
+      { label: "Learn more", href: "/church", variant: "secondary" },
+    ]}
+  >
+    Download it free, install it on the laptop at the front, and you're
+    ready for Sunday. No account, no catch.
+  </WrapUpCta>
+
+  <!-- Help note -->
+  <div class="text-center mt-12">
+    <p class="text-gray-600 dark:text-gray-300">
+      Stuck on a step? Email{" "}
+      <a
+        href="mailto:support@theopenpresenter.com"
+        class="text-teal-600 dark:text-teal-400 hover:underline font-medium"
+      >
+        support@theopenpresenter.com
+      </a>{" "}
+      and we'll help you get set up.
+    </p>
   </div>
-
-  <section class="relative">
-    <div class="relative max-w-5xl mx-auto px-4 sm:px-6">
-      <div class="pt-32 pb-12 md:pt-40 md:pb-20">
-        <!-- Header -->
-        <div class="pb-10 md:pb-12">
-          <a
-            href="/how-to"
-            class="flex w-fit items-center text-sm text-teal-500 hover:underline mb-4"
-          >
-            <svg
-              class="w-3 h-3 fill-current shrink-0 mr-2 rotate-180"
-              viewBox="0 0 12 12"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M6.602 11l-.976-.997 3.831-3.905H0V4.749h9.457L5.626.844 6.602 0 12 5.5z"
-              ></path>
-            </svg>
-            All how-to guides
-          </a>
-          <div
-            class="inline-flex items-center text-sm font-semibold tracking-wide uppercase text-teal-500 mb-2"
-          >
-            For churches &bull; 7 min read
-          </div>
-          <h1
-            class="text-3xl sm:text-4xl md:text-5xl font-black tracking-tighter font-red-hat-display mb-4 break-words"
-          >
-            How to use TheOpenPresenter Studio for church
-          </h1>
-          <p class="text-xl text-gray-600 dark:text-gray-300">
-            TheOpenPresenter Studio is the free, open source desktop version of
-            the app. It runs entirely on your own laptop or PC, works offline,
-            and needs no account, the closest fit if you're replacing software
-            like ProPresenter or EasyWorship. This guide shows you how to install
-            it and run your first Sunday service.
-          </p>
-        </div>
-
-        <!-- Before you start -->
-        <div
-          class="rounded-lg bg-teal-50 dark:bg-teal-500/10 border border-teal-200 dark:border-teal-500/30 p-5 mb-12 flex gap-4 items-start"
-        >
-          <div
-            class="shrink-0 w-10 h-10 rounded-full bg-teal-500/15 dark:bg-teal-500/20 flex items-center justify-center text-teal-600 dark:text-teal-400"
-            aria-hidden="true"
-          >
-            <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
-              <path
-                d="M11 7h2v2h-2V7zm0 4h2v6h-2v-6zm1-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"
-              ></path>
-            </svg>
-          </div>
-          <div>
-            <p class="font-semibold text-gray-900 dark:text-gray-100 mb-1">
-              Before you start
-            </p>
-            <p class="text-sm text-gray-600 dark:text-gray-300">
-              Studio is available for Windows today, with macOS on the way.
-              You'll want the laptop or PC that sits at the front of your church,
-              and a TV or projector to connect to. Because everything runs on
-              your own machine, you don't need an internet connection to present.
-              It's still good to be online when you can, though, some features
-              like importing lyrics from the online song library need an internet
-              connection.
-            </p>
-          </div>
-        </div>
-
-        <!-- Table of contents -->
-        <nav class="mb-12" aria-label="Steps in this guide">
-          <p
-            class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-300 mb-3"
-          >
-            What you'll do
-          </p>
-          <ol class="grid gap-2">
-            {
-              steps.map((step, i) => (
-                <li>
-                  <a
-                    href={`#${step.id}`}
-                    class="flex items-center gap-3 text-gray-700 dark:text-gray-300 hover:text-teal-500 transition-colors"
-                  >
-                    <span class="shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-800 text-xs font-bold">
-                      {i + 1}
-                    </span>
-                    {step.label}
-                  </a>
-                </li>
-              ))
-            }
-          </ol>
-        </nav>
-
-        <!-- ===================== STEP 1 ===================== -->
-        <article id="download" class="scroll-mt-24 mb-16">
-          <div class="flex items-center gap-4 mb-4">
-            <div
-              class="flex items-center justify-center w-12 h-12 rounded-full text-white font-red-hat-display font-black text-xl bg-linear-to-tr from-teal-500 to-teal-400 shrink-0"
-            >
-              1
-            </div>
-            <h2 class="h3 font-red-hat-display">Download Studio</h2>
-          </div>
-
-          <p class="text-lg text-gray-600 dark:text-gray-300 mb-4">
-            Studio is a free download. There's nothing to buy and no license to
-            sign up for.
-          </p>
-
-          <ol
-            class="list-decimal list-outside pl-5 space-y-3 text-gray-600 dark:text-gray-300 mb-6"
-          >
-            <li>
-              Go to the{" "}
-              <a
-                href="/download#studio"
-                class="text-teal-600 dark:text-teal-400 hover:underline font-medium"
-                >downloads page</a
-              >.
-            </li>
-            <li>
-              Under <strong class="font-semibold">TheOpenPresenter Studio</strong>,
-              download the Windows installer (the{" "}
-              <strong class="font-semibold">.exe</strong>). There's also an{" "}
-              <strong class="font-semibold">.msi</strong> if your church manages
-              installs centrally.
-            </li>
-            <li>
-              On a Mac? Studio for macOS is coming soon, so check back on the
-              downloads page.
-            </li>
-          </ol>
-
-          <div
-            class="rounded-md bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-800 p-4 text-sm text-gray-600 dark:text-gray-300"
-          >
-            <span class="font-semibold text-gray-900 dark:text-gray-100"
-              >Good to know:</span
-            > Studio is the whole app packaged as one desktop program. Like the rest
-            of the project, it's completely free and open source.
-          </div>
-        </article>
-
-        <!-- ===================== STEP 2 ===================== -->
-        <article id="install" class="scroll-mt-24 mb-16">
-          <div class="flex items-center gap-4 mb-4">
-            <div
-              class="flex items-center justify-center w-12 h-12 rounded-full text-white font-red-hat-display font-black text-xl bg-linear-to-tr from-purple-500 to-purple-400 shrink-0"
-            >
-              2
-            </div>
-            <h2 class="h3 font-red-hat-display">Install and open it</h2>
-          </div>
-
-          <ol
-            class="list-decimal list-outside pl-5 space-y-3 text-gray-600 dark:text-gray-300 mb-6"
-          >
-            <li>
-              Run the installer you just downloaded. When the setup window
-              appears, click <strong class="font-semibold">Next</strong> to
-              begin.
-            </li>
-            <li>
-              Choose where to install it (the default location is fine for most
-              people), then continue through the installer.
-            </li>
-            <li>
-              When you see <strong class="font-semibold">Installation Complete</strong>,
-              you're done. Open{" "}
-              <strong class="font-semibold">TheOpenPresenter Studio</strong> from
-              your Start menu or desktop.
-            </li>
-            <li>
-              The first time you open it, give it a moment to start up. Studio
-              runs its own private copy of TheOpenPresenter behind the scenes, so
-              the very first launch takes a little longer.
-            </li>
-          </ol>
-
-          <div class="grid gap-4 sm:grid-cols-3 items-start mb-6">
-            <Image
-              src={installWelcomeImg}
-              alt="The TheOpenPresenter Studio setup welcome screen with a Next button"
-              class="rounded-lg border border-gray-200 dark:border-gray-800 shadow-sm w-full h-auto"
-            />
-
-            <Image
-              src={installLocationImg}
-              alt="The installer's Choose Install Location screen showing the destination folder"
-              class="rounded-lg border border-gray-200 dark:border-gray-800 shadow-sm w-full h-auto"
-            />
-
-            <Image
-              src={installCompleteImg}
-              alt="The installer's Installation Complete screen with a green progress bar"
-              class="rounded-lg border border-gray-200 dark:border-gray-800 shadow-sm w-full h-auto"
-            />
-          </div>
-
-          <div
-            class="rounded-md bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-800 p-4 text-sm text-gray-600 dark:text-gray-300"
-          >
-            <span class="font-semibold text-gray-900 dark:text-gray-100"
-              >That's it:</span
-            > No account, no sign up, and no internet needed to get going. Everything
-            you create is stored on your own computer.
-          </div>
-        </article>
-
-        <!-- ===================== STEP 3 ===================== -->
-        <article id="create-project" class="scroll-mt-24 mb-16">
-          <div class="flex items-center gap-4 mb-4">
-            <div
-              class="flex items-center justify-center w-12 h-12 rounded-full text-white font-red-hat-display font-black text-xl bg-linear-to-tr from-indigo-500 to-indigo-400 shrink-0"
-            >
-              3
-            </div>
-            <h2 class="h3 font-red-hat-display">Create a project for Sunday</h2>
-          </div>
-
-          <p class="text-lg text-gray-600 dark:text-gray-300 mb-4">
-            A <strong class="font-semibold">project</strong> is a single service
-            or event, think of it as "this Sunday's service." You'll make a new
-            project each week and fill it with everything you want to show: song
-            lyrics, announcements, the sermon, and more.
-          </p>
-
-          <ol
-            class="list-decimal list-outside pl-5 space-y-3 text-gray-600 dark:text-gray-300 mb-6"
-          >
-            <li>
-              From the <strong class="font-semibold">Projects</strong> page,
-              click <strong class="font-semibold">New project</strong>.
-            </li>
-            <li>
-              Give the project a <strong class="font-semibold">Name</strong>,
-              such as "Sunday Service, 13 Jul". If you leave it blank, it's named
-              with today's date.
-            </li>
-            <li>
-              Set the <strong class="font-semibold">Service Time</strong> for the
-              service. You can optionally add a{" "}
-              <strong class="font-semibold">Category</strong> and{" "}
-              <strong class="font-semibold">Tags</strong> to keep things
-              organized week to week.
-            </li>
-            <li>
-              Click <strong class="font-semibold">Save</strong>. The project
-              opens in the editor, ready for you to add content.
-            </li>
-          </ol>
-
-          <Image
-            src={createProjectImg}
-            alt="The Projects page with the New Project dialog open, showing Name, Service Time, Category and Tags fields and a Save button"
-            class="rounded-lg border border-gray-200 dark:border-gray-800 shadow-sm w-full max-w-xl mx-auto h-auto mb-6 block"
-          />
-        </article>
-
-        <!-- ===================== STEP 4 ===================== -->
-        <article id="add-lyrics" class="scroll-mt-24 mb-16">
-          <div class="flex items-center gap-4 mb-4">
-            <div
-              class="flex items-center justify-center w-12 h-12 rounded-full text-white font-red-hat-display font-black text-xl bg-linear-to-tr from-pink-500 to-pink-400 shrink-0"
-            >
-              4
-            </div>
-            <h2 class="h3 font-red-hat-display">Add lyrics</h2>
-          </div>
-
-          <p class="text-lg text-gray-600 dark:text-gray-300 mb-4">
-            Let's add the songs for your worship set. Lyrics live in the{" "}
-            <strong class="font-semibold">Lyrics Presenter</strong>, which shows
-            song words on the screen one section at a time.
-          </p>
-
-          <ol
-            class="list-decimal list-outside pl-5 space-y-3 text-gray-600 dark:text-gray-300 mb-6"
-          >
-            <li>
-              In your project's editor, click{" "}
-              <strong class="font-semibold">Add component</strong> and choose{" "}
-              <strong class="font-semibold">Lyrics Presenter</strong> from the
-              Display section.
-            </li>
-            <li>
-              The <strong class="font-semibold">Add song(s)</strong> window opens.
-              You have a few ways to add a song:
-              <ul
-                class="list-disc list-outside pl-5 space-y-2 mt-2 text-gray-600 dark:text-gray-300"
-              >
-                <li>
-                  <strong class="font-semibold">Search</strong>, type a song
-                  title into the search box to find it in your Songbook (songs
-                  you've saved before) or import it from the online song library.
-                </li>
-                <li>
-                  <strong class="font-semibold">Create new song</strong>, click
-                  this to type or paste the lyrics in yourself.
-                </li>
-              </ul>
-            </li>
-            <li>
-              <strong class="font-semibold">Example, importing "Praise":</strong>
-              Type <strong class="font-semibold">Praise</strong> into the search
-              box and pick it from the song library. The{" "}
-              <strong class="font-semibold">Import a song</strong> window opens
-              with the lyrics already filled in and split into sections like{" "}
-              <code
-                class="px-1 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-sm"
-                >Verse 1</code
-              >
-              and <code
-                class="px-1 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-sm"
-                >Chorus</code
-              >. Each section becomes its own slide on the screen.
-            </li>
-            <li>
-              Want to tidy the formatting? Click{" "}
-              <strong class="font-semibold">AI Format</strong> (the magic-wand
-              button) and it will clean up the words into neat verses and
-              choruses for you.
-            </li>
-            <li>
-              Tick <strong class="font-semibold">Save to songbook</strong> if you
-              want to reuse this song next time, then click{" "}
-              <strong class="font-semibold">Import</strong> to add it to your set.
-              Repeat for each song you need.
-            </li>
-          </ol>
-
-          <div class="grid gap-4 sm:grid-cols-3 items-start mb-6">
-            <Image
-              src={addLyricsComponentImg}
-              alt="The Add component screen with Lyrics Presenter highlighted under the Display section"
-              class="rounded-lg border border-gray-200 dark:border-gray-800 shadow-sm w-full h-auto"
-            />
-
-            <Image
-              src={searchSongImg}
-              alt="Searching for the song Praise in the Add song window, showing Songbook results and Import results from MyWorshipList with a matching song highlighted"
-              class="rounded-lg border border-gray-200 dark:border-gray-800 shadow-sm w-full h-auto"
-            />
-
-            <Image
-              src={importSongImg}
-              alt="The Add song window showing an imported song with lyric slides, a Save to songbook checkbox, an AI Format button and an Import button"
-              class="rounded-lg border border-gray-200 dark:border-gray-800 shadow-sm w-full h-auto"
-            />
-          </div>
-
-          <div
-            class="rounded-md bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-800 p-4 text-sm text-gray-600 dark:text-gray-300"
-          >
-            <span class="font-semibold text-gray-900 dark:text-gray-100"
-              >Tip:</span
-            > Keep one line of thought per slide. Shorter sections are easier for the
-            congregation to read and easier for you to follow along while presenting.
-          </div>
-        </article>
-
-        <!-- ===================== STEP 5 ===================== -->
-        <article id="present" class="scroll-mt-24 mb-16">
-          <div class="flex items-center gap-4 mb-4">
-            <div
-              class="flex items-center justify-center w-12 h-12 rounded-full text-white font-red-hat-display font-black text-xl bg-linear-to-tr from-amber-500 to-amber-400 shrink-0"
-            >
-              5
-            </div>
-            <h2 class="h3 font-red-hat-display">Present to your screen</h2>
-          </div>
-
-          <p class="text-lg text-gray-600 dark:text-gray-300 mb-4">
-            On Sunday, present straight from Studio to your TV or projector.
-          </p>
-
-          <ol
-            class="list-decimal list-outside pl-5 space-y-3 text-gray-600 dark:text-gray-300 mb-6"
-          >
-            <li>
-              Connect your TV or projector to the computer, and set your display
-              to <strong class="font-semibold">extend</strong> (so the projector
-              is a second screen, not a mirror of your laptop).
-            </li>
-            <li>
-              Open this week's project and click the{" "}
-              <strong class="font-semibold">Present</strong> button.
-            </li>
-            <li>
-              In the <strong class="font-semibold">Select monitor</strong> list,
-              choose the display that's your TV or projector (for example,{" "}
-              <strong class="font-semibold">DISPLAY2</strong>). The lyrics fill
-              that screen while you keep the controls on your laptop.
-            </li>
-            <li>
-              Click a song section to send it to the screen. Move through the set
-              as the service goes on, and stop presenting when you're done.
-            </li>
-          </ol>
-
-          <Image
-            src={presentMonitorImg}
-            alt="The Lyrics Presenter editor with the Present button and the Select monitor dialog listing DISPLAY1 and DISPLAY2"
-            class="rounded-lg border border-gray-200 dark:border-gray-800 shadow-sm w-full max-w-2xl mx-auto h-auto mb-6 block"
-          />
-
-          <div
-            class="rounded-md bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-800 p-4 text-sm text-gray-600 dark:text-gray-300"
-          >
-            <span class="font-semibold text-gray-900 dark:text-gray-100"
-              >Tip:</span
-            > Because Studio runs offline, your service keeps working even if the
-            church internet drops out mid-song.
-          </div>
-        </article>
-
-        <!-- ===================== STEP 6 ===================== -->
-        <article id="cloud" class="scroll-mt-24 mb-16">
-          <div class="flex items-center gap-4 mb-4">
-            <div
-              class="flex items-center justify-center w-12 h-12 rounded-full text-white font-red-hat-display font-black text-xl bg-linear-to-tr from-sky-500 to-sky-400 shrink-0"
-            >
-              6
-            </div>
-            <h2 class="h3 font-red-hat-display">
-              Connect to the cloud (optional)
-            </h2>
-          </div>
-
-          <p class="text-lg text-gray-600 dark:text-gray-300 mb-4">
-            Studio works completely offline, but you can connect it to the cloud
-            whenever you want to work together as a team.
-          </p>
-
-          <p class="text-lg text-gray-600 dark:text-gray-300">
-            Once connected, your team can help build the service from their own
-            devices, and you can control the show from your phone, just like the
-            online version. If you're happy working on one machine, you can skip
-            this entirely.
-          </p>
-        </article>
-
-        <!-- Wrap up / CTA -->
-        <div
-          class="rounded-lg border border-gray-200 dark:border-gray-800 p-8 text-center"
-        >
-          <h2 class="h4 font-red-hat-display mb-2">Ready to try Studio?</h2>
-          <p class="text-gray-600 dark:text-gray-300 mb-6">
-            Download it free, install it on the laptop at the front, and you're
-            ready for Sunday. No account, no catch.
-          </p>
-          <div class="flex flex-wrap items-center justify-center gap-3">
-            <a
-              href="/download#studio"
-              class="btn text-white bg-teal-500 hover:bg-teal-400 shrink-0"
-            >
-              Download Studio
-            </a>
-            <a
-              href="/church"
-              class="btn text-teal-500 bg-transparent border border-teal-500 hover:bg-teal-500/10 shrink-0"
-            >
-              Learn more
-            </a>
-          </div>
-        </div>
-
-        <!-- Help note -->
-        <div class="text-center mt-12">
-          <p class="text-gray-600 dark:text-gray-300">
-            Stuck on a step? Email{" "}
-            <a
-              href="mailto:support@theopenpresenter.com"
-              class="text-teal-600 dark:text-teal-400 hover:underline font-medium"
-            >
-              support@theopenpresenter.com
-            </a>{" "}
-            and we'll help you get set up.
-          </p>
-        </div>
-      </div>
-    </div>
-  </section>
-</DefaultLayout>
+</ArticleLayout>

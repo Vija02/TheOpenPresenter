@@ -1,0 +1,41 @@
+---
+import DefaultLayout from "../../layouts/DefaultLayout.astro";
+import PageIllustration from "../PageIllustration.astro";
+
+const WIDTHS = {
+  "2xl": "max-w-2xl",
+  "3xl": "max-w-3xl",
+  "4xl": "max-w-4xl",
+  "5xl": "max-w-5xl",
+  "6xl": "max-w-6xl",
+};
+
+interface Props {
+  title?: string;
+  description?: string;
+  // Inner content max width. Article pages default to "4xl" for a comfortable
+  // reading measure; listing/hub pages pass "6xl" for their wider card grids.
+  width?: keyof typeof WIDTHS;
+}
+
+const { title, description, width = "4xl" } = Astro.props;
+const widthClass = WIDTHS[width] ?? WIDTHS["4xl"];
+---
+
+<DefaultLayout title={title} description={description}>
+  <!-- Page illustration -->
+  <div
+    class="relative max-w-6xl mx-auto h-0 pointer-events-none -z-1"
+    aria-hidden="true"
+  >
+    <PageIllustration />
+  </div>
+
+  <section class="relative">
+    <div class:list={["relative mx-auto px-4 sm:px-6", widthClass]}>
+      <div class="pt-32 pb-12 md:pt-40 md:pb-20">
+        <slot />
+      </div>
+    </div>
+  </section>
+</DefaultLayout>

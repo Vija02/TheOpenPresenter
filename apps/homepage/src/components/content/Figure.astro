@@ -1,0 +1,45 @@
+---
+import { Image } from "astro:assets";
+import type { ImageMetadata } from "astro";
+
+const SIZES: Record<string, string> = {
+  xs: "max-w-xs",
+  sm: "max-w-sm",
+  md: "max-w-md",
+  lg: "max-w-lg",
+  xl: "max-w-xl",
+  "2xl": "max-w-2xl",
+  full: "",
+};
+
+interface Props {
+  src: ImageMetadata;
+  alt: string;
+  // Constrain width; "full" (default) fills the column, e.g. inside a FigureGrid.
+  size?: keyof typeof SIZES;
+  center?: boolean;
+  class?: string;
+}
+
+const {
+  src,
+  alt,
+  size = "full",
+  center = true,
+  class: className = "",
+} = Astro.props;
+
+const sizeClass = SIZES[size] ?? "";
+const centerClass = size !== "full" && center ? "mx-auto" : "";
+---
+
+<Image
+  src={src}
+  alt={alt}
+  class:list={[
+    "rounded-lg border border-gray-200 dark:border-gray-800 shadow-sm w-full h-auto block",
+    sizeClass,
+    centerClass,
+    className,
+  ]}
+/>

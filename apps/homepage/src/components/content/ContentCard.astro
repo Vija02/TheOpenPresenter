@@ -1,0 +1,56 @@
+---
+import ArrowIcon from "./ArrowIcon.astro";
+
+interface Props {
+  href: string;
+  category: string;
+  minutes?: number;
+  title: string;
+  description: string;
+  cta?: string;
+}
+
+const {
+  href,
+  category,
+  minutes,
+  title,
+  description,
+  cta = "Read the guide",
+} = Astro.props;
+---
+
+<a
+  href={href}
+  class="group block rounded-lg border border-gray-200 dark:border-gray-800 p-6 md:p-8 hover:border-teal-400 dark:hover:border-teal-500 transition-colors"
+>
+  <div class="flex items-center gap-3 mb-2">
+    <span
+      class="inline-flex items-center text-xs font-semibold tracking-wide uppercase text-teal-500"
+    >
+      {category}
+    </span>
+    {
+      minutes ? (
+        <Fragment>
+          <span class="text-gray-300 dark:text-gray-700">&bull;</span>
+          <span class="text-xs text-gray-500 dark:text-gray-300">
+            {minutes} min read
+          </span>
+        </Fragment>
+      ) : null
+    }
+  </div>
+  <h2
+    class="text-xl md:text-2xl font-red-hat-display font-black mb-2 group-hover:text-teal-500 transition-colors"
+  >
+    {title}
+  </h2>
+  <p class="text-gray-600 dark:text-gray-300 mb-4">{description}</p>
+  <span class="inline-flex items-center text-teal-500 font-medium">
+    {cta}
+    <ArrowIcon
+      class="w-3 h-3 fill-current shrink-0 ml-2 group-hover:translate-x-1 transition-transform"
+    />
+  </span>
+</a>
