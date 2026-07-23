@@ -24,6 +24,7 @@ const ScreenShareRemote = () => {
     outputScreenCount,
     captureError,
     iceLoading,
+    isSupported,
     startShare,
     stopShare,
     stopSharedScreen,
@@ -64,7 +65,7 @@ const ScreenShareRemote = () => {
             <Button
               size="xs"
               variant="pill"
-              disabled={iceLoading}
+              disabled={iceLoading || !isSupported}
               onClick={() => startShare()}
             >
               <FaDesktop /> {sharedByOther ? "Take over" : "Share screen"}
@@ -97,25 +98,40 @@ const ScreenShareRemote = () => {
                     every output screen in real time.
                   </p>
                 </div>
-                <Button
-                  size="lg"
-                  disabled={iceLoading}
-                  onClick={() => startShare()}
-                >
-                  <FaDesktop /> {iceLoading ? "Preparing…" : "Share screen"}
-                </Button>
-                <div className="stack-row items-center gap-2 text-xs text-tertiary">
-                  <span
-                    className={`inline-flex h-2 w-2 ${
-                      outputScreenCount > 0 ? "bg-fill-success" : "bg-gray-400"
-                    }`}
-                  />
-                  {outputScreenCount > 0
-                    ? `${outputScreenCount} output screen${
-                        outputScreenCount === 1 ? "" : "s"
-                      } ready`
-                    : "No output screens connected yet"}
-                </div>
+                {isSupported ? (
+                  <>
+                    <Button
+                      size="lg"
+                      disabled={iceLoading}
+                      onClick={() => startShare()}
+                    >
+                      <FaDesktop /> {iceLoading ? "Preparing…" : "Share screen"}
+                    </Button>
+                    <div className="stack-row items-center gap-2 text-xs text-tertiary">
+                      <span
+                        className={`inline-flex h-2 w-2 ${
+                          outputScreenCount > 0
+                            ? "bg-fill-success"
+                            : "bg-gray-400"
+                        }`}
+                      />
+                      {outputScreenCount > 0
+                        ? `${outputScreenCount} output screen${
+                            outputScreenCount === 1 ? "" : "s"
+                          } ready`
+                        : "No output screens connected yet"}
+                    </div>
+                  </>
+                ) : (
+                  <div className="stack-row items-start gap-2 rounded-sm border border-fill-warning/50 bg-fill-warning/10 p-3 text-left text-sm text-fill-warning-fg">
+                    <FaCircleInfo className="mt-0.5 shrink-0" />
+                    <span>
+                      Screen sharing isn&apos;t available on this device. Open
+                      the project on a desktop browser (Chrome, Edge, or
+                      Firefox) to share your screen.
+                    </span>
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-3 gap-2 w-full max-w-sm">
@@ -169,7 +185,7 @@ const ScreenShareRemote = () => {
                   <Button
                     size="xs"
                     variant="pill"
-                    disabled={iceLoading}
+                    disabled={iceLoading || !isSupported}
                     onClick={() => startShare()}
                   >
                     <FaArrowRightArrowLeft /> Take over
