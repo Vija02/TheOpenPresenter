@@ -90,6 +90,14 @@ export const useScreenShareSender = () => {
     }
   }, [localTeardown, mutableSceneData, currentUserId]);
 
+  // Stop the current share even if another operator owns it
+  const stopSharedScreen = useCallback(() => {
+    localTeardown();
+    mutableSceneData.pluginData.isSharing = false;
+    mutableSceneData.pluginData.sharerAwarenessUserId = null;
+    mutableSceneData.pluginData.sessionId = null;
+  }, [localTeardown, mutableSceneData]);
+
   const startShare = useCallback(async () => {
     setCaptureError(null);
     let stream: MediaStream;
@@ -298,5 +306,6 @@ export const useScreenShareSender = () => {
     iceLoading: iceServersQuery.isLoading,
     startShare,
     stopShare,
+    stopSharedScreen,
   };
 };
