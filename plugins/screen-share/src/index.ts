@@ -23,9 +23,8 @@ export const init = (serverPluginApi: ServerPluginApi) => {
   serverPluginApi.onRendererDataCreated(pluginName, onRendererDataCreated);
   serverPluginApi.registerSceneCreator(pluginName, {
     title: "Screen Share",
-    description: "Share the operator's screen live to every output display",
+    description: "Share your screen live to any display",
     categories: ["Display"],
-    isExperimental: true,
   });
 
   serverPluginApi.serveStatic(pluginName, "out");
