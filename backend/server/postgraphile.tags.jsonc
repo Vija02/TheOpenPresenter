@@ -163,6 +163,12 @@
           "omit": true
         }
       },
+      "app_public.forgot_password": {
+        "tags": {
+          // We expose our own captcha-guarded `forgotPassword` mutation
+          "omit": "execute"
+        }
+      },
       "app_public.change_password": {
         "tags": {
           "resultFieldName": "success"

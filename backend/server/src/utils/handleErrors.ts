@@ -48,6 +48,12 @@ const pluck = (err: any): { [key: string]: any } => {
  * list of error codes that PostgreSQL produces.
  */
 export const ERROR_MESSAGE_OVERRIDES: { [code: string]: typeof pluck } = {
+  CAPTC: (err) => ({
+    ...pluck(err),
+    message:
+      "Captcha verification failed. Please complete the challenge and try again.",
+    code: "CAPTC",
+  }),
   "42501": (err) => ({
     ...pluck(err),
     message: "Permission denied (by RLS)",

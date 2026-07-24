@@ -1,9 +1,14 @@
 import { AuthRestrict, SharedLayout } from "@/components/SharedLayout";
+import {
+  Turnstile,
+  TurnstileRef,
+  getTurnstileSiteKey,
+} from "@/components/Turnstile";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForgotPasswordMutation, useSharedQuery } from "@repo/graphql";
 import { extractError } from "@repo/lib";
 import { Alert, Button, Form, InputControl, Link } from "@repo/ui";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { CombinedError } from "urql";
 import { Link as WouterLink } from "wouter";
@@ -22,6 +27,10 @@ const ForgotPassword = () => {
   const [, forgotPassword] = useForgotPasswordMutation();
   const [successfulEmail, setSuccessfulEmail] = useState<string | null>(null);
 
+  const captchaEnabled = !!getTurnstileSiteKey();
+  const turnstileRef = useRef<TurnstileRef>(null);
+  const turnstileTokenRef = useRef<string | null>(null);
+
   const form = useForm<FormInputs>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -31,19 +40,30 @@ const ForgotPassword = () => {
 
   const onSubmit = useCallback(
     async (values: FormInputs) => {
+      const turnstileToken = turnstileTokenRef.current;
+      if (captchaEnabled && !turnstileToken) {
+        setError(
+          new Error("Please complete the captcha challenge before continuing."),
+        );
+        return;
+      }
       setError(null);
       try {
         const email = values.email;
         await forgotPassword({
           email,
+          turnstileToken,
         });
         // Success: refetch
         setSuccessfulEmail(email);
       } catch (e: any) {
+        // The Turnstile token is single-use; reset so the user can retry.
+        turnstileTokenRef.current = null;
+        turnstileRef.current?.reset();
         setError(e);
       }
     },
-    [forgotPassword],
+    [forgotPassword, captchaEnabled],
   );
 
   return (
@@ -75,6 +95,13 @@ const ForgotPassword = () => {
                   Remembered your password? Log in.
                 </WouterLink>
               </Link>
+
+              <Turnstile
+                ref={turnstileRef}
+                onToken={(token) => {
+                  turnstileTokenRef.current = token;
+                }}
+              />
 
               {error ? (
                 <Alert variant="destructive" title="Error">

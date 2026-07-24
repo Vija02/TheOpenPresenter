@@ -1546,6 +1546,11 @@ input ForgotPasswordInput {
   """
   clientMutationId: String
   email: String!
+
+  """
+  A Cloudflare Turnstile token. Required when captcha is enabled on the server.
+  """
+  turnstileToken: String
 }
 
 """The output of our `forgotPassword` mutation."""
@@ -1555,11 +1560,6 @@ type ForgotPasswordPayload {
   unchanged and unused. May be used by a client to track mutations.
   """
   clientMutationId: String
-
-  """
-  Our root query field type. Allows us to run any query from our mutation payload.
-  """
-  query: Query
 }
 
 """All input for the `inviteToOrganization` mutation."""
@@ -2716,7 +2716,7 @@ type Mutation {
   ): DeleteUserMediaPayload
 
   """
-  If you've forgotten your password, give us one of your email addresses and we'll send you a reset token. Note this only works if you have added an email address!
+  If you've forgotten your password, give us one of your email addresses and we'll send you a reset token.
   """
   forgotPassword(
     """
@@ -5130,6 +5130,7 @@ input RegisterInput {
   email: String!
   name: String
   password: String!
+  turnstileToken: String
   username: String!
 }
 

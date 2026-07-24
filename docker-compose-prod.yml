@@ -50,6 +50,8 @@ services:
       - AI_API_KEY=$AI_API_KEY
       - AI_BASE_URL=$AI_BASE_URL
       - AI_MODEL=$AI_MODEL
+      - TURNSTILE_SITE_KEY=$TURNSTILE_SITE_KEY
+      - TURNSTILE_SECRET_KEY=$TURNSTILE_SECRET_KEY
     volumes:
       - ./uploads:/app/uploads
     labels:
