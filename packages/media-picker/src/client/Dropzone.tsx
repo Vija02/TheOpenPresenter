@@ -15,6 +15,8 @@ export type DropzoneProps = {
   mediaType?: MediaType;
   multiple?: boolean;
   height?: number;
+  children?: React.ReactNode;
+  className?: string;
 };
 
 const getAllowedFileTypes = (mediaType?: MediaType): string[] | undefined => {
@@ -29,8 +31,20 @@ const getAllowedFileTypes = (mediaType?: MediaType): string[] | undefined => {
   }
 };
 
-const HeadlessDropzone = ({ height }: { height: number }) => {
-  const { getRootProps, getInputProps } = useDropzone();
+const HeadlessDropzone = ({ 
+  height, 
+  children, 
+  className,
+  isUploading,
+  uploadProgress
+}: { 
+  height: number; 
+  children?: React.ReactNode; 
+  className?: string;
+  isUploading: boolean;
+  uploadProgress: number;
+}) => {
+  const { getRootProps, getInputProps } = useDropzone({ disabled: isUploading });
   const [isDragActive, setIsDragActive] = useState(false);
 
   const rootProps = getRootProps();
@@ -39,52 +53,95 @@ const HeadlessDropzone = ({ height }: { height: number }) => {
     <div 
       {...rootProps}
       onDragEnter={(e) => {
+        if (isUploading) return; // Prevent secondary drags
         e.preventDefault();
         e.stopPropagation();
         setIsDragActive(true);
         rootProps.onDragEnter?.(e as any);
       }}
       onDragOver={(e) => {
+        if (isUploading) return;
         e.preventDefault();
         e.stopPropagation();
         rootProps.onDragOver?.(e as any);
       }}
       onDragLeave={(e) => {
+        if (isUploading) return;
         e.preventDefault();
         e.stopPropagation();
         setIsDragActive(false);
         rootProps.onDragLeave?.(e as any);
       }}
       onDrop={(e) => {
+        if (isUploading) return;
         e.preventDefault();
         e.stopPropagation();
         setIsDragActive(false);
         rootProps.onDrop?.(e as any);
       }}
-      className={`relative w-full flex flex-col items-center justify-center rounded-md border-2 transition-all duration-200 cursor-pointer ${
-        isDragActive 
-          ? 'border-solid border-blue-500 bg-blue-50' 
-          : 'border-dashed border-slate-300 bg-slate-50 hover:border-slate-400 hover:bg-slate-100'
+      
+      className={children ? `relative w-full ${className || ''} ${isUploading ? 'cursor-default select-none' : ''}` : `relative w-full flex flex-col items-center justify-center rounded-md border-2 transition-all duration-200 ${
+        isUploading ? 'cursor-default select-none' : 'cursor-pointer'
+      } ${
+        isDragActive && !isUploading
+          ? 'border-solid border-link bg-link/5' 
+          : 'border-dashed border-stroke bg-slate-50 hover:border-link/50 hover:bg-link/5'
       }`}
-      style={{ height: `${height}px`, minHeight: `${height}px` }}
+      style={!children ? { height: `${height}px`, minHeight: `${height}px` } : undefined}
     >
       <input {...getInputProps()} className="hidden" />
       
-      <div className="text-slate-500 text-[1.15rem] font-medium mb-6 pointer-events-none text-center">
-        {isDragActive ? (
-          "Drop your files right here!"
-        ) : (
-          <>
-            Drag & drop files here, or <span className="text-blue-500 font-semibold">click here</span>
-          </>
-        )}
-      </div>
+      {children ? (
+        <>
+          {children}
+          
+          {/* Drag Overlay */}
+          {isDragActive && !isUploading && (
+            <div className="absolute inset-0 z-50 flex items-center justify-center bg-surface-primary/95 border-4 border-dashed border-link rounded-xl backdrop-blur-sm pointer-events-none">
+              <div className="text-link text-2xl font-bold flex flex-col items-center gap-4 pointer-events-none">
+                <FiUpload className="w-20 h-20 animate-bounce text-link" />
+                Drop your files anywhere on this card!
+              </div>
+            </div>
+          )}
 
-      <FiUpload 
-        className={`w-16 h-16 transition-colors pointer-events-none ${
-          isDragActive ? "text-blue-500" : "text-slate-400"
-        }`} 
-      />
+          {/* Upload Progress Overlay */}
+          {isUploading && (
+            <div 
+              className="absolute inset-0 z-50 flex items-center justify-center bg-surface-primary/95 rounded-xl backdrop-blur-sm border-2 border-link/30 cursor-default"
+              onClick={(e) => e.stopPropagation()} // Stop stray clicks from reaching the wrapper
+            >
+              <div className="w-3/4 max-w-md flex flex-col items-center gap-4">
+                <div className="text-link font-semibold text-xl">Uploading... {uploadProgress}%</div>
+                <div className="w-full h-4 bg-surface-secondary rounded-full overflow-hidden border border-stroke">
+                  <div 
+                    className="h-full bg-link transition-all duration-300 ease-out"
+                    style={{ width: `${uploadProgress}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+        </>
+      ) : (
+        <>
+          <div className="text-tertiary text-[1.15rem] font-medium mb-6 pointer-events-none text-center">
+            {isDragActive && !isUploading ? (
+              <span className="text-link">Drop your files right here!</span>
+            ) : (
+              <>
+                Drag & drop files here, or <span className="text-link font-semibold">click here</span>
+              </>
+            )}
+          </div>
+
+          <FiUpload 
+            className={`w-16 h-16 transition-colors pointer-events-none ${
+              isDragActive && !isUploading ? "text-link" : "text-tertiary"
+            }`} 
+          />
+        </>
+      )}
     </div>
   );
 };
@@ -97,9 +154,14 @@ export const Dropzone: React.FC<DropzoneProps> = ({
   mediaType,
   multiple = true,
   height = 240, 
+  children,
+  className,
 }) => {
   const allowedFileTypes = useMemo(() => getAllowedFileTypes(mediaType), [mediaType]);
   const maxNumberOfFiles = multiple ? null : 1;
+
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   const [uppy] = useState(() =>
     new Uppy({
@@ -123,7 +185,19 @@ export const Dropzone: React.FC<DropzoneProps> = ({
     });
   }, [uppy, allowedFileTypes, maxNumberOfFiles]);
 
+  useUppyEvent(uppy, "upload", () => {
+    setIsUploading(true);
+    setUploadProgress(0);
+  });
+
+  useUppyEvent(uppy, "progress", (progress) => {
+    setUploadProgress(progress);
+  });
+
   useUppyEvent(uppy, "complete", (result) => {
+    setIsUploading(false);
+    setUploadProgress(0);
+
     if (!result.successful || result.successful.length === 0) return;
 
     const uploaded: UploadedMediaInfo[] = result.successful.map((file) => {
@@ -137,9 +211,16 @@ export const Dropzone: React.FC<DropzoneProps> = ({
   });
 
   return (
-    <div className="bp--dropzone-container relative w-full mb-4">
+    <div className={`bp--dropzone-container relative ${!children ? "w-full mb-4" : "w-full"}`}>
       <UppyContextProvider uppy={uppy}>
-        <HeadlessDropzone height={height} />
+        <HeadlessDropzone 
+          height={height} 
+          className={className}
+          isUploading={isUploading}
+          uploadProgress={uploadProgress}
+        >
+          {children}
+        </HeadlessDropzone>
       </UppyContextProvider>
     </div>
   );

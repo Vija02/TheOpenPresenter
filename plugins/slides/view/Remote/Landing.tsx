@@ -2,6 +2,7 @@ import { PublicAccessNoticeDialog } from "@repo/base-plugin/client";
 import { Dropzone } from "@repo/media-picker/client";
 import { useState } from "react";
 import { FcGoogle } from "react-icons/fc";
+import { FiUpload } from "react-icons/fi";
 
 import { usePluginAPI } from "../pluginApi";
 import { trpc } from "../trpc";
@@ -75,65 +76,60 @@ const Landing = () => {
   return (
     <div className="w-full flex justify-center py-8 px-4">
       <div className="flex flex-col w-full text-left gap-10 max-w-7xl mx-auto mt-4">
-        
+
         {/* HERO SECTION */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <div className="flex flex-col md:flex-row items-center gap-8 p-8 md:p-16">
-            <div className="flex-1 flex flex-col items-center md:items-start text-center md:text-left space-y-8">
-              <div className="space-y-4">
-                <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight">
-                  Upload your slides
-                </h1>
-                <p className="text-lg md:text-xl text-gray-500 max-w-lg leading-relaxed">
-                  Easily upload your existing files to generate beautiful presentations. Just drag and drop to get started.
-                </p>
-              </div>
-
-              <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-base font-medium text-gray-600">
-                <div className="flex items-center gap-2 bg-red-50 text-red-700 px-5 py-2.5 rounded-md border border-red-100 shadow-sm">
-                  <span className="text-xl">📄</span> PDF
-                </div>
-                <div className="flex items-center gap-2 bg-orange-50 text-orange-700 px-5 py-2.5 rounded-md border border-orange-100 shadow-sm">
-                  <span className="text-xl">📊</span> PPTX
-                </div>
-                <div className="flex items-center gap-2 bg-blue-50 text-blue-700 px-5 py-2.5 rounded-md border border-blue-100 shadow-sm">
-                  <span className="text-xl">🖼️</span> Images
-                </div>
-              </div>
-            </div>
-
-            <div className="flex-1 w-full max-w-2xl">
-              {isPublicAccess ? (
-                <div className="p-10 text-center text-gray-500 font-medium h-[400px] flex items-center justify-center border-2 border-dashed border-gray-300 rounded-2xl bg-gray-50">
-                  Sign in to upload media.
-                </div>
-              ) : isProcessing ? (
-                <div className="p-10 text-center text-blue-600 font-medium h-[400px] flex flex-col items-center justify-center gap-4 border-2 border-dashed border-blue-300 rounded-2xl bg-blue-50">
-                  <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
-                  Processing your files...
-                </div>
-              ) : (
-                <Dropzone
-                  onUploadComplete={handleUploadComplete}
-                  organizationId={pluginContext.organizationId}
-                  projectId={pluginContext.projectId}
-                  pluginId={pluginContext.pluginId}
-                  mediaType="all"
-                  multiple={true}
-                  height={400}
-                />
-              )}
-            </div>
+        {isPublicAccess ? (
+          <div className="bg-surface-secondary rounded-xl border-2 border-dashed border-stroke p-10 text-center text-secondary font-medium min-h-[400px] flex flex-col items-center justify-center">
+            <span className="text-xl mb-2">🔒</span>
+            Sign in to upload media.
           </div>
-        </div>
+        ) : isProcessing ? (
+          <div className="bg-link/5 rounded-xl border-2 border-dashed border-link/50 p-10 text-center text-link font-medium min-h-[400px] flex flex-col items-center justify-center gap-4">
+            <div className="w-10 h-10 border-4 border-link border-t-transparent rounded-full animate-spin" />
+            <span className="text-lg">Processing your files...</span>
+          </div>
+        ) : (
+          <Dropzone
+            onUploadComplete={handleUploadComplete}
+            organizationId={pluginContext.organizationId}
+            projectId={pluginContext.projectId}
+            pluginId={pluginContext.pluginId}
+            mediaType="all"
+            multiple={true}
+            className="w-full"
+          >
+            <div className="cursor-pointer bg-slate-50 rounded-xl border-2 border-dashed border-slate-300 overflow-hidden group hover:border-link/50 hover:bg-link/5 transition-colors flex flex-col items-center justify-center text-center p-12 md:p-20 min-h-[400px]">
+              <FiUpload className="w-16 h-16 text-tertiary group-hover:text-link transition-colors mb-6 pointer-events-none" />
+              
+              <h1 className="text-4xl md:text-5xl font-extrabold text-primary tracking-tight group-hover:text-link transition-colors mb-4 pointer-events-none">
+                Upload your slides
+              </h1>
+              
+              <p className="text-lg md:text-xl text-secondary max-w-2xl leading-relaxed mb-10 pointer-events-none">
+                Drag & drop files here, or <span className="text-link font-semibold">click anywhere</span> to generate beautiful presentations.
+              </p>
+
+              <div className="flex flex-wrap items-center justify-center gap-4 text-sm font-medium text-secondary pointer-events-none">
+                <div className="flex items-center gap-2 bg-surface-primary px-4 py-2 rounded-md border border-stroke shadow-sm">
+                  <span className="text-lg">📄</span> PDF
+                </div>
+                <div className="flex items-center gap-2 bg-surface-primary px-4 py-2 rounded-md border border-stroke shadow-sm">
+                  <span className="text-lg">📊</span> PPTX
+                </div>
+                <div className="flex items-center gap-2 bg-surface-primary px-4 py-2 rounded-md border border-stroke shadow-sm">
+                  <span className="text-lg">🖼️</span> Images
+                </div>
+              </div>
+            </div>
+          </Dropzone>
+        )}
 
         {/* INTEGRATIONS SECTION */}
-        <div className="flex flex-col gap-4 px-4">
-          <h3 className="font-semibold text-gray-800 text-lg text-center md:text-left">
+        <div className="flex flex-col gap-4 px-4 mt-4">
+          <h3 className="font-semibold text-primary text-lg text-center md:text-left">
             Or import from connected apps
           </h3>
           <div className="flex flex-wrap gap-4 justify-center md:justify-start">
-
             <SlidePicker
               onFileSelected={(doc, token) => {
                 selectSlideMutation.mutate({
