@@ -112,13 +112,13 @@ const Landing = () => {
 
               <div className="flex flex-wrap items-center justify-center gap-4 text-sm font-medium text-secondary pointer-events-none">
                 <div className="flex items-center gap-2 bg-surface-primary px-4 py-2 rounded-md border border-stroke shadow-sm">
-                  <FaFilePdf className="text-xl text-[#F52102]" /> PDF
-                </div>
-                <div className="flex items-center gap-2 bg-surface-primary px-4 py-2 rounded-md border border-stroke shadow-sm">
                   <FaFilePowerpoint className="text-xl text-[#cb4a32]" /> PPTX
                 </div>
                 <div className="flex items-center gap-2 bg-surface-primary px-4 py-2 rounded-md border border-stroke shadow-sm">
                   <FaImage className="text-xl text-gray-700" /> Images
+                </div>
+                <div className="flex items-center gap-2 bg-surface-primary px-4 py-2 rounded-md border border-stroke shadow-sm">
+                  <FaFilePdf className="text-xl text-[#F52102]" /> PDF
                 </div>
               </div>
             </div>
