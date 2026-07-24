@@ -44,7 +44,7 @@ const HeadlessDropzone = ({
   isUploading: boolean;
   uploadProgress: number;
 }) => {
-  const { getRootProps, getInputProps } = useDropzone({ disabled: isUploading });
+  const { getRootProps, getInputProps } = useDropzone();
   const [isDragActive, setIsDragActive] = useState(false);
 
   const rootProps = getRootProps();

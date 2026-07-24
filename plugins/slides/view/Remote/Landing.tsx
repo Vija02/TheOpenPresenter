@@ -3,6 +3,7 @@ import { Dropzone } from "@repo/media-picker/client";
 import { useState } from "react";
 import { FcGoogle } from "react-icons/fc";
 import { FiUpload } from "react-icons/fi";
+import { FaFilePdf, FaFilePowerpoint, FaImage } from "react-icons/fa"; // Added FontAwesome icons
 
 import { usePluginAPI } from "../pluginApi";
 import { trpc } from "../trpc";
@@ -111,13 +112,13 @@ const Landing = () => {
 
               <div className="flex flex-wrap items-center justify-center gap-4 text-sm font-medium text-secondary pointer-events-none">
                 <div className="flex items-center gap-2 bg-surface-primary px-4 py-2 rounded-md border border-stroke shadow-sm">
-                  <span className="text-lg">📄</span> PDF
+                  <FaFilePdf className="text-xl text-[#F52102]" /> PDF
                 </div>
                 <div className="flex items-center gap-2 bg-surface-primary px-4 py-2 rounded-md border border-stroke shadow-sm">
-                  <span className="text-lg">📊</span> PPTX
+                  <FaFilePowerpoint className="text-xl text-[#cb4a32]" /> PPTX
                 </div>
                 <div className="flex items-center gap-2 bg-surface-primary px-4 py-2 rounded-md border border-stroke shadow-sm">
-                  <span className="text-lg">🖼️</span> Images
+                  <FaImage className="text-xl text-gray-700" /> Images
                 </div>
               </div>
             </div>
