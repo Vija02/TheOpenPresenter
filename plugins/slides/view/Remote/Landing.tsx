@@ -3,7 +3,7 @@ import { Dropzone } from "@repo/media-picker/client";
 import { useState } from "react";
 import { FcGoogle } from "react-icons/fc";
 import { FiUpload } from "react-icons/fi";
-import { FaFilePdf, FaFilePowerpoint, FaImage } from "react-icons/fa"; // Added FontAwesome icons
+import { FaFilePdf, FaFilePowerpoint, FaImage } from "react-icons/fa";
 
 import { usePluginAPI } from "../pluginApi";
 import { trpc } from "../trpc";

@@ -52,8 +52,10 @@ const HeadlessDropzone = ({
   return (
     <div 
       {...rootProps}
+      role="button"
+      aria-label="browse files"
       onDragEnter={(e) => {
-        if (isUploading) return; // Prevent secondary drags
+        if (isUploading) return;
         e.preventDefault();
         e.stopPropagation();
         setIsDragActive(true);
@@ -79,50 +81,21 @@ const HeadlessDropzone = ({
         setIsDragActive(false);
         rootProps.onDrop?.(e as any);
       }}
-      
       className={children ? `relative w-full ${className || ''} ${isUploading ? 'cursor-default select-none' : ''}` : `relative w-full flex flex-col items-center justify-center rounded-md border-2 transition-all duration-200 ${
         isUploading ? 'cursor-default select-none' : 'cursor-pointer'
       } ${
-        isDragActive && !isUploading
-          ? 'border-solid border-link bg-link/5' 
-          : 'border-dashed border-stroke bg-slate-50 hover:border-link/50 hover:bg-link/5'
-      }`}
+        isUploading
+          ? 'border-solid border-transparent bg-surface-primary'
+          : isDragActive
+            ? 'border-solid border-transparent bg-link/5' 
+            : 'border-dashed border-stroke bg-surface-primary hover:border-link/50 hover:bg-link/5'
+      } ${className || ''}`}
       style={!children ? { height: `${height}px`, minHeight: `${height}px` } : undefined}
     >
       <input {...getInputProps()} className="hidden" />
       
       {children ? (
-        <>
-          {children}
-          
-          {/* Drag Overlay */}
-          {isDragActive && !isUploading && (
-            <div className="absolute inset-0 z-50 flex items-center justify-center bg-surface-primary/95 border-4 border-dashed border-link rounded-xl backdrop-blur-sm pointer-events-none">
-              <div className="text-link text-2xl font-bold flex flex-col items-center gap-4 pointer-events-none">
-                <FiUpload className="w-20 h-20 animate-bounce text-link" />
-                Drop your files anywhere on this card!
-              </div>
-            </div>
-          )}
-
-          {/* Upload Progress Overlay */}
-          {isUploading && (
-            <div 
-              className="absolute inset-0 z-50 flex items-center justify-center bg-surface-primary/95 rounded-xl backdrop-blur-sm border-2 border-link/30 cursor-default"
-              onClick={(e) => e.stopPropagation()} // Stop stray clicks from reaching the wrapper
-            >
-              <div className="w-3/4 max-w-md flex flex-col items-center gap-4">
-                <div className="text-link font-semibold text-xl">Uploading... {uploadProgress}%</div>
-                <div className="w-full h-4 bg-surface-secondary rounded-full overflow-hidden border border-stroke">
-                  <div 
-                    className="h-full bg-link transition-all duration-300 ease-out"
-                    style={{ width: `${uploadProgress}%` }}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-        </>
+        children
       ) : (
         <>
           <div className="text-tertiary text-[1.15rem] font-medium mb-6 pointer-events-none text-center">
@@ -141,6 +114,34 @@ const HeadlessDropzone = ({
             }`} 
           />
         </>
+      )}
+
+      {isDragActive && !isUploading && (
+        <div className={`absolute inset-0 z-50 flex items-center justify-center bg-surface-primary/95 rounded-xl backdrop-blur-sm pointer-events-none ${
+          children ? 'border-4 border-dashed border-link' : 'border-2 border-dashed border-link'
+        }`}>
+          <div className="text-link text-2xl font-bold flex flex-col items-center gap-4 pointer-events-none">
+            <FiUpload className="w-20 h-20 animate-bounce text-link" />
+            Drop your files anywhere!
+          </div>
+        </div>
+      )}
+
+      {isUploading && (
+        <div 
+          className="absolute inset-0 z-50 flex items-center justify-center bg-surface-primary/95 rounded-xl backdrop-blur-sm border-2 border-link/30 cursor-default"
+          onClick={(e) => e.stopPropagation()} 
+        >
+          <div className="w-3/4 max-w-md flex flex-col items-center gap-4">
+            <div className="text-link font-semibold text-xl">Uploading... {uploadProgress}%</div>
+            <div className="w-full h-4 bg-surface-secondary rounded-full overflow-hidden border border-stroke">
+              <div 
+                className="h-full bg-link transition-all duration-300 ease-out"
+                style={{ width: `${uploadProgress}%` }}
+              />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
