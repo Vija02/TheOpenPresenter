@@ -127,9 +127,9 @@ const Landing = () => {
 
         {/* INTEGRATIONS SECTION */}
         <div className="flex flex-col gap-4 px-4 mt-4">
-          <h3 className="font-semibold text-primary text-lg text-center md:text-left">
+          <p className="font-semibold text-primary text-lg text-center md:text-left">
             Or import from connected apps
-          </h3>
+          </p>
           <div className="flex flex-wrap gap-4 justify-center md:justify-start">
             <SlidePicker
               onFileSelected={(doc, token) => {
