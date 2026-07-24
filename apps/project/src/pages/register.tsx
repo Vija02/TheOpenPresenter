@@ -1,5 +1,6 @@
 import { Redirect } from "@/components/Redirect";
 import { SharedLayout } from "@/components/SharedLayout";
+import { SocialLoginOptions } from "@/components/SocialLoginOptions";
 import {
   Turnstile,
   TurnstileRef,
@@ -239,6 +240,12 @@ const Register = () => {
                     >
                       Register
                     </Button>
+
+                    <p className="lineText w-full text-gray-700">
+                      Or continue with
+                    </p>
+
+                    <SocialLoginOptions next={redirectTo} />
                   </div>
                 </form>
               </Form>
