@@ -38,19 +38,22 @@ import {
 } from "./shared";
 import {
   createSlideRef,
+  getAutoplayDurationForSlide,
   getClickCountForSlide,
+  getClickDurationForSlide,
+  getTransitionDurationForSlide,
   parseSlideRef,
 } from "./slideOrderUtils";
 import {
   AutoplayState,
   BaseImportData,
   GoogleSlidesImportData,
+  ImageImportData,
   ImportData,
   PdfImportData,
   PluginBaseData,
   PluginRendererData,
   PptImportData,
-  ImageImportData,
 } from "./types";
 
 export const init = (
@@ -196,15 +199,52 @@ export const init = (
         currentSlideIndex,
       );
 
+      const now = Date.now();
+      const transitionEndsAt = rendererData.get("transitionEndsAt") ?? 0;
+
+      rendererData.set("lastClickTimestamp", now);
+
       if (keyType === "NEXT") {
-        if (currentClickCount < maxClicksForCurrentSlide) {
-          rendererData.set("currentClickCount", currentClickCount + 1);
+        // If last object on slide & not finished transition yet
+        if (
+          currentClickCount >= maxClicksForCurrentSlide &&
+          now < transitionEndsAt
+        ) {
+          // Then clicking next should only skip the transition and not move anything else
+          rendererData.set("transitionEndsAt", 0);
+        } else if (currentClickCount < maxClicksForCurrentSlide) {
+          // Otherwise if there's more to click, just go next
+          const nextClickCount = currentClickCount + 1;
+          rendererData.set("currentClickCount", nextClickCount);
+          const clickDuration = getClickDurationForSlide(
+            pluginDataJson,
+            currentSlideIndex,
+            nextClickCount,
+          );
+          rendererData.set("transitionEndsAt", now + clickDuration);
         } else if (currentSlideIndex < totalSlides - 1) {
-          rendererData.set("currentSlideIndex", currentSlideIndex + 1);
+          const nextSlideIndex = currentSlideIndex + 1;
+          rendererData.set("currentSlideIndex", nextSlideIndex);
           rendererData.set("currentClickCount", 0);
+          const slideTransitionDurationMs = getTransitionDurationForSlide(
+            pluginDataJson,
+            nextSlideIndex,
+          );
+          const autoplayDurationMs = getAutoplayDurationForSlide(
+            pluginDataJson,
+            nextSlideIndex,
+          );
+          rendererData.set(
+            "transitionEndsAt",
+            now +
+              slideTransitionDurationMs +
+              (autoplayDurationMs > -1 ? autoplayDurationMs : 0),
+          );
         }
         // Else: at last slide with all animations shown, do nothing
       } else if (keyType === "PREV") {
+        // Any backward move leaves the forward boundary window behind.
+        rendererData.set("transitionEndsAt", 0);
         if (currentClickCount > 0) {
           rendererData.set("currentClickCount", currentClickCount - 1);
         } else if (currentSlideIndex > 0) {
@@ -220,8 +260,6 @@ export const init = (
       } else {
         logger.warn("Unknown keyType");
       }
-
-      rendererData.set("lastClickTimestamp", Date.now());
     },
   );
 };
@@ -618,7 +656,6 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
             }
           },
         ),
-      
       selectImage: t.procedure
         .input(
           z.object({
@@ -627,58 +664,62 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
               z.object({
                 mediaName: z.string(),
                 name: z.string().optional(),
-              })
+              }),
             ),
             replaceImportId: z.string().optional(),
           }),
         )
-        .mutation(
-          async ({ input: { pluginId, images, replaceImportId } }) => {
-            const log = logger.child({ pluginId, replaceImportId });
-            const loadedPlugin = loadedPlugins[pluginId]!;
+        .mutation(async ({ input: { pluginId, images, replaceImportId } }) => {
+          const log = logger.child({ pluginId, replaceImportId });
+          const loadedPlugin = loadedPlugins[pluginId]!;
 
-            const newImportIds: string[] = [];
-            let currentReplaceId = replaceImportId;
+          const newImportIds: string[] = [];
+          let currentReplaceId = replaceImportId;
 
-            try {
-              for (const img of images) {
-                const newImport = getBaseImport(
-                  "image",
-                  img.name,
-                  currentReplaceId,
-                ) as ImageImportData;
-                
-                loadedPlugin.pluginData.imports[newImport.importId] = newImport;
+          try {
+            for (const img of images) {
+              const newImport = getBaseImport(
+                "image",
+                img.name,
+                currentReplaceId,
+              ) as ImageImportData;
 
-                loadedPlugin.pluginData.imports[newImport.importId]!.thumbnailLinks = [img.mediaName];
-                loadedPlugin.pluginData.imports[newImport.importId]!.slideClickCounts = [0];
-                loadedPlugin.pluginData.imports[newImport.importId]!.slideIds = ["0"];
-                loadedPlugin.pluginData.imports[newImport.importId]!._isFetching = false;
+              loadedPlugin.pluginData.imports[newImport.importId] = newImport;
 
-                finalizeImport({
-                  loadedPlugin,
-                  newImportId: newImport.importId,
-                  slideCount: 1,
-                  replaceImportId: currentReplaceId,
-                });
+              loadedPlugin.pluginData.imports[
+                newImport.importId
+              ]!.thumbnailLinks = [img.mediaName];
+              loadedPlugin.pluginData.imports[
+                newImport.importId
+              ]!.slideClickCounts = [0];
+              loadedPlugin.pluginData.imports[newImport.importId]!.slideIds = [
+                "0",
+              ];
+              loadedPlugin.pluginData.imports[newImport.importId]!._isFetching =
+                false;
 
-                newImportIds.push(newImport.importId);
-                currentReplaceId = undefined;
-              }
+              finalizeImport({
+                loadedPlugin,
+                newImportId: newImport.importId,
+                slideCount: 1,
+                replaceImportId: currentReplaceId,
+              });
 
-              return { importIds: newImportIds };
-            } catch (err) {
-              // rollback something fails
-              for (const id of newImportIds) {
-                const { [id]: _, ...remaining } = loadedPlugin.pluginData.imports;
-                loadedPlugin.pluginData.imports = remaining;
-              }
-              log.error({ err }, "Failed to import image(s)");
-              throw err;
+              newImportIds.push(newImport.importId);
+              currentReplaceId = undefined;
             }
-          },
-        ),
 
+            return { importIds: newImportIds };
+          } catch (err) {
+            // rollback something fails
+            for (const id of newImportIds) {
+              const { [id]: _, ...remaining } = loadedPlugin.pluginData.imports;
+              loadedPlugin.pluginData.imports = remaining;
+            }
+            log.error({ err }, "Failed to import image(s)");
+            throw err;
+          }
+        }),
 
       selectSlide: t.procedure
         .input(
@@ -801,11 +842,39 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
               const slideClickCounts = slideData
                 ? slideData.slides.map((slide) => slide.clickCount)
                 : fileNames.map(() => 0);
+              const slideTransitionDurations = slideData
+                ? slideData.slides.map(
+                    (slide) => slide.slideTransitionDurationMs,
+                  )
+                : fileNames.map(() => 0);
+              const slideClickDurations: number[][] = slideData
+                ? slideData.slides.map((slide) => slide.clickDurationsMs)
+                : fileNames.map(() => [] as number[]);
+              const slideAutoplayDurations = slideData
+                ? slideData.slides.map(
+                    (slide) => slide.autoplayObjectDurationMs,
+                  )
+                : fileNames.map(() => 0);
 
               loadedYjs.doc?.transact(() => {
                 loadedPlugin.pluginData.imports[
                   newImport.importId
                 ]!.slideClickCounts = slideClickCounts;
+                (
+                  loadedPlugin.pluginData.imports[
+                    newImport.importId
+                  ]! as GoogleSlidesImportData
+                ).slideTransitionDurations = slideTransitionDurations;
+                (
+                  loadedPlugin.pluginData.imports[
+                    newImport.importId
+                  ]! as GoogleSlidesImportData
+                ).slideClickDurations = slideClickDurations;
+                (
+                  loadedPlugin.pluginData.imports[
+                    newImport.importId
+                  ]! as GoogleSlidesImportData
+                ).slideAutoplayDurations = slideAutoplayDurations;
                 loadedPlugin.pluginData.imports[newImport.importId]!.slideIds =
                   slideIds;
                 (
