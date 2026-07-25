@@ -2,8 +2,10 @@ import {
   PresentationInfo,
   SlideAnimationData,
   SlideAnimationSequence,
+  SlideFlyDirection,
+  SlideFlyType,
   SlideInfo,
-  SlideKeyframe,
+  SlideKeyframeEasingType,
   SlideVideo,
 } from "./types";
 
@@ -69,58 +71,76 @@ function parseVideoData(videoArray: any[]): SlideVideo | null {
 /**
  * Parses animation data from slide field
  */
-function parseAnimationData(animData: any[]): SlideAnimationData {
+function parseAnimationData(
+  animData: any[],
+  slideId: string,
+): SlideAnimationData {
   const result: SlideAnimationData = {
     sequences: [],
     autoPlay: false,
-    defaultDuration: 1000,
   };
 
   if (!animData || animData.length < 3) return result;
 
   const sequences = animData[0] || [];
   result.autoPlay = animData[1] || false;
-  result.defaultDuration = animData[2] || 1000;
 
   for (const seq of sequences) {
     if (!seq || seq.length < 1) continue;
 
     const animSequence: SlideAnimationSequence = {
       animations: [],
-      timing: seq[1] || 0,
-      duration: seq[2] || 0,
+      totalDurationMs: seq[1] || 0,
     };
 
     const steps = seq[0] || [];
     for (const step of steps) {
       if (!step || step.length < 10) continue;
 
-      const keyframes: SlideKeyframe[] = [];
       const kfArray = step[0] || [];
-      for (const kf of kfArray) {
-        if (kf && kf.length >= 6) {
-          keyframes.push({
-            easingType: kf[0],
-            unknown1: kf[1],
-            value1: kf[2],
-            value2: kf[3],
-            opacity: kf[4],
-            unknown2: kf[5],
-          });
+      const firstKeyframe = kfArray[0]?.[0] || [];
+      const easingType =
+        (firstKeyframe[0] as SlideKeyframeEasingType) ??
+        SlideKeyframeEasingType.AppearDisappearFade;
+
+      const targetElementId = step[1] || "";
+      const byParagraph = targetElementId.includes("-paragraph-");
+      const isSlideTransition = targetElementId === slideId;
+
+      let flyType: SlideFlyType | undefined;
+      let flyDirection: SlideFlyDirection | undefined;
+      if (easingType === SlideKeyframeEasingType.Fly) {
+        if (firstKeyframe[2] !== 0) {
+          flyType = SlideFlyType.In;
+          flyDirection =
+            firstKeyframe[2] < 0
+              ? SlideFlyDirection.Left
+              : SlideFlyDirection.Right;
+        } else if (firstKeyframe[3] !== 0) {
+          flyType = SlideFlyType.Out;
+          flyDirection =
+            firstKeyframe[3] < 0
+              ? SlideFlyDirection.Down
+              : SlideFlyDirection.Up;
+        } else if (firstKeyframe[4] !== 0) {
+          flyType = firstKeyframe[4] < 0 ? SlideFlyType.Out : SlideFlyType.In;
+          flyDirection =
+            firstKeyframe[4] < 0
+              ? SlideFlyDirection.Down
+              : SlideFlyDirection.Up;
         }
       }
 
+      const durationMs = step[8] || 0;
+
       animSequence.animations.push({
-        keyframes,
-        targetElementId: step[1] || "",
-        unknown1: step[2] || 0,
-        unknown2: step[3] || 0,
-        animationType: step[4] || 0,
-        onClick: step[5] || false,
-        unknown3: step[6] || false,
-        startDelay: step[7] || 0,
-        unknown4: step[8] || 0,
-        duration: step[9] || 0,
+        targetElementId,
+        easingType,
+        isSlideTransition,
+        byParagraph,
+        durationMs,
+        flyType,
+        flyDirection,
       });
     }
 
@@ -153,10 +173,42 @@ export function parsePresentationInfo(docData: any[]): PresentationInfo | null {
     }
 
     // Parse animations from field 7
-    const animations = parseAnimationData(slide[7]);
+    const animations = parseAnimationData(slide[7], slide[0] || "");
 
-    // Click count = number of animation sequences
-    const clickCount = animations.sequences.length;
+    let clickCount = 0;
+    let slideTransitionDurationMs = 0;
+    let hasSlideTransition = false;
+    let hasAutoplayObject = false;
+    let autoplayObjectDurationMs = 0;
+    const clickDurationsMs: number[] = [];
+    for (const seq of animations.sequences) {
+      const isSlideTransition = seq.animations[0]?.isSlideTransition;
+
+      if (isSlideTransition) {
+        hasSlideTransition = true;
+        slideTransitionDurationMs = seq.animations[0]?.durationMs ?? 0;
+
+        // For some reason, slide transition has 2 item. So only if there's 3 or more, there's more stuff there
+        // (an object that is set to show with/after previous)
+        if (seq.animations.length > 2) {
+          hasAutoplayObject = true;
+          autoplayObjectDurationMs = Math.max(
+            autoplayObjectDurationMs,
+            seq.totalDurationMs - slideTransitionDurationMs,
+          );
+        }
+        // Transition also set autoPlay to true, but we already use the if above, so this just detects object autoplay
+      } else if (animations.autoPlay) {
+        hasAutoplayObject = true;
+        autoplayObjectDurationMs = Math.max(
+          autoplayObjectDurationMs,
+          seq.totalDurationMs,
+        );
+      } else {
+        clickCount += 1;
+        clickDurationsMs.push(seq.totalDurationMs);
+      }
+    }
 
     slides.push({
       slideId: slide[0] || "",
@@ -169,6 +221,11 @@ export function parsePresentationInfo(docData: any[]): PresentationInfo | null {
       elementImageMap: slide[13] || {},
       clickCount,
       hasAnimations: clickCount > 0,
+      hasSlideTransition,
+      slideTransitionDurationMs,
+      hasAutoplayObject,
+      autoplayObjectDurationMs,
+      clickDurationsMs,
     });
   }
 

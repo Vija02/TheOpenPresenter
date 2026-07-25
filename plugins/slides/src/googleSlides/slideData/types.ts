@@ -1,37 +1,42 @@
 // Types for Google Slides docData extraction
 
-export interface SlideKeyframe {
-  easingType: number;
-  unknown1: number;
-  value1: number;
-  value2: number;
-  opacity: number;
-  unknown2: number;
+export enum SlideKeyframeEasingType {
+  AppearDisappearFade = 0,
+  Spin = 1,
+  Zoom = 2,
+  Fly = 3,
+}
+
+export enum SlideFlyType {
+  In = "in",
+  Out = "out",
+}
+
+export enum SlideFlyDirection {
+  Left = "left",
+  Right = "right",
+  Up = "up",
+  Down = "down",
 }
 
 export interface SlideAnimation {
-  keyframes: SlideKeyframe[];
   targetElementId: string;
-  unknown1: number;
-  unknown2: number;
-  animationType: number;
-  onClick: boolean;
-  unknown3: boolean;
-  startDelay: number;
-  unknown4: number;
-  duration: number;
+  easingType: SlideKeyframeEasingType;
+  isSlideTransition: boolean;
+  byParagraph: boolean;
+  durationMs: number;
+  flyType?: SlideFlyType; // unconfirmed
+  flyDirection?: SlideFlyDirection; // unconfirmed
 }
 
 export interface SlideAnimationSequence {
   animations: SlideAnimation[];
-  timing: number;
-  duration: number;
+  totalDurationMs: number;
 }
 
 export interface SlideAnimationData {
   sequences: SlideAnimationSequence[];
   autoPlay: boolean;
-  defaultDuration: number;
 }
 
 export interface SlideVideo {
@@ -65,6 +70,11 @@ export interface SlideInfo {
   elementImageMap: Record<string, string>;
   clickCount: number;
   hasAnimations: boolean;
+  hasSlideTransition: boolean;
+  slideTransitionDurationMs: number;
+  clickDurationsMs: number[];
+  hasAutoplayObject: boolean;
+  autoplayObjectDurationMs: number;
 }
 
 export interface PresentationInfo {
