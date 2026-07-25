@@ -53,3 +53,38 @@ export function getClickCountForSlide(
 ): number {
   return resolveSlide(pluginData, globalSlideIndex)?.clickCount ?? 0;
 }
+
+export function getTransitionDurationForSlide(
+  pluginData: PluginBaseData,
+  globalSlideIndex: number,
+): number {
+  const resolved = resolveSlide(pluginData, globalSlideIndex);
+  if (!resolved) return 0;
+  const { importData, localSlideIndex } = resolved;
+  if (importData.type !== "googleslides") return 0;
+  return importData.slideTransitionDurations?.[localSlideIndex] ?? 0;
+}
+
+export function getAutoplayDurationForSlide(
+  pluginData: PluginBaseData,
+  globalSlideIndex: number,
+): number {
+  const resolved = resolveSlide(pluginData, globalSlideIndex);
+  if (!resolved) return 0;
+  const { importData, localSlideIndex } = resolved;
+  if (importData.type !== "googleslides") return 0;
+  return importData.slideAutoplayDurations?.[localSlideIndex] ?? 0;
+}
+
+export function getClickDurationForSlide(
+  pluginData: PluginBaseData,
+  globalSlideIndex: number,
+  clickCountIndex: number,
+): number {
+  const resolved = resolveSlide(pluginData, globalSlideIndex);
+  if (!resolved) return 0;
+  const { importData, localSlideIndex } = resolved;
+  if (importData.type !== "googleslides") return 0;
+  const durations = importData.slideClickDurations?.[localSlideIndex];
+  return durations?.[clickCountIndex - 1] ?? 0;
+}

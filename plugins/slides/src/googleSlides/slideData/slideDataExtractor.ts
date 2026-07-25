@@ -181,7 +181,7 @@ export function parsePresentationInfo(docData: any[]): PresentationInfo | null {
     let hasAutoplayObject = false;
     let autoplayObjectDurationMs = 0;
     const clickDurationsMs: number[] = [];
-    for (const seq of animations.sequences) {
+    for (const [seqIndex, seq] of animations.sequences.entries()) {
       const isSlideTransition = seq.animations[0]?.isSlideTransition;
 
       if (isSlideTransition) {
@@ -198,7 +198,7 @@ export function parsePresentationInfo(docData: any[]): PresentationInfo | null {
           );
         }
         // Transition also set autoPlay to true, but we already use the if above, so this just detects object autoplay
-      } else if (animations.autoPlay) {
+      } else if (seqIndex === 0 && animations.autoPlay) {
         hasAutoplayObject = true;
         autoplayObjectDurationMs = Math.max(
           autoplayObjectDurationMs,

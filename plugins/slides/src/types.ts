@@ -59,6 +59,12 @@ export interface GoogleSlidesImportData extends BaseImportData {
   presentationId: string;
   /** Processed HTML for rendering slides */
   html: string;
+  /** Similar to slideClickCounts but for slide transition duration */
+  slideTransitionDurations?: number[];
+  /** Similar to slideClickCounts but for each slide's on-click step durations */
+  slideClickDurations?: number[][];
+  /** Similar to slideClickCounts but to indicate if there's an element that plays directly. -1 means none */
+  slideAutoplayDurations?: number[];
 }
 
 export interface PdfImportData extends BaseImportData {
@@ -73,7 +79,11 @@ export interface ImageImportData extends BaseImportData {
   type: "image";
 }
 
-export type ImportData = GoogleSlidesImportData | PdfImportData | PptImportData | ImageImportData;
+export type ImportData =
+  | GoogleSlidesImportData
+  | PdfImportData
+  | PptImportData
+  | ImageImportData;
 
 // ============================================================================
 // Plugin Data Types
@@ -110,6 +120,8 @@ export type AutoplayState = {
 export type PluginRendererData = {
   currentSlideIndex: number | null;
   currentClickCount: number | null;
+  /** When should the current transition ends so we can calculate what to do on next */
+  transitionEndsAt?: number;
   /**
    * Epoch timestamp (in milliseconds) of when the slide was last clicked.
    * Used to calculate things like autoplay without relying on timers.
