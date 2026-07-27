@@ -1,6 +1,6 @@
 import { YjsState } from "@repo/base-plugin/server";
 import { OrganizationType } from "@repo/graphql";
-import { urlencoded } from "body-parser";
+import { json, urlencoded } from "body-parser";
 import { Express, Request, RequestHandler, Response } from "express";
 import { Pool, PoolClient } from "pg";
 import { typeidUnboxed } from "typeid-js";
@@ -132,7 +132,13 @@ export default (app: Express) => {
       }
 
       const command = String(rawCommand);
-      const payload = rawPayload ? JSON.parse(String(rawPayload)) : {};
+      // Handle body for big payload
+      const payload =
+        req.body && Object.keys(req.body).length > 0
+          ? req.body
+          : rawPayload
+            ? JSON.parse(String(rawPayload))
+            : {};
 
       // Now run the actual command:
       const result = await runCommand(req, res, rootPgPool, command, payload);
@@ -167,6 +173,11 @@ export default (app: Express) => {
   app.get(
     "/E2EServerCommand",
     urlencoded({ extended: false }),
+    handleE2EServerCommand,
+  );
+  app.post(
+    "/E2EServerCommand",
+    json({ limit: "50mb" }),
     handleE2EServerCommand,
   );
 };
