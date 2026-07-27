@@ -34,7 +34,7 @@ export function PopConfirm({
   cancelButtonProps,
   children,
 }: PopConfirmProps) {
-  const { open, onToggle } = useDisclosure();
+  const { open, onClose, setOpen } = useDisclosure();
   const [isLoading, setIsLoading] = useState(false);
 
   const handleConfirm = useCallback(
@@ -42,27 +42,34 @@ export function PopConfirm({
       try {
         setIsLoading(true);
         await onConfirm?.(e);
-        onToggle();
+        onClose();
       } catch (e) {
         throw e;
       } finally {
         setIsLoading(false);
       }
     },
-    [onConfirm, onToggle],
+    [onConfirm, onClose],
   );
   const handleOnClick = useCallback(
-    (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+    async (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
       if (e.shiftKey) {
-        onToggle();
-        handleConfirm(e);
+        e.preventDefault();
+        try {
+          setIsLoading(true);
+          await handleConfirm(e);
+        } catch (e) {
+          throw e;
+        } finally {
+          setIsLoading(false);
+        }
       }
     },
-    [],
+    [handleConfirm],
   );
 
   return (
-    <Popover open={open} onOpenChange={onToggle}>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild onClick={handleOnClick}>
         {children}
       </PopoverTrigger>

@@ -37,7 +37,7 @@ const ProjectSettingsModal = () => {
     exportProject().then((x) => {
       const link = document.createElement("a");
       link.href = window.URL.createObjectURL(new Blob([x.data]));
-      link.download = `${project?.name}.top`;
+      link.download = `${project?.name?.trim() || "Untitled"}.top`;
       link.click();
       window.URL.revokeObjectURL(link.href);
 
