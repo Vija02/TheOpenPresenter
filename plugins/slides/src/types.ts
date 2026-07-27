@@ -63,7 +63,7 @@ export interface GoogleSlidesImportData extends BaseImportData {
   slideTransitionDurations?: number[];
   /** Similar to slideClickCounts but for each slide's on-click step durations */
   slideClickDurations?: number[][];
-  /** Similar to slideClickCounts but to indicate if there's an element that plays directly. -1 means none */
+  /** Similar to slideClickCounts but to indicate if there's an element that plays directly. 0 means none */
   slideAutoplayDurations?: number[];
 }
 
@@ -122,6 +122,8 @@ export type PluginRendererData = {
   currentClickCount: number | null;
   /** When should the current transition ends so we can calculate what to do on next */
   transitionEndsAt?: number;
+  /** Track this so we can apply specific behavior */
+  isTransitioningBackwards?: boolean;
   /**
    * Epoch timestamp (in milliseconds) of when the slide was last clicked.
    * Used to calculate things like autoplay without relying on timers.
