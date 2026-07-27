@@ -260,4 +260,43 @@ export class E2ECommandAPI {
 
     return res.json();
   }
+
+  /**
+   * Same as `login`, but POSTs the payload
+   */
+  async loginWithScenes(payload: {
+    next?: string;
+    username?: string;
+    orgs?: {
+      name: string;
+      slug: string;
+      owner?: boolean;
+      projects?: {
+        name: string;
+        slug: string;
+        scenes?: {
+          pluginName: string;
+          pluginData: Record<string, any>;
+          rendererPluginData?: Record<string, any>;
+          activate?: boolean;
+          name?: string;
+        }[];
+      }[];
+    }[];
+  }): Promise<void> {
+    const res = await this.page.request.post(
+      "/E2EServerCommand?command=login",
+      {
+        headers: { "x-top-csrf-protection": "1" },
+        maxRedirects: 0,
+        data: payload,
+      },
+    );
+    // 3xx is the expected success (the un-followed redirect).
+    if (res.status() >= 400) {
+      throw new Error(
+        `loginWithScenes failed: ${res.status()} ${await res.text()}`,
+      );
+    }
+  }
 }
