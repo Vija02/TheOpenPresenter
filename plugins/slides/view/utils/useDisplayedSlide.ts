@@ -96,12 +96,18 @@ export const useDisplayedSlide = (): DisplayedSlide => {
     return resolveSlide(pluginData, derivedPosition.slideIndex);
   }, [pluginData, derivedPosition]);
 
+  // Handle google slide autoplay back state
+  const isAutoplayRewind =
+    effectiveClickCount < 0 &&
+    derivationOffset === 0 &&
+    derivedPosition?.slideIndex === effectiveIndex;
+
   return useMemo<DisplayedSlide>(
     () => ({
       resolvedSlide,
       globalSlideIndex: derivedPosition?.slideIndex ?? -1,
-      clickCount: derivedPosition?.clickCount ?? 0,
+      clickCount: isAutoplayRewind ? -1 : (derivedPosition?.clickCount ?? 0),
     }),
-    [resolvedSlide, derivedPosition],
+    [resolvedSlide, derivedPosition, isAutoplayRewind],
   );
 };

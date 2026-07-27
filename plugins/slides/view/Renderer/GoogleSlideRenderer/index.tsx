@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { usePluginAPI } from "../../pluginApi";
+import { toFlatPosition } from "../../utils/useAutoplay";
 import { useDisplayedSlide } from "../../utils/useDisplayedSlide";
 import RenderView, { RenderViewHandle } from "./RenderView";
 import { useIframeSync } from "./useIframeSync";
@@ -39,11 +40,33 @@ export const GoogleSlideRenderer = ({
 
   const isActive = effectiveLocalIndex !== -1;
 
+  const slideClickCounts = pluginApi.scene.useData(
+    (x) => x.pluginData.imports[importId]?.slideClickCounts,
+  );
+  const transitionEndsAt = pluginApi.renderer.useData(
+    (x) => x.transitionEndsAt,
+  );
+  const lastClickTimestamp = pluginApi.renderer.useData(
+    (x) => x.lastClickTimestamp,
+  );
+
+  const targetFlatPosition = useMemo(() => {
+    if (effectiveLocalIndex < 0) return -1;
+    return toFlatPosition(
+      effectiveLocalIndex,
+      effectiveClickCount,
+      slideClickCounts ?? [],
+    );
+  }, [effectiveLocalIndex, effectiveClickCount, slideClickCounts]);
+
   useIframeSync({
     ref,
     loaded,
     targetSlideIndex: effectiveLocalIndex,
     targetClickCount: effectiveClickCount,
+    targetFlatPosition,
+    transitionEndsAt: transitionEndsAt ?? 0,
+    lastClickTimestamp: lastClickTimestamp ?? 0,
   });
 
   useEffect(() => {
