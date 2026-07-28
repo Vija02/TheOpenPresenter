@@ -1,0 +1,10 @@
+.lay--stage {
+  position: relative;
+  overflow: hidden;
+  user-select: none;
+}
+
+.lay--box {
+  position: absolute;
+  box-sizing: border-box;
+}
