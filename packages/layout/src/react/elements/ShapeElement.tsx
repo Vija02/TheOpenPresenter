@@ -1,8 +1,8 @@
 import { CSSProperties } from "react";
 
-import { StageMetrics, rectToPx } from "../../geometry/scale";
+import { StageMetrics } from "../../geometry/scale";
 import { ShapeElement } from "../../schema/element";
-import { appearanceToCss } from "../css";
+import { appearanceToCss, rectToCss } from "../css";
 
 export type ShapeElementViewProps = {
   element: ShapeElement;
@@ -13,7 +13,6 @@ export const ShapeElementView = ({
   element,
   metrics,
 }: ShapeElementViewProps) => {
-  const box = rectToPx(element.rect, metrics);
   const appearance = appearanceToCss(element, metrics);
 
   const kindStyle: CSSProperties =
@@ -26,11 +25,7 @@ export const ShapeElementView = ({
   return (
     <div
       style={{
-        position: "absolute",
-        left: box.left,
-        top: box.top,
-        width: box.width,
-        height: box.height,
+        ...rectToCss(element.rect),
         ...appearance,
         ...kindStyle,
       }}

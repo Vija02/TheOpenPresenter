@@ -1,8 +1,8 @@
 import { resolveMediaUrl } from "@repo/lib";
 
-import { StageMetrics, rectToPx } from "../../geometry/scale";
+import { StageMetrics } from "../../geometry/scale";
 import { ImageElement } from "../../schema/element";
-import { appearanceToCss } from "../css";
+import { appearanceToCss, rectToCss } from "../css";
 
 export type ImageElementViewProps = {
   element: ImageElement;
@@ -13,17 +13,12 @@ export const ImageElementView = ({
   element,
   metrics,
 }: ImageElementViewProps) => {
-  const box = rectToPx(element.rect, metrics);
   const src = resolveMediaUrl(element.src);
 
   return (
     <div
       style={{
-        position: "absolute",
-        left: box.left,
-        top: box.top,
-        width: box.width,
-        height: box.height,
+        ...rectToCss(element.rect),
         ...appearanceToCss(element, metrics),
       }}
     >
