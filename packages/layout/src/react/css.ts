@@ -2,7 +2,17 @@ import { CSSProperties } from "react";
 
 import { StageMetrics, toPx } from "../geometry/scale";
 import { Effect, Paint, Shadow, Stroke } from "../schema/paint";
+import { Rect } from "../schema/rect";
 import { TextStyle } from "../schema/style";
+
+/** Geometry goes straight to CSS percentages */
+export const rectToCss = (rect: Rect): CSSProperties => ({
+  position: "absolute",
+  left: `${rect.x}%`,
+  top: `${rect.y}%`,
+  width: `${rect.w}%`,
+  height: `${rect.h}%`,
+});
 
 export const paintToCss = (paint: Paint): string => {
   switch (paint.type) {
@@ -75,7 +85,9 @@ export const appearanceToCss = (
   m: StageMetrics,
 ): CSSProperties => {
   const shadows = effects
-    .filter((e): e is Extract<Effect, { type: "shadow" }> => e.type === "shadow")
+    .filter(
+      (e): e is Extract<Effect, { type: "shadow" }> => e.type === "shadow",
+    )
     .map((e) => shadowToCss(e, m));
 
   const blurs = effects
@@ -110,7 +122,9 @@ export const textShadowToCss = (
     .join(", ");
 };
 
-const alignToFlex = (valign: TextStyle["valign"]): CSSProperties["justifyContent"] =>
+const alignToFlex = (
+  valign: TextStyle["valign"],
+): CSSProperties["justifyContent"] =>
   valign === "top" ? "flex-start" : valign === "bottom" ? "flex-end" : "center";
 
 /** Text properties that do not depend on the fitted size. */
