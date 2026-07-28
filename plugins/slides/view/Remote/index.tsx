@@ -1,4 +1,4 @@
-import { extractMediaName } from "@repo/lib";
+import { extractMediaName, BROWSER_SUPPORTED_IMAGE_EXTENSIONS } from "@repo/lib";
 import {
   Button,
   LoadingInline,
@@ -273,7 +273,7 @@ const RemoteHandler = () => {
             const results = await pluginApi.mediaPicker.show({
               type: "all",
               multiple: true,
-              allowedFileTypes: ["image/*", ".pdf", ".ppt", ".pptx"],
+              allowedFileTypes: [...BROWSER_SUPPORTED_IMAGE_EXTENSIONS, ".pdf", ".ppt", ".pptx"],
               customComponent: (
                 <div className="flex flex-col gap-3">
                   <h3 className="text-lg font-semibold text-gray-800">

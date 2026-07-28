@@ -1,5 +1,5 @@
 import { MediaType } from "@repo/base-plugin";
-import { appData } from "@repo/lib";
+import { appData, BROWSER_SUPPORTED_IMAGE_EXTENSIONS } from "@repo/lib";
 import Uppy from "@uppy/core";
 import { UppyContextProvider, useDropzone, useUppyEvent } from "@uppy/react";
 import Tus from "@uppy/tus";
@@ -23,7 +23,7 @@ export type DropzoneProps = {
 const getAllowedFileTypes = (mediaType?: MediaType): string[] | undefined => {
   switch (mediaType) {
     case "video": return ["video/*"];
-    case "image": return ["image/*"];
+    case "image": return BROWSER_SUPPORTED_IMAGE_EXTENSIONS;
     case "audio": return ["audio/*"];
     case "pdf": return [".pdf"];
     case "ppt": return [".ppt", ".pptx"];

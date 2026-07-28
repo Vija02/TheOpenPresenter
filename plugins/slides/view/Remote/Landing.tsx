@@ -4,7 +4,7 @@ import { useState } from "react";
 import { FcGoogle } from "react-icons/fc";
 import { FiUpload } from "react-icons/fi";
 import { FaFilePdf, FaFilePowerpoint, FaImage } from "react-icons/fa";
-
+import { BROWSER_SUPPORTED_IMAGE_EXTENSIONS } from "@repo/lib";
 import { usePluginAPI } from "../pluginApi";
 import { trpc } from "../trpc";
 import { PickerCard } from "./component/PickerCard";
@@ -44,7 +44,7 @@ const Landing = () => {
             projectId={pluginContext.projectId}
             pluginId={pluginContext.pluginId}
             mediaType="all"
-            allowedFileTypes={["image/*", ".pdf", ".ppt", ".pptx"]}
+            allowedFileTypes={[...BROWSER_SUPPORTED_IMAGE_EXTENSIONS, ".pdf", ".ppt", ".pptx"]}
             multiple={true}
             className="w-full"
           >
