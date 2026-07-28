@@ -44,6 +44,7 @@
     "dev": "vite build --watch"
   },
   "dependencies": {
+    "@react-hook/size": "^2.1.2",
     "@repo/lib": "*",
     "react-moveable": "^0.56.0",
     "react-selecto": "^1.26.3",
