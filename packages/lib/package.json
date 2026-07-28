@@ -32,6 +32,7 @@
     "use-pubsub-js": "^1.0.7",
     "yjs": "13.6.26",
     "yjs-types": "^0.0.1",
+    "zod": "^3.25.17",
     "zustand": "^5.0.2"
   },
   "devDependencies": {
