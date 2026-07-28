@@ -13,6 +13,7 @@ export type DropzoneProps = {
   projectId?: string;
   pluginId?: string;
   mediaType?: MediaType;
+  allowedFileTypes?: string[];
   multiple?: boolean;
   height?: number;
   children?: React.ReactNode;
@@ -153,12 +154,17 @@ export const Dropzone: React.FC<DropzoneProps> = ({
   projectId,
   pluginId,
   mediaType,
+  allowedFileTypes,
   multiple = true,
   height = 240, 
   children,
   className,
 }) => {
-  const allowedFileTypes = useMemo(() => getAllowedFileTypes(mediaType), [mediaType]);
+  const resolvedFileTypes = useMemo(
+    () => allowedFileTypes || getAllowedFileTypes(mediaType),
+    [mediaType, allowedFileTypes]
+  );
+
   const maxNumberOfFiles = multiple ? null : 1;
 
   const [isUploading, setIsUploading] = useState(false);
@@ -167,7 +173,7 @@ export const Dropzone: React.FC<DropzoneProps> = ({
   const [uppy] = useState(() =>
     new Uppy({
       autoProceed: true,
-      restrictions: { allowedFileTypes, maxNumberOfFiles },
+      restrictions: { allowedFileTypes: resolvedFileTypes, maxNumberOfFiles },
     }).use(Tus, {
       endpoint: window.location.origin + "/media/upload/tus",
       headers: {
@@ -182,9 +188,9 @@ export const Dropzone: React.FC<DropzoneProps> = ({
 
   useEffect(() => {
     uppy.setOptions({
-      restrictions: { allowedFileTypes, maxNumberOfFiles },
+      restrictions: { allowedFileTypes: resolvedFileTypes, maxNumberOfFiles },
     });
-  }, [uppy, allowedFileTypes, maxNumberOfFiles]);
+  }, [uppy, resolvedFileTypes, maxNumberOfFiles]);
 
   useUppyEvent(uppy, "upload", () => {
     setIsUploading(true);
@@ -204,7 +210,7 @@ export const Dropzone: React.FC<DropzoneProps> = ({
     const uploaded: UploadedMediaInfo[] = result.successful.map((file) => {
       const uploadUrl = file?.tus?.uploadUrl ?? "";
       const mediaName = uploadUrl.split("/").pop() ?? "";
-      return { mediaName, originalName: (file as any)?.name ?? null };
+      return { mediaName, originalName: file.meta?.name ?? file.name ?? null };
     });
 
     uppy.cancelAll();

@@ -288,7 +288,6 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
               <div className="bp--media-picker-empty">Loading media...</div>
             ) : (
               <div className="flex flex-col gap-2">
-                {/* 1. Dropzone Always Top */}
                 <Dropzone
                   onUploadComplete={handleUploadComplete}
                   organizationId={organizationId}
@@ -296,9 +295,15 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
                   pluginId={pluginId}
                   mediaType={options?.type}
                   multiple={allowMultiple}
+                  allowedFileTypes={options?.allowedFileTypes}
                 />
 
-                {/* 2. Your Library Section */}
+                {options?.customComponent && (
+                  <div className="py-2">
+                    {options.customComponent}
+                  </div>
+                )}
+
                 <div className="flex flex-col gap-3">
                   <h3 className="text-lg font-semibold text-gray-800">
                     Your Library

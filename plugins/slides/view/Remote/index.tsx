@@ -9,9 +9,10 @@ import {
   SlideGrid,
   UniversalImage,
 } from "@repo/ui";
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { FaArrowLeft, FaArrowRight, FaPlus } from "react-icons/fa";
 import { VscSettingsGear } from "react-icons/vsc";
+import { FcGoogle } from "react-icons/fc";
 
 import { resolveSlide } from "../../src/slideOrderUtils";
 import { usePluginAPI } from "../pluginApi";
@@ -22,6 +23,9 @@ import {
 } from "../utils/useAutoplay";
 import Landing from "./Landing";
 import SettingsModal from "./SettingsModal";
+import { useMediaUpload } from "./useMediaUpload";
+import { SlidePicker } from "./ImportFile/SlidePicker";
+import { PickerCard } from "./component/PickerCard";
 import "./index.css";
 
 const Remote = () => {
@@ -105,10 +109,12 @@ const RemoteHandler = () => {
   const rendererData = pluginApi.renderer.useData((x) => x);
 
   const mutableRendererData = pluginApi.renderer.useValtioData();
+  
+  const { handleUploadComplete } = useMediaUpload();
+  const selectSlideMutation = trpc.slides.selectSlide.useMutation();
 
-  const { mutateAsync: selectPdf } = trpc.slides.selectPdf.useMutation();
-  const { mutateAsync: selectPpt } = trpc.slides.selectPpt.useMutation();
-  const { mutateAsync: selectImage } = trpc.slides.selectImage.useMutation();
+  // ref to hold the trigger function so we can pass it to the modal safely
+  const openPickerRef = useRef<(() => void) | null>(null);
 
   const resolvedSlides = pluginData.slideOrder
     .map((_, i) => resolveSlide(pluginData, i))
@@ -159,6 +165,28 @@ const RemoteHandler = () => {
 
   return (
     <>
+      {/* 
+        render slide picker hidden in the plugin's react tree to avoid cross package hook errors
+        it extracts the "openPicker" action into our ref to be used by the generic button
+      */}
+      <div className="hidden">
+        <SlidePicker
+          onFileSelected={(doc, token) => {
+            selectSlideMutation.mutate({
+              pluginId: pluginApi.pluginContext.pluginId,
+              presentationId: doc.id,
+              token: token,
+              name: doc.name,
+            });
+          }}
+        >
+          {({ openPicker }) => {
+            openPickerRef.current = openPicker;
+            return <span />;
+          }}
+        </SlidePicker>
+      </div>
+
       {resolvedSlides.map((slide, i) => {
         const isReplacing = replacingImportIds.has(slide.ref.importId);
         return (
@@ -195,6 +223,7 @@ const RemoteHandler = () => {
           </Slide>
         );
       })}
+      
       {/* Render skeletons when importing */}
       {appendingFetchingImports.flatMap((importData, importIdx) => {
         const knownCount = importData.thumbnailLinks?.length ?? 0;
@@ -241,52 +270,44 @@ const RemoteHandler = () => {
           }
 
           try {
-            // Wait for the user to select files in the modal
             const results = await pluginApi.mediaPicker.show({
               type: "all",
               multiple: true,
+              allowedFileTypes: ["image/*", ".pdf", ".ppt", ".pptx"],
+              customComponent: (
+                <div className="flex flex-col gap-3">
+                  <h3 className="text-lg font-semibold text-gray-800">
+                    Or import from integration
+                  </h3>
+                  <div className="flex flex-wrap gap-4">
+                    <PickerCard
+                      onClick={() => {
+                        if (openPickerRef.current) {
+                          openPickerRef.current();
+                        } else {
+                          pluginApi.remote.toast.error("Google Slides integration is not ready yet.");
+                        }
+                      }}
+                      icon={<FcGoogle className="size-10" />}
+                      text="Google Slides"
+                      isLoading={selectSlideMutation.isPending}
+                    />
+                  </div>
+                </div>
+              ),
             });
 
             if (!results || results.length === 0) return;
 
-            const images: any[] = [];
-            const pdfs: any[] = [];
-            const ppts: any[] = [];
-
-            for (const file of results) {
-              const ext = file.fileExtension?.toLowerCase() || file.mediaName?.split(".").pop()?.toLowerCase() || "";
-              const fileData = {
+            await handleUploadComplete(
+              results.map((file: any) => ({
                 mediaName: file.mediaName,
-                name: file.originalName ?? undefined,
-              };
-
-              if (["jpg", "jpeg", "png", "gif", "webp"].includes(ext)) {
-                images.push(fileData);
-              } else if (ext === "pdf") {
-                pdfs.push(fileData);
-              } else if (["ppt", "pptx"].includes(ext)) {
-                ppts.push(fileData);
-              }
-            }
-
-            const promises: Promise<any>[] = [];
-            const pluginId = pluginApi.pluginContext.pluginId;
-
-            if (images.length > 0) {
-              promises.push(selectImage({ images, pluginId }));
-            }
-            for (const pdf of pdfs) {
-              promises.push(selectPdf({ ...pdf, pluginId }));
-            }
-            for (const ppt of ppts) {
-              promises.push(selectPpt({ ...ppt, pluginId }));
-            }
-
-            await Promise.all(promises);
+                originalName: file.originalName ?? null,
+              }))
+            );
           } catch (err: any) {
-            // ignore if the user just clicked cancel or closed the modal
             if (err !== "cancelled") {
-              pluginApi.remote.toast.error(`Failed to process media: ${err?.message || err}`);
+              pluginApi.remote.toast.error(`Failed to open media picker: ${err?.message || err}`);
             }
           }
         }}

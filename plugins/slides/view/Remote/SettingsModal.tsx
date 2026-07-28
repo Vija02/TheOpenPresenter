@@ -42,7 +42,7 @@ const IMPORT_TYPE_ICON: Record<ImportType, React.ReactNode> = {
   googleslides: <SiGoogleslides className="size-5 shrink-0 text-[#F4B400]" />,
   pdf: <FaFilePdf className="size-5 shrink-0 text-[#F52102]" />,
   ppt: <RiFilePpt2Fill className="size-5 shrink-0 text-[#CC4A34]" />,
-  image: <FaImage className="size-5 shrink-0 text-[#4285F4]" />,
+  image: <FaImage className="size-5 shrink-0 text-gray-700" />,
 };
 
 type SettingsData = {
