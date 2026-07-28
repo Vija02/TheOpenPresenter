@@ -1,14 +1,21 @@
 import { VideoTranscodeStatus } from "@repo/graphql";
 import { TypeId, fromString, fromUUID, toUUID } from "typeid-js";
+import { z } from "zod";
 
 import { isVideoFile } from "./mediaTypeUtil";
 
-export type InternalMedia = {
-  mediaId: string;
-  extension: string;
-  host?: string;
-};
-export type UniversalURL = string | InternalMedia;
+export const internalMediaValidator = z.object({
+  mediaId: z.string(),
+  extension: z.string(),
+  host: z.string().optional(),
+});
+export type InternalMedia = z.infer<typeof internalMediaValidator>;
+
+export const universalURLValidator = z.union([
+  z.string(),
+  internalMediaValidator,
+]);
+export type UniversalURL = z.infer<typeof universalURLValidator>;
 
 export const extractMediaName = (mediaName: string) => {
   const splittedKey = mediaName.split(".");
