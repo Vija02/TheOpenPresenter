@@ -40,6 +40,7 @@ COPY packages/graphql/package.json /app/packages/graphql/package.json
 COPY packages/portable-file/package.json /app/packages/portable-file/package.json
 COPY packages/base-types/package.json /app/packages/base-types/package.json
 COPY packages/lib/package.json /app/packages/lib/package.json
+COPY packages/layout/package.json /app/packages/layout/package.json
 COPY packages/media-picker/package.json /app/packages/media-picker/package.json
 COPY packages/observability/package.json /app/packages/observability/package.json
 COPY packages/prettier-config/package.json /app/packages/prettier-config/package.json
@@ -107,6 +108,9 @@ RUN yarn workspace @repo/video build
 
 COPY packages/media-picker/ /app/packages/media-picker/
 RUN yarn workspace @repo/media-picker build
+
+COPY packages/layout/ /app/packages/layout/
+RUN yarn workspace @repo/layout build
 
 RUN node scripts/build_utils/extract_core.js
 
