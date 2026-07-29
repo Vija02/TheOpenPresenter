@@ -9,27 +9,32 @@ import {
 
 import { MediaWithMetadata } from "./types";
 
+const matchesType = (ext: string, type: MediaType): boolean => {
+  switch (type) {
+    case "video":
+      return isVideoFile(ext);
+    case "image":
+      return isImageFile(ext);
+    case "audio":
+      return isAudioFile(ext);
+    case "pdf":
+      return isPdfFile(ext);
+    case "ppt":
+      return isPptFile(ext);
+    default:
+      return true;
+  }
+};
+
 export const filterMediaByType = (
   media: MediaWithMetadata[],
-  type: MediaType,
+  type: MediaType | MediaType[],
 ): MediaWithMetadata[] => {
-  if (type === "all") return media;
+  const types = Array.isArray(type) ? type : [type];
 
-  return media.filter((m) => {
-    const ext = m.fileExtension;
-    switch (type) {
-      case "video":
-        return isVideoFile(ext);
-      case "image":
-        return isImageFile(ext);
-      case "audio":
-        return isAudioFile(ext);
-      case "pdf":
-        return isPdfFile(ext);
-      case "ppt":
-        return isPptFile(ext);
-      default:
-        return true;
-    }
-  });
+  if (types.length === 0 || types.includes("all")) return media;
+
+  return media.filter((m) =>
+    types.some((t) => m.fileExtension && matchesType(m.fileExtension, t)),
+  );
 };
