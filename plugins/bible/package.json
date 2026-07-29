@@ -14,8 +14,8 @@
   },
   "dependencies": {
     "@r2wc/react-to-web-component": "^2.0.3",
-    "@react-hook/size": "^2.1.2",
     "@repo/base-plugin": "*",
+    "@repo/layout": "*",
     "@repo/observability": "*",
     "@repo/ui": "*",
     "@tanstack/react-query": "^5.62.3",
