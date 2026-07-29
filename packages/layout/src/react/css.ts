@@ -14,6 +14,17 @@ export const rectToCss = (rect: Rect): CSSProperties => ({
   height: `${rect.h}%`,
 });
 
+/** `rect` places the element itself. `fill` makes it fill a wrapper */
+export type ElementPlacement = "rect" | "fill";
+
+export const placementToCss = (
+  placement: ElementPlacement,
+  rect: Rect,
+): CSSProperties =>
+  placement === "fill"
+    ? { position: "absolute", inset: 0 }
+    : rectToCss(rect);
+
 export const paintToCss = (paint: Paint): string => {
   switch (paint.type) {
     case "solid":
