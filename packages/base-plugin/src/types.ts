@@ -187,13 +187,13 @@ export type MediaHandler = {
 export type MediaType = "video" | "image" | "audio" | "pdf" | "ppt" | "all";
 
 export type MediaPickerOptions = {
-  type?: MediaType;
+  type?: MediaType | MediaType[];
   title?: string;
   portalContainer?: HTMLElement | null;
   multiple?: boolean;
   autoPickVideo?: boolean;
   customComponent?: React.ReactNode;
-  allowedFileTypes?: string[];
+  overrideAllowedFileTypes?: string[];
 };
 
 export type MediaPickerOptionsInternal = MediaPickerOptions & {

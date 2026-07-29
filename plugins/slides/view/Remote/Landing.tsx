@@ -1,26 +1,18 @@
-import { PublicAccessNoticeDialog } from "@repo/base-plugin/client";
 import { Dropzone } from "@repo/media-picker/client";
-import { useState } from "react";
-import { FcGoogle } from "react-icons/fc";
 import { FiUpload } from "react-icons/fi";
 import { FaFilePdf, FaFilePowerpoint, FaImage } from "react-icons/fa";
-import { BROWSER_SUPPORTED_IMAGE_EXTENSIONS } from "@repo/lib";
+import { SUPPORTED_IMAGE_EXTENSIONS } from "@repo/lib";
+
 import { usePluginAPI } from "../pluginApi";
-import { trpc } from "../trpc";
-import { PickerCard } from "./component/PickerCard";
-import { SlidePicker } from "./ImportFile/SlidePicker";
 import { useMediaUpload } from "./useMediaUpload";
+import { GoogleSlidesIntegration } from "./component/GoogleSlidesIntegration";
 
 const Landing = () => {
   const pluginApi = usePluginAPI();
   const pluginContext = pluginApi.pluginContext;
   const isPublicAccess = pluginApi.isPublicAccess;
-
-  const [showSlidesPublicNotice, setShowSlidesPublicNotice] = useState(false);
   
   const { isProcessing, handleUploadComplete } = useMediaUpload(); 
-  
-  const selectSlideMutation = trpc.slides.selectSlide.useMutation();
 
   return (
     <div className="w-full flex justify-center py-4 md:py-8 px-4">
@@ -44,7 +36,7 @@ const Landing = () => {
             projectId={pluginContext.projectId}
             pluginId={pluginContext.pluginId}
             mediaType="all"
-            allowedFileTypes={[...BROWSER_SUPPORTED_IMAGE_EXTENSIONS, ".pdf", ".ppt", ".pptx"]}
+            overrideAllowedFileTypes={[...SUPPORTED_IMAGE_EXTENSIONS, ".pdf", ".ppt", ".pptx"]}
             multiple={true}
             className="w-full"
           >
@@ -80,38 +72,9 @@ const Landing = () => {
             Or import from integration
           </p>
           <div className="flex flex-wrap gap-4 justify-center md:justify-start">
-            <SlidePicker
-              onFileSelected={(doc, token) => {
-                selectSlideMutation.mutate({
-                  pluginId: pluginContext.pluginId,
-                  presentationId: doc.id,
-                  token: token,
-                  name: doc.name,
-                });
-              }}
-            >
-              {({ isLoading, openPicker }) => (
-                <PickerCard
-                  onClick={() => {
-                    if (isPublicAccess) {
-                      setShowSlidesPublicNotice(true);
-                      return;
-                    }
-                    openPicker();
-                  }}
-                  icon={<FcGoogle className="size-10" />}
-                  text="Google Slides"
-                  isLoading={isLoading || selectSlideMutation.isPending}
-                />
-              )}
-            </SlidePicker>
+            <GoogleSlidesIntegration />
           </div>
         </div>
-
-        <PublicAccessNoticeDialog
-          isOpen={showSlidesPublicNotice}
-          onClose={() => setShowSlidesPublicNotice(false)}
-        />
       </div>
     </div>
   );

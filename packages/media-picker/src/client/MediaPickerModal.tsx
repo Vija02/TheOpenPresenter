@@ -82,7 +82,7 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
   const rawFilteredMedia = useMemo(() => {
     const allMedia =
       (data?.organization?.medias.nodes as MediaWithMetadata[]) ?? [];
-    return filterMediaByType(allMedia, options?.type ?? "all");
+    return filterMediaByType(allMedia, (options?.type ?? "all") as any);
   }, [data, options?.type]);
 
   const { mediaList: filteredMedia, resetOverrides } = useVideoProcessingStatus(
@@ -239,7 +239,10 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
       for (const uploaded of uploadedList) {
         if (!uploaded.mediaName) continue;
         const ext = uploaded.mediaName.split(".").pop() ?? "";
-        const isVideoUpload = options?.type === "video" || isVideoFile(ext);
+        const isVideoUpload = 
+          (Array.isArray(options?.type) ? options.type.includes("video") : options?.type === "video") || 
+          isVideoFile(ext);
+
         const allowAutoPick = !isVideoUpload || !!options?.autoPickVideo;
         if (!allowAutoPick) continue;
         picked.push(
@@ -258,7 +261,9 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
   const title = options?.title ?? "Select Media";
   const portalContainer = options?.portalContainer;
 
-  const typeLabel = TYPE_LABELS[options?.type ?? "all"];
+  // Safely grab the first type if it's an array for the labels
+  const primaryType = (Array.isArray(options?.type) ? options.type[0] : options?.type) ?? "all";
+  const typeLabel = TYPE_LABELS[primaryType] || TYPE_LABELS.all;
   const isEmpty = !!data && filteredMedia.length === 0;
 
   if (!isOpen) return null;
@@ -295,7 +300,7 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
                   pluginId={pluginId}
                   mediaType={options?.type}
                   multiple={allowMultiple}
-                  allowedFileTypes={options?.allowedFileTypes}
+                  overrideAllowedFileTypes={options?.overrideAllowedFileTypes}
                 />
 
                 {options?.customComponent && (

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { SUPPORTED_IMAGE_EXTENSIONS } from "@repo/lib";
 import { usePluginAPI } from "../pluginApi";
 import { trpc } from "../trpc";
 
@@ -13,7 +14,8 @@ export const useMediaUpload = () => {
   const { mutateAsync: selectImage } = trpc.slides.selectImage.useMutation();
 
   const handleUploadComplete = async (
-    uploadedFiles: { mediaName: string; originalName: string | null }[]
+    uploadedFiles: { mediaName: string; originalName: string | null }[],
+    replaceImportId?: string
   ) => {
     if (!uploadedFiles || uploadedFiles.length === 0) return;
     setIsProcessing(true);
@@ -24,32 +26,40 @@ export const useMediaUpload = () => {
       const ppts: { mediaName: string; name?: string }[] = [];
 
       for (const file of uploadedFiles) {
-        const ext = file.mediaName.split(".").pop()?.toLowerCase() || "";
+        // Grab the extension and prepend the dot so it matches the constants array
+        const rawExt = file.mediaName.split(".").pop()?.toLowerCase() || "";
+        const ext = `.${rawExt}`;
+        
         const fileData = {
           mediaName: file.mediaName,
           name: file.originalName ?? undefined,
         };
 
-        if (["jpg", "jpeg", "png", "gif", "webp"].includes(ext)) {
+        if (SUPPORTED_IMAGE_EXTENSIONS.includes(ext)) {
           images.push(fileData);
-        } else if (ext === "pdf") {
+        } else if (ext === ".pdf") {
           pdfs.push(fileData);
-        } else if (["ppt", "pptx"].includes(ext)) {
+        } else if ([".ppt", ".pptx"].includes(ext)) {
           ppts.push(fileData);
+        } else {
+          throw new Error(`Unsupported file type: ${ext}`);
         }
       }
 
       const promises: Promise<any>[] = [];
       const pluginId = pluginContext.pluginId;
+      
+      // Only attach replaceImportId to the payload if it exists
+      const replacePayload = replaceImportId ? { replaceImportId } : {};
 
       if (images.length > 0) {
-        promises.push(selectImage({ images, pluginId }));
+        promises.push(selectImage({ images, pluginId, ...replacePayload }));
       }
       for (const pdf of pdfs) {
-        promises.push(selectPdf({ ...pdf, pluginId }));
+        promises.push(selectPdf({ ...pdf, pluginId, ...replacePayload }));
       }
       for (const ppt of ppts) {
-        promises.push(selectPpt({ ...ppt, pluginId }));
+        promises.push(selectPpt({ ...ppt, pluginId, ...replacePayload }));
       }
 
       await Promise.all(promises);

@@ -1,5 +1,5 @@
 import { MediaType } from "@repo/base-plugin";
-import { appData, BROWSER_SUPPORTED_IMAGE_EXTENSIONS } from "@repo/lib";
+import { appData, SUPPORTED_IMAGE_EXTENSIONS, SUPPORTED_VIDEO_EXTENSIONS } from "@repo/lib";
 import Uppy from "@uppy/core";
 import { UppyContextProvider, useDropzone, useUppyEvent } from "@uppy/react";
 import Tus from "@uppy/tus";
@@ -12,24 +12,44 @@ export type DropzoneProps = {
   organizationId: string;
   projectId?: string;
   pluginId?: string;
-  mediaType?: MediaType;
-  allowedFileTypes?: string[];
+  mediaType?: MediaType | MediaType[];
+  overrideAllowedFileTypes?: string[];
   multiple?: boolean;
   height?: number;
   children?: React.ReactNode;
   className?: string;
 };
 
-const getAllowedFileTypes = (mediaType?: MediaType): string[] | undefined => {
-  switch (mediaType) {
-    case "video": return ["video/*"];
-    case "image": return BROWSER_SUPPORTED_IMAGE_EXTENSIONS;
-    case "audio": return ["audio/*"];
-    case "pdf": return [".pdf"];
-    case "ppt": return [".ppt", ".pptx"];
-    case "all":
-    default: return undefined;
-  }
+const getAllowedFileTypes = (mediaType?: MediaType | MediaType[]): string[] | undefined => {
+  if (!mediaType) return undefined;
+  
+  const types = Array.isArray(mediaType) ? mediaType : [mediaType];
+  if (types.includes("all")) return undefined;
+
+  const allowed = new Set<string>();
+  
+  types.forEach((type) => {
+    switch (type) {
+      case "video":
+        SUPPORTED_VIDEO_EXTENSIONS.forEach((ext) => allowed.add(ext));
+        break;
+      case "image":
+        SUPPORTED_IMAGE_EXTENSIONS.forEach((ext) => allowed.add(ext));
+        break;
+      case "audio":
+        allowed.add("audio/*");
+        break;
+      case "pdf":
+        allowed.add(".pdf");
+        break;
+      case "ppt":
+        allowed.add(".ppt");
+        allowed.add(".pptx");
+        break;
+    }
+  });
+
+  return allowed.size > 0 ? Array.from(allowed) : undefined;
 };
 
 const HeadlessDropzone = ({ 
@@ -154,15 +174,15 @@ export const Dropzone: React.FC<DropzoneProps> = ({
   projectId,
   pluginId,
   mediaType,
-  allowedFileTypes,
+  overrideAllowedFileTypes,
   multiple = true,
   height = 240, 
   children,
   className,
 }) => {
   const resolvedFileTypes = useMemo(
-    () => allowedFileTypes || getAllowedFileTypes(mediaType),
-    [mediaType, allowedFileTypes]
+    () => overrideAllowedFileTypes || getAllowedFileTypes(mediaType),
+    [mediaType, overrideAllowedFileTypes]
   );
 
   const maxNumberOfFiles = multiple ? null : 1;

@@ -18,12 +18,14 @@ import {
   PopConfirm,
   useOverlayToggle,
 } from "@repo/ui";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { FaFilePdf, FaImage } from "react-icons/fa";
 import { FaArrowsRotate, FaCircleInfo, FaTrash } from "react-icons/fa6";
 import { RiFilePpt2Fill } from "react-icons/ri";
 import { SiGoogleslides } from "react-icons/si";
+import { FcGoogle } from "react-icons/fc";
+import { SUPPORTED_IMAGE_EXTENSIONS } from "@repo/lib";
 
 import {
   DisplayMode,
@@ -37,6 +39,9 @@ import {
   computeGlobalSlideClickCount,
 } from "../utils/useAutoplay";
 import { displayTypeMapping } from "./displayTypeMapping";
+import { useMediaUpload } from "./useMediaUpload";
+import { SlidePicker } from "./ImportFile/SlidePicker";
+import { PickerCard } from "./component/PickerCard";
 
 const IMPORT_TYPE_ICON: Record<ImportType, React.ReactNode> = {
   googleslides: <SiGoogleslides className="size-5 shrink-0 text-[#F4B400]" />,
@@ -58,9 +63,11 @@ const SettingsModal = () => {
   const mutableRendererData = pluginApi.renderer.useValtioData();
 
   const { mutate: removeImport } = trpc.slides.removeImport.useMutation();
-  const { mutateAsync: selectPdf } = trpc.slides.selectPdf.useMutation();
-  const { mutateAsync: selectPpt } = trpc.slides.selectPpt.useMutation();
-  const { mutateAsync: selectImage } = trpc.slides.selectImage.useMutation();
+  const { handleUploadComplete } = useMediaUpload();
+  const selectSlideMutation = trpc.slides.selectSlide.useMutation();
+
+  const openPickerRef = useRef<(() => void) | null>(null);
+  const [activeReplaceId, setActiveReplaceId] = useState<string | undefined>(undefined);
 
   const pluginData = pluginApi.scene.useData((x) => x.pluginData);
   const autoplay = pluginApi.renderer.useData((x) => x.autoplay);
@@ -188,6 +195,25 @@ const SettingsModal = () => {
 
   return (
     <Dialog open={isOpen ?? false} onOpenChange={onToggle ?? (() => {})}>
+      <div className="hidden">
+        <SlidePicker
+          onFileSelected={(doc, token) => {
+            selectSlideMutation.mutate({
+              pluginId: pluginApi.pluginContext.pluginId,
+              presentationId: doc.id,
+              token: token,
+              name: doc.name,
+              replaceImportId: activeReplaceId,
+            });
+          }}
+        >
+          {({ openPicker }) => {
+            openPickerRef.current = openPicker;
+            return <span />;
+          }}
+        </SlidePicker>
+      </div>
+
       <Form {...form}>
         <DialogContent
           size="3xl"
@@ -300,29 +326,38 @@ const SettingsModal = () => {
                                     const results = await pluginApi.mediaPicker.show({
                                       type: "all",
                                       multiple: false,
+                                      overrideAllowedFileTypes: [...SUPPORTED_IMAGE_EXTENSIONS, ".pdf", ".ppt", ".pptx"],
+                                      customComponent: (
+                                        <div className="flex flex-col gap-3">
+                                          <h3 className="text-lg font-semibold text-gray-800">
+                                            Or import from integration
+                                          </h3>
+                                          <div className="flex flex-wrap gap-4">
+                                            <PickerCard
+                                              onClick={() => {
+                                                setActiveReplaceId(imp.importId);
+                                                if (openPickerRef.current) {
+                                                  openPickerRef.current();
+                                                }
+                                              }}
+                                              icon={<FcGoogle className="size-10" />}
+                                              text="Google Slides"
+                                              isLoading={selectSlideMutation.isPending}
+                                            />
+                                          </div>
+                                        </div>
+                                      ),
                                     });
 
                                     if (!results || results.length === 0) return;
 
-                                    const file = results[0];
-                                    if (!file) return;
-
-                                    const ext = file.fileExtension?.toLowerCase() || file.mediaName?.split(".").pop()?.toLowerCase() || "";
-                                    const fileData = {
-                                      mediaName: file.mediaName,
-                                      name: file.originalName ?? undefined,
-                                    };
-
-                                    const pluginId = pluginApi.pluginContext.pluginId;
-                                    const replaceImportId = imp.importId;
-
-                                    if (["jpg", "jpeg", "png", "gif", "webp"].includes(ext)) {
-                                      await selectImage({ images: [fileData], pluginId, replaceImportId });
-                                    } else if (ext === "pdf") {
-                                      await selectPdf({ ...fileData, pluginId, replaceImportId });
-                                    } else if (["ppt", "pptx"].includes(ext)) {
-                                      await selectPpt({ ...fileData, pluginId, replaceImportId });
-                                    }
+                                    await handleUploadComplete(
+                                      results.map((file: any) => ({
+                                        mediaName: file.mediaName,
+                                        originalName: file.originalName ?? null,
+                                      })),
+                                      imp.importId
+                                    );
                                   } catch (err: any) {
                                     if (err !== "cancelled") {
                                       pluginApi.remote.toast.error(`Failed to replace media: ${err?.message || err}`);
