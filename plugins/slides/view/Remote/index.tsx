@@ -19,10 +19,10 @@ import {
   computeGlobalSlideClickCount,
   useAutoplay,
 } from "../utils/useAutoplay";
-import ImportFileModal from "./ImportFile/ImportFileModal";
 import Landing from "./Landing";
 import SettingsModal from "./SettingsModal";
 import "./index.css";
+import { useSlideMediaPicker } from "./integrations";
 
 const Remote = () => {
   const pluginApi = usePluginAPI();
@@ -106,6 +106,8 @@ const RemoteHandler = () => {
 
   const mutableRendererData = pluginApi.renderer.useValtioData();
 
+  const { integrationHosts, pickMedia } = useSlideMediaPicker();
+
   const resolvedSlides = pluginData.slideOrder
     .map((_, i) => resolveSlide(pluginData, i))
     .filter((x) => !!x);
@@ -155,6 +157,8 @@ const RemoteHandler = () => {
 
   return (
     <>
+      {integrationHosts}
+
       {resolvedSlides.map((slide, i) => {
         const isReplacing = replacingImportIds.has(slide.ref.importId);
         return (
@@ -191,6 +195,7 @@ const RemoteHandler = () => {
           </Slide>
         );
       })}
+
       {/* Render skeletons when importing */}
       {appendingFetchingImports.flatMap((importData, importIdx) => {
         const knownCount = importData.thumbnailLinks?.length ?? 0;
@@ -226,18 +231,17 @@ const RemoteHandler = () => {
           </Slide>
         ));
       })}
-      <OverlayToggle
-        toggler={({ onToggle }) => (
-          <Slide pluginAPI={pluginApi} heading="" onClick={onToggle}>
-            <div className="group h-full w-full flex flex-col items-center justify-center gap-2 border-2 border-dashed border-tertiary text-tertiary hover:border-secondary hover:text-secondary hover:bg-black/5 transition-colors">
-              <FaPlus className="size-6" />
-              <span className="text-sm font-medium">Add slide</span>
-            </div>
-          </Slide>
-        )}
+
+      <Slide
+        pluginAPI={pluginApi}
+        heading=""
+        onClick={() => pickMedia({ multiple: true })}
       >
-        <ImportFileModal />
-      </OverlayToggle>
+        <div className="group h-full w-full flex flex-col items-center justify-center gap-2 border-2 border-dashed border-tertiary text-tertiary hover:border-secondary hover:text-secondary hover:bg-black/5 transition-colors cursor-pointer">
+          <FaPlus className="size-6" />
+          <span className="text-sm font-medium">Add slide</span>
+        </div>
+      </Slide>
     </>
   );
 };

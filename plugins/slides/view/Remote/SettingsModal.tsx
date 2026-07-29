@@ -15,13 +15,12 @@ import {
   LoadingInline,
   NumberInputControl,
   OptionControl,
-  OverlayToggle,
   PopConfirm,
   useOverlayToggle,
 } from "@repo/ui";
 import { useCallback, useMemo } from "react";
 import { useForm } from "react-hook-form";
-import { FaFilePdf } from "react-icons/fa";
+import { FaFilePdf, FaImage } from "react-icons/fa";
 import { FaArrowsRotate, FaCircleInfo, FaTrash } from "react-icons/fa6";
 import { RiFilePpt2Fill } from "react-icons/ri";
 import { SiGoogleslides } from "react-icons/si";
@@ -37,13 +36,14 @@ import {
   calculateAutoplayPosition,
   computeGlobalSlideClickCount,
 } from "../utils/useAutoplay";
-import ImportFileModal from "./ImportFile/ImportFileModal";
 import { displayTypeMapping } from "./displayTypeMapping";
+import { useSlideMediaPicker } from "./integrations";
 
 const IMPORT_TYPE_ICON: Record<ImportType, React.ReactNode> = {
   googleslides: <SiGoogleslides className="size-5 shrink-0 text-[#F4B400]" />,
   pdf: <FaFilePdf className="size-5 shrink-0 text-[#F52102]" />,
   ppt: <RiFilePpt2Fill className="size-5 shrink-0 text-[#CC4A34]" />,
+  image: <FaImage className="size-5 shrink-0 text-gray-700" />,
 };
 
 type SettingsData = {
@@ -59,6 +59,7 @@ const SettingsModal = () => {
   const mutableRendererData = pluginApi.renderer.useValtioData();
 
   const { mutate: removeImport } = trpc.slides.removeImport.useMutation();
+  const { integrationHosts, pickMedia } = useSlideMediaPicker();
 
   const pluginData = pluginApi.scene.useData((x) => x.pluginData);
   const autoplay = pluginApi.renderer.useData((x) => x.autoplay);
@@ -186,6 +187,8 @@ const SettingsModal = () => {
 
   return (
     <Dialog open={isOpen ?? false} onOpenChange={onToggle ?? (() => {})}>
+      {integrationHosts}
+
       <Form {...form}>
         <DialogContent
           size="3xl"
@@ -271,7 +274,7 @@ const SettingsModal = () => {
                             <div className="flex items-center gap-2 min-w-0">
                               {IMPORT_TYPE_ICON[imp.type]}
                               <h4
-                                className="font-medium truncate"
+                                className="font-bold truncate"
                                 title={displayTitle}
                               >
                                 {displayTitle}
@@ -283,28 +286,25 @@ const SettingsModal = () => {
                               )}
                             </div>
                             <div className="flex items-center gap-2 shrink-0">
-                              <OverlayToggle
-                                toggler={({ onToggle }) => (
-                                  <Button
-                                    type="button"
-                                    size="xs"
-                                    variant="outline"
-                                    disabled={isBeingReplaced}
-                                    onClick={onToggle}
-                                  >
-                                    {isBeingReplaced ? (
-                                      <LoadingInline className="size-3" />
-                                    ) : (
-                                      <FaArrowsRotate />
-                                    )}
-                                    Replace
-                                  </Button>
-                                )}
+                              <Button
+                                type="button"
+                                size="xs"
+                                variant="outline"
+                                disabled={isBeingReplaced}
+                                onClick={() =>
+                                  pickMedia({
+                                    multiple: false,
+                                    replaceImportId: imp.importId,
+                                  })
+                                }
                               >
-                                <ImportFileModal
-                                  replaceImportId={imp.importId}
-                                />
-                              </OverlayToggle>
+                                {isBeingReplaced ? (
+                                  <LoadingInline className="size-3" />
+                                ) : (
+                                  <FaArrowsRotate />
+                                )}
+                                Replace
+                              </Button>
                               <PopConfirm
                                 title="Delete this import?"
                                 description={`"${displayTitle}" and all of its slides will be removed.`}

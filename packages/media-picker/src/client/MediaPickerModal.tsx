@@ -33,10 +33,10 @@ import React, {
 import { VscCloudUpload } from "react-icons/vsc";
 import { typeidUnboxed } from "typeid-js";
 
+import { Dropzone } from "./Dropzone";
 import { MediaCard } from "./MediaCard";
 import { MediaPreviewDialog } from "./MediaPreviewDialog";
 import { UploadedMediaInfo } from "./UploadMediaModal";
-import { Dropzone } from "./Dropzone";
 import { MediaWithMetadata } from "./types";
 import { filterMediaByType } from "./utils";
 
@@ -239,8 +239,12 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
       for (const uploaded of uploadedList) {
         if (!uploaded.mediaName) continue;
         const ext = uploaded.mediaName.split(".").pop() ?? "";
-        const isVideoUpload = options?.type === "video" || isVideoFile(ext);
-        const allowAutoPick = !isVideoUpload || !!options?.autoPickVideo;
+        const hasVideoUpload =
+          (Array.isArray(options?.type)
+            ? options.type.includes("video")
+            : options?.type === "video") || isVideoFile(ext);
+
+        const allowAutoPick = !hasVideoUpload || !!options?.autoPickVideo;
         if (!allowAutoPick) continue;
         picked.push(
           buildResultFromUpload(uploaded.mediaName, uploaded.originalName),
@@ -258,7 +262,10 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
   const title = options?.title ?? "Select Media";
   const portalContainer = options?.portalContainer;
 
-  const typeLabel = TYPE_LABELS[options?.type ?? "all"];
+  // Safely grab the first type if it's an array for the labels
+  const primaryType =
+    (Array.isArray(options?.type) ? options.type[0] : options?.type) ?? "all";
+  const typeLabel = TYPE_LABELS[primaryType] || TYPE_LABELS.all;
   const isEmpty = !!data && filteredMedia.length === 0;
 
   if (!isOpen) return null;
@@ -288,7 +295,6 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
               <div className="bp--media-picker-empty">Loading media...</div>
             ) : (
               <div className="flex flex-col gap-2">
-                {/* 1. Dropzone Always Top */}
                 <Dropzone
                   onUploadComplete={handleUploadComplete}
                   organizationId={organizationId}
@@ -296,16 +302,20 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
                   pluginId={pluginId}
                   mediaType={options?.type}
                   multiple={allowMultiple}
+                  overrideAllowedFileTypes={options?.overrideAllowedFileTypes}
                 />
 
-                {/* 2. Your Library Section */}
+                {options?.customComponent && (
+                  <div className="py-2">{options.customComponent}</div>
+                )}
+
                 <div className="flex flex-col gap-3">
                   <h3 className="text-lg font-semibold text-gray-800">
                     Your Library
                   </h3>
                   {isEmpty ? (
                     <div
-                      className="flex flex-col items-center justify-center p-10" 
+                      className="flex flex-col items-center justify-center p-10"
                       data-testid="media-picker-empty-state"
                     >
                       <VscCloudUpload className="size-12 text-gray-400 mb-3" />

@@ -20,17 +20,11 @@ test.describe("Slides Plugin", () => {
     await projectPage.createPlugin("Slides");
 
     await expect(page.getByRole("heading")).toContainText(
-      "Welcome to Slides Presenter",
+      "Upload your slides",
     );
     await expect(page.getByText("Google Slides")).toBeVisible();
-    await expect(page.getByText("PDF")).toBeVisible();
-    await expect(page.getByText("Powerpoint")).toBeVisible();
 
-    await page.getByText("PDF", { exact: true }).click();
-
-    // Open the uploader from the MediaPicker (empty state or grid)
-
-    // Upload the file
+    // Upload the file via unified Dropzone
     await uppyUploadFile("./dummyFiles/dummySlide.pdf");
 
     const secondSlide = page
@@ -62,17 +56,11 @@ test.describe("Slides Plugin", () => {
     await projectPage.createPlugin("Slides");
 
     await expect(page.getByRole("heading")).toContainText(
-      "Welcome to Slides Presenter",
+      "Upload your slides",
     );
     await expect(page.getByText("Google Slides")).toBeVisible();
-    await expect(page.getByText("PDF")).toBeVisible();
-    await expect(page.getByText("Powerpoint")).toBeVisible();
 
-    await page.getByText("Powerpoint", { exact: true }).click();
-
-    // Open the uploader from the MediaPicker (empty state or grid)
-
-    // Upload the file
+    // Upload the file via unified Dropzone
     await uppyUploadFile("./dummyFiles/dummySlide.pptx");
 
     const secondSlide = page
@@ -104,15 +92,10 @@ test.describe("Slides Plugin", () => {
     await projectPage.createPlugin("Slides");
 
     await expect(page.getByRole("heading")).toContainText(
-      "Welcome to Slides Presenter",
+      "Upload your slides",
     );
-    await expect(page.getByText("Image", { exact: true })).toBeVisible();
 
-    await page.getByText("Image", { exact: true }).click();
-
-    // Open the uploader from the MediaPicker
-
-    // Upload the file
+    // Upload the file via unified Dropzone
     await uppyUploadFile("./dummyFiles/dummyImage.jpg");
 
     const firstSlide = page
@@ -132,5 +115,4 @@ test.describe("Slides Plugin", () => {
     // Match screenshot
     await expect(presentedPage).toHaveScreenshot();
   });
-
 });

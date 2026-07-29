@@ -2,6 +2,7 @@ import type { InternalVideo } from "@repo/base-types";
 import type { OrganizationType } from "@repo/graphql";
 import type { ObjectToTypedMap } from "@repo/lib";
 import type { Logger } from "pino";
+import React from "react";
 import type { toast as ReactToast } from "react-toastify";
 import type { IResult } from "ua-parser-js";
 import type { Awareness } from "y-protocols/awareness.js";
@@ -186,11 +187,13 @@ export type MediaHandler = {
 export type MediaType = "video" | "image" | "audio" | "pdf" | "ppt" | "all";
 
 export type MediaPickerOptions = {
-  type?: MediaType;
+  type?: MediaType | MediaType[];
   title?: string;
   portalContainer?: HTMLElement | null;
   multiple?: boolean;
   autoPickVideo?: boolean;
+  customComponent?: React.ReactNode;
+  overrideAllowedFileTypes?: string[];
 };
 
 export type MediaPickerOptionsInternal = MediaPickerOptions & {
