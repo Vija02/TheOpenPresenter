@@ -1,23 +1,21 @@
 import { Dropzone } from "@repo/media-picker/client";
-import { FiUpload } from "react-icons/fi";
 import { FaFilePdf, FaFilePowerpoint, FaImage } from "react-icons/fa";
-import { SUPPORTED_IMAGE_EXTENSIONS } from "@repo/lib";
+import { FiUpload } from "react-icons/fi";
 
 import { usePluginAPI } from "../pluginApi";
+import { IntegrationCards } from "./integrations";
 import { useMediaUpload } from "./useMediaUpload";
-import { GoogleSlidesIntegration } from "./component/GoogleSlidesIntegration";
 
 const Landing = () => {
   const pluginApi = usePluginAPI();
   const pluginContext = pluginApi.pluginContext;
   const isPublicAccess = pluginApi.isPublicAccess;
-  
-  const { isProcessing, handleUploadComplete } = useMediaUpload(); 
+
+  const { isProcessing, handleUploadComplete } = useMediaUpload();
 
   return (
     <div className="w-full flex justify-center py-4 md:py-8 px-4">
       <div className="flex flex-col w-full text-left gap-6 md:gap-10 max-w-7xl mx-auto mt-2 md:mt-4">
-
         {/* HERO SECTION */}
         {isPublicAccess ? (
           <div className="bg-surface-secondary rounded-xl border-2 border-dashed border-stroke p-6 md:p-10 text-center text-secondary font-medium min-h-[250px] md:min-h-[400px] flex flex-col items-center justify-center">
@@ -35,31 +33,35 @@ const Landing = () => {
             organizationId={pluginContext.organizationId}
             projectId={pluginContext.projectId}
             pluginId={pluginContext.pluginId}
-            mediaType="all"
-            overrideAllowedFileTypes={[...SUPPORTED_IMAGE_EXTENSIONS, ".pdf", ".ppt", ".pptx"]}
+            mediaType={["image", "pdf", "ppt"]}
             multiple={true}
             className="w-full"
           >
             <div className="cursor-pointer bg-slate-50 rounded-xl border-2 border-dashed border-slate-300 overflow-hidden group hover:border-link/50 hover:bg-link/5 transition-colors flex flex-col items-center justify-center text-center p-6 md:p-20 min-h-[250px] md:min-h-[400px]">
               <FiUpload className="w-12 h-12 md:w-16 md:h-16 text-tertiary group-hover:text-link transition-colors mb-4 md:mb-6 pointer-events-none" />
-              
+
               <h1 className="text-3xl md:text-5xl font-extrabold text-primary tracking-tight group-hover:text-link transition-colors mb-2 md:mb-4 pointer-events-none">
                 Upload your slides
               </h1>
-              
+
               <p className="text-base md:text-xl text-secondary max-w-2xl leading-relaxed mb-6 md:mb-10 pointer-events-none">
-                Drag & drop files here, or <span className="text-link font-semibold">click anywhere</span> to upload your presentations.
+                Drag & drop files here, or{" "}
+                <span className="text-link font-semibold">click anywhere</span>{" "}
+                to upload your presentations.
               </p>
 
               <div className="flex flex-wrap items-center justify-center gap-3 md:gap-4 text-xs md:text-sm font-medium text-secondary pointer-events-none">
                 <div className="flex items-center gap-2 bg-surface-primary px-3 md:px-4 py-2 rounded-md border border-stroke shadow-sm">
-                  <FaImage className="text-lg md:text-xl text-gray-700" /> Images
+                  <FaImage className="text-lg md:text-xl text-gray-700" />{" "}
+                  Images
                 </div>
                 <div className="flex items-center gap-2 bg-surface-primary px-3 md:px-4 py-2 rounded-md border border-stroke shadow-sm">
-                  <FaFilePowerpoint className="text-lg md:text-xl text-[#cb4a32]" /> PPTX
+                  <FaFilePowerpoint className="text-lg md:text-xl text-[#cb4a32]" />{" "}
+                  PPTX
                 </div>
                 <div className="flex items-center gap-2 bg-surface-primary px-3 md:px-4 py-2 rounded-md border border-stroke shadow-sm">
-                  <FaFilePdf className="text-lg md:text-xl text-[#F52102]" /> PDF
+                  <FaFilePdf className="text-lg md:text-xl text-[#F52102]" />{" "}
+                  PDF
                 </div>
               </div>
             </div>
@@ -72,7 +74,7 @@ const Landing = () => {
             Or import from integration
           </p>
           <div className="flex flex-wrap gap-4 justify-center md:justify-start">
-            <GoogleSlidesIntegration />
+            <IntegrationCards />
           </div>
         </div>
       </div>

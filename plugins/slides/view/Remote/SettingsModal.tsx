@@ -18,14 +18,12 @@ import {
   PopConfirm,
   useOverlayToggle,
 } from "@repo/ui";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { FaFilePdf, FaImage } from "react-icons/fa";
 import { FaArrowsRotate, FaCircleInfo, FaTrash } from "react-icons/fa6";
 import { RiFilePpt2Fill } from "react-icons/ri";
 import { SiGoogleslides } from "react-icons/si";
-import { FcGoogle } from "react-icons/fc";
-import { SUPPORTED_IMAGE_EXTENSIONS } from "@repo/lib";
 
 import {
   DisplayMode,
@@ -39,9 +37,7 @@ import {
   computeGlobalSlideClickCount,
 } from "../utils/useAutoplay";
 import { displayTypeMapping } from "./displayTypeMapping";
-import { useMediaUpload } from "./useMediaUpload";
-import { SlidePicker } from "./ImportFile/SlidePicker";
-import { PickerCard } from "./component/PickerCard";
+import { useSlideMediaPicker } from "./integrations";
 
 const IMPORT_TYPE_ICON: Record<ImportType, React.ReactNode> = {
   googleslides: <SiGoogleslides className="size-5 shrink-0 text-[#F4B400]" />,
@@ -63,11 +59,7 @@ const SettingsModal = () => {
   const mutableRendererData = pluginApi.renderer.useValtioData();
 
   const { mutate: removeImport } = trpc.slides.removeImport.useMutation();
-  const { handleUploadComplete } = useMediaUpload();
-  const selectSlideMutation = trpc.slides.selectSlide.useMutation();
-
-  const openPickerRef = useRef<(() => void) | null>(null);
-  const [activeReplaceId, setActiveReplaceId] = useState<string | undefined>(undefined);
+  const { integrationHosts, pickMedia } = useSlideMediaPicker();
 
   const pluginData = pluginApi.scene.useData((x) => x.pluginData);
   const autoplay = pluginApi.renderer.useData((x) => x.autoplay);
@@ -195,24 +187,7 @@ const SettingsModal = () => {
 
   return (
     <Dialog open={isOpen ?? false} onOpenChange={onToggle ?? (() => {})}>
-      <div className="hidden">
-        <SlidePicker
-          onFileSelected={(doc, token) => {
-            selectSlideMutation.mutate({
-              pluginId: pluginApi.pluginContext.pluginId,
-              presentationId: doc.id,
-              token: token,
-              name: doc.name,
-              replaceImportId: activeReplaceId,
-            });
-          }}
-        >
-          {({ openPicker }) => {
-            openPickerRef.current = openPicker;
-            return <span />;
-          }}
-        </SlidePicker>
-      </div>
+      {integrationHosts}
 
       <Form {...form}>
         <DialogContent
@@ -316,54 +291,12 @@ const SettingsModal = () => {
                                 size="xs"
                                 variant="outline"
                                 disabled={isBeingReplaced}
-                                onClick={async () => {
-                                  if (pluginApi.isPublicAccess) {
-                                    pluginApi.remote.toast.error("Sign in to upload media.");
-                                    return;
-                                  }
-
-                                  try {
-                                    const results = await pluginApi.mediaPicker.show({
-                                      type: "all",
-                                      multiple: false,
-                                      overrideAllowedFileTypes: [...SUPPORTED_IMAGE_EXTENSIONS, ".pdf", ".ppt", ".pptx"],
-                                      customComponent: (
-                                        <div className="flex flex-col gap-3">
-                                          <h3 className="text-lg font-semibold text-gray-800">
-                                            Or import from integration
-                                          </h3>
-                                          <div className="flex flex-wrap gap-4">
-                                            <PickerCard
-                                              onClick={() => {
-                                                setActiveReplaceId(imp.importId);
-                                                if (openPickerRef.current) {
-                                                  openPickerRef.current();
-                                                }
-                                              }}
-                                              icon={<FcGoogle className="size-10" />}
-                                              text="Google Slides"
-                                              isLoading={selectSlideMutation.isPending}
-                                            />
-                                          </div>
-                                        </div>
-                                      ),
-                                    });
-
-                                    if (!results || results.length === 0) return;
-
-                                    await handleUploadComplete(
-                                      results.map((file: any) => ({
-                                        mediaName: file.mediaName,
-                                        originalName: file.originalName ?? null,
-                                      })),
-                                      imp.importId
-                                    );
-                                  } catch (err: any) {
-                                    if (err !== "cancelled") {
-                                      pluginApi.remote.toast.error(`Failed to replace media: ${err?.message || err}`);
-                                    }
-                                  }
-                                }}
+                                onClick={() =>
+                                  pickMedia({
+                                    multiple: false,
+                                    replaceImportId: imp.importId,
+                                  })
+                                }
                               >
                                 {isBeingReplaced ? (
                                   <LoadingInline className="size-3" />
