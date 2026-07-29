@@ -2,16 +2,18 @@ import { CSSProperties } from "react";
 
 import { StageMetrics } from "../../geometry/scale";
 import { ShapeElement } from "../../schema/element";
-import { appearanceToCss, rectToCss } from "../css";
+import { ElementPlacement, appearanceToCss, placementToCss } from "../css";
 
 export type ShapeElementViewProps = {
   element: ShapeElement;
   metrics: StageMetrics;
+  placement?: ElementPlacement;
 };
 
 export const ShapeElementView = ({
   element,
   metrics,
+  placement = "rect",
 }: ShapeElementViewProps) => {
   const appearance = appearanceToCss(element, metrics);
 
@@ -25,7 +27,7 @@ export const ShapeElementView = ({
   return (
     <div
       style={{
-        ...rectToCss(element.rect),
+        ...placementToCss(placement, element.rect),
         ...appearance,
         ...kindStyle,
       }}

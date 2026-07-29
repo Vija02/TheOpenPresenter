@@ -3,7 +3,12 @@ import { CSSProperties, useMemo } from "react";
 import { StageMetrics, rectToPx, toPx } from "../../geometry/scale";
 import { SpanRoleStyle } from "../../schema/style";
 import { ResolvedTextElement } from "../../template/resolve";
-import { appearanceToCss, rectToCss, textStyleToCss } from "../css";
+import {
+  ElementPlacement,
+  appearanceToCss,
+  placementToCss,
+  textStyleToCss,
+} from "../css";
 import { fitFontSize, spansToHtml } from "../text/measure";
 
 const spanStyle = (role: SpanRoleStyle | undefined): CSSProperties => {
@@ -24,11 +29,13 @@ const spanStyle = (role: SpanRoleStyle | undefined): CSSProperties => {
 export type TextElementViewProps = {
   element: ResolvedTextElement;
   metrics: StageMetrics;
+  placement?: ElementPlacement;
 };
 
 export const TextElementView = ({
   element,
   metrics,
+  placement = "rect",
 }: TextElementViewProps) => {
   // Pixels are needed for the fit measurement only, never for placement.
   const box = rectToPx(element.rect, metrics);
@@ -51,7 +58,7 @@ export const TextElementView = ({
   return (
     <div
       style={{
-        ...rectToCss(element.rect),
+        ...placementToCss(placement, element.rect),
         display: "flex",
         flexDirection: "column",
         ...appearanceToCss(element, metrics),

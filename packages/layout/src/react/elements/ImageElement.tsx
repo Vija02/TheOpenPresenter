@@ -2,23 +2,25 @@ import { resolveMediaUrl } from "@repo/lib";
 
 import { StageMetrics } from "../../geometry/scale";
 import { ImageElement } from "../../schema/element";
-import { appearanceToCss, rectToCss } from "../css";
+import { ElementPlacement, appearanceToCss, placementToCss } from "../css";
 
 export type ImageElementViewProps = {
   element: ImageElement;
   metrics: StageMetrics;
+  placement?: ElementPlacement;
 };
 
 export const ImageElementView = ({
   element,
   metrics,
+  placement = "rect",
 }: ImageElementViewProps) => {
   const src = resolveMediaUrl(element.src);
 
   return (
     <div
       style={{
-        ...rectToCss(element.rect),
+        ...placementToCss(placement, element.rect),
         ...appearanceToCss(element, metrics),
       }}
     >
