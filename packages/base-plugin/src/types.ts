@@ -216,4 +216,5 @@ export type MediaPicker = {
   show: (
     options: MediaPickerOptionsInternal,
   ) => Promise<MediaPickerResult[] | null>;
+  close?: () => void;
 };

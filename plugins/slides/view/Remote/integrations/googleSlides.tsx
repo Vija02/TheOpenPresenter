@@ -26,6 +26,8 @@ const GoogleSlidesController = ({ children }: IntegrationControllerProps) => {
           name: doc.name,
           replaceImportId: launchContextRef.current.replaceImportId,
         });
+
+        launchContextRef.current.onComplete?.();
       }}
     >
       {({ isLoading, openPicker }) =>

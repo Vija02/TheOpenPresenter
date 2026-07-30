@@ -4,6 +4,7 @@ import { ComponentType, ReactNode } from "react";
 export type IntegrationLaunchContext = {
   /** When set, the produced import replaces this existing import. */
   replaceImportId?: string;
+  onComplete?: () => void;
 };
 
 export type IntegrationController = {

@@ -72,7 +72,7 @@ export const MediaPickerProvider: React.FC<MediaPickerProviderProps> = ({
   }, []);
 
   return (
-    <MediaPickerContext.Provider value={{ show }}>
+    <MediaPickerContext.Provider value={{ show, close: handleClose }}>
       {children}
       <MediaPickerModal
         isOpen={modalState.isOpen}

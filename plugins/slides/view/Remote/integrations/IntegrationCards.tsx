@@ -25,6 +25,7 @@ export const IntegrationSection = ({
 
 export const IntegrationCards = ({
   replaceImportId,
+  onComplete,
 }: IntegrationLaunchContext = {}) => {
   const pluginApi = usePluginAPI();
   const [showPublicNotice, setShowPublicNotice] = useState(false);
@@ -40,7 +41,7 @@ export const IntegrationCards = ({
                   setShowPublicNotice(true);
                   return;
                 }
-                open({ replaceImportId });
+                open({ replaceImportId, onComplete });
               }}
               icon={icon}
               text={name}
