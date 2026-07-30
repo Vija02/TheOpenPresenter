@@ -1,0 +1,60 @@
+---
+import ArticleLayout from "../../components/content/ArticleLayout.astro";
+import ContentCard from "../../components/content/ContentCard.astro";
+import {
+  formatDate,
+  getPublishedPosts,
+  isoDate,
+  readingMinutes,
+} from "../../lib/blog";
+
+const posts = await getPublishedPosts();
+---
+
+<ArticleLayout
+  title="Blog | TheOpenPresenter"
+  description="Notes from building free, open source presentation software."
+  width="6xl"
+>
+  <!-- Page header -->
+  <div class="max-w-3xl mx-auto text-center pb-12 md:pb-16">
+    <h1 class="h2 font-red-hat-display mb-4 break-words">Blog</h1>
+    <p class="text-xl text-gray-600 dark:text-gray-300">
+      Notes from building TheOpenPresenter.
+    </p>
+  </div>
+
+  <!-- Posts list -->
+  {
+    posts.length > 0 ? (
+      <div class="max-w-5xl mx-auto grid gap-6">
+        {posts.map((post) => (
+          <ContentCard
+            href={`/blog/${post.id}`}
+            category={post.data.category}
+            minutes={readingMinutes(post)}
+            dateLabel={formatDate(post.data.publishDate)}
+            dateTime={isoDate(post.data.publishDate)}
+            title={post.data.title}
+            description={post.data.description}
+            cta="Read the post"
+          />
+        ))}
+      </div>
+    ) : (
+      <p class="max-w-3xl mx-auto text-center text-gray-600 dark:text-gray-300">
+        No posts yet.
+      </p>
+    )
+  }
+
+  <!-- Feed note -->
+  <div class="max-w-3xl mx-auto text-center mt-12">
+    <p class="text-sm text-gray-500 dark:text-gray-400">
+      Also available as an <a
+        href="/rss.xml"
+        class="text-teal-600 dark:text-teal-400 hover:underline">RSS feed</a
+      >.
+    </p>
+  </div>
+</ArticleLayout>

@@ -8,6 +8,8 @@ interface Props {
   title: string;
   description: string;
   cta?: string;
+  dateLabel?: string;
+  dateTime?: string;
 }
 
 const {
@@ -17,6 +19,8 @@ const {
   title,
   description,
   cta = "Read the guide",
+  dateLabel,
+  dateTime,
 } = Astro.props;
 ---
 
@@ -37,6 +41,19 @@ const {
           <span class="text-xs text-gray-500 dark:text-gray-300">
             {minutes} min read
           </span>
+        </Fragment>
+      ) : null
+    }
+    {
+      dateLabel ? (
+        <Fragment>
+          <span class="text-gray-300 dark:text-gray-700">&bull;</span>
+          <time
+            datetime={dateTime}
+            class="text-xs text-gray-500 dark:text-gray-300"
+          >
+            {dateLabel}
+          </time>
         </Fragment>
       ) : null
     }

@@ -1,0 +1,73 @@
+---
+import type { ImageMetadata } from "astro";
+import { Image } from "astro:assets";
+import defaultAvatar from "../../assets/images/authors/default.jpg";
+import ArrowIcon from "./ArrowIcon.astro";
+
+interface Props {
+  backHref?: string;
+  backLabel?: string;
+  title: string;
+  dateLabel: string;
+  dateTime: string;
+  updatedLabel?: string;
+  updatedTime?: string;
+  minutes: number;
+  author: string;
+  avatar?: ImageMetadata;
+}
+
+const {
+  backHref = "/blog",
+  backLabel = "All posts",
+  title,
+  dateLabel,
+  dateTime,
+  updatedLabel,
+  updatedTime,
+  minutes,
+  author,
+  avatar = defaultAvatar,
+} = Astro.props;
+---
+
+<div class="pb-10 md:pb-12">
+  <a
+    href={backHref}
+    class="flex w-fit items-center text-sm text-teal-500 hover:underline mb-4"
+  >
+    <ArrowIcon class="w-3 h-3 fill-current shrink-0 mr-2 rotate-180" />
+    {backLabel}
+  </a>
+  <h1
+    class="text-3xl sm:text-4xl md:text-[2.5rem] md:leading-[1.1] font-black tracking-tighter font-red-hat-display mb-4 break-words"
+  >
+    {title}
+  </h1>
+  <p class="text-xl text-gray-600 dark:text-gray-300 mb-6">
+    <slot />
+  </p>
+  <div class="flex items-center gap-3">
+    <Image
+      src={avatar}
+      alt=""
+      width={40}
+      height={40}
+      class="w-10 h-10 rounded-full shrink-0 object-cover"
+      loading="eager"
+    />
+    <div class="text-sm text-gray-500 dark:text-gray-400">
+      By <span class="font-medium text-gray-900 dark:text-gray-100"
+        >{author}</span
+      > on <time datetime={dateTime}>{dateLabel}</time> &bull; {minutes} min read
+      {
+        updatedLabel && updatedTime && (
+          <span>
+            {" "}
+            &bull; updated <time datetime={updatedTime}>{updatedLabel}</time>
+          </span>
+        )
+      }
+    </div>
+  </div>
+</div>

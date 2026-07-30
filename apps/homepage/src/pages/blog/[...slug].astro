@@ -1,0 +1,85 @@
+---
+import { Image } from "astro:assets";
+import { render } from "astro:content";
+import ArticleLayout from "../../components/content/ArticleLayout.astro";
+import BlogHeader from "../../components/content/BlogHeader.astro";
+import Prose from "../../components/content/Prose.astro";
+import WrapUpCta from "../../components/content/WrapUpCta.astro";
+import {
+  formatDate,
+  getPublishedPosts,
+  isoDate,
+  readingMinutes,
+  type BlogPost,
+} from "../../lib/blog";
+
+export async function getStaticPaths() {
+  const posts = await getPublishedPosts();
+  return posts.map((post) => ({
+    params: { slug: post.id },
+    props: { post },
+  }));
+}
+
+interface Props {
+  post: BlogPost;
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+const { data } = post;
+---
+
+<ArticleLayout
+  title={`${data.title} | TheOpenPresenter`}
+  description={data.description}
+  width="3xl"
+>
+  <BlogHeader
+    title={data.title}
+    dateLabel={formatDate(data.publishDate)}
+    dateTime={isoDate(data.publishDate)}
+    updatedLabel={data.updatedDate ? formatDate(data.updatedDate) : undefined}
+    updatedTime={data.updatedDate ? isoDate(data.updatedDate) : undefined}
+    minutes={readingMinutes(post)}
+    author={data.author}
+  >
+    {data.description}
+  </BlogHeader>
+
+  {/* Header media. `coverVideo` wins when both are set. */}
+  {
+    data.coverVideo ? (
+      <video
+        src={data.coverVideo}
+        autoplay
+        loop
+        muted
+        playsinline
+        class="rounded-lg border border-gray-200 dark:border-gray-800 shadow-sm w-full h-auto block mb-12"
+      />
+    ) : data.cover ? (
+      <Image
+        src={data.cover}
+        alt={data.coverAlt ?? ""}
+        class="rounded-lg border border-gray-200 dark:border-gray-800 shadow-sm w-full h-auto block mb-12"
+      />
+    ) : null
+  }
+
+  <Prose class="mb-16">
+    <Content />
+  </Prose>
+
+  <WrapUpCta
+    title="Try TheOpenPresenter"
+    buttons={[
+      { label: "Get started free", href: "/register", variant: "primary" },
+      { label: "See how it works", href: "/how-to", variant: "secondary" },
+    ]}
+  >
+    TheOpenPresenter is an open source presentation system that lets you control
+    any of your screens remotely. Show slideshows, play videos, run dashboards
+    and plenty more.
+  </WrapUpCta>
+</ArticleLayout>
