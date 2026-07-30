@@ -38,21 +38,14 @@ function getStripe(): Stripe {
 // ---------------------------------------------------------------------------
 // Lifetime (one-time) pricing
 // ---------------------------------------------------------------------------
-// Per-purchase volume tiers. Amounts are in the smallest currency unit (pence).
-// The unit price is chosen from the quantity in a SINGLE purchase (not the
-// rooms already owned), and every unit in that purchase is billed at that rate.
+// Flat one-time price, in the smallest currency unit (pence). The per-room
+// volume tiers were dropped when rooms went away: a Lifetime license now
+// covers the whole organization, so quantity is always 1.
 const LIFETIME_CURRENCY = "gbp";
-const LIFETIME_TIERS = [
-  { minQuantity: 5, unitAmount: 59000 },
-  { minQuantity: 2, unitAmount: 79000 },
-  { minQuantity: 1, unitAmount: 99000 },
-] as const;
+const LIFETIME_UNIT_AMOUNT = 99000;
 
-function lifetimeUnitAmount(quantity: number): number {
-  const tier = LIFETIME_TIERS.find((t) => quantity >= t.minQuantity);
-  return (
-    tier?.unitAmount ?? LIFETIME_TIERS[LIFETIME_TIERS.length - 1]!.unitAmount
-  );
+function lifetimeUnitAmount(): number {
+  return LIFETIME_UNIT_AMOUNT;
 }
 
 async function verifyOrgAccess(
@@ -132,11 +125,12 @@ async function upsertSubscription(
     subscription.status === "active" || subscription.status === "trialing";
   const plan = isActive ? "business" : "free";
   const item = subscription.items.data[0];
+  // Always 1 today; the column is kept in case multi-room returns.
   const quantity = item?.quantity ?? 1;
   const billingInterval = item?.price?.recurring?.interval ?? "month";
   const currentPeriodEnd = item?.current_period_end;
 
-  await pool.query(
+  const { rowCount } = await pool.query(
     `update app_private.organization_billing
      set
        stripe_subscription_id     = $1,
@@ -163,6 +157,15 @@ async function upsertSubscription(
       customerId,
     ],
   );
+
+  // The row is created before checkout, so a miss means the customer mapping
+  // is gone and the subscription state is now silently unrecorded. Surface it.
+  if (!rowCount) {
+    logger.error(
+      { subscriptionId: subscription.id, customerId },
+      "no organization_billing row for Stripe customer; subscription not recorded",
+    );
+  }
 }
 
 async function recordLifetimePurchase(
@@ -171,10 +174,6 @@ async function recordLifetimePurchase(
 ): Promise<void> {
   const pool = getRootPgPool(app);
   const organizationId = session.metadata?.organizationId;
-  const quantity = Math.max(
-    1,
-    Math.floor(Number(session.metadata?.quantity) || 1),
-  );
 
   if (!organizationId) {
     logger.error(
@@ -184,33 +183,47 @@ async function recordLifetimePurchase(
     return;
   }
 
-  const inserted = await pool.query(
+  // Kept for accounting; the primary key makes webhook redelivery a no-op.
+  // Quantity is retained for a possible future return to multi-room, but is
+  // always 1 today.
+  await pool.query(
     `insert into app_private.organization_lifetime_purchases
        (stripe_checkout_session_id, organization_id, stripe_payment_intent_id, quantity, amount_total, currency)
-     values ($1, $2, $3, $4, $5, $6)
-     on conflict (stripe_checkout_session_id) do nothing
-     returning stripe_checkout_session_id`,
+     values ($1, $2, $3, 1, $4, $5)
+     on conflict (stripe_checkout_session_id) do nothing`,
     [
       session.id,
       organizationId,
       (session.payment_intent as string) ?? null,
-      quantity,
       session.amount_total ?? null,
       session.currency ?? null,
     ],
   );
 
-  // Only add to the owned-room count the first time we process this session.
-  if (inserted.rowCount && inserted.rowCount > 0) {
-    await pool.query(
-      `insert into app_private.organization_billing (organization_id, lifetime_room_count)
-       values ($1, $2)
-       on conflict (organization_id) do update
-         set lifetime_room_count = app_private.organization_billing.lifetime_room_count + excluded.lifetime_room_count,
-             updated_at = now()`,
-      [organizationId, quantity],
-    );
-  }
+  // Set rather than increment: a license covers the whole organization, so
+  // this stays correct on webhook redelivery. Revisit if multi-room returns.
+  await pool.query(
+    `insert into app_private.organization_billing (organization_id, lifetime_room_count)
+     values ($1, 1)
+     on conflict (organization_id) do update
+       set lifetime_room_count = 1,
+           updated_at = now()`,
+    [organizationId],
+  );
+}
+
+// True when the organization already owns a Lifetime license.
+async function hasLifetimeLicense(
+  app: Express,
+  organizationId: string,
+): Promise<boolean> {
+  const pool = getRootPgPool(app);
+  const { rows } = await pool.query(
+    `select lifetime_room_count from app_private.organization_billing
+     where organization_id = $1`,
+    [organizationId],
+  );
+  return (rows[0]?.lifetime_room_count ?? 0) > 0;
 }
 
 // ---------------------------------------------------------------------------
@@ -288,18 +301,15 @@ export default async function installStripe(app: Express): Promise<void> {
     "/stripe/create-checkout-session",
     ...orgScoped,
     async (req, res) => {
-      const { slug, priceId, quantity } = req.body as {
+      const { slug, priceId } = req.body as {
         slug?: string;
         priceId?: string;
-        quantity?: number;
       };
 
       if (!slug || !priceId) {
         res.status(400).json({ error: "slug and priceId are required" });
         return;
       }
-
-      const roomCount = Math.max(1, Math.floor(Number(quantity) || 1));
 
       try {
         const stripe = req.stripe!;
@@ -314,7 +324,7 @@ export default async function installStripe(app: Express): Promise<void> {
           customer: customerId,
           mode: "subscription",
           ui_mode: "embedded_page",
-          line_items: [{ price: priceId, quantity: roomCount }],
+          line_items: [{ price: priceId, quantity: 1 }],
           automatic_tax: { enabled: true },
           tax_id_collection: { enabled: true },
           customer_update: { address: "auto", name: "auto" },
@@ -330,18 +340,15 @@ export default async function installStripe(app: Express): Promise<void> {
   );
 
   // ------------------------------------------------------------------
-  // Returns the price for a one-time Lifetime purchase of N rooms.
-  // Body: { organizationId, quantity }
-  // Returns: { quantity, unitAmount, total, currency }
+  // Returns the price of the one-time Lifetime license.
+  // Body: { organizationId }
+  // Returns: { unitAmount, total, currency }
   // ------------------------------------------------------------------
-  app.post("/stripe/preview-lifetime", ...orgScoped, async (req, res) => {
-    const { quantity } = req.body as { quantity?: number };
-    const roomCount = Math.max(1, Math.floor(Number(quantity) || 1));
-    const unitAmount = lifetimeUnitAmount(roomCount);
+  app.post("/stripe/preview-lifetime", ...orgScoped, async (_req, res) => {
+    const unitAmount = lifetimeUnitAmount();
     res.json({
-      quantity: roomCount,
       unitAmount,
-      total: unitAmount * roomCount,
+      total: unitAmount,
       currency: LIFETIME_CURRENCY,
     });
   });
@@ -355,21 +362,23 @@ export default async function installStripe(app: Express): Promise<void> {
     "/stripe/create-lifetime-checkout",
     ...orgScoped,
     async (req, res) => {
-      const { slug, quantity } = req.body as {
-        slug?: string;
-        quantity?: number;
-      };
+      const { slug } = req.body as { slug?: string };
       if (!slug) {
         res.status(400).json({ error: "slug is required" });
         return;
       }
 
-      const roomCount = Math.max(1, Math.floor(Number(quantity) || 1));
-      const unitAmount = lifetimeUnitAmount(roomCount);
+      if (await hasLifetimeLicense(app, req.organizationId!)) {
+        res
+          .status(409)
+          .json({ error: "This organization already owns a Lifetime license" });
+        return;
+      }
+
+      const unitAmount = lifetimeUnitAmount();
       const metadata = {
         organizationId: req.organizationId!,
         kind: "lifetime",
-        quantity: String(roomCount),
       };
 
       const lifetimeProductId = process.env.STRIPE_PRODUCT_ID_LIFETIME;
@@ -379,7 +388,7 @@ export default async function installStripe(app: Express): Promise<void> {
           unit_amount: unitAmount,
           ...(lifetimeProductId
             ? { product: lifetimeProductId }
-            : { product_data: { name: "TheOpenPresenter Lifetime room" } }),
+            : { product_data: { name: "TheOpenPresenter Lifetime license" } }),
         };
 
       try {
@@ -395,7 +404,7 @@ export default async function installStripe(app: Express): Promise<void> {
           customer: customerId,
           mode: "payment",
           ui_mode: "embedded_page",
-          line_items: [{ quantity: roomCount, price_data: priceData }],
+          line_items: [{ quantity: 1, price_data: priceData }],
           automatic_tax: { enabled: true },
           tax_id_collection: { enabled: true },
           customer_update: { address: "auto", name: "auto" },
@@ -448,124 +457,6 @@ export default async function installStripe(app: Express): Promise<void> {
       res.json({ url: portalSession.url });
     } catch (err: any) {
       logger.error({ err }, "create-portal-session error");
-      res.status(500).json({ error: err.message });
-    }
-  });
-
-  // ------------------------------------------------------------------
-  // Returns a cost preview (prorated) before the user commits to a change.
-  // Body: { organizationId, quantity }
-  // Returns: { amountDue, total, currency, lines }
-  // ------------------------------------------------------------------
-  app.post(
-    "/stripe/preview-subscription-update",
-    ...orgScoped,
-    async (req, res) => {
-      const { quantity } = req.body as { quantity?: number };
-      if (!quantity) {
-        res.status(400).json({ error: "quantity is required" });
-        return;
-      }
-
-      const roomCount = Math.max(1, Math.floor(Number(quantity)));
-
-      try {
-        const pool = getRootPgPool(app);
-        const { rows } = await pool.query(
-          `select stripe_subscription_id from app_private.organization_billing
-           where organization_id = $1`,
-          [req.organizationId!],
-        );
-
-        const subscriptionId = rows[0]?.stripe_subscription_id as
-          | string
-          | undefined;
-        if (!subscriptionId) {
-          res.status(400).json({ error: "No active subscription found" });
-          return;
-        }
-
-        const stripe = req.stripe!;
-        const subscription =
-          await stripe.subscriptions.retrieve(subscriptionId);
-        const itemId = subscription.items.data[0]?.id;
-        if (!itemId) {
-          res.status(400).json({ error: "Subscription has no line items" });
-          return;
-        }
-
-        const preview = await stripe.invoices.createPreview({
-          subscription: subscriptionId,
-          // Include VAT in the quote so it matches what's actually charged.
-          automatic_tax: { enabled: true },
-          subscription_details: {
-            items: [{ id: itemId, quantity: roomCount }],
-            proration_behavior: "always_invoice",
-          },
-        });
-
-        res.json({
-          amountDue: preview.amount_due, // what the customer owes (0 for downgrades)
-          total: preview.total, // negative when a credit is being issued
-          currency: preview.currency,
-          lines: preview.lines.data.map((l) => ({
-            description: l.description,
-            amount: l.amount,
-          })),
-        });
-      } catch (err: any) {
-        logger.error({ err }, "preview-subscription-update error");
-        res.status(500).json({ error: err.message });
-      }
-    },
-  );
-
-  // ------------------------------------------------------------------
-  // Updates room quantity on an existing subscription (proration applied).
-  // Body: { organizationId, quantity }
-  // Returns: { success: true }
-  // ------------------------------------------------------------------
-  app.post("/stripe/update-subscription", ...orgScoped, async (req, res) => {
-    const { quantity } = req.body as { quantity?: number };
-    if (!quantity) {
-      res.status(400).json({ error: "quantity is required" });
-      return;
-    }
-
-    const roomCount = Math.max(1, Math.floor(Number(quantity)));
-
-    try {
-      const pool = getRootPgPool(app);
-      const { rows } = await pool.query(
-        `select stripe_subscription_id from app_private.organization_billing
-         where organization_id = $1`,
-        [req.organizationId!],
-      );
-
-      const subscriptionId = rows[0]?.stripe_subscription_id as
-        | string
-        | undefined;
-      if (!subscriptionId) {
-        res.status(400).json({ error: "No active subscription found" });
-        return;
-      }
-
-      const stripe = req.stripe!;
-      const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-      const itemId = subscription.items.data[0]?.id;
-      if (!itemId) {
-        res.status(400).json({ error: "Subscription has no line items" });
-        return;
-      }
-
-      await stripe.subscriptions.update(subscriptionId, {
-        items: [{ id: itemId, quantity: roomCount }],
-        proration_behavior: "always_invoice",
-      });
-
-      res.json({ success: true });
-    } catch (err: any) {
-      logger.error({ err }, "update-subscription error");
       res.status(500).json({ error: err.message });
     }
   });

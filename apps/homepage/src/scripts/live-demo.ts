@@ -133,10 +133,24 @@ function initInstance(instance: string) {
       }
     }
 
-    // Defer scroll a tick so layout settles after the section un-hides
-    requestAnimationFrame(() => {
-      el.stage?.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
+    // The stage was display:none a moment ago, so it has no box yet. Force a
+    // layout flush before measuring, otherwise the scroll is computed from a
+    // stale zero-height position and goes nowhere.
+    void el.stage.offsetHeight;
+
+    const scrollToStage = () => {
+      if (!el.stage) return;
+      // window.scrollTo against an absolute offset rather than
+      // scrollIntoView: the layout wraps everything in an overflow-hidden
+      // flex container, which scrollIntoView can try to scroll instead of
+      // the document.
+      const top = el.stage.getBoundingClientRect().top + window.scrollY;
+      window.scrollTo({ top, behavior: "smooth" });
+    };
+
+    // Two frames: one for the unhide to paint, one for the iframe's
+    // aspect-ratio box to settle.
+    requestAnimationFrame(() => requestAnimationFrame(scrollToStage));
   };
 
   if (isMobile) {
