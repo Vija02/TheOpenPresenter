@@ -1,0 +1,107 @@
+---
+// Floating live-demo launcher, in the spirit of a support-chat widget.
+// Starts collapsed as a bubble; clicking expands the QR panel.
+//
+// The QR inside shares its `instance` with any other LiveDemoQr on the page,
+// so the hero QR and this one are the same pairing session and show an
+// identical code. Pair with a <LiveDemoStage /> on the same instance.
+import LiveDemoQr from "./LiveDemoQr.astro";
+
+interface Props {
+  instance: string;
+  /** Auto-expand once the visitor scrolls past ~half a viewport. */
+  openOnScroll?: boolean;
+}
+
+const { instance, openOnScroll = false } = Astro.props;
+---
+
+<div
+  data-live-demo-widget
+  data-live-demo-instance={instance}
+  data-widget-open-on-scroll={openOnScroll ? "true" : "false"}
+  class="fixed z-40 bottom-4 right-4 sm:bottom-6 sm:right-6 print:hidden"
+>
+  <!-- Expanded panel. Hidden until the bubble is clicked (or the optional
+       scroll trigger fires). -->
+  <div
+    data-widget-panel
+    style="display: none;"
+    class="w-72 max-w-[calc(100vw-2rem)] rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-2xl overflow-hidden origin-bottom-right opacity-0 translate-y-3 scale-95 transition-all duration-300 ease-out motion-reduce:transition-none"
+  >
+    <!-- Header -->
+    <div
+      class="flex items-center justify-between gap-2 px-4 py-3 border-b border-gray-100 dark:border-gray-800"
+    >
+      <span
+        class="flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-white"
+      >
+        <span class="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse"></span>
+        Try the live demo
+      </span>
+      <button
+        type="button"
+        data-widget-close
+        aria-label="Hide the live demo"
+        class="flex items-center justify-center w-6 h-6 -mr-1 shrink-0 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:text-gray-200 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+      >
+        <svg
+          class="w-3.5 h-3.5"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5"
+          stroke-linecap="round"
+          aria-hidden="true"
+        >
+          <path d="M6 6l12 12M18 6L6 18"></path>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Body -->
+    <div class="px-4 pt-4 pb-4">
+      <LiveDemoQr
+        instance={instance}
+        compact
+        lazy
+        size={140}
+        stacked
+        showCta={false}
+        showFeatures={false}
+      >
+        <Fragment slot="hint">
+          Control this screen from your phone. Nothing to install.
+        </Fragment>
+      </LiveDemoQr>
+    </div>
+  </div>
+
+  <!-- Collapsed bubble. Visible on load, since the widget starts closed. -->
+  <button
+    type="button"
+    data-widget-bubble
+    aria-expanded="false"
+    class="flex items-center gap-2 rounded-full bg-teal-500 hover:bg-teal-400 text-white font-medium text-sm pl-3 pr-4 py-2.5 shadow-2xl cursor-pointer origin-bottom-right transition-all duration-300 ease-out motion-reduce:transition-none"
+  >
+    <svg
+      class="w-5 h-5 shrink-0"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.8"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M4 4h6v6H4z M14 4h6v6h-6z M4 14h6v6H4z"></path>
+      <path d="M14 14h2v2h-2z M18 14h2v2h-2z M14 18h2v2h-2z M18 18h2v2h-2z"
+      ></path>
+    </svg>
+    Try the live demo
+  </button>
+</div>
+
+<script>
+  import "../../scripts/live-demo-widget";
+</script>

@@ -1,0 +1,68 @@
+---
+const reasons = [
+  {
+    title: "You run a large-production stage",
+    body: "If you feed SDI or NDI to cameras, a broadcast mixer, or a big LED wall, ProPresenter's pro video I/O is built for that and we're not there yet.",
+  },
+  {
+    title: "You rely on a cue or scheduling system",
+    body: "ProPresenter lets you script a tightly-timed service with cues. We don't have that yet.",
+  },
+  {
+    title: "You live in Planning Center",
+    body: "If your service order, songs, and volunteers already flow through Planning Center Online, ProPresenter imports straight from it. We don't integrate with PCO yet.",
+  },
+  {
+    title: "You depend on CCLI SongSelect",
+    body: "ProPresenter pulls songs from SongSelect and helps with copyright reporting. We don't do either yet. We do provide importing from other sources.",
+  },
+];
+---
+
+<section>
+  <div class="max-w-6xl mx-auto px-4 sm:px-6">
+    <div class="py-12 md:py-20 border-t border-gray-200 dark:border-gray-800">
+      <div class="max-w-3xl mx-auto">
+        <div class="text-center pb-10">
+          <h2 class="h2 font-red-hat-display mb-4">What's the catch?</h2>
+          <p class="text-xl text-gray-600 dark:text-gray-400">
+            If any of the following describes you, ProPresenter is the better
+            option for you, for now.
+          </p>
+        </div>
+
+        <div class="grid gap-6 sm:grid-cols-2">
+          {
+            reasons.map((reason, i) => (
+              <div
+                class="rounded-lg border border-gray-200 dark:border-gray-800 p-5"
+                data-aos="fade-up"
+                data-aos-delay={(i % 2) * 100}
+              >
+                <h3 class="font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                  {reason.title}
+                </h3>
+                <p class="text-gray-600 dark:text-gray-400 text-sm">
+                  {reason.body}
+                </p>
+              </div>
+            ))
+          }
+        </div>
+
+        <p
+          class="text-gray-600 dark:text-gray-400 mt-8 text-center"
+          data-aos="fade-up"
+        >
+          If that's you, this isn't the right switch today. For everyone else,
+          there's no reason to keep paying. The
+          <a
+            href="/compare/propresenter-alternative"
+            class="text-teal-600 dark:text-teal-400 hover:underline font-medium"
+            >full comparison</a
+          > goes through every feature, in both directions.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>

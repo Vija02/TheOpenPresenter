@@ -1,0 +1,74 @@
+---
+const audiences = [
+  {
+    title: "For churches",
+    body: "Sunday services, mid-week groups, and lobby signage. Import lyrics with AI formatting, build slides together during the week, and run it all from a phone.",
+    href: "/how-to/use-online-for-church",
+    cta: "See the church setup",
+    external: false,
+  },
+  {
+    title: "For meeting rooms & venues",
+    body: "Let guests present to your screen from their own devices. No cables, no apps, and nobody from your team standing by to help.",
+    href: "/meeting-room",
+    cta: "See the venue setup",
+    external: false,
+  },
+  {
+    title: "For self-hosters",
+    body: "Run the whole thing on your own hardware for free. Your data never leaves your network, and there are no per-room limits.",
+    href: "https://github.com/Vija02/TheOpenPresenter",
+    cta: "Read the source",
+    external: true,
+  },
+];
+---
+
+<section>
+  <div class="max-w-6xl mx-auto px-4 sm:px-6">
+    <div class="py-12 md:py-20 border-t border-gray-200 dark:border-gray-800">
+      <div class="max-w-3xl mx-auto text-center pb-12">
+        <div
+          class="inline-flex items-center text-sm font-semibold tracking-wide uppercase text-teal-500 mb-2"
+        >
+          Who it's for
+        </div>
+        <h2 class="h2 font-red-hat-display mb-4">Pick your starting point</h2>
+        <p class="text-xl text-gray-600 dark:text-gray-400">
+          The same app, set up three different ways.
+        </p>
+      </div>
+
+      <div class="grid gap-6 md:grid-cols-3">
+        {
+          audiences.map((audience, i) => (
+            <a
+              href={audience.href}
+              target={audience.external ? "_blank" : undefined}
+              rel={audience.external ? "noopener noreferrer" : undefined}
+              class="group flex flex-col rounded-2xl border border-gray-200 dark:border-gray-800 p-6 transition duration-150 ease-in-out hover:-translate-y-1 hover:border-teal-500 hover:shadow-lg"
+              data-aos="fade-up"
+              data-aos-delay={i * 100}
+            >
+              <h3 class="text-xl font-red-hat-display font-black mb-2">
+                {audience.title}
+              </h3>
+              <p class="text-gray-600 dark:text-gray-400 grow mb-4">
+                {audience.body}
+              </p>
+              <span class="text-teal-600 dark:text-teal-400 font-medium inline-flex items-center">
+                {audience.cta}
+                <span
+                  class="ml-1 transition-transform group-hover:translate-x-1"
+                  aria-hidden="true"
+                >
+                  &rarr;
+                </span>
+              </span>
+            </a>
+          ))
+        }
+      </div>
+    </div>
+  </div>
+</section>

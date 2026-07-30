@@ -1,0 +1,139 @@
+---
+// Condensed version of the table on /compare/propresenter-alternative.
+// Deliberately shows wins on both sides. Keep in sync with that page.
+const comparison = [
+  {
+    feature: "Price",
+    pp: "Paid licence",
+    top: "Free / open source (AGPL 3.0)",
+    winner: "top",
+  },
+  {
+    feature: "Real-time collaboration",
+    pp: "No, single operator",
+    top: "Yes, multiple controllers at once",
+    winner: "top",
+  },
+  {
+    feature: "Web-based (no install)",
+    pp: "No, native app",
+    top: "Yes, runs in any browser",
+    winner: "top",
+  },
+  {
+    feature: "Control from phone / tablet",
+    pp: "Yes (Remote app)",
+    top: "Yes, any browser, nothing to install",
+    winner: "top",
+  },
+  {
+    feature: "Google Slides sync",
+    pp: "No",
+    top: "Yes, sync directly",
+    winner: "top",
+  },
+  { feature: "AI lyric formatting", pp: "No", top: "Yes", winner: "top" },
+  { feature: "Self-host / own your data", pp: "No", top: "Yes", winner: "top" },
+  {
+    feature: "Planning Center integration",
+    pp: "Yes",
+    top: "No",
+    winner: "pp",
+  },
+  {
+    feature: "CCLI / SongSelect import",
+    pp: "Yes",
+    top: "No",
+    winner: "pp",
+  },
+  { feature: "SDI / NDI pro video", pp: "Yes", top: "No", winner: "pp" },
+  {
+    feature: "Lower thirds / overlays",
+    pp: "Yes",
+    top: "No",
+    winner: "pp",
+  },
+  {
+    feature: "Maturity",
+    pp: "Very mature, battle-tested",
+    top: "Younger, actively developed",
+    winner: "pp",
+  },
+];
+
+// Wins get the same treatment in either column, so the table reads as an
+// even-handed comparison rather than a scorecard tilted our way.
+const win = "font-bold text-teal-600 dark:text-teal-400";
+const lose = "text-gray-600 dark:text-gray-300";
+---
+
+<section>
+  <div class="max-w-6xl mx-auto px-4 sm:px-6">
+    <div class="py-12 md:py-20 border-t border-gray-200 dark:border-gray-800">
+      <div class="max-w-3xl mx-auto text-center pb-10 md:pb-12">
+        <div
+          class="inline-flex items-center text-sm font-semibold tracking-wide uppercase text-teal-500 mb-2"
+        >
+          Side by side
+        </div>
+        <h2 class="h2 font-red-hat-display mb-4">
+          How we compare to ProPresenter
+        </h2>
+        <p class="text-xl text-gray-600 dark:text-gray-400">
+          We've picked wins from both columns on purpose. Which one matters more
+          depends entirely on your church.
+        </p>
+      </div>
+
+      <div class="max-w-3xl mx-auto" data-aos="fade-up">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr>
+                <th
+                  class="py-3 pr-4 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-300"
+                ></th>
+                <th
+                  class="py-3 px-4 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-300"
+                >
+                  ProPresenter
+                </th>
+                <th
+                  class="py-3 pl-4 text-xs font-semibold uppercase tracking-wide text-teal-500"
+                >
+                  TheOpenPresenter
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {
+                comparison.map((row) => (
+                  <tr class="border-t border-gray-200 dark:border-gray-800 align-top">
+                    <td class="py-3 pr-4 font-medium text-gray-900 dark:text-gray-100">
+                      {row.feature}
+                    </td>
+                    <td class:list={["py-3 px-4", row.winner === "pp" ? win : lose]}>
+                      {row.pp}
+                    </td>
+                    <td class:list={["py-3 pl-4", row.winner === "top" ? win : lose]}>
+                      {row.top}
+                    </td>
+                  </tr>
+                ))
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <div class="mt-8 text-center">
+          <a
+            class="btn-sm text-teal-500 bg-white hover:bg-gray-50 border border-teal-500 dark:bg-transparent dark:hover:bg-gray-800"
+            href="/compare/propresenter-alternative"
+          >
+            See all 26 features compared
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

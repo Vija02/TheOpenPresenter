@@ -1,0 +1,96 @@
+---
+// Feature grid. Every claim here is mirrored in the full comparison page so
+// the two never drift: /compare/propresenter-alternative
+const features = [
+  {
+    title: "Free and open source",
+    body: "AGPL 3.0, with no per-machine licence to buy. Read the code, self-host it, and it can never be taken away from you.",
+    icon: "M12 3l8 4v5c0 4.4-3.2 8.1-8 9.3C7.2 20.1 4 16.4 4 12V7l8-4z M9 12.2l2.2 2.2L15.5 10",
+  },
+  {
+    title: "Runs in any browser",
+    body: "Nothing to install and no dedicated machine at the front. Mac, Windows, Linux, a tablet, or a TV stick all work the same.",
+    icon: "M3 5h18v11H3z M8 20h8 M12 16v4",
+  },
+  {
+    title: "Control it from a phone",
+    body: "Your worship leader can advance lyrics from the stage using the browser they already have. No remote app to install.",
+    icon: "M8 3h8v18H8z M11 18h2",
+  },
+  {
+    title: "Real-time collaboration",
+    body: "Several people can run the same screen at once. Someone fixes a typo from the back row while the front advances slides.",
+    icon: "M9 11a3 3 0 100-6 3 3 0 000 6z M3 20c0-3.3 2.7-5 6-5s6 1.7 6 5 M17 8a3 3 0 010 6 M17 15c2.5.4 4 2 4 5",
+  },
+  {
+    title: "Google Slides, synced",
+    body: "Build announcements and sermon slides where your team already works, then sync them straight onto the screen.",
+    icon: "M5 3h9l5 5v13H5z M14 3v5h5 M8 13h8 M8 17h5",
+  },
+  {
+    title: "Lyrics formatted by AI",
+    body: "Paste in a song and have it split into slides in an instant, so moving your existing library over is quick.",
+    icon: "M12 3l2 5.5 5.5 2-5.5 2L12 18l-2-5.5L4.5 10.5 10 8.5z",
+  },
+  {
+    title: "2,300+ Bible translations",
+    body: "Put scripture on the screen in the translation your church actually reads, or upload your own.",
+    icon: "M4 5.5C4 4.7 4.7 4 5.5 4H19v14H5.5A1.5 1.5 0 004 19.5z M12 7v8 M4 19.5V20h15",
+  },
+  {
+    title: "No laptop required",
+    body: "Plug in a Fire TV Stick, Chromecast, or Android TV device and present straight to the TV. It doubles as signage midweek.",
+    icon: "M4 6h16v10H4z M9 20h6 M12 16v4",
+  },
+];
+---
+
+<section>
+  <div class="max-w-6xl mx-auto px-4 sm:px-6">
+    <div class="py-12 md:py-20 border-t border-gray-200 dark:border-gray-800">
+      <!-- Section header -->
+      <div class="max-w-3xl mx-auto text-center pb-12 md:pb-16">
+        <div
+          class="inline-flex items-center text-sm font-semibold tracking-wide uppercase text-teal-500 mb-2"
+        >
+          Why TheOpenPresenter
+        </div>
+        <h2 class="h2 font-red-hat-display mb-4">
+          ProPresenter is overkill for most churches
+        </h2>
+        <p class="text-xl text-gray-600 dark:text-gray-400">
+          It's mature and powerful, and it runs stages far bigger than most
+          churches will ever need. It's also paid, licensed per machine, and
+          tied to one operator at the back of the room. We built the simpler
+          option.
+        </p>
+      </div>
+
+      <!-- Features grid -->
+      <div class="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+        {
+          features.map((feature, i) => (
+            <div data-aos="fade-up" data-aos-delay={(i % 4) * 75}>
+              <svg
+                class="w-8 h-8 text-teal-500 mb-3"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.6"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d={feature.icon} />
+              </svg>
+              <h3 class="text-lg font-red-hat-display font-black mb-1">
+                {feature.title}
+              </h3>
+              <p class="text-gray-600 dark:text-gray-400">{feature.body}</p>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,112 @@
+---
+import { Image } from "astro:assets";
+import LiveDemoQr from "../demo/LiveDemoQr.astro";
+import landingImg from "../../assets/images/landing_img.png";
+---
+
+<section>
+  <div class="max-w-6xl mx-auto px-4 sm:px-6">
+    <div class="pt-32 pb-10 md:pt-40 md:pb-16">
+      <!-- Hero content -->
+      <div class="md:grid md:grid-cols-12 md:gap-12 lg:gap-20 items-center">
+        <!-- Content -->
+        <div
+          class="md:col-span-7 lg:col-span-6 mb-8 md:mb-0 text-center md:text-left"
+        >
+          <h1
+            class="h1 lg:text-4xl mb-2 font-red-hat-display font-black leading-tight"
+            data-aos="fade-down"
+          >
+            Let guests present to your screen from
+            <span
+              class="bg-clip-text text-transparent bg-gradient-to-r from-teal-400 to-purple-500"
+              >their devices</span
+            >
+          </h1>
+          <p
+            class="text-lg lg:text-xl mb-3 font-red-hat-display font-bold text-gray-700 dark:text-gray-300 leading-tight"
+            data-aos="fade-down"
+            data-aos-delay="75"
+          >
+            Without cables, apps, or help
+          </p>
+          <p
+            class="text-sm text-gray-600 dark:text-gray-400 mb-2"
+            data-aos="fade-down"
+            data-aos-delay="120"
+          >
+            Built for event venues, coworking spaces and community halls
+          </p>
+
+          <LiveDemoQr instance="demo">
+            <Fragment slot="hint">
+              You will then be able to control this page from your phone just
+              like your guests would
+            </Fragment>
+          </LiveDemoQr>
+        </div>
+
+        <!-- Mobile mockup -->
+        <div
+          class="md:col-span-5 lg:col-span-6 text-center md:text-right h-full md"
+          data-aos="fade-up"
+          data-aos-delay="450"
+        >
+          <!-- Glow illustration -->
+          <svg
+            class="absolute mr-12 mt-32 pointer-events-none -z-1 dark:opacity-40"
+            aria-hidden="true"
+            width="678"
+            height="634"
+            viewBox="0 0 678 634"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <circle
+              cx="240"
+              cy="394"
+              r="240"
+              fill="url(#piphoneill_paint0_radial)"
+              fill-opacity=".4"></circle>
+            <circle
+              cx="438"
+              cy="240"
+              r="240"
+              fill="url(#piphoneill_paint1_radial)"
+              fill-opacity=".6"></circle>
+            <defs>
+              <radialGradient
+                id="piphoneill_paint0_radial"
+                cx="0"
+                cy="0"
+                r="1"
+                gradientUnits="userSpaceOnUse"
+                gradientTransform="rotate(90 -77 317) scale(189.054)"
+              >
+                <stop stop-color="#667EEA"></stop>
+                <stop offset="1" stop-color="#667EEA" stop-opacity=".01"></stop>
+              </radialGradient>
+              <radialGradient
+                id="piphoneill_paint1_radial"
+                cx="0"
+                cy="0"
+                r="1"
+                gradientUnits="userSpaceOnUse"
+                gradientTransform="rotate(90 99 339) scale(189.054)"
+              >
+                <stop stop-color="#9F7AEA"></stop>
+                <stop offset="1" stop-color="#9F7AEA" stop-opacity=".01"></stop>
+              </radialGradient>
+            </defs>
+          </svg>
+          <Image
+            class="inline w-full max-w-[500px] mx-auto md:block md:absolute md:top-20 md:left-1/2 md:-translate-x-1/2 md:w-[410px] md:max-w-none md:mx-0 lg:block lg:w-full lg:top-1/8"
+            src={landingImg}
+            alt="landing"
+            loading="eager"
+          />
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
