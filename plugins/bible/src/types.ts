@@ -1,4 +1,4 @@
-import { z } from "zod";
+import type { LayoutDoc } from "@repo/layout";
 
 // ---------------------------------------------------------------------------
 // Passages
@@ -61,32 +61,13 @@ export type BibleBookMeta = {
 export type BibleBookIndex = BibleBookMeta[];
 
 // ---------------------------------------------------------------------------
-// Slide style
-// ---------------------------------------------------------------------------
-
-export const textAlignments = ["left", "center", "right"] as const;
-export type TextAlignment = (typeof textAlignments)[number];
-
-export const bibleSlideStyleValidator = z.object({
-  fontSize: z.number().optional(),
-  fontWeight: z.number().optional(),
-  fontFamily: z.string().optional(),
-  textColor: z.string().optional(),
-  backgroundColor: z.string().optional(),
-  textAlign: z.enum(textAlignments).optional(),
-  showReference: z.boolean().optional(),
-  showVerseNumbers: z.boolean().optional(),
-  textShadow: z.boolean().optional(),
-});
-export type BibleSlideStyle = z.infer<typeof bibleSlideStyleValidator>;
-
-// ---------------------------------------------------------------------------
 // Plugin data (persisted base data + per-renderer state)
 // ---------------------------------------------------------------------------
 
 export type PluginBaseData = {
   passages: BiblePassage[];
-  style?: BibleSlideStyle;
+  template?: LayoutDoc | null;
+  showVerseNumbers?: boolean;
 };
 
 export type PluginRendererData = {

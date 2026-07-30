@@ -2,8 +2,7 @@ import { FrameData, Span, span } from "@repo/layout";
 
 import { deriveAbbreviation } from "../helpers/abbreviation";
 import { getSlideVerses } from "../helpers/slides";
-import { getBibleStyle } from "../style/style";
-import { BiblePassage, BibleSlideStyle, BibleVerse } from "../types";
+import { BiblePassage, BibleVerse } from "../types";
 
 /** Collapse a slide's verses to a range */
 const slideReference = (
@@ -22,20 +21,22 @@ const slideReference = (
     : `${first.bookName} ${first.chapter}:${first.verse}-${last.chapter}:${last.verse}`;
 };
 
+export type FrameOptions = {
+  showVerseNumbers?: boolean;
+};
+
 /** Shape data for rendering */
 export const passageToFrame = (
   passage: BiblePassage,
   slideIndex: number,
-  style?: BibleSlideStyle | null,
+  { showVerseNumbers = false }: FrameOptions = {},
 ): FrameData => {
-  const s = getBibleStyle(style);
   const verses = getSlideVerses(passage, slideIndex);
 
   const spans: Span[] = [];
   verses.forEach((verse, i) => {
     if (i > 0) spans.push(span(" "));
-    if (s.showVerseNumbers)
-      spans.push(span(String(verse.verse), "verseNumber"));
+    if (showVerseNumbers) spans.push(span(String(verse.verse), "verseNumber"));
     spans.push(span(verse.text));
   });
 

@@ -11,7 +11,10 @@ const Renderer = () => {
 
   const data = pluginApi.renderer.useData((x) => x);
   const passages = pluginApi.scene.useData((x) => x.pluginData.passages);
-  const style = pluginApi.scene.useData((x) => x.pluginData.style);
+  const template = pluginApi.scene.useData((x) => x.pluginData.template);
+  const showVerseNumbers = pluginApi.scene.useData(
+    (x) => x.pluginData.showVerseNumbers,
+  );
 
   // Confidence-monitor / next-slide derivation support.
   const derivationOffset = pluginApi.renderer.useDerivationOffset();
@@ -35,7 +38,12 @@ const Renderer = () => {
 
   const content =
     passage && slideIndex !== null ? (
-      <VerseView passage={passage} slideIndex={slideIndex} style={style} />
+      <VerseView
+        passage={passage}
+        slideIndex={slideIndex}
+        template={template}
+        showVerseNumbers={showVerseNumbers}
+      />
     ) : null;
 
   return (
