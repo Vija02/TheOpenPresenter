@@ -41,6 +41,7 @@
     "@repo/base-plugin": "*",
     "@repo/eslint-config": "*",
     "@repo/graphql": "*",
+    "@repo/layout": "*",
     "@repo/lib": "*",
     "@repo/media-picker": "*",
     "@repo/plugin-lyrics-presenter": "*",
