@@ -6,8 +6,20 @@ import WrapUpCta from "../../../components/content/WrapUpCta.astro";
 const comparison = [
   {
     feature: "Price",
-    pp: "Paid license",
+    pp: "$29/month per seat (subscription only)",
     top: "Free / open source (AGPL 3.0)",
+    winner: "top",
+  },
+  {
+    feature: "Cost per extra user",
+    pp: "Another seat, another $29/month",
+    top: "Free, unlimited users",
+    winner: "top",
+  },
+  {
+    feature: "Perpetual licence",
+    pp: "No longer sold, subscription only",
+    top: "Yes, or self-host free forever",
     winner: "top",
   },
   {
@@ -194,7 +206,7 @@ const lose = "text-gray-600 dark:text-gray-300";
 
   <p class="text-lg text-gray-600 dark:text-gray-300 mb-12">
     If you're looking for a free, open-source alternative, something a volunteer
-    can run from a phone, that doesn't tie you to one licensed Mac at the front,
+    can run from a phone, that doesn't charge you per seat for every volunteer,
     this page lays out where TheOpenPresenter is a real replacement, and, just
     as importantly, where ProPresenter is still the better choice.
   </p>
@@ -213,7 +225,7 @@ const lose = "text-gray-600 dark:text-gray-300";
       <ul class="space-y-3 text-gray-600 dark:text-gray-300">
         <li class="flex gap-3">
           <span class="text-teal-500 shrink-0">&#10003;</span>
-          Software that's free and open source (AGPL 3.0), with no per-machine license
+          Software that's free and open source (AGPL 3.0), with no per-seat subscription
         </li>
         <li class="flex gap-3">
           <span class="text-teal-500 shrink-0">&#10003;</span>
@@ -391,7 +403,7 @@ const lose = "text-gray-600 dark:text-gray-300";
         It's free and open source
       </h3>
       <p class="text-gray-600 dark:text-gray-300">
-        No license to buy, no per-machine cost. It's AGPL 3.0, so you can
+        No subscription, no per-seat cost. It's AGPL 3.0, so you can
         self-host it, read the code, and it can never be taken away from you.
         For churches under 50 weekly attendance, the full cloud plan is free
         through our <a

@@ -73,42 +73,42 @@ function stripePost(url: string, body: unknown) {
   });
 }
 
-const PRICE_MONTHLY_GBP = 79;
-// Annual is no longer sold; kept only to display existing annual subscriptions.
-const PRICE_ANNUAL_GBP = 790;
+const PRICE_MONTHLY_GBP = 19;
+const PRICE_ANNUAL_GBP = 190;
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 const FEATURES = [
-  "Guest portal for your guests",
-  "Custom branding & logo",
-  "Drive main screen, confidence monitor, and signage from one synchronized show",
-  "Multi-room dashboard",
-  "50 GB storage per room",
+  "Unlimited users, all at once",
+  "Unlimited connected displays",
+  "Drive main screen, confidence monitor, and signage from one synchronised show",
+  "Guest portal, so a visiting speaker can present from their own device",
+  "50 GB storage",
+  "AI lyric formatting",
   "Priority email support",
 ];
 
 const FAQ_ITEMS = [
   {
-    q: "What counts as a room?",
-    a: "A physical enclosed room space. You may connect to as many screen as you wish as long as they are all in the same room. All screens in a room shares the same presentation session. They can show the same thing or a variation of the same show such as for confidence monitor. Your subscription gives you the ability to run that many rooms at the same time.",
+    q: "Do you charge per user?",
+    a: "No. Every plan, including Free, allows unlimited users controlling the same presentation at once. There are no seats to buy and no per-user cost, however many volunteers you have.",
   },
   {
     q: "What's included in the Free plan?",
-    a: "Free includes up to 5 connected displays, 1 GB storage, all official plugins, unlimited presentations, and no time limit. No credit card required.",
+    a: "Free includes unlimited users, up to 5 connected displays, 1 GB storage, all official plugins, unlimited presentations, and no time limit. No credit card required.",
   },
   {
-    q: "How much does a room cost?",
-    a: `Each room is £${PRICE_MONTHLY_GBP}/month, billed monthly. You can add or remove rooms at any time, and cancel whenever you like.`,
+    q: "How much is the Cloud plan?",
+    a: `£${PRICE_MONTHLY_GBP}/month for your whole organization, billed monthly. Cancel whenever you like.`,
   },
   {
-    q: "Can I buy a room instead of subscribing?",
-    a: "Yes. A Lifetime room is a one-time purchase: pay once and it's yours for good, with no subscription. Buying several at once is cheaper per room. Lifetime rooms sit alongside any monthly rooms you have.",
+    q: "Can I buy it outright instead of subscribing?",
+    a: "Yes. The Lifetime licence is a one-time purchase: pay once and it's yours for good, with no subscription and no exposure to future price changes. Bug fixes and security updates are always included.",
   },
   {
-    q: "How does proration work when I change room count?",
-    a: "When you add rooms, you're charged immediately for the prorated cost of the remaining days in your billing period. When you remove rooms, you receive a credit for the unused days. This is automatically deducted from your next invoice. You'll always see the exact amount before confirming.",
+    q: "We're a small church. Is there help with the cost?",
+    a: "Churches under 50 weekly attendance get the full Cloud plan free through our sponsorship programme, storage and AI credits included. Get in touch and we'll set it up.",
   },
   {
     q: "What happens when I cancel?",
@@ -120,13 +120,8 @@ const FAQ_ITEMS = [
 // Types
 // ---------------------------------------------------------------------------
 type OrgData = NonNullable<OrganizationBillingPageQuery["organizationBySlug"]>;
-type UpdatePhase =
-  | "idle"
-  | "previewing"
-  | "confirming"
-  | "updating"
-  | "success";
 type CancelPhase = "idle" | "confirming" | "cancelling" | "success";
+type Mode = "monthly" | "yearly" | "lifetime";
 
 function Stat({
   label,
@@ -177,20 +172,17 @@ function BillingPageInner({
 
   const canManage = org.currentUserIsOwner || org.currentUserIsBillingContact;
   const billingInfo = org.billingInfo;
-  const plan = billingInfo?.plan ?? "free";
   const status = billingInfo?.subscriptionStatus ?? null;
   const periodEnd = billingInfo?.currentPeriodEnd
     ? new Date(billingInfo.currentPeriodEnd)
     : null;
-  const subscribedRoomCount = billingInfo?.subscribedRoomCount ?? 0;
-  const lifetimeRoomCount = billingInfo?.lifetimeRoomCount ?? 0;
+  const hasLifetime = (billingInfo?.lifetimeRoomCount ?? 0) > 0;
   const billingInterval = billingInfo?.billingInterval ?? "month";
   const scheduledCancel = billingInfo?.cancelAtPeriodEnd ?? false;
   const serverCancelAt = billingInfo?.cancelAt
     ? new Date(billingInfo.cancelAt)
     : null;
-  const isActive =
-    plan === "business" && (status === "active" || status === "trialing");
+  const isActive = status === "active" || status === "trialing";
 
   return (
     <div className="w-full grid grid-cols-1 gap-8 lg:grid-cols-[1fr_320px]">
@@ -198,7 +190,7 @@ function BillingPageInner({
         <div>
           <h1 className="text-2xl font-bold text-primary">Billing</h1>
           <p className="mt-1 text-sm text-secondary">
-            Manage your plan, rooms, and payment details for this organization.
+            Manage your plan and payment details for this organization.
           </p>
         </div>
 
@@ -232,8 +224,7 @@ function BillingPageInner({
               status={status}
               periodEnd={periodEnd}
               isActive={isActive}
-              subscribedRoomCount={subscribedRoomCount}
-              lifetimeRoomCount={lifetimeRoomCount}
+              hasLifetime={hasLifetime}
               billingInterval={billingInterval}
               scheduledCancel={scheduledCancel}
               serverCancelAt={serverCancelAt}
@@ -243,7 +234,12 @@ function BillingPageInner({
             />
 
             {canManage && (
-              <UpgradePanel org={org} slug={slug} isActive={isActive} />
+              <UpgradePanel
+                org={org}
+                slug={slug}
+                isActive={isActive}
+                hasLifetime={hasLifetime}
+              />
             )}
           </>
         )}
@@ -260,8 +256,7 @@ function PlanOverviewCard({
   status,
   periodEnd,
   isActive,
-  subscribedRoomCount,
-  lifetimeRoomCount,
+  hasLifetime,
   billingInterval,
   scheduledCancel,
   serverCancelAt,
@@ -272,8 +267,7 @@ function PlanOverviewCard({
   status: string | null;
   periodEnd: Date | null;
   isActive: boolean;
-  subscribedRoomCount: number;
-  lifetimeRoomCount: number;
+  hasLifetime: boolean;
   billingInterval: string;
   scheduledCancel: boolean;
   serverCancelAt: Date | null;
@@ -281,24 +275,8 @@ function PlanOverviewCard({
   org: OrgData;
   slug: string;
 }) {
-  const hasLifetime = lifetimeRoomCount > 0;
-
   // Portal
   const [portalLoading, setPortalLoading] = useState(false);
-
-  // Room editing
-  const [isEditing, setIsEditing] = useState(false);
-  const [pendingRoomCount, setPendingRoomCount] = useState(
-    subscribedRoomCount > 0 ? subscribedRoomCount : 1,
-  );
-  const [confirmedRoomCount, setConfirmedRoomCount] =
-    useState(subscribedRoomCount);
-  const [updatePhase, setUpdatePhase] = useState<UpdatePhase>("idle");
-  const [preview, setPreview] = useState<{
-    amountDue: number;
-    total: number;
-    currency: string;
-  } | null>(null);
 
   // Cancel
   const [cancelPhase, setCancelPhase] = useState<CancelPhase>("idle");
@@ -306,81 +284,10 @@ function PlanOverviewCard({
 
   const [error, setError] = useState<string | null>(null);
 
-  // Optimistically show new count after save
-  const displayRoomCount =
-    updatePhase === "success" ? pendingRoomCount : subscribedRoomCount;
-
-  // Compute next charge for display
-  const pricePerRoom =
+  // One plan per organization, so the charge is just the plan price.
+  const nextChargeAmount =
     billingInterval === "year" ? PRICE_ANNUAL_GBP : PRICE_MONTHLY_GBP;
-  const nextChargeAmount = subscribedRoomCount * pricePerRoom;
   const nextChargeUnit = billingInterval === "year" ? "/yr" : "/mo";
-
-  const startEditing = useCallback(() => {
-    setPendingRoomCount(confirmedRoomCount > 0 ? confirmedRoomCount : 1);
-    setUpdatePhase("idle");
-    setPreview(null);
-    setError(null);
-    setIsEditing(true);
-  }, [confirmedRoomCount]);
-
-  const cancelEditing = useCallback(() => {
-    setIsEditing(false);
-    setPendingRoomCount(confirmedRoomCount > 0 ? confirmedRoomCount : 1);
-    setUpdatePhase("idle");
-    setPreview(null);
-    setError(null);
-  }, [confirmedRoomCount]);
-
-  const adjustRoom = useCallback(
-    (delta: number) => {
-      setPendingRoomCount((n) => Math.max(1, n + delta));
-      if (updatePhase === "confirming") {
-        setUpdatePhase("idle");
-        setPreview(null);
-      }
-    },
-    [updatePhase],
-  );
-
-  const previewUpdate = useCallback(async () => {
-    setUpdatePhase("previewing");
-    setError(null);
-    try {
-      const { data } = await stripePost("/stripe/preview-subscription-update", {
-        organizationId: org.id,
-        quantity: pendingRoomCount,
-      });
-      setPreview({
-        amountDue: data.amountDue,
-        total: data.total,
-        currency: data.currency,
-      });
-      setUpdatePhase("confirming");
-    } catch (e: any) {
-      setError(apiError(e, "Failed to preview update"));
-      setUpdatePhase("idle");
-    }
-  }, [org.id, pendingRoomCount]);
-
-  const confirmUpdate = useCallback(async () => {
-    setUpdatePhase("updating");
-    setError(null);
-    try {
-      await stripePost("/stripe/update-subscription", {
-        organizationId: org.id,
-        quantity: pendingRoomCount,
-      });
-      setConfirmedRoomCount(pendingRoomCount);
-      setIsEditing(false);
-      setPreview(null);
-      setUpdatePhase("success");
-      setTimeout(() => setUpdatePhase("idle"), 6000);
-    } catch (e: any) {
-      setError(apiError(e, "Failed to update subscription"));
-      setUpdatePhase("confirming");
-    }
-  }, [org.id, pendingRoomCount]);
 
   const cancelSubscription = useCallback(async () => {
     setCancelPhase("cancelling");
@@ -412,8 +319,6 @@ function PlanOverviewCard({
     }
   }, [org.id, slug]);
 
-  const roomCountChanged = pendingRoomCount !== confirmedRoomCount;
-  const busy = updatePhase === "previewing" || updatePhase === "updating";
   const isCancelScheduled = scheduledCancel || cancelPhase === "success";
   const effectivePeriodEnd = cancelAt ?? serverCancelAt ?? periodEnd;
 
@@ -462,11 +367,7 @@ function PlanOverviewCard({
             <Stat label="Billing">
               {billingInterval === "year" ? "Annual" : "Monthly"}
             </Stat>
-            <Stat label="Rooms">
-              <span className="text-2xl font-bold tabular-nums">
-                {displayRoomCount}
-              </span>
-            </Stat>
+            <Stat label="Users">Unlimited</Stat>
             <Stat label="Next charge">
               £{nextChargeAmount}
               <span className="text-xs font-normal text-secondary">
@@ -479,16 +380,16 @@ function PlanOverviewCard({
           </div>
         ) : hasLifetime ? (
           <div className="grid grid-cols-2 gap-x-8 gap-y-5 sm:grid-cols-4">
+            <Stat label="Users">Unlimited</Stat>
             <Stat label="Displays">Unlimited</Stat>
-            <Stat label="Storage">50 GB / room</Stat>
-            <Stat label="Plugins">All included</Stat>
+            <Stat label="Storage">50 GB</Stat>
             <Stat label="Support">Priority</Stat>
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-x-8 gap-y-5 sm:grid-cols-4">
+            <Stat label="Users">Unlimited</Stat>
             <Stat label="Displays">Up to 5</Stat>
             <Stat label="Storage">1 GB</Stat>
-            <Stat label="Plugins">All included</Stat>
             <Stat label="Support">Community</Stat>
           </div>
         )}
@@ -497,143 +398,9 @@ function PlanOverviewCard({
           <div className="mt-5 flex flex-wrap items-center gap-2 text-sm">
             <MdStar className="size-4 text-teal-500 shrink-0" />
             <span className="font-medium text-primary">
-              {lifetimeRoomCount} lifetime{" "}
-              {lifetimeRoomCount === 1 ? "room" : "rooms"} owned
+              Lifetime licence owned
             </span>
             <span className="text-tertiary">· yours forever, no renewal</span>
-          </div>
-        )}
-
-        {/* Room editing section */}
-        {isActive && canManage && (
-          <div className="mt-5">
-            {/* View mode */}
-            {!isEditing && (
-              <div className="flex items-center gap-3">
-                {updatePhase === "success" ? (
-                  <span className="flex items-center gap-1 text-xs text-teal-600 dark:text-teal-400">
-                    <MdCheck className="size-3.5" />
-                    Rooms updated. Changes will reflect shortly
-                  </span>
-                ) : (
-                  <Button size="sm" variant="outline" onClick={startEditing}>
-                    Update rooms
-                  </Button>
-                )}
-              </div>
-            )}
-
-            {/* Edit mode */}
-            {isEditing && (
-              <div className="space-y-3">
-                <div className="flex flex-wrap items-center gap-2">
-                  <button
-                    type="button"
-                    aria-label="Remove a room"
-                    onClick={() => adjustRoom(-1)}
-                    disabled={pendingRoomCount <= 1 || busy}
-                    className="w-8 h-8 rounded border border-stroke flex items-center justify-center text-primary hover:bg-surface-primary-hover disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer leading-none"
-                  >
-                    -
-                  </button>
-                  <span className="w-8 text-center font-bold text-primary tabular-nums">
-                    {pendingRoomCount}
-                  </span>
-                  <button
-                    type="button"
-                    aria-label="Add a room"
-                    onClick={() => adjustRoom(1)}
-                    disabled={busy}
-                    className="w-8 h-8 rounded border border-stroke flex items-center justify-center text-primary hover:bg-surface-primary-hover disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer leading-none"
-                  >
-                    +
-                  </button>
-
-                  {updatePhase === "idle" && roomCountChanged && (
-                    <Button size="sm" variant="default" onClick={previewUpdate}>
-                      Preview update
-                    </Button>
-                  )}
-                  {updatePhase === "previewing" && (
-                    <Button size="sm" variant="default" isLoading disabled>
-                      Checking…
-                    </Button>
-                  )}
-                  {(updatePhase === "idle" || updatePhase === "previewing") && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={cancelEditing}
-                      disabled={busy}
-                    >
-                      Cancel
-                    </Button>
-                  )}
-                </div>
-
-                {/* Confirmation panel */}
-                {preview &&
-                  (updatePhase === "confirming" ||
-                    updatePhase === "updating") && (
-                    <div className="rounded-md border border-stroke bg-surface-secondary p-4 space-y-3">
-                      <p className="text-sm font-semibold text-primary">
-                        {confirmedRoomCount} → {pendingRoomCount}{" "}
-                        {pendingRoomCount === 1 ? "room" : "rooms"}
-                      </p>
-                      {preview.amountDue > 0 ? (
-                        <p className="text-sm text-secondary">
-                          You'll be charged{" "}
-                          <span className="font-semibold text-primary">
-                            {formatCurrency(
-                              preview.amountDue,
-                              preview.currency,
-                            )}
-                          </span>{" "}
-                          today, prorated to your next renewal date.
-                        </p>
-                      ) : preview.total < 0 ? (
-                        <p className="text-sm text-secondary">
-                          You'll receive a{" "}
-                          <span className="font-semibold text-primary">
-                            {formatCurrency(
-                              Math.abs(preview.total),
-                              preview.currency,
-                            )}{" "}
-                            credit
-                          </span>{" "}
-                          for the unused portion of your current billing period.
-                          This is added to your account balance and
-                          automatically deducted from your next invoice.
-                        </p>
-                      ) : (
-                        <p className="text-sm text-secondary">
-                          No charge. The change takes effect immediately.
-                        </p>
-                      )}
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={cancelEditing}
-                          disabled={updatePhase === "updating"}
-                        >
-                          Cancel
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="default"
-                          onClick={confirmUpdate}
-                          isLoading={updatePhase === "updating"}
-                        >
-                          {preview.amountDue > 0
-                            ? `Confirm & pay ${formatCurrency(preview.amountDue, preview.currency)}`
-                            : "Confirm change"}
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-              </div>
-            )}
           </div>
         )}
       </div>
@@ -741,22 +508,29 @@ function UpgradePanel({
   org,
   slug,
   isActive,
+  hasLifetime,
 }: {
   org: OrgData;
   slug: string;
   isActive: boolean;
+  hasLifetime: boolean;
 }) {
-  // Already subscribed monthly? Monthly room changes happen in the overview,
-  // so only Lifetime is offered here. Otherwise let them switch between the two.
-  const [mode, setMode] = useState<"monthly" | "lifetime">(
-    isActive ? "lifetime" : "monthly",
-  );
+  const modes: { key: Mode; label: string }[] = [
+    { key: "monthly", label: "Monthly" },
+    { key: "yearly", label: "Yearly" },
+    { key: "lifetime", label: "Lifetime" },
+  ];
+
+  // Already subscribed? The only upsell left is owning it outright.
+  const [mode, setMode] = useState<Mode>(isActive ? "lifetime" : "monthly");
+
+  if (hasLifetime) return null;
 
   return (
     <section className="space-y-6">
       <div className="border-t border-stroke pt-6">
         <h2 className="text-lg font-semibold text-primary">
-          {isActive ? "Own rooms for life" : "Add rooms"}
+          {isActive ? "Own it for life" : "Upgrade to Cloud"}
         </h2>
         <p className="mt-1 text-sm text-secondary">Everything in Free, plus:</p>
         <ul className="mt-3 columns-1 sm:columns-2 sm:gap-x-8">
@@ -774,54 +548,65 @@ function UpgradePanel({
 
       {!isActive && (
         <div className="flex w-full rounded-lg border border-stroke bg-surface-secondary p-1">
-          <button
-            type="button"
-            onClick={() => setMode("monthly")}
-            className={`flex-1 px-6 py-2.5 text-base font-semibold rounded-md cursor-pointer transition-colors ${
-              mode === "monthly"
-                ? "bg-surface-primary text-primary shadow-sm"
-                : "text-secondary hover:text-primary"
-            }`}
-          >
-            Monthly
-          </button>
-          <button
-            type="button"
-            onClick={() => setMode("lifetime")}
-            className={`flex-1 px-6 py-2.5 text-base font-semibold rounded-md cursor-pointer transition-colors ${
-              mode === "lifetime"
-                ? "bg-surface-primary text-primary shadow-sm"
-                : "text-secondary hover:text-primary"
-            }`}
-          >
-            Lifetime
-          </button>
+          {modes.map((m) => (
+            <button
+              key={m.key}
+              type="button"
+              onClick={() => setMode(m.key)}
+              className={`flex-1 px-4 py-2.5 text-base font-semibold rounded-md cursor-pointer transition-colors ${
+                mode === m.key
+                  ? "bg-surface-primary text-primary shadow-sm"
+                  : "text-secondary hover:text-primary"
+              }`}
+            >
+              {m.label}
+            </button>
+          ))}
         </div>
       )}
 
-      {mode === "monthly" ? (
-        <UpgradeSection org={org} slug={slug} />
-      ) : (
+      {mode === "lifetime" ? (
         <LifetimeSection org={org} slug={slug} />
+      ) : (
+        <UpgradeSection
+          org={org}
+          slug={slug}
+          interval={mode === "yearly" ? "year" : "month"}
+        />
       )}
     </section>
   );
 }
 
-function UpgradeSection({ org, slug }: { org: OrgData; slug: string }) {
-  const [roomCount, setRoomCount] = useState(1);
+function UpgradeSection({
+  org,
+  slug,
+  interval,
+}: {
+  org: OrgData;
+  slug: string;
+  interval: "month" | "year";
+}) {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const total = PRICE_MONTHLY_GBP * roomCount;
+  const isYearly = interval === "year";
 
-  const resetCheckout = useCallback(() => setClientSecret(null), []);
+  // Switching interval invalidates any checkout already on screen.
+  useEffect(() => {
+    setClientSecret(null);
+    setError(null);
+  }, [interval]);
 
   const startCheckout = useCallback(async () => {
-    const priceId = appData.getStripePriceIdMonthly();
+    const priceId = isYearly
+      ? appData.getStripePriceIdAnnual()
+      : appData.getStripePriceIdMonthly();
     if (!priceId) {
-      setError("STRIPE_PRICE_ID_MONTHLY is not configured on the server.");
+      setError(
+        `${isYearly ? "STRIPE_PRICE_ID_ANNUAL" : "STRIPE_PRICE_ID_MONTHLY"} is not configured on the server.`,
+      );
       return;
     }
     setLoading(true);
@@ -832,7 +617,7 @@ function UpgradeSection({ org, slug }: { org: OrgData; slug: string }) {
         organizationId: org.id,
         slug,
         priceId,
-        quantity: roomCount,
+        quantity: 1,
       });
       setClientSecret(data.clientSecret);
     } catch (e: any) {
@@ -840,66 +625,32 @@ function UpgradeSection({ org, slug }: { org: OrgData; slug: string }) {
     } finally {
       setLoading(false);
     }
-  }, [org.id, slug, roomCount]);
+  }, [org.id, slug, isYearly]);
 
   const stripeOptions = useMemo(
     () => (clientSecret ? { clientSecret } : null),
     [clientSecret],
   );
 
+  const yearlySaving = PRICE_MONTHLY_GBP * 12 - PRICE_ANNUAL_GBP;
+
   return (
     <section className="space-y-6">
       <div className="rounded-md border border-stroke bg-surface-primary p-5 space-y-5">
-        {/* Room picker */}
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <p className="font-medium text-primary text-sm">How many rooms?</p>
-            <p className="text-xs text-secondary mt-0.5">
-              Billed monthly. Cancel anytime.
-            </p>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              type="button"
-              aria-label="Remove a room"
-              onClick={() => {
-                setRoomCount((n) => Math.max(1, n - 1));
-                resetCheckout();
-              }}
-              disabled={roomCount <= 1}
-              className="w-8 h-8 rounded-md border border-stroke flex items-center justify-center text-primary hover:bg-surface-primary-hover disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer font-medium"
-            >
-              -
-            </button>
-            <span className="w-10 text-center font-bold text-primary text-lg tabular-nums">
-              {roomCount}
-            </span>
-            <button
-              type="button"
-              aria-label="Add a room"
-              onClick={() => {
-                setRoomCount((n) => n + 1);
-                resetCheckout();
-              }}
-              className="w-8 h-8 rounded-md border border-stroke flex items-center justify-center text-primary hover:bg-surface-primary-hover cursor-pointer font-medium"
-            >
-              +
-            </button>
-          </div>
-        </div>
-
         {/* Price + subscribe */}
         <div className="flex items-end justify-between gap-4">
           <div>
             <p className="text-2xl font-bold text-primary">
-              £{total}
-              <span className="text-sm font-normal text-secondary">/mo</span>
+              £{isYearly ? PRICE_ANNUAL_GBP : PRICE_MONTHLY_GBP}
+              <span className="text-sm font-normal text-secondary">
+                {isYearly ? "/yr" : "/mo"}
+              </span>
             </p>
-            {roomCount > 1 && (
-              <p className="mt-0.5 text-xs text-secondary">
-                £{PRICE_MONTHLY_GBP} × {roomCount} rooms
-              </p>
-            )}
+            <p className="mt-0.5 text-xs text-secondary">
+              {isYearly
+                ? `For your whole organization. Saves £${yearlySaving} a year against monthly.`
+                : "For your whole organization. Billed monthly, cancel anytime."}
+            </p>
           </div>
           <Button
             variant="default"
@@ -937,7 +688,6 @@ function UpgradeSection({ org, slug }: { org: OrgData; slug: string }) {
 }
 
 function LifetimeSection({ org, slug }: { org: OrgData; slug: string }) {
-  const [roomCount, setRoomCount] = useState(1);
   const [preview, setPreview] = useState<{
     unitAmount: number;
     total: number;
@@ -947,13 +697,14 @@ function LifetimeSection({ org, slug }: { org: OrgData; slug: string }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Refresh the tiered price whenever the room count changes.
+  // Price comes from the server rather than a constant, so it can't drift
+  // away from what Stripe actually charges.
   useEffect(() => {
     let cancelled = false;
     setClientSecret(null);
     stripePost("/stripe/preview-lifetime", {
       organizationId: org.id,
-      quantity: roomCount,
+      quantity: 1,
     })
       .then(({ data }) => {
         if (!cancelled) {
@@ -970,7 +721,7 @@ function LifetimeSection({ org, slug }: { org: OrgData; slug: string }) {
     return () => {
       cancelled = true;
     };
-  }, [org.id, roomCount]);
+  }, [org.id]);
 
   const startCheckout = useCallback(async () => {
     setLoading(true);
@@ -980,7 +731,7 @@ function LifetimeSection({ org, slug }: { org: OrgData; slug: string }) {
       const { data } = await stripePost("/stripe/create-lifetime-checkout", {
         organizationId: org.id,
         slug,
-        quantity: roomCount,
+        quantity: 1,
       });
       setClientSecret(data.clientSecret);
     } catch (e: any) {
@@ -988,7 +739,7 @@ function LifetimeSection({ org, slug }: { org: OrgData; slug: string }) {
     } finally {
       setLoading(false);
     }
-  }, [org.id, slug, roomCount]);
+  }, [org.id, slug]);
 
   const stripeOptions = useMemo(
     () => (clientSecret ? { clientSecret } : null),
@@ -998,38 +749,6 @@ function LifetimeSection({ org, slug }: { org: OrgData; slug: string }) {
   return (
     <section className="space-y-6">
       <div className="rounded-md border border-stroke bg-surface-primary p-5 space-y-5">
-        {/* Room picker */}
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <p className="font-medium text-primary text-sm">How many rooms?</p>
-            <p className="text-xs text-secondary mt-0.5">
-              £790 each for 2–4, £590 each for 5+.
-            </p>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              type="button"
-              aria-label="Remove a room"
-              onClick={() => setRoomCount((n) => Math.max(1, n - 1))}
-              disabled={roomCount <= 1}
-              className="w-8 h-8 rounded-md border border-stroke flex items-center justify-center text-primary hover:bg-surface-primary-hover disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer font-medium"
-            >
-              -
-            </button>
-            <span className="w-10 text-center font-bold text-primary text-lg tabular-nums">
-              {roomCount}
-            </span>
-            <button
-              type="button"
-              aria-label="Add a room"
-              onClick={() => setRoomCount((n) => n + 1)}
-              className="w-8 h-8 rounded-md border border-stroke flex items-center justify-center text-primary hover:bg-surface-primary-hover cursor-pointer font-medium"
-            >
-              +
-            </button>
-          </div>
-        </div>
-
         {/* Price + buy */}
         <div className="flex items-end justify-between gap-4">
           <div>
@@ -1040,12 +759,9 @@ function LifetimeSection({ org, slug }: { org: OrgData; slug: string }) {
                 one-time
               </span>
             </p>
-            {preview && roomCount > 1 && (
-              <p className="mt-0.5 text-xs text-secondary">
-                {formatCurrency(preview.unitAmount, preview.currency)} ×{" "}
-                {roomCount} rooms
-              </p>
-            )}
+            <p className="mt-0.5 text-xs text-secondary">
+              Yours for good. No subscription, and no future price changes.
+            </p>
           </div>
           <Button
             variant="default"
@@ -1057,7 +773,9 @@ function LifetimeSection({ org, slug }: { org: OrgData; slug: string }) {
           </Button>
         </div>
         <p className="text-xs text-tertiary">
-          Includes 1 year of AI tools and priority support.
+          Includes AI tools: auto-formatted slides, generated backgrounds, and
+          smart lyric &amp; scripture lookup. Bug fixes and security updates are
+          always included.
         </p>
       </div>
 

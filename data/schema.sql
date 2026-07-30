@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict xMXrOis722s0LXz60bQRV6NeZACnmtUx6wf9h7NorbZ9DwpkmGRgHMvtwg9BFeh
+\restrict 677SQtp0wWT88HlMS1fL6xtyO6td35zsJ3BAbqaZG8fWa4L0bknHGpYkl6CFniS
 
 -- Dumped from database version 17.0 (Debian 17.0-1.pgdg120+1)
 -- Dumped by pg_dump version 18.4
@@ -2250,7 +2250,10 @@ CREATE FUNCTION app_public.organizations_billing_info(org app_public.organizatio
     SET search_path TO 'pg_catalog', 'public', 'pg_temp'
     AS $$
   select
-    coalesce(b.plan, 'free')::text,
+    case
+      when coalesce(b.lifetime_room_count, 0) > 0 then 'business'
+      else coalesce(b.plan, 'free')
+    end::text,
     b.stripe_subscription_status,
     b.stripe_current_period_end,
     coalesce(b.subscribed_room_count, 0),
@@ -2272,7 +2275,7 @@ $$;
 -- Name: FUNCTION organizations_billing_info(org app_public.organizations); Type: COMMENT; Schema: app_public; Owner: -
 --
 
-COMMENT ON FUNCTION app_public.organizations_billing_info(org app_public.organizations) IS 'Current billing plan and Stripe subscription status for the organization.';
+COMMENT ON FUNCTION app_public.organizations_billing_info(org app_public.organizations) IS 'Current billing plan and Stripe subscription status for the organization. `plan` reflects effective entitlement, so a Lifetime purchase reads as ''business'' with no active subscription.';
 
 
 --
@@ -7140,5 +7143,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE theopenpresenter REVOKE ALL ON FUNCTIONS FROM 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict xMXrOis722s0LXz60bQRV6NeZACnmtUx6wf9h7NorbZ9DwpkmGRgHMvtwg9BFeh
+\unrestrict 677SQtp0wWT88HlMS1fL6xtyO6td35zsJ3BAbqaZG8fWa4L0bknHGpYkl6CFniS
 

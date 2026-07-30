@@ -9,9 +9,7 @@ query OrganizationBillingPage($slug: String!) {
       plan
       subscriptionStatus
       currentPeriodEnd
-      subscribedRoomCount
       lifetimeRoomCount
-      effectiveRoomCount
       billingInterval
       cancelAtPeriodEnd
       cancelAt

@@ -2,11 +2,103 @@
 import DefaultLayout from "../../layouts/DefaultLayout.astro";
 import PageIllustration from "../../components/PageIllustration.astro";
 import CtaSignup from "@/components/CtaSignup.astro";
+
+const plans = [
+  {
+    name: "Free",
+    blurb: "For small churches, mid-week groups, and trying us out.",
+    price: "&pound;0",
+    unit: "forever",
+    note: "no time limit &middot; no card needed",
+    cta: { label: "Sign up free", href: "/register", primary: false },
+    features: [
+      "Unlimited users, all at once",
+      "Up to 5 connected displays",
+      "1 GB storage",
+      "All official plugins",
+      "PowerPoint import and Google Slides sync",
+      "Community support",
+    ],
+  },
+  {
+    name: "Cloud",
+    blurb: "For churches that need more storage and the AI tools.",
+    price: "&pound;19",
+    unit: "/month",
+    note: "or &pound;190 a year, two months free",
+    cta: { label: "Start free, upgrade later", href: "/register", primary: true },
+    highlight: "Most popular",
+    featuresHeading: "Everything in Free, plus",
+    features: [
+      "Unlimited connected displays",
+      "Drive main screen, confidence monitor, and signage from one synchronised show",
+      "Guest portal, so a visiting speaker can present from their own device",
+      "50 GB storage",
+      "AI lyric formatting",
+      "Priority support",
+      "Cancel any time, no lock-in",
+    ],
+  },
+  {
+    name: "Self-host",
+    blurb: "Keep everything on your own hardware and network.",
+    price: "Open source",
+    unit: "",
+    note: "run it free on your own server &middot; your data never leaves your network",
+    cta: {
+      label: "Get the source",
+      href: "https://github.com/Vija02/TheOpenPresenter",
+      primary: false,
+    },
+    features: [
+      "The full app, on your hardware",
+      "Your data stays on your network",
+      "No limits beyond what your hardware allows",
+      "AGPL 3.0, yours to read and modify",
+      "You handle updates and backups",
+    ],
+  },
+];
+
+const faqs = [
+  {
+    q: "How many people can run a presentation at once?",
+    a: "As many as you like, on every plan including Free. There are no seats and no per-user cost. This is the biggest difference from ProPresenter, which is licensed per seat, so a team of three users pays three times.",
+  },
+  {
+    q: "Is the free plan really free?",
+    a: "Yes, with no time limit and no card. It covers a small church running a weekly service. You'd move to Cloud if you run out of storage, want the AI lyric formatting, or need more than five connected displays.",
+  },
+  {
+    q: "What if we're a small church and can't pay?",
+    a: "Churches under 50 weekly attendance get the full Cloud plan free through our sponsorship programme, storage and AI credits included. It isn't a discount or a trial, it's the whole plan.",
+  },
+  {
+    q: "What does the Lifetime licence actually get me?",
+    a: "The Cloud plan, paid once, with no subscription afterwards. Bug fixes and security updates are always included. It suits organisations that would rather make a one-time purchase than carry a recurring cost, and it guarantees you'll never be affected by a future price change.",
+  },
+  {
+    q: "Can I self-host instead?",
+    a: "Yes. It's open source under AGPL 3.0, so you can run the whole thing on your own hardware for free, with no limits beyond what your server can handle. Your data never leaves your network. You handle updates, backups, and support yourself.",
+  },
+  {
+    q: "Can I cancel?",
+    a: "Any time, from your dashboard. There's no contract and no cancellation fee. Your content stays in your account, and you drop back to the Free plan rather than losing access.",
+  },
+  {
+    q: "Do I need to buy hardware?",
+    a: "No. It runs on any device with a modern browser. A Fire TV Stick, a Chromecast, an old laptop, or a mini PC all work. There's also a desktop app, TheOpenPresenter Studio, if you'd rather run it on the machine at the front.",
+  },
+  {
+    q: "Can I move from monthly to Lifetime later?",
+    a: "Yes. Email us and we'll credit what you've already paid on a monthly plan against the Lifetime licence.",
+  },
+];
 ---
 
 <DefaultLayout
   title="Pricing | TheOpenPresenter"
-  description="Open source presentation software. Start free on our cloud, own a room for life with one payment, or self-host it yourself. No forced subscription."
+  description="Free for small churches. £19 a month for unlimited users, with no per-seat subscription. Or self-host the open-source app on your own hardware."
 >
   <!-- Page illustration -->
   <div
@@ -22,344 +114,200 @@ import CtaSignup from "@/components/CtaSignup.astro";
         <!-- Page header -->
         <div class="max-w-3xl mx-auto text-center">
           <h1 class="h1 font-red-hat-display mb-4" data-aos="fade-down">
-            Own your room in the cloud.
+            One price for your whole team
           </h1>
           <p
             class="text-xl text-gray-600 dark:text-gray-400"
             data-aos="fade-down"
             data-aos-delay="150"
           >
-            Start free on our cloud, buy a room for life when you need more,
-            or self-host the open source app on your own hardware. No forced
-            subscription, no lock-in.
+            No seats to count and no per-seat subscription. Start free and stay
+            there as long as it works for you.
           </p>
         </div>
 
-        <!-- Pricing cards -->
-        <div class="max-w-6xl mx-auto mt-12 md:mt-16 grid gap-6 md:grid-cols-3">
-          <!-- Free tier -->
-          <div
-            class="flex flex-col rounded-lg border border-gray-200 dark:border-gray-800 p-6 bg-white dark:bg-gray-900"
-            data-aos="fade-up"
+        <!-- Applies to every tier, so it's stated once rather than repeated
+             in all three cards. -->
+        <div
+          class="max-w-6xl mx-auto mt-10 flex justify-center"
+          data-aos="fade-up"
+        >
+          <p
+            class="inline-flex items-center gap-2 rounded-full border border-teal-200 dark:border-teal-500/30 bg-teal-50 dark:bg-teal-500/10 px-4 py-2 text-sm font-medium text-teal-700 dark:text-teal-300"
           >
-            <div class="mb-6">
-              <h2 class="h3 font-red-hat-display mb-1">Free</h2>
-              <p class="text-sm text-gray-600 dark:text-gray-400">
-                For signage, small rooms, and anyone trying us out.
-              </p>
-            </div>
-            <div class="mb-1">
-              <span class="text-4xl font-extrabold font-red-hat-display">
-                &pound;0
-              </span>
-              <span class="text-gray-600 dark:text-gray-400 ml-1">
-                forever
-              </span>
-            </div>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">
-              no time limit &middot; no card needed
-            </p>
-            <a
-              class="btn-sm text-white bg-gray-700 hover:bg-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 w-full mb-6 justify-center"
-              href="/register"
+            <svg
+              class="w-4 h-4 shrink-0"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
             >
-              Sign up free
-            </a>
-            <ul class="text-sm text-gray-600 dark:text-gray-400 space-y-2">
-              <li class="flex items-start">
-                <svg
-                  class="w-3 h-3 mt-1.5 mr-2 shrink-0 fill-current text-teal-500"
-                  viewBox="0 0 12 12"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M10.28 2.28L3.989 8.575 1.695 6.28A1 1 0 00.28 7.695l3 3a1 1 0 001.414 0l7-7A1 1 0 0010.28 2.28z"
-                  ></path>
-                </svg>
-                <span>Up to 5 connected displays</span>
-              </li>
-              <li class="flex items-start">
-                <svg
-                  class="w-3 h-3 mt-1.5 mr-2 shrink-0 fill-current text-teal-500"
-                  viewBox="0 0 12 12"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M10.28 2.28L3.989 8.575 1.695 6.28A1 1 0 00.28 7.695l3 3a1 1 0 001.414 0l7-7A1 1 0 0010.28 2.28z"
-                  ></path>
-                </svg>
-                <span>1 GB storage</span>
-              </li>
-              <li class="flex items-start">
-                <svg
-                  class="w-3 h-3 mt-1.5 mr-2 shrink-0 fill-current text-teal-500"
-                  viewBox="0 0 12 12"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M10.28 2.28L3.989 8.575 1.695 6.28A1 1 0 00.28 7.695l3 3a1 1 0 001.414 0l7-7A1 1 0 0010.28 2.28z"
-                  ></path>
-                </svg>
-                <span>All official plugins</span>
-              </li>
-              <li class="flex items-start">
-                <svg
-                  class="w-3 h-3 mt-1.5 mr-2 shrink-0 fill-current text-teal-500"
-                  viewBox="0 0 12 12"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M10.28 2.28L3.989 8.575 1.695 6.28A1 1 0 00.28 7.695l3 3a1 1 0 001.414 0l7-7A1 1 0 0010.28 2.28z"
-                  ></path>
-                </svg>
-                <span>Multi-controller, real-time collaboration</span>
-              </li>
-              <li class="flex items-start">
-                <svg
-                  class="w-3 h-3 mt-1.5 mr-2 shrink-0 fill-current text-teal-500"
-                  viewBox="0 0 12 12"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M10.28 2.28L3.989 8.575 1.695 6.28A1 1 0 00.28 7.695l3 3a1 1 0 001.414 0l7-7A1 1 0 0010.28 2.28z"
-                  ></path>
-                </svg>
-                <span>Community support</span>
-              </li>
-            </ul>
-          </div>
+              <path d="M9 11a3 3 0 100-6 3 3 0 000 6z M3 20c0-3.3 2.7-5 6-5s6 1.7 6 5"
+              ></path>
+              <path d="M17 8a3 3 0 010 6 M17 15c2.5.4 4 2 4 5"></path>
+            </svg>
+            Every plan includes unlimited users
+          </p>
+        </div>
 
-          <!-- Lifetime tier (recommended) -->
-          <div
-            class="relative flex flex-col rounded-lg border-2 border-teal-500 p-6 bg-white dark:bg-gray-900 shadow-lg"
-            data-aos="fade-up"
-            data-aos-delay="150"
-          >
-            <span
-              class="absolute -top-3 left-1/2 -translate-x-1/2 bg-teal-500 text-white text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wide"
-            >
-              Most popular
-            </span>
-            <div class="mb-6">
-              <h2 class="h3 font-red-hat-display mb-1">Lifetime</h2>
-              <p class="text-sm text-gray-600 dark:text-gray-400">
-                For venues with paying clients and guest presenters.
-              </p>
-            </div>
-            <div class="mb-1">
-              <span class="text-4xl font-extrabold font-red-hat-display">
-                &pound;990
-              </span>
-              <span class="text-gray-600 dark:text-gray-400 ml-1">
-                one-time
-              </span>
-            </div>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">
-              per room &middot; yours for life, no subscription
-            </p>
-            <a
-              class="btn-sm text-white bg-teal-500 hover:bg-teal-400 w-full mb-4 justify-center"
-              href="/register?plan=lifetime"
-            >
-              Buy a room
-            </a>
-            <!-- Monthly alternative -->
-            <div
-              class="rounded-md border border-gray-200 dark:border-gray-700 p-3 mb-3 text-sm text-gray-600 dark:text-gray-400"
-            >
-              <span class="font-semibold text-gray-900 dark:text-gray-100"
-                >Prefer monthly?</span
+        <!-- Plans -->
+        <div class="max-w-6xl mx-auto mt-6 grid gap-6 md:grid-cols-3">
+          {
+            plans.map((plan, i) => (
+              <div
+                class:list={[
+                  "relative flex flex-col rounded-lg p-6 bg-white dark:bg-gray-900",
+                  plan.highlight
+                    ? "border-2 border-teal-500 shadow-lg"
+                    : "border border-gray-200 dark:border-gray-800",
+                ]}
+                data-aos="fade-up"
+                data-aos-delay={i * 150}
               >
-              &pound;79/mo per room, no lock-in. Cancel any time, or buy the
-              Lifetime licence whenever you're ready.
-            </div>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mb-6">
-              Fitting out several rooms?
-              <span class="font-medium text-gray-700 dark:text-gray-300"
-                >&pound;790 each for 2&ndash;4, &pound;590 each for 5+.</span
-              >
-            </p>
-            <p
-              class="text-xs uppercase tracking-wide font-semibold text-gray-500 dark:text-gray-400 mb-3"
-            >
-              Everything in Free, plus
-            </p>
-            <ul class="text-sm text-gray-700 dark:text-gray-300 space-y-2">
-              <li class="flex items-start">
-                <svg
-                  class="w-3 h-3 mt-1.5 mr-2 shrink-0 fill-current text-teal-500"
-                  viewBox="0 0 12 12"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M10.28 2.28L3.989 8.575 1.695 6.28A1 1 0 00.28 7.695l3 3a1 1 0 001.414 0l7-7A1 1 0 0010.28 2.28z"
-                  ></path>
-                </svg>
-                <span>
-                  <strong>Guest portal.</strong> Send a link, your guest uploads
-                  and presents from their own device
-                </span>
-              </li>
-              <li class="flex items-start">
-                <svg
-                  class="w-3 h-3 mt-1.5 mr-2 shrink-0 fill-current text-teal-500"
-                  viewBox="0 0 12 12"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M10.28 2.28L3.989 8.575 1.695 6.28A1 1 0 00.28 7.695l3 3a1 1 0 001.414 0l7-7A1 1 0 0010.28 2.28z"
-                  ></path>
-                </svg>
-                <span>Custom branding on the guest portal</span>
-              </li>
-              <li class="flex items-start">
-                <svg
-                  class="w-3 h-3 mt-1.5 mr-2 shrink-0 fill-current text-teal-500"
-                  viewBox="0 0 12 12"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M10.28 2.28L3.989 8.575 1.695 6.28A1 1 0 00.28 7.695l3 3a1 1 0 001.414 0l7-7A1 1 0 0010.28 2.28z"
-                  ></path>
-                </svg>
-                <span>
-                  Drive main screen, confidence monitor, and signage from one
-                  synchronised show
-                </span>
-              </li>
-              <li class="flex items-start">
-                <svg
-                  class="w-3 h-3 mt-1.5 mr-2 shrink-0 fill-current text-teal-500"
-                  viewBox="0 0 12 12"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M10.28 2.28L3.989 8.575 1.695 6.28A1 1 0 00.28 7.695l3 3a1 1 0 001.414 0l7-7A1 1 0 0010.28 2.28z"
-                  ></path>
-                </svg>
-                <span>Multi-room management dashboard</span>
-              </li>
-              <li class="flex items-start">
-                <svg
-                  class="w-3 h-3 mt-1.5 mr-2 shrink-0 fill-current text-teal-500"
-                  viewBox="0 0 12 12"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M10.28 2.28L3.989 8.575 1.695 6.28A1 1 0 00.28 7.695l3 3a1 1 0 001.414 0l7-7A1 1 0 0010.28 2.28z"
-                  ></path>
-                </svg>
-                <span>50 GB storage per room</span>
-              </li>
-              <li class="flex items-start">
-                <svg
-                  class="w-3 h-3 mt-1.5 mr-2 shrink-0 fill-current text-teal-500"
-                  viewBox="0 0 12 12"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M10.28 2.28L3.989 8.575 1.695 6.28A1 1 0 00.28 7.695l3 3a1 1 0 001.414 0l7-7A1 1 0 0010.28 2.28z"
-                  ></path>
-                </svg>
-                <span>Bug fixes and security updates included, always</span>
-              </li>
-              <li class="flex items-start">
-                <svg
-                  class="w-3 h-3 mt-1.5 mr-2 shrink-0 fill-current text-teal-500"
-                  viewBox="0 0 12 12"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M10.28 2.28L3.989 8.575 1.695 6.28A1 1 0 00.28 7.695l3 3a1 1 0 001.414 0l7-7A1 1 0 0010.28 2.28z"
-                  ></path>
-                </svg>
-                <span>1 year of AI tools and priority support included</span>
-              </li>
-            </ul>
-          </div>
+                {plan.highlight && (
+                  <span class="absolute -top-3 left-1/2 -translate-x-1/2 bg-teal-500 text-white text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wide">
+                    {plan.highlight}
+                  </span>
+                )}
 
-          <!-- Self-host tier -->
-          <div
-            class="flex flex-col rounded-lg border border-gray-200 dark:border-gray-800 p-6 bg-white dark:bg-gray-900"
-            data-aos="fade-up"
-            data-aos-delay="300"
-          >
-            <div class="mb-6">
-              <h2 class="h3 font-red-hat-display mb-1">Self-host</h2>
-              <p class="text-sm text-gray-600 dark:text-gray-400">
-                Keep everything on your own hardware and network.
-              </p>
-            </div>
-            <div class="mb-1">
-              <span class="text-3xl font-extrabold font-red-hat-display">
-                Open-source
-              </span>
-            </div>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">
-              run it free on your own server &middot; your data never leaves your network
+                <div class="mb-6">
+                  <h2 class="h3 font-red-hat-display mb-1">{plan.name}</h2>
+                  <p class="text-sm text-gray-600 dark:text-gray-400">
+                    {plan.blurb}
+                  </p>
+                </div>
+
+                <div class="mb-1">
+                  <span
+                    class:list={[
+                      "font-extrabold font-red-hat-display",
+                      plan.unit ? "text-4xl" : "text-3xl",
+                    ]}
+                    set:html={plan.price}
+                  />
+                  {plan.unit && (
+                    <span class="text-gray-600 dark:text-gray-400 ml-1">
+                      {plan.unit}
+                    </span>
+                  )}
+                </div>
+                <p
+                  class="text-sm text-gray-500 dark:text-gray-400 mb-6"
+                  set:html={plan.note}
+                />
+
+                <a
+                  class:list={[
+                    "btn-sm w-full mb-6 justify-center",
+                    plan.cta.primary
+                      ? "text-white bg-teal-500 hover:bg-teal-400"
+                      : "text-white bg-gray-700 hover:bg-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600",
+                  ]}
+                  href={plan.cta.href}
+                >
+                  {plan.cta.label}
+                </a>
+
+                {plan.featuresHeading && (
+                  <p class="text-xs uppercase tracking-wide font-semibold text-gray-500 dark:text-gray-400 mb-3">
+                    {plan.featuresHeading}
+                  </p>
+                )}
+
+                <ul class="text-sm text-gray-600 dark:text-gray-400 space-y-2">
+                  {plan.features.map((feature) => (
+                    <li class="flex items-start">
+                      <svg
+                        class="w-3 h-3 mt-1.5 mr-2 shrink-0 fill-current text-teal-500"
+                        viewBox="0 0 12 12"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path d="M10.28 2.28L3.989 8.575 1.695 6.28A1 1 0 00.28 7.695l3 3a1 1 0 001.414 0l7-7A1 1 0 0010.28 2.28z" />
+                      </svg>
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))
+          }
+        </div>
+
+        <!-- Per-seat comparison -->
+        <div
+          class="max-w-4xl mx-auto mt-10 rounded-lg border border-gray-200 dark:border-gray-800 p-6"
+          data-aos="fade-up"
+        >
+          <h2 class="font-red-hat-display font-black text-lg mb-2">
+            Why we don't charge per seat
+          </h2>
+          <p class="text-gray-600 dark:text-gray-400 mb-4">
+            ProPresenter is licensed per seat, at $29 a month each. Most
+            churches have more than one person who touches the slides: someone
+            builds the service during the week, someone runs it on Sunday,
+            someone fixes a typo from the back row. On a per-seat licence, each
+            of them is another subscription.
+          </p>
+          <p class="text-gray-600 dark:text-gray-400">
+            We charge for the organisation, not the person. One price, however
+            many volunteers you have, on every plan including Free.
+          </p>
+        </div>
+
+        <!-- Lifetime -->
+        <div
+          class="max-w-4xl mx-auto mt-6 rounded-lg border border-gray-200 dark:border-gray-800 p-6 md:flex md:items-center md:justify-between md:gap-8"
+          data-aos="fade-up"
+        >
+          <div class="mb-4 md:mb-0">
+            <h2 class="font-red-hat-display font-black text-lg mb-2">
+              Would rather pay once?
+            </h2>
+            <p class="text-gray-600 dark:text-gray-400">
+              The Lifetime licence is the Cloud plan bought once, with no
+              subscription afterwards and no exposure to future price changes.
+              Bug fixes and security updates are included for good. It's for
+              organisations that would rather make a one-time purchase and forget about it.
             </p>
-            <a
-              class="btn-sm text-white bg-gray-700 hover:bg-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 w-full mb-6 justify-center"
-              href="https://github.com/vija02/theopenpresenter"
-            >
-              Get the source
-            </a>
-            <ul class="text-sm text-gray-600 dark:text-gray-400 space-y-2">
-              <li class="flex items-start">
-                <svg
-                  class="w-3 h-3 mt-1.5 mr-2 shrink-0 fill-current text-teal-500"
-                  viewBox="0 0 12 12"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M10.28 2.28L3.989 8.575 1.695 6.28A1 1 0 00.28 7.695l3 3a1 1 0 001.414 0l7-7A1 1 0 0010.28 2.28z"
-                  ></path>
-                </svg>
-                <span>Full app, run on your own hardware</span>
-              </li>
-              <li class="flex items-start">
-                <svg
-                  class="w-3 h-3 mt-1.5 mr-2 shrink-0 fill-current text-teal-500"
-                  viewBox="0 0 12 12"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M10.28 2.28L3.989 8.575 1.695 6.28A1 1 0 00.28 7.695l3 3a1 1 0 001.414 0l7-7A1 1 0 0010.28 2.28z"
-                  ></path>
-                </svg>
-                <span>Your data stays entirely on your network</span>
-              </li>
-              <li class="flex items-start">
-                <svg
-                  class="w-3 h-3 mt-1.5 mr-2 shrink-0 fill-current text-teal-500"
-                  viewBox="0 0 12 12"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M10.28 2.28L3.989 8.575 1.695 6.28A1 1 0 00.28 7.695l3 3a1 1 0 001.414 0l7-7A1 1 0 0010.28 2.28z"
-                  ></path>
-                </svg>
-                <span>No per-room limits, run what your hardware allows</span>
-              </li>
-              <li class="flex items-start text-gray-500 dark:text-gray-500">
-                <span class="w-3 mr-2 shrink-0 text-center">&middot;</span>
-                <span>Community support &middot; you handle updates and backups</span>
-              </li>
-            </ul>
-            <div class="mt-4 text-xs text-gray-500 dark:text-gray-400">
-              <p>Don't want to run it yourself?</p>
-              <a
-                href="#managed"
-                class="text-teal-600 dark:text-teal-400 hover:underline font-medium"
-                >We'll manage it for you &rarr;</a
-              >
+          </div>
+          <div class="shrink-0 text-center">
+            <div class="font-red-hat-display text-3xl font-extrabold">
+              &pound;990
             </div>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">one-time</p>
+            <a
+              class="btn-sm text-teal-500 bg-white hover:bg-gray-50 border border-teal-500 dark:bg-transparent dark:hover:bg-gray-800 w-full justify-center"
+              href="mailto:hello@theopenpresenter.com?subject=Lifetime%20licence"
+            >
+              Talk to us
+            </a>
           </div>
         </div>
 
-        <!-- 30-day money-back guarantee (low-key trust strip) -->
+        <!-- Church sponsorship -->
         <div
-          class="max-w-4xl mx-auto mt-8 rounded-lg border border-gray-200 dark:border-gray-800 px-5 py-4 flex flex-col md:flex-row md:items-center gap-3 text-sm text-gray-600 dark:text-gray-400 text-center md:text-left"
+          class="max-w-4xl mx-auto mt-6 rounded-lg border border-teal-200 dark:border-teal-500/30 bg-teal-50 dark:bg-teal-500/10 p-6"
+          data-aos="fade-up"
+        >
+          <h2 class="font-red-hat-display font-black text-lg mb-2">
+            Under 50 weekly attendance? It's free.
+          </h2>
+          <p class="text-gray-600 dark:text-gray-300">
+            Small churches get the full Cloud plan at no cost through our
+            sponsorship programme, storage and AI credits included. <a
+              href="/church/sponsorship"
+              class="text-teal-600 dark:text-teal-400 hover:underline font-medium"
+              >See how it works</a
+            >.
+          </p>
+        </div>
+
+        <!-- Money-back guarantee -->
+        <div
+          class="max-w-4xl mx-auto mt-6 rounded-lg border border-gray-200 dark:border-gray-800 px-5 py-4 flex flex-col md:flex-row md:items-center gap-3 text-sm text-gray-600 dark:text-gray-400 text-center md:text-left"
           data-aos="fade-up"
         >
           <div
@@ -386,105 +334,9 @@ import CtaSignup from "@/components/CtaSignup.astro";
             >
           </div>
           <span class="flex-1">
-            Buy a Lifetime room risk-free. If it doesn't fit your venue in the
-            first 30 days, email us and we'll refund every penny.
+            If a paid plan doesn't fit your church in the first 30 days, email
+            us and we'll refund every penny.
           </span>
-        </div>
-
-        <!-- More options (lower priority) -->
-        <div class="max-w-4xl mx-auto mt-12">
-          <h2
-            class="text-sm uppercase tracking-wide font-semibold text-gray-500 dark:text-gray-400 mb-4 text-center"
-            data-aos="fade-up"
-          >
-            More options
-          </h2>
-          <div class="grid gap-4 md:grid-cols-2">
-            <!-- Day pass -->
-            <div
-              class="rounded-lg border border-gray-200 dark:border-gray-800 p-5 flex flex-col"
-              data-aos="fade-up"
-            >
-              <div class="flex items-baseline justify-between mb-1">
-                <p class="font-semibold text-gray-900 dark:text-gray-100">
-                  Day pass
-                </p>
-                <p class="font-semibold text-gray-900 dark:text-gray-100">
-                  &pound;29<span
-                    class="text-sm font-normal text-gray-500 dark:text-gray-400"
-                    >/day</span
-                  >
-                </p>
-              </div>
-              <p class="text-sm text-gray-600 dark:text-gray-400 mb-3 flex-1">
-                One event, 24 hours, full Lifetime features including the guest
-                portal. Great for conferences, weddings, and single-day hires.
-              </p>
-              <a
-                class="text-sm text-teal-600 dark:text-teal-400 hover:underline font-medium"
-                href="mailto:hello@theopenpresenter.com?subject=Day%20pass"
-              >
-                Book a day &rarr;
-              </a>
-            </div>
-
-            <!-- Managed self-host -->
-            <div
-              id="managed"
-              class="rounded-lg border border-gray-200 dark:border-gray-800 p-5 flex flex-col scroll-mt-24"
-              data-aos="fade-up"
-            >
-              <div class="flex items-baseline justify-between mb-1">
-                <p class="font-semibold text-gray-900 dark:text-gray-100">
-                  Managed self-host
-                </p>
-              </div>
-              <p class="text-sm text-gray-600 dark:text-gray-400 mb-3 flex-1">
-                Self-hosted, but we own it. We install it on your
-                infrastructure, then keep it updated, monitored, and backed up,
-                with priority support.
-              </p>
-              <a
-                class="text-sm text-teal-600 dark:text-teal-400 hover:underline font-medium"
-                href="mailto:hello@theopenpresenter.com?subject=Managed%20self-host"
-              >
-                Talk to us &rarr;
-              </a>
-            </div>
-
-
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- What counts as a room -->
-  <section class="relative">
-    <div class="relative max-w-6xl mx-auto px-4 sm:px-6">
-      <div class="pb-12 md:pb-20">
-        <div class="max-w-3xl mx-auto">
-          <h2 class="h2 font-red-hat-display mb-4" data-aos="fade-up">
-            What counts as a "room"?
-          </h2>
-          <p
-            class="text-gray-600 dark:text-gray-400 mb-4"
-            data-aos="fade-up"
-            data-aos-delay="100"
-          >
-            A room is one logical presentation context. One synchronised show
-            across as many physical screens as that room needs (main screen,
-            confidence monitor, side panels, lobby signage). One booking, one
-            guest, one show.
-          </p>
-          <p
-            class="text-gray-600 dark:text-gray-400"
-            data-aos="fade-up"
-            data-aos-delay="150"
-          >
-            If you have two rooms running independent presentations at the same
-            time, that's two rooms. Most small venues need 1&ndash;3.
-          </p>
         </div>
       </div>
     </div>
@@ -499,214 +351,27 @@ import CtaSignup from "@/components/CtaSignup.astro";
             Pricing FAQ
           </h2>
           <div class="flex flex-col gap-4">
-            <details
-              class="rounded-lg border border-gray-200 dark:border-gray-800 p-5 group"
-              data-aos="fade-up"
-            >
-              <summary
-                class="cursor-pointer font-medium text-gray-900 dark:text-gray-100 flex items-center justify-between"
-              >
-                <span>What does buying a Lifetime room actually mean?</span>
-                <span
-                  class="ml-4 text-gray-400 group-open:rotate-45 transition-transform"
-                  aria-hidden="true">+</span
+            {
+              faqs.map((faq) => (
+                <details
+                  class="rounded-lg border border-gray-200 dark:border-gray-800 p-5 group"
+                  data-aos="fade-up"
                 >
-              </summary>
-              <p class="text-sm text-gray-600 dark:text-gray-400 mt-3">
-                You pay &pound;990 once per room and that room is yours for good
-                with no monthly or yearly fee to keep it running. We treat it
-                like the rest of your room kit: a one-time capital purchase, not
-                a subscription you have to keep feeding. Bug fixes and security
-                updates are always included.
-              </p>
-            </details>
-
-            <details
-              class="rounded-lg border border-gray-200 dark:border-gray-800 p-5 group"
-              data-aos="fade-up"
-            >
-              <summary
-                class="cursor-pointer font-medium text-gray-900 dark:text-gray-100 flex items-center justify-between"
-              >
-                <span>Can I pay monthly instead of buying outright?</span>
-                <span
-                  class="ml-4 text-gray-400 group-open:rotate-45 transition-transform"
-                  aria-hidden="true">+</span
-                >
-              </summary>
-              <p class="text-sm text-gray-600 dark:text-gray-400 mt-3">
-                Yes. A room is &pound;79/month if you'd rather spread the cost,
-                with no lock-in. Cancel any time. It's the same room and
-                features as Lifetime; you're just renting rather than owning.
-                Buy the Lifetime licence whenever you're ready to stop paying
-                monthly.
-              </p>
-            </details>
-
-            <details
-              class="rounded-lg border border-gray-200 dark:border-gray-800 p-5 group"
-              data-aos="fade-up"
-            >
-              <summary
-                class="cursor-pointer font-medium text-gray-900 dark:text-gray-100 flex items-center justify-between"
-              >
-                <span>Can I self-host TheOpenPresenter?</span>
-                <span
-                  class="ml-4 text-gray-400 group-open:rotate-45 transition-transform"
-                  aria-hidden="true">+</span
-                >
-              </summary>
-              <p class="text-sm text-gray-600 dark:text-gray-400 mt-3">
-                Yes. It's open source, so you can run the whole thing on your
-                own hardware for free. Your data never leaves your network, and
-                there are no per-room limits. You handle updates, backups, and
-                support yourself. If you'd rather not, our Managed self-host
-                option has us install it on your infrastructure and keep it
-                updated, monitored, and backed up, with priority support.
-                <a
-                  href="mailto:hello@theopenpresenter.com?subject=Managed%20self-host"
-                  class="text-teal-600 dark:text-teal-400 hover:underline font-medium"
-                  >Email us</a
-                > for a quote.
-              </p>
-            </details>
-
-            <details
-              class="rounded-lg border border-gray-200 dark:border-gray-800 p-5 group"
-              data-aos="fade-up"
-            >
-              <summary
-                class="cursor-pointer font-medium text-gray-900 dark:text-gray-100 flex items-center justify-between"
-              >
-                <span>Can I stay on Free forever?</span>
-                <span
-                  class="ml-4 text-gray-400 group-open:rotate-45 transition-transform"
-                  aria-hidden="true">+</span
-                >
-              </summary>
-              <p class="text-sm text-gray-600 dark:text-gray-400 mt-3">
-                Yes. Free covers signage and basic presentation use with no time
-                limit. Most people buy a Lifetime room for one of two reasons:
-                they need the guest portal (a link your guest presenters use to
-                upload and run their own slides), or they want to run a main
-                screen, confidence monitor, and signage together as one
-                synchronised show.
-              </p>
-            </details>
-
-            <details
-              class="rounded-lg border border-gray-200 dark:border-gray-800 p-5 group"
-              data-aos="fade-up"
-            >
-              <summary
-                class="cursor-pointer font-medium text-gray-900 dark:text-gray-100 flex items-center justify-between"
-              >
-                <span>How many displays can one room run?</span>
-                <span
-                  class="ml-4 text-gray-400 group-open:rotate-45 transition-transform"
-                  aria-hidden="true">+</span
-                >
-              </summary>
-              <p class="text-sm text-gray-600 dark:text-gray-400 mt-3">
-                As many as you need. Main screen, confidence monitor, and
-                signage all run from one synchronised show. There's a soft cap
-                in place to prevent abuse, but real venues never get close. If
-                yours might, email us with what you're running and we'll work it
-                out.
-              </p>
-            </details>
-
-            <details
-              class="rounded-lg border border-gray-200 dark:border-gray-800 p-5 group"
-              data-aos="fade-up"
-            >
-              <summary
-                class="cursor-pointer font-medium text-gray-900 dark:text-gray-100 flex items-center justify-between"
-              >
-                <span>Do I have to bring my own hardware?</span>
-                <span
-                  class="ml-4 text-gray-400 group-open:rotate-45 transition-transform"
-                  aria-hidden="true">+</span
-                >
-              </summary>
-              <p class="text-sm text-gray-600 dark:text-gray-400 mt-3">
-                You can. TheOpenPresenter runs on any device with a modern
-                browser. A Fire TV Stick, Chromecast, or mini PC all work. If
-                you'd rather we handle it, we can supply hardware at cost with a
-                small setup fee. Get in touch.
-              </p>
-            </details>
-
-            <details
-              class="rounded-lg border border-gray-200 dark:border-gray-800 p-5 group"
-              data-aos="fade-up"
-            >
-              <summary
-                class="cursor-pointer font-medium text-gray-900 dark:text-gray-100 flex items-center justify-between"
-              >
-                <span>What about other organizations like churches?</span>
-                <span
-                  class="ml-4 text-gray-400 group-open:rotate-45 transition-transform"
-                  aria-hidden="true">+</span
-                >
-              </summary>
-              <p class="text-sm text-gray-600 dark:text-gray-400 mt-3">
-                Churches get the full cloud plan of TheOpenPresenter for free
-                under our sponsorship programme. See
-                <a
-                  href="/church/sponsorship"
-                  class="text-teal-600 dark:text-teal-400 hover:underline font-medium"
-                  >this page</a
-                > for more information.
-              </p>
-            </details>
-
-            <details
-              class="rounded-lg border border-gray-200 dark:border-gray-800 p-5 group"
-              data-aos="fade-up"
-            >
-              <summary
-                class="cursor-pointer font-medium text-gray-900 dark:text-gray-100 flex items-center justify-between"
-              >
-                <span>One-off event? Do you offer a day rate?</span>
-                <span
-                  class="ml-4 text-gray-400 group-open:rotate-45 transition-transform"
-                  aria-hidden="true">+</span
-                >
-              </summary>
-              <p class="text-sm text-gray-600 dark:text-gray-400 mt-3">
-                Yes. &pound;29/day per room covers a single event (24 hours)
-                with full Lifetime features, including the guest portal. Great
-                for conferences, weddings, and single-day room hires.
-                <a
-                  href="mailto:hello@theopenpresenter.com?subject=Day%20pass"
-                  class="text-teal-600 dark:text-teal-400 hover:underline font-medium"
-                  >Email us</a
-                > with the date and we'll set it up. If you run events most weeks,
-                a Lifetime room pays for itself fast.
-              </p>
-            </details>
-
-            <details
-              class="rounded-lg border border-gray-200 dark:border-gray-800 p-5 group"
-              data-aos="fade-up"
-            >
-              <summary
-                class="cursor-pointer font-medium text-gray-900 dark:text-gray-100 flex items-center justify-between"
-              >
-                <span>Can I get a refund?</span>
-                <span
-                  class="ml-4 text-gray-400 group-open:rotate-45 transition-transform"
-                  aria-hidden="true">+</span
-                >
-              </summary>
-              <p class="text-sm text-gray-600 dark:text-gray-400 mt-3">
-                Yes. Every Lifetime room comes with a 30-day money-back
-                guarantee. If it doesn't fit your venue, email us within
-                30 days and we'll refund every penny. Monthly plans can be
-                cancelled any time from your dashboard.
-              </p>
-            </details>
+                  <summary class="cursor-pointer font-medium text-gray-900 dark:text-gray-100 flex items-center justify-between">
+                    <span>{faq.q}</span>
+                    <span
+                      class="ml-4 text-gray-400 group-open:rotate-45 transition-transform"
+                      aria-hidden="true"
+                    >
+                      +
+                    </span>
+                  </summary>
+                  <p class="text-sm text-gray-600 dark:text-gray-400 mt-3">
+                    {faq.a}
+                  </p>
+                </details>
+              ))
+            }
           </div>
         </div>
       </div>

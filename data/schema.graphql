@@ -2975,7 +2975,7 @@ type Mutation {
 
 type Organization {
   """
-  Current billing plan and Stripe subscription status for the organization.
+  Current billing plan and Stripe subscription status for the organization. `plan` reflects effective entitlement, so a Lifetime purchase reads as 'business' with no active subscription.
   """
   billingInfo: OrganizationBillingInfo
 
