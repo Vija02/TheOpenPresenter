@@ -1,3 +1,4 @@
+import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react-swc";
 import { builtinModules } from "node:module";
 import { resolve } from "node:path";
@@ -13,12 +14,17 @@ import {
 export default defineConfig({
   plugins: [
     react(),
+    tailwindcss(),
     dts({
       exclude: ["**/*.test.ts", "**/*.test.tsx"],
     }),
   ],
   build: {
     target: "esnext",
+    // Per-entry CSS instead of one merged file, so importing the renderer
+    // never drags in the editor chrome (and the Tailwind layer it needs).
+    // Lib mode defaults this to false, which would emit a single stylesheet.
+    cssCodeSplit: true,
     lib: {
       entry: {
         index: resolve(__dirname, "src/index.ts"),
@@ -26,9 +32,11 @@ export default defineConfig({
         editor: resolve(__dirname, "src/editor/index.ts"),
       },
       formats: ["es", "cjs"],
-      cssFileName: "style",
     },
     rollupOptions: {
+      // Keep CSS names stable (react.css / editor.css) so package exports can
+      // point at them; the default adds a content hash.
+      output: { assetFileNames: "[name].[ext]" },
       external: (id) => {
         if (
           builtinModules.includes(id) ||

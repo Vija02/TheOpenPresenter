@@ -1,6 +1,7 @@
 /** Core entry. Pure TypeScript, no React or DOM */
 
 export * from "./cascade";
+export * from "./doc/edit";
 export * from "./geometry/rect";
 export * from "./geometry/scale";
 export * from "./schema/defaults";
