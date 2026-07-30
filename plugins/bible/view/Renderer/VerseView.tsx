@@ -1,34 +1,27 @@
+import type { LayoutDoc } from "@repo/layout";
 import { LayoutRenderer } from "@repo/layout/react";
 import React, { useMemo } from "react";
 
-import {
-  bibleBackground,
-  bibleDocFromStyle,
-} from "../../src/template/fromStyle";
+import { resolveBibleDoc } from "../../src/template/presets";
 import { passageToFrame } from "../../src/template/toFrame";
-import { BiblePassage, BibleSlideStyle } from "../../src/types";
+import { BiblePassage } from "../../src/types";
 
 type VerseViewProps = {
   passage: BiblePassage;
   slideIndex: number;
-  style?: BibleSlideStyle | null;
+  template?: LayoutDoc | null;
+  showVerseNumbers?: boolean;
 };
 
 const VerseView = React.memo(
-  ({ passage, slideIndex, style }: VerseViewProps) => {
-    const doc = useMemo(() => bibleDocFromStyle(style), [style]);
+  ({ passage, slideIndex, template, showVerseNumbers }: VerseViewProps) => {
+    const doc = useMemo(() => resolveBibleDoc(template), [template]);
     const data = useMemo(
-      () => passageToFrame(passage, slideIndex, style),
-      [passage, slideIndex, style],
+      () => passageToFrame(passage, slideIndex, { showVerseNumbers }),
+      [passage, slideIndex, showVerseNumbers],
     );
 
-    return (
-      <LayoutRenderer
-        doc={doc}
-        data={data}
-        background={bibleBackground(style)}
-      />
-    );
+    return <LayoutRenderer doc={doc} data={data} />;
   },
 );
 

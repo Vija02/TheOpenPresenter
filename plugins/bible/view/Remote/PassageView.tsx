@@ -29,7 +29,10 @@ const PassageView = React.memo(
     const mutableSceneData = pluginApi.scene.useValtioData();
     const mutableRendererData = pluginApi.renderer.useValtioData();
     const setRenderCurrentScene = pluginApi.renderer.setRenderCurrentScene;
-    const style = pluginApi.scene.useData((x) => x.pluginData.style);
+    const template = pluginApi.scene.useData((x) => x.pluginData.template);
+    const showVerseNumbers = pluginApi.scene.useData(
+      (x) => x.pluginData.showVerseNumbers,
+    );
     const renderData = pluginApi.renderer.useData((x) => x);
 
     const handleRemove = useCallback(() => {
@@ -163,7 +166,12 @@ const PassageView = React.memo(
                   setRenderCurrentScene();
                 }}
               >
-                <VerseView passage={passage} slideIndex={i} style={style} />
+                <VerseView
+                  passage={passage}
+                  slideIndex={i}
+                  template={template}
+                  showVerseNumbers={showVerseNumbers}
+                />
               </Slide>
             );
           })}
