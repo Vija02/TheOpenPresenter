@@ -1,18 +1,27 @@
 import { expect, test } from "../../../fixtures/baseFixture";
 
-test.describe("Homepage /init-demo pairing", () => {
+// The live demo is a shared component addressed by (instance, role) attribute
+// pairs. See apps/homepage/src/scripts/live-demo.ts
+const demo = (role: string, instance = "demo") =>
+  `[data-live-demo-instance="${instance}"][data-live-demo-role="${role}"]`;
+
+// The floating widget shares the instance and renders a second QR, so roles
+// that appear in both must be scoped. The widget sits outside any <section>.
+const heroDemo = (role: string) => `section ${demo(role)}`;
+
+test.describe("/meeting-room /init-demo pairing", () => {
   test("QR URL spins up a demo project, embeds the renderer, and stays in sync with the phone", async ({
     page,
     browser,
   }) => {
     test.skip(!!process.env.PLAYWRIGHT_TAURI, "Skipped in Tauri E2E tests");
 
-    await page.goto("/");
+    await page.goto("/meeting-room");
 
-    const qrBlock = page.locator("#init-demo-qr-block");
+    const qrBlock = page.locator(heroDemo("qr-block"));
     await expect(qrBlock).toBeVisible();
 
-    const qrUrlEl = page.getByTestId("init-demo-qr-url");
+    const qrUrlEl = page.locator(heroDemo("qr-url"));
     await expect(qrUrlEl).toHaveText(/\/init-demo\?id=/, { timeout: 15_000 });
     const qrUrl = (await qrUrlEl.textContent())?.trim();
     expect(qrUrl, "expected QR URL to be populated by SSE").toBeTruthy();
@@ -34,11 +43,11 @@ test.describe("Homepage /init-demo pairing", () => {
         timeout: 20_000,
       });
 
-      // Back on the homepage, the SSE listener should swap in the renderer.
-      const rendererSection = page.locator("#init-demo-renderer-section");
+      // Back on the page, the SSE listener should swap in the renderer.
+      const rendererSection = page.locator(demo("stage"));
       await expect(rendererSection).toBeVisible({ timeout: 20_000 });
 
-      const rendererIframe = page.locator("#init-demo-renderer-iframe");
+      const rendererIframe = page.locator(demo("renderer-iframe"));
       await expect(rendererIframe).toHaveAttribute(
         "src",
         /^\/render\/demo\/demo-/,
@@ -46,11 +55,11 @@ test.describe("Homepage /init-demo pairing", () => {
 
       // QR block hides, sign-up CTA + feature list reveal.
       await expect(qrBlock).toBeHidden();
-      await expect(page.locator("#init-demo-cta-block")).toBeVisible();
-      await expect(page.locator("#init-demo-features")).toBeVisible();
+      await expect(page.locator(demo("cta-block"))).toBeVisible();
+      await expect(page.locator(demo("features"))).toBeVisible();
 
       // Wait for the renderer iframe to actually mount.
-      const rendererFrame = page.frameLocator("#init-demo-renderer-iframe");
+      const rendererFrame = page.frameLocator(demo("renderer-iframe"));
       await expect(rendererFrame.locator("body")).toBeVisible({
         timeout: 30_000,
       });
@@ -79,7 +88,7 @@ test.describe("Homepage /init-demo pairing", () => {
       // Reach into the renderer iframe and figure out which demo slide is
       // visually active.
       const iframeHandle = await page
-        .locator("#init-demo-renderer-iframe")
+        .locator(demo("renderer-iframe"))
         .elementHandle();
       expect(iframeHandle, "renderer iframe element should exist").toBeTruthy();
       const rendererContentFrame = await iframeHandle!.contentFrame();
