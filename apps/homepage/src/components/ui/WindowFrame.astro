@@ -1,0 +1,29 @@
+---
+// macOS-style window chrome for product screenshots and mocks.
+// Always white, so the shot reads as a real window against the dark page.
+interface Props {
+  /** Optional text beside the traffic lights. Omitted by default. */
+  label?: string;
+  /** Extra classes for the outer frame. */
+  class?: string;
+}
+
+const { label = "", class: className = "" } = Astro.props;
+---
+
+<div
+  class:list={[
+    "rounded-xl bg-white ring-1 ring-black/5 shadow-2xl overflow-hidden",
+    className,
+  ]}
+>
+  <!-- Title bar -->
+  <div class="flex items-center gap-1.5 px-4 py-3 border-b border-gray-100">
+    <span class="w-3 h-3 rounded-full bg-red-400"></span>
+    <span class="w-3 h-3 rounded-full bg-yellow-400"></span>
+    <span class="w-3 h-3 rounded-full bg-green-400"></span>
+    {label && <span class="ml-3 text-xs text-gray-400">{label}</span>}
+  </div>
+  <!-- Window body -->
+  <slot />
+</div>

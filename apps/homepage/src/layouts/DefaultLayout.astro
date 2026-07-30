@@ -2,13 +2,33 @@
 import Layout from "./Layout.astro";
 import Header from "../components/ui/Header.astro";
 import Footer from "../components/ui/Footer.astro";
+import LiveDemoWidget from "../components/demo/LiveDemoWidget.astro";
+import LiveDemoStage from "../components/demo/LiveDemoStage.astro";
+
+// One shared pairing session per page. Any LiveDemoQr using this instance —
+// the hero QR, the floating widget — drives the same demo and shows the same
+// code, and they all render into the single stage below.
+const DEMO_INSTANCE = "demo";
 
 interface Props {
   title?: string;
   description?: string;
+  /**
+   * Floating live-demo launcher. Turn off on pages that run their own
+   * pairing flow, otherwise the page opens two SSE connections and
+   * provisions two demo projects.
+   */
+  demoWidget?: boolean;
+  /** Let the widget auto-expand after a short scroll on this page. */
+  demoOpenOnScroll?: boolean;
 }
 
-const { title, description } = Astro.props;
+const {
+  title,
+  description,
+  demoWidget = true,
+  demoOpenOnScroll = false,
+} = Astro.props;
 ---
 
 <Layout title={title} description={description}>
@@ -16,7 +36,16 @@ const { title, description } = Astro.props;
     <Header />
     <main class="grow">
       <slot />
+      {demoWidget && <LiveDemoStage instance={DEMO_INSTANCE} />}
     </main>
     <Footer />
   </div>
+  {
+    demoWidget && (
+      <LiveDemoWidget
+        instance={DEMO_INSTANCE}
+        openOnScroll={demoOpenOnScroll}
+      />
+    )
+  }
 </Layout>

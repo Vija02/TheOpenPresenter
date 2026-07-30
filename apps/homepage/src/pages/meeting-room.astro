@@ -1,0 +1,27 @@
+---
+import DefaultLayout from "../layouts/DefaultLayout.astro";
+import PageIllustration from "../components/PageIllustration.astro";
+import MeetingRoomHero from "../components/meeting-room/MeetingRoomHero.astro";
+import MeetingRoomHowItWorks from "../components/meeting-room/MeetingRoomHowItWorks.astro";
+import FeaturesBlocks from "../components/FeaturesBlocks.astro";
+import TestimonialsBlocks from "../components/TestimonialsBlocks.astro";
+import CtaSignup from "../components/CtaSignup.astro";
+---
+
+<DefaultLayout
+  title="TheOpenPresenter for Meeting Rooms & Venues"
+  description="Let guests present to your screen from their own devices. No cables, no apps, no staff needed. Built for event venues, coworking spaces and community halls."
+>
+  <!-- Page illustration -->
+  <div
+    class="relative max-w-6xl mx-auto h-0 pointer-events-none -z-1"
+    aria-hidden="true"
+  >
+    <PageIllustration />
+  </div>
+  <MeetingRoomHero />
+  <MeetingRoomHowItWorks />
+  <FeaturesBlocks />
+  <TestimonialsBlocks />
+  <CtaSignup />
+</DefaultLayout>

@@ -1,0 +1,39 @@
+---
+// macOS-style window chrome for product screenshots.
+interface Props {
+  /** Optional title-bar caption. */
+  label?: string;
+  /** Extra classes for the outer frame. */
+  class?: string;
+}
+
+const { label, class: className = "" } = Astro.props;
+---
+
+<div
+  class:list={[
+    "overflow-hidden rounded-xl shadow-2xl ring-1 ring-gray-300 dark:ring-gray-700",
+    className,
+  ]}
+>
+  <!-- Title bar -->
+  <div
+    class="relative flex items-center gap-2 px-4 h-9 bg-gray-200 dark:bg-gray-800 border-b border-gray-300 dark:border-gray-700"
+  >
+    <span class="w-3 h-3 rounded-full bg-[#ff5f57]"></span>
+    <span class="w-3 h-3 rounded-full bg-[#febc2e]"></span>
+    <span class="w-3 h-3 rounded-full bg-[#28c840]"></span>
+    {
+      label && (
+        <span class="absolute inset-x-0 text-center text-xs font-medium text-gray-500 dark:text-gray-400 pointer-events-none">
+          {label}
+        </span>
+      )
+    }
+  </div>
+
+  <!-- Window body -->
+  <div class="bg-white dark:bg-gray-900">
+    <slot />
+  </div>
+</div>

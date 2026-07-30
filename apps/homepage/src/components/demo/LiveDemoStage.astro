@@ -1,0 +1,69 @@
+---
+// Output half of the live demo: the renderer, plus an optional inline remote
+// for visitors driving the demo on the same device. Stays hidden until the
+// pairing flow in <LiveDemoQr instance="..." /> completes.
+interface Props {
+  /** Ties this stage to its matching <LiveDemoQr instance="..." />. */
+  instance: string;
+}
+
+const { instance } = Astro.props;
+---
+
+<section
+  data-live-demo-instance={instance}
+  data-live-demo-role="stage"
+  class="hidden"
+>
+  <!-- Renderer + remote row breaks out of the usual max-w-6xl so the demo can
+       fill the screen on wide displays. The CTA below stays constrained. -->
+  <div class="px-4 sm:px-6 pt-8 md:pt-16 pb-16">
+    <div
+      class="flex flex-col md:flex-row md:items-center md:justify-center md:gap-6"
+    >
+      <div
+        class="w-full md:flex-1 md:min-w-0 md:max-w-7xl overflow-hidden rounded-xl shadow-2xl ring-1 ring-gray-200 dark:ring-gray-800"
+        style="aspect-ratio: 16 / 9; background: #000;"
+      >
+        <iframe
+          data-live-demo-instance={instance}
+          data-live-demo-role="renderer-iframe"
+          title="Live demo renderer"
+          allow="autoplay; fullscreen"
+          style="width: 100%; height: 100%; border: 0;"></iframe>
+      </div>
+      <!-- Embedded remote control — gives visitors driving the demo on this
+           device (mobile, or desktop opt-in) a way to control it without a
+           separate phone. Rendered as a phone-shaped frame; sits beside the
+           renderer on desktop, below it on mobile. -->
+      <div
+        data-live-demo-instance={instance}
+        data-live-demo-role="remote-wrap"
+        class="hidden mt-6 md:mt-0 mx-auto md:mx-0 w-full max-w-[360px] max-md:max-h-[calc(100vh_-_(100vw_-_2rem)*9/16_-_2rem_-_1.5rem_-_2rem)] md:max-h-screen md:max-w-none md:w-[clamp(280px,22vw,420px)] md:shrink-0 overflow-hidden rounded-[2rem] shadow-xl ring-1 ring-gray-200 dark:ring-gray-800"
+        style="aspect-ratio: 9 / 19.5; background: #fff;"
+      >
+        <iframe
+          data-live-demo-instance={instance}
+          data-live-demo-role="remote-iframe"
+          title="Live demo remote"
+          allow="autoplay; fullscreen; clipboard-read; clipboard-write"
+          style="width: 100%; height: 100%; border: 0;"></iframe>
+      </div>
+    </div>
+    <div class="mt-8 text-center">
+      <p
+        class="text-lg font-red-hat-display font-bold text-gray-700 dark:text-gray-300 mb-4"
+      >
+        <slot name="cta-text"
+          >Like what you see? Set up your own presentation.</slot
+        >
+      </p>
+      <a
+        class="btn text-white bg-teal-500 hover:bg-teal-400 shrink-0"
+        href="/register"
+      >
+        Sign up free
+      </a>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,244 @@
+---
+// Pairing half of the live demo: QR code on desktop, a start button on mobile.
+// Pair it with a <LiveDemoStage /> carrying the same `instance`.
+import CtaForm from "../CtaForm.astro";
+
+interface Props {
+  /** Ties this block to its matching <LiveDemoStage instance="..." />. */
+  instance: string;
+  /** Defer the SSE connection until the block scrolls into view. */
+  lazy?: boolean;
+  /** Show the sign-up form once the demo is running. */
+  showCta?: boolean;
+  /** Show the three-point feature list once the demo is running. */
+  showFeatures?: boolean;
+  /** Curved arrow pointing back at the QR. Drop it in narrow containers. */
+  showArrow?: boolean;
+  /** Stack the QR above its caption instead of sitting beside it. */
+  stacked?: boolean;
+  /** Small, tight variant for sitting inline next to buttons. */
+  compact?: boolean;
+  /** QR edge length in px. Defaults to 200, or 104 when compact. */
+  size?: number;
+  /** Extra classes for the QR/status row. */
+  class?: string;
+}
+
+const {
+  instance,
+  lazy = false,
+  showCta = true,
+  showFeatures = true,
+  showArrow = true,
+  stacked = false,
+  compact = false,
+  size = compact ? 104 : 200,
+  class: className = "",
+} = Astro.props;
+
+// Padding around the canvas inside its white card
+const boxSize = size + (compact ? 16 : 24);
+const withArrow = showArrow && !compact;
+
+const features = [
+  "Works with any device & any screen",
+  "Seamless collaboration in real-time",
+  "No downloads needed, entirely web-based",
+];
+---
+
+<div
+  data-live-demo-instance={instance}
+  data-live-demo-role="root"
+  data-live-demo-lazy={lazy ? "true" : "false"}
+>
+  <!-- Mobile-only CTA: opens the demo on this device (no scan). -->
+  <div
+    data-live-demo-instance={instance}
+    data-live-demo-role="mobile-cta"
+    class:list={["hidden text-center", compact ? "" : "mt-8 md:text-left"]}
+  >
+    <button
+      type="button"
+      data-live-demo-instance={instance}
+      data-live-demo-role="mobile-start"
+      class="btn text-white bg-teal-500 hover:bg-teal-400 shrink-0 cursor-pointer"
+    >
+      Try the live demo
+    </button>
+    <p
+      data-live-demo-instance={instance}
+      data-live-demo-role="mobile-status"
+      class="mt-3 text-sm text-gray-500 dark:text-gray-400"
+    >
+      Runs right here in your browser - no install needed.
+    </p>
+    <button
+      type="button"
+      data-live-demo-instance={instance}
+      data-live-demo-role="mobile-qr-toggle"
+      class="mt-2 block mx-auto text-xs text-gray-400 hover:text-gray-500 dark:text-gray-500 dark:hover:text-gray-400 underline cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:no-underline"
+      disabled
+    >
+      Show QR code to open on another screen
+    </button>
+  </div>
+
+  <!-- QR pairing (desktop). Swaps to the CTA once the phone has scanned and
+       the renderer has loaded below. -->
+  <div
+    data-live-demo-instance={instance}
+    data-live-demo-role="qr-block"
+    class:list={[
+      "flex flex-col items-center text-center",
+      // `stacked` wins over `compact` — a compact QR in a narrow card still
+      // needs its caption underneath, not crushed into a side column.
+      stacked
+        ? "gap-3"
+        : compact
+          ? "gap-3 sm:flex-row sm:text-left"
+          : "mt-8 md:flex-row md:items-center md:text-left md:gap-5",
+      className,
+    ]}
+    data-aos={compact ? undefined : "fade-down"}
+    data-aos-delay={compact ? undefined : "300"}
+  >
+    <div
+      class="shrink-0 inline-flex items-center justify-center rounded-lg bg-white p-2 shadow-lg ring-1 ring-gray-200"
+      style={`width: ${boxSize}px; height: ${boxSize}px;`}
+    >
+      <canvas
+        data-live-demo-instance={instance}
+        data-live-demo-role="qr-canvas"
+        data-qr-size={size}
+        width={size}
+        height={size}
+        aria-label="QR code — scan to start the demo"></canvas>
+      <span
+        data-live-demo-instance={instance}
+        data-live-demo-role="qr-loading"
+        class="text-xs text-gray-500"
+        style="display: none;"
+      >
+        Loading…
+      </span>
+      <!-- Hidden URL (mirrors the QR target so E2E / debugging can read it
+           without OCR-ing the QR image). -->
+      <span
+        hidden
+        data-live-demo-instance={instance}
+        data-live-demo-role="qr-url"
+        data-testid="init-demo-qr-url"></span>
+    </div>
+    <div class:list={[compact ? "" : "mt-3 md:mt-0"]}>
+      <!-- Small arrow pointing back at the QR (desktop only) -->
+      <svg
+        class:list={[
+          "overflow-visible text-teal-500 -mb-1",
+          withArrow ? "hidden md:block" : "hidden",
+        ]}
+        aria-hidden="true"
+        width="56"
+        height="56"
+        viewBox="0 0 48 48"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <defs>
+          <marker
+            id={`qr-arrow-head-${instance}`}
+            viewBox="0 0 10 10"
+            refX="9"
+            refY="5"
+            markerWidth="5"
+            markerHeight="5"
+            orient="auto"
+            markerUnits="strokeWidth"
+          >
+            <path d="M0,0 L10,5 L0,10 z" fill="currentColor"></path>
+          </marker>
+        </defs>
+        <path
+          d="M30 44 C 30 28, 22 14, -10 14"
+          stroke="currentColor"
+          stroke-width="2.5"
+          stroke-linecap="round"
+          fill="none"
+          marker-end={`url(#qr-arrow-head-${instance})`}></path>
+      </svg>
+      <p
+        data-live-demo-instance={instance}
+        data-live-demo-role="status"
+        class:list={[
+          "font-semibold text-gray-800 dark:text-gray-200",
+          compact ? "text-sm" : "text-base",
+        ]}
+      >
+        Scan to try the live demo
+      </p>
+      <p
+        class:list={[
+          "text-gray-500 dark:text-gray-400",
+          compact ? "text-xs mt-0.5" : "text-sm mt-1",
+        ]}
+      >
+        <slot name="hint"
+          >You will then be able to control this page from your phone</slot
+        >
+      </p>
+      <button
+        type="button"
+        data-live-demo-instance={instance}
+        data-live-demo-role="no-phone"
+        class:list={[
+          "font-medium text-teal-600 hover:text-teal-500 underline cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:no-underline",
+          compact ? "text-xs mt-1" : "text-sm mt-3",
+        ]}
+        disabled
+      >
+        {compact ? "No phone? Try it here." : "Don't have your phone? Try it right here."}
+      </button>
+    </div>
+  </div>
+
+  {
+    showCta && (
+      <div
+        data-live-demo-instance={instance}
+        data-live-demo-role="cta-block"
+        class="hidden"
+      >
+        <CtaForm />
+      </div>
+    )
+  }
+
+  {
+    showFeatures && (
+      <ul
+        data-live-demo-instance={instance}
+        data-live-demo-role="features"
+        class="hidden max-w-sm sm:max-w-md mx-auto md:max-w-none text-gray-600 dark:text-gray-400 mt-8 -mb-2 text-left"
+        data-aos="fade-down"
+        data-aos-delay="450"
+      >
+        {features.map((feature) => (
+          <li class="flex items-center mb-2">
+            <svg
+              class="w-3 h-3 fill-current text-teal-400 mr-2 shrink-0"
+              viewBox="0 0 12 12"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path d="M10.28 2.28L3.989 8.575 1.695 6.28A1 1 0 00.28 7.695l3 3a1 1 0 001.414 0l7-7A1 1 0 0010.28 2.28z" />
+            </svg>
+            <span>{feature}</span>
+          </li>
+        ))}
+      </ul>
+    )
+  }
+</div>
+
+<script>
+  import "../../scripts/live-demo";
+</script>
