@@ -67,9 +67,12 @@ jobs:
           node scripts/build_utils/extract_tauri.js
           node scripts/build_utils/copy_deps.js
 
-          # Move the node_modules
+          # Move the node_modules.
+          mv node_modules/@repo ./repo_resolvers
           rm -rf node_modules
           cp -r ./node_modules_nft/node_modules ./node_modules
+          rm -rf node_modules/@repo
+          mv ./repo_resolvers node_modules/@repo
 
           # Cleanup
           rm -rf node_modules_nft
@@ -101,9 +104,25 @@ jobs:
           node scripts/build_utils/extract_tauri.js
           node scripts/build_utils/copy_deps.js
 
-          # Move the node_modules
+          # Move the node_modules.
+          #
+          # @repo/* are workspace resolver symlinks (@repo/config ->
+          # ../../backend/config). The nft traces drop them on purpose - the
+          # workspace *code* ships via the source tree, not via node_modules -
+          # but the resolver entries themselves must survive the swap, or
+          # run_server.mjs's `-r @repo/config/extra` throws MODULE_NOT_FOUND
+          # and the app never opens port 5678.
+          #
+          # `mv` within the same filesystem is a rename: it never stats the
+          # symlink targets, so it works fine even though they dangle while
+          # parked outside node_modules. Staging them into node_modules_nft
+          # instead does NOT work - macOS `cp -r` does stat them, and fails
+          # with "No such file or directory" on every entry.
+          mv node_modules/@repo ./repo_resolvers
           rm -rf node_modules
           cp -r ./node_modules_nft/node_modules ./node_modules
+          rm -rf node_modules/@repo
+          mv ./repo_resolvers node_modules/@repo
 
           # Cleanup
           rm -rf node_modules_nft
@@ -115,6 +134,49 @@ jobs:
           yarn tauri build --verbose
 
           echo "tauri_path=$(pwd)" >> "$GITHUB_ENV"
+
+      # The build swaps the repo-root node_modules for the pruned nft tree.
+      # @repo/* are workspace symlinks that the nft ignore filter drops, so
+      # they have to be restored (copy_deps.js does this) or the bundled
+      # server dies at boot with "Cannot find module '@repo/config/extra'".
+      #
+      # That failure only shows up in the smoke test, ~30 min downstream, as a
+      # port-5678 timeout. Assert it here instead, where the message is useful.
+      - name: Verify @repo resolvers survived into the bundle (macOS)
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          set -uo pipefail
+          fail=0
+
+          echo "::group::repo-root node_modules/@repo"
+          if [ -e node_modules/@repo/config/extra.js ]; then
+            ls -la node_modules/@repo | head -20
+          else
+            echo "MISSING: node_modules/@repo/config/extra.js"
+            echo "  -> copy_deps.js did not restore the workspace symlinks."
+            fail=1
+          fi
+          echo "::endgroup::"
+
+          APP="tauri/target/release/bundle/macos/TheOpenPresenter Studio.app"
+          RES="$APP/Contents/Resources/node-server/theopenpresenter"
+          echo "::group::bundled $RES/node_modules/@repo"
+          if [ ! -d "$APP" ]; then
+            echo "Bundle not found at $APP - skipping bundle check."
+          elif [ -e "$RES/node_modules/@repo/config/extra.js" ]; then
+            ls -la "$RES/node_modules/@repo" | head -20
+          else
+            echo "MISSING: $RES/node_modules/@repo/config/extra.js"
+            echo "  -> the tauri bundler did not follow the @repo symlinks."
+            echo "     Present under node_modules:"
+            ls "$RES/node_modules" 2>/dev/null | head -20 || echo "     (no node_modules at all)"
+            fail=1
+          fi
+          echo "::endgroup::"
+
+          [ "$fail" = 0 ] || { echo "@repo resolver check failed"; exit 1; }
+          echo "OK: @repo/config/extra.js resolvable at root and in bundle."
 
       # Tauri's built-in signing handles Contents/MacOS/* + the outer .app
       # only. This bundle ships many native binaries inside
