@@ -169,6 +169,7 @@ export function initPluginApi<
           ...options,
           pluginContext,
         }),
+      close: () => misc.mediaPicker.close?.(),
     },
     log: misc.logger,
     error: {

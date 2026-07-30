@@ -53,7 +53,10 @@ export const useSlideMediaPicker = () => {
                       );
                       return;
                     }
-                    controller.open({ replaceImportId });
+                    controller.open({
+                      replaceImportId,
+                      onComplete: () => pluginApi.mediaPicker.close(),
+                    });
                   }}
                   icon={icon}
                   text={name}
