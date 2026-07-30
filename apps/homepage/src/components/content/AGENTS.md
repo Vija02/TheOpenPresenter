@@ -150,11 +150,34 @@ The bordered closing call-to-action card.
 - `slot="footer"`: optional small print under the buttons.
 
 ### ContentCard
-A single card in a hub/listing grid (`how-to/index`, `compare/index`).
+A single card in a hub/listing grid (`how-to/index`, `compare/index`,
+`blog/index`).
 - `href`, `category`, `title`, `description`.
 - `minutes?` — shown as `• N min read` when present.
+- `dateLabel?` + `dateTime?` — appended to the meta row inside a `<time>`. Blog
+  posts pass these; guides and comparisons leave them unset.
 - `cta?` — link text, default `"Read the guide"` (comparisons use
-  `"Read the comparison"`).
+  `"Read the comparison"`, blog posts `"Read the post"`).
+
+### BlogHeader
+`ArticleHeader` for a blog post: same back link and H1, but no category eyebrow,
+and the meta line carries a publish date, author and avatar. Used by
+`pages/blog/[...slug].astro`.
+- `title`, `minutes`, `author`.
+- `avatar?` — defaults to `assets/images/authors/default.jpg`.
+- `dateLabel` + `dateTime` — display string and ISO string for `<time>`.
+- `updatedLabel?` + `updatedTime?` — appends "updated <date>".
+- `backHref?`/`backLabel?` — default to `/blog` and `"All posts"`.
+- Slot: lead paragraph.
+
+### Prose
+Wraps a rendered markdown body (`<Content />`) and styles it to match the
+hand-written article pages, using `@tailwindcss/typography` modifiers.
+
+**This is where markdown body styling belongs.** Tailwind does not reliably scan
+`.md` files, so never put utility classes on elements inside a post. Add a
+`prose-*` modifier here instead.
+- `class?` — appended last, e.g. `"mb-16"`.
 
 ### ArrowIcon
 The small chevron SVG reused by the back link, hub cards, etc. Pass `class` to
