@@ -35,6 +35,7 @@ export const defaultTextStyle: TextStyle = {
 
 /** Appearance shared by every element kind. */
 export type AppearanceOptions = {
+  name?: string | null;
   rect?: Rect;
   rotation?: number;
   opacity?: number;
@@ -51,6 +52,7 @@ export type AppearanceOptions = {
 const baseElement = (
   id: string,
   {
+    name = null,
     rect = FULL_BLEED,
     rotation = 0,
     opacity = 1,
@@ -65,6 +67,7 @@ const baseElement = (
   }: AppearanceOptions,
 ): ElementBase => ({
   id,
+  name,
   rect,
   rotation,
   opacity,

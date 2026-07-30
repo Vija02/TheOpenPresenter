@@ -1,11 +1,7 @@
 import { universalURLValidator } from "@repo/lib";
 import { z } from "zod";
 
-import {
-  effectValidator,
-  paintValidator,
-  strokeValidator,
-} from "./paint";
+import { effectValidator, paintValidator, strokeValidator } from "./paint";
 import { rectValidator } from "./rect";
 import {
   spanRoleStyleValidator,
@@ -26,6 +22,8 @@ import {
  */
 export const elementBaseValidator = z.object({
   id: z.string(),
+  /** Human-facing layer name */
+  name: z.string().nullable(),
   rect: rectValidator,
   rotation: z.number(),
   opacity: z.number(),

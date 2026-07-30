@@ -34,7 +34,8 @@
         "default": "./dist/editor.cjs"
       }
     },
-    "./css": "./dist/style.css"
+    "./react/css": "./dist/react.css",
+    "./editor/css": "./dist/editor.css"
   },
   "sideEffects": [
     "**/*.css"
@@ -46,7 +47,9 @@
   "dependencies": {
     "@react-hook/size": "^2.1.2",
     "@repo/lib": "*",
+    "@repo/ui": "*",
     "ohash": "^2.0.11",
+    "react-icons": "^5.4.0",
     "react-moveable": "^0.56.0",
     "react-selecto": "^1.26.3",
     "tslib": "^2.8.1",
@@ -57,12 +60,15 @@
     "react-dom": ">=18"
   },
   "devDependencies": {
+    "@repo/tailwind-config": "*",
     "@repo/typescript-config": "*",
+    "@tailwindcss/vite": "^4.1.10",
     "@types/react": "^19.1.2",
     "@types/react-dom": "^19.1.3",
     "@vitejs/plugin-react-swc": "^3.7.2",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "tailwindcss": "^4.1.10",
     "typescript": "^5.9.3",
     "vite": "6.3.5",
     "vite-plugin-dts": "^4.5.4"
