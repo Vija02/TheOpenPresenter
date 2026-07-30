@@ -1,0 +1,26 @@
+.lay--editor {
+  border: 2px dashed var(--stroke, #d4d4d8);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.lay--editor-surface {
+  position: absolute;
+  inset: 0;
+  outline: none;
+}
+
+.lay--editor-item {
+  position: absolute;
+  box-sizing: border-box;
+  overflow: hidden;
+  cursor: grab;
+}
+
+.lay--editor-item--selected {
+  cursor: move;
+}
+
+.lay--editor-item > * {
+  pointer-events: none;
+}
