@@ -26,6 +26,7 @@ export interface EmbeddedPostgresConfig {
   roles?: DatabaseRoles;
   migration?: MigrationConfig;
   persistent?: boolean;
+  handleSignals?: boolean;
 }
 
 export interface ConnectionInfo {

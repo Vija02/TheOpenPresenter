@@ -4,13 +4,15 @@ import { rm, writeFile } from "fs/promises";
 import { join, resolve } from "path";
 import type { Client } from "pg";
 
-
-
 import { ExtensionManager } from "./extensions/index.js";
 import { MigrationManager } from "./migration/index.js";
-import type { ConnectionInfo, DatabaseUrls, EmbeddedPostgresConfig } from "./types/index.js";
+import type {
+  ConnectionInfo,
+  DatabaseUrls,
+  EmbeddedPostgresConfig,
+} from "./types/index.js";
 import { getAppDataPaths } from "./utils/paths.js";
-
+import { reconcileStaleCluster } from "./utils/staleCluster.js";
 
 export class EmbeddedPostgresManager {
   private pg: any | null = null;
@@ -29,6 +31,7 @@ export class EmbeddedPostgresManager {
       databaseName: config.databaseName || "theopenpresenter",
       projectRoot: config.projectRoot || process.cwd(),
       persistent: config.persistent ?? true,
+      handleSignals: config.handleSignals ?? true,
       roles: config.roles || {
         owner: {
           name: "theopenpresenter",
@@ -55,8 +58,11 @@ export class EmbeddedPostgresManager {
     // Initialize extension manager
     this.extensionManager = new ExtensionManager(this.config.projectRoot);
 
-    // Set up signal handlers for graceful shutdown
-    this.setupSignalHandlers();
+    // Set up signal handlers for graceful shutdown, unless the embedding
+    // process owns shutdown itself (see handleSignals).
+    if (this.config.handleSignals) {
+      this.setupSignalHandlers();
+    }
   }
 
   async initialize(): Promise<void> {
@@ -66,6 +72,13 @@ export class EmbeddedPostgresManager {
     }
 
     console.log("Initializing embedded PostgreSQL...");
+
+    // If a previous run was killed before it could stop PostgreSQL, that
+    // cluster is still alive and still holding our port. Clear it.
+    await reconcileStaleCluster({
+      databaseDir: this.config.databaseDir,
+      port: this.config.port,
+    });
 
     // Create EmbeddedPostgres instance
     this.createPgInstance();
