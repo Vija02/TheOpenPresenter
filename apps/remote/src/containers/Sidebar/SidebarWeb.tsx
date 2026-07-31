@@ -5,7 +5,13 @@ import { cx } from "class-variance-authority";
 import { sortBy } from "lodash-es";
 import { useMemo } from "react";
 import { FaMicrophoneLines } from "react-icons/fa6";
-import { MdCoPresent, MdShare, MdTune, MdVolumeUp } from "react-icons/md";
+import {
+  MdCoPresent,
+  MdPictureInPictureAlt,
+  MdShare,
+  MdTune,
+  MdVolumeUp,
+} from "react-icons/md";
 import { RiRemoteControlLine } from "react-icons/ri";
 import { VscAdd, VscEyeClosed } from "react-icons/vsc";
 import { useLocation } from "wouter";
@@ -15,6 +21,7 @@ import { useNavigateWithParams } from "../../hooks/useNavigateWithParams";
 import { getSceneOwnershipStatus } from "../../util/sceneOwnership";
 import DebugDrawer from "./Debug/DebugDrawer";
 import { PresentButton } from "./PresentButton";
+import PreviewWindow from "./PreviewWindow";
 import RendererManagementModal from "./RendererManagement/RendererManagementModal";
 import RendererSelector from "./RendererManagement/RendererSelector";
 import { RendererWarning } from "./RendererWarning";
@@ -113,7 +120,7 @@ const SidebarWeb = () => {
                   "rt--sidebar-web-scene-item rt--sidebar-web-scene-add",
                   location === "/new"
                     ? "rt--sidebar-web-scene-item__active pointer-events-none"
-                    : "rt--sidebar-web-scene-item__inactive cursor-pointer"
+                    : "rt--sidebar-web-scene-item__inactive cursor-pointer",
                 )}
               >
                 <div>
@@ -121,14 +128,13 @@ const SidebarWeb = () => {
                   <p>Add</p>
                 </div>
               </div>
-
             </div>
 
             <div className="rt--sidebar-web-actions">
               <PresentButton />
             </div>
           </div>
-          
+
           <div className="rt--sidebar-web-renderer-section">
             <RendererSelector />
             <OverlayToggle
@@ -158,6 +164,22 @@ const SidebarWeb = () => {
               )}
             >
               <ShareQRModal />
+            </OverlayToggle>
+            <OverlayToggle
+              isLazy
+              disableResetOnClose
+              toggler={({ onToggle }) => (
+                <Button
+                  onClick={onToggle}
+                  variant="ghost"
+                  size="mini"
+                  title="Preview"
+                >
+                  <MdPictureInPictureAlt />
+                </Button>
+              )}
+            >
+              <PreviewWindow />
             </OverlayToggle>
           </div>
           <div className="rt--sidebar-web-stats">
