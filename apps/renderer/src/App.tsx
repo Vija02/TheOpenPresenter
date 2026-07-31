@@ -38,6 +38,11 @@ function Root() {
     return searchParams.get("renderer") || "1";
   }, [search]);
 
+  const isPreview = useMemo(() => {
+    const searchParams = new URLSearchParams(search);
+    return searchParams.get("preview") === "1";
+  }, [search]);
+
   return (
     <PluginMetaDataProvider
       orgSlug={orgSlug!}
@@ -48,7 +53,7 @@ function Root() {
         <AudioCheckProvider>
           <PluginDataProvider type="renderer" rendererId={rendererId}>
             <AwarenessProvider>
-              <AppInner />
+              <AppInner hideFullscreenButton={isPreview} />
             </AwarenessProvider>
           </PluginDataProvider>
         </AudioCheckProvider>
@@ -57,7 +62,11 @@ function Root() {
   );
 }
 
-export const AppInner = () => {
+export const AppInner = ({
+  hideFullscreenButton,
+}: {
+  hideFullscreenButton?: boolean;
+}) => {
   const handleKeyPress = useHandleKeyPress();
 
   return (
@@ -73,7 +82,7 @@ export const AppInner = () => {
       ) : (
         <>
           <Body />
-          <FullscreenButton />
+          {!hideFullscreenButton && <FullscreenButton />}
         </>
       )}
     </div>
