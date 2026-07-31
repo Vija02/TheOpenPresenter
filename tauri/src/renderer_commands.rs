@@ -5,22 +5,30 @@ const ABOVE_MENU_BAR_LEVEL: isize = 25;
 
 /// (macOS) Lift the renderer above the Dock and menu bar.
 #[cfg(target_os = "macos")]
-fn raise_above_menu_bar(window: &tauri::WebviewWindow) -> tauri::Result<()> {
-    use objc::runtime::Object;
-    use objc::{msg_send, sel, sel_impl};
+fn raise_above_menu_bar(
+    app: &tauri::AppHandle,
+    window: &tauri::WebviewWindow,
+) -> tauri::Result<()> {
+    let window = window.clone();
 
-    let ns_window = window.ns_window()? as *mut Object;
-    if ns_window.is_null() {
-        return Ok(());
-    }
+    app.run_on_main_thread(move || {
+        use objc::runtime::Object;
+        use objc::{msg_send, sel, sel_impl};
 
-    // SAFETY: Tauri hands back this window's live NSWindow, and commands taking
-    // an AppHandle are dispatched on the main thread, where AppKit requires it.
-    unsafe {
-        let _: () = msg_send![ns_window, setLevel: ABOVE_MENU_BAR_LEVEL];
-    }
+        let Ok(ns_window) = window.ns_window() else {
+            return;
+        };
+        let ns_window = ns_window as *mut Object;
+        if ns_window.is_null() {
+            return;
+        }
 
-    Ok(())
+        // SAFETY: Tauri hands back this window's live NSWindow, and this
+        // closure runs on the main thread, where AppKit requires it.
+        unsafe {
+            let _: () = msg_send![ns_window, setLevel: ABOVE_MENU_BAR_LEVEL];
+        }
+    })
 }
 
 /// Open or navigate the renderer window to a specified URL on a given monitor
@@ -66,7 +74,7 @@ pub async fn open_renderer(
             width: size.width,
             height: size.height,
         }))?;
-        raise_above_menu_bar(&renderer_window)?;
+        raise_above_menu_bar(&app, &renderer_window)?;
     }
 
     #[cfg(not(target_os = "macos"))]
