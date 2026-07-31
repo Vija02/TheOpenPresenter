@@ -33,6 +33,7 @@ import { toast } from "react-toastify";
 import { useDisposable } from "use-disposable";
 import * as Y from "yjs";
 
+import { outputVolume } from "./outputVolume";
 import { trpcClient } from "./trpc";
 
 const useRendererId = () => {
@@ -487,6 +488,7 @@ const PluginRenderer = React.memo(
           zoomLevel: {} as any, // This should never be called
           errorHandler: { addError, removeError },
           canPlayAudio,
+          outputVolume,
           overlay,
           currentScene,
           toast,

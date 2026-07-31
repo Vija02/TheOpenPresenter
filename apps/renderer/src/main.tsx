@@ -12,6 +12,7 @@ import { Router } from "wouter";
 
 import App from "./App";
 import "./index.css";
+import { listenForOutputVolumeChanges } from "./outputVolume";
 import { trpc, trpcClient } from "./trpc";
 import { urqlClient } from "./urql";
 
@@ -24,6 +25,8 @@ const queryClient = new QueryClient({
 });
 
 preloader.initPreloader();
+
+listenForOutputVolumeChanges();
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

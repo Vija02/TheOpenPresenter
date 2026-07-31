@@ -2,7 +2,7 @@ import { usePluginMetaData } from "@repo/shared";
 import { useOverlayToggle } from "@repo/ui";
 import { useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { MdClose, MdFullscreen } from "react-icons/md";
+import { MdClose, MdFullscreen, MdVolumeOff, MdVolumeUp } from "react-icons/md";
 import { useSearch } from "wouter";
 
 import { useRendererSelection } from "../../contexts/rendererSelection";
@@ -35,6 +35,8 @@ const PreviewWindow = () => {
   }));
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
+  // The renderer installs its mute before any plugin runs, so it starts muted.
+  const [isMuted, setIsMuted] = useState(true);
   // Offset between the pointer and the window's top-left corner.
   const grabOffset = useRef<{ x: number; y: number } | null>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -51,6 +53,15 @@ const PreviewWindow = () => {
 
   const handleFullscreen = () => {
     iframeRef.current?.requestFullscreen().catch(() => {});
+  };
+
+  const handleToggleMute = () => {
+    const next = !isMuted;
+    setIsMuted(next);
+    iframeRef.current?.contentWindow?.postMessage(
+      { type: "preview:setMuted", muted: next },
+      window.location.origin,
+    );
   };
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -135,6 +146,16 @@ const PreviewWindow = () => {
             />
             <span className="tracking-wide text-red-400 uppercase">Live</span>
           </span>
+          <button
+            type="button"
+            onClick={handleToggleMute}
+            onPointerDown={(e) => e.stopPropagation()}
+            title={isMuted ? "Unmute" : "Mute"}
+            aria-label={isMuted ? "Unmute" : "Mute"}
+            className="flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center rounded text-white/70 transition-colors hover:bg-white/10 hover:text-white"
+          >
+            {isMuted ? <MdVolumeOff /> : <MdVolumeUp />}
+          </button>
           <button
             type="button"
             onClick={handleFullscreen}

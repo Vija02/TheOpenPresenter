@@ -121,6 +121,7 @@ export type MiscProps = {
   zoomLevel: ZoomLevel;
   errorHandler: ErrorHandler;
   canPlayAudio: CanPlayAudio;
+  outputVolume: OutputVolume;
   overlay: OverlayInfo;
   currentScene: CurrentSceneInfo;
   toast: typeof ReactToast;
@@ -152,6 +153,17 @@ export type CanPlayAudio = {
   _rawValue: boolean;
   isChecking: boolean;
   subscribe: (callback: () => void) => () => void;
+};
+
+// Multiplier for volume. All audio should go through this
+export type OutputVolume = {
+  scale: number;
+  subscribe: (callback: () => void) => () => void;
+};
+
+export const staticOutputVolume: OutputVolume = {
+  scale: 1,
+  subscribe: () => () => {},
 };
 
 export type OverlayType = "black" | "white" | "clear" | null;

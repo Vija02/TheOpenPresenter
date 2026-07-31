@@ -9,6 +9,7 @@ import {
   State,
   WebComponentProps,
   YjsWatcher,
+  staticOutputVolume,
 } from "@repo/base-plugin";
 import { useMediaPicker } from "@repo/base-plugin/client";
 import {
@@ -233,6 +234,7 @@ const PluginRenderer = React.memo(
           zoomLevel: zoomLevelStore,
           errorHandler: { addError, removeError },
           canPlayAudio,
+          outputVolume: staticOutputVolume,
           overlay,
           currentScene,
           toast,

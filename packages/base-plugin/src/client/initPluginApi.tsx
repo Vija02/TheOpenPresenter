@@ -161,6 +161,15 @@ export function initPluginApi<
             : misc.canPlayAudio.value,
         );
       },
+      useVolume: (volume: number) => {
+        const scale = useSyncExternalStore(
+          misc.outputVolume.subscribe,
+          () => misc.outputVolume.scale,
+        );
+
+        return volume * scale;
+      },
+      getVolume: (volume: number) => volume * misc.outputVolume.scale,
     },
     mediaPicker: {
       show: (options?: MediaPickerOptions) =>
