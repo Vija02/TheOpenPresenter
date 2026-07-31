@@ -142,8 +142,8 @@ async function main() {
     appDataFolderName,
     projectRoot: path.resolve(import.meta.dirname, "./theopenpresenter"),
     migration: { nodeBinaryPath },
-    // TODO: Handle multiple port
     port: PORT,
+    handleSignals: false,
   });
 
   installShutdownHandlers(pg);
