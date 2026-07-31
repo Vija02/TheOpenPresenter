@@ -54,8 +54,8 @@ export default (app: Express) => {
           const {
             rows: [org],
           } = await rootPgPool.query(
-            `insert into app_public.organizations (slug, name) values ($1, $2) returning *`,
-            ["local", "Local"],
+            `insert into app_public.organizations (slug, name, organization_type) values ($1, $2, $3) returning *`,
+            ["local", "Local", "church"],
           );
           await rootPgPool.query(
             `insert into app_public.organization_memberships (organization_id, user_id, is_owner, is_billing_contact)
