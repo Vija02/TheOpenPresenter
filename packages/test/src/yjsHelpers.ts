@@ -9,6 +9,7 @@ import {
   YState,
   YjsWatcher,
   createTraverser,
+  staticOutputVolume,
 } from "@repo/base-plugin";
 import {
   DisposableDocumentManager,
@@ -215,6 +216,7 @@ export const simulateUser = (
       zoomLevel: undefined as any,
       errorHandler: { addError: () => {}, removeError: () => {} },
       canPlayAudio: undefined as any,
+      outputVolume: staticOutputVolume,
       overlay: { getType: () => null, subscribe: () => () => {} },
       currentScene: { get: () => null, subscribe: () => () => {} },
       toast: { error: vi.fn() } as any,
