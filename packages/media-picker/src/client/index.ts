@@ -6,4 +6,5 @@ export * from "./MediaPickerProvider";
 export * from "./MediaPreviewDialog";
 export * from "./UploadMediaModal";
 export * from "./Dropzone";
+export * from "./MediaLibrary";
 export type { MediaWithMetadata } from "./types";

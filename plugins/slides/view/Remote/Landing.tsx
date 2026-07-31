@@ -1,6 +1,7 @@
-import { Dropzone } from "@repo/media-picker/client";
+import { Dropzone, MediaLibrary, MediaLibraryRef } from "@repo/media-picker/client";
 import { FaFilePdf, FaFilePowerpoint, FaImage } from "react-icons/fa";
 import { FiUpload } from "react-icons/fi";
+import { useRef } from "react";
 
 import { usePluginAPI } from "../pluginApi";
 import { IntegrationCards } from "./integrations";
@@ -11,11 +12,17 @@ const Landing = () => {
   const pluginContext = pluginApi.pluginContext;
   const isPublicAccess = pluginApi.isPublicAccess;
 
+  const libraryRef = useRef<MediaLibraryRef>(null);
   const { isProcessing, handleUploadComplete } = useMediaUpload();
+
+  const handleDropzoneUploadComplete = async (results: any) => {
+    await handleUploadComplete(results);
+    libraryRef.current?.refetch();
+  };
 
   return (
     <div className="w-full flex justify-center py-4 md:py-8 px-4">
-      <div className="flex flex-col w-full text-left gap-6 md:gap-10 max-w-7xl mx-auto mt-2 md:mt-4">
+      <div className="flex flex-col w-full text-left gap-6 md:gap-10 max-w-7xl mx-auto mt-2 md:mt-4 mb-10">
         {/* HERO SECTION */}
         {isPublicAccess ? (
           <div className="bg-surface-secondary rounded-xl border-2 border-dashed border-stroke p-6 md:p-10 text-center text-secondary font-medium min-h-[250px] md:min-h-[400px] flex flex-col items-center justify-center">
@@ -29,7 +36,7 @@ const Landing = () => {
           </div>
         ) : (
           <Dropzone
-            onUploadComplete={handleUploadComplete}
+            onUploadComplete={handleDropzoneUploadComplete}
             organizationId={pluginContext.organizationId}
             projectId={pluginContext.projectId}
             pluginId={pluginContext.pluginId}
@@ -76,6 +83,26 @@ const Landing = () => {
           <div className="flex flex-wrap gap-4 justify-center md:justify-start">
             <IntegrationCards />
           </div>
+        </div>
+
+        {/* RECENTLY ADDED SECTION */}
+        <div className="px-4 mt-2 md:mt-4">
+          <MediaLibrary
+            ref={libraryRef}
+            organizationId={pluginContext.organizationId}
+            type={["image", "pdf", "ppt"]}
+            allowMultiple={false}
+            isPublicAccess={isPublicAccess}
+            title="Recently added"
+            onSelect={(results) => {
+              handleUploadComplete(
+                results.map((r) => ({
+                  mediaName: r.mediaName,
+                  originalName: r.originalName ?? null,
+                })),
+              );
+            }}
+          />
         </div>
       </div>
     </div>
