@@ -7,7 +7,9 @@ const WorshipPadsRenderer = () => {
   const pluginApi = usePluginAPI();
 
   const isPlaying = pluginApi.renderer.useData((x) => x.isPlaying);
-  const volume = pluginApi.renderer.useData((x) => x.volume);
+  const volume = pluginApi.audio.useVolume(
+    pluginApi.renderer.useData((x) => x.volume) ?? 1,
+  );
 
   const canPlay = pluginApi.audio.useCanPlay({ skipCheck: !isPlaying });
 
@@ -44,7 +46,9 @@ const Player = ({
 
   const currentKey = pluginApi.renderer.useData((x) => x.currentKey);
   const isPlaying = pluginApi.renderer.useData((x) => x.isPlaying);
-  const volume = pluginApi.renderer.useData((x) => x.volume);
+  const volume = pluginApi.audio.useVolume(
+    pluginApi.renderer.useData((x) => x.volume) ?? 1,
+  );
 
   useEffect(() => {
     if (isPlaying) {

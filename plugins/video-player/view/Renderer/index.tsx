@@ -32,14 +32,20 @@ const VideoPlayerRendererInner = ({ videoId }: { videoId: string }) => {
 
   const playbackState = videoStates[videoId] ?? null;
 
-  if (!currentVideo || !playbackState) {
+  const scaledVolume = pluginApi.audio.useVolume(playbackState?.volume ?? 1);
+  const scaledPlaybackState = useMemo(
+    () => (playbackState ? { ...playbackState, volume: scaledVolume } : null),
+    [playbackState, scaledVolume],
+  );
+
+  if (!currentVideo || !scaledPlaybackState) {
     return null;
   }
 
   return (
     <VideoPlayer
       video={currentVideo}
-      playbackState={playbackState}
+      playbackState={scaledPlaybackState}
       onDurationChange={(dur: number) => {
         const index = mutableSceneData.pluginData.videos.findIndex(
           (x) => x.id === videoId,
