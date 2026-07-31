@@ -10,6 +10,7 @@ import { lazy, useEffect, useMemo } from "react";
 import { Route, Switch, useParams, useSearch } from "wouter";
 
 import { Body } from "./Body";
+import { FullscreenButton } from "./FullscreenButton";
 import { Screen } from "./Screen";
 
 const TauriHandler = lazy(() => import("./TauriHandler"));
@@ -70,7 +71,10 @@ export const AppInner = () => {
           <Body />
         </TauriHandler>
       ) : (
-        <Body />
+        <>
+          <Body />
+          <FullscreenButton />
+        </>
       )}
     </div>
   );
