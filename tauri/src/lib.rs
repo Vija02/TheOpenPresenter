@@ -1,11 +1,14 @@
 use std::{
     net::SocketAddrV4,
     process,
-    sync::Arc,
-    time::Duration,
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc,
+    },
+    time::{Duration, Instant},
 };
 
-use tauri::{path::BaseDirectory, AppHandle, Manager, WebviewWindow, WindowEvent};
+use tauri::{path::BaseDirectory, AppHandle, Manager, RunEvent, WebviewWindow, WindowEvent};
 use tauri_plugin_dialog::{DialogExt, MessageDialogKind};
 use tauri_plugin_shell::{process::CommandEvent, ShellExt};
 use tokio::{time::sleep, sync::Mutex as TokioMutex};
@@ -25,7 +28,112 @@ fn get_local_ip() -> Option<String> {
     local_ip_address::local_ip().ok().map(|ip| ip.to_string())
 }
 
-type ChildProcess = Arc<std::sync::Mutex<Option<tauri_plugin_shell::process::CommandChild>>>;
+/// The node sidecar owns two things that hold ports: the HTTP server (5678)
+/// and the embedded PostgreSQL cluster (7949). Killing it outright leaves
+/// PostgreSQL running and holding its port, which breaks the *next* launch, so
+/// shutdown has to be cooperative — we ask it to stop and give it time to shut
+/// PostgreSQL down before forcing the issue.
+struct ServerProcess {
+    child: std::sync::Mutex<Option<tauri_plugin_shell::process::CommandChild>>,
+    /// Set once the sidecar has actually exited.
+    terminated: AtomicBool,
+    /// Set as soon as *we* decide to stop, so the sidecar exiting is not
+    /// reported to the user as a crash.
+    shutting_down: AtomicBool,
+}
+
+type ServerHandle = Arc<ServerProcess>;
+
+/// How long the sidecar gets to stop PostgreSQL and exit before we kill it.
+const SHUTDOWN_GRACE: Duration = Duration::from_secs(15);
+
+impl ServerProcess {
+    fn new(child: tauri_plugin_shell::process::CommandChild) -> Self {
+        Self {
+            child: std::sync::Mutex::new(Some(child)),
+            terminated: AtomicBool::new(false),
+            shutting_down: AtomicBool::new(false),
+        }
+    }
+
+    fn is_shutting_down(&self) -> bool {
+        self.shutting_down.load(Ordering::SeqCst)
+    }
+
+    fn is_terminated(&self) -> bool {
+        self.terminated.load(Ordering::SeqCst)
+    }
+
+    fn mark_terminated(&self) {
+        self.terminated.store(true, Ordering::SeqCst);
+    }
+
+    /// Ask `run_server.mjs` to shut down. This goes over stdin rather than a
+    /// signal so it behaves identically on Windows, which has no SIGTERM.
+    fn request_stop(&self) {
+        let mut guard = self.child.lock().unwrap();
+        if let Some(child) = guard.as_mut() {
+            if let Err(e) = child.write(b"shutdown\n") {
+                log::error!("Failed to ask node server to stop: {}", e);
+            }
+        }
+    }
+
+    /// Drops the handle without signalling. Used once we know it has exited —
+    /// killing an already-dead child just logs a misleading error.
+    fn release(&self) {
+        let _ = self.child.lock().unwrap().take();
+    }
+
+    fn force_kill(&self) {
+        if let Some(child) = self.child.lock().unwrap().take() {
+            if let Err(e) = child.kill() {
+                log::error!("Failed to kill node server: {}", e);
+            }
+        }
+    }
+}
+
+/// Asks the sidecar to stop, waits for it, and force-kills past the grace
+/// period. Safe to call when the sidecar has already exited.
+async fn stop_server(server: &ServerHandle) {
+    if server.is_terminated() {
+        // Already gone; just drop the handle.
+        server.release();
+        return;
+    }
+
+    log::info!("Asking node server to shut down (this also stops PostgreSQL)...");
+    server.request_stop();
+
+    let deadline = Instant::now() + SHUTDOWN_GRACE;
+    while Instant::now() < deadline {
+        if server.is_terminated() {
+            log::info!("Node server shut down cleanly");
+            server.release();
+            return;
+        }
+        sleep(Duration::from_millis(100)).await;
+    }
+
+    log::warn!(
+        "Node server did not exit within {:?}; killing it. PostgreSQL may be left running on its port.",
+        SHUTDOWN_GRACE
+    );
+    server.force_kill();
+}
+
+/// Begins shutdown exactly once
+fn begin_shutdown(server: ServerHandle) {
+    if server.shutting_down.swap(true, Ordering::SeqCst) {
+        return;
+    }
+
+    tauri::async_runtime::spawn(async move {
+        stop_server(&server).await;
+        process::exit(0);
+    });
+}
 
 const SERVER_ORG_PAGE_URL: &str = "http://localhost:5678/o/local";
 const SERVER_HOST: &str = "http://localhost:5678";
@@ -49,30 +157,26 @@ async fn wait_for_endpoint(url: &str) {
     }
 }
 
-/// Handles window close event by killing the child process and exiting
+/// Handles a window close by starting a cooperative shutdown. We always
+/// prevent the close: the sidecar needs a moment to stop PostgreSQL, and the
+/// shutdown task exits the process once it is done. The window is hidden
+/// immediately so the app still feels responsive while that happens.
 fn handle_close_request(
     api: &tauri::CloseRequestApi,
-    child: &ChildProcess,
+    server: &ServerHandle,
     window: &WebviewWindow,
 ) {
-    if let Some(child_process) = child.lock().unwrap().take() {
-        api.prevent_close();
-        if let Err(e) = child_process.kill() {
-            eprintln!("Failed to kill child process: {}", e);
-        }
-        window.close().unwrap();
-        process::exit(0);
-    }
+    api.prevent_close();
+    let _ = window.hide();
+    begin_shutdown(Arc::clone(server));
 }
 
-/// Kills the node server, shows a blocking error dialog, then exits the app.
-fn show_fatal_error_and_exit(app_handle: &AppHandle, child: &ChildProcess, message: &str) {
-    // Make sure the node server is dead before we exit.
-    if let Some(child_process) = child.lock().unwrap().take() {
-        if let Err(e) = child_process.kill() {
-            eprintln!("Failed to kill child process: {}", e);
-        }
-    }
+/// Stops the node server, shows a blocking error dialog, then exits the app.
+async fn show_fatal_error_and_exit(app_handle: &AppHandle, server: &ServerHandle, message: &str) {
+    // Claim the shutdown so the window-close path doesn't also try to exit,
+    // then make sure PostgreSQL is stopped before we show the dialog.
+    server.shutting_down.store(true, Ordering::SeqCst);
+    stop_server(server).await;
 
     app_handle
         .dialog()
@@ -210,6 +314,16 @@ pub fn run() {
     let iroh_bridge_state: IrohBridgeState = Arc::new(TokioMutex::new(None));
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            let window = app
+                .get_webview_window("main")
+                .or_else(|| app.get_webview_window("splashscreen"));
+            if let Some(window) = window {
+                let _ = window.show();
+                let _ = window.unminimize();
+                let _ = window.set_focus();
+            }
+        }))
         .manage(iroh_bridge_state.clone())
         .invoke_handler(tauri::generate_handler![
             open_renderer,
@@ -242,29 +356,32 @@ pub fn run() {
                 .spawn()
                 .expect("Failed to spawn sidecar");
 
-            let child: ChildProcess = Arc::new(std::sync::Mutex::new(Some(child)));
+            let server: ServerHandle = Arc::new(ServerProcess::new(child));
+            // Managed so the app-level exit handler can reach it too.
+            app.manage(Arc::clone(&server));
 
             let main_window = app.get_webview_window("main").unwrap();
             let splash_window = app.get_webview_window("splashscreen").unwrap();
 
             // Set up close handlers for both windows
-            let (child_for_main, main_window_ref) = (Arc::clone(&child), main_window.clone());
+            let (server_for_main, main_window_ref) = (Arc::clone(&server), main_window.clone());
             main_window.on_window_event(move |event| {
                 if let WindowEvent::CloseRequested { api, .. } = event {
-                    handle_close_request(api, &child_for_main, &main_window_ref);
+                    handle_close_request(api, &server_for_main, &main_window_ref);
                 }
             });
 
-            let (child_for_splash, splash_window_ref) = (Arc::clone(&child), splash_window.clone());
+            let (server_for_splash, splash_window_ref) =
+                (Arc::clone(&server), splash_window.clone());
             splash_window.on_window_event(move |event| {
                 if let WindowEvent::CloseRequested { api, .. } = event {
-                    handle_close_request(api, &child_for_splash, &splash_window_ref);
+                    handle_close_request(api, &server_for_splash, &splash_window_ref);
                 }
             });
 
             // Log sidecar stdout and stderr, and bail out if the server errors/dies.
             let app_handle = app.handle().clone();
-            let child_for_error = Arc::clone(&child);
+            let server_for_events = Arc::clone(&server);
             tauri::async_runtime::spawn(async move {
                 // Keep the most recent stderr output so we can show it in the error dialog.
                 let mut stderr_buffer = String::new();
@@ -282,6 +399,10 @@ pub fn run() {
                             }
                         }
                         CommandEvent::Error(err) => {
+                            if server_for_events.is_shutting_down() {
+                                log::info!("Node server error during shutdown: {}", err);
+                                continue;
+                            }
                             log::error!("Node server error: {}", err);
                             let message = format!(
                                 "The node server encountered an error and the application will now close.\n\nError: {}\n\nServer output:\n{}",
@@ -294,10 +415,21 @@ pub fn run() {
                             {
                                 log::error!("Failed to report diagnosis: {}", e);
                             }
-                            show_fatal_error_and_exit(&app_handle, &child_for_error, &message);
+                            show_fatal_error_and_exit(&app_handle, &server_for_events, &message)
+                                .await;
                         }
                         CommandEvent::Terminated(payload) => {
-                            // Exit code 0 means a clean shutdown (e.g. we killed it on close).
+                            server_for_events.mark_terminated();
+
+                            // We asked for this, so don't report it as a crash.
+                            if server_for_events.is_shutting_down() {
+                                log::info!(
+                                    "Node server exited during shutdown (code: {:?})",
+                                    payload.code
+                                );
+                                continue;
+                            }
+
                             if payload.code != Some(0) {
                                 log::error!(
                                     "Node server terminated unexpectedly (code: {:?}, signal: {:?})",
@@ -319,7 +451,8 @@ pub fn run() {
                                 {
                                     log::error!("Failed to report diagnosis: {}", e);
                                 }
-                                show_fatal_error_and_exit(&app_handle, &child_for_error, &message);
+                                show_fatal_error_and_exit(&app_handle, &server_for_events, &message)
+                                    .await;
                             }
                         }
                         _ => {}
@@ -395,6 +528,19 @@ pub fn run() {
 
             Ok(())
         })
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|app_handle, event| {
+            // Catches the quit paths that aren't a window close (macOS Cmd+Q,
+            // dock quit, SIGINT). PostgreSQL still has to come down first, so
+            // we hold the exit and let the shutdown task finish it.
+            if let RunEvent::ExitRequested { api, .. } = event {
+                if let Some(server) = app_handle.try_state::<ServerHandle>() {
+                    if !server.is_shutting_down() {
+                        api.prevent_exit();
+                        begin_shutdown(Arc::clone(server.inner()));
+                    }
+                }
+            }
+        });
 }
