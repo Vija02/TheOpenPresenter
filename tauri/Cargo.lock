@@ -6312,6 +6312,7 @@ dependencies = [
  "local-ip-address",
  "log",
  "notify-rust",
+ "objc",
  "rand 0.9.2",
  "reqwest",
  "serde",
