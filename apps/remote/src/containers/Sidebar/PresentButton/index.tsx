@@ -19,12 +19,15 @@ import {
   MdMonitor,
   MdOpenInNew,
   MdOutlineCancelPresentation,
+  MdQrCode2,
   MdSettings,
 } from "react-icons/md";
 import { toast } from "react-toastify";
 import { useSearch } from "wouter";
 
 import { useRendererSelection } from "../../../contexts/rendererSelection";
+import PhonePresentModal from "./PhonePresentModal";
+import PresentOverlay from "./PresentOverlay";
 import "./index.css";
 
 const PresentMonitorModalWrapper = lazy(() => import("./PresentMonitorModal"));
@@ -88,13 +91,32 @@ const WebPresentButton = ({
   isMobile?: boolean;
   renderHref: string;
 }) => {
-  const { orgSlug, projectId } = usePluginMetaData();
+  const { orgSlug, projectSlug, projectId } = usePluginMetaData();
 
   const search = useSearch();
   const appendSearch = (href: string) => (search ? `${href}?${search}` : href);
 
   const [open, setOpen] = useState(false);
   const [showAllScreens, setShowAllScreens] = useState(false);
+  const [showPhoneModal, setShowPhoneModal] = useState(false);
+  const [isPresentingHere, setIsPresentingHere] = useState(false);
+
+  const remoteUrl = `${window.location.origin}${appendSearch(
+    `/app/${orgSlug}/${projectSlug}`,
+  )}`;
+
+  const handlePresentHere = () => {
+    document.documentElement.requestFullscreen().catch(() => {});
+    setShowPhoneModal(false);
+    setIsPresentingHere(true);
+  };
+
+  const handleStopPresenting = () => {
+    setIsPresentingHere(false);
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(() => {});
+    }
+  };
 
   const [{ data, fetching }, refetchScreens] =
     useOrganizationScreensIndexPageQuery({
@@ -184,6 +206,25 @@ const WebPresentButton = ({
             </p>
           </div>
         </Link>
+
+        <button
+          type="button"
+          onClick={() => {
+            setOpen(false);
+            setShowPhoneModal(true);
+          }}
+          className="flex w-full items-start gap-2 px-3 py-2 text-sm text-left rounded transition-colors cursor-pointer hover:bg-surface-primary-hover focus:bg-surface-primary-hover focus:outline-none"
+        >
+          <span className="shrink-0 mt-0.5">
+            <MdQrCode2 />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="font-medium">Present from phone</p>
+            <p className="text-xs text-tertiary">
+              Show here fullscreen, control from your phone
+            </p>
+          </div>
+        </button>
 
         <div className="px-3 pt-3 pb-1 text-xs font-medium text-tertiary">
           Present to a screen
@@ -278,6 +319,19 @@ const WebPresentButton = ({
           </button>
         )}
       </PopoverContent>
+
+      {showPhoneModal && (
+        <PhonePresentModal
+          isOpen={showPhoneModal}
+          onToggle={() => setShowPhoneModal(false)}
+          remoteUrl={remoteUrl}
+          onPresentHere={handlePresentHere}
+        />
+      )}
+
+      {isPresentingHere && (
+        <PresentOverlay renderUrl={renderHref} onClose={handleStopPresenting} />
+      )}
     </Popover>
   );
 };
