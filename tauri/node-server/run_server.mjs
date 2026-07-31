@@ -13,19 +13,23 @@ const DATABASE_NAME = "theopenpresenter";
 
 const PORT = 7949;
 
+const childProcesses = new Set();
+
 const runCommand = async (command, args, options) => {
   return new Promise((resolve, reject) => {
-    const process = spawn(command, args, options);
+    const child = spawn(command, args, options);
+    childProcesses.add(child);
 
-    process.stdout.on("data", (data) => {
+    child.stdout.on("data", (data) => {
       console.log(`${data}`);
     });
 
-    process.stderr.on("data", (data) => {
+    child.stderr.on("data", (data) => {
       console.log(`${data}`);
     });
 
-    process.on("close", (code) => {
+    child.on("close", (code) => {
+      childProcesses.delete(child);
       if (code === 0) {
         resolve();
       } else {
@@ -33,7 +37,8 @@ const runCommand = async (command, args, options) => {
       }
     });
 
-    process.on("error", (err) => {
+    child.on("error", (err) => {
+      childProcesses.delete(child);
       reject(err);
     });
   });
@@ -51,9 +56,77 @@ const nodeBinaryPath = fs.existsSync(sidecarNodePath)
     ? process.execPath
     : "node";
 
-const killProcess = async (pg) => {
-  await pg.stop();
-  process.exit(1);
+// How long children get to exit on their own before we force them. Short,
+// because stopping PostgreSQL is the part that actually matters.
+const CHILD_EXIT_TIMEOUT_MS = 5000;
+
+let shuttingDown = false;
+
+const waitForChildren = async (timeoutMs) => {
+  const deadline = Date.now() + timeoutMs;
+  while (childProcesses.size > 0 && Date.now() < deadline) {
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+};
+
+// Stops the worker/server children, then PostgreSQL.
+//
+// Idempotent: a signal, a stdin request and a child dying can all race, and we
+// only ever want one teardown. Without the `pg.stop()` here, PostgreSQL keeps
+// running after the app exits and holds its port, which breaks the next launch.
+const shutdown = async (pg, exitCode = 0) => {
+  if (shuttingDown) {
+    return;
+  }
+  shuttingDown = true;
+
+  console.log("Shutting down...");
+
+  for (const child of childProcesses) {
+    try {
+      child.kill("SIGTERM");
+    } catch (err) {
+      console.error("Failed to signal child process:", err);
+    }
+  }
+
+  await waitForChildren(CHILD_EXIT_TIMEOUT_MS);
+
+  for (const child of childProcesses) {
+    try {
+      child.kill("SIGKILL");
+    } catch {
+      // Already gone.
+    }
+  }
+
+  try {
+    await pg.stop();
+  } catch (err) {
+    console.error("Failed to stop PostgreSQL:", err);
+  }
+
+  process.exit(exitCode);
+};
+
+const installShutdownHandlers = (pg) => {
+  process.once("SIGINT", () => shutdown(pg, 0));
+  process.once("SIGTERM", () => shutdown(pg, 0));
+  process.once("SIGQUIT", () => shutdown(pg, 0));
+
+  process.stdin.on("data", (data) => {
+    if (data.toString().includes("shutdown")) {
+      shutdown(pg, 0);
+    }
+  });
+
+  // Parent died and closed the pipe. Skipped on a TTY so an interactive run
+  // isn't torn down by an empty stdin.
+  if (!process.stdin.isTTY) {
+    process.stdin.on("end", () => shutdown(pg, 0));
+  }
+
+  process.stdin.resume();
 };
 
 async function main() {
@@ -73,15 +146,7 @@ async function main() {
     port: PORT,
   });
 
-  process.once("SIGINT", async () => {
-    await pg.stop();
-
-    process.kill(process.pid, "SIGINT");
-    process.exit(1);
-  });
-  process.once("SIGTERM", () => killProcess(pg));
-  process.once("SIGQUIT", () => killProcess(pg));
-  process.once("exit", () => killProcess(pg));
+  installShutdownHandlers(pg);
 
   await pg.initialize();
   await pg.start();
