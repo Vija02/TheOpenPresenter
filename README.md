@@ -28,7 +28,7 @@ We maintain a separate wiki page at https://docs.theopenpresenter.com. Please re
 ✅ Record audio and save it for future playback  
 ✅ Import & display lyrics from various sources with ease  
 ✅ Display slides from many different sources   
-🟨 Offline app support - Beta (currently only for Windows)  
+✅ Offline app support (TheOpenPresenter Studio) - Stable on Windows, Alpha on Mac  
 
 Last but not least, the code for TheOpenPresenter will always be Open Source. We also promise to keep a hosted version of TheOpenPresenter free for those that will benefit from it the most such as small churches and select non-profit organizations.
 
