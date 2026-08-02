@@ -146,6 +146,12 @@ const EditorSurface = <T extends EditorItem>({
     }
   }, [selectableIds, selectedIds, items, itemsById, surface]);
 
+  const moveableRef = useRef<Moveable>(null);
+
+  useEffect(() => {
+    moveableRef.current?.updateRect();
+  }, [items, metrics, targets]);
+
   const idOf = (el: HTMLElement | SVGElement): string | null =>
     (el as HTMLElement).dataset?.layId ?? null;
 
@@ -282,6 +288,7 @@ const EditorSurface = <T extends EditorItem>({
       })}
 
       <Moveable
+        ref={moveableRef}
         target={targets}
         draggable
         resizable
