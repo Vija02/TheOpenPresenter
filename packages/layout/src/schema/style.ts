@@ -31,8 +31,6 @@ export const textStyleValidator = z.object({
   lineHeight: z.number(),
   /** Design units. */
   letterSpacing: z.number(),
-  /** Multiplies with the element's own opacity, as nested CSS opacity does. */
-  opacity: z.number(),
   shadows: z.array(shadowValidator),
   /** Glyph outline */
   outline: strokeValidator.nullable(),
@@ -53,6 +51,8 @@ export const spanRoleStyleValidator = textStylePatchValidator
   .extend({
     /** Multiplier of the element's resolved font size. */
     fontScale: z.number().optional(),
+    /** Per-span opacity */
+    opacity: z.number().optional(),
     /** CSS `vertical-align`. Distinct from the block level `valign`. */
     verticalAlign: z.enum(["baseline", "super", "sub"]).optional(),
     /** Design units. */
