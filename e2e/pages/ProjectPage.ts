@@ -1,4 +1,9 @@
-import { type BrowserContext, type Locator, type Page } from "@playwright/test";
+import {
+  type BrowserContext,
+  type FrameLocator,
+  type Locator,
+  type Page,
+} from "@playwright/test";
 
 const pluginsList = [
   "Embed",
@@ -134,6 +139,11 @@ export class ProjectPage {
 
   get previewFrame(): Locator {
     return this.page.getByTitle("Renderer preview");
+  }
+
+  /** The renderer document inside the preview iframe. */
+  get previewFrameContent(): FrameLocator {
+    return this.page.frameLocator('iframe[title="Renderer preview"]');
   }
 
   get previewCloseButton(): Locator {
