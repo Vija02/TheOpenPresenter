@@ -244,6 +244,12 @@ export default async function installHocuspocus(app: Express) {
         console.log(error);
       });
 
+      const earlyCloses: Array<{ code: number; reason: string }> = [];
+      const recordEarlyClose = (code: number, reason: Buffer) => {
+        earlyCloses.push({ code, reason: reason.toString() });
+      };
+      incoming.on("close", recordEarlyClose);
+
       try {
         const dummyRes = new ServerResponse(request);
 
@@ -289,15 +295,28 @@ export default async function installHocuspocus(app: Express) {
         incoming.on("message", (data: RawData) => {
           clientConnection.handleMessage(toUint8Array(data));
         });
+        incoming.off("close", recordEarlyClose);
         incoming.on("close", (code, reason) => {
           clientConnection.handleClose({
             code,
             reason: reason.toString(),
           } as Parameters<typeof clientConnection.handleClose>[0]);
         });
+
+        if (earlyCloses.length > 0) {
+          // Client hung up while we were authenticating.
+          for (const close of earlyCloses) {
+            clientConnection.handleClose(
+              close as Parameters<typeof clientConnection.handleClose>[0],
+            );
+          }
+        } else {
+          incoming.resume();
+        }
       } catch (err) {
         logger.error({ err }, "Error handling WebSocket connection");
         try {
+          incoming.resume();
           incoming.close(4500, "Internal server error");
         } catch {
           incoming.terminate();
@@ -312,6 +331,10 @@ export default async function installHocuspocus(app: Express) {
     head: Buffer,
   ) => {
     webSocketServer.handleUpgrade(req, socket, head, (ws) => {
+      // Pause it and resume it later so that we can be sure handlers are attached
+      // before anything else happens. Otherwise, this becomes a race condition
+      // and cause an infinite loading
+      ws.pause();
       webSocketServer.emit("connection", ws, req);
     });
   };
