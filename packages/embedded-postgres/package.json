@@ -29,7 +29,7 @@
   },
   "devDependencies": {
     "@repo/typescript-config": "*",
-    "@types/node": "^20.0.0",
+    "@types/node": "^24.13.3",
     "@types/node-fetch": "^2.6.11",
     "@types/pg": "^8.6.6",
     "@types/tar": "^6.1.11",

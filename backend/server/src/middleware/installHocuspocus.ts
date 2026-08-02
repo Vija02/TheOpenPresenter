@@ -1,4 +1,4 @@
-import { Server } from "@hocuspocus/server";
+import type { WebSocketLike } from "@hocuspocus/server";
 import type { YState } from "@repo/base-plugin";
 import { DisposableDocumentManager, YjsState } from "@repo/base-plugin/server";
 import { logger } from "@repo/observability";
@@ -6,10 +6,12 @@ import { Express } from "express";
 import { IncomingMessage, ServerResponse } from "http";
 import { Middleware } from "postgraphile";
 import { Duplex } from "stream";
-import WebSocket, { WebSocketServer } from "ws";
+import type { TLSSocket } from "tls";
+import WebSocket, { RawData, WebSocketServer } from "ws";
 import * as Y from "yjs";
 
 import { getUpgradeHandlers, getWebsocketMiddlewares } from "../app";
+import { hocuspocus } from "../hocuspocusInstance";
 import { serverPluginApi } from "../pluginManager";
 import { withUserPgPool } from "../utils/withUserPgPool";
 import { getRootPgPool } from "./installDatabasePools";
@@ -30,7 +32,7 @@ const throttleHeartbeatCanBump = (key: string): boolean => {
 };
 
 export default async function installHocuspocus(app: Express) {
-  Server.configure({
+  hocuspocus.configure({
     name: "Hocuspocus Server",
     onStoreDocument: async (data) => {
       const rootPgPool = getRootPgPool(app);
@@ -93,11 +95,11 @@ export default async function installHocuspocus(app: Express) {
       /**
        * Handle hooks & everything needed for the Yjs State
        */
-      const document = data.instance.documents.get(data.documentName);
-      const state = document?.getMap() as YState;
+      const document = data.document;
+      const state = document.getMap() as YState;
 
       YjsState.handleYjsDocumentLoad({
-        document: document!,
+        document,
         documentName: data.documentName,
         state,
         serverPluginApi,
@@ -112,11 +114,7 @@ export default async function installHocuspocus(app: Express) {
     },
     // Signal heartbeat to screens
     onChange: async (data) => {
-      const ctx = data.context as {
-        session_id?: string | null;
-        screen_guest_session_id?: string | null;
-        screen_id?: string | null;
-      };
+      const ctx = data.context ?? {};
       const rootPgPool = getRootPgPool(app);
 
       // Handle guest
@@ -260,10 +258,42 @@ export default async function installHocuspocus(app: Express) {
           request.session?.screenGuestSession?.id ?? null;
         const screenId = request.session?.screenGuestSession?.screenId ?? null;
 
-        Server.handleConnection(incoming, request, {
-          session_id: sessionId,
-          screen_guest_session_id: screenGuestSessionId,
-          screen_id: screenId,
+        // Since v4, hooks receive a web-standard `Request`/`Headers` instead of
+        // Node's `IncomingMessage`, so we adapt the upgrade request here.
+        const isSecure = (request.socket as TLSSocket).encrypted === true;
+        const url = new URL(
+          request.url ?? "/",
+          `${isSecure ? "https" : "http"}://${request.headers.host ?? "localhost"}`,
+        );
+        const headers = new Headers();
+        for (const [key, value] of Object.entries(request.headers)) {
+          if (Array.isArray(value)) {
+            for (const entry of value) {
+              headers.append(key, entry);
+            }
+          } else if (value !== undefined) {
+            headers.set(key, value);
+          }
+        }
+
+        const clientConnection = hocuspocus.handleConnection(
+          incoming as unknown as WebSocketLike,
+          new Request(url, { headers }),
+          {
+            session_id: sessionId,
+            screen_guest_session_id: screenGuestSessionId,
+            screen_id: screenId,
+          },
+        );
+
+        incoming.on("message", (data: RawData) => {
+          clientConnection.handleMessage(toUint8Array(data));
+        });
+        incoming.on("close", (code, reason) => {
+          clientConnection.handleClose({
+            code,
+            reason: reason.toString(),
+          } as Parameters<typeof clientConnection.handleClose>[0]);
         });
       } catch (err) {
         logger.error({ err }, "Error handling WebSocket connection");
@@ -295,6 +325,16 @@ export default async function installHocuspocus(app: Express) {
     upgrade: hocuspocusUpgradeHandler,
   });
 }
+
+const toUint8Array = (data: RawData): Uint8Array => {
+  if (Array.isArray(data)) {
+    return new Uint8Array(Buffer.concat(data));
+  }
+  if (Buffer.isBuffer(data)) {
+    return new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
+  }
+  return new Uint8Array(data);
+};
 
 const applyMiddleware = async (
   middlewares: Array<Middleware<IncomingMessage, ServerResponse>> = [],

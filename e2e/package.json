@@ -5,7 +5,7 @@
   "devDependencies": {
     "@playwright/test": "^1.60.0",
     "@repo/graphql": "*",
-    "@types/node": "^25.7.0",
+    "@types/node": "^24.13.3",
     "tsx": "^4.7.0"
   },
   "scripts": {

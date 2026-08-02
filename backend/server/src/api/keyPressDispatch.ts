@@ -1,4 +1,3 @@
-import { Server } from "@hocuspocus/server";
 import {
   KeyPressType,
   Scene,
@@ -8,6 +7,7 @@ import {
 } from "@repo/base-plugin";
 import { Doc } from "yjs";
 
+import { hocuspocus } from "../hocuspocusInstance";
 import { serverPluginApi } from "../pluginManager";
 import { ERROR_MESSAGE_OVERRIDES } from "../utils/handleErrors";
 
@@ -29,12 +29,12 @@ export function dispatchKeyPress(
 ): KeyPressDispatchResult {
   const { keyType, projectId, rendererId, organizationId } = input;
 
-  if (!Server.documents.has(projectId)) {
+  if (!hocuspocus.documents.has(projectId)) {
     throw new Error("Project not active");
   }
 
   try {
-    const document = Server.documents.get(projectId);
+    const document = hocuspocus.documents.get(projectId);
     const state = document?.getMap() as YState;
     const traverser = createTraverser<State>(state);
 

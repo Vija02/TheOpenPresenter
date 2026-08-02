@@ -13,7 +13,7 @@
     "dev": "concurrently \"dts watch --noClean\" \"tsc --watch --project tsconfig-types.json\""
   },
   "dependencies": {
-    "@hocuspocus/provider": "^2.14.0",
+    "@hocuspocus/provider": "4.4.0",
     "@repo/graphql": "*",
     "@tanstack/react-query": "^5.62.3",
     "@types/ua-parser-js": "^0.7.39",

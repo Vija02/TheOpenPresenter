@@ -4715,44 +4715,42 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@hocuspocus/common@npm:^2.14.0":
-  version: 2.14.0
-  resolution: "@hocuspocus/common@npm:2.14.0"
+"@hocuspocus/common@npm:^4.4.0":
+  version: 4.4.0
+  resolution: "@hocuspocus/common@npm:4.4.0"
   dependencies:
     lib0: "npm:^0.2.87"
-  checksum: 10c0/bef9685684b2223de71773efb5c70890a58fa7d3cc4ec65f94289cbb02555630b0d0b7d4f77da9f7b7c5191321e229e658abae07c409eee8e8dfad7060bb0b6e
+  checksum: 10c0/2cb5c0ac31262f6bb394b7c663c303958b37ef1191e02f0c9286614b0fe0103a4f0f3963ef9626a3f0cc7ae4ce2c660b9320861251f17c7669cf24c6c2740668
   languageName: node
   linkType: hard
 
-"@hocuspocus/provider@npm:^2.14.0":
-  version: 2.14.0
-  resolution: "@hocuspocus/provider@npm:2.14.0"
+"@hocuspocus/provider@npm:4.4.0":
+  version: 4.4.0
+  resolution: "@hocuspocus/provider@npm:4.4.0"
   dependencies:
-    "@hocuspocus/common": "npm:^2.14.0"
+    "@hocuspocus/common": "npm:^4.4.0"
     "@lifeomic/attempt": "npm:^3.0.2"
     lib0: "npm:^0.2.87"
-    ws: "npm:^8.17.1"
   peerDependencies:
     y-protocols: ^1.0.6
     yjs: ^13.6.8
-  checksum: 10c0/0561994bab472b5a71f1f1d8ed9b2eaaf69f51fc4645b5f3c487bed735c1124755112b9af60c2ce5593b98917608162d3cda19de10a0e990abdd315f2fb43e9c
+  checksum: 10c0/d24a69c1b97e341677db3717ac11096aa3e9edfbe6045431992cf6316accca157181f17356144218b0add2c5c22bbd1aaed5e30ac8adf4672f045a5ae8104489
   languageName: node
   linkType: hard
 
-"@hocuspocus/server@npm:2.14.0":
-  version: 2.14.0
-  resolution: "@hocuspocus/server@npm:2.14.0"
+"@hocuspocus/server@npm:4.4.0":
+  version: 4.4.0
+  resolution: "@hocuspocus/server@npm:4.4.0"
   dependencies:
-    "@hocuspocus/common": "npm:^2.14.0"
-    async-lock: "npm:^1.3.1"
+    "@hocuspocus/common": "npm:^4.4.0"
+    async-mutex: "npm:^0.5.0"
+    crossws: "npm:^0.4.4"
     kleur: "npm:^4.1.4"
     lib0: "npm:^0.2.47"
-    uuid: "npm:^10.0.0"
-    ws: "npm:^8.5.0"
   peerDependencies:
     y-protocols: ^1.0.6
     yjs: ^13.6.8
-  checksum: 10c0/5b073553610a08bc094fdfa236ab8f60e5692840d619665c3e73b7577cd8a94a74cc6c573f5d483d5b9b439560728fd99e9fa90a03ad45ce282c6163d0b0753b
+  checksum: 10c0/8260a4ab845980f47023d7d594f72c3e4b11daa30071da40623e28f02477c5514e5f3c62098c14ce958d66257cda91561dd965cf1b11f0ff3c3b62793c51474f
   languageName: node
   linkType: hard
 
@@ -9480,7 +9478,7 @@ __metadata:
   dependencies:
     "@microsoft/api-extractor": "npm:^7.49.2"
     "@repo/typescript-config": "npm:*"
-    "@types/node": "npm:^22.3.0"
+    "@types/node": "npm:^24.13.3"
     dotenv: "npm:^16.4.7"
     tsup: "npm:^8.3.6"
     typescript: "npm:5.9.3"
@@ -9507,7 +9505,7 @@ __metadata:
   dependencies:
     "@playwright/test": "npm:^1.60.0"
     "@repo/graphql": "npm:*"
-    "@types/node": "npm:^25.7.0"
+    "@types/node": "npm:^24.13.3"
     tsx: "npm:^4.7.0"
   languageName: unknown
   linkType: soft
@@ -9517,7 +9515,7 @@ __metadata:
   resolution: "@repo/embedded-postgres@workspace:packages/embedded-postgres"
   dependencies:
     "@repo/typescript-config": "npm:*"
-    "@types/node": "npm:^20.0.0"
+    "@types/node": "npm:^24.13.3"
     "@types/node-fetch": "npm:^2.6.11"
     "@types/pg": "npm:^8.6.6"
     "@types/tar": "npm:^6.1.11"
@@ -9589,7 +9587,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@repo/lib@workspace:packages/lib"
   dependencies:
-    "@hocuspocus/server": "npm:2.14.0"
+    "@hocuspocus/server": "npm:4.4.0"
     "@microsoft/api-extractor": "npm:^7.49.2"
     "@repo/graphql": "npm:*"
     "@repo/typescript-config": "npm:*"
@@ -10291,7 +10289,7 @@ __metadata:
     "@graphile-contrib/pg-simplify-inflector": "npm:^6.1.0"
     "@graphile/pg-pubsub": "npm:^4.14.0"
     "@graphile/pro": "npm:^1.0.4"
-    "@hocuspocus/server": "npm:2.14.0"
+    "@hocuspocus/server": "npm:4.4.0"
     "@repo/backend-shared": "npm:*"
     "@repo/base-plugin": "npm:*"
     "@repo/config": "npm:*"
@@ -10362,7 +10360,7 @@ __metadata:
     valtio-yjs: "npm:^0.6.0"
     vite-express: "npm:^0.21.1"
     vitest: "npm:^2.1.8"
-    ws: "npm:^8.18.0"
+    ws: "npm:^8.21.1"
     yjs: "npm:13.6.26"
     zod: "npm:^3.25.17"
   languageName: unknown
@@ -10372,7 +10370,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@repo/shared@workspace:apps/shared"
   dependencies:
-    "@hocuspocus/provider": "npm:^2.14.0"
+    "@hocuspocus/provider": "npm:4.4.0"
     "@repo/base-plugin": "npm:*"
     "@repo/eslint-config": "npm:*"
     "@repo/graphql": "npm:*"
@@ -10418,7 +10416,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@repo/test@workspace:packages/test"
   dependencies:
-    "@hocuspocus/server": "npm:2.14.0"
+    "@hocuspocus/server": "npm:4.4.0"
     "@microsoft/api-extractor": "npm:^7.49.2"
     "@repo/base-plugin": "npm:*"
     "@repo/typescript-config": "npm:*"
@@ -13623,7 +13621,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:*, @types/node@npm:>=13.7.0, @types/node@npm:^22.3.0":
+"@types/node@npm:*, @types/node@npm:>=13.7.0":
   version: 22.12.0
   resolution: "@types/node@npm:22.12.0"
   dependencies:
@@ -13646,15 +13644,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:^20.0.0":
-  version: 20.19.9
-  resolution: "@types/node@npm:20.19.9"
-  dependencies:
-    undici-types: "npm:~6.21.0"
-  checksum: 10c0/c6738131f1698258a5ac1e0185e4fc56977f7f566cd0ee11167f93f2339478470257bd82c5e1908a936a204e0ad7996d741356a1a07c04997a236161ea23a874
-  languageName: node
-  linkType: hard
-
 "@types/node@npm:^20.5.7":
   version: 20.17.14
   resolution: "@types/node@npm:20.17.14"
@@ -13673,21 +13662,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:^24.9.2":
+"@types/node@npm:^24.13.3, @types/node@npm:^24.9.2":
   version: 24.13.3
   resolution: "@types/node@npm:24.13.3"
   dependencies:
     undici-types: "npm:~7.18.0"
   checksum: 10c0/a5bc08f49b9581dcdca90e02cd77197a3c799840807664942e5cd5161a553d4d2ae8064f7e3294410d748d7d098b5c1848be7fa50c06f29c4193ab16be4e59eb
-  languageName: node
-  linkType: hard
-
-"@types/node@npm:^25.7.0":
-  version: 25.7.0
-  resolution: "@types/node@npm:25.7.0"
-  dependencies:
-    undici-types: "npm:~7.21.0"
-  checksum: 10c0/47ec7eaca154c36ad6d1ac0270e6e254eedf20b9dc49afe3bc76e4f7eba29ceac705f8903b162aeaf40e3941101ffe76ffb374989359ea3ef8c8509d8b443f55
   languageName: node
   linkType: hard
 
@@ -15719,10 +15699,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"async-lock@npm:^1.3.1":
-  version: 1.4.1
-  resolution: "async-lock@npm:1.4.1"
-  checksum: 10c0/f696991c7d894af1dc91abc81cc4f14b3785190a35afb1646d8ab91138238d55cabd83bfdd56c42663a008d72b3dc39493ff83797e550effc577d1ccbde254af
+"async-mutex@npm:^0.5.0":
+  version: 0.5.0
+  resolution: "async-mutex@npm:0.5.0"
+  dependencies:
+    tslib: "npm:^2.4.0"
+  checksum: 10c0/9096e6ad6b674c894d8ddd5aa4c512b09bb05931b8746ebd634952b05685608b2b0820ed5c406e6569919ff5fe237ab3c491e6f2887d6da6b6ba906db3ee9c32
   languageName: node
   linkType: hard
 
@@ -17628,6 +17610,18 @@ __metadata:
   dependencies:
     uncrypto: "npm:^0.1.3"
   checksum: 10c0/9e873546f0806606c4f775219f6811768fc3b3b0765ca8230722e849058ad098318af006e1faa39a8008c03009c37c519f6bccad41b0d78586237585c75fb38b
+  languageName: node
+  linkType: hard
+
+"crossws@npm:^0.4.4":
+  version: 0.4.10
+  resolution: "crossws@npm:0.4.10"
+  peerDependencies:
+    srvx: ">=0.11.5"
+  peerDependenciesMeta:
+    srvx:
+      optional: true
+  checksum: 10c0/dae29657672f4d9fc964150ae4ce7c31fd065885812c86c00ee29a2843813c6f5aaf9556d91dc75fecf9c606771b709f2d1b9ed26c7fa44d374b2c23fba84114
   languageName: node
   linkType: hard
 
@@ -33847,13 +33841,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"undici-types@npm:~6.21.0":
-  version: 6.21.0
-  resolution: "undici-types@npm:6.21.0"
-  checksum: 10c0/c01ed51829b10aa72fc3ce64b747f8e74ae9b60eafa19a7b46ef624403508a54c526ffab06a14a26b3120d055e1104d7abe7c9017e83ced038ea5cf52f8d5e04
-  languageName: node
-  linkType: hard
-
 "undici-types@npm:~7.16.0":
   version: 7.16.0
   resolution: "undici-types@npm:7.16.0"
@@ -33865,13 +33852,6 @@ __metadata:
   version: 7.18.2
   resolution: "undici-types@npm:7.18.2"
   checksum: 10c0/85a79189113a238959d7a647368e4f7c5559c3a404ebdb8fc4488145ce9426fcd82252a844a302798dfc0e37e6fb178ff481ed03bc4caf634c5757d9ef43521d
-  languageName: node
-  linkType: hard
-
-"undici-types@npm:~7.21.0":
-  version: 7.21.0
-  resolution: "undici-types@npm:7.21.0"
-  checksum: 10c0/c3b4ae5f066c398acb1962505b56214ecd72843f7d7827fcc2df7a48a63d1639d3608c580ac09f836253d21fa7ba8f1a04440569ed9d332474ad01b8a010db87
   languageName: node
   linkType: hard
 
@@ -35266,7 +35246,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ws@npm:^8.11.0, ws@npm:^8.17.1, ws@npm:^8.18.0, ws@npm:^8.5.0":
+"ws@npm:^8.11.0, ws@npm:^8.17.1":
   version: 8.18.0
   resolution: "ws@npm:8.18.0"
   peerDependencies:
@@ -35293,6 +35273,21 @@ __metadata:
     utf-8-validate:
       optional: true
   checksum: 10c0/4b50f67931b8c6943c893f59c524f0e4905bbd183016cfb0f2b8653aa7f28dad4e456b9d99d285bbb67cca4fedd9ce90dfdfaa82b898a11414ebd66ee99141e4
+  languageName: node
+  linkType: hard
+
+"ws@npm:^8.21.1":
+  version: 8.21.1
+  resolution: "ws@npm:8.21.1"
+  peerDependencies:
+    bufferutil: ^4.0.1
+    utf-8-validate: ">=5.0.2"
+  peerDependenciesMeta:
+    bufferutil:
+      optional: true
+    utf-8-validate:
+      optional: true
+  checksum: 10c0/c4c6f1d95f6d465262de2037c57c715725d67e078dd49420ede4e19115668aba159cb64d85c5e89c06eb2826be599e62e5095860ad6cc54ff42e8bd7684e1db8
   languageName: node
   linkType: hard
 

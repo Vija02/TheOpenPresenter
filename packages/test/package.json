@@ -19,7 +19,7 @@
     "dev": "tsup src/index.ts --format esm,cjs --experimental-dts --watch"
   },
   "dependencies": {
-    "@hocuspocus/server": "2.14.0",
+    "@hocuspocus/server": "4.4.0",
     "@repo/base-plugin": "*",
     "@trpc/server": "^11.1.2",
     "fast-deep-equal": "^3.1.3",
