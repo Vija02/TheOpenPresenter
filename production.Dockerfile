@@ -296,9 +296,17 @@ RUN echo -e "NODE_ENV=$NODE_ENV\nROOT_URL=$ROOT_URL" > /app/.env
 FROM node:24.15.0-alpine3.23
 
 # Install dumbpipe
-RUN apk add --no-cache curl && \
-    curl -sL https://www.dumbpipe.dev/install.sh | sh && \
-    mv dumbpipe /usr/local/bin/ && \
+ARG DUMBPIPE_VERSION=v0.39.0
+RUN set -eu; \
+    apk add --no-cache curl; \
+    curl -fsSL --retry 5 --retry-delay 3 --retry-all-errors \
+      "https://github.com/n0-computer/dumbpipe/releases/download/${DUMBPIPE_VERSION}/dumbpipe-${DUMBPIPE_VERSION}-linux-x86_64.tar.gz" \
+      -o /tmp/dumbpipe.tar.gz; \
+    mkdir -p /tmp/dumbpipe-extract; \
+    tar xzf /tmp/dumbpipe.tar.gz -C /tmp/dumbpipe-extract; \
+    mv /tmp/dumbpipe-extract/dumbpipe /usr/local/bin/dumbpipe; \
+    chmod 755 /usr/local/bin/dumbpipe; \
+    rm -rf /tmp/dumbpipe.tar.gz /tmp/dumbpipe-extract; \
     apk del curl
 
 EXPOSE $PORT
