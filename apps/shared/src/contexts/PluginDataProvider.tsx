@@ -149,14 +149,20 @@ const initializeHocuspocusProvider = (projectId: string) => {
       reject(new Error("Unable to connect: Timeout reached"));
     }, 60000);
 
+    const wsUrl = new URL(
+      `${window.location.origin.replace(/^http/, "ws")}/wlink`,
+    );
+    for (const [key, value] of Object.entries(
+      appData.getProxyConfig().headers,
+    )) {
+      wsUrl.searchParams.set(key, value);
+    }
+
     const provider = new HocuspocusProvider({
-      url: `${window.location.origin.replace(/^http/, "ws")}/wlink`,
+      url: wsUrl.toString(),
       name: projectId,
       // Here only to force authentication
       token: " ",
-      parameters: {
-        ...appData.getProxyConfig().headers,
-      },
       onAuthenticationFailed: () => {
         reject(new Error("Authentication Failed"));
       },

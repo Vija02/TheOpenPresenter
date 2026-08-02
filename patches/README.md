@@ -2,10 +2,6 @@
 
 We keep a list of the changes here to keep track of what we did
 
-## @hocuspocus/server
-
-Patched so that we can push changes from the server. Previously, these changes would be ignored.
-
 ## embedded-postgres
 
 Stop chmod from running in windows for our Tauri build. Since we don't have access to do that under Program Files.
