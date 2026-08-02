@@ -26,15 +26,21 @@ const Landing = () => {
       }}
     >
       <p style={{ fontWeight: 200 }}>Waiting for input...</p>
-      <QRCode
+      <div
         style={{
-          height: "auto",
-          maxHeight: 256,
+          width: "min(256px, 60vmin)",
+          aspectRatio: "1 / 1",
+          flexShrink: 0,
           padding: 10,
           background: "white",
+          boxSizing: "border-box",
         }}
-        value={qrcodeUrl}
-      />
+      >
+        <QRCode
+          style={{ display: "block", width: "100%", height: "100%" }}
+          value={qrcodeUrl}
+        />
+      </div>
     </div>
   );
 };
