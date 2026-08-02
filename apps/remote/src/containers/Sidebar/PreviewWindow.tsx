@@ -122,6 +122,7 @@ const PreviewWindow = () => {
 
   return createPortal(
     <div
+      data-testid="preview-window"
       className="fixed z-[90] overflow-hidden rounded-sm border border-black/20 bg-black shadow-lg"
       style={{ left: position.x, top: position.y, width }}
     >
@@ -130,6 +131,7 @@ const PreviewWindow = () => {
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerUp}
+        data-testid="preview-window-header"
         className={`flex items-center justify-between gap-2 bg-neutral-800 px-2 text-white select-none ${
           isDragging ? "cursor-grabbing" : "cursor-grab"
         }`}
