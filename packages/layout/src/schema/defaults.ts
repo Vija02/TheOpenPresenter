@@ -28,7 +28,6 @@ export const defaultTextStyle: TextStyle = {
   valign: "center",
   lineHeight: 1.15,
   letterSpacing: 0,
-  opacity: 1,
   shadows: [],
   outline: null,
 };

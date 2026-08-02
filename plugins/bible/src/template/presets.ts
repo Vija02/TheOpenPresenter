@@ -121,6 +121,7 @@ export const bibleDoc = ({
         content: "{{reference}} ({{translation}})",
         hidden: !showReference,
         hideWhenEmpty: true,
+        opacity: referenceOpacity,
         style: {
           fontFamily,
           fontSize: referenceFontSize,
@@ -128,7 +129,6 @@ export const bibleDoc = ({
           color,
           align: referenceAlign ?? align,
           valign: "center",
-          opacity: referenceOpacity,
           shadows: shadows.slice(0, 1),
         },
       }),

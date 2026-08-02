@@ -21,9 +21,7 @@ export const placementToCss = (
   placement: ElementPlacement,
   rect: Rect,
 ): CSSProperties =>
-  placement === "fill"
-    ? { position: "absolute", inset: 0 }
-    : rectToCss(rect);
+  placement === "fill" ? { position: "absolute", inset: 0 } : rectToCss(rect);
 
 export const paintToCss = (paint: Paint): string => {
   switch (paint.type) {
@@ -151,7 +149,6 @@ export const textStyleToCss = (
   lineHeight: style.lineHeight,
   letterSpacing:
     style.letterSpacing !== 0 ? `${toPx(style.letterSpacing, m)}px` : undefined,
-  opacity: style.opacity < 1 ? style.opacity : undefined,
   textShadow: textShadowToCss(style.shadows, m),
   WebkitTextStroke: style.outline
     ? `${toPx(style.outline.width, m)}px ${paintToCss(style.outline.paint)}`
