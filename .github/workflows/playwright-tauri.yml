@@ -46,9 +46,18 @@ jobs:
             xvfb
 
       - name: Install dumbpipe
+        env:
+          DUMBPIPE_VERSION: v0.39.0
         run: |
-          curl -sL https://www.dumbpipe.dev/install.sh | sh
-          sudo mv dumbpipe /usr/local/bin/
+          set -euo pipefail
+          url="https://github.com/n0-computer/dumbpipe/releases/download/${DUMBPIPE_VERSION}/dumbpipe-${DUMBPIPE_VERSION}-linux-x86_64.tar.gz"
+          curl -fsSL --retry 5 --retry-delay 3 --retry-all-errors "$url" -o /tmp/dumbpipe.tar.gz
+          mkdir -p /tmp/dumbpipe-extract
+          tar xzf /tmp/dumbpipe.tar.gz -C /tmp/dumbpipe-extract
+          bin=$(find /tmp/dumbpipe-extract -type f -name dumbpipe | head -1)
+          test -n "$bin" || { echo "dumbpipe binary not found in archive"; exit 1; }
+          sudo install -m 755 "$bin" /usr/local/bin/dumbpipe
+          dumbpipe --help >/dev/null
 
       - name: Install cloudflared
         run: |
