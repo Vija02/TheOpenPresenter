@@ -141,12 +141,21 @@ function PluginDataProviderInner({
 
 const initializeHocuspocusProvider = (projectId: string) => {
   return new Promise<HocuspocusProvider>((resolve, reject) => {
+    let provider: HocuspocusProvider | null = null;
+    let timeout: ReturnType<typeof setTimeout> | undefined;
+
+    const fail = (error: Error) => {
+      clearTimeout(timeout);
+      provider?.destroy();
+      reject(error);
+    };
+
     // Set a timeout to reject if we can't connect
     // Due to how the provider works, some error could go uncaught
     // So this is an effort to at least show an error if that happens
     // https://github.com/ueberdosis/hocuspocus/issues/762
-    const timeout = setTimeout(() => {
-      reject(new Error("Unable to connect: Timeout reached"));
+    timeout = setTimeout(() => {
+      fail(new Error("Unable to connect: Timeout reached"));
     }, 60000);
 
     const wsUrl = new URL(
@@ -158,22 +167,22 @@ const initializeHocuspocusProvider = (projectId: string) => {
       wsUrl.searchParams.set(key, value);
     }
 
-    const provider = new HocuspocusProvider({
+    provider = new HocuspocusProvider({
       url: wsUrl.toString(),
       name: projectId,
       // Here only to force authentication
       token: " ",
       onAuthenticationFailed: () => {
-        reject(new Error("Authentication Failed"));
+        fail(new Error("Authentication Failed"));
       },
       onClose: (data) => {
         if (data.event.code === 4401) {
-          reject(new Error("Authentication Failed"));
+          fail(new Error("Authentication Failed"));
         }
       },
       onSynced: () => {
         clearTimeout(timeout);
-        resolve(provider);
+        resolve(provider!);
       },
     });
   });
@@ -199,7 +208,8 @@ export const PluginDataProvider = ({
   } = useQuery({
     queryKey: ["provider", projectId],
     queryFn: () => initializeHocuspocusProvider(projectId),
-    retry: (_failureCount, err) =>
+    retry: (failureCount, err) =>
+      failureCount < 3 &&
       !/Authentication Failed/i.test((err as Error)?.message ?? ""),
   });
   const { errors } = useError();
