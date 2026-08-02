@@ -79,4 +79,115 @@ export class ProjectPage {
   get noScreensSetUpLink(): Locator {
     return this.page.getByRole("link", { name: "Set up a screen" });
   }
+
+  // --- Present from phone ---
+
+  get presentFromPhoneOption(): Locator {
+    return this.page.getByRole("button", { name: "Present from phone" });
+  }
+
+  /** Mirrors the QR target so we don't have to decode the image. */
+  get phoneQrUrl(): Locator {
+    return this.page.getByTestId("phone-present-qr-url");
+  }
+
+  get presentOnThisScreenButton(): Locator {
+    return this.page.getByRole("button", { name: "Present on this screen" });
+  }
+
+  /** The renderer iframe inside the fullscreen-ish overlay. */
+  get presentOverlayFrame(): Locator {
+    return this.page.getByTitle("Presentation");
+  }
+
+  get stopPresentingOverlayButton(): Locator {
+    // Exact, so it doesn't also match "Stop presenting to this screen".
+    return this.page.getByRole("button", {
+      name: "Stop presenting",
+      exact: true,
+    });
+  }
+
+  async openPresentFromPhone() {
+    await this.openPresentMenu();
+    await this.presentFromPhoneOption.click();
+    await this.phoneQrUrl.waitFor({ state: "attached" });
+  }
+
+  // --- Preview window ---
+
+  get previewToggleButton(): Locator {
+    // Both sidebars (web + mobile) are always mounted and hidden with CSS, so
+    // a CSS locator would match two buttons. Role locators skip anything
+    // display:none. `exact` matters too: name matching is substring by
+    // default, which would also hit "Close preview" once the window is open.
+    return this.page.getByRole("button", { name: "Preview", exact: true });
+  }
+
+  get previewWindow(): Locator {
+    return this.page.getByTestId("preview-window");
+  }
+
+  get previewWindowHeader(): Locator {
+    return this.page.getByTestId("preview-window-header");
+  }
+
+  get previewFrame(): Locator {
+    return this.page.getByTitle("Renderer preview");
+  }
+
+  get previewCloseButton(): Locator {
+    return this.page.getByRole("button", { name: "Close preview" });
+  }
+
+  get previewMuteButton(): Locator {
+    return this.page.getByRole("button", { name: /^(Mute|Unmute)$/ });
+  }
+
+  get previewResizeGrip(): Locator {
+    return this.page.getByTitle("Resize");
+  }
+
+  async openPreviewWindow() {
+    await this.previewToggleButton.click();
+    await this.previewWindow.waitFor();
+  }
+
+  /** Bounding box of the floating window, failing loudly if it isn't laid out. */
+  async previewWindowBox() {
+    const box = await this.previewWindow.boundingBox();
+    if (!box) throw new Error("Preview window has no bounding box");
+    return box;
+  }
+
+  /** Drags the window by its header using real pointer events. */
+  async dragPreviewWindowBy(dx: number, dy: number) {
+    const header = await this.previewWindowHeader.boundingBox();
+    if (!header) throw new Error("Preview window header has no bounding box");
+
+    const startX = header.x + header.width / 2;
+    const startY = header.y + header.height / 2;
+
+    await this.page.mouse.move(startX, startY);
+    await this.page.mouse.down();
+    // Intermediate move: a single jump can be treated as no drag at all.
+    await this.page.mouse.move(startX + dx / 2, startY + dy / 2);
+    await this.page.mouse.move(startX + dx, startY + dy);
+    await this.page.mouse.up();
+  }
+
+  /** Drags the bottom-right grip, which resizes by width at a locked 16:9. */
+  async resizePreviewWindowBy(dx: number) {
+    const grip = await this.previewResizeGrip.boundingBox();
+    if (!grip) throw new Error("Resize grip has no bounding box");
+
+    const startX = grip.x + grip.width / 2;
+    const startY = grip.y + grip.height / 2;
+
+    await this.page.mouse.move(startX, startY);
+    await this.page.mouse.down();
+    await this.page.mouse.move(startX + dx / 2, startY);
+    await this.page.mouse.move(startX + dx, startY);
+    await this.page.mouse.up();
+  }
 }
