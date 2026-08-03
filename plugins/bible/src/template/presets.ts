@@ -1,4 +1,5 @@
 import {
+  DEFAULT_FONT_STACK,
   DataBinding,
   HorizontalAlignment,
   LayoutDoc,
@@ -82,7 +83,7 @@ export const bibleDoc = ({
   reference,
   background = "#000000",
   color = "#ffffff",
-  fontFamily = "Arial, sans-serif",
+  fontFamily = DEFAULT_FONT_STACK,
   fontWeight = 600,
   align = "center",
   shadows = softShadows,

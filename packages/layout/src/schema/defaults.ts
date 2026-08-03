@@ -1,3 +1,4 @@
+import { DEFAULT_FONT_STACK } from "../fonts/registry";
 import {
   AspectRatio,
   LAYOUT_DOC_VERSION,
@@ -19,7 +20,7 @@ import { SpanRoleStyle, TextFitMode, TextStyle, TextStylePatch } from "./style";
 export const DEFAULT_ASPECT_RATIO: AspectRatio = { width: 16, height: 9 };
 
 export const defaultTextStyle: TextStyle = {
-  fontFamily: "Arial, sans-serif",
+  fontFamily: DEFAULT_FONT_STACK,
   fontSize: 6,
   fontWeight: 600,
   fontStyle: "normal",

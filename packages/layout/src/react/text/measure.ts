@@ -2,6 +2,7 @@ import { hash } from "ohash";
 
 import { SpanRoleStyle } from "../../schema/style";
 import { Span } from "../../template/spans";
+import { getFontGeneration } from "./fontStatus";
 
 export type MeasureSpec = {
   /** Markup mirroring what will actually render, so wrapping matches. */
@@ -113,7 +114,12 @@ export const fitFontSize = (
     return minFontSize;
   }
 
-  const key = hash({ spec, minFontSize, maxFontSize });
+  const key = hash({
+    spec,
+    minFontSize,
+    maxFontSize,
+    fonts: getFontGeneration(),
+  });
   const cached = cache.get(key);
   if (cached !== undefined) return cached;
 

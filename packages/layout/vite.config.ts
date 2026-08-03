@@ -33,10 +33,18 @@ export default defineConfig({
       },
       formats: ["es", "cjs"],
     },
+    // Font files must stay real files
+    assetsInlineLimit: (filePath) =>
+      /\.(woff2?|ttf|otf|eot)$/i.test(filePath) ? false : undefined,
     rollupOptions: {
-      // Keep CSS names stable (react.css / editor.css) so package exports can
-      // point at them; the default adds a content hash.
-      output: { assetFileNames: "[name].[ext]" },
+      output: {
+        assetFileNames: (assetInfo) => {
+          const name = assetInfo.names?.[0] ?? assetInfo.name ?? "";
+          return name.endsWith(".css")
+            ? "[name].[ext]"
+            : "assets/[name]-[hash][extname]";
+        },
+      },
       external: (id) => {
         if (
           builtinModules.includes(id) ||
