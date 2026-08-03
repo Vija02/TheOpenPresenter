@@ -25,6 +25,38 @@ export const extractTokenKeys = (template: string): string[] => {
   return keys;
 };
 
+export type TemplateSegment =
+  | { type: "text"; text: string }
+  | { type: "token"; text: string; key: string };
+
+/**
+ * Split a template into literal and token runs, for editor highlighting.
+ */
+export const splitTemplate = (template: string): TemplateSegment[] => {
+  const out: TemplateSegment[] = [];
+  let cursor = 0;
+
+  for (const match of template.matchAll(TOKEN_PATTERN)) {
+    const start = match.index;
+    const whole = match[0];
+    const key = match[1];
+    if (start === undefined || whole === undefined || key === undefined)
+      continue;
+
+    if (start > cursor) {
+      out.push({ type: "text", text: template.slice(cursor, start) });
+    }
+    out.push({ type: "token", text: whole, key });
+    cursor = start + whole.length;
+  }
+
+  if (cursor < template.length) {
+    out.push({ type: "text", text: template.slice(cursor) });
+  }
+
+  return out;
+};
+
 const scalarToString = (value: TokenValue): string => {
   if (value === null || value === undefined) return "";
   if (isSpanArray(value)) return value.map((s) => s.text).join("");
