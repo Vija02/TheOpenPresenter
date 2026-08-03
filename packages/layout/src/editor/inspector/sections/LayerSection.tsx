@@ -42,5 +42,11 @@ export const LayerSection = ({ doc, element, onChange }: SectionProps) => (
       checked={element.hidden}
       onChange={(v) => onChange(patchElement(doc, element.id, { hidden: v }))}
     />
+
+    <CheckField
+      label="Locked"
+      checked={element.locked}
+      onChange={(v) => onChange(patchElement(doc, element.id, { locked: v }))}
+    />
   </Section>
 );
