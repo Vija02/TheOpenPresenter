@@ -51,19 +51,22 @@ export const TypographySection = ({
             label:
               m === "declared"
                 ? "Fixed size"
-                : m === "shrink"
-                  ? "Shrink (no wrap)"
-                  : "Wrap and fit",
+                : m === "shrinkToFit"
+                  ? "Shrink to fit"
+                  : m === "fitNoWrap"
+                    ? "Fit (no wrap)"
+                    : "Wrap and fit",
           }))}
         />
       </Row>
 
       {/*
-        Only `declared` reads style.fontSize; `shrink` and `wrap` derive it by
-        measurement. Showing the control in those modes would be a dead knob.
+        `fitNoWrap` and `wrap` derive the size by measurement, so it would
+        be a dead knob. `declared` uses it verbatim; `shrinkToFit` uses it as a
+        ceiling, hence the different label.
       */}
-      {element.fit === "declared" && (
-        <Row label="Size">
+      {(element.fit === "declared" || element.fit === "shrinkToFit") && (
+        <Row label={element.fit === "shrinkToFit" ? "Max size" : "Size"}>
           <NumberField
             value={s.fontSize}
             min={0.5}

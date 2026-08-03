@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef } from "react";
 
+import { toPx } from "../geometry/scale";
+import { useStage } from "../react/StageContext";
 import { ElementView } from "../react/elements/ElementView";
 import { fitFontSize, spansToHtml } from "../react/text/measure";
 import { ResolvedTextElement } from "../template/resolve";
@@ -33,6 +35,7 @@ export const TextEditOverlay = ({
   onCommit,
   onCancel,
 }: TextEditOverlayProps) => {
+  const metrics = useStage();
   const ref = useRef<HTMLDivElement>(null);
   const hostRef = useRef<HTMLElement | null>(null);
 
@@ -68,16 +71,22 @@ export const TextEditOverlay = ({
     // units and already resolved to px by the renderer's own styling.
     const letterSpacing = parseFloat(getComputedStyle(host).letterSpacing);
 
-    sized.style.fontSize = `${fitFontSize({
-      html: spansToHtml([{ text: host.innerText, role: null }], null),
-      width: rect.width,
-      height: rect.height,
-      fontFamily: element.style.fontFamily,
-      fontWeight: element.style.fontWeight,
-      fontStyle: element.style.fontStyle,
-      lineHeight: element.style.lineHeight,
-      letterSpacing: Number.isFinite(letterSpacing) ? letterSpacing : 0,
-    })}px`;
+    sized.style.fontSize = `${fitFontSize(
+      {
+        html: spansToHtml([{ text: host.innerText, role: null }], null),
+        width: rect.width,
+        height: rect.height,
+        fontFamily: element.style.fontFamily,
+        fontWeight: element.style.fontWeight,
+        fontStyle: element.style.fontStyle,
+        lineHeight: element.style.lineHeight,
+        letterSpacing: Number.isFinite(letterSpacing) ? letterSpacing : 0,
+        noWrap: element.fit === "fitNoWrap",
+      },
+      element.fit === "shrinkToFit"
+        ? { maxFontSize: toPx(element.style.fontSize, metrics) }
+        : undefined,
+    )}px`;
   };
 
   useEffect(() => {

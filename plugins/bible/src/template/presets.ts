@@ -38,7 +38,9 @@ export const softShadows: Shadow[] = [
   shadow(0.5, "rgba(0,0,0,0.6)"),
 ];
 
-/** Design units. The reference is a caption by default, a heading when big. */
+/** Design units — 1 unit is 1% of slide width, so 6 is ~115px on a 1920px slide */
+const BODY_FONT_SIZE = 6;
+/** The reference is a caption by default, a heading when big. */
 const REFERENCE_FONT_SIZE = 2.8;
 const BIG_REFERENCE_FONT_SIZE = 6;
 
@@ -69,6 +71,7 @@ export type BibleDocOptions = {
   fontFamily?: string;
   fontWeight?: number;
   align?: HorizontalAlignment;
+  bodyFontSize?: number;
   shadows?: Shadow[];
   showReference?: boolean;
   referenceAlign?: HorizontalAlignment;
@@ -86,6 +89,7 @@ export const bibleDoc = ({
   fontFamily = DEFAULT_FONT_STACK,
   fontWeight = 600,
   align = "center",
+  bodyFontSize = BODY_FONT_SIZE,
   shadows = softShadows,
   showReference = true,
   referenceAlign,
@@ -101,10 +105,11 @@ export const bibleDoc = ({
         id: BODY_ELEMENT_ID,
         name: "Verse text",
         rect: body,
-        fit: "wrap",
+        fit: "shrinkToFit",
         content: "{{verses}}",
         style: {
           fontFamily,
+          fontSize: bodyFontSize,
           fontWeight,
           color,
           align,
@@ -118,7 +123,7 @@ export const bibleDoc = ({
         id: REFERENCE_ELEMENT_ID,
         name: "Reference",
         rect: reference,
-        fit: "declared",
+        fit: "shrinkToFit",
         content: "{{reference}} ({{translation}})",
         hidden: !showReference,
         hideWhenEmpty: true,
