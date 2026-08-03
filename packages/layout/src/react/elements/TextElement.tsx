@@ -52,18 +52,26 @@ export const TextElementView = ({
     getServerFontGeneration,
   );
 
+  const noWrap = element.fit === "fitNoWrap";
+
   const fontSize = useMemo(() => {
     if (element.fit === "declared") return toPx(style.fontSize, metrics);
-    return fitFontSize({
-      html: spansToHtml(spans, spanRoles),
-      width: box.width,
-      height: box.height,
-      fontFamily: style.fontFamily,
-      fontWeight: style.fontWeight,
-      fontStyle: style.fontStyle,
-      lineHeight: style.lineHeight,
-      letterSpacing: toPx(style.letterSpacing, metrics),
-    });
+    return fitFontSize(
+      {
+        html: spansToHtml(spans, spanRoles),
+        width: box.width,
+        height: box.height,
+        fontFamily: style.fontFamily,
+        fontWeight: style.fontWeight,
+        fontStyle: style.fontStyle,
+        lineHeight: style.lineHeight,
+        letterSpacing: toPx(style.letterSpacing, metrics),
+        noWrap,
+      },
+      element.fit === "shrinkToFit"
+        ? { maxFontSize: toPx(style.fontSize, metrics) }
+        : undefined,
+    );
   }, [
     element.fit,
     spans,
@@ -73,6 +81,7 @@ export const TextElementView = ({
     box.height,
     metrics,
     fontGeneration,
+    noWrap,
   ]);
 
   return (
@@ -86,7 +95,14 @@ export const TextElementView = ({
         fontSize,
       }}
     >
-      <div className="lay--text-content" style={{ width: "100%" }}>
+      <div
+        className="lay--text-content"
+        style={{
+          width: "100%",
+          whiteSpace: noWrap ? "pre" : "pre-wrap",
+          overflowWrap: "break-word",
+        }}
+      >
         {spans.map((s, i) => (
           <span
             key={i}

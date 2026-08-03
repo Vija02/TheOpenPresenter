@@ -9,13 +9,25 @@ export const verticalAlignments = ["top", "center", "bottom"] as const;
 export type VerticalAlignment = (typeof verticalAlignments)[number];
 
 /**
- * - `declared`: use `style.fontSize` verbatim, no measurement.
- * - `shrink`: measure offscreen via SVG `getBBox` and let the viewBox scale it.
- *   Resize free, but cannot word wrap since `tspan` has no wrapping.
- * - `wrap`: binary search the largest size that fits a detached DOM node.
- *   Required for prose. Must re-run on resize.
+ * How a text element's font size is decided.
+ *
+ * - `declared`: use `style.fontSize` verbatim. No measurement, so long text
+ *   overflows its box.
+ * - `shrinkToFit`: `style.fontSize` is a CEILING. Text renders at that size
+ *   until it would overflow, then shrinks (wrapping) until it fits. The usual
+ *   choice for authored text that occasionally runs long.
+ * - `fitNoWrap`: largest size that fits WITHOUT wrapping — only explicit
+ *   newlines break a line. For titles and references, where reflowing looks
+ *   wrong.
+ * - `wrap`: largest size that fits, wrapping freely. For prose, where the box
+ *   should always be filled.
  */
-export const textFitModes = ["declared", "shrink", "wrap"] as const;
+export const textFitModes = [
+  "declared",
+  "shrinkToFit",
+  "fitNoWrap",
+  "wrap",
+] as const;
 export type TextFitMode = (typeof textFitModes)[number];
 
 /** Scalars are design units. Partial styles exist only as `TextStylePatch`. */

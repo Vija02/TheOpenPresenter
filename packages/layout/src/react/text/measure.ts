@@ -15,6 +15,7 @@ export type MeasureSpec = {
   lineHeight: number;
   /** px */
   letterSpacing: number;
+  noWrap: boolean;
 };
 
 const escapeHtml = (text: string): string =>
@@ -71,7 +72,6 @@ const getMeasureNode = (): HTMLDivElement => {
     top: "0",
     margin: "0",
     padding: "0",
-    whiteSpace: "normal",
     wordBreak: "break-word",
     overflowWrap: "break-word",
     boxSizing: "border-box",
@@ -125,6 +125,7 @@ export const fitFontSize = (
 
   const el = getMeasureNode();
   el.style.width = `${spec.width}px`;
+  el.style.whiteSpace = spec.noWrap ? "pre" : "pre-wrap";
   el.style.fontFamily = spec.fontFamily;
   el.style.fontWeight = String(spec.fontWeight);
   el.style.fontStyle = spec.fontStyle;
@@ -142,6 +143,10 @@ export const fitFontSize = (
 
   let lo = minFontSize;
   let hi = Math.min(maxFontSize, spec.height);
+
+  // The search below converges from underneath and then floors, so it lands a
+  // pixel short of a ceiling that already fits.
+  if (fits(hi)) return remember(key, Math.max(minFontSize, Math.floor(hi)));
 
   for (let i = 0; i < 22; i++) {
     const mid = (lo + hi) / 2;
