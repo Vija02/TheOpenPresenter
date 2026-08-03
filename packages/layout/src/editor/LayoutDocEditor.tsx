@@ -1,10 +1,12 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { patchTextElement } from "../doc/edit";
 import { ElementView } from "../react/elements/ElementView";
 import { LayoutDoc } from "../schema/document";
 import { FrameContext, resolveDoc } from "../template/resolve";
 import { FrameData } from "../template/spans";
 import { EditorItem, LayoutEditor, RectChange } from "./LayoutEditor";
+import { TextEditOverlay } from "./TextEditOverlay";
 
 type DocItem = EditorItem & {
   element: ReturnType<typeof resolveDoc>["elements"][number];
@@ -36,6 +38,8 @@ export const LayoutDocEditor = ({
   background,
   className,
 }: LayoutDocEditorProps) => {
+  const [editingId, setEditingId] = useState<string | null>(null);
+
   const items = useMemo<DocItem[]>(
     () =>
       resolveDoc(doc, data, frame).elements.map((element) => ({
@@ -46,6 +50,19 @@ export const LayoutDocEditor = ({
       })),
     [doc, data, frame],
   );
+
+  /** The raw source for the element being edited. */
+  const editingContent = useMemo(() => {
+    if (!editingId) return null;
+    const element = doc.elements.find((e) => e.id === editingId);
+    return element?.type === "text" ? element.content : null;
+  }, [doc, editingId]);
+
+  // Applying a template can drop the element mid-edit, which would otherwise
+  // leave the overlay bound to an id that no longer exists.
+  useEffect(() => {
+    if (editingId && editingContent === null) setEditingId(null);
+  }, [editingId, editingContent]);
 
   const handleChange = useCallback(
     (changes: RectChange[]) => {
@@ -61,6 +78,25 @@ export const LayoutDocEditor = ({
     [doc, onChange],
   );
 
+  const handleDoubleClick = useCallback(
+    (id: string) => {
+      const element = doc.elements.find((e) => e.id === id);
+      // Only edit for text
+      if (element?.type === "text") setEditingId(id);
+    },
+    [doc],
+  );
+
+  const commit = useCallback(
+    (value: string) => {
+      if (!editingId) return;
+      setEditingId(null);
+      if (value === editingContent) return;
+      onChange(patchTextElement(doc, editingId, { content: value }));
+    },
+    [doc, editingId, editingContent, onChange],
+  );
+
   return (
     <LayoutEditor
       items={items}
@@ -71,9 +107,22 @@ export const LayoutDocEditor = ({
       onChange={handleChange}
       background={background}
       className={className}
-      renderItem={(item) => (
-        <ElementView element={item.element} placement="fill" />
-      )}
+      editingId={editingId}
+      onItemDoubleClick={handleDoubleClick}
+      renderItem={(item) =>
+        item.id === editingId &&
+        editingContent !== null &&
+        item.element.type === "text" ? (
+          <TextEditOverlay
+            element={item.element}
+            value={editingContent}
+            onCommit={commit}
+            onCancel={() => setEditingId(null)}
+          />
+        ) : (
+          <ElementView element={item.element} placement="fill" />
+        )
+      }
     />
   );
 };

@@ -43,6 +43,10 @@ export type LayoutEditorProps<T extends EditorItem> = {
   className?: string;
   /** Percent moved per arrow key press; Shift multiplies by 10. */
   nudgeStep?: number;
+  /** Fired when an item is double-clicked. Drives inline editing. */
+  onItemDoubleClick?: (id: string) => void;
+  /** Item currently being edited in place. */
+  editingId?: string | null;
 };
 
 type Frame = { tx: number; ty: number; w: number; h: number };
@@ -81,6 +85,8 @@ const EditorSurface = <T extends EditorItem>({
   onChange,
   renderItem,
   nudgeStep = 0.5,
+  onItemDoubleClick,
+  editingId = null,
 }: SurfaceProps<T>) => {
   const metrics = useStage();
   const [surface, setSurface] = useState<HTMLDivElement | null>(null);
@@ -112,9 +118,13 @@ const EditorSurface = <T extends EditorItem>({
     return map;
   }, [items]);
 
+  // The item being edited is excluded so Moveable does not draw a control box
   const selectableIds = useMemo(
-    () => selectedIds.filter((id) => !itemsById.get(id)?.locked),
-    [selectedIds, itemsById],
+    () =>
+      selectedIds.filter(
+        (id) => !itemsById.get(id)?.locked && id !== editingId,
+      ),
+    [selectedIds, itemsById, editingId],
   );
 
   // Nodes exist only after commit, so target resolution runs in an effect. The
@@ -251,6 +261,15 @@ const EditorSurface = <T extends EditorItem>({
       ArrowUp: [0, -step],
       ArrowDown: [0, step],
     };
+    // Arrow keys belong to the caret while an inline editor has focus.
+    if (
+      (event.target as HTMLElement).closest(
+        "input, textarea, [contenteditable='true']",
+      )
+    ) {
+      return;
+    }
+
     const move = moves[event.key];
     if (!move || selectableIds.length === 0) return;
     event.preventDefault();
@@ -267,13 +286,19 @@ const EditorSurface = <T extends EditorItem>({
       {items.map((item) => {
         const px = rectToPx(item.rect, metrics);
         const selected = selectedIds.includes(item.id);
+        const editing = item.id === editingId;
         return (
           <div
             key={item.id}
             data-lay-id={item.id}
-            className={
-              selected ? `${ITEM_CLASS} ${ITEM_CLASS}--selected` : ITEM_CLASS
-            }
+            className={[
+              ITEM_CLASS,
+              selected ? `${ITEM_CLASS}--selected` : "",
+              editing ? `${ITEM_CLASS}--editing` : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            onDoubleClick={() => onItemDoubleClick?.(item.id)}
             ref={nodeRef(item.id)}
             style={{
               left: px.left,
@@ -387,6 +412,10 @@ const EditorSurface = <T extends EditorItem>({
             // on an already-selected item, otherwise a drag becomes a marquee.
             if (
               target.closest(".moveable-control-box") ||
+              // Drags inside the inline editor are text selection, not a
+              // marquee, so Selecto must keep its hands off entirely.
+              (editingId &&
+                nodesRef.current.get(editingId)?.contains(target)) ||
               selectedIds.some((id) =>
                 nodesRef.current.get(id)?.contains(target),
               )
