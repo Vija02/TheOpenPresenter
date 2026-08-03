@@ -3,327 +3,147 @@ import {
   LayoutItem,
   SceneLayoutPosition,
 } from "@repo/base-plugin";
+import { Rect } from "@repo/layout";
+import { EditorItem, LayoutEditor, RectChange } from "@repo/layout/editor";
 import { useData } from "@repo/shared";
 import { cx } from "class-variance-authority";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+
+export type ItemPositionChange = {
+  itemId: string;
+  position: SceneLayoutPosition;
+};
 
 export type InteractiveLayoutEditorProps = {
   aspectRatio: LayoutAspectRatio;
   items: LayoutItem[];
-  onItemPositionChange: (itemId: string, position: SceneLayoutPosition) => void;
+  onItemPositionsChange: (changes: ItemPositionChange[]) => void;
 };
+
+type PreviewItem = EditorItem & {
+  source: LayoutItem;
+  label: string;
+  colorIndex: number;
+};
+
+const colors = [
+  { bg: "bg-red-200", border: "border-red-400" },
+  { bg: "bg-blue-200", border: "border-blue-400" },
+  { bg: "bg-green-200", border: "border-green-400" },
+  { bg: "bg-yellow-200", border: "border-yellow-400" },
+  { bg: "bg-purple-200", border: "border-purple-400" },
+  { bg: "bg-pink-200", border: "border-pink-400" },
+  { bg: "bg-orange-200", border: "border-orange-400" },
+  { bg: "bg-teal-200", border: "border-teal-400" },
+];
+
+const toRect = (position: SceneLayoutPosition): Rect => ({
+  x: position.x,
+  y: position.y,
+  w: position.width,
+  h: position.height,
+});
+
+const toPosition = (rect: Rect): SceneLayoutPosition => ({
+  x: rect.x,
+  y: rect.y,
+  width: rect.w,
+  height: rect.h,
+});
 
 const InteractiveLayoutEditor = ({
   aspectRatio,
   items,
-  onItemPositionChange,
+  onItemPositionsChange,
 }: InteractiveLayoutEditorProps) => {
   const data = useData();
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
-  const containerRef = useRef<HTMLDivElement>(null);
-  const wrapperRef = useRef<HTMLDivElement>(null);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [dragState, setDragState] = useState<{
-    type: "move" | "resize";
-    id: string;
-    startX: number;
-    startY: number;
-    startPosition: SceneLayoutPosition;
-    resizeHandle?: "se" | "sw" | "ne" | "nw";
-  } | null>(null);
+  const stageAspectRatio = useMemo(
+    () => ({
+      width: aspectRatio?.width ?? 16,
+      height: aspectRatio?.height ?? 9,
+    }),
+    [aspectRatio?.width, aspectRatio?.height],
+  );
 
-  const aspectWidth = aspectRatio?.width ?? 16;
-  const aspectHeight = aspectRatio?.height ?? 9;
+  const previewItems = useMemo(() => {
+    const result: PreviewItem[] = [];
 
-  const colors = [
-    { bg: "bg-red-200", border: "border-red-400", selected: "ring-red-500" },
-    { bg: "bg-blue-200", border: "border-blue-400", selected: "ring-blue-500" },
-    {
-      bg: "bg-green-200",
-      border: "border-green-400",
-      selected: "ring-green-500",
-    },
-    {
-      bg: "bg-yellow-200",
-      border: "border-yellow-400",
-      selected: "ring-yellow-500",
-    },
-    {
-      bg: "bg-purple-200",
-      border: "border-purple-400",
-      selected: "ring-purple-500",
-    },
-    { bg: "bg-pink-200", border: "border-pink-400", selected: "ring-pink-500" },
-    {
-      bg: "bg-orange-200",
-      border: "border-orange-400",
-      selected: "ring-orange-500",
-    },
-    { bg: "bg-teal-200", border: "border-teal-400", selected: "ring-teal-500" },
-  ];
+    items.forEach((item, index) => {
+      const isScreenItem = item.type === "screenItem";
+      const scene = !isScreenItem ? data.data[item.sceneId!] : null;
+      if (!isScreenItem && (!scene || scene.type !== "scene")) return;
 
-  const handleMouseDown = useCallback(
-    (
-      e: React.MouseEvent,
-      id: string,
-      type: "move" | "resize",
-      resizeHandle?: "se" | "sw" | "ne" | "nw",
-    ) => {
-      e.preventDefault();
-      e.stopPropagation();
-      setSelectedId(id);
-
-      const item = items.find((i) => i.id === id);
-      const position = item?.position || {
-        x: 0,
-        y: 0,
-        width: 100,
-        height: 100,
-      };
-
-      setDragState({
-        type,
-        id,
-        startX: e.clientX,
-        startY: e.clientY,
-        startPosition: { ...position },
-        resizeHandle,
+      result.push({
+        id: item.id,
+        rect: toRect(item.position),
+        source: item,
+        colorIndex: index % colors.length,
+        label: isScreenItem
+          ? `Screen ${item.sourceRendererId}`
+          : item.label ||
+            (scene?.type === "scene" ? scene.name : "") ||
+            "Unknown",
       });
+    });
+
+    return result;
+  }, [items, data.data]);
+
+  const handleChange = useCallback(
+    (changes: RectChange[]) => {
+      onItemPositionsChange(
+        changes.map(({ id, rect }) => ({
+          itemId: id,
+          position: toPosition(rect),
+        })),
+      );
     },
-    [items],
+    [onItemPositionsChange],
   );
 
-  const handleMouseMove = useCallback(
-    (e: React.MouseEvent) => {
-      if (!dragState || !containerRef.current) return;
+  const renderItem = useCallback(
+    (item: PreviewItem, { selected }: { selected: boolean }) => {
+      const color = colors[item.colorIndex]!;
+      const isScreenItem = item.source.type === "screenItem";
+      const derivation = item.source.derivation;
 
-      const rect = containerRef.current.getBoundingClientRect();
-      const deltaXPercent = ((e.clientX - dragState.startX) / rect.width) * 100;
-      const deltaYPercent =
-        ((e.clientY - dragState.startY) / rect.height) * 100;
-
-      const { startPosition, type, resizeHandle, id } = dragState;
-
-      let newPosition: SceneLayoutPosition;
-
-      if (type === "move") {
-        newPosition = {
-          ...startPosition,
-          x: Math.max(
-            0,
-            Math.min(
-              100 - startPosition.width,
-              startPosition.x + deltaXPercent,
-            ),
-          ),
-          y: Math.max(
-            0,
-            Math.min(
-              100 - startPosition.height,
-              startPosition.y + deltaYPercent,
-            ),
-          ),
-        };
-      } else {
-        // Resize
-        newPosition = { ...startPosition };
-        const minSize = 5; // Minimum 5%
-
-        switch (resizeHandle) {
-          case "se": // Bottom-right
-            newPosition.width = Math.max(
-              minSize,
-              Math.min(
-                100 - startPosition.x,
-                startPosition.width + deltaXPercent,
-              ),
-            );
-            newPosition.height = Math.max(
-              minSize,
-              Math.min(
-                100 - startPosition.y,
-                startPosition.height + deltaYPercent,
-              ),
-            );
-            break;
-          case "sw": // Bottom-left
-            {
-              const newX = startPosition.x + deltaXPercent;
-              const newWidth = startPosition.width - deltaXPercent;
-              if (newX >= 0 && newWidth >= minSize) {
-                newPosition.x = newX;
-                newPosition.width = newWidth;
-              }
-              newPosition.height = Math.max(
-                minSize,
-                Math.min(
-                  100 - startPosition.y,
-                  startPosition.height + deltaYPercent,
-                ),
-              );
-            }
-            break;
-          case "ne": // Top-right
-            {
-              const newY = startPosition.y + deltaYPercent;
-              const newHeight = startPosition.height - deltaYPercent;
-              if (newY >= 0 && newHeight >= minSize) {
-                newPosition.y = newY;
-                newPosition.height = newHeight;
-              }
-              newPosition.width = Math.max(
-                minSize,
-                Math.min(
-                  100 - startPosition.x,
-                  startPosition.width + deltaXPercent,
-                ),
-              );
-            }
-            break;
-          case "nw": // Top-left
-            {
-              const newX = startPosition.x + deltaXPercent;
-              const newWidth = startPosition.width - deltaXPercent;
-              const newY = startPosition.y + deltaYPercent;
-              const newHeight = startPosition.height - deltaYPercent;
-              if (newX >= 0 && newWidth >= minSize) {
-                newPosition.x = newX;
-                newPosition.width = newWidth;
-              }
-              if (newY >= 0 && newHeight >= minSize) {
-                newPosition.y = newY;
-                newPosition.height = newHeight;
-              }
-            }
-            break;
-        }
-      }
-
-      // Round to 1 decimal place for cleaner values
-      newPosition.x = Math.round(newPosition.x * 10) / 10;
-      newPosition.y = Math.round(newPosition.y * 10) / 10;
-      newPosition.width = Math.round(newPosition.width * 10) / 10;
-      newPosition.height = Math.round(newPosition.height * 10) / 10;
-
-      onItemPositionChange(id, newPosition);
+      return (
+        <div
+          className={cx(
+            "w-full h-full rounded flex flex-col items-center justify-center",
+            "text-xs font-medium overflow-hidden border-2",
+            isScreenItem ? "bg-purple-200 border-purple-400" : color.bg,
+            !isScreenItem && color.border,
+            derivation !== null && "border-dashed",
+            selected && "ring-2 ring-blue-500",
+          )}
+        >
+          <span className="truncate px-1">{item.label}</span>
+          {derivation !== null && (
+            <span className="text-[10px] text-gray-600">
+              {derivation.offset > 0 ? "+" : ""}
+              {derivation.offset}
+            </span>
+          )}
+        </div>
+      );
     },
-    [dragState, onItemPositionChange],
+    [],
   );
-
-  const handleMouseUp = useCallback(() => {
-    setDragState(null);
-  }, []);
-
-  const handleContainerClick = useCallback(() => {
-    setSelectedId(null);
-  }, []);
 
   return (
-    <div ref={wrapperRef} className="w-full max-w-full overflow-hidden">
-      <div
-        ref={containerRef}
-        className="relative border-2 border-dashed border-gray-300 bg-gray-100 rounded overflow-hidden select-none max-w-full"
-        style={{
-          width: "100%",
-          aspectRatio: aspectWidth / aspectHeight,
-        }}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
-        onClick={handleContainerClick}
-      >
-        {items.map((item, index) => {
-          const isScreenItem = item.type === "screenItem";
-          const scene = !isScreenItem ? data.data[item.sceneId!] : null;
-
-          if (!isScreenItem && (!scene || scene.type !== "scene")) return null;
-
-          const color = colors[index % colors.length]!;
-          const isSelected = selectedId === item.id;
-          const position = item.position;
-          const hasDerivation = item.derivation !== null;
-
-          // Display label
-          const displayLabel = isScreenItem
-            ? `Screen ${item.sourceRendererId}`
-            : item.label || scene?.name || "Unknown";
-
-          return (
-            <div
-              key={item.id}
-              className={cx(
-                "absolute rounded flex flex-col items-center justify-center text-xs font-medium overflow-visible border-2",
-                isScreenItem ? "bg-purple-200 border-purple-400" : color.bg,
-                isScreenItem ? "border-purple-400" : color.border,
-                isSelected &&
-                  `ring-2 ${isScreenItem ? "ring-purple-500" : color.selected}`,
-                hasDerivation && "border-dashed",
-                dragState?.id === item.id ? "cursor-grabbing" : "cursor-grab",
-              )}
-              style={{
-                left: `${position.x}%`,
-                top: `${position.y}%`,
-                width: `${position.width}%`,
-                height: `${position.height}%`,
-                zIndex: isSelected ? 10 : 1,
-              }}
-              onMouseDown={(e) => handleMouseDown(e, item.id, "move")}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <span className="truncate px-1 pointer-events-none">
-                {displayLabel}
-              </span>
-              {hasDerivation && (
-                <span className="text-[10px] text-gray-600 pointer-events-none">
-                  {item.derivation!.offset > 0 ? "+" : ""}
-                  {item.derivation!.offset}
-                </span>
-              )}
-
-              {/* Resize handles - only show when selected */}
-              {isSelected && (
-                <>
-                  <div
-                    className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-gray-600 rounded-sm cursor-se-resize"
-                    onMouseDown={(e) =>
-                      handleMouseDown(e, item.id, "resize", "se")
-                    }
-                  />
-                  <div
-                    className="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-gray-600 rounded-sm cursor-sw-resize"
-                    onMouseDown={(e) =>
-                      handleMouseDown(e, item.id, "resize", "sw")
-                    }
-                  />
-                  <div
-                    className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-gray-600 rounded-sm cursor-ne-resize"
-                    onMouseDown={(e) =>
-                      handleMouseDown(e, item.id, "resize", "ne")
-                    }
-                  />
-                  <div
-                    className="absolute -top-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-gray-600 rounded-sm cursor-nw-resize"
-                    onMouseDown={(e) =>
-                      handleMouseDown(e, item.id, "resize", "nw")
-                    }
-                  />
-                </>
-              )}
-            </div>
-          );
-        })}
-
-        {/* Position info tooltip when dragging */}
-        {dragState && (
-          <div className="absolute bottom-2 left-2 bg-black/75 text-white text-xs px-2 py-1 rounded">
-            {(() => {
-              const pos = items.find((i) => i.id === dragState.id)?.position;
-              if (!pos) return null;
-              return `X: ${pos.x.toFixed(1)}% Y: ${pos.y.toFixed(1)}% W: ${pos.width.toFixed(1)}% H: ${pos.height.toFixed(1)}%`;
-            })()}
-          </div>
-        )}
-      </div>
+    <div className="w-full max-w-full overflow-hidden">
+      <LayoutEditor
+        items={previewItems}
+        aspectRatio={stageAspectRatio}
+        selectedIds={selectedIds}
+        onSelectionChange={setSelectedIds}
+        onChange={handleChange}
+        renderItem={renderItem}
+        background="#f3f4f6"
+      />
     </div>
   );
 };
