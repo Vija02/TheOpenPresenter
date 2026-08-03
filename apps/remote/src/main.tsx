@@ -1,5 +1,5 @@
 import "@repo/base-plugin/client/css";
-import "@repo/layout/css";
+import "@repo/layout/editor/css";
 import { preloader } from "@repo/lib";
 import "@repo/media-picker/client/css";
 import { ErrorAlert } from "@repo/ui";

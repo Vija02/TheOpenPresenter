@@ -1,3 +1,6 @@
+@import "@repo/tailwind-config/index.css";
+@import "../react/styles.css";
+
 .lay--editor {
   border: 2px dashed var(--stroke, #d4d4d8);
   border-radius: 4px;
@@ -17,10 +20,52 @@
   cursor: grab;
 }
 
+/* Outlines what a click would select. Inset because `.lay--editor` clips. */
+.lay--editor-item:hover {
+  outline: 2px solid var(--accent, #3b82f6);
+  outline-offset: -2px;
+}
+
 .lay--editor-item--selected {
   cursor: move;
 }
 
+/* Moveable already draws a box here; a hover outline under it reads doubled. */
+.lay--editor-item--selected:not(.lay--editor-item--editing):hover {
+  outline: none;
+}
+
+/* Non-interactive so drags reach Selecto and Moveable. */
 .lay--editor-item > * {
   pointer-events: none;
+}
+
+.lay--editor-item--editing {
+  cursor: text;
+  outline: 2px solid var(--accent, #3b82f6);
+  outline-offset: -2px;
+}
+
+/* Takes the pointer back from the rule above, or the caret would be dead. */
+.lay--editor-item--editing > * {
+  pointer-events: auto;
+}
+
+/* Transparent: the child ElementView carries every visual. */
+.lay--editor-text-edit {
+  position: absolute;
+  inset: 0;
+  outline: none;
+  background: transparent;
+}
+
+/* The item's own accent outline stands in for the focus ring. */
+.lay--editor-text-edit [contenteditable]:focus {
+  outline: none;
+}
+
+/* Checkerboard, so a transparent slide background is legible. */
+.lay--workbench-canvas {
+  @apply checkerboard;
+  --checkerboard-color: var(--surface-secondary, #f4f4f5);
 }

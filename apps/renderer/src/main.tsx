@@ -1,3 +1,4 @@
+import "@repo/layout/react/css";
 import { preloader } from "@repo/lib";
 import { ErrorAlert } from "@repo/ui";
 import "@repo/ui/css";
