@@ -262,11 +262,8 @@ const EditorSurface = <T extends EditorItem>({
       ArrowDown: [0, step],
     };
     // Arrow keys belong to the caret while an inline editor has focus.
-    if (
-      (event.target as HTMLElement).closest(
-        "input, textarea, [contenteditable='true']",
-      )
-    ) {
+    const target = event.target as HTMLElement;
+    if (target.isContentEditable || target.closest("input, textarea")) {
       return;
     }
 
@@ -428,6 +425,9 @@ const EditorSurface = <T extends EditorItem>({
               .map((el) => idOf(el as HTMLElement))
               .filter((id): id is string => !!id);
             onSelectionChange(ids);
+
+            // Get arrow key nudge working
+            if (ids.length > 0) surface.focus({ preventScroll: true });
           }}
         />
       )}
