@@ -12,6 +12,7 @@
     "@fontsource-variable/inter": "^5.1.0",
     "@fontsource-variable/source-sans-3": "^5.1.0",
     "@repo/graphql": "*",
+    "@repo/layout": "*",
     "@repo/observability": "*",
     "@tanstack/react-query": "^5.62.3",
     "@tauri-apps/api": "^2.4.1",

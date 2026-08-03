@@ -1,3 +1,13 @@
+/**
+ * Server loaded font faces for backup. This should only load when we actually use it
+ */
+@import "@fontsource-variable/inter/index.css";
+@import "@fontsource-variable/source-sans-3/index.css";
+@import "@fontsource-variable/open-sans/index.css";
+@import "@fontsource-variable/montserrat/index.css";
+@import "@fontsource-variable/oswald/index.css";
+@import "@fontsource-variable/playfair-display/index.css";
+
 .lay--stage {
   position: relative;
   overflow: hidden;

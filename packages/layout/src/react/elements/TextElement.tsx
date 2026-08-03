@@ -1,4 +1,4 @@
-import { CSSProperties, useMemo } from "react";
+import { CSSProperties, useMemo, useSyncExternalStore } from "react";
 
 import { StageMetrics, rectToPx, toPx } from "../../geometry/scale";
 import { SpanRoleStyle } from "../../schema/style";
@@ -9,6 +9,11 @@ import {
   placementToCss,
   textStyleToCss,
 } from "../css";
+import {
+  getFontGeneration,
+  getServerFontGeneration,
+  subscribeToFonts,
+} from "../text/fontStatus";
 import { fitFontSize, spansToHtml } from "../text/measure";
 
 const spanStyle = (role: SpanRoleStyle | undefined): CSSProperties => {
@@ -41,6 +46,12 @@ export const TextElementView = ({
   const box = rectToPx(element.rect, metrics);
   const { style, spans, spanRoles } = element;
 
+  const fontGeneration = useSyncExternalStore(
+    subscribeToFonts,
+    getFontGeneration,
+    getServerFontGeneration,
+  );
+
   const fontSize = useMemo(() => {
     if (element.fit === "declared") return toPx(style.fontSize, metrics);
     return fitFontSize({
@@ -53,7 +64,16 @@ export const TextElementView = ({
       lineHeight: style.lineHeight,
       letterSpacing: toPx(style.letterSpacing, metrics),
     });
-  }, [element.fit, spans, spanRoles, style, box.width, box.height, metrics]);
+  }, [
+    element.fit,
+    spans,
+    spanRoles,
+    style,
+    box.width,
+    box.height,
+    metrics,
+    fontGeneration,
+  ]);
 
   return (
     <div

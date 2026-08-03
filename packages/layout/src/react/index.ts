@@ -8,4 +8,5 @@ export * from "./elements/ElementView";
 export * from "./elements/ImageElement";
 export * from "./elements/ShapeElement";
 export * from "./elements/TextElement";
+export * from "./text/fontStatus";
 export * from "./text/measure";
