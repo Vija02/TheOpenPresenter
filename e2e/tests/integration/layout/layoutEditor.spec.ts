@@ -255,6 +255,51 @@ test.describe.serial("Layout editor", () => {
       .toBe(referenceSizeBefore);
   });
 
+  test("arrow keys nudge the selection, except while editing text", async ({
+    page,
+    projectPage,
+    loginAndGoToProject,
+  }) => {
+    const dialog = await openStyleModal({ loginAndGoToProject, projectPage });
+    const reference = dialog.locator(REFERENCE);
+
+    await reference.click();
+    await expect(reference).toHaveClass(/lay--editor-item--selected/);
+
+    // Read the X field rather than a bounding box: a nudge is 0.5% of the
+    // stage, which at some canvas widths is a sub-pixel move that
+    // getBoundingClientRect would round away.
+    const x = row(dialog, "X").locator("input");
+    const readX = async () => Number(await x.inputValue());
+    const startX = await readX();
+
+    // Selecto preventDefaults pointerdown, so the surface only has focus
+    // because selection explicitly gives it. If that regresses, this is the
+    // assertion that catches it — the nudge is silent when unfocused.
+    await page.keyboard.press("ArrowRight");
+    await expect.poll(readX).toBeCloseTo(startX + 0.5, 5);
+
+    // Shift multiplies the step by 10.
+    await page.keyboard.press("Shift+ArrowRight");
+    await expect.poll(readX).toBeCloseTo(startX + 5.5, 5);
+
+    await page.keyboard.press("ArrowLeft");
+    await expect.poll(readX).toBeCloseTo(startX + 5, 5);
+
+    // --- arrows belong to the caret while editing --------------------------
+    await reference.dblclick();
+    await expect(reference).toHaveClass(/lay--editor-item--editing/);
+
+    const beforeEditing = await readX();
+    await page.keyboard.press("ArrowLeft");
+    await page.keyboard.press("ArrowLeft");
+
+    // The element must not move. Guarded on `isContentEditable`, which a
+    // [contenteditable='true'] selector would miss — the editor uses
+    // plaintext-only.
+    await expect.poll(readX).toBe(beforeEditing);
+  });
+
   test("the size control follows the fit mode", async ({
     projectPage,
     loginAndGoToProject,
