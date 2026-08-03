@@ -128,16 +128,18 @@ const LayoutEditorModal = ({
     [getMutableRenderer],
   );
 
-  const handlePositionChange = useCallback(
-    (itemId: string, position: SceneLayoutPosition) => {
+  const handlePositionsChange = useCallback(
+    (changes: { itemId: string; position: SceneLayoutPosition }[]) => {
       const renderer = mainState.renderer[rendererId];
       if (!renderer?.layout?.items) return;
 
-      const item = renderer.layout.items.find(
-        (item: LayoutItem) => item.id === itemId,
-      );
-      if (item) {
-        item.position = position;
+      for (const { itemId, position } of changes) {
+        const item = renderer.layout.items.find(
+          (item: LayoutItem) => item.id === itemId,
+        );
+        if (item) {
+          item.position = position;
+        }
       }
     },
     [mainState.renderer, rendererId],
@@ -199,13 +201,14 @@ const LayoutEditorModal = ({
               <p className="font-medium text-sm">
                 Layout Preview{" "}
                 <span className="text-xs text-tertiary font-normal">
-                  (drag to move, drag corners to resize)
+                  (drag to move, drag edges to resize, shift-click or drag a box
+                  to select several, arrow keys to nudge)
                 </span>
               </p>
               <InteractiveLayoutEditor
                 aspectRatio={rendererLayout.aspectRatio}
                 items={rendererLayoutItems}
-                onItemPositionChange={handlePositionChange}
+                onItemPositionsChange={handlePositionsChange}
               />
             </div>
           </div>
