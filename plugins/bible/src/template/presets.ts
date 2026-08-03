@@ -6,6 +6,7 @@ import {
   Rect,
   Shadow,
   Template,
+  VerticalAlignment,
   createLayoutDoc,
   createShapeElement,
   createTextElement,
@@ -72,6 +73,8 @@ export type BibleDocOptions = {
   fontWeight?: number;
   align?: HorizontalAlignment;
   bodyFontSize?: number;
+  bodyValign?: VerticalAlignment;
+  referenceValign?: VerticalAlignment;
   shadows?: Shadow[];
   showReference?: boolean;
   referenceAlign?: HorizontalAlignment;
@@ -90,14 +93,18 @@ export const bibleDoc = ({
   fontWeight = 600,
   align = "center",
   bodyFontSize = BODY_FONT_SIZE,
+  bodyValign,
+  referenceValign,
   shadows = softShadows,
   showReference = true,
   referenceAlign,
   referenceFontSize = REFERENCE_FONT_SIZE,
   referenceFontWeight = 400,
   referenceOpacity = 0.85,
-}: BibleDocOptions): LayoutDoc =>
-  createLayoutDoc({
+}: BibleDocOptions): LayoutDoc => {
+  const referenceAbove = reference.y < body.y;
+
+  return createLayoutDoc({
     fitMode: "fluid",
     elements: [
       backgroundElement(background),
@@ -113,7 +120,7 @@ export const bibleDoc = ({
           fontWeight,
           color,
           align,
-          valign: "center",
+          valign: bodyValign ?? (referenceAbove ? "top" : "center"),
           lineHeight: 1.15,
           shadows,
         },
@@ -134,12 +141,13 @@ export const bibleDoc = ({
           fontWeight: referenceFontWeight,
           color,
           align: referenceAlign ?? align,
-          valign: "center",
+          valign: referenceValign ?? (referenceAbove ? "bottom" : "top"),
           shadows: shadows.slice(0, 1),
         },
       }),
     ],
   });
+};
 
 export const bibleTemplates: Template[] = [
   {
@@ -152,31 +160,25 @@ export const bibleTemplates: Template[] = [
     }),
   },
   {
-    id: "centered-reference-above",
-    name: "Centered, reference above",
-    bindings: bibleBindings,
-    doc: bibleDoc({
-      body: { x: 6, y: 17, w: 88, h: 77 },
-      reference: { x: 6, y: 6, w: 88, h: 8 },
-    }),
-  },
-  {
-    id: "centered-no-reference",
-    name: "Centered, no reference",
-    bindings: bibleBindings,
-    doc: bibleDoc({
-      body: { x: 8, y: 12, w: 84, h: 76 },
-      reference: { x: 8, y: 90, w: 84, h: 8 },
-      showReference: false,
-    }),
-  },
-  {
     id: "big-reference-above",
     name: "Big reference above",
     bindings: bibleBindings,
     doc: bibleDoc({
       body: { x: 8, y: 30, w: 84, h: 62 },
       reference: { x: 8, y: 10, w: 84, h: 14 },
+      referenceFontSize: BIG_REFERENCE_FONT_SIZE,
+      referenceFontWeight: 700,
+      referenceOpacity: 1,
+    }),
+  },
+  {
+    id: "left-big-reference",
+    name: "Left aligned, big reference above",
+    bindings: bibleBindings,
+    doc: bibleDoc({
+      body: { x: 8, y: 32, w: 84, h: 60 },
+      reference: { x: 8, y: 10, w: 84, h: 14 },
+      align: "left",
       referenceFontSize: BIG_REFERENCE_FONT_SIZE,
       referenceFontWeight: 700,
       referenceOpacity: 1,
@@ -193,28 +195,34 @@ export const bibleTemplates: Template[] = [
     }),
   },
   {
-    id: "left-big-reference",
-    name: "Left aligned, big reference",
+    id: "right-reference-below",
+    name: "Left aligned, reference right",
     bindings: bibleBindings,
     doc: bibleDoc({
-      body: { x: 8, y: 32, w: 84, h: 60 },
-      reference: { x: 8, y: 10, w: 84, h: 14 },
+      body: { x: 8, y: 8, w: 84, h: 74 },
+      reference: { x: 8, y: 85, w: 84, h: 8 },
       align: "left",
-      referenceFontSize: BIG_REFERENCE_FONT_SIZE,
-      referenceFontWeight: 700,
-      referenceOpacity: 1,
+      referenceAlign: "right",
     }),
   },
   {
-    // Transparent background
     id: "lower-third",
     name: "Lower third, left aligned",
     bindings: bibleBindings,
     doc: bibleDoc({
       body: { x: 6, y: 60, w: 88, h: 26 },
       reference: { x: 6, y: 87, w: 88, h: 7 },
-      background: "rgba(0,0,0,0)",
       align: "left",
+    }),
+  },
+  {
+    id: "centered-no-reference",
+    name: "Centered, no reference",
+    bindings: bibleBindings,
+    doc: bibleDoc({
+      body: { x: 8, y: 12, w: 84, h: 76 },
+      reference: { x: 8, y: 90, w: 84, h: 8 },
+      showReference: false,
     }),
   },
 ];
