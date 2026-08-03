@@ -86,7 +86,7 @@ export const TextElementView = ({
         fontSize,
       }}
     >
-      <div style={{ width: "100%" }}>
+      <div className="lay--text-content" style={{ width: "100%" }}>
         {spans.map((s, i) => (
           <span
             key={i}
