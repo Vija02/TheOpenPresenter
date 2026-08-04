@@ -8,7 +8,8 @@ export type TemplateRailProps = {
   data?: FrameData;
   activeId?: string | null;
   onSelect: (templateId: string) => void;
-  title?: string;
+  title?: string | null;
+  columns?: 1 | 2;
 };
 
 export const TemplateRail = ({
@@ -17,31 +18,40 @@ export const TemplateRail = ({
   activeId = null,
   onSelect,
   title = "Templates",
+  columns = 1,
 }: TemplateRailProps) => (
   <div className="flex flex-col gap-3">
-    <h3 className="text-xs font-semibold uppercase tracking-wide text-secondary">
-      {title}
-    </h3>
+    {title !== null && (
+      <h3 className="text-xs font-semibold uppercase tracking-wide text-secondary">
+        {title}
+      </h3>
+    )}
 
-    {templates.map((t) => {
-      const active = t.id === activeId;
-      return (
-        <button
-          key={t.id}
-          type="button"
-          onClick={() => onSelect(t.id)}
-          className={`text-left rounded border cursor-pointer transition-colors ${
-            active
-              ? "border-primary ring-1 ring-primary"
-              : "border-stroke hover:border-primary hover:bg-primary/10"
-          }`}
-        >
-          <div className="w-full aspect-video overflow-hidden rounded-t bg-black pointer-events-none">
-            <LayoutRenderer doc={t.doc} data={data} />
-          </div>
-          <span className="block px-2 py-1 text-xs font-medium">{t.name}</span>
-        </button>
-      );
-    })}
+    <div
+      className={`grid gap-3 ${columns === 2 ? "grid-cols-2" : "grid-cols-1"}`}
+    >
+      {templates.map((t) => {
+        const active = t.id === activeId;
+        return (
+          <button
+            key={t.id}
+            type="button"
+            onClick={() => onSelect(t.id)}
+            className={`text-left rounded border cursor-pointer transition-colors ${
+              active
+                ? "border-primary ring-1 ring-primary"
+                : "border-stroke hover:border-primary hover:bg-primary/10"
+            }`}
+          >
+            <div className="w-full aspect-video overflow-hidden rounded-t bg-black pointer-events-none">
+              <LayoutRenderer doc={t.doc} data={data} />
+            </div>
+            <span className="block px-2 py-1 text-xs font-medium">
+              {t.name}
+            </span>
+          </button>
+        );
+      })}
+    </div>
   </div>
 );
