@@ -327,3 +327,397 @@ test.describe.serial("Layout editor", () => {
     await expect(row(dialog, "Size")).toHaveCount(0);
   });
 });
+
+/**
+ * The compact layout, below the `desktop:` breakpoint (48rem / 768px).
+ *
+ * `hasTouch` rather than `isMobile`: the latter also fakes a mobile user agent
+ * and meta-viewport, and is rejected outright by the Firefox and WebKit
+ * drivers. Everything asserted here is about width and input modality, so the
+ * narrower switch is the honest one.
+ *
+ * 390x844 is an iPhone 12. The exact numbers matter less than being under 768
+ * and tall enough that a canvas capped at 55% still leaves a usable panel.
+ */
+test.describe.serial("Layout editor on a phone", () => {
+  // Desktop viewport, resized per test. Scene setup CANNOT run at phone width:
+  // the remote app ships SidebarWeb and SidebarMobile as two trees toggled with
+  // `hidden desktop:flex`, and `createPlugin` drives the web one's add-scene
+  // button, which at 390px resolves but is hidden. `hasTouch` stays here
+  // because it is a context option and cannot be changed mid-test.
+  test.use({ viewport: { width: 1280, height: 720 }, hasTouch: true });
+
+  test.beforeEach(
+    async ({ e2eCommand }) =>
+      await Promise.all([
+        e2eCommand.serverCommand("clearTestUsers"),
+        e2eCommand.serverCommand("clearTestOrganizations"),
+        e2eCommand.serverCommand("clearBibleData"),
+      ]),
+  );
+
+  const PHONE = { width: 390, height: 844 };
+
+  /**
+   * Sets the scene up at desktop width, then shrinks to a phone.
+   *
+   * Resizing after the dialog is open is deliberate: the workbench reads the
+   * breakpoint through matchMedia, so this also proves it reflows live rather
+   * than only picking the right layout on mount.
+   */
+  const openStyleModalOnPhone = async (args: SetupArgs) => {
+    const dialog = await openStyleModal(args);
+    await args.projectPage.page.setViewportSize(PHONE);
+    await expect(dialog.getByRole("tab", { name: "Properties" })).toBeVisible();
+    return dialog;
+  };
+
+  test("collapses to a canvas over one tabbed panel", async ({
+    projectPage,
+    loginAndGoToProject,
+  }) => {
+    const dialog = await openStyleModalOnPhone({
+      loginAndGoToProject,
+      projectPage,
+    });
+    const canvas = dialog.locator(".lay--workbench-canvas");
+
+    // --- both panes reachable, neither beside the canvas --------------------
+    const properties = dialog.getByRole("tab", { name: "Properties" });
+    const templates = dialog.getByRole("tab", { name: "Templates" });
+    await expect(properties).toBeVisible();
+    await expect(templates).toBeVisible();
+
+    // Properties opens first: it is what a tap on the canvas leads to.
+    await expect(properties).toHaveAttribute("aria-selected", "true");
+
+    // --- the canvas fits, and leaves the panel room ------------------------
+    // The desktop build put 450px of fixed rails either side of the canvas,
+    // which at this width squeezed it past zero. Nothing may exceed the
+    // viewport, and the panel must still be on screen under it.
+    const canvasBox = await canvas.boundingBox();
+    expect(canvasBox!.width).toBeLessThanOrEqual(PHONE.width);
+    // The `max-h-[55%]` cap, which is what keeps a tall slide from pushing the
+    // panel off the bottom. +1 absorbs sub-pixel layout rounding.
+    expect(canvasBox!.height).toBeLessThanOrEqual(PHONE.height * 0.55 + 1);
+
+    const tabsBox = await properties.boundingBox();
+    expect(tabsBox!.y).toBeGreaterThan(canvasBox!.y + canvasBox!.height - 1);
+    expect(tabsBox!.y + tabsBox!.height).toBeLessThanOrEqual(PHONE.height);
+
+    // --- the inspector exists exactly once ---------------------------------
+    // The house pattern for responsive work renders both a desktop and a
+    // mobile tree and hides one with `hidden desktop:flex`. Done here that
+    // would duplicate every inspector control, and each `row()` lookup in this
+    // file would hit two nodes and fail Playwright's strict mode. This is the
+    // assertion that catches a refactor back to that shape.
+    await dialog.locator(BODY).tap();
+    await expect(dialog.locator(`div:has(> span:text-is("X"))`)).toHaveCount(1);
+  });
+
+  test("tapping an element reveals its properties", async ({
+    projectPage,
+    loginAndGoToProject,
+  }) => {
+    const dialog = await openStyleModalOnPhone({
+      loginAndGoToProject,
+      projectPage,
+    });
+
+    // Park on the other tab first, so the switch below is observable.
+    await dialog.getByRole("tab", { name: "Templates" }).tap();
+    await expect(
+      dialog.getByRole("tab", { name: "Templates" }),
+    ).toHaveAttribute("aria-selected", "true");
+    await expect(row(dialog, "X")).toHaveCount(0);
+
+    // Selecting behind a closed tab looks like nothing happening at all, so
+    // the selection forces the panel back to Properties.
+    await dialog.locator(BODY).tap();
+    await expect(dialog.locator(BODY)).toHaveClass(
+      /lay--editor-item--selected/,
+    );
+    await expect(
+      dialog.getByRole("tab", { name: "Properties" }),
+    ).toHaveAttribute("aria-selected", "true");
+    await expect(row(dialog, "X").locator("input")).toBeVisible();
+  });
+
+  test("the canvas owns touch gestures, except while editing text", async ({
+    projectPage,
+    loginAndGoToProject,
+  }) => {
+    const dialog = await openStyleModalOnPhone({
+      loginAndGoToProject,
+      projectPage,
+    });
+    const surface = dialog.locator(".lay--editor-surface");
+    const body = dialog.locator(BODY);
+
+    // Without this the browser claims a touch drag for pan/zoom before Selecto
+    // or Moveable ever see it. Asserted on computed style because Playwright
+    // cannot emulate the native scroll gesture that would show the symptom.
+    await expect(surface).toHaveCSS("touch-action", "none");
+
+    // `touch-action` resolves against every ancestor, so `none` on the surface
+    // would take caret placement and selection-drag with it. The :has() rule
+    // hands the gesture back for the duration of an edit.
+    await body.dblclick();
+    await expect(body).toHaveClass(/lay--editor-item--editing/);
+    await expect(surface).toHaveCSS("touch-action", "auto");
+
+    // ...and reclaims it on commit.
+    await dialog.locator(".lay--workbench-canvas").click({
+      position: { x: 5, y: 5 },
+    });
+    await expect(body).not.toHaveClass(/lay--editor-item--editing/);
+    await expect(surface).toHaveCSS("touch-action", "none");
+  });
+
+  test("suppresses hover affordances and enlarges handles for a finger", async ({
+    page,
+    projectPage,
+    loginAndGoToProject,
+  }) => {
+    const dialog = await openStyleModalOnPhone({
+      loginAndGoToProject,
+      projectPage,
+    });
+
+    // Whether touch emulation also flips the `hover`/`pointer` media features
+    // is a browser-engine decision, not something Playwright guarantees. If it
+    // has not, the CSS under test is not live and asserting on it would be
+    // testing the emulator rather than the styles.
+    const coarse = await page.evaluate(
+      () =>
+        matchMedia("(hover: none)").matches &&
+        matchMedia("(pointer: coarse)").matches,
+    );
+    test.skip(
+      !coarse,
+      "touch emulation did not flip the hover/pointer media features",
+    );
+
+    const body = dialog.locator(BODY);
+
+    // On touch, :hover latches at tap and stays until you tap elsewhere, so an
+    // untouched element would sit there outlined as though it were selected.
+    await body.hover();
+    await expect(body).toHaveCSS("outline-style", "none");
+
+    // Moveable's stock handle is ~14px against a ~44px fingertip, so a
+    // transparent pseudo-element carries the target instead. Probed with
+    // elementFromPoint rather than by re-deriving the CSS: the question is
+    // whether a finger landing off-centre grabs the handle, and an earlier
+    // version of this assertion multiplied the inset out to 36 and reported a
+    // number that was arithmetically right about styles that had not applied.
+    //
+    // Sized generously first. The reference ships short enough that Moveable's
+    // own 14px dots — which straddle the edges by 7px whatever we do — sit
+    // close to its middle, and the centre assertion below would be measuring
+    // that rather than anything this file controls.
+    const reference = dialog.locator(REFERENCE);
+    await reference.tap();
+    await row(dialog, "H").locator("input").fill("20");
+    await row(dialog, "H").locator("input").press("Tab");
+
+    const handle = page.locator(".moveable-control-box .moveable-e");
+    await expect(handle).toBeVisible();
+
+    // Probed on the vertical axis only. The east handle sits mid-edge, so up
+    // and down is where the neighbouring corner controls are furthest away and
+    // cannot win the hit test on overlap.
+    const REACH = 14;
+    const grabbable = await handle.evaluate((el, reach) => {
+      const box = el.getBoundingClientRect();
+      const cx = box.x + box.width / 2;
+      const cy = box.y + box.height / 2;
+      return [cy - reach, cy + reach].every((y) => {
+        const hit = document.elementFromPoint(cx, y);
+        return hit === el || el.contains(hit);
+      });
+    }, REACH);
+
+    expect(grabbable).toBe(true);
+
+    // The expansion must not eat the element it belongs to. A symmetric hit
+    // area reached 15px inward from every edge, so on a short element the north
+    // and south handles met in the middle: every grab landed on a resize handle
+    // and the element could not be dragged at all. Hence outward-only insets,
+    // and hence this assertion — it is also what proves the per-direction
+    // selectors match, since a typo there silently restores the symmetric box.
+    const centreIsTheElement = await reference.evaluate((el) => {
+      const box = el.getBoundingClientRect();
+      const hit = document.elementFromPoint(
+        box.x + box.width / 2,
+        box.y + box.height / 2,
+      );
+      return hit === el || el.contains(hit);
+    });
+
+    expect(centreIsTheElement).toBe(true);
+  });
+
+  /**
+   * A real finger drag.
+   *
+   * Playwright's touchscreen only taps, so a multi-step gesture has to go
+   * through CDP — which is Chromium-only, hence the guard at the call site.
+   * Mouse events would not do: they reach Moveable as `pointerType: "mouse"`,
+   * so they prove nothing about the touch path.
+   */
+  const touchDrag = async (
+    page: Page,
+    from: { x: number; y: number },
+    dx: number,
+    dy: number,
+  ) => {
+    const client = await page.context().newCDPSession(page);
+    const at = (x: number, y: number) => [{ x, y, radiusX: 12, radiusY: 12 }];
+
+    await client.send("Input.dispatchTouchEvent", {
+      type: "touchStart",
+      touchPoints: at(from.x, from.y),
+    });
+    // More than one move: a single jump reads as a tap, not a drag.
+    for (const step of [0.34, 0.67, 1]) {
+      await client.send("Input.dispatchTouchEvent", {
+        type: "touchMove",
+        touchPoints: at(from.x + dx * step, from.y + dy * step),
+      });
+    }
+    await client.send("Input.dispatchTouchEvent", {
+      type: "touchEnd",
+      touchPoints: [],
+    });
+    await client.detach();
+  };
+
+  /** Centre of a locator, in viewport coordinates. */
+  const centreOf = async (locator: Locator) => {
+    const box = await locator.boundingBox();
+    if (!box) throw new Error("element has no bounding box");
+    return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+  };
+
+  test("drag and resize map to stage percentages, not viewport pixels", async ({
+    page,
+    projectPage,
+    loginAndGoToProject,
+  }) => {
+    const dialog = await openStyleModalOnPhone({
+      loginAndGoToProject,
+      projectPage,
+    });
+    const reference = dialog.locator(REFERENCE);
+
+    await reference.tap();
+    await expect(reference).toHaveClass(/lay--editor-item--selected/);
+
+    // Parked away from both edges first, so neither gesture below runs into
+    // clampRect and reports a short delta for a reason unrelated to scaling.
+    //
+    // The height is not incidental. This element ships ~17px tall at phone
+    // width, and the resize dots are 14px straddling each edge, so they very
+    // nearly meet in the middle and a centre-grab lands on a handle instead of
+    // the body. 20% is ~42px, which clears them.
+    const x = row(dialog, "X").locator("input");
+    const w = row(dialog, "W").locator("input");
+    const h = row(dialog, "H").locator("input");
+    await x.fill("30");
+    await x.press("Tab");
+    await w.fill("40");
+    await w.press("Tab");
+    await h.fill("20");
+    await h.press("Tab");
+
+    const stage = (await dialog.locator(".lay--editor").boundingBox())!;
+    const DELTA_PX = 40;
+    const expected = (DELTA_PX / stage.width) * 100;
+
+    // The point of running this at phone width: a rect is stored as a
+    // percentage of the STAGE, and the stage here is ~374px rather than the
+    // ~1000px it gets on desktop, so the same 40px is worth ~10.7% instead of
+    // ~4%. Anything measuring against the window or the dialog instead would
+    // be out by a multiple. The tolerance is sized to catch that, not to chase
+    // sub-pixel drift.
+    const startX = Number(await x.inputValue());
+    await dragBy(page, reference, DELTA_PX, 0);
+    await expect
+      .poll(async () => Number(await x.inputValue()))
+      .not.toBe(startX);
+    expect(
+      Math.abs(Number(await x.inputValue()) - startX - expected),
+    ).toBeLessThan(1.5);
+
+    const startW = Number(await w.inputValue());
+    await dragBy(
+      page,
+      page.locator(".moveable-control-box .moveable-e"),
+      -DELTA_PX,
+      0,
+    );
+    await expect
+      .poll(async () => Number(await w.inputValue()))
+      .not.toBe(startW);
+    expect(
+      Math.abs(startW - Number(await w.inputValue()) - expected),
+    ).toBeLessThan(1.5);
+  });
+
+  test("a finger can move and resize an element", async ({
+    page,
+    browserName,
+    projectPage,
+    loginAndGoToProject,
+  }) => {
+    test.skip(
+      browserName !== "chromium",
+      "touch gestures are synthesised through CDP",
+    );
+
+    const dialog = await openStyleModalOnPhone({
+      loginAndGoToProject,
+      projectPage,
+    });
+    const reference = dialog.locator(REFERENCE);
+
+    await reference.tap();
+    await expect(reference).toHaveClass(/lay--editor-item--selected/);
+
+    // Height for the same reason as the sibling test: the stock resize dots
+    // straddle the edges and would otherwise meet in the middle of this
+    // element, so a centre-grab would resize rather than move.
+    const y = row(dialog, "Y").locator("input");
+    const w = row(dialog, "W").locator("input");
+    const h = row(dialog, "H").locator("input");
+    await y.fill("40");
+    await y.press("Tab");
+    await w.fill("40");
+    await w.press("Tab");
+    await h.fill("20");
+    await h.press("Tab");
+
+    // --- move ---------------------------------------------------------------
+    // This is what `touch-action: none` buys: without it the browser takes the
+    // gesture for panning and Moveable never sees the moves at all, so the
+    // element sits still and the failure looks like a broken drag handler.
+    const startY = Number(await y.inputValue());
+    await touchDrag(page, await centreOf(reference), 0, -50);
+    await expect
+      .poll(async () => Number(await y.inputValue()))
+      .toBeLessThan(startY);
+
+    // --- resize -------------------------------------------------------------
+    // Aimed at the handle's centre, so this passes or fails on whether touch
+    // drives Moveable — the enlarged hit area is covered separately.
+    const handle = page.locator(".moveable-control-box .moveable-e");
+    await expect(handle).toBeVisible();
+
+    const startW = Number(await w.inputValue());
+    await touchDrag(page, await centreOf(handle), -50, 0);
+    await expect
+      .poll(async () => Number(await w.inputValue()))
+      .toBeLessThan(startW);
+  });
+});

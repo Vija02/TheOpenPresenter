@@ -98,7 +98,7 @@ const StyleModal = () => {
     <Dialog open={isOpen ?? false} onOpenChange={onToggle ?? (() => {})}>
       <DialogContent
         size="full"
-        className="w-[96vw] max-w-[1400px] h-[88vh] flex flex-col p-0 gap-0"
+        className="desktop:w-[96vw] desktop:max-w-[1400px] desktop:h-[88vh] flex flex-col p-0 gap-0"
       >
         <DialogHeader className="px-4 py-3 border-b border-stroke shrink-0">
           <DialogTitle>Slide Template</DialogTitle>

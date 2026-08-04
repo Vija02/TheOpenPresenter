@@ -11,6 +11,14 @@
   position: absolute;
   inset: 0;
   outline: none;
+  touch-action: none;
+}
+
+/* Except while editing text: `touch-action` resolves against every ancestor,
+   so `none` up here would take caret placement and selection drag with it.
+   Selecto already sits out that gesture, so nothing else wants it. */
+.lay--editor-surface:has(.lay--editor-item--editing) {
+  touch-action: auto;
 }
 
 .lay--editor-item {
@@ -20,19 +28,23 @@
   cursor: grab;
 }
 
-/* Outlines what a click would select. Inset because `.lay--editor` clips. */
-.lay--editor-item:hover {
-  outline: 2px solid var(--accent, #3b82f6);
-  outline-offset: -2px;
+/* Gated: on touch, `:hover` latches on at tap and stays until you tap
+   elsewhere, so an untouched element sits there outlined as if selected. */
+@media (hover: hover) {
+  /* Outlines what a click would select. Inset because `.lay--editor` clips. */
+  .lay--editor-item:hover {
+    outline: 2px solid var(--accent, #3b82f6);
+    outline-offset: -2px;
+  }
+
+  /* Moveable already draws a box here; a hover outline under it reads doubled. */
+  .lay--editor-item--selected:not(.lay--editor-item--editing):hover {
+    outline: none;
+  }
 }
 
 .lay--editor-item--selected {
   cursor: move;
-}
-
-/* Moveable already draws a box here; a hover outline under it reads doubled. */
-.lay--editor-item--selected:not(.lay--editor-item--editing):hover {
-  outline: none;
 }
 
 /* Non-interactive so drags reach Selecto and Moveable. */
@@ -62,6 +74,59 @@
 /* The item's own accent outline stands in for the focus ring. */
 .lay--editor-text-edit [contenteditable]:focus {
   outline: none;
+}
+
+/* Moveable's handles are ~14px, against a ~44px fingertip: resize is close to
+   unhittable on touch. A transparent pseudo-element carries the target instead.
+
+   Only the hit area, not the painted dot: a `width` override here loses to
+   Moveable's own stylesheet, which is injected at runtime and so wins on source
+   order at equal specificity. Beating that needs !important, which is not worth
+   spending on something cosmetic.
+
+   Hit areas do overlap on a small element; the topmost handle wins, which is
+   the corner. The one most likely to be wanted. */
+@media (pointer: coarse) {
+  .lay--editor .moveable-control::after {
+    content: "";
+    position: absolute;
+    /* 14px dot + 15 either side = a 44px target. */
+    inset: -15px;
+  }
+
+  /* Outward only. Handles are centred ON the edges (14px dot, margin -7px), so
+     a symmetric hit area reaches 15px INTO the element — which on a short one
+     means the north and south handles meet in the middle and swallow it. The
+     element then cannot be dragged at all: every grab lands on a resize
+     handle. Each rule below zeroes the inward side. */
+  .lay--editor .moveable-control.moveable-n::after {
+    bottom: 0;
+  }
+  .lay--editor .moveable-control.moveable-s::after {
+    top: 0;
+  }
+  .lay--editor .moveable-control.moveable-w::after {
+    right: 0;
+  }
+  .lay--editor .moveable-control.moveable-e::after {
+    left: 0;
+  }
+  .lay--editor .moveable-control.moveable-nw::after {
+    right: 0;
+    bottom: 0;
+  }
+  .lay--editor .moveable-control.moveable-ne::after {
+    left: 0;
+    bottom: 0;
+  }
+  .lay--editor .moveable-control.moveable-sw::after {
+    right: 0;
+    top: 0;
+  }
+  .lay--editor .moveable-control.moveable-se::after {
+    left: 0;
+    top: 0;
+  }
 }
 
 /* Checkerboard, so a transparent slide background is legible. */
