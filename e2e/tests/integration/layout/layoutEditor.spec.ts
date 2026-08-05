@@ -637,3 +637,233 @@ test.describe.serial("Layout editor on a phone", () => {
       .toBeLessThan(startW);
   });
 });
+
+/**
+ * Gradient fills, driven through the Fill section of the inspector.
+ *
+ * Exercised on the body TEXT element rather than the template's background
+ * shape: the background is locked, and a text element ships with `fill: null`,
+ * which makes "None" the known starting mode. What is asserted is the painted
+ * result, not just the inspector's own state — the schema having a gradient
+ * variant means nothing if the renderer drops it.
+ */
+test.describe.serial("Gradient fill", () => {
+  test.beforeEach(
+    async ({ e2eCommand }) =>
+      await Promise.all([
+        e2eCommand.serverCommand("clearTestUsers"),
+        e2eCommand.serverCommand("clearTestOrganizations"),
+        e2eCommand.serverCommand("clearBibleData"),
+      ]),
+  );
+
+  const TRACK = ".lay--gradient-track";
+  const STOP_ROW = ".lay--gradient-row";
+
+  /**
+   * Computed style of the node that carries the fill.
+   *
+   * TextElement paints the appearance on its own wrapper, which sits between
+   * the editor item and `.lay--text-content` — so this reads the parent rather
+   * than the node the other helpers in this file use.
+   */
+  const fillStyle = (page: Page, elementSelector: string, property: string) =>
+    page
+      .locator(`${elementSelector} .lay--text-content`)
+      .evaluate((el, prop) => {
+        const painted = el.parentElement;
+        if (!painted) throw new Error("text content has no painted parent");
+        return getComputedStyle(painted).getPropertyValue(prop);
+      }, property);
+
+  /** The colour picker's own hex field, one per stop row. */
+  const stopHex = (dialog: Locator, index: number) =>
+    dialog
+      .locator(STOP_ROW)
+      .nth(index)
+      .locator(".ui--color-picker__external-input");
+
+  const stopPosition = (dialog: Locator, index: number) =>
+    dialog.getByLabel(`Stop ${index + 1} position`);
+
+  /** Selects the body text and switches its box fill to a gradient. */
+  const openGradient = async (args: SetupArgs) => {
+    const dialog = await openStyleModal(args);
+    await dialog.locator(BODY).click();
+    // Text elements label the section "Box fill" — it is the box behind the
+    // glyphs, not the glyph colour, which lives in Typography.
+    await expect(dialog.getByText("Box fill", { exact: true })).toBeVisible();
+
+    // exact, because the knobs' own labels start "Gradient stop ...".
+    await dialog.getByLabel("Gradient", { exact: true }).click();
+    await expect(dialog.locator(STOP_ROW)).toHaveCount(2);
+    return dialog;
+  };
+
+  test("switching modes paints the fill and carries the colour across", async ({
+    page,
+    projectPage,
+    loginAndGoToProject,
+  }) => {
+    const dialog = await openStyleModal({ loginAndGoToProject, projectPage });
+    await dialog.locator(BODY).click();
+    await expect(dialog.getByText("Box fill", { exact: true })).toBeVisible();
+
+    // --- none ---------------------------------------------------------------
+    expect(await fillStyle(page, BODY, "background-image")).toBe("none");
+
+    // --- gradient -----------------------------------------------------------
+    await dialog.getByLabel("Gradient", { exact: true }).click();
+    await expect
+      .poll(() => fillStyle(page, BODY, "background-image"))
+      .toContain("linear-gradient");
+
+    // The seeded ramp. Black is the fallback for an element that had no fill.
+    await expect(dialog.locator(STOP_ROW)).toHaveCount(2);
+    await expect(stopHex(dialog, 0)).toHaveValue("#000000");
+    await expect(stopHex(dialog, 1)).toHaveValue("#FFFFFF");
+    await expect(stopPosition(dialog, 0)).toHaveValue("0");
+    await expect(stopPosition(dialog, 1)).toHaveValue("100");
+
+    // --- gradient collapses to its first stop -------------------------------
+    // Solid paints through background-color, so background-image goes back to
+    // none. Flipping modes is how a design gets explored, and resetting the
+    // colour to a default each time would make that a chore.
+    await dialog.getByLabel("Solid", { exact: true }).click();
+    await expect
+      .poll(() => fillStyle(page, BODY, "background-color"))
+      .toBe("rgb(0, 0, 0)");
+
+    // --- and back, with the solid colour seeding the first stop -------------
+    await dialog.getByLabel("Gradient", { exact: true }).click();
+    await expect(stopHex(dialog, 0)).toHaveValue("#000000");
+
+    // --- none clears it -----------------------------------------------------
+    await dialog.getByLabel("None", { exact: true }).click();
+    await expect
+      .poll(() => fillStyle(page, BODY, "background-image"))
+      .toBe("none");
+    await expect(dialog.locator(STOP_ROW)).toHaveCount(0);
+  });
+
+  test("clicking the ramp adds a stop, and dragging a knob moves it", async ({
+    page,
+    projectPage,
+    loginAndGoToProject,
+  }) => {
+    const dialog = await openGradient({ loginAndGoToProject, projectPage });
+    const track = dialog.locator(TRACK);
+
+    // --- click to add -------------------------------------------------------
+    // Lands at the click point, taking the colour the ramp already shows there,
+    // so inserting a stop changes nothing until it is moved or recoloured.
+    // Halfway along black -> white is mid grey.
+    await track.click();
+    await expect(dialog.locator(STOP_ROW)).toHaveCount(3);
+    await expect(stopPosition(dialog, 1)).toHaveValue("50");
+    await expect(stopHex(dialog, 1)).toHaveValue("#808080");
+
+    // --- drag a knob --------------------------------------------------------
+    // Offsets are a fraction of the TRACK, so the same 60px is worth a
+    // different percentage at every panel width. Anything measuring against the
+    // window or the dialog would be out by a multiple.
+    const trackBox = (await track.boundingBox())!;
+    const DELTA_PX = 60;
+    const expected = Math.round((DELTA_PX / trackBox.width) * 100);
+
+    await dragBy(page, dialog.getByLabel(/^Gradient stop 1,/), DELTA_PX, 0);
+
+    await expect
+      .poll(async () => Number(await stopPosition(dialog, 0).inputValue()))
+      .toBeGreaterThan(0);
+    // Tolerance absorbs the 1% quantisation, not a scaling mistake.
+    expect(
+      Math.abs(Number(await stopPosition(dialog, 0).inputValue()) - expected),
+    ).toBeLessThanOrEqual(2);
+  });
+
+  test("stops reach CSS in ascending order however they are reordered", async ({
+    page,
+    projectPage,
+    loginAndGoToProject,
+  }) => {
+    const dialog = await openGradient({ loginAndGoToProject, projectPage });
+
+    await dialog.locator(TRACK).click();
+    await expect(stopHex(dialog, 1)).toHaveValue("#808080");
+
+    // Push the black stop past the grey one by typing, which is the cheapest
+    // way to force a reorder.
+    await stopPosition(dialog, 0).fill("70");
+    await stopPosition(dialog, 0).press("Tab");
+
+    // The rows re-sort, and each stop keeps its own colour through the move.
+    await expect(stopPosition(dialog, 0)).toHaveValue("50");
+    await expect(stopHex(dialog, 0)).toHaveValue("#808080");
+    await expect(stopPosition(dialog, 1)).toHaveValue("70");
+    await expect(stopHex(dialog, 1)).toHaveValue("#000000");
+    await expect(stopPosition(dialog, 2)).toHaveValue("100");
+
+    // The reason any of this matters: CSS silently CLAMPS a stop whose offset
+    // is below its predecessor's, so an unsorted array renders as a flat band
+    // with no error anywhere. Grey must reach the browser before black.
+    const painted = await fillStyle(page, BODY, "background-image");
+    expect(painted).toContain("linear-gradient");
+    expect(painted.indexOf("128, 128, 128")).toBeGreaterThan(-1);
+    expect(painted.indexOf("128, 128, 128")).toBeLessThan(
+      painted.indexOf("rgb(0, 0, 0)"),
+    );
+  });
+
+  test("the list keeps a floor of two stops, and reverse flips the ramp", async ({
+    projectPage,
+    loginAndGoToProject,
+  }) => {
+    const dialog = await openGradient({ loginAndGoToProject, projectPage });
+
+    // --- the floor ----------------------------------------------------------
+    // One stop is not a gradient, and leaves the renderer nothing to
+    // interpolate between.
+    await expect(dialog.getByLabel("Remove stop 1")).toBeDisabled();
+    await expect(dialog.getByLabel("Remove stop 2")).toBeDisabled();
+
+    await dialog.getByLabel("Add a stop").click();
+    await expect(dialog.locator(STOP_ROW)).toHaveCount(3);
+    // Dropped into the widest gap, so it is somewhere useful and visible.
+    await expect(stopPosition(dialog, 1)).toHaveValue("50");
+    await expect(dialog.getByLabel("Remove stop 1")).toBeEnabled();
+
+    // --- reverse ------------------------------------------------------------
+    await dialog.getByLabel("Reverse the gradient").click();
+    await expect(stopHex(dialog, 0)).toHaveValue("#FFFFFF");
+    await expect(stopHex(dialog, 2)).toHaveValue("#000000");
+    // Mirrored offsets, so a symmetric ramp keeps its stop positions.
+    await expect(stopPosition(dialog, 0)).toHaveValue("0");
+    await expect(stopPosition(dialog, 1)).toHaveValue("50");
+    await expect(stopPosition(dialog, 2)).toHaveValue("100");
+
+    // --- removing returns to the floor --------------------------------------
+    await dialog.getByLabel("Remove stop 2").click();
+    await expect(dialog.locator(STOP_ROW)).toHaveCount(2);
+    await expect(dialog.getByLabel("Remove stop 1")).toBeDisabled();
+  });
+
+  test("the angle writes through to the painted gradient", async ({
+    page,
+    projectPage,
+    loginAndGoToProject,
+  }) => {
+    const dialog = await openGradient({ loginAndGoToProject, projectPage });
+
+    // 90deg, not the 180 default: Chrome serialises `linear-gradient(180deg,
+    // ...)` without the angle, since to-bottom is the CSS default, so the
+    // default would prove nothing about the value reaching the browser.
+    const angle = row(dialog, "Angle").locator("input");
+    await angle.fill("90");
+    await angle.press("Tab");
+
+    await expect
+      .poll(() => fillStyle(page, BODY, "background-image"))
+      .toContain("90deg");
+  });
+});
