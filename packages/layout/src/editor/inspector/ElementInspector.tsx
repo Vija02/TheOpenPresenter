@@ -82,9 +82,12 @@ export const ElementInspector = ({
       </>
     )}
 
-    {element.type === "shape" && (
-      <FillSection doc={doc} element={element} onChange={onChange} />
-    )}
+    <FillSection
+      doc={doc}
+      element={element}
+      onChange={onChange}
+      title={element.type === "text" ? "Box fill" : "Fill"}
+    />
 
     <PositionSection doc={doc} element={element} onChange={onChange} />
     <LayerSection doc={doc} element={element} onChange={onChange} />

@@ -110,6 +110,10 @@
     @apply h-12 uppercase;
   }
 
+  .ui--color-picker .ui--color-picker__external-input {
+    @apply bg-surface-primary;
+  }
+
   .ui--color-picker__error {
     @apply text-fill-destructive text-sm;
   }

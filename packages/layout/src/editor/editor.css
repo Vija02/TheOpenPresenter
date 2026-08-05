@@ -134,3 +134,61 @@
   @apply checkerboard;
   --checkerboard-color: var(--surface-secondary, #f4f4f5);
 }
+
+/* --- Gradient fill controls ------------------------------------------------ */
+
+/* The shared 16px checkerboard is coarse against a 20px-tall track. */
+.lay--gradient-track {
+  --checkerboard-color: var(--stroke, #dee2e6);
+  background-size: 8px 8px;
+  background-position:
+    0 0,
+    0 4px,
+    4px -4px,
+    -4px 0;
+}
+
+/*
+ * The shared colour swatch is an icon-sized (36px) button, which is too tall
+ * for a dense list of stops. Sized down here rather than by threading a size
+ * prop through ColorField, which every other inspector row wants at 36px.
+ */
+.lay--gradient-row .ui--color-picker__swatch {
+  width: 1.5rem;
+  height: 1.5rem;
+  min-width: 0;
+}
+
+/* Its 16px gap and 48px hex field are sized for a full-width form row. */
+.lay--gradient-row .ui--color-picker {
+  gap: 0.375rem;
+}
+
+.lay--gradient-row .ui--color-picker__external-input {
+  height: 1.5rem;
+  padding: 0 0.375rem;
+  font-size: 0.6875rem;
+  background: var(--surface-primary, #fff);
+}
+
+.lay--field-input {
+  height: 1.5rem;
+  min-width: 0;
+  padding: 0 0.375rem;
+  border: 1px solid var(--stroke, #dee2e6);
+  border-radius: 4px;
+  background: var(--surface-primary, #fff);
+  color: inherit;
+  font-size: 0.6875rem;
+  line-height: 1;
+  outline: none;
+}
+
+.lay--field-input:focus {
+  border-color: var(--stroke-emphasis, #adb5bd);
+}
+
+.lay--field-input--number {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}

@@ -70,3 +70,19 @@ export const solidPaint = (color: string, opacity = 1): SolidPaint => ({
   color,
   opacity,
 });
+
+export const sortGradientStops = (
+  stops: LinearGradientPaint["stops"],
+): LinearGradientPaint["stops"] =>
+  [...stops].sort((a, b) => a.offset - b.offset);
+
+export const linearGradientPaint = (
+  angle: number,
+  stops: LinearGradientPaint["stops"],
+  opacity = 1,
+): LinearGradientPaint => ({
+  type: "linearGradient",
+  angle,
+  stops: sortGradientStops(stops),
+  opacity,
+});
