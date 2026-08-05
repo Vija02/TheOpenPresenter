@@ -300,6 +300,65 @@ test.describe.serial("Layout editor", () => {
     await expect.poll(readX).toBe(beforeEditing);
   });
 
+  test("rotates from the handle and from the inspector", async ({
+    page,
+    projectPage,
+    loginAndGoToProject,
+  }) => {
+    const dialog = await openStyleModal({ loginAndGoToProject, projectPage });
+    const reference = dialog.locator(REFERENCE);
+
+    await reference.click();
+    await expect(reference).toHaveClass(/lay--editor-item--selected/);
+
+    const rotation = row(dialog, "Rotation").locator("input");
+    await expect(rotation).toHaveValue("0");
+
+    // --- the numeric field --------------------------------------------------
+    await rotation.fill("30");
+    await rotation.press("Tab");
+
+    // The wrapper carries the angle, not the inner view: rotation rides with
+    // placement, and the editor renders its children with placement="fill".
+    await expect
+      .poll(() => reference.evaluate((el) => getComputedStyle(el).transform))
+      // matrix(cos30, sin30, -sin30, cos30, ...) — asserted loosely because the
+      // translation components depend on the canvas size.
+      .toMatch(/^matrix\(0\.86602[45]\d*, 0\.5, -0\.5, 0\.86602[45]/);
+
+    // Wraps rather than clamping, so a full turn reads as zero again.
+    await rotation.fill("390");
+    await rotation.press("Tab");
+    await expect(rotation).toHaveValue("30");
+
+    await rotation.fill("0");
+    await rotation.press("Tab");
+    await expect
+      .poll(() => reference.evaluate((el) => getComputedStyle(el).transform))
+      .toBe("none");
+
+    // --- the drag handle ----------------------------------------------------
+    // Sits above the box, outside it. The reference element is mid-stage in the
+    // default template, so the handle is not clipped by `.lay--editor`.
+    const handle = page.locator(
+      ".moveable-control-box .moveable-rotation-control",
+    );
+    await expect(handle).toBeVisible();
+
+    // Sideways from a handle that starts above the centre swings the element
+    // round. The 15 degree snap makes the committed value exact.
+    await dragBy(page, handle, 120, 40);
+
+    await expect
+      .poll(async () => Number(await rotation.inputValue()))
+      .not.toBe(0);
+
+    // Snapped, so the angle is a clean multiple rather than whatever the
+    // pointer happened to subtend.
+    const snapped = Number(await rotation.inputValue());
+    expect(snapped % 15).toBe(0);
+  });
+
   test("the size control follows the fit mode", async ({
     projectPage,
     loginAndGoToProject,

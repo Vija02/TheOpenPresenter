@@ -127,6 +127,10 @@
     left: 0;
     top: 0;
   }
+
+  .lay--editor .moveable-control.moveable-rotation-control::after {
+    inset: -15px;
+  }
 }
 
 /* Checkerboard, so a transparent slide background is legible. */

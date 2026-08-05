@@ -26,8 +26,14 @@ export type ElementPlacement = "rect" | "fill";
 export const placementToCss = (
   placement: ElementPlacement,
   rect: Rect,
+  rotation = 0,
 ): CSSProperties =>
-  placement === "fill" ? { position: "absolute", inset: 0 } : rectToCss(rect);
+  placement === "fill"
+    ? { position: "absolute", inset: 0 }
+    : {
+        ...rectToCss(rect),
+        transform: rotation !== 0 ? `rotate(${rotation}deg)` : undefined,
+      };
 
 const withOpacity = (color: string, opacity: number): string =>
   opacity >= 1
@@ -95,7 +101,6 @@ export const appearanceToCss = (
     radius,
     clip,
     opacity,
-    rotation,
   }: {
     fill: Paint | null;
     stroke: Stroke | null;
@@ -103,7 +108,6 @@ export const appearanceToCss = (
     radius: number;
     clip: boolean;
     opacity: number;
-    rotation: number;
   },
   m: StageMetrics,
 ): CSSProperties => {
@@ -125,7 +129,6 @@ export const appearanceToCss = (
     borderRadius: radius > 0 ? `${toPx(radius, m)}px` : undefined,
     overflow: clip ? "hidden" : undefined,
     opacity: opacity < 1 ? opacity : undefined,
-    transform: rotation !== 0 ? `rotate(${rotation}deg)` : undefined,
     boxShadow: boxShadow || undefined,
     filter: blurs.length > 0 ? blurs.join(" ") : undefined,
   };

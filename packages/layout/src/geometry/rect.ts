@@ -27,3 +27,10 @@ export const clampRect = (rect: Rect): Rect => {
 
 export const rectsEqual = (a: Rect, b: Rect): boolean =>
   a.x === b.x && a.y === b.y && a.w === b.w && a.h === b.h;
+
+export const normalizeRotation = (degrees: number, precision = 1): number => {
+  const f = 10 ** precision;
+  const wrapped = ((degrees % 360) + 360) % 360;
+  // A value a hair under 360 must not round up to 360, which is not in range.
+  return (Math.round(wrapped * f) / f) % 360;
+};

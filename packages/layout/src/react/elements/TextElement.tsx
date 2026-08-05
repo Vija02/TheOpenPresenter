@@ -87,7 +87,7 @@ export const TextElementView = ({
   return (
     <div
       style={{
-        ...placementToCss(placement, element.rect),
+        ...placementToCss(placement, element.rect, element.rotation),
         display: "flex",
         flexDirection: "column",
         ...appearanceToCss(element, metrics),
