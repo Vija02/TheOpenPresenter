@@ -1,7 +1,13 @@
 import { CSSProperties } from "react";
 
 import { StageMetrics, toPx } from "../geometry/scale";
-import { Effect, Paint, Shadow, Stroke } from "../schema/paint";
+import {
+  Effect,
+  Paint,
+  Shadow,
+  Stroke,
+  sortGradientStops,
+} from "../schema/paint";
 import { Rect } from "../schema/rect";
 import { TextStyle } from "../schema/style";
 
@@ -23,17 +29,25 @@ export const placementToCss = (
 ): CSSProperties =>
   placement === "fill" ? { position: "absolute", inset: 0 } : rectToCss(rect);
 
+const withOpacity = (color: string, opacity: number): string =>
+  opacity >= 1
+    ? color
+    : `color-mix(in srgb, ${color} ${opacity * 100}%, transparent)`;
+
 export const paintToCss = (paint: Paint): string => {
   switch (paint.type) {
     case "solid":
-      return paint.opacity >= 1
-        ? paint.color
-        : `color-mix(in srgb, ${paint.color} ${paint.opacity * 100}%, transparent)`;
+      return withOpacity(paint.color, paint.opacity);
     case "linearGradient": {
-      const stops = paint.stops
-        .map((s) => `${s.color} ${s.offset * 100}%`)
+      const stops = sortGradientStops(paint.stops);
+      const first = stops[0];
+      if (!first) return "transparent";
+      if (stops.length === 1) return withOpacity(first.color, paint.opacity);
+
+      const list = stops
+        .map((s) => `${withOpacity(s.color, paint.opacity)} ${s.offset * 100}%`)
         .join(", ");
-      return `linear-gradient(${paint.angle}deg, ${stops})`;
+      return `linear-gradient(${paint.angle}deg, ${list})`;
     }
   }
 };

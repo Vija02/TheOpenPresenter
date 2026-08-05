@@ -1,4 +1,5 @@
 import { Checkbox, ColorPicker, Input, NumberInput } from "@repo/ui";
+import { useState } from "react";
 
 import { inspectorInputClass } from "./styles";
 
@@ -40,6 +41,61 @@ export const NumberField = ({
     }}
   />
 );
+
+export const CompactNumberField = ({
+  value,
+  onChange,
+  min = -Infinity,
+  max = Infinity,
+  suffix,
+  width = 56,
+  label,
+}: {
+  value: number;
+  onChange: (v: number) => void;
+  min?: number;
+  max?: number;
+  suffix?: string;
+  width?: number;
+  label?: string;
+}) => {
+  const [draft, setDraft] = useState<string | null>(null);
+
+  const commit = () => {
+    if (draft === null) return;
+    const parsed = Number(draft);
+    setDraft(null);
+    if (draft.trim() !== "" && Number.isFinite(parsed)) {
+      onChange(Math.min(max, Math.max(min, parsed)));
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-1" style={{ width }}>
+      <input
+        className="lay--field-input lay--field-input--number flex-1"
+        value={draft ?? String(value)}
+        inputMode="numeric"
+        aria-label={label}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          e.stopPropagation();
+          if (e.key === "Enter") {
+            commit();
+            e.currentTarget.blur();
+          } else if (e.key === "Escape") {
+            setDraft(null);
+            e.currentTarget.blur();
+          }
+        }}
+      />
+      {suffix && (
+        <span className="shrink-0 text-2xs text-secondary">{suffix}</span>
+      )}
+    </div>
+  );
+};
 
 export const TextField = ({
   value,
