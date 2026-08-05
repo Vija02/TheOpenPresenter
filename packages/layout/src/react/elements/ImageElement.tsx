@@ -20,7 +20,7 @@ export const ImageElementView = ({
   return (
     <div
       style={{
-        ...placementToCss(placement, element.rect),
+        ...placementToCss(placement, element.rect, element.rotation),
         ...appearanceToCss(element, metrics),
       }}
     >

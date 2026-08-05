@@ -12,6 +12,7 @@ import Selecto from "react-selecto";
 import {
   MIN_RECT_SIZE,
   clampRect,
+  normalizeRotation,
   rectsEqual,
   roundRect,
 } from "../geometry/rect";
@@ -25,10 +26,11 @@ import { Rect } from "../schema/rect";
 export type EditorItem = {
   id: string;
   rect: Rect;
+  rotation?: number;
   locked?: boolean;
 };
 
-export type RectChange = { id: string; rect: Rect };
+export type RectChange = { id: string; rect: Rect; rotation?: number };
 
 export type LayoutEditorProps<T extends EditorItem> = {
   items: T[];
@@ -43,13 +45,22 @@ export type LayoutEditorProps<T extends EditorItem> = {
   className?: string;
   /** Percent moved per arrow key press; Shift multiplies by 10. */
   nudgeStep?: number;
+  /** Set false to hide the rotation handle. */
+  rotatable?: boolean;
+  rotationSnap?: number;
   /** Fired when an item is double-clicked. Drives inline editing. */
   onItemDoubleClick?: (id: string) => void;
   /** Item currently being edited in place. */
   editingId?: string | null;
 };
 
-type Frame = { tx: number; ty: number; w: number; h: number };
+type Frame = {
+  tx: number;
+  ty: number;
+  w: number;
+  h: number;
+  rotation: number;
+};
 
 const ITEM_CLASS = "lay--editor-item";
 
@@ -85,6 +96,8 @@ const EditorSurface = <T extends EditorItem>({
   onChange,
   renderItem,
   nudgeStep = 0.5,
+  rotatable = true,
+  rotationSnap = 15,
   onItemDoubleClick,
   editingId = null,
 }: SurfaceProps<T>) => {
@@ -93,6 +106,12 @@ const EditorSurface = <T extends EditorItem>({
   const nodesRef = useRef(new Map<string, HTMLElement>());
   const framesRef = useRef(new Map<string, Frame>());
   const startRectsRef = useRef(new Map<string, Rect>());
+  const startRotationsRef = useRef(new Map<string, number>());
+
+  // Read in a Moveable callback, which closes over the value from the render
+  // that created it. A ref keeps the live one without re-registering handlers.
+  const rotationSnapRef = useRef(rotationSnap);
+  rotationSnapRef.current = rotationSnap;
 
   // Ref callbacks must be stable per id. An inline arrow gets a fresh identity
   // each render, so React detaches (null) and reattaches every pass, and any
@@ -169,26 +188,33 @@ const EditorSurface = <T extends EditorItem>({
     (elements: (HTMLElement | SVGElement)[]) => {
       framesRef.current.clear();
       startRectsRef.current.clear();
+      startRotationsRef.current.clear();
       for (const el of elements) {
         const id = idOf(el);
         const item = id ? itemsById.get(id) : null;
         if (!id || !item) continue;
         const px = rectToPx(item.rect, metrics);
+        const rotation = item.rotation ?? 0;
         framesRef.current.set(id, {
           tx: 0,
           ty: 0,
           w: px.width,
           h: px.height,
+          rotation,
         });
         startRectsRef.current.set(id, item.rect);
+        startRotationsRef.current.set(id, rotation);
       }
     },
     [itemsById, metrics],
   );
 
+  // Order matters
   const applyFrame = (el: HTMLElement | SVGElement, frame: Frame) => {
     const style = (el as HTMLElement).style;
-    style.transform = `translate(${frame.tx}px, ${frame.ty}px)`;
+    style.transform =
+      `translate(${frame.tx}px, ${frame.ty}px)` +
+      (frame.rotation !== 0 ? ` rotate(${frame.rotation}deg)` : "");
     style.width = `${frame.w}px`;
     style.height = `${frame.h}px`;
   };
@@ -199,6 +225,7 @@ const EditorSurface = <T extends EditorItem>({
     for (const [id, frame] of framesRef.current) {
       const startRect = startRectsRef.current.get(id);
       if (!startRect) continue;
+      const startRotation = startRotationsRef.current.get(id) ?? 0;
 
       const startPx = rectToPx(startRect, metrics);
       const finalPx: PixelBox = {
@@ -208,16 +235,22 @@ const EditorSurface = <T extends EditorItem>({
         height: frame.h,
       };
       const rect = roundRect(clampRect(pxToRect(finalPx, metrics)));
-      const changed = !rectsEqual(rect, startRect);
-      if (changed) changes.push({ id, rect });
+      const rotation = normalizeRotation(frame.rotation);
+
+      const rectChanged = !rectsEqual(rect, startRect);
+      const rotationChanged = rotation !== startRotation;
+      if (rectChanged || rotationChanged) {
+        changes.push(rotationChanged ? { id, rect, rotation } : { id, rect });
+      }
 
       // Write the resolved geometry back rather than clearing it. React diffs
       // against its previous props, so on an unchanged dimension it skips the
       // DOM write. Clearing to "" would leave the element sized to content.
       const node = nodesRef.current.get(id);
       if (node) {
-        const px = rectToPx(changed ? rect : startRect, metrics);
-        node.style.transform = "";
+        const px = rectToPx(rectChanged ? rect : startRect, metrics);
+        const resting = rotationChanged ? rotation : startRotation;
+        node.style.transform = resting !== 0 ? `rotate(${resting}deg)` : "";
         node.style.left = `${px.left}px`;
         node.style.top = `${px.top}px`;
         node.style.width = `${px.width}px`;
@@ -227,6 +260,7 @@ const EditorSurface = <T extends EditorItem>({
 
     framesRef.current.clear();
     startRectsRef.current.clear();
+    startRotationsRef.current.clear();
 
     if (changes.length > 0) onChange(changes);
   }, [metrics, onChange]);
@@ -302,6 +336,9 @@ const EditorSurface = <T extends EditorItem>({
               top: px.top,
               width: px.width,
               height: px.height,
+              transform: item.rotation
+                ? `rotate(${item.rotation}deg)`
+                : undefined,
             }}
           >
             {renderItem(item, { selected })}
@@ -314,7 +351,8 @@ const EditorSurface = <T extends EditorItem>({
         target={targets}
         draggable
         resizable
-        snappable
+        rotatable={rotatable}
+        snappable={["draggable", "resizable"]}
         origin={false}
         keepRatio={false}
         edge={false}
@@ -390,6 +428,55 @@ const EditorSurface = <T extends EditorItem>({
           }
         }}
         onResizeGroupEnd={commitGesture}
+        onRotateStart={({ target, set }) => {
+          beginGesture([target]);
+          // Seed with the item's own angle
+          const id = idOf(target);
+          set(id ? (itemsById.get(id)?.rotation ?? 0) : 0);
+        }}
+        // Snapping is applied here
+        onBeforeRotate={(e) => {
+          const step = rotationSnapRef.current;
+          if (step > 0 && !e.inputEvent?.shiftKey) {
+            e.setRotation(Math.round(e.rotation / step) * step);
+          }
+        }}
+        onRotate={({ target, rotation, drag }) => {
+          const id = idOf(target);
+          const frame = id ? framesRef.current.get(id) : null;
+          if (!frame) return;
+          frame.rotation = rotation;
+          // Rotation about a corner also translates the box.
+          frame.tx = drag.beforeTranslate[0] ?? 0;
+          frame.ty = drag.beforeTranslate[1] ?? 0;
+          applyFrame(target, frame);
+        }}
+        onRotateEnd={commitGesture}
+        onRotateGroupStart={({ events }) => {
+          beginGesture(events.map((e) => e.target));
+          for (const e of events) {
+            const id = idOf(e.target);
+            e.set(id ? (itemsById.get(id)?.rotation ?? 0) : 0);
+          }
+        }}
+        onBeforeRotateGroup={(e) => {
+          const step = rotationSnapRef.current;
+          if (step > 0 && !e.inputEvent?.shiftKey) {
+            e.setRotation(Math.round(e.rotation / step) * step);
+          }
+        }}
+        onRotateGroup={({ events }) => {
+          for (const e of events) {
+            const id = idOf(e.target);
+            const frame = id ? framesRef.current.get(id) : null;
+            if (!frame) continue;
+            frame.rotation = e.rotation;
+            frame.tx = e.drag.beforeTranslate[0] ?? 0;
+            frame.ty = e.drag.beforeTranslate[1] ?? 0;
+            applyFrame(e.target, frame);
+          }
+        }}
+        onRotateGroupEnd={commitGesture}
       />
 
       {surface && (

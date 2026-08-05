@@ -45,6 +45,7 @@ export const LayoutDocEditor = ({
       resolveDoc(doc, data, frame).elements.map((element) => ({
         id: element.id,
         rect: element.rect,
+        rotation: element.rotation,
         locked: element.locked,
         element,
       })),
@@ -66,12 +67,20 @@ export const LayoutDocEditor = ({
 
   const handleChange = useCallback(
     (changes: RectChange[]) => {
-      const byId = new Map(changes.map((c) => [c.id, c.rect]));
+      const byId = new Map(changes.map((c) => [c.id, c]));
       onChange({
         ...doc,
         elements: doc.elements.map((element) => {
-          const rect = byId.get(element.id);
-          return rect ? { ...element, rect } : element;
+          const change = byId.get(element.id);
+          if (!change) return element;
+          return {
+            ...element,
+            rect: change.rect,
+            // Absent means the gesture never touched the angle.
+            ...(change.rotation === undefined
+              ? {}
+              : { rotation: change.rotation }),
+          };
         }),
       });
     },

@@ -27,7 +27,7 @@ export const ShapeElementView = ({
   return (
     <div
       style={{
-        ...placementToCss(placement, element.rect),
+        ...placementToCss(placement, element.rect, element.rotation),
         ...appearance,
         ...kindStyle,
       }}

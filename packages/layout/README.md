@@ -160,13 +160,33 @@ LayoutWorkbench          template rail + canvas + contextual inspector
 ```
 
 `LayoutEditor` knows nothing about `LayoutDoc` — it takes `items` with a `rect`
-and emits `RectChange[]`. Selection is internal view state in `LayoutWorkbench`;
-the document itself stays controlled.
+and a `rotation` and emits `RectChange[]`. Selection is internal view state in
+`LayoutWorkbench`; the document itself stays controlled.
 
 Behaviour worth knowing:
 
 - **Gestures commit once on release**, never per frame — consumers persist to a
   CRDT and per-mousemove writes are a firehose.
+- **`rotation` on a `RectChange` is optional**, and absent means "the gesture
+  did not touch the angle" — distinct from `0`, which means "unrotated". A
+  keyboard nudge omits it so it cannot flatten an existing rotation. `rect`
+  always rides along with a rotate, since spinning about a corner also moves
+  the box.
+- **The editor wrapper owns the angle, not the element view.** `rotation` is
+  applied by `placementToCss`, which no-ops under `placement="fill"` — the
+  placement the editor uses. Moveable transforms that wrapper directly, so
+  rotating the child too would compound into double the angle.
+- **Snapping is scoped to `["draggable", "resizable"]`.** `bounds` feeds
+  snapping, and for a rotate Moveable reads it as "no corner may leave the
+  stage", which makes anything near full-bleed impossible to spin. Rotation is
+  allowed to overhang and the stage clips it.
+- **Rotation snaps to 15°, and Shift rotates freely.** Applied in
+  `onBeforeRotate` rather than through `throttleRotate`, which is a prop and so
+  cannot see a modifier held mid-drag.
+- **One rotation handle, above the box** (Moveable's default). It sits ~40px
+  outside and `.lay--editor` clips, so an element flush to the top of the stage
+  has no reachable handle — that is what the inspector's numeric Rotation field
+  is for.
 - **`locked` blocks transform, not selection.** Moveable's targets exclude
   locked items but Selecto still selects them, so a locked full-bleed background
   can be clicked and restyled through the Fill section, and its own Locked
@@ -190,6 +210,7 @@ end up eyeballing in devtools.
 | `.lay--text-content` | text container; the inline editor's `contenteditable` host |
 | `.lay--workbench-canvas` | the surround; clicking it deselects |
 | `.lay--editor`, `.lay--editor-surface` | editor frame and canvas |
+| `.moveable-rotation-control` | rotation handle; touch hit area only |
 | `.lay--editor-item` + `--selected` / `--editing` | one element |
 | `[data-lay-id]` | element by id |
 

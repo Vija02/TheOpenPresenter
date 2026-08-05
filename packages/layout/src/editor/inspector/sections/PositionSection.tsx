@@ -1,4 +1,5 @@
 import { patchElement, patchRect } from "../../../doc/edit";
+import { normalizeRotation } from "../../../geometry/rect";
 import { MiniRow, NumberField, Row, Section } from "../primitives";
 import { SectionProps } from "./types";
 
@@ -38,6 +39,16 @@ export const PositionSection = ({ doc, element, onChange }: SectionProps) => {
           />
         </MiniRow>
       </div>
+
+      <Row label="Rotation">
+        <NumberField
+          value={element.rotation}
+          step={1}
+          onChange={(v) =>
+            onChange(patchElement(doc, id, { rotation: normalizeRotation(v) }))
+          }
+        />
+      </Row>
 
       <Row label="Opacity">
         <NumberField
