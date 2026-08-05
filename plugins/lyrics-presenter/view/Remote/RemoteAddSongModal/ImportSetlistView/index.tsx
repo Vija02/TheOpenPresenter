@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { typeidUnboxed } from "typeid-js";
 
 import { Song } from "../../../../src";
+import { usePluginAPI } from "../../../pluginApi";
 import { trpc } from "../../../trpc";
 import { AddSongFooter } from "../AddSongFooter";
 import { Setlist } from "../MainView/ImportPlaylist";
@@ -45,6 +46,7 @@ export const ImportSetlistView = ({ setlist }: { setlist: Setlist }) => {
   const [activeId, setActiveId] = useState<number | null>(null);
 
   const [isEditing, setIsEditing] = useState(false);
+  const isPublicAccess = usePluginAPI().isPublicAccess;
 
   // Seed a default decision per song once the songbook has loaded: reuse the
   // first matching entry if any, otherwise import (and save) fresh
@@ -58,12 +60,12 @@ export const ImportSetlistView = ({ setlist }: { setlist: Setlist }) => {
         const matches = matchesByMwlId.get(String(c.id)) ?? [];
         next[c.id] = matches.length
           ? { mode: "match", savedSong: matches[0]! }
-          : { mode: "import", saveToSongbook: true };
+          : { mode: "import", saveToSongbook: !isPublicAccess };
         changed = true;
       }
       return changed ? next : prev;
     });
-  }, [isLoading, matchesByMwlId, setlist.content]);
+  }, [isLoading, isPublicAccess, matchesByMwlId, setlist.content]);
 
   // Store fetched lyrics onto a choice once (keeping any user edits).
   const seedData = useCallback((id: number, data: SetlistImportData) => {

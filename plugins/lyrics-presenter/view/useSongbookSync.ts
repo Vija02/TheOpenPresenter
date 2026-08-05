@@ -12,6 +12,7 @@ export const useSongbookSync = () => {
   const pluginApi = usePluginAPI();
   const pluginInfo = pluginApi.scene.useValtioData();
   const pluginId = pluginApi.pluginContext.pluginId;
+  const isPublicAccess = pluginApi.isPublicAccess;
 
   const saveMutation = trpc.lyricsPresenter.savedSongs.save.useMutation({
     onError: () => pluginApi.remote.toast.error("Failed to save to songbook"),
@@ -19,6 +20,8 @@ export const useSongbookSync = () => {
 
   const saveToSongbook = useCallback(
     async (song: Song): Promise<string | undefined> => {
+      if (isPublicAccess) return undefined;
+
       const globalStyle = pluginInfo.pluginData.style as SlideStyle | undefined;
 
       const referencedIds = new Set<string>();
@@ -42,6 +45,7 @@ export const useSongbookSync = () => {
       return res.id;
     },
     [
+      isPublicAccess,
       pluginId,
       pluginInfo.pluginData.style,
       pluginInfo.pluginData.videoBackgrounds,

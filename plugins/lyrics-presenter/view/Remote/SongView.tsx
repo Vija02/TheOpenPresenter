@@ -88,7 +88,7 @@ const SongViewInner = React.memo(
           <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center">
             <div className="flex items-center gap-2">
               <p className="text-xl mb-0 font-bold">{song.title}</p>
-              {!isLinked && (
+              {!isLinked && !pluginApi.isPublicAccess && (
                 <button
                   type="button"
                   onClick={handleSaveToSongbook}

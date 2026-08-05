@@ -14,10 +14,11 @@ import { useAddSongScene } from "../useAddSongScene";
 export const CreateSongView = () => {
   const pluginApi = usePluginAPI();
   const globalStyle = pluginApi.scene.useData((x) => x.pluginData.style) ?? {};
+  const isPublicAccess = pluginApi.isPublicAccess;
   const { close, addSong } = useAddSongScene();
 
   const [newSong, setNewSong] = useState<Song | null>(null);
-  const [saveToSongbook, setSaveToSongbook] = useState(true);
+  const [saveToSongbook, setSaveToSongbook] = useState(!isPublicAccess);
 
   const submit = () => {
     if (!newSong) return;
@@ -45,14 +46,16 @@ export const CreateSongView = () => {
       />
 
       <AddSongFooter preview={preview}>
-        <label className="stack-row items-center gap-2 mr-auto cursor-pointer select-none">
-          <input
-            type="checkbox"
-            checked={saveToSongbook}
-            onChange={(e) => setSaveToSongbook(e.target.checked)}
-          />
-          <span className="text-sm">Save to songbook</span>
-        </label>
+        {!isPublicAccess && (
+          <label className="stack-row items-center gap-2 mr-auto cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={saveToSongbook}
+              onChange={(e) => setSaveToSongbook(e.target.checked)}
+            />
+            <span className="text-sm">Save to songbook</span>
+          </label>
+        )}
         <Button variant="success" disabled={!newSong} onClick={submit}>
           Add to list
         </Button>

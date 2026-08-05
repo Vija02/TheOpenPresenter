@@ -143,6 +143,17 @@ export class LyricsPlugin {
   }
 
   // ---------------------------------------------------------------------------
+  // Public (unauthenticated) access
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Only rendered for viewers with a session — the songbook is org-scoped.
+   */
+  get songbookButton(): Locator {
+    return this.page.getByTestId("ly-songbook-button");
+  }
+
+  // ---------------------------------------------------------------------------
   // Songbook (per-song save + browse modal)
   // ---------------------------------------------------------------------------
 

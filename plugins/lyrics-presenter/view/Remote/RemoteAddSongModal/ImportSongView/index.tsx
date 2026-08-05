@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { typeidUnboxed } from "typeid-js";
 
 import { Song } from "../../../../src";
+import { usePluginAPI } from "../../../pluginApi";
 import { trpc } from "../../../trpc";
 import { AddSongFooter } from "../AddSongFooter";
 import { useAddSongScene } from "../useAddSongScene";
@@ -11,6 +12,8 @@ import { LyricsEditor } from "./LyricsEditor";
 import { SongPreview } from "./SongPreview";
 
 export const ImportSongView = ({ mwlId }: { mwlId: number }) => {
+  const pluginApi = usePluginAPI();
+  const isPublicAccess = pluginApi.isPublicAccess;
   const { close, addSong } = useAddSongScene();
 
   const [importSongTitle, setImportSongTitle] = useState<string | null>(null);
@@ -18,7 +21,7 @@ export const ImportSongView = ({ mwlId }: { mwlId: number }) => {
     null,
   );
   const [isEditingLyrics, setIsEditingLyrics] = useState(false);
-  const [saveToSongbook, setSaveToSongbook] = useState(true);
+  const [saveToSongbook, setSaveToSongbook] = useState(!isPublicAccess);
 
   const mwlSongQuery = trpc.lyricsPresenter.myworshiplist.getSong.useQuery({
     id: mwlId,
