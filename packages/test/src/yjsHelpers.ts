@@ -16,6 +16,7 @@ import {
   ServerPluginApiPrivate,
   TRPCContext,
   YjsState,
+  createPluginTRPCObject,
 } from "@repo/base-plugin/server";
 import { initTRPC } from "@trpc/server";
 import {
@@ -50,14 +51,17 @@ export const simulateServer = async (
   init(serverPluginApi);
 
   const getTrpcClient = <T extends Router<any, any>>() => {
-    const trpc = initTRPC.context<TRPCContext>().create();
-    const mergedRouters = trpc.mergeRouters(
+    const trpcBase = initTRPC.context<TRPCContext>().create();
+    const trpc = createPluginTRPCObject(trpcBase);
+    const mergedRouters = trpcBase.mergeRouters(
       ...serverPluginApi.getRegisteredTrpcAppRouter().map((x) => x(trpc)),
     );
     const createCaller = trpc.createCallerFactory(mergedRouters);
-    return createCaller({ userId: "testUserId", sessionId: "testSessionId", screenGuestSessionId: "testScreenGuestSessionId" }) as DecorateRouterRecord<
-      ExtractRouterRecord<T>
-    >;
+    return createCaller({
+      userId: "testUserId",
+      sessionId: "testSessionId",
+      screenGuestSessionId: "testScreenGuestSessionId",
+    }) as DecorateRouterRecord<ExtractRouterRecord<T>>;
   };
 
   const yDoc = YjsState.createEmptyState();
