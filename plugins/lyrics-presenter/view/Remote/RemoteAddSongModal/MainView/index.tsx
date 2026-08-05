@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { SavedSong } from "../../../../src";
+import { usePluginAPI } from "../../../pluginApi";
 import { ImportPlaylist, Setlist } from "./ImportPlaylist";
 import { RecentSongs } from "./RecentSongs";
 import { SearchSong } from "./SearchSong";
@@ -11,6 +12,9 @@ type MainViewProps = {
 };
 
 export const MainView = ({ onImportSong, onSelectSetlist }: MainViewProps) => {
+  const pluginApi = usePluginAPI();
+  const isPublicAccess = pluginApi.isPublicAccess;
+
   const [selectedSavedSong, setSelectedSavedSong] = useState<SavedSong | null>(
     null,
   );
@@ -32,12 +36,14 @@ export const MainView = ({ onImportSong, onSelectSetlist }: MainViewProps) => {
         onSearchingChange={setIsSearching}
       />
 
-      <RecentSongs
-        selectedSavedSong={selectedSavedSong}
-        setSelectedSavedSong={setSelectedSavedSong}
-        open={recentOpen}
-        onToggleOpen={() => setRecentOpen((o) => !o)}
-      />
+      {!isPublicAccess && (
+        <RecentSongs
+          selectedSavedSong={selectedSavedSong}
+          setSelectedSavedSong={setSelectedSavedSong}
+          open={recentOpen}
+          onToggleOpen={() => setRecentOpen((o) => !o)}
+        />
+      )}
 
       <ImportPlaylist
         open={setlistOpen}

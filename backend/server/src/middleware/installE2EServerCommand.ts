@@ -31,6 +31,7 @@ type LoginProject = {
   name: string;
   slug: string;
   scenes?: LoginScene[];
+  isPublic?: boolean;
 };
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -289,6 +290,7 @@ async function runCommand(
     const otherSession = await createSession(rootPgPool, otherUser.id);
 
     const projectsToPopulate: { id: string; scenes: LoginScene[] }[] = [];
+    const publicProjectIds: string[] = [];
     const client = await rootPgPool.connect();
     try {
       await client.query("begin");
@@ -351,6 +353,9 @@ async function runCommand(
                     scenes: project.scenes,
                   });
                 }
+                if (project.isPublic) {
+                  publicProjectIds.push(created.id);
+                }
               }
             },
           ),
@@ -369,6 +374,13 @@ async function runCommand(
       await rootPgPool.query(
         "update app_public.projects set document = $1 where id = $2",
         [update, id],
+      );
+    }
+
+    if (publicProjectIds.length > 0) {
+      await rootPgPool.query(
+        "update app_public.projects set is_public = true where id = any($1::uuid[])",
+        [publicProjectIds],
       );
     }
 

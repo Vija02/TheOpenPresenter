@@ -40,6 +40,7 @@ export class E2ECommandAPI {
           activate?: boolean;
           name?: string;
         }[];
+        isPublic?: boolean;
       }[];
       owner?: boolean;
     }[];
@@ -281,6 +282,7 @@ export class E2ECommandAPI {
           activate?: boolean;
           name?: string;
         }[];
+        isPublic?: boolean;
       }[];
     }[];
   }): Promise<void> {

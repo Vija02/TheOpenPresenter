@@ -59,6 +59,7 @@ const Remote = () => {
   const pluginApi = usePluginAPI();
   const songs = pluginApi.scene.useData((x) => x.pluginData.songs);
   const mutableSceneData = pluginApi.scene.useValtioData();
+  const isPublicAccess = pluginApi.isPublicAccess;
 
   const onExport = useCallback(() => {
     songs.forEach((song) => {
@@ -107,21 +108,23 @@ const Remote = () => {
           >
             <StyleSettingModal />
           </OverlayToggle>
-          <OverlayToggle
-            toggler={({ onToggle }) => (
-              <Button
-                size="xs"
-                variant="pill"
-                onClick={onToggle}
-                data-testid="ly-songbook-button"
-              >
-                <VscBook />
-                Songbook
-              </Button>
-            )}
-          >
-            <SongbookModal />
-          </OverlayToggle>
+          {!isPublicAccess && (
+            <OverlayToggle
+              toggler={({ onToggle }) => (
+                <Button
+                  size="xs"
+                  variant="pill"
+                  onClick={onToggle}
+                  data-testid="ly-songbook-button"
+                >
+                  <VscBook />
+                  Songbook
+                </Button>
+              )}
+            >
+              <SongbookModal />
+            </OverlayToggle>
+          )}
           <Button size="xs" variant="pill" onClick={onExport}>
             <PiExportLight /> Export
           </Button>

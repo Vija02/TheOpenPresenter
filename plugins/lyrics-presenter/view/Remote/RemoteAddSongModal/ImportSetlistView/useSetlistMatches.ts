@@ -7,11 +7,15 @@ import { trpc } from "../../../trpc";
 export const useSetlistMatches = () => {
   const pluginApi = usePluginAPI();
   const pluginId = pluginApi.pluginContext.pluginId;
+  const isPublicAccess = pluginApi.isPublicAccess;
 
-  const savedSongsQuery = trpc.lyricsPresenter.savedSongs.list.useQuery({
-    // TODO: Update to orgId
-    pluginId,
-  });
+  const savedSongsQuery = trpc.lyricsPresenter.savedSongs.list.useQuery(
+    {
+      // TODO: Update to orgId
+      pluginId,
+    },
+    { enabled: !isPublicAccess },
+  );
 
   const matchesByMwlId = useMemo(() => {
     const map = new Map<string, SavedSong[]>();
@@ -25,5 +29,8 @@ export const useSetlistMatches = () => {
     return map;
   }, [savedSongsQuery.data]);
 
-  return { isLoading: savedSongsQuery.isLoading, matchesByMwlId };
+  return {
+    isLoading: !isPublicAccess && savedSongsQuery.isLoading,
+    matchesByMwlId,
+  };
 };

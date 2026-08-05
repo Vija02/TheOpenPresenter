@@ -11,11 +11,20 @@ export const useAddSongScene = () => {
   const pluginApi = usePluginAPI();
   const pluginInfo = pluginApi.scene.useValtioData();
   const pluginId = pluginApi.pluginContext.pluginId;
+  const isPublicAccess = pluginApi.isPublicAccess;
   const { saveToSongbook } = useSongbookSync();
   const { onToggle, resetData } = useOverlayToggle();
 
   const recordRecentMutation =
     trpc.lyricsPresenter.savedSongs.recordRecent.useMutation();
+
+  const recordRecent = useCallback(
+    (savedSongId: string) => {
+      if (isPublicAccess) return;
+      recordRecentMutation.mutate({ pluginId, savedSongId });
+    },
+    [isPublicAccess, pluginId, recordRecentMutation],
+  );
 
   const close = useCallback(() => {
     onToggle?.();
@@ -38,9 +47,9 @@ export const useAddSongScene = () => {
         id: typeidUnboxed(),
         songbookId: saved.id,
       });
-      recordRecentMutation.mutate({ pluginId, savedSongId: saved.id });
+      recordRecent(saved.id);
     },
-    [pluginInfo, pluginId, recordRecentMutation],
+    [pluginInfo, recordRecent],
   );
 
   // Push a song to the scene. When `save` is set, also save it to the songbook
@@ -55,11 +64,11 @@ export const useAddSongScene = () => {
             (s) => s.id === song.id,
           );
           if (idx >= 0) pluginInfo.pluginData.songs[idx]!.songbookId = id;
-          recordRecentMutation.mutate({ pluginId, savedSongId: id });
+          recordRecent(id);
         });
       }
     },
-    [pluginInfo, pluginId, recordRecentMutation, saveToSongbook],
+    [pluginInfo, recordRecent, saveToSongbook],
   );
 
   return { close, addLinkedSavedSong, addSong };

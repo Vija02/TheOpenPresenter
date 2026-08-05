@@ -21,9 +21,10 @@ export const RecentSongs = ({
   const pluginApi = usePluginAPI();
   const pluginId = pluginApi.pluginContext.pluginId;
 
-  const recentQuery = trpc.lyricsPresenter.savedSongs.recent.useQuery({
-    pluginId,
-  });
+  const recentQuery = trpc.lyricsPresenter.savedSongs.recent.useQuery(
+    { pluginId },
+    { enabled: !pluginApi.isPublicAccess },
+  );
   const recentSongs = recentQuery.data ?? [];
 
   if (recentSongs.length === 0) return null;

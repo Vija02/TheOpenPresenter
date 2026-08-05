@@ -25,6 +25,7 @@ export const SearchSong = ({
 }) => {
   const pluginApi = usePluginAPI();
   const pluginId = pluginApi.pluginContext.pluginId;
+  const isPublicAccess = pluginApi.isPublicAccess;
 
   const [searchInput, setSearchInput] = useState(initialValue ?? "");
   const [debouncedSearchInput] = useDebounce(searchInput, 200);
@@ -32,9 +33,10 @@ export const SearchSong = ({
 
   const hasQuery = debouncedSearchInput.trim().length > 0;
 
-  const savedSongsQuery = trpc.lyricsPresenter.savedSongs.list.useQuery({
-    pluginId,
-  });
+  const savedSongsQuery = trpc.lyricsPresenter.savedSongs.list.useQuery(
+    { pluginId },
+    { enabled: !isPublicAccess },
+  );
 
   const { data: songData, isLoading: isSearchLoading } =
     trpc.lyricsPresenter.myworshiplist.search.useQuery(
@@ -55,7 +57,8 @@ export const SearchSong = ({
 
   const myWorshipListResults: any[] = hasQuery ? (songData?.data ?? []) : [];
 
-  const isLoading = savedSongsQuery.isLoading || (hasQuery && isSearchLoading);
+  const isSongbookLoading = !isPublicAccess && savedSongsQuery.isLoading;
+  const isLoading = isSongbookLoading || (hasQuery && isSearchLoading);
 
   const focusElement = useRef<HTMLInputElement>(null);
   useEffect(() => {
@@ -72,10 +75,7 @@ export const SearchSong = ({
 
   return (
     <div
-      className={cn(
-        "w-full gap-2 flex flex-col",
-        hasQuery && "flex-1 min-h-0",
-      )}
+      className={cn("w-full gap-2 flex flex-col", hasQuery && "flex-1 min-h-0")}
     >
       <div className="relative">
         <Input
@@ -106,7 +106,7 @@ export const SearchSong = ({
 
       {hasQuery && (
         <div className="flex-1 min-h-0 overflow-y-auto">
-          {savedSongsQuery.isLoading && (
+          {isSongbookLoading && (
             <div className="stack-col gap-1">
               {Array.from(new Array(8)).map((_, i) => (
                 <Skeleton key={i} className="w-full h-10" />
@@ -115,7 +115,7 @@ export const SearchSong = ({
           )}
 
           {/* Songbook (yours) */}
-          {!savedSongsQuery.isLoading && (
+          {!isPublicAccess && !savedSongsQuery.isLoading && (
             <div>
               {sectionHeader("Songbook")}
               {localResults.length === 0 && (
