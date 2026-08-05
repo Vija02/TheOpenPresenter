@@ -421,7 +421,7 @@ const getAppRouter =
 
         // MyWorshipList integration
         myworshiplist: {
-          search: t.procedure
+          search: t.publicProcedure
             .input(
               z.object({
                 title: z.string(),
@@ -450,7 +450,7 @@ const getAppRouter =
               }
             }),
 
-          getSong: t.procedure
+          getSong: t.publicProcedure
             .input(z.object({ id: z.number() }))
             .query(async ({ input }) => {
               const songData = await getSongData(input.id);
@@ -461,7 +461,7 @@ const getAppRouter =
               };
             }),
 
-          playlist: t.procedure.query(async () => {
+          playlist: t.publicProcedure.query(async () => {
             const res = await axios("https://myworshiplist.com/api/songlists");
             return {
               data: res.data.data,

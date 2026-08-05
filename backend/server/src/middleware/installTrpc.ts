@@ -1,5 +1,5 @@
-import { TRPCContext } from "@repo/base-plugin/server";
-import { TRPCError, initTRPC } from "@trpc/server";
+import { TRPCContext, createPluginTRPCObject } from "@repo/base-plugin/server";
+import { initTRPC } from "@trpc/server";
 import * as trpcExpress from "@trpc/server/adapters/express";
 import { Express } from "express";
 
@@ -25,10 +25,6 @@ export default async function installTrpc(app: Express) {
       userId = row?.user_id ?? null;
     }
 
-    if (!userId && !screenGuestSessionId) {
-      throw new TRPCError({ code: "UNAUTHORIZED" });
-    }
-
     return {
       userId,
       sessionId,
@@ -36,9 +32,12 @@ export default async function installTrpc(app: Express) {
     };
   };
 
-  const t = initTRPC.context<TRPCContext>().create();
+  const tBase = initTRPC.context<TRPCContext>().create();
+
+  const t = createPluginTRPCObject(tBase);
+
   const middleware = trpcExpress.createExpressMiddleware({
-    router: t.mergeRouters(
+    router: tBase.mergeRouters(
       ...serverPluginApi.getRegisteredTrpcAppRouter().map((x) => x(t)),
     ),
     createContext,
