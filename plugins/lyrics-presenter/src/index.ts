@@ -4,7 +4,7 @@ import {
   PluginContext,
   ServerPluginApi,
   TRPCObject,
-  YjsWatcher,
+  createSseRoute,
 } from "@repo/base-plugin/server";
 import { OrganizationType } from "@repo/graphql";
 import { logger } from "@repo/observability";
@@ -45,6 +45,11 @@ let serverPluginApiRef:
   | ServerPluginApi<PluginBaseData, PluginRendererData>
   | undefined;
 
+const formatInput = z.object({
+  content: z.string().trim().min(1).max(100_000),
+  linesPerSlide: z.number().int().min(1).max(20).optional(),
+});
+
 export const init = (
   serverPluginApi: ServerPluginApi<PluginBaseData, PluginRendererData>,
 ) => {
@@ -52,69 +57,25 @@ export const init = (
 
   serverPluginApi.registerTrpcAppRouter(getAppRouter(serverPluginApi));
 
-  serverPluginApi.registerPrivateRoute(pluginName, "ai/format", (req, res) => {
-    if (req.method !== "POST") {
-      res.sendStatus(405);
-      return;
-    }
-
-    const chunks: Buffer[] = [];
-    req.on("data", (chunk) => chunks.push(chunk as Buffer));
-    req.on("end", async () => {
-      let content = "";
-      let linesPerSlide: number | undefined;
-      try {
-        const parsed = JSON.parse(Buffer.concat(chunks).toString() || "{}");
-        content = typeof parsed.content === "string" ? parsed.content : "";
-        linesPerSlide =
-          typeof parsed.linesPerSlide === "number"
-            ? parsed.linesPerSlide
-            : undefined;
-      } catch {
-        res.sendStatus(400);
-        return;
-      }
-      if (!content.trim()) {
-        res.sendStatus(400);
-        return;
-      }
-
-      res.writeHead(200, {
-        "Content-Type": "text/event-stream",
-        // no-transform also disables compression middleware buffering
-        "Cache-Control": "no-cache, no-transform",
-        Connection: "keep-alive",
-        // Don't buffer SSE
-        "X-Accel-Buffering": "no",
-      });
-      res.flushHeaders?.();
-
-      try {
-        for await (const delta of formatLyricsStream(serverPluginApi, content, {
-          linesPerSlide,
-        })) {
-          res.write(`data: ${JSON.stringify({ delta })}\n\n`);
+  serverPluginApi.registerPrivateRoute(
+    pluginName,
+    "ai/format",
+    createSseRoute({
+      name: `${pluginName}/ai/format`,
+      parse: (raw) => formatInput.parse(raw),
+      maxBodyBytes: 256 * 1024,
+      handler: async function* ({ body, signal }) {
+        for await (const delta of formatLyricsStream(
+          serverPluginApi,
+          body.content,
+          { linesPerSlide: body.linesPerSlide, signal },
+        )) {
+          yield { delta };
         }
-        res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
-      } catch (err) {
-        logger.error(
-          { err },
-          "/plugin/lyrics-presenter/ai/format: stream error",
-        );
-        res.write(
-          `data: ${JSON.stringify({
-            error: (err as Error).message || "AI formatting failed",
-          })}\n\n`,
-        );
-      } finally {
-        res.end();
-      }
-    });
-    req.on("error", () => {
-      if (!res.headersSent) res.sendStatus(400);
-      else res.end();
-    });
-  });
+        yield { done: true };
+      },
+    }),
+  );
 
   serverPluginApi.registerMigrations(
     pluginName,

@@ -1,8 +1,17 @@
-import { Button } from "@repo/ui";
-import { useRef, useState } from "react";
+import { readSseEvents } from "@repo/lib";
+import { Button, LoadingDots } from "@repo/ui";
+import { useEffect, useRef, useState } from "react";
 import { FaWandMagicSparkles } from "react-icons/fa6";
 
 import { usePluginAPI } from "../../pluginApi";
+
+type FormatEvent = {
+  delta?: string;
+  done?: boolean;
+  error?: string;
+  type?: string;
+  message?: string;
+};
 
 export const AiFormatButton = ({
   content,
@@ -17,11 +26,16 @@ export const AiFormatButton = ({
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const startedRef = useRef(false);
+
+  // Abort if closed
+  useEffect(() => () => abortRef.current?.abort(), []);
 
   const run = async () => {
     if (isStreaming) return;
     setError(null);
     setIsStreaming(true);
+    startedRef.current = false;
     const controller = new AbortController();
     abortRef.current = controller;
 
@@ -43,43 +57,36 @@ export const AiFormatButton = ({
         throw new Error(`Request failed (${res.status})`);
       }
 
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
       let acc = "";
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-
-        let sep: number;
-        while ((sep = buffer.indexOf("\n\n")) !== -1) {
-          const frame = buffer.slice(0, sep);
-          buffer = buffer.slice(sep + 2);
-          const dataLine = frame.split("\n").find((l) => l.startsWith("data:"));
-          if (!dataLine) continue;
-
-          let payload: { delta?: string; done?: boolean; error?: string };
-          try {
-            payload = JSON.parse(dataLine.slice(5).trim());
-          } catch {
-            continue;
-          }
-          if (payload.error) throw new Error(payload.error);
-          if (payload.done) continue;
-          if (payload.delta) {
-            acc += payload.delta;
-            onFormatted(acc); // live update as tokens arrive
-          }
+      for await (const event of readSseEvents(res.body, {
+        signal: controller.signal,
+      })) {
+        let payload: FormatEvent;
+        try {
+          payload = JSON.parse(event.data);
+        } catch {
+          continue;
+        }
+        if (payload.type === "fatal") {
+          throw new Error(payload.message || "AI formatting failed");
+        }
+        if (payload.error) throw new Error(payload.error);
+        if (payload.done) continue;
+        if (payload.delta) {
+          acc += payload.delta;
+          startedRef.current = true;
+          onFormatted(acc); // live update as tokens arrive
         }
       }
       onFormatted(acc.trim()); // final, trimmed result
     } catch (e) {
+      if (startedRef.current) onFormatted(content);
       if ((e as Error).name !== "AbortError") {
         setError((e as Error).message || "AI formatting failed");
       }
     } finally {
+      startedRef.current = false;
       setIsStreaming(false);
       abortRef.current = null;
     }
@@ -90,10 +97,14 @@ export const AiFormatButton = ({
   return (
     <div className="stack-row gap-1">
       <Button type="button" size="xs" disabled={isDisabled} onClick={run}>
-        <FaWandMagicSparkles
-          className={isStreaming ? "animate-pulse" : undefined}
-        />
-        {isStreaming ? "Formatting..." : "AI Format"}
+        <FaWandMagicSparkles />
+        {isStreaming ? (
+          <>
+            Formatting <LoadingDots count={3} label="" />
+          </>
+        ) : (
+          "AI Format"
+        )}
       </Button>
       {error && (
         <span className="text-xs text-red-600" title={error}>
