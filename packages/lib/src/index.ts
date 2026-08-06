@@ -6,6 +6,7 @@ export * from "./mediaTypeUtil";
 export * from "./mediaUtil";
 export * from "./network";
 export * from "./preloader";
+export * from "./sse";
 export * from "./streamToBuffer";
 export * from "./useInjectScript";
 export * from "./useVideoProcessingStatus";
