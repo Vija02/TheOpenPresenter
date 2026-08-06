@@ -9,7 +9,11 @@ import { SceneCategories } from "../types";
 import {
   ChatCompletionOptions,
   ChatMessage,
+  ChatResponseMessage,
+  ChatStreamEvent,
   chatCompletion,
+  chatCompletionEvents,
+  chatCompletionMessage,
   chatCompletionStream,
   isAIConfigured,
 } from "./ai";
@@ -357,11 +361,26 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
       messages: ChatMessage[],
       options?: ChatCompletionOptions,
     ): Promise<string> => chatCompletion(messages, options),
+    /** The whole assistant turn: tool calls, reasoning, truncation, usage. */
+    chatCompletionMessage: (
+      messages: ChatMessage[],
+      options?: ChatCompletionOptions & { stream?: boolean },
+    ): Promise<ChatResponseMessage> => chatCompletionMessage(messages, options),
+    /** Text deltas as they arrive. */
     chatCompletionStream: (
       messages: ChatMessage[],
       options?: ChatCompletionOptions,
     ): AsyncGenerator<string, void, unknown> =>
       chatCompletionStream(messages, options),
+    /**
+     * Everything as it happens: text, reasoning and tool calls.
+     * The primitive the other three are built on
+     */
+    chatCompletionEvents: (
+      messages: ChatMessage[],
+      options?: ChatCompletionOptions,
+    ): AsyncGenerator<ChatStreamEvent, void, unknown> =>
+      chatCompletionEvents(messages, options),
   };
 
   public media = {
