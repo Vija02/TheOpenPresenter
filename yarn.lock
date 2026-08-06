@@ -9930,6 +9930,7 @@ __metadata:
     "@react-hook/window-size": "npm:^3.1.1"
     "@repo/base-plugin": "npm:*"
     "@repo/eslint-config": "npm:*"
+    "@repo/lib": "npm:*"
     "@repo/observability": "npm:*"
     "@repo/prettier-config": "npm:*"
     "@repo/tailwind-config": "npm:*"
