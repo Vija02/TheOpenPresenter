@@ -12,6 +12,7 @@ import {
 } from "./package.json";
 
 export default defineConfig({
+  base: "./",
   plugins: [
     react(),
     tailwindcss(),
@@ -33,9 +34,6 @@ export default defineConfig({
       },
       formats: ["es", "cjs"],
     },
-    // Font files must stay real files
-    assetsInlineLimit: (filePath) =>
-      /\.(woff2?|ttf|otf|eot)$/i.test(filePath) ? false : undefined,
     rollupOptions: {
       output: {
         assetFileNames: (assetInfo) => {
