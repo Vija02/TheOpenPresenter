@@ -21,6 +21,7 @@
     "@react-hook/size": "^2.1.2",
     "@react-hook/window-size": "^3.1.1",
     "@repo/base-plugin": "*",
+    "@repo/lib": "*",
     "@repo/observability": "*",
     "@repo/ui": "*",
     "@repo/video": "*",

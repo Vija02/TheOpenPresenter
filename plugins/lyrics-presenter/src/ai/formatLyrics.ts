@@ -3,6 +3,7 @@ import { ServerPluginApi } from "@repo/base-plugin/server";
 export type FormatLyricsOptions = {
   linesPerSlide?: number;
   maxCharsPerLine?: number;
+  signal?: AbortSignal;
 };
 
 /**
@@ -151,6 +152,7 @@ export async function* formatLyricsStream(
       model: "deepseek/deepseek-v4-flash:nitro",
       temperature: 0,
       reasoningEnabled: false,
+      signal: options.signal,
     },
   );
 }
