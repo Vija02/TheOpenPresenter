@@ -4,6 +4,7 @@ import {
   PluginContext,
   ServerPluginApi,
   TRPCObject,
+  YjsWatcher,
   createSseRoute,
 } from "@repo/base-plugin/server";
 import { OrganizationType } from "@repo/graphql";
