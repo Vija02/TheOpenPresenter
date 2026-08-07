@@ -1,3 +1,4 @@
+import type { AiTurn } from "@repo/base-types";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
@@ -199,8 +200,6 @@ export const useTranscriptStore = create<TranscriptState & TranscriptActions>()(
     },
   ),
 );
-
-export type AiTurn = { role: "user" | "assistant"; content: string };
 
 export const toPromptHistory = (messages: AiMessage[]): AiTurn[] =>
   messages

@@ -1,3 +1,4 @@
+import type { AiTurn } from "@repo/base-types";
 import { logger } from "@repo/observability";
 
 import {
@@ -7,8 +8,6 @@ import {
   ChatStreamEvent,
   ChatTool,
 } from "./types";
-
-export type DocAgentTurn = { role: "user" | "assistant"; content: string };
 
 export type DocAgentStep<TDoc> =
   | { type: "thinkingDelta"; text: string }
@@ -28,7 +27,7 @@ export type DocAgentToolset<TDoc> = {
   tools: ChatTool[];
   buildMessages: (
     request: string,
-    history: DocAgentTurn[],
+    history: AiTurn[],
     image?: string | null,
   ) => ChatMessage[];
   apply: (
@@ -61,7 +60,7 @@ export type RunDocAgentOptions<TDoc> = DocAgentLimits & {
   toolset: DocAgentToolset<TDoc>;
   doc: TDoc;
   request: string;
-  history?: DocAgentTurn[];
+  history?: AiTurn[];
   image?: string | null;
   signal?: AbortSignal;
   name?: string;

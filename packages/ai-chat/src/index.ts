@@ -18,7 +18,7 @@ export type {
 } from "./useAiChat";
 
 export { toPromptHistory, useTranscriptStore } from "./store/transcript";
-export type { AiMessage, AiMessagePart, AiTurn } from "./store/transcript";
+export type { AiMessage, AiMessagePart } from "./store/transcript";
 
 export {
   MAX_FILE_BYTES,

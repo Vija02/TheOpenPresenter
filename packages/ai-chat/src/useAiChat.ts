@@ -1,4 +1,4 @@
-import type { MediaPicker, PluginContext } from "@repo/base-types";
+import type { AiTurn, MediaPicker, PluginContext } from "@repo/base-types";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { resolvePickedImage } from "./image/mediaSource";
@@ -9,7 +9,6 @@ import {
 import type { AiChatPickedImage } from "./image/types";
 import {
   AiMessage,
-  AiTurn,
   toPromptHistory,
   useTranscriptStore,
 } from "./store/transcript";

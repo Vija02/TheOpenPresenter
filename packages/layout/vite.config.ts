@@ -31,6 +31,7 @@ export default defineConfig({
         index: resolve(__dirname, "src/index.ts"),
         react: resolve(__dirname, "src/react/index.ts"),
         editor: resolve(__dirname, "src/editor/index.ts"),
+        ai: resolve(__dirname, "src/ai/index.ts"),
       },
       formats: ["es", "cjs"],
     },
