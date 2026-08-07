@@ -1,7 +1,7 @@
 import { readSseEvents } from "@repo/lib";
 import { logger } from "@repo/observability";
 
-import { getProvider } from "./config";
+import { getProvider, toProfiles } from "./config";
 import {
   AIRequestError,
   ChatCompletionOptions,
@@ -135,7 +135,9 @@ const openRequest = async (
   options: ChatCompletionOptions,
   stream: boolean,
 ): Promise<Attempt> => {
-  const { apiKey, baseURL, model } = getProvider(options.provider);
+  const { apiKey, baseURL, model } = getProvider(
+    ...toProfiles(options.provider),
+  );
 
   const controller = new AbortController();
   const total = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
