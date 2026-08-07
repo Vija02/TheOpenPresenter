@@ -10,6 +10,7 @@
   },
   "scripts": {
     "test": "playwright test",
+    "fake-ai": "tsx scripts/fakeAiServer.ts",
     "mock-host-device": "tsx scripts/mockHostDevice.ts"
   }
 }

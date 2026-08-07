@@ -8,6 +8,9 @@ import { defineConfig, devices } from "@playwright/test";
 // import path from 'path';
 // dotenv.config({ path: path.resolve(__dirname, '.env') });
 
+/** Kept in step with fixtures/aiFixture.ts. */
+const FAKE_AI_PORT = Number(process.env.FAKE_AI_PORT || 5679);
+
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
@@ -78,10 +81,23 @@ export default defineConfig({
   ],
 
   /* Run your local dev server before starting the tests */
-  webServer: {
-    cwd: "../",
-    command: "yarn server start",
-    url: "http://localhost:5678",
-    reuseExistingServer: !process.env.CI,
-  },
+  webServer: [
+    {
+      cwd: "./",
+      command: "yarn fake-ai",
+      url: `http://localhost:${FAKE_AI_PORT}/__control/health`,
+      reuseExistingServer: !process.env.CI,
+    },
+    {
+      cwd: "../",
+      command: "yarn server start",
+      url: "http://localhost:5678",
+      reuseExistingServer: !process.env.CI,
+      env: {
+        AI_BASE_URL: `http://localhost:${FAKE_AI_PORT}/v1`,
+        AI_API_KEY: "fake-e2e-key",
+        AI_MODEL: "fake-model",
+      },
+    },
+  ],
 });
