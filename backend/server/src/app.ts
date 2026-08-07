@@ -143,6 +143,7 @@ export async function makeApp({
   }
   await middleware.installPluginStatic(app);
   await middleware.installPluginRoute(app);
+  await middleware.installAi(app);
   // These are our assets: images/etc; served out of the /backend/server/public folder (if present)
   await middleware.installSharedStatic(app);
   if (isTest || isDev) {
