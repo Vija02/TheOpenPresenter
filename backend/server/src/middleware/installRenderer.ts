@@ -1,3 +1,4 @@
+import { isAIConfigured } from "@repo/base-plugin/server";
 import { Express, Request } from "express";
 import { Server, createServer } from "http";
 import serialize from "serialize-javascript";
@@ -87,6 +88,7 @@ function transformer(html: string, req: Request) {
       CSRF_TOKEN: req.csrfToken(),
       MEDIA_UPLOAD_CHUNK_SIZE: process.env.MEDIA_UPLOAD_CHUNK_SIZE,
       ENABLE_OTEL: !!process.env.OTLP_HOST ? "1" : undefined,
+      AI_ENABLED: isAIConfigured() ? "1" : undefined,
       DEPLOYMENT_ENV: process.env.DEPLOYMENT_ENV,
     } as Record<string, string>,
   ]

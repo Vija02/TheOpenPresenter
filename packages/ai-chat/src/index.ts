@@ -6,6 +6,9 @@ export { Markdown } from "./ui/Markdown";
 export type { MarkdownProps } from "./ui/Markdown";
 export { AttachMenu } from "./ui/AttachMenu";
 
+export { createAiCapabilityRequest } from "./request";
+export type { AiCapabilityRequestOptions } from "./request";
+
 export { useAiChat } from "./useAiChat";
 export type {
   AiChat,

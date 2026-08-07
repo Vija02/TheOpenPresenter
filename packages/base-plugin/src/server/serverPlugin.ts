@@ -7,6 +7,8 @@ import stream from "stream";
 
 import { SceneCategories } from "../types";
 import {
+  AiCapability,
+  AnyAiCapability,
   ChatCompletionOptions,
   ChatMessage,
   ChatResponseMessage,
@@ -121,6 +123,7 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
     envVars: Record<string, string>;
   }[] = [];
   protected registeredMigrations: RegisteredMigration[] = [];
+  protected registeredAiCapabilities = new Map<string, AnyAiCapability>();
 
   private app: Express;
 
@@ -247,6 +250,14 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
 
   public registerMigrations(pluginName: string, migrationsPath: string) {
     this.registeredMigrations.push({ pluginName, migrationsPath });
+  }
+
+  public registerAiCapability<T>(capability: AiCapability<T>) {
+    this.registeredAiCapabilities.set(capability.id, capability);
+  }
+
+  public hasAiCapability(id: string): boolean {
+    return this.registeredAiCapabilities.has(id);
   }
 
   public getPluginDb(pluginName: string, asUser: PluginDbAuth): PluginDb {
@@ -522,5 +533,8 @@ export class ServerPluginApiPrivate extends ServerPluginApi {
   }
   getRegisteredMigrations() {
     return this.registeredMigrations;
+  }
+  getRegisteredAiCapabilities() {
+    return this.registeredAiCapabilities;
   }
 }

@@ -1,3 +1,4 @@
+import installAi from "./installAi";
 import installAutoLogin from "./installAutoLogin";
 import installStripe from "./installStripe";
 import installCSRFProtection from "./installCSRFProtection";
@@ -33,6 +34,7 @@ import installTrpc from "./installTrpc";
 import installWorkerUtils from "./installWorkerUtils";
 
 export {
+  installAi,
   installAutoLogin,
   installCSRFProtection,
   installCloudConnection,

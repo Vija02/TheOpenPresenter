@@ -11,6 +11,7 @@ const getMediaUploadChunkSize = () => {
   return Infinity;
 };
 const getOTELEnabled = () => (window as any)?.__APP_DATA__?.ENABLE_OTEL === "1";
+const getAiEnabled = () => (window as any)?.__APP_DATA__?.AI_ENABLED === "1";
 const getDeploymentEnv = (): string | undefined =>
   (window as any)?.__APP_DATA__?.DEPLOYMENT_ENV;
 
@@ -72,6 +73,7 @@ export const appData = {
   getCSRFToken,
   getMediaUploadChunkSize,
   getOTELEnabled,
+  getAiEnabled,
   getDeploymentEnv,
   getCustomEnv,
   getPluginData,
