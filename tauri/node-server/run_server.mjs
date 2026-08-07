@@ -219,6 +219,12 @@ async function main() {
       : {}),
 
     ...envOverride,
+
+    ...Object.fromEntries(
+      ["AI_BASE_URL", "AI_API_KEY", "AI_MODEL"]
+        .filter((name) => process.env[name])
+        .map((name) => [name, process.env[name]]),
+    ),
   };
 
   console.log("Starting Worker...");
