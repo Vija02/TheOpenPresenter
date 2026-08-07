@@ -7,12 +7,18 @@ import { defineConfig, devices } from "@playwright/test";
  * It handles embedded PostgreSQL, migrations, worker, and server startup.
  *
  * Locally:
- *   ENABLE_E2E_COMMANDS=1 ./tauri/target/debug/TheOpenPresenter &
+ *   yarn e2e fake-ai &
+ *   ENABLE_E2E_COMMANDS=1 \
+ *   AI_BASE_URL=http://localhost:5679/v1 AI_API_KEY=fake-e2e-key AI_MODEL=fake-model \
+ *     ./tauri/target/debug/theopenpresenter-app &
  *   yarn e2e test --config playwright.tauri.config.ts
  *
  * On CI this is handled by .github/workflows/playwright-tauri.yml.
  */
 process.env.PLAYWRIGHT_TAURI = "1";
+
+/** Kept in step with fixtures/aiFixture.ts. */
+const FAKE_AI_PORT = Number(process.env.FAKE_AI_PORT || 5679);
 
 export default defineConfig({
   testDir: "./tests",
@@ -37,6 +43,14 @@ export default defineConfig({
     {
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
+    },
+  ],
+  webServer: [
+    {
+      cwd: "./",
+      command: "yarn fake-ai",
+      url: `http://localhost:${FAKE_AI_PORT}/__control/health`,
+      reuseExistingServer: true,
     },
   ],
 });
