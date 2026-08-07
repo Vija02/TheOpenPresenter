@@ -38,7 +38,7 @@ const formSchema = z
         /^[a-zA-Z0-9_]*$/,
         "Username must contain only alphanumeric characters and underscores.",
       ),
-    email: z.string().email("Please enter a valid email"),
+    email: z.email("Please enter a valid email"),
     password: z.string().min(1, "Please enter your password"),
     confirm: z.string().min(1, "Please enter your password again"),
   })

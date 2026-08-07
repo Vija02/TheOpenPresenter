@@ -86,7 +86,7 @@
     "vite-express": "^0.21.1",
     "ws": "^8.21.1",
     "yjs": "13.6.26",
-    "zod": "^3.25.17"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@repo/typescript-config": "*",
