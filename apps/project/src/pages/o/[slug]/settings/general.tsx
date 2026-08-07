@@ -57,9 +57,8 @@ const formSchema = z.object({
   name: z.string().min(1, "Organization name must not be empty"),
   slug: z.string().min(2, "Slug must be at least 2 characters long"),
   isPublic: z.boolean().optional(),
-  organizationType: z.nativeEnum(OrganizationType, {
-    required_error: "Please choose what kind of organization this is",
-    invalid_type_error: "Please choose what kind of organization this is",
+  organizationType: z.enum(OrganizationType, {
+    error: "Please choose what kind of organization this is",
   }),
   experimentalFeaturesEnabled: z.boolean().optional(),
 });

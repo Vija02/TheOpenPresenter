@@ -31,9 +31,8 @@ import * as z from "zod";
 
 const formSchema = z.object({
   name: z.string().min(1, "Please choose a name for the organization"),
-  organizationType: z.nativeEnum(OrganizationType, {
-    required_error: "Please choose what kind of organization this is",
-    invalid_type_error: "Please choose what kind of organization this is",
+  organizationType: z.enum(OrganizationType, {
+    error: "Please choose what kind of organization this is",
   }),
 });
 type FormInputs = z.infer<typeof formSchema>;

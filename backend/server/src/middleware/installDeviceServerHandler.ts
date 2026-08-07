@@ -383,7 +383,7 @@ export default (app: Express) => {
       logger.debug({ body: req.body }, "Invalid body on device ping");
       res.status(400).json({
         error: "Invalid request body",
-        details: parseResult.error.flatten(),
+        details: z.treeifyError(parseResult.error),
       });
       return;
     }
