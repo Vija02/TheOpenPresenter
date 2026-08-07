@@ -202,21 +202,26 @@ Behaviour worth knowing:
 
 ## AI editing
 
-Natural-language editing is a **platform capability, not a plugin's job**. A host
-that stores a `LayoutDoc` wires the whole feature up with two calls:
+Natural-language editing is a **platform capability, not a plugin's job**, and is
+on by default — a host that stores a `LayoutDoc` gets it for free:
 
 ```tsx
-<LayoutWorkbench
-  onRequestAiEdit={isLayoutAiEnabled() ? layoutAiRequest() : undefined}
-  aiThreadKey={`bible:${pluginId}`}
-  ...
-/>
+<LayoutWorkbench doc={doc} onChange={setDoc} aiThreadKey={`bible:${pluginId}`} />
 ```
+
+The panel hides itself when the server has no AI provider configured, so there is
+nothing to gate on. Three props adjust it, none of them usually needed:
+
+- `ai={false}` — omit the panel in a surface where it does not belong.
+- `aiCapability="bible.layout"` — use a plugin's own capability instead of the
+  platform default.
+- `onRequestAiEdit` — run the request yourself, bypassing the shared `/ai`
+  endpoint entirely.
 
 ```
 LayoutWorkbench            owns the useAiChat instance (not DocumentInspector,
 │                          which unmounts whenever an element is selected)
-└─ layoutAiRequest()       POST /ai/layout, SSE -> AiChatStep      @repo/layout/editor
+└─ createAiCapabilityRequest()       POST /ai/layout, SSE -> AiChatStep      @repo/layout/editor
    └─ installAi            resolves the capability by id           backend/server
       └─ layoutCapability  validates the request                   backend/server/src/ai
          └─ runDocAgent    the turn loop, tool dispatch, budgets   @repo/base-plugin/server
@@ -237,6 +242,37 @@ To customise, register an `AiCapability` from a plugin's `init`: the **same id**
 (`bible.layout`) adds a variant that only callers passing
 `layoutAiRequest("bible.layout")` get. Built-ins skip any id a plugin already
 claimed.
+
+### Choosing the model
+
+A capability's id doubles as its provider profile, so the model is env config
+rather than a code change:
+
+```bash
+AI_API_KEY=...              # the default provider, used by everything
+AI_MODEL=deepseek/v4-flash
+
+AI_LAYOUT_MODEL=cc/claude-opus-5          # just this capability, same account
+AI_LAYOUT_VISION_MODEL=google/gemini-3-pro   # ...and only when an image is attached
+```
+
+Resolution is most-specific-first, falling through each level:
+
+```
+image attached   AI_LAYOUT_VISION_*  ->  AI_LAYOUT_*  ->  AI_*
+text only                                AI_LAYOUT_*  ->  AI_*
+```
+
+So vision is **opt-in per capability**: set nothing and image requests just use
+the capability's own model, which is usually fine — most current models take
+images. Set `AI_LAYOUT_VISION_MODEL` only when the capability's normal model is
+text-only, or when a cheaper model is good enough for reading a reference slide.
+
+Credentials and model resolve independently, which is what makes the common case
+cheap: `AI_LAYOUT_MODEL` alone needs no key duplicated. Add `AI_LAYOUT_API_KEY`
+(plus `AI_LAYOUT_BASE_URL`) to move a capability to a different account. A key
+and its base URL always travel together — whichever profile supplies the key
+supplies the host, since a key is only valid against the host that issued it.
 
 Tools live in `src/ai/tools.ts`, declared once as zod schemas so the JSON Schema
 the model sees and the validation its arguments face cannot disagree. Two things
