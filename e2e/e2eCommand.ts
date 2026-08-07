@@ -74,6 +74,20 @@ export class E2ECommandAPI {
   }>;
 
   /**
+   * Which provider each registered AI capability will reach, keyed by
+   * capability id. Base URLs only, no keys.
+   */
+  async serverCommand(command: "aiWiring"): Promise<{
+    success: true;
+    configured: boolean;
+    default: { baseURL: string | null; model: string | null };
+    capabilities: Record<
+      string,
+      { baseURL: string | null; model: string | null }
+    >;
+  }>;
+
+  /**
    * Deletes a single organization
    */
   async serverCommand(

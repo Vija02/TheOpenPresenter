@@ -1,4 +1,9 @@
-import { YjsState } from "@repo/base-plugin/server";
+import {
+  YjsState,
+  getProvider,
+  isAIConfigured,
+  toProfiles,
+} from "@repo/base-plugin/server";
 import { OrganizationType } from "@repo/graphql";
 import { json, urlencoded } from "body-parser";
 import { Express, Request, RequestHandler, Response } from "express";
@@ -8,6 +13,7 @@ import { proxy } from "valtio";
 import { bind } from "valtio-yjs";
 import * as Y from "yjs";
 
+import { serverPluginApi } from "../pluginManager";
 import {
   DEFAULT_MOCK_HOST_CONFIG,
   clearAllActiveDevices,
@@ -205,6 +211,30 @@ async function runCommand(
     await rootPgPool.query("delete from plugin_bible.translation");
     await rootPgPool.query("delete from plugin_bible.bible_preference");
     return { success: true };
+  } else if (command === "aiWiring") {
+    const resolve = (profile?: string) => {
+      try {
+        const provider = getProvider(...toProfiles(profile));
+        return { baseURL: provider.baseURL, model: provider.model };
+      } catch {
+        // Unconfigured, which `configured: false` already conveys.
+        return { baseURL: null, model: null };
+      }
+    };
+
+    const capabilities = Object.fromEntries(
+      [...serverPluginApi.getRegisteredAiCapabilities().keys()].map((id) => [
+        id,
+        resolve(id),
+      ]),
+    );
+
+    return {
+      success: true,
+      configured: isAIConfigured(),
+      default: resolve(),
+      capabilities,
+    };
   } else if (command === "clearOrganizationBySlug") {
     const { slug } = payload || {};
     if (!slug || !String(slug).startsWith("test")) {
