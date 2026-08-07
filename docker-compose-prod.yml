@@ -10,6 +10,9 @@ services:
       - db
       - caddy
       - logs
+    env_file:
+      - path: ./.extraenv
+        required: false
     environment:
       - NODE_ENV=production
       - ROOT_DATABASE_URL=$ROOT_DATABASE_URL
@@ -69,6 +72,9 @@ services:
     networks:
       - db
       - logs
+    env_file:
+      - path: ./.extraenv
+        required: false
     environment:
       - NODE_ENV=production
       - ROOT_DATABASE_URL=$ROOT_DATABASE_URL
