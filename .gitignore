@@ -52,3 +52,6 @@ nft_results
 node_modules_nft
 .gemini/
 gha-creds-*.json
+
+# Extra env files
+.extraenv
