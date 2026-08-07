@@ -9710,6 +9710,8 @@ __metadata:
     "@fontsource-variable/playfair-display": "npm:^5.3.0"
     "@fontsource-variable/source-sans-3": "npm:^5.3.0"
     "@react-hook/size": "npm:^2.1.2"
+    "@repo/ai-chat": "npm:*"
+    "@repo/base-types": "npm:*"
     "@repo/lib": "npm:*"
     "@repo/tailwind-config": "npm:*"
     "@repo/typescript-config": "npm:*"
@@ -9730,6 +9732,7 @@ __metadata:
     vite: "npm:6.3.5"
     vite-plugin-dts: "npm:^4.5.4"
     zod: "npm:^3.25.17"
+    zustand: "npm:^5.0.2"
   peerDependencies:
     react: ">=18"
     react-dom: ">=18"
