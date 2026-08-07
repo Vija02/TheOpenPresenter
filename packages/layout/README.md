@@ -17,6 +17,7 @@ and scales it. They share the `Rect` shape and nothing else.
 | `@repo/layout/react/css` | `@font-face` + `.lay--stage` / `.lay--box` | renderers |
 | `@repo/layout/editor` | `LayoutWorkbench`, `LayoutEditor`, inspector | editors only |
 | `@repo/layout/editor/css` | the above plus everything in `react/css` | editors only |
+| `@repo/layout/ai` | prompts, tool schemas, tool execution, `layoutAgentToolset`. Pure TS | servers only |
 
 **`./editor` must never be imported from `./react`.** It pulls `react-moveable`
 and `react-selecto`; renderers must not ship them. `editor.css` `@import`s
@@ -198,6 +199,57 @@ Behaviour worth knowing:
   on `input`; re-rendering per keystroke would move the caret.
 - **Clicking outside the slide deselects**, tested via `closest(".lay--editor")`
   rather than `e.currentTarget` because an aspect-ratio wrapper sits in between.
+
+## AI editing
+
+Natural-language editing is a **platform capability, not a plugin's job**. A host
+that stores a `LayoutDoc` wires the whole feature up with two calls:
+
+```tsx
+<LayoutWorkbench
+  onRequestAiEdit={isLayoutAiEnabled() ? layoutAiRequest() : undefined}
+  aiThreadKey={`bible:${pluginId}`}
+  ...
+/>
+```
+
+```
+LayoutWorkbench            owns the useAiChat instance (not DocumentInspector,
+│                          which unmounts whenever an element is selected)
+└─ layoutAiRequest()       POST /ai/layout, SSE -> AiChatStep      @repo/layout/editor
+   └─ installAi            resolves the capability by id           backend/server
+      └─ layoutCapability  validates the request                   backend/server/src/ai
+         └─ runDocAgent    the turn loop, tool dispatch, budgets   @repo/base-plugin/server
+            └─ layoutAgentToolset  tools + prompt + transforms     @repo/layout/ai
+```
+
+The split is deliberate. `runDocAgent` is domain-agnostic — bound the turns,
+apply each call, feed tool failures back rather than throwing, always end with a
+document — so the next AI document feature reuses it rather than copying it.
+`@repo/layout/ai` holds everything layout-specific and ships to the browser, so it
+cannot import `@repo/base-plugin/server` (express, pg, pino) — it satisfies
+`DocAgentToolset` structurally instead. The wire types it does need (`ChatTool`,
+`ChatMessage`) come from `@repo/base-types`, which is dependency-free for exactly
+this reason; drift is caught where the capability is registered.
+
+To customise, register an `AiCapability` from a plugin's `init`: the **same id**
+(`layout`) replaces the default everywhere, a **namespaced id**
+(`bible.layout`) adds a variant that only callers passing
+`layoutAiRequest("bible.layout")` get. Built-ins skip any id a plugin already
+claimed.
+
+Tools live in `src/ai/tools.ts`, declared once as zod schemas so the JSON Schema
+the model sees and the validation its arguments face cannot disagree. Two things
+worth knowing:
+
+- **Targeted tools are preferred over `replace_document`.** A wholesale rewrite
+  risks every element id and every `{{token}}` at once, and the damage is
+  invisible to a validator — the slide still renders, it is just blank where the
+  verse used to be. `replace_document` reports dropped tokens in its result
+  rather than rejecting them, since dropping one is sometimes what was asked for.
+- **Read-only tools do not mark the run as changed**, so Undo never offers to
+  revert a no-op, and their (large, JSON) results are summarised for the user
+  rather than dumped into the transcript.
 
 ## CSS classes
 

@@ -34,6 +34,16 @@
         "default": "./dist/editor.cjs"
       }
     },
+    "./ai": {
+      "import": {
+        "types": "./dist/ai/index.d.ts",
+        "default": "./dist/ai.js"
+      },
+      "require": {
+        "types": "./dist/ai/index.d.ts",
+        "default": "./dist/ai.cjs"
+      }
+    },
     "./react/css": "./dist/react.css",
     "./editor/css": "./dist/editor.css"
   },
@@ -53,6 +63,8 @@
     "@fontsource-variable/playfair-display": "^5.3.0",
     "@fontsource-variable/source-sans-3": "^5.3.0",
     "@react-hook/size": "^2.1.2",
+    "@repo/ai-chat": "*",
+    "@repo/base-types": "*",
     "@repo/lib": "*",
     "@repo/ui": "*",
     "ohash": "^2.0.11",
@@ -60,7 +72,8 @@
     "react-moveable": "^0.56.0",
     "react-selecto": "^1.26.3",
     "tslib": "^2.8.1",
-    "zod": "^3.25.17"
+    "zod": "^3.25.17",
+    "zustand": "^5.0.2"
   },
   "peerDependencies": {
     "react": ">=18",

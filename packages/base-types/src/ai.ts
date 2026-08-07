@@ -2,6 +2,8 @@
  * The OpenAI-compatible chat wire format.
  */
 
+export type AiTurn = { role: "user" | "assistant"; content: string };
+
 export type ChatRole = "system" | "user" | "assistant" | "tool";
 
 export type ChatContentPart =
