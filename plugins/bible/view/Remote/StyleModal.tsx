@@ -113,6 +113,8 @@ const StyleModal = () => {
             activeTemplateId={activeTemplateId}
             onSelectTemplate={onSelectTemplate}
             bindings={bibleBindings}
+            aiThreadKey={`bible:${pluginApi.pluginContext.pluginId}`}
+            pluginApi={pluginApi}
             documentExtras={
               <CheckField
                 label="Show verse numbers"

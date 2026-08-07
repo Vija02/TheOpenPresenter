@@ -1,3 +1,10 @@
+import {
+  AiChatPluginApi,
+  AiChatRequest,
+  createAiCapabilityRequest,
+  useAiChat,
+} from "@repo/ai-chat";
+import { appData } from "@repo/lib";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@repo/ui";
 import { ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 
@@ -28,6 +35,15 @@ export type LayoutWorkbenchProps = {
 
   /** Plugin-specific document controls (things that are data, not layout). */
   documentExtras?: ReactNode;
+
+  /** On by default */
+  ai?: boolean;
+  /** Point at a plugin's own capability instead of the platform default. */
+  aiCapability?: string;
+  /** Escape hatch: run the edit yourself */
+  onRequestAiEdit?: AiChatRequest<LayoutDoc>;
+  aiThreadKey?: string;
+  pluginApi?: AiChatPluginApi;
   className?: string;
 };
 
@@ -47,11 +63,32 @@ export const LayoutWorkbench = ({
   onSelectTemplate,
   bindings = [],
   documentExtras,
+  ai: aiEnabled = true,
+  aiCapability = "layout",
+  onRequestAiEdit,
+  aiThreadKey = "default",
+  pluginApi,
   className,
 }: LayoutWorkbenchProps) => {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const compact = useIsCompact();
   const [compactTab, setCompactTab] = useState<CompactTab>("properties");
+
+  const aiRequest = useMemo(() => {
+    if (!aiEnabled) return undefined;
+    if (onRequestAiEdit) return onRequestAiEdit;
+    return appData.getAiEnabled()
+      ? createAiCapabilityRequest<LayoutDoc>({ capability: aiCapability })
+      : undefined;
+  }, [onRequestAiEdit, aiEnabled, aiCapability]);
+
+  const ai = useAiChat<LayoutDoc>({
+    doc,
+    onChange,
+    onRequest: aiRequest,
+    threadKey: aiThreadKey,
+    pluginApi,
+  });
 
   // Applying a template or deleting a layer can strip ids out from under the
   // selection, leaving the inspector keyed off a ghost.
@@ -105,7 +142,11 @@ export const LayoutWorkbench = ({
         bindings={bindings}
       />
     ) : (
-      <DocumentInspector doc={doc} onChange={onChange}>
+      <DocumentInspector
+        doc={doc}
+        onChange={onChange}
+        ai={aiRequest ? ai : undefined}
+      >
         {documentExtras}
       </DocumentInspector>
     );
