@@ -64,6 +64,7 @@ export type RunDocAgentOptions<TDoc> = DocAgentLimits & {
   image?: string | null;
   signal?: AbortSignal;
   name?: string;
+  reasoningEffort?: "low" | "medium" | "high";
 };
 
 const DEFAULTS: Required<DocAgentLimits> = {
@@ -91,10 +92,11 @@ const streamTurn = async function* <TDoc>(
     temperature: 0,
     timeoutMs: Math.min(turnTimeoutMs, Math.max(1_000, remaining)),
     reasoningEnabled: true,
-    // DEBT: Make configurable
-    reasoningEffort: "low",
+    reasoningEffort: options.reasoningEffort ?? "low",
     tools: options.toolset.tools,
-    ...(options.image ? { provider: "vision" } : {}),
+    provider: options.image
+      ? [options.name, "vision"].filter(Boolean).join(".")
+      : options.name,
     ...(options.signal ? { signal: options.signal } : {}),
   });
 
