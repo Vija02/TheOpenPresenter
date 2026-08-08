@@ -232,6 +232,8 @@ COPY --from=builder-core /app/backend/backend-shared/ /app/backend/backend-share
 COPY --from=builder-core /app/packages/base-plugin/ /app/packages/base-plugin/
 COPY --from=builder-core /app/packages/video/ /app/packages/video/
 COPY --from=builder-core /app/packages/media-picker/ /app/packages/media-picker/
+COPY --from=builder-core /app/packages/ai-chat/ /app/packages/ai-chat/
+COPY --from=builder-core /app/packages/layout/ /app/packages/layout/
 COPY backend/db/ /app/backend/db/
 
 COPY --from=builder-client /app/apps/project/package.json /app/apps/project/
