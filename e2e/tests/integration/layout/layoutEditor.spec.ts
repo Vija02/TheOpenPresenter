@@ -926,3 +926,222 @@ test.describe.serial("Gradient fill", () => {
       .toContain("90deg");
   });
 });
+
+/**
+ * Picture fills.
+ *
+ * A picture is a FILL, not an element type, so these run against the ordinary
+ * background shape: the point of the design is that any element can hold one.
+ *
+ * Each test uploads through the picker's own Dropzone rather than seeding the
+ * library, because the upload path is what produces a real `mediaName`, and the
+ * mediaName -> {mediaId, extension} conversion is the part most likely to break
+ * silently — a stored absolute URL would still render here and only fail later,
+ * on another host.
+ */
+test.describe.serial("Picture fill", () => {
+  test.beforeEach(
+    async ({ e2eCommand }) =>
+      await Promise.all([
+        e2eCommand.serverCommand("clearTestUsers"),
+        e2eCommand.serverCommand("clearTestOrganizations"),
+        e2eCommand.serverCommand("clearBibleData"),
+      ]),
+  );
+
+  const PICKER = '[data-testid="media-picker-dialog"]';
+  const IMAGE = "./dummyFiles/dummyImage.jpg";
+
+  /** The <img> the FillLayer draws inside an element. */
+  const fillImage = (page: Page, elementSelector: string) =>
+    page.locator(`${elementSelector} img`).first();
+
+  /**
+   * Computed style of the node that actually carries the fill.
+   *
+   * `[data-lay-id]` is the EDITOR's wrapper. The element itself renders inside
+   * it with placement="fill", and that inner node is what appearanceToCss
+   * styles — so reading the wrapper reports the transparent default no matter
+   * what the fill is set to.
+   */
+  const paintedStyle = (
+    page: Page,
+    elementSelector: string,
+    property: string,
+  ) =>
+    page
+      .locator(`${elementSelector} .lay--text-content`)
+      .evaluate((el, prop) => {
+        const painted = el.parentElement;
+        if (!painted) throw new Error("text content has no painted parent");
+        return getComputedStyle(painted).getPropertyValue(prop);
+      }, property);
+
+  /** Selects the body text and opens the picker from its fill controls. */
+  const openPicker = async (page: Page, dialog: Locator) => {
+    await dialog.locator(BODY).click();
+    // Text calls it "Box fill" — the box behind the glyphs, not the glyph
+    // colour, which lives in Typography.
+    await expect(dialog.getByText("Box fill", { exact: true })).toBeVisible();
+    await dialog.getByLabel("Image", { exact: true }).click();
+    await expect(page.locator(PICKER)).toBeVisible();
+  };
+
+  test("uploading through the picker fills the element with the picture", async ({
+    page,
+    projectPage,
+    loginAndGoToProject,
+    uppyUploadFile,
+  }) => {
+    page.setDefaultTimeout(60000);
+    const dialog = await openStyleModal({ loginAndGoToProject, projectPage });
+
+    // Nothing is painted yet.
+    await expect(page.locator(`${BODY} img`)).toHaveCount(0);
+
+    await openPicker(page, dialog);
+    await uppyUploadFile(IMAGE);
+
+    // The picker resolves an upload straight into a pick, so it closes itself.
+    await expect(page.locator(PICKER)).toBeHidden({ timeout: 30000 });
+
+    const img = fillImage(page, BODY);
+    await expect(img).toBeVisible();
+
+    // Served from the media route, not a blob: or data: URL, which is what
+    // proves the picture went through the library rather than staying local.
+    await expect(img).toHaveAttribute("src", /\/media\/data\//);
+
+    // The fill is an image, so no colour may be painted underneath it: a solid
+    // background would hide a transparent PNG's transparency.
+    await expect
+      .poll(() => paintedStyle(page, BODY, "background-image"))
+      .toBe("none");
+  });
+
+  test("the picture survives a reopen, so what was stored is a durable reference", async ({
+    page,
+    projectPage,
+    loginAndGoToProject,
+    uppyUploadFile,
+  }) => {
+    page.setDefaultTimeout(60000);
+    const dialog = await openStyleModal({ loginAndGoToProject, projectPage });
+
+    await openPicker(page, dialog);
+    await uppyUploadFile(IMAGE);
+    await expect(page.locator(PICKER)).toBeHidden({ timeout: 30000 });
+    await expect(fillImage(page, BODY)).toBeVisible();
+
+    // Save, close, reopen. The doc round-trips through Yjs, which cannot store
+    // `undefined` — a fill whose src came back malformed shows up here.
+    await page.getByRole("button", { name: "Save" }).click();
+    await expect(dialog).toBeHidden();
+
+    await page.getByRole("button", { name: "Style" }).click();
+    const reopened = page.getByRole("dialog", { name: "Slide Template" });
+    await expect(reopened).toBeVisible();
+
+    const img = fillImage(page, BODY);
+    await expect(img).toBeVisible();
+    await expect(img).toHaveAttribute("src", /\/media\/data\//);
+
+    // Still an image fill, with its controls, rather than having decayed to a
+    // colour on the way through.
+    await reopened.locator(BODY).click();
+    await expect(row(reopened, "Fit")).toBeVisible();
+  });
+
+  test("fit and opacity reach the rendered picture", async ({
+    page,
+    projectPage,
+    loginAndGoToProject,
+    uppyUploadFile,
+  }) => {
+    page.setDefaultTimeout(60000);
+    const dialog = await openStyleModal({ loginAndGoToProject, projectPage });
+
+    await openPicker(page, dialog);
+    await uppyUploadFile(IMAGE);
+    await expect(page.locator(PICKER)).toBeHidden({ timeout: 30000 });
+
+    const img = fillImage(page, BODY);
+    await expect(img).toBeVisible();
+
+    // --- fit ----------------------------------------------------------------
+    // "cover" is the default, since a background almost always wants cropping.
+    await expect(img).toHaveCSS("object-fit", "cover");
+
+    await dialog.getByLabel("Fit", { exact: true }).click();
+    await expect(img).toHaveCSS("object-fit", "contain");
+
+    await dialog.getByLabel("Stretch", { exact: true }).click();
+    await expect(img).toHaveCSS("object-fit", "fill");
+
+    // --- opacity ------------------------------------------------------------
+    // Applied to the fill LAYER, not the element: fading the element itself
+    // would fade the text sitting on top of it too.
+    const opacity = row(dialog, "Opacity").locator("input");
+    await opacity.fill("40");
+    await opacity.press("Tab");
+
+    const layer = page.locator(`${BODY} img`).first().locator("..");
+    await expect(layer).toHaveCSS("opacity", "0.4");
+    expect(await paintedStyle(page, BODY, "opacity")).toBe("1");
+  });
+
+  test("cancelling the picker leaves the existing fill alone", async ({
+    page,
+    projectPage,
+    loginAndGoToProject,
+  }) => {
+    const dialog = await openStyleModal({ loginAndGoToProject, projectPage });
+
+    // Give the background a colour worth protecting.
+    await dialog.locator(BODY).click();
+    await dialog.getByLabel("Solid", { exact: true }).click();
+    await expect
+      .poll(() => paintedStyle(page, BODY, "background-color"))
+      .not.toBe("rgba(0, 0, 0, 0)");
+
+    const before = await paintedStyle(page, BODY, "background-color");
+
+    // Open the picker and dismiss it without choosing anything. An image fill
+    // written optimistically here would leave a fill with no source, which
+    // renders as an empty box rather than the colour that was there.
+    await dialog.getByLabel("Image", { exact: true }).click();
+    await expect(page.locator(PICKER)).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(page.locator(PICKER)).toBeHidden();
+
+    await expect(page.locator(`${BODY} img`)).toHaveCount(0);
+    expect(await paintedStyle(page, BODY, "background-color")).toBe(before);
+
+    // The inspector agrees: still a solid, so the toggle did not stick on
+    // "Image" after the cancel.
+    await expect(row(dialog, "Colour")).toBeVisible();
+  });
+
+  test("switching to a colour drops the picture", async ({
+    page,
+    projectPage,
+    loginAndGoToProject,
+    uppyUploadFile,
+  }) => {
+    page.setDefaultTimeout(60000);
+    const dialog = await openStyleModal({ loginAndGoToProject, projectPage });
+
+    await openPicker(page, dialog);
+    await uppyUploadFile(IMAGE);
+    await expect(page.locator(PICKER)).toBeHidden({ timeout: 30000 });
+    await expect(fillImage(page, BODY)).toBeVisible();
+
+    await dialog.getByLabel("Gradient", { exact: true }).click();
+
+    // The layer goes away entirely rather than lingering under the gradient.
+    await expect(page.locator(`${BODY} img`)).toHaveCount(0);
+    await expect
+      .poll(() => paintedStyle(page, BODY, "background-image"))
+      .toContain("linear-gradient");
+  });
+});
