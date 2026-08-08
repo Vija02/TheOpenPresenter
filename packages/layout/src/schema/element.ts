@@ -1,7 +1,6 @@
-import { universalURLValidator } from "@repo/lib";
 import { z } from "zod";
 
-import { effectValidator, paintValidator, strokeValidator } from "./paint";
+import { effectValidator, fillPaintValidator, strokeValidator } from "./paint";
 import { rectValidator } from "./rect";
 import {
   spanRoleStyleValidator,
@@ -35,7 +34,7 @@ export const elementBaseValidator = z.object({
   hideWhenEmpty: z.boolean(),
 
   /** Background paint. For text this is the box, not the glyphs. */
-  fill: paintValidator.nullable(),
+  fill: fillPaintValidator.nullable(),
   /** Border. For text this is the box, not the glyphs. */
   stroke: strokeValidator.nullable(),
   /** Applied in order. Multiple shadows are normal, not exotic. */
@@ -56,16 +55,6 @@ export const textElementValidator = elementBaseValidator.extend({
   spanRoles: z.record(z.string(), spanRoleStyleValidator).nullable(),
 });
 
-export const imageFitModes = ["contain", "cover", "fill"] as const;
-export type ImageFitMode = (typeof imageFitModes)[number];
-
-export const imageElementValidator = elementBaseValidator.extend({
-  type: z.literal("image"),
-  /** A URL, an internal media ref, or a string containing `{{token}}`. */
-  src: universalURLValidator,
-  fit: z.enum(imageFitModes),
-});
-
 export const shapeKinds = ["rect", "ellipse", "line"] as const;
 export type ShapeKind = (typeof shapeKinds)[number];
 
@@ -76,13 +65,11 @@ export const shapeElementValidator = elementBaseValidator.extend({
 
 export const layoutElementValidator = z.discriminatedUnion("type", [
   textElementValidator,
-  imageElementValidator,
   shapeElementValidator,
 ]);
 
 export type ElementBase = z.infer<typeof elementBaseValidator>;
 export type TextElement = z.infer<typeof textElementValidator>;
-export type ImageElement = z.infer<typeof imageElementValidator>;
 export type ShapeElement = z.infer<typeof shapeElementValidator>;
 export type LayoutElement = z.infer<typeof layoutElementValidator>;
 export type LayoutElementType = LayoutElement["type"];

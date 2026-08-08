@@ -5,7 +5,7 @@ export * from "./Stage";
 export * from "./StageContext";
 export * from "./css";
 export * from "./elements/ElementView";
-export * from "./elements/ImageElement";
+export * from "./elements/FillLayer";
 export * from "./elements/ShapeElement";
 export * from "./elements/TextElement";
 export * from "./text/fontStatus";

@@ -1,7 +1,7 @@
 # @repo/layout
 
-Slide-content layout: a JSON document describing text, images and shapes inside
-one scene, plus the renderer and editor for it.
+Slide-content layout: a JSON document describing text and shapes inside one
+scene, plus the renderer and editor for it.
 
 Not to be confused with **renderer layout** (`RendererLayout` in
 `@repo/base-plugin`), which composes whole scenes onto an output. That one hosts
@@ -45,8 +45,15 @@ Every element carries `id`, `name`, `rect`, `rotation`, `opacity`, `locked`,
 of that base, the discriminated union adds:
 
 - **text** — `content` (the raw template), `fit`, `style`, `spanRoles`
-- **image** — `src`, `fit`
 - **shape** — `kind`
+
+Pictures are not an element type. `fill` accepts an image paint
+(`{ type: "image", src, fit, opacity }`), following Figma: any element can be
+filled with a picture, so an ellipse cropping a photo needs no new element kind.
+`src` is a `UniversalURL`, so it may be an internal media ref or carry a
+`{{token}}`. Strokes and text outlines take the narrower `Paint` (solid or
+gradient only) — an image stroke has no CSS form, so it is unrepresentable
+rather than a render-time failure.
 
 `rect` is `{ x, y, w, h }` in 0–100, so a document survives an aspect-ratio
 change and one geometry type serves both layout levels.

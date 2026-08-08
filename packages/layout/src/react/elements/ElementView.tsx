@@ -1,7 +1,6 @@
 import { ResolvedElement } from "../../template/resolve";
-import { ElementPlacement } from "../css";
 import { useStage } from "../StageContext";
-import { ImageElementView } from "./ImageElement";
+import { ElementPlacement } from "../css";
 import { ShapeElementView } from "./ShapeElement";
 import { TextElementView } from "./TextElement";
 
@@ -18,14 +17,6 @@ export const ElementView = ({ element, placement }: ElementViewProps) => {
     case "text":
       return (
         <TextElementView
-          element={element}
-          metrics={metrics}
-          placement={placement}
-        />
-      );
-    case "image":
-      return (
-        <ImageElementView
           element={element}
           metrics={metrics}
           placement={placement}

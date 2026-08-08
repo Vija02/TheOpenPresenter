@@ -16,6 +16,7 @@ import { LayoutDocEditor } from "./LayoutDocEditor";
 import { TemplateRail } from "./TemplateRail";
 import { DocumentInspector } from "./inspector/DocumentInspector";
 import { ElementInspector } from "./inspector/ElementInspector";
+import { LayoutPluginApi } from "./pluginApi";
 import { useIsCompact } from "./useMediaQuery";
 
 export type LayoutWorkbenchProps = {
@@ -43,7 +44,8 @@ export type LayoutWorkbenchProps = {
   /** Escape hatch: run the edit yourself */
   onRequestAiEdit?: AiChatRequest<LayoutDoc>;
   aiThreadKey?: string;
-  pluginApi?: AiChatPluginApi;
+  /** Powers the AI chat and the inspector's image picker. */
+  pluginApi?: AiChatPluginApi & LayoutPluginApi;
   className?: string;
 };
 
@@ -140,6 +142,7 @@ export const LayoutWorkbench = ({
         onChange={onChange}
         onSelectionChange={setSelectedIds}
         bindings={bindings}
+        pluginApi={pluginApi}
       />
     ) : (
       <DocumentInspector

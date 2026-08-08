@@ -1,8 +1,9 @@
 import { CSSProperties } from "react";
 
-import { StageMetrics } from "../../geometry/scale";
+import { StageMetrics, rectToPx } from "../../geometry/scale";
 import { ShapeElement } from "../../schema/element";
 import { ElementPlacement, appearanceToCss, placementToCss } from "../css";
+import { FillLayer } from "./FillLayer";
 
 export type ShapeElementViewProps = {
   element: ShapeElement;
@@ -31,6 +32,11 @@ export const ShapeElementView = ({
         ...appearance,
         ...kindStyle,
       }}
-    />
+    >
+      <FillLayer
+        fill={element.fill}
+        width={rectToPx(element.rect, metrics).width}
+      />
+    </div>
   );
 };

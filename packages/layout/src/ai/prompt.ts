@@ -5,7 +5,8 @@ import {
   LayoutDoc,
   layoutFitModes,
 } from "../schema/document";
-import { imageFitModes, shapeKinds } from "../schema/element";
+import { shapeKinds } from "../schema/element";
+import { imageFitModes } from "../schema/paint";
 import {
   horizontalAlignments,
   textFitModes,
@@ -34,7 +35,7 @@ GEOMETRY
 - "rotation" is degrees. "opacity" is 0-1.
 
 ENUMS
-- element "type": "text" | "image" | "shape"
+- element "type": "text" | "shape"
 - text "fit": ${list(textFitModes)}
   - "declared" uses style.fontSize verbatim and overflows if too long
   - "shrinkToFit" treats style.fontSize as a maximum and shrinks to fit
@@ -43,13 +44,14 @@ ENUMS
 - style "align": ${list(horizontalAlignments)}
 - style "valign": ${list(verticalAlignments)}
 - style "fontStyle": "normal" | "italic"
-- image "fit": ${list(imageFitModes)}
+- image fill "fit": ${list(imageFitModes)}
 - shape "kind": ${list(shapeKinds)}
 - document "fitMode": ${list(layoutFitModes)}
 
 PRESERVE UNLESS ASKED
 - Element "id" values. Other systems reference them; changing one silently breaks the slide.
-- "{{token}}" placeholders inside text "content" and image "src". These are substituted with real data at render time, so the text you see in a token is not the text the audience sees. Never replace a token with literal example text.`;
+- "{{token}}" placeholders inside text "content" and inside an image fill's "src". These are substituted with real data at render time, so the text you see in a token is not the text the audience sees. Never replace a token with literal example text.
+- An existing image fill. A picture is a "fill" of type "image" on any element, and it was chosen by the user from their own media library.`;
 
 const IMAGE_GUIDANCE = `An image is attached as a VISUAL REFERENCE.
 - Copy its composition: placement, proportion, alignment, colour, weight, casing.
@@ -92,7 +94,8 @@ BACKGROUNDS
 - A background is a full-bleed shape: add_shape_element with kind 'rect', x 0, y 0, w 100, h 100 and order 'back'.
 - Most layouts ALREADY have one, usually named "Background" and locked. Check list_elements first and recolour the existing one with set_fill rather than stacking a second on top of it.
 - set_fill and add_shape_element both take a linear gradient as well as a flat colour.
-- There is no image source available, so backgrounds are colours and gradients only. Never claim to have added a photo or an image.
+- You have no way to pick a picture: the media library is not available to you, so the backgrounds you can CREATE are colours and gradients only. Never claim to have added a photo or an image.
+- An element may nonetheless already have an image fill that the user picked. set_fill REPLACES the fill outright, so calling it on that element throws the photo away. Restyle around it — move it, resize it, change what sits on top — unless the request is explicitly to remove the image.
 - After changing a background, check the text still reads against it and restyle the text colour if it does not. A dark background under dark text is the most common way this goes wrong.
 
 JUDGEMENT
@@ -127,16 +130,19 @@ export const buildLayoutAgentMessages = (
 const tokensOf = (doc: LayoutDoc): Set<string> => {
   const found = new Set<string>();
   for (const element of doc.elements) {
-    // Only the string form of `src` can carry a token, and matchAll on the
-    // internal-media object form throws.
-    const source =
-      element.type === "text"
-        ? element.content
-        : element.type === "image" && typeof element.src === "string"
-          ? element.src
-          : "";
-    for (const match of source.matchAll(/{{\s*([\w.]+)\s*}}/g)) {
-      if (match[1]) found.add(match[1]);
+    const sources: string[] = [];
+    if (element.type === "text") sources.push(element.content);
+    if (
+      element.fill?.type === "image" &&
+      typeof element.fill.src === "string"
+    ) {
+      sources.push(element.fill.src);
+    }
+
+    for (const source of sources) {
+      for (const match of source.matchAll(/{{\s*([\w.]+)\s*}}/g)) {
+        if (match[1]) found.add(match[1]);
+      }
     }
   }
   return found;

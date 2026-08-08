@@ -7,3 +7,4 @@ export * from "./TemplateRail";
 export * from "./inspector/DocumentInspector";
 export * from "./inspector/ElementInspector";
 export * from "./inspector/primitives";
+export * from "./pluginApi";

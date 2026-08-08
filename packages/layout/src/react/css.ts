@@ -3,6 +3,7 @@ import { CSSProperties } from "react";
 import { StageMetrics, toPx } from "../geometry/scale";
 import {
   Effect,
+  FillPaint,
   Paint,
   Shadow,
   Stroke,
@@ -102,7 +103,7 @@ export const appearanceToCss = (
     clip,
     opacity,
   }: {
-    fill: Paint | null;
+    fill: FillPaint | null;
     stroke: Stroke | null;
     effects: Effect[];
     radius: number;
@@ -125,7 +126,7 @@ export const appearanceToCss = (
   const boxShadow = [...rings, ...shadows].join(", ");
 
   return {
-    background: fill ? paintToCss(fill) : undefined,
+    background: fill && fill.type !== "image" ? paintToCss(fill) : undefined,
     borderRadius: radius > 0 ? `${toPx(radius, m)}px` : undefined,
     overflow: clip ? "hidden" : undefined,
     opacity: opacity < 1 ? opacity : undefined,
