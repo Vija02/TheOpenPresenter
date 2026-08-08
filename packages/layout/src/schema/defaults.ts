@@ -5,15 +5,8 @@ import {
   LayoutDoc,
   LayoutFitMode,
 } from "./document";
-import {
-  ElementBase,
-  ImageElement,
-  ImageFitMode,
-  ShapeElement,
-  ShapeKind,
-  TextElement,
-} from "./element";
-import { Effect, Paint, Stroke } from "./paint";
+import { ElementBase, ShapeElement, ShapeKind, TextElement } from "./element";
+import { Effect, FillPaint, Stroke } from "./paint";
 import { FULL_BLEED, Rect } from "./rect";
 import { SpanRoleStyle, TextFitMode, TextStyle, TextStylePatch } from "./style";
 
@@ -42,7 +35,7 @@ export type AppearanceOptions = {
   locked?: boolean;
   hidden?: boolean;
   hideWhenEmpty?: boolean;
-  fill?: Paint | null;
+  fill?: FillPaint | null;
   stroke?: Stroke | null;
   effects?: Effect[];
   radius?: number;
@@ -104,24 +97,6 @@ export const createTextElement = ({
   fit,
   style: { ...defaultTextStyle, ...style },
   spanRoles,
-});
-
-export type CreateImageElementOptions = AppearanceOptions & {
-  id: string;
-  src: ImageElement["src"];
-  fit?: ImageFitMode;
-};
-
-export const createImageElement = ({
-  id,
-  src,
-  fit = "cover",
-  ...appearance
-}: CreateImageElementOptions): ImageElement => ({
-  ...baseElement(id, appearance),
-  type: "image",
-  src,
-  fit,
 });
 
 export type CreateShapeElementOptions = AppearanceOptions & {

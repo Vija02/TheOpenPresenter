@@ -4,6 +4,7 @@ import { LuCopy, LuTrash2 } from "react-icons/lu";
 import { duplicateElement, elementLabel, removeElement } from "../../doc/edit";
 import { DataBinding, LayoutDoc } from "../../schema/document";
 import { LayoutElement } from "../../schema/element";
+import { LayoutPluginApi } from "../pluginApi";
 import {
   ContentSection,
   EffectsSection,
@@ -20,6 +21,7 @@ export type ElementInspectorProps = {
   onSelectionChange: (ids: string[]) => void;
   /** Tokens the data provider offers, rendered as insert chips. */
   bindings?: DataBinding[];
+  pluginApi?: LayoutPluginApi;
 };
 
 /**
@@ -31,6 +33,7 @@ export const ElementInspector = ({
   onChange,
   onSelectionChange,
   bindings = [],
+  pluginApi,
 }: ElementInspectorProps) => (
   <>
     <div className="flex items-center justify-between py-2">
@@ -87,6 +90,7 @@ export const ElementInspector = ({
       element={element}
       onChange={onChange}
       title={element.type === "text" ? "Box fill" : "Fill"}
+      pluginApi={pluginApi}
     />
 
     <PositionSection doc={doc} element={element} onChange={onChange} />

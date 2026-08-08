@@ -1,14 +1,28 @@
+import { resolveMediaUrl } from "@repo/lib";
 import { ReactNode, useState } from "react";
-import { LuArrowLeftRight, LuMinus, LuPlus } from "react-icons/lu";
+import {
+  LuArrowLeftRight,
+  LuBan,
+  LuBlend,
+  LuImage,
+  LuMinus,
+  LuPlus,
+  LuSquare,
+} from "react-icons/lu";
 
 import { setElementFill } from "../../../doc/edit";
 import { paintToCss } from "../../../react/css";
 import {
+  FillPaint,
+  ImageFitMode,
+  ImagePaint,
   LinearGradientPaint,
-  Paint,
+  imageFitModes,
+  imagePaint,
   solidPaint,
   sortGradientStops,
 } from "../../../schema/paint";
+import { LayoutPluginApi, pickImage } from "../../pluginApi";
 import {
   ColorField,
   CompactNumberField,
@@ -23,29 +37,49 @@ import {
 } from "../primitives";
 import { SectionProps } from "./types";
 
-type FillMode = "none" | "solid" | "linearGradient";
+type FillMode = "none" | "solid" | "linearGradient" | "image";
 
-const MODES = [
-  { value: "none" as const, label: "None" },
-  { value: "solid" as const, label: "Solid" },
-  { value: "linearGradient" as const, label: "Gradient" },
+const COLOUR_MODES = [
+  { value: "none" as const, label: "None", icon: <LuBan size={14} /> },
+  { value: "solid" as const, label: "Solid", icon: <LuSquare size={14} /> },
+  {
+    value: "linearGradient" as const,
+    label: "Gradient",
+    icon: <LuBlend size={14} />,
+  },
 ];
+
+const IMAGE_MODE = {
+  value: "image" as const,
+  label: "Image",
+  icon: <LuImage size={14} />,
+};
+
+const FIT_OPTIONS = imageFitModes.map((value) => ({
+  value,
+  label: value === "fill" ? "Stretch" : value === "cover" ? "Crop" : "Fit",
+}));
 
 const DEFAULT_COLOR = "#000000";
 
 const toPercent = (offset: number) => Math.round(offset * 100);
 const fromPercent = (percent: number) => roundOffset(percent / 100);
 
-const modeOf = (fill: Paint | null): FillMode => fill?.type ?? "none";
+const modeOf = (fill: FillPaint | null): FillMode => fill?.type ?? "none";
 
 /** Carries the colours across a mode change rather than resetting. */
-const convert = (fill: Paint | null, mode: FillMode): Paint | null => {
+const convert = (
+  fill: FillPaint | null,
+  mode: Exclude<FillMode, "image">,
+): FillPaint | null => {
   if (mode === "none") return null;
 
   const firstColor =
     fill?.type === "solid"
       ? fill.color
-      : (fill?.stops[0]?.color ?? DEFAULT_COLOR);
+      : fill?.type === "linearGradient"
+        ? (fill.stops[0]?.color ?? DEFAULT_COLOR)
+        : DEFAULT_COLOR;
 
   if (mode === "solid") return solidPaint(firstColor);
 
@@ -89,20 +123,33 @@ export const FillSection = ({
   element,
   onChange,
   title = "Fill",
-}: SectionProps & { title?: string }) => {
+  pluginApi,
+}: SectionProps & { title?: string; pluginApi?: LayoutPluginApi }) => {
   const fill = element.fill;
   const [selected, setSelected] = useState(0);
 
-  const set = (next: Paint | null) =>
+  const set = (next: FillPaint | null) =>
     onChange(setElementFill(doc, element.id, next));
+
+  const chooseImage = async () => {
+    if (!pluginApi) return;
+    const src = await pickImage(pluginApi);
+    if (!src) return;
+    set(fill?.type === "image" ? { ...fill, src } : imagePaint(src));
+  };
+
+  const modes = pluginApi ? [...COLOUR_MODES, IMAGE_MODE] : COLOUR_MODES;
 
   return (
     <Section title={title}>
       <Row label="Type">
         <ToggleGroupField
           value={modeOf(fill)}
-          onChange={(next) => set(convert(fill, next))}
-          options={MODES}
+          onChange={(next) => {
+            if (next === "image") void chooseImage();
+            else set(convert(fill, next));
+          }}
+          options={modes}
         />
       </Row>
 
@@ -124,9 +171,71 @@ export const FillSection = ({
           onChange={set}
         />
       )}
+
+      {fill?.type === "image" && (
+        <ImageControls
+          fill={fill}
+          onChange={set}
+          onReplace={() => void chooseImage()}
+        />
+      )}
     </Section>
   );
 };
+
+const ImageControls = ({
+  fill,
+  onChange,
+  onReplace,
+}: {
+  fill: ImagePaint;
+  onChange: (next: ImagePaint) => void;
+  onReplace: () => void;
+}) => (
+  <>
+    <Row label="Picture">
+      <button
+        type="button"
+        onClick={onReplace}
+        title="Choose a different picture"
+        className="flex items-center gap-2 rounded border border-stroke px-1.5 py-1 text-xs hover:border-primary hover:bg-primary/10"
+      >
+        <span
+          aria-hidden
+          className="checkerboard size-6 shrink-0 overflow-hidden rounded-xs border border-stroke"
+        >
+          <img
+            src={resolveMediaUrl(fill.src)}
+            alt=""
+            draggable={false}
+            className="size-full object-cover"
+          />
+        </span>
+        Replace
+      </button>
+    </Row>
+
+    <Row label="Fit">
+      <ToggleGroupField
+        value={fill.fit}
+        onChange={(fit: ImageFitMode) => onChange({ ...fill, fit })}
+        options={FIT_OPTIONS}
+      />
+    </Row>
+
+    <Row label="Opacity">
+      <NumberField
+        value={toPercent(fill.opacity)}
+        min={0}
+        max={100}
+        step={5}
+        onChange={(percent) =>
+          onChange({ ...fill, opacity: fromPercent(percent) })
+        }
+      />
+    </Row>
+  </>
+);
 
 const GradientControls = ({
   fill,

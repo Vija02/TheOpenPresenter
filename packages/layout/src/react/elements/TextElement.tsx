@@ -15,6 +15,7 @@ import {
   subscribeToFonts,
 } from "../text/fontStatus";
 import { fitFontSize, spansToHtml } from "../text/measure";
+import { FillLayer } from "./FillLayer";
 
 const spanStyle = (role: SpanRoleStyle | undefined): CSSProperties => {
   if (!role) return {};
@@ -95,12 +96,16 @@ export const TextElementView = ({
         fontSize,
       }}
     >
+      <FillLayer fill={element.fill} width={box.width} />
+
       <div
         className="lay--text-content"
         style={{
           width: "100%",
           whiteSpace: noWrap ? "pre" : "pre-wrap",
           overflowWrap: "break-word",
+          position: "relative",
+          zIndex: 1,
         }}
       >
         {spans.map((s, i) => (

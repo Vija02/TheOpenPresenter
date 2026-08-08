@@ -1,3 +1,4 @@
+import { universalURLValidator } from "@repo/lib";
 import { z } from "zod";
 
 export const solidPaintValidator = z.object({
@@ -26,9 +27,27 @@ export const paintValidator = z.discriminatedUnion("type", [
   linearGradientPaintValidator,
 ]);
 
+export const imageFitModes = ["contain", "cover", "fill"] as const;
+export type ImageFitMode = (typeof imageFitModes)[number];
+
+export const imagePaintValidator = z.object({
+  type: z.literal("image"),
+  src: universalURLValidator,
+  fit: z.enum(imageFitModes),
+  opacity: z.number(),
+});
+
+export const fillPaintValidator = z.discriminatedUnion("type", [
+  solidPaintValidator,
+  linearGradientPaintValidator,
+  imagePaintValidator,
+]);
+
 export type SolidPaint = z.infer<typeof solidPaintValidator>;
 export type LinearGradientPaint = z.infer<typeof linearGradientPaintValidator>;
+export type ImagePaint = z.infer<typeof imagePaintValidator>;
 export type Paint = z.infer<typeof paintValidator>;
+export type FillPaint = z.infer<typeof fillPaintValidator>;
 
 export const strokeAlignments = ["inside", "center", "outside"] as const;
 export type StrokeAlignment = (typeof strokeAlignments)[number];
@@ -75,6 +94,17 @@ export const sortGradientStops = (
   stops: LinearGradientPaint["stops"],
 ): LinearGradientPaint["stops"] =>
   [...stops].sort((a, b) => a.offset - b.offset);
+
+export const imagePaint = (
+  src: ImagePaint["src"],
+  fit: ImageFitMode = "cover",
+  opacity = 1,
+): ImagePaint => ({
+  type: "image",
+  src,
+  fit,
+  opacity,
+});
 
 export const linearGradientPaint = (
   angle: number,

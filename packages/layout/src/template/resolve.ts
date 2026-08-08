@@ -1,10 +1,6 @@
 import { LayoutDoc } from "../schema/document";
-import {
-  ImageElement,
-  LayoutElement,
-  ShapeElement,
-  TextElement,
-} from "../schema/element";
+import { LayoutElement, ShapeElement, TextElement } from "../schema/element";
+import { FillPaint } from "../schema/paint";
 import { FrameData, Span, isSpansEmpty } from "./spans";
 import { substituteSpans, substituteUniversalURL } from "./tokens";
 
@@ -13,7 +9,7 @@ export type ResolvedTextElement = Omit<TextElement, "content"> & {
   spans: Span[];
 };
 
-export type ResolvedElement = ResolvedTextElement | ImageElement | ShapeElement;
+export type ResolvedElement = ResolvedTextElement | ShapeElement;
 
 export type ResolvedDoc = {
   doc: LayoutDoc;
@@ -41,28 +37,38 @@ const withReservedTokens = (
   };
 };
 
+const resolveFill = (
+  fill: FillPaint | null,
+  data: FrameData,
+): FillPaint | null => {
+  if (fill?.type !== "image") return fill;
+  return { ...fill, src: substituteUniversalURL(fill.src, data) };
+};
+
+const isEmptyImageFill = (fill: FillPaint | null): boolean =>
+  fill?.type === "image" &&
+  typeof fill.src === "string" &&
+  fill.src.trim() === "";
+
 const resolveElement = (
   element: LayoutElement,
   data: FrameData,
 ): ResolvedElement | null => {
   if (element.hidden) return null;
 
+  const fill = resolveFill(element.fill, data);
+
   switch (element.type) {
     case "text": {
       const { content, ...rest } = element;
       const spans = substituteSpans(content, data);
       if (element.hideWhenEmpty && isSpansEmpty(spans)) return null;
-      return { ...rest, spans };
-    }
-    case "image": {
-      const src = substituteUniversalURL(element.src, data);
-      const isEmpty = typeof src === "string" && src.trim() === "";
-      if (element.hideWhenEmpty && isEmpty) return null;
-      return { ...element, src };
+      return { ...rest, fill, spans };
     }
     case "shape":
-      // Shapes carry no bindings
-      return element;
+      // A shape's only binding is its image fill.
+      if (element.hideWhenEmpty && isEmptyImageFill(fill)) return null;
+      return { ...element, fill };
   }
 };
 

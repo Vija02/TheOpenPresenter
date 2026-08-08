@@ -3,7 +3,7 @@
  */
 import { LayoutDoc } from "../schema/document";
 import { LayoutElement, TextElement } from "../schema/element";
-import { Paint } from "../schema/paint";
+import { FillPaint } from "../schema/paint";
 import { Rect } from "../schema/rect";
 import { TextStylePatch } from "../schema/style";
 
@@ -64,7 +64,7 @@ export const patchTextElement = (
 export const setElementFill = (
   doc: LayoutDoc,
   id: string,
-  fill: Paint | null,
+  fill: FillPaint | null,
 ): LayoutDoc => patchElement(doc, id, { fill });
 
 /** Solid fills only; anything else has no single colour to report. */
@@ -161,7 +161,6 @@ export const reorderElement = (
 
 const TYPE_LABELS: Record<LayoutElement["type"], string> = {
   text: "Text",
-  image: "Image",
   shape: "Shape",
 };
 
