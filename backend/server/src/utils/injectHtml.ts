@@ -12,3 +12,15 @@ export const injectEndOfHead = (html: string, stringToInject: string) => {
 
   return html;
 };
+
+const headStartInjectRE = /(<head[^>]*>)/i;
+
+export const injectStartOfHead = (html: string, stringToInject: string) => {
+  if (headStartInjectRE.test(html)) {
+    return html.replace(headStartInjectRE, (match) => {
+      return `${match}\n${stringToInject}`;
+    });
+  }
+
+  return html;
+};

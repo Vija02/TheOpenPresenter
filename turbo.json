@@ -16,6 +16,12 @@
       ],
       "cache": true
     },
+    "@repo/shared-runtime#build": {
+      "dependsOn": [
+        "^build"
+      ],
+      "cache": false
+    },
     "lint": {
       "dependsOn": [
         "^lint"

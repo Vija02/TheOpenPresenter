@@ -1,4 +1,5 @@
 /// <reference types="vitest/config" />
+import { isSharedModule } from "@repo/shared-modules";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react-swc";
 import { join, resolve } from "node:path";
@@ -27,7 +28,13 @@ export default defineConfig({
     },
     rollupOptions: {
       // Exclude peer dependencies from the bundle to reduce bundle size
-      external: ["react/jsx-runtime", ...Object.keys(peerDependencies)],
+      external: (id: string) => {
+        if (id === "react/jsx-runtime") return true;
+        if (isSharedModule(id)) return true;
+        return Object.keys(peerDependencies).some(
+          (dep) => id === dep || id.startsWith(dep + "/"),
+        );
+      },
     },
   },
   resolve: {

@@ -1,0 +1,31 @@
+{
+  "name": "@repo/shared-runtime",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "node ./build.mjs && node ./verify.mjs",
+    "build:only": "node ./build.mjs --only",
+    "verify": "node ./verify.mjs",
+    "clean": "node ./build.mjs --clean"
+  },
+  "dependencies": {
+    "@repo/base-plugin": "*",
+    "@repo/graphql": "*",
+    "@repo/lib": "*",
+    "@repo/shared-modules": "*",
+    "@repo/ui": "*",
+    "@repo/video": "*",
+    "react-hook-form": "^7.57.0",
+    "react-player": "^3.4.0",
+    "urql": "^5.0.1",
+    "zod": "^4.4.3",
+    "zustand": "^5.0.2"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "*",
+    "@vitejs/plugin-react-swc": "^3.7.2",
+    "typescript": "^5.9.3",
+    "vite": "6.3.5"
+  }
+}

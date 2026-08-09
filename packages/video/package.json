@@ -26,7 +26,7 @@
   },
   "scripts": {
     "build": "pkgroll",
-    "dev": "pkgroll --watch"
+    "dev": "concurrently --kill-others --names \"VIDEO,SHARED\" --prefix \"({name})\" --prefix-colors \"cyanBright.bold,yellowBright.bold\" \"pkgroll --watch\" \"node ../shared-runtime/watch.mjs @repo/video\""
   },
   "dependencies": {
     "@repo/base-plugin": "*",
@@ -42,6 +42,7 @@
   "devDependencies": {
     "@repo/typescript-config": "*",
     "@types/react": "^19.1.2",
+    "concurrently": "^9.1.2",
     "pkgroll": "2.5.1",
     "typescript": "5.9.3"
   }
