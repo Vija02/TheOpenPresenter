@@ -72,6 +72,21 @@ export const SHARED_MODULES: SharedModule[] = [
       "urql documents and generated hooks shared between apps and plugins.",
   },
   {
+    specifier: "@repo/layout",
+    reason:
+      "Layout document model and geometry, imported by the bible plugin and both host apps. Currently inlined into plugins/bible AND apps/remote, so the same code ships twice.",
+  },
+  {
+    specifier: "@repo/layout/react",
+    reason:
+      "CRITICAL: owns StageContext. The bible plugin renders <LayoutRenderer> from this entry while the host app provides the stage, so a second copy makes useStage() silently return the empty metrics fallback rather than throwing. Subpaths need their own import map entry.",
+  },
+  {
+    specifier: "@repo/layout/editor",
+    reason:
+      "The editor entry is used by both plugins/bible (StyleModal) and apps/remote (InteractiveLayoutEditor). Shared so the editor and the renderer agree on one layout instance. The /ai entry is deliberately excluded: it is imported only by backend/server and must not reach the browser.",
+  },
+  {
     specifier: "@repo/video",
     reason:
       "Shared video plugin API. Externalized together with react-player so the hls and dash chunks resolve to one copy.",
@@ -132,8 +147,16 @@ const DEEP_INTERNAL_RE = new RegExp(
  *
  * See README.md for the exclusion rules.
  */
+/**
+ * Server-only entries of otherwise shared packages.
+ *
+ * These pull in server dependencies (express, pg, AI SDKs) and must stay
+ * bundled server side rather than being resolved from the browser's import map.
+ */
+const SERVER_ONLY_ENTRIES = ["@repo/base-plugin/server", "@repo/layout/ai"];
+
 export const isSharedModule = (id: string, self?: string): boolean => {
-  if (id === "@repo/base-plugin/server") return false;
+  if (SERVER_ONLY_ENTRIES.includes(id)) return false;
 
   if (id.endsWith("/css") || id.endsWith(".css")) return false;
 
