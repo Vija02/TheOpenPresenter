@@ -19,6 +19,9 @@ describe("isSharedModule", () => {
       ["zustand", "@repo/lib"],
       ["@repo/lib", "@repo/ui"],
       ["react-player", "@repo/video"],
+      ["@repo/layout", "@repo/ui"],
+      ["@repo/layout/react", "@repo/ui"],
+      ["@repo/layout/editor", "@repo/ui"],
     ])("%s (building %s)", (id, self) => {
       expect(isSharedModule(id, self)).toBe(true);
     });
@@ -41,6 +44,11 @@ describe("isSharedModule", () => {
         false,
       );
       expect(sharedExternals("@repo/base-plugin/server")).toBe(false);
+    });
+
+    it("@repo/layout/ai, which is imported only by backend/server", () => {
+      expect(isSharedModule("@repo/layout/ai", "@repo/layout")).toBe(false);
+      expect(sharedExternals("@repo/layout/ai")).toBe(false);
     });
 
     it("stylesheets, which are not JS modules", () => {

@@ -12,6 +12,7 @@
   "dependencies": {
     "@repo/base-plugin": "*",
     "@repo/graphql": "*",
+    "@repo/layout": "*",
     "@repo/lib": "*",
     "@repo/shared-modules": "*",
     "@repo/ui": "*",
