@@ -76,6 +76,7 @@ COPY data/ /app/data
 COPY packages/typescript-config/ /app/packages/typescript-config/
 COPY packages/tailwind-config/ /app/packages/tailwind-config/
 COPY packages/shared-modules/ /app/packages/shared-modules/
+RUN yarn workspace @repo/shared-modules build
 
 COPY packages/graphql/ /app/packages/graphql/
 COPY apps/project/src/graphql/ /app/apps/project/src/graphql/
