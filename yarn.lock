@@ -10676,6 +10676,7 @@ __metadata:
     "@repo/eslint-config": "npm:*"
     "@repo/graphql": "npm:*"
     "@repo/lib": "npm:*"
+    "@repo/shared-modules": "npm:*"
     "@repo/tailwind-config": "npm:*"
     "@storybook/addon-essentials": "npm:^8.6.14"
     "@storybook/addon-interactions": "npm:^8.6.14"
