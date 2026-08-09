@@ -6,9 +6,17 @@
   "tasks": {
     "build": {
       "inputs": [
+        "$TURBO_DEFAULT$",
+        "../../data/schema.graphql",
         "../../apps/project/src/**/*.graphql",
         "../../apps/remote/src/**/*.graphql",
         "../../apps/renderer/src/**/*.graphql"
+      ],
+      "outputs": [
+        "dist/**",
+        "index.tsx",
+        "index.d.ts",
+        "index.d.ts.map"
       ]
     }
   }
