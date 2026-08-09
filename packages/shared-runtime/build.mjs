@@ -60,12 +60,18 @@ for (const [i, specifier] of specifiers.entries()) {
       cwd: __dirname,
       env: { ...process.env, MODULE: specifier },
       stdio: "inherit",
+      shell: true,
     },
   );
 
-  if (result.status !== 0) {
+  // `error` is set when the process could not be spawned at all, in which case
+  // `status` is null. Reported explicitly, or the cause is invisible.
+  if (result.error) {
     failed.push(specifier);
-    console.error(`  FAILED: ${specifier}\n`);
+    console.error(`  FAILED to spawn: ${specifier} (${result.error.message})\n`);
+  } else if (result.status !== 0) {
+    failed.push(specifier);
+    console.error(`  FAILED: ${specifier} (exit ${result.status})\n`);
   }
 }
 
