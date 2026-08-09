@@ -91,10 +91,11 @@ const rebuild = () => {
     [resolve(__dirname, "build.mjs"), "--only", specifier],
     { cwd: __dirname, stdio: "inherit" },
   );
-  if (result.status !== 0) {
+  if (result.error || result.status !== 0) {
     // Kept alive: usually a transient half-written dist from the upstream
     // watcher, which the next change recovers from.
-    console.error(`[shared-runtime] rebuild of ${specifier} failed`);
+    const why = result.error ? ` (${result.error.message})` : "";
+    console.error(`[shared-runtime] rebuild of ${specifier} failed${why}`);
   }
 };
 
