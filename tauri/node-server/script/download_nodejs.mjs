@@ -8,7 +8,7 @@ import { pipeline } from "stream/promises";
 import { extract } from "tar";
 
 // Current LTS
-const NODE_VERSION = "v22.14.0";
+const NODE_VERSION = "v24.15.0";
 
 const downloadWindowsBinary = async () => {
   const platform = process.platform;
