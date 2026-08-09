@@ -29,8 +29,6 @@
     "@repo/lib": "*",
     "@repo/observability": "*",
     "@repo/portable-file": "*",
-    "@repo/shared-modules": "*",
-    "@repo/shared-runtime": "*",
     "@trpc/server": "^11.1.2",
     "@tus/server": "^1.10.1",
     "@types/connect-pg-simple": "^7.0.3",
@@ -91,6 +89,8 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@repo/shared-modules": "*",
+    "@repo/shared-runtime": "*",
     "@repo/typescript-config": "*",
     "@types/cookie-signature": "^1",
     "@types/serialize-javascript": "^5.0.4",

@@ -1,4 +1,4 @@
-import { isSharedModule } from "./index.ts";
+import { isSharedModule } from "./index";
 
 // esbuild plugin that keeps shared modules out of Vite's dependency
 // pre-bundling, so CJS deps cannot inline a second React. See README.md.
