@@ -41,7 +41,7 @@
   ],
   "scripts": {
     "build": "vite build",
-    "dev": "vite build --watch"
+    "dev": "concurrently --kill-others --names \"BASE-PLUGIN,SHARED\" --prefix \"({name})\" --prefix-colors \"cyanBright.bold,yellowBright.bold\" \"vite build --watch\" \"node ../shared-runtime/watch.mjs @repo/base-plugin\""
   },
   "dependencies": {
     "@repo/backend-shared": "*",
@@ -76,6 +76,7 @@
     "@repo/typescript-config": "*",
     "@tailwindcss/vite": "^4.1.10",
     "@vitejs/plugin-react-swc": "^3.7.2",
+    "concurrently": "^9.1.2",
     "tailwindcss": "^4.1.10",
     "typescript": "^5.9.3",
     "vite": "6.3.5",

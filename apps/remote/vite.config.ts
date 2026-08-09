@@ -1,3 +1,5 @@
+import { sharedExternals } from "@repo/shared-modules";
+import { externalizeSharedInOptimizer } from "@repo/shared-modules/optimizer";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react-swc";
 import postcssNested from "postcss-nested";
@@ -10,15 +12,20 @@ export default defineConfig({
     react(),
     tailwindcss(),
     externalize({
-      externals: ["yjs"],
+      externals: [sharedExternals],
     }),
   ],
+  optimizeDeps: {
+    esbuildOptions: {
+      plugins: [externalizeSharedInOptimizer()],
+    },
+  },
   css: { postcss: { plugins: [postcssNested() as any] } },
   base: "/app",
   build: {
     sourcemap: false,
     rollupOptions: {
-      external: ["yjs", "react", "react-dom", "react-dom/client"],
+      external: sharedExternals,
     },
   },
 });

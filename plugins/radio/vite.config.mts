@@ -1,3 +1,4 @@
+import { sharedExternals } from "@repo/shared-modules";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react-swc";
 import autoprefixer from "autoprefixer";
@@ -35,7 +36,7 @@ export default defineConfig({
     },
     cssCodeSplit: true,
     rollupOptions: {
-      external: ["yjs", "react", "react-dom", "react-dom/client"],
+      external: sharedExternals,
     },
     target: "esnext",
   },

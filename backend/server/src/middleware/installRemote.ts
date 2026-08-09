@@ -7,7 +7,8 @@ import { ViteExpress } from "vite-express";
 
 import { getUpgradeHandlers } from "../app";
 import { serverPluginApi } from "../pluginManager";
-import { injectEndOfHead } from "../utils/injectHtml";
+import { getImportMapTag } from "../utils/importmap";
+import { injectEndOfHead, injectStartOfHead } from "../utils/injectHtml";
 import { DEV_NONCE } from "./shared";
 
 export default async function installRemote(app: Express, server: Server) {
@@ -99,7 +100,9 @@ function transformer(html: string, req: Request) {
     `<script nonce="INJECT_NONCE">window.__APP_DATA__ = ${serialize({ ...extraEnv, pluginData })}</script>`,
   );
 
-  return injectEndOfHead(html, scripts.join("\n")).replace(
+  const withImportMap = injectStartOfHead(html, getImportMapTag());
+
+  return injectEndOfHead(withImportMap, scripts.join("\n")).replace(
     /INJECT_NONCE/g,
     req.res?.locals.nonce,
   );

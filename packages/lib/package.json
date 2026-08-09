@@ -16,7 +16,7 @@
   },
   "scripts": {
     "build": "tsup src/index.ts --format esm,cjs --experimental-dts",
-    "dev": "tsup src/index.ts --format esm,cjs --experimental-dts --watch"
+    "dev": "concurrently --kill-others --names \"LIB,SHARED\" --prefix \"({name})\" --prefix-colors \"cyanBright.bold,yellowBright.bold\" \"tsup src/index.ts --format esm,cjs --experimental-dts --watch\" \"node ../shared-runtime/watch.mjs @repo/lib\""
   },
   "dependencies": {
     "@hocuspocus/server": "4.4.0",
@@ -39,6 +39,7 @@
     "@microsoft/api-extractor": "^7.49.2",
     "@repo/typescript-config": "*",
     "@types/loadjs": "^4",
+    "concurrently": "^9.1.2",
     "tsup": "^8.3.6",
     "typescript": "^5.9.3"
   }

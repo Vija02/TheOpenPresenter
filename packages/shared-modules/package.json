@@ -1,0 +1,14 @@
+{
+  "name": "@repo/shared-modules",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./optimizer": "./src/optimizer.ts"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "*",
+    "typescript": "^5.9.3"
+  }
+}

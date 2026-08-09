@@ -16,7 +16,7 @@
   },
   "scripts": {
     "build": "yarn codegen && pkgroll --src .",
-    "dev": "yarn codegen && concurrently --kill-others --names \"GQL-CodeGen,GQL-Build\" --prefix \"({name})\" --prefix-colors \"magentaBright.bold,greenBright.bold\" \"yarn codegen --watch\" \"pkgroll --src ./ --watch\"",
+    "dev": "yarn codegen && concurrently --kill-others --names \"GQL-CodeGen,GQL-Build,SHARED\" --prefix \"({name})\" --prefix-colors \"magentaBright.bold,greenBright.bold,yellowBright.bold\" \"yarn codegen --watch\" \"pkgroll --src ./ --watch\" \"node ../shared-runtime/watch.mjs @repo/graphql\"",
     "codegen": "graphql-codegen --config codegen.yml"
   },
   "dependencies": {
@@ -32,6 +32,7 @@
     "@graphql-codegen/typescript-urql": "^4.0.1",
     "@parcel/watcher": "^2.5.0",
     "@repo/typescript-config": "*",
+    "concurrently": "^9.1.2",
     "pkgroll": "2.5.1"
   }
 }
