@@ -45,6 +45,8 @@ COPY packages/layout/package.json /app/packages/layout/package.json
 COPY packages/media-picker/package.json /app/packages/media-picker/package.json
 COPY packages/observability/package.json /app/packages/observability/package.json
 COPY packages/prettier-config/package.json /app/packages/prettier-config/package.json
+COPY packages/shared-modules/package.json /app/packages/shared-modules/package.json
+COPY packages/shared-runtime/package.json /app/packages/shared-runtime/package.json
 COPY packages/typescript-config/package.json /app/packages/typescript-config/package.json
 COPY packages/tailwind-config/package.json /app/packages/tailwind-config/package.json
 COPY packages/test/package.json /app/packages/test/package.json
@@ -73,6 +75,7 @@ COPY data/ /app/data
 
 COPY packages/typescript-config/ /app/packages/typescript-config/
 COPY packages/tailwind-config/ /app/packages/tailwind-config/
+COPY packages/shared-modules/ /app/packages/shared-modules/
 
 COPY packages/graphql/ /app/packages/graphql/
 COPY apps/project/src/graphql/ /app/apps/project/src/graphql/
@@ -128,6 +131,9 @@ RUN yarn worker build
 
 COPY backend/server/ /app/backend/server/
 RUN yarn server build
+
+COPY packages/shared-runtime/ /app/packages/shared-runtime/
+RUN SHARED_RUNTIME_NO_MAPS=1 yarn workspace @repo/shared-runtime build
 
 RUN node scripts/build_utils/extract_server.js
 
