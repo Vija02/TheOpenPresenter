@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { patchTextElement } from "../doc/edit";
+import { VideoFillModeContext } from "../react/VideoFillContext";
 import { ElementView } from "../react/elements/ElementView";
 import { LayoutDoc } from "../schema/document";
 import { FrameContext, resolveDoc } from "../template/resolve";
@@ -107,31 +108,33 @@ export const LayoutDocEditor = ({
   );
 
   return (
-    <LayoutEditor
-      items={items}
-      aspectRatio={doc.aspectRatio}
-      fitMode={doc.fitMode}
-      selectedIds={selectedIds}
-      onSelectionChange={onSelectionChange}
-      onChange={handleChange}
-      background={background}
-      className={className}
-      editingId={editingId}
-      onItemDoubleClick={handleDoubleClick}
-      renderItem={(item) =>
-        item.id === editingId &&
-        editingContent !== null &&
-        item.element.type === "text" ? (
-          <TextEditOverlay
-            element={item.element}
-            value={editingContent}
-            onCommit={commit}
-            onCancel={() => setEditingId(null)}
-          />
-        ) : (
-          <ElementView element={item.element} placement="fill" />
-        )
-      }
-    />
+    <VideoFillModeContext.Provider value="live">
+      <LayoutEditor
+        items={items}
+        aspectRatio={doc.aspectRatio}
+        fitMode={doc.fitMode}
+        selectedIds={selectedIds}
+        onSelectionChange={onSelectionChange}
+        onChange={handleChange}
+        background={background}
+        className={className}
+        editingId={editingId}
+        onItemDoubleClick={handleDoubleClick}
+        renderItem={(item) =>
+          item.id === editingId &&
+          editingContent !== null &&
+          item.element.type === "text" ? (
+            <TextEditOverlay
+              element={item.element}
+              value={editingContent}
+              onCommit={commit}
+              onCancel={() => setEditingId(null)}
+            />
+          ) : (
+            <ElementView element={item.element} placement="fill" />
+          )
+        }
+      />
+    </VideoFillModeContext.Provider>
   );
 };
