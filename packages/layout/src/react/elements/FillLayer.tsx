@@ -5,8 +5,10 @@ import {
   resolveMediaUrl,
   resolveProcessedMediaUrl,
 } from "@repo/lib";
+import { ReactNode } from "react";
 
 import { FillPaint } from "../../schema/paint";
+import { VideoFill } from "./VideoFill";
 
 const WIDTHS = [...ALLOWED_IMAGE_WIDTH].sort((a, b) => a - b);
 
@@ -29,11 +31,41 @@ export type FillLayerProps = {
   width?: number;
 };
 
+/** The absolutely-positioned box that media fills are drawn into. */
+const MediaLayer = ({
+  opacity,
+  children,
+}: {
+  opacity: number;
+  children: ReactNode;
+}) => (
+  <div
+    aria-hidden
+    style={{
+      position: "absolute",
+      inset: 0,
+      borderRadius: "inherit",
+      overflow: "hidden",
+      opacity: opacity < 1 ? opacity : undefined,
+      zIndex: 0,
+    }}
+  >
+    {children}
+  </div>
+);
+
 /**
- * Draws an image fill as a real `<img>` behind the element's own content.
+ * Draws a picture or video fill behind the element's own content.
  */
-// DEBT: Make this use UniversalImage
 export const FillLayer = ({ fill, width }: FillLayerProps) => {
+  if (fill?.type === "video") {
+    return (
+      <MediaLayer opacity={fill.opacity}>
+        <VideoFill fill={fill} />
+      </MediaLayer>
+    );
+  }
+
   if (fill?.type !== "image") return null;
 
   const src = resolveMediaUrl(fill.src);
@@ -43,18 +75,9 @@ export const FillLayer = ({ fill, width }: FillLayerProps) => {
   // width the browser would assume 100vw and fetch the largest one.
   const sizes = isInternalMedia(fill.src) ? sizesFor(width ?? 0) : undefined;
 
+  // DEBT: Make the image case use UniversalImage
   return (
-    <div
-      aria-hidden
-      style={{
-        position: "absolute",
-        inset: 0,
-        borderRadius: "inherit",
-        overflow: "hidden",
-        opacity: fill.opacity < 1 ? fill.opacity : undefined,
-        zIndex: 0,
-      }}
-    >
+    <MediaLayer opacity={fill.opacity}>
       <img
         src={src}
         alt=""
@@ -67,6 +90,6 @@ export const FillLayer = ({ fill, width }: FillLayerProps) => {
           display: "block",
         }}
       />
-    </div>
+    </MediaLayer>
   );
 };

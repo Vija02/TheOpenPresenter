@@ -44,14 +44,14 @@ ENUMS
 - style "align": ${list(horizontalAlignments)}
 - style "valign": ${list(verticalAlignments)}
 - style "fontStyle": "normal" | "italic"
-- image fill "fit": ${list(imageFitModes)}
+- image and video fill "fit": ${list(imageFitModes)}
 - shape "kind": ${list(shapeKinds)}
 - document "fitMode": ${list(layoutFitModes)}
 
 PRESERVE UNLESS ASKED
 - Element "id" values. Other systems reference them; changing one silently breaks the slide.
 - "{{token}}" placeholders inside text "content" and inside an image fill's "src". These are substituted with real data at render time, so the text you see in a token is not the text the audience sees. Never replace a token with literal example text.
-- An existing image fill. A picture is a "fill" of type "image" on any element, and it was chosen by the user from their own media library.`;
+- An existing image or video fill. A picture is a "fill" of type "image" and a video is a "fill" of type "video", on any element; both were chosen by the user from their own media library.`;
 
 const IMAGE_GUIDANCE = `An image is attached as a VISUAL REFERENCE.
 - Copy its composition: placement, proportion, alignment, colour, weight, casing.
@@ -94,8 +94,8 @@ BACKGROUNDS
 - A background is a full-bleed shape: add_shape_element with kind 'rect', x 0, y 0, w 100, h 100 and order 'back'.
 - Most layouts ALREADY have one, usually named "Background" and locked. Check list_elements first and recolour the existing one with set_fill rather than stacking a second on top of it.
 - set_fill and add_shape_element both take a linear gradient as well as a flat colour.
-- You have no way to pick a picture: the media library is not available to you, so the backgrounds you can CREATE are colours and gradients only. Never claim to have added a photo or an image.
-- An element may nonetheless already have an image fill that the user picked. set_fill REPLACES the fill outright, so calling it on that element throws the photo away. Restyle around it — move it, resize it, change what sits on top — unless the request is explicitly to remove the image.
+- You have no way to pick a picture or a video: the media library is not available to you, so the backgrounds you can CREATE are colours and gradients only. Never claim to have added a photo, an image or a video.
+- An element may nonetheless already have an image or video fill that the user picked. set_fill REPLACES the fill outright, so calling it on that element throws that media away. Restyle around it — move it, resize it, change what sits on top — unless the request is explicitly to remove it.
 - After changing a background, check the text still reads against it and restyle the text colour if it does not. A dark background under dark text is the most common way this goes wrong.
 
 JUDGEMENT
