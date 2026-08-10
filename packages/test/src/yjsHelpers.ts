@@ -242,6 +242,7 @@ export const simulateUser = (
       },
       logger: pino(destination("/dev/null")),
       parentContainer: document.body,
+      surface: type === "remote" ? "remote" : "renderer",
       isPublicAccess: false,
       organizationType: null,
       experimentalFeaturesEnabled: false,

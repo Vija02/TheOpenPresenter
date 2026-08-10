@@ -513,6 +513,7 @@ const PluginRenderer = React.memo(
           },
           logger: childLogger,
           parentContainer: pluginDivRef.current,
+          surface: "renderer",
           derivation: derivation ?? null,
           isPublicAccess,
           organizationType,

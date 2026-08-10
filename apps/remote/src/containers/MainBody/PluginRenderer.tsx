@@ -262,6 +262,7 @@ const PluginRenderer = React.memo(
           mediaPicker,
           logger: childLogger,
           parentContainer: pluginDivRef.current,
+          surface: "remote",
           isPublicAccess,
           organizationType,
           experimentalFeaturesEnabled,
