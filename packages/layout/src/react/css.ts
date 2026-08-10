@@ -36,6 +36,10 @@ export const placementToCss = (
         transform: rotation !== 0 ? `rotate(${rotation}deg)` : undefined,
       };
 
+/** Fills that CSS can paint directly, as opposed to media drawn by FillLayer. */
+const isColorPaint = (fill: FillPaint): fill is Paint =>
+  fill.type !== "image" && fill.type !== "video";
+
 const withOpacity = (color: string, opacity: number): string =>
   opacity >= 1
     ? color
@@ -126,7 +130,7 @@ export const appearanceToCss = (
   const boxShadow = [...rings, ...shadows].join(", ");
 
   return {
-    background: fill && fill.type !== "image" ? paintToCss(fill) : undefined,
+    background: fill && isColorPaint(fill) ? paintToCss(fill) : undefined,
     borderRadius: radius > 0 ? `${toPx(radius, m)}px` : undefined,
     overflow: clip ? "hidden" : undefined,
     opacity: opacity < 1 ? opacity : undefined,

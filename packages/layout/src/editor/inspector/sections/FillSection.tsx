@@ -8,6 +8,7 @@ import {
   LuMinus,
   LuPlus,
   LuSquare,
+  LuVideo,
 } from "react-icons/lu";
 
 import { setElementFill } from "../../../doc/edit";
@@ -17,12 +18,15 @@ import {
   ImageFitMode,
   ImagePaint,
   LinearGradientPaint,
+  VideoPaint,
   imageFitModes,
   imagePaint,
   solidPaint,
   sortGradientStops,
+  videoPaint,
+  videoPosterUrl,
 } from "../../../schema/paint";
-import { LayoutPluginApi, pickImage } from "../../pluginApi";
+import { LayoutPluginApi, pickImage, pickVideo } from "../../pluginApi";
 import {
   ColorField,
   CompactNumberField,
@@ -37,7 +41,7 @@ import {
 } from "../primitives";
 import { SectionProps } from "./types";
 
-type FillMode = "none" | "solid" | "linearGradient" | "image";
+type FillMode = "none" | "solid" | "linearGradient" | "image" | "video";
 
 const COLOUR_MODES = [
   { value: "none" as const, label: "None", icon: <LuBan size={14} /> },
@@ -49,11 +53,10 @@ const COLOUR_MODES = [
   },
 ];
 
-const IMAGE_MODE = {
-  value: "image" as const,
-  label: "Image",
-  icon: <LuImage size={14} />,
-};
+const MEDIA_MODES = [
+  { value: "image" as const, label: "Image", icon: <LuImage size={14} /> },
+  { value: "video" as const, label: "Video", icon: <LuVideo size={14} /> },
+];
 
 const FIT_OPTIONS = imageFitModes.map((value) => ({
   value,
@@ -70,7 +73,7 @@ const modeOf = (fill: FillPaint | null): FillMode => fill?.type ?? "none";
 /** Carries the colours across a mode change rather than resetting. */
 const convert = (
   fill: FillPaint | null,
-  mode: Exclude<FillMode, "image">,
+  mode: Exclude<FillMode, "image" | "video">,
 ): FillPaint | null => {
   if (mode === "none") return null;
 
@@ -138,7 +141,14 @@ export const FillSection = ({
     set(fill?.type === "image" ? { ...fill, src } : imagePaint(src));
   };
 
-  const modes = pluginApi ? [...COLOUR_MODES, IMAGE_MODE] : COLOUR_MODES;
+  const chooseVideo = async () => {
+    if (!pluginApi) return;
+    const video = await pickVideo(pluginApi);
+    if (!video) return;
+    set(fill?.type === "video" ? { ...fill, video } : videoPaint(video));
+  };
+
+  const modes = pluginApi ? [...COLOUR_MODES, ...MEDIA_MODES] : COLOUR_MODES;
 
   return (
     <Section title={title}>
@@ -147,6 +157,7 @@ export const FillSection = ({
           value={modeOf(fill)}
           onChange={(next) => {
             if (next === "image") void chooseImage();
+            else if (next === "video") void chooseVideo();
             else set(convert(fill, next));
           }}
           options={modes}
@@ -179,42 +190,27 @@ export const FillSection = ({
           onReplace={() => void chooseImage()}
         />
       )}
+
+      {fill?.type === "video" && (
+        <VideoControls
+          fill={fill}
+          onChange={set}
+          onReplace={() => void chooseVideo()}
+        />
+      )}
     </Section>
   );
 };
 
-const ImageControls = ({
+/** Fit and opacity, which image and video fills share. */
+const MediaFitControls = <T extends ImagePaint | VideoPaint>({
   fill,
   onChange,
-  onReplace,
 }: {
-  fill: ImagePaint;
-  onChange: (next: ImagePaint) => void;
-  onReplace: () => void;
+  fill: T;
+  onChange: (next: T) => void;
 }) => (
   <>
-    <Row label="Picture">
-      <button
-        type="button"
-        onClick={onReplace}
-        title="Choose a different picture"
-        className="flex items-center gap-2 rounded border border-stroke px-1.5 py-1 text-xs hover:border-primary hover:bg-primary/10"
-      >
-        <span
-          aria-hidden
-          className="checkerboard size-6 shrink-0 overflow-hidden rounded-xs border border-stroke"
-        >
-          <img
-            src={resolveMediaUrl(fill.src)}
-            alt=""
-            draggable={false}
-            className="size-full object-cover"
-          />
-        </span>
-        Replace
-      </button>
-    </Row>
-
     <Row label="Fit">
       <ToggleGroupField
         value={fill.fit}
@@ -234,6 +230,104 @@ const ImageControls = ({
         }
       />
     </Row>
+  </>
+);
+
+/** Thumbnail + name button that opens the picker again. */
+const MediaButton = ({
+  onClick,
+  title,
+  thumbnail,
+  children,
+}: {
+  onClick: () => void;
+  title: string;
+  thumbnail: ReactNode;
+  children: ReactNode;
+}) => (
+  <button
+    type="button"
+    onClick={onClick}
+    title={title}
+    className="flex min-w-0 items-center gap-2 rounded border border-stroke px-1.5 py-1 text-xs hover:border-primary hover:bg-primary/10"
+  >
+    <span
+      aria-hidden
+      className="checkerboard grid size-6 shrink-0 place-items-center overflow-hidden rounded-xs border border-stroke"
+    >
+      {thumbnail}
+    </span>
+    <span className="truncate">{children}</span>
+  </button>
+);
+
+const VideoControls = ({
+  fill,
+  onChange,
+  onReplace,
+}: {
+  fill: VideoPaint;
+  onChange: (next: VideoPaint) => void;
+  onReplace: () => void;
+}) => {
+  const poster = videoPosterUrl(fill.video);
+
+  return (
+    <>
+      <Row label="Video">
+        <MediaButton
+          onClick={onReplace}
+          title="Choose a different video"
+          thumbnail={
+            poster ? (
+              <img
+                src={poster}
+                alt=""
+                draggable={false}
+                className="size-full object-cover"
+              />
+            ) : (
+              <LuVideo size={12} className="text-secondary" />
+            )
+          }
+        >
+          Replace
+        </MediaButton>
+      </Row>
+
+      <MediaFitControls fill={fill} onChange={onChange} />
+    </>
+  );
+};
+
+const ImageControls = ({
+  fill,
+  onChange,
+  onReplace,
+}: {
+  fill: ImagePaint;
+  onChange: (next: ImagePaint) => void;
+  onReplace: () => void;
+}) => (
+  <>
+    <Row label="Picture">
+      <MediaButton
+        onClick={onReplace}
+        title="Choose a different picture"
+        thumbnail={
+          <img
+            src={resolveMediaUrl(fill.src)}
+            alt=""
+            draggable={false}
+            className="size-full object-cover"
+          />
+        }
+      >
+        Replace
+      </MediaButton>
+    </Row>
+
+    <MediaFitControls fill={fill} onChange={onChange} />
   </>
 );
 

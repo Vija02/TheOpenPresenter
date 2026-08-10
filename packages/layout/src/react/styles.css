@@ -11,3 +11,45 @@
   position: absolute;
   box-sizing: border-box;
 }
+
+.lay--video-fill {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  --media-object-fit: var(--lay-video-fit, cover);
+}
+
+/* The player itself, above the placeholder it replaces. */
+.lay--video-fill > *:not(.lay--video-placeholder) {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.lay--video-placeholder {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transition: opacity 250ms ease-out;
+}
+
+.lay--video-placeholder[data-loaded] {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lay--video-placeholder {
+    transition: none;
+  }
+}
+
+/* A plain (non-HLS) file plays in a real <video>, which this styles directly. */
+.lay--video-fill video {
+  width: 100%;
+  height: 100%;
+  object-fit: var(--lay-video-fit, cover);
+  display: block;
+}

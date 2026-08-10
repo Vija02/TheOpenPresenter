@@ -19,6 +19,7 @@ export type VideoPlayerProps = {
   playbackState: VideoPlaybackState;
   onDurationChange?: (duration: number) => void;
   onAwarenessLoadingChange?: (isLoading: boolean) => void;
+  onLoadedChange?: (loaded: boolean) => void;
   onError?: (error: Error, data?: unknown) => void;
   onEnded?: () => void;
   config?: Config;
@@ -30,6 +31,7 @@ export const VideoPlayer = ({
   playbackState,
   onDurationChange,
   onAwarenessLoadingChange,
+  onLoadedChange,
   onError,
   onEnded,
   config,
@@ -64,6 +66,17 @@ export const VideoPlayer = ({
   const hasInitialSeekRef = useRef(false);
 
   const { videoUrl, isYouTube } = useVideoUrl(video);
+
+  const [loaded, setLoaded] = useState(false);
+
+  // A new source has its own load to wait out, so this starts over.
+  useEffect(() => {
+    setLoaded(false);
+  }, [videoUrl]);
+
+  useEffect(() => {
+    onLoadedChange?.(loaded);
+  }, [loaded, onLoadedChange]);
 
   useEffect(() => {
     if (isEnded) {
@@ -140,6 +153,9 @@ export const VideoPlayer = ({
             onAwarenessLoadingChange?.(false);
           }
           setReady(true);
+        }}
+        onLoadedData={() => {
+          setLoaded(true);
         }}
         onError={(err: unknown, data?: unknown) => {
           console.error(err, data);
