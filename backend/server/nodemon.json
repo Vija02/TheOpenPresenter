@@ -1,0 +1,18 @@
+{
+  "signal": "SIGINT",
+  "watch": [
+    "dist/**/*",
+    "../worker/dist/**/*",
+    "../../packages/*/dist/**/*",
+    "../../plugins/*/dist/**/*"
+  ],
+  "ignore": [
+    "**/e2e/**",
+    "**/tauri/**",
+    "**/node_modules/**",
+    "**/*.d.ts",
+    "**/*.d.ts.map",
+    "**/*.map"
+  ],
+  "ext": "js,cjs,mjs"
+}
