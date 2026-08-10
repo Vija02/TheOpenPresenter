@@ -1,18 +1,23 @@
 {
   "signal": "SIGINT",
   "watch": [
-    "dist/**/*",
-    "../worker/dist/**/*",
-    "../../packages/*/dist/**/*",
-    "../../plugins/*/dist/**/*"
+    "dist/**/*.{js,cjs,mjs}",
+    "../worker/dist/**/*.{js,cjs,mjs}",
+    "../../packages/*/dist/**/*.{js,cjs,mjs}",
+    "../../plugins/*/dist/**/*.{js,cjs,mjs}"
   ],
   "ignore": [
     "**/e2e/**",
     "**/tauri/**",
     "**/node_modules/**",
+    "../../packages/*/dist/assets/**",
+    "../../packages/*/dist/fonts/**",
+    "../../plugins/*/dist/assets/**",
     "**/*.d.ts",
     "**/*.d.ts.map",
     "**/*.map"
   ],
-  "ext": "js,cjs,mjs"
+  "ext": "js,cjs,mjs",
+  "legacyWatch": true,
+  "pollingInterval": 1000
 }
