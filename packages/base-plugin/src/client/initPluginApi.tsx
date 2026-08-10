@@ -77,6 +77,7 @@ export function initPluginApi<
   return {
     env: appData,
     pluginContext,
+    surface: misc.surface,
     isPublicAccess: misc.isPublicAccess,
     org: {
       organizationType: misc.organizationType,

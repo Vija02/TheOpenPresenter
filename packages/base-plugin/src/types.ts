@@ -109,6 +109,8 @@ export type AwarenessUserData = {
 // ========================================================================== //
 // ================================== Misc ================================== //
 // ========================================================================== //
+export type PluginSurface = "remote" | "renderer";
+
 export type MiscProps = {
   setAwarenessStateData: (state: AwarenessStateData) => void;
   triggerKeyPress: (keyType: KeyPressType, sceneId?: string) => void;
@@ -123,6 +125,7 @@ export type MiscProps = {
   mediaPicker: MediaPicker;
   logger: Logger;
   parentContainer: HTMLElement | null;
+  surface: PluginSurface;
   derivation?: DerivationConfig | null;
   isPublicAccess: boolean;
   organizationType: OrganizationType | null;
