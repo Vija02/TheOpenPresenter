@@ -4,7 +4,7 @@ import { existsSync, readFileSync, watch } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { sharedModulesFor } from "./modules.mjs";
+import { entryFilesFor, sharedModulesFor } from "./modules.mjs";
 
 // Rebuilds a package's shared bundles whenever its dist output changes.
 // Usage: node watch.mjs <specifier> [entryFile]. See README.md.
@@ -32,27 +32,11 @@ try {
 const resolveEntries = () => {
   if (entryArg) return [resolve(process.cwd(), entryArg)];
 
-  const pkg = JSON.parse(
-    readFileSync(join(process.cwd(), "package.json"), "utf8"),
-  );
-
-  const fileFor = (subpath) => {
-    const e = pkg.exports?.[subpath];
-    const file =
-      e?.import?.default ??
-      e?.import ??
-      e?.default ??
-      (typeof e === "string" ? e : undefined) ??
-      (subpath === "." ? (pkg.module ?? pkg.main) : undefined);
-    return typeof file === "string" ? file : undefined;
-  };
-
-  // "@repo/video" -> ".", "@repo/video/client" -> "./client".
+  // Both conditions are collected: a package can emit ESM and CJS in separate
+  // passes, and rebuilding while only one exists fails to resolve.
   const entries = new Set();
   for (const shared of sharedModulesFor(specifier)) {
-    const rest = shared.slice(specifier.length);
-    const file = fileFor(rest === "" ? "." : "." + rest);
-    if (file) entries.add(resolve(process.cwd(), file));
+    for (const file of entryFilesFor(shared)) entries.add(file);
   }
 
   if (entries.size === 0) {
@@ -102,7 +86,26 @@ const rebuild = () => {
 // Rebuilds only when an entry's CONTENT changed: tsup rewrites index.mjs on
 // every phase even when the output is identical. All entries are hashed first,
 // since `build.mjs --only` rebuilds the package's bundles together.
+// Bounded so a package that never emits a declared entry cannot spin forever.
+const MAX_INCOMPLETE_RETRIES = 50;
+let incompleteRetries = 0;
+
 const rebuildIfChanged = () => {
+  // A build in flight has emptied the output directory. Rebuilding now would
+  // fail to resolve, so wait for the writer to finish and re-check.
+  if (!entryPaths.every(existsSync)) {
+    if (incompleteRetries++ < MAX_INCOMPLETE_RETRIES) {
+      schedule();
+      return;
+    }
+    console.error(
+      `[shared-runtime] ${specifier}: still missing ` +
+        entryPaths.filter((p) => !existsSync(p)).join(", ") +
+        ` after ${MAX_INCOMPLETE_RETRIES} checks; rebuilding anyway`,
+    );
+  }
+  incompleteRetries = 0;
+
   let changed = false;
   for (const path of entryPaths) {
     const hash = hashOf(path);
@@ -140,9 +143,39 @@ const start = () => {
   );
   for (const dir of entryDirs) watchDir(dir);
 
-  // Build once at startup so the bundle matches whatever dist holds now.
-  rebuildIfChanged();
+  // Build once at startup so the bundle matches whatever dist holds now, but
+  // only once the entries stop changing. A sibling `vite build --watch` starts
+  // at the same time and empties dist moments later; building into that window
+  // fails, and Vite caches the resolution failure for the whole run.
+  whenSettled(rebuildIfChanged);
 };
+
+/**
+ * Calls `fn` once every entry exists and none has changed for a full interval,
+ * so a build in flight is never mistaken for a finished one.
+ */
+function whenSettled(fn) {
+  const SETTLE_MS = 600;
+  let stableSince = null;
+  let previous = "";
+
+  const poll = setInterval(() => {
+    if (!entryPaths.every(existsSync)) {
+      stableSince = null;
+      return;
+    }
+    const signature = entryPaths.map((p) => hashOf(p) ?? "?").join(":");
+    if (signature !== previous) {
+      previous = signature;
+      stableSince = Date.now();
+      return;
+    }
+    if (stableSince !== null && Date.now() - stableSince >= SETTLE_MS) {
+      clearInterval(poll);
+      fn();
+    }
+  }, 150);
+}
 
 if (entryDirs.every((d) => existsSync(d))) {
   start();
