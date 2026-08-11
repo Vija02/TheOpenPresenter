@@ -20,6 +20,31 @@ import { getMediaHandler } from "./installFileUpload";
 export const disposableDocumentManager: DisposableDocumentManager =
   new DisposableDocumentManager();
 
+/**
+ * How long we wait after the last connection closes before deleting a
+ * temporary demo project. This gives users a chance to reconnect (page
+ * refresh, flaky network, opening the renderer in another tab, etc.)
+ * without losing their demo.
+ */
+const DEMO_PROJECT_DELETE_GRACE_PERIOD_MS = process.env
+  .DEMO_PROJECT_DELETE_GRACE_PERIOD_MS
+  ? parseInt(process.env.DEMO_PROJECT_DELETE_GRACE_PERIOD_MS, 10)
+  : 5 * 60_000;
+
+const pendingDemoProjectDeletions = new Map<string, NodeJS.Timeout>();
+
+const cancelPendingDemoProjectDeletion = (documentName: string) => {
+  const timer = pendingDemoProjectDeletions.get(documentName);
+  if (timer) {
+    clearTimeout(timer);
+    pendingDemoProjectDeletions.delete(documentName);
+    logger.info(
+      { projectId: documentName },
+      "Cancelled pending temporary demo project deletion",
+    );
+  }
+};
+
 const HEARTBEAT_THROTTLE_MS = 15_000;
 const heartbeatThrottle = new Map<string, number>();
 /** Throttles hearbeat. Returns true if can bump */
@@ -65,6 +90,9 @@ export default async function installHocuspocus(app: Express) {
       );
     },
     onLoadDocument: async (data) => {
+      // The document is being used again, so keep it around.
+      cancelPendingDemoProjectDeletion(data.documentName);
+
       const rootPgPool = getRootPgPool(app);
 
       const {
@@ -200,30 +228,47 @@ export default async function installHocuspocus(app: Express) {
     afterUnloadDocument: async (data) => {
       disposableDocumentManager.disposeDocument(data.documentName);
 
-      // Clean up temporary demo projects once they have no active connections.
+      // Clean up temporary demo projects once they have no active connections,
+      // but only after a grace period so a quick reconnect doesn't lose them.
       const rootPgPool = getRootPgPool(app);
-      try {
-        const { rowCount } = await rootPgPool.query(
-          `delete from app_public.projects
-           where id = $1
-             and is_temporary = true
-             and organization_id = (
-               select id from app_public.organizations where slug = 'demo'
-             )`,
-          [data.documentName],
-        );
-        if (rowCount && rowCount > 0) {
-          logger.info(
-            { projectId: data.documentName },
-            "Deleted temporary demo project after unload",
+      const documentName = data.documentName;
+
+      cancelPendingDemoProjectDeletion(documentName);
+
+      const timer = setTimeout(async () => {
+        pendingDemoProjectDeletions.delete(documentName);
+
+        // Bail out if the document got reopened in the meantime.
+        if (hocuspocus.documents.has(documentName)) {
+          return;
+        }
+
+        try {
+          const { rowCount } = await rootPgPool.query(
+            `delete from app_public.projects
+             where id = $1
+               and is_temporary = true
+               and organization_id = (
+                 select id from app_public.organizations where slug = 'demo'
+               )`,
+            [documentName],
+          );
+          if (rowCount && rowCount > 0) {
+            logger.info(
+              { projectId: documentName },
+              "Deleted temporary demo project after grace period",
+            );
+          }
+        } catch (err) {
+          logger.error(
+            { err, projectId: documentName },
+            "Failed to delete temporary demo project after grace period",
           );
         }
-      } catch (err) {
-        logger.error(
-          { err, projectId: data.documentName },
-          "Failed to delete temporary demo project after unload",
-        );
-      }
+      }, DEMO_PROJECT_DELETE_GRACE_PERIOD_MS);
+      timer.unref?.();
+
+      pendingDemoProjectDeletions.set(documentName, timer);
     },
   });
 

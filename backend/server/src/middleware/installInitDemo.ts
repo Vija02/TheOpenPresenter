@@ -244,6 +244,7 @@ export default async (app: Express) => {
 
   // Note: This endpoint creates a temporary project in the demo organization.
   // We clean this up in installHocuspocus.ts by detecting when a document is no longer active
+  // (after a grace period, so a refresh/reconnect doesn't lose the demo)
   // We also clean it up in a cronjob for projects over 1 day old
   app.get("/init-demo", async (req, res) => {
     const pairId = req.query.id?.toString();
