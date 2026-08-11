@@ -58,6 +58,20 @@ const openStyleModal = async ({
 const row = (scope: Locator, label: string) =>
   scope.locator(`div:has(> span:text-is("${label}"))`).first();
 
+/**
+ * The body of one inspector accordion, for scoping `row()`.
+ *
+ * Necessary because row labels are NOT unique across the whole inspector:
+ * "Align" is both Typography's horizontal alignment and the border's stroke
+ * alignment, and `row()` ends in `.first()`, so an unscoped lookup silently
+ * returns whichever comes first in the DOM.
+ */
+const section = (dialog: Locator, title: string) =>
+  dialog
+    .locator('[data-slot="accordion-item"]')
+    .filter({ has: dialog.page().getByRole("button", { name: title }) })
+    .locator('[data-slot="accordion-content"]');
+
 /** Computed style of the rendered text, which inherits from the styled node. */
 const textStyle = (page: Page, elementSelector: string, property: string) =>
   page
@@ -400,6 +414,255 @@ test.describe.serial("Layout editor", () => {
     await autoSize.selectOption("shrinkToFit");
     await expect(row(dialog, "Max size").locator("input")).toBeVisible();
     await expect(row(dialog, "Size")).toHaveCount(0);
+  });
+
+  test("casing is applied by CSS, leaving the stored text untouched", async ({
+    page,
+    projectPage,
+    loginAndGoToProject,
+  }) => {
+    const dialog = await openStyleModal({ loginAndGoToProject, projectPage });
+    await dialog.locator(BODY).click();
+
+    const content = page.locator(`${BODY} .lay--text-content`);
+    const original = (await content.textContent()) ?? "";
+    expect(original).not.toBe("");
+
+    await row(dialog, "Case").getByRole("radio", { name: "UPPERCASE" }).click();
+
+    await expect(content).toHaveCSS("text-transform", "uppercase");
+
+    // The point of doing this in CSS: `textContent` still reports the author's
+    // original casing, so the template text (and any {{token}} in it) survives.
+    expect(await content.textContent()).toBe(original);
+
+    // ...and it is reversible, which rewriting the content would not be.
+    await row(dialog, "Case").getByRole("radio", { name: "As typed" }).click();
+    await expect(content).toHaveCSS("text-transform", "none");
+    expect(await content.textContent()).toBe(original);
+  });
+
+  test("uppercasing re-fits auto-sized text, because capitals are wider", async ({
+    page,
+    projectPage,
+    loginAndGoToProject,
+  }) => {
+    const dialog = await openStyleModal({ loginAndGoToProject, projectPage });
+    await dialog.locator(BODY).click();
+
+    // `wrap` derives the size purely by measurement, so the fitted size is the
+    // observable proof that the measurement saw the casing.
+    await row(dialog, "Auto-size").locator("select").selectOption("wrap");
+    const before = await fontSizePx(page, BODY);
+    expect(before).toBeGreaterThan(0);
+
+    await row(dialog, "Case").getByRole("radio", { name: "UPPERCASE" }).click();
+    await expect(page.locator(`${BODY} .lay--text-content`)).toHaveCSS(
+      "text-transform",
+      "uppercase",
+    );
+
+    // Strictly smaller, not merely "no bigger". Were the measurement blind to
+    // textTransform it would return the SAME size and the text would overflow —
+    // and a <= assertion would pass in exactly that broken case. Measured at
+    // 48px -> 45px, so the margin is real rather than sub-pixel noise.
+    await expect.poll(() => fontSizePx(page, BODY)).toBeLessThan(before);
+  });
+
+  test("padding insets the text without moving the box, and re-fits it", async ({
+    page,
+    projectPage,
+    loginAndGoToProject,
+  }) => {
+    const dialog = await openStyleModal({ loginAndGoToProject, projectPage });
+    await dialog.locator(BODY).click();
+
+    // `wrap` derives the size purely by measurement, so the fitted size is the
+    // observable proof that the fitter saw the padding.
+    await row(dialog, "Auto-size").locator("select").selectOption("wrap");
+
+    const geometry = () =>
+      page.locator(`${BODY} .lay--text-content`).evaluate((el) => {
+        const painted = el.parentElement;
+        if (!painted) throw new Error("text content has no painted parent");
+        const box = painted.getBoundingClientRect();
+        return {
+          boxWidth: +box.width.toFixed(1),
+          boxHeight: +box.height.toFixed(1),
+          contentWidth: +el.getBoundingClientRect().width.toFixed(1),
+        };
+      });
+
+    const before = await geometry();
+    const sizeBefore = await fontSizePx(page, BODY);
+    expect(sizeBefore).toBeGreaterThan(0);
+
+    const padding = row(dialog, "Padding").locator("input");
+    await padding.fill("3");
+    await padding.press("Tab");
+
+    await expect
+      .poll(async () => (await geometry()).contentWidth)
+      .toBeLessThan(before.contentWidth);
+
+    const after = await geometry();
+
+    // The element must not move or grow: padding is an inset, so it comes out of
+    // the existing box. Under the default content-box it would instead push the
+    // element past the rect it was placed at.
+    expect(await paintedStyle(page, BODY, "box-sizing")).toBe("border-box");
+    expect(after.boxWidth).toBe(before.boxWidth);
+    expect(after.boxHeight).toBe(before.boxHeight);
+
+    // Inset on both sides of both axes, hence twice the padding.
+    const inset = before.contentWidth - after.contentWidth;
+    const cssPadding = parseFloat(
+      await paintedStyle(page, BODY, "padding-left"),
+    );
+    expect(inset).toBeCloseTo(2 * cssPadding, 0);
+
+    // Strictly smaller: were the fitter blind to padding it would return the
+    // same size and the text would overflow into the space just reserved.
+    await expect.poll(() => fontSizePx(page, BODY)).toBeLessThan(sizeBefore);
+  });
+
+  test("padding unlinks to four sides, and relinking keeps the linked value", async ({
+    page,
+    projectPage,
+    loginAndGoToProject,
+  }) => {
+    const dialog = await openStyleModal({ loginAndGoToProject, projectPage });
+    await dialog.locator(BODY).click();
+
+    // Measured mode, so the fitted size reacts to the space padding reserves.
+    await row(dialog, "Auto-size").locator("select").selectOption("wrap");
+
+    const padding = () => paintedStyle(page, BODY, "padding");
+
+    // --- linked: one value on all four sides --------------------------------
+    const linked = row(dialog, "Padding").locator("input");
+    await linked.fill("2");
+    await linked.press("Tab");
+
+    await expect.poll(padding).toMatch(/^(\d|\.)+px$/);
+    const linkedPadding = await padding();
+    const linkedSize = await fontSizePx(page, BODY);
+
+    // --- unlinked: independent sides, in CSS order --------------------------
+    await dialog.getByRole("button", { name: "Padding linked" }).click();
+
+    for (const [label, value] of [
+      ["T", "1"],
+      ["R", "2"],
+      ["B", "3"],
+      ["L", "4"],
+    ] as const) {
+      const field = row(dialog, label).locator("input");
+      await field.fill(value);
+      await field.press("Tab");
+    }
+
+    // Four distinct values, ascending T < R < B < L, proves each side is wired
+    // to its own edge rather than all four reading one field.
+    await expect.poll(async () => (await padding()).split(" ").length).toBe(4);
+
+    const sides = (await padding()).split(" ").map(parseFloat);
+    expect(sides[0]).toBeLessThan(sides[1]!);
+    expect(sides[1]).toBeLessThan(sides[2]!);
+    expect(sides[2]).toBeLessThan(sides[3]!);
+
+    // More total inset than the linked 2-a-side, so the text fits smaller.
+    await expect.poll(() => fontSizePx(page, BODY)).toBeLessThan(linkedSize);
+
+    // --- relink: the linked value was kept, not overwritten ------------------
+    await dialog.getByRole("button", { name: "Padding per side" }).click();
+
+    // The two sets are stored separately precisely so this round trip is lossless.
+    await expect.poll(padding).toBe(linkedPadding);
+    await expect.poll(() => fontSizePx(page, BODY)).toBe(linkedSize);
+  });
+
+  test("an outline and a radius reach the painted element", async ({
+    page,
+    projectPage,
+    loginAndGoToProject,
+  }) => {
+    const dialog = await openStyleModal({ loginAndGoToProject, projectPage });
+    await dialog.locator(BODY).click();
+
+    // --- radius, in Appearance ----------------------------------------------
+    const appearance = section(dialog, "Appearance");
+    const radius = row(appearance, "Radius").locator("input");
+    await radius.fill("2");
+    await radius.press("Tab");
+
+    // Design units are 1% of slide WIDTH, so the px value depends on the canvas
+    // size. Asserting "not zero" is the stable claim.
+    const painted = await paintedStyle(page, BODY, "border-radius");
+    expect(painted).not.toBe("0px");
+    expect(parseFloat(painted)).toBeGreaterThan(0);
+
+    // --- outline ------------------------------------------------------------
+    await dialog.getByRole("button", { name: "Outline" }).click();
+    const outlinePanel = section(dialog, "Outline");
+    await row(outlinePanel, "Outline").locator("select").selectOption("on");
+
+    // Strokes render as box-shadow rings rather than CSS borders, so that the
+    // element's own geometry is untouched by the outline width.
+    await expect
+      .poll(() => paintedStyle(page, BODY, "box-shadow"))
+      .not.toBe("none");
+    expect(await paintedStyle(page, BODY, "border-width")).toBe("0px");
+
+    // Scoped to the Outline panel: Typography also has an "Align" row, and that
+    // one is a toggle group with no <select> at all.
+    await expect(row(outlinePanel, "Align").locator("select")).toBeVisible();
+  });
+
+  test("element opacity fades the whole element, fill opacity only the fill", async ({
+    page,
+    projectPage,
+    loginAndGoToProject,
+  }) => {
+    const dialog = await openStyleModal({ loginAndGoToProject, projectPage });
+    await dialog.locator(BODY).click();
+
+    // Two rows are labelled "Opacity" — this one and the Fill section's — so the
+    // section scope is what distinguishes them.
+    const opacity = row(section(dialog, "Appearance"), "Opacity").locator(
+      "input",
+    );
+    await opacity.fill("50");
+    await opacity.press("Tab");
+
+    await expect.poll(() => paintedStyle(page, BODY, "opacity")).toBe("0.5");
+  });
+
+  test("the glyph stroke is separate from the element outline", async ({
+    page,
+    projectPage,
+    loginAndGoToProject,
+  }) => {
+    const dialog = await openStyleModal({ loginAndGoToProject, projectPage });
+    await dialog.locator(BODY).click();
+
+    await dialog.getByRole("button", { name: "Text effects" }).click();
+    const effects = section(dialog, "Text effects");
+    await row(effects, "Stroke").locator("select").selectOption("on");
+
+    // -webkit-text-stroke follows the letter shapes; the element outline is a
+    // box-shadow ring. Both can be on at once, which is why they are separate
+    // controls in separate sections.
+    const stroke = await textStyle(page, BODY, "-webkit-text-stroke-width");
+    expect(parseFloat(stroke)).toBeGreaterThan(0);
+
+    // Off again leaves no trace.
+    await row(effects, "Stroke").locator("select").selectOption("none");
+    await expect
+      .poll(async () =>
+        parseFloat(await textStyle(page, BODY, "-webkit-text-stroke-width")),
+      )
+      .toBe(0);
   });
 });
 
@@ -1059,8 +1322,11 @@ test.describe.serial("Picture fill", () => {
 
     // --- opacity ------------------------------------------------------------
     // Applied to the fill LAYER, not the element: fading the element itself
-    // would fade the text sitting on top of it too.
-    const opacity = row(dialog, "Opacity").locator("input");
+    // would fade the text sitting on top of it too. Scoped to the fill section
+    // because Appearance has an "Opacity" row that does the other thing.
+    const opacity = row(section(dialog, "Box fill"), "Opacity").locator(
+      "input",
+    );
     await opacity.fill("40");
     await opacity.press("Tab");
 
@@ -1345,8 +1611,11 @@ test.describe.serial("Video fill", () => {
 
     // --- opacity ------------------------------------------------------------
     // On the fill layer, not the element: fading the element would fade the
-    // text sitting on top of the video too.
-    const opacity = row(dialog, "Opacity").locator("input");
+    // text sitting on top of the video too. Scoped to the fill section because
+    // Appearance has an "Opacity" row that does the other thing.
+    const opacity = row(section(dialog, "Box fill"), "Opacity").locator(
+      "input",
+    );
     await opacity.fill("40");
     await opacity.press("Tab");
 
