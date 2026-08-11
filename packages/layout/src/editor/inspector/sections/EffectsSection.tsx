@@ -1,6 +1,12 @@
 import { patchTextStyle } from "../../../doc/edit";
-import { Shadow } from "../../../schema/paint";
-import { Row, Section, SelectField } from "../primitives";
+import { Shadow, Stroke, solidPaint } from "../../../schema/paint";
+import {
+  ColorField,
+  CompactNumberField,
+  Row,
+  Section,
+  SelectField,
+} from "../primitives";
 import { TextSectionProps } from "./types";
 
 const shadow = (blur: number, color: string): Shadow => ({
@@ -18,11 +24,23 @@ const SHADOW_PRESETS: Record<string, Shadow[]> = {
   strong: [shadow(0.25, "rgba(0,0,0,0.9)"), shadow(0.5, "rgba(0,0,0,0.6)")],
 };
 
+const DEFAULT_STROKE_WIDTH = 0.15;
+const DEFAULT_STROKE_COLOR = "#000000";
+
+const glyphStroke = (color: string, width: number): Stroke => ({
+  paint: solidPaint(color),
+  width,
+  align: "center",
+});
+
 export const EffectsSection = ({
   doc,
   element,
   onChange,
 }: TextSectionProps) => {
+  const id = element.id;
+  const stroke = element.style.outline;
+
   const current =
     element.style.shadows.length === 0
       ? "none"
@@ -30,14 +48,17 @@ export const EffectsSection = ({
         ? "soft"
         : "strong";
 
+  const strokeColor =
+    stroke?.paint.type === "solid" ? stroke.paint.color : DEFAULT_STROKE_COLOR;
+
   return (
-    <Section title="Effects">
+    <Section title="Text effects">
       <Row label="Shadow">
         <SelectField
           value={current}
           onChange={(v) =>
             onChange(
-              patchTextStyle(doc, element.id, {
+              patchTextStyle(doc, id, {
                 shadows: SHADOW_PRESETS[v] ?? [],
               }),
             )
@@ -49,6 +70,56 @@ export const EffectsSection = ({
           ]}
         />
       </Row>
+
+      <Row label="Stroke">
+        <SelectField
+          value={stroke ? "on" : "none"}
+          onChange={(v) =>
+            onChange(
+              patchTextStyle(doc, id, {
+                outline:
+                  v === "on"
+                    ? glyphStroke(strokeColor, DEFAULT_STROKE_WIDTH)
+                    : null,
+              }),
+            )
+          }
+          options={[
+            { value: "none", label: "None" },
+            { value: "on", label: "Stroked" },
+          ]}
+        />
+      </Row>
+
+      {stroke && (
+        <Row label="Stroke colour">
+          <div className="flex min-w-0 items-center gap-2">
+            <ColorField
+              value={strokeColor}
+              onChange={(v) =>
+                onChange(
+                  patchTextStyle(doc, id, {
+                    outline: { ...stroke, paint: solidPaint(v) },
+                  }),
+                )
+              }
+            />
+            <CompactNumberField
+              value={stroke.width}
+              min={0}
+              max={2}
+              label="Stroke width"
+              onChange={(v) =>
+                onChange(
+                  patchTextStyle(doc, id, {
+                    outline: { ...stroke, width: v },
+                  }),
+                )
+              }
+            />
+          </div>
+        </Row>
+      )}
     </Section>
   );
 };

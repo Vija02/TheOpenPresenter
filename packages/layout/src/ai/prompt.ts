@@ -33,6 +33,7 @@ export const LAYOUT_DOC_RULES = `SCHEMA RULES
 GEOMETRY
 - "rect" is {x, y, w, h} — NOT width/height. x/y are the top-left corner. x and w are percent of slide WIDTH; y and h are percent of slide HEIGHT. All 0-100.
 - Sizes in "style" (fontSize, letterSpacing) and "radius" are design units, where 1 unit = 1% of the slide WIDTH. On a 1920px slide, fontSize 6 is about 115px.
+- "stroke" is the element's outline, a ring around the box. "style.outline" is a glyph stroke that follows the letter shapes (shown as "Stroke" in the UI). Both use {paint, width, align}, width in design units. For "style.outline" only "center" align has any effect.
 - "rotation" is degrees. "opacity" is 0-1.
 
 ENUMS
