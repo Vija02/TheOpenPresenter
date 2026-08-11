@@ -1,5 +1,6 @@
 import type { Locator, Page } from "@playwright/test";
 
+import type { E2ECommandAPI } from "../../../e2eCommand";
 import { expect, test } from "../../../fixtures/projectFixture";
 import type { ProjectPage } from "../../../pages/ProjectPage";
 
@@ -65,6 +66,21 @@ const textStyle = (page: Page, elementSelector: string, property: string) =>
       (el, prop) => getComputedStyle(el).getPropertyValue(prop),
       property,
     );
+
+/**
+ * Computed style of the node that actually carries the fill.
+ *
+ * `[data-lay-id]` is the EDITOR's wrapper. The element itself renders inside it
+ * with placement="fill", and that inner node is what appearanceToCss styles —
+ * so reading the wrapper reports the transparent default no matter what the
+ * fill is set to. For text that node is the parent of `.lay--text-content`.
+ */
+const paintedStyle = (page: Page, elementSelector: string, property: string) =>
+  page.locator(`${elementSelector} .lay--text-content`).evaluate((el, prop) => {
+    const painted = el.parentElement;
+    if (!painted) throw new Error("text content has no painted parent");
+    return getComputedStyle(painted).getPropertyValue(prop);
+  }, property);
 
 const fontSizePx = async (page: Page, elementSelector: string) =>
   parseFloat(await textStyle(page, elementSelector, "font-size"));
@@ -719,22 +735,6 @@ test.describe.serial("Gradient fill", () => {
   const TRACK = ".lay--gradient-track";
   const STOP_ROW = ".lay--gradient-row";
 
-  /**
-   * Computed style of the node that carries the fill.
-   *
-   * TextElement paints the appearance on its own wrapper, which sits between
-   * the editor item and `.lay--text-content` — so this reads the parent rather
-   * than the node the other helpers in this file use.
-   */
-  const fillStyle = (page: Page, elementSelector: string, property: string) =>
-    page
-      .locator(`${elementSelector} .lay--text-content`)
-      .evaluate((el, prop) => {
-        const painted = el.parentElement;
-        if (!painted) throw new Error("text content has no painted parent");
-        return getComputedStyle(painted).getPropertyValue(prop);
-      }, property);
-
   /** The colour picker's own hex field, one per stop row. */
   const stopHex = (dialog: Locator, index: number) =>
     dialog
@@ -769,12 +769,12 @@ test.describe.serial("Gradient fill", () => {
     await expect(dialog.getByText("Box fill", { exact: true })).toBeVisible();
 
     // --- none ---------------------------------------------------------------
-    expect(await fillStyle(page, BODY, "background-image")).toBe("none");
+    expect(await paintedStyle(page, BODY, "background-image")).toBe("none");
 
     // --- gradient -----------------------------------------------------------
     await dialog.getByLabel("Gradient", { exact: true }).click();
     await expect
-      .poll(() => fillStyle(page, BODY, "background-image"))
+      .poll(() => paintedStyle(page, BODY, "background-image"))
       .toContain("linear-gradient");
 
     // The seeded ramp. Black is the fallback for an element that had no fill.
@@ -790,7 +790,7 @@ test.describe.serial("Gradient fill", () => {
     // colour to a default each time would make that a chore.
     await dialog.getByLabel("Solid", { exact: true }).click();
     await expect
-      .poll(() => fillStyle(page, BODY, "background-color"))
+      .poll(() => paintedStyle(page, BODY, "background-color"))
       .toBe("rgb(0, 0, 0)");
 
     // --- and back, with the solid colour seeding the first stop -------------
@@ -800,7 +800,7 @@ test.describe.serial("Gradient fill", () => {
     // --- none clears it -----------------------------------------------------
     await dialog.getByLabel("None", { exact: true }).click();
     await expect
-      .poll(() => fillStyle(page, BODY, "background-image"))
+      .poll(() => paintedStyle(page, BODY, "background-image"))
       .toBe("none");
     await expect(dialog.locator(STOP_ROW)).toHaveCount(0);
   });
@@ -866,7 +866,7 @@ test.describe.serial("Gradient fill", () => {
     // The reason any of this matters: CSS silently CLAMPS a stop whose offset
     // is below its predecessor's, so an unsorted array renders as a flat band
     // with no error anywhere. Grey must reach the browser before black.
-    const painted = await fillStyle(page, BODY, "background-image");
+    const painted = await paintedStyle(page, BODY, "background-image");
     expect(painted).toContain("linear-gradient");
     expect(painted.indexOf("128, 128, 128")).toBeGreaterThan(-1);
     expect(painted.indexOf("128, 128, 128")).toBeLessThan(
@@ -922,7 +922,7 @@ test.describe.serial("Gradient fill", () => {
     await angle.press("Tab");
 
     await expect
-      .poll(() => fillStyle(page, BODY, "background-image"))
+      .poll(() => paintedStyle(page, BODY, "background-image"))
       .toContain("90deg");
   });
 });
@@ -955,27 +955,6 @@ test.describe.serial("Picture fill", () => {
   /** The <img> the FillLayer draws inside an element. */
   const fillImage = (page: Page, elementSelector: string) =>
     page.locator(`${elementSelector} img`).first();
-
-  /**
-   * Computed style of the node that actually carries the fill.
-   *
-   * `[data-lay-id]` is the EDITOR's wrapper. The element itself renders inside
-   * it with placement="fill", and that inner node is what appearanceToCss
-   * styles — so reading the wrapper reports the transparent default no matter
-   * what the fill is set to.
-   */
-  const paintedStyle = (
-    page: Page,
-    elementSelector: string,
-    property: string,
-  ) =>
-    page
-      .locator(`${elementSelector} .lay--text-content`)
-      .evaluate((el, prop) => {
-        const painted = el.parentElement;
-        if (!painted) throw new Error("text content has no painted parent");
-        return getComputedStyle(painted).getPropertyValue(prop);
-      }, property);
 
   /** Selects the body text and opens the picker from its fill controls. */
   const openPicker = async (page: Page, dialog: Locator) => {
@@ -1143,5 +1122,387 @@ test.describe.serial("Picture fill", () => {
     await expect
       .poll(() => paintedStyle(page, BODY, "background-image"))
       .toContain("linear-gradient");
+  });
+});
+
+/**
+ * Video fills.
+ *
+ * Like pictures, a video is a FILL rather than an element type, so these run
+ * against the same body text element.
+ *
+ * Videos are slower and stranger to test than pictures: an upload has to be
+ * TRANSCODED before the picker will hand it back, and that is an ffmpeg run per
+ * upload. So exactly ONE test here uploads for real — the one whose subject is
+ * the upload path itself, and which therefore has to see the real
+ * InternalVideo the picker builds, hlsMediaName and all.
+ *
+ * Every other test only needs "a video the picker will hand back", so it seeds
+ * one through `seedVideoMedia`: the bytes are written straight to the library
+ * with the `completed` transcode metadata hand-written, which is exactly what
+ * the picker gates selectability on. Those videos have no HLS ladder and play
+ * the raw mp4 instead, which is a real code path (`useVideoUrl` falls back to
+ * `url` when `hlsMediaName` is null) and irrelevant to what they assert.
+ */
+test.describe.serial("Video fill", () => {
+  test.beforeEach(
+    async ({ e2eCommand }) =>
+      await Promise.all([
+        e2eCommand.serverCommand("clearTestUsers"),
+        e2eCommand.serverCommand("clearTestOrganizations"),
+        e2eCommand.serverCommand("clearBibleData"),
+      ]),
+  );
+
+  const PICKER = '[data-testid="media-picker-dialog"]';
+  const VIDEO = "./dummyFiles/dummyVideo.mp4";
+  /**
+   * Poster for a seeded video. Any image would do — it is only ever the frame
+   * shown before playback starts — but this one is 389px wide, which is what
+   * lets the placeholder test see a genuine 320px resize rather than the
+   * redirect-to-original the processed route serves for narrower sources.
+   */
+  const POSTER = "./dummyFiles/dummyImage.jpg";
+  /** dummyVideo.mp4's real length. The player treats an unknown one as stopped. */
+  const VIDEO_DURATION = 6.2;
+
+  /** Transcoding is the slow part, and it gates the one test that uploads. */
+  const TRANSCODE_TIMEOUT = 180000;
+
+  /** The <video> react-player mounts inside the fill layer. */
+  const fillVideo = (page: Page, elementSelector: string) =>
+    page.locator(`${elementSelector} video`).first();
+
+  /** Selects the body text and opens the picker from its fill controls. */
+  const openPicker = async (page: Page, dialog: Locator) => {
+    await dialog.locator(BODY).click();
+    await expect(dialog.getByText("Box fill", { exact: true })).toBeVisible();
+    await dialog.getByLabel("Video", { exact: true }).click();
+    await expect(page.locator(PICKER)).toBeVisible();
+  };
+
+  /**
+   * Uploads a video through the picker, waits out transcoding, and picks it.
+   *
+   * The pick is deliberately manual. A video is only selectable once the server
+   * has transcoded it, and that is the whole point: an auto-picked upload comes
+   * back with no HLS source, no poster and no duration, and the player treats a
+   * video of unknown duration as not playing. Waiting for the card to become
+   * clickable is what proves we stored a COMPLETE video.
+   */
+  const uploadVideo = async (
+    page: Page,
+    upload: (fileName: string) => void,
+  ) => {
+    await upload(VIDEO);
+
+    const card = page
+      .locator(PICKER)
+      .locator(".bp--media-card")
+      .filter({ hasText: "dummyVideo.mp4" });
+
+    // Present as soon as the upload lands, but not yet selectable.
+    await expect(card).toBeVisible({ timeout: 60000 });
+
+    // The picker disables a video until it is transcoded (isVideoReady), so
+    // this class going away is precisely the "ready to pick" signal.
+    await expect(card).not.toHaveClass(/bp--media-card--disabled/, {
+      timeout: TRANSCODE_TIMEOUT,
+    });
+
+    await card.click();
+    await expect(page.locator(PICKER)).toBeHidden();
+  };
+
+  /**
+   * Seeds a transcoded video into the library and picks it, no ffmpeg involved.
+   *
+   * Seeded AFTER the scene setup, because that is what creates the org the
+   * media hangs off. The disabled-class assertion is not ceremony: it is the
+   * proof that a seeded video really does read as ready, so a regression in
+   * `isVideoReady` cannot quietly turn these tests into a test of nothing.
+   */
+  const useSeededVideo = async (
+    page: Page,
+    dialog: Locator,
+    e2eCommand: E2ECommandAPI,
+  ) => {
+    await e2eCommand.seedVideoMedia({
+      orgSlug: "testorg",
+      videoPath: VIDEO,
+      posterPath: POSTER,
+      duration: VIDEO_DURATION,
+    });
+
+    await openPicker(page, dialog);
+
+    const card = page
+      .locator(PICKER)
+      .locator(".bp--media-card")
+      .filter({ hasText: "dummyVideo.mp4" });
+
+    await expect(card).toBeVisible();
+    await expect(card).not.toHaveClass(/bp--media-card--disabled/);
+
+    await card.click();
+    await expect(page.locator(PICKER)).toBeHidden();
+  };
+
+  test("uploading through the picker fills the element with the video", async ({
+    page,
+    projectPage,
+    loginAndGoToProject,
+    uppyUploadFile,
+  }) => {
+    test.setTimeout(TRANSCODE_TIMEOUT + 60000);
+    page.setDefaultTimeout(60000);
+    const dialog = await openStyleModal({ loginAndGoToProject, projectPage });
+
+    // Nothing is playing yet.
+    await expect(page.locator(`${BODY} video`)).toHaveCount(0);
+
+    await openPicker(page, dialog);
+    await uploadVideo(page, uppyUploadFile);
+
+    const video = fillVideo(page, BODY);
+    await expect(video).toBeVisible();
+
+    // Muted and looping: a background that blares audio over the service, or
+    // stops dead after 20 seconds, is not a background.
+    await expect(video).toHaveJSProperty("muted", true);
+    await expect(video).toHaveJSProperty("loop", true);
+
+    // It actually plays, rather than mounting paused on the first frame.
+    await expect
+      .poll(() => video.evaluate((el: HTMLVideoElement) => el.currentTime), {
+        timeout: 30000,
+      })
+      .toBeGreaterThan(0);
+
+    // A video fill paints no colour underneath, for the same reason a picture
+    // does not: the fill IS the video.
+    await expect
+      .poll(() => paintedStyle(page, BODY, "background-image"))
+      .toBe("none");
+  });
+
+  test("the video survives a reopen, so what was stored is a durable reference", async ({
+    page,
+    projectPage,
+    loginAndGoToProject,
+    e2eCommand,
+  }) => {
+    page.setDefaultTimeout(60000);
+    const dialog = await openStyleModal({ loginAndGoToProject, projectPage });
+
+    await useSeededVideo(page, dialog, e2eCommand);
+    await expect(fillVideo(page, BODY)).toBeVisible();
+
+    // Save, close, reopen. A video stores a whole object rather than a single
+    // URL, and Yjs cannot hold `undefined` — a field that went missing on the
+    // way through shows up here as a fill that no longer plays.
+    await page.getByRole("button", { name: "Save" }).click();
+    await expect(dialog).toBeHidden();
+
+    await page.getByRole("button", { name: "Style" }).click();
+    const reopened = page.getByRole("dialog", { name: "Slide Template" });
+    await expect(reopened).toBeVisible();
+
+    await expect(fillVideo(page, BODY)).toBeVisible();
+
+    // Still a video fill, with its controls, rather than having decayed to a
+    // colour or a still picture on the way through.
+    await reopened.locator(BODY).click();
+    await expect(row(reopened, "Video")).toBeVisible();
+    await expect(row(reopened, "Fit")).toBeVisible();
+  });
+
+  test("fit and opacity reach the rendered video", async ({
+    page,
+    projectPage,
+    loginAndGoToProject,
+    e2eCommand,
+  }) => {
+    page.setDefaultTimeout(60000);
+    const dialog = await openStyleModal({ loginAndGoToProject, projectPage });
+
+    await useSeededVideo(page, dialog, e2eCommand);
+
+    const video = fillVideo(page, BODY);
+    await expect(video).toBeVisible();
+
+    // --- fit ----------------------------------------------------------------
+    // react-player owns the <video>, so fit is delivered through a CSS custom
+    // property rather than an inline style. That indirection is exactly what
+    // could silently stop working, so assert the COMPUTED result.
+    await expect(video).toHaveCSS("object-fit", "cover");
+
+    await dialog.getByLabel("Fit", { exact: true }).click();
+    await expect(video).toHaveCSS("object-fit", "contain");
+
+    await dialog.getByLabel("Stretch", { exact: true }).click();
+    await expect(video).toHaveCSS("object-fit", "fill");
+
+    // --- opacity ------------------------------------------------------------
+    // On the fill layer, not the element: fading the element would fade the
+    // text sitting on top of the video too.
+    const opacity = row(dialog, "Opacity").locator("input");
+    await opacity.fill("40");
+    await opacity.press("Tab");
+
+    const layer = page
+      .locator(`${BODY} .lay--video-fill`)
+      .first()
+      .locator("..");
+    await expect(layer).toHaveCSS("opacity", "0.4");
+    expect(await paintedStyle(page, BODY, "opacity")).toBe("1");
+  });
+
+  test("cancelling the picker leaves the existing fill alone", async ({
+    page,
+    projectPage,
+    loginAndGoToProject,
+  }) => {
+    const dialog = await openStyleModal({ loginAndGoToProject, projectPage });
+
+    await dialog.locator(BODY).click();
+    await dialog.getByLabel("Solid", { exact: true }).click();
+    await expect
+      .poll(() => paintedStyle(page, BODY, "background-color"))
+      .not.toBe("rgba(0, 0, 0, 0)");
+
+    const before = await paintedStyle(page, BODY, "background-color");
+
+    // A video fill written optimistically on open would leave a fill with no
+    // video in it, which renders as an empty box rather than the colour that
+    // was there.
+    await dialog.getByLabel("Video", { exact: true }).click();
+    await expect(page.locator(PICKER)).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(page.locator(PICKER)).toBeHidden();
+
+    await expect(page.locator(`${BODY} video`)).toHaveCount(0);
+    expect(await paintedStyle(page, BODY, "background-color")).toBe(before);
+
+    await expect(row(dialog, "Colour")).toBeVisible();
+  });
+
+  test("switching to a colour drops the video", async ({
+    page,
+    projectPage,
+    loginAndGoToProject,
+    e2eCommand,
+  }) => {
+    page.setDefaultTimeout(60000);
+    const dialog = await openStyleModal({ loginAndGoToProject, projectPage });
+
+    await useSeededVideo(page, dialog, e2eCommand);
+    await expect(fillVideo(page, BODY)).toBeVisible();
+
+    await dialog.getByLabel("Solid", { exact: true }).click();
+
+    // The player unmounts entirely. A <video> left alive under an opaque
+    // colour is invisible but still decoding, which is the expensive way to
+    // get this wrong.
+    await expect(page.locator(`${BODY} video`)).toHaveCount(0);
+    await expect
+      .poll(() => paintedStyle(page, BODY, "background-color"))
+      .not.toBe("rgba(0, 0, 0, 0)");
+  });
+
+  test("a poster covers the gap while the video loads", async ({
+    page,
+    projectPage,
+    loginAndGoToProject,
+    e2eCommand,
+  }) => {
+    page.setDefaultTimeout(60000);
+    const dialog = await openStyleModal({ loginAndGoToProject, projectPage });
+
+    const processed: string[] = [];
+    page.on("response", (r) => {
+      if (r.url().includes("/media/processed/")) processed.push(r.url());
+    });
+
+    await useSeededVideo(page, dialog, e2eCommand);
+
+    const placeholder = page.locator(`${BODY} .lay--video-placeholder`);
+    await expect(placeholder).toBeAttached();
+
+    // The SMALL processed variant, not the full poster. Loading a full-size
+    // image to cover a brief gap would defeat the point. Polled because
+    // naturalWidth stays 0 until the image has actually decoded.
+    await expect
+      .poll(
+        () => placeholder.evaluate((el: HTMLImageElement) => el.naturalWidth),
+        { timeout: 15000 },
+      )
+      .toBe(320);
+    expect(processed.some((u) => u.includes("/media/processed/320/"))).toBe(
+      true,
+    );
+
+    // It gets out of the way once there is a real frame to show. Polled rather
+    // than asserted once, because the handover is what we care about and it may
+    // already have happened by the time we look.
+    await expect
+      .poll(
+        () =>
+          placeholder.evaluate((el) => getComputedStyle(el).opacity as string),
+        { timeout: 30000 },
+      )
+      .toBe("0");
+
+    // ...and only once a frame genuinely exists. readyState >= HAVE_CURRENT_DATA
+    // is the real signal; react-player's own `onReady` fires on `loadstart`,
+    // before anything is decoded, so wiring the placeholder to that would hide
+    // it while the element is still transparent — which is the exact flash this
+    // placeholder exists to prevent.
+    const readyState = await fillVideo(page, BODY).evaluate(
+      (el: HTMLVideoElement) => el.readyState,
+    );
+    expect(readyState).toBeGreaterThanOrEqual(2);
+  });
+
+  test("the editing canvas plays, while the remote's slide previews do not", async ({
+    page,
+    projectPage,
+    loginAndGoToProject,
+    e2eCommand,
+  }) => {
+    page.setDefaultTimeout(60000);
+    const dialog = await openStyleModal({ loginAndGoToProject, projectPage });
+
+    await useSeededVideo(page, dialog, e2eCommand);
+
+    // The canvas is where you frame the video, so it plays. Asserted on
+    // currentTime rather than just presence: this is the one place a seeded
+    // video's mp4 playback is proven, the upload test above covering the HLS
+    // source in the same way.
+    const video = fillVideo(page, BODY);
+    await expect(video).toBeVisible();
+    await expect
+      .poll(() => video.evaluate((el: HTMLVideoElement) => el.currentTime), {
+        timeout: 30000,
+      })
+      .toBeGreaterThan(0);
+
+    await page.getByRole("button", { name: "Save" }).click();
+    await expect(dialog).toBeHidden();
+
+    // Add a passage so the remote renders the doc through LayoutRenderer.
+    await page.getByTestId("bible-search-input").fill("John 3:16");
+    await page.getByTestId("bible-search-add").click();
+    await expect(page.getByText("John 3:16").first()).toBeVisible();
+
+    const preview = page.locator(".lay--stage").first();
+    await expect(preview).toBeVisible();
+
+    // The remote shows every slide at once, so previews draw the poster frame
+    // rather than spinning up a decoder each. Without this the slide grid runs
+    // one video per slide, which is invisible in a screenshot and expensive in
+    // practice.
+    await expect(preview.locator("img")).toHaveCount(1);
+    await expect(preview.locator("video, hls-video")).toHaveCount(0);
   });
 });
