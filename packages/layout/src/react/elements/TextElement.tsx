@@ -1,7 +1,7 @@
 import { CSSProperties, useMemo, useSyncExternalStore } from "react";
 
 import { StageMetrics, rectToPx, toPx } from "../../geometry/scale";
-import { SpanRoleStyle } from "../../schema/style";
+import { SpanRoleStyle, resolvePadding } from "../../schema/style";
 import { ResolvedTextElement } from "../../template/resolve";
 import {
   ElementPlacement,
@@ -57,11 +57,14 @@ export const TextElementView = ({
 
   const fontSize = useMemo(() => {
     if (element.fit === "declared") return toPx(style.fontSize, metrics);
+
+    const [top, right, bottom, left] = resolvePadding(style);
+
     return fitFontSize(
       {
         html: spansToHtml(spans, spanRoles),
-        width: box.width,
-        height: box.height,
+        width: Math.max(0, box.width - toPx(left + right, metrics)),
+        height: Math.max(0, box.height - toPx(top + bottom, metrics)),
         fontFamily: style.fontFamily,
         fontWeight: style.fontWeight,
         fontStyle: style.fontStyle,

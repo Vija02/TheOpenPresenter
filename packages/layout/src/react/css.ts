@@ -10,7 +10,7 @@ import {
   sortGradientStops,
 } from "../schema/paint";
 import { Rect } from "../schema/rect";
-import { TextStyle } from "../schema/style";
+import { TextStyle, resolvePadding } from "../schema/style";
 
 /** Geometry goes straight to CSS percentages */
 export const rectToCss = (rect: Rect): CSSProperties => ({
@@ -153,6 +153,19 @@ export const textShadowToCss = (
     .join(", ");
 };
 
+export const paddingToCss = (
+  style: TextStyle,
+  m: StageMetrics,
+): CSSProperties => {
+  const sides = resolvePadding(style);
+  if (sides.every((side) => side === 0)) return {};
+
+  return {
+    padding: sides.map((side) => `${toPx(side, m)}px`).join(" "),
+    boxSizing: "border-box",
+  };
+};
+
 const alignToFlex = (
   valign: TextStyle["valign"],
 ): CSSProperties["justifyContent"] =>
@@ -180,5 +193,6 @@ export const textStyleToCss = (
     style.textTransform && style.textTransform !== "none"
       ? style.textTransform
       : undefined,
+  ...paddingToCss(style, m),
   justifyContent: alignToFlex(style.valign),
 });

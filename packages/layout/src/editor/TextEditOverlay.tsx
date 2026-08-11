@@ -4,6 +4,7 @@ import { toPx } from "../geometry/scale";
 import { useStage } from "../react/StageContext";
 import { ElementView } from "../react/elements/ElementView";
 import { fitFontSize, spansToHtml } from "../react/text/measure";
+import { resolvePadding } from "../schema/style";
 import { ResolvedTextElement } from "../template/resolve";
 
 const TEXT_HOST_SELECTOR = ".lay--text-content";
@@ -71,11 +72,15 @@ export const TextEditOverlay = ({
     // units and already resolved to px by the renderer's own styling.
     const letterSpacing = parseFloat(getComputedStyle(host).letterSpacing);
 
+    const [padTop, padRight, padBottom, padLeft] = resolvePadding(
+      element.style,
+    );
+
     sized.style.fontSize = `${fitFontSize(
       {
         html: spansToHtml([{ text: host.innerText, role: null }], null),
-        width: rect.width,
-        height: rect.height,
+        width: Math.max(0, rect.width - toPx(padLeft + padRight, metrics)),
+        height: Math.max(0, rect.height - toPx(padTop + padBottom, metrics)),
         fontFamily: element.style.fontFamily,
         fontWeight: element.style.fontWeight,
         fontStyle: element.style.fontStyle,
