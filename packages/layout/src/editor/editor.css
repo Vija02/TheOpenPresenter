@@ -25,7 +25,6 @@
 .lay--editor-item {
   position: absolute;
   box-sizing: border-box;
-  overflow: hidden;
   cursor: grab;
 }
 
