@@ -24,6 +24,7 @@ export const defaultTextStyle: TextStyle = {
   letterSpacing: 0,
   shadows: [],
   outline: null,
+  textTransform: "none",
 };
 
 /** Appearance shared by every element kind. */

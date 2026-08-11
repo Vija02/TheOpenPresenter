@@ -176,5 +176,9 @@ export const textStyleToCss = (
     ? `${toPx(style.outline.width, m)}px ${paintToCss(style.outline.paint)}`
     : undefined,
   paintOrder: style.outline ? "stroke fill" : undefined,
+  textTransform:
+    style.textTransform && style.textTransform !== "none"
+      ? style.textTransform
+      : undefined,
   justifyContent: alignToFlex(style.valign),
 });

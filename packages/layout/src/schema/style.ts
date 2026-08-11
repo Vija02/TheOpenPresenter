@@ -30,6 +30,14 @@ export const textFitModes = [
 ] as const;
 export type TextFitMode = (typeof textFitModes)[number];
 
+export const textTransforms = [
+  "none",
+  "uppercase",
+  "lowercase",
+  "capitalize",
+] as const;
+export type TextTransform = (typeof textTransforms)[number];
+
 /** Scalars are design units. Partial styles exist only as `TextStylePatch`. */
 export const textStyleValidator = z.object({
   fontFamily: z.string(),
@@ -46,6 +54,7 @@ export const textStyleValidator = z.object({
   shadows: z.array(shadowValidator),
   /** Glyph outline */
   outline: strokeValidator.nullable(),
+  textTransform: z.enum(textTransforms).default("none"),
 });
 
 export type TextStyle = z.infer<typeof textStyleValidator>;
