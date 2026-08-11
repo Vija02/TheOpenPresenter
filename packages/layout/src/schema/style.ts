@@ -55,9 +55,46 @@ export const textStyleValidator = z.object({
   /** Glyph outline */
   outline: strokeValidator.nullable(),
   textTransform: z.enum(textTransforms).default("none"),
+  /** Inset between the element's box and its text, in design units. */
+  padding: z.number().default(0),
+  /** When true, `padding` applies to all four sides. */
+  paddingIsLinked: z.boolean().default(true),
+  paddingTop: z.number().default(0),
+  paddingRight: z.number().default(0),
+  paddingBottom: z.number().default(0),
+  paddingLeft: z.number().default(0),
 });
 
 export type TextStyle = z.infer<typeof textStyleValidator>;
+
+/** Design units, in CSS order: top, right, bottom, left. */
+export type PaddingSides = [number, number, number, number];
+
+export const resolvePadding = (
+  style: Partial<
+    Pick<
+      TextStyle,
+      | "padding"
+      | "paddingIsLinked"
+      | "paddingTop"
+      | "paddingRight"
+      | "paddingBottom"
+      | "paddingLeft"
+    >
+  >,
+): PaddingSides => {
+  // Defaults to linked
+  if (style.paddingIsLinked ?? true) {
+    const all = style.padding ?? 0;
+    return [all, all, all, all];
+  }
+  return [
+    style.paddingTop ?? 0,
+    style.paddingRight ?? 0,
+    style.paddingBottom ?? 0,
+    style.paddingLeft ?? 0,
+  ];
+};
 
 export const textStylePatchValidator = textStyleValidator.partial();
 export type TextStylePatch = z.infer<typeof textStylePatchValidator>;

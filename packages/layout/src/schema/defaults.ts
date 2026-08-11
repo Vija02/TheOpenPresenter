@@ -25,6 +25,12 @@ export const defaultTextStyle: TextStyle = {
   shadows: [],
   outline: null,
   textTransform: "none",
+  padding: 0,
+  paddingIsLinked: true,
+  paddingTop: 0,
+  paddingRight: 0,
+  paddingBottom: 0,
+  paddingLeft: 0,
 };
 
 /** Appearance shared by every element kind. */

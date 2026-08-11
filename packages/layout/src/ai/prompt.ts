@@ -32,7 +32,10 @@ export const LAYOUT_DOC_RULES = `SCHEMA RULES
 
 GEOMETRY
 - "rect" is {x, y, w, h} — NOT width/height. x/y are the top-left corner. x and w are percent of slide WIDTH; y and h are percent of slide HEIGHT. All 0-100.
-- Sizes in "style" (fontSize, letterSpacing) and "radius" are design units, where 1 unit = 1% of the slide WIDTH. On a 1920px slide, fontSize 6 is about 115px.
+- Sizes in "style" (fontSize, letterSpacing, padding) and "radius" are design units, where 1 unit = 1% of the slide WIDTH. On a 1920px slide, fontSize 6 is about 115px.
+- style padding insets the text from its own box. It does not move or grow the element, and auto-sized text is fitted to the space that remains. Use it to keep text off a fill's edges rather than shrinking the rect.
+  - With "paddingIsLinked" true (the default), the single "padding" value applies to all four sides.
+  - With it false, "paddingTop"/"paddingRight"/"paddingBottom"/"paddingLeft" apply instead. Both sets are stored, so set the ones for the mode you want and leave the others alone.
 - "stroke" is the element's outline, a ring around the box. "style.outline" is a glyph stroke that follows the letter shapes (shown as "Stroke" in the UI). Both use {paint, width, align}, width in design units. For "style.outline" only "center" align has any effect.
 - "rotation" is degrees. "opacity" is 0-1.
 
