@@ -5,8 +5,10 @@ import {
   toProfiles,
 } from "@repo/base-plugin/server";
 import { OrganizationType } from "@repo/graphql";
+import { uuidFromMediaId } from "@repo/lib";
 import { json, urlencoded } from "body-parser";
 import { Express, Request, RequestHandler, Response } from "express";
+import { Readable } from "node:stream";
 import { Pool, PoolClient } from "pg";
 import { typeidUnboxed } from "typeid-js";
 import { proxy } from "valtio";
@@ -24,6 +26,7 @@ import {
 } from "../utils/mockHostDevice";
 import { createSessionCookie } from "../utils/sessionCookie";
 import { getRootPgPool } from "./installDatabasePools";
+import { getMediaHandler } from "./installFileUpload";
 
 type LoginScene = {
   pluginName: string;
@@ -680,6 +683,116 @@ async function runCommand(
       [org.id, displayName, email, passcode],
     );
     return { success: true, screenGuestId: guest.id };
+  } else if (command === "seedVideoMedia") {
+    const {
+      orgSlug,
+      video,
+      poster,
+      originalName = "seededVideo.mp4",
+      videoExtension = "mp4",
+      posterExtension = "jpg",
+      duration = null,
+    } = payload || {};
+
+    if (!orgSlug || !String(orgSlug).startsWith("test")) {
+      throw new Error("seedVideoMedia orgSlug must start with 'test'");
+    }
+    if (!video) {
+      throw new Error("seedVideoMedia requires base64 `video` bytes");
+    }
+
+    const {
+      rows: [org],
+    } = await rootPgPool.query(
+      `select id from app_public.organizations where slug = $1`,
+      [orgSlug],
+    );
+    if (!org) {
+      throw new Error(`Organization not found: ${orgSlug}`);
+    }
+
+    // Uploads are attributed to a member so the row looks like any other
+    // upload. Owner first, since that is who a test logs in as.
+    const {
+      rows: [membership],
+    } = await rootPgPool.query(
+      `select user_id from app_public.organization_memberships
+        where organization_id = $1
+        order by is_owner desc, created_at asc
+        limit 1`,
+      [org.id],
+    );
+    const userId: string | null = membership?.user_id ?? null;
+
+    // `req.app` is the same instance installFileUpload set the handler on.
+    const mediaHandler = getMediaHandler(req.app as Express);
+
+    const videoBuffer = Buffer.from(String(video), "base64");
+    const { mediaId: videoMediaId, fileName: videoMediaName } =
+      await mediaHandler.uploadMedia({
+        file: Readable.from(videoBuffer),
+        fileSize: videoBuffer.byteLength,
+        fileExtension: String(videoExtension),
+        originalFileName: String(originalName),
+        userId,
+        organizationId: org.id,
+        isUserUploaded: true,
+        // The point of the whole command: no transcode job gets queued.
+        skipProcessing: true,
+      });
+
+    let thumbnailMediaId: string | null = null;
+    let thumbnailMediaName: string | null = null;
+    if (poster) {
+      const posterBuffer = Buffer.from(String(poster), "base64");
+      const uploaded = await mediaHandler.uploadMedia({
+        file: Readable.from(posterBuffer),
+        fileSize: posterBuffer.byteLength,
+        fileExtension: String(posterExtension),
+        originalFileName: `${originalName}.poster.${posterExtension}`,
+        userId,
+        organizationId: org.id,
+        // Derived, so it stays out of the picker's own listing.
+        isUserUploaded: false,
+        skipProcessing: true,
+      });
+      thumbnailMediaId = uploaded.mediaId;
+      thumbnailMediaName = uploaded.fileName;
+
+      // What the transcode worker does with its generated thumbnail, and what
+      // the picker reads for a video's child thumbnail.
+      await mediaHandler.createDependency(
+        uuidFromMediaId(videoMediaId),
+        uuidFromMediaId(thumbnailMediaId),
+      );
+    }
+
+    await rootPgPool.query(
+      `insert into app_public.media_video_metadata
+        (video_media_id, thumbnail_media_id, duration,
+         transcode_status, transcode_progress, transcode_stage, transcode_stage_progress)
+       values ($1, $2, $3, 'completed', 100, 'completed', 100)
+       on conflict (video_media_id) do update set
+         thumbnail_media_id = excluded.thumbnail_media_id,
+         duration = excluded.duration,
+         transcode_status = excluded.transcode_status,
+         transcode_progress = excluded.transcode_progress,
+         transcode_stage = excluded.transcode_stage,
+         transcode_stage_progress = excluded.transcode_stage_progress`,
+      [
+        uuidFromMediaId(videoMediaId),
+        thumbnailMediaId ? uuidFromMediaId(thumbnailMediaId) : null,
+        duration,
+      ],
+    );
+
+    return {
+      success: true,
+      mediaId: videoMediaId,
+      mediaName: videoMediaName,
+      thumbnailMediaId,
+      thumbnailMediaName,
+    };
   } else {
     throw new Error(`Command '${command}' not understood.`);
   }

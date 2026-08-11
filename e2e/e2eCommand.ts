@@ -1,5 +1,15 @@
 import type { APIRequestContext, Page } from "@playwright/test";
 import type { OrganizationType } from "@repo/graphql";
+import { readFileSync } from "node:fs";
+import { basename, extname, isAbsolute, join } from "node:path";
+
+/**
+ * Fixture paths are written relative to the e2e directory, which is where this
+ * file lives — resolving against it rather than cwd keeps them working however
+ * Playwright was invoked.
+ */
+const readFixture = (filePath: string) =>
+  readFileSync(isAbsolute(filePath) ? filePath : join(__dirname, filePath));
 
 type User = {
   id: string;
@@ -272,6 +282,56 @@ export class E2ECommandAPI {
         payload ? `&payload=${encodeURIComponent(JSON.stringify(payload))}` : ""
       }`,
     );
+
+    return res.json();
+  }
+
+  async seedVideoMedia(payload: {
+    orgSlug: string;
+    videoPath: string;
+    posterPath?: string;
+    originalName?: string;
+    duration?: number;
+  }): Promise<{
+    success: true;
+    mediaId: string;
+    mediaName: string;
+    thumbnailMediaId: string | null;
+    thumbnailMediaName: string | null;
+  }> {
+    const {
+      orgSlug,
+      videoPath,
+      posterPath,
+      originalName = basename(videoPath),
+      duration,
+    } = payload;
+
+    const res = await this.request.post(
+      "/E2EServerCommand?command=seedVideoMedia",
+      {
+        headers: { "x-top-csrf-protection": "1" },
+        data: {
+          orgSlug,
+          originalName,
+          duration,
+          videoExtension: extname(videoPath).replace(".", ""),
+          video: readFixture(videoPath).toString("base64"),
+          ...(posterPath
+            ? {
+                posterExtension: extname(posterPath).replace(".", ""),
+                poster: readFixture(posterPath).toString("base64"),
+              }
+            : {}),
+        },
+      },
+    );
+
+    if (!res.ok()) {
+      throw new Error(
+        `seedVideoMedia failed: ${res.status()} ${await res.text()}`,
+      );
+    }
 
     return res.json();
   }
