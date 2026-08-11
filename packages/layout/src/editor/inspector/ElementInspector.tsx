@@ -6,6 +6,7 @@ import { DataBinding, LayoutDoc } from "../../schema/document";
 import { LayoutElement } from "../../schema/element";
 import { LayoutPluginApi } from "../pluginApi";
 import {
+  AppearanceSection,
   ContentSection,
   EffectsSection,
   FillSection,
@@ -93,6 +94,7 @@ export const ElementInspector = ({
       pluginApi={pluginApi}
     />
 
+    <AppearanceSection doc={doc} element={element} onChange={onChange} />
     <PositionSection doc={doc} element={element} onChange={onChange} />
     <LayerSection doc={doc} element={element} onChange={onChange} />
   </>

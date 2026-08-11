@@ -49,23 +49,6 @@ export const PositionSection = ({ doc, element, onChange }: SectionProps) => {
           }
         />
       </Row>
-
-      <Row label="Opacity">
-        <NumberField
-          value={element.opacity * 100}
-          min={0}
-          max={100}
-          step={1}
-          // Shown as a percentage but stored 0-1
-          onChange={(v) =>
-            onChange(
-              patchElement(doc, id, {
-                opacity: Math.max(0, Math.min(1, v / 100)),
-              }),
-            )
-          }
-        />
-      </Row>
     </Section>
   );
 };

@@ -1,3 +1,4 @@
+export * from "./AppearanceSection";
 export * from "./ContentSection";
 export * from "./EffectsSection";
 export * from "./FillSection";
