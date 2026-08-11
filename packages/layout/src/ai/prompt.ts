@@ -10,6 +10,7 @@ import { imageFitModes } from "../schema/paint";
 import {
   horizontalAlignments,
   textFitModes,
+  textTransforms,
   verticalAlignments,
 } from "../schema/style";
 
@@ -44,6 +45,7 @@ ENUMS
 - style "align": ${list(horizontalAlignments)}
 - style "valign": ${list(verticalAlignments)}
 - style "fontStyle": "normal" | "italic"
+- style "textTransform": ${list(textTransforms)} — casing applied at render time. Use this to uppercase a title rather than rewriting "content", which would destroy the author's original text.
 - image and video fill "fit": ${list(imageFitModes)}
 - shape "kind": ${list(shapeKinds)}
 - document "fitMode": ${list(layoutFitModes)}

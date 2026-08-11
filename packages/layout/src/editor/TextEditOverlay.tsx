@@ -82,6 +82,7 @@ export const TextEditOverlay = ({
         lineHeight: element.style.lineHeight,
         letterSpacing: Number.isFinite(letterSpacing) ? letterSpacing : 0,
         noWrap: element.fit === "fitNoWrap",
+        textTransform: element.style.textTransform ?? "none",
       },
       element.fit === "shrinkToFit"
         ? { maxFontSize: toPx(element.style.fontSize, metrics) }

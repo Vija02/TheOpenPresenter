@@ -1,3 +1,4 @@
+import { LuCaseLower, LuCaseSensitive, LuCaseUpper } from "react-icons/lu";
 import {
   TbAlignCenter,
   TbAlignLeft,
@@ -87,6 +88,20 @@ export const TypographySection = ({
             { value: 400, label: "Normal" },
             { value: 600, label: "Semi-bold" },
             { value: 700, label: "Bold" },
+          ]}
+        />
+      </Row>
+
+      <Row label="Case">
+        <ToggleGroupField
+          value={s.textTransform ?? "none"}
+          onChange={(v) =>
+            onChange(patchTextStyle(doc, id, { textTransform: v }))
+          }
+          options={[
+            { value: "none", label: "As typed", icon: <LuCaseSensitive /> },
+            { value: "uppercase", label: "UPPERCASE", icon: <LuCaseUpper /> },
+            { value: "lowercase", label: "lowercase", icon: <LuCaseLower /> },
           ]}
         />
       </Row>

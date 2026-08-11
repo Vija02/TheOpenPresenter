@@ -1,6 +1,6 @@
 import { hash } from "ohash";
 
-import { SpanRoleStyle } from "../../schema/style";
+import { SpanRoleStyle, TextTransform } from "../../schema/style";
 import { Span } from "../../template/spans";
 import { getFontGeneration } from "./fontStatus";
 
@@ -16,6 +16,7 @@ export type MeasureSpec = {
   /** px */
   letterSpacing: number;
   noWrap: boolean;
+  textTransform: TextTransform;
 };
 
 const escapeHtml = (text: string): string =>
@@ -131,6 +132,7 @@ export const fitFontSize = (
   el.style.fontStyle = spec.fontStyle;
   el.style.lineHeight = String(spec.lineHeight);
   el.style.letterSpacing = `${spec.letterSpacing}px`;
+  el.style.textTransform = spec.textTransform;
   el.innerHTML = spec.html;
 
   const fits = (size: number): boolean => {

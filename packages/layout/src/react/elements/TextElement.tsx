@@ -68,6 +68,7 @@ export const TextElementView = ({
         lineHeight: style.lineHeight,
         letterSpacing: toPx(style.letterSpacing, metrics),
         noWrap,
+        textTransform: style.textTransform ?? "none",
       },
       element.fit === "shrinkToFit"
         ? { maxFontSize: toPx(style.fontSize, metrics) }
