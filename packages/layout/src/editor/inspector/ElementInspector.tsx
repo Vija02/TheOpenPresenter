@@ -11,6 +11,7 @@ import {
   EffectsSection,
   FillSection,
   LayerSection,
+  OutlineSection,
   PositionSection,
   TypographySection,
 } from "./sections";
@@ -94,6 +95,7 @@ export const ElementInspector = ({
       pluginApi={pluginApi}
     />
 
+    <OutlineSection doc={doc} element={element} onChange={onChange} />
     <AppearanceSection doc={doc} element={element} onChange={onChange} />
     <PositionSection doc={doc} element={element} onChange={onChange} />
     <LayerSection doc={doc} element={element} onChange={onChange} />

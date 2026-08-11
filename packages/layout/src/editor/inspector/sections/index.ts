@@ -3,6 +3,7 @@ export * from "./ContentSection";
 export * from "./EffectsSection";
 export * from "./FillSection";
 export * from "./LayerSection";
+export * from "./OutlineSection";
 export * from "./PositionSection";
 export * from "./TypographySection";
 export * from "./types";
