@@ -3,6 +3,7 @@ import { SiCanva } from "react-icons/si";
 
 import { usePluginAPI } from "../../pluginApi";
 import { trpc } from "../../trpc";
+import { CanvaAccountChooser } from "../ImportFile/CanvaAccountChooser";
 import { CanvaDesignPicker } from "../ImportFile/CanvaDesignPicker";
 import {
   IntegrationControllerProps,
@@ -16,8 +17,12 @@ const CanvaController = ({ children }: IntegrationControllerProps) => {
   const pluginApi = usePluginAPI();
   const pluginId = pluginApi.pluginContext.pluginId;
 
+  const [isChooserOpen, setIsChooserOpen] = useState(false);
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [activeConnectionId, setActiveConnectionId] = useState<string | null>(
+    null,
+  );
   const launchContextRef = useRef<IntegrationLaunchContext>({});
 
   const statusQuery = trpc.slides.canvaStatus.useQuery({ pluginId });
@@ -25,12 +30,15 @@ const CanvaController = ({ children }: IntegrationControllerProps) => {
 
   const refetchStatus = statusQuery.refetch;
 
+  const connections = statusQuery.data?.connections ?? [];
+
   const finishConnect = useCallback(async () => {
     const res = await refetchStatus();
-    if (!res.data?.connected) return false;
-    log("connected, opening picker");
+    const linked = res.data?.connections ?? [];
+    if (linked.length === 0) return false;
+    log("connected", { count: linked.length });
     setIsConnecting(false);
-    setIsPickerOpen(true);
+    setIsChooserOpen(true);
     return true;
   }, [refetchStatus]);
 
@@ -43,7 +51,6 @@ const CanvaController = ({ children }: IntegrationControllerProps) => {
       }
       if (event.data?.source !== "top-canva-oauth") return;
 
-      log("popup reported back", event.data);
       if (event.data.ok) {
         void finishConnect();
       } else {
@@ -97,33 +104,39 @@ const CanvaController = ({ children }: IntegrationControllerProps) => {
   const handleOpen = useCallback(
     (context?: IntegrationLaunchContext) => {
       launchContextRef.current = context ?? {};
-      log("card clicked", {
-        statusData: statusQuery.data,
-        connected: statusQuery.data?.connected,
-        branch: statusQuery.data?.connected ? "OPEN_PICKER" : "START_CONNECT",
-        context,
-      });
-      if (statusQuery.data?.connected) {
-        setIsPickerOpen(true);
-      } else {
+      if (connections.length === 0) {
         startConnect();
+      } else {
+        setIsChooserOpen(true);
       }
     },
-    [statusQuery.data, startConnect],
+    [connections.length, startConnect],
   );
+
+  const handleChooseAccount = useCallback((connectionId: string) => {
+    setActiveConnectionId(connectionId);
+    setIsChooserOpen(false);
+    setIsPickerOpen(true);
+  }, []);
+
+  const handleSwitchAccount = useCallback(() => {
+    setIsPickerOpen(false);
+    setIsChooserOpen(true);
+  }, []);
 
   const handleSelected = useCallback(
     ({ designId, title }: { designId: string; title: string }) => {
-      log("design selected", { designId, title });
+      if (!activeConnectionId) return;
       selectDesignMutation.mutate({
         pluginId,
+        connectionId: activeConnectionId,
         designId,
         name: title,
         replaceImportId: launchContextRef.current.replaceImportId,
       });
       launchContextRef.current.onComplete?.();
     },
-    [selectDesignMutation, pluginId],
+    [selectDesignMutation, pluginId, activeConnectionId],
   );
 
   if (statusQuery.data && !statusQuery.data.configured) {
@@ -140,15 +153,35 @@ const CanvaController = ({ children }: IntegrationControllerProps) => {
         open: handleOpen,
       })}
 
+      <CanvaAccountChooser
+        isOpen={isChooserOpen}
+        onClose={() => setIsChooserOpen(false)}
+        connections={connections}
+        onChoose={handleChooseAccount}
+        onAddAccount={() => {
+          setIsChooserOpen(false);
+          startConnect();
+        }}
+        onChanged={() => {
+          void refetchStatus().then((res) => {
+            if ((res.data?.connections ?? []).length === 0) {
+              setIsChooserOpen(false);
+            }
+          });
+        }}
+      />
+
       <CanvaDesignPicker
         isOpen={isPickerOpen}
         onClose={() => setIsPickerOpen(false)}
         onSelected={handleSelected}
-        connectedByName={statusQuery.data?.connectedByName}
-        onDisconnected={() => {
-          log("disconnected, refetching status");
-          void refetchStatus();
-        }}
+        connectionId={activeConnectionId}
+        accountLabel={
+          connections.find((c) => c.id === activeConnectionId)?.label ?? null
+        }
+        onSwitchAccount={
+          connections.length > 1 ? handleSwitchAccount : undefined
+        }
       />
     </>
   );

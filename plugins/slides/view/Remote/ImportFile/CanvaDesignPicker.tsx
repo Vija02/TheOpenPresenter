@@ -6,11 +6,11 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  Input,
   LoadingInline,
-  PopConfirm,
 } from "@repo/ui";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { FaLinkSlash } from "react-icons/fa6";
+import { FaArrowRightArrowLeft } from "react-icons/fa6";
 import { SiCanva } from "react-icons/si";
 
 import { usePluginAPI } from "../../pluginApi";
@@ -27,14 +27,17 @@ export const CanvaDesignPicker = ({
   isOpen,
   onClose,
   onSelected,
-  connectedByName,
-  onDisconnected,
+  connectionId,
+  accountLabel,
+  onSwitchAccount,
 }: {
   isOpen: boolean;
   onClose: () => void;
   onSelected: (design: CanvaDesignSelection) => void;
-  connectedByName?: string | null;
-  onDisconnected?: () => void;
+  /** Which linked Canva account to list designs from. */
+  connectionId: string | null;
+  accountLabel?: string | null;
+  onSwitchAccount?: () => void;
 }) => {
   const pluginApi = usePluginAPI();
   const pluginId = pluginApi.pluginContext.pluginId;
@@ -47,21 +50,14 @@ export const CanvaDesignPicker = ({
     return () => clearTimeout(timer);
   }, [search]);
 
-  const disconnectMutation = trpc.slides.canvaDisconnect.useMutation();
-
-  const handleDisconnect = useCallback(async () => {
-    await disconnectMutation.mutateAsync({ pluginId });
-    onDisconnected?.();
-    onClose();
-  }, [disconnectMutation, pluginId, onDisconnected, onClose]);
-
   const listQuery = trpc.slides.canvaListDesigns.useInfiniteQuery(
     {
       pluginId,
+      connectionId: connectionId ?? "",
       query: debouncedSearch || undefined,
     },
     {
-      enabled: isOpen,
+      enabled: isOpen && connectionId !== null,
       getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
       // Canva thumbnail URLs expire after 15 minutes, so don't serve a stale
       // list (with broken images) to a picker that was left open.
@@ -115,12 +111,11 @@ export const CanvaDesignPicker = ({
           </DialogTitle>
         </DialogHeader>
         <DialogBody className="pt-0 flex-1 flex flex-col min-h-0">
-          <input
-            type="text"
+          <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search your Canva designs..."
-            className="w-full border border-stroke rounded-sm px-3 py-2 mb-4 shrink-0"
+            className="mb-4 shrink-0"
           />
 
           {listQuery.isError && (
@@ -190,34 +185,25 @@ export const CanvaDesignPicker = ({
           )}
         </DialogBody>
         <DialogFooter className="sm:justify-between items-center">
-          <div className="flex items-center gap-3 min-w-0">
-            <PopConfirm
-              title="Disconnect Canva?"
-              description="Everyone in this organization will lose access to these designs until Canva is connected again. Slides you have already imported are unaffected."
-              okText="Disconnect"
-              onConfirm={handleDisconnect}
-            >
+          <div className="flex items-center gap-2 min-w-0">
+            {accountLabel && (
+              <span
+                className="text-xs text-secondary truncate"
+                title={accountLabel}
+              >
+                {accountLabel}
+              </span>
+            )}
+            {onSwitchAccount && (
               <Button
                 type="button"
                 variant="outline"
-                size="sm"
-                disabled={disconnectMutation.isPending}
+                size="xs"
+                onClick={onSwitchAccount}
               >
-                {disconnectMutation.isPending ? (
-                  <LoadingInline className="size-3" />
-                ) : (
-                  <FaLinkSlash />
-                )}
-                Disconnect
+                <FaArrowRightArrowLeft />
+                Switch account
               </Button>
-            </PopConfirm>
-            {connectedByName && (
-              <span
-                className="text-xs text-secondary truncate"
-                title={`Connected as ${connectedByName}`}
-              >
-                Connected as {connectedByName}
-              </span>
             )}
           </div>
           <Button variant="outline" onClick={onClose}>

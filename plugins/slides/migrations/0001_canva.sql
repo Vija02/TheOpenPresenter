@@ -1,18 +1,18 @@
 grant usage on schema plugin_slides to :DATABASE_VISITOR;
 
 -- ---------------------------------------------------------------------------
--- Connections, one per organization
+-- Connections. An organization may link several Canva accounts.
 -- ---------------------------------------------------------------------------
 create table if not exists canva_connection (
   id uuid primary key default gen_random_uuid(),
 
   organization_id uuid not null
-    constraint canva_connection_organization_id_key unique
     references app_public.organizations (id) on delete cascade,
 
-  -- Which Canva account/team the tokens act on behalf of
-  canva_user_id text,
+  canva_user_id text not null,
   canva_team_id text,
+
+  canva_display_name text,
 
   connected_by_user_id uuid
     references app_public.users (id) on delete set null,
@@ -22,6 +22,12 @@ create table if not exists canva_connection (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+create index if not exists canva_connection_organization_id_idx
+  on canva_connection (organization_id);
+
+create unique index if not exists canva_connection_org_canva_user_key
+  on canva_connection (organization_id, canva_user_id);
 
 create or replace trigger _100_timestamps
   before insert or update on canva_connection

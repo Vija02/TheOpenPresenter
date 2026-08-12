@@ -3,6 +3,7 @@ import { logger } from "@repo/observability";
 import { RequestHandler } from "express";
 
 import { pluginName } from "../consts";
+import { getAccountIdentity } from "./api";
 import {
   buildAuthorizeUrl,
   createPkcePair,
@@ -254,13 +255,25 @@ export const registerCanvaRoutes = (serverPluginApi: ServerPluginApi) => {
         return;
       }
 
-      await saveConnection(serverPluginApi, {
+      const identity = await getAccountIdentity(token.access_token, log);
+      log.info(
+        {
+          canvaUserId: identity.canvaUserId,
+          hasDisplayName: identity.displayName !== null,
+        },
+        "callback: identified Canva account",
+      );
+
+      const connectionId = await saveConnection(serverPluginApi, {
         organizationId: pending.organizationId,
         userId,
         token,
+        canvaUserId: identity.canvaUserId,
+        canvaTeamId: identity.canvaTeamId,
+        canvaDisplayName: identity.displayName,
       });
       log.info(
-        { organizationId: pending.organizationId, userId },
+        { organizationId: pending.organizationId, userId, connectionId },
         "callback: connection saved, Canva is now connected",
       );
 
