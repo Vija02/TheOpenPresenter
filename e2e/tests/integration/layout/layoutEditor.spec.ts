@@ -667,6 +667,273 @@ test.describe.serial("Layout editor", () => {
 });
 
 /**
+ * The add-element toolbar floating over the canvas.
+ *
+ * Ids are asserted literally (`text-1`, `rect-1`, ...) because they are what
+ * `freshElementId` promises, and because a document's ids are its stable
+ * handles: templates and AI tool calls both address elements by id, so a change
+ * in the naming scheme is a change in the contract, not an implementation
+ * detail. The Bible template ships `bible-*` ids, so these never collide.
+ */
+test.describe.serial("Adding elements", () => {
+  test.beforeEach(
+    async ({ e2eCommand }) =>
+      await Promise.all([
+        e2eCommand.serverCommand("clearTestUsers"),
+        e2eCommand.serverCommand("clearTestOrganizations"),
+        e2eCommand.serverCommand("clearBibleData"),
+      ]),
+  );
+
+  /**
+   * The node a shape's appearance is painted on.
+   *
+   * `paintedStyle` above cannot serve here: it finds the painted node by
+   * walking up from `.lay--text-content`, which a shape has none of. Both come
+   * down to the same thing — the element renders one level inside the editor's
+   * `[data-lay-id]` wrapper, with placement="fill".
+   */
+  const shapeBody = (dialog: Locator, id: string) =>
+    dialog.locator(`[data-lay-id="${id}"] > div`);
+
+  const item = (dialog: Locator, id: string) =>
+    dialog.locator(`[data-lay-id="${id}"]`);
+
+  test("adds a text element, selected and ready to restyle", async ({
+    projectPage,
+    loginAndGoToProject,
+  }) => {
+    const dialog = await openStyleModal({ loginAndGoToProject, projectPage });
+
+    await expect(item(dialog, "text-1")).toHaveCount(0);
+
+    await dialog.getByRole("button", { name: "Add text" }).click();
+
+    const added = item(dialog, "text-1");
+    await expect(added).toBeVisible();
+    await expect(added).toContainText("Your text here");
+
+    // Selected on arrival: adding an element you then have to hunt for and
+    // click is a worse experience than not having the button.
+    await expect(added).toHaveClass(/lay--editor-item--selected/);
+
+    // ...and the inspector followed the selection, so it can be styled at once.
+    // Typography only renders for a selected TEXT element, so its presence
+    // proves both the selection and the element's type.
+    await expect(dialog.getByText("Typography", { exact: true })).toBeVisible();
+
+    // On top of the paint order. Array order is paint order, so the new
+    // element must be the last item in the DOM or it lands behind the
+    // full-bleed background and is invisible.
+    await expect(dialog.locator(".lay--editor-item").last()).toHaveAttribute(
+      "data-lay-id",
+      "text-1",
+    );
+  });
+
+  test("repeated adds cascade instead of stacking invisibly", async ({
+    projectPage,
+    loginAndGoToProject,
+  }) => {
+    const dialog = await openStyleModal({ loginAndGoToProject, projectPage });
+    const addText = dialog.getByRole("button", { name: "Add text" });
+
+    await addText.click();
+    await expect(item(dialog, "text-1")).toBeVisible();
+    const first = await item(dialog, "text-1").boundingBox();
+
+    await addText.click();
+    const second = item(dialog, "text-2");
+    await expect(second).toBeVisible();
+
+    // Both alive: the second add must not have overwritten the first.
+    await expect(item(dialog, "text-1")).toBeVisible();
+
+    // Offset down-right. Were they stacked exactly, the second add would look
+    // like the button had done nothing at all.
+    const secondBox = await second.boundingBox();
+    expect(secondBox!.x).toBeGreaterThan(first!.x);
+    expect(secondBox!.y).toBeGreaterThan(first!.y);
+
+    // Only the newest is selected, so the inspector is unambiguous.
+    await expect(second).toHaveClass(/lay--editor-item--selected/);
+    await expect(dialog.locator(".lay--editor-item--selected")).toHaveCount(1);
+  });
+
+  test("an added element survives a save and reopen", async ({
+    page,
+    projectPage,
+    loginAndGoToProject,
+  }) => {
+    const dialog = await openStyleModal({ loginAndGoToProject, projectPage });
+
+    await dialog.getByRole("button", { name: "Add text" }).click();
+    await expect(item(dialog, "text-1")).toBeVisible();
+
+    // Give it a value worth checking survived, rather than the placeholder
+    // every added element starts with.
+    await row(dialog, "X").locator("input").fill("12");
+    await row(dialog, "X").locator("input").press("Tab");
+
+    await page.getByRole("button", { name: "Save" }).click();
+    await expect(dialog).toBeHidden();
+
+    // The document round-trips through Yjs, which cannot represent
+    // `undefined`. A freshly built element carries a dozen nullable fields
+    // (name, fill, stroke, spanRoles...), and any one of them left undefined
+    // rather than null is dropped in transit — so this is really a test of
+    // what `createTextElement` writes.
+    await page.getByRole("button", { name: "Style" }).click();
+    const reopened = page.getByRole("dialog", { name: "Slide Template" });
+    await expect(reopened).toBeVisible();
+
+    const restored = item(reopened, "text-1");
+    await expect(restored).toBeVisible();
+    await expect(restored).toContainText("Your text here");
+
+    await restored.click();
+    await expect(row(reopened, "X").locator("input")).toHaveValue("12");
+  });
+
+  test("an added element can be moved, restyled and deleted like any other", async ({
+    page,
+    projectPage,
+    loginAndGoToProject,
+  }) => {
+    const dialog = await openStyleModal({ loginAndGoToProject, projectPage });
+
+    await dialog.getByRole("button", { name: "Add text" }).click();
+    const added = item(dialog, "text-1");
+    await expect(added).toBeVisible();
+
+    // --- drag, through Moveable ---------------------------------------------
+    // Already selected from the add, which is what Selecto gates handing the
+    // gesture to Moveable on.
+    const before = await added.boundingBox();
+    await dragBy(page, added, 0, -60);
+    await expect
+      .poll(async () => (await added.boundingBox())?.y)
+      .toBeLessThan(before!.y);
+
+    // --- restyle ------------------------------------------------------------
+    await dialog.getByLabel("Align left").click();
+    await expect
+      .poll(() => textStyle(page, '[data-lay-id="text-1"]', "text-align"))
+      .toBe("left");
+
+    // --- inline edit --------------------------------------------------------
+    // The caret lands at the end of the existing text, so this appends.
+    await added.dblclick();
+    await expect(added).toHaveClass(/lay--editor-item--editing/);
+    await page.keyboard.insertText(" and then some");
+    await dialog
+      .locator(".lay--workbench-canvas")
+      .click({ position: { x: 5, y: 5 } });
+    await expect(added).not.toHaveClass(/lay--editor-item--editing/);
+    await expect(added).toContainText("Your text here and then some");
+
+    // --- delete -------------------------------------------------------------
+    await added.click();
+    await dialog.getByRole("button", { name: "Delete" }).click();
+    await expect(item(dialog, "text-1")).toHaveCount(0);
+
+    // The template's own elements are untouched by the round trip.
+    await expect(dialog.locator(BODY)).toBeVisible();
+  });
+
+  test("the toolbar does not clear the selection behind it", async ({
+    page,
+    projectPage,
+    loginAndGoToProject,
+  }) => {
+    const dialog = await openStyleModal({ loginAndGoToProject, projectPage });
+    const body = dialog.locator(BODY);
+
+    await body.click();
+    await expect(body).toHaveClass(/lay--editor-item--selected/);
+
+    // The toolbar sits inside <main>, whose pointerdown handler treats
+    // anything outside `.lay--editor` as a click on empty space and clears the
+    // selection. Proven with the picture button and a cancelled picker,
+    // because that is the one path that ends without selecting something new:
+    // every other button would re-select and mask the bug.
+    await dialog.getByRole("button", { name: "Add picture" }).click();
+    const picker = page.locator('[data-testid="media-picker-dialog"]');
+    await expect(picker).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(picker).toBeHidden();
+
+    await expect(body).toHaveClass(/lay--editor-item--selected/);
+    // Nothing was added on the way out.
+    await expect(item(dialog, "image-1")).toHaveCount(0);
+  });
+
+  test("the toolbar clears the slide, so the top row stays clickable", async ({
+    page,
+    projectPage,
+    loginAndGoToProject,
+  }) => {
+    const dialog = await openStyleModal({ loginAndGoToProject, projectPage });
+
+    // The bar is absolutely positioned over the canvas, so without the top
+    // padding that makes room for it, it would cover the stage and swallow
+    // every click meant for an element in the slide's top strip.
+    const bar = await dialog.getByRole("toolbar").boundingBox();
+    const stage = await dialog.locator(".lay--editor").boundingBox();
+    expect(bar!.y + bar!.height).toBeLessThanOrEqual(stage!.y + 1);
+
+    // Geometry alone would still pass if something else sat over the stage, so
+    // this asks the browser what a click at the very top of the slide would
+    // actually hit. The background is full-bleed, so its top edge IS the
+    // stage's top edge — the most easily covered pixel on the canvas.
+    const hit = await page.evaluate(
+      ({ x, y }) => {
+        const el = document.elementFromPoint(x, y);
+        return (
+          el?.closest("[data-lay-id]")?.getAttribute("data-lay-id") ?? null
+        );
+      },
+      { x: stage!.x + 20, y: stage!.y + 4 },
+    );
+    expect(hit).toBe("bible-background");
+  });
+
+  test("adds a picture as an element in its own right", async ({
+    page,
+    projectPage,
+    loginAndGoToProject,
+    uppyUploadFile,
+  }) => {
+    page.setDefaultTimeout(60000);
+    const dialog = await openStyleModal({ loginAndGoToProject, projectPage });
+
+    await dialog.getByRole("button", { name: "Add picture" }).click();
+    const picker = page.locator('[data-testid="media-picker-dialog"]');
+    await expect(picker).toBeVisible();
+
+    await uppyUploadFile("./dummyFiles/dummyImage.jpg");
+    // The picker resolves an upload straight into a pick, so it closes itself.
+    await expect(picker).toBeHidden({ timeout: 30000 });
+
+    // A picture is not an element TYPE: it is a rect carrying an image fill,
+    // which is the same shape the Fill section produces. That is what lets it
+    // be cropped, rounded, outlined and rotated with no special cases.
+    const added = item(dialog, "image-1");
+    await expect(added).toBeVisible();
+    await expect(added).toHaveClass(/lay--editor-item--selected/);
+
+    const img = added.locator("img").first();
+    await expect(img).toBeVisible();
+    // Served from the media route rather than a blob: URL, which is what shows
+    // the picture went through the library and will survive a reload.
+    await expect(img).toHaveAttribute("src", /\/media\/data\//);
+
+    // Cropped by default, as a picture dropped into a box almost always wants.
+    await expect(img).toHaveCSS("object-fit", "cover");
+  });
+});
+
+/**
  * The compact layout, below the `desktop:` breakpoint (48rem / 768px).
  *
  * `hasTouch` rather than `isMobile`: the latter also fakes a mobile user agent
