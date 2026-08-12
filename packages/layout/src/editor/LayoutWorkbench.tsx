@@ -12,6 +12,7 @@ import { findElement } from "../doc/edit";
 import { DataBinding, LayoutDoc, Template } from "../schema/document";
 import { FrameContext } from "../template/resolve";
 import { FrameData } from "../template/spans";
+import { AddElementBar } from "./AddElementBar";
 import { LayoutDocEditor } from "./LayoutDocEditor";
 import { TemplateRail } from "./TemplateRail";
 import { DocumentInspector } from "./inspector/DocumentInspector";
@@ -36,6 +37,8 @@ export type LayoutWorkbenchProps = {
 
   /** Plugin-specific document controls (things that are data, not layout). */
   documentExtras?: ReactNode;
+
+  hideAddElements?: boolean;
 
   /** On by default */
   ai?: boolean;
@@ -65,6 +68,7 @@ export const LayoutWorkbench = ({
   onSelectTemplate,
   bindings = [],
   documentExtras,
+  hideAddElements = false,
   ai: aiEnabled = true,
   aiCapability = "layout",
   onRequestAiEdit,
@@ -156,12 +160,21 @@ export const LayoutWorkbench = ({
 
   const stageAspect = `${doc.aspectRatio.width} / ${doc.aspectRatio.height}`;
 
+  const canvasPadding = !hideAddElements
+    ? compact
+      ? "px-2 pb-2 pt-12"
+      : "px-6 pb-6 pt-16"
+    : compact
+      ? "p-2"
+      : "p-6";
+
   const canvas = (
     <main
       className={
-        compact
-          ? "lay--workbench-canvas w-full shrink-0 max-h-[55%] flex items-center justify-center p-2 overflow-hidden"
-          : "lay--workbench-canvas flex-1 min-w-0 min-h-0 flex items-center justify-center p-6 overflow-hidden"
+        (compact
+          ? "lay--workbench-canvas relative w-full shrink-0 max-h-[55%] flex items-center justify-center overflow-hidden "
+          : "lay--workbench-canvas relative flex-1 min-w-0 min-h-0 flex items-center justify-center overflow-hidden ") +
+        canvasPadding
       }
       style={compact ? { aspectRatio: stageAspect } : undefined}
       onPointerDown={(e) => {
@@ -185,6 +198,16 @@ export const LayoutWorkbench = ({
           className="w-full"
         />
       </div>
+
+      {!hideAddElements && (
+        <AddElementBar
+          doc={doc}
+          onChange={onChange}
+          onSelectionChange={setSelectedIds}
+          pluginApi={pluginApi}
+          className="absolute top-2 left-1/2 z-10 -translate-x-1/2 max-w-[calc(100%-1rem)] overflow-x-auto"
+        />
+      )}
     </main>
   );
 

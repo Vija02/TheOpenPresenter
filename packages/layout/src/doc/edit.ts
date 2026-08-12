@@ -1,6 +1,7 @@
 /**
  * Pure, immutable edits to a LayoutDoc.
  */
+import { clampRect, roundRect } from "../geometry/rect";
 import { LayoutDoc } from "../schema/document";
 import { LayoutElement, TextElement } from "../schema/element";
 import { FillPaint } from "../schema/paint";
@@ -97,14 +98,45 @@ export const removeElement = (doc: LayoutDoc, id: string): LayoutDoc => ({
   elements: doc.elements.filter((e) => e.id !== id),
 });
 
-const uniqueId = (doc: LayoutDoc, base: string): string => {
-  let n = 2;
+export const freshElementId = (
+  doc: LayoutDoc,
+  base: string,
+  start = 1,
+): string => {
+  let n = start;
   let candidate = `${base}-${n}`;
   while (doc.elements.some((e) => e.id === candidate)) {
     n += 1;
     candidate = `${base}-${n}`;
   }
   return candidate;
+};
+
+// The source id is already `base`, so a copy starts counting at 2.
+const uniqueId = (doc: LayoutDoc, base: string): string =>
+  freshElementId(doc, base, 2);
+
+const CASCADE_STEP = 2;
+
+/**
+ * Nudges `rect` down-right until nothing already sits at that exact origin.
+ */
+export const cascadeRect = (doc: LayoutDoc, rect: Rect): Rect => {
+  const taken = (r: Rect) =>
+    doc.elements.some((e) => e.rect.x === r.x && e.rect.y === r.y);
+
+  let next = roundRect(clampRect(rect));
+  while (taken(next)) {
+    const moved = {
+      ...next,
+      x: next.x + CASCADE_STEP,
+      y: next.y + CASCADE_STEP,
+    };
+    // Off the slide: clamping would bounce back onto a taken origin forever.
+    if (moved.x + moved.w > 100 || moved.y + moved.h > 100) return next;
+    next = roundRect(moved);
+  }
+  return next;
 };
 
 /** Returns the new doc and the new id, so callers can select the copy. */
