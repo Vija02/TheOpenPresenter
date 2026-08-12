@@ -14,12 +14,16 @@ import {
 import { logger } from "@repo/observability";
 import axios from "axios";
 import { createProxyMiddleware } from "http-proxy-middleware";
+import path from "path";
 import { typeidUnboxed } from "typeid-js";
 import { proxy } from "valtio";
 import { bind } from "valtio-yjs";
 import * as Y from "yjs";
 import z from "zod";
 
+import { getCanvaOAuthConfig } from "./canva/oauth";
+import { createCanvaRouter } from "./canva/router";
+import { registerCanvaRoutes } from "./canva/routes";
 import {
   pluginName,
   remoteWebComponentTag,
@@ -64,6 +68,8 @@ export const init = (
       "PLUGIN_GOOGLE_SLIDES_CLIENT_ID env var missing. Please set it to use this plugin.",
     );
   }
+  const canvaEnabled = getCanvaOAuthConfig() !== null;
+
   serverPluginApi.registerCSPDirective(pluginName, {
     "frame-src": ["'self'", "*.google.com"],
     "img-src": ["*.googleusercontent.com", "ssl.gstatic.com", "data:"],
@@ -77,6 +83,20 @@ export const init = (
   });
 
   serverPluginApi.registerTrpcAppRouter(getAppRouter(serverPluginApi));
+
+  serverPluginApi.registerMigrations(
+    pluginName,
+    path.join(__dirname, "../migrations"),
+  );
+
+  if (canvaEnabled) {
+    registerCanvaRoutes(serverPluginApi);
+  } else {
+    logger.info(
+      "Canva integration disabled (PLUGIN_SLIDES_CANVA_CLIENT_ID / _SECRET not set)",
+    );
+  }
+
   serverPluginApi.onPluginDataCreated(pluginName, onPluginDataCreated);
   serverPluginApi.onPluginDataLoaded(pluginName, onPluginDataLoaded);
   serverPluginApi.onRendererDataCreated(pluginName, onRendererDataCreated);
@@ -91,6 +111,7 @@ export const init = (
 
   serverPluginApi.registerEnvToViews(pluginName, {
     PLUGIN_GOOGLE_SLIDES_CLIENT_ID: process.env.PLUGIN_GOOGLE_SLIDES_CLIENT_ID,
+    PLUGIN_SLIDES_CANVA_ENABLED: canvaEnabled ? "1" : "",
   });
 
   serverPluginApi.loadJsOnRemoteView(pluginName, `${pluginName}-remote.es.js`);
@@ -967,6 +988,14 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
             }
           },
         ),
+
+      ...createCanvaRouter(t, {
+        serverPluginApi,
+        loadedPlugins,
+        loadedContext,
+        getBaseImport,
+        finalizeImport,
+      }),
 
       removeImport: t.procedure
         .input(

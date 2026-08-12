@@ -3,10 +3,14 @@ import { ReactNode, useState } from "react";
 
 import { usePluginAPI } from "../../pluginApi";
 import { PickerCard } from "../component/PickerCard";
+import { canvaIntegration } from "./canva";
 import { googleSlidesIntegration } from "./googleSlides";
 import { IntegrationLaunchContext, SlideIntegration } from "./types";
 
-export const slideIntegrations: SlideIntegration[] = [googleSlidesIntegration];
+export const slideIntegrations: SlideIntegration[] = [
+  googleSlidesIntegration,
+  canvaIntegration,
+];
 
 export const IntegrationSection = ({
   children,
