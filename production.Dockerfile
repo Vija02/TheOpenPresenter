@@ -276,6 +276,7 @@ COPY --from=builder-plugin /app/plugins/timer/out/ /app/plugins/timer/out/
 COPY --from=builder-plugin /app/plugins/slides/package.json /app/plugins/slides/
 COPY --from=builder-plugin /app/plugins/slides/dist/ /app/plugins/slides/dist/
 COPY --from=builder-plugin /app/plugins/slides/out/ /app/plugins/slides/out/
+COPY --from=builder-plugin /app/plugins/slides/migrations/ /app/plugins/slides/migrations/
 COPY --from=builder-plugin /app/plugins/lyrics-presenter/package.json /app/plugins/lyrics-presenter/
 COPY --from=builder-plugin /app/plugins/lyrics-presenter/dist/ /app/plugins/lyrics-presenter/dist/
 COPY --from=builder-plugin /app/plugins/lyrics-presenter/out/ /app/plugins/lyrics-presenter/out/
