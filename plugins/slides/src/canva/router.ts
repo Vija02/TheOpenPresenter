@@ -17,10 +17,11 @@ import {
 import { exportDesignAsPdf, listDesigns } from "./api";
 import { getCanvaOAuthConfig } from "./oauth";
 import {
+  assertConnectionInOrg,
   deleteConnection as deleteCanvaConnection,
   getValidAccessToken as getCanvaAccessToken,
-  getConnectionSummary as getCanvaConnectionSummary,
   isOrganizationMember,
+  listConnections,
 } from "./tokenStore";
 
 export type CanvaRouterDeps = {
@@ -79,29 +80,35 @@ export const createCanvaRouter = (t: TRPCObject, deps: CanvaRouterDeps) => {
     return loadedContextData;
   };
 
+  const requireCanvaConnection = async (
+    pluginId: string,
+    connectionId: string,
+    ctx: RequestCtx,
+  ) => {
+    const loadedContextData = await requireCanvaOrgAccess(pluginId, ctx);
+    await assertConnectionInOrg(
+      serverPluginApi,
+      connectionId,
+      loadedContextData.organizationId,
+    );
+    return loadedContextData;
+  };
+
   return {
     canvaStatus: t.procedure
       .input(z.object({ pluginId: z.string() }))
       .query(async ({ input: { pluginId }, ctx }) => {
         const config = getCanvaOAuthConfig();
         if (!config) {
-          return {
-            configured: false,
-            connected: false,
-            connectedByName: null,
-          } as const;
+          return { configured: false, connections: [] };
         }
 
         const loadedContextData = loadedContext[pluginId];
         if (!loadedContextData) {
-          return {
-            configured: true,
-            connected: false,
-            connectedByName: null,
-          } as const;
+          return { configured: true, connections: [] };
         }
 
-        const connection = await getCanvaConnectionSummary(
+        const connections = await listConnections(
           serverPluginApi,
           {
             sessionId: ctx.sessionId,
@@ -112,26 +119,38 @@ export const createCanvaRouter = (t: TRPCObject, deps: CanvaRouterDeps) => {
 
         return {
           configured: true,
-          connected: connection !== null,
-          connectedByName: connection?.connectedByName ?? null,
-        } as const;
+          connections: connections.map((c) => ({
+            id: c.id,
+            label:
+              c.canvaDisplayName ??
+              (c.connectedByName
+                ? `Added by ${c.connectedByName}`
+                : "Canva account"),
+            canvaDisplayName: c.canvaDisplayName,
+            connectedByName: c.connectedByName,
+          })),
+        };
       }),
 
     canvaListDesigns: t.procedure
       .input(
         z.object({
           pluginId: z.string(),
+          connectionId: z.string(),
           query: z.string().optional(),
           cursor: z.string().optional(),
         }),
       )
       .query(
-        async ({ input: { pluginId, query, cursor: continuation }, ctx }) => {
-          const loadedContextData = await requireCanvaOrgAccess(pluginId, ctx);
+        async ({
+          input: { pluginId, connectionId, query, cursor: continuation },
+          ctx,
+        }) => {
+          await requireCanvaConnection(pluginId, connectionId, ctx);
 
           const accessToken = await getCanvaAccessToken(
             serverPluginApi,
-            loadedContextData.organizationId,
+            connectionId,
           );
           const result = await listDesigns(accessToken, {
             query,
@@ -152,19 +171,17 @@ export const createCanvaRouter = (t: TRPCObject, deps: CanvaRouterDeps) => {
       ),
 
     canvaDisconnect: t.procedure
-      .input(z.object({ pluginId: z.string() }))
-      .mutation(async ({ input: { pluginId }, ctx }) => {
-        const loadedContextData = await requireCanvaOrgAccess(pluginId, ctx);
-        await deleteCanvaConnection(
-          serverPluginApi,
-          loadedContextData.organizationId,
-        );
+      .input(z.object({ pluginId: z.string(), connectionId: z.string() }))
+      .mutation(async ({ input: { pluginId, connectionId }, ctx }) => {
+        await requireCanvaConnection(pluginId, connectionId, ctx);
+        await deleteCanvaConnection(serverPluginApi, connectionId);
       }),
 
     selectCanvaDesign: t.procedure
       .input(
         z.object({
           pluginId: z.string(),
+          connectionId: z.string(),
           designId: z.string(),
           name: z.string().optional(),
           replaceImportId: z.string().optional(),
@@ -172,24 +189,29 @@ export const createCanvaRouter = (t: TRPCObject, deps: CanvaRouterDeps) => {
       )
       .mutation(
         async ({
-          input: { pluginId, designId, name, replaceImportId },
+          input: { pluginId, connectionId, designId, name, replaceImportId },
           ctx,
         }) => {
           const log = logger.child({ pluginId, designId, replaceImportId });
-          const loadedContextData = await requireCanvaOrgAccess(pluginId, ctx);
+          const loadedContextData = await requireCanvaConnection(
+            pluginId,
+            connectionId,
+            ctx,
+          );
           const loadedPlugin = loadedPlugins[pluginId]!;
 
           const newImport: CanvaImportData = {
             ...getBaseImport("canva", name, replaceImportId),
             type: "canva",
             designId,
+            connectionId,
           };
           loadedPlugin.pluginData.imports[newImport.importId] = newImport;
 
           try {
             const accessToken = await getCanvaAccessToken(
               serverPluginApi,
-              loadedContextData.organizationId,
+              connectionId,
             );
 
             log.info("Exporting Canva design to PDF...");

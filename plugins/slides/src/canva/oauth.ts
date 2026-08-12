@@ -8,7 +8,11 @@ const CANVA_AUTHORIZE_URL = "https://www.canva.com/api/oauth/authorize";
 const CANVA_TOKEN_URL = "https://api.canva.com/rest/v1/oauth/token";
 
 // `design:meta:read` lists the user's designs, `design:content:read` exports them
-export const CANVA_SCOPES = ["design:meta:read", "design:content:read"];
+export const CANVA_SCOPES = [
+  "design:meta:read",
+  "design:content:read",
+  "profile:read",
+];
 
 export type CanvaTokenResponse = {
   access_token: string;

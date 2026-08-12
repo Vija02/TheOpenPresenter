@@ -71,6 +71,7 @@ export interface GoogleSlidesImportData extends BaseImportData {
 export interface CanvaImportData extends BaseImportData {
   type: "canva";
   designId: string;
+  connectionId?: string;
 }
 
 export interface PdfImportData extends BaseImportData {

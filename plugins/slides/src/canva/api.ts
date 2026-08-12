@@ -171,3 +171,37 @@ export const exportDesignAsPdf = async (
 
   return Buffer.from(await fileRes.arrayBuffer());
 };
+
+export type CanvaAccountIdentity = {
+  canvaUserId: string;
+  canvaTeamId: string | null;
+  displayName: string | null;
+};
+
+export const getAccountIdentity = async (
+  accessToken: string,
+  log: typeof logger,
+): Promise<CanvaAccountIdentity> => {
+  const me = await canvaFetch<{
+    team_user: { user_id: string; team_id?: string };
+  }>(accessToken, "/users/me");
+
+  let displayName: string | null = null;
+  try {
+    const profile = await canvaFetch<{
+      profile: { display_name?: string };
+    }>(accessToken, "/users/me/profile");
+    displayName = profile.profile?.display_name ?? null;
+  } catch (err) {
+    log.warn(
+      { err },
+      "Could not read Canva display name (is the profile:read scope enabled?)",
+    );
+  }
+
+  return {
+    canvaUserId: me.team_user.user_id,
+    canvaTeamId: me.team_user.team_id ?? null,
+    displayName,
+  };
+};
