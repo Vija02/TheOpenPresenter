@@ -23,7 +23,7 @@ import { useForm } from "react-hook-form";
 import { FaFilePdf, FaImage } from "react-icons/fa";
 import { FaArrowsRotate, FaCircleInfo, FaTrash } from "react-icons/fa6";
 import { RiFilePpt2Fill } from "react-icons/ri";
-import { SiGoogleslides } from "react-icons/si";
+import { SiCanva, SiGoogleslides } from "react-icons/si";
 
 import {
   DisplayMode,
@@ -41,6 +41,7 @@ import { useSlideMediaPicker } from "./integrations";
 
 const IMPORT_TYPE_ICON: Record<ImportType, React.ReactNode> = {
   googleslides: <SiGoogleslides className="size-5 shrink-0 text-[#F4B400]" />,
+  canva: <SiCanva className="size-5 shrink-0 text-[#00C4CC]" />,
   pdf: <FaFilePdf className="size-5 shrink-0 text-[#F52102]" />,
   ppt: <RiFilePpt2Fill className="size-5 shrink-0 text-[#CC4A34]" />,
   image: <FaImage className="size-5 shrink-0 text-gray-700" />,

@@ -1,4 +1,4 @@
-export type ImportType = "googleslides" | "pdf" | "ppt" | "image";
+export type ImportType = "googleslides" | "canva" | "pdf" | "ppt" | "image";
 export type DisplayMode = "googleslides" | "image";
 
 /**
@@ -7,6 +7,7 @@ export type DisplayMode = "googleslides" | "image";
  */
 export const DEFAULT_DISPLAY_MODE_BY_TYPE: Record<ImportType, DisplayMode> = {
   googleslides: "googleslides",
+  canva: "image",
   pdf: "image",
   ppt: "image",
   image: "image",
@@ -67,6 +68,11 @@ export interface GoogleSlidesImportData extends BaseImportData {
   slideAutoplayDurations?: number[];
 }
 
+export interface CanvaImportData extends BaseImportData {
+  type: "canva";
+  designId: string;
+}
+
 export interface PdfImportData extends BaseImportData {
   type: "pdf";
 }
@@ -81,6 +87,7 @@ export interface ImageImportData extends BaseImportData {
 
 export type ImportData =
   | GoogleSlidesImportData
+  | CanvaImportData
   | PdfImportData
   | PptImportData
   | ImageImportData;
