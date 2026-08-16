@@ -17,6 +17,7 @@
     "@googleworkspace/drive-picker-react": "^0.2.0",
     "@r2wc/react-to-web-component": "^2.0.3",
     "@repo/base-plugin": "*",
+    "@repo/layout": "*",
     "@repo/lib": "*",
     "@repo/media-picker": "*",
     "@repo/observability": "*",
