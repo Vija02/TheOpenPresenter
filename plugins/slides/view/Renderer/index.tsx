@@ -4,6 +4,7 @@ import { getEffectiveDisplayMode } from "../../src/types";
 import { usePluginAPI } from "../pluginApi";
 import { GoogleSlideRenderer } from "./GoogleSlideRenderer";
 import { ImageRenderer } from "./ImageRenderer";
+import { LayoutSlideRenderer } from "./LayoutSlideRenderer";
 
 const Renderer = () => {
   const pluginApi = usePluginAPI();
@@ -55,6 +56,8 @@ const Renderer = () => {
   return (
     <>
       <ImageRenderer onLoadingChange={reportLoading} />
+
+      <LayoutSlideRenderer />
 
       {googleSlidesImports.map((imp) => (
         <GoogleSlideRenderer

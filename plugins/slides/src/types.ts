@@ -1,5 +1,13 @@
-export type ImportType = "googleslides" | "canva" | "pdf" | "ppt" | "image";
-export type DisplayMode = "googleslides" | "image";
+import type { LayoutDoc } from "@repo/layout";
+
+export type ImportType =
+  | "googleslides"
+  | "canva"
+  | "pdf"
+  | "ppt"
+  | "image"
+  | "custom";
+export type DisplayMode = "googleslides" | "image" | "layout";
 
 /**
  * Default display mode for each import type.
@@ -11,6 +19,7 @@ export const DEFAULT_DISPLAY_MODE_BY_TYPE: Record<ImportType, DisplayMode> = {
   pdf: "image",
   ppt: "image",
   image: "image",
+  custom: "layout",
 };
 
 export const getEffectiveDisplayMode = (
@@ -86,12 +95,18 @@ export interface ImageImportData extends BaseImportData {
   type: "image";
 }
 
+export interface CustomImportData extends BaseImportData {
+  type: "custom";
+  docs: LayoutDoc[];
+}
+
 export type ImportData =
   | GoogleSlidesImportData
   | CanvaImportData
   | PdfImportData
   | PptImportData
-  | ImageImportData;
+  | ImageImportData
+  | CustomImportData;
 
 // ============================================================================
 // Plugin Data Types
