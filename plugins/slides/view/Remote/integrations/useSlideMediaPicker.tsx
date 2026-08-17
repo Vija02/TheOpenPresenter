@@ -1,4 +1,6 @@
+import { Option } from "@repo/ui";
 import { useCallback, useRef } from "react";
+import { RiSlideshowLine } from "react-icons/ri";
 
 import { usePluginAPI } from "../../pluginApi";
 import { PickerCard } from "../component/PickerCard";
@@ -8,6 +10,7 @@ import { IntegrationController, IntegrationLaunchContext } from "./types";
 
 export type PickMediaOptions = IntegrationLaunchContext & {
   multiple?: boolean;
+  onCreateFromScratch?: () => void;
 };
 
 export const useSlideMediaPicker = () => {
@@ -30,7 +33,11 @@ export const useSlideMediaPicker = () => {
   );
 
   const pickMedia = useCallback(
-    async ({ multiple = true, replaceImportId }: PickMediaOptions = {}) => {
+    async ({
+      multiple = true,
+      replaceImportId,
+      onCreateFromScratch,
+    }: PickMediaOptions = {}) => {
       if (pluginApi.isPublicAccess) {
         pluginApi.remote.toast.error("Sign in to upload media.");
         return;
@@ -41,29 +48,49 @@ export const useSlideMediaPicker = () => {
           type: ["image", "ppt", "pdf"],
           multiple,
           customComponent: (
-            <IntegrationSection>
-              {slideIntegrations.map(({ id, name, icon }) => (
-                <PickerCard
-                  key={id}
+            <div className="flex flex-col gap-6">
+              {onCreateFromScratch && (
+                <Option
+                  size="lg"
                   onClick={() => {
-                    const controller = controllersRef.current[id];
-                    if (!controller) {
-                      pluginApi.remote.toast.error(
-                        `${name} integration is not ready yet.`,
-                      );
-                      return;
-                    }
-                    controller.open({
-                      replaceImportId,
-                      onComplete: () => pluginApi.mediaPicker.close(),
-                    });
+                    pluginApi.mediaPicker.close();
+                    onCreateFromScratch();
                   }}
-                  icon={icon}
-                  text={name}
-                  isLoading={false}
+                  testId="slides-create-from-scratch"
+                  title={
+                    <span className="flex items-center gap-3">
+                      <RiSlideshowLine className="size-6 shrink-0 text-secondary" />
+                      Create slides from scratch
+                    </span>
+                  }
+                  description="Design your own slides directly in TheOpenPresenter."
                 />
-              ))}
-            </IntegrationSection>
+              )}
+
+              <IntegrationSection>
+                {slideIntegrations.map(({ id, name, icon }) => (
+                  <PickerCard
+                    key={id}
+                    onClick={() => {
+                      const controller = controllersRef.current[id];
+                      if (!controller) {
+                        pluginApi.remote.toast.error(
+                          `${name} integration is not ready yet.`,
+                        );
+                        return;
+                      }
+                      controller.open({
+                        replaceImportId,
+                        onComplete: () => pluginApi.mediaPicker.close(),
+                      });
+                    }}
+                    icon={icon}
+                    text={name}
+                    isLoading={false}
+                  />
+                ))}
+              </IntegrationSection>
+            </div>
           ),
         });
 
