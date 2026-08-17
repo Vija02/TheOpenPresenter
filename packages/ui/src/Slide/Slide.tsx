@@ -64,7 +64,7 @@ export const Slide = ({
               {heading || "\u00A0"}
             </p>
             {headingRight && (
-              <div className="flex items-center">{headingRight}</div>
+              <div className="ui--slide-heading-right flex items-center">{headingRight}</div>
             )}
           </div>
         )}

@@ -3,3 +3,7 @@
 .ui--slide-test {
   @apply uppercase text-xs mb-1 text-ellipsis overflow-hidden text-nowrap;
 }
+
+.ui--slide-heading-right button {
+  height: 20px;
+}
