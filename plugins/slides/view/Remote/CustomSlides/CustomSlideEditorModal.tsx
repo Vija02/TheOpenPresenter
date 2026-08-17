@@ -72,6 +72,12 @@ const CustomSlideEditorModal = ({
     if (open && slides.length === 0) onOpenChange(false);
   }, [open, slides.length, onOpenChange]);
 
+  // Make sure that selection is updated when we append from outside
+  useEffect(() => {
+    setSelectedSlideIndex(initialSlideIndex);
+    setActiveTemplateId(null);
+  }, [initialSlideIndex]);
+
   const selectSlide = useCallback((slideIndex: number) => {
     setSelectedSlideIndex(slideIndex);
     setActiveTemplateId(null);
