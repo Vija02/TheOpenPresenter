@@ -1,21 +1,34 @@
 import { Dropzone } from "@repo/media-picker/client";
+import { Option } from "@repo/ui";
 import { FaFilePdf, FaFilePowerpoint, FaImage } from "react-icons/fa";
 import { FiUpload } from "react-icons/fi";
+import { RiSlideshowLine } from "react-icons/ri";
 
 import { usePluginAPI } from "../pluginApi";
+import { useCustomSlides } from "./CustomSlides/useCustomSlides";
+import type { EditorTarget } from "./index";
 import { IntegrationCards } from "./integrations";
 import { useMediaUpload } from "./useMediaUpload";
 
-const Landing = () => {
+type LandingProps = {
+  onCustomSlideEdit: (target: EditorTarget) => void;
+};
+
+const Landing = ({ onCustomSlideEdit }: LandingProps) => {
   const pluginApi = usePluginAPI();
   const pluginContext = pluginApi.pluginContext;
   const isPublicAccess = pluginApi.isPublicAccess;
 
   const { isProcessing, handleUploadComplete } = useMediaUpload();
+  const { createDeck } = useCustomSlides();
+
+  const handleCreate = () => {
+    onCustomSlideEdit({ importId: createDeck(), slideIndex: 0 });
+  };
 
   return (
     <div className="w-full flex justify-center py-4 md:py-8 px-4">
-      <div className="flex flex-col w-full text-left gap-6 md:gap-10 max-w-7xl mx-auto mt-2 md:mt-4">
+      <div className="flex flex-col w-full text-left gap-6 max-w-7xl mx-auto mt-2 md:mt-4">
         {/* HERO SECTION */}
         {isPublicAccess ? (
           <div className="bg-surface-secondary rounded-xl border-2 border-dashed border-stroke p-6 md:p-10 text-center text-secondary font-medium min-h-[250px] md:min-h-[400px] flex flex-col items-center justify-center">
@@ -68,8 +81,21 @@ const Landing = () => {
           </Dropzone>
         )}
 
+        <Option
+          size="lg"
+          onClick={handleCreate}
+          testId="slides-create-from-scratch"
+          title={
+            <span className="flex items-center gap-3">
+              <RiSlideshowLine className="size-6 shrink-0 text-secondary" />
+              Create slides from scratch
+            </span>
+          }
+          description="Design your own slides directly in TheOpenPresenter."
+        />
+
         {/* INTEGRATIONS SECTION */}
-        <div className="flex flex-col gap-4 px-4 mt-2 md:mt-4">
+        <div className="flex flex-col gap-4">
           <p className="font-semibold text-primary text-lg text-center md:text-left">
             Or import from integration
           </p>

@@ -1,4 +1,4 @@
-import { extractMediaName } from "@repo/lib";
+import { LayoutRenderer } from "@repo/layout/react";
 import {
   Button,
   LoadingInline,
@@ -7,22 +7,26 @@ import {
   Skeleton,
   Slide,
   SlideGrid,
-  UniversalImage,
 } from "@repo/ui";
-import { useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { FaArrowLeft, FaArrowRight, FaPlus } from "react-icons/fa";
-import { VscSettingsGear } from "react-icons/vsc";
+import { VscEdit, VscSettingsGear } from "react-icons/vsc";
 
-import { resolveSlide } from "../../src/slideOrderUtils";
+import { imageSlideDoc, isCustomImport } from "../../src/customSlides";
+import { parseSlideRef, resolveSlide } from "../../src/slideOrderUtils";
 import { usePluginAPI } from "../pluginApi";
 import {
   computeGlobalSlideClickCount,
   useAutoplay,
 } from "../utils/useAutoplay";
+import CustomSlideEditorModal from "./CustomSlides/CustomSlideEditorModal";
+import { useCustomSlides } from "./CustomSlides/useCustomSlides";
 import Landing from "./Landing";
 import SettingsModal from "./SettingsModal";
 import "./index.css";
 import { useSlideMediaPicker } from "./integrations";
+
+export type EditorTarget = { importId: string; slideIndex: number };
 
 const Remote = () => {
   const pluginApi = usePluginAPI();
@@ -38,67 +42,87 @@ const Remote = () => {
     );
   }, [pluginData.imports]);
 
-  if (!hasSlides && !isAnyImportFetching) {
-    return <Landing />;
-  }
+  const [editorTarget, setEditorTarget] = useState<EditorTarget | null>(null);
+
+  const showLanding = !hasSlides && !isAnyImportFetching;
 
   return (
-    <PluginScaffold
-      title="Slides"
-      postToolbar={
-        <>
-          <OverlayToggle
-            toggler={({ onToggle }) => (
-              <Button size="xs" variant="pill" onClick={onToggle}>
-                <VscSettingsGear />
-                Settings
-              </Button>
-            )}
-          >
-            <SettingsModal />
-          </OverlayToggle>
-        </>
-      }
-      toolbar={
-        <div className="stack-row gap-x-4 gap-y-2 flex-wrap">
-          <div className="stack-row">
-            <span className="hidden sm:inline font-bold text-white text-xs">
-              Navigate:
-            </span>
-            <Button
-              size="xs"
-              variant="pill"
-              onClick={() => {
-                pluginApi.renderer.triggerKeyPress("PREV", sceneId);
-              }}
-            >
-              <FaArrowLeft />
-              Left
-            </Button>
-            <Button
-              size="xs"
-              variant="pill"
-              onClick={() => {
-                pluginApi.renderer.triggerKeyPress("NEXT", sceneId);
-              }}
-            >
-              <FaArrowRight /> Right
-            </Button>
-          </div>
-        </div>
-      }
-      body={
-        <div className="p-3 w-full">
-          <SlideGrid pluginAPI={pluginApi}>
-            <RemoteHandler />
-          </SlideGrid>
-        </div>
-      }
-    />
+    <>
+      {showLanding ? (
+        <Landing onCustomSlideEdit={setEditorTarget} />
+      ) : (
+        <PluginScaffold
+          title="Slides"
+          postToolbar={
+            <>
+              <OverlayToggle
+                toggler={({ onToggle }) => (
+                  <Button size="xs" variant="pill" onClick={onToggle}>
+                    <VscSettingsGear />
+                    Settings
+                  </Button>
+                )}
+              >
+                <SettingsModal onCustomSlideEdit={setEditorTarget} />
+              </OverlayToggle>
+            </>
+          }
+          toolbar={
+            <div className="stack-row gap-x-4 gap-y-2 flex-wrap">
+              <div className="stack-row">
+                <span className="hidden sm:inline font-bold text-white text-xs">
+                  Navigate:
+                </span>
+                <Button
+                  size="xs"
+                  variant="pill"
+                  onClick={() => {
+                    pluginApi.renderer.triggerKeyPress("PREV", sceneId);
+                  }}
+                >
+                  <FaArrowLeft />
+                  Left
+                </Button>
+                <Button
+                  size="xs"
+                  variant="pill"
+                  onClick={() => {
+                    pluginApi.renderer.triggerKeyPress("NEXT", sceneId);
+                  }}
+                >
+                  <FaArrowRight /> Right
+                </Button>
+              </div>
+            </div>
+          }
+          body={
+            <div className="p-3 w-full">
+              <SlideGrid pluginAPI={pluginApi}>
+                <RemoteHandler onCustomSlideEdit={setEditorTarget} />
+              </SlideGrid>
+            </div>
+          }
+        />
+      )}
+
+      {editorTarget && (
+        <CustomSlideEditorModal
+          key={editorTarget.importId}
+          importId={editorTarget.importId}
+          initialSlideIndex={editorTarget.slideIndex}
+          open
+          onOpenChange={(open) => !open && setEditorTarget(null)}
+        />
+      )}
+    </>
   );
 };
 
-const RemoteHandler = () => {
+type RemoteHandlerProps = {
+  onCustomSlideEdit: (target: EditorTarget) => void;
+};
+
+const RemoteHandler = ({ onCustomSlideEdit }: RemoteHandlerProps) => {
   const pluginApi = usePluginAPI();
 
   const pluginData = pluginApi.scene.useData((x) => x.pluginData);
@@ -107,6 +131,7 @@ const RemoteHandler = () => {
   const mutableRendererData = pluginApi.renderer.useValtioData();
 
   const { integrationHosts, pickMedia } = useSlideMediaPicker();
+  const { createDeck, addSlide } = useCustomSlides();
 
   const resolvedSlides = pluginData.slideOrder
     .map((_, i) => resolveSlide(pluginData, i))
@@ -155,36 +180,103 @@ const RemoteHandler = () => {
     return baseIndex;
   }, [shouldAutoPlay, calculatedAutoplaySlideIndex, baseIndex]);
 
+  const totalSlides = pluginData.slideOrder?.length ?? 0;
+
+  const lastCustomDeckId = useMemo(() => {
+    const order = pluginData.slideOrder ?? [];
+    for (let i = order.length - 1; i >= 0; i--) {
+      const ref = order[i];
+      if (!ref) continue;
+      const importData = pluginData.imports[parseSlideRef(ref).importId];
+      if (isCustomImport(importData)) return importData.importId;
+    }
+    return null;
+  }, [pluginData]);
+
+  const handleCreateFromScratch = useCallback(() => {
+    // Extend the deck
+    if (lastCustomDeckId) {
+      const newIndex = addSlide(lastCustomDeckId);
+      if (newIndex !== null) {
+        onCustomSlideEdit({ importId: lastCustomDeckId, slideIndex: newIndex });
+      }
+      return;
+    }
+
+    onCustomSlideEdit({ importId: createDeck(), slideIndex: 0 });
+  }, [lastCustomDeckId, addSlide, createDeck, onCustomSlideEdit]);
+
   return (
     <>
       {integrationHosts}
 
-      {resolvedSlides.map((slide, i) => {
+      {resolvedSlides.map((slide) => {
         const isReplacing = replacingImportIds.has(slide.ref.importId);
+        const index = slide.globalSlideIndex;
+        const customImport = isCustomImport(slide.importData)
+          ? slide.importData
+          : null;
+        const isCustom = customImport !== null;
+
+        const doc =
+          customImport?.docs[slide.localSlideIndex] ??
+          imageSlideDoc(slide.thumbnailUrl);
+
         return (
           <Slide
             key={slide.rawRef}
             pluginAPI={pluginApi}
-            heading={`Slide ${i + 1}`}
-            isActive={i === activeIndex}
+            heading={`Slide ${index + 1}`}
+            isActive={index === activeIndex}
+            headingRight={
+              isCustom ? (
+                <div
+                  className="flex items-center"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Button
+                    size="xs"
+                    variant="ghost"
+                    title="Edit slide"
+                    onClick={() =>
+                      onCustomSlideEdit({
+                        importId: slide.ref.importId,
+                        slideIndex: slide.localSlideIndex,
+                      })
+                    }
+                  >
+                    <VscEdit />
+                  </Button>
+                </div>
+              ) : undefined
+            }
             onClick={() => {
-              mutableRendererData.currentSlideIndex = i;
+              mutableRendererData.currentSlideIndex = index;
               mutableRendererData.currentClickCount = null;
               mutableRendererData.lastClickTimestamp = Date.now();
               pluginApi.renderer.setRenderCurrentScene();
             }}
           >
-            {({ width }) => (
+            {() => (
               <div className="center relative h-full w-full">
-                <UniversalImage
-                  src={
-                    /^https?:\/\//.test(slide.thumbnailUrl)
-                      ? slide.thumbnailUrl
-                      : extractMediaName(slide.thumbnailUrl)
+                <div
+                  className="h-full w-full bg-black"
+                  onDoubleClick={
+                    isCustom
+                      ? () =>
+                          onCustomSlideEdit({
+                            importId: slide.ref.importId,
+                            slideIndex: slide.localSlideIndex,
+                          })
+                      : undefined
                   }
-                  imgProp={{ style: { width: "100%" } }}
-                  width={width}
-                />
+                >
+                  <LayoutRenderer
+                    doc={doc}
+                    data={{}}
+                    frame={{ index: index + 1, total: totalSlides }}
+                  />
+                </div>
                 {isReplacing && (
                   <div className="absolute bottom-1 right-1 flex items-center justify-center rounded-full bg-black/60 p-1 text-white">
                     <LoadingInline className="size-3" />
@@ -235,7 +327,12 @@ const RemoteHandler = () => {
       <Slide
         pluginAPI={pluginApi}
         heading=""
-        onClick={() => pickMedia({ multiple: true })}
+        onClick={() =>
+          pickMedia({
+            multiple: true,
+            onCreateFromScratch: handleCreateFromScratch,
+          })
+        }
       >
         <div className="group h-full w-full flex flex-col items-center justify-center gap-2 border-2 border-dashed border-tertiary text-tertiary hover:border-secondary hover:text-secondary hover:bg-black/5 transition-colors cursor-pointer">
           <FaPlus className="size-6" />

@@ -1,4 +1,15 @@
-import { PluginBaseData, ResolvedSlide, SlideReference } from "./types";
+import {
+  ImportData,
+  PluginBaseData,
+  ResolvedSlide,
+  SlideReference,
+} from "./types";
+
+export function getImportSlideCount(importData: ImportData): number {
+  return importData.type === "custom"
+    ? importData.docs.length
+    : importData.thumbnailLinks.length;
+}
 
 export function createSlideRef(importId: string, slideIndex: number): string {
   return `${importId}:${slideIndex}`;
@@ -34,7 +45,7 @@ export function resolveSlide(
   const importData = pluginData.imports[ref.importId];
   if (!importData) return null;
 
-  if (ref.slideIndex >= importData.thumbnailLinks.length) return null;
+  if (ref.slideIndex >= getImportSlideCount(importData)) return null;
 
   return {
     globalSlideIndex,

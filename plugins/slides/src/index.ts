@@ -29,6 +29,7 @@ import {
   remoteWebComponentTag,
   rendererWebComponentTag,
 } from "./consts";
+import { isCustomImport, rebuildOrderAfterSlideRemoval } from "./customSlides";
 import { createImageProcessor } from "./googleSlides/cacheGoogleSlideImage";
 import { processHtml } from "./googleSlides/processHtml";
 import { extractSlideData } from "./googleSlides/slideData/slideDataExtractor";
@@ -51,6 +52,7 @@ import {
 import {
   AutoplayState,
   BaseImportData,
+  CustomImportData,
   GoogleSlidesImportData,
   ImageImportData,
   ImportData,
@@ -524,6 +526,64 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
 
     // 3. Clean up the thumbnails and uploaded PDF
     cleanupImportMedia(oldImport);
+  };
+
+  /**
+   * Drop an entire import and every slide it contributed.
+   *
+   * Shared by `removeImport` and by `removeCustomSlide` when it deletes the
+   * last slide of a deck — a deck with no slides would otherwise linger in the
+   * Settings list with nothing to show.
+   */
+  const removeImportById = (pluginId: string, importId: string) => {
+    const loadedPlugin = loadedPlugins[pluginId]!;
+    const loadedYjs = loadedYjsData[pluginId]!;
+    const getRendererData = loadedRendererDataGetter[pluginId];
+
+    const importData = loadedPlugin.pluginData.imports[importId];
+    if (!importData) return;
+
+    if (importData.pdfMediaName) {
+      deleteOldMedia(serverPluginApi, [importData.pdfMediaName]);
+    }
+
+    const oldSlideOrder = [...loadedPlugin.pluginData.slideOrder];
+    const newSlideOrder = oldSlideOrder.filter(
+      (ref) => parseSlideRef(ref).importId !== importId,
+    );
+
+    loadedYjs.doc?.transact(() => {
+      // 1. Drop the import data
+      const { [importId]: _, ...remainingImports } =
+        loadedPlugin.pluginData.imports;
+      loadedPlugin.pluginData.imports = remainingImports;
+
+      // 2. Strip slideOrder
+      loadedPlugin.pluginData.slideOrder = newSlideOrder;
+
+      // 3. Update renderer state
+      const rendererMap = getRendererData?.() ?? {};
+      for (const rendererData of Object.values(rendererMap)) {
+        const displayModes = rendererData.get("displayModes");
+        if (displayModes && displayModes.has(importId)) {
+          displayModes.delete(importId);
+        }
+
+        const currentIdx = rendererData.get("currentSlideIndex");
+        if (currentIdx === null || currentIdx === undefined) continue;
+
+        const oldRef = oldSlideOrder[currentIdx];
+        const newIdx =
+          oldRef !== undefined ? newSlideOrder.indexOf(oldRef) : -1;
+
+        if (newIdx === -1) {
+          rendererData.set("currentSlideIndex", null);
+          rendererData.set("currentClickCount", null);
+        } else {
+          rendererData.set("currentSlideIndex", newIdx);
+        }
+      }
+    });
   };
 
   return t.router({
@@ -1005,52 +1065,78 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
           }),
         )
         .mutation(async ({ input: { pluginId, importId } }) => {
+          removeImportById(pluginId, importId);
+        }),
+
+      removeCustomSlide: t.procedure
+        .input(
+          z.object({
+            pluginId: z.string(),
+            importId: z.string(),
+            slideIndex: z.number().int().min(0),
+          }),
+        )
+        .mutation(async ({ input: { pluginId, importId, slideIndex } }) => {
           const loadedPlugin = loadedPlugins[pluginId]!;
           const loadedYjs = loadedYjsData[pluginId]!;
           const getRendererData = loadedRendererDataGetter[pluginId];
 
           const importData = loadedPlugin.pluginData.imports[importId];
-          if (!importData) return;
+          if (!isCustomImport(importData)) return;
+          if (slideIndex >= importData.docs.length) return;
 
-          if (importData.pdfMediaName) {
-            deleteOldMedia(serverPluginApi, [importData.pdfMediaName]);
+          // Last slide standing: the deck itself is what should go
+          if (importData.docs.length <= 1) {
+            removeImportById(pluginId, importId);
+            return;
           }
 
           const oldSlideOrder = [...loadedPlugin.pluginData.slideOrder];
-          const newSlideOrder = oldSlideOrder.filter(
-            (ref) => parseSlideRef(ref).importId !== importId,
+          const newSlideOrder = rebuildOrderAfterSlideRemoval(
+            oldSlideOrder,
+            importId,
+            slideIndex,
+          );
+          const removedPos = oldSlideOrder.indexOf(
+            createSlideRef(importId, slideIndex),
           );
 
           loadedYjs.doc?.transact(() => {
-            // 1. Drop the import data
-            const { [importId]: _, ...remainingImports } =
-              loadedPlugin.pluginData.imports;
-            loadedPlugin.pluginData.imports = remainingImports;
+            const target = loadedPlugin.pluginData.imports[
+              importId
+            ] as CustomImportData;
 
-            // 2. Strip slideOrder
+            target.docs = target.docs.filter((_, i) => i !== slideIndex);
+            target.slideIds = target.slideIds.filter(
+              (_, i) => i !== slideIndex,
+            );
+            target.slideClickCounts = target.slideClickCounts.filter(
+              (_, i) => i !== slideIndex,
+            );
+
             loadedPlugin.pluginData.slideOrder = newSlideOrder;
 
-            // 3. Update renderer state
+            if (removedPos === -1) return;
+
             const rendererMap = getRendererData?.() ?? {};
             for (const rendererData of Object.values(rendererMap)) {
-              const displayModes = rendererData.get("displayModes");
-              if (displayModes && displayModes.has(importId)) {
-                displayModes.delete(importId);
-              }
-
               const currentIdx = rendererData.get("currentSlideIndex");
               if (currentIdx === null || currentIdx === undefined) continue;
+              if (currentIdx < removedPos) continue;
 
-              const oldRef = oldSlideOrder[currentIdx];
-              const newIdx =
-                oldRef !== undefined ? newSlideOrder.indexOf(oldRef) : -1;
-
-              if (newIdx === -1) {
-                rendererData.set("currentSlideIndex", null);
-                rendererData.set("currentClickCount", null);
-              } else {
-                rendererData.set("currentSlideIndex", newIdx);
+              if (currentIdx > removedPos) {
+                rendererData.set("currentSlideIndex", currentIdx - 1);
+                continue;
               }
+
+              // The live slide was the one deleted. Hold the position so the
+              // next slide moves up into view rather than blanking the output.
+              const clamped = Math.min(removedPos, newSlideOrder.length - 1);
+              rendererData.set(
+                "currentSlideIndex",
+                clamped < 0 ? null : clamped,
+              );
+              rendererData.set("currentClickCount", clamped < 0 ? null : 0);
             }
           });
         }),

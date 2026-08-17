@@ -21,10 +21,16 @@ import {
 import { useCallback, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { FaFilePdf, FaImage } from "react-icons/fa";
-import { FaArrowsRotate, FaCircleInfo, FaTrash } from "react-icons/fa6";
-import { RiFilePpt2Fill } from "react-icons/ri";
+import {
+  FaArrowsRotate,
+  FaCircleInfo,
+  FaPenToSquare,
+  FaTrash,
+} from "react-icons/fa6";
+import { RiFilePpt2Fill, RiSlideshowLine } from "react-icons/ri";
 import { SiCanva, SiGoogleslides } from "react-icons/si";
 
+import { isCustomImport } from "../../src/customSlides";
 import {
   DisplayMode,
   ImportType,
@@ -37,6 +43,7 @@ import {
   computeGlobalSlideClickCount,
 } from "../utils/useAutoplay";
 import { displayTypeMapping } from "./displayTypeMapping";
+import type { EditorTarget } from "./index";
 import { useSlideMediaPicker } from "./integrations";
 
 const IMPORT_TYPE_ICON: Record<ImportType, React.ReactNode> = {
@@ -45,6 +52,7 @@ const IMPORT_TYPE_ICON: Record<ImportType, React.ReactNode> = {
   pdf: <FaFilePdf className="size-5 shrink-0 text-[#F52102]" />,
   ppt: <RiFilePpt2Fill className="size-5 shrink-0 text-[#CC4A34]" />,
   image: <FaImage className="size-5 shrink-0 text-gray-700" />,
+  custom: <RiSlideshowLine className="size-5 shrink-0" />,
 };
 
 type SettingsData = {
@@ -53,7 +61,11 @@ type SettingsData = {
   autoplayLoopDurationSeconds: number;
 };
 
-const SettingsModal = () => {
+type SettingsModalProps = {
+  onCustomSlideEdit: (target: EditorTarget) => void;
+};
+
+const SettingsModal = ({ onCustomSlideEdit }: SettingsModalProps) => {
   const { isOpen, onToggle, resetData } = useOverlayToggle();
 
   const pluginApi = usePluginAPI();
@@ -287,25 +299,43 @@ const SettingsModal = () => {
                               )}
                             </div>
                             <div className="flex items-center gap-2 shrink-0">
-                              <Button
-                                type="button"
-                                size="xs"
-                                variant="outline"
-                                disabled={isBeingReplaced}
-                                onClick={() =>
-                                  pickMedia({
-                                    multiple: false,
-                                    replaceImportId: imp.importId,
-                                  })
-                                }
-                              >
-                                {isBeingReplaced ? (
-                                  <LoadingInline className="size-3" />
-                                ) : (
-                                  <FaArrowsRotate />
-                                )}
-                                Replace
-                              </Button>
+                              {isCustomImport(imp) ? (
+                                <Button
+                                  type="button"
+                                  size="xs"
+                                  variant="outline"
+                                  onClick={() => {
+                                    onToggle?.();
+                                    onCustomSlideEdit({
+                                      importId: imp.importId,
+                                      slideIndex: 0,
+                                    });
+                                  }}
+                                >
+                                  <FaPenToSquare />
+                                  Edit
+                                </Button>
+                              ) : (
+                                <Button
+                                  type="button"
+                                  size="xs"
+                                  variant="outline"
+                                  disabled={isBeingReplaced}
+                                  onClick={() =>
+                                    pickMedia({
+                                      multiple: false,
+                                      replaceImportId: imp.importId,
+                                    })
+                                  }
+                                >
+                                  {isBeingReplaced ? (
+                                    <LoadingInline className="size-3" />
+                                  ) : (
+                                    <FaArrowsRotate />
+                                  )}
+                                  Replace
+                                </Button>
+                              )}
                               <PopConfirm
                                 title="Delete this import?"
                                 description={`"${displayTitle}" and all of its slides will be removed.`}
