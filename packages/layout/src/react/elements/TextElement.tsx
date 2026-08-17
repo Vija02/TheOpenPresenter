@@ -95,6 +95,7 @@ export const TextElementView = ({
         ...placementToCss(placement, element.rect, element.rotation),
         display: "flex",
         flexDirection: "column",
+        isolation: "isolate",
         ...appearanceToCss(element, metrics),
         ...textStyleToCss(style, metrics),
         fontSize,
