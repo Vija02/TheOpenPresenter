@@ -50,19 +50,19 @@ test.describe("Slides Plugin - Multiple Imports", () => {
       page
         .getByTestId("slide-container")
         .nth(slidesAfterFirst - 1)
-        .getByRole("img"),
+        .locator("img").first(),
     ).toBeVisible();
     await expect(
       page
         .getByTestId("slide-container")
         .nth(slidesAfterFirst)
-        .getByRole("img"),
+        .locator("img").first(),
     ).toBeVisible();
     await expect(
       page
         .getByTestId("slide-container")
         .nth(slidesAfterSecond - 1)
-        .getByRole("img"),
+        .locator("img").first(),
     ).toBeVisible();
 
     // The trailing "Add slide" placeholder is still there after both imports

@@ -32,7 +32,7 @@ test.describe("Slides Plugin", () => {
       .filter({ hasText: /^Slide 2$/ });
 
     // Wait for image to be uploaded
-    await expect(secondSlide.getByRole("img")).toBeInViewport({
+    await expect(secondSlide.locator("img")).toBeInViewport({
       timeout: 20 * 1000,
     });
 
@@ -68,7 +68,7 @@ test.describe("Slides Plugin", () => {
       .filter({ hasText: /^Slide 2$/ });
 
     // Wait for image to be uploaded
-    await expect(secondSlide.getByRole("img")).toBeInViewport({
+    await expect(secondSlide.locator("img")).toBeInViewport({
       timeout: 60 * 1000,
     });
 
@@ -103,7 +103,7 @@ test.describe("Slides Plugin", () => {
       .filter({ hasText: /^Slide 1$/ });
 
     // Wait for image to be uploaded
-    await expect(firstSlide.getByRole("img")).toBeInViewport({
+    await expect(firstSlide.locator("img")).toBeInViewport({
       timeout: 20 * 1000,
     });
 
