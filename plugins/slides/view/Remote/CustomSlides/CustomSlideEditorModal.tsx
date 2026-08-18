@@ -1,5 +1,6 @@
 import { LayoutDoc } from "@repo/layout";
 import { LayoutWorkbench } from "@repo/layout/editor";
+import { appData } from "@repo/lib";
 import {
   Button,
   Dialog,
@@ -13,7 +14,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@repo/ui";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   customSlideTemplates,
@@ -23,6 +24,9 @@ import { usePluginAPI } from "../../pluginApi";
 import { LayoutPicker } from "./LayoutPicker";
 import { SlideFilmstrip } from "./SlideFilmstrip";
 import { useCustomSlides, useDeckSlides } from "./useCustomSlides";
+import { useDeckAi } from "./useDeckAi";
+
+const AI_ENABLED = appData.getAiEnabled();
 
 const EMPTY_DATA = {};
 
@@ -59,6 +63,25 @@ const CustomSlideEditorModal = ({
     () => slides.find((s) => s.slideIndex === selectedSlideIndex) ?? null,
     [slides, selectedSlideIndex],
   );
+
+  const deckPosition = useMemo(() => {
+    const at = slides.findIndex((s) => s.slideIndex === selectedSlideIndex);
+    return at === -1 ? null : at;
+  }, [slides, selectedSlideIndex]);
+
+  const deckPositionRef = useRef(deckPosition);
+  deckPositionRef.current = deckPosition;
+  const slideCountRef = useRef(slides.length);
+  slideCountRef.current = slides.length;
+
+  const getAiContext = useCallback(() => {
+    const index = deckPositionRef.current;
+    const count = slideCountRef.current;
+    if (index == null) return null;
+    return `The user is currently editing slide ${index + 1} of ${count}. Always refer to it as "slide ${index + 1}" when you talk to the user, and this is the slide they mean by "this slide" or "the current slide". (Internal detail: that slide is zero-based index ${index}; list_slides/get_slide/edit_slide take zero-based indices, so use index ${index} in tool calls.)`;
+  }, []);
+
+  const deckAi = useDeckAi(importId, { getContext: getAiContext });
 
   // Handle if slide vanish. Eg: Another person deleting
   useEffect(() => {
@@ -207,7 +230,7 @@ const CustomSlideEditorModal = ({
                   onChange={handleChange}
                   data={EMPTY_DATA}
                   frame={frame}
-                  aiThreadKey={`slides:${pluginApi.pluginContext.pluginId}:${selectedSlide.slideId}`}
+                  aiChat={AI_ENABLED ? deckAi : undefined}
                   pluginApi={pluginApi}
                 />
               )}
