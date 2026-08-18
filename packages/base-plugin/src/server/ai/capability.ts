@@ -1,6 +1,16 @@
+/** How deep capability spawning may nest before it is refused. */
+export const MAX_SPAWN_DEPTH = 2;
+
+export type InvokeCapability = (
+  id: string,
+  input: unknown,
+) => AsyncGenerator<unknown, void, unknown>;
+
 export type AiCapabilityContext<T> = {
   body: T;
   signal: AbortSignal;
+  depth: number;
+  invokeCapability: InvokeCapability;
 };
 
 export type AiCapability<T = unknown> = {

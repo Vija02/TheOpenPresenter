@@ -23,6 +23,7 @@ import {
   verticalAlignments,
 } from "../schema/style";
 import { LAYOUT_DOC_RULES, droppedBindingTokens } from "./prompt";
+import { explainZodError, isStrictParameters, toParameters } from "./schemaUtils";
 
 /**
  * The tool surface for AI layout editing.
@@ -499,27 +500,13 @@ export type LayoutToolDefinition = {
   strict: boolean;
 };
 
-const toParameters = (schema: z4.ZodType): Record<string, unknown> => {
-  const json = z4.toJSONSchema(schema, {
-    target: "draft-7",
-    io: "input",
-    // `nullish()` becomes anyOf[T, null] rather than an unrepresentable
-    // undefined; without this, generation throws on those fields.
-    unrepresentable: "any",
-  }) as Record<string, unknown>;
-  delete json.$schema;
-  return json;
-};
-
 export const LAYOUT_TOOLS: LayoutToolDefinition[] = TOOL_LIST.map((t) => {
   const parameters = toParameters(t.schema);
-  const properties = (parameters.properties ?? {}) as Record<string, unknown>;
-  const required = (parameters.required ?? []) as string[];
   return {
     name: t.name,
     description: t.description,
     parameters,
-    strict: required.length === Object.keys(properties).length,
+    strict: isStrictParameters(parameters),
   };
 });
 
@@ -529,18 +516,6 @@ export const isReadOnlyLayoutTool = (name: string): boolean =>
 /* -------------------------------------------------------------------------- */
 /* Execution                                                                  */
 /* -------------------------------------------------------------------------- */
-
-/**
- * Turns a zod failure into something a model can act on
- */
-const explainZodError = (error: z4.ZodError): string =>
-  error.issues
-    .slice(0, 6)
-    .map((issue) => {
-      const path = issue.path.join(".");
-      return path ? `${path}: ${issue.message}` : issue.message;
-    })
-    .join("; ");
 
 const editDistance = (a: string, b: string): number => {
   let prev = Array.from({ length: b.length + 1 }, (_, j) => j);

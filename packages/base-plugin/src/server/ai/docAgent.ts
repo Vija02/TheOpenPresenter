@@ -1,6 +1,7 @@
 import type { AiTurn } from "@repo/base-types";
 import { logger } from "@repo/observability";
 
+import { InvokeCapability } from "./capability";
 import {
   ChatCompletionOptions,
   ChatMessage,
@@ -20,6 +21,23 @@ export type DocAgentStep<TDoc> =
   /** Always last, and always carries a document, changed or not. */
   | { type: "done"; doc: TDoc; changed: boolean };
 
+/** Context a spawning tool needs to run a child capability */
+export type SpawnContext = {
+  invokeCapability: InvokeCapability;
+  signal?: AbortSignal;
+};
+
+/** An agentic tool: instead of a pure `apply`, it runs asynchronously */
+export type SpawnTool<TDoc> = (
+  doc: TDoc,
+  args: unknown,
+  ctx: SpawnContext,
+) => AsyncGenerator<
+  DocAgentStep<TDoc>,
+  { doc: TDoc; summary: string },
+  unknown
+>;
+
 /**
  * Everything domain-specific about a run
  */
@@ -37,6 +55,10 @@ export type DocAgentToolset<TDoc> = {
   ) => { doc: TDoc; summary: string };
   isReadOnly: (name: string) => boolean;
   readOnlySummary?: string;
+  /** True for tools driven by `spawn` rather than the sync `apply`. */
+  isSpawnTool?: (name: string) => boolean;
+  /** Runs an agentic tool. Required if `isSpawnTool` ever returns true. */
+  spawn?: (name: string) => SpawnTool<TDoc> | undefined;
 };
 
 export type DocAgentAi = {
@@ -66,6 +88,8 @@ export type RunDocAgentOptions<TDoc> = DocAgentLimits & {
   signal?: AbortSignal;
   name?: string;
   reasoningEffort?: "low" | "medium" | "high";
+  /** Lets spawning tools run child capabilities */
+  invokeCapability?: InvokeCapability;
 };
 
 const DEFAULTS: Required<Omit<DocAgentLimits, "idleTimeoutMs">> = {
@@ -213,24 +237,55 @@ export const runDocAgent = async function* <TDoc>(
           );
         }
 
-        const applied = toolset.apply(current, toolName, args);
-        current = applied.doc;
-        result = applied.summary;
+        if (toolset.isSpawnTool?.(toolName)) {
+          const spawnTool = toolset.spawn?.(toolName);
+          if (!spawnTool) {
+            throw new Error(`Spawn tool "${toolName}" has no implementation.`);
+          }
+          if (!options.invokeCapability) {
+            throw new Error(
+              `Tool "${toolName}" needs to spawn a capability, but this run cannot spawn.`,
+            );
+          }
 
-        if (toolset.isReadOnly(toolName)) {
-          yield {
-            type: "tool",
-            name: toolName,
-            summary: toolset.readOnlySummary ?? "Read the document.",
-          };
-        } else {
+          const child = spawnTool(current, args, {
+            invokeCapability: options.invokeCapability,
+            ...(options.signal ? { signal: options.signal } : {}),
+          });
+          let step = await child.next();
+          while (!step.done) {
+            yield step.value;
+            step = await child.next();
+          }
+          current = step.value.doc;
+          result = step.value.summary;
           changed = true;
           yield {
             type: "tool",
             name: toolName,
-            summary: applied.summary,
+            summary: step.value.summary,
             doc: current,
           };
+        } else {
+          const applied = toolset.apply(current, toolName, args);
+          current = applied.doc;
+          result = applied.summary;
+
+          if (toolset.isReadOnly(toolName)) {
+            yield {
+              type: "tool",
+              name: toolName,
+              summary: toolset.readOnlySummary ?? "Read the document.",
+            };
+          } else {
+            changed = true;
+            yield {
+              type: "tool",
+              name: toolName,
+              summary: applied.summary,
+              doc: current,
+            };
+          }
         }
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);

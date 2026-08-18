@@ -1,4 +1,5 @@
 import {
+  AiChat,
   AiChatPluginApi,
   AiChatRequest,
   createAiCapabilityRequest,
@@ -47,6 +48,8 @@ export type LayoutWorkbenchProps = {
   /** Escape hatch: run the edit yourself */
   onRequestAiEdit?: AiChatRequest<LayoutDoc>;
   aiThreadKey?: string;
+  /** Supply an already-built chat */
+  aiChat?: AiChat;
   /** Powers the AI chat and the inspector's image picker. */
   pluginApi?: AiChatPluginApi & LayoutPluginApi;
   className?: string;
@@ -73,6 +76,7 @@ export const LayoutWorkbench = ({
   aiCapability = "layout",
   onRequestAiEdit,
   aiThreadKey = "default",
+  aiChat,
   pluginApi,
   className,
 }: LayoutWorkbenchProps) => {
@@ -81,20 +85,22 @@ export const LayoutWorkbench = ({
   const [compactTab, setCompactTab] = useState<CompactTab>("properties");
 
   const aiRequest = useMemo(() => {
-    if (!aiEnabled) return undefined;
+    if (!aiEnabled || aiChat) return undefined;
     if (onRequestAiEdit) return onRequestAiEdit;
     return appData.getAiEnabled()
       ? createAiCapabilityRequest<LayoutDoc>({ capability: aiCapability })
       : undefined;
-  }, [onRequestAiEdit, aiEnabled, aiCapability]);
+  }, [onRequestAiEdit, aiEnabled, aiCapability, aiChat]);
 
-  const ai = useAiChat<LayoutDoc>({
+  const ownAi = useAiChat<LayoutDoc>({
     doc,
     onChange,
     onRequest: aiRequest,
     threadKey: aiThreadKey,
     pluginApi,
   });
+
+  const ai = aiChat ?? (aiRequest ? ownAi : undefined);
 
   // Applying a template or deleting a layer can strip ids out from under the
   // selection, leaving the inspector keyed off a ghost.
@@ -149,11 +155,7 @@ export const LayoutWorkbench = ({
         pluginApi={pluginApi}
       />
     ) : (
-      <DocumentInspector
-        doc={doc}
-        onChange={onChange}
-        ai={aiRequest ? ai : undefined}
-      >
+      <DocumentInspector doc={doc} onChange={onChange} ai={ai}>
         {documentExtras}
       </DocumentInspector>
     );
