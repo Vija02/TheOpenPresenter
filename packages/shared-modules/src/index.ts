@@ -87,6 +87,11 @@ export const SHARED_MODULES: SharedModule[] = [
       "The editor entry is used by both plugins/bible (StyleModal) and apps/remote (InteractiveLayoutEditor). Shared so the editor and the renderer agree on one layout instance. The /ai entry is deliberately excluded: it is imported only by backend/server and must not reach the browser.",
   },
   {
+    specifier: "@repo/ai-chat",
+    reason:
+      "CRITICAL: owns the module-level transcript store (zustand). @repo/layout/editor renders the single-slide AI panel while plugins/slides renders a deck-level AI panel; a second copy would give each its own store, so a thread opened in one would be invisible to the other and the shared undo state would diverge.",
+  },
+  {
     specifier: "@repo/video",
     reason:
       "Shared video plugin API. Externalized together with react-player so the hls and dash chunks resolve to one copy.",

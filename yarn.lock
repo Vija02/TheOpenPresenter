@@ -10562,6 +10562,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@repo/shared-runtime@workspace:packages/shared-runtime"
   dependencies:
+    "@repo/ai-chat": "npm:*"
     "@repo/base-plugin": "npm:*"
     "@repo/graphql": "npm:*"
     "@repo/layout": "npm:*"

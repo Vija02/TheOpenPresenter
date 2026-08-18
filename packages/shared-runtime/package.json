@@ -10,6 +10,7 @@
     "clean": "node ./build.mjs --clean"
   },
   "dependencies": {
+    "@repo/ai-chat": "*",
     "@repo/base-plugin": "*",
     "@repo/graphql": "*",
     "@repo/layout": "*",
