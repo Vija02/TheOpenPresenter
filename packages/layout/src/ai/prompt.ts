@@ -1,4 +1,4 @@
-import type { AiTurn, ChatMessage } from "@repo/base-types";
+import type { ChatMessage } from "@repo/base-types";
 
 import {
   LAYOUT_DOC_VERSION,
@@ -13,8 +13,7 @@ import {
   textTransforms,
   verticalAlignments,
 } from "../schema/style";
-
-export type LayoutAiTurn = AiTurn;
+import { buildAgentMessages, LayoutAiTurn } from "./messages";
 
 const list = (values: readonly string[]) =>
   values.map((v) => `"${v}"`).join(" | ");
@@ -113,25 +112,14 @@ export const buildLayoutAgentMessages = (
   request: string,
   history: LayoutAiTurn[] = [],
   imageDataUrl?: string | null,
-): ChatMessage[] => {
-  const text = [imageDataUrl ? IMAGE_GUIDANCE : null, `Request: ${request}`]
-    .filter(Boolean)
-    .join("\n\n");
-
-  return [
-    { role: "system", content: AGENT_SYSTEM_PROMPT },
-    ...history.map((turn) => ({ role: turn.role, content: turn.content })),
-    {
-      role: "user",
-      content: imageDataUrl
-        ? [
-            { type: "text" as const, text },
-            { type: "image_url" as const, image_url: { url: imageDataUrl } },
-          ]
-        : text,
-    },
-  ];
-};
+): ChatMessage[] =>
+  buildAgentMessages({
+    systemPrompt: AGENT_SYSTEM_PROMPT,
+    request,
+    history,
+    imageDataUrl,
+    leadIn: [imageDataUrl ? IMAGE_GUIDANCE : null],
+  });
 
 const tokensOf = (doc: LayoutDoc): Set<string> => {
   const found = new Set<string>();

@@ -1,4 +1,4 @@
-import { createSseRoute } from "@repo/base-plugin/server";
+import { createInvokeCapability, createSseRoute } from "@repo/base-plugin/server";
 import { Express, RequestHandler } from "express";
 
 import { registerBuiltInAiCapabilities } from "../ai";
@@ -8,6 +8,7 @@ export default (app: Express) => {
   registerBuiltInAiCapabilities(serverPluginApi);
 
   const capabilities = serverPluginApi.getRegisteredAiCapabilities();
+  const registry = { get: (id: string) => capabilities.get(id) };
 
   const routes = new Map<string, RequestHandler>();
   for (const [id, capability] of capabilities) {
@@ -16,7 +17,14 @@ export default (app: Express) => {
       createSseRoute({
         name: `ai/${id}`,
         parse: capability.parse,
-        handler: capability.handler,
+        // A request off the wire is the root of any spawn tree: depth 0
+        handler: ({ body, signal }) =>
+          capability.handler({
+            body,
+            signal,
+            depth: 0,
+            invokeCapability: createInvokeCapability(registry, signal, 0),
+          }),
         ...(capability.maxBodyBytes !== undefined
           ? { maxBodyBytes: capability.maxBodyBytes }
           : {}),
