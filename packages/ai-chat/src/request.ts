@@ -5,6 +5,7 @@ import type { AiChatRequest, AiChatStep } from "./useAiChat";
 export type AiCapabilityRequestOptions = {
   capability: string;
   extraBody?: Record<string, unknown>;
+  getExtraBody?: () => Record<string, unknown>;
 };
 
 const messageForStatus = (status: number): string => {
@@ -27,6 +28,7 @@ const messageForStatus = (status: number): string => {
 export const createAiCapabilityRequest = <TDoc>({
   capability,
   extraBody,
+  getExtraBody,
 }: AiCapabilityRequestOptions): AiChatRequest<TDoc> => {
   return async ({ request, doc, history, image, signal, onStep }) => {
     const res = await fetch(`${window.location.origin}/ai/${capability}`, {
@@ -36,7 +38,14 @@ export const createAiCapabilityRequest = <TDoc>({
         "csrf-token": appData.getCSRFToken(),
         ...appData.getProxyConfig().headers,
       },
-      body: JSON.stringify({ ...extraBody, doc, request, history, image }),
+      body: JSON.stringify({
+        ...extraBody,
+        ...getExtraBody?.(),
+        doc,
+        request,
+        history,
+        image,
+      }),
       signal,
     });
 
