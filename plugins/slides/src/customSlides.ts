@@ -121,3 +121,39 @@ export const insertPositionForNewSlide = (
   }
   return slideOrder.length;
 };
+
+/**
+ * Rebuild `slideOrder` so a deck occupies exactly `count` contiguous refs in
+ * its current position, leaving other imports' refs untouched. Used when the AI
+ * changes a deck's slide count and the refs must follow `docs`.
+ */
+export const rebuildOrderForDeckCount = (
+  slideOrder: string[],
+  importId: string,
+  count: number,
+): string[] => {
+  const newRefs = Array.from({ length: count }, (_, i) =>
+    createSlideRef(importId, i),
+  );
+
+  // Find where the deck's block currently sits. Splice the fresh refs in there.
+  const firstIdx = slideOrder.findIndex(
+    (ref) => parseSlideRef(ref).importId === importId,
+  );
+  const withoutDeck = slideOrder.filter(
+    (ref) => parseSlideRef(ref).importId !== importId,
+  );
+
+  if (count === 0) return withoutDeck;
+
+  const insertAt =
+    firstIdx === -1
+      ? withoutDeck.length
+      : slideOrder.slice(0, firstIdx).filter(
+          (ref) => parseSlideRef(ref).importId !== importId,
+        ).length;
+
+  const result = [...withoutDeck];
+  result.splice(insertAt, 0, ...newRefs);
+  return result;
+};
