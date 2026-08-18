@@ -51,6 +51,21 @@ const SLIDE_INDEX = z4
   .min(0)
   .describe("Zero-based slide index, exactly as listed by list_slides.");
 
+/** One slide index, or several to act on in a single call. */
+const SLIDE_INDICES = z4
+  .array(SLIDE_INDEX)
+  .min(1)
+  .describe(
+    "Zero-based slide indices, exactly as listed by list_slides. Pass several to act on multiple slides at once; order and duplicates do not matter.",
+  );
+
+/** De-duplicates and validates a batch of indices against the deck. */
+const resolveIndices = (doc: DeckDoc, indices: number[]): number[] => {
+  const unique = [...new Set(indices)];
+  for (const index of unique) requireSlide(doc, index);
+  return unique;
+};
+
 const SLIDE_LAYOUTS = ["title", "section", "content", "blank"] as const;
 
 const slideContentSchema = z4.object({
@@ -268,13 +283,25 @@ const DECK_TOOL_LIST = [
 
   deckTool({
     name: "duplicate_slide",
-    description: "Copy a slide, inserting the copy right after the original.",
-    schema: z4.strictObject({ index: SLIDE_INDEX }),
-    run: (doc, { index }) => {
-      const slide = requireSlide(doc, index);
-      const slides = [...doc.slides];
-      slides.splice(index + 1, 0, cloneDoc(slide));
-      return { doc: { slides }, summary: `Duplicated slide ${index + 1}.` };
+    description:
+      "Copy one or more slides, inserting each copy right after its original. Pass `indices` to duplicate several at once, all taken against the CURRENT numbering.",
+    schema: z4.strictObject({ indices: SLIDE_INDICES }),
+    run: (doc, { indices }) => {
+      const duplicate = new Set(resolveIndices(doc, indices));
+      const slides: LayoutDoc[] = [];
+      for (let i = 0; i < doc.slides.length; i++) {
+        const slide = doc.slides[i]!;
+        slides.push(slide);
+        if (duplicate.has(i)) slides.push(cloneDoc(slide));
+      }
+      const humans = [...duplicate].sort((a, b) => a - b).map((i) => i + 1);
+      return {
+        doc: { slides },
+        summary:
+          humans.length === 1
+            ? `Duplicated slide ${humans[0]}.`
+            : `Duplicated slides ${humans.join(", ")}.`,
+      };
     },
   }),
 
@@ -301,18 +328,22 @@ const DECK_TOOL_LIST = [
   deckTool({
     name: "remove_slide",
     description:
-      "Delete a slide. Indices of later slides shift down by one afterwards.",
-    schema: z4.strictObject({ index: SLIDE_INDEX }),
-    run: (doc, { index }) => {
-      requireSlide(doc, index);
-      if (doc.slides.length <= 1) {
+      "Delete one or more slides. Pass `indices` to remove several at once — they are all taken against the CURRENT numbering, so you do not need to account for shifting. Indices of surviving later slides shift down afterwards.",
+    schema: z4.strictObject({ indices: SLIDE_INDICES }),
+    run: (doc, { indices }) => {
+      const remove = new Set(resolveIndices(doc, indices));
+      if (remove.size >= doc.slides.length) {
         throw new Error(
-          "Cannot remove the last slide — a deck must keep at least one.",
+          "Cannot remove every slide — a deck must keep at least one.",
         );
       }
+      const humans = [...remove].sort((a, b) => a - b).map((i) => i + 1);
       return {
-        doc: { slides: doc.slides.filter((_, i) => i !== index) },
-        summary: `Removed slide ${index + 1}.`,
+        doc: { slides: doc.slides.filter((_, i) => !remove.has(i)) },
+        summary:
+          humans.length === 1
+            ? `Removed slide ${humans[0]}.`
+            : `Removed slides ${humans.join(", ")}.`,
       };
     },
   }),
@@ -351,7 +382,7 @@ const DECK_SYSTEM_PROMPT = `You build and edit slide DECKS for a church presenta
 
 WORKFLOW
 - Call list_slides FIRST, every time. Slide indices are not guessable and shift as slides are added or removed.
-- Then make the changes the request asks for, one tool call per slide where possible.
+- Then make the changes the request asks for. remove_slide, duplicate_slide and style_slide take an 'indices' array, so act on several slides in ONE call rather than one call each — the indices are all read against the current numbering, so you never have to account for shifting.
 - When finished, reply with one short sentence summarising what you built or changed. Do not reply with JSON.
 - If the request is not about slides, just say so without calling a tool.
 
@@ -366,13 +397,17 @@ TWO PASSES: BUILD, THEN STYLE
 - You do NOT have to style every slide. Style the ones that need it. For pure visual tweaks prefer style_slide over driving edit_slide yourself.
 
 BUILDING A DECK FROM A SCRIPT
-This is the most important case. When the user pastes a script, an outline, lyrics, sermon notes or talking points and asks for slides:
-- Segment it into slides yourself. One idea per slide. A wall of text on one slide is the most common failure — break it up.
-- Open with a 'title' slide when the script has an obvious title or topic.
-- Use 'section' slides to divide major parts.
-- Use 'content' slides for the substance: a short heading plus a few short lines of body. Keep each slide to roughly 1 heading and up to ~5 short lines; split anything longer across multiple slides.
-- Shorten prose into slide-sized phrases. Do NOT paste whole paragraphs verbatim — a slide is read from across a room, not studied.
-- Build each slide with add_slide and its structured content. Only drop to edit_slide / set_slide_document for something the layouts cannot express.
+This is the most important case. When the user pastes a script, sermon notes, an outline or talking points and asks for slides:
+- Most of a script is meant to be SPOKEN, not shown. Do NOT make a slide for every sentence. Put on screen only what the congregation needs to SEE, and leave the rest for the speaker to say.
+- What belongs on slides:
+  - Bible verses — put the verse text on its own slide.
+  - Summary points — the key takeaways, headings and memorable lines worth showing; a few short words each, not the full spoken explanation.
+- What does NOT belong on slides: the speaker's narration, transitions, stories, asides and any prose that is just there to be read aloud. Skip it.
+- Bible verses: include the verse numbers, and render them small as SUBSCRIPT before the words they mark (e.g. the number sits low and small, the verse text at normal size). Always show the reference (book chapter:verse) with the verse.
+- Open with a 'title' slide when the script has an obvious title or topic. Use 'section' slides to divide major parts.
+- Use 'content' slides for verses and summary points: a short heading plus a few short lines. Keep each slide to roughly 1 heading and up to ~5 short lines; split anything longer across multiple slides.
+- Shorten to slide-sized phrases. Do NOT paste whole paragraphs verbatim — a slide is read from across a room, not studied.
+- Build each slide with add_slide and its structured content. Only drop to edit_slide / set_slide_document for something the layouts cannot express (e.g. subscript verse numbers, if the composed layout does not produce them).
 
 STYLE
 - Slides default to a white background with dark text, like PowerPoint and Google Slides. Keep that unless the user asks for a theme.
@@ -388,7 +423,7 @@ CURRENT SLIDE
 - With no such context and an ambiguous "this", ask which slide, or act on the whole deck if that is clearly the intent.
 
 JUDGEMENT
-- One agent, one conversation: you can build a whole deck AND fine-tune a single slide in the same thread. Pick the tool that fits — add_slide/move_slide/remove_slide for the deck, edit_slide for within a slide.
+- One agent, one conversation: you can build a whole deck AND fine-tune a single slide in the same thread. Pick the tool that fits — add_slide/move_slide/remove_slide/duplicate_slide for the deck, edit_slide for within a slide.
 - Prefer building the whole deck the user asked for in one run rather than stopping to ask which slides they want — segment sensibly and go.
 - Preserve any {{token}} placeholders in existing slides; they are substituted with real data at render time.`;
 
@@ -416,11 +451,11 @@ export const STYLE_SLIDE_TOOL = "style_slide";
 const LAYOUT_CAPABILITY_ID = "layout";
 
 const styleSlideSchema = z4.strictObject({
-  index: SLIDE_INDEX,
+  indices: SLIDE_INDICES,
   brief: z4
     .string()
     .describe(
-      "A one-line brief for the stylist: what to improve and the theme/colours to keep (e.g. 'Tighten spacing, keep the dark theme; this is a section divider'). The stylist sees ONLY this slide, so include any context it needs.",
+      "A one-line brief for the stylist: what to improve and the theme/colours to keep (e.g. 'Tighten spacing, keep the dark theme; this is a section divider'). The SAME brief is applied to every slide in `indices`, and each slide is styled on its own — so only batch slides that share a brief. The stylist sees ONLY one slide at a time, so include any context it needs.",
     ),
 });
 
@@ -429,55 +464,71 @@ const styleSlideChatTool: ChatTool = {
   function: {
     name: STYLE_SLIDE_TOOL,
     description:
-      "Hand ONE slide to a dedicated styling agent to make it look good. Use this as a second pass after building slides. The stylist sees only that slide plus your brief; it will not change wording. Prefer this over driving edit_slide yourself for visual polish.",
+      "Hand one or more slides to a dedicated styling agent to make them look good. Use this as a second pass after building slides. Pass `indices` (against the CURRENT numbering) to style several with the same brief; each slide is styled on its own and the stylist sees only that one slide. It will not change wording. Prefer this over driving edit_slide yourself for visual polish.",
     parameters: toParameters(styleSlideSchema),
     strict: true,
   },
 };
 
-// Runs the single-slide `layout` capability on the target slide
+// Runs the single-slide `layout` capability on each target slide in turn.
 const styleSlideSpawn: SpawnTool<DeckDoc> = async function* (doc, args, ctx) {
   const parsed = styleSlideSchema.safeParse(args ?? {});
   if (!parsed.success) {
     throw new Error(`Invalid arguments: ${explainZodError(parsed.error)}`);
   }
-  const { index, brief } = parsed.data;
-  const slide = requireSlide(doc, index);
-  const human = index + 1;
+  const { brief } = parsed.data;
+  const indices = resolveIndices(doc, parsed.data.indices).sort(
+    (a, b) => a - b,
+  );
 
-  const request = `Restyle this slide to look good. ${brief} Do not change the wording of any text.`;
-  const child = ctx.invokeCapability(LAYOUT_CAPABILITY_ID, {
-    doc: cloneDoc(slide),
-    request,
-    history: [],
-  });
+  let next = doc;
+  for (const index of indices) {
+    const slide = requireSlide(next, index);
+    const human = index + 1;
+    const label = (name: string) => `${STYLE_SLIDE_TOOL}[${human}] › ${name}`;
 
-  const label = (name: string) => `${STYLE_SLIDE_TOOL}[${human}] › ${name}`;
+    const request = `Restyle this slide to look good. ${brief} Do not change the wording of any text.`;
+    const child = ctx.invokeCapability(LAYOUT_CAPABILITY_ID, {
+      doc: cloneDoc(slide),
+      request,
+      history: [],
+    });
 
-  let styled: LayoutDoc = slide;
-  for await (const raw of child) {
-    const step = raw as DocAgentStep<LayoutDoc>;
-    switch (step.type) {
-      case "done":
-        styled = step.doc;
-        break;
-      case "tool":
-        yield { type: "tool", name: label(step.name), summary: step.summary };
-        break;
-      case "toolPending":
-        yield { type: "toolPending", name: label(step.name) };
-        break;
-      case "toolError":
-        yield { type: "toolError", name: label(step.name), message: step.message };
-        break;
-      default:
-        yield step;
+    let styled: LayoutDoc = slide;
+    for await (const raw of child) {
+      const step = raw as DocAgentStep<LayoutDoc>;
+      switch (step.type) {
+        case "done":
+          styled = step.doc;
+          break;
+        case "tool":
+          yield { type: "tool", name: label(step.name), summary: step.summary };
+          break;
+        case "toolPending":
+          yield { type: "toolPending", name: label(step.name) };
+          break;
+        case "toolError":
+          yield {
+            type: "toolError",
+            name: label(step.name),
+            message: step.message,
+          };
+          break;
+        default:
+          yield step;
+      }
     }
+
+    next = replaceSlideAt(next, index, styled);
   }
 
+  const humans = indices.map((i) => i + 1);
   return {
-    doc: replaceSlideAt(doc, index, styled),
-    summary: `Styled slide ${human}.`,
+    doc: next,
+    summary:
+      humans.length === 1
+        ? `Styled slide ${humans[0]}.`
+        : `Styled slides ${humans.join(", ")}.`,
   };
 };
 
