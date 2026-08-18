@@ -47,6 +47,7 @@ type TranscriptActions = {
     kind: "reasoning" | "text",
     delta: string,
   ) => void;
+  flushDeltas: () => void;
   upsertTool: (
     key: string,
     id: string,
@@ -61,6 +62,75 @@ type TranscriptActions = {
 const EMPTY: AiMessage[] = [];
 
 const emptyThread = (): Thread => ({ messages: [], undo: null });
+
+type DeltaKind = "reasoning" | "text";
+type PendingDelta = { key: string; id: string; kind: DeltaKind; text: string };
+
+const deltaBuffer = new Map<string, PendingDelta>();
+let flushScheduled = false;
+
+const schedule = (fn: () => void) => {
+  if (typeof queueMicrotask === "function") queueMicrotask(fn);
+  else Promise.resolve().then(fn);
+};
+
+const applyBufferedDeltas =
+  (batch: PendingDelta[]) =>
+  (state: TranscriptState): TranscriptState => {
+    let threads = state.threads;
+    let mutated = false;
+
+    for (const { key, id, kind, text } of batch) {
+      const thread = threads[key];
+      if (!thread) continue;
+
+      const messages = thread.messages.map((m) => {
+        if (m.id !== id) return m;
+        const parts = m.parts ? [...m.parts] : [];
+        const tail = parts[parts.length - 1];
+        if (tail?.type === kind) {
+          parts[parts.length - 1] = { ...tail, text: tail.text + text };
+        } else {
+          parts.push({ type: kind, text });
+        }
+        return { ...m, parts };
+      });
+
+      threads = { ...threads, [key]: { ...thread, messages } };
+      mutated = true;
+    }
+
+    return mutated ? { threads } : state;
+  };
+
+// Flush on a microtask so the store `set` (and its re-render) runs outside the
+// current call stack, avoiding re-entering the web-component render.
+const bufferDelta = (
+  key: string,
+  id: string,
+  kind: DeltaKind,
+  delta: string,
+  set: (fn: (state: TranscriptState) => TranscriptState) => void,
+) => {
+  const bufKey = `${key}\u0000${id}\u0000${kind}`;
+  const existing = deltaBuffer.get(bufKey);
+  if (existing) existing.text += delta;
+  else deltaBuffer.set(bufKey, { key, id, kind, text: delta });
+
+  if (flushScheduled) return;
+  flushScheduled = true;
+  schedule(() => flushDeltaBuffer(set));
+};
+
+const flushDeltaBuffer = (
+  set: (fn: (state: TranscriptState) => TranscriptState) => void,
+) => {
+  flushScheduled = false;
+  if (deltaBuffer.size === 0) return;
+  const batch = [...deltaBuffer.values()];
+  deltaBuffer.clear();
+  set(applyBufferedDeltas(batch));
+};
 
 // Caps stored history
 const MAX_MESSAGES = 60;
@@ -110,32 +180,9 @@ export const useTranscriptStore = create<TranscriptState & TranscriptActions>()(
         }),
 
       appendDelta: (key, id, kind, delta) =>
-        set((state) => {
-          const thread = state.threads[key];
-          if (!thread) return state;
-          return {
-            threads: {
-              ...state.threads,
-              [key]: {
-                ...thread,
-                messages: thread.messages.map((m) => {
-                  if (m.id !== id) return m;
-                  const parts = m.parts ? [...m.parts] : [];
-                  const tail = parts[parts.length - 1];
-                  if (tail?.type === kind) {
-                    parts[parts.length - 1] = {
-                      ...tail,
-                      text: tail.text + delta,
-                    };
-                  } else {
-                    parts.push({ type: kind, text: delta });
-                  }
-                  return { ...m, parts };
-                }),
-              },
-            },
-          };
-        }),
+        bufferDelta(key, id, kind, delta, set),
+
+      flushDeltas: () => flushDeltaBuffer(set),
 
       upsertTool: (key, id, name, state_, summary) =>
         set((state) => {
@@ -201,8 +248,14 @@ export const useTranscriptStore = create<TranscriptState & TranscriptActions>()(
   ),
 );
 
-export const toPromptHistory = (messages: AiMessage[]): AiTurn[] =>
-  messages
+const MAX_HISTORY_TURNS = 20;
+const MAX_HISTORY_CONTENT = 4000;
+
+const clip = (text: string, max: number): string =>
+  text.length > max ? text.slice(text.length - max) : text;
+
+export const toPromptHistory = (messages: AiMessage[]): AiTurn[] => {
+  const turns = messages
     .map((message) => {
       if (message.role === "user") {
         return { role: "user" as const, content: message.text ?? "" };
@@ -215,4 +268,11 @@ export const toPromptHistory = (messages: AiMessage[]): AiTurn[] =>
         .trim();
       return { role: "assistant" as const, content: text };
     })
-    .filter((turn) => turn.content.length > 0);
+    .filter((turn) => turn.content.length > 0)
+    .map((turn) => ({
+      ...turn,
+      content: clip(turn.content, MAX_HISTORY_CONTENT),
+    }));
+
+  return turns.slice(-MAX_HISTORY_TURNS);
+};

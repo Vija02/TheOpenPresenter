@@ -50,6 +50,7 @@ export type DocAgentAi = {
 export type DocAgentLimits = {
   maxTurns?: number;
   turnTimeoutMs?: number;
+  idleTimeoutMs?: number;
   runBudgetMs?: number;
   /** Separate from maxTurns because one turn can request several calls. */
   maxToolCalls?: number;
@@ -67,7 +68,7 @@ export type RunDocAgentOptions<TDoc> = DocAgentLimits & {
   reasoningEffort?: "low" | "medium" | "high";
 };
 
-const DEFAULTS: Required<DocAgentLimits> = {
+const DEFAULTS: Required<Omit<DocAgentLimits, "idleTimeoutMs">> = {
   maxTurns: 12,
   turnTimeoutMs: 90_000,
   runBudgetMs: 180_000,
@@ -91,6 +92,9 @@ const streamTurn = async function* <TDoc>(
   const events = options.ai.chatCompletionEvents(messages, {
     temperature: 0,
     timeoutMs: Math.min(turnTimeoutMs, Math.max(1_000, remaining)),
+    ...(options.idleTimeoutMs !== undefined
+      ? { idleTimeoutMs: options.idleTimeoutMs }
+      : {}),
     reasoningEnabled: true,
     reasoningEffort: options.reasoningEffort ?? "low",
     tools: options.toolset.tools,

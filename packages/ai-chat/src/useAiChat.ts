@@ -165,9 +165,11 @@ export const useAiChat = <TDoc>({
                 s.appendDelta(threadKey, assistantId, "text", step.text);
                 break;
               case "toolPending":
+                s.flushDeltas();
                 s.upsertTool(threadKey, assistantId, step.name, "pending");
                 break;
               case "tool":
+                s.flushDeltas();
                 s.upsertTool(
                   threadKey,
                   assistantId,
@@ -189,6 +191,7 @@ export const useAiChat = <TDoc>({
                 }
                 break;
               case "toolError":
+                s.flushDeltas();
                 // Kept rather than hidden: the model usually recovers on the
                 // next turn, but if the run ends badly this is the trail that
                 // explains why.
@@ -205,6 +208,7 @@ export const useAiChat = <TDoc>({
                 // did not, so a non-streaming server does not go unreported and
                 // a streaming one does not print twice.
                 {
+                  s.flushDeltas();
                   const current = s
                     .messagesOf(threadKey)
                     .find((m) => m.id === assistantId);
@@ -217,6 +221,7 @@ export const useAiChat = <TDoc>({
                 }
                 break;
               case "done":
+                s.flushDeltas();
                 // Undo is only offered when something actually changed, so the
                 // button never promises to revert a no-op.
                 if (step.changed) {

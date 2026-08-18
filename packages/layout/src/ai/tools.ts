@@ -542,6 +542,33 @@ const explainZodError = (error: z4.ZodError): string =>
     })
     .join("; ");
 
+const editDistance = (a: string, b: string): number => {
+  let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    const curr = [i, ...Array<number>(b.length).fill(0)];
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      curr[j] = Math.min(prev[j]! + 1, curr[j - 1]! + 1, prev[j - 1]! + cost);
+    }
+    prev = curr;
+  }
+  return prev[b.length]!;
+};
+
+export const unknownToolMessage = (
+  name: string,
+  available: string[],
+): string => {
+  const closest = available
+    .map((candidate) => ({ candidate, d: editDistance(name, candidate) }))
+    .sort((a, b) => a.d - b.d)[0];
+  const hint =
+    closest && closest.d <= Math.max(3, Math.ceil(name.length / 2))
+      ? ` Did you mean "${closest.candidate}"?`
+      : "";
+  return `Unknown tool "${name}".${hint} Available: ${available.join(", ")}.`;
+};
+
 /**
  * Runs one tool call against a document
  */
@@ -552,9 +579,7 @@ export const applyLayoutTool = (
 ): LayoutToolResult => {
   const definition = BY_NAME.get(name);
   if (!definition) {
-    throw new Error(
-      `Unknown tool "${name}". Available: ${[...BY_NAME.keys()].join(", ")}.`,
-    );
+    throw new Error(unknownToolMessage(name, [...BY_NAME.keys()]));
   }
 
   const parsed = definition.schema.safeParse(rawArgs ?? {});
