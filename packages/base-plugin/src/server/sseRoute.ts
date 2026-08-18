@@ -87,6 +87,10 @@ export const createSseRoute = <T>({
       body = parse(JSON.parse(raw || "{}"));
     } catch (err) {
       const status = (err as { status?: number }).status ?? 400;
+      logger.warn(
+        { err, route: name, status },
+        "SSE route rejected request body",
+      );
       if (!res.headersSent) res.sendStatus(status);
       return;
     }
