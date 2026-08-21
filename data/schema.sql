@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict FFlY41sBXZjWxeog4XayRvEOa5eLMbi8hzN8UVm4HHYPm6yO1ljhMzkMDASank0
+\restrict 0C7MwCnJUGwPMT8cWReBXsPD5u9oglE344leA5yZsn3wwvr9IvO8OFcazZXWhZR
 
 -- Dumped from database version 17.0 (Debian 17.0-1.pgdg120+1)
 -- Dumped by pg_dump version 18.4
@@ -101,6 +101,40 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA public;
 --
 
 COMMENT ON EXTENSION "uuid-ossp" IS 'generate universally unique identifiers (UUIDs)';
+
+
+--
+-- Name: client_plugin_build_status; Type: TYPE; Schema: app_public; Owner: -
+--
+
+CREATE TYPE app_public.client_plugin_build_status AS ENUM (
+    'pending',
+    'built',
+    'failed'
+);
+
+
+--
+-- Name: client_plugin_review_status; Type: TYPE; Schema: app_public; Owner: -
+--
+
+CREATE TYPE app_public.client_plugin_review_status AS ENUM (
+    'draft',
+    'pending',
+    'approved',
+    'rejected'
+);
+
+
+--
+-- Name: client_plugin_visibility; Type: TYPE; Schema: app_public; Owner: -
+--
+
+CREATE TYPE app_public.client_plugin_visibility AS ENUM (
+    'private',
+    'unlisted',
+    'public'
+);
 
 
 --
@@ -3071,6 +3105,55 @@ $$;
 
 
 --
+-- Name: client_plugin_drafts; Type: TABLE; Schema: app_public; Owner: -
+--
+
+CREATE TABLE app_public.client_plugin_drafts (
+    client_plugin_id uuid NOT NULL,
+    source jsonb DEFAULT '{}'::jsonb NOT NULL,
+    manifest jsonb DEFAULT '{}'::jsonb NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: TABLE client_plugin_drafts; Type: COMMENT; Schema: app_public; Owner: -
+--
+
+COMMENT ON TABLE app_public.client_plugin_drafts IS 'Autosaved working copy. Promoted into an immutable client_plugin_versions row on build';
+
+
+--
+-- Name: upsert_client_plugin_draft(uuid, jsonb, jsonb); Type: FUNCTION; Schema: app_public; Owner: -
+--
+
+CREATE FUNCTION app_public.upsert_client_plugin_draft(client_plugin_id uuid, source jsonb, manifest jsonb) RETURNS app_public.client_plugin_drafts
+    LANGUAGE sql
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+    AS $$
+  insert into app_public.client_plugin_drafts (client_plugin_id, source, manifest)
+  values (
+    upsert_client_plugin_draft.client_plugin_id,
+    upsert_client_plugin_draft.source,
+    upsert_client_plugin_draft.manifest
+  )
+  on conflict (client_plugin_id)
+  do update set
+    source = excluded.source,
+    manifest = excluded.manifest
+  returning *;
+$$;
+
+
+--
+-- Name: FUNCTION upsert_client_plugin_draft(client_plugin_id uuid, source jsonb, manifest jsonb); Type: COMMENT; Schema: app_public; Owner: -
+--
+
+COMMENT ON FUNCTION app_public.upsert_client_plugin_draft(client_plugin_id uuid, source jsonb, manifest jsonb) IS 'Autosaves the owning organization''s shared draft for a client plugin';
+
+
+--
 -- Name: users_has_password(app_public.users); Type: FUNCTION; Schema: app_public; Owner: -
 --
 
@@ -3287,6 +3370,55 @@ COMMENT ON TABLE app_public.categories IS 'Categories data';
 
 
 --
+-- Name: client_plugin_versions; Type: TABLE; Schema: app_public; Owner: -
+--
+
+CREATE TABLE app_public.client_plugin_versions (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    client_plugin_id uuid NOT NULL,
+    version text NOT NULL,
+    manifest jsonb DEFAULT '{}'::jsonb NOT NULL,
+    source jsonb DEFAULT '{}'::jsonb NOT NULL,
+    build_status app_public.client_plugin_build_status DEFAULT 'pending'::app_public.client_plugin_build_status NOT NULL,
+    build_log text DEFAULT ''::text NOT NULL,
+    artifacts jsonb DEFAULT '[]'::jsonb NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: TABLE client_plugin_versions; Type: COMMENT; Schema: app_public; Owner: -
+--
+
+COMMENT ON TABLE app_public.client_plugin_versions IS 'An immutable, built version of a client plugin. Contains authored source and a manifest. Built artifacts are stored in object storage and listed in the artifacts column';
+
+
+--
+-- Name: client_plugins; Type: TABLE; Schema: app_public; Owner: -
+--
+
+CREATE TABLE app_public.client_plugins (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    owner_organization_id uuid NOT NULL,
+    handle public.citext NOT NULL,
+    title text NOT NULL,
+    description text DEFAULT ''::text NOT NULL,
+    latest_version_id uuid,
+    visibility app_public.client_plugin_visibility DEFAULT 'private'::app_public.client_plugin_visibility NOT NULL,
+    review_status app_public.client_plugin_review_status DEFAULT 'draft'::app_public.client_plugin_review_status NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: TABLE client_plugins; Type: COMMENT; Schema: app_public; Owner: -
+--
+
+COMMENT ON TABLE app_public.client_plugins IS 'A frontend-only plugin authored by an organization';
+
+
+--
 -- Name: cloud_connections; Type: TABLE; Schema: app_public; Owner: -
 --
 
@@ -3421,6 +3553,26 @@ CREATE TABLE app_public.organization_active_devices (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     host_session_cookie text
 );
+
+
+--
+-- Name: organization_client_plugins; Type: TABLE; Schema: app_public; Owner: -
+--
+
+CREATE TABLE app_public.organization_client_plugins (
+    organization_id uuid NOT NULL,
+    client_plugin_id uuid NOT NULL,
+    pinned_version_id uuid NOT NULL,
+    enabled boolean DEFAULT true NOT NULL,
+    installed_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: TABLE organization_client_plugins; Type: COMMENT; Schema: app_public; Owner: -
+--
+
+COMMENT ON TABLE app_public.organization_client_plugins IS 'Records that an organization has installed a client plugin, pinned to a specific version';
 
 
 --
@@ -3693,6 +3845,30 @@ ALTER TABLE ONLY app_public.categories
 
 
 --
+-- Name: client_plugin_drafts client_plugin_drafts_pkey; Type: CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.client_plugin_drafts
+    ADD CONSTRAINT client_plugin_drafts_pkey PRIMARY KEY (client_plugin_id);
+
+
+--
+-- Name: client_plugin_versions client_plugin_versions_pkey; Type: CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.client_plugin_versions
+    ADD CONSTRAINT client_plugin_versions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: client_plugins client_plugins_pkey; Type: CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.client_plugins
+    ADD CONSTRAINT client_plugins_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: cloud_connections cloud_connections_pkey; Type: CONSTRAINT; Schema: app_public; Owner: -
 --
 
@@ -3730,6 +3906,14 @@ ALTER TABLE ONLY app_public.media_video_metadata
 
 ALTER TABLE ONLY app_public.medias
     ADD CONSTRAINT medias_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: organization_client_plugins organization_client_plugins_pkey; Type: CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.organization_client_plugins
+    ADD CONSTRAINT organization_client_plugins_pkey PRIMARY KEY (organization_id, client_plugin_id);
 
 
 --
@@ -3969,6 +4153,48 @@ CREATE INDEX categories_organization_id_idx ON app_public.categories USING btree
 
 
 --
+-- Name: client_plugin_versions_client_plugin_id_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX client_plugin_versions_client_plugin_id_idx ON app_public.client_plugin_versions USING btree (client_plugin_id);
+
+
+--
+-- Name: client_plugin_versions_created_at_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX client_plugin_versions_created_at_idx ON app_public.client_plugin_versions USING btree (created_at);
+
+
+--
+-- Name: client_plugin_versions_plugin_version_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE UNIQUE INDEX client_plugin_versions_plugin_version_idx ON app_public.client_plugin_versions USING btree (client_plugin_id, version);
+
+
+--
+-- Name: client_plugins_owner_handle_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE UNIQUE INDEX client_plugins_owner_handle_idx ON app_public.client_plugins USING btree (owner_organization_id, handle);
+
+
+--
+-- Name: client_plugins_owner_organization_id_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX client_plugins_owner_organization_id_idx ON app_public.client_plugins USING btree (owner_organization_id);
+
+
+--
+-- Name: client_plugins_public_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX client_plugins_public_idx ON app_public.client_plugins USING btree (visibility, review_status);
+
+
+--
 -- Name: cloud_connections_created_at_idx; Type: INDEX; Schema: app_public; Owner: -
 --
 
@@ -4141,6 +4367,27 @@ CREATE UNIQUE INDEX organization_active_devices_organization_id_iroh_endpoint_i_
 --
 
 CREATE INDEX organization_active_devices_updated_at_idx ON app_public.organization_active_devices USING btree (updated_at);
+
+
+--
+-- Name: organization_client_plugins_client_plugin_id_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX organization_client_plugins_client_plugin_id_idx ON app_public.organization_client_plugins USING btree (client_plugin_id);
+
+
+--
+-- Name: organization_client_plugins_organization_id_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX organization_client_plugins_organization_id_idx ON app_public.organization_client_plugins USING btree (organization_id);
+
+
+--
+-- Name: organization_client_plugins_pinned_version_id_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX organization_client_plugins_pinned_version_id_idx ON app_public.organization_client_plugins USING btree (pinned_version_id);
 
 
 --
@@ -4491,6 +4738,20 @@ CREATE TRIGGER _100_timestamps BEFORE INSERT OR UPDATE ON app_private.organizati
 --
 
 CREATE TRIGGER _100_timestamps BEFORE INSERT OR UPDATE ON app_public.categories FOR EACH ROW EXECUTE FUNCTION app_private.tg__timestamps();
+
+
+--
+-- Name: client_plugin_drafts _100_timestamps; Type: TRIGGER; Schema: app_public; Owner: -
+--
+
+CREATE TRIGGER _100_timestamps BEFORE INSERT OR UPDATE ON app_public.client_plugin_drafts FOR EACH ROW EXECUTE FUNCTION app_private.tg__timestamps();
+
+
+--
+-- Name: client_plugins _100_timestamps; Type: TRIGGER; Schema: app_public; Owner: -
+--
+
+CREATE TRIGGER _100_timestamps BEFORE INSERT OR UPDATE ON app_public.client_plugins FOR EACH ROW EXECUTE FUNCTION app_private.tg__timestamps();
 
 
 --
@@ -4851,6 +5112,38 @@ ALTER TABLE ONLY app_public.categories
 
 
 --
+-- Name: client_plugin_drafts client_plugin_drafts_client_plugin_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.client_plugin_drafts
+    ADD CONSTRAINT client_plugin_drafts_client_plugin_id_fkey FOREIGN KEY (client_plugin_id) REFERENCES app_public.client_plugins(id) ON DELETE CASCADE;
+
+
+--
+-- Name: client_plugin_versions client_plugin_versions_client_plugin_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.client_plugin_versions
+    ADD CONSTRAINT client_plugin_versions_client_plugin_id_fkey FOREIGN KEY (client_plugin_id) REFERENCES app_public.client_plugins(id) ON DELETE CASCADE;
+
+
+--
+-- Name: client_plugins client_plugins_latest_version_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.client_plugins
+    ADD CONSTRAINT client_plugins_latest_version_id_fkey FOREIGN KEY (latest_version_id) REFERENCES app_public.client_plugin_versions(id) ON DELETE SET NULL;
+
+
+--
+-- Name: client_plugins client_plugins_owner_organization_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.client_plugins
+    ADD CONSTRAINT client_plugins_owner_organization_id_fkey FOREIGN KEY (owner_organization_id) REFERENCES app_public.organizations(id) ON DELETE CASCADE;
+
+
+--
 -- Name: cloud_connections cloud_connections_creator_user_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
 --
 
@@ -4976,6 +5269,30 @@ ALTER TABLE ONLY app_public.medias
 
 ALTER TABLE ONLY app_public.organization_active_devices
     ADD CONSTRAINT organization_active_devices_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES app_public.organizations(id) ON DELETE CASCADE;
+
+
+--
+-- Name: organization_client_plugins organization_client_plugins_client_plugin_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.organization_client_plugins
+    ADD CONSTRAINT organization_client_plugins_client_plugin_id_fkey FOREIGN KEY (client_plugin_id) REFERENCES app_public.client_plugins(id) ON DELETE CASCADE;
+
+
+--
+-- Name: organization_client_plugins organization_client_plugins_organization_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.organization_client_plugins
+    ADD CONSTRAINT organization_client_plugins_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES app_public.organizations(id) ON DELETE CASCADE;
+
+
+--
+-- Name: organization_client_plugins organization_client_plugins_pinned_version_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.organization_client_plugins
+    ADD CONSTRAINT organization_client_plugins_pinned_version_id_fkey FOREIGN KEY (pinned_version_id) REFERENCES app_public.client_plugin_versions(id) ON DELETE RESTRICT;
 
 
 --
@@ -5247,6 +5564,24 @@ ALTER TABLE app_private.user_secrets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE app_public.categories ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: client_plugin_drafts; Type: ROW SECURITY; Schema: app_public; Owner: -
+--
+
+ALTER TABLE app_public.client_plugin_drafts ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: client_plugin_versions; Type: ROW SECURITY; Schema: app_public; Owner: -
+--
+
+ALTER TABLE app_public.client_plugin_versions ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: client_plugins; Type: ROW SECURITY; Schema: app_public; Owner: -
+--
+
+ALTER TABLE app_public.client_plugins ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: cloud_connections; Type: ROW SECURITY; Schema: app_public; Owner: -
 --
 
@@ -5270,6 +5605,13 @@ CREATE POLICY delete_own ON app_public.cloud_connections FOR DELETE USING ((orga
 --
 
 CREATE POLICY delete_own ON app_public.organization_active_devices FOR DELETE USING ((organization_id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids)));
+
+
+--
+-- Name: organization_client_plugins delete_own; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY delete_own ON app_public.organization_client_plugins FOR DELETE USING ((organization_id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids)));
 
 
 --
@@ -5343,6 +5685,13 @@ CREATE POLICY insert_own ON app_public.organization_active_devices FOR INSERT WI
 
 
 --
+-- Name: organization_client_plugins insert_own; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY insert_own ON app_public.organization_client_plugins FOR INSERT WITH CHECK ((organization_id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids)));
+
+
+--
 -- Name: project_medias insert_own; Type: POLICY; Schema: app_public; Owner: -
 --
 
@@ -5413,6 +5762,35 @@ CREATE POLICY insert_own_tag ON app_public.project_tags FOR INSERT WITH CHECK (a
 
 
 --
+-- Name: client_plugin_drafts manage_own; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY manage_own ON app_public.client_plugin_drafts USING ((client_plugin_id IN ( SELECT client_plugins.id
+   FROM app_public.client_plugins
+  WHERE (client_plugins.owner_organization_id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids))))) WITH CHECK ((client_plugin_id IN ( SELECT client_plugins.id
+   FROM app_public.client_plugins
+  WHERE (client_plugins.owner_organization_id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids)))));
+
+
+--
+-- Name: client_plugin_versions manage_own; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY manage_own ON app_public.client_plugin_versions USING ((client_plugin_id IN ( SELECT client_plugins.id
+   FROM app_public.client_plugins
+  WHERE (client_plugins.owner_organization_id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids))))) WITH CHECK ((client_plugin_id IN ( SELECT client_plugins.id
+   FROM app_public.client_plugins
+  WHERE (client_plugins.owner_organization_id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids)))));
+
+
+--
+-- Name: client_plugins manage_own; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY manage_own ON app_public.client_plugins USING ((owner_organization_id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids))) WITH CHECK ((owner_organization_id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids)));
+
+
+--
 -- Name: media_dependencies; Type: ROW SECURITY; Schema: app_public; Owner: -
 --
 
@@ -5447,6 +5825,12 @@ ALTER TABLE app_public.medias ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE app_public.organization_active_devices ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: organization_client_plugins; Type: ROW SECURITY; Schema: app_public; Owner: -
+--
+
+ALTER TABLE app_public.organization_client_plugins ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: organization_invitations; Type: ROW SECURITY; Schema: app_public; Owner: -
@@ -5597,6 +5981,24 @@ CREATE POLICY select_guest_session ON app_public.screen_control_requests FOR SEL
 
 
 --
+-- Name: client_plugin_versions select_installed; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY select_installed ON app_public.client_plugin_versions FOR SELECT USING ((id IN ( SELECT ocp.pinned_version_id
+   FROM app_public.organization_client_plugins ocp
+  WHERE (ocp.organization_id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids)))));
+
+
+--
+-- Name: client_plugins select_installed; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY select_installed ON app_public.client_plugins FOR SELECT USING ((id IN ( SELECT ocp.client_plugin_id
+   FROM app_public.organization_client_plugins ocp
+  WHERE (ocp.organization_id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids)))));
+
+
+--
 -- Name: organization_memberships select_invited; Type: POLICY; Schema: app_public; Owner: -
 --
 
@@ -5671,6 +6073,13 @@ CREATE POLICY select_own ON app_public.medias FOR SELECT USING ((organization_id
 --
 
 CREATE POLICY select_own ON app_public.organization_active_devices FOR SELECT USING ((organization_id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids)));
+
+
+--
+-- Name: organization_client_plugins select_own; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY select_own ON app_public.organization_client_plugins FOR SELECT USING ((organization_id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids)));
 
 
 --
@@ -5776,6 +6185,22 @@ CREATE POLICY select_own_org ON app_public.tags FOR SELECT USING ((organization_
 
 
 --
+-- Name: client_plugin_versions select_public; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY select_public ON app_public.client_plugin_versions FOR SELECT USING ((client_plugin_id IN ( SELECT client_plugins.id
+   FROM app_public.client_plugins
+  WHERE ((client_plugins.visibility = 'public'::app_public.client_plugin_visibility) AND (client_plugins.review_status = 'approved'::app_public.client_plugin_review_status)))));
+
+
+--
+-- Name: client_plugins select_public; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY select_public ON app_public.client_plugins FOR SELECT USING (((visibility = 'public'::app_public.client_plugin_visibility) AND (review_status = 'approved'::app_public.client_plugin_review_status)));
+
+
+--
 -- Name: organizations select_public; Type: POLICY; Schema: app_public; Owner: -
 --
 
@@ -5821,6 +6246,13 @@ CREATE POLICY update_only_when_empty ON app_public.cloud_connections FOR UPDATE 
 --
 
 CREATE POLICY update_own ON app_public.organization_active_devices FOR UPDATE USING ((organization_id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids)));
+
+
+--
+-- Name: organization_client_plugins update_own; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY update_own ON app_public.organization_client_plugins FOR UPDATE USING ((organization_id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids)));
 
 
 --
@@ -6747,6 +7179,42 @@ GRANT ALL ON FUNCTION app_public.update_screen_guest(id uuid, display_name text,
 
 
 --
+-- Name: TABLE client_plugin_drafts; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT SELECT,DELETE ON TABLE app_public.client_plugin_drafts TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN client_plugin_drafts.client_plugin_id; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(client_plugin_id) ON TABLE app_public.client_plugin_drafts TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN client_plugin_drafts.source; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(source),UPDATE(source) ON TABLE app_public.client_plugin_drafts TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN client_plugin_drafts.manifest; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(manifest),UPDATE(manifest) ON TABLE app_public.client_plugin_drafts TO theopenpresenter_visitor;
+
+
+--
+-- Name: FUNCTION upsert_client_plugin_draft(client_plugin_id uuid, source jsonb, manifest jsonb); Type: ACL; Schema: app_public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_public.upsert_client_plugin_draft(client_plugin_id uuid, source jsonb, manifest jsonb) FROM PUBLIC;
+GRANT ALL ON FUNCTION app_public.upsert_client_plugin_draft(client_plugin_id uuid, source jsonb, manifest jsonb) TO theopenpresenter_visitor;
+
+
+--
 -- Name: FUNCTION users_has_password(u app_public.users); Type: ACL; Schema: app_public; Owner: -
 --
 
@@ -6829,6 +7297,83 @@ GRANT INSERT(name),UPDATE(name) ON TABLE app_public.categories TO theopenpresent
 --
 
 GRANT INSERT(organization_id) ON TABLE app_public.categories TO theopenpresenter_visitor;
+
+
+--
+-- Name: TABLE client_plugin_versions; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT SELECT ON TABLE app_public.client_plugin_versions TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN client_plugin_versions.client_plugin_id; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(client_plugin_id) ON TABLE app_public.client_plugin_versions TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN client_plugin_versions.version; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(version) ON TABLE app_public.client_plugin_versions TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN client_plugin_versions.manifest; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(manifest) ON TABLE app_public.client_plugin_versions TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN client_plugin_versions.source; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(source) ON TABLE app_public.client_plugin_versions TO theopenpresenter_visitor;
+
+
+--
+-- Name: TABLE client_plugins; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT SELECT,DELETE ON TABLE app_public.client_plugins TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN client_plugins.owner_organization_id; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(owner_organization_id) ON TABLE app_public.client_plugins TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN client_plugins.handle; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(handle) ON TABLE app_public.client_plugins TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN client_plugins.title; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(title),UPDATE(title) ON TABLE app_public.client_plugins TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN client_plugins.description; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(description),UPDATE(description) ON TABLE app_public.client_plugins TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN client_plugins.visibility; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(visibility),UPDATE(visibility) ON TABLE app_public.client_plugins TO theopenpresenter_visitor;
 
 
 --
@@ -6948,6 +7493,41 @@ GRANT INSERT(updated_at),UPDATE(updated_at) ON TABLE app_public.organization_act
 --
 
 GRANT INSERT(host_session_cookie),UPDATE(host_session_cookie) ON TABLE app_public.organization_active_devices TO theopenpresenter_visitor;
+
+
+--
+-- Name: TABLE organization_client_plugins; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT SELECT,DELETE ON TABLE app_public.organization_client_plugins TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN organization_client_plugins.organization_id; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(organization_id) ON TABLE app_public.organization_client_plugins TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN organization_client_plugins.client_plugin_id; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(client_plugin_id) ON TABLE app_public.organization_client_plugins TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN organization_client_plugins.pinned_version_id; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(pinned_version_id),UPDATE(pinned_version_id) ON TABLE app_public.organization_client_plugins TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN organization_client_plugins.enabled; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(enabled),UPDATE(enabled) ON TABLE app_public.organization_client_plugins TO theopenpresenter_visitor;
 
 
 --
@@ -7143,5 +7723,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE theopenpresenter REVOKE ALL ON FUNCTIONS FROM 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict FFlY41sBXZjWxeog4XayRvEOa5eLMbi8hzN8UVm4HHYPm6yO1ljhMzkMDASank0
+\unrestrict 0C7MwCnJUGwPMT8cWReBXsPD5u9oglE344leA5yZsn3wwvr9IvO8OFcazZXWhZR
 
