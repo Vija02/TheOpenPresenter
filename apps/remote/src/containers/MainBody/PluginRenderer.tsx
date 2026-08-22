@@ -92,9 +92,23 @@ const PluginRenderer = React.memo(
 
     const viewData = useMemo(() => {
       if (pluginMeta && "registeredRemoteView" in pluginMeta) {
-        return pluginMeta.registeredRemoteView.find(
+        const native = pluginMeta.registeredRemoteView.find(
           (x) => x.pluginName === pluginInfo.plugin,
         );
+        if (native) return native;
+      }
+      // Handle client plugins
+      if (pluginMeta && "clientPluginViews" in pluginMeta) {
+        const client = (pluginMeta.clientPluginViews as any[]).find(
+          (x: any) => x.pluginName === pluginInfo.plugin,
+        );
+        if (client) {
+          return {
+            pluginName: client.pluginName,
+            tag: client.remoteTag,
+            config: null,
+          };
+        }
       }
       return undefined;
     }, [pluginInfo.plugin, pluginMeta]);

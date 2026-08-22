@@ -371,9 +371,16 @@ const PluginRenderer = React.memo(
     );
     const tag = useMemo(() => {
       if (pluginMeta && "registeredRendererView" in pluginMeta) {
-        return pluginMeta.registeredRendererView.find(
+        const native = pluginMeta.registeredRendererView.find(
           (x) => x.pluginName === pluginInfo?.plugin,
         )?.tag;
+        if (native) return native;
+      }
+      // Handle client plugins
+      if (pluginMeta && "clientPluginViews" in pluginMeta) {
+        return (pluginMeta.clientPluginViews as any[]).find(
+          (x: any) => x.pluginName === pluginInfo?.plugin,
+        )?.rendererTag;
       }
       return undefined;
     }, [pluginInfo?.plugin, pluginMeta]);

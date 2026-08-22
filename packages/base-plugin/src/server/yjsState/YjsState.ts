@@ -15,6 +15,57 @@ import {
 import { ServerPluginApiPrivate } from "../serverPlugin";
 import { DisposableDocumentManager } from "./DisposableDocumentManager";
 
+const CPLUGIN_PREFIX = "cplugin-";
+
+const toYjs = (value: any): any => {
+  if (Array.isArray(value)) {
+    const arr = new Y.Array();
+    arr.push(value.map(toYjs));
+    return arr;
+  }
+  if (value !== null && typeof value === "object") {
+    const map = new Y.Map();
+    for (const [k, v] of Object.entries(value)) {
+      map.set(k, toYjs(v));
+    }
+    return map;
+  }
+  return value;
+};
+
+/**
+ * Typically, we seed the renderer data through the server
+ * But for client plugin, we don't have a proper way to do this.
+ * We could hook it up in the same place but that might not be secure.
+ * To keep it still mostly client, we just keep it in the plugin data
+ * And populate it from there.
+ */
+const seedClientPluginRendererData = (
+  pluginInfo: ObjectToTypedMap<Plugin>,
+  rendererPluginMap: ObjectToTypedMap<any>,
+): boolean => {
+  const pluginName = pluginInfo.get("plugin");
+  if (
+    typeof pluginName !== "string" ||
+    !pluginName.startsWith(CPLUGIN_PREFIX)
+  ) {
+    return false;
+  }
+
+  const pluginData = pluginInfo.get("pluginData") as
+    | ObjectToTypedMap<any>
+    | undefined;
+  const initial = pluginData?.get("__initialRendererData");
+  const plain =
+    initial instanceof Y.AbstractType ? initial.toJSON() : (initial ?? {});
+
+  const map = rendererPluginMap as unknown as Y.Map<any>;
+  for (const [k, v] of Object.entries(plain ?? {})) {
+    map.set(k, toYjs(v));
+  }
+  return true;
+};
+
 /**
  * Creates an empty Yjs doc and populate it without our default state
  */
@@ -272,6 +323,9 @@ const handleYjsDocumentLoad = ({
             pluginInfo,
             rendererPluginMap,
           }) => {
+            if (seedClientPluginRendererData(pluginInfo, rendererPluginMap)) {
+              return;
+            }
             callPluginHooks({
               registeredHooks: registeredOnRendererDataCreated,
               hookName: "onRendererDataCreated",
@@ -488,6 +542,9 @@ const handleYjsDocumentLoad = ({
             pluginInfo,
             rendererPluginMap,
           }) => {
+            if (seedClientPluginRendererData(pluginInfo, rendererPluginMap)) {
+              return;
+            }
             callPluginHooks({
               registeredHooks: registeredOnRendererDataCreated,
               hookName: "onRendererDataCreated",

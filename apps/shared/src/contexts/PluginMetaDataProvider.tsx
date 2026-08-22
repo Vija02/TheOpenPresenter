@@ -5,6 +5,7 @@ import {
   useRemoteBasePluginQuery,
   useRendererBasePluginQuery,
 } from "@repo/graphql";
+import { preloader } from "@repo/lib";
 import { ErrorAlert, LoadingFull } from "@repo/ui";
 import React, { createContext, useContext, useMemo } from "react";
 
@@ -129,6 +130,23 @@ export function PluginMetaDataProvider({
     pluginMetaData?.publicOrGuestProject?.nodes,
   ]);
 
+  // Register client plugin files. Not in useEffect due to loading behaviour
+  const clientPluginViews: any[] =
+    pluginMetaData?.pluginMeta &&
+    "clientPluginViews" in pluginMetaData.pluginMeta
+      ? ((pluginMetaData.pluginMeta as any).clientPluginViews ?? [])
+      : [];
+  for (const view of clientPluginViews) {
+    preloader.registerRuntimePlugin(view.pluginName, {
+      scripts:
+        type === "remote"
+          ? (view.remoteScripts ?? [])
+          : (view.rendererScripts ?? []),
+      css:
+        type === "remote" ? (view.remoteCss ?? []) : (view.rendererCss ?? []),
+    });
+  }
+
   // Allow overriding the organization type
   const organizationTypeOverride = useMemo<OrganizationType | null>(() => {
     if (typeof window === "undefined") return null;
@@ -168,7 +186,9 @@ export function PluginMetaDataProvider({
           organizationTypeOverride ??
           pluginMetaData?.organizationBySlug?.organizationType ??
           null,
-        experimentalFeaturesEnabled: pluginMetaData?.organizationBySlug?.experimentalFeaturesEnabled ?? false,
+        experimentalFeaturesEnabled:
+          pluginMetaData?.organizationBySlug?.experimentalFeaturesEnabled ??
+          false,
         projectSlug,
         projectId: projectId,
         currentUser,
