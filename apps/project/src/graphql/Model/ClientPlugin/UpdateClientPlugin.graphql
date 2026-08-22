@@ -1,0 +1,11 @@
+mutation UpdateClientPlugin($input: UpdateClientPluginInput!) {
+  updateClientPlugin(input: $input) {
+    clientPlugin {
+      id
+      title
+      description
+      visibility
+      latestVersionId
+    }
+  }
+}

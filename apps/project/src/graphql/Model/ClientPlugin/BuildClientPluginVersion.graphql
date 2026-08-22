@@ -1,0 +1,6 @@
+mutation BuildClientPluginVersionMut($input: BuildClientPluginVersionInput!) {
+  buildClientPluginVersion(input: $input) {
+    success
+    buildLog
+  }
+}

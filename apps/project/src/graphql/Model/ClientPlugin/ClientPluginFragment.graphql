@@ -1,0 +1,11 @@
+fragment ClientPlugin on ClientPlugin {
+  id
+  handle
+  title
+  description
+  visibility
+  reviewStatus
+  latestVersionId
+  createdAt
+  updatedAt
+}

@@ -1,0 +1,7 @@
+mutation TestBuildClientPlugin($input: TestBuildClientPluginInput!) {
+  testBuildClientPlugin(input: $input) {
+    success
+    buildLog
+    artifacts
+  }
+}

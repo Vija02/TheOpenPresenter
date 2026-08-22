@@ -1,0 +1,9 @@
+mutation CreateClientPluginVersion($input: CreateClientPluginVersionInput!) {
+  createClientPluginVersion(input: $input) {
+    clientPluginVersion {
+      id
+      version
+      buildStatus
+    }
+  }
+}

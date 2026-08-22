@@ -1,0 +1,12 @@
+mutation UpdateOrganizationClientPlugin(
+  $input: UpdateOrganizationClientPluginInput!
+) {
+  updateOrganizationClientPlugin(input: $input) {
+    organizationClientPlugin {
+      organizationId
+      clientPluginId
+      pinnedVersionId
+      enabled
+    }
+  }
+}

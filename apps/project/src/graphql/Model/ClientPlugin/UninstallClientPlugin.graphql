@@ -1,0 +1,5 @@
+mutation UninstallClientPlugin($input: DeleteOrganizationClientPluginInput!) {
+  deleteOrganizationClientPlugin(input: $input) {
+    deletedOrganizationClientPluginNodeId
+  }
+}
