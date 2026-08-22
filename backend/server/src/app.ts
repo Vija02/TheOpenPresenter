@@ -142,6 +142,7 @@ export async function makeApp({
     await middleware.installForceSSL(app);
   }
   await middleware.installPluginStatic(app);
+  await middleware.installClientPluginStatic(app);
   await middleware.installPluginRoute(app);
   await middleware.installAi(app);
   // These are our assets: images/etc; served out of the /backend/server/public folder (if present)

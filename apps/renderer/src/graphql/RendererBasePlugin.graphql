@@ -42,4 +42,15 @@ fragment BaseRendererPluginMeta on PluginMeta {
     pluginName
     tag
   }
+  clientPluginViews {
+    pluginName
+    versionId
+    rendererTag
+    rendererScripts
+    rendererCss
+    title
+    description
+    categories
+    organizationTypes
+  }
 }
