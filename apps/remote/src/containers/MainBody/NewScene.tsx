@@ -28,19 +28,44 @@ export const NewScene = () => {
   const remotePluginMeta =
     pluginMeta && "registeredRemoteView" in pluginMeta ? pluginMeta : null;
 
+  const clientPluginCreators =
+    remotePluginMeta?.clientPluginViews.map((x) => ({
+      pluginName: x.pluginName,
+      title: x.title,
+      description: x.description,
+      categories: x.categories,
+      organizationTypes: x.organizationTypes,
+      isExperimental: false as boolean | null,
+      isStarred: false as boolean | null,
+      initialPluginData: x.initialPluginData ?? {},
+      initialRendererData: x.initialRendererData ?? {},
+    })) ?? [];
+
+  const initialDataByName = new Map(
+    clientPluginCreators.map((x) => [
+      x.pluginName,
+      {
+        pluginData: x.initialPluginData,
+        rendererData: x.initialRendererData,
+      },
+    ]),
+  );
+
   const visibleSceneCreators =
-    remotePluginMeta?.sceneCreator.filter((x) => {
-      const matchesOrg =
-        !organizationType ||
-        !x.organizationTypes ||
-        x.organizationTypes.length === 0 ||
-        x.organizationTypes.includes(organizationType);
+    [...(remotePluginMeta?.sceneCreator ?? []), ...clientPluginCreators].filter(
+      (x) => {
+        const matchesOrg =
+          !organizationType ||
+          !x.organizationTypes ||
+          x.organizationTypes.length === 0 ||
+          x.organizationTypes.includes(organizationType);
 
-      const matchExperimentalOnlyWhenEnabled =
-        !x.isExperimental || experimentalFeaturesEnabled;
+        const matchExperimentalOnlyWhenEnabled =
+          !x.isExperimental || experimentalFeaturesEnabled;
 
-      return matchesOrg && matchExperimentalOnlyWhenEnabled;
-    }) ?? [];
+        return matchesOrg && matchExperimentalOnlyWhenEnabled;
+      },
+    ) ?? [];
 
   const addPlugin = (pluginName: string, pluginTitle: string) => {
     const sceneId = typeidUnboxed("scene");
@@ -55,7 +80,17 @@ export const NewScene = () => {
         [typeidUnboxed("plugin")]: {
           plugin: pluginName,
           order: 1,
-          pluginData: {},
+          // This seeding is just for client plugin
+          pluginData: {
+            ...(initialDataByName.get(pluginName)?.pluginData ?? {}),
+            ...(initialDataByName.has(pluginName)
+              ? {
+                  // Store this here since we don't have a backend to handle it
+                  __initialRendererData:
+                    initialDataByName.get(pluginName)?.rendererData ?? {},
+                }
+              : {}),
+          },
         },
       },
     } as Scene;
