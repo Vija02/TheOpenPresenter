@@ -41,9 +41,16 @@ export async function resolveClientPluginsForOrg(
       v.artifacts as artifacts
     from app_public.organization_client_plugins ocp
     join app_public.client_plugins p on p.id = ocp.client_plugin_id
-    join app_public.client_plugin_versions v on v.id = ocp.pinned_version_id
+    join lateral (
+      select vv.id, vv.manifest, vv.artifacts
+        from app_public.client_plugin_versions vv
+       where vv.client_plugin_id = p.id
+         and vv.build_status = 'built'
+         and (ocp.pinned_version_id is null or vv.id = ocp.pinned_version_id)
+       order by vv.created_at desc
+       limit 1
+    ) v on true
     where ocp.enabled = true
-      and v.build_status = 'built'
       and ($1::uuid is null or ocp.organization_id = $1::uuid)
     `,
     [organizationId ?? null],
