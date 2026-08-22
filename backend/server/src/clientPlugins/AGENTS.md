@@ -16,6 +16,18 @@ Runtime name: `cplugin-<clientPluginId>-<versionId>`, tags `-remote` / `-rendere
 - Rejected: arbitrary npm, `/server` entries, dynamic `import()`, `eval`, `localStorage`, cookies.
 - CSS is namespaced to the plugin's container so it can't restyle the host.
 
+### Test build vs publish
+
+Two mutations, deliberately asymmetric:
+
+- `testBuildClientPlugin` (`api/clientPlugin/testBuildClientPlugin.ts`) compiles editor source
+  and returns the log. **Writes nothing** — no version row, no artifacts. Authors iterate on a
+  broken build without burning version numbers.
+- `buildClientPluginVersion` builds an existing version row and persists (below).
+
+The editor only calls the second one after the first succeeds, and it pins the exact source that
+passed; editing afterwards invalidates it and re-locks Publish.
+
 ## 2. Upload to storage
 
 `persist.ts` writes every output to object storage via `artifactStore.ts` under

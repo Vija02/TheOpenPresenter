@@ -1,7 +1,7 @@
 import { makePluginByCombiningPlugins } from "graphile-utils";
 
 import activeDevicePlugin from "../api/activeDevice";
-import { buildClientPluginVersion } from "../api/clientPlugin/buildClientPluginVersion";
+import clientPlugin from "../api/clientPlugin";
 import cloudPlugin from "../api/cloud";
 import mediaPlugin from "../api/media";
 import { pluginKeyPress } from "../api/pluginKeyPress";
@@ -12,7 +12,7 @@ export default makePluginByCombiningPlugins(
   pluginMeta,
   pluginKeyPress,
   screenControlPlugin,
-  buildClientPluginVersion,
+  ...clientPlugin,
   ...activeDevicePlugin,
   ...mediaPlugin,
   ...cloudPlugin,
