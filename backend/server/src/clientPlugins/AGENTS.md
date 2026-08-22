@@ -52,8 +52,11 @@ runs. Consequence: with the proxy/CDN path, artifacts are public to anyone holdi
 
 ## 4. Auto-exposed as a scene creator
 
-`resolveForOrg.ts` resolves each org's enabled + pinned + built versions into tags and artifact
-URLs; `api/pluginMeta.ts` exposes them as `clientPluginViews`. From there it's automatic:
+`resolveForOrg.ts` resolves each org's enabled + built versions into tags and artifact
+URLs; `api/pluginMeta.ts` exposes them as `clientPluginViews`. A null `pinned_version_id`
+means "follow the latest built version" and is resolved with a `join lateral … limit 1`,
+so publishing ships to the org without touching the install row. A non-null pin still
+locks to that exact version. From there it's automatic:
 
 - `PluginMetaDataProvider` calls `preloader.registerRuntimePlugin` **synchronously during render**.
   It must not move into `useEffect`: effects run child-first, so `PluginRenderer` would call
