@@ -1,0 +1,8 @@
+query ClientPluginDraft($clientPluginId: UUID!) {
+  clientPluginDraft(clientPluginId: $clientPluginId) {
+    clientPluginId
+    source
+    manifest
+    updatedAt
+  }
+}

@@ -1,0 +1,10 @@
+query ClientPluginVersionSource($versionId: UUID!) {
+  clientPluginVersion(id: $versionId) {
+    id
+    version
+    source
+    manifest
+    buildStatus
+    buildLog
+  }
+}

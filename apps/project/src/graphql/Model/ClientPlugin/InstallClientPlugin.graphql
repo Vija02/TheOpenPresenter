@@ -1,0 +1,10 @@
+mutation InstallClientPlugin($input: CreateOrganizationClientPluginInput!) {
+  createOrganizationClientPlugin(input: $input) {
+    organizationClientPlugin {
+      organizationId
+      clientPluginId
+      pinnedVersionId
+      enabled
+    }
+  }
+}

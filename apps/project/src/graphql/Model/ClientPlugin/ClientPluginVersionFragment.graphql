@@ -1,0 +1,7 @@
+fragment ClientPluginVersion on ClientPluginVersion {
+  id
+  version
+  buildStatus
+  buildLog
+  createdAt
+}

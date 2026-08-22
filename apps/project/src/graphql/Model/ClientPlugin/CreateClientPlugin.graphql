@@ -1,0 +1,9 @@
+mutation CreateClientPlugin($input: CreateClientPluginInput!) {
+  createClientPlugin(input: $input) {
+    clientPlugin {
+      id
+      handle
+      title
+    }
+  }
+}

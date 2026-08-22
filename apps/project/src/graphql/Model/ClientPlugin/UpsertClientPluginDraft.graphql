@@ -1,0 +1,8 @@
+mutation UpsertClientPluginDraft($input: UpsertClientPluginDraftInput!) {
+  upsertClientPluginDraft(input: $input) {
+    clientPluginDraft {
+      clientPluginId
+      updatedAt
+    }
+  }
+}

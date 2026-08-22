@@ -1,0 +1,5 @@
+mutation DeleteClientPlugin($input: DeleteClientPluginInput!) {
+  deleteClientPlugin(input: $input) {
+    deletedClientPluginNodeId
+  }
+}

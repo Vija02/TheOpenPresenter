@@ -1,0 +1,48 @@
+query OrganizationSettingsPluginsPage($slug: String!) {
+  ...BaseOrganizationSettingsPage
+
+  ...OrganizationSettingsPluginsInfo
+}
+
+fragment OrganizationSettingsPluginsInfo on Query {
+  organizationBySlug(slug: $slug) {
+    id
+    name
+    slug
+
+    clientPluginsByOwnerOrganizationId {
+      nodes {
+        ...ClientPlugin
+        clientPluginVersions(orderBy: CREATED_AT_DESC) {
+          nodes {
+            ...ClientPluginVersion
+          }
+        }
+      }
+    }
+
+    organizationClientPlugins {
+      nodes {
+        organizationId
+        clientPluginId
+        pinnedVersionId
+        enabled
+        installedAt
+        clientPlugin {
+          id
+          handle
+          title
+          description
+          visibility
+          clientPluginVersions(orderBy: CREATED_AT_DESC) {
+            nodes {
+              id
+              version
+              buildStatus
+            }
+          }
+        }
+      }
+    }
+  }
+}
