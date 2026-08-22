@@ -2,6 +2,7 @@ import installAi from "./installAi";
 import installAutoLogin from "./installAutoLogin";
 import installStripe from "./installStripe";
 import installCSRFProtection from "./installCSRFProtection";
+import installClientPluginStatic from "./installClientPluginStatic";
 import installCloudConnection from "./installCloudConnection";
 import installDatabasePools from "./installDatabasePools";
 import installDeviceHostHandler from "./installDeviceHostHandler";
@@ -37,6 +38,7 @@ export {
   installAi,
   installAutoLogin,
   installCSRFProtection,
+  installClientPluginStatic,
   installCloudConnection,
   installDatabasePools,
   installDeviceHostHandler,

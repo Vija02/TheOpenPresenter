@@ -64,4 +64,17 @@ fragment BaseRemotePluginMeta on PluginMeta {
       alwaysRender
     }
   }
+  clientPluginViews {
+    pluginName
+    versionId
+    remoteTag
+    remoteScripts
+    remoteCss
+    title
+    description
+    categories
+    organizationTypes
+    initialPluginData
+    initialRendererData
+  }
 }

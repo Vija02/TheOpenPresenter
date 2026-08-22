@@ -115,6 +115,15 @@ input BooleanFilter {
   notIn: [Boolean!]
 }
 
+input BuildClientPluginVersionInput {
+  versionId: UUID!
+}
+
+type BuildClientPluginVersionPayload {
+  buildLog: String!
+  success: Boolean!
+}
+
 """A connection to a list of `Category` values."""
 type CategoriesConnection {
   """
@@ -275,6 +284,548 @@ type ChangePasswordPayload {
   """
   query: Query
   success: Boolean
+}
+
+"""A frontend-only plugin authored by an organization"""
+type ClientPlugin {
+  """
+  Reads a single `ClientPluginDraft` that is related to this `ClientPlugin`.
+  """
+  clientPluginDraft: ClientPluginDraft
+
+  """Reads and enables pagination through a set of `ClientPluginDraft`."""
+  clientPluginDrafts(
+    """Read all values in the set after (below) this cursor."""
+    after: Cursor
+
+    """Read all values in the set before (above) this cursor."""
+    before: Cursor
+
+    """
+    A condition to be used in determining which values should be returned by the collection.
+    """
+    condition: ClientPluginDraftCondition
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: ClientPluginDraftFilter
+
+    """Only read the first `n` values of the set."""
+    first: Int
+
+    """Only read the last `n` values of the set."""
+    last: Int
+
+    """
+    Skip the first `n` values from our `after` cursor, an alternative to cursor
+    based pagination. May not be used with `last`.
+    """
+    offset: Int
+
+    """The method to use when ordering `ClientPluginDraft`."""
+    orderBy: [ClientPluginDraftsOrderBy!] = [PRIMARY_KEY_ASC]
+  ): ClientPluginDraftsConnection! @deprecated(reason: "Please use clientPluginDraft instead")
+
+  """Reads and enables pagination through a set of `ClientPluginVersion`."""
+  clientPluginVersions(
+    """Read all values in the set after (below) this cursor."""
+    after: Cursor
+
+    """Read all values in the set before (above) this cursor."""
+    before: Cursor
+
+    """
+    A condition to be used in determining which values should be returned by the collection.
+    """
+    condition: ClientPluginVersionCondition
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: ClientPluginVersionFilter
+
+    """Only read the first `n` values of the set."""
+    first: Int
+
+    """Only read the last `n` values of the set."""
+    last: Int
+
+    """
+    Skip the first `n` values from our `after` cursor, an alternative to cursor
+    based pagination. May not be used with `last`.
+    """
+    offset: Int
+
+    """The method to use when ordering `ClientPluginVersion`."""
+    orderBy: [ClientPluginVersionsOrderBy!] = [PRIMARY_KEY_ASC]
+  ): ClientPluginVersionsConnection!
+  createdAt: Datetime!
+  description: String!
+  handle: String!
+  id: UUID!
+  latestVersionId: UUID
+
+  """
+  Reads and enables pagination through a set of `OrganizationClientPlugin`.
+  """
+  organizationClientPlugins(
+    """Read all values in the set after (below) this cursor."""
+    after: Cursor
+
+    """Read all values in the set before (above) this cursor."""
+    before: Cursor
+
+    """
+    A condition to be used in determining which values should be returned by the collection.
+    """
+    condition: OrganizationClientPluginCondition
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: OrganizationClientPluginFilter
+
+    """Only read the first `n` values of the set."""
+    first: Int
+
+    """Only read the last `n` values of the set."""
+    last: Int
+
+    """
+    Skip the first `n` values from our `after` cursor, an alternative to cursor
+    based pagination. May not be used with `last`.
+    """
+    offset: Int
+
+    """The method to use when ordering `OrganizationClientPlugin`."""
+    orderBy: [OrganizationClientPluginsOrderBy!] = [PRIMARY_KEY_ASC]
+  ): OrganizationClientPluginsConnection!
+
+  """Reads a single `Organization` that is related to this `ClientPlugin`."""
+  ownerOrganization: Organization
+  ownerOrganizationId: UUID!
+  reviewStatus: ClientPluginReviewStatus!
+  title: String!
+  updatedAt: Datetime!
+  visibility: ClientPluginVisibility!
+}
+
+enum ClientPluginBuildStatus {
+  BUILT
+  FAILED
+  PENDING
+}
+
+"""
+A condition to be used against `ClientPlugin` object types. All fields are
+tested for equality and combined with a logical ‘and.’
+"""
+input ClientPluginCondition {
+  """Checks for equality with the object’s `id` field."""
+  id: UUID
+
+  """Checks for equality with the object’s `ownerOrganizationId` field."""
+  ownerOrganizationId: UUID
+
+  """Checks for equality with the object’s `visibility` field."""
+  visibility: ClientPluginVisibility
+}
+
+"""
+Autosaved working copy. Promoted into an immutable client_plugin_versions row on build
+"""
+type ClientPluginDraft {
+  """
+  Reads a single `ClientPlugin` that is related to this `ClientPluginDraft`.
+  """
+  clientPlugin: ClientPlugin
+  clientPluginId: UUID!
+  createdAt: Datetime!
+  manifest: JSON!
+  source: JSON!
+  updatedAt: Datetime!
+}
+
+"""
+A condition to be used against `ClientPluginDraft` object types. All fields are
+tested for equality and combined with a logical ‘and.’
+"""
+input ClientPluginDraftCondition {
+  """Checks for equality with the object’s `clientPluginId` field."""
+  clientPluginId: UUID
+}
+
+"""
+A filter to be used against `ClientPluginDraft` object types. All fields are combined with a logical ‘and.’
+"""
+input ClientPluginDraftFilter {
+  """Checks for all expressions in this list."""
+  and: [ClientPluginDraftFilter!]
+
+  """Filter by the object’s `clientPluginId` field."""
+  clientPluginId: UUIDFilter
+
+  """Negates the expression."""
+  not: ClientPluginDraftFilter
+
+  """Checks for any expressions in this list."""
+  or: [ClientPluginDraftFilter!]
+}
+
+"""An input for mutations affecting `ClientPluginDraft`"""
+input ClientPluginDraftInput {
+  clientPluginId: UUID!
+  manifest: JSON
+  source: JSON
+}
+
+"""
+Represents an update to a `ClientPluginDraft`. Fields that are set will be updated.
+"""
+input ClientPluginDraftPatch {
+  manifest: JSON
+  source: JSON
+}
+
+"""A connection to a list of `ClientPluginDraft` values."""
+type ClientPluginDraftsConnection {
+  """
+  A list of edges which contains the `ClientPluginDraft` and cursor to aid in pagination.
+  """
+  edges: [ClientPluginDraftsEdge!]!
+
+  """A list of `ClientPluginDraft` objects."""
+  nodes: [ClientPluginDraft!]!
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+
+  """
+  The count of *all* `ClientPluginDraft` you could get from the connection.
+  """
+  totalCount: Int!
+}
+
+"""A `ClientPluginDraft` edge in the connection."""
+type ClientPluginDraftsEdge {
+  """A cursor for use in pagination."""
+  cursor: Cursor
+
+  """The `ClientPluginDraft` at the end of the edge."""
+  node: ClientPluginDraft!
+}
+
+"""Methods to use when ordering `ClientPluginDraft`."""
+enum ClientPluginDraftsOrderBy {
+  CLIENT_PLUGIN_ID_ASC
+  CLIENT_PLUGIN_ID_DESC
+  NATURAL
+  PRIMARY_KEY_ASC
+  PRIMARY_KEY_DESC
+}
+
+"""
+A filter to be used against `ClientPlugin` object types. All fields are combined with a logical ‘and.’
+"""
+input ClientPluginFilter {
+  """Checks for all expressions in this list."""
+  and: [ClientPluginFilter!]
+
+  """Filter by the object’s `id` field."""
+  id: UUIDFilter
+
+  """Negates the expression."""
+  not: ClientPluginFilter
+
+  """Checks for any expressions in this list."""
+  or: [ClientPluginFilter!]
+
+  """Filter by the object’s `ownerOrganizationId` field."""
+  ownerOrganizationId: UUIDFilter
+
+  """Filter by the object’s `visibility` field."""
+  visibility: ClientPluginVisibilityFilter
+}
+
+"""An input for mutations affecting `ClientPlugin`"""
+input ClientPluginInput {
+  description: String
+  handle: String!
+  ownerOrganizationId: UUID!
+  title: String!
+  visibility: ClientPluginVisibility
+}
+
+"""
+Represents an update to a `ClientPlugin`. Fields that are set will be updated.
+"""
+input ClientPluginPatch {
+  description: String
+  title: String
+  visibility: ClientPluginVisibility
+}
+
+enum ClientPluginReviewStatus {
+  APPROVED
+  DRAFT
+  PENDING
+  REJECTED
+}
+
+"""
+An immutable, built version of a client plugin. Contains authored source and a manifest. Built artifacts are stored in object storage and listed in the artifacts column
+"""
+type ClientPluginVersion {
+  artifacts: JSON!
+  buildLog: String!
+  buildStatus: ClientPluginBuildStatus!
+
+  """
+  Reads a single `ClientPlugin` that is related to this `ClientPluginVersion`.
+  """
+  clientPlugin: ClientPlugin
+  clientPluginId: UUID!
+  createdAt: Datetime!
+  id: UUID!
+  manifest: JSON!
+
+  """
+  Reads and enables pagination through a set of `OrganizationClientPlugin`.
+  """
+  organizationClientPluginsByPinnedVersionId(
+    """Read all values in the set after (below) this cursor."""
+    after: Cursor
+
+    """Read all values in the set before (above) this cursor."""
+    before: Cursor
+
+    """
+    A condition to be used in determining which values should be returned by the collection.
+    """
+    condition: OrganizationClientPluginCondition
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: OrganizationClientPluginFilter
+
+    """Only read the first `n` values of the set."""
+    first: Int
+
+    """Only read the last `n` values of the set."""
+    last: Int
+
+    """
+    Skip the first `n` values from our `after` cursor, an alternative to cursor
+    based pagination. May not be used with `last`.
+    """
+    offset: Int
+
+    """The method to use when ordering `OrganizationClientPlugin`."""
+    orderBy: [OrganizationClientPluginsOrderBy!] = [PRIMARY_KEY_ASC]
+  ): OrganizationClientPluginsConnection!
+  source: JSON!
+  version: String!
+}
+
+"""
+A condition to be used against `ClientPluginVersion` object types. All fields
+are tested for equality and combined with a logical ‘and.’
+"""
+input ClientPluginVersionCondition {
+  """Checks for equality with the object’s `clientPluginId` field."""
+  clientPluginId: UUID
+
+  """Checks for equality with the object’s `createdAt` field."""
+  createdAt: Datetime
+
+  """Checks for equality with the object’s `id` field."""
+  id: UUID
+}
+
+"""
+A filter to be used against `ClientPluginVersion` object types. All fields are combined with a logical ‘and.’
+"""
+input ClientPluginVersionFilter {
+  """Checks for all expressions in this list."""
+  and: [ClientPluginVersionFilter!]
+
+  """Filter by the object’s `clientPluginId` field."""
+  clientPluginId: UUIDFilter
+
+  """Filter by the object’s `createdAt` field."""
+  createdAt: DatetimeFilter
+
+  """Filter by the object’s `id` field."""
+  id: UUIDFilter
+
+  """Negates the expression."""
+  not: ClientPluginVersionFilter
+
+  """Checks for any expressions in this list."""
+  or: [ClientPluginVersionFilter!]
+}
+
+"""An input for mutations affecting `ClientPluginVersion`"""
+input ClientPluginVersionInput {
+  clientPluginId: UUID!
+  manifest: JSON
+  source: JSON
+  version: String!
+}
+
+"""A connection to a list of `ClientPluginVersion` values."""
+type ClientPluginVersionsConnection {
+  """
+  A list of edges which contains the `ClientPluginVersion` and cursor to aid in pagination.
+  """
+  edges: [ClientPluginVersionsEdge!]!
+
+  """A list of `ClientPluginVersion` objects."""
+  nodes: [ClientPluginVersion!]!
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+
+  """
+  The count of *all* `ClientPluginVersion` you could get from the connection.
+  """
+  totalCount: Int!
+}
+
+"""A `ClientPluginVersion` edge in the connection."""
+type ClientPluginVersionsEdge {
+  """A cursor for use in pagination."""
+  cursor: Cursor
+
+  """The `ClientPluginVersion` at the end of the edge."""
+  node: ClientPluginVersion!
+}
+
+"""Methods to use when ordering `ClientPluginVersion`."""
+enum ClientPluginVersionsOrderBy {
+  CLIENT_PLUGIN_ID_ASC
+  CLIENT_PLUGIN_ID_DESC
+  CREATED_AT_ASC
+  CREATED_AT_DESC
+  ID_ASC
+  ID_DESC
+  NATURAL
+  PRIMARY_KEY_ASC
+  PRIMARY_KEY_DESC
+}
+
+"""
+A client-side plugin enabled for the requesting organization.
+Carries everything the frontend runtime needs to load and register it.
+"""
+type ClientPluginView {
+  categories: [String!]!
+  description: String!
+
+  """JSON: initial pluginData shape seeded when a scene is created."""
+  initialPluginData: JSON!
+
+  """JSON: initial rendererData shape seeded per renderer."""
+  initialRendererData: JSON!
+  organizationTypes: [String!]
+  pluginName: String!
+  remoteCss: [String!]!
+  remoteScripts: [String!]!
+  remoteTag: String!
+  rendererCss: [String!]!
+  rendererScripts: [String!]!
+  rendererTag: String!
+  title: String!
+  versionId: UUID!
+}
+
+enum ClientPluginVisibility {
+  PRIVATE
+  PUBLIC
+  UNLISTED
+}
+
+"""
+A filter to be used against ClientPluginVisibility fields. All fields are combined with a logical ‘and.’
+"""
+input ClientPluginVisibilityFilter {
+  """
+  Not equal to the specified value, treating null like an ordinary value.
+  """
+  distinctFrom: ClientPluginVisibility
+
+  """Equal to the specified value."""
+  equalTo: ClientPluginVisibility
+
+  """Greater than the specified value."""
+  greaterThan: ClientPluginVisibility
+
+  """Greater than or equal to the specified value."""
+  greaterThanOrEqualTo: ClientPluginVisibility
+
+  """Included in the specified list."""
+  in: [ClientPluginVisibility!]
+
+  """
+  Is null (if `true` is specified) or is not null (if `false` is specified).
+  """
+  isNull: Boolean
+
+  """Less than the specified value."""
+  lessThan: ClientPluginVisibility
+
+  """Less than or equal to the specified value."""
+  lessThanOrEqualTo: ClientPluginVisibility
+
+  """Equal to the specified value, treating null like an ordinary value."""
+  notDistinctFrom: ClientPluginVisibility
+
+  """Not equal to the specified value."""
+  notEqualTo: ClientPluginVisibility
+
+  """Not included in the specified list."""
+  notIn: [ClientPluginVisibility!]
+}
+
+"""A connection to a list of `ClientPlugin` values."""
+type ClientPluginsConnection {
+  """
+  A list of edges which contains the `ClientPlugin` and cursor to aid in pagination.
+  """
+  edges: [ClientPluginsEdge!]!
+
+  """A list of `ClientPlugin` objects."""
+  nodes: [ClientPlugin!]!
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+
+  """The count of *all* `ClientPlugin` you could get from the connection."""
+  totalCount: Int!
+}
+
+"""A `ClientPlugin` edge in the connection."""
+type ClientPluginsEdge {
+  """A cursor for use in pagination."""
+  cursor: Cursor
+
+  """The `ClientPlugin` at the end of the edge."""
+  node: ClientPlugin!
+}
+
+"""Methods to use when ordering `ClientPlugin`."""
+enum ClientPluginsOrderBy {
+  ID_ASC
+  ID_DESC
+  NATURAL
+  OWNER_ORGANIZATION_ID_ASC
+  OWNER_ORGANIZATION_ID_DESC
+  PRIMARY_KEY_ASC
+  PRIMARY_KEY_DESC
+  VISIBILITY_ASC
+  VISIBILITY_DESC
 }
 
 type CloudConnection {
@@ -640,6 +1191,124 @@ type CreateCategoryPayload {
   query: Query
 }
 
+"""All input for the create `ClientPluginDraft` mutation."""
+input CreateClientPluginDraftInput {
+  """
+  An arbitrary string value with no semantic meaning. Will be included in the
+  payload verbatim. May be used to track mutations by the client.
+  """
+  clientMutationId: String
+
+  """The `ClientPluginDraft` to be created by this mutation."""
+  clientPluginDraft: ClientPluginDraftInput!
+}
+
+"""The output of our create `ClientPluginDraft` mutation."""
+type CreateClientPluginDraftPayload {
+  """
+  The exact same `clientMutationId` that was provided in the mutation input,
+  unchanged and unused. May be used by a client to track mutations.
+  """
+  clientMutationId: String
+
+  """
+  Reads a single `ClientPlugin` that is related to this `ClientPluginDraft`.
+  """
+  clientPlugin: ClientPlugin
+
+  """The `ClientPluginDraft` that was created by this mutation."""
+  clientPluginDraft: ClientPluginDraft
+
+  """An edge for our `ClientPluginDraft`. May be used by Relay 1."""
+  clientPluginDraftEdge(
+    """The method to use when ordering `ClientPluginDraft`."""
+    orderBy: [ClientPluginDraftsOrderBy!] = [PRIMARY_KEY_ASC]
+  ): ClientPluginDraftsEdge
+
+  """
+  Our root query field type. Allows us to run any query from our mutation payload.
+  """
+  query: Query
+}
+
+"""All input for the create `ClientPlugin` mutation."""
+input CreateClientPluginInput {
+  """
+  An arbitrary string value with no semantic meaning. Will be included in the
+  payload verbatim. May be used to track mutations by the client.
+  """
+  clientMutationId: String
+
+  """The `ClientPlugin` to be created by this mutation."""
+  clientPlugin: ClientPluginInput!
+}
+
+"""The output of our create `ClientPlugin` mutation."""
+type CreateClientPluginPayload {
+  """
+  The exact same `clientMutationId` that was provided in the mutation input,
+  unchanged and unused. May be used by a client to track mutations.
+  """
+  clientMutationId: String
+
+  """The `ClientPlugin` that was created by this mutation."""
+  clientPlugin: ClientPlugin
+
+  """An edge for our `ClientPlugin`. May be used by Relay 1."""
+  clientPluginEdge(
+    """The method to use when ordering `ClientPlugin`."""
+    orderBy: [ClientPluginsOrderBy!] = [PRIMARY_KEY_ASC]
+  ): ClientPluginsEdge
+
+  """Reads a single `Organization` that is related to this `ClientPlugin`."""
+  ownerOrganization: Organization
+
+  """
+  Our root query field type. Allows us to run any query from our mutation payload.
+  """
+  query: Query
+}
+
+"""All input for the create `ClientPluginVersion` mutation."""
+input CreateClientPluginVersionInput {
+  """
+  An arbitrary string value with no semantic meaning. Will be included in the
+  payload verbatim. May be used to track mutations by the client.
+  """
+  clientMutationId: String
+
+  """The `ClientPluginVersion` to be created by this mutation."""
+  clientPluginVersion: ClientPluginVersionInput!
+}
+
+"""The output of our create `ClientPluginVersion` mutation."""
+type CreateClientPluginVersionPayload {
+  """
+  The exact same `clientMutationId` that was provided in the mutation input,
+  unchanged and unused. May be used by a client to track mutations.
+  """
+  clientMutationId: String
+
+  """
+  Reads a single `ClientPlugin` that is related to this `ClientPluginVersion`.
+  """
+  clientPlugin: ClientPlugin
+
+  """The `ClientPluginVersion` that was created by this mutation."""
+  clientPluginVersion: ClientPluginVersion
+
+  """An edge for our `ClientPluginVersion`. May be used by Relay 1."""
+  clientPluginVersionEdge(
+    """The method to use when ordering `ClientPluginVersion`."""
+    orderBy: [ClientPluginVersionsOrderBy!] = [PRIMARY_KEY_ASC]
+  ): ClientPluginVersionsEdge
+
+  """
+  Our root query field type. Allows us to run any query from our mutation payload.
+  """
+  query: Query
+}
+
 """All input for the `createFullProject` mutation."""
 input CreateFullProjectInput {
   categoryId: UUID
@@ -760,6 +1429,56 @@ type CreateOrganizationActiveDevicePayload {
     """The method to use when ordering `OrganizationActiveDevice`."""
     orderBy: [OrganizationActiveDevicesOrderBy!] = [NATURAL]
   ): OrganizationActiveDevicesEdge
+
+  """
+  Our root query field type. Allows us to run any query from our mutation payload.
+  """
+  query: Query
+}
+
+"""All input for the create `OrganizationClientPlugin` mutation."""
+input CreateOrganizationClientPluginInput {
+  """
+  An arbitrary string value with no semantic meaning. Will be included in the
+  payload verbatim. May be used to track mutations by the client.
+  """
+  clientMutationId: String
+
+  """The `OrganizationClientPlugin` to be created by this mutation."""
+  organizationClientPlugin: OrganizationClientPluginInput!
+}
+
+"""The output of our create `OrganizationClientPlugin` mutation."""
+type CreateOrganizationClientPluginPayload {
+  """
+  The exact same `clientMutationId` that was provided in the mutation input,
+  unchanged and unused. May be used by a client to track mutations.
+  """
+  clientMutationId: String
+
+  """
+  Reads a single `ClientPlugin` that is related to this `OrganizationClientPlugin`.
+  """
+  clientPlugin: ClientPlugin
+
+  """
+  Reads a single `Organization` that is related to this `OrganizationClientPlugin`.
+  """
+  organization: Organization
+
+  """The `OrganizationClientPlugin` that was created by this mutation."""
+  organizationClientPlugin: OrganizationClientPlugin
+
+  """An edge for our `OrganizationClientPlugin`. May be used by Relay 1."""
+  organizationClientPluginEdge(
+    """The method to use when ordering `OrganizationClientPlugin`."""
+    orderBy: [OrganizationClientPluginsOrderBy!] = [PRIMARY_KEY_ASC]
+  ): OrganizationClientPluginsEdge
+
+  """
+  Reads a single `ClientPluginVersion` that is related to this `OrganizationClientPlugin`.
+  """
+  pinnedVersion: ClientPluginVersion
 
   """
   Our root query field type. Allows us to run any query from our mutation payload.
@@ -1211,6 +1930,82 @@ type DeleteCategoryPayload {
   query: Query
 }
 
+"""All input for the `deleteClientPluginDraft` mutation."""
+input DeleteClientPluginDraftInput {
+  """
+  An arbitrary string value with no semantic meaning. Will be included in the
+  payload verbatim. May be used to track mutations by the client.
+  """
+  clientMutationId: String
+  clientPluginId: UUID!
+}
+
+"""The output of our delete `ClientPluginDraft` mutation."""
+type DeleteClientPluginDraftPayload {
+  """
+  The exact same `clientMutationId` that was provided in the mutation input,
+  unchanged and unused. May be used by a client to track mutations.
+  """
+  clientMutationId: String
+
+  """
+  Reads a single `ClientPlugin` that is related to this `ClientPluginDraft`.
+  """
+  clientPlugin: ClientPlugin
+
+  """The `ClientPluginDraft` that was deleted by this mutation."""
+  clientPluginDraft: ClientPluginDraft
+
+  """An edge for our `ClientPluginDraft`. May be used by Relay 1."""
+  clientPluginDraftEdge(
+    """The method to use when ordering `ClientPluginDraft`."""
+    orderBy: [ClientPluginDraftsOrderBy!] = [PRIMARY_KEY_ASC]
+  ): ClientPluginDraftsEdge
+  deletedClientPluginDraftNodeId: ID
+
+  """
+  Our root query field type. Allows us to run any query from our mutation payload.
+  """
+  query: Query
+}
+
+"""All input for the `deleteClientPlugin` mutation."""
+input DeleteClientPluginInput {
+  """
+  An arbitrary string value with no semantic meaning. Will be included in the
+  payload verbatim. May be used to track mutations by the client.
+  """
+  clientMutationId: String
+  id: UUID!
+}
+
+"""The output of our delete `ClientPlugin` mutation."""
+type DeleteClientPluginPayload {
+  """
+  The exact same `clientMutationId` that was provided in the mutation input,
+  unchanged and unused. May be used by a client to track mutations.
+  """
+  clientMutationId: String
+
+  """The `ClientPlugin` that was deleted by this mutation."""
+  clientPlugin: ClientPlugin
+
+  """An edge for our `ClientPlugin`. May be used by Relay 1."""
+  clientPluginEdge(
+    """The method to use when ordering `ClientPlugin`."""
+    orderBy: [ClientPluginsOrderBy!] = [PRIMARY_KEY_ASC]
+  ): ClientPluginsEdge
+  deletedClientPluginNodeId: ID
+
+  """Reads a single `Organization` that is related to this `ClientPlugin`."""
+  ownerOrganization: Organization
+
+  """
+  Our root query field type. Allows us to run any query from our mutation payload.
+  """
+  query: Query
+}
+
 """All input for the `deleteCloudConnection` mutation."""
 input DeleteCloudConnectionInput {
   """
@@ -1246,6 +2041,56 @@ type DeleteCloudConnectionPayload {
   Reads a single `Organization` that is related to this `CloudConnection`.
   """
   organization: Organization
+
+  """
+  Our root query field type. Allows us to run any query from our mutation payload.
+  """
+  query: Query
+}
+
+"""All input for the `deleteOrganizationClientPlugin` mutation."""
+input DeleteOrganizationClientPluginInput {
+  """
+  An arbitrary string value with no semantic meaning. Will be included in the
+  payload verbatim. May be used to track mutations by the client.
+  """
+  clientMutationId: String
+  clientPluginId: UUID!
+  organizationId: UUID!
+}
+
+"""The output of our delete `OrganizationClientPlugin` mutation."""
+type DeleteOrganizationClientPluginPayload {
+  """
+  The exact same `clientMutationId` that was provided in the mutation input,
+  unchanged and unused. May be used by a client to track mutations.
+  """
+  clientMutationId: String
+
+  """
+  Reads a single `ClientPlugin` that is related to this `OrganizationClientPlugin`.
+  """
+  clientPlugin: ClientPlugin
+  deletedOrganizationClientPluginNodeId: ID
+
+  """
+  Reads a single `Organization` that is related to this `OrganizationClientPlugin`.
+  """
+  organization: Organization
+
+  """The `OrganizationClientPlugin` that was deleted by this mutation."""
+  organizationClientPlugin: OrganizationClientPlugin
+
+  """An edge for our `OrganizationClientPlugin`. May be used by Relay 1."""
+  organizationClientPluginEdge(
+    """The method to use when ordering `OrganizationClientPlugin`."""
+    orderBy: [OrganizationClientPluginsOrderBy!] = [PRIMARY_KEY_ASC]
+  ): OrganizationClientPluginsEdge
+
+  """
+  Reads a single `ClientPluginVersion` that is related to this `OrganizationClientPlugin`.
+  """
+  pinnedVersion: ClientPluginVersion
 
   """
   Our root query field type. Allows us to run any query from our mutation payload.
@@ -2491,6 +3336,17 @@ type Mutation {
     input: AuthenticateScreenGuestInput!
   ): AuthenticateScreenGuestPayload
 
+  """
+  Builds a client plugin version's authored source into runtime bundles and
+  stores the artifacts.
+  """
+  buildClientPluginVersion(
+    """
+    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.
+    """
+    input: BuildClientPluginVersionInput!
+  ): BuildClientPluginVersionPayload
+
   """Enter your old password and a new password to change your password."""
   changePassword(
     """
@@ -2532,6 +3388,30 @@ type Mutation {
     """
     input: CreateCategoryInput!
   ): CreateCategoryPayload
+
+  """Creates a single `ClientPlugin`."""
+  createClientPlugin(
+    """
+    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.
+    """
+    input: CreateClientPluginInput!
+  ): CreateClientPluginPayload
+
+  """Creates a single `ClientPluginDraft`."""
+  createClientPluginDraft(
+    """
+    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.
+    """
+    input: CreateClientPluginDraftInput!
+  ): CreateClientPluginDraftPayload
+
+  """Creates a single `ClientPluginVersion`."""
+  createClientPluginVersion(
+    """
+    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.
+    """
+    input: CreateClientPluginVersionInput!
+  ): CreateClientPluginVersionPayload
   createFullProject(
     """
     The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.
@@ -2564,6 +3444,14 @@ type Mutation {
     """
     input: CreateOrganizationActiveDeviceInput!
   ): CreateOrganizationActiveDevicePayload
+
+  """Creates a single `OrganizationClientPlugin`."""
+  createOrganizationClientPlugin(
+    """
+    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.
+    """
+    input: CreateOrganizationClientPluginInput!
+  ): CreateOrganizationClientPluginPayload
 
   """Creates a single `Project`."""
   createProject(
@@ -2633,6 +3521,22 @@ type Mutation {
     input: DeleteCategoryInput!
   ): DeleteCategoryPayload
 
+  """Deletes a single `ClientPlugin` using a unique key."""
+  deleteClientPlugin(
+    """
+    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.
+    """
+    input: DeleteClientPluginInput!
+  ): DeleteClientPluginPayload
+
+  """Deletes a single `ClientPluginDraft` using a unique key."""
+  deleteClientPluginDraft(
+    """
+    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.
+    """
+    input: DeleteClientPluginDraftInput!
+  ): DeleteClientPluginDraftPayload
+
   """Deletes a single `CloudConnection` using a unique key."""
   deleteCloudConnection(
     """
@@ -2650,6 +3554,14 @@ type Mutation {
     """
     input: DeleteOrganizationInput!
   ): DeleteOrganizationPayload
+
+  """Deletes a single `OrganizationClientPlugin` using a unique key."""
+  deleteOrganizationClientPlugin(
+    """
+    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.
+    """
+    input: DeleteOrganizationClientPluginInput!
+  ): DeleteOrganizationClientPluginPayload
 
   """Deletes a single `Project` using a unique key."""
   deleteProject(
@@ -2908,6 +3820,22 @@ type Mutation {
     input: UpdateCategoryInput!
   ): UpdateCategoryPayload
 
+  """Updates a single `ClientPlugin` using a unique key and a patch."""
+  updateClientPlugin(
+    """
+    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.
+    """
+    input: UpdateClientPluginInput!
+  ): UpdateClientPluginPayload
+
+  """Updates a single `ClientPluginDraft` using a unique key and a patch."""
+  updateClientPluginDraft(
+    """
+    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.
+    """
+    input: UpdateClientPluginDraftInput!
+  ): UpdateClientPluginDraftPayload
+
   """Updates a single `CloudConnection` using a unique key and a patch."""
   updateCloudConnection(
     """
@@ -2923,6 +3851,16 @@ type Mutation {
     """
     input: UpdateOrganizationInput!
   ): UpdateOrganizationPayload
+
+  """
+  Updates a single `OrganizationClientPlugin` using a unique key and a patch.
+  """
+  updateOrganizationClientPlugin(
+    """
+    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.
+    """
+    input: UpdateOrganizationClientPluginInput!
+  ): UpdateOrganizationClientPluginPayload
 
   """Updates a single `Project` using a unique key and a patch."""
   updateProject(
@@ -2961,6 +3899,14 @@ type Mutation {
     """
     input: UpdateUserInput!
   ): UpdateUserPayload
+
+  """Autosaves the owning organization's shared draft for a client plugin"""
+  upsertClientPluginDraft(
+    """
+    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.
+    """
+    input: UpsertClientPluginDraftInput!
+  ): UpsertClientPluginDraftPayload
 
   """
   Once you have received a verification token for your email, you may call this mutation with that token to make your email verified.
@@ -3012,6 +3958,40 @@ type Organization {
     """The method to use when ordering `Category`."""
     orderBy: [CategoriesOrderBy!] = [PRIMARY_KEY_ASC]
   ): CategoriesConnection!
+
+  """Reads and enables pagination through a set of `ClientPlugin`."""
+  clientPluginsByOwnerOrganizationId(
+    """Read all values in the set after (below) this cursor."""
+    after: Cursor
+
+    """Read all values in the set before (above) this cursor."""
+    before: Cursor
+
+    """
+    A condition to be used in determining which values should be returned by the collection.
+    """
+    condition: ClientPluginCondition
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: ClientPluginFilter
+
+    """Only read the first `n` values of the set."""
+    first: Int
+
+    """Only read the last `n` values of the set."""
+    last: Int
+
+    """
+    Skip the first `n` values from our `after` cursor, an alternative to cursor
+    based pagination. May not be used with `last`.
+    """
+    offset: Int
+
+    """The method to use when ordering `ClientPlugin`."""
+    orderBy: [ClientPluginsOrderBy!] = [PRIMARY_KEY_ASC]
+  ): ClientPluginsConnection!
 
   """Reads and enables pagination through a set of `CloudConnection`."""
   cloudConnections(
@@ -3159,6 +4139,42 @@ type Organization {
     """The method to use when ordering `OrganizationActiveDevice`."""
     orderBy: [OrganizationActiveDevicesOrderBy!] = [NATURAL]
   ): OrganizationActiveDevicesConnection!
+
+  """
+  Reads and enables pagination through a set of `OrganizationClientPlugin`.
+  """
+  organizationClientPlugins(
+    """Read all values in the set after (below) this cursor."""
+    after: Cursor
+
+    """Read all values in the set before (above) this cursor."""
+    before: Cursor
+
+    """
+    A condition to be used in determining which values should be returned by the collection.
+    """
+    condition: OrganizationClientPluginCondition
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: OrganizationClientPluginFilter
+
+    """Only read the first `n` values of the set."""
+    first: Int
+
+    """Only read the last `n` values of the set."""
+    last: Int
+
+    """
+    Skip the first `n` values from our `after` cursor, an alternative to cursor
+    based pagination. May not be used with `last`.
+    """
+    offset: Int
+
+    """The method to use when ordering `OrganizationClientPlugin`."""
+    orderBy: [OrganizationClientPluginsOrderBy!] = [PRIMARY_KEY_ASC]
+  ): OrganizationClientPluginsConnection!
 
   """
   Reads and enables pagination through a set of `OrganizationJoinRequest`.
@@ -3514,6 +4530,126 @@ type OrganizationBillingInfo {
 }
 
 """
+Records that an organization has installed a client plugin, pinned to a specific version
+"""
+type OrganizationClientPlugin {
+  """
+  Reads a single `ClientPlugin` that is related to this `OrganizationClientPlugin`.
+  """
+  clientPlugin: ClientPlugin
+  clientPluginId: UUID!
+  enabled: Boolean!
+  installedAt: Datetime!
+
+  """
+  Reads a single `Organization` that is related to this `OrganizationClientPlugin`.
+  """
+  organization: Organization
+  organizationId: UUID!
+
+  """
+  Reads a single `ClientPluginVersion` that is related to this `OrganizationClientPlugin`.
+  """
+  pinnedVersion: ClientPluginVersion
+  pinnedVersionId: UUID!
+}
+
+"""
+A condition to be used against `OrganizationClientPlugin` object types. All
+fields are tested for equality and combined with a logical ‘and.’
+"""
+input OrganizationClientPluginCondition {
+  """Checks for equality with the object’s `clientPluginId` field."""
+  clientPluginId: UUID
+
+  """Checks for equality with the object’s `organizationId` field."""
+  organizationId: UUID
+
+  """Checks for equality with the object’s `pinnedVersionId` field."""
+  pinnedVersionId: UUID
+}
+
+"""
+A filter to be used against `OrganizationClientPlugin` object types. All fields are combined with a logical ‘and.’
+"""
+input OrganizationClientPluginFilter {
+  """Checks for all expressions in this list."""
+  and: [OrganizationClientPluginFilter!]
+
+  """Filter by the object’s `clientPluginId` field."""
+  clientPluginId: UUIDFilter
+
+  """Negates the expression."""
+  not: OrganizationClientPluginFilter
+
+  """Checks for any expressions in this list."""
+  or: [OrganizationClientPluginFilter!]
+
+  """Filter by the object’s `organizationId` field."""
+  organizationId: UUIDFilter
+
+  """Filter by the object’s `pinnedVersionId` field."""
+  pinnedVersionId: UUIDFilter
+}
+
+"""An input for mutations affecting `OrganizationClientPlugin`"""
+input OrganizationClientPluginInput {
+  clientPluginId: UUID!
+  enabled: Boolean
+  organizationId: UUID!
+  pinnedVersionId: UUID!
+}
+
+"""
+Represents an update to a `OrganizationClientPlugin`. Fields that are set will be updated.
+"""
+input OrganizationClientPluginPatch {
+  enabled: Boolean
+  pinnedVersionId: UUID
+}
+
+"""A connection to a list of `OrganizationClientPlugin` values."""
+type OrganizationClientPluginsConnection {
+  """
+  A list of edges which contains the `OrganizationClientPlugin` and cursor to aid in pagination.
+  """
+  edges: [OrganizationClientPluginsEdge!]!
+
+  """A list of `OrganizationClientPlugin` objects."""
+  nodes: [OrganizationClientPlugin!]!
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+
+  """
+  The count of *all* `OrganizationClientPlugin` you could get from the connection.
+  """
+  totalCount: Int!
+}
+
+"""A `OrganizationClientPlugin` edge in the connection."""
+type OrganizationClientPluginsEdge {
+  """A cursor for use in pagination."""
+  cursor: Cursor
+
+  """The `OrganizationClientPlugin` at the end of the edge."""
+  node: OrganizationClientPlugin!
+}
+
+"""Methods to use when ordering `OrganizationClientPlugin`."""
+enum OrganizationClientPluginsOrderBy {
+  CLIENT_PLUGIN_ID_ASC
+  CLIENT_PLUGIN_ID_DESC
+  NATURAL
+  ORGANIZATION_ID_ASC
+  ORGANIZATION_ID_DESC
+  PINNED_VERSION_ID_ASC
+  PINNED_VERSION_ID_DESC
+  PRIMARY_KEY_ASC
+  PRIMARY_KEY_DESC
+}
+
+"""
 A condition to be used against `Organization` object types. All fields are
 tested for equality and combined with a logical ‘and.’
 """
@@ -3837,6 +4973,7 @@ type PluginKeyPressPayload {
 }
 
 type PluginMeta {
+  clientPluginViews: [ClientPluginView!]!
   registeredRemoteView: [RegisteredRemoteView!]!
   registeredRendererView: [RegisteredRendererView!]!
   sceneCreator: [SceneCreator!]!
@@ -4359,6 +5496,111 @@ type Query {
     orderBy: [CategoriesOrderBy!] = [PRIMARY_KEY_ASC]
   ): CategoriesConnection
   category(id: UUID!): Category
+  clientPlugin(id: UUID!): ClientPlugin
+  clientPluginDraft(clientPluginId: UUID!): ClientPluginDraft
+
+  """Reads and enables pagination through a set of `ClientPluginDraft`."""
+  clientPluginDrafts(
+    """Read all values in the set after (below) this cursor."""
+    after: Cursor
+
+    """Read all values in the set before (above) this cursor."""
+    before: Cursor
+
+    """
+    A condition to be used in determining which values should be returned by the collection.
+    """
+    condition: ClientPluginDraftCondition
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: ClientPluginDraftFilter
+
+    """Only read the first `n` values of the set."""
+    first: Int
+
+    """Only read the last `n` values of the set."""
+    last: Int
+
+    """
+    Skip the first `n` values from our `after` cursor, an alternative to cursor
+    based pagination. May not be used with `last`.
+    """
+    offset: Int
+
+    """The method to use when ordering `ClientPluginDraft`."""
+    orderBy: [ClientPluginDraftsOrderBy!] = [PRIMARY_KEY_ASC]
+  ): ClientPluginDraftsConnection
+  clientPluginVersion(id: UUID!): ClientPluginVersion
+
+  """Reads and enables pagination through a set of `ClientPluginVersion`."""
+  clientPluginVersions(
+    """Read all values in the set after (below) this cursor."""
+    after: Cursor
+
+    """Read all values in the set before (above) this cursor."""
+    before: Cursor
+
+    """
+    A condition to be used in determining which values should be returned by the collection.
+    """
+    condition: ClientPluginVersionCondition
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: ClientPluginVersionFilter
+
+    """Only read the first `n` values of the set."""
+    first: Int
+
+    """Only read the last `n` values of the set."""
+    last: Int
+
+    """
+    Skip the first `n` values from our `after` cursor, an alternative to cursor
+    based pagination. May not be used with `last`.
+    """
+    offset: Int
+
+    """The method to use when ordering `ClientPluginVersion`."""
+    orderBy: [ClientPluginVersionsOrderBy!] = [PRIMARY_KEY_ASC]
+  ): ClientPluginVersionsConnection
+
+  """Reads and enables pagination through a set of `ClientPlugin`."""
+  clientPlugins(
+    """Read all values in the set after (below) this cursor."""
+    after: Cursor
+
+    """Read all values in the set before (above) this cursor."""
+    before: Cursor
+
+    """
+    A condition to be used in determining which values should be returned by the collection.
+    """
+    condition: ClientPluginCondition
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: ClientPluginFilter
+
+    """Only read the first `n` values of the set."""
+    first: Int
+
+    """Only read the last `n` values of the set."""
+    last: Int
+
+    """
+    Skip the first `n` values from our `after` cursor, an alternative to cursor
+    based pagination. May not be used with `last`.
+    """
+    offset: Int
+
+    """The method to use when ordering `ClientPlugin`."""
+    orderBy: [ClientPluginsOrderBy!] = [PRIMARY_KEY_ASC]
+  ): ClientPluginsConnection
   cloudConnection(id: UUID!): CloudConnection
 
   """Reads and enables pagination through a set of `CloudConnection`."""
@@ -4652,6 +5894,43 @@ type Query {
     orderBy: [OrganizationActiveDevicesOrderBy!] = [NATURAL]
   ): OrganizationActiveDevicesConnection
   organizationBySlug(slug: String!): Organization
+  organizationClientPlugin(clientPluginId: UUID!, organizationId: UUID!): OrganizationClientPlugin
+
+  """
+  Reads and enables pagination through a set of `OrganizationClientPlugin`.
+  """
+  organizationClientPlugins(
+    """Read all values in the set after (below) this cursor."""
+    after: Cursor
+
+    """Read all values in the set before (above) this cursor."""
+    before: Cursor
+
+    """
+    A condition to be used in determining which values should be returned by the collection.
+    """
+    condition: OrganizationClientPluginCondition
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: OrganizationClientPluginFilter
+
+    """Only read the first `n` values of the set."""
+    first: Int
+
+    """Only read the last `n` values of the set."""
+    last: Int
+
+    """
+    Skip the first `n` values from our `after` cursor, an alternative to cursor
+    based pagination. May not be used with `last`.
+    """
+    offset: Int
+
+    """The method to use when ordering `OrganizationClientPlugin`."""
+    orderBy: [OrganizationClientPluginsOrderBy!] = [PRIMARY_KEY_ASC]
+  ): OrganizationClientPluginsConnection
 
   """
   Given an invitation UUID (and, if required, the code that was emailed to you), retrieves the `Organization` that you were invited to.
@@ -4757,7 +6036,7 @@ type Query {
     offset: Int
     searchString: String!
   ): OrganizationsConnection
-  pluginMeta: PluginMeta!
+  pluginMeta(organizationId: UUID): PluginMeta!
   project(id: UUID!): Project
   projectByOrganizationIdAndSlug(organizationId: UUID!, slug: String!): Project
 
@@ -7079,6 +8358,90 @@ type UpdateCategoryPayload {
   query: Query
 }
 
+"""All input for the `updateClientPluginDraft` mutation."""
+input UpdateClientPluginDraftInput {
+  """
+  An arbitrary string value with no semantic meaning. Will be included in the
+  payload verbatim. May be used to track mutations by the client.
+  """
+  clientMutationId: String
+  clientPluginId: UUID!
+
+  """
+  An object where the defined keys will be set on the `ClientPluginDraft` being updated.
+  """
+  patch: ClientPluginDraftPatch!
+}
+
+"""The output of our update `ClientPluginDraft` mutation."""
+type UpdateClientPluginDraftPayload {
+  """
+  The exact same `clientMutationId` that was provided in the mutation input,
+  unchanged and unused. May be used by a client to track mutations.
+  """
+  clientMutationId: String
+
+  """
+  Reads a single `ClientPlugin` that is related to this `ClientPluginDraft`.
+  """
+  clientPlugin: ClientPlugin
+
+  """The `ClientPluginDraft` that was updated by this mutation."""
+  clientPluginDraft: ClientPluginDraft
+
+  """An edge for our `ClientPluginDraft`. May be used by Relay 1."""
+  clientPluginDraftEdge(
+    """The method to use when ordering `ClientPluginDraft`."""
+    orderBy: [ClientPluginDraftsOrderBy!] = [PRIMARY_KEY_ASC]
+  ): ClientPluginDraftsEdge
+
+  """
+  Our root query field type. Allows us to run any query from our mutation payload.
+  """
+  query: Query
+}
+
+"""All input for the `updateClientPlugin` mutation."""
+input UpdateClientPluginInput {
+  """
+  An arbitrary string value with no semantic meaning. Will be included in the
+  payload verbatim. May be used to track mutations by the client.
+  """
+  clientMutationId: String
+  id: UUID!
+
+  """
+  An object where the defined keys will be set on the `ClientPlugin` being updated.
+  """
+  patch: ClientPluginPatch!
+}
+
+"""The output of our update `ClientPlugin` mutation."""
+type UpdateClientPluginPayload {
+  """
+  The exact same `clientMutationId` that was provided in the mutation input,
+  unchanged and unused. May be used by a client to track mutations.
+  """
+  clientMutationId: String
+
+  """The `ClientPlugin` that was updated by this mutation."""
+  clientPlugin: ClientPlugin
+
+  """An edge for our `ClientPlugin`. May be used by Relay 1."""
+  clientPluginEdge(
+    """The method to use when ordering `ClientPlugin`."""
+    orderBy: [ClientPluginsOrderBy!] = [PRIMARY_KEY_ASC]
+  ): ClientPluginsEdge
+
+  """Reads a single `Organization` that is related to this `ClientPlugin`."""
+  ownerOrganization: Organization
+
+  """
+  Our root query field type. Allows us to run any query from our mutation payload.
+  """
+  query: Query
+}
+
 """All input for the `updateCloudConnection` mutation."""
 input UpdateCloudConnectionInput {
   """
@@ -7118,6 +8481,60 @@ type UpdateCloudConnectionPayload {
   Reads a single `Organization` that is related to this `CloudConnection`.
   """
   organization: Organization
+
+  """
+  Our root query field type. Allows us to run any query from our mutation payload.
+  """
+  query: Query
+}
+
+"""All input for the `updateOrganizationClientPlugin` mutation."""
+input UpdateOrganizationClientPluginInput {
+  """
+  An arbitrary string value with no semantic meaning. Will be included in the
+  payload verbatim. May be used to track mutations by the client.
+  """
+  clientMutationId: String
+  clientPluginId: UUID!
+  organizationId: UUID!
+
+  """
+  An object where the defined keys will be set on the `OrganizationClientPlugin` being updated.
+  """
+  patch: OrganizationClientPluginPatch!
+}
+
+"""The output of our update `OrganizationClientPlugin` mutation."""
+type UpdateOrganizationClientPluginPayload {
+  """
+  The exact same `clientMutationId` that was provided in the mutation input,
+  unchanged and unused. May be used by a client to track mutations.
+  """
+  clientMutationId: String
+
+  """
+  Reads a single `ClientPlugin` that is related to this `OrganizationClientPlugin`.
+  """
+  clientPlugin: ClientPlugin
+
+  """
+  Reads a single `Organization` that is related to this `OrganizationClientPlugin`.
+  """
+  organization: Organization
+
+  """The `OrganizationClientPlugin` that was updated by this mutation."""
+  organizationClientPlugin: OrganizationClientPlugin
+
+  """An edge for our `OrganizationClientPlugin`. May be used by Relay 1."""
+  organizationClientPluginEdge(
+    """The method to use when ordering `OrganizationClientPlugin`."""
+    orderBy: [OrganizationClientPluginsOrderBy!] = [PRIMARY_KEY_ASC]
+  ): OrganizationClientPluginsEdge
+
+  """
+  Reads a single `ClientPluginVersion` that is related to this `OrganizationClientPlugin`.
+  """
+  pinnedVersion: ClientPluginVersion
 
   """
   Our root query field type. Allows us to run any query from our mutation payload.
@@ -7374,6 +8791,44 @@ type UpdateUserPayload {
     """The method to use when ordering `User`."""
     orderBy: [UsersOrderBy!] = [PRIMARY_KEY_ASC]
   ): UsersEdge
+}
+
+"""All input for the `upsertClientPluginDraft` mutation."""
+input UpsertClientPluginDraftInput {
+  """
+  An arbitrary string value with no semantic meaning. Will be included in the
+  payload verbatim. May be used to track mutations by the client.
+  """
+  clientMutationId: String
+  clientPluginId: UUID!
+  manifest: JSON!
+  source: JSON!
+}
+
+"""The output of our `upsertClientPluginDraft` mutation."""
+type UpsertClientPluginDraftPayload {
+  """
+  The exact same `clientMutationId` that was provided in the mutation input,
+  unchanged and unused. May be used by a client to track mutations.
+  """
+  clientMutationId: String
+
+  """
+  Reads a single `ClientPlugin` that is related to this `ClientPluginDraft`.
+  """
+  clientPlugin: ClientPlugin
+  clientPluginDraft: ClientPluginDraft
+
+  """An edge for our `ClientPluginDraft`. May be used by Relay 1."""
+  clientPluginDraftEdge(
+    """The method to use when ordering `ClientPluginDraft`."""
+    orderBy: [ClientPluginDraftsOrderBy!] = [PRIMARY_KEY_ASC]
+  ): ClientPluginDraftsEdge
+
+  """
+  Our root query field type. Allows us to run any query from our mutation payload.
+  """
+  query: Query
 }
 
 """A user who can log in to the application."""
