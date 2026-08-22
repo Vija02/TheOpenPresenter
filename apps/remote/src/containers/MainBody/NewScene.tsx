@@ -5,7 +5,11 @@ import React from "react";
 import { FaStar } from "react-icons/fa";
 import { IconType } from "react-icons/lib";
 import { MdOutlineOndemandVideo } from "react-icons/md";
-import { PiMusicNotesSimple, PiPresentationChart } from "react-icons/pi";
+import {
+  PiMusicNotesSimple,
+  PiPresentationChart,
+  PiPuzzlePiece,
+} from "react-icons/pi";
 import { typeidUnboxed } from "typeid-js";
 
 import { useIsMobile } from "../../hooks/useIsMobile";
@@ -15,6 +19,7 @@ const sceneCategoriesConfig: Record<SceneCategories, IconType> = {
   Display: PiPresentationChart,
   Media: MdOutlineOndemandVideo,
   Audio: PiMusicNotesSimple,
+  Custom: PiPuzzlePiece,
 };
 
 export const NewScene = () => {
@@ -33,8 +38,8 @@ export const NewScene = () => {
       pluginName: x.pluginName,
       title: x.title,
       description: x.description,
-      categories: x.categories,
-      organizationTypes: x.organizationTypes,
+      categories: ["Custom"] as string[],
+      organizationTypes: null as string[] | null,
       isExperimental: false as boolean | null,
       isStarred: false as boolean | null,
       initialPluginData: x.initialPluginData ?? {},

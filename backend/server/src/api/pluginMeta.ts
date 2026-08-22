@@ -58,11 +58,7 @@ export const pluginMeta = makeExtendSchemaPlugin(() => ({
       rendererCss: [String!]!
       title: String!
       description: String!
-      categories: [String!]!
-      organizationTypes: [String!]
-      """JSON: initial pluginData shape seeded when a scene is created."""
       initialPluginData: JSON!
-      """JSON: initial rendererData shape seeded per renderer."""
       initialRendererData: JSON!
     }
   `,
@@ -91,10 +87,8 @@ export const pluginMeta = makeExtendSchemaPlugin(() => ({
               rendererTag: x.renderer.tag,
               rendererScripts: x.renderer.scripts,
               rendererCss: x.renderer.css,
-              title: x.manifest.title,
-              description: x.manifest.description,
-              categories: x.manifest.categories,
-              organizationTypes: x.manifest.organizationTypes,
+              title: x.title,
+              description: x.description,
               initialPluginData: x.manifest.pluginData,
               initialRendererData: x.manifest.rendererData,
             }));

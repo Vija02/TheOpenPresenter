@@ -15,11 +15,9 @@ export type ResolvedClientPluginView = {
   versionId: string;
   remote: { tag: string; scripts: string[]; css: string[] };
   renderer: { tag: string; scripts: string[]; css: string[] };
+  title: string;
+  description: string;
   manifest: {
-    title: string;
-    description: string;
-    categories: string[];
-    organizationTypes: string[] | null;
     pluginData: Record<string, unknown>;
     rendererData: Record<string, unknown>;
   };
@@ -36,6 +34,8 @@ export async function resolveClientPluginsForOrg(
     `
     select
       p.id as client_plugin_id,
+      p.title as plugin_title,
+      p.description as plugin_description,
       v.id as version_id,
       v.manifest as manifest,
       v.artifacts as artifacts
@@ -86,11 +86,9 @@ export async function resolveClientPluginsForOrg(
           ? [staticUrl(row.version_id, RENDERER_CSS_FILE)]
           : [],
       },
+      title: row.plugin_title || "Untitled plugin",
+      description: row.plugin_description || "",
       manifest: {
-        title: manifest.title ?? "Untitled plugin",
-        description: manifest.description ?? "",
-        categories: manifest.categories ?? [],
-        organizationTypes: manifest.organizationTypes ?? null,
         pluginData: manifest.pluginData ?? {},
         rendererData: manifest.rendererData ?? {},
       },
