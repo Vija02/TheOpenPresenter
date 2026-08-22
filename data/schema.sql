@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 0C7MwCnJUGwPMT8cWReBXsPD5u9oglE344leA5yZsn3wwvr9IvO8OFcazZXWhZR
+\restrict gUBeruUoncWQtsUrDLEFULRfGWmMEyOCtcEwoHzzAm7kQK0TP5YZyz1mDjjtqEV
 
 -- Dumped from database version 17.0 (Debian 17.0-1.pgdg120+1)
 -- Dumped by pg_dump version 18.4
@@ -1120,6 +1120,34 @@ $$;
 --
 
 COMMENT ON FUNCTION app_private.tg__timestamps() IS 'This trigger should be called on all tables with created_at, updated_at - it ensures that they cannot be manipulated and that updated_at will always be larger than the previous updated_at.';
+
+
+--
+-- Name: tg_client_plugin_versions__autoinstall_for_owner(); Type: FUNCTION; Schema: app_private; Owner: -
+--
+
+CREATE FUNCTION app_private.tg_client_plugin_versions__autoinstall_for_owner() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+    AS $$
+begin
+  insert into app_public.organization_client_plugins
+    (organization_id, client_plugin_id, pinned_version_id, enabled)
+  select p.owner_organization_id, p.id, null, true
+    from app_public.client_plugins p
+   where p.id = NEW.client_plugin_id
+  on conflict (organization_id, client_plugin_id) do nothing;
+
+  return NEW;
+end;
+$$;
+
+
+--
+-- Name: FUNCTION tg_client_plugin_versions__autoinstall_for_owner(); Type: COMMENT; Schema: app_private; Owner: -
+--
+
+COMMENT ON FUNCTION app_private.tg_client_plugin_versions__autoinstall_for_owner() IS 'Installs a client plugin for its owning organization once a version builds';
 
 
 --
@@ -3562,7 +3590,7 @@ CREATE TABLE app_public.organization_active_devices (
 CREATE TABLE app_public.organization_client_plugins (
     organization_id uuid NOT NULL,
     client_plugin_id uuid NOT NULL,
-    pinned_version_id uuid NOT NULL,
+    pinned_version_id uuid,
     enabled boolean DEFAULT true NOT NULL,
     installed_at timestamp with time zone DEFAULT now() NOT NULL
 );
@@ -4874,6 +4902,13 @@ CREATE TRIGGER _200_forbid_if_project_and_tag_within_different_org BEFORE INSERT
 
 
 --
+-- Name: client_plugin_versions _300_autoinstall_for_owner; Type: TRIGGER; Schema: app_public; Owner: -
+--
+
+CREATE TRIGGER _300_autoinstall_for_owner AFTER UPDATE OF build_status ON app_public.client_plugin_versions FOR EACH ROW WHEN (((new.build_status = 'built'::app_public.client_plugin_build_status) AND (old.build_status IS DISTINCT FROM 'built'::app_public.client_plugin_build_status))) EXECUTE FUNCTION app_private.tg_client_plugin_versions__autoinstall_for_owner();
+
+
+--
 -- Name: project_tags _300_update_project_updated_at; Type: TRIGGER; Schema: app_public; Owner: -
 --
 
@@ -5984,7 +6019,7 @@ CREATE POLICY select_guest_session ON app_public.screen_control_requests FOR SEL
 -- Name: client_plugin_versions select_installed; Type: POLICY; Schema: app_public; Owner: -
 --
 
-CREATE POLICY select_installed ON app_public.client_plugin_versions FOR SELECT USING ((id IN ( SELECT ocp.pinned_version_id
+CREATE POLICY select_installed ON app_public.client_plugin_versions FOR SELECT USING ((client_plugin_id IN ( SELECT ocp.client_plugin_id
    FROM app_public.organization_client_plugins ocp
   WHERE (ocp.organization_id IN ( SELECT app_public.current_user_member_organization_ids() AS current_user_member_organization_ids)))));
 
@@ -6484,6 +6519,13 @@ REVOKE ALL ON FUNCTION app_private.tg__notify_org_screen_control_request() FROM 
 --
 
 REVOKE ALL ON FUNCTION app_private.tg__timestamps() FROM PUBLIC;
+
+
+--
+-- Name: FUNCTION tg_client_plugin_versions__autoinstall_for_owner(); Type: ACL; Schema: app_private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_private.tg_client_plugin_versions__autoinstall_for_owner() FROM PUBLIC;
 
 
 --
@@ -7723,5 +7765,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE theopenpresenter REVOKE ALL ON FUNCTIONS FROM 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 0C7MwCnJUGwPMT8cWReBXsPD5u9oglE344leA5yZsn3wwvr9IvO8OFcazZXWhZR
+\unrestrict gUBeruUoncWQtsUrDLEFULRfGWmMEyOCtcEwoHzzAm7kQK0TP5YZyz1mDjjtqEV
 

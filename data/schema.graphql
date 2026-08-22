@@ -4562,7 +4562,7 @@ type OrganizationClientPlugin {
   Reads a single `ClientPluginVersion` that is related to this `OrganizationClientPlugin`.
   """
   pinnedVersion: ClientPluginVersion
-  pinnedVersionId: UUID!
+  pinnedVersionId: UUID
 }
 
 """
@@ -4608,7 +4608,7 @@ input OrganizationClientPluginInput {
   clientPluginId: UUID!
   enabled: Boolean
   organizationId: UUID!
-  pinnedVersionId: UUID!
+  pinnedVersionId: UUID
 }
 
 """
