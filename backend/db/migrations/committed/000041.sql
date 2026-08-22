@@ -1,9 +1,18 @@
 --! Previous: sha1:01b593a9c47df56b185c295c10b71e684cef25dd
---! Hash: sha1:771e3ec43d6c696f30411dfd65f776570a2538fc
+--! Hash: sha1:0bc6a61676c4fdb6f6180529c36f1851696adeb2
 
 --! split: 100-reset.sql
 -- 910
 drop function if exists app_public.upsert_client_plugin_draft(uuid, jsonb, jsonb) cascade;
+
+-- 900 (trigger first: it depends on client_plugin_versions and the function)
+do $$
+begin
+  if to_regclass('app_public.client_plugin_versions') is not null then
+    drop trigger if exists _300_autoinstall_for_owner on app_public.client_plugin_versions;
+  end if;
+end$$;
+drop function if exists app_private.tg_client_plugin_versions__autoinstall_for_owner() cascade;
 
 -- 810
 do $$
@@ -217,15 +226,12 @@ end;
 $$;
 
 --! split: 540-organization_client_plugins.sql
--- 540-organization_client_plugins.sql
--- Org-level install/enable of a client plugin, pinned to an explicit version.
--- (drops live in 100-reset.sql)
-
 create table app_public.organization_client_plugins (
   organization_id uuid not null references app_public.organizations(id) on delete cascade,
   client_plugin_id uuid not null references app_public.client_plugins(id) on delete cascade,
 
-  pinned_version_id uuid not null references app_public.client_plugin_versions(id) on delete restrict,
+  -- Null means latest
+  pinned_version_id uuid references app_public.client_plugin_versions(id) on delete restrict,
 
   enabled boolean not null default true,
 
@@ -324,8 +330,8 @@ grant delete on app_public.client_plugin_drafts to :DATABASE_VISITOR;
 drop policy if exists select_installed on app_public.client_plugin_versions;
 create policy select_installed on app_public.client_plugin_versions
   for select using (
-    id in (
-      select ocp.pinned_version_id
+    client_plugin_id in (
+      select ocp.client_plugin_id
         from app_public.organization_client_plugins ocp
        where ocp.organization_id in (select app_public.current_user_member_organization_ids())
     )
@@ -341,6 +347,29 @@ create policy select_installed on app_public.client_plugins
        where ocp.organization_id in (select app_public.current_user_member_organization_ids())
     )
   );
+
+--! split: 900-autoinstall-owner.sql
+create function app_private.tg_client_plugin_versions__autoinstall_for_owner() returns trigger as $$
+begin
+  insert into app_public.organization_client_plugins
+    (organization_id, client_plugin_id, pinned_version_id, enabled)
+  select p.owner_organization_id, p.id, null, true
+    from app_public.client_plugins p
+   where p.id = NEW.client_plugin_id
+  on conflict (organization_id, client_plugin_id) do nothing;
+
+  return NEW;
+end;
+$$ language plpgsql volatile security definer set search_path to pg_catalog, public, pg_temp;
+
+comment on function app_private.tg_client_plugin_versions__autoinstall_for_owner() is
+  E'Installs a client plugin for its owning organization once a version builds';
+
+create trigger _300_autoinstall_for_owner
+  after update of build_status on app_public.client_plugin_versions
+  for each row
+  when (NEW.build_status = 'built' and OLD.build_status is distinct from 'built')
+  execute procedure app_private.tg_client_plugin_versions__autoinstall_for_owner();
 
 --! split: 910-upsert-draft.sql
 -- Helper for upsert
