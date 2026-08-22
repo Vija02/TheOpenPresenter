@@ -721,15 +721,9 @@ A client-side plugin enabled for the requesting organization.
 Carries everything the frontend runtime needs to load and register it.
 """
 type ClientPluginView {
-  categories: [String!]!
   description: String!
-
-  """JSON: initial pluginData shape seeded when a scene is created."""
   initialPluginData: JSON!
-
-  """JSON: initial rendererData shape seeded per renderer."""
   initialRendererData: JSON!
-  organizationTypes: [String!]
   pluginName: String!
   remoteCss: [String!]!
   remoteScripts: [String!]!

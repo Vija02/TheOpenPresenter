@@ -72,8 +72,6 @@ fragment BaseRemotePluginMeta on PluginMeta {
     remoteCss
     title
     description
-    categories
-    organizationTypes
     initialPluginData
     initialRendererData
   }
