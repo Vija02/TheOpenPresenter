@@ -75,9 +75,29 @@ const initPreloader = () => {
   preloader.setPreloader(promises);
 };
 
+// Registers additional plugins at runtime (used for client plugins)
+const registerRuntimePlugin = (
+  pluginName: string,
+  plugin: { scripts: string[]; css: string[] },
+) => {
+  const current = (getPreloader() ?? {}) as Preloader;
+  if (current[pluginName]) return;
+
+  const promises: Promise<any>[] = [];
+  plugin.scripts.forEach((script) => {
+    promises.push(importWithRetry("js", script));
+  });
+  plugin.css.forEach((css) => {
+    promises.push(importWithRetry("css", css));
+  });
+
+  setPreloader({ ...current, [pluginName]: promises });
+};
+
 export const preloader = {
   setPreloader,
   getPreloader,
   getPluginPromise,
   initPreloader,
+  registerRuntimePlugin,
 };
