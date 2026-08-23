@@ -54,6 +54,14 @@ It gives a fixed header with a toolbar and a flex-1 body, so the plugin matches
 every built-in plugin. Put settings, style and layout entry points in
 \`toolbar\`, the go-live control in \`postToolbar\`, and the preview in \`body\`.
 
+BUTTON VARIANTS. \`variant="pill"\` is ONLY for buttons inside PluginScaffold's
+\`toolbar\` / \`postToolbar\` header, always with \`size="xs"\`. Everywhere else
+(the body, inside modals, dialog footers, forms) omit \`variant\` entirely and
+let it default. Do not put pill buttons in the body. Use \`variant="destructive"\`
+for a delete and \`variant="outline"\` or \`variant="ghost"\` for a secondary
+action; the full set is default, success, info, warning, destructive, outline,
+muted, ghost, pill, link.
+
 THE MAIN PAGE SHOWS A PREVIEW, NOT AN EDITOR.
 Do not put <LayoutWorkbench> directly in the body. The body previews what will
 go out; editing happens in a modal.
@@ -102,6 +110,9 @@ toolbar:
     >
       <StyleModal />
     </OverlayToggle>
+That toggler is a toolbar button, hence pill. A button rendered in the body or
+inside the modal itself takes no \`variant\`:
+    <Button onClick={onSave}>Save</Button>
 The modal component reads its open state from CONTEXT, not props:
     const { isOpen, onToggle } = useOverlayToggle();   // from @repo/ui
     <Dialog open={isOpen ?? false} onOpenChange={onToggle ?? (() => {})}>
