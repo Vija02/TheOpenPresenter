@@ -1,7 +1,6 @@
 import {
   clientPluginRemoteTag,
   clientPluginRendererTag,
-  clientPluginRuntimeName,
   clientPluginVersionName,
 } from "@repo/lib";
 
@@ -20,9 +19,8 @@ export const remoteTag = (clientPluginId: string, versionId: string) =>
 export const rendererTag = (clientPluginId: string, versionId: string) =>
   clientPluginRendererTag(clientPluginVersionName(clientPluginId, versionId));
 
-/** CSS is scoped to the container, which carries the version-free plugin name. */
-export const cssScopeSelector = (clientPluginId: string) =>
-  `#pl-${clientPluginRuntimeName(clientPluginId)}`;
+export const cssScopeSelector = (clientPluginId: string, versionId: string) =>
+  `#pl-${clientPluginVersionName(clientPluginId, versionId)}`;
 
 export const REMOTE_ENTRY = "remote.tsx";
 export const RENDERER_ENTRY = "renderer.tsx";

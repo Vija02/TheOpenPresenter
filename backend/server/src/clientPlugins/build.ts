@@ -172,6 +172,7 @@ function inMemoryPlugin(
 
 async function buildEntry(
   clientPluginId: string,
+  versionId: string,
   entryFileName: string,
   entrySource: string,
   authorVirtualName: string,
@@ -217,7 +218,7 @@ async function buildEntry(
 
   // Namespace CSS so a plugin can't restyle the host.
   if (css.trim()) {
-    css = await scopeCss(css, cssScopeSelector(clientPluginId));
+    css = await scopeCss(css, cssScopeSelector(clientPluginId, versionId));
   }
 
   return { js, css, disallowed };
@@ -239,6 +240,7 @@ export async function buildClientPlugin(
     const build = Promise.all([
       buildEntry(
         clientPluginId,
+        versionId,
         "__entry_remote.tsx",
         remoteEntrySource(versionName),
         "__author_remote.tsx",
@@ -247,6 +249,7 @@ export async function buildClientPlugin(
       ),
       buildEntry(
         clientPluginId,
+        versionId,
         "__entry_renderer.tsx",
         rendererEntrySource(versionName),
         "__author_renderer.tsx",
