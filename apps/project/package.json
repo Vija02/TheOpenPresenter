@@ -15,6 +15,7 @@
     "@hookform/resolvers": "^5.1.1",
     "@monaco-editor/react": "^4.7.0",
     "@react-hook/window-size": "^3.1.1",
+    "@repo/ai-chat": "*",
     "@repo/base-plugin": "*",
     "@repo/media-picker": "*",
     "@repo/observability": "*",
@@ -50,7 +51,6 @@
     "zxcvbn": "^4.4.2"
   },
   "devDependencies": {
-    "@repo/ai-chat": "*",
     "@repo/config": "*",
     "@repo/eslint-config": "*",
     "@repo/graphql": "*",
