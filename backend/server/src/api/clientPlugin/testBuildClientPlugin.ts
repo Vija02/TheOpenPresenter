@@ -1,7 +1,6 @@
 import { gql, makeExtendSchemaPlugin } from "graphile-utils";
 
 import { buildClientPlugin } from "../../clientPlugins/build";
-import { runtimePluginName } from "../../clientPlugins/naming";
 import { OurGraphQLContext } from "../../graphile.config";
 import { ERROR_MESSAGE_OVERRIDES } from "../../utils/handleErrors";
 
@@ -62,11 +61,11 @@ export const testBuildClientPlugin = makeExtendSchemaPlugin(() => ({
         }
 
         try {
-          // No version id yet, so use a stable placeholder purely for CSS
-          // scoping/tag naming during the dry run.
-          const runtimeName = runtimePluginName(clientPluginId, "preview");
+          // No version id yet, so use a stable placeholder purely for tag
+          // naming during the dry run.
           const result = await buildClientPlugin(
-            runtimeName,
+            clientPluginId,
+            "preview",
             source as Record<string, string>,
           );
 

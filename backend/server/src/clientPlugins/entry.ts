@@ -1,8 +1,8 @@
-import { remoteTag, rendererTag } from "./naming";
+import { clientPluginRemoteTag, clientPluginRendererTag } from "@repo/lib";
 
 // Entry to custom element
 
-export const remoteEntrySource = (runtimeName: string) => `
+export const remoteEntrySource = (versionName: string) => `
 import r2wc from "@r2wc/react-to-web-component";
 import { PluginAPIProvider } from "@repo/base-plugin/client";
 import { DialogPortalContainerContext } from "@repo/ui";
@@ -30,10 +30,10 @@ const Component = r2wc(RemoteEntry, {
   },
 });
 
-customElements.define(${JSON.stringify(remoteTag(runtimeName))}, Component);
+customElements.define(${JSON.stringify(clientPluginRemoteTag(versionName))}, Component);
 `;
 
-export const rendererEntrySource = (runtimeName: string) => `
+export const rendererEntrySource = (versionName: string) => `
 import r2wc from "@r2wc/react-to-web-component";
 import { PluginAPIProvider } from "@repo/base-plugin/client";
 import AuthorRenderer from "./__author_renderer";
@@ -58,5 +58,5 @@ const Component = r2wc(RendererEntry, {
   },
 });
 
-customElements.define(${JSON.stringify(rendererTag(runtimeName))}, Component);
+customElements.define(${JSON.stringify(clientPluginRendererTag(versionName))}, Component);
 `;

@@ -1,16 +1,17 @@
 import { ALL_SHARED_SPECIFIERS, isSharedModule } from "@repo/shared-modules";
 import * as esbuild from "esbuild";
-import postcss from "postcss";
-import prefixSelector from "postcss-prefix-selector";
 
+import { scopeCss } from "./cssScope";
 import { remoteEntrySource, rendererEntrySource } from "./entry";
 import {
   REMOTE_CSS_FILE,
   REMOTE_JS_FILE,
   RENDERER_CSS_FILE,
   RENDERER_JS_FILE,
+  clientPluginVersionName,
   cssScopeSelector,
 } from "./naming";
+import { buildPluginTailwind } from "./tailwind";
 
 const RESOLVE_DIR =
   typeof __dirname !== "undefined" ? __dirname : process.cwd();
@@ -170,7 +171,7 @@ function inMemoryPlugin(
 }
 
 async function buildEntry(
-  runtimeName: string,
+  clientPluginId: string,
   entryFileName: string,
   entrySource: string,
   authorVirtualName: string,
@@ -212,19 +213,19 @@ async function buildEntry(
     else js += out.text;
   }
 
+  css = (await buildPluginTailwind(source)) + css;
+
   // Namespace CSS so a plugin can't restyle the host.
   if (css.trim()) {
-    const processed = await postcss([
-      prefixSelector({ prefix: cssScopeSelector(runtimeName) }) as any,
-    ]).process(css, { from: undefined });
-    css = processed.css;
+    css = await scopeCss(css, cssScopeSelector(clientPluginId));
   }
 
   return { js, css, disallowed };
 }
 
 export async function buildClientPlugin(
-  runtimeName: string,
+  clientPluginId: string,
+  versionId: string,
   source: ClientPluginSource,
 ): Promise<BuildResult> {
   const validationError = validateSource(source);
@@ -232,20 +233,22 @@ export async function buildClientPlugin(
     return { ok: false, log: validationError };
   }
 
+  const versionName = clientPluginVersionName(clientPluginId, versionId);
+
   try {
     const build = Promise.all([
       buildEntry(
-        runtimeName,
+        clientPluginId,
         "__entry_remote.tsx",
-        remoteEntrySource(runtimeName),
+        remoteEntrySource(versionName),
         "__author_remote.tsx",
         "remote.tsx",
         source,
       ),
       buildEntry(
-        runtimeName,
+        clientPluginId,
         "__entry_renderer.tsx",
-        rendererEntrySource(runtimeName),
+        rendererEntrySource(versionName),
         "__author_renderer.tsx",
         "renderer.tsx",
         source,

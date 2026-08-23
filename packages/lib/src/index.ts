@@ -1,4 +1,5 @@
 export * from "./appData";
+export * from "./clientPluginNaming";
 export * from "./constants";
 export * from "./errors";
 export * from "./globalState";

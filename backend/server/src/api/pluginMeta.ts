@@ -49,7 +49,9 @@ export const pluginMeta = makeExtendSchemaPlugin(() => ({
     """
     type ClientPluginView {
       pluginName: String!
+      pluginFamily: String!
       versionId: UUID!
+      isInstallDefault: Boolean!
       remoteTag: String!
       remoteScripts: [String!]!
       remoteCss: [String!]!
@@ -80,7 +82,9 @@ export const pluginMeta = makeExtendSchemaPlugin(() => ({
             );
             clientPluginViews = resolved.map((x) => ({
               pluginName: x.pluginName,
+              pluginFamily: x.pluginFamily,
               versionId: x.versionId,
+              isInstallDefault: x.isInstallDefault,
               remoteTag: x.remote.tag,
               remoteScripts: x.remote.scripts,
               remoteCss: x.remote.css,
