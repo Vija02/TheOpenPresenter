@@ -5,6 +5,7 @@ import {
 
 import { deckLayoutCapability } from "./deckLayoutCapability";
 import { layoutCapability } from "./layoutCapability";
+import { pluginSourceCapability } from "./pluginSourceCapability";
 
 // Built in capabilities of the platform
 export const registerBuiltInAiCapabilities = (
@@ -13,6 +14,7 @@ export const registerBuiltInAiCapabilities = (
   const capabilities: AnyAiCapability[] = [
     layoutCapability(serverPluginApi),
     deckLayoutCapability(serverPluginApi),
+    pluginSourceCapability(serverPluginApi),
   ];
   for (const capability of capabilities) {
     if (serverPluginApi.hasAiCapability(capability.id)) continue;
@@ -22,3 +24,4 @@ export const registerBuiltInAiCapabilities = (
 
 export * from "./deckLayoutCapability";
 export * from "./layoutCapability";
+export * from "./pluginSourceCapability";
