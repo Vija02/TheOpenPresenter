@@ -16,6 +16,7 @@ fragment SharedOrganization on Query {
     id
     name
     organizationType
+    experimentalFeaturesEnabled
   }
 }
 

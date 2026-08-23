@@ -9,10 +9,11 @@ import InvitationsAcceptPage from "./pages/invitations/accept";
 import LoginPage from "./pages/login";
 import OrganizationPage from "./pages/o";
 import OrganizationSlugPage from "./pages/o/[slug]";
+import OrganizationSlugBillingPage from "./pages/o/[slug]/billing";
 import OrganizationSlugCloudPage from "./pages/o/[slug]/cloud";
 import OrganizationSlugLatestPage from "./pages/o/[slug]/latest/[type]";
-import OrganizationSlugBillingPage from "./pages/o/[slug]/billing";
 import OrganizationSlugMediaPage from "./pages/o/[slug]/media";
+import OrganizationSlugPluginsPage from "./pages/o/[slug]/plugins";
 import OrganizationSlugScreensPage from "./pages/o/[slug]/screens";
 import OrganizationSlugScreenAdminPage from "./pages/o/[slug]/screens/[screenSlug]/admin";
 import OrganizationSlugScreenControlPage from "./pages/o/[slug]/screens/[screenSlug]/control";
@@ -98,6 +99,9 @@ function App() {
             </Route>
             <Route path="/o/:slug/media">
               <OrganizationSlugMediaPage />
+            </Route>
+            <Route path="/o/:slug/plugins">
+              <OrganizationSlugPluginsPage />
             </Route>
             <Route path="/o/:slug/cloud">
               <OrganizationSlugCloudPage />

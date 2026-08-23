@@ -24,6 +24,7 @@ import { LuChevronsUpDown } from "react-icons/lu";
 import { MdCreditCard, MdPermMedia } from "react-icons/md";
 import {
   PiProjectorScreenChartLight,
+  PiPuzzlePiece,
   PiTelevisionSimple,
 } from "react-icons/pi";
 import { RxHamburgerMenu } from "react-icons/rx";
@@ -122,6 +123,9 @@ export function SharedOrgLayout({
 
   const isMobile = useIsMobile();
 
+  const experimentalFeaturesEnabled =
+    data?.organizationBySlug?.experimentalFeaturesEnabled ?? false;
+
   useEffect(() => {
     if (result.data?.currentUser) {
       const membership =
@@ -214,6 +218,14 @@ export function SharedOrgLayout({
           name="Media"
           exact
         />
+        {experimentalFeaturesEnabled && (
+          <SidebarItem
+            href={`/o/${slug}/plugins`}
+            icon={<PiPuzzlePiece />}
+            name="Plugins"
+            exact
+          />
+        )}
         <SidebarItem
           href={`/o/${slug}/billing`}
           icon={<MdCreditCard />}
@@ -244,7 +256,13 @@ export function SharedOrgLayout({
         </SidebarItem>
       </div>
     ),
-    [data?.cloudEnabled, data?.organizationBySlug?.name, memberships, slug],
+    [
+      data?.cloudEnabled,
+      data?.organizationBySlug?.name,
+      experimentalFeaturesEnabled,
+      memberships,
+      slug,
+    ],
   );
 
   return (

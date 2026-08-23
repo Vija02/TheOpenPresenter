@@ -1,10 +1,10 @@
-query OrganizationSettingsPluginsPage($slug: String!) {
-  ...BaseOrganizationSettingsPage
+query OrganizationPluginsPage($slug: String!) {
+  ...SharedOrganization
 
-  ...OrganizationSettingsPluginsInfo
+  ...OrganizationPluginsInfo
 }
 
-fragment OrganizationSettingsPluginsInfo on Query {
+fragment OrganizationPluginsInfo on Query {
   organizationBySlug(slug: $slug) {
     id
     name

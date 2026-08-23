@@ -6102,6 +6102,28 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@monaco-editor/loader@npm:^1.5.0":
+  version: 1.7.0
+  resolution: "@monaco-editor/loader@npm:1.7.0"
+  dependencies:
+    state-local: "npm:^1.0.6"
+  checksum: 10c0/1fd3579cb09b669493cf553dfc0723a93483140a44353ce9a739827edfa7b2c6541b254024d15c48176ece749ef666b6d16cce6cf0e4396c7fa1c5a48012d08a
+  languageName: node
+  linkType: hard
+
+"@monaco-editor/react@npm:^4.7.0":
+  version: 4.7.0
+  resolution: "@monaco-editor/react@npm:4.7.0"
+  dependencies:
+    "@monaco-editor/loader": "npm:^1.5.0"
+  peerDependencies:
+    monaco-editor: ">= 0.25.0 < 1"
+    react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+    react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+  checksum: 10c0/a4e91c6eda1a71f5fd23871bd801de435490ccbc43934d23cba65cefe2be7e9d02c9a57c4ef80fc9fe99e4d4deea51e5db19cb4e0ecf3f51818dda0eb9cdbf12
+  languageName: node
+  linkType: hard
+
 "@mux/mux-data-google-ima@npm:^0.3.4":
   version: 0.3.15
   resolution: "@mux/mux-data-google-ima@npm:0.3.15"
@@ -10302,17 +10324,22 @@ __metadata:
     "@fontsource-variable/inter": "npm:^5.1.0"
     "@fontsource-variable/source-sans-3": "npm:^5.1.0"
     "@hookform/resolvers": "npm:^5.1.1"
+    "@monaco-editor/react": "npm:^4.7.0"
     "@react-hook/window-size": "npm:^3.1.1"
+    "@repo/ai-chat": "npm:*"
     "@repo/base-plugin": "npm:*"
     "@repo/config": "npm:*"
     "@repo/eslint-config": "npm:*"
     "@repo/graphql": "npm:*"
+    "@repo/layout": "npm:*"
     "@repo/lib": "npm:*"
     "@repo/media-picker": "npm:*"
     "@repo/observability": "npm:*"
     "@repo/prettier-config": "npm:*"
+    "@repo/shared-modules": "npm:*"
     "@repo/typescript-config": "npm:*"
     "@repo/ui": "npm:*"
+    "@repo/video": "npm:*"
     "@stripe/react-stripe-js": "npm:^6.6.0"
     "@stripe/stripe-js": "npm:^9.8.0"
     "@tailwindcss/vite": "npm:^4.1.10"
@@ -10329,6 +10356,7 @@ __metadata:
     event-source-plus: "npm:^0.1.12"
     graphql: "npm:^15.9.0"
     graphql-ws: "npm:^5.16.0"
+    monaco-editor: "npm:^0.52.2"
     nprogress: "npm:^0.2.0"
     pretty-bytes: "npm:^6.1.1"
     qrcode: "npm:^1.5.4"
@@ -10510,6 +10538,7 @@ __metadata:
     cookie: "npm:^1.1.1"
     cookie-signature: "npm:^1.2.2"
     csurf: "npm:^1.11.0"
+    esbuild: "npm:^0.25.0"
     event-source-plus: "npm:^0.1.12"
     express: "npm:^4.21.2"
     express-session: "npm:^1.18.1"
@@ -10528,6 +10557,8 @@ __metadata:
     passport-github2: "npm:^0.1.12"
     passport-google-oauth20: "npm:^2.0.0"
     pg: "npm:^8.12.0"
+    postcss: "npm:^8.4.49"
+    postcss-prefix-selector: "npm:^2.1.1"
     postgraphile: "npm:^4.14.0"
     postgraphile-plugin-connection-filter: "npm:^2.3.0"
     redis: "npm:^4.7.0"
@@ -26590,6 +26621,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"monaco-editor@npm:^0.52.2":
+  version: 0.52.2
+  resolution: "monaco-editor@npm:0.52.2"
+  checksum: 10c0/5a92da64f1e2ab375c0ce99364137f794d057c97bed10ecc65a08d6e6846804b8ecbd377eacf01e498f7dfbe1b21e8be64f728256681448f0484df90e767b435
+  languageName: node
+  linkType: hard
+
 "morgan@npm:^1.10.0":
   version: 1.10.0
   resolution: "morgan@npm:1.10.0"
@@ -26742,6 +26780,15 @@ __metadata:
   bin:
     nanoid: bin/nanoid.cjs
   checksum: 10c0/40e7f70b3d15f725ca072dfc4f74e81fcf1fbb02e491cf58ac0c79093adc9b0a73b152bcde57df4b79cd097e13023d7504acb38404a4da7bc1cd8e887b82fe0b
+  languageName: node
+  linkType: hard
+
+"nanoid@npm:^3.3.17":
+  version: 3.3.18
+  resolution: "nanoid@npm:3.3.18"
+  bin:
+    nanoid: bin/nanoid.cjs
+  checksum: 10c0/b994b4e396730f8be2520923284e2040d61eaee55cc6d4935ef6d38d34bafdc46133eda4d3faea5073bda545aa6079d82b886caeac5c731cf9ac18bcc1301425
   languageName: node
   linkType: hard
 
@@ -29111,6 +29158,17 @@ __metadata:
     picocolors: "npm:^1.1.1"
     source-map-js: "npm:^1.2.1"
   checksum: 10c0/f1b3f17aaf36d136f59ec373459f18129908235e65dbdc3aee5eef8eba0756106f52de5ec4682e29a2eab53eb25170e7e871b3e4b52a8f1de3d344a514306be3
+  languageName: node
+  linkType: hard
+
+"postcss@npm:^8.4.49":
+  version: 8.5.26
+  resolution: "postcss@npm:8.5.26"
+  dependencies:
+    nanoid: "npm:^3.3.17"
+    picocolors: "npm:^1.1.1"
+    source-map-js: "npm:^1.2.1"
+  checksum: 10c0/2bdafc00d96bd57b6649a52e458864a4bf58ee56cfdbe4aea1472b5cccc127e6c1ad653bd0bec50d211e650eb0b9270c80e1e72aff2e2fa40d9e7363234d6e43
   languageName: node
   linkType: hard
 
@@ -32464,6 +32522,13 @@ __metadata:
   version: 2.1.0
   resolution: "standard-as-callback@npm:2.1.0"
   checksum: 10c0/012677236e3d3fdc5689d29e64ea8a599331c4babe86956bf92fc5e127d53f85411c5536ee0079c52c43beb0026b5ce7aa1d834dd35dd026e82a15d1bcaead1f
+  languageName: node
+  linkType: hard
+
+"state-local@npm:^1.0.6":
+  version: 1.0.7
+  resolution: "state-local@npm:1.0.7"
+  checksum: 10c0/8dc7daeac71844452fafb514a6d6b6f40d7e2b33df398309ea1c7b3948d6110c57f112b7196500a10c54fdde40291488c52c875575670fb5c819602deca48bd9
   languageName: node
   linkType: hard
 
