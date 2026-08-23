@@ -13,7 +13,7 @@ import {
   WebComponentProps,
   YjsWatcher,
 } from "@repo/base-plugin";
-import { preloader } from "@repo/lib";
+import { findClientPluginView, preloader } from "@repo/lib";
 import { logger } from "@repo/observability";
 import {
   useAudioCheck,
@@ -335,7 +335,14 @@ const PluginRenderer = React.memo(
     derivation?: DerivationConfig | null;
   }) => {
     const pluginDivRef = useRef<HTMLDivElement>(null);
-    const { pluginMeta, orgId, projectId, isPublicAccess, organizationType, experimentalFeaturesEnabled } = usePluginMetaData();
+    const {
+      pluginMeta,
+      orgId,
+      projectId,
+      isPublicAccess,
+      organizationType,
+      experimentalFeaturesEnabled,
+    } = usePluginMetaData();
     const {
       getYJSPluginRenderer,
       getYJSPluginSceneData,
@@ -369,21 +376,30 @@ const PluginRenderer = React.memo(
       () => (mainState.data[sceneId] as Scene).children[pluginId],
       [sceneId, mainState.data, pluginId],
     );
-    const tag = useMemo(() => {
+    const view = useMemo(() => {
       if (pluginMeta && "registeredRendererView" in pluginMeta) {
         const native = pluginMeta.registeredRendererView.find(
           (x) => x.pluginName === pluginInfo?.plugin,
-        )?.tag;
-        if (native) return native;
+        );
+        if (native?.tag) {
+          return { tag: native.tag, pluginName: native.pluginName };
+        }
       }
       // Handle client plugins
       if (pluginMeta && "clientPluginViews" in pluginMeta) {
-        return (pluginMeta.clientPluginViews as any[]).find(
-          (x: any) => x.pluginName === pluginInfo?.plugin,
-        )?.rendererTag;
+        const client = findClientPluginView(
+          pluginMeta.clientPluginViews as any[],
+          pluginInfo?.plugin,
+        );
+        if (client) {
+          return { tag: client.rendererTag, pluginName: client.pluginName };
+        }
       }
       return undefined;
     }, [pluginInfo?.plugin, pluginMeta]);
+
+    const tag = view?.tag;
+    const resolvedPluginName = view?.pluginName ?? pluginInfo?.plugin;
 
     const { canPlayAudio } = useAudioCheck();
     const { addError, removeError } = useError();
@@ -416,9 +432,9 @@ const PluginRenderer = React.memo(
     );
 
     const { isSuccess, error } = useQuery({
-      queryKey: ["preloader", pluginInfo?.plugin],
+      queryKey: ["preloader", resolvedPluginName],
       queryFn: () => {
-        const data = preloader.getPluginPromise(pluginInfo!.plugin);
+        const data = preloader.getPluginPromise(resolvedPluginName!);
         return data;
       },
     });
@@ -557,7 +573,7 @@ const PluginRenderer = React.memo(
     return (
       <div
         ref={pluginDivRef}
-        id={`pl-${pluginInfo?.plugin}`}
+        id={`pl-${resolvedPluginName}`}
         key={pluginId}
         style={{
           width: layoutPosition ? "100%" : "100vw",

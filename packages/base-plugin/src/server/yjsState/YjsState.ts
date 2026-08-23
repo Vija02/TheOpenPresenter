@@ -1,3 +1,4 @@
+import { isClientPluginName } from "@repo/lib";
 import { typeidUnboxed } from "typeid-js";
 import { proxy } from "valtio";
 import { bind } from "valtio-yjs";
@@ -14,8 +15,6 @@ import {
 } from "../../types";
 import { ServerPluginApiPrivate } from "../serverPlugin";
 import { DisposableDocumentManager } from "./DisposableDocumentManager";
-
-const CPLUGIN_PREFIX = "cplugin-";
 
 const toYjs = (value: any): any => {
   if (Array.isArray(value)) {
@@ -45,10 +44,7 @@ const seedClientPluginRendererData = (
   rendererPluginMap: ObjectToTypedMap<any>,
 ): boolean => {
   const pluginName = pluginInfo.get("plugin");
-  if (
-    typeof pluginName !== "string" ||
-    !pluginName.startsWith(CPLUGIN_PREFIX)
-  ) {
+  if (typeof pluginName !== "string" || !isClientPluginName(pluginName)) {
     return false;
   }
 

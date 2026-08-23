@@ -19,6 +19,7 @@ import {
   useUnlinkMediaFromPluginMutation,
 } from "@repo/graphql";
 import {
+  findClientPluginView,
   preloader,
   uuidFromMediaIdOrUUIDOrMediaName,
   uuidFromPluginIdOrUUID,
@@ -99,8 +100,9 @@ const PluginRenderer = React.memo(
       }
       // Handle client plugins
       if (pluginMeta && "clientPluginViews" in pluginMeta) {
-        const client = (pluginMeta.clientPluginViews as any[]).find(
-          (x: any) => x.pluginName === pluginInfo.plugin,
+        const client = findClientPluginView(
+          pluginMeta.clientPluginViews as any[],
+          pluginInfo.plugin,
         );
         if (client) {
           return {
@@ -162,10 +164,12 @@ const PluginRenderer = React.memo(
       [pluginContext, pluginInfo],
     );
 
+    const resolvedPluginName = viewData?.pluginName ?? pluginInfo.plugin;
+
     const { isSuccess, error } = useQuery({
-      queryKey: ["preloader", pluginInfo.plugin],
+      queryKey: ["preloader", resolvedPluginName],
       queryFn: () => {
-        const data = preloader.getPluginPromise(pluginInfo.plugin);
+        const data = preloader.getPluginPromise(resolvedPluginName);
         return data;
       },
     });
@@ -315,7 +319,7 @@ const PluginRenderer = React.memo(
     return (
       <div
         ref={pluginDivRef}
-        id={`pl-${pluginInfo.plugin}`}
+        id={`pl-${resolvedPluginName}`}
         className={cx(
           !match && viewData?.config?.alwaysRender ? "content-hidden" : "",
           match && "h-full",

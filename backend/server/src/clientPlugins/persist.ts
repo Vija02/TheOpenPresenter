@@ -2,7 +2,6 @@ import { Pool } from "pg";
 
 import { artifactKey, getArtifactStore } from "./artifactStore";
 import { buildClientPlugin } from "./build";
-import { runtimePluginName } from "./naming";
 
 export type ArtifactEntry = { filename: string; contentType: string };
 
@@ -28,9 +27,12 @@ export async function buildAndPersistVersion(
   }
 
   const source = (version.source ?? {}) as Record<string, string>;
-  const runtimeName = runtimePluginName(version.client_plugin_id, version.id);
 
-  const result = await buildClientPlugin(runtimeName, source);
+  const result = await buildClientPlugin(
+    version.client_plugin_id,
+    version.id,
+    source,
+  );
 
   if (!result.ok) {
     await rootPgPool.query(

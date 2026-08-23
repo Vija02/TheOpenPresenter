@@ -5,14 +5,19 @@ import {
   REMOTE_JS_FILE,
   RENDERER_CSS_FILE,
   RENDERER_JS_FILE,
+  clientPluginVersionName,
   remoteTag,
   rendererTag,
   runtimePluginName,
 } from "./naming";
 
 export type ResolvedClientPluginView = {
+  /** Name versioned */
   pluginName: string;
+  pluginFamily: string;
   versionId: string;
+  /** True for the version a NEW scene should be created with */
+  isInstallDefault: boolean;
   remote: { tag: string; scripts: string[]; css: string[] };
   renderer: { tag: string; scripts: string[]; css: string[] };
   title: string;
@@ -38,18 +43,16 @@ export async function resolveClientPluginsForOrg(
       p.description as plugin_description,
       v.id as version_id,
       v.manifest as manifest,
-      v.artifacts as artifacts
+      v.artifacts as artifacts,
+      (v.id = first_value(v.id) over (
+         partition by ocp.organization_id, ocp.client_plugin_id
+         order by (v.id = ocp.pinned_version_id) desc, v.created_at desc
+       )) as is_install_default
     from app_public.organization_client_plugins ocp
     join app_public.client_plugins p on p.id = ocp.client_plugin_id
-    join lateral (
-      select vv.id, vv.manifest, vv.artifacts
-        from app_public.client_plugin_versions vv
-       where vv.client_plugin_id = p.id
-         and vv.build_status = 'built'
-         and (ocp.pinned_version_id is null or vv.id = ocp.pinned_version_id)
-       order by vv.created_at desc
-       limit 1
-    ) v on true
+    join app_public.client_plugin_versions v
+      on v.client_plugin_id = p.id
+     and v.build_status = 'built'
     where ocp.enabled = true
       and ($1::uuid is null or ocp.organization_id = $1::uuid)
     `,
@@ -57,7 +60,10 @@ export async function resolveClientPluginsForOrg(
   );
 
   return rows.map((row): ResolvedClientPluginView => {
-    const pluginName = runtimePluginName(row.client_plugin_id, row.version_id);
+    const pluginName = clientPluginVersionName(
+      row.client_plugin_id,
+      row.version_id,
+    );
     const filenames: string[] = ((row.artifacts ?? []) as any[]).map(
       (a) => a.filename,
     );
@@ -67,9 +73,11 @@ export async function resolveClientPluginsForOrg(
 
     return {
       pluginName,
+      pluginFamily: runtimePluginName(row.client_plugin_id),
       versionId: row.version_id,
+      isInstallDefault: row.is_install_default === true,
       remote: {
-        tag: remoteTag(pluginName),
+        tag: remoteTag(row.client_plugin_id, row.version_id),
         scripts: has(REMOTE_JS_FILE)
           ? [staticUrl(row.version_id, REMOTE_JS_FILE)]
           : [],
@@ -78,7 +86,7 @@ export async function resolveClientPluginsForOrg(
           : [],
       },
       renderer: {
-        tag: rendererTag(pluginName),
+        tag: rendererTag(row.client_plugin_id, row.version_id),
         scripts: has(RENDERER_JS_FILE)
           ? [staticUrl(row.version_id, RENDERER_JS_FILE)]
           : [],

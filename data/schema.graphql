@@ -724,6 +724,17 @@ type ClientPluginView {
   description: String!
   initialPluginData: JSON!
   initialRendererData: JSON!
+
+  """
+  True for the version a NEW scene should be created with (the org's pin, or
+  the newest built version). Existing scenes keep their own version.
+  """
+  isInstallDefault: Boolean!
+
+  """Version-free key shared by every version of this plugin."""
+  pluginFamily: String!
+
+  """Versioned name a scene persists, pinning it to this exact version."""
   pluginName: String!
   remoteCss: [String!]!
   remoteScripts: [String!]!

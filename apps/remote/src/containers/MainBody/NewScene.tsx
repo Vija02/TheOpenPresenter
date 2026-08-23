@@ -34,17 +34,19 @@ export const NewScene = () => {
     pluginMeta && "registeredRemoteView" in pluginMeta ? pluginMeta : null;
 
   const clientPluginCreators =
-    remotePluginMeta?.clientPluginViews.map((x) => ({
-      pluginName: x.pluginName,
-      title: x.title,
-      description: x.description,
-      categories: ["Custom"] as string[],
-      organizationTypes: null as string[] | null,
-      isExperimental: false as boolean | null,
-      isStarred: false as boolean | null,
-      initialPluginData: x.initialPluginData ?? {},
-      initialRendererData: x.initialRendererData ?? {},
-    })) ?? [];
+    remotePluginMeta?.clientPluginViews
+      .filter((x) => x.isInstallDefault)
+      .map((x) => ({
+        pluginName: x.pluginName,
+        title: x.title,
+        description: x.description,
+        categories: ["Custom"] as string[],
+        organizationTypes: null as string[] | null,
+        isExperimental: false as boolean | null,
+        isStarred: false as boolean | null,
+        initialPluginData: x.initialPluginData ?? {},
+        initialRendererData: x.initialRendererData ?? {},
+      })) ?? [];
 
   const initialDataByName = new Map(
     clientPluginCreators.map((x) => [

@@ -44,7 +44,9 @@ fragment BaseRendererPluginMeta on PluginMeta {
   }
   clientPluginViews {
     pluginName
+    pluginFamily
     versionId
+    isInstallDefault
     rendererTag
     rendererScripts
     rendererCss

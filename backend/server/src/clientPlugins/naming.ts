@@ -1,15 +1,28 @@
-export const CPLUGIN_PREFIX = "cplugin";
+import {
+  clientPluginRemoteTag,
+  clientPluginRendererTag,
+  clientPluginRuntimeName,
+  clientPluginVersionName,
+} from "@repo/lib";
 
-export const runtimePluginName = (clientPluginId: string, versionId: string) =>
-  `${CPLUGIN_PREFIX}-${clientPluginId}-${versionId}`;
+export {
+  CPLUGIN_PREFIX,
+  clientPluginRuntimeName as runtimePluginName,
+  clientPluginVersionName,
+  findClientPluginView,
+  isClientPluginName,
+} from "@repo/lib";
 
-export const isClientPluginName = (name: string) =>
-  name.startsWith(`${CPLUGIN_PREFIX}-`);
+// Web component tags are versioned
+export const remoteTag = (clientPluginId: string, versionId: string) =>
+  clientPluginRemoteTag(clientPluginVersionName(clientPluginId, versionId));
 
-export const remoteTag = (runtimeName: string) => `${runtimeName}-remote`;
-export const rendererTag = (runtimeName: string) => `${runtimeName}-renderer`;
+export const rendererTag = (clientPluginId: string, versionId: string) =>
+  clientPluginRendererTag(clientPluginVersionName(clientPluginId, versionId));
 
-export const cssScopeSelector = (runtimeName: string) => `#pl-${runtimeName}`;
+/** CSS is scoped to the container, which carries the version-free plugin name. */
+export const cssScopeSelector = (clientPluginId: string) =>
+  `#pl-${clientPluginRuntimeName(clientPluginId)}`;
 
 export const REMOTE_ENTRY = "remote.tsx";
 export const RENDERER_ENTRY = "renderer.tsx";
