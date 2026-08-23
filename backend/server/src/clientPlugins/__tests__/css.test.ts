@@ -52,7 +52,12 @@ describe("client plugin CSS", () => {
     const { files } = await build();
     const css = files.find((f) => f.filename === "remote.css")?.content ?? "";
 
-    expect(css).toContain("#pl-cplugin-abc .stack-row");
+    // Must match the `pl-${resolvedPluginName}` container id the apps render,
+    // and that name is the VERSIONED one.
+    expect(css).toContain(`#pl-cplugin-${CLIENT_PLUGIN_ID}-${VERSION_ID}`);
+    expect(css).toContain(
+      `#pl-cplugin-${CLIENT_PLUGIN_ID}-${VERSION_ID} .stack-row`,
+    );
     // :root would leak theme variables onto the host document.
     expect(css).not.toMatch(/(^|[\s,{])(:root|:host)\b/m);
   }, 30_000);
