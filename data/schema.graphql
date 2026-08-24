@@ -364,6 +364,11 @@ type ClientPlugin {
   description: String!
   handle: String!
   id: UUID!
+
+  """
+  Reads a single `ClientPluginVersion` that is related to this `ClientPlugin`.
+  """
+  latestVersion: ClientPluginVersion
   latestVersionId: UUID
 
   """
@@ -424,6 +429,9 @@ tested for equality and combined with a logical ‘and.’
 input ClientPluginCondition {
   """Checks for equality with the object’s `id` field."""
   id: UUID
+
+  """Checks for equality with the object’s `latestVersionId` field."""
+  latestVersionId: UUID
 
   """Checks for equality with the object’s `ownerOrganizationId` field."""
   ownerOrganizationId: UUID
@@ -535,6 +543,9 @@ input ClientPluginFilter {
   """Filter by the object’s `id` field."""
   id: UUIDFilter
 
+  """Filter by the object’s `latestVersionId` field."""
+  latestVersionId: UUIDFilter
+
   """Negates the expression."""
   not: ClientPluginFilter
 
@@ -586,6 +597,40 @@ type ClientPluginVersion {
   """
   clientPlugin: ClientPlugin
   clientPluginId: UUID!
+
+  """Reads and enables pagination through a set of `ClientPlugin`."""
+  clientPluginsByLatestVersionId(
+    """Read all values in the set after (below) this cursor."""
+    after: Cursor
+
+    """Read all values in the set before (above) this cursor."""
+    before: Cursor
+
+    """
+    A condition to be used in determining which values should be returned by the collection.
+    """
+    condition: ClientPluginCondition
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: ClientPluginFilter
+
+    """Only read the first `n` values of the set."""
+    first: Int
+
+    """Only read the last `n` values of the set."""
+    last: Int
+
+    """
+    Skip the first `n` values from our `after` cursor, an alternative to cursor
+    based pagination. May not be used with `last`.
+    """
+    offset: Int
+
+    """The method to use when ordering `ClientPlugin`."""
+    orderBy: [ClientPluginsOrderBy!] = [PRIMARY_KEY_ASC]
+  ): ClientPluginsConnection!
   createdAt: Datetime!
   id: UUID!
   manifest: JSON!
@@ -815,6 +860,8 @@ type ClientPluginsEdge {
 enum ClientPluginsOrderBy {
   ID_ASC
   ID_DESC
+  LATEST_VERSION_ID_ASC
+  LATEST_VERSION_ID_DESC
   NATURAL
   OWNER_ORGANIZATION_ID_ASC
   OWNER_ORGANIZATION_ID_DESC
@@ -1255,6 +1302,11 @@ type CreateClientPluginPayload {
     """The method to use when ordering `ClientPlugin`."""
     orderBy: [ClientPluginsOrderBy!] = [PRIMARY_KEY_ASC]
   ): ClientPluginsEdge
+
+  """
+  Reads a single `ClientPluginVersion` that is related to this `ClientPlugin`.
+  """
+  latestVersion: ClientPluginVersion
 
   """Reads a single `Organization` that is related to this `ClientPlugin`."""
   ownerOrganization: Organization
@@ -1992,6 +2044,11 @@ type DeleteClientPluginPayload {
     orderBy: [ClientPluginsOrderBy!] = [PRIMARY_KEY_ASC]
   ): ClientPluginsEdge
   deletedClientPluginNodeId: ID
+
+  """
+  Reads a single `ClientPluginVersion` that is related to this `ClientPlugin`.
+  """
+  latestVersion: ClientPluginVersion
 
   """Reads a single `Organization` that is related to this `ClientPlugin`."""
   ownerOrganization: Organization
@@ -8453,6 +8510,11 @@ type UpdateClientPluginPayload {
     """The method to use when ordering `ClientPlugin`."""
     orderBy: [ClientPluginsOrderBy!] = [PRIMARY_KEY_ASC]
   ): ClientPluginsEdge
+
+  """
+  Reads a single `ClientPluginVersion` that is related to this `ClientPlugin`.
+  """
+  latestVersion: ClientPluginVersion
 
   """Reads a single `Organization` that is related to this `ClientPlugin`."""
   ownerOrganization: Organization

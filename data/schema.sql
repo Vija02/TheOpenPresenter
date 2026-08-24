@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict gUBeruUoncWQtsUrDLEFULRfGWmMEyOCtcEwoHzzAm7kQK0TP5YZyz1mDjjtqEV
+\restrict 5DdWD4bdjhLngkx78LeOjQTMbbPf55D3D7qkofCd5XjzaUiLIhqFQt5fj2mlxWw
 
 -- Dumped from database version 17.0 (Debian 17.0-1.pgdg120+1)
 -- Dumped by pg_dump version 18.4
@@ -4202,6 +4202,13 @@ CREATE UNIQUE INDEX client_plugin_versions_plugin_version_idx ON app_public.clie
 
 
 --
+-- Name: client_plugins_latest_version_id_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX client_plugins_latest_version_id_idx ON app_public.client_plugins USING btree (latest_version_id);
+
+
+--
 -- Name: client_plugins_owner_handle_idx; Type: INDEX; Schema: app_public; Owner: -
 --
 
@@ -7765,5 +7772,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE theopenpresenter REVOKE ALL ON FUNCTIONS FROM 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict gUBeruUoncWQtsUrDLEFULRfGWmMEyOCtcEwoHzzAm7kQK0TP5YZyz1mDjjtqEV
+\unrestrict 5DdWD4bdjhLngkx78LeOjQTMbbPf55D3D7qkofCd5XjzaUiLIhqFQt5fj2mlxWw
 
