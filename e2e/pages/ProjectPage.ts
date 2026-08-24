@@ -40,6 +40,14 @@ export class ProjectPage {
     return this.page.getByText(plugin, { exact: true });
   }
 
+  sceneCreatorOption(title: string): Locator {
+    return this.page.locator(".ui--option").filter({
+      has: this.page
+        .locator(".ui--option__title")
+        .filter({ hasText: new RegExp(`^${title}$`) }),
+    });
+  }
+
   async present() {
     // The Present button opens a popover; "Open in new tab" is a link whose
     // href is the renderer URL.
