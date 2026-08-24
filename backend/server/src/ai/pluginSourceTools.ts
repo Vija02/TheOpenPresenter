@@ -1,6 +1,8 @@
 import type { ChatTool } from "@repo/base-types";
 import z from "zod";
 
+import { findLibSymbol, listLibModules, readLibTypes } from "./libTypeTools";
+
 /**
  * AI editing for client plugin source. The "document" is the plugin's file map,
  * so the tools are file operations rather than layout element operations.
@@ -139,6 +141,44 @@ const TOOL_LIST = [
       delete files[name];
       return { doc: { files }, summary: `Deleted ${name}.` };
     },
+  }),
+
+  tool({
+    name: "list_lib_modules",
+    description:
+      "List every module a plugin is allowed to import. Anything else fails the build.",
+    schema: z.strictObject({}),
+    readOnly: true,
+    run: (doc) => ({ doc, summary: listLibModules() }),
+  }),
+
+  tool({
+    name: "find_lib_symbol",
+    description:
+      "Find the real type declaration of a component, hook or type from the shared libraries, e.g. Button, PluginScaffold, LayoutWorkbench. Use this to check props and allowed values instead of guessing.",
+    schema: z.strictObject({
+      symbol: z.string().min(1).describe("Exported name to look for."),
+      module: z
+        .string()
+        .optional()
+        .describe("Optional module to narrow the search, e.g. @repo/ui."),
+    }),
+    readOnly: true,
+    run: (doc, { symbol, module }) => ({
+      doc,
+      summary: findLibSymbol(symbol, module),
+    }),
+  }),
+
+  tool({
+    name: "read_lib_types",
+    description:
+      "Read a shared module's full type declarations. Prefer find_lib_symbol; this can be large.",
+    schema: z.strictObject({
+      module: z.string().min(1).describe("Module specifier, e.g. @repo/ui."),
+    }),
+    readOnly: true,
+    run: (doc, { module }) => ({ doc, summary: readLibTypes(module) }),
   }),
 ];
 

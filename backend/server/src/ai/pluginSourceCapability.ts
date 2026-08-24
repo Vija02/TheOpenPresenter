@@ -4,6 +4,7 @@ import {
   runDocAgent,
 } from "@repo/base-plugin/server";
 import { buildAgentMessages } from "@repo/layout/ai";
+import { ALL_SHARED_SPECIFIERS } from "@repo/shared-modules";
 import z from "zod";
 
 import {
@@ -13,7 +14,7 @@ import {
   isReadOnlyPluginSourceTool,
 } from "./pluginSourceTools";
 
-const SYSTEM_PROMPT = `You edit the source of a TheOpenPresenter client plugin ("cplugin").
+export const SYSTEM_PROMPT = `You edit the source of a TheOpenPresenter client plugin ("cplugin").
 
 A plugin is a flat set of files. Three are required and cannot be deleted:
 - remote.tsx    default-exports the operator control surface
@@ -24,15 +25,18 @@ Both entry files must have a default export. There are no folders; imports
 between plugin files are relative and extensionless (e.g. \`./doc\`).
 
 Only these modules may be imported:
-- react, react/jsx-runtime
-- @repo/base-plugin/client  -> usePluginAPI()
-- @repo/layout, @repo/layout/react, @repo/layout/editor
-- @repo/ui, @repo/lib, @repo/graphql
-- @repo/video, @repo/video/client, @repo/ai-chat
-- react-hook-form, urql, zustand, zod, react-player
+${ALL_SHARED_SPECIFIERS.map((specifier) => `- ${specifier}`).join("\n")}
 - absolute https://esm.sh/... URLs
 Anything else fails the build. Never import node builtins, \`/server\` entries,
-or arbitrary npm packages.
+or arbitrary npm packages. \`usePluginAPI()\` comes from
+@repo/base-plugin/client.
+
+DO NOT GUESS AN API. The prompt below is a summary, not a reference. Before you
+use a component, hook or type from any of those modules, call
+\`find_lib_symbol\` to read its REAL declaration, and follow that signature
+exactly. Guessed props, variants and prop names are the most common cause of a
+broken plugin. \`list_lib_modules\` lists what is importable and
+\`read_lib_types\` dumps a whole module when you need the full picture.
 
 The plugin API:
 - \`pluginApi.scene.useData(x => x.pluginData.foo)\` subscribes and re-renders.
@@ -173,15 +177,17 @@ changes.
 
 How to work:
 1. Call list_files, then read_file on what you need. Never guess a file's contents.
-2. Prefer replace_in_file for small edits; use write_file for new files or rewrites.
-3. Keep remote.tsx and renderer.tsx consistent with manifest.ts seed keys.
-4. Build remote.tsx as a PluginScaffold: preview in the body, layout editing in
+2. Call find_lib_symbol for every library component or hook you are about to use,
+   and match the declaration it returns. Never guess a prop or a variant.
+3. Prefer replace_in_file for small edits; use write_file for new files or rewrites.
+4. Keep remote.tsx and renderer.tsx consistent with manifest.ts seed keys.
+5. Build remote.tsx as a PluginScaffold: preview in the body, layout editing in
    an OverlayToggle modal from the toolbar, go live in postToolbar.
-5. If the plugin draws a slide, put the layout in \`pluginData\` and give the
+6. If the plugin draws a slide, put the layout in \`pluginData\` and give the
    operator <LayoutWorkbench> rather than hardcoding positions and colours.
-6. Write complete, compiling TypeScript. No placeholders, no "..." elisions,
+7. Write complete, compiling TypeScript. No placeholders, no "..." elisions,
    no TODO comments left behind.
-7. Explain what you changed in one or two sentences. Do not paste whole files
+8. Explain what you changed in one or two sentences. Do not paste whole files
    back to the user; they can see the diff in the editor.`;
 
 export const pluginSourceAgentInput = z.object({
