@@ -230,6 +230,11 @@ COPY --from=deps /app/node_modules/@repo /app/node_modules/@repo/
 COPY --from=deps /app/node_modules/ffmpeg-static /app/node_modules/ffmpeg-static/
 
 COPY --from=builder-core /app/packages/graphql/ /app/packages/graphql/
+# Needed at runtime for client plugin
+COPY --from=builder-core /app/packages/tailwind-config/ /app/packages/tailwind-config/
+COPY --from=builder-core /app/packages/shared-modules/ /app/packages/shared-modules/
+COPY --from=builder-core /app/packages/ui/ /app/packages/ui/
+
 COPY --from=builder-core /app/backend/config/ /app/backend/config/
 COPY --from=builder-core /app/packages/observability/ /app/packages/observability/
 COPY --from=builder-core /app/packages/portable-file/ /app/packages/portable-file/
