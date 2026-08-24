@@ -9,7 +9,11 @@ export default defineConfig({
       },
     },
     globals: true,
-    environment: 'jsdom',
+    environment: "jsdom",
+    environmentMatchGlobs: [
+      ["backend/**", "node"],
+      ["**/*.node.test.ts", "node"],
+    ],
     exclude: [
       "**/node_modules/**",
       "**/dist/**",
