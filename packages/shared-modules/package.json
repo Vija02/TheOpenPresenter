@@ -11,7 +11,7 @@
       },
       "require": {
         "types": "./dist/index.d.ts",
-        "default": "./dist/index.js"
+        "default": "./dist/index.cjs"
       }
     },
     "./optimizer": {
@@ -21,7 +21,7 @@
       },
       "require": {
         "types": "./dist/optimizer.d.ts",
-        "default": "./dist/optimizer.js"
+        "default": "./dist/optimizer.cjs"
       }
     }
   },
