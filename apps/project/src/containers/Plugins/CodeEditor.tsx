@@ -49,6 +49,11 @@ export const CodeEditor = ({
 }) => {
   const monacoRef = useRef<Monaco | null>(null);
 
+  // For tests
+  const handleMount = useCallback((editor: any) => {
+    (window as any).__CPLUGIN_EDITOR__ = editor;
+  }, []);
+
   const handleBeforeMount = useCallback((monaco: Monaco) => {
     monacoRef.current = monaco;
     const ts = monaco.languages.typescript.typescriptDefaults;
@@ -91,6 +96,7 @@ export const CodeEditor = ({
         value={value}
         onChange={(v) => onChange(v ?? "")}
         beforeMount={handleBeforeMount}
+        onMount={handleMount}
         options={{
           minimap: { enabled: false },
           fontSize: 13,
