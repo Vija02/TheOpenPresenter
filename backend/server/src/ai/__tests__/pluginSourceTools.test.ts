@@ -21,8 +21,11 @@ describe("plugin source tools", () => {
     const names = PLUGIN_SOURCE_TOOLS.map((t) => t.function.name).sort();
     expect(names).toEqual([
       "delete_file",
+      "find_lib_symbol",
       "list_files",
+      "list_lib_modules",
       "read_file",
+      "read_lib_types",
       "replace_in_file",
       "write_file",
     ]);
