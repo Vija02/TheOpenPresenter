@@ -29,6 +29,7 @@
     "@repo/lib": "*",
     "@repo/observability": "*",
     "@repo/portable-file": "*",
+    "@repo/shared-modules": "*",
     "@repo/tailwind-config": "*",
     "@tailwindcss/node": "^4.1.10",
     "@tailwindcss/oxide": "^4.1.10",
