@@ -2,6 +2,8 @@ import { Pool } from "pg";
 
 import { artifactKey, getArtifactStore } from "./artifactStore";
 import { buildClientPlugin } from "./build";
+import { evaluateManifest } from "./evaluateManifest";
+import { MANIFEST_ENTRY } from "./naming";
 
 export type ArtifactEntry = { filename: string; contentType: string };
 
@@ -67,10 +69,19 @@ export async function buildAndPersistVersion(
     contentType: f.contentType,
   }));
 
+  const { manifest, log: manifestLog } = await evaluateManifest(
+    source,
+    MANIFEST_ENTRY,
+  );
+  const buildLog = manifestLog ? `${result.log}\n${manifestLog}` : result.log;
+
   await rootPgPool.query(
     `with built_version as (
        update app_public.client_plugin_versions
-          set build_status = 'built', build_log = $2, artifacts = $3::jsonb
+          set build_status = 'built',
+              build_log = $2,
+              artifacts = $3::jsonb,
+              manifest = $4::jsonb
         where id = $1
         returning client_plugin_id
      )
@@ -78,7 +89,7 @@ export async function buildAndPersistVersion(
         set latest_version_id = $1
        from built_version v
       where p.id = v.client_plugin_id`,
-    [versionId, result.log, JSON.stringify(artifacts)],
+    [versionId, buildLog, JSON.stringify(artifacts), JSON.stringify(manifest)],
   );
 
   return { ok: true, fileCount: result.files.length };
