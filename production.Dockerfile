@@ -207,6 +207,7 @@ FROM deps AS nft-extract
 # We don't need to copy from core since both builder extends core
 COPY --from=builder-server /app/nft_results /app/nft_results
 COPY --from=builder-plugin /app/nft_results /app/nft_results
+COPY --from=builder-core /app/packages/shared-modules/ /app/packages/shared-modules/
 RUN node scripts/build_utils/copy_deps.js
 
 ################################################################################
