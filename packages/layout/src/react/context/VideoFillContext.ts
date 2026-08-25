@@ -39,15 +39,18 @@ export const useVideoFillPlaybackState = (
   return states?.[videoFillKey(key)];
 };
 
+export const VideoFillMutedContext = createContext(false);
+
 /** The plugin's output level for its videos */
 export const useVideoFillOutputVolume = (): number => {
   const { pluginAPI } = useContext(PluginAPIContext);
+  const muted = useContext(VideoFillMutedContext);
 
   const volume = pluginAPI?.renderer.useData(
     (x: Record<string, unknown>) => x[VIDEO_VOLUME_KEY] as number | undefined,
   );
 
-  return volume ?? 1;
+  return muted ? 0 : (volume ?? 1);
 };
 
 /** Pass down scope */

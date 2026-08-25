@@ -1,6 +1,7 @@
 import "./editor.css";
 
 export * from "./AddElementBar";
+export * from "./EditorMuteToggle";
 export * from "./LayoutDocEditor";
 export * from "./LayoutEditor";
 export * from "./LayoutWorkbench";

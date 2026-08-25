@@ -2,7 +2,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { patchTextElement } from "../doc/edit";
 import { LayoutActiveContext } from "../react/context/ActiveContext";
-import { VideoFillModeContext } from "../react/context/VideoFillContext";
+import {
+  VideoFillModeContext,
+  VideoFillMutedContext,
+} from "../react/context/VideoFillContext";
 import { ElementView } from "../react/elements/ElementView";
 import { LayoutDoc } from "../schema/document";
 import { FrameContext, resolveDoc } from "../template/resolve";
@@ -23,6 +26,7 @@ export type LayoutDocEditorProps = {
   onChange: (doc: LayoutDoc) => void;
   background?: string;
   className?: string;
+  muted?: boolean;
 };
 
 /**
@@ -39,6 +43,7 @@ export const LayoutDocEditor = ({
   onChange,
   background,
   className,
+  muted = true,
 }: LayoutDocEditorProps) => {
   const [editingId, setEditingId] = useState<string | null>(null);
 
@@ -113,32 +118,34 @@ export const LayoutDocEditor = ({
   return (
     <LayoutActiveContext.Provider value={activeSince}>
       <VideoFillModeContext.Provider value="live">
-        <LayoutEditor
-          items={items}
-          aspectRatio={doc.aspectRatio}
-          fitMode={doc.fitMode}
-          selectedIds={selectedIds}
-          onSelectionChange={onSelectionChange}
-          onChange={handleChange}
-          background={background}
-          className={className}
-          editingId={editingId}
-          onItemDoubleClick={handleDoubleClick}
-          renderItem={(item) =>
-            item.id === editingId &&
-            editingContent !== null &&
-            item.element.type === "text" ? (
-              <TextEditOverlay
-                element={item.element}
-                value={editingContent}
-                onCommit={commit}
-                onCancel={() => setEditingId(null)}
-              />
-            ) : (
-              <ElementView element={item.element} placement="fill" />
-            )
-          }
-        />
+        <VideoFillMutedContext.Provider value={muted}>
+          <LayoutEditor
+            items={items}
+            aspectRatio={doc.aspectRatio}
+            fitMode={doc.fitMode}
+            selectedIds={selectedIds}
+            onSelectionChange={onSelectionChange}
+            onChange={handleChange}
+            background={background}
+            className={className}
+            editingId={editingId}
+            onItemDoubleClick={handleDoubleClick}
+            renderItem={(item) =>
+              item.id === editingId &&
+              editingContent !== null &&
+              item.element.type === "text" ? (
+                <TextEditOverlay
+                  element={item.element}
+                  value={editingContent}
+                  onCommit={commit}
+                  onCancel={() => setEditingId(null)}
+                />
+              ) : (
+                <ElementView element={item.element} placement="fill" />
+              )
+            }
+          />
+        </VideoFillMutedContext.Provider>
       </VideoFillModeContext.Provider>
     </LayoutActiveContext.Provider>
   );
