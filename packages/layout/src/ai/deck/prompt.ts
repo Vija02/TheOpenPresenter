@@ -4,18 +4,13 @@ import * as z4 from "zod";
 
 import { cloneDoc } from "../../doc/edit";
 import { LayoutDoc, layoutDocValidator } from "../../schema/document";
-import { buildAgentMessages, LayoutAiTurn } from "../messages";
+import { LayoutAiTurn, buildAgentMessages } from "../messages";
 import {
   explainZodError,
   isStrictParameters,
   toParameters,
 } from "../schemaUtils";
-import {
-  applyLayoutTool,
-  isReadOnlyLayoutTool,
-  LAYOUT_TOOLS,
-  unknownToolMessage,
-} from "../tools";
+import { LAYOUT_TOOLS, applyLayoutTool, unknownToolMessage } from "../tools";
 import {
   blankSlideDoc,
   contentSlideDoc,
