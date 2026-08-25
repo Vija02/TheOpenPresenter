@@ -55,6 +55,88 @@ filled with a picture, so an ellipse cropping a photo needs no new element kind.
 gradient only) — an image stroke has no CSS form, so it is unrepresentable
 rather than a render-time failure.
 
+Video is a fill for the same reason
+(`{ type: "video", video, fit, opacity, playback }`), and `playback` is the one
+field that needs a renderer to cooperate:
+
+| `playback` | UI label | Behaviour |
+|---|---|---|
+| `loop` (default) | Loop | ambient. Plays forever, always silent, from wherever the shared clock says — mounting it late does not restart it |
+| `once` | Play once | plays from the first frame each time the slide becomes active, holds the last frame, rewinds when the slide leaves, and is audible |
+
+`once` depends on knowing whether the document is on screen, which is not the
+same as being mounted: renderers keep every slide mounted and cross-fade with
+`opacity`, so an off-screen document would otherwise play and finish before
+anyone saw it. `LayoutRenderer` takes `activeSince`, published on
+`LayoutActiveContext`, and any renderer that mounts more than one document at a
+time must pass it — see
+`plugins/slides/view/Renderer/LayoutSlideRenderer`.
+
+`activeSince` is a single nullable timestamp rather than a boolean plus a time,
+because there is nothing useful to do with an activation time for a document
+nobody can see: `null` means "not on screen", and that is the only sense in
+which a fill needs to know.
+
+**It must come from shared state, never `Date.now()` at the call site.**
+Several outputs display the same scene simultaneously, and each one mounts and
+finishes buffering at a different moment; a local anchor drifts them apart on
+screen. Because the player derives position from `startedAt` plus duration,
+feeding it a synced timestamp makes every renderer resolve to the same frame —
+and makes a renderer that joins late drop into the middle of the clip rather
+than restarting it.
+
+In the slides plugin the anchor is derived rather than stored, because
+navigation already syncs everything needed: `lastClickTimestamp` under manual
+control, and `lastClickTimestamp + floor(elapsed / loopDurationMs) *
+loopDurationMs` under autoplay (`calculateAutoplayStepStartedAt`). Autoplay
+advances slides from a local `requestAnimationFrame` loop without writing to
+Yjs, so deriving is not just cheaper than storing a per-slide `startedAt` — it
+avoids having every renderer race to write its own `Date.now()` into the same
+key on each advance, which would restart the clip on all the others.
+
+### Controllable playback
+
+Derived timing keeps outputs in step but leaves nothing to control: an operator
+cannot pause or re-cue something that is a pure function of when a slide was
+clicked. The way in is `LAYOUT_VIDEO_STATES_KEY` — a reserved key inside the
+host plugin's own renderer data, holding `VideoPlaybackState` per video. A fill
+reads it off `PluginAPIContext` itself and prefers it over its derived state
+whenever an entry exists.
+
+Reading rather than being handed a lookup is deliberate: a host only has to
+*write* the state, and nothing has to be threaded down through `LayoutRenderer`
+for fills to find it. The key is prefixed because it sits in a namespace the
+host owns and must not collide with the plugin's own fields.
+
+Entries are keyed by `videoFillKey({ scope, elementId })`, joined with NUL,
+where `scope` identifies the document (a slide ref) and `elementId` the
+placement within it. Both halves are needed: templates mint stable element ids,
+so two slides may legitimately reuse `el-a`, and one slide may hold two videos.
+Keying by video id instead would merge a clip used as a background on three
+slides into one entry. The key and the reserved name live in `doc/edit` rather
+than beside the React contexts so server code can use them without importing
+React.
+
+Writes must come from a **single** writer. Renderers all run the same code, so
+letting them seed state means every output racing on each slide change. In the
+slides plugin every activation path — remote click, settings jump, arrow keys —
+goes through one `activateSlide()` helper that sets the slide index, the
+timestamp autoplay depends on, and the video state together, so none of them can
+be updated without the others. Its reconcile step prunes entries belonging to
+slides that are no longer live, which is also what stops orphans accumulating in
+a document that syncs forever.
+
+A missing entry is always legal and means "derive from the activation time".
+That is what makes the whole mechanism additive: a renderer that wires up none
+of it still plays one-shot video correctly and in sync, and forgetting to seed
+degrades to *not individually controllable* rather than to a black slide.
+
+`playback` is `.default("loop")` rather than `.nullable()`, the one exception to
+the nullability rule above, because it postdates documents already stored: they
+parse as `loop`, which is what they were already doing. Read it as
+`fill.playback ?? "loop"` anywhere the value has not been through the validator
+— documents come out of Yjs unparsed.
+
 `rect` is `{ x, y, w, h }` in 0–100, so a document survives an aspect-ratio
 change and one geometry type serves both layout levels.
 
