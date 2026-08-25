@@ -11,4 +11,8 @@ export type PluginAPI = {
   remote: {
     zoomLevel: ZoomLevel;
   };
+  renderer: {
+    useData: <Y = any>(fn?: (x: any) => Y) => Y;
+    useValtioData: <O = undefined>() => O extends undefined ? any : O;
+  };
 };

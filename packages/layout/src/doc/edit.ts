@@ -202,9 +202,6 @@ export type VideoFillKey = {
 export const videoFillKey = ({ scope, elementId }: VideoFillKey): string =>
   `${scope}\u0000${elementId}`;
 
-/** Where per-video playback state lives */
-export const LAYOUT_VIDEO_STATES_KEY = "_layoutVideoStates";
-
 export const audibleVideoElements = (
   doc: LayoutDoc,
 ): { id: string; label: string; video: VideoPaint["video"] }[] =>

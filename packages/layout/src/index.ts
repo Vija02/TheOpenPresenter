@@ -2,6 +2,7 @@
 
 export * from "./cascade";
 export * from "./doc/edit";
+export * from "./doc/videoState";
 export * from "./fonts/registry";
 export * from "./geometry/rect";
 export * from "./geometry/scale";

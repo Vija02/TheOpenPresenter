@@ -30,6 +30,13 @@ export type UniversalVideo = Video | InternalVideo;
  * This contains everything needed to play and control a video.
  * Store this in your Yjs state and pass it to VideoPlayer.
  */
+
+/** Where per-video-fill playback state lives on a plugin's renderer data */
+export const LAYOUT_VIDEO_STATES_KEY = "_layoutVideoStates";
+
+/** Where a plugin keeps the operator's output level for its videos */
+export const VIDEO_VOLUME_KEY = "_videoVolume";
+
 export type VideoPlaybackState = {
   /**
    * Unique ID for the current playback session.

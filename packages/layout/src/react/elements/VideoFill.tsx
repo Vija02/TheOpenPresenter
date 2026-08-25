@@ -20,6 +20,7 @@ import { useLayoutActiveSince } from "../context/ActiveContext";
 import {
   type VideoFillPlaybackState,
   useVideoFillMode,
+  useVideoFillOutputVolume,
   useVideoFillPlaybackState,
   useVideoFillScope,
 } from "../context/VideoFillContext";
@@ -158,7 +159,8 @@ const OncePlayer = ({
 
   const playbackState = stored ?? derived;
 
-  const volume = pluginAPI!.audio.useVolume(playbackState.volume);
+  const output = useVideoFillOutputVolume();
+  const volume = pluginAPI!.audio.useVolume(playbackState.volume * output);
 
   const { video, onDurationChange } = useResolvedVideo(fill);
 

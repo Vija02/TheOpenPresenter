@@ -1,8 +1,12 @@
+import type { PluginAPI } from "../Slide/types";
+import { VideoVolumeBar } from "./VideoVolumeBar";
+
 type PluginScaffoldPropTypes = {
   title: string;
   toolbar?: React.ReactElement;
   postToolbar?: React.ReactElement;
   body?: React.ReactElement;
+  pluginAPI?: PluginAPI | null;
 };
 
 export const PluginScaffold = ({
@@ -10,6 +14,7 @@ export const PluginScaffold = ({
   toolbar,
   postToolbar,
   body,
+  pluginAPI,
 }: PluginScaffoldPropTypes) => {
   return (
     <div className="flex flex-col h-full">
@@ -26,7 +31,10 @@ export const PluginScaffold = ({
           </div>
         </div>
       </div>
-      <div className="flex w-full flex-1 min-h-0">{body}</div>
+      <div className="flex w-full flex-1 min-h-0">
+        {pluginAPI && <VideoVolumeBar pluginAPI={pluginAPI} />}
+        {body}
+      </div>
     </div>
   );
 };

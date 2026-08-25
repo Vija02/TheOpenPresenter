@@ -55,6 +55,7 @@
     "@radix-ui/react-toggle-group": "^1.1.10",
     "@radix-ui/react-tooltip": "^1.2.7",
     "@react-hook/size": "^2.1.2",
+    "@repo/base-types": "*",
     "@repo/graphql": "*",
     "@repo/lib": "*",
     "@repo/tailwind-config": "*",
