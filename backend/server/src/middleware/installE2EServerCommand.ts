@@ -250,6 +250,43 @@ async function runCommand(
       [slug],
     );
     return { success: true };
+  } else if (command === "seedProjectScenes") {
+    // Replaces an existing project's Y.Doc with the given scenes.
+    //
+    // `login` can also seed scenes, but it CREATES the organization, so it
+    // cannot be called twice for the same slug. Tests that need media in the
+    // scene have a chicken-and-egg problem: media hangs off an org that must
+    // already exist, while the scene must reference the resulting media name.
+    // This command closes that loop without deleting and recreating the org,
+    // which would cascade the freshly seeded media away with it.
+    const { orgSlug, projectSlug, scenes } = payload || {};
+
+    if (!orgSlug || !String(orgSlug).startsWith("test")) {
+      throw new Error("seedProjectScenes orgSlug must start with 'test'");
+    }
+    if (!projectSlug) {
+      throw new Error("seedProjectScenes requires a projectSlug");
+    }
+
+    const {
+      rows: [project],
+    } = await rootPgPool.query(
+      `select p.id from app_public.projects p
+         join app_public.organizations o on o.id = p.organization_id
+        where o.slug = $1 and p.slug = $2`,
+      [orgSlug, projectSlug],
+    );
+    if (!project) {
+      throw new Error(`Project not found: ${orgSlug}/${projectSlug}`);
+    }
+
+    const update = await buildProjectDocument(scenes ?? []);
+    await rootPgPool.query(
+      "update app_public.projects set document = $1 where id = $2",
+      [update, project.id],
+    );
+
+    return { success: true };
   } else if (command === "clearUserByUsername") {
     const { username } = payload || {};
     if (!username || !String(username).startsWith("testuser")) {

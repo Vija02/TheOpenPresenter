@@ -337,6 +337,40 @@ export class E2ECommandAPI {
   }
 
   /**
+   * Replaces an existing project's scenes.
+   *
+   * Unlike `login`, this does not create the organization, so it can be called
+   * after media has been seeded into an org that already exists.
+   */
+  async seedProjectScenes(payload: {
+    orgSlug: string;
+    projectSlug: string;
+    scenes: {
+      pluginName: string;
+      pluginData: Record<string, any>;
+      rendererPluginData?: Record<string, any>;
+      activate?: boolean;
+      name?: string;
+    }[];
+  }): Promise<{ success: true }> {
+    const res = await this.request.post(
+      "/E2EServerCommand?command=seedProjectScenes",
+      {
+        headers: { "x-top-csrf-protection": "1" },
+        data: payload,
+      },
+    );
+
+    if (!res.ok()) {
+      throw new Error(
+        `seedProjectScenes failed: ${res.status()} ${await res.text()}`,
+      );
+    }
+
+    return res.json();
+  }
+
+  /**
    * Same as `login`, but POSTs the payload
    */
   async loginWithScenes(payload: {
