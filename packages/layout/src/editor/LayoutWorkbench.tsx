@@ -14,6 +14,7 @@ import { DataBinding, LayoutDoc, Template } from "../schema/document";
 import { FrameContext } from "../template/resolve";
 import { FrameData } from "../template/spans";
 import { AddElementBar } from "./AddElementBar";
+import { EditorMuteToggle, hasAudibleVideo } from "./EditorMuteToggle";
 import { LayoutDocEditor } from "./LayoutDocEditor";
 import { TemplateRail } from "./TemplateRail";
 import { DocumentInspector } from "./inspector/DocumentInspector";
@@ -81,6 +82,7 @@ export const LayoutWorkbench = ({
   className,
 }: LayoutWorkbenchProps) => {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [muted, setMuted] = useState(true);
   const compact = useIsCompact();
   const [compactTab, setCompactTab] = useState<CompactTab>("properties");
 
@@ -198,6 +200,7 @@ export const LayoutWorkbench = ({
           onSelectionChange={setSelectedIds}
           onChange={onChange}
           className="w-full"
+          muted={muted}
         />
       </div>
 
@@ -208,6 +211,14 @@ export const LayoutWorkbench = ({
           onSelectionChange={setSelectedIds}
           pluginApi={pluginApi}
           className="absolute top-2 left-1/2 z-10 -translate-x-1/2 max-w-[calc(100%-1rem)] overflow-x-auto"
+        />
+      )}
+
+      {hasAudibleVideo(doc) && (
+        <EditorMuteToggle
+          muted={muted}
+          onToggle={() => setMuted((x) => !x)}
+          className="absolute top-2 right-2 z-10"
         />
       )}
     </main>
