@@ -27,6 +27,7 @@ const Remote = () => {
   return (
     <PluginScaffold
       title="Bible"
+      pluginAPI={pluginApi}
       toolbar={
         <div className="flex items-center gap-2">
           <OverlayToggle

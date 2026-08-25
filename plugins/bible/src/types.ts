@@ -1,4 +1,5 @@
-import type { LayoutDoc } from "@repo/layout";
+import { LAYOUT_VIDEO_STATES_KEY, VIDEO_VOLUME_KEY } from "@repo/base-types";
+import { type LayoutDoc, type LayoutVideoStates } from "@repo/layout";
 
 // ---------------------------------------------------------------------------
 // Passages
@@ -73,4 +74,8 @@ export type PluginBaseData = {
 export type PluginRendererData = {
   passageId: string | null;
   slideIndex: number | null;
+  lastClickTimestamp?: number | null;
+
+  [LAYOUT_VIDEO_STATES_KEY]?: LayoutVideoStates;
+  [VIDEO_VOLUME_KEY]?: number;
 };

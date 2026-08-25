@@ -43,6 +43,7 @@ const Renderer = () => {
         slideIndex={slideIndex}
         template={template}
         showVerseNumbers={showVerseNumbers}
+        activeSince={derivationOffset === 0 ? data.lastClickTimestamp : null}
       />
     ) : null;
 

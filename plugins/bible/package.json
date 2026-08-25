@@ -15,6 +15,7 @@
   "dependencies": {
     "@r2wc/react-to-web-component": "^2.0.3",
     "@repo/base-plugin": "*",
+    "@repo/base-types": "*",
     "@repo/layout": "*",
     "@repo/observability": "*",
     "@repo/ui": "*",

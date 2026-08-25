@@ -5,6 +5,7 @@ import {
   ServerPluginApi,
   TRPCObject,
 } from "@repo/base-plugin/server";
+import { VIDEO_VOLUME_KEY } from "@repo/base-types";
 import { OrganizationType } from "@repo/graphql";
 import { logger } from "@repo/observability";
 import path from "path";
@@ -23,12 +24,12 @@ import {
   remoteWebComponentTag,
   rendererWebComponentTag,
 } from "./consts";
+import { getPassageSlideCount } from "./helpers/slides";
 import {
   registerLoadedPlugin,
   resolveContext,
   unregisterLoadedPlugin,
 } from "./registry";
-import { getPassageSlideCount } from "./helpers/slides";
 import {
   createTranslation,
   deleteTranslation,
@@ -38,6 +39,7 @@ import {
   setPreferences,
 } from "./storage";
 import { BiblePassage, PluginBaseData, PluginRendererData } from "./types";
+import { activateVerse, yjsActivationTarget } from "./verseActivation";
 
 export const init = (
   serverPluginApi: ServerPluginApi<PluginBaseData, PluginRendererData>,
@@ -82,20 +84,27 @@ export const init = (
   serverPluginApi.registerKeyPressHandler(
     pluginName,
     (keyType, { document, pluginData, rendererData }) => {
-      const passages: BiblePassage[] =
-        pluginData.get("passages")?.toJSON() ?? [];
+      const pluginDataJson = pluginData.toJSON() as PluginBaseData;
+      const passages: BiblePassage[] = pluginDataJson.passages ?? [];
       if (passages.length === 0) return;
 
       const passageIds = passages.map((x) => x.id);
       const currentPassageId = rendererData.get("passageId");
       const currentSlideIndex = rendererData.get("slideIndex");
+      const activationTarget = yjsActivationTarget(rendererData);
+      const activate = (passageId: string | null, slideIndex: number | null) =>
+        document.transact(() =>
+          activateVerse(
+            activationTarget,
+            pluginDataJson,
+            passageId,
+            slideIndex,
+          ),
+        );
 
       // Nothing selected yet -> select the very first slide.
       if (currentSlideIndex === null || currentSlideIndex === undefined) {
-        document.transact(() => {
-          rendererData.set("passageId", passageIds[0]!);
-          rendererData.set("slideIndex", 0);
-        });
+        activate(passageIds[0]!, 0);
         return;
       }
 
@@ -112,14 +121,9 @@ export const init = (
         if (newIndex >= currentMaxIndex) {
           // Move to the first slide of the next passage, if any.
           const nextPassageId = passageIds[currentPassageIdx + 1];
-          if (nextPassageId) {
-            document.transact(() => {
-              rendererData.set("passageId", nextPassageId);
-              rendererData.set("slideIndex", 0);
-            });
-          }
+          if (nextPassageId) activate(nextPassageId, 0);
         } else {
-          rendererData.set("slideIndex", newIndex);
+          activate(currentPassageId ?? null, newIndex);
         }
       } else {
         const newIndex = currentSlideIndex - 1;
@@ -131,13 +135,10 @@ export const init = (
             const prevMaxIndex = prevPassage
               ? getPassageSlideCount(prevPassage)
               : 1;
-            document.transact(() => {
-              rendererData.set("passageId", prevPassageId);
-              rendererData.set("slideIndex", Math.max(0, prevMaxIndex - 1));
-            });
+            activate(prevPassageId, Math.max(0, prevMaxIndex - 1));
           }
         } else {
-          rendererData.set("slideIndex", newIndex);
+          activate(currentPassageId ?? null, newIndex);
         }
       }
     },
@@ -167,6 +168,8 @@ const onRendererDataCreated = (
 ) => {
   rendererData.set("passageId", null);
   rendererData.set("slideIndex", null);
+  rendererData.set("lastClickTimestamp", null);
+  rendererData.set(VIDEO_VOLUME_KEY, 1);
 
   return {};
 };
@@ -336,7 +339,11 @@ const getAppRouter =
             .input(z.object({ pluginId: z.string() }))
             .query(async ({ input, ctx }) => {
               const { organizationId } = resolveContext(input.pluginId);
-              return getPreferences(serverPluginApi, authOf(ctx), organizationId);
+              return getPreferences(
+                serverPluginApi,
+                authOf(ctx),
+                organizationId,
+              );
             }),
 
           set: t.procedure
@@ -433,4 +440,3 @@ const getAppRouter =
 export type AppRouter = ReturnType<ReturnType<typeof getAppRouter>>;
 
 export * from "./types";
-
