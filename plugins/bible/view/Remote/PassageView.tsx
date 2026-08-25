@@ -14,6 +14,10 @@ import {
   splitSlide,
 } from "../../src/helpers/slides";
 import { BiblePassage } from "../../src/types";
+import {
+  activateVerse,
+  valtioActivationTarget,
+} from "../../src/verseActivation";
 import VerseView from "../Renderer/VerseView";
 import { usePluginAPI } from "../pluginApi";
 
@@ -56,7 +60,12 @@ const PassageView = React.memo(
           mutableRendererData.passageId === passage.id &&
           (mutableRendererData.slideIndex ?? 0) > sizes.length - 1
         ) {
-          mutableRendererData.slideIndex = sizes.length - 1;
+          activateVerse(
+            valtioActivationTarget(mutableRendererData),
+            mutableSceneData.pluginData,
+            passage.id,
+            sizes.length - 1,
+          );
           setRenderCurrentScene();
         }
       },
@@ -122,7 +131,8 @@ const PassageView = React.memo(
                 ? `v${first?.verse}-${last?.verse}`
                 : `v${first?.verse}`;
             const isActive =
-              renderData.passageId === passage.id && renderData.slideIndex === i;
+              renderData.passageId === passage.id &&
+              renderData.slideIndex === i;
 
             return (
               <Slide
@@ -161,8 +171,12 @@ const PassageView = React.memo(
                   </div>
                 }
                 onClick={() => {
-                  mutableRendererData.passageId = passage.id;
-                  mutableRendererData.slideIndex = i;
+                  activateVerse(
+                    valtioActivationTarget(mutableRendererData),
+                    mutableSceneData.pluginData,
+                    passage.id,
+                    i,
+                  );
                   setRenderCurrentScene();
                 }}
               >
