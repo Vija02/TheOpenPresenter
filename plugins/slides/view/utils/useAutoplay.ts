@@ -105,6 +105,21 @@ export const calculateAutoplayPosition = ({
   );
 };
 
+export const calculateAutoplayStepStartedAt = ({
+  lastClickTimestamp,
+  loopDurationMs,
+}: {
+  lastClickTimestamp: number | null;
+  loopDurationMs: number;
+}): number | null => {
+  if (lastClickTimestamp === null || loopDurationMs <= 0) return null;
+
+  const elapsed = Math.max(0, Date.now() - lastClickTimestamp);
+  const stepDelta = Math.floor(elapsed / loopDurationMs);
+
+  return lastClickTimestamp + stepDelta * loopDurationMs;
+};
+
 export const useAutoplay = ({
   baseIndex,
   baseClickCount,

@@ -5,6 +5,7 @@ import {
   ServerPluginApi,
   TRPCObject,
 } from "@repo/base-plugin/server";
+import { VIDEO_VOLUME_KEY } from "@repo/base-types";
 import {
   TypedMap,
   extractMediaName,
@@ -41,6 +42,7 @@ import {
   startThumbnailWorker,
   uploadPdfAndPrepare,
 } from "./shared";
+import { activateSlide, yjsActivationTarget } from "./slideActivation";
 import {
   createSlideRef,
   getAutoplayDurationForSlide,
@@ -227,6 +229,8 @@ export const init = (
       const isTransitioningBackwards =
         rendererData.get("isTransitioningBackwards") ?? false;
 
+      const activationTarget = yjsActivationTarget(rendererData);
+
       // Wrap every mutation in a single transaction so all changes for one
       // key press are applied atomically.
       rendererData.doc?.transact(() => {
@@ -242,10 +246,11 @@ export const init = (
             const returningHasAutoplay =
               getAutoplayDurationForSlide(pluginDataJson, returningSlideIndex) >
               0;
-            rendererData.set("currentSlideIndex", returningSlideIndex);
-            rendererData.set(
-              "currentClickCount",
-              returningHasAutoplay ? -1 : 0,
+            activateSlide(
+              activationTarget,
+              pluginDataJson,
+              returningSlideIndex,
+              { clickCount: returningHasAutoplay ? -1 : 0, now },
             );
             rendererData.set("transitionEndsAt", 0);
             return;
@@ -278,8 +283,9 @@ export const init = (
             rendererData.set("transitionEndsAt", now + clickDuration);
           } else if (currentSlideIndex < totalSlides - 1) {
             const nextSlideIndex = currentSlideIndex + 1;
-            rendererData.set("currentSlideIndex", nextSlideIndex);
-            rendererData.set("currentClickCount", 0);
+            activateSlide(activationTarget, pluginDataJson, nextSlideIndex, {
+              now,
+            });
             const slideTransitionDurationMs = getTransitionDurationForSlide(
               pluginDataJson,
               nextSlideIndex,
@@ -316,8 +322,10 @@ export const init = (
               pluginDataJson,
               prevSlideIndex,
             );
-            rendererData.set("currentSlideIndex", prevSlideIndex);
-            rendererData.set("currentClickCount", maxClicksForPrevSlide);
+            activateSlide(activationTarget, pluginDataJson, prevSlideIndex, {
+              clickCount: maxClicksForPrevSlide,
+              now,
+            });
 
             // Unlike object builds, a slide transition plays backwards with the
             // same duration it has forward. The transition that reverses is the
@@ -400,6 +408,7 @@ const onRendererDataCreated = (
   rendererData.set("currentSlideIndex", null);
   rendererData.set("currentClickCount", null);
   rendererData.set("lastClickTimestamp", null);
+  rendererData.set(VIDEO_VOLUME_KEY, 1);
 
   const autoPlay = new Y.Map() as TypedMap<AutoplayState>;
   autoPlay.set("enabled", false);

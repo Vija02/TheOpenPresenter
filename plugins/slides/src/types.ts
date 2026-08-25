@@ -1,4 +1,5 @@
-import type { LayoutDoc } from "@repo/layout";
+import { LAYOUT_VIDEO_STATES_KEY, VIDEO_VOLUME_KEY } from "@repo/base-types";
+import { type LayoutDoc, type LayoutVideoStates } from "@repo/layout";
 
 export type ImportType =
   | "googleslides"
@@ -160,6 +161,9 @@ export type PluginRendererData = {
    * Per-import display mode, keyed by importId.
    */
   displayModes?: Record<string, DisplayMode>;
+
+  [LAYOUT_VIDEO_STATES_KEY]?: LayoutVideoStates;
+  [VIDEO_VOLUME_KEY]?: number;
 };
 
 // ============================================================================
