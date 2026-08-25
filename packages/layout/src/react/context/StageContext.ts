@@ -1,6 +1,6 @@
 import { createContext, useContext } from "react";
 
-import { StageMetrics } from "../geometry/scale";
+import { StageMetrics } from "../../geometry/scale";
 
 const EMPTY_METRICS: StageMetrics = {
   containerWidth: 0,

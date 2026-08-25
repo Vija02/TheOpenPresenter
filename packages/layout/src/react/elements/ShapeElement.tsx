@@ -36,6 +36,7 @@ export const ShapeElementView = ({
       <FillLayer
         fill={element.fill}
         width={rectToPx(element.rect, metrics).width}
+        elementId={element.id}
       />
     </div>
   );
