@@ -13,7 +13,7 @@ import {
   textTransforms,
   verticalAlignments,
 } from "../schema/style";
-import { buildAgentMessages, LayoutAiTurn } from "./messages";
+import { LayoutAiTurn, buildAgentMessages } from "./messages";
 
 const list = (values: readonly string[]) =>
   values.map((v) => `"${v}"`).join(" | ");

@@ -23,7 +23,11 @@ import {
   verticalAlignments,
 } from "../schema/style";
 import { LAYOUT_DOC_RULES, droppedBindingTokens } from "./prompt";
-import { explainZodError, isStrictParameters, toParameters } from "./schemaUtils";
+import {
+  explainZodError,
+  isStrictParameters,
+  toParameters,
+} from "./schemaUtils";
 
 /**
  * The tool surface for AI layout editing.
