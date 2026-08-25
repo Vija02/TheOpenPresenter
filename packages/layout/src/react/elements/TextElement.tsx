@@ -101,7 +101,7 @@ export const TextElementView = ({
         fontSize,
       }}
     >
-      <FillLayer fill={element.fill} width={box.width} />
+      <FillLayer fill={element.fill} width={box.width} elementId={element.id} />
 
       <div
         className="lay--text-content"

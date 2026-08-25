@@ -56,11 +56,15 @@ export const layoutVideoValidator = z.object({
   thumbnailUrl: z.string().nullable(),
 });
 
+export const videoPlaybackModes = ["loop", "once"] as const;
+export type VideoPlaybackMode = (typeof videoPlaybackModes)[number];
+
 export const videoPaintValidator = z.object({
   type: z.literal("video"),
   video: layoutVideoValidator,
   fit: z.enum(imageFitModes),
   opacity: z.number(),
+  playback: z.enum(videoPlaybackModes).default("loop"),
 });
 
 export const fillPaintValidator = z.discriminatedUnion("type", [
@@ -206,9 +210,11 @@ export const videoPaint = (
   video: LayoutVideo,
   fit: ImageFitMode = "cover",
   opacity = 1,
+  playback: VideoPlaybackMode = "loop",
 ): VideoPaint => ({
   type: "video",
   video,
   fit,
   opacity,
+  playback,
 });

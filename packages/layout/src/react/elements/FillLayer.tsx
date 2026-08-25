@@ -29,6 +29,8 @@ const sizesFor = (renderedWidth: number): string | undefined => {
 export type FillLayerProps = {
   fill: FillPaint | null;
   width?: number;
+  /** The id of the element this fill belongs to */
+  elementId: string;
 };
 
 /** The absolutely-positioned box that media fills are drawn into. */
@@ -57,11 +59,11 @@ const MediaLayer = ({
 /**
  * Draws a picture or video fill behind the element's own content.
  */
-export const FillLayer = ({ fill, width }: FillLayerProps) => {
+export const FillLayer = ({ fill, width, elementId }: FillLayerProps) => {
   if (fill?.type === "video") {
     return (
       <MediaLayer opacity={fill.opacity}>
-        <VideoFill fill={fill} />
+        <VideoFill fill={fill} elementId={elementId} />
       </MediaLayer>
     );
   }

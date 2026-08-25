@@ -4,7 +4,7 @@
 import { clampRect, roundRect } from "../geometry/rect";
 import { LayoutDoc } from "../schema/document";
 import { LayoutElement, TextElement } from "../schema/element";
-import { FillPaint } from "../schema/paint";
+import { FillPaint, VideoPaint } from "../schema/paint";
 import { Rect } from "../schema/rect";
 import { TextStylePatch } from "../schema/style";
 
@@ -188,6 +188,38 @@ export const reorderElement = (
   elements.splice(target, 0, moved!);
   return { ...doc, elements };
 };
+
+// ---------------------------------------------------------------------------
+
+/** Identifies one video fill within a scene */
+export type VideoFillKey = {
+  /** Identifies the document within the scene (e.g. a slide ref). */
+  scope: string;
+  /** Identifies the element within that document. */
+  elementId: string;
+};
+
+export const videoFillKey = ({ scope, elementId }: VideoFillKey): string =>
+  `${scope}\u0000${elementId}`;
+
+/** Where per-video playback state lives */
+export const LAYOUT_VIDEO_STATES_KEY = "_layoutVideoStates";
+
+export const audibleVideoElements = (
+  doc: LayoutDoc,
+): { id: string; label: string; video: VideoPaint["video"] }[] =>
+  doc.elements.flatMap((element) =>
+    element.fill?.type === "video" &&
+    (element.fill.playback ?? "loop") === "once"
+      ? [
+          {
+            id: element.id,
+            label: element.name ?? element.fill.video.title ?? "Video",
+            video: element.fill.video,
+          },
+        ]
+      : [],
+  );
 
 // ---------------------------------------------------------------------------
 

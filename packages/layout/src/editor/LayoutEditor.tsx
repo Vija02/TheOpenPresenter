@@ -18,7 +18,7 @@ import {
 } from "../geometry/rect";
 import { PixelBox, pxToRect, rectToPx } from "../geometry/scale";
 import { Stage } from "../react/Stage";
-import { useStage } from "../react/StageContext";
+import { useStage } from "../react/context/StageContext";
 import { DEFAULT_ASPECT_RATIO } from "../schema/defaults";
 import { AspectRatio, LayoutFitMode } from "../schema/document";
 import { Rect } from "../schema/rect";

@@ -4,7 +4,7 @@ import { CSSProperties, ReactNode, useMemo, useState } from "react";
 import { computeStageMetrics } from "../geometry/scale";
 import { DEFAULT_ASPECT_RATIO } from "../schema/defaults";
 import { AspectRatio, LayoutFitMode } from "../schema/document";
-import { StageContext } from "./StageContext";
+import { StageContext } from "./context/StageContext";
 
 export type StageSizing = "fill" | "aspect";
 

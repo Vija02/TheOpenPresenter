@@ -19,6 +19,7 @@ import {
   ImagePaint,
   LinearGradientPaint,
   VideoPaint,
+  VideoPlaybackMode,
   imageFitModes,
   imagePaint,
   solidPaint,
@@ -62,6 +63,11 @@ const FIT_OPTIONS = imageFitModes.map((value) => ({
   value,
   label: value === "fill" ? "Stretch" : value === "cover" ? "Crop" : "Fit",
 }));
+
+const PLAYBACK_OPTIONS: { value: VideoPlaybackMode; label: string }[] = [
+  { value: "loop", label: "Loop" },
+  { value: "once", label: "Play once" },
+];
 
 const DEFAULT_COLOR = "#000000";
 
@@ -296,6 +302,16 @@ const VideoControls = ({
       </Row>
 
       <MediaFitControls fill={fill} onChange={onChange} />
+
+      <Row label="Playback">
+        <ToggleGroupField
+          value={fill.playback ?? "loop"}
+          onChange={(playback: VideoPlaybackMode) =>
+            onChange({ ...fill, playback })
+          }
+          options={PLAYBACK_OPTIONS}
+        />
+      </Row>
     </>
   );
 };

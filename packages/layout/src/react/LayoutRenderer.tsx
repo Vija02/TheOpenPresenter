@@ -4,6 +4,8 @@ import { LayoutDoc } from "../schema/document";
 import { FrameContext, ResolvedElement, resolveDoc } from "../template/resolve";
 import { FrameData } from "../template/spans";
 import { Stage, StageSizing } from "./Stage";
+import { LayoutActiveContext } from "./context/ActiveContext";
+import { VideoFillScopeContext } from "./context/VideoFillContext";
 import { ElementView } from "./elements/ElementView";
 import { ensureFontsLoaded } from "./text/fontStatus";
 
@@ -15,6 +17,10 @@ export type LayoutRendererProps = {
   background?: string;
   className?: string;
   style?: CSSProperties;
+  /** Epoch ms when this becomes active. Used for video playback */
+  activeSince?: number | null;
+  /** Required whenever a renderer draws more than one document to avoid clash for video playback */
+  scope?: string;
 };
 
 /**
@@ -28,18 +34,26 @@ export const LayoutRenderer = ({
   background,
   className,
   style,
-}: LayoutRendererProps) => (
-  <Stage
-    aspectRatio={doc.aspectRatio}
-    fitMode={doc.fitMode}
-    sizing={sizing}
-    background={background}
-    className={className}
-    style={style}
-  >
-    <LayoutElements doc={doc} data={data} frame={frame} />
-  </Stage>
-);
+  activeSince = null,
+  scope = "",
+}: LayoutRendererProps) => {
+  return (
+    <LayoutActiveContext.Provider value={activeSince}>
+      <VideoFillScopeContext.Provider value={scope}>
+        <Stage
+          aspectRatio={doc.aspectRatio}
+          fitMode={doc.fitMode}
+          sizing={sizing}
+          background={background}
+          className={className}
+          style={style}
+        >
+          <LayoutElements doc={doc} data={data} frame={frame} />
+        </Stage>
+      </VideoFillScopeContext.Provider>
+    </LayoutActiveContext.Provider>
+  );
+};
 
 const collectFontStacks = (elements: ResolvedElement[]): string[] => {
   const stacks = new Set<string>();

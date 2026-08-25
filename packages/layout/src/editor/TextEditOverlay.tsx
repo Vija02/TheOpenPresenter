@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef } from "react";
 
 import { toPx } from "../geometry/scale";
-import { useStage } from "../react/StageContext";
+import { useStage } from "../react/context/StageContext";
 import { ElementView } from "../react/elements/ElementView";
 import { fitFontSize, spansToHtml } from "../react/text/measure";
 import { resolvePadding } from "../schema/style";

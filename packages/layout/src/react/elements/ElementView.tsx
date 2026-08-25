@@ -1,5 +1,5 @@
 import { ResolvedElement } from "../../template/resolve";
-import { useStage } from "../StageContext";
+import { useStage } from "../context/StageContext";
 import { ElementPlacement } from "../css";
 import { ShapeElementView } from "./ShapeElement";
 import { TextElementView } from "./TextElement";
