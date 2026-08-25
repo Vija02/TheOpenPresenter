@@ -21,8 +21,7 @@ export const LayoutSlideRenderer = () => {
   const rendererDisplayModes = pluginApi.renderer.useData(
     (x) => x.displayModes,
   );
-
-  const { globalSlideIndex } = useDisplayedSlide();
+  const { globalSlideIndex, activeSince } = useDisplayedSlide();
 
   const totalSlides = pluginData.slideOrder?.length ?? 0;
 
@@ -50,25 +49,31 @@ export const LayoutSlideRenderer = () => {
     return slides;
   }, [pluginData, rendererDisplayModes]);
 
-  return renderableSlides.map(({ slide, globalIndex, doc }) => {
-    const isActive = globalSlideIndex === globalIndex;
+  return (
+    <>
+      {renderableSlides.map(({ slide, globalIndex, doc }) => {
+        const isActive = globalSlideIndex === globalIndex;
 
-    return (
-      <div
-        key={slide.rawRef}
-        style={{
-          position: "absolute",
-          width: "100%",
-          height: "100%",
-          opacity: isActive ? 1 : 0,
-        }}
-      >
-        <LayoutRenderer
-          doc={doc}
-          data={EMPTY_DATA}
-          frame={{ index: globalIndex + 1, total: totalSlides }}
-        />
-      </div>
-    );
-  });
+        return (
+          <div
+            key={slide.rawRef}
+            style={{
+              position: "absolute",
+              width: "100%",
+              height: "100%",
+              opacity: isActive ? 1 : 0,
+            }}
+          >
+            <LayoutRenderer
+              doc={doc}
+              data={EMPTY_DATA}
+              frame={{ index: globalIndex + 1, total: totalSlides }}
+              activeSince={isActive ? activeSince : null}
+              scope={slide.rawRef}
+            />
+          </div>
+        );
+      })}
+    </>
+  );
 };

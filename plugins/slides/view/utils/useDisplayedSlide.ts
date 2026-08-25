@@ -4,6 +4,7 @@ import { resolveSlide } from "../../src/slideOrderUtils";
 import { ResolvedSlide } from "../../src/types";
 import { usePluginAPI } from "../pluginApi";
 import {
+  calculateAutoplayStepStartedAt,
   computeGlobalSlideClickCount,
   fromFlatPosition,
   toFlatPosition,
@@ -15,6 +16,7 @@ export type DisplayedSlide = {
   resolvedSlide: ResolvedSlide | null;
   globalSlideIndex: number;
   clickCount: number;
+  activeSince: number | null;
 };
 
 export const useDisplayedSlide = (): DisplayedSlide => {
@@ -39,6 +41,7 @@ export const useDisplayedSlide = (): DisplayedSlide => {
 
   const {
     shouldAutoPlay,
+    loopDurationMs,
     calculatedAutoplaySlideIndex,
     calculatedAutoplayClickCount,
   } = useAutoplay({
@@ -102,12 +105,28 @@ export const useDisplayedSlide = (): DisplayedSlide => {
     derivationOffset === 0 &&
     derivedPosition?.slideIndex === effectiveIndex;
 
+  const lastClickTimestamp = pluginApi.renderer.useData(
+    (x) => x.lastClickTimestamp,
+  );
+
+  const activeSince = useMemo(
+    () =>
+      shouldAutoPlay
+        ? (calculateAutoplayStepStartedAt({
+            lastClickTimestamp,
+            loopDurationMs,
+          }) ?? lastClickTimestamp)
+        : lastClickTimestamp,
+    [lastClickTimestamp, loopDurationMs, shouldAutoPlay],
+  );
+
   return useMemo<DisplayedSlide>(
     () => ({
       resolvedSlide,
       globalSlideIndex: derivedPosition?.slideIndex ?? -1,
       clickCount: isAutoplayRewind ? -1 : (derivedPosition?.clickCount ?? 0),
+      activeSince,
     }),
-    [resolvedSlide, derivedPosition, isAutoplayRewind],
+    [resolvedSlide, derivedPosition, isAutoplayRewind, activeSince],
   );
 };

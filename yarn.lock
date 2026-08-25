@@ -9957,6 +9957,7 @@ __metadata:
   dependencies:
     "@r2wc/react-to-web-component": "npm:^2.0.3"
     "@repo/base-plugin": "npm:*"
+    "@repo/base-types": "npm:*"
     "@repo/eslint-config": "npm:*"
     "@repo/layout": "npm:*"
     "@repo/observability": "npm:*"
@@ -10171,6 +10172,7 @@ __metadata:
     "@r2wc/react-to-web-component": "npm:^2.0.3"
     "@repo/ai-chat": "npm:*"
     "@repo/base-plugin": "npm:*"
+    "@repo/base-types": "npm:*"
     "@repo/eslint-config": "npm:*"
     "@repo/layout": "npm:*"
     "@repo/lib": "npm:*"
@@ -10765,6 +10767,7 @@ __metadata:
     "@radix-ui/react-toggle-group": "npm:^1.1.10"
     "@radix-ui/react-tooltip": "npm:^1.2.7"
     "@react-hook/size": "npm:^2.1.2"
+    "@repo/base-types": "npm:*"
     "@repo/eslint-config": "npm:*"
     "@repo/graphql": "npm:*"
     "@repo/lib": "npm:*"

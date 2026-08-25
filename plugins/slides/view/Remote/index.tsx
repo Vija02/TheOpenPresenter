@@ -13,6 +13,10 @@ import { FaArrowLeft, FaArrowRight, FaPlus } from "react-icons/fa";
 import { VscEdit, VscSettingsGear } from "react-icons/vsc";
 
 import { imageSlideDoc, isCustomImport } from "../../src/customSlides";
+import {
+  activateSlide,
+  valtioActivationTarget,
+} from "../../src/slideActivation";
 import { parseSlideRef, resolveSlide } from "../../src/slideOrderUtils";
 import { usePluginAPI } from "../pluginApi";
 import {
@@ -53,6 +57,7 @@ const Remote = () => {
       ) : (
         <PluginScaffold
           title="Slides"
+          pluginAPI={pluginApi}
           postToolbar={
             <>
               <OverlayToggle
@@ -96,7 +101,7 @@ const Remote = () => {
             </div>
           }
           body={
-            <div className="p-3 w-full">
+            <div className="p-3 flex-1 min-w-0">
               <SlideGrid pluginAPI={pluginApi}>
                 <RemoteHandler onCustomSlideEdit={setEditorTarget} />
               </SlideGrid>
@@ -251,9 +256,12 @@ const RemoteHandler = ({ onCustomSlideEdit }: RemoteHandlerProps) => {
               ) : undefined
             }
             onClick={() => {
-              mutableRendererData.currentSlideIndex = index;
-              mutableRendererData.currentClickCount = null;
-              mutableRendererData.lastClickTimestamp = Date.now();
+              activateSlide(
+                valtioActivationTarget(mutableRendererData),
+                pluginData,
+                index,
+                { clickCount: null },
+              );
               pluginApi.renderer.setRenderCurrentScene();
             }}
           >

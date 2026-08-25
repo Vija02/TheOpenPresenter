@@ -32,6 +32,10 @@ import { SiCanva, SiGoogleslides } from "react-icons/si";
 
 import { isCustomImport } from "../../src/customSlides";
 import {
+  activateSlide,
+  valtioActivationTarget,
+} from "../../src/slideActivation";
+import {
   DisplayMode,
   ImportType,
   getEffectiveDisplayMode,
@@ -147,8 +151,12 @@ const SettingsModal = ({ onCustomSlideEdit }: SettingsModalProps) => {
             mutableRendererData.displayModes,
           ),
         });
-        mutableRendererData.currentSlideIndex = newPos.slideIndex;
-        mutableRendererData.currentClickCount = newPos.clickCount;
+        activateSlide(
+          valtioActivationTarget(mutableRendererData),
+          pluginData,
+          newPos.slideIndex,
+          { clickCount: newPos.clickCount },
+        );
       }
       if (!mutableRendererData.autoplay) {
         mutableRendererData.autoplay = {

@@ -18,6 +18,7 @@
     "@r2wc/react-to-web-component": "^2.0.3",
     "@repo/ai-chat": "*",
     "@repo/base-plugin": "*",
+    "@repo/base-types": "*",
     "@repo/layout": "*",
     "@repo/lib": "*",
     "@repo/media-picker": "*",
