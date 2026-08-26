@@ -98,6 +98,14 @@ export const removeElement = (doc: LayoutDoc, id: string): LayoutDoc => ({
   elements: doc.elements.filter((e) => e.id !== id),
 });
 
+export const removeElements = (doc: LayoutDoc, ids: string[]): LayoutDoc => {
+  const dropped = new Set(ids);
+  return {
+    ...doc,
+    elements: doc.elements.filter((e) => !dropped.has(e.id)),
+  };
+};
+
 export const freshElementId = (
   doc: LayoutDoc,
   base: string,
@@ -115,6 +123,10 @@ export const freshElementId = (
 // The source id is already `base`, so a copy starts counting at 2.
 const uniqueId = (doc: LayoutDoc, base: string): string =>
   freshElementId(doc, base, 2);
+
+// Without this, pasting the same payload repeatedly grows the id every round:
+// text-1 -> text-1-2 -> text-1-2-2.
+const stripCopySuffix = (id: string): string => id.replace(/-\d+$/, "") || id;
 
 const CASCADE_STEP = 2;
 
@@ -158,6 +170,45 @@ export const duplicateElement = (
 
   const index = doc.elements.findIndex((e) => e.id === id);
   return { doc: insertElement(doc, copy, index + 1), id: copy.id };
+};
+
+/** Duplicates in paint order, so a multi-selection keeps its stacking */
+export const duplicateElements = (
+  doc: LayoutDoc,
+  ids: string[],
+): { doc: LayoutDoc; ids: string[] } => {
+  const ordered = doc.elements
+    .filter((e) => ids.includes(e.id))
+    .map((e) => e.id);
+
+  let next = doc;
+  const created: string[] = [];
+  for (const id of ordered) {
+    const result = duplicateElement(next, id);
+    next = result.doc;
+    if (result.id) created.push(result.id);
+  }
+  return { doc: next, ids: created };
+};
+
+export const pasteElements = (
+  doc: LayoutDoc,
+  elements: LayoutElement[],
+): { doc: LayoutDoc; ids: string[] } => {
+  let next = doc;
+  const created: string[] = [];
+
+  for (const element of elements) {
+    const copy = JSON.parse(JSON.stringify(element)) as LayoutElement;
+    // Numbered from 1, not 2 as a duplicate is: the source may well be gone
+    // (a cut), and reusing its id makes that round trip lossless
+    copy.id = freshElementId(next, stripCopySuffix(element.id));
+    copy.rect = cascadeRect(next, copy.rect);
+    next = insertElement(next, copy);
+    created.push(copy.id);
+  }
+
+  return { doc: next, ids: created };
 };
 
 export type ReorderDirection = "forward" | "backward" | "front" | "back";

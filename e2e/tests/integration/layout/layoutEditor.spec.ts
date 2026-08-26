@@ -934,6 +934,155 @@ test.describe.serial("Adding elements", () => {
 });
 
 /**
+ * Keyboard shortcuts.
+ *
+ * `Meta` is not used anywhere: Playwright's Chromium on Linux does not deliver
+ * a Meta chord the way a Mac would, and the handler accepts either modifier, so
+ * Control exercises the same branch everywhere.
+ */
+test.describe.serial("Editor shortcuts", () => {
+  test.beforeEach(
+    async ({ e2eCommand }) =>
+      await Promise.all([
+        e2eCommand.serverCommand("clearTestUsers"),
+        e2eCommand.serverCommand("clearTestOrganizations"),
+        e2eCommand.serverCommand("clearBibleData"),
+      ]),
+  );
+
+  const item = (dialog: Locator, id: string) =>
+    dialog.locator(`[data-lay-id="${id}"]`);
+
+  test("delete and backspace remove the selection, and undo brings it back", async ({
+    page,
+    projectPage,
+    loginAndGoToProject,
+  }) => {
+    const dialog = await openStyleModal({ loginAndGoToProject, projectPage });
+
+    await dialog.getByRole("button", { name: "Add text" }).click();
+    await expect(item(dialog, "text-1")).toBeVisible();
+
+    await page.keyboard.press("Delete");
+    await expect(item(dialog, "text-1")).toHaveCount(0);
+
+    // Undo restores the element AND its id, since the whole doc is snapshotted.
+    await page.keyboard.press("Control+z");
+    await expect(item(dialog, "text-1")).toBeVisible();
+
+    await page.keyboard.press("Control+Shift+z");
+    await expect(item(dialog, "text-1")).toHaveCount(0);
+
+    // Backspace is the same gesture. Guarded separately because a browser maps
+    // it to history-back when nothing swallows it.
+    await page.keyboard.press("Control+z");
+    await item(dialog, "text-1").click();
+    await page.keyboard.press("Backspace");
+    await expect(item(dialog, "text-1")).toHaveCount(0);
+
+    // ...and the page did not navigate away under us.
+    await expect(dialog).toBeVisible();
+  });
+
+  test("delete does nothing while editing text in place", async ({
+    page,
+    projectPage,
+    loginAndGoToProject,
+  }) => {
+    const dialog = await openStyleModal({ loginAndGoToProject, projectPage });
+    const body = dialog.locator(BODY);
+
+    await body.dblclick();
+    await expect(body).toHaveClass(/lay--editor-item--editing/);
+
+    // Backspace belongs to the caret here. If the shortcut fired instead, the
+    // element the user is typing into would vanish mid-sentence.
+    await page.keyboard.press("Backspace");
+    await page.keyboard.press("Delete");
+    await expect(body).toBeVisible();
+  });
+
+  test("copy and paste round-trips an element, including its styling", async ({
+    page,
+    projectPage,
+    loginAndGoToProject,
+  }) => {
+    const dialog = await openStyleModal({ loginAndGoToProject, projectPage });
+
+    await dialog.getByRole("button", { name: "Add text" }).click();
+    const source = item(dialog, "text-1");
+    await expect(source).toBeVisible();
+
+    await dialog.getByLabel("Align left").click();
+    await expect
+      .poll(() => textStyle(page, '[data-lay-id="text-1"]', "text-align"))
+      .toBe("left");
+
+    await page.keyboard.press("Control+c");
+    await page.keyboard.press("Control+v");
+
+    // Ids are regenerated against the target doc, so the copy cannot collide
+    // with the original it was pasted alongside.
+    const copy = item(dialog, "text-2");
+    await expect(copy).toBeVisible();
+    await expect(source).toBeVisible();
+    await expect(copy).toHaveClass(/lay--editor-item--selected/);
+
+    // The payload carries the whole element, not just its geometry.
+    await expect
+      .poll(() => textStyle(page, '[data-lay-id="text-2"]', "text-align"))
+      .toBe("left");
+
+    // Cascaded rather than stacked exactly, so the copy is visibly its own
+    // element rather than hiding under the original.
+    const sourceBox = await source.boundingBox();
+    const copyBox = await copy.boundingBox();
+    expect(copyBox!.x).not.toBe(sourceBox!.x);
+  });
+
+  test("cut removes the element but keeps it pasteable", async ({
+    page,
+    projectPage,
+    loginAndGoToProject,
+  }) => {
+    const dialog = await openStyleModal({ loginAndGoToProject, projectPage });
+
+    await dialog.getByRole("button", { name: "Add text" }).click();
+    await expect(item(dialog, "text-1")).toBeVisible();
+
+    await page.keyboard.press("Control+x");
+    await expect(item(dialog, "text-1")).toHaveCount(0);
+
+    // The id is free again by the time it is pasted back, so the round trip is
+    // lossless rather than leaving a renamed orphan.
+    await page.keyboard.press("Control+v");
+    await expect(item(dialog, "text-1")).toBeVisible();
+  });
+
+  test("select-all selects every element, and duplicate copies them all", async ({
+    page,
+    projectPage,
+    loginAndGoToProject,
+  }) => {
+    const dialog = await openStyleModal({ loginAndGoToProject, projectPage });
+
+    // The Bible template ships exactly these three.
+    await dialog.locator(BODY).click();
+    await page.keyboard.press("Control+a");
+    await expect(dialog.locator(".lay--editor-item--selected")).toHaveCount(3);
+
+    await page.keyboard.press("Control+d");
+    await expect(item(dialog, "bible-body-2")).toBeVisible();
+    await expect(item(dialog, "bible-reference-2")).toBeVisible();
+    await expect(item(dialog, "bible-background-2")).toBeVisible();
+
+    // Selection follows the copies, which is what makes a duplicate-then-drag
+    // work as one gesture.
+    await expect(dialog.locator(".lay--editor-item--selected")).toHaveCount(3);
+  });
+});
+
+/**
  * The compact layout, below the `desktop:` breakpoint (48rem / 768px).
  *
  * `hasTouch` rather than `isMobile`: the latter also fakes a mobile user agent

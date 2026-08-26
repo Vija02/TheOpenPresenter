@@ -7,9 +7,21 @@ import {
 } from "@repo/ai-chat";
 import { appData } from "@repo/lib";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@repo/ui";
-import { ReactNode, useCallback, useEffect, useMemo, useState } from "react";
+import {
+  ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
-import { findElement } from "../doc/edit";
+import {
+  duplicateElements,
+  findElement,
+  pasteElements,
+  removeElements,
+} from "../doc/edit";
 import { DataBinding, LayoutDoc, Template } from "../schema/document";
 import { FrameContext } from "../template/resolve";
 import { FrameData } from "../template/spans";
@@ -17,9 +29,12 @@ import { AddElementBar } from "./AddElementBar";
 import { EditorMuteToggle, hasAudibleVideo } from "./EditorMuteToggle";
 import { LayoutDocEditor } from "./LayoutDocEditor";
 import { TemplateRail } from "./TemplateRail";
+import { parseElements, serializeElements } from "./clipboard";
 import { DocumentInspector } from "./inspector/DocumentInspector";
 import { ElementInspector } from "./inspector/ElementInspector";
 import { LayoutPluginApi } from "./pluginApi";
+import { useLayoutHistory } from "./useLayoutHistory";
+import { useLayoutShortcuts } from "./useLayoutShortcuts";
 import { useIsCompact } from "./useMediaQuery";
 
 export type LayoutWorkbenchProps = {
@@ -64,7 +79,7 @@ type CompactTab = "templates" | "properties";
  */
 export const LayoutWorkbench = ({
   doc,
-  onChange,
+  onChange: onChangeProp,
   data = {},
   frame,
   templates,
@@ -85,6 +100,10 @@ export const LayoutWorkbench = ({
   const [muted, setMuted] = useState(true);
   const compact = useIsCompact();
   const [compactTab, setCompactTab] = useState<CompactTab>("properties");
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  const history = useLayoutHistory(doc, onChangeProp);
+  const onChange = history.onChange;
 
   const aiRequest = useMemo(() => {
     if (!aiEnabled || aiChat) return undefined;
@@ -128,6 +147,46 @@ export const LayoutWorkbench = ({
   );
 
   const clearSelection = useCallback(() => setSelectedIds([]), []);
+
+  const selectedElements = useMemo(
+    () => doc.elements.filter((e) => selectedIds.includes(e.id)),
+    [doc, selectedIds],
+  );
+
+  const copyPayload = useCallback(
+    () =>
+      selectedElements.length > 0 ? serializeElements(selectedElements) : null,
+    [selectedElements],
+  );
+
+  useLayoutShortcuts(rootRef, {
+    onDelete: () => {
+      const removable = selectedElements
+        .filter((e) => !e.locked)
+        .map((e) => e.id);
+      if (removable.length === 0) return;
+      onChange(removeElements(doc, removable));
+      setSelectedIds([]);
+    },
+    onDuplicate: () => {
+      if (selectedIds.length === 0) return;
+      const result = duplicateElements(doc, selectedIds);
+      onChange(result.doc);
+      setSelectedIds(result.ids);
+    },
+    onSelectAll: () => setSelectedIds(doc.elements.map((e) => e.id)),
+    onUndo: history.undo,
+    onRedo: history.redo,
+    onCopy: copyPayload,
+    onCut: copyPayload,
+    onPaste: (text) => {
+      const elements = parseElements(text);
+      if (!elements) return;
+      const result = pasteElements(doc, elements);
+      onChange(result.doc);
+      setSelectedIds(result.ids);
+    },
+  });
 
   const rail =
     templates && templates.length > 0 && onSelectTemplate ? (
@@ -226,7 +285,10 @@ export const LayoutWorkbench = ({
 
   if (compact) {
     return (
-      <div className={`flex flex-col h-full min-h-0 ${className ?? ""}`}>
+      <div
+        ref={rootRef}
+        className={`flex flex-col h-full min-h-0 ${className ?? ""}`}
+      >
         {canvas}
 
         {rail ? (
@@ -263,7 +325,7 @@ export const LayoutWorkbench = ({
   }
 
   return (
-    <div className={`flex h-full min-h-0 ${className ?? ""}`}>
+    <div ref={rootRef} className={`flex h-full min-h-0 ${className ?? ""}`}>
       {rail && (
         <aside className="w-[170px] shrink-0 border-r border-stroke overflow-y-auto p-3">
           {rail}

@@ -189,4 +189,36 @@ test.describe.serial("Slides Plugin - custom slides", () => {
     await expect(editorDialog(page)).toBeVisible();
     await expect(layElement(editorDialog(page), "title")).toBeVisible();
   });
+
+  test("undo works in the slides editor, which persists through Yjs", async ({
+    page,
+    projectPage,
+    loginAndGoToProject,
+  }) => {
+    await loginAndGoToProject();
+    await projectPage.createPlugin("Slides");
+    await page.getByTestId("slides-create-from-scratch").click();
+
+    const dialog = editorDialog(page);
+    const title = layElement(dialog, "title");
+    await expect(title).toBeVisible();
+
+    await title.click();
+    await expect(title).toHaveClass(/lay--editor-item--selected/);
+
+    await page.keyboard.press("Delete");
+    await expect(layElement(dialog, "title")).toHaveCount(0);
+
+    await page.keyboard.press("ControlOrMeta+z");
+    await expect(layElement(dialog, "title")).toBeVisible();
+
+    // The undo has to survive the round trip out to the shared document, not
+    // merely repaint the canvas. `data-lay-id` is editor-only markup, so the
+    // grid is checked by the restored element's text.
+    await dialog.getByRole("button", { name: "Done" }).click();
+    await expect(dialog).toBeHidden();
+    await expect(
+      slideCardByHeading(page, "Slide 1").getByText("Title", { exact: true }),
+    ).toBeVisible();
+  });
 });
