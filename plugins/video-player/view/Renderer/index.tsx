@@ -1,4 +1,4 @@
-import { VideoPlayer } from "@repo/video/client";
+import { VideoPlayer, useVideoPreload } from "@repo/video/client";
 import { useMemo } from "react";
 
 import { usePluginAPI } from "../pluginApi";
@@ -7,6 +7,9 @@ const VideoPlayerRenderer = () => {
   const pluginApi = usePluginAPI();
 
   const activeVideoId = pluginApi.renderer.useData((x) => x.activeVideoId);
+  const videos = pluginApi.scene.useData((x) => x.pluginData.videos);
+
+  useVideoPreload(videos);
 
   if (!activeVideoId) {
     return null;

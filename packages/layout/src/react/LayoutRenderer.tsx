@@ -8,6 +8,7 @@ import { LayoutActiveContext } from "./context/ActiveContext";
 import { VideoFillScopeContext } from "./context/VideoFillContext";
 import { ElementView } from "./elements/ElementView";
 import { ensureFontsLoaded } from "./text/fontStatus";
+import { useLayoutVideoPreload } from "./useLayoutVideoPreload";
 
 export type LayoutRendererProps = {
   doc: LayoutDoc;
@@ -37,6 +38,8 @@ export const LayoutRenderer = ({
   activeSince = null,
   scope = "",
 }: LayoutRendererProps) => {
+  useLayoutVideoPreload(doc, activeSince === null ? "background" : "eager");
+
   return (
     <LayoutActiveContext.Provider value={activeSince}>
       <VideoFillScopeContext.Provider value={scope}>
