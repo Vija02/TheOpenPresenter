@@ -27,6 +27,8 @@ import {
   videoPaint,
   videoPosterUrl,
 } from "../../../schema/paint";
+import { useLayoutInsertDefaults } from "../../InsertDefaultsContext";
+import { applyFillDefaults } from "../../insertDefaults";
 import { LayoutPluginApi, pickImage, pickVideo } from "../../pluginApi";
 import {
   ColorField,
@@ -136,22 +138,28 @@ export const FillSection = ({
 }: SectionProps & { title?: string; pluginApi?: LayoutPluginApi }) => {
   const fill = element.fill;
   const [selected, setSelected] = useState(0);
+  const defaults = useLayoutInsertDefaults();
 
   const set = (next: FillPaint | null) =>
     onChange(setElementFill(doc, element.id, next));
+
+  /** A fill the user has just picked, so the host's overrides apply. */
+  const setFresh = (next: FillPaint) => set(applyFillDefaults(defaults, next));
 
   const chooseImage = async () => {
     if (!pluginApi) return;
     const src = await pickImage(pluginApi);
     if (!src) return;
-    set(fill?.type === "image" ? { ...fill, src } : imagePaint(src));
+    if (fill?.type === "image") set({ ...fill, src });
+    else setFresh(imagePaint(src));
   };
 
   const chooseVideo = async () => {
     if (!pluginApi) return;
     const video = await pickVideo(pluginApi);
     if (!video) return;
-    set(fill?.type === "video" ? { ...fill, video } : videoPaint(video));
+    if (fill?.type === "video") set({ ...fill, video });
+    else setFresh(videoPaint(video));
   };
 
   const modes = pluginApi ? [...COLOUR_MODES, ...MEDIA_MODES] : COLOUR_MODES;
@@ -164,7 +172,11 @@ export const FillSection = ({
           onChange={(next) => {
             if (next === "image") void chooseImage();
             else if (next === "video") void chooseVideo();
-            else set(convert(fill, next));
+            else {
+              const converted = convert(fill, next);
+              if (converted) setFresh(converted);
+              else set(null);
+            }
           }}
           options={modes}
         />

@@ -9,6 +9,7 @@ import {
 } from "react-icons/lu";
 
 import { LayoutDoc } from "../schema/document";
+import { useLayoutInsertDefaults } from "./InsertDefaultsContext";
 import {
   AddResult,
   addImageElement,
@@ -46,6 +47,7 @@ export const AddElementBar = ({
   className,
 }: AddElementBarProps) => {
   const compact = useIsCompact();
+  const defaults = useLayoutInsertDefaults();
   // On a phone the canvas is capped at 55% of the viewport
   const showLabels = labels ?? !compact;
 
@@ -54,25 +56,25 @@ export const AddElementBar = ({
       key: "text",
       label: "Text",
       icon: <LuType size={ICON_SIZE} />,
-      run: addTextElement,
+      run: (d: LayoutDoc) => addTextElement(d, defaults),
     },
     {
       key: "rect",
       label: "Rectangle",
       icon: <LuSquare size={ICON_SIZE} />,
-      run: (d) => addShape(d, "rect"),
+      run: (d: LayoutDoc) => addShape(d, "rect", defaults),
     },
     {
       key: "ellipse",
       label: "Ellipse",
       icon: <LuCircle size={ICON_SIZE} />,
-      run: (d) => addShape(d, "ellipse"),
+      run: (d: LayoutDoc) => addShape(d, "ellipse", defaults),
     },
     {
       key: "line",
       label: "Line",
       icon: <LuMinus size={ICON_SIZE} />,
-      run: (d) => addShape(d, "line"),
+      run: (d: LayoutDoc) => addShape(d, "line", defaults),
     },
     ...(pluginApi
       ? [
@@ -80,13 +82,13 @@ export const AddElementBar = ({
             key: "image",
             label: "Picture",
             icon: <LuImage size={ICON_SIZE} />,
-            run: (d: LayoutDoc) => addImageElement(d, pluginApi),
+            run: (d: LayoutDoc) => addImageElement(d, pluginApi, defaults),
           },
           {
             key: "video",
             label: "Video",
             icon: <LuVideo size={ICON_SIZE} />,
-            run: (d: LayoutDoc) => addVideoElement(d, pluginApi),
+            run: (d: LayoutDoc) => addVideoElement(d, pluginApi, defaults),
           },
         ]
       : []),

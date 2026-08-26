@@ -5,6 +5,7 @@ import { LayoutDoc } from "../schema/document";
 import { LayoutElement, ShapeKind } from "../schema/element";
 import { FillPaint, imagePaint, solidPaint, videoPaint } from "../schema/paint";
 import { Rect } from "../schema/rect";
+import { LayoutInsertDefaults, applyInsertDefaults } from "./insertDefaults";
 import { LayoutPluginApi, pickImage, pickVideo } from "./pluginApi";
 
 /**
@@ -34,13 +35,22 @@ const add = (
   base: string,
   build: (id: string, rect: Rect) => LayoutElement,
   rect: Rect,
+  defaults: LayoutInsertDefaults,
 ): AddResult => {
   const id = freshElementId(doc, base);
   const element = build(id, cascadeRect(doc, rect));
-  return { doc: insertElement(doc, element), id };
+  return {
+    doc: insertElement(doc, applyInsertDefaults(defaults, element)),
+    id,
+  };
 };
 
-export const addTextElement = (doc: LayoutDoc): AddResult =>
+const NO_DEFAULTS: LayoutInsertDefaults = {};
+
+export const addTextElement = (
+  doc: LayoutDoc,
+  defaults: LayoutInsertDefaults = NO_DEFAULTS,
+): AddResult =>
   add(
     doc,
     "text",
@@ -52,9 +62,14 @@ export const addTextElement = (doc: LayoutDoc): AddResult =>
         fit: "shrinkToFit",
       }),
     TEXT_RECT,
+    defaults,
   );
 
-export const addShape = (doc: LayoutDoc, kind: ShapeKind): AddResult =>
+export const addShape = (
+  doc: LayoutDoc,
+  kind: ShapeKind,
+  defaults: LayoutInsertDefaults = NO_DEFAULTS,
+): AddResult =>
   add(
     doc,
     kind,
@@ -68,30 +83,39 @@ export const addShape = (doc: LayoutDoc, kind: ShapeKind): AddResult =>
           : { fill: SHAPE_FILL }),
       }),
     kind === "line" ? LINE_RECT : SHAPE_RECT,
+    defaults,
   );
 
-const addMedia = (doc: LayoutDoc, base: string, fill: FillPaint): AddResult =>
+const addMedia = (
+  doc: LayoutDoc,
+  base: string,
+  fill: FillPaint,
+  defaults: LayoutInsertDefaults,
+): AddResult =>
   add(
     doc,
     base,
     (id, rect) => createShapeElement({ id, kind: "rect", rect, fill }),
     MEDIA_RECT,
+    defaults,
   );
 
 export const addImageElement = async (
   doc: LayoutDoc,
   api: LayoutPluginApi,
+  defaults: LayoutInsertDefaults = NO_DEFAULTS,
 ): Promise<AddResult | null> => {
   const src = await pickImage(api);
   if (!src) return null;
-  return addMedia(doc, "image", imagePaint(src));
+  return addMedia(doc, "image", imagePaint(src), defaults);
 };
 
 export const addVideoElement = async (
   doc: LayoutDoc,
   api: LayoutPluginApi,
+  defaults: LayoutInsertDefaults = NO_DEFAULTS,
 ): Promise<AddResult | null> => {
   const video = await pickVideo(api);
   if (!video) return null;
-  return addMedia(doc, "video", videoPaint(video));
+  return addMedia(doc, "video", videoPaint(video), defaults);
 };
