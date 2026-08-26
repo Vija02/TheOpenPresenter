@@ -12,6 +12,13 @@ export type YjsWatcherOptions = {
   shallow?: boolean;
 };
 
+/** Returns the previous value when the new one is deeply equal */
+const cached = <T>(ref: { current: any }, next: T): T => {
+  if (isEqual(ref.current, next)) return ref.current as T;
+  ref.current = next;
+  return next;
+};
+
 export class YjsWatcher implements IDisposable {
   private _watcher: Record<string, { id: string; callback: () => void }[]> = {};
   private _disposable: IDisposable[] = [];
@@ -91,16 +98,15 @@ export class YjsWatcher implements IDisposable {
         const data = this.traverser(traverserFn);
 
         if (isYjsObj(data)) {
-          if (isEqual(prevDataRef.current, data)) {
-            return prevDataRef.current;
-          } else {
-            prevDataRef.current = data;
-            return prevDataRef.current;
-          }
-        } else {
-          // If it's a primitive, we just return the data directly
-          return data as Y;
+          return cached(prevDataRef, data);
         }
+
+        if (data !== null && typeof data === "object") {
+          return cached(prevDataRef, data);
+        }
+
+        // If it's a primitive, we just return the data directly
+        return data as Y;
       },
       () => {
         const data = this.traverser(traverserFn) as any;
@@ -121,17 +127,18 @@ export class YjsWatcher implements IDisposable {
         const data = this.traverser(traverserFn);
 
         if (isYjsObj(data)) {
-          const jsonData = (data as unknown as AbstractType<any>).toJSON();
-          if (isEqual(prevDataRef.current, jsonData)) {
-            return prevDataRef.current;
-          } else {
-            prevDataRef.current = jsonData;
-            return prevDataRef.current;
-          }
-        } else {
-          // If it's a primitive, we just return the data directly
-          return data as Y;
+          return cached(
+            prevDataRef,
+            (data as unknown as AbstractType<any>).toJSON(),
+          );
         }
+
+        if (data !== null && typeof data === "object") {
+          return cached(prevDataRef, data);
+        }
+
+        // If it's a primitive, we just return the data directly
+        return data as Y;
       },
       () => {
         const data = this.traverser(traverserFn) as any;
