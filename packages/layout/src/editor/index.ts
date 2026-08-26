@@ -8,6 +8,8 @@ export * from "./LayoutWorkbench";
 export * from "./TemplateRail";
 export * from "./addElement";
 export * from "./clipboard";
+export * from "./InsertDefaultsContext";
+export * from "./insertDefaults";
 export * from "./inspector/DocumentInspector";
 export * from "./inspector/ElementInspector";
 export * from "./inspector/primitives";

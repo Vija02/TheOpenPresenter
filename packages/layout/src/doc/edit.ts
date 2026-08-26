@@ -4,7 +4,7 @@
 import { clampRect, roundRect } from "../geometry/rect";
 import { LayoutDoc } from "../schema/document";
 import { LayoutElement, TextElement } from "../schema/element";
-import { FillPaint, VideoPaint } from "../schema/paint";
+import { FillPaint, VideoPaint, VideoPlaybackMode } from "../schema/paint";
 import { Rect } from "../schema/rect";
 import { TextStylePatch } from "../schema/style";
 
@@ -253,21 +253,30 @@ export type VideoFillKey = {
 export const videoFillKey = ({ scope, elementId }: VideoFillKey): string =>
   `${scope}\u0000${elementId}`;
 
-export const audibleVideoElements = (
-  doc: LayoutDoc,
-): { id: string; label: string; video: VideoPaint["video"] }[] =>
+export type VideoFillElement = {
+  id: string;
+  label: string;
+  video: VideoPaint["video"];
+  playback: VideoPlaybackMode;
+};
+
+/** Every video fill in the document, in element order */
+export const videoFillElements = (doc: LayoutDoc): VideoFillElement[] =>
   doc.elements.flatMap((element) =>
-    element.fill?.type === "video" &&
-    (element.fill.playback ?? "loop") === "once"
+    element.fill?.type === "video"
       ? [
           {
             id: element.id,
             label: element.name ?? element.fill.video.title ?? "Video",
             video: element.fill.video,
+            playback: element.fill.playback ?? "loop",
           },
         ]
       : [],
   );
+
+export const audibleVideoElements = (doc: LayoutDoc): VideoFillElement[] =>
+  videoFillElements(doc).filter((element) => element.playback === "once");
 
 // ---------------------------------------------------------------------------
 
