@@ -1,5 +1,5 @@
 import { LayoutDoc } from "@repo/layout";
-import { LayoutWorkbench } from "@repo/layout/editor";
+import { LayoutInsertDefaults, LayoutWorkbench } from "@repo/layout/editor";
 import { appData } from "@repo/lib";
 import {
   Button,
@@ -29,6 +29,10 @@ import { useDeckAi } from "./useDeckAi";
 const AI_ENABLED = appData.getAiEnabled();
 
 const EMPTY_DATA = {};
+
+const INSERT_DEFAULTS: LayoutInsertDefaults = {
+  fills: { video: { playback: "once" } },
+};
 
 type SideTab = "slides" | "layouts";
 
@@ -232,6 +236,7 @@ const CustomSlideEditorModal = ({
                   frame={frame}
                   aiChat={AI_ENABLED ? deckAi : undefined}
                   pluginApi={pluginApi}
+                  insertDefaults={INSERT_DEFAULTS}
                 />
               )}
             </div>
