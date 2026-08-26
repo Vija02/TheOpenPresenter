@@ -289,6 +289,39 @@ Behaviour worth knowing:
 - **Clicking outside the slide deselects**, tested via `closest(".lay--editor")`
   rather than `e.currentTarget` because an aspect-ratio wrapper sits in between.
 
+## Shortcuts and undo
+
+`LayoutWorkbench` owns both, so every host gets them without wiring anything up.
+
+| | |
+|---|---|
+| `Delete` / `Backspace` | remove the selection, skipping locked elements |
+| `Ctrl/Cmd` + `C` / `X` / `V` | copy, cut, paste elements |
+| `Ctrl/Cmd` + `D` | duplicate |
+| `Ctrl/Cmd` + `A` | select every element |
+| `Ctrl/Cmd` + `Z`, `Shift`+`Ctrl/Cmd`+`Z`, `Ctrl/Cmd`+`Y` | undo, redo |
+
+- **Bound at the document, not the surface**, so they work when focus sits
+  nowhere in particular — which is where it sits after a click on the canvas
+  background. Ownership when several workbenches are mounted (a modal over a
+  page) is resolved by focus first and by the last-pointed surface otherwise.
+- **Everything is a no-op while a field or the inline text editor has focus.**
+  Backspace inside a text element belongs to the caret, not to the layer.
+- **Clipboard rides the native `copy`/`cut`/`paste` events**, not
+  `navigator.clipboard`: reading needs a permission prompt in Firefox and a
+  user gesture in Safari, whereas `event.clipboardData` is always readable.
+  The payload is JSON on `text/plain` — a custom MIME type would restrict it
+  back to the async API — so elements cross tabs and windows for free, and
+  anything that is not one of our payloads is left to the browser.
+- **Pasted ids are regenerated against the target document**, so a copy never
+  collides with the original. They number from 1 rather than 2, so pasting
+  back what was just cut restores the original id exactly.
+- **Undo is snapshot-based and lives in `useLayoutHistory`.** Only edits routed
+  through the workbench are recorded; when the doc is replaced from outside
+  (another slide selected, a template applied, a collaborator's change arriving)
+  the stacks are dropped, since undoing onto a snapshot of a different subject
+  would silently destroy that work.
+
 ## AI editing
 
 Natural-language editing is a **platform capability, not a plugin's job**, and is
