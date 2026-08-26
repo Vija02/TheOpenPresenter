@@ -7,6 +7,7 @@ import {
   useComputedPlaybackState,
 } from "../useComputedPlaybackState";
 import { useVideoUrl } from "./useVideoUrl";
+import { getWarmedStartLevel } from "../preload/videoPreload";
 import ReactPlayer from "react-player";
 import { Config } from "react-player/types";
 
@@ -24,6 +25,7 @@ export type VideoPlayerProps = {
   onEnded?: () => void;
   config?: Config;
   forceLoop?: boolean;
+  preload?: "none" | "metadata" | "auto";
 };
 
 export const VideoPlayer = ({
@@ -36,6 +38,7 @@ export const VideoPlayer = ({
   onEnded,
   config,
   forceLoop,
+  preload = "auto",
 }: VideoPlayerProps) => {
   const pluginApi = usePluginAPI();
 
@@ -68,6 +71,11 @@ export const VideoPlayer = ({
   const { videoUrl, isYouTube } = useVideoUrl(video);
 
   const [loaded, setLoaded] = useState(false);
+
+  const warmedStartLevel = useMemo(
+    () => getWarmedStartLevel(videoUrl),
+    [videoUrl],
+  );
 
   // A new source has its own load to wait out, so this starts over.
   useEffect(() => {
@@ -133,6 +141,7 @@ export const VideoPlayer = ({
         volume={volume}
         playing={isPlaying}
         loop={forceLoop}
+        preload={preload}
         onDurationChange={() => {
           const player = ref.current;
           if (!player) return;
@@ -168,6 +177,12 @@ export const VideoPlayer = ({
         src={videoUrl}
         config={{
           ...config,
+          hls: {
+            ...(warmedStartLevel === null
+              ? {}
+              : { startLevel: warmedStartLevel }),
+            ...config?.hls,
+          },
           youtube: {
             referrerpolicy: "strict-origin-when-cross-origin",
             cc_load_policy: 0,
