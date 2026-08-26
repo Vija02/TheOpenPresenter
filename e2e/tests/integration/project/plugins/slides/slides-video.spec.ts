@@ -22,8 +22,18 @@ import {
  * the state pre-built would let all of this pass with the activation deleted.
  */
 
-const ORG = "testorg";
-const PROJECT = "testproject";
+/**
+ * Worker-scoped fixture names.
+ *
+ * `clearTestOrganizations` deletes every org whose slug starts with `test`, so
+ * a shared `testorg` means two parallel workers delete each other's data
+ * mid-test. Tagging by worker keeps each one in its own org, and cleanup is
+ * scoped to that slug rather than the global wipe.
+ */
+const WORKER_TAG = `w${process.env.TEST_WORKER_INDEX ?? "0"}`;
+const ORG = `testorg-video-${WORKER_TAG}`;
+const PROJECT = "video-source-project";
+const USERNAME = `testuser_video_${WORKER_TAG}`;
 
 /** The <video> react-player mounts inside a fill. */
 const fillVideo = (scope: Page | Locator) =>
@@ -64,7 +74,7 @@ const seedDeck = async (
   // name that only exists after seeding. Log in to create the org, seed the
   // video, then write the scenes into the project that is already there.
   await e2eCommand.loginWithScenes({
-    username: "testuser",
+    username: USERNAME,
     orgs: [
       {
         name: "Test Org",
@@ -87,11 +97,15 @@ const seedDeck = async (
 };
 
 test.describe.serial("Slides video playback", () => {
+  test.setTimeout(60000);
+
   test.beforeEach(
     async ({ e2eCommand }) =>
       await Promise.all([
-        e2eCommand.serverCommand("clearTestUsers"),
-        e2eCommand.serverCommand("clearTestOrganizations"),
+        e2eCommand.serverCommand("clearOrganizationBySlug", { slug: ORG }),
+        e2eCommand.serverCommand("clearUserByUsername", {
+          username: USERNAME,
+        }),
       ]),
   );
 
@@ -99,8 +113,6 @@ test.describe.serial("Slides video playback", () => {
     page,
     e2eCommand,
   }) => {
-    page.setDefaultTimeout(60000);
-
     await seedDeck(e2eCommand, [
       { playback: "once", label: "Slide one" },
       { playback: "once", label: "Slide two" },
@@ -135,8 +147,6 @@ test.describe.serial("Slides video playback", () => {
     page,
     e2eCommand,
   }) => {
-    page.setDefaultTimeout(60000);
-
     await seedDeck(e2eCommand, [
       { playback: "once", label: "Slide one" },
       { playback: "once", label: "Slide two" },
@@ -183,8 +193,6 @@ test.describe.serial("Slides video playback", () => {
     page,
     e2eCommand,
   }) => {
-    page.setDefaultTimeout(60000);
-
     await seedDeck(e2eCommand, [{ playback: "once", label: "Only slide" }]);
 
     const renderer = await page.context().newPage();
@@ -216,8 +224,6 @@ test.describe.serial("Slides video playback", () => {
     page,
     e2eCommand,
   }) => {
-    page.setDefaultTimeout(60000);
-
     await seedDeck(e2eCommand, [
       { playback: "once", label: "Slide one" },
       { playback: "once", label: "Slide two" },
@@ -256,8 +262,6 @@ test.describe.serial("Slides video playback", () => {
     page,
     e2eCommand,
   }) => {
-    page.setDefaultTimeout(60000);
-
     await seedDeck(e2eCommand, [{ playback: "loop", label: "Ambient" }]);
 
     const renderer = await page.context().newPage();
@@ -284,8 +288,10 @@ test.describe.serial("Slides video volume", () => {
   test.beforeEach(
     async ({ e2eCommand }) =>
       await Promise.all([
-        e2eCommand.serverCommand("clearTestUsers"),
-        e2eCommand.serverCommand("clearTestOrganizations"),
+        e2eCommand.serverCommand("clearOrganizationBySlug", { slug: ORG }),
+        e2eCommand.serverCommand("clearUserByUsername", {
+          username: USERNAME,
+        }),
       ]),
   );
 
@@ -296,8 +302,6 @@ test.describe.serial("Slides video volume", () => {
     page,
     e2eCommand,
   }) => {
-    page.setDefaultTimeout(60000);
-
     await seedDeck(e2eCommand, [{ playback: "once", label: "Only slide" }]);
     await page.goto(`/app/${ORG}/${PROJECT}`);
 
@@ -317,8 +321,6 @@ test.describe.serial("Slides video volume", () => {
     page,
     e2eCommand,
   }) => {
-    page.setDefaultTimeout(60000);
-
     await seedDeck(e2eCommand, [{ playback: "loop", label: "Ambient" }]);
     await page.goto(`/app/${ORG}/${PROJECT}`);
 
@@ -335,8 +337,6 @@ test.describe.serial("Slides video volume", () => {
     page,
     e2eCommand,
   }) => {
-    page.setDefaultTimeout(60000);
-
     await seedDeck(e2eCommand, [{ playback: "once", label: "Only slide" }]);
 
     const renderer = await page.context().newPage();
@@ -380,8 +380,6 @@ test.describe.serial("Slides video volume", () => {
     page,
     e2eCommand,
   }) => {
-    page.setDefaultTimeout(60000);
-
     await seedDeck(e2eCommand, [
       { playback: "once", label: "Slide one" },
       { playback: "once", label: "Slide two" },
@@ -411,11 +409,15 @@ test.describe.serial("Slides video volume", () => {
 });
 
 test.describe.serial("Slides video in the editor", () => {
+  test.setTimeout(60000);
+
   test.beforeEach(
     async ({ e2eCommand }) =>
       await Promise.all([
-        e2eCommand.serverCommand("clearTestUsers"),
-        e2eCommand.serverCommand("clearTestOrganizations"),
+        e2eCommand.serverCommand("clearOrganizationBySlug", { slug: ORG }),
+        e2eCommand.serverCommand("clearUserByUsername", {
+          username: USERNAME,
+        }),
       ]),
   );
 
@@ -436,8 +438,6 @@ test.describe.serial("Slides video in the editor", () => {
     page,
     e2eCommand,
   }) => {
-    page.setDefaultTimeout(60000);
-
     await seedDeck(e2eCommand, [{ playback: "once", label: "Only slide" }]);
     const dialog = await openEditor(page);
 
@@ -456,8 +456,6 @@ test.describe.serial("Slides video in the editor", () => {
     page,
     e2eCommand,
   }) => {
-    page.setDefaultTimeout(60000);
-
     await seedDeck(e2eCommand, [{ playback: "once", label: "Only slide" }]);
     const dialog = await openEditor(page);
 
@@ -485,8 +483,6 @@ test.describe.serial("Slides video in the editor", () => {
     page,
     e2eCommand,
   }) => {
-    page.setDefaultTimeout(60000);
-
     await seedDeck(e2eCommand, [{ playback: "loop", label: "Ambient" }]);
     const dialog = await openEditor(page);
 
@@ -504,8 +500,6 @@ test.describe.serial("Slides video in the editor", () => {
     page,
     e2eCommand,
   }) => {
-    page.setDefaultTimeout(60000);
-
     await seedDeck(e2eCommand, [{ playback: "loop", label: "Ambient" }]);
     const dialog = await openEditor(page);
 
@@ -540,8 +534,6 @@ test.describe.serial("Slides video in the editor", () => {
     page,
     e2eCommand,
   }) => {
-    page.setDefaultTimeout(60000);
-
     await seedDeck(e2eCommand, [{ playback: "once", label: "Only slide" }]);
     const dialog = await openEditor(page);
 
