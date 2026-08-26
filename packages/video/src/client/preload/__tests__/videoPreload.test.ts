@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { UniversalVideo } from "../../../types";
 import {
   getVideoPreloadStatus,
+  getWarmedStartLevel,
   preloadVideo,
   resetVideoPreload,
 } from "../videoPreload";
@@ -68,16 +69,16 @@ describe("videoPreload", () => {
     vi.unstubAllGlobals();
   });
 
-  it("walks the manifest tree and warms the lowest bitrate variant", async () => {
+  it("warms only the variant playlist the player will start on", async () => {
     preloadVideo(video("https://cdn.test/v/master.m3u8"), "eager");
     await flush();
 
-    // Both variant playlists get read so bitrates can be compared
-    expect(fetched).toContain("https://cdn.test/v/1080/index.m3u8");
     expect(fetched).toContain("https://cdn.test/v/360/index.m3u8");
+    // The variants we will not start on are never fetched
+    expect(fetched).not.toContain("https://cdn.test/v/1080/index.m3u8");
 
-    // Segments come from the low variant only, capped at three, relative to
-    // that variant's own playlist url
+    // Segments come from that variant only, capped at three, resolved relative
+    // to its own playlist url
     expect(fetched.filter((url) => url.endsWith(".ts"))).toEqual([
       "https://cdn.test/v/360/0.ts",
       "https://cdn.test/v/360/1.ts",
@@ -94,6 +95,99 @@ describe("videoPreload", () => {
       "https://cdn.test/direct/1.ts",
       "https://cdn.test/direct/2.ts",
     ]);
+  });
+
+  it("publishes the warmed level so the player can start there", async () => {
+    const url = "https://cdn.test/v/master.m3u8";
+
+    // Nothing to report before the warm completes
+    expect(getWarmedStartLevel(url)).toBeNull();
+
+    preloadVideo(video(url), "eager");
+    await flush();
+
+    // Sorted ladder is 360 then 1080, and a cold estimate affords only 360
+    expect(getWarmedStartLevel(url)).toBe(0);
+  });
+
+  it("publishes no level while a warm is still in flight", async () => {
+    let release: () => void = () => {};
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string) => {
+        await gate;
+        return {
+          ok: true,
+          status: 200,
+          text: async () => (url.endsWith(".m3u8") ? MEDIA_PLAYLIST : ""),
+          arrayBuffer: async () => new ArrayBuffer(4),
+        };
+      }),
+    );
+
+    const url = "https://cdn.test/slow/master.m3u8";
+    preloadVideo(video(url), "eager");
+    await flush();
+
+    // Warming, so there is no settled level to hand the player yet
+    expect(getVideoPreloadStatus(url)).toBe("warming");
+    expect(getWarmedStartLevel(url)).toBeNull();
+
+    release();
+    await vi.waitFor(() => expect(getVideoPreloadStatus(url)).toBe("ready"));
+  });
+
+  it("reports no level for a single media playlist, which has none to pin", async () => {
+    const url = "https://cdn.test/direct/index.m3u8";
+
+    preloadVideo(video(url), "eager");
+    await flush();
+
+    expect(getVideoPreloadStatus(url)).toBe("ready");
+    expect(getWarmedStartLevel(url)).toBeNull();
+  });
+
+  it("warms but does not publish a level for an ambiguous ladder", async () => {
+    // Two identical variants: hls.js dedupes them, so our indices would shift
+    const ambiguous = `#EXTM3U
+#EXT-X-STREAM-INF:BANDWIDTH=900000,RESOLUTION=640x360
+a/index.m3u8
+#EXT-X-STREAM-INF:BANDWIDTH=900000,RESOLUTION=640x360
+b/index.m3u8
+`;
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string) => {
+        fetched.push(url);
+        const body = url.endsWith("ambiguous.m3u8")
+          ? ambiguous
+          : url.endsWith(".m3u8")
+            ? MEDIA_PLAYLIST
+            : "segment-bytes";
+
+        return {
+          ok: true,
+          status: 200,
+          text: async () => body,
+          arrayBuffer: async () => new ArrayBuffer(body.length),
+        };
+      }),
+    );
+
+    const url = "https://cdn.test/amb/ambiguous.m3u8";
+    preloadVideo(video(url), "eager");
+    await flush();
+
+    // The warm still happened
+    expect(getVideoPreloadStatus(url)).toBe("ready");
+    expect(fetched.filter((x) => x.endsWith(".ts")).length).toBe(3);
+    // But we refuse to pin the player to an index we cannot trust
+    expect(getWarmedStartLevel(url)).toBeNull();
   });
 
   it("reaches ready and dedupes repeat requests for the same url", async () => {
