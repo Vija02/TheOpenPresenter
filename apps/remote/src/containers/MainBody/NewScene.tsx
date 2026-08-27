@@ -1,4 +1,5 @@
 import { Scene, SceneCategories, sceneCategories } from "@repo/base-plugin";
+import { captureEvent } from "@repo/observability/initAnalytics";
 import { usePluginData, usePluginMetaData } from "@repo/shared";
 import { Badge, Option } from "@repo/ui";
 import React from "react";
@@ -101,6 +102,12 @@ export const NewScene = () => {
         },
       },
     } as Scene;
+
+    captureEvent("scene_created", {
+      plugin_name: pluginName,
+      is_client_plugin: initialDataByName.has(pluginName),
+      scene_count: Object.keys(mainState.data).length,
+    });
 
     navigate(`/${sceneId}`);
   };

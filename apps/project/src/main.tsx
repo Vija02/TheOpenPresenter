@@ -1,6 +1,7 @@
 import "@fontsource-variable/inter";
 import "@fontsource-variable/source-sans-3";
 import "@repo/media-picker/client/css";
+import { captureException } from "@repo/observability/initAnalytics";
 import { ErrorAlert } from "@repo/ui";
 import "@repo/ui/css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -32,7 +33,7 @@ NProgress.configure({
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <ErrorBoundary FallbackComponent={ErrorAlert}>
+    <ErrorBoundary FallbackComponent={ErrorAlert} onError={captureException}>
       <Router>
         <URQLClientProvider>
           <QueryClientProvider client={queryClient}>

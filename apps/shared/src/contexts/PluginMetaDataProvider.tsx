@@ -6,8 +6,12 @@ import {
   useRendererBasePluginQuery,
 } from "@repo/graphql";
 import { preloader } from "@repo/lib";
+import {
+  identifyUser,
+  resetAnalytics,
+} from "@repo/observability/initAnalytics";
 import { ErrorAlert, LoadingFull } from "@repo/ui";
-import React, { createContext, useContext, useMemo } from "react";
+import React, { createContext, useContext, useEffect, useMemo } from "react";
 
 type Project = NonNullable<
   | NonNullable<
@@ -129,6 +133,23 @@ export function PluginMetaDataProvider({
     pluginMetaData?.organizationBySlug?.projects.nodes,
     pluginMetaData?.publicOrGuestProject?.nodes,
   ]);
+
+  const currentUserId = currentUser?.id;
+
+  useEffect(() => {
+    if (!currentUserId) {
+      if (pluginMetaData && !loading) {
+        resetAnalytics();
+      }
+      return;
+    }
+
+    identifyUser({
+      userId: currentUserId,
+      organizationId,
+      organizationSlug: orgSlug,
+    });
+  }, [currentUserId, organizationId, orgSlug, pluginMetaData, loading]);
 
   // Register client plugin files. Not in useEffect due to loading behaviour
   const clientPluginViews: any[] =

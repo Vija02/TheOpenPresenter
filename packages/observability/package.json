@@ -17,11 +17,15 @@
       "types": "./dist/initBrowser.d.mts",
       "default": "./dist/initBrowser.mjs"
     },
+    "./initAnalytics": {
+      "types": "./dist/initAnalytics.d.mts",
+      "default": "./dist/initAnalytics.mjs"
+    },
     "./initTracing": "./initTracing.js"
   },
   "scripts": {
-    "build": "tsup src/index.ts src/initBrowser.ts --format esm,cjs --experimental-dts",
-    "dev": "tsup src/index.ts src/initBrowser.ts --format esm,cjs --experimental-dts --watch"
+    "build": "tsup src/index.ts src/initBrowser.ts src/initAnalytics.ts --format esm,cjs --experimental-dts",
+    "dev": "tsup src/index.ts src/initBrowser.ts src/initAnalytics.ts --format esm,cjs --experimental-dts --watch"
   },
   "dependencies": {
     "@opentelemetry/api": "^1.9.0",
@@ -43,6 +47,7 @@
     "@repo/lib": "*",
     "pino": "^9.6.0",
     "pino-pretty": "^13.0.0",
+    "posthog-js": "^1.421.0",
     "tslib": "^2.8.1"
   },
   "devDependencies": {

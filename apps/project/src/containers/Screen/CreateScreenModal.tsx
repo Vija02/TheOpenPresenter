@@ -1,6 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCreateScreenMutation } from "@repo/graphql";
 import { extractError, globalState } from "@repo/lib";
+import { captureEvent } from "@repo/observability/initAnalytics";
 import {
   Alert,
   Button,
@@ -62,6 +63,9 @@ const CreateScreenModal = ({ organizationId }: CreateScreenModalPropTypes) => {
           name,
           slug,
         });
+        captureEvent("screen_created", {
+          has_custom_slug: Boolean(rawSlug),
+        });
         publish();
         toast.success("Screen created");
         onToggle?.();
@@ -70,7 +74,13 @@ const CreateScreenModal = ({ organizationId }: CreateScreenModalPropTypes) => {
         setError(e);
       }
     },
-    [createScreen, onToggle, organizationId, publish, resetData],
+    [
+      createScreen,
+      onToggle,
+      organizationId,
+      publish,
+      resetData,
+    ],
   );
 
   return (

@@ -84,6 +84,12 @@ function transformer(html: string, req: Request) {
       CSRF_TOKEN: req.csrfToken(),
       MEDIA_UPLOAD_CHUNK_SIZE: process.env.MEDIA_UPLOAD_CHUNK_SIZE,
       ENABLE_OTEL: !!process.env.OTLP_HOST ? "1" : undefined,
+      ANALYTICS_KEY: process.env.ANALYTICS_KEY,
+      ANALYTICS_HOST: process.env.ANALYTICS_HOST,
+      ANALYTICS_UI_HOST: process.env.ANALYTICS_UI_HOST,
+      ANALYTICS_REPLAY: process.env.ANALYTICS_REPLAY === "1" ? "1" : undefined,
+      ANALYTICS_RENDERER_REPLAY:
+        process.env.ANALYTICS_RENDERER_REPLAY === "1" ? "1" : undefined,
       AI_ENABLED: isAIConfigured() ? "1" : undefined,
       DEPLOYMENT_ENV: process.env.DEPLOYMENT_ENV,
       STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY,

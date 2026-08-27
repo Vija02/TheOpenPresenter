@@ -8,6 +8,7 @@ import {
 } from "@/components/Turnstile";
 import { WrappedPasswordStrength } from "@/components/WrappedPasswordStrength";
 import { useResetURQLClient } from "@/urql";
+import { captureEvent } from "@repo/observability/initAnalytics";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRegisterMutation, useSharedQuery } from "@repo/graphql";
 import {
@@ -98,6 +99,7 @@ const Register = () => {
           name: values.name,
           turnstileToken,
         });
+        captureEvent("user_registered");
         // Success: refetch
         resetClient();
         navigate(redirectTo);
