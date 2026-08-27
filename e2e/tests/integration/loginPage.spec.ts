@@ -14,7 +14,9 @@ test.describe("LoginPage", () => {
   test("shows login form on /login", async ({ page }) => {
     await page.goto("/login");
 
-    await expect(page.getByRole("heading", { name: "Login" })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Sign in to TheOpenPresenter" }),
+    ).toBeVisible();
     await expect(page.getByTestId("loginpage-input-username")).toBeVisible();
     await expect(page.getByTestId("loginpage-input-password")).toBeVisible();
   });
@@ -24,7 +26,9 @@ test.describe("LoginPage", () => {
   }) => {
     await page.goto("/o/my-unauthenticated-org/latest/render?kiosk");
 
-    await expect(page.getByRole("heading", { name: "Login" })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Sign in to TheOpenPresenter" }),
+    ).toBeVisible();
     expect(page.url()).toBe(
       "http://localhost:5678/login?next=%2Fo%2Fmy-unauthenticated-org%2Flatest%2Frender&kiosk",
     );

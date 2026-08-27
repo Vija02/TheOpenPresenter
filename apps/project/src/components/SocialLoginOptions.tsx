@@ -1,9 +1,31 @@
-import { OverlayToggle } from "@repo/ui";
+import { Button, OverlayToggle } from "@repo/ui";
 import { useEffect, useRef } from "react";
 import { BsGithub, BsQrCodeScan } from "react-icons/bs";
 import { FcGoogle } from "react-icons/fc";
+import { IconType } from "react-icons/lib";
 
 import QRLoginModal from "./QRLoginModal";
+
+type SocialProvider = {
+  service: string;
+  label: string;
+  icon: IconType;
+  iconClassName?: string;
+};
+
+export const socialProviders: SocialProvider[] = [
+  {
+    service: "google",
+    label: "Google",
+    icon: FcGoogle,
+  },
+  {
+    service: "github",
+    label: "GitHub",
+    icon: BsGithub,
+    iconClassName: "text-primary",
+  },
+];
 
 export interface SocialLoginOptionsProps {
   next: string;
@@ -13,7 +35,7 @@ export interface SocialLoginOptionsProps {
 }
 
 function defaultButtonTextFromService(service: string) {
-  return `Sign in with ${service}`;
+  return service;
 }
 
 export function SocialLoginOptions({
@@ -31,48 +53,52 @@ export function SocialLoginOptions({
     }
   }, [autoOpenQRLogin]);
 
+  const hrefFor = (service: string) =>
+    `/auth/${service}?next=${encodeURIComponent(next)}${persistSessionParam}`;
+
   return (
-    <div className="stack-row justify-center gap-3 w-full">
-      <a
-        href={`/auth/google?next=${encodeURIComponent(next)}${persistSessionParam}`}
-        className="flex-1 hover:bg-gray-100 transition-colors"
-      >
-        <div className="border border-gray-600 rounded-sm p-2">
-          <div className="center">
-            <FcGoogle className="text-2xl" />
-          </div>
-        </div>
-      </a>
-      <a
-        href={`/auth/github?next=${encodeURIComponent(next)}${persistSessionParam}`}
-        className="flex-1 hover:bg-gray-100 transition-colors"
-      >
-        <div className="border border-gray-600 rounded-sm p-2">
-          <div className="center">
-            <BsGithub className="text-2xl text-black" />
-          </div>
-        </div>
-      </a>
+    <div className="stack-col gap-2 w-full">
+      <div className="stack-row gap-2 w-full">
+        {socialProviders.map((provider) => (
+          <Button
+            key={provider.service}
+            asChild
+            variant="outline"
+            size="lg"
+            className="flex-1 hover:no-underline"
+            data-testid={`loginpage-social-${provider.service}`}
+          >
+            <a href={hrefFor(provider.service)}>
+              <provider.icon
+                className={`size-5 ${provider.iconClassName ?? ""}`}
+              />
+              {buttonTextFromService(provider.label)}
+            </a>
+          </Button>
+        ))}
+      </div>
+
       <OverlayToggle
         toggler={({ onToggle }) => {
           qrToggleRef.current = onToggle;
           return (
-            <div
-              className="cursor-pointer flex-1 hover:bg-gray-100 transition-colors"
+            <Button
+              variant="outline"
+              size="lg"
+              className="w-full"
               onClick={onToggle}
               data-testid="loginpage-qr-button"
             >
-              <div className="border border-gray-600 rounded-sm p-2">
-                <div className="center">
-                  <BsQrCodeScan className="text-2xl text-black" />
-                </div>
-              </div>
-            </div>
+              <BsQrCodeScan className="size-5 text-primary" />
+              Login with phone
+            </Button>
           );
         }}
       >
         <QRLoginModal next={next} persistSession={persistSession} />
       </OverlayToggle>
+
+      <p className="lineText w-full text-tertiary text-xs">OR</p>
     </div>
   );
 }

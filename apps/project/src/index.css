@@ -9,7 +9,7 @@
 
 .lineText::before,
 .lineText::after {
-  background-color: #4a5568;
+  background-color: var(--stroke);
   content: "";
   display: inline-block;
   height: 1px;
