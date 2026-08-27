@@ -2,10 +2,10 @@ import { Redirect } from "@/components/Redirect";
 import { SharedLayout } from "@/components/SharedLayout";
 import { SocialLoginOptions } from "@/components/SocialLoginOptions";
 import { useResetURQLClient } from "@/urql";
-import { captureEvent } from "@repo/observability/initAnalytics";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useLoginMutation, useSharedQuery } from "@repo/graphql";
 import { extractError, getCodeFromError } from "@repo/lib";
+import { captureEvent } from "@repo/observability/initAnalytics";
 import {
   Alert,
   Button,
@@ -43,9 +43,11 @@ export default function Home() {
           // Handle it here instead of shared layout so we can redirect properly
           <Redirect href={next} />
         ) : (
-          <div className="flex justify-center mt-16">
-            <div className="max-w-md w-full">
-              <h1 className="text-2xl font-bold mb-4">Login</h1>
+          <div className="flex justify-center px-4 py-12">
+            <div className="max-w-sm w-full">
+              <h1 className="text-2xl font-bold text-center mb-6">
+                Sign in to TheOpenPresenter
+              </h1>
               <LoginForm
                 error={error}
                 setError={setError}
@@ -61,9 +63,9 @@ export default function Home() {
 }
 
 const formSchema = z.object({
-  username: z.string().min(1, "Please enter your e-mail or username"),
+  username: z.string().min(1, "Please enter your e-mail"),
   password: z.string().min(1, "Please enter your password"),
-  rememberMe: z.boolean().default(false),
+  rememberMe: z.boolean().default(true),
 });
 type FormInputs = z.infer<typeof formSchema>;
 
@@ -90,7 +92,7 @@ function LoginForm({
     defaultValues: {
       username: "",
       password: "",
-      rememberMe: false,
+      rememberMe: true,
     },
   });
 
@@ -120,7 +122,7 @@ function LoginForm({
         if (code === "CREDS") {
           form.setError("password", {
             type: "manual",
-            message: "Incorrect username or password",
+            message: "Incorrect e-mail or password",
           });
         } else {
           setError(e);
@@ -134,11 +136,17 @@ function LoginForm({
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <div className="stack-col items-start gap-4">
+          <SocialLoginOptions
+            next={onSuccessRedirectTo}
+            persistSession={rememberMe}
+            autoOpenQRLogin={autoOpenQRLogin}
+          />
+
           <InputControl
             control={form.control}
             name="username"
-            label="E-mail or Username"
-            placeholder="Enter your e-mail or username"
+            label="E-mail"
+            placeholder="Enter your e-mail"
             autoComplete="email username"
             data-testid="loginpage-input-username"
             autoFocus
@@ -147,6 +155,13 @@ function LoginForm({
             control={form.control}
             name="password"
             label="Password"
+            labelSuffix={
+              <Link asChild>
+                <WouterLink href="/forgot" className="text-sm">
+                  Forgot password?
+                </WouterLink>
+              </Link>
+            }
             type="password"
             placeholder="Password"
             autoComplete="current-password"
@@ -156,23 +171,9 @@ function LoginForm({
           <CheckboxControl
             control={form.control}
             name="rememberMe"
-            label="Remember me"
+            label="Keep me signed in"
             data-testid="loginpage-input-rememberme"
           />
-
-          <div className="stack-col items-start gap-2">
-            <Link asChild>
-              <WouterLink href="/forgot" className="text-sm">
-                Forgotten your password?
-              </WouterLink>
-            </Link>
-
-            <Link asChild>
-              <WouterLink href="/register" className="text-sm">
-                Don't have an account yet? Sign up
-              </WouterLink>
-            </Link>
-          </div>
 
           {error ? (
             <Alert variant="destructive" title="Login failed">
@@ -189,13 +190,13 @@ function LoginForm({
             Sign in
           </Button>
 
-          <p className="lineText w-full text-gray-700">Or continue with</p>
-
-          <SocialLoginOptions
-            next={onSuccessRedirectTo}
-            persistSession={rememberMe}
-            autoOpenQRLogin={autoOpenQRLogin}
-          />
+          <div className="stack-col items-center gap-1 w-full pt-2">
+            <Link asChild>
+              <WouterLink href="/register" className="text-sm">
+                Don't have an account yet? Sign up
+              </WouterLink>
+            </Link>
+          </div>
         </div>
       </form>
     </Form>

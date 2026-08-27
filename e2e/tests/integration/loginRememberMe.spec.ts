@@ -22,11 +22,11 @@ test.describe("Login remember-me cookie expiry", () => {
     });
   });
 
-  test("Remember me checked → ~400 day cookie", async ({ page }) => {
+  test("Remember me (on by default) → ~400 day cookie", async ({ page }) => {
     await page.goto("/login");
     await page.getByTestId("loginpage-input-username").fill(USERNAME);
     await page.getByTestId("loginpage-input-password").fill(PASSWORD);
-    await page.getByTestId("loginpage-input-rememberme").click();
+    await expect(page.getByTestId("loginpage-input-rememberme")).toBeChecked();
 
     const loginResponse = page.waitForResponse(
       (resp) =>
@@ -51,6 +51,10 @@ test.describe("Login remember-me cookie expiry", () => {
     await page.goto("/login");
     await page.getByTestId("loginpage-input-username").fill(USERNAME);
     await page.getByTestId("loginpage-input-password").fill(PASSWORD);
+    await page.getByTestId("loginpage-input-rememberme").click();
+    await expect(
+      page.getByTestId("loginpage-input-rememberme"),
+    ).not.toBeChecked();
 
     const loginResponse = page.waitForResponse(
       (resp) =>
@@ -118,7 +122,7 @@ async function runQrLoginUiFlow({
   rememberMe: boolean;
 }) {
   await page.goto("/login");
-  if (rememberMe) {
+  if (!rememberMe) {
     await page.getByTestId("loginpage-input-rememberme").click();
   }
   await page.getByTestId("loginpage-qr-button").click();

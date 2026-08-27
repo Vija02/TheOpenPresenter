@@ -8,7 +8,6 @@ import {
 } from "@/components/Turnstile";
 import { WrappedPasswordStrength } from "@/components/WrappedPasswordStrength";
 import { useResetURQLClient } from "@/urql";
-import { captureEvent } from "@repo/observability/initAnalytics";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRegisterMutation, useSharedQuery } from "@repo/graphql";
 import {
@@ -16,6 +15,7 @@ import {
   getCodeFromError,
   getExceptionFromError,
 } from "@repo/lib";
+import { captureEvent } from "@repo/observability/initAnalytics";
 import { Alert, Button, Form, InputControl, Link } from "@repo/ui";
 import { useCallback, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -145,12 +145,17 @@ const Register = () => {
           // Handle it here instead of shared layout so we can redirect properly
           <Redirect href={redirectTo} />
         ) : (
-          <div className="flex justify-center mt-16">
-            <div className="max-w-md w-full">
+          <div className="flex justify-center px-4 py-12">
+            <div className="max-w-sm w-full">
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)}>
                   <div className="stack-col items-start gap-4">
-                    <h1 className="text-2xl font-bold">Register</h1>
+                    <h1 className="text-2xl font-bold text-center w-full">
+                      Create your account
+                    </h1>
+
+                    <SocialLoginOptions next={redirectTo} />
+
                     <InputControl
                       control={form.control}
                       name="name"
@@ -211,12 +216,6 @@ const Register = () => {
                       data-testid="registerpage-input-password2"
                     />
 
-                    <Link asChild>
-                      <WouterLink href="/login" className="text-sm">
-                        Already have an account? Sign in
-                      </WouterLink>
-                    </Link>
-
                     <Turnstile
                       ref={turnstileRef}
                       onToken={(token) => {
@@ -243,11 +242,13 @@ const Register = () => {
                       Register
                     </Button>
 
-                    <p className="lineText w-full text-gray-700">
-                      Or continue with
-                    </p>
-
-                    <SocialLoginOptions next={redirectTo} />
+                    <div className="stack-col items-center w-full pt-2">
+                      <Link asChild>
+                        <WouterLink href="/login" className="text-sm">
+                          Already have an account? Sign in
+                        </WouterLink>
+                      </Link>
+                    </div>
                   </div>
                 </form>
               </Form>
