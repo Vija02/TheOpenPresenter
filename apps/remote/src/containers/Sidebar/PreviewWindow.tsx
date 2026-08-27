@@ -1,6 +1,7 @@
+import { captureEvent } from "@repo/observability/initAnalytics";
 import { usePluginMetaData } from "@repo/shared";
 import { useOverlayToggle } from "@repo/ui";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { MdClose, MdFullscreen, MdVolumeOff, MdVolumeUp } from "react-icons/md";
 import { useSearch } from "wouter";
@@ -40,6 +41,12 @@ const PreviewWindow = () => {
   // Offset between the pointer and the window's top-left corner.
   const grabOffset = useRef<{ x: number; y: number } | null>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      captureEvent("preview_opened");
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 

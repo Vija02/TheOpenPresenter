@@ -15,6 +15,7 @@
   "dependencies": {
     "@hocuspocus/provider": "4.4.0",
     "@repo/graphql": "*",
+    "@repo/observability": "*",
     "@tanstack/react-query": "^5.62.3",
     "@types/ua-parser-js": "^0.7.39",
     "autoprefixer": "^10.4.21",

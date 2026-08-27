@@ -1,5 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUpdateProjectMutation } from "@repo/graphql";
+import { captureEvent } from "@repo/observability/initAnalytics";
 import { usePluginMetaData } from "@repo/shared";
 import {
   Button,
@@ -40,6 +41,10 @@ const ProjectSettingsModal = () => {
       link.download = `${project?.name?.trim() || "Untitled"}.top`;
       link.click();
       window.URL.revokeObjectURL(link.href);
+
+      captureEvent("project_exported", {
+        byte_size: x.data?.size ?? null,
+      });
 
       toast.success("Project exported!");
     });

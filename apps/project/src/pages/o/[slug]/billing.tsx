@@ -8,6 +8,7 @@ import {
   useOrganizationBillingPageQuery,
 } from "@repo/graphql";
 import { appData } from "@repo/lib";
+import { captureEvent } from "@repo/observability/initAnalytics";
 import {
   Accordion,
   AccordionContent,
@@ -297,12 +298,15 @@ function PlanOverviewCard({
         organizationId: org.id,
       });
       setCancelAt(data.cancelAt ? new Date(data.cancelAt * 1000) : periodEnd);
+      captureEvent("subscription_canceled", {
+        billing_interval: billingInterval,
+      });
       setCancelPhase("success");
     } catch (e: any) {
       setError(apiError(e, "Failed to cancel subscription"));
       setCancelPhase("confirming");
     }
-  }, [org.id, periodEnd]);
+  }, [org.id, periodEnd, billingInterval]);
 
   const openPortal = useCallback(async () => {
     setPortalLoading(true);
@@ -620,12 +624,16 @@ function UpgradeSection({
         quantity: 1,
       });
       setClientSecret(data.clientSecret);
+      captureEvent("checkout_started", {
+        plan_type: "cloud",
+        billing_interval: interval,
+      });
     } catch (e: any) {
       setError(apiError(e, "Failed to start checkout"));
     } finally {
       setLoading(false);
     }
-  }, [org.id, slug, isYearly]);
+  }, [org.id, slug, isYearly, interval]);
 
   const stripeOptions = useMemo(
     () => (clientSecret ? { clientSecret } : null),
@@ -734,6 +742,9 @@ function LifetimeSection({ org, slug }: { org: OrgData; slug: string }) {
         quantity: 1,
       });
       setClientSecret(data.clientSecret);
+      captureEvent("checkout_started", {
+        plan_type: "lifetime",
+      });
     } catch (e: any) {
       setError(apiError(e, "Failed to start checkout"));
     } finally {

@@ -3,6 +3,10 @@ import {
   SharedLayout_UserFragment,
 } from "@repo/graphql";
 import { logger } from "@repo/observability";
+import {
+  identifyUser,
+  resetAnalytics,
+} from "@repo/observability/initAnalytics";
 import { Button, ErrorAlert, Link } from "@repo/ui";
 import * as React from "react";
 import { CombinedError, UseQueryResponse } from "urql";
@@ -113,6 +117,31 @@ export function SharedLayout({
       logger.info({ err: error }, "Error on page query");
     }
   }, [error]);
+
+  const currentUserId = data?.currentUser?.id;
+  const firstOrganization =
+    data?.currentUser?.organizationMemberships?.nodes?.[0]?.organization;
+
+  React.useEffect(() => {
+    if (!currentUserId) {
+      if (data && !fetching) {
+        resetAnalytics();
+      }
+      return;
+    }
+
+    identifyUser({
+      userId: currentUserId,
+      organizationId: firstOrganization?.id,
+      organizationSlug: firstOrganization?.slug,
+    });
+  }, [
+    currentUserId,
+    firstOrganization?.id,
+    firstOrganization?.slug,
+    data,
+    fetching,
+  ]);
 
   return (
     <>

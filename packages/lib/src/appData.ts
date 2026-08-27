@@ -11,6 +11,16 @@ const getMediaUploadChunkSize = () => {
   return Infinity;
 };
 const getOTELEnabled = () => (window as any)?.__APP_DATA__?.ENABLE_OTEL === "1";
+const getAnalyticsKey = (): string | undefined =>
+  (window as any)?.__APP_DATA__?.ANALYTICS_KEY || undefined;
+const getAnalyticsHost = (): string =>
+  (window as any)?.__APP_DATA__?.ANALYTICS_HOST || "/ingest";
+const getAnalyticsUiHost = (): string | undefined =>
+  (window as any)?.__APP_DATA__?.ANALYTICS_UI_HOST || undefined;
+const getAnalyticsReplayEnabled = () =>
+  (window as any)?.__APP_DATA__?.ANALYTICS_REPLAY === "1";
+const getAnalyticsRendererReplayEnabled = () =>
+  (window as any)?.__APP_DATA__?.ANALYTICS_RENDERER_REPLAY === "1";
 const getAiEnabled = () => (window as any)?.__APP_DATA__?.AI_ENABLED === "1";
 const getDeploymentEnv = (): string | undefined =>
   (window as any)?.__APP_DATA__?.DEPLOYMENT_ENV;
@@ -73,6 +83,11 @@ export const appData = {
   getCSRFToken,
   getMediaUploadChunkSize,
   getOTELEnabled,
+  getAnalyticsKey,
+  getAnalyticsHost,
+  getAnalyticsUiHost,
+  getAnalyticsReplayEnabled,
+  getAnalyticsRendererReplayEnabled,
   getAiEnabled,
   getDeploymentEnv,
   getCustomEnv,

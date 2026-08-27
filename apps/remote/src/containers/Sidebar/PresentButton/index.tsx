@@ -2,6 +2,7 @@ import {
   useOrganizationScreensIndexPageQuery,
   useSetExistingProjectToScreenMutation,
 } from "@repo/graphql";
+import { captureEvent } from "@repo/observability/initAnalytics";
 import { usePluginMetaData } from "@repo/shared";
 import {
   Button,
@@ -109,6 +110,7 @@ const WebPresentButton = ({
     document.documentElement.requestFullscreen().catch(() => {});
     setShowPhoneModal(false);
     setIsPresentingHere(true);
+    captureEvent("presented", { present_type: "this_screen" });
   };
 
   const handleStopPresenting = () => {
@@ -143,6 +145,7 @@ const WebPresentButton = ({
   const handlePresent = async (screenId: string, screenName: string) => {
     try {
       await setExistingProjectToScreen({ screenId, projectId });
+      captureEvent("presented", { present_type: "screen" });
       toast.success(`Now presenting to ${screenName}`);
       refresh();
     } catch {
@@ -193,7 +196,10 @@ const WebPresentButton = ({
           href={renderHref}
           isExternal
           variant="unstyled"
-          onClick={() => setOpen(false)}
+          onClick={() => {
+            setOpen(false);
+            captureEvent("presented", { present_type: "new_tab" });
+          }}
           className="flex w-full items-start gap-2 px-3 py-2 text-sm text-left rounded transition-colors cursor-pointer hover:bg-surface-primary-hover focus:bg-surface-primary-hover focus:outline-none"
         >
           <span className="shrink-0 mt-0.5">

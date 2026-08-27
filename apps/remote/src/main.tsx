@@ -2,6 +2,7 @@ import "@repo/base-plugin/client/css";
 import "@repo/layout/editor/css";
 import { preloader } from "@repo/lib";
 import "@repo/media-picker/client/css";
+import { captureException } from "@repo/observability/initAnalytics";
 import { ErrorAlert } from "@repo/ui";
 import "@repo/ui/css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -32,7 +33,7 @@ preloader.initPreloader();
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <ErrorBoundary FallbackComponent={ErrorAlert}>
+    <ErrorBoundary FallbackComponent={ErrorAlert} onError={captureException}>
       <Router base="/app">
         <trpc.Provider client={trpcClient} queryClient={queryClient}>
           <Provider value={urqlClient}>

@@ -1,6 +1,7 @@
 import { Redirect } from "@/components/Redirect";
 import { SharedLayoutLoggedIn } from "@/components/SharedLayoutLoggedIn";
 import { organizationTypeOptions } from "@/lib/organizationType";
+import { captureEvent } from "@repo/observability/initAnalytics";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   CreatedOrganizationFragment,
@@ -66,8 +67,14 @@ const CreateOrganizationPage = () => {
           slug,
           organizationType,
         });
+        const organization = data?.createOrganization?.organization;
+        if (organization) {
+          captureEvent("organization_created", {
+            organization_type: organizationType,
+          });
+        }
         setError(null);
-        setOrganization(data?.createOrganization?.organization || null);
+        setOrganization(organization || null);
       } catch (e: any) {
         setError(e);
       }

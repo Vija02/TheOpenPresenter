@@ -1,3 +1,4 @@
+import { captureEvent } from "@repo/observability/initAnalytics";
 import { core } from "@tauri-apps/api";
 
 export const onPresentClick = async (
@@ -16,5 +17,10 @@ export const onPresentClick = async (
   await core.invoke("open_renderer", {
     url: window.location.origin + fullPath,
     mindex: monitorIndex,
+  });
+
+  captureEvent("presented", {
+    present_type: "desktop_monitor",
+    monitor_index: monitorIndex,
   });
 };

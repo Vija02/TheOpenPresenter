@@ -1,6 +1,6 @@
 import installAi from "./installAi";
+import installAnalyticsProxy from "./installAnalyticsProxy";
 import installAutoLogin from "./installAutoLogin";
-import installStripe from "./installStripe";
 import installCSRFProtection from "./installCSRFProtection";
 import installClientPluginStatic from "./installClientPluginStatic";
 import installCloudConnection from "./installCloudConnection";
@@ -16,6 +16,7 @@ import installHelmet from "./installHelmet";
 import installHocuspocus from "./installHocuspocus";
 import installInitDemo from "./installInitDemo";
 import installLogging from "./installLogging";
+import installMediaProxyHandler from "./installMediaProxyHandler";
 import installObservability from "./installObservability";
 import installPassport from "./installPassport";
 import installPluginRoute from "./installPluginRoute";
@@ -30,12 +31,13 @@ import installSameOrigin from "./installSameOrigin";
 import installScreenControlSweeper from "./installScreenControlSweeper";
 import installSession from "./installSession";
 import installSharedStatic from "./installSharedStatic";
-import installMediaProxyHandler from "./installMediaProxyHandler";
+import installStripe from "./installStripe";
 import installTrpc from "./installTrpc";
 import installWorkerUtils from "./installWorkerUtils";
 
 export {
   installAi,
+  installAnalyticsProxy,
   installAutoLogin,
   installCSRFProtection,
   installClientPluginStatic,

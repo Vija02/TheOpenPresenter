@@ -13,6 +13,7 @@ import {
 } from "@repo/graphql";
 import { globalState } from "@repo/lib";
 import { logger } from "@repo/observability";
+import { captureEvent } from "@repo/observability/initAnalytics";
 import {
   Button,
   Dialog,
@@ -113,6 +114,13 @@ const CreateProjectModal = ({
             logger.error("CreateProjectModal onCreated failed:", e);
           }
         }
+
+        captureEvent("project_created", {
+          has_name: data.name !== "",
+          has_category: data.categoryId !== UNCATEGORIZED,
+          tag_count: selectedTagIds.length,
+          has_target_date: Boolean(data.targetDate),
+        });
 
         const projectSlug = project.slug;
         const projectOrgSlug = project.organization?.slug ?? slug;

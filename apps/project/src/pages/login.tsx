@@ -2,6 +2,7 @@ import { Redirect } from "@/components/Redirect";
 import { SharedLayout } from "@/components/SharedLayout";
 import { SocialLoginOptions } from "@/components/SocialLoginOptions";
 import { useResetURQLClient } from "@/urql";
+import { captureEvent } from "@repo/observability/initAnalytics";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useLoginMutation, useSharedQuery } from "@repo/graphql";
 import { extractError, getCodeFromError } from "@repo/lib";
@@ -110,6 +111,7 @@ function LoginForm({
             },
           },
         );
+        captureEvent("user_logged_in");
         // Success: refetch
         resetClient();
         navigate(onSuccessRedirectTo);

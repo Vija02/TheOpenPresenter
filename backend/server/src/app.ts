@@ -133,6 +133,7 @@ export async function makeApp({
   await middleware.installHelmet(app);
   await middleware.installSameOrigin(app);
   await middleware.installSession(app);
+  await middleware.installAnalyticsProxy(app);
   await middleware.installCSRFProtection(app);
   await middleware.installPassport(app);
   await middleware.installLogging(app);
