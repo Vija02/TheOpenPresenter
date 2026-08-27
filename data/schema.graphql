@@ -6474,7 +6474,7 @@ input RegisterInput {
   name: String
   password: String!
   turnstileToken: String
-  username: String!
+  username: String
 }
 
 type RegisterPayload {

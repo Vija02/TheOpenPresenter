@@ -10,11 +10,7 @@ import { WrappedPasswordStrength } from "@/components/WrappedPasswordStrength";
 import { useResetURQLClient } from "@/urql";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRegisterMutation, useSharedQuery } from "@repo/graphql";
-import {
-  extractError,
-  getCodeFromError,
-  getExceptionFromError,
-} from "@repo/lib";
+import { extractError, getCodeFromError } from "@repo/lib";
 import { captureEvent } from "@repo/observability/initAnalytics";
 import { Alert, Button, Form, InputControl, Link } from "@repo/ui";
 import { useCallback, useRef, useState } from "react";
@@ -26,19 +22,6 @@ import z from "zod";
 const formSchema = z
   .object({
     name: z.string().min(1, "Please enter your name"),
-    username: z
-      .string()
-      .min(2, "Username must be at least 2 characters long.")
-      .max(24, "Username must be at most 24 characters long.")
-      .regex(/^([a-zA-Z]|$)/, "Username must start with a letter.")
-      .regex(
-        /^([^_]|_[^_]|_$)*$/,
-        "Username must not contain two underscores next to each other.",
-      )
-      .regex(
-        /^[a-zA-Z0-9_]*$/,
-        "Username must contain only alphanumeric characters and underscores.",
-      ),
     email: z.email("Please enter a valid email"),
     password: z.string().min(1, "Please enter your password"),
     confirm: z.string().min(1, "Please enter your password again"),
@@ -74,7 +57,6 @@ const Register = () => {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
-      username: "",
       email: email?.toString() ?? "",
       password: "",
       confirm: "",
@@ -93,7 +75,6 @@ const Register = () => {
       setError(null);
       try {
         await register({
-          username: values.username,
           email: values.email,
           password: values.password,
           name: values.name,
@@ -107,9 +88,6 @@ const Register = () => {
         turnstileTokenRef.current = null;
         turnstileRef.current?.reset();
         const code = getCodeFromError(e);
-        const exception = getExceptionFromError(e);
-        const fields: any =
-          exception && "fields" in exception && exception.fields;
         if (code === "WEAKP") {
           form.setError("password", {
             message:
@@ -119,16 +97,6 @@ const Register = () => {
           form.setError("email", {
             message:
               "An account with this email address has already been registered. Please login or use the forgot password feature to retrive your account.",
-          });
-        } else if (code === "NUNIQ" && fields && fields[0] === "username") {
-          form.setError("username", {
-            message:
-              "An account with this username has already been registered, please try a different username.",
-          });
-        } else if (code === "23514") {
-          form.setError("username", {
-            message:
-              "This username is not allowed; usernames must be between 2 and 24 characters long (inclusive), must start with a letter, and must contain only alphanumeric characters and underscores.",
           });
         } else {
           setError(e);
@@ -162,25 +130,7 @@ const Register = () => {
                       label="Name"
                       autoComplete="name"
                       data-testid="registerpage-input-name"
-                      onChange={(e) => {
-                        const newValue = e.target.value as string;
-                        const newUsername = newValue
-                          .toLowerCase()
-                          .replace(/\s\s+/g, " ")
-                          .replace(/ /g, "_");
-
-                        form.setValue("name", newValue);
-                        form.setValue("username", newUsername);
-                      }}
                       autoFocus
-                    />
-
-                    <InputControl
-                      control={form.control}
-                      name="username"
-                      label="Username"
-                      autoComplete="username"
-                      data-testid="registerpage-input-username"
                     />
 
                     <InputControl

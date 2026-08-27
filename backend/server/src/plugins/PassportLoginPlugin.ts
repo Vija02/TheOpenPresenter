@@ -7,7 +7,7 @@ import { assertValidCaptcha } from "../utils/verifyCaptcha";
 const PassportLoginPlugin = makeExtendSchemaPlugin((build) => {
   const typeDefs = gql`
     input RegisterInput {
-      username: String!
+      username: String
       email: String!
       password: String!
       name: String
@@ -139,7 +139,10 @@ const PassportLoginPlugin = makeExtendSchemaPlugin((build) => {
             `
             with new_user as (
               select users.* from app_private.really_create_user(
-                username => $1,
+                username => coalesce(
+                  $1,
+                  app_private.generate_unique_username(coalesce($3, split_part($2, '@', 1)))
+                ),
                 email => $2,
                 email_is_verified => false,
                 name => $3,

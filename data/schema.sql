@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 5DdWD4bdjhLngkx78LeOjQTMbbPf55D3D7qkofCd5XjzaUiLIhqFQt5fj2mlxWw
+\restrict mkxDW0JWQnfHpR0iHiAmalMlPSg5MUG7SEWzmmcAeuTapKuX1GQPoajB0bPYfCJ
 
 -- Dumped from database version 17.0 (Debian 17.0-1.pgdg120+1)
 -- Dumped by pg_dump version 18.4
@@ -454,6 +454,62 @@ $$;
 
 
 --
+-- Name: generate_unique_username(text); Type: FUNCTION; Schema: app_private; Owner: -
+--
+
+CREATE FUNCTION app_private.generate_unique_username(base text) RETURNS public.citext
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+    AS $$
+declare
+  v_username citext = base;
+begin
+  if v_username is null then
+    v_username = 'user';
+  end if;
+
+  v_username = regexp_replace(v_username, '^[^a-z]+', '', 'gi');
+  v_username = regexp_replace(v_username, '[^a-z0-9]+', '_', 'gi');
+
+  if v_username is null or length(v_username) < 3 then
+    v_username = 'user';
+  end if;
+
+  if length(v_username) > 20 then
+    v_username = substring(v_username from 1 for 20);
+  end if;
+
+  select (
+    case
+    when i = 0 then v_username
+    else v_username || i::text
+    end
+  ) into v_username from generate_series(0, 1000) i
+  where not exists(
+    select 1
+    from app_public.users
+    where users.username = (
+      case
+      when i = 0 then v_username
+      else v_username || i::text
+      end
+    )
+  )
+  limit 1;
+
+  return v_username;
+end;
+$$;
+
+
+--
+-- Name: FUNCTION generate_unique_username(base text); Type: COMMENT; Schema: app_private; Owner: -
+--
+
+COMMENT ON FUNCTION app_private.generate_unique_username(base text) IS 'Sanitises the given string into a valid username, appending a discriminator if needed to make it unique.';
+
+
+--
 -- Name: users; Type: TABLE; Schema: app_public; Owner: -
 --
 
@@ -781,38 +837,15 @@ declare
   v_avatar_url text;
   v_user_authentication_id uuid;
 begin
-  -- Extract data from the user’s OAuth profile data.
+  -- Extract data from the user's OAuth profile data.
   v_email := f_profile ->> 'email';
   v_name := f_profile ->> 'name';
   v_username := f_profile ->> 'username';
   v_avatar_url := f_profile ->> 'avatar_url';
 
-  -- Sanitise the username, and make it unique if necessary.
-  if v_username is null then
-    v_username = coalesce(v_name, 'user');
-  end if;
-  v_username = regexp_replace(v_username, '^[^a-z]+', '', 'gi');
-  v_username = regexp_replace(v_username, '[^a-z0-9]+', '_', 'gi');
-  if v_username is null or length(v_username) < 3 or length(v_username) > 19 then
-    v_username = 'user';
-  end if;
-  select (
-    case
-    when i = 0 then v_username
-    else v_username || i::text
-    end
-  ) into v_username from generate_series(0, 10000) i
-  where not exists(
-    select 1
-    from app_public.users
-    where users.username = (
-      case
-      when i = 0 then v_username
-      else v_username || i::text
-      end
-    )
-  )
-  limit 1;
+  v_username = app_private.generate_unique_username(
+    coalesce(v_username, v_name, 'user')
+  );
 
   -- Create the user account
   v_user = app_private.really_create_user(
@@ -823,7 +856,7 @@ begin
     avatar_url => v_avatar_url
   );
 
-  -- Insert the user’s private account data (e.g. OAuth tokens)
+  -- Insert the user's private account data (e.g. OAuth tokens)
   insert into app_public.user_authentications (user_id, service, identifier, details) values
     (v_user.id, f_service, f_identifier, f_profile) returning id into v_user_authentication_id;
   insert into app_private.user_authentication_secrets (user_authentication_id, details) values
@@ -6424,6 +6457,13 @@ REVOKE ALL ON FUNCTION app_private.generate_screen_code() FROM PUBLIC;
 
 
 --
+-- Name: FUNCTION generate_unique_username(base text); Type: ACL; Schema: app_private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_private.generate_unique_username(base text) FROM PUBLIC;
+
+
+--
 -- Name: TABLE users; Type: ACL; Schema: app_public; Owner: -
 --
 
@@ -7772,5 +7812,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE theopenpresenter REVOKE ALL ON FUNCTIONS FROM 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 5DdWD4bdjhLngkx78LeOjQTMbbPf55D3D7qkofCd5XjzaUiLIhqFQt5fj2mlxWw
+\unrestrict mkxDW0JWQnfHpR0iHiAmalMlPSg5MUG7SEWzmmcAeuTapKuX1GQPoajB0bPYfCJ
 
