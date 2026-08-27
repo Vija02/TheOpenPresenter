@@ -14,6 +14,7 @@ import installFileUpload from "./installFileUpload";
 import installForceSSL from "./installForceSSL";
 import installHelmet from "./installHelmet";
 import installHocuspocus from "./installHocuspocus";
+import installImpersonation from "./installImpersonation";
 import installInitDemo from "./installInitDemo";
 import installLogging from "./installLogging";
 import installMediaProxyHandler from "./installMediaProxyHandler";
@@ -52,6 +53,7 @@ export {
   installForceSSL,
   installHelmet,
   installHocuspocus,
+  installImpersonation,
   installInitDemo,
   installLogging,
   installObservability,
