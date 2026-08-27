@@ -1,4 +1,8 @@
 ---
+import { Image } from "astro:assets";
+import austinImage from "../assets/images/testimonials/jesus-loves-austin-unsplash-tiny.jpg";
+import jeremyBoriack from "../assets/images/testimonials/jeremy-boriack.jpg";
+import cruLogo from "../assets/images/testimonials/cru-logo-mono.png";
 ---
 
 <section>
@@ -12,72 +16,123 @@
           class="h2 mb-4 font-red-hat-display"
           data-aos="fade-up"
         >
-          In production every week
+          Impacting ministries globally
         </h2>
         <p
           class="text-lg text-gray-600 dark:text-gray-400"
           data-aos="fade-up"
           data-aos-delay="100"
         >
-          Stable and working in various churches today
+          Churches and youth ministries run their services on TheOpenPresenter
+          every week
         </p>
       </div>
 
-      <!-- Stat blocks -->
-      <div
-        class="max-w-sm mx-auto grid gap-6 sm:grid-cols-3 sm:max-w-none md:gap-8 items-stretch"
-        data-aos-id-proof
+      <!-- Testimonial -->
+      <figure
+        class="relative w-full mx-auto mb-12 md:mb-16 overflow-hidden rounded-2xl bg-gradient-to-br from-gray-50 via-white to-teal-50/40 dark:from-gray-800 dark:via-gray-900 dark:to-gray-900 border border-gray-200/80 dark:border-gray-800 shadow-xl shadow-gray-200/60 dark:shadow-none"
+        data-aos="fade-up"
       >
-        <!-- Reliability: live every week, sector-neutral framing -->
         <div
-          class="flex flex-col items-center text-center p-6 rounded-lg border border-gray-200 dark:border-gray-800"
-          data-aos="fade-up"
-          data-aos-anchor="[data-aos-id-proof]"
+          class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-teal-400 to-purple-500"
+          aria-hidden="true"
         >
-          <div
-            class="font-red-hat-display text-3xl md:text-4xl font-black tracking-tight mb-2 bg-clip-text text-transparent bg-gradient-to-r from-teal-400 to-purple-500"
-          >
-            Weekly
-          </div>
-          <p class="text-sm text-gray-600 dark:text-gray-400">
-            Driving live presentations at UK venues, week in, week out.
-          </p>
         </div>
+        <div class="grid gap-0 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+          <div class="relative h-44 sm:h-56 md:h-full bg-gray-100 dark:bg-gray-900">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/45 via-black/10 to-transparent z-10" aria-hidden="true"></div>
+            <div class="relative h-full overflow-hidden">
+              <Image
+                src={austinImage}
+                alt="TheOpenPresenter used in a church setting"
+                width={1200}
+                height={1800}
+                class="block w-full h-full object-cover object-center"
+                loading="lazy"
+              />
+            </div>
+          </div>
 
-        <!-- Audience scale -->
-        <div
-          class="flex flex-col items-center text-center p-6 rounded-lg border border-gray-200 dark:border-gray-800"
-          data-aos="fade-up"
-          data-aos-anchor="[data-aos-id-proof]"
-          data-aos-delay="100"
-        >
-          <div
-            class="font-red-hat-display text-3xl md:text-4xl font-black tracking-tight mb-2 bg-clip-text text-transparent bg-gradient-to-r from-teal-400 to-purple-500"
-          >
-            100&ndash;200
-          </div>
-          <p class="text-sm text-gray-600 dark:text-gray-400">
-            Attendees per event, handled on a single setup.
-          </p>
-        </div>
+          <div class="relative p-6 sm:p-8 md:p-10 lg:p-12">
+            <svg
+              class="absolute right-4 top-4 w-24 h-24 fill-current text-teal-500/[0.08] dark:text-teal-400/[0.08] pointer-events-none"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true"
+            >
+              <path
+                d="M10 8v6c0 3.3-2.7 6-6 6v-3c1.7 0 3-1.3 3-3H4V8h6zm10 0v6c0 3.3-2.7 6-6 6v-3c1.7 0 3-1.3 3-3h-3V8h6z"
+              ></path>
+            </svg>
 
-        <!-- Development -->
-        <div
-          class="flex flex-col items-center text-center p-6 rounded-lg border border-gray-200 dark:border-gray-800"
-          data-aos="fade-up"
-          data-aos-anchor="[data-aos-id-proof]"
-          data-aos-delay="200"
-        >
-          <div
-            class="font-red-hat-display text-3xl md:text-4xl font-black tracking-tight mb-2 bg-clip-text text-transparent bg-gradient-to-r from-teal-400 to-purple-500"
-          >
-            1,400+
+            <blockquote class="relative space-y-4 text-gray-600 dark:text-gray-400">
+              <p
+                class="text-lg md:text-xl leading-relaxed text-gray-900 dark:text-gray-100 font-medium"
+              >
+                I discovered TheOpenPresenter at just the right time. I was managing
+                production for &ldquo;Fastbreak,&rdquo; a High School Ministry Winter
+                Retreat with our Portland Metro High School Ministry. After
+                encountering significant display connection and integration issues
+                with other tools on our first night, I scrambled to find an
+                alternative. That evening, I discovered TheOpenPresenter.
+              </p>
+              <p>
+                Within a short time, I was able to build a skeleton for the
+                remaining weekend sessions, import and format song lyrics, and
+                generate scripture slides for our speakers. The standout feature was
+                the ability to run the presentation from a cell phone, allowing me
+                to hand off the controls easily and stay available for students.
+              </p>
+              <p>
+                TheOpenPresenter has now become my go-to presentation tool for both
+                our High School and Middle School ministries. It is user-friendly,
+                flexible, and an excellent collaborative tool. It keeps our dynamic
+                programs polished, allowing everyone to focus entirely on the
+                content. Thank you to the dedicated community of developers
+                contributing to this application. It is truly a gift.
+              </p>
+            </blockquote>
+
+            <figcaption
+              class="relative mt-8 pt-6 border-t border-gray-200/80 dark:border-gray-800 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+            >
+              <div class="flex items-center gap-4">
+                <div
+                  class="shrink-0 rounded-full p-0.5 bg-gradient-to-r from-teal-400 to-purple-500"
+                >
+                  <Image
+                    src={jeremyBoriack}
+                    alt="Jeremy Boriack"
+                    width={64}
+                    height={64}
+                    class="w-14 h-14 rounded-full object-cover block border-2 border-white dark:border-gray-900"
+                    loading="lazy"
+                  />
+                </div>
+                <div>
+                  <div
+                    class="font-red-hat-display font-bold text-gray-900 dark:text-gray-100"
+                  >
+                    Jeremy Boriack
+                  </div>
+                  <div class="text-sm text-gray-600 dark:text-gray-400">
+                    Cru High School, Portland Metro
+                  </div>
+                </div>
+              </div>
+
+              <Image
+                src={cruLogo}
+                alt="Cru"
+                width={96}
+                height={59}
+                class="w-16 h-auto shrink-0 opacity-90 self-center sm:self-auto"
+                loading="lazy"
+              />
+            </figcaption>
           </div>
-          <p class="text-sm text-gray-600 dark:text-gray-400">
-            Commits and counting. Active, ongoing development.
-          </p>
         </div>
-      </div>
+      </figure>
 
       <!-- Open source / GitHub link -->
       <div
