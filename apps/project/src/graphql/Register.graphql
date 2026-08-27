@@ -1,5 +1,4 @@
 mutation Register(
-  $username: String!
   $password: String!
   $email: String!
   $name: String
@@ -7,7 +6,6 @@ mutation Register(
 ) {
   register(
     input: {
-      username: $username
       password: $password
       email: $email
       name: $name
