@@ -2,123 +2,173 @@ import { Browser, expect, test } from "@playwright/test";
 
 import { E2ECommandAPI } from "../../e2eCommand";
 
-const USERNAME = "testuser";
 const PASSWORD = "TestUserPassword";
 const SESSION_COOKIE_NAME = "connect.sid";
 
 const DAY_SECONDS = 24 * 60 * 60;
 
+/**
+ * Each test gets its OWN username. The tests in this file run in parallel and
+ * the only available cleanup helpers are global (`clearTestUsers` deletes every
+ * `testuser%` row), so a shared username meant one test's setup deleted the
+ * user another test was mid-login with.
+ */
+const createUser = async (
+  page: import("@playwright/test").Page,
+  request: import("@playwright/test").APIRequestContext,
+  username: string,
+) => {
+  const e2eCommand = new E2ECommandAPI(page, request);
+  await e2eCommand.serverCommand("clearUserByUsername", { username });
+  await e2eCommand.serverCommand("createUser", {
+    username,
+    password: PASSWORD,
+    verified: true,
+  });
+  return () => e2eCommand.serverCommand("clearUserByUsername", { username });
+};
+
 test.describe("Login remember-me cookie expiry", () => {
-  test.beforeEach(async ({ page, request }) => {
-    const e2eCommand = new E2ECommandAPI(page, request);
-    await Promise.all([
-      e2eCommand.serverCommand("clearTestUsers"),
-      e2eCommand.serverCommand("clearTestOrganizations"),
-    ]);
-    await e2eCommand.serverCommand("createUser", {
-      username: USERNAME,
-      password: PASSWORD,
-      verified: true,
-    });
+  test("Remember me (on by default) → ~400 day cookie", async ({
+    page,
+    request,
+  }) => {
+    const username = "testuser_rm_default";
+    const cleanup = await createUser(page, request, username);
+
+    try {
+      await page.goto("/login");
+      await page.getByTestId("loginpage-input-username").fill(username);
+      await page.getByTestId("loginpage-input-password").fill(PASSWORD);
+      await expect(
+        page.getByTestId("loginpage-input-rememberme"),
+      ).toBeChecked();
+
+      const loginResponse = page.waitForResponse(
+        (resp) =>
+          resp.url().includes("/graphql") &&
+          resp.request().method() === "POST" &&
+          resp.status() === 200,
+      );
+      await page
+        .locator("form")
+        .getByRole("button", { name: "Sign in" })
+        .click();
+      await loginResponse;
+
+      const session = (await page.context().cookies()).find(
+        (c) => c.name === SESSION_COOKIE_NAME,
+      );
+      expect(session, "session cookie should be set").toBeDefined();
+
+      const ttlSeconds = session!.expires - Math.floor(Date.now() / 1000);
+      // Server sets 400 days (RFC 6265bis browser max)
+      expect(ttlSeconds).toBeGreaterThan(350 * DAY_SECONDS);
+    } finally {
+      await cleanup();
+    }
   });
 
-  test("Remember me (on by default) → ~400 day cookie", async ({ page }) => {
-    await page.goto("/login");
-    await page.getByTestId("loginpage-input-username").fill(USERNAME);
-    await page.getByTestId("loginpage-input-password").fill(PASSWORD);
-    await expect(page.getByTestId("loginpage-input-rememberme")).toBeChecked();
+  test("Remember me unchecked → ~3 day cookie", async ({ page, request }) => {
+    const username = "testuser_rm_off";
+    const cleanup = await createUser(page, request, username);
 
-    const loginResponse = page.waitForResponse(
-      (resp) =>
-        resp.url().includes("/graphql") &&
-        resp.request().method() === "POST" &&
-        resp.status() === 200,
-    );
-    await page.locator("form").getByRole("button", { name: "Sign in" }).click();
-    await loginResponse;
+    try {
+      await page.goto("/login");
+      await page.getByTestId("loginpage-input-username").fill(username);
+      await page.getByTestId("loginpage-input-password").fill(PASSWORD);
+      await page.getByTestId("loginpage-input-rememberme").click();
+      await expect(
+        page.getByTestId("loginpage-input-rememberme"),
+      ).not.toBeChecked();
 
-    const session = (await page.context().cookies()).find(
-      (c) => c.name === SESSION_COOKIE_NAME,
-    );
-    expect(session, "session cookie should be set").toBeDefined();
+      const loginResponse = page.waitForResponse(
+        (resp) =>
+          resp.url().includes("/graphql") &&
+          resp.request().method() === "POST" &&
+          resp.status() === 200,
+      );
+      await page
+        .locator("form")
+        .getByRole("button", { name: "Sign in" })
+        .click();
+      await loginResponse;
 
-    const ttlSeconds = session!.expires - Math.floor(Date.now() / 1000);
-    // Server sets 400 days (RFC 6265bis browser max)
-    expect(ttlSeconds).toBeGreaterThan(350 * DAY_SECONDS);
-  });
+      const session = (await page.context().cookies()).find(
+        (c) => c.name === SESSION_COOKIE_NAME,
+      );
+      expect(session, "session cookie should be set").toBeDefined();
 
-  test("Remember me unchecked → ~3 day cookie", async ({ page }) => {
-    await page.goto("/login");
-    await page.getByTestId("loginpage-input-username").fill(USERNAME);
-    await page.getByTestId("loginpage-input-password").fill(PASSWORD);
-    await page.getByTestId("loginpage-input-rememberme").click();
-    await expect(
-      page.getByTestId("loginpage-input-rememberme"),
-    ).not.toBeChecked();
-
-    const loginResponse = page.waitForResponse(
-      (resp) =>
-        resp.url().includes("/graphql") &&
-        resp.request().method() === "POST" &&
-        resp.status() === 200,
-    );
-    await page.locator("form").getByRole("button", { name: "Sign in" }).click();
-    await loginResponse;
-
-    const session = (await page.context().cookies()).find(
-      (c) => c.name === SESSION_COOKIE_NAME,
-    );
-    expect(session, "session cookie should be set").toBeDefined();
-
-    const ttlSeconds = session!.expires - Math.floor(Date.now() / 1000);
-    // Server default is 3 days. Require <= 7 days (catches the bug where the
-    // 400-day persistent maxAge accidentally bleeds in) and > 1 hour (catches
-    // a missing/short cookie regression).
-    expect(ttlSeconds).toBeLessThan(7 * DAY_SECONDS);
-    expect(ttlSeconds).toBeGreaterThan(60 * 60);
+      const ttlSeconds = session!.expires - Math.floor(Date.now() / 1000);
+      // Server default is 3 days. Require <= 7 days (catches the bug where the
+      // 400-day persistent maxAge accidentally bleeds in) and > 1 hour (catches
+      // a missing/short cookie regression).
+      expect(ttlSeconds).toBeLessThan(7 * DAY_SECONDS);
+      expect(ttlSeconds).toBeGreaterThan(60 * 60);
+    } finally {
+      await cleanup();
+    }
   });
 
   test("QR login with Remember me → ~400 day cookie", async ({
     browser,
     page,
+    request,
   }) => {
     test.skip(!!process.env.PLAYWRIGHT_TAURI, "Skipped in Tauri E2E tests");
-    await runQrLoginUiFlow({ browser, page, rememberMe: true });
+    const username = "testuser_qr_on";
+    const cleanup = await createUser(page, request, username);
 
-    const session = (await page.context().cookies()).find(
-      (c) => c.name === SESSION_COOKIE_NAME,
-    );
-    expect(session, "session cookie should be set").toBeDefined();
+    try {
+      await runQrLoginUiFlow({ browser, page, username, rememberMe: true });
 
-    const ttlSeconds = session!.expires - Math.floor(Date.now() / 1000);
-    expect(ttlSeconds).toBeGreaterThan(350 * DAY_SECONDS);
+      const session = (await page.context().cookies()).find(
+        (c) => c.name === SESSION_COOKIE_NAME,
+      );
+      expect(session, "session cookie should be set").toBeDefined();
+
+      const ttlSeconds = session!.expires - Math.floor(Date.now() / 1000);
+      expect(ttlSeconds).toBeGreaterThan(350 * DAY_SECONDS);
+    } finally {
+      await cleanup();
+    }
   });
 
   test("QR login without Remember me → ~3 day cookie", async ({
     browser,
     page,
+    request,
   }) => {
     test.skip(!!process.env.PLAYWRIGHT_TAURI, "Skipped in Tauri E2E tests");
-    await runQrLoginUiFlow({ browser, page, rememberMe: false });
+    const username = "testuser_qr_off";
+    const cleanup = await createUser(page, request, username);
 
-    const session = (await page.context().cookies()).find(
-      (c) => c.name === SESSION_COOKIE_NAME,
-    );
-    expect(session, "session cookie should be set").toBeDefined();
+    try {
+      await runQrLoginUiFlow({ browser, page, username, rememberMe: false });
 
-    const ttlSeconds = session!.expires - Math.floor(Date.now() / 1000);
-    expect(ttlSeconds).toBeLessThan(7 * DAY_SECONDS);
-    expect(ttlSeconds).toBeGreaterThan(60 * 60);
+      const session = (await page.context().cookies()).find(
+        (c) => c.name === SESSION_COOKIE_NAME,
+      );
+      expect(session, "session cookie should be set").toBeDefined();
+
+      const ttlSeconds = session!.expires - Math.floor(Date.now() / 1000);
+      expect(ttlSeconds).toBeLessThan(7 * DAY_SECONDS);
+      expect(ttlSeconds).toBeGreaterThan(60 * 60);
+    } finally {
+      await cleanup();
+    }
   });
 });
 
 async function runQrLoginUiFlow({
   browser,
   page,
+  username,
   rememberMe,
 }: {
   browser: Browser;
   page: import("@playwright/test").Page;
+  username: string;
   rememberMe: boolean;
 }) {
   await page.goto("/login");
@@ -137,7 +187,7 @@ async function runQrLoginUiFlow({
   try {
     const mobilePage = await mobileContext.newPage();
     const mobileApi = new E2ECommandAPI(mobilePage, mobileContext.request);
-    await mobileApi.login({ username: USERNAME });
+    await mobileApi.login({ username });
     await mobilePage.goto(authUrl!);
 
     await page.waitForURL((url) => !url.pathname.startsWith("/login"));
