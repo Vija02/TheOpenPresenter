@@ -1,16 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { E2ECommandAPI } from "../../e2eCommand";
-
 test.describe("LoginPage", () => {
-  test.beforeEach(async ({ page, request }) => {
-    const e2eCommand = new E2ECommandAPI(page, request);
-    await Promise.all([
-      e2eCommand.serverCommand("clearTestUsers"),
-      e2eCommand.serverCommand("clearTestOrganizations"),
-    ]);
-  });
-
   test("shows login form on /login", async ({ page }) => {
     await page.goto("/login");
 
@@ -27,7 +17,7 @@ test.describe("LoginPage", () => {
     await page.goto("/o/my-unauthenticated-org/latest/render?kiosk");
 
     await expect(
-      page.getByRole("heading", { name: "Sign in to TheOpenPresenter" }),
+      page.locator("h1", { hasText: "Sign in to TheOpenPresenter" }),
     ).toBeVisible();
     expect(page.url()).toBe(
       "http://localhost:5678/login?next=%2Fo%2Fmy-unauthenticated-org%2Flatest%2Frender&kiosk",
