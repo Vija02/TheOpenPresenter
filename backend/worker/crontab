@@ -15,3 +15,4 @@
 # * * * * * task ?opts {payload}
 0 0 * * * medias__cleanExpiredUploads
 30 0 * * * projects__cleanExpiredDemoProjects
+*/5 * * * * renderer_sessions__closeStale
