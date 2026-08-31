@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict mkxDW0JWQnfHpR0iHiAmalMlPSg5MUG7SEWzmmcAeuTapKuX1GQPoajB0bPYfCJ
+\restrict 8qH9iVJ5YaKNboRMEU3MJAR9zT5p5G8jgu4tzJBMjecLfdnmNJKFGW6PMsVMw2b
 
 -- Dumped from database version 17.0 (Debian 17.0-1.pgdg120+1)
 -- Dumped by pg_dump version 18.4
@@ -3317,6 +3317,47 @@ CREATE TABLE app_private.organization_lifetime_purchases (
 
 
 --
+-- Name: renderer_sessions; Type: TABLE; Schema: app_private; Owner: -
+--
+
+CREATE TABLE app_private.renderer_sessions (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    organization_id uuid NOT NULL,
+    project_id uuid,
+    screen_id uuid,
+    user_id uuid,
+    renderer_id text DEFAULT '1'::text NOT NULL,
+    is_preview boolean DEFAULT false NOT NULL,
+    started_at timestamp with time zone DEFAULT now() NOT NULL,
+    last_seen_at timestamp with time zone DEFAULT now() NOT NULL,
+    ended_at timestamp with time zone,
+    end_reason text
+);
+
+
+--
+-- Name: renderer_session_durations; Type: VIEW; Schema: app_private; Owner: -
+--
+
+CREATE VIEW app_private.renderer_session_durations AS
+ SELECT rs.id,
+    rs.organization_id,
+    rs.project_id,
+    rs.screen_id,
+    rs.user_id,
+    rs.renderer_id,
+    rs.is_preview,
+    rs.started_at,
+    rs.last_seen_at,
+    rs.ended_at,
+    rs.end_reason,
+    (o.slug OPERATOR(public.=) 'demo'::public.citext) AS is_demo,
+    (EXTRACT(epoch FROM (COALESCE(rs.ended_at, rs.last_seen_at) - rs.started_at)))::integer AS duration_seconds
+   FROM (app_private.renderer_sessions rs
+     JOIN app_public.organizations o ON ((o.id = rs.organization_id)));
+
+
+--
 -- Name: unregistered_email_password_resets; Type: TABLE; Schema: app_private; Owner: -
 --
 
@@ -3850,6 +3891,14 @@ ALTER TABLE ONLY app_private.organization_lifetime_purchases
 
 
 --
+-- Name: renderer_sessions renderer_sessions_pkey; Type: CONSTRAINT; Schema: app_private; Owner: -
+--
+
+ALTER TABLE ONLY app_private.renderer_sessions
+    ADD CONSTRAINT renderer_sessions_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: connect_pg_simple_sessions session_pkey; Type: CONSTRAINT; Schema: app_private; Owner: -
 --
 
@@ -4190,6 +4239,48 @@ ALTER TABLE ONLY app_public.users
 --
 
 CREATE INDEX organization_lifetime_purchases_organization_id_idx ON app_private.organization_lifetime_purchases USING btree (organization_id);
+
+
+--
+-- Name: renderer_sessions_open_idx; Type: INDEX; Schema: app_private; Owner: -
+--
+
+CREATE INDEX renderer_sessions_open_idx ON app_private.renderer_sessions USING btree (last_seen_at) WHERE (ended_at IS NULL);
+
+
+--
+-- Name: renderer_sessions_organization_id_idx; Type: INDEX; Schema: app_private; Owner: -
+--
+
+CREATE INDEX renderer_sessions_organization_id_idx ON app_private.renderer_sessions USING btree (organization_id);
+
+
+--
+-- Name: renderer_sessions_organization_id_started_at_idx; Type: INDEX; Schema: app_private; Owner: -
+--
+
+CREATE INDEX renderer_sessions_organization_id_started_at_idx ON app_private.renderer_sessions USING btree (organization_id, started_at DESC);
+
+
+--
+-- Name: renderer_sessions_project_id_idx; Type: INDEX; Schema: app_private; Owner: -
+--
+
+CREATE INDEX renderer_sessions_project_id_idx ON app_private.renderer_sessions USING btree (project_id);
+
+
+--
+-- Name: renderer_sessions_screen_id_idx; Type: INDEX; Schema: app_private; Owner: -
+--
+
+CREATE INDEX renderer_sessions_screen_id_idx ON app_private.renderer_sessions USING btree (screen_id);
+
+
+--
+-- Name: renderer_sessions_user_id_idx; Type: INDEX; Schema: app_private; Owner: -
+--
+
+CREATE INDEX renderer_sessions_user_id_idx ON app_private.renderer_sessions USING btree (user_id);
 
 
 --
@@ -5144,6 +5235,38 @@ ALTER TABLE ONLY app_private.organization_billing
 
 ALTER TABLE ONLY app_private.organization_lifetime_purchases
     ADD CONSTRAINT organization_lifetime_purchases_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES app_public.organizations(id) ON DELETE CASCADE;
+
+
+--
+-- Name: renderer_sessions renderer_sessions_organization_id_fkey; Type: FK CONSTRAINT; Schema: app_private; Owner: -
+--
+
+ALTER TABLE ONLY app_private.renderer_sessions
+    ADD CONSTRAINT renderer_sessions_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES app_public.organizations(id) ON DELETE CASCADE;
+
+
+--
+-- Name: renderer_sessions renderer_sessions_project_id_fkey; Type: FK CONSTRAINT; Schema: app_private; Owner: -
+--
+
+ALTER TABLE ONLY app_private.renderer_sessions
+    ADD CONSTRAINT renderer_sessions_project_id_fkey FOREIGN KEY (project_id) REFERENCES app_public.projects(id) ON DELETE SET NULL;
+
+
+--
+-- Name: renderer_sessions renderer_sessions_screen_id_fkey; Type: FK CONSTRAINT; Schema: app_private; Owner: -
+--
+
+ALTER TABLE ONLY app_private.renderer_sessions
+    ADD CONSTRAINT renderer_sessions_screen_id_fkey FOREIGN KEY (screen_id) REFERENCES app_public.screens(id) ON DELETE SET NULL;
+
+
+--
+-- Name: renderer_sessions renderer_sessions_user_id_fkey; Type: FK CONSTRAINT; Schema: app_private; Owner: -
+--
+
+ALTER TABLE ONLY app_private.renderer_sessions
+    ADD CONSTRAINT renderer_sessions_user_id_fkey FOREIGN KEY (user_id) REFERENCES app_public.users(id) ON DELETE SET NULL;
 
 
 --
@@ -7812,5 +7935,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE theopenpresenter REVOKE ALL ON FUNCTIONS FROM 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict mkxDW0JWQnfHpR0iHiAmalMlPSg5MUG7SEWzmmcAeuTapKuX1GQPoajB0bPYfCJ
+\unrestrict 8qH9iVJ5YaKNboRMEU3MJAR9zT5p5G8jgu4tzJBMjecLfdnmNJKFGW6PMsVMw2b
 

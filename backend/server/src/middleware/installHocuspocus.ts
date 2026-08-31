@@ -16,6 +16,11 @@ import { serverPluginApi } from "../pluginManager";
 import { withUserPgPool } from "../utils/withUserPgPool";
 import { getRootPgPool } from "./installDatabasePools";
 import { getMediaHandler } from "./installFileUpload";
+import {
+  endRendererSession,
+  parseRendererSessionParams,
+  startRendererSession,
+} from "./rendererSessionTracker";
 
 export const disposableDocumentManager: DisposableDocumentManager =
   new DisposableDocumentManager();
@@ -138,6 +143,24 @@ export default async function installHocuspocus(app: Express) {
           const mediaHandler = getMediaHandler(app);
           mediaHandler.unlinkPlugin(pluginId, { projectId });
         },
+      });
+    },
+    // Track how long a renderer stays open
+    connected: async (data) => {
+      await startRendererSession({
+        app,
+        socketId: data.socketId,
+        projectId: data.documentName,
+        screenId: data.context.screen_id ?? null,
+        sessionId: data.context.session_id ?? null,
+        params: parseRendererSessionParams(data.requestParameters),
+      });
+    },
+    onDisconnect: async (data) => {
+      await endRendererSession({
+        app,
+        socketId: data.socketId,
+        projectId: data.documentName,
       });
     },
     // Signal heartbeat to screens

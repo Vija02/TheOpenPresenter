@@ -51,7 +51,11 @@ function Root() {
     >
       <ErrorProvider>
         <AudioCheckProvider>
-          <PluginDataProvider type="renderer" rendererId={rendererId}>
+          <PluginDataProvider
+            type="renderer"
+            rendererId={rendererId}
+            isPreview={isPreview}
+          >
             <AwarenessProvider>
               <AppInner hideFullscreenButton={isPreview} />
             </AwarenessProvider>

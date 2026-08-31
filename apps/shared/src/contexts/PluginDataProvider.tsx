@@ -139,7 +139,16 @@ function PluginDataProviderInner({
   );
 }
 
-const initializeHocuspocusProvider = (projectId: string) => {
+type HocuspocusClientInfo = {
+  type: "remote" | "renderer";
+  rendererId: string;
+  isPreview: boolean;
+};
+
+const initializeHocuspocusProvider = (
+  projectId: string,
+  { type, rendererId, isPreview }: HocuspocusClientInfo,
+) => {
   return new Promise<HocuspocusProvider>((resolve, reject) => {
     let provider: HocuspocusProvider | null = null;
     let timeout: ReturnType<typeof setTimeout> | undefined;
@@ -167,6 +176,12 @@ const initializeHocuspocusProvider = (projectId: string) => {
       wsUrl.searchParams.set(key, value);
     }
 
+    wsUrl.searchParams.set("client", type);
+    wsUrl.searchParams.set("rendererId", rendererId);
+    if (isPreview) {
+      wsUrl.searchParams.set("preview", "1");
+    }
+
     provider = new HocuspocusProvider({
       url: wsUrl.toString(),
       name: projectId,
@@ -192,10 +207,12 @@ export const PluginDataProvider = ({
   children,
   type,
   rendererId = "1",
+  isPreview = false,
 }: {
   children: React.ReactNode;
   type: "remote" | "renderer";
   rendererId?: string;
+  isPreview?: boolean;
 }) => {
   const projectId = usePluginMetaData().projectId;
   const [currentUserId] = useState(v4());
@@ -207,7 +224,8 @@ export const PluginDataProvider = ({
     isError,
   } = useQuery({
     queryKey: ["provider", projectId],
-    queryFn: () => initializeHocuspocusProvider(projectId),
+    queryFn: () =>
+      initializeHocuspocusProvider(projectId, { type, rendererId, isPreview }),
     retry: (failureCount, err) =>
       failureCount < 3 &&
       !/Authentication Failed/i.test((err as Error)?.message ?? ""),
