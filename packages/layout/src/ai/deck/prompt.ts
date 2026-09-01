@@ -226,7 +226,7 @@ const DECK_TOOL_LIST = [
   deckTool({
     name: "edit_slide",
     description:
-      "Fine-tune ONE slide with a single-slide editing tool. Use this to adjust an element the composed layouts got slightly wrong, or to add a shape/background to a specific slide. `tool` is a single-slide tool name (e.g. set_text_style, set_fill, add_text_element, set_rect, remove_element, list_elements) and `args` are its arguments.",
+      "Fine-tune ONE slide with a single-slide editing tool. Use this to adjust an element the composed layouts got slightly wrong, or to add a shape/background to a specific slide. `tool` must be a real single-slide tool name (for example set_text_style, set_fill, add_text_element, add_shape_element, set_rect, remove_element, list_elements), and `args` must match that tool exactly.",
     schema: z4.strictObject({
       index: SLIDE_INDEX,
       tool: z4
