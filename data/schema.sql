@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 8qH9iVJ5YaKNboRMEU3MJAR9zT5p5G8jgu4tzJBMjecLfdnmNJKFGW6PMsVMw2b
+\restrict ZSgstqeikQ4sZDhThyRzaIIDSRgT8YRzHMdyK8lSYsYtuBu4bExJym9Y6wCfnpu
 
 -- Dumped from database version 17.0 (Debian 17.0-1.pgdg120+1)
 -- Dumped by pg_dump version 18.4
@@ -1675,10 +1675,10 @@ COMMENT ON COLUMN app_public.organizations.experimental_features_enabled IS 'Whe
 
 
 --
--- Name: create_organization(public.citext, text, app_public.organization_type); Type: FUNCTION; Schema: app_public; Owner: -
+-- Name: create_organization(public.citext, text, app_public.organization_type, boolean); Type: FUNCTION; Schema: app_public; Owner: -
 --
 
-CREATE FUNCTION app_public.create_organization(slug public.citext, name text, organization_type app_public.organization_type DEFAULT 'venue'::app_public.organization_type) RETURNS app_public.organizations
+CREATE FUNCTION app_public.create_organization(slug public.citext, name text, organization_type app_public.organization_type DEFAULT 'venue'::app_public.organization_type, is_public boolean DEFAULT false) RETURNS app_public.organizations
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO 'pg_catalog', 'public', 'pg_temp'
     AS $$
@@ -1688,11 +1688,12 @@ begin
   if app_public.current_user_id() is null then
     raise exception 'You must log in to create an organization' using errcode = 'LOGIN';
   end if;
-  insert into app_public.organizations (slug, name, organization_type)
+  insert into app_public.organizations (slug, name, organization_type, is_public)
     values (
       create_organization.slug,
       create_organization.name,
-      create_organization.organization_type
+      create_organization.organization_type,
+      create_organization.is_public
     )
     returning * into v_org;
   insert into app_public.organization_memberships (organization_id, user_id, is_owner, is_billing_contact)
@@ -6900,11 +6901,11 @@ GRANT UPDATE(experimental_features_enabled) ON TABLE app_public.organizations TO
 
 
 --
--- Name: FUNCTION create_organization(slug public.citext, name text, organization_type app_public.organization_type); Type: ACL; Schema: app_public; Owner: -
+-- Name: FUNCTION create_organization(slug public.citext, name text, organization_type app_public.organization_type, is_public boolean); Type: ACL; Schema: app_public; Owner: -
 --
 
-REVOKE ALL ON FUNCTION app_public.create_organization(slug public.citext, name text, organization_type app_public.organization_type) FROM PUBLIC;
-GRANT ALL ON FUNCTION app_public.create_organization(slug public.citext, name text, organization_type app_public.organization_type) TO theopenpresenter_visitor;
+REVOKE ALL ON FUNCTION app_public.create_organization(slug public.citext, name text, organization_type app_public.organization_type, is_public boolean) FROM PUBLIC;
+GRANT ALL ON FUNCTION app_public.create_organization(slug public.citext, name text, organization_type app_public.organization_type, is_public boolean) TO theopenpresenter_visitor;
 
 
 --
@@ -7935,5 +7936,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE theopenpresenter REVOKE ALL ON FUNCTIONS FROM 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 8qH9iVJ5YaKNboRMEU3MJAR9zT5p5G8jgu4tzJBMjecLfdnmNJKFGW6PMsVMw2b
+\unrestrict ZSgstqeikQ4sZDhThyRzaIIDSRgT8YRzHMdyK8lSYsYtuBu4bExJym9Y6wCfnpu
 
