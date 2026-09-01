@@ -9,8 +9,7 @@ export const cloudEnabled = makeExtendSchemaPlugin(() => ({
   resolvers: {
     Query: {
       async cloudEnabled() {
-        // DEBT: For now, let's always enable it.
-        return true;
+        return process.env.CLOUD_TAB_ENABLED !== "0";
       },
     },
   },
