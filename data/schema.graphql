@@ -1541,6 +1541,7 @@ input CreateOrganizationInput {
   payload verbatim. May be used to track mutations by the client.
   """
   clientMutationId: String
+  isPublic: Boolean
   name: String!
   organizationType: OrganizationType
   slug: String!

@@ -8,12 +8,14 @@ mutation CreateOrganization(
   $name: String!
   $slug: String!
   $organizationType: OrganizationType
+  $isPublic: Boolean
 ) {
   createOrganization(
     input: {
       name: $name
       slug: $slug
       organizationType: $organizationType
+      isPublic: $isPublic
     }
   ) {
     organization {

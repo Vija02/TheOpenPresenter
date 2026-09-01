@@ -1,7 +1,6 @@
 import { Redirect } from "@/components/Redirect";
 import { SharedLayoutLoggedIn } from "@/components/SharedLayoutLoggedIn";
 import { organizationTypeOptions } from "@/lib/organizationType";
-import { captureEvent } from "@repo/observability/initAnalytics";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   CreatedOrganizationFragment,
@@ -11,6 +10,7 @@ import {
   useSharedQuery,
 } from "@repo/graphql";
 import { extractError, getCodeFromError } from "@repo/lib";
+import { captureEvent } from "@repo/observability/initAnalytics";
 import {
   Accordion,
   AccordionContent,
@@ -18,6 +18,7 @@ import {
   AccordionTrigger,
   Alert,
   Button,
+  CheckboxControl,
   Form,
   InputControl,
   OptionControl,
@@ -35,6 +36,7 @@ const formSchema = z.object({
   organizationType: z.enum(OrganizationType, {
     error: "Please choose what kind of organization this is",
   }),
+  isPublic: z.boolean(),
 });
 type FormInputs = z.infer<typeof formSchema>;
 
@@ -45,7 +47,8 @@ const CreateOrganizationPage = () => {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
-      organizationType: OrganizationType.Venue,
+      organizationType: OrganizationType.Church,
+      isPublic: true,
     },
   });
 
@@ -58,7 +61,7 @@ const CreateOrganizationPage = () => {
     async (values: FormInputs) => {
       setError(null);
       try {
-        const { name, organizationType } = values;
+        const { name, organizationType, isPublic } = values;
         const slug = slugify(name || "", {
           lower: true,
         });
@@ -66,6 +69,7 @@ const CreateOrganizationPage = () => {
           name,
           slug,
           organizationType,
+          isPublic,
         });
         const organization = data?.createOrganization?.organization;
         if (organization) {
@@ -105,13 +109,21 @@ const CreateOrganizationPage = () => {
 
                 <SlugCheck name={form.watch("name")} />
 
-                <div className="my-4">
+                <div className="my-4 stack-col items-start gap-4 w-full">
                   <OptionControl<OrganizationType>
                     control={form.control}
                     name="organizationType"
                     label="What kind of organization is this?"
                     description="This helps us tailor TheOpenPresenter to how you'll use it. You can change this later."
                     options={organizationTypeOptions}
+                  />
+
+                  <CheckboxControl
+                    control={form.control}
+                    name="isPublic"
+                    label="Make my organization public"
+                    description="When checked, your volunteers can find your church and request to join. Uncheck this to make it invite-only."
+                    data-testid="createorganization-checkbox-public"
                   />
                 </div>
 
