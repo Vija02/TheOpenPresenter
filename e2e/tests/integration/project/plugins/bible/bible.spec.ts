@@ -14,7 +14,9 @@ const setupBiblePlugin = async ({
 }: SetupBiblePluginArgs) => {
   await loginAndGoToProject();
   await projectPage.createPlugin("Bible");
-  await expect(projectPage.page.getByText("No passages yet")).toBeVisible();
+  await expect(
+    projectPage.page.getByText("Add a passage to get started"),
+  ).toBeVisible();
 };
 
 const selectTranslation = async (projectPage: ProjectPage, name: string) => {

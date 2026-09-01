@@ -32,7 +32,9 @@ const openStyleModal = async ({
 }: SetupArgs) => {
   await loginAndGoToProject();
   await projectPage.createPlugin("Bible");
-  await expect(projectPage.page.getByText("No passages yet")).toBeVisible();
+  await expect(
+    projectPage.page.getByText("Add a passage to get started"),
+  ).toBeVisible();
 
   await projectPage.page.getByRole("button", { name: "Style" }).click();
 

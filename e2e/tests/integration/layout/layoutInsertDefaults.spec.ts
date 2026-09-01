@@ -90,7 +90,7 @@ const goToProject = async (page: Page, e2eCommand: E2ECommandAPI) => {
 /** Bible's Slide Template dialog: a LayoutWorkbench with NO insertDefaults. */
 const openBibleEditor = async (page: Page, projectPage: ProjectPage) => {
   await projectPage.createPlugin("Bible");
-  await expect(page.getByText("No passages yet")).toBeVisible();
+  await expect(page.getByText("Add a passage to get started")).toBeVisible();
 
   await page.getByRole("button", { name: "Style" }).click();
 
