@@ -5,6 +5,7 @@ query OrganizationBillingPage($slug: String!) {
     id
     currentUserIsOwner
     currentUserIsBillingContact
+    organizationType
     billingInfo {
       plan
       subscriptionStatus
