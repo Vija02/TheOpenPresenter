@@ -5,6 +5,7 @@ import {
 } from "@/lib/permissionHooks/organization";
 import {
   OrganizationBillingPageQuery,
+  OrganizationType,
   useOrganizationBillingPageQuery,
 } from "@repo/graphql";
 import { appData } from "@repo/lib";
@@ -220,6 +221,32 @@ function BillingPageInner({
                 Only the organization owner or billing contact can make changes.
               </Alert>
             )}
+
+            {org.organizationType === OrganizationType.Church &&
+              !isActive &&
+              !hasLifetime && (
+                <div className="rounded-md border border-teal-200 bg-teal-50 p-4 flex items-start gap-3 dark:border-teal-900/40 dark:bg-teal-950/20">
+                  <MdStar className="size-5 text-teal-500 shrink-0 mt-0.5" />
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold text-primary">
+                      Your church may be eligible for a free Cloud plan
+                    </p>
+                    <p className="text-sm text-secondary">
+                      Small churches get the full Cloud plan free through our
+                      sponsorship programme, storage and AI credits included.{" "}
+                      <a
+                        href="https://theopenpresenter.com/church/sponsorship"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="underline hover:no-underline font-medium text-teal-700 dark:text-teal-300"
+                      >
+                        Check eligibility and apply
+                      </a>
+                      .
+                    </p>
+                  </div>
+                </div>
+              )}
 
             <PlanOverviewCard
               status={status}
