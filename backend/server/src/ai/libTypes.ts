@@ -5,7 +5,7 @@ import path from "path";
  * Reads the real .d.ts of the modules a client plugin may import.
  */
 
-const MAX_CHARS = 24_000;
+const MAX_CHARS = 8_000;
 
 /** Barrels re-export, so follow `export * from "./x"` to find real declarations. */
 const REEXPORT_RE = /export\s+\*\s+from\s+["'](\.[^"']+)["']/g;
