@@ -13,10 +13,10 @@ import {
   ChatUsage,
 } from "./types";
 
-const DEFAULT_TIMEOUT_MS = 60_000;
+const DEFAULT_TIMEOUT_MS = 120_000;
 // Reasoning might take awhile
-const DEFAULT_IDLE_TIMEOUT_MS = 45_000;
-const DEFAULT_MAX_RETRIES = 2;
+const DEFAULT_IDLE_TIMEOUT_MS = 60_000;
+const DEFAULT_MAX_RETRIES = 3;
 const MAX_RETRY_DELAY_MS = 8_000;
 
 /* -------------------------------------------------------------------------- */
