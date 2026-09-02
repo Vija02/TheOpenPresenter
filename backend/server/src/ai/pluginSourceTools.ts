@@ -18,7 +18,11 @@ const FILENAME = z
   .min(1)
   .describe("File name, exactly as listed by list_files.");
 
-type ToolResult = { doc: PluginSourceDoc; summary: string };
+type ToolResult = {
+  doc: PluginSourceDoc;
+  summary: string;
+  display?: string;
+};
 
 type SourceTool<S extends z.ZodType = z.ZodType> = {
   name: string;
@@ -58,6 +62,7 @@ const TOOL_LIST = [
     readOnly: true,
     run: (doc) => ({
       doc,
+      display: `Listed ${Object.keys(doc.files).length} plugin files.`,
       summary: JSON.stringify(
         Object.entries(doc.files).map(([name, body]) => ({
           name,
@@ -73,10 +78,14 @@ const TOOL_LIST = [
     description: "Read one file's full contents.",
     schema: z.strictObject({ name: FILENAME }),
     readOnly: true,
-    run: (doc, { name }) => ({
-      doc,
-      summary: requireFile(doc, name),
-    }),
+    run: (doc, { name }) => {
+      const body = requireFile(doc, name);
+      return {
+        doc,
+        display: `Read ${name} (${body.length} chars).`,
+        summary: body,
+      };
+    },
   }),
 
   tool({
@@ -149,7 +158,11 @@ const TOOL_LIST = [
       "List every module a plugin is allowed to import. Anything else fails the build.",
     schema: z.strictObject({}),
     readOnly: true,
-    run: (doc) => ({ doc, summary: listLibModules() }),
+    run: (doc) => ({
+      doc,
+      display: "Listed the importable libraries.",
+      summary: listLibModules(),
+    }),
   }),
 
   tool({
@@ -166,6 +179,9 @@ const TOOL_LIST = [
     readOnly: true,
     run: (doc, { symbol, module }) => ({
       doc,
+      display: module
+        ? `Looked up ${symbol} in ${module}.`
+        : `Looked up ${symbol}.`,
       summary: findLibSymbol(symbol, module),
     }),
   }),
@@ -178,7 +194,11 @@ const TOOL_LIST = [
       module: z.string().min(1).describe("Module specifier, e.g. @repo/ui."),
     }),
     readOnly: true,
-    run: (doc, { module }) => ({ doc, summary: readLibTypes(module) }),
+    run: (doc, { module }) => ({
+      doc,
+      display: `Read the types of ${module}.`,
+      summary: readLibTypes(module),
+    }),
   }),
 ];
 
