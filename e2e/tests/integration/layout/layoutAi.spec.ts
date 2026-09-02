@@ -113,8 +113,8 @@ test.describe.serial("Layout AI editing", () => {
     // Reasoning is collapsed, so the toggle is the evidence it arrived.
     await expect(dialog.getByText(/Thought|Thinking/)).toBeVisible();
 
-    // The read-only tool reports generically; the mutating one reports itself.
-    await expect(dialog.getByText("Read the layout.")).toBeVisible();
+    // Every tool step describes what it did, reads included.
+    await expect(dialog.getByText(/Listed \d+ elements?\./)).toBeVisible();
     await expect(dialog.getByText("Restyled bible-body.")).toBeVisible();
     await expect(dialog.getByText("Turned the body text red.")).toBeVisible();
 
@@ -229,7 +229,7 @@ test.describe.serial("Layout AI editing", () => {
 
     // Stop replaces Send only while a run is pending.
     await expect(panel.stop).toBeVisible();
-    await expect(dialog.getByText("Read the layout.")).toBeVisible();
+    await expect(dialog.getByText(/Listed \d+ elements?\./)).toBeVisible();
 
     await panel.stop.click();
 
