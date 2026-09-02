@@ -31,6 +31,7 @@ export type DeckDoc = {
 export type DeckToolResult = {
   doc: DeckDoc;
   summary: string;
+  display?: string;
 };
 
 /* -------------------------------------------------------------------------- */
@@ -181,6 +182,7 @@ const DECK_TOOL_LIST = [
     readOnly: true,
     run: (doc) => ({
       doc,
+      display: `Listed ${doc.slides.length} slide${doc.slides.length === 1 ? "" : "s"}.`,
       summary: JSON.stringify({
         count: doc.slides.length,
         slides: doc.slides.map((s, i) => ({ index: i, ...summariseSlide(s) })),
@@ -196,6 +198,7 @@ const DECK_TOOL_LIST = [
     readOnly: true,
     run: (doc, { index }) => ({
       doc,
+      display: `Read slide ${index + 1}.`,
       summary: JSON.stringify(requireSlide(doc, index)),
     }),
   }),

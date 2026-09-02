@@ -131,6 +131,7 @@ const requireElement = (doc: LayoutDoc, id: string) => {
 export type LayoutToolResult = {
   doc: LayoutDoc;
   summary: string;
+  display?: string;
 };
 
 /* -------------------------------------------------------------------------- */
@@ -158,6 +159,7 @@ const TOOL_LIST = [
     readOnly: true,
     run: (doc) => ({
       doc,
+      display: `Listed ${doc.elements.length} element${doc.elements.length === 1 ? "" : "s"}.`,
       summary: JSON.stringify(
         doc.elements.map((e, i) => ({
           id: e.id,
@@ -184,6 +186,7 @@ const TOOL_LIST = [
     readOnly: true,
     run: (doc) => ({
       doc,
+      display: "Read the layout document.",
       summary: `${LAYOUT_DOC_RULES}\n\nCurrent document:\n${JSON.stringify(doc, null, 2)}`,
     }),
   }),

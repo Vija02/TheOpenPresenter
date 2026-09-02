@@ -52,8 +52,9 @@ export type DocAgentToolset<TDoc> = {
     doc: TDoc,
     name: string,
     args: unknown,
-  ) => { doc: TDoc; summary: string };
+  ) => { doc: TDoc; summary: string; display?: string };
   isReadOnly: (name: string) => boolean;
+  /** Fallback when a read-only tool gives no `display` of its own. */
   readOnlySummary?: string;
   /** True for tools driven by `spawn` rather than the sync `apply`. */
   isSpawnTool?: (name: string) => boolean;
@@ -275,14 +276,17 @@ export const runDocAgent = async function* <TDoc>(
             yield {
               type: "tool",
               name: toolName,
-              summary: toolset.readOnlySummary ?? "Read the document.",
+              summary:
+                applied.display ??
+                toolset.readOnlySummary ??
+                "Read the document.",
             };
           } else {
             changed = true;
             yield {
               type: "tool",
               name: toolName,
-              summary: applied.summary,
+              summary: applied.display ?? applied.summary,
               doc: current,
             };
           }
