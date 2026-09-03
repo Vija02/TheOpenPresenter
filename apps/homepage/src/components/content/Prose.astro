@@ -22,11 +22,11 @@ const { class: className = "" } = Astro.props;
     "prose-blockquote:border-l-teal-500 prose-blockquote:not-italic prose-blockquote:font-normal prose-blockquote:text-gray-600 dark:prose-blockquote:text-gray-300",
     "prose-img:rounded-lg prose-img:border prose-img:border-gray-200 dark:prose-img:border-gray-800 prose-img:shadow-sm",
     "prose-video:max-w-full prose-video:h-auto prose-video:my-0 prose-video:mx-auto prose-video:rounded-lg prose-video:border prose-video:border-gray-200 dark:prose-video:border-gray-800 prose-video:shadow-sm",
-    // Two caption styles that need to match: <figcaption> under a video, and
-    // the italic line straight after a markdown image.
+    // Markdown images are wrapped into <figure> by rehype-image-figures, so
+    // images and videos share one frame and one caption style.
     "prose-figure:mb-8",
+    "prose-img:my-0 prose-img:mx-auto",
     "prose-figcaption:text-base prose-figcaption:italic prose-figcaption:text-center prose-figcaption:mt-2 prose-figcaption:text-gray-500 dark:prose-figcaption:text-gray-400",
-    "prose-img:mb-2",
     "prose-em:text-gray-500 dark:prose-em:text-gray-400",
     // Inline code only. A bare `prose-code:` would also match the <code> that
     // Shiki nests inside <pre>, drawing a second background box on top of the

@@ -75,7 +75,11 @@ They live in an Astro content collection so a new post is one file.
   Don't put Tailwind classes on markdown elements. Tailwind scans `.astro`/`.ts`
   sources, and relying on it picking up `.md` is fragile. `Prose.astro` styles
   images, video, captions and code blocks already.
-- An italic line straight after an image or video renders as its caption.
+- An italic line straight after an image renders as its caption. A rehype
+  plugin (`src/plugins/rehype-image-figures.mjs`) wraps every markdown image in
+  a `<figure>` and turns that italic paragraph into the `<figcaption>`, so
+  images and videos share one caption style. Videos write the `<figure>` and
+  `<figcaption>` by hand since they are raw HTML.
 - The byline avatar is `src/assets/images/authors/default.jpg`, imported by
   `BlogHeader.astro`. For a second author, pass its `avatar` prop rather than
   swapping the default.
