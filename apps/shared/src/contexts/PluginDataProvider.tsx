@@ -143,11 +143,13 @@ type HocuspocusClientInfo = {
   type: "remote" | "renderer";
   rendererId: string;
   isPreview: boolean;
+  /** Identifies this client across reconnects */
+  instanceId: string;
 };
 
 const initializeHocuspocusProvider = (
   projectId: string,
-  { type, rendererId, isPreview }: HocuspocusClientInfo,
+  { type, rendererId, isPreview, instanceId }: HocuspocusClientInfo,
 ) => {
   return new Promise<HocuspocusProvider>((resolve, reject) => {
     let provider: HocuspocusProvider | null = null;
@@ -178,6 +180,7 @@ const initializeHocuspocusProvider = (
 
     wsUrl.searchParams.set("client", type);
     wsUrl.searchParams.set("rendererId", rendererId);
+    wsUrl.searchParams.set("instanceId", instanceId);
     if (isPreview) {
       wsUrl.searchParams.set("preview", "1");
     }
@@ -225,7 +228,12 @@ export const PluginDataProvider = ({
   } = useQuery({
     queryKey: ["provider", projectId],
     queryFn: () =>
-      initializeHocuspocusProvider(projectId, { type, rendererId, isPreview }),
+      initializeHocuspocusProvider(projectId, {
+        type,
+        rendererId,
+        isPreview,
+        instanceId: currentUserId,
+      }),
     retry: (failureCount, err) =>
       failureCount < 3 &&
       !/Authentication Failed/i.test((err as Error)?.message ?? ""),

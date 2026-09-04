@@ -161,6 +161,7 @@ export default async function installHocuspocus(app: Express) {
         app,
         socketId: data.socketId,
         projectId: data.documentName,
+        params: parseRendererSessionParams(data.requestParameters),
       });
     },
     // Signal heartbeat to screens
