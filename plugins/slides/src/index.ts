@@ -6,17 +6,10 @@ import {
   TRPCObject,
 } from "@repo/base-plugin/server";
 import { VIDEO_VOLUME_KEY } from "@repo/base-types";
-import {
-  TypedMap,
-  extractMediaName,
-  isPubliclyAccessibleUrl,
-  streamToBuffer,
-} from "@repo/lib";
+import { TypedMap } from "@repo/lib";
 import { logger } from "@repo/observability";
-import axios from "axios";
 import { createProxyMiddleware } from "http-proxy-middleware";
 import path from "path";
-import { typeidUnboxed } from "typeid-js";
 import { proxy } from "valtio";
 import { bind } from "valtio-yjs";
 import * as Y from "yjs";
@@ -31,17 +24,15 @@ import {
   rendererWebComponentTag,
 } from "./consts";
 import { isCustomImport, rebuildOrderAfterSlideRemoval } from "./customSlides";
-import { createImageProcessor } from "./googleSlides/cacheGoogleSlideImage";
-import { processHtml } from "./googleSlides/processHtml";
-import { extractSlideData } from "./googleSlides/slideData/slideDataExtractor";
-import { convertPptToPdfViaOfficeOnline } from "./office/convertPptToPdf";
-import { isOnline } from "./office/network";
+import { createImporters } from "./importers";
+import { createImportHelpers } from "./importShared";
 import {
-  deleteOldMedia,
-  processPdfToThumbnails,
-  startThumbnailWorker,
-  uploadPdfAndPrepare,
-} from "./shared";
+  loadedContext,
+  loadedPlugins,
+  loadedRendererDataGetter,
+  loadedYjsData,
+} from "./loadedState";
+import { deleteOldMedia } from "./shared";
 import { activateSlide, yjsActivationTarget } from "./slideActivation";
 import {
   createSlideRef,
@@ -53,15 +44,9 @@ import {
 } from "./slideOrderUtils";
 import {
   AutoplayState,
-  BaseImportData,
   CustomImportData,
-  GoogleSlidesImportData,
-  ImageImportData,
-  ImportData,
-  PdfImportData,
   PluginBaseData,
   PluginRendererData,
-  PptImportData,
 } from "./types";
 
 export const init = (
@@ -358,17 +343,6 @@ const onPluginDataCreated = (pluginInfo: ObjectToTypedMap<Plugin>) => {
 };
 
 // Keep a local copy of the yjs data so that we can use it outside the initialization context
-const loadedPlugins: Record<string, Plugin<PluginBaseData>> = {};
-const loadedContext: Record<string, PluginContext> = {};
-const loadedYjsData: Record<
-  string,
-  ObjectToTypedMap<Plugin<PluginBaseData>>
-> = {};
-const loadedRendererDataGetter: Record<
-  string,
-  () => Record<string, ObjectToTypedMap<PluginRendererData>>
-> = {};
-
 const onPluginDataLoaded = (
   pluginInfo: ObjectToTypedMap<Plugin<PluginBaseData>>,
   context: PluginContext,
@@ -419,123 +393,11 @@ const onRendererDataCreated = (
 };
 
 const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
-  const cleanupImportMedia = (importData: ImportData) => {
-    if (importData.pdfMediaName) {
-      deleteOldMedia(serverPluginApi, [importData.pdfMediaName]);
-    }
-  };
-  function getBaseImport(
-    type: ImportData["type"],
-    name?: string,
-    replaceImportId?: string,
-  ): BaseImportData {
-    return {
-      importId: typeidUnboxed("import"),
-      type,
-      name,
-      fetchId: typeidUnboxed("fetch"),
-      thumbnailLinks: [],
-      slideClickCounts: [],
-      slideIds: [],
-      _isFetching: true,
-      ...(replaceImportId && { replaceImportId }),
-    };
-  }
-
-  const buildReplacedSlideOrder = (
-    oldOrder: string[],
-    replaceImportId: string,
-    newImportId: string,
-    newSlideCount: number,
-  ): string[] => {
-    const survivingIndices = new Set<number>();
-    const rebuilt: string[] = [];
-    let lastSurvivingPos = -1;
-
-    for (const ref of oldOrder) {
-      const { importId, slideIndex } = parseSlideRef(ref);
-
-      // Refs from other imports stay exactly where they are.
-      if (importId !== replaceImportId) {
-        rebuilt.push(ref);
-        continue;
-      }
-
-      // Drop slides that no longer exist or that we've already kept.
-      const slideStillExists = slideIndex < newSlideCount;
-      const alreadyKept = survivingIndices.has(slideIndex);
-      if (!slideStillExists || alreadyKept) continue;
-
-      // Keep, rewriting to the new import id.
-      survivingIndices.add(slideIndex);
-      rebuilt.push(createSlideRef(newImportId, slideIndex));
-      lastSurvivingPos = rebuilt.length - 1;
-    }
-
-    // Append brand-new slides after the last surviving slide of this import.
-    const newSlides: string[] = [];
-    for (let i = 0; i < newSlideCount; i++) {
-      if (!survivingIndices.has(i)) {
-        newSlides.push(createSlideRef(newImportId, i));
-      }
-    }
-    if (newSlides.length > 0) {
-      const insertAt =
-        lastSurvivingPos >= 0 ? lastSurvivingPos + 1 : rebuilt.length;
-      rebuilt.splice(insertAt, 0, ...newSlides);
-    }
-
-    return rebuilt;
-  };
-
-  /**
-   * Handles both appending & replacing
-   */
-  const finalizeImport = ({
-    loadedPlugin,
-    newImportId,
-    slideCount,
-    replaceImportId,
-  }: {
-    loadedPlugin: Plugin<PluginBaseData>;
-    newImportId: string;
-    slideCount: number;
-    replaceImportId?: string;
-  }) => {
-    const oldImport = replaceImportId
-      ? loadedPlugin.pluginData.imports[replaceImportId]
-      : undefined;
-
-    // Append functionality
-    if (!replaceImportId || !oldImport) {
-      const newRefs = Array.from({ length: slideCount }, (_, i) =>
-        createSlideRef(newImportId, i),
-      );
-      loadedPlugin.pluginData.slideOrder = [
-        ...loadedPlugin.pluginData.slideOrder,
-        ...newRefs,
-      ];
-      return;
-    }
-
-    // Replace functionality
-
-    // 1. Drop the old import from the imports map.
-    const { [replaceImportId]: _removed, ...remainingImports } =
-      loadedPlugin.pluginData.imports;
-    loadedPlugin.pluginData.imports = remainingImports;
-
-    // 2. Rebuild slideOrder, preserving manual ordering.
-    loadedPlugin.pluginData.slideOrder = buildReplacedSlideOrder(
-      loadedPlugin.pluginData.slideOrder,
-      replaceImportId,
-      newImportId,
-      slideCount,
-    );
-
-    // 3. Clean up the thumbnails and uploaded PDF
-    cleanupImportMedia(oldImport);
-  };
+  const importHelpers = createImportHelpers(serverPluginApi);
+  const { cleanupImportMedia, getBaseImport, finalizeImport } = importHelpers;
+  const { importPpt, importGoogleSlidesDeck, importPdf, importImages } =
+    createImporters(serverPluginApi, importHelpers);
+  const canvaRouter = createCanvaRouter(t, { serverPluginApi, importHelpers });
 
   /**
    * Drop an entire import and every slide it contributed.
@@ -610,115 +472,14 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
           async ({
             input: { pluginId, mediaName, name, replaceImportId },
             ctx,
-          }) => {
-            if (!process.env.ROOT_URL) {
-              throw new Error(
-                "ROOT_URL env var missing. It is required so Office Online can fetch the uploaded file.",
-              );
-            }
-
-            const log = logger.child({ pluginId, mediaName, replaceImportId });
-            const loadedPlugin = loadedPlugins[pluginId]!;
-            const loadedContextData = loadedContext[pluginId]!;
-
-            const newImport = getBaseImport(
-              "ppt",
+          }) =>
+            importPpt({
+              pluginId,
+              mediaName,
               name,
               replaceImportId,
-            ) as PptImportData;
-            loadedPlugin.pluginData.imports[newImport.importId] = newImport;
-
-            try {
-              const rootUrl =
-                process.env.PUBLIC_ROOT_URL ?? process.env.ROOT_URL;
-              let publicPptUrl: string;
-
-              if (isPubliclyAccessibleUrl(rootUrl)) {
-                publicPptUrl = `${rootUrl}/media/data/${mediaName}`;
-              } else {
-                if (!(await isOnline())) {
-                  throw new Error(
-                    "Converting PowerPoint isn't available offline yet. Please connect to the internet and try again.",
-                  );
-                }
-                // Local/self-host with internet access:
-                // Proxy our files through cloud server
-                const proxyRes = await axios.post(
-                  `${rootUrl}/device/host/media-proxy-url`,
-                  { mediaName },
-                  {
-                    headers: { "x-top-csrf-protection": "1" },
-                    validateStatus: () => true,
-                  },
-                );
-                if (proxyRes.status !== 200 || !proxyRes.data?.url) {
-                  throw new Error(
-                    "Unable to convert PowerPoint on this device. Please make sure you are connected the internet.",
-                  );
-                }
-                publicPptUrl = proxyRes.data.url as string;
-              }
-
-              log.info(
-                { publicPptUrl },
-                "Converting PPT to PDF via Office Online...",
-              );
-
-              const pdfBuffer = await convertPptToPdfViaOfficeOnline(
-                publicPptUrl,
-                log,
-              );
-              log.info("PPT converted to PDF");
-
-              const { fileNames, workerPromise, uploadedPdfFileName } =
-                await processPdfToThumbnails(
-                  {
-                    serverPluginApi,
-                    organizationId: loadedContextData.organizationId,
-                    userId: ctx.userId,
-                    projectId: loadedContextData.projectId,
-                    pluginId,
-                  },
-                  pdfBuffer,
-                  log,
-                  undefined,
-                  extractMediaName(mediaName).mediaId,
-                );
-
-              loadedPlugin.pluginData.imports[
-                newImport.importId
-              ]!.thumbnailLinks = fileNames;
-              loadedPlugin.pluginData.imports[
-                newImport.importId
-              ]!.slideClickCounts = fileNames.map(() => 0);
-              loadedPlugin.pluginData.imports[newImport.importId]!.slideIds =
-                fileNames.map((_, i) => String(i));
-              loadedPlugin.pluginData.imports[
-                newImport.importId
-              ]!.pdfMediaName = uploadedPdfFileName;
-
-              // Wait for thumbnails to be uploaded
-              await workerPromise;
-
-              loadedPlugin.pluginData.imports[newImport.importId]!._isFetching =
-                false;
-
-              finalizeImport({
-                loadedPlugin,
-                newImportId: newImport.importId,
-                slideCount: fileNames.length,
-                replaceImportId,
-              });
-
-              return { importId: newImport.importId };
-            } catch (err) {
-              const { [newImport.importId]: _, ...remaining } =
-                loadedPlugin.pluginData.imports;
-              loadedPlugin.pluginData.imports = remaining;
-              log.error({ err }, "Failed to import PPT");
-              throw err;
-            }
-          },
+              userId: ctx.userId,
+            }),
         ),
 
       selectPdf: t.procedure
@@ -734,70 +495,14 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
           async ({
             input: { pluginId, mediaName, name, replaceImportId },
             ctx,
-          }) => {
-            const log = logger.child({ pluginId, mediaName, replaceImportId });
-            const loadedPlugin = loadedPlugins[pluginId]!;
-            const loadedContextData = loadedContext[pluginId]!;
-
-            const newImport = getBaseImport(
-              "pdf",
+          }) =>
+            importPdf({
+              pluginId,
+              mediaName,
               name,
               replaceImportId,
-            ) as PdfImportData;
-            loadedPlugin.pluginData.imports[newImport.importId] = newImport;
-
-            try {
-              const media = await serverPluginApi.media.getMedia(mediaName);
-              const pdfBuffer = await streamToBuffer(media);
-
-              const { fileNames, workerPromise, uploadedPdfFileName } =
-                await processPdfToThumbnails(
-                  {
-                    serverPluginApi,
-                    organizationId: loadedContextData.organizationId,
-                    userId: ctx.userId,
-                    projectId: loadedContextData.projectId,
-                    pluginId,
-                  },
-                  pdfBuffer,
-                  log,
-                  mediaName,
-                );
-
-              loadedPlugin.pluginData.imports[
-                newImport.importId
-              ]!.pdfMediaName = uploadedPdfFileName;
-              loadedPlugin.pluginData.imports[
-                newImport.importId
-              ]!.thumbnailLinks = fileNames;
-              loadedPlugin.pluginData.imports[
-                newImport.importId
-              ]!.slideClickCounts = fileNames.map(() => 0);
-              loadedPlugin.pluginData.imports[newImport.importId]!.slideIds =
-                fileNames.map((_, i) => String(i));
-
-              // Wait for thumbnails to be uploaded
-              await workerPromise;
-
-              loadedPlugin.pluginData.imports[newImport.importId]!._isFetching =
-                false;
-
-              finalizeImport({
-                loadedPlugin,
-                newImportId: newImport.importId,
-                slideCount: fileNames.length,
-                replaceImportId,
-              });
-
-              return { importId: newImport.importId };
-            } catch (err) {
-              const { [newImport.importId]: _, ...remaining } =
-                loadedPlugin.pluginData.imports;
-              loadedPlugin.pluginData.imports = remaining;
-              log.error({ err }, "Failed to import pdf");
-              throw err;
-            }
-          },
+              userId: ctx.userId,
+            }),
         ),
       selectImage: t.procedure
         .input(
@@ -812,57 +517,9 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
             replaceImportId: z.string().optional(),
           }),
         )
-        .mutation(async ({ input: { pluginId, images, replaceImportId } }) => {
-          const log = logger.child({ pluginId, replaceImportId });
-          const loadedPlugin = loadedPlugins[pluginId]!;
-
-          const newImportIds: string[] = [];
-          let currentReplaceId = replaceImportId;
-
-          try {
-            for (const img of images) {
-              const newImport = getBaseImport(
-                "image",
-                img.name,
-                currentReplaceId,
-              ) as ImageImportData;
-
-              loadedPlugin.pluginData.imports[newImport.importId] = newImport;
-
-              loadedPlugin.pluginData.imports[
-                newImport.importId
-              ]!.thumbnailLinks = [img.mediaName];
-              loadedPlugin.pluginData.imports[
-                newImport.importId
-              ]!.slideClickCounts = [0];
-              loadedPlugin.pluginData.imports[newImport.importId]!.slideIds = [
-                "0",
-              ];
-              loadedPlugin.pluginData.imports[newImport.importId]!._isFetching =
-                false;
-
-              finalizeImport({
-                loadedPlugin,
-                newImportId: newImport.importId,
-                slideCount: 1,
-                replaceImportId: currentReplaceId,
-              });
-
-              newImportIds.push(newImport.importId);
-              currentReplaceId = undefined;
-            }
-
-            return { importIds: newImportIds };
-          } catch (err) {
-            // rollback something fails
-            for (const id of newImportIds) {
-              const { [id]: _, ...remaining } = loadedPlugin.pluginData.imports;
-              loadedPlugin.pluginData.imports = remaining;
-            }
-            log.error({ err }, "Failed to import image(s)");
-            throw err;
-          }
-        }),
+        .mutation(async ({ input: { pluginId, images, replaceImportId } }) =>
+          importImages({ pluginId, images, replaceImportId }),
+        ),
 
       selectSlide: t.procedure
         .input(
@@ -878,193 +535,18 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
           async ({
             input: { pluginId, presentationId, token, name, replaceImportId },
             ctx,
-          }) => {
-            const log = logger.child({
+          }) =>
+            importGoogleSlidesDeck({
               pluginId,
               presentationId,
+              token,
+              name,
               replaceImportId,
-            });
-            const loadedPlugin = loadedPlugins[pluginId]!;
-            const loadedContextData = loadedContext[pluginId]!;
-            const loadedYjs = loadedYjsData[pluginId]!;
-
-            const startTime = Date.now();
-
-            const newImport: GoogleSlidesImportData = {
-              ...getBaseImport("googleslides", name, replaceImportId),
-              type: "googleslides",
-              presentationId,
-              html: "",
-            };
-            loadedPlugin.pluginData.imports[newImport.importId] = newImport;
-
-            try {
-              // Step 1: Fetch HTML embed
-              log.info("Fetching HTML embed");
-              const htmlData = await axios(
-                `https://docs.google.com/presentation/d/${presentationId}/embed?rm=minimal`,
-                {
-                  headers: { Authorization: `Bearer ${token}` },
-                },
-              );
-
-              const ctx_media = {
-                serverPluginApi,
-                organizationId: loadedContextData.organizationId,
-                userId: ctx.userId,
-                projectId: loadedContextData.projectId,
-                pluginId,
-              };
-
-              // Step 2: Start image downloads immediately
-              log.info(
-                "Starting image downloads and PDF download in parallel...",
-              );
-              const imageProcessor = createImageProcessor(
-                htmlData.data,
-                ctx_media,
-              );
-
-              // Step 3: Download PDF in parallel with image downloads
-              const pdfRes = await axios(
-                `https://docs.google.com/feeds/download/presentations/Export?id=${presentationId}&exportFormat=pdf`,
-                {
-                  headers: { Authorization: `Bearer ${token}` },
-                  responseType: "arraybuffer",
-                },
-              );
-              const pdfBuffer = Buffer.from(pdfRes.data);
-              log.info(`Downloaded PDF (${pdfBuffer.length} bytes)`);
-
-              // Step 4: Upload PDF
-              const {
-                fileNames,
-                mediaIds,
-                uploadedPdfMediaId,
-                uploadedPdfFileName,
-              } = await uploadPdfAndPrepare(ctx_media, pdfBuffer);
-
-              loadedPlugin.pluginData.imports[
-                newImport.importId
-              ]!.thumbnailLinks = fileNames;
-              loadedPlugin.pluginData.imports[
-                newImport.importId
-              ]!.pdfMediaName = uploadedPdfFileName;
-
-              log.info("PDF uploaded. Signaling image uploads to start...");
-              imageProcessor.setParentMediaId(uploadedPdfMediaId);
-
-              // Step 5: Run thumbnail worker in parallel with remaining image uploads
-              const [_, urlMapping] = await Promise.all([
-                startThumbnailWorker(
-                  ctx_media,
-                  uploadedPdfFileName,
-                  mediaIds,
-                  uploadedPdfMediaId,
-                  log,
-                ),
-                imageProcessor.result,
-              ]);
-
-              log.info("All images processed");
-
-              // Process HTML and extract slide data
-              const processedHtml = processHtml(htmlData.data, urlMapping);
-              const slideData = extractSlideData(processedHtml);
-
-              if (!slideData) {
-                log.error(
-                  { processedHtml },
-                  "Unable to extract data from slide",
-                );
-              }
-
-              const slideIds = slideData
-                ? slideData.slides.map((slide) => slide.slideId)
-                : fileNames.map((_, i) => String(i));
-              const slideClickCounts = slideData
-                ? slideData.slides.map((slide) => slide.clickCount)
-                : fileNames.map(() => 0);
-              const slideTransitionDurations = slideData
-                ? slideData.slides.map(
-                    (slide) => slide.slideTransitionDurationMs,
-                  )
-                : fileNames.map(() => 0);
-              const slideClickDurations: number[][] = slideData
-                ? slideData.slides.map((slide) => slide.clickDurationsMs)
-                : fileNames.map(() => [] as number[]);
-              const slideAutoplayDurations = slideData
-                ? slideData.slides.map(
-                    (slide) => slide.autoplayObjectDurationMs,
-                  )
-                : fileNames.map(() => 0);
-
-              loadedYjs.doc?.transact(() => {
-                loadedPlugin.pluginData.imports[
-                  newImport.importId
-                ]!.slideClickCounts = slideClickCounts;
-                (
-                  loadedPlugin.pluginData.imports[
-                    newImport.importId
-                  ]! as GoogleSlidesImportData
-                ).slideTransitionDurations = slideTransitionDurations;
-                (
-                  loadedPlugin.pluginData.imports[
-                    newImport.importId
-                  ]! as GoogleSlidesImportData
-                ).slideClickDurations = slideClickDurations;
-                (
-                  loadedPlugin.pluginData.imports[
-                    newImport.importId
-                  ]! as GoogleSlidesImportData
-                ).slideAutoplayDurations = slideAutoplayDurations;
-                loadedPlugin.pluginData.imports[newImport.importId]!.slideIds =
-                  slideIds;
-                (
-                  loadedPlugin.pluginData.imports[
-                    newImport.importId
-                  ]! as GoogleSlidesImportData
-                ).html = processedHtml;
-                loadedPlugin.pluginData.imports[
-                  newImport.importId
-                ]!._isFetching = false;
-
-                finalizeImport({
-                  loadedPlugin,
-                  newImportId: newImport.importId,
-                  slideCount: fileNames.length,
-                  replaceImportId,
-                });
-              });
-
-              const elapsed = Date.now() - startTime;
-              log.info(
-                {
-                  durationMs: elapsed,
-                  slideCount: slideClickCounts.length,
-                  cachedImages: urlMapping.size,
-                },
-                `Google Slides import completed in ${elapsed}ms`,
-              );
-
-              return { importId: newImport.importId };
-            } catch (err) {
-              const { [newImport.importId]: _, ...remaining } =
-                loadedPlugin.pluginData.imports;
-              loadedPlugin.pluginData.imports = remaining;
-              log.error({ err }, "Failed to import google slide");
-              throw err;
-            }
-          },
+              userId: ctx.userId,
+            }),
         ),
 
-      ...createCanvaRouter(t, {
-        serverPluginApi,
-        loadedPlugins,
-        loadedContext,
-        getBaseImport,
-        finalizeImport,
-      }),
+      ...canvaRouter.procedures,
 
       removeImport: t.procedure
         .input(
