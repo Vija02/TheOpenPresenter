@@ -1,20 +1,11 @@
-import {
-  Plugin,
-  PluginContext,
-  ServerPluginApi,
-  TRPCObject,
-} from "@repo/base-plugin/server";
+import { ServerPluginApi, TRPCObject } from "@repo/base-plugin/server";
 import { logger } from "@repo/observability";
 import z from "zod";
 
-import { processPdfToThumbnails } from "../shared";
-import {
-  BaseImportData,
-  CanvaImportData,
-  ImportData,
-  PluginBaseData,
-} from "../types";
-import { exportDesignAsPdf, listDesigns } from "./api";
+import type { ImportHelpers } from "../importShared";
+import { loadedContext } from "../loadedState";
+import { listDesigns } from "./api";
+import { createCanvaImporter } from "./importCanvaDesign";
 import { getCanvaOAuthConfig } from "./oauth";
 import {
   assertConnectionInOrg,
@@ -26,19 +17,7 @@ import {
 
 export type CanvaRouterDeps = {
   serverPluginApi: ServerPluginApi;
-  loadedPlugins: Record<string, Plugin<PluginBaseData>>;
-  loadedContext: Record<string, PluginContext>;
-  getBaseImport: (
-    type: ImportData["type"],
-    name?: string,
-    replaceImportId?: string,
-  ) => BaseImportData;
-  finalizeImport: (args: {
-    loadedPlugin: Plugin<PluginBaseData>;
-    newImportId: string;
-    slideCount: number;
-    replaceImportId?: string;
-  }) => void;
+  importHelpers: ImportHelpers;
 };
 
 type RequestCtx = {
@@ -48,13 +27,7 @@ type RequestCtx = {
 };
 
 export const createCanvaRouter = (t: TRPCObject, deps: CanvaRouterDeps) => {
-  const {
-    serverPluginApi,
-    loadedPlugins,
-    loadedContext,
-    getBaseImport,
-    finalizeImport,
-  } = deps;
+  const { serverPluginApi, importHelpers } = deps;
 
   const requireCanvaOrgAccess = async (pluginId: string, ctx: RequestCtx) => {
     const loadedContextData = loadedContext[pluginId];
@@ -94,7 +67,12 @@ export const createCanvaRouter = (t: TRPCObject, deps: CanvaRouterDeps) => {
     return loadedContextData;
   };
 
-  return {
+  const importCanvaDesign = createCanvaImporter(
+    serverPluginApi,
+    importHelpers,
+  );
+
+  const procedures = {
     canvaStatus: t.procedure
       .input(z.object({ pluginId: z.string() }))
       .query(async ({ input: { pluginId }, ctx }) => {
@@ -192,82 +170,25 @@ export const createCanvaRouter = (t: TRPCObject, deps: CanvaRouterDeps) => {
           input: { pluginId, connectionId, designId, name, replaceImportId },
           ctx,
         }) => {
-          const log = logger.child({ pluginId, designId, replaceImportId });
           const loadedContextData = await requireCanvaConnection(
             pluginId,
             connectionId,
             ctx,
           );
-          const loadedPlugin = loadedPlugins[pluginId]!;
 
-          const newImport: CanvaImportData = {
-            ...getBaseImport("canva", name, replaceImportId),
-            type: "canva",
-            designId,
+          return importCanvaDesign({
+            pluginId,
             connectionId,
-          };
-          loadedPlugin.pluginData.imports[newImport.importId] = newImport;
-
-          try {
-            const accessToken = await getCanvaAccessToken(
-              serverPluginApi,
-              connectionId,
-            );
-
-            log.info("Exporting Canva design to PDF...");
-            const pdfBuffer = await exportDesignAsPdf(
-              accessToken,
-              designId,
-              log,
-            );
-            log.info(`Canva export downloaded (${pdfBuffer.length} bytes)`);
-
-            const { fileNames, workerPromise, uploadedPdfFileName } =
-              await processPdfToThumbnails(
-                {
-                  serverPluginApi,
-                  organizationId: loadedContextData.organizationId,
-                  userId: ctx.userId,
-                  projectId: loadedContextData.projectId,
-                  pluginId,
-                },
-                pdfBuffer,
-                log,
-              );
-
-            loadedPlugin.pluginData.imports[
-              newImport.importId
-            ]!.thumbnailLinks = fileNames;
-            loadedPlugin.pluginData.imports[
-              newImport.importId
-            ]!.slideClickCounts = fileNames.map(() => 0);
-            loadedPlugin.pluginData.imports[newImport.importId]!.slideIds =
-              fileNames.map((_, i) => String(i));
-            loadedPlugin.pluginData.imports[newImport.importId]!.pdfMediaName =
-              uploadedPdfFileName;
-
-            // Wait for thumbnails to be uploaded
-            await workerPromise;
-
-            loadedPlugin.pluginData.imports[newImport.importId]!._isFetching =
-              false;
-
-            finalizeImport({
-              loadedPlugin,
-              newImportId: newImport.importId,
-              slideCount: fileNames.length,
-              replaceImportId,
-            });
-
-            return { importId: newImport.importId };
-          } catch (err) {
-            const { [newImport.importId]: _, ...remaining } =
-              loadedPlugin.pluginData.imports;
-            loadedPlugin.pluginData.imports = remaining;
-            log.error({ err }, "Failed to import Canva design");
-            throw err;
-          }
+            designId,
+            name,
+            replaceImportId,
+            organizationId: loadedContextData.organizationId,
+            projectId: loadedContextData.projectId,
+            userId: ctx.userId,
+          });
         },
       ),
   };
+
+  return { procedures, importCanvaDesign };
 };
