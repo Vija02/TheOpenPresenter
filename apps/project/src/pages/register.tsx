@@ -11,9 +11,13 @@ import { useResetURQLClient } from "@/urql";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRegisterMutation, useSharedQuery } from "@repo/graphql";
 import { extractError, getCodeFromError } from "@repo/lib";
-import { captureEvent } from "@repo/observability/initAnalytics";
-import { Alert, Button, Form, InputControl, Link } from "@repo/ui";
+import {
+  captureEvent,
+  captureException,
+} from "@repo/observability/initAnalytics";
+import { Alert, Button, ErrorAlert, Form, InputControl, Link } from "@repo/ui";
 import { useCallback, useRef, useState } from "react";
+import { ErrorBoundary } from "react-error-boundary";
 import { useForm } from "react-hook-form";
 import { CombinedError } from "urql";
 import { Link as WouterLink, useLocation, useSearchParams } from "wouter";
@@ -115,93 +119,98 @@ const Register = () => {
         ) : (
           <div className="flex justify-center px-4 py-12">
             <div className="max-w-sm w-full">
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)}>
-                  <div className="stack-col items-start gap-4">
-                    <h1 className="text-2xl font-bold text-center w-full">
-                      Create your account
-                    </h1>
+              <ErrorBoundary
+                FallbackComponent={ErrorAlert}
+                onError={captureException}
+              >
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)}>
+                    <div className="stack-col items-start gap-4">
+                      <h1 className="text-2xl font-bold text-center w-full">
+                        Create your account
+                      </h1>
 
-                    <SocialLoginOptions next={redirectTo} />
+                      <SocialLoginOptions next={redirectTo} />
 
-                    <InputControl
-                      control={form.control}
-                      name="name"
-                      label="Name"
-                      autoComplete="name"
-                      data-testid="registerpage-input-name"
-                      autoFocus
-                    />
+                      <InputControl
+                        control={form.control}
+                        name="name"
+                        label="Name"
+                        autoComplete="name"
+                        data-testid="registerpage-input-name"
+                        autoFocus
+                      />
 
-                    <InputControl
-                      control={form.control}
-                      name="email"
-                      label="E-mail"
-                      type="email"
-                      autoComplete="email"
-                      data-testid="registerpage-input-email"
-                    />
+                      <InputControl
+                        control={form.control}
+                        name="email"
+                        label="E-mail"
+                        type="email"
+                        autoComplete="email"
+                        data-testid="registerpage-input-email"
+                      />
 
-                    <InputControl
-                      control={form.control}
-                      name="password"
-                      label="Password"
-                      placeholder="Password"
-                      type="password"
-                      autoComplete="new-password"
-                      data-testid="registerpage-input-password"
-                    />
+                      <InputControl
+                        control={form.control}
+                        name="password"
+                        label="Password"
+                        placeholder="Password"
+                        type="password"
+                        autoComplete="new-password"
+                        data-testid="registerpage-input-password"
+                      />
 
-                    <WrappedPasswordStrength
-                      password={form.watch("password")}
-                    />
+                      <WrappedPasswordStrength
+                        password={form.watch("password")}
+                      />
 
-                    <InputControl
-                      control={form.control}
-                      name="confirm"
-                      label="Confirm password"
-                      placeholder="Password"
-                      type="password"
-                      autoComplete="new-password"
-                      data-testid="registerpage-input-password2"
-                    />
+                      <InputControl
+                        control={form.control}
+                        name="confirm"
+                        label="Confirm password"
+                        placeholder="Password"
+                        type="password"
+                        autoComplete="new-password"
+                        data-testid="registerpage-input-password2"
+                      />
 
-                    <Turnstile
-                      ref={turnstileRef}
-                      onToken={(token) => {
-                        turnstileTokenRef.current = token;
-                      }}
-                    />
+                      <Turnstile
+                        ref={turnstileRef}
+                        onToken={(token) => {
+                          turnstileTokenRef.current = token;
+                        }}
+                      />
 
-                    {error ? (
-                      <Alert
-                        variant="destructive"
-                        title="Error: Failed to register"
+                      {error ? (
+                        <Alert
+                          variant="destructive"
+                          title="Error: Failed to register"
+                        >
+                          {extractError(error).message}
+                        </Alert>
+                      ) : null}
+
+                      <Button
+                        type="submit"
+                        variant="success"
+                        isLoading={form.formState.isSubmitting}
+                        data-testid="registerpage-submit-button"
+                        className="w-full"
                       >
-                        {extractError(error).message}
-                      </Alert>
-                    ) : null}
+                        Register
+                      </Button>
 
-                    <Button
-                      type="submit"
-                      variant="success"
-                      isLoading={form.formState.isSubmitting}
-                      data-testid="registerpage-submit-button"
-                      className="w-full"
-                    >
-                      Register
-                    </Button>
-
-                    <div className="stack-col items-center w-full pt-2">
-                      <Link asChild>
-                        <WouterLink href="/login" className="text-sm">
-                          Already have an account? Sign in
-                        </WouterLink>
-                      </Link>
+                      <div className="stack-col items-center w-full pt-2">
+                        <Link asChild>
+                          <WouterLink href="/login" className="text-sm">
+                            Already have an account? Sign in
+                          </WouterLink>
+                        </Link>
+                      </div>
                     </div>
-                  </div>
-                </form>
-              </Form>
+                  </form>
+                </Form>
+              </ErrorBoundary>
             </div>
           </div>
         )

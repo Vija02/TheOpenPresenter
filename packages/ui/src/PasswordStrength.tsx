@@ -19,35 +19,43 @@ export function PasswordStrength({
   ],
   isDirty = false,
 }: PasswordStrengthProps) {
-  if (!isDirty) {
-    return null;
-  }
+  // The block stays mounted and toggles visibility instead of unmounting text
+  // nodes on every keystroke. A full unmount breaks when a browser translation
+  // (for example Chrome on Android) wraps these text nodes, because React then
+  // tries to remove DOM it no longer owns.
+  const isWeak = passwordStrength < 2;
 
-  const content = (
-    <ul className="list-disc list-inside">
-      {suggestions.map((suggestion, key) => {
-        return (
-          <li key={key} className="text-secondary">
-            {suggestion}
-          </li>
-        );
-      })}
-    </ul>
-  );
-
+  // Inline `display` toggles the elements without dropping them from the tree.
+  // A `hidden` attribute or utility class is not safe here, because the
+  // `display` utility classes on these elements win over it.
   return (
-    <div className="stack-col items-start w-full">
-      {passwordStrength < 2 && (
-        <p className="text-secondary">
-          You can proceed. However, we recommend choosing a stronger password.
-        </p>
-      )}
+    <div
+      className="stack-col items-start w-full"
+      style={{ display: isDirty ? undefined : "none" }}
+    >
+      <p
+        className="text-secondary"
+        style={{ display: isWeak ? undefined : "none" }}
+      >
+        You can proceed. However, we recommend choosing a stronger password.
+      </p>
       <Progress
         className="w-full"
         value={strengthToPercent(passwordStrength)}
-        variant={passwordStrength < 2 ? "destructive" : "success"}
+        variant={isWeak ? "destructive" : "success"}
       />
-      {passwordStrength < 2 && content}
+      <ul
+        className="list-disc list-inside"
+        style={{ display: isWeak ? undefined : "none" }}
+      >
+        {suggestions.map((suggestion, key) => {
+          return (
+            <li key={key} className="text-secondary">
+              {suggestion}
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }
