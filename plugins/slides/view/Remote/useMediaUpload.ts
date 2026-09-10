@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { SUPPORTED_IMAGE_EXTENSIONS } from "@repo/lib";
 import { usePluginAPI } from "../pluginApi";
+import { classifySlideFile } from "../../src/slideFileTypes";
 import { trpc } from "../trpc";
 
 export const useMediaUpload = () => {
@@ -26,23 +26,21 @@ export const useMediaUpload = () => {
       const ppts: { mediaName: string; name?: string }[] = [];
 
       for (const file of uploadedFiles) {
-        // Grab the extension and prepend the dot so it matches the constants array
-        const rawExt = file.mediaName.split(".").pop()?.toLowerCase() || "";
-        const ext = `.${rawExt}`;
-        
+        const kind = classifySlideFile(file.mediaName);
+
         const fileData = {
           mediaName: file.mediaName,
           name: file.originalName ?? undefined,
         };
 
-        if (SUPPORTED_IMAGE_EXTENSIONS.includes(ext)) {
+        if (kind === "image") {
           images.push(fileData);
-        } else if (ext === ".pdf") {
+        } else if (kind === "pdf") {
           pdfs.push(fileData);
-        } else if ([".ppt", ".pptx"].includes(ext)) {
+        } else if (kind === "ppt") {
           ppts.push(fileData);
         } else {
-          throw new Error(`Unsupported file type: ${ext}`);
+          throw new Error(`Unsupported file type: ${file.mediaName}`);
         }
       }
 
