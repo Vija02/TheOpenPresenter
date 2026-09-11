@@ -38,7 +38,7 @@ export const registerPublicCanvaRoutes = (
 
   /** POST /plugin/slides/canva-import/:token */
   const importHandler: RequestHandler = async (req, res) => {
-    const { connectionId, designId, title } = req.body ?? {};
+    const { connectionId, designId, title, uploaderName } = req.body ?? {};
 
     if (!connectionId || !designId) {
       res.status(400).json({ error: "Missing design details." });
@@ -61,7 +61,7 @@ export const registerPublicCanvaRoutes = (
         res,
         mediaId: null,
         originalName: title ?? "Canva design",
-        uploaderName: (req.body?.name as string) || null,
+        uploaderName: (uploaderName as string) || null,
         deps,
         doImport: (replaceImportId) =>
           deps.importCanvaDesign({
@@ -119,7 +119,9 @@ export const registerPublicCanvaRoutes = (
             link.id,
           ))
         ) {
-          res.status(403).json({ error: "That Canva account isn't connected." });
+          res
+            .status(403)
+            .json({ error: "That Canva account isn't connected." });
           return;
         }
 

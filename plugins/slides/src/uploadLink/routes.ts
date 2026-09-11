@@ -120,8 +120,10 @@ export const registerUploadLinkRoutes = (
     const link = await findLinkByToken(serverPluginApi, token);
     const check = checkUploadLink(link);
 
+    const isSpent = !check.ok && check.reason === "limit-reached";
+
     // The page is HTML, so its rejections have to be HTML too.
-    if (!check.ok || !link) {
+    if ((!check.ok && !isSpent) || !link) {
       const reason = check.ok ? "not-found" : check.reason;
       const status = UPLOAD_LINK_STATUS[reason];
       const message = UPLOAD_LINK_MESSAGE[reason];
@@ -145,6 +147,9 @@ export const registerUploadLinkRoutes = (
             ),
             label: link.label,
             accept: PUBLIC_ACCEPT,
+            rejectionMessage: isSpent
+              ? UPLOAD_LINK_MESSAGE["limit-reached"]
+              : null,
             googleClientId: process.env.PLUGIN_GOOGLE_SLIDES_CLIENT_ID ?? "",
             googleAppId: (
               process.env.PLUGIN_GOOGLE_SLIDES_CLIENT_ID ?? ""
@@ -156,6 +161,13 @@ export const registerUploadLinkRoutes = (
           },
         }),
       );
+      return;
+    }
+
+    if (isSpent) {
+      res
+        .status(UPLOAD_LINK_STATUS["limit-reached"])
+        .json({ error: UPLOAD_LINK_MESSAGE["limit-reached"] });
       return;
     }
 
@@ -202,7 +214,7 @@ export const registerUploadLinkRoutes = (
         res,
         mediaId: uuidFromMediaIdOrUUIDOrMediaName(mediaId),
         originalName: file.originalname,
-        uploaderName: (req.body?.name as string) || null,
+        uploaderName: (req.body?.uploaderName as string) || null,
         deps,
         doImport: (replaceImportId) =>
           deps.importFile({
@@ -236,7 +248,7 @@ export const registerUploadLinkRoutes = (
    * Import a Google Slides deck
    */
   const gslidesHandler: RequestHandler = async (req, res) => {
-    const { presentationId, name, googleToken } = req.body ?? {};
+    const { presentationId, name, uploaderName, googleToken } = req.body ?? {};
 
     if (!presentationId || !googleToken) {
       res.status(400).json({ error: "Missing presentation details." });
@@ -252,7 +264,7 @@ export const registerUploadLinkRoutes = (
         res,
         mediaId: null,
         originalName: name ?? "Google Slides",
-        uploaderName: (req.body?.name as string) || null,
+        uploaderName: (uploaderName as string) || null,
         deps,
         doImport: (replaceImportId) =>
           deps.importGoogleSlides({
@@ -302,9 +314,11 @@ export const registerUploadLinkRoutes = (
         }
 
         const current = await findCurrentUpload(serverPluginApi, link);
+        const check = checkUploadLink(link);
 
         res.json({
           attemptsRemaining: attemptsRemaining(link),
+          rejectionMessage: check.ok ? null : UPLOAD_LINK_MESSAGE[check.reason],
           current: current
             ? {
                 originalName: current.original_name,

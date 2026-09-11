@@ -25,9 +25,9 @@ import {
 } from "../utils/useAutoplay";
 import CustomSlideEditorModal from "./CustomSlides/CustomSlideEditorModal";
 import { useCustomSlides } from "./CustomSlides/useCustomSlides";
-import { UploadLinksDialog } from "./UploadLinks/UploadLinksDialog";
 import Landing from "./Landing";
 import SettingsModal from "./SettingsModal";
+import { UploadLinksDialog } from "./UploadLinks/UploadLinksDialog";
 import "./index.css";
 import { useSlideMediaPicker } from "./integrations";
 

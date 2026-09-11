@@ -1,8 +1,8 @@
 import { PublicAccessNoticeDialog } from "@repo/base-plugin/client";
-import { ReactNode, useState } from "react";
+import { useState } from "react";
 
+import { PickerCard } from "../../components/PickerCard";
 import { usePluginAPI } from "../../pluginApi";
-import { PickerCard } from "../component/PickerCard";
 import { canvaIntegration } from "./canva";
 import { googleSlidesIntegration } from "./googleSlides";
 import { IntegrationLaunchContext, SlideIntegration } from "./types";
@@ -11,21 +11,6 @@ export const slideIntegrations: SlideIntegration[] = [
   googleSlidesIntegration,
   canvaIntegration,
 ];
-
-export const IntegrationSection = ({
-  children,
-  title = "Or import from integration",
-  className = "",
-}: {
-  children: ReactNode;
-  title?: string;
-  className?: string;
-}) => (
-  <div className={`flex flex-col gap-3 ${className}`}>
-    <p className="text-lg font-semibold text-primary">{title}</p>
-    <div className="flex flex-wrap gap-4">{children}</div>
-  </div>
-);
 
 export const IntegrationCards = ({
   replaceImportId,

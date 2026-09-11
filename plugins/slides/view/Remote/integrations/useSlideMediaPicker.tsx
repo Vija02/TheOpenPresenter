@@ -3,10 +3,11 @@ import { useCallback, useRef } from "react";
 import { FaLink } from "react-icons/fa6";
 import { RiSlideshowLine } from "react-icons/ri";
 
+import { IntegrationSection } from "../../components/IntegrationSection";
+import { PickerCard } from "../../components/PickerCard";
 import { usePluginAPI } from "../../pluginApi";
-import { PickerCard } from "../component/PickerCard";
 import { useMediaUpload } from "../useMediaUpload";
-import { IntegrationSection, slideIntegrations } from "./IntegrationCards";
+import { slideIntegrations } from "./IntegrationCards";
 import { IntegrationController, IntegrationLaunchContext } from "./types";
 
 export type PickMediaOptions = IntegrationLaunchContext & {
