@@ -31,7 +31,7 @@ export type CanvaOAuthConfig = {
 export const getCanvaOAuthConfig = (): CanvaOAuthConfig | null => {
   const clientId = process.env.PLUGIN_SLIDES_CANVA_CLIENT_ID;
   const clientSecret = process.env.PLUGIN_SLIDES_CANVA_CLIENT_SECRET;
-  const rootUrl = process.env.PUBLIC_ROOT_URL ?? process.env.ROOT_URL;
+  const rootUrl = process.env.ROOT_URL;
 
   if (!clientId || !clientSecret || !rootUrl) {
     return null;

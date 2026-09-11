@@ -83,7 +83,7 @@ const renderPopupResult = ({
 
 export const registerCanvaRoutes = (serverPluginApi: ServerPluginApi) => {
   const appOrigin = (() => {
-    const rootUrl = process.env.PUBLIC_ROOT_URL ?? process.env.ROOT_URL;
+    const rootUrl = process.env.ROOT_URL;
     try {
       return new URL(rootUrl!).origin;
     } catch {
