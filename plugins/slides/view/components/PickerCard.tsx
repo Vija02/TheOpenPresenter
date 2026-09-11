@@ -5,20 +5,29 @@ export const PickerCard = ({
   text,
   onClick,
   isLoading,
+  isDisabled,
+  testId,
 }: {
   icon: React.ReactNode;
   text: string;
   onClick: () => void;
   isLoading?: boolean;
+  isDisabled?: boolean;
+  testId?: string;
 }) => {
+  const isInert = isLoading || isDisabled;
+
   return (
     <div
       className={cn(
         "stack-col border border-stroke rounded-sm p-2 justify-center aspect-square w-36",
-        isLoading && "cursor-not-allowed opacity-80",
-        !isLoading && "cursor-pointer hover:border-blue-400",
+        isInert && "cursor-not-allowed opacity-80",
+        isDisabled && "opacity-50",
+        !isInert && "cursor-pointer hover:border-blue-400",
       )}
-      onClick={!isLoading ? onClick : undefined}
+      onClick={!isInert ? onClick : undefined}
+      data-testid={testId}
+      aria-disabled={isDisabled || undefined}
     >
       {icon}
       <p className="font-bold">{text}</p>

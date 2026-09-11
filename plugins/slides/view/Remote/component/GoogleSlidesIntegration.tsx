@@ -1,10 +1,11 @@
 import { PublicAccessNoticeDialog } from "@repo/base-plugin/client";
 import { useState } from "react";
 import { FcGoogle } from "react-icons/fc";
+
+import { PickerCard } from "../../components/PickerCard";
 import { usePluginAPI } from "../../pluginApi";
 import { trpc } from "../../trpc";
 import { SlidePicker } from "../ImportFile/SlidePicker";
-import { PickerCard } from "./PickerCard";
 
 export const GoogleSlidesIntegration = ({
   replaceImportId,

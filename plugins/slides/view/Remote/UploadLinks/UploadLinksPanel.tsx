@@ -16,6 +16,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { FaCopy, FaLink, FaTrash } from "react-icons/fa6";
 
+import { UploadedSlidesPreview } from "../../components/UploadedSlidesPreview";
 import { usePluginAPI } from "../../pluginApi";
 import { trpc } from "../../trpc";
 
@@ -185,7 +186,7 @@ export const UploadLinksPanel = () => {
       {activeLinks.map((link: any) => (
         <div
           key={link.id}
-          className="border border-stroke rounded-lg p-3 flex flex-col gap-2"
+          className="border border-stroke rounded-sm p-3 flex flex-col gap-2"
         >
           <div className="flex items-center justify-between gap-2">
             <span className="font-semibold text-sm">
@@ -221,7 +222,7 @@ export const UploadLinksPanel = () => {
           </div>
 
           {link.current_thumbnail_media_names?.length ? (
-            <div className="flex flex-col gap-2 bg-surface-secondary rounded-md p-2">
+            <div className="flex flex-col gap-2 bg-surface-primary rounded-md p-2">
               <div className="flex flex-col min-w-0">
                 <span className="text-sm font-medium truncate">
                   {link.current_original_name ?? "Slide"}
@@ -236,18 +237,9 @@ export const UploadLinksPanel = () => {
                 </span>
               </div>
 
-              <div className="flex gap-2 overflow-x-auto pb-1">
-                {link.current_thumbnail_media_names.map(
-                  (mediaName: string, i: number) => (
-                    <img
-                      key={`${mediaName}-${i}`}
-                      src={`/media/data/${mediaName}`}
-                      alt=""
-                      className="h-16 aspect-[4/3] object-cover rounded border border-stroke shrink-0"
-                    />
-                  ),
-                )}
-              </div>
+              <UploadedSlidesPreview
+                mediaNames={link.current_thumbnail_media_names}
+              />
             </div>
           ) : (
             <span className="text-xs text-tertiary">Nothing received yet.</span>

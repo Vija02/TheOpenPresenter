@@ -1,6 +1,6 @@
 import { useRef } from "react";
-import { FcGoogle } from "react-icons/fc";
 
+import { googleSlidesBrand } from "../../components/integrationBranding";
 import { usePluginAPI } from "../../pluginApi";
 import { trpc } from "../../trpc";
 import { SlidePicker } from "../ImportFile/SlidePicker";
@@ -44,8 +44,6 @@ const GoogleSlidesController = ({ children }: IntegrationControllerProps) => {
 };
 
 export const googleSlidesIntegration: SlideIntegration = {
-  id: "googleslides",
-  name: "Google Slides",
-  icon: <FcGoogle className="size-10" />,
+  ...googleSlidesBrand,
   Controller: GoogleSlidesController,
 };

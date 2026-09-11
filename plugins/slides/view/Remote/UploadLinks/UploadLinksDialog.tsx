@@ -17,7 +17,7 @@ export const UploadLinksDialog = ({
   onOpenChange: (open: boolean) => void;
 }) => (
   <Dialog open={isOpen} onOpenChange={onOpenChange}>
-    <DialogContent size="lg">
+    <DialogContent size="3xl">
       <DialogHeader>
         <DialogTitle>Collect slides from others</DialogTitle>
       </DialogHeader>

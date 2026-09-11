@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { SiCanva } from "react-icons/si";
 
+import { canvaBrand } from "../../components/integrationBranding";
 import { usePluginAPI } from "../../pluginApi";
 import { trpc } from "../../trpc";
 import { CanvaAccountChooser } from "../ImportFile/CanvaAccountChooser";
@@ -188,8 +188,6 @@ const CanvaController = ({ children }: IntegrationControllerProps) => {
 };
 
 export const canvaIntegration: SlideIntegration = {
-  id: "canva",
-  name: "Canva",
-  icon: <SiCanva className="size-10 text-[#00C4CC]" />,
+  ...canvaBrand,
   Controller: CanvaController,
 };
