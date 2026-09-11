@@ -45,7 +45,9 @@ export const getUserIdForSession = async (
 export type CanvaPendingAuth = {
   codeVerifier: string;
   organizationId: string;
-  userId: string;
+  /** Null when the connection is being made through a public upload link. */
+  userId: string | null;
+  uploadLinkId?: string | null;
 };
 
 /**
@@ -54,14 +56,14 @@ export type CanvaPendingAuth = {
 export const savePendingAuth = async (
   serverPluginApi: ServerPluginApi,
   stateId: string,
-  { codeVerifier, organizationId, userId }: CanvaPendingAuth,
+  { codeVerifier, organizationId, userId, uploadLinkId }: CanvaPendingAuth,
 ): Promise<void> => {
   const db = serverPluginApi.getDangerousRootPluginDb(pluginName);
   await db.query(
     `insert into canva_oauth_state
-        (state_id, code_verifier, organization_id, user_id)
-      values ($1, $2, $3, $4)`,
-    [stateId, codeVerifier, organizationId, userId],
+        (state_id, code_verifier, organization_id, user_id, upload_link_id)
+      values ($1, $2, $3, $4, $5)`,
+    [stateId, codeVerifier, organizationId, userId, uploadLinkId ?? null],
   );
 };
 
@@ -78,7 +80,8 @@ export const consumePendingAuth = async (
       where state_id = $1 and expires_at > now()
       returning code_verifier as "codeVerifier",
                 organization_id as "organizationId",
-                user_id as "userId"`,
+                user_id as "userId",
+                upload_link_id as "uploadLinkId"`,
     [stateId],
   );
 
@@ -174,6 +177,7 @@ export const saveConnection = async (
   {
     organizationId,
     userId,
+    uploadLinkId,
     token,
     canvaUserId,
     canvaTeamId,
@@ -181,6 +185,7 @@ export const saveConnection = async (
   }: {
     organizationId: string;
     userId: string | null;
+    uploadLinkId?: string | null;
     token: CanvaTokenResponse;
     canvaUserId: string;
     canvaTeamId?: string | null;
@@ -195,8 +200,8 @@ export const saveConnection = async (
     } = await client.query<{ id: string }>(
       `insert into canva_connection
           (organization_id, connected_by_user_id, canva_user_id, canva_team_id,
-           canva_display_name, scopes)
-        values ($1, $2, $3, $4, $5, $6)
+           canva_display_name, scopes, created_via_upload_link_id)
+        values ($1, $2, $3, $4, $5, $6, $7)
         on conflict (organization_id, canva_user_id) do update set
           connected_by_user_id = excluded.connected_by_user_id,
           canva_team_id = excluded.canva_team_id,
@@ -212,6 +217,7 @@ export const saveConnection = async (
         canvaTeamId ?? null,
         canvaDisplayName ?? null,
         token.scope ?? "",
+        uploadLinkId ?? null,
       ],
     );
 
