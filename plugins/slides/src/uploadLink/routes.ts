@@ -34,7 +34,7 @@ import {
 export const MAX_UPLOAD_BYTES = 50 * 1024 * 1024;
 
 export const getUploadLinkBaseUrl = (): string => {
-  const root = process.env.PUBLIC_ROOT_URL ?? process.env.ROOT_URL ?? "";
+  const root = process.env.ROOT_URL ?? "";
   return `${root}/plugin/${pluginName}/upload`;
 };
 

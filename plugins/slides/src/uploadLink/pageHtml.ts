@@ -10,7 +10,7 @@ const getImportMapTag = async (): Promise<string> => {
     return cachedImportMap;
   }
 
-  const root = process.env.PUBLIC_ROOT_URL ?? process.env.ROOT_URL ?? "";
+  const root = process.env.ROOT_URL ?? "";
 
   const res = await fetch(`${root}/assets/shared/importmap.json`);
   if (!res.ok) {
