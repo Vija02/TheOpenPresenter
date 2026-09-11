@@ -24,15 +24,15 @@ import {
   rendererWebComponentTag,
 } from "./consts";
 import { isCustomImport, rebuildOrderAfterSlideRemoval } from "./customSlides";
-import { createImporters } from "./importers";
 import { createImportHelpers } from "./importShared";
+import { createImporters } from "./importers";
 import {
   loadedContext,
   loadedPlugins,
   loadedRendererDataGetter,
   loadedYjsData,
 } from "./loadedState";
-import { deleteOldMedia } from "./shared";
+import { createRemoveImportById } from "./removeImport";
 import { activateSlide, yjsActivationTarget } from "./slideActivation";
 import {
   createSlideRef,
@@ -40,7 +40,6 @@ import {
   getClickCountForSlide,
   getClickDurationForSlide,
   getTransitionDurationForSlide,
-  parseSlideRef,
 } from "./slideOrderUtils";
 import {
   AutoplayState,
@@ -48,6 +47,17 @@ import {
   PluginBaseData,
   PluginRendererData,
 } from "./types";
+import {
+  createLink,
+  listLinksForPlugin,
+  listUploadsForPlugin,
+  revokeLink,
+} from "./uploadLink/db";
+import {
+  getUploadLinkBaseUrl,
+  registerUploadLinkRoutes,
+} from "./uploadLink/routes";
+import { buildUploadLinkDeps } from "./uploadLinkDeps";
 
 export const init = (
   serverPluginApi: ServerPluginApi<PluginBaseData, PluginRendererData>,
@@ -72,6 +82,11 @@ export const init = (
   });
 
   serverPluginApi.registerTrpcAppRouter(getAppRouter(serverPluginApi));
+
+  registerUploadLinkRoutes(
+    serverPluginApi,
+    buildUploadLinkDeps(serverPluginApi),
+  );
 
   serverPluginApi.registerMigrations(
     pluginName,
@@ -394,68 +409,10 @@ const onRendererDataCreated = (
 
 const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
   const importHelpers = createImportHelpers(serverPluginApi);
-  const { cleanupImportMedia, getBaseImport, finalizeImport } = importHelpers;
   const { importPpt, importGoogleSlidesDeck, importPdf, importImages } =
     createImporters(serverPluginApi, importHelpers);
   const canvaRouter = createCanvaRouter(t, { serverPluginApi, importHelpers });
-
-  /**
-   * Drop an entire import and every slide it contributed.
-   *
-   * Shared by `removeImport` and by `removeCustomSlide` when it deletes the
-   * last slide of a deck — a deck with no slides would otherwise linger in the
-   * Settings list with nothing to show.
-   */
-  const removeImportById = (pluginId: string, importId: string) => {
-    const loadedPlugin = loadedPlugins[pluginId]!;
-    const loadedYjs = loadedYjsData[pluginId]!;
-    const getRendererData = loadedRendererDataGetter[pluginId];
-
-    const importData = loadedPlugin.pluginData.imports[importId];
-    if (!importData) return;
-
-    if (importData.pdfMediaName) {
-      deleteOldMedia(serverPluginApi, [importData.pdfMediaName]);
-    }
-
-    const oldSlideOrder = [...loadedPlugin.pluginData.slideOrder];
-    const newSlideOrder = oldSlideOrder.filter(
-      (ref) => parseSlideRef(ref).importId !== importId,
-    );
-
-    loadedYjs.doc?.transact(() => {
-      // 1. Drop the import data
-      const { [importId]: _, ...remainingImports } =
-        loadedPlugin.pluginData.imports;
-      loadedPlugin.pluginData.imports = remainingImports;
-
-      // 2. Strip slideOrder
-      loadedPlugin.pluginData.slideOrder = newSlideOrder;
-
-      // 3. Update renderer state
-      const rendererMap = getRendererData?.() ?? {};
-      for (const rendererData of Object.values(rendererMap)) {
-        const displayModes = rendererData.get("displayModes");
-        if (displayModes && displayModes.has(importId)) {
-          displayModes.delete(importId);
-        }
-
-        const currentIdx = rendererData.get("currentSlideIndex");
-        if (currentIdx === null || currentIdx === undefined) continue;
-
-        const oldRef = oldSlideOrder[currentIdx];
-        const newIdx =
-          oldRef !== undefined ? newSlideOrder.indexOf(oldRef) : -1;
-
-        if (newIdx === -1) {
-          rendererData.set("currentSlideIndex", null);
-          rendererData.set("currentClickCount", null);
-        } else {
-          rendererData.set("currentSlideIndex", newIdx);
-        }
-      }
-    });
-  };
+  const removeImportById = createRemoveImportById(serverPluginApi);
 
   return t.router({
     slides: {
@@ -547,6 +504,52 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
         ),
 
       ...canvaRouter.procedures,
+
+      // Upload links stuff
+      listUploadLinks: t.procedure
+        .input(z.object({ pluginId: z.string() }))
+        .query(async ({ input: { pluginId } }) => {
+          const [links, uploads] = await Promise.all([
+            listLinksForPlugin(serverPluginApi, pluginId),
+            listUploadsForPlugin(serverPluginApi, pluginId),
+          ]);
+          return { links, uploads, baseUrl: getUploadLinkBaseUrl() };
+        }),
+      createUploadLink: t.procedure
+        .input(
+          z.object({
+            pluginId: z.string(),
+            label: z.string().optional(),
+            maxAttempts: z.number().int().positive().optional(),
+            expiresAt: z.string().optional(),
+          }),
+        )
+        .mutation(
+          async ({
+            input: { pluginId, label, maxAttempts, expiresAt },
+            ctx,
+          }) => {
+            const loadedContextData = loadedContext[pluginId]!;
+
+            const link = await createLink(serverPluginApi, {
+              organizationId: loadedContextData.organizationId,
+              projectId: loadedContextData.projectId,
+              sceneId: loadedContextData.sceneId,
+              pluginId,
+              label,
+              maxAttempts,
+              expiresAt,
+              userId: ctx.userId,
+            });
+
+            return { link, baseUrl: getUploadLinkBaseUrl() };
+          },
+        ),
+      revokeUploadLink: t.procedure
+        .input(z.object({ pluginId: z.string(), id: z.string() }))
+        .mutation(async ({ input: { pluginId, id } }) => {
+          await revokeLink(serverPluginApi, { id, pluginId });
+        }),
 
       removeImport: t.procedure
         .input(

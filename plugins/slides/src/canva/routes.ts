@@ -19,6 +19,11 @@ import {
   saveConnection,
   savePendingAuth,
 } from "./tokenStore";
+import {
+  findLinkByToken,
+  isUploadLinkStillUsable,
+} from "../uploadLink/db";
+import { checkUploadLink } from "../uploadLink/rules";
 
 type CanvaRequest = {
   query: Record<string, unknown>;
@@ -244,15 +249,27 @@ export const registerCanvaRoutes = (serverPluginApi: ServerPluginApi) => {
       );
 
       const userId = pending.userId;
-      const stillMember = await isOrganizationMemberAsRoot(
-        serverPluginApi,
-        pending.organizationId,
-        userId,
-      );
-      log.trace({ userId, stillMember }, "callback: membership re-check");
-      if (!stillMember) {
-        fail("You are no longer a member of this organization.");
-        return;
+
+      if (pending.uploadLinkId) {
+        const stillUsable = await isUploadLinkStillUsable(
+          serverPluginApi,
+          pending.uploadLinkId,
+        );
+        if (!stillUsable) {
+          fail("This upload link is no longer active.");
+          return;
+        }
+      } else {
+        const stillMember = await isOrganizationMemberAsRoot(
+          serverPluginApi,
+          pending.organizationId,
+          userId!,
+        );
+        log.trace({ userId, stillMember }, "callback: membership re-check");
+        if (!stillMember) {
+          fail("You are no longer a member of this organization.");
+          return;
+        }
       }
 
       const identity = await getAccountIdentity(token.access_token, log);
@@ -267,6 +284,7 @@ export const registerCanvaRoutes = (serverPluginApi: ServerPluginApi) => {
       const connectionId = await saveConnection(serverPluginApi, {
         organizationId: pending.organizationId,
         userId,
+        uploadLinkId: pending.uploadLinkId ?? null,
         token,
         canvaUserId: identity.canvaUserId,
         canvaTeamId: identity.canvaTeamId,
@@ -295,4 +313,53 @@ export const registerCanvaRoutes = (serverPluginApi: ServerPluginApi) => {
     authorize,
   );
   serverPluginApi.registerPrivateRoute(pluginName, "canva/callback", callback);
+
+  /**
+   * Same OAuth dance, but authorized by an upload-link token rather than a
+   * signed-in member. The visitor connects their OWN Canva account.
+   */
+  const authorizePublic: RequestHandler = async (req, res) => {
+    const log = logger.child({ scope: "canva/authorize-public" });
+    const config = getCanvaOAuthConfig();
+    if (!config) {
+      res.status(501).send("Canva integration is not configured.");
+      return;
+    }
+
+    const token = typeof req.query.token === "string" ? req.query.token : null;
+    if (!token) {
+      res.status(400).send("Missing upload link.");
+      return;
+    }
+
+    const link = await findLinkByToken(serverPluginApi, token);
+    if (!checkUploadLink(link).ok || !link) {
+      res.status(403).send("This upload link is no longer active.");
+      return;
+    }
+
+    const { codeVerifier, codeChallenge } = createPkcePair();
+    const state = createStateToken();
+
+    try {
+      await savePendingAuth(serverPluginApi, state, {
+        codeVerifier,
+        organizationId: link.organization_id,
+        userId: null,
+        uploadLinkId: link.id,
+      });
+    } catch (err) {
+      log.error({ err }, "authorize-public: failed to persist pending auth");
+      res.status(500).send("Could not start the Canva connection.");
+      return;
+    }
+
+    res.redirect(buildAuthorizeUrl({ config, codeChallenge, state }));
+  };
+
+  serverPluginApi.registerPrivateRoute(
+    pluginName,
+    "canva/authorize-public",
+    authorizePublic,
+  );
 };
