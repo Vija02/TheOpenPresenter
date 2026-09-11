@@ -208,7 +208,9 @@ export const saveConnection = async (
           -- Keep the previous label if this authorization could not read one
           canva_display_name =
             coalesce(excluded.canva_display_name, canva_connection.canva_display_name),
-          scopes = excluded.scopes
+          scopes = excluded.scopes,
+          created_via_upload_link_id =
+            coalesce(excluded.created_via_upload_link_id, canva_connection.created_via_upload_link_id)
         returning id`,
       [
         organizationId,

@@ -9,6 +9,7 @@ import {
 import { CanvaPicker } from "./CanvaPicker";
 import type { UploadPageConfig } from "./UploadPage";
 import { openGooglePicker } from "./googlePicker";
+import { useCanvaConnections } from "./useCanvaConnections";
 
 // Integrations
 export const SourceButtons = ({
@@ -28,6 +29,14 @@ export const SourceButtons = ({
 }) => {
   const { token, googleClientId, googleAppId, canvaEnabled } = config;
   const [showCanva, setShowCanva] = useState(false);
+  const { connections, isConnecting, startConnect } =
+    useCanvaConnections(token);
+
+  // Always re-authorize
+  const handleCanva = () => {
+    setShowCanva(true);
+    startConnect();
+  };
 
   if (!googleClientId && !canvaEnabled) return null;
 
@@ -76,7 +85,7 @@ export const SourceButtons = ({
 
         {canvaEnabled && (
           <PickerCard
-            onClick={() => setShowCanva((v) => !v)}
+            onClick={handleCanva}
             icon={canvaBrand.icon}
             text={canvaBrand.name}
             isLoading={isBusy}
@@ -86,8 +95,17 @@ export const SourceButtons = ({
         )}
       </IntegrationSection>
 
-      {showCanva && (
-        <CanvaPicker token={token} uploaderName={uploaderName} send={send} />
+      {canvaEnabled && (
+        <CanvaPicker
+          token={token}
+          uploaderName={uploaderName}
+          send={send}
+          isOpen={showCanva}
+          onClose={() => setShowCanva(false)}
+          connections={connections}
+          isConnecting={isConnecting}
+          onRetryConnect={startConnect}
+        />
       )}
     </div>
   );

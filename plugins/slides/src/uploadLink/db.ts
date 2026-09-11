@@ -1,11 +1,7 @@
 import type { ServerPluginApi } from "@repo/base-plugin/server";
 
 import { pluginName } from "../consts";
-import {
-  UploadLinkRow,
-  checkUploadLink,
-  generateUploadToken,
-} from "./rules";
+import { UploadLinkRow, checkUploadLink, generateUploadToken } from "./rules";
 
 export const findLinkByToken = async (
   serverPluginApi: ServerPluginApi,
@@ -186,4 +182,18 @@ export const connectionBelongsToLink = async (
     [connectionId, uploadLinkId],
   );
   return rows.length > 0;
+};
+
+/**
+ * Forgets the Canva account a visitor connected through this link.
+ */
+export const forgetLinkConnections = async (
+  serverPluginApi: ServerPluginApi,
+  uploadLinkId: string,
+): Promise<void> => {
+  const db = serverPluginApi.getDangerousRootPluginDb(pluginName);
+  await db.query(
+    `delete from canva_connection where created_via_upload_link_id = $1`,
+    [uploadLinkId],
+  );
 };

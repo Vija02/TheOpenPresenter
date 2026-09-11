@@ -3,6 +3,12 @@ import { logger } from "@repo/observability";
 import { RequestHandler } from "express";
 
 import { pluginName } from "../consts";
+import {
+  findLinkByToken,
+  forgetLinkConnections,
+  isUploadLinkStillUsable,
+} from "../uploadLink/db";
+import { checkUploadLink } from "../uploadLink/rules";
 import { getAccountIdentity } from "./api";
 import {
   buildAuthorizeUrl,
@@ -19,11 +25,6 @@ import {
   saveConnection,
   savePendingAuth,
 } from "./tokenStore";
-import {
-  findLinkByToken,
-  isUploadLinkStillUsable,
-} from "../uploadLink/db";
-import { checkUploadLink } from "../uploadLink/rules";
 
 type CanvaRequest = {
   query: Record<string, unknown>;
@@ -340,6 +341,17 @@ export const registerCanvaRoutes = (serverPluginApi: ServerPluginApi) => {
 
     const { codeVerifier, codeChallenge } = createPkcePair();
     const state = createStateToken();
+
+    // Starting a new authorization means a new visitor may be behind it, and
+    // this URL is public. Drop whatever account the link remembered so nobody
+    // inherits a stranger's designs.
+    try {
+      await forgetLinkConnections(serverPluginApi, link.id);
+    } catch (err) {
+      log.error({ err }, "authorize-public: failed to clear old connections");
+      res.status(500).send("Could not start the Canva connection.");
+      return;
+    }
 
     try {
       await savePendingAuth(serverPluginApi, state, {
