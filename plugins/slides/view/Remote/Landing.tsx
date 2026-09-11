@@ -57,7 +57,7 @@ const Landing = ({ onCustomSlideEdit }: LandingProps) => {
           </Dropzone>
         )}
 
-        <div className="flex flex-col md:flex-row gap-3 md:gap-4">
+        <div className="flex flex-col md:flex-row gap-2">
           <Option
             size="lg"
             className="flex-1"
