@@ -7,6 +7,8 @@ import { CustomSizeContext } from "./SlideGrid";
 import { mapZoomToRange } from "./mapZoomToRange";
 import type { PluginAPI } from "./types";
 
+const BORDER_WIDTH = 4;
+
 type PropTypes = {
   heading?: string;
   headingIsFaded?: boolean;
@@ -44,6 +46,13 @@ export const Slide = ({
     [containerWidth, forceWidth, zoomLevel],
   );
 
+  // We need to calculate height rather than `aspect-ratio` due to border messing it up
+  const height = useMemo(
+    () =>
+      `calc((${width} - ${BORDER_WIDTH * 2}px) / ${aspectRatio} + ${BORDER_WIDTH * 2}px)`,
+    [width, aspectRatio],
+  );
+
   return (
     <div
       className={cx(["flex justify-center", { "cursor-pointer": !!onClick }])}
@@ -64,7 +73,9 @@ export const Slide = ({
               {heading || "\u00A0"}
             </p>
             {headingRight && (
-              <div className="ui--slide-heading-right flex items-center">{headingRight}</div>
+              <div className="ui--slide-heading-right flex items-center">
+                {headingRight}
+              </div>
             )}
           </div>
         )}
@@ -76,7 +87,7 @@ export const Slide = ({
           ])}
           style={{
             width,
-            aspectRatio,
+            height,
           }}
         >
           {typeof children === "function" ? children({ width }) : children}
