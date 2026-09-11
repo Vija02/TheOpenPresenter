@@ -52,7 +52,7 @@ export const useSlideMediaPicker = () => {
           multiple,
           customComponent: (
             <div className="flex flex-col gap-6">
-              <div className="flex flex-col md:flex-row gap-3 md:gap-4">
+              <div className="flex flex-col md:flex-row gap-2">
                 {onCreateFromScratch && (
                   <Option
                     size="lg"
