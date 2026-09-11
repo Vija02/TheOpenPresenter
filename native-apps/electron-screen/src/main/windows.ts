@@ -103,6 +103,7 @@ export function createMainWindow(): BrowserWindow {
   });
 
   loadWindow(mainWin, "main");
+  watchMainLoadFailures(mainWin);
 
   mainWin.on("closed", () => {
     settingsWin?.webContents.send("screen-visibility", false);
@@ -130,6 +131,36 @@ export function createMainWindow(): BrowserWindow {
   });
 
   return mainWin;
+}
+
+// ---------------------------------------------------------------------------
+// Load failure recovery
+// ---------------------------------------------------------------------------
+
+const LOAD_RETRY_MS = 3000;
+
+function watchMainLoadFailures(win: BrowserWindow): void {
+  win.webContents.on(
+    "did-fail-load",
+    (_event, errorCode, errorDescription, validatedURL, isMainFrame) => {
+      if (!isMainFrame) return;
+      // -3 is ERR_ABORTED, fired for navigations we replaced ourselves.
+      if (errorCode === -3) return;
+
+      console.log(
+        `[screen] load failed (${errorCode} ${errorDescription}) for ${validatedURL}, retrying in ${LOAD_RETRY_MS}ms`,
+      );
+
+      setTimeout(() => {
+        if (win.isDestroyed()) return;
+        if (validatedURL) {
+          win.loadURL(validatedURL).catch(() => {});
+        } else {
+          loadWindow(win, "main");
+        }
+      }, LOAD_RETRY_MS);
+    },
+  );
 }
 
 export function showSettingsWindow(): void {
