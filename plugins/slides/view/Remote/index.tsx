@@ -25,6 +25,7 @@ import {
 } from "../utils/useAutoplay";
 import CustomSlideEditorModal from "./CustomSlides/CustomSlideEditorModal";
 import { useCustomSlides } from "./CustomSlides/useCustomSlides";
+import { UploadLinksDialog } from "./UploadLinks/UploadLinksDialog";
 import Landing from "./Landing";
 import SettingsModal from "./SettingsModal";
 import "./index.css";
@@ -47,6 +48,7 @@ const Remote = () => {
   }, [pluginData.imports]);
 
   const [editorTarget, setEditorTarget] = useState<EditorTarget | null>(null);
+  const [isUploadLinksOpen, setIsUploadLinksOpen] = useState(false);
 
   const showLanding = !hasSlides && !isAnyImportFetching;
 
@@ -68,7 +70,10 @@ const Remote = () => {
                   </Button>
                 )}
               >
-                <SettingsModal onCustomSlideEdit={setEditorTarget} />
+                <SettingsModal
+                  onCustomSlideEdit={setEditorTarget}
+                  onCollectFromOthers={() => setIsUploadLinksOpen(true)}
+                />
               </OverlayToggle>
             </>
           }
@@ -103,7 +108,10 @@ const Remote = () => {
           body={
             <div className="p-3 flex-1 min-w-0">
               <SlideGrid pluginAPI={pluginApi}>
-                <RemoteHandler onCustomSlideEdit={setEditorTarget} />
+                <RemoteHandler
+                  onCustomSlideEdit={setEditorTarget}
+                  onCollectFromOthers={() => setIsUploadLinksOpen(true)}
+                />
               </SlideGrid>
             </div>
           }
@@ -119,15 +127,24 @@ const Remote = () => {
           onOpenChange={(open) => !open && setEditorTarget(null)}
         />
       )}
+
+      <UploadLinksDialog
+        isOpen={isUploadLinksOpen}
+        onOpenChange={setIsUploadLinksOpen}
+      />
     </>
   );
 };
 
 type RemoteHandlerProps = {
   onCustomSlideEdit: (target: EditorTarget) => void;
+  onCollectFromOthers: () => void;
 };
 
-const RemoteHandler = ({ onCustomSlideEdit }: RemoteHandlerProps) => {
+const RemoteHandler = ({
+  onCustomSlideEdit,
+  onCollectFromOthers,
+}: RemoteHandlerProps) => {
   const pluginApi = usePluginAPI();
 
   const pluginData = pluginApi.scene.useData((x) => x.pluginData);
@@ -339,6 +356,7 @@ const RemoteHandler = ({ onCustomSlideEdit }: RemoteHandlerProps) => {
           pickMedia({
             multiple: true,
             onCreateFromScratch: handleCreateFromScratch,
+            onCollectFromOthers,
           })
         }
       >

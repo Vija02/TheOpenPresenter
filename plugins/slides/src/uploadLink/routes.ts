@@ -49,6 +49,7 @@ export type ImportUploadedFile = (args: {
   pluginId: string;
   mediaName: string;
   name?: string;
+  replaceImportId?: string;
 }) => Promise<{ importId: string }>;
 
 /** Imports a Google Slides deck using the visitor's own OAuth token. */
@@ -57,6 +58,7 @@ export type ImportGoogleSlides = (args: {
   presentationId: string;
   token: string;
   name?: string;
+  replaceImportId?: string;
 }) => Promise<{ importId: string }>;
 
 /** Imports a Canva design chosen by an anonymous upload-link visitor. */
@@ -68,6 +70,7 @@ export type ImportCanvaDesign = (args: {
   organizationId: string;
   projectId: string;
   userId: string | null;
+  replaceImportId?: string;
 }) => Promise<{ importId: string }>;
 
 /** Removes the import a replaced upload had created. */
@@ -133,19 +136,24 @@ export const registerUploadLinkRoutes = (
 
     if (req.method === "GET") {
       res.type("html").send(
-        renderUploadPage({
-          token,
-          organizationName: await lookupOrganizationName(
-            serverPluginApi,
-            link.organization_id,
-          ),
-          label: link.label,
-          accept: PUBLIC_ACCEPT,
-          googleClientId: process.env.PLUGIN_GOOGLE_SLIDES_CLIENT_ID ?? "",
-          canvaEnabled: Boolean(
-            process.env.PLUGIN_SLIDES_CANVA_CLIENT_ID &&
-              process.env.PLUGIN_SLIDES_CANVA_CLIENT_SECRET,
-          ),
+        await renderUploadPage({
+          config: {
+            token,
+            organizationName: await lookupOrganizationName(
+              serverPluginApi,
+              link.organization_id,
+            ),
+            label: link.label,
+            accept: PUBLIC_ACCEPT,
+            googleClientId: process.env.PLUGIN_GOOGLE_SLIDES_CLIENT_ID ?? "",
+            googleAppId: (
+              process.env.PLUGIN_GOOGLE_SLIDES_CLIENT_ID ?? ""
+            ).split("-")[0],
+            canvaEnabled: Boolean(
+              process.env.PLUGIN_SLIDES_CANVA_CLIENT_ID &&
+                process.env.PLUGIN_SLIDES_CANVA_CLIENT_SECRET,
+            ),
+          },
         }),
       );
       return;
@@ -196,11 +204,12 @@ export const registerUploadLinkRoutes = (
         originalName: file.originalname,
         uploaderName: (req.body?.name as string) || null,
         deps,
-        doImport: () =>
+        doImport: (replaceImportId) =>
           deps.importFile({
             pluginId: link.plugin_id,
             mediaName: fileName,
             name: file.originalname,
+            replaceImportId,
           }),
       });
 
@@ -245,12 +254,13 @@ export const registerUploadLinkRoutes = (
         originalName: name ?? "Google Slides",
         uploaderName: (req.body?.name as string) || null,
         deps,
-        doImport: () =>
+        doImport: (replaceImportId) =>
           deps.importGoogleSlides({
             pluginId: link.plugin_id,
             presentationId,
             token: googleToken,
             name,
+            replaceImportId,
           }),
       });
 

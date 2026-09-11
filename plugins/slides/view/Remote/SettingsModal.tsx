@@ -24,6 +24,7 @@ import { FaFilePdf, FaImage } from "react-icons/fa";
 import {
   FaArrowsRotate,
   FaCircleInfo,
+  FaLink,
   FaPenToSquare,
   FaTrash,
 } from "react-icons/fa6";
@@ -67,9 +68,13 @@ type SettingsData = {
 
 type SettingsModalProps = {
   onCustomSlideEdit: (target: EditorTarget) => void;
+  onCollectFromOthers: () => void;
 };
 
-const SettingsModal = ({ onCustomSlideEdit }: SettingsModalProps) => {
+const SettingsModal = ({
+  onCustomSlideEdit,
+  onCollectFromOthers,
+}: SettingsModalProps) => {
   const { isOpen, onToggle, resetData } = useOverlayToggle();
 
   const pluginApi = usePluginAPI();
@@ -243,6 +248,30 @@ const SettingsModal = ({ onCustomSlideEdit }: SettingsModalProps) => {
                   )}
                 </div>
               </div>
+
+              {!pluginApi.isPublicAccess && (
+                <div>
+                  <h3 className="font-bold text-lg mb-2">Collecting slides</h3>
+                  <div className="flex items-center justify-between gap-3 border border-gray-200 rounded p-3">
+                    <p className="text-sm text-secondary">
+                      Share a link for people to send you slides.
+                    </p>
+                    <Button
+                      type="button"
+                      size="xs"
+                      variant="outline"
+                      className="shrink-0"
+                      onClick={() => {
+                        onToggle?.();
+                        onCollectFromOthers();
+                      }}
+                    >
+                      <FaLink />
+                      Manage links
+                    </Button>
+                  </div>
+                </div>
+              )}
 
               {visibleImports.length > 0 && (
                 <div>

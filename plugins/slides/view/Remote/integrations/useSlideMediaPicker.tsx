@@ -1,5 +1,6 @@
 import { Option } from "@repo/ui";
 import { useCallback, useRef } from "react";
+import { FaLink } from "react-icons/fa6";
 import { RiSlideshowLine } from "react-icons/ri";
 
 import { usePluginAPI } from "../../pluginApi";
@@ -11,6 +12,7 @@ import { IntegrationController, IntegrationLaunchContext } from "./types";
 export type PickMediaOptions = IntegrationLaunchContext & {
   multiple?: boolean;
   onCreateFromScratch?: () => void;
+  onCollectFromOthers?: () => void;
 };
 
 export const useSlideMediaPicker = () => {
@@ -18,7 +20,6 @@ export const useSlideMediaPicker = () => {
   const { isProcessing, handleUploadComplete } = useMediaUpload();
 
   const controllersRef = useRef<Record<string, IntegrationController>>({});
-
   const integrationHosts = (
     <div className="hidden">
       {slideIntegrations.map(({ id, Controller }) => (
@@ -37,6 +38,7 @@ export const useSlideMediaPicker = () => {
       multiple = true,
       replaceImportId,
       onCreateFromScratch,
+      onCollectFromOthers,
     }: PickMediaOptions = {}) => {
       if (pluginApi.isPublicAccess) {
         pluginApi.remote.toast.error("Sign in to upload media.");
@@ -49,23 +51,43 @@ export const useSlideMediaPicker = () => {
           multiple,
           customComponent: (
             <div className="flex flex-col gap-6">
-              {onCreateFromScratch && (
+              <div className="flex flex-col md:flex-row gap-3 md:gap-4">
+                {onCreateFromScratch && (
+                  <Option
+                    size="lg"
+                    className="flex-1"
+                    onClick={() => {
+                      pluginApi.mediaPicker.close();
+                      onCreateFromScratch();
+                    }}
+                    testId="slides-create-from-scratch"
+                    title={
+                      <span className="flex items-center gap-3">
+                        <RiSlideshowLine className="size-6 shrink-0 text-secondary" />
+                        Create slides from scratch
+                      </span>
+                    }
+                    description="Design your own slides directly in TheOpenPresenter."
+                  />
+                )}
+
                 <Option
                   size="lg"
+                  className="flex-1"
                   onClick={() => {
                     pluginApi.mediaPicker.close();
-                    onCreateFromScratch();
+                    onCollectFromOthers?.();
                   }}
-                  testId="slides-create-from-scratch"
+                  testId="slides-collect-from-others"
                   title={
                     <span className="flex items-center gap-3">
-                      <RiSlideshowLine className="size-6 shrink-0 text-secondary" />
-                      Create slides from scratch
+                      <FaLink className="size-5 shrink-0 text-secondary" />
+                      Collect slides from others
                     </span>
                   }
-                  description="Design your own slides directly in TheOpenPresenter."
+                  description="Share a link so people can send you slides."
                 />
-              )}
+              </div>
 
               <IntegrationSection>
                 {slideIntegrations.map(({ id, name, icon }) => (

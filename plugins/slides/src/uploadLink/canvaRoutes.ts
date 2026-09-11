@@ -63,7 +63,7 @@ export const registerPublicCanvaRoutes = (
         originalName: title ?? "Canva design",
         uploaderName: (req.body?.name as string) || null,
         deps,
-        doImport: () =>
+        doImport: (replaceImportId) =>
           deps.importCanvaDesign({
             pluginId: link.plugin_id,
             connectionId,
@@ -72,6 +72,7 @@ export const registerPublicCanvaRoutes = (
             organizationId: link.organization_id,
             projectId: link.project_id,
             userId: null,
+            replaceImportId,
           }),
       });
 

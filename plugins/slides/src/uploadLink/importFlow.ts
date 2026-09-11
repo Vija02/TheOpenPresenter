@@ -81,8 +81,8 @@ export const runImport = async (
     mediaId: string | null;
     originalName: string;
     uploaderName: string | null;
-    deps: { removeImport: RemoveImport; readThumbnails: ReadThumbnails };
-    doImport: () => Promise<{ importId: string }>;
+    deps: { readThumbnails: ReadThumbnails };
+    doImport: (replaceImportId?: string) => Promise<{ importId: string }>;
   },
 ): Promise<boolean> => {
   const claim = await claimUploadSlot(serverPluginApi, {
@@ -104,7 +104,7 @@ export const runImport = async (
 
   let importId: string;
   try {
-    ({ importId } = await doImport());
+    ({ importId } = await doImport(claim.previousImportId ?? undefined));
   } catch (err) {
     // Don't burn the visitor's attempt on a failed import.
     await releaseUploadSlot(serverPluginApi, {
@@ -122,19 +122,6 @@ export const runImport = async (
     uploadLinkId: link.id,
     thumbnailMediaNames: deps.readThumbnails(link.plugin_id, importId),
   });
-
-  const { previousImportId } = claim;
-  if (previousImportId && previousImportId !== importId) {
-    try {
-      deps.removeImport({
-        pluginId: link.plugin_id,
-        importId: previousImportId,
-      });
-    } catch (err) {
-      // The new slide is already in place, so this is not fatal.
-      log.error({ err }, "Failed to remove the replaced import");
-    }
-  }
 
   return true;
 };
