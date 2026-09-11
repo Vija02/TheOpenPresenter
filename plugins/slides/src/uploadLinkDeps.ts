@@ -19,13 +19,14 @@ export const buildUploadLinkDeps = (
   const removeImportById = createRemoveImportById(serverPluginApi);
 
   return {
-    importFile: async ({ pluginId, mediaName, name }) => {
+    importFile: async ({ pluginId, mediaName, name, replaceImportId }) => {
       const kind = classifySlideFile(mediaName);
 
       if (kind === "image") {
         const { importIds } = await importers.importImages({
           pluginId,
           images: [{ mediaName, name }],
+          replaceImportId,
         });
         return { importId: importIds[0]! };
       }
@@ -36,6 +37,7 @@ export const buildUploadLinkDeps = (
           mediaName,
           name,
           userId: null,
+          replaceImportId,
         });
       }
 
@@ -45,19 +47,27 @@ export const buildUploadLinkDeps = (
           mediaName,
           name,
           userId: null,
+          replaceImportId,
         });
       }
 
       throw new Error(`Unsupported file type for upload: ${mediaName}`);
     },
 
-    importGoogleSlides: ({ pluginId, presentationId, token, name }) =>
+    importGoogleSlides: ({
+      pluginId,
+      presentationId,
+      token,
+      name,
+      replaceImportId,
+    }) =>
       importers.importGoogleSlidesDeck({
         pluginId,
         presentationId,
         token,
         name,
         userId: null,
+        replaceImportId,
       }),
 
     importCanvaDesign: createCanvaImporter(serverPluginApi, importHelpers),

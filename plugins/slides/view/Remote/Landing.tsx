@@ -1,6 +1,8 @@
 import { Dropzone } from "@repo/media-picker/client";
 import { Option } from "@repo/ui";
+import { useState } from "react";
 import { FaFilePdf, FaFilePowerpoint, FaImage } from "react-icons/fa";
+import { FaLink } from "react-icons/fa6";
 import { FiUpload } from "react-icons/fi";
 import { RiSlideshowLine } from "react-icons/ri";
 
@@ -8,6 +10,7 @@ import { usePluginAPI } from "../pluginApi";
 import { useCustomSlides } from "./CustomSlides/useCustomSlides";
 import type { EditorTarget } from "./index";
 import { IntegrationCards } from "./integrations";
+import { UploadLinksDialog } from "./UploadLinks/UploadLinksDialog";
 import { useMediaUpload } from "./useMediaUpload";
 
 type LandingProps = {
@@ -21,6 +24,7 @@ const Landing = ({ onCustomSlideEdit }: LandingProps) => {
 
   const { isProcessing, handleUploadComplete } = useMediaUpload();
   const { createDeck } = useCustomSlides();
+  const [isUploadLinksOpen, setIsUploadLinksOpen] = useState(false);
 
   const handleCreate = () => {
     onCustomSlideEdit({ importId: createDeck(), slideIndex: 0 });
@@ -81,17 +85,41 @@ const Landing = ({ onCustomSlideEdit }: LandingProps) => {
           </Dropzone>
         )}
 
-        <Option
-          size="lg"
-          onClick={handleCreate}
-          testId="slides-create-from-scratch"
-          title={
-            <span className="flex items-center gap-3">
-              <RiSlideshowLine className="size-6 shrink-0 text-secondary" />
-              Create slides from scratch
-            </span>
-          }
-          description="Design your own slides directly in TheOpenPresenter."
+        <div className="flex flex-col md:flex-row gap-3 md:gap-4">
+          <Option
+            size="lg"
+            className="flex-1"
+            onClick={handleCreate}
+            testId="slides-create-from-scratch"
+            title={
+              <span className="flex items-center gap-3">
+                <RiSlideshowLine className="size-6 shrink-0 text-secondary" />
+                Create slides from scratch
+              </span>
+            }
+            description="Design your own slides directly in TheOpenPresenter."
+          />
+
+          {!pluginApi.isPublicAccess && (
+            <Option
+              size="lg"
+              className="flex-1"
+              onClick={() => setIsUploadLinksOpen(true)}
+              testId="slides-collect-from-others"
+              title={
+                <span className="flex items-center gap-3">
+                  <FaLink className="size-5 shrink-0 text-secondary" />
+                  Collect slides from others
+                </span>
+              }
+              description="Share a link so people can send you slides."
+            />
+          )}
+        </div>
+
+        <UploadLinksDialog
+          isOpen={isUploadLinksOpen}
+          onOpenChange={setIsUploadLinksOpen}
         />
 
         {/* INTEGRATIONS SECTION */}
