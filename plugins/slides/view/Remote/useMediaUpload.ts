@@ -1,6 +1,7 @@
 import { useState } from "react";
+
+import { classifySlideFile } from "../../src/importers/fileTypes";
 import { usePluginAPI } from "../pluginApi";
-import { classifySlideFile } from "../../src/slideFileTypes";
 import { trpc } from "../trpc";
 
 export const useMediaUpload = () => {
@@ -15,7 +16,7 @@ export const useMediaUpload = () => {
 
   const handleUploadComplete = async (
     uploadedFiles: { mediaName: string; originalName: string | null }[],
-    replaceImportId?: string
+    replaceImportId?: string,
   ) => {
     if (!uploadedFiles || uploadedFiles.length === 0) return;
     setIsProcessing(true);
@@ -46,7 +47,7 @@ export const useMediaUpload = () => {
 
       const promises: Promise<any>[] = [];
       const pluginId = pluginContext.pluginId;
-      
+
       // Only attach replaceImportId to the payload if it exists
       const replacePayload = replaceImportId ? { replaceImportId } : {};
 
@@ -64,7 +65,7 @@ export const useMediaUpload = () => {
     } catch (err: any) {
       pluginApi.remote.toast.error(
         `Failed to process uploads: ${err?.message || err}`,
-        { toastId: "slides--uploadError" }
+        { toastId: "slides--uploadError" },
       );
     } finally {
       setIsProcessing(false);

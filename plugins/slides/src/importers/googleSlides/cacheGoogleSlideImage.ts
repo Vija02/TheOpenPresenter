@@ -3,7 +3,7 @@ import { logger } from "@repo/observability";
 import axios from "axios";
 import pLimit from "p-limit";
 
-import { pluginName } from "../consts";
+import { pluginName } from "../../consts";
 
 /**
  * Decodes escape sequences in a string:

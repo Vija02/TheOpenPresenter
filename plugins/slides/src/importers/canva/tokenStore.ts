@@ -1,7 +1,7 @@
 import { ServerPluginApi } from "@repo/base-plugin/server";
 import { logger } from "@repo/observability";
 
-import { pluginName } from "../consts";
+import { pluginName } from "../../consts";
 import {
   CanvaAuthRevokedError,
   CanvaTokenResponse,

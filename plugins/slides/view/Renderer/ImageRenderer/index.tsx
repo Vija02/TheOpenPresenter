@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef } from "react";
 
-import { resolveSlide } from "../../../src/slideOrderUtils";
+import { resolveSlide } from "../../../src/slides/order";
 import { ResolvedSlide, getEffectiveDisplayMode } from "../../../src/types";
 import { usePluginAPI } from "../../pluginApi";
 import { useDisplayedSlide } from "../../utils/useDisplayedSlide";

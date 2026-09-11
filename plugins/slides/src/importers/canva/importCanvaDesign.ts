@@ -1,10 +1,10 @@
 import type { ServerPluginApi } from "@repo/base-plugin/server";
 import { logger } from "@repo/observability";
 
-import type { ImportHelpers } from "../importShared";
-import { loadedPlugins } from "../loadedState";
-import { processPdfToThumbnails } from "../shared";
-import type { CanvaImportData } from "../types";
+import { loadedPlugins } from "../../loadedState";
+import type { CanvaImportData } from "../../types";
+import type { ImportHelpers } from "../helpers";
+import { processPdfToThumbnails } from "../pdfPipeline";
 import { exportDesignAsPdf } from "./api";
 import { getValidAccessToken as getCanvaAccessToken } from "./tokenStore";
 

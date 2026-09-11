@@ -35,7 +35,7 @@ import { isCustomImport } from "../../src/customSlides";
 import {
   activateSlide,
   valtioActivationTarget,
-} from "../../src/slideActivation";
+} from "../../src/slides/activation";
 import {
   DisplayMode,
   ImportType,

@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { extractSlideData } from "../../plugins/slides/src/googleSlides/slideData/slideDataExtractor";
+import { extractSlideData } from "../../plugins/slides/src/importers/googleSlides/slideData/slideDataExtractor";
 
 const SAMPLE_HTML_PATH = join(__dirname, "../sample-files/sample.html");
 

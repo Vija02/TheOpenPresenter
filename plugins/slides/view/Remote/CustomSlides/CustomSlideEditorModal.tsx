@@ -19,7 +19,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   customSlideTemplates,
   findCustomSlideTemplate,
-} from "../../../src/template/presets";
+} from "../../../src/customSlides/presets";
 import { usePluginAPI } from "../../pluginApi";
 import { LayoutPicker } from "./LayoutPicker";
 import { SlideFilmstrip } from "./SlideFilmstrip";

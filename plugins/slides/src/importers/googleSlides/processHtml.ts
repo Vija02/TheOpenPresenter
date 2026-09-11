@@ -1,4 +1,4 @@
-import { pluginName } from "../consts";
+import { pluginName } from "../../consts";
 
 const scriptsPrefix = `/plugin/${pluginName}/gslide/gscripts`;
 const userUploadsPrefix = `/plugin/${pluginName}/gslide/userUploads`;

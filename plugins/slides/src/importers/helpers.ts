@@ -1,9 +1,9 @@
 import type { Plugin, ServerPluginApi } from "@repo/base-plugin/server";
 import { typeidUnboxed } from "typeid-js";
 
-import { deleteOldMedia } from "./shared";
-import { createSlideRef, parseSlideRef } from "./slideOrderUtils";
-import type { BaseImportData, ImportData, PluginBaseData } from "./types";
+import { createSlideRef, parseSlideRef } from "../slides/order";
+import type { BaseImportData, ImportData, PluginBaseData } from "../types";
+import { deleteOldMedia } from "./pdfPipeline";
 
 export const createImportHelpers = (serverPluginApi: ServerPluginApi) => {
   const cleanupImportMedia = (importData: ImportData) => {

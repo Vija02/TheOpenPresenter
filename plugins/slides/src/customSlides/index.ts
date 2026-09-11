@@ -9,12 +9,9 @@ import {
 import { UniversalURL, extractMediaName } from "@repo/lib";
 import { typeidUnboxed } from "typeid-js";
 
-import { createSlideRef, parseSlideRef } from "./slideOrderUtils";
-import {
-  defaultCustomSlideTemplate,
-  findCustomSlideTemplate,
-} from "./template/presets";
-import { CustomImportData, ImportData } from "./types";
+import { createSlideRef, parseSlideRef } from "../slides/order";
+import { CustomImportData, ImportData } from "../types";
+import { defaultCustomSlideTemplate, findCustomSlideTemplate } from "./presets";
 
 /**
  * Helpers for custom (in-app authored) slide decks
@@ -149,9 +146,9 @@ export const rebuildOrderForDeckCount = (
   const insertAt =
     firstIdx === -1
       ? withoutDeck.length
-      : slideOrder.slice(0, firstIdx).filter(
-          (ref) => parseSlideRef(ref).importId !== importId,
-        ).length;
+      : slideOrder
+          .slice(0, firstIdx)
+          .filter((ref) => parseSlideRef(ref).importId !== importId).length;
 
   const result = [...withoutDeck];
   result.splice(insertAt, 0, ...newRefs);

@@ -1,12 +1,12 @@
 import type { ServerPluginApi } from "@repo/base-plugin/server";
 
-import { createCanvaImporter } from "./canva/importCanvaDesign";
-import { createImportHelpers } from "./importShared";
-import { createImporters } from "./importers";
-import { loadedPlugins } from "./loadedState";
-import { createRemoveImportById } from "./removeImport";
-import { classifySlideFile } from "./slideFileTypes";
-import type { UploadLinkDeps } from "./uploadLink/routes";
+import { createImporters } from "../importers";
+import { createCanvaImporter } from "../importers/canva/importCanvaDesign";
+import { classifySlideFile } from "../importers/fileTypes";
+import { createImportHelpers } from "../importers/helpers";
+import { createRemoveImportById } from "../importers/removeImport";
+import { loadedPlugins } from "../loadedState";
+import type { UploadLinkDeps } from "./routes";
 
 /**
  * Everything the public upload-link routes need from the rest of the plugin.

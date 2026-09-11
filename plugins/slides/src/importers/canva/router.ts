@@ -2,8 +2,8 @@ import { ServerPluginApi, TRPCObject } from "@repo/base-plugin/server";
 import { logger } from "@repo/observability";
 import z from "zod";
 
-import type { ImportHelpers } from "../importShared";
-import { loadedContext } from "../loadedState";
+import { loadedContext } from "../../loadedState";
+import type { ImportHelpers } from "../helpers";
 import { listDesigns } from "./api";
 import { createCanvaImporter } from "./importCanvaDesign";
 import { getCanvaOAuthConfig } from "./oauth";
@@ -67,10 +67,7 @@ export const createCanvaRouter = (t: TRPCObject, deps: CanvaRouterDeps) => {
     return loadedContextData;
   };
 
-  const importCanvaDesign = createCanvaImporter(
-    serverPluginApi,
-    importHelpers,
-  );
+  const importCanvaDesign = createCanvaImporter(serverPluginApi, importHelpers);
 
   const procedures = {
     canvaStatus: t.procedure

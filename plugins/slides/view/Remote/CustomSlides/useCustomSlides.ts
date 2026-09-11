@@ -8,7 +8,7 @@ import {
   isCustomImport,
   newCustomSlideId,
 } from "../../../src/customSlides";
-import { createSlideRef, parseSlideRef } from "../../../src/slideOrderUtils";
+import { createSlideRef, parseSlideRef } from "../../../src/slides/order";
 import { CustomImportData } from "../../../src/types";
 import { usePluginAPI } from "../../pluginApi";
 import { trpc } from "../../trpc";

@@ -16,8 +16,8 @@ import { imageSlideDoc, isCustomImport } from "../../src/customSlides";
 import {
   activateSlide,
   valtioActivationTarget,
-} from "../../src/slideActivation";
-import { parseSlideRef, resolveSlide } from "../../src/slideOrderUtils";
+} from "../../src/slides/activation";
+import { parseSlideRef, resolveSlide } from "../../src/slides/order";
 import { usePluginAPI } from "../pluginApi";
 import {
   computeGlobalSlideClickCount,

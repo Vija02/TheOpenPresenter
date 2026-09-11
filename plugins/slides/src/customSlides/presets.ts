@@ -1,5 +1,13 @@
-import { DEFAULT_FONT_STACK, LayoutDoc, Rect, Template, createLayoutDoc, createShapeElement, createTextElement, solidPaint } from "@repo/layout";
-
+import {
+  DEFAULT_FONT_STACK,
+  LayoutDoc,
+  Rect,
+  Template,
+  createLayoutDoc,
+  createShapeElement,
+  createTextElement,
+  solidPaint,
+} from "@repo/layout";
 
 export const BACKGROUND_ELEMENT_ID = "background";
 export const TITLE_ELEMENT_ID = "title";

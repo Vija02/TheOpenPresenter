@@ -3,9 +3,9 @@ import { logger } from "@repo/observability";
 import bodyParser from "body-parser";
 import type { RequestHandler } from "express";
 
-import { listDesigns } from "../canva/api";
-import { getValidAccessToken as getCanvaAccessToken } from "../canva/tokenStore";
 import { pluginName } from "../consts";
+import { listDesigns } from "../importers/canva/api";
+import { getValidAccessToken as getCanvaAccessToken } from "../importers/canva/tokenStore";
 import { connectionBelongsToLink, listConnectionsForLink } from "./db";
 import { resolveLink, runImport, safeHandler } from "./importFlow";
 import type { UploadLinkDeps } from "./routes";

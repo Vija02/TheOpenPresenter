@@ -7,24 +7,24 @@ import {
 import { logger } from "@repo/observability";
 import axios from "axios";
 
+import { loadedContext, loadedPlugins, loadedYjsData } from "../loadedState";
+import type {
+  GoogleSlidesImportData,
+  ImageImportData,
+  PdfImportData,
+  PptImportData,
+} from "../types";
 import { createImageProcessor } from "./googleSlides/cacheGoogleSlideImage";
 import { processHtml } from "./googleSlides/processHtml";
 import { extractSlideData } from "./googleSlides/slideData/slideDataExtractor";
-import type { ImportHelpers } from "./importShared";
-import { loadedContext, loadedPlugins, loadedYjsData } from "./loadedState";
+import type { ImportHelpers } from "./helpers";
 import { convertPptToPdfViaOfficeOnline } from "./office/convertPptToPdf";
 import { isOnline } from "./office/network";
 import {
   processPdfToThumbnails,
   startThumbnailWorker,
   uploadPdfAndPrepare,
-} from "./shared";
-import type {
-  GoogleSlidesImportData,
-  ImageImportData,
-  PdfImportData,
-  PptImportData,
-} from "./types";
+} from "./pdfPipeline";
 
 export const createImporters = (
   serverPluginApi: ServerPluginApi,

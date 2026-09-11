@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 
-import { resolveSlide } from "../../src/slideOrderUtils";
+import { resolveSlide } from "../../src/slides/order";
 import { ResolvedSlide } from "../../src/types";
 import { usePluginAPI } from "../pluginApi";
 import {
