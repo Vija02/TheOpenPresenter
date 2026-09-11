@@ -58,7 +58,7 @@ export const UploadLinksPanel = () => {
     trpc.slides.revokeUploadLink.useMutation();
 
   const form = useForm<CreateLinkForm>({
-    defaultValues: { label: "", maxAttempts: 3, expiresIn: "never" },
+    defaultValues: { label: "", maxAttempts: 5, expiresIn: "never" },
   });
 
   const urlFor = (token: string) => `${data?.baseUrl ?? ""}/${token}`;
@@ -148,7 +148,7 @@ export const UploadLinksPanel = () => {
           <Accordion type="single" collapsible>
             <AccordionItem value="advanced" className="border-0">
               <AccordionTrigger className="py-1 text-sm">
-                Advanced
+                Advanced options
               </AccordionTrigger>
               <AccordionContent className="pt-2">
                 <div className="flex flex-col md:flex-row gap-3">
@@ -178,10 +178,6 @@ export const UploadLinksPanel = () => {
           </Accordion>
         </form>
       </Form>
-
-      {activeLinks.length === 0 && (
-        <p className="text-sm text-tertiary">No active links yet.</p>
-      )}
 
       {activeLinks.map((link: any) => (
         <div
