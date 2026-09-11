@@ -6,9 +6,9 @@ import {
   yjsVideoStateTarget,
 } from "@repo/layout";
 
-import { isCustomImport } from "./customSlides";
-import { resolveSlide } from "./slideOrderUtils";
-import type { PluginBaseData, PluginRendererData } from "./types";
+import { isCustomImport } from "../customSlides";
+import type { PluginBaseData, PluginRendererData } from "../types";
+import { resolveSlide } from "./order";
 
 const docsForSlide = (
   pluginData: PluginBaseData,

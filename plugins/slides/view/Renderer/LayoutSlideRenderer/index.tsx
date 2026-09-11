@@ -2,7 +2,7 @@ import type { LayoutDoc } from "@repo/layout";
 import { LayoutRenderer } from "@repo/layout/react";
 import { useMemo } from "react";
 
-import { resolveSlide } from "../../../src/slideOrderUtils";
+import { resolveSlide } from "../../../src/slides/order";
 import { ResolvedSlide, getEffectiveDisplayMode } from "../../../src/types";
 import { usePluginAPI } from "../../pluginApi";
 import { useDisplayedSlide } from "../../utils/useDisplayedSlide";

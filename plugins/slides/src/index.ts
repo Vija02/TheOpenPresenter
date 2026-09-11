@@ -15,32 +15,32 @@ import { bind } from "valtio-yjs";
 import * as Y from "yjs";
 import z from "zod";
 
-import { getCanvaOAuthConfig } from "./canva/oauth";
-import { createCanvaRouter } from "./canva/router";
-import { registerCanvaRoutes } from "./canva/routes";
 import {
   pluginName,
   remoteWebComponentTag,
   rendererWebComponentTag,
 } from "./consts";
 import { isCustomImport, rebuildOrderAfterSlideRemoval } from "./customSlides";
-import { createImportHelpers } from "./importShared";
 import { createImporters } from "./importers";
+import { getCanvaOAuthConfig } from "./importers/canva/oauth";
+import { createCanvaRouter } from "./importers/canva/router";
+import { registerCanvaRoutes } from "./importers/canva/routes";
+import { createImportHelpers } from "./importers/helpers";
+import { createRemoveImportById } from "./importers/removeImport";
 import {
   loadedContext,
   loadedPlugins,
   loadedRendererDataGetter,
   loadedYjsData,
 } from "./loadedState";
-import { createRemoveImportById } from "./removeImport";
-import { activateSlide, yjsActivationTarget } from "./slideActivation";
+import { activateSlide, yjsActivationTarget } from "./slides/activation";
 import {
   createSlideRef,
   getAutoplayDurationForSlide,
   getClickCountForSlide,
   getClickDurationForSlide,
   getTransitionDurationForSlide,
-} from "./slideOrderUtils";
+} from "./slides/order";
 import {
   AutoplayState,
   CustomImportData,
@@ -53,11 +53,11 @@ import {
   listUploadsForPlugin,
   revokeLink,
 } from "./uploadLink/db";
+import { buildUploadLinkDeps } from "./uploadLink/deps";
 import {
   getUploadLinkBaseUrl,
   registerUploadLinkRoutes,
 } from "./uploadLink/routes";
-import { buildUploadLinkDeps } from "./uploadLinkDeps";
 
 export const init = (
   serverPluginApi: ServerPluginApi<PluginBaseData, PluginRendererData>,

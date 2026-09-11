@@ -2,12 +2,12 @@
 
 We render the real Google Slides embed in an iframe and drive it with synthetic
 arrow-key presses. Nothing here is documented by Google — the rules below were
-found by observation, and the controller in `../index.ts` exists to reproduce
+found by observation, and the controller in `../../index.ts` exists to reproduce
 them. Get a rule wrong and the renderer desyncs from the tracker by one click.
 
 Scope: this folder does import-time extraction (`slideData/`), but the rules are
 Google-Slides-specific, so they live here. The navigation controller itself is
-the key-press handler in `../index.ts` (lines 185-317).
+the key-press handler in `../../index.ts` (lines 185-317).
 
 ## 1. Rulebook (empirical, load-bearing)
 
@@ -93,7 +93,7 @@ classifies them:
 - anything else → one click; `totalDurationMs` appended to
   `slideClickDurations[slideIndex]`, and `slideClickCounts` incremented.
 
-Read them back only through `../slideOrderUtils.ts`
+Read them back only through `../../slides/order.ts`
 (`getClickCountForSlide`, `getTransitionDurationForSlide`,
 `getClickDurationForSlide`, `getAutoplayDurationForSlide`) — those resolve the
 global slide order and return 0 for non-Google imports.
@@ -194,9 +194,9 @@ re-imported. All the Google-only fields are optional; treat a missing value as
 
 ## 9. Key files
 
-- `../index.ts` (185-317) — key-press handler; also the import flow.
+- `../../index.ts` (185-317) — key-press handler; also the import flow.
 - `slideData/slideDataExtractor.ts` — parses the embed's `docData`; per-slide
   click count and durations.
-- `../slideOrderUtils.ts` — resolve a global slide index to its import + data.
+- `../../slides/order.ts` — resolve a global slide index to its import + data.
 - `view/utils/useAutoplay.ts` — flat-position math.
 - `view/Renderer/GoogleSlideRenderer/useIframeSync.ts` — drives the iframe.

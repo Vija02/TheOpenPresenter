@@ -2,13 +2,13 @@ import { ServerPluginApi } from "@repo/base-plugin/server";
 import { logger } from "@repo/observability";
 import { RequestHandler } from "express";
 
-import { pluginName } from "../consts";
+import { pluginName } from "../../consts";
 import {
   findLinkByToken,
   forgetLinkConnections,
   isUploadLinkStillUsable,
-} from "../uploadLink/db";
-import { checkUploadLink } from "../uploadLink/rules";
+} from "../../uploadLink/db";
+import { checkUploadLink } from "../../uploadLink/rules";
 import { getAccountIdentity } from "./api";
 import {
   buildAuthorizeUrl,

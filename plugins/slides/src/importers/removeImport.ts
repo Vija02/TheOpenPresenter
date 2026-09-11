@@ -4,9 +4,9 @@ import {
   loadedPlugins,
   loadedRendererDataGetter,
   loadedYjsData,
-} from "./loadedState";
-import { deleteOldMedia } from "./shared";
-import { parseSlideRef } from "./slideOrderUtils";
+} from "../loadedState";
+import { parseSlideRef } from "../slides/order";
+import { deleteOldMedia } from "./pdfPipeline";
 
 /**
  * Drop an entire import and every slide it contributed.

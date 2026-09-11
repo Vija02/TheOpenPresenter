@@ -9,7 +9,7 @@ import type { RequestHandler } from "express";
 import multer from "multer";
 
 import { pluginName } from "../consts";
-import { PPT_EXTENSIONS, classifySlideFile } from "../slideFileTypes";
+import { PPT_EXTENSIONS, classifySlideFile } from "../importers/fileTypes";
 import { registerPublicCanvaRoutes } from "./canvaRoutes";
 import {
   findCurrentUpload,

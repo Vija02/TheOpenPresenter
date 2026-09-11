@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 
-import { resolveSlide } from "../../src/slideOrderUtils";
+import { resolveSlide } from "../../src/slides/order";
 import {
   DisplayMode,
   PluginBaseData,

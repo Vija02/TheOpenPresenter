@@ -3,7 +3,7 @@ import {
   PluginBaseData,
   ResolvedSlide,
   SlideReference,
-} from "./types";
+} from "../types";
 
 export function getImportSlideCount(importData: ImportData): number {
   return importData.type === "custom"
