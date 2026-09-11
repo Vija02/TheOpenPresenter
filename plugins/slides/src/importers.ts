@@ -86,6 +86,10 @@ export const createImporters = (
           },
         );
         if (proxyRes.status !== 200 || !proxyRes.data?.url) {
+          log.error(
+            { status: proxyRes.status, data: proxyRes.data },
+            "Failed to get media proxy url",
+          );
           throw new Error(
             "Unable to convert PowerPoint on this device. Please make sure you are connected the internet.",
           );
