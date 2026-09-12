@@ -240,9 +240,13 @@ const RemoteHandler = ({
           : null;
         const isCustom = customImport !== null;
 
+        // Imported slides publish their media names before the worker finishes
+        // uploading the pages, so the thumbnail can be missing for a while.
+        // Skeleton those slides instead of feeding an empty name to the
+        // renderer, matching the guard the renderer already applies.
         const doc =
           customImport?.docs[slide.localSlideIndex] ??
-          imageSlideDoc(slide.thumbnailUrl);
+          (slide.thumbnailUrl ? imageSlideDoc(slide.thumbnailUrl) : null);
 
         return (
           <Slide
@@ -296,11 +300,15 @@ const RemoteHandler = ({
                       : undefined
                   }
                 >
-                  <LayoutRenderer
-                    doc={doc}
-                    data={{}}
-                    frame={{ index: index + 1, total: totalSlides }}
-                  />
+                  {doc ? (
+                    <LayoutRenderer
+                      doc={doc}
+                      data={{}}
+                      frame={{ index: index + 1, total: totalSlides }}
+                    />
+                  ) : (
+                    <Skeleton className="h-full w-full" />
+                  )}
                 </div>
                 {isReplacing && (
                   <div className="absolute bottom-1 right-1 flex items-center justify-center rounded-full bg-black/60 p-1 text-white">
