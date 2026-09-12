@@ -139,6 +139,7 @@ export const registerUploadLinkRoutes = (
     if (req.method === "GET") {
       res.type("html").send(
         await renderUploadPage({
+          nonce: res.locals.nonce,
           config: {
             token,
             organizationName: await lookupOrganizationName(
