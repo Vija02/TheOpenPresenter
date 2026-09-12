@@ -29,9 +29,12 @@ const getImportMapTag = async (): Promise<string> => {
  */
 export const renderUploadPage = async ({
   config,
+  nonce,
 }: {
   config: Record<string, unknown>;
-}): Promise<string> => `<!doctype html>
+  nonce: string;
+}): Promise<string> =>
+  `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -47,7 +50,7 @@ window.__UPLOAD_CONFIG = ${JSON.stringify(config)};
 <div id="pl-${pluginName}"><div id="root"></div></div>
 <script type="module" src="/plugin/${pluginName}/static/${pluginName}-uploadPage.es.js" nonce="INJECT_NONCE"></script>
 </body>
-</html>`;
+</html>`.replace(/INJECT_NONCE/g, nonce);
 
 /** Standalone page for a link that can't be used. */
 export const renderErrorPage = (message: string): string => `<!doctype html>
