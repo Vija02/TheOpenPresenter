@@ -42,6 +42,9 @@ function loadTurnstileScript(): Promise<void> {
     script.src = SCRIPT_SRC;
     script.async = true;
     script.defer = true;
+    // Report a real Turnstile load failure with a usable stack instead of an
+    // opaque cross-origin "Script error.".
+    script.crossOrigin = "anonymous";
     script.onload = () => resolve();
     script.onerror = () => reject(new Error("Failed to load Turnstile"));
     document.head.appendChild(script);
