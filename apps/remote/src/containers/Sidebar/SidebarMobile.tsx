@@ -16,12 +16,12 @@ import { RiRemoteControlLine } from "react-icons/ri";
 import { VscAdd, VscEyeClosed } from "react-icons/vsc";
 import { useLocation } from "wouter";
 
+import { usePreviewWindow } from "../../contexts/previewWindow";
 import { useRendererSelection } from "../../contexts/rendererSelection";
 import { useNavigateWithParams } from "../../hooks/useNavigateWithParams";
 import { getSceneOwnershipStatus } from "../../util/sceneOwnership";
 import DebugDrawer from "./Debug/DebugDrawer";
 import { PresentButton } from "./PresentButton";
-import PreviewWindow from "./PreviewWindow";
 import RendererManagementModal from "./RendererManagement/RendererManagementModal";
 import RendererSelector from "./RendererManagement/RendererSelector";
 import { RendererWarning } from "./RendererWarning";
@@ -34,6 +34,7 @@ const SidebarMobile = () => {
   const navigate = useNavigateWithParams();
   const { awarenessData } = useAwareness();
   const { selectedRendererId } = useRendererSelection();
+  const { toggle: togglePreview } = usePreviewWindow();
 
   const ownedScenes = useMemo(
     () => data.renderer[selectedRendererId]?.ownedScenes,
@@ -159,22 +160,14 @@ const SidebarMobile = () => {
           >
             <ShareQRModal />
           </OverlayToggle>
-          <OverlayToggle
-            isLazy
-            disableResetOnClose
-            toggler={({ onToggle }) => (
-              <Button
-                onClick={onToggle}
-                variant="ghost"
-                size="mini"
-                title="Preview"
-              >
-                <MdPictureInPictureAlt />
-              </Button>
-            )}
+          <Button
+            onClick={() => togglePreview("sidebar")}
+            variant="ghost"
+            size="mini"
+            title="Preview"
           >
-            <PreviewWindow />
-          </OverlayToggle>
+            <MdPictureInPictureAlt />
+          </Button>
         </div>
         <div className="rt--sidebar-mobile-stats">
           <div>
