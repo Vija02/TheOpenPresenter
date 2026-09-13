@@ -57,7 +57,13 @@ function Button({
       {...(isLoading ? { disabled: true } : {})}
       {...props}
     >
-      {isLoading && <LoadingInline data-slot="loading" />}
+      <span
+        data-slot="loading"
+        className="contents"
+        style={{ display: isLoading ? undefined : "none" }}
+      >
+        <LoadingInline />
+      </span>
       <Slottable>{props.children}</Slottable>
     </Comp>
   );
