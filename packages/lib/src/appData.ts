@@ -1,5 +1,25 @@
 const getRootURL = () => (window as any)?.__APP_DATA__?.ROOT_URL;
 const getCSRFToken = () => (window as any)?.__APP_DATA__?.CSRF_TOKEN;
+const setCSRFToken = (token: string) => {
+  const appDataObject = (window as any).__APP_DATA__;
+  if (appDataObject) {
+    appDataObject.CSRF_TOKEN = token;
+  }
+};
+const refreshCSRFToken = async (): Promise<string | undefined> => {
+  try {
+    const res = await fetch("/csrf-token", { credentials: "same-origin" });
+    if (!res.ok) return undefined;
+    const { csrfToken } = await res.json();
+    if (typeof csrfToken === "string") {
+      setCSRFToken(csrfToken);
+      return csrfToken;
+    }
+  } catch {
+    // Caller falls back to the existing token.
+  }
+  return undefined;
+};
 const getMediaUploadChunkSize = () => {
   const val = parseInt(
     (window as any)?.__APP_DATA__?.MEDIA_UPLOAD_CHUNK_SIZE,
@@ -81,6 +101,7 @@ const getPluginData = () =>
 export const appData = {
   getRootURL,
   getCSRFToken,
+  refreshCSRFToken,
   getMediaUploadChunkSize,
   getOTELEnabled,
   getAnalyticsKey,

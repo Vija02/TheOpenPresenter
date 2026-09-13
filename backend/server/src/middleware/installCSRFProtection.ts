@@ -31,4 +31,9 @@ export default (app: Express) => {
       csrfProtection(req, res, next);
     }
   });
+
+  /** Re-issues a token for the current session */
+  app.get("/csrf-token", csrfProtection, (req, res) => {
+    res.json({ csrfToken: req.csrfToken() });
+  });
 };

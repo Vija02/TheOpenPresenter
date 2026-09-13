@@ -50,14 +50,14 @@ export function resetWebsocketConnection(): void {
 const makeClient = (extraHeaders?: Record<string, string>) =>
   new URQLClient({
     url: `${window.location.origin}/graphql`,
-    fetchOptions: {
+    fetchOptions: () => ({
       credentials: "same-origin",
       method: "POST",
       headers: {
         "CSRF-Token": appData.getCSRFToken(),
         ...extraHeaders,
       },
-    },
+    }),
     preferGetMethod: false,
     requestPolicy: "cache-and-network",
     exchanges: [
@@ -82,6 +82,11 @@ const makeClient = (extraHeaders?: Record<string, string>) =>
           const isMutation = operationDefinitionNode.operation === "mutation";
 
           if (graphQLErrors.length > 0) {
+            if (
+              graphQLErrors.some((e) => (e as any).code === "EBADCSRFTOKEN")
+            ) {
+              appData.refreshCSRFToken();
+            }
             if (isMutation) {
               toast.error(`Sorry, we are unable to complete your request.`, {
                 toastId: "graphQLError",

@@ -298,6 +298,18 @@ async function runCommand(
       username,
     ]);
     return { success: true };
+  } else if (command === "clearOrganizationsBySlugPrefix") {
+    const { prefix } = payload || {};
+    if (!prefix || !String(prefix).startsWith("test")) {
+      throw new Error(
+        "clearOrganizationsBySlugPrefix requires a prefix starting with 'test'",
+      );
+    }
+    await rootPgPool.query(
+      "delete from app_public.organizations where slug like $1",
+      [`${prefix}%`],
+    );
+    return { success: true };
   } else if (command === "createUser") {
     if (!payload) {
       throw new Error("Payload required");
@@ -380,12 +392,14 @@ async function runCommand(
               projects = [],
               owner = true,
               organizationType,
+              isPublic,
             }: {
               name: string;
               slug: string;
               projects?: LoginProject[];
               owner?: boolean;
               organizationType?: OrganizationType;
+              isPublic?: boolean;
             }) => {
               if (!owner) {
                 await setSession(otherSession);
@@ -395,6 +409,7 @@ async function runCommand(
                 slug,
                 name,
                 organizationType,
+                isPublic,
               );
               if (!owner) {
                 await client.query(
@@ -900,12 +915,13 @@ async function createTestOrganization(
   name: string,
   // Default to church
   organizationType: OrganizationType = OrganizationType.Church,
+  isPublic: boolean = false,
 ) {
   const {
     rows: [organization],
   } = await client.query(
-    "select * from app_public.create_organization($1, $2, $3::app_public.organization_type)",
-    [slug, name, organizationType.toLowerCase()],
+    "select * from app_public.create_organization($1, $2, $3::app_public.organization_type, $4)",
+    [slug, name, organizationType.toLowerCase(), isPublic],
   );
   return organization;
 }

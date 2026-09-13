@@ -1,0 +1,36 @@
+query OnboardingPage {
+  ...SharedLayout_Query
+
+  currentUser {
+    id
+    name
+    isVerified
+    onboardingData
+    userEmails(first: 1) {
+      nodes {
+        id
+        email
+        isVerified
+      }
+    }
+    organizationMemberships(first: 20) {
+      nodes {
+        id
+        organization {
+          id
+          name
+          slug
+        }
+      }
+    }
+  }
+}
+
+mutation UpdateOnboardingData($id: UUID!, $onboardingData: JSON!) {
+  updateUser(input: { id: $id, patch: { onboardingData: $onboardingData } }) {
+    user {
+      id
+      onboardingData
+    }
+  }
+}
