@@ -16,6 +16,7 @@ import CentralContainer from "./containers/CentralContainer";
 import { GuestControlGuard } from "./containers/GuestControlGuard";
 import { TopBar } from "./containers/TopBar";
 import { useRendererSelection } from "./contexts/rendererSelection";
+import { useNoOutputHint } from "./hooks/useNoOutputHint";
 
 function App() {
   return (
@@ -68,6 +69,8 @@ function MediaPickerWrapper({ children }: { children: React.ReactNode }) {
 
 const Inner = () => {
   const handleKeyPress = useHandleKeyPress();
+
+  useNoOutputHint();
 
   return (
     <div className="rt--app" tabIndex={0} onKeyDown={handleKeyPress}>

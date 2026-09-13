@@ -1,11 +1,11 @@
 import { captureEvent } from "@repo/observability/initAnalytics";
 import { usePluginMetaData } from "@repo/shared";
-import { useOverlayToggle } from "@repo/ui";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { MdClose, MdFullscreen, MdVolumeOff, MdVolumeUp } from "react-icons/md";
 import { useSearch } from "wouter";
 
+import { usePreviewWindow } from "../../contexts/previewWindow";
 import { useRendererSelection } from "../../contexts/rendererSelection";
 
 const DEFAULT_WIDTH = 320;
@@ -21,7 +21,7 @@ const clamp = (value: number, min: number, max: number) =>
   Math.min(Math.max(value, min), max);
 
 const PreviewWindow = () => {
-  const { isOpen, onToggle } = useOverlayToggle();
+  const { isOpen, source, close } = usePreviewWindow();
   const { orgSlug, projectSlug } = usePluginMetaData();
   const search = useSearch();
   const { selectedRendererId } = useRendererSelection();
@@ -44,8 +44,10 @@ const PreviewWindow = () => {
 
   useEffect(() => {
     if (isOpen) {
-      captureEvent("preview_opened");
+      captureEvent("preview_opened", { source });
     }
+    // `source` is only read when the window opens, so it shouldn't retrigger
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   if (!isOpen) return null;
@@ -177,7 +179,7 @@ const PreviewWindow = () => {
           </button>
           <button
             type="button"
-            onClick={onToggle}
+            onClick={close}
             onPointerDown={(e) => e.stopPropagation()}
             title="Close preview"
             aria-label="Close preview"
