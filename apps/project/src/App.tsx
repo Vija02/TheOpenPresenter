@@ -13,7 +13,6 @@ import OrganizationSlugBillingPage from "./pages/o/[slug]/billing";
 import OrganizationSlugCloudPage from "./pages/o/[slug]/cloud";
 import OrganizationSlugLatestPage from "./pages/o/[slug]/latest/[type]";
 import OrganizationSlugMediaPage from "./pages/o/[slug]/media";
-import OrganizationSlugPluginsPage from "./pages/o/[slug]/plugins";
 import OrganizationSlugScreensPage from "./pages/o/[slug]/screens";
 import OrganizationSlugScreenAdminPage from "./pages/o/[slug]/screens/[screenSlug]/admin";
 import OrganizationSlugScreenControlPage from "./pages/o/[slug]/screens/[screenSlug]/control";
@@ -42,6 +41,9 @@ import SetupScreenPage from "./pages/setup";
 import VerifyPage from "./pages/verify";
 
 const OnboardingPage = lazy(() => import("./pages/onboarding"));
+const OrganizationSlugPluginsPage = lazy(
+  () => import("./pages/o/[slug]/plugins"),
+);
 
 // ========================================================================== //
 // ===============================! IMPORTANT !============================== //
@@ -103,7 +105,9 @@ function App() {
               <OrganizationSlugMediaPage />
             </Route>
             <Route path="/o/:slug/plugins">
-              <OrganizationSlugPluginsPage />
+              <Suspense fallback={<Skeleton className="h-40" />}>
+                <OrganizationSlugPluginsPage />
+              </Suspense>
             </Route>
             <Route path="/o/:slug/cloud">
               <OrganizationSlugCloudPage />
