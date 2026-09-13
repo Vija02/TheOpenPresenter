@@ -122,7 +122,7 @@ const Register = () => {
                       Create your account
                     </h1>
 
-                    <SocialLoginOptions next={redirectTo} />
+                    <SocialLoginOptions next={redirectTo} showQRLogin={false} />
 
                     <InputControl
                       control={form.control}

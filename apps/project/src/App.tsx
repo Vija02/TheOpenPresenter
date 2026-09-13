@@ -1,6 +1,6 @@
-import { FourOhFour } from "@repo/ui";
+import { FourOhFour, Skeleton } from "@repo/ui";
 import NProgress from "nprogress";
-import { useEffect } from "react";
+import { Suspense, lazy, useEffect } from "react";
 import { Redirect, Route, Switch, useLocation, useSearchParams } from "wouter";
 
 import ConnectPage from "./pages/connect";
@@ -40,6 +40,8 @@ import SettingsProfilePage from "./pages/settings/profile";
 import SettingsSecurityPage from "./pages/settings/security";
 import SetupScreenPage from "./pages/setup";
 import VerifyPage from "./pages/verify";
+
+const OnboardingPage = lazy(() => import("./pages/onboarding"));
 
 // ========================================================================== //
 // ===============================! IMPORTANT !============================== //
@@ -200,6 +202,11 @@ function App() {
         </Route>
         <Route path="/setup">
           <SetupScreenPage />
+        </Route>
+        <Route path="/onboarding">
+          <Suspense fallback={<Skeleton className="h-40" />}>
+            <OnboardingPage />
+          </Suspense>
         </Route>
         <Route path="/qr/screen-select">
           <QrScreenSelectPage />

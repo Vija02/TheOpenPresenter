@@ -2,10 +2,10 @@
 -- PostgreSQL database dump
 --
 
-\restrict ZSgstqeikQ4sZDhThyRzaIIDSRgT8YRzHMdyK8lSYsYtuBu4bExJym9Y6wCfnpu
+\restrict IAY7RZbgt52mSLqh4hpaXH97BwfVCeAoxYoUV84tLRheK0VVdbVa4hyVQpnix0i
 
 -- Dumped from database version 17.0 (Debian 17.0-1.pgdg120+1)
--- Dumped by pg_dump version 18.4
+-- Dumped by pg_dump version 18.6
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -522,6 +522,7 @@ CREATE TABLE app_public.users (
     is_verified boolean DEFAULT false NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    onboarding_data jsonb DEFAULT '{}'::jsonb NOT NULL,
     CONSTRAINT users_avatar_url_check CHECK ((avatar_url ~ '^https?://[^/]+'::text)),
     CONSTRAINT users_username_check CHECK (((length((username)::text) >= 2) AND (length((username)::text) <= 24) AND (username OPERATOR(public.~) '^[a-zA-Z]([_]?[a-zA-Z0-9])+$'::public.citext)))
 );
@@ -567,6 +568,13 @@ COMMENT ON COLUMN app_public.users.avatar_url IS 'Optional avatar URL.';
 --
 
 COMMENT ON COLUMN app_public.users.is_admin IS 'If true, the user has elevated privileges.';
+
+
+--
+-- Name: COLUMN users.onboarding_data; Type: COMMENT; Schema: app_public; Owner: -
+--
+
+COMMENT ON COLUMN app_public.users.onboarding_data IS 'Answers given during onboarding, and which steps are done.';
 
 
 --
@@ -6616,6 +6624,13 @@ GRANT UPDATE(avatar_url) ON TABLE app_public.users TO theopenpresenter_visitor;
 
 
 --
+-- Name: COLUMN users.onboarding_data; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT UPDATE(onboarding_data) ON TABLE app_public.users TO theopenpresenter_visitor;
+
+
+--
 -- Name: FUNCTION link_or_register_user(f_user_id uuid, f_service character varying, f_identifier character varying, f_profile json, f_auth_details json); Type: ACL; Schema: app_private; Owner: -
 --
 
@@ -7936,5 +7951,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE theopenpresenter REVOKE ALL ON FUNCTIONS FROM 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict ZSgstqeikQ4sZDhThyRzaIIDSRgT8YRzHMdyK8lSYsYtuBu4bExJym9Y6wCfnpu
+\unrestrict IAY7RZbgt52mSLqh4hpaXH97BwfVCeAoxYoUV84tLRheK0VVdbVa4hyVQpnix0i
 

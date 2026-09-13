@@ -13,6 +13,7 @@ import { DEV_NONCE } from "./shared";
 const paths = [
   "/invitations",
   "/o",
+  "/onboarding",
   "/org",
   "/setup",
   "/connect",

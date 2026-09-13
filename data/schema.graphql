@@ -9000,6 +9000,9 @@ type User {
   """Public-facing name (or pseudonym) of the user."""
   name: String
 
+  """Answers given during onboarding, and which steps are done."""
+  onboardingData: JSON!
+
   """
   Reads and enables pagination through a set of `OrganizationJoinRequest`.
   """
@@ -9416,6 +9419,9 @@ input UserPatch {
 
   """Public-facing name (or pseudonym) of the user."""
   name: String
+
+  """Answers given during onboarding, and which steps are done."""
+  onboardingData: JSON
 
   """Public-facing username (or 'handle') of the user."""
   username: String

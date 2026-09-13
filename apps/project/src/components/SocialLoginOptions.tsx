@@ -32,6 +32,7 @@ export interface SocialLoginOptionsProps {
   persistSession?: boolean;
   buttonTextFromService?: (service: string) => string;
   autoOpenQRLogin?: boolean;
+  showQRLogin?: boolean;
 }
 
 function defaultButtonTextFromService(service: string) {
@@ -43,6 +44,7 @@ export function SocialLoginOptions({
   persistSession,
   buttonTextFromService = defaultButtonTextFromService,
   autoOpenQRLogin = false,
+  showQRLogin = true,
 }: SocialLoginOptionsProps) {
   const persistSessionParam = persistSession ? "&persist-session=1" : "";
   const qrToggleRef = useRef<(() => void) | null>(null);
@@ -78,25 +80,27 @@ export function SocialLoginOptions({
         ))}
       </div>
 
-      <OverlayToggle
-        toggler={({ onToggle }) => {
-          qrToggleRef.current = onToggle;
-          return (
-            <Button
-              variant="outline"
-              size="lg"
-              className="w-full"
-              onClick={onToggle}
-              data-testid="loginpage-qr-button"
-            >
-              <BsQrCodeScan className="size-5 text-primary" />
-              Login with phone
-            </Button>
-          );
-        }}
-      >
-        <QRLoginModal next={next} persistSession={persistSession} />
-      </OverlayToggle>
+      {showQRLogin && (
+        <OverlayToggle
+          toggler={({ onToggle }) => {
+            qrToggleRef.current = onToggle;
+            return (
+              <Button
+                variant="outline"
+                size="lg"
+                className="w-full"
+                onClick={onToggle}
+                data-testid="loginpage-qr-button"
+              >
+                <BsQrCodeScan className="size-5 text-primary" />
+                Login with phone
+              </Button>
+            );
+          }}
+        >
+          <QRLoginModal next={next} persistSession={persistSession} />
+        </OverlayToggle>
+      )}
 
       <p className="lineText w-full text-tertiary text-xs">OR</p>
     </div>

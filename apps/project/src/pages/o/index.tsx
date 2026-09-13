@@ -25,7 +25,7 @@ const OrganizationIndex = () => {
         if (lastSelectedOrganization) {
           navigate(`/o/${lastSelectedOrganization.slug}`, { replace: true });
         } else {
-          navigate(`/org/create-organization`, { replace: true });
+          navigate(`/onboarding`, { replace: true });
         }
       } else {
         // If not logged in

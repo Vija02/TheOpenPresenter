@@ -39,6 +39,8 @@ export class E2ECommandAPI {
       slug: string;
       /** Defaults to church when omitted */
       organizationType?: OrganizationType;
+      /** Makes the org findable by `organizationsPublicSearch` */
+      isPublic?: boolean;
       projects?: {
         name: string;
         slug: string;
@@ -103,6 +105,16 @@ export class E2ECommandAPI {
   async serverCommand(
     command: "clearOrganizationBySlug",
     payload: { slug: string },
+  ): Promise<{ success: true }>;
+
+  /**
+   * Deletes every organization whose slug starts with the given prefix, which
+   * must itself start with 'test'. Lets a spec clean up only its own orgs
+   * instead of sweeping every test org out from under parallel workers.
+   */
+  async serverCommand(
+    command: "clearOrganizationsBySlugPrefix",
+    payload: { prefix: string },
   ): Promise<{ success: true }>;
 
   /**

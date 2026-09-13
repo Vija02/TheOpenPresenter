@@ -4,7 +4,7 @@ import { SocialLoginOptions } from "@/components/SocialLoginOptions";
 import { useResetURQLClient } from "@/urql";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useLoginMutation, useSharedQuery } from "@repo/graphql";
-import { extractError, getCodeFromError } from "@repo/lib";
+import { appData, extractError, getCodeFromError } from "@repo/lib";
 import { captureEvent } from "@repo/observability/initAnalytics";
 import {
   Alert,
@@ -114,6 +114,7 @@ function LoginForm({
           },
         );
         captureEvent("user_logged_in");
+        await appData.refreshCSRFToken();
         // Success: refetch
         resetClient();
         navigate(onSuccessRedirectTo);

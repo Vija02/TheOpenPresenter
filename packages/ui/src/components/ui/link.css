@@ -2,10 +2,14 @@
 
 @layer base {
   .ui--link {
-    @apply inline-flex gap-2 items-center text-link underline-offset-4 hover:underline hover:text-link-hover;
+    @apply inline-flex gap-2 items-center text-link underline-offset-4 hover:underline hover:text-link-hover cursor-pointer;
   }
 
   .ui--link:has(.ui--button):hover {
     @apply no-underline;
+  }
+
+  .ui--link:disabled {
+    @apply cursor-not-allowed;
   }
 }
