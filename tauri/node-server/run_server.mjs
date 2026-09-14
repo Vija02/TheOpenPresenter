@@ -221,7 +221,16 @@ async function main() {
     ...envOverride,
 
     ...Object.fromEntries(
-      ["AI_BASE_URL", "AI_API_KEY", "AI_MODEL"]
+      [
+        "AI_BASE_URL",
+        "AI_API_KEY",
+        "AI_MODEL",
+        // E2E points these at the fake Planning Center
+        "PLUGIN_LYRICS_PCO_CLIENT_ID",
+        "PLUGIN_LYRICS_PCO_CLIENT_SECRET",
+        "PLUGIN_LYRICS_PCO_API_URL",
+        "PLUGIN_LYRICS_PCO_OAUTH_URL",
+      ]
         .filter((name) => process.env[name])
         .map((name) => [name, process.env[name]]),
     ),
