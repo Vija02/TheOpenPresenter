@@ -238,6 +238,16 @@ async function runCommand(
       default: resolve(),
       capabilities,
     };
+  } else if (command === "pcoWiring") {
+    return {
+      success: true,
+      configured: !!(
+        process.env.PLUGIN_LYRICS_PCO_CLIENT_ID &&
+        process.env.PLUGIN_LYRICS_PCO_CLIENT_SECRET
+      ),
+      apiUrl: process.env.PLUGIN_LYRICS_PCO_API_URL ?? null,
+      oauthUrl: process.env.PLUGIN_LYRICS_PCO_OAUTH_URL ?? null,
+    };
   } else if (command === "clearOrganizationBySlug") {
     const { slug } = payload || {};
     if (!slug || !String(slug).startsWith("test")) {

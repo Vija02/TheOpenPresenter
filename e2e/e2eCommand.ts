@@ -100,6 +100,17 @@ export class E2ECommandAPI {
   }>;
 
   /**
+   * Where the lyrics plugin's Planning Center integration is pointed. Lets a
+   * spec confirm it is talking to the local fake before running.
+   */
+  async serverCommand(command: "pcoWiring"): Promise<{
+    success: true;
+    configured: boolean;
+    apiUrl: string | null;
+    oauthUrl: string | null;
+  }>;
+
+  /**
    * Deletes a single organization
    */
   async serverCommand(

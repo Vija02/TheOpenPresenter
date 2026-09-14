@@ -1,6 +1,8 @@
 import { logger } from "@repo/observability";
 
-const PCO_BASE = "https://api.planningcenteronline.com";
+const PCO_BASE =
+  process.env.PLUGIN_LYRICS_PCO_API_URL ??
+  "https://api.planningcenteronline.com";
 
 export type JsonApiResource = {
   id: string;
@@ -91,7 +93,6 @@ export const pcoGet = async (
   }
 
   const doc = (await res.json()) as JsonApiDoc;
-  console.log(`[pco] GET ${path}`, JSON.stringify(doc, null, 2));
   return doc;
 };
 

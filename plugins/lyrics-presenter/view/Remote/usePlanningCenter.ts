@@ -43,24 +43,34 @@ export const usePlanningCenter = () => {
   }, [organizationId]);
 
   useEffect(() => {
-    const onMessage = (event: MessageEvent) => {
-      if (event.origin !== window.location.origin) return;
-      if (event.data?.source !== "top-pco-oauth") return;
+    const handleResult = (data: any) => {
+      if (data?.source !== "top-pco-oauth") return;
 
-      if (event.data.ok) {
+      if (data.ok) {
         void finishConnect();
       } else {
         setIsConnecting(false);
         setConnectError(
-          typeof event.data.error === "string" && event.data.error
-            ? event.data.error
+          typeof data.error === "string" && data.error
+            ? data.error
             : "Could not connect to Planning Center. Please try again.",
         );
       }
     };
 
+    const onMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      handleResult(event.data);
+    };
+
+    const channel = new BroadcastChannel("top-pco-oauth");
+    channel.onmessage = (event) => handleResult(event.data);
+
     window.addEventListener("message", onMessage);
-    return () => window.removeEventListener("message", onMessage);
+    return () => {
+      window.removeEventListener("message", onMessage);
+      channel.close();
+    };
   }, [finishConnect]);
 
   // Fallback for when postMessage never arrives

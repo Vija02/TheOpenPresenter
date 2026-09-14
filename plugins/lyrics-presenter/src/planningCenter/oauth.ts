@@ -1,8 +1,12 @@
 import crypto from "crypto";
 
-const PCO_AUTHORIZE_URL =
-  "https://api.planningcenteronline.com/oauth/authorize";
-const PCO_TOKEN_URL = "https://api.planningcenteronline.com/oauth/token";
+// Overridable so E2E can point the whole integration at a local fake
+const PCO_OAUTH_BASE =
+  process.env.PLUGIN_LYRICS_PCO_OAUTH_URL ??
+  "https://api.planningcenteronline.com";
+
+const PCO_AUTHORIZE_URL = `${PCO_OAUTH_BASE}/oauth/authorize`;
+const PCO_TOKEN_URL = `${PCO_OAUTH_BASE}/oauth/token`;
 
 // Setlists and lyrics both live in the Services product.
 export const PCO_SCOPES = ["services"];

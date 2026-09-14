@@ -10,6 +10,10 @@ import { defineConfig, devices } from "@playwright/test";
 
 /** Kept in step with fixtures/aiFixture.ts. */
 const FAKE_AI_PORT = Number(process.env.FAKE_AI_PORT || 5679);
+/** Kept in step with fixtures/planningCenterFixture.ts. */
+const FAKE_PCO_PORT = Number(process.env.FAKE_PCO_PORT || 5680);
+/** Overridable so a run can use its own server instead of the dev one. */
+const APP_URL = process.env.E2E_BASE_URL || "http://localhost:5678";
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -29,7 +33,7 @@ export default defineConfig({
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: "http://localhost:5678",
+    baseURL: APP_URL,
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: "on-first-retry",
@@ -89,14 +93,24 @@ export default defineConfig({
       reuseExistingServer: !process.env.CI,
     },
     {
+      cwd: "./",
+      command: "yarn fake-pco",
+      url: `http://localhost:${FAKE_PCO_PORT}/__control/health`,
+      reuseExistingServer: !process.env.CI,
+    },
+    {
       cwd: "../",
       command: "yarn server start",
-      url: "http://localhost:5678",
+      url: APP_URL,
       reuseExistingServer: !process.env.CI,
       env: {
         AI_BASE_URL: `http://localhost:${FAKE_AI_PORT}/v1`,
         AI_API_KEY: "fake-e2e-key",
         AI_MODEL: "fake-model",
+        PLUGIN_LYRICS_PCO_CLIENT_ID: "fake-pco-client",
+        PLUGIN_LYRICS_PCO_CLIENT_SECRET: "fake-pco-secret",
+        PLUGIN_LYRICS_PCO_API_URL: `http://localhost:${FAKE_PCO_PORT}`,
+        PLUGIN_LYRICS_PCO_OAUTH_URL: `http://localhost:${FAKE_PCO_PORT}`,
       },
     },
   ],
