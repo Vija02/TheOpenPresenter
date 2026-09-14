@@ -132,9 +132,9 @@ const comparison = [
   },
   {
     feature: "Planning Center integration",
-    pp: "Yes",
-    top: "No",
-    winner: "pp",
+    pp: "Yes, imports the full service plan",
+    top: "Yes, imports your plan's songs and lyrics",
+    winner: "tie",
   },
   {
     feature: "CCLI / SongSelect import + reporting",
@@ -151,7 +151,7 @@ const faqs = [
   },
   {
     q: "Can it fully replace ProPresenter?",
-    a: "For most small-to-mid churches, yes. If you depend on SDI/NDI video output, a built-in cue/scheduling system, or a Planning Center and CCLI SongSelect workflow, not yet. Those are areas where ProPresenter is still ahead.",
+    a: "For most small-to-mid churches, yes. If you depend on SDI/NDI video output, a built-in cue/scheduling system, or CCLI SongSelect, not yet. Those are areas where ProPresenter is still ahead.",
   },
   {
     q: "Does it run on Mac and Windows?",
@@ -171,7 +171,7 @@ const faqs = [
   },
   {
     q: "Does it work with Planning Center?",
-    a: "Not yet. If your church runs everything through Planning Center Online, that's currently a reason to stay on ProPresenter. PCO integration is something we're watching, but it isn't here today.",
+    a: "Yes. Connect your Planning Center account once and import the service plans your team already builds there, with the songs and their arrangement lyrics coming across as slides.",
   },
   {
     q: "Does it handle CCLI / SongSelect?",
@@ -262,7 +262,7 @@ const lose = "text-gray-600 dark:text-gray-300";
         </li>
         <li class="flex gap-3">
           <span class="text-gray-400 shrink-0">&bull;</span>
-          Planning Center and CCLI SongSelect built into your workflow
+          CCLI SongSelect import and copyright reporting in your workflow
         </li>
         <li class="flex gap-3">
           <span class="text-gray-400 shrink-0">&bull;</span>
@@ -318,10 +318,9 @@ const lose = "text-gray-600 dark:text-gray-300";
   <p class="text-gray-600 dark:text-gray-300 mb-16">
     We've highlighted the wins on each side deliberately. ProPresenter is
     clearly ahead on pro video (SDI/NDI), lower thirds, transitions,
-    macros/MIDI, cueing, a mature stage display, and the two integrations
-    churches ask about most: <strong class="font-semibold"
-      >Planning Center and CCLI SongSelect</strong
-    >. TheOpenPresenter is ahead on price, real-time collaboration, web/phone
+    macros/MIDI, cueing, a mature stage display, and the integration churches
+    ask about most: <strong class="font-semibold">CCLI SongSelect</strong>.
+    TheOpenPresenter is ahead on price, real-time collaboration, web/phone
     control, Google Slides, screen share, digital signage, and openness. Which
     column matters more depends entirely on your church.
   </p>
@@ -351,16 +350,6 @@ const lose = "text-gray-600 dark:text-gray-300";
           >You rely on a cue/scheduling system.</strong
         > ProPresenter lets you script a tightly-timed service with cues. We don't
         have that yet. It's on the roadmap, but "yet" is the honest word.
-      </span>
-    </li>
-    <li class="flex gap-3">
-      <span class="text-gray-400 shrink-0">&bull;</span>
-      <span>
-        <strong class="font-semibold text-gray-900 dark:text-gray-100"
-          >You live in Planning Center.</strong
-        > If your service order, songs, and volunteers already flow through Planning
-        Center Online, ProPresenter imports straight from it. We don't integrate
-        with PCO yet, so you'd build the service in TheOpenPresenter directly.
       </span>
     </li>
     <li class="flex gap-3">
@@ -564,8 +553,8 @@ const lose = "text-gray-600 dark:text-gray-300";
   </WrapUpCta>
 
   <p class="text-gray-600 dark:text-gray-300 mt-10 text-center italic">
-    Honest verdict: if you need SDI/NDI, cue-based scheduling, or a Planning
-    Center and CCLI workflow, stay on ProPresenter for now. For everyone else,
+    Honest verdict: if you need SDI/NDI, cue-based scheduling, or a CCLI
+    SongSelect workflow, stay on ProPresenter for now. For everyone else,
     there's no reason to keep paying.
   </p>
 </ArticleLayout>
