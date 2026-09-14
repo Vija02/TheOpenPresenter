@@ -26,6 +26,8 @@ process.env.PLAYWRIGHT_TAURI = "1";
 const FAKE_AI_PORT = Number(process.env.FAKE_AI_PORT || 5679);
 /** Kept in step with fixtures/planningCenterFixture.ts. */
 const FAKE_PCO_PORT = Number(process.env.FAKE_PCO_PORT || 5680);
+/** Overridable so a run can target a server other than the Tauri app's. */
+const APP_URL = process.env.E2E_BASE_URL || "http://localhost:5678";
 
 export default defineConfig({
   testDir: "./tests",
@@ -42,7 +44,7 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: "html",
   use: {
-    baseURL: "http://localhost:5678",
+    baseURL: APP_URL,
     trace: "on-first-retry",
     screenshot: "only-on-failure",
   },
