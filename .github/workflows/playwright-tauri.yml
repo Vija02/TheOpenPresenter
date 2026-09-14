@@ -100,11 +100,17 @@ jobs:
           echo "PUBLIC_ROOT_URL: $TUNNEL_URL"
           yarn e2e fake-ai > /tmp/fake-ai.log 2>&1 &
           timeout 60 bash -c 'until curl -sf http://localhost:5679/__control/health >/dev/null 2>&1; do sleep 1; done'
+          yarn e2e fake-pco > /tmp/fake-pco.log 2>&1 &
+          timeout 60 bash -c 'until curl -sf http://localhost:5680/__control/health >/dev/null 2>&1; do sleep 1; done'
           ENABLE_E2E_COMMANDS=1 \
           PUBLIC_ROOT_URL=$TUNNEL_URL \
           AI_BASE_URL=http://localhost:5679/v1 \
           AI_API_KEY=fake-e2e-key \
           AI_MODEL=fake-model \
+          PLUGIN_LYRICS_PCO_CLIENT_ID=fake-pco-client \
+          PLUGIN_LYRICS_PCO_CLIENT_SECRET=fake-pco-secret \
+          PLUGIN_LYRICS_PCO_API_URL=http://localhost:5680 \
+          PLUGIN_LYRICS_PCO_OAUTH_URL=http://localhost:5680 \
           DISPLAY=:99 \
             tauri/target/debug/theopenpresenter-app &
           echo "Waiting for server to be ready..."
