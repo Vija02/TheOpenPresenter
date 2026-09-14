@@ -1,8 +1,7 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
 exports[`convertMWLData > formats 'Praise' (praise-chords) 1`] = `
-"[Unknown]
-VAMP
+"[VAMP]
 Let everything that has breath
 Praise the Lord
 Praise the Lord
@@ -66,8 +65,7 @@ Praise cause you reign
 Praise cause you rose and defeated the grave
 I’ll praise cause you’re faithful
 Praise cause you’re true
-Praise cause there’s nobody greater than you
-"
+Praise cause there’s nobody greater than you"
 `;
 
 exports[`convertMWLData > formats 'Who Else' (who-else-chords) 1`] = `
@@ -122,6 +120,5 @@ Ho-ly, ho-ly
 . x09m7 x052
 There is no one, only You, Jesus
 . x09m7 x052
-There is no one, only You, Jesus
-"
+There is no one, only You, Jesus"
 `;

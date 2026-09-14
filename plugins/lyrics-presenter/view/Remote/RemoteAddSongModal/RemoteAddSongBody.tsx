@@ -4,7 +4,7 @@ import { CreateSongView } from "./CreateSongView";
 import { ImportSetlistView } from "./ImportSetlistView";
 import { ImportSongView } from "./ImportSongView";
 import { MainView } from "./MainView";
-import { Setlist } from "./MainView/ImportPlaylist";
+import { Setlist } from "./MainView/setlistTypes";
 
 export type Route =
   | { view: "main" }

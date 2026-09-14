@@ -26,6 +26,14 @@ import {
 import { getSongData } from "./data";
 import { convertMWLData } from "./importer/myworshiplist";
 import { migratePluginDataV1ToV2 } from "./migrate/v1";
+import { getPcoOAuthConfig } from "./planningCenter/oauth";
+import { createPlanningCenterRouter } from "./planningCenter/router";
+import { registerPlanningCenterRoutes } from "./planningCenter/routes";
+import {
+  SETLIST_SOURCES,
+  listEnabledSources,
+  setSourceEnabled,
+} from "./setlistSources/db";
 import { getMaxIndex, processSong } from "./songHelpers";
 import {
   deleteSavedSong,
@@ -82,6 +90,14 @@ export const init = (
     pluginName,
     path.join(__dirname, "../migrations"),
   );
+
+  if (getPcoOAuthConfig()) {
+    registerPlanningCenterRoutes(serverPluginApi);
+  } else {
+    logger.info(
+      "Planning Center integration disabled (PLUGIN_LYRICS_PCO_CLIENT_ID / _SECRET not set)",
+    );
+  }
 
   serverPluginApi.onPluginDataCreated(pluginName, onPluginDataCreated);
   serverPluginApi.onPluginDataLoaded(pluginName, onPluginDataLoaded);
@@ -381,6 +397,41 @@ const getAppRouter =
             }),
         },
 
+        // Setlist info
+        setlistSources: {
+          list: t.procedure
+            .input(z.object({ pluginId: z.string() }))
+            .query(async ({ input, ctx }) => {
+              const { organizationId } = resolveContext(input.pluginId);
+              return {
+                enabled: await listEnabledSources(
+                  serverPluginApi,
+                  authOf(ctx),
+                  organizationId,
+                ),
+              };
+            }),
+
+          setEnabled: t.procedure
+            .input(
+              z.object({
+                pluginId: z.string(),
+                source: z.enum(SETLIST_SOURCES),
+                enabled: z.boolean(),
+              }),
+            )
+            .mutation(async ({ input, ctx }) => {
+              const { organizationId } = resolveContext(input.pluginId);
+              await setSourceEnabled(serverPluginApi, authOf(ctx), {
+                organizationId,
+                userId: ctx.userId,
+                source: input.source,
+                enabled: input.enabled,
+              });
+              return { success: true };
+            }),
+        },
+
         // MyWorshipList integration
         myworshiplist: {
           search: t.publicProcedure
@@ -430,6 +481,8 @@ const getAppRouter =
             };
           }),
         },
+
+        planningCenter: createPlanningCenterRouter(t, serverPluginApi),
       },
     });
   };

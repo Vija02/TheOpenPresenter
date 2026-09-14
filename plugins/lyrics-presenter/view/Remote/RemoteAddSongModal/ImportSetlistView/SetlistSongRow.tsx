@@ -6,6 +6,7 @@ import { SetlistChoice } from "./types";
 
 type SetlistSongRowProps = {
   title: string;
+  sourceLabel: string;
   matches: SavedSong[];
   choice: SetlistChoice | undefined;
   isActive: boolean;
@@ -14,6 +15,7 @@ type SetlistSongRowProps = {
 
 export const SetlistSongRow = ({
   title,
+  sourceLabel,
   matches,
   choice,
   isActive,
@@ -25,7 +27,7 @@ export const SetlistSongRow = ({
     ? `From songbook: ${choice.savedSong.title || "Untitled"}`
     : matches.length > 0
       ? "Import (songbook match available)"
-      : "Import from MyWorshipList";
+      : `Import from ${sourceLabel}`;
 
   return (
     <button

@@ -1,19 +1,33 @@
 import { InternalVideo } from "@repo/video";
 import { z } from "zod";
 
-export type MyWorshipListImportSetting = {
-  type: "myworshiplist";
-  meta: { id: number };
-  importedData?: MyWorshipListImportedData;
-};
-export type MyWorshipListImportedData = {
-  id: number;
+export type ImportedData = {
   title: string;
   author: string | null;
-  year: number | null;
   content: string;
   original_chord: string;
+  [key: string]: unknown;
 };
+
+type ImportSettingBase = {
+  importedData?: ImportedData;
+};
+
+export type MyWorshipListImportSetting = ImportSettingBase & {
+  type: "myworshiplist";
+  meta: { id: number };
+};
+
+export type PlanningCenterImportSetting = ImportSettingBase & {
+  type: "planningCenter";
+  meta: { songId: string; arrangementId: string };
+};
+
+export type ImportSetting =
+  | MyWorshipListImportSetting
+  | PlanningCenterImportSetting;
+
+export type ImportSource = ImportSetting["type"];
 
 export type Song = {
   id: string;
@@ -28,7 +42,7 @@ export type Song = {
 
   _imported: boolean;
   // If this exist then this song is imported.
-  import?: MyWorshipListImportSetting;
+  import?: ImportSetting;
 };
 
 export type PluginBaseData = {
