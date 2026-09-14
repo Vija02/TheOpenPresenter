@@ -50,6 +50,7 @@ test("can register user with a password", () =>
         "is_admin": false,
         "is_verified": false,
         "name": "Test One",
+        "onboarding_data": {},
         "updated_at": "[DATE]",
         "username": "testuser",
       }
@@ -76,6 +77,7 @@ test("can register user with just a username and email", () =>
         "is_admin": false,
         "is_verified": false,
         "name": null,
+        "onboarding_data": {},
         "updated_at": "[DATE]",
         "username": "testuser",
       }
