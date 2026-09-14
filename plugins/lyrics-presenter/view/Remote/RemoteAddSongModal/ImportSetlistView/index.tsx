@@ -4,49 +4,26 @@ import { typeidUnboxed } from "typeid-js";
 
 import { Song } from "../../../../src";
 import { usePluginAPI } from "../../../pluginApi";
-import { trpc } from "../../../trpc";
 import { AddSongFooter } from "../AddSongFooter";
-import { Setlist } from "../MainView/ImportPlaylist";
+import { Setlist, setlistSourceLabel } from "../MainView/setlistTypes";
 import { useAddSongScene } from "../useAddSongScene";
 import { SetlistSongDetail } from "./SetlistSongDetail";
 import { SetlistSongRow } from "./SetlistSongRow";
+import { SongLyricsLoader } from "./SongLyricsLoader";
 import { SetlistChoice, SetlistImportData } from "./types";
 import { useSetlistMatches } from "./useSetlistMatches";
 
-// Invisible loader
-// Here so we don't need to put the hooks in a loop
-const SongLyricsLoader = ({
-  mwlId,
-  onLoaded,
-}: {
-  mwlId: number;
-  onLoaded: (data: SetlistImportData) => void;
-}) => {
-  const { data } = trpc.lyricsPresenter.myworshiplist.getSong.useQuery({
-    id: mwlId,
-  });
-  useEffect(() => {
-    if (data) {
-      onLoaded({
-        title: data.title,
-        author: data.author,
-        content: data.content,
-        originalContent: data.content,
-      });
-    }
-  }, [data, onLoaded]);
-  return null;
-};
-
 export const ImportSetlistView = ({ setlist }: { setlist: Setlist }) => {
+  const pluginApi = usePluginAPI();
+  const pluginId = pluginApi.pluginContext.pluginId;
   const { close, addLinkedSavedSong, addSong } = useAddSongScene();
-  const { isLoading, matchesByMwlId } = useSetlistMatches();
+  const { isLoading, getMatches } = useSetlistMatches();
 
-  const [choices, setChoices] = useState<Record<number, SetlistChoice>>({});
-  const [activeId, setActiveId] = useState<number | null>(null);
+  const [choices, setChoices] = useState<Record<string, SetlistChoice>>({});
+  const [activeKey, setActiveKey] = useState<string | null>(null);
 
   const [isEditing, setIsEditing] = useState(false);
-  const isPublicAccess = usePluginAPI().isPublicAccess;
+  const isPublicAccess = pluginApi.isPublicAccess;
 
   // Seed a default decision per song once the songbook has loaded: reuse the
   // first matching entry if any, otherwise import (and save) fresh
@@ -55,53 +32,53 @@ export const ImportSetlistView = ({ setlist }: { setlist: Setlist }) => {
     setChoices((prev) => {
       let changed = false;
       const next = { ...prev };
-      for (const c of setlist.content) {
-        if (next[c.id]) continue;
-        const matches = matchesByMwlId.get(String(c.id)) ?? [];
-        next[c.id] = matches.length
+      for (const song of setlist.content) {
+        if (next[song.key]) continue;
+        const matches = getMatches(song.matchSource, song.matchExternalId);
+        next[song.key] = matches.length
           ? { mode: "match", savedSong: matches[0]! }
           : { mode: "import", saveToSongbook: !isPublicAccess };
         changed = true;
       }
       return changed ? next : prev;
     });
-  }, [isLoading, isPublicAccess, matchesByMwlId, setlist.content]);
+  }, [isLoading, isPublicAccess, getMatches, setlist.content]);
 
   // Store fetched lyrics onto a choice once (keeping any user edits).
-  const seedData = useCallback((id: number, data: SetlistImportData) => {
+  const seedData = useCallback((key: string, data: SetlistImportData) => {
     setChoices((prev) => {
-      const ch = prev[id];
+      const ch = prev[key];
       if (!ch || ch.mode !== "import" || ch.data) return prev;
-      return { ...prev, [id]: { ...ch, data } };
+      return { ...prev, [key]: { ...ch, data } };
     });
   }, []);
 
   // The songs that will be imported fresh (not reused from the songbook)
-  const importIds = useMemo(
+  const importSongs = useMemo(
     () =>
-      setlist.content
-        .filter((c) => (choices[c.id]?.mode ?? "import") === "import")
-        .map((c) => c.id),
+      setlist.content.filter(
+        (song) => (choices[song.key]?.mode ?? "import") === "import",
+      ),
     [setlist.content, choices],
   );
 
-  const importsReady = importIds.every((id) => {
-    const ch = choices[id];
+  const importsReady = importSongs.every((song) => {
+    const ch = choices[song.key];
     return ch?.mode === "import" && !!ch.data;
   });
 
   const activeSong =
-    setlist.content.find((c) => c.id === activeId) ??
+    setlist.content.find((song) => song.key === activeKey) ??
     setlist.content[0] ??
     null;
 
   const matchedCount = setlist.content.filter(
-    (c) => choices[c.id]?.mode === "match",
+    (song) => choices[song.key]?.mode === "match",
   ).length;
 
   const submit = () => {
-    for (const c of setlist.content) {
-      const choice = choices[c.id];
+    for (const song of setlist.content) {
+      const choice = choices[song.key];
       if (choice?.mode === "match") {
         addLinkedSavedSong(choice.savedSong);
         continue;
@@ -109,7 +86,7 @@ export const ImportSetlistView = ({ setlist }: { setlist: Setlist }) => {
       const data = choice?.mode === "import" ? choice.data : undefined;
       if (!data) continue;
       const save = choice?.mode === "import" ? choice.saveToSongbook : true;
-      const mwlId = Number(c.id);
+
       const imported: Song = {
         id: typeidUnboxed(),
         title: data.title,
@@ -117,13 +94,10 @@ export const ImportSetlistView = ({ setlist }: { setlist: Setlist }) => {
         content: data.content,
         _imported: true,
         import: {
-          type: "myworshiplist",
-          meta: { id: mwlId },
+          ...song.importSetting,
           importedData: {
-            id: mwlId,
             title: data.title,
             author: data.author,
-            year: null,
             content: data.content,
             original_chord: "",
           },
@@ -138,11 +112,13 @@ export const ImportSetlistView = ({ setlist }: { setlist: Setlist }) => {
   return (
     <div className="stack-col items-stretch gap-3 mb-4 md:flex-1 md:min-h-0">
       {/* Load import lyrics */}
-      {importIds.map((id) => (
+      {importSongs.map((song) => (
         <SongLyricsLoader
-          key={id}
-          mwlId={Number(id)}
-          onLoaded={(data) => seedData(id, data)}
+          key={song.key}
+          song={song}
+          connectionId={setlist.connectionId}
+          pluginId={pluginId}
+          onLoaded={(data) => seedData(song.key, data)}
         />
       ))}
 
@@ -163,16 +139,16 @@ export const ImportSetlistView = ({ setlist }: { setlist: Setlist }) => {
             ? Array.from(new Array(4)).map((_, i) => (
                 <Skeleton key={i} className="w-full h-12" />
               ))
-            : setlist.content.map((c, index) =>
+            : setlist.content.map((song, index) =>
                 isEditing ? (
                   <button
-                    key={c.id}
+                    key={song.key}
                     type="button"
-                    onClick={() => setActiveId(c.id)}
-                    title={c.title}
+                    onClick={() => setActiveKey(song.key)}
+                    title={song.title}
                     className={cn(
                       "flex items-center justify-center rounded-md w-full py-2 text-sm cursor-pointer hover:bg-surface-primary-hover",
-                      activeSong?.id === c.id &&
+                      activeSong?.key === song.key &&
                         "bg-surface-primary-active font-bold",
                     )}
                   >
@@ -180,12 +156,13 @@ export const ImportSetlistView = ({ setlist }: { setlist: Setlist }) => {
                   </button>
                 ) : (
                   <SetlistSongRow
-                    key={c.id}
-                    title={c.title}
-                    matches={matchesByMwlId.get(String(c.id)) ?? []}
-                    choice={choices[c.id]}
-                    isActive={activeSong?.id === c.id}
-                    onSelect={() => setActiveId(c.id)}
+                    key={song.key}
+                    title={song.title}
+                    sourceLabel={setlistSourceLabel[setlist.source]}
+                    matches={getMatches(song.matchSource, song.matchExternalId)}
+                    choice={choices[song.key]}
+                    isActive={activeSong?.key === song.key}
+                    onSelect={() => setActiveKey(song.key)}
                   />
                 ),
               )}
@@ -194,11 +171,15 @@ export const ImportSetlistView = ({ setlist }: { setlist: Setlist }) => {
         <div className="flex-1 min-w-0 md:min-h-0 md:overflow-y-auto">
           {activeSong && (
             <SetlistSongDetail
-              key={activeSong.id}
-              matches={matchesByMwlId.get(String(activeSong.id)) ?? []}
-              choice={choices[activeSong.id]}
+              key={activeSong.key}
+              sourceLabel={setlistSourceLabel[setlist.source]}
+              matches={getMatches(
+                activeSong.matchSource,
+                activeSong.matchExternalId,
+              )}
+              choice={choices[activeSong.key]}
               onChange={(choice) =>
-                setChoices((prev) => ({ ...prev, [activeSong.id]: choice }))
+                setChoices((prev) => ({ ...prev, [activeSong.key]: choice }))
               }
               isEditingLyrics={isEditing}
               setIsEditingLyrics={setIsEditing}

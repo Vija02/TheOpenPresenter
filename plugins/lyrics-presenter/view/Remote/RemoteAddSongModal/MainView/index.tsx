@@ -2,9 +2,10 @@ import { useEffect, useState } from "react";
 
 import { SavedSong } from "../../../../src";
 import { usePluginAPI } from "../../../pluginApi";
-import { ImportPlaylist, Setlist } from "./ImportPlaylist";
+import { ImportPlaylist } from "./ImportPlaylist";
 import { RecentSongs } from "./RecentSongs";
 import { SearchSong } from "./SearchSong";
+import { Setlist } from "./setlistTypes";
 
 type MainViewProps = {
   onImportSong: (mwlId: number) => void;

@@ -5,12 +5,14 @@ import { SetlistChoice } from "./types";
 const IMPORT_VALUE = "__import__";
 
 type SetlistSourceSelectProps = {
+  sourceLabel: string;
   matches: SavedSong[];
   choice: SetlistChoice | undefined;
   onChange: (choice: SetlistChoice) => void;
 };
 
 export const SetlistSourceSelect = ({
+  sourceLabel,
   matches,
   choice,
   onChange,
@@ -40,11 +42,11 @@ export const SetlistSourceSelect = ({
               From songbook{m.author ? ` (${m.author})` : ""}
             </option>
           ))}
-          <option value={IMPORT_VALUE}>Import from MyWorshipList</option>
+          <option value={IMPORT_VALUE}>Import from {sourceLabel}</option>
         </select>
       ) : (
         <p className="text-sm text-secondary">
-          No songbook match. It will be imported from MyWorshipList.
+          No songbook match. It will be imported from {sourceLabel}.
         </p>
       )}
     </div>

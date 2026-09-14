@@ -17,20 +17,26 @@ export const useSetlistMatches = () => {
     { enabled: !isPublicAccess },
   );
 
-  const matchesByMwlId = useMemo(() => {
+  const matchesByKey = useMemo(() => {
     const map = new Map<string, SavedSong[]>();
     for (const saved of savedSongsQuery.data ?? []) {
-      if (saved.source === "myworshiplist" && saved.externalId) {
-        const arr = map.get(saved.externalId) ?? [];
-        arr.push(saved);
-        map.set(saved.externalId, arr);
-      }
+      if (!saved.externalId) continue;
+      const key = `${saved.source}:${saved.externalId}`;
+      const arr = map.get(key) ?? [];
+      arr.push(saved);
+      map.set(key, arr);
     }
     return map;
   }, [savedSongsQuery.data]);
 
+  const getMatches = useMemo(
+    () => (source: string, externalId: string | null) =>
+      externalId ? (matchesByKey.get(`${source}:${externalId}`) ?? []) : [],
+    [matchesByKey],
+  );
+
   return {
     isLoading: !isPublicAccess && savedSongsQuery.isLoading,
-    matchesByMwlId,
+    getMatches,
   };
 };

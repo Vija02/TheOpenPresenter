@@ -11,6 +11,7 @@ import { SetlistSourceSelect } from "./SetlistSourceSelect";
 import { SetlistChoice, SetlistImportData } from "./types";
 
 type SetlistSongDetailProps = {
+  sourceLabel: string;
   matches: SavedSong[];
   choice: SetlistChoice | undefined;
   onChange: (choice: SetlistChoice) => void;
@@ -19,6 +20,7 @@ type SetlistSongDetailProps = {
 };
 
 export const SetlistSongDetail = ({
+  sourceLabel,
   matches,
   choice,
   onChange,
@@ -65,6 +67,7 @@ export const SetlistSongDetail = ({
   return (
     <div className="stack-col items-stretch gap-3">
       <SetlistSourceSelect
+        sourceLabel={sourceLabel}
         matches={matches}
         choice={choice}
         onChange={onChange}

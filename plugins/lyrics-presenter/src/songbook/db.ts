@@ -12,6 +12,9 @@ const deriveSavedSongKey = (
   if (imp?.type === "myworshiplist" && imp.meta?.id != null) {
     return { source: "myworshiplist", externalId: String(imp.meta.id) };
   }
+  if (imp?.type === "planningCenter" && imp.meta?.songId) {
+    return { source: "planningCenter", externalId: String(imp.meta.songId) };
+  }
   const normalizedTitle = (song.title ?? "").trim().toLowerCase();
   return {
     source: "manual",
