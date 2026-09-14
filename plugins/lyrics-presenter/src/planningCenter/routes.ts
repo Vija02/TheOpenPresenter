@@ -62,6 +62,14 @@ const renderPopupResult = ({
           source: "top-pco-oauth",
           ...payload,
         })};
+
+        // BroadcastChannel first
+        try {
+          var channel = new BroadcastChannel("top-pco-oauth");
+          channel.postMessage(message);
+          channel.close();
+        } catch (e) {}
+
         // Handle if opener is on a different host
         var targets = [];
         var configured = ${JSON.stringify(origin)};

@@ -11,6 +11,7 @@
   "scripts": {
     "test": "playwright test",
     "fake-ai": "tsx scripts/fakeAiServer.ts",
+    "fake-pco": "tsx scripts/fakePcoServer.ts",
     "mock-host-device": "tsx scripts/mockHostDevice.ts"
   }
 }

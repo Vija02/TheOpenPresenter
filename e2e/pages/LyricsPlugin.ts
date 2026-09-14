@@ -143,6 +143,44 @@ export class LyricsPlugin {
   }
 
   // ---------------------------------------------------------------------------
+  // Setlist sources (Planning Center + MyWorshipList)
+  // ---------------------------------------------------------------------------
+
+  /** Open the "Setlist sources" settings modal from the add-song surface. */
+  async openSetlistSourcesModal(): Promise<Locator> {
+    await this.openAddSurface();
+    await this.page.getByTestId("ly-setlist-sources").click();
+    return this.dialog;
+  }
+
+  /**
+   * Run the Planning Center OAuth round trip.
+   *
+   * The connect button opens a popup, which the fake PCO redirects straight
+   * back to the app's callback. The callback page posts a message to its opener
+   * and closes itself, so all this has to do is wait for the popup to go away.
+   */
+  async connectPlanningCenter(button: Locator) {
+    const popupPromise = this.page.waitForEvent("popup");
+    await button.click();
+    const popup = await popupPromise;
+    await popup.waitForEvent("close", { timeout: 30_000 }).catch(async () => {
+      // The popup only closes itself on the happy path. On failure it stays up
+      // showing the reason, which the opener has already been told about.
+      await popup.close();
+    });
+  }
+
+  get pcoConnectionRow(): Locator {
+    return this.page.getByTestId("ly-pco-connection");
+  }
+
+  async disconnectPlanningCenter() {
+    await this.page.getByTestId("ly-pco-disconnect").click();
+    await this.page.getByRole("button", { name: "Yes" }).click();
+  }
+
+  // ---------------------------------------------------------------------------
   // Public (unauthenticated) access
   // ---------------------------------------------------------------------------
 
