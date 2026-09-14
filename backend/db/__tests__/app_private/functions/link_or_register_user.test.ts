@@ -59,6 +59,7 @@ describe("when account doesn't already exist", () => {
           "is_admin": false,
           "is_verified": true,
           "name": "GitHub User123456",
+          "onboarding_data": {},
           "updated_at": "[DATE]",
           "username": "GHU123",
         }
