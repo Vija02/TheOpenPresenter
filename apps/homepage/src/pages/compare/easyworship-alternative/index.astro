@@ -1,0 +1,651 @@
+---
+import ArticleLayout from "../../../components/content/ArticleLayout.astro";
+import ArticleHeader from "../../../components/content/ArticleHeader.astro";
+import WrapUpCta from "../../../components/content/WrapUpCta.astro";
+
+const comparison = [
+  {
+    feature: "Price",
+    ew: "From $17.50/month (Basic, billed yearly), subscription only",
+    top: "Free / open source (AGPL 3.0)",
+    winner: "top",
+  },
+  {
+    feature: "How pricing scales",
+    ew: "By average weekly attendance, the bigger you grow the more you pay",
+    top: "Free, size doesn't change the price",
+    winner: "top",
+  },
+  {
+    feature: "Perpetual licence",
+    ew: "Version 7 was sold outright, version 8 is subscription",
+    top: "Yes, or self-host free forever",
+    winner: "top",
+  },
+  {
+    feature: "Cost per extra user",
+    ew: "Campus licence covers machines at one site",
+    top: "Free, unlimited users, anywhere",
+    winner: "top",
+  },
+  {
+    feature: "Free trial / free tier",
+    ew: "30-day trial, no free tier",
+    top: "Free forever",
+    winner: "top",
+  },
+  {
+    feature: "Platforms",
+    ew: "Windows and Mac (version 8), install required",
+    top: "Any browser, plus a desktop app and TV apps",
+    winner: "top",
+  },
+  {
+    feature: "Web-based (no install)",
+    ew: "No, native app",
+    top: "Yes, runs in any browser",
+    winner: "top",
+  },
+  {
+    feature: "Real-time collaboration (multiple operators)",
+    ew: "No, one machine holds the schedule",
+    top: "Yes, multiple controllers at once",
+    winner: "top",
+  },
+  {
+    feature: "Prepare the service from home",
+    ew: "On the machine EasyWorship is installed on",
+    top: "Any device with a browser",
+    winner: "top",
+  },
+  {
+    feature: "Control from phone / tablet",
+    ew: "Yes, free Remote app, same network only",
+    top: "Yes, any browser, nothing to install",
+    winner: "top",
+  },
+  {
+    feature: "Google Slides sync",
+    ew: "No",
+    top: "Yes, sync directly",
+    winner: "top",
+  },
+  { feature: "PowerPoint import", ew: "Yes", top: "Yes", winner: "tie" },
+  {
+    feature: "Bible / scripture display",
+    ew: "90+ translations, many are a paid add-on",
+    top: "2,300+ translations included, plus custom upload",
+    winner: "top",
+  },
+  {
+    feature: "Embed a live web page",
+    ew: "Yes, one-click web display",
+    top: "Yes",
+    winner: "tie",
+  },
+  {
+    feature: "Video (YouTube / Vimeo / upload)",
+    ew: "Yes",
+    top: "Yes",
+    winner: "tie",
+  },
+  {
+    feature: "Video backgrounds behind lyrics",
+    ew: "Yes",
+    top: "Yes",
+    winner: "tie",
+  },
+  {
+    feature: "Countdown / timer / rundown",
+    ew: "Yes",
+    top: "Yes",
+    winner: "tie",
+  },
+  {
+    feature: "Stock media library",
+    ew: "Yes, 49,000+ items on the Premium plan",
+    top: "No, bring your own",
+    winner: "ew",
+  },
+  {
+    feature: "Screen share to the output",
+    ew: "No",
+    top: "Yes",
+    winner: "top",
+  },
+  {
+    feature: "Multiple independent outputs",
+    ew: "Yes",
+    top: "Yes, each can show different content",
+    winner: "tie",
+  },
+  {
+    feature: "Digital signage / always-on TV",
+    ew: "No",
+    top: "Yes",
+    winner: "top",
+  },
+  { feature: "AI lyric formatting", ew: "No", top: "Yes", winner: "top" },
+  {
+    feature: "Self-host / own your data",
+    ew: "No, local files on one machine",
+    top: "Yes",
+    winner: "top",
+  },
+  {
+    feature: "Works offline",
+    ew: "Yes, presenting is fully offline",
+    top: "Desktop app works offline, cloud needs a connection",
+    winner: "ew",
+  },
+  {
+    feature: "Stage display / confidence monitor",
+    ew: "Yes, foldback with clock and alerts",
+    top: "Beta",
+    winner: "ew",
+  },
+  {
+    feature: "Lower thirds / overlays / alpha channel",
+    ew: "Yes",
+    top: "No",
+    winner: "ew",
+  },
+  {
+    feature: "NDI (network video)",
+    ew: "Yes, in and out, plus NDI HX",
+    top: "No",
+    winner: "ew",
+  },
+  {
+    feature: "Livestream integration (OBS / vMix)",
+    ew: "Yes, via NDI and alpha channel",
+    top: "No",
+    winner: "ew",
+  },
+  {
+    feature: "MIDI / presenter remotes",
+    ew: "Yes",
+    top: "No",
+    winner: "ew",
+  },
+  {
+    feature: "CCLI / SongSelect import + reporting",
+    ew: "Yes, built in with auto-reporting",
+    top: "No",
+    winner: "ew",
+  },
+  {
+    feature: "Planning Center integration",
+    ew: "No, requested for years",
+    top: "Yes, import your plan's songs and lyrics",
+    winner: "top",
+  },
+  {
+    feature: "Maturity",
+    ew: "Shipping since 2003, very established",
+    top: "Younger, actively developed",
+    winner: "ew",
+  },
+];
+
+const faqs = [
+  {
+    q: "Is TheOpenPresenter really free?",
+    a: "Yes. It's open source under AGPL 3.0, so you can self-host it for free forever. The hosted cloud version is free for small churches, and free entirely (storage and AI included) for churches under 50 weekly attendance via our sponsorship programme.",
+  },
+  {
+    q: "Can it fully replace EasyWorship?",
+    a: "For most small-to-mid churches, yes. The gap is on the production side: if you send NDI or alpha channel video into OBS or vMix, or your song workflow runs through CCLI SongSelect, EasyWorship is still ahead.",
+  },
+  {
+    q: "I bought EasyWorship outright. Is my licence gone?",
+    a: "No, a version 7 perpetual licence keeps working on the machine it's installed on. But version 8 is sold as a subscription priced by weekly attendance, so staying current now means an ongoing bill. That's the point where a lot of churches start looking around.",
+  },
+  {
+    q: "Does it run on Mac and Windows?",
+    a: "It runs in any modern browser, so any OS works, including Linux and Chromebooks. There's also a desktop app, TheOpenPresenter Studio, for a native offline experience, plus TV apps for Fire TV and Android TV.",
+  },
+  {
+    q: "Does it work with Planning Center?",
+    a: "Yes. Connect your Planning Center account once, then import the service plans your team already builds there, songs and arrangement lyrics included. EasyWorship has no Planning Center integration, its own Planning BETA is a separate product you export from.",
+  },
+  {
+    q: "Can I move my EasyWorship songs and slides over?",
+    a: "There's no direct EasyWorship file import. You can bring content in via PowerPoint import, Google Slides sync, or a Planning Center service plan, and for loose song lyrics our AI formatting turns pasted text into slides in an instant.",
+  },
+  {
+    q: "Can multiple people control it at once?",
+    a: "Yes, in real time, from separate devices. EasyWorship runs from one machine with a remote app attached to it, so this is one of the biggest differences.",
+  },
+  {
+    q: "Does the remote work off the church wifi?",
+    a: "Ours does. The EasyWorship Remote app needs your phone on the same network as the computer. TheOpenPresenter is just a web address, so a volunteer can prepare and control the service from home, on mobile data, or from the stage.",
+  },
+  {
+    q: "What about livestreaming?",
+    a: "This is where EasyWorship is stronger. It sends NDI and alpha channel video straight into OBS or vMix. We don't do NDI yet, so if lyrics have to be keyed over your stream, stay where you are.",
+  },
+  {
+    q: "Does it handle CCLI / SongSelect?",
+    a: "No. EasyWorship has SongSelect built in with automatic copyright reporting. We don't. You import lyrics from other sources or add them yourself, and we don't track CCLI usage.",
+  },
+  {
+    q: "Do I have to pay extra for Bible translations?",
+    a: "Not with us. EasyWorship includes a set of free Bibles and sells many modern translations as add-ons. TheOpenPresenter includes 2,300+ translations, and you can upload your own.",
+  },
+  {
+    q: "Can I use it for digital signage too?",
+    a: "Yes. Because it runs in a browser on a TV stick and can loop slides, images, and web pages, the same setup can drive lobby or announcement screens during the week.",
+  },
+];
+
+const win = "font-bold text-teal-600 dark:text-teal-400";
+const lose = "text-gray-600 dark:text-gray-300";
+---
+
+<ArticleLayout
+  title="Free EasyWorship Alternative (Open Source) | TheOpenPresenter"
+  description="Looking for a free EasyWorship alternative? TheOpenPresenter is open source, web-based, and collaborative, with a straight look at where EasyWorship still wins."
+>
+  <ArticleHeader
+    backHref="/compare"
+    backLabel="All comparisons"
+    category="Comparison"
+    minutes={9}
+    title="Free EasyWorship alternative: TheOpenPresenter"
+  >
+    EasyWorship has been the default in small church media booths since
+    2003. It's dependable, volunteer-friendly, and cheaper than ProPresenter.
+    What changed is the deal: version 8 is a subscription priced by your weekly
+    attendance, so the bill grows as the church does.
+  </ArticleHeader>
+
+  <p class="text-lg text-gray-600 dark:text-gray-300 mb-12">
+    If you're looking for a free, open-source alternative, something a volunteer
+    can run from a phone without installing anything, this page lays out where
+    TheOpenPresenter is a solid replacement, and, just as importantly, where
+    EasyWorship is still the better option.
+  </p>
+
+  <!-- At a glance -->
+  <h2 class="text-2xl md:text-3xl font-black font-red-hat-display mb-6">
+    At a glance
+  </h2>
+  <div class="grid gap-6 md:grid-cols-2 mb-16">
+    <div
+      class="rounded-lg border border-teal-200 dark:border-teal-500/30 bg-teal-50 dark:bg-teal-500/10 p-6"
+    >
+      <p class="font-semibold text-gray-900 dark:text-gray-100 mb-4">
+        TheOpenPresenter is a strong alternative if you want:
+      </p>
+      <ul class="space-y-3 text-gray-600 dark:text-gray-300">
+        <li class="flex gap-3">
+          <span class="text-teal-500 shrink-0">&#10003;</span>
+          Software that's free and open source (AGPL 3.0), with no monthly bill that
+          grows with your attendance
+        </li>
+        <li class="flex gap-3">
+          <span class="text-teal-500 shrink-0">&#10003;</span>
+          To build and control presentations from a phone, tablet, or any browser,
+          from anywhere
+        </li>
+        <li class="flex gap-3">
+          <span class="text-teal-500 shrink-0">&#10003;</span>
+          Multiple people running the same screen at once, in real time
+        </li>
+        <li class="flex gap-3">
+          <span class="text-teal-500 shrink-0">&#10003;</span>
+          Google Slides synced straight onto the screen
+        </li>
+        <li class="flex gap-3">
+          <span class="text-teal-500 shrink-0">&#10003;</span>
+          Your Planning Center service plans imported straight into the service
+        </li>
+        <li class="flex gap-3">
+          <span class="text-teal-500 shrink-0">&#10003;</span>
+          A setup that isn't tied to one Windows or Mac machine in the booth
+        </li>
+      </ul>
+    </div>
+
+    <div class="rounded-lg border border-gray-200 dark:border-gray-800 p-6">
+      <p class="font-semibold text-gray-900 dark:text-gray-100 mb-4">
+        Stick with EasyWorship if you need:
+      </p>
+      <ul class="space-y-3 text-gray-600 dark:text-gray-300">
+        <li class="flex gap-3">
+          <span class="text-gray-400 shrink-0">&bull;</span>
+          NDI and alpha channel output into OBS, vMix, or a video mixer for your
+          livestream
+        </li>
+        <li class="flex gap-3">
+          <span class="text-gray-400 shrink-0">&bull;</span>
+          CCLI SongSelect import with automatic copyright reporting
+        </li>
+        <li class="flex gap-3">
+          <span class="text-gray-400 shrink-0">&bull;</span>
+          A large bundled media library of backgrounds and countdowns
+        </li>
+        <li class="flex gap-3">
+          <span class="text-gray-400 shrink-0">&bull;</span>
+          A fully offline machine in the booth with a mature stage display
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Feature comparison -->
+  <h2 class="text-2xl md:text-3xl font-black font-red-hat-display mb-6">
+    Feature comparison
+  </h2>
+  <div class="overflow-x-auto mb-6">
+    <table class="w-full text-left border-collapse">
+      <thead>
+        <tr>
+          <th
+            class="py-3 pr-4 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-300"
+          ></th>
+          <th
+            class="py-3 px-4 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-300"
+          >
+            EasyWorship
+          </th>
+          <th
+            class="py-3 pl-4 text-xs font-semibold uppercase tracking-wide text-teal-500"
+          >
+            TheOpenPresenter
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {
+          comparison.map((row) => (
+            <tr class="border-t border-gray-200 dark:border-gray-800 align-top">
+              <td class="py-3 pr-4 font-medium text-gray-900 dark:text-gray-100">
+                {row.feature}
+              </td>
+              <td class:list={["py-3 px-4", row.winner === "ew" ? win : lose]}>
+                {row.ew}
+              </td>
+              <td class:list={["py-3 pl-4", row.winner === "top" ? win : lose]}>
+                {row.top}
+              </td>
+            </tr>
+          ))
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <p class="text-gray-600 dark:text-gray-300 mb-16">
+    We've highlighted the wins on each side deliberately. EasyWorship is clearly
+    ahead on livestream output (NDI and alpha channel), <strong
+      class="font-semibold">CCLI SongSelect</strong
+    > with automatic reporting, its bundled media library, offline operation, and
+    a mature stage display. TheOpenPresenter is ahead on price, real-time collaboration,
+    web and phone control from anywhere, Google Slides, included Bible translations,
+    screen share, digital signage, and openness. Which column matters more depends
+    entirely on your church. The exception worth noting: Planning Center. Churches
+    have been asking EasyWorship for it for close to a decade and it still isn't
+    there. We import your service plans directly.
+  </p>
+
+  <!-- Where EasyWorship is still better -->
+  <h2 class="text-2xl md:text-3xl font-black font-red-hat-display mb-4">
+    Where EasyWorship is still better, and who should stay
+  </h2>
+  <p class="text-lg text-gray-600 dark:text-gray-300 mb-6">
+    We're not going to pretend otherwise:
+  </p>
+  <ul class="space-y-4 text-gray-600 dark:text-gray-300 mb-6">
+    <li class="flex gap-3">
+      <span class="text-gray-400 shrink-0">&bull;</span>
+      <span>
+        <strong class="font-semibold text-gray-900 dark:text-gray-100"
+          >You livestream with lyrics on the stream.</strong
+        > EasyWorship sends NDI and alpha channel video into OBS, vMix, or a mixer,
+        so lyrics key over your camera feed. We don't do NDI, so that workflow isn't
+        possible with us yet.
+      </span>
+    </li>
+    <li class="flex gap-3">
+      <span class="text-gray-400 shrink-0">&bull;</span>
+      <span>
+        <strong class="font-semibold text-gray-900 dark:text-gray-100"
+          >You rely on CCLI SongSelect and reporting.</strong
+        > EasyWorship has SongSelect built in, lyrics arrive pre-formatted, and copyright
+        usage can report itself. We don't. You import lyrics from other sources or
+        add them yourself.
+      </span>
+    </li>
+    <li class="flex gap-3">
+      <span class="text-gray-400 shrink-0">&bull;</span>
+      <span>
+        <strong class="font-semibold text-gray-900 dark:text-gray-100"
+          >You want media supplied for you.</strong
+        > The Premium plan bundles tens of thousands of backgrounds, countdowns, and
+        title media. We don't ship a media library, you bring your own.
+      </span>
+    </li>
+    <li class="flex gap-3">
+      <span class="text-gray-400 shrink-0">&bull;</span>
+      <span>
+        <strong class="font-semibold text-gray-900 dark:text-gray-100"
+          >Your building has unreliable internet.</strong
+        > EasyWorship presents fully offline. Our cloud version needs a connection,
+        though TheOpenPresenter Studio, our desktop app, runs offline too.
+      </span>
+    </li>
+    <li class="flex gap-3">
+      <span class="text-gray-400 shrink-0">&bull;</span>
+      <span>
+        <strong class="font-semibold text-gray-900 dark:text-gray-100"
+          >You depend on a polished stage display.</strong
+        > Foldback in EasyWorship has years behind it, with next-item previews, a clock,
+        and alerts to the stage. Ours is still in beta.
+      </span>
+    </li>
+  </ul>
+  <p class="text-gray-600 dark:text-gray-300 mb-16">
+    If that's you, TheOpenPresenter isn't the right switch today. Bookmark us
+    and check back.
+  </p>
+
+  <!-- Where TheOpenPresenter wins -->
+  <h2 class="text-2xl md:text-3xl font-black font-red-hat-display mb-4">
+    Where TheOpenPresenter wins
+  </h2>
+  <p class="text-lg text-gray-600 dark:text-gray-300 mb-8">
+    For most small and mid-sized churches, the things below matter more than NDI
+    ever will:
+  </p>
+
+  <div class="space-y-8 mb-16">
+    <div>
+      <h3 class="text-xl font-red-hat-display font-black mb-2">
+        It's free, and it stays free as you grow
+      </h3>
+      <p class="text-gray-600 dark:text-gray-300">
+        EasyWorship prices by average weekly attendance, so growing the church
+        raises the bill. TheOpenPresenter is AGPL 3.0, so you can self-host it,
+        read the code, and it can never be taken away from you. For churches
+        under 50 weekly attendance, the full cloud plan is free through our <a
+          href="/church/sponsorship"
+          class="text-teal-600 dark:text-teal-400 hover:underline font-medium"
+          >sponsorship programme</a
+        >, storage and AI credits included.
+      </p>
+    </div>
+
+    <div>
+      <h3 class="text-xl font-red-hat-display font-black mb-2">
+        Not tied to the booth computer
+      </h3>
+      <p class="text-gray-600 dark:text-gray-300">
+        EasyWorship lives on an installed machine, and its remote app needs your
+        phone on the same network. TheOpenPresenter is a web address. A
+        volunteer can build the service at home on a laptop, and run it on
+        Sunday from a phone in the back row.
+      </p>
+    </div>
+
+    <div>
+      <h3 class="text-xl font-red-hat-display font-black mb-2">
+        Real collaboration
+      </h3>
+      <p class="text-gray-600 dark:text-gray-300">
+        Several people can control the same presentation simultaneously, in real
+        time. Prepare the service together during the week; run it together on
+        Sunday. No single indispensable operator, and no copying a schedule file
+        from one computer to another.
+      </p>
+    </div>
+
+    <div>
+      <h3 class="text-xl font-red-hat-display font-black mb-2">
+        Google Slides, synced
+      </h3>
+      <p class="text-gray-600 dark:text-gray-300">
+        Build announcements and sermon slides in Google Slides, where your team
+        already works, and sync them straight onto the screen. With EasyWorship
+        you'd export to PowerPoint and re-import every time something changes.
+      </p>
+    </div>
+
+    <div>
+      <h3 class="text-xl font-red-hat-display font-black mb-2">
+        Planning Center, imported
+      </h3>
+      <p class="text-gray-600 dark:text-gray-300">
+        Connect your Planning Center account once and pull in the service plans
+        your team already builds there. The songs come across with their
+        arrangement lyrics, so the set is ready before you touch a slide.
+        EasyWorship users have been asking for this on the support forum since
+        2016.
+      </p>
+    </div>
+
+    <div>
+      <h3 class="text-xl font-red-hat-display font-black mb-2">
+        Bibles included, not sold separately
+      </h3>
+      <p class="text-gray-600 dark:text-gray-300">
+        EasyWorship gives you a handful of free translations and charges for
+        many of the modern ones. We include 2,300+ translations, and you can
+        upload your own if yours isn't there.
+      </p>
+    </div>
+
+    <div>
+      <h3 class="text-xl font-red-hat-display font-black mb-2">
+        Share any screen, live
+      </h3>
+      <p class="text-gray-600 dark:text-gray-300">
+        Push an operator's screen straight to the output over the network, handy
+        for a last-minute website, a live document, or anything not built as a
+        slide.
+      </p>
+    </div>
+
+    <div>
+      <h3 class="text-xl font-red-hat-display font-black mb-2">
+        No laptop required
+      </h3>
+      <p class="text-gray-600 dark:text-gray-300">
+        Plug a Fire TV Stick, Chromecast, or Android TV device into the screen
+        and present straight to the TV. The same setup drives lobby or
+        announcement displays through the week. <a
+          href="/how-to/present-on-tv"
+          class="text-teal-600 dark:text-teal-400 hover:underline font-medium"
+          >See how</a
+        >.
+      </p>
+    </div>
+  </div>
+
+  <!-- Switching from EasyWorship -->
+  <h2 class="text-2xl md:text-3xl font-black font-red-hat-display mb-4">
+    Switching from EasyWorship
+  </h2>
+  <p class="text-lg text-gray-600 dark:text-gray-300 mb-6">
+    You don't have to rip everything out at once:
+  </p>
+  <ol
+    class="list-decimal list-outside pl-5 space-y-3 text-gray-600 dark:text-gray-300 mb-6"
+  >
+    <li>
+      <strong class="font-semibold">Start free.</strong>
+      <a
+        href="/register"
+        class="text-teal-600 dark:text-teal-400 hover:underline font-medium"
+        >Create an account</a
+      >. No card, no commitment.
+    </li>
+    <li>
+      <strong class="font-semibold">Bring your existing slides.</strong>
+      Import PowerPoint files, or sync from Google Slides. For songs, paste the lyrics
+      in and let the AI formatting split them into slides.
+    </li>
+    <li>
+      <strong class="font-semibold">Connect a screen</strong>, a browser on any
+      device, or a TV stick. <a
+        href="/how-to/use-online-for-church"
+        class="text-teal-600 dark:text-teal-400 hover:underline font-medium"
+        >Setup guide</a
+      >.
+    </li>
+    <li>
+      <strong class="font-semibold">Run one service as a trial</strong> alongside
+      EasyWorship. Keep the booth machine as backup until you're confident.
+    </li>
+  </ol>
+  <p class="text-gray-600 dark:text-gray-300 mb-16">
+    Most teams find a single mid-week meeting is the low-risk way to test it
+    before trusting it with a Sunday. If your EasyWorship licence is a version 7
+    perpetual, there's no rush either way, it keeps working while you try.
+  </p>
+
+  <!-- FAQ -->
+  <h2 class="text-2xl md:text-3xl font-black font-red-hat-display mb-6">
+    Frequently asked questions
+  </h2>
+  <div class="space-y-6 mb-16">
+    {
+      faqs.map((faq) => (
+        <div class="border-b border-gray-200 dark:border-gray-800 pb-6">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+            {faq.q}
+          </h3>
+          <p class="text-gray-600 dark:text-gray-300">{faq.a}</p>
+        </div>
+      ))
+    }
+  </div>
+
+  <!-- Try it free / CTA -->
+  <WrapUpCta
+    title="Try it free"
+    buttons={[
+      { label: "Try it online now", href: "/register", variant: "primary" },
+      { label: "See the church plan", href: "/church", variant: "secondary" },
+    ]}
+  >
+    If you're a small church that wants presentation software without a monthly
+    bill that climbs with your attendance, that a volunteer can run from a
+    phone, that your whole team can use at once. TheOpenPresenter is built for
+    you.
+    <p slot="footer" class="text-sm text-gray-500 dark:text-gray-400 mt-6">
+      Free to start, no card needed. Or read <a
+        href="/how-to/use-online-for-church"
+        class="text-teal-600 dark:text-teal-400 hover:underline font-medium"
+        >how to get set up for church</a
+      >.
+    </p>
+  </WrapUpCta>
+
+  <p class="text-gray-600 dark:text-gray-300 mt-10 text-center italic">
+    Verdict: if lyrics have to reach your livestream over NDI, or SongSelect is
+    how your songs get in, stay on EasyWorship for now. For everyone else,
+    there's no reason to pay by the head.
+  </p>
+</ArticleLayout>
