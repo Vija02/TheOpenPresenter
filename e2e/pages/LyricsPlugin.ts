@@ -129,11 +129,30 @@ export class LyricsPlugin {
   }
 
   /**
+   * Switch MyWorshipList on if it isn't already.
+   *
+   * A new organization has no setlist source enabled, so the add surface shows
+   * the empty state rather than any setlist cards. Picking a source is what
+   * replaces it with the real thing.
+   */
+  async enableMyWorshipList() {
+    const scope = await this.openAddSurface();
+
+    const enableButton = scope.getByTestId("ly-enable-mwl");
+    // Already on for this org (the empty state is gone), nothing to do.
+    if (!(await enableButton.count())) return scope;
+
+    await enableButton.click();
+    await enableButton.waitFor({ state: "detached" });
+    return scope;
+  }
+
+  /**
    * Import a setlist: pick the first setlist card, then confirm with Import.
    * NOTE: hits the live MyWorshipList API.
    */
   async importFirstSetlist() {
-    const scope = await this.openAddSurface();
+    const scope = await this.enableMyWorshipList();
     // The setlist cards are shown by default under "Import a setlist".
     const firstCard = scope.getByTestId("ly-setlist-card").first();
     await firstCard.click();
