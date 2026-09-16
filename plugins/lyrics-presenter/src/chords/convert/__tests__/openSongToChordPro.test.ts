@@ -6,9 +6,17 @@ import { hasOpenSongChords, openSongToChordPro } from "../openSongToChordPro";
 
 describe("openSongToChordPro", () => {
   it("moves a monospace chord line inline", () => {
-    const content = [".G        C", "Amazing grace how sweet"].join("\n");
+    const content = [".G                 C", "Amazing grace how sweet"].join(
+      "\n",
+    );
 
-    expect(openSongToChordPro(content)).toBe("[G]Amazing [C]grace how sweet");
+    expect(openSongToChordPro(content)).toBe("[G]Amazing grace how [C]sweet");
+  });
+
+  it("keeps a chord the author put mid-word", () => {
+    const content = [".G     C", "Amazing grace"].join("\n");
+
+    expect(openSongToChordPro(content)).toBe("[G]Amazin[C]g grace");
   });
 
   it("never changes the lyrics", () => {
@@ -47,7 +55,7 @@ describe("openSongToChordPro", () => {
     const result = openSongToChordPro(content);
 
     expect(stripInlineChords(result)).toBe("Amazing grace how sweet the sound");
-    expect(result).toContain("[C]sound");
+    expect(result).toContain("so[C]und");
   });
 });
 
