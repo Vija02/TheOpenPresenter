@@ -44,60 +44,8 @@ export const collectChordLyricPairs = (lines: string[]): ChordLyricPair[] => {
 
 type PlacedChord = { index: number; chord: string };
 
-/**
- * Chords are written above a syllable, and whoever typed the sheet was aiming
- * at one. Whitespace positioning is only accurate to a character or two, so a
- * chord landing just inside a word is pulled back to the start of it.
- *
- * A re-spaced sheet needs a little more slack, since its columns were
- * reconstructed from font metrics rather than read off directly.
- */
-const SNAP_TOLERANCE = 2;
-const REALIGNED_SNAP_TOLERANCE = 3;
-
-const snapToWordStart = (
-  index: number,
-  lyricLine: string,
-  tolerance: number,
-): number => {
-  if (index <= 0 || index >= lyricLine.length) return index;
-
-  let best = index;
-  let bestDistance = Infinity;
-
-  const re = /\S+/g;
-  let match: RegExpExecArray | null;
-  while ((match = re.exec(lyricLine)) !== null) {
-    const distance = Math.abs(match.index - index);
-    if (distance <= tolerance && distance < bestDistance) {
-      bestDistance = distance;
-      best = match.index;
-    }
-  }
-
-  // The end of the line is a real target too: turnaround chords sit there.
-  const toEnd = Math.abs(lyricLine.length - index);
-  if (toEnd <= tolerance && toEnd < bestDistance) {
-    best = lyricLine.length;
-  }
-
-  return best;
-};
-
-/** Positions a chord can sit on: every word start, plus the end of the line. */
-const anchorPositions = (lyricLine: string): number[] => {
-  const positions = [...lyricLine.matchAll(/\S+/g)].map((m) => m.index!);
-  positions.push(lyricLine.length);
-  return positions;
-};
-
-const placeChords = (
-  chordText: string,
-  lyricLine: string,
-  tolerance: number,
-): PlacedChord[] => {
+const placeChords = (chordText: string, lyricLine: string): PlacedChord[] => {
   const placed: PlacedChord[] = [];
-  const anchors = anchorPositions(lyricLine);
   const re = /\S+/g;
   let match: RegExpExecArray | null;
 
@@ -106,14 +54,12 @@ const placeChords = (
     // than splicing "[|]" into the middle of a word.
     if (!isChordToken(match[0])) continue;
 
-    const clamped = Math.max(0, Math.min(match.index, lyricLine.length));
-    let index = snapToWordStart(clamped, lyricLine, tolerance);
+    let index = Math.max(0, Math.min(match.index, lyricLine.length));
 
-    // Two chords must never collapse onto one syllable: that would lose the
-    // order the changes happen in. Move the later one to the next word.
-    if (placed.some((p) => p.index === index)) {
-      const next = anchors.find((position) => position > index);
-      index = next ?? lyricLine.length;
+    // Two chords must never collapse onto one column: that would lose the
+    // order the changes happen in. Nudge the later one one character along.
+    while (placed.some((p) => p.index === index) && index < lyricLine.length) {
+      index++;
     }
 
     placed.push({ index, chord: match[0] });
@@ -145,22 +91,8 @@ const chordOnlyLine = (chordText: string): string =>
     .map((token) => (isChordToken(token) ? `[${token}]` : token))
     .join(" ");
 
-export type OpenSongToChordProOptions = {
-  /**
-   * Set when the chord lines were re-spaced from a proportional original, so
-   * their columns are reconstructed rather than exact.
-   */
-  realigned?: boolean;
-};
-
 /** Convert OpenSong-style content (dot-prefixed chord lines) to ChordPro. */
-export const openSongToChordPro = (
-  content: string,
-  options: OpenSongToChordProOptions = {},
-): string => {
-  const tolerance = options.realigned
-    ? REALIGNED_SNAP_TOLERANCE
-    : SNAP_TOLERANCE;
+export const openSongToChordPro = (content: string): string => {
   const lines = content.split("\n");
   const out: string[] = [];
 
@@ -187,7 +119,7 @@ export const openSongToChordPro = (
       continue;
     }
 
-    out.push(spliceChords(next, placeChords(chordText, next, tolerance)));
+    out.push(spliceChords(next, placeChords(chordText, next)));
     i++; // the lyric line has been consumed
   }
 
