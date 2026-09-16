@@ -3,6 +3,7 @@ import {
   stripInlineChords,
   tokenizeChordPro,
 } from "./chordpro";
+import { isOpenSongChordLine } from "./convert/openSongToChordPro";
 
 /**
  * Editing lyrics while chords are hidden.
@@ -149,9 +150,13 @@ export const mergeLyricEdit = (
   return out.join("\n");
 };
 
-/** A line that is only chords, e.g. an intro: "[G] [C] [D]". */
+/**
+ * A line that carries no lyric: an inline chord-only line like "[G] [C] [D]",
+ * or an OpenSong chord line like ".| D /// | Em / D / |".
+ */
 export const isChordOnlyLine = (line: string): boolean =>
-  hasInlineChords(line) && stripInlineChords(line).trim() === "";
+  isOpenSongChordLine(line) ||
+  (hasInlineChords(line) && stripInlineChords(line).trim() === "");
 
 /** The chords-hidden view of the content the editor shows the user. */
 export const toLyricsOnly = (content: string): string =>

@@ -6,13 +6,17 @@ import { SongEditInfo } from "./SongEditInfo";
 export const LyricFormLabel = ({
   canReset,
   content,
-  onRemoveChords,
+  hasChords,
+  showChords,
+  onToggleShowChords,
   onReset,
   onFormatted,
 }: {
   canReset: boolean;
   content: string;
-  onRemoveChords: () => void;
+  hasChords: boolean;
+  showChords: boolean;
+  onToggleShowChords: () => void;
   onReset: () => void;
   onFormatted: (content: string) => void;
 }) => {
@@ -22,9 +26,15 @@ export const LyricFormLabel = ({
         Lyric <SongEditInfo />
       </FormLabel>
       <div className="stack-row">
-        <Button size="xs" onClick={onRemoveChords}>
-          Remove chords
-        </Button>
+        {hasChords && (
+          <Button
+            size="xs"
+            onClick={onToggleShowChords}
+            data-testid="ly-toggle-chords"
+          >
+            {showChords ? "Hide chords" : "Show chords"}
+          </Button>
+        )}
         <AiFormatButton content={content} onFormatted={onFormatted} />
         {canReset && (
           <Button size="xs" onClick={onReset}>

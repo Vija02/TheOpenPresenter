@@ -1,5 +1,5 @@
 import { detectAlignment } from "../chords/alignment/detectAlignment";
-import { realignChordLineToMono } from "../chords/alignment/realignToMono";
+import { realignChordLines } from "../chords/alignment/realignToMono";
 import {
   collectChordLyricPairs,
   isOpenSongChordLine,
@@ -44,7 +44,7 @@ export const convertMWLDataDetailed = (
 
   const alignment = detectAlignment(collectChordLyricPairs(decoded)).mode;
   const prepared =
-    alignment === "proportional" ? realignToMono(decoded) : decoded;
+    alignment === "proportional" ? realignChordLines(decoded) : decoded;
 
   return {
     content: finalize(
@@ -55,24 +55,6 @@ export const convertMWLDataDetailed = (
     alignment,
   };
 };
-
-/** Re-space every chord line against the lyric beneath it. */
-const realignToMono = (lines: string[]): string[] =>
-  lines.map((line, i) => {
-    if (!isOpenSongChordLine(line)) return line;
-
-    const next = lines[i + 1];
-    const canAttach =
-      next !== undefined &&
-      next.trim() !== "" &&
-      next.trim() !== "-" &&
-      !isOpenSongChordLine(next) &&
-      !next.trim().startsWith("[");
-
-    if (!canAttach) return line;
-
-    return "." + realignChordLineToMono(line.slice(1), next);
-  });
 
 export const convertMWLData = (
   content: string,

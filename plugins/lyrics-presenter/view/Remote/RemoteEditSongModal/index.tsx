@@ -21,9 +21,15 @@ import {
   TabsTrigger,
   useOverlayToggle,
 } from "@repo/ui";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 
+import {
+  mergeLyricEdit,
+  toLyricsOnly,
+} from "../../../src/chords/mergeLyricEdit";
+import { contentHasChords } from "../../../src/chords/song";
+import { upgradeMwlChordCodes } from "../../../src/importer/upgradeChords";
 import { removeChords } from "../../../src/processLyrics";
 import { getMergedSlideStyle } from "../../../src/slideStyle";
 import { Song, displayTypeSettings } from "../../../src/types";
@@ -31,6 +37,8 @@ import { usePluginAPI } from "../../pluginApi";
 import { useSongbookSync } from "../../useSongbookSync";
 import { SongViewSlides } from "../SongViewSlides";
 import { ArrangeTab } from "./ArrangeTab";
+import { ChordToolbar } from "./ChordToolbar";
+import { ChordUpgradeNotice } from "./ChordUpgradeNotice";
 import { LyricFormLabel } from "./LyricFormLabel";
 import { MobilePreview } from "./MobilePreview";
 import SongEditEditor from "./SongEditEditor";
@@ -111,17 +119,48 @@ const RemoteEditSongModal = ({
     [song.import?.importedData?.content],
   );
 
+  // Songs imported before we decoded chords still hold "x00" placeholders.
+  // Upgrade them on open so the editor shows real chords; saving keeps it.
+  const upgraded = useMemo(() => {
+    const key = song.key ?? song.import?.importedData?.original_chord ?? null;
+    return { content: upgradeMwlChordCodes(song.content, key), key };
+  }, [song.content, song.key, song.import?.importedData?.original_chord]);
+
   const form = useForm<SongFormData>({
     resolver: zodResolver(songFormValidator),
     values: {
       ...song.setting,
       title: song.title,
-      content: song.content,
-      key: song.key ?? null,
+      content: upgraded.content,
+      key: upgraded.key,
     },
   });
 
   const data = form.watch();
+
+  const [showChords, setShowChords] = useState(false);
+
+  const hasChords = useMemo(
+    () => contentHasChords(data.content),
+    [data.content],
+  );
+
+  // What the editor shows. With chords hidden the user edits lyrics only, and
+  // each change is merged back into the chorded content.
+  const editorContent = useMemo(
+    () => (showChords ? data.content : toLyricsOnly(data.content)),
+    [data.content, showChords],
+  );
+
+  const handleEditorChange = useCallback(
+    (value: string) => {
+      form.setValue(
+        "content",
+        showChords ? value : mergeLyricEdit(data.content, value),
+      );
+    },
+    [data.content, form, showChords],
+  );
 
   // Automatically update section order when section titles change
   useUpdateSectionOrderOnEdit(form);
@@ -196,31 +235,53 @@ const RemoteEditSongModal = ({
                         <FormItem>
                           <LyricFormLabel
                             content={data.content}
+                            hasChords={hasChords}
+                            showChords={showChords}
+                            onToggleShowChords={() =>
+                              setShowChords((shown) => !shown)
+                            }
                             onFormatted={(val) => {
                               form.setValue("content", val);
-                            }}
-                            onRemoveChords={() => {
-                              form.setValue(
-                                "content",
-                                removeChords(data.content.split("\n")).join(
-                                  "\n",
-                                ),
-                              );
                             }}
                             canReset={data.content !== originalContent}
                             onReset={() => {
                               form.setValue("content", originalContent);
                             }}
                           />
+                          {hasChords && showChords && (
+                            <>
+                              <ChordUpgradeNotice
+                                song={song}
+                                onUpgrade={(val, newKey) => {
+                                  form.setValue("content", val);
+                                  form.setValue("key", newKey);
+                                }}
+                              />
+                              <ChordToolbar
+                                content={data.content}
+                                songKey={data.key}
+                                onChange={(val, newKey) => {
+                                  form.setValue("content", val);
+                                  form.setValue("key", newKey);
+                                }}
+                                onRemoveChords={() => {
+                                  form.setValue(
+                                    "content",
+                                    removeChords(data.content.split("\n")).join(
+                                      "\n",
+                                    ),
+                                  );
+                                }}
+                              />
+                            </>
+                          )}
                           <FormControl>
                             <SongEditEditor
-                              initialContent={data.content
+                              initialContent={editorContent
                                 .split("\n")
                                 .map((x) => `<p>${x}</p>`)
                                 .join("")}
-                              onChange={(val) => {
-                                form.setValue("content", val);
-                              }}
+                              onChange={handleEditorChange}
                             />
                           </FormControl>
                           <FormMessage />

@@ -28,6 +28,10 @@ describe("toLyricsOnly", () => {
     expect(toLyricsOnly("[G] [C]\nHello")).toBe("Hello");
   });
 
+  it("drops OpenSong chord lines", () => {
+    expect(toLyricsOnly(".| D /// | Em / D / |\nHello")).toBe("Hello");
+  });
+
   it("keeps section headings", () => {
     expect(toLyricsOnly("[Chorus]")).toBe("[Chorus]");
   });
@@ -36,6 +40,10 @@ describe("toLyricsOnly", () => {
 describe("isChordOnlyLine", () => {
   it("is true for a bare chord run", () => {
     expect(isChordOnlyLine("[G] [C] [D]")).toBe(true);
+  });
+
+  it("is true for an OpenSong chord line", () => {
+    expect(isChordOnlyLine(".| D /// | Em / D / |")).toBe(true);
   });
 
   it("is false for a heading or a lyric", () => {
@@ -76,6 +84,13 @@ describe("mergeLyricEdit", () => {
     const withIntro = `[Intro]\n[G] [C]\n${SONG}`;
     const merged = mergeLyricEdit(withIntro, toLyricsOnly(withIntro));
     expect(merged).toContain("[G] [C]");
+  });
+
+  it("keeps an OpenSong intro line that the user never sees", () => {
+    const withIntro = `[Intro]\n.| D /// | Em / D / |\n${SONG}`;
+    const merged = mergeLyricEdit(withIntro, toLyricsOnly(withIntro));
+
+    expect(merged).toContain(".| D /// | Em / D / |");
   });
 
   it("drops interior chords when the whole line is rewritten, but keeps the opening one", () => {

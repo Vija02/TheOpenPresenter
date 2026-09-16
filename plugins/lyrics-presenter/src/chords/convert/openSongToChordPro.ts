@@ -22,6 +22,17 @@ export const isOpenSongChordLine = (line: string): boolean =>
 const chordTextOf = (line: string): string => line.slice(1);
 
 /**
+ * Whether the line under a chord line is a lyric it can attach to. Blank lines,
+ * slide breaks, headings and further chord lines are not.
+ */
+export const chordLineCanAttach = (next: string | undefined): boolean =>
+  next !== undefined &&
+  next.trim() !== "" &&
+  next.trim() !== "-" &&
+  !isOpenSongChordLine(next) &&
+  !next.trim().startsWith("[");
+
+/**
  * Pair every chord line with the lyric line beneath it. Chord lines with no
  * lyric under them (intros, instrumental breaks) are skipped
  */
@@ -31,12 +42,9 @@ export const collectChordLyricPairs = (lines: string[]): ChordLyricPair[] => {
   for (let i = 0; i < lines.length - 1; i++) {
     const line = lines[i]!;
     if (!isOpenSongChordLine(line)) continue;
+    if (!chordLineCanAttach(lines[i + 1])) continue;
 
-    const next = lines[i + 1]!;
-    if (!next.trim() || isOpenSongChordLine(next)) continue;
-    if (next.trim().startsWith("[") || next.trim() === "-") continue;
-
-    pairs.push({ chordLine: chordTextOf(line), lyricLine: next });
+    pairs.push({ chordLine: chordTextOf(line), lyricLine: lines[i + 1]! });
   }
 
   return pairs;
@@ -101,39 +109,21 @@ export const openSongToChordPro = (content: string): string => {
 
     const chordText = chordTextOf(line);
     const next = lines[i + 1];
-    const canAttach =
-      next !== undefined &&
-      next.trim() !== "" &&
-      next.trim() !== "-" &&
-      !isOpenSongChordLine(next) &&
-      !next.trim().startsWith("[");
 
     // Intros, instrumental breaks and bar-line sheets ("| G /// | Em / D / |")
     // have no lyric to sit on. Inlining them would turn the bars and slashes
     // into lyrics, so they stay OpenSong chord lines.
-    if (!canAttach) {
+    if (!chordLineCanAttach(next)) {
       if (chordText.trim()) out.push(line);
       continue;
     }
 
-    out.push(spliceChords(next, placeChords(chordText, next)));
+    out.push(spliceChords(next!, placeChords(chordText, next!)));
     i++; // the lyric line has been consumed
   }
 
   return out.join("\n");
 };
-
-/** True when the content still uses dot-prefixed OpenSong chord lines. */
-export const hasOpenSongChords = (content: string): boolean =>
-  content.split("\n").some(isOpenSongChordLine);
-
-/**
- * True when there is a chord line that would actually become inline ChordPro.
- * A chord line with no lyric under it stays as it is, so on its own it is not
- * something to offer a conversion for.
- */
-export const hasConvertibleOpenSongChords = (content: string): boolean =>
-  openSongToChordPro(content) !== content;
 
 /** Transpose the chords on an OpenSong chord line, keeping everything else. */
 export const transposeOpenSongChordLine = (

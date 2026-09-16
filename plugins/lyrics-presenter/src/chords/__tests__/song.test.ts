@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   chordsInContent,
+  contentHasChords,
   guessKey,
   resolveKey,
   transposeContent,
@@ -33,6 +34,28 @@ describe("guessKey", () => {
 
   it("is null without chords", () => {
     expect(guessKey("[Verse 1]\nJust words")).toBeNull();
+  });
+});
+
+describe("contentHasChords", () => {
+  it("sees inline chords", () => {
+    expect(contentHasChords(SONG)).toBe(true);
+  });
+
+  it("sees an OpenSong chord line", () => {
+    expect(contentHasChords("[Intro]\n.| D /// | Em / D / |")).toBe(true);
+  });
+
+  it("sees a chord line we could not decode", () => {
+    // Imported before we decoded chords and with no key to decode against.
+    // The tokens do not parse, but it is still a chord line to hide.
+    expect(contentHasChords("[Verse 1]\n.x07 x09m\nSin was stained")).toBe(
+      true,
+    );
+  });
+
+  it("is false for plain lyrics", () => {
+    expect(contentHasChords("[Verse 1]\nAmazing grace")).toBe(false);
   });
 });
 
