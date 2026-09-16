@@ -1,7 +1,10 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
 exports[`convertMWLData > formats 'Hosanna' (hosanna-chords) 1`] = `
-"[Verse 1]
+"[Intro]
+.C#m E F#m G#m
+
+[Verse 1]
 [E]I see the King of glory
 [C#m]Coming on the clouds with fire
 The whole earth[F#m] shakes

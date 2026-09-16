@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { guessKey, resolveKey, transposeKey } from "../song";
+import {
+  chordsInContent,
+  guessKey,
+  resolveKey,
+  transposeContent,
+  transposeKey,
+} from "../song";
 
 const SONG = ["[Verse 1]", "[G]Amazing [C]grace", "That [D]saved"].join("\n");
 
@@ -27,6 +33,24 @@ describe("guessKey", () => {
 
   it("is null without chords", () => {
     expect(guessKey("[Verse 1]\nJust words")).toBeNull();
+  });
+});
+
+describe("chordsInContent", () => {
+  it("counts chords on OpenSong lines that stayed as they are", () => {
+    const content = ["[Intro]", ".| D /// | Em / D / |"].join("\n");
+
+    expect(chordsInContent(content)).toEqual(["D", "Em"]);
+  });
+});
+
+describe("transposeContent", () => {
+  it("transposes an OpenSong chord line and keeps its bars", () => {
+    const content = ["[Intro]", ".| D /// | Em / D / |"].join("\n");
+
+    expect(transposeContent(content, 2, "D")).toBe(
+      ["[Intro]", ".| E /// | F#m / E / |"].join("\n"),
+    );
   });
 });
 

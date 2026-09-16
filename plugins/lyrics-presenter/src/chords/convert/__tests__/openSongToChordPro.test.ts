@@ -29,10 +29,18 @@ describe("openSongToChordPro", () => {
     );
   });
 
-  it("keeps a chord line that has no lyric under it", () => {
+  it("keeps a chord line that has no lyric under it as an OpenSong line", () => {
     const content = [".G C D", "", "Something"].join("\n");
 
-    expect(openSongToChordPro(content).split("\n")[0]).toBe("[G] [C] [D]");
+    expect(openSongToChordPro(content).split("\n")[0]).toBe(".G C D");
+  });
+
+  it("leaves a bar-line chord line alone", () => {
+    const content = [".| G /// | Em / D / |", "", "Something"].join("\n");
+
+    expect(openSongToChordPro(content).split("\n")[0]).toBe(
+      ".| G /// | Em / D / |",
+    );
   });
 
   it("leaves section headings and slide breaks alone", () => {

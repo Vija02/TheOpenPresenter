@@ -2,6 +2,7 @@ import {
   Accidental,
   accidentalForKey,
   formatChord,
+  isChordToken,
   parseChord,
   transposeChord,
 } from "./chord";
@@ -12,7 +13,10 @@ import {
 } from "./chordpro";
 import {
   hasOpenSongChords,
+  isOpenSongChordLine,
+  openSongChordTokens,
   openSongToChordPro,
+  transposeOpenSongChordLine,
 } from "./convert/openSongToChordPro";
 
 /** Whole-song chord operations, for the editor. */
@@ -25,13 +29,23 @@ export const chordsInContent = (content: string): string[] => {
   const seen = new Set<string>();
   const chords: string[] = [];
 
+  const remember = (chord: string) => {
+    if (seen.has(chord)) return;
+    seen.add(chord);
+    chords.push(chord);
+  };
+
   for (const line of content.split("\n")) {
+    if (isOpenSongChordLine(line)) {
+      for (const token of openSongChordTokens(line)) {
+        if (isChordToken(token)) remember(token);
+      }
+      continue;
+    }
+
     if (!hasInlineChords(line)) continue;
     for (const token of tokenizeChordPro(line)) {
-      if (token.type === "chord" && !seen.has(token.value)) {
-        seen.add(token.value);
-        chords.push(token.value);
-      }
+      if (token.type === "chord") remember(token.value);
     }
   }
 
@@ -63,7 +77,11 @@ export const transposeContent = (
 
   return content
     .split("\n")
-    .map((line) => transposeChordProLine(line, semitones, accidental))
+    .map((line) =>
+      isOpenSongChordLine(line)
+        ? transposeOpenSongChordLine(line, semitones, accidental)
+        : transposeChordProLine(line, semitones, accidental),
+    )
     .join("\n");
 };
 
