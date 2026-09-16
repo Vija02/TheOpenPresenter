@@ -467,10 +467,12 @@ const getAppRouter =
             .input(z.object({ id: z.number() }))
             .query(async ({ input }) => {
               const songData = await getSongData(input.id);
+              const key = (songData.original_chord as string | null) || null;
               return {
                 title: (songData.title ?? "") as string,
                 author: (songData.author ?? null) as string | null,
-                content: convertMWLData(songData.content),
+                content: convertMWLData(songData.content, { key }),
+                key,
               };
             }),
 
@@ -491,3 +493,4 @@ export type AppRouter = ReturnType<ReturnType<typeof getAppRouter>>;
 
 export * from "./types";
 export * from "./sectionOrder";
+export * from "./chords";

@@ -35,6 +35,8 @@ export type Song = {
   content: string;
   author?: string | null;
   album?: string | null;
+  /** The base key */
+  key?: string | null;
   setting: SongSetting;
   styleOverride?: SlideStyle | null;
 
