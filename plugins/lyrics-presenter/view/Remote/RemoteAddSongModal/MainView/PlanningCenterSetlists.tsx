@@ -43,6 +43,7 @@ const PlanCard = ({
           key: song.itemId,
           title: song.title,
           author: song.author,
+          songKey: song.key,
           matchSource: "planningCenter",
           matchExternalId: song.songId,
           importSetting: {

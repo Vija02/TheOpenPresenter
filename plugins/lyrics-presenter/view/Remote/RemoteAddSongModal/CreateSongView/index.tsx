@@ -8,8 +8,8 @@ import { getMergedSlideStyle } from "../../../../src/slideStyle";
 import { usePluginAPI } from "../../../pluginApi";
 import { SongViewSlides } from "../../SongViewSlides";
 import { AddSongFooter } from "../AddSongFooter";
-import { CreateNewSong } from "./CreateNewSong";
 import { useAddSongScene } from "../useAddSongScene";
+import { CreateNewSong } from "./CreateNewSong";
 
 export const CreateSongView = () => {
   const pluginApi = usePluginAPI();

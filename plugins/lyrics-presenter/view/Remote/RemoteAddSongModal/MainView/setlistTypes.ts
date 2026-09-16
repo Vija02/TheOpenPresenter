@@ -4,6 +4,7 @@ export type SetlistSong = {
   key: string;
   title: string;
   author: string | null;
+  songKey?: string | null;
   matchSource: string;
   matchExternalId: string | null;
   /** Recorded onto the song so later edits know where it came from. */

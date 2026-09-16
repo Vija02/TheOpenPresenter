@@ -195,6 +195,7 @@ export const createPlanningCenterRouter = (t: TRPCObject, api: Api) => {
           arrangementId: z.string(),
           title: z.string().optional(),
           author: z.string().nullish(),
+          key: z.string().nullish(),
         }),
       )
       .query(async ({ input, ctx }) => {
@@ -219,7 +220,7 @@ export const createPlanningCenterRouter = (t: TRPCObject, api: Api) => {
             title: input.title ?? "",
             author: input.author ?? null,
             content,
-            chordChartKey: arrangement?.chordChartKey ?? null,
+            chordChartKey: input.key || arrangement?.chordChartKey || null,
           };
         });
       }),

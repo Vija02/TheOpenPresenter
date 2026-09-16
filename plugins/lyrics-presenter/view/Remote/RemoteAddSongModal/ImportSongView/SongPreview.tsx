@@ -25,7 +25,10 @@ export const SongPreview = ({
 }: SongPreviewProps) => {
   const pluginApi = usePluginAPI();
   const globalStyle = pluginApi.scene.useData((x) => x.pluginData.style);
-  const slideStyle = getMergedSlideStyle(globalStyle, previewSong.styleOverride);
+  const slideStyle = getMergedSlideStyle(
+    globalStyle,
+    previewSong.styleOverride,
+  );
 
   return (
     <div className="stack-col items-stretch">

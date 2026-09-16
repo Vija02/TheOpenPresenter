@@ -118,6 +118,7 @@ export type PcoPlanSong = {
   author: string | null;
   /** The plan's per-item arrangement override, when one is set. */
   customSequence: string[];
+  key: string | null;
 };
 
 export const listPlanSongs = async (
@@ -128,7 +129,7 @@ export const listPlanSongs = async (
   const doc = await pcoGet(
     accessToken,
     `/services/v2/service_types/${serviceTypeId}/plans/${planId}/items`,
-    { per_page: 100, include: "song,arrangement" },
+    { per_page: 100, include: "song,arrangement,key" },
   );
 
   const includedById = new Map(
@@ -141,6 +142,8 @@ export const listPlanSongs = async (
       const songRef = item.relationships?.song?.data ?? null;
       const arrangementRef = item.relationships?.arrangement?.data ?? null;
       const song = songRef ? includedById.get(`Song:${songRef.id}`) : undefined;
+      const keyRef = item.relationships?.key?.data ?? null;
+      const key = keyRef ? includedById.get(`Key:${keyRef.id}`) : undefined;
 
       return {
         itemId: item.id,
@@ -153,8 +156,18 @@ export const listPlanSongs = async (
         author: (song?.attributes?.author as string) ?? null,
         customSequence:
           (item.attributes?.custom_arrangement_sequence as string[]) ?? [],
+        key: keyNameOf(key) ?? (item.attributes?.key_name as string) ?? null,
       };
     });
+};
+
+/** PCO keeps minor in a separate flag rather than in `starting_key`. */
+const keyNameOf = (key: JsonApiResource | undefined): string | null => {
+  const starting = (key?.attributes?.starting_key as string) ?? null;
+  if (!starting) return null;
+  return key?.attributes?.starting_minor && !starting.endsWith("m")
+    ? `${starting}m`
+    : starting;
 };
 
 export type PcoArrangement = {
