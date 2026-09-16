@@ -21,14 +21,9 @@ import {
   TabsTrigger,
   useOverlayToggle,
 } from "@repo/ui";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
 import { useForm } from "react-hook-form";
 
-import {
-  mergeLyricEdit,
-  toLyricsOnly,
-} from "../../../src/chords/mergeLyricEdit";
-import { contentHasChords } from "../../../src/chords/song";
 import { upgradeMwlChordCodes } from "../../../src/importer/upgradeChords";
 import { removeChords } from "../../../src/processLyrics";
 import { getMergedSlideStyle } from "../../../src/slideStyle";
@@ -43,6 +38,7 @@ import { LyricFormLabel } from "./LyricFormLabel";
 import { MobilePreview } from "./MobilePreview";
 import SongEditEditor from "./SongEditEditor";
 import { SongFormData, songFormValidator } from "./types";
+import { useChordEditing } from "./useChordEditing";
 import { useUpdateSectionOrderOnEdit } from "./useUpdateSectionOrderOnEdit";
 
 export type RemoteEditSongModalPropTypes = { song: Song };
@@ -138,29 +134,14 @@ const RemoteEditSongModal = ({
 
   const data = form.watch();
 
-  const [showChords, setShowChords] = useState(false);
-
-  const hasChords = useMemo(
-    () => contentHasChords(data.content),
-    [data.content],
-  );
-
-  // What the editor shows. With chords hidden the user edits lyrics only, and
-  // each change is merged back into the chorded content.
-  const editorContent = useMemo(
-    () => (showChords ? data.content : toLyricsOnly(data.content)),
-    [data.content, showChords],
-  );
-
-  const handleEditorChange = useCallback(
-    (value: string) => {
-      form.setValue(
-        "content",
-        showChords ? value : mergeLyricEdit(data.content, value),
-      );
-    },
-    [data.content, form, showChords],
-  );
+  const {
+    hasChords,
+    showChords,
+    toggleShowChords,
+    editorContent,
+    onEditorChange,
+    showChordToolbar,
+  } = useChordEditing(data.content, (val) => form.setValue("content", val));
 
   // Automatically update section order when section titles change
   useUpdateSectionOrderOnEdit(form);
@@ -237,9 +218,7 @@ const RemoteEditSongModal = ({
                             content={data.content}
                             hasChords={hasChords}
                             showChords={showChords}
-                            onToggleShowChords={() =>
-                              setShowChords((shown) => !shown)
-                            }
+                            onToggleShowChords={toggleShowChords}
                             onFormatted={(val) => {
                               form.setValue("content", val);
                             }}
@@ -248,7 +227,7 @@ const RemoteEditSongModal = ({
                               form.setValue("content", originalContent);
                             }}
                           />
-                          {hasChords && showChords && (
+                          {showChordToolbar && (
                             <>
                               <ChordUpgradeNotice
                                 song={song}
@@ -281,7 +260,7 @@ const RemoteEditSongModal = ({
                                 .split("\n")
                                 .map((x) => `<p>${x}</p>`)
                                 .join("")}
-                              onChange={handleEditorChange}
+                              onChange={onEditorChange}
                             />
                           </FormControl>
                           <FormMessage />
