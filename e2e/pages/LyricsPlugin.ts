@@ -327,6 +327,23 @@ export class LyricsPlugin {
     await this.songEditor.pressSequentially(text);
   }
 
+  /** Press a key at the end of the line containing `lineText`. */
+  async pressAtEndOfLine(lineText: string, key: string) {
+    const line = this.songEditor.locator("p", { hasText: lineText }).first();
+    await line.click();
+    await this.songEditor.press("End");
+    await this.songEditor.press(key);
+  }
+
+  /** Press a key with the caret at the start of `word`. */
+  async pressBeforeWord(lineText: string, word: string, key: string) {
+    const line = this.songEditor.locator("p", { hasText: lineText }).first();
+    // Double-clicking selects the word; ArrowLeft collapses to its start.
+    await line.getByText(word, { exact: false }).first().dblclick();
+    await this.songEditor.press("ArrowLeft");
+    await this.songEditor.press(key);
+  }
+
   /** Type at the very end of the song, the way an ordinary edit would. */
   async appendToEditor(text: string) {
     const editor = this.songEditor;

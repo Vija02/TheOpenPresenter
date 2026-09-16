@@ -228,4 +228,55 @@ test.describe.serial("Lyrics Presenter - Chords", () => {
     await expect(panel).toContainText("Formatting songs");
     await expect(panel).toContainText("[G]Amazing [C]grace how [D]sweet");
   });
+
+  test("keeps the chords lined up when a line is added with chords hidden", async ({
+    projectPage,
+    lyricsPlugin,
+    loginAndGoToProject,
+  }) => {
+    await loginAndGoToProject();
+    await projectPage.createPlugin("Lyrics Presenter");
+    await lyricsPlugin.addCustomSong("Amazing Grace", CHORDED_SONG);
+
+    await lyricsPlugin.openEditSong();
+
+    // Enter at the end of the heading, with the chords hidden. This used to
+    // shift every line onto its neighbour's chords and strand a stray one on
+    // the new blank line.
+    await lyricsPlugin.pressAtEndOfLine("[Verse 1]", "Enter");
+
+    await lyricsPlugin.showChords();
+
+    await expect(lyricsPlugin.songEditor).toContainText(
+      "[G]Amazing grace how [C]sweet the sound",
+    );
+    await expect(lyricsPlugin.songEditor).toContainText(
+      "That [D]saved a wretch like [G]me",
+    );
+  });
+
+  test("keeps both halves' chords when a line is split with chords hidden", async ({
+    projectPage,
+    lyricsPlugin,
+    loginAndGoToProject,
+  }) => {
+    await loginAndGoToProject();
+    await projectPage.createPlugin("Lyrics Presenter");
+    await lyricsPlugin.addCustomSong("Amazing Grace", CHORDED_SONG);
+
+    await lyricsPlugin.openEditSong();
+
+    // Enter mid-line, with the chords hidden. The second half used to come back
+    // with no chords at all.
+    await lyricsPlugin.pressBeforeWord(
+      "Amazing grace how sweet",
+      "how",
+      "Enter",
+    );
+
+    await lyricsPlugin.showChords();
+
+    await expect(lyricsPlugin.songEditor).toContainText("[G]Amazing grace");
+    await expect(lyricsPlugin.songEditor).toContainText("how [C]sweet");
+  });
 });
