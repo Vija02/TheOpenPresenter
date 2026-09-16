@@ -1,5 +1,5 @@
 import { ChordLyricPair } from "../alignment/detectAlignment";
-import { isChordToken } from "../chord";
+import { Accidental, isChordToken, transposeChordName } from "../chord";
 
 /**
  * OpenSong keeps chords on their own line, positioned by whitespace:
@@ -86,11 +86,6 @@ const spliceChords = (lyricLine: string, chords: PlacedChord[]): string => {
   return result;
 };
 
-const chordOnlyLine = (chordText: string): string =>
-  (chordText.match(/\S+/g) ?? [])
-    .map((token) => (isChordToken(token) ? `[${token}]` : token))
-    .join(" ");
-
 /** Convert OpenSong-style content (dot-prefixed chord lines) to ChordPro. */
 export const openSongToChordPro = (content: string): string => {
   const lines = content.split("\n");
@@ -113,9 +108,11 @@ export const openSongToChordPro = (content: string): string => {
       !isOpenSongChordLine(next) &&
       !next.trim().startsWith("[");
 
+    // Intros, instrumental breaks and bar-line sheets ("| G /// | Em / D / |")
+    // have no lyric to sit on. Inlining them would turn the bars and slashes
+    // into lyrics, so they stay OpenSong chord lines.
     if (!canAttach) {
-      const only = chordOnlyLine(chordText);
-      if (only) out.push(only);
+      if (chordText.trim()) out.push(line);
       continue;
     }
 
@@ -129,6 +126,27 @@ export const openSongToChordPro = (content: string): string => {
 /** True when the content still uses dot-prefixed OpenSong chord lines. */
 export const hasOpenSongChords = (content: string): boolean =>
   content.split("\n").some(isOpenSongChordLine);
+
+/**
+ * True when there is a chord line that would actually become inline ChordPro.
+ * A chord line with no lyric under it stays as it is, so on its own it is not
+ * something to offer a conversion for.
+ */
+export const hasConvertibleOpenSongChords = (content: string): boolean =>
+  openSongToChordPro(content) !== content;
+
+/** Transpose the chords on an OpenSong chord line, keeping everything else. */
+export const transposeOpenSongChordLine = (
+  line: string,
+  semitones: number,
+  accidental: Accidental = "sharp",
+): string =>
+  "." +
+  chordTextOf(line).replace(/\S+/g, (token) =>
+    isChordToken(token)
+      ? transposeChordName(token, semitones, accidental)
+      : token,
+  );
 
 /**
  * Chord tokens found in OpenSong chord lines, for callers that want to know
