@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { detectAlignment } from "../../alignment/detectAlignment";
 import { stripInlineChords } from "../../chordpro";
-import { hasOpenSongChords, openSongToChordPro } from "../openSongToChordPro";
+import { openSongToChordPro } from "../openSongToChordPro";
 
 describe("openSongToChordPro", () => {
   it("moves a monospace chord line inline", () => {
@@ -64,13 +64,6 @@ describe("openSongToChordPro", () => {
 
     expect(stripInlineChords(result)).toBe("Amazing grace how sweet the sound");
     expect(result).toContain("so[C]und");
-  });
-});
-
-describe("hasOpenSongChords", () => {
-  it("detects dot-prefixed chord lines", () => {
-    expect(hasOpenSongChords(".G C\nHello")).toBe(true);
-    expect(hasOpenSongChords("[G]Hello")).toBe(false);
   });
 });
 

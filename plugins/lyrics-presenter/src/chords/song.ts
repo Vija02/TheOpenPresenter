@@ -12,10 +12,8 @@ import {
   transposeChordProLine,
 } from "./chordpro";
 import {
-  hasOpenSongChords,
   isOpenSongChordLine,
   openSongChordTokens,
-  openSongToChordPro,
   transposeOpenSongChordLine,
 } from "./convert/openSongToChordPro";
 
@@ -23,6 +21,12 @@ import {
 
 export const contentHasChordPro = (content: string): boolean =>
   content.split("\n").some(hasInlineChords);
+
+/** Whether the song carries chords at all, in either format */
+export const contentHasChords = (content: string): boolean =>
+  content
+    .split("\n")
+    .some((line) => isOpenSongChordLine(line) || hasInlineChords(line));
 
 /** Every chord used, in the order it first appears. */
 export const chordsInContent = (content: string): string[] => {
@@ -110,12 +114,4 @@ const destinationSpelling = (
   const FLAT_PREFERRED = [1, 3, 5, 8, 10];
   const root = (((chord.root + semitones) % 12) + 12) % 12;
   return FLAT_PREFERRED.includes(root) ? "F" : "G";
-};
-
-/** Make sure the content uses ChordPro */
-export const ensureChordPro = (
-  content: string,
-): { content: string; converted: boolean } => {
-  if (!hasOpenSongChords(content)) return { content, converted: false };
-  return { content: openSongToChordPro(content), converted: true };
 };
