@@ -42,6 +42,7 @@ export const ImportSongView = ({ mwlId }: { mwlId: number }) => {
       title: importSongTitle ?? mwlSongQuery.data.title,
       author: mwlSongQuery.data.author,
       content: importSongContent ?? mwlSongQuery.data.content,
+      key: mwlSongQuery.data.key ?? null,
       _imported: true,
       setting: { displayType: "sections" },
     };
@@ -54,6 +55,7 @@ export const ImportSongView = ({ mwlId }: { mwlId: number }) => {
       title: importSongTitle ?? mwlSongQuery.data.title,
       author: mwlSongQuery.data.author,
       content: importSongContent ?? mwlSongQuery.data.content,
+      key: mwlSongQuery.data.key ?? null,
       _imported: true,
       import: {
         type: "myworshiplist",

@@ -5,6 +5,7 @@ export type SetlistImportData = {
   author: string | null;
   content: string;
   originalContent: string;
+  key: string | null;
 };
 
 export type SetlistChoice =

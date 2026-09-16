@@ -1,3 +1,4 @@
+import { stripInlineChords } from "../chords/chordpro";
 import { groupData, ungroupData } from "../processLyrics";
 
 const SECTION_WORDS =
@@ -26,6 +27,7 @@ export const finalize = (lines: string[]): string => {
       group.slides
         .flat()
         .filter((line) => !line.startsWith("."))
+        .map(stripInlineChords)
         .join("")
         .trim() !== "",
   );
