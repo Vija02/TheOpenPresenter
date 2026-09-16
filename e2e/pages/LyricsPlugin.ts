@@ -248,6 +248,93 @@ export class LyricsPlugin {
     await this.page.getByRole("button", { name: "Yes" }).click();
   }
 
+  // ---------------------------------------------------------------------------
+  // Chords
+  // ---------------------------------------------------------------------------
+
+  /** Open the edit modal for a song already on the list. */
+  async openEditSong(index = 0) {
+    await this.page.getByTestId("ly-edit-song").nth(index).click();
+    return this.dialog;
+  }
+
+  /** The editor's text, one line per paragraph. */
+  async editorText(): Promise<string> {
+    return this.songEditor.innerText();
+  }
+
+  get songEditor(): Locator {
+    return this.page
+      .getByTestId("ly-song-editor")
+      .locator('[contenteditable="true"]');
+  }
+
+  get toggleChordsButton(): Locator {
+    return this.page.getByTestId("ly-toggle-chords");
+  }
+
+  get chordToolbar(): Locator {
+    return this.page.getByTestId("ly-chord-toolbar");
+  }
+
+  get transposeKey(): Locator {
+    return this.page.getByTestId("ly-key");
+  }
+
+  async showChords() {
+    await this.page
+      .getByTestId("ly-toggle-chords")
+      .filter({ hasText: "Show chords" })
+      .click();
+  }
+
+  async hideChords() {
+    await this.page
+      .getByTestId("ly-toggle-chords")
+      .filter({ hasText: "Hide chords" })
+      .click();
+  }
+
+  async transposeUp() {
+    await this.page.getByTestId("ly-transpose-up").click();
+  }
+
+  async transposeDown() {
+    await this.page.getByTestId("ly-transpose-down").click();
+  }
+
+  async removeAllChords() {
+    await this.page.getByTestId("ly-remove-chords").click();
+  }
+
+  /**
+   * Replace the whole editor contents. Note this clears the editor first, so
+   * any chords go with it: that is a real deletion, not an edit.
+   */
+  async setEditorContent(content: string) {
+    const editor = this.songEditor;
+    await editor.click();
+    await editor.press("ControlOrMeta+a");
+    await editor.press("Backspace");
+    await editor.pressSequentially(content);
+  }
+
+  /** Type at the start of a line, the way someone adding a chord would. */
+  async typeAtStartOfLine(lineText: string, text: string) {
+    const line = this.songEditor.locator("p", { hasText: lineText }).first();
+    await line.click();
+    await this.songEditor.press("Home");
+    await this.songEditor.pressSequentially(text);
+  }
+
+  /** Type at the very end of the song, the way an ordinary edit would. */
+  async appendToEditor(text: string) {
+    const editor = this.songEditor;
+    await editor.click();
+    await editor.press("ControlOrMeta+End");
+    await editor.pressSequentially(text);
+  }
+
   async closeDialog() {
     await this.page.keyboard.press("Escape");
   }
