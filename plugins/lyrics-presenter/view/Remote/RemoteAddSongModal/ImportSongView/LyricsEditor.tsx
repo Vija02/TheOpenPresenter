@@ -6,7 +6,9 @@ import { removeChords } from "../../../../src/processLyrics";
 import { getMergedSlideStyle } from "../../../../src/slideStyle";
 import { usePluginAPI } from "../../../pluginApi";
 import { AiFormatButton } from "../../RemoteEditSongModal/AiFormatButton";
+import { ChordToolbar } from "../../RemoteEditSongModal/ChordToolbar";
 import SongEditEditor from "../../RemoteEditSongModal/SongEditEditor";
+import { useChordEditing } from "../../RemoteEditSongModal/useChordEditing";
 import { SongViewSlides } from "../../SongViewSlides";
 import { SectionHeading } from "../SectionHeading";
 
@@ -29,7 +31,20 @@ export const LyricsEditor = ({
 }: LyricsEditorProps) => {
   const pluginApi = usePluginAPI();
   const globalStyle = pluginApi.scene.useData((x) => x.pluginData.style);
-  const slideStyle = getMergedSlideStyle(globalStyle, previewSong.styleOverride);
+  const slideStyle = getMergedSlideStyle(
+    globalStyle,
+    previewSong.styleOverride,
+  );
+
+  const content = importSongContent ?? "";
+  const {
+    hasChords,
+    showChords,
+    toggleShowChords,
+    editorContent,
+    onEditorChange,
+    showChordToolbar,
+  } = useChordEditing(content, setImportSongContent);
 
   return (
     <div className="flex flex-col md:flex-row gap-3">
@@ -37,23 +52,21 @@ export const LyricsEditor = ({
         <div className="stack-row justify-between items-center w-full gap-1 flex-wrap">
           <SectionHeading>Lyrics</SectionHeading>
           <div className="stack-row gap-1">
-            <Button
-              size="xs"
-              onClick={() =>
-                setImportSongContent(
-                  removeChords((importSongContent ?? "").split("\n")).join(
-                    "\n",
-                  ),
-                )
-              }
-            >
-              Remove chords
-            </Button>
+            {hasChords && (
+              <Button
+                size="xs"
+                variant={showChords ? "default" : "outline"}
+                onClick={toggleShowChords}
+                data-testid="ly-toggle-chords"
+              >
+                {showChords ? "Hide chords" : "Show chords"}
+              </Button>
+            )}
             <AiFormatButton
-              content={importSongContent ?? ""}
+              content={content}
               onFormatted={setImportSongContent}
             />
-            {(importSongContent ?? "") !== originalContent && (
+            {content !== originalContent && (
               <Button
                 size="xs"
                 onClick={() => setImportSongContent(originalContent)}
@@ -63,13 +76,25 @@ export const LyricsEditor = ({
             )}
           </div>
         </div>
+
+        {showChordToolbar && (
+          <ChordToolbar
+            content={content}
+            songKey={previewSong.key}
+            onChange={(val) => setImportSongContent(val)}
+            onRemoveChords={() =>
+              setImportSongContent(removeChords(content.split("\n")).join("\n"))
+            }
+          />
+        )}
+
         <SongEditEditor
           key={editorKey}
-          initialContent={(importSongContent ?? "")
+          initialContent={editorContent
             .split("\n")
             .map((x) => `<p>${x}</p>`)
             .join("")}
-          onChange={(val) => setImportSongContent(val)}
+          onChange={onEditorChange}
         />
       </div>
       <div className="md:basis-[260px] shrink-0">

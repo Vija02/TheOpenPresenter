@@ -22,8 +22,10 @@ import {
   songSettingValidator,
 } from "../../../../src/types";
 import { usePluginAPI } from "../../../pluginApi";
+import { ChordToolbar } from "../../RemoteEditSongModal/ChordToolbar";
 import { LyricFormLabel } from "../../RemoteEditSongModal/LyricFormLabel";
 import SongEditEditor from "../../RemoteEditSongModal/SongEditEditor";
+import { useChordEditing } from "../../RemoteEditSongModal/useChordEditing";
 import { SongViewSlides } from "../../SongViewSlides";
 
 export const CreateNewSong = ({
@@ -52,6 +54,15 @@ export const CreateNewSong = ({
   });
 
   const data = form.watch();
+
+  const {
+    hasChords,
+    showChords,
+    toggleShowChords,
+    editorContent,
+    onEditorChange,
+    showChordToolbar,
+  } = useChordEditing(data.content, (val) => form.setValue("content", val));
 
   const previewSong: Song = useMemo(
     () => ({
@@ -102,27 +113,37 @@ export const CreateNewSong = ({
                 <FormItem>
                   <LyricFormLabel
                     content={data.content}
+                    hasChords={hasChords}
+                    showChords={showChords}
+                    onToggleShowChords={toggleShowChords}
                     onFormatted={(val) => {
                       form.setValue("content", val);
-                    }}
-                    onRemoveChords={() => {
-                      form.setValue(
-                        "content",
-                        removeChords(data.content.split("\n")).join("\n"),
-                      );
                     }}
                     canReset={false}
                     onReset={() => {}}
                   />
-                  <FormControl>
-                    <SongEditEditor
-                      initialContent={data.content
-                        .split("\n")
-                        .map((x) => `<p>${x}</p>`)
-                        .join("")}
+                  {showChordToolbar && (
+                    <ChordToolbar
+                      content={data.content}
+                      songKey={null}
                       onChange={(val) => {
                         form.setValue("content", val);
                       }}
+                      onRemoveChords={() => {
+                        form.setValue(
+                          "content",
+                          removeChords(data.content.split("\n")).join("\n"),
+                        );
+                      }}
+                    />
+                  )}
+                  <FormControl>
+                    <SongEditEditor
+                      initialContent={editorContent
+                        .split("\n")
+                        .map((x) => `<p>${x}</p>`)
+                        .join("")}
+                      onChange={onEditorChange}
                     />
                   </FormControl>
                   <FormMessage />
