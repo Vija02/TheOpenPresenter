@@ -123,6 +123,109 @@ describe("mergeLyricEdit", () => {
     expect(merged).toContain("[G]Amazing");
   });
 
+  it("keeps every line's own chords when a line is inserted above them", () => {
+    // Pressing Enter at the end of the heading used to shift every line onto
+    // its neighbour's chords, leaving a stray chord on the new blank line.
+    const lyrics = toLyricsOnly(SONG).split("\n");
+    const edited = [lyrics[0]!, "", lyrics[1]!, lyrics[2]!].join("\n");
+
+    expect(mergeLyricEdit(SONG, edited).split("\n")).toEqual([
+      "[Verse 1]",
+      "",
+      "[G]Amazing [C]grace how [D]sweet the sound",
+      "That [G]saved a wretch like [D]me",
+    ]);
+  });
+
+  it("keeps the chords below a line inserted in the middle", () => {
+    const lyrics = toLyricsOnly(SONG).split("\n");
+    const edited = [lyrics[0]!, lyrics[1]!, "a new line", lyrics[2]!].join(
+      "\n",
+    );
+
+    expect(mergeLyricEdit(SONG, edited).split("\n")).toEqual([
+      "[Verse 1]",
+      "[G]Amazing [C]grace how [D]sweet the sound",
+      "a new line",
+      "That [G]saved a wretch like [D]me",
+    ]);
+  });
+
+  it("keeps the remaining line's chords when a line above it is deleted", () => {
+    const lyrics = toLyricsOnly(SONG).split("\n");
+    const edited = [lyrics[0]!, lyrics[2]!].join("\n");
+
+    expect(mergeLyricEdit(SONG, edited).split("\n")).toEqual([
+      "[Verse 1]",
+      "That [G]saved a wretch like [D]me",
+    ]);
+  });
+
+  it("splits a line without moving chords onto the wrong half", () => {
+    const lyrics = toLyricsOnly(SONG).split("\n");
+    const edited = [
+      lyrics[0]!,
+      "Amazing grace",
+      "how sweet the sound",
+      lyrics[2]!,
+    ].join("\n");
+    const merged = mergeLyricEdit(SONG, edited).split("\n");
+
+    expect(merged[1]).toBe("[G]Amazing [C]grace");
+    expect(merged[3]).toBe("That [G]saved a wretch like [D]me");
+  });
+
+  it("keeps each half's own chords when a line is split", () => {
+    // Pressing Enter mid-line used to give the first half every chord it could
+    // still place and drop the rest entirely.
+    const song = [
+      "[Verse]",
+      "Let every brea[G]th, [C]all that I [G]am, [Em]never cease to [F]worship [D]you",
+    ].join("\n");
+    const edited = [
+      "[Verse]",
+      "Let every breath, all that I am,",
+      "never cease to worship you",
+    ].join("\n");
+
+    expect(mergeLyricEdit(song, edited).split("\n")).toEqual([
+      "[Verse]",
+      "Let every brea[G]th, [C]all that I [G]am,",
+      "[Em]never cease to [F]worship [D]you",
+    ]);
+  });
+
+  it("keeps the chords when a line is split more than once", () => {
+    const song = [
+      "[Verse]",
+      "Let every brea[G]th, [C]all that I [G]am, [Em]never cease to [F]worship [D]you",
+    ].join("\n");
+    const edited = [
+      "[Verse]",
+      "Let every breath,",
+      "all that I am,",
+      "never cease to worship you",
+    ].join("\n");
+
+    expect(mergeLyricEdit(song, edited).split("\n")).toEqual([
+      "[Verse]",
+      "Let every brea[G]th,",
+      "[C]all that I [G]am,",
+      "[Em]never cease to [F]worship [D]you",
+    ]);
+  });
+
+  it("keeps a chord at the end of a line on the half that ends up with it", () => {
+    const song = ["[Verse]", "Amazing grace how sweet[G]"].join("\n");
+    const edited = ["[Verse]", "Amazing grace", "how sweet"].join("\n");
+
+    expect(mergeLyricEdit(song, edited).split("\n")).toEqual([
+      "[Verse]",
+      "Amazing grace",
+      "how sweet[G]",
+    ]);
+  });
+
   it("never leaves a chord bracket inside a word it did not belong to", () => {
     const edited = toLyricsOnly(SONG).replace("sweet", "");
     const merged = mergeLyricEdit(SONG, edited);
