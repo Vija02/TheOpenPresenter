@@ -47,7 +47,10 @@ export const processSongWithoutArrangement = (content: string) => {
   const groupedData = groupData(cleanData);
   const cleanedData = suppressStartAndEndEmptyLines(groupedData);
 
-  return cleanedData;
+  // If the section only has chords and no lyrics, no need to show it
+  return cleanedData.filter((group) =>
+    group.slides.some((slide) => slide.some((line) => line.trim() !== "")),
+  );
 };
 
 export const getMaxIndex = (
