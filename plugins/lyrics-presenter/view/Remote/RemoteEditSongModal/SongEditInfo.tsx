@@ -29,7 +29,8 @@ export const SongEditInfo = () => {
         render={<Button size="xs" variant="outline" className="font-light" />}
       >
         <FaCircleInfo className="text-gray-700" />
-        How does this work?
+        <span className="md:hidden">Help</span>
+        <span className="hidden md:inline">How does this work?</span>
       </SheetTrigger>
 
       <SheetContent side="right" className="w-full sm:max-w-md">
