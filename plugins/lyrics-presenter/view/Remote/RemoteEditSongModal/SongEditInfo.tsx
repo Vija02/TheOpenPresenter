@@ -1,36 +1,76 @@
-import { PopoverContent } from "@repo/ui";
+import {
+  Button,
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@repo/ui";
+import { ReactNode } from "react";
+import { FaCircleInfo } from "react-icons/fa6";
 
-// TODO: Make this clearer & using modal/drawer
+const Example = ({ children }: { children: ReactNode }) => (
+  <pre className="mt-2 rounded border border-stroke bg-surface-secondary px-3 py-2 font-mono text-xs whitespace-pre-wrap">
+    {children}
+  </pre>
+);
+
+const Rule = ({ title, children }: { title: string; children: ReactNode }) => (
+  <section className="border-b border-stroke pb-4 last:border-b-0 last:pb-0">
+    <h4 className="text-sm font-semibold">{title}</h4>
+    <div className="mt-1 text-sm text-secondary">{children}</div>
+  </section>
+);
+
 export const SongEditInfo = () => {
   return (
-    <PopoverContent
-      align="start"
-      className="w-full max-w-screen text-white bg-blue-900 border border-blue-900"
-    >
-      <h3 className="text-lg font-black">Formatting songs</h3>
-      We use quite a simple format to show songs inspired by OpenSong. <br />
-      <br />
-      <b>Here are some of the basic rules: </b>
-      <br />
-      <ol className="list-decimal list-inside">
-        <li>
-          Separate sections with square brackets(<b>[ ]</b>) like{" "}
-          <b>[Verse 1]</b>.
-          <br />
-          This can be anything from Verse, Chorus, Bridge, and any text you
-          like.
-        </li>
-        <li>
-          Use a single dash(<b>-</b>) to split your section into multiple
-          slides.
-        </li>
-        <li>
-          Add a dot(<b>.</b>) in front of a line to indicate that it is a chord
-          line.
-          <br />
-          Note: At this time, we do not support showing chords yet.
-        </li>
-      </ol>
-    </PopoverContent>
+    <Sheet>
+      <SheetTrigger
+        render={<Button size="xs" variant="outline" className="font-light" />}
+      >
+        <FaCircleInfo className="text-gray-700" />
+        How does this work?
+      </SheetTrigger>
+
+      <SheetContent side="right" className="w-full sm:max-w-md">
+        <SheetHeader className="border-b border-stroke">
+          <SheetTitle>Formatting songs</SheetTitle>
+        </SheetHeader>
+
+        <div className="stack-col min-h-0 flex-1 items-stretch gap-4 overflow-y-auto p-4">
+          <Rule title="Sections">
+            Put the section name in square brackets on its own line. It can be
+            anything you like: Verse 1, Chorus, Bridge, Tag.
+            <Example>{"[Verse 1]\nAmazing grace how sweet the sound"}</Example>
+          </Rule>
+
+          <Rule title="Splitting a section into slides">
+            A line with a single dash starts a new slide in the same section.
+            <Example>
+              {
+                "[Verse 1]\nAmazing grace how sweet the sound\n-\nThat saved a wretch like me"
+              }
+            </Example>
+          </Rule>
+
+          <Rule title="Chords">
+            Chords go inline in square brackets where they need to be. This is
+            the ChordPro format which keeps your chords aligned.
+            <Example>{"[G]Amazing [C]grace how [D]sweet the sound"}</Example>
+          </Rule>
+
+          <Rule title="Chord lines">
+            For chords that are above the lines, prefix the line with a dot.
+            This indicates that the whole line are for chords.
+            <Example>{"[Intro]\n.| D /// | Em / D / | G /// |"}</Example>
+          </Rule>
+
+          <Rule title="Chords on screen">
+            Chords are for the people on stage. They don't show up on the
+            projected slides.
+          </Rule>
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 };
