@@ -18,6 +18,7 @@ export type PcoSong = {
   title: string;
   author: string | null;
   chordChart: string;
+  key?: string;
 };
 
 export type PcoPlan = {

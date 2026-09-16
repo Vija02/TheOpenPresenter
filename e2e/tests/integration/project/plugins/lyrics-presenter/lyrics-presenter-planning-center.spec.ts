@@ -70,10 +70,26 @@ test.describe.serial("Lyrics Presenter - Planning Center", () => {
       .filter({ hasText: "January 4" })
       .click();
 
-    // The import view lists both songs from the plan.
+    // The import view lists both songs from the plan. Match the rows, not the
+    // title text: the rendered preview slides carry the lyrics, which contain
+    // the title too.
     const dialog = page.getByRole("dialog");
-    await expect(dialog.getByText("Amazing Grace")).toBeVisible();
-    await expect(dialog.getByText("How Great Thou Art")).toBeVisible();
+    await expect(
+      dialog.getByRole("button", { name: /^Amazing Grace/ }),
+    ).toBeVisible();
+    await expect(
+      dialog.getByRole("button", { name: /^How Great Thou Art/ }),
+    ).toBeVisible();
+
+    // The preview editor, before importing, shows the same chords and key the
+    // imported song will end up with.
+    await dialog.getByRole("button", { name: "Edit" }).click();
+    await lyricsPlugin.showChords();
+
+    await expect(lyricsPlugin.songEditor).toContainText("[D]Amazing gra[G]ce");
+    await expect(lyricsPlugin.transposeKey).toHaveText("Bb");
+
+    await dialog.getByRole("button", { name: "Done" }).click();
 
     await dialog.getByRole("button", { name: "Import", exact: true }).click();
 
@@ -88,6 +104,19 @@ test.describe.serial("Lyrics Presenter - Planning Center", () => {
       page.getByText("Amazing grace how sweet the sound").first(),
     ).toBeVisible();
     await expect(page.getByText("D          G      D")).toHaveCount(0);
+
+    // The chords themselves were kept, inline, where the editor can show them.
+    // They are never on the slides, so the editor is the only place to look.
+    await lyricsPlugin.openEditSong();
+    await lyricsPlugin.showChords();
+
+    await expect(lyricsPlugin.songEditor).toContainText("[D]Amazing gra[G]ce");
+    await expect(lyricsPlugin.songEditor).toContainText("[A]wretch like me");
+
+    // The key comes from the plan item, which is the one a musician sets in
+    // Planning Center. The fixture's Bb is neither the chart's chord_chart_key
+    // nor its first chord, so neither of those can be what is shown.
+    await expect(lyricsPlugin.transposeKey).toHaveText("Bb");
   });
 
   test("a connected account persists across a reload", async ({

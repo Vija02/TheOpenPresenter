@@ -31,6 +31,8 @@ type Song = {
   author: string | null;
   /** Served as the arrangement's chord_chart */
   chordChart: string;
+  /** Served as the plan item's related Key resource. */
+  key?: string;
 };
 
 type Plan = {
@@ -88,6 +90,7 @@ const defaultAccount = (): Account => ({
           title: "Amazing Grace",
           author: "John Newton",
           chordChart: AMAZING_GRACE,
+          key: "Bb",
         },
         {
           id: "song-2",
@@ -108,6 +111,7 @@ const defaultAccount = (): Account => ({
           title: "Amazing Grace",
           author: "John Newton",
           chordChart: AMAZING_GRACE,
+          key: "Bb",
         },
       ],
     },
@@ -383,13 +387,28 @@ const handleServices = (
         relationships: {
           song: { data: { id: song.id, type: "Song" } },
           arrangement: { data: { id: `arr-${song.id}`, type: "Arrangement" } },
+          ...(song.key
+            ? { key: { data: { id: `key-${song.id}`, type: "Key" } } }
+            : {}),
         },
       })),
-      included: plan.songs.map((song) => ({
-        id: song.id,
-        type: "Song",
-        attributes: { title: song.title, author: song.author },
-      })),
+      included: [
+        ...plan.songs.map((song) => ({
+          id: song.id,
+          type: "Song",
+          attributes: { title: song.title, author: song.author },
+        })),
+        ...plan.songs
+          .filter((song) => !!song.key)
+          .map((song) => ({
+            id: `key-${song.id}`,
+            type: "Key",
+            attributes: {
+              starting_key: song.key,
+              starting_minor: (song.key ?? "").endsWith("m"),
+            },
+          })),
+      ],
     });
     return;
   }

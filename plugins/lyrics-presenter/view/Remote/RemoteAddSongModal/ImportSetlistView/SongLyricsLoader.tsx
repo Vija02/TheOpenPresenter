@@ -41,6 +41,7 @@ export const SongLyricsLoader = ({
           : "",
       title: song.title,
       author: song.author,
+      key: song.songKey ?? null,
     },
     { enabled: !isMwl && !!connectionId },
   );

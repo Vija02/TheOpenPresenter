@@ -1,4 +1,8 @@
 import {
+  isOpenSongChordLine,
+  openSongToChordPro,
+} from "../chords/convert/openSongToChordPro";
+import {
   cleanWhiteSpace,
   finalize,
   headingOf,
@@ -6,17 +10,34 @@ import {
   splitLines,
 } from "./shared";
 
+/**
+ * A Planning Center chord chart is either already ChordPro, or chords on their
+ * own line positioned by whitespace:
+ *
+ *   D          G      D
+ *   Amazing grace how sweet the sound
+ *
+ * Both end up as ChordPro. The positional form is marked up as OpenSong chord
+ * lines first, since that is the same shape.
+ */
+
 export const convertPcoLyrics = (content: string): string => {
   const lines: string[] = [];
   let hasHeading = false;
 
-  for (const raw of withSlideBreaks(cleanWhiteSpace(splitLines(content)))) {
+  // Chord columns are counted in characters, so the whitespace has to survive
+  // until the chords have been moved inline.
+  for (const raw of withSlideBreaks(markChordLines(splitLines(content)))) {
     if (raw === "-") {
       lines.push(raw);
       continue;
     }
 
-    // Matched before chord stripping, so a bracketed heading survives
+    if (isOpenSongChordLine(raw)) {
+      lines.push(raw);
+      continue;
+    }
+
     const heading = matchHeading(raw);
     if (heading) {
       hasHeading = true;
@@ -27,31 +48,41 @@ export const convertPcoLyrics = (content: string): string => {
       continue;
     }
 
-    const lyric = stripInlineChords(raw);
-    if (!lyric || isChordToken(lyric)) continue;
-    lines.push(lyric);
+    // Nothing left once the chords come off means there is nothing to sing.
+    if (!stripInlineChords(raw)) continue;
+    lines.push(raw);
   }
 
   if (!hasHeading) lines.unshift("[Unknown]");
 
-  return finalize(lines);
+  return finalize(
+    cleanWhiteSpace(openSongToChordPro(lines.join("\n")).split("\n")),
+  );
 };
 
-/** "[G]Amazing [D]grace" becomes "Amazing grace". */
 const stripInlineChords = (line: string): string =>
   line
     .replace(/\[[^\]]*\]/g, "")
     .replace(/\s+/g, " ")
     .trim();
 
-/** Blank lines within a section separate slides, which the presenter marks "-" */
+/**
+ * A chord row above a lyric becomes an OpenSong chord line. Headings are
+ * matched first, or a bare "D" section marker would read as a chord.
+ */
+const markChordLines = (lines: string[]): string[] =>
+  lines.map((line) =>
+    !matchHeading(line) && isChordToken(line) ? `.${line}` : line,
+  );
+
+/** Blank lines within a section separate slides, which we mark "-" */
 const withSlideBreaks = (lines: string[]): string[] => {
   const out: string[] = [];
   let pendingBreak = false;
   let started = false;
 
   for (const line of lines) {
-    if (line === "") {
+    if (line.trim() === "") {
       if (started) pendingBreak = true;
       continue;
     }
@@ -73,9 +104,8 @@ const CHORD_RE =
   /^[A-G](#|b)?(maj|min|m|sus|aug|dim|add|M)?\d*(\/[A-G](#|b)?)?$/;
 
 /**
- * Nothing but chords, either "[Bm7/D]" on its own line or a plain chart's
- * chord row above the lyric. Requiring every token to parse as a chord keeps
- * real lyrics safe, since ordinary words like "Be" or "And" are not chords.
+ * Requiring every token to parse as a chord keeps real lyrics safe, since
+ * ordinary words like "Be" or "And" are not chords.
  */
 const isChordToken = (value: string) => {
   const tokens = value.trim().split(/\s+/).filter(Boolean);
