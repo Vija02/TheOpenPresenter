@@ -52,7 +52,7 @@ const RemoteEditSongModal = ({
   const { saveToSongbook } = useSongbookSync();
 
   const handleSubmit = useCallback(
-    ({ title, content, ...setting }: SongFormData) => {
+    ({ title, content, key, ...setting }: SongFormData) => {
       const index = mutableSceneData.pluginData.songs.findIndex(
         (x) => x.id === song.id,
       );
@@ -80,12 +80,14 @@ const RemoteEditSongModal = ({
       mutableSceneData.pluginData.songs[index]!.setting = normalizedSetting;
       mutableSceneData.pluginData.songs[index]!.title = title;
       mutableSceneData.pluginData.songs[index]!.content = content;
+      mutableSceneData.pluginData.songs[index]!.key = key;
 
       if (song.songbookId) {
         void saveToSongbook({
           ...song,
           title,
           content,
+          key,
           setting: normalizedSetting,
         });
       }
@@ -115,6 +117,7 @@ const RemoteEditSongModal = ({
       ...song.setting,
       title: song.title,
       content: song.content,
+      key: song.key ?? null,
     },
   });
 

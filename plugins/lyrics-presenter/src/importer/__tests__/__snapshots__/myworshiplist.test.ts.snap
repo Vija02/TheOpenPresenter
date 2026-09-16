@@ -1,124 +1,87 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`convertMWLData > formats 'Praise' (praise-chords) 1`] = `
-"[VAMP]
-Let everything that has breath
-Praise the Lord
-Praise the Lord
+exports[`convertMWLData > formats 'Hosanna' (hosanna-chords) 1`] = `
+"[Verse 1]
+[E]I see the King of glory
+[C#m]Coming on the clouds with fire
+The whole earth[F#m] shakes
+The whole earth shake[B]s
+[E]I see His love and mercy
+[C#m]Washing over all our sin
+The people[F#m] sing
+The people[B] sing
 
-[VERSE 1]
-.x00
-I’ll praise in the valley
-.x05/x00 x00
-Praise on the mountain
-. x07/x00
-I’ll praise when I’m sure
-.x05/x00 x00
-Praise when I’m doubting
-.x00
-I’ll praise when outnumbered
-.x05/x00 x00
-Praise when surrounded
-. x07/x11 x05/x00
-Cause praise is the waters
-. x00
-My enemies drown in
+[Chorus]
+[E]Hosan[A]na[B] hosan[C#m]na
+Hosan[A]na in the[C#m] highest[B]
+Ho[E]sann[A]a h[B]osanna[C#m]
+Ho[A]sanna in the[B] highe[E]st
 
-[PRE-CHORUS]
-. x07
-As long as I’m breathing
-.x05
-I’ve got a reason to
+[Verse 2]
+[E]I see a generation
+[C#m]Rising up to take their place
+With selfless [F#m]faith
+With selfless fa[B]ith
+[E]I see a near revival
+[C#m]Stirring as we pray and seek
+We're on our [F#m]knees
+We're on our [B]knees
 
-[CHORUS]
-.x09m x05 x00
-Praise the Lord
-. x07
-Oh my soul
-.x09m x05 x00
-Praise the Lord
-. x07
-Oh my soul
-
-[VERSE 2]
-.x00
-I’ll praise when I feel it
-.x05/x00 x00
-I’ll praise when I don’t
-. x07/x00
-I’ll praise cause I know
-.x05/x00 x00
-You’re still in control
-.x00
-My praise is a weapon
-.x05/x00 x00
-It’s more than a sound
-. x07/x11 x05/x00
-My praise is the shout
-. x00
-That brings Jericho down
-
-[BRIDGE]
-.x00
-I’ll praise cause you’re sovereign
-Praise cause you reign
-Praise cause you rose and defeated the grave
-I’ll praise cause you’re faithful
-Praise cause you’re true
-Praise cause there’s nobody greater than you"
+[Bridge]
+[A]Heal my heart and make it cl[B]ean
+[E]Open up my eyes to the[C#m] things unseen
+[A]Show me how to love like [B]You have loved m[C#m]e
+[A]Break my heart for what breaks Yo[B]urs
+[E]Everything I am for You[C#m]r Kingdom's cause
+[A]As I walk from earth i[B]nto eternit[A]y"
 `;
 
-exports[`convertMWLData > formats 'Who Else' (who-else-chords) 1`] = `
-"[VERSE 1]
-. x00 x07
-I am an instrument of exaltation
-. x09m7 x07
-And I was born to lift Your name above all names
-. x00 x07
-You hear the melody of all creation
-. x09m7 x07
-But there's a song of praise that only I can bring
+exports[`convertMWLData > formats 'King of Kings' (king-of-kings-chords) 1`] = `
+"[Verse 1]
+In the [D]darkness we were [G]waiting
+Without [A]hope without [D]light
+Till from [D]heaven You came [G]running
+There was [A]mercy in Your e[D]yes
+To [D]fulfil the law and [G]prophets
+To a v[A]irgin came the [D]Word
+From a [D]throne of endless [G]glory
+To a c[A]radle in the [D]dirt
 
-[CHORUS]
-. x00 x02m7
-Who else is worthy? Who else is worthy?
-. x09m7 x052
-There is no one, only You, Jesus
-. x00 x02m7
-Who else is worthy? Who else is worthy?
-. x09m7 x052
-There is no one, only You, Jesus
+[Chorus]
+[D]Praise the Father
+[G]Praise the Son
+[Bm]Praise the Spirit [A]three in one
+[D]God of glory
+[G]Majesty
+[Bm]Praise for[G]ever to the [A]King of [D]Kings
 
-[VERSE 2]
-. x00 x07
-You are the infinite God of the ages
-. x09m7 x07
-Yet You chose to make my heart Your dwelling place
-. x00 x07
-You healed my brokenness, showed me Your glory
-. x09m7 x07
-So I have songs of thanks not even angels sing
+[Verse 2]
+To [D]reveal the kingdom [G]coming
+And to r[A]econcile the [D]lost
+To [D]redeem the whole c[G]reation
+You did n[A]ot despise the [D]cross
+For [D]even in Your s[G]uffering
+You saw [A]to the other [D]side
+Knowing [D]this was our salv[G]ation
+Jesus [A]for our sake You [D]died
 
-[BRIDGE 1]
-. x052 x07
-Lamb of God, anointed one
-. x09m7
-Who was and is and is to come
-. x00sus x00 x07
-Seated on the throne above
-Ho-ly, ho-ly
+[Verse 3]
+And the [Bm]morning that You [G]rose
+All of h[A]eaven held its [D]breath
+Till that [Bm]stone was moved for [G]good
+For the [A]Lamb had conquered [D]death
+And the [Bm]dead rose from their [G]tombs
+And the [A]angels stood in [D]awe
+For the [Bm]souls of all who’d [G]come
+To the F[A]ather are res[D]tored
 
-. x052 x07
-Righteous One who shed His blood
-. x09m7
-You proved to us the Father's love
-. x00sus x00 x07
-Jesus Christ, be lifted up
-Ho-ly, ho-ly
-
-[TAG]
-. x09m7 x052
-There is no one, only You, Jesus
-. x09m7 x052
-There is no one, only You, Jesus"
+[Verse 4]
+And the [D]Church of Christ was [G]born
+Then the [A]Spirit lit the [D]flame
+Now this [D]gospel truth of [G]old
+Shall not [A]kneel shall not [D]faint
+By His [D]blood and in His [G]Name
+In His f[A]reedom I am f[D]ree
+For the love of Jesus [G]Christ
+Who has r[A]esurrected [D]me"
 `;

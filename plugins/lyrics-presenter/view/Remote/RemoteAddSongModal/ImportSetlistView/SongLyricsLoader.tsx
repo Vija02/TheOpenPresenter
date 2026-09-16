@@ -54,6 +54,7 @@ export const SongLyricsLoader = ({
       author: data.author ?? song.author,
       content: data.content,
       originalContent: data.content,
+      key: ("key" in data ? data.key : data.chordChartKey) || null,
     });
   }, [data, onLoaded, song.title, song.author]);
 

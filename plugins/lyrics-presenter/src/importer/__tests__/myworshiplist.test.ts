@@ -1,22 +1,80 @@
 import { describe, expect, it } from "vitest";
 
-import { convertMWLData } from "../myworshiplist";
+import { stripInlineChords } from "../../chords/chordpro";
+import { convertMWLData, convertMWLDataDetailed } from "../myworshiplist";
 
 /**
  * Fixtures are the raw `content` field returned by the MyWorshipList API
  * Sources:
- *   - "Who Else" (id 2175) -> https://myworshiplist.com/songs/who-else-chords
- *   - "Praise"  (id 2074) -> https://myworshiplist.com/songs/praise-chords
+ *   - "Hosanna" (id 10) -> https://myworshiplist.com/songs/hosanna-chords
+ *   - "King of Kings" (id 2133) -> https://myworshiplist.com/songs/king-of-kings-chords
  */
-const WHO_ELSE = `Intro:<br>|x00 / / / |<br><br>VERSE 1:<br>  x00               x07<br>I am an instrument of exaltation<br>    x09m7             x07<br>And I was born to lift Your name above all names<br>   x00               x07<br>You hear the melody of all creation<br>  x09m7               x07<br>But there's a song of praise that only I can bring<br><br>CHORUS:<br>      x00            x02m7<br>Who else is worthy? Who else is worthy?<br>    x09m7           x052<br>There is no one, only You, Jesus<br>      x00            x02m7<br>Who else is worthy? Who else is worthy?<br>    x09m7           x052<br>There is no one, only You, Jesus<br><br>VERSE 2:<br>   x00               x07<br>You are the infinite God of the ages<br>    x09m7             x07<br>Yet You chose to make my heart Your dwelling place<br>   x00               x07<br>You healed my brokenness, showed me Your glory<br>  x09m7               x07<br>So I have songs of thanks not even angels sing<br><br>BRIDGE 1:<br>     x052            x07<br>Lamb of God, anointed one<br>     x09m7<br>Who was and is and is to come<br>    x00sus    x00      x07<br>Seated on the throne above<br>Ho-ly, ho-ly<br><br>     x052            x07<br>Righteous One who shed His blood<br>     x09m7<br>You proved to us the Father's love<br>    x00sus    x00      x07<br>Jesus Christ, be lifted up<br>Ho-ly, ho-ly<br><br>TAG:<br>    x09m7           x052<br>There is no one, only You, Jesus<br>    x09m7           x052<br>There is no one, only You, Jesus`;
-const PRAISE = `VAMP<br>Let everything that has breath<br>Praise the Lord<br>Praise the Lord<br><br>VERSE 1<br>x00<br>I’ll praise in the valley<br>x05/x00 x00<br>Praise on the mountain<br> x07/x00<br>I’ll praise when I’m sure<br>x05/x00 x00<br>Praise when I’m doubting<br>x00<br>I’ll praise when outnumbered<br>x05/x00 x00<br>Praise when surrounded<br> x07/x11 x05/x00<br>Cause praise is the waters<br> x00<br>My enemies drown in<br><br>PRE-CHORUS<br> x07<br>As long as I’m breathing<br>x05<br>I’ve got a reason to<br><br>CHORUS<br>x09m x05 x00<br>Praise the Lord<br> x07<br>Oh my soul<br>x09m x05 x00<br>Praise the Lord<br> x07<br>Oh my soul<br><br>VERSE 2<br>x00<br>I’ll praise when I feel it<br>x05/x00 x00<br>I’ll praise when I don’t<br> x07/x00<br>I’ll praise cause I know<br>x05/x00 x00<br>You’re still in control<br>x00<br>My praise is a weapon<br>x05/x00 x00<br>It’s more than a sound<br> x07/x11 x05/x00<br>My praise is the shout<br> x00<br>That brings Jericho down<br><br>BRIDGE<br>x00<br>I’ll praise cause you’re sovereign<br>Praise cause you reign<br>Praise cause you rose and defeated the grave<br>I’ll praise cause you’re faithful<br>Praise cause you’re true<br>Praise cause there’s nobody greater than you`;
+const HOSANNA =
+  "Intro<br>x09m  x00  x02m  x04m<br>            <br>Verse 1<br>x00                               <br>I see the King of glory<br>x09m                                      <br>Coming on the clouds with fire<br>                         x02m     <br>The whole earth shakes<br>                                    x07             <br>The whole earth shakes<br>x00                                   <br>I see His love and mercy<br>x09m                             <br>Washing over all our sin<br>                  x02m <br>The people sing<br>                  x07     <br>The people sing<br>           <br>Chorus<br>x00       x05   x07        x09m<br>Hosanna hosanna<br>          x05            x09m      x07  <br>Hosanna in the highest<br>     x00     x05   x07        x09m<br>Hosanna hosanna<br>     x05                 x07        x00<br>Hosanna in the highest<br>             <br>Verse 2<br>x00                         <br>I see a generation<br>x09m                                   <br>Rising up to take their place<br>                     x02m <br>With selfless faith<br>                        x07 <br>With selfless faith<br>x00                          <br>I see a near revival<br>x09m                                    <br>Stirring as we pray and seek<br>                     x02m    <br>We're on our knees<br>                     x07        <br>We're on our knees<br>          <br>Bridge<br>x05                                            x07       <br>Heal my heart and make it clean<br>x00                                   x09m               <br>Open up my eyes to the things unseen<br>x05                                       x07                          x09m<br>Show me how to love like You have loved me<br>x05                                                    x07       <br>Break my heart for what breaks Yours<br>x00                                   x09m                   <br>Everything I am for Your Kingdom's cause<br>x05                               x07              x05<br>As I walk from earth into eternity<br>";
+const KING_OF_KINGS =
+  "[Verse 1]<br>       x00                x05<br>In the darkness we were waiting<br>        x07            x00<br>Without hope without light<br>          x00               x05<br>Till from heaven You came running<br>          x07              x00<br>There was mercy in Your eyes<br>   x00                  x05<br>To fulfil the law and prophets<br>      x07              x00<br>To a virgin came the Word<br>       x00                 x05<br>From a throne of endless glory<br>      x07            x00<br>To a cradle in the dirt<br><br>[Chorus]<br>x00<br>Praise the Father<br>x05<br>Praise the Son<br>x09m                x07<br>Praise the Spirit three in one<br>x00<br>God of glory<br>x05<br>Majesty<br>x09m        x05           x07       x00<br>Praise forever to the King of Kings<br><br>[Verse 2]<br>   x00                  x05<br>To reveal the kingdom coming<br>        x07            x00<br>And to reconcile the lost<br>   x00                 x05<br>To redeem the whole creation<br>         x07              x00<br>You did not despise the cross<br>    x00             x05<br>For even in Your suffering<br>        x07            x00<br>You saw to the other side<br>        x00                x05<br>Knowing this was our salvation<br>      x07                x00<br>Jesus for our sake You died<br><br>[Verse 3]<br>        x09m               x05<br>And the morning that You rose<br>        x07              x00<br>All of heaven held its breath<br>          x09m                  x05<br>Till that stone was moved for good<br>        x07                  x00<br>For the Lamb had conquered death<br>        x09m                   x05<br>And the dead rose from their tombs<br>        x07               x00<br>And the angels stood in awe<br>        x09m                 x05<br>For the souls of all who\u2019d come<br>        x07            x00<br>To the Father are restored<br><br>[Verse 4]<br>        x00                    x05<br>And the Church of Christ was born<br>         x07              x00<br>Then the Spirit lit the flame<br>         x00               x05<br>Now this gospel truth of old<br>          x07               x00<br>Shall not kneel shall not faint<br>       x00                x05<br>By His blood and in His Name<br>        x07            x00<br>In His freedom I am free<br>                      x05<br>For the love of Jesus Christ<br>         x07          x00<br>Who has resurrected me";
 
 describe("convertMWLData", () => {
-  it("formats 'Who Else' (who-else-chords)", () => {
-    expect(convertMWLData(WHO_ELSE)).toMatchSnapshot();
+  it("formats 'Hosanna' (hosanna-chords)", () => {
+    expect(convertMWLData(HOSANNA, { key: "E" })).toMatchSnapshot();
   });
 
-  it("formats 'Praise' (praise-chords)", () => {
-    expect(convertMWLData(PRAISE)).toMatchSnapshot();
+  it("formats 'King of Kings' (king-of-kings-chords)", () => {
+    expect(convertMWLData(KING_OF_KINGS, { key: "D" })).toMatchSnapshot();
+  });
+
+  it("detects how each sheet was aligned", () => {
+    // "King of Kings" was typed in a monospace font; "Hosanna" was aligned
+    // against the site's Arial rendering.
+    expect(convertMWLDataDetailed(KING_OF_KINGS, { key: "D" }).alignment).toBe(
+      "mono",
+    );
+    expect(convertMWLDataDetailed(HOSANNA, { key: "E" }).alignment).toBe(
+      "proportional",
+    );
+  });
+
+  it("keeps a chord where the sheet put it, mid-word included", () => {
+    const result = convertMWLData(KING_OF_KINGS, { key: "D" });
+
+    expect(result).toContain("There was [A]mercy in Your e[D]yes");
+  });
+
+  it("decodes placeholders into real chords in the song's key", () => {
+    const result = convertMWLData(KING_OF_KINGS, { key: "D" });
+
+    expect(result).toContain("[D]");
+    expect(result).toContain("[Bm]");
+    expect(result).not.toContain("x00");
+  });
+
+  it("never alters the lyrics", () => {
+    const lyrics = convertMWLData(HOSANNA, { key: "E" })
+      .split("\n")
+      .map(stripInlineChords);
+
+    expect(lyrics).toContain("I see the King of glory");
+    expect(lyrics).toContain("Coming on the clouds with fire");
+  });
+
+  it("can still emit the OpenSong format", () => {
+    const result = convertMWLData(KING_OF_KINGS, {
+      key: "D",
+      format: "opensong",
+    });
+
+    expect(result).toContain(".");
+    expect(result).toContain("x00");
+  });
+
+  it("uses the source key rather than guessing from the chords", () => {
+    // "Hosanna" is in E but opens on an intro line with no lyric under it, so
+    // guessing would be unreliable. The source key decides the spelling.
+    const result = convertMWLData(HOSANNA, { key: "E" });
+
+    expect(result).toContain("[E]");
+    expect(result).toContain("[C#m]");
+    // E is a sharp key, so nothing should be spelled with flats.
+    expect(result).not.toMatch(/\[[A-G]b/);
   });
 });
