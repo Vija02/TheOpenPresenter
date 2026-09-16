@@ -3,6 +3,8 @@ import { Node as ProsemirrorNode } from "@tiptap/pm/model";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
 
+import { inlineChordRanges } from "./chordRanges";
+
 function getDecorations({ doc, name }: { doc: ProsemirrorNode; name: string }) {
   const decorations: Decoration[] = [];
 
@@ -25,18 +27,26 @@ function getDecorations({ doc, name }: { doc: ProsemirrorNode; name: string }) {
         },
       );
       decorations.push(decoration);
-    } else if (
-      block.node.textContent.startsWith("[") &&
-      block.node.textContent.endsWith("]")
-    ) {
-      const decoration = Decoration.inline(
-        block.pos,
-        block.pos + block.node.textContent.length + 1,
-        {
-          class: "heading",
-        },
-      );
-      decorations.push(decoration);
+    } else {
+      const text = block.node.textContent;
+      const chordRanges = inlineChordRanges(text);
+
+      if (chordRanges.length > 0) {
+        // Highlight each inline chord, leave the lyric alone.
+        for (const { from, to } of chordRanges) {
+          decorations.push(
+            Decoration.inline(block.pos + 1 + from, block.pos + 1 + to, {
+              class: "chord",
+            }),
+          );
+        }
+      } else if (text.startsWith("[") && text.endsWith("]")) {
+        decorations.push(
+          Decoration.inline(block.pos, block.pos + text.length + 1, {
+            class: "heading",
+          }),
+        );
+      }
     }
   });
 
