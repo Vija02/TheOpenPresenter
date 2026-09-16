@@ -31,7 +31,10 @@ export const ChordToolbar = ({
     );
 
   return (
-    <div className="stack-row w-full flex-wrap justify-between gap-2 rounded-sm border border-stroke bg-surface-secondary px-2 py-1.5">
+    <div
+      className="stack-row w-full flex-wrap justify-between gap-2 rounded-sm border border-stroke bg-surface-secondary px-2 py-1.5"
+      data-testid="ly-chord-toolbar"
+    >
       <div className="stack-row gap-2">
         <span className="text-xs font-medium">Transpose</span>
 

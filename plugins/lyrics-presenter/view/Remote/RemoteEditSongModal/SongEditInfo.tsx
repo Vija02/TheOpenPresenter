@@ -27,13 +27,18 @@ export const SongEditInfo = () => {
     <Sheet>
       <SheetTrigger
         render={<Button size="xs" variant="outline" className="font-light" />}
+        data-testid="ly-format-help"
       >
         <FaCircleInfo className="text-gray-700" />
         <span className="md:hidden">Help</span>
         <span className="hidden md:inline">How does this work?</span>
       </SheetTrigger>
 
-      <SheetContent side="right" className="w-full sm:max-w-md">
+      <SheetContent
+        side="right"
+        className="w-full sm:max-w-md"
+        data-testid="ly-format-help-panel"
+      >
         <SheetHeader className="border-b border-stroke">
           <SheetTitle>Formatting songs</SheetTitle>
         </SheetHeader>
