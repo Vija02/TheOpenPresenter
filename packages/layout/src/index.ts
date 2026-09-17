@@ -7,6 +7,7 @@ export * from "./fonts/registry";
 export * from "./geometry/rect";
 export * from "./geometry/scale";
 export * from "./schema/defaults";
+export * from "./schema/derivation";
 export * from "./schema/document";
 export * from "./schema/element";
 export * from "./schema/paint";

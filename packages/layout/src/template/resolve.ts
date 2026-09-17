@@ -1,5 +1,10 @@
 import { LayoutDoc } from "../schema/document";
-import { LayoutElement, ShapeElement, TextElement } from "../schema/element";
+import {
+  HostElement,
+  LayoutElement,
+  ShapeElement,
+  TextElement,
+} from "../schema/element";
 import { FillPaint } from "../schema/paint";
 import { FrameData, Span, isSpansEmpty } from "./spans";
 import { substituteSpans, substituteUniversalURL } from "./tokens";
@@ -9,7 +14,7 @@ export type ResolvedTextElement = Omit<TextElement, "content"> & {
   spans: Span[];
 };
 
-export type ResolvedElement = ResolvedTextElement | ShapeElement;
+export type ResolvedElement = ResolvedTextElement | ShapeElement | HostElement;
 
 export type ResolvedDoc = {
   doc: LayoutDoc;
@@ -68,6 +73,8 @@ const resolveElement = (
     case "shape":
       // A shape's only binding is its image fill.
       if (element.hideWhenEmpty && isEmptyImageFill(fill)) return null;
+      return { ...element, fill };
+    case "host":
       return { ...element, fill };
   }
 };
