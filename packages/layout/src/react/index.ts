@@ -1,12 +1,17 @@
 import "./styles.css";
 
 export * from "./context/ActiveContext";
+export * from "./context/HostContext";
+export * from "./context/hostCatalog";
 export * from "./context/StageContext";
 export * from "./context/VideoFillContext";
 export * from "./LayoutRenderer";
 export * from "./Stage";
 export * from "./css";
 export * from "./elements/ElementView";
+export * from "./elements/HostElement";
+export * from "./elements/HostElementFrame";
+export * from "./elements/HostElementPlaceholder";
 export * from "./elements/ShapeElement";
 export * from "./elements/TextElement";
 export * from "./text/fontStatus";

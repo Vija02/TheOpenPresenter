@@ -173,6 +173,9 @@ const TOOL_LIST = [
             ? { content: e.content, fit: e.fit, style: e.style }
             : {}),
           ...(e.type === "shape" ? { kind: e.kind, fill: e.fill } : {}),
+          ...(e.type === "host"
+            ? { source: e.source, derivation: e.derivation }
+            : {}),
         })),
       ),
     }),

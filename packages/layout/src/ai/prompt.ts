@@ -39,7 +39,8 @@ GEOMETRY
 - "rotation" is degrees. "opacity" is 0-1.
 
 ENUMS
-- element "type": "text" | "shape"
+- element "type": "text" | "shape" | "host"
+- a "host" element is a live window onto the app itself (a scene, a screen's output, one plugin). Its "source" and "derivation" are placed by the user and are not yours to invent or repoint: move, resize and restyle one, but never create or delete one.
 - text "fit": ${list(textFitModes)}
   - "declared" uses style.fontSize verbatim and overflows if too long
   - "shrinkToFit" treats style.fontSize as a maximum and shrinks to fit

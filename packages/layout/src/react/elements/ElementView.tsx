@@ -1,6 +1,7 @@
 import { ResolvedElement } from "../../template/resolve";
 import { useStage } from "../context/StageContext";
 import { ElementPlacement } from "../css";
+import { HostElementView } from "./HostElement";
 import { ShapeElementView } from "./ShapeElement";
 import { TextElementView } from "./TextElement";
 
@@ -25,6 +26,14 @@ export const ElementView = ({ element, placement }: ElementViewProps) => {
     case "shape":
       return (
         <ShapeElementView
+          element={element}
+          metrics={metrics}
+          placement={placement}
+        />
+      );
+    case "host":
+      return (
+        <HostElementView
           element={element}
           metrics={metrics}
           placement={placement}

@@ -2,8 +2,18 @@
  * Pure, immutable edits to a LayoutDoc.
  */
 import { clampRect, roundRect } from "../geometry/rect";
+import {
+  Derivation,
+  createDerivation,
+  isIdentityDerivation,
+} from "../schema/derivation";
 import { LayoutDoc } from "../schema/document";
-import { LayoutElement, TextElement } from "../schema/element";
+import {
+  HostElement,
+  HostSource,
+  LayoutElement,
+  TextElement,
+} from "../schema/element";
 import { FillPaint, VideoPaint, VideoPlaybackMode } from "../schema/paint";
 import { Rect } from "../schema/rect";
 import { TextStylePatch } from "../schema/style";
@@ -61,6 +71,62 @@ export const patchTextElement = (
   patch: Partial<Omit<TextElement, "type" | "style">>,
 ): LayoutDoc =>
   mapElement(doc, id, (e) => (e.type === "text" ? { ...e, ...patch } : e));
+
+/** No-op on non-host elements, so callers need not narrow first. */
+export const patchHostElement = (
+  doc: LayoutDoc,
+  id: string,
+  patch: Partial<Omit<HostElement, "type">>,
+): LayoutDoc =>
+  mapElement(doc, id, (e) => (e.type === "host" ? { ...e, ...patch } : e));
+
+/** `null` puts the element back on the live data. */
+export const setHostDerivation = (
+  doc: LayoutDoc,
+  id: string,
+  derivation: Derivation | null,
+): LayoutDoc => patchHostElement(doc, id, { derivation });
+
+/**
+ * Merges into a host element's derivation params, leaving `offset` alone.
+ * A key set to `undefined` is removed, and emptying the object stores `null`
+ * rather than `{}` so a params-only derivation reverts to live data.
+ */
+export const patchHostDerivationParams = (
+  doc: LayoutDoc,
+  id: string,
+  params: Record<string, unknown>,
+): LayoutDoc =>
+  mapElement(doc, id, (e) => {
+    if (e.type !== "host") return e;
+
+    const base = e.derivation ?? createDerivation();
+    const merged: Record<string, unknown> = { ...(base.params ?? {}) };
+    for (const [key, value] of Object.entries(params)) {
+      if (value === undefined) delete merged[key];
+      else merged[key] = value;
+    }
+
+    const next = {
+      ...base,
+      params: Object.keys(merged).length > 0 ? merged : null,
+    };
+
+    return {
+      ...e,
+      derivation: isIdentityDerivation(next) ? null : next,
+    };
+  });
+
+/** Repoints a host element at different live content. */
+export const setHostSource = (
+  doc: LayoutDoc,
+  id: string,
+  source: HostSource,
+): LayoutDoc => patchHostElement(doc, id, { source });
+
+export const hostElements = (doc: LayoutDoc): HostElement[] =>
+  doc.elements.filter((e): e is HostElement => e.type === "host");
 
 export const setElementFill = (
   doc: LayoutDoc,
@@ -283,7 +349,24 @@ export const audibleVideoElements = (doc: LayoutDoc): VideoFillElement[] =>
 const TYPE_LABELS: Record<LayoutElement["type"], string> = {
   text: "Text",
   shape: "Shape",
+  host: "Live content",
+};
+
+/** Fallback for when the host has not named the element itself. */
+export const hostElementDisplayName = (element: HostElement): string => {
+  const { source } = element;
+  switch (source.kind) {
+    case "screen":
+      return `Screen ${source.rendererId}`;
+    case "scene":
+      return `Scene on screen ${source.rendererId}`;
+    case "plugin":
+      return `Plugin on screen ${source.rendererId}`;
+  }
 };
 
 export const elementLabel = (element: LayoutElement): string =>
-  element.name ?? TYPE_LABELS[element.type];
+  element.name ??
+  (element.type === "host"
+    ? hostElementDisplayName(element)
+    : TYPE_LABELS[element.type]);

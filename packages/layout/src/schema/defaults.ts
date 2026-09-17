@@ -1,11 +1,19 @@
 import { DEFAULT_FONT_STACK } from "../fonts/registry";
+import { Derivation } from "./derivation";
 import {
   AspectRatio,
   LAYOUT_DOC_VERSION,
   LayoutDoc,
   LayoutFitMode,
 } from "./document";
-import { ElementBase, ShapeElement, ShapeKind, TextElement } from "./element";
+import {
+  ElementBase,
+  HostElement,
+  HostSource,
+  ShapeElement,
+  ShapeKind,
+  TextElement,
+} from "./element";
 import { Effect, FillPaint, Stroke } from "./paint";
 import { FULL_BLEED, Rect } from "./rect";
 import { SpanRoleStyle, TextFitMode, TextStyle, TextStylePatch } from "./style";
@@ -119,6 +127,24 @@ export const createShapeElement = ({
   ...baseElement(id, appearance),
   type: "shape",
   kind,
+});
+
+export type CreateHostElementOptions = AppearanceOptions & {
+  id: string;
+  source: HostSource;
+  derivation?: Derivation | null;
+};
+
+export const createHostElement = ({
+  id,
+  source,
+  derivation = null,
+  ...appearance
+}: CreateHostElementOptions): HostElement => ({
+  ...baseElement(id, { clip: true, ...appearance }),
+  type: "host",
+  source,
+  derivation,
 });
 
 export type CreateLayoutDocOptions = {

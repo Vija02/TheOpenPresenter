@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { derivationValidator } from "./derivation";
 import { effectValidator, fillPaintValidator, strokeValidator } from "./paint";
 import { rectValidator } from "./rect";
 import {
@@ -63,13 +64,52 @@ export const shapeElementValidator = elementBaseValidator.extend({
   kind: z.enum(shapeKinds),
 });
 
+/** What a host element points at */
+export const hostSourceValidator = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("scene"),
+    rendererId: z.string(),
+    sceneId: z.string(),
+  }),
+  z.object({
+    kind: z.literal("screen"),
+    rendererId: z.string(),
+  }),
+  z.object({
+    kind: z.literal("plugin"),
+    rendererId: z.string(),
+    sceneId: z.string(),
+    pluginId: z.string(),
+  }),
+]);
+
+export type HostSource = z.infer<typeof hostSourceValidator>;
+export type HostSourceKind = HostSource["kind"];
+
+export const hostElementValidator = elementBaseValidator.extend({
+  type: z.literal("host"),
+  source: hostSourceValidator,
+  derivation: derivationValidator.nullable(),
+});
+
 export const layoutElementValidator = z.discriminatedUnion("type", [
   textElementValidator,
   shapeElementValidator,
+  hostElementValidator,
 ]);
 
 export type ElementBase = z.infer<typeof elementBaseValidator>;
 export type TextElement = z.infer<typeof textElementValidator>;
 export type ShapeElement = z.infer<typeof shapeElementValidator>;
+export type HostElement = z.infer<typeof hostElementValidator>;
 export type LayoutElement = z.infer<typeof layoutElementValidator>;
 export type LayoutElementType = LayoutElement["type"];
+
+export const isHostElement = (element: LayoutElement): element is HostElement =>
+  element.type === "host";
+
+export const hostSourceRendererId = (source: HostSource): string =>
+  source.rendererId;
+
+export const hostSourceSceneId = (source: HostSource): string | null =>
+  source.kind === "screen" ? null : source.sceneId;
