@@ -7,7 +7,7 @@ import type { IResult } from "ua-parser-js";
 import type { Awareness } from "y-protocols/awareness.js";
 import type { StoreApi } from "zustand";
 
-import { DerivationConfig, RendererLayout } from "./rendererLayoutTypes";
+import { Derivation, RendererLayout } from "./rendererLayoutTypes";
 
 export type { ObjectToTypedMap };
 
@@ -59,7 +59,7 @@ export type RenderData<T = Record<string, any>> = {
   overlay: { type: "black" | "white" | "clear" } | null;
   children: Record<UUID, Record<UUID, T>>;
   ownedScenes: Record<UUID, OwnedScene> | null;
-  layout: RendererLayout | null;
+  layout: RendererLayout<any> | null;
 };
 
 export type PluginRendererState = {
@@ -126,7 +126,7 @@ export type MiscProps = {
   logger: Logger;
   parentContainer: HTMLElement | null;
   surface: PluginSurface;
-  derivation?: DerivationConfig | null;
+  derivation?: Derivation | null;
   isPublicAccess: boolean;
   organizationType: OrganizationType | null;
   experimentalFeaturesEnabled: boolean;
