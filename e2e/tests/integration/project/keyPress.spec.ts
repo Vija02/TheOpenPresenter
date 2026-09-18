@@ -46,7 +46,9 @@ test.describe("Key Press Navigation", () => {
         .first(),
     ).toBeVisible();
 
-    // Go to next song
+    // Go to next song. It opens with a chord-only Intro, which is a blank
+    // slide, so the first verse is one press further on.
+    await presentedPage.keyboard.press("ArrowRight");
     await presentedPage.keyboard.press("ArrowRight");
     await presentedPage.keyboard.press("ArrowRight");
     await expect(
