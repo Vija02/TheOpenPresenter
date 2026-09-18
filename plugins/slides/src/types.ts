@@ -56,6 +56,7 @@ export interface BaseImportData {
    * For PDF/PPT: generated at import time (e.g., "0", "1", "2").
    */
   slideIds: string[];
+  speakerNotes?: string[];
   /** Media name of the PDF that was uploaded as part of this import */
   pdfMediaName?: string;
   /** Whether this import is currently being fetched/processed */
