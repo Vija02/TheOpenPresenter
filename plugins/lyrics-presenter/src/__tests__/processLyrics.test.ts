@@ -58,15 +58,19 @@ describe("processSong", () => {
     expect(grouped[0]!.slides[0]).toEqual(["Amazing grace", "That saved"]);
   });
 
-  it("drops a section that is nothing but chords", () => {
-    // An intro or instrumental break has no words, so it has no slide.
+  it("keeps a section that is nothing but chords", () => {
+    // An intro or instrumental break has no words, but it still gets a blank slide.
     const grouped = processSong(
       ["[Intro]", ".B G#m7 F# E", "[Verse 1]", "[B]I lay my life down"].join(
         "\n",
       ),
     );
 
-    expect(grouped.map((group) => group.heading)).toEqual(["Verse 1"]);
+    expect(grouped.map((group) => group.heading)).toEqual([
+      "Intro",
+      "Verse 1",
+    ]);
+    expect(grouped[0]!.slides).toEqual([[]]);
   });
 
   it("keeps the slide breaks inside a section", () => {
