@@ -2,6 +2,7 @@ export * from "./AppearanceSection";
 export * from "./ContentSection";
 export * from "./EffectsSection";
 export * from "./FillSection";
+export * from "./HostSourceSection";
 export * from "./LayerSection";
 export * from "./OutlineSection";
 export * from "./PositionSection";
