@@ -1,9 +1,5 @@
-import {
-  OwnedScene,
-  RenderData,
-  RendererLayout,
-  StateData,
-} from "@repo/base-plugin";
+import { OwnedScene, RenderData, StateData } from "@repo/base-plugin";
+import { createRendererLayout } from "@repo/layout";
 import { usePluginData } from "@repo/shared";
 import { Button, Checkbox, PopConfirm } from "@repo/ui";
 import { cx } from "class-variance-authority";
@@ -99,11 +95,7 @@ const RendererCard = ({
 
       if (enabled) {
         if (!rendererState.layout) {
-          rendererState.layout = {
-            enabled: true,
-            aspectRatio: { width: 16, height: 9 },
-            items: [],
-          } satisfies RendererLayout;
+          rendererState.layout = createRendererLayout();
         } else {
           rendererState.layout.enabled = true;
         }

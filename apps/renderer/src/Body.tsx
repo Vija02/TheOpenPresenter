@@ -2,13 +2,10 @@ import {
   AwarenessContext,
   AwarenessStateData,
   CurrentSceneInfo,
-  DerivationConfig,
-  LayoutItem,
+  Derivation,
   OverlayInfo,
   PluginContext,
-  RendererLayout,
   Scene,
-  SceneLayoutPosition,
   State,
   WebComponentProps,
   YjsWatcher,
@@ -17,6 +14,8 @@ import {
   PluginAPIContext,
   initStandalonePluginApi,
 } from "@repo/base-plugin/client";
+import { HostElement, readRendererLayoutDoc } from "@repo/layout";
+import { HostRendererProvider, LayoutRenderer } from "@repo/layout/react";
 import { findClientPluginView, preloader } from "@repo/lib";
 import { logger } from "@repo/observability";
 import {
@@ -54,7 +53,12 @@ const useRendererId = () => {
 
 const Landing = lazy(() => import("./Landing"));
 
-export const Body = () => {
+export const Body = ({
+  hostElementId = null,
+}: {
+  /** Draw only this host element of the layout, filling the frame. */
+  hostElementId?: string | null;
+}) => {
   const data = useData();
   const rendererId = useRendererId();
 
@@ -66,41 +70,38 @@ export const Body = () => {
     () => currentRenderer?.currentScene,
     [currentRenderer?.currentScene],
   );
-  const layout = useMemo(
-    () => currentRenderer?.layout as RendererLayout | null | undefined,
+  const layoutDoc = useMemo(
+    () => readRendererLayoutDoc(currentRenderer?.layout),
     [currentRenderer?.layout],
   );
 
-  if (layout?.enabled) {
+  // One element on its own, for the layout editor's live preview
+  if (hostElementId) {
+    const element = layoutDoc?.elements.find(
+      (candidate) => candidate.id === hostElementId,
+    );
+
+    if (!element || element.type !== "host") return null;
+
+    return (
+      <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
+        {renderHostElement({ element })}
+      </div>
+    );
+  }
+
+  if (currentRenderer?.layout?.enabled && layoutDoc) {
     return (
       <>
         <Overlay />
         <LayoutOutputPluginApi>
-          <LayoutContainer layout={layout}>
-            {layout.items.map((item: LayoutItem) => {
-              if (item.type === "screenItem") {
-                return (
-                  <ScreenRenderer
-                    key={item.id}
-                    sourceRendererId={item.sourceRendererId}
-                    layoutPosition={item.position}
-                    derivation={item.derivation}
-                    sceneOverrides={item.sceneOverrides}
-                  />
-                );
-              }
-
-              return (
-                <SceneRenderer
-                  key={item.id}
-                  sceneId={item.sceneId!}
-                  sourceRendererId={item.sourceRendererId}
-                  layoutPosition={item.position}
-                  derivation={item.derivation}
-                />
-              );
-            })}
-          </LayoutContainer>
+          <HostRendererProvider render={renderHostElement}>
+            <LayoutRenderer
+              doc={layoutDoc}
+              data={EMPTY_DATA}
+              background="#000"
+            />
+          </HostRendererProvider>
         </LayoutOutputPluginApi>
       </>
     );
@@ -119,6 +120,8 @@ export const Body = () => {
     </>
   );
 };
+
+const EMPTY_DATA = {};
 
 /**
  * A layout draws the same elements a plugin does, but owns no plugin, so it
@@ -155,6 +158,43 @@ const LayoutOutputPluginApi = ({ children }: { children: ReactNode }) => {
   );
 };
 
+/** Fills a layout's host elements with live application content */
+const renderHostElement = ({ element }: { element: HostElement }) => {
+  const { source, derivation } = element;
+
+  if (source.kind === "screen") {
+    return (
+      <ScreenRenderer
+        sourceRendererId={source.rendererId}
+        derivation={derivation}
+      />
+    );
+  }
+
+  if (source.kind === "plugin") {
+    return (
+      <ErrorBoundary FallbackComponent={ErrorAlert}>
+        <PluginRenderer
+          pluginId={source.pluginId}
+          sceneId={source.sceneId}
+          sourceRendererId={source.rendererId}
+          inLayout
+          derivation={derivation}
+        />
+      </ErrorBoundary>
+    );
+  }
+
+  return (
+    <SceneRenderer
+      sceneId={source.sceneId}
+      sourceRendererId={source.rendererId}
+      inLayout
+      derivation={derivation}
+    />
+  );
+};
+
 const Overlay = () => {
   const data = useData();
   const rendererId = useRendererId();
@@ -187,62 +227,14 @@ const Overlay = () => {
   );
 };
 
-// Enforces aspect ratio and centers content
-const LayoutContainer = React.memo(
-  ({
-    layout,
-    children,
-  }: {
-    layout: RendererLayout;
-    children: React.ReactNode;
-  }) => {
-    const aspectWidth = layout.aspectRatio?.width ?? 16;
-    const aspectHeight = layout.aspectRatio?.height ?? 9;
-
-    return (
-      <div
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: "#000",
-        }}
-      >
-        <div
-          style={{
-            position: "relative",
-            width: "100%",
-            height: "100%",
-            maxWidth: `calc(100vh * ${aspectWidth} / ${aspectHeight})`,
-            maxHeight: `calc(100vw * ${aspectHeight} / ${aspectWidth})`,
-            aspectRatio: `${aspectWidth} / ${aspectHeight}`,
-            overflow: "hidden",
-          }}
-        >
-          {children}
-        </div>
-      </div>
-    );
-  },
-);
-
-// Mirror another renderer's current scene
+// Mirror another screen's current scene
 const ScreenRenderer = React.memo(
   ({
     sourceRendererId,
-    layoutPosition,
     derivation,
-    sceneOverrides,
   }: {
     sourceRendererId: string;
-    layoutPosition: SceneLayoutPosition;
-    derivation?: DerivationConfig | null;
-    sceneOverrides?: Record<string, DerivationConfig | null>;
+    derivation?: Derivation | null;
   }) => {
     const data = useData();
 
@@ -259,35 +251,32 @@ const ScreenRenderer = React.memo(
       return null;
     }
 
-    // Check for scene-specific derivation override
-    const effectiveDerivation =
-      sceneOverrides?.[currentSceneId] !== undefined
-        ? sceneOverrides[currentSceneId]
-        : derivation;
-
     return (
       <SceneRenderer
         sceneId={currentSceneId}
         sourceRendererId={sourceRendererId}
-        layoutPosition={layoutPosition}
-        derivation={effectiveDerivation}
+        inLayout
+        derivation={derivation}
       />
     );
   },
 );
 
-// Renders a scene, optionally at a specific layout position & renderer
+/**
+ * Renders a scene, either as this screen's own output or inside a host element
+ * of a layout, where the box is already placed and sized for us.
+ */
 const SceneRenderer = React.memo(
   ({
     sceneId,
     sourceRendererId,
-    layoutPosition,
+    inLayout = false,
     derivation,
   }: {
     sceneId: string;
     sourceRendererId?: string;
-    layoutPosition?: SceneLayoutPosition;
-    derivation?: DerivationConfig | null;
+    inLayout?: boolean;
+    derivation?: Derivation | null;
   }) => {
     const data = useData();
     const rendererId = useRendererId();
@@ -314,20 +303,11 @@ const SceneRenderer = React.memo(
     );
 
     const isCurrentScene = currentScene === sceneId;
-    const isLayoutMode = !!layoutPosition;
 
-    const containerStyle: React.CSSProperties = isLayoutMode
-      ? {
-          // Layout mode
-          position: "absolute",
-          left: `${layoutPosition.x}%`,
-          top: `${layoutPosition.y}%`,
-          width: `${layoutPosition.width}%`,
-          height: `${layoutPosition.height}%`,
-          overflow: "hidden",
-        }
+    const containerStyle: React.CSSProperties = inLayout
+      ? // The host element owns the geometry, so we simply fill it.
+        { position: "absolute", inset: 0, overflow: "hidden" }
       : {
-          // Normal mode
           position: "absolute",
           zIndex: isCurrentScene ? 1 : 0,
         };
@@ -344,7 +324,7 @@ const SceneRenderer = React.memo(
         <div
           className={cx(
             // Only apply fade transitions in normal mode
-            !isLayoutMode &&
+            !inLayout &&
               (isCurrentScene
                 ? "transition-fade-in"
                 : "transition-fade-out delay-[400ms]"),
@@ -357,7 +337,7 @@ const SceneRenderer = React.memo(
                 pluginId={pluginId}
                 sceneId={sceneId}
                 sourceRendererId={effectiveRendererId}
-                layoutPosition={layoutPosition}
+                inLayout={inLayout}
                 derivation={derivation}
               />
             </ErrorBoundary>
@@ -373,14 +353,14 @@ const PluginRenderer = React.memo(
     pluginId,
     sceneId,
     sourceRendererId,
-    layoutPosition,
+    inLayout = false,
     derivation,
   }: {
     pluginId: string;
     sceneId: string;
     sourceRendererId?: string;
-    layoutPosition?: SceneLayoutPosition;
-    derivation?: DerivationConfig | null;
+    inLayout?: boolean;
+    derivation?: Derivation | null;
   }) => {
     const pluginDivRef = useRef<HTMLDivElement>(null);
     const {
@@ -624,8 +604,8 @@ const PluginRenderer = React.memo(
         id={`pl-${resolvedPluginName}`}
         key={pluginId}
         style={{
-          width: layoutPosition ? "100%" : "100vw",
-          height: layoutPosition ? "100%" : "100dvh",
+          width: inLayout ? "100%" : "100vw",
+          height: inLayout ? "100%" : "100dvh",
           userSelect: "none",
           pointerEvents: "none",
         }}

@@ -43,6 +43,25 @@ function Root() {
     return searchParams.get("preview") === "1";
   }, [search]);
 
+  // When passed, we draw only that hostElement rather than the layout/confidence monitor
+  const hostElementId = useMemo(() => {
+    const searchParams = new URLSearchParams(search);
+    return searchParams.get("hostElement");
+  }, [search]);
+
+  useEffect(() => {
+    if (!hostElementId) return;
+
+    const { documentElement, body } = document;
+    documentElement.style.backgroundColor = "transparent";
+    body.style.backgroundColor = "transparent";
+
+    return () => {
+      documentElement.style.backgroundColor = "";
+      body.style.backgroundColor = "";
+    };
+  }, [hostElementId]);
+
   return (
     <PluginMetaDataProvider
       orgSlug={orgSlug!}
@@ -57,7 +76,10 @@ function Root() {
             isPreview={isPreview}
           >
             <AwarenessProvider>
-              <AppInner hideFullscreenButton={isPreview} />
+              <AppInner
+                hideFullscreenButton={isPreview || !!hostElementId}
+                hostElementId={hostElementId}
+              />
             </AwarenessProvider>
           </PluginDataProvider>
         </AudioCheckProvider>
@@ -68,8 +90,10 @@ function Root() {
 
 export const AppInner = ({
   hideFullscreenButton,
+  hostElementId = null,
 }: {
   hideFullscreenButton?: boolean;
+  hostElementId?: string | null;
 }) => {
   const handleKeyPress = useHandleKeyPress();
 
@@ -81,11 +105,11 @@ export const AppInner = ({
     >
       {window.__TAURI_INTERNALS__ ? (
         <TauriHandler>
-          <Body />
+          <Body hostElementId={hostElementId} />
         </TauriHandler>
       ) : (
         <>
-          <Body />
+          <Body hostElementId={hostElementId} />
           {!hideFullscreenButton && <FullscreenButton />}
         </>
       )}
