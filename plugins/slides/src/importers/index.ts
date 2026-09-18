@@ -20,11 +20,44 @@ import { extractSlideData } from "./googleSlides/slideData/slideDataExtractor";
 import type { ImportHelpers } from "./helpers";
 import { convertPptToPdfViaOfficeOnline } from "./office/convertPptToPdf";
 import { isOnline } from "./office/network";
+import { extractPptxSpeakerNotes } from "./office/pptxSpeakerNotes";
 import {
   processPdfToThumbnails,
   startThumbnailWorker,
   uploadPdfAndPrepare,
 } from "./pdfPipeline";
+import { htmlNotesToPlainText, normalizeSpeakerNotes } from "./speakerNotes";
+
+/**
+ * Reads speaker notes straight out of the uploaded .pptx. The PDF we present
+ * from carries no notes, so this is the only chance to keep them.
+ */
+const readPptSpeakerNotes = async (
+  serverPluginApi: ServerPluginApi,
+  mediaName: string,
+  slideCount: number,
+  log: typeof logger,
+): Promise<string[] | undefined> => {
+  try {
+    const media = await serverPluginApi.media.getMedia(mediaName);
+    const notes = extractPptxSpeakerNotes(await streamToBuffer(media));
+    if (!notes) return undefined;
+
+    // Office Online can merge or drop slides, so only trust a 1:1 match.
+    if (notes.length !== slideCount) {
+      log.warn(
+        { notesCount: notes.length, slideCount },
+        "Speaker notes count doesn't match the converted slide count, skipping",
+      );
+      return undefined;
+    }
+
+    return normalizeSpeakerNotes(notes);
+  } catch (err) {
+    log.warn({ err }, "Could not read speaker notes from the PowerPoint file");
+    return undefined;
+  }
+};
 
 export const createImporters = (
   serverPluginApi: ServerPluginApi,
@@ -125,6 +158,17 @@ export const createImporters = (
         fileNames.map((_, i) => String(i));
       loadedPlugin.pluginData.imports[newImport.importId]!.pdfMediaName =
         uploadedPdfFileName;
+
+      const speakerNotes = await readPptSpeakerNotes(
+        serverPluginApi,
+        mediaName,
+        fileNames.length,
+        log,
+      );
+      if (speakerNotes) {
+        loadedPlugin.pluginData.imports[newImport.importId]!.speakerNotes =
+          speakerNotes;
+      }
 
       // Wait for thumbnails to be uploaded
       await workerPromise;
@@ -267,6 +311,13 @@ export const createImporters = (
       const slideAutoplayDurations = slideData
         ? slideData.slides.map((slide) => slide.autoplayObjectDurationMs)
         : fileNames.map(() => 0);
+      const speakerNotes = slideData
+        ? normalizeSpeakerNotes(
+            slideData.slides.map((slide) =>
+              htmlNotesToPlainText(slide.speakerNotes),
+            ),
+          )
+        : undefined;
 
       loadedYjs.doc?.transact(() => {
         loadedPlugin.pluginData.imports[newImport.importId]!.slideClickCounts =
@@ -288,6 +339,10 @@ export const createImporters = (
         ).slideAutoplayDurations = slideAutoplayDurations;
         loadedPlugin.pluginData.imports[newImport.importId]!.slideIds =
           slideIds;
+        if (speakerNotes) {
+          loadedPlugin.pluginData.imports[newImport.importId]!.speakerNotes =
+            speakerNotes;
+        }
         (
           loadedPlugin.pluginData.imports[
             newImport.importId
