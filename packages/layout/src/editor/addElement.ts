@@ -1,8 +1,13 @@
 import { cascadeRect, freshElementId, insertElement } from "../doc/edit";
 import { MIN_RECT_SIZE } from "../geometry/rect";
-import { createShapeElement, createTextElement } from "../schema/defaults";
+import {
+  createHostElement,
+  createShapeElement,
+  createTextElement,
+} from "../schema/defaults";
+import { Derivation } from "../schema/derivation";
 import { LayoutDoc } from "../schema/document";
-import { LayoutElement, ShapeKind } from "../schema/element";
+import { HostSource, LayoutElement, ShapeKind } from "../schema/element";
 import { FillPaint, imagePaint, solidPaint, videoPaint } from "../schema/paint";
 import { Rect } from "../schema/rect";
 import { LayoutInsertDefaults, applyInsertDefaults } from "./insertDefaults";
@@ -119,3 +124,30 @@ export const addVideoElement = async (
   if (!video) return null;
   return addMedia(doc, "video", videoPaint(video), defaults);
 };
+
+const HOST_RECT = centered(50, 50);
+
+/** Ids carry the source kind so a layer list reads without extra lookups. */
+export const addHostElement = (
+  doc: LayoutDoc,
+  source: HostSource,
+  {
+    name = null,
+    derivation = null,
+    rect = HOST_RECT,
+    defaults = NO_DEFAULTS,
+  }: {
+    name?: string | null;
+    derivation?: Derivation | null;
+    rect?: Rect;
+    defaults?: LayoutInsertDefaults;
+  } = {},
+): AddResult =>
+  add(
+    doc,
+    source.kind,
+    (id, cascaded) =>
+      createHostElement({ id, source, derivation, name, rect: cascaded }),
+    rect,
+    defaults,
+  );

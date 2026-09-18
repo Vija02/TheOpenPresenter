@@ -137,6 +137,36 @@ const EditorSurface = <T extends EditorItem>({
     return map;
   }, [items]);
 
+  /** Array index is paint order, so index becomes z-index directly. */
+  const paintOrder = useMemo(() => {
+    const order = new Map<string, number>();
+    items.forEach((item, index) => order.set(item.id, index));
+    return order;
+  }, [items]);
+
+  /**
+   * The items in a DOM order that never changes once an id has been seen.
+   *
+   * Reordering layers must not move nodes: relocating an iframe in the DOM
+   * reloads it, which tears down a live host preview on every "bring
+   * forward". Stacking is expressed with z-index instead, so this order is
+   * purely structural and carries no visual meaning.
+   */
+  const domOrderRef = useRef<string[]>([]);
+
+  const stableOrderItems = useMemo(() => {
+    const previous = domOrderRef.current.filter((id) => itemsById.has(id));
+    const seen = new Set(previous);
+    const added = items.filter((item) => !seen.has(item.id));
+
+    const nextOrder = [...previous, ...added.map((item) => item.id)];
+    domOrderRef.current = nextOrder;
+
+    return nextOrder
+      .map((id) => itemsById.get(id))
+      .filter((item): item is T => item !== undefined);
+  }, [items, itemsById]);
+
   // The item being edited is excluded so Moveable does not draw a control box
   const selectableIds = useMemo(
     () =>
@@ -314,7 +344,7 @@ const EditorSurface = <T extends EditorItem>({
       tabIndex={0}
       onKeyDown={handleKeyDown}
     >
-      {items.map((item) => {
+      {stableOrderItems.map((item) => {
         const px = rectToPx(item.rect, metrics);
         const selected = selectedIds.includes(item.id);
         const editing = item.id === editingId;
@@ -336,6 +366,10 @@ const EditorSurface = <T extends EditorItem>({
               top: px.top,
               width: px.width,
               height: px.height,
+              // Paint order comes from z-index rather than DOM order, so
+              // reordering never moves a node. Moving an iframe in the DOM
+              // reloads it, which would tear down a live preview mid-edit.
+              zIndex: paintOrder.get(item.id),
               transform: item.rotation
                 ? `rotate(${item.rotation}deg)`
                 : undefined,

@@ -10,6 +10,7 @@ import {
   ContentSection,
   EffectsSection,
   FillSection,
+  HostSourceSection,
   LayerSection,
   OutlineSection,
   PositionSection,
@@ -73,6 +74,10 @@ export const ElementInspector = ({
         </Button>
       </div>
     </div>
+
+    {element.type === "host" && (
+      <HostSourceSection doc={doc} element={element} onChange={onChange} />
+    )}
 
     {element.type === "text" && (
       <>

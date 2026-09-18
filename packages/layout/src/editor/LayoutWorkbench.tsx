@@ -22,6 +22,10 @@ import {
   pasteElements,
   removeElements,
 } from "../doc/edit";
+import {
+  LayoutHostCatalog,
+  LayoutHostCatalogProvider,
+} from "../react/context/hostCatalog";
 import { DataBinding, LayoutDoc, Template } from "../schema/document";
 import { FrameContext } from "../template/resolve";
 import { FrameData } from "../template/spans";
@@ -62,6 +66,12 @@ export type LayoutWorkbenchProps = {
   /** Per-plugin overrides for what newly inserted elements look like. */
   insertDefaults?: LayoutInsertDefaults;
 
+  /**
+   * Live content the host can place: scenes, screens, plugins, and how their
+   * data may be derived. Omit to hide host elements from the editor.
+   */
+  hostCatalog?: LayoutHostCatalog;
+
   /** On by default */
   ai?: boolean;
   /** Point at a plugin's own capability instead of the platform default. */
@@ -94,6 +104,7 @@ export const LayoutWorkbench = ({
   documentExtras,
   hideAddElements = false,
   insertDefaults,
+  hostCatalog,
   ai: aiEnabled = true,
   aiCapability = "layout",
   onRequestAiEdit,
@@ -344,7 +355,9 @@ export const LayoutWorkbench = ({
 
   return (
     <LayoutInsertDefaultsProvider defaults={insertDefaults}>
-      {body}
+      <LayoutHostCatalogProvider catalog={hostCatalog}>
+        {body}
+      </LayoutHostCatalogProvider>
     </LayoutInsertDefaultsProvider>
   );
 };
