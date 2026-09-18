@@ -13,6 +13,10 @@ import {
   WebComponentProps,
   YjsWatcher,
 } from "@repo/base-plugin";
+import {
+  PluginAPIContext,
+  initStandalonePluginApi,
+} from "@repo/base-plugin/client";
 import { findClientPluginView, preloader } from "@repo/lib";
 import { logger } from "@repo/observability";
 import {
@@ -26,7 +30,14 @@ import {
 import { ErrorAlert, LoadingPart } from "@repo/ui";
 import { useQuery } from "@tanstack/react-query";
 import { cx } from "class-variance-authority";
-import React, { lazy, useCallback, useMemo, useRef, useState } from "react";
+import React, {
+  ReactNode,
+  lazy,
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useAnimatePresence } from "react-animate-presence";
 import { ErrorBoundary } from "react-error-boundary";
 import { toast } from "react-toastify";
@@ -64,31 +75,33 @@ export const Body = () => {
     return (
       <>
         <Overlay />
-        <LayoutContainer layout={layout}>
-          {layout.items.map((item: LayoutItem) => {
-            if (item.type === "screenItem") {
+        <LayoutOutputPluginApi>
+          <LayoutContainer layout={layout}>
+            {layout.items.map((item: LayoutItem) => {
+              if (item.type === "screenItem") {
+                return (
+                  <ScreenRenderer
+                    key={item.id}
+                    sourceRendererId={item.sourceRendererId}
+                    layoutPosition={item.position}
+                    derivation={item.derivation}
+                    sceneOverrides={item.sceneOverrides}
+                  />
+                );
+              }
+
               return (
-                <ScreenRenderer
+                <SceneRenderer
                   key={item.id}
+                  sceneId={item.sceneId!}
                   sourceRendererId={item.sourceRendererId}
                   layoutPosition={item.position}
                   derivation={item.derivation}
-                  sceneOverrides={item.sceneOverrides}
                 />
               );
-            }
-
-            return (
-              <SceneRenderer
-                key={item.id}
-                sceneId={item.sceneId!}
-                sourceRendererId={item.sourceRendererId}
-                layoutPosition={item.position}
-                derivation={item.derivation}
-              />
-            );
-          })}
-        </LayoutContainer>
+            })}
+          </LayoutContainer>
+        </LayoutOutputPluginApi>
       </>
     );
   }
@@ -104,6 +117,41 @@ export const Body = () => {
         <SceneRenderer key={sceneId} sceneId={sceneId} />
       ))}
     </>
+  );
+};
+
+/**
+ * A layout draws the same elements a plugin does, but owns no plugin, so it
+ * builds a standalone API from this screen's own host services.
+ */
+const LayoutOutputPluginApi = ({ children }: { children: ReactNode }) => {
+  const { canPlayAudio } = useAudioCheck();
+  const { addError, removeError } = useError();
+  const { orgSlug, projectSlug } = usePluginMetaData();
+
+  const pluginAPI = useMemo(
+    () =>
+      initStandalonePluginApi({
+        pluginContext: {
+          pluginId: "",
+          sceneId: "",
+          organizationId: orgSlug,
+          projectId: projectSlug,
+        },
+        misc: {
+          canPlayAudio,
+          outputVolume,
+          errorHandler: { addError, removeError },
+          surface: "renderer",
+        },
+      }),
+    [canPlayAudio, addError, removeError, orgSlug, projectSlug],
+  );
+
+  return (
+    <PluginAPIContext.Provider value={{ pluginAPI }}>
+      {children}
+    </PluginAPIContext.Provider>
   );
 };
 

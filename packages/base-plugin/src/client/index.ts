@@ -1,6 +1,7 @@
 import "./styles.css";
 
 export * from "./initPluginApi";
+export * from "./initStandalonePluginApi";
 export * from "./PluginAPIProvider";
 export * from "./usePluginApi";
 export * from "./MediaPicker";
