@@ -197,6 +197,9 @@ RUN yarn workspace @repo/plugin-bible build
 COPY plugins/screen-share/ /app/plugins/screen-share/
 RUN yarn workspace @repo/plugin-screen-share build
 
+COPY plugins/slido/ /app/plugins/slido/
+RUN yarn workspace @repo/plugin-slido build
+
 RUN node scripts/build_utils/extract_plugins.js
 
 ################################################################################
@@ -306,6 +309,9 @@ COPY --from=builder-plugin /app/plugins/bible/migrations/ /app/plugins/bible/mig
 COPY --from=builder-plugin /app/plugins/screen-share/package.json /app/plugins/screen-share/
 COPY --from=builder-plugin /app/plugins/screen-share/dist/ /app/plugins/screen-share/dist/
 COPY --from=builder-plugin /app/plugins/screen-share/out/ /app/plugins/screen-share/out/
+COPY --from=builder-plugin /app/plugins/slido/package.json /app/plugins/slido/
+COPY --from=builder-plugin /app/plugins/slido/dist/ /app/plugins/slido/dist/
+COPY --from=builder-plugin /app/plugins/slido/out/ /app/plugins/slido/out/
 
 # Shared args shouldn't be overridable at runtime (because they're baked into
 # the built JS).
