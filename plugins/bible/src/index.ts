@@ -24,6 +24,7 @@ import {
   remoteWebComponentTag,
   rendererWebComponentTag,
 } from "./consts";
+import { derivationFields } from "./derivation";
 import { getPassageSlideCount } from "./helpers/slides";
 import {
   registerLoadedPlugin,
@@ -63,6 +64,8 @@ export const init = (
   });
 
   serverPluginApi.serveStatic(pluginName, "out");
+
+  serverPluginApi.registerDerivationFields(pluginName, derivationFields);
 
   serverPluginApi.loadJsOnRemoteView(pluginName, `${pluginName}-remote.es.js`);
   serverPluginApi.loadCssOnRemoteView(pluginName, `RemoteEntry.css`);

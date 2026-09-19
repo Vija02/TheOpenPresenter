@@ -21,6 +21,7 @@ import {
   rendererWebComponentTag,
 } from "./consts";
 import { isCustomImport, rebuildOrderAfterSlideRemoval } from "./customSlides";
+import { derivationFields } from "./derivation";
 import { createImporters } from "./importers";
 import { getCanvaOAuthConfig } from "./importers/canva/oauth";
 import { createCanvaRouter } from "./importers/canva/router";
@@ -112,6 +113,8 @@ export const init = (
   });
 
   serverPluginApi.serveStatic(pluginName, "out");
+
+  serverPluginApi.registerDerivationFields(pluginName, derivationFields);
 
   serverPluginApi.registerEnvToViews(pluginName, {
     PLUGIN_GOOGLE_SLIDES_CLIENT_ID: process.env.PLUGIN_GOOGLE_SLIDES_CLIENT_ID,
