@@ -62,6 +62,7 @@ COPY plugins/radio/package.json /app/plugins/radio/package.json
 COPY plugins/worship-pads/package.json /app/plugins/worship-pads/package.json
 COPY plugins/bible/package.json /app/plugins/bible/package.json
 COPY plugins/screen-share/package.json /app/plugins/screen-share/package.json
+COPY plugins/slido/package.json /app/plugins/slido/package.json
 
 RUN yarn install
 
