@@ -7,6 +7,7 @@ import { FaStar } from "react-icons/fa";
 import { IconType } from "react-icons/lib";
 import { MdOutlineOndemandVideo } from "react-icons/md";
 import {
+  PiChatsCircle,
   PiMusicNotesSimple,
   PiPresentationChart,
   PiPuzzlePiece,
@@ -20,6 +21,7 @@ const sceneCategoriesConfig: Record<SceneCategories, IconType> = {
   Display: PiPresentationChart,
   Media: MdOutlineOndemandVideo,
   Audio: PiMusicNotesSimple,
+  Interaction: PiChatsCircle,
   Custom: PiPuzzlePiece,
 };
 

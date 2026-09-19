@@ -142,7 +142,13 @@ export type WebComponentProps<TrpcClient> = {
   misc: MiscProps;
 };
 
-export const sceneCategories = ["Display", "Media", "Audio", "Custom"] as const;
+export const sceneCategories = [
+  "Display",
+  "Media",
+  "Audio",
+  "Interaction",
+  "Custom",
+] as const;
 export type SceneCategories = (typeof sceneCategories)[number];
 
 export type CanPlayAudio = {
