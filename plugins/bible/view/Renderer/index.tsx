@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 
+import { OFFSET_PARAM } from "../../src/derivation";
 import { getPassageSlideCount } from "../../src/helpers/slides";
 import { usePluginAPI } from "../pluginApi";
 import VerseView from "./VerseView";
@@ -17,7 +18,10 @@ const Renderer = () => {
   );
 
   // Confidence-monitor / next-slide derivation support.
-  const derivationOffset = pluginApi.renderer.useDerivationOffset();
+  const derivationOffset = pluginApi.renderer.useDerivationParam(
+    OFFSET_PARAM,
+    0,
+  );
 
   const passage = useMemo(
     () => passages.find((x) => x.id === data.passageId),

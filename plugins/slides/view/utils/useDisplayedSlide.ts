@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 
+import { OFFSET_PARAM } from "../../src/derivation";
 import { resolveSlide } from "../../src/slides/order";
 import { ResolvedSlide } from "../../src/types";
 import { usePluginAPI } from "../pluginApi";
@@ -29,7 +30,10 @@ export const useDisplayedSlide = (): DisplayedSlide => {
     (x) => x.currentClickCount,
   );
   const displayModes = pluginApi.renderer.useData((x) => x.displayModes);
-  const derivationOffset = pluginApi.renderer.useDerivationOffset();
+  const derivationOffset = pluginApi.renderer.useDerivationParam(
+    OFFSET_PARAM,
+    0,
+  );
 
   const baseIndex = currentSlideIndex ?? 0;
   const baseClickCount = currentClickCount ?? 0;
@@ -76,14 +80,14 @@ export const useDisplayedSlide = (): DisplayedSlide => {
     [effectiveIndex, effectiveClickCount, globalSlideClickCount],
   );
 
-  const derivedFlatPos = useMemo(
-    () => baseFlatPos + derivationOffset,
-    [baseFlatPos, derivationOffset],
-  );
-
   const totalSteps = useMemo(
     () => totalStepCount(globalSlideClickCount),
     [globalSlideClickCount],
+  );
+
+  const derivedFlatPos = useMemo(
+    () => baseFlatPos + derivationOffset,
+    [baseFlatPos, derivationOffset],
   );
 
   const derivedPosition = useMemo(

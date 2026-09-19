@@ -2,6 +2,7 @@ import { cx } from "class-variance-authority";
 import { useMemo } from "react";
 
 import { Song } from "../../src";
+import { OFFSET_PARAM } from "../../src/derivation";
 import { getMergedSlideStyle } from "../../src/slideStyle";
 import { processSong } from "../../src/songHelpers";
 import { usePluginAPI } from "../pluginApi";
@@ -45,7 +46,10 @@ const SlideRenderer = () => {
   );
 
   // Get derivation offset for confidence monitor mode
-  const derivationOffset = pluginApi.renderer.useDerivationOffset();
+  const derivationOffset = pluginApi.renderer.useDerivationParam(
+    OFFSET_PARAM,
+    0,
+  );
 
   const songs = pluginApi.scene.useData((x) => x.pluginData.songs);
 

@@ -24,6 +24,7 @@ import {
   rendererWebComponentTag,
 } from "./consts";
 import { getSongData } from "./data";
+import { derivationFields } from "./derivation";
 import { convertMWLData } from "./importer/myworshiplist";
 import { migratePluginDataV1ToV2 } from "./migrate/v1";
 import { getPcoOAuthConfig } from "./planningCenter/oauth";
@@ -111,6 +112,8 @@ export const init = (
   });
 
   serverPluginApi.serveStatic(pluginName, "out");
+
+  serverPluginApi.registerDerivationFields(pluginName, derivationFields);
 
   serverPluginApi.loadJsOnRemoteView(pluginName, `${pluginName}-remote.es.js`);
   serverPluginApi.loadCssOnRemoteView(pluginName, `RemoteEntry.css`);
