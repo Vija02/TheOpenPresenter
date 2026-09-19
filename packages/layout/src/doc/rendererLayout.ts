@@ -66,6 +66,12 @@ const toSource = (item: LegacyItem): HostSource =>
         sceneId: item.sceneId,
       };
 
+/** The legacy shape */
+const toDerivation = (item: LegacyItem) =>
+  item.derivation
+    ? createDerivation({ params: { offset: item.derivation.offset } })
+    : null;
+
 const toElement = (item: LegacyItem, index: number): LayoutElement =>
   createHostElement({
     // Item ids were typeids; keeping them means an in-flight edit still points
@@ -73,9 +79,7 @@ const toElement = (item: LegacyItem, index: number): LayoutElement =>
     id: item.id ?? `host-${index + 1}`,
     name: item.label ?? null,
     source: toSource(item),
-    derivation: item.derivation
-      ? createDerivation({ offset: item.derivation.offset })
-      : null,
+    derivation: toDerivation(item),
     rect: toRect(item.position),
   });
 

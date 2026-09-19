@@ -15,7 +15,13 @@ export const pluginMeta = makeExtendSchemaPlugin(() => ({
       sceneCreator: [SceneCreator!]!
       registeredRemoteView: [RegisteredRemoteView!]!
       registeredRendererView: [RegisteredRendererView!]!
+      registeredDerivationFields: [RegisteredDerivationFields!]!
       clientPluginViews: [ClientPluginView!]!
+    }
+
+    type RegisteredDerivationFields {
+      pluginName: String!
+      fields: JSON!
     }
 
     type SceneCreator {
@@ -120,6 +126,12 @@ export const pluginMeta = makeExtendSchemaPlugin(() => ({
               pluginName: x.pluginName,
               tag: x.webComponentTag,
             })),
+            registeredDerivationFields: serverPluginApi
+              .getRegisteredDerivationFields()
+              .map((x) => ({
+                pluginName: x.pluginName,
+                fields: x.fields,
+              })),
             clientPluginViews,
           };
         } catch (e: any) {

@@ -51,7 +51,7 @@ describe("readRendererLayoutDoc", () => {
       type: "host",
       rect: { x: 70, y: 0, w: 30, h: 50 },
       source: { kind: "screen", rendererId: "2" },
-      derivation: { offset: 1, params: null },
+      derivation: { params: { offset: 1 } },
     });
   });
 

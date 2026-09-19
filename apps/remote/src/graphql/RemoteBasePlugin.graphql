@@ -64,6 +64,10 @@ fragment BaseRemotePluginMeta on PluginMeta {
       alwaysRender
     }
   }
+  registeredDerivationFields {
+    pluginName
+    fields
+  }
   clientPluginViews {
     pluginName
     pluginFamily

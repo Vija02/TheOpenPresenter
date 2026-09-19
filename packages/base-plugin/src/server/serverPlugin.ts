@@ -1,4 +1,5 @@
 import { WithPgClient, job, media } from "@repo/backend-shared";
+import type { DerivationField } from "@repo/base-types";
 import { OrganizationType } from "@repo/graphql";
 import { mediaIdFromUUID } from "@repo/lib";
 import { Express, RequestHandler } from "express";
@@ -123,6 +124,10 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
     envVars: Record<string, string>;
   }[] = [];
   protected registeredMigrations: RegisteredMigration[] = [];
+  protected registeredDerivationFields: {
+    pluginName: string;
+    fields: DerivationField[];
+  }[] = [];
   protected registeredAiCapabilities = new Map<string, AnyAiCapability>();
 
   private app: Express;
@@ -250,6 +255,13 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
 
   public registerMigrations(pluginName: string, migrationsPath: string) {
     this.registeredMigrations.push({ pluginName, migrationsPath });
+  }
+
+  public registerDerivationFields(
+    pluginName: string,
+    fields: DerivationField[],
+  ) {
+    this.registeredDerivationFields.push({ pluginName, fields });
   }
 
   public registerAiCapability<T>(capability: AiCapability<T>) {
@@ -533,6 +545,9 @@ export class ServerPluginApiPrivate extends ServerPluginApi {
   }
   getRegisteredMigrations() {
     return this.registeredMigrations;
+  }
+  getRegisteredDerivationFields() {
+    return this.registeredDerivationFields;
   }
   getRegisteredAiCapabilities() {
     return this.registeredAiCapabilities;

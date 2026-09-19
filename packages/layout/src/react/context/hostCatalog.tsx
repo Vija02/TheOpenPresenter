@@ -1,6 +1,7 @@
+import type { DerivationField } from "@repo/base-types";
 import { ReactNode, createContext, useContext } from "react";
 
-import { Derivation, createDerivation } from "../../schema/derivation";
+import { Derivation } from "../../schema/derivation";
 import { HostElement, HostSource } from "../../schema/element";
 
 /**
@@ -8,7 +9,8 @@ import { HostElement, HostSource } from "../../schema/element";
  *
  * The layout package cannot enumerate scenes, screens or plugins itself, and it
  * cannot know what a derivation means to the plugin behind a scene. So the host
- * supplies both lists and the editor only presents them.
+ * supplies the sources and the per-plugin derivation controls, and the editor
+ * only presents them.
  */
 
 export type HostSourceOption = {
@@ -20,32 +22,10 @@ export type HostSourceOption = {
   source: HostSource;
 };
 
-export type HostDerivationOption = {
-  id: string;
-  label: string;
-  /** Null means the live data, underived. */
-  derivation: Derivation | null;
-};
-
-/**
- * Stepping backwards and forwards is what every sequential plugin already
- * understands, so it is offered by default. A host that wants more (a
- * translation, chords on or off) passes its own list, which may carry `params`.
- */
-export const DEFAULT_HOST_DERIVATION_OPTIONS: HostDerivationOption[] = [
-  { id: "live", label: "Current", derivation: null },
-  {
-    id: "previous",
-    label: "Previous",
-    derivation: createDerivation({ offset: -1 }),
-  },
-  { id: "next", label: "Next", derivation: createDerivation({ offset: 1 }) },
-];
-
 export type LayoutHostCatalog = {
   /** Empty hides the add-live control entirely. */
   sources: HostSourceOption[];
-  derivations?: HostDerivationOption[];
+  derivationFields?: (source: HostSource) => DerivationField[];
   /** Extra per-element controls, for plugin-specific derivation params. */
   renderElementExtras?: (props: {
     element: HostElement;
@@ -65,8 +45,10 @@ const HostCatalogContext = createContext<LayoutHostCatalog>(EMPTY_HOST_CATALOG);
 export const useHostCatalog = (): LayoutHostCatalog =>
   useContext(HostCatalogContext);
 
-export const useHostDerivationOptions = (): HostDerivationOption[] =>
-  useHostCatalog().derivations ?? DEFAULT_HOST_DERIVATION_OPTIONS;
+/** Empty when the plugin behind this source declares nothing of its own. */
+export const useHostDerivationFields = (
+  source: HostSource,
+): DerivationField[] => useHostCatalog().derivationFields?.(source) ?? [];
 
 export const useHostPreviewUrl = (): LayoutHostCatalog["previewUrl"] =>
   useHostCatalog().previewUrl;
@@ -97,29 +79,3 @@ export const findSourceOption = (
   source: HostSource,
 ): HostSourceOption | null =>
   options.find((option) => sameHostSource(option.source, source)) ?? null;
-
-/** Offset-only derivations round-trip through the default options. */
-export const findDerivationOption = (
-  options: HostDerivationOption[],
-  derivation: Derivation | null,
-): HostDerivationOption | null =>
-  options.find((option) => sameDerivation(option.derivation, derivation)) ??
-  null;
-
-const sameParams = (
-  a: Record<string, unknown> | null,
-  b: Record<string, unknown> | null,
-): boolean => {
-  const aKeys = Object.keys(a ?? {});
-  const bKeys = Object.keys(b ?? {});
-  if (aKeys.length !== bKeys.length) return false;
-  return aKeys.every((key) => Object.is(a?.[key], b?.[key]));
-};
-
-export const sameDerivation = (
-  a: Derivation | null,
-  b: Derivation | null,
-): boolean => {
-  if (!a || !b) return !a && !b;
-  return a.offset === b.offset && sameParams(a.params, b.params);
-};
