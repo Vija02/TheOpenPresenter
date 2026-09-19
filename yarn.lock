@@ -10052,6 +10052,7 @@ __metadata:
     postcss-prefix-selector: "npm:^2.1.1"
     react: "npm:^19.1.0"
     react-dom: "npm:^19.1.0"
+    react-icons: "npm:^5.4.0"
     vite: "npm:6.3.5"
     yjs: "npm:13.6.26"
   languageName: unknown
