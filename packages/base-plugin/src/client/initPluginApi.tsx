@@ -138,7 +138,6 @@ export function initPluginApi<
         );
       },
       useDerivation: () => misc.derivation ?? null,
-      useDerivationOffset: () => misc.derivation?.offset ?? 0,
       useDerivationParam<T = unknown>(key: string, fallback: T): T {
         return (misc.derivation?.params?.[key] as T | undefined) ?? fallback;
       },

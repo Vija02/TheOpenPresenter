@@ -1,5 +1,6 @@
 import { Scene } from "@repo/base-plugin";
-import { HostElement } from "@repo/layout";
+import type { DerivationField } from "@repo/base-types";
+import { HostElement, HostSource } from "@repo/layout";
 import { HostSourceOption, LayoutHostCatalog } from "@repo/layout/react";
 import { useData, usePluginMetaData } from "@repo/shared";
 import { sortBy } from "lodash-es";
@@ -13,7 +14,7 @@ export const useRendererHostCatalog = (
   rendererId: string,
 ): LayoutHostCatalog => {
   const data = useData();
-  const { orgSlug, projectSlug } = usePluginMetaData();
+  const { orgSlug, projectSlug, pluginMeta } = usePluginMetaData();
   const search = useSearch();
 
   const previewUrl = useCallback(
@@ -26,6 +27,44 @@ export const useRendererHostCatalog = (
       return `/render/${orgSlug}/${projectSlug}?${params.toString()}`;
     },
     [orgSlug, projectSlug, search, rendererId],
+  );
+
+  const fieldsByPlugin = useMemo(() => {
+    const registered =
+      pluginMeta && "registeredDerivationFields" in pluginMeta
+        ? pluginMeta.registeredDerivationFields
+        : [];
+
+    const map = new Map<string, DerivationField[]>();
+    for (const entry of registered ?? []) {
+      map.set(entry.pluginName, (entry.fields ?? []) as DerivationField[]);
+    }
+    return map;
+  }, [pluginMeta]);
+
+  const derivationFields = useCallback(
+    (source: HostSource): DerivationField[] => {
+      if (source.kind === "screen") return [];
+
+      const scene = data.data[source.sceneId] as Scene | undefined;
+      const plugins = Object.values(scene?.children ?? {});
+
+      const wanted =
+        source.kind === "plugin"
+          ? plugins.filter((p) => p.plugin === source.pluginId)
+          : plugins;
+
+      const out: DerivationField[] = [];
+      for (const plugin of wanted) {
+        for (const field of fieldsByPlugin.get(plugin.plugin) ?? []) {
+          if (!out.some((existing) => existing.key === field.key)) {
+            out.push(field);
+          }
+        }
+      }
+      return out;
+    },
+    [data.data, fieldsByPlugin],
   );
 
   return useMemo(() => {
@@ -71,6 +110,6 @@ export const useRendererHostCatalog = (
       }
     }
 
-    return { sources, previewUrl };
-  }, [data.renderer, data.data, rendererId, previewUrl]);
+    return { sources, previewUrl, derivationFields };
+  }, [data.renderer, data.data, rendererId, previewUrl, derivationFields]);
 };

@@ -87,11 +87,7 @@ export const setHostDerivation = (
   derivation: Derivation | null,
 ): LayoutDoc => patchHostElement(doc, id, { derivation });
 
-/**
- * Merges into a host element's derivation params, leaving `offset` alone.
- * A key set to `undefined` is removed, and emptying the object stores `null`
- * rather than `{}` so a params-only derivation reverts to live data.
- */
+/** Merges into a host element's derivation params */
 export const patchHostDerivationParams = (
   doc: LayoutDoc,
   id: string,

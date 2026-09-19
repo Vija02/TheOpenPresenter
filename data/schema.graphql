@@ -5039,6 +5039,7 @@ type PluginKeyPressPayload {
 
 type PluginMeta {
   clientPluginViews: [ClientPluginView!]!
+  registeredDerivationFields: [RegisteredDerivationFields!]!
   registeredRemoteView: [RegisteredRemoteView!]!
   registeredRendererView: [RegisteredRendererView!]!
   sceneCreator: [SceneCreator!]!
@@ -6480,6 +6481,11 @@ input RegisterInput {
 
 type RegisterPayload {
   user: User!
+}
+
+type RegisteredDerivationFields {
+  fields: JSON!
+  pluginName: String!
 }
 
 type RegisteredRemoteView {
