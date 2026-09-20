@@ -15,6 +15,7 @@ import { bind } from "valtio-yjs";
 import * as Y from "yjs";
 import z from "zod";
 
+import { dataBindings } from "./bindings";
 import {
   pluginName,
   remoteWebComponentTag,
@@ -135,6 +136,15 @@ export const init = (
     pluginName,
     rendererWebComponentTag,
   );
+  serverPluginApi.loadJsOnRendererView(
+    pluginName,
+    `${pluginName}-dataProvider.es.js`,
+  );
+  serverPluginApi.loadJsOnRemoteView(
+    pluginName,
+    `${pluginName}-dataProvider.es.js`,
+  );
+  serverPluginApi.registerDataBindings(pluginName, dataBindings);
   serverPluginApi.registerPrivateRoute(
     pluginName,
     "gslide/proxy",

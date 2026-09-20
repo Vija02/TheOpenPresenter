@@ -1,17 +1,17 @@
 import { useMemo } from "react";
 
 import { OFFSET_PARAM } from "../../src/derivation";
-import { resolveSlide } from "../../src/slides/order";
-import { ResolvedSlide } from "../../src/types";
-import { usePluginAPI } from "../pluginApi";
 import {
   calculateAutoplayStepStartedAt,
   computeGlobalSlideClickCount,
   fromFlatPosition,
   toFlatPosition,
   totalStepCount,
-  useAutoplay,
-} from "./useAutoplay";
+} from "../../src/slides/autoplay";
+import { resolveSlide } from "../../src/slides/order";
+import { ResolvedSlide } from "../../src/types";
+import { usePluginAPI } from "../pluginApi";
+import { useAutoplay } from "./useAutoplay";
 
 export type DisplayedSlide = {
   resolvedSlide: ResolvedSlide | null;

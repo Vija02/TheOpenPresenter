@@ -31,6 +31,7 @@ export default defineConfig({
       entry: [
         "./view/entries/remote.tsx",
         "./view/entries/renderer.tsx",
+        "./view/entries/dataProvider.ts",
         "./view/entries/uploadPage.tsx",
       ],
       formats: ["es"],
