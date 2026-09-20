@@ -1,5 +1,5 @@
 import { Scene } from "@repo/base-plugin";
-import type { DerivationField } from "@repo/base-types";
+import type { DataBinding, DerivationField } from "@repo/base-types";
 import { HostElement, HostSource } from "@repo/layout";
 import { HostSourceOption, LayoutHostCatalog } from "@repo/layout/react";
 import { useData, usePluginMetaData } from "@repo/shared";
@@ -42,21 +42,39 @@ export const useRendererHostCatalog = (
     return map;
   }, [pluginMeta]);
 
-  const derivationFields = useCallback(
-    (source: HostSource): DerivationField[] => {
+  const bindingsByPlugin = useMemo(() => {
+    const registered =
+      pluginMeta && "registeredDataBindings" in pluginMeta
+        ? pluginMeta.registeredDataBindings
+        : [];
+
+    const map = new Map<string, DataBinding[]>();
+    for (const entry of registered ?? []) {
+      map.set(entry.pluginName, (entry.bindings ?? []) as DataBinding[]);
+    }
+    return map;
+  }, [pluginMeta]);
+
+  /** The plugins a source covers: one, or every plugin in the scene. */
+  const pluginsForSource = useCallback(
+    (source: HostSource): string[] => {
       if (source.kind === "screen") return [];
 
       const scene = data.data[source.sceneId] as Scene | undefined;
-      const plugins = Object.values(scene?.children ?? {});
+      const plugins = Object.values(scene?.children ?? {}).map((p) => p.plugin);
 
-      const wanted =
-        source.kind === "plugin"
-          ? plugins.filter((p) => p.plugin === source.pluginId)
-          : plugins;
+      return source.kind === "plugin"
+        ? plugins.filter((plugin) => plugin === source.pluginId)
+        : plugins;
+    },
+    [data.data],
+  );
 
+  const derivationFields = useCallback(
+    (source: HostSource): DerivationField[] => {
       const out: DerivationField[] = [];
-      for (const plugin of wanted) {
-        for (const field of fieldsByPlugin.get(plugin.plugin) ?? []) {
+      for (const plugin of pluginsForSource(source)) {
+        for (const field of fieldsByPlugin.get(plugin) ?? []) {
           if (!out.some((existing) => existing.key === field.key)) {
             out.push(field);
           }
@@ -64,7 +82,22 @@ export const useRendererHostCatalog = (
       }
       return out;
     },
-    [data.data, fieldsByPlugin],
+    [pluginsForSource, fieldsByPlugin],
+  );
+
+  const dataBindings = useCallback(
+    (source: HostSource): DataBinding[] => {
+      const out: DataBinding[] = [];
+      for (const plugin of pluginsForSource(source)) {
+        for (const binding of bindingsByPlugin.get(plugin) ?? []) {
+          if (!out.some((existing) => existing.key === binding.key)) {
+            out.push(binding);
+          }
+        }
+      }
+      return out;
+    },
+    [pluginsForSource, bindingsByPlugin],
   );
 
   return useMemo(() => {
@@ -110,6 +143,13 @@ export const useRendererHostCatalog = (
       }
     }
 
-    return { sources, previewUrl, derivationFields };
-  }, [data.renderer, data.data, rendererId, previewUrl, derivationFields]);
+    return { sources, previewUrl, derivationFields, dataBindings };
+  }, [
+    data.renderer,
+    data.data,
+    rendererId,
+    previewUrl,
+    derivationFields,
+    dataBindings,
+  ]);
 };

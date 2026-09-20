@@ -1,4 +1,4 @@
-import type { DerivationField } from "@repo/base-types";
+import type { DataBinding, DerivationField } from "@repo/base-types";
 import { ReactNode, createContext, useContext } from "react";
 
 import { Derivation } from "../../schema/derivation";
@@ -26,6 +26,8 @@ export type LayoutHostCatalog = {
   /** Empty hides the add-live control entirely. */
   sources: HostSourceOption[];
   derivationFields?: (source: HostSource) => DerivationField[];
+  /** Token vocabulary a source offers a feed. Empty means it publishes none. */
+  dataBindings?: (source: HostSource) => DataBinding[];
   /** Extra per-element controls, for plugin-specific derivation params. */
   renderElementExtras?: (props: {
     element: HostElement;
