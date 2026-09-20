@@ -14,8 +14,19 @@ import {
   PluginAPIContext,
   initStandalonePluginApi,
 } from "@repo/base-plugin/client";
-import { HostElement, readRendererLayoutDoc } from "@repo/layout";
-import { HostRendererProvider, LayoutRenderer } from "@repo/layout/react";
+import {
+  HostElement,
+  LayoutDoc,
+  LayoutFeed,
+  activeFeeds,
+  readRendererLayoutDoc,
+} from "@repo/layout";
+import {
+  HostRendererProvider,
+  LayoutRenderer,
+  resolveFeedSources,
+  useFeedData,
+} from "@repo/layout/react";
 import { findClientPluginView, preloader } from "@repo/lib";
 import { logger } from "@repo/observability";
 import {
@@ -95,13 +106,7 @@ export const Body = ({
       <>
         <Overlay />
         <LayoutOutputPluginApi>
-          <HostRendererProvider render={renderHostElement}>
-            <LayoutRenderer
-              doc={layoutDoc}
-              data={EMPTY_DATA}
-              background="#000"
-            />
-          </HostRendererProvider>
+          <LayoutWithFeeds doc={layoutDoc} />
         </LayoutOutputPluginApi>
       </>
     );
@@ -121,7 +126,23 @@ export const Body = ({
   );
 };
 
-const EMPTY_DATA = {};
+const LayoutWithFeeds = ({ doc }: { doc: LayoutDoc }) => {
+  const data = useData();
+  const feeds = useMemo(() => activeFeeds(doc), [doc]);
+
+  const resolveSources = useCallback(
+    (feed: LayoutFeed) => resolveFeedSources(data, feed),
+    [data],
+  );
+
+  const feedData = useFeedData(feeds, resolveSources);
+
+  return (
+    <HostRendererProvider render={renderHostElement}>
+      <LayoutRenderer doc={doc} data={feedData} background="#000" />
+    </HostRendererProvider>
+  );
+};
 
 /**
  * A layout draws the same elements a plugin does, but owns no plugin, so it
