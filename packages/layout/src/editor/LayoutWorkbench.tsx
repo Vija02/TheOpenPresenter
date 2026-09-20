@@ -24,11 +24,13 @@ import {
   removeElements,
 } from "../doc/edit";
 import {
+  EMPTY_HOST_CATALOG,
   LayoutHostCatalog,
   LayoutHostCatalogProvider,
 } from "../react/context/hostCatalog";
 import { LayoutDoc, Template } from "../schema/document";
 import { FrameContext } from "../template/resolve";
+import { sampleFeedData } from "../template/sampleFeedData";
 import { FrameData } from "../template/spans";
 import { AddElementBar } from "./AddElementBar";
 import { EditorMuteToggle, hasAudibleVideo } from "./EditorMuteToggle";
@@ -206,11 +208,24 @@ export const LayoutWorkbench = ({
     },
   });
 
+  const hostCatalogValue = hostCatalog ?? EMPTY_HOST_CATALOG;
+
+  const canvasData = useMemo(
+    () => ({
+      ...sampleFeedData(
+        doc,
+        (source) => hostCatalogValue.dataBindings?.(source) ?? [],
+      ),
+      ...data,
+    }),
+    [doc, hostCatalogValue, data],
+  );
+
   const rail =
     templates && templates.length > 0 && onSelectTemplate ? (
       <TemplateRail
         templates={templates}
-        data={data}
+        data={canvasData}
         activeId={activeTemplateId}
         onSelect={onSelectTemplate}
         title={compact ? null : undefined}
@@ -271,7 +286,7 @@ export const LayoutWorkbench = ({
       >
         <LayoutDocEditor
           doc={doc}
-          data={data}
+          data={canvasData}
           frame={frame}
           selectedIds={selectedIds}
           onSelectionChange={setSelectedIds}
