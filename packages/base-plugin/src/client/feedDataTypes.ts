@@ -14,9 +14,5 @@ export type FeedDataProvider<Scene = any, Renderer = any> = {
   bindings: DataBinding[];
   /** Called whenever the Yjs data changes. */
   getData: (ctx: FeedDataContext<Scene, Renderer>) => FeedData;
-  /** For values that change with the clock rather than with the document, such as an autoplaying deck */
-  subscribe?: (
-    ctx: FeedDataContext<Scene, Renderer>,
-    emit: (data: FeedData) => void,
-  ) => () => void;
+  isLive?: (ctx: FeedDataContext<Scene, Renderer>) => boolean;
 };

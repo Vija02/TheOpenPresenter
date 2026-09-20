@@ -16,4 +16,5 @@ export * from "./elements/ShapeElement";
 export * from "./elements/TextElement";
 export * from "./text/fontStatus";
 export * from "./text/measure";
+export * from "./useFeedData";
 export * from "./useLayoutVideoPreload";
