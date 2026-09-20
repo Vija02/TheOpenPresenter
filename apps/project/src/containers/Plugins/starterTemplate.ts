@@ -6,7 +6,7 @@ export const STARTER: Record<string, string> = {
   createTextElement,
   solidPaint,
 } from "@repo/layout";
-import type { DataBinding } from "@repo/layout";
+import type { DataBinding } from "@repo/base-types";
 
 // Tokens the plugin fills in at render time. Offered as insert chips in the
 // layout editor, so they must match the {{ token }} names used below.

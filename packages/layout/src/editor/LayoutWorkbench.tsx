@@ -5,6 +5,7 @@ import {
   createAiCapabilityRequest,
   useAiChat,
 } from "@repo/ai-chat";
+import type { DataBinding } from "@repo/base-types";
 import { appData } from "@repo/lib";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@repo/ui";
 import {
@@ -26,7 +27,7 @@ import {
   LayoutHostCatalog,
   LayoutHostCatalogProvider,
 } from "../react/context/hostCatalog";
-import { DataBinding, LayoutDoc, Template } from "../schema/document";
+import { LayoutDoc, Template } from "../schema/document";
 import { FrameContext } from "../template/resolve";
 import { FrameData } from "../template/spans";
 import { AddElementBar } from "./AddElementBar";

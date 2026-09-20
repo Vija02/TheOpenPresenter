@@ -1,8 +1,9 @@
+import type { DataBinding } from "@repo/base-types";
 import { Button } from "@repo/ui";
 import { LuCopy, LuTrash2 } from "react-icons/lu";
 
 import { duplicateElement, elementLabel, removeElement } from "../../doc/edit";
-import { DataBinding, LayoutDoc } from "../../schema/document";
+import { LayoutDoc } from "../../schema/document";
 import { LayoutElement } from "../../schema/element";
 import { LayoutPluginApi } from "../pluginApi";
 import {

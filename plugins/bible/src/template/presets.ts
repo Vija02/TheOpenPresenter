@@ -1,6 +1,6 @@
+import type { DataBinding } from "@repo/base-types";
 import {
   DEFAULT_FONT_STACK,
-  DataBinding,
   HorizontalAlignment,
   LayoutDoc,
   Rect,
