@@ -68,6 +68,10 @@ fragment BaseRemotePluginMeta on PluginMeta {
     pluginName
     fields
   }
+  registeredDataBindings {
+    pluginName
+    bindings
+  }
   clientPluginViews {
     pluginName
     pluginFamily
