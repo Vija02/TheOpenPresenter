@@ -17,12 +17,10 @@ import {
   activateSlide,
   valtioActivationTarget,
 } from "../../src/slides/activation";
+import { computeGlobalSlideClickCount } from "../../src/slides/autoplay";
 import { parseSlideRef, resolveSlide } from "../../src/slides/order";
 import { usePluginAPI } from "../pluginApi";
-import {
-  computeGlobalSlideClickCount,
-  useAutoplay,
-} from "../utils/useAutoplay";
+import { useAutoplay } from "../utils/useAutoplay";
 import CustomSlideEditorModal from "./CustomSlides/CustomSlideEditorModal";
 import { useCustomSlides } from "./CustomSlides/useCustomSlides";
 import Landing from "./Landing";

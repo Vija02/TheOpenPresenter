@@ -70,7 +70,7 @@ Single source of truth in renderer data: `currentSlideIndex` +
 - `clickCount === -1` is the **autoplay-rewind sub-step**: the slide is shown
   with its auto-playing entry object removed. Only reachable on slides with
   `slideAutoplayDurations > 0`.
-- **Flat position** (`toFlatPosition`, `view/utils/useAutoplay.ts`) linearizes
+- **Flat position** (`toFlatPosition`, `src/slides/autoplay.ts`) linearizes
   `(slideIndex, clickCount)` into one monotonic integer; each slide occupies
   `clickCount + 1` steps (the `+1` is the press that leaves the slide). **One
   unit of flat position === one arrow key**, including the boundary press. That
@@ -198,5 +198,5 @@ re-imported. All the Google-only fields are optional; treat a missing value as
 - `slideData/slideDataExtractor.ts` — parses the embed's `docData`; per-slide
   click count and durations.
 - `../../slides/order.ts` — resolve a global slide index to its import + data.
-- `view/utils/useAutoplay.ts` — flat-position math.
+- `src/slides/autoplay.ts` — flat-position math.
 - `view/Renderer/GoogleSlideRenderer/useIframeSync.ts` — drives the iframe.

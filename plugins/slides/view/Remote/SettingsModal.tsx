@@ -37,16 +37,16 @@ import {
   valtioActivationTarget,
 } from "../../src/slides/activation";
 import {
+  calculateAutoplayPosition,
+  computeGlobalSlideClickCount,
+} from "../../src/slides/autoplay";
+import {
   DisplayMode,
   ImportType,
   getEffectiveDisplayMode,
 } from "../../src/types";
 import { usePluginAPI } from "../pluginApi";
 import { trpc } from "../trpc";
-import {
-  calculateAutoplayPosition,
-  computeGlobalSlideClickCount,
-} from "../utils/useAutoplay";
 import { displayTypeMapping } from "./displayTypeMapping";
 import type { EditorTarget } from "./index";
 import { useSlideMediaPicker } from "./integrations";

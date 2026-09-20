@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { toFlatPosition } from "../../../src/slides/autoplay";
 import { usePluginAPI } from "../../pluginApi";
-import { toFlatPosition } from "../../utils/useAutoplay";
 import { useDisplayedSlide } from "../../utils/useDisplayedSlide";
 import RenderView, { RenderViewHandle } from "./RenderView";
 import { useIframeSync } from "./useIframeSync";
