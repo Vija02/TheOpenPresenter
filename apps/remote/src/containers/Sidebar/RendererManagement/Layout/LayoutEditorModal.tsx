@@ -8,12 +8,18 @@ import {
   useCompleteMediaMutation,
   useDeleteMediaMutation,
 } from "@repo/graphql";
-import { LayoutDoc, cloneDoc, readRendererLayoutDoc } from "@repo/layout";
+import {
+  LayoutDoc,
+  activeFeeds,
+  cloneDoc,
+  readRendererLayoutDoc,
+} from "@repo/layout";
 import {
   LayoutInsertDefaults,
   LayoutPluginApi,
   LayoutWorkbench,
 } from "@repo/layout/editor";
+import { useFeedData } from "@repo/layout/react";
 import { uuidFromMediaIdOrUUIDOrMediaName } from "@repo/lib";
 import {
   useAudioCheck,
@@ -33,6 +39,7 @@ import {
 } from "@repo/ui";
 import { useCallback, useMemo } from "react";
 
+import { useFeedSourceResolver } from "./useFeedSourceResolver";
 import { useRendererHostCatalog } from "./useRendererHostCatalog";
 
 const INSERT_DEFAULTS: LayoutInsertDefaults = {
@@ -75,6 +82,10 @@ const LayoutEditorModal = ({
     () => readRendererLayoutDoc(data.renderer[rendererId]?.layout),
     [data.renderer, rendererId],
   );
+
+  const feeds = useMemo(() => (doc ? activeFeeds(doc) : []), [doc]);
+  const resolveFeedSources = useFeedSourceResolver();
+  const feedData = useFeedData(feeds, resolveFeedSources);
 
   const { canPlayAudio } = useAudioCheck();
   const { addError, removeError } = useError();
@@ -160,6 +171,7 @@ const LayoutEditorModal = ({
                 hostCatalog={hostCatalog}
                 pluginApi={mediaPickerApi}
                 insertDefaults={INSERT_DEFAULTS}
+                data={feedData}
                 ai={false}
               />
             </PluginAPIContext.Provider>

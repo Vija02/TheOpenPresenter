@@ -18,5 +18,6 @@ export * from "./schema/rect";
 export * from "./schema/style";
 export * from "./template/feedData";
 export * from "./template/resolve";
+export * from "./template/sampleFeedData";
 export * from "./template/spans";
 export * from "./template/tokens";
