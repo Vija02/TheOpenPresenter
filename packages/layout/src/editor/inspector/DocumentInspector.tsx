@@ -3,6 +3,7 @@ import { ReactNode } from "react";
 
 import { LayoutDoc } from "../../schema/document";
 import { Section } from "./primitives";
+import { FeedsSection } from "./sections/FeedsSection";
 
 export type DocumentInspectorProps = {
   doc: LayoutDoc;
@@ -15,6 +16,8 @@ export type DocumentInspectorProps = {
 };
 
 export const DocumentInspector = ({
+  doc,
+  onChange,
   children,
   hint = "Click an element on the canvas to edit it. Drag to move, drag a corner to resize, arrow keys to nudge.",
   ai,
@@ -27,6 +30,8 @@ export const DocumentInspector = ({
         <AiChatPanel ai={ai} />
       </Section>
     )}
+
+    <FeedsSection doc={doc} onChange={onChange} />
 
     {children && <Section title="Slide">{children}</Section>}
   </>
