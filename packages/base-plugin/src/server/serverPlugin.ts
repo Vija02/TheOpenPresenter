@@ -1,5 +1,5 @@
 import { WithPgClient, job, media } from "@repo/backend-shared";
-import type { DerivationField } from "@repo/base-types";
+import type { DataBinding, DerivationField } from "@repo/base-types";
 import { OrganizationType } from "@repo/graphql";
 import { mediaIdFromUUID } from "@repo/lib";
 import { Express, RequestHandler } from "express";
@@ -127,6 +127,10 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
   protected registeredDerivationFields: {
     pluginName: string;
     fields: DerivationField[];
+  }[] = [];
+  protected registeredDataBindings: {
+    pluginName: string;
+    bindings: DataBinding[];
   }[] = [];
   protected registeredAiCapabilities = new Map<string, AnyAiCapability>();
 
@@ -262,6 +266,10 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
     fields: DerivationField[],
   ) {
     this.registeredDerivationFields.push({ pluginName, fields });
+  }
+
+  public registerDataBindings(pluginName: string, bindings: DataBinding[]) {
+    this.registeredDataBindings.push({ pluginName, bindings });
   }
 
   public registerAiCapability<T>(capability: AiCapability<T>) {
@@ -548,6 +556,9 @@ export class ServerPluginApiPrivate extends ServerPluginApi {
   }
   getRegisteredDerivationFields() {
     return this.registeredDerivationFields;
+  }
+  getRegisteredDataBindings() {
+    return this.registeredDataBindings;
   }
   getRegisteredAiCapabilities() {
     return this.registeredAiCapabilities;
