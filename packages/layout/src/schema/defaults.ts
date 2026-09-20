@@ -14,6 +14,7 @@ import {
   ShapeKind,
   TextElement,
 } from "./element";
+import { LayoutFeed } from "./feed";
 import { Effect, FillPaint, Stroke } from "./paint";
 import { FULL_BLEED, Rect } from "./rect";
 import { SpanRoleStyle, TextFitMode, TextStyle, TextStylePatch } from "./style";
@@ -151,15 +152,18 @@ export type CreateLayoutDocOptions = {
   aspectRatio?: AspectRatio;
   fitMode?: LayoutFitMode;
   elements?: LayoutDoc["elements"];
+  feeds?: LayoutFeed[] | null;
 };
 
 export const createLayoutDoc = ({
   aspectRatio = DEFAULT_ASPECT_RATIO,
   fitMode = "fluid",
   elements = [],
+  feeds = null,
 }: CreateLayoutDocOptions = {}): LayoutDoc => ({
   version: LAYOUT_DOC_VERSION,
   aspectRatio,
   fitMode,
   elements,
+  feeds,
 });

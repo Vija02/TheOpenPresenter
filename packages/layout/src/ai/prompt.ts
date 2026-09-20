@@ -13,6 +13,7 @@ import {
   textTransforms,
   verticalAlignments,
 } from "../schema/style";
+import { docTokenKeys } from "../template/feedData";
 import { LayoutAiTurn, buildAgentMessages } from "./messages";
 
 const list = (values: readonly string[]) =>
@@ -122,26 +123,7 @@ export const buildLayoutAgentMessages = (
     leadIn: [imageDataUrl ? IMAGE_GUIDANCE : null],
   });
 
-const tokensOf = (doc: LayoutDoc): Set<string> => {
-  const found = new Set<string>();
-  for (const element of doc.elements) {
-    const sources: string[] = [];
-    if (element.type === "text") sources.push(element.content);
-    if (
-      element.fill?.type === "image" &&
-      typeof element.fill.src === "string"
-    ) {
-      sources.push(element.fill.src);
-    }
-
-    for (const source of sources) {
-      for (const match of source.matchAll(/{{\s*([\w.]+)\s*}}/g)) {
-        if (match[1]) found.add(match[1]);
-      }
-    }
-  }
-  return found;
-};
+const tokensOf = (doc: LayoutDoc): Set<string> => new Set(docTokenKeys(doc));
 
 /**
  * Tokens that existed before an edit and do not survive it

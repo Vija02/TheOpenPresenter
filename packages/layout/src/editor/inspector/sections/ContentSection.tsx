@@ -1,5 +1,6 @@
+import type { DataBinding } from "@repo/base-types";
+
 import { patchTextElement } from "../../../doc/edit";
-import { DataBinding } from "../../../schema/document";
 import { Section, TokenTextArea } from "../primitives";
 import { TextSectionProps } from "./types";
 

@@ -1,6 +1,8 @@
+import { bindingTypes } from "@repo/base-types";
 import { z } from "zod";
 
 import { layoutElementValidator } from "./element";
+import { layoutFeedValidator } from "./feed";
 
 export const LAYOUT_DOC_VERSION = 1;
 
@@ -30,21 +32,17 @@ export const layoutDocValidator = z.object({
   fitMode: z.enum(layoutFitModes),
   /** Array order is paint order */
   elements: z.array(layoutElementValidator),
+  /** Named live data sources */
+  feeds: z.array(layoutFeedValidator).nullable().default(null),
 });
 
 export type LayoutDoc = z.infer<typeof layoutDocValidator>;
 
-/** The shape of the value a binding resolves to, which is what the editor keys off. */
-export const bindingTypes = ["text", "richText", "image"] as const;
-export type BindingType = (typeof bindingTypes)[number];
-
-/** A token the DATA PROVIDER (the plugin) offers */
 export const dataBindingValidator = z.object({
   key: z.string(),
   label: z.string(),
   type: z.enum(bindingTypes),
 });
-export type DataBinding = z.infer<typeof dataBindingValidator>;
 
 export const templateValidator = z.object({
   id: z.string(),

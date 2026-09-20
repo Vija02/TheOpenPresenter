@@ -17,6 +17,7 @@ import {
 import { FillPaint, VideoPaint, VideoPlaybackMode } from "../schema/paint";
 import { Rect } from "../schema/rect";
 import { TextStylePatch } from "../schema/style";
+import { LayoutFeed, freshFeedName, sanitiseFeedName } from "../schema/feed";
 
 /**
  * Deep clone AND strip `undefined`.
@@ -123,6 +124,73 @@ export const setHostSource = (
 
 export const hostElements = (doc: LayoutDoc): HostElement[] =>
   doc.elements.filter((e): e is HostElement => e.type === "host");
+
+// ---------------------------------------------------------------------------
+// Feeds. Named sources that text tokens read, as `{{<feed>.<key>}}`.
+// ---------------------------------------------------------------------------
+
+/** Documents predating feeds store none. */
+export const docFeeds = (doc: LayoutDoc): LayoutFeed[] => doc.feeds ?? [];
+
+export const addFeed = (
+  doc: LayoutDoc,
+  feed: Omit<LayoutFeed, "name"> & { name?: string },
+): { doc: LayoutDoc; name: string } => {
+  const feeds = docFeeds(doc);
+  const name = freshFeedName(feeds, feed.name ?? "feed");
+  return {
+    doc: { ...doc, feeds: [...feeds, { ...feed, name }] },
+    name,
+  };
+};
+
+export const removeFeed = (doc: LayoutDoc, name: string): LayoutDoc => ({
+  ...doc,
+  feeds: docFeeds(doc).filter((feed) => feed.name !== name),
+});
+
+export const patchFeed = (
+  doc: LayoutDoc,
+  name: string,
+  patch: Partial<Omit<LayoutFeed, "name">>,
+): LayoutDoc => ({
+  ...doc,
+  feeds: docFeeds(doc).map((feed) =>
+    feed.name === name ? { ...feed, ...patch } : feed,
+  ),
+});
+
+/**
+ * Renames a feed and rewrites every token that addressed it, so the text
+ * elements do not silently go blank. Returns the doc unchanged when the new
+ * name is empty or already taken.
+ */
+export const renameFeed = (
+  doc: LayoutDoc,
+  from: string,
+  to: string,
+): LayoutDoc => {
+  const feeds = docFeeds(doc);
+  const next = sanitiseFeedName(to);
+  if (next === "" || next === from) return doc;
+  if (feeds.some((feed) => feed.name === next)) return doc;
+  if (!feeds.some((feed) => feed.name === from)) return doc;
+
+  // Feed names are sanitised to word characters, so nothing needs escaping.
+  const pattern = new RegExp(`(\\{\\{\\s*)${from}\\.`, "g");
+
+  return {
+    ...doc,
+    feeds: feeds.map((feed) =>
+      feed.name === from ? { ...feed, name: next } : feed,
+    ),
+    elements: doc.elements.map((element) =>
+      element.type === "text"
+        ? { ...element, content: element.content.replace(pattern, `$1${next}.`) }
+        : element,
+    ),
+  };
+};
 
 export const setElementFill = (
   doc: LayoutDoc,
