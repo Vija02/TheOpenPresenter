@@ -23,6 +23,7 @@ export const init = (serverPluginApi: ServerPluginApi) => {
     title: "Embed",
     description: "Embed any 3rd party web pages",
     categories: ["Display"],
+    icon: "browser",
   });
 
   serverPluginApi.serveStatic(pluginName, "out");

@@ -40,6 +40,27 @@
     @apply font-bold text-base;
   }
 
+  .ui--option__layout {
+    @apply flex items-start gap-3;
+  }
+
+  .ui--option__icon {
+    @apply shrink-0 flex items-center justify-center size-6 text-2xl mt-0.5;
+    @apply text-secondary;
+  }
+
+  .ui--option:hover .ui--option__icon {
+    @apply text-accent;
+  }
+
+  .ui--option__sm .ui--option__icon {
+    @apply size-5 text-xl;
+  }
+
+  .ui--option__lg .ui--option__icon {
+    @apply size-7 text-3xl;
+  }
+
   .ui--option__description {
     @apply text-sm text-secondary;
   }

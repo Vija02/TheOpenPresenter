@@ -16,6 +16,7 @@ import { typeidUnboxed } from "typeid-js";
 
 import { useIsMobile } from "../../hooks/useIsMobile";
 import { useNavigateWithParams } from "../../hooks/useNavigateWithParams";
+import { getSceneIcon } from "./sceneIcons";
 
 const sceneCategoriesConfig: Record<SceneCategories, IconType> = {
   Display: PiPresentationChart,
@@ -44,6 +45,7 @@ export const NewScene = () => {
         title: x.title,
         description: x.description,
         categories: ["Custom"] as string[],
+        icon: null as string | null,
         organizationTypes: null as string[] | null,
         isExperimental: false as boolean | null,
         isStarred: false as boolean | null,
@@ -154,6 +156,9 @@ export const NewScene = () => {
                         )}
                       </div>
                     }
+                    icon={React.createElement(
+                      getSceneIcon(sceneCreator.icon),
+                    )}
                     size={isMobile ? "sm" : "default"}
                     description={sceneCreator.description}
                   />

@@ -35,6 +35,7 @@ export const pluginMeta = makeExtendSchemaPlugin(() => ({
       title: String!
       description: String!
       categories: [String!]!
+      icon: String
       organizationTypes: [OrganizationType!]
       isExperimental: Boolean
       isStarred: Boolean
@@ -116,6 +117,7 @@ export const pluginMeta = makeExtendSchemaPlugin(() => ({
               title: x.sceneCreatorMeta.title,
               description: x.sceneCreatorMeta.description,
               categories: x.sceneCreatorMeta.categories,
+              icon: x.sceneCreatorMeta.icon ?? null,
               organizationTypes:
                 x.sceneCreatorMeta.organizationTypeWhitelist?.map((x) =>
                   x.toLowerCase(),

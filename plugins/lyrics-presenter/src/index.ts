@@ -107,6 +107,7 @@ export const init = (
     title: "Lyrics Presenter",
     description: "Display song lyrics to the screen",
     categories: ["Display"],
+    icon: "musicNotes",
     organizationTypeWhitelist: [OrganizationType.Church],
     isStarred: true,
   });

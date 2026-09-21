@@ -62,6 +62,7 @@ export const init = (serverPluginApi: ServerPluginApi) => {
     description:
       "Play videos from sources like YouTube and Vimeo. You can also upload your own video.",
     categories: ["Media"],
+    icon: "video",
   });
 
   serverPluginApi.serveStatic(pluginName, "out");

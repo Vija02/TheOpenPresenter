@@ -21,6 +21,7 @@ export const init = (serverPluginApi: ServerPluginApi) => {
     title: "Timer",
     description: "Timer with rundown, wrap-up colors, and multiple modes",
     categories: ["Display"],
+    icon: "timer",
   });
 
   serverPluginApi.serveStatic(pluginName, "out");

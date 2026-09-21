@@ -111,6 +111,7 @@ export const init = (
     description:
       "Import & display presentations from PPT, Google Slides and more",
     categories: ["Display"],
+    icon: "presentation",
   });
 
   serverPluginApi.serveStatic(pluginName, "out");

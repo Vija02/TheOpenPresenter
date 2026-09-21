@@ -28,6 +28,7 @@ export const init = (serverPluginApi: ServerPluginApi) => {
     title: "Worship Pads",
     description: "Play an ambient pad to back your worship session",
     categories: ["Audio"],
+    icon: "pads",
     organizationTypeWhitelist: [OrganizationType.Church],
   });
 

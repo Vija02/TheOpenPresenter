@@ -36,6 +36,7 @@ export interface OptionItem<Value = string> {
 interface OptionProps extends VariantProps<typeof optionVariants> {
   title: React.ReactNode;
   description?: React.ReactNode;
+  icon?: React.ReactNode;
   selected?: boolean;
   disabled?: boolean;
   onClick?: () => void;
@@ -46,6 +47,7 @@ interface OptionProps extends VariantProps<typeof optionVariants> {
 function Option({
   title,
   description,
+  icon,
   selected,
   disabled,
   onClick,
@@ -64,8 +66,24 @@ function Option({
       onClick={disabled ? undefined : onClick}
       data-testid={testId}
     >
-      <p className="ui--option__title">{title}</p>
-      {description && <p className="ui--option__description">{description}</p>}
+      {icon ? (
+        <div className="ui--option__layout">
+          <div className="ui--option__icon">{icon}</div>
+          <div>
+            <p className="ui--option__title">{title}</p>
+            {description && (
+              <p className="ui--option__description">{description}</p>
+            )}
+          </div>
+        </div>
+      ) : (
+        <>
+          <p className="ui--option__title">{title}</p>
+          {description && (
+            <p className="ui--option__description">{description}</p>
+          )}
+        </>
+      )}
     </div>
   );
 }

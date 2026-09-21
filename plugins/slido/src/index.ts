@@ -24,6 +24,7 @@ export const init = (
     title: "Slido",
     description: "Show live Slido polls and Q&A on the screen",
     categories: ["Interaction"],
+    icon: "poll",
   });
 
   serverPluginApi.serveStatic(pluginName, "out");
