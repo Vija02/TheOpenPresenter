@@ -6,7 +6,7 @@ import { Express, RequestHandler } from "express";
 import { Pool } from "pg";
 import stream from "stream";
 
-import { SceneCategories } from "../types";
+import { SceneCategories, SceneIcon } from "../types";
 import {
   AiCapability,
   AnyAiCapability,
@@ -101,6 +101,7 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
       title: string;
       description: string;
       categories: SceneCategories[];
+      icon?: SceneIcon;
       organizationTypeWhitelist?: OrganizationType[];
       isExperimental?: boolean;
       isStarred?: boolean;
@@ -220,6 +221,7 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
       title: string;
       description: string;
       categories: SceneCategories[];
+      icon?: SceneIcon;
       organizationTypeWhitelist?: OrganizationType[];
       isExperimental?: boolean;
       isStarred?: boolean;

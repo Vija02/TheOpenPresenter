@@ -28,6 +28,7 @@ export const init = (serverPluginApi: ServerPluginApi) => {
     title: "Radio",
     description: "Play a radio station stream in the background",
     categories: ["Audio"],
+    icon: "radio",
   });
 
   serverPluginApi.serveStatic(pluginName, "out");

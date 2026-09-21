@@ -6697,6 +6697,7 @@ type RespondToScreenControlRequestPayload {
 type SceneCreator {
   categories: [String!]!
   description: String!
+  icon: String
   isExperimental: Boolean
   isStarred: Boolean
   organizationTypes: [OrganizationType!]

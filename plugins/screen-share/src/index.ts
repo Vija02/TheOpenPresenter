@@ -25,6 +25,7 @@ export const init = (serverPluginApi: ServerPluginApi) => {
     title: "Screen Share",
     description: "Share your screen live to any display",
     categories: ["Display"],
+    icon: "screenShare",
   });
 
   serverPluginApi.serveStatic(pluginName, "out");

@@ -53,6 +53,7 @@ fragment BaseRemotePluginMeta on PluginMeta {
     pluginName
     description
     categories
+    icon
     organizationTypes
     isExperimental
     isStarred

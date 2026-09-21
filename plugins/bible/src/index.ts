@@ -60,6 +60,7 @@ export const init = (
     title: "Bible",
     description: "Display bible verses to the screen",
     categories: ["Display"],
+    icon: "bible",
     organizationTypeWhitelist: [OrganizationType.Church],
   });
 

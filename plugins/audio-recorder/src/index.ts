@@ -27,6 +27,7 @@ export const init = (serverPluginApi: ServerPluginApi) => {
     title: "Audio Recorder",
     description: "Records audio from any of your microphones",
     categories: ["Audio"],
+    icon: "microphone",
     isExperimental: true,
   });
 

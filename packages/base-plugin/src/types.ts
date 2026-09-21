@@ -151,6 +151,22 @@ export const sceneCategories = [
 ] as const;
 export type SceneCategories = (typeof sceneCategories)[number];
 
+export const sceneIcons = [
+  "bible",
+  "browser",
+  "image",
+  "microphone",
+  "musicNotes",
+  "pads",
+  "poll",
+  "presentation",
+  "radio",
+  "screenShare",
+  "timer",
+  "video",
+] as const;
+export type SceneIcon = (typeof sceneIcons)[number];
+
 export type CanPlayAudio = {
   value: boolean;
   _rawValue: boolean;
