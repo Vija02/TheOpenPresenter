@@ -236,18 +236,23 @@ jobs:
           # Derived from what is already published (see the step above), so
           # a plain `git push --tags` still produces deltas. The manual
           # input overrides it when you want a specific set.
+          # Written to tolerate bash 3.2, which macOS still ships: there,
+          # `${#arr[@]}` and `${arr[@]}` on an empty array are "unbound"
+          # under `set -u`, so neither is used without a guard.
           PREVIOUS_ARGS=()
           MANUAL="${{ github.event.inputs.previous }}"
+          DERIVED="${{ steps.deltas.outputs.args }}"
           if [ -n "$MANUAL" ]; then
-            IFS=',' read -ra PREVS <<< "$MANUAL"
+            LIST="${MANUAL//,/ }"
           else
-            read -ra PREVS <<< "${{ steps.deltas.outputs.args }}"
+            LIST="$DERIVED"
           fi
-          for p in "${PREVS[@]:-}"; do
-            [ -n "$p" ] && PREVIOUS_ARGS+=(--previous "$p")
+
+          for p in $LIST; do
+            PREVIOUS_ARGS+=(--previous "$p")
           done
 
-          if [ ${#PREVIOUS_ARGS[@]} -eq 0 ]; then
+          if [ -z "${LIST// /}" ]; then
             echo "No previous versions: publishing a full pack only."
           fi
 
@@ -266,7 +271,7 @@ jobs:
             --platform "${{ matrix.slug }}" \
             --out "$RUNNER_TEMP/cdn" \
             --key "$KEY_FILE" \
-            "${PREVIOUS_ARGS[@]}"
+            ${PREVIOUS_ARGS[@]+"${PREVIOUS_ARGS[@]}"}
 
           rm -f "$KEY_FILE"
 

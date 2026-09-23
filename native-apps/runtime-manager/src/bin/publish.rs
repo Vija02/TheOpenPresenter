@@ -188,11 +188,33 @@ fn write_pack(dest: &Path, blobs: &[(&str, &[u8])]) -> Result<u64> {
     Ok(compressed.len() as u64)
 }
 
+/// Drop Windows' `\\?\` extended-length prefix from a canonical path.
+pub fn strip_unc_prefix(path: PathBuf) -> PathBuf {
+    let text = path.to_string_lossy();
+    let Some(rest) = text.strip_prefix(r"\\?\") else {
+        return path;
+    };
+    // A drive path looks like `C:\...`: letter, colon, separator.
+    let is_drive = {
+        let bytes = rest.as_bytes();
+        bytes.len() >= 3
+            && bytes[0].is_ascii_alphabetic()
+            && bytes[1] == b':'
+            && (bytes[2] == b'\\' || bytes[2] == b'/')
+    };
+    if is_drive {
+        PathBuf::from(rest.to_string())
+    } else {
+        path
+    }
+}
+
 /// Shared inputs for `assemble` and `build`.
 fn build_inputs() -> Result<(top_runtime_manager::publish::build::BuildConfig, PathBuf)> {
     let repo = PathBuf::from(arg("--repo").unwrap_or_else(|| ".".to_string()))
         .canonicalize()
         .context("--repo does not exist")?;
+    let repo = strip_unc_prefix(repo);
     let config_path = arg("--config")
         .map(PathBuf::from)
         .unwrap_or_else(|| repo.join("runtime.toml"));
@@ -513,4 +535,40 @@ fn main() -> Result<()> {
 
     println!("Published {version} to {}", out.display());
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_windows_extended_path_is_unwrapped_for_node() {
+        // The bug: canonicalize() returns \\?\D:\a\repo, and Node's
+        // module resolver splits that into lstat("D:"), which fails with
+        // EISDIR before any script runs.
+        let given = PathBuf::from(r"\\?\D:\a\TheOpenPresenter");
+        assert_eq!(
+            strip_unc_prefix(given),
+            PathBuf::from(r"D:\a\TheOpenPresenter")
+        );
+    }
+
+    #[test]
+    fn a_unc_share_is_left_alone() {
+        // Stripping here would turn a network path into a relative-looking
+        // one pointing somewhere else entirely.
+        let share = PathBuf::from(r"\\?\UNC\server\share\repo");
+        assert_eq!(strip_unc_prefix(share.clone()), share);
+    }
+
+    #[test]
+    fn an_ordinary_path_is_untouched() {
+        // Every non-Windows platform takes this path, so it has to be a
+        // no-op rather than something clever.
+        let unix = PathBuf::from("/home/user/repo");
+        assert_eq!(strip_unc_prefix(unix.clone()), unix);
+
+        let plain_windows = PathBuf::from(r"C:\repo");
+        assert_eq!(strip_unc_prefix(plain_windows.clone()), plain_windows);
+    }
 }
