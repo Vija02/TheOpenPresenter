@@ -13,6 +13,7 @@
     "dev": "yarn && turbo dev --concurrency 40",
     "local-dev": "node ./scripts/local-dev.mjs",
     "build": "turbo build",
+    "publish:runtime": "node scripts/publish-local-runtime.cjs",
     "clean": "node ./scripts/clean.js",
     "reset": "yarn clean && node ./scripts/delete-env-file.js",
     "postinstall": "node -e \"process.env.NO_POSTINSTALL !== '1' && process.exit(1)\" || (yarn patch-package)",

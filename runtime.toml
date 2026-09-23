@@ -1,0 +1,125 @@
+# What ships inside a runtime release.
+
+[runtime]
+entry = "run_server.mjs"
+entry_source = "tauri/node-server/run_server.mjs"
+
+# Which plugins are loaded at boot.
+plugins = [
+  "lyrics-presenter",
+  "slides",
+  "radio",
+  "audio-recorder",
+  "video-player",
+  "worship-pads",
+  "embed",
+  "timer",
+  "bible",
+  "screen-share",
+  "slido",
+]
+
+# Directories copied relative to the repo root.
+[[copy]]
+from = "backend/server"
+exclude = ["node_modules"]
+
+[[copy]]
+from = "backend/worker"
+exclude = ["node_modules"]
+
+[[copy]]
+from = "backend/config"
+
+[[copy]]
+from = "backend/db"
+
+[[copy]]
+from = "packages/embedded-postgres/dist"
+
+# The frontends the server serves.
+[[copy]]
+from = "apps/remote/dist"
+
+[[copy]]
+from = "apps/renderer/dist"
+
+[[copy]]
+from = "apps/project/dist"
+
+# Dependency tracing.
+#
+# Regenerated rather than trusted from disk: stale traces produce a runtime
+# that boots and then fails on the first request that needs an untraced
+# package, which is a miserable thing to debug. The scripts are Node
+# because @vercel/nft is, so the publisher shells out to them.
+[trace]
+scripts = [
+  "scripts/build_utils/extract_core.js",
+  "scripts/build_utils/extract_server.js",
+  "scripts/build_utils/extract_plugins.js",
+  "scripts/build_utils/extract_tauri.js",
+]
+results = "nft_results"
+
+# Packages nft cannot see.
+#
+# Native addons build their filename from process.platform and
+# process.arch at runtime, so static analysis finds nothing. The whole
+# containing package is copied, not just the .node file, because these are
+# resolved as packages and Node needs their package.json.
+native_addons = true
+
+# Resolved from the repo's node_modules and copied in, because the
+# workspace layout that makes @repo/* resolve does not survive the copy.
+workspace_packages = ["@repo"]
+
+# Bare imports from the tree root, which resolve upward from the importing
+# file and so need a node_modules at the root itself.
+root_packages = ["dotenv"]
+
+# Packages nft cannot see, copied whole along with their dependency tree.
+#
+# ffmpeg-static builds its binary path from process.platform at runtime, so
+# tracing finds index.js and package.json and misses a 78MB executable. The
+# rest are resolved dynamically by the client plugin build, so nothing
+# imports them statically.
+#
+# Walking optionalDependencies is what pulls in the per-platform native
+# packages (@esbuild/<platform>, @tailwindcss/oxide-<platform>): npm
+# installs only the ones matching the current machine, so this yields
+# exactly the right binaries for whichever runner is building.
+include_packages = [
+  "ffmpeg-static",
+  "@r2wc",
+  "esbuild",
+  "@tailwindcss/node",
+  "@tailwindcss/oxide",
+  "@tailwindcss/typography",
+  "tailwindcss",
+  "tw-animate-css",
+]
+
+# Yarn's install state. The plugin build reads it to resolve what is
+# available without a network round trip.
+include_module_files = [".yarn-state.yml"]
+
+# Paths that must exist in the finished tree.
+#
+# Every one of these was a real failure that installed and migrated
+# cleanly, then died at runtime. Checking here turns a five-minute
+# debugging session into an immediate error naming the missing file.
+[verify]
+required = [
+  "run_server.mjs",
+  "node_modules/dotenv/package.json",
+  "theopenpresenter/node_modules/@repo/config/extra.js",
+  # A real symlink target, to catch @repo/* being copied as dangling links
+  # rather than materialised. The server dies on its first import.
+  "theopenpresenter/node_modules/@repo/observability/package.json",
+  "theopenpresenter/backend/worker/install-db-schema.js",
+  "theopenpresenter/backend/server/postgraphile.tags.jsonc",
+  # The binary nft cannot see. Its absence is invisible until someone
+  # uploads a video and transcoding fails. `*` covers ffmpeg.exe.
+  "theopenpresenter/node_modules/ffmpeg-static/ffmpeg*",
+]
