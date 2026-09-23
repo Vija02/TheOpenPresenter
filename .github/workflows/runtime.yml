@@ -1,0 +1,469 @@
+name: Runtime payload
+
+# Builds the Node runtime (server + node + PostgreSQL + dependencies) and
+# publishes it as a signed, content-addressed release the desktop app can
+# download after install.
+
+on:
+  push:
+    tags:
+      - "runtime-v*"
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Runtime version to publish (e.g. 1.9.0)"
+        required: true
+      schema_version:
+        description: "Bump only when this release adds DB migrations"
+        required: true
+        default: "1"
+      channel:
+        description: "Channel to point at this version"
+        required: false
+        default: "stable"
+      previous:
+        description: "Override which versions to build deltas from (derived automatically if blank)"
+        required: false
+        default: ""
+
+jobs:
+  publish:
+    name: Publish runtime (${{ matrix.platform }})
+    runs-on: ${{ matrix.platform }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # The slug must match what `Platform::current()` produces
+          - platform: ubuntu-latest
+            slug: linux-x64
+          - platform: macos-latest
+            slug: macos-arm64
+          - platform: windows-latest
+            slug: windows-x64
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: yarn
+
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: native-apps/runtime-manager
+
+      # Which channel this run publishes, and what to call the version.
+      # A tag is a release: stable, named by the tag. A push to main is a
+      # nightly: named `0.0.0-nightly.<date>.<short sha>`
+      - name: Resolve version and channel
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+            CHANNEL="${{ github.event.inputs.channel || 'stable' }}"
+          elif [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            VERSION="${GITHUB_REF_NAME#runtime-v}"
+            CHANNEL="stable"
+          else
+            VERSION="0.0.0-nightly.$(date -u +%Y%m%d).$(git rev-parse --short HEAD)"
+            CHANNEL="nightly"
+          fi
+          echo "value=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "channel=$CHANNEL" >> "$GITHUB_OUTPUT"
+          echo "publishing $VERSION to the $CHANNEL channel"
+
+      # ---------------------------------------------------------------------
+      # 1. Build the app.
+      # ---------------------------------------------------------------------
+      - name: Build the app
+        shell: bash
+        env:
+          TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+          TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
+        run: |
+          cp .env.ci .env
+          yarn --no-immutable
+          yarn build
+
+      # ---------------------------------------------------------------------
+      # 2. Sign native binaries BEFORE hashing.
+      # ---------------------------------------------------------------------
+      - name: Build the publisher
+        working-directory: native-apps/runtime-manager
+        run: cargo build --release --bin top-runtime-publish
+
+      # Assembly is separate from publishing because native binaries have
+      # to be signed *before* they are hashed. Signing embeds a timestamp,
+      # so hashing first would give every file a new hash on every release
+      # and turn every incremental update into a full download.
+      - name: Assemble the runtime tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          BIN=native-apps/runtime-manager/target/release/top-runtime-publish
+          [ "${{ runner.os }}" = "Windows" ] && BIN="$BIN.exe"
+
+          "$BIN" assemble --repo . --into "$RUNNER_TEMP/runtime"
+          echo "RUNTIME_DIR=$RUNNER_TEMP/runtime" >> "$GITHUB_ENV"
+          du -sh "$RUNNER_TEMP/runtime" || true
+
+      - name: Sign native binaries (macOS)
+        if: runner.os == 'macOS' && env.APPLE_SIGNING_IDENTITY != ''
+        shell: bash
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+        run: |
+          set -euo pipefail
+
+          KEY_PASS=$(openssl rand -base64 12)
+          KEYCHAIN="$HOME/Library/Keychains/runtime-sign.keychain-db"
+          security create-keychain -p "$KEY_PASS" "$KEYCHAIN"
+          security unlock-keychain -p "$KEY_PASS" "$KEYCHAIN"
+
+          CERT_FILE="$(mktemp).p12"
+          echo "$APPLE_CERTIFICATE" | tr -d '[:space:]' | base64 -D > "$CERT_FILE"
+          security import "$CERT_FILE" -f pkcs12 \
+            -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign -k "$KEYCHAIN"
+          rm "$CERT_FILE"
+          security set-key-partition-list \
+            -S apple-tool:,apple:,codesign: -s -k "$KEY_PASS" "$KEYCHAIN"
+          security list-keychain -d user -s \
+            "$HOME/Library/Keychains/login.keychain-db" "$KEYCHAIN"
+
+          # Under the hardened runtime, unsigned downloaded dylibs will not
+          # load at all, so every Mach-O in the payload has to be signed.
+          while IFS= read -r -d '' f; do
+            if file "$f" | grep -qE 'Mach-O'; then
+              codesign --force --options runtime --timestamp \
+                --keychain "$KEYCHAIN" \
+                --sign "$APPLE_SIGNING_IDENTITY" "$f"
+            fi
+          done < <(find "$RUNTIME_DIR" -type f -print0)
+
+          security delete-keychain "$KEYCHAIN"
+
+      # ---------------------------------------------------------------------
+      # 3. Seed the output with what is already published, so deltas have
+      #    something to diff against.
+      # ---------------------------------------------------------------------
+      - name: Fetch published manifests for delta packs
+        id: deltas
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          CDN="$RUNNER_TEMP/cdn"
+          mkdir -p "$CDN"
+
+          # Diff against this channel's own history. A nightly compared to
+          # the last stable would produce a delta covering weeks of change,
+          # which is both large and slower to build than the full pack.
+          if [ "${{ steps.version.outputs.channel }}" = "stable" ]; then
+            SRC_TAG="runtime-latest"
+          else
+            SRC_TAG="runtime-${{ steps.version.outputs.channel }}"
+          fi
+          echo "seeding deltas from $SRC_TAG"
+
+          # Which versions already exist for this platform.
+          if ! gh release download "$SRC_TAG" \
+                 --pattern "versions__${{ matrix.slug }}.json" \
+                 --dir "$RUNNER_TEMP/seed" --clobber 2>/dev/null; then
+            echo "No previous release found; this will be a full-pack release."
+            echo "args=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          SEED="$RUNNER_TEMP/seed/versions__${{ matrix.slug }}.json"
+          mkdir -p "$CDN/versions"
+          cp "$SEED" "$CDN/versions/${{ matrix.slug }}.json"
+
+          # Build deltas from the most recent few. Older than that, a client
+          # is better served by the full pack than by a long delta chain.
+          PREVS=$(python3 -c "
+          import json, sys
+          versions = json.load(open('$SEED')).get('versions', [])
+          print(' '.join(versions[-3:]))
+          ")
+
+          ARGS=""
+          for v in $PREVS; do
+            [ "$v" = "${{ steps.version.outputs.value }}" ] && continue
+            NAME="runtimes__${{ matrix.slug }}__${v}__manifest.json"
+            if gh release download "$SRC_TAG" --pattern "$NAME" \
+                 --dir "$RUNNER_TEMP/seed" --clobber 2>/dev/null; then
+              mkdir -p "$CDN/runtimes/${{ matrix.slug }}/$v"
+              cp "$RUNNER_TEMP/seed/$NAME" \
+                 "$CDN/runtimes/${{ matrix.slug }}/$v/manifest.json"
+              ARGS="$ARGS $v"
+              echo "will build a delta from $v"
+            fi
+          done
+
+          echo "args=${ARGS# }" >> "$GITHUB_OUTPUT"
+
+      # ---------------------------------------------------------------------
+      # 4. Hash and pack the now-signed tree.
+      # ---------------------------------------------------------------------
+      - name: Publish
+        shell: bash
+        env:
+          RUNTIME_SIGNING_KEY: ${{ secrets.RUNTIME_SIGNING_KEY }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${RUNTIME_SIGNING_KEY:-}" ]; then
+            echo "RUNTIME_SIGNING_KEY is not set."
+            echo "Generate one with: cargo run --bin top-runtime-keygen"
+            echo "Publishing unsigned runtimes is not supported: clients"
+            echo "refuse manifests that do not verify."
+            exit 1
+          fi
+
+          KEY_FILE="$RUNNER_TEMP/release.key"
+          printf '%s' "$RUNTIME_SIGNING_KEY" > "$KEY_FILE"
+
+          # Derived from what is already published (see the step above), so
+          # a plain `git push --tags` still produces deltas. The manual
+          # input overrides it when you want a specific set.
+          PREVIOUS_ARGS=()
+          MANUAL="${{ github.event.inputs.previous }}"
+          if [ -n "$MANUAL" ]; then
+            IFS=',' read -ra PREVS <<< "$MANUAL"
+          else
+            read -ra PREVS <<< "${{ steps.deltas.outputs.args }}"
+          fi
+          for p in "${PREVS[@]:-}"; do
+            [ -n "$p" ] && PREVIOUS_ARGS+=(--previous "$p")
+          done
+
+          if [ ${#PREVIOUS_ARGS[@]} -eq 0 ]; then
+            echo "No previous versions: publishing a full pack only."
+          fi
+
+          BIN=native-apps/runtime-manager/target/release/top-runtime-publish
+          [ "${{ runner.os }}" = "Windows" ] && BIN="$BIN.exe"
+
+          # The tree was assembled and signed in earlier steps: hashing
+          # has to happen after signing, so this publishes an existing
+          # directory rather than rebuilding one.
+          "$BIN" \
+            --runtime "$RUNTIME_DIR" \
+            --version "${{ steps.version.outputs.value }}" \
+            --schema "${{ github.event.inputs.schema_version || '1' }}" \
+            --entry run_server.mjs \
+            --channel "${{ steps.version.outputs.channel }}" \
+            --platform "${{ matrix.slug }}" \
+            --out "$RUNNER_TEMP/cdn" \
+            --key "$KEY_FILE" \
+            "${PREVIOUS_ARGS[@]}"
+
+          rm -f "$KEY_FILE"
+
+      # A release whose manifest does not verify is worse than no release:
+      # every client silently refuses to update. Prove it round-trips here.
+      - name: Verify the published release installs
+        shell: bash
+        env:
+          RUNTIME_SIGNING_KEY: ${{ secrets.RUNTIME_SIGNING_KEY }}
+          TOP_RUNTIME_PUBKEY: ${{ secrets.RUNTIME_PUBLIC_KEY }}
+        run: |
+          set -euo pipefail
+          BIN=native-apps/runtime-manager/target/release/top-runtime-manager
+          [ "${{ runner.os }}" = "Windows" ] && BIN="$BIN.exe"
+
+          cargo build --release --bin top-runtime-manager \
+            --manifest-path native-apps/runtime-manager/Cargo.toml
+
+          # Verify against the channel this run actually published to, not
+          # a default: a nightly that only checked `stable` would pass
+          # while pointing at someone else's release.
+          CHANNEL="${{ steps.version.outputs.channel }}"
+          OUT=$(printf '%s\n' \
+            "{\"id\":1,\"cmd\":\"ensure\",\"channel\":\"$CHANNEL\"}" \
+            '{"cmd":"shutdown"}' \
+            | "$BIN" --root "$RUNNER_TEMP/verify" --source "$RUNNER_TEMP/cdn")
+
+          echo "$OUT" | tail -3
+          echo "$OUT" | grep -q '"ok":true' || {
+            echo 'The published release does not install. Not uploading it.'
+            exit 1
+          }
+
+      - name: Upload the CDN tree
+        uses: actions/upload-artifact@v4
+        with:
+          name: runtime-${{ matrix.slug }}-${{ steps.version.outputs.value }}
+          path: ${{ runner.temp }}/cdn
+          retention-days: 14
+
+  # The matrix produces three CDN trees that have to become one. They share
+  # `blobs/` by design (content-addressed, so identical JavaScript across
+  # platforms is stored once) and differ everywhere else, which is exactly
+  # what the per-platform keys are for: merging is a plain file copy with
+  # no conflicts to resolve.
+  release:
+    name: Publish to GitHub Releases
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Same resolution as the publish job. Duplicated rather than passed
+      # between jobs because a matrix job's outputs are whichever runner
+      # finished last, which is not something to depend on.
+      - name: Work out the version and channel
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+            CHANNEL="${{ github.event.inputs.channel || 'stable' }}"
+          elif [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            VERSION="${GITHUB_REF_NAME#runtime-v}"
+            CHANNEL="stable"
+          else
+            VERSION="0.0.0-nightly.$(date -u +%Y%m%d).$(git rev-parse --short HEAD)"
+            CHANNEL="nightly"
+          fi
+          echo "value=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "channel=$CHANNEL" >> "$GITHUB_OUTPUT"
+
+          # Each channel gets its own moving tag. Sharing one would mean a
+          # nightly silently replacing what stable users download.
+          if [ "$CHANNEL" = "stable" ]; then
+            echo "latest_tag=runtime-latest" >> "$GITHUB_OUTPUT"
+          else
+            echo "latest_tag=runtime-$CHANNEL" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Collect every platform's tree
+        uses: actions/download-artifact@v4
+        with:
+          pattern: runtime-*-${{ steps.version.outputs.value }}
+          path: trees
+
+      - name: Merge into one CDN tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p cdn
+          for tree in trees/*/; do
+            echo "merging $tree"
+            cp -R "$tree". cdn/
+          done
+
+          echo "merged layout:"
+          find cdn -maxdepth 2 -mindepth 1 -type d | sort | head -20
+          echo "blob count: $(find cdn/blobs -type f | wc -l)"
+
+      # GitHub Releases has a single flat namespace for assets: there are no
+      # directories, and a name containing "/" is rejected. Each key is
+      # therefore flattened with "__" and the client puts it back together.
+      # This is what GithubSource in fetch.rs decodes.
+      - name: Flatten the tree into release assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p assets
+          cd cdn
+          find . -type f | while read -r f; do
+            rel="${f#./}"
+            flat="${rel//\//__}"
+            cp "$f" "../assets/$flat"
+          done
+          cd ..
+          echo "asset count: $(ls assets | wc -l)"
+          du -sh assets
+
+      - name: Trim superseded packs from the channel tag
+        if: steps.version.outputs.channel != 'stable'
+        continue-on-error: true
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG="${{ steps.version.outputs.latest_tag }}"
+          KEEP=5
+
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            echo "No $TAG release yet; nothing to trim."
+            exit 0
+          fi
+
+          # Full packs only. Deltas are small and are what a returning
+          # client actually wants; blobs are shared and must stay.
+          mapfile -t PACKS < <(
+            gh release view "$TAG" --json assets \
+              --jq '.assets[].name | select(startswith("packs__") and contains("__full__"))' \
+              | sort
+          )
+
+          COUNT=${#PACKS[@]}
+          echo "$COUNT full packs on $TAG, keeping the newest $KEEP"
+          if [ "$COUNT" -le "$KEEP" ]; then
+            exit 0
+          fi
+
+          # Sorted by name, which for `0.0.0-nightly.<date>.<sha>` is
+          # chronological. Delete everything but the tail.
+          for name in "${PACKS[@]:0:$((COUNT - KEEP))}"; do
+            echo "  removing $name"
+            gh release delete-asset "$TAG" "$name" --yes || true
+          done
+
+      # Only tagged releases get a permanent versioned tag. A nightly per
+      # commit would accumulate hundreds of ~300MB releases, so nightlies
+      # live only at the moving pointer below.
+      - name: Publish the versioned release
+        if: steps.version.outputs.channel == 'stable'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: runtime-v${{ steps.version.outputs.value }}
+          name: Runtime ${{ steps.version.outputs.value }}
+          files: assets/*
+          fail_on_unmatched_files: true
+          body: |
+            Runtime payload for TheOpenPresenter ${{ steps.version.outputs.value }}.
+
+            Downloaded automatically by the desktop app and by
+            `top-runtime-manager install`. Assets are flattened CDN keys:
+            `channels__linux-x64__stable.json` is `channels/linux-x64/stable.json`.
+
+      # Clients ship a fixed default source, so they need one tag that
+      # always holds the current release rather than a version they cannot
+      # know at build time. One per channel: `runtime-latest` for stable,
+      # `runtime-nightly` for main.
+      - name: Move the channel pointer
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.latest_tag }}
+          name: Runtime (${{ steps.version.outputs.channel }})
+          prerelease: ${{ steps.version.outputs.channel != 'stable' }}
+          files: assets/*
+          fail_on_unmatched_files: true
+          body: |
+            The current ${{ steps.version.outputs.channel }} runtime,
+            republished on every build. Currently
+            ${{ steps.version.outputs.value }}.
+
+            Stable:  `--source github:Vija02/TheOpenPresenter@runtime-latest`
+            Nightly: `--source github:Vija02/TheOpenPresenter@runtime-nightly`
+
+            Pin one release with
+            `--source github:Vija02/TheOpenPresenter@runtime-v<version>`.
