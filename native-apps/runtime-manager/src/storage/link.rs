@@ -12,6 +12,10 @@
 
 use std::fs;
 use std::path::Path;
+// Only the non-unix symlink fallback needs this, and an unconditional
+// import would be an unused-import warning on Linux and macOS.
+#[cfg(not(unix))]
+use std::path::PathBuf;
 
 use anyhow::{Context, Result};
 
@@ -88,7 +92,7 @@ fn try_reflink(src: &Path, dest: &Path) -> bool {
     use std::ffi::CString;
     use std::os::unix::ffi::OsStrExt;
 
-    const CLONE_NOFOLLOW: libc::c_int = 0x0001;
+    const CLONE_NOFOLLOW: u32 = 0x0001;
 
     let (Ok(src_c), Ok(dest_c)) = (
         CString::new(src.as_os_str().as_bytes()),
