@@ -159,34 +159,27 @@ jobs:
         id: deltas
         shell: bash
         env:
-          GH_TOKEN: ${{ github.token }}
+          RUNTIME_BASE_URL: ${{ secrets.RUNTIME_BASE_URL }}
         run: |
           set -euo pipefail
           CDN="$RUNNER_TEMP/cdn"
           mkdir -p "$CDN"
 
-          # Diff against this channel's own history. A nightly compared to
-          # the last stable would produce a delta covering weeks of change,
-          # which is both large and slower to build than the full pack.
-          if [ "${{ steps.version.outputs.channel }}" = "stable" ]; then
-            SRC_TAG="runtime-latest"
-          else
-            SRC_TAG="runtime-${{ steps.version.outputs.channel }}"
-          fi
-          echo "seeding deltas from $SRC_TAG"
+          BASE="${RUNTIME_BASE_URL:-https://runtime.theopenpresenter.com}"
+          SLUG="${{ matrix.slug }}"
+          echo "seeding deltas from $BASE"
 
-          # Which versions already exist for this platform.
-          if ! gh release download "$SRC_TAG" \
-                 --pattern "versions__${{ matrix.slug }}.json" \
-                 --dir "$RUNNER_TEMP/seed" --clobber 2>/dev/null; then
-            echo "No previous release found; this will be a full-pack release."
+          mkdir -p "$RUNNER_TEMP/seed"
+          if ! curl -fsSL "$BASE/versions/$SLUG.json" \
+                 -o "$RUNNER_TEMP/seed/versions.json" 2>/dev/null; then
+            echo "No published versions yet; this will be a full-pack release."
             echo "args=" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
-          SEED="$RUNNER_TEMP/seed/versions__${{ matrix.slug }}.json"
+          SEED="$RUNNER_TEMP/seed/versions.json"
           mkdir -p "$CDN/versions"
-          cp "$SEED" "$CDN/versions/${{ matrix.slug }}.json"
+          cp "$SEED" "$CDN/versions/$SLUG.json"
 
           # Build deltas from the most recent few. Older than that, a client
           # is better served by the full pack than by a long delta chain.
@@ -199,14 +192,14 @@ jobs:
           ARGS=""
           for v in $PREVS; do
             [ "$v" = "${{ steps.version.outputs.value }}" ] && continue
-            NAME="runtimes__${{ matrix.slug }}__${v}__manifest.json"
-            if gh release download "$SRC_TAG" --pattern "$NAME" \
-                 --dir "$RUNNER_TEMP/seed" --clobber 2>/dev/null; then
-              mkdir -p "$CDN/runtimes/${{ matrix.slug }}/$v"
-              cp "$RUNNER_TEMP/seed/$NAME" \
-                 "$CDN/runtimes/${{ matrix.slug }}/$v/manifest.json"
+            DEST="$CDN/runtimes/$SLUG/$v"
+            mkdir -p "$DEST"
+            if curl -fsSL "$BASE/runtimes/$SLUG/$v/manifest.json" \
+                 -o "$DEST/manifest.json" 2>/dev/null; then
               ARGS="$ARGS $v"
               echo "will build a delta from $v"
+            else
+              rmdir "$DEST" 2>/dev/null || true
             fi
           done
 
@@ -317,12 +310,11 @@ jobs:
   # platforms is stored once) and differ everywhere else, which is exactly
   # what the per-platform keys are for: merging is a plain file copy with
   # no conflicts to resolve.
-  release:
-    name: Publish to GitHub Releases
+
+  publish-to-r2:
+    name: Publish to R2
     needs: publish
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
 
     steps:
       - uses: actions/checkout@v4
@@ -348,14 +340,6 @@ jobs:
           echo "value=$VERSION" >> "$GITHUB_OUTPUT"
           echo "channel=$CHANNEL" >> "$GITHUB_OUTPUT"
 
-          # Each channel gets its own moving tag. Sharing one would mean a
-          # nightly silently replacing what stable users download.
-          if [ "$CHANNEL" = "stable" ]; then
-            echo "latest_tag=runtime-latest" >> "$GITHUB_OUTPUT"
-          else
-            echo "latest_tag=runtime-$CHANNEL" >> "$GITHUB_OUTPUT"
-          fi
-
       - name: Collect every platform's tree
         uses: actions/download-artifact@v4
         with:
@@ -372,69 +356,133 @@ jobs:
             cp -R "$tree". cdn/
           done
 
-          echo "merged layout:"
-          find cdn -maxdepth 2 -mindepth 1 -type d | sort | head -20
-          echo "blob count: $(find cdn/blobs -type f | wc -l)"
+          echo "packs:  $(find cdn/packs -type f | wc -l)"
+          echo "blobs:  $(find cdn/blobs -type f | wc -l)"
+          du -sh cdn
 
-      # GitHub Releases has a single flat namespace for assets: there are no
-      # directories, and a name containing "/" is rejected. Each key is
-      # therefore flattened with "__" and the client puts it back together.
-      # This is what GithubSource in fetch.rs decodes.
-      - name: Flatten the tree into release assets
+          # A release without a full pack is unusable: a client with no
+          # matching delta has nothing to fall back to.
+          if ! find cdn/packs -name "full__*" | grep -q .; then
+            echo "No full pack in the tree. Refusing to publish."
+            exit 1
+          fi
+
+      - name: Sync to R2
+        shell: bash
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+          R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+        run: |
+          set -euo pipefail
+
+          for var in AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY R2_ENDPOINT R2_BUCKET; do
+            if [ -z "${!var:-}" ]; then
+              echo "$var is not set."
+              echo "Add R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_ENDPOINT"
+              echo "and R2_BUCKET under Settings -> Secrets and variables."
+              exit 1
+            fi
+          done
+
+          s3() { aws s3 "$@" --endpoint-url "$R2_ENDPOINT"; }
+
+          # Immutable content first. Blobs and packs are addressed by hash
+          # or by version, so they are never overwritten in place and can
+          # be cached forever.
+          for dir in blobs packs runtimes; do
+            [ -d "cdn/$dir" ] || continue
+            echo "syncing $dir"
+            s3 sync "cdn/$dir" "s3://$R2_BUCKET/$dir" \
+              --cache-control "public, max-age=31536000, immutable" \
+              --no-progress
+          done
+
+          # The version index, then the channel pointer. Both are mutable
+          # and must not be cached for long, or a client keeps resolving
+          # to yesterday's release.
+          echo "syncing versions"
+          s3 sync cdn/versions "s3://$R2_BUCKET/versions" \
+            --cache-control "public, max-age=60" --no-progress
+
+          echo "syncing channel pointer"
+          s3 sync cdn/channels "s3://$R2_BUCKET/channels" \
+            --cache-control "public, max-age=60" --no-progress
+
+          echo "published ${{ steps.version.outputs.value }} to ${{ steps.version.outputs.channel }}"
+
+  # A compact mirror of each release on GitHub, so there is a human-visible
+  # record and a second host if R2 is ever unreachable.
+  # Packs and metadata only.
+  mirror-to-github:
+    name: Mirror packs to GitHub Releases
+    needs: publish-to-r2
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Work out the version and channel
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+            CHANNEL="${{ github.event.inputs.channel || 'stable' }}"
+          elif [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            VERSION="${GITHUB_REF_NAME#runtime-v}"
+            CHANNEL="stable"
+          else
+            VERSION="0.0.0-nightly.$(date -u +%Y%m%d).$(git rev-parse --short HEAD)"
+            CHANNEL="nightly"
+          fi
+          echo "value=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "channel=$CHANNEL" >> "$GITHUB_OUTPUT"
+
+      - name: Collect every platform's tree
+        uses: actions/download-artifact@v4
+        with:
+          pattern: runtime-*-${{ steps.version.outputs.value }}
+          path: trees
+
+      # GitHub Releases has a single flat namespace: no directories, and a
+      # name containing "/" is rejected. Keys are flattened with "__", which
+      # is what GithubSource in fetch.rs reverses.
+      - name: Flatten packs and metadata into assets
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p assets
-          cd cdn
-          find . -type f | while read -r f; do
-            rel="${f#./}"
-            flat="${rel//\//__}"
-            cp "$f" "../assets/$flat"
+
+          for tree in trees/*/; do
+            cd "$tree"
+            # Blobs are deliberately absent: they are R2's job. Everything
+            # else is small and is what a client needs to resolve and
+            # install a version.
+            find packs channels versions runtimes -type f 2>/dev/null | while read -r f; do
+              cp "$f" "$OLDPWD/assets/${f//\//__}"
+            done
+            cd "$OLDPWD"
           done
-          cd ..
+
           echo "asset count: $(ls assets | wc -l)"
           du -sh assets
 
-      - name: Trim superseded packs from the channel tag
-        if: steps.version.outputs.channel != 'stable'
-        continue-on-error: true
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          TAG="${{ steps.version.outputs.latest_tag }}"
-          KEEP=5
-
-          if ! gh release view "$TAG" >/dev/null 2>&1; then
-            echo "No $TAG release yet; nothing to trim."
-            exit 0
+          # A release with no full pack is unusable: a client with no
+          # matching delta has nothing to fall back to.
+          if ! ls assets | grep -q "__full__"; then
+            echo "No full pack among the assets. Refusing to publish."
+            exit 1
           fi
-
-          # Full packs only. Deltas are small and are what a returning
-          # client actually wants; blobs are shared and must stay.
-          mapfile -t PACKS < <(
-            gh release view "$TAG" --json assets \
-              --jq '.assets[].name | select(startswith("packs__") and contains("__full__"))' \
-              | sort
-          )
-
-          COUNT=${#PACKS[@]}
-          echo "$COUNT full packs on $TAG, keeping the newest $KEEP"
-          if [ "$COUNT" -le "$KEEP" ]; then
-            exit 0
-          fi
-
-          # Sorted by name, which for `0.0.0-nightly.<date>.<sha>` is
-          # chronological. Delete everything but the tail.
-          for name in "${PACKS[@]:0:$((COUNT - KEEP))}"; do
-            echo "  removing $name"
-            gh release delete-asset "$TAG" "$name" --yes || true
-          done
 
       # Only tagged releases get a permanent versioned tag. A nightly per
-      # commit would accumulate hundreds of ~300MB releases, so nightlies
-      # live only at the moving pointer below.
+      # commit would accumulate hundreds of releases, so nightlies live
+      # only at the moving channel pointer below.
       - name: Publish the versioned release
         if: steps.version.outputs.channel == 'stable'
         uses: softprops/action-gh-release@v2
@@ -446,18 +494,17 @@ jobs:
           body: |
             Runtime payload for TheOpenPresenter ${{ steps.version.outputs.value }}.
 
-            Downloaded automatically by the desktop app and by
-            `top-runtime-manager install`. Assets are flattened CDN keys:
-            `channels__linux-x64__stable.json` is `channels/linux-x64/stable.json`.
+            Packs and metadata only. The primary source is R2
+            (`https://runtime.theopenpresenter.com`), which also hosts the
+            individual blobs that make an interrupted download resumable.
 
-      # Clients ship a fixed default source, so they need one tag that
-      # always holds the current release rather than a version they cannot
-      # know at build time. One per channel: `runtime-latest` for stable,
-      # `runtime-nightly` for main.
+            Install from this mirror instead with:
+            `--source github:Vija02/TheOpenPresenter@runtime-v${{ steps.version.outputs.value }}`
+
       - name: Move the channel pointer
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.version.outputs.latest_tag }}
+          tag_name: runtime-${{ steps.version.outputs.channel }}
           name: Runtime (${{ steps.version.outputs.channel }})
           prerelease: ${{ steps.version.outputs.channel != 'stable' }}
           files: assets/*
@@ -467,8 +514,5 @@ jobs:
             republished on every build. Currently
             ${{ steps.version.outputs.value }}.
 
-            Stable:  `--source github:Vija02/TheOpenPresenter@runtime-latest`
-            Nightly: `--source github:Vija02/TheOpenPresenter@runtime-nightly`
-
-            Pin one release with
-            `--source github:Vija02/TheOpenPresenter@runtime-v<version>`.
+            A compact mirror: packs and metadata, no blobs.
+            `--source github:Vija02/TheOpenPresenter@runtime-${{ steps.version.outputs.channel }}`

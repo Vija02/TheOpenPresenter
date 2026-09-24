@@ -19,7 +19,7 @@ use crate::shell::output::{emit, emit_progress};
 use crate::shell::protocol::{Command, Event, Request};
 use crate::storage::{disk, paths::Layout};
 
-pub const DEFAULT_SOURCE: &str = "github:Vija02/TheOpenPresenter@runtime-latest";
+pub const DEFAULT_SOURCE: &str = "https://runtime.theopenpresenter.com";
 
 pub struct Manager {
     pub layout: Layout,
