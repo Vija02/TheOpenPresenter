@@ -165,18 +165,18 @@ with no environment at all to prove the real key is embedded.
 
 Two, published by the same workflow from different triggers:
 
-| Channel | Built from | Version looks like | Tag |
-|---|---|---|---|
-| `stable` | a `runtime-v*` git tag | `1.9.0` | `runtime-latest` |
-| `nightly` | every push to `main` | `0.0.0-nightly.20260922.a1b2c3d` | `runtime-nightly` |
+| Channel | Built from | Version looks like |
+|---|---|---|
+| `stable` | a `runtime-v*` git tag | `1.9.0` |
+| `nightly` | every push to `main` | `0.0.0-nightly.20260922.a1b2c3d` |
 
 Stable is the default; nothing has to opt in. Nightly carries the date for
 humans and the short sha so a bug report maps to a commit.
 
-Each channel has its own moving tag, so a nightly can never replace what
-stable users download. Each also builds deltas against its own history: a
-nightly diffed against the last stable would cover weeks of change and be
-larger than the full pack.
+Each channel has its own pointer under `channels/<platform>/`, so a
+nightly can never replace what stable users download. Each also builds
+deltas against its own history: a nightly diffed against the last stable
+would cover weeks of change and be larger than the full pack.
 
 ```sh
 top-runtime-manager install nightly --activate
@@ -192,29 +192,31 @@ nightly format is free to be readable rather than semver-compatible.
 
 ### What a long gap costs
 
-A moving tag would otherwise grow without bound: one full pack (~120MB)
-per commit is ~12GB after 100 nightlies and ~42GB after a year. The
-workflow trims the nightly tag to the newest 5 full packs.
+Storage grows by one full pack (~141MB per platform) per release, so a
+nightly channel would reach ~42GB after a year if nothing were ever
+removed. Blobs do not have that problem: they are content-addressed, so a
+file unchanged between releases keeps its key and is stored once.
 
-Blobs are never trimmed. They are content-addressed and shared, they only
-grow by what actually changed, and they are what makes switching between
-versions nearly free.
+Blobs are never trimmed. They are shared, they only grow by what actually
+changed, and they are what makes switching between versions nearly free.
 
 So a client N nightlies behind resolves in this order:
 
 1. A single delta, if one covers the hop
 2. A chain of deltas, up to 12 hops
 3. The current full pack
+4. Individual blobs for anything the packs did not cover
 
 Someone 100 nightlies behind falls through to the full pack and downloads
-~120MB once, which is the same as a fresh install and no worse than any
-other updater. Someone a few behind gets the delta chain and downloads
-almost nothing.
+~141MB once, the same as a fresh install. Someone a few behind gets the
+delta chain and downloads almost nothing. Because blobs are hosted too, a
+download interrupted partway resumes from whatever the CAS already holds
+rather than starting the pack again.
 
 ## Where releases come from
 
-Releases are published to GitHub Releases by `.github/workflows/runtime.yml`
-and downloaded from there by default. See
+Releases are published to Cloudflare R2 by `.github/workflows/runtime.yml`
+and downloaded from `https://runtime.theopenpresenter.com` by default. See
 `docs/RUNTIME-SIGNING-AND-RELEASES.md` for signing, keys and hosting.
 
 A release is per-platform: the runtime contains PostgreSQL, ffmpeg and a
@@ -232,7 +234,8 @@ packs/<platform>/<from>__<to>.tar.zst
 ```
 
 `--source` accepts `github:owner/repo@tag`, an `https://` base URL, or a
-local directory.
+local directory. R2 is the default and hosts the full tree; the GitHub
+mirror carries packs and metadata only.
 
 ## Source layout
 
