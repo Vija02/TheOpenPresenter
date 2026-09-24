@@ -7,9 +7,13 @@ name: Runtime payload
 on:
   push:
     tags:
-      - "runtime-v*"
+      - "v*"
     branches:
       - main
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
+      - ".github/workflows/gemini-*.yml"
   workflow_dispatch:
     inputs:
       version:
@@ -27,6 +31,10 @@ on:
         description: "Override which versions to build deltas from (derived automatically if blank)"
         required: false
         default: ""
+
+concurrency:
+  group: runtime-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref_type != 'tag' }}
 
 jobs:
   publish:
@@ -69,7 +77,7 @@ jobs:
             VERSION="${{ github.event.inputs.version }}"
             CHANNEL="${{ github.event.inputs.channel || 'stable' }}"
           elif [ "${GITHUB_REF_TYPE}" = "tag" ]; then
-            VERSION="${GITHUB_REF_NAME#runtime-v}"
+            VERSION="${GITHUB_REF_NAME#v}"
             CHANNEL="stable"
           else
             VERSION="0.0.0-nightly.$(date -u +%Y%m%d).$(git rev-parse --short HEAD)"
@@ -95,9 +103,14 @@ jobs:
       # ---------------------------------------------------------------------
       # 2. Sign native binaries BEFORE hashing.
       # ---------------------------------------------------------------------
-      - name: Build the publisher
+      - name: Build the publisher and manager
         working-directory: native-apps/runtime-manager
-        run: cargo build --release --bin top-runtime-publish
+        env:
+          TOP_RUNTIME_PUBKEY: ${{ secrets.RUNTIME_PUBLIC_KEY }}
+        run: |
+          cargo build --release \
+            --bin top-runtime-publish \
+            --bin top-runtime-manager
 
       # Assembly is separate from publishing because native binaries have
       # to be signed *before* they are hashed. Signing embeds a timestamp,
@@ -280,9 +293,6 @@ jobs:
           BIN=native-apps/runtime-manager/target/release/top-runtime-manager
           [ "${{ runner.os }}" = "Windows" ] && BIN="$BIN.exe"
 
-          cargo build --release --bin top-runtime-manager \
-            --manifest-path native-apps/runtime-manager/Cargo.toml
-
           # Verify against the channel this run actually published to, not
           # a default: a nightly that only checked `stable` would pass
           # while pointing at someone else's release.
@@ -297,6 +307,25 @@ jobs:
             echo 'The published release does not install. Not uploading it.'
             exit 1
           }
+
+      - name: Stage the manager binary
+        shell: bash
+        run: |
+          set -euo pipefail
+          EXT=""
+          [ "${{ runner.os }}" = "Windows" ] && EXT=".exe"
+          SRC="native-apps/runtime-manager/target/release/top-runtime-manager$EXT"
+
+          mkdir -p "$RUNNER_TEMP/bin"
+          cp "$SRC" "$RUNNER_TEMP/bin/top-runtime-manager-${{ matrix.slug }}$EXT"
+          ls -la "$RUNNER_TEMP/bin"
+
+      - name: Upload the manager binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: manager-${{ matrix.slug }}-${{ steps.version.outputs.value }}
+          path: ${{ runner.temp }}/bin
+          retention-days: 14
 
       - name: Upload the CDN tree
         uses: actions/upload-artifact@v4
@@ -331,7 +360,7 @@ jobs:
             VERSION="${{ github.event.inputs.version }}"
             CHANNEL="${{ github.event.inputs.channel || 'stable' }}"
           elif [ "${GITHUB_REF_TYPE}" = "tag" ]; then
-            VERSION="${GITHUB_REF_NAME#runtime-v}"
+            VERSION="${GITHUB_REF_NAME#v}"
             CHANNEL="stable"
           else
             VERSION="0.0.0-nightly.$(date -u +%Y%m%d).$(git rev-parse --short HEAD)"
@@ -435,7 +464,7 @@ jobs:
             VERSION="${{ github.event.inputs.version }}"
             CHANNEL="${{ github.event.inputs.channel || 'stable' }}"
           elif [ "${GITHUB_REF_TYPE}" = "tag" ]; then
-            VERSION="${GITHUB_REF_NAME#runtime-v}"
+            VERSION="${GITHUB_REF_NAME#v}"
             CHANNEL="stable"
           else
             VERSION="0.0.0-nightly.$(date -u +%Y%m%d).$(git rev-parse --short HEAD)"
@@ -449,6 +478,13 @@ jobs:
         with:
           pattern: runtime-*-${{ steps.version.outputs.value }}
           path: trees
+
+      - name: Collect the manager binaries
+        uses: actions/download-artifact@v4
+        with:
+          pattern: manager-*-${{ steps.version.outputs.value }}
+          path: bins
+          merge-multiple: true
 
       # GitHub Releases has a single flat namespace: no directories, and a
       # name containing "/" is rejected. Keys are flattened with "__", which
@@ -470,6 +506,12 @@ jobs:
             cd "$OLDPWD"
           done
 
+          # Binaries already have flat, platform-suffixed names.
+          if [ -d bins ]; then
+            cp bins/* assets/
+            chmod +x assets/top-runtime-manager-* 2>/dev/null || true
+          fi
+
           echo "asset count: $(ls assets | wc -l)"
           du -sh assets
 
@@ -480,6 +522,13 @@ jobs:
             exit 1
           fi
 
+          # Likewise a release with no manager: the packs would have
+          # nothing able to install them.
+          if ! ls assets | grep -q "^top-runtime-manager-"; then
+            echo "No manager binary among the assets. Refusing to publish."
+            exit 1
+          fi
+
       # Only tagged releases get a permanent versioned tag. A nightly per
       # commit would accumulate hundreds of releases, so nightlies live
       # only at the moving channel pointer below.
@@ -487,19 +536,35 @@ jobs:
         if: steps.version.outputs.channel == 'stable'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: runtime-v${{ steps.version.outputs.value }}
-          name: Runtime ${{ steps.version.outputs.value }}
           files: assets/*
           fail_on_unmatched_files: true
-          body: |
-            Runtime payload for TheOpenPresenter ${{ steps.version.outputs.value }}.
 
-            Packs and metadata only. The primary source is R2
-            (`https://runtime.theopenpresenter.com`), which also hosts the
-            individual blobs that make an interrupted download resumable.
+      - name: Remove assets that are no longer published
+        continue-on-error: true
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG="runtime-${{ steps.version.outputs.channel }}"
 
-            Install from this mirror instead with:
-            `--source github:Vija02/TheOpenPresenter@runtime-v${{ steps.version.outputs.value }}`
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            echo "No $TAG release yet; nothing to prune."
+            exit 0
+          fi
+
+          # Blobs are R2's job and must never appear here: one asset per
+          # file is what made the Releases upload fail in the first place.
+          mapfile -t STALE < <(
+            gh release view "$TAG" --json assets \
+              --jq '.assets[].name | select(startswith("blobs__"))'
+          )
+
+          echo "${#STALE[@]} stale blob assets on $TAG"
+          for name in ${STALE[@]+"${STALE[@]}"}; do
+            echo "  removing $name"
+            gh release delete-asset "$TAG" "$name" --yes || true
+          done
 
       - name: Move the channel pointer
         uses: softprops/action-gh-release@v2

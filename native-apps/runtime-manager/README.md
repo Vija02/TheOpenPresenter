@@ -167,7 +167,7 @@ Two, published by the same workflow from different triggers:
 
 | Channel | Built from | Version looks like |
 |---|---|---|
-| `stable` | a `runtime-v*` git tag | `1.9.0` |
+| `stable` | a `v*` git tag | `1.9.0` |
 | `nightly` | every push to `main` | `0.0.0-nightly.20260922.a1b2c3d` |
 
 Stable is the default; nothing has to opt in. Nightly carries the date for
