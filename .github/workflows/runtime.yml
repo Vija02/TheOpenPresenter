@@ -195,13 +195,18 @@ jobs:
           mkdir -p "$CDN/versions"
           cp "$SEED" "$CDN/versions/$SLUG.json"
 
+          # Written to a file rather than passed with `-c`: the YAML block
+          # indents every line, and Python rejects a leading indent.
+          SEED_SCRIPT="$RUNNER_TEMP/seed/latest.py"
+          cat > "$SEED_SCRIPT" <<'PY'
+          import json, sys
+          versions = json.load(open(sys.argv[1])).get("versions", [])
+          print(" ".join(versions[-3:]))
+          PY
+
           # Build deltas from the most recent few. Older than that, a client
           # is better served by the full pack than by a long delta chain.
-          PREVS=$(python3 -c "
-          import json, sys
-          versions = json.load(open('$SEED')).get('versions', [])
-          print(' '.join(versions[-3:]))
-          ")
+          PREVS=$(python3 "$SEED_SCRIPT" "$SEED")
 
           ARGS=""
           for v in $PREVS; do
