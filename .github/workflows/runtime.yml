@@ -105,6 +105,7 @@ jobs:
       # ---------------------------------------------------------------------
       - name: Build the publisher and manager
         working-directory: native-apps/runtime-manager
+        shell: bash
         env:
           TOP_RUNTIME_PUBKEY: ${{ secrets.RUNTIME_PUBLIC_KEY }}
         run: |
