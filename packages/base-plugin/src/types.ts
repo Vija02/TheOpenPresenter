@@ -124,6 +124,7 @@ export type MiscProps = {
   media: MediaHandler;
   mediaPicker: MediaPicker;
   logger: Logger;
+  captureEvent?: (event: string, properties?: Record<string, unknown>) => void;
   parentContainer: HTMLElement | null;
   surface: PluginSurface;
   derivation?: Derivation | null;

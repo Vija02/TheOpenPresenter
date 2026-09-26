@@ -25,6 +25,7 @@ import {
   uuidFromPluginIdOrUUID,
 } from "@repo/lib";
 import { logger } from "@repo/observability";
+import { captureEvent } from "@repo/observability/initAnalytics";
 import {
   useAudioCheck,
   useAwarenessState,
@@ -279,6 +280,7 @@ const PluginRenderer = React.memo(
           },
           mediaPicker,
           logger: childLogger,
+          captureEvent,
           parentContainer: pluginDivRef.current,
           surface: "remote",
           isPublicAccess,

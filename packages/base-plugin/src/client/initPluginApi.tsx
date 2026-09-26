@@ -184,6 +184,8 @@ export function initPluginApi<
       close: () => misc.mediaPicker.close?.(),
     },
     log: misc.logger,
+    captureEvent: (event: string, properties?: Record<string, unknown>) =>
+      misc.captureEvent?.(event, properties),
     error: {
       addError: misc.errorHandler.addError,
       removeError: misc.errorHandler.removeError,

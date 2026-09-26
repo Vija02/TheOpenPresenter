@@ -59,7 +59,8 @@ const ScreenShareRemote = () => {
           )}
           {isSharer ? (
             <Button size="xs" variant="pill" onClick={() => stopShare()}>
-              <FaStop /> Stop sharing
+              <FaStop />
+              <span>Stop sharing</span>
             </Button>
           ) : (
             <Button
@@ -68,19 +69,21 @@ const ScreenShareRemote = () => {
               disabled={iceLoading || !isSupported}
               onClick={() => startShare()}
             >
-              <FaDesktop /> {sharedByOther ? "Take over" : "Share screen"}
+              <FaDesktop />
+              <span>{sharedByOther ? "Take over" : "Share screen"}</span>
             </Button>
           )}
         </>
       }
       body={
         <div className="stack-col items-stretch flex-1 p-3 gap-3 overflow-auto bg-surface-primary">
-          {captureError && (
-            <div className="stack-row items-center gap-2 p-3 rounded-sm border border-fill-destructive/40 bg-fill-destructive/10 text-fill-destructive text-sm">
-              <FaCircleInfo className="shrink-0" />
-              <span>{captureError}</span>
-            </div>
-          )}
+          <div
+            className="stack-row items-center gap-2 p-3 rounded-sm border border-fill-destructive/40 bg-fill-destructive/10 text-fill-destructive text-sm"
+            style={{ display: captureError ? undefined : "none" }}
+          >
+            <FaCircleInfo className="shrink-0" />
+            <span>{captureError}</span>
+          </div>
 
           {/* Idle: rich empty state that invites the operator to start */}
           {idle && (
@@ -105,7 +108,8 @@ const ScreenShareRemote = () => {
                       disabled={iceLoading}
                       onClick={() => startShare()}
                     >
-                      <FaDesktop /> {iceLoading ? "Preparing…" : "Share screen"}
+                      <FaDesktop />
+                      <span>{iceLoading ? "Preparing…" : "Share screen"}</span>
                     </Button>
                     <div className="stack-row items-center gap-2 text-xs text-tertiary">
                       <span
@@ -115,11 +119,13 @@ const ScreenShareRemote = () => {
                             : "bg-gray-400"
                         }`}
                       />
-                      {outputScreenCount > 0
-                        ? `${outputScreenCount} output screen${
-                            outputScreenCount === 1 ? "" : "s"
-                          } ready`
-                        : "No output screens connected yet"}
+                      <span>
+                        {outputScreenCount > 0
+                          ? `${outputScreenCount} output screen${
+                              outputScreenCount === 1 ? "" : "s"
+                            } ready`
+                          : "No output screens connected yet"}
+                      </span>
                     </div>
                   </>
                 ) : (
