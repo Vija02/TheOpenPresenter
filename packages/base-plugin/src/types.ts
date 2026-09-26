@@ -1,6 +1,7 @@
 import type { MediaPicker, PluginContext, UUID } from "@repo/base-types";
 import type { OrganizationType } from "@repo/graphql";
 import type { ObjectToTypedMap } from "@repo/lib";
+import type { captureEvent as CaptureEvent } from "@repo/observability/initAnalytics";
 import type { Logger } from "pino";
 import type { toast as ReactToast } from "react-toastify";
 import type { IResult } from "ua-parser-js";
@@ -124,6 +125,7 @@ export type MiscProps = {
   media: MediaHandler;
   mediaPicker: MediaPicker;
   logger: Logger;
+  captureEvent?: typeof CaptureEvent;
   parentContainer: HTMLElement | null;
   surface: PluginSurface;
   derivation?: Derivation | null;
