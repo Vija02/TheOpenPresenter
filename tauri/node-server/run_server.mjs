@@ -11,7 +11,7 @@ const DATABASE_OWNER_PASSWORD = "password_owner";
 const DATABASE_VISITOR = "theopenpresenter_visitor";
 const DATABASE_NAME = "theopenpresenter";
 
-const PORT = 7949;
+const PORT = Number(process.env.TOP_PG_PORT ?? 7949);
 
 const childProcesses = new Set();
 
@@ -156,12 +156,14 @@ async function main() {
     envOverride = dotenv.parse(fs.readFileSync(envPath));
   }
 
+  const e2eEnabled = process.env.ENABLE_E2E_COMMANDS === "1";
+
   const finalEnv = {
-    NODE_ENV: process.env.ENABLE_E2E_COMMANDS ? "test" : "production",
+    NODE_ENV: e2eEnabled ? "test" : "production",
     LOG_LOCALLY: "1",
     // Disable auto login for test
-    AUTO_LOGIN: process.env.ENABLE_E2E_COMMANDS ? "0" : "1",
-    ENABLE_E2E_COMMANDS: process.env.ENABLE_E2E_COMMANDS ? "1" : "0",
+    AUTO_LOGIN: e2eEnabled ? "0" : "1",
+    ENABLE_E2E_COMMANDS: e2eEnabled ? "1" : "0",
     ...(process.env.PLUGIN_GOOGLE_SLIDES_UNOCONVERT_SERVER
       ? {
           PLUGIN_GOOGLE_SLIDES_UNOCONVERT_SERVER:
@@ -182,8 +184,9 @@ async function main() {
     DATABASE_NAME,
 
     // CORE
-    PORT: "5678",
-    ROOT_URL: "http://localhost:5678",
+    PORT: process.env.PORT ?? "5678",
+    ROOT_URL:
+      process.env.ROOT_URL ?? `http://localhost:${process.env.PORT ?? "5678"}`,
     SECRET: "cookie_secret",
     GRAPHILE_TURBO: "1",
 
