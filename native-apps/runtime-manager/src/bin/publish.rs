@@ -303,6 +303,21 @@ fn resolve_key(repo: &Path) -> Result<PathBuf> {
 
     let path = repo.join("native-apps/runtime-manager/dev-private.key");
     if path.is_file() {
+        let pubpath = path.with_file_name("dev-pubkey.txt");
+        if !pubpath.is_file() {
+            use ed25519_dalek::SigningKey;
+            let raw = base64::engine::general_purpose::STANDARD
+                .decode(fs::read_to_string(&path)?.trim())?;
+            let bytes: [u8; 32] = raw
+                .as_slice()
+                .try_into()
+                .map_err(|_| anyhow::anyhow!("dev-private.key is not a 32 byte ed25519 key"))?;
+            let key = SigningKey::from_bytes(&bytes);
+            fs::write(
+                &pubpath,
+                base64::engine::general_purpose::STANDARD.encode(key.verifying_key().to_bytes()),
+            )?;
+        }
         return Ok(path);
     }
 
@@ -310,11 +325,13 @@ fn resolve_key(repo: &Path) -> Result<PathBuf> {
     use rand::rngs::OsRng;
     let key = SigningKey::generate(&mut OsRng);
     let encoded = base64::engine::general_purpose::STANDARD.encode(key.to_bytes());
+    let public = base64::engine::general_purpose::STANDARD.encode(key.verifying_key().to_bytes());
 
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent)?;
     }
     fs::write(&path, &encoded)?;
+    fs::write(path.with_file_name("dev-pubkey.txt"), &public)?;
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt;
@@ -322,10 +339,7 @@ fn resolve_key(repo: &Path) -> Result<PathBuf> {
     }
 
     eprintln!("generated a development signing key at {}", path.display());
-    eprintln!(
-        "  public key: {}",
-        base64::engine::general_purpose::STANDARD.encode(key.verifying_key().to_bytes())
-    );
+    eprintln!("  public key: {public}");
     Ok(path)
 }
 
