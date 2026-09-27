@@ -39,6 +39,15 @@ pub enum Cli {
     Prune,
     /// Print where everything lives.
     Paths,
+    /// Show the runtime log, or follow it as it is written.
+    Log {
+        /// Keep printing as new lines arrive, like `tail -f`.
+        follow: bool,
+        /// How many trailing lines to show first.
+        lines: usize,
+        /// Show the previous run's log instead of the current one.
+        previous: bool,
+    },
     /// Print usage.
     Help,
     /// Print the version.
@@ -55,6 +64,12 @@ pub struct Options {
     pub activate: bool,
     /// Skip confirmation prompts.
     pub force: bool,
+    /// `log`: how many trailing lines to show.
+    pub lines: Option<usize>,
+    /// `log`: keep printing as new lines arrive.
+    pub follow: bool,
+    /// `log`: read the previous run's log.
+    pub previous: bool,
 }
 
 pub struct Parsed {
@@ -91,6 +106,12 @@ where
             _ if arg == "--json" => options.json = true,
             _ if arg == "--activate" => options.activate = true,
             _ if arg == "--force" || arg == "-f" => options.force = true,
+            Some(("--lines", value)) => options.lines = value.parse().ok(),
+            _ if arg == "--lines" || arg == "-n" => {
+                options.lines = take_value(None, &mut index).and_then(|v| v.parse().ok())
+            }
+            _ if arg == "--follow" => options.follow = true,
+            _ if arg == "--previous" => options.previous = true,
             _ => positional.push(arg.clone()),
         }
         index += 1;
@@ -138,6 +159,11 @@ where
         },
         Some("prune") => Cli::Prune,
         Some("paths") => Cli::Paths,
+        Some("log") | Some("logs") => Cli::Log {
+            follow: options.follow,
+            lines: options.lines.unwrap_or(200),
+            previous: options.previous,
+        },
         Some("--version" | "-V" | "version") => Cli::Version,
         Some("--help" | "-h" | "help") => Cli::Help,
         // A shell pipes us commands and passes no subcommand, so a
@@ -186,6 +212,9 @@ SUBCOMMANDS:
                        unless --force. Never touches your data.
     prune              Delete inactive runtimes and unreferenced data.
     paths              Show where runtimes, data and logs are stored.
+    log                Show the runtime log. --follow to keep watching,
+                       --lines N for a different amount (default 200),
+                       --previous for the run before this one.
 
 OPTIONS:
     --root <DIR>       Where runtimes and data live.
@@ -343,5 +372,59 @@ mod tests {
                 channel: "stable".to_string()
             }
         );
+    }
+
+    #[test]
+    fn log_defaults_to_a_screenful_of_the_current_run() {
+        let parsed = parse_args(&["log"], true);
+        assert!(matches!(
+            parsed.cli,
+            Cli::Log {
+                follow: false,
+                lines: 200,
+                previous: false
+            }
+        ));
+    }
+
+    #[test]
+    fn log_accepts_its_flags() {
+        let parsed = parse_args(&["log", "--follow", "--lines", "20"], true);
+        assert!(matches!(
+            parsed.cli,
+            Cli::Log {
+                follow: true,
+                lines: 20,
+                previous: false
+            }
+        ));
+
+        let parsed = parse_args(&["log", "-n", "5", "--previous"], true);
+        assert!(matches!(
+            parsed.cli,
+            Cli::Log {
+                lines: 5,
+                previous: true,
+                ..
+            }
+        ));
+
+        let parsed = parse_args(&["log", "--lines=42"], true);
+        assert!(matches!(parsed.cli, Cli::Log { lines: 42, .. }));
+    }
+
+    /// `logs` is what people type when the command is `log`, and the other
+    /// way round. Accepting both costs one line.
+    #[test]
+    fn log_has_a_plural_alias() {
+        assert!(matches!(parse_args(&["logs"], true).cli, Cli::Log { .. }));
+    }
+
+    /// `-f` means force elsewhere, so following must not silently claim it.
+    #[test]
+    fn short_f_still_means_force_not_follow() {
+        let parsed = parse_args(&["log", "-f"], true);
+        assert!(matches!(parsed.cli, Cli::Log { follow: false, .. }));
+        assert!(parsed.options.force);
     }
 }

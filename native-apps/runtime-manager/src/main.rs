@@ -131,6 +131,12 @@ fn run(command: cli::Cli, options: cli::Options) -> Result<()> {
             serve(manager)
         }
 
+        cli::Cli::Log {
+            follow,
+            lines,
+            previous,
+        } => show_log(&manager.layout, follow, lines, previous),
+
         cli::Cli::Paths => {
             let layout = &manager.layout;
             if options.json {
@@ -460,4 +466,115 @@ fn serve(mut manager: Manager) -> Result<()> {
         std::mem::forget(manager.supervisor.take());
     }
     Ok(())
+}
+
+/// Show the runtime log, optionally following it
+fn show_log(layout: &Layout, follow: bool, lines: usize, previous: bool) -> Result<()> {
+    use std::io::{BufRead, BufReader, Seek, SeekFrom, Write};
+
+    let name = if previous {
+        "runtime.1.log"
+    } else {
+        "runtime.log"
+    };
+    let path = layout.logs_dir().join(name);
+
+    if !path.is_file() {
+        println!("No log at {}", path.display());
+        if !previous && layout.logs_dir().join("runtime.1.log").is_file() {
+            println!("The previous run's log is there: pass --previous to read it.");
+        }
+        return Ok(());
+    }
+
+    // Read the tail by lines rather than seeking to a byte offset: a log
+    // line can be any length, and cutting one in half is how a diagnostic
+    // tool starts lying about what happened.
+    let file =
+        std::fs::File::open(&path).with_context(|| format!("Failed to open {}", path.display()))?;
+    let mut reader = BufReader::new(file);
+    let mut tail: std::collections::VecDeque<String> = std::collections::VecDeque::new();
+    let mut buffer = String::new();
+
+    while reader.read_line(&mut buffer)? > 0 {
+        if tail.len() == lines {
+            tail.pop_front();
+        }
+        tail.push_back(buffer.trim_end().to_string());
+        buffer.clear();
+    }
+
+    let stdout = std::io::stdout();
+    let mut out = stdout.lock();
+    for line in &tail {
+        writeln!(out, "{line}")?;
+    }
+    out.flush()?;
+
+    if !follow {
+        return Ok(());
+    }
+
+    // Follow from where the read finished, reopening if the file is
+    // rotated or truncated under us by a restart.
+    let mut position = reader.stream_position()?;
+    let mut identity = std::fs::metadata(&path)
+        .ok()
+        .map(|m| file_identity(&m))
+        .unwrap_or_default();
+    install_interrupt_handler();
+
+    while !INTERRUPTED.load(std::sync::atomic::Ordering::SeqCst) {
+        let size = std::fs::metadata(&path).map(|m| m.len()).unwrap_or(0);
+        // A new run truncates the log and writes over it. Comparing sizes
+        // alone is not enough: the replacement can already be longer than
+        // wherever we had reached, and resuming at that offset lands in
+        // the middle of a line. Watching the inode (Unix) or the creation
+        // time (Windows) catches the replacement itself.
+        let replaced = std::fs::metadata(&path)
+            .ok()
+            .map(|m| file_identity(&m) != identity)
+            .unwrap_or(false);
+
+        if size < position || replaced {
+            position = 0;
+            identity = std::fs::metadata(&path)
+                .ok()
+                .map(|m| file_identity(&m))
+                .unwrap_or_default();
+        }
+
+        if size > position {
+            let mut file = std::fs::File::open(&path)?;
+            file.seek(SeekFrom::Start(position))?;
+            let mut reader = BufReader::new(file);
+            let mut line = String::new();
+            while reader.read_line(&mut line)? > 0 {
+                write!(out, "{line}")?;
+                line.clear();
+            }
+            out.flush()?;
+            position = reader.stream_position()?;
+        }
+
+        std::thread::sleep(Duration::from_millis(300));
+    }
+
+    Ok(())
+}
+
+fn file_identity(meta: &std::fs::Metadata) -> u64 {
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::MetadataExt;
+        meta.ino()
+    }
+    #[cfg(not(unix))]
+    {
+        meta.created()
+            .ok()
+            .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+            .map(|d| d.as_nanos() as u64)
+            .unwrap_or(0)
+    }
 }
