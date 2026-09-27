@@ -1,10 +1,10 @@
 import r2wc from "@r2wc/react-to-web-component";
-import { lazyWithRetry, withSuspense } from "@repo/ui";
+import { lazyWithRetry } from "@repo/ui";
 
 import { remoteWebComponentTag } from "../../src/consts";
 
 const Component = r2wc(
-  withSuspense(lazyWithRetry(() => import("./RemoteEntry"))),
+  lazyWithRetry(() => import("./RemoteEntry")),
   {
     //@ts-ignore
     props: {

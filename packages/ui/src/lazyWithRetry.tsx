@@ -1,6 +1,7 @@
+import { LoadingPart } from "@/Loading/LoadingPart";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Component, ComponentType, ReactNode, lazy, useState } from "react";
+import { Component, ComponentType, Suspense, lazy } from "react";
 import { VscSync } from "react-icons/vsc";
 
 type Loader = () => Promise<{ default: ComponentType<any> }>;
@@ -41,69 +42,55 @@ export async function importWithRetry<T>(
   throw lastError;
 }
 
-class ViewErrorBoundary extends Component<
-  { onRetry: () => void; children: ReactNode },
-  { error: Error | null }
-> {
-  state = { error: null as Error | null };
-
-  static getDerivedStateFromError(error: Error) {
-    return { error };
-  }
-
-  componentDidCatch(error: Error) {
-    // Report it like an uncaught error so error tracking still sees it
-    window.reportError?.(error);
-  }
-
-  render() {
-    const { error } = this.state;
-    if (!error) {
-      return this.props.children;
-    }
-
-    return (
-      <div className="stack-col p-3">
-        <Alert
-          variant="destructive"
-          title="Unable to show this view"
-          className="max-w-2xl"
-        >
-          {error.message}
-        </Alert>
-        <Button
-          onClick={() => {
-            this.props.onRetry();
-            this.setState({ error: null });
-          }}
-        >
-          <VscSync />
-          Try again
-        </Button>
-      </div>
-    );
-  }
-}
-
-// Use it in place of React.lazy for plugin views. It retries a failed chunk
-// load, and if that still fails, it shows an error with a retry button in
-// place of the view.
+// Use it in place of withSuspense(lazy(...)) for plugin views. It retries a
+// failed chunk load, and if that still fails, it shows an error with a retry
+// button in place of the view.
 export const lazyWithRetry = (loader: Loader) => {
   const createLazy = () => lazy(() => importWithRetry(loader));
   let LazyComponent = createLazy();
 
-  return (props: any) => {
-    const [, setAttempt] = useState(0);
+  return class LazyWithRetry extends Component<any, { error: Error | null }> {
+    state = { error: null as Error | null };
 
-    return (
-      <ViewErrorBoundary
-        onRetry={() => {
-          LazyComponent = createLazy();
-          setAttempt((x) => x + 1);
-        }}
-      >
-        <LazyComponent {...props} />
-      </ViewErrorBoundary>
-    );
+    static getDerivedStateFromError(error: Error) {
+      return { error };
+    }
+
+    componentDidCatch(error: Error) {
+      // Report it like an uncaught error so error tracking still sees it
+      window.reportError?.(error);
+    }
+
+    render() {
+      const { error } = this.state;
+      if (!error) {
+        return (
+          <Suspense fallback={<LoadingPart />}>
+            <LazyComponent {...this.props} />
+          </Suspense>
+        );
+      }
+
+      return (
+        <div className="stack-col p-3">
+          <Alert
+            variant="destructive"
+            title="Unable to show this view"
+            className="max-w-2xl"
+          >
+            {error.message}
+          </Alert>
+          <Button
+            onClick={() => {
+              LazyComponent = createLazy();
+              this.setState({ error: null });
+            }}
+          >
+            <VscSync />
+            Try again
+          </Button>
+        </div>
+      );
+    }
   };
 };

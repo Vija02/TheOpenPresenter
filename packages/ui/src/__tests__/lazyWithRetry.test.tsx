@@ -1,5 +1,4 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
-import { Suspense } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { importWithRetry, lazyWithRetry } from "../lazyWithRetry";
@@ -54,11 +53,7 @@ describe("lazyWithRetry", () => {
     );
     const LazyView = lazyWithRetry(loader);
 
-    render(
-      <Suspense fallback="loading">
-        <LazyView />
-      </Suspense>,
-    );
+    render(<LazyView />);
     await act(() => vi.runAllTimersAsync());
 
     expect(screen.getByText("Unable to show this view")).toBeTruthy();
