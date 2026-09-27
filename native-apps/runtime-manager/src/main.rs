@@ -271,12 +271,19 @@ fn run(command: cli::Cli, options: cli::Options) -> Result<()> {
 
             let result = manager.handle(Request {
                 id: None,
-                command: Command::Start,
+                command: Command::Start { holder: None },
             })?;
             finish_human_progress();
 
             let url = result["url"].as_str().unwrap_or("");
+            // A joined runtime belongs to another process
+            let joined = result["foreign"].as_bool().unwrap_or(false);
+            let port = result["httpPort"].as_u64().unwrap_or(0) as u16;
+
             println!("\nTheOpenPresenter is running at {url}");
+            if joined {
+                println!("(joined a server another process started)");
+            }
             println!("Press Ctrl-C to stop.\n");
 
             // Stop the server on Ctrl-C rather than leaving PostgreSQL
@@ -284,23 +291,39 @@ fn run(command: cli::Cli, options: cli::Options) -> Result<()> {
             install_interrupt_handler();
 
             while !INTERRUPTED.load(std::sync::atomic::Ordering::SeqCst) {
-                // pump marks the runtime good once it settles and reaps
-                // it if it dies, which is what makes the crash counter
-                // work in the standalone path too.
-                manager.pump();
-                if manager.supervisor.is_none() {
-                    println!("The server stopped.");
-                    return Ok(());
+                if joined {
+                    let gone = !top_runtime_manager::runtime::supervise::wait_for_http(
+                        port,
+                        Duration::from_millis(200),
+                    ) || top_runtime_manager::storage::lock::read(manager.layout.root())
+                        .is_none();
+                    if gone {
+                        println!("The server stopped.");
+                        return Ok(());
+                    }
+                } else {
+                    manager.pump();
+                    if manager.supervisor.is_none() {
+                        println!("The server stopped.");
+                        return Ok(());
+                    }
                 }
                 std::thread::sleep(Duration::from_millis(200));
             }
 
             println!("Stopping…");
-            manager.handle(Request {
+            let stopped = manager.handle(Request {
                 id: None,
-                command: Command::Stop,
+                command: Command::Stop {
+                    holder: None,
+                    force: false,
+                },
             })?;
-            println!("Stopped.");
+            if stopped["stopped"].as_bool().unwrap_or(true) {
+                println!("Stopped.");
+            } else {
+                println!("Left running: another process is still using it.");
+            }
             Ok(())
         }
 
@@ -422,9 +445,19 @@ fn serve(mut manager: Manager) -> Result<()> {
         }
     }
 
-    // stdin closed: the shell is gone, so the runtime should not outlive it.
-    if let Some(supervisor) = manager.supervisor.take() {
-        supervisor.stop().ok();
+    // stdin closed: this shell is gone. Release its claim, and stop the
+    // runtime only if nobody else is holding it up. A desktop app quitting
+    // should not take down a server a second window or the CLI is using.
+    let unheld = top_runtime_manager::storage::lock::release(manager.layout.root());
+    if unheld {
+        if let Some(supervisor) = manager.supervisor.take() {
+            supervisor.stop().ok();
+        }
+    } else {
+        // Leaked on purpose: dropping it closes the runtime's stdin, and
+        // stopping it is what the remaining holders are asking us not to
+        // do. TOP_MANAGED makes the runtime ignore the closed pipe.
+        std::mem::forget(manager.supervisor.take());
     }
     Ok(())
 }

@@ -8,6 +8,7 @@ use std::path::{Path, PathBuf};
 use anyhow::{Context, Result};
 
 // ---- the macOS clonefile block, minus #[cfg(target_os = "macos")] --------
+#[cfg(unix)]
 mod macos_shape {
     // Declared extern so the call site needs `unsafe`, exactly as the real
     // libc binding does. Never linked: this file is only type-checked.
