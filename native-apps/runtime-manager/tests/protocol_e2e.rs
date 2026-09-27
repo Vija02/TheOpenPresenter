@@ -188,7 +188,14 @@ struct Manager {
 
 impl Manager {
     fn start(root: &Path, cdn: &Path, pubkey_b64: &str) -> Self {
-        let mut child = Command::new(env!("CARGO_BIN_EXE_top-runtime-manager"))
+        Self::start_with_env(root, cdn, pubkey_b64, &[])
+    }
+
+    /// Start with extra environment, for fixtures whose behaviour is
+    /// controlled by a variable the runtime inherits.
+    fn start_with_env(root: &Path, cdn: &Path, pubkey_b64: &str, extra: &[(&str, &str)]) -> Self {
+        let mut command = Command::new(env!("CARGO_BIN_EXE_top-runtime-manager"));
+        command
             .arg("--root")
             .arg(root)
             .arg("--source")
@@ -196,7 +203,12 @@ impl Manager {
             .env("TOP_RUNTIME_PUBKEY", pubkey_b64)
             // Fixture runtimes exit immediately instead of serving, so the
             // real five-minute startup wait would stall the suite.
-            .env("TOP_RUNTIME_START_TIMEOUT", "3")
+            .env("TOP_RUNTIME_START_TIMEOUT", "3");
+        for (key, value) in extra {
+            command.env(key, value);
+        }
+
+        let mut child = command
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::null())
@@ -254,6 +266,17 @@ impl Manager {
 impl Drop for Manager {
     fn drop(&mut self) {
         let _ = writeln!(self.stdin, r#"{{"cmd":"shutdown"}}"#);
+        let _ = self.child.wait();
+    }
+}
+
+impl Manager {
+    /// Kill the manager outright, with no shutdown handshake.
+    ///
+    /// Simulates a crash: the runtime it spawned is orphaned rather than
+    /// stopped, which is the state cross-process holders exist to handle.
+    fn kill(&mut self) {
+        let _ = self.child.kill();
         let _ = self.child.wait();
     }
 }
@@ -1137,5 +1160,328 @@ fn a_release_signed_by_the_wrong_key_is_refused() {
     assert!(
         !root.path().join("versions/1.0.0").exists(),
         "nothing should have been written"
+    );
+}
+
+/// A server that stays up until told to stop, for holder tests.
+const SHARED_SERVER: &str = r#"
+import http from "node:http";
+const port = Number(process.env.TOP_HTTP_PORT);
+const server = http.createServer((req, res) => {
+  res.writeHead(200);
+  res.end("ok");
+});
+server.listen(port, "127.0.0.1", () => {
+  console.log("TOP_LISTENING " + port);
+});
+process.stdin.on("data", (d) => {
+  if (String(d).includes("shutdown")) process.exit(0);
+});
+process.stdin.resume();
+"#;
+
+/// Two parts of a shell can both want the server up. The second start
+/// must reuse the first rather than failing or launching a rival.
+#[test]
+fn a_second_start_reuses_the_running_runtime() {
+    let (root, cdn, key, pubkey) = fixture();
+    publish(
+        cdn.path(),
+        &key,
+        "1.0.0",
+        1,
+        "run_server.mjs",
+        &[("run_server.mjs", SHARED_SERVER.as_bytes())],
+    );
+
+    let mut manager = Manager::start(root.path(), cdn.path(), &pubkey);
+    manager.request(
+        1,
+        serde_json::json!({"cmd": "ensure", "channel": "stable", "activate": true}),
+    );
+
+    let first = manager.request(2, serde_json::json!({"cmd": "start", "holder": "window"}));
+    assert_eq!(first["ok"], true, "first start failed: {first}");
+    let port = first["result"]["httpPort"].as_u64().unwrap();
+    assert_eq!(first["result"]["reused"], false);
+
+    let second = manager.request(3, serde_json::json!({"cmd": "start", "holder": "tray"}));
+    assert_eq!(second["ok"], true, "a second start must not fail: {second}");
+    assert_eq!(
+        second["result"]["httpPort"].as_u64().unwrap(),
+        port,
+        "the second caller must get the same server"
+    );
+    assert_eq!(second["result"]["reused"], true);
+
+    let release = manager.request(4, serde_json::json!({"cmd": "stop", "holder": "tray"}));
+    assert_eq!(release["result"]["stopped"], false, "still held by window");
+
+    let status = manager.request(5, serde_json::json!({"cmd": "status"}));
+    assert_eq!(status["result"]["running"], true, "must still be running");
+
+    let last = manager.request(6, serde_json::json!({"cmd": "stop", "holder": "window"}));
+    assert_eq!(last["result"]["stopped"], true);
+
+    let after = manager.request(7, serde_json::json!({"cmd": "status"}));
+    assert_eq!(after["result"]["running"], false);
+}
+
+/// The same holder starting twice must not pin the runtime. A renderer
+/// that reloads re-runs its startup path, and that must not make the
+/// server unstoppable.
+#[test]
+fn the_same_holder_starting_twice_still_releases_on_one_stop() {
+    let (root, cdn, key, pubkey) = fixture();
+    publish(
+        cdn.path(),
+        &key,
+        "1.0.0",
+        1,
+        "run_server.mjs",
+        &[("run_server.mjs", SHARED_SERVER.as_bytes())],
+    );
+
+    let mut manager = Manager::start(root.path(), cdn.path(), &pubkey);
+    manager.request(
+        1,
+        serde_json::json!({"cmd": "ensure", "channel": "stable", "activate": true}),
+    );
+
+    manager.request(2, serde_json::json!({"cmd": "start", "holder": "window"}));
+    manager.request(3, serde_json::json!({"cmd": "start", "holder": "window"}));
+
+    let stop = manager.request(4, serde_json::json!({"cmd": "stop", "holder": "window"}));
+    assert_eq!(
+        stop["result"]["stopped"], true,
+        "one holder means one release, however many times it started"
+    );
+}
+
+/// A holder is not a reservation on a dead server. If the runtime crashed,
+/// the next start must launch a new one rather than handing back the
+/// address of something that is no longer listening.
+#[test]
+fn a_crashed_runtime_is_restarted_not_reused() {
+    let (root, cdn, key, pubkey) = fixture();
+    // Exits on its own shortly after announcing, simulating a crash that
+    // happens once the manager already considers it up.
+    let server = br#"
+import http from "node:http";
+const port = Number(process.env.TOP_HTTP_PORT);
+const server = http.createServer((req, res) => {
+  res.writeHead(200);
+  res.end("ok");
+});
+server.listen(port, "127.0.0.1", () => {
+  console.log("TOP_LISTENING " + port);
+  if (process.env.TOP_STATE_DIR && process.env.CRASH_AFTER_START === "1") {
+    setTimeout(() => process.exit(1), 300);
+  }
+});
+process.stdin.on("data", (d) => {
+  if (String(d).includes("shutdown")) process.exit(0);
+});
+process.stdin.resume();
+"#;
+    publish(
+        cdn.path(),
+        &key,
+        "1.0.0",
+        1,
+        "run_server.mjs",
+        &[("run_server.mjs", server)],
+    );
+
+    let mut manager = Manager::start_with_env(
+        root.path(),
+        cdn.path(),
+        &pubkey,
+        &[("CRASH_AFTER_START", "1")],
+    );
+    manager.request(
+        1,
+        serde_json::json!({"cmd": "ensure", "channel": "stable", "activate": true}),
+    );
+
+    let first = manager.request(2, serde_json::json!({"cmd": "start", "holder": "window"}));
+    assert_eq!(first["ok"], true, "first start failed: {first}");
+    let first_port = first["result"]["httpPort"].as_u64().unwrap();
+
+    // Let it die, leaving the holder set populated: the state a crash
+    // leaves behind.
+    std::thread::sleep(std::time::Duration::from_millis(900));
+
+    let second = manager.request(3, serde_json::json!({"cmd": "start", "holder": "window"}));
+    assert_eq!(
+        second["ok"], true,
+        "a crashed runtime must be restartable: {second}"
+    );
+    assert_eq!(
+        second["result"]["reused"], false,
+        "a dead server must not be handed back as if it were running"
+    );
+    assert_ne!(
+        second["result"]["httpPort"].as_u64().unwrap(),
+        first_port,
+        "a fresh port proves a new process, not the corpse of the old one"
+    );
+}
+
+/// A runtime outlives the manager that spawned it, so ownership of a root
+/// cannot belong to one process. A second manager must join the running
+/// server rather than opening a rival over the same database, and the
+/// server must survive the first manager going away.
+#[test]
+fn a_second_manager_joins_the_running_runtime() {
+    let (root, cdn, key, pubkey) = fixture();
+    publish(
+        cdn.path(),
+        &key,
+        "1.0.0",
+        1,
+        "run_server.mjs",
+        &[("run_server.mjs", SHARED_SERVER.as_bytes())],
+    );
+
+    let mut first = Manager::start(root.path(), cdn.path(), &pubkey);
+    first.request(
+        1,
+        serde_json::json!({"cmd": "ensure", "channel": "stable", "activate": true}),
+    );
+    let started = first.request(2, serde_json::json!({"cmd": "start", "holder": "window"}));
+    assert_eq!(started["ok"], true, "first start failed: {started}");
+    let port = started["result"]["httpPort"].as_u64().unwrap();
+
+    // A separate manager process over the same root.
+    let mut second = Manager::start(root.path(), cdn.path(), &pubkey);
+    let joined = second.request(1, serde_json::json!({"cmd": "start", "holder": "cli"}));
+
+    assert_eq!(joined["ok"], true, "a second manager should join: {joined}");
+    assert_eq!(
+        joined["result"]["httpPort"].as_u64().unwrap(),
+        port,
+        "it must get the SAME server, not a second one"
+    );
+    assert_eq!(joined["result"]["reused"], true);
+    assert_eq!(
+        joined["result"]["foreign"], true,
+        "joining someone else's runtime should say so"
+    );
+
+    // The first manager letting go must not stop a server the second
+    // still wants.
+    let release = first.request(3, serde_json::json!({"cmd": "stop", "holder": "window"}));
+    assert_eq!(
+        release["result"]["stopped"], false,
+        "another process still holds it: {release}"
+    );
+
+    // And it is genuinely still serving.
+    let probe = std::net::TcpStream::connect(format!("127.0.0.1:{port}"));
+    assert!(
+        probe.is_ok(),
+        "the runtime must still be listening while held elsewhere"
+    );
+}
+
+/// The whole point of cross-process holders: the manager that spawned the
+/// runtime can go away, and the server keeps serving for whoever else
+/// still wants it.
+#[test]
+fn the_runtime_survives_the_manager_that_started_it() {
+    let (root, cdn, key, pubkey) = fixture();
+    publish(
+        cdn.path(),
+        &key,
+        "1.0.0",
+        1,
+        "run_server.mjs",
+        &[("run_server.mjs", SHARED_SERVER.as_bytes())],
+    );
+
+    let mut first = Manager::start(root.path(), cdn.path(), &pubkey);
+    first.request(
+        1,
+        serde_json::json!({"cmd": "ensure", "channel": "stable", "activate": true}),
+    );
+    let started = first.request(2, serde_json::json!({"cmd": "start", "holder": "window"}));
+    let port = started["result"]["httpPort"].as_u64().unwrap();
+
+    let mut second = Manager::start(root.path(), cdn.path(), &pubkey);
+    let joined = second.request(1, serde_json::json!({"cmd": "start", "holder": "cli"}));
+    assert_eq!(joined["ok"], true, "second manager should join: {joined}");
+
+    // Kill the first manager outright: no shutdown, no cleanup. A child
+    // process is orphaned rather than killed, so the runtime lives on.
+    first.kill();
+    std::thread::sleep(std::time::Duration::from_millis(500));
+
+    assert!(
+        std::net::TcpStream::connect(format!("127.0.0.1:{port}")).is_ok(),
+        "the runtime must outlive the manager that spawned it"
+    );
+
+    // The survivor still sees it, and still gets the same address.
+    let again = second.request(2, serde_json::json!({"cmd": "start", "holder": "cli"}));
+    assert_eq!(
+        again["result"]["httpPort"].as_u64().unwrap(),
+        port,
+        "the surviving holder should still reach the same server"
+    );
+}
+
+/// Quitting the desktop app must not stop a server the CLI is using.
+///
+/// `shutdown` is the manager's own exit path, distinct from `stop`, and it
+/// used to kill the runtime unconditionally. That made the holder list
+/// meaningless for the one case people actually hit: closing the app.
+#[test]
+fn shutdown_leaves_a_runtime_another_process_is_using() {
+    let (root, cdn, key, pubkey) = fixture();
+    publish(
+        cdn.path(),
+        &key,
+        "1.0.0",
+        1,
+        "run_server.mjs",
+        &[("run_server.mjs", SHARED_SERVER.as_bytes())],
+    );
+
+    let mut app = Manager::start(root.path(), cdn.path(), &pubkey);
+    app.request(
+        1,
+        serde_json::json!({"cmd": "ensure", "channel": "stable", "activate": true}),
+    );
+    let started = app.request(
+        2,
+        serde_json::json!({"cmd": "start", "holder": "desktop-shell"}),
+    );
+    let port = started["result"]["httpPort"].as_u64().unwrap();
+
+    let mut cli = Manager::start(root.path(), cdn.path(), &pubkey);
+    let joined = cli.request(1, serde_json::json!({"cmd": "start", "holder": "cli"}));
+    assert_eq!(joined["ok"], true, "cli should join: {joined}");
+
+    // The app quits the way Electron does.
+    let bye = app.request(3, serde_json::json!({"cmd": "shutdown"}));
+    assert_eq!(
+        bye["result"]["runtimeStopped"], false,
+        "the runtime is still held by the cli: {bye}"
+    );
+    drop(app);
+    std::thread::sleep(std::time::Duration::from_millis(600));
+
+    assert!(
+        std::net::TcpStream::connect(format!("127.0.0.1:{port}")).is_ok(),
+        "the server must survive the app that started it quitting"
+    );
+
+    // And the last holder leaving does stop it.
+    cli.request(2, serde_json::json!({"cmd": "stop", "holder": "cli"}));
+    std::thread::sleep(std::time::Duration::from_millis(600));
+    assert!(
+        std::net::TcpStream::connect(format!("127.0.0.1:{port}")).is_err(),
+        "the last holder leaving should stop the server"
     );
 }

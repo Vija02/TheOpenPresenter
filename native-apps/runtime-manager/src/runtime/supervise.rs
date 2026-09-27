@@ -142,6 +142,27 @@ impl Supervisor {
             command.env(key, value);
         }
 
+        // Put the runtime in its own process group.
+        #[cfg(unix)]
+        {
+            use std::os::unix::process::CommandExt;
+            // Safety: setsid only detaches the child from the controlling
+            // terminal's group; it touches no shared state in the parent.
+            unsafe {
+                command.pre_exec(|| {
+                    libc::setsid();
+                    Ok(())
+                });
+            }
+        }
+        #[cfg(windows)]
+        {
+            use std::os::windows::process::CommandExt;
+            // CREATE_NEW_PROCESS_GROUP: the Windows equivalent, so a
+            // console Ctrl-C does not propagate into the runtime.
+            command.creation_flags(0x0000_0200);
+        }
+
         let mut child = command
             .spawn()
             .with_context(|| format!("Failed to start {}", node.display()))?;
@@ -202,6 +223,12 @@ impl Supervisor {
     /// URL until the user happens to trigger another command.
     pub fn take_events(&mut self) -> Option<Receiver<RuntimeEvent>> {
         self.events.take()
+    }
+
+    /// The runtime's process id, while it is running.
+    pub fn pid(&self) -> Option<u32> {
+        let guard = self.child.lock().ok()?;
+        guard.as_ref().map(|child| child.id())
     }
 
     pub fn uptime(&self) -> Duration {

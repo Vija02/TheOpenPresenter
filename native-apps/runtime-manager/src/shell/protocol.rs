@@ -32,9 +32,18 @@ pub enum Command {
     /// Activate an installed version.
     Activate { version: String },
     /// Launch the active runtime and report the URL it listens on.
-    Start,
-    /// Stop the running runtime, giving PostgreSQL time to shut down.
-    Stop,
+    Start {
+        #[serde(default)]
+        holder: Option<String>,
+    },
+    /// Release a holder. The runtime stops when the last one lets go.
+    Stop {
+        #[serde(default)]
+        holder: Option<String>,
+        /// Stop regardless of who else is holding it.
+        #[serde(default)]
+        force: bool,
+    },
     /// Delete runtimes other than the ones named, and unreferenced blobs.
     Prune { keep: Vec<String> },
     /// Delete one installed version, even the active one.

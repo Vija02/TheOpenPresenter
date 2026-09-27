@@ -29,6 +29,10 @@ pub struct Manager {
     /// without re-fetching.
     pending: Option<Manifest>,
     pub supervisor: Option<Supervisor>,
+    /// Who currently wants the runtime up.
+    holders: std::collections::BTreeSet<String>,
+    /// What the running runtime is serving
+    running: Option<(u16, String)>,
     marked_good: bool,
 }
 
@@ -41,6 +45,8 @@ impl Manager {
             pubkey: manifest::trusted_pubkey()?,
             pending: None,
             supervisor: None,
+            holders: std::collections::BTreeSet::new(),
+            running: None,
             marked_good: false,
         })
     }
@@ -72,13 +78,8 @@ impl Manager {
                 self.installer().activate(&manifest)?;
                 Ok(serde_json::json!({ "version": version }))
             }
-            Command::Start => self.start(),
-            Command::Stop => {
-                if let Some(supervisor) = self.supervisor.take() {
-                    supervisor.stop()?;
-                }
-                Ok(serde_json::json!({ "stopped": true }))
-            }
+            Command::Start { holder } => self.start(holder),
+            Command::Stop { holder, force } => self.stop(holder, force),
             Command::Remove { version } => {
                 // Deleting the files out from under a running server would
                 // leave a process serving a directory that no longer
@@ -88,6 +89,9 @@ impl Manager {
                     if let Some(supervisor) = self.supervisor.take() {
                         supervisor.stop().ok();
                     }
+                    self.running = None;
+                    self.holders.clear();
+                    crate::storage::lock::release(self.layout.root());
                 }
 
                 let outcome = self.installer().remove(&version)?;
@@ -110,10 +114,27 @@ impl Manager {
                 Ok(serde_json::json!({ "migratedSchemaVersion": state.migrated_schema_version }))
             }
             Command::Shutdown => {
-                if let Some(supervisor) = self.supervisor.take() {
-                    supervisor.stop().ok();
+                self.holders.clear();
+                let unheld = crate::storage::lock::release(self.layout.root());
+
+                if unheld {
+                    if let Some(supervisor) = self.supervisor.take() {
+                        supervisor.stop().ok();
+                    }
+                    self.running = None;
+                } else {
+                    // Deliberately leaked: dropping the Supervisor would
+                    // close the runtime's stdin, and killing it here is
+                    // exactly what the remaining holders are asking us not
+                    // to do. TOP_MANAGED tells the runtime to ignore the
+                    // closed pipe.
+                    std::mem::forget(self.supervisor.take());
                 }
-                Ok(serde_json::json!({ "shuttingDown": true }))
+
+                Ok(serde_json::json!({
+                    "shuttingDown": true,
+                    "runtimeStopped": unheld,
+                }))
             }
         }
     }
@@ -194,11 +215,111 @@ impl Manager {
         Ok(result)
     }
 
-    fn start(&mut self) -> Result<serde_json::Value> {
-        if self.supervisor.is_some() {
-            bail!("A runtime is already running; stop it first");
+    /// Release a holder, stopping the runtime when the last one lets go.
+    fn stop(&mut self, holder: Option<String>, force: bool) -> Result<serde_json::Value> {
+        let name = holder.unwrap_or_else(|| "default".into());
+        self.holders.remove(&name);
+
+        if force {
+            self.holders.clear();
+        } else if !self.holders.is_empty() {
+            // Someone else still wants it. Saying so beats a silent no-op
+            // when a caller is working out why the server is still up.
+            return Ok(serde_json::json!({
+                "stopped": false,
+                "holders": self.holders.iter().collect::<Vec<_>>(),
+            }));
         }
 
+        // Read the runtime's pid before releasing: the last release
+        // deletes the file, and a joined runtime can only be stopped by
+        // pid because its pipes belong to another process.
+        let foreign_pid = crate::storage::lock::read(self.layout.root())
+            .filter(|_| self.supervisor.is_none())
+            .and_then(|l| l.runtime_pid);
+
+        // The file is the cross-process view; the in-memory set only knows
+        // about this manager. A runtime is stopped only when both agree
+        // nobody wants it.
+        let unheld = crate::storage::lock::release(self.layout.root());
+        if !unheld && !force {
+            return Ok(serde_json::json!({
+                "stopped": false,
+                "holders": self.holders.iter().collect::<Vec<_>>(),
+                "heldElsewhere": true,
+            }));
+        }
+
+        if let Some(supervisor) = self.supervisor.take() {
+            supervisor.stop()?;
+        } else if let Some(pid) = foreign_pid {
+            // A runtime we joined rather than spawned: its pipes belong to
+            // a process that may be gone, so signal it instead. Left alone
+            // it would outlive every holder, which is the stale server the
+            // lock file exists to prevent.
+            stop_by_pid(pid);
+        }
+        self.running = None;
+        Ok(serde_json::json!({ "stopped": true, "holders": [] }))
+    }
+
+    fn start(&mut self, holder: Option<String>) -> Result<serde_json::Value> {
+        let name = holder.unwrap_or_else(|| "default".into());
+
+        if self
+            .supervisor
+            .as_ref()
+            .map(|s| s.exited())
+            .unwrap_or(false)
+        {
+            self.supervisor = None;
+            self.running = None;
+            self.holders.clear();
+        }
+
+        // Already serving: adopt the caller as another holder
+        if let Some((port, version)) = self.running.clone() {
+            self.holders.insert(name);
+            return Ok(serde_json::json!({
+                "url": format!("http://localhost:{port}"),
+                "httpPort": port,
+                "version": version,
+                "reused": true,
+                "holders": self.holders.iter().collect::<Vec<_>>(),
+            }));
+        }
+
+        // Someone else may already be serving this root
+        if let Some(existing) = crate::storage::lock::read(self.layout.root()) {
+            if let (Some(port), true) = (
+                existing.http_port,
+                existing
+                    .runtime_pid
+                    .map(crate::storage::lock::process_alive)
+                    .unwrap_or(false),
+            ) {
+                let lock = crate::storage::lock::RuntimeLock {
+                    manager_pid: existing.manager_pid,
+                    runtime_pid: existing.runtime_pid,
+                    http_port: Some(port),
+                    version: existing.version.clone(),
+                    holders: existing.holders.clone(),
+                };
+                crate::storage::lock::hold(self.layout.root(), &name, &lock)?;
+                self.holders.insert(name);
+                self.running = Some((port, existing.version.clone().unwrap_or_default()));
+                return Ok(serde_json::json!({
+                    "url": format!("http://localhost:{port}"),
+                    "httpPort": port,
+                    "version": existing.version.unwrap_or_default(),
+                    "reused": true,
+                    "foreign": true,
+                    "holders": self.holders.iter().collect::<Vec<_>>(),
+                }));
+            }
+        }
+
+        // Registered only once the runtime is actually up
         let state = self.state()?;
         let version = state
             .current
@@ -297,11 +418,27 @@ impl Manager {
             );
         }
 
+        self.running = Some((config.http_port, version.clone()));
+        self.holders.insert(name.clone());
+        let _ = crate::storage::lock::hold(
+            self.layout.root(),
+            &name,
+            &crate::storage::lock::RuntimeLock {
+                manager_pid: std::process::id(),
+                runtime_pid: self.supervisor.as_ref().and_then(|s| s.pid()),
+                http_port: Some(config.http_port),
+                version: Some(version.clone()),
+                holders: Vec::new(),
+            },
+        );
+
         Ok(serde_json::json!({
             "version": version,
             "httpPort": config.http_port,
             "pgPort": config.pg_port,
             "url": format!("http://localhost:{}", config.http_port),
+            "reused": false,
+            "holders": self.holders.iter().collect::<Vec<_>>(),
         }))
     }
 
@@ -333,6 +470,9 @@ impl Manager {
 
     fn on_exit(&mut self, code: Option<i32>) {
         self.supervisor = None;
+        self.running = None;
+        self.holders.clear();
+        crate::storage::lock::release(self.layout.root());
 
         let clean = code == Some(0);
         let mut reverted_to = None;
@@ -411,4 +551,37 @@ pub fn startup_timeout() -> Duration {
         .and_then(|v| v.parse().ok())
         .unwrap_or(300);
     Duration::from_secs(seconds)
+}
+
+/// Stop a runtime this process did not spawn.
+///
+/// Its stdin belongs to whoever launched it, which may be gone, so the
+/// only handle left is its pid. SIGTERM lets `run_server.mjs` shut
+/// PostgreSQL down cleanly; killing outright would leave the data
+/// directory locked and break the next launch.
+fn stop_by_pid(pid: u32) {
+    #[cfg(unix)]
+    // Safety: SIGTERM to a pid recorded by a manager; the runtime installs
+    // a handler for it and exits cleanly.
+    unsafe {
+        libc::kill(pid as libc::pid_t, libc::SIGTERM);
+    }
+    #[cfg(windows)]
+    {
+        let _ = std::process::Command::new("taskkill")
+            .args(["/PID", &pid.to_string(), "/T"])
+            .output();
+    }
+
+    // The same grace a supervised stop gets, so PostgreSQL can close its
+    // files before anything else opens the directory.
+    let deadline = std::time::Instant::now() + Duration::from_secs(20);
+    while std::time::Instant::now() < deadline {
+        if !crate::storage::lock::process_alive(pid) {
+            return;
+        }
+        std::thread::sleep(Duration::from_millis(200));
+    }
+
+    tracing::warn!(pid, "A joined runtime did not exit after SIGTERM");
 }
