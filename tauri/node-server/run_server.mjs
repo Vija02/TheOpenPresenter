@@ -120,9 +120,22 @@ const installShutdownHandlers = (pg) => {
     }
   });
 
-  // Parent died and closed the pipe. Skipped on a TTY so an interactive run
-  // isn't torn down by an empty stdin.
-  if (!process.stdin.isTTY) {
+  // Don't crash due to this cause there might be other instances needed it.
+  const muteBrokenPipe = (stream) => {
+    stream.on("error", (err) => {
+      if (err?.code === "EPIPE" || err?.code === "ERR_STREAM_DESTROYED") {
+        stream.write = () => true;
+        return;
+      }
+      throw err;
+    });
+  };
+  muteBrokenPipe(process.stdout);
+  muteBrokenPipe(process.stderr);
+
+  // Parent died and closed the pipe.
+  // Skipped on a TTY so an interactive run isn't torn down by an empty stdin
+  if (!process.stdin.isTTY && process.env.TOP_MANAGED !== "1") {
     process.stdin.on("end", () => shutdown(pg, 0));
   }
 
