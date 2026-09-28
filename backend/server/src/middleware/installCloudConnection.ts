@@ -1,12 +1,71 @@
 import { logger } from "@repo/observability";
 import axios, { AxiosError } from "axios";
 import { createSession } from "better-sse";
+import { json } from "body-parser";
 import { EventSourcePlus } from "event-source-plus";
 import { Express } from "express";
 import setCookieParse from "set-cookie-parser";
 
 import { withUserPgPool } from "../utils/withUserPgPool";
 import { getRootPgPool } from "./installDatabasePools";
+
+async function authorizeConnect(
+  app: Express,
+  sessionId: string,
+  organizationId: string,
+): Promise<string> {
+  let userId = "";
+  await withUserPgPool(app, sessionId, async (client) => {
+    const {
+      rows: [row],
+    } = await client.query(
+      "select * from app_public.organizations where id = $1",
+      [organizationId],
+    );
+    if (!row) {
+      throw new Error("Not Authorized");
+    }
+    const {
+      rows: [user],
+    } = await client.query("select app_public.current_user_id() as id");
+    userId = user.id;
+
+    const {
+      rows: [cloudConnection],
+    } = await client.query(
+      "select * from app_public.cloud_connections where organization_id = $1",
+      [organizationId],
+    );
+    if (cloudConnection) {
+      throw new Error("Already connected to cloud");
+    }
+  });
+  return userId;
+}
+
+/** Record a cloud connection. */
+async function storeConnection(
+  app: Express,
+  args: {
+    organizationId: string;
+    host: string;
+    cookie: string;
+    expiry: Date;
+    userId: string;
+  },
+): Promise<string> {
+  const rootPgPool = getRootPgPool(app);
+  const {
+    rows: [row],
+  } = await rootPgPool.query(
+    `INSERT INTO app_public.cloud_connections
+       (organization_id, host, session_cookie, session_cookie_expiry, creator_user_id)
+     VALUES ($1, $2, $3, $4, $5)
+     RETURNING id`,
+    [args.organizationId, args.host, args.cookie, args.expiry, args.userId],
+  );
+  return row.id;
+}
 
 export default (app: Express) => {
   // TODO: Access control for login - user/org
@@ -27,31 +86,11 @@ export default (app: Express) => {
     let userId: string | undefined = undefined;
 
     try {
-      await withUserPgPool(app, req.user?.session_id ?? "", async (client) => {
-        const {
-          rows: [row],
-        } = await client.query(
-          "select * from app_public.organizations where id = $1",
-          [organizationId],
-        );
-        if (!row) {
-          throw new Error("Not Authorized");
-        }
-        const {
-          rows: [user],
-        } = await client.query("select app_public.current_user_id() as id");
-        userId = user.id;
-
-        const {
-          rows: [cloudConnection],
-        } = await client.query(
-          "select * from app_public.cloud_connections where organization_id = $1",
-          [organizationId],
-        );
-        if (cloudConnection) {
-          throw new Error("Already connected to cloud");
-        }
-      });
+      userId = await authorizeConnect(
+        app,
+        req.user?.session_id ?? "",
+        String(organizationId),
+      );
     } catch (e) {
       logger.debug({ query: req.query }, "Invalid query to /cloud/connect");
       session.push({ error: (e as Error)?.message });
@@ -100,17 +139,13 @@ export default (app: Express) => {
               }
             }
 
-            const rootPgPool = getRootPgPool(app);
-            await rootPgPool.query(
-              "INSERT INTO app_public.cloud_connections(organization_id, host, session_cookie, session_cookie_expiry, creator_user_id) VALUES ($1, $2, $3, $4, $5)",
-              [
-                organizationId,
-                targetCloudUrl,
-                cookieString,
-                cookieExpiry,
-                userId,
-              ],
-            );
+            await storeConnection(app, {
+              organizationId: String(organizationId),
+              host: String(targetCloudUrl),
+              cookie: cookieString,
+              expiry: cookieExpiry,
+              userId: userId ?? "",
+            });
             controller.abort();
 
             session.push({
@@ -155,5 +190,51 @@ export default (app: Express) => {
       controller.abort();
       res.end();
     });
+  });
+
+  /** Use to create cloud connection from an existing auth token */
+  app.post("/cloud/adopt", json({ limit: "16kb" }), async (req, res) => {
+    const { organizationId, host, cookie, expiry } = req.body ?? {};
+
+    if (!organizationId || !host || !cookie) {
+      res
+        .status(400)
+        .json({ error: "organizationId, host and cookie are required" });
+      return;
+    }
+
+    let userId: string;
+    try {
+      userId = await authorizeConnect(
+        app,
+        req.user?.session_id ?? "",
+        String(organizationId),
+      );
+    } catch (e) {
+      logger.debug({ organizationId }, "Invalid request to /cloud/adopt");
+      res.status(403).json({ error: (e as Error)?.message });
+      return;
+    }
+
+    // An expiry is required by the schema
+    const parsed = expiry ? new Date(String(expiry)) : null;
+    const sessionExpiry =
+      parsed && !Number.isNaN(parsed.getTime())
+        ? parsed
+        : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+    try {
+      const id = await storeConnection(app, {
+        organizationId: String(organizationId),
+        host: String(host),
+        cookie: String(cookie),
+        expiry: sessionExpiry,
+        userId,
+      });
+      res.json({ id });
+    } catch (err) {
+      logger.error({ err }, "Failed to store an adopted cloud connection");
+      res.status(500).json({ error: "Could not store the cloud connection" });
+    }
   });
 };
