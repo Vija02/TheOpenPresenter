@@ -145,7 +145,7 @@ fn run(command: cli::Cli, options: cli::Options) -> Result<()> {
                 println!("root      {}", layout.root().display());
                 println!("versions  {}", layout.runtimes_dir().display());
                 println!(
-                    "data      {}  (your work; back this up)",
+                    "data      {}  (iroh identity; see db/ and uploads/ in the root)",
                     layout.state_dir().display()
                 );
                 println!(
