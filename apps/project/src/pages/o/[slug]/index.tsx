@@ -2,6 +2,7 @@ import { SharedOrgLayout } from "@/components/SharedOrgLayout";
 import CreateProjectModal from "@/containers/CreateProjectModal";
 import { HostProjects } from "@/containers/Dashboard/HostProjects";
 import { ProjectCard } from "@/containers/Dashboard/ProjectCard";
+import DuplicateProjectModal from "@/containers/DuplicateProjectModal";
 import EditProjectModal from "@/containers/EditProjectModal";
 import ImportProjectModal from "@/containers/ImportProjectModal";
 import { useOrganizationSlug } from "@/lib/permissionHooks/organization";
@@ -10,6 +11,7 @@ import {
   ProjectFragment,
   useDeleteProjectMutation,
   useOrganizationDashboardIndexPageQuery,
+  useSetExistingProjectToScreenMutation,
 } from "@repo/graphql";
 import { globalState } from "@repo/lib";
 import { Button, OverlayToggle, PopConfirm } from "@repo/ui";
@@ -30,6 +32,8 @@ const OrganizationPage = () => {
   });
 
   const [, deleteProject] = useDeleteProjectMutation();
+  const [, setExistingProjectToScreen] =
+    useSetExistingProjectToScreenMutation();
 
   const handleDeleteProject = useCallback(
     async (id: string) => {
@@ -44,6 +48,19 @@ const OrganizationPage = () => {
       }
     },
     [deleteProject, publish],
+  );
+
+  const handleAssignToScreen = useCallback(
+    async (screenId: string, projectId: string) => {
+      try {
+        await setExistingProjectToScreen({ screenId, projectId });
+        publish();
+        toast.success("Project assigned to screen");
+      } catch (e: any) {
+        toast.error("Error occurred when assigning to screen: " + e.message);
+      }
+    },
+    [setExistingProjectToScreen, publish],
   );
 
   const emptyProject = useMemo(
@@ -96,20 +113,34 @@ const OrganizationPage = () => {
       <div className="stack-col items-center mb-2 flex-wrap gap-0">
         {emptyProject && <EmptyProject />}
         {data?.organizationBySlug?.projects.nodes.map((project) => (
-          <ProjectCard
+          <OverlayToggle
             key={project.id}
-            project={project}
-            linkHref={`/app/${slug}/${project.slug}`}
-            renderHref={`/render/${slug}/${project.slug}`}
-            actions={
-              <DashboardProjectActions
+            isLazy
+            toggler={({ onToggle }) => (
+              <ProjectCard
                 project={project}
-                organizationId={data?.organizationBySlug?.id}
-                categories={data?.organizationBySlug?.categories.nodes ?? []}
-                handleDeleteProject={handleDeleteProject}
+                linkHref={`/app/${slug}/${project.slug}`}
+                renderHref={`/render/${slug}/${project.slug}`}
+                screens={data?.organizationBySlug?.screens.nodes ?? []}
+                onAssignToScreen={(screenId) =>
+                  handleAssignToScreen(screenId, project.id)
+                }
+                onDuplicate={onToggle}
+                actions={
+                  <DashboardProjectActions
+                    project={project}
+                    organizationId={data?.organizationBySlug?.id}
+                    categories={
+                      data?.organizationBySlug?.categories.nodes ?? []
+                    }
+                    handleDeleteProject={handleDeleteProject}
+                  />
+                }
               />
-            }
-          />
+            )}
+          >
+            <DuplicateProjectModal project={project} />
+          </OverlayToggle>
         ))}
       </div>
 
@@ -160,6 +191,7 @@ const DashboardProjectActions = ({
             variant="ghost"
             size="sm"
             role="button"
+            aria-label="Edit project"
             className="text-tertiary hover:bg-blue-100 hover:text-accent opacity-100 md:opacity-0 group-hover:opacity-100"
             onClick={onToggle}
           >
@@ -185,6 +217,7 @@ const DashboardProjectActions = ({
           variant="ghost"
           size="sm"
           role="button"
+          aria-label="Delete project"
           className="text-tertiary hover:bg-red-50 hover:text-red-400 opacity-100 md:opacity-0 group-hover:opacity-100"
         >
           <VscTrash />

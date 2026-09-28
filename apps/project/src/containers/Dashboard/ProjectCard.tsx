@@ -1,10 +1,27 @@
 import { Tag } from "@/components/Tag";
 import { ProjectFragment } from "@repo/graphql";
-import { Button, DateDisplay, DateDisplayRelative, Link } from "@repo/ui";
+import {
+  Button,
+  DateDisplay,
+  DateDisplayRelative,
+  Link,
+  Popover,
+  PopoverContent,
+  PopoverMenuItem,
+  PopoverSubMenu,
+  PopoverTrigger,
+} from "@repo/ui";
 import { format } from "date-fns";
 import { MouseEvent, ReactNode } from "react";
 import { IoCloudDoneOutline } from "react-icons/io5";
 import { MdCoPresent } from "react-icons/md";
+import { VscCopy, VscKebabVertical, VscScreenNormal } from "react-icons/vsc";
+
+export type ProjectCardScreen = {
+  id: string;
+  name: string;
+  currentProjectId?: string | null;
+};
 
 type ProjectCardProps = {
   project: ProjectFragment;
@@ -12,6 +29,9 @@ type ProjectCardProps = {
   renderHref?: string;
   actions?: ReactNode;
   onLinkClick?: (e: MouseEvent<HTMLAnchorElement>) => void;
+  screens?: ProjectCardScreen[];
+  onAssignToScreen?: (screenId: string) => void;
+  onDuplicate?: () => void;
 };
 
 export const ProjectCard = ({
@@ -20,7 +40,13 @@ export const ProjectCard = ({
   renderHref,
   actions,
   onLinkClick,
+  screens,
+  onAssignToScreen,
+  onDuplicate,
 }: ProjectCardProps) => {
+  const assignableScreens = onAssignToScreen ? (screens ?? []) : [];
+  const hasMenu = !!renderHref || !!onDuplicate || assignableScreens.length > 0;
+
   return (
     <div
       key={project.id}
@@ -52,19 +78,68 @@ export const ProjectCard = ({
           <p className="text-xs text-tertiary">{project.category?.name}</p>
         </Link>
         <div className="flex">
-          {renderHref && (
-            <Link href={renderHref} isExternal>
-              <Button
-                variant="ghost"
-                size="sm"
-                role="button"
-                className="text-tertiary hover:bg-blue-100 hover:text-accent opacity-100 md:opacity-0 group-hover:opacity-100"
-              >
-                <MdCoPresent />
-              </Button>
-            </Link>
-          )}
           {actions}
+          {hasMenu && (
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  role="button"
+                  aria-label="More options"
+                  data-testid="project-card-menu"
+                  className="text-tertiary hover:bg-blue-100 hover:text-accent opacity-100 md:opacity-0 group-hover:opacity-100 data-[state=open]:opacity-100"
+                >
+                  <VscKebabVertical />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent
+                align="end"
+                hideArrow
+                hideCloseButton
+                className="w-64 p-1"
+              >
+                {renderHref && (
+                  <PopoverMenuItem
+                    label="Open renderer"
+                    description="Show this project on a display"
+                    icon={<MdCoPresent />}
+                    href={renderHref}
+                    isExternal
+                  />
+                )}
+                {onDuplicate && (
+                  <PopoverMenuItem
+                    label="Duplicate project"
+                    description="Create a copy of this project"
+                    icon={<VscCopy />}
+                    onClick={onDuplicate}
+                  />
+                )}
+                {assignableScreens.length > 0 && (
+                  <PopoverSubMenu
+                    label="Assign to screen"
+                    icon={<VscScreenNormal />}
+                    contentClassName="max-h-80 overflow-y-auto"
+                  >
+                    {assignableScreens.map((screen) => (
+                      <PopoverMenuItem
+                        key={screen.id}
+                        label={screen.name}
+                        description={
+                          screen.currentProjectId === project.id
+                            ? "Currently showing this project"
+                            : undefined
+                        }
+                        disabled={screen.currentProjectId === project.id}
+                        onClick={() => onAssignToScreen?.(screen.id)}
+                      />
+                    ))}
+                  </PopoverSubMenu>
+                )}
+              </PopoverContent>
+            </Popover>
+          )}
         </div>
       </div>
       <div className="flex flex-col-reverse sm:flex-row gap-1 sm:gap-4 items-start sm:items-center">

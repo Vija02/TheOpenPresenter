@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
-import { XIcon } from "lucide-react";
+import { ChevronRightIcon, XIcon } from "lucide-react";
 import * as React from "react";
 
 import { useDialogPortalContainerContext } from "./dialog";
@@ -79,6 +79,8 @@ type PopoverMenuItemProps = Omit<React.ComponentProps<"button">, "children"> & {
   label: React.ReactNode;
   description?: React.ReactNode;
   icon?: React.ReactNode;
+  href?: string;
+  isExternal?: boolean;
 };
 
 function PopoverMenuItem({
@@ -87,28 +89,128 @@ function PopoverMenuItem({
   icon,
   className,
   type = "button",
+  href,
+  isExternal,
   ...props
 }: PopoverMenuItemProps) {
+  const sharedClassName = cn(
+    "flex w-full items-start gap-2 px-3 py-2 text-sm text-left rounded transition-colors cursor-pointer hover:bg-surface-primary-hover focus:bg-surface-primary-hover focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed text-primary hover:no-underline",
+    className,
+  );
+
+  const content = (
+    <>
+      {icon && <span className="shrink-0 mt-0.5">{icon}</span>}
+      <div className="min-w-0 flex-1">
+        <p className="font-medium">{label}</p>
+        {description && <p className="text-xs text-tertiary">{description}</p>}
+      </div>
+    </>
+  );
+
   return (
     <PopoverClose asChild>
-      <button
-        type={type}
-        data-slot="popover-menu-item"
+      {href ? (
+        <a
+          href={href}
+          data-slot="popover-menu-item"
+          className={sharedClassName}
+          {...(isExternal ? { target: "_blank", rel: "noopener" } : {})}
+          {...(props as React.ComponentProps<"a">)}
+        >
+          {content}
+        </a>
+      ) : (
+        <button
+          type={type}
+          data-slot="popover-menu-item"
+          className={sharedClassName}
+          {...props}
+        >
+          {content}
+        </button>
+      )}
+    </PopoverClose>
+  );
+}
+
+type PopoverSubMenuProps = {
+  label: React.ReactNode;
+  description?: React.ReactNode;
+  icon?: React.ReactNode;
+  children: React.ReactNode;
+  className?: string;
+  contentClassName?: string;
+  disabled?: boolean;
+};
+
+function PopoverSubMenu({
+  label,
+  description,
+  icon,
+  children,
+  className,
+  contentClassName,
+  disabled,
+}: PopoverSubMenuProps) {
+  const [open, setOpen] = React.useState(false);
+  const closeTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const cancelClose = React.useCallback(() => {
+    if (closeTimer.current) {
+      clearTimeout(closeTimer.current);
+      closeTimer.current = null;
+    }
+  }, []);
+
+  const scheduleClose = React.useCallback(() => {
+    cancelClose();
+    closeTimer.current = setTimeout(() => setOpen(false), 150);
+  }, [cancelClose]);
+
+  React.useEffect(() => cancelClose, [cancelClose]);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger
+        type="button"
+        data-slot="popover-sub-trigger"
+        disabled={disabled}
+        onMouseEnter={() => {
+          if (!disabled) {
+            cancelClose();
+            setOpen(true);
+          }
+        }}
+        onMouseLeave={scheduleClose}
         className={cn(
-          "flex w-full items-start gap-2 px-3 py-2 text-sm text-left rounded transition-colors cursor-pointer hover:bg-surface-primary-hover focus:bg-surface-primary-hover focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed",
+          "flex w-full items-center gap-2 px-3 py-2 text-sm text-left rounded transition-colors cursor-pointer hover:bg-surface-primary-hover focus:bg-surface-primary-hover focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed data-[state=open]:bg-surface-primary-hover text-primary",
           className,
         )}
-        {...props}
       >
-        {icon && <span className="shrink-0 mt-0.5">{icon}</span>}
+        {icon && <span className="shrink-0">{icon}</span>}
         <div className="min-w-0 flex-1">
           <p className="font-medium">{label}</p>
           {description && (
             <p className="text-xs text-tertiary">{description}</p>
           )}
         </div>
-      </button>
-    </PopoverClose>
+        <ChevronRightIcon className="shrink-0 size-4 text-tertiary" />
+      </PopoverTrigger>
+      <PopoverContent
+        side="right"
+        align="start"
+        sideOffset={14}
+        hideArrow
+        hideCloseButton
+        onOpenAutoFocus={(e) => e.preventDefault()}
+        onMouseEnter={cancelClose}
+        onMouseLeave={scheduleClose}
+        className={cn("w-64 p-1", contentClassName)}
+      >
+        {children}
+      </PopoverContent>
+    </Popover>
   );
 }
 
@@ -119,4 +221,5 @@ export {
   PopoverContent,
   PopoverAnchor,
   PopoverMenuItem,
+  PopoverSubMenu,
 };

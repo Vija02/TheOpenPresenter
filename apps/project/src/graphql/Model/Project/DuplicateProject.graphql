@@ -1,0 +1,8 @@
+mutation DuplicateProject($projectId: UUID!, $name: String) {
+  duplicateProject(input: { projectId: $projectId, name: $name }) {
+    project {
+      id
+      ...Project
+    }
+  }
+}

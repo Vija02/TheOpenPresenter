@@ -7,8 +7,15 @@ export class OrganizationPage {
   readonly newProjectSaveButton: Locator;
   readonly projectCards: Locator;
   readonly projectCardEditButtonNth: (nth?: number) => Locator;
-  readonly projectCardPresentButtonNth: (nth?: number) => Locator;
+  readonly projectCardMenuButtonNth: (nth?: number) => Locator;
   readonly projectCardDeleteButtonNth: (nth?: number) => Locator;
+  readonly projectCardMenuDuplicate: Locator;
+  readonly projectCardMenuRenderer: Locator;
+  readonly projectCardMenuAssignToScreen: Locator;
+  readonly projectCardMenuScreen: (name: string) => Locator;
+
+  readonly duplicateModalNameInput: Locator;
+  readonly duplicateModalConfirmButton: Locator;
 
   readonly projectEditModalNameInput: Locator;
   readonly projectEditModalTargetDateInput: Locator;
@@ -36,24 +43,41 @@ export class OrganizationPage {
     });
 
     this.projectCards = page.locator("[data-testid=project-card]");
-    this.projectCardPresentButtonNth = (nth = 0) =>
+    this.projectCardMenuButtonNth = (nth = 0) =>
       page
         .locator("[data-testid=project-card]")
         .nth(nth)
-        .getByRole("button")
-        .nth(0);
+        .locator("[data-testid=project-card-menu]");
     this.projectCardEditButtonNth = (nth = 0) =>
       page
         .locator("[data-testid=project-card]")
         .nth(nth)
-        .getByRole("button")
-        .nth(1);
+        .getByRole("button", { name: "Edit project" });
     this.projectCardDeleteButtonNth = (nth = 0) =>
       page
         .locator("[data-testid=project-card]")
         .nth(nth)
-        .getByRole("button")
-        .nth(2);
+        .getByRole("button", { name: "Delete project" });
+    this.projectCardMenuDuplicate = page.getByRole("button", {
+      name: "Duplicate project",
+    });
+    this.projectCardMenuRenderer = page.getByRole("link", {
+      name: "Open renderer",
+    });
+    this.projectCardMenuAssignToScreen = page.getByRole("button", {
+      name: "Assign to screen",
+    });
+    this.projectCardMenuScreen = (name: string) =>
+      page.getByRole("button", { name });
+
+    // Duplicate modal
+    this.duplicateModalNameInput = page
+      .getByRole("dialog")
+      .getByRole("textbox", { name: "Name" });
+    this.duplicateModalConfirmButton = page.getByRole("button", {
+      name: "Duplicate",
+      exact: true,
+    });
 
     // Edit modal
     this.projectEditModalNameInput = page.getByRole("textbox", {
