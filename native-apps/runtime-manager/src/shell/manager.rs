@@ -33,6 +33,9 @@ pub struct Manager {
     holders: std::collections::BTreeSet<String>,
     /// What the running runtime is serving
     running: Option<(u16, String)>,
+    /// Remote access
+    #[cfg(feature = "remote")]
+    remote: Option<crate::remote::Remote>,
     marked_good: bool,
 }
 
@@ -47,6 +50,8 @@ impl Manager {
             supervisor: None,
             holders: std::collections::BTreeSet::new(),
             running: None,
+            #[cfg(feature = "remote")]
+            remote: None,
             marked_good: false,
         })
     }
@@ -113,6 +118,9 @@ impl Manager {
                 state.save(&path)?;
                 Ok(serde_json::json!({ "migratedSchemaVersion": state.migrated_schema_version }))
             }
+            Command::RemoteStart => self.remote_start(),
+            Command::RemoteStop => self.remote_stop(),
+            Command::RemoteStatus => self.remote_status(),
             Command::Shutdown => {
                 self.holders.clear();
                 let unheld = crate::storage::lock::release(self.layout.root());
@@ -149,7 +157,112 @@ impl Manager {
             "migratedSchemaVersion": state.migrated_schema_version,
             "crashCount": state.crash_count,
             "running": self.supervisor.is_some(),
+            "managerVersion": env!("CARGO_PKG_VERSION"),
         }))
+    }
+
+    /// Start peer-to-peer remote access to the running server.
+    ///
+    /// Requires the server to be up: the tunnel forwards to its port, and
+    /// a tunnel to nothing would hand out a ticket that fails on first use.
+    #[cfg(feature = "remote")]
+    fn remote_start(&mut self) -> Result<serde_json::Value> {
+        let Some((port, _)) = self.running else {
+            bail!("Start the server before turning on remote access");
+        };
+
+        // Another process sharing this runtime already has a tunnel to it.
+        // Hand back the same ticket rather than opening a second one to
+        // the same server, which would waste a relay connection and give
+        // out two addresses for one machine.
+        if let Some(info) = crate::storage::lock::remote(self.layout.root()) {
+            if info.owner_pid != std::process::id() {
+                return Ok(serde_json::json!({
+                    "enabled": true,
+                    "ticket": info.ticket,
+                    "node_id": info.node_id,
+                }));
+            }
+        }
+
+        let remote = match &mut self.remote {
+            Some(remote) => remote,
+            None => {
+                self.remote = Some(crate::remote::Remote::new()?);
+                self.remote.as_mut().expect("just set")
+            }
+        };
+
+        let target = std::net::SocketAddr::from(([127, 0, 0, 1], port));
+        let status = remote.start(target, self.layout.state_dir())?;
+
+        // Publish it so other processes sharing this runtime can see that
+        // remote access is on and show the same ticket.
+        if let (Some(ticket), Some(node_id)) = (&status.ticket, &status.node_id) {
+            crate::storage::lock::set_remote(
+                self.layout.root(),
+                Some(crate::storage::lock::RemoteInfo {
+                    ticket: ticket.clone(),
+                    node_id: node_id.clone(),
+                    owner_pid: std::process::id(),
+                }),
+            );
+        }
+
+        Ok(serde_json::to_value(status)?)
+    }
+
+    #[cfg(feature = "remote")]
+    fn remote_stop(&mut self) -> Result<serde_json::Value> {
+        if let Some(remote) = &mut self.remote {
+            remote.stop();
+        }
+        // Only clear the shared entry if this process owns the tunnel.
+        // Another app may be running one, and stopping ours must not make
+        // theirs invisible.
+        if let Some(info) = crate::storage::lock::remote(self.layout.root()) {
+            if info.owner_pid == std::process::id() {
+                crate::storage::lock::set_remote(self.layout.root(), None);
+            }
+        }
+        Ok(serde_json::to_value(crate::remote::RemoteStatus::off())?)
+    }
+
+    #[cfg(feature = "remote")]
+    fn remote_status(&self) -> Result<serde_json::Value> {
+        // Ours if we opened it, otherwise whatever the lock says: a
+        // second app joining a shared runtime has to see the tunnel the
+        // first one opened, not report remote access as off.
+        let status = match &self.remote {
+            Some(remote) if remote.status().enabled => remote.status(),
+            _ => match crate::storage::lock::remote(self.layout.root()) {
+                Some(info) => crate::remote::RemoteStatus {
+                    enabled: true,
+                    ticket: Some(info.ticket),
+                    node_id: Some(info.node_id),
+                },
+                None => crate::remote::RemoteStatus::off(),
+            },
+        };
+        Ok(serde_json::to_value(status)?)
+    }
+
+    // Without the feature the commands still exist on the protocol, so a
+    // shell built against a full manager gets a clear answer instead of an
+    // unknown-command error.
+    #[cfg(not(feature = "remote"))]
+    fn remote_start(&mut self) -> Result<serde_json::Value> {
+        bail!("This build has no remote access support")
+    }
+
+    #[cfg(not(feature = "remote"))]
+    fn remote_stop(&mut self) -> Result<serde_json::Value> {
+        Ok(serde_json::json!({ "enabled": false }))
+    }
+
+    #[cfg(not(feature = "remote"))]
+    fn remote_status(&self) -> Result<serde_json::Value> {
+        Ok(serde_json::json!({ "enabled": false, "supported": false }))
     }
 
     /// Download a version and make it present on disk.
@@ -304,6 +417,7 @@ impl Manager {
                     http_port: Some(port),
                     version: existing.version.clone(),
                     holders: existing.holders.clone(),
+                    remote: existing.remote.clone(),
                 };
                 crate::storage::lock::hold(self.layout.root(), &name, &lock)?;
                 self.holders.insert(name);
@@ -429,6 +543,7 @@ impl Manager {
                 http_port: Some(config.http_port),
                 version: Some(version.clone()),
                 holders: Vec::new(),
+                remote: None,
             },
         );
 
