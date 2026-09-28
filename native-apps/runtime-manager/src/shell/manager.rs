@@ -684,7 +684,7 @@ fn stop_by_pid(pid: u32) {
     #[cfg(windows)]
     {
         let _ = std::process::Command::new("taskkill")
-            .args(["/PID", &pid.to_string(), "/T"])
+            .args(["/PID", &pid.to_string(), "/T", "/F"])
             .output();
     }
 
