@@ -60,9 +60,18 @@ pub fn process_alive(pid: u32) -> bool {
     // cannot be queried is treated as gone, which errs toward starting a
     // new runtime rather than refusing forever.
     Command::new("tasklist")
-        .args(["/FI", &format!("PID eq {pid}"), "/NH"])
+        .args(["/FI", &format!("PID eq {pid}"), "/NH", "/FO", "CSV"])
         .output()
-        .map(|out| String::from_utf8_lossy(&out.stdout).contains(&pid.to_string()))
+        .map(|out| {
+            let text = String::from_utf8_lossy(&out.stdout);
+            text.lines().any(|line| {
+                // "name.exe","1234","Console","1","5,678 K"
+                line.split("\",\"")
+                    .nth(1)
+                    .map(|field| field.trim_matches('"') == pid.to_string())
+                    .unwrap_or(false)
+            })
+        })
         .unwrap_or(false)
 }
 
@@ -162,6 +171,34 @@ pub fn hold(root: &Path, name: &str, runtime: &RuntimeLock) -> Result<()> {
 mod tests {
     use super::*;
 
+    /// Spawn a process that stays alive long enough to be observed.
+    ///
+    /// Windows has no `sleep`, and `timeout` exits immediately when its
+    /// stdout is redirected because it wants a console. `ping -n` waits
+    /// without either problem.
+    fn spawn_live_helper() -> std::process::Child {
+        let mut command = if cfg!(windows) {
+            let mut c = std::process::Command::new("ping");
+            c.args(["-n", "30", "127.0.0.1"]);
+            c
+        } else {
+            let mut c = std::process::Command::new("sleep");
+            c.arg("30");
+            c
+        };
+
+        let child = command
+            .stdout(std::process::Stdio::null())
+            .spawn()
+            .expect("failed to spawn a helper process");
+
+        assert!(
+            process_alive(child.id()),
+            "the helper process should be alive for this test to mean anything"
+        );
+        child
+    }
+
     fn lock_for(pid: u32) -> RuntimeLock {
         RuntimeLock {
             manager_pid: pid,
@@ -227,14 +264,9 @@ mod tests {
     fn release_only_removes_our_own_lock() {
         let root = tempfile::tempdir().unwrap();
 
-        // A live process that is not us: sleep long enough to still be
-        // running for the duration of the check. Using a made-up pid would
-        // test the stale path instead of the ownership one.
-        let mut other = std::process::Command::new(if cfg!(windows) { "timeout" } else { "sleep" })
-            .arg("3")
-            .stdout(std::process::Stdio::null())
-            .spawn()
-            .expect("failed to spawn a helper process");
+        // A live process that is not us. Using a made-up pid would test
+        // the stale path instead of the ownership one.
+        let mut other = spawn_live_helper();
 
         write(root.path(), &lock_for(other.id())).unwrap();
         release(root.path());
@@ -304,10 +336,7 @@ mod tests {
         let root = dir.path();
 
         // A real process that will be gone by the time we read.
-        let mut child = std::process::Command::new("sleep")
-            .arg("30")
-            .spawn()
-            .unwrap();
+        let mut child = spawn_live_helper();
         let dead_pid = child.id();
 
         let lock = RuntimeLock {

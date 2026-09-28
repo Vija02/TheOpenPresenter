@@ -1273,10 +1273,22 @@ const server = http.createServer((req, res) => {
   res.writeHead(200);
   res.end("ok");
 });
+import fs from "node:fs";
+import path from "node:path";
+
 server.listen(port, "127.0.0.1", () => {
   console.log("TOP_LISTENING " + port);
+  // Crash once, not every time. A marker on disk survives the process, so
+  // the restart runs the same binary and stays up. Keying this on an env
+  // var made every start crash, so the restart raced its own 300ms timer
+  // against the health check and lost on slower runners.
   if (process.env.TOP_STATE_DIR && process.env.CRASH_AFTER_START === "1") {
-    setTimeout(() => process.exit(1), 300);
+    const marker = path.join(process.env.TOP_STATE_DIR, "crashed-once");
+    if (!fs.existsSync(marker)) {
+      fs.mkdirSync(path.dirname(marker), { recursive: true });
+      fs.writeFileSync(marker, "1");
+      setTimeout(() => process.exit(1), 300);
+    }
   }
 });
 process.stdin.on("data", (d) => {
