@@ -30,5 +30,12 @@ query OrganizationDashboardIndexPage($slug: String!) {
         activeProjectIds
       }
     }
+    screens(orderBy: [NAME_ASC]) {
+      nodes {
+        id
+        name
+        currentProjectId
+      }
+    }
   }
 }

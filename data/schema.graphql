@@ -2437,6 +2437,47 @@ type DeleteUserMediaPayload {
   success: Boolean!
 }
 
+"""All input for the `duplicateProject` mutation."""
+input DuplicateProjectInput {
+  """
+  An arbitrary string value with no semantic meaning. Will be included in the
+  payload verbatim. May be used to track mutations by the client.
+  """
+  clientMutationId: String
+  name: String
+  projectId: UUID!
+}
+
+"""The output of our `duplicateProject` mutation."""
+type DuplicateProjectPayload {
+  """Reads a single `Category` that is related to this `Project`."""
+  category: Category
+
+  """
+  The exact same `clientMutationId` that was provided in the mutation input,
+  unchanged and unused. May be used by a client to track mutations.
+  """
+  clientMutationId: String
+
+  """Reads a single `User` that is related to this `Project`."""
+  creatorUser: User
+
+  """Reads a single `Organization` that is related to this `Project`."""
+  organization: Organization
+  project: Project
+
+  """An edge for our `Project`. May be used by Relay 1."""
+  projectEdge(
+    """The method to use when ordering `Project`."""
+    orderBy: [ProjectsOrderBy!] = [PRIMARY_KEY_ASC]
+  ): ProjectsEdge
+
+  """
+  Our root query field type. Allows us to run any query from our mutation payload.
+  """
+  query: Query
+}
+
 """All input for the `forgotPassword` mutation."""
 input ForgotPasswordInput {
   """
@@ -3680,6 +3721,16 @@ type Mutation {
     """
     input: DeleteUserMediaInput!
   ): DeleteUserMediaPayload
+
+  """
+  Creates a copy of a project, including its document, tags and media links.
+  """
+  duplicateProject(
+    """
+    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.
+    """
+    input: DuplicateProjectInput!
+  ): DuplicateProjectPayload
 
   """
   If you've forgotten your password, give us one of your email addresses and we'll send you a reset token.

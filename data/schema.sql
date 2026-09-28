@@ -2,16 +2,16 @@
 -- PostgreSQL database dump
 --
 
-\restrict IAY7RZbgt52mSLqh4hpaXH97BwfVCeAoxYoUV84tLRheK0VVdbVa4hyVQpnix0i
+\restrict f4fhotfncgnlSBBu51lAPW6LfNKSeqZtIcSDJijLAX2Lyouw5Ry7FK0N93eVaz4
 
--- Dumped from database version 17.0 (Debian 17.0-1.pgdg120+1)
+-- Dumped from database version 17.4
 -- Dumped by pg_dump version 18.6
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
 SET transaction_timeout = 0;
-SET client_encoding = 'UTF8';
+SET client_encoding = 'SQL_ASCII';
 SET standard_conforming_strings = on;
 SELECT pg_catalog.set_config('search_path', '', false);
 SET check_function_bodies = false;
@@ -2056,6 +2056,88 @@ begin
   return id;
 end;
 $$;
+
+
+--
+-- Name: duplicate_project(uuid, text); Type: FUNCTION; Schema: app_public; Owner: -
+--
+
+CREATE FUNCTION app_public.duplicate_project(project_id uuid, name text DEFAULT NULL::text) RETURNS app_public.projects
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+    AS $$
+declare
+  v_source app_public.projects;
+  v_project app_public.projects;
+  v_name text;
+  v_base_slug citext;
+  v_slug citext;
+  v_suffix int := 1;
+begin
+  select * into v_source from app_public.projects where id = project_id;
+
+  if v_source.id is null then
+    raise exception 'Project not found' using errcode = 'NTFND';
+  end if;
+
+  if v_source.organization_id not in (select app_public.current_user_member_organization_ids()) then
+    raise exception 'You do not have access to this project' using errcode = 'DNIED';
+  end if;
+
+  v_name := coalesce(
+    duplicate_project.name,
+    case when v_source.name = '' then '' else v_source.name || ' (copy)' end
+  );
+
+  v_base_slug := v_source.slug || '-copy';
+  v_slug := v_base_slug;
+
+  while exists(
+    select 1 from app_public.projects
+    where organization_id = v_source.organization_id and slug = v_slug
+  ) loop
+    v_suffix := v_suffix + 1;
+    v_slug := v_base_slug || '-' || v_suffix;
+  end loop;
+
+  insert into app_public.projects (
+    organization_id,
+    creator_user_id,
+    name,
+    slug,
+    category_id,
+    target_date,
+    document
+  ) values (
+    v_source.organization_id,
+    app_public.current_user_id(),
+    v_name,
+    v_slug,
+    v_source.category_id,
+    v_source.target_date,
+    v_source.document
+  ) returning * into v_project;
+
+  insert into app_public.project_tags (project_id, tag_id)
+  select v_project.id, pt.tag_id
+  from app_public.project_tags pt
+  where pt.project_id = v_source.id;
+
+  insert into app_public.project_medias (project_id, media_id, plugin_id)
+  select v_project.id, pm.media_id, pm.plugin_id
+  from app_public.project_medias pm
+  where pm.project_id = v_source.id;
+
+  return v_project;
+end;
+$$;
+
+
+--
+-- Name: FUNCTION duplicate_project(project_id uuid, name text); Type: COMMENT; Schema: app_public; Owner: -
+--
+
+COMMENT ON FUNCTION app_public.duplicate_project(project_id uuid, name text) IS 'Creates a copy of a project, including its document, tags and media links.';
 
 
 --
@@ -7067,6 +7149,14 @@ GRANT ALL ON FUNCTION app_public.delete_screen_guest(id uuid) TO theopenpresente
 
 
 --
+-- Name: FUNCTION duplicate_project(project_id uuid, name text); Type: ACL; Schema: app_public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_public.duplicate_project(project_id uuid, name text) FROM PUBLIC;
+GRANT ALL ON FUNCTION app_public.duplicate_project(project_id uuid, name text) TO theopenpresenter_visitor;
+
+
+--
 -- Name: FUNCTION forgot_password(email public.citext); Type: ACL; Schema: app_public; Owner: -
 --
 
@@ -7951,5 +8041,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE theopenpresenter REVOKE ALL ON FUNCTIONS FROM 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict IAY7RZbgt52mSLqh4hpaXH97BwfVCeAoxYoUV84tLRheK0VVdbVa4hyVQpnix0i
+\unrestrict f4fhotfncgnlSBBu51lAPW6LfNKSeqZtIcSDJijLAX2Lyouw5Ry7FK0N93eVaz4
 
