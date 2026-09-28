@@ -39,6 +39,7 @@ COPY packages/eslint-config/package.json /app/packages/eslint-config/package.jso
 COPY packages/graphql/package.json /app/packages/graphql/package.json
 COPY packages/portable-file/package.json /app/packages/portable-file/package.json
 COPY packages/base-types/package.json /app/packages/base-types/package.json
+COPY packages/desktop-bridge/package.json /app/packages/desktop-bridge/package.json
 COPY packages/lib/package.json /app/packages/lib/package.json
 COPY packages/ai-chat/package.json /app/packages/ai-chat/package.json
 COPY packages/layout/package.json /app/packages/layout/package.json
@@ -99,6 +100,9 @@ RUN yarn workspace @repo/lib build
 
 COPY packages/observability/ /app/packages/observability/
 RUN yarn workspace @repo/observability build
+
+COPY packages/desktop-bridge/ /app/packages/desktop-bridge/
+RUN yarn workspace @repo/desktop-bridge build
 
 COPY backend/backend-shared/ /app/backend/backend-shared/
 RUN yarn workspace @repo/backend-shared build
@@ -242,6 +246,7 @@ COPY --from=builder-core /app/packages/ui/ /app/packages/ui/
 
 COPY --from=builder-core /app/backend/config/ /app/backend/config/
 COPY --from=builder-core /app/packages/observability/ /app/packages/observability/
+COPY --from=builder-core /app/packages/desktop-bridge/ /app/packages/desktop-bridge/
 COPY --from=builder-core /app/packages/portable-file/ /app/packages/portable-file/
 COPY --from=builder-core /app/packages/base-types/ /app/packages/base-types/
 COPY --from=builder-core /app/packages/lib/ /app/packages/lib/

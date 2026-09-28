@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.1.1",
+    "@repo/desktop-bridge": "*",
     "@repo/observability": "*",
     "@tanstack/react-query": "^5.62.3",
     "@tauri-apps/api": "^2.4.1",

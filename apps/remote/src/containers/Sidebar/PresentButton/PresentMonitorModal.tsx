@@ -9,19 +9,18 @@ import {
   OverlayToggle,
   useOverlayToggle,
 } from "@repo/ui";
-import { useMemo } from "react";
 import { useSearch } from "wouter";
 
 import { useRendererSelection } from "../../../contexts/rendererSelection";
 import { onPresentClick } from "./desktopPresent";
-import { useAllWindows } from "./useAllWindows";
 import { useAvailableMonitors } from "./useAvailableMonitors";
+import { usePresentingRenderers } from "./usePresentingRenderers";
 
 const PresentMonitorModal = () => {
   const { isOpen, onToggle } = useOverlayToggle();
 
   const { data: monitors } = useAvailableMonitors();
-  const { refetch: refetchWindow } = useAllWindows();
+  const { refetch: refetchPresenting } = usePresentingRenderers();
 
   const { orgSlug, projectSlug } = usePluginMetaData();
   const search = useSearch();
@@ -34,25 +33,23 @@ const PresentMonitorModal = () => {
           <DialogTitle>Select monitor</DialogTitle>
         </DialogHeader>
         <DialogBody>
-          {monitors?.map((monitor, i) => (
+          {monitors?.map((monitor) => (
             <div
-              key={i}
+              key={monitor.index}
               onClick={async () => {
                 await onPresentClick(
                   orgSlug,
                   projectSlug,
-                  i,
+                  monitor.index,
                   search,
                   selectedRendererId,
                 );
-                setTimeout(async () => {
-                  await refetchWindow();
-                }, 2000);
+                await refetchPresenting();
                 onToggle?.();
               }}
               className="cursor-pointer hover:bg-surface-primary-hover"
             >
-              {monitor.name} | {monitor.size.width}x{monitor.size.height}
+              {monitor.name} | {monitor.width}x{monitor.height}
             </div>
           ))}
         </DialogBody>
@@ -73,30 +70,31 @@ const PresentMonitorModalWrapper = ({
   }) => React.ReactElement;
 }) => {
   const { data: monitors } = useAvailableMonitors();
-  const { data: allWindows, refetch: refetchWindow } = useAllWindows();
-  const rendererWindow = useMemo(
-    () => allWindows?.find((x) => x.label === "renderer"),
-    [allWindows],
-  );
+  const { data: presenting, refetch: refetchPresenting } =
+    usePresentingRenderers();
 
   const { orgSlug, projectSlug } = usePluginMetaData();
   const search = useSearch();
   const { selectedRendererId } = useRendererSelection();
+
+  const isPresenting = (presenting ?? []).includes(selectedRendererId);
 
   return (
     <>
       <OverlayToggle
         toggler={({ onToggle }) => (
           <PresentButtonElement
-            onClick={() => {
+            onClick={async () => {
+              // One monitor means there is nothing to choose between.
               if (monitors?.length === 1) {
-                onPresentClick(
+                await onPresentClick(
                   orgSlug,
                   projectSlug,
                   0,
                   search,
                   selectedRendererId,
                 );
+                await refetchPresenting();
               } else {
                 onToggle();
               }
@@ -107,11 +105,12 @@ const PresentMonitorModalWrapper = ({
         <PresentMonitorModal />
       </OverlayToggle>
 
-      {rendererWindow && (
+      {isPresenting && (
         <StopPresentButtonElement
           onClick={async () => {
-            await rendererWindow.close();
-            await refetchWindow();
+            const { desktop } = await import("@repo/desktop-bridge");
+            await desktop.stopPresenting(selectedRendererId);
+            await refetchPresenting();
           }}
         />
       )}

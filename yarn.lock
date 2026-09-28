@@ -9714,6 +9714,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@repo/desktop-bridge@npm:*, @repo/desktop-bridge@workspace:packages/desktop-bridge":
+  version: 0.0.0-use.local
+  resolution: "@repo/desktop-bridge@workspace:packages/desktop-bridge"
+  dependencies:
+    "@repo/typescript-config": "npm:*"
+    "@tauri-apps/api": "npm:^2.4.1"
+    tsup: "npm:^8.3.6"
+    typescript: "npm:5.9.3"
+  languageName: unknown
+  linkType: soft
+
 "@repo/e2e@workspace:e2e":
   version: 0.0.0-use.local
   resolution: "@repo/e2e@workspace:e2e"
@@ -10446,6 +10457,7 @@ __metadata:
     "@repo/ai-chat": "npm:*"
     "@repo/base-plugin": "npm:*"
     "@repo/config": "npm:*"
+    "@repo/desktop-bridge": "npm:*"
     "@repo/eslint-config": "npm:*"
     "@repo/graphql": "npm:*"
     "@repo/layout": "npm:*"
@@ -10508,6 +10520,7 @@ __metadata:
   dependencies:
     "@hookform/resolvers": "npm:^5.1.1"
     "@repo/base-plugin": "npm:*"
+    "@repo/desktop-bridge": "npm:*"
     "@repo/eslint-config": "npm:*"
     "@repo/graphql": "npm:*"
     "@repo/layout": "npm:*"
@@ -10567,6 +10580,7 @@ __metadata:
     "@fontsource-variable/inter": "npm:^5.1.0"
     "@fontsource-variable/source-sans-3": "npm:^5.1.0"
     "@repo/base-plugin": "npm:*"
+    "@repo/desktop-bridge": "npm:*"
     "@repo/eslint-config": "npm:*"
     "@repo/graphql": "npm:*"
     "@repo/layout": "npm:*"
