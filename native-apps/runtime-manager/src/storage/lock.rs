@@ -26,6 +26,17 @@ pub struct RuntimeLock {
     /// Everyone currently wanting it up, across processes.
     #[serde(default)]
     pub holders: Vec<Holder>,
+    /// The iroh ticket, when remote access is on.
+    #[serde(default)]
+    pub remote: Option<RemoteInfo>,
+}
+
+/// Remote access details, shared across processes via the lock file.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct RemoteInfo {
+    pub ticket: String,
+    pub node_id: String,
+    pub owner_pid: u32,
 }
 
 pub fn lock_path(root: &Path) -> PathBuf {
@@ -56,6 +67,20 @@ pub fn process_alive(pid: u32) -> bool {
 }
 
 /// Read the lock, if one is present and still describes a live runtime.
+/// Record that remote access is on, so other processes can see it.
+pub fn set_remote(root: &Path, info: Option<RemoteInfo>) {
+    let Some(mut lock) = read(root) else {
+        return;
+    };
+    lock.remote = info;
+    let _ = write(root, &lock);
+}
+
+/// Remote access details, if a live process is running a tunnel.
+pub fn remote(root: &Path) -> Option<RemoteInfo> {
+    read(root).and_then(|lock| lock.remote)
+}
+
 pub fn read(root: &Path) -> Option<RuntimeLock> {
     let path = lock_path(root);
     let text = fs::read_to_string(&path).ok()?;
@@ -69,7 +94,18 @@ pub fn read(root: &Path) -> Option<RuntimeLock> {
 
     let before = lock.holders.len();
     lock.holders.retain(|h| process_alive(h.pid));
-    if lock.holders.len() != before {
+
+    // A tunnel belongs to the process that opened it. If that manager is
+    // gone the tunnel went with it, so drop the entry rather than hand out
+    // a ticket that no longer resolves to anything.
+    let remote_before = lock.remote.is_some();
+    if let Some(remote) = &lock.remote {
+        if !process_alive(remote.owner_pid) {
+            lock.remote = None;
+        }
+    }
+
+    if lock.holders.len() != before || remote_before != lock.remote.is_some() {
         let _ = write(root, &lock);
     }
 
@@ -136,6 +172,7 @@ mod tests {
                 pid,
                 name: "test".into(),
             }],
+            remote: None,
         }
     }
 
@@ -226,5 +263,78 @@ mod tests {
         let root = tempfile::tempdir().unwrap();
         fs::write(lock_path(root.path()), "{not json").unwrap();
         assert!(read(root.path()).is_none());
+    }
+
+    /// Remote access is per-runtime, not per-process: a second app sharing a
+    /// running server must see the tunnel the first one opened.
+    #[test]
+    fn remote_details_are_shared_through_the_lock() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+
+        let lock = RuntimeLock {
+            manager_pid: std::process::id(),
+            runtime_pid: Some(std::process::id()),
+            http_port: Some(1234),
+            version: Some("1.0.0".into()),
+            holders: vec![],
+            remote: None,
+        };
+        hold(root, "first", &lock).unwrap();
+
+        set_remote(
+            root,
+            Some(RemoteInfo {
+                ticket: "endpointabc".into(),
+                node_id: "node123".into(),
+                owner_pid: std::process::id(),
+            }),
+        );
+
+        let seen = remote(root).expect("another process should see the tunnel");
+        assert_eq!(seen.ticket, "endpointabc");
+        assert_eq!(seen.node_id, "node123");
+    }
+
+    /// A tunnel dies with the process that opened it, so an entry whose owner
+    /// is gone must not be handed out as a live ticket.
+    #[test]
+    fn a_tunnel_whose_owner_died_is_pruned() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+
+        // A real process that will be gone by the time we read.
+        let mut child = std::process::Command::new("sleep")
+            .arg("30")
+            .spawn()
+            .unwrap();
+        let dead_pid = child.id();
+
+        let lock = RuntimeLock {
+            manager_pid: std::process::id(),
+            runtime_pid: Some(std::process::id()),
+            http_port: Some(1234),
+            version: Some("1.0.0".into()),
+            holders: vec![],
+            remote: None,
+        };
+        hold(root, "holder", &lock).unwrap();
+        set_remote(
+            root,
+            Some(RemoteInfo {
+                ticket: "endpointstale".into(),
+                node_id: "nodestale".into(),
+                owner_pid: dead_pid,
+            }),
+        );
+        assert!(remote(root).is_some(), "should be visible while alive");
+
+        child.kill().unwrap();
+        child.wait().unwrap();
+
+        assert!(
+            remote(root).is_none(),
+            "a ticket from a dead process must not be handed out"
+        );
     }
 }

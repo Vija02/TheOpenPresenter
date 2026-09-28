@@ -40,6 +40,23 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 tempfile = "3"
 
+# Remote access over iroh
+iroh = { version = "1.2", optional = true }
+iroh-base = { version = "1.2", optional = true }
+iroh-tickets = { version = "1.0", optional = true }
+tokio = { version = "1", features = ["rt-multi-thread", "net", "io-util", "sync", "time", "macros"], optional = true }
+tokio-util = { version = "0.7", optional = true }
+
+[features]
+default = ["remote"]
+remote = [
+  "dep:iroh",
+  "dep:iroh-base",
+  "dep:iroh-tickets",
+  "dep:tokio",
+  "dep:tokio-util",
+]
+
 [target.'cfg(unix)'.dependencies]
 libc = "0.2"
 

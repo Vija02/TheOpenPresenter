@@ -48,6 +48,12 @@ pub enum Cli {
         /// Show the previous run's log instead of the current one.
         previous: bool,
     },
+    /// Start peer-to-peer remote access to the running server.
+    RemoteStart,
+    /// Stop remote access
+    RemoteStop,
+    /// Report whether remote access is on, and the ticket if it is.
+    RemoteStatus,
     /// Print usage.
     Help,
     /// Print the version.
@@ -164,6 +170,12 @@ where
             lines: options.lines.unwrap_or(200),
             previous: options.previous,
         },
+        Some("remote") => match positional.get(1).map(String::as_str) {
+            Some("stop") => Cli::RemoteStop,
+            Some("status") | None => Cli::RemoteStatus,
+            Some("start") | Some("on") => Cli::RemoteStart,
+            Some(_) => Cli::RemoteStatus,
+        },
         Some("--version" | "-V" | "version") => Cli::Version,
         Some("--help" | "-h" | "help") => Cli::Help,
         // A shell pipes us commands and passes no subcommand, so a
@@ -215,6 +227,11 @@ SUBCOMMANDS:
     log                Show the runtime log. --follow to keep watching,
                        --lines N for a different amount (default 200),
                        --previous for the run before this one.
+    remote [start|stop|status]
+                       Peer-to-peer access to the running server, for
+                       reaching it from outside the building without port
+                       forwarding. `start` runs in the foreground and
+                       prints a ticket to share.
 
 OPTIONS:
     --root <DIR>       Where runtimes and data live.
@@ -426,5 +443,42 @@ mod tests {
         let parsed = parse_args(&["log", "-f"], true);
         assert!(matches!(parsed.cli, Cli::Log { follow: false, .. }));
         assert!(parsed.options.force);
+    }
+
+    #[test]
+    fn remote_defaults_to_status() {
+        assert!(matches!(
+            parse_args(&["remote"], true).cli,
+            Cli::RemoteStatus
+        ));
+        assert!(matches!(
+            parse_args(&["remote", "status"], true).cli,
+            Cli::RemoteStatus
+        ));
+    }
+
+    #[test]
+    fn remote_start_and_stop() {
+        assert!(matches!(
+            parse_args(&["remote", "start"], true).cli,
+            Cli::RemoteStart
+        ));
+        assert!(matches!(
+            parse_args(&["remote", "on"], true).cli,
+            Cli::RemoteStart
+        ));
+        assert!(matches!(
+            parse_args(&["remote", "stop"], true).cli,
+            Cli::RemoteStop
+        ));
+    }
+
+    /// A typo falls back to status rather than silently starting a tunnel.
+    #[test]
+    fn remote_typo_is_not_a_silent_start() {
+        assert!(matches!(
+            parse_args(&["remote", "sttart"], true).cli,
+            Cli::RemoteStatus
+        ));
     }
 }

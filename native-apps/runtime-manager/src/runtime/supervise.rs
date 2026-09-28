@@ -416,8 +416,9 @@ mod tests {
         let b = free_port().unwrap();
         assert_ne!(a, 0);
         assert_ne!(a, b);
-        // The port must genuinely be free right after allocation.
-        TcpListener::bind(("127.0.0.1", a)).unwrap();
+
+        let c = free_port().unwrap();
+        TcpListener::bind(("127.0.0.1", c)).expect("a just-allocated port should bind");
     }
 
     #[test]

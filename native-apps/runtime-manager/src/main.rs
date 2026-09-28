@@ -407,6 +407,72 @@ fn run(command: cli::Cli, options: cli::Options) -> Result<()> {
             Ok(())
         }
 
+        cli::Cli::RemoteStatus => {
+            let result = manager.handle(Request {
+                id: None,
+                command: Command::RemoteStatus,
+            })?;
+            if options.json {
+                println!("{}", serde_json::to_string_pretty(&result)?);
+            } else if result["enabled"] == true {
+                println!("Remote access is on.");
+                println!("\nTicket:\n{}", result["ticket"].as_str().unwrap_or(""));
+            } else {
+                println!("Remote access is off.");
+            }
+            Ok(())
+        }
+
+        cli::Cli::RemoteStop => {
+            manager.handle(Request {
+                id: None,
+                command: Command::RemoteStop,
+            })?;
+            println!("Remote access stopped.");
+            Ok(())
+        }
+
+        cli::Cli::RemoteStart => {
+            let started = manager.handle(Request {
+                id: None,
+                command: Command::Start {
+                    holder: Some("remote-cli".to_string()),
+                },
+            })?;
+            finish_human_progress();
+
+            let result = manager.handle(Request {
+                id: None,
+                command: Command::RemoteStart,
+            })?;
+
+            let url = started["url"].as_str().unwrap_or("");
+            println!("\nServing {url}");
+            println!("Remote access is on. Share this ticket:\n");
+            println!("{}", result["ticket"].as_str().unwrap_or(""));
+            println!("\nPress Ctrl-C to stop.\n");
+
+            install_interrupt_handler();
+            while !INTERRUPTED.load(std::sync::atomic::Ordering::SeqCst) {
+                manager.pump();
+                std::thread::sleep(Duration::from_millis(200));
+            }
+
+            println!("Stopping…");
+            manager.handle(Request {
+                id: None,
+                command: Command::RemoteStop,
+            })?;
+            manager.handle(Request {
+                id: None,
+                command: Command::Stop {
+                    holder: Some("remote-cli".to_string()),
+                    force: false,
+                },
+            })?;
+            Ok(())
+        }
+
         cli::Cli::Help | cli::Cli::Version => unreachable!("handled in main"),
     }
 }

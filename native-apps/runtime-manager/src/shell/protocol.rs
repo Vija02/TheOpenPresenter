@@ -53,6 +53,12 @@ pub enum Command {
     Paths,
     /// Record that the active runtime migrated the database.
     RecordMigration { schema_version: u32 },
+    /// Start peer-to-peer remote access to the running server.
+    RemoteStart,
+    /// Stop remote access.
+    RemoteStop,
+    /// Report remote access state and the ticket, if any.
+    RemoteStatus,
     /// Exit the manager.
     Shutdown,
 }
