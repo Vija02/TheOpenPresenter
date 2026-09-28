@@ -1311,7 +1311,20 @@ server.listen(port, "127.0.0.1", () => {
     // broken test, and it should not look like a broken product.
     return;
   }
-  setTimeout(() => process.exit(1), 300);
+
+  // Do not die until the manager has actually seen us up, otherwise the
+  // *first* start fails instead of succeeding-then-crashing, which is a
+  // different scenario from the one under test. The manager polls the port
+  // every 250ms, so exiting on a 300ms timer raced that poll and lost on
+  // slower Windows runners. Waiting for a real connection removes the
+  // timing assumption entirely.
+  let seen = false;
+  server.on("connection", () => {
+    if (seen) return;
+    seen = true;
+    // A short delay so the health check completes before the socket dies.
+    setTimeout(() => process.exit(1), 150);
+  });
 });
 process.stdin.on("data", (d) => {
   if (String(d).includes("shutdown")) process.exit(0);
