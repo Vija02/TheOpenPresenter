@@ -94,7 +94,7 @@ function PopoverMenuItem({
   ...props
 }: PopoverMenuItemProps) {
   const sharedClassName = cn(
-    "flex w-full items-start gap-2 px-3 py-2 text-sm text-left rounded transition-colors cursor-pointer hover:bg-surface-primary-hover focus:bg-surface-primary-hover focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed text-primary hover:no-underline",
+    "flex w-full items-start gap-2 px-3 py-2 text-sm text-left rounded transition-colors cursor-pointer hover:bg-surface-primary-hover focus-visible:bg-surface-primary-hover focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed text-primary hover:no-underline",
     className,
   );
 
@@ -156,6 +156,16 @@ function PopoverSubMenu({
   const [open, setOpen] = React.useState(false);
   const closeTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const [isNarrow, setIsNarrow] = React.useState(false);
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    const query = window.matchMedia("(max-width: 767px)");
+    const sync = () => setIsNarrow(query.matches);
+    sync();
+    query.addEventListener("change", sync);
+    return () => query.removeEventListener("change", sync);
+  }, []);
+
   const cancelClose = React.useCallback(() => {
     if (closeTimer.current) {
       clearTimeout(closeTimer.current);
@@ -195,18 +205,27 @@ function PopoverSubMenu({
             <p className="text-xs text-tertiary">{description}</p>
           )}
         </div>
-        <ChevronRightIcon className="shrink-0 size-4 text-tertiary" />
+        <ChevronRightIcon
+          className={cn(
+            "shrink-0 size-4 text-tertiary transition-transform",
+            isNarrow && "rotate-90",
+          )}
+        />
       </PopoverTrigger>
       <PopoverContent
-        side="right"
-        align="start"
-        sideOffset={14}
+        side={isNarrow ? "bottom" : "right"}
+        align={isNarrow ? "center" : "start"}
+        sideOffset={isNarrow ? 4 : 12}
+        collisionPadding={8}
         hideArrow
         hideCloseButton
         onOpenAutoFocus={(e) => e.preventDefault()}
         onMouseEnter={cancelClose}
         onMouseLeave={scheduleClose}
-        className={cn("w-64 p-1", contentClassName)}
+        className={cn(
+          "w-(--radix-popover-trigger-width) sm:w-64 p-1",
+          contentClassName,
+        )}
       >
         {children}
       </PopoverContent>
