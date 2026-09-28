@@ -918,7 +918,7 @@ type CloudConnection {
   """
   organization: Organization
   organizationId: UUID!
-  organizationList: [String]!
+  organizationList: [CloudOrganization!]!
   sessionCookieExpiry: Datetime!
   syncAll: Boolean
   targetOrganizationSlug: String
@@ -1024,6 +1024,11 @@ enum CloudSyncItemStatus {
   PENDING
   SYNCED
   SYNCING
+}
+
+type CloudOrganization {
+  name: String!
+  slug: String!
 }
 
 type CloudSyncRun {

@@ -1,6 +1,6 @@
 import { SharedOrgLayout } from "@/components/SharedOrgLayout";
-import { desktop } from "@repo/desktop-bridge";
 import { useOrganizationSlug } from "@/lib/permissionHooks/organization";
+import { desktop } from "@repo/desktop-bridge";
 import {
   useDeleteCloudConnectionMutation,
   useOrganizationCloudIndexPageQuery,
@@ -695,14 +695,14 @@ const OrganizationCloudPage = () => {
                   </p>
                   <div className="space-y-2">
                     {cloudConnection.organizationList.map(
-                      (orgSlug) =>
-                        orgSlug && (
+                      (org) =>
+                        org && (
                           <Option
-                            key={orgSlug}
-                            onClick={() => onSelectOrganization(orgSlug)}
-                            title={undefined}
-                            description={orgSlug}
-                            testId={`select-org-${orgSlug}`}
+                            key={org.slug}
+                            onClick={() => onSelectOrganization(org.slug)}
+                            title={org.name}
+                            description={org.slug}
+                            testId={`select-org-${org.slug}`}
                           />
                         ),
                     )}
