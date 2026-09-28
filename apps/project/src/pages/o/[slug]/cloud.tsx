@@ -1,4 +1,5 @@
 import { SharedOrgLayout } from "@/components/SharedOrgLayout";
+import { desktop } from "@repo/desktop-bridge";
 import { useOrganizationSlug } from "@/lib/permissionHooks/organization";
 import {
   useDeleteCloudConnectionMutation,
@@ -413,9 +414,8 @@ const OrganizationCloudPage = () => {
             if (data.authLink) {
               if (manual) {
                 setManualAuthLink(data.authLink);
-              } else if (window.__TAURI__) {
-                const { openUrl } = window.__TAURI__.opener;
-                openUrl(data.authLink);
+              } else if (desktop.isDesktop) {
+                void desktop.openExternal(data.authLink);
               } else {
                 popup = window.open(data.authLink, "popup", "popup=true");
                 if (connectionRef.current) {

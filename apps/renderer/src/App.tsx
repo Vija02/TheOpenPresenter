@@ -1,3 +1,4 @@
+import { desktop } from "@repo/desktop-bridge";
 import {
   AudioCheckProvider,
   AwarenessProvider,
@@ -13,7 +14,7 @@ import { Body } from "./Body";
 import { FullscreenButton } from "./FullscreenButton";
 import { Screen } from "./Screen";
 
-const TauriHandler = lazy(() => import("./TauriHandler"));
+const DesktopHandler = lazy(() => import("./DesktopHandler"));
 
 function App() {
   return (
@@ -103,10 +104,10 @@ export const AppInner = ({
       tabIndex={0}
       onKeyDown={handleKeyPress}
     >
-      {window.__TAURI_INTERNALS__ ? (
-        <TauriHandler>
+      {desktop.isDesktop ? (
+        <DesktopHandler>
           <Body hostElementId={hostElementId} />
-        </TauriHandler>
+        </DesktopHandler>
       ) : (
         <>
           <Body hostElementId={hostElementId} />

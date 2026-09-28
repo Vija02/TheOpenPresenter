@@ -1,3 +1,4 @@
+import { desktop } from "@repo/desktop-bridge";
 import {
   useOrganizationScreensIndexPageQuery,
   useSetExistingProjectToScreenMutation,
@@ -40,7 +41,7 @@ export const PresentButton = ({ isMobile }: { isMobile?: boolean }) => {
   const search = useSearch();
   const { selectedRendererId } = useRendererSelection();
 
-  if (window.__TAURI_INTERNALS__) {
+  if (desktop.isDesktop) {
     const PresentButtonElement = ({ onClick }: { onClick?: () => void }) => (
       <Button
         className={cx(["rt--present-button"])}

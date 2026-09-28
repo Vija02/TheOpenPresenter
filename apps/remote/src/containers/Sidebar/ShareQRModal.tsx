@@ -1,3 +1,4 @@
+import { desktop } from "@repo/desktop-bridge";
 import { useUpdateProjectMutation } from "@repo/graphql";
 import { usePluginMetaData } from "@repo/shared";
 import {
@@ -12,7 +13,6 @@ import {
   Label,
   useOverlayToggle,
 } from "@repo/ui";
-import { core } from "@tauri-apps/api";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import QRCode from "react-qr-code";
 import { toast } from "react-toastify";
@@ -44,18 +44,14 @@ const ShareQRModal = () => {
   );
 
   useEffect(() => {
-    if (window.__TAURI_INTERNALS__ && isOpen) {
-      core.invoke<string | null>("get_local_ip").then((ip) => {
-        setLocalIp(ip);
-      });
-    }
+    if (!isOpen) return;
+    desktop.localIp().then(setLocalIp);
   }, [isOpen]);
 
   const shareUrl = useMemo(() => {
     let origin = window.location.origin;
 
-    // If running in Tauri and localhost, replace with local IP
-    if (window.__TAURI_INTERNALS__ && localIp) {
+    if (localIp) {
       const url = new URL(origin);
       if (url.hostname === "localhost" || url.hostname === "127.0.0.1") {
         url.hostname = localIp;
@@ -84,7 +80,7 @@ const ShareQRModal = () => {
                 value={shareUrl}
               />
             </div>
-            {window.__TAURI_INTERNALS__ && (
+            {desktop.isDesktop && (
               <p className="text-xs text-muted break-all text-center">
                 {shareUrl}
               </p>

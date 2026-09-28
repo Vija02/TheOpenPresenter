@@ -1,5 +1,5 @@
+import { desktop } from "@repo/desktop-bridge";
 import { captureEvent } from "@repo/observability/initAnalytics";
-import { core } from "@tauri-apps/api";
 
 export const onPresentClick = async (
   orgSlug: string,
@@ -14,10 +14,11 @@ export const onPresentClick = async (
     ? `${basePath}?${search}&${rendererParam}`
     : `${basePath}?${rendererParam}`;
 
-  await core.invoke("open_renderer", {
-    url: window.location.origin + fullPath,
-    mindex: monitorIndex,
-  });
+  await desktop.present(
+    window.location.origin + fullPath,
+    monitorIndex,
+    rendererId,
+  );
 
   captureEvent("presented", {
     present_type: "desktop_monitor",
