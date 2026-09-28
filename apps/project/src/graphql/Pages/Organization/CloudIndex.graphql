@@ -8,7 +8,10 @@ query OrganizationCloudIndexPage($slug: String!) {
         id
         host
         syncAll
-        organizationList
+        organizationList {
+          slug
+          name
+        }
         targetOrganizationSlug
         sessionCookieExpiry
         cloudSyncRuns(orderBy: CREATED_AT_DESC, first: 1) {
