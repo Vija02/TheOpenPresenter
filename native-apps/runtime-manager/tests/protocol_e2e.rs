@@ -294,6 +294,18 @@ fn fixture() -> (tempfile::TempDir, tempfile::TempDir, SigningKey, String) {
     )
 }
 
+/// Wait for a port to stop accepting connections.
+fn wait_until_closed(port: u64, timeout: std::time::Duration) -> bool {
+    let deadline = std::time::Instant::now() + timeout;
+    while std::time::Instant::now() < deadline {
+        if std::net::TcpStream::connect(format!("127.0.0.1:{port}")).is_err() {
+            return true;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(50));
+    }
+    false
+}
+
 #[test]
 fn the_shell_can_install_and_launch_a_runtime_over_the_protocol() {
     let (root, cdn, key, pubkey) = fixture();
@@ -1267,29 +1279,39 @@ fn a_crashed_runtime_is_restarted_not_reused() {
     // Exits on its own shortly after announcing, simulating a crash that
     // happens once the manager already considers it up.
     let server = br#"
+import fs from "node:fs";
 import http from "node:http";
+import path from "node:path";
+
 const port = Number(process.env.TOP_HTTP_PORT);
 const server = http.createServer((req, res) => {
   res.writeHead(200);
   res.end("ok");
 });
-import fs from "node:fs";
-import path from "node:path";
 
 server.listen(port, "127.0.0.1", () => {
   console.log("TOP_LISTENING " + port);
-  // Crash once, not every time. A marker on disk survives the process, so
-  // the restart runs the same binary and stays up. Keying this on an env
-  // var made every start crash, so the restart raced its own 300ms timer
-  // against the health check and lost on slower runners.
-  if (process.env.TOP_STATE_DIR && process.env.CRASH_AFTER_START === "1") {
-    const marker = path.join(process.env.TOP_STATE_DIR, "crashed-once");
-    if (!fs.existsSync(marker)) {
-      fs.mkdirSync(path.dirname(marker), { recursive: true });
-      fs.writeFileSync(marker, "1");
-      setTimeout(() => process.exit(1), 300);
-    }
+
+  // Crash once, not on every start. Keying this on an env var alone made
+  // every start crash, so the restart raced its own timer against the
+  // health check and lost on slower runners.
+  //
+  // TOP_STATE_DIR is created by the manager before it spawns anything
+  // (Layout::ensure), so this only writes a file. The earlier version
+  // called mkdirSync here, which on Windows raced that same setup.
+  if (process.env.CRASH_AFTER_START !== "1") return;
+  if (!process.env.TOP_STATE_DIR) return;
+
+  const marker = path.join(process.env.TOP_STATE_DIR, "crashed-once");
+  try {
+    if (fs.existsSync(marker)) return;
+    fs.writeFileSync(marker, "1");
+  } catch {
+    // Staying up beats crash-looping: a failure to write the marker is a
+    // broken test, and it should not look like a broken product.
+    return;
   }
+  setTimeout(() => process.exit(1), 300);
 });
 process.stdin.on("data", (d) => {
   if (String(d).includes("shutdown")) process.exit(0);
@@ -1323,6 +1345,14 @@ process.stdin.resume();
     // Let it die, leaving the holder set populated: the state a crash
     // leaves behind.
     std::thread::sleep(std::time::Duration::from_millis(900));
+
+    // The crash path must have actually run. Without this the test still
+    // passes when the marker write silently fails and nothing ever
+    // crashes, which is exactly the hole the previous version fell into.
+    assert!(
+        root.path().join("data").join("crashed-once").exists(),
+        "the fake server should have written its crash marker"
+    );
 
     let second = manager.request(3, serde_json::json!({"cmd": "start", "holder": "window"}));
     assert_eq!(
@@ -1482,18 +1512,22 @@ fn shutdown_leaves_a_runtime_another_process_is_using() {
         "the runtime is still held by the cli: {bye}"
     );
     drop(app);
-    std::thread::sleep(std::time::Duration::from_millis(600));
 
+    // Give the app a moment to actually be gone, then prove the server is
+    // still there. This one stays a sleep: there is no event to wait for,
+    // and polling for "still up" would pass instantly either way.
+    std::thread::sleep(std::time::Duration::from_millis(600));
     assert!(
         std::net::TcpStream::connect(format!("127.0.0.1:{port}")).is_ok(),
         "the server must survive the app that started it quitting"
     );
 
-    // And the last holder leaving does stop it.
+    // And the last holder leaving does stop it. Polled rather than slept
+    // on: Windows tears a listener down more slowly than Linux, and a
+    // fixed 600ms wait failed on CI while passing locally.
     cli.request(2, serde_json::json!({"cmd": "stop", "holder": "cli"}));
-    std::thread::sleep(std::time::Duration::from_millis(600));
     assert!(
-        std::net::TcpStream::connect(format!("127.0.0.1:{port}")).is_err(),
+        wait_until_closed(port, std::time::Duration::from_secs(20)),
         "the last holder leaving should stop the server"
     );
 }
