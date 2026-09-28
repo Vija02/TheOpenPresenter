@@ -1,5 +1,6 @@
-import { Express } from "express";
+import { Express, RequestHandler } from "express";
 
+import { getWebsocketMiddlewares } from "../app";
 import { getRootPgPool } from "./installDatabasePools";
 
 const defaultUsername = "autologin";
@@ -8,7 +9,7 @@ const defaultEmail = "autologin@theopenpresenter.com";
 
 export default (app: Express) => {
   if (process.env.AUTO_LOGIN === "1") {
-    app.use(async (req, _res, next) => {
+    const autoLoginMiddleware: RequestHandler = async (req, _res, next) => {
       const login = (user: any) =>
         new Promise<void>((resolve, reject) => {
           req.login(user, { session: true, keepSessionInfo: true }, (err) =>
@@ -75,6 +76,9 @@ export default (app: Express) => {
       }
 
       next();
-    });
+    };
+
+    app.use(autoLoginMiddleware);
+    getWebsocketMiddlewares(app).push(autoLoginMiddleware);
   }
 };
