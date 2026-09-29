@@ -492,10 +492,10 @@ impl Manager {
 
         let deadline = startup_timeout();
         let ready = {
-            // Poll the port, but stop early if the process dies
+            // Poll the port in short slices, so a process that dies is noticed
             let start = std::time::Instant::now();
             loop {
-                if wait_for_http(config.http_port, Duration::from_millis(500)) {
+                if wait_for_http(config.http_port, Duration::from_millis(100)) {
                     break true;
                 }
                 if self.supervisor.as_ref().map(|s| s.exited()).unwrap_or(true) {

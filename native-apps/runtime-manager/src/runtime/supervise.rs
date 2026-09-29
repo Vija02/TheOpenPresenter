@@ -372,7 +372,7 @@ pub fn wait_for_http(port: u16, timeout: Duration) -> bool {
         if TcpStream::connect(&addr).is_ok() {
             return true;
         }
-        std::thread::sleep(Duration::from_millis(250));
+        std::thread::sleep(Duration::from_millis(50));
     }
     false
 }
