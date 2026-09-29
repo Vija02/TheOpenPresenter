@@ -24,6 +24,7 @@ export default defineConfig({
       "**/loadedPlugins/**",
       "**/tauri/node-server/theopenpresenter/**",
       "**/tauri/target/**",
+      "**/native-apps/**",
     ],
   },
 });
