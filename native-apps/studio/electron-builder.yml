@@ -7,6 +7,10 @@ directories:
 files:
   - out/**
   - package.json
+publish:
+  provider: github
+  owner: Vija02
+  repo: TheOpenPresenter
 extraResources:
   - from: packaging/icon.png
     to: icon.png

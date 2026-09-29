@@ -133,6 +133,7 @@ jobs:
             native-apps/studio/dist/*.deb
             native-apps/studio/dist/*.rpm
             native-apps/studio/dist/*.tar.gz
+            native-apps/studio/dist/latest*.yml
           if-no-files-found: warn
 
   smoke-test:
@@ -208,17 +209,21 @@ jobs:
           body: "Nightly build of the TheOpenPresenter desktop app."
           files: |
             artifacts/**/*.dmg
+            artifacts/**/*.zip
             artifacts/**/*.exe
             artifacts/**/*.AppImage
             artifacts/**/*.deb
             artifacts/**/*.rpm
+            artifacts/**/latest*.yml
       - name: Tagged release
         uses: softprops/action-gh-release@v2
         if: github.ref_type == 'tag'
         with:
           files: |
             artifacts/**/*.dmg
+            artifacts/**/*.zip
             artifacts/**/*.exe
             artifacts/**/*.AppImage
             artifacts/**/*.deb
             artifacts/**/*.rpm
+            artifacts/**/latest*.yml
