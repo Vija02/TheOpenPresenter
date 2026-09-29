@@ -176,7 +176,7 @@ impl Layout {
         Ok(())
     }
 
-    /// Versions currently installed, as directory names.
+    /// Installed runtimes, newest first.
     pub fn installed_versions(&self) -> Vec<String> {
         let Ok(entries) = std::fs::read_dir(self.runtimes_dir()) else {
             return Vec::new();
@@ -186,7 +186,7 @@ impl Layout {
             .filter(|e| e.path().is_dir())
             .filter_map(|e| e.file_name().into_string().ok())
             .collect();
-        out.sort();
+        crate::storage::version::sort_newest_first(&mut out);
         out
     }
 }
@@ -390,6 +390,23 @@ mod tests {
         layout.ensure().unwrap();
         std::fs::create_dir_all(layout.runtime_dir("1.9.0")).unwrap();
         std::fs::create_dir_all(layout.runtime_dir("1.8.3")).unwrap();
-        assert_eq!(layout.installed_versions(), vec!["1.8.3", "1.9.0"]);
+        // Newest first, so the list reads the way a version list should.
+        assert_eq!(layout.installed_versions(), vec!["1.9.0", "1.8.3"]);
+    }
+
+    /// Directory order would put `0.0.10` before `0.0.2`, burying the newest
+    /// install partway down the list.
+    #[test]
+    fn installed_versions_sorts_numerically() {
+        let tmp = tempfile::tempdir().unwrap();
+        let layout = Layout::new(tmp.path());
+        layout.ensure().unwrap();
+        for version in ["0.0.2", "0.0.10", "0.0.9"] {
+            std::fs::create_dir_all(layout.runtime_dir(version)).unwrap();
+        }
+        assert_eq!(
+            layout.installed_versions(),
+            vec!["0.0.10", "0.0.9", "0.0.2"]
+        );
     }
 }
