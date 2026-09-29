@@ -1,0 +1,224 @@
+name: Studio app
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+  pull_request:
+    paths:
+      - "native-apps/studio/**"
+      - "native-apps/runtime-manager/**"
+      - "packages/desktop-bridge/**"
+      - ".github/workflows/desktop.yml"
+  workflow_dispatch:
+
+jobs:
+  runtime-manager-tests:
+    name: Runtime manager tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: native-apps/runtime-manager
+      - name: Format
+        working-directory: native-apps/runtime-manager
+        run: cargo fmt --check
+      - name: Clippy
+        working-directory: native-apps/runtime-manager
+        run: cargo clippy --all-targets -- -D warnings
+      - name: Test
+        working-directory: native-apps/runtime-manager
+        run: cargo test --all-targets
+      - name: Type-check platform-specific code paths
+        working-directory: native-apps/runtime-manager
+        run: cargo run --example platform_shapes
+
+  build:
+    name: Build (${{ matrix.platform }})
+    needs: runtime-manager-tests
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: ubuntu-latest
+            rust_target: x86_64-unknown-linux-gnu
+          - platform: macos-latest
+            rust_target: aarch64-apple-darwin
+          - platform: windows-latest
+            rust_target: x86_64-pc-windows-msvc
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.rust_target }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: native-apps/runtime-manager
+
+      # The sidecar must exist before electron-builder packages the app
+      - name: Build the runtime manager sidecar
+        working-directory: native-apps/runtime-manager
+        shell: bash
+        env:
+          TOP_RUNTIME_PUBKEY: ${{ secrets.RUNTIME_PUBLIC_KEY }}
+        run: cargo build --release --target ${{ matrix.rust_target }}
+
+      - name: Stage the sidecar
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p native-apps/studio/resources
+          SRC="native-apps/runtime-manager/target/${{ matrix.rust_target }}/release"
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            cp "$SRC/top-runtime-manager.exe" native-apps/studio/resources/
+          else
+            cp "$SRC/top-runtime-manager" native-apps/studio/resources/
+            chmod +x native-apps/studio/resources/top-runtime-manager
+          fi
+          ls -la native-apps/studio/resources
+
+      - name: Install shell dependencies
+        working-directory: native-apps/studio
+        run: npm ci || npm install
+
+      - name: Typecheck
+        working-directory: native-apps/studio
+        run: npm run typecheck
+
+      # These drive the real manager binary over the real protocol, which is
+      # the only thing that catches the two halves drifting apart.
+      - name: Test
+        working-directory: native-apps/studio
+        shell: bash
+        run: |
+          # The integration test expects a debug build alongside the release one.
+          (cd ../runtime-manager && cargo build)
+          npm test
+
+      - name: Build and package
+        working-directory: native-apps/studio
+        shell: bash
+        env:
+          CSC_LINK: ${{ secrets.APPLE_CERTIFICATE }}
+          CSC_KEY_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: npm run dist
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-${{ matrix.platform }}
+          path: |
+            native-apps/studio/dist/*.dmg
+            native-apps/studio/dist/*.zip
+            native-apps/studio/dist/*.exe
+            native-apps/studio/dist/*.AppImage
+            native-apps/studio/dist/*.deb
+            native-apps/studio/dist/*.rpm
+            native-apps/studio/dist/*.tar.gz
+          if-no-files-found: warn
+
+  smoke-test:
+    name: Smoke test (Linux)
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: native-apps/runtime-manager
+      - uses: actions/download-artifact@v4
+        with:
+          name: desktop-ubuntu-latest
+          path: artifact
+
+      - name: Extract and probe the sidecar
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          TARBALL=$(find artifact -name '*.tar.gz' | head -1)
+          [ -n "$TARBALL" ] || { echo 'No tar.gz artifact found'; exit 1; }
+
+          mkdir -p unpacked
+          tar -xzf "$TARBALL" -C unpacked --strip-components=1
+
+          MANAGER=$(find unpacked -name 'top-runtime-manager' -type f | head -1)
+          [ -n "$MANAGER" ] || {
+            echo 'The packaged app does not contain the runtime manager sidecar.'
+            echo 'Contents of resources:'
+            find unpacked -maxdepth 2 -name 'resources' -exec ls -la {} \;
+            exit 1
+          }
+          chmod +x "$MANAGER"
+
+          # No TOP_RUNTIME_PUBKEY here on purpose. The shipped binary must
+          # carry its signing key baked in; if it does not, it exits before
+          # reading a command and this is where we find out, rather than a
+          # user discovering offline mode is dead.
+          OUT=$(printf '%s\n' \
+            '{"id":1,"cmd":"status"}' \
+            '{"cmd":"shutdown"}' \
+            | "$MANAGER" --root "$RUNNER_TEMP/rt" --source "$RUNNER_TEMP/none")
+
+          echo "$OUT"
+          echo "$OUT" | grep -q '"ok":true' || {
+            echo 'The packaged sidecar did not answer a status request.'
+            exit 1
+          }
+          echo 'Smoke test passed: the shipped sidecar speaks its protocol.'
+
+  release:
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    needs: [build, smoke-test]
+    if: github.ref == 'refs/heads/main' || github.ref_type == 'tag'
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - name: Update nightly release
+        uses: andelf/nightly-release@main
+        if: github.ref == 'refs/heads/main'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: desktop-nightly
+          name: "TheOpenPresenter Desktop Nightly $$"
+          prerelease: true
+          body: "Nightly build of the TheOpenPresenter desktop app."
+          files: |
+            artifacts/**/*.dmg
+            artifacts/**/*.exe
+            artifacts/**/*.AppImage
+            artifacts/**/*.deb
+            artifacts/**/*.rpm
+      - name: Tagged release
+        uses: softprops/action-gh-release@v2
+        if: github.ref_type == 'tag'
+        with:
+          files: |
+            artifacts/**/*.dmg
+            artifacts/**/*.exe
+            artifacts/**/*.AppImage
+            artifacts/**/*.deb
+            artifacts/**/*.rpm
