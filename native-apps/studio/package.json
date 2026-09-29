@@ -1,8 +1,8 @@
 {
-  "name": "desktop",
+  "name": "studio",
   "private": true,
-  "version": "0.1.0",
-  "description": "TheOpenPresenter desktop app",
+  "version": "1.0.0",
+  "description": "TheOpenPresenter studio app",
   "homepage": "https://theopenpresenter.com",
   "author": {
     "name": "TheOpenPresenter",
@@ -10,7 +10,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/TheOpenPresenter/TheOpenPresenter.git"
+    "url": "https://github.com/Vija02/TheOpenPresenter.git"
   },
   "main": "out/main/index.js",
   "scripts": {
@@ -24,6 +24,7 @@
     "prepare:sidecar": "node scripts/prepare-sidecar.cjs"
   },
   "dependencies": {
+    "electron-updater": "^6.8.9",
     "qrcode.react": "^4.2.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",

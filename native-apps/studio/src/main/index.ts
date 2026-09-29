@@ -11,6 +11,7 @@ import {
 } from "./settings/store";
 import { setupMenu } from "./shell/menu";
 import { setupTray } from "./shell/tray";
+import { isInstallingUpdate, setupUpdates } from "./shell/updates";
 import {
   closeAllPresentWindows,
   closeLoadingWindow,
@@ -95,6 +96,7 @@ if (!gotLock) {
     registerIPC();
     setupMenu();
     setupTray();
+    setupUpdates();
     forwardRuntimeEvents();
 
     screen.on("display-added", repositionPresentWindows);
@@ -116,6 +118,10 @@ if (!gotLock) {
   // its port and breaks the next launch.
   let shuttingDown = false;
   app.on("before-quit", (event) => {
+    // An update install shuts the runtime down itself, then calls
+    // `quitAndInstall`. Replacing that with a plain `app.quit()` here would
+    // restart the app on the old version.
+    if (isInstallingUpdate()) return;
     if (shuttingDown || !runtime.isRunning) return;
     event.preventDefault();
     shuttingDown = true;

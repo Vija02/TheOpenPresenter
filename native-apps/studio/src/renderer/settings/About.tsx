@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 import { type AboutInfo, api } from "../bridge/ipc";
 import { Logo } from "../shared/Logo";
+import { AppUpdate } from "./AppUpdate";
 
 export function About() {
   const [info, setInfo] = useState<AboutInfo | null>(null);
@@ -36,6 +37,8 @@ export function About() {
       <Logo className="about-mark" />
       <h2>TheOpenPresenter</h2>
       <p className="muted">Version {info?.appVersion ?? "…"}</p>
+
+      <AppUpdate />
 
       <div className="about-group">
         <h3>Connection</h3>

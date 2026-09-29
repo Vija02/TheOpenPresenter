@@ -89,6 +89,15 @@ export type Account = {
   email: string | null;
 };
 
+/** How an app update is progressing. Mirrors `shell/updates.ts`. */
+export type UpdateState =
+  | { status: "idle" }
+  | { status: "checking" }
+  | { status: "downloading"; percent: number }
+  | { status: "ready"; version: string }
+  | { status: "unsupported"; reason: string }
+  | { status: "error"; message: string };
+
 export type ProgressPayload = {
   phase: string;
   done: number;
@@ -237,6 +246,11 @@ export const api = {
 
   /** Versions and connection, for the About panel. */
   aboutInfo: () => invoke<AboutInfo>("app:about"),
+
+  /** App update state, and the two things a user can do about it. */
+  updateState: () => invoke<UpdateState>("update:state"),
+  checkForUpdate: () => invoke<UpdateState>("update:check"),
+  installUpdate: () => invoke<void>("update:install"),
   openWebsite: () => invoke<void>("app:website"),
   copyText: (text: string) => invoke<void>("app:copy-text", text),
 
