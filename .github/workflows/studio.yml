@@ -110,6 +110,10 @@ jobs:
           (cd ../runtime-manager && cargo build)
           npm test
 
+      - name: Install Linux packaging tools
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libarchive-tools
+
       - name: Build and package
         working-directory: native-apps/studio
         shell: bash
@@ -132,6 +136,7 @@ jobs:
             native-apps/studio/dist/*.AppImage
             native-apps/studio/dist/*.deb
             native-apps/studio/dist/*.rpm
+            native-apps/studio/dist/*.pacman
             native-apps/studio/dist/*.tar.gz
             native-apps/studio/dist/latest*.yml
           if-no-files-found: warn
@@ -214,6 +219,7 @@ jobs:
             artifacts/**/*.AppImage
             artifacts/**/*.deb
             artifacts/**/*.rpm
+            artifacts/**/*.pacman
             artifacts/**/latest*.yml
       - name: Tagged release
         uses: softprops/action-gh-release@v2
@@ -226,4 +232,5 @@ jobs:
             artifacts/**/*.AppImage
             artifacts/**/*.deb
             artifacts/**/*.rpm
+            artifacts/**/*.pacman
             artifacts/**/latest*.yml

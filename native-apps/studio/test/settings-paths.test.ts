@@ -1,4 +1,4 @@
-import { join } from "node:path";
+import { join, relative } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { chromiumDir, runtimeRoot, shellDir } from "../src/main/settings/paths";
@@ -50,9 +50,17 @@ describe("runtimeRoot", () => {
     expect(chromiumDir()).toBe(join("/tmp/some-root", "electron", "chromium"));
   });
 
-  /** The cookie jar has to move with the install it belongs to. */
+  /**
+   * The cookie jar has to move with the install it belongs to.
+   *
+   * Compared with `relative` rather than `startsWith`: on Windows `join`
+   * normalises to backslashes while the raw env value keeps forward slashes,
+   * so a string prefix check fails on a path that is genuinely inside.
+   */
   it("puts Chromium state inside the runtime root", () => {
     process.env.TOP_RUNTIME_ROOT = "/tmp/some-root";
-    expect(chromiumDir().startsWith(runtimeRoot())).toBe(true);
+    const rel = relative(runtimeRoot(), chromiumDir());
+    expect(rel.startsWith("..")).toBe(false);
+    expect(rel).not.toBe("");
   });
 });
