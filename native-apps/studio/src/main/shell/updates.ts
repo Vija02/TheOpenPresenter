@@ -36,7 +36,7 @@ export function updateSupport(): { supported: boolean; reason: string } {
   if (!app.isPackaged) {
     return {
       supported: false,
-      reason: "Updates only apply to an installed app.",
+      reason: "Unable to update this installation automatically.",
     };
   }
   if (process.platform === "linux" && !process.env.APPIMAGE) {
