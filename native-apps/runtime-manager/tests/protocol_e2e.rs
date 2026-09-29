@@ -201,9 +201,7 @@ impl Manager {
             .arg("--source")
             .arg(cdn)
             .env("TOP_RUNTIME_PUBKEY", pubkey_b64)
-            // Fixture runtimes exit immediately instead of serving, so the
-            // real five-minute startup wait would stall the suite.
-            .env("TOP_RUNTIME_START_TIMEOUT", "3");
+            .env("TOP_RUNTIME_START_TIMEOUT", "30");
         for (key, value) in extra {
             command.env(key, value);
         }
@@ -790,7 +788,16 @@ fn a_runtime_that_dies_on_startup_is_reported_promptly() {
         )],
     );
 
-    let mut manager = Manager::start(root.path(), cdn.path(), &pubkey);
+    // A long budget on purpose: the point is that a dead process is noticed by
+    // watching the process, not by waiting out the timeout. If detection ever
+    // regresses to timeout-based, this takes 30s and the assertion below fails
+    // loudly, rather than passing because the budget happened to be short.
+    let mut manager = Manager::start_with_env(
+        root.path(),
+        cdn.path(),
+        &pubkey,
+        &[("TOP_RUNTIME_START_TIMEOUT", "30")],
+    );
     manager.request(
         1,
         serde_json::json!({"cmd": "ensure", "channel": "stable", "activate": true}),
