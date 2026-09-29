@@ -11,7 +11,7 @@ on:
       - "native-apps/studio/**"
       - "native-apps/runtime-manager/**"
       - "packages/desktop-bridge/**"
-      - ".github/workflows/desktop.yml"
+      - ".github/workflows/studio.yml"
   workflow_dispatch:
 
 jobs:
@@ -160,7 +160,13 @@ jobs:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-        run: npm run dist
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ] && [ "${{ runner.os }}" = "Linux" ]; then
+            npm run build
+            npx electron-builder --linux tar.gz --publish never
+          else
+            npm run dist
+          fi
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -234,10 +240,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: native-apps/runtime-manager
       - uses: actions/download-artifact@v4
         with:
           name: desktop-ubuntu-latest
