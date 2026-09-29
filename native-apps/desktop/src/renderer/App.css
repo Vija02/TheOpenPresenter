@@ -1,0 +1,910 @@
+:root {
+  color-scheme: dark;
+  --bg: #111111;
+  --panel: #1b1b1b;
+  --panel-hover: #232323;
+  --stroke: #303030;
+  --text: #f2f2f2;
+  --muted: #9a9a9a;
+  --accent: #4c8dff;
+  --danger: #ff6b6b;
+  --warn: #ffb020;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif;
+  font-size: 14px;
+}
+
+.shell {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 48px 24px;
+}
+
+.shell-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 32px;
+}
+
+.shell-header h1 {
+  font-size: 20px;
+  margin: 0;
+}
+
+h2 {
+  font-size: 16px;
+  margin: 0 0 8px;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.small {
+  font-size: 12px;
+}
+
+.warn {
+  color: var(--warn);
+}
+
+.error {
+  color: var(--danger);
+  border: 1px solid var(--danger);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 16px;
+}
+
+.onboarding {
+  max-width: 460px;
+  margin: 0 auto;
+}
+
+.onboarding h2 {
+  margin: 0 0 6px;
+  font-size: 22px;
+}
+
+/* Centred logo and title, so the first screen reads as a welcome rather
+   than as a form. */
+.hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 4px;
+  margin-bottom: 28px;
+}
+
+.hero svg {
+  margin-bottom: 12px;
+}
+
+.onboarding .primary {
+  width: 100%;
+  margin: 20px 0 8px;
+}
+
+/* The role question: two large targets, because this is the one choice
+   that changes what the app does. */
+.choices {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 20px 0 12px;
+}
+
+.choice {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 14px 16px;
+  text-align: left;
+  border: 1px solid var(--stroke);
+  border-radius: 8px;
+  background: var(--panel);
+  cursor: pointer;
+}
+
+.choice:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+/* The "another server" option is a container for a form, not a button, so it
+   must not look clickable or light up on hover. */
+.choice-static,
+.choice-static:hover {
+  cursor: default;
+  border-color: var(--stroke);
+}
+
+/* Radio semantics, not toggles: exactly one applies, and the selected one
+   needs to read as chosen at a glance rather than merely hovered. */
+.choice[aria-checked="true"] {
+  border-color: var(--accent);
+  background: var(--panel-hover);
+}
+
+.choice-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.choice-tag {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--accent);
+  color: #0b1b3a;
+  font-weight: 600;
+}
+
+.choice-title {
+  font-weight: 600;
+}
+
+.choice-note {
+  font-size: 13px;
+  opacity: 0.7;
+}
+
+.field {
+  display: block;
+  margin: 16px 0 4px;
+}
+
+.field span {
+  display: block;
+  font-size: 13px;
+  opacity: 0.8;
+  margin-bottom: 4px;
+}
+
+.field input,
+.field select {
+  width: 100%;
+}
+
+/* The advanced disclosure sits between the choices and Continue, so it
+   needs to read as secondary to both. */
+.advanced-toggle {
+  display: block;
+  margin: 4px 0 0;
+  font-size: 13px;
+}
+
+.advanced-panel {
+  margin-top: 8px;
+  padding: 12px 14px;
+  border: 1px solid var(--stroke);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.advanced-panel .field {
+  margin-top: 0;
+}
+
+.advanced-panel p {
+  margin: 8px 0 0;
+}
+
+/* A management panel, reached from the menu rather than onboarding. Wider
+   and left-aligned: this is a list of facts and actions, not a decision. */
+.panel-body {
+  max-width: 560px;
+  margin: 0 auto;
+  /* Less at the top than the sides: a panel window has its own title bar,
+     so a deep gap above the heading just wastes the window. */
+  padding: 16px 24px 32px;
+  text-align: left;
+}
+
+.panel-body h3 {
+  margin: 28px 0 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.versions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--stroke);
+  border-radius: 8px;
+}
+
+.versions li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+}
+
+.versions li + li {
+  border-top: 1px solid var(--stroke);
+}
+
+/* Distinct from .error, which is a whole-screen failure: .problem is one
+   action that did not work, shown next to what the user just clicked. */
+.problem {
+  margin-top: 16px;
+  color: var(--danger, #e06c6c);
+  font-size: 13px;
+}
+
+/* Secondary actions share a row rather than stacking, so neither reads as
+   a step in the flow. */
+.link-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 4px;
+}
+
+.link-row:only-child,
+.link-row > :only-child {
+  justify-content: flex-start;
+}
+
+/* Background download: present but never the focus. */
+.download-status {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--stroke);
+  font-size: 13px;
+  opacity: 0.75;
+}
+
+.download-status.warn {
+  opacity: 1;
+  color: var(--warn, #b8860b);
+}
+
+.download-status .bar {
+  height: 3px;
+  border-radius: 2px;
+  background: var(--stroke);
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.download-status .bar-fill {
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.3s ease;
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 16px 0;
+  flex-wrap: wrap;
+}
+
+input,
+select {
+  flex: 1;
+  min-width: 220px;
+  background: var(--panel);
+  border: 1px solid var(--stroke);
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: inherit;
+  font: inherit;
+}
+
+input:disabled,
+select:disabled {
+  opacity: 0.6;
+}
+
+button {
+  background: var(--panel);
+  border: 1px solid var(--stroke);
+  border-radius: 8px;
+  padding: 10px 16px;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+  background: var(--panel-hover);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+button.link {
+  background: none;
+  border: none;
+  color: var(--accent);
+  padding: 0;
+}
+
+/* The one action a screen wants you to take. */
+.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #0b1b3a;
+  font-weight: 600;
+}
+
+.primary:hover:not(:disabled) {
+  filter: brightness(1.08);
+  background: var(--accent);
+}
+
+/* A real action, but not the one being suggested: cancel, stop, back. */
+.ghost {
+  background: none;
+}
+
+.advanced {
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid var(--stroke);
+}
+
+.source-editor {
+  margin: 12px 0;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 6px 16px;
+  margin: 16px 0;
+}
+
+.facts dt {
+  color: var(--muted);
+}
+
+.facts dd {
+  margin: 0;
+}
+
+.paths {
+  border-top: 1px solid var(--stroke);
+  margin-top: 16px;
+  padding-top: 12px;
+}
+
+.paths-list {
+  margin: 8px 0;
+  font-size: 12px;
+}
+
+.paths-list dt {
+  color: var(--muted);
+  margin-top: 8px;
+}
+
+.paths-list dd {
+  margin: 2px 0 0;
+  word-break: break-all;
+}
+
+.warning {
+  background: rgba(214, 158, 46, 0.12);
+  border: 1px solid rgba(214, 158, 46, 0.4);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 13px;
+}
+
+.detail {
+  background: var(--panel);
+  border: 1px solid var(--stroke);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 160px;
+  overflow-y: auto;
+  color: var(--muted);
+}
+
+code {
+  background: var(--panel);
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
+.progress {
+  margin: 16px 0;
+}
+
+.progress-label {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.progress-track {
+  height: 6px;
+  background: var(--panel);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.2s ease;
+}
+
+/* About: a centred card of facts. Deliberately not a native message box,
+   which renders everything as one unselectable blob. */
+.about {
+  max-width: 460px;
+  margin: 0 auto;
+  padding: 28px 24px 32px;
+  text-align: center;
+}
+
+.about h2 {
+  margin: 12px 0 2px;
+  font-size: 18px;
+}
+
+.about-mark {
+  opacity: 0.9;
+}
+
+.about-group {
+  margin-top: 24px;
+  text-align: left;
+  border: 1px solid var(--stroke);
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+
+.about-group h3 {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  opacity: 0.6;
+}
+
+.about .facts {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 16px;
+  margin: 0;
+  font-size: 13px;
+}
+
+.about .facts dt {
+  opacity: 0.65;
+}
+
+.about .facts dd {
+  margin: 0;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+/* Versions and URLs line up and stay legible in a monospace face. */
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+}
+
+.about .row {
+  margin-top: 24px;
+  justify-content: center;
+}
+
+.ticket {
+  margin-top: 12px;
+}
+
+.ticket label {
+  display: block;
+  font-size: 12px;
+  opacity: 0.65;
+  margin-bottom: 4px;
+}
+
+.ticket textarea {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11px;
+  resize: none;
+  background: var(--panel, #1a1a1a);
+  color: inherit;
+  border: 1px solid var(--stroke);
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+
+/* Loading window: a frameless card, so it reads as a status indicator
+   rather than an empty application.
+
+   The wrapper drops its padding for this one screen: `.shell` adds 48px
+   around its content, and a 100vh child inside that padding overflows by
+   exactly the padding, which is what put a scrollbar on a window with
+   nothing to scroll. */
+.shell.bare {
+  padding: 0;
+  max-width: none;
+}
+
+.loading {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  -webkit-app-region: drag;
+  user-select: none;
+  overflow: hidden;
+}
+
+.loading h1 {
+  font-size: 15px;
+  font-weight: 500;
+  margin: 14px 0 18px;
+  letter-spacing: 0.01em;
+}
+
+.loading-bar {
+  position: relative;
+  width: 220px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--stroke);
+  overflow: hidden;
+}
+
+.loading-fill {
+  height: 100%;
+  background: currentColor;
+  opacity: 0.85;
+  border-radius: 2px;
+  transition: width 200ms ease-out;
+}
+
+/* Nothing to measure yet: sweep instead of sitting at zero, which reads
+   as stuck. */
+.loading-bar.indeterminate .loading-fill {
+  width: 35%;
+  animation: loading-sweep 1.1s ease-in-out infinite;
+}
+
+@keyframes loading-sweep {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(286%);
+  }
+}
+
+.loading-phase {
+  margin-top: 14px;
+  font-size: 11px;
+  opacity: 0.5;
+  max-width: 300px;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Onboarding screens that carry their own logo and heading. */
+.onboarding {
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 32px 0;
+  text-align: center;
+}
+
+.onboarding h2 {
+  margin: 14px 0 6px;
+  font-size: 18px;
+}
+
+/* Organisations to pick from: a list of choices, not a form. */
+.org-list {
+  list-style: none;
+  margin: 22px 0 8px;
+  padding: 0;
+  text-align: left;
+}
+
+.org-list li + li {
+  margin-top: 8px;
+}
+
+.org-option {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  text-align: left;
+}
+
+.org-name {
+  font-weight: 500;
+}
+
+.name-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.name-form input {
+  padding: 10px 12px;
+  font-size: 14px;
+  border: 1px solid var(--stroke);
+  border-radius: 6px;
+  background: var(--panel, #1a1a1a);
+  color: inherit;
+}
+
+/* A state the user needs to act on, rather than a passive fact. */
+.notice {
+  margin: 16px 0;
+  padding: 12px 14px;
+  border: 1px solid var(--stroke);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.notice p {
+  margin: 0 0 10px;
+  font-size: 13px;
+}
+
+/* -- Settings window ------------------------------------------------------ */
+/* Sections down the left, the chosen one on the right. One window rather than
+   one per setting, so the list doubles as a map of what is configurable. */
+
+.settings {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.settings-nav {
+  flex: 0 0 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 8px;
+  border-right: 1px solid var(--stroke);
+  background: var(--panel);
+  overflow-y: auto;
+}
+
+.settings-nav-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: flex-start;
+  text-align: left;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+  color: inherit;
+}
+
+.settings-nav-item:hover {
+  background: var(--panel-hover);
+}
+
+/* The selected section has to read as chosen at a glance, not merely hovered.
+   A left bar rather than a border: an inset shadow follows the rounded corner
+   and smears the accent colour around it, which reads as a rendering fault. */
+.settings-nav-item[aria-current="true"] {
+  background: var(--panel-hover);
+  position: relative;
+}
+
+.settings-nav-item[aria-current="true"]::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+.settings-nav-label {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.settings-nav-hint {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.settings-pane {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 0 24px;
+}
+
+/* The pane scrolls, but the content inside should not stretch with the window:
+   long lines of settings text are hard to read, and the controls end up miles
+   from their labels on a wide window. */
+.settings-pane .panel-body {
+  margin: 0;
+  max-width: 560px;
+  padding: 20px 24px;
+}
+
+/* Organisations on this computer. A list of facts with an action beside each,
+   not a set of choices: these already exist, they are not being picked. */
+
+.org-rows {
+  list-style: none;
+  margin: 10px 0 14px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  border: 1px solid var(--stroke);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--stroke);
+}
+
+.org-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  background: var(--panel);
+}
+
+.org-row-name {
+  font-size: 13px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.connect-list {
+  margin: 10px 0 14px;
+}
+
+/* Whether an organisation syncs anywhere is the one thing worth saying about
+   it in a list, so it gets colour rather than the muted grey. */
+.org-row-sync {
+  font-size: 12px;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+/* A heading with its own action beside it. The action belongs to the section,
+   not to any one row, so it sits on the heading line rather than below the
+   list where it would read as acting on the last item. */
+.section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 22px;
+}
+
+.section-head h3 {
+  margin: 0;
+}
+
+/* Sign-in state, at the top of the Account section. A banner rather than a
+   fact row: it is the thing that decides what everything below it can do. */
+.cloud-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 14px 0 6px;
+  padding: 12px 14px;
+  border: 1px solid var(--stroke);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+/* Signed in reads as settled, so the accent goes on the edge rather than
+   shouting with a filled background. */
+.cloud-banner-on {
+  border-color: var(--accent);
+}
+
+.cloud-banner-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.cloud-banner-title {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.cloud-banner-text .muted {
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+/* The configured instance did not answer at startup. A dead end unless it
+   offers a way forward, so the two actions sit right under the explanation. */
+.unreachable {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+  padding: 28px 24px;
+}
+
+.unreachable h1 {
+  margin: 10px 0 0;
+  font-size: 18px;
+}
+
+.unreachable p {
+  margin: 0;
+  font-size: 13px;
+}
+
+.unreachable .mono {
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.unreachable .row {
+  margin-top: 18px;
+}
+
+/* An error about one control sits with that control, not at the top of the
+   page: the default 16px top margin would detach it from the field it is
+   about, and `.row` already spaces the field above it. */
+.choice-problem {
+  margin-top: 0;
+  font-size: 12px;
+}
