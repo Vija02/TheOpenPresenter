@@ -20,6 +20,7 @@ const APP_URL = process.env.E2E_BASE_URL || "http://localhost:5678";
  */
 export default defineConfig({
   testDir: "./tests",
+  testIgnore: ["**/electron/**"],
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */

@@ -77,6 +77,9 @@ const gotLock =
 if (!gotLock) {
   app.quit();
 } else {
+  /** True while startup is deciding which window to show. */
+  let routing = true;
+
   app.on("second-instance", () => {
     const win = getMainWindow();
     if (win) {
@@ -103,7 +106,11 @@ if (!gotLock) {
     screen.on("display-removed", repositionPresentWindows);
     screen.on("display-metrics-changed", repositionPresentWindows);
 
-    await startupRoute();
+    try {
+      await startupRoute();
+    } finally {
+      routing = false;
+    }
 
     app.on("activate", () => {
       if (BrowserWindow.getAllWindows().length === 0) void startupRoute();
@@ -111,6 +118,7 @@ if (!gotLock) {
   });
 
   app.on("window-all-closed", () => {
+    if (routing) return;
     if (process.platform !== "darwin") app.quit();
   });
 
@@ -174,8 +182,9 @@ async function startupRoute(): Promise<void> {
       console.error("[main] failed to start the local runtime:", err);
     }
 
-    closeLoadingWindow();
+    // Open before closing, so the window count never reaches zero.
     openOnboardingWindow();
+    closeLoadingWindow();
     return;
   }
 
@@ -185,9 +194,12 @@ async function startupRoute(): Promise<void> {
 
     // Check if instance is up
     if (!(await checkHost(rootUrl))) {
-      closeLoadingWindow();
       const { describeConnection } = await import("./settings/connection");
+      // Open before closing the loading window. Closing first leaves zero
+      // windows for an instant, which fires `window-all-closed` and quits the
+      // app before the replacement appears.
       openUnreachableWindow(describeConnection(settings, null).label, rootUrl);
+      closeLoadingWindow();
       return;
     }
 
@@ -197,8 +209,8 @@ async function startupRoute(): Promise<void> {
     }
   }
 
-  closeLoadingWindow();
   openOnboardingWindow();
+  closeLoadingWindow();
 }
 
 /**
