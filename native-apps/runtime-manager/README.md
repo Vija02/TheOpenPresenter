@@ -262,4 +262,4 @@ real publisher and installs with the real manager. Neither uses mocks: the
 bugs worth catching here are the ones that only appear when the pieces meet.
 
 To publish a runtime from a checkout for local testing, see
-`native-apps/desktop/scripts/publish-local-runtime.cjs`.
+`native-apps/studio/scripts/publish-local-runtime.cjs`.
