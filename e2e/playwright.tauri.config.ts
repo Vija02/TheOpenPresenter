@@ -32,6 +32,7 @@ const APP_URL = process.env.E2E_BASE_URL || "http://localhost:5678";
 export default defineConfig({
   testDir: "./tests",
   testIgnore: [
+    "**/electron/**",
     "**/cloud/sync.spec.ts",
     "**/cloud/syncDocument.spec.ts",
     "**/hostProjects/hostProjectsDashboard.spec.ts",

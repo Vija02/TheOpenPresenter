@@ -141,6 +141,56 @@ jobs:
             native-apps/studio/dist/latest*.yml
           if-no-files-found: warn
 
+  e2e:
+    name: E2E (Linux)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: native-apps/runtime-manager
+
+      - name: Build the runtime manager
+        env:
+          TOP_RUNTIME_PUBKEY: ${{ secrets.RUNTIME_PUBLIC_KEY }}
+        run: cargo build --release --manifest-path native-apps/runtime-manager/Cargo.toml
+
+      - name: Stage the sidecar
+        run: |
+          set -euo pipefail
+          mkdir -p native-apps/studio/resources
+          cp native-apps/runtime-manager/target/release/top-runtime-manager \
+            native-apps/studio/resources/
+          chmod +x native-apps/studio/resources/top-runtime-manager
+
+      - name: Install and build the shell
+        working-directory: native-apps/studio
+        run: |
+          npm ci || npm install
+          npx electron-vite build
+
+      # Only the e2e workspace's own deps are needed
+      - name: Install workspace dependencies
+        run: |
+          corepack enable
+          yarn --no-immutable
+
+      # These drive real Electron windows, so they need a display.
+      - name: Run Electron E2E
+        working-directory: e2e
+        run: xvfb-run -a npx playwright test --config playwright.electron.config.ts --reporter=list
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: electron-e2e-results
+          path: e2e/test-results
+          if-no-files-found: ignore
+
   smoke-test:
     name: Smoke test (Linux)
     needs: build
