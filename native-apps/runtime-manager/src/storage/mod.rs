@@ -4,3 +4,4 @@ pub mod link;
 pub mod lock;
 pub mod paths;
 pub mod platform;
+pub mod version;
