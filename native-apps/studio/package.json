@@ -20,7 +20,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
     "test": "npm run prepare:sidecar && vitest run",
     "pack": "npm run prepare:sidecar && npm run build && electron-builder --dir",
-    "dist": "npm run build && electron-builder",
+    "dist": "npm run build && electron-builder --publish never",
     "prepare:sidecar": "node scripts/prepare-sidecar.cjs"
   },
   "dependencies": {

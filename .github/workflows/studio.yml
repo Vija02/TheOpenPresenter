@@ -114,12 +114,49 @@ jobs:
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y libarchive-tools
 
+      - name: Prepare the signing keychain
+        if: runner.os == 'macOS'
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+        run: |
+          set -euo pipefail
+
+          # A fork PR has no secrets; an unsigned build is better than a
+          # failed one.
+          if [ -z "${APPLE_CERTIFICATE:-}" ]; then
+            echo "No signing certificate available; skipping."
+            exit 0
+          fi
+
+          KEY_PASS=$(openssl rand -base64 12)
+          KEYCHAIN="$HOME/Library/Keychains/studio-sign.keychain-db"
+          security create-keychain -p "$KEY_PASS" "$KEYCHAIN"
+          security unlock-keychain -p "$KEY_PASS" "$KEYCHAIN"
+          # Without this the keychain relocks part-way through a long build.
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+
+          CERT_FILE="$(mktemp).p12"
+          echo "$APPLE_CERTIFICATE" | tr -d '[:space:]' | base64 -D > "$CERT_FILE"
+          security import "$CERT_FILE" \
+            -f pkcs12 \
+            -P "$APPLE_CERTIFICATE_PASSWORD" \
+            -T /usr/bin/codesign \
+            -k "$KEYCHAIN"
+          rm "$CERT_FILE"
+
+          security set-key-partition-list \
+            -S apple-tool:,apple:,codesign: -s -k "$KEY_PASS" "$KEYCHAIN"
+          security list-keychain -d user -s \
+            "$HOME/Library/Keychains/login.keychain-db" "$KEYCHAIN"
+
+          security find-identity -v -p codesigning "$KEYCHAIN"
+
       - name: Build and package
         working-directory: native-apps/studio
         shell: bash
         env:
-          CSC_LINK: ${{ secrets.APPLE_CERTIFICATE }}
-          CSC_KEY_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          CSC_IDENTITY_AUTO_DISCOVERY: "true"
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
