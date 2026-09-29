@@ -9,6 +9,7 @@ import {
   resolveRootUrl,
   resolveRuntimeSource,
 } from "./settings/store";
+import { reportDiagnosis } from "./shell/diagnostics";
 import { setupMenu } from "./shell/menu";
 import { setupTray } from "./shell/tray";
 import { isInstallingUpdate, setupUpdates } from "./shell/updates";
@@ -249,6 +250,17 @@ function forwardRuntimeEvents(): void {
     // it has the final URL, and doing it here too raced that onto a stale URL.
   });
 
-  runtime.on("runtime-exit", (payload) => send("runtime:exit", payload));
-  runtime.on("manager-exit", (code) => send("runtime:manager-exit", { code }));
+  // Both of these are the app breaking underneath the user. Reporting is
+  // best-effort and deliberately not awaited: the UI still needs telling.
+  runtime.on("runtime-exit", (payload) => {
+    send("runtime:exit", payload);
+    void reportDiagnosis(
+      `runtime_exit: code=${payload?.code ?? "?"} signal=${payload?.signal ?? "?"}`,
+      String(payload?.detail ?? ""),
+    );
+  });
+  runtime.on("manager-exit", ({ code, detail }) => {
+    send("runtime:manager-exit", { code });
+    void reportDiagnosis(`manager_exit: code=${code}`, detail ?? "");
+  });
 }
