@@ -69,6 +69,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: native-apps/runtime-manager
+          key: pubkey-${{ secrets.RUNTIME_PUBLIC_KEY != '' }}
 
       # The sidecar must exist before electron-builder packages the app
       - name: Build the runtime manager sidecar
@@ -91,6 +92,28 @@ jobs:
             chmod +x native-apps/studio/resources/top-runtime-manager
           fi
           ls -la native-apps/studio/resources
+
+      - name: The staged sidecar trusts the published release
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          MANAGER=native-apps/studio/resources/top-runtime-manager
+
+          # Deliberately no TOP_RUNTIME_PUBKEY: that override is exactly what
+          # hides this failure.
+          OUT=$(printf '%s\n' \
+            '{"id":1,"cmd":"ensure","channel":"stable","activate":false}' \
+            '{"cmd":"shutdown"}' \
+            | "$MANAGER" --root "$RUNNER_TEMP/keycheck" 2>&1 || true)
+
+          if printf '%s' "$OUT" | grep -q 'does not verify'; then
+            echo "::error::The baked-in signing key does not match the published release."
+            echo "RUNTIME_PUBLIC_KEY must be the public half of RUNTIME_SIGNING_KEY."
+            printf '%s\n' "$OUT" | tail -5
+            exit 1
+          fi
+          echo "Baked-in key verifies against the published manifest."
 
       - name: Install shell dependencies
         working-directory: native-apps/studio
@@ -196,6 +219,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: native-apps/runtime-manager
+          key: pubkey-${{ secrets.RUNTIME_PUBLIC_KEY != '' }}
 
       - name: Build the runtime manager
         env:
