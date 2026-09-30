@@ -36,7 +36,7 @@ from = "backend/db"
 
 [[copy]]
 from = "packages/embedded-postgres"
-exclude = ["node_modules", "src"]
+exclude = ["node_modules"]
 
 # The frontends the server serves.
 [[copy]]
@@ -123,4 +123,7 @@ required = [
   # The binary nft cannot see. Its absence is invisible until someone
   # uploads a video and transcoding fails. `*` covers ffmpeg.exe.
   "theopenpresenter/node_modules/ffmpeg-static/ffmpeg*",
+  # Postgres will not start without the uuid extension
+  "theopenpresenter/packages/embedded-postgres/package.json",
+  "theopenpresenter/packages/embedded-postgres/src/extensions/pgUuidv7/pg17/*",
 ]
