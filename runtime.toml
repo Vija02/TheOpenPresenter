@@ -35,7 +35,8 @@ from = "backend/config"
 from = "backend/db"
 
 [[copy]]
-from = "packages/embedded-postgres/dist"
+from = "packages/embedded-postgres"
+exclude = ["node_modules", "src"]
 
 # The frontends the server serves.
 [[copy]]
