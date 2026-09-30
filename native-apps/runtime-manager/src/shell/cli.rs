@@ -83,13 +83,25 @@ pub struct Parsed {
     pub options: Options,
 }
 
+/// Strip characters that cannot legitimately appear in an argument.
+fn clean_arg(arg: &str) -> String {
+    arg.chars()
+        .filter(|c| {
+            !c.is_control()
+                && !matches!(c, '\u{80}'..='\u{9f}' | '\u{200b}'..='\u{200d}' | '\u{feff}')
+        })
+        .collect::<String>()
+        .trim()
+        .to_string()
+}
+
 /// Parse arguments. `interactive` is whether stdin is a terminal, which
 /// decides what a bare invocation means.
 pub fn parse<I>(args: I, interactive: bool) -> Parsed
 where
     I: IntoIterator<Item = String>,
 {
-    let args: Vec<String> = args.into_iter().collect();
+    let args: Vec<String> = args.into_iter().map(|a| clean_arg(&a)).collect();
     let mut options = Options::default();
     let mut positional: Vec<String> = Vec::new();
     let mut index = 0;
@@ -338,6 +350,19 @@ mod tests {
             panic!("expected an install");
         };
         assert!(activate);
+    }
+
+    /// A real paste from a Windows terminal carried U+0096 into the argument,
+    /// producing a 404 for a version the user could see was correct.
+    #[test]
+    fn invisible_characters_from_a_paste_are_stripped() {
+        let parsed = parse_args(&["\u{96}activate", "\u{96}1.2.3"], false);
+        assert_eq!(
+            parsed.cli,
+            Cli::Activate {
+                version: Some("1.2.3".to_string())
+            }
+        );
     }
 
     #[test]
