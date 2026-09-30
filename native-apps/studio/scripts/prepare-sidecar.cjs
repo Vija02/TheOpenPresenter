@@ -68,6 +68,13 @@ function ensureDevKey() {
 }
 
 function main() {
+  const staged = join(RESOURCES, BIN);
+  if (existsSync(staged) && !process.env.TOP_FORCE_SIDECAR) {
+    log(`already staged, leaving it alone: ${staged}`);
+    log("set TOP_FORCE_SIDECAR=1 to rebuild it anyway");
+    return;
+  }
+
   if (spawnSync("cargo", ["--version"], { stdio: "ignore" }).status !== 0) {
     log("cargo not found — skipping. Offline mode will be unavailable.");
     log("Install Rust from https://rustup.rs to enable it.");
