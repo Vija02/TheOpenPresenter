@@ -172,6 +172,9 @@ async function main() {
   const e2eEnabled = process.env.ENABLE_E2E_COMMANDS === "1";
 
   const finalEnv = {
+    ...(process.env.ELECTRON_RUN_AS_NODE
+      ? { ELECTRON_RUN_AS_NODE: process.env.ELECTRON_RUN_AS_NODE }
+      : {}),
     NODE_ENV: e2eEnabled ? "test" : "production",
     LOG_LOCALLY: "1",
     // Disable auto login for test
