@@ -13,6 +13,7 @@ const DIAGNOSTICS_CLOUD_HOST = "https://theopenpresenter.com";
 /** Enough log to see what happened, small enough to post while degraded. */
 const MAX_LOG_BYTES = 64 * 1024;
 const MAX_LOG_LINES = 300;
+const MAX_LOG_FILES = 2;
 
 type LogFile = { name: string; content: string; truncated: boolean };
 
@@ -23,44 +24,43 @@ function diagnosticsHost(): string {
   );
 }
 
-/**
- * The newest runtime log, tail-first.
- *
- * The end of a log is where a crash is; the beginning is startup noise, so a
- * truncated bundle keeps the last lines rather than the first.
- */
-function collectLatestLog(): LogFile | null {
+function collectLogs(): LogFile[] {
   try {
     const dir = join(runtimeRoot(), "logs");
-    const newest = readdirSync(dir)
+    return readdirSync(dir)
       .filter((name) => name.endsWith(".log"))
       .map((name) => {
         const path = join(dir, name);
-        return { name, path, mtime: statSync(path).mtimeMs };
+        const stat = statSync(path);
+        return { name, path, mtime: stat.mtimeMs, size: stat.size };
       })
-      .sort((a, b) => b.mtime - a.mtime)[0];
-
-    if (!newest) return null;
-
-    const raw = readFileSync(newest.path, "utf8");
-    const lines = raw.split("\n");
-
-    let truncated = false;
-    let content = raw;
-    if (lines.length > MAX_LOG_LINES) {
-      content = lines.slice(-MAX_LOG_LINES).join("\n");
-      truncated = true;
-    }
-    if (Buffer.byteLength(content, "utf8") > MAX_LOG_BYTES) {
-      content = content.slice(-MAX_LOG_BYTES);
-      truncated = true;
-    }
-
-    return { name: newest.name, content, truncated };
+      .filter((file) => file.size > 0)
+      .sort((a, b) => b.mtime - a.mtime)
+      .slice(0, MAX_LOG_FILES)
+      .map((file) => readLogTail(file.name, file.path));
   } catch {
     // No logs yet, or unreadable. The report is still worth sending.
-    return null;
+    return [];
   }
+}
+
+/** The last lines of one log: the end is where a crash is. */
+function readLogTail(name: string, path: string): LogFile {
+  const raw = readFileSync(path, "utf8");
+  const lines = raw.split("\n");
+
+  let truncated = false;
+  let content = raw;
+  if (lines.length > MAX_LOG_LINES) {
+    content = lines.slice(-MAX_LOG_LINES).join("\n");
+    truncated = true;
+  }
+  if (Buffer.byteLength(content, "utf8") > MAX_LOG_BYTES) {
+    content = content.slice(-MAX_LOG_BYTES);
+    truncated = true;
+  }
+
+  return { name, content, truncated };
 }
 
 /** Reports of the same failure are suppressed for this long */
@@ -83,7 +83,7 @@ export async function reportDiagnosis(
   lastReported.set(reason, now);
 
   try {
-    const log = collectLatestLog();
+    const logs = collectLogs();
 
     const body = {
       systemInfo: {
@@ -99,7 +99,7 @@ export async function reportDiagnosis(
         logDir: join(runtimeRoot(), "logs"),
         recentOutput: recentOutput.slice(-MAX_LOG_BYTES),
       },
-      logs: log ? [log] : [],
+      logs,
     };
 
     const response = await net.fetch(
