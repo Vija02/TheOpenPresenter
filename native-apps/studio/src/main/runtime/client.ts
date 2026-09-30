@@ -4,6 +4,8 @@ import { EventEmitter } from "events";
 import { existsSync } from "fs";
 import { join } from "path";
 
+import { runtimeRoot } from "../settings/paths";
+
 /** Peer-to-peer remote access state. */
 export type RemoteStatus = {
   enabled: boolean;
@@ -102,7 +104,7 @@ export class RuntimeClient extends EventEmitter {
 
     const args: string[] = [];
 
-    if (options.root) args.push("--root", options.root);
+    args.push("--root", options.root ?? runtimeRoot());
     if (options.source) args.push("--source", options.source);
 
     const child = spawn(binary, args, {

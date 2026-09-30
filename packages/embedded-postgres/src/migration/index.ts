@@ -36,6 +36,9 @@ export class MigrationManager {
       const sep = process.platform === "win32" ? ";" : ":";
       env.PATH = `${nodeDir}${sep}${process.env.PATH ?? ""}`;
     }
+    if (process.env.ELECTRON_RUN_AS_NODE) {
+      env.ELECTRON_RUN_AS_NODE = process.env.ELECTRON_RUN_AS_NODE;
+    }
     return env;
   }
 
