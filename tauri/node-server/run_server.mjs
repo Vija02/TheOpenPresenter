@@ -15,9 +15,19 @@ const PORT = Number(process.env.TOP_PG_PORT ?? 7949);
 
 const childProcesses = new Set();
 
+const argvShim = path.resolve(
+  import.meta.dirname,
+  "theopenpresenter/packages/embedded-postgres/dist/electronArgvShim.cjs",
+);
+const needsArgvShim = !!process.versions.electron && !process.defaultApp;
+
 const runCommand = async (command, args, options) => {
   return new Promise((resolve, reject) => {
-    const child = spawn(command, args, options);
+    const finalArgs =
+      needsArgvShim && fs.existsSync(argvShim)
+        ? ["--require", argvShim, ...args]
+        : args;
+    const child = spawn(command, finalArgs, options);
     childProcesses.add(child);
 
     child.stdout.on("data", (data) => {
