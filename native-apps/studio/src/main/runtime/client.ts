@@ -107,6 +107,10 @@ export class RuntimeClient extends EventEmitter {
 
     const child = spawn(binary, args, {
       stdio: ["pipe", "pipe", "pipe"],
+      env: {
+        ...process.env,
+        TOP_NODE_BINARY: process.execPath,
+      },
     });
     this.child = child;
 

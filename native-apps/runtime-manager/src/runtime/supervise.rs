@@ -47,20 +47,67 @@ pub struct LaunchConfig {
     pub plugins: Vec<String>,
 }
 
+/// Where the `node` used to launch the runtime came from.
+pub enum NodeSource {
+    Node(PathBuf),
+    Electron(PathBuf),
+}
+
+impl NodeSource {
+    pub fn path(&self) -> &PathBuf {
+        match self {
+            NodeSource::Node(p) | NodeSource::Electron(p) => p,
+        }
+    }
+
+    pub fn is_electron(&self) -> bool {
+        matches!(self, NodeSource::Electron(_))
+    }
+}
+
 impl LaunchConfig {
-    /// Resolve the bundled `node`, falling back to whatever is on PATH. A
-    /// local development runtime does not necessarily ship one.
-    pub fn node_binary(&self) -> PathBuf {
+    /// Find something that can run the server, in order of how much we trust it:
+    /// the runtime's own node, an explicit override, Studio's Electron, then PATH.
+    pub fn node_binary(&self) -> Result<NodeSource> {
         let name = if cfg!(windows) { "node.exe" } else { "node" };
+
         for candidate in [
             self.runtime_dir.join(name),
             self.runtime_dir.join("bin").join(name),
         ] {
             if candidate.is_file() {
-                return candidate;
+                return Ok(NodeSource::Node(candidate));
             }
         }
-        PathBuf::from("node")
+
+        if let Ok(explicit) = std::env::var("TOP_NODE_BINARY") {
+            let path = PathBuf::from(explicit.trim());
+            if path.is_file() {
+                return Ok(if is_electron_binary(&path) {
+                    NodeSource::Electron(path)
+                } else {
+                    NodeSource::Node(path)
+                });
+            }
+        }
+
+        if let Some(electron) = find_studio_electron() {
+            return Ok(NodeSource::Electron(electron));
+        }
+
+        if let Some(found) = which_node(name) {
+            return Ok(NodeSource::Node(found));
+        }
+
+        bail!(
+            "Node.js is required to run the server and was not found.\n\
+             \n\
+             Install TheOpenPresenter Studio, which includes it, or install \
+             Node.js from https://nodejs.org and make sure `node` is on your PATH.\n\
+             \n\
+             If it is installed somewhere unusual, set TOP_NODE_BINARY to its \
+             full path."
+        )
     }
 
     fn env(&self) -> Vec<(String, String)> {
@@ -129,14 +176,18 @@ impl Supervisor {
             bail!("Runtime entrypoint not found: {}", entry.display());
         }
 
-        let node = config.node_binary();
-        let mut command = Command::new(&node);
+        let node = config.node_binary()?;
+        let mut command = Command::new(node.path());
         command
             .arg(&entry)
             .current_dir(&config.runtime_dir)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped());
+
+        if node.is_electron() {
+            command.env("ELECTRON_RUN_AS_NODE", "1");
+        }
 
         for (key, value) in config.env() {
             command.env(key, value);
@@ -165,7 +216,7 @@ impl Supervisor {
 
         let mut child = command
             .spawn()
-            .with_context(|| format!("Failed to start {}", node.display()))?;
+            .with_context(|| format!("Failed to start {}", node.path().display()))?;
 
         let (tx, rx) = mpsc::channel();
 
@@ -362,6 +413,65 @@ fn write_log(log: &Arc<Mutex<Option<std::fs::File>>>, line: &str) {
     let _ = writeln!(file, "{line}");
 }
 
+/// Electron is only usable as a node when told to be, so it has to be
+/// distinguished from a real node binary by name.
+fn is_electron_binary(path: &Path) -> bool {
+    path.file_stem()
+        .and_then(|s| s.to_str())
+        .map(|s| s.eq_ignore_ascii_case("electron") || s.contains("TheOpenPresenter"))
+        .unwrap_or(false)
+}
+
+fn which_node(name: &str) -> Option<PathBuf> {
+    let path = std::env::var_os("PATH")?;
+    std::env::split_paths(&path)
+        .map(|dir| dir.join(name))
+        .find(|candidate| candidate.is_file())
+}
+
+/// Studio's Electron binary, when Studio is installed but did not launch us.
+fn find_studio_electron() -> Option<PathBuf> {
+    let candidates: Vec<PathBuf> = if cfg!(target_os = "windows") {
+        let mut v = Vec::new();
+        // Per-user install, which is what the NSIS default produces.
+        if let Some(local) = std::env::var_os("LOCALAPPDATA") {
+            v.push(
+                PathBuf::from(&local)
+                    .join("Programs")
+                    .join("TheOpenPresenter")
+                    .join("TheOpenPresenter.exe"),
+            );
+        }
+        if let Some(files) = std::env::var_os("PROGRAMFILES") {
+            v.push(
+                PathBuf::from(&files)
+                    .join("TheOpenPresenter")
+                    .join("TheOpenPresenter.exe"),
+            );
+        }
+        v
+    } else if cfg!(target_os = "macos") {
+        let mut v = vec![PathBuf::from(
+            "/Applications/TheOpenPresenter.app/Contents/MacOS/TheOpenPresenter",
+        )];
+        if let Some(home) = std::env::var_os("HOME") {
+            v.push(
+                PathBuf::from(&home)
+                    .join("Applications/TheOpenPresenter.app/Contents/MacOS/TheOpenPresenter"),
+            );
+        }
+        v
+    } else {
+        vec![
+            PathBuf::from("/opt/TheOpenPresenter/theopenpresenter"),
+            PathBuf::from("/opt/TheOpenPresenter/TheOpenPresenter"),
+            PathBuf::from("/usr/bin/theopenpresenter"),
+        ]
+    };
+
+    candidates.into_iter().find(|path| path.is_file())
+}
+
 /// Best-effort readiness probe against the runtime's HTTP port.
 pub fn wait_for_http(port: u16, timeout: Duration) -> bool {
     use std::net::TcpStream;
@@ -384,10 +494,21 @@ pub fn write_debug_launcher(config: &LaunchConfig, dest: &Path) -> Result<()> {
     for (key, value) in config.env() {
         script.push_str(&format!("export {key}=\"{value}\"\n"));
     }
+    // A launcher for a runtime whose node cannot be found is still useful: it
+    // shows the environment, and the placeholder says what is missing.
+    let node = match config.node_binary() {
+        Ok(found) => {
+            if found.is_electron() {
+                script.push_str("export ELECTRON_RUN_AS_NODE=1\n");
+            }
+            found.path().display().to_string()
+        }
+        Err(_) => "node".to_string(),
+    };
     script.push_str(&format!(
         "cd \"{}\"\nexec \"{}\" \"{}\"\n",
         config.runtime_dir.display(),
-        config.node_binary().display(),
+        node,
         config.entry
     ));
     std::fs::write(dest, script)?;
@@ -470,7 +591,80 @@ mod tests {
         std::fs::write(tmp.path().join(name), b"").unwrap();
 
         let config = config(tmp.path(), "run_server.mjs");
-        assert_eq!(config.node_binary(), tmp.path().join(name));
+        let resolved = config.node_binary().unwrap();
+        assert_eq!(resolved.path(), &tmp.path().join(name));
+        assert!(!resolved.is_electron());
+    }
+
+    /// The whole point of the Electron fallback: Studio's binary is not a node
+    /// and has to be marked so `ELECTRON_RUN_AS_NODE` gets set.
+    #[test]
+    fn an_explicit_electron_binary_is_flagged_as_electron() {
+        let tmp = tempfile::tempdir().unwrap();
+        let electron = tmp.path().join(if cfg!(windows) {
+            "TheOpenPresenter.exe"
+        } else {
+            "electron"
+        });
+        std::fs::write(&electron, b"").unwrap();
+
+        // Empty runtime dir, so resolution has to fall through to the override.
+        let runtime = tempfile::tempdir().unwrap();
+        let config = config(runtime.path(), "run_server.mjs");
+
+        // SAFETY: single-threaded test, and the var is cleared straight after.
+        unsafe { std::env::set_var("TOP_NODE_BINARY", &electron) };
+        let resolved = config.node_binary().unwrap();
+        unsafe { std::env::remove_var("TOP_NODE_BINARY") };
+
+        assert_eq!(resolved.path(), &electron);
+        assert!(
+            resolved.is_electron(),
+            "Electron must be distinguished from node"
+        );
+    }
+
+    /// The fallback end to end: with no node anywhere, Electron must actually
+    /// run the entrypoint. Asserting the flag alone would pass even if
+    /// `ELECTRON_RUN_AS_NODE` never reached the child.
+    #[test]
+    fn electron_can_run_the_runtime_without_any_node() {
+        let electron = PathBuf::from(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../studio/node_modules/electron/dist/electron"
+        ));
+        if !electron.is_file() {
+            eprintln!("skipping: Electron is not installed in this checkout");
+            return;
+        }
+
+        let tmp = tempfile::tempdir().unwrap();
+        std::fs::write(
+            tmp.path().join("run_server.mjs"),
+            b"console.log('ran on node ' + process.versions.node);\n",
+        )
+        .unwrap();
+
+        let config = config(tmp.path(), "run_server.mjs");
+
+        // SAFETY: single-threaded test; cleared immediately after.
+        unsafe { std::env::set_var("TOP_NODE_BINARY", &electron) };
+        let resolved = config.node_binary().unwrap();
+        unsafe { std::env::remove_var("TOP_NODE_BINARY") };
+
+        assert!(resolved.is_electron());
+
+        let out = std::process::Command::new(resolved.path())
+            .arg(tmp.path().join("run_server.mjs"))
+            .env("ELECTRON_RUN_AS_NODE", "1")
+            .output()
+            .expect("Electron should be runnable");
+
+        let stdout = String::from_utf8_lossy(&out.stdout);
+        assert!(
+            stdout.contains("ran on node"),
+            "Electron did not execute the script as node: {stdout}"
+        );
     }
 
     #[test]
