@@ -63,6 +63,10 @@ function collectLatestLog(): LogFile | null {
   }
 }
 
+/** Reports of the same failure are suppressed for this long */
+const REPORT_COOLDOWN_MS = 5 * 60 * 1000;
+const lastReported = new Map<string, number>();
+
 /**
  * Send a diagnosis bundle. Never throws: callers are already handling a
  * failure and must not have to guard this one too.
@@ -71,6 +75,13 @@ export async function reportDiagnosis(
   reason: string,
   recentOutput = "",
 ): Promise<boolean> {
+  const now = Date.now();
+  const previous = lastReported.get(reason);
+  if (previous !== undefined && now - previous < REPORT_COOLDOWN_MS) {
+    return false;
+  }
+  lastReported.set(reason, now);
+
   try {
     const log = collectLatestLog();
 
