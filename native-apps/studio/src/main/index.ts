@@ -167,6 +167,7 @@ async function startupRoute(): Promise<void> {
   } catch (err) {
     // Not fatal: cloud and self-hosted mode do not need it.
     console.error("[main] runtime manager unavailable:", err);
+    void reportDiagnosis("startup_failed: manager unavailable", String(err));
   }
 
   if (settings.mode === "local") {
@@ -181,6 +182,7 @@ async function startupRoute(): Promise<void> {
       }
     } catch (err) {
       console.error("[main] failed to start the local runtime:", err);
+      void reportDiagnosis("startup_failed: local runtime", String(err));
     }
 
     // Open before closing, so the window count never reaches zero.

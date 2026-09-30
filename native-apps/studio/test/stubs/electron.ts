@@ -12,6 +12,8 @@ const userData = mkdtempSync(join(tmpdir(), "top-desktop-test-"));
 export const app = {
   isPackaged: false,
   getPath: (name: string) => (name === "userData" ? userData : userData),
+  getName: () => "TheOpenPresenter",
+  getVersion: () => "0.0.0-test",
   setAppUserModelId: () => {},
   on: () => {},
   whenReady: () => Promise.resolve(),

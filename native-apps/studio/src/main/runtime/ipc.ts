@@ -8,6 +8,7 @@ import {
   resolveRuntimeSource,
   updateSettings,
 } from "../settings/store";
+import { reportDiagnosis } from "../shell/diagnostics";
 import { refreshMenu } from "../shell/menu";
 import { showAppWindow } from "../shell/windows";
 import { runtime } from "./client";
@@ -62,7 +63,13 @@ export function registerRuntimeIPC(): void {
   );
 
   ipcMain.handle("runtime:start", async (_event, args?: { open?: boolean }) => {
-    const result = await runtime.startRuntime();
+    let result;
+    try {
+      result = await runtime.startRuntime();
+    } catch (err) {
+      void reportDiagnosis("start_failed: runtime", String(err));
+      throw err;
+    }
 
     if (args?.open !== false) {
       updateSettings({ mode: "local" });
