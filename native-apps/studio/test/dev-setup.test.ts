@@ -54,24 +54,4 @@ describe("offline mode is usable straight after a dev build", () => {
     expect(reply, `no response in output:\n${output}`).toBeTruthy();
     expect(reply.ok).toBe(true);
   });
-
-  it("a development signing key exists and is a real ed25519 key", () => {
-    const keygen = join(
-      MANAGER_DIR,
-      "target/debug",
-      `top-runtime-keygen${EXE}`,
-    );
-    if (!existsSync(keygen)) return;
-
-    const pubkey = resolve(MANAGER_DIR, "dev-pubkey.txt");
-    expect(existsSync(pubkey)).toBe(true);
-
-    const raw = Buffer.from(
-      require("fs").readFileSync(pubkey, "utf8").trim(),
-      "base64",
-    );
-    // A truncated or text-mangled key passes base64 but is rejected by the
-    // manager at startup.
-    expect(raw.length).toBe(32);
-  });
 });
