@@ -5,6 +5,7 @@ import { runtime } from "./runtime/client";
 import { registerTicket } from "./runtime/remote";
 import { chromiumDir } from "./settings/paths";
 import {
+  DEFAULT_CHANNEL,
   getSettings,
   resolveRootUrl,
   resolveRuntimeSource,
@@ -142,6 +143,19 @@ if (!gotLock) {
   });
 }
 
+async function refreshBeforeOnboarding(): Promise<void> {
+  try {
+    const channel = getSettings().channel ?? DEFAULT_CHANNEL;
+    const result = await runtime.ensure(channel, true);
+    console.log(
+      `[main] runtime refreshed before onboarding: ${result.version}`,
+    );
+  } catch (err) {
+    // Offline is the ordinary case; onboarding downloads it later anyway.
+    console.error("[main] could not refresh the runtime:", err);
+  }
+}
+
 /**
  * Decide what the user sees on launch. The runtime manager starts regardless
  * of mode: it is a small idle process.
@@ -154,8 +168,10 @@ async function startupRoute(): Promise<void> {
     openOnboardingWindow();
     try {
       runtime.start({ source: resolveRuntimeSource() });
+      void refreshBeforeOnboarding();
     } catch (err) {
       console.error("[main] runtime manager unavailable:", err);
+      void reportDiagnosis("startup_failed: manager unavailable", String(err));
     }
     return;
   }
