@@ -518,6 +518,10 @@ impl Manager {
 
             let log = self.layout.logs_dir().join("runtime.log");
             if died {
+                // The process is gone but its output may still be in the pipe.
+                if let Some(supervisor) = self.supervisor.as_mut() {
+                    supervisor.wait_for_logs();
+                }
                 bail!(
                     "The server stopped while starting up. Its log is at {}.",
                     log.display()
@@ -579,6 +583,10 @@ impl Manager {
         }
 
         if let Some(code) = supervisor.poll_exit() {
+            // Drain before dropping the supervisor
+            if let Some(supervisor) = self.supervisor.as_mut() {
+                supervisor.wait_for_logs();
+            }
             self.on_exit(code);
         }
     }

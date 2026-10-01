@@ -42,6 +42,9 @@ const REQUEST_TIMEOUT_MS = 30 * 60 * 1000;
 
 const HOLDER = "desktop-shell";
 
+/** Enough runtime output to diagnose a failed start, bounded for memory. */
+const RUNTIME_TAIL_LINES = 300;
+
 export class RuntimeClient extends EventEmitter {
   private child: ChildProcessWithoutNullStreams | null = null;
   private pending = new Map<number, Pending>();
@@ -56,10 +59,17 @@ export class RuntimeClient extends EventEmitter {
   }> | null = null;
   /** Recent stderr, kept so an early exit can explain itself. */
   private stderrTail: string[] = [];
+  /** Recent runtime output, for reports when `runtime.log` is empty. */
+  private runtimeTail: string[] = [];
 
   /** URL the local runtime is serving on, once it has reported one. */
   get url(): string | null {
     return this.localUrl;
+  }
+
+  /** Recent runtime output, for a diagnosis when the log file is empty. */
+  get recentOutput(): string {
+    return this.runtimeTail.join("\n");
   }
 
   get isRunning(): boolean {
@@ -201,11 +211,17 @@ export class RuntimeClient extends EventEmitter {
         this.localUrl = String(message.url);
         this.emit("listening", { url: this.localUrl, port: message.port });
         break;
-      case "log":
+      case "log": {
+        const line = String(message.line ?? "");
+        this.runtimeTail.push(line);
+        if (this.runtimeTail.length > RUNTIME_TAIL_LINES) {
+          this.runtimeTail.shift();
+        }
         // Forward just the text: passing the `{ stream, line }` envelope means
         // anything that stringifies it prints "[object Object]".
-        this.emit("log", String(message.line ?? ""));
+        this.emit("log", line);
         break;
+      }
       case "exited":
         this.localUrl = null;
         this.emit("runtime-exit", message);

@@ -825,6 +825,53 @@ fn a_runtime_that_dies_on_startup_is_reported_promptly() {
 }
 
 #[test]
+fn the_log_is_complete_when_the_error_points_at_it() {
+    // The bug this pins: the manager reported the failure as soon as the
+    // process died, while the threads copying its output into runtime.log were
+    // still draining the pipe. The error named a log the user then opened and
+    // found empty. Verbose output makes the window wide enough to catch.
+    let (root, cdn, key, pubkey) = fixture();
+
+    let mut source = String::new();
+    for i in 0..2000 {
+        source.push_str(&format!(
+            "console.error('startup line {i} explaining what went wrong');\n"
+        ));
+    }
+    source.push_str("process.exit(1);\n");
+
+    publish(
+        cdn.path(),
+        &key,
+        "1.0.0",
+        1,
+        "run_server.mjs",
+        &[("run_server.mjs", source.as_bytes())],
+    );
+
+    let mut manager = Manager::start(root.path(), cdn.path(), &pubkey);
+    manager.request(
+        1,
+        serde_json::json!({"cmd": "ensure", "channel": "stable", "activate": true}),
+    );
+
+    let start = manager.request(2, serde_json::json!({"cmd": "start"}));
+    assert_eq!(start["ok"], false, "a dead runtime must not report success");
+    let error = start["error"].as_str().unwrap_or_default().to_string();
+
+    // Read immediately, as a user following the error message would.
+    let log = std::fs::read_to_string(root.path().join("logs/runtime.log"))
+        .expect("the log the error names must exist");
+    let lines = log.lines().count();
+
+    assert_eq!(
+        lines, 2000,
+        "the log must be fully flushed before the failure is reported, \
+         got {lines} lines (error was: {error})"
+    );
+}
+
+#[test]
 fn the_runtime_log_is_written_to_disk() {
     // "It got stuck starting" is unanswerable without a log that outlives
     // the process.
