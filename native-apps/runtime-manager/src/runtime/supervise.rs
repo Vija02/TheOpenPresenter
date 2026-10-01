@@ -293,9 +293,7 @@ impl Supervisor {
         let mut guard = self.child.lock().ok()?;
         let child = guard.as_mut()?;
         match child.try_wait() {
-            Ok(Some(status)) => {
-                Some(status.code())
-            }
+            Ok(Some(status)) => Some(status.code()),
             _ => None,
         }
     }
