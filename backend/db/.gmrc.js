@@ -1,4 +1,6 @@
 const path = require("path");
+
+const nodeBinary = JSON.stringify(process.execPath);
 /*
  * Graphile Migrate configuration.
  *
@@ -68,7 +70,7 @@ module.exports = {
     "!afterReset.sql",
     {
       _: "command",
-      command: `node "${path.resolve(__dirname, "../worker/install-db-schema.js")}"`,
+      command: `${nodeBinary} "${path.resolve(__dirname, "../worker/install-db-schema.js")}"`,
     },
   ],
 
@@ -80,7 +82,7 @@ module.exports = {
       _: "command",
       shadow: true,
       // NOTE: this script does nothing when envvar `IN_TESTS` is `1`
-      command: "node scripts/dump-db.js",
+      command: `${nodeBinary} scripts/dump-db.js`,
     },
   ],
 
@@ -93,7 +95,7 @@ module.exports = {
       _: "command",
       shadow: true,
       // NOTE: this script does nothing unless envvar `IN_TESTS` is `1`
-      command: "node scripts/test-seed.js",
+      command: `${nodeBinary} scripts/test-seed.js`,
     },
   ],
 

@@ -198,7 +198,10 @@ async function startupRoute(): Promise<void> {
       }
     } catch (err) {
       console.error("[main] failed to start the local runtime:", err);
-      void reportDiagnosis("startup_failed: local runtime", String(err));
+      void reportDiagnosis(
+        "startup_failed: local runtime",
+        `${String(err)}\n\n--- runtime output ---\n${runtime.recentOutput}`,
+      );
     }
 
     // Open before closing, so the window count never reaches zero.

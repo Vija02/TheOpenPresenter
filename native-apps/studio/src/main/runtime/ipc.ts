@@ -67,7 +67,10 @@ export function registerRuntimeIPC(): void {
     try {
       result = await runtime.startRuntime();
     } catch (err) {
-      void reportDiagnosis("start_failed: runtime", String(err));
+      void reportDiagnosis(
+        "start_failed: runtime",
+        `${String(err)}\n\n--- runtime output ---\n${runtime.recentOutput}`,
+      );
       throw err;
     }
 

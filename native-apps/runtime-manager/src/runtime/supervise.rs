@@ -164,6 +164,7 @@ pub struct Supervisor {
     child: Arc<Mutex<Option<Child>>>,
     events: Option<Receiver<RuntimeEvent>>,
     started_at: Instant,
+    readers: Vec<std::thread::JoinHandle<()>>,
 }
 
 /// How long the runtime gets to shut PostgreSQL down before it is killed.
@@ -231,7 +232,7 @@ impl Supervisor {
         let stdout = child.stdout.take().context("No stdout on the runtime")?;
         let tx_out = tx.clone();
         let log_out = Arc::clone(&log);
-        std::thread::spawn(move || {
+        let stdout_reader = std::thread::spawn(move || {
             // The runtime announces its port twice: once in the structured
             // line meant for us, and once in the server's own banner. Both
             // are worth recognising, but a consumer that navigates on this
@@ -252,7 +253,7 @@ impl Supervisor {
         let stderr = child.stderr.take().context("No stderr on the runtime")?;
         let tx_err = tx.clone();
         let log_err = Arc::clone(&log);
-        std::thread::spawn(move || {
+        let stderr_reader = std::thread::spawn(move || {
             for line in BufReader::new(stderr).lines().map_while(Result::ok) {
                 write_log(&log_err, &line);
                 let _ = tx_err.send(RuntimeEvent::Stderr(line));
@@ -263,6 +264,7 @@ impl Supervisor {
             child: Arc::new(Mutex::new(Some(child))),
             events: Some(rx),
             started_at: Instant::now(),
+            readers: vec![stdout_reader, stderr_reader],
         })
     }
 
@@ -292,10 +294,25 @@ impl Supervisor {
         let child = guard.as_mut()?;
         match child.try_wait() {
             Ok(Some(status)) => {
-                *guard = None;
                 Some(status.code())
             }
             _ => None,
+        }
+    }
+
+    /// Wait for the log readers to drain the runtime's pipes.
+    pub fn wait_for_logs(&mut self) {
+        for reader in self.readers.drain(..) {
+            let _ = reader.join();
+        }
+        if let Ok(mut guard) = self.child.lock() {
+            if guard
+                .as_mut()
+                .map(|c| matches!(c.try_wait(), Ok(Some(_))))
+                .unwrap_or(false)
+            {
+                *guard = None;
+            }
         }
     }
 
