@@ -409,4 +409,24 @@ mod tests {
             vec!["0.0.10", "0.0.9", "0.0.2"]
         );
     }
+
+    /// Two nightlies from consecutive days, which is what `activate` with no
+    /// argument picks between. The front of the list must be the newer one:
+    /// taking the back (`.pop()`) silently activated the older nightly.
+    #[test]
+    fn installed_versions_puts_the_newest_nightly_first() {
+        let tmp = tempfile::tempdir().unwrap();
+        let layout = Layout::new(tmp.path());
+        layout.ensure().unwrap();
+        for version in [
+            "0.0.0-nightly.20260930.6a9757b",
+            "0.0.0-nightly.20261001.e6d384d",
+        ] {
+            std::fs::create_dir_all(layout.runtime_dir(version)).unwrap();
+        }
+        assert_eq!(
+            layout.installed_versions().first().map(String::as_str),
+            Some("0.0.0-nightly.20261001.e6d384d")
+        );
+    }
 }

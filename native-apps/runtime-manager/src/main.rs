@@ -243,7 +243,8 @@ fn run(command: cli::Cli, options: cli::Options) -> Result<()> {
                 None => manager
                     .layout
                     .installed_versions()
-                    .pop()
+                    .into_iter()
+                    .next()
                     .context("Nothing is installed to activate")?,
             };
 
