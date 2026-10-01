@@ -1,3 +1,4 @@
+import { Button } from "@repo/ui";
 import { useCallback, useEffect, useState } from "react";
 
 import { type RemoteStatus, api } from "../bridge/ipc";
@@ -60,9 +61,13 @@ export function RemoteAccess() {
       </p>
 
       <div className="row">
-        <button onClick={() => void toggle()} disabled={busy || !running}>
+        <Button
+          variant="outline"
+          onClick={() => void toggle()}
+          disabled={busy || !running}
+        >
           {busy ? "Working…" : status?.enabled ? "Turn off" : "Turn on"}
-        </button>
+        </Button>
         {!running && <span className="muted">Start the server first.</span>}
       </div>
 
@@ -70,9 +75,9 @@ export function RemoteAccess() {
         <div className="ticket">
           <label>Connection ticket</label>
           <textarea readOnly value={status.ticket} rows={3} />
-          <button className="link" onClick={() => void copy()}>
+          <Button variant="link" onClick={() => void copy()}>
             {copied ? "Copied" : "Copy ticket"}
-          </button>
+          </Button>
         </div>
       )}
 

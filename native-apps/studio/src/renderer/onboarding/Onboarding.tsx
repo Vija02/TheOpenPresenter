@@ -1,3 +1,4 @@
+import { Alert, Button } from "@repo/ui";
 import { useCallback, useEffect, useState } from "react";
 
 import {
@@ -12,6 +13,7 @@ import { DownloadStatus } from "./DownloadStatus";
 import { LocalRuntime } from "./LocalRuntime";
 import { NameOrganization } from "./NameOrganization";
 import { SignIn } from "./SignIn";
+import { canGoBack, current, pop, push } from "./history";
 import { type Step, firstStep } from "./steps";
 import { useRuntimeDownload } from "./useRuntimeDownload";
 
@@ -22,12 +24,30 @@ import { useRuntimeDownload } from "./useRuntimeDownload";
  * choosing which server to point at.
  */
 export function Onboarding() {
-  const [step, setStep] = useState<Step>("role");
+  const [history, setHistory] = useState<Step[]>(["role"]);
+  const step = current(history);
   const [settings, setSettings] = useState<Settings>({});
   const [error, setError] = useState<string | null>(null);
   const [finishing, setFinishing] = useState(false);
   const [, setConnection] = useState<CloudConnection | null>(null);
   const download = useRuntimeDownload();
+
+  /** Move forward, remembering where we came from. */
+  const goTo = useCallback((next: Step) => {
+    setHistory((stack) => push(stack, next));
+    setError(null);
+  }, []);
+
+  /** Step back. Clears the error so a failure does not follow you. */
+  const goBack = useCallback(() => {
+    setHistory(pop);
+    setError(null);
+  }, []);
+
+  /** Jump to a starting step, discarding any history. */
+  const resetTo = useCallback((next: Step) => {
+    setHistory([next]);
+  }, []);
 
   // Read back from settings so a returning user keeps the choice they made.
   const runsLocally = settings.autoStartRuntime ?? false;
@@ -37,13 +57,13 @@ export function Onboarding() {
       .getSettings()
       .then((loaded) => {
         setSettings(loaded);
-        setStep(firstStep(loaded));
+        resetTo(firstStep(loaded));
       })
       .catch((err) => {
         setError(String(err));
-        setStep("role");
+        resetTo("role");
       });
-  }, []);
+  }, [resetTo]);
 
   /**
    * Start the local server and hand the window over to it. The end of every
@@ -93,7 +113,7 @@ export function Onboarding() {
         // something to discover later.
         setConnection(await api.cloudConnect(rootUrl || undefined));
         setFinishing(false);
-        setStep("organization");
+        goTo("organization");
       } catch (err) {
         setError(String(err));
         setFinishing(false);
@@ -116,7 +136,7 @@ export function Onboarding() {
     // to the cloud URL instead of its own server.
     setSettings((prev) => ({ ...prev, ...patch }));
     void api.updateSettings(patch);
-    setStep("signin");
+    goTo("signin");
   };
 
   return (
@@ -124,15 +144,34 @@ export function Onboarding() {
       {step === "local" && (
         <header className="shell-header">
           <h1>TheOpenPresenter</h1>
-          <button className="link" onClick={() => setStep("signin")}>
+          <Button variant="link" onClick={() => goTo("signin")}>
             Sign in instead
-          </button>
+          </Button>
         </header>
       )}
 
-      {error && <div className="error">{error}</div>}
+      {canGoBack(history) && !finishing && (
+        <Button variant="link" className="back" onClick={goBack}>
+          ← Back
+        </Button>
+      )}
 
-      {step === "role" && <ChooseSetup busy={false} onContinue={chooseSetup} />}
+      {error && (
+        <Alert variant="destructive" size="sm">
+          {error}
+        </Alert>
+      )}
+
+      {step === "role" && (
+        <ChooseSetup
+          busy={false}
+          onContinue={chooseSetup}
+          initialKind={
+            settings.autoStartRuntime === false ? "minimal" : undefined
+          }
+          initialChannel={settings.channel}
+        />
+      )}
 
       {step === "signin" && (
         <SignIn
@@ -144,21 +183,29 @@ export function Onboarding() {
           initialUrl={
             settings.mode === "selfhosted" ? settings.rootUrl : undefined
           }
-          footer={<DownloadStatus state={download} />}
+          footer={
+            /* Only on a complete setup: minimal downloads nothing, so there
+               is no progress to report and "Ready to run on this computer"
+               would be untrue. */
+            runsLocally ? <DownloadStatus state={download} /> : null
+          }
           secondary={
             /* Skip rather than "run locally instead": signing in is not an
                alternative to running the server, it is what links the server
-               to a cloud organisation. Skipping leaves that unlinked. */
-            !finishing ? (
-              <button
-                className="link"
-                onClick={() => {
-                  if (runsLocally) void finishLocally();
-                  else setStep("local");
-                }}
+               to a cloud organisation. Skipping leaves that unlinked.
+
+               On a minimal setup there is no runtime to fall back to, so
+               skipping would strand the user on a server-management screen
+               for a server this machine never runs. Sign-in is the only way
+               forward there. */
+            !finishing && runsLocally ? (
+              <Button
+                variant="link"
+                size="xs"
+                onClick={() => void finishLocally()}
               >
                 Skip for now
-              </button>
+              </Button>
             ) : null
           }
         />
@@ -167,7 +214,7 @@ export function Onboarding() {
       {step === "organization" && (
         <ChooseOrganization
           onConnected={() => void finishLocally()}
-          onSkip={() => setStep("name")}
+          onSkip={() => goTo("name")}
           onError={setError}
         />
       )}

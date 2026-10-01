@@ -21,10 +21,6 @@ export function DownloadStatus({ state }: { state: DownloadState }) {
     );
   }
 
-  if (state.done) {
-    return <p className="download-status">Ready to run on this computer.</p>;
-  }
-
   if (!state.active) return null;
 
   const pct = percent(state);

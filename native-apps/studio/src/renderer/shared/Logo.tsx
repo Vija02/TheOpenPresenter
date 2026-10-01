@@ -1,3 +1,7 @@
+const VIEWBOX = "0 0 412 316";
+const VIEWBOX_WIDTH = 412;
+const VIEWBOX_HEIGHT = 316;
+
 export function Logo({
   size = 56,
   className,
@@ -7,14 +11,14 @@ export function Logo({
 }) {
   return (
     <svg
-      width={size}
+      width={Math.round((size * VIEWBOX_WIDTH) / VIEWBOX_HEIGHT)}
       height={size}
-      viewBox="0 0 520 264"
+      viewBox={VIEWBOX}
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       role="img"
       aria-label="TheOpenPresenter"
-      className={className}
+      className={className ? `logo-mark ${className}` : "logo-mark"}
     >
       <rect y="48.5" width="214.9" height="214.9" fill="#303030" />
       <rect

@@ -1,3 +1,4 @@
+import { Button, Input, Option } from "@repo/ui";
 import { useEffect, useState } from "react";
 
 import { type ConnectionSummary, api } from "../bridge/ipc";
@@ -80,45 +81,42 @@ export function Account() {
           </p>
 
           <div className="choices">
-            <button
-              className="choice"
+            <Option
+              title={
+                <span className="choice-head">
+                  TheOpenPresenter Cloud
+                  {busy === "cloud" && (
+                    <span className="choice-tag">Connecting</span>
+                  )}
+                </span>
+              }
+              description="Use the hosted service. Needs a working internet connection."
               disabled={busy !== null}
               onClick={() => switchTo("cloud", "cloud", CLOUD_URL)}
-            >
-              <span className="choice-head">
-                <span className="choice-title">TheOpenPresenter Cloud</span>
-                {busy === "cloud" && (
-                  <span className="choice-tag">Connecting</span>
-                )}
-              </span>
-              <span className="muted">
-                Use the hosted service. Needs a working internet connection.
-              </span>
-            </button>
+            />
 
-            <div className="choice choice-static">
-              <span className="choice-head">
-                <span className="choice-title">Another computer</span>
-              </span>
-              <span className="muted">
+            <div className="instance-form">
+              <p className="instance-form-title">Another computer</p>
+              <p className="muted">
                 A TheOpenPresenter instance someone else runs.
-              </span>
+              </p>
               <div className="row">
-                <input
+                <Input
                   type="text"
                   value={customUrl}
                   placeholder="presenter.mychurch.org"
                   onChange={(event) => editCustomUrl(event.target.value)}
                   disabled={busy !== null}
                 />
-                <button
+                <Button
+                  variant="outline"
                   disabled={busy !== null || !customUrl.trim()}
                   onClick={() =>
                     switchTo("custom", "selfhosted", customUrl.trim())
                   }
                 >
                   {busy === "custom" ? "Connecting…" : "Connect"}
-                </button>
+                </Button>
               </div>
               {connectProblem && (
                 <span className="problem choice-problem">{connectProblem}</span>
@@ -134,49 +132,47 @@ export function Account() {
           </p>
 
           <div className="row">
-            <button
-              className="primary"
+            <Button
               disabled={busy !== null}
               onClick={() => switchTo("local", "local")}
             >
               {busy === "local" ? "Starting…" : "Run locally"}
-            </button>
+            </Button>
           </div>
 
           {/* Still worth offering: moving between two remote servers is a
               different job from coming back to this computer. */}
-          <div className="choice choice-static">
-            <span className="choice-head">
-              <span className="choice-title">Use a different instance</span>
-            </span>
+          <div className="instance-form">
+            <p className="instance-form-title">Use a different instance</p>
             <div className="row">
-              <input
+              <Input
                 type="text"
                 value={customUrl}
                 placeholder="presenter.mychurch.org"
                 onChange={(event) => editCustomUrl(event.target.value)}
                 disabled={busy !== null}
               />
-              <button
+              <Button
+                variant="outline"
                 disabled={busy !== null || !customUrl.trim()}
                 onClick={() =>
                   switchTo("custom", "selfhosted", customUrl.trim())
                 }
               >
                 {busy === "custom" ? "Connecting…" : "Connect"}
-              </button>
+              </Button>
             </div>
             {connectProblem && (
               <span className="problem choice-problem">{connectProblem}</span>
             )}
             {!current?.isCloud && (
-              <button
-                className="link"
+              <Button
+                variant="link"
                 disabled={busy !== null}
                 onClick={() => switchTo("cloud", "cloud", CLOUD_URL)}
               >
                 Use TheOpenPresenter Cloud instead
-              </button>
+              </Button>
             )}
           </div>
         </>

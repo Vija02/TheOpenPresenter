@@ -1,3 +1,4 @@
+import { Button, Option } from "@repo/ui";
 import { useState } from "react";
 
 import { Logo } from "../shared/Logo";
@@ -17,13 +18,21 @@ export type SetupChoice = { kind: SetupKind; channel: string };
 export function ChooseSetup({
   onContinue,
   busy,
+  initialKind,
+  initialChannel,
 }: {
   onContinue: (choice: SetupChoice) => void;
   busy: boolean;
+  initialKind?: SetupKind;
+  initialChannel?: string;
 }) {
-  const [kind, setKind] = useState<SetupKind>("complete");
-  const [channel, setChannel] = useState("stable");
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [kind, setKind] = useState<SetupKind>(initialKind ?? "complete");
+  const [channel, setChannel] = useState(initialChannel ?? "stable");
+  // Open when a non-default channel is already set, so a returning user can
+  // see what they picked instead of it looking like the default.
+  const [showAdvanced, setShowAdvanced] = useState(
+    Boolean(initialChannel && initialChannel !== "stable"),
+  );
 
   return (
     <div className="onboarding">
@@ -33,84 +42,71 @@ export function ChooseSetup({
         <p className="muted">You can change this later from the menu.</p>
       </div>
 
-      <div className="choices" role="radiogroup" aria-label="Setup type">
-        <button
-          type="button"
-          role="radio"
-          aria-checked={kind === "complete"}
-          className="choice"
+      <div
+        className="choices ui--option-group"
+        role="radiogroup"
+        aria-label="Setup type"
+      >
+        <Option
+          title={
+            <span className="choice-head">
+              Complete
+              <span className="choice-tag">Recommended</span>
+            </span>
+          }
+          description="Runs everything on this computer. Works without internet, and other screens and phones connect to it. Downloads about 140MB."
+          selected={kind === "complete"}
           disabled={busy}
           onClick={() => setKind("complete")}
-        >
-          <span className="choice-head">
-            <span className="choice-title">Complete</span>
-            <span className="choice-tag">Recommended</span>
-          </span>
-          <span className="choice-note">
-            Runs everything on this computer. Works without internet, and other
-            screens and phones connect to it. Downloads about 140MB.
-          </span>
-        </button>
+        />
 
-        <button
-          type="button"
-          role="radio"
-          aria-checked={kind === "minimal"}
-          className="choice"
+        <Option
+          title="Minimal"
+          description="Connects to another computer or the cloud. Nothing to download."
+          selected={kind === "minimal"}
           disabled={busy}
           onClick={() => setKind("minimal")}
-        >
-          <span className="choice-head">
-            <span className="choice-title">Minimal</span>
-          </span>
-          <span className="choice-note">
-            Connects to another computer or the cloud. Nothing to download.
-          </span>
-        </button>
+        />
       </div>
 
-      {/* Between the choices and Continue, so it reads as a footnote rather
-          than a third option. Collapsed because almost nobody wants a
-          nightly, and offering it prominently invites picking it. */}
-      <button
-        type="button"
-        className="link advanced-toggle"
-        onClick={() => setShowAdvanced(!showAdvanced)}
-        aria-expanded={showAdvanced}
-      >
-        {showAdvanced ? "Hide advanced" : "Advanced"}
-      </button>
+      {kind === "complete" && (
+        <>
+          <Button
+            type="button"
+            variant="link"
+            className="advanced-toggle"
+            onClick={() => setShowAdvanced(!showAdvanced)}
+            aria-expanded={showAdvanced}
+          >
+            {showAdvanced ? "Hide advanced" : "Advanced"}
+          </Button>
 
-      {showAdvanced && (
-        <div className="advanced-panel">
-          <label className="field">
-            <span>Version to download</span>
-            <select
-              value={channel}
-              disabled={busy || kind === "minimal"}
-              onChange={(event) => setChannel(event.target.value)}
-            >
-              <option value="stable">Stable (recommended)</option>
-              <option value="nightly">Nightly (latest, may break)</option>
-            </select>
-          </label>
-          <p className="muted small">
-            {kind === "minimal"
-              ? "Only applies when this computer runs everything."
-              : channel === "nightly"
-                ? "Built from the newest code. Expect rough edges."
-                : "Tested releases."}
-          </p>
-        </div>
+          {showAdvanced && (
+            <div className="advanced-panel">
+              <label className="field">
+                <span>Version to download</span>
+                <select
+                  value={channel}
+                  disabled={busy}
+                  onChange={(event) => setChannel(event.target.value)}
+                >
+                  <option value="stable">Stable (recommended)</option>
+                  <option value="nightly">Nightly (latest, may break)</option>
+                </select>
+              </label>
+              <p className="muted small">
+                {channel === "nightly"
+                  ? "Built from the newest code. Expect rough edges."
+                  : "Tested releases."}
+              </p>
+            </div>
+          )}
+        </>
       )}
 
-      <button
-        className="primary"
-        disabled={busy}
-        onClick={() => onContinue({ kind, channel })}
-      >
+      <Button disabled={busy} onClick={() => onContinue({ kind, channel })}>
         Continue
-      </button>
+      </Button>
     </div>
   );
 }

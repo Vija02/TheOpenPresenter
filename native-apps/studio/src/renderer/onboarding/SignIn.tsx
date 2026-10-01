@@ -1,3 +1,4 @@
+import { Alert, Button, Input } from "@repo/ui";
 import { useEffect, useState } from "react";
 
 import { type Mode, api, listen } from "../bridge/ipc";
@@ -36,6 +37,7 @@ export function SignIn({
   const [busy, setBusy] = useState(false);
   const [waiting, setWaiting] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
+  const [headline, setHeadline] = useState<string | null>(null);
   const [authUrl, setAuthUrl] = useState<string | null>(null);
 
   const mode: Mode = custom ? "selfhosted" : "cloud";
@@ -48,6 +50,7 @@ export function SignIn({
     });
     const offFail = listen<{ message: string }>("auth:failed", (payload) => {
       setProblem(payload.message);
+      setHeadline("Sign-in did not finish");
       setWaiting(false);
       setAuthUrl(null);
     });
@@ -59,17 +62,20 @@ export function SignIn({
 
   const start = async () => {
     setProblem(null);
+    setHeadline(null);
     setBusy(true);
     try {
       const target = custom ? await api.normalizeHost(input) : CLOUD_URL;
       if (!target) {
         setProblem("Enter a server address.");
+        setHeadline("No server address");
         return;
       }
 
       const reachable = await api.checkHost(target);
       if (!reachable) {
         setProblem(`Could not reach ${target}.`);
+        setHeadline("Could not reach that server");
         return;
       }
 
@@ -88,6 +94,7 @@ export function SignIn({
       // reported success and then failure.
     } catch (err) {
       setProblem(String(err));
+      setHeadline("Something went wrong");
     } finally {
       setBusy(false);
     }
@@ -99,7 +106,7 @@ export function SignIn({
     return (
       <div className="onboarding">
         <div className="hero">
-          <Logo size={44} />
+          <Logo />
           <h2>Almost ready</h2>
         </div>
         <p className="muted">{busyLabel ?? "Finishing setup…"}</p>
@@ -117,12 +124,12 @@ export function SignIn({
           its own.
         </p>
         {authUrl && (
-          <button className="link" onClick={() => api.openExternal(authUrl)}>
+          <Button variant="link" onClick={() => api.openExternal(authUrl)}>
             Open the browser again
-          </button>
+          </Button>
         )}
-        <button
-          className="ghost"
+        <Button
+          variant="ghost"
           onClick={() => {
             void api.cancelAuth();
             setWaiting(false);
@@ -130,7 +137,7 @@ export function SignIn({
           }}
         >
           Cancel
-        </button>
+        </Button>
         {footer}
       </div>
     );
@@ -139,15 +146,13 @@ export function SignIn({
   return (
     <div className="onboarding">
       <div className="hero">
-        <Logo size={44} />
-        <h2>Sign in</h2>
+        <Logo />
+        <h2>Connect to your account</h2>
       </div>
-      {problem && <div className="error">{problem}</div>}
-
       {custom && (
         <label className="field">
           <span>Server address</span>
-          <input
+          <Input
             autoFocus
             value={input}
             placeholder="presenter.mychurch.org"
@@ -157,22 +162,59 @@ export function SignIn({
         </label>
       )}
 
-      <button className="primary" disabled={busy} onClick={() => void start()}>
-        {busy ? "Connecting…" : custom ? "Connect" : "Sign in"}
-      </button>
+      <Button
+        className="onboarding-primary"
+        disabled={busy}
+        onClick={() => void start()}
+      >
+        {busy
+          ? "Connecting…"
+          : custom
+            ? "Connect"
+            : "Sign in to TheOpenPresenter Cloud"}
+      </Button>
 
-      {/* One row: both are "not the main thing", and stacking them made the
-          skip read as a third step. */}
-      <div className="link-row">
-        <button
-          className="link"
+      {/* Below the button: the failure is a response to pressing it, so it
+          reads in the order it happened. */}
+      {problem && (
+        <Alert
+          variant="destructive"
+          size="sm"
+          title={headline ?? "Could not connect"}
+        >
+          {problem}
+        </Alert>
+      )}
+
+      {/* Only for the cloud: a self-hosted server has its own accounts, and
+          registering on ours would not grant access to it. */}
+      {!custom && (
+        <p className="muted small">
+          Don&apos;t have an account?{" "}
+          <Button
+            variant="link"
+            onClick={() => api.openExternal(`${CLOUD_URL}/register`)}
+          >
+            Register
+          </Button>
+        </p>
+      )}
+
+      {/* Separated and quieter than the register link above: these are ways
+          out of the suggested path, not alternatives being offered. One row,
+          because stacking them made the skip read as a third step. */}
+      <div className="link-row link-row-alt">
+        <Button
+          variant="link"
+          size="xs"
           onClick={() => {
             setCustom(!custom);
             setProblem(null);
+            setHeadline(null);
           }}
         >
           {custom ? "Use TheOpenPresenter cloud" : "Use my own server"}
-        </button>
+        </Button>
         {secondary}
       </div>
 

@@ -1,3 +1,4 @@
+import { Button } from "@repo/ui";
 import { useCallback, useEffect, useState } from "react";
 
 import { type UpdateState, api, listen } from "../bridge/ipc";
@@ -47,9 +48,7 @@ export function AppUpdate() {
             Version {state.version} is ready. It will be applied next time the
             app starts.
           </p>
-          <button className="primary" onClick={() => void api.installUpdate()}>
-            Restart now
-          </button>
+          <Button onClick={() => void api.installUpdate()}>Restart now</Button>
         </>
       ) : state.status === "downloading" ? (
         <p className="muted">Downloading update… {state.percent}%</p>
@@ -60,14 +59,15 @@ export function AppUpdate() {
               ? "Could not check for updates."
               : "This app is up to date."}
           </p>
-          <button
+          <Button
+            variant="outline"
             disabled={checking || state.status === "checking"}
             onClick={() => void check()}
           >
             {checking || state.status === "checking"
               ? "Checking…"
               : "Check for updates"}
-          </button>
+          </Button>
         </>
       )}
     </div>

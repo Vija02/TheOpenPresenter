@@ -1,3 +1,4 @@
+import { Button, Input } from "@repo/ui";
 import { useEffect, useState } from "react";
 
 import { api } from "../bridge/ipc";
@@ -37,9 +38,9 @@ export function RuntimeSource({ onChanged }: { onChanged: () => void }) {
     return (
       <p className="muted small">
         Downloading from {saved || "the default release server"}.{" "}
-        <button className="link" onClick={() => setOpen(true)}>
+        <Button variant="link" onClick={() => setOpen(true)}>
           Change
-        </button>
+        </Button>
       </p>
     );
   }
@@ -51,19 +52,23 @@ export function RuntimeSource({ onChanged }: { onChanged: () => void }) {
         published release. Leave empty for the default.
       </label>
       <div className="row">
-        <input
+        <Input
           id="runtime-source"
           value={value}
           onChange={(event) => setValue(event.target.value)}
           placeholder="https://runtime.theopenpresenter.com"
           spellCheck={false}
         />
-        <button onClick={() => void save()} disabled={busy}>
+        <Button variant="outline" onClick={() => void save()} disabled={busy}>
           {busy ? "Saving…" : "Save"}
-        </button>
-        <button onClick={() => setOpen(false)} disabled={busy}>
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => setOpen(false)}
+          disabled={busy}
+        >
           Cancel
-        </button>
+        </Button>
       </div>
     </div>
   );
