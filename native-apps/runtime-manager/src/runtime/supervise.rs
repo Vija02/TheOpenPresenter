@@ -445,12 +445,18 @@ fn write_log(log: &Arc<Mutex<Option<std::fs::File>>>, line: &str) {
     let _ = writeln!(file, "{line}");
 }
 
-/// Electron is only usable as a node when told to be, so it has to be
-/// distinguished from a real node binary by name.
+/// Whether a binary is Electron rather than a real node.
+///
+/// Case-insensitive on purpose: electron-builder's `executableName` is
+/// `theopenpresenter` (lowercase) while the product name is
+/// `TheOpenPresenter`
 fn is_electron_binary(path: &Path) -> bool {
     path.file_stem()
         .and_then(|s| s.to_str())
-        .map(|s| s.eq_ignore_ascii_case("electron") || s.contains("TheOpenPresenter"))
+        .map(|s| {
+            let lower = s.to_ascii_lowercase();
+            lower == "electron" || lower.contains("theopenpresenter")
+        })
         .unwrap_or(false)
 }
 
@@ -550,6 +556,32 @@ pub fn write_debug_launcher(config: &LaunchConfig, dest: &Path) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// The packaged executable is lowercase (`executableName` in
+    /// electron-builder.yml). A case-sensitive check missed it, so
+    /// ELECTRON_RUN_AS_NODE was never set and Electron booted as a GUI
+    /// browser: nothing served, and the log filled with GTK warnings.
+    #[test]
+    fn the_packaged_executable_is_recognised_as_electron() {
+        for name in [
+            "theopenpresenter", // Linux / Windows executableName
+            "TheOpenPresenter", // macOS .app executable
+            "electron",         // dev runs
+            "Electron",         // macOS dev
+        ] {
+            assert!(
+                is_electron_binary(Path::new(&format!("/some/path/{name}"))),
+                "{name} should be recognised as Electron"
+            );
+        }
+
+        for name in ["node", "nodejs", "python3"] {
+            assert!(
+                !is_electron_binary(Path::new(&format!("/usr/bin/{name}"))),
+                "{name} is a real interpreter, not Electron"
+            );
+        }
+    }
 
     fn config(dir: &Path, entry: &str) -> LaunchConfig {
         LaunchConfig {
