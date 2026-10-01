@@ -1,3 +1,4 @@
+import { Button } from "@repo/ui";
 import { useState } from "react";
 
 import { type RuntimeStatus, api } from "../bridge/ipc";
@@ -25,9 +26,9 @@ export function RuntimeAdvanced({
   if (!open) {
     return (
       <p className="muted small">
-        <button className="link" onClick={() => setOpen(true)}>
+        <Button variant="link" onClick={() => setOpen(true)}>
           Advanced
-        </button>
+        </Button>
       </p>
     );
   }
@@ -49,9 +50,9 @@ export function RuntimeAdvanced({
   return (
     <section className="advanced">
       <p className="muted small">
-        <button className="link" onClick={() => setOpen(false)}>
+        <Button variant="link" onClick={() => setOpen(false)}>
           Hide advanced
-        </button>
+        </Button>
       </p>
 
       <dl className="facts">
@@ -79,10 +80,16 @@ export function RuntimeAdvanced({
       )}
 
       <div className="row">
-        <button disabled={busy} onClick={() => void checkForUpdates()}>
+        <Button
+          variant="outline"
+          disabled={busy}
+          onClick={() => void checkForUpdates()}
+        >
           {busy ? "Checking…" : "Check for updates"}
-        </button>
-        <button onClick={() => void api.openRuntimeLogs()}>Show the log</button>
+        </Button>
+        <Button variant="outline" onClick={() => void api.openRuntimeLogs()}>
+          Show the log
+        </Button>
       </div>
 
       <RuntimeSource onChanged={onChanged} />

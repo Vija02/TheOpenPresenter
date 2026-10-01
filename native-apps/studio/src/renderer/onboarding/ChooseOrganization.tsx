@@ -1,3 +1,4 @@
+import { Button } from "@repo/ui";
 import { useEffect, useState } from "react";
 
 import { type CloudOrganization, api } from "../bridge/ipc";
@@ -43,7 +44,7 @@ export function ChooseOrganization({
 
   return (
     <section className="onboarding">
-      <Logo size={56} />
+      <Logo />
       <h2>Choose your organisation</h2>
       <p className="muted">
         Your projects will be kept in step between this computer and the
@@ -62,22 +63,23 @@ export function ChooseOrganization({
       <ul className="org-list">
         {options?.map((org) => (
           <li key={org.slug}>
-            <button
+            <Button
+              variant="outline"
               onClick={() => void connect(org)}
               disabled={busy !== null}
               className="org-option"
             >
               <span className="org-name">{org.name}</span>
               {busy === org.slug && <span className="muted">Connecting…</span>}
-            </button>
+            </Button>
           </li>
         ))}
       </ul>
 
       <div className="row">
-        <button className="link" onClick={onSkip} disabled={busy !== null}>
+        <Button variant="link" onClick={onSkip} disabled={busy !== null}>
           Carry on without connecting
-        </button>
+        </Button>
       </div>
     </section>
   );

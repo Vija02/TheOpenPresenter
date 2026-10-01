@@ -1,3 +1,4 @@
+import { Button } from "@repo/ui";
 import { useCallback, useEffect, useState } from "react";
 
 import { type RuntimeStatus, api } from "../bridge/ipc";
@@ -129,28 +130,24 @@ export function RuntimeManager() {
             The server is still running {pendingVersion}. Restart it to use{" "}
             {current}.
           </p>
-          <button
-            className="primary"
-            onClick={() => void restart()}
-            disabled={busy !== null}
-          >
+          <Button onClick={() => void restart()} disabled={busy !== null}>
             {busy === "restart" ? "Restarting…" : "Restart the instance"}
-          </button>
+          </Button>
         </div>
       )}
 
       <div className="row">
-        <button onClick={() => void checkForUpdate()} disabled={busy !== null}>
+        <Button
+          variant="outline"
+          onClick={() => void checkForUpdate()}
+          disabled={busy !== null}
+        >
           {busy === "check" ? "Checking…" : "Check for updates"}
-        </button>
+        </Button>
         {updatable && (
-          <button
-            className="primary"
-            onClick={() => void install()}
-            disabled={busy !== null}
-          >
+          <Button onClick={() => void install()} disabled={busy !== null}>
             {busy === "install" ? "Downloading…" : `Update to ${available}`}
-          </button>
+          </Button>
         )}
       </div>
 
@@ -163,18 +160,18 @@ export function RuntimeManager() {
           <h3>Installed versions</h3>
           <ul className="versions">
             {installed.map((version) => (
-              <li key={version}>
-                <span>{version}</span>
+              <li key={version} className={version === current ? "in-use" : ""}>
+                <span className="version-name">{version}</span>
                 {version === current ? (
-                  <span className="muted">in use</span>
+                  <span className="version-state">in use</span>
                 ) : (
-                  <button
-                    className="link"
+                  <Button
+                    variant="link"
                     onClick={() => void activate(version)}
                     disabled={busy !== null}
                   >
                     {busy === version ? "Switching…" : "Use this one"}
-                  </button>
+                  </Button>
                 )}
               </li>
             ))}

@@ -1,3 +1,4 @@
+import { Button, Input } from "@repo/ui";
 import { useCallback, useEffect, useState } from "react";
 
 import {
@@ -99,9 +100,9 @@ export function Organizations({
       <div className="section-head">
         <h3>Organizations</h3>
         {mode === "idle" && (
-          <button className="link" onClick={() => setMode("creating")}>
+          <Button variant="link" onClick={() => setMode("creating")}>
             New local organization
-          </button>
+          </Button>
         )}
       </div>
 
@@ -131,15 +132,15 @@ export function Organizations({
 
       {mode === "idle" && (
         <div className="row">
-          <button onClick={() => void startConnecting()}>
+          <Button variant="outline" onClick={() => void startConnecting()}>
             Connect a cloud organization
-          </button>
+          </Button>
         </div>
       )}
 
       {mode === "creating" && (
         <div className="row">
-          <input
+          <Input
             type="text"
             value={newName}
             placeholder="St Mary's Church"
@@ -150,15 +151,16 @@ export function Organizations({
               if (event.key === "Escape") setMode("idle");
             }}
           />
-          <button
+          <Button
+            variant="outline"
             disabled={busy !== null || !newName.trim()}
             onClick={() => void create()}
           >
             {busy === "create" ? "Creating…" : "Create"}
-          </button>
-          <button className="link" onClick={() => setMode("idle")}>
+          </Button>
+          <Button variant="link" onClick={() => setMode("idle")}>
             Cancel
-          </button>
+          </Button>
         </div>
       )}
 
@@ -175,19 +177,20 @@ export function Organizations({
               {cloudOptions.map((org) => (
                 <li key={org.slug} className="org-row">
                   <span className="org-row-name">{org.name}</span>
-                  <button
+                  <Button
+                    variant="outline"
                     disabled={busy !== null}
                     onClick={() => void connect(org)}
                   >
                     {busy === org.slug ? "Connecting…" : "Connect"}
-                  </button>
+                  </Button>
                 </li>
               ))}
             </ul>
           )}
-          <button className="link" onClick={() => setMode("idle")}>
+          <Button variant="link" onClick={() => setMode("idle")}>
             Cancel
-          </button>
+          </Button>
         </div>
       )}
     </>

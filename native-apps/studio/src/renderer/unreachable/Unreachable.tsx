@@ -1,3 +1,4 @@
+import { Button } from "@repo/ui";
 import { useState } from "react";
 
 import { api } from "../bridge/ipc";
@@ -36,16 +37,16 @@ export function Unreachable({ label, url }: { label: string; url: string }) {
       {failedAgain && <p className="problem">Still no answer from {label}.</p>}
 
       <div className="row">
-        <button
-          className="primary"
-          disabled={busy}
-          onClick={() => void retry()}
-        >
+        <Button disabled={busy} onClick={() => void retry()}>
           {busy ? "Trying…" : "Try again"}
-        </button>
-        <button disabled={busy} onClick={() => void api.openSettings()}>
+        </Button>
+        <Button
+          variant="outline"
+          disabled={busy}
+          onClick={() => void api.openSettings()}
+        >
           Open settings
-        </button>
+        </Button>
       </div>
     </section>
   );

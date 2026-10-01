@@ -1,3 +1,4 @@
+import { Button } from "@repo/ui";
 import { useEffect, useState } from "react";
 
 import { api } from "../bridge/ipc";
@@ -31,9 +32,9 @@ export function RuntimePaths() {
   if (!open) {
     return (
       <p className="muted small">
-        <button className="link" onClick={() => setOpen(true)}>
+        <Button variant="link" onClick={() => setOpen(true)}>
           Where are these files?
-        </button>
+        </Button>
       </p>
     );
   }
@@ -71,10 +72,15 @@ export function RuntimePaths() {
       )}
 
       <div className="row">
-        <button onClick={() => void api.revealRuntimeFolder("data")}>
+        <Button
+          variant="outline"
+          onClick={() => void api.revealRuntimeFolder("data")}
+        >
           Open my work folder
-        </button>
-        <button onClick={() => setOpen(false)}>Hide</button>
+        </Button>
+        <Button variant="outline" onClick={() => setOpen(false)}>
+          Hide
+        </Button>
       </div>
     </div>
   );

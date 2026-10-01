@@ -1,3 +1,4 @@
+import { Button } from "@repo/ui";
 import { useEffect, useState } from "react";
 
 import { type AboutInfo, api } from "../bridge/ipc";
@@ -74,12 +75,12 @@ export function About() {
       </div>
 
       <div className="row">
-        <button onClick={() => void copy()} disabled={!info}>
+        <Button variant="outline" onClick={() => void copy()} disabled={!info}>
           {copied ? "Copied" : "Copy details"}
-        </button>
-        <button className="link" onClick={() => void api.openWebsite()}>
+        </Button>
+        <Button variant="link" onClick={() => void api.openWebsite()}>
           Website
-        </button>
+        </Button>
       </div>
     </section>
   );

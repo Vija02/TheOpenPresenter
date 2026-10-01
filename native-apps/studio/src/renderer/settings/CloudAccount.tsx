@@ -1,3 +1,4 @@
+import { Button } from "@repo/ui";
 import { useCallback, useEffect, useState } from "react";
 
 import { type Account, api } from "../bridge/ipc";
@@ -102,8 +103,8 @@ export function CloudAccount({
           </span>
         </div>
         {waiting ? (
-          <button
-            className="link"
+          <Button
+            variant="link"
             onClick={() => {
               void api.cancelAuth();
               setWaiting(false);
@@ -111,15 +112,11 @@ export function CloudAccount({
             }}
           >
             Cancel
-          </button>
+          </Button>
         ) : (
-          <button
-            className="primary"
-            disabled={busy}
-            onClick={() => void signIn()}
-          >
+          <Button disabled={busy} onClick={() => void signIn()}>
             Sign in
-          </button>
+          </Button>
         )}
       </div>
     );
@@ -135,9 +132,9 @@ export function CloudAccount({
           {account.email ?? account.name ?? account.username}
         </span>
       </div>
-      <button className="link" disabled={busy} onClick={() => void signOut()}>
+      <Button variant="link" disabled={busy} onClick={() => void signOut()}>
         {busy ? "Signing out…" : "Sign out"}
-      </button>
+      </Button>
     </div>
   );
 }

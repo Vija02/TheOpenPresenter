@@ -1,3 +1,4 @@
+import { Alert, Button } from "@repo/ui";
 import { useEffect, useState } from "react";
 
 import {
@@ -93,13 +94,15 @@ export function LocalRuntime({
     return (
       <section>
         <h2>Use this computer</h2>
-        <p className="error">
+        <Alert variant="destructive" size="sm">
           The runtime manager could not be started, so this option is
           unavailable. Signing in to a server still works.
-        </p>
+        </Alert>
         {status.reason && <pre className="detail">{status.reason}</pre>}
         <div className="row">
-          <button onClick={refresh}>Try again</button>
+          <Button variant="outline" onClick={refresh}>
+            Try again
+          </Button>
         </div>
       </section>
     );
@@ -115,15 +118,15 @@ export function LocalRuntime({
         <>
           <p className="muted">The server is running on this computer.</p>
           <div className="row">
-            <button
-              className="primary"
+            <Button
               onClick={() =>
                 void api.runtimeOpen().catch((e) => onError(String(e)))
               }
             >
               Open
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="outline"
               disabled={busy}
               onClick={() =>
                 void (async () => {
@@ -138,7 +141,7 @@ export function LocalRuntime({
               }
             >
               Stop
-            </button>
+            </Button>
           </div>
         </>
       ) : (
@@ -148,8 +151,7 @@ export function LocalRuntime({
               ? "Everything runs here, with no internet needed after the first download (about 700 MB)."
               : "Everything runs here. No internet needed."}
           </p>
-          <button
-            className="primary"
+          <Button
             onClick={() => void startAndOpen(!needsDownload)}
             disabled={busy}
           >
@@ -160,7 +162,7 @@ export function LocalRuntime({
               : needsDownload
                 ? "Download and start"
                 : "Start"}
-          </button>
+          </Button>
         </>
       )}
 
@@ -188,9 +190,9 @@ export function LocalRuntime({
       {warning && (
         <p className="warning">
           {warning}{" "}
-          <button className="link" onClick={() => setWarning(null)}>
+          <Button variant="link" onClick={() => setWarning(null)}>
             Dismiss
-          </button>
+          </Button>
         </p>
       )}
 

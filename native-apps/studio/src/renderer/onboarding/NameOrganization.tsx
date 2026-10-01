@@ -1,3 +1,4 @@
+import { Button, Input } from "@repo/ui";
 import { useState } from "react";
 
 import { api } from "../bridge/ipc";
@@ -35,14 +36,14 @@ export function NameOrganization({
 
   return (
     <section className="onboarding">
-      <Logo size={56} />
+      <Logo />
       <h2>What is your church or venue called?</h2>
       <p className="muted">
         This is the name your projects are filed under. You can change it later.
       </p>
 
       <form onSubmit={submit} className="name-form">
-        <input
+        <Input
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -50,9 +51,9 @@ export function NameOrganization({
           autoFocus
           disabled={busy}
         />
-        <button type="submit" disabled={busy || !name.trim()}>
+        <Button type="submit" disabled={busy || !name.trim()}>
           {busy ? "Setting up…" : "Continue"}
-        </button>
+        </Button>
       </form>
     </section>
   );
