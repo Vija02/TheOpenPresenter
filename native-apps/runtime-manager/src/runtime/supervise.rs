@@ -210,9 +210,16 @@ impl Supervisor {
         #[cfg(windows)]
         {
             use std::os::windows::process::CommandExt;
-            // CREATE_NEW_PROCESS_GROUP: the Windows equivalent, so a
-            // console Ctrl-C does not propagate into the runtime.
-            command.creation_flags(0x0000_0200);
+            // CREATE_NEW_PROCESS_GROUP (0x200): a console Ctrl-C does not
+            // propagate into the runtime.
+            //
+            // CREATE_NO_WINDOW (0x0800_0000): without it, a console-subsystem
+            // child launched from a GUI parent gets a brand new console
+            // allocated. Studio is a GUI process, so the runtime's output went
+            // to that console instead of our pipes -- the server appeared to
+            // start and `runtime.log` stayed empty, while the same manager run
+            // from a terminal (which already has a console) worked fine.
+            command.creation_flags(0x0000_0200 | 0x0800_0000);
         }
 
         let mut child = command
@@ -228,6 +235,16 @@ impl Supervisor {
         // the time anyone asks. A file the user can be pointed at is the
         // difference between "it didn't work" and a diagnosis.
         let log = Arc::new(Mutex::new(open_log(&config.layout)));
+
+        write_log(
+            &log,
+            &format!(
+                "--- starting {} (entry: {}, port: {}) ---",
+                node.path().display(),
+                config.entry,
+                config.http_port
+            ),
+        );
 
         let stdout = child.stdout.take().context("No stdout on the runtime")?;
         let tx_out = tx.clone();
