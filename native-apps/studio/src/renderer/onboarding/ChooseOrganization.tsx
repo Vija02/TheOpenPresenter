@@ -60,16 +60,28 @@ export function ChooseOrganization({
         </p>
       )}
 
+      {options !== null &&
+        options.length > 0 &&
+        options.every((org) => org.connected) && (
+          <p className="muted">
+            Every organization in this account is already set up on this
+            computer.
+          </p>
+        )}
+
       <ul className="org-list">
         {options?.map((org) => (
           <li key={org.slug}>
             <Button
               variant="outline"
               onClick={() => void connect(org)}
-              disabled={busy !== null}
+              disabled={busy !== null || org.connected}
               className="org-option"
             >
               <span className="org-name">{org.name}</span>
+              {org.connected && (
+                <span className="muted">Already on this computer</span>
+              )}
               {busy === org.slug && <span className="muted">Connecting…</span>}
             </Button>
           </li>

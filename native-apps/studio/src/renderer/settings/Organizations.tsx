@@ -177,13 +177,17 @@ export function Organizations({
               {cloudOptions.map((org) => (
                 <li key={org.slug} className="org-row">
                   <span className="org-row-name">{org.name}</span>
-                  <Button
-                    variant="outline"
-                    disabled={busy !== null}
-                    onClick={() => void connect(org)}
-                  >
-                    {busy === org.slug ? "Connecting…" : "Connect"}
-                  </Button>
+                  {org.connected ? (
+                    <span className="muted">Already connected</span>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      disabled={busy !== null}
+                      onClick={() => void connect(org)}
+                    >
+                      {busy === org.slug ? "Connecting…" : "Connect"}
+                    </Button>
+                  )}
                 </li>
               ))}
             </ul>

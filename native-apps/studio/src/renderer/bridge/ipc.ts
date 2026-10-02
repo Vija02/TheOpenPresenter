@@ -52,6 +52,8 @@ export type AboutInfo = {
 export type CloudOrganization = {
   slug: string;
   name: string;
+  connected?: boolean;
+  localName?: string | null;
 };
 
 /** An organisation on this install. */
