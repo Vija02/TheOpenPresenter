@@ -93,6 +93,12 @@ jobs:
           fi
           ls -la native-apps/studio/resources
 
+      - name: Build the shared UI package
+        shell: bash
+        run: |
+          yarn install --immutable
+          npx turbo build --filter=@repo/ui
+
       - name: Install shell dependencies
         working-directory: native-apps/studio
         run: npm ci || npm install
