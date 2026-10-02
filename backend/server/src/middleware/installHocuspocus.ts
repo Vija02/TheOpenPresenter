@@ -14,6 +14,10 @@ import { getUpgradeHandlers, getWebsocketMiddlewares } from "../app";
 import { hocuspocus } from "../hocuspocusInstance";
 import { serverPluginApi } from "../pluginManager";
 import { withUserPgPool } from "../utils/withUserPgPool";
+import {
+  bridgeProjectIfEligible,
+  unbridgeProject,
+} from "./cloudDocumentBridge";
 import { getRootPgPool } from "./installDatabasePools";
 import { getMediaHandler } from "./installFileUpload";
 import {
@@ -144,6 +148,8 @@ export default async function installHocuspocus(app: Express) {
           mediaHandler.unlinkPlugin(pluginId, { projectId });
         },
       });
+
+      await bridgeProjectIfEligible(rootPgPool, projectId, document);
     },
     // Track how long a renderer stays open
     connected: async (data) => {
@@ -251,6 +257,8 @@ export default async function installHocuspocus(app: Express) {
     },
     afterUnloadDocument: async (data) => {
       disposableDocumentManager.disposeDocument(data.documentName);
+
+      await unbridgeProject(data.documentName);
 
       // Clean up temporary demo projects once they have no active connections,
       // but only after a grace period so a quick reconnect doesn't lose them.
