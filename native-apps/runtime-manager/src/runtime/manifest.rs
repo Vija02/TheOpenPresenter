@@ -206,13 +206,27 @@ pub fn trusted_pubkey() -> Result<VerifyingKey> {
 }
 
 pub fn parse_pubkey(encoded: &str) -> Result<VerifyingKey> {
+    let cleaned = undo_msys_path_mangling(encoded.trim());
     let bytes = base64::engine::general_purpose::STANDARD
-        .decode(encoded.trim())
+        .decode(cleaned)
         .context("Signing key is not valid base64")?;
     let array: [u8; 32] = bytes
         .try_into()
         .map_err(|_| anyhow!("Signing key is not 32 bytes"))?;
     VerifyingKey::from_bytes(&array).context("Signing key is not a valid ed25519 public key")
+}
+
+/// Recover a key Git Bash turned into a path.
+/// To make windows more reliable
+fn undo_msys_path_mangling(value: &str) -> &str {
+    /// 32 bytes, base64 encoded with padding.
+    const ENCODED_LEN: usize = 44;
+
+    // A real base64 key never contains ':'; anything that does was mangled.
+    if !value.contains(':') || value.len() < ENCODED_LEN {
+        return value;
+    }
+    &value[value.len() - ENCODED_LEN..]
 }
 
 #[cfg(test)]
@@ -378,5 +392,39 @@ mod tests {
         };
         assert!(exe.is_executable());
         assert!(!plain.is_executable());
+    }
+
+    /// Git Bash rewrites a key beginning with `/` into a Windows path when it
+    /// launches a native binary, which turned a signing failure into
+    /// "Invalid symbol 58, offset 1" on the Windows runner only.
+    #[test]
+    fn a_key_mangled_into_a_windows_path_still_parses() {
+        let key = SigningKey::generate(&mut OsRng);
+        let encoded =
+            base64::engine::general_purpose::STANDARD.encode(key.verifying_key().to_bytes());
+
+        for mangled in [
+            format!("D:/msys64{encoded}"),
+            format!("C:\\Program Files\\Git{encoded}"),
+            format!("D:/msys64/{encoded}"),
+        ] {
+            let parsed = parse_pubkey(&mangled)
+                .unwrap_or_else(|e| panic!("{mangled} should still parse: {e}"));
+            assert_eq!(parsed.to_bytes(), key.verifying_key().to_bytes());
+        }
+    }
+
+    /// The untouched path has to keep working, including the keys that end in
+    /// `/` — stripping to the last separator must not eat those.
+    #[test]
+    fn an_untouched_key_is_left_alone() {
+        for _ in 0..200 {
+            let key = SigningKey::generate(&mut OsRng);
+            let encoded =
+                base64::engine::general_purpose::STANDARD.encode(key.verifying_key().to_bytes());
+            let parsed = parse_pubkey(&encoded)
+                .unwrap_or_else(|e| panic!("{encoded} should parse unchanged: {e}"));
+            assert_eq!(parsed.to_bytes(), key.verifying_key().to_bytes());
+        }
     }
 }

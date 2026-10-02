@@ -147,6 +147,17 @@ jobs:
 
           # The install has to be verified against the same key the publish
           # just generated, which is not the one compiled into the binary.
+          #
+          # The key is passed through the environment, and a base64 key can
+          # start with "/". When Git Bash launches a native Windows binary it
+          # rewrites path-looking values, so the key arrived as
+          # "D:/msys64/S47..." and failed to decode with "Invalid symbol 58,
+          # offset 1" — the ":" of the drive letter. ENV_CONV_EXCL is what
+          # covers environment variables; ARG_CONV_EXCL only covers argv.
+          export MSYS2_ENV_CONV_EXCL="TOP_RUNTIME_PUBKEY"
+          export MSYS2_ARG_CONV_EXCL="*"
+          export MSYS_NO_PATHCONV=1
+
           PUBKEY=$(cat native-apps/runtime-manager/dev-pubkey.txt)
           TOP_RUNTIME_PUBKEY="$PUBKEY" "$MANAGER" install \
             --root "$RUNNER_TEMP/root" \
