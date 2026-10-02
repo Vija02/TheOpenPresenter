@@ -317,6 +317,12 @@ export async function connectCloudOrganization(
   // separate step for it.
   await selectOrganization(base, created.id, cloudOrg.slug);
 
+  try {
+    await startSync(base, created.id);
+  } catch (err) {
+    console.error("Could not start the first sync", err);
+  }
+
   return { ...created, targetOrganizationSlug: cloudOrg.slug };
 }
 
