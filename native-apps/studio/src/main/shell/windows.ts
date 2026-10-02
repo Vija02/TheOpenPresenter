@@ -2,6 +2,7 @@ import { BrowserWindow, app, globalShortcut, screen, shell } from "electron";
 import { join } from "path";
 
 import { openExternalSafely } from "./external";
+import { logShell } from "./log";
 import { isAllowedAppUrl } from "./origins";
 
 const PRELOAD_PATH = join(__dirname, "../preload/index.js");
@@ -31,7 +32,7 @@ function guardNavigation(win: BrowserWindow): void {
   win.webContents.on("will-navigate", (event, url) => {
     if (isAllowedAppUrl(url)) return;
     event.preventDefault();
-    console.warn(`[shell] blocked navigation to ${url}`);
+    logShell("warn", `[shell] blocked navigation to ${url}`);
     void openExternalSafely(url).catch(() => {});
   });
 
@@ -117,12 +118,12 @@ export function appEntryUrl(url: string, organizationSlug?: string): string {
 export function navigateToServer(url: string): void {
   const target = appEntryUrl(url);
   if (!isAllowedAppUrl(target)) {
-    console.error(`[shell] refused to navigate to ${target}`);
+    logShell("error", `[shell] refused to navigate to ${target}`);
     return;
   }
   if (!mainWin || mainWin.isDestroyed()) createMainWindow();
   mainWin!.loadURL(target).catch((err) => {
-    console.error("[windows] failed to load", target, err);
+    logShell("error", "[windows] failed to load", target, err);
   });
 }
 
@@ -317,7 +318,7 @@ export function getOnboardingWindow(): BrowserWindow | null {
 export function showAppWindow(url: string, organizationSlug?: string): void {
   const entry = appEntryUrl(url, organizationSlug);
   if (!isAllowedAppUrl(entry)) {
-    console.error(`[shell] refused to show ${entry}`);
+    logShell("error", `[shell] refused to show ${entry}`);
     return;
   }
 

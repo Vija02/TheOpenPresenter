@@ -1,6 +1,7 @@
 import { ipcMain } from "electron";
 
 import { runtime } from "../runtime/client";
+import { logShell } from "../shell/log";
 import {
   type Settings,
   getSettings,
@@ -25,7 +26,11 @@ export function registerSettingsIPC(): void {
         try {
           runtime.start({ source: resolveRuntimeSource() });
         } catch (err) {
-          console.error("[ipc] could not restart the runtime manager:", err);
+          logShell(
+            "error",
+            "[ipc] could not restart the runtime manager:",
+            err,
+          );
         }
       }
 

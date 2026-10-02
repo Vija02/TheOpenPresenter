@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { homedir } from "os";
 import { join } from "path";
 
+import { logShell } from "../shell/log";
 import { shellDir } from "./paths";
 
 /** JSON-file settings store */
@@ -56,7 +57,7 @@ function persist(): void {
     if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
     writeFileSync(storePath(), JSON.stringify(cache ?? {}, null, 2), "utf8");
   } catch (err) {
-    console.error("[settings] failed to save:", err);
+    logShell("error", "[settings] failed to save:", err);
   }
 }
 

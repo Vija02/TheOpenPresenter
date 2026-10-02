@@ -5,6 +5,7 @@ import { existsSync } from "fs";
 import { join } from "path";
 
 import { runtimeRoot } from "../settings/paths";
+import { logShell } from "../shell/log";
 
 /** Peer-to-peer remote access state. */
 export type RemoteStatus = {
@@ -157,7 +158,7 @@ export class RuntimeClient extends EventEmitter {
     });
 
     child.on("error", (err) => {
-      console.error("[runtime-manager] failed to start:", err);
+      logShell("error", "[runtime-manager] failed to start:", err);
       this.emit("manager-error", err);
     });
   }
@@ -175,7 +176,7 @@ export class RuntimeClient extends EventEmitter {
       try {
         message = JSON.parse(line) as Record<string, unknown>;
       } catch {
-        console.warn("[runtime-manager] unparseable line:", line);
+        logShell("warn", "[runtime-manager] unparseable line:", line);
         continue;
       }
 

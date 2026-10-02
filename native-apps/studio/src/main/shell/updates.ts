@@ -2,6 +2,8 @@ import { BrowserWindow, app } from "electron";
 import type { UpdateInfo } from "electron-updater";
 import pkg from "electron-updater";
 
+import { logShell, shellLogger } from "./log";
+
 const { autoUpdater } = pkg;
 
 /** Keeping the electron app itself up to date. */
@@ -60,6 +62,7 @@ export function setupUpdates(): void {
   // mid-service is not, so installing always waits to be asked.
   autoUpdater.autoDownload = true;
   autoUpdater.autoInstallOnAppQuit = true;
+  autoUpdater.logger = shellLogger;
 
   autoUpdater.on("checking-for-update", () => setState({ status: "checking" }));
   autoUpdater.on("update-not-available", () => setState({ status: "idle" }));
@@ -72,10 +75,11 @@ export function setupUpdates(): void {
   autoUpdater.on("update-downloaded", (info: UpdateInfo) =>
     setState({ status: "ready", version: info.version }),
   );
-  autoUpdater.on("error", (err) =>
+  autoUpdater.on("error", (err) => {
+    logShell("error", "[updates]", err);
     // Being offline is the common case here, not a fault worth shouting about.
-    setState({ status: "error", message: err?.message ?? String(err) }),
-  );
+    setState({ status: "error", message: err?.message ?? String(err) });
+  });
 
   void checkForUpdates();
 }
@@ -116,6 +120,8 @@ async function shutdownForInstall(): Promise<void> {
   if (runtime.isRunning) {
     await runtime
       .shutdown()
-      .catch((err) => console.error("[updates] runtime shutdown failed:", err));
+      .catch((err) =>
+        logShell("error", "[updates] runtime shutdown failed:", err),
+      );
   }
 }
