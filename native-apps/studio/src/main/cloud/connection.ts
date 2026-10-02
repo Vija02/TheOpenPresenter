@@ -1,4 +1,4 @@
-import { net } from "electron";
+import { session as electronSession, net } from "electron";
 
 import { cloudSessionCookie } from "./auth";
 import { toSlug, uniqueSlug } from "./slug";
@@ -10,10 +10,27 @@ const HEADERS = {
   "x-top-csrf-protection": "1",
 };
 
+const SESSION_COOKIE = "connect.sid";
+
+async function localSessionHeader(
+  base: string,
+): Promise<Record<string, string>> {
+  try {
+    const cookies = await electronSession.defaultSession.cookies.get({
+      url: base,
+      name: SESSION_COOKIE,
+    });
+    const cookie = cookies[0];
+    return cookie ? { Cookie: `${cookie.name}=${cookie.value}` } : {};
+  } catch {
+    return {};
+  }
+}
+
 async function post<T>(base: string, path: string, body: unknown): Promise<T> {
   const response = await net.fetch(`${base}${path}`, {
     method: "POST",
-    headers: HEADERS,
+    headers: { ...HEADERS, ...(await localSessionHeader(base)) },
     body: JSON.stringify(body),
   });
 
@@ -54,6 +71,15 @@ export type CloudConnection = {
   host: string;
   organizationList: { slug: string; name: string }[];
   targetOrganizationSlug: string | null;
+  /**
+   * The slug of the *local* organisation this connection belongs to.
+   *
+   * Not the same as `targetOrganizationSlug`: the local mirror is given a
+   * unique slug, so mirroring a cloud `grace` onto an install that already
+   * has a `grace` produces `grace-2`. Callers that want to open the
+   * organisation need this one.
+   */
+  localOrganizationSlug?: string;
 };
 
 export async function localOrganization(
@@ -247,7 +273,11 @@ export async function selectOrganization(
   cloudConnectionId: string,
   targetOrganizationSlug: string,
 ): Promise<void> {
-  await graphql(
+  const data = await graphql<{
+    updateCloudConnection: {
+      cloudConnection: { id: string; targetOrganizationSlug: string } | null;
+    } | null;
+  }>(
     base,
     `
       mutation ($cloudConnectionId: UUID!, $targetOrganizationSlug: String!) {
@@ -266,6 +296,15 @@ export async function selectOrganization(
     `,
     { cloudConnectionId, targetOrganizationSlug },
   );
+
+  const updated = data.updateCloudConnection?.cloudConnection;
+  if (updated?.targetOrganizationSlug !== targetOrganizationSlug) {
+    throw new Error(
+      `Could not point this computer at ${targetOrganizationSlug}. ` +
+        `The server accepted the request but stored nothing, which usually ` +
+        `means this shell is not signed in to the local server.`,
+    );
+  }
 }
 
 /** Start a sync. Returns once queued, not once finished. */
@@ -323,7 +362,11 @@ export async function connectCloudOrganization(
     console.error("Could not start the first sync", err);
   }
 
-  return { ...created, targetOrganizationSlug: cloudOrg.slug };
+  return {
+    ...created,
+    targetOrganizationSlug: cloudOrg.slug,
+    localOrganizationSlug: org.slug,
+  };
 }
 
 /** Give this install an organization with a name the user chose. */

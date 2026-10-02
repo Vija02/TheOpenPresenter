@@ -37,7 +37,8 @@ export const net = {
 export const session = {
   defaultSession: {
     cookies: {
-      get: () => Promise.resolve([]),
+      get: (_filter?: unknown): Promise<{ name: string; value: string }[]> =>
+        Promise.resolve([]),
       remove: () => Promise.resolve(),
     },
   },
