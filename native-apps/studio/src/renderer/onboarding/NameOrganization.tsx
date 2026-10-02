@@ -13,7 +13,7 @@ export function NameOrganization({
   onCreated,
   onError,
 }: {
-  onCreated: () => void;
+  onCreated: (organizationSlug?: string) => void;
   onError: (message: string) => void;
 }) {
   const [name, setName] = useState("");
@@ -26,8 +26,8 @@ export function NameOrganization({
 
     setBusy(true);
     try {
-      await api.createLocalOrganization(trimmed);
-      onCreated();
+      const organization = await api.createLocalOrganization(trimmed);
+      onCreated(organization.slug);
     } catch (err) {
       onError(err instanceof Error ? err.message : String(err));
       setBusy(false);

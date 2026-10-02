@@ -41,3 +41,43 @@ describe("where the window lands", () => {
     expect(target("not a url")).toBe("not a url");
   });
 });
+
+/**
+ * Onboarding knows which organisation the user just picked. Without passing
+ * it, the window lands on `/o`, which prefers the organisation the browser
+ * last remembered and otherwise takes the first in the list — so an install
+ * with a second organisation opens the wrong one.
+ */
+describe("opening a named organisation", () => {
+  it("lands directly on the organisation it was given", () => {
+    expect(target("http://localhost:45231", "interview-test")).toBe(
+      "http://localhost:45231/o/interview-test",
+    );
+  });
+
+  it("still falls back to the picker without one", () => {
+    expect(target("http://localhost:45231", undefined)).toBe(
+      "http://localhost:45231/o",
+    );
+  });
+
+  /** A mirror of an existing name is uniquified, so the slug can differ. */
+  it("uses the slug given rather than guessing", () => {
+    expect(target("http://localhost:45231/", "grace-2")).toBe(
+      "http://localhost:45231/o/grace-2",
+    );
+  });
+
+  it("escapes a slug so it cannot alter the path", () => {
+    expect(target("http://localhost:45231", "a/../login")).toBe(
+      "http://localhost:45231/o/a%2F..%2Flogin",
+    );
+  });
+
+  /** A caller that already has a destination is still left alone. */
+  it("does not override an explicit path", () => {
+    expect(target("http://localhost:45231/login", "grace")).toBe(
+      "http://localhost:45231/login",
+    );
+  });
+});

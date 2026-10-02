@@ -98,12 +98,13 @@ export function loadShellUI(
   }
 }
 
-/** Land on /o rather than root */
-export function appEntryUrl(url: string): string {
+export function appEntryUrl(url: string, organizationSlug?: string): string {
   try {
     const parsed = new URL(url);
     if (parsed.pathname === "/" && !parsed.search && !parsed.hash) {
-      parsed.pathname = "/o";
+      parsed.pathname = organizationSlug
+        ? `/o/${encodeURIComponent(organizationSlug)}`
+        : "/o";
       return parsed.toString();
     }
   } catch {
@@ -313,8 +314,8 @@ export function getOnboardingWindow(): BrowserWindow | null {
  * Hand the window over to the running server. The end of every startup path:
  * whatever was showing progress goes away as the app window appears.
  */
-export function showAppWindow(url: string): void {
-  const entry = appEntryUrl(url);
+export function showAppWindow(url: string, organizationSlug?: string): void {
+  const entry = appEntryUrl(url, organizationSlug);
   if (!isAllowedAppUrl(entry)) {
     console.error(`[shell] refused to show ${entry}`);
     return;

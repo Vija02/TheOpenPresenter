@@ -73,6 +73,7 @@ export type CloudConnection = {
   host: string;
   organizationList: { slug: string; name: string }[];
   targetOrganizationSlug: string | null;
+  localOrganizationSlug?: string;
 };
 
 /** What the app is currently pointed at. Mirrors the main process summary. */
@@ -219,7 +220,7 @@ export const api = {
       version: string;
       lanAddress: string | null;
     }>("runtime:restart"),
-  runtimeStart: (args?: { open?: boolean }) =>
+  runtimeStart: (args?: { open?: boolean; organizationSlug?: string }) =>
     invoke<{
       url: string;
       httpPort: number;

@@ -123,6 +123,26 @@ describe("connectCloudOrganization", () => {
   });
 
   /**
+   * Onboarding opens this organisation afterwards. The local mirror's slug is
+   * uniquified, so returning the cloud slug would open the wrong one on an
+   * install that already had an organisation of that name.
+   */
+  it("reports the local mirror's slug, not the cloud one", async () => {
+    const server = fakeServer();
+    const electron = await import("electron");
+    (electron.net as any).fetch = server.fetch;
+
+    const result = await connectCloudOrganization(
+      "http://localhost:5678",
+      "https://theopenpresenter.com",
+      { slug: "grace", name: "Grace Church" },
+    );
+
+    expect(result.localOrganizationSlug).toBe("grace");
+    expect(result.targetOrganizationSlug).toBe("grace");
+  });
+
+  /**
    * Order matters: the worker aborts when target_organization_slug is unset,
    * so a sync queued before the target is chosen would silently do nothing.
    */
