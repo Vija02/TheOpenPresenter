@@ -42,6 +42,7 @@ export * from "./PasswordStrength";
 export * from "./PopConfirm";
 export * from "./Redirect/Redirect";
 export * from "./Slide";
+export * from "./lazyWithRetry";
 export * from "./withSuspense";
 export * from "./UniversalImage";
 export * from "./PluginScaffold";
