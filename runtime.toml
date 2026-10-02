@@ -2,7 +2,7 @@
 
 [runtime]
 entry = "run_server.mjs"
-entry_source = "tauri/node-server/run_server.mjs"
+entry_source = "runtime/run_server.mjs"
 
 # Which plugins are loaded at boot.
 plugins = [
@@ -59,7 +59,6 @@ scripts = [
   "scripts/build_utils/extract_core.js",
   "scripts/build_utils/extract_server.js",
   "scripts/build_utils/extract_plugins.js",
-  "scripts/build_utils/extract_tauri.js",
 ]
 results = "nft_results"
 

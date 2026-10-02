@@ -36,7 +36,6 @@ test.describe("Preview window", () => {
     context,
     e2eCommand,
   }) => {
-    test.skip(!!process.env.PLAYWRIGHT_TAURI, "Skipped in Tauri E2E tests");
 
     await login(e2eCommand);
 
@@ -59,7 +58,6 @@ test.describe("Preview window", () => {
   });
 
   test("starts muted and toggles", async ({ page, context, e2eCommand }) => {
-    test.skip(!!process.env.PLAYWRIGHT_TAURI, "Skipped in Tauri E2E tests");
 
     await login(e2eCommand);
 
@@ -92,7 +90,6 @@ test.describe("Preview window", () => {
     context,
     e2eCommand,
   }) => {
-    test.skip(!!process.env.PLAYWRIGHT_TAURI, "Skipped in Tauri E2E tests");
 
     await login(e2eCommand);
 
@@ -119,7 +116,6 @@ test.describe("Preview window", () => {
     context,
     e2eCommand,
   }) => {
-    test.skip(!!process.env.PLAYWRIGHT_TAURI, "Skipped in Tauri E2E tests");
 
     await login(e2eCommand);
 
@@ -149,7 +145,6 @@ test.describe("Preview window", () => {
     context,
     e2eCommand,
   }) => {
-    test.skip(!!process.env.PLAYWRIGHT_TAURI, "Skipped in Tauri E2E tests");
 
     await login(e2eCommand);
 
@@ -169,7 +164,6 @@ test.describe("Preview window", () => {
     context,
     e2eCommand,
   }) => {
-    test.skip(!!process.env.PLAYWRIGHT_TAURI, "Skipped in Tauri E2E tests");
 
     await login(e2eCommand);
 

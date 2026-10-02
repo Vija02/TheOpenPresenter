@@ -14,7 +14,6 @@ test.describe("/meeting-room /init-demo pairing", () => {
     page,
     browser,
   }) => {
-    test.skip(!!process.env.PLAYWRIGHT_TAURI, "Skipped in Tauri E2E tests");
 
     await page.goto("/meeting-room");
 

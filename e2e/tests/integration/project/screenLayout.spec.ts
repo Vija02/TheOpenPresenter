@@ -86,7 +86,6 @@ test.describe.serial("Screen layouts", () => {
     e2eCommand,
     setupScreen,
   }) => {
-    test.skip(!!process.env.PLAYWRIGHT_TAURI, "Skipped in Tauri E2E tests");
     const marker = "Layout marker alpha";
 
     await login(e2eCommand, marker);
@@ -133,7 +132,6 @@ test.describe.serial("Screen layouts", () => {
     context,
     e2eCommand,
   }) => {
-    test.skip(!!process.env.PLAYWRIGHT_TAURI, "Skipped in Tauri E2E tests");
     const marker = "Layout marker preview";
 
     await login(e2eCommand, marker);
@@ -162,7 +160,6 @@ test.describe.serial("Screen layouts", () => {
     context,
     e2eCommand,
   }) => {
-    test.skip(!!process.env.PLAYWRIGHT_TAURI, "Skipped in Tauri E2E tests");
     const marker = "Layout marker persist";
 
     await login(e2eCommand, marker);

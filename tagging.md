@@ -36,11 +36,10 @@ git tag v0.1.0
 git push origin v0.1.0
 ```
 
-The push fires two workflows in parallel:
+The push fires the release workflows in parallel:
 
 | Workflow | Builds | Publishes to release as |
 |---|---|---|
-| `.github/workflows/tauri.yml` | Main desktop app (Windows MSI/NSIS, macOS dmg) | `TheOpenPresenter_<ver>_x64-setup.exe`, `…_x64_en-US.msi`, `…_aarch64.dmg` |
 | `.github/workflows/desktop-screen.yml` | Kiosk binaries (Linux x86_64 + aarch64) | `desktop-screen-linux-x86_64`, `desktop-screen-linux-aarch64` |
 
 Both target the same `vX.Y.Z` GitHub Release. The `softprops/action-gh-release@v2`
@@ -72,10 +71,8 @@ that matters to you (e.g., to keep them out of `/releases/latest`):
 Pushes to `main` (without a version tag) build and refresh a moving
 `nightly` GitHub Release:
 
-- `tauri.yml` publishes the main app artifacts.
 - `desktop-screen.yml` publishes the kiosk binaries (tag
-  `desktop-screen-nightly` - separate from `nightly` to avoid the
-  cross-publish issue at the nightly level).
+  `desktop-screen-nightly`).
 
 The homepage's Windows download link
 (`apps/homepage/src/pages/download/index.astro`) hard-codes the

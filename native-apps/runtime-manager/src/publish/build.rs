@@ -595,7 +595,7 @@ fn copy_symlink(from: &Path, to: &Path) -> Result<()> {
 /// that uses this is a cross-reference, and a parse that silently breaks
 /// should not block a release on its own.
 fn enabled_plugins_in_server(repo: &Path) -> Result<Vec<String>> {
-    let path = repo.join("tauri/node-server/run_server.mjs");
+    let path = repo.join("runtime/run_server.mjs");
     let Ok(source) = std::fs::read_to_string(&path) else {
         return Ok(Vec::new());
     };
