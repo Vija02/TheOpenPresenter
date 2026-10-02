@@ -14,7 +14,7 @@ export function ChooseOrganization({
   onSkip,
   onError,
 }: {
-  onConnected: () => void;
+  onConnected: (organizationSlug?: string) => void;
   onSkip: () => void;
   onError: (message: string) => void;
 }) {
@@ -34,8 +34,8 @@ export function ChooseOrganization({
   const connect = async (org: CloudOrganization) => {
     setBusy(org.slug);
     try {
-      await api.connectCloudOrganization(org);
-      onConnected();
+      const connection = await api.connectCloudOrganization(org);
+      onConnected(connection.localOrganizationSlug);
     } catch (err) {
       onError(err instanceof Error ? err.message : String(err));
       setBusy(null);

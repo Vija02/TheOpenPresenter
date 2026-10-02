@@ -62,29 +62,32 @@ export function registerRuntimeIPC(): void {
     runtime.activate(version),
   );
 
-  ipcMain.handle("runtime:start", async (_event, args?: { open?: boolean }) => {
-    let result;
-    try {
-      result = await runtime.startRuntime();
-    } catch (err) {
-      void reportDiagnosis(
-        "start_failed: runtime",
-        `${String(err)}\n\n--- runtime output ---\n${runtime.recentOutput}`,
-      );
-      throw err;
-    }
+  ipcMain.handle(
+    "runtime:start",
+    async (_event, args?: { open?: boolean; organizationSlug?: string }) => {
+      let result;
+      try {
+        result = await runtime.startRuntime();
+      } catch (err) {
+        void reportDiagnosis(
+          "start_failed: runtime",
+          `${String(err)}\n\n--- runtime output ---\n${runtime.recentOutput}`,
+        );
+        throw err;
+      }
 
-    if (args?.open !== false) {
-      updateSettings({ mode: "local" });
-      showAppWindow(runtime.url ?? result.url);
-      refreshMenu();
-    }
-    return {
-      ...result,
-      url: runtime.url ?? result.url,
-      lanAddress: localAddress(),
-    };
-  });
+      if (args?.open !== false) {
+        updateSettings({ mode: "local" });
+        showAppWindow(runtime.url ?? result.url, args?.organizationSlug);
+        refreshMenu();
+      }
+      return {
+        ...result,
+        url: runtime.url ?? result.url,
+        lanAddress: localAddress(),
+      };
+    },
+  );
 
   /** Open the window into a server that is already running */
   ipcMain.handle("runtime:open", () => {

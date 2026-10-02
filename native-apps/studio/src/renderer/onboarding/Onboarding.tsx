@@ -69,17 +69,20 @@ export function Onboarding() {
    * Start the local server and hand the window over to it. The end of every
    * path that runs locally.
    */
-  const finishLocally = useCallback(async () => {
-    setError(null);
-    setFinishing(true);
-    try {
-      await download.wait();
-      await api.runtimeStart();
-    } catch (err) {
-      setError(String(err));
-      setFinishing(false);
-    }
-  }, [download]);
+  const finishLocally = useCallback(
+    async (organizationSlug?: string) => {
+      setError(null);
+      setFinishing(true);
+      try {
+        await download.wait();
+        await api.runtimeStart({ organizationSlug });
+      } catch (err) {
+        setError(String(err));
+        setFinishing(false);
+      }
+    },
+    [download],
+  );
 
   /**
    * Finish setup once the user has signed in. Signing in and running locally
@@ -213,7 +216,7 @@ export function Onboarding() {
 
       {step === "organization" && (
         <ChooseOrganization
-          onConnected={() => void finishLocally()}
+          onConnected={(slug) => void finishLocally(slug)}
           onSkip={() => goTo("name")}
           onError={setError}
         />
@@ -221,7 +224,7 @@ export function Onboarding() {
 
       {step === "name" && (
         <NameOrganization
-          onCreated={() => void finishLocally()}
+          onCreated={(slug) => void finishLocally(slug)}
           onError={setError}
         />
       )}
