@@ -24,14 +24,11 @@
     "prepare:sidecar": "node scripts/prepare-sidecar.cjs"
   },
   "dependencies": {
-    "@repo/ui": "file:../../packages/ui",
     "electron-updater": "^6.8.9",
-    "qrcode.react": "^4.2.0",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
     "slugify": "^1.6.6"
   },
   "devDependencies": {
+    "@repo/ui": "file:../../packages/ui",
     "@tailwindcss/vite": "^4.3.3",
     "@types/node": "^24.13.3",
     "@types/react": "^19.1.8",
@@ -40,6 +37,8 @@
     "electron": "^43.7.7",
     "electron-builder": "^26.17.0",
     "electron-vite": "^2.3.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
     "tailwindcss": "^4.3.3",
     "typescript": "~5.8.3",
     "vite": "^5.4.0",
