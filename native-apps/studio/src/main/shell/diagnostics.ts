@@ -4,6 +4,7 @@ import { cpus } from "os";
 import { join } from "path";
 
 import { runtimeRoot } from "../settings/paths";
+import { logShell } from "./log";
 
 /** Reporting a crash to the cloud. */
 
@@ -13,7 +14,7 @@ const DIAGNOSTICS_CLOUD_HOST = "https://theopenpresenter.com";
 /** Enough log to see what happened, small enough to post while degraded. */
 const MAX_LOG_BYTES = 64 * 1024;
 const MAX_LOG_LINES = 300;
-const MAX_LOG_FILES = 2;
+const MAX_LOG_FILES = 3;
 
 type LogFile = { name: string; content: string; truncated: boolean };
 
@@ -116,13 +117,16 @@ export async function reportDiagnosis(
     );
 
     if (!response.ok) {
-      console.error(`[diagnostics] report rejected: HTTP ${response.status}`);
+      logShell(
+        "error",
+        `[diagnostics] report rejected: HTTP ${response.status}`,
+      );
       return false;
     }
     console.log("[diagnostics] report sent");
     return true;
   } catch (err) {
-    console.error("[diagnostics] failed to send report:", err);
+    logShell("error", "[diagnostics] failed to send report:", err);
     return false;
   }
 }

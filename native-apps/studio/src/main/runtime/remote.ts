@@ -1,4 +1,5 @@
 import { runtime } from "../runtime/client";
+import { logShell } from "../shell/log";
 
 /** Local server requests skip CSRF the same way the app's own clients do. */
 const HEADERS = {
@@ -26,9 +27,9 @@ export async function registerTicket(
     const detail = await response.text().catch(() => "");
     const message =
       `The server refused the connection details (${response.status}). ${detail}`.trim();
-    console.error("[remote]", message);
+    logShell("error", "[remote]", message);
     throw new Error(message);
   }
 
-  console.log(`[remote] registered, node ${endpointId.slice(0, 12)}…`);
+  logShell("info", `[remote] registered, node ${endpointId.slice(0, 12)}…`);
 }

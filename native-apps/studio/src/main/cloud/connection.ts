@@ -1,5 +1,6 @@
 import { session as electronSession, net } from "electron";
 
+import { logShell } from "../shell/log";
 import { cloudSessionCookie } from "./auth";
 import { toSlug, uniqueSlug } from "./slug";
 
@@ -359,7 +360,7 @@ export async function connectCloudOrganization(
   try {
     await startSync(base, created.id);
   } catch (err) {
-    console.error("Could not start the first sync", err);
+    logShell("error", "Could not start the first sync", err);
   }
 
   return {

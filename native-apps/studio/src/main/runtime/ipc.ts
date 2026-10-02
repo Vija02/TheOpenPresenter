@@ -9,6 +9,7 @@ import {
   updateSettings,
 } from "../settings/store";
 import { reportDiagnosis } from "../shell/diagnostics";
+import { logShell } from "../shell/log";
 import { refreshMenu } from "../shell/menu";
 import { showAppWindow } from "../shell/windows";
 import { runtime } from "./client";
@@ -138,7 +139,7 @@ export function registerRuntimeIPC(): void {
 
   ipcMain.handle("runtime:remote-start", async () => {
     const status = await runtime.startRemote();
-    console.log("[remote] tunnel started, enabled=" + status.enabled);
+    logShell("info", "[remote] tunnel started, enabled=" + status.enabled);
 
     if (status.enabled && status.ticket && status.node_id) {
       await registerTicket(status.ticket, status.node_id);
@@ -150,7 +151,7 @@ export function registerRuntimeIPC(): void {
 
   ipcMain.handle("runtime:remote-stop", async () => {
     const status = await runtime.stopRemote();
-    console.log("[remote] tunnel stopped");
+    logShell("info", "[remote] tunnel stopped");
     updateSettings({ remoteAccess: false });
     return status;
   });

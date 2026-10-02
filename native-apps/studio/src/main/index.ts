@@ -3,7 +3,7 @@ import { BrowserWindow, app, screen } from "electron";
 import { registerIPC } from "./ipc";
 import { runtime } from "./runtime/client";
 import { registerTicket } from "./runtime/remote";
-import { chromiumDir } from "./settings/paths";
+import { chromiumDir, runtimeRoot } from "./settings/paths";
 import {
   DEFAULT_CHANNEL,
   getSettings,
@@ -11,6 +11,7 @@ import {
   resolveRuntimeSource,
 } from "./settings/store";
 import { reportDiagnosis } from "./shell/diagnostics";
+import { logShell } from "./shell/log";
 import { setupMenu } from "./shell/menu";
 import { setupTray } from "./shell/tray";
 import { isInstallingUpdate, setupUpdates } from "./shell/updates";
@@ -77,6 +78,7 @@ const gotLock =
   app.requestSingleInstanceLock();
 
 if (!gotLock) {
+  logShell("info", "[startup] another instance is already running, quitting");
   app.quit();
 } else {
   /** True while startup is deciding which window to show. */
@@ -109,7 +111,12 @@ if (!gotLock) {
     screen.on("display-metrics-changed", repositionPresentWindows);
 
     try {
-      await startupRoute();
+      const destination = await startupRoute();
+      logShell(
+        "info",
+        `[startup] app ${app.getVersion()}, electron ${process.versions.electron}, ${process.platform}-${process.arch}, root ${runtimeRoot()}`,
+      );
+      logShell("info", `[startup] showing ${destination}`);
     } finally {
       routing = false;
     }
@@ -138,7 +145,7 @@ if (!gotLock) {
     closeAllPresentWindows();
     runtime
       .shutdown()
-      .catch((err) => console.error("[main] runtime shutdown failed:", err))
+      .catch((err) => logShell("error", "[main] runtime shutdown failed:", err))
       .finally(() => app.quit());
   });
 }
@@ -147,12 +154,13 @@ async function refreshBeforeOnboarding(): Promise<void> {
   try {
     const channel = getSettings().channel ?? DEFAULT_CHANNEL;
     const result = await runtime.ensure(channel, true);
-    console.log(
+    logShell(
+      "info",
       `[main] runtime refreshed before onboarding: ${result.version}`,
     );
   } catch (err) {
     // Offline is the ordinary case; onboarding downloads it later anyway.
-    console.error("[main] could not refresh the runtime:", err);
+    logShell("error", "[main] could not refresh the runtime:", err);
   }
 }
 
@@ -160,7 +168,7 @@ async function refreshBeforeOnboarding(): Promise<void> {
  * Decide what the user sees on launch. The runtime manager starts regardless
  * of mode: it is a small idle process.
  */
-async function startupRoute(): Promise<void> {
+async function startupRoute(): Promise<string> {
   const settings = getSettings();
 
   // Nothing set up yet: onboarding owns the screen until it finishes.
@@ -170,10 +178,10 @@ async function startupRoute(): Promise<void> {
       runtime.start({ source: resolveRuntimeSource() });
       void refreshBeforeOnboarding();
     } catch (err) {
-      console.error("[main] runtime manager unavailable:", err);
+      logShell("error", "[main] runtime manager unavailable:", err);
       void reportDiagnosis("startup_failed: manager unavailable", String(err));
     }
-    return;
+    return "onboarding";
   }
 
   openLoadingWindow();
@@ -182,7 +190,7 @@ async function startupRoute(): Promise<void> {
     runtime.start({ source: resolveRuntimeSource() });
   } catch (err) {
     // Not fatal: cloud and self-hosted mode do not need it.
-    console.error("[main] runtime manager unavailable:", err);
+    logShell("error", "[main] runtime manager unavailable:", err);
     void reportDiagnosis("startup_failed: manager unavailable", String(err));
   }
 
@@ -193,11 +201,11 @@ async function startupRoute(): Promise<void> {
         if (started?.url) {
           if (settings.remoteAccess !== false) void resumeRemoteAccess();
           showAppWindow(started.url);
-          return;
+          return "the app window";
         }
       }
     } catch (err) {
-      console.error("[main] failed to start the local runtime:", err);
+      logShell("error", "[main] failed to start the local runtime:", err);
       void reportDiagnosis(
         "startup_failed: local runtime",
         `${String(err)}\n\n--- runtime output ---\n${runtime.recentOutput}`,
@@ -207,7 +215,7 @@ async function startupRoute(): Promise<void> {
     // Open before closing, so the window count never reaches zero.
     openOnboardingWindow();
     closeLoadingWindow();
-    return;
+    return "onboarding";
   }
 
   if (settings.rootUrl) {
@@ -222,17 +230,18 @@ async function startupRoute(): Promise<void> {
       // app before the replacement appears.
       openUnreachableWindow(describeConnection(settings, null).label, rootUrl);
       closeLoadingWindow();
-      return;
+      return "the unreachable screen";
     }
 
     if (await isLoggedIn(rootUrl)) {
       showAppWindow(rootUrl);
-      return;
+      return "the app window";
     }
   }
 
   openOnboardingWindow();
   closeLoadingWindow();
+  return "onboarding";
 }
 
 /**
@@ -245,7 +254,7 @@ async function resumeRemoteAccess(): Promise<void> {
       await registerTicket(status.ticket, status.node_id);
     }
   } catch (err) {
-    console.error("[main] failed to resume remote access:", err);
+    logShell("error", "[main] failed to resume remote access:", err);
   }
 }
 
@@ -261,12 +270,19 @@ function forwardRuntimeEvents(): void {
 
   runtime.on("progress", (payload) => send("runtime:progress", payload));
   runtime.on("warning", (payload) => send("runtime:warning", payload));
-  runtime.on("ready", (payload) => send("runtime:ready", payload));
+  runtime.on("ready", (payload) => {
+    send("runtime:ready", payload);
+    logShell(
+      "info",
+      `[runtime] ready: ${payload?.version ?? "unknown version"}`,
+    );
+  });
   // Nothing in the UI shows these. Kept on the channel for debugging.
   runtime.on("log", (payload) => send("runtime:log", payload));
 
   runtime.on("listening", (payload: { url: string }) => {
     send("runtime:listening", payload);
+    logShell("info", `[runtime] listening at ${payload.url}`);
     // Deliberately no navigation: `runtime:start` hands the window over once
     // it has the final URL, and doing it here too raced that onto a stale URL.
   });
@@ -275,6 +291,13 @@ function forwardRuntimeEvents(): void {
   // best-effort and deliberately not awaited: the UI still needs telling.
   runtime.on("runtime-exit", (payload) => {
     send("runtime:exit", payload);
+    const reverted = payload?.reverted_to
+      ? `, reverted to ${payload.reverted_to}`
+      : "";
+    logShell(
+      "error",
+      `[runtime] exited (code ${payload?.code ?? "?"}, signal ${payload?.signal ?? "?"}${reverted})`,
+    );
     void reportDiagnosis(
       `runtime_exit: code=${payload?.code ?? "?"} signal=${payload?.signal ?? "?"}`,
       String(payload?.detail ?? ""),
@@ -282,6 +305,7 @@ function forwardRuntimeEvents(): void {
   });
   runtime.on("manager-exit", ({ code, detail }) => {
     send("runtime:manager-exit", { code });
+    logShell("error", `[runtime-manager] exited (code ${code})`, detail ?? "");
     void reportDiagnosis(`manager_exit: code=${code}`, detail ?? "");
   });
 }
