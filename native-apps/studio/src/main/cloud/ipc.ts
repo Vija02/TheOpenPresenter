@@ -13,6 +13,7 @@ import {
   type LoginHandle,
   beginBrowserLogin,
 } from "./auth";
+import { markConnectedOrganizations } from "./connected";
 import {
   type CloudConnection,
   allOrganizations,
@@ -142,11 +143,22 @@ export function registerCloudIPC(): void {
     },
   );
 
-  /** Cloud organisations available to sign-in, before any connection exists. */
+  /**
+   * Cloud organisations available to sign-in, before any connection exists.
+   * Each is flagged with whether this install already mirrors it
+   */
   ipcMain.handle(
     "cloud:organizations",
-    async (_event, args?: { cloudUrl?: string }) =>
-      cloudOrganizations(args?.cloudUrl ?? DEFAULT_CLOUD_URL),
+    async (_event, args?: { cloudUrl?: string }) => {
+      const cloudUrl = args?.cloudUrl ?? DEFAULT_CLOUD_URL;
+      const organizations = await cloudOrganizations(cloudUrl);
+
+      const local = runtime.url
+        ? await allOrganizations(runtime.url).catch(() => [])
+        : [];
+
+      return markConnectedOrganizations(organizations, local, cloudUrl);
+    },
   );
 
   /** Connect one cloud organisation, creating its local mirror. */
