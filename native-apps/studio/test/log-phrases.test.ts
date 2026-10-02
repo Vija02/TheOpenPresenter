@@ -14,7 +14,7 @@ import { describeLogLine } from "../src/renderer/loading/phase";
  * status line on a slow Windows machine.
  */
 const SOURCES = [
-  join(__dirname, "../../../tauri/node-server/run_server.mjs"),
+  join(__dirname, "../../../runtime/run_server.mjs"),
   join(
     __dirname,
     "../../../packages/embedded-postgres/src/EmbeddedPostgresManager.ts",

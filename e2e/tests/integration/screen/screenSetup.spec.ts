@@ -33,7 +33,6 @@ test.describe("Setup screen QR flow", () => {
     setupOrgOwnerContext,
     setupScreen,
   }) => {
-    test.skip(!!process.env.PLAYWRIGHT_TAURI, "Skipped in Tauri E2E tests");
     const owner = await setupOrgOwnerContext({
       orgSlug: ORG_SLUG,
       orgName: ORG_NAME,
@@ -79,7 +78,6 @@ test.describe("Setup screen QR flow", () => {
     setupOrgOwnerContext,
     setupScreen,
   }) => {
-    test.skip(!!process.env.PLAYWRIGHT_TAURI, "Skipped in Tauri E2E tests");
     await setupOrgOwnerContext({
       orgSlug: ORG_SLUG,
       orgName: ORG_NAME,
@@ -139,7 +137,6 @@ test.describe("Setup screen QR flow", () => {
     page,
     e2eCommand,
   }) => {
-    test.skip(!!process.env.PLAYWRIGHT_TAURI, "Skipped in Tauri E2E tests");
     await e2eCommand.serverCommand("clearUserByUsername", {
       username: USERNAME,
     });
@@ -173,7 +170,6 @@ test.describe("Setup screen QR flow", () => {
     page,
     setupOrgOwnerContext,
   }) => {
-    test.skip(!!process.env.PLAYWRIGHT_TAURI, "Skipped in Tauri E2E tests");
     const newScreenName = `Empty State Screen ${WORKER_TAG}`;
 
     const owner = await setupOrgOwnerContext({
@@ -219,7 +215,6 @@ test.describe("Setup screen QR flow", () => {
     setupOrgOwnerContext,
     setupScreen,
   }) => {
-    test.skip(!!process.env.PLAYWRIGHT_TAURI, "Skipped in Tauri E2E tests");
     const additionalScreenName = `Additional Screen ${WORKER_TAG}`;
 
     const owner = await setupOrgOwnerContext({

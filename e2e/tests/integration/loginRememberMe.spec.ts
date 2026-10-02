@@ -115,7 +115,6 @@ test.describe("Login remember-me cookie expiry", () => {
     page,
     request,
   }) => {
-    test.skip(!!process.env.PLAYWRIGHT_TAURI, "Skipped in Tauri E2E tests");
     const username = "testuser_qr_on";
     const cleanup = await createUser(page, request, username);
 
@@ -139,7 +138,6 @@ test.describe("Login remember-me cookie expiry", () => {
     page,
     request,
   }) => {
-    test.skip(!!process.env.PLAYWRIGHT_TAURI, "Skipped in Tauri E2E tests");
     const username = "testuser_qr_off";
     const cleanup = await createUser(page, request, username);
 

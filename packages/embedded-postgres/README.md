@@ -1,6 +1,6 @@
 # @repo/embedded-postgres
 
-A wrapper package for managing an embedded PostgreSQL instance with custom extensions and migrations. This package is designed to handle PostgreSQL setup and management for both Tauri applications and local development environments.
+A wrapper package for managing an embedded PostgreSQL instance with custom extensions and local development and desktop runtime environments.
 
 ## Overview
 
@@ -11,9 +11,10 @@ This package provides:
 
 ## Current Usage
 
-### In Tauri Applications
+## Desktop runtime
 
-This package is used within Tauri applications to provide a local PostgreSQL database instance with custom extensions pre-configured.
+This package is used by the Studio runtime to provide a local PostgreSQL instance
+with custom extensions pre-configured.
 
 ### Local Development
 

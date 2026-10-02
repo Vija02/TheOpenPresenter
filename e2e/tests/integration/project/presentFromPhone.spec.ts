@@ -36,7 +36,6 @@ test.describe("Present from phone", () => {
     context,
     e2eCommand,
   }) => {
-    test.skip(!!process.env.PLAYWRIGHT_TAURI, "Skipped in Tauri E2E tests");
 
     await login(e2eCommand);
 
@@ -56,7 +55,6 @@ test.describe("Present from phone", () => {
     context,
     e2eCommand,
   }) => {
-    test.skip(!!process.env.PLAYWRIGHT_TAURI, "Skipped in Tauri E2E tests");
 
     await login(e2eCommand);
 

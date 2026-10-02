@@ -111,7 +111,6 @@ test.describe.serial("Layout feeds", () => {
     page,
     e2eCommand,
   }) => {
-    test.skip(!!process.env.PLAYWRIGHT_TAURI, "Skipped in Tauri E2E tests");
 
     await login(e2eCommand);
     await page.goto(`/app/${ORG_SLUG}/${PROJECT_SLUG}`);
@@ -132,7 +131,6 @@ test.describe.serial("Layout feeds", () => {
     e2eCommand,
     setupScreen,
   }) => {
-    test.skip(!!process.env.PLAYWRIGHT_TAURI, "Skipped in Tauri E2E tests");
 
     await login(e2eCommand);
     const ctx = await setupScreen({
@@ -173,7 +171,6 @@ test.describe.serial("Layout feeds", () => {
     e2eCommand,
     setupScreen,
   }) => {
-    test.skip(!!process.env.PLAYWRIGHT_TAURI, "Skipped in Tauri E2E tests");
 
     await login(e2eCommand);
     const ctx = await setupScreen({
@@ -225,7 +222,6 @@ test.describe.serial("Layout feeds", () => {
     page,
     e2eCommand,
   }) => {
-    test.skip(!!process.env.PLAYWRIGHT_TAURI, "Skipped in Tauri E2E tests");
 
     await login(e2eCommand);
     await page.goto(`/app/${ORG_SLUG}/${PROJECT_SLUG}`);

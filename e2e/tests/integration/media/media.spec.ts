@@ -41,10 +41,7 @@ test.describe("Media Page", () => {
       ".ui--media-preview-processing-overlay",
     );
 
-    // Skip in Tauri: processing is too fast, making this flaky
-    if (!process.env.PLAYWRIGHT_TAURI) {
-      await expect(processingOverlay).toBeVisible();
-    }
+    await expect(processingOverlay).toBeVisible();
 
     // Wait for processing to complete - the overlay should disappear
     await expect(processingOverlay).toBeHidden({ timeout: 60000 });

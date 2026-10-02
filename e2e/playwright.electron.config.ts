@@ -5,7 +5,7 @@ import { defineConfig } from "@playwright/test";
  *
  * These drive the shell's own windows (onboarding, settings, the unreachable
  * screen) through Playwright's Electron support, which the other configs
- * cannot reach: `playwright.tauri.config.ts` drives the web app a desktop
+ * cannot reach: the old desktop configuration drove the web app as a desktop
  * binary serves, not the desktop chrome around it.
  *
  * No web server and no database. Every test launches the built app against a

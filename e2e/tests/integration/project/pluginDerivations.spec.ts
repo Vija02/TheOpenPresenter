@@ -75,7 +75,6 @@ test.describe.serial("Plugin-declared derivations", () => {
     page,
     e2eCommand,
   }) => {
-    test.skip(!!process.env.PLAYWRIGHT_TAURI, "Skipped in Tauri E2E tests");
 
     await login(e2eCommand);
     await page.goto(`/app/${ORG_SLUG}/${PROJECT_SLUG}`);
@@ -90,7 +89,6 @@ test.describe.serial("Plugin-declared derivations", () => {
     page,
     e2eCommand,
   }) => {
-    test.skip(!!process.env.PLAYWRIGHT_TAURI, "Skipped in Tauri E2E tests");
 
     await login(e2eCommand);
     await page.goto(`/app/${ORG_SLUG}/${PROJECT_SLUG}`);

@@ -48,7 +48,6 @@ test.describe("Present to a screen from the remote", () => {
     e2eCommand,
     setupScreen,
   }) => {
-    test.skip(!!process.env.PLAYWRIGHT_TAURI, "Skipped in Tauri E2E tests");
     const marker = "Present marker alpha";
 
     await e2eCommand.login({
@@ -108,7 +107,6 @@ test.describe("Present to a screen from the remote", () => {
     context,
     e2eCommand,
   }) => {
-    test.skip(!!process.env.PLAYWRIGHT_TAURI, "Skipped in Tauri E2E tests");
 
     await e2eCommand.login({
       username: USERNAME,
@@ -135,7 +133,6 @@ test.describe("Present to a screen from the remote", () => {
     context,
     e2eCommand,
   }) => {
-    test.skip(!!process.env.PLAYWRIGHT_TAURI, "Skipped in Tauri E2E tests");
 
     await e2eCommand.login({
       username: USERNAME,
