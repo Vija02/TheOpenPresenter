@@ -2,6 +2,7 @@ import { Button, Option } from "@repo/ui";
 import { useState } from "react";
 
 import { Logo } from "../shared/Logo";
+import { CHANNELS, DEFAULT_CHANNEL, channelNote } from "../shared/channels";
 
 export type SetupKind = "complete" | "minimal";
 
@@ -27,11 +28,11 @@ export function ChooseSetup({
   initialChannel?: string;
 }) {
   const [kind, setKind] = useState<SetupKind>(initialKind ?? "complete");
-  const [channel, setChannel] = useState(initialChannel ?? "stable");
+  const [channel, setChannel] = useState(initialChannel ?? DEFAULT_CHANNEL);
   // Open when a non-default channel is already set, so a returning user can
   // see what they picked instead of it looking like the default.
   const [showAdvanced, setShowAdvanced] = useState(
-    Boolean(initialChannel && initialChannel !== "stable"),
+    Boolean(initialChannel && initialChannel !== DEFAULT_CHANNEL),
   );
 
   return (
@@ -90,15 +91,14 @@ export function ChooseSetup({
                   disabled={busy}
                   onChange={(event) => setChannel(event.target.value)}
                 >
-                  <option value="stable">Stable (recommended)</option>
-                  <option value="nightly">Nightly (latest, may break)</option>
+                  {CHANNELS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
                 </select>
               </label>
-              <p className="muted small">
-                {channel === "nightly"
-                  ? "Built from the newest code. Expect rough edges."
-                  : "Tested releases."}
-              </p>
+              <p className="muted small">{channelNote(channel)}</p>
             </div>
           )}
         </>
