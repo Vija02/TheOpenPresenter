@@ -56,6 +56,7 @@ pacman:
 win:
   target:
     - nsis
+  artifactName: ${productName}-Setup-${version}.${ext}
 nsis:
   oneClick: false
   allowToChangeInstallationDirectory: true
