@@ -230,7 +230,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: lts/*
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
         with:
@@ -249,6 +249,12 @@ jobs:
           cp native-apps/runtime-manager/target/release/top-runtime-manager \
             native-apps/studio/resources/
           chmod +x native-apps/studio/resources/top-runtime-manager
+
+      - name: Build the shared UI package
+        run: |
+          corepack enable
+          yarn install --immutable
+          npx turbo build --filter=@repo/ui
 
       - name: Install and build the shell
         working-directory: native-apps/studio
