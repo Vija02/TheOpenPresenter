@@ -242,6 +242,12 @@ h2 {
   width: 100%;
 }
 
+.field.channel-field > span {
+  font-size: inherit;
+  opacity: 1;
+  font-weight: 700;
+}
+
 /* The advanced disclosure sits between the choices and Continue, so it
    needs to read as secondary to both. */
 .advanced-toggle {

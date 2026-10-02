@@ -2,6 +2,7 @@ import { Button } from "@repo/ui";
 import { useCallback, useEffect, useState } from "react";
 
 import { type RuntimeStatus, api } from "../bridge/ipc";
+import { CHANNELS, DEFAULT_CHANNEL, channelNote } from "../shared/channels";
 
 function pendingRestartVersion(
   runningVersion: string | null,
@@ -18,6 +19,7 @@ export function RuntimeManager() {
   const [available, setAvailable] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
+  const [channel, setChannel] = useState<string>(DEFAULT_CHANNEL);
 
   // Diverges from the activated version only between switching and
   // restarting. Captured on first load because nothing else reports it.
@@ -40,11 +42,28 @@ export function RuntimeManager() {
     void refresh();
   }, [refresh]);
 
+  useEffect(() => {
+    void api
+      .getSettings()
+      .then((settings) => setChannel(settings.channel ?? DEFAULT_CHANNEL))
+      .catch(() => undefined);
+  }, []);
+
+  /** Whatever the previous channel offered is stale the moment this changes. */
+  const changeChannel = (next: string) => {
+    setChannel(next);
+    setAvailable(null);
+    setProblem(null);
+    void api.updateSettings({ channel: next }).catch((error) => {
+      setProblem(error instanceof Error ? error.message : String(error));
+    });
+  };
+
   const checkForUpdate = async () => {
     setBusy("check");
     setProblem(null);
     try {
-      const found = await api.runtimeCheck();
+      const found = await api.runtimeCheck(channel);
       setAvailable(found.version);
     } catch (error) {
       setProblem(error instanceof Error ? error.message : String(error));
@@ -57,7 +76,7 @@ export function RuntimeManager() {
     setBusy("install");
     setProblem(null);
     try {
-      await api.runtimeInstall();
+      await api.runtimeInstall(channel);
       setAvailable(null);
       await refresh();
     } catch (error) {
@@ -102,27 +121,22 @@ export function RuntimeManager() {
   const current = ready?.current ?? null;
   const pendingVersion = pendingRestartVersion(runningVersion, current);
   const updatable = available && available !== current;
-
-  if (status && !ready) {
-    return (
-      <section className="panel-body">
-        <h2>Local runtime</h2>
-        <p className="problem">
-          {("reason" in status && status.reason) ||
-            "The runtime manager is not available."}
-        </p>
-      </section>
-    );
-  }
+  const unreachable = status?.available === false ? status : null;
 
   return (
     <section className="panel-body">
       <h2>Local runtime</h2>
 
-      <dl className="facts">
-        <dt>In use</dt>
-        <dd>{current ?? "None installed"}</dd>
-      </dl>
+      {unreachable ? (
+        <p className="problem">
+          {unreachable.reason || "The runtime manager is not available."}
+        </p>
+      ) : (
+        <dl className="facts">
+          <dt>In use</dt>
+          <dd>{current ?? "None installed"}</dd>
+        </dl>
+      )}
 
       {pendingVersion && (
         <div className="notice">
@@ -136,48 +150,71 @@ export function RuntimeManager() {
         </div>
       )}
 
-      <div className="row">
-        <Button
-          variant="outline"
-          onClick={() => void checkForUpdate()}
-          disabled={busy !== null}
-        >
-          {busy === "check" ? "Checking…" : "Check for updates"}
-        </Button>
-        {updatable && (
-          <Button onClick={() => void install()} disabled={busy !== null}>
-            {busy === "install" ? "Downloading…" : `Update to ${available}`}
-          </Button>
-        )}
-      </div>
-
-      {available && !updatable && (
-        <p className="muted">This is the newest version.</p>
-      )}
-
-      {installed.length > 1 && (
+      {!unreachable && (
         <>
-          <h3>Installed versions</h3>
-          <ul className="versions">
-            {installed.map((version) => (
-              <li key={version} className={version === current ? "in-use" : ""}>
-                <span className="version-name">{version}</span>
-                {version === current ? (
-                  <span className="version-state">in use</span>
-                ) : (
-                  <Button
-                    variant="link"
-                    onClick={() => void activate(version)}
-                    disabled={busy !== null}
+          <div className="row">
+            <Button
+              variant="outline"
+              onClick={() => void checkForUpdate()}
+              disabled={busy !== null}
+            >
+              {busy === "check" ? "Checking…" : "Check for updates"}
+            </Button>
+            {updatable && (
+              <Button onClick={() => void install()} disabled={busy !== null}>
+                {busy === "install" ? "Downloading…" : `Update to ${available}`}
+              </Button>
+            )}
+          </div>
+
+          {available && !updatable && (
+            <p className="muted">This is the newest version.</p>
+          )}
+
+          {installed.length > 1 && (
+            <>
+              <h3>Installed versions</h3>
+              <ul className="versions">
+                {installed.map((version) => (
+                  <li
+                    key={version}
+                    className={version === current ? "in-use" : ""}
                   >
-                    {busy === version ? "Switching…" : "Use this one"}
-                  </Button>
-                )}
-              </li>
-            ))}
-          </ul>
+                    <span className="version-name">{version}</span>
+                    {version === current ? (
+                      <span className="version-state">in use</span>
+                    ) : (
+                      <Button
+                        variant="link"
+                        onClick={() => void activate(version)}
+                        disabled={busy !== null}
+                      >
+                        {busy === version ? "Switching…" : "Use this one"}
+                      </Button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
         </>
       )}
+
+      <label className="field channel-field">
+        <span>Download channel</span>
+        <select
+          value={channel}
+          disabled={busy !== null}
+          onChange={(event) => changeChannel(event.target.value)}
+        >
+          {CHANNELS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </label>
+      <p className="muted small">{channelNote(channel)}</p>
 
       {problem && <p className="problem">{problem}</p>}
     </section>
