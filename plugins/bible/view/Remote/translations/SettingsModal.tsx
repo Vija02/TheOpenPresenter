@@ -20,6 +20,7 @@ import {
 } from "react-icons/vsc";
 
 import type { CatalogTranslation } from "../../../src/catalog";
+import { readableError } from "../../errors";
 import { usePluginAPI } from "../../pluginApi";
 import { trpc } from "../../trpc";
 import TranslationsModal from "./TranslationsModal";
@@ -434,12 +435,15 @@ const SettingsModal = () => {
       await utils.bible.preferences.get.invalidate();
       setSaved(true);
       onToggle?.();
+    } catch {
+      // setMutation.error carries the message shown in the footer.
     } finally {
       setSaving(false);
     }
   };
 
-  const loading = listQuery.isLoading || prefsQuery.isLoading;
+  const loadError = listQuery.error ?? prefsQuery.error;
+  const loading = !loadError && (listQuery.isLoading || prefsQuery.isLoading);
   // A primary translation is always required before saving.
   const needsPrimary = !primaryId;
 
@@ -525,7 +529,31 @@ const SettingsModal = () => {
                   </p>
                 )}
 
-                {!loading && selectedRows.length > 0 && (
+                {loadError && (
+                  <div
+                    className="flex flex-col items-start gap-2 px-3 py-4"
+                    data-testid="bible-catalog-error"
+                  >
+                    <p className="text-sm text-red-600">
+                      {readableError(
+                        loadError,
+                        "Could not load the translation catalog.",
+                      )}
+                    </p>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        listQuery.refetch();
+                        prefsQuery.refetch();
+                      }}
+                    >
+                      Try again
+                    </Button>
+                  </div>
+                )}
+
+                {!loading && !loadError && selectedRows.length > 0 && (
                   <>
                     <SectionHeader label="Selected" />
                     {selectedRows.map((t) => (
@@ -545,6 +573,7 @@ const SettingsModal = () => {
                 )}
 
                 {!loading &&
+                  !loadError &&
                   (favoriteRows.length > 0 || listRows.length > 0) && (
                     <>
                       {selectedRows.length > 0 && (
@@ -580,6 +609,7 @@ const SettingsModal = () => {
                   )}
 
                 {!loading &&
+                  !loadError &&
                   selectedRows.length === 0 &&
                   favoriteRows.length === 0 &&
                   listRows.length === 0 && (
@@ -589,7 +619,7 @@ const SettingsModal = () => {
                   )}
               </div>
 
-              {!loading && (
+              {!loading && !loadError && (
                 <p className="text-xs text-secondary shrink-0">
                   {`Showing ${loadedCount} of ${total} matching translations` +
                     (selectedRows.length > 0
@@ -603,10 +633,16 @@ const SettingsModal = () => {
         </DialogBody>
 
         <DialogFooter className="pt-0 pb-3 justify-end items-center gap-2">
-          {needsPrimary && (
+          {setMutation.isError ? (
             <span className="text-sm text-red-600">
-              Pick a primary translation (Use) to save
+              {readableError(setMutation.error, "Could not save settings.")}
             </span>
+          ) : (
+            needsPrimary && (
+              <span className="text-sm text-red-600">
+                Pick a primary translation (Use) to save
+              </span>
+            )
           )}
           {saved && !needsPrimary && (
             <span className="text-sm text-green-600">Saved</span>
