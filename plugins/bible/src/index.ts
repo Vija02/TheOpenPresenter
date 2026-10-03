@@ -33,7 +33,6 @@ import {
   unregisterLoadedPlugin,
 } from "./registry";
 import {
-  TranslationSummary,
   createTranslation,
   defaultPreferences,
   deleteTranslation,
@@ -211,10 +210,7 @@ const getAppRouter =
     const isAnonymous = (ctx: TRPCContext) =>
       !ctx.userId && !ctx.screenGuestSessionId;
 
-    const uploadsOf = async (
-      ctx: TRPCContext,
-      pluginId: string,
-    ): Promise<TranslationSummary[]> => {
+    const uploadsOf = async (ctx: TRPCContext, pluginId: string) => {
       if (isAnonymous(ctx)) return [];
       const { organizationId } = resolveContext(pluginId);
       return listTranslations(serverPluginApi, authOf(ctx), organizationId);
