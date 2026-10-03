@@ -207,6 +207,13 @@ export const resolveFromDb = async (
 /** Languages the catalog is filtered to on first run. */
 export const DEFAULT_LANGUAGES = ["en"] as const;
 
+export const defaultPreferences = (): BiblePreferences => ({
+  languages: [...DEFAULT_LANGUAGES],
+  translationIds: [DEFAULT_TRANSLATION_ID],
+  primaryTranslationId: DEFAULT_TRANSLATION_ID,
+  favoriteIds: [DEFAULT_TRANSLATION_ID],
+});
+
 export const getPreferences = async (
   api: Api,
   auth: RequestAuth,
@@ -225,14 +232,7 @@ export const getPreferences = async (
   );
   const row = rows[0];
 
-  if (!row) {
-    return {
-      languages: [...DEFAULT_LANGUAGES],
-      translationIds: [DEFAULT_TRANSLATION_ID],
-      primaryTranslationId: DEFAULT_TRANSLATION_ID,
-      favoriteIds: [DEFAULT_TRANSLATION_ID],
-    };
-  }
+  if (!row) return defaultPreferences();
 
   return {
     languages: (row.languages as string[]) ?? [],

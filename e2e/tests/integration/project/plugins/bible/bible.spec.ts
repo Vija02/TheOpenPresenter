@@ -291,3 +291,75 @@ test.describe.serial("Bible Plugin", () => {
     );
   });
 });
+
+// A public-link viewer (the logged-out demo lands on one) has no session. The
+// public catalog and passage lookups must still work for them.
+test.describe("Bible Plugin - public access", () => {
+  test.beforeEach(async ({ e2eCommand }) => {
+    await Promise.all([
+      e2eCommand.serverCommand("clearTestUsers"),
+      e2eCommand.serverCommand("clearTestOrganizations"),
+      e2eCommand.serverCommand("clearBibleData"),
+    ]);
+
+    await e2eCommand.loginWithScenes({
+      orgs: [
+        {
+          name: "TestOrg",
+          slug: "testorg",
+          projects: [
+            {
+              name: "TestProject",
+              slug: "testproject",
+              isPublic: true,
+              scenes: [
+                {
+                  pluginName: "bible",
+                  name: "Bible",
+                  activate: true,
+                  pluginData: { passages: [] },
+                  rendererPluginData: {
+                    passageId: null,
+                    slideIndex: null,
+                    lastClickTimestamp: null,
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+  });
+
+  test("a logged-out viewer can add a verse and browse the catalog", async ({
+    browser,
+  }) => {
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    try {
+      await page.goto("/app/testorg/testproject");
+      await expect(
+        page.getByText("Add a passage to get started"),
+      ).toBeVisible();
+
+      await page.getByTestId("bible-search-input").fill("John 3:16");
+      await page.getByTestId("bible-search-add").click();
+      await expect(page.getByTestId("slide-container").first()).toContainText(
+        "For God so loved the world",
+      );
+
+      await page.getByTestId("bible-settings").click();
+      const settings = page.getByRole("dialog", { name: "Bible Settings" });
+      await expect(
+        settings
+          .getByTestId("bible-translation-row")
+          .filter({ hasText: "King James (Authorized) Version" })
+          .first(),
+      ).toBeVisible();
+      await expect(settings.getByTestId("bible-catalog-error")).toHaveCount(0);
+    } finally {
+      await context.close();
+    }
+  });
+});
