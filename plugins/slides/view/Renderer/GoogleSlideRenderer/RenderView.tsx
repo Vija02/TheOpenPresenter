@@ -4,6 +4,7 @@ export type RenderViewHandle = {
   next: () => string | null;
   prev: () => string | null;
   goToSlide: (slideIndex: number) => void;
+  getDocument: () => Document | null;
 };
 
 const RenderView = React.memo(
@@ -55,6 +56,7 @@ const RenderView = React.memo(
               new KeyboardEvent("keydown", { key: "Enter", keyCode: 13 }),
             );
           },
+          getDocument: () => iframeRef.current?.contentDocument ?? null,
         } satisfies RenderViewHandle;
       }, []);
 

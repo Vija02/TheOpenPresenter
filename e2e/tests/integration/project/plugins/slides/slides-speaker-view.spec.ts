@@ -256,12 +256,74 @@ test.describe("Slides speaker view", () => {
     await page.keyboard.press("ArrowRight");
     await expect(page.getByText("Notes for slide one")).toBeVisible();
 
-    // The Next tile selects the whole next slide, like the slide list does,
-    // and the notes move with it.
+    // With the build shown, the Next tile is the next slide, and the notes
+    // move with it.
     const nextTile = page.getByTestId("speaker-next-box").locator("..");
     await expect(nextTile).toHaveText(/Next\s*2$/);
     await nextTile.click();
     await expect(page.getByText("Notes for slide two")).toBeVisible();
+  });
+
+  test("previews picture the step a press would land on", async ({
+    page,
+    e2eCommand,
+  }) => {
+    await e2eCommand.loginWithScenes({
+      next: "/o/testorg",
+      orgs: [
+        {
+          name: "TestOrg",
+          slug: "testorg",
+          projects: [
+            {
+              name: "TestProject",
+              slug: "testproject",
+              scenes: [GOOGLE_SCENE],
+            },
+          ],
+        },
+      ],
+    });
+    await page.goto("/app/testorg/testproject");
+    await page.getByRole("button", { name: "Speaker view" }).click();
+
+    // Every step is captured from a hidden embed, which then goes away
+    await expect(page.getByTestId("slide-capturer")).toHaveCount(0, {
+      timeout: 60_000,
+    });
+
+    const previousTile = page.getByTestId("speaker-previous-box").locator("..");
+    const nextTile = page.getByTestId("speaker-next-box").locator("..");
+    const captured = (tile: typeof nextTile) =>
+      tile.getByTestId("speaker-captured-step").locator("svg");
+
+    // Slide 1 has one build: Next is that build, not slide 2
+    await expect(nextTile).toHaveText(/Next\s*Build 1\/1\s*1$/);
+    await expect(captured(nextTile)).toHaveCount(1);
+    await expect(previousTile).toHaveText(/Start of slides/);
+
+    // Each press waits out the step, so the next one isn't a skip
+    await page.keyboard.press("ArrowRight");
+    await page.waitForTimeout(1500);
+    await page.keyboard.press("ArrowRight");
+    await expect(page.getByText("2 / 4")).toBeVisible();
+    await page.waitForTimeout(1500);
+
+    // Slide 2 has an object that plays on entry: Previous is slide 2
+    // without it, reachable only by going back
+    await expect(previousTile).toHaveText(/Previous\s*2$/);
+    await expect(captured(previousTile)).toHaveCount(1);
+
+    await previousTile.click();
+    await expect(previousTile).toHaveText(/Previous\s*Build 1\/1\s*1$/);
+    await expect(nextTile).toHaveText(/Next\s*2$/);
+    await expect(page.getByText("2 / 4")).toBeVisible();
+
+    // Reopening reuses the captures
+    await page.getByRole("button", { name: "Close speaker view" }).click();
+    await page.getByRole("button", { name: "Speaker view" }).click();
+    await expect(captured(nextTile)).toHaveCount(1);
+    await expect(page.getByTestId("slide-capturer")).toHaveCount(0);
   });
 
   test("speaker notes can be edited and are kept", async ({
