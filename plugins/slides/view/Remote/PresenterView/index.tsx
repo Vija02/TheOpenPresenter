@@ -1,6 +1,7 @@
 import { Button } from "@repo/ui";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { FaTimes } from "react-icons/fa";
+import { MdGridView } from "react-icons/md";
 
 import {
   activateSlide,
@@ -8,10 +9,12 @@ import {
 } from "../../../src/slides/activation";
 import { settledStep } from "../../../src/slides/navigation";
 import { resolveSlide } from "../../../src/slides/order";
+import type { ResolvedSlide } from "../../../src/types";
 import { usePluginAPI } from "../../pluginApi";
 import { useDisplayedSlide } from "../../utils/useDisplayedSlide";
 import { MainSlide } from "./MainSlide";
 import { PreviewStep, SidePreviews } from "./SidePreviews";
+import { SlideOverview } from "./SlideOverview";
 import { SpeakerNotesPanel } from "./SpeakerNotesPanel";
 import { SlideCapturer } from "./capture/SlideCapturer";
 import { useIsPortrait } from "./useIsPortrait";
@@ -26,6 +29,7 @@ export const PresenterView = ({ onClose }: PresenterViewProps) => {
   const mutableRendererData = pluginApi.renderer.useValtioData();
   const { resolvedSlide, globalSlideIndex, clickCount } = useDisplayedSlide();
   const isPortrait = useIsPortrait();
+  const [isOverviewOpen, setIsOverviewOpen] = useState(false);
 
   const totalSlides = pluginData.slideOrder?.length ?? 0;
 
@@ -59,6 +63,21 @@ export const PresenterView = ({ onClose }: PresenterViewProps) => {
     [mutableRendererData, pluginData, pluginApi],
   );
 
+  // Same as picking a slide on the front page
+  const selectSlide = useCallback(
+    (slide: ResolvedSlide) => {
+      activateSlide(
+        valtioActivationTarget(mutableRendererData),
+        pluginData,
+        slide.globalSlideIndex,
+        { clickCount: null },
+      );
+      pluginApi.renderer.setRenderCurrentScene();
+    },
+    [mutableRendererData, pluginData, pluginApi],
+  );
+  const closeOverview = useCallback(() => setIsOverviewOpen(false), []);
+
   return (
     <div
       data-testid="speaker-view"
@@ -79,7 +98,17 @@ export const PresenterView = ({ onClose }: PresenterViewProps) => {
         <MainSlide slide={resolvedSlide} />
 
         <div className="mt-3 flex shrink-0 items-center gap-2">
-          <span className="ml-auto text-xs tabular-nums text-secondary">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsOverviewOpen(true)}
+            title="All slides"
+            aria-label="All slides"
+            className="ml-auto"
+          >
+            <MdGridView />
+          </Button>
+          <span className="text-xs tabular-nums text-secondary">
             {globalSlideIndex >= 0 ? globalSlideIndex + 1 : 0} / {totalSlides}
           </span>
         </div>
@@ -96,6 +125,14 @@ export const PresenterView = ({ onClose }: PresenterViewProps) => {
       <SpeakerNotesPanel slide={resolvedSlide} />
 
       <SlideCapturer currentSlide={globalSlideIndex} />
+
+      {isOverviewOpen && (
+        <SlideOverview
+          currentSlide={globalSlideIndex}
+          onSelect={selectSlide}
+          onClose={closeOverview}
+        />
+      )}
     </div>
   );
 };
