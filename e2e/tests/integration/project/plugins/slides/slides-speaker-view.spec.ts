@@ -326,6 +326,50 @@ test.describe("Slides speaker view", () => {
     await expect(page.getByTestId("slide-capturer")).toHaveCount(0);
   });
 
+  test("all slides can be shown and one picked", async ({
+    page,
+    e2eCommand,
+  }) => {
+    await e2eCommand.loginWithScenes({
+      next: "/o/testorg",
+      orgs: [
+        {
+          name: "TestOrg",
+          slug: "testorg",
+          projects: [
+            {
+              name: "TestProject",
+              slug: "testproject",
+              scenes: [customScene],
+            },
+          ],
+        },
+      ],
+    });
+    await page.goto("/app/testorg/testproject");
+    await page.getByRole("button", { name: "Speaker view" }).click();
+    await expect(page.getByText("1 / 3")).toBeVisible();
+
+    const overview = page.getByRole("dialog", { name: "All slides" });
+    await page.getByRole("button", { name: "All slides", exact: true }).click();
+    await expect(overview.getByTestId("slide-container")).toHaveCount(3);
+    await expect(overview.locator('[aria-current="true"]')).toHaveText(
+      /Slide 1/,
+    );
+
+    // Escape leaves without changing slide
+    await page.keyboard.press("Escape");
+    await expect(overview).toBeHidden();
+    await expect(page.getByText("1 / 3")).toBeVisible();
+
+    // Picking a slide goes to it and returns to the speaker view
+    await page.getByRole("button", { name: "All slides", exact: true }).click();
+    await overview.getByTestId("slide-container").nth(2).click();
+    await expect(overview).toBeHidden();
+    await expect(page.getByText("3 / 3")).toBeVisible();
+    await expect(page.getByText("Custom notes three")).toBeVisible();
+  });
+
   test("speaker notes can be edited and are kept", async ({
     page,
     e2eCommand,
