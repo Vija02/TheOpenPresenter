@@ -3,6 +3,7 @@ import { useCallback, useMemo, useState } from "react";
 import { FaTimes } from "react-icons/fa";
 import { MdGridView } from "react-icons/md";
 
+import type { InkTool } from "../../../src/ink";
 import {
   activateSlide,
   valtioActivationTarget,
@@ -17,6 +18,8 @@ import { PreviewStep, SidePreviews } from "./SidePreviews";
 import { SlideOverview } from "./SlideOverview";
 import { SpeakerNotesPanel } from "./SpeakerNotesPanel";
 import { SlideCapturer } from "./capture/SlideCapturer";
+import { InkSurface } from "./ink/InkSurface";
+import { InkToolbar } from "./ink/InkToolbar";
 import { useIsPortrait } from "./useIsPortrait";
 
 type PresenterViewProps = {
@@ -30,6 +33,7 @@ export const PresenterView = ({ onClose }: PresenterViewProps) => {
   const { resolvedSlide, globalSlideIndex, clickCount } = useDisplayedSlide();
   const isPortrait = useIsPortrait();
   const [isOverviewOpen, setIsOverviewOpen] = useState(false);
+  const [inkTool, setInkTool] = useState<InkTool | null>(null);
 
   const totalSlides = pluginData.slideOrder?.length ?? 0;
 
@@ -95,9 +99,19 @@ export const PresenterView = ({ onClose }: PresenterViewProps) => {
       </Button>
 
       <div className="flex min-h-0 min-w-0 flex-col p-3 portrait:flex-initial portrait:pt-13 landscape:flex-1 sm:p-4 sm:portrait:pt-13">
-        <MainSlide slide={resolvedSlide} />
+        <MainSlide
+          slide={resolvedSlide}
+          overlay={
+            inkTool && <InkSurface tool={inkTool} slide={resolvedSlide} />
+          }
+        />
 
         <div className="mt-3 flex shrink-0 items-center gap-2">
+          <InkToolbar
+            tool={inkTool}
+            onToolChange={setInkTool}
+            slideRef={resolvedSlide?.rawRef ?? null}
+          />
           <Button
             variant="ghost"
             size="sm"

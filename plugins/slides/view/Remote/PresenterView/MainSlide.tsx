@@ -1,5 +1,5 @@
 import useSize from "@react-hook/size";
-import { CSSProperties, useMemo, useState } from "react";
+import { CSSProperties, ReactNode, useMemo, useState } from "react";
 
 import type { ResolvedSlide } from "../../../src/types";
 import Renderer from "../../Renderer";
@@ -10,7 +10,13 @@ import {
   slideAspectRatio,
 } from "./slideGeometry";
 
-export const MainSlide = ({ slide }: { slide: ResolvedSlide | null }) => {
+export const MainSlide = ({
+  slide,
+  overlay,
+}: {
+  slide: ResolvedSlide | null;
+  overlay?: ReactNode;
+}) => {
   const [element, setElement] = useState<HTMLDivElement | null>(null);
   const [containerWidth, containerHeight] = useSize(element);
 
@@ -40,7 +46,7 @@ export const MainSlide = ({ slide }: { slide: ResolvedSlide | null }) => {
     >
       <div
         data-testid="speaker-main-box"
-        className="relative shrink-0 overflow-hidden bg-black"
+        className="relative shrink-0 select-none overflow-hidden bg-black"
         style={boxStyle}
       >
         {slide ? (
@@ -57,6 +63,7 @@ export const MainSlide = ({ slide }: { slide: ResolvedSlide | null }) => {
             Nothing to show
           </div>
         )}
+        {slide && overlay}
         <div className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-stroke" />
       </div>
     </div>

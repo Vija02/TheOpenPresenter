@@ -370,6 +370,123 @@ test.describe("Slides speaker view", () => {
     await expect(page.getByText("Custom notes three")).toBeVisible();
   });
 
+  test("marks drawn in the speaker view show on the output", async ({
+    page,
+    e2eCommand,
+  }) => {
+    await e2eCommand.loginWithScenes({
+      next: "/o/testorg",
+      orgs: [
+        {
+          name: "TestOrg",
+          slug: "testorg",
+          projects: [
+            {
+              name: "TestProject",
+              slug: "testproject",
+              scenes: [customScene],
+            },
+          ],
+        },
+      ],
+    });
+    const output = await page.context().newPage();
+    try {
+      await output.goto("/render/testorg/testproject");
+      await page.goto("/app/testorg/testproject");
+      await page.getByRole("button", { name: "Speaker view" }).click();
+      await expect(page.getByText("1 / 3")).toBeVisible();
+
+      const mainBox = page.getByTestId("speaker-main-box");
+      const marks = (target: typeof page, tool: string) =>
+        target
+          .getByTestId("slides-ink-layer")
+          .locator(`g[data-ink-tool="${tool}"] path`);
+      // Where a mark sits, as fractions of the slide it's drawn on
+      const placeOf = (target: typeof page, tool: string) =>
+        marks(target, tool)
+          .first()
+          .evaluate((path: SVGPathElement) => {
+            const mark = path.getBoundingClientRect();
+            const slide = path.ownerSVGElement!.getBoundingClientRect();
+            const at = (v: number) => Math.round(v * 100) / 100;
+            return {
+              left: at((mark.left - slide.left) / slide.width),
+              right: at((mark.right - slide.left) / slide.width),
+              middle: at(
+                (mark.top + mark.height / 2 - slide.top) / slide.height,
+              ),
+            };
+          });
+      const drag = async (from: [number, number], to: [number, number]) => {
+        const box = (await mainBox.boundingBox())!;
+        const x = (f: number) => box.x + box.width * f;
+        const y = (f: number) => box.y + box.height * f;
+        await page.mouse.move(x(from[0]), y(from[1]));
+        await page.mouse.down();
+        await page.mouse.move(x(to[0]), y(to[1]), { steps: 15 });
+        await page.mouse.up();
+      };
+
+      // Pencil: a line across the middle, shown on the output in the same
+      // place on the slide
+      // Even with the page selected, a press draws instead of dragging the
+      // selection
+      await page.keyboard.press("ControlOrMeta+a");
+      await page.getByRole("button", { name: "Pencil", exact: true }).click();
+      await drag([0.25, 0.5], [0.75, 0.5]);
+      await expect(marks(output, "pencil")).toHaveCount(1);
+      await expect(marks(page, "pencil")).toHaveCount(1);
+      const onOutput = await placeOf(output, "pencil");
+      expect(onOutput.left).toBeCloseTo(0.25, 1);
+      expect(onOutput.right).toBeCloseTo(0.75, 1);
+      expect(onOutput.middle).toBeCloseTo(0.5, 1);
+      expect(await placeOf(page, "pencil")).toEqual(onOutput);
+
+      await page
+        .getByRole("button", { name: "Highlight", exact: true })
+        .click();
+      await drag([0.2, 0.3], [0.6, 0.3]);
+      await expect(marks(output, "highlight")).toHaveCount(1);
+
+      // Laser: shows while pressed, fades away after release
+      await page.getByRole("button", { name: "Laser", exact: true }).click();
+      const box = (await mainBox.boundingBox())!;
+      await page.mouse.move(box.x + box.width * 0.4, box.y + box.height * 0.4);
+      await page.mouse.down();
+      await page.mouse.move(box.x + box.width * 0.6, box.y + box.height * 0.6, {
+        steps: 10,
+      });
+      await expect(marks(output, "laser").first()).toBeAttached();
+      await page.mouse.up();
+      await expect(marks(output, "laser")).toHaveCount(0);
+      // Pick it again to put it down
+      await page.getByRole("button", { name: "Laser", exact: true }).click();
+      await expect(page.getByTestId("speaker-ink-surface")).toHaveCount(0);
+
+      // Marks stay on their slide
+      await page.keyboard.press("ArrowRight");
+      await expect(page.getByText("2 / 3")).toBeVisible();
+      await expect(marks(output, "pencil")).toHaveCount(0);
+      await page.keyboard.press("ArrowLeft");
+      await expect(page.getByText("1 / 3")).toBeVisible();
+      await expect(marks(output, "pencil")).toHaveCount(1);
+
+      // An output that reloads still has them
+      await output.reload();
+      await expect(marks(output, "pencil")).toHaveCount(1);
+      await expect(marks(output, "highlight")).toHaveCount(1);
+
+      await page
+        .getByRole("button", { name: "Clear marks on this slide" })
+        .click();
+      await expect(marks(output, "pencil")).toHaveCount(0);
+      await expect(marks(output, "highlight")).toHaveCount(0);
+    } finally {
+      await output.close();
+    }
+  });
+
   test("speaker notes can be edited and are kept", async ({
     page,
     e2eCommand,
