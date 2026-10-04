@@ -263,4 +263,144 @@ test.describe("Slides speaker view", () => {
     await nextTile.click();
     await expect(page.getByText("Notes for slide two")).toBeVisible();
   });
+
+  test("speaker notes can be edited and are kept", async ({
+    page,
+    e2eCommand,
+  }) => {
+    const noNotesScene = buildCustomScene({
+      importId: "import_e2enotes",
+      docs: [deckDoc("Slide 1", "#1d4ed8"), deckDoc("Slide 2", "#047857")],
+      notes: [],
+    });
+    await e2eCommand.loginWithScenes({
+      next: "/o/testorg",
+      orgs: [
+        {
+          name: "TestOrg",
+          slug: "testorg",
+          projects: [
+            {
+              name: "TestProject",
+              slug: "testproject",
+              scenes: [noNotesScene],
+            },
+          ],
+        },
+      ],
+    });
+    await page.goto("/app/testorg/testproject");
+    await page.getByRole("button", { name: "Speaker view" }).click();
+
+    // A deck imported without notes can still be given some
+    await expect(page.getByText("No notes for this slide")).toBeVisible();
+    await page.getByRole("button", { name: "Edit notes" }).click();
+    const editor = page.getByRole("textbox", { name: "Speaker notes" });
+    await expect(editor).toBeFocused();
+    await editor.fill("Welcome everyone\nThen the reading");
+
+    // Arrow keys type in the editor instead of changing slide
+    await editor.press("ArrowLeft");
+    await expect(page.getByText("1 / 2")).toBeVisible();
+
+    await page.getByRole("button", { name: "Done editing notes" }).click();
+    await expect(editor).toBeHidden();
+    await expect(page.getByText("Welcome everyone")).toBeVisible();
+
+    // Moving to another slide shows its own (empty) notes
+    await page.getByTestId("speaker-next-box").locator("..").click();
+    await expect(page.getByText("2 / 2")).toBeVisible();
+    await expect(page.getByText("No notes for this slide")).toBeVisible();
+
+    // Saved to the scene: still there after a reload
+    await page.reload();
+    await page.getByRole("button", { name: "Speaker view" }).click();
+    await page.getByTestId("speaker-previous-box").locator("..").click();
+    await expect(page.getByText("1 / 2")).toBeVisible();
+    await expect(page.getByText("Welcome everyone")).toBeVisible();
+    await expect(page.getByText("Then the reading")).toBeVisible();
+
+    // An edit left open is saved when the slide changes
+    await page.getByRole("button", { name: "Edit notes" }).click();
+    await editor.fill("Edited then moved on");
+    await page.getByTestId("speaker-next-box").locator("..").click();
+    await expect(page.getByText("2 / 2")).toBeVisible();
+    await page.getByTestId("speaker-previous-box").locator("..").click();
+    await expect(page.getByText("Edited then moved on")).toBeVisible();
+  });
+
+  test("all slides' notes can be shown and edited in one go", async ({
+    page,
+    e2eCommand,
+  }) => {
+    await e2eCommand.loginWithScenes({
+      next: "/o/testorg",
+      orgs: [
+        {
+          name: "TestOrg",
+          slug: "testorg",
+          projects: [
+            {
+              name: "TestProject",
+              slug: "testproject",
+              scenes: [customScene],
+            },
+          ],
+        },
+      ],
+    });
+    await page.goto("/app/testorg/testproject");
+    await page.getByRole("button", { name: "Speaker view" }).click();
+    await expect(page.getByText("Custom notes one")).toBeVisible();
+    await expect(page.getByText("Custom notes two")).toBeHidden();
+
+    // Every slide's notes, with the current one marked
+    await page
+      .getByRole("button", { name: "Show notes for all slides" })
+      .click();
+    for (const note of NOTES) {
+      await expect(page.getByText(note)).toBeVisible();
+    }
+    await expect(page.locator('li[aria-current="true"]')).toContainText(
+      "Custom notes one",
+    );
+
+    // Edit them all as one text, split by --- lines
+    await page.getByRole("button", { name: "Edit notes" }).click();
+    const editor = page.getByRole("textbox", { name: "Speaker notes" });
+    await expect(editor).toHaveValue(
+      "--- Slide 1\nCustom notes one\n\n--- Slide 2\nCustom notes two\n\n--- Slide 3\nCustom notes three",
+    );
+
+    // A missing separator is refused rather than shifting notes around
+    await editor.fill("--- Slide 1\nOne\n\nTwo\n--- Slide 3\nThree");
+    await page.getByRole("button", { name: "Done editing notes" }).click();
+    await expect(page.getByRole("alert")).toContainText(
+      "expected one per slide",
+    );
+    await expect(editor).toBeVisible();
+
+    // Clicking away does not save a half-edited text
+    await page.getByText("Speaker notes", { exact: true }).click();
+    await expect(editor).toBeVisible();
+
+    await editor.fill(
+      "--- Slide 1\nOpen in prayer\n\n--- Slide 2\n\n--- Slide 3\nClose\nwith the blessing",
+    );
+    await page.getByRole("button", { name: "Done editing notes" }).click();
+    await expect(editor).toBeHidden();
+    await expect(page.getByText("Open in prayer")).toBeVisible();
+    await expect(page.getByText("No notes")).toBeVisible();
+
+    // Each slide got its own part, kept after a reload
+    await page.reload();
+    await page.getByRole("button", { name: "Speaker view" }).click();
+    await expect(page.getByText("Open in prayer")).toBeVisible();
+    await page.getByTestId("speaker-next-box").locator("..").click();
+    await expect(page.getByText("2 / 3")).toBeVisible();
+    await expect(page.getByText("No notes for this slide")).toBeVisible();
+    await page.getByTestId("speaker-next-box").locator("..").click();
+    await expect(page.getByText("3 / 3")).toBeVisible();
+    await expect(page.getByText("Close\nwith the blessing")).toBeVisible();
+  });
 });
