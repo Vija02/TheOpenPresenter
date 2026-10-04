@@ -10,9 +10,10 @@ import {
 } from "@repo/ui";
 import { useCallback, useMemo, useState } from "react";
 import { FaArrowLeft, FaArrowRight, FaPlus } from "react-icons/fa";
+import { MdCoPresent } from "react-icons/md";
 import { VscEdit, VscSettingsGear } from "react-icons/vsc";
 
-import { imageSlideDoc, isCustomImport } from "../../src/customSlides";
+import { isCustomImport, resolvedSlideDoc } from "../../src/customSlides";
 import {
   activateSlide,
   valtioActivationTarget,
@@ -24,6 +25,7 @@ import { useAutoplay } from "../utils/useAutoplay";
 import CustomSlideEditorModal from "./CustomSlides/CustomSlideEditorModal";
 import { useCustomSlides } from "./CustomSlides/useCustomSlides";
 import Landing from "./Landing";
+import PresenterView from "./PresenterView";
 import SettingsModal from "./SettingsModal";
 import { UploadLinksDialog } from "./UploadLinks/UploadLinksDialog";
 import "./index.css";
@@ -47,6 +49,7 @@ const Remote = () => {
 
   const [editorTarget, setEditorTarget] = useState<EditorTarget | null>(null);
   const [isUploadLinksOpen, setIsUploadLinksOpen] = useState(false);
+  const [isSpeakerViewOpen, setIsSpeakerViewOpen] = useState(false);
 
   const showLanding = !hasSlides && !isAnyImportFetching;
 
@@ -77,6 +80,16 @@ const Remote = () => {
           }
           toolbar={
             <div className="stack-row gap-x-4 gap-y-2 flex-wrap">
+              <div className="stack-row">
+                <Button
+                  size="xs"
+                  variant="pill"
+                  onClick={() => setIsSpeakerViewOpen(true)}
+                >
+                  <MdCoPresent />
+                  Speaker view
+                </Button>
+              </div>
               <div className="stack-row">
                 <span className="hidden sm:inline font-bold text-white text-xs">
                   Navigate:
@@ -130,6 +143,10 @@ const Remote = () => {
         isOpen={isUploadLinksOpen}
         onOpenChange={setIsUploadLinksOpen}
       />
+
+      {isSpeakerViewOpen && (
+        <PresenterView onClose={() => setIsSpeakerViewOpen(false)} />
+      )}
     </>
   );
 };
@@ -238,10 +255,6 @@ const RemoteHandler = ({
           : null;
         const isCustom = customImport !== null;
 
-        const doc =
-          customImport?.docs[slide.localSlideIndex] ??
-          imageSlideDoc(slide.thumbnailUrl);
-
         return (
           <Slide
             key={slide.rawRef}
@@ -295,7 +308,7 @@ const RemoteHandler = ({
                   }
                 >
                   <LayoutRenderer
-                    doc={doc}
+                    doc={resolvedSlideDoc(slide)}
                     data={{}}
                     frame={{ index: index + 1, total: totalSlides }}
                   />
