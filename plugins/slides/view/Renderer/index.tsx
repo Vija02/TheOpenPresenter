@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { getEffectiveDisplayMode } from "../../src/types";
+import { InkLayer } from "../Ink/InkLayer";
 import { usePluginAPI } from "../pluginApi";
 import { GoogleSlideRenderer } from "./GoogleSlideRenderer";
 import { ImageRenderer } from "./ImageRenderer";
@@ -67,6 +68,8 @@ const Renderer = () => {
           onUnmount={unregisterLoading}
         />
       ))}
+
+      <InkLayer />
     </>
   );
 };
