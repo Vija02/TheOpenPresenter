@@ -8,7 +8,6 @@
   ],
   "ignore": [
     "**/e2e/**",
-    "**/tauri/**",
     "**/node_modules/**",
     "../../packages/*/dist/assets/**",
     "../../packages/*/dist/fonts/**",
