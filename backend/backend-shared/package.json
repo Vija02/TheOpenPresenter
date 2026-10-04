@@ -18,6 +18,7 @@
     "dev": "tsup src/index.ts --format esm,cjs --experimental-dts --watch"
   },
   "dependencies": {
+    "@hocuspocus/provider": "4.4.0",
     "@repo/graphql": "*",
     "@repo/lib": "*",
     "@repo/observability": "*",
@@ -35,7 +36,9 @@
     "random-word-slugs": "^0.1.7",
     "sharp": "0.34.5",
     "typeid-js": "^1.1.0",
-    "urql": "^5.0.1"
+    "urql": "^5.0.1",
+    "ws": "^8.21.1",
+    "yjs": "13.6.26"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.49.2",
