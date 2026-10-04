@@ -298,7 +298,7 @@ test.describe("Slides speaker view", () => {
       tile.getByTestId("speaker-captured-step").locator("svg");
 
     // Slide 1 has one build: Next is that build, not slide 2
-    await expect(nextTile).toHaveText(/Next\s*Build 1\/1\s*1$/);
+    await expect(nextTile).toHaveText(/Next\s*1$/);
     await expect(captured(nextTile)).toHaveCount(1);
     await expect(previousTile).toHaveText(/Start of slides/);
 
@@ -315,7 +315,7 @@ test.describe("Slides speaker view", () => {
     await expect(captured(previousTile)).toHaveCount(1);
 
     await previousTile.click();
-    await expect(previousTile).toHaveText(/Previous\s*Build 1\/1\s*1$/);
+    await expect(previousTile).toHaveText(/Previous\s*1$/);
     await expect(nextTile).toHaveText(/Next\s*2$/);
     await expect(page.getByText("2 / 4")).toBeVisible();
 
