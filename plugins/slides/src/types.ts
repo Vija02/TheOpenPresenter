@@ -1,6 +1,8 @@
 import { LAYOUT_VIDEO_STATES_KEY, VIDEO_VOLUME_KEY } from "@repo/base-types";
 import { type LayoutDoc, type LayoutVideoStates } from "@repo/layout";
 
+import type { InkStroke } from "./ink";
+
 export type ImportType =
   | "googleslides"
   | "canva"
@@ -162,6 +164,9 @@ export type PluginRendererData = {
    * Per-import display mode, keyed by importId.
    */
   displayModes?: Record<string, DisplayMode>;
+
+  /** Speaker's pencil/highlight marks, kept per slide. Keyed by slide ref */
+  ink?: Record<string, InkStroke[]>;
 
   [LAYOUT_VIDEO_STATES_KEY]?: LayoutVideoStates;
   [VIDEO_VOLUME_KEY]?: number;
