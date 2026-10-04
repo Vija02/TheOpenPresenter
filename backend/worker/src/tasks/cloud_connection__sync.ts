@@ -16,6 +16,9 @@ interface CloudConnectionSyncPayload {
   force_resync?: boolean;
 }
 
+// If we need to push, we open up a ws socket so don't do it all at once
+const DOCUMENT_SYNC_CONCURRENCY = 4;
+
 // TODO: Consider if categories or tags changes
 const task: Task = async (inPayload, { addJob, withPgClient }) => {
   const payload: CloudConnectionSyncPayload = inPayload as any;
@@ -237,31 +240,40 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
       );
       let documentSyncedCount = 0;
       let documentFailedCount = 0;
+
+      const pending = [...externalProjectIdsToCreateOrUpdate];
+      const syncNext = async (): Promise<void> => {
+        const externalProjectId = pending.shift();
+        if (!externalProjectId) return;
+        await syncOne(externalProjectId);
+        return syncNext();
+      };
+      const syncOne = async (externalProjectId: string) => {
+        const localProjectId =
+          externalToLocalProjectIdMapping.get(externalProjectId);
+        if (!localProjectId) {
+          log.debug(
+            { externalProjectId },
+            "Skipping document sync; no local project mapping",
+          );
+          return;
+        }
+        try {
+          await cloud.syncProjectDocument(withPgClient, localProjectId);
+          await cloud.bumpSyncRunSyncedProjects(withPgClient, syncRunId!);
+          documentSyncedCount += 1;
+          log.debug({ localProjectId }, "Synced project document");
+        } catch (documentErr) {
+          documentFailedCount += 1;
+          log.warn(
+            { err: documentErr, localProjectId },
+            "Failed to sync document for project",
+          );
+          await cloud.bumpSyncRunFailedProjects(withPgClient, syncRunId!);
+        }
+      };
       await Promise.all(
-        externalProjectIdsToCreateOrUpdate.map(async (externalProjectId) => {
-          const localProjectId =
-            externalToLocalProjectIdMapping.get(externalProjectId);
-          if (!localProjectId) {
-            log.debug(
-              { externalProjectId },
-              "Skipping document sync; no local project mapping",
-            );
-            return;
-          }
-          try {
-            await cloud.syncProjectDocument(withPgClient, localProjectId);
-            await cloud.bumpSyncRunSyncedProjects(withPgClient, syncRunId!);
-            documentSyncedCount += 1;
-            log.debug({ localProjectId }, "Synced project document");
-          } catch (documentErr) {
-            documentFailedCount += 1;
-            log.warn(
-              { err: documentErr, localProjectId },
-              "Failed to sync document for project",
-            );
-            await cloud.bumpSyncRunFailedProjects(withPgClient, syncRunId!);
-          }
-        }),
+        Array.from({ length: DOCUMENT_SYNC_CONCURRENCY }, syncNext),
       );
       log.info(
         { documentSyncedCount, documentFailedCount },
@@ -296,7 +308,10 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
       try {
         await cloud.failSyncRun(withPgClient, syncRunId, e);
       } catch (updateErr) {
-        log.error({ err: updateErr }, "Failed to mark cloud sync run as failed");
+        log.error(
+          { err: updateErr },
+          "Failed to mark cloud sync run as failed",
+        );
       }
     }
   }
