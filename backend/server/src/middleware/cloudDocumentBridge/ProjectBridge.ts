@@ -2,8 +2,8 @@ import {
   HocuspocusProvider,
   HocuspocusProviderWebsocket,
 } from "@hocuspocus/provider";
+import { cloud } from "@repo/backend-shared";
 import { logger } from "@repo/observability";
-import WebSocket from "ws";
 import * as Y from "yjs";
 
 import { BRIDGE_ORIGIN, isEcho, isEmptyUpdate } from "./protocol";
@@ -36,29 +36,6 @@ type BridgeOptions = {
   localDoc: Y.Doc;
 } & BridgeEvents;
 
-/**
- * `ws` accepts headers, but the provider constructs its socket with only a
- * URL. Binding the cookie into a subclass is the supported way to get one
- * onto the handshake without forking the provider.
- */
-const websocketWithCookie = (cookie: string, origin: string) =>
-  class BridgeWebSocket extends WebSocket {
-    constructor(address: string | URL, protocols?: string | string[]) {
-      super(address, protocols, {
-        headers: {
-          Cookie: cookie,
-          Origin: origin,
-        },
-      });
-    }
-  };
-
-const websocketUrl = (host: string): string => {
-  const url = new URL("/wlink", host);
-  url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
-  return url.toString();
-};
-
 export class ProjectBridge {
   private provider: HocuspocusProvider | null = null;
   private socket: HocuspocusProviderWebsocket | null = null;
@@ -80,8 +57,8 @@ export class ProjectBridge {
     const { host, sessionCookie, remoteProjectId, localDoc } = this.options;
 
     this.socket = new HocuspocusProviderWebsocket({
-      url: websocketUrl(host),
-      WebSocketPolyfill: websocketWithCookie(sessionCookie, host),
+      url: cloud.websocketUrl(host),
+      WebSocketPolyfill: cloud.websocketWithCookie(sessionCookie, host),
     });
 
     this.provider = new HocuspocusProvider({
