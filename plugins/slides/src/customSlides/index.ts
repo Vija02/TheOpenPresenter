@@ -10,7 +10,7 @@ import { UniversalURL, extractMediaName } from "@repo/lib";
 import { typeidUnboxed } from "typeid-js";
 
 import { createSlideRef, parseSlideRef } from "../slides/order";
-import { CustomImportData, ImportData } from "../types";
+import { CustomImportData, ImportData, ResolvedSlide } from "../types";
 import { defaultCustomSlideTemplate, findCustomSlideTemplate } from "./presets";
 
 /**
@@ -80,6 +80,11 @@ export const imageSlideDoc = (thumbnailUrl: string): LayoutDoc =>
       }),
     ],
   });
+
+export const resolvedSlideDoc = (slide: ResolvedSlide): LayoutDoc =>
+  (isCustomImport(slide.importData)
+    ? slide.importData.docs[slide.localSlideIndex]
+    : undefined) ?? imageSlideDoc(slide.thumbnailUrl);
 
 export const rebuildOrderAfterSlideRemoval = (
   slideOrder: string[],
