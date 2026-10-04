@@ -1,12 +1,17 @@
 import useSize from "@react-hook/size";
 import { LayoutRenderer } from "@repo/layout/react";
 import { cx } from "class-variance-authority";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 
 import { resolvedSlideDoc } from "../../../src/customSlides";
+import { getEffectiveDisplayMode } from "../../../src/types";
 import type { ResolvedSlide } from "../../../src/types";
+import { usePluginAPI } from "../../pluginApi";
+import { useSlideCapture } from "./capture/useSlideCapture";
 import { aspectRatioValue, slideAspectRatio } from "./slideGeometry";
+
+export type PreviewStep = { slide: ResolvedSlide; clickCount: number };
 
 type Direction = "previous" | "next";
 
@@ -25,15 +30,15 @@ const EMPTY_DATA = {};
 export const SidePreviews = ({
   fillWidth,
   currentSlide,
-  previousSlide,
-  nextSlide,
+  previous,
+  next,
   onSelect,
 }: {
   fillWidth: boolean;
   currentSlide: ResolvedSlide | null;
-  previousSlide: ResolvedSlide | null;
-  nextSlide: ResolvedSlide | null;
-  onSelect: (slide: ResolvedSlide) => void;
+  previous: PreviewStep | null;
+  next: PreviewStep | null;
+  onSelect: (step: PreviewStep) => void;
 }) => (
   <div
     className={cx(
@@ -45,7 +50,7 @@ export const SidePreviews = ({
       label="Previous"
       direction="previous"
       currentSlide={currentSlide}
-      slide={previousSlide}
+      step={previous}
       fillWidth={fillWidth}
       onSelect={onSelect}
     />
@@ -53,7 +58,7 @@ export const SidePreviews = ({
       label="Next"
       direction="next"
       currentSlide={currentSlide}
-      slide={nextSlide}
+      step={next}
       fillWidth={fillWidth}
       onSelect={onSelect}
     />
@@ -64,17 +69,18 @@ const SidePreview = ({
   label,
   direction,
   currentSlide,
-  slide,
+  step,
   fillWidth,
   onSelect,
 }: {
   label: string;
   direction: Direction;
   currentSlide: ResolvedSlide | null;
-  slide: ResolvedSlide | null;
+  step: PreviewStep | null;
   fillWidth: boolean;
-  onSelect: (slide: ResolvedSlide) => void;
+  onSelect: (step: PreviewStep) => void;
 }) => {
+  const slide = step?.slide ?? null;
   const [areaElement, setAreaElement] = useState<HTMLDivElement | null>(null);
   const [labelElement, setLabelElement] = useState<HTMLDivElement | null>(null);
   const [areaWidth, areaHeight] = useSize(areaElement);
@@ -96,7 +102,7 @@ const SidePreview = ({
       <button
         type="button"
         disabled={!slide}
-        onClick={() => slide && onSelect(slide)}
+        onClick={() => step && onSelect(step)}
         style={{ width }}
         className={cx(
           "group flex flex-col self-start text-left",
@@ -106,19 +112,15 @@ const SidePreview = ({
         <div
           data-testid={`speaker-${direction}-box`}
           className={cx(
-            "relative overflow-hidden ring-1 transition-colors",
+            "relative overflow-hidden ring-1 transition-shadow",
             slide
               ? "bg-black ring-stroke group-hover:ring-stroke-emphasis"
               : "bg-surface-secondary ring-stroke",
           )}
           style={{ width, height }}
         >
-          {slide ? (
-            <LayoutRenderer
-              doc={resolvedSlideDoc(slide)}
-              data={EMPTY_DATA}
-              scope={`speaker-view-${direction}`}
-            />
+          {step ? (
+            <StepPicture step={step} scope={`speaker-view-${direction}`} />
           ) : (
             currentSlide && (
               <div className="flex h-full w-full items-center justify-center p-2 text-center text-sm text-tertiary">
@@ -135,13 +137,67 @@ const SidePreview = ({
             {DIRECTION_ICON[direction]}
             {label}
           </span>
-          {slide && (
+          {step && (
             <span className="shrink-0 tabular-nums text-tertiary">
-              {slide.globalSlideIndex + 1}
+              {step.slide.globalSlideIndex + 1}
             </span>
           )}
         </div>
       </button>
     </div>
+  );
+};
+
+/**
+ * The step as it looks once finished: captured from the Google Slides embed
+ * when ready, otherwise the slide's thumbnail.
+ */
+const StepPicture = ({ step, scope }: { step: PreviewStep; scope: string }) => {
+  const pluginApi = usePluginAPI();
+  const displayModes = pluginApi.renderer.useData((x) => x.displayModes);
+  const { importData, localSlideIndex } = step.slide;
+  const capture = useSlideCapture(
+    importData.type === "googleslides" &&
+      getEffectiveDisplayMode(importData, displayModes) === "googleslides"
+      ? {
+          fetchId: importData.fetchId,
+          localSlideIndex,
+          clickCount: step.clickCount,
+        }
+      : null,
+  );
+
+  if (capture) return <CapturedSvg svg={capture} />;
+  return (
+    <LayoutRenderer
+      doc={resolvedSlideDoc(step.slide)}
+      data={EMPTY_DATA}
+      scope={scope}
+    />
+  );
+};
+
+const CapturedSvg = ({ svg }: { svg: SVGSVGElement }) => {
+  const [container, setContainer] = useState<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!container) return;
+    // The store keeps the original, ready for the next time it is shown
+    const copy = svg.cloneNode(true) as SVGSVGElement;
+    copy.style.width = "100%";
+    copy.style.height = "100%";
+    copy.style.display = "block";
+    container.replaceChildren(copy);
+    return () => {
+      container.replaceChildren();
+    };
+  }, [container, svg]);
+
+  return (
+    <div
+      ref={setContainer}
+      data-testid="speaker-captured-step"
+      className="h-full w-full"
+    />
   );
 };

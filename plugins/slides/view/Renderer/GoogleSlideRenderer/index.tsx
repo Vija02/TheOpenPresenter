@@ -4,6 +4,7 @@ import { toFlatPosition } from "../../../src/slides/autoplay";
 import { usePluginAPI } from "../../pluginApi";
 import { useDisplayedSlide } from "../../utils/useDisplayedSlide";
 import RenderView, { RenderViewHandle } from "./RenderView";
+import { googleSlideSrc } from "./slideSrc";
 import { useIframeSync } from "./useIframeSync";
 
 interface GoogleSlideRendererProps {
@@ -22,12 +23,10 @@ export const GoogleSlideRenderer = ({
 
   const pluginApi = usePluginAPI();
 
-  const slideSrc = useMemo(() => {
-    return (
-      window.location.origin +
-      `/plugin/slides/gslide/proxy?pluginId=${pluginApi.pluginContext.pluginId}&importId=${importId}`
-    );
-  }, [pluginApi.pluginContext.pluginId, importId]);
+  const slideSrc = useMemo(
+    () => googleSlideSrc(pluginApi.pluginContext.pluginId, importId),
+    [pluginApi.pluginContext.pluginId, importId],
+  );
 
   const { resolvedSlide, clickCount: effectiveClickCount } =
     useDisplayedSlide();

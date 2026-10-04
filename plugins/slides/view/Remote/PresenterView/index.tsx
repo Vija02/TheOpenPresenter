@@ -6,13 +6,14 @@ import {
   activateSlide,
   valtioActivationTarget,
 } from "../../../src/slides/activation";
+import { settledStep } from "../../../src/slides/navigation";
 import { resolveSlide } from "../../../src/slides/order";
-import type { ResolvedSlide } from "../../../src/types";
 import { usePluginAPI } from "../../pluginApi";
 import { useDisplayedSlide } from "../../utils/useDisplayedSlide";
 import { MainSlide } from "./MainSlide";
-import { SidePreviews } from "./SidePreviews";
+import { PreviewStep, SidePreviews } from "./SidePreviews";
 import { SpeakerNotesPanel } from "./SpeakerNotesPanel";
+import { SlideCapturer } from "./capture/SlideCapturer";
 import { useIsPortrait } from "./useIsPortrait";
 
 type PresenterViewProps = {
@@ -23,35 +24,35 @@ export const PresenterView = ({ onClose }: PresenterViewProps) => {
   const pluginApi = usePluginAPI();
   const pluginData = pluginApi.scene.useData((x) => x.pluginData);
   const mutableRendererData = pluginApi.renderer.useValtioData();
-  const { resolvedSlide, globalSlideIndex } = useDisplayedSlide();
+  const { resolvedSlide, globalSlideIndex, clickCount } = useDisplayedSlide();
   const isPortrait = useIsPortrait();
 
   const totalSlides = pluginData.slideOrder?.length ?? 0;
 
-  const previousSlide = useMemo(
-    () =>
-      globalSlideIndex > 0
-        ? resolveSlide(pluginData, globalSlideIndex - 1)
-        : null,
-    [pluginData, globalSlideIndex],
+  // Where a press would land, once the current step has finished
+  const stepTowards = useCallback(
+    (keyType: "NEXT" | "PREV"): PreviewStep | null => {
+      if (globalSlideIndex < 0) return null;
+      const step = settledStep(
+        pluginData,
+        { slideIndex: globalSlideIndex, clickCount },
+        keyType,
+      );
+      const slide = step && resolveSlide(pluginData, step.slideIndex);
+      return slide ? { slide, clickCount: step.clickCount } : null;
+    },
+    [pluginData, globalSlideIndex, clickCount],
   );
+  const previousStep = useMemo(() => stepTowards("PREV"), [stepTowards]);
+  const nextStep = useMemo(() => stepTowards("NEXT"), [stepTowards]);
 
-  const nextSlide = useMemo(
-    () =>
-      globalSlideIndex >= 0 && globalSlideIndex + 1 < totalSlides
-        ? resolveSlide(pluginData, globalSlideIndex + 1)
-        : null,
-    [pluginData, globalSlideIndex, totalSlides],
-  );
-
-  // Same as selecting a slide in the remote's slide list
-  const selectSlide = useCallback(
-    (slide: ResolvedSlide) => {
+  const selectStep = useCallback(
+    ({ slide, clickCount }: PreviewStep) => {
       activateSlide(
         valtioActivationTarget(mutableRendererData),
         pluginData,
         slide.globalSlideIndex,
-        { clickCount: null },
+        { clickCount },
       );
       pluginApi.renderer.setRenderCurrentScene();
     },
@@ -86,13 +87,15 @@ export const PresenterView = ({ onClose }: PresenterViewProps) => {
         <SidePreviews
           fillWidth={isPortrait}
           currentSlide={resolvedSlide}
-          previousSlide={previousSlide}
-          nextSlide={nextSlide}
-          onSelect={selectSlide}
+          previous={previousStep}
+          next={nextStep}
+          onSelect={selectStep}
         />
       </div>
 
       <SpeakerNotesPanel slide={resolvedSlide} />
+
+      <SlideCapturer currentSlide={globalSlideIndex} />
     </div>
   );
 };
