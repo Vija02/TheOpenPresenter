@@ -36,13 +36,8 @@ import {
   loadedYjsData,
 } from "./loadedState";
 import { activateSlide, yjsActivationTarget } from "./slides/activation";
-import {
-  createSlideRef,
-  getAutoplayDurationForSlide,
-  getClickCountForSlide,
-  getClickDurationForSlide,
-  getTransitionDurationForSlide,
-} from "./slides/order";
+import { navigate } from "./slides/navigation";
+import { createSlideRef } from "./slides/order";
 import {
   AutoplayState,
   CustomImportData,
@@ -225,137 +220,46 @@ export const init = (
     pluginName,
     (keyType, { rendererData, pluginData }) => {
       const pluginDataJson = pluginData.toJSON() as PluginBaseData;
-      const currentSlideIndex = rendererData.get("currentSlideIndex") ?? 0;
-      const currentClickCount = rendererData.get("currentClickCount") ?? 0;
-      const totalSlides = pluginDataJson.slideOrder?.length ?? 0;
-
-      if (totalSlides === 0) {
+      if ((pluginDataJson.slideOrder?.length ?? 0) === 0) {
+        return;
+      }
+      if (keyType !== "NEXT" && keyType !== "PREV") {
+        logger.warn("Unknown keyType");
         return;
       }
 
-      const maxClicksForCurrentSlide = getClickCountForSlide(
-        pluginDataJson,
-        currentSlideIndex,
-      );
-
       const now = Date.now();
-      const transitionEndsAt = rendererData.get("transitionEndsAt") ?? 0;
-      const isTransitioningBackwards =
-        rendererData.get("isTransitioningBackwards") ?? false;
-
-      const activationTarget = yjsActivationTarget(rendererData);
+      const current = {
+        slideIndex: rendererData.get("currentSlideIndex") ?? 0,
+        clickCount: rendererData.get("currentClickCount") ?? 0,
+        transitionEndsAt: rendererData.get("transitionEndsAt") ?? 0,
+        isTransitioningBackwards:
+          rendererData.get("isTransitioningBackwards") ?? false,
+      };
+      const result = navigate(pluginDataJson, current, keyType, now);
 
       // Wrap every mutation in a single transaction so all changes for one
       // key press are applied atomically.
       rendererData.doc?.transact(() => {
         rendererData.set("lastClickTimestamp", now);
-        // Default off; only a backward slide-boundary crossing re-arms it below.
-        rendererData.set("isTransitioningBackwards", false);
+        rendererData.set(
+          "isTransitioningBackwards",
+          result.isTransitioningBackwards,
+        );
 
-        // Handle transitioning backwards which has special behaviors
-        if (isTransitioningBackwards && now < transitionEndsAt) {
-          if (keyType === "NEXT") {
-            // Cancel it and return to base click count
-            const returningSlideIndex = currentSlideIndex + 1;
-            const returningHasAutoplay =
-              getAutoplayDurationForSlide(pluginDataJson, returningSlideIndex) >
-              0;
-            activateSlide(
-              activationTarget,
-              pluginDataJson,
-              returningSlideIndex,
-              { clickCount: returningHasAutoplay ? -1 : 0, now },
-            );
-            rendererData.set("transitionEndsAt", 0);
-            return;
-          }
-          if (keyType === "PREV") {
-            // Snap on the highest click count
-            rendererData.set("currentClickCount", maxClicksForCurrentSlide);
-            rendererData.set("transitionEndsAt", 0);
-            return;
-          }
+        if (result.enteredSlide) {
+          activateSlide(
+            yjsActivationTarget(rendererData),
+            pluginDataJson,
+            result.slideIndex,
+            { clickCount: result.clickCount, now },
+          );
+        } else if (result.clickCount !== current.clickCount) {
+          rendererData.set("currentClickCount", result.clickCount);
         }
 
-        if (keyType === "NEXT") {
-          // If last object on slide & not finished transition yet
-          if (
-            currentClickCount >= maxClicksForCurrentSlide &&
-            now < transitionEndsAt
-          ) {
-            // Then clicking next should only skip the transition and not move anything else
-            rendererData.set("transitionEndsAt", 0);
-          } else if (currentClickCount < maxClicksForCurrentSlide) {
-            // Otherwise if there's more to click, just go next
-            const nextClickCount = currentClickCount + 1;
-            rendererData.set("currentClickCount", nextClickCount);
-            const clickDuration = getClickDurationForSlide(
-              pluginDataJson,
-              currentSlideIndex,
-              nextClickCount,
-            );
-            rendererData.set("transitionEndsAt", now + clickDuration);
-          } else if (currentSlideIndex < totalSlides - 1) {
-            const nextSlideIndex = currentSlideIndex + 1;
-            activateSlide(activationTarget, pluginDataJson, nextSlideIndex, {
-              now,
-            });
-            const slideTransitionDurationMs = getTransitionDurationForSlide(
-              pluginDataJson,
-              nextSlideIndex,
-            );
-            const autoplayDurationMs = getAutoplayDurationForSlide(
-              pluginDataJson,
-              nextSlideIndex,
-            );
-            rendererData.set(
-              "transitionEndsAt",
-              now +
-                slideTransitionDurationMs +
-                (autoplayDurationMs > 0 ? autoplayDurationMs : 0),
-            );
-          }
-          // Else: at last slide with all animations shown, do nothing
-        } else if (keyType === "PREV") {
-          // Clear any forward boundary window. Backward object steps (build
-          // undo, autoplay-rewind) are instant, so they get no window; the
-          // slide-boundary branch below re-arms it for the reverse transition,
-          // which does animate.
-          rendererData.set("transitionEndsAt", 0);
-
-          if (currentClickCount > 0) {
-            rendererData.set("currentClickCount", currentClickCount - 1);
-          } else if (
-            currentClickCount === 0 &&
-            getAutoplayDurationForSlide(pluginDataJson, currentSlideIndex) > 0
-          ) {
-            rendererData.set("currentClickCount", -1);
-          } else if (currentSlideIndex > 0) {
-            const prevSlideIndex = currentSlideIndex - 1;
-            const maxClicksForPrevSlide = getClickCountForSlide(
-              pluginDataJson,
-              prevSlideIndex,
-            );
-            activateSlide(activationTarget, pluginDataJson, prevSlideIndex, {
-              clickCount: maxClicksForPrevSlide,
-              now,
-            });
-
-            // Unlike object builds, a slide transition plays backwards with the
-            // same duration it has forward. The transition that reverses is the
-            // one belonging to the slide we're leaving (currentSlideIndex) —
-            // the same transition played when entering it. Arm the window so
-            // the renderer knows the reverse animation is in flight.
-            const reverseTransitionMs = getTransitionDurationForSlide(
-              pluginDataJson,
-              currentSlideIndex,
-            );
-            rendererData.set("transitionEndsAt", now + reverseTransitionMs);
-            rendererData.set("isTransitioningBackwards", true);
-          }
-          // Else: at first slide with click count 0, do nothing
-        } else {
-          logger.warn("Unknown keyType");
+        if (result.transitionEndsAt !== current.transitionEndsAt) {
+          rendererData.set("transitionEndsAt", result.transitionEndsAt);
         }
       });
     },
