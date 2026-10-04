@@ -41,6 +41,9 @@ export const useIframeSync = ({
   // Epoch (OUR clock) after which the current step's animation has finished.
   // Non-zero also means "a window is armed at this step".
   const boundaryEndsAtRef = useRef(0);
+  // The key that finishes that step without moving: Right for a forward
+  // step, Left for a backward slide transition (Right would cancel it).
+  const boundarySkipKeyRef = useRef<"next" | "prev">("next");
 
   // Click count actually applied to the iframe. Tracked separately because
   // clickCount -1 (the autoplay-rewind sub-step) shares a flat position with 0.
@@ -120,7 +123,11 @@ export const useIframeSync = ({
         Date.now() < boundaryEndsAtRef.current
       ) {
         boundaryEndsAtRef.current = 0;
-        ref.current?.next();
+        if (boundarySkipKeyRef.current === "prev") {
+          ref.current?.prev();
+        } else {
+          ref.current?.next();
+        }
       }
       return;
     }
@@ -131,13 +138,17 @@ export const useIframeSync = ({
     if (!sequential) {
       jumpToPosition(targetSlideIndex, targetClickCount);
       boundaryEndsAtRef.current = 0;
-    } else if (delta === 1) {
-      ref.current?.next();
+    } else {
+      if (delta === 1) {
+        ref.current?.next();
+      } else {
+        ref.current?.prev();
+      }
+      // Only slide transitions have a window going backwards: builds are
+      // removed instantly, and the controller closes the window for them
       const durationMs = transitionEndsAt - lastClickTimestamp;
       boundaryEndsAtRef.current = durationMs > 0 ? Date.now() + durationMs : 0;
-    } else {
-      ref.current?.prev();
-      boundaryEndsAtRef.current = 0;
+      boundarySkipKeyRef.current = delta === 1 ? "next" : "prev";
     }
 
     setLocalFlatPosition(targetFlatPosition);

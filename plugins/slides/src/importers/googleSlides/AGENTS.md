@@ -154,20 +154,20 @@ controller-internal — nothing reads it.
 - Flat delta `+1` → one `next()`, and arm a local window of
   `transitionEndsAt - lastClickTimestamp`. Both stamps come from the same press,
   so the duration is clock-skew-free; the local deadline uses `Date.now()`.
-- Flat delta `-1` → one `prev()`, local window cleared.
+- Flat delta `-1` → one `prev()`, and arm the window the same way. Only a
+  backward slide crossing has one; the controller closes it for builds.
 - Any other delta → `jumpToPosition` (goToSlide + steps), window cleared.
 - Delta `0` but `targetClickCount` differs → the `-1` autoplay sub-step: one
   `prev()`/`next()`.
 - Delta `0`, `transitionEndsAt === 0`, local window still open → that's the
-  controller's **snap**: fire one `next()` to finish the animation and do not
-  move the position.
+  controller's **snap**: finish the animation with the key that armed the
+  window and do not move the position. `next()` for a forward step; `prev()`
+  for a reverse transition, where the embed's Left completes it and stays
+  (measured: `3,-1: L 30..300ms L` lands on `2,3`, a further Left goes to
+  `2,2`). A `next()` there would cancel the transition instead.
 
 ## 6. Known gaps
 
-- A `PREV` during a reverse transition is a no-op in practice: the controller
-  snaps to a click count the position already has, so the renderer sees delta 0
-  with no armed local window (backward steps don't arm one) and fires nothing.
-  The reverse animation just plays out instead of being skipped.
 - Object-group bundling beyond what `clickCount` already collapses is not
   modelled.
 - `goToSlide` + `next()` stepping in `jumpToPosition` is spaced by `STEP_MS`

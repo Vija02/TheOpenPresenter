@@ -35,8 +35,13 @@ Sample deck, for reading the numbers:
   even while the object is still animating (`0,1: R 30ms L` lands on `1,-1`).
 - **Left at 0 (no autoplay) or at -1:** goes to the previous slide's last
   build, playing the transition of the slide being left backwards
-  (`3,-1: L` is busy 415ms; `2,0: L` and `1,-1: L` are instant because those
-  slides have no transition).
+  (`3,-1: L` 415ms, `2,0: L` ~500ms; `1,-1: L` is instant since slide 1 has
+  no transition). Slide 2's reverse makes no mutations between its start and
+  its cleanup at ~507ms, so the quiet check below misses it; a picture taken
+  at +300ms is neither slide.
+- **Left during that backward transition:** completes it and stays
+  (`3,-1: L 30..300ms L` lands on `2,3`; `2,0: L 30ms L` on `1,0`). **Right**
+  cancels it, back where it started (`3,-1: L 30ms R` lands on `3,-1`).
 - **Left while a slide transition plays:** cancels it, back where it started
   (`1,0: R 30ms L` stays on `1,0`; `2,3: R 200ms L` stays on `2,3`). Once the
   transition has ended and only the entry autoplay plays, Left goes to `-1`
@@ -76,6 +81,8 @@ is `view/Remote/PresenterView/capture/capturePlan.ts`.
   when there have been no such mutations for a short quiet window (120ms is
   ample; animation frames come every ~16ms). Still wait at least the measured
   duration, because a step can start a few ms after the key press.
+- It doesn't see every animation (slide 2's backward transition, above).
+  That's fine for capture: the plan never crosses slides with an arrow key.
 
 ## Which slide is showing
 
