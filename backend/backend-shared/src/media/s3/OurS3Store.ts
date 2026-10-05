@@ -278,7 +278,7 @@ export class OurS3Store extends S3Store implements OurDataStore {
   async removeRaw(id: string) {
     const { "upload-id": uploadId, file } = await this.getMetadata(id);
 
-    const isComplete = file.metadata?.isComplete;
+    const isComplete = file.metadata?.isComplete === "1";
 
     logger.info({ id, isComplete }, "Deleting file...");
 

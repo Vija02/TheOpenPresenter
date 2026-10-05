@@ -239,9 +239,10 @@ export default (app: Express) => {
   // ================================== //
   const server = new Server({
     path: "/media/upload/tus",
-    datastore: media[process.env.STORAGE_TYPE as "file" | "s3"].createTusStore(
-      rootWithPgClient,
-    ),
+    datastore:
+      media[process.env.STORAGE_TYPE as "file" | "s3"].createTusStore(
+        rootWithPgClient,
+      ),
     respectForwardedHeaders: true,
     onUploadCreate: async (req, res, upload) => {
       if (!req.headers["organization-id"]) {
@@ -260,6 +261,10 @@ export default (app: Express) => {
             ?.id,
           projectId,
         });
+        // A connected instance syncing its media keeps derived media
+        const syncedDerived =
+          !!req.headers["cloud-sync"] &&
+          req.headers["cloud-sync-user-uploaded"] === "0";
         return Promise.resolve({
           res,
           metadata: {
@@ -268,7 +273,7 @@ export default (app: Express) => {
             userId,
             projectId: projectId ?? null,
             pluginId: pluginId ?? null,
-            isUserUploaded: userId ? "1" : "0",
+            isUserUploaded: userId && !syncedDerived ? "1" : "0",
             isGuest: userId ? "0" : "1",
           },
         });
@@ -295,7 +300,7 @@ export default (app: Express) => {
 
       return `${mediaId}.${fileExtension}`;
     },
-    onUploadFinish: async (_req, res, upload) => {
+    onUploadFinish: async (req, res, upload) => {
       const splittedKey = upload.id.split(".");
       const mediaId = splittedKey[0];
       const uuid = toUUID(mediaId as TypeId<string>);
@@ -309,10 +314,13 @@ export default (app: Express) => {
         [true, uuid],
       );
 
-      const isUserUploaded = upload.metadata?.isUserUploaded === "1";
-      await mediaHandler.processCompletedMedia(upload.id, {
-        isUserUploaded,
-      });
+      // Synced media arrive with their derived media and metadata.
+      if (!req.headers["cloud-sync"]) {
+        const isUserUploaded = upload.metadata?.isUserUploaded === "1";
+        await mediaHandler.processCompletedMedia(upload.id, {
+          isUserUploaded,
+        });
+      }
 
       return res;
     },
