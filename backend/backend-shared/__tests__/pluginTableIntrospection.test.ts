@@ -46,6 +46,7 @@ describe("resolveCloudSyncTable", () => {
     ).toMatchObject({
       organizationColumn: "organization_id",
       keyColumns: ["id"],
+      localIdentityColumns: [],
       userColumns: ["created_by_user_id"],
     });
   });
@@ -60,7 +61,11 @@ describe("resolveCloudSyncTable", () => {
           ],
         }),
       ),
-    ).toMatchObject({ keyColumns: ["organization_id"] });
+    ).toMatchObject({
+      keyColumns: ["organization_id"],
+      // Matched by org, so each side keeps its own id.
+      localIdentityColumns: ["id"],
+    });
   });
 
   it("uses a composite primary key that includes the organization", () => {

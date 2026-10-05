@@ -84,6 +84,7 @@ const PUSH_BATCH = 200;
 /** Send every local change since the last sync, then record what landed. */
 export const pushLocalChanges = async (
   scope: Scope,
+  { deletes }: { deletes: boolean },
   send: (changes: PushChange[]) => Promise<PushResult[]>,
 ): Promise<{ pushed: number; rejected: number }> => {
   const { withPgClient, cloudConnectionId, organizationId, table, entity } =
@@ -91,7 +92,7 @@ export const pushLocalChanges = async (
   const target = targetOf(table);
   const org = quoteIdent(table.organizationColumn);
 
-  const { rows: pending } = await withPgClient((pgClient) =>
+  const { rows: all } = await withPgClient((pgClient) =>
     pgClient.query<PendingChange>(
       `
         with state as (
@@ -124,6 +125,8 @@ export const pushLocalChanges = async (
       [cloudConnectionId, entity, organizationId],
     ),
   );
+
+  const pending = deletes ? all : all.filter((c) => c.kind !== "delete");
 
   let pushed = 0;
   let rejected = 0;

@@ -104,12 +104,13 @@ export const applyPushedChanges = async (
   userId: string | null,
   changes: PushChange[],
 ): Promise<PushResult[]> => {
+  const writable = await writableColumns(client, targetOf(table));
   const results: PushResult[] = [];
   for (const change of changes) {
     await client.query("savepoint cloud_sync_push");
     try {
       results.push(
-        await applyOne(client, table, organizationId, userId, change),
+        await applyOne(client, table, organizationId, userId, writable, change),
       );
       await client.query("release savepoint cloud_sync_push");
     } catch (err) {
@@ -128,6 +129,7 @@ const applyOne = async (
   table: CloudSyncTable,
   organizationId: string,
   userId: string | null,
+  { insertable, updatable }: Awaited<ReturnType<typeof writableColumns>>,
   change: PushChange,
 ): Promise<PushResult> => {
   const target = targetOf(table);
@@ -154,14 +156,15 @@ const applyOne = async (
     return { status: "applied", updatedAt: null };
   }
 
-  // The org and user references are this side's own; never take them from
-  // the other instance.
+  // The org, user references and local identity are this side's own; never
+  // take them from the other instance.
   const userColumns = new Set(table.userColumns);
   const columns = Object.keys(change.row).filter(
     (c) =>
       table.columns.includes(c) &&
       c !== table.organizationColumn &&
-      !userColumns.has(c),
+      !userColumns.has(c) &&
+      !table.localIdentityColumns.includes(c),
   );
   const row: Record<string, unknown> = {};
   for (const c of columns) row[c] = change.row[c];
@@ -169,7 +172,12 @@ const applyOne = async (
   if (!current) {
     row[table.organizationColumn] = organizationId;
     for (const c of userColumns) row[c] = userId;
-    const insertColumns = Object.keys(row).map(quoteIdent).join(", ");
+    // Columns the caller may not set (e.g. timestamps under column grants)
+    // fall back to their defaults and triggers.
+    const insertColumns = Object.keys(row)
+      .filter((c) => insertable.has(c))
+      .map(quoteIdent)
+      .join(", ");
     const {
       rows: [inserted],
     } = await client.query<{ updated_at: string }>(
@@ -181,15 +189,19 @@ const applyOne = async (
     return { status: "applied", updatedAt: inserted!.updated_at };
   }
 
-  // `updated_at` is set explicitly for tables without a timestamps trigger,
-  // so other instances still see the change.
   const updateColumns = columns.filter(
     (c) =>
-      !table.keyColumns.includes(c) && c !== "created_at" && c !== "updated_at",
+      updatable.has(c) &&
+      !table.keyColumns.includes(c) &&
+      c !== "created_at" &&
+      c !== "updated_at",
   );
+  // Set explicitly for tables without a timestamps trigger, so other
+  // instances still see the change. Where the caller cannot, the table's
+  // trigger owns it.
   const set = [
     ...updateColumns.map((c) => `${quoteIdent(c)} = r.${quoteIdent(c)}`),
-    "updated_at = now()",
+    ...(updatable.has("updated_at") ? ["updated_at = now()"] : []),
   ].join(", ");
   const {
     rows: [updated],
@@ -201,4 +213,24 @@ const applyOne = async (
     [...params, JSON.stringify(row)],
   );
   return { status: "applied", updatedAt: updated!.updated_at };
+};
+
+/** What the caller may write, which column-level grants can narrow. */
+const writableColumns = async (client: Queryable, target: string) => {
+  const { rows } = await client.query<{
+    column: string;
+    can_insert: boolean;
+    can_update: boolean;
+  }>(
+    `select a.attname::text as column,
+       has_column_privilege(a.attrelid, a.attnum, 'INSERT') as can_insert,
+       has_column_privilege(a.attrelid, a.attnum, 'UPDATE') as can_update
+     from pg_attribute a
+     where a.attrelid = $1::regclass and a.attnum > 0 and not a.attisdropped`,
+    [target],
+  );
+  return {
+    insertable: new Set(rows.filter((r) => r.can_insert).map((r) => r.column)),
+    updatable: new Set(rows.filter((r) => r.can_update).map((r) => r.column)),
+  };
 };

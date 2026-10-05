@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict b1Dg4dizlAmgkltonjn0eG1DOaz1tbqcAW3HQDSIWginFKOUYqU839v1DUMNuDb
+\restrict QETTHUIuhp2Ex9fL2eDwhHOrHo7ax2xt51iMB6StihifQYIRdhYMhln3DTGL0tm
 
 -- Dumped from database version 17.0 (Debian 17.0-1.pgdg120+1)
 -- Dumped by pg_dump version 18.6
@@ -3368,7 +3368,8 @@ CREATE TABLE app_private.cloud_sync_rows (
     entity text NOT NULL,
     row_key jsonb NOT NULL,
     cloud_updated_at timestamp with time zone NOT NULL,
-    local_updated_at timestamp with time zone NOT NULL
+    local_updated_at timestamp with time zone NOT NULL,
+    synced_value jsonb
 );
 
 
@@ -3572,7 +3573,8 @@ CREATE TABLE app_public.categories (
 -- Name: TABLE categories; Type: COMMENT; Schema: app_public; Owner: -
 --
 
-COMMENT ON TABLE app_public.categories IS 'Categories data';
+COMMENT ON TABLE app_public.categories IS 'Categories data
+@cloudSync';
 
 
 --
@@ -3916,7 +3918,8 @@ CREATE TABLE app_public.tags (
 -- Name: TABLE tags; Type: COMMENT; Schema: app_public; Owner: -
 --
 
-COMMENT ON TABLE app_public.tags IS 'Tag data';
+COMMENT ON TABLE app_public.tags IS 'Tag data
+@cloudSync';
 
 
 --
@@ -6934,6 +6937,13 @@ GRANT SELECT,DELETE ON TABLE app_public.projects TO theopenpresenter_visitor;
 
 
 --
+-- Name: COLUMN projects.id; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(id) ON TABLE app_public.projects TO theopenpresenter_visitor;
+
+
+--
 -- Name: COLUMN projects.organization_id; Type: ACL; Schema: app_public; Owner: -
 --
 
@@ -8076,5 +8086,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE theopenpresenter REVOKE ALL ON FUNCTIONS FROM 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict b1Dg4dizlAmgkltonjn0eG1DOaz1tbqcAW3HQDSIWginFKOUYqU839v1DUMNuDb
+\unrestrict QETTHUIuhp2Ex9fL2eDwhHOrHo7ax2xt51iMB6StihifQYIRdhYMhln3DTGL0tm
 

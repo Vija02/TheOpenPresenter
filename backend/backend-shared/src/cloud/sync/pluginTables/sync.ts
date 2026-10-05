@@ -1,8 +1,9 @@
 import { logger } from "@repo/observability";
-import { Client, CombinedError } from "urql";
+import { Client } from "urql";
 
 import { WithPgClient } from "../../../types";
 import { getUrqlClientFromCloudConnection } from "../../urqlClientFromCloudConnection";
+import { UnsupportedByCloud, queryCloud } from "../cloudQuery";
 import type { PushChange, PushResult } from "./cloud";
 import {
   CloudSyncTable,
@@ -60,10 +61,10 @@ type Counts = {
   pushRejected: number;
 };
 
-/** A cloud that predates plugin sync rejects the fields at validation. */
-class UnsupportedByCloud extends Error {}
-const isUnsupportedByCloud = (err: CombinedError) =>
-  err.graphQLErrors.some((e) => e.message.includes("Cannot query field"));
+type SyncOptions = {
+  forceResync: boolean;
+  deletes?: boolean;
+};
 
 /**
  * Two-way sync of every `@cloudSync` plugin table, per table in dependency
@@ -81,7 +82,7 @@ const isUnsupportedByCloud = (err: CombinedError) =>
 export const syncPluginTables = async (
   withPgClient: WithPgClient,
   cloudConnection: CloudConnection,
-  { forceResync }: { forceResync: boolean },
+  options: SyncOptions,
 ): Promise<Counts & { failedTables: number }> => {
   const { tables, rejected } = await withPgClient((pgClient) =>
     introspectCloudSyncTables(pgClient),
@@ -109,7 +110,7 @@ export const syncPluginTables = async (
     try {
       const counts = await syncCloudPluginTable(
         { withPgClient, urqlClient, cloudConnection, table, entity },
-        { forceResync },
+        options,
       );
       for (const k of Object.keys(counts) as (keyof Counts)[]) {
         total[k] += counts[k];
@@ -128,23 +129,9 @@ export const syncPluginTables = async (
   return total;
 };
 
-const queryCloud = async <T>(
-  urqlClient: Client,
-  query: string,
-  variables: Record<string, unknown>,
-  kind: "query" | "mutation" = "query",
-): Promise<T> => {
-  const res = await urqlClient[kind](query, variables);
-  if (res.error) {
-    if (isUnsupportedByCloud(res.error)) throw new UnsupportedByCloud();
-    throw res.error;
-  }
-  return res.data as T;
-};
-
 const syncCloudPluginTable = async (
   ctx: Ctx,
-  { forceResync }: { forceResync: boolean },
+  { forceResync, deletes = true }: SyncOptions,
 ): Promise<Counts> => {
   const { withPgClient, urqlClient, cloudConnection, table, entity } = ctx;
   const cloudVariables = {
@@ -207,19 +194,25 @@ const syncCloudPluginTable = async (
     table,
     entity,
   };
-  counts.deletedLocally = await applyCloudDeletes(scope, cloudKeys);
+  if (deletes) {
+    counts.deletedLocally = await applyCloudDeletes(scope, cloudKeys);
+  }
 
-  const pushResult = await pushLocalChanges(scope, async (changes) => {
-    const { cloudPluginTablePush } = await queryCloud<{
-      cloudPluginTablePush: PushResult[];
-    }>(
-      urqlClient,
-      CLOUD_PLUGIN_TABLE_PUSH,
-      { ...cloudVariables, changes: changes satisfies PushChange[] },
-      "mutation",
-    );
-    return cloudPluginTablePush;
-  });
+  const pushResult = await pushLocalChanges(
+    scope,
+    { deletes },
+    async (changes) => {
+      const { cloudPluginTablePush } = await queryCloud<{
+        cloudPluginTablePush: PushResult[];
+      }>(
+        urqlClient,
+        CLOUD_PLUGIN_TABLE_PUSH,
+        { ...cloudVariables, changes: changes satisfies PushChange[] },
+        "mutation",
+      );
+      return cloudPluginTablePush;
+    },
+  );
   counts.pushed = pushResult.pushed;
   counts.pushRejected = pushResult.rejected;
   return counts;
@@ -233,8 +226,8 @@ const applyCloudPluginRows = async (
 ): Promise<{ pulled: number; conflicts: number }> => {
   // The cloud may run a newer plugin version with columns we lack; only write
   // what exists here, and let local defaults fill the rest.
-  const columns = Object.keys(cloudRows[0]!).filter((c) =>
-    table.columns.includes(c),
+  const columns = Object.keys(cloudRows[0]!).filter(
+    (c) => table.columns.includes(c) && !table.localIdentityColumns.includes(c),
   );
   const userColumns = new Set(table.userColumns);
   const incoming = cloudRows.map((row) => {
