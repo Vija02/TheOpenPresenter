@@ -5,6 +5,7 @@ import { Client } from "urql";
 import { WithPgClient } from "../../../types";
 import { getUrqlClientFromCloudConnection } from "../../urqlClientFromCloudConnection";
 import { inBatches, queryCloud } from "../cloudQuery";
+import { forgetProjectLinks } from "../media/sync";
 import { syncProjectDocument } from "../projectDocument";
 import type {
   CloudProject,
@@ -383,6 +384,19 @@ export const syncProjects = async (
   );
 
   await record(withPgClient, cloudConnection.id, synced, failed, forgotten);
+  // A project created on a side, including one copied back to a side that
+  // deleted it, has none of its media links there yet: that is not their
+  // removal. A project gone from both sides has no links left to sync.
+  await forgetProjectLinks(withPgClient, cloudConnection.id, [
+    ...forgotten,
+    ...synced
+      .filter(
+        (s) =>
+          pulls.some((p) => p.row.cloud_id === s.cloudId && !p.row.in_local) ||
+          pushes.some((p) => p.change.id === s.cloudId && !p.change.expected),
+      )
+      .map((s) => s.cloudId),
+  ]);
 
   return {
     ...counts,

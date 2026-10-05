@@ -1,9 +1,20 @@
 import { Hocuspocus, WebSocketLike } from "@hocuspocus/server";
-import { Server, createServer } from "http";
+import { uuidFromMediaId } from "@repo/lib";
+import { IncomingMessage, Server, ServerResponse, createServer } from "http";
 import { AddressInfo } from "net";
 import { WebSocketServer } from "ws";
 import * as Y from "yjs";
 
+import type {
+  CloudMedia,
+  LinkChange,
+  MediaLink,
+} from "../../../backend-shared/src/cloud/sync/media/cloud";
+import {
+  MediaMetadata,
+  emptyMediaMetadata,
+  metadataWithin,
+} from "../../../backend-shared/src/cloud/sync/media/metadata";
 import type { CloudSyncTable } from "../../../backend-shared/src/cloud/sync/pluginTables/introspection";
 import type {
   CloudProject,
@@ -85,6 +96,27 @@ export const startFakeCloud = async (syncTables: CloudSyncTable[]) => {
     /** Cloud project ids whose document fetch fails. */
     failDocuments: new Set<string>(),
 
+    // ----- Media -----
+    media: [] as CloudMedia[],
+    /** File contents per media name. */
+    files: new Map<string, Buffer>(),
+    mediaMetadata: emptyMediaMetadata(),
+    mediaLinks: [] as MediaLink[],
+    /** Media per page, small so tests page. */
+    mediaPageSize: 2,
+    /** Uploads begun but not finished, per media name: bytes so far. */
+    partialUploads: new Map<string, Buffer>(),
+    /** Headers of each upload's create request, per media name. */
+    uploadHeaders: new Map<string, Record<string, string>>(),
+    /** Bytes received by PATCH, per media name. */
+    uploadedBytes: new Map<string, number>(),
+    /** Media names whose download or upload fails. */
+    failTransfers: new Set<string>(),
+    mediaPushes: [] as { metadata: MediaMetadata; links: LinkChange[] }[],
+    mediaDeletes: [] as string[],
+    /** Media the cloud answers "inUse" for, as if put to use meanwhile. */
+    refuseDeletes: new Set<string>(),
+
     close: async () => {},
   };
 
@@ -145,6 +177,122 @@ export const startFakeCloud = async (syncTables: CloudSyncTable[]) => {
     }
   };
 
+  const childrenOf = (id: string): string[] =>
+    fake.mediaMetadata.dependencies
+      .filter((d) => d.parentMediaId === id)
+      .flatMap((d) => [d.childMediaId, ...childrenOf(d.childMediaId)]);
+
+  /** As the real cloud: deleting a media deletes all derived from it. */
+  const removeMedia = (id: string) => {
+    const ids = new Set([id, ...childrenOf(id)]);
+    for (const m of fake.media.filter((m) => ids.has(m.id))) {
+      fake.files.delete(m.mediaName);
+    }
+    fake.media = fake.media.filter((m) => !ids.has(m.id));
+    fake.mediaLinks = fake.mediaLinks.filter((l) => !ids.has(l.mediaId));
+    const md = fake.mediaMetadata;
+    md.dependencies = md.dependencies.filter(
+      (d) => !ids.has(d.parentMediaId) && !ids.has(d.childMediaId),
+    );
+    md.imageSizes = md.imageSizes.filter(
+      (r) => !ids.has(r.imageMediaId) && !ids.has(r.processedMediaId),
+    );
+    md.imageMetadata = md.imageMetadata.filter((r) => !ids.has(r.imageMediaId));
+    md.videoMetadata = md.videoMetadata.filter((r) => !ids.has(r.videoMediaId));
+  };
+
+  const mediaInUse = (id: string): boolean =>
+    [id, ...childrenOf(id)].some((m) =>
+      fake.mediaLinks.some((l) => l.mediaId === m),
+    );
+
+  const mediaPage = (after: string | null) => {
+    const sorted = [...fake.media].sort((a, b) => (a.id < b.id ? -1 : 1));
+    const page = sorted
+      .filter((m) => !after || m.id > after)
+      .slice(0, fake.mediaPageSize);
+    const ids = new Set(page.map((m) => m.id));
+    const md = fake.mediaMetadata;
+    return {
+      organizationId: CLOUD_ORG_ID,
+      media: page,
+      metadata: {
+        dependencies: md.dependencies.filter((d) => ids.has(d.parentMediaId)),
+        imageSizes: md.imageSizes.filter((r) => ids.has(r.imageMediaId)),
+        imageMetadata: md.imageMetadata.filter((r) => ids.has(r.imageMediaId)),
+        videoMetadata: md.videoMetadata.filter((r) => ids.has(r.videoMediaId)),
+      },
+      links: fake.mediaLinks.filter((l) => ids.has(l.mediaId)),
+      endCursor:
+        page.length === fake.mediaPageSize ? page[page.length - 1]!.id : null,
+    };
+  };
+
+  const applyMediaPush = (metadata: MediaMetadata, links: LinkChange[]) => {
+    fake.mediaPushes.push({ metadata, links });
+    const known = new Set(fake.media.map((m) => m.id));
+    // As writeMediaMetadata, for rows whose media the cloud has.
+    const within = metadataWithin(metadata, known);
+    const md = fake.mediaMetadata;
+    const add = <T>(list: T[], row: T, sameKey: (a: T, b: T) => boolean) => {
+      const index = list.findIndex((r) => sameKey(r, row));
+      if (index >= 0) list.splice(index, 1, row);
+      else list.push(row);
+    };
+    for (const row of within.dependencies) {
+      add(md.dependencies, row, (a, b) => same(a, b));
+    }
+    for (const row of within.imageSizes) {
+      add(
+        md.imageSizes,
+        row,
+        (a, b) =>
+          a.imageMediaId === b.imageMediaId &&
+          a.width === b.width &&
+          a.fileType === b.fileType,
+      );
+    }
+    for (const row of within.imageMetadata) {
+      add(md.imageMetadata, row, (a, b) => a.imageMediaId === b.imageMediaId);
+    }
+    for (const row of within.videoMetadata) {
+      const current = md.videoMetadata.find(
+        (r) => r.videoMediaId === row.videoMediaId,
+      );
+      const keep =
+        current?.transcodeStatus === "completed" &&
+        row.transcodeStatus !== "completed";
+      if (!keep) {
+        add(md.videoMetadata, row, (a, b) => a.videoMediaId === b.videoMediaId);
+      }
+    }
+    return {
+      metadata: { written: 0, dropped: 0 },
+      links: links.map((change) => {
+        const { remove, ...link } = change;
+        if (remove) {
+          fake.mediaLinks = fake.mediaLinks.filter((l) => !same(l, link));
+          return "applied";
+        }
+        const projectKnown = fake.projects.some((p) => p.id === link.projectId);
+        if (!projectKnown || !known.has(link.mediaId)) return "rejected";
+        if (!fake.mediaLinks.some((l) => same(l, link))) {
+          fake.mediaLinks.push(link);
+        }
+        return "applied";
+      }),
+    };
+  };
+
+  const applyMediaDelete = (mediaIds: string[]) =>
+    mediaIds.map((id) => {
+      fake.mediaDeletes.push(id);
+      if (!fake.media.some((m) => m.id === id)) return "missing";
+      if (fake.refuseDeletes.has(id) || mediaInUse(id)) return "inUse";
+      removeMedia(id);
+      return "deleted";
+    });
+
   const missingReferences = (value: CloudProject["value"]) => {
     if (!fake.checkProjectReferences) return false;
     const names = (entity: string) =>
@@ -179,6 +327,10 @@ export const startFakeCloud = async (syncTables: CloudSyncTable[]) => {
           return rejected("changed on the cloud");
         }
         fake.projects.splice(index, 1);
+        // `on delete cascade`, as on the cloud.
+        fake.mediaLinks = fake.mediaLinks.filter(
+          (l) => l.projectId !== change.id,
+        );
         return { status: "applied", updatedAt: null };
       }
       if (missingReferences(change.value)) return rejected("missing names");
@@ -239,6 +391,16 @@ export const startFakeCloud = async (syncTables: CloudSyncTable[]) => {
         return { data: { [field]: fake.projects } };
       case "cloudProjectSyncPush":
         return { data: { [field]: applyProjectPush(variables.changes) } };
+      case "cloudMediaSyncPage":
+        return { data: { [field]: mediaPage(variables.after ?? null) } };
+      case "cloudMediaSyncPush":
+        return {
+          data: {
+            [field]: applyMediaPush(variables.metadata, variables.links),
+          },
+        };
+      case "cloudMediaSyncDelete":
+        return { data: { [field]: applyMediaDelete(variables.mediaIds) } };
       case "project": {
         const id = variables.projectId as string;
         fake.documentsFetched.push(id);
@@ -262,16 +424,107 @@ export const startFakeCloud = async (syncTables: CloudSyncTable[]) => {
     }
   };
 
+  /**
+   * The tus protocol as far as the sync client uses it, with the cloud's
+   * naming: the upload of `<custom-media-id>.<file-extension>` lives at
+   * `/media/upload/tus/<media name>`.
+   */
+  const handleTus = (
+    req: IncomingMessage,
+    res: ServerResponse,
+    body: Buffer,
+  ) => {
+    const name = decodeURIComponent(
+      (req.url ?? "").replace(/^\/media\/upload\/tus\/?/, ""),
+    );
+    const header = (h: string) => req.headers[h]?.toString() ?? "";
+    res.setHeader("Tus-Resumable", "1.0.0");
+    if (req.method === "POST") {
+      const mediaName = `${header("custom-media-id")}.${header("file-extension")}`;
+      fake.uploadHeaders.set(
+        mediaName,
+        Object.fromEntries(
+          Object.entries(req.headers).map(([k, v]) => [k, String(v)]),
+        ),
+      );
+      fake.partialUploads.set(mediaName, Buffer.alloc(0));
+      uploadLengths.set(mediaName, Number(header("upload-length")));
+      res.statusCode = 201;
+      res.setHeader("Location", `/media/upload/tus/${mediaName}`);
+      return res.end();
+    }
+    const complete = fake.files.get(name);
+    const partial = fake.partialUploads.get(name);
+    if (req.method === "HEAD") {
+      if (!complete && !partial) {
+        res.statusCode = 404;
+        return res.end();
+      }
+      res.statusCode = 200;
+      res.setHeader("Upload-Offset", String((complete ?? partial)!.length));
+      return res.end();
+    }
+    if (req.method === "PATCH") {
+      if (fake.failTransfers.has(name)) {
+        res.statusCode = 500;
+        return res.end();
+      }
+      if (!partial || Number(header("upload-offset")) !== partial.length) {
+        res.statusCode = 409;
+        return res.end();
+      }
+      const data = Buffer.concat([partial, body]);
+      fake.uploadedBytes.set(
+        name,
+        (fake.uploadedBytes.get(name) ?? 0) + body.length,
+      );
+      fake.partialUploads.set(name, data);
+      if (data.length === uploadLengths.get(name)) {
+        fake.partialUploads.delete(name);
+        fake.files.set(name, data);
+        const [id, extension] = name.split(".");
+        const headers = fake.uploadHeaders.get(name)!;
+        fake.media.push({
+          id: uuidFromMediaId(id!),
+          mediaName: name,
+          fileSize: String(data.length),
+          originalName: Buffer.from(
+            (headers["upload-metadata"] ?? "").replace(/^filename ?/, ""),
+            "base64",
+          ).toString(),
+          fileExtension: extension!,
+          isUserUploaded: headers["cloud-sync-user-uploaded"] !== "0",
+        });
+      }
+      res.statusCode = 204;
+      res.setHeader("Upload-Offset", String(data.length));
+      return res.end();
+    }
+    res.statusCode = 405;
+    res.end();
+  };
+  const uploadLengths = new Map<string, number>();
+
   const server: Server = createServer((req, res) => {
-    let body = "";
-    req.on("data", (chunk) => (body += chunk));
+    const chunks: Buffer[] = [];
+    req.on("data", (chunk) => chunks.push(chunk));
     req.on("end", async () => {
+      const raw = Buffer.concat(chunks);
+      if (req.url?.startsWith("/media/upload/tus")) {
+        return handleTus(req, res, raw);
+      }
+      if (req.url?.startsWith("/media/data/")) {
+        const name = req.url.slice("/media/data/".length);
+        const file = fake.files.get(name);
+        res.statusCode = file && !fake.failTransfers.has(name) ? 200 : 500;
+        return res.end(file);
+      }
       // The cloud's GraphQL endpoint reads at most 100kb (body-parser's default).
-      if (Buffer.byteLength(body) > 100 * 1024) {
+      if (raw.length > 100 * 1024) {
         res.statusCode = 413;
         return res.end();
       }
-      const { query, variables } = JSON.parse(body);
+      const { query, variables } = JSON.parse(raw.toString());
       if (query.includes("cloudProjectSyncPush")) {
         await fake.beforeProjectPush?.();
       }
@@ -352,4 +605,16 @@ export const resetFakeCloud = (fake: FakeCloud) => {
   fake.documents.clear();
   fake.documentsFetched = [];
   fake.failDocuments.clear();
+  fake.media = [];
+  fake.files.clear();
+  fake.mediaMetadata = emptyMediaMetadata();
+  fake.mediaLinks = [];
+  fake.mediaPageSize = 2;
+  fake.partialUploads.clear();
+  fake.uploadHeaders.clear();
+  fake.uploadedBytes.clear();
+  fake.failTransfers.clear();
+  fake.mediaPushes = [];
+  fake.mediaDeletes = [];
+  fake.refuseDeletes.clear();
 };
