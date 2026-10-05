@@ -349,6 +349,16 @@ describe("a project only here", () => {
     await expectQuietSync();
   });
 
+  it("is pushed in parts when over the cloud's request limit", async () => {
+    // 50 projects with 3kb names: about 150kb in one request.
+    for (let i = 0; i < 50; i++) {
+      await createLocal(`${i} ${"long name ".repeat(300)}`);
+    }
+
+    expect(await sync()).toMatchObject({ pushed: 50, pushRejected: 0 });
+    expect(fake.projects).toHaveLength(50);
+  });
+
   it("stays unconnected until a rejected create lands", async () => {
     const localId = await createLocal("Christmas");
     fake.rejectProjectPushes = true;

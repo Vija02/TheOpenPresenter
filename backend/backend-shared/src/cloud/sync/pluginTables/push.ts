@@ -1,4 +1,5 @@
 import { WithPgClient } from "../../../types";
+import { inBatches } from "../cloudQuery";
 import type { PushChange, PushResult } from "./cloud";
 import { CloudSyncTable, quoteIdent, rowKeySql } from "./introspection";
 
@@ -130,8 +131,7 @@ export const pushLocalChanges = async (
 
   let pushed = 0;
   let rejected = 0;
-  for (let i = 0; i < pending.length; i += PUSH_BATCH) {
-    const batch = pending.slice(i, i + PUSH_BATCH);
+  for (const batch of inBatches(pending, PUSH_BATCH)) {
     const results = await send(
       batch.map((c) => ({
         key: c.row_key,

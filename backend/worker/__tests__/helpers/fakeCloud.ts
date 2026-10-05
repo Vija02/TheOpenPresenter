@@ -266,6 +266,11 @@ export const startFakeCloud = async (syncTables: CloudSyncTable[]) => {
     let body = "";
     req.on("data", (chunk) => (body += chunk));
     req.on("end", async () => {
+      // The cloud's GraphQL endpoint reads at most 100kb (body-parser's default).
+      if (Buffer.byteLength(body) > 100 * 1024) {
+        res.statusCode = 413;
+        return res.end();
+      }
       const { query, variables } = JSON.parse(body);
       if (query.includes("cloudProjectSyncPush")) {
         await fake.beforeProjectPush?.();

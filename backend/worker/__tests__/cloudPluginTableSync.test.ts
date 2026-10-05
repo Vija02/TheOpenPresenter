@@ -444,6 +444,19 @@ describe("syncPluginTables", () => {
       expect(fake.downloaded.get(SONGS)).toBeUndefined();
     });
 
+    it("pushes more than the cloud reads per request, in parts", async () => {
+      // About 600kb of lyrics, over the cloud's 100kb request limit.
+      await query(
+        `insert into ${SONGS} (organization_id, title, content, song)
+         select $1, 'Song ' || n, repeat('la ', 1000), '{}'
+         from generate_series(1, 200) n`,
+        [orgId],
+      );
+
+      expect(await sync()).toMatchObject({ pushed: 200, pushRejected: 0 });
+      expect(fake.tables.get(SONGS)).toHaveLength(200);
+    });
+
     it("pushes a delete made here", async () => {
       fake.tables.set(SONGS, [
         cloudSong("Amazing Grace", "2026-01-01T00:00:00+00:00"),

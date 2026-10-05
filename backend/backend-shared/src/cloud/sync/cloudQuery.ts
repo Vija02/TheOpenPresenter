@@ -19,3 +19,28 @@ export const queryCloud = async <T>(
   }
   return res.data as T;
 };
+
+/**
+ * The cloud reads at most 100kb per request (body-parser's default, which
+ * PostGraphile keeps), so pushes are split by size as well as count.
+ */
+const REQUEST_BYTES = 64 * 1024;
+
+export const inBatches = <T>(items: T[], maxCount = Infinity): T[][] => {
+  const batches: T[][] = [];
+  let batch: T[] = [];
+  let bytes = 0;
+  for (const item of items) {
+    const size = Buffer.byteLength(JSON.stringify(item));
+    const full = bytes + size > REQUEST_BYTES || batch.length >= maxCount;
+    if (batch.length > 0 && full) {
+      batches.push(batch);
+      batch = [];
+      bytes = 0;
+    }
+    batch.push(item);
+    bytes += size;
+  }
+  if (batch.length > 0) batches.push(batch);
+  return batches;
+};
