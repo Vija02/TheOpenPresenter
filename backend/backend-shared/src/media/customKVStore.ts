@@ -38,7 +38,7 @@ export class CustomKVStore<T extends Upload | MetadataValue>
         organizationId: mediaRow.organization_id,
         userId: mediaRow.creator_user_id,
         isUserUploaded: mediaRow.is_user_uploaded ? "1" : "0",
-        isComplete: mediaRow.is_complete,
+        isComplete: mediaRow.is_complete ? "1" : "0",
         projectId: mediaRow.project_id,
         pluginId: mediaRow.plugin_id,
       } as any,
