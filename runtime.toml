@@ -59,6 +59,7 @@ scripts = [
   "scripts/build_utils/extract_core.js",
   "scripts/build_utils/extract_server.js",
   "scripts/build_utils/extract_plugins.js",
+  "scripts/build_utils/extract_runtime.js",
 ]
 results = "nft_results"
 
@@ -81,9 +82,11 @@ root_packages = ["dotenv"]
 # Packages nft cannot see, copied whole along with their dependency tree.
 #
 # ffmpeg-static builds its binary path from process.platform at runtime, so
-# tracing finds index.js and package.json and misses a 78MB executable. The
-# rest are resolved dynamically by the client plugin build, so nothing
-# imports them statically.
+# tracing finds index.js and package.json and misses a 78MB executable.
+# embedded-postgres does the same with the Postgres binaries, which live in
+# a per-platform @embedded-postgres/<platform> package. The rest are
+# resolved dynamically by the client plugin build, so nothing imports them
+# statically.
 #
 # Walking optionalDependencies is what pulls in the per-platform native
 # packages (@esbuild/<platform>, @tailwindcss/oxide-<platform>): npm
@@ -91,6 +94,8 @@ root_packages = ["dotenv"]
 # exactly the right binaries for whichever runner is building.
 include_packages = [
   "ffmpeg-static",
+  "embedded-postgres",
+  "@embedded-postgres",
   "@r2wc",
   "esbuild",
   "@tailwindcss/node",
@@ -125,4 +130,7 @@ required = [
   # Postgres will not start without the uuid extension
   "theopenpresenter/packages/embedded-postgres/package.json",
   "theopenpresenter/packages/embedded-postgres/src/extensions/pgUuidv7/pg17/*",
+  # Imported only by run_server.mjs, so its dependencies need their own trace.
+  "theopenpresenter/node_modules/platformdirs/package.json",
+  "theopenpresenter/node_modules/embedded-postgres/package.json",
 ]
