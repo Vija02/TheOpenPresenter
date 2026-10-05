@@ -388,12 +388,77 @@ function resolveDisplay(index: number, id?: string) {
   return byId ?? displays[index] ?? displays[0];
 }
 
-export function openPresentWindow(
+/**
+ * Tiling window managers put every new window on the focused output and
+ * ignore the position it asks for. They do float splash windows, and a
+ * floating window can then be moved. Only applied where that has been
+ * checked: on GNOME or KDE a splash window may not be given focus.
+ */
+function needsFloatingHint(): boolean {
+  if (process.platform !== "linux") return false;
+  const desktop = [process.env.XDG_CURRENT_DESKTOP, process.env.DESKTOP_SESSION]
+    .join(":")
+    .toLowerCase();
+  return !!process.env.I3SOCK || desktop.split(":").includes("i3");
+}
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** Move a shown window onto `display`, retrying until it */
+async function moveToDisplay(
+  win: BrowserWindow,
+  display: Electron.Display,
+): Promise<void> {
+  const deadline = Date.now() + 1500;
+  do {
+    win.setBounds(display.bounds);
+    await sleep(60);
+    if (win.isDestroyed()) return;
+    if (screen.getDisplayMatching(win.getBounds()).id === display.id) return;
+  } while (Date.now() < deadline);
+  logShell("warn", `[present] window did not move to display ${display.id}`);
+}
+
+// macOS native fullscreen moves the window to its own Space, hiding the
+// operator's main window behind a Space switch every time they present.
+function isPresentFullScreen(win: BrowserWindow): boolean {
+  return process.platform === "darwin"
+    ? win.isSimpleFullScreen()
+    : win.isFullScreen();
+}
+
+function enterPresentFullScreen(win: BrowserWindow): void {
+  if (process.platform === "darwin") win.setSimpleFullScreen(true);
+  else win.setFullScreen(true);
+}
+
+/**
+ * A fullscreen window is pinned to its output: moving it does nothing until
+ * it has left fullscreen, which the window manager does asynchronously.
+ */
+function leavePresentFullScreen(win: BrowserWindow): Promise<void> {
+  if (!isPresentFullScreen(win)) return Promise.resolve();
+  if (process.platform === "darwin") {
+    win.setSimpleFullScreen(false);
+    return Promise.resolve();
+  }
+  return new Promise((resolve) => {
+    // Some window managers never confirm, so do not wait forever.
+    const timer = setTimeout(resolve, 1000);
+    win.once("leave-full-screen", () => {
+      clearTimeout(timer);
+      resolve();
+    });
+    win.setFullScreen(false);
+  });
+}
+
+export async function openPresentWindow(
   url: string,
   monitorIndex: number,
   rendererId = "1",
   monitorId?: string,
-): void {
+): Promise<void> {
   const display = resolveDisplay(monitorIndex, monitorId);
   if (!display) throw new Error("No displays available");
 
@@ -410,6 +475,7 @@ export function openPresentWindow(
       y: display.bounds.y,
       width: display.bounds.width,
       height: display.bounds.height,
+      ...(needsFloatingHint() && { type: "splash" }),
       webPreferences: baseWebPreferences(),
     });
     guardNavigation(win);
@@ -443,17 +509,18 @@ export function openPresentWindow(
     target.loadURL(url).catch(() => {});
   }
 
-  target.setBounds(display.bounds);
-  target.show();
-
-  // macOS native fullscreen moves the window to its own Space, hiding the
-  // operator's main window behind a Space switch every time they present.
-  if (process.platform !== "darwin") {
-    target.setFullScreen(true);
-  } else {
-    target.setSimpleFullScreen(true);
+  const onTarget =
+    target.isVisible() &&
+    screen.getDisplayMatching(target.getBounds()).id === display.id;
+  if (!onTarget) {
+    await leavePresentFullScreen(target);
+    if (target.isDestroyed()) return;
+    target.show();
+    await moveToDisplay(target, display);
+    if (target.isDestroyed()) return;
   }
 
+  enterPresentFullScreen(target);
   target.focus();
   mainWin?.webContents.send("present-windows-changed", listPresentWindows());
 }
