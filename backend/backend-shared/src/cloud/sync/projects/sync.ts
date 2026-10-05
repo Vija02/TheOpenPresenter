@@ -4,7 +4,7 @@ import { Client } from "urql";
 
 import { WithPgClient } from "../../../types";
 import { getUrqlClientFromCloudConnection } from "../../urqlClientFromCloudConnection";
-import { queryCloud } from "../cloudQuery";
+import { inBatches, queryCloud } from "../cloudQuery";
 import { syncProjectDocument } from "../projectDocument";
 import type {
   CloudProject,
@@ -293,8 +293,7 @@ export const syncProjects = async (
     [creates.map((p) => p.row.local_id)],
   );
 
-  for (let i = 0; i < pushes.length; i += PUSH_BATCH) {
-    const batch = pushes.slice(i, i + PUSH_BATCH);
+  for (const batch of inBatches(pushes, PUSH_BATCH)) {
     const results = await push(
       urqlClient,
       organizationSlug,
