@@ -4,6 +4,7 @@ import installAutoLogin from "./installAutoLogin";
 import installCSRFProtection from "./installCSRFProtection";
 import installClientPluginStatic from "./installClientPluginStatic";
 import installCloudConnection from "./installCloudConnection";
+import installCloudSyncOnStart from "./installCloudSyncOnStart";
 import installDatabasePools from "./installDatabasePools";
 import installDeviceHostHandler from "./installDeviceHostHandler";
 import installDeviceServerHandler from "./installDeviceServerHandler";
@@ -43,6 +44,7 @@ export {
   installCSRFProtection,
   installClientPluginStatic,
   installCloudConnection,
+  installCloudSyncOnStart,
   installDatabasePools,
   installDeviceHostHandler,
   installDeviceServerHandler,

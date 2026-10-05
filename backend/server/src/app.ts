@@ -153,6 +153,7 @@ export async function makeApp({
     await middleware.installE2EServerCommand(app);
   }
   await middleware.installCloudConnection(app);
+  await middleware.installCloudSyncOnStart(app);
   await middleware.installDeviceHostHandler(app);
   await middleware.installDeviceServerHandler(app);
   await middleware.installDiagnostics(app);
