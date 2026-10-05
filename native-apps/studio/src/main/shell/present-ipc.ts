@@ -17,7 +17,7 @@ export function registerPresentIPC(): void {
 
   ipcMain.handle(
     "present:open",
-    (
+    async (
       _event,
       args: {
         url: string;
@@ -31,7 +31,7 @@ export function registerPresentIPC(): void {
       if (!isAllowedAppUrl(args.url)) {
         throw new Error("Refused to present a URL from outside this server.");
       }
-      openPresentWindow(
+      await openPresentWindow(
         args.url,
         args.monitorIndex,
         args.rendererId ?? "1",
