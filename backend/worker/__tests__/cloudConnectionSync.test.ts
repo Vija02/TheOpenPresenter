@@ -25,6 +25,20 @@ import {
   startFakeCloud,
 } from "./helpers/fakeCloud";
 
+// Media go to a file store in a temporary directory, read when it loads.
+const { uploads, previousEnv } = vi.hoisted(() => {
+  const dir = require("fs").mkdtempSync(
+    require("path").join(require("os").tmpdir(), "connection-sync-"),
+  );
+  const previousEnv = {
+    STORAGE_TYPE: process.env.STORAGE_TYPE,
+    UPLOADS_PATH: process.env.UPLOADS_PATH,
+  };
+  process.env.STORAGE_TYPE = "file";
+  process.env.UPLOADS_PATH = dir;
+  return { uploads: dir, previousEnv };
+});
+
 // The task imports the package, whose `dist` may be stale; test the source.
 vi.mock(
   "@repo/backend-shared",
@@ -43,26 +57,34 @@ let fake: FakeCloud;
 let orgId: string;
 let connectionId: string;
 let task: (payload: unknown, helpers: unknown) => Promise<void>;
+let mediaTask: (payload: unknown, helpers: unknown) => Promise<void>;
 let addJob: ReturnType<typeof vi.fn>;
 
 const query = async (text: string, params: unknown[] = []) =>
   (await pool.query(text, params)).rows;
 
-const runTask = () =>
-  task(
-    { id: connectionId },
-    {
-      addJob,
-      withPgClient: async (callback: (client: unknown) => unknown) => {
-        const client = await pool.connect();
-        try {
-          return await callback(client);
-        } finally {
-          client.release();
-        }
-      },
-    },
-  );
+const helpers = () => ({
+  addJob,
+  withPgClient: async (callback: (client: unknown) => unknown) => {
+    const client = await pool.connect();
+    try {
+      return await callback(client);
+    } finally {
+      client.release();
+    }
+  },
+});
+
+const runTask = () => task({ id: connectionId }, helpers());
+
+/** The sync task, then the media job it queued, as the worker would. */
+const runBoth = async () => {
+  addJob.mockClear();
+  await runTask();
+  const [name, payload] = addJob.mock.calls[0]!;
+  expect(name).toBe("cloud_connection__sync_media");
+  await mediaTask(payload, helpers());
+};
 
 const lastRun = async () =>
   (
@@ -106,10 +128,17 @@ beforeAll(async () => {
   fake = await startFakeCloud(tables);
   const mod = await import("../src/tasks/cloud_connection__sync");
   task = (mod as any).default ?? mod;
+  const media = await import("../src/tasks/cloud_connection__sync_media");
+  mediaTask = (media as any).default ?? media;
 });
 
 afterAll(async () => {
   await fake.close();
+  require("fs").rmSync(uploads, { recursive: true, force: true });
+  for (const [key, value] of Object.entries(previousEnv)) {
+    if (value === undefined) delete process.env[key];
+    else process.env[key] = value;
+  }
 });
 
 beforeEach(async () => {
@@ -135,6 +164,11 @@ beforeEach(async () => {
 });
 
 afterEach(async () => {
+  await query(
+    `delete from app_public.medias where organization_id in (
+       select id from app_public.organizations where slug like $1)`,
+    [`${ORG_PREFIX}-%`],
+  );
   await query(`delete from app_public.organizations where slug like $1`, [
     `${ORG_PREFIX}-%`,
   ]);
@@ -388,6 +422,116 @@ describe("cloud_connection__sync", () => {
       await runTask();
 
       await expectBothSides("Sunday AM", ["Band"]);
+    });
+  });
+
+  describe("with media", () => {
+    const PLUGIN_ID = "b1000000-0000-4000-8000-000000000001";
+    let projectId: string;
+    let mediaName: string;
+    let mediaId: string;
+
+    /** A project here using a PDF page, synced. */
+    beforeEach(async () => {
+      [{ id: projectId }] = await query(
+        `insert into app_public.projects (organization_id, slug, name)
+         values ($1, 'p', 'Slides') returning id`,
+        [orgId],
+      );
+      const { media, cloud } = await import("@repo/backend-shared");
+      const handler = new media.file.mediaHandler(async (callback) => {
+        const client = await pool.connect();
+        try {
+          return await callback(client);
+        } finally {
+          client.release();
+        }
+      });
+      const id = (await import("typeid-js")).typeidUnboxed("media");
+      mediaName = `${id}.jpg`;
+      await handler.uploadMedia({
+        file: (await import("stream")).Readable.from(Buffer.from("page 1")),
+        fileExtension: "jpg",
+        fileSize: 6,
+        userId: null,
+        organizationId: orgId,
+        mediaId: id,
+        isUserUploaded: false,
+        skipProcessing: true,
+      });
+      [{ id: mediaId }] = await query(
+        "select id from app_public.medias where media_name = $1",
+        [mediaName],
+      );
+      await query(
+        `insert into app_public.project_medias (project_id, media_id, plugin_id)
+         values ($1, $2, $3)`,
+        [projectId, mediaId, PLUGIN_ID],
+      );
+      expect(cloud.syncMedia).toBeDefined();
+      await runBoth();
+      expect(fake.files.get(mediaName)?.toString()).toBe("page 1");
+      expect(fake.mediaLinks).toEqual([
+        { projectId, mediaId, pluginId: PLUGIN_ID },
+      ]);
+    });
+
+    it("records the transfers on the run", async () => {
+      expect(await lastRun()).toMatchObject({
+        media_status: "synced",
+        total_media: 1,
+        synced_media: 1,
+        total_bytes: "6",
+        downloaded_bytes: "6",
+      });
+    });
+
+    it("brings back a project the cloud deleted, using media still on the cloud", async () => {
+      // The page was only linked, not deleted: say it is used elsewhere.
+      fake.projects = [];
+      fake.mediaLinks = [];
+      await query(
+        "update app_public.projects set name = 'Kept' where id = $1",
+        [projectId],
+      );
+
+      await runBoth();
+
+      expect(fake.mediaLinks).toEqual([
+        { projectId, mediaId, pluginId: PLUGIN_ID },
+      ]);
+      expect(
+        await query(
+          "select media_id from app_public.project_medias where project_id = $1",
+          [projectId],
+        ),
+      ).toEqual([{ media_id: mediaId }]);
+    });
+
+    it("brings back a project the cloud deleted but edited here, media and all", async () => {
+      // Deleted on the cloud: its links go with it, then the page, unused.
+      fake.projects = [];
+      fake.mediaLinks = [];
+      fake.media = [];
+      fake.files.clear();
+      await query(
+        "update app_public.projects set name = 'Kept' where id = $1",
+        [projectId],
+      );
+
+      await runBoth();
+
+      expect(fake.projects.map((p) => p.id)).toEqual([projectId]);
+      expect(fake.files.get(mediaName)?.toString()).toBe("page 1");
+      expect(fake.mediaLinks).toEqual([
+        { projectId, mediaId, pluginId: PLUGIN_ID },
+      ]);
+      expect(
+        await query(
+          "select media_id from app_public.project_medias where project_id = $1",
+          [projectId],
+        ),
+      ).toEqual([{ media_id: mediaId }]);
     });
   });
 

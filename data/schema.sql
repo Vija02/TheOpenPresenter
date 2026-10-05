@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict QETTHUIuhp2Ex9fL2eDwhHOrHo7ax2xt51iMB6StihifQYIRdhYMhln3DTGL0tm
+\restrict QgMUots2YEUKKuJHUQiDP9QypgJLZbDNG6rcTOjebuOzhNcCXWm5xSph7N6a3KA
 
 -- Dumped from database version 17.0 (Debian 17.0-1.pgdg120+1)
 -- Dumped by pg_dump version 18.6
@@ -3367,8 +3367,8 @@ CREATE TABLE app_private.cloud_sync_rows (
     cloud_connection_id uuid NOT NULL,
     entity text NOT NULL,
     row_key jsonb NOT NULL,
-    cloud_updated_at timestamp with time zone NOT NULL,
-    local_updated_at timestamp with time zone NOT NULL,
+    cloud_updated_at timestamp with time zone,
+    local_updated_at timestamp with time zone,
     synced_value jsonb
 );
 
@@ -8086,5 +8086,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE theopenpresenter REVOKE ALL ON FUNCTIONS FROM 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict QETTHUIuhp2Ex9fL2eDwhHOrHo7ax2xt51iMB6StihifQYIRdhYMhln3DTGL0tm
+\unrestrict QgMUots2YEUKKuJHUQiDP9QypgJLZbDNG6rcTOjebuOzhNcCXWm5xSph7N6a3KA
 
