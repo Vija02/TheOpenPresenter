@@ -121,6 +121,10 @@ export const createMediaHandler = <T extends OurDataStore>(
       }
     }
 
+    async getReadable(mediaName: string) {
+      return this.store.getReadable(mediaName);
+    }
+
     async deleteMedia(mediaName: string) {
       try {
         return await backOff(
