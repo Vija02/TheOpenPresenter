@@ -155,6 +155,7 @@ function PopoverSubMenu({
 }: PopoverSubMenuProps) {
   const [open, setOpen] = React.useState(false);
   const closeTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const clickPointerType = React.useRef<string | null>(null);
 
   const [isNarrow, setIsNarrow] = React.useState(false);
   React.useEffect(() => {
@@ -186,13 +187,27 @@ function PopoverSubMenu({
         type="button"
         data-slot="popover-sub-trigger"
         disabled={disabled}
-        onMouseEnter={() => {
-          if (!disabled) {
+        onPointerEnter={(e) => {
+          if (e.pointerType === "mouse" && !disabled) {
             cancelClose();
             setOpen(true);
           }
         }}
-        onMouseLeave={scheduleClose}
+        onPointerLeave={(e) => {
+          if (e.pointerType === "mouse") scheduleClose();
+        }}
+        onPointerDown={(e) => {
+          clickPointerType.current = e.pointerType;
+        }}
+        onClick={(e) => {
+          const pointerType = clickPointerType.current;
+          clickPointerType.current = null;
+          if (pointerType === "mouse") {
+            e.preventDefault();
+            cancelClose();
+            setOpen(true);
+          }
+        }}
         className={cn(
           "flex w-full items-center gap-2 px-3 py-2 text-sm text-left rounded transition-colors cursor-pointer hover:bg-surface-primary-hover focus:bg-surface-primary-hover focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed data-[state=open]:bg-surface-primary-hover text-primary",
           className,
