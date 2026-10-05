@@ -1,4 +1,4 @@
-import { ipcMain } from "electron";
+import { BrowserWindow, ipcMain } from "electron";
 
 import { isAllowedAppUrl } from "./origins";
 import {
@@ -11,20 +11,32 @@ import {
 
 export function registerPresentIPC(): void {
   // -- Presentation ---------------------------------------------------------
-  ipcMain.handle("present:monitors", () => listMonitors());
+  ipcMain.handle("present:monitors", (event) =>
+    listMonitors(BrowserWindow.fromWebContents(event.sender)),
+  );
 
   ipcMain.handle(
     "present:open",
     (
       _event,
-      args: { url: string; monitorIndex: number; rendererId?: string },
+      args: {
+        url: string;
+        monitorIndex: number;
+        monitorId?: string;
+        rendererId?: string;
+      },
     ) => {
       // The URL comes from the page, and a presentation window carries the
       // same preload bridge.
       if (!isAllowedAppUrl(args.url)) {
         throw new Error("Refused to present a URL from outside this server.");
       }
-      openPresentWindow(args.url, args.monitorIndex, args.rendererId ?? "1");
+      openPresentWindow(
+        args.url,
+        args.monitorIndex,
+        args.rendererId ?? "1",
+        args.monitorId,
+      );
       return listPresentWindows();
     },
   );
