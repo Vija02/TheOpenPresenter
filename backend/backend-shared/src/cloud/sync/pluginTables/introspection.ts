@@ -31,6 +31,11 @@ export type CloudSyncTable = {
    * within one connection, which is one organization on each side.
    */
   rowKeyColumns: string[];
+  /**
+   * The primary key, when rows are matched by another key (e.g. a name).
+   * Each side generates its own, so it is never compared, copied or written.
+   */
+  localIdentityColumns: string[];
   /** Columns referencing users. Users differ per instance, so these are cleared. */
   userColumns: string[];
   pluginReferences: PluginReference[];
@@ -180,6 +185,7 @@ export const resolveCloudSyncTable = (
     organizationColumn,
     keyColumns: key.columns,
     rowKeyColumns: key.columns.filter((c) => c !== organizationColumn),
+    localIdentityColumns: primary && primary !== key ? primary.columns : [],
     userColumns,
     pluginReferences,
     conflict,
@@ -311,7 +317,7 @@ export const introspectCloudSyncTables = async (
       from pg_class c
       join pg_namespace n on n.oid = c.relnamespace
       where c.relkind = 'r'
-        and n.nspname like 'plugin\\_%'
+        and (n.nspname like 'plugin\\_%' or n.nspname = 'app_public')
         and obj_description(c.oid, 'pg_class') ~ '(^|\\s)@cloudSync(\\s|$)'
       order by n.nspname, c.relname
     `,

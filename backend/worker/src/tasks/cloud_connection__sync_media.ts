@@ -500,16 +500,17 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
     });
     log.info(metadataCounts, "Synced media metadata tables");
 
-    // Sync deletion
+    // Sync deletion. Only of media the cloud has: anything else was added
+    // here and is not on the cloud yet, not removed from it.
     const { rows: localProjectMedias } = await withPgClient((pgClient) =>
       pgClient.query(
         `
-          SELECT pm.project_id, pm.media_id, pm.plugin_id
+          SELECT pm.project_id, p.cloud_project_id, pm.media_id, pm.plugin_id
           FROM app_public.project_medias pm
           JOIN app_public.projects p ON pm.project_id = p.id
-          WHERE p.cloud_project_id = ANY($1)
+          WHERE p.cloud_project_id = ANY($1) AND pm.media_id = ANY($2)
         `,
-        [externalProjectIds],
+        [externalProjectIds, allMediaIds],
       ),
     );
 
@@ -520,7 +521,7 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
     const projectMediasToDelete = localProjectMedias.filter((localPM) => {
       return !externalProjectMedias.some(
         (externalPM) =>
-          externalPM.projectId === localPM.project_id &&
+          externalPM.projectId === localPM.cloud_project_id &&
           externalPM.mediaId === localPM.media_id &&
           externalPM.pluginId === localPM.plugin_id,
       );

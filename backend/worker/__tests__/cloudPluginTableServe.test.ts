@@ -261,3 +261,112 @@ describe("findCloudOrganizationId", () => {
     });
   });
 });
+
+describe("as the cloud's visitor role", () => {
+  /** Run as `userId`, a member of `orgId`, the way GraphQL requests do. */
+  const becomeMember = async (
+    client: PoolClient,
+    orgId: string,
+    userId: string,
+  ) => {
+    await client.query(
+      `insert into app_public.organization_memberships (organization_id, user_id, is_owner)
+       values ($1, $2, true)`,
+      [orgId, userId],
+    );
+    const {
+      rows: [session],
+    } = await client.query(
+      "insert into app_private.sessions (user_id) values ($1) returning uuid",
+      [userId],
+    );
+    await client.query(
+      `select set_config('role', $1, true), set_config('jwt.claims.session_id', $2, true)`,
+      [process.env.DATABASE_VISITOR, session.uuid],
+    );
+  };
+
+  it("pushes to a core table whose grants cover only some columns", async () => {
+    await inCloud(async ({ client, orgId, userId }) => {
+      await becomeMember(client, orgId, userId);
+      const table = tableNamed("tags");
+      const tag = (name: string, color: string) => ({
+        // The pushing instance's own id: never used by the cloud.
+        id: "7a900000-0000-4000-8000-000000000001",
+        name,
+        description: null,
+        background_color: color,
+        foreground_color: "#000",
+        variant: "solid",
+        organization_id: OTHER_ORG_ID,
+        created_at: "2026-01-01T00:00:00+00:00",
+        updated_at: "2026-01-01T00:00:00+00:00",
+      });
+      const visibleOrg = await findCloudOrganizationId(
+        client,
+        "testpluginserve",
+      );
+      expect(visibleOrg).toBe(orgId);
+
+      const [created] = (await applyPushedChanges(
+        client,
+        table,
+        orgId,
+        userId,
+        [
+          {
+            key: { name: "Youth" },
+            expectedUpdatedAt: null,
+            row: tag("Youth", "#f00"),
+          },
+        ],
+      )) as { status: string; updatedAt: string }[];
+      expect(created).toMatchObject({ status: "applied" });
+
+      const [updated] = (await applyPushedChanges(
+        client,
+        table,
+        orgId,
+        userId,
+        [
+          {
+            key: { name: "Youth" },
+            expectedUpdatedAt: created!.updatedAt,
+            row: tag("Youth", "#0f0"),
+          },
+        ],
+      )) as { status: string; updatedAt: string }[];
+      expect(updated).toMatchObject({ status: "applied" });
+
+      const { rows } = await client.query(
+        `select id, background_color from app_public.tags where organization_id = $1`,
+        [orgId],
+      );
+      expect(rows).toHaveLength(1);
+      expect(rows[0].background_color).toBe("#0f0");
+      expect(rows[0].id).not.toBe("7a900000-0000-4000-8000-000000000001");
+
+      const [deleted] = await applyPushedChanges(client, table, orgId, userId, [
+        {
+          key: { name: "Youth" },
+          expectedUpdatedAt: updated!.updatedAt,
+          row: null,
+        },
+      ]);
+      expect(deleted).toMatchObject({ status: "applied" });
+    });
+  });
+
+  it("refuses an organization the user is not a member of", async () => {
+    await inCloud(async ({ client, orgId, userId }) => {
+      await client.query(
+        `insert into app_public.organizations (slug, name) values ('testpluginserve-other', 'Other')`,
+      );
+      await becomeMember(client, orgId, userId);
+
+      await expect(
+        findCloudOrganizationId(client, "testpluginserve-other"),
+      ).rejects.toThrow("Organization not found");
+    });
+  });
+});
