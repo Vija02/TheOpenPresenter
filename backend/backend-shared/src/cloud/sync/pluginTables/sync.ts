@@ -1,15 +1,17 @@
 import { logger } from "@repo/observability";
 import { Client, CombinedError } from "urql";
 
-import { WithPgClient } from "../../types";
-import { getUrqlClientFromCloudConnection } from "../urqlClientFromCloudConnection";
+import { WithPgClient } from "../../../types";
+import { getUrqlClientFromCloudConnection } from "../../urqlClientFromCloudConnection";
+import type { PushChange, PushResult } from "./cloud";
 import {
   CloudSyncTable,
   introspectCloudSyncTables,
   quoteIdent,
   quoteLiteral,
   rowKeySql,
-} from "./pluginTableIntrospection";
+} from "./introspection";
+import { applyCloudDeletes, pushLocalChanges } from "./push";
 
 // Not codegen'd: these fields return plugin rows as untyped JSON.
 const CLOUD_PLUGIN_TABLE_KEYS = `
@@ -20,6 +22,11 @@ const CLOUD_PLUGIN_TABLE_KEYS = `
 const CLOUD_PLUGIN_TABLE_ROWS = `
   query CloudPluginTableRows($organizationSlug: String!, $schemaName: String!, $tableName: String!, $keys: JSON!) {
     cloudPluginTableRows(organizationSlug: $organizationSlug, schemaName: $schemaName, tableName: $tableName, keys: $keys)
+  }
+`;
+const CLOUD_PLUGIN_TABLE_PUSH = `
+  mutation CloudPluginTablePush($organizationSlug: String!, $schemaName: String!, $tableName: String!, $changes: JSON!) {
+    cloudPluginTablePush(organizationSlug: $organizationSlug, schemaName: $schemaName, tableName: $tableName, changes: $changes)
   }
 `;
 
@@ -46,7 +53,11 @@ type Ctx = {
 type Counts = {
   pulled: number;
   conflicts: number;
-  deletedOnCloud: number;
+  /** Rows deleted here because the cloud deleted them. */
+  deletedLocally: number;
+  pushed: number;
+  /** Changed on the cloud meanwhile; the next pull resolves them. */
+  pushRejected: number;
 };
 
 /** A cloud that predates plugin sync rejects the fields at validation. */
@@ -55,10 +66,12 @@ const isUnsupportedByCloud = (err: CombinedError) =>
   err.graphQLErrors.some((e) => e.message.includes("Cannot query field"));
 
 /**
- * Pull every `@cloudSync` plugin table from the cloud.
+ * Two-way sync of every `@cloudSync` plugin table, per table in dependency
+ * order: pull what changed on the cloud, apply the cloud's deletes, then push
+ * what changed here. Pulling first means a conflict is resolved locally (and a
+ * kept copy is pushed) within the same sync.
  *
- * Pull-only: local changes are not sent up, and cloud deletes are counted but
- * not applied. Per-row state in `app_private.cloud_sync_rows` means only rows
+ * Per-row state in `app_private.cloud_sync_rows` drives all of it: only rows
  * changed on the cloud are downloaded, a row edited only locally is left
  * alone, and a row edited on both sides goes to the table's conflict strategy.
  *
@@ -81,7 +94,14 @@ export const syncPluginTables = async (
   }
 
   const urqlClient = getUrqlClientFromCloudConnection(cloudConnection);
-  const total = { pulled: 0, conflicts: 0, deletedOnCloud: 0, failedTables: 0 };
+  const total = {
+    pulled: 0,
+    conflicts: 0,
+    deletedLocally: 0,
+    pushed: 0,
+    pushRejected: 0,
+    failedTables: 0,
+  };
 
   for (const table of tables) {
     const entity = `${table.schema}.${table.table}`;
@@ -91,9 +111,9 @@ export const syncPluginTables = async (
         { withPgClient, urqlClient, cloudConnection, table, entity },
         { forceResync },
       );
-      total.pulled += counts.pulled;
-      total.conflicts += counts.conflicts;
-      total.deletedOnCloud += counts.deletedOnCloud;
+      for (const k of Object.keys(counts) as (keyof Counts)[]) {
+        total[k] += counts[k];
+      }
       log.debug(counts, "Synced plugin table");
     } catch (err) {
       if (err instanceof UnsupportedByCloud) {
@@ -112,8 +132,9 @@ const queryCloud = async <T>(
   urqlClient: Client,
   query: string,
   variables: Record<string, unknown>,
+  kind: "query" | "mutation" = "query",
 ): Promise<T> => {
-  const res = await urqlClient.query(query, variables);
+  const res = await urqlClient[kind](query, variables);
   if (res.error) {
     if (isUnsupportedByCloud(res.error)) throw new UnsupportedByCloud();
     throw res.error;
@@ -140,7 +161,7 @@ const syncCloudPluginTable = async (
   const {
     rows: [diff],
   } = await withPgClient((pgClient) =>
-    pgClient.query<{ changed: unknown[]; deleted_on_cloud: number }>(
+    pgClient.query<{ changed: unknown[] }>(
       `
         with cloud as (
           select * from jsonb_to_recordset($1::jsonb) as k(key jsonb, "updatedAt" timestamptz)
@@ -149,17 +170,12 @@ const syncCloudPluginTable = async (
           select * from app_private.cloud_sync_rows
           where cloud_connection_id = $2 and entity = $3
         )
-        select
-          coalesce((
-            select jsonb_agg(cloud.key) from cloud
-            left join state on state.row_key = cloud.key
-            where $4 or state.row_key is null
-              or state.cloud_updated_at <> cloud."updatedAt"
-          ), '[]'::jsonb) as changed,
-          (
-            select count(*)::int from state
-            where not exists (select 1 from cloud where cloud.key = state.row_key)
-          ) as deleted_on_cloud
+        select coalesce((
+          select jsonb_agg(cloud.key) from cloud
+          left join state on state.row_key = cloud.key
+          where $4 or state.row_key is null
+            or state.cloud_updated_at <> cloud."updatedAt"
+        ), '[]'::jsonb) as changed
       `,
       [JSON.stringify(cloudKeys), cloudConnection.id, entity, forceResync],
     ),
@@ -168,7 +184,9 @@ const syncCloudPluginTable = async (
   const counts: Counts = {
     pulled: 0,
     conflicts: 0,
-    deletedOnCloud: diff!.deleted_on_cloud,
+    deletedLocally: 0,
+    pushed: 0,
+    pushRejected: 0,
   };
   for (let i = 0; i < diff!.changed.length; i += ROWS_PER_REQUEST) {
     const keys = diff!.changed.slice(i, i + ROWS_PER_REQUEST);
@@ -181,6 +199,29 @@ const syncCloudPluginTable = async (
     counts.pulled += applied.pulled;
     counts.conflicts += applied.conflicts;
   }
+
+  const scope = {
+    withPgClient,
+    cloudConnectionId: cloudConnection.id,
+    organizationId: cloudConnection.organization_id,
+    table,
+    entity,
+  };
+  counts.deletedLocally = await applyCloudDeletes(scope, cloudKeys);
+
+  const pushResult = await pushLocalChanges(scope, async (changes) => {
+    const { cloudPluginTablePush } = await queryCloud<{
+      cloudPluginTablePush: PushResult[];
+    }>(
+      urqlClient,
+      CLOUD_PLUGIN_TABLE_PUSH,
+      { ...cloudVariables, changes: changes satisfies PushChange[] },
+      "mutation",
+    );
+    return cloudPluginTablePush;
+  });
+  counts.pushed = pushResult.pushed;
+  counts.pushRejected = pushResult.rejected;
   return counts;
 };
 

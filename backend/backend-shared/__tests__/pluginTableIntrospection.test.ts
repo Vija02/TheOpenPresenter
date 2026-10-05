@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   RawCloudSyncTable,
   resolveCloudSyncTable,
-} from "../src/cloud/sync/pluginTableIntrospection";
+} from "../src/cloud/sync/pluginTables/introspection";
 
 const orgFk = {
   columns: ["organization_id"],
