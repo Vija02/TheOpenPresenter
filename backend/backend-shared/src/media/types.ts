@@ -33,6 +33,7 @@ export interface MediaHandlerInterface {
   }>;
 
   deleteMedia(mediaName: string): Promise<void>;
+  getReadable(mediaName: string): Promise<stream.Readable>;
   completeMedia(mediaName: string): Promise<void>;
 
   createDependency(
