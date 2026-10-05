@@ -5,4 +5,3 @@ export * from "./tags";
 export * from "./status";
 export * from "./remoteDocument";
 export * from "./pluginTables";
-export * from "./pluginTableIntrospection";

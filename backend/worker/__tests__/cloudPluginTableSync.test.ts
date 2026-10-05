@@ -21,15 +21,16 @@ import {
 import {
   CloudSyncTable,
   introspectCloudSyncTables,
-} from "../../backend-shared/src/cloud/sync/pluginTableIntrospection";
-import { syncPluginTables } from "../../backend-shared/src/cloud/sync/pluginTables";
+} from "../../backend-shared/src/cloud/sync/pluginTables/introspection";
+import { syncPluginTables } from "../../backend-shared/src/cloud/sync/pluginTables/sync";
 import { WithPgClient } from "../../backend-shared/src/types";
 
 /**
  * The local half of plugin table sync, against a real database. The cloud is
  * faked in-process so each test can stage whatever the cloud holds; the
  * e2e "cloud" shares the local database, where rows that keep the cloud's id
- * cannot exist in two orgs at once.
+ * cannot exist in two orgs at once. The cloud's own SQL is tested separately
+ * in cloudPluginTableServe.test.ts.
  */
 
 const SONGS = "plugin_lyrics_presenter.saved_song";
@@ -44,15 +45,64 @@ type Row = Record<string, unknown>;
 const stableKey = (key: unknown) =>
   JSON.stringify(key, Object.keys(key as object).sort());
 
-/** Answers the two cloud fields from rows the test puts in `tables`. */
+type Change = { key: Row; expectedUpdatedAt: string | null; row: Row | null };
+
+/**
+ * Answers the cloud fields from rows the test puts in `tables`. Pushes follow
+ * the real rule: applied only if the row is still the one the change was based
+ * on, stamped with the fake's own clock.
+ */
 const startFakeCloud = async (syncTables: CloudSyncTable[]) => {
+  let clock = Date.parse("2027-01-01T00:00:00Z");
   const fake = {
     url: "",
     tables: new Map<string, Row[]>(),
     /** Keys requested from `cloudPluginTableRows`, per entity. */
     downloaded: new Map<string, unknown[]>(),
+    /** Changes received by `cloudPluginTablePush`, per entity. */
+    pushed: new Map<string, Change[]>(),
     unsupported: false,
+    /** Refuse every push, as if each row changed on the cloud meanwhile. */
+    rejectPushes: false,
+    /** As if the session lost access to the organization. */
+    orgMissing: false,
+    now: () => new Date((clock += 1000)).toISOString(),
     server: null as Server | null,
+  };
+
+  const sameTime = (a: unknown, b: unknown) =>
+    Date.parse(String(a)) === Date.parse(String(b));
+
+  const applyPush = (entity: string, changes: Change[]) => {
+    fake.pushed.set(entity, [...(fake.pushed.get(entity) ?? []), ...changes]);
+    const rows = fake.tables.get(entity) ?? [];
+    fake.tables.set(entity, rows);
+    return changes.map((change) => {
+      const index = rows.findIndex(
+        (r) => stableKey(rowKey(entity, r)) === stableKey(change.key),
+      );
+      const current = rows[index];
+      const stale =
+        change.expectedUpdatedAt === null
+          ? !!current
+          : !current || !sameTime(current.updated_at, change.expectedUpdatedAt);
+      if (fake.rejectPushes || stale) {
+        return { status: "rejected", reason: "changed on the cloud" };
+      }
+      if (!change.row) {
+        rows.splice(index, 1);
+        return { status: "applied", updatedAt: null };
+      }
+      const updatedAt = fake.now();
+      const row = {
+        ...change.row,
+        organization_id: CLOUD_ORG_ID,
+        updated_at: updatedAt,
+      };
+      if (current) rows[index] = row;
+      else rows.push(row);
+      return { status: "applied", updatedAt };
+    });
   };
 
   const rowKey = (entity: string, row: Row) => {
@@ -69,7 +119,9 @@ const startFakeCloud = async (syncTables: CloudSyncTable[]) => {
       const rows = fake.tables.get(entity) ?? [];
       let response: object;
 
-      if (fake.unsupported) {
+      if (fake.orgMissing) {
+        response = { errors: [{ message: "Organization not found" }] };
+      } else if (fake.unsupported) {
         response = {
           errors: [
             {
@@ -77,6 +129,10 @@ const startFakeCloud = async (syncTables: CloudSyncTable[]) => {
                 'Cannot query field "cloudPluginTableKeys" on type "Query".',
             },
           ],
+        };
+      } else if (query.includes("cloudPluginTablePush(")) {
+        response = {
+          data: { cloudPluginTablePush: applyPush(entity, variables.changes) },
         };
       } else if (query.includes("cloudPluginTableKeys(")) {
         response = {
@@ -138,12 +194,13 @@ const query = async (text: string, params: unknown[] = []) =>
   (await pool.query(text, params)).rows;
 
 const SONG_ID = "5a1e0000-0000-4000-8000-000000000001";
+const CLOUD_ORG_ID = "c0000000-0000-4000-8000-000000000001";
 const CLOUD_USER_ID = "c1000000-0000-4000-8000-000000000001";
 
 /** A `saved_song` row as the cloud's `to_jsonb` would serialize it. */
 const cloudSong = (title: string, updatedAt: string): Row => ({
   id: SONG_ID,
-  organization_id: "c0000000-0000-4000-8000-000000000001",
+  organization_id: CLOUD_ORG_ID,
   created_by_user_id: CLOUD_USER_ID,
   title,
   author: null,
@@ -189,7 +246,10 @@ afterAll(async () => {
 beforeEach(async () => {
   fake.tables.clear();
   fake.downloaded.clear();
+  fake.pushed.clear();
   fake.unsupported = false;
+  fake.rejectPushes = false;
+  fake.orgMissing = false;
 
   // Sync commits its own transactions, so tests write real rows and clean up
   // by org instead of rolling back.
@@ -266,7 +326,7 @@ describe("syncPluginTables", () => {
     ]);
   });
 
-  it("leaves an edit made only locally alone", async () => {
+  it("pushes an edit made only locally, based on the cloud row it saw", async () => {
     fake.tables.set(SONGS, [
       cloudSong("Amazing Grace", "2026-01-01T00:00:00+00:00"),
     ]);
@@ -275,8 +335,17 @@ describe("syncPluginTables", () => {
       SONG_ID,
     ]);
 
-    await sync();
+    const result = await sync();
 
+    expect(result).toMatchObject({ pulled: 0, pushed: 1, pushRejected: 0 });
+    expect(fake.pushed.get(SONGS)).toMatchObject([
+      {
+        key: { id: SONG_ID },
+        expectedUpdatedAt: "2026-01-01T00:00:00+00:00",
+        row: { title: "Edited here" },
+      },
+    ]);
+    expect(fake.tables.get(SONGS)![0]).toMatchObject({ title: "Edited here" });
     expect((await localSongs()).map((s) => s.title)).toEqual(["Edited here"]);
   });
 
@@ -302,9 +371,17 @@ describe("syncPluginTables", () => {
     ]);
     // The cloud's version keeps the id, so documents linked to it follow.
     expect(songs.find((s) => s.title === "Edited on cloud")!.id).toBe(SONG_ID);
+    // The kept copy is new here, so it goes up in the same sync.
+    expect(result.pushed).toBe(1);
+    expect(
+      fake.tables
+        .get(SONGS)!
+        .map((r) => r.title)
+        .sort(),
+    ).toEqual(["Edited here (conflicted copy)", "Edited on cloud"]);
   });
 
-  it("counts a cloud delete without deleting locally", async () => {
+  it("applies a cloud delete to a row untouched here", async () => {
     fake.tables.set(SONGS, [
       cloudSong("Amazing Grace", "2026-01-01T00:00:00+00:00"),
     ]);
@@ -313,8 +390,8 @@ describe("syncPluginTables", () => {
 
     const result = await sync();
 
-    expect(result.deletedOnCloud).toBe(1);
-    expect(await localSongs()).toHaveLength(1);
+    expect(result).toMatchObject({ deletedLocally: 1, pushed: 0 });
+    expect(await localSongs()).toEqual([]);
   });
 
   it("matches composite keys and keeps local user attribution on overwrite", async () => {
@@ -324,7 +401,7 @@ describe("syncPluginTables", () => {
       [orgId, userId],
     );
     const cloudSource = (enabled: boolean, updatedAt: string) => ({
-      organization_id: "c0000000-0000-4000-8000-000000000001",
+      organization_id: CLOUD_ORG_ID,
       source: "myworshiplist",
       enabled,
       enabled_by_user_id: CLOUD_USER_ID,
@@ -363,7 +440,7 @@ describe("syncPluginTables", () => {
       {
         // A different id: the org, not the id, identifies this row.
         id: "b1000000-0000-4000-8000-000000000001",
-        organization_id: "c0000000-0000-4000-8000-000000000001",
+        organization_id: CLOUD_ORG_ID,
         languages: ["id"],
         translation_ids: [],
         primary_translation_id: null,
@@ -407,7 +484,7 @@ describe("syncPluginTables", () => {
   describe("recent_song", () => {
     const cloudUse = (id: string, usedAt: string): Row => ({
       id,
-      organization_id: "c0000000-0000-4000-8000-000000000001",
+      organization_id: CLOUD_ORG_ID,
       saved_song_id: SONG_ID,
       created_at: usedAt,
       updated_at: usedAt,
@@ -461,6 +538,139 @@ describe("syncPluginTables", () => {
 
       expect(result.failedTables).toBe(0);
       expect(await localUses()).toEqual([]);
+    });
+  });
+
+  describe("two-way", () => {
+    const insertLocalSong = (id: string, title: string) =>
+      query(
+        `insert into ${SONGS} (id, organization_id, created_by_user_id, title, song)
+         values ($1, $2, $3, $4, $5)`,
+        [id, orgId, userId, title, { title }],
+      );
+    const LOCAL_SONG_ID = "10ca1000-0000-4000-8000-000000000001";
+
+    it("pushes a row created here once, then leaves it", async () => {
+      await insertLocalSong(LOCAL_SONG_ID, "Written offline");
+
+      const result = await sync();
+
+      expect(result).toMatchObject({ pushed: 1, pushRejected: 0 });
+      expect(fake.pushed.get(SONGS)).toMatchObject([
+        { key: { id: LOCAL_SONG_ID }, expectedUpdatedAt: null },
+      ]);
+      // Our id becomes the cloud's id, so documents linked to it still work.
+      expect(fake.tables.get(SONGS)).toMatchObject([
+        { id: LOCAL_SONG_ID, title: "Written offline" },
+      ]);
+
+      fake.pushed.clear();
+      fake.downloaded.clear();
+      const again = await sync();
+
+      expect(again).toMatchObject({ pulled: 0, pushed: 0 });
+      expect(fake.pushed.get(SONGS)).toBeUndefined();
+      expect(fake.downloaded.get(SONGS)).toBeUndefined();
+    });
+
+    it("pushes a delete made here", async () => {
+      fake.tables.set(SONGS, [
+        cloudSong("Amazing Grace", "2026-01-01T00:00:00+00:00"),
+      ]);
+      await sync();
+      await query(`delete from ${SONGS} where id = $1`, [SONG_ID]);
+
+      const result = await sync();
+
+      expect(result.pushed).toBe(1);
+      expect(fake.tables.get(SONGS)).toEqual([]);
+    });
+
+    it("keeps a row edited here that the cloud deleted, and puts it back", async () => {
+      fake.tables.set(SONGS, [
+        cloudSong("Amazing Grace", "2026-01-01T00:00:00+00:00"),
+      ]);
+      await sync();
+      await query(`update ${SONGS} set title = 'Still needed' where id = $1`, [
+        SONG_ID,
+      ]);
+      fake.tables.set(SONGS, []);
+
+      const result = await sync();
+
+      expect(result).toMatchObject({ deletedLocally: 0, pushed: 1 });
+      expect((await localSongs()).map((s) => s.title)).toEqual([
+        "Still needed",
+      ]);
+      expect(fake.tables.get(SONGS)).toMatchObject([
+        { id: SONG_ID, title: "Still needed" },
+      ]);
+    });
+
+    it("brings back a row deleted here that the cloud edited", async () => {
+      fake.tables.set(SONGS, [
+        cloudSong("Amazing Grace", "2026-01-01T00:00:00+00:00"),
+      ]);
+      await sync();
+      await query(`delete from ${SONGS} where id = $1`, [SONG_ID]);
+      fake.tables.set(SONGS, [
+        cloudSong("Amazing Grace (Live)", "2026-01-02T00:00:00+00:00"),
+      ]);
+
+      const result = await sync();
+
+      expect(result).toMatchObject({ pulled: 1, pushed: 0 });
+      expect(fake.pushed.get(SONGS)).toBeUndefined();
+      expect((await localSongs()).map((s) => s.title)).toEqual([
+        "Amazing Grace (Live)",
+      ]);
+    });
+
+    it("keeps a rejected push and sends it again next sync", async () => {
+      await insertLocalSong(LOCAL_SONG_ID, "Written offline");
+      fake.rejectPushes = true;
+
+      const rejected = await sync();
+
+      expect(rejected).toMatchObject({ pushed: 0, pushRejected: 1 });
+      expect(await localSongs()).toHaveLength(1);
+
+      fake.rejectPushes = false;
+      const retried = await sync();
+
+      expect(retried).toMatchObject({ pushed: 1, pushRejected: 0 });
+    });
+
+    it("pushes a use after the song it refers to", async () => {
+      await insertLocalSong(LOCAL_SONG_ID, "Written offline");
+      await query(
+        `insert into ${RECENT_SONGS} (id, organization_id, saved_song_id, created_at)
+         values ('0e000000-0000-4000-8000-000000000009', $1, $2, '2026-03-01T10:00:00Z')`,
+        [orgId, LOCAL_SONG_ID],
+      );
+
+      await sync();
+
+      expect(fake.tables.get(RECENT_SONGS)).toMatchObject([
+        {
+          saved_song_id: LOCAL_SONG_ID,
+          created_at: "2026-03-01T10:00:00+00:00",
+        },
+      ]);
+      expect(fake.tables.get(SONGS)).toHaveLength(1);
+    });
+
+    it("leaves local rows alone when the cloud refuses the organization", async () => {
+      fake.tables.set(SONGS, [
+        cloudSong("Amazing Grace", "2026-01-01T00:00:00+00:00"),
+      ]);
+      await sync();
+      fake.orgMissing = true;
+
+      const result = await sync();
+
+      expect(result.failedTables).toBeGreaterThan(0);
+      expect(await localSongs()).toHaveLength(1);
     });
   });
 });
