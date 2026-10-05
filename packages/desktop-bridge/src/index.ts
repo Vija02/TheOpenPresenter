@@ -3,6 +3,8 @@ import {
   closeSelf,
   listMonitors,
   listPresenting,
+  onMonitorsChanged,
+  onPresentingChanged,
   present,
   stopPresenting,
 } from "./present";
@@ -22,9 +24,11 @@ export const desktop = {
   },
 
   listMonitors,
+  onMonitorsChanged,
   present,
   stopPresenting,
   listPresenting,
+  onPresentingChanged,
   openExternal,
   localIp,
   closeSelf,

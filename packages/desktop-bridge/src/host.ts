@@ -36,10 +36,16 @@ type TauriWindowHandle = {
   close(): Promise<void>;
 };
 
+type TauriMonitor = {
+  name: string | null;
+  size: { width: number; height: number };
+  position: { x: number; y: number };
+};
+
 type TauriWindowApi = {
-  availableMonitors(): Promise<
-    { name: string | null; size: { width: number; height: number } }[]
-  >;
+  availableMonitors(): Promise<TauriMonitor[]>;
+  currentMonitor(): Promise<TauriMonitor | null>;
+  primaryMonitor(): Promise<TauriMonitor | null>;
   getAllWindows(): Promise<TauriWindowHandle[]>;
   getCurrentWindow(): TauriWindowHandle;
 };

@@ -50,6 +50,10 @@ export const screen = {
     id: 0,
     bounds: { x: 0, y: 0, width: 0, height: 0 },
   }),
+  getDisplayMatching: () => ({
+    id: 0,
+    bounds: { x: 0, y: 0, width: 0, height: 0 },
+  }),
   on: () => {},
 };
 

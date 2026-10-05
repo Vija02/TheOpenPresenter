@@ -20,6 +20,7 @@ import {
   closeLoadingWindow,
   getMainWindow,
   navigateToServer,
+  notifyMonitorsChanged,
   openLoadingWindow,
   openOnboardingWindow,
   openUnreachableWindow,
@@ -106,9 +107,13 @@ if (!gotLock) {
     setupUpdates();
     forwardRuntimeEvents();
 
-    screen.on("display-added", repositionPresentWindows);
-    screen.on("display-removed", repositionPresentWindows);
-    screen.on("display-metrics-changed", repositionPresentWindows);
+    const onDisplaysChanged = () => {
+      repositionPresentWindows();
+      notifyMonitorsChanged();
+    };
+    screen.on("display-added", onDisplaysChanged);
+    screen.on("display-removed", onDisplaysChanged);
+    screen.on("display-metrics-changed", onDisplaysChanged);
 
     try {
       const destination = await startupRoute();

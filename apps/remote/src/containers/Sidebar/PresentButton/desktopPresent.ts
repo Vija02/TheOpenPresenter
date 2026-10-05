@@ -1,10 +1,10 @@
-import { desktop } from "@repo/desktop-bridge";
+import { type Monitor, desktop } from "@repo/desktop-bridge";
 import { captureEvent } from "@repo/observability/initAnalytics";
 
 export const onPresentClick = async (
   orgSlug: string,
   projectSlug: string,
-  monitorIndex: number = 0,
+  monitor: Pick<Monitor, "index" | "id"> = { index: 0 },
   search?: string,
   rendererId: string = "1",
 ) => {
@@ -16,12 +16,13 @@ export const onPresentClick = async (
 
   await desktop.present(
     window.location.origin + fullPath,
-    monitorIndex,
+    monitor.index,
     rendererId,
+    monitor.id,
   );
 
   captureEvent("presented", {
     present_type: "desktop_monitor",
-    monitor_index: monitorIndex,
+    monitor_index: monitor.index,
   });
 };

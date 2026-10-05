@@ -354,10 +354,15 @@ export type MonitorInfo = {
   x: number;
   y: number;
   isPrimary: boolean;
+  isCurrent: boolean;
 };
 
-export function listMonitors(): MonitorInfo[] {
+export function listMonitors(from?: BrowserWindow | null): MonitorInfo[] {
   const primary = screen.getPrimaryDisplay();
+  const current =
+    from && !from.isDestroyed()
+      ? screen.getDisplayMatching(from.getBounds())
+      : null;
   return screen.getAllDisplays().map((display) => ({
     id: String(display.id),
     name: display.label || `Display ${display.id}`,
@@ -366,20 +371,30 @@ export function listMonitors(): MonitorInfo[] {
     x: display.bounds.x,
     y: display.bounds.y,
     isPrimary: display.id === primary.id,
+    isCurrent: display.id === current?.id,
   }));
 }
 
-function displayForIndex(index: number) {
+/** Tell the app the display layout changed, so an open picker redraws. */
+export function notifyMonitorsChanged(): void {
+  if (mainWin && !mainWin.isDestroyed()) {
+    mainWin.webContents.send("present-monitors-changed");
+  }
+}
+
+function resolveDisplay(index: number, id?: string) {
   const displays = screen.getAllDisplays();
-  return displays[index] ?? displays[0];
+  const byId = id ? displays.find((d) => String(d.id) === id) : undefined;
+  return byId ?? displays[index] ?? displays[0];
 }
 
 export function openPresentWindow(
   url: string,
   monitorIndex: number,
   rendererId = "1",
+  monitorId?: string,
 ): void {
-  const display = displayForIndex(monitorIndex);
+  const display = resolveDisplay(monitorIndex, monitorId);
   if (!display) throw new Error("No displays available");
 
   let win = presentWins.get(rendererId);
@@ -400,7 +415,10 @@ export function openPresentWindow(
     guardNavigation(win);
     presentWins.set(rendererId, win);
 
+    let ownsEscape = false;
+
     win.on("closed", () => {
+      if (ownsEscape) globalShortcut.unregister("Escape");
       presentWins.delete(rendererId);
       mainWin?.webContents.send(
         "present-windows-changed",
@@ -411,9 +429,11 @@ export function openPresentWindow(
     // Only while focused: a global Escape would fire while the operator is
     // typing in the main window.
     win.on("focus", () => {
+      ownsEscape = true;
       globalShortcut.register("Escape", () => closePresentWindow(rendererId));
     });
     win.on("blur", () => {
+      ownsEscape = false;
       globalShortcut.unregister("Escape");
     });
   }
