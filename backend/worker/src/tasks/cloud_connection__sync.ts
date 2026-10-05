@@ -230,6 +230,20 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
     );
 
     // ========================================================================== //
+    // =========================== Plugin-owned tables ========================== //
+    // ========================================================================== //
+    try {
+      const pluginCounts = await cloud.syncPluginTables(
+        withPgClient,
+        cloudConnection,
+        { forceResync: !!force_resync },
+      );
+      log.info(pluginCounts, "Synced plugin tables");
+    } catch (pluginErr) {
+      log.warn({ err: pluginErr }, "Failed to sync plugin tables");
+    }
+
+    // ========================================================================== //
     // ========================== Project document sync ========================= //
     // ========================================================================== //
     // Documents only need re-syncing for projects that were created/updated

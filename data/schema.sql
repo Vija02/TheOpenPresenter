@@ -2,16 +2,16 @@
 -- PostgreSQL database dump
 --
 
-\restrict f4fhotfncgnlSBBu51lAPW6LfNKSeqZtIcSDJijLAX2Lyouw5Ry7FK0N93eVaz4
+\restrict b1Dg4dizlAmgkltonjn0eG1DOaz1tbqcAW3HQDSIWginFKOUYqU839v1DUMNuDb
 
--- Dumped from database version 17.4
+-- Dumped from database version 17.0 (Debian 17.0-1.pgdg120+1)
 -- Dumped by pg_dump version 18.6
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
 SET transaction_timeout = 0;
-SET client_encoding = 'SQL_ASCII';
+SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SELECT pg_catalog.set_config('search_path', '', false);
 SET check_function_bodies = false;
@@ -3360,6 +3360,19 @@ COMMENT ON FUNCTION app_public.verify_email(user_email_id uuid, token text) IS '
 
 
 --
+-- Name: cloud_sync_rows; Type: TABLE; Schema: app_private; Owner: -
+--
+
+CREATE TABLE app_private.cloud_sync_rows (
+    cloud_connection_id uuid NOT NULL,
+    entity text NOT NULL,
+    row_key jsonb NOT NULL,
+    cloud_updated_at timestamp with time zone NOT NULL,
+    local_updated_at timestamp with time zone NOT NULL
+);
+
+
+--
 -- Name: connect_pg_simple_sessions; Type: TABLE; Schema: app_private; Owner: -
 --
 
@@ -3947,6 +3960,14 @@ COMMENT ON COLUMN app_public.user_authentications.identifier IS 'A unique identi
 --
 
 COMMENT ON COLUMN app_public.user_authentications.details IS 'Additional profile details extracted from this login method';
+
+
+--
+-- Name: cloud_sync_rows cloud_sync_rows_pkey; Type: CONSTRAINT; Schema: app_private; Owner: -
+--
+
+ALTER TABLE ONLY app_private.cloud_sync_rows
+    ADD CONSTRAINT cloud_sync_rows_pkey PRIMARY KEY (cloud_connection_id, entity, row_key);
 
 
 --
@@ -5313,6 +5334,14 @@ CREATE TRIGGER _900_send_verification_email AFTER INSERT ON app_public.user_emai
 
 
 --
+-- Name: cloud_sync_rows cloud_sync_rows_cloud_connection_id_fkey; Type: FK CONSTRAINT; Schema: app_private; Owner: -
+--
+
+ALTER TABLE ONLY app_private.cloud_sync_rows
+    ADD CONSTRAINT cloud_sync_rows_cloud_connection_id_fkey FOREIGN KEY (cloud_connection_id) REFERENCES app_public.cloud_connections(id) ON DELETE CASCADE;
+
+
+--
 -- Name: organization_billing organization_billing_organization_id_fkey; Type: FK CONSTRAINT; Schema: app_private; Owner: -
 --
 
@@ -5815,6 +5844,12 @@ ALTER TABLE ONLY app_public.user_authentications
 ALTER TABLE ONLY app_public.user_emails
     ADD CONSTRAINT user_emails_user_id_fkey FOREIGN KEY (user_id) REFERENCES app_public.users(id) ON DELETE CASCADE;
 
+
+--
+-- Name: cloud_sync_rows; Type: ROW SECURITY; Schema: app_private; Owner: -
+--
+
+ALTER TABLE app_private.cloud_sync_rows ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: connect_pg_simple_sessions; Type: ROW SECURITY; Schema: app_private; Owner: -
@@ -8041,5 +8076,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE theopenpresenter REVOKE ALL ON FUNCTIONS FROM 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict f4fhotfncgnlSBBu51lAPW6LfNKSeqZtIcSDJijLAX2Lyouw5Ry7FK0N93eVaz4
+\unrestrict b1Dg4dizlAmgkltonjn0eG1DOaz1tbqcAW3HQDSIWginFKOUYqU839v1DUMNuDb
 
