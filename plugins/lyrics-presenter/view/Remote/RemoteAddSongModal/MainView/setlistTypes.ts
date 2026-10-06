@@ -12,7 +12,7 @@ export type SetlistSong = {
 };
 
 export type Setlist = {
-  source: "myworshiplist" | "planningCenter";
+  source: "myworshiplist" | "planningCenter" | "churchSuite";
   id: string;
   title: string;
   /** Service type, date, or whatever else identifies the setlist. */
@@ -25,4 +25,5 @@ export type Setlist = {
 export const setlistSourceLabel: Record<Setlist["source"], string> = {
   myworshiplist: "MyWorshipList",
   planningCenter: "Planning Center",
+  churchSuite: "ChurchSuite",
 };

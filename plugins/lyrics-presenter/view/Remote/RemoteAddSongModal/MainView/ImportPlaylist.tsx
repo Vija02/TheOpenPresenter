@@ -17,6 +17,7 @@ import {
 import { usePluginAPI } from "../../../pluginApi";
 import SetlistSourcesModal from "../../SetlistSourcesModal";
 import { useSetlistSources } from "../../useSetlistSources";
+import { ChurchSuiteSetlists } from "./ChurchSuiteSetlists";
 import { MyWorshipListSetlists } from "./MyWorshipListSetlists";
 import { PlanningCenterSetlists } from "./PlanningCenterSetlists";
 import { SetlistSourcesEmptyState } from "./SetlistSourcesEmptyState";
@@ -43,16 +44,27 @@ export const ImportPlaylist = ({
 
   const activeSource = source && sources.includes(source) ? source : sources[0];
 
-  const renderSource = (value: Setlist["source"]) =>
-    value === "myworshiplist" ? (
-      <MyWorshipListSetlists onSelectSetlist={onSelectSetlist} />
-    ) : (
-      <PlanningCenterSetlists
-        pluginId={pluginId}
-        connectionId={planningCenter.connections[0]?.id ?? null}
-        onSelectSetlist={onSelectSetlist}
-      />
-    );
+  const renderSource = (value: Setlist["source"]) => {
+    switch (value) {
+      case "myworshiplist":
+        return <MyWorshipListSetlists onSelectSetlist={onSelectSetlist} />;
+      case "churchSuite":
+        return (
+          <ChurchSuiteSetlists
+            pluginId={pluginId}
+            onSelectSetlist={onSelectSetlist}
+          />
+        );
+      case "planningCenter":
+        return (
+          <PlanningCenterSetlists
+            pluginId={pluginId}
+            connectionId={planningCenter.connections[0]?.id ?? null}
+            onSelectSetlist={onSelectSetlist}
+          />
+        );
+    }
+  };
 
   return (
     <div className="min-w-0 mb-4">

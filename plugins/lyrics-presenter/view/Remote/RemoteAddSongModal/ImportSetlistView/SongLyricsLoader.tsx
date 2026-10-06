@@ -15,7 +15,8 @@ export const SongLyricsLoader = ({
   pluginId: string;
   onLoaded: (data: SetlistImportData) => void;
 }) => {
-  const isMwl = song.importSetting.type === "myworshiplist";
+  const { importSetting } = song;
+  const isMwl = importSetting.type === "myworshiplist";
 
   const mwlQuery = trpc.lyricsPresenter.myworshiplist.getSong.useQuery(
     {
@@ -43,10 +44,30 @@ export const SongLyricsLoader = ({
       author: song.author,
       key: song.songKey ?? null,
     },
-    { enabled: !isMwl && !!connectionId },
+    {
+      enabled: song.importSetting.type === "planningCenter" && !!connectionId,
+    },
   );
 
-  const data = isMwl ? mwlQuery.data : pcoQuery.data;
+  const churchSuiteQuery = trpc.lyricsPresenter.churchSuite.getSong.useQuery(
+    {
+      pluginId,
+      arrangementId:
+        importSetting.type === "churchSuite"
+          ? importSetting.meta.arrangementId
+          : "",
+      title: song.title,
+      author: song.author,
+      key: song.songKey ?? null,
+    },
+    { enabled: importSetting.type === "churchSuite" },
+  );
+
+  const data = isMwl
+    ? mwlQuery.data
+    : importSetting.type === "churchSuite"
+      ? churchSuiteQuery.data
+      : pcoQuery.data;
 
   useEffect(() => {
     if (!data) return;

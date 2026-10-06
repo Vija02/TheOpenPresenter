@@ -3,6 +3,7 @@ import { useCallback, useMemo } from "react";
 import { usePluginAPI } from "../pluginApi";
 import { trpc } from "../trpc";
 import { Setlist } from "./RemoteAddSongModal/MainView/setlistTypes";
+import { useChurchSuite } from "./useChurchSuite";
 import { usePlanningCenter } from "./usePlanningCenter";
 
 /**
@@ -14,6 +15,7 @@ export const useSetlistSources = () => {
   const isPublicAccess = pluginApi.isPublicAccess;
 
   const planningCenter = usePlanningCenter();
+  const churchSuite = useChurchSuite();
 
   const sourcesQuery = trpc.lyricsPresenter.setlistSources.list.useQuery(
     { pluginId },
@@ -44,16 +46,25 @@ export const useSetlistSources = () => {
   const sources = useMemo(() => {
     const enabled: Setlist["source"][] = [];
     if (planningCenter.connections.length > 0) enabled.push("planningCenter");
+    if (churchSuite.connection) enabled.push("churchSuite");
     if (isMyWorshipListEnabled) enabled.push("myworshiplist");
     return enabled;
-  }, [isMyWorshipListEnabled, planningCenter.connections.length]);
+  }, [
+    isMyWorshipListEnabled,
+    planningCenter.connections.length,
+    churchSuite.connection,
+  ]);
 
   return {
     sources,
-    isLoading: sourcesQuery.isLoading || planningCenter.isLoading,
+    isLoading:
+      sourcesQuery.isLoading ||
+      planningCenter.isLoading ||
+      churchSuite.isLoading,
     isMyWorshipListEnabled,
     setMyWorshipListEnabled,
     isSaving: setEnabledMutation.isPending,
     planningCenter,
+    churchSuite,
   };
 };

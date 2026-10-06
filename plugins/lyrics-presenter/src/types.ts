@@ -23,9 +23,15 @@ export type PlanningCenterImportSetting = ImportSettingBase & {
   meta: { songId: string; arrangementId: string };
 };
 
+export type ChurchSuiteImportSetting = ImportSettingBase & {
+  type: "churchSuite";
+  meta: { songId: string; arrangementId: string };
+};
+
 export type ImportSetting =
   | MyWorshipListImportSetting
-  | PlanningCenterImportSetting;
+  | PlanningCenterImportSetting
+  | ChurchSuiteImportSetting;
 
 export type ImportSource = ImportSetting["type"];
 

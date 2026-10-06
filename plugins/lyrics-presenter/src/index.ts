@@ -18,6 +18,7 @@ import * as Y from "yjs";
 import z from "zod";
 
 import { formatLyricsStream } from "./ai/formatLyrics";
+import { createChurchSuiteRouter } from "./churchSuite/router";
 import {
   pluginName,
   remoteWebComponentTag,
@@ -489,6 +490,8 @@ const getAppRouter =
         },
 
         planningCenter: createPlanningCenterRouter(t, serverPluginApi),
+
+        churchSuite: createChurchSuiteRouter(t, serverPluginApi),
       },
     });
   };
