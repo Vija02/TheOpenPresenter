@@ -117,6 +117,25 @@ const dragBy = async (page: Page, target: Locator, dx: number, dy: number) => {
   await page.mouse.up();
 };
 
+/**
+ * Replaces the text of the element being edited with `blocks`, one line per
+ * entry and a blank line between blocks. Typed with Enter, as a user would,
+ * rather than inserting "\n" — the inline editor is a contenteditable.
+ */
+const typeBlocks = async (page: Page, blocks: string[][]) => {
+  await page.keyboard.press("ControlOrMeta+a");
+  for (const [b, lines] of blocks.entries()) {
+    if (b > 0) {
+      await page.keyboard.press("Enter");
+      await page.keyboard.press("Enter");
+    }
+    for (const [l, line] of lines.entries()) {
+      if (l > 0) await page.keyboard.press("Enter");
+      await page.keyboard.insertText(line);
+    }
+  }
+};
+
 test.describe.serial("Layout editor", () => {
   test.beforeEach(
     async ({ e2eCommand }) =>
@@ -401,7 +420,7 @@ test.describe.serial("Layout editor", () => {
 
     // Measured modes derive the size, so any size control would be a dead knob
     // and none is rendered.
-    for (const measured of ["wrap", "fitNoWrap"]) {
+    for (const measured of ["wrap", "fitNoWrap", "columns"]) {
       await autoSize.selectOption(measured);
       await expect(row(dialog, "Size")).toHaveCount(0);
       await expect(row(dialog, "Max size")).toHaveCount(0);
@@ -665,6 +684,126 @@ test.describe.serial("Layout editor", () => {
         parseFloat(await textStyle(page, BODY, "-webkit-text-stroke-width")),
       )
       .toBe(0);
+  });
+
+  test("columns flow blocks side by side, keep each whole, and grow the text", async ({
+    page,
+    projectPage,
+    loginAndGoToProject,
+  }) => {
+    const dialog = await openStyleModal({ loginAndGoToProject, projectPage });
+    const body = dialog.locator(BODY);
+    await body.click();
+
+    const autoSize = row(dialog, "Auto-size").locator("select");
+    await autoSize.selectOption("columns");
+
+    // Column settings only exist for the columns mode.
+    const maxColumns = row(dialog, "Max columns").locator("input");
+    await expect(maxColumns).toBeVisible();
+    await expect(row(dialog, "Column gap").locator("input")).toBeVisible();
+
+    // --- type a song: six short blocks, blank lines between them ------------
+    // Far taller than wide, so a single column would be tiny.
+    const song = Array.from({ length: 6 }, (_, b) =>
+      Array.from({ length: 4 }, (_, l) => `Block ${b + 1} line ${l + 1}`),
+    );
+
+    await body.dblclick();
+    await expect(body).toHaveClass(/lay--editor-item--editing/);
+    await typeBlocks(page, song);
+
+    // Editing is one wrapped flow: a caret cannot survive the text re-flowing
+    // between columns on every keystroke.
+    await expect(body.locator(".lay--text-column")).toHaveCount(0);
+
+    await dialog.locator(".lay--workbench-canvas").click({
+      position: { x: 5, y: 5 },
+    });
+    await expect(body).not.toHaveClass(/lay--editor-item--editing/);
+
+    // --- laid out in several columns ----------------------------------------
+    const columns = body.locator(".lay--text-column");
+    await expect.poll(() => columns.count()).toBeGreaterThan(1);
+
+    // Each block lives in exactly one column: its first line and its last line
+    // are found together, and nowhere else.
+    const columnTexts = await columns.allInnerTexts();
+    for (const lines of song) {
+      const owners = columnTexts.filter((t) => t.includes(lines[0]!));
+      expect(owners).toHaveLength(1);
+      for (const line of lines) expect(owners[0]).toContain(line);
+    }
+
+    // Reading order runs down each column, then across.
+    const order = columnTexts
+      .join("\n")
+      .split("\n")
+      .filter((t) => t.trim() !== "");
+    expect(order).toEqual(song.flat());
+
+    // --- capping at one column shrinks the text ------------------------------
+    const multiColumnSize = await fontSizePx(page, BODY);
+    expect(multiColumnSize).toBeGreaterThan(0);
+
+    await body.click();
+    await maxColumns.fill("1");
+    await maxColumns.press("Tab");
+
+    await expect(columns).toHaveCount(1);
+    await expect
+      .poll(() => fontSizePx(page, BODY))
+      .toBeLessThan(multiColumnSize);
+  });
+
+  test("columns never overflow the box", async ({
+    page,
+    projectPage,
+    loginAndGoToProject,
+  }) => {
+    const dialog = await openStyleModal({ loginAndGoToProject, projectPage });
+    const body = dialog.locator(BODY);
+    await body.click();
+    await row(dialog, "Auto-size").locator("select").selectOption("columns");
+
+    // Uneven blocks, including one long enough to tempt a split.
+    const blocks = [3, 12, 2, 5, 4].map((count, b) =>
+      Array.from(
+        { length: count },
+        (_, l) => `Section ${b + 1}, a somewhat longer line ${l + 1}`,
+      ),
+    );
+
+    await body.dblclick();
+    await expect(body).toHaveClass(/lay--editor-item--editing/);
+    await typeBlocks(page, blocks);
+    await dialog.locator(".lay--workbench-canvas").click({
+      position: { x: 5, y: 5 },
+    });
+
+    await expect
+      .poll(() => body.locator(".lay--text-column").count())
+      .toBeGreaterThan(0);
+
+    // Neither the columns nor the content node spill out of the box the text
+    // is fitted into. Columns do not shrink, so an overflow shows up as
+    // scrollWidth rather than as squashed columns.
+    const overflow = () =>
+      page.locator(`${BODY} .lay--text-content`).evaluate((el) => {
+        const box = el.parentElement!.getBoundingClientRect();
+        const content = el.getBoundingClientRect();
+        return {
+          x: el.scrollWidth - el.clientWidth,
+          top: box.top - content.top,
+          bottom: content.bottom - box.bottom,
+        };
+      });
+    await expect
+      .poll(async () => {
+        const { x, top, bottom } = await overflow();
+        return Math.max(x, top, bottom);
+      })
+      .toBeLessThanOrEqual(1);
   });
 });
 

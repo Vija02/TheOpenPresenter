@@ -40,6 +40,8 @@ export const defaultTextStyle: TextStyle = {
   paddingRight: 0,
   paddingBottom: 0,
   paddingLeft: 0,
+  maxColumns: 4,
+  columnGap: 3,
 };
 
 /** Appearance shared by every element kind. */

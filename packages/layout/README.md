@@ -183,6 +183,7 @@ empty, so the editor canvas shows exactly what output will.
 | `shrinkToFit` | Shrink to fit | ceiling | that size until it would overflow, then shrinks (wrapping) |
 | `fitNoWrap` | Fit (no wrap) | ignored | largest that fits **without wrapping**; only explicit newlines break |
 | `wrap` | Wrap and fit | ignored | largest that fits, wrapping freely |
+| `columns` | Columns | ignored | largest that fits once flowed into up to `maxColumns` columns; see below |
 
 The last three share one binary search, differing only in `white-space` (`pre`
 for `fitNoWrap`, `pre-wrap` otherwise) and whether `style.fontSize` caps the
@@ -216,6 +217,43 @@ to pre-split lines.
 `fitFontSize` (`react/text/measure.ts`) runs **synchronously during render** so
 the first paint is already correct, and memoises into a 500-entry FIFO cache
 keyed on a hash of the full spec.
+
+### Columns
+
+`columns` is the full-song view: text too tall for one column is flowed into
+several so it can be read at a size the back row can see. It is the
+lyrics-presenter `FullSongRenderView` rebuilt on this engine, so lyrics can move
+over and the musicians' chord monitor can reuse it.
+
+- **Lines** are split on `\n` and never wrap. **Blocks** are runs of lines
+  separated by blank lines; a plugin marks song sections that way, and a
+  `heading` span role styles the section names.
+- **Column count is chosen for the biggest text**, trying 1 to
+  `style.maxColumns` (default 4). Lyrics instead takes the fewest columns that
+  fit, which often leaves the text smaller than it needs to be.
+- **Columns are as wide as their own longest line**, not all as wide as the
+  widest. That is the space the lyrics TODO ("optimize based on font size
+  rather than horizontally") was after. Slack is shared out evenly, and `align`
+  applies within each column.
+- **Blocks stay whole.** A block is split across columns only when that makes
+  the text at least `SPLIT_GAIN` (1.25×) bigger, and a split leaves at least
+  `MIN_SPLIT_LINES` (2) lines on each side, so a heading is never stranded.
+- `style.columnGap` is in design units and does not scale with the text. The
+  space between blocks in one column is one line, in `em`, so it does.
+
+`solveColumns` (`text/columns.ts`, pure) does the search. Because lines do not
+wrap, every size scales linearly with the font, so `fitColumns`
+(`react/text/columns.ts`) measures each line **once** at 100px and solves on
+those numbers. For each column count, a binary search over column-height caps,
+with a DP that minimises total column width under each cap, finds the
+partition. The chosen layout is then laid out for real and shrunk if it
+overflows, because fixed-px letter spacing and glyph widths do not scale
+exactly linearly. The measure node and `TextElementView` build the same DOM
+(`columnRowStyle`, `blockStartStyle`); keep them in step.
+
+While a columns element is being edited inline, it renders as `wrap`: the text
+re-flows between columns as you type, so a caret inside a column would not
+survive.
 
 ## Fonts
 
@@ -453,4 +491,5 @@ yarn e2e test layoutEditor --project=chromium
 - No `theme` on `LayoutDoc`; every element carries its own style.
 - No org-level template library — templates live in each scene's `pluginData`.
 - `lyrics-presenter` still has its own parallel style system and has not been
-  migrated.
+  migrated. Its full-song view maps onto the `columns` fit, but nothing renders
+  chords above lyrics yet.

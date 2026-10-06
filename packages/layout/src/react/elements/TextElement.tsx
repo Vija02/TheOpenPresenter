@@ -1,14 +1,26 @@
 import { CSSProperties, useMemo, useSyncExternalStore } from "react";
 
 import { StageMetrics, rectToPx, toPx } from "../../geometry/scale";
-import { SpanRoleStyle, resolvePadding } from "../../schema/style";
+import {
+  SpanRoleStyle,
+  resolveColumns,
+  resolvePadding,
+} from "../../schema/style";
 import { ResolvedTextElement } from "../../template/resolve";
+import { Span } from "../../template/spans";
+import { spansToBlocks } from "../../text/columns";
 import {
   ElementPlacement,
   appearanceToCss,
   placementToCss,
   textStyleToCss,
 } from "../css";
+import {
+  blockStartStyle,
+  columnRowStyle,
+  fitColumns,
+  startsBlock,
+} from "../text/columns";
 import {
   getFontGeneration,
   getServerFontGeneration,
@@ -31,6 +43,19 @@ const spanStyle = (role: SpanRoleStyle | undefined): CSSProperties => {
       role.marginAfter !== undefined ? `${role.marginAfter}em` : undefined,
   };
 };
+
+const renderSpans = (
+  spans: Span[],
+  roles: Record<string, SpanRoleStyle> | null,
+) =>
+  spans.map((s, i) => (
+    <span
+      key={i}
+      style={s.role !== null ? spanStyle(roles?.[s.role]) : undefined}
+    >
+      {s.text}
+    </span>
+  ));
 
 export type TextElementViewProps = {
   element: ResolvedTextElement;
@@ -55,7 +80,45 @@ export const TextElementView = ({
 
   const noWrap = element.fit === "fitNoWrap";
 
+  const columnGap = toPx(resolveColumns(style).columnGap, metrics);
+
+  const columns = useMemo(() => {
+    if (element.fit !== "columns") return null;
+
+    const [top, right, bottom, left] = resolvePadding(style);
+    const blocks = spansToBlocks(spans);
+
+    return {
+      blocks,
+      ...fitColumns({
+        blocks,
+        roles: spanRoles,
+        width: Math.max(0, box.width - toPx(left + right, metrics)),
+        height: Math.max(0, box.height - toPx(top + bottom, metrics)),
+        fontFamily: style.fontFamily,
+        fontWeight: style.fontWeight,
+        fontStyle: style.fontStyle,
+        lineHeight: style.lineHeight,
+        letterSpacing: toPx(style.letterSpacing, metrics),
+        textTransform: style.textTransform ?? "none",
+        columnGap,
+        maxColumns: resolveColumns(style).maxColumns,
+      }),
+    };
+  }, [
+    element.fit,
+    spans,
+    spanRoles,
+    style,
+    box.width,
+    box.height,
+    metrics,
+    fontGeneration,
+    columnGap,
+  ]);
+
   const fontSize = useMemo(() => {
+    if (columns) return columns.fontSize;
     if (element.fit === "declared") return toPx(style.fontSize, metrics);
 
     const [top, right, bottom, left] = resolvePadding(style);
@@ -87,6 +150,7 @@ export const TextElementView = ({
     metrics,
     fontGeneration,
     noWrap,
+    columns,
   ]);
 
   return (
@@ -103,25 +167,58 @@ export const TextElementView = ({
     >
       <FillLayer fill={element.fill} width={box.width} elementId={element.id} />
 
-      <div
-        className="lay--text-content"
-        style={{
-          width: "100%",
-          whiteSpace: noWrap ? "pre" : "pre-wrap",
-          overflowWrap: "break-word",
-          position: "relative",
-          zIndex: 1,
-        }}
-      >
-        {spans.map((s, i) => (
-          <span
-            key={i}
-            style={s.role !== null ? spanStyle(spanRoles?.[s.role]) : undefined}
-          >
-            {s.text}
-          </span>
-        ))}
-      </div>
+      {columns ? (
+        // Structure mirrors the measure node in `text/columns.ts`.
+        <div
+          className="lay--text-content"
+          style={{
+            width: "100%",
+            whiteSpace: "pre",
+            position: "relative",
+            zIndex: 1,
+            ...columnRowStyle(columnGap),
+          }}
+        >
+          {columns.columns.map((column, c) => (
+            <div
+              key={c}
+              className="lay--text-column"
+              // Natural width plus an even share of the slack, so `align`
+              // applies within each column.
+              style={{ flex: "1 0 auto" }}
+            >
+              {column.map((ref, i) => (
+                <div
+                  key={i}
+                  style={
+                    startsBlock(column, i)
+                      ? blockStartStyle(style.lineHeight)
+                      : undefined
+                  }
+                >
+                  {renderSpans(
+                    columns.blocks[ref.block]![ref.line]!,
+                    spanRoles,
+                  )}
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div
+          className="lay--text-content"
+          style={{
+            width: "100%",
+            whiteSpace: noWrap ? "pre" : "pre-wrap",
+            overflowWrap: "break-word",
+            position: "relative",
+            zIndex: 1,
+          }}
+        >
+          {renderSpans(spans, spanRoles)}
+        </div>
+      )}
     </div>
   );
 };

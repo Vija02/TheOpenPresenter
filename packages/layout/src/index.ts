@@ -21,3 +21,4 @@ export * from "./template/resolve";
 export * from "./template/sampleFeedData";
 export * from "./template/spans";
 export * from "./template/tokens";
+export * from "./text/columns";

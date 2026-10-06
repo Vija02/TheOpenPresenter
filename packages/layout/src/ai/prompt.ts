@@ -32,7 +32,7 @@ export const LAYOUT_DOC_RULES = `SCHEMA RULES
 
 GEOMETRY
 - "rect" is {x, y, w, h} — NOT width/height. x/y are the top-left corner. x and w are percent of slide WIDTH; y and h are percent of slide HEIGHT. All 0-100.
-- Sizes in "style" (fontSize, letterSpacing, padding) and "radius" are design units, where 1 unit = 1% of the slide WIDTH. On a 1920px slide, fontSize 6 is about 115px.
+- Sizes in "style" (fontSize, letterSpacing, padding, columnGap) and "radius" are design units, where 1 unit = 1% of the slide WIDTH. On a 1920px slide, fontSize 6 is about 115px.
 - style padding insets the text from its own box. It does not move or grow the element, and auto-sized text is fitted to the space that remains. Use it to keep text off a fill's edges rather than shrinking the rect.
   - With "paddingIsLinked" true (the default), the single "padding" value applies to all four sides.
   - With it false, "paddingTop"/"paddingRight"/"paddingBottom"/"paddingLeft" apply instead. Both sets are stored, so set the ones for the mode you want and leave the others alone.
@@ -47,6 +47,7 @@ ENUMS
   - "shrinkToFit" treats style.fontSize as a maximum and shrinks to fit
   - "fitNoWrap" picks the largest size that fits on one line per explicit newline
   - "wrap" picks the largest size that fits, wrapping freely
+  - "columns" picks the largest size that fits once the text is flowed into up to style.maxColumns columns, style.columnGap design units apart. Blank lines separate the blocks (e.g. song sections) that are kept whole in one column; lines never wrap. For long text such as a whole song on one screen.
 - style "align": ${list(horizontalAlignments)}
 - style "valign": ${list(verticalAlignments)}
 - style "fontStyle": "normal" | "italic"

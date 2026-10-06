@@ -21,12 +21,16 @@ export type VerticalAlignment = (typeof verticalAlignments)[number];
  *   wrong.
  * - `wrap`: largest size that fits, wrapping freely. For prose, where the box
  *   should always be filled.
+ * - `columns`: largest size that fits once the text is flowed into up to
+ *   `style.maxColumns` columns. Blank lines separate blocks, which are kept
+ *   whole where possible. Lines never wrap. For a whole song on one screen.
  */
 export const textFitModes = [
   "declared",
   "shrinkToFit",
   "fitNoWrap",
   "wrap",
+  "columns",
 ] as const;
 export type TextFitMode = (typeof textFitModes)[number];
 
@@ -63,6 +67,10 @@ export const textStyleValidator = z.object({
   paddingRight: z.number().default(0),
   paddingBottom: z.number().default(0),
   paddingLeft: z.number().default(0),
+  /** `columns` fit only: the most columns the text may be flowed into. */
+  maxColumns: z.number().default(4),
+  /** `columns` fit only: space between columns, in design units. */
+  columnGap: z.number().default(3),
 });
 
 export type TextStyle = z.infer<typeof textStyleValidator>;
@@ -98,6 +106,14 @@ export const resolvePadding = (
 
 export const textStylePatchValidator = textStyleValidator.partial();
 export type TextStylePatch = z.infer<typeof textStylePatchValidator>;
+
+/** Documents come out of Yjs unparsed, so the defaults above may be missing. */
+export const resolveColumns = (
+  style: Partial<Pick<TextStyle, "maxColumns" | "columnGap">>,
+): { maxColumns: number; columnGap: number } => ({
+  maxColumns: Math.max(1, Math.floor(style.maxColumns ?? 4)),
+  columnGap: Math.max(0, style.columnGap ?? 3),
+});
 
 /**
  * Omits what cannot apply to an inline span: `fontSize` is absolute design
