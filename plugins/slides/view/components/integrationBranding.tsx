@@ -1,5 +1,6 @@
 import { FcGoogle } from "react-icons/fc";
-import { SiCanva } from "react-icons/si";
+
+import { CanvaIconLogo } from "./CanvaLogo";
 
 export type IntegrationBrand = {
   id: string;
@@ -16,5 +17,5 @@ export const googleSlidesBrand: IntegrationBrand = {
 export const canvaBrand: IntegrationBrand = {
   id: "canva",
   name: "Canva",
-  icon: <SiCanva className="size-10 text-[#00C4CC]" />,
+  icon: <CanvaIconLogo className="size-10" />,
 };

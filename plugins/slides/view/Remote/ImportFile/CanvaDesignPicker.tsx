@@ -11,8 +11,8 @@ import {
 } from "@repo/ui";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { FaArrowRightArrowLeft } from "react-icons/fa6";
-import { SiCanva } from "react-icons/si";
 
+import { CanvaIconLogo } from "../../components/CanvaLogo";
 import { usePluginAPI } from "../../pluginApi";
 import { trpc } from "../../trpc";
 
@@ -106,7 +106,7 @@ export const CanvaDesignPicker = ({
       <DialogContent size="3xl" className="md:max-w-[900px] md:min-h-[80vh]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <SiCanva className="size-5 text-[#00C4CC]" />
+            <CanvaIconLogo className="size-5" />
             Import from Canva
           </DialogTitle>
         </DialogHeader>
@@ -148,7 +148,7 @@ export const CanvaDesignPicker = ({
                     />
                   ) : (
                     <div className="w-full aspect-video bg-slate-100 flex items-center justify-center">
-                      <SiCanva className="size-8 text-[#00C4CC]" />
+                      <CanvaIconLogo className="size-8" />
                     </div>
                   )}
                   <div className="p-2">
