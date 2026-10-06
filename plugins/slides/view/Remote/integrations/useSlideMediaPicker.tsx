@@ -110,6 +110,7 @@ export const useSlideMediaPicker = () => {
                     icon={icon}
                     text={name}
                     isLoading={false}
+                    testId={`slides-integration-${id}`}
                   />
                 ))}
               </IntegrationSection>

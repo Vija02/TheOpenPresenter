@@ -15,6 +15,7 @@ import type {
   PptImportData,
 } from "../types";
 import { createImageProcessor } from "./googleSlides/cacheGoogleSlideImage";
+import { googleUrl } from "./googleSlides/oauth";
 import { processHtml } from "./googleSlides/processHtml";
 import { extractSlideData } from "./googleSlides/slideData/slideDataExtractor";
 import type { ImportHelpers } from "./helpers";
@@ -112,7 +113,7 @@ export const createImporters = (
         // Proxy our files through cloud server
         const proxyRes = await axios.post(
           `${rootUrl}/device/host/media-proxy-url`,
-          { mediaName },
+          { mediaName, organizationId: loadedContextData.organizationId },
           {
             headers: { "x-top-csrf-protection": "1" },
             validateStatus: () => true,
@@ -202,6 +203,7 @@ export const createImporters = (
     name,
     replaceImportId,
     userId,
+    googleConnectionId = null,
   }: {
     pluginId: string;
     presentationId: string;
@@ -209,6 +211,7 @@ export const createImporters = (
     name?: string;
     replaceImportId?: string;
     userId: string | null;
+    googleConnectionId?: string | null;
   }) => {
     const log = logger.child({
       pluginId,
@@ -225,6 +228,7 @@ export const createImporters = (
       ...getBaseImport("googleslides", name, replaceImportId),
       type: "googleslides",
       presentationId,
+      googleConnectionId,
       html: "",
     };
     loadedPlugin.pluginData.imports[newImport.importId] = newImport;
@@ -233,7 +237,9 @@ export const createImporters = (
       // Step 1: Fetch HTML embed
       log.info("Fetching HTML embed");
       const htmlData = await axios(
-        `https://docs.google.com/presentation/d/${presentationId}/embed?rm=minimal`,
+        googleUrl(
+          `https://docs.google.com/presentation/d/${presentationId}/embed?rm=minimal`,
+        ),
         {
           headers: { Authorization: `Bearer ${token}` },
         },
@@ -253,7 +259,9 @@ export const createImporters = (
 
       // Step 3: Download PDF in parallel with image downloads
       const pdfRes = await axios(
-        `https://docs.google.com/feeds/download/presentations/Export?id=${presentationId}&exportFormat=pdf`,
+        googleUrl(
+          `https://docs.google.com/feeds/download/presentations/Export?id=${presentationId}&exportFormat=pdf`,
+        ),
         {
           headers: { Authorization: `Bearer ${token}` },
           responseType: "arraybuffer",

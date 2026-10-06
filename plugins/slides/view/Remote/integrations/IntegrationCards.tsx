@@ -35,6 +35,7 @@ export const IntegrationCards = ({
               icon={icon}
               text={name}
               isLoading={isLoading}
+              testId={`slides-integration-${id}`}
             />
           )}
         </Controller>

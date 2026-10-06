@@ -27,6 +27,9 @@ import { createImporters } from "./importers";
 import { getCanvaOAuthConfig } from "./importers/canva/oauth";
 import { createCanvaRouter } from "./importers/canva/router";
 import { registerCanvaRoutes } from "./importers/canva/routes";
+import { getGoogleOAuthConfig } from "./importers/googleSlides/oauth";
+import { createGoogleSlidesRouter } from "./importers/googleSlides/router";
+import { registerGoogleSlidesRoutes } from "./importers/googleSlides/routes";
 import { createImportHelpers } from "./importers/helpers";
 import { createRemoveImportById } from "./importers/removeImport";
 import {
@@ -60,12 +63,8 @@ import {
 export const init = (
   serverPluginApi: ServerPluginApi<PluginBaseData, PluginRendererData>,
 ) => {
-  if (!process.env.PLUGIN_GOOGLE_SLIDES_CLIENT_ID) {
-    throw new Error(
-      "PLUGIN_GOOGLE_SLIDES_CLIENT_ID env var missing. Please set it to use this plugin.",
-    );
-  }
   const canvaEnabled = getCanvaOAuthConfig() !== null;
+  const googleStoresConnections = getGoogleOAuthConfig() !== null;
 
   serverPluginApi.registerCSPDirective(pluginName, {
     "frame-src": ["'self'", "*.google.com"],
@@ -90,6 +89,10 @@ export const init = (
     pluginName,
     path.join(__dirname, "../migrations"),
   );
+
+  if (googleStoresConnections) {
+    registerGoogleSlidesRoutes(serverPluginApi);
+  }
 
   if (canvaEnabled) {
     registerCanvaRoutes(serverPluginApi);
@@ -116,7 +119,8 @@ export const init = (
   serverPluginApi.registerLooks(pluginName, screenLooks);
 
   serverPluginApi.registerEnvToViews(pluginName, {
-    PLUGIN_GOOGLE_SLIDES_CLIENT_ID: process.env.PLUGIN_GOOGLE_SLIDES_CLIENT_ID,
+    PLUGIN_GOOGLE_SLIDES_CLIENT_ID:
+      process.env.PLUGIN_GOOGLE_SLIDES_CLIENT_ID ?? "",
     PLUGIN_SLIDES_CANVA_ENABLED: canvaEnabled ? "1" : "",
   });
 
@@ -317,6 +321,10 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
   const { importPpt, importGoogleSlidesDeck, importPdf, importImages } =
     createImporters(serverPluginApi, importHelpers);
   const canvaRouter = createCanvaRouter(t, { serverPluginApi, importHelpers });
+  const googleSlidesRouter = createGoogleSlidesRouter(t, {
+    serverPluginApi,
+    importGoogleSlidesDeck,
+  });
   const removeImportById = createRemoveImportById(serverPluginApi);
 
   return t.router({
@@ -409,6 +417,7 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
         ),
 
       ...canvaRouter.procedures,
+      ...googleSlidesRouter.procedures,
 
       // Upload links stuff
       listUploadLinks: t.procedure
