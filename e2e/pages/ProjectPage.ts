@@ -12,7 +12,7 @@ const pluginsList = [
   "Timer",
   "Video Player",
   "Audio Recorder",
-  "Radio",
+  "Music Player",
   "Worship Pads",
   "Bible",
   "Screen Share",
