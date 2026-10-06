@@ -199,6 +199,9 @@ export const startFakeCloud = async (syncTables: CloudSyncTable[]) => {
     );
     md.imageMetadata = md.imageMetadata.filter((r) => !ids.has(r.imageMediaId));
     md.videoMetadata = md.videoMetadata.filter((r) => !ids.has(r.videoMediaId));
+    md.audioMetadata = md.audioMetadata?.filter(
+      (r) => !ids.has(r.audioMediaId),
+    );
   };
 
   const mediaInUse = (id: string): boolean =>
@@ -221,6 +224,14 @@ export const startFakeCloud = async (syncTables: CloudSyncTable[]) => {
         imageSizes: md.imageSizes.filter((r) => ids.has(r.imageMediaId)),
         imageMetadata: md.imageMetadata.filter((r) => ids.has(r.imageMediaId)),
         videoMetadata: md.videoMetadata.filter((r) => ids.has(r.videoMediaId)),
+        // Left out when the fake plays an instance from before audio
+        ...(md.audioMetadata
+          ? {
+              audioMetadata: md.audioMetadata.filter((r) =>
+                ids.has(r.audioMediaId),
+              ),
+            }
+          : {}),
       },
       links: fake.mediaLinks.filter((l) => ids.has(l.mediaId)),
       endCursor:
@@ -264,6 +275,11 @@ export const startFakeCloud = async (syncTables: CloudSyncTable[]) => {
         row.transcodeStatus !== "completed";
       if (!keep) {
         add(md.videoMetadata, row, (a, b) => a.videoMediaId === b.videoMediaId);
+      }
+    }
+    if (md.audioMetadata) {
+      for (const row of within.audioMetadata ?? []) {
+        add(md.audioMetadata, row, (a, b) => a.audioMediaId === b.audioMediaId);
       }
     }
     return {

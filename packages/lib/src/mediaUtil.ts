@@ -2,7 +2,7 @@ import { VideoTranscodeStatus } from "@repo/graphql";
 import { TypeId, fromString, fromUUID, toUUID } from "typeid-js";
 import { z } from "zod";
 
-import { isVideoFile } from "./mediaTypeUtil";
+import { isAudioFile, isVideoFile } from "./mediaTypeUtil";
 
 export const internalMediaValidator = z.object({
   mediaId: z.string(),
@@ -98,14 +98,25 @@ export const resolveProcessedMediaUrl = ({
   return undefined;
 };
 
-export const isVideoReady = (media: {
+/** Whether the media can be used yet, since video and audio need processing first */
+export const isMediaReady = (media: {
   fileExtension?: string | null;
   videoMetadata?: {
     transcodeStatus?: VideoTranscodeStatus | null;
   } | null;
+  audioMetadata?: {
+    transcodeStatus?: VideoTranscodeStatus | null;
+  } | null;
 }): boolean => {
-  if (!isVideoFile(media.fileExtension)) return true;
-  const videoMeta = media.videoMetadata;
-  if (!videoMeta) return false;
-  return videoMeta.transcodeStatus === VideoTranscodeStatus.Completed;
+  if (isVideoFile(media.fileExtension)) {
+    return (
+      media.videoMetadata?.transcodeStatus === VideoTranscodeStatus.Completed
+    );
+  }
+  if (isAudioFile(media.fileExtension)) {
+    return (
+      media.audioMetadata?.transcodeStatus === VideoTranscodeStatus.Completed
+    );
+  }
+  return true;
 };

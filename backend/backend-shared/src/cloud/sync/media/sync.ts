@@ -477,6 +477,7 @@ const listCloud = async (
     links: [],
   };
   let after: string | null = null;
+  let knowsAudio = false;
   do {
     const { cloudMediaSyncPage: page }: { cloudMediaSyncPage: CloudMediaPage } =
       await queryCloud(urqlClient, CLOUD_MEDIA_SYNC_PAGE, {
@@ -486,11 +487,13 @@ const listCloud = async (
     all.organizationId = page.organizationId;
     all.media.push(...page.media);
     all.links.push(...page.links);
+    knowsAudio ||= !!page.metadata.audioMetadata;
     for (const key of Object.keys(all.metadata) as (keyof MediaMetadata)[]) {
-      (all.metadata[key] as unknown[]).push(...page.metadata[key]);
+      (all.metadata[key] as unknown[]).push(...(page.metadata[key] ?? []));
     }
     after = page.endCursor;
   } while (after);
+  if (!knowsAudio) delete all.metadata.audioMetadata;
   return all;
 };
 
@@ -652,11 +655,24 @@ const missingFrom = (
       r.duration === null ? null : Number(r.duration),
       r.transcodeStatus,
     ]);
+  const audio = (r: NonNullable<MediaMetadata["audioMetadata"]>[number]) =>
+    json([
+      r.audioMediaId,
+      r.playbackMediaId,
+      r.coverMediaId,
+      r.duration === null ? null : Number(r.duration),
+      r.title,
+      r.artist,
+      r.album,
+      r.normalizeLoudness,
+      r.transcodeStatus,
+    ]);
   const has = {
     dependencies: keyed(cloud.dependencies, dependency),
     imageSizes: keyed(cloud.imageSizes, size),
     imageMetadata: keyed(cloud.imageMetadata, image),
     videoMetadata: keyed(cloud.videoMetadata, video),
+    audioMetadata: keyed(cloud.audioMetadata ?? [], audio),
   };
   return {
     dependencies: local.dependencies.filter(
@@ -669,6 +685,11 @@ const missingFrom = (
     videoMetadata: local.videoMetadata.filter(
       (r) => !has.videoMetadata.has(video(r)),
     ),
+    audioMetadata: cloud.audioMetadata
+      ? (local.audioMetadata ?? []).filter(
+          (r) => !has.audioMetadata.has(audio(r)),
+        )
+      : [],
   };
 };
 
@@ -698,7 +719,7 @@ const pushMetadata = async (
   metadata: MediaMetadata,
 ) => {
   const rows = (Object.keys(metadata) as (keyof MediaMetadata)[]).flatMap(
-    (table) => metadata[table].map((row) => ({ table, row })),
+    (table) => (metadata[table] ?? []).map((row) => ({ table, row })),
   );
   for (const batch of inBatches(rows, PUSH_BATCH)) {
     const part = emptyMediaMetadata();

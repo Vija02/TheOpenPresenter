@@ -6,6 +6,7 @@ export class MusicPlayerPlugin {
   readonly tracks: Locator;
   readonly nowPlaying: Locator;
   readonly radioTab: Locator;
+  readonly libraryButton: Locator;
 
   constructor(public readonly page: Page) {
     this.input = page.getByPlaceholder("Search YouTube or paste a link...");
@@ -13,6 +14,7 @@ export class MusicPlayerPlugin {
     this.tracks = page.getByTestId("playlist-track");
     this.nowPlaying = page.getByTestId("now-playing");
     this.radioTab = page.getByRole("tab", { name: "Radio" });
+    this.libraryButton = page.getByRole("button", { name: "From library" });
   }
 
   async submit(value: string) {
@@ -41,6 +43,11 @@ export class MusicPlayerPlugin {
     await this.page.mouse.down();
     await this.page.mouse.move(x, target.y + target.height / 2, { steps: 10 });
     await this.page.mouse.up();
+  }
+
+  /** A library track's player on an output screen */
+  static rendererAudio(rendererPage: Page): Locator {
+    return rendererPage.locator('[src*=".m4a"]');
   }
 
   /** The hidden YouTube player on an output screen */

@@ -46,4 +46,43 @@ test.describe("Media Page", () => {
     // Wait for processing to complete - the overlay should disappear
     await expect(processingOverlay).toBeHidden({ timeout: 60000 });
   });
+
+  test("can upload audio and play the processed copy", async ({
+    page,
+    mediaPage,
+    loginDefault,
+    uppyUploadFile,
+  }) => {
+    await loginDefault("/o/testorg/media");
+
+    await mediaPage.uploadButton.click();
+    await uppyUploadFile("./dummyFiles/dummyAudio.mp3");
+    await expect(mediaPage.uppyDashboard).toBeHidden({ timeout: 30000 });
+
+    const mediaCard = mediaPage.getMediaCardByName("dummyAudio.mp3");
+    await expect(mediaCard).toBeVisible({ timeout: 10000 });
+
+    const processingOverlay = mediaCard.locator(
+      ".ui--media-preview-processing-overlay",
+    );
+    await expect(processingOverlay).toBeVisible();
+    await expect(processingOverlay).toBeHidden({ timeout: 60000 });
+
+    // The cover art embedded in the mp3
+    await expect(mediaCard.locator("img")).toHaveAttribute(
+      "src",
+      /\/media\/data\/media_\w+\.jpg$/,
+    );
+
+    await mediaCard.getByTitle("Play audio").click();
+    const audio = mediaCard.locator("audio");
+    await expect(audio).toHaveAttribute(
+      "src",
+      /\/media\/data\/media_\w+\.m4a$/,
+    );
+
+    const response = await page.request.get((await audio.getAttribute("src"))!);
+    expect(response.ok()).toBe(true);
+    expect((await response.body()).length).toBeGreaterThan(1000);
+  });
 });

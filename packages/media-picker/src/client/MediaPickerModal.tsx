@@ -6,12 +6,13 @@ import {
 import { useOrganizationMediaForPickerQuery } from "@repo/graphql";
 import {
   extractMediaName,
+  isAudioFile,
   isImageFile,
+  isMediaReady,
   isVideoFile,
-  isVideoReady,
   mediaIdFromUUID,
   resolveMediaUrl,
-  useVideoProcessingStatus,
+  useMediaProcessingStatus,
 } from "@repo/lib";
 import {
   Button,
@@ -85,7 +86,7 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
     return filterMediaByType(allMedia, options?.type ?? "all");
   }, [data, options?.type]);
 
-  const { mediaList: filteredMedia, resetOverrides } = useVideoProcessingStatus(
+  const { mediaList: filteredMedia, resetOverrides } = useMediaProcessingStatus(
     rawFilteredMedia,
     { enabled: isOpen },
   );
@@ -154,6 +155,27 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
         };
       }
 
+      if (isAudioFile(media.fileExtension)) {
+        const audioMeta = media.audioMetadata;
+        const duration = audioMeta?.duration
+          ? parseFloat(audioMeta.duration)
+          : null;
+
+        result.internalAudio = {
+          playbackMediaName: audioMeta?.playbackMedia?.mediaName ?? null,
+          coverMediaName: audioMeta?.coverMedia?.mediaName ?? null,
+          metadata: JSON.parse(
+            JSON.stringify({
+              title:
+                audioMeta?.title ?? result.originalName ?? result.mediaName,
+              artist: audioMeta?.artist ?? undefined,
+              album: audioMeta?.album ?? undefined,
+              duration: duration ?? undefined,
+            }),
+          ),
+        };
+      }
+
       const imageDependency = media.dependencies.nodes.find((dep) =>
         isImageFile(dep.childMedia?.fileExtension),
       );
@@ -174,7 +196,7 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
 
   const handleClick = useCallback(
     (media: MediaWithMetadata, e: React.MouseEvent) => {
-      if (!isVideoReady(media)) return;
+      if (!isMediaReady(media)) return;
 
       const isMultiSelect = allowMultiple && e.shiftKey;
 
@@ -224,6 +246,13 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
           metadata: {
             title: originalName ?? mediaName,
           },
+        };
+      }
+      if (isAudioFile(extension)) {
+        result.internalAudio = {
+          playbackMediaName: null,
+          coverMediaName: null,
+          metadata: { title: originalName ?? mediaName },
         };
       }
       return result;
@@ -334,7 +363,7 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
                           media={media}
                           onClick={(e) => handleClick(media, e)}
                           onPreview={(m) => setPreviewMedia(m)}
-                          disabled={!isVideoReady(media)}
+                          disabled={!isMediaReady(media)}
                           selected={selectedIds.has(media.id)}
                         />
                       ))}

@@ -7,7 +7,7 @@ import {
   useMediaDependenciesOfParentQuery,
   useOrganizationMediaIndexPageQuery,
 } from "@repo/graphql";
-import { globalState, useVideoProcessingStatus } from "@repo/lib";
+import { globalState, useMediaProcessingStatus } from "@repo/lib";
 import { UploadMediaModal } from "@repo/media-picker/client";
 import {
   Button,
@@ -117,7 +117,7 @@ const OrganizationMediaPage = () => {
     [data?.organizationBySlug?.medias.nodes],
   );
 
-  const { mediaList } = useVideoProcessingStatus(rawMediaList);
+  const { mediaList } = useMediaProcessingStatus(rawMediaList);
 
   const emptyMedia = useMemo(() => mediaList.length === 0, [mediaList.length]);
 

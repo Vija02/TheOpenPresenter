@@ -842,6 +842,86 @@ describe("metadata", () => {
   });
 });
 
+describe("audio metadata", () => {
+  const audioRow = (audioMediaId: string, playbackMediaId: string) => ({
+    audioMediaId,
+    playbackMediaId,
+    coverMediaId: null,
+    duration: "4.05",
+    title: "A Song",
+    artist: "An Artist",
+    album: null,
+    normalizeLoudness: true,
+    transcodeStatus: "completed",
+  });
+
+  it("carries the processed audio both ways", async () => {
+    const here = await createLocal("a1", { extension: "mp3" });
+    const herePlayback = await createLocal("a1-playback", {
+      extension: "m4a",
+      userUploaded: false,
+    });
+    await query(
+      `insert into app_public.media_dependencies (parent_media_id, child_media_id)
+       values ($1, $2)`,
+      [here.id, herePlayback.id],
+    );
+    await query(
+      `insert into app_public.media_audio_metadata
+         (audio_media_id, playback_media_id, duration, title, artist, transcode_status)
+       values ($1, $2, 4.05, 'A Song', 'An Artist', 'completed')`,
+      [here.id, herePlayback.id],
+    );
+    await sync();
+    expect(
+      fake.mediaMetadata.audioMetadata?.find((r) => r.audioMediaId === here.id),
+    ).toMatchObject(audioRow(here.id, herePlayback.id));
+
+    const there = createOnCloud("a2", { extension: "mp3" });
+    const therePlayback = createOnCloud("a2-playback", {
+      extension: "m4a",
+      userUploaded: false,
+    });
+    fake.mediaMetadata.dependencies.push({
+      parentMediaId: there.id,
+      childMediaId: therePlayback.id,
+    });
+    fake.mediaMetadata.audioMetadata!.push(
+      audioRow(there.id, therePlayback.id),
+    );
+    await sync();
+
+    expect(
+      await query(
+        `select playback_media_id, title, transcode_status
+         from app_public.media_audio_metadata where audio_media_id = $1`,
+        [there.id],
+      ),
+    ).toEqual([
+      {
+        playback_media_id: therePlayback.id,
+        title: "A Song",
+        transcode_status: "completed",
+      },
+    ]);
+  });
+
+  it("syncs with an instance from before audio processing", async () => {
+    delete fake.mediaMetadata.audioMetadata;
+    const here = await createLocal("a3", { extension: "mp3" });
+    await query(
+      `insert into app_public.media_audio_metadata (audio_media_id, transcode_status)
+       values ($1, 'completed')`,
+      [here.id],
+    );
+    createOnCloud("a4", { extension: "mp3" });
+
+    await sync();
+    await expectQuietSync();
+    expect(fake.mediaMetadata.audioMetadata).toBeUndefined();
+  });
+});
+
 describe("when the cloud cannot answer", () => {
   it("changes nothing if the organization is not found", async () => {
     const media = await createLocal("safe");

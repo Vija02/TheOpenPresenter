@@ -1,4 +1,9 @@
-import { extractMediaName, mediaIdFromUUID, resolveMediaUrl } from "@repo/lib";
+import {
+  extractMediaName,
+  isAudioFile,
+  mediaIdFromUUID,
+  resolveMediaUrl,
+} from "@repo/lib";
 import {
   Dialog,
   DialogBody,
@@ -22,8 +27,16 @@ export const MediaPreviewDialog: React.FC<MediaPreviewDialogProps> = ({
   isOpen,
   onClose,
 }) => {
+  const isAudio = isAudioFile(media?.fileExtension);
+
   const videoUrl = useMemo(() => {
     if (!media) return null;
+    if (isAudioFile(media.fileExtension)) {
+      const playbackMediaName = media.audioMetadata?.playbackMedia?.mediaName;
+      return playbackMediaName
+        ? resolveMediaUrl(extractMediaName(playbackMediaName))
+        : null;
+    }
     const hlsId = media.videoMetadata?.hlsMediaId;
     if (hlsId) {
       const hlsMediaName = mediaIdFromUUID(hlsId) + ".m3u8";
@@ -31,6 +44,11 @@ export const MediaPreviewDialog: React.FC<MediaPreviewDialogProps> = ({
     }
     return resolveMediaUrl(extractMediaName(media.mediaName));
   }, [media]);
+
+  const coverMediaName = media?.audioMetadata?.coverMedia?.mediaName;
+  const coverUrl = coverMediaName
+    ? resolveMediaUrl(extractMediaName(coverMediaName))
+    : null;
 
   if (!media || !videoUrl) return null;
 
@@ -47,9 +65,16 @@ export const MediaPreviewDialog: React.FC<MediaPreviewDialogProps> = ({
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
         <DialogBody className="bp--media-preview-dialog-body">
-          <div className="bp--media-preview-dialog-player">
-            <PreviewVideoPlayer src={videoUrl} controls playing muted />
-          </div>
+          {isAudio ? (
+            <div className="bp--media-preview-dialog-audio">
+              {coverUrl && <img src={coverUrl} alt="" />}
+              <audio src={videoUrl} controls autoPlay />
+            </div>
+          ) : (
+            <div className="bp--media-preview-dialog-player">
+              <PreviewVideoPlayer src={videoUrl} controls playing muted />
+            </div>
+          )}
         </DialogBody>
       </DialogContent>
     </Dialog>

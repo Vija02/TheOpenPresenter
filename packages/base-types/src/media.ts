@@ -27,6 +27,20 @@ export type MediaPickerOptionsInternal = MediaPickerOptions & {
   pluginContext: PluginContext;
 };
 
+/** A library audio file, processed for playback */
+export type InternalAudio = {
+  /** Null until processing finishes */
+  playbackMediaName: string | null;
+  coverMediaName: string | null;
+  metadata: {
+    title?: string;
+    artist?: string;
+    album?: string;
+    /** In seconds */
+    duration?: number;
+  };
+};
+
 export type MediaPickerResult = {
   id: string;
   mediaName: string;
@@ -34,6 +48,7 @@ export type MediaPickerResult = {
   fileExtension: string | null;
   url: string;
   internalVideo?: InternalVideo;
+  internalAudio?: InternalAudio;
   extraMeta?: {
     childThumbnailUrl?: string;
   };

@@ -12,7 +12,7 @@ export * from "./preloader";
 export * from "./sse";
 export * from "./streamToBuffer";
 export * from "./useInjectScript";
-export * from "./useVideoProcessingStatus";
+export * from "./useMediaProcessingStatus";
 export * from "./uuidUtils";
 export * from "./yjsTypes";
 export * from "./YjsWatcher";

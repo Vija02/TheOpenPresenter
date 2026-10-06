@@ -6,8 +6,8 @@ import {
   isBrowserSupportedVideoFile,
   isExtensionInList,
   isImageFile,
+  isMediaReady,
   isVideoFile,
-  isVideoReady,
   mediaIdFromUUID,
   resolveMediaUrl,
   resolveProcessedMediaUrl,
@@ -36,6 +36,12 @@ export type MediaPreviewData = {
     transcodeStatus?: VideoTranscodeStatus | null;
     transcodeProgress?: number | null;
   } | null;
+  audioMetadata?: {
+    coverMediaId?: string | null;
+    playbackMedia?: { mediaName: string } | null;
+    transcodeStatus?: VideoTranscodeStatus | null;
+    transcodeProgress?: number | null;
+  } | null;
   // Dependencies for fallback thumbnail
   dependencies?: {
     nodes: Array<{
@@ -49,7 +55,7 @@ export type MediaPreviewData = {
 
 export type MediaPreviewProps = {
   media: MediaPreviewData;
-  /** Optional video player component - if provided, shows play button and uses this for playback */
+  /** Optional video player component - if provided, shows play button and uses this for playback. Audio also gets a play button when this is set */
   videoPlayerComponent?: React.ComponentType<{
     src: string;
     onEnded?: () => void;
@@ -78,16 +84,22 @@ const getFallbackIcon = (
   return VscFileMedia;
 };
 
-const getVideoStatusText = (
-  videoMetadata: MediaPreviewData["videoMetadata"],
+const getProcessingStatusText = (
+  metadata:
+    | {
+        transcodeStatus?: VideoTranscodeStatus | null;
+        transcodeProgress?: number | null;
+      }
+    | null
+    | undefined,
 ): string | null => {
-  if (!videoMetadata) return "Processing...";
+  if (!metadata) return "Processing...";
 
-  switch (videoMetadata.transcodeStatus) {
+  switch (metadata.transcodeStatus) {
     case VideoTranscodeStatus.Pending:
       return "Queued";
     case VideoTranscodeStatus.Processing:
-      return `Processing ${videoMetadata.transcodeProgress ?? 0}%`;
+      return `Processing ${metadata.transcodeProgress ?? 0}%`;
     case VideoTranscodeStatus.Failed:
       return "Failed";
     case VideoTranscodeStatus.Completed:
@@ -119,6 +131,7 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
   showProcessingOverlay = true,
 }) => {
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
 
   const isBrowserSupportedImage = isBrowserSupportedImageFile(
     media.fileExtension,
@@ -128,12 +141,13 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
   );
   const isImage = isImageFile(media.fileExtension);
   const isVideo = isVideoFile(media.fileExtension);
+  const isAudio = isAudioFile(media.fileExtension);
   const isPng = isPngFile(media.fileExtension);
 
   // Video is processing if it's a video file and not ready
-  const isVideoProcessing = isVideo && !isVideoReady(media);
+  const isVideoProcessing = isVideo && !isMediaReady(media);
   const videoStatusText = isVideo
-    ? getVideoStatusText(media.videoMetadata)
+    ? getProcessingStatusText(media.videoMetadata)
     : null;
 
   const FallbackIcon = getFallbackIcon(media.fileExtension);
@@ -152,11 +166,12 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
   }, [isImage, isBrowserSupportedImage, media.mediaName, processedImageSize]);
 
   const thumbnailUrl = useMemo(() => {
-    // First, check video metadata for thumbnail
-    const videoMeta = media.videoMetadata;
-    if (videoMeta?.thumbnailMediaId) {
-      const thumbnailMediaName =
-        mediaIdFromUUID(videoMeta.thumbnailMediaId) + ".jpg";
+    // First, check video and audio metadata for thumbnail
+    const thumbnailMediaId =
+      media.videoMetadata?.thumbnailMediaId ??
+      media.audioMetadata?.coverMediaId;
+    if (thumbnailMediaId) {
+      const thumbnailMediaName = mediaIdFromUUID(thumbnailMediaId) + ".jpg";
       return resolveMediaUrl(extractMediaName(thumbnailMediaName));
     }
 
@@ -171,7 +186,7 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
     }
 
     return null;
-  }, [media.videoMetadata, media.dependencies?.nodes]);
+  }, [media.videoMetadata, media.audioMetadata, media.dependencies?.nodes]);
 
   const hlsUrl = useMemo(() => {
     if (media.videoMetadata?.hlsMediaId) {
@@ -182,6 +197,15 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
   }, [isBrowserSupportedVideo, media.videoMetadata, media.dependencies?.nodes]);
 
   const videoUrl = hlsUrl ?? mediaUrl;
+
+  const audioPlaybackMediaName = media.audioMetadata?.playbackMedia?.mediaName;
+  const audioPlaybackUrl = useMemo(
+    () =>
+      audioPlaybackMediaName
+        ? resolveMediaUrl(extractMediaName(audioPlaybackMediaName))
+        : null,
+    [audioPlaybackMediaName],
+  );
 
   const alt = media.originalName ?? media.mediaName;
 
@@ -247,7 +271,44 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
     );
   }
 
-  // Case 4: Browser-supported image (show directly)
+  // Case 4: Audio (cover art, playing the processed file once it's ready)
+  if (isAudio) {
+    const isAudioReady = isMediaReady(media) && !!audioPlaybackUrl;
+    return (
+      <div className={containerClassName}>
+        {thumbnailUrl ? (
+          <img src={thumbnailUrl} alt={alt} className={defaultMediaClassName} />
+        ) : (
+          <FallbackIcon className={defaultIconClassName} />
+        )}
+        {showProcessingOverlay && !isMediaReady(media) ? (
+          <ProcessingOverlay
+            statusText={getProcessingStatusText(media.audioMetadata)}
+          />
+        ) : VideoPlayer && isAudioReady && isAudioPlaying ? (
+          <audio
+            src={audioPlaybackUrl}
+            controls
+            autoPlay
+            onEnded={() => setIsAudioPlaying(false)}
+            className="ui--media-preview-audio"
+          />
+        ) : VideoPlayer && isAudioReady ? (
+          <button
+            onClick={() => setIsAudioPlaying(true)}
+            className={defaultPlayButtonClassName}
+            title="Play audio"
+          >
+            <div className="ui--media-preview-play-icon-wrapper">
+              <VscPlay className="ui--media-preview-play-icon" />
+            </div>
+          </button>
+        ) : null}
+      </div>
+    );
+  }
+
+  // Case 5: Browser-supported image (show directly)
   if (isBrowserSupportedImage) {
     return (
       <div
@@ -261,7 +322,7 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
     );
   }
 
-  // Case 5: Non-browser-supported image (use processed URL)
+  // Case 6: Non-browser-supported image (use processed URL)
   if (isImage && processedUrl) {
     return (
       <div className={containerClassName}>
@@ -270,7 +331,7 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
     );
   }
 
-  // Case 6: Other file types - check for thumbnail from dependencies
+  // Case 7: Other file types - check for thumbnail from dependencies
   if (thumbnailUrl) {
     return (
       <div className={containerClassName}>
@@ -279,7 +340,7 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
     );
   }
 
-  // Case 7: Fallback - show icon based on file type
+  // Case 8: Fallback - show icon based on file type
   return (
     <div className={containerClassName}>
       <FallbackIcon className={defaultIconClassName} />
