@@ -7,7 +7,7 @@ import {
   TRPCObject,
   YjsWatcher,
 } from "@repo/base-plugin/server";
-import { TypedArray } from "@repo/lib";
+import { TypedArray, extractMediaName } from "@repo/lib";
 import { createVideoPlaybackState } from "@repo/video";
 import getYouTubeID from "get-youtube-id";
 import { proxy } from "valtio";
@@ -25,7 +25,12 @@ import {
 import { PluginBaseData, PluginRendererData } from "./types";
 import { getPlaylistVideos } from "./youtubePlaylist";
 
+const AUDIO_CHECK_INTERVAL_MS = 3000;
+
+let mediaApi: ServerPluginApi["media"];
+
 export const init = (serverPluginApi: ServerPluginApi) => {
+  mediaApi = serverPluginApi.media;
   serverPluginApi.registerCSPDirective(pluginName, {
     "script-src": ["https://www.youtube.com"],
     "frame-src": ["https://www.youtube.com"],
@@ -84,8 +89,68 @@ const onPluginDataLoaded = (
   const data = proxy(pluginInfo.toJSON() as Plugin<PluginBaseData>);
   const unbind = bind(data, pluginInfo as any);
 
+  // Library audio picked right after upload can't play until it's processed
+  const checking = new Map<string, ReturnType<typeof setInterval>>();
+  const stopChecking = (trackId: string) => {
+    clearInterval(checking.get(trackId));
+    checking.delete(trackId);
+  };
+
+  const fillInProcessedAudio = () => {
+    for (const track of data.pluginData.tracks) {
+      if (
+        track.type !== "audio" ||
+        track.playbackMediaName ||
+        checking.has(track.id)
+      ) {
+        continue;
+      }
+
+      const { id: trackId, mediaName } = track;
+      const check = async () => {
+        const metadata = await mediaApi
+          .getAudioMetadata(extractMediaName(mediaName).uuid)
+          .catch(() => undefined);
+        if (metadata?.transcodeStatus === "failed") stopChecking(trackId);
+        if (metadata?.transcodeStatus !== "completed") return;
+
+        stopChecking(trackId);
+        const mutableTrack = data.pluginData.tracks.find(
+          (x) => x.id === trackId,
+        );
+        if (mutableTrack?.type !== "audio") return;
+
+        mutableTrack.playbackMediaName = metadata.playbackMediaName;
+        mutableTrack.coverMediaName = metadata.coverMediaName;
+        // The tags beat the file name it was given on upload
+        if (metadata.title) mutableTrack.metadata.title = metadata.title;
+        if (metadata.artist) mutableTrack.metadata.author = metadata.artist;
+        if (metadata.duration) {
+          mutableTrack.metadata.duration = metadata.duration;
+        }
+      };
+
+      checking.set(trackId, setInterval(check, AUDIO_CHECK_INTERVAL_MS));
+      check();
+    }
+    for (const trackId of checking.keys()) {
+      if (!data.pluginData.tracks.some((x) => x.id === trackId)) {
+        stopChecking(trackId);
+      }
+    }
+  };
+
+  fillInProcessedAudio();
+  const yjsWatcher = new YjsWatcher(pluginInfo as Y.Map<any>);
+  yjsWatcher.watchYjs(
+    (x: Plugin<PluginBaseData>) => x.pluginData.tracks,
+    fillInProcessedAudio,
+  );
+
   return {
     dispose: () => {
+      for (const trackId of [...checking.keys()]) stopChecking(trackId);
+      yjsWatcher.dispose();
       unbind();
     },
   };

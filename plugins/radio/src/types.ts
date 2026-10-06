@@ -14,8 +14,18 @@ export type YoutubeTrack = {
   metadata: TrackMetadata;
 };
 
-// DEBT: Add "audio" tracks once the media system supports audio files
-export type Track = YoutubeTrack;
+/** From the media library. Names rather than urls, since hosts differ */
+export type AudioTrack = {
+  id: string;
+  type: "audio";
+  mediaName: string;
+  /** Null while the library is still processing it */
+  playbackMediaName: string | null;
+  coverMediaName: string | null;
+  metadata: TrackMetadata;
+};
+
+export type Track = YoutubeTrack | AudioTrack;
 
 export type RepeatMode = SequenceRepeat;
 

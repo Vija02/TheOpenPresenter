@@ -1,8 +1,10 @@
+import { useVideoPreload } from "@repo/video/client";
 import { lazy } from "react";
 
 import { SequenceFade, SequencePlaybackState } from "../../src/sequence";
 import { Track } from "../../src/types";
 import { usePluginAPI } from "../pluginApi";
+import { isTrackReady, trackVideo } from "../trackHelpers";
 import { usePlaylistPosition } from "../usePlaylistPosition";
 import type { TrackRole } from "./TrackPlayer";
 
@@ -40,7 +42,9 @@ type Layer = {
 
 const TrackRenderer = () => {
   const {
+    tracks,
     track,
+    isEnded,
     playbackState,
     fade,
     outgoing,
@@ -49,11 +53,42 @@ const TrackRenderer = () => {
     upcomingTrack,
   } = usePlaylistPosition();
 
-  if (!track) {
-    return null;
-  }
+  // The start of each library track, so any of them begins at once.
+  useVideoPreload(
+    [track, upcomingTrack].map((x) => x && trackVideo(x)),
+    "eager",
+  );
+  useVideoPreload(
+    tracks.filter((x) => x.type === "audio").map(trackVideo),
+    "background",
+  );
 
-  const layers: Layer[] = [{ track, role: "current", playbackState, fade }];
+  const layers: Layer[] = [];
+  if (track) {
+    layers.push({ track, role: "current", playbackState, fade });
+  }
+  // Play starts the first track from here, so it's ready and waiting. This
+  // also loads the player itself, and YouTube can't be warmed any other way
+  const firstTrack = tracks[0];
+  if (
+    (!track || isEnded) &&
+    firstTrack &&
+    isTrackReady(firstTrack) &&
+    firstTrack.id !== track?.id
+  ) {
+    layers.push({
+      track: firstTrack,
+      role: "upcoming",
+      playbackState: {
+        uid: "upcoming:first",
+        isPlaying: false,
+        seek: 0,
+        startedAt: 0,
+        onFinishBehaviour: "pause",
+      },
+      fade: null,
+    });
+  }
   if (outgoing && outgoingTrack) {
     layers.push({
       track: outgoingTrack,
@@ -64,6 +99,7 @@ const TrackRenderer = () => {
   }
   // Loaded paused and silent ahead of time, so it can start on cue
   if (
+    track &&
     upcoming &&
     upcomingTrack &&
     !layers.some((x) => x.track.id === upcomingTrack.id)
