@@ -12,6 +12,8 @@ import { defineConfig, devices } from "@playwright/test";
 const FAKE_AI_PORT = Number(process.env.FAKE_AI_PORT || 5679);
 /** Kept in step with fixtures/planningCenterFixture.ts. */
 const FAKE_PCO_PORT = Number(process.env.FAKE_PCO_PORT || 5680);
+/** Kept in step with fixtures/googleSlidesFixture.ts. */
+const FAKE_GOOGLE_PORT = Number(process.env.FAKE_GOOGLE_PORT || 5681);
 /** Overridable so a run can use its own server instead of the dev one. */
 const APP_URL = process.env.E2E_BASE_URL || "http://localhost:5678";
 
@@ -100,6 +102,12 @@ export default defineConfig({
       reuseExistingServer: !process.env.CI,
     },
     {
+      cwd: "./",
+      command: "yarn fake-google",
+      url: `http://localhost:${FAKE_GOOGLE_PORT}/__control/health`,
+      reuseExistingServer: !process.env.CI,
+    },
+    {
       cwd: "../",
       command: "yarn server start",
       url: APP_URL,
@@ -112,6 +120,11 @@ export default defineConfig({
         PLUGIN_LYRICS_PCO_CLIENT_SECRET: "fake-pco-secret",
         PLUGIN_LYRICS_PCO_API_URL: `http://localhost:${FAKE_PCO_PORT}`,
         PLUGIN_LYRICS_PCO_OAUTH_URL: `http://localhost:${FAKE_PCO_PORT}`,
+        // The app id is the client id's numeric prefix
+        PLUGIN_GOOGLE_SLIDES_CLIENT_ID:
+          "100000000000-fake.apps.googleusercontent.com",
+        PLUGIN_GOOGLE_SLIDES_CLIENT_SECRET: "fake-google-secret",
+        PLUGIN_GOOGLE_SLIDES_API_URL: `http://localhost:${FAKE_GOOGLE_PORT}`,
       },
     },
   ],

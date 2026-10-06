@@ -1,0 +1,91 @@
+-- ---------------------------------------------------------------------------
+-- Stored Google connections, so picking a deck no longer needs a fresh
+-- sign-in every time and imported decks can be re-fetched later.
+--
+-- Only populated on a server holding PLUGIN_GOOGLE_SLIDES_CLIENT_SECRET (the
+-- cloud). Local installs ask the cloud for access tokens and leave these
+-- tables empty. Deliberately not @cloudSync.
+-- ---------------------------------------------------------------------------
+create table if not exists google_connection (
+  id uuid primary key default gen_random_uuid(),
+
+  organization_id uuid not null
+    references app_public.organizations (id) on delete cascade,
+
+  -- OpenID `sub`
+  google_user_id text not null,
+  google_email text,
+  google_display_name text,
+
+  connected_by_user_id uuid
+    references app_public.users (id) on delete set null,
+
+  scopes text not null default '',
+
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists google_connection_organization_id_idx
+  on google_connection (organization_id);
+
+create index if not exists google_connection_connected_by_user_id_idx
+  on google_connection (connected_by_user_id);
+
+create unique index if not exists google_connection_org_google_user_key
+  on google_connection (organization_id, google_user_id);
+
+create or replace trigger _100_timestamps
+  before insert or update on google_connection
+  for each row
+  execute procedure app_private.tg__timestamps();
+
+grant select on google_connection to :DATABASE_VISITOR;
+
+alter table google_connection enable row level security;
+
+drop policy if exists select_own_org on google_connection;
+create policy select_own_org on google_connection for select
+  using (organization_id in (select app_public.current_user_member_organization_ids()));
+
+-- ---------------------------------------------------------------------------
+-- Tokens (no visitor grants)
+-- ---------------------------------------------------------------------------
+create table if not exists google_connection_secret (
+  google_connection_id uuid primary key
+    references google_connection (id) on delete cascade,
+
+  access_token text not null,
+  refresh_token text not null,
+  access_token_expires_at timestamptz not null
+);
+
+alter table google_connection_secret enable row level security;
+
+-- ---------------------------------------------------------------------------
+-- PKCE state for the OAuth round trip
+-- ---------------------------------------------------------------------------
+create table if not exists google_oauth_state (
+  -- The opaque value sent to Google as the `state` query parameter
+  state_id text primary key,
+
+  code_verifier text not null,
+
+  organization_id uuid not null
+    references app_public.organizations (id) on delete cascade,
+  user_id uuid not null
+    references app_public.users (id) on delete cascade,
+
+  -- Set when the sign-in is part of an integration intent (a local install
+  -- picking through the cloud); the callback then continues to the picker
+  -- instead of closing a popup.
+  intent_id text,
+
+  created_at timestamptz not null default now(),
+  expires_at timestamptz not null default now() + interval '15 minutes'
+);
+
+create index if not exists google_oauth_state_expires_at_idx
+  on google_oauth_state (expires_at);
+
+alter table google_oauth_state enable row level security;

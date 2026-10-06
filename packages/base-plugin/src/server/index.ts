@@ -1,4 +1,5 @@
 export * from "./ai";
+export * from "./integrations";
 export * from "./pluginDatabase";
 export * from "./serverPlugin";
 export * from "./serverPluginTypes";
