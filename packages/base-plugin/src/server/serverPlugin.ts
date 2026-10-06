@@ -20,6 +20,7 @@ import {
   chatCompletionStream,
   isAIConfigured,
 } from "./ai";
+import { IntegrationsApi } from "./integrations";
 import {
   PluginDb,
   PluginDbAuth,
@@ -387,6 +388,18 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
       return { success: false };
     }
   }
+
+  /** Shared plumbing for third-party integrations. See ./integrations.ts */
+  public integrations = new IntegrationsApi(() => {
+    const pool = this.app.get("rootPgPool") as Pool | undefined;
+    if (!pool) {
+      throw new Error(
+        "rootPgPool is not available yet. integrations must be used at " +
+          "request/runtime, after the database pools are installed.",
+      );
+    }
+    return pool;
+  });
 
   public ai = {
     isConfigured: (): boolean => isAIConfigured(),
