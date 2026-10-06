@@ -1,7 +1,8 @@
 import { OrganizationType } from "@repo/graphql";
+
 import { expect, test } from "../../../../../fixtures/projectFixture";
 
-test.describe.serial("Radio Plugin", () => {
+test.describe.serial("Music Player Plugin: Radio", () => {
   test.beforeEach(
     async ({ e2eCommand }) =>
       await Promise.all([
@@ -14,6 +15,7 @@ test.describe.serial("Radio Plugin", () => {
     page,
     e2eCommand,
     projectPage,
+    musicPlayerPlugin,
   }) => {
     await e2eCommand.login({
       username: "testuser_church",
@@ -28,7 +30,8 @@ test.describe.serial("Radio Plugin", () => {
       next: "/app/testchurch/testproject",
     });
 
-    await projectPage.createPlugin("Radio");
+    await projectPage.createPlugin("Music Player");
+    await musicPlayerPlugin.radioTab.click();
 
     await expect(page.getByText("Worship Radio 247")).toBeVisible();
     await expect(page.getByText("AllWorship Christmas Worship")).toBeVisible();
@@ -39,6 +42,7 @@ test.describe.serial("Radio Plugin", () => {
     page,
     e2eCommand,
     projectPage,
+    musicPlayerPlugin,
   }) => {
     await e2eCommand.login({
       username: "testuser_venue",
@@ -53,7 +57,8 @@ test.describe.serial("Radio Plugin", () => {
       next: "/app/testvenue/testproject",
     });
 
-    await projectPage.createPlugin("Radio");
+    await projectPage.createPlugin("Music Player");
+    await musicPlayerPlugin.radioTab.click();
 
     await expect(page.getByText("BBC World Service")).toBeVisible();
     await expect(page.getByText("Radio Paradise (Eclectic Mix)")).toBeVisible();

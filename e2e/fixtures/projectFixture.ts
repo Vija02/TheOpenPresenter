@@ -1,4 +1,5 @@
 import { LyricsPlugin } from "../pages/LyricsPlugin";
+import { MusicPlayerPlugin } from "../pages/MusicPlayerPlugin";
 import { OrganizationPage } from "../pages/OrganizationPage";
 import { ProjectPage } from "../pages/ProjectPage";
 import { VideoPlayerPlugin } from "../pages/VideoPlayerPlugin";
@@ -9,6 +10,7 @@ type ProjectFixture = {
   organizationPage: OrganizationPage;
   lyricsPlugin: LyricsPlugin;
   videoPlayerPlugin: VideoPlayerPlugin;
+  musicPlayerPlugin: MusicPlayerPlugin;
   loginAndGoToProject: () => void;
   uppyUploadFile: (fileName: string) => void;
 };
@@ -29,6 +31,9 @@ export const test = base.extend<ProjectFixture>({
   videoPlayerPlugin: async ({ page }, use) => {
     const videoPlayerPlugin = new VideoPlayerPlugin(page);
     await use(videoPlayerPlugin);
+  },
+  musicPlayerPlugin: async ({ page }, use) => {
+    await use(new MusicPlayerPlugin(page));
   },
   loginAndGoToProject: async ({ loginWithDefaultProject }, use) => {
     const fn = async () => {

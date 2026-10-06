@@ -1,1 +1,46 @@
 @import "@repo/tailwind-config/index.css";
+
+.scrubber .bar__progress {
+  background: #fd0101;
+}
+.scrubber .bar__thumb {
+  background: #fd0101;
+}
+
+.pl-radio--equalizer {
+  display: flex;
+  align-items: flex-end;
+  gap: 12%;
+  aspect-ratio: 1;
+
+  > span {
+    flex: 1;
+    height: 100%;
+    background: currentColor;
+    border-radius: 1px;
+    transform-origin: bottom;
+    animation: pl-radio--equalizer 0.9s ease-in-out infinite alternate;
+  }
+  > span:nth-child(2) {
+    animation-delay: -0.3s;
+  }
+  > span:nth-child(3) {
+    animation-delay: -0.6s;
+  }
+}
+
+@keyframes pl-radio--equalizer {
+  0% {
+    transform: scaleY(0.25);
+  }
+  100% {
+    transform: scaleY(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pl-radio--equalizer > span {
+    animation: none;
+    transform: scaleY(0.6);
+  }
+}
