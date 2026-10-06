@@ -4,8 +4,18 @@ import crypto from "crypto";
  * Canva Connect OAuth2, authorization code flow with PKCE (S256).
  */
 
-const CANVA_AUTHORIZE_URL = "https://www.canva.com/api/oauth/authorize";
-const CANVA_TOKEN_URL = "https://api.canva.com/rest/v1/oauth/token";
+const CANVA_URL_OVERRIDE = process.env.PLUGIN_SLIDES_CANVA_API_URL;
+
+export const canvaUrl = (url: string): string => {
+  if (!CANVA_URL_OVERRIDE) return url;
+  const { pathname, search } = new URL(url);
+  return new URL(`${pathname}${search}`, CANVA_URL_OVERRIDE).toString();
+};
+
+const CANVA_AUTHORIZE_URL = canvaUrl(
+  "https://www.canva.com/api/oauth/authorize",
+);
+const CANVA_TOKEN_URL = canvaUrl("https://api.canva.com/rest/v1/oauth/token");
 
 // `design:meta:read` lists the user's designs, `design:content:read` exports them
 export const CANVA_SCOPES = [

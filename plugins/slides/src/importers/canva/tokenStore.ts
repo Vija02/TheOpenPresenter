@@ -48,6 +48,8 @@ export type CanvaPendingAuth = {
   /** Null when the connection is being made through a public upload link. */
   userId: string | null;
   uploadLinkId?: string | null;
+  isOneTime?: boolean;
+  grantId?: string | null;
 };
 
 /**
@@ -56,14 +58,30 @@ export type CanvaPendingAuth = {
 export const savePendingAuth = async (
   serverPluginApi: ServerPluginApi,
   stateId: string,
-  { codeVerifier, organizationId, userId, uploadLinkId }: CanvaPendingAuth,
+  {
+    codeVerifier,
+    organizationId,
+    userId,
+    uploadLinkId,
+    isOneTime,
+    grantId,
+  }: CanvaPendingAuth,
 ): Promise<void> => {
   const db = serverPluginApi.getDangerousRootPluginDb(pluginName);
   await db.query(
     `insert into canva_oauth_state
-        (state_id, code_verifier, organization_id, user_id, upload_link_id)
-      values ($1, $2, $3, $4, $5)`,
-    [stateId, codeVerifier, organizationId, userId, uploadLinkId ?? null],
+        (state_id, code_verifier, organization_id, user_id, upload_link_id,
+         is_one_time, grant_id)
+      values ($1, $2, $3, $4, $5, $6, $7)`,
+    [
+      stateId,
+      codeVerifier,
+      organizationId,
+      userId,
+      uploadLinkId ?? null,
+      isOneTime ?? false,
+      grantId ?? null,
+    ],
   );
 };
 
@@ -81,7 +99,9 @@ export const consumePendingAuth = async (
       returning code_verifier as "codeVerifier",
                 organization_id as "organizationId",
                 user_id as "userId",
-                upload_link_id as "uploadLinkId"`,
+                upload_link_id as "uploadLinkId",
+                is_one_time as "isOneTime",
+                grant_id as "grantId"`,
     [stateId],
   );
 
@@ -177,15 +197,13 @@ export const saveConnection = async (
   {
     organizationId,
     userId,
-    uploadLinkId,
     token,
     canvaUserId,
     canvaTeamId,
     canvaDisplayName,
   }: {
     organizationId: string;
-    userId: string | null;
-    uploadLinkId?: string | null;
+    userId: string;
     token: CanvaTokenResponse;
     canvaUserId: string;
     canvaTeamId?: string | null;
@@ -200,17 +218,15 @@ export const saveConnection = async (
     } = await client.query<{ id: string }>(
       `insert into canva_connection
           (organization_id, connected_by_user_id, canva_user_id, canva_team_id,
-           canva_display_name, scopes, created_via_upload_link_id)
-        values ($1, $2, $3, $4, $5, $6, $7)
+           canva_display_name, scopes)
+        values ($1, $2, $3, $4, $5, $6)
         on conflict (organization_id, canva_user_id) do update set
           connected_by_user_id = excluded.connected_by_user_id,
           canva_team_id = excluded.canva_team_id,
           -- Keep the previous label if this authorization could not read one
           canva_display_name =
             coalesce(excluded.canva_display_name, canva_connection.canva_display_name),
-          scopes = excluded.scopes,
-          created_via_upload_link_id =
-            coalesce(excluded.created_via_upload_link_id, canva_connection.created_via_upload_link_id)
+          scopes = excluded.scopes
         returning id`,
       [
         organizationId,
@@ -219,7 +235,6 @@ export const saveConnection = async (
         canvaTeamId ?? null,
         canvaDisplayName ?? null,
         token.scope ?? "",
-        uploadLinkId ?? null,
       ],
     );
 
@@ -391,3 +406,142 @@ export const getValidAccessToken = async (
     }
   }
 };
+
+/* -------------------------------------------------------------------------- */
+/* One-time grants                                                             */
+/* -------------------------------------------------------------------------- */
+
+export type GrantOwner = { userId: string } | { uploadLinkId: string };
+
+const ownerColumns = (owner: GrantOwner) =>
+  "userId" in owner
+    ? { userId: owner.userId, uploadLinkId: null }
+    : { userId: null, uploadLinkId: owner.uploadLinkId };
+
+/** How long a one-time sign-in stays usable for picking a design. */
+const ONE_TIME_GRANT_LIFETIME_S = 60 * 60;
+
+/**
+ * Keeps a one-time access token just long enough to pick and import a
+ * design. Capped below the token's own lifetime so it never needs refreshing.
+ * `id` is the one an upload-link visitor's browser chose, if any.
+ */
+export const saveOneTimeGrant = async (
+  serverPluginApi: ServerPluginApi,
+  {
+    id,
+    organizationId,
+    owner,
+    token,
+  }: {
+    id?: string | null;
+    organizationId: string;
+    owner: GrantOwner;
+    token: CanvaTokenResponse;
+  },
+): Promise<string> => {
+  const db = serverPluginApi.getDangerousRootPluginDb(pluginName);
+  const lifetimeS = Math.min(
+    ONE_TIME_GRANT_LIFETIME_S,
+    token.expires_in - EXPIRY_LEEWAY_MS / 1000,
+  );
+  const { userId, uploadLinkId } = ownerColumns(owner);
+
+  const {
+    rows: [row],
+  } = await db.query<{ id: string }>(
+    `insert into canva_one_time_grant
+        (id, organization_id, user_id, upload_link_id, access_token, expires_at)
+      values (coalesce($1, gen_random_uuid()), $2, $3, $4, $5,
+              now() + ($6 || ' seconds')::interval)
+      returning id`,
+    [
+      id ?? null,
+      organizationId,
+      userId,
+      uploadLinkId,
+      token.access_token,
+      String(lifetimeS),
+    ],
+  );
+
+  // Opportunistic cleanup of abandoned one-time sign-ins
+  db.query(`delete from canva_one_time_grant where expires_at <= now()`).catch(
+    (err: unknown) => {
+      logger.warn({ err }, "Failed to sweep expired Canva one-time grants");
+    },
+  );
+
+  return row!.id;
+};
+
+/**
+ * The access token of a one-time grant, if this owner may use it and it has
+ * not expired. `consume` deletes it, for the import that uses it up.
+ */
+export const getOneTimeGrantToken = async (
+  serverPluginApi: ServerPluginApi,
+  {
+    grantId,
+    organizationId,
+    owner,
+    consume = false,
+  }: {
+    grantId: string;
+    organizationId: string;
+    owner: GrantOwner;
+    consume?: boolean;
+  },
+): Promise<string> => {
+  const token = await findOneTimeGrantToken(serverPluginApi, {
+    grantId,
+    organizationId,
+    owner,
+    consume,
+  });
+  if (!token) {
+    throw new Error(
+      "This one-time Canva sign-in has expired. Sign in to Canva again.",
+    );
+  }
+  return token;
+};
+
+/** Like getOneTimeGrantToken, but null rather than an error. */
+export const findOneTimeGrantToken = async (
+  serverPluginApi: ServerPluginApi,
+  {
+    grantId,
+    organizationId,
+    owner,
+    consume = false,
+  }: {
+    grantId: string;
+    organizationId: string;
+    owner: GrantOwner;
+    consume?: boolean;
+  },
+): Promise<string | null> => {
+  // Not a uuid can't be a grant, and would make the query throw
+  if (!UUID_PATTERN.test(grantId)) return null;
+
+  const db = serverPluginApi.getDangerousRootPluginDb(pluginName);
+  const { userId, uploadLinkId } = ownerColumns(owner);
+  const match = `id = $1 and organization_id = $2
+     and user_id is not distinct from $3
+     and upload_link_id is not distinct from $4
+     and expires_at > now()`;
+
+  const { rows } = await db.query<{ accessToken: string }>(
+    consume
+      ? `delete from canva_one_time_grant where ${match}
+          returning access_token as "accessToken"`
+      : `select access_token as "accessToken"
+           from canva_one_time_grant where ${match}`,
+    [grantId, organizationId, userId, uploadLinkId],
+  );
+  return rows[0]?.accessToken ?? null;
+};
+
+export const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

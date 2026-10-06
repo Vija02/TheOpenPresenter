@@ -3,11 +3,7 @@ import { logger } from "@repo/observability";
 import { RequestHandler } from "express";
 
 import { pluginName } from "../../consts";
-import {
-  findLinkByToken,
-  forgetLinkConnections,
-  isUploadLinkStillUsable,
-} from "../../uploadLink/db";
+import { findLinkByToken, isUploadLinkStillUsable } from "../../uploadLink/db";
 import { checkUploadLink } from "../../uploadLink/rules";
 import { getAccountIdentity } from "./api";
 import {
@@ -18,11 +14,13 @@ import {
   getCanvaOAuthConfig,
 } from "./oauth";
 import {
+  UUID_PATTERN,
   consumePendingAuth,
   getUserIdForSession,
   isOrganizationMember,
   isOrganizationMemberAsRoot,
   saveConnection,
+  saveOneTimeGrant,
   savePendingAuth,
 } from "./tokenStore";
 
@@ -30,6 +28,19 @@ type CanvaRequest = {
   query: Record<string, unknown>;
   user?: { session_id?: string };
 };
+
+const escapeHtml = (value: string) =>
+  value.replace(
+    /[&<>"']/g,
+    (c) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[
+        c
+      ]!,
+  );
+
+/** JSON that cannot close the inline script it is written into. */
+const scriptJson = (value: unknown) =>
+  JSON.stringify(value).replace(/</g, "\\u003c");
 
 // Minimal page for after canva auth
 const renderPopupResult = ({
@@ -46,18 +57,20 @@ const renderPopupResult = ({
   <body style="font-family: system-ui, sans-serif; padding: 24px">
     <p>${
       payload.ok
-        ? "Canva connected. You can close this window."
-        : "Canva connection failed. You can close this window."
+        ? "Signed in to Canva. You can close this window."
+        : `Canva sign-in failed: ${escapeHtml(
+            String(payload.error ?? "unknown error"),
+          )}`
     }</p>
     <script nonce="${nonce}">
       (function () {
-        var message = ${JSON.stringify({
+        var message = ${scriptJson({
           source: "top-canva-oauth",
           ...payload,
         })};
         // Handle if opener is on a different host
         var targets = [];
-        var configured = ${JSON.stringify(origin)};
+        var configured = ${scriptJson(origin)};
         if (configured) targets.push(configured);
         try {
           if (document.referrer) {
@@ -75,7 +88,7 @@ const renderPopupResult = ({
             }
           }
         } catch (e) {}
-        window.close();
+        if (message.ok) window.close();
       })();
     </script>
   </body>
@@ -159,6 +172,7 @@ export const registerCanvaRoutes = (serverPluginApi: ServerPluginApi) => {
         codeVerifier,
         organizationId,
         userId,
+        isOneTime: req.query.once === "1",
       });
     } catch (err) {
       log.error({ err }, "authorize: failed to persist pending auth");
@@ -273,6 +287,31 @@ export const registerCanvaRoutes = (serverPluginApi: ServerPluginApi) => {
         }
       }
 
+      // An upload-link visitor never gets a connection, and neither does a
+      // member who chose "Import once"
+      if (pending.uploadLinkId || pending.isOneTime) {
+        const grantId = await saveOneTimeGrant(serverPluginApi, {
+          id: pending.grantId,
+          organizationId: pending.organizationId,
+          owner: pending.uploadLinkId
+            ? { uploadLinkId: pending.uploadLinkId }
+            : { userId: userId! },
+          token,
+        });
+        log.info(
+          { organizationId: pending.organizationId, userId },
+          "callback: one-time grant saved, no connection made",
+        );
+        res.send(
+          renderPopupResult({
+            nonce,
+            origin: appOrigin,
+            payload: { ok: true, grantId },
+          }),
+        );
+        return;
+      }
+
       const identity = await getAccountIdentity(token.access_token, log);
       log.info(
         {
@@ -284,8 +323,7 @@ export const registerCanvaRoutes = (serverPluginApi: ServerPluginApi) => {
 
       const connectionId = await saveConnection(serverPluginApi, {
         organizationId: pending.organizationId,
-        userId,
-        uploadLinkId: pending.uploadLinkId ?? null,
+        userId: userId!,
         token,
         canvaUserId: identity.canvaUserId,
         canvaTeamId: identity.canvaTeamId,
@@ -317,7 +355,8 @@ export const registerCanvaRoutes = (serverPluginApi: ServerPluginApi) => {
 
   /**
    * Same OAuth dance, but authorized by an upload-link token rather than a
-   * signed-in member. The visitor connects their OWN Canva account.
+   * signed-in member. The visitor signs in to their OWN Canva account, and
+   * gets a one-time grant tied to the link, never a connection.
    */
   const authorizePublic: RequestHandler = async (req, res) => {
     const log = logger.child({ scope: "canva/authorize-public" });
@@ -339,19 +378,17 @@ export const registerCanvaRoutes = (serverPluginApi: ServerPluginApi) => {
       return;
     }
 
-    const { codeVerifier, codeChallenge } = createPkcePair();
-    const state = createStateToken();
-
-    // Starting a new authorization means a new visitor may be behind it, and
-    // this URL is public. Drop whatever account the link remembered so nobody
-    // inherits a stranger's designs.
-    try {
-      await forgetLinkConnections(serverPluginApi, link.id);
-    } catch (err) {
-      log.error({ err }, "authorize-public: failed to clear old connections");
-      res.status(500).send("Could not start the Canva connection.");
+    // The visitor's browser picks the grant's id and polls for it, so only
+    // that browser can find the sign-in. Others holding the link cannot.
+    const grantId =
+      typeof req.query.grant === "string" ? req.query.grant : null;
+    if (!grantId || !UUID_PATTERN.test(grantId)) {
+      res.status(400).send("Missing sign-in id.");
       return;
     }
+
+    const { codeVerifier, codeChallenge } = createPkcePair();
+    const state = createStateToken();
 
     try {
       await savePendingAuth(serverPluginApi, state, {
@@ -359,6 +396,8 @@ export const registerCanvaRoutes = (serverPluginApi: ServerPluginApi) => {
         organizationId: link.organization_id,
         userId: null,
         uploadLinkId: link.id,
+        isOneTime: true,
+        grantId,
       });
     } catch (err) {
       log.error({ err }, "authorize-public: failed to persist pending auth");

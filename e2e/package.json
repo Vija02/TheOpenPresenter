@@ -14,6 +14,7 @@
     "fake-ai": "tsx scripts/fakeAiServer.ts",
     "fake-pco": "tsx scripts/fakePcoServer.ts",
     "fake-google": "tsx scripts/fakeGoogleServer.ts",
+    "fake-canva": "tsx scripts/fakeCanvaServer.ts",
     "mock-host-device": "tsx scripts/mockHostDevice.ts"
   }
 }

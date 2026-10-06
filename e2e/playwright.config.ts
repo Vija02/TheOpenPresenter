@@ -14,6 +14,8 @@ const FAKE_AI_PORT = Number(process.env.FAKE_AI_PORT || 5679);
 const FAKE_PCO_PORT = Number(process.env.FAKE_PCO_PORT || 5680);
 /** Kept in step with fixtures/googleSlidesFixture.ts. */
 const FAKE_GOOGLE_PORT = Number(process.env.FAKE_GOOGLE_PORT || 5681);
+/** Kept in step with fixtures/canvaFixture.ts. */
+const FAKE_CANVA_PORT = Number(process.env.FAKE_CANVA_PORT || 5682);
 /** Overridable so a run can use its own server instead of the dev one. */
 const APP_URL = process.env.E2E_BASE_URL || "http://localhost:5678";
 
@@ -108,6 +110,12 @@ export default defineConfig({
       reuseExistingServer: !process.env.CI,
     },
     {
+      cwd: "./",
+      command: "yarn fake-canva",
+      url: `http://localhost:${FAKE_CANVA_PORT}/__control/health`,
+      reuseExistingServer: !process.env.CI,
+    },
+    {
       cwd: "../",
       command: "yarn server start",
       url: APP_URL,
@@ -125,6 +133,9 @@ export default defineConfig({
           "100000000000-fake.apps.googleusercontent.com",
         PLUGIN_GOOGLE_SLIDES_CLIENT_SECRET: "fake-google-secret",
         PLUGIN_GOOGLE_SLIDES_API_URL: `http://localhost:${FAKE_GOOGLE_PORT}`,
+        PLUGIN_SLIDES_CANVA_CLIENT_ID: "fake-canva-client",
+        PLUGIN_SLIDES_CANVA_CLIENT_SECRET: "fake-canva-secret",
+        PLUGIN_SLIDES_CANVA_API_URL: `http://localhost:${FAKE_CANVA_PORT}`,
       },
     },
   ],

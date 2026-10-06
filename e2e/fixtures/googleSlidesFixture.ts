@@ -23,6 +23,7 @@ const ACCOUNT_COOKIE = "e2e_google_account";
 const GAPI_URL = "https://apis.google.com/js/api.js";
 const GSI_URL = "https://accounts.google.com/gsi/client";
 const PICKER_REPORT_URL = "https://apis.google.com/__e2e/picker-opened";
+const BROWSER_TOKEN_URL = "https://accounts.google.com/__e2e/token";
 
 export type GoogleAccount = {
   email: string;
@@ -46,6 +47,8 @@ export type FakeGoogle = {
   newAccountId: (label?: string) => string;
   /** Describes an account and makes it the one the next sign-in authorizes. */
   signInAs: (accountId: string, account?: Partial<GoogleAccount>) => Promise<void>;
+  /** A token for Google's in-browser sign-in to hand out ("import once"). */
+  browserToken: (accountId: string) => Promise<string>;
   /** As if the user removed the app's access in their Google account. */
   revokeAccess: (accountId: string) => Promise<void>;
   activity: (accountId: string) => Promise<GoogleAccountActivity>;
@@ -56,8 +59,10 @@ export type DrivePicker = {
   willPick: (doc: { id: string; name: string } | null) => void;
   /** The token the app handed to each picker opening, in order. */
   openedWithTokens: string[];
-  /** Times the app fell back to Google's in-browser sign-in. */
+  /** Times the app used Google's in-browser sign-in. */
   inBrowserSignIns: () => number;
+  /** The token Google's in-browser sign-in hands out next. */
+  signInInBrowserWith: (accessToken: string) => void;
 };
 
 type GoogleSlidesFixture = {
@@ -133,8 +138,43 @@ const PICKER_SCRIPT = `
 })();
 `;
 
+/**
+ * Stands in for accounts.google.com/gsi/client: the in-browser sign-in hands
+ * over whatever token the test gave it, as if the user had approved.
+ */
+const GSI_SCRIPT = `
+(function () {
+  window.google = window.google || {};
+  window.google.accounts = {
+    oauth2: {
+      initTokenClient: function (config) {
+        return {
+          requestAccessToken: function () {
+            fetch(${JSON.stringify(BROWSER_TOKEN_URL)})
+              .then(function (res) { return res.json(); })
+              .then(function (body) {
+                if (!body.accessToken) {
+                  config.error_callback({ type: "popup_closed" });
+                  return;
+                }
+                config.callback({
+                  access_token: body.accessToken,
+                  expires_in: 3599,
+                  scope: config.scope,
+                  token_type: "Bearer",
+                });
+              });
+          },
+        };
+      },
+    },
+  };
+})();
+`;
+
 const installDrivePicker = async (context: BrowserContext): Promise<DrivePicker> => {
   let nextPick: { id: string; name: string } | null = null;
+  let nextBrowserToken: string | null = null;
   let signIns = 0;
   const openedWithTokens: string[] = [];
 
@@ -149,11 +189,18 @@ const installDrivePicker = async (context: BrowserContext): Promise<DrivePicker>
       body: JSON.stringify(nextPick),
     });
   });
-  // With a stored connection the app hands the picker a token, so it should
-  // never need Google's in-browser sign-in
-  await context.route(GSI_URL, (route) => {
+  // Only "import once" should need Google's in-browser sign-in. With a stored
+  // connection the app hands the picker a token instead.
+  await context.route(GSI_URL, (route) =>
+    route.fulfill({ contentType: "text/javascript", body: GSI_SCRIPT }),
+  );
+  await context.route(BROWSER_TOKEN_URL, (route) => {
     signIns += 1;
-    return route.fulfill({ contentType: "text/javascript", body: "" });
+    return route.fulfill({
+      contentType: "application/json",
+      headers: { "Access-Control-Allow-Origin": "*" },
+      body: JSON.stringify({ accessToken: nextBrowserToken }),
+    });
   });
 
   return {
@@ -162,6 +209,9 @@ const installDrivePicker = async (context: BrowserContext): Promise<DrivePicker>
     },
     openedWithTokens,
     inBrowserSignIns: () => signIns,
+    signInInBrowserWith: (accessToken) => {
+      nextBrowserToken = accessToken;
+    },
   };
 };
 
@@ -190,6 +240,13 @@ export const test = base.extend<GoogleSlidesFixture>({
         await context.addCookies([
           { name: ACCOUNT_COOKIE, value: accountId, url: FAKE_GOOGLE_URL },
         ]);
+      },
+      browserToken: async (accountId) => {
+        const res = await request.post(
+          `${FAKE_GOOGLE_URL}/__control/browser-token`,
+          { data: { accountId } },
+        );
+        return (await res.json()).accessToken;
       },
       revokeAccess: (accountId) => control("revoke", { accountId }),
       activity: async (accountId) => {
