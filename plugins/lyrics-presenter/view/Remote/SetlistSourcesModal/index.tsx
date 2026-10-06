@@ -16,8 +16,12 @@ import { VscAdd, VscCheck, VscDebugDisconnect } from "react-icons/vsc";
 import { usePluginAPI } from "../../pluginApi";
 import { trpc } from "../../trpc";
 import { setlistSourceLabel } from "../RemoteAddSongModal/MainView/setlistTypes";
-import { PlanningCenterIcon } from "../RemoteAddSongModal/MainView/sourceIcons";
+import {
+  ChurchSuiteIcon,
+  PlanningCenterIcon,
+} from "../RemoteAddSongModal/MainView/sourceIcons";
 import { useSetlistSources } from "../useSetlistSources";
+import { ChurchSuiteConnect } from "./ChurchSuiteConnect";
 
 const SourceSection = ({
   icon,
@@ -65,6 +69,7 @@ const SetlistSourcesModal = () => {
     setMyWorshipListEnabled,
     isSaving,
     planningCenter,
+    churchSuite,
   } = useSetlistSources();
 
   // Only one Planning Center account is supported per organization.
@@ -185,6 +190,16 @@ const SetlistSourcesModal = () => {
                     )}
                   </>
                 )}
+              </SourceSection>
+
+              {/* ChurchSuite */}
+              <SourceSection
+                icon={<ChurchSuiteIcon className="size-5" />}
+                title={setlistSourceLabel.churchSuite}
+                description="Import the service plans your team builds in ChurchSuite Planning."
+                isEnabled={!!churchSuite.connection}
+              >
+                <ChurchSuiteConnect churchSuite={churchSuite} />
               </SourceSection>
 
               {/* MyWorshipList */}

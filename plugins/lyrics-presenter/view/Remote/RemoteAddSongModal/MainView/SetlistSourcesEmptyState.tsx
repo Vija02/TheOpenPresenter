@@ -1,10 +1,11 @@
-import { Button } from "@repo/ui";
+import { Button, OverlayToggle } from "@repo/ui";
 import { ReactNode } from "react";
 import { BsMusicNoteBeamed } from "react-icons/bs";
 
+import ChurchSuiteConnectModal from "../../ChurchSuiteConnectModal";
 import { useSetlistSources } from "../../useSetlistSources";
 import { setlistSourceLabel } from "./setlistTypes";
-import { PlanningCenterIcon } from "./sourceIcons";
+import { ChurchSuiteIcon, PlanningCenterIcon } from "./sourceIcons";
 
 const SourceCard = ({
   icon,
@@ -76,6 +77,28 @@ export const SetlistSourcesEmptyState = ({
             }
           />
         )}
+
+        <SourceCard
+          icon={<ChurchSuiteIcon className="size-5" />}
+          title={setlistSourceLabel.churchSuite}
+          description="Import the service plans your team builds in ChurchSuite Planning."
+          action={
+            <OverlayToggle
+              toggler={({ onToggle }) => (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={onToggle}
+                  data-testid="ly-connect-cs"
+                >
+                  Connect ChurchSuite
+                </Button>
+              )}
+            >
+              <ChurchSuiteConnectModal />
+            </OverlayToggle>
+          }
+        />
 
         <SourceCard
           icon={<BsMusicNoteBeamed className="size-5" />}
