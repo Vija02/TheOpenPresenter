@@ -187,6 +187,8 @@ test.describe.serial("Music Player Plugin: Playlist", () => {
     musicPlayerPlugin,
     loginAndGoToProject,
   }) => {
+    // Waits on the worker to process two uploads
+    test.slow();
     await loginAndGoToProject();
     await putSomethingOnScreen(page, context, projectPage);
     await projectPage.createPlugin("Music Player");

@@ -14,7 +14,7 @@ export class MusicPlayerPlugin {
     this.tracks = page.getByTestId("playlist-track");
     this.nowPlaying = page.getByTestId("now-playing");
     this.radioTab = page.getByRole("tab", { name: "Radio" });
-    this.libraryButton = page.getByRole("button", { name: "From library" });
+    this.libraryButton = page.getByRole("button", { name: "Media library" });
   }
 
   async submit(value: string) {
