@@ -244,6 +244,14 @@ export default (app: Express) => {
         rootWithPgClient,
       ),
     respectForwardedHeaders: true,
+    onIncomingRequest: async (req) => {
+      if (req.method === "HEAD" && !req.headers["cloud-sync"]) {
+        throw {
+          status_code: 404,
+          body: "The file for this url was not found\n",
+        };
+      }
+    },
     onUploadCreate: async (req, res, upload) => {
       if (!req.headers["organization-id"]) {
         throw new Error("Missing organization-id header");
