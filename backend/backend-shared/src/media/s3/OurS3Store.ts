@@ -1,6 +1,6 @@
 import { logger } from "@repo/observability";
 import { MetadataValue, Options, S3Store } from "@tus/s3-store";
-import { type KvStore, TUS_RESUMABLE, Upload } from "@tus/utils";
+import { ERRORS, type KvStore, TUS_RESUMABLE, Upload } from "@tus/utils";
 import debug from "debug";
 import _ from "lodash";
 import fs, { promises as fsProm } from "node:fs";
@@ -122,7 +122,8 @@ export class OurS3Store extends S3Store implements OurDataStore {
   // ============== Save metadata to DB rather than an .info file ============= //
   // ========================================================================== //
   protected async getMetadata(id: string): Promise<MetadataValue> {
-    const metadata = (await this.configstore.get(id))!;
+    const metadata = await this.configstore.get(id);
+    if (!metadata) throw ERRORS.FILE_NOT_FOUND;
     return metadata;
   }
 
