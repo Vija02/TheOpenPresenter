@@ -29,7 +29,7 @@ import {
   FaTrash,
 } from "react-icons/fa6";
 import { RiFilePpt2Fill, RiSlideshowLine } from "react-icons/ri";
-import { SiCanva, SiGoogleslides } from "react-icons/si";
+import { SiGoogleslides } from "react-icons/si";
 
 import { isCustomImport } from "../../src/customSlides";
 import {
@@ -45,6 +45,7 @@ import {
   ImportType,
   getEffectiveDisplayMode,
 } from "../../src/types";
+import { CanvaIconLogo } from "../components/CanvaLogo";
 import { usePluginAPI } from "../pluginApi";
 import { trpc } from "../trpc";
 import { displayTypeMapping } from "./displayTypeMapping";
@@ -53,7 +54,7 @@ import { useSlideMediaPicker } from "./integrations";
 
 const IMPORT_TYPE_ICON: Record<ImportType, React.ReactNode> = {
   googleslides: <SiGoogleslides className="size-5 shrink-0 text-[#F4B400]" />,
-  canva: <SiCanva className="size-5 shrink-0 text-[#00C4CC]" />,
+  canva: <CanvaIconLogo className="size-5" />,
   pdf: <FaFilePdf className="size-5 shrink-0 text-[#F52102]" />,
   ppt: <RiFilePpt2Fill className="size-5 shrink-0 text-[#CC4A34]" />,
   image: <FaImage className="size-5 shrink-0 text-gray-700" />,

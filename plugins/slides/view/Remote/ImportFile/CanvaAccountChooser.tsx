@@ -11,8 +11,8 @@ import {
 } from "@repo/ui";
 import { useCallback } from "react";
 import { FaLinkSlash, FaPlus } from "react-icons/fa6";
-import { SiCanva } from "react-icons/si";
 
+import { CanvaIconLogo } from "../../components/CanvaLogo";
 import { usePluginAPI } from "../../pluginApi";
 import { trpc } from "../../trpc";
 
@@ -55,7 +55,7 @@ export const CanvaAccountChooser = ({
       <DialogContent size="lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <SiCanva className="size-5 text-[#00C4CC]" />
+            <CanvaIconLogo className="size-5" />
             Choose a Canva account
           </DialogTitle>
         </DialogHeader>
@@ -71,7 +71,7 @@ export const CanvaAccountChooser = ({
                   onClick={() => onChoose(connection.id)}
                   className="flex items-center gap-3 min-w-0 flex-1 text-left cursor-pointer p-3"
                 >
-                  <SiCanva className="size-6 shrink-0 text-[#00C4CC]" />
+                  <CanvaIconLogo className="size-10" />
                   <span className="min-w-0">
                     <span className="block font-medium truncate">
                       {connection.label}
@@ -93,16 +93,16 @@ export const CanvaAccountChooser = ({
                   <Button
                     type="button"
                     variant="outline"
-                    size="xs"
+                    size="sm"
                     className="self-center shrink-0"
                     disabled={disconnectMutation.isPending}
                   >
                     {disconnectMutation.isPending ? (
-                      <LoadingInline className="size-3" />
+                      <LoadingInline className="size-4" />
                     ) : (
-                      <FaLinkSlash />
+                      <FaLinkSlash className="text-red-600" />
                     )}
-                    Disconnect
+                    Disconnect from Canva
                   </Button>
                 </PopConfirm>
               </div>
