@@ -30,6 +30,7 @@ import { TrackThumbnail } from "./TrackThumbnail";
 import YoutubeSearchModal, { YoutubeSearchResult } from "./YoutubeSearchModal";
 import { formatDuration } from "./formatDuration";
 import { PlayerControls } from "./usePlayerControls";
+import { getYoutubePlaylistId } from "./youtubePlaylistId";
 
 function isValidHttpUrl(string: string) {
   try {
@@ -57,6 +58,7 @@ const createYoutubeTrack = (result: YoutubeSearchResult): Track => ({
 export const PlaylistTab = ({ controls }: { controls: PlayerControls }) => {
   const pluginApi = usePluginAPI();
   const youtubeMetadata = trpc.musicPlayer.youtubeMetadata.useMutation();
+  const youtubePlaylist = trpc.musicPlayer.youtubePlaylist.useMutation();
 
   const tracks = pluginApi.scene.useData((x) => x.pluginData.tracks) ?? [];
   const { itemId: activeTrackId, isPlaying: trackIsPlaying } =
@@ -65,7 +67,14 @@ export const PlaylistTab = ({ controls }: { controls: PlayerControls }) => {
   const [input, setInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [isAdding, setIsAdding] = useState(false);
+  // A video opened from a playlist, waiting on which of the two to add
+  const [videoInPlaylist, setVideoInPlaylist] = useState<{
+    url: string;
+    videoId: string;
+    playlistId: string;
+  } | null>(null);
   const searchDisclosure = useDisclosure();
 
   const sensors = useSensors(
@@ -84,9 +93,60 @@ export const PlaylistTab = ({ controls }: { controls: PlayerControls }) => {
     );
   };
 
+  const finishAdding = () => {
+    setError(null);
+    setInput("");
+    setVideoInPlaylist(null);
+  };
+
+  const addVideo = async (url: string, videoId: string) => {
+    setIsAdding(true);
+    try {
+      const metadata = await youtubeMetadata.mutateAsync({ url });
+      controls.addTracks([
+        createYoutubeTrack({ ...metadata, title: metadata.title ?? url }),
+      ]);
+    } catch (err) {
+      // Still playable, the renderer fills in the duration once it loads
+      pluginApi.log.warn({ err, url }, "Failed to fetch track metadata");
+      controls.addTracks([createYoutubeTrack({ videoId, title: url })]);
+    } finally {
+      setIsAdding(false);
+    }
+    setNotice(null);
+    finishAdding();
+  };
+
+  const addPlaylist = async (playlistId: string) => {
+    setIsAdding(true);
+    try {
+      const playlist = await youtubePlaylist.mutateAsync({ playlistId });
+      if (playlist.videos.length === 0) {
+        setError("That playlist has no videos we can play.");
+        return;
+      }
+
+      controls.addTracks(playlist.videos.map(createYoutubeTrack));
+      const name = playlist.title ? ` from "${playlist.title}"` : "";
+      setNotice(
+        playlist.isTruncated
+          ? `Added the first ${playlist.videos.length} tracks${name}.`
+          : `Added ${playlist.videos.length} tracks${name}.`,
+      );
+      finishAdding();
+    } catch (err) {
+      pluginApi.log.warn({ err, playlistId }, "Failed to fetch playlist");
+      setError("Couldn't load that playlist. It may be private.");
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
   const onSubmit = async () => {
     const value = input.trim();
     if (!value) return;
+    setNotice(null);
+    setVideoInPlaylist(null);
 
     if (!isValidHttpUrl(value)) {
       setError(null);
@@ -96,26 +156,18 @@ export const PlaylistTab = ({ controls }: { controls: PlayerControls }) => {
     }
 
     const videoId = getYouTubeID(value);
-    if (!videoId) {
-      setError("Only YouTube links are supported for now.");
-      return;
-    }
+    const playlistId = getYoutubePlaylistId(value);
 
-    setIsAdding(true);
-    try {
-      const metadata = await youtubeMetadata.mutateAsync({ url: value });
-      controls.addTracks([
-        createYoutubeTrack({ ...metadata, title: metadata.title ?? value }),
-      ]);
-    } catch (err) {
-      // Still playable, the renderer fills in the duration once it loads
-      pluginApi.log.warn({ err, url: value }, "Failed to fetch track metadata");
-      controls.addTracks([createYoutubeTrack({ videoId, title: value })]);
-    } finally {
-      setIsAdding(false);
+    if (videoId && playlistId) {
+      setError(null);
+      setVideoInPlaylist({ url: value, videoId, playlistId });
+    } else if (playlistId) {
+      await addPlaylist(playlistId);
+    } else if (videoId) {
+      await addVideo(value, videoId);
+    } else {
+      setError("Only YouTube links are supported for now.");
     }
-    setError(null);
-    setInput("");
   };
 
   return (
@@ -138,6 +190,30 @@ export const PlaylistTab = ({ controls }: { controls: PlayerControls }) => {
           </Button>
         </div>
         {error && <div className="text-fill-destructive mt-1">{error}</div>}
+        {notice && <div className="text-secondary mt-1">{notice}</div>}
+        {videoInPlaylist && (
+          <div className="stack-row flex-wrap mt-2 p-2 rounded-sm bg-gray-100">
+            <span className="flex-1">This video is part of a playlist.</span>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={isAdding}
+              onClick={() =>
+                addVideo(videoInPlaylist.url, videoInPlaylist.videoId)
+              }
+            >
+              Add this video
+            </Button>
+            <Button
+              size="sm"
+              variant="success"
+              disabled={isAdding}
+              onClick={() => addPlaylist(videoInPlaylist.playlistId)}
+            >
+              Add whole playlist
+            </Button>
+          </div>
+        )}
       </form>
 
       <YoutubeSearchModal
