@@ -42,9 +42,13 @@ export const TextEditOverlay = ({
 
   const committed = useRef(false);
 
+  // Columns are re-flowed from the text, so a caret inside one would be lost
+  // on the first keystroke that moved a line. Edit as one wrapped flow instead.
+  const fit = element.fit === "columns" ? "wrap" : element.fit;
+
   const editingElement = useMemo(
-    () => ({ ...element, spans: [{ text: value, role: null }] }),
-    [element, value],
+    () => ({ ...element, fit, spans: [{ text: value, role: null }] }),
+    [element, fit, value],
   );
 
   const readHost = () => hostRef.current?.innerText ?? "";
@@ -57,7 +61,7 @@ export const TextEditOverlay = ({
 
   /** Re-run the auto-fit against the text as typed. */
   const refit = () => {
-    if (element.fit === "declared") return;
+    if (fit === "declared") return;
 
     const host = hostRef.current;
     const box = ref.current;
@@ -86,10 +90,10 @@ export const TextEditOverlay = ({
         fontStyle: element.style.fontStyle,
         lineHeight: element.style.lineHeight,
         letterSpacing: Number.isFinite(letterSpacing) ? letterSpacing : 0,
-        noWrap: element.fit === "fitNoWrap",
+        noWrap: fit === "fitNoWrap",
         textTransform: element.style.textTransform ?? "none",
       },
-      element.fit === "shrinkToFit"
+      fit === "shrinkToFit"
         ? { maxFontSize: toPx(element.style.fontSize, metrics) }
         : undefined,
     )}px`;

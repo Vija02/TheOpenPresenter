@@ -274,6 +274,14 @@ const TOOL_LIST = [
       valign: opt(z4.enum(verticalAlignments), "Vertical alignment."),
       lineHeight: opt(z4.number(), "Multiplier, e.g. 1.2."),
       letterSpacing: opt(units(), "Design units."),
+      maxColumns: opt(
+        z4.number().int().min(1).max(8),
+        "Only used when fit is 'columns': the most columns the text may use.",
+      ),
+      columnGap: opt(
+        units(),
+        "Only used when fit is 'columns': space between columns, design units.",
+      ),
     }),
     run: (doc, { id, ...patch }) => {
       const element = requireElement(doc, id);
@@ -290,7 +298,7 @@ const TOOL_LIST = [
   tool({
     name: "set_text_fit",
     description:
-      "How text is sized to its box. 'declared' uses fontSize verbatim; 'shrinkToFit' treats it as a maximum; 'fitNoWrap' fits each line; 'wrap' fits while wrapping.",
+      "How text is sized to its box. 'declared' uses fontSize verbatim; 'shrinkToFit' treats it as a maximum; 'fitNoWrap' fits each line; 'wrap' fits while wrapping; 'columns' flows blank-line-separated blocks into up to style.maxColumns columns and fits that.",
     schema: z4.strictObject({
       id: ID,
       fit: z4.enum(textFitModes).describe("How the text is sized to its box."),

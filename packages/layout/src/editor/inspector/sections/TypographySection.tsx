@@ -16,7 +16,11 @@ import {
 
 import { patchTextElement, patchTextStyle } from "../../../doc/edit";
 import { TextElement } from "../../../schema/element";
-import { textFitModes } from "../../../schema/style";
+import {
+  TextFitMode,
+  resolveColumns,
+  textFitModes,
+} from "../../../schema/style";
 import {
   ColorField,
   FontField,
@@ -28,6 +32,14 @@ import {
   ToggleGroupField,
 } from "../primitives";
 import { TextSectionProps } from "./types";
+
+const FIT_LABELS: Record<TextFitMode, string> = {
+  declared: "Fixed size",
+  shrinkToFit: "Shrink to fit",
+  fitNoWrap: "Fit (no wrap)",
+  wrap: "Wrap and fit",
+  columns: "Columns",
+};
 
 const PADDING_SIDES = [
   { key: "paddingTop", label: "T" },
@@ -64,20 +76,41 @@ export const TypographySection = ({
           }
           options={textFitModes.map((m) => ({
             value: m,
-            label:
-              m === "declared"
-                ? "Fixed size"
-                : m === "shrinkToFit"
-                  ? "Shrink to fit"
-                  : m === "fitNoWrap"
-                    ? "Fit (no wrap)"
-                    : "Wrap and fit",
+            label: FIT_LABELS[m],
           }))}
         />
       </Row>
 
+      {/* Blank lines in the text separate the blocks a column keeps together. */}
+      {element.fit === "columns" && (
+        <>
+          <Row label="Max columns">
+            <NumberField
+              value={resolveColumns(s).maxColumns}
+              min={1}
+              max={8}
+              step={1}
+              onChange={(v) =>
+                onChange(patchTextStyle(doc, id, { maxColumns: v }))
+              }
+            />
+          </Row>
+          <Row label="Column gap">
+            <NumberField
+              value={resolveColumns(s).columnGap}
+              min={0}
+              max={20}
+              step={0.1}
+              onChange={(v) =>
+                onChange(patchTextStyle(doc, id, { columnGap: v }))
+              }
+            />
+          </Row>
+        </>
+      )}
+
       {/*
-        `fitNoWrap` and `wrap` derive the size by measurement, so it would
+        `fitNoWrap`, `wrap` and `columns` derive the size by measurement, so it would
         be a dead knob. `declared` uses it verbatim; `shrinkToFit` uses it as a
         ceiling, hence the different label.
       */}
