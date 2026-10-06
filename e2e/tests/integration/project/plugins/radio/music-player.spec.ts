@@ -1,5 +1,6 @@
 import { expect, test } from "../../../../../fixtures/projectFixture";
 import {
+  type StubPlaylist,
   type StubVideo,
   stubYoutube,
 } from "../../../../../helpers/youtubeStub";
@@ -30,13 +31,19 @@ const fourth: StubVideo = {
   duration: 10,
 };
 
+const worshipSet: StubPlaylist = {
+  playlistId: "PLworshipset",
+  title: "Sunday Set",
+  videos: [first, second, third],
+};
+
 test.describe.serial("Music Player Plugin: Playlist", () => {
   test.beforeEach(async ({ e2eCommand, context }) => {
     await Promise.all([
       e2eCommand.serverCommand("clearTestUsers"),
       e2eCommand.serverCommand("clearTestOrganizations"),
     ]);
-    await stubYoutube(context, [first, second, third, fourth]);
+    await stubYoutube(context, [first, second, third, fourth], [worshipSet]);
   });
 
   test("builds a playlist from a YouTube search", async ({
@@ -95,6 +102,62 @@ test.describe.serial("Music Player Plugin: Playlist", () => {
       page.getByText("Only YouTube links are supported for now."),
     ).toBeVisible();
     await expect(musicPlayerPlugin.tracks).toHaveCount(1);
+  });
+
+  test("adds a whole YouTube playlist from a pasted link", async ({
+    page,
+    projectPage,
+    musicPlayerPlugin,
+    loginAndGoToProject,
+  }) => {
+    await loginAndGoToProject();
+    await projectPage.createPlugin("Music Player");
+
+    await musicPlayerPlugin.submit(
+      `https://www.youtube.com/playlist?list=${worshipSet.playlistId}`,
+    );
+    await expect(
+      page.getByText('Added 3 tracks from "Sunday Set".'),
+    ).toBeVisible();
+    await expect(musicPlayerPlugin.tracks).toHaveCount(3);
+    await expect(musicPlayerPlugin.tracks.nth(0)).toContainText("First Song");
+    await expect(musicPlayerPlugin.tracks.nth(2)).toContainText("Third Song");
+    await expect(musicPlayerPlugin.input).toHaveValue("");
+
+    await musicPlayerPlugin.submit(
+      "https://www.youtube.com/playlist?list=PLprivate",
+    );
+    await expect(
+      page.getByText("Couldn't load that playlist. It may be private."),
+    ).toBeVisible();
+    await expect(musicPlayerPlugin.tracks).toHaveCount(3);
+  });
+
+  test("asks about a video opened from a playlist", async ({
+    page,
+    projectPage,
+    musicPlayerPlugin,
+    loginAndGoToProject,
+  }) => {
+    await loginAndGoToProject();
+    await projectPage.createPlugin("Music Player");
+
+    const link = `https://www.youtube.com/watch?v=${second.videoId}&list=${worshipSet.playlistId}&index=2`;
+
+    await musicPlayerPlugin.submit(link);
+    await expect(
+      page.getByText("This video is part of a playlist."),
+    ).toBeVisible();
+    await page.getByRole("button", { name: "Add this video" }).click();
+    await expect(musicPlayerPlugin.tracks).toHaveCount(1);
+    await expect(musicPlayerPlugin.tracks.nth(0)).toContainText("Second Song");
+    await expect(
+      page.getByText("This video is part of a playlist."),
+    ).toBeHidden();
+
+    await musicPlayerPlugin.submit(link);
+    await page.getByRole("button", { name: "Add whole playlist" }).click();
+    await expect(musicPlayerPlugin.tracks).toHaveCount(4);
   });
 
   test("reorders and removes tracks", async ({

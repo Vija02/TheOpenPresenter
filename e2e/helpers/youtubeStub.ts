@@ -9,6 +9,12 @@ export type StubVideo = {
   duration: number;
 };
 
+export type StubPlaylist = {
+  playlistId: string;
+  title: string;
+  videos: StubVideo[];
+};
+
 const toResult = (video: StubVideo) => ({
   ...video,
   durationText: `0:${String(video.duration).padStart(2, "0")}`,
@@ -24,6 +30,7 @@ const toResult = (video: StubVideo) => ({
 export const stubYoutube = async (
   context: BrowserContext,
   videos: StubVideo[],
+  playlists: StubPlaylist[] = [],
 ) => {
   await context.route(/\/trpc\/musicPlayer\./, (route) => {
     const request = route.request();
@@ -38,6 +45,21 @@ export const stubYoutube = async (
     const body = procedures.map((procedure, i) => {
       if (procedure === "musicPlayer.search") {
         return { result: { data: { results: videos.map(toResult) } } };
+      }
+
+      const playlist = playlists.find(
+        (x) => x.playlistId === inputs[i]?.playlistId,
+      );
+      if (procedure === "musicPlayer.youtubePlaylist" && playlist) {
+        return {
+          result: {
+            data: {
+              title: playlist.title,
+              videos: playlist.videos.map(toResult),
+              isTruncated: false,
+            },
+          },
+        };
       }
 
       const video = videos.find((x) => inputs[i]?.url?.includes(x.videoId));

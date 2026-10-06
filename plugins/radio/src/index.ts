@@ -23,6 +23,7 @@ import {
   rendererWebComponentTag,
 } from "./consts";
 import { PluginBaseData, PluginRendererData } from "./types";
+import { getPlaylistVideos } from "./youtubePlaylist";
 
 export const init = (serverPluginApi: ServerPluginApi) => {
   serverPluginApi.registerCSPDirective(pluginName, {
@@ -207,6 +208,17 @@ const getAppRouter = (t: TRPCObject) => {
             duration: res.basic_info.duration,
             thumbnailUrl: res.basic_info.thumbnail?.[0]?.url,
           };
+        }),
+
+      youtubePlaylist: t.procedure
+        .input(
+          z.object({
+            playlistId: z.string().min(1),
+          }),
+        )
+        .mutation(async (opts) => {
+          const yt = await getInnertube();
+          return getPlaylistVideos(yt, opts.input.playlistId);
         }),
     },
   });
