@@ -1,16 +1,17 @@
 import { desktop } from "@repo/desktop-bridge";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { FcGoogle } from "react-icons/fc";
 
 import { googleSlidesBrand } from "../../components/integrationBranding";
 import { usePluginAPI } from "../../pluginApi";
 import { trpc } from "../../trpc";
-import { GoogleAccountChooser } from "../ImportFile/GoogleAccountChooser";
 import { SlidePicker } from "../ImportFile/SlidePicker";
 import {
   IntegrationControllerProps,
   IntegrationLaunchContext,
   SlideIntegration,
 } from "./types";
+import { IntegrationAccountChooser } from "./IntegrationAccountChooser";
 
 const PICK_POLL_MS = 2000;
 const PICK_TIMEOUT_MS = 15 * 60 * 1000;
@@ -67,13 +68,19 @@ const StoredGoogleSlides = ({
     topAccountId: string | null;
   } | null>(null);
   const [token, setToken] = useState<string | null>(null);
-  const [isOpenRequested, setIsOpenRequested] = useState(false);
+  // "stored" opens with an account's token; "once" lets the picker sign in
+  // with Google itself, so nothing is stored
+  const [openRequest, setOpenRequest] = useState<"stored" | "once" | null>(
+    null,
+  );
   const openPickerRef = useRef<(() => void) | null>(null);
   const connectionIdRef = useRef<string | null>(null);
   const launchContextRef = useRef<IntegrationLaunchContext>({});
 
   const tokenMutation = trpc.slides.googleSlidesPickerToken.useMutation();
   const selectMutation = trpc.slides.selectGoogleSlide.useMutation();
+  const importOnceMutation = trpc.slides.googleSlidesImportOnce.useMutation();
+  const disconnectMutation = trpc.slides.googleSlidesDisconnect.useMutation();
 
   const openWithAccount = useCallback(
     async (connectionId: string) => {
@@ -84,7 +91,7 @@ const StoredGoogleSlides = ({
         });
         connectionIdRef.current = connectionId;
         setToken(accessToken);
-        setIsOpenRequested(true);
+        setOpenRequest("stored");
       } catch (err: any) {
         pluginApi.remote.toast.error(
           err?.message ?? "Could not open Google Drive.",
@@ -95,13 +102,18 @@ const StoredGoogleSlides = ({
     [tokenMutation, pluginId, pluginApi, refetchStatus],
   );
 
-  // Open only once the picker has rendered with the token, or it would fall
-  // back to Google's own sign-in
   useEffect(() => {
-    if (!isOpenRequested || !token) return;
-    setIsOpenRequested(false);
+    if (!openRequest) return;
+    if ((openRequest === "stored") !== (token !== null)) return;
+    setOpenRequest(null);
     openPickerRef.current?.();
-  }, [isOpenRequested, token]);
+  }, [openRequest, token]);
+
+  const importOnce = useCallback(() => {
+    connectionIdRef.current = null;
+    setToken(null);
+    setOpenRequest("once");
+  }, []);
 
   const startConnect = useCallback(() => {
     const url = `/plugin/slides/google/authorize?organizationId=${encodeURIComponent(
@@ -163,19 +175,35 @@ const StoredGoogleSlides = ({
       <SlidePicker
         clientId={clientId}
         oauthToken={token ?? undefined}
-        onFileSelected={(doc) => {
+        onFileSelected={(doc, accessToken) => {
           const connectionId = connectionIdRef.current;
-          if (!connectionId) return;
-          selectMutation.mutate(
-            {
-              pluginId,
-              connectionId,
-              presentationId: doc.id,
-              name: doc.name,
-              replaceImportId: launchContextRef.current.replaceImportId,
-            },
-            { onError: (err) => pluginApi.remote.toast.error(err.message) },
-          );
+          const replaceImportId = launchContextRef.current.replaceImportId;
+          const onError = (err: { message: string }) =>
+            pluginApi.remote.toast.error(err.message);
+
+          if (connectionId) {
+            selectMutation.mutate(
+              {
+                pluginId,
+                connectionId,
+                presentationId: doc.id,
+                name: doc.name,
+                replaceImportId,
+              },
+              { onError },
+            );
+          } else {
+            importOnceMutation.mutate(
+              {
+                pluginId,
+                token: accessToken,
+                presentationId: doc.id,
+                name: doc.name,
+                replaceImportId,
+              },
+              { onError },
+            );
+          }
           launchContextRef.current.onComplete?.();
         }}
       >
@@ -187,39 +215,54 @@ const StoredGoogleSlides = ({
               statusQuery.isLoading ||
               !!connectingFrom ||
               tokenMutation.isPending ||
-              selectMutation.isPending,
+              selectMutation.isPending ||
+              importOnceMutation.isPending,
             open: (context) => {
               launchContextRef.current = context ?? {};
-              if (accounts.length === 0) {
-                startConnect();
-              } else {
-                setIsChooserOpen(true);
-              }
+              setIsChooserOpen(true);
             },
           });
         }}
       </SlidePicker>
 
-      <GoogleAccountChooser
+      <IntegrationAccountChooser
         isOpen={isChooserOpen}
         onClose={() => setIsChooserOpen(false)}
-        accounts={accounts}
+        name="Google"
+        icon={(className) => <FcGoogle className={className} />}
+        accounts={accounts.map((account) => ({
+          id: account.id,
+          label: account.label,
+          sublabel: account.displayName,
+        }))}
         onChoose={(connectionId) => {
           setIsChooserOpen(false);
           void openWithAccount(connectionId);
         }}
-        onAddAccount={() => {
-          setIsChooserOpen(false);
-          startConnect();
+        connect={{
+          description: "Stays connected, so you can pick again without signing in.",
+          onClick: () => {
+            setIsChooserOpen(false);
+            startConnect();
+          },
         }}
-        onChanged={() => {
-          void refetchStatus().then((res) => {
-            const remaining =
-              res.data?.mode === "local" ? res.data.accounts : [];
-            if (remaining.length === 0) {
-              setIsChooserOpen(false);
+        onImportOnce={() => {
+          setIsChooserOpen(false);
+          importOnce();
+        }}
+        disconnect={{
+          description:
+            "You will need to connect it again to pick from its Drive. Slides you have already imported are unaffected.",
+          onConfirm: async (connectionId) => {
+            try {
+              await disconnectMutation.mutateAsync({ pluginId, connectionId });
+            } catch (err: any) {
+              pluginApi.remote.toast.error(
+                err?.message ?? "Could not disconnect the Google account.",
+              );
             }
-          });
+            await refetchStatus();
+          },
         }}
       />
     </>

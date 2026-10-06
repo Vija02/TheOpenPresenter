@@ -19,6 +19,8 @@
  *   GET  /feeds/download/presentations/Export    the deck as PDF
  *   POST /__control/scenario                     a test describes an account
  *   POST /__control/revoke                       as if the user removed access
+ *   POST /__control/browser-token                a token as Google's in-browser
+ *                                                sign-in would hand out
  *   GET  /__control/account?id=                  what happened to an account
  *   POST /__control/reset                        forget an account
  *   GET  /__control/health                       liveness
@@ -328,6 +330,16 @@ const handleControl = async (
     const state = stateFor(body.accountId);
     state.account = { ...defaultAccount(body.accountId), ...body.account };
     json(res, 200, { ok: true });
+    return;
+  }
+
+  // Google's in-browser sign-in hands the page an access token directly, with
+  // no code exchange. Specs stub that script, and it serves this token.
+  if (path === "/__control/browser-token" && req.method === "POST") {
+    const accessToken = `browser-${randomId()}`;
+    accessTokens.set(accessToken, body.accountId);
+    stateFor(body.accountId);
+    json(res, 200, { accessToken });
     return;
   }
 

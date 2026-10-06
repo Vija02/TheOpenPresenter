@@ -1,12 +1,14 @@
 import { logger } from "@repo/observability";
 
+import { canvaUrl } from "./oauth";
+
 /**
  * Thin client over the Canva Connect REST API.
  *
  * https://www.canva.dev/docs/connect/api-reference/
  */
 
-const CANVA_API_BASE = "https://api.canva.com/rest/v1";
+const CANVA_API_BASE = canvaUrl("https://api.canva.com/rest/v1");
 
 export type CanvaDesign = {
   id: string;
