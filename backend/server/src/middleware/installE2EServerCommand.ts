@@ -257,6 +257,15 @@ async function runCommand(
       ),
       apiUrl: process.env.PLUGIN_GOOGLE_SLIDES_API_URL ?? null,
     };
+  } else if (command === "canvaWiring") {
+    return {
+      success: true,
+      configured: !!(
+        process.env.PLUGIN_SLIDES_CANVA_CLIENT_ID &&
+        process.env.PLUGIN_SLIDES_CANVA_CLIENT_SECRET
+      ),
+      apiUrl: process.env.PLUGIN_SLIDES_CANVA_API_URL ?? null,
+    };
   } else if (command === "clearOrganizationBySlug") {
     const { slug } = payload || {};
     if (!slug || !String(slug).startsWith("test")) {

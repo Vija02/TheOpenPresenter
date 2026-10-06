@@ -9,8 +9,6 @@ import {
 } from "@repo/ui";
 import { useEffect, useState } from "react";
 
-import type { CanvaConnection } from "./useCanvaConnections";
-
 type Design = { id: string; title: string; thumbnailUrl: string | null };
 
 export const CanvaPicker = ({
@@ -19,55 +17,63 @@ export const CanvaPicker = ({
   send,
   isOpen,
   onClose,
-  connections,
-  isConnecting,
-  onRetryConnect,
+  grantId,
+  isSigningIn,
+  signInError,
+  onRetrySignIn,
 }: {
   token: string;
   uploaderName: string;
   send: (run: () => Promise<Response>) => Promise<boolean>;
   isOpen: boolean;
   onClose: () => void;
-  connections: CanvaConnection[] | null;
-  isConnecting: boolean;
-  onRetryConnect: () => void;
+  /** The visitor's one-time sign-in, once it has finished */
+  grantId: string | null;
+  isSigningIn: boolean;
+  signInError: string | null;
+  onRetrySignIn: () => void;
 }) => {
   const [designs, setDesigns] = useState<Design[] | null>(null);
-
-  const connectionId = connections?.[0]?.id;
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     setDesigns(null);
-    if (!connectionId) return;
+    setLoadError(null);
+    if (!grantId) return;
 
     let cancelled = false;
 
     void (async () => {
       const res = await fetch(
-        `/plugin/slides/canva-designs/${token}?connectionId=${connectionId}`,
+        `/plugin/slides/canva-designs/${token}?grantId=${grantId}`,
       );
-      if (!res.ok || cancelled) return;
-      const body = await res.json();
-      if (!cancelled) setDesigns(body.items ?? []);
+      const body = await res.json().catch(() => ({}));
+      if (cancelled) return;
+      if (!res.ok) {
+        // e.g. the sign-in expired while the dialog was left open
+        setLoadError(body.error ?? "Couldn't load your Canva designs.");
+        return;
+      }
+      setDesigns(body.items ?? []);
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [connectionId, token]);
+  }, [grantId, token]);
 
   const body = () => {
-    if (connections === null || isConnecting) {
+    if (isSigningIn) {
       return (
         <div className="flex flex-col items-center justify-center gap-3 py-10 text-secondary">
           <LoadingInline className="size-6" />
           <span className="text-sm">
-            Finish connecting Canva in the window that opened.
+            Finish signing in to Canva in the window that opened.
           </span>
           <button
             type="button"
             className="text-sm font-medium text-link cursor-pointer hover:underline"
-            onClick={onRetryConnect}
+            onClick={onRetrySignIn}
           >
             Reopen Canva
           </button>
@@ -75,16 +81,19 @@ export const CanvaPicker = ({
       );
     }
 
-    if (connections.length === 0) {
+    if (!grantId || loadError) {
       return (
         <div className="flex flex-col items-center justify-center gap-3 py-10 text-secondary">
           <span className="text-sm">
-            If nothing opened, your browser may have blocked the popup.
+            {loadError ??
+              (signInError
+                ? `Canva sign-in failed: ${signInError}`
+                : "If nothing opened, your browser may have blocked the popup.")}
           </span>
           <button
             type="button"
             className="text-sm font-medium text-link cursor-pointer hover:underline"
-            onClick={onRetryConnect}
+            onClick={onRetrySignIn}
           >
             Try again
           </button>
@@ -125,7 +134,7 @@ export const CanvaPicker = ({
                     "x-top-csrf-protection": "1",
                   },
                   body: JSON.stringify({
-                    connectionId,
+                    grantId,
                     designId: design.id,
                     title: design.title,
                     uploaderName: uploaderName || undefined,

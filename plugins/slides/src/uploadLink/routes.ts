@@ -64,7 +64,7 @@ export type ImportGoogleSlides = (args: {
 /** Imports a Canva design chosen by an anonymous upload-link visitor. */
 export type ImportCanvaDesign = (args: {
   pluginId: string;
-  connectionId: string;
+  accessToken: string;
   designId: string;
   name?: string;
   organizationId: string;

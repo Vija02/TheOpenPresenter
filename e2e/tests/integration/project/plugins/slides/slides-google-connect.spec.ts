@@ -9,8 +9,8 @@ import {
 /**
  * Connecting Google accounts and importing from them, end to end against the
  * fake Google (e2e/scripts/fakeGoogleServer.ts). The sign-in, token storage,
- * refresh, revocation and import are all real; only Google, and its Drive
- * Picker widget, are stand-ins.
+ * refresh, revocation and import are all real; only Google, its Drive Picker
+ * widget and its in-browser sign-in ("import once") are stand-ins.
  *
  * Serial, like the other plugin specs: they all log in as the same `testorg`,
  * and the beforeEach sweep would pull that org out from under a sibling test.
@@ -28,16 +28,25 @@ const openAddSlides = async (page: Page) => {
   await expect(googleCard(page)).toBeVisible();
 };
 
-/** The account isn't stored any more: clicking Google signs in again. */
-const expectSignInAgain = async (page: Page) => {
-  const popupPromise = page.waitForEvent("popup");
-  await googleCard(page).click();
-  await (await popupPromise).close();
-  await expect(accountChooserOf(page)).toBeHidden();
-};
-
+/** Opened by clicking Google: connected accounts, then connect or import once. */
 const accountChooserOf = (page: Page) =>
-  page.getByRole("dialog").filter({ hasText: "Choose a Google account" });
+  page.getByRole("dialog").filter({ hasText: "Import once" });
+
+const connectOption = (page: Page) =>
+  accountChooserOf(page).getByRole("button", {
+    name: /^Connect (a|another) Google account/,
+  });
+
+/** No account is stored: the chooser only offers to connect or import once. */
+const expectNoAccounts = async (page: Page) => {
+  await googleCard(page).click();
+  const chooser = accountChooserOf(page);
+  await expect(chooser.getByText("Import from Google")).toBeVisible();
+  await expect(chooser.getByRole("button", { name: "Disconnect" })).toHaveCount(
+    0,
+  );
+  await chooser.getByRole("button", { name: "Cancel" }).click();
+};
 
 /** Clicks through a sign-in popup, which closes itself once connected. */
 const signInThroughPopup = async (page: Page, open: () => Promise<void>) => {
@@ -70,10 +79,11 @@ const openSlides = async ({
   await projectPage.createPlugin("Slides");
 };
 
-/** First use: sign in, then the picker opens with the new account. */
+/** First use: connect an account, then the picker opens with it. */
 const connectAndImport = async (page: Page, drivePicker: DrivePicker) => {
   drivePicker.willPick(DECK);
-  await signInThroughPopup(page, () => googleCard(page).click());
+  await googleCard(page).click();
+  await signInThroughPopup(page, () => connectOption(page).click());
   await expectImported(page);
 };
 
@@ -183,11 +193,7 @@ test.describe.serial("Slides Plugin - Google Slides accounts", () => {
     await openAddSlides(page);
     await googleCard(page).click();
     const chooser = accountChooserOf(page);
-    await signInThroughPopup(page, () =>
-      chooser
-        .getByRole("button", { name: "Connect another Google account" })
-        .click(),
-    );
+    await signInThroughPopup(page, () => connectOption(page).click());
 
     // Straight into the new account's Drive
     await expect.poll(() => drivePicker.openedWithTokens.length).toBe(2);
@@ -221,17 +227,16 @@ test.describe.serial("Slides Plugin - Google Slides accounts", () => {
     // The confirm popover's own button
     await page.getByRole("button", { name: "Disconnect", exact: true }).last().click();
 
-    // The last account is gone, so the chooser closes
-    await expect(chooser).toBeHidden();
+    // The last account is gone; the chooser stays, offering the other ways in
+    await expect(chooser.getByText("worship@example.com")).toBeHidden();
+    await expect(chooser.getByText("Import from Google")).toBeVisible();
     await expect
       .poll(() => fakeGoogle.activity(account).then((a) => a.revokeCount))
       .toBe(1);
+    await chooser.getByRole("button", { name: "Cancel" }).click();
 
     // Imported slides stay
     await expectImported(page);
-
-    // Nothing left to pick from, so the next click signs in again
-    await expectSignInAgain(page);
   });
 
   test("a cancelled sign-in says so and connects nothing", async ({
@@ -245,13 +250,18 @@ test.describe.serial("Slides Plugin - Google Slides accounts", () => {
     await fakeGoogle.signInAs(account, { denyAuthorization: true });
 
     await openSlides({ projectPage, loginAndGoToProject });
-    await signInThroughPopup(page, () => googleCard(page).click());
+    await googleCard(page).click();
+    const popupPromise = page.waitForEvent("popup");
+    await connectOption(page).click();
+    const popup = await popupPromise;
 
+    // The popup stays up showing the reason; the app says so too
     await expect(page.getByText("Google sign-in was cancelled.")).toBeVisible();
+    await popup.close();
     expect(drivePicker.openedWithTokens).toHaveLength(0);
 
-    // Still nothing connected: the next click signs in again
-    await expectSignInAgain(page);
+    // Still nothing connected
+    await expectNoAccounts(page);
   });
 
   test("access removed at Google drops the account", async ({
@@ -291,6 +301,43 @@ test.describe.serial("Slides Plugin - Google Slides accounts", () => {
     // not the page's cached account list.
     await page.reload();
     await openAddSlides(page);
-    await expectSignInAgain(page);
+    await expectNoAccounts(page);
+  });
+
+  test("import once brings a deck in without connecting the account", async ({
+    page,
+    projectPage,
+    loginAndGoToProject,
+    fakeGoogle,
+    drivePicker,
+  }) => {
+    const account = fakeGoogle.newAccountId();
+    drivePicker.signInInBrowserWith(await fakeGoogle.browserToken(account));
+    drivePicker.willPick(DECK);
+
+    await openSlides({ projectPage, loginAndGoToProject });
+
+    let popups = 0;
+    page.on("popup", () => {
+      popups += 1;
+    });
+
+    await googleCard(page).click();
+    await accountChooserOf(page)
+      .getByRole("button", { name: /^Import once/ })
+      .click();
+    await expectImported(page);
+
+    // Google's own sign-in ran in the page, and its token did the import
+    expect(popups).toBe(0);
+    expect(drivePicker.inBrowserSignIns()).toBe(1);
+    expect(drivePicker.openedWithTokens).toHaveLength(1);
+    expect(drivePicker.openedWithTokens[0]).toMatch(/^browser-/);
+    expect((await fakeGoogle.activity(account)).exportCount).toBe(1);
+
+    // And nothing was kept
+    await page.reload();
+    await openAddSlides(page);
+    await expectNoAccounts(page);
   });
 });

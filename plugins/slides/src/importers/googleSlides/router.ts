@@ -144,6 +144,37 @@ export const createGoogleSlidesRouter = (
         return getRemotePickStatus(serverPluginApi, organizationId, intentId);
       }),
 
+    /**
+     * "Import once": imports with a token from Google's in-browser sign-in.
+     * Nothing is stored, so the import can't be fetched again later.
+     */
+    googleSlidesImportOnce: t.procedure
+      .input(
+        z.object({
+          pluginId: z.string(),
+          token: z.string(),
+          presentationId: z.string(),
+          name: z.string().optional(),
+          replaceImportId: z.string().optional(),
+        }),
+      )
+      .mutation(
+        async ({
+          input: { pluginId, token, presentationId, name, replaceImportId },
+          ctx,
+        }) => {
+          const { userId } = await requireMember(pluginId, ctx);
+          return importGoogleSlidesDeck({
+            pluginId,
+            presentationId,
+            token,
+            name,
+            replaceImportId,
+            userId,
+          });
+        },
+      ),
+
     /** Imports a deck from a stored connection, local or remote. */
     selectGoogleSlide: t.procedure
       .input(

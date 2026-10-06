@@ -11,6 +11,7 @@ import {
   assertConnectionInOrg,
   deleteConnection as deleteCanvaConnection,
   getValidAccessToken as getCanvaAccessToken,
+  getOneTimeGrantToken,
   isOrganizationMember,
   listConnections,
 } from "./tokenStore";
@@ -67,6 +68,41 @@ export const createCanvaRouter = (t: TRPCObject, deps: CanvaRouterDeps) => {
     return loadedContextData;
   };
 
+  const accessTokenFor = async (
+    pluginId: string,
+    source: { connectionId?: string; grantId?: string },
+    ctx: RequestCtx,
+    { consume = false }: { consume?: boolean } = {},
+  ) => {
+    if (source.connectionId) {
+      const loadedContextData = await requireCanvaConnection(
+        pluginId,
+        source.connectionId,
+        ctx,
+      );
+      return {
+        loadedContextData,
+        accessToken: await getCanvaAccessToken(
+          serverPluginApi,
+          source.connectionId,
+        ),
+      };
+    }
+    if (source.grantId) {
+      const loadedContextData = await requireCanvaOrgAccess(pluginId, ctx);
+      return {
+        loadedContextData,
+        accessToken: await getOneTimeGrantToken(serverPluginApi, {
+          grantId: source.grantId,
+          organizationId: loadedContextData.organizationId,
+          owner: { userId: ctx.userId! },
+          consume,
+        }),
+      };
+    }
+    throw new Error("Choose a Canva account first.");
+  };
+
   const importCanvaDesign = createCanvaImporter(serverPluginApi, importHelpers);
 
   const procedures = {
@@ -111,21 +147,27 @@ export const createCanvaRouter = (t: TRPCObject, deps: CanvaRouterDeps) => {
       .input(
         z.object({
           pluginId: z.string(),
-          connectionId: z.string(),
+          connectionId: z.string().optional(),
+          grantId: z.string().optional(),
           query: z.string().optional(),
           cursor: z.string().optional(),
         }),
       )
       .query(
         async ({
-          input: { pluginId, connectionId, query, cursor: continuation },
+          input: {
+            pluginId,
+            connectionId,
+            grantId,
+            query,
+            cursor: continuation,
+          },
           ctx,
         }) => {
-          await requireCanvaConnection(pluginId, connectionId, ctx);
-
-          const accessToken = await getCanvaAccessToken(
-            serverPluginApi,
-            connectionId,
+          const { accessToken } = await accessTokenFor(
+            pluginId,
+            { connectionId, grantId },
+            ctx,
           );
           const result = await listDesigns(accessToken, {
             query,
@@ -156,7 +198,9 @@ export const createCanvaRouter = (t: TRPCObject, deps: CanvaRouterDeps) => {
       .input(
         z.object({
           pluginId: z.string(),
-          connectionId: z.string(),
+          connectionId: z.string().optional(),
+          /** An import-once sign-in, in place of a connection. Used up here. */
+          grantId: z.string().optional(),
           designId: z.string(),
           name: z.string().optional(),
           replaceImportId: z.string().optional(),
@@ -164,18 +208,27 @@ export const createCanvaRouter = (t: TRPCObject, deps: CanvaRouterDeps) => {
       )
       .mutation(
         async ({
-          input: { pluginId, connectionId, designId, name, replaceImportId },
-          ctx,
-        }) => {
-          const loadedContextData = await requireCanvaConnection(
+          input: {
             pluginId,
             connectionId,
+            grantId,
+            designId,
+            name,
+            replaceImportId,
+          },
+          ctx,
+        }) => {
+          const { loadedContextData, accessToken } = await accessTokenFor(
+            pluginId,
+            { connectionId, grantId },
             ctx,
+            { consume: true },
           );
 
           return importCanvaDesign({
             pluginId,
             connectionId,
+            accessToken: connectionId ? undefined : accessToken,
             designId,
             name,
             replaceImportId,
