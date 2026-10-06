@@ -1,3 +1,5 @@
+import type { BrowserContext, Page } from "@playwright/test";
+
 import { expect, test } from "../../../../../fixtures/projectFixture";
 import {
   type StubPlaylist,
@@ -5,6 +7,7 @@ import {
   stubYoutube,
 } from "../../../../../helpers/youtubeStub";
 import { MusicPlayerPlugin } from "../../../../../pages/MusicPlayerPlugin";
+import type { ProjectPage } from "../../../../../pages/ProjectPage";
 
 const first: StubVideo = {
   videoId: "aaaaaaaaaa1",
@@ -35,6 +38,23 @@ const worshipSet: StubPlaylist = {
   playlistId: "PLworshipset",
   title: "Sunday Set",
   videos: [first, second, third],
+};
+
+/** Music plays behind whatever is showing, so put something on screen */
+const putSomethingOnScreen = async (
+  page: Page,
+  context: BrowserContext,
+  projectPage: ProjectPage,
+) => {
+  await context.route("**://example.com/**", (route) =>
+    route.fulfill({ status: 200, contentType: "text/html", body: "" }),
+  );
+  await projectPage.createPlugin("Embed");
+  await page
+    .getByPlaceholder("Paste a web address")
+    .fill("https://example.com/page");
+  await page.getByRole("button", { name: "Load" }).click();
+  await page.getByRole("button", { name: "Go live" }).click();
 };
 
 test.describe.serial("Music Player Plugin: Playlist", () => {
@@ -160,6 +180,59 @@ test.describe.serial("Music Player Plugin: Playlist", () => {
     await expect(musicPlayerPlugin.tracks).toHaveCount(4);
   });
 
+  test("adds music from the media library and plays it", async ({
+    page,
+    context,
+    projectPage,
+    musicPlayerPlugin,
+    loginAndGoToProject,
+  }) => {
+    await loginAndGoToProject();
+    await putSomethingOnScreen(page, context, projectPage);
+    await projectPage.createPlugin("Music Player");
+
+    // Uploaded from the picker, so they're added before they've been processed
+    for (const file of ["dummyAudio.mp3", "dummyAudio.mp3"]) {
+      await musicPlayerPlugin.libraryButton.click();
+      const [fileChooser] = await Promise.all([
+        page.waitForEvent("filechooser"),
+        page.getByRole("button", { name: "browse files" }).click(),
+      ]);
+      await fileChooser.setFiles(`./dummyFiles/${file}`);
+      await expect(musicPlayerPlugin.libraryButton).toBeEnabled();
+    }
+
+    // Once processed, the file's own tags fill them in
+    await expect(musicPlayerPlugin.tracks).toHaveCount(2);
+    for (const i of [0, 1]) {
+      await expect(musicPlayerPlugin.tracks.nth(i)).toContainText(
+        "Dummy Artist • 00:04",
+        { timeout: 60 * 1000 },
+      );
+    }
+
+    const rendererPage = await projectPage.present();
+    const requested = new Set<string>();
+    rendererPage.on("request", (request) => {
+      if (request.url().endsWith(".m4a")) requested.add(request.url());
+    });
+    await rendererPage.waitForLoadState("networkidle");
+
+    // Ready before anyone presses play: the first is loaded into a player,
+    // and the start of each is already fetched
+    await expect(MusicPlayerPlugin.rendererAudio(rendererPage)).toHaveCount(1);
+    await expect.poll(() => requested.size).toBe(2);
+
+    await musicPlayerPlugin.tracks
+      .nth(1)
+      .getByRole("button", { name: /^Play / })
+      .click();
+    await expect(
+      musicPlayerPlugin.nowPlaying.getByRole("button", { name: "Pause" }),
+    ).toBeVisible();
+    await expect(MusicPlayerPlugin.rendererAudio(rendererPage)).toHaveCount(1);
+  });
+
   test("reorders and removes tracks", async ({
     projectPage,
     musicPlayerPlugin,
@@ -200,16 +273,7 @@ test.describe.serial("Music Player Plugin: Playlist", () => {
   }) => {
     await loginAndGoToProject();
 
-    // Music plays behind whatever is showing, so put something on screen
-    await context.route("**://example.com/**", (route) =>
-      route.fulfill({ status: 200, contentType: "text/html", body: "" }),
-    );
-    await projectPage.createPlugin("Embed");
-    await page
-      .getByPlaceholder("Paste a web address")
-      .fill("https://example.com/page");
-    await page.getByRole("button", { name: "Load" }).click();
-    await page.getByRole("button", { name: "Go live" }).click();
+    await putSomethingOnScreen(page, context, projectPage);
 
     await projectPage.createPlugin("Music Player");
     for (const video of [first, second]) {
@@ -251,15 +315,7 @@ test.describe.serial("Music Player Plugin: Playlist", () => {
   }) => {
     await loginAndGoToProject();
 
-    await context.route("**://example.com/**", (route) =>
-      route.fulfill({ status: 200, contentType: "text/html", body: "" }),
-    );
-    await projectPage.createPlugin("Embed");
-    await page
-      .getByPlaceholder("Paste a web address")
-      .fill("https://example.com/page");
-    await page.getByRole("button", { name: "Load" }).click();
-    await page.getByRole("button", { name: "Go live" }).click();
+    await putSomethingOnScreen(page, context, projectPage);
 
     await projectPage.createPlugin("Music Player");
     for (const video of [fourth, second]) {

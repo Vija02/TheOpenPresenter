@@ -14,16 +14,18 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { MediaPickerResult } from "@repo/base-plugin";
 import { Button, Input, cn, useDisclosure } from "@repo/ui";
 import getYouTubeID from "get-youtube-id";
 import { useState } from "react";
 import { FaPause, FaPlay } from "react-icons/fa6";
 import { IoMdClose } from "react-icons/io";
-import { VscGripper } from "react-icons/vsc";
+import { VscGripper, VscLibrary } from "react-icons/vsc";
 import { typeidUnboxed } from "typeid-js";
 
 import { Track } from "../../src/types";
 import { usePluginAPI } from "../pluginApi";
+import { isTrackReady, trackTitle } from "../trackHelpers";
 import { trpc } from "../trpc";
 import { usePlaylistPosition } from "../usePlaylistPosition";
 import { TrackThumbnail } from "./TrackThumbnail";
@@ -54,6 +56,25 @@ const createYoutubeTrack = (result: YoutubeSearchResult): Track => ({
     }),
   ),
 });
+
+const createAudioTrack = (result: MediaPickerResult): Track | null => {
+  const audio = result.internalAudio;
+  if (!audio) return null;
+  return {
+    id: typeidUnboxed("track"),
+    type: "audio",
+    mediaName: result.mediaName,
+    playbackMediaName: audio.playbackMediaName,
+    coverMediaName: audio.coverMediaName,
+    metadata: JSON.parse(
+      JSON.stringify({
+        title: audio.metadata.title,
+        author: audio.metadata.artist,
+        duration: audio.metadata.duration,
+      }),
+    ),
+  };
+};
 
 export const PlaylistTab = ({ controls }: { controls: PlayerControls }) => {
   const pluginApi = usePluginAPI();
@@ -142,6 +163,17 @@ export const PlaylistTab = ({ controls }: { controls: PlayerControls }) => {
     }
   };
 
+  const addFromLibrary = async () => {
+    const results = await pluginApi.mediaPicker.show({
+      type: "audio",
+      title: "Add music from your library",
+    });
+    const audioTracks = (results ?? [])
+      .map(createAudioTrack)
+      .filter((x): x is Track => !!x);
+    if (audioTracks.length > 0) controls.addTracks(audioTracks);
+  };
+
   const onSubmit = async () => {
     const value = input.trim();
     if (!value) return;
@@ -187,6 +219,10 @@ export const PlaylistTab = ({ controls }: { controls: PlayerControls }) => {
           />
           <Button type="submit" variant="success" disabled={isAdding}>
             {isAdding ? "Adding..." : "Go"}
+          </Button>
+          <Button type="button" variant="outline" onClick={addFromLibrary}>
+            <VscLibrary />
+            Media library
           </Button>
         </div>
         {error && <div className="text-fill-destructive mt-1">{error}</div>}
@@ -279,7 +315,8 @@ const TrackRow = ({
     isDragging,
   } = useSortable({ id: track.id });
 
-  const title = track.metadata.title ?? track.url;
+  const title = trackTitle(track);
+  const isReady = isTrackReady(track);
 
   return (
     <div
@@ -309,6 +346,7 @@ const TrackRow = ({
         size="sm"
         // Same width either way, so the row doesn't shift
         className="w-10 shrink-0"
+        disabled={!isReady}
         onClick={() => controls.toggleTrack(track.id)}
         aria-label={`${isPlaying ? "Pause" : "Play"} ${title}`}
       >
@@ -318,14 +356,16 @@ const TrackRow = ({
       <div className="flex-1 min-w-0">
         <p className="truncate font-medium">{title}</p>
         <p className="truncate text-xs text-secondary">
-          {[
-            track.metadata.author,
-            track.metadata.duration
-              ? formatDuration(track.metadata.duration)
-              : null,
-          ]
-            .filter(Boolean)
-            .join(" • ")}
+          {isReady
+            ? [
+                track.metadata.author,
+                track.metadata.duration
+                  ? formatDuration(track.metadata.duration)
+                  : null,
+              ]
+                .filter(Boolean)
+                .join(" • ")
+            : "Processing..."}
         </p>
       </div>
       <Button

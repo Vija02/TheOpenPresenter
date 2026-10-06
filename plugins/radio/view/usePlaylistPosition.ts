@@ -72,6 +72,7 @@ export const usePlaylistPosition = () => {
 
   return {
     ...resolved,
+    tracks,
     track,
     outgoingTrack: findTrack(resolved.outgoing?.itemId),
     upcomingTrack: findTrack(resolved.upcoming?.itemId),

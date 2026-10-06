@@ -10,6 +10,7 @@ import { MdRepeat, MdRepeatOne } from "react-icons/md";
 import { Scrubber } from "react-scrubber";
 
 import { RepeatMode } from "../../src/types";
+import { trackTitle } from "../trackHelpers";
 import { usePlaylistPosition } from "../usePlaylistPosition";
 import { CrossfadeButton } from "./CrossfadeButton";
 import { TrackThumbnail } from "./TrackThumbnail";
@@ -52,9 +53,7 @@ export const NowPlaying = ({ controls }: { controls: PlayerControls }) => {
           <p className="text-xs uppercase tracking-wide text-secondary">
             Now playing
           </p>
-          <p className="truncate font-bold">
-            {track.metadata.title ?? track.url}
-          </p>
+          <p className="truncate font-bold">{trackTitle(track)}</p>
           {track.metadata.author && (
             <p className="truncate text-xs text-secondary">
               {track.metadata.author}

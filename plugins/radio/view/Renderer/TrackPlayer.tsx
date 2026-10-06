@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { SequenceFade, SequencePlaybackState } from "../../src/sequence";
 import { Track } from "../../src/types";
 import { usePluginAPI } from "../pluginApi";
+import { trackVideo } from "../trackHelpers";
 import { useFadeGain } from "./useFadeGain";
 
 // YouTube needs a real iframe to play, so we keep it on the page but unseen
@@ -43,11 +44,16 @@ const TrackPlayer = ({
     () => ({ ...playbackState, volume }),
     [playbackState, volume],
   );
+  const video = useMemo(() => trackVideo(track), [track]);
+
+  if (!video) {
+    return null;
+  }
 
   return (
     <div style={hiddenStyle} aria-hidden>
       <VideoPlayer
-        video={track}
+        video={video}
         playbackState={videoPlaybackState}
         onDurationChange={(duration: number) => {
           const mutableTrack = mutableSceneData.pluginData.tracks.find(
@@ -66,7 +72,7 @@ const TrackPlayer = ({
         }}
         onError={(err: Error, errorData?: unknown) => {
           pluginApi.log.error(
-            { err, errorData, url: track.url },
+            { err, errorData, url: video.url },
             "Error on track playback",
           );
           if (role === "current") {
