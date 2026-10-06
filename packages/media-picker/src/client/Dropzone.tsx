@@ -1,5 +1,5 @@
 import { MediaType } from "@repo/base-plugin";
-import { appData, SUPPORTED_IMAGE_EXTENSIONS, SUPPORTED_VIDEO_EXTENSIONS } from "@repo/lib";
+import { appData, SUPPORTED_AUDIO_EXTENSIONS, SUPPORTED_IMAGE_EXTENSIONS, SUPPORTED_VIDEO_EXTENSIONS } from "@repo/lib";
 import Uppy from "@uppy/core";
 import { UppyContextProvider, useDropzone, useUppyEvent } from "@uppy/react";
 import Tus from "@uppy/tus";
@@ -37,7 +37,7 @@ const getAllowedFileTypes = (mediaType?: MediaType | MediaType[]): string[] | un
         SUPPORTED_IMAGE_EXTENSIONS.forEach((ext) => allowed.add(ext));
         break;
       case "audio":
-        allowed.add("audio/*");
+        SUPPORTED_AUDIO_EXTENSIONS.forEach((ext) => allowed.add(ext));
         break;
       case "pdf":
         allowed.add(".pdf");

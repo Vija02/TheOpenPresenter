@@ -163,7 +163,10 @@ enum CategoriesOrderBy {
   PRIMARY_KEY_DESC
 }
 
-"""Categories data"""
+"""
+Categories data
+@cloudSync
+"""
 type Category {
   createdAt: Datetime!
   id: UUID!
@@ -1019,16 +1022,16 @@ enum CloudConnectionsOrderBy {
   PRIMARY_KEY_DESC
 }
 
+type CloudOrganization {
+  name: String!
+  slug: String!
+}
+
 enum CloudSyncItemStatus {
   FAILED
   PENDING
   SYNCED
   SYNCING
-}
-
-type CloudOrganization {
-  name: String!
-  slug: String!
 }
 
 type CloudSyncRun {
@@ -2602,6 +2605,111 @@ type Media {
   isComplete: Boolean!
   isUserUploaded: Boolean!
 
+  """Reads and enables pagination through a set of `MediaAudioMetadatum`."""
+  mediaAudioMetadataByAudioMediaId(
+    """Read all values in the set after (below) this cursor."""
+    after: Cursor
+
+    """Read all values in the set before (above) this cursor."""
+    before: Cursor
+
+    """
+    A condition to be used in determining which values should be returned by the collection.
+    """
+    condition: MediaAudioMetadatumCondition
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: MediaAudioMetadatumFilter
+
+    """Only read the first `n` values of the set."""
+    first: Int
+
+    """Only read the last `n` values of the set."""
+    last: Int
+
+    """
+    Skip the first `n` values from our `after` cursor, an alternative to cursor
+    based pagination. May not be used with `last`.
+    """
+    offset: Int
+
+    """The method to use when ordering `MediaAudioMetadatum`."""
+    orderBy: [MediaAudioMetadataOrderBy!] = [PRIMARY_KEY_ASC]
+  ): MediaAudioMetadataConnection! @deprecated(reason: "Please use mediaAudioMetadatumByAudioMediaId instead")
+
+  """Reads and enables pagination through a set of `MediaAudioMetadatum`."""
+  mediaAudioMetadataByCoverMediaId(
+    """Read all values in the set after (below) this cursor."""
+    after: Cursor
+
+    """Read all values in the set before (above) this cursor."""
+    before: Cursor
+
+    """
+    A condition to be used in determining which values should be returned by the collection.
+    """
+    condition: MediaAudioMetadatumCondition
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: MediaAudioMetadatumFilter
+
+    """Only read the first `n` values of the set."""
+    first: Int
+
+    """Only read the last `n` values of the set."""
+    last: Int
+
+    """
+    Skip the first `n` values from our `after` cursor, an alternative to cursor
+    based pagination. May not be used with `last`.
+    """
+    offset: Int
+
+    """The method to use when ordering `MediaAudioMetadatum`."""
+    orderBy: [MediaAudioMetadataOrderBy!] = [PRIMARY_KEY_ASC]
+  ): MediaAudioMetadataConnection!
+
+  """Reads and enables pagination through a set of `MediaAudioMetadatum`."""
+  mediaAudioMetadataByPlaybackMediaId(
+    """Read all values in the set after (below) this cursor."""
+    after: Cursor
+
+    """Read all values in the set before (above) this cursor."""
+    before: Cursor
+
+    """
+    A condition to be used in determining which values should be returned by the collection.
+    """
+    condition: MediaAudioMetadatumCondition
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: MediaAudioMetadatumFilter
+
+    """Only read the first `n` values of the set."""
+    first: Int
+
+    """Only read the last `n` values of the set."""
+    last: Int
+
+    """
+    Skip the first `n` values from our `after` cursor, an alternative to cursor
+    based pagination. May not be used with `last`.
+    """
+    offset: Int
+
+    """The method to use when ordering `MediaAudioMetadatum`."""
+    orderBy: [MediaAudioMetadataOrderBy!] = [PRIMARY_KEY_ASC]
+  ): MediaAudioMetadataConnection!
+
+  """Reads a single `MediaAudioMetadatum` that is related to this `Media`."""
+  mediaAudioMetadatumByAudioMediaId: MediaAudioMetadatum
+
   """Reads and enables pagination through a set of `MediaDependency`."""
   mediaDependenciesByChildMediaId(
     """Read all values in the set after (below) this cursor."""
@@ -2956,6 +3064,107 @@ type Media {
   s3UploadId: String
   tags: [String]!
   updatedAt: Datetime!
+}
+
+"""A connection to a list of `MediaAudioMetadatum` values."""
+type MediaAudioMetadataConnection {
+  """
+  A list of edges which contains the `MediaAudioMetadatum` and cursor to aid in pagination.
+  """
+  edges: [MediaAudioMetadataEdge!]!
+
+  """A list of `MediaAudioMetadatum` objects."""
+  nodes: [MediaAudioMetadatum!]!
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+
+  """
+  The count of *all* `MediaAudioMetadatum` you could get from the connection.
+  """
+  totalCount: Int!
+}
+
+"""A `MediaAudioMetadatum` edge in the connection."""
+type MediaAudioMetadataEdge {
+  """A cursor for use in pagination."""
+  cursor: Cursor
+
+  """The `MediaAudioMetadatum` at the end of the edge."""
+  node: MediaAudioMetadatum!
+}
+
+"""Methods to use when ordering `MediaAudioMetadatum`."""
+enum MediaAudioMetadataOrderBy {
+  AUDIO_MEDIA_ID_ASC
+  AUDIO_MEDIA_ID_DESC
+  COVER_MEDIA_ID_ASC
+  COVER_MEDIA_ID_DESC
+  NATURAL
+  PLAYBACK_MEDIA_ID_ASC
+  PLAYBACK_MEDIA_ID_DESC
+  PRIMARY_KEY_ASC
+  PRIMARY_KEY_DESC
+}
+
+type MediaAudioMetadatum {
+  album: String
+  artist: String
+
+  """Reads a single `Media` that is related to this `MediaAudioMetadatum`."""
+  audioMedia: Media
+  audioMediaId: UUID!
+
+  """Reads a single `Media` that is related to this `MediaAudioMetadatum`."""
+  coverMedia: Media
+  coverMediaId: UUID
+  duration: BigFloat
+  normalizeLoudness: Boolean!
+
+  """Reads a single `Media` that is related to this `MediaAudioMetadatum`."""
+  playbackMedia: Media
+  playbackMediaId: UUID
+  title: String
+  transcodeProgress: Int!
+  transcodeStatus: VideoTranscodeStatus!
+}
+
+"""
+A condition to be used against `MediaAudioMetadatum` object types. All fields
+are tested for equality and combined with a logical ‘and.’
+"""
+input MediaAudioMetadatumCondition {
+  """Checks for equality with the object’s `audioMediaId` field."""
+  audioMediaId: UUID
+
+  """Checks for equality with the object’s `coverMediaId` field."""
+  coverMediaId: UUID
+
+  """Checks for equality with the object’s `playbackMediaId` field."""
+  playbackMediaId: UUID
+}
+
+"""
+A filter to be used against `MediaAudioMetadatum` object types. All fields are combined with a logical ‘and.’
+"""
+input MediaAudioMetadatumFilter {
+  """Checks for all expressions in this list."""
+  and: [MediaAudioMetadatumFilter!]
+
+  """Filter by the object’s `audioMediaId` field."""
+  audioMediaId: UUIDFilter
+
+  """Filter by the object’s `coverMediaId` field."""
+  coverMediaId: UUIDFilter
+
+  """Negates the expression."""
+  not: MediaAudioMetadatumFilter
+
+  """Checks for any expressions in this list."""
+  or: [MediaAudioMetadatumFilter!]
+
+  """Filter by the object’s `playbackMediaId` field."""
+  playbackMediaId: UUIDFilter
 }
 
 """
@@ -3454,6 +3663,10 @@ type Mutation {
     """
     input: ChangePasswordInput!
   ): ChangePasswordPayload
+  cloudMediaSyncDelete(mediaIds: JSON!, organizationSlug: String!): JSON!
+  cloudMediaSyncPush(links: JSON!, metadata: JSON!, organizationSlug: String!): JSON!
+  cloudPluginTablePush(changes: JSON!, organizationSlug: String!, schemaName: String!, tableName: String!): JSON!
+  cloudProjectSyncPush(changes: JSON!, organizationSlug: String!): JSON!
 
   """Use this mutation to complete a media"""
   completeMedia(
@@ -5316,6 +5529,7 @@ input ProjectFilter {
 input ProjectInput {
   categoryId: UUID
   creatorUserId: UUID
+  id: UUID
   isPublic: Boolean
   name: String
   organizationId: UUID!
@@ -5760,6 +5974,10 @@ type Query {
     orderBy: [CloudConnectionsOrderBy!] = [PRIMARY_KEY_ASC]
   ): CloudConnectionsConnection
   cloudEnabled: Boolean!
+  cloudMediaSyncPage(after: UUID, organizationSlug: String!): JSON!
+  cloudPluginTableKeys(organizationSlug: String!, schemaName: String!, tableName: String!): JSON!
+  cloudPluginTableRows(keys: JSON!, organizationSlug: String!, schemaName: String!, tableName: String!): JSON!
+  cloudProjectSyncList(organizationSlug: String!): JSON!
   cloudSyncRun(id: UUID!): CloudSyncRun
 
   """Reads and enables pagination through a set of `CloudSyncRun`."""
@@ -5807,6 +6025,41 @@ type Query {
   currentUserCanAccessScreen(screenId: UUID!): Boolean
   currentUserCanAccessTag(tagId: UUID!): Boolean
   media(id: UUID!): Media
+
+  """Reads and enables pagination through a set of `MediaAudioMetadatum`."""
+  mediaAudioMetadata(
+    """Read all values in the set after (below) this cursor."""
+    after: Cursor
+
+    """Read all values in the set before (above) this cursor."""
+    before: Cursor
+
+    """
+    A condition to be used in determining which values should be returned by the collection.
+    """
+    condition: MediaAudioMetadatumCondition
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: MediaAudioMetadatumFilter
+
+    """Only read the first `n` values of the set."""
+    first: Int
+
+    """Only read the last `n` values of the set."""
+    last: Int
+
+    """
+    Skip the first `n` values from our `after` cursor, an alternative to cursor
+    based pagination. May not be used with `last`.
+    """
+    offset: Int
+
+    """The method to use when ordering `MediaAudioMetadatum`."""
+    orderBy: [MediaAudioMetadataOrderBy!] = [PRIMARY_KEY_ASC]
+  ): MediaAudioMetadataConnection
+  mediaAudioMetadatum(audioMediaId: UUID!): MediaAudioMetadatum
 
   """Reads and enables pagination through a set of `MediaDependency`."""
   mediaDependencies(
@@ -8185,7 +8438,10 @@ type SyncCloudConnectionPayload {
   success: Boolean!
 }
 
-"""Tag data"""
+"""
+Tag data
+@cloudSync
+"""
 type Tag {
   backgroundColor: String
   createdAt: Datetime!

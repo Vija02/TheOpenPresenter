@@ -1,4 +1,5 @@
 import {
+  SUPPORTED_AUDIO_EXTENSIONS,
   SUPPORTED_IMAGE_EXTENSIONS,
   SUPPORTED_VIDEO_EXTENSIONS,
   uuidFromMediaIdOrUUIDOrMediaName,
@@ -314,9 +315,54 @@ export const createMediaHandler = <T extends OurDataStore>(
       }
     }
 
+    async queueAudioTranscode(
+      mediaUUID: string,
+      { normalizeLoudness }: { normalizeLoudness: boolean },
+    ) {
+      const taskName = "medias__transcodeAudio";
+      const jobKey = `audio_transcode_${mediaUUID}`;
+
+      try {
+        await this.withPgClient((client) =>
+          client.query(
+            `
+          INSERT INTO app_public.media_audio_metadata (audio_media_id, normalize_loudness)
+          VALUES ($1, $2)
+          ON CONFLICT (audio_media_id) DO NOTHING
+        `,
+            [mediaUUID, normalizeLoudness],
+          ),
+        );
+
+        await this.withPgClient((client) =>
+          client.query(
+            `
+          SELECT graphile_worker.add_job(
+            $1,
+            payload := $2::json,
+            queue_name := $3,
+            job_key := $4
+          );
+        `,
+            [taskName, JSON.stringify({ id: mediaUUID }), jobKey, jobKey],
+          ),
+        );
+        logger.info(
+          { mediaUUID, taskName, jobKey },
+          "Queued audio transcoding job",
+        );
+      } catch (err) {
+        logger.error(
+          { err, mediaUUID, taskName },
+          "Failed to queue audio transcoding job",
+        );
+        throw err;
+      }
+    }
+
     async processCompletedMedia(
       mediaName: string,
-      options?: { isUserUploaded?: boolean },
+      options?: { isUserUploaded?: boolean; normalizeLoudness?: boolean },
     ) {
       const splittedKey = mediaName.split(".");
       const mediaId = splittedKey[0]!;
@@ -327,6 +373,9 @@ export const createMediaHandler = <T extends OurDataStore>(
         "." + fileExtension.toLowerCase(),
       );
       const isVideo = SUPPORTED_VIDEO_EXTENSIONS.includes(
+        "." + fileExtension.toLowerCase(),
+      );
+      const isAudio = SUPPORTED_AUDIO_EXTENSIONS.includes(
         "." + fileExtension.toLowerCase(),
       );
 
@@ -368,6 +417,13 @@ export const createMediaHandler = <T extends OurDataStore>(
       // For videos: queue transcoding (if user-uploaded)
       if (isVideo && options?.isUserUploaded !== false) {
         await this.queueVideoTranscode(uuid);
+      }
+
+      // For audio: queue a playable copy (if user-uploaded)
+      if (isAudio && options?.isUserUploaded !== false) {
+        await this.queueAudioTranscode(uuid, {
+          normalizeLoudness: options?.normalizeLoudness ?? true,
+        });
       }
     }
   };

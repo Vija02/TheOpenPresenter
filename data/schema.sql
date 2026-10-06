@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 6uVhtZ0LWpMWcufKmwJ5UATBI87PibhGuEBNw4a27bXCaCngObRqpzU2XvWPN8m
+\restrict 1MBz75RW7ahrbF3fPR5k6wFiMximlCjb5sF9UPUJlnYpzcmqz1CGNsmLSWubQui
 
 -- Dumped from database version 17.0 (Debian 17.0-1.pgdg120+1)
 -- Dumped by pg_dump version 18.6
@@ -3676,6 +3676,24 @@ CREATE TABLE app_public.cloud_sync_runs (
 
 
 --
+-- Name: media_audio_metadata; Type: TABLE; Schema: app_public; Owner: -
+--
+
+CREATE TABLE app_public.media_audio_metadata (
+    audio_media_id uuid NOT NULL,
+    playback_media_id uuid,
+    cover_media_id uuid,
+    duration numeric(10,2),
+    title text,
+    artist text,
+    album text,
+    normalize_loudness boolean DEFAULT true NOT NULL,
+    transcode_status app_public.video_transcode_status DEFAULT 'pending'::app_public.video_transcode_status NOT NULL,
+    transcode_progress integer DEFAULT 0 NOT NULL
+);
+
+
+--
 -- Name: media_dependencies; Type: TABLE; Schema: app_public; Owner: -
 --
 
@@ -4110,6 +4128,14 @@ ALTER TABLE ONLY app_public.cloud_sync_runs
 
 
 --
+-- Name: media_audio_metadata media_audio_metadata_pkey; Type: CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.media_audio_metadata
+    ADD CONSTRAINT media_audio_metadata_pkey PRIMARY KEY (audio_media_id);
+
+
+--
 -- Name: media_image_metadata media_image_metadata_pkey; Type: CONSTRAINT; Schema: app_public; Owner: -
 --
 
@@ -4522,6 +4548,20 @@ CREATE INDEX idx_user_emails_primary ON app_public.user_emails USING btree (is_p
 --
 
 CREATE INDEX idx_user_emails_user ON app_public.user_emails USING btree (user_id);
+
+
+--
+-- Name: media_audio_metadata_cover_media_id_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX media_audio_metadata_cover_media_id_idx ON app_public.media_audio_metadata USING btree (cover_media_id);
+
+
+--
+-- Name: media_audio_metadata_playback_media_id_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX media_audio_metadata_playback_media_id_idx ON app_public.media_audio_metadata USING btree (playback_media_id);
 
 
 --
@@ -5497,6 +5537,30 @@ ALTER TABLE ONLY app_public.cloud_sync_runs
 
 
 --
+-- Name: media_audio_metadata media_audio_metadata_audio_media_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.media_audio_metadata
+    ADD CONSTRAINT media_audio_metadata_audio_media_id_fkey FOREIGN KEY (audio_media_id) REFERENCES app_public.medias(id) ON DELETE CASCADE;
+
+
+--
+-- Name: media_audio_metadata media_audio_metadata_cover_media_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.media_audio_metadata
+    ADD CONSTRAINT media_audio_metadata_cover_media_id_fkey FOREIGN KEY (cover_media_id) REFERENCES app_public.medias(id) ON DELETE SET NULL;
+
+
+--
+-- Name: media_audio_metadata media_audio_metadata_playback_media_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.media_audio_metadata
+    ADD CONSTRAINT media_audio_metadata_playback_media_id_fkey FOREIGN KEY (playback_media_id) REFERENCES app_public.medias(id) ON DELETE SET NULL;
+
+
+--
 -- Name: media_dependencies media_dependencies_child_media_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
 --
 
@@ -6118,6 +6182,12 @@ CREATE POLICY manage_own ON app_public.client_plugins USING ((owner_organization
 
 
 --
+-- Name: media_audio_metadata; Type: ROW SECURITY; Schema: app_public; Owner: -
+--
+
+ALTER TABLE app_public.media_audio_metadata ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: media_dependencies; Type: ROW SECURITY; Schema: app_public; Owner: -
 --
 
@@ -6467,6 +6537,13 @@ CREATE POLICY select_own ON app_public.user_authentications FOR SELECT USING ((u
 --
 
 CREATE POLICY select_own ON app_public.user_emails FOR SELECT USING ((user_id = app_public.current_user_id()));
+
+
+--
+-- Name: media_audio_metadata select_own_media; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY select_own_media ON app_public.media_audio_metadata FOR SELECT USING (app_public.current_user_can_access_media(audio_media_id));
 
 
 --
@@ -7761,6 +7838,13 @@ GRANT SELECT ON TABLE app_public.cloud_sync_runs TO theopenpresenter_visitor;
 
 
 --
+-- Name: TABLE media_audio_metadata; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT SELECT ON TABLE app_public.media_audio_metadata TO theopenpresenter_visitor;
+
+
+--
 -- Name: TABLE media_dependencies; Type: ACL; Schema: app_public; Owner: -
 --
 
@@ -8086,5 +8170,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE theopenpresenter REVOKE ALL ON FUNCTIONS FROM 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 6uVhtZ0LWpMWcufKmwJ5UATBI87PibhGuEBNw4a27bXCaCngObRqpzU2XvWPN8m
+\unrestrict 1MBz75RW7ahrbF3fPR5k6wFiMximlCjb5sF9UPUJlnYpzcmqz1CGNsmLSWubQui
 

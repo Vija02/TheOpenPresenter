@@ -424,6 +424,46 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
         withPgClientFromPool(this.app.get("rootPgPool") as Pool),
       ).store.getReadable(mediaName);
     },
+    /** Undefined until the audio has been queued for processing */
+    getAudioMetadata: async (mediaUUID: string) => {
+      const pool = this.app.get("rootPgPool") as Pool;
+      const {
+        rows: [row],
+      } = await pool.query(
+        `
+        select
+          a.transcode_status,
+          a.duration,
+          a.title,
+          a.artist,
+          a.album,
+          playback.media_name as playback_media_name,
+          cover.media_name as cover_media_name
+        from app_public.media_audio_metadata a
+          left join app_public.medias playback on playback.id = a.playback_media_id
+          left join app_public.medias cover on cover.id = a.cover_media_id
+        where a.audio_media_id = $1
+      `,
+        [mediaUUID],
+      );
+      if (!row) {
+        return undefined;
+      }
+
+      return {
+        transcodeStatus: row.transcode_status as
+          | "pending"
+          | "processing"
+          | "completed"
+          | "failed",
+        playbackMediaName: (row.playback_media_name as string | null) ?? null,
+        coverMediaName: (row.cover_media_name as string | null) ?? null,
+        duration: row.duration === null ? null : Number(row.duration),
+        title: (row.title as string | null) ?? null,
+        artist: (row.artist as string | null) ?? null,
+        album: (row.album as string | null) ?? null,
+      };
+    },
     getVideoMetadata: async (mediaUUID: string) => {
       const pool = this.app.get("rootPgPool") as Pool;
       const {

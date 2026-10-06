@@ -228,6 +228,24 @@
   background: #000;
 }
 
+.bp--media-preview-dialog-audio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem;
+}
+
+.bp--media-preview-dialog-audio img {
+  max-width: 300px;
+  max-height: 300px;
+  border-radius: 0.25rem;
+}
+
+.bp--media-preview-dialog-audio audio {
+  width: 100%;
+}
+
 .bp--upload-dialog {
   max-height: 80vh;
   display: flex;

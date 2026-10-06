@@ -28,6 +28,17 @@ export type MediaMetadata = {
     duration: string | null;
     transcodeStatus: string;
   }[];
+  audioMetadata?: {
+    audioMediaId: string;
+    playbackMediaId: string | null;
+    coverMediaId: string | null;
+    duration: string | null;
+    title: string | null;
+    artist: string | null;
+    album: string | null;
+    normalizeLoudness: boolean;
+    transcodeStatus: string;
+  }[];
 };
 
 export const emptyMediaMetadata = (): MediaMetadata => ({
@@ -35,6 +46,7 @@ export const emptyMediaMetadata = (): MediaMetadata => ({
   imageSizes: [],
   imageMetadata: [],
   videoMetadata: [],
+  audioMetadata: [],
 });
 
 /** Every media id a row refers to; a row is only written where all exist. */
@@ -52,6 +64,10 @@ export const mediaIdsOf = {
   ],
   videoMetadata: (r: MediaMetadata["videoMetadata"][number]) =>
     [r.videoMediaId, r.hlsMediaId, r.thumbnailMediaId, r.mp4MediaId].filter(
+      (id): id is string => id !== null,
+    ),
+  audioMetadata: (r: NonNullable<MediaMetadata["audioMetadata"]>[number]) =>
+    [r.audioMediaId, r.playbackMediaId, r.coverMediaId].filter(
       (id): id is string => id !== null,
     ),
 };
@@ -74,6 +90,9 @@ export const metadataWithin = (
     ),
     videoMetadata: metadata.videoMetadata.filter((r) =>
       all(mediaIdsOf.videoMetadata(r)),
+    ),
+    audioMetadata: (metadata.audioMetadata ?? []).filter((r) =>
+      all(mediaIdsOf.audioMetadata(r)),
     ),
   };
 };
@@ -122,7 +141,21 @@ export const readMediaMetadata = async (
             'transcodeStatus', v.transcode_status))
           from app_public.media_video_metadata v
           where v.video_media_id = any($1::uuid[])
-        ), '[]'::jsonb) as video_metadata
+        ), '[]'::jsonb) as video_metadata,
+        coalesce((
+          select jsonb_agg(jsonb_build_object(
+            'audioMediaId', a.audio_media_id,
+            'playbackMediaId', a.playback_media_id,
+            'coverMediaId', a.cover_media_id,
+            'duration', a.duration::text,
+            'title', a.title,
+            'artist', a.artist,
+            'album', a.album,
+            'normalizeLoudness', a.normalize_loudness,
+            'transcodeStatus', a.transcode_status))
+          from app_public.media_audio_metadata a
+          where a.audio_media_id = any($1::uuid[])
+        ), '[]'::jsonb) as audio_metadata
     `,
     [mediaIds],
   );
@@ -131,13 +164,14 @@ export const readMediaMetadata = async (
     imageSizes: row!.image_sizes,
     imageMetadata: row!.image_metadata,
     videoMetadata: row!.video_metadata,
+    audioMetadata: row!.audio_metadata,
   };
 };
 
 /**
  * Add the other side's rows. Nothing here is edited by people, so there are
- * no conflicts to resolve, with one exception: a video's transcode, where a
- * completed one is never replaced by one still in progress.
+ * no conflicts to resolve, with one exception: a video or audio transcode,
+ * where a completed one is never replaced by one still in progress.
  */
 export const writeMediaMetadata = async (
   client: Queryable,
@@ -197,5 +231,32 @@ export const writeMediaMetadata = async (
           or excluded.transcode_status = 'completed'
     `,
     [JSON.stringify(metadata.videoMetadata)],
+  );
+  await client.query(
+    `
+      insert into app_public.media_audio_metadata as a
+        (audio_media_id, playback_media_id, cover_media_id, duration, title,
+         artist, album, normalize_loudness, transcode_status)
+      select "audioMediaId", "playbackMediaId", "coverMediaId",
+        duration::numeric, title, artist, album, "normalizeLoudness",
+        "transcodeStatus"::app_public.video_transcode_status
+      from jsonb_to_recordset($1::jsonb) as x(
+        "audioMediaId" uuid, "playbackMediaId" uuid, "coverMediaId" uuid,
+        duration text, title text, artist text, album text,
+        "normalizeLoudness" boolean, "transcodeStatus" text
+      )
+      on conflict (audio_media_id) do update
+        set playback_media_id = excluded.playback_media_id,
+            cover_media_id = excluded.cover_media_id,
+            duration = excluded.duration,
+            title = excluded.title,
+            artist = excluded.artist,
+            album = excluded.album,
+            normalize_loudness = excluded.normalize_loudness,
+            transcode_status = excluded.transcode_status
+        where a.transcode_status <> 'completed'
+          or excluded.transcode_status = 'completed'
+    `,
+    [JSON.stringify(metadata.audioMetadata ?? [])],
   );
 };

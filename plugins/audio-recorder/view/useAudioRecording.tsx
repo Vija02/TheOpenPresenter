@@ -324,6 +324,7 @@ function startUpload(
       "plugin-id": pluginApi.pluginContext.pluginId,
       "file-extension": "mp3",
       "custom-media-id": mediaId,
+      "normalize-loudness": "0",
     },
     metadata: {
       filename: `recording_${new Date().toISOString()}.mp3`,

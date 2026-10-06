@@ -76,11 +76,12 @@ export interface DownloadMediaParams {
   mediaName: string;
 }
 
-export const downloadMediaFile = async ({
+/** Downloads into a temp dir of its own, reusing an earlier attempt's copy */
+export const downloadSourceFile = async ({
   withPgClient,
   mediaId,
   mediaName,
-}: DownloadMediaParams): Promise<DownloadedMedia> => {
+}: DownloadMediaParams) => {
   const mediaDir = path.join(baseDir, mediaName);
   fs.mkdirSync(mediaDir, { recursive: true });
 
@@ -115,6 +116,13 @@ export const downloadMediaFile = async ({
     }
   }
 
+  return { mediaDir, localFilePath };
+};
+
+export const downloadMediaFile = async (
+  params: DownloadMediaParams,
+): Promise<DownloadedMedia> => {
+  const { mediaDir, localFilePath } = await downloadSourceFile(params);
   const metadata = await extractMetadata(localFilePath);
 
   return {

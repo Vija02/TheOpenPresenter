@@ -133,6 +133,11 @@ export const applyPushedMediaMetadata = async (
           r.thumbnailMediaId,
           r.mp4MediaId,
         ]),
+        ...(metadata.audioMetadata ?? []).flatMap((r) => [
+          r.audioMediaId,
+          r.playbackMediaId,
+          r.coverMediaId,
+        ]),
       ].filter((id): id is string => !!id),
     ),
   ];

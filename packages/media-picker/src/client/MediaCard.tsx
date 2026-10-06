@@ -1,7 +1,7 @@
-import { isVideoFile, isVideoReady } from "@repo/lib";
+import { isAudioFile, isMediaReady, isVideoFile } from "@repo/lib";
 import { MediaPreview } from "@repo/ui";
 import React from "react";
-import { VscPlay } from "react-icons/vsc";
+import { VscMusic, VscPlay } from "react-icons/vsc";
 
 import { MediaWithMetadata } from "./types";
 
@@ -21,7 +21,8 @@ export const MediaCard: React.FC<MediaCardProps> = ({
   selected,
 }) => {
   const isVideo = isVideoFile(media.fileExtension);
-  const canPreview = isVideo && isVideoReady(media) && !!onPreview;
+  const isAudio = isAudioFile(media.fileExtension);
+  const canPreview = (isVideo || isAudio) && isMediaReady(media) && !!onPreview;
 
   return (
     <div
@@ -51,6 +52,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({
         title={media.originalName ?? media.mediaName}
       >
         {isVideo && <VscPlay className="bp--media-card__icon" />}
+        {isAudio && <VscMusic className="bp--media-card__icon" />}
         <span className="bp--media-card__name">
           {media.originalName || media.mediaName}
         </span>

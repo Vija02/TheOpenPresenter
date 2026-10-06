@@ -283,6 +283,8 @@ export default (app: Express) => {
             pluginId: pluginId ?? null,
             isUserUploaded: userId && !syncedDerived ? "1" : "0",
             isGuest: userId ? "0" : "1",
+            normalizeLoudness:
+              req.headers["normalize-loudness"]?.toString() === "0" ? "0" : "1",
           },
         });
       } catch (e) {
@@ -327,6 +329,7 @@ export default (app: Express) => {
         const isUserUploaded = upload.metadata?.isUserUploaded === "1";
         await mediaHandler.processCompletedMedia(upload.id, {
           isUserUploaded,
+          normalizeLoudness: upload.metadata?.normalizeLoudness !== "0",
         });
       }
 
