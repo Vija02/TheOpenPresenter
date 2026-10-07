@@ -11,19 +11,19 @@ export const SlideDropArea = ({
   headingLevel?: "h1" | "h2";
 }) => (
   <div
-    className={`cursor-pointer bg-slate-50 rounded-xl border-2 border-dashed overflow-hidden group transition-colors flex flex-col items-center justify-center text-center p-6 md:p-10 min-h-[250px] md:min-h-[400px] ${
+    className={`cursor-pointer bg-slate-50 rounded-xl border-2 border-dashed overflow-hidden group transition-colors flex flex-col items-center justify-center text-center p-6 md:p-8 min-h-[220px] md:min-h-[300px] ${
       isDragActive
         ? "border-link bg-link/5"
         : "border-slate-300 hover:border-link/50 hover:bg-link/5"
     }`}
   >
-    <FiUpload className="w-12 h-12 md:w-16 md:h-16 text-tertiary group-hover:text-link transition-colors mb-4 md:mb-6 pointer-events-none" />
+    <FiUpload className="size-8 md:size-10 text-tertiary group-hover:text-link transition-colors mb-3 md:mb-4 pointer-events-none" />
 
-    <Heading className="text-3xl md:text-5xl font-extrabold text-primary tracking-tight group-hover:text-link transition-colors mb-2 md:mb-4 pointer-events-none">
+    <Heading className="text-2xl md:text-4xl font-extrabold text-primary tracking-tight group-hover:text-link transition-colors mb-2 md:mb-3 pointer-events-none">
       {title}
     </Heading>
 
-    <p className="text-base md:text-xl text-secondary max-w-2xl leading-relaxed mb-6 md:mb-10 pointer-events-none">
+    <p className="text-base md:text-lg text-secondary max-w-2xl leading-relaxed mb-5 md:mb-6 pointer-events-none">
       Drag & drop files here, or{" "}
       <span className="text-link font-semibold">click anywhere</span> to upload
       your presentations.

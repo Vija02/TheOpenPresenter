@@ -34,12 +34,12 @@ const Landing = ({ onCustomSlideEdit }: LandingProps) => {
       <div className="flex flex-col w-full text-left gap-6 max-w-7xl mx-auto mt-2 md:mt-4">
         {/* HERO SECTION */}
         {isPublicAccess ? (
-          <div className="bg-surface-secondary rounded-xl border-2 border-dashed border-stroke p-6 md:p-10 text-center text-secondary font-medium min-h-[250px] md:min-h-[400px] flex flex-col items-center justify-center">
+          <div className="bg-surface-secondary rounded-xl border-2 border-dashed border-stroke p-6 md:p-8 text-center text-secondary font-medium min-h-[220px] md:min-h-[300px] flex flex-col items-center justify-center">
             <span className="text-xl mb-2">🔒</span>
             Sign in to upload media.
           </div>
         ) : isProcessing ? (
-          <div className="bg-link/5 rounded-xl border-2 border-dashed border-link/50 p-6 md:p-10 text-center text-link font-medium min-h-[250px] md:min-h-[400px] flex flex-col items-center justify-center gap-4">
+          <div className="bg-link/5 rounded-xl border-2 border-dashed border-link/50 p-6 md:p-8 text-center text-link font-medium min-h-[220px] md:min-h-[300px] flex flex-col items-center justify-center gap-4">
             <div className="w-10 h-10 border-4 border-link border-t-transparent rounded-full animate-spin" />
             <span className="text-lg">Processing your files...</span>
           </div>
@@ -59,32 +59,38 @@ const Landing = ({ onCustomSlideEdit }: LandingProps) => {
 
         <div className="flex flex-col md:flex-row gap-2">
           <Option
-            size="lg"
-            className="flex-1"
+            className="flex-1 md:p-3"
             onClick={handleCreate}
             testId="slides-create-from-scratch"
             title={
-              <span className="flex items-center gap-3">
-                <RiSlideshowLine className="size-6 shrink-0 text-secondary" />
+              <span className="flex items-center gap-2 md:gap-3 md:text-lg">
+                <RiSlideshowLine className="size-5 md:size-6 shrink-0 text-secondary" />
                 Create slides from scratch
               </span>
             }
-            description="Design your own slides directly in TheOpenPresenter."
+            description={
+              <span className="md:text-base">
+                Design your own slides directly in TheOpenPresenter.
+              </span>
+            }
           />
 
           {!pluginApi.isPublicAccess && (
             <Option
-              size="lg"
-              className="flex-1"
+              className="flex-1 md:p-3"
               onClick={() => setIsUploadLinksOpen(true)}
               testId="slides-collect-from-others"
               title={
-                <span className="flex items-center gap-3">
-                  <FaLink className="size-5 shrink-0 text-secondary" />
+                <span className="flex items-center gap-2 md:gap-3 md:text-lg">
+                  <FaLink className="size-4 md:size-5 shrink-0 text-secondary" />
                   Collect slides from others
                 </span>
               }
-              description="Share a link so people can send you slides."
+              description={
+                <span className="md:text-base">
+                  Share a link so people can send you slides.
+                </span>
+              }
             />
           )}
         </div>

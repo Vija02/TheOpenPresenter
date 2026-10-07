@@ -119,7 +119,13 @@ const HeadlessDropzone = ({
         children
       ) : (
         <>
-          <div className="text-tertiary text-[1.15rem] font-medium mb-6 pointer-events-none text-center">
+          <FiUpload 
+            className={`size-8 mb-3 transition-colors pointer-events-none ${
+              isDragActive && !isUploading ? "text-link" : "text-tertiary"
+            }`} 
+          />
+
+          <div className="text-tertiary text-base font-medium pointer-events-none text-center">
             {isDragActive && !isUploading ? (
               <span className="text-link">Drop your files right here!</span>
             ) : (
@@ -128,12 +134,6 @@ const HeadlessDropzone = ({
               </>
             )}
           </div>
-
-          <FiUpload 
-            className={`w-16 h-16 transition-colors pointer-events-none ${
-              isDragActive && !isUploading ? "text-link" : "text-tertiary"
-            }`} 
-          />
         </>
       )}
 
@@ -141,8 +141,8 @@ const HeadlessDropzone = ({
         <div className={`absolute inset-0 z-50 flex items-center justify-center bg-surface-primary/95 rounded-xl backdrop-blur-sm pointer-events-none ${
           children ? 'border-4 border-dashed border-link' : 'border-2 border-dashed border-link'
         }`}>
-          <div className="text-link text-2xl font-bold flex flex-col items-center gap-4 pointer-events-none">
-            <FiUpload className="w-20 h-20 animate-bounce text-link" />
+          <div className="text-link text-lg font-bold flex flex-col items-center gap-3 pointer-events-none">
+            <FiUpload className="size-10 animate-bounce text-link" />
             Drop your files anywhere!
           </div>
         </div>
@@ -154,8 +154,8 @@ const HeadlessDropzone = ({
           onClick={(e) => e.stopPropagation()} 
         >
           <div className="w-3/4 max-w-md flex flex-col items-center gap-4">
-            <div className="text-link font-semibold text-xl">Uploading... {uploadProgress}%</div>
-            <div className="w-full h-4 bg-surface-secondary rounded-full overflow-hidden border border-stroke">
+            <div className="text-link font-semibold text-lg">Uploading... {uploadProgress}%</div>
+            <div className="w-full h-3 bg-surface-secondary rounded-full overflow-hidden border border-stroke">
               <div 
                 className="h-full bg-link transition-all duration-300 ease-out"
                 style={{ width: `${uploadProgress}%` }}
@@ -176,7 +176,7 @@ export const Dropzone: React.FC<DropzoneProps> = ({
   mediaType,
   overrideAllowedFileTypes,
   multiple = true,
-  height = 240, 
+  height = 160, 
   children,
   className,
 }) => {
