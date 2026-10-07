@@ -29,6 +29,7 @@ import {
 } from "@repo/layout/react";
 import { findClientPluginView, preloader } from "@repo/lib";
 import { logger } from "@repo/observability";
+import { captureEvent } from "@repo/observability/initAnalytics";
 import {
   useAudioCheck,
   useAwarenessState,
@@ -584,6 +585,7 @@ const PluginRenderer = React.memo(
             },
           },
           logger: childLogger,
+          captureEvent,
           parentContainer: pluginDivRef.current,
           surface: "renderer",
           derivation: derivation ?? null,

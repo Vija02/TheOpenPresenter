@@ -114,9 +114,13 @@ export const useScreenShareSender = () => {
         audio: false,
       });
     } catch (err) {
+      const errorName = err instanceof Error ? err.name : "unknown";
+      pluginApi.captureEvent("screen_share_capture_failed", {
+        error_name: errorName,
+      });
       setCaptureError(
-        err instanceof Error && err.name === "NotAllowedError"
-          ? "Screen capture was cancelled or blocked."
+        errorName === "NotAllowedError"
+          ? "Screen sharing was cancelled or blocked. If you did not cancel, allow screen sharing for this site in your browser and system settings, then try again."
           : "Could not start screen capture.",
       );
       return;
@@ -147,7 +151,14 @@ export const useScreenShareSender = () => {
     mutableSceneData.pluginData.isSharing = true;
     mutableSceneData.pluginData.sharerAwarenessUserId = currentUserId;
     mutableSceneData.pluginData.sessionId = newSessionId;
-  }, [currentUserId, mutableSceneData, pluginId, publish, stopShare]);
+  }, [
+    currentUserId,
+    mutableSceneData,
+    pluginApi,
+    pluginId,
+    publish,
+    stopShare,
+  ]);
 
   // We hold a capture but are no longer the active sharer (overridden, session
   // changed, or sharing stopped). Drop it without clobbering the new owner.
