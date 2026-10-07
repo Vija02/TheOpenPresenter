@@ -16,6 +16,7 @@ function parseError(
   error: Error & {
     code?: string;
     statusCode?: number;
+    status_code?: number;
     status?: number;
   },
 ): ParsedError {
@@ -34,7 +35,11 @@ function parseError(
   }
 
   // TODO: process certain errors
-  const code = error["statusCode"] || error["status"] || error["code"];
+  const code =
+    error["statusCode"] ||
+    error["status_code"] ||
+    error["status"] ||
+    error["code"];
   const codeAsFloat = code ? parseInt(String(code), 10) : NaN;
   const httpCode =
     isFinite(codeAsFloat) && codeAsFloat >= 400 && codeAsFloat < 600
