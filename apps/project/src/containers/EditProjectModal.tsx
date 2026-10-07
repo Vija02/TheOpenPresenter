@@ -2,6 +2,7 @@ import { ReactSelectDateProps } from "@/components/DatePicker/datePickerReactSel
 import { TagsSelector } from "@/components/Tag/TagsSelector";
 import { getOrgTypeLabels } from "@/lib/organizationType";
 import { useOrganizationType } from "@/lib/permissionHooks/organization";
+import { fromProjectDateValue, toProjectDateValue } from "@/lib/projectDate";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   CategoryFragment,
@@ -86,7 +87,9 @@ const EditProjectModal = ({
     defaultValues: {
       name: project.name,
       categoryId: project.category?.id || UNCATEGORIZED,
-      targetDate: project.targetDate ? new Date(project.targetDate) : undefined,
+      targetDate: project.targetDate
+        ? fromProjectDateValue(project.targetDate)
+        : undefined,
     },
   });
 
@@ -97,7 +100,9 @@ const EditProjectModal = ({
         name: data.name,
         categoryId:
           data.categoryId === UNCATEGORIZED ? undefined : data.categoryId,
-        targetDate: data.targetDate ? data.targetDate.toDateString() : null,
+        targetDate: data.targetDate
+          ? toProjectDateValue(data.targetDate)
+          : null,
       });
       const existingTagIds = project.projectTags.nodes.map((x) => x.tag?.id);
       const newTagIds = selectedTagIds;
