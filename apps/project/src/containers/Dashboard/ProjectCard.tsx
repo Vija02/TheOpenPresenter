@@ -1,4 +1,5 @@
 import { Tag } from "@/components/Tag";
+import { fromProjectDateValue } from "@/lib/projectDate";
 import { ProjectFragment } from "@repo/graphql";
 import {
   Button,
@@ -63,7 +64,7 @@ export const ProjectCard = ({
         >
           {project.targetDate && (
             <DateDisplay
-              date={new Date(project.targetDate)}
+              date={fromProjectDateValue(project.targetDate)}
               formatToken="do MMM yyyy"
               className="text-sm font-bold sm:font-medium"
             />

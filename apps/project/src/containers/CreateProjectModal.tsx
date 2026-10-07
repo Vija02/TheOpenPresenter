@@ -5,6 +5,7 @@ import {
   useOrganizationSlug,
   useOrganizationType,
 } from "@/lib/permissionHooks/organization";
+import { toProjectDateValue } from "@/lib/projectDate";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   CategoryFragment,
@@ -102,7 +103,9 @@ const CreateProjectModal = ({
         categoryId:
           data.categoryId === UNCATEGORIZED ? undefined : data.categoryId,
         tags: selectedTagIds,
-        targetDate: data.targetDate ? data.targetDate.toDateString() : null,
+        targetDate: data.targetDate
+          ? toProjectDateValue(data.targetDate)
+          : null,
       }).then(async (x) => {
         const project = x?.createFullProject?.project;
         if (!project) return;
