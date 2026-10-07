@@ -1,30 +1,10 @@
-import {
-  ALLOWED_IMAGE_WIDTH,
-  UniversalURL,
-  isInternalMedia,
-  resolveMediaUrl,
-  resolveProcessedMediaUrl,
-} from "@repo/lib";
+import { resolveMediaUrl } from "@repo/lib";
+import { UniversalImage } from "@repo/ui";
 import { ReactNode } from "react";
+import { LuImageOff } from "react-icons/lu";
 
 import { FillPaint } from "../../schema/paint";
 import { VideoFill } from "./VideoFill";
-
-const WIDTHS = [...ALLOWED_IMAGE_WIDTH].sort((a, b) => a - b);
-
-const srcSetOf = (src: UniversalURL): string =>
-  WIDTHS.map((size) => {
-    const url = resolveProcessedMediaUrl({ mediaUrl: src, size });
-    return url ? `${url} ${size}w` : null;
-  })
-    .filter((x): x is string => x !== null)
-    .join(", ");
-
-const sizesFor = (renderedWidth: number): string | undefined => {
-  if (!Number.isFinite(renderedWidth) || renderedWidth <= 0) return undefined;
-  const bucket = WIDTHS.find((w) => w > renderedWidth);
-  return `${bucket ?? Math.ceil(renderedWidth)}px`;
-};
 
 export type FillLayerProps = {
   fill: FillPaint | null;
@@ -56,6 +36,22 @@ const MediaLayer = ({
   </div>
 );
 
+const ImageFallback = () => (
+  <div
+    style={{
+      width: "100%",
+      height: "100%",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      background: "rgba(0, 0, 0, 0.35)",
+      color: "rgba(255, 255, 255, 0.4)",
+    }}
+  >
+    <LuImageOff size="20%" />
+  </div>
+);
+
 /**
  * Draws a picture or video fill behind the element's own content.
  */
@@ -70,26 +66,25 @@ export const FillLayer = ({ fill, width, elementId }: FillLayerProps) => {
 
   if (fill?.type !== "image") return null;
 
-  const src = resolveMediaUrl(fill.src);
-  if (!src) return null;
+  if (!resolveMediaUrl(fill.src)) return null;
 
-  // Only internal media has processed variants, and without a known render
-  // width the browser would assume 100vw and fetch the largest one.
-  const sizes = isInternalMedia(fill.src) ? sizesFor(width ?? 0) : undefined;
+  const hasWidth = width !== undefined && Number.isFinite(width) && width > 0;
 
-  // DEBT: Make the image case use UniversalImage
   return (
     <MediaLayer opacity={fill.opacity}>
-      <img
-        src={src}
-        alt=""
-        draggable={false}
-        {...(sizes ? { sizes, srcSet: srcSetOf(fill.src) } : {})}
-        style={{
-          width: "100%",
-          height: "100%",
-          objectFit: fill.fit,
-          display: "block",
+      <UniversalImage
+        src={fill.src}
+        width={hasWidth ? `${width}px` : undefined}
+        fallback={<ImageFallback />}
+        imgProp={{
+          alt: "",
+          draggable: false,
+          style: {
+            width: "100%",
+            height: "100%",
+            objectFit: fill.fit,
+            display: "block",
+          },
         }}
       />
     </MediaLayer>
