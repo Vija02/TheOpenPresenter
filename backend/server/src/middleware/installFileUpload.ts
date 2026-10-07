@@ -41,6 +41,11 @@ export default (app: Express) => {
   app.set("mediaObject", mediaObject);
   app.set("mediaHandler", mediaHandler);
 
+  app.use(["/media/data", "/media/processed"], (_req, res, next) => {
+    res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+    next();
+  });
+
   // Handle serving the media
   if (process.env.STORAGE_PROXY) {
     if (
