@@ -1,6 +1,27 @@
+import path from "node:path";
 import { defineConfig } from "vitest/config";
 
+const atAliasRoots = ["packages/ui/src", "apps/project/src"].map((dir) =>
+  path.resolve(__dirname, dir),
+);
+
 export default defineConfig({
+  plugins: [
+    {
+      name: "per-package-at-alias",
+      enforce: "pre",
+      resolveId(source, importer) {
+        if (!source.startsWith("@/") || !importer) return null;
+        const root = atAliasRoots.find((r) =>
+          importer.startsWith(r + path.sep),
+        );
+        if (!root) return null;
+        return this.resolve(path.join(root, source.slice(2)), importer, {
+          skipSelf: true,
+        });
+      },
+    },
+  ],
   test: {
     fileParallelism: false,
     poolOptions: {
