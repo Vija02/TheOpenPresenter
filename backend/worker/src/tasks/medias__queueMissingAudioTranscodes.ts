@@ -27,10 +27,6 @@ const task: Task = async (inPayload, { withPgClient }) => {
             and m.is_complete
             and lower(m.file_extension) = any($1::text[])
             and m.updated_at < now() - make_interval(secs => $2)
-            and not exists (
-              select 1 from app_public.media_audio_metadata a
-              where a.audio_media_id = m.id
-            )
           on conflict (audio_media_id) do nothing
           returning audio_media_id
         )
