@@ -207,7 +207,7 @@ const getAppRouter =
       bible: {
         // Uploaded translations
         translations: {
-          list: t.procedure
+          list: t.publicProcedure
             .input(z.object({ pluginId: z.string() }))
             .query(async ({ input, ctx }) => {
               const { organizationId } = resolveContext(input.pluginId);
@@ -265,7 +265,7 @@ const getAppRouter =
         catalog: {
           // Server-side filtered / sorted / paginated catalog page. The client
           // never loads the full ~2,300-entry catalog.
-          list: t.procedure
+          list: t.publicProcedure
             .input(
               z.object({
                 pluginId: z.string(),
@@ -295,7 +295,7 @@ const getAppRouter =
             }),
 
           // Distinct languages present in the catalog (drives the filter).
-          languages: t.procedure
+          languages: t.publicProcedure
             .input(z.object({ pluginId: z.string() }))
             .query(async ({ input, ctx }) => {
               const { organizationId } = resolveContext(input.pluginId);
@@ -308,7 +308,7 @@ const getAppRouter =
             }),
 
           // Metadata for a specific set of ids (used by the search bar).
-          byIds: t.procedure
+          byIds: t.publicProcedure
             .input(z.object({ pluginId: z.string(), ids: z.array(z.string()) }))
             .query(async ({ input, ctx }) => {
               if (input.ids.length === 0) return [];
@@ -322,7 +322,7 @@ const getAppRouter =
             }),
 
           // Native book index for a helloao translation (drives search + picker).
-          books: t.procedure
+          books: t.publicProcedure
             .input(z.object({ translationId: z.string() }))
             .query(async ({ input }) => {
               try {
@@ -339,7 +339,7 @@ const getAppRouter =
 
         // Per-organization preferences
         preferences: {
-          get: t.procedure
+          get: t.publicProcedure
             .input(z.object({ pluginId: z.string() }))
             .query(async ({ input, ctx }) => {
               const { organizationId } = resolveContext(input.pluginId);
@@ -374,7 +374,7 @@ const getAppRouter =
         },
 
         // Resolve a reference against an uploaded translation
-        resolveCustom: t.procedure
+        resolveCustom: t.publicProcedure
           .input(
             z.object({
               pluginId: z.string(),
@@ -408,7 +408,7 @@ const getAppRouter =
           }),
 
         // Resolve a reference against a helloao (public catalog) translation
-        resolveCatalog: t.procedure
+        resolveCatalog: t.publicProcedure
           .input(
             z.object({
               translationId: z.string(),

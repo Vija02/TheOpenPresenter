@@ -10,6 +10,7 @@ import {
   BibleBookMeta,
   BiblePassage,
 } from "../../../src/types";
+import { readableError } from "../../errors";
 import { usePluginAPI } from "../../pluginApi";
 import { trpc } from "../../trpc";
 import { useCustomTranslations } from "../translations/customTranslations";
@@ -261,7 +262,7 @@ const SearchBar = () => {
   const errorMessage =
     localError ??
     (submitted && activeQuery?.isError
-      ? activeQuery.error?.message || "Could not find that passage"
+      ? readableError(activeQuery.error, "Could not find that passage.")
       : null);
 
   return (
