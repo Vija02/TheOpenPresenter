@@ -855,6 +855,51 @@ async function runCommand(
       thumbnailMediaId,
       thumbnailMediaName,
     };
+  } else if (command === "seedAudioMediaWithoutMetadata") {
+    const { orgSlug, audio, originalName, audioExtension } = payload || {};
+
+    if (!orgSlug || !String(orgSlug).startsWith("test")) {
+      throw new Error(
+        "seedAudioMediaWithoutMetadata orgSlug must start with 'test'",
+      );
+    }
+    if (!audio || !originalName || !audioExtension) {
+      throw new Error(
+        "seedAudioMediaWithoutMetadata requires { audio, originalName, audioExtension }",
+      );
+    }
+
+    const {
+      rows: [org],
+    } = await rootPgPool.query(
+      `select id from app_public.organizations where slug = $1`,
+      [orgSlug],
+    );
+    if (!org) {
+      throw new Error(`Organization not found: ${orgSlug}`);
+    }
+
+    const audioBuffer = Buffer.from(String(audio), "base64");
+    // Skipping processing leaves no metadata row, like audio uploaded before audio processing existed
+    const { mediaId, fileName } = await getMediaHandler(
+      req.app as Express,
+    ).uploadMedia({
+      file: Readable.from(audioBuffer),
+      fileSize: audioBuffer.byteLength,
+      fileExtension: String(audioExtension),
+      originalFileName: String(originalName),
+      userId: null,
+      organizationId: org.id,
+      isUserUploaded: true,
+      skipProcessing: true,
+    });
+
+    return { success: true, mediaId, mediaName: fileName };
+  } else if (command === "queueMissingAudioTranscodes") {
+    await rootPgPool.query(
+      `select graphile_worker.add_job('medias__queueMissingAudioTranscodes')`,
+    );
+    return { success: true };
   } else {
     throw new Error(`Command '${command}' not understood.`);
   }
