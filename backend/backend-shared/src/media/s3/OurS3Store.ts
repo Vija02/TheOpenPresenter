@@ -246,7 +246,8 @@ export class OurS3Store extends S3Store implements OurDataStore {
 
   // Don't recreate resource if it already exist
   public async create(upload: Upload) {
-    const metadata = await this.getMetadata(upload.id);
+    // Not using getMetadata since we set it to throw when the resource doesn't exist
+    const metadata = await this.configstore.get(upload.id);
     if (metadata) {
       logger.info(
         { upload, metadata },
