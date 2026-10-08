@@ -1,7 +1,9 @@
 /**
  * Converts lyrics-presenter data from before it moved onto `@repo/layout`:
- * the old `SlideStyle` becomes a text template and a background. Pure, on
- * plain JSON, for `upgrade__v1_lyrics_layout`.
+ * the old `SlideStyle` becomes a look, a text template and a background.
+ * Looks are the organization's, so a scene's style becomes its
+ * organization's look, or, where it differs from that, its songs' own.
+ * Pure, on plain JSON, for `upgrade__v1_lyrics_layout`.
  *
  * A one-off, so it holds its own copy of the plugin's default template as it
  * was at the time, rather than depending on the plugin.
@@ -53,10 +55,17 @@ type FullStyle = Required<Omit<LegacyStyle, "backgroundVideoMediaId">> & {
   backgroundVideoMediaId: string | null;
 };
 
+/** As the plugin's `SongLook`: null follows the organization's look */
+export type SongLook = {
+  template: LayoutDoc | null;
+  background: LayoutDoc | null;
+};
+
 export type LegacySong = {
   styleOverride?: LegacyStyle | null;
-  template?: LayoutDoc | null;
-  background?: LayoutDoc | null;
+  setting?: { displayType?: string };
+  /** Set once converted */
+  looks?: Record<string, SongLook>;
   [key: string]: unknown;
 };
 
@@ -64,10 +73,28 @@ export type LegacyPluginData = {
   style?: LegacyStyle;
   videoBackgrounds?: LegacyVideo[];
   songs?: LegacySong[];
-  template?: LayoutDoc | null;
-  background?: LayoutDoc | null;
   [key: string]: unknown;
 };
+
+/** A look's layout, as the plugin's `Look` holds it */
+export type LookLayout = {
+  template: LayoutDoc;
+  background: LayoutDoc | null;
+};
+
+// --- The plugin's looks, as they were ----------------------------------------
+
+export const MAIN_LOOK = "main";
+export const FULL_SONG_LOOK = "fullSong";
+
+/** The looks an old style stands for: it was used for both displays */
+export const LEGACY_STYLE_LOOKS = [
+  { key: MAIN_LOOK, name: "Main", position: 0 },
+  { key: FULL_SONG_LOOK, name: "Full song", position: 1 },
+] as const;
+
+const lookKeyFor = (song: LegacySong) =>
+  song.setting?.displayType === "fullSong" ? FULL_SONG_LOOK : MAIN_LOOK;
 
 // --- The plugin's defaults, as they were -----------------------------------
 
@@ -327,6 +354,9 @@ export const applyLegacyStyle = (
 
 // --- Old style -> background -------------------------------------------------
 
+/** As the plugin's: an explicit none, where null would follow the look */
+const NO_BACKGROUND: LayoutDoc = createLayoutDoc({ elements: [] });
+
 export const backgroundFromLegacyStyle = (
   style: FullStyle,
   legacyVideos: LegacyVideo[],
@@ -352,7 +382,7 @@ export type LegacyContext = {
   template: LayoutDoc | null;
 };
 
-export const isLegacySong = (song: LegacySong) => song.template === undefined;
+export const isLegacySong = (song: LegacySong) => song.looks === undefined;
 
 /**
  * Overrides only stored what differed from the scene, but padding and a
@@ -382,7 +412,7 @@ const completeOverride = (
 export const convertSong = (
   song: LegacySong,
   context: LegacyContext,
-): { template: LayoutDoc | null; background: LayoutDoc | null } => {
+): SongLook => {
   const override = song.styleOverride ?? undefined;
   const merged = fullStyle(context.legacyStyle, override);
 
@@ -393,61 +423,96 @@ export const convertSong = (
       )
     : null;
 
-  const background =
-    song.background ??
-    (hasAny(override, BACKGROUND_FIELDS)
-      ? backgroundFromLegacyStyle(merged, context.legacyVideos)
-      : null);
+  const background = hasAny(override, BACKGROUND_FIELDS)
+    ? backgroundFromLegacyStyle(merged, context.legacyVideos)
+    : null;
 
   return { template, background };
 };
 
-export type SceneConversion = {
-  /** Undefined when the scene itself was already converted */
-  scene?: { template: LayoutDoc | null; background: LayoutDoc | null };
-  /** By index into `songs`, only those that needed it */
-  songs: Map<
-    number,
-    { template: LayoutDoc | null; background: LayoutDoc | null }
-  >;
+/** The built-in main look, as the plugin had it */
+const DEFAULT_LOOK: LookLayout = {
+  template: defaultLyricsTemplate(),
+  background: backgroundDoc(solidPaint(DEFAULT_STYLE.backgroundColor)),
 };
 
-/** Null when there is nothing left to convert */
-export const convertPluginData = (
+/** The look a scene's style stands for. Null for a scene never styled */
+export const convertSceneStyle = (
   pluginData: LegacyPluginData,
-): SceneConversion | null => {
-  const sceneDone = pluginData.template !== undefined;
-
-  const scene = sceneDone
-    ? undefined
-    : {
-        template: pluginData.style
-          ? applyLegacyStyle(
-              defaultLyricsTemplate(),
-              fullStyle(pluginData.style),
-            )
-          : null,
+): LookLayout | null =>
+  pluginData.style
+    ? {
+        template: applyLegacyStyle(
+          defaultLyricsTemplate(),
+          fullStyle(pluginData.style),
+        ),
         background: backgroundFromLegacyStyle(
           fullStyle(pluginData.style),
           pluginData.videoBackgrounds ?? [],
         ),
-      };
+      }
+    : null;
+
+/** Keys sorted: Yjs and jsonb each keep their own order */
+const stable = (value: unknown): unknown =>
+  Array.isArray(value)
+    ? value.map(stable)
+    : value !== null && typeof value === "object"
+      ? Object.fromEntries(
+          Object.keys(value)
+            .sort()
+            .map((key) => [
+              key,
+              stable((value as Record<string, unknown>)[key]),
+            ]),
+        )
+      : value;
+
+const same = (a: unknown, b: unknown) =>
+  JSON.stringify(stable(a ?? null)) === JSON.stringify(stable(b ?? null));
+
+const songLooks = (song: LegacySong, own: SongLook) =>
+  own.template === null && own.background === null
+    ? {}
+    : { [lookKeyFor(song)]: own };
+
+/**
+ * Each unconverted song's looks, by index into `songs`. `organizationLook` is
+ * what the organization's look became, null for the built-in. Where the
+ * scene's style differs from it, the scene's goes onto its songs, so nothing
+ * changes on screen
+ */
+export const convertSceneSongs = (
+  pluginData: LegacyPluginData,
+  organizationLook: LookLayout | null,
+): Map<number, Record<string, SongLook>> => {
+  const scene = convertSceneStyle(pluginData) ?? DEFAULT_LOOK;
+  const look = organizationLook ?? DEFAULT_LOOK;
+  const keepTemplate = !same(scene.template, look.template);
+  const keepBackground = !same(scene.background, look.background);
 
   const context: LegacyContext = {
     legacyStyle: pluginData.style,
     legacyVideos: pluginData.videoBackgrounds ?? [],
-    template: scene ? scene.template : (pluginData.template ?? null),
+    template: scene.template,
   };
 
-  const songs = new Map<
-    number,
-    { template: LayoutDoc | null; background: LayoutDoc | null }
-  >();
+  const songs = new Map<number, Record<string, SongLook>>();
   (pluginData.songs ?? []).forEach((song, index) => {
-    if (isLegacySong(song)) songs.set(index, convertSong(song, context));
+    if (!isLegacySong(song)) return;
+    const own = convertSong(song, context);
+    songs.set(
+      index,
+      songLooks(song, {
+        template: own.template ?? (keepTemplate ? scene.template : null),
+        background:
+          own.background ??
+          // A scene showing none, over a look that has one, says so
+          (keepBackground ? (scene.background ?? NO_BACKGROUND) : null),
+      }),
+    );
   });
-
-  return scene || songs.size > 0 ? { scene, songs } : null;
+  return songs;
 };
 
 /** A songbook song isn't tied to a scene, so it converts against the defaults */
@@ -458,10 +523,13 @@ export const convertSavedSong = (
   isLegacySong(song)
     ? {
         ...song,
-        ...convertSong(song, {
-          legacyStyle: undefined,
-          legacyVideos,
-          template: null,
-        }),
+        looks: songLooks(
+          song,
+          convertSong(song, {
+            legacyStyle: undefined,
+            legacyVideos,
+            template: null,
+          }),
+        ),
       }
     : null;

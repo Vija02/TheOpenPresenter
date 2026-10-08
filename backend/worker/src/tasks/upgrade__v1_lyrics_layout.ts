@@ -3,15 +3,20 @@ import { Task } from "graphile-worker";
 import * as Y from "yjs";
 
 import {
+  LEGACY_STYLE_LOOKS,
   type LegacyPluginData,
   type LegacySong,
-  convertPluginData,
+  type LookLayout,
   convertSavedSong,
+  convertSceneSongs,
+  convertSceneStyle,
 } from "../migrations/lyricsLayoutUpgrade";
 
 const PLUGIN_NAME = "lyrics-presenter";
 /** `pluginSchemaName("lyrics-presenter")` */
-const SONGBOOK_TABLE = "plugin_lyrics_presenter.saved_song";
+const SCHEMA = "plugin_lyrics_presenter";
+const SONGBOOK_TABLE = `${SCHEMA}.saved_song`;
+const LOOK_TABLE = `${SCHEMA}.look`;
 
 const toYjs = (value: unknown): unknown => {
   if (Array.isArray(value)) {
@@ -29,59 +34,121 @@ const toYjs = (value: unknown): unknown => {
   return value;
 };
 
+type LyricsScene = { pluginData: Y.Map<any>; legacy: LegacyPluginData };
+
+const lyricsScenes = (ydoc: Y.Doc): LyricsScene[] => {
+  const state = ydoc.getMap() as YState;
+  const dataMap = state.get("data") as Y.Map<any> | undefined;
+  const scenes: LyricsScene[] = [];
+
+  for (const sceneValue of dataMap?.values() ?? []) {
+    if (!(sceneValue instanceof Y.Map)) continue;
+    if (sceneValue.get("type") !== "scene") continue;
+
+    const children = sceneValue.get("children") as Y.Map<any> | undefined;
+    for (const pluginValue of children?.values() ?? []) {
+      if (!(pluginValue instanceof Y.Map)) continue;
+      if (pluginValue.get("plugin") !== PLUGIN_NAME) continue;
+
+      const pluginData = pluginValue.get("pluginData");
+      if (!(pluginData instanceof Y.Map)) continue;
+      scenes.push({
+        pluginData,
+        legacy: pluginData.toJSON() as LegacyPluginData,
+      });
+    }
+  }
+  return scenes;
+};
+
 /**
- * Lyrics moved onto `@repo/layout`: each scene's old style becomes a text
- * template and a background, and each song's style override its own. Songbook
- * songs convert too. The old fields are left in place, unread
+ * Lyrics moved onto `@repo/layout`, with looks that are the organization's.
+ * Each organization's most recently edited styled scene becomes its looks.
+ * Songs in scenes styled otherwise keep their scene's look as their own, so
+ * nothing changes on screen. Songbook songs convert too. The old fields are
+ * left in place, unread
  */
 const task: Task = async (_, { withPgClient }) => {
-  const { rows: projects } = await withPgClient((pgClient) =>
-    pgClient.query(`select * from app_public.projects`, []),
+  // The plugin's tables come from its own migrations, which the server runs
+  // on start. Until then, fail, so the job is retried
+  await withPgClient(async (pgClient) => {
+    const {
+      rows: [row],
+    } = await pgClient.query(`select to_regclass($1) as exists`, [LOOK_TABLE]);
+    if (!row?.exists) {
+      throw new Error(`${LOOK_TABLE} doesn't exist yet, retrying later`);
+    }
+  });
+
+  // An organization that edited its look before this ran keeps it
+  const organizationLooks = new Map<string, LookLayout | null>();
+  const { rows: existing } = await withPgClient((pgClient) =>
+    pgClient.query(
+      `select organization_id, template, background from ${LOOK_TABLE}
+        where key = $1`,
+      [LEGACY_STYLE_LOOKS[0].key],
+    ),
   );
+  for (const row of existing) {
+    organizationLooks.set(row.organization_id, {
+      template: row.template,
+      background: row.background,
+    });
+  }
+
+  // Most recent first: the first styled scene an organization has wins
+  const { rows: projects } = await withPgClient((pgClient) =>
+    pgClient.query(
+      `select id, organization_id, document from app_public.projects
+        order by updated_at desc`,
+    ),
+  );
+
+  const decode = (project: { document: Buffer }) => {
+    const ydoc = new Y.Doc();
+    Y.applyUpdate(ydoc, project.document);
+    return ydoc;
+  };
+
+  // First decide every organization's look, so each scene below is compared
+  // against the final one
+  for (const project of projects) {
+    if (organizationLooks.has(project.organization_id)) continue;
+    try {
+      for (const { legacy } of lyricsScenes(decode(project))) {
+        const look = convertSceneStyle(legacy);
+        if (look) {
+          organizationLooks.set(project.organization_id, look);
+          break;
+        }
+      }
+    } catch (e) {
+      console.error("Failed to read project id: " + project.id, e);
+    }
+  }
 
   for (const project of projects) {
     try {
-      const ydoc = new Y.Doc();
-      Y.applyUpdate(ydoc, project.document);
+      const ydoc = decode(project);
 
-      const state = ydoc.getMap() as YState;
-      const dataMap = state.get("data") as Y.Map<any> | undefined;
-      if (!dataMap) continue;
+      const scenes = lyricsScenes(ydoc);
+      if (scenes.length === 0) continue;
 
       let mutated = false;
 
       ydoc.transact(() => {
-        for (const sceneValue of dataMap.values()) {
-          if (!(sceneValue instanceof Y.Map)) continue;
-          if (sceneValue.get("type") !== "scene") continue;
+        for (const { pluginData, legacy } of scenes) {
+          const songs = pluginData.get("songs");
+          if (!(songs instanceof Y.Array)) continue;
 
-          const children = sceneValue.get("children") as Y.Map<any> | undefined;
-          for (const pluginValue of children?.values() ?? []) {
-            if (!(pluginValue instanceof Y.Map)) continue;
-            if (pluginValue.get("plugin") !== PLUGIN_NAME) continue;
-
-            const pluginData = pluginValue.get("pluginData");
-            if (!(pluginData instanceof Y.Map)) continue;
-
-            const conversion = convertPluginData(
-              pluginData.toJSON() as LegacyPluginData,
-            );
-            if (!conversion) continue;
-
-            if (conversion.scene) {
-              pluginData.set("template", toYjs(conversion.scene.template));
-              pluginData.set("background", toYjs(conversion.scene.background));
-            }
-
-            const songs = pluginData.get("songs");
-            for (const [index, song] of conversion.songs) {
-              const songMap =
-                songs instanceof Y.Array ? songs.get(index) : null;
-              if (!(songMap instanceof Y.Map)) continue;
-              songMap.set("template", toYjs(song.template));
-              songMap.set("background", toYjs(song.background));
-            }
-
+          const converted = convertSceneSongs(
+            legacy,
+            organizationLooks.get(project.organization_id) ?? null,
+          );
+          for (const [index, looks] of converted) {
+            const songMap = songs.get(index);
+            if (!(songMap instanceof Y.Map)) continue;
+            songMap.set("looks", toYjs(looks));
             mutated = true;
           }
         }
@@ -106,19 +173,41 @@ const task: Task = async (_, { withPgClient }) => {
     }
   }
 
-  // Songbook rows, where the plugin's tables exist
+  // The styles that became looks. Never over one the organization has
   try {
     await withPgClient(async (pgClient) => {
-      const {
-        rows: [table],
-      } = await pgClient.query(`select to_regclass($1) as exists`, [
-        SONGBOOK_TABLE,
-      ]);
-      if (!table?.exists) return;
+      // Fire the triggers, so open scenes pick the looks up
+      await pgClient.query("SET session_replication_role = origin;");
+      for (const [organizationId, look] of organizationLooks) {
+        if (!look) continue;
+        for (const { key, name, position } of LEGACY_STYLE_LOOKS) {
+          await pgClient.query(
+            `insert into ${LOOK_TABLE}
+               (organization_id, key, name, position, template, background)
+             values ($1, $2, $3, $4, $5::jsonb, $6::jsonb)
+             on conflict (organization_id, key) do nothing`,
+            [
+              organizationId,
+              key,
+              name,
+              position,
+              JSON.stringify(look.template),
+              look.background === null ? null : JSON.stringify(look.background),
+            ],
+          );
+        }
+      }
+    });
+  } catch (e) {
+    console.error("Failed to save the organizations' looks", e);
+  }
 
+  // Songbook rows
+  try {
+    await withPgClient(async (pgClient) => {
       const { rows } = await pgClient.query(
         `select id, song, video_backgrounds from ${SONGBOOK_TABLE}
-          where not (song ? 'template')`,
+          where not (song ? 'looks')`,
       );
 
       await pgClient.query("SET session_replication_role = replica;");
