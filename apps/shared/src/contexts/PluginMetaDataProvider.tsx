@@ -111,9 +111,6 @@ export function PluginMetaDataProvider({
       ? (pluginMetaData.currentScreenGuestSession ?? null)
       : null;
 
-  const isPublicAccess =
-    !currentUser && !screenGuestSession && !!project?.isPublic;
-
   const organizationId = useMemo(() => {
     if (
       pluginMetaData?.organizationBySlug?.projects.nodes &&
@@ -133,6 +130,14 @@ export function PluginMetaDataProvider({
     pluginMetaData?.organizationBySlug?.projects.nodes,
     pluginMetaData?.publicOrGuestProject?.nodes,
   ]);
+
+  const isMember =
+    !!organizationId &&
+    !!currentUser?.organizationMemberships.nodes.some(
+      (membership) => membership.organizationId === organizationId,
+    );
+  const isPublicAccess =
+    !isMember && !screenGuestSession && !!project?.isPublic;
 
   const currentUserId = currentUser?.id;
 
