@@ -196,3 +196,9 @@
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
+
+/* As on the canvas: a slide without a background shows as see-through */
+.lay--template-rail__preview {
+  @apply checkerboard;
+  --checkerboard-color: var(--surface-secondary, #f4f4f5);
+}

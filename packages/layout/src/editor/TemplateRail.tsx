@@ -43,7 +43,7 @@ export const TemplateRail = ({
                 : "border-stroke hover:border-primary hover:bg-primary/10"
             }`}
           >
-            <div className="w-full aspect-video overflow-hidden rounded-t bg-black pointer-events-none">
+            <div className="lay--template-rail__preview w-full aspect-video overflow-hidden rounded-t pointer-events-none">
               <LayoutRenderer doc={t.doc} data={data} />
             </div>
             <span className="block px-2 py-1 text-xs font-medium">
