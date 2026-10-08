@@ -20,6 +20,7 @@
     "@repo/backend-shared": "*",
     "@repo/base-plugin": "*",
     "@repo/config": "*",
+    "@repo/layout": "*",
     "@repo/lib": "*",
     "@repo/observability": "*",
     "@types/html-to-text": "^9.0.4",
