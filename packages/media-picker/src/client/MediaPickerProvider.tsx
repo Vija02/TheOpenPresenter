@@ -10,6 +10,7 @@ import {
   OrganizationMediaForPickerQuery,
   OrganizationMediaForPickerQueryVariables,
 } from "@repo/graphql";
+import { usePublicAccess } from "@repo/ui";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import { useClient } from "urql";
 
@@ -23,7 +24,6 @@ import {
 
 export type MediaPickerProviderProps = {
   children: React.ReactNode;
-  isPublicAccess?: boolean;
 };
 
 type ModalState = {
@@ -47,8 +47,8 @@ const baseModalState: ModalState = {
 
 export const MediaPickerProvider: React.FC<MediaPickerProviderProps> = ({
   children,
-  isPublicAccess = false,
 }) => {
+  const isPublicAccess = usePublicAccess();
   const [modalState, setModalState] = useState<ModalState>(baseModalState);
   const resolveRef = useRef<
     ((result: MediaPickerResult[] | null) => void) | null
@@ -137,7 +137,6 @@ export const MediaPickerProvider: React.FC<MediaPickerProviderProps> = ({
         onClose={handleClose}
         onSelect={handleSelect}
         options={modalState.options}
-        isPublicAccess={isPublicAccess}
       />
     </MediaPickerContext.Provider>
   );

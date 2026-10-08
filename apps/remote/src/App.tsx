@@ -8,6 +8,7 @@ import {
   useHandleKeyPress,
   usePluginMetaData,
 } from "@repo/shared";
+import { PublicAccessProvider } from "@repo/ui";
 import { useEffect } from "react";
 import { Route, Switch, useParams } from "wouter";
 
@@ -46,9 +47,11 @@ function Root() {
           <AudioCheckProvider>
             <PluginDataProvider type="remote" rendererId={selectedRendererId}>
               <AwarenessProvider>
-                <MediaPickerWrapper>
-                  <Inner />
-                </MediaPickerWrapper>
+                <PublicAccessWrapper>
+                  <MediaPickerProvider>
+                    <Inner />
+                  </MediaPickerProvider>
+                </PublicAccessWrapper>
               </AwarenessProvider>
             </PluginDataProvider>
           </AudioCheckProvider>
@@ -58,12 +61,12 @@ function Root() {
   );
 }
 
-function MediaPickerWrapper({ children }: { children: React.ReactNode }) {
+function PublicAccessWrapper({ children }: { children: React.ReactNode }) {
   const { isPublicAccess } = usePluginMetaData();
   return (
-    <MediaPickerProvider isPublicAccess={isPublicAccess}>
+    <PublicAccessProvider isPublicAccess={isPublicAccess}>
       {children}
-    </MediaPickerProvider>
+    </PublicAccessProvider>
   );
 }
 

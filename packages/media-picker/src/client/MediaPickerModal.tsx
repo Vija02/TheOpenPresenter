@@ -21,6 +21,7 @@ import {
   DialogHeader,
   DialogPortalContainerContext,
   DialogTitle,
+  usePublicAccess,
 } from "@repo/ui";
 import React, {
   useCallback,
@@ -53,7 +54,6 @@ export type MediaPickerModalProps = {
   onClose: () => void;
   onSelect: (results: MediaPickerResult[]) => void;
   options: MediaPickerOptionsInternal;
-  isPublicAccess?: boolean;
 };
 
 export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
@@ -61,8 +61,8 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
   onClose,
   onSelect,
   options,
-  isPublicAccess = false,
 }) => {
+  const isPublicAccess = usePublicAccess();
   const { organizationId, projectId, pluginId } = options.pluginContext;
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
