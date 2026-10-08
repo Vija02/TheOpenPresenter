@@ -7,10 +7,8 @@ import { useOrganizationMediaForPickerQuery } from "@repo/graphql";
 import {
   extractMediaName,
   isAudioFile,
-  isImageFile,
   isMediaReady,
   isVideoFile,
-  mediaIdFromUUID,
   resolveMediaUrl,
   useMediaProcessingStatus,
 } from "@repo/lib";
@@ -39,7 +37,7 @@ import { MediaCard } from "./MediaCard";
 import { MediaPreviewDialog } from "./MediaPreviewDialog";
 import { UploadedMediaInfo } from "./UploadMediaModal";
 import { MediaWithMetadata } from "./types";
-import { filterMediaByType } from "./utils";
+import { buildMediaPickerResult, filterMediaByType } from "./utils";
 
 const TYPE_LABELS: Record<MediaType, { plural: string; singular: string }> = {
   all: { plural: "media", singular: "file" },
@@ -101,97 +99,6 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
     prevIsOpenRef.current = isOpen;
   }, [isOpen, resetOverrides]);
 
-  const buildResult = useCallback(
-    (media: MediaWithMetadata): MediaPickerResult => {
-      const mediaUrl = resolveMediaUrl(extractMediaName(media.mediaName));
-
-      const result: MediaPickerResult = {
-        id: media.id,
-        mediaName: media.mediaName,
-        originalName: media.originalName,
-        fileExtension: media.fileExtension,
-        url: mediaUrl,
-      };
-
-      if (isVideoFile(media.fileExtension)) {
-        const videoMeta = media.videoMetadata;
-
-        let hlsMediaName: string | null = null;
-        let thumbnailMediaName: string | null = null;
-        let duration: number | null = null;
-
-        if (videoMeta) {
-          if (videoMeta.hlsMediaId) {
-            hlsMediaName = mediaIdFromUUID(videoMeta.hlsMediaId) + ".m3u8";
-          }
-          if (videoMeta.thumbnailMediaId) {
-            thumbnailMediaName =
-              mediaIdFromUUID(videoMeta.thumbnailMediaId) + ".jpg";
-          }
-          duration = parseFloat(videoMeta.duration);
-        }
-
-        result.internalVideo = {
-          id: typeidUnboxed("video"),
-          url: result.url,
-          isInternalVideo: true,
-          hlsMediaName: hlsMediaName,
-          thumbnailMediaName: thumbnailMediaName,
-          metadata: {
-            title: result.originalName ?? result.mediaName,
-            ...(thumbnailMediaName
-              ? {
-                  thumbnailUrl: resolveMediaUrl(
-                    extractMediaName(thumbnailMediaName),
-                  ),
-                }
-              : {}),
-            ...(duration
-              ? {
-                  duration,
-                }
-              : {}),
-          },
-        };
-      }
-
-      if (isAudioFile(media.fileExtension)) {
-        const audioMeta = media.audioMetadata;
-        const duration = audioMeta?.duration
-          ? parseFloat(audioMeta.duration)
-          : null;
-
-        result.internalAudio = {
-          playbackMediaName: audioMeta?.playbackMedia?.mediaName ?? null,
-          coverMediaName: audioMeta?.coverMedia?.mediaName ?? null,
-          metadata: JSON.parse(
-            JSON.stringify({
-              title:
-                audioMeta?.title ?? result.originalName ?? result.mediaName,
-              artist: audioMeta?.artist ?? undefined,
-              album: audioMeta?.album ?? undefined,
-              duration: duration ?? undefined,
-            }),
-          ),
-        };
-      }
-
-      const imageDependency = media.dependencies.nodes.find((dep) =>
-        isImageFile(dep.childMedia?.fileExtension),
-      );
-      if (imageDependency?.childMedia) {
-        result.extraMeta = {
-          childThumbnailUrl: resolveMediaUrl(
-            extractMediaName(imageDependency.childMedia.mediaName),
-          ),
-        };
-      }
-
-      return result;
-    },
-    [],
-  );
-
   const allowMultiple = options?.multiple ?? true;
 
   const handleClick = useCallback(
@@ -211,18 +118,18 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
           return newSet;
         });
       } else {
-        onSelect([buildResult(media)]);
+        onSelect([buildMediaPickerResult(media)]);
       }
     },
-    [onSelect, buildResult, allowMultiple],
+    [onSelect, allowMultiple],
   );
 
   const handleDone = useCallback(() => {
     const results = filteredMedia
       .filter((media) => selectedIds.has(media.id))
-      .map(buildResult);
+      .map(buildMediaPickerResult);
     onSelect(results);
-  }, [filteredMedia, selectedIds, buildResult, onSelect]);
+  }, [filteredMedia, selectedIds, onSelect]);
 
   const buildResultFromUpload = useCallback(
     (mediaName: string, originalName: string | null): MediaPickerResult => {

@@ -1,11 +1,21 @@
 import {
+  MediaListOptions,
   MediaPickerOptionsInternal,
   MediaPickerResult,
 } from "@repo/base-plugin";
 import { MediaPickerContext } from "@repo/base-plugin/client";
-import React, { useCallback, useRef, useState } from "react";
+import {
+  OrganizationMediaForPickerDocument,
+  OrganizationMediaForPickerQuery,
+  OrganizationMediaForPickerQueryVariables,
+} from "@repo/graphql";
+import { isMediaReady } from "@repo/lib";
+import React, { useCallback, useMemo, useRef, useState } from "react";
+import { useClient } from "urql";
 
 import { MediaPickerModal } from "./MediaPickerModal";
+import { MediaWithMetadata } from "./types";
+import { buildMediaPickerResult, filterMediaByType } from "./utils";
 
 export type MediaPickerProviderProps = {
   children: React.ReactNode;
@@ -71,8 +81,51 @@ export const MediaPickerProvider: React.FC<MediaPickerProviderProps> = ({
     setModalState(baseModalState);
   }, []);
 
+  const client = useClient();
+
+  // Fresh each call, so uploads and finished processing show up
+  const list = useCallback(
+    async ({
+      type = "all",
+      pluginContext,
+    }: MediaListOptions): Promise<MediaPickerResult[]> => {
+      const result = await client
+        .query<
+          OrganizationMediaForPickerQuery,
+          OrganizationMediaForPickerQueryVariables
+        >(
+          OrganizationMediaForPickerDocument,
+          {
+            organizationId: pluginContext.organizationId,
+            condition: { isUserUploaded: true },
+          },
+          { requestPolicy: "network-only" },
+        )
+        .toPromise();
+      // urql reports failures here rather than throwing
+      if (result.error) throw result.error;
+
+      const media = (result.data?.organization?.medias.nodes ??
+        []) as MediaWithMetadata[];
+      return filterMediaByType(media, type)
+        .filter(isMediaReady)
+        .map(buildMediaPickerResult);
+    },
+    [client],
+  );
+
+  // Public visitors have no library, so browsing in place hides entirely
+  const value = useMemo(
+    () => ({
+      show,
+      close: handleClose,
+      list: isPublicAccess ? undefined : list,
+    }),
+    [show, handleClose, list, isPublicAccess],
+  );
+
   return (
-    <MediaPickerContext.Provider value={{ show, close: handleClose }}>
+    <MediaPickerContext.Provider value={value}>
       {children}
       <MediaPickerModal
         isOpen={modalState.isOpen}
