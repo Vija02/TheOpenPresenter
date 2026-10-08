@@ -5,7 +5,7 @@ import {
   createAiCapabilityRequest,
   useAiChat,
 } from "@repo/ai-chat";
-import type { DataBinding } from "@repo/base-types";
+import type { DataBinding, MediaPickerResult } from "@repo/base-types";
 import { appData } from "@repo/lib";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@repo/ui";
 import {
@@ -29,6 +29,7 @@ import {
   LayoutHostCatalogProvider,
 } from "../react/context/hostCatalog";
 import { LayoutDoc, Template } from "../schema/document";
+import { FillPaint } from "../schema/paint";
 import { FrameContext } from "../template/resolve";
 import { sampleFeedData } from "../template/sampleFeedData";
 import { FrameData } from "../template/spans";
@@ -36,6 +37,7 @@ import { AddElementBar } from "./AddElementBar";
 import { EditorMuteToggle, hasAudibleVideo } from "./EditorMuteToggle";
 import { LayoutInsertDefaultsProvider } from "./InsertDefaultsContext";
 import { LayoutDocEditor } from "./LayoutDocEditor";
+import { MediaStripWrapper, useMediaStrip } from "./MediaStrip";
 import { TemplateRail } from "./TemplateRail";
 import { parseElements, serializeElements } from "./clipboard";
 import { LayoutInsertDefaults } from "./insertDefaults";
@@ -66,6 +68,19 @@ export type LayoutWorkbenchProps = {
 
   hideAddElements?: boolean;
 
+  /**
+   * Whether the media library along the bottom starts open. It is there
+   * wherever the host can list its library (`pluginApi.mediaPicker.list`)
+   */
+  media?: boolean;
+  /** Custom media action when picked */
+  mediaAction?: (picked: MediaPickerResult | null) => void;
+  /** Adds a colour and gradient card to the media panel, after None */
+  mediaColourAction?: (fill: FillPaint) => void;
+  /** Marks the current choice in the media panel. See `MediaStrip` */
+  mediaSelection?: FillPaint | null;
+  /** Beside the media panel's heading */
+  mediaHeaderExtras?: ReactNode;
   /** Drawn under the canvas, not selectable */
   underlay?: LayoutDoc | null;
 
@@ -92,7 +107,7 @@ export type LayoutWorkbenchProps = {
   className?: string;
 };
 
-type CompactTab = "templates" | "properties";
+type CompactTab = "templates" | "properties" | "media";
 
 /**
  * The full editing surface: template rail, canvas, contextual inspector.
@@ -109,6 +124,11 @@ export const LayoutWorkbench = ({
   bindings = [],
   documentExtras,
   hideAddElements = false,
+  media: mediaStartsOpen = false,
+  mediaAction,
+  mediaColourAction,
+  mediaSelection,
+  mediaHeaderExtras,
   underlay,
   insertDefaults,
   hostCatalog,
@@ -171,6 +191,23 @@ export const LayoutWorkbench = ({
   );
 
   const clearSelection = useCallback(() => setSelectedIds([]), []);
+
+  const media = useMediaStrip({
+    doc,
+    onChange,
+    selectedIds,
+    setSelectedIds,
+    insertDefaults,
+    pluginApi,
+    rootRef,
+    compact,
+    startOpen: mediaStartsOpen,
+    action: mediaAction,
+    colourAction: mediaColourAction,
+    selection: mediaSelection,
+    headerExtras: mediaHeaderExtras,
+  });
+  const mediaStrip = media.strip;
 
   const selectedElements = useMemo(
     () => doc.elements.filter((e) => selectedIds.includes(e.id)),
@@ -277,6 +314,7 @@ export const LayoutWorkbench = ({
         canvasPadding
       }
       style={compact ? { aspectRatio: stageAspect } : undefined}
+      {...media.dropHandlers}
       onPointerDown={(e) => {
         if (!(e.target as HTMLElement).closest(".lay--editor")) {
           clearSelection();
@@ -328,7 +366,7 @@ export const LayoutWorkbench = ({
     >
       {canvas}
 
-      {rail ? (
+      {rail || mediaStrip ? (
         <Tabs
           value={compactTab}
           onValueChange={(value) => setCompactTab(value as CompactTab)}
@@ -336,7 +374,8 @@ export const LayoutWorkbench = ({
         >
           <TabsList className="shrink-0">
             <TabsTrigger value="properties">Properties</TabsTrigger>
-            <TabsTrigger value="templates">Templates</TabsTrigger>
+            {rail && <TabsTrigger value="templates">Templates</TabsTrigger>}
+            {mediaStrip && <TabsTrigger value="media">Media</TabsTrigger>}
           </TabsList>
           {/* Radix unmounts the inactive panel, so each pane stays a single instance. */}
           <TabsContent
@@ -345,12 +384,19 @@ export const LayoutWorkbench = ({
           >
             {inspector}
           </TabsContent>
-          <TabsContent
-            value="templates"
-            className="flex-1 min-h-0 overflow-y-auto p-3"
-          >
-            {rail}
-          </TabsContent>
+          {rail && (
+            <TabsContent
+              value="templates"
+              className="flex-1 min-h-0 overflow-y-auto p-3"
+            >
+              {rail}
+            </TabsContent>
+          )}
+          {mediaStrip && (
+            <TabsContent value="media" className="flex-1 min-h-0 px-3 flex">
+              {mediaStrip}
+            </TabsContent>
+          )}
         </Tabs>
       ) : (
         <div className="flex-1 min-h-0 overflow-y-auto px-3 border-t border-stroke">
@@ -359,18 +405,27 @@ export const LayoutWorkbench = ({
       )}
     </div>
   ) : (
-    <div ref={rootRef} className={`flex h-full min-h-0 ${className ?? ""}`}>
-      {rail && (
-        <aside className="w-[170px] shrink-0 border-r border-stroke overflow-y-auto p-3">
-          {rail}
+    <div
+      ref={rootRef}
+      className={`flex flex-col h-full min-h-0 ${className ?? ""}`}
+    >
+      <div className="flex flex-1 min-h-0">
+        {rail && (
+          <aside className="w-[170px] shrink-0 border-r border-stroke overflow-y-auto p-3">
+            {rail}
+          </aside>
+        )}
+
+        {canvas}
+
+        <aside className="w-[280px] shrink-0 border-l border-stroke overflow-y-auto px-3">
+          {inspector}
         </aside>
+      </div>
+
+      {mediaStrip && (
+        <MediaStripWrapper panel={media.panel}>{mediaStrip}</MediaStripWrapper>
       )}
-
-      {canvas}
-
-      <aside className="w-[280px] shrink-0 border-l border-stroke overflow-y-auto px-3">
-        {inspector}
-      </aside>
     </div>
   );
 

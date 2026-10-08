@@ -1,8 +1,10 @@
 import { PluginAPIContext } from "@repo/base-plugin/client";
+import { UniversalImage } from "@repo/ui";
 import { createVideoPlaybackState } from "@repo/video";
 import { VideoPlayer } from "@repo/video/client";
 import {
   CSSProperties,
+  ComponentProps,
   ReactNode,
   useCallback,
   useContext,
@@ -11,9 +13,10 @@ import {
 } from "react";
 
 import {
+  VIDEO_COVER_WIDTH,
   VideoPaint,
   toInternalVideo,
-  videoPosterPlaceholderUrl,
+  videoCoverSrc,
   videoPosterUrl,
 } from "../../schema/paint";
 import { useLayoutActiveSince } from "../context/ActiveContext";
@@ -60,19 +63,24 @@ const PlayerFrame = ({
     "--lay-video-fit": fill.fit,
   } as CSSProperties;
 
-  const placeholder = videoPosterPlaceholderUrl(fill.video);
+  const cover = videoCoverSrc(fill.video);
 
   return (
     <div className="lay--video-fill" style={objectFitStyle}>
-      {placeholder && (
-        <img
-          aria-hidden
-          src={placeholder}
-          alt=""
-          draggable={false}
-          className="lay--video-placeholder"
-          data-loaded={loaded ? "" : undefined}
-          style={{ objectFit: fill.fit }}
+      {cover && (
+        <UniversalImage
+          src={cover}
+          width={VIDEO_COVER_WIDTH}
+          imgProp={
+            {
+              "aria-hidden": true,
+              alt: "",
+              draggable: false,
+              className: "lay--video-placeholder",
+              "data-loaded": loaded ? "" : undefined,
+              style: { objectFit: fill.fit },
+            } as ComponentProps<"img">
+          }
         />
       )}
 

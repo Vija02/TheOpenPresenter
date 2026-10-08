@@ -59,11 +59,20 @@ export type MediaListOptions = {
   pluginContext: PluginContext;
 };
 
+export type MediaProcessing = {
+  status: "PENDING" | "PROCESSING" | "FAILED";
+  progress: number | null;
+};
+
+export type MediaListItem = MediaPickerResult & {
+  processing: MediaProcessing | null;
+};
+
 export type MediaPicker = {
   show: (
     options: MediaPickerOptionsInternal,
   ) => Promise<MediaPickerResult[] | null>;
   close?: () => void;
   /** For custom UI */
-  list?: (options: MediaListOptions) => Promise<MediaPickerResult[]>;
+  list?: (options: MediaListOptions) => Promise<MediaListItem[]>;
 };

@@ -7,6 +7,7 @@ export * from "./LayoutEditor";
 export * from "./LayoutWorkbench";
 export * from "./TemplateRail";
 export * from "./addElement";
+export * from "./MediaStrip";
 export * from "./clipboard";
 export * from "./InsertDefaultsContext";
 export * from "./insertDefaults";

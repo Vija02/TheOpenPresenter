@@ -91,18 +91,48 @@ export const addShape = (
     defaults,
   );
 
+const clamp = (value: number, max: number) => Math.min(Math.max(value, 0), max);
+
 const addMedia = (
   doc: LayoutDoc,
   base: string,
   fill: FillPaint,
   defaults: LayoutInsertDefaults,
+  center?: { x: number; y: number },
 ): AddResult =>
   add(
     doc,
     base,
     (id, rect) => createShapeElement({ id, kind: "rect", rect, fill }),
-    MEDIA_RECT,
+    center
+      ? {
+          ...MEDIA_RECT,
+          x: clamp(center.x - MEDIA_RECT.w / 2, 100 - MEDIA_RECT.w),
+          y: clamp(center.y - MEDIA_RECT.h / 2, 100 - MEDIA_RECT.h),
+        }
+      : MEDIA_RECT,
     defaults,
+  );
+
+/** For media already chosen, e.g. from the media strip */
+export const addMediaElement = (
+  doc: LayoutDoc,
+  fill: FillPaint,
+  {
+    center,
+    defaults = NO_DEFAULTS,
+  }: {
+    /** Design percentages. Centred on the stage when omitted */
+    center?: { x: number; y: number };
+    defaults?: LayoutInsertDefaults;
+  } = {},
+): AddResult =>
+  addMedia(
+    doc,
+    fill.type === "video" ? "video" : "image",
+    fill,
+    defaults,
+    center,
   );
 
 export const addImageElement = async (
