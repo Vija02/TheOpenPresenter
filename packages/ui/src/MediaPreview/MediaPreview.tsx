@@ -12,6 +12,7 @@ import {
   resolveMediaUrl,
   resolveProcessedMediaUrl,
 } from "@repo/lib";
+import type { UniversalURL } from "@repo/lib";
 import React, { useMemo, useState } from "react";
 import {
   VscFile,
@@ -21,6 +22,7 @@ import {
   VscPlay,
 } from "react-icons/vsc";
 
+import { UniversalImage } from "../UniversalImage";
 import { cn } from "../lib/utils";
 import "./MediaPreview.css";
 
@@ -66,6 +68,9 @@ export type MediaPreviewProps = {
   iconClassName?: string;
   processedImageSize?: number;
   showProcessingOverlay?: boolean;
+  // Hint for loading a smaller size
+  imageWidth?: string;
+  loading?: "lazy" | "eager";
 };
 
 const isPdfFile = (extension: string | null | undefined): boolean =>
@@ -129,6 +134,8 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
   iconClassName,
   processedImageSize = 300,
   showProcessingOverlay = true,
+  imageWidth,
+  loading,
 }) => {
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
@@ -188,6 +195,26 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
     return null;
   }, [media.videoMetadata, media.audioMetadata, media.dependencies?.nodes]);
 
+  // The same images as library media, for `UniversalImage` to resize
+  const thumbnailSrc = useMemo((): UniversalURL | null => {
+    const thumbnailMediaId =
+      media.videoMetadata?.thumbnailMediaId ??
+      media.audioMetadata?.coverMediaId;
+    const mediaName = thumbnailMediaId
+      ? mediaIdFromUUID(thumbnailMediaId) + ".jpg"
+      : media.dependencies?.nodes.find((dep) =>
+          isImageFile(dep.childMedia?.fileExtension),
+        )?.childMedia?.mediaName;
+    if (!mediaName) return null;
+    const { mediaId, extension } = extractMediaName(mediaName);
+    return { mediaId, extension };
+  }, [media.videoMetadata, media.audioMetadata, media.dependencies?.nodes]);
+
+  const mediaSrc = useMemo((): UniversalURL => {
+    const { mediaId, extension } = extractMediaName(media.mediaName);
+    return { mediaId, extension };
+  }, [media.mediaName]);
+
   const hlsUrl = useMemo(() => {
     if (media.videoMetadata?.hlsMediaId) {
       const hlsMediaName =
@@ -215,6 +242,24 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
 
   const defaultIconClassName = cn("ui--media-preview-icon", iconClassName);
 
+  /** Resized to `imageWidth` where it's library media, else as it is */
+  const still = (url: string, src: UniversalURL | null) =>
+    imageWidth && src ? (
+      <UniversalImage
+        src={src}
+        width={imageWidth}
+        fallback={<FallbackIcon className={defaultIconClassName} />}
+        imgProp={{ alt, className: defaultMediaClassName, loading }}
+      />
+    ) : (
+      <img
+        loading={loading}
+        src={url}
+        alt={alt}
+        className={defaultMediaClassName}
+      />
+    );
+
   const defaultPlayButtonClassName = cn(
     "ui--media-preview-play-button",
     playButtonClassName,
@@ -234,7 +279,7 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
     return (
       <div className={containerClassName}>
         {thumbnailUrl ? (
-          <img src={thumbnailUrl} alt={alt} className={defaultMediaClassName} />
+          still(thumbnailUrl, thumbnailSrc)
         ) : (
           <FallbackIcon className={defaultIconClassName} />
         )}
@@ -260,7 +305,7 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
     return (
       <div className={containerClassName}>
         {thumbnailUrl ? (
-          <img src={thumbnailUrl} alt={alt} className={defaultMediaClassName} />
+          still(thumbnailUrl, thumbnailSrc)
         ) : (
           <FallbackIcon className={defaultIconClassName} />
         )}
@@ -277,7 +322,7 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
     return (
       <div className={containerClassName}>
         {thumbnailUrl ? (
-          <img src={thumbnailUrl} alt={alt} className={defaultMediaClassName} />
+          still(thumbnailUrl, thumbnailSrc)
         ) : (
           <FallbackIcon className={defaultIconClassName} />
         )}
@@ -317,7 +362,7 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
           containerClassName,
         )}
       >
-        <img src={mediaUrl} alt={alt} className={defaultMediaClassName} />
+        {still(mediaUrl, mediaSrc)}
       </div>
     );
   }
@@ -326,7 +371,12 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
   if (isImage && processedUrl) {
     return (
       <div className={containerClassName}>
-        <img src={processedUrl} alt={alt} className={defaultMediaClassName} />
+        <img
+          loading={loading}
+          src={processedUrl}
+          alt={alt}
+          className={defaultMediaClassName}
+        />
       </div>
     );
   }
@@ -335,7 +385,7 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
   if (thumbnailUrl) {
     return (
       <div className={containerClassName}>
-        <img src={thumbnailUrl} alt={alt} className={defaultMediaClassName} />
+        {still(thumbnailUrl, thumbnailSrc)}
       </div>
     );
   }

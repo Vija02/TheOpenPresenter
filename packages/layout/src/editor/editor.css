@@ -1,6 +1,7 @@
 @import "@repo/tailwind-config/index.css";
 @import "../react/styles.css";
 @import "@repo/ai-chat/css";
+@import "./MediaStrip/MediaStrip.css";
 
 .lay--editor {
   border: 2px dashed var(--stroke, #d4d4d8);

@@ -175,12 +175,7 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
       for (const uploaded of uploadedList) {
         if (!uploaded.mediaName) continue;
         const ext = uploaded.mediaName.split(".").pop() ?? "";
-        const hasVideoUpload =
-          (Array.isArray(options?.type)
-            ? options.type.includes("video")
-            : options?.type === "video") || isVideoFile(ext);
-
-        const allowAutoPick = !hasVideoUpload || !!options?.autoPickVideo;
+        const allowAutoPick = !isVideoFile(ext) || !!options?.autoPickVideo;
         if (!allowAutoPick) continue;
         picked.push(
           buildResultFromUpload(uploaded.mediaName, uploaded.originalName),

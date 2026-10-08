@@ -1,12 +1,26 @@
-import type { MediaPicker, PluginContext } from "@repo/base-types";
+import type {
+  MediaPicker,
+  MediaPickerResult,
+  PluginContext,
+} from "@repo/base-types";
 import { extractMediaName } from "@repo/lib";
 import type { UniversalURL } from "@repo/lib";
 
 import { LayoutVideo, toLayoutVideo } from "../schema/paint";
 
 export type LayoutPluginApi = {
-  mediaPicker: Pick<MediaPicker, "show">;
+  mediaPicker: Pick<MediaPicker, "show" | "list">;
   pluginContext: PluginContext;
+};
+
+export const pickedImageSrc = (picked: MediaPickerResult): UniversalURL => {
+  try {
+    const { mediaId, extension } = extractMediaName(picked.mediaName);
+    return { mediaId, extension };
+  } catch {
+    // Not an internal media name: fall back to whatever URL the host gave us.
+    return picked.url;
+  }
 };
 
 export const pickImage = async (
@@ -20,15 +34,7 @@ export const pickImage = async (
   });
 
   const picked = results?.[0];
-  if (!picked) return null;
-
-  try {
-    const { mediaId, extension } = extractMediaName(picked.mediaName);
-    return { mediaId, extension };
-  } catch {
-    // Not an internal media name: fall back to whatever URL the host gave us.
-    return picked.url;
-  }
+  return picked ? pickedImageSrc(picked) : null;
 };
 
 export const pickVideo = async (

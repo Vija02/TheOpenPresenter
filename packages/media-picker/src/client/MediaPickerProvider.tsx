@@ -1,4 +1,5 @@
 import {
+  MediaListItem,
   MediaListOptions,
   MediaPickerOptionsInternal,
   MediaPickerResult,
@@ -9,13 +10,16 @@ import {
   OrganizationMediaForPickerQuery,
   OrganizationMediaForPickerQueryVariables,
 } from "@repo/graphql";
-import { isMediaReady } from "@repo/lib";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import { useClient } from "urql";
 
 import { MediaPickerModal } from "./MediaPickerModal";
 import { MediaWithMetadata } from "./types";
-import { buildMediaPickerResult, filterMediaByType } from "./utils";
+import {
+  buildMediaPickerResult,
+  filterMediaByType,
+  mediaProcessing,
+} from "./utils";
 
 export type MediaPickerProviderProps = {
   children: React.ReactNode;
@@ -88,7 +92,7 @@ export const MediaPickerProvider: React.FC<MediaPickerProviderProps> = ({
     async ({
       type = "all",
       pluginContext,
-    }: MediaListOptions): Promise<MediaPickerResult[]> => {
+    }: MediaListOptions): Promise<MediaListItem[]> => {
       const result = await client
         .query<
           OrganizationMediaForPickerQuery,
@@ -107,9 +111,10 @@ export const MediaPickerProvider: React.FC<MediaPickerProviderProps> = ({
 
       const media = (result.data?.organization?.medias.nodes ??
         []) as MediaWithMetadata[];
-      return filterMediaByType(media, type)
-        .filter(isMediaReady)
-        .map(buildMediaPickerResult);
+      return filterMediaByType(media, type).map((item) => ({
+        ...buildMediaPickerResult(item),
+        processing: mediaProcessing(item),
+      }));
     },
     [client],
   );

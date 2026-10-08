@@ -1,8 +1,14 @@
-import { MediaPickerResult, MediaType } from "@repo/base-plugin";
+import {
+  MediaPickerResult,
+  MediaProcessing,
+  MediaType,
+} from "@repo/base-plugin";
+import { VideoTranscodeStatus } from "@repo/graphql";
 import {
   extractMediaName,
   isAudioFile,
   isImageFile,
+  isMediaReady,
   isPdfFile,
   isPptFile,
   isVideoFile,
@@ -131,4 +137,24 @@ export const buildMediaPickerResult = (
   }
 
   return result;
+};
+
+/** Null once the item can be used, else how processing is going */
+export const mediaProcessing = (
+  media: MediaWithMetadata,
+): MediaProcessing | null => {
+  if (isMediaReady(media)) return null;
+  const meta = isVideoFile(media.fileExtension)
+    ? media.videoMetadata
+    : media.audioMetadata;
+  const status = meta?.transcodeStatus;
+  return {
+    status:
+      status === VideoTranscodeStatus.Failed
+        ? "FAILED"
+        : status === VideoTranscodeStatus.Processing
+          ? "PROCESSING"
+          : "PENDING",
+    progress: meta?.transcodeProgress ?? null,
+  };
 };

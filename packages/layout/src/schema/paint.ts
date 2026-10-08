@@ -1,14 +1,13 @@
 import type { InternalVideo } from "@repo/base-types";
 import {
-  ALLOWED_IMAGE_WIDTH,
+  UniversalURL,
   extractMediaName,
   resolveMediaUrl,
-  resolveProcessedMediaUrl,
   universalURLValidator,
 } from "@repo/lib";
 import { z } from "zod";
 
-const PLACEHOLDER_WIDTH = Math.min(...ALLOWED_IMAGE_WIDTH);
+export const VIDEO_COVER_WIDTH = "240px";
 
 export const solidPaintValidator = z.object({
   type: z.literal("solid"),
@@ -189,18 +188,12 @@ export const videoPosterUrl = (video: LayoutVideo): string | null => {
   return null;
 };
 
-export const videoPosterPlaceholderUrl = (
-  video: LayoutVideo,
-): string | null => {
+/** The cover as library media, for `UniversalImage` to pick a resize of */
+export const videoCoverSrc = (video: LayoutVideo): UniversalURL | null => {
   if (!video.thumbnailMediaName) return null;
   try {
     const { mediaId, extension } = extractMediaName(video.thumbnailMediaName);
-    return (
-      resolveProcessedMediaUrl({
-        mediaUrl: { mediaId, extension },
-        size: PLACEHOLDER_WIDTH,
-      }) ?? null
-    );
+    return { mediaId, extension };
   } catch {
     return null;
   }
