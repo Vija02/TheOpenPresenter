@@ -3,8 +3,8 @@ import { useMemo } from "react";
 
 import { Song } from "../../src";
 import { OFFSET_PARAM } from "../../src/derivation";
+import { lookKeyFor, songLookTemplate } from "../../src/looks";
 import { processSong } from "../../src/songHelpers";
-import { songTemplate } from "../../src/template/layout";
 import { usePluginAPI } from "../pluginApi";
 import BackgroundRenderer from "./BackgroundRenderer";
 import { LyricsSlide } from "./LyricsSlide";
@@ -113,12 +113,12 @@ const SlideRenderer = () => {
 
 const SongSlide = ({ song, index }: { song: Song; index: number | null }) => {
   const pluginApi = usePluginAPI();
-  const template = pluginApi.scene.useData((x) => x.pluginData.template);
+  const looks = pluginApi.scene.useData((x) => x.pluginData.looks);
 
   return (
     <LyricsSlide
       song={song}
-      template={songTemplate(song, { template })}
+      template={songLookTemplate(song, lookKeyFor(song), looks)}
       index={index}
     />
   );

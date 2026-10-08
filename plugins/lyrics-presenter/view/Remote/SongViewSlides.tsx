@@ -2,13 +2,14 @@ import type { LayoutDoc } from "@repo/layout";
 import { Slide } from "@repo/ui";
 import { useMemo } from "react";
 
+import { ResolvedBackground } from "../../src/backgrounds";
 import {
-  ResolvedBackground,
+  lookKeyFor,
   resolveSongBackground,
-} from "../../src/backgrounds";
+  songLookTemplate,
+} from "../../src/looks";
 import { GroupedData } from "../../src/processLyrics";
 import { processSong } from "../../src/songHelpers";
-import { sceneBackground, songTemplate } from "../../src/template/layout";
 import { Song } from "../../src/types";
 import { LyricsSlide } from "../Renderer/LyricsSlide";
 import { usePluginAPI } from "../pluginApi";
@@ -22,8 +23,7 @@ export const SongViewSlides = ({
   isPreview?: boolean;
 }) => {
   const pluginApi = usePluginAPI();
-  const template = pluginApi.scene.useData((x) => x.pluginData.template);
-  const background = pluginApi.scene.useData((x) => x.pluginData.background);
+  const looks = pluginApi.scene.useData((x) => x.pluginData.looks);
 
   const groupedData = useMemo(
     () => processSong(song.content, song.setting.sectionOrder),
@@ -31,10 +31,10 @@ export const SongViewSlides = ({
   );
 
   // The same resolvers as the output
-  const resolvedTemplate = songTemplate(song, { template });
+  const resolvedTemplate = songLookTemplate(song, lookKeyFor(song), looks);
   const resolvedBackground = useMemo(
-    () => resolveSongBackground(song, sceneBackground({ background })),
-    [song, background],
+    () => resolveSongBackground(song, looks),
+    [song, looks],
   );
 
   const props = {

@@ -2,8 +2,7 @@ import { LayoutRenderer } from "@repo/layout/react";
 import { CSSProperties, useMemo } from "react";
 
 import { backgroundScope, resolveLiveBackground } from "../../src/activation";
-import { resolveSceneBackgrounds } from "../../src/backgrounds";
-import { sceneBackground } from "../../src/template/layout";
+import { resolveSceneBackgrounds } from "../../src/looks";
 import { usePluginAPI } from "../pluginApi";
 
 const EMPTY_DATA = {};
@@ -24,11 +23,11 @@ const BackgroundRenderer = () => {
   const backgroundRun = pluginApi.renderer.useData((x) => x.backgroundRun);
 
   const songs = pluginApi.scene.useData((x) => x.pluginData.songs);
-  const background = pluginApi.scene.useData((x) => x.pluginData.background);
+  const looks = pluginApi.scene.useData((x) => x.pluginData.looks);
 
   const reachable = useMemo(
-    () => resolveSceneBackgrounds(songs, sceneBackground({ background })),
-    [songs, background],
+    () => resolveSceneBackgrounds(songs, looks),
+    [songs, looks],
   );
 
   // Which background shows is a pure function of song and position, so it
@@ -36,11 +35,11 @@ const BackgroundRenderer = () => {
   const liveKey = useMemo(
     () =>
       resolveLiveBackground(
-        { songs, background: sceneBackground({ background }) },
+        { songs, looks },
         songId ?? null,
         currentIndex ?? null,
       )?.key ?? null,
-    [songs, background, songId, currentIndex],
+    [songs, looks, songId, currentIndex],
   );
   const since =
     backgroundRun && backgroundRun.key === liveKey ? backgroundRun.since : null;

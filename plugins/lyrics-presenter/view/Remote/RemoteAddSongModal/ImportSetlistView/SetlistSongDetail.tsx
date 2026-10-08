@@ -58,8 +58,7 @@ export const SetlistSongDetail = ({
           content: data.content,
           key: data.key,
           _imported: true,
-          template: null,
-          background: null,
+          looks: {},
           setting: { displayType: "sections" },
         }
       : null;
