@@ -3,12 +3,11 @@ import { useMemo } from "react";
 
 import { Song } from "../../src";
 import { OFFSET_PARAM } from "../../src/derivation";
-import { getMergedSlideStyle } from "../../src/slideStyle";
 import { processSong } from "../../src/songHelpers";
+import { songTemplate } from "../../src/template/layout";
 import { usePluginAPI } from "../pluginApi";
-import FullSongRenderView from "./FullSongRenderView";
-import SectionsRenderView from "./SectionsRenderView";
-import VideoBackgroundRenderer from "./VideoBackgroundRenderer";
+import BackgroundRenderer from "./BackgroundRenderer";
+import { LyricsSlide } from "./LyricsSlide";
 import "./index.css";
 
 const Renderer = () => {
@@ -19,8 +18,8 @@ const Renderer = () => {
 
   return (
     <div style={{ position: "relative", width: "100%", height: "100%" }}>
-      {/* Hide video background when derived (e.g., confidence monitor showing next slide) */}
-      {!isDerived && <VideoBackgroundRenderer />}
+      {/* Hide background when derived (e.g., confidence monitor showing next slide) */}
+      {!isDerived && <BackgroundRenderer />}
       <div
         style={{
           position: "relative",
@@ -94,17 +93,12 @@ const SlideRenderer = () => {
       return null;
     }
     if (song.setting.displayType === "fullSong") {
-      return <FullSongRenderer song={song} />;
+      return <SongSlide key="full" song={song} index={null} />;
     }
-
     if (currentIndex === undefined || currentIndex === null) {
       return null;
     }
-    if (song.setting.displayType === "sections") {
-      return <SectionsRenderer song={song} currentIndex={currentIndex} />;
-    }
-
-    return null;
+    return <SongSlide key={currentIndex} song={song} index={currentIndex} />;
   };
 
   return (
@@ -117,45 +111,15 @@ const SlideRenderer = () => {
   );
 };
 
-const FullSongRenderer = ({ song }: { song: Song }) => {
+const SongSlide = ({ song, index }: { song: Song; index: number | null }) => {
   const pluginApi = usePluginAPI();
-  const globalStyle = pluginApi.scene.useData((x) => x.pluginData.style);
-
-  const groupedData = useMemo(
-    () => processSong(song.content, song.setting.sectionOrder),
-    [song.content, song.setting.sectionOrder],
-  );
-
-  const slideStyle = getMergedSlideStyle(globalStyle, song.styleOverride);
+  const template = pluginApi.scene.useData((x) => x.pluginData.template);
 
   return (
-    <FullSongRenderView groupedData={groupedData} slideStyle={slideStyle} />
-  );
-};
-
-const SectionsRenderer = ({
-  song,
-  currentIndex,
-}: {
-  song: Song;
-  currentIndex: number;
-}) => {
-  const pluginApi = usePluginAPI();
-  const globalStyle = pluginApi.scene.useData((x) => x.pluginData.style);
-
-  const groupedData = useMemo(
-    () => processSong(song.content, song.setting.sectionOrder),
-    [song.content, song.setting.sectionOrder],
-  );
-
-  const slideStyle = getMergedSlideStyle(globalStyle, song.styleOverride);
-
-  return (
-    <SectionsRenderView
-      key={currentIndex}
-      groupedData={groupedData}
-      currentIndex={currentIndex}
-      slideStyle={slideStyle}
+    <LyricsSlide
+      song={song}
+      template={songTemplate(song, { template })}
+      index={index}
     />
   );
 };
