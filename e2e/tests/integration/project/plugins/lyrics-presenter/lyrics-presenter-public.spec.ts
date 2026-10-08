@@ -25,8 +25,8 @@ const LYRICS_SCENE = {
   pluginName: "lyrics-presenter",
   name: "Lyrics",
   activate: true,
-  pluginData: { songs: [], videoBackgrounds: [] },
-  rendererPluginData: { songId: null, currentIndex: null },
+  pluginData: { songs: [], looks: {} },
+  rendererPluginData: { songId: null, currentIndex: null, backgroundRun: null },
 };
 
 const PUBLIC_PROJECT_URL = "/app/testorg/testproject";
@@ -125,6 +125,28 @@ test.describe("Lyrics Presenter - public access", () => {
         dialog.locator("label").filter({ hasText: "Save to songbook" }),
       ).toHaveCount(0);
       await expect(dialog.getByText("Import settings")).toHaveCount(0);
+    } finally {
+      await context.close();
+    }
+  });
+
+  test("the global style is the organization's, so it asks to log in", async ({
+    browser,
+  }) => {
+    const { context, page, lyrics } = await openPublicly(browser);
+    try {
+      await expect(lyrics.searchSongTitleInput).toBeVisible();
+      await lyrics.addCustomSong("Amazing Grace", SONG_CONTENT);
+
+      await expect(lyrics.styleButton).toBeDisabled();
+      // A tap, as on a phone, says why
+      await page.getByTestId("login-required").click();
+      await expect(page.getByRole("tooltip")).toContainText(
+        "Log in to change the global style",
+      );
+
+      // A song's own style is the scene's, so still allowed
+      await expect(page.getByTestId("ly-style-song").first()).toBeEnabled();
     } finally {
       await context.close();
     }
