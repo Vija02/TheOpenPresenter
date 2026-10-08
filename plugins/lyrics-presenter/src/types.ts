@@ -1,8 +1,8 @@
 import { LAYOUT_VIDEO_STATES_KEY } from "@repo/base-types";
-import type { LayoutDoc, LayoutVideoStates } from "@repo/layout";
+import type { LayoutVideoStates } from "@repo/layout";
 import { z } from "zod";
 
-import type { Background } from "./backgrounds";
+import type { LookMap, SongLook } from "./looks";
 
 export type ImportedData = {
   title: string;
@@ -47,9 +47,8 @@ export type Song = {
   /** The base key */
   key?: string | null;
   setting: SongSetting;
-  /** Song main styling */
-  template: LayoutDoc | null;
-  background: Background | null;
+  /** The song's own versions of looks, by key. Missing ones follow the org */
+  looks: Record<string, SongLook>;
 
   songbookId?: string;
 
@@ -60,8 +59,8 @@ export type Song = {
 
 export type PluginBaseData = {
   songs: Song[];
-  template: LayoutDoc | null;
-  background: Background | null;
+  /** READ-ONLY CACHE of the organization's looks, by key. Server synced. For easy access. */
+  looks: LookMap;
 };
 
 // A saved-song library row

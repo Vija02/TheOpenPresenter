@@ -1,31 +1,7 @@
 import { type LayoutDoc, type LayoutElement } from "@repo/layout";
 
-import { type Background, backgroundFromMedia } from "../backgrounds";
-import type { PluginBaseData, Song } from "../types";
+import type { Background } from "../backgrounds";
 import { BACKGROUND_ELEMENT_ID, LYRICS_TOKEN } from "./ids";
-import { defaultLyricsTemplate } from "./presets";
-
-type SceneLayout = Pick<PluginBaseData, "template" | "background">;
-
-export const DEFAULT_SCENE_BACKGROUND: Background = backgroundFromMedia({
-  type: "solid",
-  color: "#000000",
-});
-
-export const sceneTemplate = (pluginData: Pick<SceneLayout, "template">) =>
-  pluginData.template ?? defaultLyricsTemplate();
-
-export const sceneBackground = (
-  pluginData: Pick<SceneLayout, "background">,
-): Background | null =>
-  pluginData.background === undefined
-    ? DEFAULT_SCENE_BACKGROUND
-    : pluginData.background;
-
-export const songTemplate = (
-  song: Pick<Song, "template">,
-  pluginData: Pick<SceneLayout, "template">,
-): LayoutDoc => song.template ?? sceneTemplate(pluginData);
 
 const isBackgroundElement = (element: LayoutElement) =>
   element.id === BACKGROUND_ELEMENT_ID;

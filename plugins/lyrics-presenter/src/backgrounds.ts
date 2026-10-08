@@ -15,7 +15,6 @@ import type { InternalVideo } from "@repo/video";
 import { hash } from "ohash";
 
 import { BACKGROUND_ELEMENT_ID } from "./template/ids";
-import type { Song } from "./types";
 
 export { BACKGROUND_ELEMENT_ID };
 
@@ -116,26 +115,10 @@ export const NO_BACKGROUND: Background = createLayoutDoc({ elements: [] });
 export const isNoBackground = (background: Background | null | undefined) =>
   !!background && background.elements.length === 0;
 
-const keyed = (background: Background | null): ResolvedBackground =>
+/** Keyed for its run, or null for none */
+export const keyBackground = (
+  background: Background | null,
+): ResolvedBackground =>
   background && !isNoBackground(background)
     ? { key: backgroundKey(background), background }
     : null;
-
-/** The song's own, else the scene's. Every slide of a song shows it */
-export const resolveSongBackground = (
-  song: Pick<Song, "background">,
-  sceneBackground: Background | null,
-): ResolvedBackground => keyed(song.background ?? sceneBackground);
-
-/** Everything the output may need to show, to preload */
-export const resolveSceneBackgrounds = (
-  songs: Pick<Song, "background">[],
-  sceneBackground: Background | null,
-): KeyedBackground[] => {
-  const seen = new Map<string, KeyedBackground>();
-  for (const song of songs) {
-    const entry = resolveSongBackground(song, sceneBackground);
-    if (entry && !seen.has(entry.key)) seen.set(entry.key, entry);
-  }
-  return [...seen.values()];
-};

@@ -122,7 +122,8 @@ export const lyricsDoc = ({
   });
 };
 
-export const lyricsTemplates: Template[] = [
+/** Main slides: the lyrics over the whole screen */
+export const mainTemplates: Template[] = [
   {
     id: "centered",
     name: "Centered",
@@ -136,24 +137,44 @@ export const lyricsTemplates: Template[] = [
     doc: lyricsDoc({ style: { valign: "top" } }),
   },
   {
+    id: "bottom",
+    name: "Bottom",
+    bindings: lyricsBindings,
+    doc: lyricsDoc({ style: { valign: "bottom" } }),
+  },
+];
+
+/** The whole song at once, flowing into columns */
+export const fullSongTemplates: Template[] = [
+  {
+    id: "full-song",
+    name: "Full song",
+    bindings: lyricsBindings,
+    doc: lyricsDoc({
+      fit: "columns",
+      style: { align: "left", valign: "top" },
+    }),
+  },
+];
+
+/** A couple of lines along the bottom, over other content */
+export const lowerThirdTemplates: Template[] = [
+  {
     id: "lower-third",
     name: "Lower third",
     bindings: lyricsBindings,
     doc: lyricsDoc({
-      body: { x: 5, y: 62, w: 90, h: 32 },
+      body: { x: 5, y: 72, w: 90, h: 22 },
       style: { valign: "bottom" },
     }),
   },
 ];
 
-export const DEFAULT_TEMPLATE_ID = "centered";
+export const lyricsTemplates: Template[] = [
+  ...mainTemplates,
+  ...fullSongTemplates,
+  ...lowerThirdTemplates,
+];
 
 export const findLyricsTemplate = (id: string): Template | null =>
   lyricsTemplates.find((t) => t.id === id) ?? null;
-
-const defaultDoc = (
-  findLyricsTemplate(DEFAULT_TEMPLATE_ID) ?? lyricsTemplates[0]!
-).doc;
-
-/** Shared, so it is stable for memos. Clone before storing or editing */
-export const defaultLyricsTemplate = (): LayoutDoc => defaultDoc;

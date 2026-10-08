@@ -16,6 +16,7 @@ import {
   backgroundFromMedia,
   backgroundKey,
 } from "../backgrounds";
+import { MAIN_LOOK, builtInLook } from "../looks";
 import type { PluginBaseData, PluginRendererData, Song } from "../types";
 
 const video = (id: string): InternalVideo => ({
@@ -35,15 +36,18 @@ const clouds = backgroundFromMedia(
 
 const plain = backgroundFromMedia({ type: "solid", color: "#000000" });
 
-const song = (id: string, overrides: Partial<Song> = {}): Song => ({
+const song = (
+  id: string,
+  background: Background | null = waves,
+  overrides: Partial<Song> = {},
+): Song => ({
   id,
   title: id,
   // Verse (2 slides), Chorus (1)
   content: "[Verse]\na\n-\nb\n[Chorus]\nc",
   setting: { displayType: "sections", sectionOrder: null },
   _imported: false,
-  template: null,
-  background: waves,
+  looks: background ? { [MAIN_LOOK]: { template: null, background } } : {},
   ...overrides,
 });
 
@@ -51,13 +55,14 @@ const pluginData: PluginBaseData = {
   songs: [
     song("a"),
     song("b"),
-    // Falls back to the scene
-    song("c", { background: null }),
-    song("d", { background: clouds }),
-    song("e", { background: NO_BACKGROUND }),
+    // Falls back to the look
+    song("c", null),
+    song("d", clouds),
+    song("e", NO_BACKGROUND),
   ],
-  template: null,
-  background: plain,
+  looks: {
+    [MAIN_LOOK]: { ...builtInLook(MAIN_LOOK)!, background: plain },
+  },
 };
 
 const emptyRendererData = (): PluginRendererData => ({
@@ -153,7 +158,7 @@ describe("activateLyricSlide", () => {
     activateLyricSlide(target, pluginData, "a", 0, { now: 100 });
     activateLyricSlide(target, pluginData, "c", 0, { now: 200 });
 
-    // Song c falls back to the scene background
+    // Song c falls back to the look's background
     expect(data.backgroundRun?.key).toEqual(keyOf(plain));
     expect(data.backgroundRun?.since).toBe(200);
     // Looping videos are muted and keep no state
@@ -224,6 +229,6 @@ describe("activateLyricSlide", () => {
     });
 
     expect(data.backgroundRun?.key).toEqual(keyOf(clouds));
-    expect(snapshot(live).songs[3]?.background).toBeTruthy();
+    expect(snapshot(live).songs[3]?.looks[MAIN_LOOK]).toBeTruthy();
   });
 });

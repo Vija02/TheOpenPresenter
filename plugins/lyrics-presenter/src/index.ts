@@ -26,6 +26,14 @@ import {
 import { getSongData } from "./data";
 import { derivationFields } from "./derivation";
 import { convertMWLData } from "./importer/myworshiplist";
+import {
+  deleteLook,
+  ensureLookListener,
+  refreshOrganizationLooks,
+  syncLooks,
+  upsertLook,
+} from "./lookStore";
+import type { Look } from "./looks";
 import { getPcoOAuthConfig } from "./planningCenter/oauth";
 import { createPlanningCenterRouter } from "./planningCenter/router";
 import { registerPlanningCenterRoutes } from "./planningCenter/routes";
@@ -210,6 +218,7 @@ export const init = (
 
 const onPluginDataCreated = (pluginInfo: ObjectToTypedMap<Plugin>) => {
   pluginInfo.get("pluginData")?.set("songs", new Y.Array());
+  pluginInfo.get("pluginData")?.set("looks", new Y.Map());
 
   return {};
 };
@@ -222,11 +231,15 @@ const onPluginDataLoaded = (
   const unbind = bind(data, pluginInfo as any);
 
   registerLoadedPlugin(context, data);
-  if (serverPluginApiRef) ensureSongbookListener(serverPluginApiRef);
+  if (serverPluginApiRef) {
+    ensureSongbookListener(serverPluginApiRef);
+    ensureLookListener(serverPluginApiRef);
+  }
 
-  // Pick up songbook edits made while this scene was unloaded
+  // Pick up songbook and look edits made while this scene was unloaded
   void (async () => {
     if (serverPluginApiRef) {
+      await syncLooks(serverPluginApiRef, context.organizationId, data);
       await syncSongsFromSongbook(
         serverPluginApiRef,
         context.organizationId,
@@ -353,6 +366,48 @@ const getAppRouter =
                 input.savedSongId,
               );
               return { success: true };
+            }),
+        },
+
+        // The organization's looks
+        looks: {
+          save: t.procedure
+            .input(
+              z.object({
+                pluginId: z.string(),
+                look: z.object({
+                  key: z.string().min(1),
+                  name: z.string().min(1),
+                  position: z.number().int(),
+                  template: z.object({}).passthrough(),
+                  background: z.object({}).passthrough().nullable(),
+                }),
+              }),
+            )
+            .mutation(async ({ input, ctx }) => {
+              const { organizationId } = resolveContext(input.pluginId);
+              await upsertLook(
+                serverPluginApi,
+                authOf(ctx),
+                organizationId,
+                input.look as Look,
+              );
+              // Without waiting for the notification
+              await refreshOrganizationLooks(serverPluginApi, organizationId);
+            }),
+
+          /** A built-in back to its default */
+          reset: t.procedure
+            .input(z.object({ pluginId: z.string(), key: z.string() }))
+            .mutation(async ({ input, ctx }) => {
+              const { organizationId } = resolveContext(input.pluginId);
+              await deleteLook(
+                serverPluginApi,
+                authOf(ctx),
+                organizationId,
+                input.key,
+              );
+              await refreshOrganizationLooks(serverPluginApi, organizationId);
             }),
         },
 
