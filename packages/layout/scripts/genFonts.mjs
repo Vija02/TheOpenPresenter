@@ -7,7 +7,7 @@
  * for `build.lib` before it ever consults `assetsInlineLimit`. So importing
  * their stylesheets embedded ~1MB of base64 woff2 into ours
  */
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -43,20 +43,28 @@ const HEADER = `/**
 const blocks = [HEADER];
 let faces = 0;
 
+// Upright, then italic where the family has one. Without it, the browser
+// slants the upright
+const STYLES = ["index.css", "wght-italic.css"];
+
 for (const family of FAMILIES) {
-  const css = readFileSync(
-    resolve(ROOT, `node_modules/@fontsource-variable/${family}/index.css`),
-    "utf8",
-  );
-  // Only the url() changes: unicode-range, weight axis and ordering stay as
-  // upstream ships them.
-  const rewritten = css.replace(
-    /url\(\.\/files\/([^)]+)\)/g,
-    (_m, file) =>
-      `url("@fontsource-variable/${family}/files/${file}?no-inline")`,
-  );
-  faces += (rewritten.match(/@font-face/g) ?? []).length;
-  blocks.push(rewritten.trim() + "\n");
+  for (const sheet of STYLES) {
+    const path = resolve(
+      ROOT,
+      `node_modules/@fontsource-variable/${family}/${sheet}`,
+    );
+    if (!existsSync(path)) continue;
+    const css = readFileSync(path, "utf8");
+    // Only the url() changes: unicode-range, weight axis and ordering stay as
+    // upstream ships them.
+    const rewritten = css.replace(
+      /url\(\.\/files\/([^)]+)\)/g,
+      (_m, file) =>
+        `url("@fontsource-variable/${family}/files/${file}?no-inline")`,
+    );
+    faces += (rewritten.match(/@font-face/g) ?? []).length;
+    blocks.push(rewritten.trim() + "\n");
+  }
 }
 
 const prettier = await import("prettier");
