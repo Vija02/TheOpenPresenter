@@ -1,5 +1,3 @@
-import { InternalVideo } from "@repo/video";
-
 import { pluginName } from "../consts";
 import { SavedSong, Song } from "../types";
 import { Api, RequestAuth, SavedSongEntry } from "./types";
@@ -39,7 +37,6 @@ export const listSavedSongs = async (
             source,
             external_id       as "externalId",
             song,
-            video_backgrounds as "videoBackgrounds",
             created_at        as "createdAt",
             updated_at        as "updatedAt"
        from saved_song
@@ -58,12 +55,10 @@ export const insertSavedSong = async (
     organizationId,
     userId,
     song,
-    videoBackgrounds,
   }: {
     organizationId: string;
     userId: string | null;
     song: Song;
-    videoBackgrounds: InternalVideo[];
   },
 ): Promise<string> => {
   const { source, externalId } = deriveSavedSongKey(song);
@@ -73,8 +68,8 @@ export const insertSavedSong = async (
   } = await db.query<{ id: string }>(
     `insert into saved_song
        (organization_id, created_by_user_id, title, author, album,
-        content, source, external_id, song, video_backgrounds)
-     values ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10::jsonb)
+        content, source, external_id, song)
+     values ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb)
      returning id`,
     [
       organizationId,
@@ -86,7 +81,6 @@ export const insertSavedSong = async (
       source,
       externalId,
       JSON.stringify(song),
-      JSON.stringify(videoBackgrounds ?? []),
     ],
   );
   return row!.id;
@@ -97,7 +91,7 @@ export const updateSavedSong = async (
   auth: RequestAuth,
   songbookId: string,
   organizationId: string,
-  { song, videoBackgrounds }: { song: Song; videoBackgrounds: InternalVideo[] },
+  { song }: { song: Song },
 ): Promise<void> => {
   const db = api.getPluginDb(pluginName, auth);
   await db.query(
@@ -107,16 +101,14 @@ export const updateSavedSong = async (
        album             = $3,
        content           = $4,
        song              = $5::jsonb,
-       video_backgrounds = $6::jsonb,
        updated_at        = now()
-     where id = $7 and organization_id = $8`,
+     where id = $6 and organization_id = $7`,
     [
       song.title ?? "",
       song.author ?? null,
       song.album ?? null,
       song.content ?? "",
       JSON.stringify(song),
-      JSON.stringify(videoBackgrounds ?? []),
       songbookId,
       organizationId,
     ],
@@ -145,13 +137,13 @@ export const fetchSavedSong = async (
   const {
     rows: [row],
   } = await db.query<SavedSongEntry>(
-    `select song, video_backgrounds as "videoBackgrounds"
+    `select song
        from saved_song
       where id = $1 and organization_id = $2`,
     [id, organizationId],
   );
   if (!row) return null;
-  return { song: row.song, videoBackgrounds: row.videoBackgrounds ?? [] };
+  return { song: row.song };
 };
 
 export const fetchSavedSongsByIds = async (
@@ -162,8 +154,7 @@ export const fetchSavedSongsByIds = async (
   const db = api.getDangerousRootPluginDb(pluginName);
   const { rows } = await db.query<{ id: string } & SavedSongEntry>(
     `select id,
-            song,
-            video_backgrounds as "videoBackgrounds"
+            song
        from saved_song
       where organization_id = $1
         and id = any($2::uuid[])`,
@@ -171,10 +162,7 @@ export const fetchSavedSongsByIds = async (
   );
   const byId = new Map<string, SavedSongEntry>();
   for (const row of rows) {
-    byId.set(row.id, {
-      song: row.song,
-      videoBackgrounds: row.videoBackgrounds ?? [],
-    });
+    byId.set(row.id, { song: row.song });
   }
   return byId;
 };
@@ -212,7 +200,6 @@ export const listRecentSongs = async (
             ss.source,
             ss.external_id       as "externalId",
             ss.song,
-            ss.video_backgrounds as "videoBackgrounds",
             ss.created_at        as "createdAt",
             ss.updated_at        as "updatedAt",
             latest.created_at    as "usedAt"

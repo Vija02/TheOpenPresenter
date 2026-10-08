@@ -1,7 +1,6 @@
-import { InternalVideo } from "@repo/video";
 import { useCallback } from "react";
 
-import { SlideStyle, Song } from "../src/types";
+import { Song } from "../src/types";
 import { usePluginAPI } from "./pluginApi";
 import { trpc } from "./trpc";
 
@@ -10,7 +9,6 @@ import { trpc } from "./trpc";
  */
 export const useSongbookSync = () => {
   const pluginApi = usePluginAPI();
-  const pluginInfo = pluginApi.scene.useValtioData();
   const pluginId = pluginApi.pluginContext.pluginId;
   const isPublicAccess = pluginApi.isPublicAccess;
 
@@ -22,35 +20,15 @@ export const useSongbookSync = () => {
     async (song: Song): Promise<string | undefined> => {
       if (isPublicAccess) return undefined;
 
-      const globalStyle = pluginInfo.pluginData.style as SlideStyle | undefined;
-
-      const referencedIds = new Set<string>();
-      if (song.styleOverride?.backgroundVideoMediaId) {
-        referencedIds.add(song.styleOverride.backgroundVideoMediaId);
-      }
-      if (globalStyle?.backgroundVideoMediaId) {
-        referencedIds.add(globalStyle.backgroundVideoMediaId);
-      }
-      const videoBackgrounds = (
-        pluginInfo.pluginData.videoBackgrounds ?? []
-      ).filter((v: InternalVideo) => referencedIds.has(v.id));
-
       const res = await saveMutation.mutateAsync({
         pluginId,
         songbookId: song.songbookId,
         song: JSON.parse(JSON.stringify(song)),
-        videoBackgrounds: JSON.parse(JSON.stringify(videoBackgrounds)),
       });
 
       return res.id;
     },
-    [
-      isPublicAccess,
-      pluginId,
-      pluginInfo.pluginData.style,
-      pluginInfo.pluginData.videoBackgrounds,
-      saveMutation,
-    ],
+    [isPublicAccess, pluginId, saveMutation],
   );
 
   return { saveToSongbook, isSaving: saveMutation.isPending };

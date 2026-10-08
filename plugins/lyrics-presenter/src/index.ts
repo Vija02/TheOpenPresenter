@@ -4,12 +4,10 @@ import {
   PluginContext,
   ServerPluginApi,
   TRPCObject,
-  YjsWatcher,
   createSseRoute,
 } from "@repo/base-plugin/server";
 import { OrganizationType } from "@repo/graphql";
 import { logger } from "@repo/observability";
-import { InternalVideo } from "@repo/video";
 import axios from "axios";
 import path from "path";
 import { proxy } from "valtio";
@@ -17,6 +15,7 @@ import { bind } from "valtio-yjs";
 import * as Y from "yjs";
 import z from "zod";
 
+import { activateLyricSlide, yjsLyricsActivationTarget } from "./activation";
 import { formatLyricsStream } from "./ai/formatLyrics";
 import { createChurchSuiteRouter } from "./churchSuite/router";
 import {
@@ -27,7 +26,6 @@ import {
 import { getSongData } from "./data";
 import { derivationFields } from "./derivation";
 import { convertMWLData } from "./importer/myworshiplist";
-import { migratePluginDataV1ToV2 } from "./migrate/v1";
 import { getPcoOAuthConfig } from "./planningCenter/oauth";
 import { createPlanningCenterRouter } from "./planningCenter/router";
 import { registerPlanningCenterRoutes } from "./planningCenter/routes";
@@ -136,19 +134,28 @@ export const init = (
   serverPluginApi.registerKeyPressHandler(
     pluginName,
     (keyType, { document, pluginData, rendererData }) => {
-      const songs: Song[] = pluginData.get("songs")?.toJSON() ?? [];
+      const data = pluginData.toJSON() as PluginBaseData;
+      const songs: Song[] = data.songs ?? [];
       const songIds = songs.map((x) => x.id);
 
-      const currentSongId = rendererData.get("songId");
+      const currentSongId = rendererData.get("songId") ?? null;
       const currentIndex = rendererData.get("currentIndex");
+
+      const activate = (songId: string | null, index: number) => {
+        document.transact(() => {
+          activateLyricSlide(
+            yjsLyricsActivationTarget(rendererData),
+            data,
+            songId,
+            index,
+          );
+        });
+      };
 
       // If nothing yet, we can just set it to the first item
       if (currentIndex === null || currentIndex === undefined) {
         if (songIds.length > 0) {
-          document.transact(() => {
-            rendererData.set("songId", songIds[0]!);
-            rendererData.set("currentIndex", 0);
-          });
+          activate(songIds[0]!, 0);
         }
         return;
       }
@@ -170,13 +177,10 @@ export const init = (
           const nextSongId =
             songIds[songIds.findIndex((x) => x === currentSongId) + 1];
           if (nextSongId) {
-            document.transact(() => {
-              rendererData.set("songId", nextSongId);
-              rendererData.set("currentIndex", 0);
-            });
+            activate(nextSongId, 0);
           }
         } else {
-          rendererData.set("currentIndex", newIndex);
+          activate(currentSongId, newIndex);
         }
       } else {
         // Then handle previous
@@ -194,13 +198,10 @@ export const init = (
                 prevSong?.setting?.sectionOrder,
               ),
             );
-            document.transact(() => {
-              rendererData.set("songId", prevSongId);
-              rendererData.set("currentIndex", prevSongMaxIndex - 1);
-            });
+            activate(prevSongId, prevSongMaxIndex - 1);
           }
         } else {
-          rendererData.set("currentIndex", newIndex);
+          activate(currentSongId, newIndex);
         }
       }
     },
@@ -209,7 +210,6 @@ export const init = (
 
 const onPluginDataCreated = (pluginInfo: ObjectToTypedMap<Plugin>) => {
   pluginInfo.get("pluginData")?.set("songs", new Y.Array());
-  pluginInfo.get("pluginData")?.set("videoBackgrounds", new Y.Array());
 
   return {};
 };
@@ -218,44 +218,13 @@ const onPluginDataLoaded = (
   pluginInfo: ObjectToTypedMap<Plugin>,
   context: PluginContext,
 ) => {
-  migratePluginDataV1ToV2(
-    pluginInfo as ObjectToTypedMap<Plugin<PluginBaseData>>,
-  );
-
   const data = proxy(pluginInfo.toJSON() as Plugin<PluginBaseData>);
   const unbind = bind(data, pluginInfo as any);
 
   registerLoadedPlugin(context, data);
   if (serverPluginApiRef) ensureSongbookListener(serverPluginApiRef);
 
-  const cleanupUnusedVideoBackgrounds = () => {
-    const usedVideoIds = new Set<string>();
-
-    // Check global style
-    const globalStyleVideoId = data.pluginData.style?.backgroundVideoMediaId;
-    if (globalStyleVideoId) {
-      usedVideoIds.add(globalStyleVideoId);
-    }
-
-    // Check all song style overrides
-    for (const song of data.pluginData.songs) {
-      const songVideoId = song.styleOverride?.backgroundVideoMediaId;
-      if (songVideoId) {
-        usedVideoIds.add(songVideoId);
-      }
-    }
-
-    // Remove any videoBackgrounds that are not in use
-    const videoBackgrounds = data.pluginData.videoBackgrounds;
-    for (let i = videoBackgrounds.length - 1; i >= 0; i--) {
-      const video = videoBackgrounds[i];
-      if (video && !usedVideoIds.has(video.id)) {
-        videoBackgrounds.splice(i, 1);
-      }
-    }
-  };
-
-  // On load, do some tidying up work
+  // Pick up songbook edits made while this scene was unloaded
   void (async () => {
     if (serverPluginApiRef) {
       await syncSongsFromSongbook(
@@ -264,24 +233,12 @@ const onPluginDataLoaded = (
         data,
       );
     }
-    cleanupUnusedVideoBackgrounds();
   })();
-
-  const yjsWatcher = new YjsWatcher(pluginInfo as Y.Map<any>);
-  yjsWatcher.watchYjs(
-    (x: Plugin<PluginBaseData>) => x.pluginData.songs,
-    cleanupUnusedVideoBackgrounds,
-  );
-  yjsWatcher.watchYjs(
-    (x: Plugin<PluginBaseData>) => x.pluginData.style,
-    cleanupUnusedVideoBackgrounds,
-  );
 
   return {
     dispose: () => {
       unregisterLoadedPlugin(context.pluginId);
       unbind();
-      yjsWatcher.dispose();
     },
   };
 };
@@ -291,6 +248,7 @@ const onRendererDataCreated = (
 ) => {
   rendererData.set("songId", null);
   rendererData.set("currentIndex", null);
+  rendererData.set("backgroundRun", null);
 
   return {};
 };
@@ -334,15 +292,12 @@ const getAppRouter =
                     album: z.string().nullish(),
                   })
                   .passthrough(),
-                videoBackgrounds: z.array(z.any()).optional(),
               }),
             )
             .mutation(async ({ input, ctx }) => {
               const { organizationId } = resolveContext(input.pluginId);
               const auth = authOf(ctx);
               const song = input.song as Song;
-              const videoBackgrounds = (input.videoBackgrounds ??
-                []) as InternalVideo[];
 
               if (input.songbookId) {
                 await updateSavedSong(
@@ -350,7 +305,7 @@ const getAppRouter =
                   auth,
                   input.songbookId,
                   organizationId,
-                  { song, videoBackgrounds },
+                  { song },
                 );
                 return { id: input.songbookId };
               }
@@ -359,7 +314,6 @@ const getAppRouter =
                 organizationId,
                 userId: ctx.userId,
                 song,
-                videoBackgrounds,
               });
               return { id };
             }),
