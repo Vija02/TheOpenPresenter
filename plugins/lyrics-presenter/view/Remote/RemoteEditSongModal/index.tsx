@@ -26,9 +26,9 @@ import { useForm } from "react-hook-form";
 
 import { upgradeMwlChordCodes } from "../../../src/importer/upgradeChords";
 import { removeChords } from "../../../src/processLyrics";
-import { getMergedSlideStyle } from "../../../src/slideStyle";
 import { Song, displayTypeSettings } from "../../../src/types";
 import { usePluginAPI } from "../../pluginApi";
+import { useActivateLyricSlide } from "../../useActivateLyricSlide";
 import { useSongbookSync } from "../../useSongbookSync";
 import { SongViewSlides } from "../SongViewSlides";
 import { ArrangeTab } from "./ArrangeTab";
@@ -50,9 +50,9 @@ const RemoteEditSongModal = ({
   const { isOpen, onToggle, resetData } = useOverlayToggle();
 
   const pluginApi = usePluginAPI();
-  const slideStyle = pluginApi.scene.useData((x) => x.pluginData.style);
   const mutableSceneData = pluginApi.scene.useValtioData();
   const mutableRendererData = pluginApi.renderer.useValtioData();
+  const { activate } = useActivateLyricSlide();
   const { saveToSongbook } = useSongbookSync();
 
   const handleSubmit = useCallback(
@@ -63,14 +63,11 @@ const RemoteEditSongModal = ({
 
       // If we're changing this song to sections and the current song is selected,
       // Then we want to reset the index to the first item
-      if (
+      const resetIndex =
         setting.displayType === "sections" &&
         mutableSceneData.pluginData.songs[index]!.setting.displayType !==
           "sections" &&
-        mutableRendererData.songId === song.id
-      ) {
-        mutableRendererData.currentIndex = 0;
-      }
+        mutableRendererData.songId === song.id;
 
       // Convert empty sectionOrder to null (use default)
       const normalizedSetting = {
@@ -85,6 +82,8 @@ const RemoteEditSongModal = ({
       mutableSceneData.pluginData.songs[index]!.title = title;
       mutableSceneData.pluginData.songs[index]!.content = content;
       mutableSceneData.pluginData.songs[index]!.key = key;
+
+      if (resetIndex) activate(song.id, 0);
 
       if (song.songbookId) {
         void saveToSongbook({
@@ -107,6 +106,7 @@ const RemoteEditSongModal = ({
       resetData,
       song,
       saveToSongbook,
+      activate,
     ],
   );
 
@@ -146,11 +146,6 @@ const RemoteEditSongModal = ({
   // Automatically update section order when section titles change
   useUpdateSectionOrderOnEdit(form);
 
-  const mergedSlideStyle = useMemo(
-    () => getMergedSlideStyle(slideStyle, song.styleOverride),
-    [slideStyle, song.styleOverride],
-  );
-
   const preview = useMemo(
     () => (
       <SongViewSlides
@@ -159,11 +154,10 @@ const RemoteEditSongModal = ({
           setting: data,
           content: data.content,
         }}
-        slideStyle={mergedSlideStyle}
         isPreview
       />
     ),
-    [data, mergedSlideStyle, song],
+    [data, song],
   );
 
   return (

@@ -2,7 +2,6 @@ import { LoadingInline, SlideGrid } from "@repo/ui";
 import { Dispatch, SetStateAction } from "react";
 
 import { SavedSong, Song } from "../../../../src";
-import { getMergedSlideStyle } from "../../../../src/slideStyle";
 import { usePluginAPI } from "../../../pluginApi";
 import { SongViewSlides } from "../../SongViewSlides";
 import { SectionHeading } from "../SectionHeading";
@@ -28,8 +27,6 @@ export const SetlistSongDetail = ({
   setIsEditingLyrics,
 }: SetlistSongDetailProps) => {
   const pluginApi = usePluginAPI();
-  const globalStyle = pluginApi.scene.useData((x) => x.pluginData.style);
-
   const matchedSong = choice?.mode === "match" ? choice.savedSong : null;
   const saveToSongbook =
     choice?.mode === "import" ? choice.saveToSongbook : true;
@@ -61,6 +58,8 @@ export const SetlistSongDetail = ({
           content: data.content,
           key: data.key,
           _imported: true,
+          template: null,
+          background: null,
           setting: { displayType: "sections" },
         }
       : null;
@@ -78,15 +77,7 @@ export const SetlistSongDetail = ({
         <div className="stack-col items-stretch gap-2">
           <SectionHeading>Preview</SectionHeading>
           <SlideGrid pluginAPI={pluginApi}>
-            <SongViewSlides
-              song={matchedSong.song}
-              slideStyle={getMergedSlideStyle(
-                globalStyle,
-                matchedSong.song.styleOverride,
-              )}
-              videoBackgrounds={matchedSong.videoBackgrounds}
-              isPreview
-            />
+            <SongViewSlides song={matchedSong.song} isPreview />
           </SlideGrid>
         </div>
       ) : !data || !previewSong ? (

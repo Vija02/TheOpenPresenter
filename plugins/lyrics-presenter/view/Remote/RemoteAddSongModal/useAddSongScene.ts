@@ -31,17 +31,9 @@ export const useAddSongScene = () => {
     resetData?.();
   }, [onToggle, resetData]);
 
-  // Add an already-saved songbook song to the scene (linked), restoring its
-  // referenced video backgrounds (dedupe by id)
+  // Add an already-saved songbook song to the scene (linked)
   const addLinkedSavedSong = useCallback(
     (saved: SavedSong) => {
-      const existing = pluginInfo.pluginData.videoBackgrounds;
-      const existingIds = new Set(existing.map((v) => v.id));
-      for (const vb of saved.videoBackgrounds ?? []) {
-        if (vb && !existingIds.has(vb.id)) {
-          existing.push(vb);
-        }
-      }
       pluginInfo.pluginData.songs.push({
         ...saved.song,
         id: typeidUnboxed(),

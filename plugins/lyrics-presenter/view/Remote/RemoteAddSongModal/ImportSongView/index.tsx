@@ -44,6 +44,8 @@ export const ImportSongView = ({ mwlId }: { mwlId: number }) => {
       content: importSongContent ?? mwlSongQuery.data.content,
       key: mwlSongQuery.data.key ?? null,
       _imported: true,
+      template: null,
+      background: null,
       setting: { displayType: "sections" },
     };
   }, [mwlSongQuery.data, importSongTitle, importSongContent]);
@@ -57,6 +59,8 @@ export const ImportSongView = ({ mwlId }: { mwlId: number }) => {
       content: importSongContent ?? mwlSongQuery.data.content,
       key: mwlSongQuery.data.key ?? null,
       _imported: true,
+      template: null,
+      background: null,
       import: {
         type: "myworshiplist",
         meta: { id: mwlId },

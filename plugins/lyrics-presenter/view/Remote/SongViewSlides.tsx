@@ -1,74 +1,75 @@
+import type { LayoutDoc } from "@repo/layout";
 import { Slide } from "@repo/ui";
-import { InternalVideo } from "@repo/video";
-import { Fragment, useMemo } from "react";
+import { useMemo } from "react";
 
+import {
+  ResolvedBackground,
+  resolveSongBackground,
+} from "../../src/backgrounds";
 import { GroupedData } from "../../src/processLyrics";
-import { getSlideStyle } from "../../src/slideStyle";
 import { processSong } from "../../src/songHelpers";
-import { SlideStyle, Song } from "../../src/types";
-import FullSongRenderView from "../Renderer/FullSongRenderView";
-import SectionsRenderView from "../Renderer/SectionsRenderView";
-import { PreviewVideoBackgroundsContext } from "../Renderer/useVideoBackgroundThumbnail";
+import { sceneBackground, songTemplate } from "../../src/template/layout";
+import { Song } from "../../src/types";
+import { LyricsSlide } from "../Renderer/LyricsSlide";
 import { usePluginAPI } from "../pluginApi";
+import { useActivateLyricSlide } from "../useActivateLyricSlide";
 
 export const SongViewSlides = ({
   song,
   isPreview = false,
-  slideStyle,
-  videoBackgrounds,
 }: {
   song: Song;
   isPreview?: boolean;
-  slideStyle: SlideStyle;
-  // Pass this to handle previewing without it being in the data itself
-  videoBackgrounds?: InternalVideo[];
 }) => {
+  const pluginApi = usePluginAPI();
+  const template = pluginApi.scene.useData((x) => x.pluginData.template);
+  const background = pluginApi.scene.useData((x) => x.pluginData.background);
+
   const groupedData = useMemo(
     () => processSong(song.content, song.setting.sectionOrder),
     [song.content, song.setting.sectionOrder],
   );
 
-  const content =
-    song.setting.displayType === "sections" ? (
-      <Sections
-        song={song}
-        groupedData={groupedData}
-        isPreview={isPreview}
-        slideStyle={slideStyle}
-      />
-    ) : song.setting.displayType === "fullSong" ? (
-      <FullSong
-        song={song}
-        groupedData={groupedData}
-        isPreview={isPreview}
-        slideStyle={slideStyle}
-      />
-    ) : null;
+  // The same resolvers as the output
+  const resolvedTemplate = songTemplate(song, { template });
+  const resolvedBackground = useMemo(
+    () => resolveSongBackground(song, sceneBackground({ background })),
+    [song, background],
+  );
 
-  // Only override for previews that actually pass saved video backgrounds
-  if (isPreview && videoBackgrounds) {
-    return (
-      <PreviewVideoBackgroundsContext.Provider value={videoBackgrounds}>
-        {content}
-      </PreviewVideoBackgroundsContext.Provider>
-    );
-  }
-  return <Fragment>{content}</Fragment>;
+  const props = {
+    song,
+    groupedData,
+    isPreview,
+    template: resolvedTemplate,
+    background: resolvedBackground,
+  };
+
+  return song.setting.displayType === "sections" ? (
+    <Sections {...props} />
+  ) : song.setting.displayType === "fullSong" ? (
+    <FullSong {...props} />
+  ) : null;
+};
+
+type SlidesProps = {
+  song: Song;
+  groupedData: GroupedData;
+  template: LayoutDoc;
+  /** The same for every slide of the song */
+  background: ResolvedBackground;
+  isPreview?: boolean;
 };
 
 const Sections = ({
   song,
   groupedData,
-  slideStyle,
+  template,
+  background,
   isPreview = false,
-}: {
-  song: Song;
-  groupedData: GroupedData;
-  slideStyle: SlideStyle;
-  isPreview?: boolean;
-}) => {
+}: SlidesProps) => {
   const pluginApi = usePluginAPI();
-  const mutableRendererData = pluginApi.renderer.useValtioData();
+  const { activate } = useActivateLyricSlide();
   const setRenderCurrentScene = pluginApi.renderer.setRenderCurrentScene;
 
   const renderData = pluginApi.renderer.useData((x) => x);
@@ -99,18 +100,23 @@ const Sections = ({
                 isPreview
                   ? undefined
                   : () => {
-                      mutableRendererData.currentIndex = currentIndex;
-                      mutableRendererData.songId = song.id;
+                      activate(song.id, currentIndex);
                       setRenderCurrentScene();
                     }
               }
             >
-              <SectionsRenderView
-                groupedData={groupedData}
-                currentIndex={currentIndex}
-                slideStyle={getSlideStyle(slideStyle)}
-                renderVideoThumbnail
-              />
+              <div
+                className="contents"
+                data-testid="lyrics-slide-background"
+                data-background-key={background?.key ?? ""}
+              >
+                <LyricsSlide
+                  song={song}
+                  template={template}
+                  index={currentIndex}
+                  background={background?.background}
+                />
+              </div>
             </Slide>
           );
         });
@@ -120,17 +126,13 @@ const Sections = ({
 };
 const FullSong = ({
   song,
-  groupedData,
-  slideStyle,
+  template,
+  background,
   isPreview = false,
-}: {
-  song: Song;
-  groupedData: GroupedData;
-  slideStyle: SlideStyle;
-  isPreview?: boolean;
-}) => {
+}: SlidesProps) => {
   const pluginApi = usePluginAPI();
   const mutableRendererData = pluginApi.renderer.useValtioData();
+  const { activate } = useActivateLyricSlide();
   const setRenderCurrentScene = pluginApi.renderer.setRenderCurrentScene;
 
   const activeSongId = pluginApi.renderer.useData((x) => x.songId);
@@ -143,18 +145,24 @@ const FullSong = ({
         isPreview
           ? undefined
           : () => {
-              if (!isPreview) {
-                mutableRendererData.songId = song.id;
-                setRenderCurrentScene();
-              }
+              // Full song ignores the index, so leave it as it was
+              activate(song.id, mutableRendererData.currentIndex);
+              setRenderCurrentScene();
             }
       }
     >
-      <FullSongRenderView
-        groupedData={groupedData}
-        slideStyle={getSlideStyle(slideStyle)}
-        renderVideoThumbnail
-      />
+      <div
+        className="contents"
+        data-testid="lyrics-slide-background"
+        data-background-key={background?.key ?? ""}
+      >
+        <LyricsSlide
+          song={song}
+          template={template}
+          index={null}
+          background={background?.background}
+        />
+      </div>
     </Slide>
   );
 };

@@ -3,7 +3,6 @@ import { Dispatch, SetStateAction } from "react";
 
 import { Song } from "../../../../src";
 import { removeChords } from "../../../../src/processLyrics";
-import { getMergedSlideStyle } from "../../../../src/slideStyle";
 import { usePluginAPI } from "../../../pluginApi";
 import { AiFormatButton } from "../../RemoteEditSongModal/AiFormatButton";
 import { ChordToolbar } from "../../RemoteEditSongModal/ChordToolbar";
@@ -30,11 +29,6 @@ export const LyricsEditor = ({
   setIsEditingLyrics,
 }: LyricsEditorProps) => {
   const pluginApi = usePluginAPI();
-  const globalStyle = pluginApi.scene.useData((x) => x.pluginData.style);
-  const slideStyle = getMergedSlideStyle(
-    globalStyle,
-    previewSong.styleOverride,
-  );
 
   const content = importSongContent ?? "";
   const {
@@ -110,11 +104,7 @@ export const LyricsEditor = ({
           </Button>
         </div>
         <SlideGrid pluginAPI={pluginApi} forceWidth={200}>
-          <SongViewSlides
-            song={previewSong}
-            slideStyle={slideStyle}
-            isPreview
-          />
+          <SongViewSlides song={previewSong} isPreview />
         </SlideGrid>
       </div>
     </div>

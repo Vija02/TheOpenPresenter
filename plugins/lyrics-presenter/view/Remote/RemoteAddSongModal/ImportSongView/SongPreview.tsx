@@ -3,7 +3,6 @@ import { Dispatch, SetStateAction } from "react";
 import { VscEdit } from "react-icons/vsc";
 
 import { Song } from "../../../../src";
-import { getMergedSlideStyle } from "../../../../src/slideStyle";
 import { usePluginAPI } from "../../../pluginApi";
 import { AiFormatButton } from "../../RemoteEditSongModal/AiFormatButton";
 import { SongViewSlides } from "../../SongViewSlides";
@@ -24,11 +23,6 @@ export const SongPreview = ({
   setIsEditingLyrics,
 }: SongPreviewProps) => {
   const pluginApi = usePluginAPI();
-  const globalStyle = pluginApi.scene.useData((x) => x.pluginData.style);
-  const slideStyle = getMergedSlideStyle(
-    globalStyle,
-    previewSong.styleOverride,
-  );
 
   return (
     <div className="stack-col items-stretch">
@@ -51,7 +45,7 @@ export const SongPreview = ({
         </div>
       </div>
       <SlideGrid pluginAPI={pluginApi}>
-        <SongViewSlides song={previewSong} slideStyle={slideStyle} isPreview />
+        <SongViewSlides song={previewSong} isPreview />
       </SlideGrid>
     </div>
   );
