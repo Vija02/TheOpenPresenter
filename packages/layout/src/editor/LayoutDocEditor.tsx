@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { patchTextElement } from "../doc/edit";
+import { patchTextElement, videoFillElements } from "../doc/edit";
+import { LayoutRenderer } from "../react/LayoutRenderer";
 import { LayoutActiveContext } from "../react/context/ActiveContext";
 import {
   VideoFillModeContext,
@@ -17,6 +18,8 @@ type DocItem = EditorItem & {
   element: ReturnType<typeof resolveDoc>["elements"][number];
 };
 
+const NO_UNDERLAY_DATA = {};
+
 export type LayoutDocEditorProps = {
   doc: LayoutDoc;
   data?: FrameData;
@@ -24,7 +27,7 @@ export type LayoutDocEditorProps = {
   selectedIds: string[];
   onSelectionChange: (ids: string[]) => void;
   onChange: (doc: LayoutDoc) => void;
-  background?: string;
+  underlay?: LayoutDoc | null;
   className?: string;
   muted?: boolean;
 };
@@ -41,7 +44,7 @@ export const LayoutDocEditor = ({
   selectedIds,
   onSelectionChange,
   onChange,
-  background,
+  underlay,
   className,
   muted = true,
 }: LayoutDocEditorProps) => {
@@ -113,7 +116,14 @@ export const LayoutDocEditor = ({
     [doc, editingId, editingContent, onChange],
   );
 
-  const [activeSince] = useState(() => Date.now());
+  const onceVideos = [
+    ...videoFillElements(doc),
+    ...(underlay ? videoFillElements(underlay) : []),
+  ]
+    .filter((element) => element.playback === "once")
+    .map((element) => `${element.id}:${element.video.id}`)
+    .join("|");
+  const activeSince = useMemo(() => Date.now(), [onceVideos]);
 
   return (
     <LayoutActiveContext.Provider value={activeSince}>
@@ -126,7 +136,16 @@ export const LayoutDocEditor = ({
             selectedIds={selectedIds}
             onSelectionChange={onSelectionChange}
             onChange={handleChange}
-            background={background}
+            underlay={
+              underlay ? (
+                <LayoutRenderer
+                  doc={underlay}
+                  data={NO_UNDERLAY_DATA}
+                  activeSince={activeSince}
+                  scope="underlay"
+                />
+              ) : undefined
+            }
             className={className}
             editingId={editingId}
             onItemDoubleClick={handleDoubleClick}

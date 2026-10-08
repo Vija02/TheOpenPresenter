@@ -66,6 +66,9 @@ export type LayoutWorkbenchProps = {
 
   hideAddElements?: boolean;
 
+  /** Drawn under the canvas, not selectable */
+  underlay?: LayoutDoc | null;
+
   /** Per-plugin overrides for what newly inserted elements look like. */
   insertDefaults?: LayoutInsertDefaults;
 
@@ -106,6 +109,7 @@ export const LayoutWorkbench = ({
   bindings = [],
   documentExtras,
   hideAddElements = false,
+  underlay,
   insertDefaults,
   hostCatalog,
   ai: aiEnabled = true,
@@ -293,6 +297,7 @@ export const LayoutWorkbench = ({
           onChange={onChange}
           className="w-full"
           muted={muted}
+          underlay={underlay}
         />
       </div>
 
@@ -306,7 +311,7 @@ export const LayoutWorkbench = ({
         />
       )}
 
-      {hasAudibleVideo(doc) && (
+      {(hasAudibleVideo(doc) || (!!underlay && hasAudibleVideo(underlay))) && (
         <EditorMuteToggle
           muted={muted}
           onToggle={() => setMuted((x) => !x)}
