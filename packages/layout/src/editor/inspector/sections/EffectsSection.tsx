@@ -1,5 +1,6 @@
 import { patchTextStyle } from "../../../doc/edit";
-import { Shadow, Stroke, solidPaint } from "../../../schema/paint";
+import { SHADOW_PRESETS } from "../../../schema/defaults";
+import { Stroke, solidPaint } from "../../../schema/paint";
 import {
   ColorField,
   CompactNumberField,
@@ -8,21 +9,6 @@ import {
   SelectField,
 } from "../primitives";
 import { TextSectionProps } from "./types";
-
-const shadow = (blur: number, color: string): Shadow => ({
-  x: 0,
-  y: 0,
-  blur,
-  spread: 0,
-  color,
-  inner: false,
-});
-
-const SHADOW_PRESETS: Record<string, Shadow[]> = {
-  none: [],
-  soft: [shadow(0.25, "rgba(0,0,0,0.9)")],
-  strong: [shadow(0.25, "rgba(0,0,0,0.9)"), shadow(0.5, "rgba(0,0,0,0.6)")],
-};
 
 const DEFAULT_STROKE_WIDTH = 0.15;
 const DEFAULT_STROKE_COLOR = "#000000";
@@ -59,7 +45,7 @@ export const EffectsSection = ({
           onChange={(v) =>
             onChange(
               patchTextStyle(doc, id, {
-                shadows: SHADOW_PRESETS[v] ?? [],
+                shadows: SHADOW_PRESETS[v as keyof typeof SHADOW_PRESETS] ?? [],
               }),
             )
           }

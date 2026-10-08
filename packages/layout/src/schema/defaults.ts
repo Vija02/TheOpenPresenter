@@ -15,11 +15,30 @@ import {
   TextElement,
 } from "./element";
 import { LayoutFeed } from "./feed";
-import { Effect, FillPaint, Stroke } from "./paint";
+import { Effect, FillPaint, Shadow, Stroke } from "./paint";
 import { FULL_BLEED, Rect } from "./rect";
 import { SpanRoleStyle, TextFitMode, TextStyle, TextStylePatch } from "./style";
 
 export const DEFAULT_ASPECT_RATIO: AspectRatio = { width: 16, height: 9 };
+
+const textShadow = (blur: number, color: string): Shadow => ({
+  x: 0,
+  y: 0,
+  blur,
+  spread: 0,
+  color,
+  inner: false,
+});
+
+/** The editor's shadow choices. It tells them apart by how many layers */
+export const SHADOW_PRESETS = {
+  none: [] as Shadow[],
+  soft: [textShadow(0.25, "rgba(0,0,0,0.9)")],
+  strong: [
+    textShadow(0.25, "rgba(0,0,0,0.9)"),
+    textShadow(0.5, "rgba(0,0,0,0.6)"),
+  ],
+} satisfies Record<string, Shadow[]>;
 
 export const defaultTextStyle: TextStyle = {
   fontFamily: DEFAULT_FONT_STACK,
