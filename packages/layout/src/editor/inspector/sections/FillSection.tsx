@@ -44,7 +44,7 @@ import {
 } from "../primitives";
 import { SectionProps } from "./types";
 
-type FillMode = "none" | "solid" | "linearGradient" | "image" | "video";
+export type FillMode = "none" | "solid" | "linearGradient" | "image" | "video";
 
 const COLOUR_MODES = [
   { value: "none" as const, label: "None", icon: <LuBan size={14} /> },
@@ -129,13 +129,37 @@ const IconButton = ({
   </button>
 );
 
+const Wrapper = ({
+  title,
+  bare,
+  children,
+}: {
+  title: string;
+  bare: boolean;
+  children: ReactNode;
+}) =>
+  bare ? (
+    <div className="flex flex-col gap-2">{children}</div>
+  ) : (
+    <Section title={title}>{children}</Section>
+  );
+
 export const FillSection = ({
   doc,
   element,
   onChange,
   title = "Fill",
   pluginApi,
-}: SectionProps & { title?: string; pluginApi?: LayoutPluginApi }) => {
+  only,
+  bare = false,
+}: SectionProps & {
+  title?: string;
+  pluginApi?: LayoutPluginApi;
+  /** Limit the fill types offered, e.g. colours only */
+  only?: FillMode[];
+  /** Without the collapsible section, e.g. inside a popover */
+  bare?: boolean;
+}) => {
   const fill = element.fill;
   const [selected, setSelected] = useState(0);
   const defaults = useLayoutInsertDefaults();
@@ -162,10 +186,15 @@ export const FillSection = ({
     else setFresh(videoPaint(video));
   };
 
-  const modes = pluginApi ? [...COLOUR_MODES, ...MEDIA_MODES] : COLOUR_MODES;
+  const available = pluginApi
+    ? [...COLOUR_MODES, ...MEDIA_MODES]
+    : COLOUR_MODES;
+  const modes = only
+    ? available.filter((mode) => only.includes(mode.value))
+    : available;
 
   return (
-    <Section title={title}>
+    <Wrapper title={title} bare={bare}>
       <Row label="Type">
         <ToggleGroupField
           value={modeOf(fill)}
@@ -216,7 +245,7 @@ export const FillSection = ({
           onReplace={() => void chooseVideo()}
         />
       )}
-    </Section>
+    </Wrapper>
   );
 };
 
