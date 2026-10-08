@@ -2,7 +2,9 @@ import {
   LuCaseLower,
   LuCaseSensitive,
   LuCaseUpper,
+  LuItalic,
   LuLink,
+  LuType,
   LuUnlink,
 } from "react-icons/lu";
 import {
@@ -136,6 +138,17 @@ export const TypographySection = ({
             { value: 400, label: "Normal" },
             { value: 600, label: "Semi-bold" },
             { value: 700, label: "Bold" },
+          ]}
+        />
+      </Row>
+
+      <Row label="Style">
+        <ToggleGroupField
+          value={s.fontStyle}
+          onChange={(v) => onChange(patchTextStyle(doc, id, { fontStyle: v }))}
+          options={[
+            { value: "normal", label: "Upright", icon: <LuType /> },
+            { value: "italic", label: "Italic", icon: <LuItalic /> },
           ]}
         />
       </Row>
