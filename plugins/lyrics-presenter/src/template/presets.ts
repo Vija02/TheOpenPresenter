@@ -78,7 +78,7 @@ export const lyricsDoc = ({
 }: LyricsDocOptions = {}): LayoutDoc => {
   const bodyStyle: TextStylePatch = {
     fontFamily: LYRICS_FONT_STACK,
-    fontWeight: 600,
+    fontWeight: 700,
     color: "#FFFFFF",
     lineHeight: 1,
     shadows: lyricsShadows,
