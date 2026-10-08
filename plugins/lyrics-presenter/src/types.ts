@@ -1,5 +1,8 @@
-import { InternalVideo } from "@repo/video";
+import { LAYOUT_VIDEO_STATES_KEY } from "@repo/base-types";
+import type { LayoutDoc, LayoutVideoStates } from "@repo/layout";
 import { z } from "zod";
+
+import type { Background } from "./backgrounds";
 
 export type ImportedData = {
   title: string;
@@ -44,7 +47,9 @@ export type Song = {
   /** The base key */
   key?: string | null;
   setting: SongSetting;
-  styleOverride?: SlideStyle | null;
+  /** Song main styling */
+  template: LayoutDoc | null;
+  background: Background | null;
 
   songbookId?: string;
 
@@ -54,9 +59,9 @@ export type Song = {
 };
 
 export type PluginBaseData = {
-  style?: SlideStyle;
   songs: Song[];
-  videoBackgrounds: InternalVideo[];
+  template: LayoutDoc | null;
+  background: Background | null;
 };
 
 // A saved-song library row
@@ -68,56 +73,9 @@ export type SavedSong = {
   source: string;
   externalId: string | null;
   song: Song;
-  videoBackgrounds: InternalVideo[];
   createdAt: string;
   updatedAt: string;
 };
-
-const paddingValidator = z
-  .string()
-  .or(z.number())
-  .transform((x) => {
-    const num = parseFloat(x.toString());
-    return Number.isNaN(num) ? 0 : num;
-  })
-  .optional();
-
-export const verticalAlignments = ["top", "center", "bottom"] as const;
-export type VerticalAlignment = (typeof verticalAlignments)[number];
-
-export const backgroundTypes = ["solid", "video"] as const;
-export type BackgroundType = (typeof backgroundTypes)[number];
-
-export const slideStyleValidator = z.object({
-  autoSize: z.boolean().optional(),
-  fontSize: z.string().or(z.number()).optional(),
-  fontWeight: z.string().or(z.number()).optional(),
-  fontStyle: z.string().optional(),
-  fontFamily: z.string().optional(),
-  lineHeight: z
-    .string()
-    .or(z.number())
-    .transform((x) => {
-      const num = parseFloat(x.toString());
-      return Number.isNaN(num) ? 1 : num;
-    })
-    .optional(),
-  textColor: z.string().optional(),
-  textShadow: z.boolean().optional(),
-  textOutline: z.boolean().optional(),
-  backgroundType: z.enum(backgroundTypes).optional(),
-  backgroundColor: z.string().optional(),
-  backgroundVideoMediaId: z.string().nullable().optional(),
-  verticalAlign: z.enum(verticalAlignments).optional(),
-  padding: paddingValidator,
-  paddingIsLinked: z.boolean().optional(),
-  leftPadding: paddingValidator,
-  topPadding: paddingValidator,
-  rightPadding: paddingValidator,
-  bottomPadding: paddingValidator,
-  debugPadding: z.boolean().optional(),
-});
-export type SlideStyle = z.infer<typeof slideStyleValidator>;
 
 export const displayTypes = ["sections", "fullSong"] as const;
 export type DisplayType = (typeof displayTypes)[number];
@@ -140,7 +98,16 @@ export const songSettingValidator = z.object({
 });
 export type SongSetting = z.infer<typeof songSettingValidator>;
 
+export type BackgroundRun = {
+  key: string;
+  /** Epoch ms the run started. Drives the background's playback */
+  since: number;
+};
+
 export type PluginRendererData = {
   songId: string | null;
   currentIndex: number | null;
+  /** Only written by `activateLyricSlide`. Missing on older renderer data */
+  backgroundRun: BackgroundRun | null;
+  [LAYOUT_VIDEO_STATES_KEY]?: LayoutVideoStates;
 };
