@@ -5,6 +5,7 @@ import {
   HorizontalAlignment,
   LayoutDoc,
   Rect,
+  SHADOW_PRESETS,
   Shadow,
   Stroke,
   Template,
@@ -152,7 +153,7 @@ export const fullSongTemplates: Template[] = [
     bindings: lyricsBindings,
     doc: lyricsDoc({
       fit: "columns",
-      style: { align: "left", valign: "top" },
+      style: { align: "left", valign: "top", shadows: SHADOW_PRESETS.soft },
     }),
   },
 ];
