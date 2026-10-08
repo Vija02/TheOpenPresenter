@@ -54,9 +54,16 @@ export type MediaPickerResult = {
   };
 };
 
+export type MediaListOptions = {
+  type?: MediaType | MediaType[];
+  pluginContext: PluginContext;
+};
+
 export type MediaPicker = {
   show: (
     options: MediaPickerOptionsInternal,
   ) => Promise<MediaPickerResult[] | null>;
   close?: () => void;
+  /** For custom UI */
+  list?: (options: MediaListOptions) => Promise<MediaPickerResult[]>;
 };

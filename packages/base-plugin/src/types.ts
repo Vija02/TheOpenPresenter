@@ -217,6 +217,7 @@ export type MediaHandler = {
 
 export type {
   InternalAudio,
+  MediaListOptions,
   MediaPickerOptions,
   MediaPickerOptionsInternal,
   MediaPickerResult,
