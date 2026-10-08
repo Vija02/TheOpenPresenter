@@ -17,17 +17,8 @@ const reconcileLinkedSong = (song: Song, saved: Song) => {
   if (JSON.stringify(song.setting) !== JSON.stringify(saved.setting)) {
     song.setting = saved.setting;
   }
-  if (
-    JSON.stringify(song.template ?? null) !==
-    JSON.stringify(saved.template ?? null)
-  ) {
-    song.template = saved.template ?? null;
-  }
-  if (
-    JSON.stringify(song.background ?? null) !==
-    JSON.stringify(saved.background ?? null)
-  ) {
-    song.background = saved.background ?? null;
+  if (JSON.stringify(song.looks ?? {}) !== JSON.stringify(saved.looks ?? {})) {
+    song.looks = saved.looks ?? {};
   }
 };
 

@@ -5,8 +5,8 @@ import {
   yjsVideoStateTarget,
 } from "@repo/layout";
 
-import { type ResolvedBackground, resolveSongBackground } from "./backgrounds";
-import { sceneBackground } from "./template/layout";
+import { type ResolvedBackground } from "./backgrounds";
+import { resolveSongBackground } from "./looks";
 import type {
   BackgroundRun,
   PluginBaseData,
@@ -16,7 +16,7 @@ import type {
 /** Each background's video fills are keyed under this scope */
 export const backgroundScope = (key: string) => `bg:${key}`;
 
-export type LyricsSceneData = Pick<PluginBaseData, "songs" | "background">;
+export type LyricsSceneData = Pick<PluginBaseData, "songs" | "looks">;
 
 export const resolveLiveBackground = (
   pluginData: LyricsSceneData,
@@ -28,7 +28,7 @@ export const resolveLiveBackground = (
   // Nothing is showing. Full song shows whatever the index says
   if (index === null && song.setting.displayType !== "fullSong") return null;
 
-  return resolveSongBackground(song, sceneBackground(pluginData));
+  return resolveSongBackground(song, pluginData.looks);
 };
 
 // Adapter

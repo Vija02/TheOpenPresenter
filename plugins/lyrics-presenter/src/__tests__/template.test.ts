@@ -4,16 +4,8 @@ import { describe, expect, it } from "vitest";
 import { backgroundFromMedia } from "../backgrounds";
 import { processSong } from "../songHelpers";
 import { BACKGROUND_ELEMENT_ID, HEADING_ROLE } from "../template/ids";
-import {
-  DEFAULT_SCENE_BACKGROUND,
-  composeLayout,
-  fullSongLayout,
-  sceneBackground,
-  sceneTemplate,
-  songTemplate,
-  textLayout,
-} from "../template/layout";
-import { defaultLyricsTemplate, lyricsDoc } from "../template/presets";
+import { composeLayout, fullSongLayout, textLayout } from "../template/layout";
+import { lyricsDoc } from "../template/presets";
 import { fullSongFrame, sectionsFrame, slideAt } from "../template/toFrame";
 
 const content = "[Verse]\na\nb\n-\nc\n[Chorus]\nd";
@@ -74,17 +66,5 @@ describe("layouts", () => {
       (e) => e.type === "text" && e.fit,
     );
     expect(fits).toEqual(["columns", "fitNoWrap"]);
-  });
-
-  it("falls back from the song, to the scene, to the default", () => {
-    expect(sceneTemplate({ template: null })).toBe(defaultLyricsTemplate());
-    expect(songTemplate({ template: null }, { template })).toBe(template);
-    const own = lyricsDoc({ style: { valign: "top" } });
-    expect(songTemplate({ template: own }, { template })).toBe(own);
-    expect(sceneBackground({ background: null })).toBeNull();
-    // Never set, as on new and seeded scenes
-    expect(sceneBackground({} as Parameters<typeof sceneBackground>[0])).toBe(
-      DEFAULT_SCENE_BACKGROUND,
-    );
   });
 });
