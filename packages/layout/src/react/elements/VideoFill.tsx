@@ -199,6 +199,7 @@ export const VideoFill = ({
   if ((fill.playback ?? "loop") === "once") {
     return (
       <OncePlayer
+        key={fill.video.id}
         fill={fill}
         since={since}
         stored={since === null ? undefined : stored}
@@ -206,5 +207,5 @@ export const VideoFill = ({
     );
   }
 
-  return <LoopPlayer fill={fill} />;
+  return <LoopPlayer key={fill.video.id} fill={fill} />;
 };
