@@ -2,7 +2,7 @@ import { cx } from "class-variance-authority";
 import { useMemo } from "react";
 
 import { Song } from "../../src";
-import { OFFSET_PARAM } from "../../src/derivation";
+import { OFFSET_PARAM, SHOW_BACKGROUND_PARAM } from "../../src/derivation";
 import { lookKeyFor, songLookTemplate } from "../../src/looks";
 import { processSong } from "../../src/songHelpers";
 import { usePluginAPI } from "../pluginApi";
@@ -12,14 +12,14 @@ import "./index.css";
 
 const Renderer = () => {
   const pluginApi = usePluginAPI();
-  // Get derivation config to check if we should hide background
-  const derivation = pluginApi.renderer.useDerivation();
-  const isDerived = derivation !== null;
+  const showBackground = pluginApi.renderer.useDerivationParam(
+    SHOW_BACKGROUND_PARAM,
+    true,
+  );
 
   return (
     <div style={{ position: "relative", width: "100%", height: "100%" }}>
-      {/* Hide background when derived (e.g., confidence monitor showing next slide) */}
-      {!isDerived && <BackgroundRenderer />}
+      {showBackground && <BackgroundRenderer />}
       <div
         style={{
           position: "relative",
