@@ -1,6 +1,7 @@
 import type { DerivationField } from "@repo/base-types";
 
 export const OFFSET_PARAM = "offset";
+export const SHOW_BACKGROUND_PARAM = "showBackground";
 
 export const derivationFields: DerivationField[] = [
   {
@@ -12,5 +13,12 @@ export const derivationFields: DerivationField[] = [
     max: 20,
     step: 1,
     help: "0 is the live slide. 1 is the next one, -1 the previous.",
+  },
+  {
+    key: SHOW_BACKGROUND_PARAM,
+    type: "boolean",
+    label: "Show background",
+    default: true,
+    help: "The live slide's background behind the lyrics.",
   },
 ];
