@@ -1,3 +1,4 @@
+import { PublicAccessProvider } from "@repo/ui";
 import React, { createContext, useEffect, useState } from "react";
 
 import { AwarenessContext, MiscProps, PluginContext } from "..";
@@ -59,7 +60,9 @@ export const PluginAPIProvider = ({
 
   return (
     <PluginAPIContext.Provider value={{ pluginAPI }}>
-      {pluginAPI && children}
+      <PublicAccessProvider isPublicAccess={misc.isPublicAccess}>
+        {pluginAPI && children}
+      </PublicAccessProvider>
     </PluginAPIContext.Provider>
   );
 };
