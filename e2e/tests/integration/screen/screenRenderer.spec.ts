@@ -38,7 +38,7 @@ const lyricsScene = (songTitle: string, marker: string) => {
           _imported: true,
         },
       ],
-      videoBackgrounds: [],
+      looks: {},
     },
     rendererPluginData: { songId, currentIndex: 0 },
     activate: true,

@@ -5,7 +5,6 @@ export class LyricsPlugin {
   readonly addToListFormButton: Locator;
   readonly importFormButton: Locator;
   readonly styleButton: Locator;
-  readonly saveStyleButton: Locator;
 
   constructor(public readonly page: Page) {
     // The unified search box (songbook + MyWorshipList import).
@@ -17,8 +16,10 @@ export class LyricsPlugin {
       name: "Import",
       exact: true,
     });
-    this.styleButton = page.getByRole("button", { name: "Style", exact: true });
-    this.saveStyleButton = page.getByRole("button", { name: "Save" });
+    this.styleButton = page.getByRole("button", {
+      name: "Global style",
+      exact: true,
+    });
   }
 
   // ---------------------------------------------------------------------------
@@ -357,143 +358,151 @@ export class LyricsPlugin {
   }
 
   // ---------------------------------------------------------------------------
-  // Style settings
+  // Layout (the style buttons open a layout workbench)
   // ---------------------------------------------------------------------------
 
-  async openStyleSettings() {
+  /** The organization's looks, on Main. Returns the dialog */
+  async openStyleSettings(): Promise<Locator> {
     await this.styleButton.click();
+    return this.layoutDialog("Global style");
   }
 
-  // Tab navigation
-  async goToTextTab() {
-    await this.page.getByRole("tab", { name: "Text" }).click();
+  /** A song's own looks, on the one it shows in. Returns the dialog */
+  async openSongLayout(index = 0): Promise<Locator> {
+    await this.page.getByTestId("ly-style-song").nth(index).click();
+    return this.layoutDialog("Song style");
   }
 
-  async goToPlacementTab() {
-    await this.page.getByRole("tab", { name: "Placement" }).click();
+  private async layoutDialog(title: string): Promise<Locator> {
+    const dialog = this.page
+      .getByRole("dialog")
+      .filter({ has: this.page.getByRole("heading", { name: title }) });
+    await dialog.locator(".lay--editor-surface").waitFor();
+    return dialog;
   }
 
-  async goToBackgroundTab() {
-    await this.page.getByRole("tab", { name: "Background" }).click();
+  /** Switches the dialog to another look, e.g. "Full song" */
+  async switchLook(dialog: Locator, name: string) {
+    await dialog
+      .getByTestId("lyrics-look-switcher")
+      .getByText(name, { exact: true })
+      .click();
+    await dialog.locator(".lay--editor-surface").waitFor();
   }
 
-  // Text tab methods
-  async setTextColor(color: string) {
-    await this.goToTextTab();
-    const colorInput = this.page
-      .getByTestId("form-item-textColor")
-      .locator("input");
-    await colorInput.fill(color);
+  /**
+   * An inspector row by its label. Labels are spans, not <label>s, and the
+   * direct-child constraint keeps ancestors from matching
+   */
+  inspectorRow(dialog: Locator, label: string): Locator {
+    return dialog.locator(`div:has(> span:text-is("${label}"))`).first();
   }
 
-  async toggleTextShadow() {
-    await this.goToTextTab();
-    await this.page.getByLabel("Text Shadow").click();
+  async selectLyrics(dialog: Locator) {
+    await dialog.locator('[data-lay-id="lyrics-body"]').click();
+    await dialog.getByText("Typography", { exact: true }).waitFor();
   }
 
-  async toggleTextOutline() {
-    await this.goToTextTab();
-    await this.page.getByLabel("Text Outline").click();
+  /**
+   * The background is its own layer, set from the media library. Its Colour
+   * card switches to a colour and opens the inspector's colour controls
+   */
+  async openBackgroundColour(dialog: Locator): Promise<Locator> {
+    await dialog.getByTestId("layout-media-colour").click();
+    const panel = this.page.getByTestId("layout-media-colour-panel");
+    await panel.waitFor();
+    return panel;
   }
 
-  async setVerticalAlign(align: "top" | "center" | "bottom") {
-    await this.goToPlacementTab();
-    await this.page.getByLabel(`Align ${align}`).click();
+  async setColour(dialog: Locator, label: string, hex: string) {
+    await this.pickColour(this.inspectorRow(dialog, label), hex);
   }
 
-  async toggleBold() {
-    await this.goToTextTab();
-    await this.page.getByLabel("Toggle bold").click();
+  /**
+   * Typing applies the colour. Closed by its swatch, as Escape would also
+   * close the dialog
+   */
+  private async pickColour(scope: Locator, hex: string) {
+    const swatch = scope.locator(".ui--color-picker__swatch");
+    await swatch.click();
+    const input = this.page.locator(".ui--color-picker__format-input");
+    await input.fill(hex);
+    await swatch.click();
+    await input.waitFor({ state: "hidden" });
   }
 
-  async toggleItalic() {
-    await this.goToTextTab();
-    await this.page.getByLabel("Toggle italic").click();
+  async setTextColor(dialog: Locator, hex: string) {
+    await this.selectLyrics(dialog);
+    await this.setColour(dialog, "Colour", hex);
   }
 
-  async setAutoSize(autoSize: boolean) {
-    await this.goToTextTab();
-    if (autoSize) {
-      await this.page.getByText("Auto fit").click();
-    } else {
-      await this.page.getByText("Manual", { exact: true }).click();
-    }
+  async setVerticalAlign(dialog: Locator, align: "top" | "middle" | "bottom") {
+    await this.selectLyrics(dialog);
+    await dialog.getByLabel(`Align ${align}`).click();
   }
 
-  async setFontSize(size: number) {
-    await this.goToTextTab();
-    await this.page
-      .getByTestId("form-item-fontSize")
-      .locator("input")
-      .fill(size.toString());
+  async setFontWeight(dialog: Locator, weight: 400 | 600 | 700) {
+    await this.selectLyrics(dialog);
+    await this.inspectorRow(dialog, "Weight")
+      .locator("select")
+      .selectOption(String(weight));
   }
 
-  // Background tab methods
-  async setBackgroundType(type: "Solid Color" | "Video") {
-    await this.goToBackgroundTab();
-    await this.page.getByTestId("form-item-backgroundType").click();
-    await this.page.getByRole("option", { name: type }).click();
-  }
-
-  async setBackgroundColor(color: string) {
-    await this.goToBackgroundTab();
-    const colorInput = this.page
-      .getByTestId("form-item-backgroundColor")
-      .locator("input");
-    await colorInput.fill(color);
-  }
-
-  // Placement tab methods
-  async setPadding(padding: number) {
-    await this.goToPlacementTab();
-    await this.page
-      .getByTestId("form-item-padding")
-      .locator("input")
-      .fill(padding.toString());
-  }
-
-  async togglePaddingLink() {
-    await this.goToPlacementTab();
-    await this.page
-      .getByTestId("form-item-paddingIsLinked")
-      .getByRole("button")
+  async setFontStyle(dialog: Locator, style: "upright" | "italic") {
+    await this.selectLyrics(dialog);
+    await dialog
+      .getByLabel(style === "italic" ? "Italic" : "Upright", { exact: true })
       .click();
   }
 
-  async setIndividualPadding(padding: {
-    left?: number;
-    top?: number;
-    right?: number;
-    bottom?: number;
-  }) {
-    await this.goToPlacementTab();
-    if (padding.left !== undefined) {
-      await this.page
-        .getByTestId("form-item-leftPadding")
-        .locator("input")
-        .fill(padding.left.toString());
-    }
-    if (padding.top !== undefined) {
-      await this.page
-        .getByTestId("form-item-topPadding")
-        .locator("input")
-        .fill(padding.top.toString());
-    }
-    if (padding.right !== undefined) {
-      await this.page
-        .getByTestId("form-item-rightPadding")
-        .locator("input")
-        .fill(padding.right.toString());
-    }
-    if (padding.bottom !== undefined) {
-      await this.page
-        .getByTestId("form-item-bottomPadding")
-        .locator("input")
-        .fill(padding.bottom.toString());
-    }
+  /** A fixed ceiling the lyrics shrink from, in design units */
+  async setMaxFontSize(dialog: Locator, size: number) {
+    await this.selectLyrics(dialog);
+    await this.inspectorRow(dialog, "Auto-size")
+      .locator("select")
+      .selectOption({ label: "Shrink to fit" });
+    const input = this.inspectorRow(dialog, "Max size").locator("input");
+    await input.fill(String(size));
+    await input.press("Tab");
   }
 
-  async saveStyleSettings() {
-    await this.saveStyleButton.click();
+  async setBackgroundColor(dialog: Locator, hex: string) {
+    const panel = await this.openBackgroundColour(dialog);
+    // Solid has the one colour picker in the panel
+    await this.pickColour(panel, hex);
+    // Toggle the panel closed; Escape here could close the dialog
+    await dialog.getByTestId("layout-media-colour").click();
+    await panel.waitFor({ state: "hidden" });
+  }
+
+  /**
+   * Picks a preset from the rail, accepting the replace confirmation. By its
+   * exact label: a card's name also holds its preview's text
+   */
+  async useTemplate(dialog: Locator, name: string) {
+    this.page.once("dialog", (confirm) => void confirm.accept());
+    await dialog
+      .getByRole("button")
+      .filter({ has: this.page.getByText(name, { exact: true }) })
+      .click();
+  }
+
+  /**
+   * The global style saves through the server, which then updates the
+   * scene, so wait for it. A song's saves straight into the scene
+   */
+  async saveStyleSettings(dialog: Locator) {
+    const isGlobal =
+      (await dialog.getByRole("heading", { name: "Global style" }).count()) > 0;
+    const saved = isGlobal
+      ? this.page.waitForResponse(
+          (response) =>
+            response.url().includes("lyricsPresenter.looks.") &&
+            response.request().method() === "POST",
+        )
+      : null;
+    await dialog.getByRole("button", { name: "Save", exact: true }).click();
+    await dialog.waitFor({ state: "hidden" });
+    await saved;
   }
 }
