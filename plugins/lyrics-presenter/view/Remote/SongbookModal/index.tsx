@@ -15,7 +15,6 @@ import { useMemo, useState } from "react";
 import { VscAdd, VscArrowLeft, VscCheck, VscTrash } from "react-icons/vsc";
 
 import { SavedSong } from "../../../src";
-import { getMergedSlideStyle } from "../../../src/slideStyle";
 import { usePluginAPI } from "../../pluginApi";
 import { trpc } from "../../trpc";
 import { useAddSongScene } from "../RemoteAddSongModal/useAddSongScene";
@@ -28,7 +27,6 @@ const SongbookModal = () => {
   const { isOpen, onToggle } = useOverlayToggle();
   const pluginApi = usePluginAPI();
   const pluginId = pluginApi.pluginContext.pluginId;
-  const globalStyle = pluginApi.scene.useData((x) => x.pluginData.style);
   const { addLinkedSavedSong } = useAddSongScene();
 
   // Ids added to the setlist during this session, for a bit of inline feedback.
@@ -60,11 +58,6 @@ const SongbookModal = () => {
   const previewSong = useMemo(
     () => songs.find((s) => s.id === previewId) ?? null,
     [songs, previewId],
-  );
-
-  const previewSlideStyle = useMemo(
-    () => getMergedSlideStyle(globalStyle, previewSong?.song.styleOverride),
-    [globalStyle, previewSong],
   );
 
   const handleAdd = (saved: SavedSong) => {
@@ -115,12 +108,7 @@ const SongbookModal = () => {
             <DialogBody className="px-3 md:px-6 pb-4">
               <div className="overflow-y-auto">
                 <SlideGrid pluginAPI={pluginApi}>
-                  <SongViewSlides
-                    song={previewSong.song}
-                    slideStyle={previewSlideStyle}
-                    videoBackgrounds={previewSong.videoBackgrounds}
-                    isPreview
-                  />
+                  <SongViewSlides song={previewSong.song} isPreview />
                 </SlideGrid>
               </div>
             </DialogBody>

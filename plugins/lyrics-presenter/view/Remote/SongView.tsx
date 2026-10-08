@@ -1,5 +1,5 @@
 import { Button, OverlayToggle, PopConfirm, SlideGrid } from "@repo/ui";
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback } from "react";
 import {
   VscArrowDown,
   VscArrowUp,
@@ -9,7 +9,6 @@ import {
   VscTrash,
 } from "react-icons/vsc";
 
-import { getMergedSlideStyle } from "../../src/slideStyle";
 import { Song } from "../../src/types";
 import { usePluginAPI } from "../pluginApi";
 import { useSongbookSync } from "../useSongbookSync";
@@ -55,7 +54,6 @@ const SongViewInner = React.memo(
   ({ song, onMoveUp, onMoveDown }: SongViewProps) => {
     const pluginApi = usePluginAPI();
     const mutableSceneData = pluginApi.scene.useValtioData();
-    const globalStyle = pluginApi.scene.useData((x) => x.pluginData.style);
     const { saveToSongbook } = useSongbookSync();
 
     const isLinked = !!song.songbookId;
@@ -76,11 +74,6 @@ const SongViewInner = React.memo(
       const id = await saveToSongbook(sceneSong);
       if (id) sceneSong.songbookId = id;
     }, [mutableSceneData.pluginData.songs, song.id, saveToSongbook]);
-
-    const slideStyle = useMemo(
-      () => getMergedSlideStyle(globalStyle, song.styleOverride),
-      [globalStyle, song.styleOverride],
-    );
 
     return (
       <div className="pb-4">
@@ -173,7 +166,7 @@ const SongViewInner = React.memo(
           </div>
         </div>
         <SlideGrid pluginAPI={pluginApi}>
-          <SongViewSlides song={song} slideStyle={slideStyle} />
+          <SongViewSlides song={song} />
         </SlideGrid>
       </div>
     );

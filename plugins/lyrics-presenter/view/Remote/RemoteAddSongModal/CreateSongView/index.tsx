@@ -4,7 +4,6 @@ import { useState } from "react";
 import { typeidUnboxed } from "typeid-js";
 
 import { Song } from "../../../../src";
-import { getMergedSlideStyle } from "../../../../src/slideStyle";
 import { usePluginAPI } from "../../../pluginApi";
 import { SongViewSlides } from "../../SongViewSlides";
 import { AddSongFooter } from "../AddSongFooter";
@@ -13,7 +12,6 @@ import { CreateNewSong } from "./CreateNewSong";
 
 export const CreateSongView = () => {
   const pluginApi = usePluginAPI();
-  const globalStyle = pluginApi.scene.useData((x) => x.pluginData.style) ?? {};
   const isPublicAccess = pluginApi.isPublicAccess;
   const { close, addSong } = useAddSongScene();
 
@@ -27,13 +25,7 @@ export const CreateSongView = () => {
     close();
   };
 
-  const preview = newSong ? (
-    <SongViewSlides
-      song={newSong}
-      slideStyle={getMergedSlideStyle(globalStyle, newSong.styleOverride)}
-      isPreview
-    />
-  ) : null;
+  const preview = newSong ? <SongViewSlides song={newSong} isPreview /> : null;
 
   return (
     <>

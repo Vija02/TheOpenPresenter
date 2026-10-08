@@ -14,7 +14,6 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { removeChords } from "../../../../src/processLyrics";
-import { getSlideStyle } from "../../../../src/slideStyle";
 import {
   DisplayType,
   Song,
@@ -34,8 +33,6 @@ export const CreateNewSong = ({
   onChange: (song: Song) => void;
 }) => {
   const pluginApi = usePluginAPI();
-  const globalStyle = pluginApi.scene.useData((x) => x.pluginData.style);
-  const slideStyle = useMemo(() => getSlideStyle(globalStyle), [globalStyle]);
 
   const form = useForm({
     resolver: zodResolver(
@@ -69,6 +66,8 @@ export const CreateNewSong = ({
       id: "",
       title: data.title,
       _imported: false,
+      template: null,
+      background: null,
       setting: { displayType: data.displayType },
       content: data.content,
     }),
@@ -154,11 +153,7 @@ export const CreateNewSong = ({
           <div className="hidden md:block stack-col basis-52">
             <h3 className="text-lg font-medium text-center mb-2">Preview</h3>
             <SlideGrid pluginAPI={pluginApi} forceWidth={200}>
-              <SongViewSlides
-                song={previewSong}
-                slideStyle={slideStyle}
-                isPreview
-              />
+              <SongViewSlides song={previewSong} isPreview />
             </SlideGrid>
           </div>
         </div>
