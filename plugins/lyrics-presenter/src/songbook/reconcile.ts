@@ -1,5 +1,4 @@
 import { Plugin } from "@repo/base-plugin/server";
-import { InternalVideo } from "@repo/video";
 
 import { PluginBaseData, Song } from "../types";
 import { SavedSongEntry } from "./types";
@@ -19,21 +18,16 @@ const reconcileLinkedSong = (song: Song, saved: Song) => {
     song.setting = saved.setting;
   }
   if (
-    JSON.stringify(song.styleOverride ?? null) !==
-    JSON.stringify(saved.styleOverride ?? null)
+    JSON.stringify(song.template ?? null) !==
+    JSON.stringify(saved.template ?? null)
   ) {
-    song.styleOverride = saved.styleOverride ?? null;
+    song.template = saved.template ?? null;
   }
-};
-
-// Append any incoming video backgrounds the doc doesn't already have
-const addMissingVideoBackgrounds = (
-  existing: InternalVideo[],
-  incoming: InternalVideo[],
-) => {
-  const existingIds = new Set(existing.map((v) => v.id));
-  for (const vb of incoming) {
-    if (vb && !existingIds.has(vb.id)) existing.push(vb);
+  if (
+    JSON.stringify(song.background ?? null) !==
+    JSON.stringify(saved.background ?? null)
+  ) {
+    song.background = saved.background ?? null;
   }
 };
 
@@ -45,8 +39,4 @@ export const applySavedEntryToDoc = (
   for (const song of data.pluginData.songs) {
     if (song.songbookId === songbookId) reconcileLinkedSong(song, entry.song);
   }
-  addMissingVideoBackgrounds(
-    data.pluginData.videoBackgrounds,
-    entry.videoBackgrounds,
-  );
 };
