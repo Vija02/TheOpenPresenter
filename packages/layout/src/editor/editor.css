@@ -202,3 +202,10 @@
   @apply checkerboard;
   --checkerboard-color: var(--surface-secondary, #f4f4f5);
 }
+
+/* Under every element and never hit: see `underlay` on LayoutDocEditor */
+.lay--editor-underlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}

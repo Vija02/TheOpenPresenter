@@ -41,7 +41,8 @@ export type LayoutEditorProps<T extends EditorItem> = {
   renderItem: (item: T, state: { selected: boolean }) => ReactNode;
   aspectRatio?: AspectRatio;
   fitMode?: LayoutFitMode;
-  background?: string;
+  /** Drawn under every element and not selectable */
+  underlay?: ReactNode;
   className?: string;
   /** Percent moved per arrow key press; Shift multiplies by 10. */
   nudgeStep?: number;
@@ -67,18 +68,14 @@ const ITEM_CLASS = "lay--editor-item";
 export const LayoutEditor = <T extends EditorItem>({
   aspectRatio = DEFAULT_ASPECT_RATIO,
   fitMode = "fluid",
-  background,
+  underlay,
   className,
   ...rest
 }: LayoutEditorProps<T>) => (
   // The border lives here
   <div className={className ? `lay--editor ${className}` : "lay--editor"}>
-    <Stage
-      aspectRatio={aspectRatio}
-      fitMode={fitMode}
-      sizing="aspect"
-      background={background}
-    >
+    <Stage aspectRatio={aspectRatio} fitMode={fitMode} sizing="aspect">
+      {underlay && <div className="lay--editor-underlay">{underlay}</div>}
       <EditorSurface {...rest} />
     </Stage>
   </div>
@@ -86,7 +83,7 @@ export const LayoutEditor = <T extends EditorItem>({
 
 type SurfaceProps<T extends EditorItem> = Omit<
   LayoutEditorProps<T>,
-  "aspectRatio" | "fitMode" | "background" | "className"
+  "aspectRatio" | "fitMode" | "underlay" | "className"
 >;
 
 const EditorSurface = <T extends EditorItem>({
