@@ -94,8 +94,7 @@ export const ImportSetlistView = ({ setlist }: { setlist: Setlist }) => {
         content: data.content,
         key: data.key,
         _imported: true,
-        template: null,
-        background: null,
+        looks: {},
         import: {
           ...song.importSetting,
           importedData: {

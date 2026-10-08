@@ -1,63 +1,78 @@
 import { Button, useOverlayToggle } from "@repo/ui";
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 
 import {
-  DEFAULT_SCENE_BACKGROUND,
-  sceneBackground,
-  sceneTemplate,
-} from "../../../src/template/layout";
-import { defaultLyricsTemplate } from "../../../src/template/presets";
+  MAIN_LOOK,
+  builtInLook,
+  listLooks,
+  resolveLook,
+  sameLayout,
+} from "../../../src/looks";
 import { usePluginAPI } from "../../pluginApi";
-import { useActivateLyricSlide } from "../../useActivateLyricSlide";
-import { LayoutEditorDialog } from "../LayoutEditorDialog";
+import { trpc } from "../../trpc";
+import { LayoutEditorDialog, LayoutValue } from "../LayoutEditorDialog";
 
-/** The scene's layout and default background */
 const StyleSettingModal = () => {
   const { isOpen, onToggle } = useOverlayToggle();
 
   const pluginApi = usePluginAPI();
-  const mutablePluginInfo = pluginApi.scene.useValtioData();
-  const { reactivateLive } = useActivateLyricSlide();
+  const pluginId = pluginApi.pluginContext.pluginId;
 
-  const template = pluginApi.scene.useData((x) => x.pluginData.template);
-  const background = pluginApi.scene.useData((x) => x.pluginData.background);
-  const songs = pluginApi.scene.useData((x) => x.pluginData.songs);
+  const looks = pluginApi.scene.useData((x) => x.pluginData.looks);
 
-  const value = useMemo(
-    () => ({
-      template: sceneTemplate({ template }),
-      background: sceneBackground({ background }),
-    }),
-    [template, background],
+  const saveLook = trpc.lyricsPresenter.looks.save.useMutation();
+  const resetLook = trpc.lyricsPresenter.looks.reset.useMutation();
+
+  const options = useMemo(() => listLooks(looks), [looks]);
+
+  const valueFor = useCallback(
+    (key: string): LayoutValue => {
+      const look = resolveLook(looks, key);
+      return { template: look.template, background: look.background };
+    },
+    [looks],
   );
+
+  // The server updates every open scene's copy, this one included
+  const onSave = (edited: Record<string, LayoutValue>) => {
+    const saves = Object.entries(edited).map(([key, value]) => {
+      const builtIn = builtInLook(key);
+      if (builtIn && sameLayout(value, builtIn)) {
+        // Back on the default, so it follows future changes to it
+        return resetLook.mutateAsync({ pluginId, key });
+      }
+      const { name, position } = resolveLook(looks, key);
+      return saveLook.mutateAsync({
+        pluginId,
+        look: { key, name, position, ...value },
+      });
+    });
+    void Promise.all(saves).catch(() =>
+      pluginApi.remote.toast.error("Failed to save the global style"),
+    );
+  };
 
   return (
     <LayoutEditorDialog
       isOpen={isOpen ?? false}
       onToggle={() => onToggle?.()}
-      title="Slide Layout"
-      value={value}
-      sampleSong={songs.find((x) => x.setting.displayType === "sections")}
-      aiThreadKey={`lyrics:${pluginApi.pluginContext.pluginId}`}
-      onSave={(next) => {
-        mutablePluginInfo.pluginData.template = next.template;
-        mutablePluginInfo.pluginData.background = next.background;
-        // The default background may be what the live slide shows
-        reactivateLive();
+      title="Global style"
+      looks={options}
+      initialLook={MAIN_LOOK}
+      valueFor={valueFor}
+      aiThreadKey={(key) => `lyrics:${pluginId}:look:${key}`}
+      onSave={onSave}
+      footerStart={({ lookKey, value, setValue }) => {
+        const builtIn = builtInLook(lookKey);
+        return (
+          builtIn &&
+          !sameLayout(value, builtIn) && (
+            <Button variant="outline" onClick={() => setValue(builtIn)}>
+              Reset to default
+            </Button>
+          )
+        );
       }}
-      footerStart={({ setValue }) => (
-        <Button
-          variant="outline"
-          onClick={() =>
-            setValue({
-              template: defaultLyricsTemplate(),
-              background: DEFAULT_SCENE_BACKGROUND,
-            })
-          }
-        >
-          Reset to default
-        </Button>
-      )}
     />
   );
 };

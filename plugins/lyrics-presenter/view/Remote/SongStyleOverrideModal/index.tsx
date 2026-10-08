@@ -1,18 +1,16 @@
-import type { LayoutDoc } from "@repo/layout";
 import { Button, useOverlayToggle } from "@repo/ui";
-import { hash } from "ohash";
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 
 import {
-  Background,
-  backgroundKey,
-  isNoBackground,
-} from "../../../src/backgrounds";
-import {
-  sceneBackground,
-  sceneTemplate,
-  songTemplate,
-} from "../../../src/template/layout";
+  SongLook,
+  listLooks,
+  lookKeyFor,
+  resolveLook,
+  sameBackground,
+  sameTemplate,
+  songLook,
+  songLookTemplate,
+} from "../../../src/looks";
 import { Song } from "../../../src/types";
 import { usePluginAPI } from "../../pluginApi";
 import { useActivateLyricSlide } from "../../useActivateLyricSlide";
@@ -23,14 +21,10 @@ export type SongStyleOverrideModalProps = {
   song: Song;
 };
 
-const sameTemplate = (a: LayoutDoc, b: LayoutDoc) => hash(a) === hash(b);
-
-const sameBackground = (a: Background | null, b: Background | null) => {
-  const key = (x: Background | null) =>
-    x === null || isNoBackground(x) ? null : backgroundKey(x);
-  return key(a) === key(b);
-};
-
+/**
+ * The song's own versions of the organization's looks, each starting as a
+ * copy. Whatever matches the look is saved as following it
+ */
 const SongStyleOverrideModal = ({ song }: SongStyleOverrideModalProps) => {
   const { isOpen, onToggle } = useOverlayToggle();
 
@@ -39,82 +33,88 @@ const SongStyleOverrideModal = ({ song }: SongStyleOverrideModalProps) => {
   const { saveToSongbook } = useSongbookSync();
   const { reactivateLive } = useActivateLyricSlide();
 
-  const template = pluginApi.scene.useData((x) => x.pluginData.template);
-  const background = pluginApi.scene.useData((x) => x.pluginData.background);
+  const looks = pluginApi.scene.useData((x) => x.pluginData.looks);
+  const options = useMemo(() => listLooks(looks), [looks]);
 
-  const scene = useMemo(
-    () => ({
-      template: sceneTemplate({ template }),
-      background: sceneBackground({ background }),
+  const valueFor = useCallback(
+    (key: string): LayoutValue => ({
+      template: songLookTemplate(song, key, looks),
+      // Null follows the look, which the dialog shows as its fallback
+      background: songLook(song, key)?.background ?? null,
     }),
-    [template, background],
+    [song, looks],
   );
 
-  const value = useMemo(
-    () => ({
-      template: songTemplate(song, { template }),
-      // Null follows the scene, which the dialog shows as its fallback
-      background: song.background,
-    }),
-    [song, template],
+  const fallbackFor = useCallback(
+    (key: string) => ({ background: resolveLook(looks, key).background }),
+    [looks],
   );
 
-  const write = (next: Pick<Song, "template" | "background">) => {
+  const onSave = (edited: Record<string, LayoutValue>) => {
     const sceneSong = mutableSceneData.pluginData.songs.find(
       (x) => x.id === song.id,
     );
     if (!sceneSong) return;
 
-    sceneSong.template = next.template;
-    sceneSong.background = next.background;
+    // Plain, from the snapshot
+    const next: Record<string, SongLook> = JSON.parse(
+      JSON.stringify(song.looks ?? {}),
+    );
+    for (const [key, value] of Object.entries(edited)) {
+      const look = resolveLook(looks, key);
+      const own: SongLook = {
+        template: sameTemplate(value.template, look.template)
+          ? null
+          : value.template,
+        background:
+          value.background === null ||
+          sameBackground(value.background, look.background)
+            ? null
+            : value.background,
+      };
+      if (own.template === null && own.background === null) delete next[key];
+      else next[key] = own;
+    }
+
+    sceneSong.looks = next;
     // The live slide's background may have changed under it
     reactivateLive();
 
-    if (song.songbookId) void saveToSongbook({ ...song, ...next });
+    if (song.songbookId) void saveToSongbook({ ...song, looks: next });
   };
-
-  const onSave = (next: LayoutValue) =>
-    write({
-      template:
-        song.template === null && sameTemplate(next.template, scene.template)
-          ? null
-          : next.template,
-      background:
-        song.background === null &&
-        sameBackground(next.background, scene.background)
-          ? null
-          : next.background,
-    });
-
-  const isOwn = song.template !== null || song.background !== null;
 
   return (
     <LayoutEditorDialog
       isOpen={isOpen ?? false}
       onToggle={() => onToggle?.()}
-      title={`Song Layout - "${song.title}"`}
-      value={value}
+      title={`Song style - "${song.title}"`}
+      looks={options}
+      initialLook={lookKeyFor(song)}
+      valueFor={valueFor}
+      fallbackFor={fallbackFor}
       sampleSong={song}
-      fallback={{ background: scene.background }}
-      aiThreadKey={`lyrics:${pluginApi.pluginContext.pluginId}:${song.id}`}
-      onSave={onSave}
-      footerStart={() =>
-        isOwn && (
-          <Button
-            variant="outline"
-            onClick={() => {
-              const ok = window.confirm(
-                "Reset this song to the scene's layout and background? Its own layout is discarded.",
-              );
-              if (!ok) return;
-              write({ template: null, background: null });
-              onToggle?.();
-            }}
-          >
-            Reset to default
-          </Button>
-        )
+      aiThreadKey={(key) =>
+        `lyrics:${pluginApi.pluginContext.pluginId}:${song.id}:${key}`
       }
+      onSave={onSave}
+      footerStart={({ lookKey, value, setValue }) => {
+        const look = resolveLook(looks, lookKey);
+        const isOwn =
+          value.background !== null ||
+          !sameTemplate(value.template, look.template);
+        return (
+          isOwn && (
+            <Button
+              variant="outline"
+              onClick={() =>
+                setValue({ template: look.template, background: null })
+              }
+            >
+              Reset to default
+            </Button>
+          )
+        );
+      }}
     />
   );
 };

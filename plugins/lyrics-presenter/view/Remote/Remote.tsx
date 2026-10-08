@@ -1,4 +1,4 @@
-import { Button, OverlayToggle, PluginScaffold } from "@repo/ui";
+import { Button, LoginRequired, OverlayToggle, PluginScaffold } from "@repo/ui";
 import { useCallback } from "react";
 import { PiExportLight } from "react-icons/pi";
 import { VscAdd, VscBook, VscPaintcan } from "react-icons/vsc";
@@ -6,6 +6,7 @@ import { VscAdd, VscBook, VscPaintcan } from "react-icons/vsc";
 import { chordProToOpenSong } from "../../src/chords/convert/chordProToOpenSong";
 import { Song } from "../../src/types";
 import { usePluginAPI } from "../pluginApi";
+import { useFollowLookChanges } from "../useActivateLyricSlide";
 import Landing from "./Landing";
 import RemoteAddSongModal from "./RemoteAddSongModal";
 import SongView from "./SongView";
@@ -59,6 +60,7 @@ const Remote = () => {
   const songs = pluginApi.scene.useData((x) => x.pluginData.songs);
   const mutableSceneData = pluginApi.scene.useValtioData();
   const isPublicAccess = pluginApi.isPublicAccess;
+  useFollowLookChanges();
 
   const onExport = useCallback(() => {
     songs.forEach((song) => {
@@ -99,10 +101,12 @@ const Remote = () => {
           </OverlayToggle>
           <OverlayToggle
             toggler={({ onToggle }) => (
-              <Button size="xs" variant="pill" onClick={onToggle}>
-                <VscPaintcan />
-                Style
-              </Button>
+              <LoginRequired message="Log in to change the global style">
+                <Button size="xs" variant="pill" onClick={onToggle}>
+                  <VscPaintcan />
+                  Global style
+                </Button>
+              </LoginRequired>
             )}
           >
             <StyleSettingModal />

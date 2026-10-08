@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useEffect, useRef } from "react";
 
 import {
   activateLyricSlide,
@@ -34,4 +34,21 @@ export const useActivateLyricSlide = () => {
   }, [activate, mutableRendererData]);
 
   return { activate, reactivateLive };
+};
+
+/**
+ * Looks change on the server, from this remote or anywhere else. Once the
+ * scene's copy arrives, keep the live run on the background it now resolves to
+ */
+export const useFollowLookChanges = () => {
+  const pluginApi = usePluginAPI();
+  const looks = pluginApi.scene.useData((x) => x.pluginData.looks);
+  const { reactivateLive } = useActivateLyricSlide();
+
+  const reactivateRef = useRef(reactivateLive);
+  reactivateRef.current = reactivateLive;
+
+  useEffect(() => {
+    reactivateRef.current();
+  }, [looks]);
 };
