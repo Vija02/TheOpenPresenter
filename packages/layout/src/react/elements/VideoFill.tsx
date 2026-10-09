@@ -1,6 +1,6 @@
 import { PluginAPIContext } from "@repo/base-plugin/client";
 import { UniversalImage } from "@repo/ui";
-import { createVideoPlaybackState } from "@repo/video";
+import { createVideoPlaybackState, volumeToAmplitude } from "@repo/video";
 import { VideoPlayer } from "@repo/video/client";
 import {
   CSSProperties,
@@ -168,7 +168,9 @@ const OncePlayer = ({
   const playbackState = stored ?? derived;
 
   const output = useVideoFillOutputVolume();
-  const volume = pluginAPI!.audio.useVolume(playbackState.volume * output);
+  const volume = volumeToAmplitude(
+    pluginAPI!.audio.useVolume(playbackState.volume * output),
+  );
 
   const { video, onDurationChange } = useResolvedVideo(fill);
 

@@ -1,4 +1,4 @@
-import { perceptualToAmplitude } from "@discordapp/perceptual";
+import { volumeToAmplitude } from "@repo/video";
 import IcecastMetadataPlayer from "icecast-metadata-player";
 import { useEffect, useState } from "react";
 import { useDisposable } from "use-disposable";
@@ -74,9 +74,7 @@ const Player = () => {
 
   useEffect(() => {
     if (player) {
-      player.audioElement.volume = perceptualToAmplitude(
-        Math.min(Math.max(0, volume ?? 1), 1),
-      );
+      player.audioElement.volume = volumeToAmplitude(volume ?? 1);
     }
   }, [player, volume]);
 
