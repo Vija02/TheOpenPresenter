@@ -29,6 +29,7 @@
     "dev": "concurrently --kill-others --names \"VIDEO,SHARED\" --prefix \"({name})\" --prefix-colors \"cyanBright.bold,yellowBright.bold\" \"pkgroll --watch\" \"node ../shared-runtime/watch.mjs @repo/video\""
   },
   "dependencies": {
+    "@discordapp/perceptual": "^1.1.0",
     "@repo/base-plugin": "*",
     "@repo/base-types": "*",
     "@repo/lib": "*",

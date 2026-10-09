@@ -1,3 +1,4 @@
+import { volumeToAmplitude } from "@repo/video";
 import { VideoPlayer, useVideoPreload } from "@repo/video/client";
 import { useMemo } from "react";
 
@@ -35,7 +36,9 @@ const VideoPlayerRendererInner = ({ videoId }: { videoId: string }) => {
 
   const playbackState = videoStates[videoId] ?? null;
 
-  const scaledVolume = pluginApi.audio.useVolume(playbackState?.volume ?? 1);
+  const scaledVolume = volumeToAmplitude(
+    pluginApi.audio.useVolume(playbackState?.volume ?? 1),
+  );
   const scaledPlaybackState = useMemo(
     () => (playbackState ? { ...playbackState, volume: scaledVolume } : null),
     [playbackState, scaledVolume],

@@ -10141,7 +10141,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@repo/plugin-radio@workspace:plugins/radio"
   dependencies:
-    "@discordapp/perceptual": "npm:^1.1.0"
     "@dnd-kit/core": "npm:^6.3.1"
     "@dnd-kit/sortable": "npm:^10.0.0"
     "@dnd-kit/utilities": "npm:^3.2.2"
@@ -10926,6 +10925,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@repo/video@workspace:packages/video"
   dependencies:
+    "@discordapp/perceptual": "npm:^1.1.0"
     "@repo/base-plugin": "npm:*"
     "@repo/base-types": "npm:*"
     "@repo/lib": "npm:*"

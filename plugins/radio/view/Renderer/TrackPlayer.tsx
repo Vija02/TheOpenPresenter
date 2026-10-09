@@ -1,3 +1,4 @@
+import { volumeToAmplitude } from "@repo/video";
 import { VideoPlayer } from "@repo/video/client";
 import { useMemo } from "react";
 
@@ -34,8 +35,10 @@ const TrackPlayer = ({
 
   const gain = useFadeGain(fade, role === "outgoing" ? "out" : "in");
   const volume =
-    pluginApi.audio.useVolume(
-      pluginApi.renderer.useData((x) => x.volume) ?? 1,
+    volumeToAmplitude(
+      pluginApi.audio.useVolume(
+        pluginApi.renderer.useData((x) => x.volume) ?? 1,
+      ),
     ) * (role === "upcoming" ? 0 : gain);
 
   const mutableSceneData = pluginApi.scene.useValtioData();
