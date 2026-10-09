@@ -1,8 +1,11 @@
-import { volumeToAmplitude } from "@repo/video";
+import {
+  SequenceFade,
+  SequencePlaybackState,
+  volumeToAmplitude,
+} from "@repo/video";
 import { VideoPlayer } from "@repo/video/client";
 import { useMemo } from "react";
 
-import { SequenceFade, SequencePlaybackState } from "../../src/sequence";
 import { Track } from "../../src/types";
 import { usePluginAPI } from "../pluginApi";
 import { trackVideo } from "../trackHelpers";

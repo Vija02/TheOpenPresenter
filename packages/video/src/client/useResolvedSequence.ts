@@ -5,7 +5,7 @@ import {
   SequenceItem,
   SequenceOptions,
   resolveSequence,
-} from "../../src/sequence";
+} from "../sequence";
 
 // Land just past a boundary rather than just before it
 const BOUNDARY_SLACK_MS = 50;

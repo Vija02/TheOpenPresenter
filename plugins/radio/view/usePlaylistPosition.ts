@@ -1,9 +1,12 @@
-import { createVideoPlaybackState } from "@repo/video";
+import {
+  SequenceAnchor,
+  SequenceItem,
+  createVideoPlaybackState,
+} from "@repo/video";
+import { useResolvedSequence } from "@repo/video/client";
 import { useMemo } from "react";
 
-import { SequenceAnchor, SequenceItem } from "../src/sequence";
 import { usePluginAPI } from "./pluginApi";
-import { useResolvedSequence } from "./sequence/useResolvedSequence";
 
 const emptyTrackState = createVideoPlaybackState();
 

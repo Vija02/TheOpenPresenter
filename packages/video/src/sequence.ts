@@ -6,7 +6,7 @@
  * Before changing the anchor, `rebaseAnchor` to pin down where playback has
  * got to. Keep its uid when nothing audible changes, so players don't resync.
  *
- * Nothing here is music specific. We can reuse it later for anything that needs sequencing.
+ * Nothing here is media specific, so anything that needs sequencing can use it.
  */
 
 export type SequenceItem = {

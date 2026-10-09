@@ -1,7 +1,7 @@
+import { SequenceFade, SequencePlaybackState } from "@repo/video";
 import { useVideoPreload } from "@repo/video/client";
 import { lazy } from "react";
 
-import { SequenceFade, SequencePlaybackState } from "../../src/sequence";
 import { Track } from "../../src/types";
 import { usePluginAPI } from "../pluginApi";
 import { isTrackReady, trackVideo } from "../trackHelpers";
