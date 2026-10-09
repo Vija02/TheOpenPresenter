@@ -122,8 +122,14 @@ const onPluginDataLoaded: RegisterOnPluginDataLoaded<
           // Get volume from first existing video state, or default to 1
           const firstState = videoStatesMap.values().next().value;
           const currentVolume = firstState?.get("volume") ?? 1;
+          // Repeating one loops every video, so new ones join in
+          const onFinishBehaviour =
+            firstState?.get("onFinishBehaviour") ?? "pause";
 
-          const newState = createVideoPlaybackState({ volume: currentVolume });
+          const newState = createVideoPlaybackState({
+            volume: currentVolume,
+            onFinishBehaviour,
+          });
 
           const stateMap = new Y.Map() as TypedMap<VideoPlaybackState>;
           stateMap.set("uid", newState.uid);
@@ -221,6 +227,8 @@ const onRendererDataCreated = (
 ) => {
   rendererData.set("activeVideoId", null);
   rendererData.set("videoStates", new Y.Map<any>() as TypedMap<any>);
+  rendererData.set("autoplay", false);
+  rendererData.set("repeatMode", "off");
 
   return {};
 };

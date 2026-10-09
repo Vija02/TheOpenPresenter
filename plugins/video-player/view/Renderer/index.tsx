@@ -1,31 +1,41 @@
-import { volumeToAmplitude } from "@repo/video";
+import { VideoPlaybackState, volumeToAmplitude } from "@repo/video";
 import { VideoPlayer, useVideoPreload } from "@repo/video/client";
 import { useMemo } from "react";
 
 import { usePluginAPI } from "../pluginApi";
+import { useVideoSequence } from "../useVideoSequence";
 
 const VideoPlayerRenderer = () => {
   const pluginApi = usePluginAPI();
 
-  const activeVideoId = pluginApi.renderer.useData((x) => x.activeVideoId);
   const videos = pluginApi.scene.useData((x) => x.pluginData.videos);
+  const { videoId, playbackState } = useVideoSequence();
 
   useVideoPreload(videos);
 
-  if (!activeVideoId) {
+  if (!videoId) {
     return null;
   }
 
   return (
-    <VideoPlayerRendererInner key={activeVideoId} videoId={activeVideoId} />
+    <VideoPlayerRendererInner
+      key={videoId}
+      videoId={videoId}
+      playbackState={playbackState}
+    />
   );
 };
 
-const VideoPlayerRendererInner = ({ videoId }: { videoId: string }) => {
+const VideoPlayerRendererInner = ({
+  videoId,
+  playbackState,
+}: {
+  videoId: string;
+  playbackState: VideoPlaybackState | null;
+}) => {
   const pluginApi = usePluginAPI();
 
   const videos = pluginApi.scene.useData((x) => x.pluginData.videos);
-  const videoStates = pluginApi.renderer.useData((x) => x.videoStates);
 
   const mutableSceneData = pluginApi.scene.useValtioData();
 
@@ -33,8 +43,6 @@ const VideoPlayerRendererInner = ({ videoId }: { videoId: string }) => {
     () => videos.find((vid) => vid.id === videoId),
     [videoId, videos],
   );
-
-  const playbackState = videoStates[videoId] ?? null;
 
   const scaledVolume = volumeToAmplitude(
     pluginApi.audio.useVolume(playbackState?.volume ?? 1),

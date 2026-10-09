@@ -5,7 +5,7 @@ export class VideoPlayerPlugin {
 
   constructor(public readonly page: Page) {
     this.searchInput = page.getByRole("textbox", {
-      name: "Search...",
+      name: "Search YouTube or paste a link...",
     });
   }
 }
