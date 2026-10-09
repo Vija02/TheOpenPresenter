@@ -1,0 +1,16 @@
+/* Compact mode: buttons that have an icon drop their text label.
+ * The button becomes a square grid whose first row (the icon) fills it, so the
+ * label lands in a clipped second row. Avoids font-size: 0 since browsers with
+ * a minimum font size ignore it.
+ * Unlayered on purpose so it wins over the button's size utilities */
+.ui--plugin-scaffold__compact [data-slot="button"]:has(> svg) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: 100%;
+  place-items: center;
+  aspect-ratio: 1;
+  min-width: 0;
+  padding: 0;
+  gap: 0;
+  overflow: hidden;
+}

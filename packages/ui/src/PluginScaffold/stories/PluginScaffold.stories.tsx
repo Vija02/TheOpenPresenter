@@ -164,3 +164,53 @@ export const MediaControlsSample: Story = {
     ),
   },
 };
+
+export const ResponsiveToolbar: Story = {
+  decorators: [
+    (Story, context) => (
+      <div className="h-[80vh] resize-x overflow-hidden border max-w-full w-[900px] min-w-[200px]">
+        <Story {...context} />
+      </div>
+    ),
+  ],
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "Drag the bottom-right corner to resize. When the toolbar doesn't fit, buttons first drop their labels, then collapse behind a menu button.",
+      },
+    },
+  },
+  args: {
+    title: "Responsive Plugin",
+    toolbar: (
+      <>
+        <Button variant="pill" size="xs">
+          <Plus />
+          New
+        </Button>
+        <Button variant="pill" size="xs">
+          <Save />
+          Save
+        </Button>
+        <Button variant="pill" size="xs">
+          <Upload />
+          Import
+        </Button>
+        <Button variant="pill" size="xs">
+          <Download />
+          Export
+        </Button>
+        <Button variant="pill" size="xs">
+          Text only
+        </Button>
+      </>
+    ),
+    postToolbar: (
+      <Button variant="pill" size="xs">
+        <Settings />
+        Settings
+      </Button>
+    ),
+  },
+};
