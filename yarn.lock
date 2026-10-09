@@ -10354,6 +10354,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@repo/plugin-video-player@workspace:plugins/video-player"
   dependencies:
+    "@dnd-kit/core": "npm:^6.3.1"
+    "@dnd-kit/sortable": "npm:^10.0.0"
+    "@dnd-kit/utilities": "npm:^3.2.2"
     "@r2wc/react-to-web-component": "npm:^2.0.3"
     "@repo/base-plugin": "npm:*"
     "@repo/eslint-config": "npm:*"

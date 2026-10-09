@@ -21,7 +21,7 @@ test.describe("Video Player Plugin", () => {
     await projectPage.createPlugin("Video Player");
 
     // Verify the video player plugin is loaded
-    await expect(page.getByText("Search or enter URL:")).toBeVisible();
+    await expect(videoPlayerPlugin.searchInput).toBeVisible();
 
     // Enter a search query
     await videoPlayerPlugin.searchInput.fill("test video");
