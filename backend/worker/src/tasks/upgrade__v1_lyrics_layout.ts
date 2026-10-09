@@ -1,65 +1,21 @@
-import type { YState } from "@repo/base-plugin";
 import { Task } from "graphile-worker";
 import * as Y from "yjs";
 
 import {
   LEGACY_STYLE_LOOKS,
-  type LegacyPluginData,
-  type LegacySong,
   type LookLayout,
   convertSavedSong,
   convertSceneSongs,
   convertSceneStyle,
+  type LegacySong,
+  lookTemplateFor,
 } from "../migrations/lyricsLayoutUpgrade";
+import { lyricsScenes, toYjs } from "../migrations/lyricsYjs";
 
-const PLUGIN_NAME = "lyrics-presenter";
 /** `pluginSchemaName("lyrics-presenter")` */
 const SCHEMA = "plugin_lyrics_presenter";
 const SONGBOOK_TABLE = `${SCHEMA}.saved_song`;
 const LOOK_TABLE = `${SCHEMA}.look`;
-
-const toYjs = (value: unknown): unknown => {
-  if (Array.isArray(value)) {
-    const array = new Y.Array();
-    array.push(value.map(toYjs));
-    return array;
-  }
-  if (value !== null && typeof value === "object") {
-    const map = new Y.Map();
-    for (const [key, entry] of Object.entries(value)) {
-      if (entry !== undefined) map.set(key, toYjs(entry));
-    }
-    return map;
-  }
-  return value;
-};
-
-type LyricsScene = { pluginData: Y.Map<any>; legacy: LegacyPluginData };
-
-const lyricsScenes = (ydoc: Y.Doc): LyricsScene[] => {
-  const state = ydoc.getMap() as YState;
-  const dataMap = state.get("data") as Y.Map<any> | undefined;
-  const scenes: LyricsScene[] = [];
-
-  for (const sceneValue of dataMap?.values() ?? []) {
-    if (!(sceneValue instanceof Y.Map)) continue;
-    if (sceneValue.get("type") !== "scene") continue;
-
-    const children = sceneValue.get("children") as Y.Map<any> | undefined;
-    for (const pluginValue of children?.values() ?? []) {
-      if (!(pluginValue instanceof Y.Map)) continue;
-      if (pluginValue.get("plugin") !== PLUGIN_NAME) continue;
-
-      const pluginData = pluginValue.get("pluginData");
-      if (!(pluginData instanceof Y.Map)) continue;
-      scenes.push({
-        pluginData,
-        legacy: pluginData.toJSON() as LegacyPluginData,
-      });
-    }
-  }
-  return scenes;
-};
 
 /**
  * Lyrics moved onto `@repo/layout`, with looks that are the organization's.
@@ -191,7 +147,7 @@ const task: Task = async (_, { withPgClient }) => {
               key,
               name,
               position,
-              JSON.stringify(look.template),
+              JSON.stringify(lookTemplateFor(key, look.template)),
               look.background === null ? null : JSON.stringify(look.background),
             ],
           );
