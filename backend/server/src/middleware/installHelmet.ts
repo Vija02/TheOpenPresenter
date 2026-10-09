@@ -73,6 +73,8 @@ export default async function installHelmet(app: Express) {
       },
       // Useful for OAuth
       crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
+      // YouTube embeds refuse to play without a referrer (error 153)
+      referrerPolicy: { policy: "strict-origin-when-cross-origin" },
     };
 
     if (isDevOrTest || devMode) {
