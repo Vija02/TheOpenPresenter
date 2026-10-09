@@ -34,6 +34,8 @@ const fourth: StubVideo = {
   duration: 10,
 };
 
+const autoplayOn = "Autoplay on: plays the next track when one finishes";
+
 const worshipSet: StubPlaylist = {
   playlistId: "PLworshipset",
   title: "Sunday Set",
@@ -405,6 +407,89 @@ test.describe.serial("Music Player Plugin: Playlist", () => {
     await nowPlaying.getByRole("button", { name: "Play" }).click();
     await expect(
       nowPlaying.getByRole("button", { name: "Pause" }),
+    ).toBeVisible();
+  });
+
+  test("stops after the current track with autoplay off", async ({
+    projectPage,
+    musicPlayerPlugin,
+    loginAndGoToProject,
+  }) => {
+    await loginAndGoToProject();
+    await projectPage.createPlugin("Music Player");
+    for (const video of [first, second]) {
+      await musicPlayerPlugin.submit(
+        `https://www.youtube.com/watch?v=${video.videoId}`,
+      );
+      await expect(musicPlayerPlugin.track(video.title)).toBeVisible();
+    }
+
+    await musicPlayerPlugin.playTrackButton("First Song").click();
+    const nowPlaying = musicPlayerPlugin.nowPlaying;
+    // On unless someone turns it off
+    await nowPlaying.getByRole("button", { name: autoplayOn }).click();
+    await expect(
+      nowPlaying.getByRole("button", { name: "Autoplay off" }),
+    ).toBeVisible();
+
+    // First Song is 5s long, and it stays on it once it's done
+    await expect(nowPlaying.getByRole("button", { name: "Play" })).toBeVisible({
+      timeout: 10 * 1000,
+    });
+    await expect(nowPlaying).toContainText("First Song");
+
+    // Playing a finished track starts it again, not the playlist
+    await nowPlaying.getByRole("button", { name: "Play" }).click();
+    await expect(
+      nowPlaying.getByRole("button", { name: "Pause" }),
+    ).toBeVisible();
+    await expect(nowPlaying).toContainText("First Song");
+  });
+
+  test("autoplay goes with repeating the playlist and crossfading", async ({
+    page,
+    projectPage,
+    musicPlayerPlugin,
+    loginAndGoToProject,
+  }) => {
+    await loginAndGoToProject();
+    await projectPage.createPlugin("Music Player");
+    await musicPlayerPlugin.submit(
+      `https://www.youtube.com/watch?v=${second.videoId}`,
+    );
+    await musicPlayerPlugin.playTrackButton("Second Song").click();
+
+    const nowPlaying = musicPlayerPlugin.nowPlaying;
+    await nowPlaying.getByRole("button", { name: "Repeat off" }).click();
+    await nowPlaying.getByRole("button", { name: "Crossfade off" }).click();
+    await page.getByRole("button", { name: "3 seconds" }).click();
+    await expect(
+      nowPlaying.getByRole("button", { name: "Repeat playlist" }),
+    ).toBeVisible();
+    await expect(
+      nowPlaying.getByRole("button", { name: "Crossfade 3s" }),
+    ).toBeVisible();
+
+    // Both only apply while moving between tracks, so they go off with it
+    await nowPlaying.getByRole("button", { name: autoplayOn }).click();
+    await expect(
+      nowPlaying.getByRole("button", { name: "Repeat off" }),
+    ).toBeVisible();
+    await expect(
+      nowPlaying.getByRole("button", { name: "Crossfade off" }),
+    ).toBeVisible();
+
+    // ...and either one brings it back
+    await nowPlaying.getByRole("button", { name: "Crossfade off" }).click();
+    await page.getByRole("button", { name: "3 seconds" }).click();
+    await expect(
+      nowPlaying.getByRole("button", { name: autoplayOn }),
+    ).toBeVisible();
+
+    await nowPlaying.getByRole("button", { name: autoplayOn }).click();
+    await nowPlaying.getByRole("button", { name: "Repeat off" }).click();
+    await expect(
+      nowPlaying.getByRole("button", { name: autoplayOn }),
     ).toBeVisible();
   });
 });

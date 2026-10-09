@@ -78,3 +78,47 @@ export const stubYoutube = async (
       route.fulfill({ status: 200, contentType: "text/html", body: "" }),
   );
 };
+
+/**
+ * The video player's version of `stubYoutube`. Its search answers from
+ * `videos`, with their durations, since the blank embedded player never
+ * reports one and autoplay can't move on without it.
+ */
+export const stubVideoPlayerYoutube = async (
+  context: BrowserContext,
+  videos: StubVideo[],
+) => {
+  await context.route(/\/trpc\/videoPlayer\.search/, (route) =>
+    route.fulfill({
+      status: 200,
+      json: [
+        {
+          result: {
+            data: {
+              results: videos.map((video) => ({
+                type: "Video",
+                video_id: video.videoId,
+                title: { text: video.title },
+                author: { name: video.author },
+                duration: { seconds: video.duration },
+                thumbnails: [
+                  {
+                    url: `https://i.ytimg.com/vi/${video.videoId}/hqdefault.jpg`,
+                  },
+                ],
+                thumbnail_overlays: [],
+              })),
+              refinements: [],
+            },
+          },
+        },
+      ],
+    }),
+  );
+
+  await context.route(
+    /^https:\/\/([\w-]+\.)?(youtube\.com|ytimg\.com)\//,
+    (route) =>
+      route.fulfill({ status: 200, contentType: "text/html", body: "" }),
+  );
+};
