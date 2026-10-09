@@ -6,9 +6,20 @@ import {
 import { useResolvedSequence } from "@repo/video/client";
 import { useMemo } from "react";
 
+import { Track } from "../src/types";
 import { usePluginAPI } from "./pluginApi";
 
 const emptyTrackState = createVideoPlaybackState();
+
+/** With autoplay off, the current track plays on its own and stops */
+export const toSequenceItems = (
+  tracks: Track[],
+  activeTrackId: string | null,
+  autoplay: boolean,
+): SequenceItem[] =>
+  tracks
+    .filter((x) => autoplay || x.id === activeTrackId)
+    .map((x) => ({ id: x.id, duration: x.metadata.duration }));
 
 export const usePlaylistSequenceInput = () => {
   const pluginApi = usePluginAPI();
@@ -22,11 +33,11 @@ export const usePlaylistSequenceInput = () => {
     pluginApi.renderer.useData((x) => x.crossfadeSeconds) ?? 0;
   const fadingOutTrack =
     pluginApi.renderer.useData((x) => x.fadingOutTrack) ?? null;
+  const autoplay = pluginApi.renderer.useData((x) => x.autoplay) ?? true;
 
   const items: SequenceItem[] = useMemo(
-    () =>
-      (tracks ?? []).map((x) => ({ id: x.id, duration: x.metadata.duration })),
-    [tracks],
+    () => toSequenceItems(tracks ?? [], activeTrackId ?? null, autoplay),
+    [tracks, activeTrackId, autoplay],
   );
 
   const anchor: SequenceAnchor = useMemo(
@@ -54,11 +65,12 @@ export const usePlaylistSequenceInput = () => {
     anchor,
     repeatMode,
     crossfadeSeconds,
+    autoplay,
   };
 };
 
 export const usePlaylistPosition = () => {
-  const { tracks, items, anchor, repeatMode, crossfadeSeconds } =
+  const { tracks, items, anchor, repeatMode, crossfadeSeconds, autoplay } =
     usePlaylistSequenceInput();
   const resolved = useResolvedSequence(items, anchor, {
     repeat: repeatMode,
@@ -81,5 +93,6 @@ export const usePlaylistPosition = () => {
     upcomingTrack: findTrack(resolved.upcoming?.itemId),
     repeatMode,
     crossfadeSeconds,
+    autoplay,
   };
 };

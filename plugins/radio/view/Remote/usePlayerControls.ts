@@ -10,6 +10,7 @@ import { useMemo } from "react";
 
 import { RepeatMode, Track } from "../../src/types";
 import { usePluginAPI } from "../pluginApi";
+import { toSequenceItems } from "../usePlaylistPosition";
 
 /** Going back this far into a track restarts it rather than skipping back */
 const RESTART_THRESHOLD_SECONDS = 3;
@@ -26,7 +27,11 @@ export const usePlayerControls = () => {
     const resolveNow = (now: number): ResolvedSequence => {
       const state = mutableRendererData.trackState;
       return resolveSequence(
-        getTracks().map((x) => ({ id: x.id, duration: x.metadata.duration })),
+        toSequenceItems(
+          getTracks(),
+          mutableRendererData.activeTrackId ?? null,
+          mutableRendererData.autoplay ?? true,
+        ),
         {
           itemId: mutableRendererData.activeTrackId ?? null,
           uid: state.uid,
@@ -95,10 +100,13 @@ export const usePlayerControls = () => {
       const resolved = resolveNow(Date.now());
       if (!resolved.itemId) return;
 
-      // A finished playlist starts again from the top
+      // A finished playlist starts again from the top, a lone track from its start
       if (resolved.isEnded) {
-        const firstTrack = getTracks()[0];
-        if (firstTrack) startTrack(firstTrack.id);
+        const trackId =
+          (mutableRendererData.autoplay ?? true)
+            ? getTracks()[0]?.id
+            : resolved.itemId;
+        if (trackId) startTrack(trackId);
         return;
       }
 
@@ -150,11 +158,24 @@ export const usePlayerControls = () => {
     const setRepeatMode = (repeatMode: RepeatMode) => {
       rebase();
       mutableRendererData.repeatMode = repeatMode;
+      if (repeatMode === "all") mutableRendererData.autoplay = true;
+    };
+
+    const setAutoplay = (enabled: boolean) => {
+      rebase();
+      mutableRendererData.autoplay = enabled;
+      if (!enabled) {
+        if (mutableRendererData.repeatMode === "all") {
+          mutableRendererData.repeatMode = "off";
+        }
+        mutableRendererData.crossfadeSeconds = 0;
+      }
     };
 
     const setCrossfade = (seconds: number) => {
       rebase();
       mutableRendererData.crossfadeSeconds = seconds;
+      if (seconds > 0) mutableRendererData.autoplay = true;
     };
 
     const addTracks = (tracks: Track[]) => {
@@ -220,6 +241,7 @@ export const usePlayerControls = () => {
       updateSeeking,
       endSeeking,
       setRepeatMode,
+      setAutoplay,
       setCrossfade,
       addTracks,
       removeTrack,

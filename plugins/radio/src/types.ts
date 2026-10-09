@@ -47,6 +47,7 @@ export type PluginRendererData = PluginRendererState & {
   activeTrackId: string | null;
   trackState: VideoPlaybackState;
   repeatMode: RepeatMode;
+  autoplay?: boolean;
   /** 0 is off */
   crossfadeSeconds: number;
   /** The anchor's `outgoing`, see ./sequence */
