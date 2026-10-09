@@ -50,4 +50,5 @@ export type VideoPlaybackState = {
   seek: number;
   startedAt: number;
   onFinishBehaviour: "pause" | "loop";
+  playbackRate?: number;
 };

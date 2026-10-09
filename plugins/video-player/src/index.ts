@@ -125,10 +125,12 @@ const onPluginDataLoaded: RegisterOnPluginDataLoaded<
           // Repeating one loops every video, so new ones join in
           const onFinishBehaviour =
             firstState?.get("onFinishBehaviour") ?? "pause";
+          const playbackRate = firstState?.get("playbackRate") ?? 1;
 
           const newState = createVideoPlaybackState({
             volume: currentVolume,
             onFinishBehaviour,
+            playbackRate,
           });
 
           const stateMap = new Y.Map() as TypedMap<VideoPlaybackState>;
@@ -138,6 +140,7 @@ const onPluginDataLoaded: RegisterOnPluginDataLoaded<
           stateMap.set("seek", newState.seek);
           stateMap.set("startedAt", newState.startedAt);
           stateMap.set("onFinishBehaviour", newState.onFinishBehaviour);
+          stateMap.set("playbackRate", playbackRate);
 
           videoStatesMap.set(video.id, stateMap);
         }

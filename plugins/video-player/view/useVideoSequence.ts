@@ -49,14 +49,18 @@ const getSequenceInput = (
 
   const items: SequenceItem[] =
     rendererData.autoplay && state
-      ? videos.map((x) => ({
-          id: x.id,
-          // A looping video plays until someone acts, so it never moves on
-          duration:
-            rendererData.videoStates[x.id]?.onFinishBehaviour === "loop"
-              ? undefined
-              : x.metadata.duration,
-        }))
+      ? videos.map((x) => {
+          const state = rendererData.videoStates[x.id];
+          const duration = x.metadata.duration;
+          return {
+            id: x.id,
+            duration:
+              state?.onFinishBehaviour === "loop" || duration === undefined
+                ? undefined
+                : // The sequence runs on the clock, so a faster video is shorter
+                  duration / (state?.playbackRate ?? 1),
+          };
+        })
       : [];
 
   const anchor: SequenceAnchor = {

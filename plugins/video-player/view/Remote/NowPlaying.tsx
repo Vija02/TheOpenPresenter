@@ -16,6 +16,7 @@ import { MdRepeat, MdRepeatOne } from "react-icons/md";
 import { TbPlayerTrackNext } from "react-icons/tb";
 import { Scrubber } from "react-scrubber";
 
+import { SpeedButton } from "./SpeedButton";
 import { formatDuration } from "./formatDuration";
 import { VideoPlayerControls } from "./useVideoPlayerControls";
 
@@ -147,6 +148,10 @@ export const NowPlaying = ({
           >
             <TbPlayerTrackNext />
           </Button>
+          <SpeedButton
+            playbackRate={playbackState.playbackRate ?? 1}
+            controls={controls}
+          />
         </div>
       </div>
     </div>
