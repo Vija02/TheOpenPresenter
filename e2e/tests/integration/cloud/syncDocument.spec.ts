@@ -49,8 +49,8 @@ test.describe("Cloud Document Sync", () => {
 
     await expect(
       originalProjectPage
-        .getByText("Shout to the Lord all the earth let us sing", {
-          exact: true,
+        .locator(".lay--text-content", {
+          hasText: "Shout to the Lord all the earth let us sing",
         })
         .first(),
     ).toBeVisible();

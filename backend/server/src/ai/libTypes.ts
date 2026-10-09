@@ -106,7 +106,7 @@ export const resolveTypesFile = (
 /** A declaration file plus every barrel it re-exports, in order. */
 export const collectDeclarations = (
   entryFile: string,
-  maxFiles = 60,
+  maxFiles = 100,
 ): { file: string; text: string }[] => {
   const seen = new Set<string>();
   const queue = [entryFile];
