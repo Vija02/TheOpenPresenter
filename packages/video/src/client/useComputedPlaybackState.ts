@@ -22,7 +22,9 @@ export const computePlaybackState = (
     };
   }
 
-  const elapsedSeconds = (currentTime - playbackState.startedAt) / 1000;
+  const elapsedSeconds =
+    ((currentTime - playbackState.startedAt) / 1000) *
+    (playbackState.playbackRate ?? 1);
   const startedAtSeconds = playbackState.seek * videoDuration;
   const totalElapsedSeconds = elapsedSeconds + startedAtSeconds;
 

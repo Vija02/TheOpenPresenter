@@ -139,6 +139,7 @@ export const VideoPlayer = ({
         width="100%"
         muted={muted || !canPlay}
         volume={volume}
+        playbackRate={playbackState.playbackRate ?? 1}
         playing={isPlaying}
         loop={forceLoop}
         preload={preload}

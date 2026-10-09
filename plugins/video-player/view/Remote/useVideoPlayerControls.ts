@@ -156,6 +156,20 @@ export const useVideoPlayerControls = () => {
       }
     };
 
+    const setPlaybackRate = (playbackRate: number) => {
+      rebase();
+      for (const [videoId, state] of Object.entries(
+        mutableRendererData.videoStates,
+      )) {
+        if ((state.playbackRate ?? 1) === playbackRate) continue;
+        if (state.isPlaying) {
+          state.seek = computeState(videoId)?.currentSeek ?? state.seek;
+          state.startedAt = Date.now();
+        }
+        state.playbackRate = playbackRate;
+      }
+    };
+
     const setAutoplay = (enabled: boolean) => {
       rebase();
       mutableRendererData.autoplay = enabled;
@@ -200,6 +214,7 @@ export const useVideoPlayerControls = () => {
       updateSeeking,
       endSeeking,
       setRepeatMode,
+      setPlaybackRate,
       setAutoplay,
       addVideos,
       removeVideo,
