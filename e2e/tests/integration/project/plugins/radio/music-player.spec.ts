@@ -408,3 +408,102 @@ test.describe.serial("Music Player Plugin: Playlist", () => {
     ).toBeVisible();
   });
 });
+
+// A public-link viewer (the logged-out demo lands on one) has no session. They
+// can still search YouTube and add tracks by link.
+test.describe("Music Player Plugin: public access", () => {
+  test.beforeEach(async ({ e2eCommand }) => {
+    await Promise.all([
+      e2eCommand.serverCommand("clearTestUsers"),
+      e2eCommand.serverCommand("clearTestOrganizations"),
+    ]);
+
+    await e2eCommand.loginWithScenes({
+      orgs: [
+        {
+          name: "TestOrg",
+          slug: "testorg",
+          projects: [
+            {
+              name: "TestProject",
+              slug: "testproject",
+              isPublic: true,
+              scenes: [
+                {
+                  pluginName: "radio",
+                  name: "Music Player",
+                  activate: true,
+                  pluginData: { url: "", tracks: [] },
+                  rendererPluginData: {
+                    url: null,
+                    isPlaying: false,
+                    volume: 1,
+                    activeTrackId: null,
+                    trackState: {
+                      uid: "initial",
+                      isPlaying: false,
+                      volume: 1,
+                      muted: false,
+                      seek: 0,
+                      startedAt: 0,
+                      onFinishBehaviour: "pause",
+                    },
+                    repeatMode: "off",
+                    crossfadeSeconds: 0,
+                    fadingOutTrack: null,
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+  });
+
+  test("a logged-out viewer can search YouTube and add a track", async ({
+    browser,
+  }) => {
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    const musicPlayerPlugin = new MusicPlayerPlugin(page);
+    try {
+      await stubYoutube(context, [first, second]);
+      await page.goto("/app/testorg/testproject");
+      await expect(page.getByText("No tracks yet.")).toBeVisible();
+
+      await musicPlayerPlugin.submit("worship");
+      const dialog = page.getByRole("dialog");
+      await dialog.getByRole("button", { name: /Second Song/ }).click();
+      await dialog.getByRole("button", { name: "Done (1 added)" }).click();
+
+      await expect(musicPlayerPlugin.tracks).toHaveCount(1);
+      await expect(musicPlayerPlugin.tracks.nth(0)).toContainText(
+        "Second Song",
+      );
+    } finally {
+      await context.close();
+    }
+  });
+
+  // The UI test stubs YouTube in the browser, so this checks the server
+  // itself lets a logged-out call through. A bad link fails before YouTube is
+  // ever contacted, so the spec doesn't depend on it.
+  test("the YouTube lookups don't require a login", async ({ browser }) => {
+    const context = await browser.newContext();
+    try {
+      const res = await context.request.post(
+        "/trpc/musicPlayer.youtubeMetadata",
+        {
+          headers: { "x-top-csrf-protection": "1" },
+          data: { url: "not a youtube link" },
+        },
+      );
+      const body = await res.json();
+      expect(body.error.data.code).not.toBe("UNAUTHORIZED");
+      expect(body.error.message).toBe("Invalid YouTube URL");
+    } finally {
+      await context.close();
+    }
+  });
+});

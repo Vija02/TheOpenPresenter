@@ -14,13 +14,12 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { MediaPickerResult } from "@repo/base-plugin";
 import { Button, Input, cn, useDisclosure } from "@repo/ui";
 import getYouTubeID from "get-youtube-id";
 import { useState } from "react";
 import { FaPause, FaPlay } from "react-icons/fa6";
 import { IoMdClose } from "react-icons/io";
-import { VscGripper, VscLibrary } from "react-icons/vsc";
+import { VscGripper } from "react-icons/vsc";
 import { typeidUnboxed } from "typeid-js";
 
 import { Track } from "../../src/types";
@@ -56,25 +55,6 @@ const createYoutubeTrack = (result: YoutubeSearchResult): Track => ({
     }),
   ),
 });
-
-const createAudioTrack = (result: MediaPickerResult): Track | null => {
-  const audio = result.internalAudio;
-  if (!audio) return null;
-  return {
-    id: typeidUnboxed("track"),
-    type: "audio",
-    mediaName: result.mediaName,
-    playbackMediaName: audio.playbackMediaName,
-    coverMediaName: audio.coverMediaName,
-    metadata: JSON.parse(
-      JSON.stringify({
-        title: audio.metadata.title,
-        author: audio.metadata.artist,
-        duration: audio.metadata.duration,
-      }),
-    ),
-  };
-};
 
 export const PlaylistTab = ({ controls }: { controls: PlayerControls }) => {
   const pluginApi = usePluginAPI();
@@ -163,17 +143,6 @@ export const PlaylistTab = ({ controls }: { controls: PlayerControls }) => {
     }
   };
 
-  const addFromLibrary = async () => {
-    const results = await pluginApi.mediaPicker.show({
-      type: "audio",
-      title: "Add music from your library",
-    });
-    const audioTracks = (results ?? [])
-      .map(createAudioTrack)
-      .filter((x): x is Track => !!x);
-    if (audioTracks.length > 0) controls.addTracks(audioTracks);
-  };
-
   const onSubmit = async () => {
     const value = input.trim();
     if (!value) return;
@@ -212,17 +181,13 @@ export const PlaylistTab = ({ controls }: { controls: PlayerControls }) => {
       >
         <div className="stack-row">
           <Input
-            className="flex-1"
+            className="flex-1 min-w-0"
             placeholder="Search YouTube or paste a link..."
             value={input}
             onChange={(e) => setInput(e.target.value)}
           />
           <Button type="submit" variant="success" disabled={isAdding}>
             {isAdding ? "Adding..." : "Go"}
-          </Button>
-          <Button type="button" variant="outline" onClick={addFromLibrary}>
-            <VscLibrary />
-            Media library
           </Button>
         </div>
         {error && <div className="text-fill-destructive mt-1">{error}</div>}
@@ -324,7 +289,7 @@ const TrackRow = ({
       style={{ transform: CSS.Translate.toString(transform), transition }}
       data-testid="playlist-track"
       className={cn(
-        "stack-row p-1 rounded-sm border",
+        "stack-row gap-2 p-1 rounded-sm border @md:gap-2.5",
         // Opaque so a dragged row covers the ones it passes
         isActive
           ? "bg-gray-100 border-fill-default"
@@ -352,7 +317,8 @@ const TrackRow = ({
       >
         {isPlaying ? <FaPause /> : <FaPlay />}
       </Button>
-      <TrackThumbnail track={track} className="w-16" />
+      {/* Narrow screens need the room for the title */}
+      <TrackThumbnail track={track} className="hidden w-16 @sm:block" />
       <div className="flex-1 min-w-0">
         <p className="truncate font-medium">{title}</p>
         <p className="truncate text-xs text-secondary">

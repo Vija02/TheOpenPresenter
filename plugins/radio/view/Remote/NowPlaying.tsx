@@ -48,7 +48,7 @@ export const NowPlaying = ({ controls }: { controls: PlayerControls }) => {
       className="stack-col items-stretch gap-2 p-2 border border-black/20 rounded-sm shadow-sm"
     >
       <div className="stack-row items-center">
-        <TrackThumbnail track={track} className="w-24" />
+        <TrackThumbnail track={track} className="w-20 @md:w-24" />
         <div className="flex-1 min-w-0">
           <p className="text-xs uppercase tracking-wide text-secondary">
             Now playing
@@ -62,59 +62,65 @@ export const NowPlaying = ({ controls }: { controls: PlayerControls }) => {
         </div>
       </div>
 
-      <div className="stack-row">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={controls.previous}
-          aria-label="Previous"
-        >
-          <FaBackwardStep />
-        </Button>
-        <Button
-          variant={isPlaying ? "default" : "outline"}
-          onClick={() => controls.toggleTrack(track.id)}
-          aria-label={isPlaying ? "Pause" : "Play"}
-        >
-          {isPlaying ? <FaPause /> : <FaPlay />}
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={controls.next}
-          aria-label="Next"
-        >
-          <FaForwardStep />
-        </Button>
-        <span className="text-xs tabular-nums text-secondary">
-          {formatDuration(currentTimeSeconds)}
-        </span>
-        <div className="flex-1 flex items-center">
-          <Scrubber
-            min={0}
-            max={0.999999}
-            value={currentSeek}
-            onScrubStart={controls.startSeeking}
-            onScrubChange={controls.updateSeeking}
-            onScrubEnd={controls.endSeeking}
+      <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 @lg:flex-nowrap">
+        <div className="stack-row order-2 @lg:order-none">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={controls.previous}
+            aria-label="Previous"
+          >
+            <FaBackwardStep />
+          </Button>
+          <Button
+            variant={isPlaying ? "default" : "outline"}
+            onClick={() => controls.toggleTrack(track.id)}
+            aria-label={isPlaying ? "Pause" : "Play"}
+          >
+            {isPlaying ? <FaPause /> : <FaPlay />}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={controls.next}
+            aria-label="Next"
+          >
+            <FaForwardStep />
+          </Button>
+        </div>
+        <div className="stack-row basis-full order-1 @lg:order-none @lg:basis-auto @lg:flex-1 min-w-0">
+          <span className="text-xs tabular-nums text-secondary">
+            {formatDuration(currentTimeSeconds)}
+          </span>
+          <div className="flex-1 flex items-center">
+            <Scrubber
+              min={0}
+              max={0.999999}
+              value={currentSeek}
+              onScrubStart={controls.startSeeking}
+              onScrubChange={controls.updateSeeking}
+              onScrubEnd={controls.endSeeking}
+            />
+          </div>
+          <span className="text-xs tabular-nums text-secondary">
+            {duration ? formatDuration(duration) : "--:--"}
+          </span>
+        </div>
+        <div className="stack-row order-3 ml-auto @lg:order-none @lg:ml-0">
+          <Button
+            variant={repeatMode === "off" ? "ghost" : "default"}
+            size="sm"
+            onClick={() => controls.setRepeatMode(nextRepeatMode[repeatMode])}
+            aria-label={repeatModeLabel[repeatMode]}
+            title={repeatModeLabel[repeatMode]}
+          >
+            {repeatMode === "one" ? <MdRepeatOne /> : <MdRepeat />}
+          </Button>
+          <CrossfadeButton
+            crossfadeSeconds={crossfadeSeconds}
+            controls={controls}
           />
         </div>
-        <span className="text-xs tabular-nums text-secondary">
-          {duration ? formatDuration(duration) : "--:--"}
-        </span>
-        <Button
-          variant={repeatMode === "off" ? "ghost" : "default"}
-          size="sm"
-          onClick={() => controls.setRepeatMode(nextRepeatMode[repeatMode])}
-          aria-label={repeatModeLabel[repeatMode]}
-          title={repeatModeLabel[repeatMode]}
-        >
-          {repeatMode === "one" ? <MdRepeatOne /> : <MdRepeat />}
-        </Button>
-        <CrossfadeButton
-          crossfadeSeconds={crossfadeSeconds}
-          controls={controls}
-        />
       </div>
     </div>
   );

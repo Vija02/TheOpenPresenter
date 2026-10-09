@@ -227,7 +227,7 @@ const getInnertube = () => {
 const getAppRouter = (t: TRPCObject) => {
   return t.router({
     musicPlayer: {
-      search: t.procedure
+      search: t.publicProcedure
         .input(
           z.object({
             query: z.string(),
@@ -251,7 +251,7 @@ const getAppRouter = (t: TRPCObject) => {
           };
         }),
 
-      youtubeMetadata: t.procedure
+      youtubeMetadata: t.publicProcedure
         .input(
           z.object({
             url: z.string(),
@@ -275,7 +275,7 @@ const getAppRouter = (t: TRPCObject) => {
           };
         }),
 
-      youtubePlaylist: t.procedure
+      youtubePlaylist: t.publicProcedure
         .input(
           z.object({
             playlistId: z.string().min(1),
