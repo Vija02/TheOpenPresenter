@@ -352,6 +352,46 @@ export const applyLegacyStyle = (
   return JSON.parse(JSON.stringify(doc)) as LayoutDoc;
 };
 
+/**
+ * The old full song view drew its text from the top left, flowing into
+ * columns, whatever the style's alignment. Its look and songs keep that
+ */
+export const asFullSongTemplate = (template: LayoutDoc): LayoutDoc => ({
+  ...template,
+  elements: template.elements.map((element) =>
+    element.type === "text" && isLyricsElement(element)
+      ? {
+          ...element,
+          fit: "columns",
+          style: { ...element.style, align: "left", valign: "top" },
+        }
+      : element,
+  ),
+});
+
+/** The template a look shows, from the main template a style became */
+export const lookTemplateFor = (key: string, template: LayoutDoc) =>
+  key === FULL_SONG_LOOK ? asFullSongTemplate(template) : template;
+
+/**
+ * For data converted before `asFullSongTemplate`: a full song template still
+ * as converted, its lyrics centred and never flowed into columns. The full
+ * song preset sets `columns`, and the editor keeps the stored fit, so one
+ * started from the preset is left alone. Null when there's nothing to fix
+ */
+export const repairFullSongTemplate = (
+  template: LayoutDoc,
+): LayoutDoc | null =>
+  template.elements.some(
+    (element) =>
+      element.type === "text" &&
+      isLyricsElement(element) &&
+      element.fit !== "columns" &&
+      element.style.align === "center",
+  )
+    ? asFullSongTemplate(template)
+    : null;
+
 // --- Old style -> background -------------------------------------------------
 
 /** As the plugin's: an explicit none, where null would follow the look */
@@ -471,10 +511,16 @@ const stable = (value: unknown): unknown =>
 const same = (a: unknown, b: unknown) =>
   JSON.stringify(stable(a ?? null)) === JSON.stringify(stable(b ?? null));
 
-const songLooks = (song: LegacySong, own: SongLook) =>
-  own.template === null && own.background === null
-    ? {}
-    : { [lookKeyFor(song)]: own };
+const songLooks = (song: LegacySong, own: SongLook) => {
+  if (own.template === null && own.background === null) return {};
+  const key = lookKeyFor(song);
+  return {
+    [key]: {
+      ...own,
+      template: own.template && lookTemplateFor(key, own.template),
+    },
+  };
+};
 
 /**
  * Each unconverted song's looks, by index into `songs`. `organizationLook` is
