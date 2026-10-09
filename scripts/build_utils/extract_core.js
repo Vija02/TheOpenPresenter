@@ -12,6 +12,7 @@ const files = [
   "./backend/backend-shared/dist/index.js",
   "./packages/base-plugin/dist/index.js",
   "./packages/base-plugin/dist/server.js",
+  "./packages/video/dist/index.js",
 ];
 
 (async () => {
