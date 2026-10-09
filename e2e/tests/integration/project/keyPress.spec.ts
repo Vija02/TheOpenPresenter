@@ -28,8 +28,8 @@ test.describe("Key Press Navigation", () => {
 
     await expect(
       presentedPage
-        .getByText("Shout to the Lord all the earth let us sing", {
-          exact: true,
+        .locator(".lay--text-content", {
+          hasText: "Shout to the Lord all the earth let us sing",
         })
         .first(),
     ).toBeVisible();
@@ -40,8 +40,8 @@ test.describe("Key Press Navigation", () => {
     await presentedPage.keyboard.press("ArrowLeft");
     await expect(
       presentedPage
-        .getByText("My Jesus, My Savior, Lord there is none like you", {
-          exact: true,
+        .locator(".lay--text-content", {
+          hasText: "My Jesus, My Savior, Lord there is none like you",
         })
         .first(),
     ).toBeVisible();
@@ -53,8 +53,8 @@ test.describe("Key Press Navigation", () => {
     await presentedPage.keyboard.press("ArrowRight");
     await expect(
       presentedPage
-        .getByText("I lay my life down at Your feet", {
-          exact: true,
+        .locator(".lay--text-content", {
+          hasText: "I lay my life down at Your feet",
         })
         .first(),
     ).toBeVisible();
@@ -64,9 +64,7 @@ test.describe("Key Press Navigation", () => {
     await page.keyboard.press("ArrowRight");
     await expect(
       presentedPage
-        .getByText("One way, Jesus", {
-          exact: true,
-        })
+        .locator(".lay--text-content", { hasText: "One way, Jesus" })
         .first(),
     ).toBeVisible();
   });

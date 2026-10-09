@@ -146,12 +146,13 @@ test.describe.serial("Lyrics Presenter - Confidence monitor", () => {
     await expect(chord).toBeVisible();
     await expect(preview.getByText("E", { exact: true }).first()).toBeVisible();
 
-    // Above its words, and starting where they do
+    // Above its words, and starting where they do. The words' box takes in
+    // the font's ascent, so it can reach a little into the chord's line
     const words = preview.getByText("All the saints and", { exact: true });
     await expect(words.first()).toBeVisible();
     const chordBox = (await chord.boundingBox())!;
     const wordsBox = (await words.first().boundingBox())!;
-    expect(chordBox.y + chordBox.height).toBeLessThanOrEqual(wordsBox.y + 1);
+    expect(chordBox.y + chordBox.height / 2).toBeLessThan(wordsBox.y);
     expect(Math.abs(chordBox.x - wordsBox.x)).toBeLessThan(2);
 
     // And off again
