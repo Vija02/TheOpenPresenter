@@ -1,4 +1,9 @@
-import { GroupedData, groupData, removeChords } from "./processLyrics";
+import {
+  GroupedData,
+  groupData,
+  removeChordLines,
+  removeChords,
+} from "./processLyrics";
 import { applySectionOrder } from "./sectionOrder";
 
 export const cleanWhiteSpace = (content: string[]) => {
@@ -31,17 +36,27 @@ export const suppressStartAndEndEmptyLines = (groupedData: GroupedData) => {
   }));
 };
 
+export type ProcessSongOptions = {
+  /** Keeps inline chords in the lines */
+  chords?: boolean;
+};
+
 export const processSong = (
   content: string,
   sectionOrder?: string[] | null,
+  options?: ProcessSongOptions,
 ) => {
-  const cleanedData = processSongWithoutArrangement(content);
+  const cleanedData = processSongWithoutArrangement(content, options);
   return applySectionOrder(cleanedData, sectionOrder);
 };
 
-export const processSongWithoutArrangement = (content: string) => {
+export const processSongWithoutArrangement = (
+  content: string,
+  { chords = false }: ProcessSongOptions = {},
+) => {
+  const lines = content.split(/<br>|\n/gm) ?? [];
   const cleanData = cleanWhiteSpace(
-    removeChords(content.split(/<br>|\n/gm) ?? []),
+    chords ? removeChordLines(lines) : removeChords(lines),
   );
 
   const groupedData = groupData(cleanData);

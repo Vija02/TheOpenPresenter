@@ -1,7 +1,19 @@
-import { type LayoutDoc, type LayoutElement } from "@repo/layout";
+import {
+  type LayoutDoc,
+  type LayoutElement,
+  type SpanRoleStyle,
+} from "@repo/layout";
 
 import type { Background } from "../backgrounds";
-import { BACKGROUND_ELEMENT_ID, LYRICS_TOKEN } from "./ids";
+import {
+  BACKGROUND_ELEMENT_ID,
+  CHORD_ROLE,
+  HEADING_ROLE,
+  LIVE_CHORD_ROLE,
+  LIVE_HEADING_ROLE,
+  LIVE_ROLE,
+  LYRICS_TOKEN,
+} from "./ids";
 
 const isBackgroundElement = (element: LayoutElement) =>
   element.id === BACKGROUND_ELEMENT_ID;
@@ -24,6 +36,34 @@ export const fullSongLayout = (doc: LayoutDoc): LayoutDoc => ({
         ? { ...element, fit: "columns" }
         : element,
   ),
+});
+
+/** How the live slide stands out, unless a template styles it */
+const LIVE_COLOR = "#FACC15";
+
+/**
+ * Gives the lyrics styles for the live slide, where the template has none:
+ * its usual heading and chord styles, in the live colour
+ */
+export const withLiveRole = (doc: LayoutDoc): LayoutDoc => ({
+  ...doc,
+  elements: doc.elements.map((element): LayoutElement => {
+    if (element.type !== "text" || !showsLyrics(element)) return element;
+    const roles = element.spanRoles ?? {};
+    const live = (base: string): SpanRoleStyle => ({
+      ...roles[base],
+      color: LIVE_COLOR,
+    });
+    return {
+      ...element,
+      spanRoles: {
+        [LIVE_ROLE]: { color: LIVE_COLOR },
+        [LIVE_CHORD_ROLE]: live(CHORD_ROLE),
+        [LIVE_HEADING_ROLE]: live(HEADING_ROLE),
+        ...roles,
+      },
+    };
+  }),
 });
 
 /** Where the template's lyrics go, for applying old style fields */

@@ -16,6 +16,12 @@ import {
   textStyleToCss,
 } from "../css";
 import {
+  EMPTY_ANNOTATED_TEXT,
+  annotatedStyle,
+  annotatedTextStyle,
+  annotationStyle,
+} from "../text/annotation";
+import {
   blockStartStyle,
   columnRowStyle,
   fitColumns,
@@ -48,14 +54,31 @@ const renderSpans = (
   spans: Span[],
   roles: Record<string, SpanRoleStyle> | null,
 ) =>
-  spans.map((s, i) => (
-    <span
-      key={i}
-      style={s.role !== null ? spanStyle(roles?.[s.role]) : undefined}
-    >
-      {s.text}
-    </span>
-  ));
+  spans.map((s, i) => {
+    const text = (
+      <span
+        key={s.above ? undefined : i}
+        style={s.role !== null ? spanStyle(roles?.[s.role]) : undefined}
+      >
+        {s.above ? s.text || EMPTY_ANNOTATED_TEXT : s.text}
+      </span>
+    );
+    if (!s.above) return text;
+
+    // Mirrors `spansToHtml`, so the fit measures what is drawn
+    return (
+      <span key={i} style={annotatedStyle}>
+        <span
+          style={annotationStyle(
+            s.above.role !== null ? roles?.[s.above.role] : undefined,
+          )}
+        >
+          {s.above.text}
+        </span>
+        <span style={annotatedTextStyle}>{text}</span>
+      </span>
+    );
+  });
 
 export type TextElementViewProps = {
   element: ResolvedTextElement;

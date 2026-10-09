@@ -8,7 +8,18 @@ export type Span = {
   text: string;
   /** Key into the element's `spanRoles`. `null` uses the element's base style. */
   role: string | null;
+  /** Shown over the start of the text, like a chord over its syllable. */
+  above?: SpanAnnotation;
 };
+
+export type SpanAnnotation = {
+  text: string;
+  /** Key into `spanRoles`. Without a `fontScale`, it is `ANNOTATION_SCALE` */
+  role: string | null;
+};
+
+/** An annotation's size, of its span's, unless its role sets one */
+export const ANNOTATION_SCALE = 0.8;
 
 /**
  * `undefined` is accepted on the way in, but never persisted. `InternalMedia`
@@ -37,15 +48,18 @@ export const spansToPlainText = (spans: Span[]): string =>
 
 /** Drives `hideWhenEmpty`. Whitespace only counts as empty. */
 export const isSpansEmpty = (spans: Span[]): boolean =>
-  spans.every((s) => s.text.trim() === "");
+  spans.every((s) => s.text.trim() === "" && !s.above);
 
-/** Drop empty spans and merge adjacent spans sharing a role. */
+/**
+ * Drop empty spans and merge adjacent spans sharing a role. An annotated span
+ * is kept whole, as the annotation belongs to its start
+ */
 export const compactSpans = (spans: Span[]): Span[] => {
   const out: Span[] = [];
   for (const s of spans) {
-    if (s.text === "") continue;
+    if (s.text === "" && !s.above) continue;
     const prev = out[out.length - 1];
-    if (prev && prev.role === s.role) {
+    if (prev && !prev.above && !s.above && prev.role === s.role) {
       out[out.length - 1] = { text: prev.text + s.text, role: prev.role };
     } else {
       out.push(s);

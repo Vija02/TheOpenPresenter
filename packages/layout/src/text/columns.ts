@@ -14,11 +14,12 @@ export type TextLine = Span[];
 export type TextBlock = TextLine[];
 
 const isBlankLine = (line: TextLine): boolean =>
-  line.every((s) => s.text.trim() === "");
+  line.every((s) => s.text.trim() === "" && !s.above);
 
 /**
  * Lines split on `\n`, blocks on one or more blank lines. A span crossing a
- * newline is cut in two with its role kept on both halves.
+ * newline is cut in two with its role kept on both halves, and its annotation
+ * on the first.
  */
 export const spansToBlocks = (spans: Span[]): TextBlock[] => {
   const lines: TextLine[] = [[]];
@@ -28,7 +29,12 @@ export const spansToBlocks = (spans: Span[]): TextBlock[] => {
       .split("\n")
       .forEach((part, i) => {
         if (i > 0) lines.push([]);
-        if (part !== "") lines[lines.length - 1]!.push({ ...s, text: part });
+        const { above, ...rest } = s;
+        const piece: Span =
+          i === 0 && above
+            ? { ...rest, text: part, above }
+            : { ...rest, text: part };
+        if (part !== "" || piece.above) lines[lines.length - 1]!.push(piece);
       });
   }
 

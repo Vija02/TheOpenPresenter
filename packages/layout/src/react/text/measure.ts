@@ -2,6 +2,13 @@ import { hash } from "ohash";
 
 import { SpanRoleStyle, TextTransform } from "../../schema/style";
 import { Span } from "../../template/spans";
+import {
+  EMPTY_ANNOTATED_TEXT,
+  annotatedStyle,
+  annotatedTextStyle,
+  annotationStyle,
+  toCssText,
+} from "./annotation";
 import { getFontGeneration } from "./fontStatus";
 
 export type MeasureSpec = {
@@ -38,6 +45,20 @@ export const spansToHtml = (
   spans
     .map((s) => {
       const role = s.role !== null ? roles?.[s.role] : undefined;
+      if (s.above) {
+        const aboveRole =
+          s.above.role !== null ? roles?.[s.above.role] : undefined;
+        const text = spansToHtml(
+          [{ text: s.text || EMPTY_ANNOTATED_TEXT, role: s.role }],
+          roles,
+        );
+        return (
+          `<span style="${toCssText(annotatedStyle)}">` +
+          `<span style="${toCssText(annotationStyle(aboveRole))}">${escapeHtml(s.above.text)}</span>` +
+          `<span style="${toCssText(annotatedTextStyle)}">${text}</span>` +
+          `</span>`
+        );
+      }
       const text = escapeHtml(s.text);
       if (!role) return text;
 
