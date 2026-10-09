@@ -45,6 +45,10 @@ export const ungroupData = (groupedData: GroupedData): string[] => {
   return data.split("\n");
 };
 
+/** OpenSong chord lines, which ChordPro replaced. Never shown */
+export const removeChordLines = (content: string[]) =>
+  content.filter((line) => !line.startsWith("."));
+
 export const removeChords = (content: string[]) => {
   const out: string[] = [];
 

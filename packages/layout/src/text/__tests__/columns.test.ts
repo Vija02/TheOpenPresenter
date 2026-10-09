@@ -72,6 +72,18 @@ describe("spansToBlocks", () => {
     expect(spansToBlocks([])).toEqual([]);
     expect(spansToBlocks([span("\n \n")])).toEqual([]);
   });
+
+  it("keeps an annotation on the first half only, even with no text", () => {
+    const above = { text: "G", role: "chord" };
+    expect(
+      spansToBlocks([
+        { ...span("a\nb"), above },
+        { ...span(""), above },
+      ]),
+    ).toEqual([
+      [[{ ...span("a"), above }], [span("b"), { ...span(""), above }]],
+    ]);
+  });
 });
 
 describe("solveColumns", () => {
