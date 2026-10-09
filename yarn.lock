@@ -10950,6 +10950,7 @@ __metadata:
     "@repo/backend-shared": "npm:*"
     "@repo/base-plugin": "npm:*"
     "@repo/config": "npm:*"
+    "@repo/layout": "npm:*"
     "@repo/lib": "npm:*"
     "@repo/observability": "npm:*"
     "@repo/typescript-config": "npm:*"
