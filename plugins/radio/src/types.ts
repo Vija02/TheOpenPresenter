@@ -1,7 +1,10 @@
 import { PluginRendererState } from "@repo/base-plugin";
-import { VideoMetadata, VideoPlaybackState } from "@repo/video";
-
-import type { SequenceOutgoing, SequenceRepeat } from "./sequence";
+import {
+  SequenceOutgoing,
+  SequenceRepeat,
+  VideoMetadata,
+  VideoPlaybackState,
+} from "@repo/video";
 
 export type TrackMetadata = VideoMetadata & {
   author?: string;

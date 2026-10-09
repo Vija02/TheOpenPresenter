@@ -1,6 +1,5 @@
+import { SequenceFade } from "@repo/video";
 import { useEffect, useReducer } from "react";
-
-import { SequenceFade } from "../../src/sequence";
 
 const STEP_MS = 50;
 

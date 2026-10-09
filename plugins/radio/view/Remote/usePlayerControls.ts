@@ -1,5 +1,3 @@
-import { useMemo } from "react";
-
 import {
   ResolvedSequence,
   SequenceAnchor,
@@ -7,7 +5,9 @@ import {
   getPreviousItemId,
   rebaseAnchor,
   resolveSequence,
-} from "../../src/sequence";
+} from "@repo/video";
+import { useMemo } from "react";
+
 import { RepeatMode, Track } from "../../src/types";
 import { usePluginAPI } from "../pluginApi";
 
