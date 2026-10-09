@@ -267,7 +267,7 @@ const onRendererDataLoaded: RegisterOnRendererDataLoaded<PluginRendererData> = (
 const getAppRouter = (t: TRPCObject) => {
   return t.router({
     videoPlayer: {
-      search: t.procedure
+      search: t.publicProcedure
         .input(
           z.object({
             title: z.string(),
