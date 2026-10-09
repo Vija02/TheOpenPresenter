@@ -7,6 +7,7 @@ import {
   FaPlay,
 } from "react-icons/fa6";
 import { MdRepeat, MdRepeatOne } from "react-icons/md";
+import { TbPlayerTrackNext } from "react-icons/tb";
 import { Scrubber } from "react-scrubber";
 
 import { RepeatMode } from "../../src/types";
@@ -29,9 +30,18 @@ const repeatModeLabel: Record<RepeatMode, string> = {
 };
 
 export const NowPlaying = ({ controls }: { controls: PlayerControls }) => {
-  const { track, playbackState, isPlaying, repeatMode, crossfadeSeconds } =
-    usePlaylistPosition();
+  const {
+    track,
+    playbackState,
+    isPlaying,
+    repeatMode,
+    crossfadeSeconds,
+    autoplay,
+  } = usePlaylistPosition();
   const duration = track?.metadata.duration ?? 0;
+  const autoplayLabel = autoplay
+    ? "Autoplay on: plays the next track when one finishes"
+    : "Autoplay off";
 
   const { currentSeek, currentTimeSeconds } = useComputedPlaybackState(
     { ...playbackState, volume: 1 },
@@ -115,6 +125,15 @@ export const NowPlaying = ({ controls }: { controls: PlayerControls }) => {
             title={repeatModeLabel[repeatMode]}
           >
             {repeatMode === "one" ? <MdRepeatOne /> : <MdRepeat />}
+          </Button>
+          <Button
+            variant={autoplay ? "default" : "ghost"}
+            size="sm"
+            onClick={() => controls.setAutoplay(!autoplay)}
+            aria-label={autoplayLabel}
+            title={autoplayLabel}
+          >
+            <TbPlayerTrackNext />
           </Button>
           <CrossfadeButton
             crossfadeSeconds={crossfadeSeconds}

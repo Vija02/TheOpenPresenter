@@ -165,6 +165,7 @@ const onRendererDataCreated: RegisterOnRendererDataCreated<
   rendererData.set("activeTrackId", null);
   rendererData.set("trackState", createTrackStateMap() as any);
   rendererData.set("repeatMode", "off");
+  rendererData.set("autoplay", true);
   rendererData.set("crossfadeSeconds", 0);
   rendererData.set("fadingOutTrack", null);
 
