@@ -35,7 +35,7 @@ import {
 import { ErrorAlert, LoadingPart } from "@repo/ui";
 import { useQuery } from "@tanstack/react-query";
 import { cx } from "class-variance-authority";
-import React, { useCallback, useMemo, useRef, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import { useDisposable } from "use-disposable";
 import { useRoute } from "wouter";
@@ -56,7 +56,7 @@ const PluginRenderer = React.memo(
     pluginId: string;
     pluginInfo: Plugin<Record<string, any>>;
   }) => {
-    const pluginDivRef = useRef<HTMLDivElement>(null);
+    const [pluginDiv, setPluginDiv] = useState<HTMLDivElement | null>(null);
     const {
       pluginMeta,
       orgId,
@@ -220,7 +220,12 @@ const PluginRenderer = React.memo(
         return <ErrorAlert error={error} />;
       }
 
-      if (!yjsPluginSceneData || !yjsPluginRendererData || !isSuccess) {
+      if (
+        !yjsPluginSceneData ||
+        !yjsPluginRendererData ||
+        !isSuccess ||
+        !pluginDiv
+      ) {
         return <LoadingPart />;
       }
 
@@ -279,7 +284,7 @@ const PluginRenderer = React.memo(
           },
           mediaPicker,
           logger: childLogger,
-          parentContainer: pluginDivRef.current,
+          parentContainer: pluginDiv,
           surface: "remote",
           isPublicAccess,
           organizationType,
@@ -303,6 +308,7 @@ const PluginRenderer = React.memo(
       overlay,
       currentScene,
       pluginContext,
+      pluginDiv,
       pluginInfo.plugin,
       provider,
       removeError,
@@ -318,7 +324,7 @@ const PluginRenderer = React.memo(
 
     return (
       <div
-        ref={pluginDivRef}
+        ref={setPluginDiv}
         id={`pl-${resolvedPluginName}`}
         className={cx(
           !match && viewData?.config?.alwaysRender ? "content-hidden" : "",
