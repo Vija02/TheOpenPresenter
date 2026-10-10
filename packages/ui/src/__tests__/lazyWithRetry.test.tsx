@@ -45,25 +45,49 @@ describe("importWithRetry", () => {
 });
 
 describe("lazyWithRetry", () => {
-  it("shows a retry button when the view does not load, and recovers", async () => {
-    let failing = true;
-    const loader = vi.fn(() =>
-      failing
-        ? Promise.reject(loadError())
-        : Promise.resolve({ default: View }),
-    );
+  const reload = vi.fn();
+  const originalLocation = window.location;
+
+  beforeEach(() => {
+    sessionStorage.clear();
+    reload.mockClear();
+    Object.defineProperty(window, "location", {
+      configurable: true,
+      value: { ...originalLocation, reload },
+    });
+  });
+
+  afterEach(() => {
+    Object.defineProperty(window, "location", {
+      configurable: true,
+      value: originalLocation,
+    });
+  });
+
+  it("reloads the page once when the view does not load", async () => {
+    const loader = vi.fn().mockRejectedValue(loadError());
     const LazyView = lazyWithRetry(loader);
 
     render(<LazyView />);
     await act(() => vi.runAllTimersAsync());
 
+    expect(reload).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText("Unable to show this view")).toBeNull();
+  });
+
+  it("shows a reload button when the page already reloaded recently", async () => {
+    sessionStorage.setItem("lazyWithRetry:reloadedAt", String(Date.now()));
+    const loader = vi.fn().mockRejectedValue(loadError());
+    const LazyView = lazyWithRetry(loader);
+
+    render(<LazyView />);
+    await act(() => vi.runAllTimersAsync());
+
+    expect(reload).not.toHaveBeenCalled();
     expect(screen.getByText("Unable to show this view")).toBeTruthy();
     expect(window.reportError).toHaveBeenCalledTimes(1);
 
-    failing = false;
-    fireEvent.click(screen.getByText("Try again"));
-    await act(() => vi.runAllTimersAsync());
-
-    expect(screen.getByText("view loaded")).toBeTruthy();
+    fireEvent.click(screen.getByText("Reload page"));
+    expect(reload).toHaveBeenCalledTimes(1);
   });
 });

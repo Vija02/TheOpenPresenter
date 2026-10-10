@@ -37,16 +37,10 @@ import {
   usePluginData,
   usePluginMetaData,
 } from "@repo/shared";
-import { ErrorAlert, LoadingPart } from "@repo/ui";
+import { ErrorAlert, LoadingPart, lazyWithRetry } from "@repo/ui";
 import { useQuery } from "@tanstack/react-query";
 import { cx } from "class-variance-authority";
-import React, {
-  ReactNode,
-  lazy,
-  useCallback,
-  useMemo,
-  useState,
-} from "react";
+import React, { ReactNode, useCallback, useMemo, useState } from "react";
 import { useAnimatePresence } from "react-animate-presence";
 import { ErrorBoundary } from "react-error-boundary";
 import { toast } from "react-toastify";
@@ -61,7 +55,7 @@ const useRendererId = () => {
   return rendererId;
 };
 
-const Landing = lazy(() => import("./Landing"));
+const Landing = lazyWithRetry(() => import("./Landing"));
 
 export const Body = ({
   hostElementId = null,
