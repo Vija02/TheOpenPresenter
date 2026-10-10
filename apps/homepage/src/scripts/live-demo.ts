@@ -81,6 +81,17 @@ function initInstance(instance: string) {
   // via the "don't have your phone" button.
   let useInlineRemote = isMobile;
 
+  // Demo flavour (e.g. the church/lyrics setup). Any mount point can opt the
+  // whole instance in, since they all share one demo project.
+  const template = el.roots.find((r) => r.dataset.liveDemoTemplate)?.dataset
+    .liveDemoTemplate;
+  const organizationType = el.roots.find(
+    (r) => r.dataset.liveDemoOrganizationType,
+  )?.dataset.liveDemoOrganizationType;
+  const orgTypeQuery = organizationType
+    ? `?organizationType=${encodeURIComponent(organizationType)}`
+    : "";
+
   const setStatus = (text: string) => setText(el.status, text);
 
   const renderQr = async (url: string) => {
@@ -106,7 +117,7 @@ function initInstance(instance: string) {
 
   const swapInRenderer = (payload: DonePayload) => {
     if (!el.stage || !el.rendererIframe) return;
-    el.rendererIframe.src = `/render/${encodeURIComponent(payload.orgSlug)}/${encodeURIComponent(payload.projectSlug)}`;
+    el.rendererIframe.src = `/render/${encodeURIComponent(payload.orgSlug)}/${encodeURIComponent(payload.projectSlug)}${orgTypeQuery}`;
     el.stage.classList.remove("hidden");
 
     // QR has done its job — replace it with the sign-up CTA + features list.
@@ -123,7 +134,7 @@ function initInstance(instance: string) {
       .forEach((w) => w.remove());
 
     if (useInlineRemote && el.remoteWrap && el.remoteIframe) {
-      el.remoteIframe.src = `/app/${encodeURIComponent(payload.orgSlug)}/${encodeURIComponent(payload.projectSlug)}`;
+      el.remoteIframe.src = `/app/${encodeURIComponent(payload.orgSlug)}/${encodeURIComponent(payload.projectSlug)}${orgTypeQuery}`;
       el.remoteWrap.classList.remove("hidden");
     } else {
       const rendererWrap = el.rendererIframe.parentElement as HTMLElement | null;
@@ -234,10 +245,15 @@ function initInstance(instance: string) {
       try {
         const payload = JSON.parse(ev.data) as IdPayload | DonePayload;
         if ("id" in payload) {
-          const target = new URL(
+          const targetUrl = new URL(
             `/init-demo?id=${encodeURIComponent(payload.id)}`,
             window.location.origin,
-          ).toString();
+          );
+          if (template) targetUrl.searchParams.set("template", template);
+          if (organizationType) {
+            targetUrl.searchParams.set("organizationType", organizationType);
+          }
+          const target = targetUrl.toString();
 
           if (isMobile) {
             // No QR; wait for the user to press the button.

@@ -22,6 +22,11 @@ interface Props {
   size?: number;
   /** Extra classes for the QR/status row. */
   class?: string;
+  /**
+   * Seed the demo with the church setup (lyrics with sample songs, church plugins)
+   * instead of the generic slides/video one. Applies to the whole instance.
+   */
+  church?: boolean;
 }
 
 const {
@@ -34,6 +39,7 @@ const {
   compact = false,
   size = compact ? 104 : 200,
   class: className = "",
+  church = false,
 } = Astro.props;
 
 // Padding around the canvas inside its white card
@@ -51,6 +57,8 @@ const features = [
   data-live-demo-instance={instance}
   data-live-demo-role="root"
   data-live-demo-lazy={lazy ? "true" : "false"}
+  data-live-demo-template={church ? "lyrics-songs" : undefined}
+  data-live-demo-organization-type={church ? "church" : undefined}
 >
   <!-- Mobile-only CTA: opens the demo on this device (no scan). -->
   <div
