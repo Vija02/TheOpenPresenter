@@ -44,8 +44,12 @@ const RELOAD_KEY = "lazyWithRetry:reloadedAt";
 const RELOAD_COOLDOWN_MS = 60_000;
 
 // A deploy removes the old hashed chunks, so only a fresh page can load the view.
-// We reload at most once per cooldown so a real outage doesn't loop
+// We reload at most once per cooldown so a real outage doesn't loop, and never
+// offline, where a reload would replace the app with the browser's offline page
 const reloadOnce = () => {
+  if (!navigator.onLine) {
+    return false;
+  }
   try {
     const reloadedAt = Number(sessionStorage.getItem(RELOAD_KEY) ?? 0);
     if (Date.now() - reloadedAt < RELOAD_COOLDOWN_MS) {

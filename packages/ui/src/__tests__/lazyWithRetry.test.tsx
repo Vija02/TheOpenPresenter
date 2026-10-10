@@ -58,6 +58,7 @@ describe("lazyWithRetry", () => {
   });
 
   afterEach(() => {
+    vi.restoreAllMocks();
     Object.defineProperty(window, "location", {
       configurable: true,
       value: originalLocation,
@@ -89,5 +90,17 @@ describe("lazyWithRetry", () => {
 
     fireEvent.click(screen.getByText("Reload page"));
     expect(reload).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not reload while offline", async () => {
+    vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+    const loader = vi.fn().mockRejectedValue(loadError());
+    const LazyView = lazyWithRetry(loader);
+
+    render(<LazyView />);
+    await act(() => vi.runAllTimersAsync());
+
+    expect(reload).not.toHaveBeenCalled();
+    expect(screen.getByText("Unable to show this view")).toBeTruthy();
   });
 });
