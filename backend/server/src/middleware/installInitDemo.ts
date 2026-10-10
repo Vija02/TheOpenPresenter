@@ -1,4 +1,10 @@
 import { YjsState } from "@repo/base-plugin/server";
+import {
+  type LayoutDoc,
+  createLayoutDoc,
+  createShapeElement,
+  videoPaint,
+} from "@repo/layout";
 import { logger } from "@repo/observability";
 import type { Video } from "@repo/video";
 import { createSession } from "better-sse";
@@ -9,6 +15,8 @@ import { proxy } from "valtio";
 import { bind } from "valtio-yjs";
 import * as Y from "yjs";
 
+import { DEMO_RADIO_TRACKS } from "./demoRadioTracks";
+import { DEMO_SONGS } from "./demoSongs";
 import { getRootPgPool } from "./installDatabasePools";
 
 async function createRedisClient() {
@@ -39,9 +47,16 @@ type SlidesPluginData = {
 type VideoPluginData = {
   videos: Video[];
 };
+type RadioPluginData = {
+  url: string;
+  tracks: unknown[];
+};
+type BiblePluginData = {
+  passages: unknown[];
+};
 type LyricsPluginData = {
   songs: unknown[];
-  videoBackgrounds: unknown[];
+  looks: Record<string, unknown>;
 };
 
 /**
@@ -69,7 +84,13 @@ const DEMO_SLIDE_COUNT = 5;
 type DemoScene = {
   name?: string;
   pluginName: string;
-  pluginData: VideoPluginData | SlidesPluginData | LyricsPluginData;
+  pluginData:
+    | VideoPluginData
+    | SlidesPluginData
+    | LyricsPluginData
+    | RadioPluginData
+    | BiblePluginData;
+  rendererPluginData?: Record<string, unknown>;
   activate?: boolean;
 };
 
@@ -104,6 +125,11 @@ const buildProjectDocument = async (scenes: DemoScene[]): Promise<Buffer> => {
         },
       },
     };
+    if (scene.rendererPluginData) {
+      mainState.renderer["1"].children[sceneId] = {
+        [pluginId]: scene.rendererPluginData,
+      };
+    }
     if (scene.activate && !activeSceneId) {
       activeSceneId = sceneId;
     }
@@ -120,10 +146,8 @@ const buildProjectDocument = async (scenes: DemoScene[]): Promise<Buffer> => {
   return Buffer.from(Y.encodeStateAsUpdate(yDoc));
 };
 
-/**
- * Build the default demo scenes: one Slides scene and Video Player scene pre-populated
- */
-const buildDemoScenes = (): DemoScene[] => {
+/** A Slides scene with the demo deck from `public/images/demo` */
+const buildSlidesScene = ({ activate }: { activate: boolean }): DemoScene => {
   const rootUrl = (process.env.ROOT_URL ?? "").replace(/\/$/, "");
   const slidesImportId = typeidUnboxed("import");
   const slidesImport: SlidesImportData = {
@@ -138,10 +162,10 @@ const buildDemoScenes = (): DemoScene[] => {
     slideClickCounts: Array.from({ length: DEMO_SLIDE_COUNT }, () => 0),
     slideIds: Array.from({ length: DEMO_SLIDE_COUNT }, (_, i) => String(i)),
   };
-  const slidesScene: DemoScene = {
+  return {
     name: "Slides",
     pluginName: "slides",
-    activate: true,
+    activate,
     pluginData: {
       imports: { [slidesImportId]: slidesImport },
       slideOrder: Array.from(
@@ -150,6 +174,13 @@ const buildDemoScenes = (): DemoScene[] => {
       ),
     } satisfies SlidesPluginData,
   };
+};
+
+/**
+ * Build the default demo scenes: one Slides scene and Video Player scene pre-populated
+ */
+const buildDemoScenes = (): DemoScene[] => {
+  const slidesScene = buildSlidesScene({ activate: true });
 
   const videoPlayerScene: DemoScene = {
     name: "Video Player",
@@ -172,21 +203,167 @@ const buildDemoScenes = (): DemoScene[] => {
   return [slidesScene, videoPlayerScene];
 };
 
+/** Mirrors the lyrics plugin's `MAIN_LOOK` and `BACKGROUND_ELEMENT_ID` */
+const LYRICS_MAIN_LOOK = "main";
+const LYRICS_BACKGROUND_ELEMENT_ID = "background";
+
+/** Same shape as the lyrics plugin's `backgroundFromMedia` for a video */
+const buildVideoBackground = (song: (typeof DEMO_SONGS)[number]): LayoutDoc =>
+  createLayoutDoc({
+    elements: [
+      createShapeElement({
+        id: LYRICS_BACKGROUND_ELEMENT_ID,
+        name: "Background",
+        fill: videoPaint({
+          id: typeidUnboxed("video"),
+          url: `https://stream.mux.com/${song.muxPlaybackId}.m3u8`,
+          hlsMediaName: null,
+          thumbnailMediaName: null,
+          title: song.backgroundTitle,
+          duration: song.backgroundDuration,
+          thumbnailUrl: `https://image.mux.com/${song.muxPlaybackId}/thumbnail.webp?time=2`,
+        }),
+        locked: true,
+      }),
+    ],
+  });
+
 /**
- * Build a minimal demo with just an empty Lyrics plugin
+ * Build the church demo: a Lyrics scene, optionally with a few songs each on
+ * its own motion background. With songs, it also gets a Music Player stocked
+ * with worship tracks, a Video Player with a worship video, a Bible scene with
+ * John 3:16, and the demo slide deck
  */
-const buildLyricsScenes = (): DemoScene[] => {
+const buildLyricsScenes = ({
+  withSongs,
+}: {
+  withSongs: boolean;
+}): DemoScene[] => {
+  const songs = (withSongs ? DEMO_SONGS : []).map((song) => ({
+    id: typeidUnboxed(),
+    title: song.title,
+    author: song.author,
+    content: song.content,
+    setting: { displayType: "sections" },
+    looks: {
+      [LYRICS_MAIN_LOOK]: {
+        template: null,
+        background: buildVideoBackground(song),
+      },
+    },
+    _imported: false,
+  }));
+
   const lyricsScene: DemoScene = {
     name: "Lyrics",
     pluginName: "lyrics-presenter",
     activate: true,
     pluginData: {
-      songs: [],
-      videoBackgrounds: [],
+      songs,
+      looks: {},
     } satisfies LyricsPluginData,
+    rendererPluginData: {
+      songId: songs[0]?.id ?? null,
+      currentIndex: songs.length > 0 ? 0 : null,
+      backgroundRun: null,
+    },
   };
 
-  return [lyricsScene];
+  if (!withSongs) return [lyricsScene];
+
+  const radioScene: DemoScene = {
+    name: "Music Player",
+    pluginName: "radio",
+    pluginData: {
+      url: "",
+      tracks: DEMO_RADIO_TRACKS,
+    } satisfies RadioPluginData,
+    rendererPluginData: {
+      url: null,
+      isPlaying: false,
+      volume: 1,
+      activeTrackId: DEMO_RADIO_TRACKS[0]?.id ?? null,
+      trackState: {
+        uid: Math.random().toString(),
+        isPlaying: false,
+        volume: 1,
+        muted: false,
+        seek: 0,
+        startedAt: Date.now(),
+        onFinishBehaviour: "pause",
+      },
+      repeatMode: "off",
+      crossfadeSeconds: 0,
+      fadingOutTrack: null,
+    },
+  };
+
+  const DEMO_VIDEO_ID = "video_01m4hka33heshvgw7d703rhw6g";
+  const videoPlayerScene: DemoScene = {
+    name: "Video Player",
+    pluginName: "video-player",
+    pluginData: {
+      videos: [
+        {
+          id: DEMO_VIDEO_ID,
+          url: "https://www.youtube.com/watch?v=f2oxGYpuLkw",
+          metadata: {
+            title:
+              "Praise (feat. Brandon Lake, Chris Brown & Chandler Moore) | Elevation Worship",
+            duration: 305,
+            thumbnailUrl:
+              "https://i.ytimg.com/vi/f2oxGYpuLkw/hq720.jpg?sqp=-oaymwEjCOgCEMoBSFryq4qpAxUIARUAAAAAGAElAADIQj0AgKJDeAE=&rs=AOn4CLACfuL-mxsLTHZ6OzzBH6EdPpFWNg",
+          },
+        },
+      ],
+    } satisfies VideoPluginData,
+    rendererPluginData: {
+      activeVideoId: DEMO_VIDEO_ID,
+      videoStates: {
+        [DEMO_VIDEO_ID]: {
+          uid: Math.random().toString(),
+          isPlaying: false,
+          volume: 1,
+          seek: 0,
+          startedAt: Date.now(),
+          onFinishBehaviour: "pause",
+        },
+      },
+    },
+  };
+
+  const bibleScene: DemoScene = {
+    name: "Bible",
+    pluginName: "bible",
+    pluginData: {
+      passages: [
+        {
+          id: typeidUnboxed(),
+          reference: "John 3:16",
+          translationId: "eng_kjv",
+          translationName: "King James (Authorized) Version",
+          translationAbbreviation: "KJAV",
+          verses: [
+            {
+              bookId: "JHN",
+              bookName: "John",
+              chapter: 3,
+              verse: 16,
+              text: "For God so loved the world, that he gave his only begotten Son, that whosoever believeth in him should not perish, but have everlasting life.",
+            },
+          ],
+        },
+      ],
+    } satisfies BiblePluginData,
+  };
+
+  return [
+    lyricsScene,
+    radioScene,
+    videoPlayerScene,
+    bibleScene,
+    buildSlidesScene({ activate: false }),
+  ];
 };
 
 export default async (app: Express) => {
@@ -287,8 +464,13 @@ export default async (app: Express) => {
         "/init-demo created demo project",
       );
 
+      // `lyrics` is an empty Lyrics scene, `lyrics-songs` comes with songs
       const scenes =
-        template === "lyrics" ? buildLyricsScenes() : buildDemoScenes();
+        template === "lyrics-songs"
+          ? buildLyricsScenes({ withSongs: true })
+          : template === "lyrics"
+            ? buildLyricsScenes({ withSongs: false })
+            : buildDemoScenes();
       const update = await buildProjectDocument(scenes);
       await rootPgPool.query(
         "update app_public.projects set document = $1 where id = $2",
