@@ -123,7 +123,9 @@ export async function beginBrowserLogin(
 
   return {
     authUrl: `${base}${authPath}`,
-    registerUrl: `${base}/register?next=${encodeURIComponent(authPath)}`,
+    registerUrl: `${base}/register?next=${encodeURIComponent(
+      `${authPath}&next=${encodeURIComponent("/onboarding")}`,
+    )}`,
     completed: completed.promise,
     cancel: () => controller.abort(),
   };

@@ -266,6 +266,12 @@ export const api = {
   copyText: (text: string) => invoke<void>("app:copy-text", text),
 
   /** Cloud organisations this sign-in can see. */
+  /** Null when nobody is signed in or the request failed. */
+  cloudOnboarding: (cloudUrl?: string) =>
+    invoke<{ completed: boolean; hasOrganization: boolean } | null>(
+      "cloud:onboarding",
+      { cloudUrl },
+    ),
   cloudOrganizations: (cloudUrl?: string) =>
     invoke<CloudOrganization[]>("cloud:organizations", { cloudUrl }),
 

@@ -44,6 +44,15 @@ export function registerCloudIPC(): void {
     return currentAccount(resolveRootUrl(runtime.url));
   });
 
+  /** How far the signed-in account is through the website's onboarding. */
+  ipcMain.handle(
+    "cloud:onboarding",
+    async (_event, args?: { cloudUrl?: string }) => {
+      const { onboardingStatus } = await import("./account");
+      return onboardingStatus(args?.cloudUrl ?? DEFAULT_CLOUD_URL);
+    },
+  );
+
   ipcMain.handle("host:logout", async () => {
     await logout(resolveRootUrl(runtime.url));
     backToShellUI();

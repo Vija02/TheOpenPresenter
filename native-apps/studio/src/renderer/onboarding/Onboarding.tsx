@@ -10,6 +10,7 @@ import {
 import { ChooseOrganization } from "./ChooseOrganization";
 import { ChooseSetup, type SetupChoice } from "./ChooseSetup";
 import { DownloadStatus } from "./DownloadStatus";
+import { FinishAccount } from "./FinishAccount";
 import { LocalRuntime } from "./LocalRuntime";
 import { NameOrganization } from "./NameOrganization";
 import { SignIn } from "./SignIn";
@@ -20,7 +21,7 @@ import { useRuntimeDownload } from "./useRuntimeDownload";
 /**
  * First-run setup. One question decides everything after it: is this the
  * machine that runs the server? If so the runtime download starts immediately
- * and sign-in links it to a cloud organisation. If not, the user is only
+ * and sign-in links it to a cloud organization. If not, the user is only
  * choosing which server to point at.
  */
 export function Onboarding() {
@@ -30,6 +31,8 @@ export function Onboarding() {
   const [error, setError] = useState<string | null>(null);
   const [finishing, setFinishing] = useState(false);
   const [, setConnection] = useState<CloudConnection | null>(null);
+  /** The server signed in to, kept for the steps that follow sign-in. */
+  const [signedInUrl, setSignedInUrl] = useState<string>("");
   const download = useRuntimeDownload();
 
   /** Move forward, remembering where we came from. */
@@ -85,24 +88,11 @@ export function Onboarding() {
   );
 
   /**
-   * Finish setup once the user has signed in. Signing in and running locally
-   * are not alternatives: on a complete setup the machine still serves, and
-   * the account exists so the local server can be linked to a cloud
-   * organisation. So sign-in lands on the local server, not the cloud one.
+   * Bring up the local server and link it to the account, then pick the
+   * organization. Waits for the download, which may still be running.
    */
-  const onConnect = useCallback(
-    async (chosen: Mode, rootUrl: string) => {
-      setError(null);
-
-      if (!runsLocally) {
-        try {
-          await api.connect(chosen, rootUrl);
-        } catch (err) {
-          setError(String(err));
-        }
-        return;
-      }
-
+  const linkLocalServer = useCallback(
+    async (rootUrl: string) => {
       setFinishing(true);
       try {
         // Connecting before the runtime exists would drop the user on a cloud
@@ -122,7 +112,39 @@ export function Onboarding() {
         setFinishing(false);
       }
     },
-    [download, runsLocally],
+    [download, goTo],
+  );
+
+  const onConnect = useCallback(
+    async (chosen: Mode, rootUrl: string) => {
+      setError(null);
+
+      if (!runsLocally) {
+        try {
+          await api.connect(chosen, rootUrl);
+        } catch (err) {
+          setError(String(err));
+        }
+        return;
+      }
+
+      setSignedInUrl(rootUrl);
+
+      // A new account has no organization until it finishes onboarding
+      const status = await api.cloudOnboarding(rootUrl).catch(() => null);
+      if (status && !status.completed && !status.hasOrganization) {
+        goTo("account");
+        return;
+      }
+
+      await linkLocalServer(rootUrl);
+    },
+    [runsLocally, goTo, linkLocalServer],
+  );
+
+  const onAccountReady = useCallback(
+    () => void linkLocalServer(signedInUrl),
+    [linkLocalServer, signedInUrl],
   );
 
   const chooseSetup = (choice: SetupChoice) => {
@@ -195,7 +217,7 @@ export function Onboarding() {
           secondary={
             /* Skip rather than "run locally instead": signing in is not an
                alternative to running the server, it is what links the server
-               to a cloud organisation. Skipping leaves that unlinked.
+               to a cloud organization. Skipping leaves that unlinked.
 
                On a minimal setup there is no runtime to fall back to, so
                skipping would strand the user on a server-management screen
@@ -213,6 +235,21 @@ export function Onboarding() {
           }
         />
       )}
+
+      {step === "account" &&
+        (finishing ? (
+          <section className="onboarding">
+            <h2>Almost ready</h2>
+            <p className="muted">
+              {download.active
+                ? "Finishing the download…"
+                : "Starting the server…"}
+            </p>
+            <DownloadStatus state={download} />
+          </section>
+        ) : (
+          <FinishAccount rootUrl={signedInUrl} onDone={onAccountReady} />
+        ))}
 
       {step === "organization" && (
         <ChooseOrganization

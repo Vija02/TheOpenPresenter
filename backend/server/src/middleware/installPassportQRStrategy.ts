@@ -128,9 +128,17 @@ export default async (app: Express) => {
       return;
     }
 
+    const rawNext = req.query.next?.toString();
+    const next =
+      rawNext && rawNext.startsWith("/") && !rawNext.startsWith("//")
+        ? rawNext
+        : undefined;
+
     if (!req.user?.session_id) {
+      const params = new URLSearchParams({ id });
+      if (next) params.set("next", next);
       res.redirect(
-        `/login?next=${encodeURIComponent(`/qr-auth/auth?id=${id}`)}`,
+        `/login?next=${encodeURIComponent(`/qr-auth/auth?${params}`)}`,
       );
       return;
     }
@@ -140,6 +148,7 @@ export default async (app: Express) => {
       publishClient,
       channels.login(id),
       req.user.session_id,
+      next,
     );
   });
 
