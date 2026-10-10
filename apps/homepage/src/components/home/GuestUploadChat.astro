@@ -1,0 +1,70 @@
+---
+// The guest upload story as a short message thread: you send the link, the
+// guest replies once they've uploaded through it, and the file lands in the
+// service. Bubbles appear
+// one by one when the thread scrolls into view (src/scripts/reveal-on-view.ts).
+// Coloured like a phone's messages app: blue for what you send, grey for
+// what comes back.
+interface Props {
+  class?: string;
+}
+
+const { class: className = "" } = Astro.props;
+---
+
+<div
+  class:list={["guest-chat flex flex-col gap-2 rounded-lg bg-white p-3 sm:p-4 shadow-lg ring-1 ring-black/5 text-[13px] leading-snug font-[system-ui,-apple-system,'Segoe_UI',Roboto,sans-serif]", className]}
+  data-reveal
+  role="img"
+  aria-label="A message thread: you send Pastor Dave an upload link, he replies that he's uploaded his slides, and his PowerPoint is converted and added to Sunday's service"
+>
+  <div class="bubble self-end max-w-[85%] rounded-[18px] rounded-br-md bg-[#007AFF] px-3 py-2 text-white">
+    Hi Dave, could you drop your slides here before Sunday?
+    <span class="mt-1.5 flex items-center gap-1.5 rounded-lg bg-white/20 px-2 py-1 text-xs font-semibold">
+      <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7 M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7" />
+      </svg>
+      Upload slides for Sunday
+    </span>
+  </div>
+
+  <div class="bubble self-start max-w-[85%] rounded-[18px] rounded-bl-md bg-[#E9E9EB] px-3 py-2 text-black">
+    <span class="block text-[11px] font-semibold text-[#8E8E93] mb-0.5">Pastor Dave</span>
+    Done, just uploaded them!
+  </div>
+
+  <div class="bubble self-center flex items-center gap-1.5 px-3 py-1 text-[11px] font-medium text-[#8E8E93]">
+    <svg class="w-3.5 h-3.5 text-teal-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M5 12.5l4.5 4.5L19 7.5" />
+    </svg>
+    <span><span class="font-semibold">Hope in the storm.pptx</span>: 18 slides added to Sunday, 10:30</span>
+  </div>
+</div>
+
+<script>
+  import "../../scripts/reveal-on-view";
+</script>
+
+<style>
+  @media (prefers-reduced-motion: no-preference) {
+    .guest-chat .bubble {
+      opacity: 0;
+      transform: translateY(8px) scale(0.98);
+    }
+    .guest-chat.is-visible .bubble {
+      animation: bubble-in 0.4s ease-out forwards;
+    }
+    .guest-chat.is-visible .bubble:nth-child(2) {
+      animation-delay: 0.9s;
+    }
+    .guest-chat.is-visible .bubble:nth-child(3) {
+      animation-delay: 1.8s;
+    }
+  }
+  @keyframes bubble-in {
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+</style>
