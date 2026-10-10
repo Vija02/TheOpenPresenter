@@ -2,17 +2,18 @@
 import DefaultLayout from "../layouts/DefaultLayout.astro";
 import PageIllustration from "../components/PageIllustration.astro";
 import HomeHero from "../components/home/HomeHero.astro";
+import HomeTeam from "../components/home/HomeTeam.astro";
+import HomeIntegrations from "../components/home/HomeIntegrations.astro";
 import HomeWhy from "../components/home/HomeWhy.astro";
 import TestimonialsBlocks from "../components/TestimonialsBlocks.astro";
-import HomeComparison from "../components/home/HomeComparison.astro";
-import HomeHonest from "../components/home/HomeHonest.astro";
+import HomeSwitching from "../components/home/HomeSwitching.astro";
 import HomeWhoItsFor from "../components/home/HomeWhoItsFor.astro";
 import HomeCta from "../components/home/HomeCta.astro";
 ---
 
 <DefaultLayout
-  title="TheOpenPresenter | Free, Open-Source ProPresenter Alternative"
-  description="Open-source presentation software for small churches. Run your service from any phone or laptop, with your whole team at once. Free to start, no licence fee."
+  title="TheOpenPresenter | Free Church Presentation Software for Your Whole Team"
+  description="Open-source presentation software for churches. Plan the service together from home, then run it from any phone or laptop on Sunday. Free to start, no licence fee."
 >
   <!-- Page illustration -->
   <div
@@ -22,10 +23,11 @@ import HomeCta from "../components/home/HomeCta.astro";
     <PageIllustration />
   </div>
   <HomeHero />
+  <HomeTeam />
+  <HomeIntegrations />
   <HomeWhy />
   <TestimonialsBlocks />
-  <HomeComparison />
-  <HomeHonest />
+  <HomeSwitching />
   <HomeWhoItsFor />
   <HomeCta />
 </DefaultLayout>

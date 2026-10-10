@@ -1,0 +1,74 @@
+---
+// Points people coming from a specific app at its comparison page. The
+// detailed, both-directions comparisons live under /compare; keep this list in
+// step with the hub in src/pages/compare/index.astro.
+const apps = [
+  {
+    name: "ProPresenter",
+    body: "Per-seat pricing, one operator, one machine. See where we're a real replacement and where ProPresenter still wins.",
+    href: "/compare/propresenter-alternative",
+  },
+  {
+    name: "EasyWorship",
+    body: "Pricing that grows with your attendance, and an install on one machine. See how the two line up, including where EasyWorship is the better pick.",
+    href: "/compare/easyworship-alternative",
+  },
+];
+---
+
+<section>
+  <div class="max-w-6xl mx-auto px-4 sm:px-6">
+    <div class="py-12 md:py-20 border-t border-gray-200 dark:border-gray-800">
+      <div class="max-w-3xl mx-auto text-center pb-10">
+        <div
+          class="inline-flex items-center text-sm font-semibold tracking-wide uppercase text-teal-500 mb-2"
+        >
+          Switching?
+        </div>
+        <h2 class="h2 font-red-hat-display mb-4">Coming from another app</h2>
+        <p class="text-xl text-gray-600 dark:text-gray-400">
+          We've written straight comparisons, including what we don't do yet.
+          If the other tool suits your church better, we say so.
+        </p>
+      </div>
+
+      <div class="grid gap-6 md:grid-cols-2 max-w-4xl mx-auto">
+        {
+          apps.map((app, i) => (
+            <a
+              href={app.href}
+              class="group flex flex-col rounded-2xl border border-gray-200 dark:border-gray-800 p-6 transition duration-150 ease-in-out hover:-translate-y-1 hover:border-teal-500 hover:shadow-lg"
+              data-aos="fade-up"
+              data-aos-delay={i * 100}
+            >
+              <div class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
+                Switching from
+              </div>
+              <h3 class="text-xl font-red-hat-display font-black mb-2">
+                {app.name}
+              </h3>
+              <p class="text-gray-600 dark:text-gray-400 grow mb-4">{app.body}</p>
+              <span class="text-teal-600 dark:text-teal-400 font-medium inline-flex items-center">
+                Read the comparison
+                <span
+                  class="ml-1 transition-transform group-hover:translate-x-1"
+                  aria-hidden="true"
+                >
+                  &rarr;
+                </span>
+              </span>
+            </a>
+          ))
+        }
+      </div>
+
+      <p class="text-center mt-8">
+        <a
+          href="/compare"
+          class="text-teal-600 dark:text-teal-400 hover:underline font-medium"
+          >All comparisons</a
+        >
+      </p>
+    </div>
+  </div>
+</section>
