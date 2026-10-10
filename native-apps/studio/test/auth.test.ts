@@ -102,6 +102,18 @@ describe("browser sign-in", () => {
     handle.cancel();
   });
 
+  it("offers a registration URL that returns to the same handoff", async () => {
+    // Registering follows `next`, so a new account lands on /qr-auth/auth
+    // already signed in and this shell is signed in with it.
+    const base = await startServer({ tokenDelayMs: 10_000 });
+    const handle = await beginBrowserLogin(base);
+
+    expect(handle.registerUrl).toBe(
+      `${base}/register?next=${encodeURIComponent("/qr-auth/auth?id=test-id-123")}`,
+    );
+    handle.cancel();
+  });
+
   it("completes once the server releases the token", async () => {
     const base = await startServer();
     const handle = await beginBrowserLogin(base);

@@ -36,6 +36,7 @@ export function SignIn({
   const [input, setInput] = useState(initialUrl ?? "");
   const [busy, setBusy] = useState(false);
   const [waiting, setWaiting] = useState(false);
+  const [registering, setRegistering] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const [headline, setHeadline] = useState<string | null>(null);
   const [authUrl, setAuthUrl] = useState<string | null>(null);
@@ -60,7 +61,7 @@ export function SignIn({
     };
   }, [mode, onConnect]);
 
-  const start = async () => {
+  const start = async ({ register = false } = {}) => {
     setProblem(null);
     setHeadline(null);
     setBusy(true);
@@ -79,7 +80,7 @@ export function SignIn({
         return;
       }
 
-      const result = await api.beginAuth(target);
+      const result = await api.beginAuth(target, undefined, { register });
       if (!result.supported) {
         // An older server without the handoff: connect anyway and let the page
         // ask for a password itself.
@@ -88,6 +89,7 @@ export function SignIn({
       }
 
       setAuthUrl(result.authUrl);
+      setRegistering(register);
       setWaiting(true);
       // `auth:begin` already opened the browser. Opening it here too produced
       // two tabs, and the second consumed the same one-shot token, so it
@@ -118,10 +120,13 @@ export function SignIn({
   if (waiting) {
     return (
       <div className="onboarding">
-        <h2>Finish signing in</h2>
+        <h2>
+          {registering ? "Finish creating your account" : "Finish signing in"}
+        </h2>
         <p className="muted">
-          Your browser is open. Sign in there and this window will continue on
-          its own.
+          {registering
+            ? "Your browser is open. Create your account there and this window will continue on its own."
+            : "Your browser is open. Sign in there and this window will continue on its own."}
         </p>
         {authUrl && (
           <Button variant="link" onClick={() => api.openExternal(authUrl)}>
@@ -193,7 +198,8 @@ export function SignIn({
           Don&apos;t have an account?{" "}
           <Button
             variant="link"
-            onClick={() => api.openExternal(`${CLOUD_URL}/register`)}
+            disabled={busy}
+            onClick={() => void start({ register: true })}
           >
             Register
           </Button>

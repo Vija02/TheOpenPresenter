@@ -178,8 +178,16 @@ export const api = {
   logout: () => invoke<void>("host:logout"),
 
   /** Hand sign-in to the user's real browser. */
-  beginAuth: (rootUrl?: string, next?: string) =>
-    invoke<AuthBeginResult>("auth:begin", { rootUrl, next }),
+  beginAuth: (
+    rootUrl?: string,
+    next?: string,
+    options?: { register?: boolean },
+  ) =>
+    invoke<AuthBeginResult>("auth:begin", {
+      rootUrl,
+      next,
+      register: options?.register,
+    }),
   cancelAuth: () => invoke<void>("auth:cancel"),
 
   connect: (mode: Mode, rootUrl?: string) =>

@@ -56,7 +56,10 @@ export function registerCloudIPC(): void {
 
   ipcMain.handle(
     "auth:begin",
-    async (event, args: { rootUrl?: string; next?: string }) => {
+    async (
+      event,
+      args: { rootUrl?: string; next?: string; register?: boolean },
+    ) => {
       activeLogin?.cancel();
       activeLogin = null;
 
@@ -70,7 +73,8 @@ export function registerCloudIPC(): void {
 
         // Validated because the URL is built from a host the user typed, so a
         // hostile or mistyped value must not reach the OS unchecked.
-        if (!(await openExternalSafely(handle.authUrl))) {
+        const opened = args.register ? handle.registerUrl : handle.authUrl;
+        if (!(await openExternalSafely(opened))) {
           throw new Error("The sign-in link was not a valid web address.");
         }
 
