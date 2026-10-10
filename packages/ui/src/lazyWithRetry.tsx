@@ -40,9 +40,39 @@ export async function importWithRetry<T>(
   throw lastError;
 }
 
+const RELOAD_KEY = "lazyWithRetry:reloadedAt";
+const RELOAD_COOLDOWN_MS = 60_000;
+
+// A deploy removes the old hashed chunks, so only a fresh page can load the view.
+// We reload at most once per cooldown so a real outage doesn't loop, and never
+// offline, where a reload would replace the app with the browser's offline page
+const reloadOnce = () => {
+  if (!navigator.onLine) {
+    return false;
+  }
+  try {
+    const reloadedAt = Number(sessionStorage.getItem(RELOAD_KEY) ?? 0);
+    if (Date.now() - reloadedAt < RELOAD_COOLDOWN_MS) {
+      return false;
+    }
+    sessionStorage.setItem(RELOAD_KEY, String(Date.now()));
+  } catch {
+    return false;
+  }
+  window.location.reload();
+  return true;
+};
+
 export const lazyWithRetry = (loader: Loader) => {
-  const createLazy = () => lazy(() => importWithRetry(loader));
-  let LazyComponent = createLazy();
+  const LazyComponent = lazy(() =>
+    importWithRetry(loader).catch((error) => {
+      if (reloadOnce()) {
+        // Keep the loading state until the page reloads
+        return new Promise<never>(() => {});
+      }
+      throw error;
+    }),
+  );
 
   return class LazyWithRetry extends Component<any, { error: Error | null }> {
     state = { error: null as Error | null };
@@ -74,14 +104,9 @@ export const lazyWithRetry = (loader: Loader) => {
           >
             {error.message}
           </Alert>
-          <Button
-            onClick={() => {
-              LazyComponent = createLazy();
-              this.setState({ error: null });
-            }}
-          >
+          <Button onClick={() => window.location.reload()}>
             <VscSync />
-            Try again
+            Reload page
           </Button>
         </div>
       );
