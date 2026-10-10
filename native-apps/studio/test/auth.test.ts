@@ -109,7 +109,9 @@ describe("browser sign-in", () => {
     const handle = await beginBrowserLogin(base);
 
     expect(handle.registerUrl).toBe(
-      `${base}/register?next=${encodeURIComponent("/qr-auth/auth?id=test-id-123")}`,
+      `${base}/register?next=${encodeURIComponent(
+        `/qr-auth/auth?id=test-id-123&next=${encodeURIComponent("/onboarding")}`,
+      )}`,
     );
     handle.cancel();
   });

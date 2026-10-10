@@ -4,7 +4,13 @@ import type { Settings } from "../bridge/ipc";
  * A step in first-run setup. Only setup screens: panels live in their own
  * windows, so they are not states this machine can be in.
  */
-export type Step = "role" | "signin" | "organization" | "name" | "local";
+export type Step =
+  | "role"
+  | "signin"
+  | "account"
+  | "organization"
+  | "name"
+  | "local";
 
 /**
  * Where setup should begin. `mode` is only written once someone completes
