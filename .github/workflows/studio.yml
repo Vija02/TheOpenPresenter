@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - main
-    tags:
-      - "v*"
   pull_request:
     paths:
       - "native-apps/studio/**"
@@ -13,6 +11,7 @@ on:
       - "packages/desktop-bridge/**"
       - ".github/workflows/studio.yml"
   workflow_dispatch:
+  workflow_call:
 
 jobs:
   runtime-manager-tests:
@@ -210,7 +209,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: desktop-${{ matrix.platform }}
+          name: studio-${{ matrix.platform }}
           path: |
             native-apps/studio/dist/*.dmg
             native-apps/studio/dist/*.zip
@@ -288,7 +287,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
-          name: desktop-ubuntu-latest
+          name: studio-ubuntu-latest
           path: artifact
 
       - name: Extract and probe the sidecar
@@ -336,6 +335,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
+          pattern: studio-*
           path: artifacts
       - name: Update nightly release
         uses: andelf/nightly-release@main
@@ -356,11 +356,15 @@ jobs:
             artifacts/**/*.rpm
             artifacts/**/*.pacman
             artifacts/**/latest*.yml
-      - name: Tagged release
-        uses: softprops/action-gh-release@v2
+      # release.yml publishes this alongside the other components
+      - name: Hand files to the tagged release
+        uses: actions/upload-artifact@v4
         if: github.ref_type == 'tag'
         with:
-          files: |
+          name: release-studio
+          if-no-files-found: error
+          retention-days: 7
+          path: |
             artifacts/**/*.dmg
             artifacts/**/*.zip
             artifacts/**/*.exe

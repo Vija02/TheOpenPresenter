@@ -27,6 +27,8 @@ mac:
   hardenedRuntime: true
   entitlements: packaging/entitlements.mac.plist
   entitlementsInherit: packaging/entitlements.mac.plist
+dmg:
+  artifactName: ${productName}-${arch}.${ext}
 linux:
   target:
     - AppImage
@@ -56,7 +58,7 @@ pacman:
 win:
   target:
     - nsis
-  artifactName: ${productName}-Setup-${version}.${ext}
+  artifactName: ${productName}-Setup.${ext}
 nsis:
   oneClick: false
   allowToChangeInstallationDirectory: true

@@ -36,35 +36,40 @@ git tag v0.1.0
 git push origin v0.1.0
 ```
 
-The push fires the release workflows in parallel:
+The push runs `.github/workflows/release.yml`, which builds every
+component in parallel and then publishes **one** `vX.Y.Z` GitHub Release
+containing all of them:
 
-| Workflow | Builds | Publishes to release as |
-|---|---|---|
-| `.github/workflows/desktop-screen.yml` | Kiosk binaries (Linux x86_64 + aarch64) | `desktop-screen-linux-x86_64`, `desktop-screen-linux-aarch64` |
+| Component workflow | Builds |
+|---|---|
+| `desktop-screen.yml` | Kiosk app (Tauri: Linux binaries, Windows, macOS) |
+| `electron-screen.yml` | Kiosk app (Electron: Linux packages) |
+| `runtime.yml` | Runtime packs and manager binaries (also syncs R2 and moves `runtime-stable`) |
+| `studio.yml` | Studio app (Windows, macOS, Linux) and its auto-update metadata |
 
-Both target the same `vX.Y.Z` GitHub Release. The `softprops/action-gh-release@v2`
-action is idempotent — the first workflow to finish creates the release,
-the second updates it with its own assets. Whichever finishes last sets
-the release notes / name.
+Each component workflow uploads the files it wants published as a
+`release-<component>` artifact. The final `publish` job only runs once
+all four have succeeded: it uploads everything to a draft release, then
+publishes it in a single step. Nobody (the homepage, the Studio
+auto-updater, the kiosk installer) ever sees a half-uploaded release.
+
+If any component fails, nothing is published. Fix it and re-run the
+failed jobs; a draft left behind by a failed publish is replaced
+automatically. The R2 runtime upload is not part of this gate: it
+happens as soon as the runtime build finishes.
 
 ## Pre-releases
 
-Pre-release tags (anything with a suffix after the patch number) need
-one extra signal so GitHub marks them as such:
+Pre-release tags have a suffix after the patch number:
 
 ```sh
 git tag v0.2.0-beta.1
 git push origin v0.2.0-beta.1
 ```
 
-By default `softprops/action-gh-release@v2` doesn't infer prerelease
-from the tag name; the published release will appear as a normal one. If
-that matters to you (e.g., to keep them out of `/releases/latest`):
-
-- Set `prerelease: true` in the release step, or
-- Use the GitHub UI to mark it as pre-release after the fact, or
-- Adopt the convention "tags with a hyphen are pre-releases" and let
-  the install script's loose regex pick them up anyway.
+Any `v*` tag with a hyphen is published as a pre-release, so it stays
+out of `/releases/latest` (and off the homepage download links). The
+kiosk install script's loose regex still picks them up.
 
 ## Nightly tag
 
@@ -74,9 +79,23 @@ Pushes to `main` (without a version tag) build and refresh a moving
 - `desktop-screen.yml` publishes the kiosk binaries (tag
   `desktop-screen-nightly`).
 
-The homepage's Windows download link
-(`apps/homepage/src/pages/download/index.astro`) hard-codes the
-`nightly` tag, so it always points at the most recent main build.
+## Homepage download links
+
+The Studio downloads on the homepage
+(`apps/homepage/src/pages/download/index.astro`) link to
+`releases/latest/download/<file>`, which GitHub redirects to the release
+marked **Latest**. This always points at the newest stable `vX.Y.Z`
+tag because:
+
+- Studio's installer names carry no version
+  (`TheOpenPresenter-Setup.exe`, `TheOpenPresenter-arm64.dmg`; see
+  `native-apps/studio/electron-builder.yml`), so the same URL works for
+  every release.
+- `release.yml` publishes the whole release at once and marks it Latest
+  (unless the tag has a hyphen). It also refuses to publish if any of
+  the files the homepage links to are missing.
+- The moving `runtime-stable` release sets `make_latest: false`, so
+  republishing it never takes the flag.
 
 ## Fixing a mistake
 
