@@ -13,6 +13,7 @@ test.describe("Public Project", () => {
     page,
     browser,
     projectPage,
+    videoPlayerPlugin,
     loginAndGoToProject,
   }) => {
     await loginAndGoToProject();
@@ -78,7 +79,7 @@ test.describe("Public Project", () => {
       // create a new scene from their authenticated remote. The unauth
       // viewer should observe the new scene appear in real time via sync.
       await projectPage.createPlugin("Video Player");
-      await expect(page.getByText("Search or enter URL:")).toBeVisible();
+      await expect(videoPlayerPlugin.searchInput).toBeVisible();
 
       // The new "Video Player" scene should now sync over to the unauth view.
       await expect(unauthSceneItems).toHaveCount(1);
@@ -117,12 +118,13 @@ test.describe("Public Project", () => {
     page,
     browser,
     projectPage,
+    videoPlayerPlugin,
     loginAndGoToProject,
   }) => {
     await loginAndGoToProject();
 
     await projectPage.createPlugin("Video Player");
-    await expect(page.getByText("Search or enter URL:")).toBeVisible();
+    await expect(videoPlayerPlugin.searchInput).toBeVisible();
 
     // Toggle the project public via the Edit Project dialog.
     const projectNameLocator = page.locator(".rt--top-bar--project-name");
