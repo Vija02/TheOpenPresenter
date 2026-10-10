@@ -4,8 +4,8 @@ import { Express, Response } from "express";
 import * as redis from "redis";
 import { typeidUnboxed } from "typeid-js";
 
-import { applySessionMaxAge } from "./installSession";
 import { getRootPgPool } from "./installDatabasePools";
+import { applySessionMaxAge } from "./installSession";
 
 async function createRedisClient() {
   const client = redis.createClient({
@@ -121,15 +121,17 @@ export default async (app: Express) => {
   // Authorize the ID that has been generated from the method above.
   // Should be called by the authenticated user
   app.get("/qr-auth/auth", async (req, res) => {
-    if (!req.user?.session_id) {
-      res.redirect(`/login?next=/qr-auth/auth?id=${req.query.id}`);
-      return;
-    }
-
     const id = req.query.id?.toString();
 
     if (!id) {
       res.sendStatus(400);
+      return;
+    }
+
+    if (!req.user?.session_id) {
+      res.redirect(
+        `/login?next=${encodeURIComponent(`/qr-auth/auth?id=${id}`)}`,
+      );
       return;
     }
 
@@ -168,7 +170,7 @@ export default async (app: Express) => {
       `insert into app_private.sessions (user_id) select user_id from app_private.sessions where uuid = $1 returning *`,
       [value],
     );
-    console.log("Got new session", session.uuid, value)
+    console.log("Got new session", session.uuid, value);
 
     applySessionMaxAge(req);
     req.login(

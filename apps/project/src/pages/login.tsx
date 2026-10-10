@@ -193,7 +193,14 @@ function LoginForm({
 
           <div className="stack-col items-center gap-1 w-full pt-2">
             <Link asChild>
-              <WouterLink href="/register" className="text-sm">
+              <WouterLink
+                href={
+                  onSuccessRedirectTo === "/o/"
+                    ? "/register"
+                    : `/register?next=${encodeURIComponent(onSuccessRedirectTo)}`
+                }
+                className="text-sm"
+              >
                 Don't have an account yet? Sign up
               </WouterLink>
             </Link>

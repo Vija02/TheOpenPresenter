@@ -19,6 +19,8 @@ import { CombinedError } from "urql";
 import { Link as WouterLink, useLocation, useSearchParams } from "wouter";
 import z from "zod";
 
+import { isSafe } from "./login";
+
 const formSchema = z
   .object({
     name: z.string().min(1, "Please enter your name"),
@@ -51,7 +53,8 @@ const Register = () => {
   const turnstileRef = useRef<TurnstileRef>(null);
   const turnstileTokenRef = useRef<string | null>(null);
 
-  const redirectTo = "/o/";
+  const rawNext = searchParams.get("next");
+  const redirectTo = isSafe(rawNext) ? rawNext! : "/o/";
 
   const form = useForm<FormInputs>({
     resolver: zodResolver(formSchema),
@@ -103,7 +106,7 @@ const Register = () => {
         }
       }
     },
-    [register, resetClient, navigate, form, captchaEnabled],
+    [register, resetClient, navigate, redirectTo, form, captchaEnabled],
   );
 
   return (
@@ -194,7 +197,14 @@ const Register = () => {
 
                     <div className="stack-col items-center w-full pt-2">
                       <Link asChild>
-                        <WouterLink href="/login" className="text-sm">
+                        <WouterLink
+                          href={
+                            rawNext && isSafe(rawNext)
+                              ? `/login?next=${encodeURIComponent(rawNext)}`
+                              : "/login"
+                          }
+                          className="text-sm"
+                        >
                           Already have an account? Sign in
                         </WouterLink>
                       </Link>

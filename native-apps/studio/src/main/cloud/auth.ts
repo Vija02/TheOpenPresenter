@@ -9,6 +9,7 @@ const SESSION_COOKIE = "connect.sid";
 export type LoginHandle = {
   /** Where to send the browser. Exposed so the UI can offer a copyable link. */
   authUrl: string;
+  registerUrl: string;
   /** Resolves once the session cookie is in place. */
   completed: Promise<void>;
   cancel: () => void;
@@ -118,9 +119,11 @@ export async function beginBrowserLogin(
   })();
 
   const resolvedId = await id.promise;
+  const authPath = `/qr-auth/auth?id=${encodeURIComponent(resolvedId)}`;
 
   return {
-    authUrl: `${base}/qr-auth/auth?id=${encodeURIComponent(resolvedId)}`,
+    authUrl: `${base}${authPath}`,
+    registerUrl: `${base}/register?next=${encodeURIComponent(authPath)}`,
     completed: completed.promise,
     cancel: () => controller.abort(),
   };
