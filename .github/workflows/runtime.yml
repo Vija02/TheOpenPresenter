@@ -6,8 +6,6 @@ name: Runtime payload
 
 on:
   push:
-    tags:
-      - "v*"
     branches:
       - main
     paths-ignore:
@@ -31,6 +29,7 @@ on:
         description: "Override which versions to build deltas from (derived automatically if blank)"
         required: false
         default: ""
+  workflow_call:
 
 concurrency:
   group: runtime-${{ github.ref }}
@@ -538,13 +537,16 @@ jobs:
 
       # Only tagged releases get a permanent versioned tag. A nightly per
       # commit would accumulate hundreds of releases, so nightlies live
-      # only at the moving channel pointer below.
-      - name: Publish the versioned release
-        if: steps.version.outputs.channel == 'stable'
-        uses: softprops/action-gh-release@v2
+      # only at the moving channel pointer below. release.yml publishes
+      # these alongside the other components.
+      - name: Hand files to the tagged release
+        if: github.ref_type == 'tag'
+        uses: actions/upload-artifact@v4
         with:
-          files: assets/*
-          fail_on_unmatched_files: true
+          name: release-runtime
+          path: assets/*
+          if-no-files-found: error
+          retention-days: 7
 
       - name: Remove assets that are no longer published
         continue-on-error: true
@@ -579,6 +581,7 @@ jobs:
           tag_name: runtime-${{ steps.version.outputs.channel }}
           name: Runtime (${{ steps.version.outputs.channel }})
           prerelease: ${{ steps.version.outputs.channel != 'stable' }}
+          make_latest: false
           files: assets/*
           fail_on_unmatched_files: true
           body: |

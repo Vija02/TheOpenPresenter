@@ -3,12 +3,12 @@ name: Electron Screen App - Build & Release
 on:
   push:
     branches: [main]
-    tags: ['v*']
   pull_request:
     paths:
       - 'native-apps/electron-screen/**'
       - '.github/workflows/electron-screen.yml'
   workflow_dispatch:
+  workflow_call:
 
 concurrency:
   group: electron-screen-build-${{ github.ref }}
@@ -101,6 +101,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
+          pattern: electron-screen-*
           path: artifacts
           merge-multiple: true
 
@@ -124,14 +125,15 @@ jobs:
             artifacts/*.AppImage
             artifacts/*.tar.gz
 
-      - name: Tagged release
+      # release.yml publishes this alongside the other components
+      - name: Hand files to the tagged release
         if: github.ref_type == 'tag'
-        uses: softprops/action-gh-release@v2
+        uses: actions/upload-artifact@v4
         with:
-          tag_name: ${{ github.ref_name }}
-          name: ${{ github.ref_name }}
-          generate_release_notes: true
-          files: |
+          name: release-electron-screen
+          if-no-files-found: error
+          retention-days: 7
+          path: |
             artifacts/*.deb
             artifacts/*.rpm
             artifacts/*.pacman

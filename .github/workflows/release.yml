@@ -1,0 +1,122 @@
+name: Release
+
+# One `vX.Y.Z` tag builds every component, then publishes them as a single
+# GitHub Release in one go. Nothing is public until everything has built, so
+# `releases/latest` (the homepage download links, the Studio auto-updater, the
+# kiosk installer) never sees a half-uploaded release.
+#
+# Each component workflow hands over the files it wants published as a
+# `release-<component>` artifact; which files those are stays decided there.
+
+on:
+  push:
+    tags:
+      - "v*"
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  desktop-screen:
+    uses: ./.github/workflows/desktop-screen.yml
+    secrets: inherit
+
+  electron-screen:
+    uses: ./.github/workflows/electron-screen.yml
+    secrets: inherit
+
+  runtime:
+    uses: ./.github/workflows/runtime.yml
+    secrets: inherit
+
+  studio:
+    uses: ./.github/workflows/studio.yml
+    secrets: inherit
+
+  publish:
+    name: Publish ${{ github.ref_name }}
+    needs: [desktop-screen, electron-screen, runtime, studio]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: release-*
+          path: collected
+
+      - name: Flatten and check the assets
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # A release is one flat namespace. Two components shipping the same
+          # file name would silently overwrite each other, so refuse instead.
+          mkdir -p assets
+          DUPES=$(find collected -type f -printf '%f\n' | sort | uniq -d)
+          if [ -n "$DUPES" ]; then
+            echo "::error::More than one component produced these files:"
+            echo "$DUPES"
+            exit 1
+          fi
+          find collected -type f -exec cp {} assets/ \;
+
+          # The homepage links to these by name via releases/latest, and the
+          # Studio auto-updater reads the latest*.yml files.
+          MISSING=0
+          for f in \
+            TheOpenPresenter-Setup.exe \
+            TheOpenPresenter-arm64.dmg \
+            TheOpenPresenter-x86_64.AppImage \
+            studio-amd64.deb \
+            studio-x86_64.rpm \
+            studio-x64.pacman \
+            latest.yml latest-mac.yml latest-linux.yml; do
+            if [ ! -f "assets/$f" ]; then
+              echo "::error::Missing $f"
+              MISSING=1
+            fi
+          done
+          [ "$MISSING" = 0 ] || exit 1
+
+          echo "asset count: $(ls assets | wc -l)"
+          ls -la assets
+
+      # Created as a draft so every file is uploaded before anyone can see it,
+      # then published in a single edit.
+      - name: Publish the release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+
+          # A re-run after a failed upload leaves a draft behind. A draft is
+          # safe to replace; a published release is not.
+          if IS_DRAFT=$(gh release view "$TAG" --json isDraft --jq .isDraft 2>/dev/null); then
+            if [ "$IS_DRAFT" = "true" ]; then
+              echo "Removing the draft left by a previous attempt"
+              gh release delete "$TAG" --yes
+            else
+              echo "::error::$TAG is already published. Tag a new version instead."
+              exit 1
+            fi
+          fi
+
+          gh release create "$TAG" assets/* \
+            --draft \
+            --verify-tag \
+            --title "$TAG" \
+            --generate-notes
+
+          # Tags with a hyphen (v0.2.0-beta.1) are pre-releases and stay out
+          # of releases/latest. Everything else becomes Latest.
+          if [[ "$TAG" == *-* ]]; then
+            gh release edit "$TAG" --draft=false --prerelease --latest=false
+          else
+            gh release edit "$TAG" --draft=false --latest
+          fi
