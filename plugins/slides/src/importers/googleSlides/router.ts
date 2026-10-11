@@ -1,4 +1,8 @@
-import { ServerPluginApi, TRPCObject } from "@repo/base-plugin/server";
+import {
+  CloudCallError,
+  ServerPluginApi,
+  TRPCObject,
+} from "@repo/base-plugin/server";
 import z from "zod";
 
 import { loadedContext } from "../../loadedState";
@@ -6,9 +10,12 @@ import type { Importers } from "../index";
 import { getGoogleAppId, getGoogleClientId } from "./oauth";
 import {
   beginRemotePick,
+  disconnectRemote,
   getGoogleAccessToken,
+  getRemoteAccounts,
   getRemotePickStatus,
   resolveGoogleMode,
+  toAccountOption,
 } from "./provider";
 import {
   deleteConnection,
@@ -70,7 +77,10 @@ export const createGoogleSlidesRouter = (
       .input(z.object({ pluginId: z.string() }))
       .query(async ({ input: { pluginId }, ctx }) => {
         const { organizationId, userId } = await requireMember(pluginId, ctx);
-        const resolved = await resolveGoogleMode(serverPluginApi, organizationId);
+        const resolved = await resolveGoogleMode(
+          serverPluginApi,
+          organizationId,
+        );
 
         if (resolved.mode === "local") {
           const connections = await listConnectionsForUser(
@@ -83,22 +93,23 @@ export const createGoogleSlidesRouter = (
             clientId: getGoogleClientId(),
             appId: getGoogleAppId(),
             // Most recently used first
-            accounts: connections.map((connection) => ({
-              id: connection.id,
-              label:
-                connection.googleEmail ??
-                connection.googleDisplayName ??
-                "Google account",
-              // Only worth showing when it differs from the email
-              displayName:
-                connection.googleEmail && connection.googleDisplayName
-                  ? connection.googleDisplayName
-                  : null,
-            })),
+            accounts: connections.map(toAccountOption),
           };
         }
         if (resolved.mode === "remote") {
-          return { mode: "remote" as const };
+          try {
+            const { accounts } = await getRemoteAccounts(
+              serverPluginApi,
+              organizationId,
+            );
+            return { mode: "remote" as const, accounts };
+          } catch (err) {
+            // e.g. offline, or the cloud sign-in expired
+            if (err instanceof CloudCallError) {
+              return { mode: "unavailable" as const, reason: err.message };
+            }
+            throw err;
+          }
         }
         return { mode: "unavailable" as const, reason: resolved.reason };
       }),
@@ -120,6 +131,12 @@ export const createGoogleSlidesRouter = (
       .input(z.object({ pluginId: z.string(), connectionId: z.string() }))
       .mutation(async ({ input: { pluginId, connectionId }, ctx }) => {
         const { organizationId, userId } = await requireMember(pluginId, ctx);
+        const mode = await resolveGoogleMode(serverPluginApi, organizationId);
+        if (mode.mode === "remote") {
+          // The cloud checks the account is the caller's own
+          await disconnectRemote(serverPluginApi, organizationId, connectionId);
+          return;
+        }
         const connection = await requireOwnConnection(
           organizationId,
           userId,
@@ -130,10 +147,19 @@ export const createGoogleSlidesRouter = (
 
     /** Remote mode: starts a pick on the cloud. Open `url` externally. */
     googleSlidesBeginPick: t.procedure
-      .input(z.object({ pluginId: z.string() }))
-      .mutation(async ({ input: { pluginId }, ctx }) => {
+      .input(
+        z.object({
+          pluginId: z.string(),
+          mode: z.enum(["pick", "connect", "once"]),
+          connectionId: z.string().optional(),
+        }),
+      )
+      .mutation(async ({ input: { pluginId, mode, connectionId }, ctx }) => {
         const { organizationId } = await requireMember(pluginId, ctx);
-        return beginRemotePick(serverPluginApi, organizationId);
+        return beginRemotePick(serverPluginApi, organizationId, {
+          mode,
+          connectionId: connectionId ?? null,
+        });
       }),
 
     /** Remote mode: polled until the pick is done or failed. */
@@ -188,7 +214,13 @@ export const createGoogleSlidesRouter = (
       )
       .mutation(
         async ({
-          input: { pluginId, connectionId, presentationId, name, replaceImportId },
+          input: {
+            pluginId,
+            connectionId,
+            presentationId,
+            name,
+            replaceImportId,
+          },
           ctx,
         }) => {
           const { organizationId, userId } = await requireMember(pluginId, ctx);

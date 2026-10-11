@@ -4,8 +4,12 @@ import { CanvaIconLogo } from "../../components/CanvaLogo";
 import { canvaBrand } from "../../components/integrationBranding";
 import { usePluginAPI } from "../../pluginApi";
 import { trpc } from "../../trpc";
-import { CanvaDesignPicker, CanvaSource } from "../ImportFile/CanvaDesignPicker";
+import {
+  CanvaDesignPicker,
+  CanvaSource,
+} from "../ImportFile/CanvaDesignPicker";
 import { IntegrationAccountChooser } from "./IntegrationAccountChooser";
+import { claimExternalWindow, openExternally } from "./externalWindow";
 import {
   IntegrationControllerProps,
   IntegrationLaunchContext,
@@ -16,6 +20,10 @@ const log = (...args: unknown[]) => console.log("[canva]", ...args);
 
 /** How long to wait for the sign-in popup before giving up. */
 const CONNECT_TIMEOUT_MS = 3 * 60 * 1000;
+
+const SIGN_IN_POLL_MS = 2000;
+// Matches the intent's lifetime on the cloud
+const SIGN_IN_TIMEOUT_MS = 15 * 60 * 1000;
 
 const CanvaController = ({ children }: IntegrationControllerProps) => {
   const pluginApi = usePluginAPI();
@@ -29,16 +37,35 @@ const CanvaController = ({ children }: IntegrationControllerProps) => {
   const [connecting, setConnecting] = useState<
     { mode: "once" } | { mode: "connect"; knownIds: string[] } | null
   >(null);
+  // Studio: a sign-in running in the system browser on the cloud
+  const [cloudSignIn, setCloudSignIn] = useState<{
+    intentId: string;
+    mode: "connect" | "once";
+    startedAt: number;
+  } | null>(null);
   const [source, setSource] = useState<CanvaSource | null>(null);
   const launchContextRef = useRef<IntegrationLaunchContext>({});
+  // Polling can report the same result twice; act on it once
+  const handledIntentRef = useRef<string | null>(null);
 
   const statusQuery = trpc.slides.canvaStatus.useQuery({ pluginId });
   const selectDesignMutation = trpc.slides.selectCanvaDesign.useMutation();
   const disconnectMutation = trpc.slides.canvaDisconnect.useMutation();
+  const beginSignInMutation = trpc.slides.canvaBeginSignIn.useMutation();
+  const signInStatusQuery = trpc.slides.canvaSignInStatus.useQuery(
+    { pluginId, intentId: cloudSignIn?.intentId ?? "" },
+    {
+      enabled: !!cloudSignIn,
+      refetchInterval: SIGN_IN_POLL_MS,
+      retry: false,
+    },
+  );
 
   const refetchStatus = statusQuery.refetch;
 
-  const connections = statusQuery.data?.connections ?? [];
+  const status = statusQuery.data;
+  const connections =
+    status && "connections" in status ? status.connections : [];
 
   const openPicker = useCallback((next: CanvaSource) => {
     setSource(next);
@@ -61,7 +88,8 @@ const CanvaController = ({ children }: IntegrationControllerProps) => {
     const finishConnect = async ({ isConfirmed }: { isConfirmed: boolean }) => {
       const res = await refetchStatus();
       if (isDone || connecting.mode !== "connect") return;
-      const linked = res.data?.connections ?? [];
+      const linked =
+        res.data && "connections" in res.data ? res.data.connections : [];
       const isNew = linked.some((c) => !connecting.knownIds.includes(c.id));
       // Reconnecting a known account adds nothing new, so only the popup's
       // own message can confirm that
@@ -114,8 +142,76 @@ const CanvaController = ({ children }: IntegrationControllerProps) => {
     };
   }, [connecting, refetchStatus, openPicker, pluginApi]);
 
+  // Studio: the sign-in finishes on the cloud, and its intent says how
+  useEffect(() => {
+    if (!cloudSignIn) return;
+
+    if (signInStatusQuery.error) {
+      setCloudSignIn(null);
+      pluginApi.remote.toast.error(signInStatusQuery.error.message);
+      return;
+    }
+
+    const data = signInStatusQuery.data;
+    if (data?.status === "done" && data.result) {
+      setCloudSignIn(null);
+      if (handledIntentRef.current === cloudSignIn.intentId) return;
+      handledIntentRef.current = cloudSignIn.intentId;
+      if ("grantId" in data.result) {
+        openPicker({ grantId: data.result.grantId });
+      } else {
+        void refetchStatus().then(() => setIsChooserOpen(true));
+      }
+      return;
+    }
+    if (data?.status === "failed") {
+      setCloudSignIn(null);
+      pluginApi.remote.toast.error(data.error ?? "Canva sign-in failed.");
+      return;
+    }
+    if (Date.now() - cloudSignIn.startedAt > SIGN_IN_TIMEOUT_MS) {
+      setCloudSignIn(null);
+    }
+  }, [
+    cloudSignIn,
+    signInStatusQuery.data,
+    signInStatusQuery.error,
+    openPicker,
+    refetchStatus,
+    pluginApi,
+  ]);
+
+  /** Studio: signs in on the cloud, in the system browser. */
+  const startCloudSignIn = useCallback(
+    async (mode: "connect" | "once") => {
+      setIsChooserOpen(false);
+      const claimed = claimExternalWindow();
+      try {
+        const { intentId, url } = await beginSignInMutation.mutateAsync({
+          pluginId,
+          mode,
+        });
+        await openExternally(claimed, url);
+        setCloudSignIn({ intentId, mode, startedAt: Date.now() });
+        pluginApi.remote.toast.info(
+          "Finish signing in to Canva in the browser window that opened.",
+        );
+      } catch (err: any) {
+        claimed?.close();
+        pluginApi.remote.toast.error(
+          err?.message ?? "Could not start the Canva sign-in.",
+        );
+      }
+    },
+    [beginSignInMutation, pluginId, pluginApi],
+  );
+
   const startConnect = useCallback(
     (mode: "connect" | "once") => {
+      if (status?.mode === "remote") {
+        void startCloudSignIn(mode);
+        return;
+      }
       const organizationId = pluginApi.pluginContext.organizationId;
       const url = `/plugin/slides/canva/authorize?organizationId=${encodeURIComponent(
         organizationId,
@@ -132,13 +228,29 @@ const CanvaController = ({ children }: IntegrationControllerProps) => {
         log("POPUP BLOCKED by the browser");
       }
     },
-    [pluginApi.pluginContext.organizationId, connections],
+    [
+      pluginApi.pluginContext.organizationId,
+      connections,
+      status,
+      startCloudSignIn,
+    ],
   );
 
-  const handleOpen = useCallback((context?: IntegrationLaunchContext) => {
-    launchContextRef.current = context ?? {};
-    setIsChooserOpen(true);
-  }, []);
+  const handleOpen = useCallback(
+    (context?: IntegrationLaunchContext) => {
+      if (statusQuery.error) {
+        pluginApi.remote.toast.error(statusQuery.error.message);
+        return;
+      }
+      if (status?.mode === "unavailable") {
+        pluginApi.remote.toast.error(status.reason);
+        return;
+      }
+      launchContextRef.current = context ?? {};
+      setIsChooserOpen(true);
+    },
+    [status, statusQuery.error, pluginApi],
+  );
 
   const handleSwitchAccount = useCallback(() => {
     setIsPickerOpen(false);
@@ -163,18 +275,17 @@ const CanvaController = ({ children }: IntegrationControllerProps) => {
     [selectDesignMutation, pluginId, pluginApi, source],
   );
 
-  if (statusQuery.data && !statusQuery.data.configured) {
-    return null;
-  }
-
   const activeConnectionId =
     source && "connectionId" in source ? source.connectionId : null;
 
   return (
     <>
       {children({
+        // Not while a Studio sign-in waits on the browser: if that tab was
+        // closed, clicking again starts over rather than waiting it out
         isLoading:
           !!connecting ||
+          beginSignInMutation.isPending ||
           statusQuery.isLoading ||
           selectDesignMutation.isPending,
         open: handleOpen,

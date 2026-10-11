@@ -1,4 +1,3 @@
-import { desktop } from "@repo/desktop-bridge";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FcGoogle } from "react-icons/fc";
 
@@ -6,15 +5,24 @@ import { googleSlidesBrand } from "../../components/integrationBranding";
 import { usePluginAPI } from "../../pluginApi";
 import { trpc } from "../../trpc";
 import { SlidePicker } from "../ImportFile/SlidePicker";
+import { IntegrationAccountChooser } from "./IntegrationAccountChooser";
+import { claimExternalWindow, openExternally } from "./externalWindow";
 import {
   IntegrationControllerProps,
   IntegrationLaunchContext,
   SlideIntegration,
 } from "./types";
-import { IntegrationAccountChooser } from "./IntegrationAccountChooser";
 
 const PICK_POLL_MS = 2000;
 const PICK_TIMEOUT_MS = 15 * 60 * 1000;
+
+const GOOGLE_CONNECT_DESCRIPTION =
+  "Stays connected, so you can pick again without signing in.";
+const GOOGLE_DISCONNECT_DESCRIPTION =
+  "You will need to connect it again to pick from its Drive. Slides you have already imported are unaffected.";
+
+/** How a pick on the cloud starts. Mirrors RemotePickMode on the server. */
+type RemotePickMode = "pick" | "connect" | "once";
 
 const GoogleSlidesController = (props: IntegrationControllerProps) => {
   const pluginApi = usePluginAPI();
@@ -240,7 +248,7 @@ const StoredGoogleSlides = ({
           void openWithAccount(connectionId);
         }}
         connect={{
-          description: "Stays connected, so you can pick again without signing in.",
+          description: GOOGLE_CONNECT_DESCRIPTION,
           onClick: () => {
             setIsChooserOpen(false);
             startConnect();
@@ -251,8 +259,7 @@ const StoredGoogleSlides = ({
           importOnce();
         }}
         disconnect={{
-          description:
-            "You will need to connect it again to pick from its Drive. Slides you have already imported are unaffected.",
+          description: GOOGLE_DISCONNECT_DESCRIPTION,
           onConfirm: async (connectionId) => {
             try {
               await disconnectMutation.mutateAsync({ pluginId, connectionId });
@@ -270,25 +277,36 @@ const StoredGoogleSlides = ({
 };
 
 /**
- * The cloud stores the connection. Google won't run its picker on a
- * localhost origin or inside the desktop shell, so the user picks on a cloud
- * page in their real browser and we poll for the result.
+ * Studio: the cloud stores the connections. Google won't run its sign-in or
+ * picker on a localhost origin or inside the desktop shell, so both happen on
+ * a cloud page in the system browser, and we poll for the pick.
  */
 const RemoteGoogleSlides = ({ children }: IntegrationControllerProps) => {
   const pluginApi = usePluginAPI();
   const pluginId = pluginApi.pluginContext.pluginId;
 
+  // Same query as the parent, so this shares its cache
+  const accountsQuery = trpc.slides.googleSlidesStatus.useQuery({ pluginId });
+  const accounts =
+    accountsQuery.data?.mode === "remote" ? accountsQuery.data.accounts : [];
+  const refetchAccounts = accountsQuery.refetch;
+
+  const [isChooserOpen, setIsChooserOpen] = useState(false);
   const [pending, setPending] = useState<{
     intentId: string;
+    mode: RemotePickMode;
     startedAt: number;
     context: IntegrationLaunchContext;
   } | null>(null);
+  const launchContextRef = useRef<IntegrationLaunchContext>({});
 
   // Effects can run twice for one result; import it once
   const handledIntentRef = useRef<string | null>(null);
 
   const beginMutation = trpc.slides.googleSlidesBeginPick.useMutation();
   const selectMutation = trpc.slides.selectGoogleSlide.useMutation();
+  const importOnceMutation = trpc.slides.googleSlidesImportOnce.useMutation();
+  const disconnectMutation = trpc.slides.googleSlidesDisconnect.useMutation();
 
   const statusQuery = trpc.slides.googleSlidesPickStatus.useQuery(
     { pluginId, intentId: pending?.intentId ?? "" },
@@ -309,18 +327,31 @@ const RemoteGoogleSlides = ({ children }: IntegrationControllerProps) => {
       setPending(null);
       if (handledIntentRef.current === pending.intentId) return;
       handledIntentRef.current = pending.intentId;
-      selectMutation.mutate(
-        {
-          pluginId,
-          connectionId: data.result.connectionId,
-          presentationId: data.result.presentationId,
-          name: data.result.name ?? undefined,
-          replaceImportId: pending.context.replaceImportId,
-        },
-        {
-          onError: (err) => pluginApi.remote.toast.error(err.message),
-        },
-      );
+
+      const { result } = data;
+      const common = {
+        pluginId,
+        presentationId: result.presentationId,
+        name: result.name ?? undefined,
+        replaceImportId: pending.context.replaceImportId,
+      };
+      const onError = (err: { message: string }) =>
+        pluginApi.remote.toast.error(err.message);
+
+      if (result.connectionId) {
+        selectMutation.mutate(
+          { ...common, connectionId: result.connectionId },
+          { onError },
+        );
+      } else if (result.accessToken) {
+        // "Import once": the cloud handed back a short-lived token instead
+        importOnceMutation.mutate(
+          { ...common, token: result.accessToken },
+          { onError },
+        );
+      }
+      // A new account may have been connected on the way
+      void refetchAccounts();
       pending.context.onComplete?.();
       return;
     }
@@ -337,31 +368,36 @@ const RemoteGoogleSlides = ({ children }: IntegrationControllerProps) => {
     statusQuery.data,
     statusQuery.error,
     selectMutation,
+    importOnceMutation,
+    refetchAccounts,
     pluginId,
     pluginApi,
   ]);
 
-  const open = useCallback(
-    async (context?: IntegrationLaunchContext) => {
-      // A plain browser blocks windows opened after an await, so claim one
-      // now. The desktop shell opens the system browser instead.
-      const placeholder = desktop.isDesktop
-        ? null
-        : window.open("about:blank", "_blank");
-
+  const begin = useCallback(
+    async (mode: RemotePickMode, connectionId?: string) => {
+      setIsChooserOpen(false);
+      const claimed = claimExternalWindow();
       try {
-        const { intentId, url } = await beginMutation.mutateAsync({ pluginId });
-        if (placeholder) {
-          placeholder.location.href = url;
-        } else {
-          await desktop.openExternal(url);
-        }
-        setPending({ intentId, startedAt: Date.now(), context: context ?? {} });
+        const { intentId, url } = await beginMutation.mutateAsync({
+          pluginId,
+          mode,
+          connectionId,
+        });
+        await openExternally(claimed, url);
+        setPending({
+          intentId,
+          mode,
+          startedAt: Date.now(),
+          context: launchContextRef.current,
+        });
         pluginApi.remote.toast.info(
-          "Choose your presentation in the browser window that just opened.",
+          mode === "pick"
+            ? "Choose your presentation in the browser window that just opened."
+            : "Sign in to Google in the browser window that just opened.",
         );
       } catch (err: any) {
-        placeholder?.close();
+        claimed?.close();
         pluginApi.remote.toast.error(
           err?.message ?? "Could not start Google Slides.",
         );
@@ -370,10 +406,53 @@ const RemoteGoogleSlides = ({ children }: IntegrationControllerProps) => {
     [beginMutation, pluginId, pluginApi],
   );
 
-  return children({
-    isLoading: beginMutation.isPending || !!pending || selectMutation.isPending,
-    open: (context) => void open(context),
-  });
+  return (
+    <>
+      {children({
+        // Not while a pick waits on the browser: if that tab was closed,
+        // clicking again starts over rather than waiting it out
+        isLoading:
+          beginMutation.isPending ||
+          selectMutation.isPending ||
+          importOnceMutation.isPending,
+        open: (context) => {
+          launchContextRef.current = context ?? {};
+          setIsChooserOpen(true);
+        },
+      })}
+
+      <IntegrationAccountChooser
+        isOpen={isChooserOpen}
+        onClose={() => setIsChooserOpen(false)}
+        name="Google"
+        icon={(className) => <FcGoogle className={className} />}
+        accounts={accounts.map((account) => ({
+          id: account.id,
+          label: account.label,
+          sublabel: account.displayName,
+        }))}
+        onChoose={(connectionId) => void begin("pick", connectionId)}
+        connect={{
+          description: GOOGLE_CONNECT_DESCRIPTION,
+          onClick: () => void begin("connect"),
+        }}
+        onImportOnce={() => void begin("once")}
+        disconnect={{
+          description: GOOGLE_DISCONNECT_DESCRIPTION,
+          onConfirm: async (connectionId) => {
+            try {
+              await disconnectMutation.mutateAsync({ pluginId, connectionId });
+            } catch (err: any) {
+              pluginApi.remote.toast.error(
+                err?.message ?? "Could not disconnect the Google account.",
+              );
+            }
+            await refetchAccounts();
+          },
+        }}
+      />
+    </>
+  );
 };
 
 export const googleSlidesIntegration: SlideIntegration = {
