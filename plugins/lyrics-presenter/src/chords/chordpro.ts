@@ -61,6 +61,34 @@ export const tokenizeChordPro = (line: string): ChordProToken[] => {
   return tokens;
 };
 
+export type ChordSegment = {
+  /** Over the start of `text`. Null for text before a line's first chord */
+  chord: string | null;
+  text: string;
+};
+
+/**
+ * A line as runs of text, each under the chord before it. A chord with
+ * nothing after it, before another chord or at the end, is over "".
+ */
+export const chordSegments = (line: string): ChordSegment[] => {
+  if (!hasInlineChords(line)) return [{ chord: null, text: line }];
+
+  const out: ChordSegment[] = [];
+  let chord: string | null = null;
+  for (const token of tokenizeChordPro(line)) {
+    if (token.type === "chord") {
+      if (chord !== null) out.push({ chord, text: "" });
+      chord = token.value;
+    } else {
+      out.push({ chord, text: token.value });
+      chord = null;
+    }
+  }
+  if (chord !== null) out.push({ chord, text: "" });
+  return out;
+};
+
 /** The lyric of a ChordPro line, with every inline chord removed. */
 export const stripInlineChords = (line: string): string => {
   if (!hasInlineChords(line)) return line;
