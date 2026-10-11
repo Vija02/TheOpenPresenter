@@ -84,11 +84,14 @@ export const buildAuthorizeUrl = ({
   codeChallenge,
   state,
   loginHint,
+  offline = true,
 }: {
   config: GoogleOAuthConfig;
   codeChallenge: string;
   state: string;
   loginHint?: string;
+  /** False for "Import once": no refresh token, since nothing is stored. */
+  offline?: boolean;
 }) => {
   const params = new URLSearchParams({
     response_type: "code",
@@ -98,10 +101,11 @@ export const buildAuthorizeUrl = ({
     code_challenge: codeChallenge,
     code_challenge_method: "S256",
     state,
-    access_type: "offline",
     include_granted_scopes: "true",
-    prompt: "consent select_account",
+    // Consent is only re-prompted to get a refresh token
+    prompt: offline ? "consent select_account" : "select_account",
   });
+  if (offline) params.set("access_type", "offline");
   if (loginHint) params.set("login_hint", loginHint);
 
   return `${GOOGLE_AUTHORIZE_URL}?${params.toString()}`;

@@ -50,6 +50,8 @@ export type CanvaPendingAuth = {
   uploadLinkId?: string | null;
   isOneTime?: boolean;
   grantId?: string | null;
+  /** Started from a local install; its intent learns the result. */
+  intentId?: string | null;
 };
 
 /**
@@ -65,14 +67,15 @@ export const savePendingAuth = async (
     uploadLinkId,
     isOneTime,
     grantId,
+    intentId,
   }: CanvaPendingAuth,
 ): Promise<void> => {
   const db = serverPluginApi.getDangerousRootPluginDb(pluginName);
   await db.query(
     `insert into canva_oauth_state
         (state_id, code_verifier, organization_id, user_id, upload_link_id,
-         is_one_time, grant_id)
-      values ($1, $2, $3, $4, $5, $6, $7)`,
+         is_one_time, grant_id, intent_id)
+      values ($1, $2, $3, $4, $5, $6, $7, $8)`,
     [
       stateId,
       codeVerifier,
@@ -81,6 +84,7 @@ export const savePendingAuth = async (
       uploadLinkId ?? null,
       isOneTime ?? false,
       grantId ?? null,
+      intentId ?? null,
     ],
   );
 };
@@ -101,7 +105,8 @@ export const consumePendingAuth = async (
                 user_id as "userId",
                 upload_link_id as "uploadLinkId",
                 is_one_time as "isOneTime",
-                grant_id as "grantId"`,
+                grant_id as "grantId",
+                intent_id as "intentId"`,
     [stateId],
   );
 
@@ -175,17 +180,27 @@ export const listConnections = async (
   return rows as CanvaConnectionSummary[];
 };
 
-export const assertConnectionInOrg = async (
+export const isConnectionInOrg = async (
   serverPluginApi: ServerPluginApi,
   connectionId: string,
   organizationId: string,
-): Promise<void> => {
+): Promise<boolean> => {
   const db = serverPluginApi.getDangerousRootPluginDb(pluginName);
   const { rows } = await db.query(
     `select 1 from canva_connection where id = $1 and organization_id = $2`,
     [connectionId, organizationId],
   );
-  if (rows.length === 0) {
+  return rows.length > 0;
+};
+
+export const assertConnectionInOrg = async (
+  serverPluginApi: ServerPluginApi,
+  connectionId: string,
+  organizationId: string,
+): Promise<void> => {
+  if (
+    !(await isConnectionInOrg(serverPluginApi, connectionId, organizationId))
+  ) {
     throw new Error(
       "That Canva account is not connected to this organization.",
     );
