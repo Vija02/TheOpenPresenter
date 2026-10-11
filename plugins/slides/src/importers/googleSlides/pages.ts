@@ -80,7 +80,8 @@ export const renderPickPage = ({
   nonce: string;
   config: {
     intentId: string;
-    connectionId: string;
+    /** Null for "Import once", which sends the token back instead */
+    connectionId: string | null;
     accessToken: string;
     appId: string;
     accountLabel: string;
@@ -123,6 +124,7 @@ export const renderPickPage = ({
           presentationId: doc.id,
           name: doc.name || null,
           connectionId: config.connectionId,
+          accessToken: config.connectionId ? undefined : config.accessToken,
         }),
       })
         .then(function (res) {

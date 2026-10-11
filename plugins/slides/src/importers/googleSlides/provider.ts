@@ -5,7 +5,11 @@ import {
 } from "@repo/base-plugin/server";
 
 import { getGoogleOAuthConfig } from "./oauth";
-import { GoogleAccessToken, getValidAccessToken } from "./tokenStore";
+import {
+  GoogleAccessToken,
+  GoogleConnectionSummary,
+  getValidAccessToken,
+} from "./tokenStore";
 
 /**
  * Decides how Google Slides runs for an organization and hides the
@@ -22,17 +26,57 @@ export const GOOGLE_PROVIDER = "slides/google";
 
 /** Paths on the cloud that a local install calls. Served by ./routes.ts */
 export const REMOTE_PATHS = {
+  status: "/plugin/slides/google/remote/status",
   pick: "/plugin/slides/google/remote/pick",
   intent: "/plugin/slides/google/remote/intent",
   token: "/plugin/slides/google/remote/token",
+  disconnect: "/plugin/slides/google/remote/disconnect",
 };
+
+/**
+ * What a remote pick starts with:
+ * - "pick": the picker, with `connectionId` or the latest account
+ * - "connect": sign in and connect an account, then the picker
+ * - "once": sign in for this import only; nothing is stored
+ */
+export type RemotePickMode = "pick" | "connect" | "once";
+
+export type RemotePickInput = {
+  mode: RemotePickMode;
+  connectionId?: string | null;
+};
+
+/** A connected account, as the account chooser lists it. */
+export type GoogleAccountOption = {
+  id: string;
+  label: string;
+  displayName: string | null;
+};
+
+export const toAccountOption = (
+  connection: GoogleConnectionSummary,
+): GoogleAccountOption => ({
+  id: connection.id,
+  label:
+    connection.googleEmail ?? connection.googleDisplayName ?? "Google account",
+  // Only worth showing when it differs from the email
+  displayName:
+    connection.googleEmail && connection.googleDisplayName
+      ? connection.googleDisplayName
+      : null,
+});
 
 export type GoogleMode = IntegrationMode;
 
+/**
+ * What a remote pick hands back: the stored connection it used, or for
+ * "Import once" a short-lived access token in its place.
+ */
 export type GooglePickResult = {
   presentationId: string;
   name: string | null;
-  connectionId: string;
+  connectionId: string | null;
+  accessToken?: string;
 };
 
 export const resolveGoogleMode = async (
@@ -58,11 +102,34 @@ const requireRemote = async (
 export const beginRemotePick = async (
   serverPluginApi: ServerPluginApi,
   organizationId: string,
+  input: RemotePickInput,
 ) =>
   serverPluginApi.integrations.callCloud<{ intentId: string; url: string }>(
     await requireRemote(serverPluginApi, organizationId),
     REMOTE_PATHS.pick,
-    { method: "POST", body: {} },
+    { method: "POST", body: input },
+  );
+
+/** Remote: the caller's own accounts, as connected on the cloud. */
+export const getRemoteAccounts = async (
+  serverPluginApi: ServerPluginApi,
+  organizationId: string,
+) =>
+  serverPluginApi.integrations.callCloud<{ accounts: GoogleAccountOption[] }>(
+    await requireRemote(serverPluginApi, organizationId),
+    REMOTE_PATHS.status,
+  );
+
+/** Remote: disconnects one of the caller's accounts on the cloud. */
+export const disconnectRemote = async (
+  serverPluginApi: ServerPluginApi,
+  organizationId: string,
+  connectionId: string,
+) =>
+  serverPluginApi.integrations.callCloud<{ ok: true }>(
+    await requireRemote(serverPluginApi, organizationId),
+    REMOTE_PATHS.disconnect,
+    { method: "POST", body: { connectionId } },
   );
 
 /** Remote: where a pick started by `beginRemotePick` has got to. */
