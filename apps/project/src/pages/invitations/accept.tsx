@@ -40,7 +40,29 @@ const InvitationAccept = () => {
   });
 
   if (!id) {
-    throw new Error("id not supplied");
+    return (
+      <SharedLayout
+        title="Accept Invitation"
+        query={query}
+        noHandleErrors
+        forbidWhen={AuthRestrict.LOGGED_OUT}
+      >
+        <div className="stack-col items-start">
+          <h2 className="text-2xl font-bold">
+            This invitation link is not valid
+          </h2>
+          <p>
+            The link is missing some information. Please open the invitation
+            link from your email again.
+          </p>
+          <Link asChild>
+            <WouterLink href="/o">
+              <Button>Back to the app</Button>
+            </WouterLink>
+          </Link>
+        </div>
+      </SharedLayout>
+    );
   }
 
   return (
