@@ -85,4 +85,34 @@ test.describe("Media Page", () => {
     expect(response.ok()).toBe(true);
     expect((await response.body()).length).toBeGreaterThan(1000);
   });
+
+  test("processes audio that has no metadata", async ({
+    page,
+    mediaPage,
+    loginDefault,
+    e2eCommand,
+  }) => {
+    await loginDefault("/o/testorg/media");
+    await e2eCommand.seedAudioMediaWithoutMetadata({
+      orgSlug: "testorg",
+      audioPath: "./dummyFiles/dummyAudio.mp3",
+    });
+    await page.reload();
+
+    const mediaCard = mediaPage.getMediaCardByName("dummyAudio.mp3");
+    const processingOverlay = mediaCard.locator(
+      ".ui--media-preview-processing-overlay",
+    );
+    await expect(processingOverlay).toBeVisible({ timeout: 10000 });
+
+    await e2eCommand.serverCommand("queueMissingAudioTranscodes");
+    await expect(processingOverlay).toBeHidden({ timeout: 60000 });
+
+    // Old audio keeps its levels, so the mp3 plays as it is
+    await mediaCard.getByTitle("Play audio").click();
+    await expect(mediaCard.locator("audio")).toHaveAttribute(
+      "src",
+      /\/media\/data\/media_\w+\.mp3$/,
+    );
+  });
 });

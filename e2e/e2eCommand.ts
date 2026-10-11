@@ -299,6 +299,13 @@ export class E2ECommandAPI {
     },
   ): Promise<{ success: true; screenGuestId: string }>;
 
+  /**
+   * Queues the job that processes audio with no metadata row
+   */
+  async serverCommand(command: "queueMissingAudioTranscodes"): Promise<{
+    success: true;
+  }>;
+
   async serverCommand(command: string, payload?: any): Promise<any> {
     const res = await this.request.get(
       `/E2EServerCommand?command=${encodeURIComponent(command)}${
@@ -353,6 +360,38 @@ export class E2ECommandAPI {
     if (!res.ok()) {
       throw new Error(
         `seedVideoMedia failed: ${res.status()} ${await res.text()}`,
+      );
+    }
+
+    return res.json();
+  }
+
+  /**
+   * Uploads audio with no metadata row, like audio uploaded before audio
+   * processing existed
+   */
+  async seedAudioMediaWithoutMetadata(payload: {
+    orgSlug: string;
+    audioPath: string;
+  }): Promise<{ success: true; mediaId: string; mediaName: string }> {
+    const { orgSlug, audioPath } = payload;
+
+    const res = await this.request.post(
+      "/E2EServerCommand?command=seedAudioMediaWithoutMetadata",
+      {
+        headers: { "x-top-csrf-protection": "1" },
+        data: {
+          orgSlug,
+          originalName: basename(audioPath),
+          audioExtension: extname(audioPath).replace(".", ""),
+          audio: readFixture(audioPath).toString("base64"),
+        },
+      },
+    );
+
+    if (!res.ok()) {
+      throw new Error(
+        `seedAudioMediaWithoutMetadata failed: ${res.status()} ${await res.text()}`,
       );
     }
 
