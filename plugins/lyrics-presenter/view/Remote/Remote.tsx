@@ -1,6 +1,6 @@
 import { Button, LoginRequired, OverlayToggle, PluginScaffold } from "@repo/ui";
-import { useCallback } from "react";
-import { PiExportLight } from "react-icons/pi";
+import { useCallback, useState } from "react";
+import { PiExportLight, PiMusicNotes } from "react-icons/pi";
 import { VscAdd, VscBook, VscPaintcan } from "react-icons/vsc";
 
 import { chordProToOpenSong } from "../../src/chords/convert/chordProToOpenSong";
@@ -8,6 +8,7 @@ import { Song } from "../../src/types";
 import { usePluginAPI } from "../pluginApi";
 import { useFollowLookChanges } from "../useActivateLyricSlide";
 import Landing from "./Landing";
+import { MusicianView } from "./MusicianView";
 import RemoteAddSongModal from "./RemoteAddSongModal";
 import SongView from "./SongView";
 import SongbookModal from "./SongbookModal";
@@ -61,6 +62,8 @@ const Remote = () => {
   const mutableSceneData = pluginApi.scene.useValtioData();
   const isPublicAccess = pluginApi.isPublicAccess;
   useFollowLookChanges();
+  const [isMusicianViewOpen, setIsMusicianViewOpen] = useState(false);
+  const closeMusicianView = useCallback(() => setIsMusicianViewOpen(false), []);
 
   const onExport = useCallback(() => {
     songs.forEach((song) => {
@@ -82,6 +85,23 @@ const Remote = () => {
   return (
     <PluginScaffold
       title="Lyrics"
+      postToolbar={
+        <>
+          <Button
+            size="xs"
+            variant="pill"
+            onClick={() => setIsMusicianViewOpen(true)}
+            disabled={songs.length === 0}
+            data-testid="ly-musician-view-button"
+          >
+            <PiMusicNotes />
+            Musician view
+          </Button>
+          <Button size="xs" variant="pill" onClick={onExport}>
+            <PiExportLight /> Export
+          </Button>
+        </>
+      }
       toolbar={
         <>
           <OverlayToggle
@@ -128,9 +148,6 @@ const Remote = () => {
               <SongbookModal />
             </OverlayToggle>
           )}
-          <Button size="xs" variant="pill" onClick={onExport}>
-            <PiExportLight /> Export
-          </Button>
         </>
       }
       body={
@@ -167,6 +184,7 @@ const Remote = () => {
             >
               <RemoteAddSongModal />
             </OverlayToggle>
+            {isMusicianViewOpen && <MusicianView onClose={closeMusicianView} />}
           </div>
         )
       }

@@ -358,6 +358,46 @@ export class LyricsPlugin {
   }
 
   // ---------------------------------------------------------------------------
+  // Musician view
+  // ---------------------------------------------------------------------------
+
+  /** Returns the view */
+  async openMusicianView(): Promise<Locator> {
+    await this.page.getByTestId("ly-musician-view-button").click();
+    const view = this.page.getByTestId("ly-musician-view");
+    await view.waitFor();
+    return view;
+  }
+
+  /** The title the view's song picker shows */
+  musicianSong(view: Locator): Locator {
+    return view.getByTestId("ly-musician-song").locator("option:checked");
+  }
+
+  musicianLiveSlide(view: Locator): Locator {
+    return view.locator('[data-testid="ly-musician-slide"][data-live="true"]');
+  }
+
+  /** Sets "Fit the whole song" for the style the view is showing */
+  async setMusicianFit(view: Locator, on: boolean) {
+    const panel = await this.openMusicianSettings(view);
+    const fit = panel.getByTestId("ly-musician-autofit");
+    if ((await fit.getAttribute("aria-checked")) !== String(on)) {
+      await fit.click();
+    }
+    await this.page.keyboard.press("Escape");
+    await panel.waitFor({ state: "hidden" });
+  }
+
+  /** Returns the panel. It sits over the view, not inside it */
+  async openMusicianSettings(view: Locator): Promise<Locator> {
+    await view.getByTestId("ly-musician-settings").click();
+    const panel = this.page.getByTestId("ly-musician-settings-panel");
+    await panel.waitFor();
+    return panel;
+  }
+
+  // ---------------------------------------------------------------------------
   // Layout (the style buttons open a layout workbench)
   // ---------------------------------------------------------------------------
 

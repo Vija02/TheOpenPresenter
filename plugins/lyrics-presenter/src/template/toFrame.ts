@@ -1,6 +1,6 @@
 import { FrameData, Span, span } from "@repo/layout";
 
-import { hasInlineChords, tokenizeChordPro } from "../chords/chordpro";
+import { chordSegments } from "../chords/chordpro";
 import { GroupedData } from "../processLyrics";
 import type { Song } from "../types";
 import {
@@ -53,28 +53,12 @@ const append = (out: Span[], next: Span) => {
 const appendLines = (out: Span[], lines: string[], role: string | null) => {
   for (const line of lines) {
     if (out.length > 0) append(out, span("\n"));
-    if (!hasInlineChords(line)) {
-      append(out, span(line, role));
-      continue;
+    for (const { chord, text } of chordSegments(line)) {
+      append(
+        out,
+        chord === null ? span(text, role) : withChord(text, chord, role),
+      );
     }
-
-    let chord: string | null = null;
-    for (const token of tokenizeChordPro(line)) {
-      if (token.type === "chord") {
-        // Two chords in a row: the first is over nothing
-        if (chord !== null) append(out, withChord("", chord, role));
-        chord = token.value;
-      } else {
-        append(
-          out,
-          chord === null
-            ? span(token.value, role)
-            : withChord(token.value, chord, role),
-        );
-        chord = null;
-      }
-    }
-    if (chord !== null) append(out, withChord("", chord, role));
   }
 };
 
