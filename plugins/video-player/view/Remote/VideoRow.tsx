@@ -1,7 +1,7 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Button, cn } from "@repo/ui";
-import { UniversalVideo } from "@repo/video";
+import { InternalVideo, UniversalVideo } from "@repo/video";
 import { FaPause, FaPlay } from "react-icons/fa6";
 import { IoMdClose } from "react-icons/io";
 import { VscGripper } from "react-icons/vsc";
@@ -32,6 +32,9 @@ export const VideoRow = ({
   } = useSortable({ id: video.id });
 
   const title = video.metadata.title ?? video.url;
+  // Uploads are added straight away, but can't play until transcoded
+  const isProcessing =
+    !!video.isInternalVideo && !(video as InternalVideo).hlsMediaName;
   const details = [
     video.isInternalVideo ? "Uploaded" : "YouTube",
     (video.metadata.duration ?? 0) > 0
@@ -69,16 +72,26 @@ export const VideoRow = ({
         size="sm"
         // Same width either way, so the row doesn't shift
         className="w-10 shrink-0"
+        disabled={isProcessing}
         onClick={() => controls.toggleVideo(video.id)}
         aria-label={`${isPlaying ? "Pause" : "Play"} ${title}`}
       >
         {isPlaying ? <FaPause /> : <FaPlay />}
       </Button>
       {/* Narrow screens need the room for the title */}
-      <VideoThumbnail video={video} className="hidden w-16 @sm:block" />
+      <VideoThumbnail
+        video={video}
+        isProcessing={isProcessing}
+        className="hidden w-16 @sm:block"
+      />
       <div className="flex-1 min-w-0">
         <p className="truncate font-medium">{title}</p>
-        <p className="truncate text-xs text-secondary">{details}</p>
+        <p
+          className="truncate text-xs text-secondary"
+          data-testid={isProcessing ? "playlist-video-processing" : undefined}
+        >
+          {isProcessing ? "Processing..." : details}
+        </p>
       </div>
       <Button
         variant="ghost"

@@ -2,12 +2,15 @@ import { extractMediaName } from "@repo/lib";
 import { MediaPreview, MediaPreviewData, Skeleton, cn } from "@repo/ui";
 import { InternalVideo, UniversalVideo } from "@repo/video";
 import { useMemo } from "react";
+import { VscLoading } from "react-icons/vsc";
 
 export const VideoThumbnail = ({
   video,
+  isProcessing,
   className,
 }: {
   video: UniversalVideo;
+  isProcessing?: boolean;
   className?: string;
 }) => {
   const mediaPreviewData: MediaPreviewData | null = useMemo(() => {
@@ -39,7 +42,7 @@ export const VideoThumbnail = ({
   return (
     <div
       className={cn(
-        "aspect-video shrink-0 rounded-sm overflow-hidden",
+        "relative aspect-video shrink-0 rounded-sm overflow-hidden",
         className,
       )}
     >
@@ -53,6 +56,11 @@ export const VideoThumbnail = ({
         />
       ) : (
         <Skeleton className="w-full h-full" />
+      )}
+      {isProcessing && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/50 text-white">
+          <VscLoading className="animate-spin" />
+        </div>
       )}
     </div>
   );

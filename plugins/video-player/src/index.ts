@@ -191,12 +191,14 @@ const onPluginDataLoaded: RegisterOnPluginDataLoaded<
         if (!internalVideo.hlsMediaName) {
           logger.trace({ videoUUID }, "Checking transcode status");
           checkTranscoded(videoUUID).then((metadata) => {
-            (data.pluginData.videos[i] as InternalVideo).hlsMediaName =
-              metadata.hlsMediaName ?? null;
-            (data.pluginData.videos[i] as InternalVideo).thumbnailMediaName =
-              metadata.thumbnailMediaName ?? null;
-            (data.pluginData.videos[i] as InternalVideo).metadata.duration =
-              metadata.duration;
+            // By id, since the playlist may have been reordered meanwhile
+            const target = data.pluginData.videos.find(
+              (x) => x.id === video.id,
+            ) as InternalVideo | undefined;
+            if (!target) return;
+            target.hlsMediaName = metadata.hlsMediaName ?? null;
+            target.thumbnailMediaName = metadata.thumbnailMediaName ?? null;
+            target.metadata.duration = metadata.duration;
           });
         }
       }
