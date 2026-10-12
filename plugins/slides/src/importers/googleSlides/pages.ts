@@ -86,6 +86,8 @@ export const renderPickPage = ({
     appId: string;
     accountLabel: string;
     switchAccountUrl: string;
+    /** Where the pick goes. Not this page's URL, which may be the callback */
+    submitUrl: string;
   };
 }) => `<!doctype html>
 <html lang="en">
@@ -117,7 +119,7 @@ export const renderPickPage = ({
       done = true;
       openEl.hidden = true;
       setStatus("Adding “" + (doc.name || "presentation") + "”…");
-      fetch(window.location.pathname + window.location.search, {
+      fetch(config.submitUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-top-csrf-protection": "1" },
         body: JSON.stringify({
