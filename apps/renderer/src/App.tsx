@@ -7,14 +7,15 @@ import {
   PluginMetaDataProvider,
 } from "@repo/shared";
 import { useHandleKeyPress } from "@repo/shared";
-import { lazy, useEffect, useMemo } from "react";
+import { lazyWithRetry } from "@repo/ui";
+import { useEffect, useMemo } from "react";
 import { Route, Switch, useParams, useSearch } from "wouter";
 
 import { Body } from "./Body";
 import { FullscreenButton } from "./FullscreenButton";
 import { Screen } from "./Screen";
 
-const DesktopHandler = lazy(() => import("./DesktopHandler"));
+const DesktopHandler = lazyWithRetry(() => import("./DesktopHandler"));
 
 function App() {
   return (
