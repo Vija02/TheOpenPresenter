@@ -1,6 +1,7 @@
 import { Redirect } from "@/components/Redirect";
 import { SharedLayoutLoggedIn } from "@/components/SharedLayoutLoggedIn";
 import { organizationTypeOptions } from "@/lib/organizationType";
+import { useCreateSampleProject } from "@/lib/useCreateSampleProject";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   CreatedOrganizationFragment,
@@ -56,6 +57,7 @@ const CreateOrganizationPage = () => {
   const [organization, setOrganization] =
     useState<null | CreatedOrganizationFragment>(null);
   const [, createOrganization] = useCreateOrganizationMutation();
+  const createSampleProject = useCreateSampleProject();
 
   const onSubmit = useCallback(
     async (values: FormInputs) => {
@@ -76,6 +78,7 @@ const CreateOrganizationPage = () => {
           captureEvent("organization_created", {
             organization_type: organizationType,
           });
+          await createSampleProject(organization.id);
         }
         setError(null);
         setOrganization(organization || null);
@@ -83,7 +86,7 @@ const CreateOrganizationPage = () => {
         setError(e);
       }
     },
-    [createOrganization],
+    [createOrganization, createSampleProject],
   );
 
   if (organization) {

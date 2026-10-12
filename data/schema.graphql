@@ -1702,6 +1702,21 @@ type CreateProjectTagPayload {
   tag: Tag
 }
 
+input CreateSampleProjectInput {
+  organizationId: UUID!
+  slug: String!
+
+  """
+  The day of the service. The client picks it so it's in the user's time zone
+  """
+  targetDate: Datetime
+}
+
+type CreateSampleProjectPayload {
+  projectId: UUID
+  projectSlug: String
+}
+
 """All input for the `createScreenGuest` mutation."""
 input CreateScreenGuestInput {
   """
@@ -3789,6 +3804,17 @@ type Mutation {
     """
     input: CreateProjectTagInput!
   ): CreateProjectTagPayload
+
+  """
+  Creates a sample project in an organization that has no projects yet.
+  Returns a null project if the organization already has one.
+  """
+  createSampleProject(
+    """
+    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.
+    """
+    input: CreateSampleProjectInput!
+  ): CreateSampleProjectPayload
 
   """Creates a single `Screen`."""
   createScreen(

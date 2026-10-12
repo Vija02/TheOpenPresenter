@@ -1,0 +1,16 @@
+mutation CreateSampleProject(
+  $organizationId: UUID!
+  $slug: String!
+  $targetDate: Datetime
+) {
+  createSampleProject(
+    input: {
+      organizationId: $organizationId
+      slug: $slug
+      targetDate: $targetDate
+    }
+  ) {
+    projectId
+    projectSlug
+  }
+}
