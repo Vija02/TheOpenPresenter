@@ -37,6 +37,8 @@ export type GoogleAccountActivity = {
   refreshCount: number;
   revokeCount: number;
   exportCount: number;
+  /** Per sign-in, in order: whether it asked for offline access. */
+  signIns: { offline: boolean }[];
 };
 
 export type FakeGoogle = {
