@@ -256,6 +256,7 @@ export const registerGoogleSlidesRoutes = (
               accountLabel:
                 identity.email ?? identity.displayName ?? "your Google account",
               switchAccountUrl: intentPath("authorize", intent.id),
+              submitUrl: intentPath("pick", intent.id),
             },
           }),
         );
@@ -277,15 +278,13 @@ export const registerGoogleSlidesRoutes = (
         return;
       }
 
-      res
-        .type("html")
-        .send(
-          renderPopupResult({
-            nonce,
-            origin: appOrigin,
-            payload: { ok: true },
-          }),
-        );
+      res.type("html").send(
+        renderPopupResult({
+          nonce,
+          origin: appOrigin,
+          payload: { ok: true },
+        }),
+      );
     } catch (err) {
       await fail(
         err instanceof Error && err.message.startsWith("Google did not grant")
@@ -425,6 +424,7 @@ export const registerGoogleSlidesRoutes = (
             connection.googleDisplayName ??
             "your Google account",
           switchAccountUrl: intentPath("authorize", intent.id),
+          submitUrl: intentPath("pick", intent.id),
         },
       }),
     );

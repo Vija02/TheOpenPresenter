@@ -59,6 +59,8 @@ type AccountState = {
   refreshCount: number;
   revokeCount: number;
   exportCount: number;
+  /** Per sign-in, in order: whether it asked for offline access. */
+  signIns: { offline: boolean }[];
 };
 
 const defaultAccount = (accountId: string): Account => ({
@@ -71,8 +73,12 @@ const accounts = new Map<string, AccountState>();
 const accessTokens = new Map<string, string>();
 /** Refresh token -> account id. */
 const refreshTokens = new Map<string, string>();
-/** Authorization code -> account id and the PKCE challenge it was issued for. */
-const codes = new Map<string, { accountId: string; codeChallenge: string }>();
+/** Authorization code -> who it is for, its PKCE challenge, and whether it
+ * may be exchanged for a refresh token. */
+const codes = new Map<
+  string,
+  { accountId: string; codeChallenge: string; offline: boolean }
+>();
 
 const stateFor = (accountId: string): AccountState => {
   const existing = accounts.get(accountId);
@@ -82,6 +88,7 @@ const stateFor = (accountId: string): AccountState => {
     refreshCount: 0,
     revokeCount: 0,
     exportCount: 0,
+    signIns: [],
   };
   accounts.set(accountId, created);
   return created;
@@ -172,8 +179,12 @@ const handleAuthorize = (
     return;
   }
 
+  // As at Google, only an offline sign-in gets a refresh token
+  const offline = url.searchParams.get("access_type") === "offline";
+  stateFor(accountId).signIns.push({ offline });
+
   const code = `code-${randomId()}`;
-  codes.set(code, { accountId, codeChallenge });
+  codes.set(code, { accountId, codeChallenge, offline });
   back.searchParams.set("code", code);
   redirect(res, back.toString());
 };
@@ -185,6 +196,7 @@ const handleToken = async (req: IncomingMessage, res: ServerResponse) => {
 
   let accountId: string | undefined;
   let isFirstExchange = false;
+  let isOffline = false;
 
   if (body.get("grant_type") === "authorization_code") {
     const issued = codes.get(body.get("code") ?? "");
@@ -196,6 +208,7 @@ const handleToken = async (req: IncomingMessage, res: ServerResponse) => {
     }
     accountId = issued.accountId;
     isFirstExchange = true;
+    isOffline = issued.offline;
   } else if (body.get("grant_type") === "refresh_token") {
     accountId = refreshTokens.get(body.get("refresh_token") ?? "");
     if (!accountId) return invalidGrant("fake-google: token has been revoked");
@@ -210,7 +223,7 @@ const handleToken = async (req: IncomingMessage, res: ServerResponse) => {
   accessTokens.set(accessToken, accountId);
 
   let refreshToken: string | undefined;
-  if (isFirstExchange && !account.withholdRefreshToken) {
+  if (isFirstExchange && isOffline && !account.withholdRefreshToken) {
     refreshToken = `refresh-${randomId()}`;
     refreshTokens.set(refreshToken, accountId);
   }
@@ -313,6 +326,7 @@ const handleControl = async (
       refreshCount: state?.refreshCount ?? 0,
       revokeCount: state?.revokeCount ?? 0,
       exportCount: state?.exportCount ?? 0,
+      signIns: state?.signIns ?? [],
     });
     return;
   }
