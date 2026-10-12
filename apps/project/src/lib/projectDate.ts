@@ -28,3 +28,9 @@ export const fromProjectDateValue = (value: string): Date => {
     stored.getUTCDate(),
   );
 };
+
+export const comingSunday = (from = new Date()): Date => {
+  const day = new Date(from.getFullYear(), from.getMonth(), from.getDate());
+  day.setDate(day.getDate() + ((7 - day.getDay()) % 7));
+  return day;
+};

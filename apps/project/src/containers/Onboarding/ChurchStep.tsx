@@ -1,3 +1,4 @@
+import { useCreateSampleProject } from "@/lib/useCreateSampleProject";
 import {
   OrganizationType,
   useCreateOrganizationMutation,
@@ -68,6 +69,7 @@ export const ChurchStep = ({
 
   const [, createOrganization] = useCreateOrganizationMutation();
   const [, requestJoinToOrganization] = useRequestJoinToOrganizationMutation();
+  const createSampleProject = useCreateSampleProject();
 
   const [{ data: publicOrganizations }] = useSearchPublicOrganizationsQuery({
     variables: {
@@ -109,9 +111,10 @@ export const ChurchStep = ({
         from_onboarding: true,
         is_personal: !isPublic,
       });
+      await createSampleProject(organization.id);
       return organization;
     },
-    [createOrganization, organizationType],
+    [createOrganization, createSampleProject, organizationType],
   );
 
   /** A private space of their own, named after them. */
