@@ -1,5 +1,9 @@
 import { WithPgClient, job, media } from "@repo/backend-shared";
-import type { DataBinding, DerivationField } from "@repo/base-types";
+import type {
+  DataBinding,
+  DerivationField,
+  PluginLook,
+} from "@repo/base-types";
 import { OrganizationType } from "@repo/graphql";
 import { mediaIdFromUUID } from "@repo/lib";
 import { Express, RequestHandler } from "express";
@@ -132,6 +136,10 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
   protected registeredDataBindings: {
     pluginName: string;
     bindings: DataBinding[];
+  }[] = [];
+  protected registeredLooks: {
+    pluginName: string;
+    looks: PluginLook[];
   }[] = [];
   protected registeredAiCapabilities = new Map<string, AnyAiCapability>();
 
@@ -272,6 +280,11 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
 
   public registerDataBindings(pluginName: string, bindings: DataBinding[]) {
     this.registeredDataBindings.push({ pluginName, bindings });
+  }
+
+  /** The plugin's own versions of looks. A screen falls back to main */
+  public registerLooks(pluginName: string, looks: PluginLook[]) {
+    this.registeredLooks.push({ pluginName, looks });
   }
 
   public registerAiCapability<T>(capability: AiCapability<T>) {
@@ -601,6 +614,9 @@ export class ServerPluginApiPrivate extends ServerPluginApi {
   }
   getRegisteredDataBindings() {
     return this.registeredDataBindings;
+  }
+  getRegisteredLooks() {
+    return this.registeredLooks;
   }
   getRegisteredAiCapabilities() {
     return this.registeredAiCapabilities;

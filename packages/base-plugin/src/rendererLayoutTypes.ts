@@ -7,3 +7,11 @@ export type RendererLayout<Doc = unknown> = {
 };
 
 export type { Derivation };
+
+export {
+  BUILT_IN_LOOK_KEYS,
+  CONFIDENCE_LOOK_KEY,
+  MAIN_LOOK_KEY,
+  OVERLAY_LOOK_KEY,
+} from "@repo/base-types";
+export type { PluginLook, ProjectLook, ProjectLooks } from "@repo/base-types";

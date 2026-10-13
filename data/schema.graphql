@@ -5336,6 +5336,7 @@ type PluginMeta {
   clientPluginViews: [ClientPluginView!]!
   registeredDataBindings: [RegisteredDataBindings!]!
   registeredDerivationFields: [RegisteredDerivationFields!]!
+  registeredLooks: [RegisteredLooks!]!
   registeredRemoteView: [RegisteredRemoteView!]!
   registeredRendererView: [RegisteredRendererView!]!
   sceneCreator: [SceneCreator!]!
@@ -6826,6 +6827,11 @@ type RegisteredDataBindings {
 
 type RegisteredDerivationFields {
   fields: JSON!
+  pluginName: String!
+}
+
+type RegisteredLooks {
+  looks: JSON!
   pluginName: String!
 }
 

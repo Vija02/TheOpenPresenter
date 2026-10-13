@@ -1,4 +1,9 @@
-import type { MediaPicker, PluginContext, UUID } from "@repo/base-types";
+import type {
+  MediaPicker,
+  PluginContext,
+  ProjectLooks,
+  UUID,
+} from "@repo/base-types";
 import type { OrganizationType } from "@repo/graphql";
 import type { ObjectToTypedMap } from "@repo/lib";
 import type { Logger } from "pino";
@@ -19,6 +24,7 @@ export type State = {
   meta: Meta;
   data: StateData;
   renderer: Renderer;
+  looks?: ProjectLooks | null;
 };
 
 export type Meta = {
