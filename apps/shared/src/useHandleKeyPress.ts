@@ -2,10 +2,11 @@ import { useKeyPressMutation } from "@repo/graphql";
 
 import { usePluginData, usePluginMetaData } from "./contexts";
 
-export const useHandleKeyPress = () => {
+export const useHandleKeyPress = (programId?: string) => {
   const [, keyPressMutate] = useKeyPressMutation();
   const projectId = usePluginMetaData().projectId;
-  const { rendererId } = usePluginData();
+  const { rendererId: providerRendererId } = usePluginData();
+  const rendererId = programId ?? providerRendererId;
 
   const handleKeyPress = (e: React.KeyboardEvent<any>) => {
     // Skip if focus is in an input field

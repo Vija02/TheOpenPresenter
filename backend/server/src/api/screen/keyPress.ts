@@ -1,9 +1,26 @@
-import { KeyPressType, keyPressTypes } from "@repo/base-plugin";
+import { KeyPressType, YState, keyPressTypes } from "@repo/base-plugin";
+import { outputProgramId, readOutputs } from "@repo/layout";
 import { gql, makeExtendSchemaPlugin } from "graphile-utils";
 
 import { OurGraphQLContext } from "../../graphile.config";
+import { hocuspocus } from "../../hocuspocusInstance";
 import { dispatchKeyPress } from "../keyPressDispatch";
 import { isMemberOfOrg } from "./helpers";
+
+/** A screen shows an output; its presses move the program the output shows */
+const outputProgram = (projectId: string, outputId: string): string => {
+  const state = hocuspocus.documents.get(projectId)?.getMap() as
+    | YState
+    | undefined;
+  if (!state) return outputId;
+  return outputProgramId(
+    readOutputs({
+      renderer: state.get("renderer")?.toJSON() ?? {},
+      outputs: state.get("outputs")?.toJSON() ?? null,
+    }),
+    outputId,
+  );
+};
 
 const screenKeyPressPlugin = makeExtendSchemaPlugin(() => ({
   typeDefs: gql`
@@ -90,7 +107,7 @@ const screenKeyPressPlugin = makeExtendSchemaPlugin(() => ({
         const result = dispatchKeyPress({
           keyType: keyType as KeyPressType,
           projectId,
-          rendererId,
+          rendererId: outputProgram(projectId, rendererId),
           sceneId: inputSceneId,
           organizationId,
         });

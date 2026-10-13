@@ -3,6 +3,7 @@ import {
   AwarenessStateData,
   CurrentSceneInfo,
   Derivation,
+  MAIN_LOOK_KEY,
   OverlayInfo,
   PluginContext,
   Scene,
@@ -19,13 +20,16 @@ import {
   LayoutDoc,
   LayoutFeed,
   activeFeeds,
-  readRendererLayoutDoc,
+  bindLookTarget,
+  resolvePluginLook,
+  simpleOutputInfo,
 } from "@repo/layout";
 import {
   HostRendererProvider,
   LayoutRenderer,
   resolveFeedSources,
   useFeedData,
+  useReadOutputs,
 } from "@repo/layout/react";
 import { findClientPluginView, preloader } from "@repo/lib";
 import { logger } from "@repo/observability";
@@ -42,8 +46,10 @@ import { useQuery } from "@tanstack/react-query";
 import { cx } from "class-variance-authority";
 import React, {
   ReactNode,
+  createContext,
   lazy,
   useCallback,
+  useContext,
   useMemo,
   useState,
 } from "react";
@@ -63,31 +69,52 @@ const useRendererId = () => {
 
 const Landing = lazy(() => import("./Landing"));
 
+/**
+ * Whether the program's Black/Clear applies here. Null outside any box, so the
+ * outermost box draws the black and the boxes inside a look inherit
+ */
+const FollowOverlayContext = createContext<boolean | null>(null);
+
+/** Set for a simple output, whose one box keeps every scene ready to fade in */
+const PreloadScenesContext = createContext(false);
+
+/** Draws one output, named by the URL's `renderer` */
 export const Body = ({
   hostElementId = null,
+  hostSpec = null,
 }: {
-  /** Draw only this host element of the layout, filling the frame. */
+  /** Draw only this host element of the output, filling the frame. */
   hostElementId?: string | null;
+  /** JSON `{ source, derivation, look, followOverlay }`, drawn the same way */
+  hostSpec?: string | null;
 }) => {
   const data = useData();
-  const rendererId = useRendererId();
+  const outputId = useRendererId();
 
-  const currentRenderer = useMemo(
-    () => data.renderer[rendererId],
-    [data.renderer, rendererId],
+  const outputs = useReadOutputs({
+    renderer: data.renderer,
+    outputs: data.outputs,
+  });
+  const output = outputs[outputId];
+  const simple = useMemo(
+    () => (output ? simpleOutputInfo(output.layout) : null),
+    [output],
   );
-  const currentScene = useMemo(
-    () => currentRenderer?.currentScene,
-    [currentRenderer?.currentScene],
-  );
-  const layoutDoc = useMemo(
-    () => readRendererLayoutDoc(currentRenderer?.layout),
-    [currentRenderer?.layout],
-  );
+
+  if (hostSpec) {
+    const element = parseHostSpec(hostSpec);
+    if (!element) return null;
+
+    return (
+      <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
+        <HostBox element={element} />
+      </div>
+    );
+  }
 
   // One element on its own, for the layout editor's live preview
   if (hostElementId) {
-    const element = layoutDoc?.elements.find(
+    const element = output?.layout.elements.find(
       (candidate) => candidate.id === hostElementId,
     );
 
@@ -95,37 +122,38 @@ export const Body = ({
 
     return (
       <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
-        {renderHostElement({ element })}
+        <HostBox element={element} />
       </div>
     );
   }
 
-  if (currentRenderer?.layout?.enabled && layoutDoc) {
-    return (
-      <>
-        <Overlay />
-        <LayoutOutputPluginApi>
-          <LayoutWithFeeds doc={layoutDoc} />
-        </LayoutOutputPluginApi>
-      </>
-    );
+  if (!output) {
+    return <Landing />;
   }
 
-  if (!currentScene) {
+  if (
+    simple?.look === MAIN_LOOK_KEY &&
+    !data.renderer[simple.programId]?.currentScene
+  ) {
     return <Landing />;
   }
 
   return (
-    <>
-      <Overlay />
-      {Object.keys(currentRenderer?.children ?? {}).map((sceneId) => (
-        <SceneRenderer key={sceneId} sceneId={sceneId} />
-      ))}
-    </>
+    <PreloadScenesContext.Provider value={!!simple}>
+      <LayoutOutputPluginApi>
+        <LayoutWithFeeds doc={output.layout} />
+      </LayoutOutputPluginApi>
+    </PreloadScenesContext.Provider>
   );
 };
 
-const LayoutWithFeeds = ({ doc }: { doc: LayoutDoc }) => {
+const LayoutWithFeeds = ({
+  doc,
+  background = "#000",
+}: {
+  doc: LayoutDoc;
+  background?: string;
+}) => {
   const data = useData();
   const feeds = useMemo(() => activeFeeds(doc), [doc]);
 
@@ -138,7 +166,7 @@ const LayoutWithFeeds = ({ doc }: { doc: LayoutDoc }) => {
 
   return (
     <HostRendererProvider render={renderHostElement}>
-      <LayoutRenderer doc={doc} data={feedData} background="#000" />
+      <LayoutRenderer doc={doc} data={feedData} background={background} />
     </HostRendererProvider>
   );
 };
@@ -178,53 +206,93 @@ const LayoutOutputPluginApi = ({ children }: { children: ReactNode }) => {
   );
 };
 
+const parseHostSpec = (spec: string): HostElement | null => {
+  try {
+    const { source, derivation, look, followOverlay } = JSON.parse(spec);
+    if (!source?.kind) return null;
+    return {
+      source,
+      derivation: derivation ?? null,
+      look: look ?? null,
+      followOverlay: followOverlay ?? true,
+    } as HostElement;
+  } catch {
+    return null;
+  }
+};
+
 /** Fills a layout's host elements with live application content */
-const renderHostElement = ({ element }: { element: HostElement }) => {
+const renderHostElement = ({ element }: { element: HostElement }) => (
+  <HostBox element={element} />
+);
+
+const HostBox = ({ element }: { element: HostElement }) => {
   const { source, derivation } = element;
+  const parentFollows = useContext(FollowOverlayContext);
+  const preloadScenes = useContext(PreloadScenesContext);
 
-  if (source.kind === "screen") {
-    return (
-      <ScreenRenderer
-        sourceRendererId={source.rendererId}
-        derivation={derivation}
-      />
-    );
-  }
+  const follows = (parentFollows ?? true) && element.followOverlay !== false;
+  const programId = source.kind === "self" ? null : source.rendererId;
+  const lookKey = element.look ?? MAIN_LOOK_KEY;
 
-  if (source.kind === "plugin") {
-    return (
-      <ErrorBoundary FallbackComponent={ErrorAlert}>
-        <PluginRenderer
-          pluginId={source.pluginId}
-          sceneId={source.sceneId}
-          sourceRendererId={source.rendererId}
-          inLayout
-          derivation={derivation}
-        />
-      </ErrorBoundary>
-    );
-  }
+  const content = (() => {
+    switch (source.kind) {
+      case "screen":
+        return (
+          <ProgramRenderer
+            programId={source.rendererId}
+            lookKey={lookKey}
+            derivation={derivation}
+            // Only the output's own box: a box inside a look shows one scene
+            allScenes={preloadScenes && parentFollows === null}
+          />
+        );
+      case "plugin":
+        return (
+          <ErrorBoundary FallbackComponent={ErrorAlert}>
+            <PluginRenderer
+              pluginId={source.pluginId}
+              sceneId={source.sceneId}
+              sourceRendererId={source.rendererId}
+              inLayout
+              derivation={derivation}
+            />
+          </ErrorBoundary>
+        );
+      case "scene":
+        return (
+          <SceneRenderer
+            sceneId={source.sceneId}
+            sourceRendererId={source.rendererId}
+            inLayout
+            derivation={derivation}
+            lookKey={lookKey}
+          />
+        );
+      // Only inside a look, which binds it before drawing
+      case "self":
+        return null;
+    }
+  })();
 
   return (
-    <SceneRenderer
-      sceneId={source.sceneId}
-      sourceRendererId={source.rendererId}
-      inLayout
-      derivation={derivation}
-    />
+    <FollowOverlayContext.Provider value={follows}>
+      <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
+        {content}
+        {/* Boxes inside this one are covered by this black already */}
+        {follows && parentFollows === null && programId && (
+          <BlackOverlay programId={programId} />
+        )}
+      </div>
+    </FollowOverlayContext.Provider>
   );
 };
 
-const Overlay = () => {
+const BlackOverlay = ({ programId }: { programId: string }) => {
   const data = useData();
-  const rendererId = useRendererId();
-  const currentRenderer = useMemo(
-    () => data.renderer[rendererId],
-    [data.renderer, rendererId],
-  );
 
   const { ref, animationClassName, isRendered } = useAnimatePresence({
-    visible: currentRenderer?.overlay?.type === "black",
+    visible: data.renderer[programId]?.overlay?.type === "black",
     animation: {
       enter: "transition-fade-in",
       exit: "transition-fade-out",
@@ -247,74 +315,83 @@ const Overlay = () => {
   );
 };
 
-// Mirror another screen's current scene
-const ScreenRenderer = React.memo(
+/**
+ * A program's live scene in a look. The output's own box keeps every scene
+ * mounted and fades between them, as a screen always has; a box inside a
+ * layout shows the live one alone
+ */
+const ProgramRenderer = React.memo(
   ({
-    sourceRendererId,
+    programId,
+    lookKey,
     derivation,
+    allScenes,
   }: {
-    sourceRendererId: string;
+    programId: string;
+    lookKey: string;
     derivation?: Derivation | null;
+    allScenes: boolean;
   }) => {
     const data = useData();
+    const program = data.renderer[programId];
+    const currentSceneId = program?.currentScene ?? null;
 
-    const sourceRenderer = useMemo(
-      () => data.renderer[sourceRendererId],
-      [data.renderer, sourceRendererId],
+    const sceneIds = useMemo(
+      () =>
+        allScenes
+          ? Object.keys(program?.children ?? {})
+          : currentSceneId
+            ? [currentSceneId]
+            : [],
+      [allScenes, program?.children, currentSceneId],
     );
-    const currentSceneId = useMemo(
-      () => sourceRenderer?.currentScene,
-      [sourceRenderer?.currentScene],
-    );
-
-    if (!currentSceneId) {
-      return null;
-    }
 
     return (
-      <SceneRenderer
-        sceneId={currentSceneId}
-        sourceRendererId={sourceRendererId}
-        inLayout
-        derivation={derivation}
-      />
+      <>
+        {sceneIds.map((sceneId) => (
+          <SceneRenderer
+            key={sceneId}
+            sceneId={sceneId}
+            sourceRendererId={programId}
+            inLayout
+            transitions={allScenes}
+            derivation={derivation}
+            lookKey={lookKey}
+          />
+        ))}
+      </>
     );
   },
 );
 
-/**
- * Renders a scene, either as this screen's own output or inside a host element
- * of a layout, where the box is already placed and sized for us.
- */
 const SceneRenderer = React.memo(
   ({
     sceneId,
     sourceRendererId,
     inLayout = false,
+    transitions = false,
     derivation,
+    lookKey = MAIN_LOOK_KEY,
   }: {
     sceneId: string;
     sourceRendererId?: string;
     inLayout?: boolean;
+    transitions?: boolean;
     derivation?: Derivation | null;
+    lookKey?: string;
   }) => {
     const data = useData();
     const rendererId = useRendererId();
 
-    // Use source renderer if specified, otherwise use current renderer
     const effectiveRendererId = sourceRendererId || rendererId;
 
-    const currentRenderer = useMemo(
-      () => data.renderer[rendererId],
-      [data.renderer, rendererId],
-    );
     const sourceRenderer = useMemo(
       () => data.renderer[effectiveRendererId],
       [data.renderer, effectiveRendererId],
     );
     const currentScene = useMemo(
-      () => currentRenderer?.currentScene,
-      [currentRenderer?.currentScene],
+      () => sourceRenderer?.currentScene,
+      [sourceRenderer?.currentScene],
     );
 
     const pluginIds = useMemo(
@@ -324,17 +401,14 @@ const SceneRenderer = React.memo(
 
     const isCurrentScene = currentScene === sceneId;
 
-    const containerStyle: React.CSSProperties = inLayout
-      ? // The host element owns the geometry, so we simply fill it.
-        { position: "absolute", inset: 0, overflow: "hidden" }
-      : {
-          position: "absolute",
-          zIndex: isCurrentScene ? 1 : 0,
-        };
-
     return (
       <div
-        style={containerStyle}
+        style={{
+          position: "absolute",
+          inset: 0,
+          overflow: "hidden",
+          zIndex: transitions && isCurrentScene ? 1 : 0,
+        }}
         {...(isCurrentScene
           ? {
               "data-testid": "current-scene",
@@ -343,8 +417,7 @@ const SceneRenderer = React.memo(
       >
         <div
           className={cx(
-            // Only apply fade transitions in normal mode
-            !inLayout &&
+            transitions &&
               (isCurrentScene
                 ? "transition-fade-in"
                 : "transition-fade-out delay-[400ms]"),
@@ -353,16 +426,80 @@ const SceneRenderer = React.memo(
         >
           {pluginIds.map((pluginId) => (
             <ErrorBoundary key={pluginId} FallbackComponent={ErrorAlert}>
-              <PluginRenderer
+              <PluginLookRenderer
                 pluginId={pluginId}
                 sceneId={sceneId}
                 sourceRendererId={effectiveRendererId}
                 inLayout={inLayout}
                 derivation={derivation}
+                lookKey={lookKey}
               />
             </ErrorBoundary>
           ))}
         </div>
+      </div>
+    );
+  },
+);
+
+/**
+ * A plugin in a look. Its own version of the look is a layout around it,
+ * drawn here; without one, it shows as it always does
+ */
+const PluginLookRenderer = React.memo(
+  ({
+    lookKey,
+    ...props
+  }: {
+    pluginId: string;
+    sceneId: string;
+    sourceRendererId: string;
+    inLayout: boolean;
+    derivation?: Derivation | null;
+    lookKey: string;
+  }) => {
+    const { pluginId, sceneId, sourceRendererId, inLayout } = props;
+    const { pluginMeta } = usePluginMetaData();
+    const data = useData();
+    const pluginName = (data.data[sceneId] as Scene | undefined)?.children[
+      pluginId
+    ]?.plugin;
+    const projectLooks = data.looks;
+
+    const lookDoc = useMemo(() => {
+      if (lookKey === MAIN_LOOK_KEY || !pluginName) return null;
+      const registered =
+        pluginMeta && "registeredLooks" in pluginMeta
+          ? pluginMeta.registeredLooks
+          : [];
+      return resolvePluginLook(registered, projectLooks, pluginName, lookKey);
+    }, [lookKey, pluginName, pluginMeta, projectLooks]);
+
+    const doc = useMemo(
+      () =>
+        lookDoc
+          ? bindLookTarget(lookDoc, {
+              rendererId: sourceRendererId,
+              sceneId,
+              pluginId,
+            })
+          : null,
+      [lookDoc, sourceRendererId, sceneId, pluginId],
+    );
+
+    if (!doc) return <PluginRenderer {...props} />;
+
+    return (
+      <div
+        style={{
+          position: "relative",
+          width: inLayout ? "100%" : "100vw",
+          height: inLayout ? "100%" : "100dvh",
+        }}
+      >
+        <LayoutOutputPluginApi>
+          <LayoutWithFeeds doc={doc} background="transparent" />
+        </LayoutOutputPluginApi>
       </div>
     );
   },
@@ -400,7 +537,9 @@ const PluginRenderer = React.memo(
       rendererId,
     } = usePluginData();
 
+    // The program this plugin plays in. The screen's own id names an output
     const effectiveRendererId = sourceRendererId || rendererId;
+    const followsOverlay = useContext(FollowOverlayContext) ?? true;
 
     // Include rendererId in deps to recreate watcher when renderer changes
     const yjsWatcher = useDisposable(() => {
@@ -490,35 +629,37 @@ const PluginRenderer = React.memo(
     const overlay = useMemo<OverlayInfo>(
       () => ({
         getType: () => {
-          const renderer = getYJSPluginRenderer(rendererId);
+          if (!followsOverlay) return null;
+          const renderer = getYJSPluginRenderer(effectiveRendererId);
           return renderer?.get("overlay")?.get("type") ?? null;
         },
         subscribe: (callback: () => void) => {
+          if (!followsOverlay) return () => {};
           yjsWatcher?.watchYjs(
-            (x: State) => x.renderer[rendererId]?.overlay,
+            (x: State) => x.renderer[effectiveRendererId]?.overlay,
             callback,
           );
           return () => {};
         },
       }),
-      [getYJSPluginRenderer, rendererId, yjsWatcher],
+      [getYJSPluginRenderer, effectiveRendererId, followsOverlay, yjsWatcher],
     );
 
     const currentScene = useMemo<CurrentSceneInfo>(
       () => ({
         get: () => {
-          const renderer = getYJSPluginRenderer(rendererId);
+          const renderer = getYJSPluginRenderer(effectiveRendererId);
           return renderer?.get("currentScene") ?? null;
         },
         subscribe: (callback: () => void) => {
           yjsWatcher?.watchYjs(
-            (x: State) => x.renderer[rendererId]?.currentScene,
+            (x: State) => x.renderer[effectiveRendererId]?.currentScene,
             callback,
           );
           return () => {};
         },
       }),
-      [getYJSPluginRenderer, rendererId, yjsWatcher],
+      [getYJSPluginRenderer, effectiveRendererId, yjsWatcher],
     );
 
     const TagElement = useMemo(() => {
@@ -553,7 +694,7 @@ const PluginRenderer = React.memo(
         } satisfies AwarenessContext,
         pluginContext,
         setRenderCurrentScene: () => {
-          const renderer = getYJSPluginRenderer(rendererId);
+          const renderer = getYJSPluginRenderer(effectiveRendererId);
           if (renderer?.get("currentScene") !== sceneId) {
             renderer?.set("currentScene", sceneId);
           }
@@ -616,7 +757,7 @@ const PluginRenderer = React.memo(
       pluginInfo?.plugin,
       provider,
       removeError,
-      rendererId,
+      effectiveRendererId,
       sceneId,
       setAwarenessStateData,
       tag,
