@@ -37,6 +37,7 @@ import type { Look } from "./looks";
 import { getPcoOAuthConfig } from "./planningCenter/oauth";
 import { createPlanningCenterRouter } from "./planningCenter/router";
 import { registerPlanningCenterRoutes } from "./planningCenter/routes";
+import { screenLooks } from "./screenLooks";
 import {
   SETLIST_SOURCES,
   listEnabledSources,
@@ -122,6 +123,7 @@ export const init = (
   serverPluginApi.serveStatic(pluginName, "out");
 
   serverPluginApi.registerDerivationFields(pluginName, derivationFields);
+  serverPluginApi.registerLooks(pluginName, screenLooks);
 
   serverPluginApi.loadJsOnRemoteView(pluginName, `${pluginName}-remote.es.js`);
   serverPluginApi.loadCssOnRemoteView(pluginName, `RemoteEntry.css`);

@@ -35,6 +35,7 @@ import {
   loadedRendererDataGetter,
   loadedYjsData,
 } from "./loadedState";
+import { screenLooks } from "./screenLooks";
 import { activateSlide, yjsActivationTarget } from "./slides/activation";
 import { navigate } from "./slides/navigation";
 import { createSlideRef } from "./slides/order";
@@ -112,6 +113,7 @@ export const init = (
   serverPluginApi.serveStatic(pluginName, "out");
 
   serverPluginApi.registerDerivationFields(pluginName, derivationFields);
+  serverPluginApi.registerLooks(pluginName, screenLooks);
 
   serverPluginApi.registerEnvToViews(pluginName, {
     PLUGIN_GOOGLE_SLIDES_CLIENT_ID: process.env.PLUGIN_GOOGLE_SLIDES_CLIENT_ID,

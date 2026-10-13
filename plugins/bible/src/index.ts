@@ -31,6 +31,7 @@ import {
   resolveContext,
   unregisterLoadedPlugin,
 } from "./registry";
+import { screenLooks } from "./screenLooks";
 import {
   createTranslation,
   deleteTranslation,
@@ -67,6 +68,7 @@ export const init = (
   serverPluginApi.serveStatic(pluginName, "out");
 
   serverPluginApi.registerDerivationFields(pluginName, derivationFields);
+  serverPluginApi.registerLooks(pluginName, screenLooks);
 
   serverPluginApi.loadJsOnRemoteView(pluginName, `${pluginName}-remote.es.js`);
   serverPluginApi.loadCssOnRemoteView(pluginName, `RemoteEntry.css`);
