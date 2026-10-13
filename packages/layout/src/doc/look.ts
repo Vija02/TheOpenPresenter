@@ -107,7 +107,6 @@ export const defaultConfidenceLook = ({
         name: "Next",
         rect: { x: 2, y: 65, w: 96, h: 32 },
         params: { [offsetParam]: 1, ...nextParams },
-        opacity: 0.6,
       }),
     ],
   });

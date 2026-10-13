@@ -10,8 +10,13 @@ import {
   selfHost,
 } from "@repo/layout";
 
-import { LOOK_PARAM, SHOW_BACKGROUND_PARAM } from "./derivation";
+import {
+  LOOK_PARAM,
+  SHOW_BACKGROUND_PARAM,
+  TEXT_COLOR_PARAM,
+} from "./derivation";
 import { LOWER_THIRD_LOOK, MAIN_LOOK } from "./looks";
+import { LIVE_COLOR } from "./template/layout";
 
 const sections = { [SHOW_BACKGROUND_PARAM]: false, [LOOK_PARAM]: MAIN_LOOK };
 
@@ -21,7 +26,7 @@ export const screenLooks: PluginLook<LayoutDoc>[] = [
     name: "Confidence monitor",
     doc: defaultConfidenceLook({
       currentParams: sections,
-      nextParams: sections,
+      nextParams: { ...sections, [TEXT_COLOR_PARAM]: LIVE_COLOR },
     }),
   },
   {
