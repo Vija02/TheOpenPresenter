@@ -47,6 +47,10 @@ fragment BaseRendererPluginMeta on PluginMeta {
     pluginName
     tag
   }
+  registeredLooks {
+    pluginName
+    looks
+  }
   clientPluginViews {
     pluginName
     pluginFamily
