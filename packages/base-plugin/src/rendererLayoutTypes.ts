@@ -1,12 +1,20 @@
 import type { Derivation } from "@repo/base-types";
 
-/** A screen's custom layout, used for confidence monitors and multi-pane output */
+/**
+ * A screen's custom layout from before outputs. Still read, by `readOutputs`
+ * in @repo/layout, for projects that have no outputs yet
+ */
 export type RendererLayout<Doc = unknown> = {
   enabled: boolean;
   doc: Doc;
 };
 
 export type { Derivation };
+
+export type OutputData<Doc = any> = {
+  name: string;
+  layout: Doc;
+};
 
 export {
   BUILT_IN_LOOK_KEYS,

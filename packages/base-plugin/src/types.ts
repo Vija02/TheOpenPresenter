@@ -12,7 +12,11 @@ import type { IResult } from "ua-parser-js";
 import type { Awareness } from "y-protocols/awareness.js";
 import type { StoreApi } from "zustand";
 
-import { Derivation, RendererLayout } from "./rendererLayoutTypes";
+import {
+  Derivation,
+  OutputData,
+  RendererLayout,
+} from "./rendererLayoutTypes";
 
 export type { ObjectToTypedMap };
 
@@ -24,6 +28,7 @@ export type State = {
   meta: Meta;
   data: StateData;
   renderer: Renderer;
+  outputs?: Record<string, OutputData> | null;
   looks?: ProjectLooks | null;
 };
 

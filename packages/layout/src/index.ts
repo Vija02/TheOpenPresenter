@@ -3,6 +3,7 @@
 export * from "./cascade";
 export * from "./doc/edit";
 export * from "./doc/look";
+export * from "./doc/outputs";
 export * from "./doc/rendererLayout";
 export * from "./doc/videoState";
 export * from "./fonts/registry";
