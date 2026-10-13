@@ -113,14 +113,18 @@ export const resolveFeedSources = (
   const rendererScene =
     state.renderer[source.rendererId]?.children?.[sceneId] ?? {};
 
-  return Object.entries<any>(scene?.children ?? {})
-    .filter(
-      ([, plugin]) =>
-        source.kind !== "plugin" || plugin.plugin === source.pluginId,
-    )
-    .map(([pluginId, plugin]) => ({
-      pluginName: plugin.plugin,
-      sceneData: plugin,
-      rendererData: rendererScene[pluginId],
-    }));
+  return (
+    Object.entries<any>(scene?.children ?? {})
+      .filter(
+        ([pluginId, plugin]) =>
+          source.kind !== "plugin" ||
+          pluginId === source.pluginId ||
+          plugin.plugin === source.pluginId,
+      )
+      .map(([pluginId, plugin]) => ({
+        pluginName: plugin.plugin,
+        sceneData: plugin,
+        rendererData: rendererScene[pluginId],
+      }))
+  );
 };
