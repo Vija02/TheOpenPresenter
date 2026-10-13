@@ -52,10 +52,23 @@ export const renderPopupResult = ({
 <script nonce="${nonce}">
   (function () {
     var message = ${safeJson({ source: "top-google-oauth", ...payload })};
-    try {
-      if (window.opener) window.opener.postMessage(message, ${safeJson(origin)});
-    } catch (e) {}
-    if (message.ok) window.close();
+    var post = function () {
+      try {
+        if (window.opener) window.opener.postMessage(message, ${safeJson(origin)});
+      } catch (e) {}
+    };
+    post();
+    if (message.ok) {
+      window.close();
+      return;
+    }
+    // A failure has no polling fallback, and this page can load before the
+    // app starts listening. Say it again for a while; repeats are ignored.
+    var sent = 1;
+    var timer = setInterval(function () {
+      post();
+      if (++sent >= 10) clearInterval(timer);
+    }, 500);
   })();
 </script>
 </body>

@@ -92,16 +92,30 @@ const renderPopupResult = ({
           }
         } catch (e) {}
 
-        try {
-          if (window.opener) {
-            for (var i = 0; i < targets.length; i++) {
-              try {
-                window.opener.postMessage(message, targets[i]);
-              } catch (e) {}
+        var post = function () {
+          try {
+            if (window.opener) {
+              for (var i = 0; i < targets.length; i++) {
+                try {
+                  window.opener.postMessage(message, targets[i]);
+                } catch (e) {}
+              }
             }
-          }
-        } catch (e) {}
-        if (message.ok) window.close();
+          } catch (e) {}
+        };
+        post();
+        if (message.ok) {
+          window.close();
+          return;
+        }
+        // A failure has no polling fallback, and this page can load before
+        // the app starts listening. Say it again for a while; repeats are
+        // ignored.
+        var sent = 1;
+        var timer = setInterval(function () {
+          post();
+          if (++sent >= 10) clearInterval(timer);
+        }, 500);
       })();
     </script>
   </body>
