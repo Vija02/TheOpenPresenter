@@ -19,6 +19,8 @@ export const hostSourceLabel = (source: HostSource): string => {
       return "Scene";
     case "plugin":
       return "Plugin";
+    case "self":
+      return "This content";
   }
 };
 

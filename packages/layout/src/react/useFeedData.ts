@@ -103,6 +103,7 @@ export const resolveFeedSources = (
   feed: LayoutFeed,
 ) => {
   const { source } = feed;
+  if (source.kind === "self") return [];
   const sceneId =
     source.kind === "screen"
       ? (state.renderer[source.rendererId]?.currentScene ?? null)
