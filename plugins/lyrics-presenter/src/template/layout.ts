@@ -39,7 +39,7 @@ export const fullSongLayout = (doc: LayoutDoc): LayoutDoc => ({
 });
 
 /** How the live slide stands out, unless a template styles it */
-const LIVE_COLOR = "#FACC15";
+export const LIVE_COLOR = "#FACC15";
 
 /**
  * Gives the lyrics styles for the live slide, where the template has none:
@@ -64,6 +64,17 @@ export const withLiveRole = (doc: LayoutDoc): LayoutDoc => ({
       },
     };
   }),
+});
+
+/** The lyrics in one colour, over the template's */
+export const withTextColor = (doc: LayoutDoc, color: string): LayoutDoc => ({
+  ...doc,
+  elements: doc.elements.map(
+    (element): LayoutElement =>
+      element.type === "text" && showsLyrics(element)
+        ? { ...element, style: { ...element.style, color } }
+        : element,
+  ),
 });
 
 /** Where the template's lyrics go, for applying old style fields */

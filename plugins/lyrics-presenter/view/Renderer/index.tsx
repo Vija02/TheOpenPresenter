@@ -5,10 +5,12 @@ import { Song } from "../../src";
 import {
   HIGHLIGHT_LIVE_PARAM,
   LOOK_PARAM,
+  LOOK_TEXT_COLOR,
   OFFSET_PARAM,
   SHOW_BACKGROUND_PARAM,
   SHOW_CHORDS_PARAM,
   SONG_LOOK,
+  TEXT_COLOR_PARAM,
 } from "../../src/derivation";
 import { FULL_SONG_LOOK, lookKeyFor, songLookTemplate } from "../../src/looks";
 import { processSong } from "../../src/songHelpers";
@@ -69,6 +71,10 @@ const SlideRenderer = () => {
     HIGHLIGHT_LIVE_PARAM,
     false,
   );
+  const textColor = pluginApi.renderer.useDerivationParam(
+    TEXT_COLOR_PARAM,
+    LOOK_TEXT_COLOR,
+  );
 
   const songs = pluginApi.scene.useData((x) => x.pluginData.songs);
 
@@ -125,6 +131,7 @@ const SlideRenderer = () => {
           index={null}
           showChords={showChords}
           highlight={highlightLive ? (baseCurrentIndex ?? null) : null}
+          textColor={textColor || null}
         />
       );
     }
@@ -138,6 +145,7 @@ const SlideRenderer = () => {
         lookKey={lookKey}
         index={currentIndex}
         showChords={showChords}
+        textColor={textColor || null}
       />
     );
   };
@@ -158,12 +166,14 @@ const SongSlide = ({
   index,
   showChords,
   highlight = null,
+  textColor = null,
 }: {
   song: Song;
   lookKey: string;
   index: number | null;
   showChords: boolean;
   highlight?: number | null;
+  textColor?: string | null;
 }) => {
   const pluginApi = usePluginAPI();
   const looks = pluginApi.scene.useData((x) => x.pluginData.looks);
@@ -176,6 +186,7 @@ const SongSlide = ({
       showChords={showChords}
       fullSong={lookKey === FULL_SONG_LOOK}
       highlight={highlight}
+      textColor={textColor}
     />
   );
 };

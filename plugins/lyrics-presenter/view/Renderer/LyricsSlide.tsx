@@ -8,6 +8,7 @@ import {
   composeLayout,
   fullSongLayout,
   withLiveRole,
+  withTextColor,
 } from "../../src/template/layout";
 import {
   fullSongFrame,
@@ -25,6 +26,8 @@ type LyricsSlideProps = {
   fullSong?: boolean;
   /** In a full song, the flat index of the slide to pick out as live */
   highlight?: number | null;
+  /** Over the template's, e.g. yellow for the next lines on a monitor */
+  textColor?: string | null;
 };
 
 export const LyricsSlide = React.memo(
@@ -36,6 +39,7 @@ export const LyricsSlide = React.memo(
     showChords = false,
     fullSong,
     highlight = null,
+    textColor = null,
   }: LyricsSlideProps) => {
     const { title, author, content } = song;
     const sectionOrder = song.setting.sectionOrder;
@@ -48,12 +52,13 @@ export const LyricsSlide = React.memo(
     );
 
     const doc = useMemo(() => {
-      const text = isFullSong ? fullSongLayout(template) : template;
+      const laidOut = isFullSong ? fullSongLayout(template) : template;
+      const text = textColor ? withTextColor(laidOut, textColor) : laidOut;
       return composeLayout(
         isHighlighted ? withLiveRole(text) : text,
         background,
       );
-    }, [template, isFullSong, isHighlighted, background]);
+    }, [template, isFullSong, isHighlighted, background, textColor]);
 
     const data = useMemo(() => {
       if (isFullSong) {
