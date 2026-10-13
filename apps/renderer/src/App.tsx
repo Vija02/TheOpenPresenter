@@ -1,4 +1,6 @@
 import { desktop } from "@repo/desktop-bridge";
+import { outputProgramId } from "@repo/layout";
+import { useReadOutputs } from "@repo/layout/react";
 import {
   AudioCheckProvider,
   AwarenessProvider,
@@ -6,7 +8,7 @@ import {
   PluginDataProvider,
   PluginMetaDataProvider,
 } from "@repo/shared";
-import { useHandleKeyPress } from "@repo/shared";
+import { useData, useHandleKeyPress, usePluginData } from "@repo/shared";
 import { lazy, useEffect, useMemo } from "react";
 import { Route, Switch, useParams, useSearch } from "wouter";
 
@@ -50,8 +52,14 @@ function Root() {
     return searchParams.get("hostElement");
   }, [search]);
 
+  // Used for looks preview before it's finalized, so we pass the raw spec
+  const hostSpec = useMemo(() => {
+    const searchParams = new URLSearchParams(search);
+    return searchParams.get("hostSpec");
+  }, [search]);
+
   useEffect(() => {
-    if (!hostElementId) return;
+    if (!hostElementId && !hostSpec) return;
 
     const { documentElement, body } = document;
     documentElement.style.backgroundColor = "transparent";
@@ -61,7 +69,7 @@ function Root() {
       documentElement.style.backgroundColor = "";
       body.style.backgroundColor = "";
     };
-  }, [hostElementId]);
+  }, [hostElementId, hostSpec]);
 
   return (
     <PluginMetaDataProvider
@@ -78,8 +86,11 @@ function Root() {
           >
             <AwarenessProvider>
               <AppInner
-                hideFullscreenButton={isPreview || !!hostElementId}
+                hideFullscreenButton={
+                  isPreview || !!hostElementId || !!hostSpec
+                }
                 hostElementId={hostElementId}
+                hostSpec={hostSpec}
               />
             </AwarenessProvider>
           </PluginDataProvider>
@@ -92,11 +103,19 @@ function Root() {
 export const AppInner = ({
   hideFullscreenButton,
   hostElementId = null,
+  hostSpec = null,
 }: {
   hideFullscreenButton?: boolean;
   hostElementId?: string | null;
+  hostSpec?: string | null;
 }) => {
-  const handleKeyPress = useHandleKeyPress();
+  const data = useData();
+  const outputId = usePluginData().rendererId;
+  const outputs = useReadOutputs({
+    renderer: data.renderer,
+    outputs: data.outputs,
+  });
+  const handleKeyPress = useHandleKeyPress(outputProgramId(outputs, outputId));
 
   return (
     <div
@@ -106,11 +125,11 @@ export const AppInner = ({
     >
       {desktop.isDesktop ? (
         <DesktopHandler>
-          <Body hostElementId={hostElementId} />
+          <Body hostElementId={hostElementId} hostSpec={hostSpec} />
         </DesktopHandler>
       ) : (
         <>
-          <Body hostElementId={hostElementId} />
+          <Body hostElementId={hostElementId} hostSpec={hostSpec} />
           {!hideFullscreenButton && <FullscreenButton />}
         </>
       )}
