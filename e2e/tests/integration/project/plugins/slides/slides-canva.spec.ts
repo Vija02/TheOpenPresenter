@@ -41,9 +41,14 @@ const signInThroughPopup = async (page: Page, open: () => Promise<void>) => {
 
 /** The design's two PDF pages, once the import has finished. */
 const expectImported = async (page: Page) => {
-  // Not a bare count: the "Add slide" tile is a slide container too
+  // Not a bare count: the "Add slide" tile is a slide container too.
+  // Wait for the image, not the placeholder: the import is still running
+  // until its pages are rendered.
   await expect(
-    page.getByTestId("slide-container").filter({ hasText: /^Slide 2$/ }),
+    page
+      .getByTestId("slide-container")
+      .filter({ hasText: /^Slide 2$/ })
+      .locator("img"),
   ).toBeVisible({ timeout: 30_000 });
 };
 
