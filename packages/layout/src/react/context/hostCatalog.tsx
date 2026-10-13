@@ -28,6 +28,8 @@ export type LayoutHostCatalog = {
   derivationFields?: (source: HostSource) => DerivationField[];
   /** Token vocabulary a source offers a feed. Empty means it publishes none. */
   dataBindings?: (source: HostSource) => DataBinding[];
+  /** Looks a box can show its source in. */
+  looks?: { key: string; name: string }[];
   /** Extra per-element controls, for plugin-specific derivation params. */
   renderElementExtras?: (props: {
     element: HostElement;
@@ -68,6 +70,7 @@ export const LayoutHostCatalogProvider = ({
 );
 
 export const sameHostSource = (a: HostSource, b: HostSource): boolean => {
+  if (a.kind === "self" || b.kind === "self") return a.kind === b.kind;
   if (a.kind !== b.kind || a.rendererId !== b.rendererId) return false;
   if (a.kind === "screen" || b.kind === "screen") return true;
   if (a.sceneId !== b.sceneId) return false;

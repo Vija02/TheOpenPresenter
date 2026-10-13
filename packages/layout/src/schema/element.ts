@@ -81,6 +81,9 @@ export const hostSourceValidator = z.discriminatedUnion("kind", [
     sceneId: z.string(),
     pluginId: z.string(),
   }),
+  z.object({
+    kind: z.literal("self"),
+  }),
 ]);
 
 export type HostSource = z.infer<typeof hostSourceValidator>;
@@ -90,6 +93,8 @@ export const hostElementValidator = elementBaseValidator.extend({
   type: z.literal("host"),
   source: hostSourceValidator,
   derivation: derivationValidator.nullable(),
+  look: z.string().nullable().default(null),
+  followOverlay: z.boolean().default(true),
 });
 
 export const layoutElementValidator = z.discriminatedUnion("type", [
@@ -109,7 +114,7 @@ export const isHostElement = (element: LayoutElement): element is HostElement =>
   element.type === "host";
 
 export const hostSourceRendererId = (source: HostSource): string =>
-  source.rendererId;
+  source.kind === "self" ? "" : source.rendererId;
 
 export const hostSourceSceneId = (source: HostSource): string | null =>
-  source.kind === "screen" ? null : source.sceneId;
+  source.kind === "screen" || source.kind === "self" ? null : source.sceneId;

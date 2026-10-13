@@ -155,18 +155,24 @@ export type CreateHostElementOptions = AppearanceOptions & {
   id: string;
   source: HostSource;
   derivation?: Derivation | null;
+  look?: string | null;
+  followOverlay?: boolean;
 };
 
 export const createHostElement = ({
   id,
   source,
   derivation = null,
+  look = null,
+  followOverlay = true,
   ...appearance
 }: CreateHostElementOptions): HostElement => ({
   ...baseElement(id, { clip: true, ...appearance }),
   type: "host",
   source,
   derivation,
+  look,
+  followOverlay,
 });
 
 export type CreateLayoutDocOptions = {

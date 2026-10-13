@@ -1,6 +1,10 @@
+import { MAIN_LOOK_KEY } from "@repo/base-types";
+
 import {
   hostElementDisplayName,
   setHostDerivation,
+  setHostFollowOverlay,
+  setHostLook,
   setHostSource,
 } from "../../../doc/edit";
 import {
@@ -10,7 +14,7 @@ import {
 } from "../../../react/context/hostCatalog";
 import { Derivation } from "../../../schema/derivation";
 import { HostElement } from "../../../schema/element";
-import { Row, Section, SelectField } from "../primitives";
+import { CheckField, Row, Section, SelectField } from "../primitives";
 import { DerivationFields } from "./DerivationFields";
 import { SectionProps } from "./types";
 
@@ -57,6 +61,41 @@ export const HostSourceSection = ({
               if (option)
                 onChange(setHostSource(doc, element.id, option.source));
             }}
+          />
+        </Row>
+      )}
+
+      {catalog.looks &&
+        catalog.looks.length > 0 &&
+        element.source.kind === "screen" && (
+          <Row label="Look">
+            <SelectField
+              value={element.look ?? MAIN_LOOK_KEY}
+              options={catalog.looks.map((look) => ({
+                value: look.key,
+                label: look.name,
+              }))}
+              onChange={(look) =>
+                onChange(
+                  setHostLook(
+                    doc,
+                    element.id,
+                    look === MAIN_LOOK_KEY ? null : look,
+                  ),
+                )
+              }
+            />
+          </Row>
+        )}
+
+      {element.source.kind !== "self" && (
+        <Row label="">
+          <CheckField
+            label="Follow Black/Clear"
+            checked={element.followOverlay !== false}
+            onChange={(checked) =>
+              onChange(setHostFollowOverlay(doc, element.id, checked))
+            }
           />
         </Row>
       )}

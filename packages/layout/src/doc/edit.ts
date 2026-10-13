@@ -14,10 +14,10 @@ import {
   LayoutElement,
   TextElement,
 } from "../schema/element";
+import { LayoutFeed, freshFeedName, sanitiseFeedName } from "../schema/feed";
 import { FillPaint, VideoPaint, VideoPlaybackMode } from "../schema/paint";
 import { Rect } from "../schema/rect";
 import { TextStylePatch } from "../schema/style";
-import { LayoutFeed, freshFeedName, sanitiseFeedName } from "../schema/feed";
 
 /**
  * Deep clone AND strip `undefined`.
@@ -88,6 +88,19 @@ export const setHostDerivation = (
   derivation: Derivation | null,
 ): LayoutDoc => patchHostElement(doc, id, { derivation });
 
+/** Null is main */
+export const setHostLook = (
+  doc: LayoutDoc,
+  id: string,
+  look: string | null,
+): LayoutDoc => patchHostElement(doc, id, { look });
+
+export const setHostFollowOverlay = (
+  doc: LayoutDoc,
+  id: string,
+  followOverlay: boolean,
+): LayoutDoc => patchHostElement(doc, id, { followOverlay });
+
 /** Merges into a host element's derivation params */
 export const patchHostDerivationParams = (
   doc: LayoutDoc,
@@ -116,11 +129,17 @@ export const patchHostDerivationParams = (
   });
 
 /** Repoints a host element at different live content. */
+/** Only a "What's live" box takes a look, so other sources drop it */
 export const setHostSource = (
   doc: LayoutDoc,
   id: string,
   source: HostSource,
-): LayoutDoc => patchHostElement(doc, id, { source });
+): LayoutDoc =>
+  patchHostElement(
+    doc,
+    id,
+    source.kind === "screen" ? { source } : { source, look: null },
+  );
 
 export const hostElements = (doc: LayoutDoc): HostElement[] =>
   doc.elements.filter((e): e is HostElement => e.type === "host");
@@ -186,7 +205,10 @@ export const renameFeed = (
     ),
     elements: doc.elements.map((element) =>
       element.type === "text"
-        ? { ...element, content: element.content.replace(pattern, `$1${next}.`) }
+        ? {
+            ...element,
+            content: element.content.replace(pattern, `$1${next}.`),
+          }
         : element,
     ),
   };
@@ -426,6 +448,8 @@ export const hostElementDisplayName = (element: HostElement): string => {
       return `Scene on screen ${source.rendererId}`;
     case "plugin":
       return `Plugin on screen ${source.rendererId}`;
+    case "self":
+      return "This content";
   }
 };
 
