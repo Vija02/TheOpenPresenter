@@ -138,7 +138,7 @@ const SidebarMobile = () => {
                 onClick={onToggle}
                 variant="ghost"
                 size="mini"
-                title="Manage Renderers"
+                title="Manage Outputs"
               >
                 <MdTune />
               </Button>

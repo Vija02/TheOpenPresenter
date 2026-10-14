@@ -1,33 +1,7 @@
-import { staticOutputVolume } from "@repo/base-plugin";
-import {
-  PluginAPIContext,
-  initStandalonePluginApi,
-  useMediaPicker,
-} from "@repo/base-plugin/client";
-import {
-  useCompleteMediaMutation,
-  useDeleteMediaMutation,
-} from "@repo/graphql";
-import {
-  LayoutDoc,
-  activeFeeds,
-  cloneDoc,
-  readRendererLayoutDoc,
-} from "@repo/layout";
-import {
-  LayoutInsertDefaults,
-  LayoutPluginApi,
-  LayoutWorkbench,
-} from "@repo/layout/editor";
+import { PluginAPIContext } from "@repo/base-plugin/client";
+import { LayoutDoc, activeFeeds, cloneDoc } from "@repo/layout";
+import { LayoutInsertDefaults, LayoutWorkbench } from "@repo/layout/editor";
 import { useFeedData } from "@repo/layout/react";
-import { uuidFromMediaIdOrUUIDOrMediaName } from "@repo/lib";
-import {
-  useAudioCheck,
-  useData,
-  useError,
-  usePluginData,
-  usePluginMetaData,
-} from "@repo/shared";
 import {
   Button,
   Dialog,
@@ -39,7 +13,9 @@ import {
 } from "@repo/ui";
 import { useCallback, useMemo } from "react";
 
+import { useOutputs } from "../useOutputs";
 import { useFeedSourceResolver } from "./useFeedSourceResolver";
+import { useLayoutEditorApis } from "./useLayoutEditorApis";
 import { useRendererHostCatalog } from "./useRendererHostCatalog";
 
 const INSERT_DEFAULTS: LayoutInsertDefaults = {
@@ -48,100 +24,34 @@ const INSERT_DEFAULTS: LayoutInsertDefaults = {
 
 type LayoutEditorModalProps = {
   isOpen: boolean;
-  rendererId: string;
+  outputId: string;
   onClose: () => void;
 };
 
 const LayoutEditorModal = ({
   isOpen,
-  rendererId,
+  outputId,
   onClose,
 }: LayoutEditorModalProps) => {
-  const data = useData();
-  const mainState = usePluginData().mainState!;
+  const { outputs, writableOutputs } = useOutputs();
+  const output = outputs[outputId];
 
-  const hostCatalog = useRendererHostCatalog(rendererId);
+  const hostCatalog = useRendererHostCatalog(outputId);
 
-  const mediaPicker = useMediaPicker();
-  const { orgId, projectId } = usePluginMetaData();
+  const { mediaPickerApi, videoPluginApi } = useLayoutEditorApis();
 
-  const mediaPickerApi = useMemo<LayoutPluginApi>(
-    () => ({
-      mediaPicker,
-      pluginContext: {
-        organizationId: orgId,
-        projectId,
-        pluginId: "",
-        sceneId: "",
-      },
-    }),
-    [mediaPicker, orgId, projectId],
-  );
-
-  const doc = useMemo(
-    () => readRendererLayoutDoc(data.renderer[rendererId]?.layout),
-    [data.renderer, rendererId],
-  );
+  const doc = output?.layout ?? null;
 
   const feeds = useMemo(() => (doc ? activeFeeds(doc) : []), [doc]);
   const resolveFeedSources = useFeedSourceResolver();
   const feedData = useFeedData(feeds, resolveFeedSources);
 
-  const { canPlayAudio } = useAudioCheck();
-  const { addError, removeError } = useError();
-  const [, deleteMedia] = useDeleteMediaMutation();
-  const [, completeMedia] = useCompleteMediaMutation();
-
-  // Some things like video needs plugin API. Since we're outside a plugin this becomes a problem
-  // So just create a standalone one for that
-  const videoPluginApi = useMemo(
-    () =>
-      initStandalonePluginApi({
-        pluginContext: {
-          organizationId: orgId,
-          projectId,
-          pluginId: "",
-          sceneId: "",
-        },
-        misc: {
-          canPlayAudio,
-          outputVolume: staticOutputVolume,
-          errorHandler: { addError, removeError },
-          mediaPicker,
-          media: {
-            permanentlyDeleteMedia: (mediaKey: string) =>
-              deleteMedia({ id: uuidFromMediaIdOrUUIDOrMediaName(mediaKey) }),
-            completeMedia: (mediaKey: string) =>
-              completeMedia({ id: uuidFromMediaIdOrUUIDOrMediaName(mediaKey) }),
-            // No plugin owns this layout, so there is nothing to unlink.
-            unlinkMediaFromPlugin: () => Promise.resolve(),
-          },
-          surface: "remote",
-        },
-      }),
-    [
-      canPlayAudio,
-      orgId,
-      projectId,
-      addError,
-      removeError,
-      mediaPicker,
-      deleteMedia,
-      completeMedia,
-    ],
-  );
-
   const handleChange = useCallback(
     (next: LayoutDoc) => {
-      const renderer = mainState.renderer[rendererId];
-      if (!renderer?.layout) return;
-
-      renderer.layout = {
-        enabled: renderer.layout.enabled ?? true,
-        doc: cloneDoc(next),
-      };
+      const target = writableOutputs()[outputId];
+      if (target) target.layout = cloneDoc(next);
     },
-    [mainState.renderer, rendererId],
+    [writableOutputs, outputId],
   );
 
   return (
@@ -158,7 +68,7 @@ const LayoutEditorModal = ({
             >
               &larr;
             </button>
-            Layout Settings - Screen {rendererId}
+            Layout Settings - {output?.name ?? `Output ${outputId}`}
           </DialogTitle>
         </DialogHeader>
 
