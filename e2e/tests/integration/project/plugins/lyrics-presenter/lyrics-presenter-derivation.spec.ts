@@ -76,9 +76,10 @@ const login = (e2eCommand: any, currentIndex = 0) =>
  */
 const placeLyrics = async (page: Page): Promise<Locator> => {
   await page.goto(`/app/${ORG_SLUG}/${PROJECT_SLUG}`);
-  await page.getByRole("button", { name: "Manage Renderers" }).click();
-  await expect(page.getByText("Manage Renderers")).toBeVisible();
-  await page.getByRole("checkbox", { name: "Use custom layout" }).check();
+  await page.getByRole("button", { name: "Manage Outputs" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Outputs", exact: true }),
+  ).toBeVisible();
   await page.getByRole("button", { name: "Configure" }).click();
   await expect(page.getByText(/Layout Settings/)).toBeVisible();
 
@@ -86,8 +87,11 @@ const placeLyrics = async (page: Page): Promise<Locator> => {
   await page.getByRole("button", { name: SCENE_NAME, exact: true }).click();
   await expect(page.locator("[data-lay-host]").first()).toBeVisible();
 
+  // The main output already has its live box; this is the scene just added
   return page
-    .frameLocator("iframe[title='Live content preview']")
+    .frameLocator(
+      "iframe[title='Live content preview'][src*='hostElement=scene']",
+    )
     .locator(".lay--text-content");
 };
 

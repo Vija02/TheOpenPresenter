@@ -51,14 +51,14 @@ const login = (e2eCommand: any, marker: string) =>
     ],
   });
 
-// The screen layout editor lives behind the sidebar's renderer management, and
-// every test here needs a layout switched on for screen 1.
+// The layout editor lives behind the sidebar's outputs dialog; every test here
+// edits the main output's layout.
 const openLayoutEditor = async (page: any) => {
-  await page.getByRole("button", { name: "Manage Renderers" }).click();
-  await expect(page.getByText("Manage Renderers")).toBeVisible();
+  await page.getByRole("button", { name: "Manage Outputs" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Outputs", exact: true }),
+  ).toBeVisible();
 
-  // Each renderer card has its own scene checkboxes too, so match the label.
-  await page.getByRole("checkbox", { name: "Use custom layout" }).check();
   await page.getByRole("button", { name: "Configure" }).click();
   await expect(page.getByText(/Layout Settings/)).toBeVisible();
 };
@@ -143,14 +143,15 @@ test.describe.serial("Screen layouts", () => {
 
     // The canvas frames the renderer rather than mounting plugin components,
     // because only the renderer app is served plugin bundles.
-    const frame = page.frameLocator("iframe[title='Live content preview']");
+    // The main output already has its live box; this is the scene just added.
+    const preview =
+      "iframe[title='Live content preview'][src*='hostElement=scene']";
+    const frame = page.frameLocator(preview);
     await expect(frame.getByText(marker).first()).toBeVisible();
 
     // preview=1 keeps the frame out of screen-session tracking, and
     // hostElement= is what makes the renderer draw one element full-frame.
-    const src = await page
-      .locator("iframe[title='Live content preview']")
-      .getAttribute("src");
+    const src = await page.locator(preview).getAttribute("src");
     expect(src).toMatch(/preview=1/);
     expect(src).toMatch(/hostElement=/);
   });
