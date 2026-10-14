@@ -37,9 +37,10 @@ const login = (e2eCommand: any) =>
   });
 
 const openLayoutEditor = async (page: Page) => {
-  await page.getByRole("button", { name: "Manage Renderers" }).click();
-  await expect(page.getByText("Manage Renderers")).toBeVisible();
-  await page.getByRole("checkbox", { name: "Use custom layout" }).check();
+  await page.getByRole("button", { name: "Manage Outputs" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Outputs", exact: true }),
+  ).toBeVisible();
   await page.getByRole("button", { name: "Configure" }).click();
   await expect(page.getByText(/Layout Settings/)).toBeVisible();
 };

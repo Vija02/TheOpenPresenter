@@ -51,9 +51,10 @@ const login = (e2eCommand: any) =>
   });
 
 const openLayoutEditor = async (page: Page) => {
-  await page.getByRole("button", { name: "Manage Renderers" }).click();
-  await expect(page.getByText("Manage Renderers")).toBeVisible();
-  await page.getByRole("checkbox", { name: "Use custom layout" }).check();
+  await page.getByRole("button", { name: "Manage Outputs" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Outputs", exact: true }),
+  ).toBeVisible();
   await page.getByRole("button", { name: "Configure" }).click();
   await expect(page.getByText(/Layout Settings/)).toBeVisible();
 };
@@ -111,7 +112,6 @@ test.describe.serial("Layout feeds", () => {
     page,
     e2eCommand,
   }) => {
-
     await login(e2eCommand);
     await page.goto(`/app/${ORG_SLUG}/${PROJECT_SLUG}`);
     await openLayoutEditor(page);
@@ -131,7 +131,6 @@ test.describe.serial("Layout feeds", () => {
     e2eCommand,
     setupScreen,
   }) => {
-
     await login(e2eCommand);
     const ctx = await setupScreen({
       orgSlug: ORG_SLUG,
@@ -171,7 +170,6 @@ test.describe.serial("Layout feeds", () => {
     e2eCommand,
     setupScreen,
   }) => {
-
     await login(e2eCommand);
     const ctx = await setupScreen({
       orgSlug: ORG_SLUG,
@@ -222,7 +220,6 @@ test.describe.serial("Layout feeds", () => {
     page,
     e2eCommand,
   }) => {
-
     await login(e2eCommand);
     await page.goto(`/app/${ORG_SLUG}/${PROJECT_SLUG}`);
     await openLayoutEditor(page);
@@ -239,8 +236,9 @@ test.describe.serial("Layout feeds", () => {
     // The chip list now advertises the new namespace...
     await expect(page.getByText("{{live.notes}}")).toBeVisible();
 
-    // ...and the text element was rewritten rather than left dangling.
-    await page.locator("[data-lay-id]").first().click();
+    // ...and the text element was rewritten rather than left dangling. It is
+    // the last element; the main output's live box comes first.
+    await page.locator("[data-lay-id]").last().click();
     await expect(contentBox(page)).toHaveValue("NOW: {{live.notes}}");
   });
 });
