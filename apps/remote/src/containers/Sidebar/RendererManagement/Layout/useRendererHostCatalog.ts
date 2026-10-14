@@ -1,6 +1,6 @@
-import { Scene } from "@repo/base-plugin";
+import { BUILT_IN_LOOK_KEYS, Scene } from "@repo/base-plugin";
 import type { DataBinding, DerivationField } from "@repo/base-types";
-import { HostElement, HostSource } from "@repo/layout";
+import { HostElement, HostSource, MAIN_PROGRAM_ID } from "@repo/layout";
 import { HostSourceOption, LayoutHostCatalog } from "@repo/layout/react";
 import { useData, usePluginMetaData } from "@repo/shared";
 import { sortBy } from "lodash-es";
@@ -8,57 +8,48 @@ import { useCallback, useMemo } from "react";
 import { useSearch } from "wouter";
 
 import { getSceneOwnershipStatus } from "../../../../util/sceneOwnership";
+import { useRegisteredPluginMeta } from "./useRegisteredPluginMeta";
 
-/** What this screen's layout may show: any other screen's live output, and any scene owned by any screen */
-export const useRendererHostCatalog = (
-  rendererId: string,
-): LayoutHostCatalog => {
+const programLabel = (programId: string) =>
+  programId === MAIN_PROGRAM_ID
+    ? "What's live"
+    : `What's live on program ${programId}`;
+
+/** What an output's layout may show: a program's live scene in a look, or any one scene */
+export const useRendererHostCatalog = (outputId: string): LayoutHostCatalog => {
   const data = useData();
-  const { orgSlug, projectSlug, pluginMeta } = usePluginMetaData();
+  const { orgSlug, projectSlug } = usePluginMetaData();
   const search = useSearch();
 
   const previewUrl = useCallback(
     (element: HostElement) => {
       const params = new URLSearchParams(search);
-      params.set("renderer", rendererId);
+      params.set("renderer", outputId);
       params.set("preview", "1");
       params.set("hostElement", element.id);
 
       return `/render/${orgSlug}/${projectSlug}?${params.toString()}`;
     },
-    [orgSlug, projectSlug, search, rendererId],
+    [orgSlug, projectSlug, search, outputId],
   );
 
-  const fieldsByPlugin = useMemo(() => {
-    const registered =
-      pluginMeta && "registeredDerivationFields" in pluginMeta
-        ? pluginMeta.registeredDerivationFields
-        : [];
-
-    const map = new Map<string, DerivationField[]>();
-    for (const entry of registered ?? []) {
-      map.set(entry.pluginName, (entry.fields ?? []) as DerivationField[]);
-    }
-    return map;
-  }, [pluginMeta]);
-
-  const bindingsByPlugin = useMemo(() => {
-    const registered =
-      pluginMeta && "registeredDataBindings" in pluginMeta
-        ? pluginMeta.registeredDataBindings
-        : [];
-
-    const map = new Map<string, DataBinding[]>();
-    for (const entry of registered ?? []) {
-      map.set(entry.pluginName, (entry.bindings ?? []) as DataBinding[]);
-    }
-    return map;
-  }, [pluginMeta]);
+  const { fieldsByPlugin, bindingsByPlugin } = useRegisteredPluginMeta();
 
   /** The plugins a source covers: one, or every plugin in the scene. */
   const pluginsForSource = useCallback(
     (source: HostSource): string[] => {
-      if (source.kind === "screen") return [];
+      if (source.kind === "self") return [];
+
+      if (source.kind === "screen") {
+        const sceneIds = Object.keys(
+          data.renderer[source.rendererId]?.children ?? {},
+        );
+        return sceneIds.flatMap((sceneId) =>
+          Object.values(
+            (data.data[sceneId] as Scene | undefined)?.children ?? {},
+          ).map((p) => p.plugin),
+        );
+      }
 
       const scene = data.data[source.sceneId] as Scene | undefined;
       const plugins = Object.values(scene?.children ?? {}).map((p) => p.plugin);
@@ -67,7 +58,7 @@ export const useRendererHostCatalog = (
         ? plugins.filter((plugin) => plugin === source.pluginId)
         : plugins;
     },
-    [data.data],
+    [data.data, data.renderer],
   );
 
   const derivationFields = useCallback(
@@ -114,12 +105,10 @@ export const useRendererHostCatalog = (
     const sources: HostSourceOption[] = [];
 
     for (const sourceRendererId of rendererIds) {
-      // Mirroring this screen into itself would recurse forever.
-      if (sourceRendererId === rendererId) continue;
       sources.push({
         id: `screen:${sourceRendererId}`,
-        label: `Screen ${sourceRendererId} (live)`,
-        group: "Screens",
+        label: programLabel(sourceRendererId),
+        group: "Live",
         source: { kind: "screen", rendererId: sourceRendererId },
       });
     }
@@ -133,7 +122,10 @@ export const useRendererHostCatalog = (
         sources.push({
           id: `scene:${sourceRendererId}:${sceneId}`,
           label: scene.name || "Unnamed scene",
-          group: `Screen ${sourceRendererId}`,
+          group:
+            sourceRendererId === MAIN_PROGRAM_ID
+              ? "Scenes"
+              : `Scenes on program ${sourceRendererId}`,
           source: {
             kind: "scene",
             rendererId: sourceRendererId,
@@ -143,13 +135,12 @@ export const useRendererHostCatalog = (
       }
     }
 
-    return { sources, previewUrl, derivationFields, dataBindings };
-  }, [
-    data.renderer,
-    data.data,
-    rendererId,
-    previewUrl,
-    derivationFields,
-    dataBindings,
-  ]);
+    return {
+      sources,
+      previewUrl,
+      derivationFields,
+      dataBindings,
+      looks: BUILT_IN_LOOK_KEYS,
+    };
+  }, [data.renderer, data.data, previewUrl, derivationFields, dataBindings]);
 };

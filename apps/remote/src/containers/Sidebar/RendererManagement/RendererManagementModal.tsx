@@ -1,5 +1,19 @@
-import { RenderData } from "@repo/base-plugin";
-import { useData, usePluginData } from "@repo/shared";
+import {
+  BUILT_IN_LOOK_KEYS,
+  CONFIDENCE_LOOK_KEY,
+  MAIN_LOOK_KEY,
+} from "@repo/base-plugin";
+import {
+  LayoutDoc,
+  MAIN_OUTPUT_ID,
+  builtInPluginLook,
+  createLayoutDoc,
+  createProgramBox,
+  createSimpleOutputLayout,
+  nextOutputId,
+  sortedOutputIds,
+} from "@repo/layout";
+import { useData } from "@repo/shared";
 import {
   Button,
   Dialog,
@@ -11,63 +25,111 @@ import {
   useOverlayToggle,
 } from "@repo/ui";
 import { useCallback, useMemo, useState } from "react";
-import { VscAdd } from "react-icons/vsc";
+import { VscAdd, VscEdit } from "react-icons/vsc";
 
-import { useRendererSelection } from "../../../contexts/rendererSelection";
 import LayoutEditorModal from "./Layout/LayoutEditorModal";
-import RendererCard from "./RendererCard";
+import LookEditorModal from "./Layout/LookEditorModal";
+import { useRegisteredPluginMeta } from "./Layout/useRegisteredPluginMeta";
+import OutputCard from "./OutputCard";
+import { useOutputs } from "./useOutputs";
+
+const SHORTCUT_LOOKS = BUILT_IN_LOOK_KEYS.filter(
+  (look) => look.key !== MAIN_LOOK_KEY,
+);
 
 const RendererManagementModal = () => {
   const { isOpen, onToggle } = useOverlayToggle();
 
   const data = useData();
-  const mainState = usePluginData().mainState!;
-  const { selectedRendererId, setSelectedRendererId } = useRendererSelection();
+  const { outputs, writableOutputs } = useOutputs();
+  const { titleByPlugin, looks } = useRegisteredPluginMeta();
 
-  const [layoutEditorRendererId, setLayoutEditorRendererId] = useState<
+  const [layoutEditorOutputId, setLayoutEditorOutputId] = useState<
     string | null
   >(null);
+  const [lookEditor, setLookEditor] = useState<{
+    lookKey: string;
+    pluginName: string;
+  } | null>(null);
 
-  const rendererIds = useMemo(
-    () => Object.keys(data.renderer).sort(),
-    [data.renderer],
-  );
+  const outputIds = useMemo(() => sortedOutputIds(outputs), [outputs]);
 
-  const handleAddRenderer = useCallback(() => {
-    const numericIds = rendererIds
-      .map((id) => parseInt(id, 10))
-      .filter((id) => !isNaN(id));
-    const nextId = Math.max(0, ...numericIds) + 1;
-    const newId = String(nextId);
-
-    mainState.renderer[newId] = {
-      currentScene: null,
-      overlay: null,
-      children: {},
-      layout: null,
-      ownedScenes: {},
-    } satisfies RenderData;
-  }, [mainState.renderer, rendererIds]);
-
-  const handleDeleteRenderer = useCallback(
-    (rendererId: string) => {
-      if (rendererId === "1") return;
-
-      if (selectedRendererId === rendererId) {
-        setSelectedRendererId("1");
-      }
-
-      delete mainState.renderer[rendererId];
+  const addOutput = useCallback(
+    (name: string, layout: LayoutDoc) => {
+      const target = writableOutputs();
+      const id = nextOutputId(target);
+      target[id] = { name, layout };
+      return id;
     },
-    [mainState.renderer, selectedRendererId, setSelectedRendererId],
+    [writableOutputs],
   );
 
-  if (layoutEditorRendererId) {
+  const addLookOutput = useCallback(
+    (key: string, name: string) =>
+      addOutput(
+        name,
+        createSimpleOutputLayout({
+          look: key,
+          // A confidence monitor keeps showing when the room goes black
+          followOverlay: key !== CONFIDENCE_LOOK_KEY,
+        }),
+      ),
+    [addOutput],
+  );
+
+  const addCustomOutput = useCallback(() => {
+    const id = addOutput(
+      "Custom",
+      createLayoutDoc({ fitMode: "letterbox", elements: [createProgramBox()] }),
+    );
+    setLayoutEditorOutputId(id);
+  }, [addOutput]);
+
+  const handleDeleteOutput = useCallback(
+    (outputId: string) => {
+      if (outputId === MAIN_OUTPUT_ID) return;
+      delete writableOutputs()[outputId];
+    },
+    [writableOutputs],
+  );
+
+  const pluginsByLook = useMemo(
+    () =>
+      SHORTCUT_LOOKS.map((look) => {
+        const pluginNames = new Set<string>();
+        for (const pluginName of titleByPlugin.keys()) {
+          if (
+            builtInPluginLook(looks, pluginName, look.key) ||
+            data.looks?.[look.key]?.plugins?.[pluginName]
+          ) {
+            pluginNames.add(pluginName);
+          }
+        }
+        const others = [...titleByPlugin.keys()].filter(
+          (name) => !pluginNames.has(name),
+        );
+        return { look, pluginNames: [...pluginNames], others };
+      }),
+    [titleByPlugin, looks, data.looks],
+  );
+
+  if (lookEditor) {
+    return (
+      <LookEditorModal
+        isOpen={isOpen ?? false}
+        lookKey={lookEditor.lookKey}
+        pluginName={lookEditor.pluginName}
+        onClose={() => setLookEditor(null)}
+      />
+    );
+  }
+
+  if (layoutEditorOutputId) {
     return (
       <LayoutEditorModal
         isOpen={isOpen ?? false}
-        rendererId={layoutEditorRendererId}
-        onClose={() => setLayoutEditorRendererId(null)}
+        outputId={layoutEditorOutputId}
+        onClose={() => setLayoutEditorOutputId(null)}
       />
     );
   }
@@ -76,35 +138,104 @@ const RendererManagementModal = () => {
     <Dialog open={isOpen ?? false} onOpenChange={onToggle ?? (() => {})}>
       <DialogContent size="3xl">
         <DialogHeader>
-          <DialogTitle>Manage Renderers</DialogTitle>
+          <DialogTitle>Outputs</DialogTitle>
         </DialogHeader>
         <DialogBody>
-          <div className="flex flex-col gap-4 py-2">
-            <p className="text-sm text-secondary">
-              Renderers are independent display outputs. Each renderer can show
-              different scenes or use custom layouts for confidence monitors.
-            </p>
+          <div className="flex flex-col gap-6 py-2">
+            <section className="flex flex-col gap-3">
+              <p className="text-sm text-secondary">
+                Each output is a display. It shows what is live in a look, or a
+                custom layout.
+              </p>
 
-            <div className="flex flex-wrap gap-4">
-              {rendererIds.map((rendererId) => (
-                <RendererCard
-                  key={rendererId}
-                  rendererId={rendererId}
-                  renderer={data.renderer[rendererId] as RenderData}
-                  stateData={data.data}
-                  onDelete={handleDeleteRenderer}
-                  onOpenLayoutEditor={setLayoutEditorRendererId}
-                />
+              <div className="flex flex-wrap gap-4">
+                {outputIds.map((outputId) => (
+                  <OutputCard
+                    key={outputId}
+                    outputId={outputId}
+                    output={outputs[outputId]!}
+                    onDelete={handleDeleteOutput}
+                    onOpenLayoutEditor={setLayoutEditorOutputId}
+                  />
+                ))}
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {SHORTCUT_LOOKS.map((look) => (
+                  <Button
+                    key={look.key}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => addLookOutput(look.key, look.name)}
+                  >
+                    <VscAdd /> Add {look.name.toLowerCase()}
+                  </Button>
+                ))}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => addLookOutput(MAIN_LOOK_KEY, "Main copy")}
+                >
+                  <VscAdd /> Add copy of main
+                </Button>
+                <Button variant="outline" size="sm" onClick={addCustomOutput}>
+                  <VscAdd /> Add custom layout
+                </Button>
+              </div>
+            </section>
+
+            <section className="flex flex-col gap-3">
+              <div>
+                <h3 className="font-medium">Looks</h3>
+                <p className="text-sm text-secondary">
+                  How each kind of content shows in a look, in this project.
+                </p>
+              </div>
+              {pluginsByLook.map(({ look, pluginNames, others }) => (
+                <div
+                  key={look.key}
+                  className="flex flex-wrap items-center gap-2 text-sm"
+                >
+                  <span className="w-40 shrink-0 text-secondary">
+                    {look.name}
+                  </span>
+                  {pluginNames.map((pluginName) => (
+                    <Button
+                      key={pluginName}
+                      variant="outline"
+                      size="xs"
+                      onClick={() =>
+                        setLookEditor({ lookKey: look.key, pluginName })
+                      }
+                    >
+                      <VscEdit />
+                      {titleByPlugin.get(pluginName) ?? pluginName}
+                    </Button>
+                  ))}
+                  {others.length > 0 && (
+                    <select
+                      aria-label={`Customize ${look.name.toLowerCase()} for another plugin`}
+                      className="border border-stroke rounded-sm px-2 py-0.5 bg-surface-primary text-xs"
+                      value=""
+                      onChange={(e) =>
+                        e.target.value &&
+                        setLookEditor({
+                          lookKey: look.key,
+                          pluginName: e.target.value,
+                        })
+                      }
+                    >
+                      <option value="">Another…</option>
+                      {others.map((pluginName) => (
+                        <option key={pluginName} value={pluginName}>
+                          {titleByPlugin.get(pluginName) ?? pluginName}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
               ))}
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleAddRenderer}
-              className="w-full"
-            >
-              <VscAdd /> Add New Renderer
-            </Button>
+            </section>
           </div>
         </DialogBody>
         <DialogFooter>
