@@ -41,8 +41,6 @@ export default async function installHelmet(app: Express) {
           ...(contentSecurityPolicy.getDefaultDirectives()[
             "script-src"
           ] as Iterable<any>),
-          // ES Module shim
-          "https://ga.jspm.io",
           "https://esm.sh",
           // Stripe
           "https://js.stripe.com",
