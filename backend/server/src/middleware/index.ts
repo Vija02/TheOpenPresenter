@@ -26,6 +26,7 @@ import installPluginStatic from "./installPluginStatic";
 import installPostGraphile from "./installPostGraphile";
 import installProjectImportExport from "./installProjectImportExport";
 import installProjectManagement from "./installProjectManagement";
+import installProxyCache from "./installProxyCache";
 import installRemote from "./installRemote";
 import installRenderer from "./installRenderer";
 import installSSR from "./installSSR";
@@ -65,6 +66,7 @@ export {
   installPostGraphile,
   installProjectImportExport,
   installProjectManagement,
+  installProxyCache,
   installRemote,
   installRenderer,
   installSSR,

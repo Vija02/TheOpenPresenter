@@ -196,26 +196,11 @@ export const init = (
     },
     changeOrigin: true,
   });
-  const apiProxyScripts = createProxyMiddleware({
-    target: "https://docs.google.com",
-    changeOrigin: true,
-    on: {
-      proxyRes: (proxyRes) => {
-        proxyRes.headers["cache-control"] =
-          "public, max-age=31536000, immutable";
-      },
-    },
-  });
 
   serverPluginApi.registerPrivateRoute(
     pluginName,
     "gslide/userUploads",
     apiProxy,
-  );
-  serverPluginApi.registerPrivateRoute(
-    pluginName,
-    "gslide/gscripts",
-    apiProxyScripts,
   );
 
   serverPluginApi.registerKeyPressHandler(
