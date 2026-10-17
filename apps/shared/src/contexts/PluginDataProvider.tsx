@@ -1,4 +1,4 @@
-import { HocuspocusProvider } from "@hocuspocus/provider";
+import { HocuspocusProvider, WebSocketStatus } from "@hocuspocus/provider";
 import type {
   AwarenessUserData,
   ObjectToTypedMap,
@@ -305,6 +305,23 @@ export const PluginDataProvider = ({
     provider?.synced,
     setAwarenessData,
   ]);
+
+  // Retry connection straight away when network changes
+  useEffect(() => {
+    if (!provider) return;
+    const socket = provider.configuration.websocketProvider;
+    const reconnectNow = () => {
+      if (document.visibilityState === "hidden") return;
+      if (socket.status === WebSocketStatus.Connected) return;
+      void socket.connect();
+    };
+    addEventListener("online", reconnectNow);
+    document.addEventListener("visibilitychange", reconnectNow);
+    return () => {
+      removeEventListener("online", reconnectNow);
+      document.removeEventListener("visibilitychange", reconnectNow);
+    };
+  }, [provider]);
 
   // Only before connecting: once connected, the connection recovers itself
   if (isError && !provider) {
