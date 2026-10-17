@@ -5,27 +5,29 @@ import type { RequestHandler } from "express";
 
 import { pluginName } from "../consts";
 import { listDesigns } from "../importers/canva/api";
-import { getValidAccessToken as getCanvaAccessToken } from "../importers/canva/tokenStore";
-import { connectionBelongsToLink, listConnectionsForLink } from "./db";
+import { findOneTimeGrantToken } from "../importers/canva/tokenStore";
 import { resolveLink, runImport, safeHandler } from "./importFlow";
 import type { UploadLinkDeps } from "./routes";
+import type { UploadLinkRow } from "./rules";
 
-/** Designs in the visitor's own Canva account, shaped for the public page. */
-const listPublicCanvaDesigns = async (
+const SIGN_IN_AGAIN = "Your Canva sign-in has expired. Sign in to Canva again.";
+
+/**
+ * The access token of the visitor's one-time Canva sign-in. The grant id is
+ * only known to the browser that started the sign-in.
+ */
+const visitorAccessToken = (
   serverPluginApi: ServerPluginApi,
-  connectionId: string,
-) => {
-  const accessToken = await getCanvaAccessToken(serverPluginApi, connectionId);
-  const result = await listDesigns(accessToken, {});
-
-  return {
-    items: result.items.map((d) => ({
-      id: d.id,
-      title: d.title ?? "Untitled design",
-      thumbnailUrl: d.thumbnail?.url ?? null,
-    })),
-  };
-};
+  link: UploadLinkRow,
+  grantId: unknown,
+) =>
+  typeof grantId === "string"
+    ? findOneTimeGrantToken(serverPluginApi, {
+        grantId,
+        organizationId: link.organization_id,
+        owner: { uploadLinkId: link.id },
+      })
+    : Promise.resolve(null);
 
 /**
  * Canva endpoints for the public upload page.
@@ -38,9 +40,9 @@ export const registerPublicCanvaRoutes = (
 
   /** POST /plugin/slides/canva-import/:token */
   const importHandler: RequestHandler = async (req, res) => {
-    const { connectionId, designId, title, uploaderName } = req.body ?? {};
+    const { grantId, designId, title, uploaderName } = req.body ?? {};
 
-    if (!connectionId || !designId) {
+    if (!grantId || !designId) {
       res.status(400).json({ error: "Missing design details." });
       return;
     }
@@ -48,10 +50,10 @@ export const registerPublicCanvaRoutes = (
     const link = await resolveLink(serverPluginApi, req, res);
     if (!link) return;
 
-    if (
-      !(await connectionBelongsToLink(serverPluginApi, connectionId, link.id))
-    ) {
-      res.status(403).json({ error: "That Canva account isn't connected." });
+    // Not consumed: a visitor may send again to replace their slides
+    const accessToken = await visitorAccessToken(serverPluginApi, link, grantId);
+    if (!accessToken) {
+      res.status(403).json({ error: SIGN_IN_AGAIN });
       return;
     }
 
@@ -66,7 +68,7 @@ export const registerPublicCanvaRoutes = (
         doImport: (replaceImportId) =>
           deps.importCanvaDesign({
             pluginId: link.plugin_id,
-            connectionId,
+            accessToken,
             designId,
             name: title,
             organizationId: link.organization_id,
@@ -97,35 +99,33 @@ export const registerPublicCanvaRoutes = (
       ),
   );
 
-  /** GET /plugin/slides/canva-designs/:token?connectionId=... */
+  /** GET /plugin/slides/canva-designs/:token?grantId=... */
   serverPluginApi.registerPrivateRoute(
     pluginName,
     "canva-designs",
     safeHandler("canva-designs", async (req, res) => {
       try {
-        const connectionId =
-          typeof req.query.connectionId === "string"
-            ? req.query.connectionId
-            : null;
-
         const link = await resolveLink(serverPluginApi, req, res);
         if (!link) return;
 
-        if (
-          !connectionId ||
-          !(await connectionBelongsToLink(
-            serverPluginApi,
-            connectionId,
-            link.id,
-          ))
-        ) {
-          res
-            .status(403)
-            .json({ error: "That Canva account isn't connected." });
+        const accessToken = await visitorAccessToken(
+          serverPluginApi,
+          link,
+          req.query.grantId,
+        );
+        if (!accessToken) {
+          res.status(403).json({ error: SIGN_IN_AGAIN });
           return;
         }
 
-        res.json(await listPublicCanvaDesigns(serverPluginApi, connectionId));
+        const result = await listDesigns(accessToken, {});
+        res.json({
+          items: result.items.map((d) => ({
+            id: d.id,
+            title: d.title ?? "Untitled design",
+            thumbnailUrl: d.thumbnail?.url ?? null,
+          })),
+        });
       } catch (err) {
         logger
           .child({ pluginName })
@@ -136,25 +136,29 @@ export const registerPublicCanvaRoutes = (
   );
 
   /**
-   * GET /plugin/slides/canva-connection/:token
-   * Tells the page whether the visitor has finished connecting Canva.
+   * GET /plugin/slides/canva-sign-in/:token?grantId=...
+   * Tells the page whether the visitor has finished signing in to Canva.
    */
   serverPluginApi.registerPrivateRoute(
     pluginName,
-    "canva-connection",
-    safeHandler("canva-connection", async (req, res) => {
+    "canva-sign-in",
+    safeHandler("canva-sign-in", async (req, res) => {
       try {
         const link = await resolveLink(serverPluginApi, req, res);
         if (!link) return;
 
         res.json({
-          connections: await listConnectionsForLink(serverPluginApi, link.id),
+          isSignedIn: !!(await visitorAccessToken(
+            serverPluginApi,
+            link,
+            req.query.grantId,
+          )),
         });
       } catch (err) {
         logger
           .child({ pluginName })
-          .error({ err }, "Failed to list Canva connections");
-        res.status(500).json({ error: "Couldn't check your Canva account." });
+          .error({ err }, "Failed to check a Canva sign-in");
+        res.status(500).json({ error: "Couldn't check your Canva sign-in." });
       }
     }),
   );

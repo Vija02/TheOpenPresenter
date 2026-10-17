@@ -15,6 +15,7 @@ export const createCanvaImporter = (
   const importCanvaDesign = async ({
     pluginId,
     connectionId,
+    accessToken: givenAccessToken,
     designId,
     name,
     replaceImportId,
@@ -23,7 +24,8 @@ export const createCanvaImporter = (
     userId,
   }: {
     pluginId: string;
-    connectionId: string;
+    connectionId?: string;
+    accessToken?: string;
     designId: string;
     name?: string;
     replaceImportId?: string;
@@ -43,10 +45,9 @@ export const createCanvaImporter = (
     loadedPlugin.pluginData.imports[newImport.importId] = newImport;
 
     try {
-      const accessToken = await getCanvaAccessToken(
-        serverPluginApi,
-        connectionId,
-      );
+      const accessToken =
+        givenAccessToken ??
+        (await getCanvaAccessToken(serverPluginApi, connectionId!));
 
       log.info("Exporting Canva design to PDF...");
       const pdfBuffer = await exportDesignAsPdf(accessToken, designId, log);

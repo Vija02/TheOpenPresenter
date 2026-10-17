@@ -16,6 +16,8 @@ import { CanvaIconLogo } from "../../components/CanvaLogo";
 import { usePluginAPI } from "../../pluginApi";
 import { trpc } from "../../trpc";
 
+export type CanvaSource = { connectionId: string } | { grantId: string };
+
 export type CanvaDesignSelection = {
   designId: string;
   title: string;
@@ -27,15 +29,14 @@ export const CanvaDesignPicker = ({
   isOpen,
   onClose,
   onSelected,
-  connectionId,
+  source,
   accountLabel,
   onSwitchAccount,
 }: {
   isOpen: boolean;
   onClose: () => void;
   onSelected: (design: CanvaDesignSelection) => void;
-  /** Which linked Canva account to list designs from. */
-  connectionId: string | null;
+  source: CanvaSource | null;
   accountLabel?: string | null;
   onSwitchAccount?: () => void;
 }) => {
@@ -53,11 +54,11 @@ export const CanvaDesignPicker = ({
   const listQuery = trpc.slides.canvaListDesigns.useInfiniteQuery(
     {
       pluginId,
-      connectionId: connectionId ?? "",
+      ...source,
       query: debouncedSearch || undefined,
     },
     {
-      enabled: isOpen && connectionId !== null,
+      enabled: isOpen && source !== null,
       getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
       // Canva thumbnail URLs expire after 15 minutes, so don't serve a stale
       // list (with broken images) to a picker that was left open.

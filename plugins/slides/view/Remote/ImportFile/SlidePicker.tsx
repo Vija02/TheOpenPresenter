@@ -33,20 +33,25 @@ export type OAuthResponseEvent = {
 export const SlidePicker = ({
   onFileSelected,
   children,
+  clientId,
+  oauthToken,
 }: {
   onFileSelected: (doc: PickerDocument, accessToken: string) => void;
   children: (val: {
     isLoading: boolean;
     openPicker: () => void;
   }) => React.ReactElement<any>;
+  clientId?: string;
+  oauthToken?: string;
 }) => {
   const pluginApi = usePluginAPI();
   const [isPickerVisible, setIsPickerVisible] = useState(false);
   const accessTokenRef = useRef<string | null>(null);
 
   const googleClientID = useMemo(
-    () => pluginApi.env.getCustomEnv("PLUGIN_GOOGLE_SLIDES_CLIENT_ID"),
-    [pluginApi.env],
+    () =>
+      clientId || pluginApi.env.getCustomEnv("PLUGIN_GOOGLE_SLIDES_CLIENT_ID"),
+    [clientId, pluginApi.env],
   );
 
   const appId = useMemo(
@@ -63,11 +68,11 @@ export const SlidePicker = ({
       const docs = event.detail.docs;
       if (docs.length > 0) {
         const doc = docs[0]!;
-        onFileSelected(doc, accessTokenRef.current ?? "");
+        onFileSelected(doc, oauthToken ?? accessTokenRef.current ?? "");
       }
       setIsPickerVisible(false);
     },
-    [onFileSelected],
+    [onFileSelected, oauthToken],
   );
 
   const handleCanceled = useCallback(() => {
@@ -93,6 +98,7 @@ export const SlidePicker = ({
         <DrivePicker
           client-id={googleClientID}
           app-id={appId}
+          {...(oauthToken ? { "oauth-token": oauthToken } : {})}
           onPicked={handlePicked}
           onCanceled={handleCanceled}
           onOauthError={handleOAuthError}

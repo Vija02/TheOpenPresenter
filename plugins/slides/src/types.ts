@@ -71,6 +71,8 @@ export interface GoogleSlidesImportData extends BaseImportData {
   type: "googleslides";
   /** The Google presentation objectId */
   presentationId: string;
+  /** The stored Google connection it was imported with */
+  googleConnectionId?: string | null;
   /** Processed HTML for rendering slides */
   html: string;
   /** Similar to slideClickCounts but for slide transition duration */

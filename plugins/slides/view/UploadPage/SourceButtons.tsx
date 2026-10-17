@@ -9,7 +9,7 @@ import {
 import { CanvaPicker } from "./CanvaPicker";
 import type { UploadPageConfig } from "./UploadPage";
 import { openGooglePicker } from "./googlePicker";
-import { useCanvaConnections } from "./useCanvaConnections";
+import { useCanvaSignIn } from "./useCanvaSignIn";
 
 // Integrations
 export const SourceButtons = ({
@@ -29,13 +29,17 @@ export const SourceButtons = ({
 }) => {
   const { token, googleClientId, googleAppId, canvaEnabled } = config;
   const [showCanva, setShowCanva] = useState(false);
-  const { connections, isConnecting, startConnect } =
-    useCanvaConnections(token);
+  const {
+    grantId,
+    isSigningIn,
+    error: canvaError,
+    startSignIn,
+  } = useCanvaSignIn(token);
 
-  // Always re-authorize
+  // Always sign in again: a visitor's sign-in is never kept for the next one
   const handleCanva = () => {
     setShowCanva(true);
-    startConnect();
+    startSignIn();
   };
 
   if (!googleClientId && !canvaEnabled) return null;
@@ -102,9 +106,10 @@ export const SourceButtons = ({
           send={send}
           isOpen={showCanva}
           onClose={() => setShowCanva(false)}
-          connections={connections}
-          isConnecting={isConnecting}
-          onRetryConnect={startConnect}
+          grantId={grantId}
+          isSigningIn={isSigningIn}
+          signInError={canvaError}
+          onRetrySignIn={startSignIn}
         />
       )}
     </div>

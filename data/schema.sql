@@ -3385,6 +3385,26 @@ CREATE TABLE app_private.connect_pg_simple_sessions (
 
 
 --
+-- Name: integration_intents; Type: TABLE; Schema: app_private; Owner: -
+--
+
+CREATE TABLE app_private.integration_intents (
+    id text NOT NULL,
+    provider text NOT NULL,
+    kind text NOT NULL,
+    organization_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    status text DEFAULT 'pending'::text NOT NULL,
+    input jsonb DEFAULT '{}'::jsonb NOT NULL,
+    result jsonb,
+    error text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    expires_at timestamp with time zone DEFAULT (now() + '00:15:00'::interval) NOT NULL,
+    CONSTRAINT integration_intents_status_check CHECK ((status = ANY (ARRAY['pending'::text, 'done'::text, 'failed'::text])))
+);
+
+
+--
 -- Name: organization_billing; Type: TABLE; Schema: app_private; Owner: -
 --
 
@@ -3992,6 +4012,14 @@ ALTER TABLE ONLY app_private.cloud_sync_rows
 
 
 --
+-- Name: integration_intents integration_intents_pkey; Type: CONSTRAINT; Schema: app_private; Owner: -
+--
+
+ALTER TABLE ONLY app_private.integration_intents
+    ADD CONSTRAINT integration_intents_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: organization_billing organization_billing_pkey; Type: CONSTRAINT; Schema: app_private; Owner: -
 --
 
@@ -4373,6 +4401,27 @@ ALTER TABLE ONLY app_public.users
 
 ALTER TABLE ONLY app_public.users
     ADD CONSTRAINT users_username_key UNIQUE (username);
+
+
+--
+-- Name: integration_intents_expires_at_idx; Type: INDEX; Schema: app_private; Owner: -
+--
+
+CREATE INDEX integration_intents_expires_at_idx ON app_private.integration_intents USING btree (expires_at);
+
+
+--
+-- Name: integration_intents_organization_id_idx; Type: INDEX; Schema: app_private; Owner: -
+--
+
+CREATE INDEX integration_intents_organization_id_idx ON app_private.integration_intents USING btree (organization_id);
+
+
+--
+-- Name: integration_intents_user_id_idx; Type: INDEX; Schema: app_private; Owner: -
+--
+
+CREATE INDEX integration_intents_user_id_idx ON app_private.integration_intents USING btree (user_id);
 
 
 --
@@ -5385,6 +5434,22 @@ ALTER TABLE ONLY app_private.cloud_sync_rows
 
 
 --
+-- Name: integration_intents integration_intents_organization_id_fkey; Type: FK CONSTRAINT; Schema: app_private; Owner: -
+--
+
+ALTER TABLE ONLY app_private.integration_intents
+    ADD CONSTRAINT integration_intents_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES app_public.organizations(id) ON DELETE CASCADE;
+
+
+--
+-- Name: integration_intents integration_intents_user_id_fkey; Type: FK CONSTRAINT; Schema: app_private; Owner: -
+--
+
+ALTER TABLE ONLY app_private.integration_intents
+    ADD CONSTRAINT integration_intents_user_id_fkey FOREIGN KEY (user_id) REFERENCES app_public.users(id) ON DELETE CASCADE;
+
+
+--
 -- Name: organization_billing organization_billing_organization_id_fkey; Type: FK CONSTRAINT; Schema: app_private; Owner: -
 --
 
@@ -5923,6 +5988,12 @@ ALTER TABLE app_private.cloud_sync_rows ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE app_private.connect_pg_simple_sessions ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: integration_intents; Type: ROW SECURITY; Schema: app_private; Owner: -
+--
+
+ALTER TABLE app_private.integration_intents ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: sessions; Type: ROW SECURITY; Schema: app_private; Owner: -
