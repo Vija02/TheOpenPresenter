@@ -2,6 +2,7 @@ import type { InternalVideo } from "@repo/base-types";
 import {
   UniversalURL,
   extractMediaName,
+  normalizeMediaUrl,
   resolveMediaUrl,
   universalURLValidator,
 } from "@repo/lib";
@@ -177,7 +178,7 @@ export const toInternalVideo = (video: LayoutVideo): InternalVideo => ({
 });
 
 export const videoPosterUrl = (video: LayoutVideo): string | null => {
-  if (video.thumbnailUrl) return video.thumbnailUrl;
+  if (video.thumbnailUrl) return normalizeMediaUrl(video.thumbnailUrl);
   if (video.thumbnailMediaName) {
     try {
       return resolveMediaUrl(extractMediaName(video.thumbnailMediaName));

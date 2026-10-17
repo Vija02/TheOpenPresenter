@@ -1,4 +1,4 @@
-import { extractMediaName, resolveMediaUrl } from "@repo/lib";
+import { extractMediaName, normalizeMediaUrl, resolveMediaUrl } from "@repo/lib";
 
 import { InternalVideo, UniversalVideo } from "../types";
 
@@ -15,13 +15,16 @@ export const resolveVideoUrl = (
       try {
         return resolveMediaUrl(extractMediaName(internalVideo.hlsMediaName));
       } catch {
-        return video.url ?? null;
+        return storedUrl(video);
       }
     }
   }
 
-  return video.url ?? null;
+  return storedUrl(video);
 };
+
+const storedUrl = (video: UniversalVideo) =>
+  video.url ? normalizeMediaUrl(video.url) : null;
 
 export const isYouTubeUrl = (url: string | null): boolean =>
   url ? url.includes("youtube.com") || url.includes("youtu.be") : false;

@@ -84,6 +84,18 @@ export const resolveMediaUrl = (mediaUrl: UniversalURL) => {
   return mediaUrl;
 };
 
+export const mediaDataPath = (mediaName: string) => `/media/data/${mediaName}`;
+
+// Our own media routes on any host, eg `http://localhost:5678/media/data/media_01k....mp4`
+const OWN_MEDIA_URL =
+  /^[a-z][a-z0-9+.-]*:\/\/[^/?#]+(\/media\/(?:data|processed\/\d+)\/media_[0-9a-z]{26}\.[a-z0-9]{1,12}(?:[?#].*)?)$/i;
+
+/** Use this for older data that has the full media link so that we convert
+ * it into just the path
+ */
+export const normalizeMediaUrl = (url: string): string =>
+  url.replace(OWN_MEDIA_URL, "$1");
+
 export const resolveProcessedMediaUrl = ({
   mediaUrl,
   size,

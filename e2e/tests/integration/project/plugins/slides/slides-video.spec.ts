@@ -68,6 +68,7 @@ const expectPlaying = async (video: Locator) => {
 const seedDeck = async (
   e2eCommand: any,
   slides: { playback: "loop" | "once"; label: string }[],
+  { savedHost }: { savedHost?: string } = {},
 ) => {
   // Ordering: media hangs off an organization, so the org has to exist before
   // `seedVideoMedia` can attach to it — but the scene must reference a media
@@ -87,10 +88,20 @@ const seedDeck = async (
 
   const video = await seedVideo(e2eCommand, ORG);
 
+  let scene = buildVideoSlidesScene(video, slides);
+  if (savedHost) {
+    // Older pickers saved links with the address of the browser that picked
+    // the file, which only loads from that machine
+    const path = `/media/data/${video.mediaName}`;
+    scene = JSON.parse(
+      JSON.stringify(scene).replaceAll(`"${path}"`, `"${savedHost}${path}"`),
+    );
+  }
+
   await e2eCommand.seedProjectScenes({
     orgSlug: ORG,
     projectSlug: PROJECT,
-    scenes: [buildVideoSlidesScene(video, slides)],
+    scenes: [scene],
   });
 
   return video;
@@ -138,6 +149,30 @@ test.describe.serial("Slides video playback", () => {
       await page.getByTestId("slide-container").first().click();
 
       await expectPlaying(rendererVideo(renderer));
+    } finally {
+      await renderer.close();
+    }
+  });
+
+  test("a video saved with another machine's address loads from this server", async ({
+    page,
+    e2eCommand,
+    baseURL,
+  }) => {
+    await seedDeck(e2eCommand, [{ playback: "once", label: "Slide one" }], {
+      savedHost: "http://old-host.invalid:5678",
+    });
+
+    const renderer = await page.context().newPage();
+    try {
+      await renderer.goto(`/render/${ORG}/${PROJECT}`);
+      await page.goto(`/app/${ORG}/${PROJECT}`);
+      await page.getByTestId("slide-container").first().click();
+
+      const video = rendererVideo(renderer);
+      await expectPlaying(video);
+      const src = await video.evaluate((el: HTMLVideoElement) => el.currentSrc);
+      expect(new URL(src).origin).toBe(new URL(baseURL!).origin);
     } finally {
       await renderer.close();
     }
