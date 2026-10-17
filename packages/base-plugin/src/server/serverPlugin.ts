@@ -360,7 +360,7 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
     ].mediaHandler(withPgClientFromPool(this.app.get("rootPgPool") as Pool));
 
     const { mediaId, fileName } = await mediaHandler.uploadMedia({
-      file: stream.Readable.from(data),
+      file: () => stream.Readable.from(data),
       fileExtension,
       fileSize,
       userId,

@@ -10,7 +10,8 @@ export interface MediaHandlerConstructor {
 }
 
 export type UploadMediaParam = {
-  file: stream.Readable;
+  /** Pass a function to allow retries */
+  file: stream.Readable | (() => stream.Readable);
   fileExtension: string;
   fileSize: number;
   mediaId?: string;

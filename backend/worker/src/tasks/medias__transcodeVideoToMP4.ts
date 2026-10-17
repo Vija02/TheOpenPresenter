@@ -226,7 +226,7 @@ const task: Task = async (inPayload, { withPgClient }) => {
 
     logger.trace({ mediaId, transcodedFilePath }, "Uploading transcoded MP4");
     await mediaHandler.uploadMedia({
-      file: createReadStream(transcodedFilePath),
+      file: () => createReadStream(transcodedFilePath),
       userId: mediaRow.user_id,
       organizationId: mediaRow.organization_id,
       isUserUploaded: false,

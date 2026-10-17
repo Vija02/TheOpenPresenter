@@ -336,7 +336,7 @@ const task: Task = async (inPayload, { withPgClient }) => {
         ).size;
 
         await mediaHandler.uploadMedia({
-          file: createReadStream(path.join(resolutionDir, fileToUpload)),
+          file: () => createReadStream(path.join(resolutionDir, fileToUpload)),
           userId: mediaRow.user_id,
           organizationId: mediaRow.organization_id,
           isUserUploaded: false,
@@ -434,7 +434,7 @@ const task: Task = async (inPayload, { withPgClient }) => {
     ].mediaHandler(withPgClient);
 
     await mediaHandler.uploadMedia({
-      file: createReadStream(masterFilePath),
+      file: () => createReadStream(masterFilePath),
       userId: mediaRow.user_id,
       organizationId: mediaRow.organization_id,
       isUserUploaded: false,
