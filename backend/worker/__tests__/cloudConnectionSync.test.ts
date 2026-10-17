@@ -176,6 +176,125 @@ afterEach(async () => {
 });
 
 describe("cloud_connection__sync", () => {
+  const localOrganization = async () =>
+    (
+      await query(
+        `select organization_type, is_public, experimental_features_enabled
+         from app_public.organizations where id = $1`,
+        [orgId],
+      )
+    )[0];
+  const setLocal = (sql: string) =>
+    query(`update app_public.organizations set ${sql} where id = $1`, [orgId]);
+
+  describe("organization settings", () => {
+    it("takes the cloud's on the first sync", async () => {
+      // Connecting creates the local organization with the defaults
+      expect(await localOrganization()).toEqual({
+        organization_type: "venue",
+        is_public: false,
+        experimental_features_enabled: false,
+      });
+      fake.organization = {
+        organizationType: "church",
+        isPublic: true,
+        experimentalFeaturesEnabled: true,
+      };
+
+      await runTask();
+
+      expect(await localOrganization()).toEqual({
+        organization_type: "church",
+        is_public: true,
+        experimental_features_enabled: true,
+      });
+      expect(fake.organizationPushes).toEqual([]);
+    });
+
+    it("pushes an edit made here", async () => {
+      await runTask();
+      await setLocal("is_public = true");
+
+      await runTask();
+
+      expect(fake.organization).toEqual({
+        organizationType: "church",
+        isPublic: true,
+        experimentalFeaturesEnabled: false,
+      });
+      // A sync with nothing new changes nothing
+      await runTask();
+      expect(fake.organizationPushes).toHaveLength(1);
+    });
+
+    it("pulls an edit made on the cloud", async () => {
+      await runTask();
+      fake.organization = { ...fake.organization, organizationType: "venue" };
+
+      await runTask();
+
+      expect(await localOrganization()).toMatchObject({
+        organization_type: "venue",
+      });
+      expect(fake.organizationPushes).toEqual([]);
+    });
+
+    it("combines edits made on both sides", async () => {
+      await runTask();
+      await setLocal("is_public = true");
+      fake.organization = {
+        ...fake.organization,
+        experimentalFeaturesEnabled: true,
+      };
+
+      await runTask();
+
+      expect(await localOrganization()).toEqual({
+        organization_type: "church",
+        is_public: true,
+        experimental_features_enabled: true,
+      });
+      expect(fake.organization).toEqual({
+        organizationType: "church",
+        isPublic: true,
+        experimentalFeaturesEnabled: true,
+      });
+    });
+
+    it("tries again next sync when the cloud changed during a push", async () => {
+      await runTask();
+      await setLocal("is_public = true");
+      fake.beforeOrganizationPush = () => {
+        fake.organization = {
+          ...fake.organization,
+          experimentalFeaturesEnabled: true,
+        };
+        fake.beforeOrganizationPush = null;
+      };
+
+      await runTask();
+      // Refused, so nothing here moves yet
+      expect(await localOrganization()).toEqual({
+        organization_type: "church",
+        is_public: true,
+        experimental_features_enabled: false,
+      });
+      expect(await lastRun()).toMatchObject({ status: "completed" });
+
+      await runTask();
+      expect(await localOrganization()).toEqual({
+        organization_type: "church",
+        is_public: true,
+        experimental_features_enabled: true,
+      });
+      expect(fake.organization).toEqual({
+        organizationType: "church",
+        isPublic: true,
+        experimentalFeaturesEnabled: true,
+      });
+    });
+  });
+
   it("pulls a project and the category and tags it names, in one run", async () => {
     const cloudId = randomUUID();
     fake.tables.set("app_public.categories", [cloudCategory("Youth")]);

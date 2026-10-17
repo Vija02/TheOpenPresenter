@@ -4,3 +4,4 @@ export * from "./remoteDocument";
 export * from "./pluginTables";
 export * from "./projects";
 export * from "./media";
+export * from "./organization";

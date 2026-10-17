@@ -3680,6 +3680,7 @@ type Mutation {
   ): ChangePasswordPayload
   cloudMediaSyncDelete(mediaIds: JSON!, organizationSlug: String!): JSON!
   cloudMediaSyncPush(links: JSON!, metadata: JSON!, organizationSlug: String!): JSON!
+  cloudOrganizationSyncPush(expected: JSON!, organizationSlug: String!, value: JSON!): JSON!
   cloudPluginTablePush(changes: JSON!, organizationSlug: String!, schemaName: String!, tableName: String!): JSON!
   cloudProjectSyncPush(changes: JSON!, organizationSlug: String!): JSON!
 
@@ -6002,6 +6003,7 @@ type Query {
   ): CloudConnectionsConnection
   cloudEnabled: Boolean!
   cloudMediaSyncPage(after: UUID, organizationSlug: String!): JSON!
+  cloudOrganizationSyncGet(organizationSlug: String!): JSON!
   cloudPluginTableKeys(organizationSlug: String!, schemaName: String!, tableName: String!): JSON!
   cloudPluginTableRows(keys: JSON!, organizationSlug: String!, schemaName: String!, tableName: String!): JSON!
   cloudProjectSyncList(organizationSlug: String!): JSON!

@@ -33,6 +33,12 @@ import type {
 
 export const CLOUD_ORG_ID = "c0000000-0000-4000-8000-000000000001";
 
+const defaultOrganization = {
+  organizationType: "church",
+  isPublic: false,
+  experimentalFeaturesEnabled: false,
+};
+
 type Row = Record<string, unknown>;
 export type TableChange = {
   key: Row;
@@ -64,6 +70,14 @@ export const startFakeCloud = async (syncTables: CloudSyncTable[]) => {
     orgMissing: false,
     /** As if the cloud predates sync: every sync field fails validation. */
     unsupported: false,
+    // ----- The organization's settings -----
+    organization: { ...defaultOrganization },
+    organizationPushes: [] as {
+      expected: Record<string, unknown>;
+      value: Record<string, unknown>;
+    }[],
+    /** Runs before an organization push applies, e.g. to edit the cloud. */
+    beforeOrganizationPush: null as null | (() => unknown),
 
     // ----- @cloudSync tables -----
     tables: new Map<string, Row[]>(),
@@ -378,6 +392,24 @@ export const startFakeCloud = async (syncTables: CloudSyncTable[]) => {
     const entity = `${variables.schemaName}.${variables.tableName}`;
 
     switch (field) {
+      case "cloudOrganizationSyncGet":
+        return { data: { [field]: fake.organization } };
+      case "cloudOrganizationSyncPush": {
+        fake.beforeOrganizationPush?.();
+        fake.organizationPushes.push({
+          expected: variables.expected,
+          value: variables.value,
+        });
+        if (!same(variables.expected, fake.organization)) {
+          return {
+            data: {
+              [field]: { status: "rejected", reason: "changed on the cloud" },
+            },
+          };
+        }
+        fake.organization = variables.value;
+        return { data: { [field]: { status: "applied" } } };
+      }
       case "cloudPluginTableKeys":
         return {
           data: {
@@ -608,6 +640,9 @@ export const resetFakeCloud = (fake: FakeCloud) => {
   fake.requests = [];
   fake.orgMissing = false;
   fake.unsupported = false;
+  fake.organization = { ...defaultOrganization };
+  fake.organizationPushes = [];
+  fake.beforeOrganizationPush = null;
   fake.tables.clear();
   fake.downloaded.clear();
   fake.pushed.clear();
