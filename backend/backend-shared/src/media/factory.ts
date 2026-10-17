@@ -9,6 +9,7 @@ import { logger } from "@repo/observability";
 import { Upload } from "@tus/server";
 import { backOff } from "exponential-backoff";
 import { Request } from "express";
+import type { Readable } from "stream";
 import { StorageEngine } from "multer";
 import sharp from "sharp";
 import { TypeId, toUUID, typeidUnboxed } from "typeid-js";
@@ -49,6 +50,7 @@ export const createMediaHandler = <T extends OurDataStore>(
       skipProcessing = false,
     }: UploadMediaParam) {
       const finalFileName = mediaId + "." + fileExtension;
+      const openFile = typeof file === "function" ? file : null;
       try {
         return await backOff(
           async () => {
@@ -67,9 +69,10 @@ export const createMediaHandler = <T extends OurDataStore>(
             });
 
             await this.store.create(upload);
+            const src = openFile ? openFile() : (file as Readable);
             try {
               // Write to storage
-              await this.store.write(file, upload.id, 0);
+              await this.store.write(src, upload.id, 0);
             } catch (err: any) {
               if (err?.Code === "NoSuchUpload") {
                 logger.warn(
@@ -79,6 +82,9 @@ export const createMediaHandler = <T extends OurDataStore>(
                 return { mediaId, fileExtension, fileName: finalFileName };
               }
               throw err;
+            } finally {
+              // Releases the file handle when a failed attempt left it open
+              if (openFile) src.destroy();
             }
 
             // Update is_complete flag
@@ -105,6 +111,13 @@ export const createMediaHandler = <T extends OurDataStore>(
           },
           {
             retry: (err, attemptNumber) => {
+              if (!openFile) {
+                logger.warn(
+                  { err },
+                  "uploadMedia: Failed to upload; not retrying since the stream can't be replayed",
+                );
+                return false;
+              }
               logger.warn(
                 { err, attemptNumber },
                 "uploadMedia: Failed to upload, retrying...",

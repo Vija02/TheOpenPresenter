@@ -99,7 +99,7 @@ const task: Task = async (inPayload, { withPgClient }) => {
         limit(async () => {
           // Upload
           const { fileName } = await mediaHandler.uploadMedia({
-            file: createReadStream(localPath),
+            file: () => createReadStream(localPath),
             fileExtension: "jpg",
             fileSize,
             userId,

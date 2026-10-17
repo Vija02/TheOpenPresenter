@@ -43,7 +43,7 @@ export const processAndUploadThumbnail = async ({
   ].mediaHandler(withPgClient);
 
   await mediaHandler.uploadMedia({
-    file: createReadStream(thumbnailFilePath),
+    file: () => createReadStream(thumbnailFilePath),
     userId: mediaRow.user_id,
     organizationId: mediaRow.organization_id,
     isUserUploaded: false,
