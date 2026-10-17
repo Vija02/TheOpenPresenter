@@ -1,5 +1,9 @@
 import type { MediaListItem, MediaPickerResult } from "@repo/base-types";
-import { isImageFile, uuidFromMediaIdOrUUIDOrMediaName } from "@repo/lib";
+import {
+  isImageFile,
+  normalizeMediaUrl,
+  uuidFromMediaIdOrUUIDOrMediaName,
+} from "@repo/lib";
 import type { MediaPreviewData } from "@repo/ui";
 
 import {
@@ -34,7 +38,8 @@ export const mediaMatchesFill = (
 ): boolean => {
   if (fill?.type === "video") {
     return (
-      !!picked.internalVideo && fill.video.url === picked.internalVideo.url
+      !!picked.internalVideo && normalizeMediaUrl(fill.video.url) ===
+        normalizeMediaUrl(picked.internalVideo.url)
     );
   }
   if (fill?.type === "image" && isImageFile(picked.fileExtension)) {

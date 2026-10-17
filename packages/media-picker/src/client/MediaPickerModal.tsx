@@ -9,7 +9,7 @@ import {
   isAudioFile,
   isMediaReady,
   isVideoFile,
-  resolveMediaUrl,
+  mediaDataPath,
   useMediaProcessingStatus,
 } from "@repo/lib";
 import {
@@ -134,7 +134,7 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
   const buildResultFromUpload = useCallback(
     (mediaName: string, originalName: string | null): MediaPickerResult => {
       const parsed = extractMediaName(mediaName);
-      const url = resolveMediaUrl(parsed);
+      const url = mediaDataPath(mediaName);
       const result: MediaPickerResult = {
         id: parsed.uuid,
         mediaName,

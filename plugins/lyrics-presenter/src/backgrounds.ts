@@ -10,7 +10,7 @@ import {
   toLayoutVideo,
   videoPaint,
 } from "@repo/layout";
-import type { UniversalURL } from "@repo/lib";
+import { type UniversalURL, normalizeMediaUrl } from "@repo/lib";
 import type { InternalVideo } from "@repo/video";
 import { hash } from "ohash";
 
@@ -97,7 +97,13 @@ const identity = (background: Background) => ({
   ...background,
   elements: background.elements.map((element) =>
     element.fill?.type === "video"
-      ? { ...element, fill: { ...element.fill, video: element.fill.video.url } }
+      ? {
+          ...element,
+          fill: {
+            ...element.fill,
+            video: normalizeMediaUrl(element.fill.video.url),
+          },
+        }
       : element,
   ),
 });

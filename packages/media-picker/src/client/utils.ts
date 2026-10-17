@@ -13,7 +13,7 @@ import {
   isPptFile,
   isVideoFile,
   mediaIdFromUUID,
-  resolveMediaUrl,
+  mediaDataPath,
 } from "@repo/lib";
 import { typeidUnboxed } from "typeid-js";
 
@@ -53,7 +53,7 @@ export const filterMediaByType = (
 export const buildMediaPickerResult = (
   media: MediaWithMetadata,
 ): MediaPickerResult => {
-  const mediaUrl = resolveMediaUrl(extractMediaName(media.mediaName));
+  const mediaUrl = mediaDataPath(media.mediaName);
 
   const result: MediaPickerResult = {
     id: media.id,
@@ -91,9 +91,7 @@ export const buildMediaPickerResult = (
         title: result.originalName ?? result.mediaName,
         ...(thumbnailMediaName
           ? {
-              thumbnailUrl: resolveMediaUrl(
-                extractMediaName(thumbnailMediaName),
-              ),
+              thumbnailUrl: mediaDataPath(thumbnailMediaName),
             }
           : {}),
         ...(duration
@@ -130,9 +128,7 @@ export const buildMediaPickerResult = (
   );
   if (imageDependency?.childMedia) {
     result.extraMeta = {
-      childThumbnailUrl: resolveMediaUrl(
-        extractMediaName(imageDependency.childMedia.mediaName),
-      ),
+      childThumbnailUrl: mediaDataPath(imageDependency.childMedia.mediaName),
     };
   }
 
