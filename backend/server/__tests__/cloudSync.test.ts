@@ -198,6 +198,70 @@ describe("GraphQL", () => {
     ]);
   });
 
+  describe("organization settings", () => {
+    const GET = `query ($s: String!) { cloudOrganizationSyncGet(organizationSlug: $s) }`;
+    const PUSH = `mutation ($s: String!, $e: JSON!, $v: JSON!) {
+      cloudOrganizationSyncPush(organizationSlug: $s, expected: $e, value: $v)
+    }`;
+    const created = {
+      organizationType: "venue",
+      isPublic: false,
+      experimentalFeaturesEnabled: false,
+    };
+    const edited = { ...created, organizationType: "church", isPublic: true };
+
+    it("pushes and gets them", async () => {
+      expect(await call("cloudOrganizationSyncGet", GET, { s: orgSlug })).toEqual(
+        created,
+      );
+
+      expect(
+        await call("cloudOrganizationSyncPush", PUSH, {
+          s: orgSlug,
+          e: created,
+          v: edited,
+        }),
+      ).toEqual({ status: "applied" });
+      expect(await call("cloudOrganizationSyncGet", GET, { s: orgSlug })).toEqual(
+        edited,
+      );
+    });
+
+    it("refuses a push based on settings the cloud no longer has", async () => {
+      await query(
+        `update app_public.organizations set is_public = true where id = $1`,
+        [orgId],
+      );
+
+      expect(
+        await call("cloudOrganizationSyncPush", PUSH, {
+          s: orgSlug,
+          e: created,
+          v: edited,
+        }),
+      ).toEqual({ status: "rejected", reason: "changed on the cloud" });
+    });
+
+    it("refuses a push from a member who may not change them", async () => {
+      await query(
+        `update app_public.organization_memberships set is_owner = false
+         where organization_id = $1`,
+        [orgId],
+      );
+
+      expect(
+        await call("cloudOrganizationSyncPush", PUSH, {
+          s: orgSlug,
+          e: created,
+          v: edited,
+        }),
+      ).toEqual({ status: "rejected", reason: "not allowed on the cloud" });
+      expect(await call("cloudOrganizationSyncGet", GET, { s: orgSlug })).toEqual(
+        created,
+      );
+    });
+  });
+
   it("pushes and lists @cloudSync table rows", async () => {
     const PUSH = `mutation ($s: String!, $c: JSON!) {
       cloudPluginTablePush(organizationSlug: $s, schemaName: "app_public", tableName: "categories", changes: $c)

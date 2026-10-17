@@ -64,6 +64,23 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
     log.info("Created sync run");
 
     // ========================================================================== //
+    // ======================== The organization's settings ===================== //
+    // ========================================================================== //
+    // Not worth failing the sync over
+    try {
+      const organization = await cloud.syncOrganization(
+        withPgClient,
+        cloudConnection,
+      );
+      log.info(organization, "Synced organization settings");
+    } catch (organizationErr) {
+      log.warn(
+        { err: organizationErr },
+        "Failed to sync organization settings",
+      );
+    }
+
+    // ========================================================================== //
     // ===================== @cloudSync tables (incl. plugins) ================== //
     // ========================================================================== //
     // Before projects, so the categories and tags they name exist on both
