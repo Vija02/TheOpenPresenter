@@ -10,7 +10,11 @@ import type {
 } from "@repo/base-plugin";
 import { appData } from "@repo/lib";
 import { ErrorAlert, LoadingFull } from "@repo/ui";
-import { useQuery } from "@tanstack/react-query";
+import {
+  type QueryClient,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import React, {
   createContext,
   useCallback,
@@ -206,6 +210,20 @@ const initializeHocuspocusProvider = (
   });
 };
 
+const PROVIDER_QUERY_KEY = "provider";
+
+/** Closes a connection once react-query drops it */
+const closingClients = new WeakSet<QueryClient>();
+const closeDroppedProviders = (queryClient: QueryClient) => {
+  if (closingClients.has(queryClient)) return;
+  closingClients.add(queryClient);
+  queryClient.getQueryCache().subscribe((event) => {
+    if (event.type !== "removed") return;
+    if (event.query.queryKey[0] !== PROVIDER_QUERY_KEY) return;
+    (event.query.state.data as HocuspocusProvider | undefined)?.destroy();
+  });
+};
+
 export const PluginDataProvider = ({
   children,
   type,
@@ -219,6 +237,8 @@ export const PluginDataProvider = ({
 }) => {
   const projectId = usePluginMetaData().projectId;
   const [currentUserId] = useState(v4());
+  const queryClient = useQueryClient();
+  closeDroppedProviders(queryClient);
 
   const {
     data: provider,
@@ -226,7 +246,7 @@ export const PluginDataProvider = ({
     error,
     isError,
   } = useQuery({
-    queryKey: ["provider", projectId],
+    queryKey: [PROVIDER_QUERY_KEY, projectId],
     queryFn: () =>
       initializeHocuspocusProvider(projectId, {
         type,
@@ -237,6 +257,13 @@ export const PluginDataProvider = ({
     retry: (failureCount, err) =>
       failureCount < 3 &&
       !/Authentication Failed/i.test((err as Error)?.message ?? ""),
+    // One connection per project
+    staleTime: Infinity,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+    refetchOnWindowFocus: false,
+    // Dropped, and so closed, as soon as nothing uses it
+    gcTime: 0,
   });
   const { errors } = useError();
 
@@ -279,7 +306,8 @@ export const PluginDataProvider = ({
     setAwarenessData,
   ]);
 
-  if (isError) {
+  // Only before connecting: once connected, the connection recovers itself
+  if (isError && !provider) {
     return <ErrorAlert error={error} />;
   }
   if (isLoading || !provider) {
