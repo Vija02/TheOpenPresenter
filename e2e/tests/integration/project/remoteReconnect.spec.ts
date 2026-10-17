@@ -78,7 +78,8 @@ test.describe("Remote - network coming back", () => {
     // The network comes back
     reachable = true;
     await page.context().setOffline(false);
-    await expect.poll(() => live, { timeout: 45000 }).not.toBeNull();
+    // Straight away, not at the next of its retries, which are up to 30s apart
+    await expect.poll(() => live, { timeout: 5000 }).not.toBeNull();
 
     await expect(page.getByText("Unable to connect")).toHaveCount(0);
     await expect(page.locator(".rt--app")).toBeVisible();
