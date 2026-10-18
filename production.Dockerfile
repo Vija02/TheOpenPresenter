@@ -305,6 +305,7 @@ COPY --from=builder-plugin /app/plugins/video-player/out/ /app/plugins/video-pla
 COPY --from=builder-plugin /app/plugins/radio/package.json /app/plugins/radio/
 COPY --from=builder-plugin /app/plugins/radio/dist/ /app/plugins/radio/dist/
 COPY --from=builder-plugin /app/plugins/radio/out/ /app/plugins/radio/out/
+COPY --from=builder-plugin /app/plugins/radio/migrations/ /app/plugins/radio/migrations/
 COPY --from=builder-plugin /app/plugins/worship-pads/package.json /app/plugins/worship-pads/
 COPY --from=builder-plugin /app/plugins/worship-pads/dist/ /app/plugins/worship-pads/dist/
 COPY --from=builder-plugin /app/plugins/worship-pads/out/ /app/plugins/worship-pads/out/

@@ -36,6 +36,10 @@ export const stubYoutube = async (
     const request = route.request();
     const url = new URL(request.url());
     const procedures = url.pathname.split("/").pop()!.split(",");
+    // Saved playlists and the like don't talk to YouTube, so they go through
+    if (!procedures.some((x) => /^musicPlayer\.(search|youtube)/.test(x))) {
+      return route.fallback();
+    }
     // Queries send their input in the url, mutations in the body
     const inputs =
       request.method() === "GET"

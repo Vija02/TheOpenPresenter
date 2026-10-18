@@ -184,6 +184,14 @@ export const usePlayerControls = () => {
       getTracks().push(...tracks);
     };
 
+    const replaceTracks = (tracks: Track[]) => {
+      mutableRendererData.activeTrackId = null;
+      mutableRendererData.trackState.uid = newUid();
+      mutableRendererData.trackState.isPlaying = false;
+      mutableRendererData.fadingOutTrack = null;
+      getTracks().splice(0, getTracks().length, ...tracks);
+    };
+
     const removeTrack = (trackId: string) => {
       const resolved = rebase();
       if (resolved.itemId === trackId) {
@@ -244,6 +252,7 @@ export const usePlayerControls = () => {
       setAutoplay,
       setCrossfade,
       addTracks,
+      replaceTracks,
       removeTrack,
       moveTrack,
       playRadio,

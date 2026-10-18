@@ -1,6 +1,7 @@
 import {
   ObjectToTypedMap,
   Plugin,
+  PluginContext,
   RegisterOnRendererDataCreated,
   RegisterOnRendererDataLoaded,
   ServerPluginApi,
@@ -10,6 +11,7 @@ import {
 import { TypedArray, extractMediaName } from "@repo/lib";
 import { createVideoPlaybackState } from "@repo/video";
 import getYouTubeID from "get-youtube-id";
+import path from "path";
 import { proxy } from "valtio";
 import { bind } from "valtio-yjs";
 import * as Y from "yjs";
@@ -22,15 +24,31 @@ import {
   remoteWebComponentTag,
   rendererWebComponentTag,
 } from "./consts";
+import {
+  deleteSavedPlaylist,
+  insertSavedPlaylist,
+  listSavedPlaylists,
+  registerLoadedPlugin,
+  resolveOrganizationId,
+  trackSchema,
+  unregisterLoadedPlugin,
+  updateSavedPlaylist,
+} from "./playlistStore";
 import { PluginBaseData, PluginRendererData } from "./types";
 import { getPlaylistVideos } from "./youtubePlaylist";
 
 const AUDIO_CHECK_INTERVAL_MS = 3000;
 
 let mediaApi: ServerPluginApi["media"];
+let serverPluginApiRef: ServerPluginApi;
 
 export const init = (serverPluginApi: ServerPluginApi) => {
   mediaApi = serverPluginApi.media;
+  serverPluginApiRef = serverPluginApi;
+  serverPluginApi.registerMigrations(
+    pluginName,
+    path.join(__dirname, "../migrations"),
+  );
   serverPluginApi.registerCSPDirective(pluginName, {
     "script-src": ["https://www.youtube.com"],
     "frame-src": ["https://www.youtube.com"],
@@ -79,13 +97,16 @@ const onPluginDataCreated = (
 ) => {
   pluginInfo.get("pluginData")?.set("url", "");
   pluginInfo.get("pluginData")?.set("tracks", new Y.Array() as TypedArray<any>);
+  pluginInfo.get("pluginData")?.set("savedPlaylistId", null);
 
   return {};
 };
 
 const onPluginDataLoaded = (
   pluginInfo: ObjectToTypedMap<Plugin<PluginBaseData>>,
+  context: PluginContext,
 ) => {
+  registerLoadedPlugin(context);
   const data = proxy(pluginInfo.toJSON() as Plugin<PluginBaseData>);
   const unbind = bind(data, pluginInfo as any);
 
@@ -152,6 +173,7 @@ const onPluginDataLoaded = (
       for (const trackId of [...checking.keys()]) stopChecking(trackId);
       yjsWatcher.dispose();
       unbind();
+      unregisterLoadedPlugin(context.pluginId);
     },
   };
 };
@@ -226,8 +248,79 @@ const getInnertube = () => {
 };
 
 const getAppRouter = (t: TRPCObject) => {
+  // Saved playlists are read and written as the request user, so RLS applies
+  const authOf = (ctx: {
+    sessionId: string | null;
+    screenGuestSessionId: string | null;
+  }) => ({
+    sessionId: ctx.sessionId,
+    screenGuestSessionId: ctx.screenGuestSessionId,
+  });
+
   return t.router({
     musicPlayer: {
+      savedPlaylists: {
+        list: t.procedure
+          .input(z.object({ pluginId: z.string() }))
+          .query(({ input, ctx }) =>
+            listSavedPlaylists(
+              serverPluginApiRef,
+              authOf(ctx),
+              resolveOrganizationId(input.pluginId),
+            ),
+          ),
+
+        create: t.procedure
+          .input(
+            z.object({
+              pluginId: z.string(),
+              name: z.string().trim().min(1).max(200),
+              tracks: z.array(trackSchema),
+            }),
+          )
+          .mutation(({ input, ctx }) =>
+            insertSavedPlaylist(serverPluginApiRef, authOf(ctx), {
+              organizationId: resolveOrganizationId(input.pluginId),
+              userId: ctx.userId,
+              name: input.name,
+              tracks: input.tracks,
+            }),
+          ),
+
+        update: t.procedure
+          .input(
+            z.object({
+              pluginId: z.string(),
+              id: z.uuid(),
+              name: z.string().trim().min(1).max(200).optional(),
+              tracks: z.array(trackSchema).optional(),
+            }),
+          )
+          .mutation(async ({ input, ctx }) => {
+            const playlist = await updateSavedPlaylist(
+              serverPluginApiRef,
+              authOf(ctx),
+              resolveOrganizationId(input.pluginId),
+              input.id,
+              { name: input.name, tracks: input.tracks },
+            );
+            if (!playlist) throw new Error("Playlist not found");
+            return playlist;
+          }),
+
+        remove: t.procedure
+          .input(z.object({ pluginId: z.string(), id: z.uuid() }))
+          .mutation(async ({ input, ctx }) => {
+            await deleteSavedPlaylist(
+              serverPluginApiRef,
+              authOf(ctx),
+              resolveOrganizationId(input.pluginId),
+              input.id,
+            );
+            return { success: true };
+          }),
+      },
+
       search: t.publicProcedure
         .input(
           z.object({

@@ -7,9 +7,11 @@ import {
   TabsList,
   TabsTrigger,
   VolumeBar,
+  useDisclosure,
 } from "@repo/ui";
 import { useState } from "react";
 import { FaPause, FaPlay } from "react-icons/fa6";
+import { MdQueueMusic } from "react-icons/md";
 import { VscLibrary } from "react-icons/vsc";
 import "react-scrubber/lib/scrubber.css";
 import { typeidUnboxed } from "typeid-js";
@@ -21,8 +23,10 @@ import { NowPlaying } from "./NowPlaying";
 import { PlaylistTab } from "./PlaylistTab";
 import { RadioNowPlaying } from "./RadioNowPlaying";
 import { RadioTab } from "./RadioTab";
+import { SavedPlaylistsModal } from "./SavedPlaylistsModal";
 import "./index.css";
 import { usePlayerControls } from "./usePlayerControls";
+import { useSavedPlaylists } from "./useSavedPlaylists";
 
 const createAudioTrack = (result: MediaPickerResult): Track | null => {
   const audio = result.internalAudio;
@@ -58,6 +62,10 @@ const MusicPlayerRemote = () => {
   const hasTracks = (tracks?.length ?? 0) > 0;
 
   const controls = usePlayerControls();
+  const saved = useSavedPlaylists(controls);
+  // Saved playlists belong to the organization, which public visitors aren't in
+  const canUseSavedPlaylists = !pluginApi.isPublicAccess;
+  const savedPlaylistsDisclosure = useDisclosure();
 
   // Scenes from before the playlist existed open on the radio they were using
   const [tab, setTab] = useState(() =>
@@ -106,6 +114,16 @@ const MusicPlayerRemote = () => {
             <VscLibrary />
             Media library
           </Button>
+          {canUseSavedPlaylists && (
+            <Button
+              size="xs"
+              variant="pill"
+              onClick={savedPlaylistsDisclosure.onOpen}
+            >
+              <MdQueueMusic />
+              Saved playlists
+            </Button>
+          )}
         </div>
       }
       body={
@@ -130,13 +148,30 @@ const MusicPlayerRemote = () => {
                 <TabsTrigger value="radio">Radio</TabsTrigger>
               </TabsList>
               <TabsContent value="playlist">
-                <PlaylistTab controls={controls} />
+                <PlaylistTab
+                  controls={controls}
+                  saved={canUseSavedPlaylists ? saved : null}
+                  onBrowseSavedPlaylists={savedPlaylistsDisclosure.onOpen}
+                  onAddFromLibrary={addFromLibrary}
+                  onOpenRadio={() => setTab("radio")}
+                />
               </TabsContent>
               <TabsContent value="radio">
                 <RadioTab controls={controls} />
               </TabsContent>
             </Tabs>
           </div>
+
+          {canUseSavedPlaylists && (
+            <SavedPlaylistsModal
+              isOpen={savedPlaylistsDisclosure.open}
+              onToggle={savedPlaylistsDisclosure.onToggle}
+              saved={saved}
+              hasTracks={hasTracks}
+              // So they can see what was loaded
+              onLoaded={() => setTab("playlist")}
+            />
+          )}
         </>
       }
     />
