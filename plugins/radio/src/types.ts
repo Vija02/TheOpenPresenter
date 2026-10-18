@@ -36,6 +36,8 @@ export type PluginBaseData = {
   /** Unused. Kept from when this was the radio plugin */
   url: string;
   tracks: Track[];
+  /** The saved playlist this was loaded from or saved as */
+  savedPlaylistId?: string | null;
 };
 
 export type PluginRendererData = PluginRendererState & {
@@ -52,4 +54,13 @@ export type PluginRendererData = PluginRendererState & {
   crossfadeSeconds: number;
   /** The anchor's `outgoing`, see ./sequence */
   fadingOutTrack: SequenceOutgoing | null;
+};
+
+/** An organization's playlist, reusable across scenes */
+export type SavedPlaylist = {
+  id: string;
+  name: string;
+  tracks: Track[];
+  createdAt: string;
+  updatedAt: string;
 };

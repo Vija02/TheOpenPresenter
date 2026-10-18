@@ -77,7 +77,7 @@ test.describe.serial("Music Player Plugin: Playlist", () => {
     await loginAndGoToProject();
     await projectPage.createPlugin("Music Player");
 
-    await expect(page.getByText("No tracks yet.")).toBeVisible();
+    await expect(page.getByText("Start the music")).toBeVisible();
 
     await musicPlayerPlugin.submit("worship");
     const dialog = page.getByRole("dialog");
@@ -124,6 +124,30 @@ test.describe.serial("Music Player Plugin: Playlist", () => {
       page.getByText("Only YouTube links are supported for now."),
     ).toBeVisible();
     await expect(musicPlayerPlugin.tracks).toHaveCount(1);
+  });
+
+  test("an empty playlist offers the ways to start", async ({
+    page,
+    projectPage,
+    musicPlayerPlugin,
+    loginAndGoToProject,
+  }) => {
+    await loginAndGoToProject();
+    await projectPage.createPlugin("Music Player");
+    await expect(page.getByText("Start the music")).toBeVisible();
+
+    await page.getByRole("button", { name: /Search YouTube/ }).click();
+    await expect(musicPlayerPlugin.input).toBeFocused();
+
+    await page.getByRole("button", { name: /Media library Music/ }).click();
+    await expect(page.getByText("Add music from your library")).toBeVisible();
+    await page.keyboard.press("Escape");
+
+    await page.getByRole("button", { name: /Radio station/ }).click();
+    await expect(musicPlayerPlugin.radioTab).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
   });
 
   test("adds a whole YouTube playlist from a pasted link", async ({
@@ -552,10 +576,17 @@ test.describe("Music Player Plugin: public access", () => {
     const context = await browser.newContext();
     const page = await context.newPage();
     const musicPlayerPlugin = new MusicPlayerPlugin(page);
+    // Saved playlists belong to the organization, so they're never asked for
+    const savedPlaylistCalls: string[] = [];
+    page.on("request", (request) => {
+      if (request.url().includes("savedPlaylists")) {
+        savedPlaylistCalls.push(request.url());
+      }
+    });
     try {
       await stubYoutube(context, [first, second]);
       await page.goto("/app/testorg/testproject");
-      await expect(page.getByText("No tracks yet.")).toBeVisible();
+      await expect(page.getByText("Start the music")).toBeVisible();
 
       await musicPlayerPlugin.submit("worship");
       const dialog = page.getByRole("dialog");
@@ -566,6 +597,11 @@ test.describe("Music Player Plugin: public access", () => {
       await expect(musicPlayerPlugin.tracks.nth(0)).toContainText(
         "Second Song",
       );
+      await expect(page.getByTestId("saved-playlist-bar")).toBeHidden();
+      await expect(
+        page.getByRole("button", { name: "Saved playlists" }),
+      ).toBeHidden();
+      expect(savedPlaylistCalls).toEqual([]);
     } finally {
       await context.close();
     }

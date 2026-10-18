@@ -16,7 +16,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { Button, Input, cn, useDisclosure } from "@repo/ui";
 import getYouTubeID from "get-youtube-id";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FaPause, FaPlay } from "react-icons/fa6";
 import { IoMdClose } from "react-icons/io";
 import { VscGripper } from "react-icons/vsc";
@@ -27,10 +27,13 @@ import { usePluginAPI } from "../pluginApi";
 import { isTrackReady, trackTitle } from "../trackHelpers";
 import { trpc } from "../trpc";
 import { usePlaylistPosition } from "../usePlaylistPosition";
+import { EmptyPlaylist } from "./EmptyPlaylist";
+import { SavedPlaylistBar } from "./SavedPlaylistBar";
 import { TrackThumbnail } from "./TrackThumbnail";
 import YoutubeSearchModal, { YoutubeSearchResult } from "./YoutubeSearchModal";
 import { formatDuration } from "./formatDuration";
 import { PlayerControls } from "./usePlayerControls";
+import { SavedPlaylists } from "./useSavedPlaylists";
 import { getYoutubePlaylistId } from "./youtubePlaylistId";
 
 function isValidHttpUrl(string: string) {
@@ -56,7 +59,20 @@ const createYoutubeTrack = (result: YoutubeSearchResult): Track => ({
   ),
 });
 
-export const PlaylistTab = ({ controls }: { controls: PlayerControls }) => {
+export const PlaylistTab = ({
+  controls,
+  saved,
+  onBrowseSavedPlaylists,
+  onAddFromLibrary,
+  onOpenRadio,
+}: {
+  controls: PlayerControls;
+  /** Null when saved playlists aren't available, e.g. on a public link */
+  saved: SavedPlaylists | null;
+  onBrowseSavedPlaylists: () => void;
+  onAddFromLibrary: () => void;
+  onOpenRadio: () => void;
+}) => {
   const pluginApi = usePluginAPI();
   const youtubeMetadata = trpc.musicPlayer.youtubeMetadata.useMutation();
   const youtubePlaylist = trpc.musicPlayer.youtubePlaylist.useMutation();
@@ -66,6 +82,14 @@ export const PlaylistTab = ({ controls }: { controls: PlayerControls }) => {
     usePlaylistPosition();
 
   const [input, setInput] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+  // Briefly ringed, so it's clear where to type
+  const [isSearchHighlighted, setIsSearchHighlighted] = useState(false);
+  useEffect(() => {
+    if (!isSearchHighlighted) return;
+    const timeout = setTimeout(() => setIsSearchHighlighted(false), 1500);
+    return () => clearTimeout(timeout);
+  }, [isSearchHighlighted]);
   const [searchQuery, setSearchQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -181,7 +205,12 @@ export const PlaylistTab = ({ controls }: { controls: PlayerControls }) => {
       >
         <div className="stack-row">
           <Input
-            className="flex-1 min-w-0"
+            ref={inputRef}
+            className={cn(
+              "flex-1 min-w-0 transition-shadow duration-300",
+              isSearchHighlighted &&
+                "border-fill-success ring-4 ring-fill-success/25",
+            )}
             placeholder="Search YouTube or paste a link..."
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -191,7 +220,10 @@ export const PlaylistTab = ({ controls }: { controls: PlayerControls }) => {
           </Button>
         </div>
         {error && <div className="text-fill-destructive mt-1">{error}</div>}
-        {notice && <div className="text-secondary mt-1">{notice}</div>}
+        {/* Stale once the tracks it's about are cleared */}
+        {notice && tracks.length > 0 && (
+          <div className="text-secondary mt-1">{notice}</div>
+        )}
         {videoInPlaylist && (
           <div className="stack-row flex-wrap mt-2 p-2 rounded-sm bg-gray-100">
             <span className="flex-1">This video is part of a playlist.</span>
@@ -227,10 +259,21 @@ export const PlaylistTab = ({ controls }: { controls: PlayerControls }) => {
         }}
       />
 
+      {saved && tracks.length > 0 && (
+        <SavedPlaylistBar saved={saved} tracks={tracks} />
+      )}
+
       {tracks.length === 0 && (
-        <div className="text-secondary py-4">
-          No tracks yet. Search YouTube or paste a link to build a playlist.
-        </div>
+        <EmptyPlaylist
+          saved={saved}
+          onSearch={() => {
+            inputRef.current?.focus();
+            setIsSearchHighlighted(true);
+          }}
+          onAddFromLibrary={onAddFromLibrary}
+          onOpenRadio={onOpenRadio}
+          onShowAllSaved={onBrowseSavedPlaylists}
+        />
       )}
 
       <DndContext
