@@ -38,7 +38,7 @@
     "valtio": "^2.1.2",
     "valtio-yjs": "^0.6.0",
     "yjs": "13.6.26",
-    "youtubei.js": "^17.2.0",
+    "youtubei.js": "^18.2.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {

@@ -27,7 +27,7 @@ export const tracksSummary = (tracks: Track[]) => {
   const duration = totalDurationSeconds(tracks);
   return [
     `${tracks.length} ${tracks.length === 1 ? "track" : "tracks"}`,
-    duration ? formatDuration(duration) : null,
+    duration > 0 ? formatDuration(duration) : null,
   ]
     .filter(Boolean)
     .join(" • ");

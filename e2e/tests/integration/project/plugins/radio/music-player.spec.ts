@@ -121,7 +121,7 @@ test.describe.serial("Music Player Plugin: Playlist", () => {
 
     await musicPlayerPlugin.submit("https://example.com/song.mp3");
     await expect(
-      page.getByText("Only YouTube links are supported for now."),
+      page.getByText("Only YouTube and Spotify links are supported for now."),
     ).toBeVisible();
     await expect(musicPlayerPlugin.tracks).toHaveCount(1);
   });

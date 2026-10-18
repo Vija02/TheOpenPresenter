@@ -1,6 +1,6 @@
 import { Button } from "@repo/ui";
 import { ReactNode } from "react";
-import { FaYoutube } from "react-icons/fa";
+import { FaSpotify, FaYoutube } from "react-icons/fa";
 import { MdQueueMusic, MdRadio } from "react-icons/md";
 import { VscLibrary } from "react-icons/vsc";
 
@@ -40,9 +40,9 @@ export const EmptyPlaylist = ({
 
       <div className="grid grid-cols-1 gap-2 @md:grid-cols-3">
         <StartCard
-          icon={<FaYoutube className="text-[#FF0000]" />}
+          icon={<YoutubeSpotifyIcon />}
           title="Search YouTube"
-          description="Or paste a video or playlist link"
+          description="Or paste a YouTube or Spotify link"
           onClick={onSearch}
         />
         <StartCard
@@ -92,6 +92,18 @@ export const EmptyPlaylist = ({
     </div>
   );
 };
+
+const YoutubeSpotifyIcon = () => (
+  <span className="relative block size-7" aria-hidden>
+    <span className="absolute inset-0 [clip-path:polygon(0_0,100%_0,0_100%)]">
+      <FaYoutube className="absolute top-0 left-0 size-[70%] text-[#FF0000]" />
+    </span>
+    <span className="absolute inset-0 [clip-path:polygon(100%_0,100%_100%,0_100%)]">
+      <FaSpotify className="absolute right-0 bottom-0 size-[70%] text-[#1DB954]" />
+    </span>
+    <span className="absolute top-1/2 left-1/2 h-[110%] w-px -translate-1/2 rotate-45 bg-stroke-emphasis" />
+  </span>
+);
 
 const StartCard = ({
   icon,

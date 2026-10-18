@@ -22,6 +22,7 @@ import { IoMdClose } from "react-icons/io";
 import { VscGripper } from "react-icons/vsc";
 import { typeidUnboxed } from "typeid-js";
 
+import { isSpotifyUrl } from "../../src/spotifyUrl";
 import { Track } from "../../src/types";
 import { usePluginAPI } from "../pluginApi";
 import { isTrackReady, trackTitle } from "../trackHelpers";
@@ -29,6 +30,7 @@ import { trpc } from "../trpc";
 import { usePlaylistPosition } from "../usePlaylistPosition";
 import { EmptyPlaylist } from "./EmptyPlaylist";
 import { SavedPlaylistBar } from "./SavedPlaylistBar";
+import { SpotifyImportModal, SpotifyImportResult } from "./SpotifyImportModal";
 import { TrackThumbnail } from "./TrackThumbnail";
 import YoutubeSearchModal, { YoutubeSearchResult } from "./YoutubeSearchModal";
 import { formatDuration } from "./formatDuration";
@@ -58,6 +60,16 @@ const createYoutubeTrack = (result: YoutubeSearchResult): Track => ({
     }),
   ),
 });
+
+// Spotify's names, which are tidier than the upload's, and the upload's duration
+const createSpotifyTrack = ({ track, video }: SpotifyImportResult): Track =>
+  createYoutubeTrack({
+    videoId: video.videoId,
+    title: track.title,
+    author: track.artist,
+    duration: video.duration,
+    thumbnailUrl: video.thumbnailUrl,
+  });
 
 export const PlaylistTab = ({
   controls,
@@ -91,6 +103,7 @@ export const PlaylistTab = ({
     return () => clearTimeout(timeout);
   }, [isSearchHighlighted]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [spotifyUrl, setSpotifyUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [isAdding, setIsAdding] = useState(false);
@@ -173,6 +186,13 @@ export const PlaylistTab = ({
     setNotice(null);
     setVideoInPlaylist(null);
 
+    // Before the url check, since spotify: links aren't http
+    if (isSpotifyUrl(value)) {
+      setError(null);
+      setSpotifyUrl(value);
+      return;
+    }
+
     if (!isValidHttpUrl(value)) {
       setError(null);
       setSearchQuery(value);
@@ -191,7 +211,7 @@ export const PlaylistTab = ({
     } else if (videoId) {
       await addVideo(value, videoId);
     } else {
-      setError("Only YouTube links are supported for now.");
+      setError("Only YouTube and Spotify links are supported for now.");
     }
   };
 
@@ -256,6 +276,18 @@ export const PlaylistTab = ({
         onAdd={(result) => {
           controls.addTracks([createYoutubeTrack(result)]);
           setInput("");
+        }}
+      />
+
+      <SpotifyImportModal
+        url={spotifyUrl}
+        onClose={() => setSpotifyUrl(null)}
+        onAdd={(results) => {
+          controls.addTracks(results.map(createSpotifyTrack));
+          setInput("");
+          setNotice(
+            `Added ${results.length} ${results.length === 1 ? "track" : "tracks"} from Spotify.`,
+          );
         }}
       />
 
