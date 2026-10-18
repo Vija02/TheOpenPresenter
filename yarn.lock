@@ -10180,7 +10180,7 @@ __metadata:
     valtio-yjs: "npm:^0.6.0"
     vite: "npm:6.3.5"
     yjs: "npm:13.6.26"
-    youtubei.js: "npm:^17.2.0"
+    youtubei.js: "npm:^18.2.0"
     zod: "npm:^4.4.3"
   languageName: unknown
   linkType: soft
@@ -26025,6 +26025,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"meriyah@npm:^7.3.1":
+  version: 7.4.0
+  resolution: "meriyah@npm:7.4.0"
+  checksum: 10c0/ffeefe5fd4a504cfbc4d5896eb8665e682b305d016d3a6ffdd6289773b558c43da2806a1fb894f51df33c5e1c04ff473b0ea1c58692ff5c44f06301cc21ea4c5
+  languageName: node
+  linkType: hard
+
 "meros@npm:^1.2.1":
   version: 1.3.0
   resolution: "meros@npm:1.3.0"
@@ -36504,6 +36511,17 @@ __metadata:
     fflate: "npm:^0.8.2"
     meriyah: "npm:^6.1.4"
   checksum: 10c0/82ade381c6b1173b0fdb609a86c6a3c2d82db9c4add7dcaa06574507bb2586b885df4d5fd3f0d92e9cf67fd85a58158030f62bd576357432121785a52d167ab8
+  languageName: node
+  linkType: hard
+
+"youtubei.js@npm:^18.2.0":
+  version: 18.2.0
+  resolution: "youtubei.js@npm:18.2.0"
+  dependencies:
+    "@bufbuild/protobuf": "npm:^2.0.0"
+    fflate: "npm:^0.8.2"
+    meriyah: "npm:^7.3.1"
+  checksum: 10c0/e4e350b3b855781b2d3ed267443e2cfd16e99c293d1dc4b53ba54fb33cc3b47c64753a9ded07fdcad159829340c18f455c87b976286f0c4e37ebce3781c428ef
   languageName: node
   linkType: hard
 

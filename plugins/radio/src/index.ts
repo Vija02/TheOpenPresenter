@@ -16,7 +16,6 @@ import { proxy } from "valtio";
 import { bind } from "valtio-yjs";
 import * as Y from "yjs";
 import { Innertube, UniversalCache } from "youtubei.js";
-import type { YTNodes } from "youtubei.js";
 import z from "zod";
 
 import {
@@ -34,10 +33,14 @@ import {
   unregisterLoadedPlugin,
   updateSavedPlaylist,
 } from "./playlistStore";
+import { getSpotifyCollection } from "./spotify";
 import { PluginBaseData, PluginRendererData } from "./types";
+import { findYoutubeMatches, searchVideos } from "./youtubeMatch";
 import { getPlaylistVideos } from "./youtubePlaylist";
 
 const AUDIO_CHECK_INTERVAL_MS = 3000;
+const MAX_TRACKS_PER_MATCH = 10;
+const MATCH_CONCURRENCY = 5;
 
 let mediaApi: ServerPluginApi["media"];
 let serverPluginApiRef: ServerPluginApi;
@@ -329,20 +332,42 @@ const getAppRouter = (t: TRPCObject) => {
         )
         .query(async (opts) => {
           const yt = await getInnertube();
-          const res = await yt.search(opts.input.query, { type: "video" });
+          return { results: await searchVideos(yt, opts.input.query) };
+        }),
 
-          return {
-            results: (
-              res.results.filter((x) => x.type === "Video") as YTNodes.Video[]
-            ).map((x) => ({
-              videoId: x.video_id,
-              title: x.title.text ?? "",
-              author: x.author.name,
-              duration: x.duration.seconds,
-              durationText: x.duration.text,
-              thumbnailUrl: x.thumbnails[x.thumbnails.length - 1]?.url,
-            })),
-          };
+      spotifyCollection: t.publicProcedure
+        .input(z.object({ url: z.string() }))
+        .mutation((opts) => getSpotifyCollection(opts.input.url)),
+
+      spotifyMatches: t.publicProcedure
+        .input(
+          z.object({
+            tracks: z
+              .array(
+                z.object({
+                  title: z.string(),
+                  artist: z.string(),
+                  duration: z.number().optional(),
+                }),
+              )
+              .max(MAX_TRACKS_PER_MATCH),
+          }),
+        )
+        .mutation(async (opts) => {
+          const yt = await getInnertube();
+          const { tracks } = opts.input;
+          const matches: Awaited<ReturnType<typeof findYoutubeMatches>>[] = [];
+          for (let i = 0; i < tracks.length; i += MATCH_CONCURRENCY) {
+            const batch = tracks.slice(i, i + MATCH_CONCURRENCY);
+            // One failed search shouldn't lose the rest
+            const results = await Promise.all(
+              batch.map((track) =>
+                findYoutubeMatches(yt, track).catch(() => []),
+              ),
+            );
+            matches.push(...results);
+          }
+          return { matches };
         }),
 
       youtubeMetadata: t.publicProcedure
