@@ -93,12 +93,16 @@ test.describe("Slides Plugin - Google Slides offline", () => {
     await page.goto("/app/testgslideoffline/testproject");
     const pp = await projectPage.present();
     const frame = pp.locator("iframe");
+    // The renderer's fullscreen button shows for 1.5s after the pointer moves,
+    // so whether it's in a screenshot is down to timing
+    const shoot = () =>
+      frame.screenshot({ mask: [pp.locator("button[aria-label$='fullscreen']")] });
     await expect(frame).toBeVisible({ timeout: 30 * 1000 });
     await pp.click("body");
     await pp.waitForLoadState("networkidle");
     await pp.waitForTimeout(1000);
     await walkDeck(pp);
-    const online = await frame.screenshot();
+    const online = await shoot();
 
     // ── Offline: reload everything with the internet cut off ─────────────
     const { blocked, essential } = await goOffline(context, new URL(baseURL!).origin);
@@ -115,7 +119,7 @@ test.describe("Slides Plugin - Google Slides offline", () => {
     await pp.click("body");
     await pp.waitForLoadState("networkidle");
     await pp.waitForTimeout(1000);
-    const offline = await frame.screenshot();
+    const offline = await shoot();
     await walkDeck(pp);
 
     const report = {
