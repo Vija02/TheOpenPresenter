@@ -1,8 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 
+import { listenToPopup, popupOpenedAt } from "../popupMessages";
+
 export const useCanvaSignIn = (token: string) => {
-  const [pendingGrantId, setPendingGrantId] = useState<string | null>(null);
+  const [pending, setPending] = useState<{
+    grantId: string;
+    openedAt: number;
+  } | null>(null);
   const [grantId, setGrantId] = useState<string | null>(null);
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -11,7 +16,7 @@ export const useCanvaSignIn = (token: string) => {
     const id = uuidv4();
     setGrantId(null);
     setError(null);
-    setPendingGrantId(id);
+    setPending({ grantId: id, openedAt: popupOpenedAt() });
     setIsSigningIn(true);
 
     window.open(
@@ -35,34 +40,37 @@ export const useCanvaSignIn = (token: string) => {
   );
 
   useEffect(() => {
-    if (!pendingGrantId) return;
+    if (!pending) return;
+    const pendingGrantId = pending.grantId;
 
+    let cancelled = false;
     const finish = () => {
+      cancelled = true;
       setGrantId(pendingGrantId);
-      setPendingGrantId(null);
+      setPending(null);
       setIsSigningIn(false);
     };
 
     const onMessage = (event: MessageEvent) => {
       if (event.origin !== window.location.origin) return;
-      if (event.data?.source !== "top-canva-oauth") return;
+      if (event.data?.source !== "top-canva-oauth" || cancelled) return;
       if (event.data.ok) {
         finish();
       } else {
-        setPendingGrantId(null);
+        cancelled = true;
+        setPending(null);
         setIsSigningIn(false);
         setError(event.data.error ?? "Canva sign-in failed.");
       }
     };
-    window.addEventListener("message", onMessage);
+    const stopListening = listenToPopup(pending.openedAt, onMessage);
 
     // Poll in case the popup's message never arrives
-    let cancelled = false;
     const startedAt = Date.now();
     const TIMEOUT_MS = 3 * 60 * 1000;
     const timer = setInterval(() => {
       if (Date.now() - startedAt > TIMEOUT_MS) {
-        setPendingGrantId(null);
+        setPending(null);
         setIsSigningIn(false);
         return;
       }
@@ -73,10 +81,10 @@ export const useCanvaSignIn = (token: string) => {
 
     return () => {
       cancelled = true;
-      window.removeEventListener("message", onMessage);
+      stopListening();
       clearInterval(timer);
     };
-  }, [pendingGrantId, isReady]);
+  }, [pending, isReady]);
 
   return { grantId, isSigningIn, error, startSignIn };
 };
