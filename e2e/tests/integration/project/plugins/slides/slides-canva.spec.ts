@@ -36,7 +36,10 @@ const signInThroughPopup = async (page: Page, open: () => Promise<void>) => {
   const popupPromise = page.waitForEvent("popup");
   await open();
   const popup = await popupPromise;
-  await popup.waitForEvent("close", { timeout: 30_000 });
+  // It can be done and closed before we get to it, and "close" won't fire again
+  if (!popup.isClosed()) {
+    await popup.waitForEvent("close", { timeout: 30_000 });
+  }
 };
 
 /** The design's two PDF pages, once the import has finished. */
