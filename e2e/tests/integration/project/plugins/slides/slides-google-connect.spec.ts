@@ -53,6 +53,8 @@ const signInThroughPopup = async (page: Page, open: () => Promise<void>) => {
   const popupPromise = page.waitForEvent("popup");
   await open();
   const popup = await popupPromise;
+  // It can be done and closed before we get to it, and "close" won't fire again
+  if (popup.isClosed()) return;
   await popup.waitForEvent("close", { timeout: 30_000 }).catch(async () => {
     // It only closes itself on success. On failure it stays up showing the
     // reason, which the app has already been told.

@@ -184,6 +184,8 @@ export class LyricsPlugin {
     const popupPromise = this.page.waitForEvent("popup");
     await button.click();
     const popup = await popupPromise;
+    // It can be done and closed before we get to it, and "close" won't fire again
+    if (popup.isClosed()) return;
     await popup.waitForEvent("close", { timeout: 30_000 }).catch(async () => {
       // The popup only closes itself on the happy path. On failure it stays up
       // showing the reason, which the opener has already been told about.
