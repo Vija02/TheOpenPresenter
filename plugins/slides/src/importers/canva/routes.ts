@@ -298,6 +298,10 @@ export const registerCanvaRoutes = (serverPluginApi: ServerPluginApi) => {
     }
 
     const nonce = res.locals.nonce ?? "";
+    // The popup came back from another origin. Our usual COOP makes Chromium
+    // put this page in a new browsing context group, which drops
+    // window.opener and with it the message to the app.
+    res.setHeader("Cross-Origin-Opener-Policy", "unsafe-none");
 
     const code = typeof req.query.code === "string" ? req.query.code : null;
     const state = typeof req.query.state === "string" ? req.query.state : null;
