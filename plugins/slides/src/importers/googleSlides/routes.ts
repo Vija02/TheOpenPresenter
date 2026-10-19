@@ -151,6 +151,10 @@ export const registerGoogleSlidesRoutes = (
   const callback: RequestHandler = async (req, res) => {
     const config = getGoogleOAuthConfig()!;
     const nonce = res.locals.nonce ?? "";
+    // The popup came back from another origin. Our usual COOP makes Chromium
+    // put this page in a new browsing context group, which drops
+    // window.opener and with it the message to the app.
+    res.setHeader("Cross-Origin-Opener-Policy", "unsafe-none");
 
     const state = queryString(req.query.state);
     const pending = state
