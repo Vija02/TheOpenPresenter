@@ -1,0 +1,793 @@
+---
+import ArticleLayout from "../../../components/content/ArticleLayout.astro";
+import ArticleHeader from "../../../components/content/ArticleHeader.astro";
+import Tip from "../../../components/content/Tip.astro";
+import WrapUpCta from "../../../components/content/WrapUpCta.astro";
+import {
+  CHART,
+  GBP_TO_USD,
+  PRICES,
+  type Billing,
+  calculateCosts,
+  chartPaths,
+  chartX,
+  chartY,
+  formatGbp,
+  formatUsd,
+  yearlyUsd,
+} from "../../../lib/prodisplayPricing";
+
+// Rendered server-side so the calculator shows real figures before JS loads
+const DEFAULT_SCREENS = 8;
+const defaultCosts = calculateCosts(DEFAULT_SCREENS, "yearly");
+
+const billings: Billing[] = ["yearly", "monthly"];
+const series = billings.map((billing) => {
+  const end = yearlyUsd(CHART.maxScreens, billing);
+  return { billing, paths: chartPaths(billing), end };
+});
+const defaultMarker = yearlyUsd(DEFAULT_SCREENS, "yearly");
+const formatTick = (usd: number) => (usd === 0 ? "$0" : `$${usd / 1000}K`);
+const tableScreens = [1, 5, 6, 10, 20, 30, 40];
+
+const comparison = [
+  {
+    feature: "Pricing model",
+    pd: "Per screen: $19/month or $149/year each",
+    top: "Per church: one price, however many screens",
+    winner: "top",
+  },
+  {
+    feature: "Free plan",
+    pd: "First screen free for the first year",
+    top: "Up to 5 screens free, no time limit",
+    winner: "top",
+  },
+  {
+    feature: "Hardware for each room",
+    pd: "An Apple TV (Android coming soon)",
+    top: "Fire TV, Google TV, Android TV, or any device with a browser",
+    winner: "top",
+  },
+  {
+    feature: "Keeps playing if the internet drops",
+    pd: "Yes, content is saved to the device",
+    top: "Yes, content is saved to the device",
+    winner: "tie",
+  },
+  {
+    feature: "Schedule content to rooms by time",
+    pd: "Yes, calendars per room",
+    top: "Not yet",
+    winner: "pd",
+  },
+  {
+    feature: "Run a room from a phone",
+    pd: "Yes, ProDisplay app or Apple TV remote",
+    top: "Yes, any phone browser, nothing to install",
+    winner: "tie",
+  },
+  {
+    feature: "See every screen in one place",
+    pd: "Yes, device dashboard",
+    top: "Yes, screens page with what each is showing",
+    winner: "tie",
+  },
+  {
+    feature: "Curriculum integrations",
+    pd: "Life.Church Open Network, Amazing Curriculum",
+    top: "None yet: upload the videos, or play from YouTube / Vimeo",
+    winner: "pd",
+  },
+  {
+    feature: "Bring in existing slides",
+    pd: "Export from ProPresenter",
+    top: "PowerPoint import and Google Slides sync",
+    winner: "tie",
+  },
+  {
+    feature: "Lyrics, Bible, and countdown timers",
+    pd: "Built for playing presentations",
+    top: "Yes, a full presentation app",
+    winner: "top",
+  },
+  {
+    feature: "Run the main service too",
+    pd: "No, that's ProPresenter (sold separately)",
+    top: "Yes, same app and same plan",
+    winner: "top",
+  },
+  {
+    feature: "Live web pages and screen share",
+    pd: "No",
+    top: "Yes",
+    winner: "top",
+  },
+  {
+    feature: "Open source / self-host",
+    pd: "No",
+    top: "Yes, AGPL 3.0",
+    winner: "top",
+  },
+  {
+    feature: "Maturity",
+    pd: "Brand new, launched October 2026",
+    top: "Proven, runs live every week at real churches",
+    winner: "top",
+  },
+];
+
+const faqs = [
+  {
+    q: "How much does ProDisplay cost compared to TheOpenPresenter?",
+    a: "ProDisplay charges per screen: $19 a month or $149 a year for each one, with your first screen free for the first year. TheOpenPresenter charges per church. Up to 5 screens are free, and the Cloud plan is £190 a year for unlimited screens. There's also a £990 one-time Lifetime licence.",
+  },
+  {
+    q: "Can I schedule content to play in each room at a set time?",
+    a: "Not yet. This is ProDisplay's strongest feature, and if your rooms need content to start on a timetable with nobody touching it, ProDisplay does that today. In TheOpenPresenter a volunteer starts the presentation in each room, from a phone or the TV itself.",
+  },
+  {
+    q: "What happens if the church Wi-Fi drops mid-service?",
+    a: "Content is saved to the screen, so it keeps playing. That's true of both products.",
+  },
+  {
+    q: "Do I need an Apple TV?",
+    a: "No. TheOpenPresenter runs on Fire TV, Google TV, and Android TV, or on any device with a modern browser, including an old laptop or a mini PC. There's no Apple TV app.",
+  },
+  {
+    q: "Can I use Life.Church Open or Orange curriculum?",
+    a: "There's no direct integration. You can download the videos and slides from the curriculum site and upload them, or play videos from YouTube and Vimeo. ProDisplay pulls Life.Church Open and Amazing Curriculum content in for you, which saves a step each week.",
+  },
+  {
+    q: "Can the same setup run our main service as well as the kids' rooms?",
+    a: "Yes. TheOpenPresenter is a full presentation app with lyrics, Bible, video, and timers, so the main room and every kids' room run on the same account and the same plan. With Renewed Vision, the main service runs on ProPresenter and the rooms run on ProDisplay, each with its own subscription.",
+  },
+  {
+    q: "How many volunteers can use it?",
+    a: "As many as you like, on every plan, with no per-user cost. Each room's leader can run their own screen from their phone at the same time.",
+  },
+];
+
+const win = "font-bold text-teal-600 dark:text-teal-400";
+const lose = "text-gray-600 dark:text-gray-300";
+---
+
+<ArticleLayout
+  title="ProDisplay Alternative for Kids Church Screens | TheOpenPresenter"
+  description="Comparing ProDisplay for kids ministry screens? TheOpenPresenter covers every room for one flat price, runs on Fire TV or any browser, and is open source."
+>
+  <ArticleHeader
+    backHref="/compare"
+    backLabel="All comparisons"
+    category="Comparison"
+    minutes={7}
+    title="ProDisplay alternative for kids church screens"
+  >
+    ProDisplay is Renewed Vision's new app for the screens outside your main
+    auditorium: kids' rooms, lobbies, and hallways. It's built by the
+    ProPresenter team, it runs on Apple TV, and it's priced per screen.
+  </ArticleHeader>
+
+  <p class="text-lg text-gray-600 dark:text-gray-300 mb-12">
+    Kids ministry is where the screen count adds up fast. One screen per
+    classroom, plus check-in and the hallway, and per-screen pricing becomes the
+    biggest line in the budget. This page compares the two on price and
+    features, including the things ProDisplay does that we don't yet.
+  </p>
+
+  <!-- At a glance -->
+  <h2 class="text-2xl md:text-3xl font-black font-red-hat-display mb-6">
+    At a glance
+  </h2>
+  <div class="grid gap-6 md:grid-cols-2 mb-16">
+    <div
+      class="rounded-lg border border-teal-200 dark:border-teal-500/30 bg-teal-50 dark:bg-teal-500/10 p-6"
+    >
+      <p class="font-semibold text-gray-900 dark:text-gray-100 mb-4">
+        TheOpenPresenter fits better if you want:
+      </p>
+      <ul class="space-y-3 text-gray-600 dark:text-gray-300">
+        <li class="flex gap-3">
+          <span class="text-teal-500 shrink-0">&#10003;</span>
+          One price for the whole church, however many rooms you add
+        </li>
+        <li class="flex gap-3">
+          <span class="text-teal-500 shrink-0">&#10003;</span>
+          Cheap screens: a Fire TV Stick or any browser, no Apple TV per room
+        </li>
+        <li class="flex gap-3">
+          <span class="text-teal-500 shrink-0">&#10003;</span>
+          Volunteers running each room from their own phone
+        </li>
+        <li class="flex gap-3">
+          <span class="text-teal-500 shrink-0">&#10003;</span>
+          Lyrics, Bible, and timers in the kids' rooms, not just playback
+        </li>
+        <li class="flex gap-3">
+          <span class="text-teal-500 shrink-0">&#10003;</span>
+          The main service and the kids' rooms on one account
+        </li>
+      </ul>
+    </div>
+
+    <div class="rounded-lg border border-gray-200 dark:border-gray-800 p-6">
+      <p class="font-semibold text-gray-900 dark:text-gray-100 mb-4">
+        ProDisplay fits better if you need:
+      </p>
+      <ul class="space-y-3 text-gray-600 dark:text-gray-300">
+        <li class="flex gap-3">
+          <span class="text-gray-400 shrink-0">&bull;</span>
+          Content that starts in each room on a timetable, with nobody pressing
+          play
+        </li>
+        <li class="flex gap-3">
+          <span class="text-gray-400 shrink-0">&bull;</span>
+          Life.Church Open or Amazing Curriculum pulled in automatically
+        </li>
+        <li class="flex gap-3">
+          <span class="text-gray-400 shrink-0">&bull;</span>
+          A direct export from the ProPresenter setup you already run
+        </li>
+        <li class="flex gap-3">
+          <span class="text-gray-400 shrink-0">&bull;</span>
+          To stay all-Apple, with an Apple TV remote in every room
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Price comparison -->
+  <h2 class="text-2xl md:text-3xl font-black font-red-hat-display mb-4">
+    Price comparison
+  </h2>
+  <p class="text-lg text-gray-600 dark:text-gray-300 mb-6">
+    ProDisplay costs ${PRICES.prodisplayPerScreenYearly} a year (or ${
+      PRICES.prodisplayPerScreenMonthly
+    } a month) for each screen, with the first screen free for the first year.
+    TheOpenPresenter is free for up to {PRICES.freePlanScreens} screens, and £{
+      PRICES.cloudYearly
+    } a year for unlimited screens on the Cloud plan. Slide to your number of
+    rooms.
+  </p>
+
+  <div
+    data-price-calc
+    class="rounded-lg border border-gray-200 dark:border-gray-800 p-6 mb-6"
+  >
+    <div class="flex items-end justify-between gap-4">
+      <label
+        for="price-calc-screens"
+        class="font-semibold text-gray-900 dark:text-gray-100"
+      >
+        How many screens?
+      </label>
+      <p
+        class="font-red-hat-display text-gray-900 dark:text-gray-100"
+        aria-live="polite"
+      >
+        <span class="text-3xl font-extrabold" data-calc-out="screens"
+          >{DEFAULT_SCREENS}</span
+        >
+        <span class="text-gray-500 dark:text-gray-400" data-calc-out="screens-word"
+          >screens</span
+        >
+      </p>
+    </div>
+    <input
+      id="price-calc-screens"
+      data-calc-screens
+      type="range"
+      min="1"
+      max="40"
+      value={DEFAULT_SCREENS}
+      class="w-full"
+    />
+
+    <fieldset class="flex flex-wrap gap-2 mb-6">
+      <legend class="sr-only">Billing</legend>
+      <label class="cursor-pointer">
+        <input
+          type="radio"
+          name="price-calc-billing"
+          value="yearly"
+          data-calc-billing
+          class="peer sr-only"
+          checked
+        />
+        <span
+          class="block rounded-full border border-gray-300 dark:border-gray-700 px-4 py-1.5 text-sm text-gray-600 dark:text-gray-300 peer-checked:border-teal-500 peer-checked:bg-teal-500 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-teal-500"
+          >Billed yearly</span
+        >
+      </label>
+      <label class="cursor-pointer">
+        <input
+          type="radio"
+          name="price-calc-billing"
+          value="monthly"
+          data-calc-billing
+          class="peer sr-only"
+        />
+        <span
+          class="block rounded-full border border-gray-300 dark:border-gray-700 px-4 py-1.5 text-sm text-gray-600 dark:text-gray-300 peer-checked:border-teal-500 peer-checked:bg-teal-500 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-teal-500"
+          >Billed monthly</span
+        >
+      </label>
+    </fieldset>
+
+    <div class="grid gap-4 sm:grid-cols-2">
+      <div class="rounded-lg bg-gray-50 dark:bg-gray-800/50 p-4">
+        <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-300 mb-1">
+          ProDisplay, per year
+        </p>
+        <p class="font-red-hat-display text-2xl font-extrabold text-gray-900 dark:text-gray-100" data-calc-out="pd-year">
+          {formatUsd(defaultCosts.prodisplayPerYear)}
+        </p>
+      </div>
+      <div class="rounded-lg border border-teal-200 dark:border-teal-500/30 bg-teal-50 dark:bg-teal-500/10 p-4">
+        <p class="text-xs font-semibold uppercase tracking-wide text-teal-600 dark:text-teal-400 mb-1">
+          TheOpenPresenter, per year
+        </p>
+        <p class="font-red-hat-display text-2xl font-extrabold text-teal-600 dark:text-teal-400" data-calc-out="top">
+          {formatGbp(defaultCosts.theOpenPresenter)}
+        </p>
+        <p class="text-sm text-gray-500 dark:text-gray-400" data-calc-out="top-plan">
+          {defaultCosts.isFreePlan ? "Free plan" : "Cloud plan"}
+        </p>
+      </div>
+    </div>
+
+    <p class="text-gray-600 dark:text-gray-300 mt-4">
+      Over three years: ProDisplay <strong
+        class="font-semibold text-gray-900 dark:text-gray-100"
+        data-calc-out="pd-three">{formatUsd(defaultCosts.prodisplayThreeYears)}</strong
+      >, TheOpenPresenter <strong
+        class="font-semibold text-teal-600 dark:text-teal-400"
+        data-calc-out="top-three"
+        >{formatGbp(defaultCosts.theOpenPresenterThreeYears)}</strong
+      >.
+    </p>
+
+    <figure class="mt-8">
+      <div class="flex flex-wrap items-center gap-x-6 gap-y-2 mb-3">
+        <p class="font-semibold text-gray-900 dark:text-gray-100 mr-auto">
+          Yearly cost by number of screens
+        </p>
+        <span class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+          <span class="inline-block h-0.5 w-4 rounded-full bg-teal-700 dark:bg-teal-400"></span>
+          TheOpenPresenter
+        </span>
+        <span class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+          <span class="inline-block h-0.5 w-4 rounded-full bg-gray-400 dark:bg-gray-500"></span>
+          ProDisplay
+        </span>
+      </div>
+
+      <!-- Scrolls sideways on narrow phones rather than shrinking the text -->
+      <div class="relative overflow-x-auto" data-calc-chart>
+        <svg
+          viewBox={`0 0 ${CHART.width} ${CHART.height}`}
+          class="w-full min-w-[540px] h-auto cursor-crosshair select-none"
+          role="img"
+          aria-label="Line chart of yearly cost against number of screens. ProDisplay rises by one screen's price for every screen added. TheOpenPresenter is free up to 5 screens and then stays flat on the Cloud plan."
+        >
+          {
+            CHART.yTicks.map((tick) => (
+              <g>
+                <line
+                  x1={CHART.left}
+                  x2={chartX(CHART.maxScreens)}
+                  y1={chartY(tick)}
+                  y2={chartY(tick)}
+                  class="stroke-gray-200 dark:stroke-gray-800"
+                  stroke-width="1"
+                />
+                <text
+                  x={CHART.left - 8}
+                  y={chartY(tick)}
+                  text-anchor="end"
+                  dominant-baseline="middle"
+                  class="fill-gray-500 dark:fill-gray-400 text-[11px] tabular-nums"
+                >
+                  {formatTick(tick)}
+                </text>
+              </g>
+            ))
+          }
+          {
+            CHART.xTicks.map((tick) => (
+              <text
+                x={chartX(tick)}
+                y={CHART.height - CHART.bottom + 18}
+                text-anchor="middle"
+                class="fill-gray-500 dark:fill-gray-400 text-[11px] tabular-nums"
+              >
+                {tick}
+              </text>
+            ))
+          }
+          <text
+            x={(CHART.left + chartX(CHART.maxScreens)) / 2}
+            y={CHART.height - 4}
+            text-anchor="middle"
+            class="fill-gray-500 dark:fill-gray-400 text-[11px]"
+          >
+            Screens
+          </text>
+
+          {
+            series.map((s) => (
+              <g
+                data-calc-series={s.billing}
+                class:list={[s.billing !== "yearly" && "hidden"]}
+              >
+                <path
+                  d={s.paths.prodisplay}
+                  fill="none"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  class="stroke-gray-400 dark:stroke-gray-500"
+                />
+                <path
+                  d={s.paths.theOpenPresenter}
+                  fill="none"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  class="stroke-teal-700 dark:stroke-teal-400"
+                />
+                <text
+                  x={chartX(CHART.maxScreens) + 10}
+                  y={chartY(s.end.prodisplay)}
+                  dominant-baseline="middle"
+                  class="fill-gray-600 dark:fill-gray-300 text-[12px]"
+                >
+                  <tspan class="font-semibold">{formatUsd(s.end.prodisplay)}</tspan>
+                  <tspan> ProDisplay</tspan>
+                </text>
+                <text
+                  x={chartX(CHART.maxScreens) + 10}
+                  y={chartY(s.end.theOpenPresenter) - 8}
+                  dominant-baseline="middle"
+                  class="fill-gray-600 dark:fill-gray-300 text-[12px]"
+                >
+                  <tspan class="font-semibold">
+                    ~{formatUsd(s.end.theOpenPresenter)}
+                  </tspan>
+                  <tspan> TheOpenPresenter</tspan>
+                </text>
+              </g>
+            ))
+          }
+
+          <line
+            data-calc-crosshair
+            x1={chartX(DEFAULT_SCREENS)}
+            x2={chartX(DEFAULT_SCREENS)}
+            y1={CHART.top}
+            y2={CHART.height - CHART.bottom}
+            stroke-width="1"
+            class="stroke-gray-400 dark:stroke-gray-600 pointer-events-none"
+          />
+          <circle
+            data-calc-dot="pd"
+            cx={chartX(DEFAULT_SCREENS)}
+            cy={chartY(defaultMarker.prodisplay)}
+            r="5"
+            stroke-width="2"
+            class="fill-gray-400 dark:fill-gray-500 stroke-white dark:stroke-gray-900 pointer-events-none"
+          />
+          <circle
+            data-calc-dot="top"
+            cx={chartX(DEFAULT_SCREENS)}
+            cy={chartY(defaultMarker.theOpenPresenter)}
+            r="5"
+            stroke-width="2"
+            class="fill-teal-700 dark:fill-teal-400 stroke-white dark:stroke-gray-900 pointer-events-none"
+          />
+        </svg>
+
+        <div
+          data-calc-tooltip
+          hidden
+          class="absolute top-2 pointer-events-none rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm shadow-lg whitespace-nowrap"
+        >
+          <p class="text-gray-500 dark:text-gray-400 mb-1" data-calc-out="tip-screens">
+          </p>
+          <p class="flex items-center gap-2">
+            <span class="inline-block h-0.5 w-3 rounded-full bg-teal-700 dark:bg-teal-400"></span>
+            <strong class="font-semibold text-gray-900 dark:text-gray-100" data-calc-out="tip-top"></strong>
+            <span class="text-gray-500 dark:text-gray-400">TheOpenPresenter</span>
+          </p>
+          <p class="flex items-center gap-2">
+            <span class="inline-block h-0.5 w-3 rounded-full bg-gray-400 dark:bg-gray-500"></span>
+            <strong class="font-semibold text-gray-900 dark:text-gray-100" data-calc-out="tip-pd"></strong>
+            <span class="text-gray-500 dark:text-gray-400">ProDisplay</span>
+          </p>
+        </div>
+      </div>
+
+      <figcaption class="text-sm text-gray-500 dark:text-gray-400 mt-2">
+        Cost per year. To put both on
+        one axis, TheOpenPresenter's pounds are shown in dollars at about ${
+          GBP_TO_USD.toFixed(2)
+        } to the pound. Hover to compare, click to select.
+      </figcaption>
+
+      <table class="sr-only">
+        <caption>Yearly cost by number of screens, billed yearly</caption>
+        <thead>
+          <tr>
+            <th scope="col">Screens</th>
+            <th scope="col">ProDisplay</th>
+            <th scope="col">TheOpenPresenter</th>
+          </tr>
+        </thead>
+        <tbody>
+          {
+            tableScreens.map((n) => {
+              const costs = calculateCosts(n, "yearly");
+              return (
+                <tr>
+                  <td>{n}</td>
+                  <td>{formatUsd(costs.prodisplayPerYear)}</td>
+                  <td>{formatGbp(costs.theOpenPresenter)}</td>
+                </tr>
+              );
+            })
+          }
+        </tbody>
+      </table>
+    </figure>
+  </div>
+  <script>
+    import "../../../scripts/prodisplay-price-calculator";
+  </script>
+
+  <Tip label="Good to know" class="mb-6">
+    Prices are as listed on each company's site in October 2026. ProDisplay is
+    priced in US dollars and TheOpenPresenter in pounds. The three-year totals
+    include ProDisplay's free first screen in year one.
+    The Apple TV that ProDisplay needs in each room is extra; TheOpenPresenter
+    runs on a Fire TV Stick or any device with a browser.
+  </Tip>
+  <p class="text-gray-600 dark:text-gray-300 mb-16">
+    Prefer to pay once? The <a
+      href="/pricing"
+      class="text-teal-600 dark:text-teal-400 hover:underline font-medium"
+      >Lifetime licence</a
+    > is the Cloud plan for £990, one time. And churches under 50 weekly attendance
+    get the Cloud plan free through our <a
+      href="/church/sponsorship"
+      class="text-teal-600 dark:text-teal-400 hover:underline font-medium"
+      >sponsorship programme</a
+    >.
+  </p>
+
+  <!-- Feature comparison -->
+  <h2 class="text-2xl md:text-3xl font-black font-red-hat-display mb-6">
+    Feature comparison
+  </h2>
+  <div class="overflow-x-auto mb-6">
+    <table class="w-full text-left border-collapse">
+      <thead>
+        <tr>
+          <th
+            class="py-3 pr-4 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-300"
+          ></th>
+          <th
+            class="py-3 px-4 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-300"
+          >
+            ProDisplay
+          </th>
+          <th
+            class="py-3 pl-4 text-xs font-semibold uppercase tracking-wide text-teal-500"
+          >
+            TheOpenPresenter
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {
+          comparison.map((row) => (
+            <tr class="border-t border-gray-200 dark:border-gray-800 align-top">
+              <td class="py-3 pr-4 font-medium text-gray-900 dark:text-gray-100">
+                {row.feature}
+              </td>
+              <td class:list={["py-3 px-4", row.winner === "pd" ? win : lose]}>
+                {row.pd}
+              </td>
+              <td class:list={["py-3 pl-4", row.winner === "top" ? win : lose]}>
+                {row.top}
+              </td>
+            </tr>
+          ))
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <p class="text-gray-600 dark:text-gray-300 mb-16">
+    ProDisplay is ahead on <strong class="font-semibold">scheduling</strong> and
+    <strong class="font-semibold">curriculum integrations</strong>. TheOpenPresenter
+    is ahead on price, hardware, and everything that comes from being a full
+    presentation app rather than a player.
+  </p>
+
+  <!-- Where ProDisplay is better -->
+  <h2 class="text-2xl md:text-3xl font-black font-red-hat-display mb-4">
+    Where ProDisplay is better
+  </h2>
+  <ul class="space-y-4 text-gray-600 dark:text-gray-300 mb-16">
+    <li class="flex gap-3">
+      <span class="text-gray-400 shrink-0">&bull;</span>
+      <span>
+        <strong class="font-semibold text-gray-900 dark:text-gray-100"
+          >Rooms that run themselves.</strong
+        > ProDisplay lets you put content on a calendar for each room, so the welcome
+        loop starts at 9:45 and the lesson at 10:15 without anyone touching it. We
+        don't have scheduling yet.
+      </span>
+    </li>
+    <li class="flex gap-3">
+      <span class="text-gray-400 shrink-0">&bull;</span>
+      <span>
+        <strong class="font-semibold text-gray-900 dark:text-gray-100"
+          >Curriculum arrives ready.</strong
+        > If your kids ministry runs on Life.Church Open or Amazing Curriculum, ProDisplay
+        brings the week's content in directly. With us, you download it and upload
+        it.
+      </span>
+    </li>
+    <li class="flex gap-3">
+      <span class="text-gray-400 shrink-0">&bull;</span>
+      <span>
+        <strong class="font-semibold text-gray-900 dark:text-gray-100"
+          >You're already on ProPresenter.</strong
+        > Exporting straight from the ProPresenter you run on Sunday is a smooth
+        workflow if you plan to keep it.
+      </span>
+    </li>
+  </ul>
+
+  <!-- Where TheOpenPresenter wins -->
+  <h2 class="text-2xl md:text-3xl font-black font-red-hat-display mb-4">
+    Where TheOpenPresenter wins
+  </h2>
+  <div class="space-y-8 mb-16">
+    <div>
+      <h3 class="text-xl font-red-hat-display font-black mb-2">
+        Add rooms without adding cost
+      </h3>
+      <p class="text-gray-600 dark:text-gray-300">
+        Every new classroom on ProDisplay is another ${
+          PRICES.prodisplayPerScreenYearly
+        } a year. On TheOpenPresenter, the sixth screen and the twentieth cost the
+        same as the first: nothing extra. Opening a new room becomes a question
+        of finding a TV, not finding budget.
+      </p>
+    </div>
+
+    <div>
+      <h3 class="text-xl font-red-hat-display font-black mb-2">
+        Any TV, any stick
+      </h3>
+      <p class="text-gray-600 dark:text-gray-300">
+        Plug a Fire TV Stick, Chromecast with Google TV, or Android TV device into
+        each screen, or use a laptop or mini PC you already own. <a
+          href="/how-to/present-on-tv"
+          class="text-teal-600 dark:text-teal-400 hover:underline font-medium"
+          >See how to set up a TV</a
+        >.
+      </p>
+    </div>
+
+    <div>
+      <h3 class="text-xl font-red-hat-display font-black mb-2">
+        Built for rotating volunteers
+      </h3>
+      <p class="text-gray-600 dark:text-gray-300">
+        Each room's leader opens their room on their own phone and runs it from
+        there, with no app to install. Several rooms run
+        at once, and the kids pastor can see and fix any of them from anywhere
+        in the building. <a
+          href="/how-to/control-with-phone"
+          class="text-teal-600 dark:text-teal-400 hover:underline font-medium"
+          >How phone control works</a
+        >.
+      </p>
+    </div>
+
+    <div>
+      <h3 class="text-xl font-red-hat-display font-black mb-2">
+        More than playback
+      </h3>
+      <p class="text-gray-600 dark:text-gray-300">
+        Kids' worship needs lyrics. Small groups need a Bible verse. Every room
+        needs a countdown to get everyone back in their seats. TheOpenPresenter
+        does all of these in the same room, alongside videos and slides.
+      </p>
+    </div>
+
+    <div>
+      <h3 class="text-xl font-red-hat-display font-black mb-2">
+        One account for the whole church
+      </h3>
+      <p class="text-gray-600 dark:text-gray-300">
+        The main service, the kids' rooms, the youth hall, and the lobby screen
+        all run in one place, on one plan. No second subscription for the rooms
+        down the corridor.
+      </p>
+    </div>
+  </div>
+
+  <!-- Switching -->
+  <h2 class="text-2xl md:text-3xl font-black font-red-hat-display mb-4">
+    Trying it in your kids ministry
+  </h2>
+  <ol
+    class="list-decimal list-outside pl-5 space-y-3 text-gray-600 dark:text-gray-300 mb-6"
+  >
+    <li>
+      <strong class="font-semibold">Start free.</strong>
+      <a
+        href="/register"
+        class="text-teal-600 dark:text-teal-400 hover:underline font-medium"
+        >Create an account</a
+      >. Up to 5 screens are free, no card needed.
+    </li>
+    <li>
+      <strong class="font-semibold">Set up one room.</strong> Plug a TV stick into
+      the screen, install the app, and scan the QR code to connect it.
+    </li>
+    <li>
+      <strong class="font-semibold">Add this week's lesson.</strong> Upload the
+      curriculum videos and slides, and add your worship songs.
+    </li>
+    <li>
+      <strong class="font-semibold">Hand it to the room leader.</strong> They run
+      it from their phone on Sunday. Add the other rooms once it's proven.
+    </li>
+  </ol>
+  <p class="text-gray-600 dark:text-gray-300 mb-16">
+    One room for one Sunday is the easiest way to see whether it fits.
+  </p>
+
+  <!-- FAQ -->
+  <h2 class="text-2xl md:text-3xl font-black font-red-hat-display mb-6">
+    Frequently asked questions
+  </h2>
+  <div class="space-y-6 mb-16">
+    {
+      faqs.map((faq) => (
+        <div class="border-b border-gray-200 dark:border-gray-800 pb-6">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+            {faq.q}
+          </h3>
+          <p class="text-gray-600 dark:text-gray-300">{faq.a}</p>
+        </div>
+      ))
+    }
+  </div>
+
+  <WrapUpCta
+    title="Every room, one plan"
+    buttons={[
+      { label: "Try it free", href: "/register", variant: "primary" },
+      { label: "See pricing", href: "/pricing", variant: "secondary" },
+    ]}
+  >
+    If your kids ministry has more screens than budget, TheOpenPresenter runs
+    every room for one flat price, on inexpensive TV sticks,
+    with volunteers in charge from their phones.
+    <p slot="footer" class="text-sm text-gray-500 dark:text-gray-400 mt-6">
+      Free for up to 5 screens, no card needed.
+    </p>
+  </WrapUpCta>
+
+  <p class="text-gray-600 dark:text-gray-300 mt-10 text-center italic">
+    Verdict: if you need rooms on a timetable or automatic curriculum today,
+    ProDisplay does that. If you need lots of screens on a church budget,
+    TheOpenPresenter covers them all for less.
+  </p>
+</ArticleLayout>
