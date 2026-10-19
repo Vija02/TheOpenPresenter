@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { CanvaIconLogo } from "../../components/CanvaLogo";
 import { canvaBrand } from "../../components/integrationBranding";
 import { usePluginAPI } from "../../pluginApi";
+import { listenToPopup, popupOpenedAt } from "../../popupMessages";
 import { trpc } from "../../trpc";
 import {
   CanvaDesignPicker,
@@ -35,7 +36,10 @@ const CanvaController = ({ children }: IntegrationControllerProps) => {
   // leaves no connection, so it can only report back by message. A connect
   // remembers the accounts already there, so polling can spot the new one.
   const [connecting, setConnecting] = useState<
-    { mode: "once" } | { mode: "connect"; knownIds: string[] } | null
+    | (({ mode: "once" } | { mode: "connect"; knownIds: string[] }) & {
+        openedAt: number;
+      })
+    | null
   >(null);
   // Studio: a sign-in running in the system browser on the cloud
   const [cloudSignIn, setCloudSignIn] = useState<{
@@ -121,7 +125,7 @@ const CanvaController = ({ children }: IntegrationControllerProps) => {
       }
       void finishConnect({ isConfirmed: true });
     };
-    window.addEventListener("message", onMessage);
+    const stopListening = listenToPopup(connecting.openedAt, onMessage);
 
     // Fallback for when postMessage never arrives. Only a connection can be
     // found this way; an import-once sign-in just times out.
@@ -137,7 +141,7 @@ const CanvaController = ({ children }: IntegrationControllerProps) => {
 
     return () => {
       isDone = true;
-      window.removeEventListener("message", onMessage);
+      stopListening();
       clearInterval(timer);
     };
   }, [connecting, refetchStatus, openPicker, pluginApi]);
@@ -218,10 +222,11 @@ const CanvaController = ({ children }: IntegrationControllerProps) => {
       )}${mode === "once" ? "&once=1" : ""}`;
       log("startConnect -> opening popup", { organizationId, mode });
       setIsChooserOpen(false);
+      const openedAt = popupOpenedAt();
       setConnecting(
         mode === "once"
-          ? { mode }
-          : { mode, knownIds: connections.map((c) => c.id) },
+          ? { mode, openedAt }
+          : { mode, knownIds: connections.map((c) => c.id), openedAt },
       );
       const popup = window.open(url, "canva-oauth", "width=600,height=800");
       if (!popup || popup.closed) {

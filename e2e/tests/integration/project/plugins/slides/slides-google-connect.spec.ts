@@ -156,6 +156,14 @@ test.describe.serial("Slides Plugin - Google Slides accounts", () => {
     await expect
       .poll(() => fakeGoogle.activity(account).then((a) => a.exportCount))
       .toBe(2);
+    // Let the second deck finish importing, or its pages are still being
+    // made when the next test clears the org
+    await expect(
+      page
+        .getByTestId("slide-container")
+        .filter({ hasText: /^Slide 4$/ })
+        .locator("img"),
+    ).toBeVisible({ timeout: 30_000 });
     expect(popups).toBe(0);
     expect(drivePicker.openedWithTokens).toHaveLength(2);
     expect(drivePicker.inBrowserSignIns()).toBe(0);

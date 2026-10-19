@@ -3,6 +3,7 @@ import { FcGoogle } from "react-icons/fc";
 
 import { googleSlidesBrand } from "../../components/integrationBranding";
 import { usePluginAPI } from "../../pluginApi";
+import { listenToPopup, popupOpenedAt } from "../../popupMessages";
 import { trpc } from "../../trpc";
 import { SlidePicker } from "../ImportFile/SlidePicker";
 import { IntegrationAccountChooser } from "./IntegrationAccountChooser";
@@ -74,6 +75,7 @@ const StoredGoogleSlides = ({
   // account moves to the top, which is how polling spots the result.
   const [connectingFrom, setConnectingFrom] = useState<{
     topAccountId: string | null;
+    openedAt: number;
   } | null>(null);
   const [token, setToken] = useState<string | null>(null);
   // "stored" opens with an account's token; "once" lets the picker sign in
@@ -127,7 +129,10 @@ const StoredGoogleSlides = ({
     const url = `/plugin/slides/google/authorize?organizationId=${encodeURIComponent(
       pluginApi.pluginContext.organizationId,
     )}`;
-    setConnectingFrom({ topAccountId: accounts[0]?.id ?? null });
+    setConnectingFrom({
+      topAccountId: accounts[0]?.id ?? null,
+      openedAt: popupOpenedAt(),
+    });
     window.open(url, "google-oauth", "width=500,height=700");
   }, [pluginApi.pluginContext.organizationId, accounts]);
 
@@ -149,17 +154,18 @@ const StoredGoogleSlides = ({
 
     const onMessage = (event: MessageEvent) => {
       if (event.origin !== window.location.origin) return;
-      if (event.data?.source !== "top-google-oauth") return;
+      if (event.data?.source !== "top-google-oauth" || isDone) return;
       if (event.data.ok) {
         void finish({ isConfirmed: true });
       } else {
+        isDone = true;
         setConnectingFrom(null);
         pluginApi.remote.toast.error(
           event.data.error ?? "Google connection failed.",
         );
       }
     };
-    window.addEventListener("message", onMessage);
+    const stopListening = listenToPopup(connectingFrom.openedAt, onMessage);
 
     // Fallback for when postMessage never arrives
     const startedAt = Date.now();
@@ -173,7 +179,7 @@ const StoredGoogleSlides = ({
 
     return () => {
       isDone = true;
-      window.removeEventListener("message", onMessage);
+      stopListening();
       clearInterval(timer);
     };
   }, [connectingFrom, refetchStatus, openWithAccount, pluginApi]);
