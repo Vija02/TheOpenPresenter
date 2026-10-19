@@ -47,6 +47,12 @@ const comparison = [
     winner: "top",
   },
   {
+    feature: "Linux",
+    pp: "No, macOS and Windows only",
+    top: "Yes, in the browser or the Studio desktop app",
+    winner: "top",
+  },
+  {
     feature: "Google Slides sync",
     pp: "No",
     top: "Yes, sync directly",
@@ -154,8 +160,12 @@ const faqs = [
     a: "For most small-to-mid churches, yes. If you depend on SDI/NDI video output, a built-in cue/scheduling system, or CCLI SongSelect, not yet. Those are areas where ProPresenter is still ahead.",
   },
   {
-    q: "Does it run on Mac and Windows?",
-    a: "It runs in any modern browser, so any OS works. There's also a desktop app, TheOpenPresenter Studio, for a native offline experience, plus TV apps for Fire TV and Android TV.",
+    q: "Does it run on Mac, Windows and Linux?",
+    a: "Yes. It runs in any modern browser, so any OS works. There's also a desktop app, TheOpenPresenter Studio, for Windows, macOS and Linux if you want a native offline experience, plus TV apps for Fire TV and Android TV.",
+  },
+  {
+    q: "Is there a ProPresenter for Linux?",
+    a: "No. ProPresenter only runs on macOS and Windows. TheOpenPresenter runs in the browser on any Linux machine, and Studio, our offline desktop app, is available as a Linux AppImage.",
   },
   {
     q: "Can I import my ProPresenter files?",
@@ -189,7 +199,7 @@ const lose = "text-gray-600 dark:text-gray-300";
 
 <ArticleLayout
   title="Free ProPresenter Alternative (Open Source) | TheOpenPresenter"
-  description="Looking for a free ProPresenter alternative? TheOpenPresenter is open source, web-based, and collaborative, with an honest look at where ProPresenter still wins."
+  description="A free, open-source ProPresenter alternative that runs in any browser on Windows, Mac or Linux. See where it wins or loses from ProPresenter."
 >
   <ArticleHeader
     backHref="/compare"
@@ -413,6 +423,21 @@ const lose = "text-gray-600 dark:text-gray-300";
         tablet, or laptop. Your worship leader can advance lyrics from the stage
         while someone else fixes a typo from the back row, at the same time,
         with nothing to install.
+      </p>
+    </div>
+
+    <div>
+      <h3 class="text-xl font-red-hat-display font-black mb-2">
+        Works on Linux
+      </h3>
+      <p class="text-gray-600 dark:text-gray-300">
+        ProPresenter only runs on macOS and Windows. TheOpenPresenter runs in
+        the browser on any Linux machine, and <a
+          href="/download"
+          class="text-teal-600 dark:text-teal-400 hover:underline font-medium"
+          >Studio</a
+        >, our offline desktop app, comes as a Linux AppImage. That old laptop
+        at the back of the hall can run your screens.
       </p>
     </div>
 
