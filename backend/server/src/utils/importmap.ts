@@ -37,4 +37,5 @@ const readImportMap = (): string => {
 };
 
 export const getImportMapTag = (): string =>
+  `<script async src="/assets/es-module-shims@1.10.0/es-module-shims.js" nonce="INJECT_NONCE"></script>\n` +
   `<script type="importmap" nonce="INJECT_NONCE">\n${readImportMap()}\n</script>`;
