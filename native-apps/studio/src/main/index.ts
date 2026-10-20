@@ -16,14 +16,17 @@ import { setupMenu } from "./shell/menu";
 import { setupTray } from "./shell/tray";
 import { isInstallingUpdate, setupUpdates } from "./shell/updates";
 import {
+  backToShellUI,
   closeAllPresentWindows,
   closeLoadingWindow,
   getMainWindow,
+  isShowingServer,
   navigateToServer,
   notifyMonitorsChanged,
   openLoadingWindow,
   openOnboardingWindow,
   openUnreachableWindow,
+  reloadServerWindows,
   repositionPresentWindows,
   showAppWindow,
 } from "./shell/windows";
@@ -144,7 +147,10 @@ if (!gotLock) {
     // `quitAndInstall`. Replacing that with a plain `app.quit()` here would
     // restart the app on the old version.
     if (isInstallingUpdate()) return;
-    if (shuttingDown || !runtime.isRunning) return;
+    if (shuttingDown || !runtime.isRunning) {
+      void runtime.shutdown();
+      return;
+    }
     event.preventDefault();
     shuttingDown = true;
     closeAllPresentWindows();
@@ -285,7 +291,19 @@ function forwardRuntimeEvents(): void {
   // Nothing in the UI shows these. Kept on the channel for debugging.
   runtime.on("log", (payload) => send("runtime:log", payload));
 
+  // Where the local server was last seen
+  let serverUrl: string | null = null;
+  // Snapshotted at the crash
+  let crashedUrl: string | null = null;
+  // Where the server was when its manager died, until the respawn rejoins it.
+  let managerLostUrl: string | null = null;
+
+  const giveUp = () => {
+    if (serverUrl && isShowingServer(serverUrl)) backToShellUI();
+  };
+
   runtime.on("listening", (payload: { url: string }) => {
+    serverUrl = payload.url;
     send("runtime:listening", payload);
     logShell("info", `[runtime] listening at ${payload.url}`);
     // Deliberately no navigation: `runtime:start` hands the window over once
@@ -296,6 +314,8 @@ function forwardRuntimeEvents(): void {
   // best-effort and deliberately not awaited: the UI still needs telling.
   runtime.on("runtime-exit", (payload) => {
     send("runtime:exit", payload);
+    if (payload?.restarting) crashedUrl = serverUrl;
+    else giveUp();
     const reverted = payload?.reverted_to
       ? `, reverted to ${payload.reverted_to}`
       : "";
@@ -308,9 +328,65 @@ function forwardRuntimeEvents(): void {
       String(payload?.detail ?? ""),
     );
   });
-  runtime.on("manager-exit", ({ code, detail }) => {
+  runtime.on(
+    "runtime-restarted",
+    (payload: { url: string; port: number; version: string }) => {
+      logShell("info", `[runtime] restarted at ${payload.url}`);
+      const previous = crashedUrl ?? payload.url;
+      crashedUrl = null;
+      serverUrl = payload.url;
+      reloadServerWindows(previous, payload.url);
+      // A tunnel opened against the old port was reopened by the manager,
+      // possibly with a new ticket the cloud needs to hear about.
+      if (previous !== payload.url && getSettings().remoteAccess !== false) {
+        void resumeRemoteAccess();
+      }
+    },
+  );
+
+  // The manager is respawned by the client. The runtime usually survived it
+  // and is rejoined as is; if it died too, the new manager starts it again,
+  // on its old port when it can, and the windows need a reload.
+  runtime.on("manager-restarted", () => {
+    const previous = managerLostUrl;
+    managerLostUrl = null;
+    logShell("info", "[runtime-manager] respawned");
+    if (!previous) return;
+
+    void (async () => {
+      try {
+        const started = await runtime.startRuntime();
+        serverUrl = started.url;
+        if (!started.reused || started.url !== previous) {
+          reloadServerWindows(previous, started.url);
+        }
+        // The tunnel lived in the manager that died.
+        if (getSettings().remoteAccess !== false) void resumeRemoteAccess();
+      } catch (err) {
+        logShell(
+          "error",
+          "[runtime-manager] could not restore the server:",
+          err,
+        );
+        serverUrl = previous;
+        giveUp();
+      }
+    })();
+  });
+
+  runtime.on("runtime-restart-failed", ({ message }: { message: string }) => {
+    logShell("error", `[runtime] restart failed: ${message}`);
+    giveUp();
+  });
+
+  runtime.on("manager-exit", ({ code, detail, url, respawning }) => {
     send("runtime:manager-exit", { code });
-    logShell("error", `[runtime-manager] exited (code ${code})`, detail ?? "");
+    logShell(
+      "error",
+      `[runtime-manager] exited (code ${code}${respawning ? ", respawning" : ""})`,
+      detail ?? "",
+    );
     void reportDiagnosis(`manager_exit: code=${code}`, detail ?? "");
+    if (respawning && url) managerLostUrl = url;
   });
 }

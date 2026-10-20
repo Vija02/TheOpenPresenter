@@ -5,8 +5,9 @@
 //! prints: callers decide whether a result becomes JSON on stdout or prose
 //! on a terminal.
 
+use std::collections::BTreeSet;
 use std::sync::mpsc::Receiver;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use anyhow::{bail, Context, Result};
 
@@ -14,12 +15,18 @@ use crate::runtime::fetch::Source;
 use crate::runtime::install::Installer;
 use crate::runtime::manifest::{self, Manifest};
 use crate::runtime::state::{CurrentState, SETTLE_SECONDS};
-use crate::runtime::supervise::{free_port, wait_for_http, LaunchConfig, RuntimeEvent, Supervisor};
+use crate::runtime::supervise::{
+    free_port, port_available, wait_for_http, LaunchConfig, RuntimeEvent, Supervisor,
+};
 use crate::shell::output::{emit, emit_progress};
 use crate::shell::protocol::{Command, Event, Request};
 use crate::storage::{disk, paths::Layout};
 
 pub const DEFAULT_SOURCE: &str = "https://runtime.theopenpresenter.com";
+
+/// How many times a runtime that crashed after starting is brought back,
+const MAX_RESTARTS: usize = 3;
+const RESTART_WINDOW: Duration = Duration::from_secs(5 * 60);
 
 pub struct Manager {
     pub layout: Layout,
@@ -30,13 +37,18 @@ pub struct Manager {
     pending: Option<Manifest>,
     pub supervisor: Option<Supervisor>,
     /// Who currently wants the runtime up.
-    holders: std::collections::BTreeSet<String>,
+    holders: BTreeSet<String>,
     /// What the running runtime is serving
     running: Option<(u16, String)>,
     /// Remote access
     #[cfg(feature = "remote")]
     remote: Option<crate::remote::Remote>,
     marked_good: bool,
+    /// When each recent automatic restart happened, for the restart budget.
+    restarts: Vec<Instant>,
+    /// Port the next `start` should try first, so a restarted runtime comes
+    /// back where windows, the remote tunnel and LAN links expect it.
+    preferred_port: Option<u16>,
 }
 
 impl Manager {
@@ -48,11 +60,13 @@ impl Manager {
             pubkey: manifest::trusted_pubkey()?,
             pending: None,
             supervisor: None,
-            holders: std::collections::BTreeSet::new(),
+            holders: BTreeSet::new(),
             running: None,
             #[cfg(feature = "remote")]
             remote: None,
             marked_good: false,
+            restarts: Vec::new(),
+            preferred_port: None,
         })
     }
 
@@ -431,6 +445,13 @@ impl Manager {
                     "holders": self.holders.iter().collect::<Vec<_>>(),
                 }));
             }
+
+            // Its runtime is dead, but windows may still be pointed at the
+            // port it had: a manager that crashed and was respawned, or an
+            // app reopened after a force quit.
+            if let Some(port) = existing.http_port {
+                self.preferred_port.get_or_insert(port);
+            }
         }
 
         // Registered only once the runtime is actually up
@@ -460,15 +481,24 @@ impl Manager {
             .map(|m| m.plugins.clone())
             .unwrap_or_default();
 
+        let http_port = match self.preferred_port.take() {
+            Some(port) if port_available(port) => port,
+            _ => free_port()?,
+        };
+
         let config = LaunchConfig {
             runtime_dir: self.layout.runtime_dir(&version),
             entry,
-            http_port: free_port()?,
+            http_port,
             pg_port: free_port()?,
             layout: self.layout.clone(),
             extra_env: vec![],
             plugins,
         };
+
+        // Nothing live owns this root (checked above), so a PostgreSQL still
+        // running on its data is an orphan, and would stop ours starting.
+        crate::runtime::postgres::stop_orphan(&self.layout.pgdata_dir());
 
         let mut supervisor = Supervisor::spawn(&config)?;
 
@@ -592,12 +622,24 @@ impl Manager {
     }
 
     fn on_exit(&mut self, code: Option<i32>) {
+        let clean = code == Some(0);
+        let serving_port = self.running.as_ref().map(|(port, _)| *port);
+        let holders = std::mem::take(&mut self.holders);
         self.supervisor = None;
         self.running = None;
-        self.holders.clear();
-        crate::storage::lock::release(self.layout.root());
 
-        let clean = code == Some(0);
+        // Only a runtime that got as far as serving, and that someone still
+        // wants. One that dies during startup is `start`'s error to report,
+        // and restarting it would just repeat the failure.
+        let restart_port =
+            serving_port.filter(|_| !clean && !holders.is_empty() && self.may_restart());
+
+        // Kept while restarting: the lock also carries the remote-access
+        // ticket, which other processes read and a fresh lock would lose.
+        if restart_port.is_none() {
+            crate::storage::lock::release(self.layout.root());
+        }
+
         let mut reverted_to = None;
 
         if !clean && !self.marked_good {
@@ -615,7 +657,73 @@ impl Manager {
             }
         }
 
-        emit(&Event::Exited { code, reverted_to });
+        emit(&Event::Exited {
+            code,
+            reverted_to,
+            restarting: restart_port.is_some(),
+        });
+
+        if let Some(port) = restart_port {
+            self.restart(port, holders);
+        }
+    }
+
+    /// An open tunnel forwards to the port it was opened against, so a
+    /// runtime that came back elsewhere needs a new one.
+    fn retarget_remote(&mut self) {
+        #[cfg(feature = "remote")]
+        {
+            let on = self.remote.as_ref().is_some_and(|r| r.status().enabled);
+            if on {
+                let _ = self.remote_stop();
+                if let Err(e) = self.remote_start() {
+                    tracing::warn!("Could not reopen remote access after a restart: {e:#}");
+                }
+            }
+        }
+    }
+
+    fn may_restart(&mut self) -> bool {
+        self.restarts.retain(|at| at.elapsed() < RESTART_WINDOW);
+        self.restarts.len() < MAX_RESTARTS
+    }
+
+    /// Bring a crashed runtime back for the holders it had.
+    fn restart(&mut self, port: u16, holders: BTreeSet<String>) {
+        self.restarts.push(Instant::now());
+        tracing::warn!(
+            "Runtime exited unexpectedly; restarting ({} of {MAX_RESTARTS})",
+            self.restarts.len()
+        );
+
+        self.preferred_port = Some(port);
+        let mut names = holders.into_iter();
+        let started = self.start(names.next());
+        self.preferred_port = None;
+
+        match started {
+            Ok(result) => {
+                // The rest join the runtime the first one just started.
+                for name in names {
+                    let _ = self.start(Some(name));
+                }
+                let new_port = result["httpPort"].as_u64().unwrap_or_default() as u16;
+                if new_port != port {
+                    self.retarget_remote();
+                }
+                emit(&Event::Restarted {
+                    url: result["url"].as_str().unwrap_or_default().to_string(),
+                    port: new_port,
+                    version: result["version"].as_str().unwrap_or_default().to_string(),
+                });
+            }
+            Err(e) => {
+                crate::storage::lock::release(self.layout.root());
+                emit(&Event::RestartFailed {
+                    message: format!("{e:#}"),
+                });
+            }
+        }
     }
 }
 
