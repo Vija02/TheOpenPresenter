@@ -34,6 +34,11 @@ pub fn free_port() -> Result<u16> {
     Ok(port)
 }
 
+/// Whether a specific port can be listened on right now.
+pub fn port_available(port: u16) -> bool {
+    TcpListener::bind(("127.0.0.1", port)).is_ok()
+}
+
 pub struct LaunchConfig {
     pub runtime_dir: PathBuf,
     pub entry: String,

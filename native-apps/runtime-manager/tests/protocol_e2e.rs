@@ -1280,12 +1280,11 @@ fn the_same_holder_starting_twice_still_releases_on_one_stop() {
 /// A holder is not a reservation on a dead server. If the runtime crashed,
 /// the next start must launch a new one rather than handing back the
 /// address of something that is no longer listening.
-#[test]
-fn a_crashed_runtime_is_restarted_not_reused() {
-    let (root, cdn, key, pubkey) = fixture();
-    // Exits on its own shortly after announcing, simulating a crash that
-    // happens once the manager already considers it up.
-    let server = br#"
+/// A fake server that crashes shortly after the manager has seen it up.
+///
+/// `CRASH_AFTER_START=once` crashes the first run only; `always` crashes
+/// every run, for the restart budget.
+const CRASHING_SERVER: &[u8] = br#"
 import fs from "node:fs";
 import http from "node:http";
 import path from "node:path";
@@ -1299,20 +1298,19 @@ const server = http.createServer((req, res) => {
 server.listen(port, "127.0.0.1", () => {
   console.log("TOP_LISTENING " + port);
 
-  // Crash once, not on every start. Keying this on an env var alone made
-  // every start crash, so the restart raced its own timer against the
-  // health check and lost on slower runners.
-  //
-  // TOP_STATE_DIR is created by the manager before it spawns anything
-  // (Layout::ensure), so this only writes a file. The earlier version
-  // called mkdirSync here, which on Windows raced that same setup.
-  if (process.env.CRASH_AFTER_START !== "1") return;
+  const mode = process.env.CRASH_AFTER_START;
+  if (mode !== "once" && mode !== "always") return;
   if (!process.env.TOP_STATE_DIR) return;
 
-  const marker = path.join(process.env.TOP_STATE_DIR, "crashed-once");
+  // Counted rather than flagged, so a test can tell how many runs there were.
+  // TOP_STATE_DIR is created by the manager before it spawns anything
+  // (Layout::ensure), so this only writes a file.
+  const marker = path.join(process.env.TOP_STATE_DIR, "crashes");
+  let crashes = 0;
   try {
-    if (fs.existsSync(marker)) return;
-    fs.writeFileSync(marker, "1");
+    crashes = fs.existsSync(marker) ? Number(fs.readFileSync(marker, "utf8")) : 0;
+    if (mode === "once" && crashes > 0) return;
+    fs.writeFileSync(marker, String(crashes + 1));
   } catch {
     // Staying up beats crash-looping: a failure to write the marker is a
     // broken test, and it should not look like a broken product.
@@ -1320,11 +1318,8 @@ server.listen(port, "127.0.0.1", () => {
   }
 
   // Do not die until the manager has actually seen us up, otherwise the
-  // *first* start fails instead of succeeding-then-crashing, which is a
-  // different scenario from the one under test. The manager polls the port
-  // every 250ms, so exiting on a 300ms timer raced that poll and lost on
-  // slower Windows runners. Waiting for a real connection removes the
-  // timing assumption entirely.
+  // start fails instead of succeeding-then-crashing, which is a different
+  // scenario. Waiting for a real connection removes the timing assumption.
   let seen = false;
   server.on("connection", () => {
     if (seen) return;
@@ -1338,20 +1333,51 @@ process.stdin.on("data", (d) => {
 });
 process.stdin.resume();
 "#;
+
+fn crash_count(root: &Path) -> u32 {
+    std::fs::read_to_string(root.join("data").join("crashes"))
+        .ok()
+        .and_then(|s| s.trim().parse().ok())
+        .unwrap_or(0)
+}
+
+/// Poll with `status` until `done` holds, so events streamed by the
+/// manager's own restarts are collected without a request to wait on.
+fn status_until(manager: &mut Manager, first_id: u64, done: impl Fn(&Manager) -> bool) {
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(30);
+    let mut id = first_id;
+    while !done(manager) {
+        assert!(
+            std::time::Instant::now() < deadline,
+            "timed out; events so far: {:?}",
+            manager.seen
+        );
+        std::thread::sleep(std::time::Duration::from_millis(200));
+        manager.request(id, serde_json::json!({"cmd": "status"}));
+        id += 1;
+    }
+}
+
+/// The laptop-lid case: a runtime that was serving dies, and nobody asked
+/// it to. The manager must bring it back on its own, on the same port, so
+/// the window pointed at it only needs a reload.
+#[test]
+fn a_runtime_that_crashes_after_starting_is_restarted_on_its_port() {
+    let (root, cdn, key, pubkey) = fixture();
     publish(
         cdn.path(),
         &key,
         "1.0.0",
         1,
         "run_server.mjs",
-        &[("run_server.mjs", server)],
+        &[("run_server.mjs", CRASHING_SERVER)],
     );
 
     let mut manager = Manager::start_with_env(
         root.path(),
         cdn.path(),
         &pubkey,
-        &[("CRASH_AFTER_START", "1")],
+        &[("CRASH_AFTER_START", "once")],
     );
     manager.request(
         1,
@@ -1360,33 +1386,99 @@ process.stdin.resume();
 
     let first = manager.request(2, serde_json::json!({"cmd": "start", "holder": "window"}));
     assert_eq!(first["ok"], true, "first start failed: {first}");
-    let first_port = first["result"]["httpPort"].as_u64().unwrap();
+    let port = first["result"]["httpPort"].as_u64().unwrap();
 
-    // Let it die, leaving the holder set populated: the state a crash
-    // leaves behind.
-    std::thread::sleep(std::time::Duration::from_millis(900));
-
-    // The crash path must have actually run. Without this the test still
-    // passes when the marker write silently fails and nothing ever
-    // crashes, which is exactly the hole the previous version fell into.
+    // Down and back up with no command sent: the shell is idle when a lid
+    // closes, so the manager has to notice by itself.
     assert!(
-        root.path().join("data").join("crashed-once").exists(),
-        "the fake server should have written its crash marker"
+        wait_until_closed(port, std::time::Duration::from_secs(10)),
+        "the fake server should have crashed"
+    );
+    assert!(
+        top_runtime_manager::runtime::supervise::wait_for_http(
+            port as u16,
+            std::time::Duration::from_secs(10)
+        ),
+        "an idle manager should have restarted it"
     );
 
-    let second = manager.request(3, serde_json::json!({"cmd": "start", "holder": "window"}));
+    status_until(&mut manager, 3, |m| !m.events("restarted").is_empty());
+
+    // The crash path must have actually run, or this passes vacuously.
+    assert_eq!(crash_count(root.path()), 1);
+
+    let exited = manager.events("exited");
+    assert_eq!(exited.len(), 1, "{exited:?}");
+    assert_eq!(exited[0]["restarting"], true);
+
+    let restarted = manager.events("restarted")[0].clone();
+    assert_eq!(restarted["port"].as_u64(), Some(port), "{restarted}");
+    assert!(
+        top_runtime_manager::runtime::supervise::wait_for_http(
+            port as u16,
+            std::time::Duration::from_secs(5)
+        ),
+        "the restarted runtime should be answering on its old port"
+    );
+
+    // Still held: a second start joins it rather than spawning a rival.
+    let again = manager.request(99, serde_json::json!({"cmd": "start", "holder": "window"}));
+    assert_eq!(again["result"]["reused"], true, "{again}");
+}
+
+/// A runtime that crashes every time it starts must not be restarted
+/// forever. After the budget runs out the manager says so, and an explicit
+/// start still gets a fresh process rather than the corpse of the old one.
+#[test]
+fn a_runtime_that_keeps_crashing_is_given_up_on() {
+    let (root, cdn, key, pubkey) = fixture();
+    publish(
+        cdn.path(),
+        &key,
+        "1.0.0",
+        1,
+        "run_server.mjs",
+        &[("run_server.mjs", CRASHING_SERVER)],
+    );
+
+    let mut manager = Manager::start_with_env(
+        root.path(),
+        cdn.path(),
+        &pubkey,
+        &[("CRASH_AFTER_START", "always")],
+    );
+    manager.request(
+        1,
+        serde_json::json!({"cmd": "ensure", "channel": "stable", "activate": true}),
+    );
+    let first = manager.request(2, serde_json::json!({"cmd": "start", "holder": "window"}));
+    assert_eq!(first["ok"], true, "first start failed: {first}");
+
+    status_until(&mut manager, 3, |m| {
+        m.events("exited")
+            .iter()
+            .any(|e| e.get("restarting").is_none())
+    });
+
+    // The first run plus three restarts, then nothing more.
+    assert_eq!(manager.events("restarted").len(), 3);
+    assert_eq!(crash_count(root.path()), 4);
+    std::thread::sleep(std::time::Duration::from_millis(1500));
+    manager.request(500, serde_json::json!({"cmd": "status"}));
     assert_eq!(
-        second["ok"], true,
-        "a crashed runtime must be restartable: {second}"
+        crash_count(root.path()),
+        4,
+        "it should have stopped retrying"
+    );
+
+    let manual = manager.request(501, serde_json::json!({"cmd": "start", "holder": "window"}));
+    assert_eq!(
+        manual["ok"], true,
+        "a given-up runtime must be startable: {manual}"
     );
     assert_eq!(
-        second["result"]["reused"], false,
+        manual["result"]["reused"], false,
         "a dead server must not be handed back as if it were running"
-    );
-    assert_ne!(
-        second["result"]["httpPort"].as_u64().unwrap(),
-        first_port,
-        "a fresh port proves a new process, not the corpse of the old one"
     );
 }
 

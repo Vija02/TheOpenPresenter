@@ -127,6 +127,53 @@ export function navigateToServer(url: string): void {
   });
 }
 
+/** Windows currently showing a page from `serverUrl`'s origin. */
+function windowsShowing(serverUrl: string): BrowserWindow[] {
+  let origin: string;
+  try {
+    origin = new URL(serverUrl).origin;
+  } catch {
+    return [];
+  }
+  return BrowserWindow.getAllWindows().filter((win) => {
+    if (win.isDestroyed()) return false;
+    try {
+      return new URL(win.webContents.getURL()).origin === origin;
+    } catch {
+      return false;
+    }
+  });
+}
+
+export function isShowingServer(serverUrl: string): boolean {
+  return windowsShowing(serverUrl).length > 0;
+}
+
+export function reloadServerWindows(previousUrl: string, url: string): void {
+  let next: URL;
+  try {
+    next = new URL(url);
+  } catch {
+    return;
+  }
+
+  for (const win of windowsShowing(previousUrl)) {
+    const current = new URL(win.webContents.getURL());
+    if (current.origin === next.origin) {
+      win.webContents.reload();
+      continue;
+    }
+    // Came back on another port: same page, new address.
+    current.protocol = next.protocol;
+    current.host = next.host;
+    const target = current.toString();
+    if (!isAllowedAppUrl(target)) continue;
+    win.loadURL(target).catch((err) => {
+      logShell("error", "[windows] failed to reload", target, err);
+    });
+  }
+}
+
 /**
  * Go back to setup. Hides the app window rather than navigating it, so
  * whatever was on screen survives.

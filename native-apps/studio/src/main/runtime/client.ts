@@ -46,6 +46,15 @@ const HOLDER = "desktop-shell";
 /** Enough runtime output to diagnose a failed start, bounded for memory. */
 const RUNTIME_TAIL_LINES = 300;
 
+/**
+ * Respawns of a manager that died without being asked to, and over what
+ * window. The runtime outlives its manager, so a new one usually just
+ * rejoins it; a manager that dies on every launch gives up instead.
+ */
+const MAX_RESPAWNS = 3;
+const RESPAWN_WINDOW_MS = 5 * 60 * 1000;
+const RESPAWN_DELAY_MS = 1000;
+
 export class RuntimeClient extends EventEmitter {
   private child: ChildProcessWithoutNullStreams | null = null;
   private pending = new Map<number, Pending>();
@@ -57,11 +66,18 @@ export class RuntimeClient extends EventEmitter {
     url: string;
     httpPort: number;
     version: string;
+    reused?: boolean;
   }> | null = null;
   /** Recent stderr, kept so an early exit can explain itself. */
   private stderrTail: string[] = [];
   /** Recent runtime output, for reports when `runtime.log` is empty. */
   private runtimeTail: string[] = [];
+  /** What `start` was last called with, to respawn the same manager. */
+  private startOptions: { source?: string; root?: string } = {};
+  /** Set by `shutdown`, so an exit we asked for is not mistaken for a crash. */
+  private stopping = false;
+  private respawns: number[] = [];
+  private respawnTimer: NodeJS.Timeout | null = null;
 
   /** URL the local runtime is serving on, once it has reported one. */
   get url(): string | null {
@@ -103,6 +119,8 @@ export class RuntimeClient extends EventEmitter {
 
   start(options: { source?: string; root?: string } = {}): void {
     if (this.child) return;
+    this.startOptions = options;
+    this.stopping = false;
 
     const binary = RuntimeClient.binaryPath();
     if (!existsSync(binary)) {
@@ -143,7 +161,11 @@ export class RuntimeClient extends EventEmitter {
     });
 
     child.on("exit", (code) => {
+      // A manager already replaced, e.g. by a source change, must not
+      // clear its successor or trigger a respawn of its own.
+      if (this.child !== child) return;
       this.child = null;
+      const url = this.localUrl;
       this.localUrl = null;
       const detail = this.stderrTail.join("\n").trim();
       const message =
@@ -154,13 +176,36 @@ export class RuntimeClient extends EventEmitter {
         pending.reject(new Error(message));
       }
       this.pending.clear();
-      this.emit("manager-exit", { code, detail });
+      const respawning = !this.stopping && this.mayRespawn();
+      this.emit("manager-exit", { code, detail, url, respawning });
+      if (respawning) this.scheduleRespawn();
     });
 
     child.on("error", (err) => {
       logShell("error", "[runtime-manager] failed to start:", err);
       this.emit("manager-error", err);
     });
+  }
+
+  private mayRespawn(): boolean {
+    const now = Date.now();
+    this.respawns = this.respawns.filter((at) => now - at < RESPAWN_WINDOW_MS);
+    return this.respawns.length < MAX_RESPAWNS;
+  }
+
+  private scheduleRespawn(): void {
+    this.respawns.push(Date.now());
+    this.respawnTimer = setTimeout(() => {
+      this.respawnTimer = null;
+      if (this.stopping || this.child) return;
+      try {
+        this.start(this.startOptions);
+        this.emit("manager-restarted");
+      } catch (err) {
+        logShell("error", "[runtime-manager] respawn failed:", err);
+        this.emit("manager-error", err);
+      }
+    }, RESPAWN_DELAY_MS);
   }
 
   private onData(chunk: string): void {
@@ -226,6 +271,20 @@ export class RuntimeClient extends EventEmitter {
       case "exited":
         this.localUrl = null;
         this.emit("runtime-exit", message);
+        break;
+      // The manager restarts a runtime that crashed after starting.
+      case "restarted":
+        this.localUrl = String(message.url);
+        this.emit("runtime-restarted", {
+          url: this.localUrl,
+          port: Number(message.port),
+          version: String(message.version ?? ""),
+        });
+        break;
+      case "restart_failed":
+        this.emit("runtime-restart-failed", {
+          message: String(message.message ?? ""),
+        });
         break;
       default:
         break;
@@ -297,6 +356,8 @@ export class RuntimeClient extends EventEmitter {
     url: string;
     httpPort: number;
     version: string;
+    /** Joined a runtime that was already serving, rather than spawning one. */
+    reused?: boolean;
   }> {
     if (this.starting) return this.starting;
 
@@ -306,6 +367,7 @@ export class RuntimeClient extends EventEmitter {
           url: string;
           httpPort: number;
           version: string;
+          reused?: boolean;
         }>({ cmd: "start", holder: HOLDER });
 
         // A runtime that was already serving is adopted rather than spawned,
@@ -343,6 +405,9 @@ export class RuntimeClient extends EventEmitter {
   }
 
   async shutdown(): Promise<void> {
+    this.stopping = true;
+    if (this.respawnTimer) clearTimeout(this.respawnTimer);
+    this.respawnTimer = null;
     if (!this.child) return;
     try {
       await this.request({ cmd: "shutdown" });

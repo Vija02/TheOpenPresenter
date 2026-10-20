@@ -214,6 +214,32 @@ describe("RuntimeClient against the real manager binary", () => {
     }
   });
 
+  /**
+   * A manager that dies on its own takes the app's only way to control the
+   * server with it. The runtime is built to outlive it, so the respawned
+   * manager must find it again rather than start a rival.
+   */
+  it("respawns a manager that dies and rejoins the runtime it left", async () => {
+    const started = await client.startRuntime();
+
+    const exit = new Promise<{ respawning: boolean; url: string | null }>(
+      (resolve) => client.once("manager-exit", resolve),
+    );
+    const respawned = new Promise((resolve) =>
+      client.once("manager-restarted", resolve),
+    );
+    (client as unknown as { child: { kill(signal: string): void } }).child.kill(
+      "SIGKILL",
+    );
+
+    expect(await exit).toMatchObject({ respawning: true, url: started.url });
+    await respawned;
+
+    const rejoined = await client.startRuntime();
+    expect(rejoined.url).toBe(started.url);
+    expect(rejoined.reused).toBe(true);
+  });
+
   it("stops the runtime cleanly", async () => {
     await client.stopRuntime();
     const status = await client.status();

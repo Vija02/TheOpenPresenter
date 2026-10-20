@@ -480,9 +480,27 @@ fn run(command: cli::Cli, options: cli::Options) -> Result<()> {
 
 /// The long-lived NDJSON loop the desktop shell drives.
 fn serve(mut manager: Manager) -> Result<()> {
-    let stdin = std::io::stdin();
-    for line in stdin.lock().lines() {
-        let line = line?;
+    // Read stdin on its own thread so the loop can wake without a command.
+    // Otherwise a runtime that crashes while the shell is idle goes
+    // unnoticed, and unrestarted, until the user next does something.
+    let (lines_tx, lines) = std::sync::mpsc::channel();
+    std::thread::spawn(move || {
+        for line in std::io::stdin().lock().lines() {
+            if lines_tx.send(line).is_err() {
+                break;
+            }
+        }
+    });
+
+    loop {
+        let line = match lines.recv_timeout(Duration::from_millis(500)) {
+            Ok(line) => line?,
+            Err(std::sync::mpsc::RecvTimeoutError::Timeout) => {
+                manager.pump();
+                continue;
+            }
+            Err(std::sync::mpsc::RecvTimeoutError::Disconnected) => break,
+        };
         manager.pump();
 
         let Some(parsed) = top_runtime_manager::shell::protocol::parse_line(&line) else {

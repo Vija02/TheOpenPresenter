@@ -135,6 +135,20 @@ pub enum Event {
         code: Option<i32>,
         #[serde(skip_serializing_if = "Option::is_none")]
         reverted_to: Option<String>,
+        /// The manager is bringing it back by itself. A `restarted` or
+        /// `restart_failed` follows.
+        #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+        restarting: bool,
+    },
+    /// A runtime that crashed is serving again. Normally on the port it had
+    /// before, so anything pointed at it only needs to reload.
+    Restarted {
+        url: String,
+        port: u16,
+        version: String,
+    },
+    RestartFailed {
+        message: String,
     },
 }
 
