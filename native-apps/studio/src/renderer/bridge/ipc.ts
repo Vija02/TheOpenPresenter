@@ -96,7 +96,8 @@ export type Account = {
 export type UpdateState =
   | { status: "idle" }
   | { status: "checking" }
-  | { status: "downloading"; percent: number }
+  | { status: "available"; version: string }
+  | { status: "downloading"; version: string; percent: number }
   | { status: "ready"; version: string }
   | { status: "unsupported"; reason: string }
   | { status: "error"; message: string };
@@ -258,10 +259,13 @@ export const api = {
   /** Versions and connection, for the About panel. */
   aboutInfo: () => invoke<AboutInfo>("app:about"),
 
-  /** App update state, and the two things a user can do about it. */
+  /** App update state, and what a user can do about it. */
   updateState: () => invoke<UpdateState>("update:state"),
   checkForUpdate: () => invoke<UpdateState>("update:check"),
+  downloadUpdate: () => invoke<void>("update:download"),
   installUpdate: () => invoke<void>("update:install"),
+  /** Close the update popup. The update itself is left as it is. */
+  dismissUpdate: () => invoke<void>("update:dismiss"),
   openWebsite: () => invoke<void>("app:website"),
   copyText: (text: string) => invoke<void>("app:copy-text", text),
 

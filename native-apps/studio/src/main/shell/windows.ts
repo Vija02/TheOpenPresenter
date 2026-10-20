@@ -86,7 +86,7 @@ export function createMainWindow(): BrowserWindow {
  */
 export function loadShellUI(
   win: BrowserWindow,
-  entry: "onboarding" | "panel" | "loading" | "unreachable",
+  entry: "onboarding" | "panel" | "loading" | "unreachable" | "update",
   panel?: string,
 ): void {
   const hash = panel ? `#${panel}` : "";
@@ -316,6 +316,47 @@ export function closeUnreachableWindow(): void {
   unreachableWin = null;
 }
 
+// -- Update -----------------------------------------------------------------
+let updateWin: BrowserWindow | null = null;
+
+/** Offer an app update. Rides on the main window when there is one. */
+export function openUpdateWindow(): BrowserWindow {
+  if (updateWin && !updateWin.isDestroyed()) {
+    updateWin.focus();
+    return updateWin;
+  }
+
+  const parent = mainWin && !mainWin.isDestroyed() ? mainWin : undefined;
+  updateWin = new BrowserWindow({
+    width: 420,
+    height: 280,
+    resizable: false,
+    minimizable: false,
+    maximizable: false,
+    show: false,
+    backgroundColor: "#111111",
+    title: "Update available",
+    icon: ICON_PATH,
+    autoHideMenuBar: true,
+    parent,
+    webPreferences: baseWebPreferences(),
+  });
+  guardNavigation(updateWin);
+
+  loadShellUI(updateWin, "update");
+  updateWin.once("ready-to-show", () => updateWin?.show());
+  updateWin.on("closed", () => {
+    updateWin = null;
+  });
+
+  return updateWin;
+}
+
+export function closeUpdateWindow(): void {
+  if (updateWin && !updateWin.isDestroyed()) updateWin.close();
+  updateWin = null;
+}
+
 // -- Onboarding -------------------------------------------------------------
 let onboardingWin: BrowserWindow | null = null;
 
@@ -377,6 +418,11 @@ export function showAppWindow(url: string, organizationSlug?: string): void {
     revealed = true;
     win.show();
     win.focus();
+    // An update offered during startup would otherwise end up behind the app.
+    if (updateWin && !updateWin.isDestroyed()) {
+      updateWin.setParentWindow(win);
+      updateWin.moveTop();
+    }
     // Only after the app is visible, so the screen is never empty.
     closeLoadingWindow();
     closeOnboardingWindow();

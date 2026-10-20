@@ -1,22 +1,13 @@
 import { Button } from "@repo/ui";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 
-import { type UpdateState, api, listen } from "../bridge/ipc";
+import { api } from "../bridge/ipc";
+import { useUpdateState } from "../shared/useUpdateState";
 
 /** App updates, in the About panel. */
 export function AppUpdate() {
-  const [state, setState] = useState<UpdateState>({ status: "idle" });
+  const [state, setState] = useUpdateState();
   const [checking, setChecking] = useState(false);
-
-  useEffect(() => {
-    api
-      .updateState()
-      .then(setState)
-      .catch(() => undefined);
-    // The main process drives the download, so progress arrives as events
-    // rather than from polling.
-    return listen<UpdateState>("update:state", setState);
-  }, []);
 
   const check = useCallback(async () => {
     setChecking(true);
@@ -27,7 +18,7 @@ export function AppUpdate() {
     } finally {
       setChecking(false);
     }
-  }, []);
+  }, [setState]);
 
   if (state.status === "unsupported") {
     return (
@@ -49,6 +40,13 @@ export function AppUpdate() {
             app starts.
           </p>
           <Button onClick={() => void api.installUpdate()}>Restart now</Button>
+        </>
+      ) : state.status === "available" ? (
+        <>
+          <p className="muted">Version {state.version} is available.</p>
+          <Button onClick={() => void api.downloadUpdate()}>
+            Download update
+          </Button>
         </>
       ) : state.status === "downloading" ? (
         <p className="muted">Downloading update… {state.percent}%</p>
