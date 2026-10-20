@@ -2,12 +2,18 @@ import { BrowserWindow, app } from "electron";
 import type { UpdateInfo } from "electron-updater";
 import pkg from "electron-updater";
 
+import { type ProgressEvent, runtime } from "../runtime/client";
+import { DEFAULT_CHANNEL, getSettings } from "../settings/store";
 import { logShell, shellLogger } from "./log";
-import { openUpdateWindow } from "./windows";
+import { refreshMenu } from "./menu";
+import { closeUpdateWindow, openUpdateWindow, showAppWindow } from "./windows";
 
 const { autoUpdater } = pkg;
 
-/** Keeping the electron app itself up to date. */
+/**
+ * Keeping the app up to date: the electron app itself, and in local mode the
+ * runtime it serves. Both are offered together in one popup at launch.
+ */
 
 export type UpdateState =
   | { status: "idle" }
@@ -16,7 +22,7 @@ export type UpdateState =
   | { status: "downloading"; version: string; percent: number }
   | { status: "ready"; version: string }
   | { status: "unsupported"; reason: string }
-  | { status: "error"; message: string };
+  | { status: "error"; message: string; version?: string };
 
 let state: UpdateState = { status: "idle" };
 /** The version on offer, kept so a failed download can be retried. */
@@ -88,12 +94,25 @@ export function setupUpdates(): void {
   autoUpdater.on("error", (err) => {
     logShell("error", "[updates]", err);
     // Being offline is the common case here, not a fault worth shouting about.
-    setState({ status: "error", message: err?.message ?? String(err) });
+    setState({
+      status: "error",
+      message: err?.message ?? String(err),
+      ...(state.status === "downloading" && { version: state.version }),
+    });
   });
+}
 
-  void checkForUpdates().then((result) => {
-    if (result.status === "available") openUpdateWindow();
-  });
+export async function checkAtLaunch(): Promise<void> {
+  const [appUpdate, runtimeUpdate] = await Promise.all([
+    checkForUpdates(),
+    checkForRuntimeUpdate(),
+  ]);
+  if (
+    appUpdate.status === "available" ||
+    runtimeUpdate.status === "available"
+  ) {
+    openUpdateWindow();
+  }
 }
 
 export async function checkForUpdates(): Promise<UpdateState> {
@@ -109,7 +128,12 @@ export async function checkForUpdates(): Promise<UpdateState> {
   return state;
 }
 
-export async function downloadUpdate(): Promise<void> {
+/** Download everything on offer, app and runtime side by side. */
+export async function downloadUpdates(): Promise<void> {
+  await Promise.all([downloadAppUpdate(), downloadRuntimeUpdate()]);
+}
+
+async function downloadAppUpdate(): Promise<void> {
   if (!offered) return;
   if (state.status !== "available" && state.status !== "error") return;
   setState({ status: "downloading", version: offered, percent: 0 });
@@ -117,23 +141,46 @@ export async function downloadUpdate(): Promise<void> {
     await autoUpdater.downloadUpdate();
   } catch (err) {
     // Usually already reported through the `error` event, but not always.
-    if (updateState().status === "downloading") {
+    const current = updateState();
+    if (current.status === "downloading") {
       setState({
         status: "error",
         message: err instanceof Error ? err.message : String(err),
+        version: current.version,
       });
     }
   }
 }
 
-/** Restart into the downloaded version. Only valid once one is ready. */
-export function installUpdate(): void {
-  if (state.status !== "ready") return;
-  // `quitAndInstall` fires `before-quit`, where the runtime shutdown guard
-  // calls `preventDefault()` and then `app.quit()`. That plain quit would
-  // lose the install, so the shutdown is done here first and the guard is
-  // told to stand aside.
-  void shutdownForInstall().then(() => autoUpdater.quitAndInstall());
+/**
+ * Restart into whatever has been downloaded. A new app means restarting the
+ * whole app; a new runtime alone only needs the server restarted.
+ */
+export async function installUpdate(): Promise<void> {
+  const appReady = state.status === "ready";
+  const runtimeReady = runtimeState.status === "ready";
+  if (!appReady && !runtimeReady) return;
+
+  if (appReady) {
+    await shutdownForInstall();
+    autoUpdater.quitAndInstall();
+    return;
+  }
+
+  closeUpdateWindow();
+  await activatePendingRuntime();
+  if (runtimeState.status === "ready" && runtimeState.needsRestart) {
+    try {
+      await runtime.stopRuntime(true);
+      const result = await runtime.startRuntime();
+      showAppWindow(runtime.url ?? result.url);
+      refreshMenu();
+    } catch (err) {
+      logShell("error", "[updates] runtime restart failed:", err);
+      throw err;
+    }
+  }
+  setRuntimeState({ status: "none" });
 }
 
 /** How the quit guard is bypassed for an install. */
@@ -145,12 +192,128 @@ export function isInstallingUpdate(): boolean {
 
 async function shutdownForInstall(): Promise<void> {
   installing = true;
-  const { runtime } = await import("../runtime/client");
+  await activatePendingRuntime();
   if (runtime.isRunning) {
     await runtime
       .shutdown()
       .catch((err) =>
         logShell("error", "[updates] runtime shutdown failed:", err),
       );
+  }
+}
+
+// -- Runtime ------------------------------------------------------------------
+
+export type RuntimeUpdateState =
+  | { status: "none" }
+  | { status: "checking" }
+  | { status: "available"; current: string | null; version: string }
+  | {
+      status: "downloading";
+      version: string;
+      progress: ProgressEvent | null;
+    }
+  /** `needsRestart`: the server is still running the old version. */
+  | { status: "ready"; version: string; needsRestart: boolean }
+  | { status: "error"; version: string; message: string };
+
+let runtimeState: RuntimeUpdateState = { status: "none" };
+/** Downloaded while the server was running, so not yet switched to. */
+let pendingActivation: string | null = null;
+
+export function runtimeUpdateState(): RuntimeUpdateState {
+  return runtimeState;
+}
+
+function setRuntimeState(next: RuntimeUpdateState): void {
+  runtimeState = next;
+  for (const win of BrowserWindow.getAllWindows()) {
+    if (!win.isDestroyed()) win.webContents.send("update:runtime", next);
+  }
+}
+
+function channel(): string {
+  return getSettings().channel ?? DEFAULT_CHANNEL;
+}
+
+/** Only local mode runs a runtime; elsewhere there is nothing to update. */
+export async function checkForRuntimeUpdate(): Promise<RuntimeUpdateState> {
+  if (getSettings().mode !== "local" || !runtime.isRunning) {
+    return runtimeState;
+  }
+  // Mid-download or waiting on a restart: a fresh check would lose that.
+  if (runtimeState.status === "downloading" || runtimeState.status === "ready")
+    return runtimeState;
+
+  setRuntimeState({ status: "checking" });
+  try {
+    const [found, status] = await Promise.all([
+      runtime.check(channel()),
+      runtime.status(),
+    ]);
+    setRuntimeState(
+      found.version === status.current
+        ? { status: "none" }
+        : {
+            status: "available",
+            current: status.current,
+            version: found.version,
+          },
+    );
+  } catch (err) {
+    // Offline, most likely. Not worth a popup.
+    logShell("warn", "[updates] runtime check failed:", err);
+    setRuntimeState({ status: "none" });
+  }
+  return runtimeState;
+}
+
+async function downloadRuntimeUpdate(): Promise<void> {
+  if (runtimeState.status !== "available" && runtimeState.status !== "error")
+    return;
+  const version = runtimeState.version;
+  setRuntimeState({ status: "downloading", version, progress: null });
+
+  const onProgress = (progress: ProgressEvent) => {
+    if (runtimeState.status === "downloading") {
+      setRuntimeState({ status: "downloading", version, progress });
+    }
+  };
+  runtime.on("progress", onProgress);
+  try {
+    // Switching the version under a running server would let a crash respawn
+    // it on the new one mid-service, so that waits for a restart.
+    const status = await runtime.status();
+    const result = await runtime.ensure(channel(), !status.running);
+    pendingActivation = result.activated ? null : result.version;
+    setRuntimeState({
+      status: "ready",
+      version: result.version,
+      needsRestart: status.running,
+    });
+  } catch (err) {
+    logShell("error", "[updates] runtime download failed:", err);
+    setRuntimeState({
+      status: "error",
+      version,
+      message: err instanceof Error ? err.message : String(err),
+    });
+  } finally {
+    runtime.off("progress", onProgress);
+  }
+}
+
+/**
+ * Switch to a runtime downloaded while the server was running. Called on the
+ * way out, so "Later" still means the next start uses it.
+ */
+export async function activatePendingRuntime(): Promise<void> {
+  if (!pendingActivation || !runtime.isRunning) return;
+  const version = pendingActivation;
+  pendingActivation = null;
+  try {
+    await runtime.activate(version);
+  } catch (err) {
+    logShell("error", "[updates] runtime activation failed:", err);
   }
 }

@@ -1004,3 +1004,17 @@ code {
 .update-prompt .row {
   margin-top: 18px;
 }
+
+.update-prompt .update-list {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  width: 100%;
+  font-size: 13px;
+}
+
+.update-prompt .update-list li {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+}

@@ -44,7 +44,7 @@ export function AppUpdate() {
       ) : state.status === "available" ? (
         <>
           <p className="muted">Version {state.version} is available.</p>
-          <Button onClick={() => void api.downloadUpdate()}>
+          <Button onClick={() => void api.downloadUpdates()}>
             Download update
           </Button>
         </>
