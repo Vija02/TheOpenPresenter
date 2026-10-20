@@ -17,6 +17,9 @@ export const websocketWithCookie = (
           Origin: origin,
         },
       });
+      // Capture this so we don't leak for when hocuspocus already clears up 
+      // its listener.
+      this.on("error", () => {});
     }
   };
 
