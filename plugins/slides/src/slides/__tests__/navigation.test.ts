@@ -144,3 +144,12 @@ describe("settledStep", () => {
     ).toBeNull();
   });
 });
+
+describe("display modes", () => {
+  it("skips the builds of a deck shown as images", () => {
+    const r = navigate(pluginData, settled(0, 0), "NEXT", NOW, { g: "image" });
+    expect(r).toMatchObject({ slideIndex: 1, clickCount: 0 });
+    // No transition or autoplay window either
+    expect(r.transitionEndsAt).toBe(NOW);
+  });
+});

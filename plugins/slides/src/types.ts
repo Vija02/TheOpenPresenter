@@ -32,6 +32,10 @@ export const getEffectiveDisplayMode = (
   displayModes?.[importData.importId] ??
   DEFAULT_DISPLAY_MODE_BY_TYPE[importData.type];
 
+/** Display modes that play builds and transitions, so clicks count */
+export const isAnimatedDisplayMode = (mode: DisplayMode) =>
+  mode === "googleslides";
+
 /**
  * Base import data - all imports have these properties
  */

@@ -1,8 +1,12 @@
 import {
+  DisplayMode,
+  GoogleSlidesImportData,
   ImportData,
   PluginBaseData,
   ResolvedSlide,
   SlideReference,
+  getEffectiveDisplayMode,
+  isAnimatedDisplayMode,
 } from "../types";
 
 export function getImportSlideCount(importData: ImportData): number {
@@ -58,44 +62,92 @@ export function resolveSlide(
   };
 }
 
+type DisplayModes = Record<string, DisplayMode> | undefined;
+
+/**
+ * The slide, if it is shown in a mode that plays builds. A slide shown as an
+ * image has no clicks or timings, whatever was imported.
+ */
+function resolveAnimatedSlide(
+  pluginData: PluginBaseData,
+  globalSlideIndex: number,
+  displayModes: DisplayModes,
+): ResolvedSlide | null {
+  const resolved = resolveSlide(pluginData, globalSlideIndex);
+  if (!resolved) return null;
+  const mode = getEffectiveDisplayMode(resolved.importData, displayModes);
+  return isAnimatedDisplayMode(mode) ? resolved : null;
+}
+
+type SlideTimings = Pick<
+  GoogleSlidesImportData,
+  "slideTransitionDurations" | "slideClickDurations" | "slideAutoplayDurations"
+>;
+
+const slideTimings = (importData: ImportData): SlideTimings =>
+  importData.type === "googleslides" ? importData : {};
+
 export function getClickCountForSlide(
   pluginData: PluginBaseData,
   globalSlideIndex: number,
+  displayModes?: DisplayModes,
 ): number {
-  return resolveSlide(pluginData, globalSlideIndex)?.clickCount ?? 0;
+  return (
+    resolveAnimatedSlide(pluginData, globalSlideIndex, displayModes)
+      ?.clickCount ?? 0
+  );
 }
 
 export function getTransitionDurationForSlide(
   pluginData: PluginBaseData,
   globalSlideIndex: number,
+  displayModes?: DisplayModes,
 ): number {
-  const resolved = resolveSlide(pluginData, globalSlideIndex);
+  const resolved = resolveAnimatedSlide(
+    pluginData,
+    globalSlideIndex,
+    displayModes,
+  );
   if (!resolved) return 0;
-  const { importData, localSlideIndex } = resolved;
-  if (importData.type !== "googleslides") return 0;
-  return importData.slideTransitionDurations?.[localSlideIndex] ?? 0;
+  return (
+    slideTimings(resolved.importData).slideTransitionDurations?.[
+      resolved.localSlideIndex
+    ] ?? 0
+  );
 }
 
 export function getAutoplayDurationForSlide(
   pluginData: PluginBaseData,
   globalSlideIndex: number,
+  displayModes?: DisplayModes,
 ): number {
-  const resolved = resolveSlide(pluginData, globalSlideIndex);
+  const resolved = resolveAnimatedSlide(
+    pluginData,
+    globalSlideIndex,
+    displayModes,
+  );
   if (!resolved) return 0;
-  const { importData, localSlideIndex } = resolved;
-  if (importData.type !== "googleslides") return 0;
-  return importData.slideAutoplayDurations?.[localSlideIndex] ?? 0;
+  return (
+    slideTimings(resolved.importData).slideAutoplayDurations?.[
+      resolved.localSlideIndex
+    ] ?? 0
+  );
 }
 
 export function getClickDurationForSlide(
   pluginData: PluginBaseData,
   globalSlideIndex: number,
   clickCountIndex: number,
+  displayModes?: DisplayModes,
 ): number {
-  const resolved = resolveSlide(pluginData, globalSlideIndex);
+  const resolved = resolveAnimatedSlide(
+    pluginData,
+    globalSlideIndex,
+    displayModes,
+  );
   if (!resolved) return 0;
-  const { importData, localSlideIndex } = resolved;
-  if (importData.type !== "googleslides") return 0;
-  const durations = importData.slideClickDurations?.[localSlideIndex];
+  const durations = slideTimings(resolved.importData).slideClickDurations?.[
+    resolved.localSlideIndex
+  ];
   return durations?.[clickCountIndex - 1] ?? 0;
 }
