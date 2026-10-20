@@ -1388,12 +1388,14 @@ fn a_runtime_that_crashes_after_starting_is_restarted_on_its_port() {
     assert_eq!(first["ok"], true, "first start failed: {first}");
     let port = first["result"]["httpPort"].as_u64().unwrap();
 
-    // Down and back up with no command sent: the shell is idle when a lid
-    // closes, so the manager has to notice by itself.
-    assert!(
-        wait_until_closed(port, std::time::Duration::from_secs(10)),
-        "the fake server should have crashed"
-    );
+    // Down and back up with nothing but read-only `status` sent: the shell is
+    // idle when a lid closes, so the manager has to notice by itself.
+    //
+    // Watched through the manager's events rather than by probing the port
+    // for the gap: on Windows a refused connect is retried for about a
+    // second, long enough to land on the restarted server and never see it
+    // down.
+    status_until(&mut manager, 3, |m| !m.events("restarted").is_empty());
     assert!(
         top_runtime_manager::runtime::supervise::wait_for_http(
             port as u16,
@@ -1401,8 +1403,6 @@ fn a_runtime_that_crashes_after_starting_is_restarted_on_its_port() {
         ),
         "an idle manager should have restarted it"
     );
-
-    status_until(&mut manager, 3, |m| !m.events("restarted").is_empty());
 
     // The crash path must have actually run, or this passes vacuously.
     assert_eq!(crash_count(root.path()), 1);
