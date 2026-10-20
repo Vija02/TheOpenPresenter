@@ -16,8 +16,17 @@ use crate::storage::platform::Platform;
 /// packs/<platform>/<from>__<to>.tar.zst
 /// packs/<platform>/full__<version>.tar.zst
 /// ```
+pub type BytesFn<'a> = &'a mut dyn FnMut(u64, u64);
+
 pub trait Source: Send + Sync {
     fn get(&self, key: &str) -> Result<Vec<u8>>;
+
+    /// Like `get`, reporting bytes as they arrive. A pack is hundreds of MB,
+    /// and without this the download is the longest silent stretch of an
+    /// install. Local sources are fast enough to not bother.
+    fn get_with_progress(&self, key: &str, _on_bytes: BytesFn<'_>) -> Result<Vec<u8>> {
+        self.get(key)
+    }
 
     /// Whether an optional artifact exists. Used to decide between a delta
     /// pack, a full pack and per-blob fetches without a failed download
@@ -85,6 +94,10 @@ const MAX_ARTIFACT_BYTES: u64 = 4 * 1024 * 1024 * 1024;
 
 impl Source for HttpSource {
     fn get(&self, key: &str) -> Result<Vec<u8>> {
+        self.get_with_progress(key, &mut |_, _| {})
+    }
+
+    fn get_with_progress(&self, key: &str, on_bytes: BytesFn<'_>) -> Result<Vec<u8>> {
         let url = self.url(key);
         let response = self
             .agent
@@ -101,11 +114,20 @@ impl Source for HttpSource {
         }
 
         let mut buf = Vec::with_capacity(declared.min(8 * 1024 * 1024) as usize);
-        response
-            .into_reader()
-            .take(MAX_ARTIFACT_BYTES)
-            .read_to_end(&mut buf)
-            .with_context(|| format!("Failed to read body of {url}"))?;
+        let mut reader = response.into_reader().take(MAX_ARTIFACT_BYTES);
+        let mut chunk = vec![0u8; 64 * 1024];
+        loop {
+            let n = match reader.read(&mut chunk) {
+                Ok(0) => break,
+                Ok(n) => n,
+                Err(e) if e.kind() == std::io::ErrorKind::Interrupted => continue,
+                Err(e) => {
+                    return Err(e).with_context(|| format!("Failed to read body of {url}"));
+                }
+            };
+            buf.extend_from_slice(&chunk[..n]);
+            on_bytes(buf.len() as u64, declared);
+        }
         Ok(buf)
     }
 
@@ -187,14 +209,24 @@ impl GithubSource {
     }
 }
 
-impl Source for GithubSource {
-    fn get(&self, key: &str) -> Result<Vec<u8>> {
-        self.inner.get(&format!(
+impl GithubSource {
+    fn asset_key(&self, key: &str) -> String {
+        format!(
             "{}/releases/download/{}/{}",
             self.repo,
             self.tag,
             Self::asset_name(key)
-        ))
+        )
+    }
+}
+
+impl Source for GithubSource {
+    fn get(&self, key: &str) -> Result<Vec<u8>> {
+        self.inner.get(&self.asset_key(key))
+    }
+
+    fn get_with_progress(&self, key: &str, on_bytes: BytesFn<'_>) -> Result<Vec<u8>> {
+        self.inner.get_with_progress(&self.asset_key(key), on_bytes)
     }
 }
 

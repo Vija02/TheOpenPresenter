@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   describeLogLine,
   describePhase,
+  describeProgress,
 } from "../src/renderer/loading/phase";
 
 describe("describePhase", () => {
@@ -24,6 +25,48 @@ describe("describePhase", () => {
 
   it("does not leak the version from a prefixed phase", () => {
     expect(describePhase("resolved:0.0.7-dev")).not.toContain("0.0.7");
+  });
+});
+
+describe("describeProgress", () => {
+  const MB = 1024 * 1024;
+
+  it("shows bytes while a pack downloads", () => {
+    expect(
+      describeProgress({ phase: "fetch", done: 120 * MB, total: 480 * MB }),
+    ).toEqual({ label: "Downloading 120.0 MB of 480.0 MB", percent: 25 });
+  });
+
+  it("still says something when the size is unknown", () => {
+    expect(
+      describeProgress({ phase: "fetch", done: 3 * MB, total: 0 }),
+    ).toEqual({ label: "Downloading 3.0 MB", percent: null });
+  });
+
+  it("counts files once the pack is in", () => {
+    const view = describeProgress({ phase: "download", done: 50, total: 200 });
+    expect(view.percent).toBe(25);
+    expect(view.label).toContain("50");
+    expect(describeProgress({ phase: "assemble", done: 1, total: 4 })).toEqual({
+      label: "Installing",
+      percent: 25,
+    });
+  });
+
+  it("never reports past 100%", () => {
+    expect(
+      describeProgress({ phase: "fetch", done: 2 * MB, total: MB }).percent,
+    ).toBe(100);
+  });
+
+  it("sweeps for phases without a count", () => {
+    expect(
+      describeProgress({ phase: "resolved:1.2.3", done: 0, total: 0 }),
+    ).toEqual({ label: "Checking for updates", percent: null });
+    expect(describeProgress({ phase: "mystery", done: 0, total: 0 })).toEqual({
+      label: "Working",
+      percent: null,
+    });
   });
 });
 

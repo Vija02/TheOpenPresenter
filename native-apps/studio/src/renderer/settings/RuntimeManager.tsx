@@ -1,7 +1,13 @@
 import { Button } from "@repo/ui";
 import { useCallback, useEffect, useState } from "react";
 
-import { type RuntimeStatus, api } from "../bridge/ipc";
+import {
+  type ProgressPayload,
+  type RuntimeStatus,
+  api,
+  listen,
+} from "../bridge/ipc";
+import { RuntimeProgress } from "../shared/RuntimeProgress";
 import { CHANNELS, DEFAULT_CHANNEL, channelNote } from "../shared/channels";
 
 function pendingRestartVersion(
@@ -20,6 +26,7 @@ export function RuntimeManager() {
   const [busy, setBusy] = useState<string | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   const [channel, setChannel] = useState<string>(DEFAULT_CHANNEL);
+  const [progress, setProgress] = useState<ProgressPayload | null>(null);
 
   // Diverges from the activated version only between switching and
   // restarting. Captured on first load because nothing else reports it.
@@ -41,6 +48,8 @@ export function RuntimeManager() {
   useEffect(() => {
     void refresh();
   }, [refresh]);
+
+  useEffect(() => listen<ProgressPayload>("runtime:progress", setProgress), []);
 
   useEffect(() => {
     void api
@@ -75,6 +84,7 @@ export function RuntimeManager() {
   const install = async () => {
     setBusy("install");
     setProblem(null);
+    setProgress(null);
     try {
       await api.runtimeInstall(channel);
       setAvailable(null);
@@ -162,10 +172,12 @@ export function RuntimeManager() {
             </Button>
             {updatable && (
               <Button onClick={() => void install()} disabled={busy !== null}>
-                {busy === "install" ? "Downloading…" : `Update to ${available}`}
+                {busy === "install" ? "Updating…" : `Update to ${available}`}
               </Button>
             )}
           </div>
+
+          {busy === "install" && <RuntimeProgress progress={progress} />}
 
           {available && !updatable && (
             <p className="muted">This is the newest version.</p>

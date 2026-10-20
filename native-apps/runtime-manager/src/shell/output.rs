@@ -29,6 +29,16 @@ pub fn render_human(event: &Event) {
     let line = match event {
         Event::Progress {
             phase, done, total, ..
+        } if phase == "fetch" => {
+            let mb = |b: &u64| b / (1024 * 1024);
+            if *total > 0 {
+                format!("Downloading… {} / {} MB", mb(done), mb(total))
+            } else {
+                format!("Downloading… {} MB", mb(done))
+            }
+        }
+        Event::Progress {
+            phase, done, total, ..
         } if phase == "download" => {
             format!("Downloading… {done}/{total} files")
         }
@@ -63,6 +73,12 @@ pub fn emit_progress(progress: Progress) {
             done: 0,
             total: 0,
             bytes: None,
+        },
+        Progress::Fetch { received, total } => Event::Progress {
+            phase: "fetch".into(),
+            done: received,
+            total,
+            bytes: Some(received),
         },
         Progress::Download { done, total, bytes } => Event::Progress {
             phase: "download".into(),
