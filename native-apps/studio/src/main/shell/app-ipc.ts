@@ -13,10 +13,16 @@ import {
 import { WEBSITE_URL, aboutInfo } from "./about";
 import { openExternalSafely } from "./external";
 import { refreshMenu } from "./menu";
-import { checkForUpdates, installUpdate, updateState } from "./updates";
+import {
+  checkForUpdates,
+  downloadUpdate,
+  installUpdate,
+  updateState,
+} from "./updates";
 import {
   backToShellUI,
   closeUnreachableWindow,
+  closeUpdateWindow,
   openPanelWindow,
   showAppWindow,
 } from "./windows";
@@ -99,7 +105,9 @@ export function registerAppIPC(): void {
 
   ipcMain.handle("update:state", () => updateState());
   ipcMain.handle("update:check", () => checkForUpdates());
+  ipcMain.handle("update:download", () => downloadUpdate());
   ipcMain.handle("update:install", () => installUpdate());
+  ipcMain.handle("update:dismiss", () => closeUpdateWindow());
 
   /**
    * Try the configured instance again after it was unreachable at startup.

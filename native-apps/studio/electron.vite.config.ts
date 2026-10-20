@@ -19,6 +19,7 @@ export default defineConfig({
           panel: resolve(__dirname, "src/renderer/panel.html"),
           loading: resolve(__dirname, "src/renderer/loading.html"),
           unreachable: resolve(__dirname, "src/renderer/unreachable.html"),
+          update: resolve(__dirname, "src/renderer/update.html"),
         },
       },
     },

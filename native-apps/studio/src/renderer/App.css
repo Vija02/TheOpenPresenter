@@ -976,3 +976,31 @@ code {
   margin-top: 0;
   font-size: 12px;
 }
+
+/* The update popup: one question at a time, with its answers right under it. */
+.update-prompt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+  padding: 28px 24px;
+}
+
+.update-prompt h1 {
+  margin: 10px 0 0;
+  font-size: 18px;
+}
+
+.update-prompt p {
+  margin: 0;
+  font-size: 13px;
+}
+
+.update-prompt .progress {
+  width: 100%;
+}
+
+.update-prompt .row {
+  margin-top: 18px;
+}
