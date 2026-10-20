@@ -528,6 +528,11 @@ code {
   transition: width 0.2s ease;
 }
 
+.progress-track.indeterminate .progress-bar {
+  width: 35%;
+  animation: loading-sweep 1.1s ease-in-out infinite;
+}
+
 /* About: a centred card of facts. Deliberately not a native message box,
    which renders everything as one unselectable blob. */
 .about {

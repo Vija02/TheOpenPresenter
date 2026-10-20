@@ -7,17 +7,8 @@ import {
   api,
   listen,
 } from "../bridge/ipc";
+import { RuntimeProgress } from "../shared/RuntimeProgress";
 import { RuntimeAdvanced } from "./RuntimeAdvanced";
-
-function formatBytes(bytes: number): string {
-  if (!bytes) return "0 B";
-  const units = ["B", "KB", "MB", "GB"];
-  const index = Math.min(
-    units.length - 1,
-    Math.floor(Math.log(bytes) / Math.log(1024)),
-  );
-  return `${(bytes / 1024 ** index).toFixed(index === 0 ? 0 : 1)} ${units[index]}`;
-}
 
 /**
  * Running TheOpenPresenter on this computer. One button does the whole job:
@@ -166,26 +157,7 @@ export function LocalRuntime({
         </>
       )}
 
-      {progress && (
-        <div className="progress">
-          <div className="progress-label">
-            {progress.phase}
-            {progress.total > 0 && ` ${progress.done} / ${progress.total}`}
-            {progress.bytes ? ` · ${formatBytes(progress.bytes)}` : ""}
-          </div>
-          <div className="progress-track">
-            <div
-              className="progress-bar"
-              style={{
-                width:
-                  progress.total > 0
-                    ? `${Math.round((progress.done / progress.total) * 100)}%`
-                    : "0%",
-              }}
-            />
-          </div>
-        </div>
-      )}
+      {progress && <RuntimeProgress progress={progress} />}
 
       {warning && (
         <p className="warning">

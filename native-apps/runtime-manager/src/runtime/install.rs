@@ -9,6 +9,7 @@ use std::collections::HashSet;
 use std::fs;
 use std::io::Read;
 use std::path::PathBuf;
+use std::time::{Duration, Instant};
 
 use anyhow::{bail, Context, Result};
 use ed25519_dalek::VerifyingKey;
@@ -26,6 +27,10 @@ use crate::storage::platform::Platform;
 pub enum Progress {
     Resolved {
         version: String,
+    },
+    Fetch {
+        received: u64,
+        total: u64,
     },
     /// `total` counts blobs missing locally, not files in the manifest.
     Download {
@@ -241,7 +246,22 @@ impl<'a> Installer<'a> {
 
         let mut packs_applied = 0usize;
         for pack_key in self.choose_packs(version) {
-            let Ok(pack) = self.source.get(&pack_key) else {
+            // Throttled: a 64KB read every few milliseconds would flood the
+            // shell with JSON.
+            let mut last_report: Option<Instant> = None;
+            let fetched = self
+                .source
+                .get_with_progress(&pack_key, &mut |received, size| {
+                    if last_report.is_some_and(|t| t.elapsed() < Duration::from_millis(200)) {
+                        return;
+                    }
+                    last_report = Some(Instant::now());
+                    progress(Progress::Fetch {
+                        received,
+                        total: size,
+                    });
+                });
+            let Ok(pack) = fetched else {
                 continue;
             };
             let pack_bytes = pack.len() as u64;
