@@ -1,6 +1,7 @@
 import { desktop } from "@repo/desktop-bridge";
 import { outputProgramId } from "@repo/layout";
 import { useReadOutputs } from "@repo/layout/react";
+import { detectWebPSupport } from "@repo/lib";
 import {
   AudioCheckProvider,
   AwarenessProvider,
@@ -15,6 +16,8 @@ import { Route, Switch, useParams, useSearch } from "wouter";
 import { Body } from "./Body";
 import { FullscreenButton } from "./FullscreenButton";
 import { Screen } from "./Screen";
+
+void detectWebPSupport();
 
 const DesktopHandler = lazy(() => import("./DesktopHandler"));
 
