@@ -1,0 +1,1381 @@
+{
+  "w": 1920,
+  "h": 1080,
+  "slides": {
+    "1": {
+      "animLst": {
+        "anim": [
+          {
+            "autoRev": false,
+            "cmd": "",
+            "dir": 0,
+            "effectId": 31,
+            "effectType": 0,
+            "hideAfter": 0,
+            "rewind": false,
+            "rotAng": 0,
+            "smEnd": 0,
+            "smSt": 0,
+            "sp": 6,
+            "timing": {
+              "off": 0,
+              "spd": "1750",
+              "st": 0
+            },
+            "transp": 0
+          }
+        ],
+        "id": 0
+      },
+      "bg": {
+        "Item": {
+          "__type": "CT_SolidFill:#p",
+          "clr": [251, 227, 214],
+          "transp": 30
+        }
+      },
+      "hidden": false,
+      "id": 776,
+      "resCat": [
+        {
+          "id": "S208_1_1920x1080",
+          "name": "",
+          "base64": ""
+        },
+        {
+          "id": "S208_2_1920x1080",
+          "name": "",
+          "base64": ""
+        },
+        {
+          "id": "S208_3_1920x1080",
+          "name": "",
+          "base64": ""
+        },
+        {
+          "id": "S208_4_1920x1080",
+          "name": "",
+          "base64": ""
+        }
+      ],
+      "sbLst": [],
+      "spLst": [
+        {
+          "bapis": null,
+          "bgSp": true,
+          "clckTgts": null,
+          "id": 2,
+          "pos": {
+            "x": 0,
+            "y": 0
+          },
+          "reg": {
+            "h": 1080,
+            "imgID": "S208_1_1920x1080",
+            "isGif": false,
+            "transp": false,
+            "w": 1920,
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "bapis": null,
+          "bgSp": true,
+          "clckTgts": null,
+          "id": 3,
+          "pos": {
+            "x": 0,
+            "y": 0
+          },
+          "reg": {
+            "h": 1080,
+            "imgID": "S208_2_1920x1080",
+            "isGif": false,
+            "transp": false,
+            "w": 1920,
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "bapis": null,
+          "bgSp": true,
+          "clckTgts": null,
+          "id": 4,
+          "pos": {
+            "x": 176,
+            "y": 205
+          },
+          "reg": {
+            "h": 744,
+            "imgID": "S208_3_1920x1080",
+            "isGif": false,
+            "transp": false,
+            "w": 1500,
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "bapis": null,
+          "bgSp": true,
+          "clckTgts": null,
+          "id": 5,
+          "pos": {
+            "x": 653,
+            "y": 773
+          },
+          "reg": {
+            "h": 307,
+            "imgID": "S208_3_1920x1080",
+            "isGif": false,
+            "transp": false,
+            "w": 1267,
+            "x": 0,
+            "y": 746
+          }
+        },
+        {
+          "bapis": null,
+          "bgSp": false,
+          "clckTgts": null,
+          "id": 6,
+          "pos": {
+            "x": 53,
+            "y": 59
+          },
+          "reg": {
+            "h": 536,
+            "imgID": "S208_4_1920x1080",
+            "isGif": false,
+            "transp": false,
+            "w": 765,
+            "x": 0,
+            "y": 0
+          }
+        }
+      ]
+    },
+    "2": {
+      "animLst": {
+        "anim": [
+          {
+            "autoRev": false,
+            "cmd": "",
+            "dir": 0,
+            "effectId": 42,
+            "effectType": 0,
+            "hideAfter": 0,
+            "rewind": false,
+            "rotAng": 0,
+            "smEnd": 0,
+            "smSt": 0,
+            "sp": 8,
+            "timing": {
+              "off": 0,
+              "spd": "1000",
+              "st": 0
+            },
+            "transp": 0
+          },
+          {
+            "autoRev": false,
+            "cmd": "",
+            "dir": 10,
+            "effectId": 14,
+            "effectType": 0,
+            "hideAfter": 0,
+            "rewind": false,
+            "rotAng": 0,
+            "smEnd": 0,
+            "smSt": 0,
+            "sp": 4,
+            "timing": {
+              "off": 0,
+              "spd": "500",
+              "st": 0
+            },
+            "transp": 0
+          },
+          {
+            "autoRev": false,
+            "cmd": "",
+            "dir": 0,
+            "effectId": 42,
+            "effectType": 0,
+            "hideAfter": 0,
+            "rewind": false,
+            "rotAng": 0,
+            "smEnd": 0,
+            "smSt": 0,
+            "sp": 9,
+            "timing": {
+              "off": 0,
+              "spd": "1000",
+              "st": 0
+            },
+            "transp": 0
+          },
+          {
+            "autoRev": false,
+            "cmd": "",
+            "dir": 0,
+            "effectId": 10,
+            "effectType": 0,
+            "hideAfter": 0,
+            "rewind": false,
+            "rotAng": 0,
+            "smEnd": 0,
+            "smSt": 0,
+            "sp": 15,
+            "timing": {
+              "off": 0,
+              "spd": "500",
+              "st": 0
+            },
+            "transp": 0
+          },
+          {
+            "autoRev": false,
+            "cmd": "",
+            "dir": 0,
+            "effectId": 42,
+            "effectType": 0,
+            "hideAfter": 0,
+            "rewind": false,
+            "rotAng": 0,
+            "smEnd": 0,
+            "smSt": 0,
+            "sp": 10,
+            "timing": {
+              "off": 0,
+              "spd": "1000",
+              "st": 0
+            },
+            "transp": 0
+          },
+          {
+            "autoRev": false,
+            "cmd": "",
+            "dir": 0,
+            "effectId": 42,
+            "effectType": 0,
+            "hideAfter": 0,
+            "rewind": false,
+            "rotAng": 0,
+            "smEnd": 0,
+            "smSt": 0,
+            "sp": 11,
+            "timing": {
+              "off": 0,
+              "spd": "1000",
+              "st": 0
+            },
+            "transp": 0
+          },
+          {
+            "autoRev": false,
+            "cmd": "",
+            "dir": 0,
+            "effectId": 42,
+            "effectType": 0,
+            "hideAfter": 0,
+            "rewind": false,
+            "rotAng": 0,
+            "smEnd": 0,
+            "smSt": 0,
+            "sp": 12,
+            "timing": {
+              "off": 0,
+              "spd": "1000",
+              "st": 0
+            },
+            "transp": 0
+          },
+          {
+            "autoRev": false,
+            "cmd": "",
+            "dir": 0,
+            "effectId": 10,
+            "effectType": 0,
+            "hideAfter": 0,
+            "rewind": false,
+            "rotAng": 0,
+            "smEnd": 0,
+            "smSt": 0,
+            "sp": 16,
+            "timing": {
+              "off": 0,
+              "spd": "500",
+              "st": 0
+            },
+            "transp": 0
+          },
+          {
+            "autoRev": false,
+            "cmd": "",
+            "dir": 0,
+            "effectId": 42,
+            "effectType": 0,
+            "hideAfter": 0,
+            "rewind": false,
+            "rotAng": 0,
+            "smEnd": 0,
+            "smSt": 0,
+            "sp": 13,
+            "timing": {
+              "off": 0,
+              "spd": "1000",
+              "st": 0
+            },
+            "transp": 0
+          },
+          {
+            "autoRev": false,
+            "cmd": "",
+            "dir": 0,
+            "effectId": 42,
+            "effectType": 0,
+            "hideAfter": 0,
+            "rewind": false,
+            "rotAng": 0,
+            "smEnd": 0,
+            "smSt": 0,
+            "sp": 14,
+            "timing": {
+              "off": 0,
+              "spd": "1000",
+              "st": 0
+            },
+            "transp": 0
+          },
+          {
+            "autoRev": false,
+            "cmd": "",
+            "dir": 0,
+            "effectId": 10,
+            "effectType": 0,
+            "hideAfter": 0,
+            "rewind": false,
+            "rotAng": 0,
+            "smEnd": 0,
+            "smSt": 0,
+            "sp": 17,
+            "timing": {
+              "off": 0,
+              "spd": "500",
+              "st": 0
+            },
+            "transp": 0
+          }
+        ],
+        "id": 0
+      },
+      "bg": {
+        "Item": {
+          "__type": "CT_SolidFill:#p",
+          "clr": [255, 255, 255],
+          "transp": 0
+        }
+      },
+      "hidden": false,
+      "id": 777,
+      "resCat": [
+        {
+          "id": "S209_1_1920x1080",
+          "name": "",
+          "base64": ""
+        },
+        {
+          "id": "S209_2_1920x1080",
+          "name": "",
+          "base64": ""
+        },
+        {
+          "id": "S209_3_1920x1080",
+          "name": "",
+          "base64": ""
+        },
+        {
+          "id": "S209_4_1920x1080",
+          "name": "",
+          "base64": ""
+        },
+        {
+          "id": "S209_5_1920x1080",
+          "name": "",
+          "base64": ""
+        },
+        {
+          "id": "S209_6_1920x1080",
+          "name": "",
+          "base64": ""
+        }
+      ],
+      "sbLst": [],
+      "spLst": [
+        {
+          "bapis": null,
+          "bgSp": false,
+          "clckTgts": null,
+          "id": 3,
+          "pos": {
+            "x": 0,
+            "y": 0
+          },
+          "reg": {
+            "h": 1078,
+            "imgID": "S209_4_1920x1080",
+            "isGif": false,
+            "transp": false,
+            "w": 1920,
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "bapis": null,
+          "bgSp": false,
+          "clckTgts": null,
+          "id": 4,
+          "pos": {
+            "x": 1139,
+            "y": 34
+          },
+          "reg": {
+            "h": 1010,
+            "imgID": "S209_3_1920x1080",
+            "isGif": false,
+            "transp": false,
+            "w": 714,
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "bapis": null,
+          "bgSp": false,
+          "clckTgts": null,
+          "id": 6,
+          "pos": {
+            "x": 5,
+            "y": 6
+          },
+          "reg": {
+            "h": 280,
+            "imgID": "S209_5_1920x1080",
+            "isGif": false,
+            "transp": false,
+            "w": 1912,
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "bapis": null,
+          "bgSp": false,
+          "clckTgts": null,
+          "id": 7,
+          "pos": {
+            "x": 94,
+            "y": 265
+          },
+          "reg": {
+            "h": 715,
+            "imgID": "S209_5_1920x1080",
+            "isGif": false,
+            "transp": false,
+            "w": 1047,
+            "x": 0,
+            "y": 282
+          }
+        },
+        {
+          "bapis": null,
+          "bgSp": false,
+          "clckTgts": null,
+          "id": 8,
+          "pos": {
+            "x": 100,
+            "y": 265
+          },
+          "reg": {
+            "h": 215,
+            "imgID": "S209_2_1920x1080",
+            "isGif": false,
+            "transp": false,
+            "w": 701,
+            "x": 0,
+            "y": 524
+          }
+        },
+        {
+          "bapis": null,
+          "bgSp": false,
+          "clckTgts": null,
+          "id": 9,
+          "pos": {
+            "x": 100,
+            "y": 402
+          },
+          "reg": {
+            "h": 164,
+            "imgID": "S209_6_1920x1080",
+            "isGif": false,
+            "transp": false,
+            "w": 1033,
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "bapis": null,
+          "bgSp": false,
+          "clckTgts": null,
+          "id": 10,
+          "pos": {
+            "x": 100,
+            "y": 521
+          },
+          "reg": {
+            "h": 165,
+            "imgID": "S209_1_1920x1080",
+            "isGif": false,
+            "transp": false,
+            "w": 1023,
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "bapis": null,
+          "bgSp": false,
+          "clckTgts": null,
+          "id": 11,
+          "pos": {
+            "x": 100,
+            "y": 641
+          },
+          "reg": {
+            "h": 115,
+            "imgID": "S209_1_1920x1080",
+            "isGif": false,
+            "transp": false,
+            "w": 752,
+            "x": 0,
+            "y": 826
+          }
+        },
+        {
+          "bapis": null,
+          "bgSp": false,
+          "clckTgts": null,
+          "id": 12,
+          "pos": {
+            "x": 100,
+            "y": 711
+          },
+          "reg": {
+            "h": 115,
+            "imgID": "S209_1_1920x1080",
+            "isGif": false,
+            "transp": false,
+            "w": 863,
+            "x": 0,
+            "y": 709
+          }
+        },
+        {
+          "bapis": null,
+          "bgSp": false,
+          "clckTgts": null,
+          "id": 13,
+          "pos": {
+            "x": 100,
+            "y": 781
+          },
+          "reg": {
+            "h": 115,
+            "imgID": "S209_2_1920x1080",
+            "isGif": false,
+            "transp": false,
+            "w": 611,
+            "x": 0,
+            "y": 741
+          }
+        },
+        {
+          "bapis": null,
+          "bgSp": false,
+          "clckTgts": null,
+          "id": 14,
+          "pos": {
+            "x": 100,
+            "y": 851
+          },
+          "reg": {
+            "h": 115,
+            "imgID": "S209_2_1920x1080",
+            "isGif": false,
+            "transp": false,
+            "w": 743,
+            "x": 0,
+            "y": 407
+          }
+        },
+        {
+          "bapis": null,
+          "bgSp": false,
+          "clckTgts": null,
+          "id": 15,
+          "pos": {
+            "x": 1062,
+            "y": -57
+          },
+          "reg": {
+            "h": 540,
+            "imgID": "S209_1_1920x1080",
+            "isGif": false,
+            "transp": false,
+            "w": 864,
+            "x": 0,
+            "y": 167
+          }
+        },
+        {
+          "bapis": null,
+          "bgSp": false,
+          "clckTgts": null,
+          "id": 16,
+          "pos": {
+            "x": 1124,
+            "y": 369
+          },
+          "reg": {
+            "h": 405,
+            "imgID": "S209_2_1920x1080",
+            "isGif": false,
+            "transp": false,
+            "w": 762,
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "bapis": null,
+          "bgSp": false,
+          "clckTgts": null,
+          "id": 17,
+          "pos": {
+            "x": 1003,
+            "y": 509
+          },
+          "reg": {
+            "h": 810,
+            "imgID": "S209_6_1920x1080",
+            "isGif": false,
+            "transp": false,
+            "w": 1030,
+            "x": 0,
+            "y": 166
+          }
+        }
+      ]
+    },
+    "3": {
+      "animLst": {
+        "anim": [
+          {
+            "autoRev": false,
+            "cmd": "",
+            "dir": 0,
+            "effectId": 10,
+            "effectType": 0,
+            "hideAfter": 0,
+            "rewind": false,
+            "rotAng": 0,
+            "smEnd": 0,
+            "smSt": 0,
+            "sp": 4,
+            "timing": {
+              "off": 0,
+              "spd": "700",
+              "st": 1
+            },
+            "transp": 0
+          }
+        ],
+        "id": 0
+      },
+      "bg": {
+        "Item": {
+          "__type": "CT_SolidFill:#p",
+          "clr": [255, 255, 255],
+          "transp": 0
+        }
+      },
+      "hidden": false,
+      "id": 773,
+      "resCat": [
+        {
+          "id": "S205_1_1920x1080",
+          "name": "",
+          "base64": ""
+        },
+        {
+          "id": "S205_2_1920x1080",
+          "name": "",
+          "base64": ""
+        },
+        {
+          "id": "S205_3_1920x1080",
+          "name": "",
+          "base64": ""
+        },
+        {
+          "id": "S205_4_1920x1080",
+          "name": "",
+          "base64": ""
+        },
+        {
+          "id": "S205_5_1920x1080",
+          "name": "",
+          "base64": ""
+        }
+      ],
+      "sbLst": [],
+      "spLst": [
+        {
+          "bapis": null,
+          "bgSp": false,
+          "clckTgts": null,
+          "id": 3,
+          "pos": {
+            "x": 0,
+            "y": 0
+          },
+          "reg": {
+            "h": 1078,
+            "imgID": "S205_5_1920x1080",
+            "isGif": false,
+            "transp": false,
+            "w": 1920,
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "bapis": null,
+          "bgSp": false,
+          "clckTgts": null,
+          "id": 4,
+          "pos": {
+            "x": 501,
+            "y": -56
+          },
+          "reg": {
+            "h": 290,
+            "imgID": "S205_1_1920x1080",
+            "isGif": false,
+            "transp": false,
+            "w": 943,
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "bapis": null,
+          "bgSp": false,
+          "clckTgts": null,
+          "id": 6,
+          "pos": {
+            "x": 657,
+            "y": 163
+          },
+          "reg": {
+            "h": 801,
+            "imgID": "S205_4_1920x1080",
+            "isGif": false,
+            "transp": false,
+            "w": 606,
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "bapis": null,
+          "bgSp": false,
+          "clckTgts": null,
+          "id": 7,
+          "pos": {
+            "x": 18,
+            "y": 163
+          },
+          "reg": {
+            "h": 801,
+            "imgID": "S205_3_1920x1080",
+            "isGif": false,
+            "transp": false,
+            "w": 607,
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "bapis": null,
+          "bgSp": false,
+          "clckTgts": null,
+          "id": 8,
+          "pos": {
+            "x": 1295,
+            "y": 163
+          },
+          "reg": {
+            "h": 801,
+            "imgID": "S205_2_1920x1080",
+            "isGif": false,
+            "transp": false,
+            "w": 607,
+            "x": 0,
+            "y": 0
+          }
+        }
+      ]
+    },
+    "7": {
+      "animLst": {
+        "anim": [
+          {
+            "autoRev": false,
+            "cmd": "",
+            "dir": 0,
+            "effectId": 10,
+            "effectType": 0,
+            "hideAfter": 0,
+            "rewind": false,
+            "rotAng": 0,
+            "smEnd": 0,
+            "smSt": 0,
+            "sp": 4,
+            "timing": {
+              "off": 1000,
+              "spd": "700",
+              "st": 1
+            },
+            "transp": 0
+          },
+          {
+            "autoRev": false,
+            "cmd": "",
+            "dir": 10,
+            "effectId": 14,
+            "effectType": 0,
+            "hideAfter": 0,
+            "rewind": false,
+            "rotAng": 0,
+            "smEnd": 0,
+            "smSt": 0,
+            "sp": 8,
+            "timing": {
+              "off": 0,
+              "spd": "500",
+              "st": 0
+            },
+            "transp": 0
+          },
+          {
+            "autoRev": false,
+            "cmd": "",
+            "dir": 10,
+            "effectId": 14,
+            "effectType": 0,
+            "hideAfter": 0,
+            "rewind": false,
+            "rotAng": 0,
+            "smEnd": 0,
+            "smSt": 0,
+            "sp": 5,
+            "timing": {
+              "off": 0,
+              "spd": "500",
+              "st": 0
+            },
+            "transp": 0
+          }
+        ],
+        "id": 0
+      },
+      "bg": {
+        "Item": {
+          "__type": "CT_SolidFill:#p",
+          "clr": [255, 255, 255],
+          "transp": 0
+        }
+      },
+      "hidden": false,
+      "id": 779,
+      "resCat": [
+        {
+          "id": "S20B_1_1920x1080",
+          "name": "",
+          "base64": ""
+        },
+        {
+          "id": "S20B_2_1920x1080",
+          "name": "",
+          "base64": ""
+        },
+        {
+          "id": "S20B_3_1920x1080",
+          "name": "",
+          "base64": ""
+        },
+        {
+          "id": "S20B_4_1920x1080",
+          "name": "",
+          "base64": ""
+        }
+      ],
+      "sbLst": [],
+      "spLst": [
+        {
+          "bapis": null,
+          "bgSp": false,
+          "clckTgts": null,
+          "id": 3,
+          "pos": {
+            "x": 0,
+            "y": 0
+          },
+          "reg": {
+            "h": 1078,
+            "imgID": "S20B_3_1920x1080",
+            "isGif": false,
+            "transp": false,
+            "w": 1920,
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "bapis": null,
+          "bgSp": false,
+          "clckTgts": null,
+          "id": 4,
+          "pos": {
+            "x": 1007,
+            "y": 13
+          },
+          "reg": {
+            "h": 304,
+            "imgID": "S20B_1_1920x1080",
+            "isGif": false,
+            "transp": false,
+            "w": 960,
+            "x": 0,
+            "y": 624
+          }
+        },
+        {
+          "bapis": null,
+          "bgSp": false,
+          "clckTgts": null,
+          "id": 5,
+          "pos": {
+            "x": 1166,
+            "y": 369
+          },
+          "reg": {
+            "h": 622,
+            "imgID": "S20B_1_1920x1080",
+            "isGif": false,
+            "transp": false,
+            "w": 727,
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "bapis": null,
+          "bgSp": false,
+          "clckTgts": null,
+          "id": 7,
+          "pos": {
+            "x": 936,
+            "y": 516
+          },
+          "reg": {
+            "h": 48,
+            "imgID": "S20B_1_1920x1080",
+            "isGif": false,
+            "transp": false,
+            "w": 48,
+            "x": 729,
+            "y": 0
+          }
+        },
+        {
+          "bapis": null,
+          "bgSp": false,
+          "clckTgts": null,
+          "id": 8,
+          "pos": {
+            "x": 0,
+            "y": 61
+          },
+          "reg": {
+            "h": 408,
+            "imgID": "S20B_4_1920x1080",
+            "isGif": false,
+            "transp": false,
+            "w": 1079,
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "bapis": null,
+          "bgSp": false,
+          "clckTgts": null,
+          "id": 10,
+          "pos": {
+            "x": 137,
+            "y": 500
+          },
+          "reg": {
+            "h": 560,
+            "imgID": "S20B_2_1920x1080",
+            "isGif": false,
+            "transp": false,
+            "w": 891,
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "bapis": null,
+          "bgSp": false,
+          "clckTgts": null,
+          "id": 11,
+          "pos": {
+            "x": 571,
+            "y": 532
+          },
+          "reg": {
+            "h": 262,
+            "imgID": "S20B_2_1920x1080",
+            "isGif": false,
+            "transp": false,
+            "w": 457,
+            "x": 0,
+            "y": 562
+          }
+        }
+      ]
+    },
+    "10": {
+      "animLst": {
+        "anim": [
+          {
+            "autoRev": false,
+            "cmd": "",
+            "dir": 4,
+            "effectId": 2,
+            "effectType": 0,
+            "hideAfter": 0,
+            "rewind": false,
+            "rotAng": 0,
+            "smEnd": 0,
+            "smSt": 0,
+            "sp": 4,
+            "timing": {
+              "off": 0,
+              "spd": "500",
+              "st": 0
+            },
+            "transp": 0
+          },
+          {
+            "autoRev": false,
+            "cmd": "",
+            "dir": 21,
+            "effectId": 16,
+            "effectType": 0,
+            "hideAfter": 0,
+            "rewind": false,
+            "rotAng": 0,
+            "smEnd": 0,
+            "smSt": 0,
+            "sp": 5,
+            "timing": {
+              "off": 0,
+              "spd": "500",
+              "st": 0
+            },
+            "transp": 0
+          },
+          {
+            "autoRev": false,
+            "cmd": "",
+            "dir": 21,
+            "effectId": 16,
+            "effectType": 0,
+            "hideAfter": 0,
+            "rewind": false,
+            "rotAng": 0,
+            "smEnd": 0,
+            "smSt": 0,
+            "sp": 7,
+            "timing": {
+              "off": 0,
+              "spd": "500",
+              "st": 0
+            },
+            "transp": 0
+          },
+          {
+            "autoRev": false,
+            "cmd": "",
+            "dir": 21,
+            "effectId": 16,
+            "effectType": 0,
+            "hideAfter": 0,
+            "rewind": false,
+            "rotAng": 0,
+            "smEnd": 0,
+            "smSt": 0,
+            "sp": 8,
+            "timing": {
+              "off": 0,
+              "spd": "500",
+              "st": 0
+            },
+            "transp": 0
+          },
+          {
+            "autoRev": false,
+            "cmd": "",
+            "dir": 21,
+            "effectId": 16,
+            "effectType": 0,
+            "hideAfter": 0,
+            "rewind": false,
+            "rotAng": 0,
+            "smEnd": 0,
+            "smSt": 0,
+            "sp": 6,
+            "timing": {
+              "off": 0,
+              "spd": "500",
+              "st": 0
+            },
+            "transp": 0
+          },
+          {
+            "autoRev": false,
+            "cmd": "",
+            "dir": 21,
+            "effectId": 16,
+            "effectType": 0,
+            "hideAfter": 0,
+            "rewind": false,
+            "rotAng": 0,
+            "smEnd": 0,
+            "smSt": 0,
+            "sp": 9,
+            "timing": {
+              "off": 0,
+              "spd": "500",
+              "st": 0
+            },
+            "transp": 0
+          }
+        ],
+        "id": 0
+      },
+      "bg": {
+        "Item": {
+          "__type": "CT_SolidFill:#p",
+          "clr": [255, 255, 255],
+          "transp": 0
+        }
+      },
+      "hidden": false,
+      "id": 261,
+      "resCat": [
+        {
+          "id": "S5_1_1920x1080",
+          "name": "",
+          "base64": ""
+        },
+        {
+          "id": "S5_2_1920x1080",
+          "name": "",
+          "base64": ""
+        },
+        {
+          "id": "S5_3_1920x1080",
+          "name": "",
+          "base64": ""
+        },
+        {
+          "id": "S5_4_1920x1080",
+          "name": "",
+          "base64": ""
+        },
+        {
+          "id": "S5_5_1920x1080",
+          "name": "",
+          "base64": ""
+        },
+        {
+          "id": "S5_6_1920x1080",
+          "name": "",
+          "base64": ""
+        },
+        {
+          "id": "S5_7_1920x1080",
+          "name": "",
+          "base64": ""
+        }
+      ],
+      "sbLst": [],
+      "spLst": [
+        {
+          "bapis": null,
+          "bgSp": false,
+          "clckTgts": null,
+          "id": 3,
+          "pos": {
+            "x": 0,
+            "y": 0
+          },
+          "reg": {
+            "h": 1080,
+            "imgID": "S5_5_1920x1080",
+            "isGif": false,
+            "transp": false,
+            "w": 1920,
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "bapis": null,
+          "bgSp": false,
+          "clckTgts": null,
+          "id": 4,
+          "pos": {
+            "x": 220,
+            "y": 233
+          },
+          "reg": {
+            "h": 704,
+            "imgID": "S5_6_1920x1080",
+            "isGif": false,
+            "transp": false,
+            "w": 1381,
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "bapis": null,
+          "bgSp": false,
+          "clckTgts": null,
+          "id": 5,
+          "pos": {
+            "x": -30,
+            "y": -19
+          },
+          "reg": {
+            "h": 788,
+            "imgID": "S5_7_1920x1080",
+            "isGif": false,
+            "transp": false,
+            "w": 1374,
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "bapis": null,
+          "bgSp": false,
+          "clckTgts": null,
+          "id": 6,
+          "pos": {
+            "x": -168,
+            "y": 605
+          },
+          "reg": {
+            "h": 588,
+            "imgID": "S5_3_1920x1080",
+            "isGif": false,
+            "transp": false,
+            "w": 913,
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "bapis": null,
+          "bgSp": false,
+          "clckTgts": null,
+          "id": 7,
+          "pos": {
+            "x": 1003,
+            "y": -36
+          },
+          "reg": {
+            "h": 773,
+            "imgID": "S5_2_1920x1080",
+            "isGif": false,
+            "transp": false,
+            "w": 948,
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "bapis": null,
+          "bgSp": false,
+          "clckTgts": null,
+          "id": 8,
+          "pos": {
+            "x": 596,
+            "y": 430
+          },
+          "reg": {
+            "h": 895,
+            "imgID": "S5_1_1920x1080",
+            "isGif": false,
+            "transp": false,
+            "w": 969,
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "bapis": null,
+          "bgSp": false,
+          "clckTgts": null,
+          "id": 9,
+          "pos": {
+            "x": 1262,
+            "y": 588
+          },
+          "reg": {
+            "h": 535,
+            "imgID": "S5_4_1920x1080",
+            "isGif": false,
+            "transp": false,
+            "w": 700,
+            "x": 0,
+            "y": 0
+          }
+        }
+      ]
+    }
+  }
+}

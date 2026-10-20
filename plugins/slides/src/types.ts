@@ -2,6 +2,7 @@ import { LAYOUT_VIDEO_STATES_KEY, VIDEO_VOLUME_KEY } from "@repo/base-types";
 import { type LayoutDoc, type LayoutVideoStates } from "@repo/layout";
 
 import type { InkStroke } from "./ink";
+import type { OfficeDeck } from "./office/types";
 
 export type ImportType =
   | "googleslides"
@@ -10,7 +11,7 @@ export type ImportType =
   | "ppt"
   | "image"
   | "custom";
-export type DisplayMode = "googleslides" | "image" | "layout";
+export type DisplayMode = "googleslides" | "powerpoint" | "image" | "layout";
 
 /**
  * Default display mode for each import type.
@@ -25,16 +26,30 @@ export const DEFAULT_DISPLAY_MODE_BY_TYPE: Record<ImportType, DisplayMode> = {
   custom: "layout",
 };
 
+/** Whether a PowerPoint import carries the slideshow data to play animations.
+ * Old ones doesn't
+ */
+export const hasOfficeSlideshow = (
+  importData: ImportData,
+): importData is PptImportData & { office: OfficeDeck } =>
+  importData.type === "ppt" && !!importData.office;
+
 export const getEffectiveDisplayMode = (
   importData: ImportData,
   displayModes: Record<string, DisplayMode> | undefined,
-): DisplayMode =>
-  displayModes?.[importData.importId] ??
-  DEFAULT_DISPLAY_MODE_BY_TYPE[importData.type];
+): DisplayMode => {
+  const chosen = displayModes?.[importData.importId];
+  if (chosen === "powerpoint" && !hasOfficeSlideshow(importData)) {
+    return "image";
+  }
+  if (chosen) return chosen;
+  if (hasOfficeSlideshow(importData)) return "powerpoint";
+  return DEFAULT_DISPLAY_MODE_BY_TYPE[importData.type];
+};
 
 /** Display modes that play builds and transitions, so clicks count */
 export const isAnimatedDisplayMode = (mode: DisplayMode) =>
-  mode === "googleslides";
+  mode === "googleslides" || mode === "powerpoint";
 
 /**
  * Base import data - all imports have these properties
@@ -99,6 +114,12 @@ export interface PdfImportData extends BaseImportData {
 
 export interface PptImportData extends BaseImportData {
   type: "ppt";
+  /** Shapes, sprites and animations captured from PowerPoint for the web */
+  office?: OfficeDeck;
+  /** Same as `GoogleSlidesImportData` */
+  slideTransitionDurations?: number[];
+  slideClickDurations?: number[][];
+  slideAutoplayDurations?: number[];
 }
 
 export interface ImageImportData extends BaseImportData {

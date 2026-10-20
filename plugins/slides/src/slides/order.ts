@@ -85,7 +85,9 @@ type SlideTimings = Pick<
 >;
 
 const slideTimings = (importData: ImportData): SlideTimings =>
-  importData.type === "googleslides" ? importData : {};
+  importData.type === "googleslides" || importData.type === "ppt"
+    ? importData
+    : {};
 
 export function getClickCountForSlide(
   pluginData: PluginBaseData,

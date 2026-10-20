@@ -4,7 +4,11 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { extractSlideData } from "../googleSlides/slideData/slideDataExtractor";
-import { extractPptxSpeakerNotes } from "../office/pptxSpeakerNotes";
+import {
+  extractPptxSlideNotes,
+  extractPptxSpeakerNotes,
+  notesForPages,
+} from "../office/pptxSpeakerNotes";
 import { htmlNotesToPlainText, normalizeSpeakerNotes } from "../speakerNotes";
 
 const repoRoot = join(__dirname, "../../../../..");
@@ -68,7 +72,10 @@ const notesPart = (text: string) =>
   `</p:spTree></p:cSld></p:notes>`;
 
 /** Minimal .pptx carrying just what the notes extractor reads. */
-const buildPptx = (slides: (string | null)[]): Buffer => {
+const buildPptx = (
+  slides: (string | null)[],
+  hiddenSlides: number[] = [],
+): Buffer => {
   const files: Record<string, Uint8Array> = {};
 
   const presentationRels = slides
@@ -90,7 +97,11 @@ const buildPptx = (slides: (string | null)[]): Buffer => {
 
   slides.forEach((notes, i) => {
     const n = i + 1;
-    files[`ppt/slides/slide${n}.xml`] = strToU8("<p:sld/>");
+    files[`ppt/slides/slide${n}.xml`] = strToU8(
+      hiddenSlides.includes(i)
+        ? `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<p:sld xmlns:p="x" show="0"/>`
+        : "<p:sld/>",
+    );
     files[`ppt/slides/_rels/slide${n}.xml.rels`] = strToU8(
       `<Relationships>` +
         `<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/slideLayout1.xml"/>` +
@@ -128,9 +139,39 @@ describe("extractPptxSpeakerNotes", () => {
     expect(notes).toEqual(["Read John 3:16\nThen pray & sit down"]);
   });
 
+  it("says which slides are hidden", () => {
+    expect(
+      extractPptxSlideNotes(buildPptx(["One", "Hidden", "Three"], [1])),
+    ).toEqual([
+      { notes: "One", hidden: false },
+      { notes: "Hidden", hidden: true },
+      { notes: "Three", hidden: false },
+    ]);
+  });
+
   it("returns one entry per slide for the real fixture deck", () => {
     const pptx = readFileSync(join(repoRoot, "e2e/dummyFiles/dummySlide.pptx"));
 
     expect(extractPptxSpeakerNotes(pptx)).toEqual(["", ""]);
+  });
+});
+
+describe("notesForPages", () => {
+  const slides = [
+    { notes: "One", hidden: false },
+    { notes: "Hidden", hidden: true },
+    { notes: "Three", hidden: false },
+  ];
+
+  it("keeps every slide when the pages match", () => {
+    expect(notesForPages(slides, 3)).toEqual(["One", "Hidden", "Three"]);
+  });
+
+  it("leaves hidden slides out when the PDF did", () => {
+    expect(notesForPages(slides, 2)).toEqual(["One", "Three"]);
+  });
+
+  it("gives up when they still don't line up", () => {
+    expect(notesForPages(slides, 1)).toBeNull();
   });
 });

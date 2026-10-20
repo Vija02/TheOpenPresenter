@@ -20,8 +20,16 @@ import { processHtml } from "./googleSlides/processHtml";
 import { extractSlideData } from "./googleSlides/slideData/slideDataExtractor";
 import type { ImportHelpers } from "./helpers";
 import { convertPptToPdfViaOfficeOnline } from "./office/convertPptToPdf";
+import { fetchOfficeSlideshow } from "./office/fetchOfficeSlideshow";
 import { isOnline } from "./office/network";
-import { extractPptxSpeakerNotes } from "./office/pptxSpeakerNotes";
+import {
+  storeOfficeSlideshow,
+  warmOfficeSprites,
+} from "./office/officeSlideshowImport";
+import {
+  extractPptxSlideNotes,
+  notesForPages,
+} from "./office/pptxSpeakerNotes";
 import {
   processPdfToThumbnails,
   startThumbnailWorker,
@@ -41,13 +49,13 @@ const readPptSpeakerNotes = async (
 ): Promise<string[] | undefined> => {
   try {
     const media = await serverPluginApi.media.getMedia(mediaName);
-    const notes = extractPptxSpeakerNotes(await streamToBuffer(media));
-    if (!notes) return undefined;
+    const slides = extractPptxSlideNotes(await streamToBuffer(media));
+    if (!slides) return undefined;
 
-    // Office Online can merge or drop slides, so only trust a 1:1 match.
-    if (notes.length !== slideCount) {
+    const notes = notesForPages(slides, slideCount);
+    if (!notes) {
       log.warn(
-        { notesCount: notes.length, slideCount },
+        { notesCount: slides.length, slideCount },
         "Speaker notes count doesn't match the converted slide count, skipping",
       );
       return undefined;
@@ -133,23 +141,38 @@ export const createImporters = (
 
       log.info({ publicPptUrl }, "Converting PPT to PDF via Office Online...");
 
+      // Captured alongside the PDF so the deck can play its animations.
+      const slideshowPromise = fetchOfficeSlideshow(publicPptUrl, log).catch(
+        (err) => {
+          log.warn(
+            { err },
+            "Could not capture the PowerPoint slideshow, importing as images",
+          );
+          return null;
+        },
+      );
+
       const pdfBuffer = await convertPptToPdfViaOfficeOnline(publicPptUrl, log);
       log.info("PPT converted to PDF");
 
-      const { fileNames, workerPromise, uploadedPdfFileName } =
-        await processPdfToThumbnails(
-          {
-            serverPluginApi,
-            organizationId: loadedContextData.organizationId,
-            userId,
-            projectId: loadedContextData.projectId,
-            pluginId,
-          },
-          pdfBuffer,
-          log,
-          undefined,
-          extractMediaName(mediaName).mediaId,
-        );
+      const {
+        fileNames,
+        workerPromise,
+        uploadedPdfFileName,
+        uploadedPdfMediaId,
+      } = await processPdfToThumbnails(
+        {
+          serverPluginApi,
+          organizationId: loadedContextData.organizationId,
+          userId,
+          projectId: loadedContextData.projectId,
+          pluginId,
+        },
+        pdfBuffer,
+        log,
+        undefined,
+        extractMediaName(mediaName).mediaId,
+      );
 
       loadedPlugin.pluginData.imports[newImport.importId]!.thumbnailLinks =
         fileNames;
@@ -171,6 +194,36 @@ export const createImporters = (
           speakerNotes;
       }
 
+      const slideshow = await slideshowPromise;
+      const officeFields =
+        slideshow &&
+        (await storeOfficeSlideshow(
+          slideshow,
+          {
+            serverPluginApi,
+            organizationId: loadedContextData.organizationId,
+            userId,
+            projectId: loadedContextData.projectId,
+            pluginId,
+            parentMediaId: uploadedPdfMediaId,
+            pageCount: fileNames.length,
+          },
+          log,
+        ).catch((err) => {
+          log.warn({ err }, "Could not store the PowerPoint slideshow");
+          return null;
+        }));
+      if (officeFields) {
+        const target = loadedPlugin.pluginData.imports[
+          newImport.importId
+        ] as PptImportData;
+        target.office = officeFields.office;
+        target.slideClickCounts = officeFields.slideClickCounts;
+        target.slideClickDurations = officeFields.slideClickDurations;
+        target.slideAutoplayDurations = officeFields.slideAutoplayDurations;
+        target.slideTransitionDurations = officeFields.slideTransitionDurations;
+      }
+
       // Wait for thumbnails to be uploaded
       await workerPromise;
 
@@ -182,6 +235,12 @@ export const createImporters = (
         slideCount: fileNames.length,
         replaceImportId,
       });
+
+      if (officeFields) {
+        // In the background: the deck is usable now, this only speeds up its
+        // first showing
+        void warmOfficeSprites(officeFields.office, process.env.ROOT_URL!, log);
+      }
 
       return { importId: newImport.importId };
     } catch (err) {

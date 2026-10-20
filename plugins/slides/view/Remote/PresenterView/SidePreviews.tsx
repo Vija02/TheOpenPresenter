@@ -1,17 +1,28 @@
 import useSize from "@react-hook/size";
 import { LayoutRenderer } from "@repo/layout/react";
+import { lazyWithRetry } from "@repo/ui";
 import { cx } from "class-variance-authority";
 import { useEffect, useState } from "react";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 
 import { resolvedSlideDoc } from "../../../src/customSlides";
-import { getEffectiveDisplayMode } from "../../../src/types";
+import {
+  getEffectiveDisplayMode,
+  hasOfficeSlideshow,
+} from "../../../src/types";
 import type { ResolvedSlide } from "../../../src/types";
 import { usePluginAPI } from "../../pluginApi";
 import { useSlideCapture } from "./capture/useSlideCapture";
 import { aspectRatioValue, slideAspectRatio } from "./slideGeometry";
 
 export type PreviewStep = { slide: ResolvedSlide; clickCount: number };
+
+// Only fetched when a preview shows a PowerPoint step
+const OfficeStepPreview = lazyWithRetry(() =>
+  import("./OfficeStepPreview").then((module) => ({
+    default: module.OfficeStepPreview,
+  })),
+);
 
 type Direction = "previous" | "next";
 
@@ -168,6 +179,12 @@ const StepPicture = ({ step, scope }: { step: PreviewStep; scope: string }) => {
   );
 
   if (capture) return <CapturedSvg svg={capture} />;
+  if (
+    hasOfficeSlideshow(importData) &&
+    getEffectiveDisplayMode(importData, displayModes) === "powerpoint"
+  ) {
+    return <OfficeStepPreview step={step} />;
+  }
   return (
     <LayoutRenderer
       doc={resolvedSlideDoc(step.slide)}
