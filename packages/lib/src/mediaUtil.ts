@@ -2,6 +2,7 @@ import { VideoTranscodeStatus } from "@repo/graphql";
 import { TypeId, fromString, fromUUID, toUUID } from "typeid-js";
 import { z } from "zod";
 
+import type { ProcessedImageFormat } from "./constants";
 import { isAudioFile, isVideoFile } from "./mediaTypeUtil";
 
 export const internalMediaValidator = z.object({
@@ -99,12 +100,15 @@ export const normalizeMediaUrl = (url: string): string =>
 export const resolveProcessedMediaUrl = ({
   mediaUrl,
   size,
+  format,
 }: {
   mediaUrl: UniversalURL;
   size: number;
+  format?: ProcessedImageFormat;
 }) => {
   if (isInternalMedia(mediaUrl)) {
-    return `${mediaUrl.host ?? window.location.origin}/media/processed/${size}/${constructMediaName(mediaUrl.mediaId, mediaUrl.extension)}`;
+    const query = format ? `?format=${format}` : "";
+    return `${mediaUrl.host ?? window.location.origin}/media/processed/${size}/${constructMediaName(mediaUrl.mediaId, mediaUrl.extension)}${query}`;
   }
 
   return undefined;

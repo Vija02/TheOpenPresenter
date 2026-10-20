@@ -1,5 +1,9 @@
 export const ALLOWED_IMAGE_WIDTH = [320, 640, 1200, 2048, 3840];
 
+/** Formats `/media/processed` can convert images to, via `?format=` */
+export const PROCESSED_IMAGE_FORMATS = ["webp"] as const;
+export type ProcessedImageFormat = (typeof PROCESSED_IMAGE_FORMATS)[number];
+
 export const SUPPORTED_IMAGE_EXTENSIONS = [
   // JPEG
   ".jpg",

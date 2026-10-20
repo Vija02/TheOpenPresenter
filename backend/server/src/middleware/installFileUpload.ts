@@ -1,6 +1,7 @@
 import { media } from "@repo/backend-shared";
 import {
   ALLOWED_IMAGE_WIDTH,
+  PROCESSED_IMAGE_FORMATS,
   SUPPORTED_IMAGE_EXTENSIONS,
   constructMediaName,
   extractMediaName,
@@ -99,6 +100,19 @@ export default (app: Express) => {
       return;
     }
 
+    const format = req.query.format;
+    if (
+      format !== undefined &&
+      !PROCESSED_IMAGE_FORMATS.includes(format as any)
+    ) {
+      res.status(400).send("Invalid image format");
+      return;
+    }
+    const outputExtension =
+      typeof format === "string" ? format : mediaDetails.extension;
+    // A conversion still has work to do when no resize is needed
+    const converting = outputExtension !== mediaDetails.extension;
+
     // If processed file exist, redirect to data URL
     try {
       const {
@@ -110,11 +124,11 @@ export default (app: Express) => {
         width = $2 AND 
         file_type = $3
         `,
-        [mediaDetails.uuid, width, mediaDetails.extension],
+        [mediaDetails.uuid, width, outputExtension],
       );
       res.redirect(
         301,
-        `/media/data/${constructMediaName(mediaIdFromUUID(row.processed_media_id), mediaDetails.extension)}`,
+        `/media/data/${constructMediaName(mediaIdFromUUID(row.processed_media_id), outputExtension)}`,
       );
 
       return;
@@ -137,7 +151,7 @@ export default (app: Express) => {
       }
 
       // If requested size is bigger than original file, skip the resize and just give the original file
-      if (mediaRow.width && width > mediaRow.width) {
+      if (!converting && mediaRow.width && width > mediaRow.width) {
         res.redirect(301, `/media/data/${req.params.mediaName}`);
         return;
       }
@@ -178,7 +192,7 @@ export default (app: Express) => {
         );
 
         // Again, if requested size is bigger than original file, skip the resize and just give the original file
-        if (metadata.width && width > metadata.width) {
+        if (!converting && metadata.width && width > metadata.width) {
           res.redirect(301, `/media/data/${req.params.mediaName}`);
           return;
         }
@@ -188,11 +202,17 @@ export default (app: Express) => {
 
       const tempFilePath = os.tmpdir() + `/${processedMediaId}`;
       // Convert
-      await pipeline(
-        rawData,
-        sharp().rotate().resize(width).withMetadata(),
-        fs.createWriteStream(tempFilePath),
-      );
+      const transform = sharp({
+        // Without this a converted GIF keeps only its first frame
+        animated: converting && mediaDetails.extension === "gif",
+      })
+        .rotate()
+        .resize({ width, withoutEnlargement: true })
+        .withMetadata();
+      if (outputExtension === "webp") {
+        transform.webp({ quality: 90, alphaQuality: 100 });
+      }
+      await pipeline(rawData, transform, fs.createWriteStream(tempFilePath));
 
       // Upload to media
       await mediaHandler.uploadMedia({
@@ -201,7 +221,7 @@ export default (app: Express) => {
         organizationId: mediaRow.organization_id,
         isUserUploaded: false,
         fileSize: fs.statSync(tempFilePath).size,
-        fileExtension: mediaDetails.extension,
+        fileExtension: outputExtension,
         mediaId: processedMediaId,
       });
 
@@ -216,7 +236,7 @@ export default (app: Express) => {
           mediaDetails.uuid,
           uuidFromMediaId(processedMediaId),
           width,
-          mediaDetails.extension,
+          outputExtension,
         ],
       );
 
@@ -230,7 +250,7 @@ export default (app: Express) => {
 
       res.redirect(
         301,
-        `/media/data/${constructMediaName(processedMediaId, mediaDetails.extension)}`,
+        `/media/data/${constructMediaName(processedMediaId, outputExtension)}`,
       );
     } catch (err) {
       logger.error({ err }, "/media/processed endpoint error");
