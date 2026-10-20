@@ -93,6 +93,7 @@ export const uploadMedia = async ({
     "Tus-Resumable": TUS_VERSION,
     Cookie: sessionCookie,
     Origin: host,
+    "x-top-csrf-protection": "1",
     "organization-id": cloudOrganizationId,
     "custom-media-id": mediaId,
     "file-extension": extension,
