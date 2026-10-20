@@ -60,13 +60,22 @@ const readNotesBodyText = (xml: string): string => {
   return paragraphs.join("\n");
 };
 
+export type PptxSlideNotes = { notes: string; hidden: boolean };
+
+/** Hidden slides carry `show="0"` on the slide element */
+const isHiddenSlide = (slideXml: string) =>
+  /^\s*<p:sld\b[^>]*\bshow="(?:0|false)"/.test(
+    slideXml.replace(/^<\?xml[^>]*\?>/, ""),
+  );
+
 /**
- * Reads the speaker notes of every slide in a .pptx, in slide order.
- * Returns null when the file isn't a readable OOXML package (e.g. legacy .ppt).
+ * Reads the speaker notes of every slide in a .pptx, in slide order, along
+ * with whether the slide is hidden. Returns null when the file isn't a
+ * readable OOXML package (e.g. legacy .ppt).
  */
-export const extractPptxSpeakerNotes = (
+export const extractPptxSlideNotes = (
   pptxBuffer: Buffer,
-): string[] | null => {
+): PptxSlideNotes[] | null => {
   let files: Record<string, Uint8Array>;
   try {
     files = unzipSync(new Uint8Array(pptxBuffer));
@@ -102,6 +111,29 @@ export const extractPptxSpeakerNotes = (
   return slidePaths.map((slidePath) => {
     const notesPath = findNotesPartForSlide(files, slidePath);
     const notes = notesPath ? files[notesPath] : undefined;
-    return notes ? readNotesBodyText(strFromU8(notes)) : "";
+    const slide = files[slidePath];
+    return {
+      notes: notes ? readNotesBodyText(strFromU8(notes)) : "",
+      hidden: slide ? isHiddenSlide(strFromU8(slide)) : false,
+    };
   });
+};
+
+/** The speaker notes of every slide in a .pptx, in slide order */
+export const extractPptxSpeakerNotes = (pptxBuffer: Buffer): string[] | null =>
+  extractPptxSlideNotes(pptxBuffer)?.map((slide) => slide.notes) ?? null;
+
+/**
+ * Lines notes up with the converted pages, one each. The PDF leaves hidden
+ * slides out, so try without them before giving up; past that Office Online
+ * may have merged or dropped slides, and we only trust a 1:1 match.
+ */
+export const notesForPages = (
+  slides: PptxSlideNotes[],
+  pageCount: number,
+): string[] | null => {
+  if (slides.length === pageCount) return slides.map((slide) => slide.notes);
+  const shown = slides.filter((slide) => !slide.hidden);
+  if (shown.length === pageCount) return shown.map((slide) => slide.notes);
+  return null;
 };

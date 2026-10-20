@@ -152,4 +152,37 @@ describe("display modes", () => {
     // No transition or autoplay window either
     expect(r.transitionEndsAt).toBe(NOW);
   });
+
+  it("uses a PowerPoint import's timings when it plays animations", () => {
+    const ppt = {
+      imports: {
+        p: {
+          importId: "p",
+          type: "ppt",
+          fetchId: "f",
+          office: { width: 1920, height: 1080, images: {}, slides: [] },
+          thumbnailLinks: ["a", "b"],
+          slideIds: ["0", "1"],
+          slideClickCounts: [1, 0],
+          slideTransitionDurations: [0, 700],
+          slideClickDurations: [[250], []],
+          slideAutoplayDurations: [0, 0],
+        },
+      },
+      slideOrder: ["p:0", "p:1"],
+    } as unknown as PluginBaseData;
+
+    const click = navigate(ppt, settled(0, 0), "NEXT", NOW);
+    expect(click).toMatchObject({ slideIndex: 0, clickCount: 1 });
+    expect(click.transitionEndsAt).toBe(NOW + 250);
+
+    const enter = navigate(ppt, settled(0, 1), "NEXT", NOW);
+    expect(enter).toMatchObject({ slideIndex: 1, enteredSlide: true });
+    expect(enter.transitionEndsAt).toBe(NOW + 700);
+
+    // The same deck as images is one press per slide
+    expect(
+      navigate(ppt, settled(0, 0), "NEXT", NOW, { p: "image" }),
+    ).toMatchObject({ slideIndex: 1, clickCount: 0 });
+  });
 });

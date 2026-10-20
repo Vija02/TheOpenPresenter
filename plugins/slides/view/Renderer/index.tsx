@@ -1,11 +1,41 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { importWithRetry } from "@repo/ui";
+import {
+  Suspense,
+  lazy,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
-import { getEffectiveDisplayMode } from "../../src/types";
+import { getEffectiveDisplayMode, hasOfficeSlideshow } from "../../src/types";
 import { InkLayer } from "../Ink/InkLayer";
 import { usePluginAPI } from "../pluginApi";
 import { GoogleSlideRenderer } from "./GoogleSlideRenderer";
 import { ImageRenderer } from "./ImageRenderer";
 import { LayoutSlideRenderer } from "./LayoutSlideRenderer";
+import { PowerPointFallback } from "./PowerPointFallback";
+
+// Only fetched by shows that play a PowerPoint deck
+const PowerPointRenderer = lazy(() =>
+  importWithRetry(() => import("./PowerPointRenderer")).then((module) => ({
+    default: module.PowerPointRenderer,
+  })),
+);
+const POWERPOINT_LOADING_ID = "__powerpoint_renderer_code__";
+
+/** Shows the screen as loading while the PowerPoint renderer's code arrives */
+const ReportLoading = ({
+  onLoadingChange,
+}: {
+  onLoadingChange: (id: string, isLoading: boolean) => void;
+}) => {
+  useEffect(() => {
+    onLoadingChange(POWERPOINT_LOADING_ID, true);
+    return () => onLoadingChange(POWERPOINT_LOADING_ID, false);
+  }, [onLoadingChange]);
+  return null;
+};
 
 const Renderer = () => {
   const pluginApi = usePluginAPI();
@@ -25,6 +55,17 @@ const Renderer = () => {
         getEffectiveDisplayMode(imp, rendererDisplayModes) === "googleslides",
     );
   }, [pluginData.imports, rendererDisplayModes]);
+
+  const hasPowerPointSlides = useMemo(
+    () =>
+      Object.values(pluginData.imports).some(
+        (imp) =>
+          !imp._isFetching &&
+          hasOfficeSlideshow(imp) &&
+          getEffectiveDisplayMode(imp, rendererDisplayModes) === "powerpoint",
+      ),
+    [pluginData.imports, rendererDisplayModes],
+  );
 
   const [loadingMap, setLoadingMap] = useState<Record<string, boolean>>({});
 
@@ -59,6 +100,16 @@ const Renderer = () => {
       <ImageRenderer onLoadingChange={reportLoading} />
 
       <LayoutSlideRenderer />
+
+      {hasPowerPointSlides && (
+        <PowerPointFallback>
+          <Suspense
+            fallback={<ReportLoading onLoadingChange={reportLoading} />}
+          >
+            <PowerPointRenderer onLoadingChange={reportLoading} />
+          </Suspense>
+        </PowerPointFallback>
+      )}
 
       {googleSlidesImports.map((imp) => (
         <GoogleSlideRenderer

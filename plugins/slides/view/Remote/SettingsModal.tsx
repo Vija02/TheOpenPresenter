@@ -44,6 +44,7 @@ import {
   DisplayMode,
   ImportType,
   getEffectiveDisplayMode,
+  hasOfficeSlideshow,
 } from "../../src/types";
 import { CanvaIconLogo } from "../components/CanvaLogo";
 import { usePluginAPI } from "../pluginApi";
@@ -299,6 +300,21 @@ const SettingsModal = ({
                           value: "googleslides" satisfies DisplayMode,
                         },
                         {
+                          title: "PowerPoint",
+                          description: (
+                            <>
+                              Plays the slides with their animations and
+                              transitions <br />
+                              <div className="mt-2 flex gap-1 italic">
+                                <FaCircleInfo className="m-1 shrink-0" />
+                                Rendered by PowerPoint for the web when the file
+                                was imported
+                              </div>
+                            </>
+                          ),
+                          value: "powerpoint" satisfies DisplayMode,
+                        },
+                        {
                           title: "Image",
                           description: (
                             <>
@@ -311,10 +327,12 @@ const SettingsModal = ({
                           ),
                           value: "image" satisfies DisplayMode,
                         },
-                      ].filter((x) =>
-                        displayTypeMapping[x.value as DisplayMode].includes(
-                          imp.type,
-                        ),
+                      ].filter(
+                        (x) =>
+                          displayTypeMapping[x.value as DisplayMode].includes(
+                            imp.type,
+                          ) &&
+                          (x.value !== "powerpoint" || hasOfficeSlideshow(imp)),
                       );
                       return (
                         <div
