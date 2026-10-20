@@ -329,7 +329,7 @@ export function openUpdateWindow(): BrowserWindow {
   const parent = mainWin && !mainWin.isDestroyed() ? mainWin : undefined;
   updateWin = new BrowserWindow({
     width: 420,
-    height: 280,
+    height: 360,
     resizable: false,
     minimizable: false,
     maximizable: false,

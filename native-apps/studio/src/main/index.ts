@@ -14,7 +14,12 @@ import { reportDiagnosis } from "./shell/diagnostics";
 import { logShell } from "./shell/log";
 import { setupMenu } from "./shell/menu";
 import { setupTray } from "./shell/tray";
-import { isInstallingUpdate, setupUpdates } from "./shell/updates";
+import {
+  activatePendingRuntime,
+  checkAtLaunch,
+  isInstallingUpdate,
+  setupUpdates,
+} from "./shell/updates";
 import {
   backToShellUI,
   closeAllPresentWindows,
@@ -128,6 +133,7 @@ if (!gotLock) {
     } finally {
       routing = false;
     }
+    void checkAtLaunch();
 
     app.on("activate", () => {
       if (BrowserWindow.getAllWindows().length === 0) void startupRoute();
@@ -154,8 +160,9 @@ if (!gotLock) {
     event.preventDefault();
     shuttingDown = true;
     closeAllPresentWindows();
-    runtime
-      .shutdown()
+    // A runtime downloaded and left for "later" is switched to on the way out.
+    activatePendingRuntime()
+      .then(() => runtime.shutdown())
       .catch((err) => logShell("error", "[main] runtime shutdown failed:", err))
       .finally(() => app.quit());
   });

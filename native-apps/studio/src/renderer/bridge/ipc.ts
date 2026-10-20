@@ -100,7 +100,7 @@ export type UpdateState =
   | { status: "downloading"; version: string; percent: number }
   | { status: "ready"; version: string }
   | { status: "unsupported"; reason: string }
-  | { status: "error"; message: string };
+  | { status: "error"; message: string; version?: string };
 
 export type ProgressPayload = {
   phase: string;
@@ -108,6 +108,19 @@ export type ProgressPayload = {
   total: number;
   bytes?: number;
 };
+
+/** How a runtime update is progressing. Mirrors `shell/updates.ts`. */
+export type RuntimeUpdateState =
+  | { status: "none" }
+  | { status: "checking" }
+  | { status: "available"; current: string | null; version: string }
+  | {
+      status: "downloading";
+      version: string;
+      progress: ProgressPayload | null;
+    }
+  | { status: "ready"; version: string; needsRestart: boolean }
+  | { status: "error"; version: string; message: string };
 
 type Bridge = {
   isDesktop: true;
@@ -262,7 +275,9 @@ export const api = {
   /** App update state, and what a user can do about it. */
   updateState: () => invoke<UpdateState>("update:state"),
   checkForUpdate: () => invoke<UpdateState>("update:check"),
-  downloadUpdate: () => invoke<void>("update:download"),
+  runtimeUpdateState: () => invoke<RuntimeUpdateState>("update:runtime"),
+  /** Download everything on offer: the app, the runtime, or both. */
+  downloadUpdates: () => invoke<void>("update:download"),
   installUpdate: () => invoke<void>("update:install"),
   /** Close the update popup. The update itself is left as it is. */
   dismissUpdate: () => invoke<void>("update:dismiss"),

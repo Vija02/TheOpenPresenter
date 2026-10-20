@@ -15,8 +15,9 @@ import { openExternalSafely } from "./external";
 import { refreshMenu } from "./menu";
 import {
   checkForUpdates,
-  downloadUpdate,
+  downloadUpdates,
   installUpdate,
+  runtimeUpdateState,
   updateState,
 } from "./updates";
 import {
@@ -105,7 +106,8 @@ export function registerAppIPC(): void {
 
   ipcMain.handle("update:state", () => updateState());
   ipcMain.handle("update:check", () => checkForUpdates());
-  ipcMain.handle("update:download", () => downloadUpdate());
+  ipcMain.handle("update:runtime", () => runtimeUpdateState());
+  ipcMain.handle("update:download", () => downloadUpdates());
   ipcMain.handle("update:install", () => installUpdate());
   ipcMain.handle("update:dismiss", () => closeUpdateWindow());
 
