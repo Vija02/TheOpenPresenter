@@ -1,3 +1,4 @@
+import { detectWebPSupport } from "@repo/lib";
 import { MediaPickerProvider } from "@repo/media-picker/client";
 import {
   AudioCheckProvider,
@@ -18,6 +19,8 @@ import { GuestControlGuard } from "./containers/GuestControlGuard";
 import { TopBar } from "./containers/TopBar";
 import { useRendererSelection } from "./contexts/rendererSelection";
 import { useNoOutputHint } from "./hooks/useNoOutputHint";
+
+void detectWebPSupport();
 
 function App() {
   return (

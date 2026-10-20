@@ -3,6 +3,7 @@ import { TypeId, fromString, fromUUID, toUUID } from "typeid-js";
 import { z } from "zod";
 
 import type { ProcessedImageFormat } from "./constants";
+import { detectWebPSupport, getWebPSupport } from "./imageSupport";
 import { isAudioFile, isVideoFile } from "./mediaTypeUtil";
 
 export const internalMediaValidator = z.object({
@@ -104,10 +105,15 @@ export const resolveProcessedMediaUrl = ({
 }: {
   mediaUrl: UniversalURL;
   size: number;
-  format?: ProcessedImageFormat;
+  format?: ProcessedImageFormat | "original";
 }) => {
   if (isInternalMedia(mediaUrl)) {
-    const query = format ? `?format=${format}` : "";
+    if (format === undefined) void detectWebPSupport();
+    const output =
+      format === "original"
+        ? null
+        : (format ?? (getWebPSupport() ? "webp" : null));
+    const query = output ? `?format=${output}` : "";
     return `${mediaUrl.host ?? window.location.origin}/media/processed/${size}/${constructMediaName(mediaUrl.mediaId, mediaUrl.extension)}${query}`;
   }
 

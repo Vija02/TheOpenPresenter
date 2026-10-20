@@ -3,6 +3,7 @@ export * from "./clientPluginNaming";
 export * from "./constants";
 export * from "./errors";
 export * from "./globalState";
+export * from "./imageSupport";
 export * from "./mediaTypeUtil";
 export * from "./mediaUtil";
 export * from "./network";
