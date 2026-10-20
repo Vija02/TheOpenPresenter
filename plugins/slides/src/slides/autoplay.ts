@@ -1,4 +1,9 @@
-import { DisplayMode, PluginBaseData, getEffectiveDisplayMode } from "../types";
+import {
+  DisplayMode,
+  PluginBaseData,
+  getEffectiveDisplayMode,
+  isAnimatedDisplayMode,
+} from "../types";
 import { resolveSlide } from "./order";
 
 export type AutoplayPosition = {
@@ -19,7 +24,7 @@ export const computeGlobalSlideClickCount = (
       continue;
     }
     const mode = getEffectiveDisplayMode(resolved.importData, displayModes);
-    result.push(mode === "googleslides" ? resolved.clickCount : 0);
+    result.push(isAnimatedDisplayMode(mode) ? resolved.clickCount : 0);
   }
   return result;
 };

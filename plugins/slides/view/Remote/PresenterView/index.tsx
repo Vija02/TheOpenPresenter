@@ -31,6 +31,7 @@ export const PresenterView = ({ onClose }: PresenterViewProps) => {
   const pluginData = pluginApi.scene.useData((x) => x.pluginData);
   const mutableRendererData = pluginApi.renderer.useValtioData();
   const { resolvedSlide, globalSlideIndex, clickCount } = useDisplayedSlide();
+  const displayModes = pluginApi.renderer.useData((x) => x.displayModes);
   const isPortrait = useIsPortrait();
   const [isOverviewOpen, setIsOverviewOpen] = useState(false);
   const [inkTool, setInkTool] = useState<InkTool | null>(null);
@@ -45,11 +46,12 @@ export const PresenterView = ({ onClose }: PresenterViewProps) => {
         pluginData,
         { slideIndex: globalSlideIndex, clickCount },
         keyType,
+        displayModes,
       );
       const slide = step && resolveSlide(pluginData, step.slideIndex);
       return slide ? { slide, clickCount: step.clickCount } : null;
     },
-    [pluginData, globalSlideIndex, clickCount],
+    [pluginData, globalSlideIndex, clickCount, displayModes],
   );
   const previousStep = useMemo(() => stepTowards("PREV"), [stepTowards]);
   const nextStep = useMemo(() => stepTowards("NEXT"), [stepTowards]);

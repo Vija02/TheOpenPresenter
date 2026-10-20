@@ -1,4 +1,4 @@
-import type { PluginBaseData } from "../types";
+import type { DisplayMode, PluginBaseData } from "../types";
 import {
   getAutoplayDurationForSlide,
   getClickCountForSlide,
@@ -29,10 +29,11 @@ export const navigate = (
   state: NavigationState,
   keyType: "NEXT" | "PREV",
   now: number,
+  displayModes?: Record<string, DisplayMode>,
 ): NavigationResult => {
   const { slideIndex, clickCount, transitionEndsAt } = state;
   const totalSlides = pluginData.slideOrder?.length ?? 0;
-  const maxClicks = getClickCountForSlide(pluginData, slideIndex);
+  const maxClicks = getClickCountForSlide(pluginData, slideIndex, displayModes);
 
   const stay = (patch: Partial<NavigationState> = {}): NavigationResult => ({
     ...state,
@@ -53,7 +54,7 @@ export const navigate = (
       // Cancel it and return to the slide we left, without re-running autoplay
       const returning = slideIndex + 1;
       const hasAutoplay =
-        getAutoplayDurationForSlide(pluginData, returning) > 0;
+        getAutoplayDurationForSlide(pluginData, returning, displayModes) > 0;
       return enter({
         slideIndex: returning,
         clickCount: hasAutoplay ? -1 : 0,
@@ -75,18 +76,23 @@ export const navigate = (
       return stay({
         clickCount: next,
         transitionEndsAt:
-          now + getClickDurationForSlide(pluginData, slideIndex, next),
+          now +
+          getClickDurationForSlide(pluginData, slideIndex, next, displayModes),
       });
     }
     if (slideIndex < totalSlides - 1) {
       const nextSlide = slideIndex + 1;
-      const autoplayMs = getAutoplayDurationForSlide(pluginData, nextSlide);
+      const autoplayMs = getAutoplayDurationForSlide(
+        pluginData,
+        nextSlide,
+        displayModes,
+      );
       return enter({
         slideIndex: nextSlide,
         clickCount: 0,
         transitionEndsAt:
           now +
-          getTransitionDurationForSlide(pluginData, nextSlide) +
+          getTransitionDurationForSlide(pluginData, nextSlide, displayModes) +
           (autoplayMs > 0 ? autoplayMs : 0),
         isTransitioningBackwards: false,
       });
@@ -101,7 +107,7 @@ export const navigate = (
   }
   if (
     clickCount === 0 &&
-    getAutoplayDurationForSlide(pluginData, slideIndex) > 0
+    getAutoplayDurationForSlide(pluginData, slideIndex, displayModes) > 0
   ) {
     return stay({ clickCount: -1, transitionEndsAt: 0 });
   }
@@ -109,9 +115,14 @@ export const navigate = (
     // The reversing transition belongs to the slide being left
     return enter({
       slideIndex: slideIndex - 1,
-      clickCount: getClickCountForSlide(pluginData, slideIndex - 1),
+      clickCount: getClickCountForSlide(
+        pluginData,
+        slideIndex - 1,
+        displayModes,
+      ),
       transitionEndsAt:
-        now + getTransitionDurationForSlide(pluginData, slideIndex),
+        now +
+        getTransitionDurationForSlide(pluginData, slideIndex, displayModes),
       isTransitioningBackwards: true,
     });
   }
@@ -124,12 +135,14 @@ export const settledStep = (
   pluginData: PluginBaseData,
   position: { slideIndex: number; clickCount: number },
   keyType: "NEXT" | "PREV",
+  displayModes?: Record<string, DisplayMode>,
 ): { slideIndex: number; clickCount: number } | null => {
   const result = navigate(
     pluginData,
     { ...position, transitionEndsAt: 0, isTransitioningBackwards: false },
     keyType,
     0,
+    displayModes,
   );
   if (
     result.slideIndex === position.slideIndex &&

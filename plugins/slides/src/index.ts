@@ -45,6 +45,7 @@ import { createSlideRef } from "./slides/order";
 import {
   AutoplayState,
   CustomImportData,
+  DisplayMode,
   PluginBaseData,
   PluginRendererData,
 } from "./types";
@@ -227,7 +228,21 @@ export const init = (
         isTransitioningBackwards:
           rendererData.get("isTransitioningBackwards") ?? false,
       };
-      const result = navigate(pluginDataJson, current, keyType, now);
+      const displayModesData = rendererData.get("displayModes") as
+        | { toJSON?: () => Record<string, DisplayMode> }
+        | Record<string, DisplayMode>
+        | undefined;
+      const displayModes =
+        typeof displayModesData?.toJSON === "function"
+          ? displayModesData.toJSON()
+          : (displayModesData as Record<string, DisplayMode> | undefined);
+      const result = navigate(
+        pluginDataJson,
+        current,
+        keyType,
+        now,
+        displayModes,
+      );
 
       // Wrap every mutation in a single transaction so all changes for one
       // key press are applied atomically.
