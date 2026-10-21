@@ -69,7 +69,7 @@ export const init = (
 
   serverPluginApi.registerCSPDirective(pluginName, {
     "frame-src": ["'self'", "*.google.com"],
-    "img-src": ["*.googleusercontent.com", "ssl.gstatic.com", "data:"],
+    "img-src": ["*.googleusercontent.com", "ssl.gstatic.com", "data:", "blob:"],
     // We need these for Auth & Google Picker API
     "script-src": [
       "https://apis.google.com",
