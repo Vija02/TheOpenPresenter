@@ -1,6 +1,9 @@
 import { expect, test } from "../../../../../fixtures/projectFixture";
 
 test.describe("Slides Plugin - Multiple Imports", () => {
+  // The PPTX goes through Microsoft's servers, which can be slow
+  test.describe.configure({ timeout: 120 * 1000 });
+
   test.beforeEach(
     async ({ e2eCommand }) =>
       await Promise.all([
@@ -37,7 +40,7 @@ test.describe("Slides Plugin - Multiple Imports", () => {
 
     // Wait until the PPTX has finished processing and added more slides
     await expect
-      .poll(async () => renderedSlides.count(), { timeout: 30 * 1000 })
+      .poll(async () => renderedSlides.count(), { timeout: 60 * 1000 })
       .toBeGreaterThan(slidesAfterFirst);
 
     const slidesAfterSecond = await renderedSlides.count();
@@ -115,7 +118,7 @@ test.describe("Slides Plugin - Multiple Imports", () => {
     await uppyUploadFile("./dummyFiles/dummySlide.pptx");
 
     await expect
-      .poll(async () => renderedSlides.count(), { timeout: 30 * 1000 })
+      .poll(async () => renderedSlides.count(), { timeout: 60 * 1000 })
       .toBeGreaterThan(slidesAfterFirst);
 
     const slidesAfterSecond = await renderedSlides.count();
