@@ -215,7 +215,8 @@ so the embed's own player never shows through.
 - **YouTube** goes straight in at import.
 - **Drive** can't be read with our `drive.file` token until the user picks the
   file in the Google Picker (`view/Remote/DriveVideoAccess.tsx`, picker limited
-  to those file ids). Then `driveVideos.ts` downloads it via the Drive API,
+  to those file ids; on a cloud-linked install, the cloud pick page with
+  `fileIds` in the intent). Then `driveVideos.ts` downloads it via the Drive API,
   uploads it as media and adds it to `slideVideoDocs`. Import tries once
   quietly, which covers re-imports of videos picked before. Until then the
   video's poster (`slide[13]`, by element id; already copied at import) covers

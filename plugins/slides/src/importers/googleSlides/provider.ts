@@ -44,7 +44,10 @@ export type RemotePickMode = "pick" | "connect" | "once";
 export type RemotePickInput = {
   mode: RemotePickMode;
   connectionId?: string | null;
+  fileIds?: string[] | null;
 };
+
+export { MAX_PICK_FILE_IDS } from "../../consts";
 
 /** A connected account, as the account chooser lists it. */
 export type GoogleAccountOption = {
@@ -77,6 +80,7 @@ export type GooglePickResult = {
   name: string | null;
   connectionId: string | null;
   accessToken?: string;
+  fileIds?: string[];
 };
 
 export const resolveGoogleMode = async (

@@ -17,6 +17,7 @@ import { renderMessagePage, renderPickPage, renderPopupResult } from "./pages";
 import {
   GOOGLE_PROVIDER,
   GooglePickResult,
+  MAX_PICK_FILE_IDS,
   RemotePickInput,
   RemotePickMode,
   toAccountOption,
@@ -62,6 +63,9 @@ const queryString = (value: unknown) =>
   typeof value === "string" && value ? value : null;
 
 const PICK_MODES: RemotePickMode[] = ["pick", "connect", "once"];
+
+// Drive file ids: letters, digits, - and _. They end up in the picker page
+const DRIVE_ID = /^[\w-]{10,128}$/;
 
 /** "Import once": signed in for this pick only, nothing stored. */
 const isOnce = (intent: { input: unknown }) =>
@@ -261,6 +265,7 @@ export const registerGoogleSlidesRoutes = (
                 identity.email ?? identity.displayName ?? "your Google account",
               switchAccountUrl: intentPath("authorize", intent.id),
               submitUrl: intentPath("pick", intent.id),
+              fileIds: intent.input?.fileIds ?? null,
             },
           }),
         );
@@ -315,9 +320,29 @@ export const registerGoogleSlidesRoutes = (
     }
 
     if (req.method === "POST") {
-      const { presentationId, name, connectionId, accessToken } =
-        req.body ?? {};
-      if (typeof presentationId !== "string" || !presentationId) {
+      const {
+        presentationId: rawPresentationId,
+        name,
+        connectionId,
+        accessToken,
+        fileIds: rawFileIds,
+      } = req.body ?? {};
+
+      // A pick of files: only the ones this intent offered count
+      const offered = intent.input?.fileIds ?? null;
+      const fileIds = offered
+        ? (Array.isArray(rawFileIds) ? rawFileIds : []).filter(
+            (id: unknown): id is string =>
+              typeof id === "string" && offered.includes(id),
+          )
+        : undefined;
+      const presentationId = offered ? "" : rawPresentationId;
+
+      if (fileIds && fileIds.length === 0) {
+        res.status(400).json({ error: "No video was chosen." });
+        return;
+      }
+      if (!fileIds && (typeof presentationId !== "string" || !presentationId)) {
         res.status(400).json({ error: "No presentation was chosen." });
         return;
       }
@@ -334,6 +359,7 @@ export const registerGoogleSlidesRoutes = (
           name: typeof name === "string" ? name : null,
           connectionId: null,
           accessToken,
+          ...(fileIds ? { fileIds } : {}),
         };
         await integrations.completeIntent(intent.id, result);
         res.json({ ok: true });
@@ -359,6 +385,7 @@ export const registerGoogleSlidesRoutes = (
         presentationId,
         name: typeof name === "string" ? name : null,
         connectionId: connection.id,
+        ...(fileIds ? { fileIds } : {}),
       };
       await integrations.completeIntent(intent.id, result);
       res.json({ ok: true });
@@ -429,6 +456,7 @@ export const registerGoogleSlidesRoutes = (
             "your Google account",
           switchAccountUrl: intentPath("authorize", intent.id),
           submitUrl: intentPath("pick", intent.id),
+          fileIds: intent.input?.fileIds ?? null,
         },
       }),
     );
@@ -477,15 +505,29 @@ export const registerGoogleSlidesRoutes = (
       res.sendStatus(405);
       return;
     }
-    const { mode = "pick", connectionId = null } = (req.body ??
-      {}) as Partial<RemotePickInput>;
+    const {
+      mode = "pick",
+      connectionId = null,
+      fileIds = null,
+    } = (req.body ?? {}) as Partial<RemotePickInput>;
     if (!PICK_MODES.includes(mode)) {
       res.status(400).json({ error: "Unknown pick mode." });
+      return;
+    }
+    if (
+      fileIds !== null &&
+      (!Array.isArray(fileIds) ||
+        fileIds.length === 0 ||
+        fileIds.length > MAX_PICK_FILE_IDS ||
+        !fileIds.every((id) => typeof id === "string" && DRIVE_ID.test(id)))
+    ) {
+      res.status(400).json({ error: "Invalid files to pick." });
       return;
     }
     const input: RemotePickInput = {
       mode,
       connectionId: typeof connectionId === "string" ? connectionId : null,
+      fileIds,
     };
     const intentId = await integrations.createIntent({
       provider: GOOGLE_PROVIDER,

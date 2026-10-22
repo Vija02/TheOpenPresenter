@@ -3,9 +3,10 @@ import {
   DrivePickerDocsView,
 } from "@googleworkspace/drive-picker-react";
 import { Button } from "@repo/ui";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FaGoogleDrive } from "react-icons/fa";
 
+import { MAX_PICK_FILE_IDS } from "../../src/consts";
 import type { DriveSlideVideo, GoogleSlidesImportData } from "../../src/types";
 import { usePluginAPI } from "../pluginApi";
 import { trpc } from "../trpc";
@@ -13,6 +14,10 @@ import type {
   OAuthResponseEvent,
   PickerPickedEvent,
 } from "./ImportFile/SlidePicker";
+import {
+  claimExternalWindow,
+  openExternally,
+} from "./integrations/externalWindow";
 
 /**
  * Drive videos in a Google Slides deck can only be downloaded once the user
@@ -44,6 +49,9 @@ export const DriveVideoAccess = () => {
   );
 };
 
+const PICK_POLL_MS = 2000;
+const PICK_TIMEOUT_MS = 15 * 60 * 1000;
+
 const uniqueByFile = (videos: DriveSlideVideo[]) => [
   ...new Map(videos.map((video) => [video.fileId, video])).values(),
 ];
@@ -70,15 +78,107 @@ const DeckNotice = ({ deck }: { deck: GoogleSlidesImportData }) => {
   const downloading = videos.filter((video) => video.status === "downloading");
   const failed = videos.filter((video) => video.status === "failed");
 
+  // Remote: the picker runs on a cloud page in the system browser, and we
+  // poll for what was picked
+  const beginMutation = trpc.slides.googleSlidesBeginPick.useMutation();
+  const [pending, setPending] = useState<{
+    intentId: string;
+    startedAt: number;
+  } | null>(null);
+  const handledIntentRef = useRef<string | null>(null);
+  const pickStatusQuery = trpc.slides.googleSlidesPickStatus.useQuery(
+    { pluginId, intentId: pending?.intentId ?? "" },
+    { enabled: !!pending, refetchInterval: PICK_POLL_MS, retry: false },
+  );
+
+  useEffect(() => {
+    if (!pending) return;
+
+    if (pickStatusQuery.error) {
+      setPending(null);
+      pluginApi.remote.toast.error(pickStatusQuery.error.message);
+      return;
+    }
+
+    const data = pickStatusQuery.data;
+    if (data?.status === "done" && data.result) {
+      setPending(null);
+      // Effects can run twice for one result; fetch once
+      if (handledIntentRef.current === pending.intentId) return;
+      handledIntentRef.current = pending.intentId;
+
+      const { connectionId, accessToken, fileIds } = data.result;
+      if (!fileIds?.length) return;
+      fetchMutation.mutate(
+        {
+          pluginId,
+          importId: deck.importId,
+          fileIds,
+          ...(connectionId ? { connectionId } : { token: accessToken }),
+        },
+        { onError: (err) => pluginApi.remote.toast.error(err.message) },
+      );
+      return;
+    }
+    if (data?.status === "failed") {
+      setPending(null);
+      pluginApi.remote.toast.error(data.error ?? "Google Drive failed.");
+      return;
+    }
+    if (Date.now() - pending.startedAt > PICK_TIMEOUT_MS) {
+      setPending(null);
+    }
+  }, [
+    pending,
+    pickStatusQuery.data,
+    pickStatusQuery.error,
+    fetchMutation,
+    pluginId,
+    deck.importId,
+    pluginApi,
+  ]);
+
+  const openRemote = useCallback(
+    async (fileIds: string[]) => {
+      const claimed = claimExternalWindow();
+      const connectionId = deck.googleConnectionId ?? undefined;
+      try {
+        const { intentId, url } = await beginMutation.mutateAsync({
+          pluginId,
+          // An "Import once" deck has no account to use, so sign in
+          mode: connectionId ? "pick" : "once",
+          connectionId,
+          fileIds,
+        });
+        await openExternally(claimed, url);
+        setPending({ intentId, startedAt: Date.now() });
+        pluginApi.remote.toast.info(
+          "Select the videos in the browser window that just opened.",
+        );
+      } catch (err: any) {
+        claimed?.close();
+        pluginApi.remote.toast.error(
+          err?.message ?? "Could not open Google Drive.",
+        );
+      }
+    },
+    [beginMutation, deck.googleConnectionId, pluginId, pluginApi],
+  );
+
   const open = useCallback(async () => {
     const status = statusQuery.data;
+    if (status?.mode === "remote") {
+      // More than one pick allows: the rest get the next one
+      await openRemote(
+        toPick.slice(0, MAX_PICK_FILE_IDS).map((video) => video.fileId),
+      );
+      return;
+    }
     if (status?.mode !== "local") {
       pluginApi.remote.toast.error(
         status?.mode === "unavailable"
           ? status.reason
-          : status?.mode === "remote"
-            ? "Giving access to Drive videos isn't available here yet."
-            : "Still checking Google Drive. Try again in a moment.",
+          : "Still checking Google Drive. Try again in a moment.",
       );
       return;
     }
@@ -105,6 +205,8 @@ const DeckNotice = ({ deck }: { deck: GoogleSlidesImportData }) => {
     setPicker({ connectionId: null, oauthToken: null });
   }, [
     statusQuery.data,
+    openRemote,
+    toPick,
     deck.googleConnectionId,
     tokenMutation,
     pluginId,

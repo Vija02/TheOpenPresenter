@@ -10,6 +10,7 @@ import { loadedContext } from "../../loadedState";
 import type { Importers } from "../index";
 import { getGoogleAppId, getGoogleClientId } from "./oauth";
 import {
+  MAX_PICK_FILE_IDS,
   beginRemotePick,
   disconnectRemote,
   getGoogleAccessToken,
@@ -155,15 +156,19 @@ export const createGoogleSlidesRouter = (
           pluginId: z.string(),
           mode: z.enum(["pick", "connect", "once"]),
           connectionId: z.string().optional(),
+          fileIds: z.array(z.string()).min(1).max(MAX_PICK_FILE_IDS).optional(),
         }),
       )
-      .mutation(async ({ input: { pluginId, mode, connectionId }, ctx }) => {
-        const { organizationId } = await requireMember(pluginId, ctx);
-        return beginRemotePick(serverPluginApi, organizationId, {
-          mode,
-          connectionId: connectionId ?? null,
-        });
-      }),
+      .mutation(
+        async ({ input: { pluginId, mode, connectionId, fileIds }, ctx }) => {
+          const { organizationId } = await requireMember(pluginId, ctx);
+          return beginRemotePick(serverPluginApi, organizationId, {
+            mode,
+            connectionId: connectionId ?? null,
+            fileIds: fileIds ?? null,
+          });
+        },
+      ),
 
     /** Remote mode: polled until the pick is done or failed. */
     googleSlidesPickStatus: t.procedure
