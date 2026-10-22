@@ -56,13 +56,19 @@ gradient only) — an image stroke has no CSS form, so it is unrepresentable
 rather than a render-time failure.
 
 Video is a fill for the same reason
-(`{ type: "video", video, fit, opacity, playback }`), and `playback` is the one
-field that needs a renderer to cooperate:
+(`{ type: "video", video, fit, opacity, playback, start }`), and `playback` and
+`start` are the fields that need a renderer to cooperate:
 
 | `playback` | UI label | Behaviour |
 |---|---|---|
 | `loop` (default) | Loop | ambient. Plays forever, always silent, from wherever the shared clock says — mounting it late does not restart it |
 | `once` | Play once | plays from the first frame each time the slide becomes active, holds the last frame, rewinds when the slide leaves, and is audible |
+
+`start` says when a `once` video begins. `auto` (the default) is as above.
+`manual` holds it on its first frame until something starts it with
+`controlVideoFills`, which plays, pauses, seeks or sets the volume of given
+videos and leaves every other one as it is. A host plugin calls it for its own
+triggers, eg. Google Slides videos set to play on a click.
 
 `once` depends on knowing whether the document is on screen, which is not the
 same as being mounted: renderers keep every slide mounted and cross-fade with
