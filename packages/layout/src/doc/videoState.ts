@@ -11,6 +11,7 @@ export type DesiredVideoFill = {
   key: string;
   scope: string;
   elementId: string;
+  playing: boolean;
 };
 
 export type ScopedLayoutDoc = {
@@ -26,8 +27,26 @@ export const desiredVideoFills = (
       key: videoFillKey({ scope, elementId: element.id }),
       scope,
       elementId: element.id,
+      playing: element.start !== "manual",
     })),
   );
+
+/** From the first frame, playing or held there */
+const freshState = (
+  key: string,
+  playing: boolean,
+  existing: VideoPlaybackState | undefined,
+  now: number,
+): VideoPlaybackState => ({
+  // A fresh uid is what tells the player to seek rather than carry on
+  uid: `${now}-${key}`,
+  isPlaying: playing,
+  volume: existing?.volume ?? 1,
+  muted: existing?.muted ?? false,
+  seek: 0,
+  startedAt: now,
+  onFinishBehaviour: "pause",
+});
 
 /**
  * Bring the stored video states in line with what is newly on screen
@@ -40,18 +59,12 @@ export const reconcileVideoStates = (
   const next: LayoutVideoStates = {};
 
   for (const video of desired) {
-    const existing = current?.[video.key];
-
-    next[video.key] = {
-      // A fresh uid is what tells the player to seek rather than carry on
-      uid: `${now}-${video.key}`,
-      isPlaying: true,
-      volume: existing?.volume ?? 1,
-      muted: existing?.muted ?? false,
-      seek: 0,
-      startedAt: now,
-      onFinishBehaviour: "pause",
-    };
+    next[video.key] = freshState(
+      video.key,
+      video.playing,
+      current?.[video.key],
+      now,
+    );
   }
 
   const changed =
@@ -86,6 +99,63 @@ export const activateVideoFills = (
 
   target.setVideoStates(next);
   return true;
+};
+
+/** What to do to one video on screen */
+export type VideoFillControl = {
+  scope: string;
+  elementId: string;
+  playing?: boolean;
+  seek?: number;
+  volume?: number;
+  muted?: boolean;
+};
+
+const applyControl = (
+  key: string,
+  existing: VideoPlaybackState | undefined,
+  { playing, seek, volume, muted }: VideoFillControl,
+  now: number,
+): VideoPlaybackState => {
+  const base = existing ?? freshState(key, false, undefined, now);
+  const next: VideoPlaybackState = {
+    ...base,
+    ...(volume === undefined ? {} : { volume }),
+    ...(muted === undefined ? {} : { muted }),
+  };
+
+  const moves = playing !== undefined || seek !== undefined;
+  const alreadyPlaying =
+    playing === true && seek === undefined && base.isPlaying;
+  if (!moves || alreadyPlaying) return next;
+
+  // A fresh uid is what tells the player to seek rather than carry on
+  return {
+    ...next,
+    uid: `${now}-${key}`,
+    isPlaying: playing ?? base.isPlaying,
+    seek: seek ?? base.seek,
+    startedAt: now,
+  };
+};
+
+/**
+ * Play, pause, seek or change the volume of videos on screen
+ */
+export const controlVideoFills = (
+  target: VideoStateTarget,
+  controls: VideoFillControl[],
+  now: number = Date.now(),
+): void => {
+  if (controls.length === 0) return;
+
+  const current = target.getVideoStates();
+  const next: LayoutVideoStates = { ...current };
+  for (const control of controls) {
+    const key = videoFillKey(control);
+    next[key] = applyControl(key, current?.[key], control, now);
+  }
+  target.setVideoStates(next);
 };
 
 /** Pass the proxy from `pluginApi.renderer.useValtioData()` */

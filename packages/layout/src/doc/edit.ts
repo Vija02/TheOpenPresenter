@@ -15,7 +15,12 @@ import {
   TextElement,
 } from "../schema/element";
 import { LayoutFeed, freshFeedName, sanitiseFeedName } from "../schema/feed";
-import { FillPaint, VideoPaint, VideoPlaybackMode } from "../schema/paint";
+import {
+  FillPaint,
+  VideoPaint,
+  VideoPlaybackMode,
+  VideoStartMode,
+} from "../schema/paint";
 import { Rect } from "../schema/rect";
 import { TextStylePatch } from "../schema/style";
 
@@ -410,6 +415,7 @@ export type VideoFillElement = {
   label: string;
   video: VideoPaint["video"];
   playback: VideoPlaybackMode;
+  start: VideoStartMode;
 };
 
 /** Every video fill in the document, in element order */
@@ -422,6 +428,7 @@ export const videoFillElements = (doc: LayoutDoc): VideoFillElement[] =>
             label: element.name ?? element.fill.video.title ?? "Video",
             video: element.fill.video,
             playback: element.fill.playback ?? "loop",
+            start: element.fill.start ?? "auto",
           },
         ]
       : [],

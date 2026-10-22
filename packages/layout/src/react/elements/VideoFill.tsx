@@ -157,12 +157,12 @@ const OncePlayer = ({
   const derived = useMemo(
     () =>
       createVideoPlaybackState({
-        isPlaying: since !== null,
+        isPlaying: since !== null && (fill.start ?? "auto") === "auto",
         onFinishBehaviour: "pause",
         seek: 0,
         startedAt: since ?? 0,
       }),
-    [since],
+    [since, fill.start],
   );
 
   const playbackState = stored ?? derived;
