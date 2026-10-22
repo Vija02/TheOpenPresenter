@@ -218,6 +218,36 @@ describe("activateLyricSlide", () => {
     ).toBe(100);
   });
 
+  it("writes video state through a Yjs target as Y.Maps", () => {
+    const doc = new Y.Doc();
+    const rendererData = doc.getMap<any>("renderer");
+
+    // Song "d" plays its background once, so it gets a video state
+    doc.transact(() => {
+      activateLyricSlide(
+        yjsLyricsActivationTarget(rendererData),
+        pluginData,
+        "d",
+        0,
+        { now: 200 },
+      );
+    });
+
+    // Clients edit fields (eg. the volume) in place: a plain object can't
+    const states = rendererData.get(LAYOUT_VIDEO_STATES_KEY);
+    expect(states).toBeInstanceOf(Y.Map);
+    for (const entry of states.values()) expect(entry).toBeInstanceOf(Y.Map);
+
+    const copy = new Y.Doc();
+    Y.applyUpdate(copy, Y.encodeStateAsUpdate(doc));
+    const synced = copy.getMap<any>("renderer").toJSON()[
+      LAYOUT_VIDEO_STATES_KEY
+    ];
+    expect(Object.values(synced)).toEqual([
+      expect.objectContaining({ isPlaying: true, startedAt: 200, seek: 0 }),
+    ]);
+  });
+
   it("gives the same key from a valtio proxy as from a snapshot", () => {
     const live = proxy(
       JSON.parse(JSON.stringify(pluginData)) as PluginBaseData,
