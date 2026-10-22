@@ -100,6 +100,8 @@ export interface GoogleSlidesImportData extends BaseImportData {
   slideClickDurations?: number[][];
   /** Similar to slideClickCounts but to indicate if there's an element that plays directly. 0 means none */
   slideAutoplayDurations?: number[];
+  /** The slide's videos, drawn over it as a layout doc */
+  slideVideoDocs?: Record<string, LayoutDoc>;
 }
 
 export interface CanvaImportData extends BaseImportData {

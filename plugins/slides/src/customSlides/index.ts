@@ -86,6 +86,15 @@ export const resolvedSlideDoc = (slide: ResolvedSlide): LayoutDoc =>
     ? slide.importData.docs[slide.localSlideIndex]
     : undefined) ?? imageSlideDoc(slide.thumbnailUrl);
 
+/** Videos drawn over an imported slide, see `slideVideoDocs` */
+export const importedSlideVideoDoc = (
+  importData: ImportData,
+  localSlideIndex: number,
+): LayoutDoc | null =>
+  importData.type === "googleslides"
+    ? (importData.slideVideoDocs?.[String(localSlideIndex)] ?? null)
+    : null;
+
 export const rebuildOrderAfterSlideRemoval = (
   slideOrder: string[],
   importId: string,

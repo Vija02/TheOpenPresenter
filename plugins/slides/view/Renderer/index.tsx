@@ -15,6 +15,7 @@ import { GoogleSlideRenderer } from "./GoogleSlideRenderer";
 import { ImageRenderer } from "./ImageRenderer";
 import { LayoutSlideRenderer } from "./LayoutSlideRenderer";
 import { PowerPointFallback } from "./PowerPointFallback";
+import { SlideVideoOverlay } from "./SlideVideoOverlay";
 
 // Only fetched by shows that play a PowerPoint deck
 const PowerPointRenderer = lazy(() =>
@@ -119,6 +120,8 @@ const Renderer = () => {
           onUnmount={unregisterLoading}
         />
       ))}
+
+      <SlideVideoOverlay />
 
       <InkLayer />
     </>
