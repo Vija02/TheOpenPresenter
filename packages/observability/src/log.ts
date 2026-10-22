@@ -47,11 +47,17 @@ const getNodeDestination = () => {
     : pino.destination("/dev/null");
 };
 
+export const redact = {
+  paths: ["*.config.headers.Authorization", "*.config.headers.authorization"],
+  censor: "[Redacted]",
+};
+
 const logger = pino(
   {
     // TODO: Make level configurable
     level: "trace",
     serializers: { ...pino.stdSerializers, error: pino.stdSerializers.err },
+    redact,
     browser: {
       serialize: true,
       write: ({ msg, time, level, ...attributes }: any) => {
