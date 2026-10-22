@@ -18,6 +18,7 @@ import { createImageProcessor } from "./googleSlides/cacheGoogleSlideImage";
 import { googleUrl } from "./googleSlides/oauth";
 import { processHtml } from "./googleSlides/processHtml";
 import { extractSlideData } from "./googleSlides/slideData/slideDataExtractor";
+import { buildSlideVideoDocs } from "./googleSlides/slideVideos";
 import type { ImportHelpers } from "./helpers";
 import { convertPptToPdfViaOfficeOnline } from "./office/convertPptToPdf";
 import { fetchOfficeSlideshow } from "./office/fetchOfficeSlideshow";
@@ -378,6 +379,7 @@ export const createImporters = (
       const slideAutoplayDurations = slideData
         ? slideData.slides.map((slide) => slide.autoplayObjectDurationMs)
         : fileNames.map(() => 0);
+      const slideVideoDocs = slideData ? buildSlideVideoDocs(slideData) : {};
       const speakerNotes = slideData
         ? normalizeSpeakerNotes(
             slideData.slides.map((slide) =>
@@ -404,6 +406,11 @@ export const createImporters = (
             newImport.importId
           ]! as GoogleSlidesImportData
         ).slideAutoplayDurations = slideAutoplayDurations;
+        (
+          loadedPlugin.pluginData.imports[
+            newImport.importId
+          ]! as GoogleSlidesImportData
+        ).slideVideoDocs = slideVideoDocs;
         loadedPlugin.pluginData.imports[newImport.importId]!.slideIds =
           slideIds;
         if (speakerNotes) {

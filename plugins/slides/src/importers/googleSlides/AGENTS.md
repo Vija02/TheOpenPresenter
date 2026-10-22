@@ -200,3 +200,17 @@ re-imported. All the Google-only fields are optional; treat a missing value as
 - `../../slides/order.ts` — resolve a global slide index to its import + data.
 - `src/slides/autoplay.ts` — flat-position math.
 - `view/Renderer/GoogleSlideRenderer/useIframeSync.ts` — drives the iframe.
+
+## 10. Videos
+
+The embed only plays a video when someone clicks it inside the iframe, so we
+play them ourselves: `slideVideoDocs` holds, per slide, a transparent layout
+doc with each video at its place, drawn over the slide by
+`view/Renderer/SlideVideoOverlay` and activated like a custom slide's video
+(`src/slides/activation.ts`). Positions come from docData `slide[4]`, as two
+corners `[left, top, right, bottom]` (not a size) in the same units as the
+slide size; `videoType` 1 is YouTube, 2 Drive. Each video sits on a black box
+so the embed's own player never shows through.
+
+- **YouTube** goes straight in at import.
+- **Drive** isn't played yet.

@@ -6,7 +6,7 @@ import {
   yjsVideoStateTarget,
 } from "@repo/layout";
 
-import { isCustomImport } from "../customSlides";
+import { importedSlideVideoDoc, isCustomImport } from "../customSlides";
 import type { PluginBaseData, PluginRendererData } from "../types";
 import { resolveSlide } from "./order";
 
@@ -15,9 +15,11 @@ const docsForSlide = (
   slideIndex: number,
 ): ScopedLayoutDoc[] => {
   const resolved = resolveSlide(pluginData, slideIndex);
-  if (!resolved || !isCustomImport(resolved.importData)) return [];
+  if (!resolved) return [];
 
-  const doc = resolved.importData.docs[resolved.localSlideIndex];
+  const doc = isCustomImport(resolved.importData)
+    ? resolved.importData.docs[resolved.localSlideIndex]
+    : importedSlideVideoDoc(resolved.importData, resolved.localSlideIndex);
   if (!doc) return [];
 
   return [{ scope: resolved.rawRef, doc }];

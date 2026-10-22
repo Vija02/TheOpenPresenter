@@ -53,8 +53,8 @@ function parseVideoData(videoArray: any[]): SlideVideo | null {
     bounds: {
       x: boundsArray?.[0] || 0,
       y: boundsArray?.[1] || 0,
-      width: boundsArray?.[2] || 0,
-      height: boundsArray?.[3] || 0,
+      width: (boundsArray?.[2] || 0) - (boundsArray?.[0] || 0),
+      height: (boundsArray?.[3] || 0) - (boundsArray?.[1] || 0),
     },
     startTime: videoArray[4] || 0,
     endTime: videoArray[5] || 0,
