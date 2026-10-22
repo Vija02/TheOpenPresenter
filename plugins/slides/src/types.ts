@@ -1,5 +1,9 @@
 import { LAYOUT_VIDEO_STATES_KEY, VIDEO_VOLUME_KEY } from "@repo/base-types";
-import { type LayoutDoc, type LayoutVideoStates } from "@repo/layout";
+import {
+  type LayoutDoc,
+  type LayoutVideoStates,
+  type Rect,
+} from "@repo/layout";
 
 import type { InkStroke } from "./ink";
 import type { OfficeDeck } from "./office/types";
@@ -102,6 +106,33 @@ export interface GoogleSlidesImportData extends BaseImportData {
   slideAutoplayDurations?: number[];
   /** The slide's videos, drawn over it as a layout doc */
   slideVideoDocs?: Record<string, LayoutDoc>;
+  /** Slide size, in the units Google positions videos in */
+  slideSize?: { width: number; height: number };
+  /** Drive videos on the slides. Each joins `slideVideoDocs` once downloaded */
+  driveVideos?: DriveSlideVideo[];
+}
+
+/**
+ * - `needsAccess`: our `drive.file` token can't read it until the user picks it
+ * - `downloading`: being copied into our media
+ * - `ready`: in `slideVideoDocs`
+ * - `failed`: see `error`; picking it again retries
+ */
+export type DriveVideoStatus =
+  | "needsAccess"
+  | "downloading"
+  | "ready"
+  | "failed";
+
+export interface DriveSlideVideo {
+  fileId: string;
+  title: string | null;
+  /** Local slide index */
+  slideIndex: number;
+  elementId: string;
+  rect: Rect;
+  status: DriveVideoStatus;
+  error: string | null;
 }
 
 export interface CanvaImportData extends BaseImportData {

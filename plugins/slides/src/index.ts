@@ -297,6 +297,12 @@ const onPluginDataLoaded = (
   // TODO: Handle this better
   for (const importData of Object.values(data.pluginData.imports)) {
     importData._isFetching = false;
+    // A download cut short by a restart; picking it again retries
+    if (importData.type === "googleslides") {
+      for (const video of importData.driveVideos ?? []) {
+        if (video.status === "downloading") video.status = "needsAccess";
+      }
+    }
   }
 
   loadedPlugins[context.pluginId] = data;
@@ -333,12 +339,18 @@ const onRendererDataCreated = (
 
 const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
   const importHelpers = createImportHelpers(serverPluginApi);
-  const { importPpt, importGoogleSlidesDeck, importPdf, importImages } =
-    createImporters(serverPluginApi, importHelpers);
+  const {
+    importPpt,
+    importGoogleSlidesDeck,
+    importPdf,
+    importImages,
+    fetchDriveVideos,
+  } = createImporters(serverPluginApi, importHelpers);
   const canvaRouter = createCanvaRouter(t, { serverPluginApi, importHelpers });
   const googleSlidesRouter = createGoogleSlidesRouter(t, {
     serverPluginApi,
     importGoogleSlidesDeck,
+    fetchDriveVideos,
   });
   const removeImportById = createRemoveImportById(serverPluginApi);
 

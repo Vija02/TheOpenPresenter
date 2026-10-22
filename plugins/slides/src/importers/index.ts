@@ -15,10 +15,14 @@ import type {
   PptImportData,
 } from "../types";
 import { createImageProcessor } from "./googleSlides/cacheGoogleSlideImage";
+import { createDriveVideoFetcher } from "./googleSlides/driveVideos";
 import { googleUrl } from "./googleSlides/oauth";
 import { processHtml } from "./googleSlides/processHtml";
 import { extractSlideData } from "./googleSlides/slideData/slideDataExtractor";
-import { buildSlideVideoDocs } from "./googleSlides/slideVideos";
+import {
+  buildSlideVideoDocs,
+  collectDriveVideos,
+} from "./googleSlides/slideVideos";
 import type { ImportHelpers } from "./helpers";
 import { convertPptToPdfViaOfficeOnline } from "./office/convertPptToPdf";
 import { fetchOfficeSlideshow } from "./office/fetchOfficeSlideshow";
@@ -73,6 +77,8 @@ export const createImporters = (
   serverPluginApi: ServerPluginApi,
   { getBaseImport, finalizeImport }: ImportHelpers,
 ) => {
+  const { fetchDriveVideos } = createDriveVideoFetcher(serverPluginApi);
+
   /**
    * Import a PowerPoint file, converting via Office Online.
    */
@@ -380,6 +386,7 @@ export const createImporters = (
         ? slideData.slides.map((slide) => slide.autoplayObjectDurationMs)
         : fileNames.map(() => 0);
       const slideVideoDocs = slideData ? buildSlideVideoDocs(slideData) : {};
+      const driveVideos = slideData ? collectDriveVideos(slideData) : [];
       const speakerNotes = slideData
         ? normalizeSpeakerNotes(
             slideData.slides.map((slide) =>
@@ -411,6 +418,18 @@ export const createImporters = (
             newImport.importId
           ]! as GoogleSlidesImportData
         ).slideVideoDocs = slideVideoDocs;
+        (
+          loadedPlugin.pluginData.imports[
+            newImport.importId
+          ]! as GoogleSlidesImportData
+        ).driveVideos = driveVideos;
+        if (slideData) {
+          (
+            loadedPlugin.pluginData.imports[
+              newImport.importId
+            ]! as GoogleSlidesImportData
+          ).slideSize = { width: slideData.width, height: slideData.height };
+        }
         loadedPlugin.pluginData.imports[newImport.importId]!.slideIds =
           slideIds;
         if (speakerNotes) {
@@ -442,6 +461,18 @@ export const createImporters = (
         },
         `Google Slides import completed in ${elapsed}ms`,
       );
+
+      if (driveVideos.length > 0) {
+        void fetchDriveVideos({
+          pluginId,
+          importId: newImport.importId,
+          token,
+          userId,
+          quiet: true,
+        }).catch((err) =>
+          log.warn({ err }, "Could not fetch Drive videos after import"),
+        );
+      }
 
       return { importId: newImport.importId };
     } catch (err) {
@@ -589,7 +620,13 @@ export const createImporters = (
     }
   };
 
-  return { importPpt, importGoogleSlidesDeck, importPdf, importImages };
+  return {
+    importPpt,
+    importGoogleSlidesDeck,
+    importPdf,
+    importImages,
+    fetchDriveVideos,
+  };
 };
 
 export type Importers = ReturnType<typeof createImporters>;

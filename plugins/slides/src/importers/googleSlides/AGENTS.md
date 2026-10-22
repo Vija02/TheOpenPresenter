@@ -213,4 +213,13 @@ slide size; `videoType` 1 is YouTube, 2 Drive. Each video sits on a black box
 so the embed's own player never shows through.
 
 - **YouTube** goes straight in at import.
-- **Drive** isn't played yet.
+- **Drive** can't be read with our `drive.file` token until the user picks the
+  file in the Google Picker (`view/Remote/DriveVideoAccess.tsx`, picker limited
+  to those file ids). Then `driveVideos.ts` downloads it via the Drive API,
+  uploads it as media and adds it to `slideVideoDocs`. Import tries once
+  quietly, which covers re-imports of videos picked before. Until then the
+  video's poster (`slide[13]`, by element id; already copied at import) covers
+  it.
+- Dead ends, measured: the Drive API says 404 for unpicked files; the embed's
+  own playback API (`workspacevideo-pa.clients6.google.com/v1/drive/media/{id}/playback`)
+  answers 403 "insufficient authentication scopes" to our token.
