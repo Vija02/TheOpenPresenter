@@ -101,19 +101,21 @@ export const renderPickPage = ({
     switchAccountUrl: string;
     /** Where the pick goes. Not this page's URL, which may be the callback */
     submitUrl: string;
+    /** Pick these Drive files (a deck's videos) instead of a presentation */
+    fileIds: string[] | null;
   };
 }) => `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Choose a presentation</title>
+<title>${config.fileIds ? "Choose the videos" : "Choose a presentation"}</title>
 <style>${baseStyle}</style>
 </head>
 <body>
 <main>
   <p id="status">Opening Google Drive…</p>
-  <p><button id="open" hidden>Choose a presentation</button></p>
+  <p><button id="open" hidden>${config.fileIds ? "Choose the videos" : "Choose a presentation"}</button></p>
   <p class="muted">
     Using ${escapeHtml(config.accountLabel)} ·
     <a href="${escapeHtml(config.switchAccountUrl)}">Use a different account</a>
@@ -128,15 +130,23 @@ export const renderPickPage = ({
 
     function setStatus(text) { statusEl.textContent = text; }
 
-    function submit(doc) {
+    function submit(docs) {
+      var doc = docs[0];
       done = true;
       openEl.hidden = true;
-      setStatus("Adding “" + (doc.name || "presentation") + "”…");
+      setStatus(
+        config.fileIds
+          ? "Giving access to " + docs.length + (docs.length === 1 ? " video…" : " videos…")
+          : "Adding “" + (doc.name || "presentation") + "”…",
+      );
       fetch(config.submitUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-top-csrf-protection": "1" },
         body: JSON.stringify({
-          presentationId: doc.id,
+          presentationId: config.fileIds ? undefined : doc.id,
+          fileIds: config.fileIds
+            ? docs.map(function (d) { return d.id; })
+            : undefined,
           name: doc.name || null,
           connectionId: config.connectionId,
           accessToken: config.connectionId ? undefined : config.accessToken,
@@ -159,17 +169,29 @@ export const renderPickPage = ({
 
     function showPicker() {
       var google = window.google;
-      var view = new google.picker.DocsView(google.picker.ViewId.PRESENTATIONS)
-        .setMimeTypes("application/vnd.google-apps.presentation");
-      var picker = new google.picker.PickerBuilder()
+      // Picking a file is what lets us read it, so a deck's videos are offered
+      // on their own, all selectable at once
+      var view = config.fileIds
+        ? new google.picker.DocsView(google.picker.ViewId.DOCS)
+            .setFileIds(config.fileIds.join(","))
+            .setMode(google.picker.DocsViewMode.LIST)
+        : new google.picker.DocsView(google.picker.ViewId.PRESENTATIONS)
+            .setMimeTypes("application/vnd.google-apps.presentation");
+      var builder = new google.picker.PickerBuilder()
         .setAppId(config.appId)
         .setOAuthToken(config.accessToken)
-        .addView(view)
+        .addView(view);
+      if (config.fileIds) {
+        builder = builder
+          .enableFeature(google.picker.Feature.MULTISELECT_ENABLED)
+          .setTitle("Select the videos to play");
+      }
+      var picker = builder
         .setCallback(function (data) {
           if (data.action === google.picker.Action.PICKED && data.docs && data.docs[0]) {
-            submit(data.docs[0]);
+            submit(data.docs);
           } else if (data.action === google.picker.Action.CANCEL && !done) {
-            setStatus("No presentation chosen.");
+            setStatus(config.fileIds ? "No video chosen." : "No presentation chosen.");
             openEl.hidden = false;
           }
         })
@@ -184,7 +206,7 @@ export const renderPickPage = ({
     script.nonce = ${safeJson(nonce)};
     script.onload = function () {
       window.gapi.load("picker", function () {
-        setStatus("Choose a presentation to add.");
+        setStatus(config.fileIds ? "Select the videos to play." : "Choose a presentation to add.");
         openEl.hidden = false;
         showPicker();
       });
