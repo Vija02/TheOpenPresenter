@@ -98,7 +98,10 @@ export const valtioVideoStateTarget = (mutableRendererData: {
   },
 });
 
-/** Callers are expected to already be inside `doc.transact()` */
+/**
+ * Pass the renderer's Y.Map. Callers are expected to already be inside
+ * `doc.transact()`
+ */
 export const yjsVideoStateTarget = (rendererData: {
   get: (key: any) => any;
   set: (key: any, value: any) => any;
@@ -112,6 +115,18 @@ export const yjsVideoStateTarget = (rendererData: {
       : (raw as LayoutVideoStates);
   },
   setVideoStates: (next) => {
-    rendererData.set(LAYOUT_VIDEO_STATES_KEY, next);
+    const YMap = rendererData.constructor as new () => {
+      set: (key: string, value: unknown) => unknown;
+    };
+    const states = new YMap();
+    for (const [key, state] of Object.entries(next)) {
+      const entry = new YMap();
+      for (const [field, value] of Object.entries(state)) {
+        // Yjs can't hold undefined
+        if (value !== undefined) entry.set(field, value);
+      }
+      states.set(key, entry);
+    }
+    rendererData.set(LAYOUT_VIDEO_STATES_KEY, states);
   },
 });
