@@ -6,7 +6,11 @@ import type {
   SlideInfo,
   SlideVideo,
 } from "../googleSlides/slideData/types";
-import { buildSlideVideoDocs } from "../googleSlides/slideVideos";
+import {
+  buildSlideVideoDocs,
+  collectDriveVideos,
+  withDriveVideo,
+} from "../googleSlides/slideVideos";
 
 const video = (overrides: Partial<SlideVideo> = {}): SlideVideo => ({
   videoId: "abc123",
@@ -24,7 +28,10 @@ const video = (overrides: Partial<SlideVideo> = {}): SlideVideo => ({
   ...overrides,
 });
 
-const slide = (videos: SlideVideo[]): SlideInfo => ({
+const slide = (
+  videos: SlideVideo[],
+  overrides: Partial<SlideInfo> = {},
+): SlideInfo => ({
   slideId: "s",
   slideIndex: 0,
   title: "",
@@ -40,6 +47,7 @@ const slide = (videos: SlideVideo[]): SlideInfo => ({
   clickDurationsMs: [],
   hasAutoplayObject: false,
   autoplayObjectDurationMs: 0,
+  ...overrides,
 });
 
 const presentation = (slides: SlideInfo[]): PresentationInfo => ({
@@ -76,12 +84,104 @@ describe("buildSlideVideoDocs", () => {
     });
   });
 
-  it("leaves out videos it can't play yet", () => {
+  it("covers Drive videos with their poster until they're downloaded", () => {
     const docs = buildSlideVideoDocs(
-      presentation([slide([video({ videoType: 2 })])]),
+      presentation([
+        slide([video({ videoType: 2 })], {
+          elementImageMap: {
+            g1_video: "/media/data/media_01m5dz8867enev8qavp0jry3ej.jpg",
+          },
+        }),
+        // No poster: a black box still hides the embed's error
+        slide([video({ videoType: 2 })]),
+      ]),
     );
 
-    expect(docs).toEqual({});
+    expect(docs["0"]!.elements.map((el) => el.id)).toEqual([
+      "g1_video-backdrop",
+      "g1_video-poster",
+    ]);
+    expect(docs["0"]!.elements[1]!.fill).toMatchObject({
+      type: "image",
+      src: { mediaId: "media_01m5dz8867enev8qavp0jry3ej", extension: "jpg" },
+    });
+    expect(docs["1"]!.elements.map((el) => el.id)).toEqual([
+      "g1_video-backdrop",
+    ]);
+  });
+});
+
+describe("Drive videos", () => {
+  const drive = presentation([
+    slide([]),
+    slide([video({ videoType: 2, videoId: "drive-1" })]),
+  ]);
+
+  it("tracks them as needing access, with their place on the slide", () => {
+    expect(collectDriveVideos(drive)).toEqual([
+      {
+        fileId: "drive-1",
+        title: "Welcome",
+        slideIndex: 1,
+        elementId: "g1_video",
+        rect: { x: 25, y: 25, w: 50, h: 50 },
+        status: "needsAccess",
+        error: null,
+      },
+    ]);
+  });
+
+  it("joins the slide's video doc once downloaded", () => {
+    const [driveVideo] = collectDriveVideos(drive);
+    const layoutVideo = {
+      id: "media_1",
+      url: "/media/data/media_1.mp4",
+      hlsMediaName: null,
+      thumbnailMediaName: null,
+      title: "Welcome",
+      duration: null,
+      thumbnailUrl: null,
+    };
+
+    const doc = withDriveVideo(undefined, drive, driveVideo!, layoutVideo);
+    expect(doc.fitMode).toBe("letterbox");
+    expect(doc.elements).toHaveLength(2);
+    expect(doc.elements[1]!.fill).toMatchObject({
+      type: "video",
+      playback: "once",
+      video: { url: "/media/data/media_1.mp4" },
+    });
+
+    // Fetching again replaces it rather than stacking a second copy
+    const again = withDriveVideo(doc, drive, driveVideo!, layoutVideo);
+    expect(again.elements).toHaveLength(2);
+  });
+
+  it("takes its poster's place", () => {
+    const deck = presentation([
+      slide([video({ videoType: 2, videoId: "drive-1" })], {
+        elementImageMap: {
+          g1_video: "/media/data/media_01m5dz8867enev8qavp0jry3ej.jpg",
+        },
+      }),
+    ]);
+    const [driveVideo] = collectDriveVideos(deck);
+    const covered = buildSlideVideoDocs(deck)["0"];
+
+    const doc = withDriveVideo(covered, deck, driveVideo!, {
+      id: "media_1",
+      url: "/media/data/media_1.mp4",
+      hlsMediaName: null,
+      thumbnailMediaName: null,
+      title: null,
+      duration: null,
+      thumbnailUrl: null,
+    });
+
+    expect(doc.elements.map((el) => el.id)).toEqual([
+      "g1_video-backdrop",
+      "g1_video",
+    ]);
   });
 });
 

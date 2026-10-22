@@ -3,6 +3,7 @@ import {
   ServerPluginApi,
   TRPCObject,
 } from "@repo/base-plugin/server";
+import { logger } from "@repo/observability";
 import z from "zod";
 
 import { loadedContext } from "../../loadedState";
@@ -31,9 +32,11 @@ export const createGoogleSlidesRouter = (
   {
     serverPluginApi,
     importGoogleSlidesDeck,
+    fetchDriveVideos,
   }: {
     serverPluginApi: ServerPluginApi;
     importGoogleSlidesDeck: Importers["importGoogleSlidesDeck"];
+    fetchDriveVideos: Importers["fetchDriveVideos"];
   },
 ) => {
   /** The scene's organization, if the caller is a member of it. */
@@ -243,6 +246,57 @@ export const createGoogleSlidesRouter = (
             userId,
             googleConnectionId: connectionId,
           });
+        },
+      ),
+
+    /** Copies a deck's Drive videos after the user picked them */
+    googleSlidesFetchVideos: t.procedure
+      .input(
+        z.object({
+          pluginId: z.string(),
+          importId: z.string(),
+          fileIds: z.array(z.string()).min(1),
+          connectionId: z.string().optional(),
+          token: z.string().optional(),
+        }),
+      )
+      .mutation(
+        async ({
+          input: { pluginId, importId, fileIds, connectionId, token },
+          ctx,
+        }) => {
+          const { organizationId, userId } = await requireMember(pluginId, ctx);
+
+          let accessToken = token;
+          if (connectionId) {
+            const mode = await resolveGoogleMode(
+              serverPluginApi,
+              organizationId,
+            );
+            if (mode.mode === "local") {
+              await requireOwnConnection(organizationId, userId, connectionId);
+            }
+            accessToken = (
+              await getGoogleAccessToken(
+                serverPluginApi,
+                organizationId,
+                connectionId,
+              )
+            ).accessToken;
+          }
+          if (!accessToken) {
+            throw new Error("Sign in to Google to give access to the videos.");
+          }
+
+          void fetchDriveVideos({
+            pluginId,
+            importId,
+            token: accessToken,
+            userId,
+            fileIds,
+          }).catch((err) =>
+            logger.warn({ err, pluginId, importId }, "Drive videos failed"),
+          );
         },
       ),
   };

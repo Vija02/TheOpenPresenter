@@ -24,6 +24,7 @@ import { usePluginAPI } from "../pluginApi";
 import { useAutoplay } from "../utils/useAutoplay";
 import CustomSlideEditorModal from "./CustomSlides/CustomSlideEditorModal";
 import { useCustomSlides } from "./CustomSlides/useCustomSlides";
+import { DriveVideoAccess } from "./DriveVideoAccess";
 import Landing from "./Landing";
 import PresenterView from "./PresenterView";
 import SettingsModal from "./SettingsModal";
@@ -118,6 +119,7 @@ const Remote = () => {
           }
           body={
             <div className="p-3 flex-1 min-w-0">
+              <DriveVideoAccess />
               <SlideGrid pluginAPI={pluginApi}>
                 <RemoteHandler
                   onCustomSlideEdit={setEditorTarget}
