@@ -1,0 +1,93 @@
+@reference "@repo/tailwind-config/index.css";
+
+.rt--sidebar-section {
+  @apply flex flex-col shrink-0 min-h-0 border-t-1 border-t-gray-100;
+
+  &:first-child {
+    @apply border-t-0;
+  }
+}
+
+.rt--sidebar-section--header {
+  @apply flex items-center gap-1 h-7 pr-1 shrink-0 select-none overflow-hidden hover:bg-gray-100;
+}
+
+.rt--sidebar-section--toggle {
+  @apply flex flex-1 min-w-0 items-center gap-1 h-full pl-1 cursor-pointer text-xs font-bold text-gray-900;
+
+  svg {
+    @apply size-3.5 shrink-0;
+  }
+
+  span {
+    @apply truncate;
+  }
+}
+
+.rt--sidebar-section--toggle__fit {
+  @apply flex-initial;
+}
+
+.rt--sidebar-section--actions {
+  @apply flex items-center shrink-0 ml-auto;
+
+  button {
+    @apply flex size-5 items-center justify-center rounded-sm text-gray-900 cursor-pointer transition-colors hover:bg-gray-200;
+  }
+
+  svg {
+    @apply size-3;
+  }
+}
+
+/*
+ * Revealed on hover like VS Code, but always there for touch. Hidden ones take
+ * no room, so the title only shortens while they're shown.
+ */
+@media (hover: hover) {
+  .rt--sidebar-section--actions {
+    @apply hidden;
+  }
+
+  .rt--sidebar-section:hover .rt--sidebar-section--actions,
+  .rt--sidebar-section:focus-within .rt--sidebar-section--actions {
+    @apply flex;
+  }
+}
+
+/* Slides open and closed by animating the body's one grid row */
+.rt--sidebar-section--body {
+  @apply grid min-h-0 transition-[grid-template-rows] duration-200 ease-out motion-reduce:transition-none;
+  grid-template-rows: 0fr;
+}
+
+.rt--sidebar-section__open > .rt--sidebar-section--body {
+  grid-template-rows: 1fr;
+}
+
+.rt--sidebar-section--body-inner {
+  @apply flex flex-col min-h-0 overflow-hidden;
+}
+
+/* Gives back its share of the space as it closes, rather than all at once */
+.rt--sidebar-section__grow {
+  @apply transition-[flex-grow] duration-200 ease-out motion-reduce:transition-none;
+  /* Auto basis keeps the header when closed; not 0 so the grow can animate */
+  flex: 0.0001 1 auto;
+}
+
+.rt--sidebar-section__grow.rt--sidebar-section__open {
+  flex-grow: 1;
+}
+
+.rt--sidebar-section__grow > .rt--sidebar-section--body {
+  @apply flex-1;
+}
+
+.rt--sidebar-section--chevron {
+  @apply transition-transform duration-200 ease-out motion-reduce:transition-none;
+}
+
+.rt--sidebar-section__open .rt--sidebar-section--chevron {
+  @apply rotate-90;
+}
