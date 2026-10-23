@@ -1,6 +1,7 @@
 import type { Locator, Page } from "@playwright/test";
 
 import { expect, test } from "../../../../../fixtures/screenFixture";
+import { openManageOutputs } from "../../../../../helpers/outputs";
 
 /**
  * Lyrics on a confidence monitor: a live content element showing the lyrics
@@ -76,7 +77,7 @@ const login = (e2eCommand: any, currentIndex = 0) =>
  */
 const placeLyrics = async (page: Page): Promise<Locator> => {
   await page.goto(`/app/${ORG_SLUG}/${PROJECT_SLUG}`);
-  await page.getByRole("button", { name: "Manage Outputs" }).click();
+  await openManageOutputs(page);
   await expect(
     page.getByRole("heading", { name: "Outputs", exact: true }),
   ).toBeVisible();
