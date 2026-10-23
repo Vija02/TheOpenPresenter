@@ -28,6 +28,11 @@ html {
   cursor: ew-resize;
 }
 
+/* Iframes swallow the pointer, which would stall a resize dragged over them */
+.react-draggable-transparent-selection iframe {
+  pointer-events: none;
+}
+
 .react-resizable-handle-w {
   top: 0;
   left: -3px;

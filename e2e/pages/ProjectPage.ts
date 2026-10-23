@@ -28,7 +28,10 @@ export class ProjectPage {
     public readonly context: BrowserContext,
   ) {
     this.newSceneButton = page.getByTestId("add-scene");
-    this.presentButton = page.getByRole("button", { name: "Present" });
+    // The top bar's; the sidebar has one too, under the scene list
+    this.presentButton = page
+      .getByRole("button", { name: "Present", exact: true })
+      .first();
   }
 
   async createPlugin(plugin: (typeof pluginsList)[number]) {
@@ -128,22 +131,16 @@ export class ProjectPage {
     await this.phoneQrUrl.waitFor({ state: "attached" });
   }
 
-  // --- Preview window ---
+  // --- Preview panel ---
 
   get previewToggleButton(): Locator {
-    // Both sidebars (web + mobile) are always mounted and hidden with CSS, so
-    // a CSS locator would match two buttons. Role locators skip anything
-    // display:none. `exact` matters too: name matching is substring by
-    // default, which would also hit "Close preview" once the window is open.
+    // The sidebar section's header. `exact` keeps it from matching other
+    // buttons that mention the preview.
     return this.page.getByRole("button", { name: "Preview", exact: true });
   }
 
-  get previewWindow(): Locator {
-    return this.page.getByTestId("preview-window");
-  }
-
-  get previewWindowHeader(): Locator {
-    return this.page.getByTestId("preview-window-header");
+  get previewPanel(): Locator {
+    return this.page.getByTestId("preview-panel");
   }
 
   get previewFrame(): Locator {
@@ -155,56 +152,35 @@ export class ProjectPage {
     return this.page.frameLocator('iframe[title="Renderer preview"]');
   }
 
-  get previewCloseButton(): Locator {
-    return this.page.getByRole("button", { name: "Close preview" });
-  }
-
   get previewMuteButton(): Locator {
     return this.page.getByRole("button", { name: /^(Mute|Unmute)$/ });
   }
 
-  get previewResizeGrip(): Locator {
-    return this.page.getByTitle("Resize");
+  /** The drag handle on the right edge of the desktop sidebar. */
+  get sidebarResizeHandle(): Locator {
+    return this.page.locator(
+      ".sidebar-resizable-container .react-resizable-handle-e",
+    );
   }
 
-  async openPreviewWindow() {
-    await this.previewToggleButton.click();
-    await this.previewWindow.waitFor();
-  }
-
-  /** Bounding box of the floating window, failing loudly if it isn't laid out. */
-  async previewWindowBox() {
-    const box = await this.previewWindow.boundingBox();
-    if (!box) throw new Error("Preview window has no bounding box");
+  /** Bounding box of the panel, failing loudly if it isn't laid out. */
+  async previewPanelBox() {
+    const box = await this.previewPanel.boundingBox();
+    if (!box) throw new Error("Preview panel has no bounding box");
     return box;
   }
 
-  /** Drags the window by its header using real pointer events. */
-  async dragPreviewWindowBy(dx: number, dy: number) {
-    const header = await this.previewWindowHeader.boundingBox();
-    if (!header) throw new Error("Preview window header has no bounding box");
+  /** Drags the desktop sidebar's right edge; positive widens it. */
+  async resizeSidebarBy(dx: number) {
+    const handle = await this.sidebarResizeHandle.boundingBox();
+    if (!handle) throw new Error("Sidebar resize handle has no bounding box");
 
-    const startX = header.x + header.width / 2;
-    const startY = header.y + header.height / 2;
+    const startX = handle.x + handle.width / 2;
+    const startY = handle.y + handle.height / 2;
 
     await this.page.mouse.move(startX, startY);
     await this.page.mouse.down();
     // Intermediate move: a single jump can be treated as no drag at all.
-    await this.page.mouse.move(startX + dx / 2, startY + dy / 2);
-    await this.page.mouse.move(startX + dx, startY + dy);
-    await this.page.mouse.up();
-  }
-
-  /** Drags the bottom-right grip, which resizes by width at a locked 16:9. */
-  async resizePreviewWindowBy(dx: number) {
-    const grip = await this.previewResizeGrip.boundingBox();
-    if (!grip) throw new Error("Resize grip has no bounding box");
-
-    const startX = grip.x + grip.width / 2;
-    const startY = grip.y + grip.height / 2;
-
-    await this.page.mouse.move(startX, startY);
-    await this.page.mouse.down();
     await this.page.mouse.move(startX + dx / 2, startY);
     await this.page.mouse.move(startX + dx, startY);
     await this.page.mouse.up();

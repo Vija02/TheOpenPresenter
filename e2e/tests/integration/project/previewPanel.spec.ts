@@ -21,7 +21,7 @@ const login = (e2eCommand: any) =>
     ],
   });
 
-test.describe("Preview window", () => {
+test.describe("Preview panel", () => {
   test.beforeEach(async ({ e2eCommand }) => {
     await e2eCommand.serverCommand("clearOrganizationBySlug", {
       slug: ORG_SLUG,
@@ -31,20 +31,17 @@ test.describe("Preview window", () => {
     });
   });
 
-  test("opens a muted renderer preview and closes again", async ({
+  test("is open by default and shows a muted renderer preview", async ({
     page,
     context,
     e2eCommand,
   }) => {
-
     await login(e2eCommand);
 
     const projectPage = new ProjectPage(page, context);
     await page.goto(`/app/${ORG_SLUG}/${PROJECT_SLUG}`);
 
-    await expect(projectPage.previewWindow).toBeHidden();
-
-    await projectPage.openPreviewWindow();
+    await expect(projectPage.previewPanel).toBeVisible();
 
     // preview=1 is what makes the renderer start silent and drop its own
     // fullscreen button, so it's the flag worth asserting on.
@@ -53,17 +50,53 @@ test.describe("Preview window", () => {
       new RegExp(`/render/${ORG_SLUG}/${PROJECT_SLUG}.*preview=1`),
     );
 
-    await projectPage.previewCloseButton.click();
-    await expect(projectPage.previewWindow).toBeHidden();
+    // The preview's own renderer must not pass for a real screen
+    await expect(
+      projectPage.previewFrameContent.getByText("Waiting for input..."),
+    ).toBeVisible();
+    await expect(page.getByTitle("Active screens")).toHaveText("0");
   });
 
-  test("starts muted and toggles", async ({ page, context, e2eCommand }) => {
-
+  test("collapses from its sidebar section and remembers it", async ({
+    page,
+    context,
+    e2eCommand,
+  }) => {
     await login(e2eCommand);
 
     const projectPage = new ProjectPage(page, context);
     await page.goto(`/app/${ORG_SLUG}/${PROJECT_SLUG}`);
-    await projectPage.openPreviewWindow();
+    await expect(projectPage.previewFrame).toBeVisible();
+
+    // On desktop, the section header is the toggle
+    await projectPage.previewToggleButton.click();
+    await expect(projectPage.previewToggleButton).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
+    // Nothing left running in the background either
+    await expect(projectPage.previewFrame).toHaveCount(0);
+
+    await page.reload();
+    await expect(projectPage.previewToggleButton).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
+    await expect(projectPage.previewFrame).toHaveCount(0);
+
+    await projectPage.previewToggleButton.click();
+    await expect(projectPage.previewFrame).toBeVisible();
+  });
+
+  test("starts muted and toggles", async ({ page, context, e2eCommand }) => {
+    await login(e2eCommand);
+
+    const projectPage = new ProjectPage(page, context);
+    await page.goto(`/app/${ORG_SLUG}/${PROJECT_SLUG}`);
+    await expect(projectPage.previewPanel).toBeVisible();
+
+    // Header actions only show while the section is hovered
+    await projectPage.previewPanel.hover();
 
     // The renderer installs its mute before any plugin runs, so the control
     // starts offering to unmute.
@@ -85,78 +118,58 @@ test.describe("Preview window", () => {
     );
   });
 
-  test("can be dragged by its header", async ({
+  test("sits at the bottom of the sidebar, under Present, and follows the sidebar's width", async ({
     page,
     context,
     e2eCommand,
   }) => {
-
+    await page.setViewportSize({ width: 1280, height: 800 });
     await login(e2eCommand);
 
     const projectPage = new ProjectPage(page, context);
     await page.goto(`/app/${ORG_SLUG}/${PROJECT_SLUG}`);
-    await projectPage.openPreviewWindow();
 
-    const before = await projectPage.previewWindowBox();
+    const before = await projectPage.previewPanelBox();
+    expect(Math.round(before.x)).toBeLessThan(10);
+    // Present sits under the scene list's Add, above the preview
+    const add = await page.getByTestId("add-scene").boundingBox();
+    const present = await page
+      .locator(".rt--sidebar-web-container")
+      .getByRole("button", { name: "Present", exact: true })
+      .boundingBox();
+    if (!add || !present) throw new Error("Add or Present has no bounding box");
+    expect(present.y).toBeGreaterThanOrEqual(add.y + add.height - 1);
+    expect(present.y + present.height).toBeLessThanOrEqual(before.y);
 
-    // Up and to the left: the window opens near the bottom-right corner, so
-    // this direction stays inside the viewport and clear of the clamp.
-    await projectPage.dragPreviewWindowBy(-120, -80);
+    await projectPage.resizeSidebarBy(200);
+    // Back over the preview: the iframe must not swallow the drag
+    await projectPage.resizeSidebarBy(-100);
 
-    const after = await projectPage.previewWindowBox();
+    const after = await projectPage.previewPanelBox();
+    expect(Math.round(after.width)).toBe(Math.round(before.width) + 100);
 
-    expect(Math.round(after.x)).toBeLessThan(Math.round(before.x));
-    expect(Math.round(after.y)).toBeLessThan(Math.round(before.y));
-    // Dragging must not resize it.
-    expect(Math.round(after.width)).toBe(Math.round(before.width));
-  });
-
-  test("resizes from the corner grip, keeping 16:9", async ({
-    page,
-    context,
-    e2eCommand,
-  }) => {
-
-    await login(e2eCommand);
-
-    const projectPage = new ProjectPage(page, context);
-    await page.goto(`/app/${ORG_SLUG}/${PROJECT_SLUG}`);
-    await projectPage.openPreviewWindow();
-
-    // Move it away from the edges first, so the resize isn't capped by the
-    // viewport before it has grown.
-    await projectPage.dragPreviewWindowBy(-260, -220);
-
-    const before = await projectPage.previewWindowBox();
-    await projectPage.resizePreviewWindowBy(120);
-    const after = await projectPage.previewWindowBox();
-
-    expect(after.width).toBeGreaterThan(before.width);
-
-    // Height is derived from width, so the body keeps its aspect ratio. The
-    // header is fixed height and excluded from the ratio.
     const frame = await projectPage.previewFrame.boundingBox();
     if (!frame) throw new Error("Preview frame has no bounding box");
     expect(frame.width / frame.height).toBeCloseTo(16 / 9, 1);
   });
 
-  test("shrinking is bounded by a minimum width", async ({
+  test("isn't shown on phones, along with the top bar's Present", async ({
     page,
     context,
     e2eCommand,
   }) => {
-
+    await page.setViewportSize({ width: 390, height: 844 });
     await login(e2eCommand);
 
     const projectPage = new ProjectPage(page, context);
     await page.goto(`/app/${ORG_SLUG}/${PROJECT_SLUG}`);
-    await projectPage.openPreviewWindow();
-
-    // Far more than the window's width, to push past the clamp.
-    await projectPage.resizePreviewWindowBy(-1000);
-
-    const box = await projectPage.previewWindowBox();
-    expect(box.width).toBeGreaterThanOrEqual(199);
+    // Only the sidebar's remains. Waited on first, so the checks below run
+    // once the page is up rather than passing before it loads
+    await expect(
+      page.getByRole("button", { name: "Present", exact: true }),
+    ).toHaveCount(1);
+    await expect(projectPage.previewFrame).toHaveCount(0);
+    await expect(projectPage.previewToggleButton).toHaveCount(0);
   });
 
   test("does not show the renderer's own fullscreen button inside", async ({
@@ -164,12 +177,10 @@ test.describe("Preview window", () => {
     context,
     e2eCommand,
   }) => {
-
     await login(e2eCommand);
 
     const projectPage = new ProjectPage(page, context);
     await page.goto(`/app/${ORG_SLUG}/${PROJECT_SLUG}`);
-    await projectPage.openPreviewWindow();
 
     // Prove the renderer really booted in there, so the absence below is
     // evidence of suppression rather than of an iframe that never loaded.

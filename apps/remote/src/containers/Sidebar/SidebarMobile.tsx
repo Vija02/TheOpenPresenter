@@ -1,26 +1,18 @@
-import { PluginRendererState } from "@repo/base-plugin";
+import { PluginRendererState, isScreenRenderer } from "@repo/base-plugin";
 import { useAwareness, useData } from "@repo/shared";
 import { Button, OverlayToggle } from "@repo/ui";
 import { cx } from "class-variance-authority";
 import { sortBy } from "lodash-es";
 import { useMemo } from "react";
 import { FaMicrophoneLines } from "react-icons/fa6";
-import {
-  MdCoPresent,
-  MdPictureInPictureAlt,
-  MdShare,
-  MdTune,
-  MdVolumeUp,
-} from "react-icons/md";
-import { RiRemoteControlLine } from "react-icons/ri";
+import { MdShare, MdTune, MdVolumeUp } from "react-icons/md";
+import { PiCircleNotchBold } from "react-icons/pi";
 import { VscAdd, VscEyeClosed } from "react-icons/vsc";
 import { useLocation } from "wouter";
 
-import { usePreviewWindow } from "../../contexts/previewWindow";
 import { useRendererSelection } from "../../contexts/rendererSelection";
 import { useNavigateWithParams } from "../../hooks/useNavigateWithParams";
 import { getSceneOwnershipStatus } from "../../util/sceneOwnership";
-import DebugDrawer from "./Debug/DebugDrawer";
 import { PresentButton } from "./PresentButton";
 import RendererManagementModal from "./RendererManagement/RendererManagementModal";
 import RendererSelector from "./RendererManagement/RendererSelector";
@@ -34,7 +26,6 @@ const SidebarMobile = () => {
   const navigate = useNavigateWithParams();
   const { awarenessData } = useAwareness();
   const { selectedRendererId } = useRendererSelection();
-  const { toggle: togglePreview } = usePreviewWindow();
 
   const ownedScenes = useMemo(
     () => data.renderer[selectedRendererId]?.ownedScenes,
@@ -67,7 +58,7 @@ const SidebarMobile = () => {
                 const isLoading = awarenessData.find(
                   (x) =>
                     x.user &&
-                    x.user.type === "renderer" &&
+                    isScreenRenderer(x.user) &&
                     x.user.state.find((y) => y.sceneId === id && y.isLoading),
                 );
 
@@ -87,7 +78,12 @@ const SidebarMobile = () => {
                   >
                     <div>
                       {isLoading && (
-                        <div className="rt--sidebar-mobile-loading-indicator" />
+                        <span
+                          className="rt--sidebar-mobile-loading-indicator"
+                          title="Loading on a screen"
+                        >
+                          <PiCircleNotchBold className="animate-spin" />
+                        </span>
                       )}
                       {data.renderer[selectedRendererId]?.currentScene ===
                         id && (
@@ -160,42 +156,9 @@ const SidebarMobile = () => {
           >
             <ShareQRModal />
           </OverlayToggle>
-          <Button
-            onClick={() => togglePreview("sidebar")}
-            variant="ghost"
-            size="mini"
-            title="Preview"
-          >
-            <MdPictureInPictureAlt />
-          </Button>
-        </div>
-        <div className="rt--sidebar-mobile-stats">
-          <div>
-            <p>
-              {awarenessData.filter((x) => x.user?.type === "remote").length}
-            </p>
-            <RiRemoteControlLine title="Active remote" />
-          </div>
-          <div>
-            <p>
-              {awarenessData.filter((x) => x.user?.type === "renderer").length}
-            </p>
-            <MdCoPresent title="Active screens" />
-          </div>
         </div>
         <div className="rt--sidebar-mobile-debug-section">
           <RendererWarning />
-          {import.meta.env.DEV && (
-            <OverlayToggle
-              toggler={({ onToggle }) => (
-                <Button onClick={onToggle} variant="muted" size="sm">
-                  Debug
-                </Button>
-              )}
-            >
-              <DebugDrawer />
-            </OverlayToggle>
-          )}
         </div>
       </div>
     </div>
