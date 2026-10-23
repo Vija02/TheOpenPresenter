@@ -117,8 +117,8 @@ export const NewScene = () => {
   };
 
   return (
-    <div className="p-4 prose max-w-none">
-      <h2 className="mt-2 mb-2">Add component</h2>
+    <div className="p-4 max-[399px]:pt-3 prose max-w-none">
+      <h2 className="mt-2 mb-2 max-[399px]:mt-0">Add component</h2>
       <p>Select a component below to add it to your project.</p>
 
       {/* stop the menu from stretching on big monitors */}
