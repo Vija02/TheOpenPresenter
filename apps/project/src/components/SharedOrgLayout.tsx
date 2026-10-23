@@ -202,7 +202,7 @@ export function SharedOrgLayout({
         <SidebarItem
           href={`/o/${slug}/screens`}
           icon={<PiTelevisionSimple />}
-          name="Screens"
+          name="Virtual Screens"
         />
         {data?.cloudEnabled && (
           <SidebarItem

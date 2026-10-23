@@ -31,7 +31,7 @@ test.describe("Create screen via UI", () => {
 
     await expect(page).toHaveURL(new RegExp(`/o/${ORG_SLUG}/screens$`));
     await expect(
-      page.getByRole("heading", { name: "Screens", exact: true }),
+      page.getByRole("heading", { name: "Virtual Screens", exact: true }),
     ).toBeVisible();
 
     // Empty state: click the "New screen" button inside the empty placeholder.
