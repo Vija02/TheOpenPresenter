@@ -1,0 +1,18 @@
+@reference "@repo/tailwind-config/index.css";
+@reference "@repo/tailwind-config/theme.css";
+
+.rt--preview-panel--frame-container {
+  @apply flex justify-center px-2 pb-2;
+}
+
+.rt--preview-panel--frame-wrapper {
+  @apply relative w-full;
+}
+
+.rt--preview-panel--frame {
+  @apply block w-full aspect-video border-0 bg-black;
+}
+
+.rt--preview-panel--output-picker {
+  @apply min-w-0 max-w-28 shrink truncate -ml-0.5 rounded-sm bg-transparent py-0.5 pr-1 text-xs font-bold text-gray-900 cursor-pointer hover:bg-gray-200;
+}
