@@ -12,6 +12,7 @@ import { useRendererSelection } from "../../contexts/rendererSelection";
 import { deleteScene } from "../../util/sceneActions";
 import ProjectSettingsModal from "../ProjectSettingsModal";
 import SceneSettingsModal from "../SceneSettingsModal";
+import { PresentButton } from "../Sidebar/PresentButton";
 import "./index.css";
 
 export const TopBar = () => {
@@ -104,6 +105,7 @@ export const TopBar = () => {
         )}
       </div>
       <div className="rt--top-bar--right">
+        <PresentButton size="sm" className="rt--top-bar--present" />
         {organizationType !== OrganizationType.Venue && (
           <Button
             size="sm"
