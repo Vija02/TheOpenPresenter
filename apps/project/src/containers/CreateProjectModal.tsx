@@ -12,7 +12,7 @@ import {
   useCreateProjectMutation,
   useCreateTagMutation,
 } from "@repo/graphql";
-import { globalState } from "@repo/lib";
+import { globalState, untitledProjectName } from "@repo/lib";
 import { logger } from "@repo/observability";
 import { captureEvent } from "@repo/observability/initAnalytics";
 import {
@@ -35,7 +35,6 @@ import {
   formatHumanReadableDate,
   useOverlayToggle,
 } from "@repo/ui";
-import { format } from "date-fns";
 import { generateSlug } from "random-word-slugs";
 import { useCallback, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -74,10 +73,7 @@ const CreateProjectModal = ({
   const [, createProject] = useCreateProjectMutation();
   const slug = useOrganizationSlug();
 
-  const namePlaceholder = useMemo(
-    () => `Untitled (${format(new Date(), "do MMM yyyy")})`,
-    [],
-  );
+  const namePlaceholder = useMemo(() => untitledProjectName(new Date()), []);
 
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
 
