@@ -22,7 +22,7 @@ body {
   }
 
   @media (orientation: landscape) and (max-height: 540px) {
-    @apply p-10 flex gap-10;
+    @apply p-10;
 
     p {
       @apply text-xl;
@@ -33,5 +33,24 @@ body {
     p {
       @apply text-lg;
     }
+  }
+
+  @media (max-height: 300px) {
+    @apply p-3;
+
+    p {
+      @apply text-sm;
+    }
+  }
+}
+
+/* Sized for the remote's small preview */
+@media (max-height: 300px) {
+  .ui--loading-full-wrapper {
+    scale: 0.5;
+  }
+
+  :has(> .ui--loading-full-wrapper) {
+    @apply pt-[15vh];
   }
 }
