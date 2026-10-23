@@ -19,6 +19,21 @@ const setupBiblePlugin = async ({
   ).toBeVisible();
 };
 
+/**
+ * Adds a passage from the search bar. A just-chosen translation loads its book
+ * index in the background and Add refuses until it has, so retry while the
+ * app says it is still loading.
+ */
+const addPassage = async (page: Page, reference: string) => {
+  await page.getByTestId("bible-search-input").fill(reference);
+  await expect(async () => {
+    await page.getByTestId("bible-search-add").click();
+    await expect(page.getByText(/Loading translation/)).toBeHidden({
+      timeout: 1000,
+    });
+  }).toPass();
+};
+
 const selectTranslation = async (projectPage: ProjectPage, name: string) => {
   const settings = projectPage.page.getByRole("dialog", {
     name: "Bible Settings",
@@ -65,8 +80,7 @@ test.describe.serial("Bible Plugin", () => {
   }) => {
     await setupBiblePlugin({ loginAndGoToProject, projectPage });
 
-    await page.getByTestId("bible-search-input").fill("John 3:16");
-    await page.getByTestId("bible-search-add").click();
+    await addPassage(page, "John 3:16");
 
     await expect(page.getByText("John 3:16").first()).toBeVisible();
     await expect(
@@ -119,14 +133,12 @@ test.describe.serial("Bible Plugin", () => {
   }) => {
     await setupBiblePlugin({ loginAndGoToProject, projectPage });
 
-    await page.getByTestId("bible-search-input").fill("John 3:16");
-    await page.getByTestId("bible-search-add").click();
+    await addPassage(page, "John 3:16");
     await expect(page.getByTestId("slide-container").first()).toContainText(
       "For God so loved the world",
     );
 
-    await page.getByTestId("bible-search-input").fill("John 3:17");
-    await page.getByTestId("bible-search-add").click();
+    await addPassage(page, "John 3:17");
 
     const passages = page.getByTestId("slide-container");
     await expect(passages.first()).toContainText("John 3:16");
@@ -192,8 +204,7 @@ test.describe.serial("Bible Plugin", () => {
 
     await expect(settings).toBeHidden();
 
-    await page.getByTestId("bible-search-input").fill("John 3:16");
-    await page.getByTestId("bible-search-add").click();
+    await addPassage(page, "John 3:16");
 
     await expect(page.getByText("John 3:16").first()).toBeVisible();
     await expect(page.getByText("World English Bible").first()).toBeVisible();
@@ -241,8 +252,7 @@ test.describe.serial("Bible Plugin", () => {
     await settings.getByRole("button", { name: "Save" }).click();
     await expect(settings).toBeHidden();
 
-    await page.getByTestId("bible-search-input").fill("John 3:16");
-    await page.getByTestId("bible-search-add").click();
+    await addPassage(page, "John 3:16");
 
     await expect(page.getByText("John 3:16").first()).toBeVisible();
     await expect(page.getByText("E2E Test Bible").first()).toBeVisible();
@@ -281,8 +291,7 @@ test.describe.serial("Bible Plugin", () => {
     await settings.getByRole("button", { name: "Save" }).click();
     await expect(settings).toBeHidden();
 
-    await page.getByTestId("bible-search-input").fill("John 3:16");
-    await page.getByTestId("bible-search-add").click();
+    await addPassage(page, "John 3:16");
 
     await expect(page.getByText("John 3:16").first()).toBeVisible();
     await expect(page.getByText(catalogName).first()).toBeVisible();
@@ -343,8 +352,7 @@ test.describe("Bible Plugin - public access", () => {
         page.getByText("Add a passage to get started"),
       ).toBeVisible();
 
-      await page.getByTestId("bible-search-input").fill("John 3:16");
-      await page.getByTestId("bible-search-add").click();
+      await addPassage(page, "John 3:16");
       await expect(page.getByTestId("slide-container").first()).toContainText(
         "For God so loved the world",
       );
