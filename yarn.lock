@@ -9866,6 +9866,7 @@ __metadata:
     "@repo/typescript-config": "npm:*"
     "@types/loadjs": "npm:^4"
     concurrently: "npm:^9.1.2"
+    date-fns: "npm:^4.1.0"
     fast-deep-equal: "npm:^3.1.3"
     graphql: "npm:^15.9.0"
     ipaddr.js: "npm:^2.4.0"
@@ -10540,6 +10541,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@repo/remote@workspace:apps/remote"
   dependencies:
+    "@dnd-kit/core": "npm:^6.3.1"
+    "@dnd-kit/sortable": "npm:^10.0.0"
+    "@dnd-kit/utilities": "npm:^3.2.2"
     "@hookform/resolvers": "npm:^5.1.1"
     "@repo/base-plugin": "npm:*"
     "@repo/desktop-bridge": "npm:*"
