@@ -14,10 +14,18 @@ import {
   useSetExistingProjectToScreenMutation,
 } from "@repo/graphql";
 import { globalState } from "@repo/lib";
-import { Button, OverlayToggle, PopConfirm } from "@repo/ui";
+import {
+  Button,
+  OverlayToggle,
+  PopConfirm,
+  Popover,
+  PopoverContent,
+  PopoverMenuItem,
+  PopoverTrigger,
+} from "@repo/ui";
 import { useCallback, useMemo } from "react";
 import { FaFileImport, FaPlus } from "react-icons/fa";
-import { VscEdit, VscTrash } from "react-icons/vsc";
+import { VscChevronDown, VscEdit, VscTrash } from "react-icons/vsc";
 import { toast } from "react-toastify";
 
 import "./index.css";
@@ -79,34 +87,59 @@ const OrganizationPage = () => {
       <div className="flex items-center justify-between mb-3">
         <h1 className="text-2xl font-bold mb-0">Projects</h1>
         <div className="stack-row">
-          <OverlayToggle
-            toggler={({ onToggle }) => (
-              <Button variant="success" size="sm" onClick={onToggle}>
-                <FaPlus />
-                New
-              </Button>
-            )}
-          >
-            <CreateProjectModal
-              organizationId={data?.organizationBySlug?.id}
-              categories={data?.organizationBySlug?.categories.nodes ?? []}
-            />
-          </OverlayToggle>
-          <OverlayToggle
-            toggler={({ onToggle }) => (
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex gap-2"
-                onClick={onToggle}
-              >
-                <FaFileImport />
-                Import
-              </Button>
-            )}
-          >
-            <ImportProjectModal organizationId={data?.organizationBySlug?.id} />
-          </OverlayToggle>
+          <div className="flex">
+            <OverlayToggle
+              toggler={({ onToggle }) => (
+                <Button
+                  variant="success"
+                  size="sm"
+                  className="rounded-r-none"
+                  onClick={onToggle}
+                >
+                  <FaPlus />
+                  New
+                </Button>
+              )}
+            >
+              <CreateProjectModal
+                organizationId={data?.organizationBySlug?.id}
+                categories={data?.organizationBySlug?.categories.nodes ?? []}
+              />
+            </OverlayToggle>
+            <OverlayToggle
+              toggler={({ onToggle: openImport }) => (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="success"
+                      size="sm"
+                      className="rounded-l-none border-l border-l-white/30 px-2"
+                      aria-label="More ways to add a project"
+                    >
+                      <VscChevronDown />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    align="end"
+                    hideArrow
+                    hideCloseButton
+                    className="w-64 p-1"
+                  >
+                    <PopoverMenuItem
+                      label="Import project"
+                      description="From an exported .top file"
+                      icon={<FaFileImport />}
+                      onClick={openImport}
+                    />
+                  </PopoverContent>
+                </Popover>
+              )}
+            >
+              <ImportProjectModal
+                organizationId={data?.organizationBySlug?.id}
+              />
+            </OverlayToggle>
+          </div>
         </div>
       </div>
 
