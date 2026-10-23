@@ -47,6 +47,9 @@ export const ProjectCard = ({
 }: ProjectCardProps) => {
   const assignableScreens = onAssignToScreen ? (screens ?? []) : [];
   const hasMenu = !!renderHref || !!onDuplicate || assignableScreens.length > 0;
+  const cloudIcon = project.cloudConnectionId && (
+    <IoCloudDoneOutline className="shrink-0" />
+  );
 
   return (
     <div
@@ -56,26 +59,33 @@ export const ProjectCard = ({
       data-testid="project-card"
     >
       <div className="flex items-center gap-2 justify-between sm:justify-start">
-        {project.cloudConnectionId && <IoCloudDoneOutline />}
         <Link
           href={linkHref}
           onClick={onLinkClick}
           className="project--project-card-main-link"
         >
-          {project.targetDate && (
-            <DateDisplay
-              date={fromProjectDateValue(project.targetDate)}
-              formatToken={PROJECT_DATE_FORMAT}
-              className="text-sm font-bold sm:font-medium"
-            />
+          {project.targetDate ? (
+            <>
+              <div className="flex items-center gap-1.5">
+                <DateDisplay
+                  date={fromProjectDateValue(project.targetDate)}
+                  formatToken={PROJECT_DATE_FORMAT}
+                  className="text-sm font-bold sm:font-medium"
+                />
+                {cloudIcon}
+              </div>
+              <p className="text-xs">{project.name}</p>
+            </>
+          ) : (
+            <div className="flex items-center gap-1.5">
+              <p className="text-sm">
+                {project.name !== ""
+                  ? project.name
+                  : untitledProjectName(project.createdAt)}
+              </p>
+              {cloudIcon}
+            </div>
           )}
-          <p className={`${project.targetDate ? "text-xs" : "text-sm"}`}>
-            {project.name !== ""
-              ? project.name
-              : project.targetDate
-                ? ""
-                : untitledProjectName(project.createdAt)}
-          </p>
           <p className="text-xs text-tertiary">{project.category?.name}</p>
         </Link>
         <div className="flex">
