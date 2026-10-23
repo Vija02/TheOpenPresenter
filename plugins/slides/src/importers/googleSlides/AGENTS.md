@@ -252,12 +252,12 @@ on a slide shown as an image, where there are no clicks, every video plays on
 entry. Trim is fields 5 and 6 of the video array, in ms (0/null = none);
 parsed, not yet applied.
 
-**The embed's own video never ends** (measured with
-`tools/googleSlides/probe-embed.js`, see embed-capture.md). In our renderer
-it can't load, so a play step is a build whose animation never finishes, and
-§1's rule applies: the next press only finishes it. Unhandled, that cost one
-extra press per on-click or automatic video, and the tracker (which took
-Google's nominal 1s) fell behind: a desync on every deck with videos.
+**The embed's own video never ends** (measured, see embed-capture.md). In our
+renderer it can't load, so a play step is a build whose animation never
+finishes, and §1's rule applies: the next press only finishes it. Unhandled,
+that cost one extra press per on-click or automatic video, and the tracker
+(which took Google's nominal 1s) fell behind: a desync on every deck with
+videos.
 
 We keep presses to what an operator expects (play, then move on) and absorb
 the quirk instead: the renderer finishes the embed's video as soon as its step

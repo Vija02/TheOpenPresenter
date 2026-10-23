@@ -112,9 +112,10 @@ is `view/Remote/PresenterView/capture/capturePlan.ts`.
 
 Measured on a deck with a Drive video set to play on click (1), a YouTube
 video set to play automatically (2), a Drive video set to play manually (3)
-and a plain slide (4), with `tools/googleSlides/probe-embed.js`, presses 2.5s
-apart. The embed's video player shows an error from the moment each slide
-appears (`docs-video-erroroverlaycomponent`): it never plays.
+and a plain slide (4), pressing keys into the embed 2.5s apart and reading the
+slide under its video player. The embed's video player shows an error from the
+moment each slide appears (`docs-video-erroroverlaycomponent`): it never
+plays.
 
 | Press | Slide | Changed on screen |
 | ----- | ----- | ----------------- |
@@ -135,4 +136,3 @@ appears (`docs-video-erroroverlaycomponent`): it never plays.
   for any build still playing. Backwards nothing is replayed: the existing
   rules hold as they are.
 - "Play manually" has no step in the embed at all (R6).
-
