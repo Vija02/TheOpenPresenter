@@ -1,9 +1,11 @@
+import { isScreenRenderer } from "@repo/base-plugin";
 import { captureEvent } from "@repo/observability/initAnalytics";
 import { useAwareness } from "@repo/shared";
 import { useEffect, useRef } from "react";
 import { toast } from "react-toastify";
 
-import { previewWindowStore } from "../contexts/previewWindow";
+import { previewPanelStore } from "../contexts/previewPanel";
+import { useIsMobile } from "./useIsMobile";
 
 const ATTEMPT_COUNT = 3;
 const ATTEMPT_WINDOW_MS = 5000;
@@ -19,9 +21,11 @@ export const useNoOutputHint = () => {
   const { awarenessData } = useAwareness();
 
   const hasRendererRef = useRef(false);
-  hasRendererRef.current = awarenessData.some(
-    (x) => x.user?.type === "renderer",
-  );
+  hasRendererRef.current = awarenessData.some((x) => isScreenRenderer(x.user));
+
+  // The hint is opening the preview, which phones don't have
+  const isMobileRef = useRef(false);
+  isMobileRef.current = useIsMobile();
 
   useEffect(() => {
     let lastSlide: Element | null = null;
@@ -29,7 +33,7 @@ export const useNoOutputHint = () => {
     let hasHinted = false;
 
     const onClick = (event: MouseEvent) => {
-      if (hasHinted) return;
+      if (hasHinted || isMobileRef.current) return;
 
       const target = event.target;
       if (!(target instanceof Element)) return;
@@ -37,7 +41,7 @@ export const useNoOutputHint = () => {
       const slide = target.closest(SLIDE_SELECTOR);
       if (!slide) return;
 
-      const isPreviewOpen = previewWindowStore.getState().isOpen;
+      const isPreviewOpen = previewPanelStore.getState().isOpen;
       if (hasRendererRef.current || isPreviewOpen) {
         attempts = [];
         return;
@@ -64,7 +68,7 @@ export const useNoOutputHint = () => {
       hasHinted = true;
       attempts = [];
       captureEvent("no_output_hint_shown", { click_count: ATTEMPT_COUNT });
-      previewWindowStore.getState().open("no_output_hint");
+      previewPanelStore.getState().open("no_output_hint");
       toast.info(
         "Nothing is on a screen yet. This preview shows what your audience would see. Hit Present when you're ready.",
       );

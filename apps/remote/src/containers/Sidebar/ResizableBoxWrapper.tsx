@@ -10,7 +10,7 @@ export const ResizableBoxWrapper = ({
 }) => {
   const key = useInitialLoad();
 
-  const [sidebarWidth, setSidebarWidth] = useState(200);
+  const [sidebarWidth, setSidebarWidth] = useState(280);
 
   const onResize = useCallback(
     (e: React.SyntheticEvent<Element, Event>, data: ResizeCallbackData) => {

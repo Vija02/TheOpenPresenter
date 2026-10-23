@@ -23,6 +23,8 @@ query RendererBasePlugin($orgSlug: String!, $projectSlug: String!) {
         id
         name
         isPublic
+        createdAt
+        targetDate
       }
     }
   }
@@ -33,6 +35,8 @@ query RendererBasePlugin($orgSlug: String!, $projectSlug: String!) {
       name
       isPublic
       organizationId
+      createdAt
+      targetDate
     }
   }
 }

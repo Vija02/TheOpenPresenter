@@ -6,7 +6,7 @@ import { useMemo } from "react";
 import { useRendererSelection } from "../../../contexts/rendererSelection";
 import { getSceneOwnershipStatus } from "../../../util/sceneOwnership";
 
-const RendererSelector = () => {
+const RendererSelector = ({ className }: { className?: string }) => {
   const data = useData();
   const { selectedRendererId, setSelectedRendererId } = useRendererSelection();
 
@@ -33,7 +33,7 @@ const RendererSelector = () => {
   }
 
   return (
-    <div className="flex gap-1">
+    <div className={cx("flex gap-1", className)}>
       {rendererIdsWithScenes.map((rendererId) => (
         <Button
           key={rendererId}
