@@ -200,12 +200,14 @@ async function runCommand(
   payload: { [key: string]: any },
 ): Promise<object | null> {
   if (command === "clearTestUsers") {
-    await rootPgPool.query(
+    await deleteTestRows(
+      rootPgPool,
       "delete from app_public.users where username like 'testuser%'",
     );
     return { success: true };
   } else if (command === "clearTestOrganizations") {
-    await rootPgPool.query(
+    await deleteTestRows(
+      rootPgPool,
       "delete from app_public.organizations where slug like 'test%'",
     );
     return { success: true };
@@ -273,7 +275,8 @@ async function runCommand(
         "clearOrganizationBySlug requires a slug starting with 'test'",
       );
     }
-    await rootPgPool.query(
+    await deleteTestRows(
+      rootPgPool,
       "delete from app_public.organizations where slug = $1",
       [slug],
     );
@@ -322,9 +325,11 @@ async function runCommand(
         "clearUserByUsername requires a username starting with 'testuser'",
       );
     }
-    await rootPgPool.query("delete from app_public.users where username = $1", [
-      username,
-    ]);
+    await deleteTestRows(
+      rootPgPool,
+      "delete from app_public.users where username = $1",
+      [username],
+    );
     return { success: true };
   } else if (command === "clearOrganizationsBySlugPrefix") {
     const { prefix } = payload || {};
@@ -333,7 +338,8 @@ async function runCommand(
         "clearOrganizationsBySlugPrefix requires a prefix starting with 'test'",
       );
     }
-    await rootPgPool.query(
+    await deleteTestRows(
+      rootPgPool,
       "delete from app_public.organizations where slug like $1",
       [`${prefix}%`],
     );
@@ -875,6 +881,35 @@ async function runCommand(
     };
   } else {
     throw new Error(`Command '${command}' not understood.`);
+  }
+}
+
+const TEST_ROWS_LOCK_KEY = 4_281_517;
+
+/**
+ * Deleting users and deleting organizations cascade into the same membership
+ * rows, so two of these running at once (a spec clearing both in a
+ * Promise.all, or two workers) can deadlock and leave the rows behind. A
+ * shared advisory lock makes them take turns.
+ */
+async function deleteTestRows(
+  rootPgPool: Pool,
+  sql: string,
+  params: unknown[] = [],
+) {
+  const client = await rootPgPool.connect();
+  try {
+    await client.query("begin");
+    await client.query("select pg_advisory_xact_lock($1)", [
+      TEST_ROWS_LOCK_KEY,
+    ]);
+    await client.query(sql, params);
+    await client.query("commit");
+  } catch (e) {
+    await client.query("rollback");
+    throw e;
+  } finally {
+    client.release();
   }
 }
 

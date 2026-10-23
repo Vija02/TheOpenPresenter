@@ -57,11 +57,14 @@ export class E2ECommandAPI {
       owner?: boolean;
     }[];
   }) {
-    await this.page.goto(
+    const res = await this.page.goto(
       `/E2EServerCommand?command=login${
         payload ? `&payload=${encodeURIComponent(JSON.stringify(payload))}` : ""
       }`,
     );
+    if (res && res.status() >= 500) {
+      throw new Error(`login failed (${res.status()}): ${await res.text()}`);
+    }
   }
 
   /**
@@ -326,6 +329,12 @@ export class E2ECommandAPI {
       }`,
     );
 
+    // Fail here rather than letting the test timeout
+    if (!res.ok()) {
+      throw new Error(
+        `serverCommand "${command}" failed (${res.status()}): ${await res.text()}`,
+      );
+    }
     return res.json();
   }
 

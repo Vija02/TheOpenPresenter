@@ -161,9 +161,11 @@ test.describe("Cloud Sync", () => {
     await cloudOrganizationPage.projectCardEditButtonNth(0).click();
     await cloudOrganizationPage.projectEditModalTagsRemove(0).click();
     await cloudOrganizationPage.projectEditModalSaveButton.click();
+    // Scoped to the cards: the edit modal's own tag chip also reads "Tag 2"
+    // until it has finished closing.
     await expect(
-      cloudOrganizationPage.page.getByText("Tag 2"),
-    ).not.toBeInViewport();
+      cloudOrganizationPage.projectCards.getByText("Tag 2"),
+    ).toHaveCount(0);
 
     await cloudPage.startSyncButton.click();
     // TODO: Better way to wait until sync is done
