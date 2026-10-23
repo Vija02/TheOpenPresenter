@@ -107,3 +107,32 @@ is `view/Remote/PresenterView/capture/capturePlan.ts`.
   every slide defines `clipPath#p.0`-style ids that would clash.
 - A capture embed must stay inside the viewport and painted (opacity 0 is fine)
   or the browser may throttle its timers.
+
+## Videos
+
+Measured on a deck with a Drive video set to play on click (1), a YouTube
+video set to play automatically (2), a Drive video set to play manually (3)
+and a plain slide (4), with `tools/googleSlides/probe-embed.js`, presses 2.5s
+apart. The embed's video player shows an error from the moment each slide
+appears (`docs-video-erroroverlaycomponent`): it never plays.
+
+| Press | Slide | Changed on screen |
+| ----- | ----- | ----------------- |
+| go 1  | 1     | -                 |
+| R1    | 1     | no (plays video)  |
+| R2    | 1     | no (finishes it)  |
+| R3    | 2     | yes               |
+| R4    | 2     | no (finishes it)  |
+| R5    | 3     | yes               |
+| R6    | 4     | yes               |
+| L1    | 3     | yes               |
+| L2    | 2     | yes               |
+| L3    | 2     | no (`-1`)         |
+| L4    | 1     | yes               |
+| L5    | 1     | no (build off)    |
+
+- A video's play step never ends, so the press after it only finishes it, as
+  for any build still playing. Backwards nothing is replayed: the existing
+  rules hold as they are.
+- "Play manually" has no step in the embed at all (R6).
+

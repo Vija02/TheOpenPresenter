@@ -21,10 +21,16 @@ type UseIframeSyncArgs = {
   transitionEndsAt: number;
   /** Controller's timestamp for the last key press (epoch ms, server clock). */
   lastClickTimestamp: number;
+  videoFinishAt?: (
+    slideIndex: number,
+    clickCount: number,
+  ) => "right" | "rightLeft" | null;
 };
 
 // Spacing between arrow-key presses when a jump fires several in a row
 const STEP_MS = 50;
+// After a step has started, before finishing the video it plays
+const FINISH_DELAY_MS = 100;
 
 export const useIframeSync = ({
   ref,
@@ -34,6 +40,7 @@ export const useIframeSync = ({
   targetFlatPosition,
   transitionEndsAt,
   lastClickTimestamp,
+  videoFinishAt,
 }: UseIframeSyncArgs) => {
   const [localFlatPosition, setLocalFlatPosition] = useState(-1);
   const [initialized, setInitialized] = useState(false);
@@ -49,10 +56,41 @@ export const useIframeSync = ({
   // clickCount -1 (the autoplay-rewind sub-step) shares a flat position with 0.
   const localClickCountRef = useRef(0);
 
+  // Read through a ref, so a new function doesn't re-run the sync
+  const videoFinishAtRef = useRef(videoFinishAt);
+  videoFinishAtRef.current = videoFinishAt;
+
+  // The keys that will finish a video the embed just started
+  const finishTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cancelFinish = useCallback(() => {
+    if (finishTimerRef.current) clearTimeout(finishTimerRef.current);
+    finishTimerRef.current = null;
+  }, []);
+  const scheduleFinish = useCallback(
+    (slideIndex: number, clickCount: number, afterMs: number) => {
+      cancelFinish();
+      const keys = videoFinishAtRef.current?.(slideIndex, clickCount);
+      if (!keys) return;
+      finishTimerRef.current = setTimeout(() => {
+        finishTimerRef.current = null;
+        ref.current?.next();
+        if (keys === "rightLeft") {
+          finishTimerRef.current = setTimeout(() => {
+            finishTimerRef.current = null;
+            ref.current?.prev();
+          }, STEP_MS);
+        }
+      }, afterMs + FINISH_DELAY_MS);
+    },
+    [cancelFinish, ref],
+  );
+  useEffect(() => cancelFinish, [cancelFinish]);
+
   // Land at an arbitrary position: goToSlide lands on click count 0, then step to the
   // target click count. Negative click count is the autoplay-rewind sub-step.
   const jumpToPosition = useCallback(
     (slideIndex: number, clickCount: number) => {
+      cancelFinish();
       ref.current?.goToSlide(slideIndex);
       if (clickCount < 0) {
         for (let i = 0; i < -clickCount; i++) {
@@ -62,9 +100,10 @@ export const useIframeSync = ({
         for (let i = 0; i < clickCount; i++) {
           setTimeout(() => ref.current?.next(), STEP_MS * (i + 1));
         }
+        scheduleFinish(slideIndex, clickCount, STEP_MS * (clickCount + 1));
       }
     },
-    [ref],
+    [ref, cancelFinish, scheduleFinish],
   );
 
   // Initialize once loaded
@@ -92,6 +131,7 @@ export const useIframeSync = ({
     // Deck not active. Forget our position so re-entry re-jumps cleanly.
     if (targetSlideIndex < 0 || targetFlatPosition < 0) {
       if (localFlatPosition !== -1) {
+        cancelFinish();
         setLocalFlatPosition(-1);
         boundaryEndsAtRef.current = 0;
         localClickCountRef.current = 0;
@@ -105,10 +145,13 @@ export const useIframeSync = ({
       // Autoplay-rewind sub-step (0 <-> -1): invisible to the flat delta, so
       // drive it with a single arrow key.
       if (targetClickCount !== localClickCountRef.current) {
+        cancelFinish();
         if (targetClickCount < localClickCountRef.current) {
           ref.current?.prev();
         } else {
           ref.current?.next();
+          // Plays the automatic objects again, a video among them maybe
+          scheduleFinish(targetSlideIndex, targetClickCount, STEP_MS);
         }
         localClickCountRef.current = targetClickCount;
         boundaryEndsAtRef.current = 0;
@@ -123,10 +166,12 @@ export const useIframeSync = ({
         Date.now() < boundaryEndsAtRef.current
       ) {
         boundaryEndsAtRef.current = 0;
+        cancelFinish();
         if (boundarySkipKeyRef.current === "prev") {
           ref.current?.prev();
         } else {
           ref.current?.next();
+          scheduleFinish(targetSlideIndex, targetClickCount, 0);
         }
       }
       return;
@@ -139,6 +184,7 @@ export const useIframeSync = ({
       jumpToPosition(targetSlideIndex, targetClickCount);
       boundaryEndsAtRef.current = 0;
     } else {
+      cancelFinish();
       if (delta === 1) {
         ref.current?.next();
       } else {
@@ -147,6 +193,15 @@ export const useIframeSync = ({
       // Only slide transitions have a window going backwards: builds are
       // removed instantly, and the controller closes the window for them
       const durationMs = transitionEndsAt - lastClickTimestamp;
+      // Going back doesn't replay a video; going forward may start one. Its
+      // step takes no time, but a transition before it must play out first
+      if (delta === 1) {
+        scheduleFinish(
+          targetSlideIndex,
+          targetClickCount,
+          Math.max(0, durationMs),
+        );
+      }
       boundaryEndsAtRef.current = durationMs > 0 ? Date.now() + durationMs : 0;
       boundarySkipKeyRef.current = delta === 1 ? "next" : "prev";
     }
@@ -163,5 +218,7 @@ export const useIframeSync = ({
     localFlatPosition,
     ref,
     jumpToPosition,
+    cancelFinish,
+    scheduleFinish,
   ]);
 };

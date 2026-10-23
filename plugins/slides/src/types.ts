@@ -106,10 +106,27 @@ export interface GoogleSlidesImportData extends BaseImportData {
   slideAutoplayDurations?: number[];
   /** The slide's videos, drawn over it as a layout doc */
   slideVideoDocs?: Record<string, LayoutDoc>;
+  /** Steps of the slides with videos, keyed by local slide index */
+  slideVideos?: Record<string, SlideVideoSteps>;
   /** Slide size, in the units Google positions videos in */
   slideSize?: { width: number; height: number };
   /** Drive videos on the slides. Each joins `slideVideoDocs` once downloaded */
   driveVideos?: DriveSlideVideo[];
+}
+
+export interface SlideVideoSteps {
+  /**
+   * The embed's own steps on the slide. `slideClickCounts` is what we navigate
+   * by, and adds one step per "Play (manually)" video after these, which the
+   * embed knows nothing about
+   */
+  embedClicks: number;
+  /**
+   * The step each video starts on, by element id: 0 on entering the slide
+   * ("Play automatically"), up to `embedClicks` for "Play on click", past it
+   * for "Play manually"
+   */
+  startClicks: Record<string, number>;
 }
 
 /**

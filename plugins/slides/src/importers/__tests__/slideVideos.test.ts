@@ -47,6 +47,8 @@ const slide = (
   clickDurationsMs: [],
   hasAutoplayObject: false,
   autoplayObjectDurationMs: 0,
+  videoClicks: {},
+  autoplayVideoIds: [],
   ...overrides,
 });
 
@@ -156,7 +158,34 @@ describe("Drive videos", () => {
     const again = withDriveVideo(doc, drive, driveVideo!, layoutVideo);
     expect(again.elements).toHaveLength(2);
   });
+});
 
+describe("video bounds in docData", () => {
+  it("are two corners, not a size", () => {
+    // Measured on a real deck: a centred 9:16 video
+    const videoArray = Array.from({ length: 19 }, () => null as unknown);
+    videoArray[0] = "drive-1";
+    videoArray[1] = 2;
+    videoArray[2] = [128444, 6096, 237316, 199645];
+    const slideArray = Array.from({ length: 15 }, () => null as unknown);
+    slideArray[0] = "s";
+    slideArray[4] = [videoArray];
+
+    const info = parsePresentationInfo([[365760, 205740], [slideArray]])!;
+    const { bounds } = info.slides[0]!.videos[0]!;
+
+    expect(bounds).toEqual({
+      x: 128444,
+      y: 6096,
+      width: 108872,
+      height: 193549,
+    });
+    // Centred on the slide
+    expect(bounds.x + bounds.width / 2).toBe(365760 / 2);
+  });
+});
+
+describe("a Drive video arriving", () => {
   it("takes its poster's place", () => {
     const deck = presentation([
       slide([video({ videoType: 2, videoId: "drive-1" })], {
@@ -182,30 +211,5 @@ describe("Drive videos", () => {
       "g1_video-backdrop",
       "g1_video",
     ]);
-  });
-});
-
-describe("video bounds in docData", () => {
-  it("are two corners, not a size", () => {
-    // Measured on a real deck: a centred 9:16 video
-    const videoArray = Array.from({ length: 19 }, () => null as unknown);
-    videoArray[0] = "drive-1";
-    videoArray[1] = 2;
-    videoArray[2] = [128444, 6096, 237316, 199645];
-    const slideArray = Array.from({ length: 15 }, () => null as unknown);
-    slideArray[0] = "s";
-    slideArray[4] = [videoArray];
-
-    const info = parsePresentationInfo([[365760, 205740], [slideArray]])!;
-    const { bounds } = info.slides[0]!.videos[0]!;
-
-    expect(bounds).toEqual({
-      x: 128444,
-      y: 6096,
-      width: 108872,
-      height: 193549,
-    });
-    // Centred on the slide
-    expect(bounds.x + bounds.width / 2).toBe(365760 / 2);
   });
 });

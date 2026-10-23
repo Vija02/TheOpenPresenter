@@ -39,7 +39,11 @@ import {
   loadedYjsData,
 } from "./loadedState";
 import { screenLooks } from "./screenLooks";
-import { activateSlide, yjsActivationTarget } from "./slides/activation";
+import {
+  activateSlide,
+  updateSlideVideos,
+  yjsActivationTarget,
+} from "./slides/activation";
 import { navigate } from "./slides/navigation";
 import { createSlideRef } from "./slides/order";
 import {
@@ -258,10 +262,22 @@ export const init = (
             yjsActivationTarget(rendererData),
             pluginDataJson,
             result.slideIndex,
-            { clickCount: result.clickCount, now },
+            {
+              clickCount: result.clickCount,
+              now,
+              startLandedVideo: keyType === "NEXT",
+            },
           );
         } else if (result.clickCount !== current.clickCount) {
           rendererData.set("currentClickCount", result.clickCount);
+          // Videos set to play on a click start (or rewind) with it
+          updateSlideVideos(
+            yjsActivationTarget(rendererData),
+            pluginDataJson,
+            result.slideIndex,
+            { from: current.clickCount, to: result.clickCount },
+            now,
+          );
         }
 
         if (result.transitionEndsAt !== current.transitionEndsAt) {

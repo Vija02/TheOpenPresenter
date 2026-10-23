@@ -77,6 +77,13 @@ Single source of truth in renderer data: `currentSlideIndex` +
   equivalence is why the renderer can drive the iframe by stepping.
 - Flat position clamps negatives, so `-1` and `0` share a flat position; the
   renderer distinguishes them with its own `localClickCountRef`.
+- **Our steps vs the embed's.** `slideClickCounts` is what we navigate by. It
+  adds one step per "Play (manually)" video (§10) **after** all of the embed's
+  own, which are `slideVideos[slide].embedClicks` (missing = the same). Anything that
+  drives an embed (renderer, speaker-view capture) must use the embed's count,
+  via `getEmbedClickCount` / `toEmbedClickCount` in `order.ts`: the embed sits
+  at `min(ours, embed's)`, so our extra steps are flat delta 0 and never become
+  key presses.
 
 ## 3. What import extracts
 
@@ -113,7 +120,9 @@ currently-playing step finishes. `0` means "no window / closed".
    → **snap**: set `transitionEndsAt = 0` and change nothing else. This is rule
    §1's exception — skip the animation without crossing the boundary.
 2. More clicks left → `currentClickCount + 1`, window =
-   `now + getClickDurationForSlide(...)`.
+   `now + getClickDurationForSlide(...)`. If the new click is one of our added
+   steps, the window is left **untouched**: the embed hasn't moved, so whatever
+   it is still playing keeps its window, and rule 1's snap still finishes it.
 3. Otherwise, not the last slide → next slide, `currentClickCount = 0`, window =
    `now + transitionDuration + autoplayDuration` (of the slide being entered).
 4. Last slide, all builds shown → nothing.
@@ -123,8 +132,10 @@ natively (one key = one step).
 
 **PREV**
 
-Always clears `transitionEndsAt` first: backward object steps are instant, so
-they get no window. Then:
+Leaving one of our added steps → `currentClickCount - 1` and the window is
+left **untouched** (closing it would read as a snap to the renderer, which
+would press Right). Otherwise it always clears `transitionEndsAt` first:
+backward object steps are instant, so they get no window. Then:
 
 1. `currentClickCount > 0` → `currentClickCount - 1`.
 2. `currentClickCount === 0` and the slide has an autoplay object →
@@ -165,6 +176,12 @@ controller-internal — nothing reads it.
   for a reverse transition, where the embed's Left completes it and stays
   (measured: `3,-1: L 30..300ms L` lands on `2,3`, a further Left goes to
   `2,2`). A `next()` there would cancel the transition instead.
+- Forward onto a step that plays a video (or a jump landing on one, or `-1` →
+  `0` replaying an automatic one): **finish it** with the keys from
+  `embedVideoFinish` once the step's window (a transition) has played out. The
+  embed's video never plays, so its step never ends; unfinished, the next
+  press would only finish it and the embed would fall a step behind (§10).
+  Any other key cancels a pending finish.
 
 ## 6. Known gaps
 
@@ -175,8 +192,9 @@ controller-internal — nothing reads it.
 
 ## 7. Persistence caveat
 
-`slideClickCounts`, `slideTransitionDurations`, `slideClickDurations`, and
-`slideAutoplayDurations` are written **at import time**. Changing extraction
+`slideClickCounts`, `slideVideos`, `slideTransitionDurations`,
+`slideClickDurations`, `slideAutoplayDurations` and the video fields are
+written **at import time**. Changing extraction
 logic does not retroactively fix already-imported decks — they must be
 re-imported. All the Google-only fields are optional; treat a missing value as
 "unknown" and fall back to 0.
@@ -209,8 +227,44 @@ doc with each video at its place, drawn over the slide by
 `view/Renderer/SlideVideoOverlay` and activated like a custom slide's video
 (`src/slides/activation.ts`). Positions come from docData `slide[4]`, as two
 corners `[left, top, right, bottom]` (not a size) in the same units as the
-slide size; `videoType` 1 is YouTube, 2 Drive. Each video sits on a black box
-so the embed's own player never shows through.
+slide size (`slideSize`); `videoType` 1 is YouTube, 2 Drive. Each video sits on
+a black box so the embed's own (failing) player never shows through.
+
+**When each video plays** (`slideVideos[slide].startClicks`, by element id;
+read in `src/slides/activation.ts`). The setting isn't on the video in docData but in
+the slide's animations, as a step with easing type `6` (`MediaPlay`) targeting
+the video's element:
+
+- "Play (on click)": a click sequence. The embed counts it as a build, so the
+  video starts on that click.
+- "Play (automatically)": in the autoplay sequence. Plays on entering the slide
+  (and is paused at `-1`, the autoplay-rewind sub-step).
+- "Play (manually)": no animation at all, and no step in the embed. We add one
+  (§2), so it starts on its own press.
+
+Mapped onto layout's own video controls: a video that waits for a click is
+`start: "manual"` in the overlay doc, so it holds on its first frame when the
+slide comes on screen. A press that crosses its click starts it, and stepping
+back before it rewinds it, both through `controlVideoFills` (`updateSlideVideos`,
+from the key handler); a press that crosses no video's click touches none.
+Entering a slide also starts the video of the click it lands on (a jump), and
+on a slide shown as an image, where there are no clicks, every video plays on
+entry. Trim is fields 5 and 6 of the video array, in ms (0/null = none);
+parsed, not yet applied.
+
+**The embed's own video never ends** (measured with
+`tools/googleSlides/probe-embed.js`, see embed-capture.md). In our renderer
+it can't load, so a play step is a build whose animation never finishes, and
+§1's rule applies: the next press only finishes it. Unhandled, that cost one
+extra press per on-click or automatic video, and the tracker (which took
+Google's nominal 1s) fell behind: a desync on every deck with videos.
+
+We keep presses to what an operator expects (play, then move on) and absorb
+the quirk instead: the renderer finishes the embed's video as soon as its step
+starts (§5), and import gives video steps no time (`slideClickDurations` 0;
+an automatic one's `slideAutoplayDurations` 1, still an autoplay object for
+the `-1` sub-step). A tracker window there would make its snap press Right on
+an embed that is already finished, crossing the slide.
 
 - **YouTube** goes straight in at import.
 - **Drive** can't be read with our `drive.file` token until the user picks the

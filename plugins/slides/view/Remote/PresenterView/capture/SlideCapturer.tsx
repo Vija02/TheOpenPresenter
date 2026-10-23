@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { getEmbedClickCount } from "../../../../src/slides/order";
 import type { GoogleSlidesImportData } from "../../../../src/types";
 import { getEffectiveDisplayMode } from "../../../../src/types";
 import RenderView, {
@@ -81,7 +82,7 @@ const ImportCapturer = ({
         captureKey(
           fetchId,
           localIndex,
-          importData.slideClickCounts[localIndex] ?? 0,
+          getEmbedClickCount(importData, localIndex),
         ),
       ),
     ),
@@ -104,7 +105,7 @@ const ImportCapturer = ({
 
     const isCaptured = (localIndex: number) => {
       const importData = importRef.current;
-      const lastClick = importData.slideClickCounts[localIndex] ?? 0;
+      const lastClick = getEmbedClickCount(importData, localIndex);
       return captureStore.has(captureKey(fetchId, localIndex, lastClick));
     };
 
@@ -136,7 +137,7 @@ const ImportCapturer = ({
             localSlideIndex: localIndex,
             slideId,
             steps: slideCapturePlan({
-              maxClicks: importData.slideClickCounts[localIndex] ?? 0,
+              maxClicks: getEmbedClickCount(importData, localIndex),
               autoplayMs: importData.slideAutoplayDurations?.[localIndex] ?? 0,
               clickDurationsMs:
                 importData.slideClickDurations?.[localIndex] ?? [],

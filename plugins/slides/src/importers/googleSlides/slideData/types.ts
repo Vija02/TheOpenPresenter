@@ -5,6 +5,7 @@ export enum SlideKeyframeEasingType {
   Spin = 1,
   Zoom = 2,
   Fly = 3,
+  MediaPlay = 6,
 }
 
 export enum SlideFlyType {
@@ -75,6 +76,8 @@ export interface SlideInfo {
   clickDurationsMs: number[];
   hasAutoplayObject: boolean;
   autoplayObjectDurationMs: number;
+  videoClicks: Record<string, number>;
+  autoplayVideoIds: string[];
 }
 
 export interface PresentationInfo {
