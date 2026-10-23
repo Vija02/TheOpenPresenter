@@ -34,7 +34,9 @@ const errorSettings: Record<
 export const RendererWarningModal = () => {
   const { isOpen, onToggle } = useOverlayToggle();
 
-  const { awarenessData } = useAwareness();
+  const awarenessData = useAwareness().awarenessData.filter(
+    (x) => !x.user?.isPreview,
+  );
 
   const allErrors = awarenessData.map((x) => x.user?.errors ?? []).flat();
 

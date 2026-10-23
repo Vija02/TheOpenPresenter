@@ -7,7 +7,9 @@ import { RendererWarningModal } from "./RendererWarningModal";
 import "./index.css";
 
 export const RendererWarning = () => {
-  const { awarenessData } = useAwareness();
+  const awarenessData = useAwareness().awarenessData.filter(
+    (x) => !x.user?.isPreview,
+  );
 
   const allErrors = awarenessData.map((x) => x.user?.errors ?? []).flat();
 

@@ -1,3 +1,4 @@
+export * from "./awareness";
 export * from "./types";
 export * from "./rendererLayoutTypes";
 export {

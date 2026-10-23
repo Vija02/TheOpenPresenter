@@ -1,3 +1,4 @@
+import { isScreenRenderer } from "@repo/base-plugin/client";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useIceServers } from "../iceServers";
@@ -298,8 +299,8 @@ export const useScreenShareSender = () => {
 
   // Output screens present anywhere in the project (app-level presence). Lets the
   // UI distinguish "no screen connected" from "connected but not on this scene".
-  const outputScreenCount = awarenessData.filter(
-    (s: any) => s?.user?.type === "renderer",
+  const outputScreenCount = awarenessData.filter((s: any) =>
+    isScreenRenderer(s?.user),
   ).length;
 
   return {

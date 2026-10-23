@@ -274,11 +274,20 @@ export const PluginDataProvider = ({
     provider?.setAwarenessField("user", {
       id: currentUserId,
       type,
+      isPreview,
       userAgentInfo: uaData,
       errors,
       state: awarenessState,
     } satisfies AwarenessUserData);
-  }, [awarenessState, currentUserId, errors, provider, type, uaData]);
+  }, [
+    awarenessState,
+    currentUserId,
+    errors,
+    isPreview,
+    provider,
+    type,
+    uaData,
+  ]);
   const clearAwarenessData = useCallback(() => {
     provider?.setAwarenessField("user", null);
   }, [provider]);

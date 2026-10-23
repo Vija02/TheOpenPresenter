@@ -112,6 +112,7 @@ export type AwarenessStore<T extends object = {}> = T & {
 export type AwarenessUserData = {
   id: string;
   type: "remote" | "renderer";
+  isPreview?: boolean;
   userAgentInfo: IResult;
   errors: string[];
   state: AwarenessState;
