@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ProjectFragment, useDuplicateProjectMutation } from "@repo/graphql";
-import { globalState } from "@repo/lib";
+import { globalState, projectTitle } from "@repo/lib";
 import {
   Button,
   Dialog,
@@ -13,7 +13,6 @@ import {
   InputControl,
   useOverlayToggle,
 } from "@repo/ui";
-import { format } from "date-fns";
 import { useCallback, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
@@ -29,12 +28,6 @@ export type DuplicateProjectModalPropTypes = {
   project: ProjectFragment;
 };
 
-/** Mirrors the name the dashboard shows for a project without one. */
-const displayName = (project: ProjectFragment) =>
-  project.name !== ""
-    ? project.name
-    : `Untitled (${format(new Date(project.createdAt), "do MMM yyyy")})`;
-
 const DuplicateProjectModal = ({ project }: DuplicateProjectModalPropTypes) => {
   const { isOpen, onToggle, resetData } = useOverlayToggle();
 
@@ -44,7 +37,7 @@ const DuplicateProjectModal = ({ project }: DuplicateProjectModalPropTypes) => {
   });
 
   const defaultName = useMemo(
-    () => `${displayName(project)} (copy)`,
+    () => `${projectTitle(project)} (copy)`,
     [project],
   );
 
@@ -90,7 +83,7 @@ const DuplicateProjectModal = ({ project }: DuplicateProjectModalPropTypes) => {
           </DialogHeader>
           <DialogBody>
             <p className="text-sm text-secondary mb-3">
-              This makes a copy of "{displayName(project)}", including its
+              This makes a copy of "{projectTitle(project)}", including its
               content, category and tags.
             </p>
 

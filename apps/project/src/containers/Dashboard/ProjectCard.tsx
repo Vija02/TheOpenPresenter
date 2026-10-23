@@ -1,6 +1,7 @@
 import { Tag } from "@/components/Tag";
 import { fromProjectDateValue } from "@/lib/projectDate";
 import { ProjectFragment } from "@repo/graphql";
+import { PROJECT_DATE_FORMAT, untitledProjectName } from "@repo/lib";
 import {
   Button,
   DateDisplay,
@@ -12,7 +13,6 @@ import {
   PopoverSubMenu,
   PopoverTrigger,
 } from "@repo/ui";
-import { format } from "date-fns";
 import { MouseEvent, ReactNode } from "react";
 import { IoCloudDoneOutline } from "react-icons/io5";
 import { MdCoPresent } from "react-icons/md";
@@ -65,7 +65,7 @@ export const ProjectCard = ({
           {project.targetDate && (
             <DateDisplay
               date={fromProjectDateValue(project.targetDate)}
-              formatToken="do MMM yyyy"
+              formatToken={PROJECT_DATE_FORMAT}
               className="text-sm font-bold sm:font-medium"
             />
           )}
@@ -74,7 +74,7 @@ export const ProjectCard = ({
               ? project.name
               : project.targetDate
                 ? ""
-                : `Untitled (${format(new Date(project.createdAt), "do MMM yyyy")})`}
+                : untitledProjectName(project.createdAt)}
           </p>
           <p className="text-xs text-tertiary">{project.category?.name}</p>
         </Link>
