@@ -22,16 +22,16 @@ const OrganizationScreensPage = () => {
   const screens = data?.organizationBySlug?.screens.nodes ?? [];
 
   return (
-    <SharedOrgLayout title="Screens" sharedOrgQuery={query}>
+    <SharedOrgLayout title="Virtual Screens" sharedOrgQuery={query}>
       <Alert
         variant="default"
         size="sm"
-        title="Screens are a beta feature"
+        title="Virtual Screens are a beta feature"
         subtitle="Behaviour and settings may change. Please report any issues you run into."
         className="mb-2"
       />
       <div className="flex items-center justify-between mb-3">
-        <h1 className="text-2xl font-bold mb-0">Screens</h1>
+        <h1 className="text-2xl font-bold mb-0">Virtual Screens</h1>
         <div className="stack-row">
           {organizationId && (
             <OverlayToggle
