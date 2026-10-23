@@ -1,5 +1,5 @@
 import { appData } from "@repo/lib";
-import posthog from "posthog-js";
+import posthog, { type CaptureResult } from "posthog-js";
 
 export type AnalyticsSurface = "project" | "remote" | "renderer";
 
@@ -13,6 +13,27 @@ const isReplayEnabled = (surface: AnalyticsSurface) =>
   surface === "renderer"
     ? appData.getAnalyticsRendererReplayEnabled()
     : appData.getAnalyticsReplayEnabled();
+
+// A cross-origin script that throws without CORS headers surfaces in the
+// browser as an opaque "Script error." with no stack and a synthetic
+// mechanism. These come from extensions or third-party scripts, carry no
+// stack to debug, and reach error tracking as high-severity noise, so we drop
+// them before they leave the browser.
+const isOpaqueScriptError = (event: CaptureResult): boolean => {
+  if (event.event !== "$exception") {
+    return false;
+  }
+
+  const exceptionList = event.properties?.$exception_list;
+  if (!Array.isArray(exceptionList) || exceptionList.length === 0) {
+    return false;
+  }
+
+  return exceptionList.every((exception) => {
+    const frameCount = exception?.stacktrace?.frames?.length ?? 0;
+    return exception?.value === "Script error." && frameCount === 0;
+  });
+};
 
 export const initAnalytics = ({ surface, env }: InitAnalyticsOptions) => {
   const key = appData.getAnalyticsKey();
@@ -43,6 +64,10 @@ export const initAnalytics = ({ surface, env }: InitAnalyticsOptions) => {
     person_profiles: "identified_only",
     before_send: (event) => {
       if (!event) {
+        return null;
+      }
+
+      if (isOpaqueScriptError(event)) {
         return null;
       }
 
