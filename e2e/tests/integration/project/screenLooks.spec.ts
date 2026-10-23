@@ -7,6 +7,7 @@ import {
 } from "@repo/layout";
 
 import { expect, test } from "../../../fixtures/screenFixture";
+import { openManageOutputs } from "../../../helpers/outputs";
 
 /**
  * A screen set to a look shows each plugin's version of it. Here, lyrics on
@@ -141,7 +142,7 @@ test.describe.serial("Screen looks", () => {
     await login(e2eCommand);
 
     await page.goto(`/app/${ORG_SLUG}/${PROJECT_SLUG}`);
-    await page.getByRole("button", { name: "Manage Outputs" }).click();
+    await openManageOutputs(page);
     await page.getByRole("button", { name: "Add confidence monitor" }).click();
 
     // Set up already: the confidence look, ignoring Black/Clear
@@ -192,7 +193,7 @@ test.describe.serial("Screen looks", () => {
     await login(e2eCommand, true);
 
     await page.goto(`/app/${ORG_SLUG}/${PROJECT_SLUG}`);
-    await page.getByRole("button", { name: "Manage Outputs" }).click();
+    await openManageOutputs(page);
     await page.getByRole("button", { name: "Add confidence monitor" }).click();
     await page.getByRole("button", { name: "Close" }).first().click();
 
@@ -253,7 +254,7 @@ test.describe.serial("Screen looks", () => {
     await login(e2eCommand, true);
 
     await page.goto(`/app/${ORG_SLUG}/${PROJECT_SLUG}`);
-    await page.getByRole("button", { name: "Manage Outputs" }).click();
+    await openManageOutputs(page);
     await page.getByRole("button", { name: "Add confidence monitor" }).click();
 
     const monitor = await context.newPage();
@@ -295,7 +296,7 @@ test.describe.serial("Screen looks", () => {
     await login(e2eCommand);
 
     await page.goto(`/app/${ORG_SLUG}/${PROJECT_SLUG}`);
-    await page.getByRole("button", { name: "Manage Outputs" }).click();
+    await openManageOutputs(page);
     await page.getByRole("button", { name: "Add confidence monitor" }).click();
     await page.getByRole("button", { name: "Close" }).first().click();
 
@@ -333,7 +334,7 @@ test.describe.serial("Screen looks", () => {
     await login(e2eCommand);
 
     await page.goto(`/app/${ORG_SLUG}/${PROJECT_SLUG}`);
-    await page.getByRole("button", { name: "Manage Outputs" }).click();
+    await openManageOutputs(page);
     await page.getByRole("button", { name: "Add custom layout" }).click();
     await expect(page.getByText(/Layout Settings - Custom/)).toBeVisible();
 

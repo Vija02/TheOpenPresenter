@@ -6,12 +6,33 @@ import * as React from "react";
 
 import "./dialog.css";
 
+const isInPopover = (target: EventTarget | null | undefined) =>
+  target instanceof Element &&
+  target.closest('[data-slot="popover-content"]') !== null;
+
 function Dialog({
   children,
+  onOpenChange,
   ...props
 }: React.ComponentProps<typeof BaseDialog.Root>) {
   return (
-    <BaseDialog.Root data-slot="dialog" {...props}>
+    <BaseDialog.Root
+      data-slot="dialog"
+      onOpenChange={(open, details) => {
+        const event = details.event as
+          | (Event & { relatedTarget?: EventTarget | null })
+          | undefined;
+        if (
+          !open &&
+          (isInPopover(event?.target) || isInPopover(event?.relatedTarget))
+        ) {
+          details.cancel();
+          return;
+        }
+        onOpenChange?.(open, details);
+      }}
+      {...props}
+    >
       {children}
     </BaseDialog.Root>
   );

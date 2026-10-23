@@ -1,6 +1,7 @@
 import type { Page } from "@playwright/test";
 
 import { expect, test } from "../../../fixtures/screenFixture";
+import { openManageOutputs } from "../../../helpers/outputs";
 import {
   SAMPLE_SPEAKER_NOTES,
   buildGoogleSlidesScene,
@@ -51,7 +52,7 @@ const login = (e2eCommand: any) =>
   });
 
 const openLayoutEditor = async (page: Page) => {
-  await page.getByRole("button", { name: "Manage Outputs" }).click();
+  await openManageOutputs(page);
   await expect(
     page.getByRole("heading", { name: "Outputs", exact: true }),
   ).toBeVisible();

@@ -1,4 +1,5 @@
 import { expect, test } from "../../../fixtures/screenFixture";
+import { openManageOutputs } from "../../../helpers/outputs";
 import { ProjectPage } from "../../../pages/ProjectPage";
 import { RendererScreenPage } from "../../../pages/Renderer/RendererScreenPage";
 
@@ -54,7 +55,7 @@ const login = (e2eCommand: any, marker: string) =>
 // The layout editor lives behind the sidebar's outputs dialog; every test here
 // edits the main output's layout.
 const openLayoutEditor = async (page: any) => {
-  await page.getByRole("button", { name: "Manage Outputs" }).click();
+  await openManageOutputs(page);
   await expect(
     page.getByRole("heading", { name: "Outputs", exact: true }),
   ).toBeVisible();

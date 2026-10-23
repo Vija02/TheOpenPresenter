@@ -1,6 +1,7 @@
 import type { Page } from "@playwright/test";
 
 import { expect, test } from "../../../fixtures/screenFixture";
+import { openManageOutputs } from "../../../helpers/outputs";
 import { buildGoogleSlidesScene } from "../../../helpers/slidesSeed";
 
 /**
@@ -37,7 +38,7 @@ const login = (e2eCommand: any) =>
   });
 
 const openLayoutEditor = async (page: Page) => {
-  await page.getByRole("button", { name: "Manage Outputs" }).click();
+  await openManageOutputs(page);
   await expect(
     page.getByRole("heading", { name: "Outputs", exact: true }),
   ).toBeVisible();
@@ -76,7 +77,6 @@ test.describe.serial("Plugin-declared derivations", () => {
     page,
     e2eCommand,
   }) => {
-
     await login(e2eCommand);
     await page.goto(`/app/${ORG_SLUG}/${PROJECT_SLUG}`);
     await openLayoutEditor(page);
@@ -90,7 +90,6 @@ test.describe.serial("Plugin-declared derivations", () => {
     page,
     e2eCommand,
   }) => {
-
     await login(e2eCommand);
     await page.goto(`/app/${ORG_SLUG}/${PROJECT_SLUG}`);
     await openLayoutEditor(page);
