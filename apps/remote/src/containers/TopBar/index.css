@@ -8,6 +8,35 @@
 .rt--top-bar--left {
   @apply stack-row px-2 gap-2 overflow-hidden;
 }
+
+/* Small phones: one line, the titles shorten instead of the buttons wrapping */
+.rt--top-bar__compact {
+  @apply flex-nowrap gap-2;
+
+  .rt--top-bar--left {
+    @apply min-w-0 flex-1 gap-1 px-0;
+  }
+
+  .rt--top-bar--right {
+    @apply shrink-0;
+  }
+}
+
+.rt--top-bar--titles {
+  @apply flex flex-col min-w-0 leading-tight;
+
+  p {
+    @apply truncate;
+  }
+
+  p:first-child {
+    @apply text-2xs text-secondary;
+  }
+
+  p:last-child:not(:first-child) {
+    @apply text-sm font-bold;
+  }
+}
 .rt-top-bar--scene-name {
   @apply font-bold text-sm pl-1 text-ellipsis whitespace-nowrap overflow-hidden max-w-100;
 }
@@ -62,6 +91,10 @@
 
 .rt--top-bar--back-link {
   @apply desktop:hidden;
+}
+
+.rt--top-bar--menu {
+  @apply -mx-1 px-2;
 }
 
 .rt--top-bar--scene-settings-icon {
