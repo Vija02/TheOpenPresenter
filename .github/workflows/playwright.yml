@@ -103,9 +103,9 @@ jobs:
           CONFIRM_DROP=1 yarn setup
           yarn build
           if [ "${{ steps.pw-cache.outputs.cache-hit }}" == "true" ]; then
-            yarn e2e playwright install-deps
+            yarn e2e playwright install-deps chromium firefox
           else
-            yarn e2e playwright install --with-deps
+            yarn e2e playwright install --with-deps chromium firefox
           fi
           yarn worker start &
           yarn e2e test --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
