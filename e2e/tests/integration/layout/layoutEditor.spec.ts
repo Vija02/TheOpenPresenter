@@ -74,6 +74,20 @@ const section = (dialog: Locator, title: string) =>
     .filter({ has: dialog.page().getByRole("button", { name: title }) })
     .locator('[data-slot="accordion-content"]');
 
+/**
+ * Expands an inspector accordion and returns its body. Most sections start
+ * open, so a blind click would collapse them; the selects inside stay usable
+ * during the close animation, which hides the mistake on a fast machine.
+ */
+const openSection = async (dialog: Locator, title: string) => {
+  const trigger = dialog.getByRole("button", { name: title, exact: true });
+  if ((await trigger.getAttribute("aria-expanded")) !== "true") {
+    await trigger.click();
+  }
+  await expect(trigger).toHaveAttribute("aria-expanded", "true");
+  return section(dialog, title);
+};
+
 /** Computed style of the rendered text, which inherits from the styled node. */
 const textStyle = (page: Page, elementSelector: string, property: string) =>
   page
@@ -624,8 +638,7 @@ test.describe.serial("Layout editor", () => {
     expect(parseFloat(painted)).toBeGreaterThan(0);
 
     // --- outline ------------------------------------------------------------
-    await dialog.getByRole("button", { name: "Outline" }).click();
-    const outlinePanel = section(dialog, "Outline");
+    const outlinePanel = await openSection(dialog, "Outline");
     await row(outlinePanel, "Outline").locator("select").selectOption("on");
 
     // Strokes render as box-shadow rings rather than CSS borders, so that the
@@ -667,15 +680,17 @@ test.describe.serial("Layout editor", () => {
     const dialog = await openStyleModal({ loginAndGoToProject, projectPage });
     await dialog.locator(BODY).click();
 
-    await dialog.getByRole("button", { name: "Text effects" }).click();
-    const effects = section(dialog, "Text effects");
+    const effects = await openSection(dialog, "Text effects");
     await row(effects, "Stroke").locator("select").selectOption("on");
 
     // -webkit-text-stroke follows the letter shapes; the element outline is a
     // box-shadow ring. Both can be on at once, which is why they are separate
     // controls in separate sections.
-    const stroke = await textStyle(page, BODY, "-webkit-text-stroke-width");
-    expect(parseFloat(stroke)).toBeGreaterThan(0);
+    await expect
+      .poll(async () =>
+        parseFloat(await textStyle(page, BODY, "-webkit-text-stroke-width")),
+      )
+      .toBeGreaterThan(0);
 
     // Off again leaves no trace.
     await row(effects, "Stroke").locator("select").selectOption("none");
@@ -1001,6 +1016,11 @@ test.describe.serial("Adding elements", () => {
     await dialog.getByRole("button", { name: "Add picture" }).click();
     const picker = page.locator('[data-testid="media-picker-dialog"]');
     await expect(picker).toBeVisible();
+    // The dialog paints before it takes focus and starts listening for Escape;
+    // on a loaded runner a keypress in that gap goes nowhere.
+    await expect
+      .poll(() => picker.evaluate((el) => el.contains(document.activeElement)))
+      .toBe(true);
     await page.keyboard.press("Escape");
     await expect(picker).toBeHidden();
 
