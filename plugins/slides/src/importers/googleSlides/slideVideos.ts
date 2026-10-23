@@ -2,6 +2,7 @@ import {
   type LayoutDoc,
   type LayoutVideo,
   type Rect,
+  type VideoStartMode,
   createLayoutDoc,
   createShapeElement,
   imagePaint,
@@ -10,7 +11,7 @@ import {
 } from "@repo/layout";
 import { type UniversalURL, extractMediaName } from "@repo/lib";
 
-import type { DriveSlideVideo } from "../../types";
+import type { DriveSlideVideo, SlideVideoSteps } from "../../types";
 import type {
   PresentationInfo,
   SlideInfo,
@@ -98,15 +99,21 @@ const videoElements = (
   name: string | null,
   rect: Rect,
   video: LayoutVideo,
+  start: VideoStartMode,
 ) => [
   backdrop(id, rect),
   createShapeElement({
     id,
     name,
     rect,
-    fill: videoPaint(video, "contain", 1, "once"),
+    fill: videoPaint(video, "contain", 1, "once", start),
   }),
 ];
+
+const startMode = (
+  steps: SlideVideoSteps | undefined,
+  elementId: string,
+): VideoStartMode => (steps?.startClicks[elementId] ? "manual" : "auto");
 
 const emptyVideoDoc = (size: SlideSize): LayoutDoc =>
   createLayoutDoc({
@@ -121,6 +128,7 @@ const emptyVideoDoc = (size: SlideSize): LayoutDoc =>
  */
 export const buildSlideVideoDocs = (
   presentation: PresentationInfo,
+  slideVideos: Record<string, SlideVideoSteps> = {},
 ): Record<string, LayoutDoc> => {
   const docs: Record<string, LayoutDoc> = {};
 
@@ -136,6 +144,7 @@ export const buildSlideVideoDocs = (
           video.title || null,
           rect,
           youTubeVideo(video),
+          startMode(slideVideos[String(slideIndex)], id),
         );
       }
       if (video.videoType === DRIVE_VIDEO_TYPE) {
@@ -179,6 +188,7 @@ export const withDriveVideo = (
   size: SlideSize,
   driveVideo: DriveSlideVideo,
   video: LayoutVideo,
+  steps?: SlideVideoSteps,
 ): LayoutDoc => {
   const doc = existing ?? emptyVideoDoc(size);
   const elements = videoElements(
@@ -186,6 +196,7 @@ export const withDriveVideo = (
     driveVideo.title,
     driveVideo.rect,
     video,
+    startMode(steps, driveVideo.elementId),
   );
 
   return {
@@ -200,4 +211,53 @@ export const withDriveVideo = (
       ...elements,
     ],
   };
+};
+
+/**
+ * Our steps per slide and the step each video starts on.
+ *
+ * "Play (on click)" uses the click the embed already has for it. "Play
+ * (manually)" has none in the embed (you'd click the video itself), so we add
+ * one per such video, after all of the embed's, which the renderer never
+ * forwards (see `getEmbedClickCount`). "Play (automatically)" starts on entry.
+ */
+export const planSlideSteps = (presentation: PresentationInfo) => {
+  const clickCounts: number[] = [];
+  const slideVideos: Record<string, SlideVideoSteps> = {};
+
+  presentation.slides.forEach((slide, slideIndex) => {
+    const startClicks: Record<string, number> = {};
+    let added = 0;
+
+    slide.videos.forEach((video, i) => {
+      // Only videos we draw get a step. Without an element id one can't be
+      // matched to its animation either, so it plays on entry
+      const isDrawn =
+        !!video.videoId &&
+        (video.videoType === YOUTUBE_VIDEO_TYPE ||
+          video.videoType === DRIVE_VIDEO_TYPE);
+      if (!isDrawn || !video.elementId) return;
+
+      const id = elementId(video, i);
+      const onClick = slide.videoClicks[id];
+      if (onClick !== undefined) {
+        startClicks[id] = onClick;
+      } else if (slide.autoplayVideoIds.includes(id)) {
+        startClicks[id] = 0;
+      } else {
+        added += 1;
+        startClicks[id] = slide.clickCount + added;
+      }
+    });
+
+    clickCounts.push(slide.clickCount + added);
+    if (Object.keys(startClicks).length > 0) {
+      slideVideos[String(slideIndex)] = {
+        embedClicks: slide.clickCount,
+        startClicks,
+      };
+    }
+  });
+
+  return { clickCounts, slideVideos };
 };

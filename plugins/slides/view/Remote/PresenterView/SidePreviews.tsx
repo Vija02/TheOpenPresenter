@@ -7,6 +7,10 @@ import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 
 import { resolvedSlideDoc } from "../../../src/customSlides";
 import {
+  getEmbedClickCount,
+  toEmbedClickCount,
+} from "../../../src/slides/order";
+import {
   getEffectiveDisplayMode,
   hasOfficeSlideshow,
 } from "../../../src/types";
@@ -173,7 +177,10 @@ const StepPicture = ({ step, scope }: { step: PreviewStep; scope: string }) => {
       ? {
           fetchId: importData.fetchId,
           localSlideIndex,
-          clickCount: step.clickCount,
+          clickCount: toEmbedClickCount(
+            step.clickCount,
+            getEmbedClickCount(importData, localSlideIndex),
+          ),
         }
       : null,
   );

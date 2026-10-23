@@ -40,6 +40,9 @@ export function extractDocData(html: string): any[] | null {
   }
 }
 
+/** An autoplay object that takes no time, but is still there */
+const AUTOPLAY_VIDEO_MS = 1;
+
 /**
  * Parses video data from slide field
  */
@@ -56,8 +59,8 @@ function parseVideoData(videoArray: any[]): SlideVideo | null {
       width: (boundsArray?.[2] || 0) - (boundsArray?.[0] || 0),
       height: (boundsArray?.[3] || 0) - (boundsArray?.[1] || 0),
     },
-    startTime: videoArray[4] || 0,
-    endTime: videoArray[5] || 0,
+    startTime: videoArray[5] || 0,
+    endTime: videoArray[6] || 0,
     title: videoArray[8] || "",
     description: videoArray[9] || "",
     elementId: videoArray[10] || "",
@@ -97,8 +100,10 @@ function parseAnimationData(
     for (const step of steps) {
       if (!step || step.length < 10) continue;
 
-      const kfArray = step[0] || [];
-      const firstKeyframe = kfArray[0]?.[0] || [];
+      // The first keyframe, `[easing, …]`. Most effects nest it a level
+      // deeper than a video's play step does, so find it rather than assume
+      let firstKeyframe: any[] = step[0] || [];
+      while (Array.isArray(firstKeyframe[0])) firstKeyframe = firstKeyframe[0];
       const easingType =
         (firstKeyframe[0] as SlideKeyframeEasingType) ??
         SlideKeyframeEasingType.AppearDisappearFade;
@@ -181,6 +186,12 @@ export function parsePresentationInfo(docData: any[]): PresentationInfo | null {
     let hasAutoplayObject = false;
     let autoplayObjectDurationMs = 0;
     const clickDurationsMs: number[] = [];
+    const videoClicks: Record<string, number> = {};
+    const autoplayVideoIds: string[] = [];
+    const playedVideos = (seq: SlideAnimationSequence) =>
+      seq.animations
+        .filter((anim) => anim.easingType === SlideKeyframeEasingType.MediaPlay)
+        .map((anim) => anim.targetElementId);
     for (const [seqIndex, seq] of animations.sequences.entries()) {
       const isSlideTransition = seq.animations[0]?.isSlideTransition;
 
@@ -197,6 +208,7 @@ export function parsePresentationInfo(docData: any[]): PresentationInfo | null {
             seq.totalDurationMs - slideTransitionDurationMs,
           );
         }
+        autoplayVideoIds.push(...playedVideos(seq));
         // Transition also set autoPlay to true, but we already use the if above, so this just detects object autoplay
       } else if (seqIndex === 0 && animations.autoPlay) {
         hasAutoplayObject = true;
@@ -204,10 +216,20 @@ export function parsePresentationInfo(docData: any[]): PresentationInfo | null {
           autoplayObjectDurationMs,
           seq.totalDurationMs,
         );
+        autoplayVideoIds.push(...playedVideos(seq));
       } else {
         clickCount += 1;
-        clickDurationsMs.push(seq.totalDurationMs);
+        const videos = playedVideos(seq);
+        // The embed's video can't play, so its step would never finish; the
+        // renderer finishes it at once, so it takes no time (AGENTS.md §10)
+        clickDurationsMs.push(videos.length > 0 ? 0 : seq.totalDurationMs);
+        for (const id of videos) videoClicks[id] ??= clickCount;
       }
+    }
+    // Same for an automatic one, which still counts as an autoplay object:
+    // that is what gives the slide its -1 sub-step
+    if (autoplayVideoIds.length > 0) {
+      autoplayObjectDurationMs = AUTOPLAY_VIDEO_MS;
     }
 
     slides.push({
@@ -226,6 +248,8 @@ export function parsePresentationInfo(docData: any[]): PresentationInfo | null {
       hasAutoplayObject,
       autoplayObjectDurationMs,
       clickDurationsMs,
+      videoClicks,
+      autoplayVideoIds,
     });
   }
 

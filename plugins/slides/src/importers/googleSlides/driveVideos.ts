@@ -143,6 +143,7 @@ export const createDriveVideoFetcher = (serverPluginApi: ServerPluginApi) => {
             importData.slideSize,
             driveVideo,
             video,
+            importData.slideVideos?.[key],
           ),
         };
         driveVideo.status = "ready";

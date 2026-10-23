@@ -22,6 +22,7 @@ import { extractSlideData } from "./googleSlides/slideData/slideDataExtractor";
 import {
   buildSlideVideoDocs,
   collectDriveVideos,
+  planSlideSteps,
 } from "./googleSlides/slideVideos";
 import type { ImportHelpers } from "./helpers";
 import { convertPptToPdfViaOfficeOnline } from "./office/convertPptToPdf";
@@ -373,9 +374,9 @@ export const createImporters = (
       const slideIds = slideData
         ? slideData.slides.map((slide) => slide.slideId)
         : fileNames.map((_, i) => String(i));
-      const slideClickCounts = slideData
-        ? slideData.slides.map((slide) => slide.clickCount)
-        : fileNames.map(() => 0);
+      // Ours include a step per "Play (manually)" video; the embed's don't
+      const steps = slideData ? planSlideSteps(slideData) : null;
+      const slideClickCounts = steps?.clickCounts ?? fileNames.map(() => 0);
       const slideTransitionDurations = slideData
         ? slideData.slides.map((slide) => slide.slideTransitionDurationMs)
         : fileNames.map(() => 0);
@@ -385,7 +386,9 @@ export const createImporters = (
       const slideAutoplayDurations = slideData
         ? slideData.slides.map((slide) => slide.autoplayObjectDurationMs)
         : fileNames.map(() => 0);
-      const slideVideoDocs = slideData ? buildSlideVideoDocs(slideData) : {};
+      const slideVideoDocs = slideData
+        ? buildSlideVideoDocs(slideData, steps?.slideVideos)
+        : {};
       const driveVideos = slideData ? collectDriveVideos(slideData) : [];
       const speakerNotes = slideData
         ? normalizeSpeakerNotes(
@@ -423,6 +426,13 @@ export const createImporters = (
             newImport.importId
           ]! as GoogleSlidesImportData
         ).driveVideos = driveVideos;
+        if (steps) {
+          (
+            loadedPlugin.pluginData.imports[
+              newImport.importId
+            ]! as GoogleSlidesImportData
+          ).slideVideos = steps.slideVideos;
+        }
         if (slideData) {
           (
             loadedPlugin.pluginData.imports[

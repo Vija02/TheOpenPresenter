@@ -1,6 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { toFlatPosition } from "../../../src/slides/autoplay";
+import {
+  embedVideoFinish,
+  getEmbedClickCounts,
+  toEmbedClickCount,
+} from "../../../src/slides/order";
 import { usePluginAPI } from "../../pluginApi";
 import { useDisplayedSlide } from "../../utils/useDisplayedSlide";
 import RenderView, { RenderViewHandle } from "./RenderView";
@@ -39,9 +44,22 @@ export const GoogleSlideRenderer = ({
 
   const isActive = effectiveLocalIndex !== -1;
 
-  const slideClickCounts = pluginApi.scene.useData(
-    (x) => x.pluginData.imports[importId]?.slideClickCounts,
+  const importData = pluginApi.scene.useData(
+    (x) => x.pluginData.imports[importId],
   );
+  // The embed's own steps. Ours add some for manual videos, after these,
+  // which must never reach it as key presses
+  const embedClickCounts = useMemo(
+    () => (importData ? getEmbedClickCounts(importData) : []),
+    [importData],
+  );
+  const embedClickCount =
+    effectiveLocalIndex < 0
+      ? effectiveClickCount
+      : toEmbedClickCount(
+          effectiveClickCount,
+          embedClickCounts[effectiveLocalIndex] ?? 0,
+        );
   const transitionEndsAt = pluginApi.renderer.useData(
     (x) => x.transitionEndsAt,
   );
@@ -49,23 +67,30 @@ export const GoogleSlideRenderer = ({
     (x) => x.lastClickTimestamp,
   );
 
+  const videoFinishAt = useCallback(
+    (slideIndex: number, clickCount: number) =>
+      importData ? embedVideoFinish(importData, slideIndex, clickCount) : null,
+    [importData],
+  );
+
   const targetFlatPosition = useMemo(() => {
     if (effectiveLocalIndex < 0) return -1;
     return toFlatPosition(
       effectiveLocalIndex,
-      effectiveClickCount,
-      slideClickCounts ?? [],
+      embedClickCount,
+      embedClickCounts,
     );
-  }, [effectiveLocalIndex, effectiveClickCount, slideClickCounts]);
+  }, [effectiveLocalIndex, embedClickCount, embedClickCounts]);
 
   useIframeSync({
     ref,
     loaded,
     targetSlideIndex: effectiveLocalIndex,
-    targetClickCount: effectiveClickCount,
+    targetClickCount: embedClickCount,
     targetFlatPosition,
     transitionEndsAt: transitionEndsAt ?? 0,
     lastClickTimestamp: lastClickTimestamp ?? 0,
+    videoFinishAt,
   });
 
   useEffect(() => {

@@ -89,6 +89,56 @@ const slideTimings = (importData: ImportData): SlideTimings =>
     ? importData
     : {};
 
+export function getEmbedClickCount(
+  importData: ImportData,
+  localSlideIndex: number,
+): number {
+  const tracked = importData.slideClickCounts[localSlideIndex] ?? 0;
+  if (importData.type !== "googleslides") return tracked;
+  return (
+    importData.slideVideos?.[String(localSlideIndex)]?.embedClicks ?? tracked
+  );
+}
+
+/** `getEmbedClickCount` for every slide of an import */
+export const getEmbedClickCounts = (importData: ImportData): number[] =>
+  importData.slideClickCounts.map((_, i) => getEmbedClickCount(importData, i));
+
+export function getEmbedClickCountForSlide(
+  pluginData: PluginBaseData,
+  globalSlideIndex: number,
+  displayModes?: DisplayModes,
+): number {
+  const resolved = resolveAnimatedSlide(
+    pluginData,
+    globalSlideIndex,
+    displayModes,
+  );
+  if (!resolved) return 0;
+  return getEmbedClickCount(resolved.importData, resolved.localSlideIndex);
+}
+
+export function embedVideoFinish(
+  importData: ImportData,
+  localSlideIndex: number,
+  embedClick: number,
+): "right" | "rightLeft" | null {
+  if (importData.type !== "googleslides" || embedClick < 0) return null;
+  const steps = importData.slideVideos?.[String(localSlideIndex)];
+  if (!steps) return null;
+
+  // Past the embed's own steps are our manual ones, which it never plays
+  const startsHere =
+    embedClick <= steps.embedClicks &&
+    Object.values(steps.startClicks).includes(embedClick);
+  if (!startsHere) return null;
+  return embedClick < steps.embedClicks ? "rightLeft" : "right";
+}
+
+/** Where the embed is when we're at `clickCount`. Keeps -1 (autoplay rewind) */
+export const toEmbedClickCount = (clickCount: number, embedClicks: number) =>
+  Math.min(clickCount, embedClicks);
+
 export function getClickCountForSlide(
   pluginData: PluginBaseData,
   globalSlideIndex: number,

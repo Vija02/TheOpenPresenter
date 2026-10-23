@@ -3,6 +3,7 @@ import {
   getAutoplayDurationForSlide,
   getClickCountForSlide,
   getClickDurationForSlide,
+  getEmbedClickCountForSlide,
   getTransitionDurationForSlide,
 } from "./order";
 
@@ -73,6 +74,13 @@ export const navigate = (
     }
     if (clickCount < maxClicks) {
       const next = clickCount + 1;
+      // A step only we have (a manual video): the embed doesn't move, so the
+      // window of whatever it is still playing carries over untouched
+      if (
+        next > getEmbedClickCountForSlide(pluginData, slideIndex, displayModes)
+      ) {
+        return stay({ clickCount: next });
+      }
       return stay({
         clickCount: next,
         transitionEndsAt:
@@ -101,7 +109,15 @@ export const navigate = (
     return stay();
   }
 
-  // PREV. Backward object steps are instant, so they close the window.
+  // PREV. Leaving a step only we have: the embed doesn't move, so neither
+  // does its window (closing it would tell the renderer to skip an animation)
+  if (
+    clickCount >
+    getEmbedClickCountForSlide(pluginData, slideIndex, displayModes)
+  ) {
+    return stay({ clickCount: clickCount - 1 });
+  }
+  // Backward object steps are instant, so they close the window.
   if (clickCount > 0) {
     return stay({ clickCount: clickCount - 1, transitionEndsAt: 0 });
   }
