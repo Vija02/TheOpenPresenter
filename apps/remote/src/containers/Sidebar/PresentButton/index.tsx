@@ -36,7 +36,17 @@ const PresentMonitorModalWrapper = lazy(() => import("./PresentMonitorModal"));
 
 const SCREEN_LIMIT = 5;
 
-export const PresentButton = ({ isMobile }: { isMobile?: boolean }) => {
+export const PresentButton = ({
+  isMobile,
+  size,
+  className,
+}: {
+  isMobile?: boolean;
+  /** Overrides the size picked from `isMobile`, eg. for the top bar */
+  size?: "sm";
+  className?: string;
+}) => {
+  const buttonSize = size ?? (isMobile ? "mini" : "default");
   const { orgSlug, projectSlug } = usePluginMetaData();
   const search = useSearch();
   const { selectedRendererId } = useRendererSelection();
@@ -44,9 +54,9 @@ export const PresentButton = ({ isMobile }: { isMobile?: boolean }) => {
   if (desktop.isDesktop) {
     const PresentButtonElement = ({ onClick }: { onClick?: () => void }) => (
       <Button
-        className={cx(["rt--present-button"])}
+        className={cx(["rt--present-button", className])}
         variant="outline"
-        size={isMobile ? "mini" : "default"}
+        size={buttonSize}
         onClick={onClick}
       >
         <MdCoPresent />
@@ -59,9 +69,9 @@ export const PresentButton = ({ isMobile }: { isMobile?: boolean }) => {
       onClick?: () => void;
     }) => (
       <Button
-        className={cx(["rt--present-button"])}
+        className={cx(["rt--present-button", className])}
         variant="outline"
-        size={isMobile ? "mini" : "default"}
+        size={buttonSize}
         onClick={onClick}
       >
         <MdOutlineCancelPresentation />
@@ -83,14 +93,22 @@ export const PresentButton = ({ isMobile }: { isMobile?: boolean }) => {
     ? `/render/${orgSlug}/${projectSlug}?${search}&${rendererParam}`
     : `/render/${orgSlug}/${projectSlug}?${rendererParam}`;
 
-  return <WebPresentButton isMobile={isMobile} renderHref={renderHref} />;
+  return (
+    <WebPresentButton
+      size={buttonSize}
+      className={className}
+      renderHref={renderHref}
+    />
+  );
 };
 
 const WebPresentButton = ({
-  isMobile,
+  size,
+  className,
   renderHref,
 }: {
-  isMobile?: boolean;
+  size: "mini" | "sm" | "default";
+  className?: string;
   renderHref: string;
 }) => {
   const { orgSlug, projectSlug, projectId } = usePluginMetaData();
@@ -179,9 +197,9 @@ const WebPresentButton = ({
         )}
       <PopoverTrigger asChild>
         <Button
-          className={cx(["rt--present-button"])}
+          className={cx(["rt--present-button", className])}
           variant="outline"
-          size={isMobile ? "mini" : "default"}
+          size={size}
         >
           <MdCoPresent />
           Present
