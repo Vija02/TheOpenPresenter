@@ -9,6 +9,7 @@ import { VscArrowLeft, VscSettingsGear, VscTrash } from "react-icons/vsc";
 import { useLocation, useSearch } from "wouter";
 
 import { useRendererSelection } from "../../contexts/rendererSelection";
+import { deleteScene } from "../../util/sceneActions";
 import ProjectSettingsModal from "../ProjectSettingsModal";
 import SceneSettingsModal from "../SceneSettingsModal";
 import "./index.css";
@@ -92,14 +93,7 @@ export const TopBar = () => {
                 <SceneSettingsModal selectedScene={selectedScene} />
               </OverlayToggle>
               <PopConfirm
-                onConfirm={() => {
-                  delete mainState.data[selectedScene];
-                  for (const renderer of Object.values(mainState.renderer)) {
-                    if (renderer?.currentScene === selectedScene) {
-                      renderer!.currentScene = null;
-                    }
-                  }
-                }}
+                onConfirm={() => deleteScene(mainState, selectedScene)}
               >
                 <Button size="sm" variant="ghost" role="group">
                   <VscTrash className="rt--top-bar--delete-icon" />
