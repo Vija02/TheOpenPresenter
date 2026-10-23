@@ -2,6 +2,7 @@ import { type Locator, type Page } from "@playwright/test";
 
 export class OrganizationPage {
   readonly newProjectButton: Locator;
+  readonly newOptionsButton: Locator;
   readonly importButton: Locator;
   readonly importCloseButton: Locator;
   readonly newProjectSaveButton: Locator;
@@ -31,10 +32,10 @@ export class OrganizationPage {
       name: "New",
       exact: true,
     });
-    this.importButton = page.getByRole("button", {
-      name: "Import",
-      exact: true,
+    this.newOptionsButton = page.getByRole("button", {
+      name: "More ways to add a project",
     });
+    this.importButton = page.getByRole("button", { name: /^Import project/ });
     this.importCloseButton = page
       .getByRole("button", { name: "Close" })
       .first();

@@ -29,9 +29,9 @@ test.describe("OrganizationPage", () => {
     organizationPage,
     loginDefault,
   }) => {
-
     await loginDefault();
 
+    await organizationPage.newOptionsButton.click();
     await organizationPage.importButton.click();
 
     const [fileChooser] = await Promise.all([
