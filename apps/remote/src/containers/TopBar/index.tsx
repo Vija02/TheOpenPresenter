@@ -1,14 +1,22 @@
 import { OrganizationType } from "@repo/graphql";
-import { appData } from "@repo/lib";
+import { projectTitle } from "@repo/lib";
 import { useData, usePluginData, usePluginMetaData } from "@repo/shared";
 import { Button, Link, OverlayToggle, PopConfirm } from "@repo/ui";
 import { cx } from "class-variance-authority";
 import { useMemo } from "react";
 import { RxCross1 } from "react-icons/rx";
-import { VscArrowLeft, VscSettingsGear, VscTrash } from "react-icons/vsc";
-import { useLocation, useSearch } from "wouter";
+import {
+  VscArrowLeft,
+  VscMenu,
+  VscSettingsGear,
+  VscTrash,
+} from "react-icons/vsc";
+import { useLocation } from "wouter";
 
+import { useMobileSidebar } from "../../contexts/mobileSidebar";
 import { useRendererSelection } from "../../contexts/rendererSelection";
+import { useBackLink } from "../../hooks/useBackLink";
+import { useIsSmallPhone } from "../../hooks/useIsSmallPhone";
 import { deleteScene } from "../../util/sceneActions";
 import ProjectSettingsModal from "../ProjectSettingsModal";
 import SceneSettingsModal from "../SceneSettingsModal";
@@ -17,25 +25,12 @@ import "./index.css";
 
 export const TopBar = () => {
   const [location] = useLocation();
-  const { orgSlug, project, screenGuestSession, organizationType } =
-    usePluginMetaData();
+  const { project, organizationType } = usePluginMetaData();
   const { selectedRendererId } = useRendererSelection();
-  const search = useSearch();
+  const { open: openSidebar } = useMobileSidebar();
+  const isSmallPhone = useIsSmallPhone();
 
-  // When in proxy mode, use the cloud org slug for navigation back to projects
-  const proxyConfig = appData.getProxyConfig();
-  const projectsOrgSlug = proxyConfig.isProxy
-    ? proxyConfig.cloudOrgSlug
-    : orgSlug;
-
-  const guestScreen = screenGuestSession?.screen ?? null;
-  const appendSearch = (href: string) => (search ? `${href}?${search}` : href);
-  const backHref = guestScreen?.organization?.slug
-    ? appendSearch(
-        `/o/${guestScreen.organization.slug}/screens/${guestScreen.slug}/control`,
-      )
-    : appendSearch(`/o/${projectsOrgSlug}`);
-  const backLabel = guestScreen ? "Screen control" : "Projects";
+  const { href: backHref, label: backLabel } = useBackLink();
 
   const data = useData();
   const mainState = usePluginData().mainState!;
@@ -46,7 +41,7 @@ export const TopBar = () => {
   );
 
   return (
-    <div className="rt--top-bar">
+    <div className={cx("rt--top-bar", isSmallPhone && "rt--top-bar__compact")}>
       <div className="rt--top-bar--left">
         <div className="rt--top-bar--breadcrumb">
           <Link href={backHref} className="rt--top-bar--breadcrumb-link">
@@ -67,10 +62,29 @@ export const TopBar = () => {
             <ProjectSettingsModal />
           </OverlayToggle>
         </div>
-        <Link href={backHref} className="rt--top-bar--back-link">
-          <VscArrowLeft />
-        </Link>
-        {selectedScene && (
+        {isSmallPhone ? (
+          <Button
+            size="sm"
+            variant="ghost"
+            className="rt--top-bar--menu"
+            aria-label="Menu"
+            title="Menu"
+            onClick={openSidebar}
+          >
+            <VscMenu />
+          </Button>
+        ) : (
+          <Link href={backHref} className="rt--top-bar--back-link">
+            <VscArrowLeft />
+          </Link>
+        )}
+        {isSmallPhone && (
+          <div className="rt--top-bar--titles">
+            <p>{project ? projectTitle(project) : ""}</p>
+            {selectedScene && <p>{data.data[selectedScene]?.name}</p>}
+          </div>
+        )}
+        {!isSmallPhone && selectedScene && (
           <>
             <p
               className="rt-top-bar--scene-name"

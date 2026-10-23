@@ -4,6 +4,10 @@
   @apply shadow;
 }
 
+.rt--sidebar-content {
+  @apply flex flex-col h-full;
+}
+
 .rt--sidebar-web-container > div > div {
   @apply flex flex-col h-full border-r-1 border-r-gray-300;
 }

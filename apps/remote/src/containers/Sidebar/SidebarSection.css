@@ -50,7 +50,8 @@
   }
 
   .rt--sidebar-section:hover .rt--sidebar-section--actions,
-  .rt--sidebar-section:focus-within .rt--sidebar-section--actions {
+  .rt--sidebar-section:focus-within .rt--sidebar-section--actions,
+  .rt--sidebar-section__static .rt--sidebar-section--actions {
     @apply flex;
   }
 }
@@ -90,4 +91,12 @@
 
 .rt--sidebar-section__open .rt--sidebar-section--chevron {
   @apply rotate-90;
+}
+
+.rt--sidebar-section__static > .rt--sidebar-section--header {
+  @apply pl-1.5 hover:bg-transparent;
+
+  .rt--sidebar-section--toggle {
+    @apply cursor-default;
+  }
 }

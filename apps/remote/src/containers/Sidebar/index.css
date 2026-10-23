@@ -7,3 +7,47 @@
 .rt--sidebar-wrapper-mobile {
   @apply desktop:hidden flex relative;
 }
+
+.rt--mobile-drawer {
+  @apply fixed inset-y-0 left-0 z-50 flex flex-col w-[85vw] max-w-[360px] bg-white shadow-lg -translate-x-full transition-transform duration-200 ease-out motion-reduce:transition-none;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+
+  .rt--sidebar-content {
+    @apply min-h-0 flex-1;
+  }
+
+  /* Big enough to tap */
+  .rt--sidebar-section--header {
+    @apply h-10;
+  }
+
+  .rt--sidebar-section--actions {
+    @apply gap-1;
+
+    button {
+      @apply size-8;
+    }
+
+    svg {
+      @apply size-4.5;
+    }
+  }
+}
+
+.rt--mobile-drawer[data-open="true"] {
+  @apply translate-x-0;
+}
+
+.rt--mobile-drawer--back {
+  @apply flex items-center gap-2 h-11 px-3 shrink-0 text-sm font-medium border-b-1 border-b-gray-200;
+}
+
+.rt--mobile-drawer-backdrop {
+  @apply hidden;
+}
+
+.rt--mobile-drawer-backdrop[data-open="true"] {
+  @apply block fixed inset-0 z-40 bg-black/30;
+}
