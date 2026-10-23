@@ -413,7 +413,7 @@ export const ChurchStep = ({
         </Alert>
       ) : null}
 
-      {!lastRequestedName && (
+      {!lastRequestedName && trimmedSearch === "" && (
         <div className="pt-4 flex justify-center">
           <Button
             variant="link"
