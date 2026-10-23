@@ -53,7 +53,6 @@ import React, {
   useMemo,
   useState,
 } from "react";
-import { useAnimatePresence } from "react-animate-presence";
 import { ErrorBoundary } from "react-error-boundary";
 import { toast } from "react-toastify";
 import { useDisposable } from "use-disposable";
@@ -61,6 +60,7 @@ import * as Y from "yjs";
 
 import { outputVolume } from "./outputVolume";
 import { trpcClient } from "./trpc";
+import { useFade } from "./useFade";
 
 const useRendererId = () => {
   const { rendererId } = usePluginData();
@@ -291,22 +291,17 @@ const HostBox = ({ element }: { element: HostElement }) => {
 const BlackOverlay = ({ programId }: { programId: string }) => {
   const data = useData();
 
-  const { ref, animationClassName, isRendered } = useAnimatePresence({
-    visible: data.renderer[programId]?.overlay?.type === "black",
-    animation: {
-      enter: "transition-fade-in",
-      exit: "transition-fade-out",
-    },
-  });
+  const { className, isRendered } = useFade(
+    data.renderer[programId]?.overlay?.type === "black",
+  );
 
   return (
     <>
       {isRendered && (
         <div
           key="black"
-          ref={ref}
           className={cx(
-            animationClassName,
+            className,
             "top-0 left-0 right-0 bottom-0 absolute bg-black z-[999]",
           )}
         />
@@ -400,6 +395,7 @@ const SceneRenderer = React.memo(
     );
 
     const isCurrentScene = currentScene === sceneId;
+    const fade = useFade(isCurrentScene, { exitDelayMs: 400 });
 
     return (
       <div
@@ -417,10 +413,10 @@ const SceneRenderer = React.memo(
       >
         <div
           className={cx(
+            transitions && fade.className,
             transitions &&
-              (isCurrentScene
-                ? "transition-fade-in"
-                : "transition-fade-out delay-[400ms]"),
+              fade.className === "transition-fade-out" &&
+              "delay-[400ms]",
             "w-full h-full",
           )}
         >
