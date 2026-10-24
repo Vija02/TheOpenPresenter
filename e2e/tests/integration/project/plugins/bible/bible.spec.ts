@@ -1,6 +1,7 @@
 import type { Page } from "@playwright/test";
 
 import { expect, test } from "../../../../../fixtures/projectFixture";
+import { ORG_SLUG, projectUrl } from "../../../../../helpers/workerData";
 import type { ProjectPage } from "../../../../../pages/ProjectPage";
 
 type SetupBiblePluginArgs = {
@@ -63,15 +64,8 @@ const attachTranslationToCatalog = async (page: Page, name: string) => {
     .setInputFiles("./dummyFiles/bible-test-translation.xml");
 };
 
-test.describe.serial("Bible Plugin", () => {
-  test.beforeEach(
-    async ({ e2eCommand }) =>
-      await Promise.all([
-        e2eCommand.serverCommand("clearTestUsers"),
-        e2eCommand.serverCommand("clearTestOrganizations"),
-        e2eCommand.serverCommand("clearBibleData"),
-      ]),
-  );
+test.describe("Bible Plugin", () => {
+  test.beforeEach(async ({ e2eCommand }) => await e2eCommand.clearWorkerData());
 
   test("can add a verse by reference", async ({
     page,
@@ -305,17 +299,13 @@ test.describe.serial("Bible Plugin", () => {
 // public catalog and passage lookups must still work for them.
 test.describe("Bible Plugin - public access", () => {
   test.beforeEach(async ({ e2eCommand }) => {
-    await Promise.all([
-      e2eCommand.serverCommand("clearTestUsers"),
-      e2eCommand.serverCommand("clearTestOrganizations"),
-      e2eCommand.serverCommand("clearBibleData"),
-    ]);
+    await e2eCommand.clearWorkerData();
 
     await e2eCommand.loginWithScenes({
       orgs: [
         {
           name: "TestOrg",
-          slug: "testorg",
+          slug: ORG_SLUG,
           projects: [
             {
               name: "TestProject",
@@ -347,7 +337,7 @@ test.describe("Bible Plugin - public access", () => {
     const context = await browser.newContext();
     const page = await context.newPage();
     try {
-      await page.goto("/app/testorg/testproject");
+      await page.goto(projectUrl());
       await expect(
         page.getByText("Add a passage to get started"),
       ).toBeVisible();

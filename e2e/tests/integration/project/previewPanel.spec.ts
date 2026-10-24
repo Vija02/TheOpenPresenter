@@ -1,7 +1,7 @@
 import { expect, test } from "../../../fixtures/screenFixture";
+import { WORKER_TAG } from "../../../helpers/workerData";
 import { ProjectPage } from "../../../pages/ProjectPage";
 
-const WORKER_TAG = `w${process.env.TEST_WORKER_INDEX ?? "0"}`;
 const ORG_SLUG = `testorg-preview-${WORKER_TAG}`;
 const ORG_NAME = `TestOrg Preview ${WORKER_TAG}`;
 const USERNAME = `testuser_preview_${WORKER_TAG}`;

@@ -1,9 +1,9 @@
 import { expect, test } from "../../../../fixtures/screenFixture";
+import { WORKER_TAG } from "../../../../helpers/workerData";
 import { RendererScreenPage } from "../../../../pages/Renderer/RendererScreenPage";
 import { ScreenControlPage } from "../../../../pages/ScreenGuest/ScreenControlPage";
 import { ScreenLoginPage } from "../../../../pages/ScreenGuest/ScreenLoginPage";
 
-const WORKER_TAG = `w${process.env.TEST_WORKER_INDEX ?? "0"}`;
 const ORG_SLUG = `testorg-cpadm-${WORKER_TAG}`;
 const SECONDARY_ORG_SLUG = `testorg-cpadm2-${WORKER_TAG}`;
 const SCREEN_SLUG = `testscreen-cpadm-${WORKER_TAG}`;
@@ -36,8 +36,6 @@ const lyricsScene = (songTitle: string, marker: string) => {
 };
 
 test.describe("Screen /control as org member", () => {
-  test.describe.configure({ mode: "serial" });
-
   test.beforeEach(async ({ e2eCommand }) => {
     await e2eCommand.serverCommand("clearOrganizationBySlug", {
       slug: ORG_SLUG,

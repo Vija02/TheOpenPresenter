@@ -1,6 +1,6 @@
 import { expect, test } from "../../../../fixtures/screenFixture";
+import { WORKER_TAG } from "../../../../helpers/workerData";
 
-const WORKER_TAG = `w${process.env.TEST_WORKER_INDEX ?? "0"}`;
 const SCREEN_ORG_SLUG = `testorg-cpgli-scr-${WORKER_TAG}`;
 const SCREEN_ORG_NAME = `TestOrg ControlGuestLoggedIn Screen ${WORKER_TAG}`;
 const USER_ORG_SLUG = `testorg-cpgli-user-${WORKER_TAG}`;
@@ -11,8 +11,6 @@ const SCREEN_SLUG = `testscreen-cpgli-${WORKER_TAG}`;
 const USERNAME = `testuser_cpgli_${WORKER_TAG}`;
 
 test.describe("Screen /control as logged-in guest (non-member of screen org)", () => {
-  test.describe.configure({ mode: "serial" });
-
   test.beforeEach(async ({ e2eCommand }) => {
     await e2eCommand.serverCommand("clearOrganizationBySlug", {
       slug: SCREEN_ORG_SLUG,
@@ -158,9 +156,7 @@ test.describe("Screen /control as logged-in guest (non-member of screen org)", (
           name: USER_ORG_NAME,
           slug: USER_ORG_SLUG,
           owner: true,
-          projects: [
-            { name: "Pickable Project", slug: "pickable-project" },
-          ],
+          projects: [{ name: "Pickable Project", slug: "pickable-project" }],
         },
       ],
     });
@@ -244,9 +240,7 @@ test.describe("Screen /control as logged-in guest (non-member of screen org)", (
     // The new project is created in the user's OWN org (not the screen's
     // foreign org), and CreateProjectModal navigates to that project after
     // onCreated assigns it to the screen.
-    await expect(page).toHaveURL(
-      new RegExp(`/app/${USER_ORG_SLUG}/[^/]+`),
-    );
+    await expect(page).toHaveURL(new RegExp(`/app/${USER_ORG_SLUG}/[^/]+`));
 
     // Returning to the foreign-org screen's /control confirms the cross-org
     // assignment landed.

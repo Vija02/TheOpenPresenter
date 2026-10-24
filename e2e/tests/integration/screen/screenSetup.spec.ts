@@ -1,10 +1,10 @@
 import { E2ECommandAPI } from "../../../e2eCommand";
 import { expect, test } from "../../../fixtures/screenFixture";
+import { WORKER_TAG } from "../../../helpers/workerData";
 import { QrScreenSelectPage } from "../../../pages/QrScreenSelectPage";
 import { ScreenControlPage } from "../../../pages/ScreenGuest/ScreenControlPage";
 import { SetupScreenDevicePage } from "../../../pages/SetupScreenDevicePage";
 
-const WORKER_TAG = `w${process.env.TEST_WORKER_INDEX ?? "0"}`;
 const ORG_SLUG = `testorg-setup-${WORKER_TAG}`;
 const SCREEN_SLUG = `testscreen-setup-${WORKER_TAG}`;
 const ORG_NAME = `TestOrg Setup ${WORKER_TAG}`;
@@ -17,8 +17,6 @@ function toRelative(url: string): string {
 }
 
 test.describe("Setup screen QR flow", () => {
-  test.describe.configure({ mode: "serial" });
-
   test.beforeEach(async ({ e2eCommand }) => {
     await e2eCommand.serverCommand("clearOrganizationBySlug", {
       slug: ORG_SLUG,
@@ -205,9 +203,7 @@ test.describe("Setup screen QR flow", () => {
       new RegExp(`/o/${ORG_SLUG}/screens/[^/]+/control`),
     );
     await expect(phoneControl.openProjectHeading).toBeVisible();
-    await expect(page).toHaveURL(
-      new RegExp(`/render/s/${ORG_SLUG}/[^/]+`),
-    );
+    await expect(page).toHaveURL(new RegExp(`/render/s/${ORG_SLUG}/[^/]+`));
   });
 
   test("phone with existing screens can create another via the in-section row", async ({

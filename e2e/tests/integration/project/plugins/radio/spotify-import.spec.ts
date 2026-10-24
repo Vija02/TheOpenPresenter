@@ -57,12 +57,9 @@ const candidates = {
   ],
 };
 
-test.describe.serial("Music Player Plugin: Spotify import", () => {
+test.describe("Music Player Plugin: Spotify import", () => {
   test.beforeEach(async ({ e2eCommand, context }) => {
-    await Promise.all([
-      e2eCommand.serverCommand("clearTestUsers"),
-      e2eCommand.serverCommand("clearTestOrganizations"),
-    ]);
+    await e2eCommand.clearWorkerData();
     await stubYoutube(context, []);
     await stubSpotify(context, [sundaySet], candidates);
   });

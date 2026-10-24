@@ -1,15 +1,10 @@
 import { OrganizationType } from "@repo/graphql";
 
 import { expect, test } from "../../../fixtures/projectFixture";
+import { projectUrl, tagged } from "../../../helpers/workerData";
 
 test.describe("Add Scene page: organization type filtering", () => {
-  test.beforeEach(
-    async ({ e2eCommand }) =>
-      await Promise.all([
-        e2eCommand.serverCommand("clearTestUsers"),
-        e2eCommand.serverCommand("clearTestOrganizations"),
-      ]),
-  );
+  test.beforeEach(async ({ e2eCommand }) => await e2eCommand.clearWorkerData());
 
   test("church organization sees worship-oriented scene creators", async ({
     e2eCommand,
@@ -19,12 +14,12 @@ test.describe("Add Scene page: organization type filtering", () => {
       orgs: [
         {
           name: "TestChurch",
-          slug: "testchurch",
+          slug: tagged("testchurch"),
           organizationType: OrganizationType.Church,
           projects: [{ name: "TestProject", slug: "testproject" }],
         },
       ],
-      next: "/app/testchurch/testproject",
+      next: projectUrl(tagged("testchurch")),
     });
 
     await expect(projectPage.pluginOption("Lyrics Presenter")).toBeVisible();
@@ -41,12 +36,12 @@ test.describe("Add Scene page: organization type filtering", () => {
       orgs: [
         {
           name: "TestVenue",
-          slug: "testvenue",
+          slug: tagged("testvenue"),
           organizationType: OrganizationType.Venue,
           projects: [{ name: "TestProject", slug: "testproject" }],
         },
       ],
-      next: "/app/testvenue/testproject",
+      next: projectUrl(tagged("testvenue")),
     });
 
     await expect(projectPage.pluginOption("Lyrics Presenter")).toHaveCount(0);

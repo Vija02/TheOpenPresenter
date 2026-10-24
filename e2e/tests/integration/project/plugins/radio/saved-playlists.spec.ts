@@ -1,4 +1,5 @@
 import { expect, test } from "../../../../../fixtures/projectFixture";
+import { ORG_SLUG, projectUrl } from "../../../../../helpers/workerData";
 import {
   type StubPlaylist,
   type StubVideo,
@@ -30,12 +31,9 @@ const worshipSet: StubPlaylist = {
   videos: [first, second, third],
 };
 
-test.describe.serial("Music Player Plugin: Saved playlists", () => {
+test.describe("Music Player Plugin: Saved playlists", () => {
   test.beforeEach(async ({ e2eCommand, context }) => {
-    await Promise.all([
-      e2eCommand.serverCommand("clearTestUsers"),
-      e2eCommand.serverCommand("clearTestOrganizations"),
-    ]);
+    await e2eCommand.clearWorkerData();
     await stubYoutube(context, [first, second, third], [worshipSet]);
   });
 
@@ -49,14 +47,14 @@ test.describe.serial("Music Player Plugin: Saved playlists", () => {
       orgs: [
         {
           name: "TestOrg",
-          slug: "testorg",
+          slug: ORG_SLUG,
           projects: [
             { name: "TestProject", slug: "testproject" },
             { name: "OtherProject", slug: "otherproject" },
           ],
         },
       ],
-      next: "/app/testorg/testproject",
+      next: projectUrl(),
     });
     await projectPage.createPlugin("Music Player");
 
@@ -82,7 +80,7 @@ test.describe.serial("Music Player Plugin: Saved playlists", () => {
     await bar.getByRole("button", { name: "Save changes" }).click();
     await expect(bar).toContainText("Saved");
 
-    await page.goto("/app/testorg/otherproject");
+    await page.goto(projectUrl(ORG_SLUG, "otherproject"));
     await projectPage.createPlugin("Music Player");
 
     const quickStart = page.getByTestId("saved-playlist-quick-start");

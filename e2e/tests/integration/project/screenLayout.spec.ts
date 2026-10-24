@@ -1,9 +1,9 @@
 import { expect, test } from "../../../fixtures/screenFixture";
 import { openManageOutputs } from "../../../helpers/outputs";
+import { WORKER_TAG } from "../../../helpers/workerData";
 import { ProjectPage } from "../../../pages/ProjectPage";
 import { RendererScreenPage } from "../../../pages/Renderer/RendererScreenPage";
 
-const WORKER_TAG = `w${process.env.TEST_WORKER_INDEX ?? "0"}`;
 const ORG_SLUG = `testorg-layout-${WORKER_TAG}`;
 const SCREEN_SLUG = `testscreen-layout-${WORKER_TAG}`;
 const ORG_NAME = `TestOrg Layout ${WORKER_TAG}`;
@@ -71,7 +71,7 @@ const addLiveContent = async (page: any) => {
   await page.getByRole("button", { name: "Unnamed scene" }).click();
 };
 
-test.describe.serial("Screen layouts", () => {
+test.describe("Screen layouts", () => {
   test.beforeEach(async ({ e2eCommand }) => {
     await e2eCommand.serverCommand("clearOrganizationBySlug", {
       slug: ORG_SLUG,

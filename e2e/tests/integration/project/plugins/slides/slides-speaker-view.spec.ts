@@ -8,6 +8,11 @@ import {
 
 import { expect, test } from "../../../../../fixtures/projectFixture";
 import { buildGoogleSlidesScene } from "../../../../../helpers/slidesSeed";
+import {
+  ORG_SLUG,
+  orgUrl,
+  projectUrl,
+} from "../../../../../helpers/workerData";
 
 const deckDoc = (
   label: string,
@@ -94,24 +99,18 @@ const customScene43 = buildCustomScene({
 const GOOGLE_SCENE = buildGoogleSlidesScene();
 
 test.describe("Slides speaker view", () => {
-  test.beforeEach(
-    async ({ e2eCommand }) =>
-      await Promise.all([
-        e2eCommand.serverCommand("clearTestUsers"),
-        e2eCommand.serverCommand("clearTestOrganizations"),
-      ]),
-  );
+  test.beforeEach(async ({ e2eCommand }) => await e2eCommand.clearWorkerData());
 
   test("shows main slide, prev/next previews and notes, and navigates", async ({
     page,
     e2eCommand,
   }) => {
     await e2eCommand.loginWithScenes({
-      next: "/o/testorg",
+      next: orgUrl(),
       orgs: [
         {
           name: "TestOrg",
-          slug: "testorg",
+          slug: ORG_SLUG,
           projects: [
             {
               name: "TestProject",
@@ -122,7 +121,7 @@ test.describe("Slides speaker view", () => {
         },
       ],
     });
-    await page.goto("/app/testorg/testproject");
+    await page.goto(projectUrl());
 
     await page.getByRole("button", { name: "Speaker view" }).click();
 
@@ -157,11 +156,11 @@ test.describe("Slides speaker view", () => {
     e2eCommand,
   }) => {
     await e2eCommand.loginWithScenes({
-      next: "/o/testorg",
+      next: orgUrl(),
       orgs: [
         {
           name: "TestOrg",
-          slug: "testorg",
+          slug: ORG_SLUG,
           projects: [
             {
               name: "TestProject",
@@ -172,7 +171,7 @@ test.describe("Slides speaker view", () => {
         },
       ],
     });
-    await page.goto("/app/testorg/testproject");
+    await page.goto(projectUrl());
     await page.getByRole("button", { name: "Speaker view" }).click();
     await expect(page.getByText("1 / 3")).toBeVisible();
 
@@ -195,11 +194,11 @@ test.describe("Slides speaker view", () => {
 
   test("renders on a narrow phone viewport", async ({ page, e2eCommand }) => {
     await e2eCommand.loginWithScenes({
-      next: "/o/testorg",
+      next: orgUrl(),
       orgs: [
         {
           name: "TestOrg",
-          slug: "testorg",
+          slug: ORG_SLUG,
           projects: [
             {
               name: "TestProject",
@@ -211,7 +210,7 @@ test.describe("Slides speaker view", () => {
       ],
     });
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto("/app/testorg/testproject");
+    await page.goto(projectUrl());
 
     await page.getByRole("button", { name: "Speaker view" }).click();
     await expect(page.getByText("1 / 3")).toBeVisible();
@@ -226,11 +225,11 @@ test.describe("Slides speaker view", () => {
     e2eCommand,
   }) => {
     await e2eCommand.loginWithScenes({
-      next: "/o/testorg",
+      next: orgUrl(),
       orgs: [
         {
           name: "TestOrg",
-          slug: "testorg",
+          slug: ORG_SLUG,
           projects: [
             {
               name: "TestProject",
@@ -241,7 +240,7 @@ test.describe("Slides speaker view", () => {
         },
       ],
     });
-    await page.goto("/app/testorg/testproject");
+    await page.goto(projectUrl());
     await page.getByRole("button", { name: "Speaker view" }).click();
 
     await expect(page.getByText("Notes for slide one")).toBeVisible();
@@ -269,11 +268,11 @@ test.describe("Slides speaker view", () => {
     e2eCommand,
   }) => {
     await e2eCommand.loginWithScenes({
-      next: "/o/testorg",
+      next: orgUrl(),
       orgs: [
         {
           name: "TestOrg",
-          slug: "testorg",
+          slug: ORG_SLUG,
           projects: [
             {
               name: "TestProject",
@@ -284,7 +283,7 @@ test.describe("Slides speaker view", () => {
         },
       ],
     });
-    await page.goto("/app/testorg/testproject");
+    await page.goto(projectUrl());
     await page.getByRole("button", { name: "Speaker view" }).click();
 
     // Every step is captured from a hidden embed, which then goes away
@@ -331,11 +330,11 @@ test.describe("Slides speaker view", () => {
     e2eCommand,
   }) => {
     await e2eCommand.loginWithScenes({
-      next: "/o/testorg",
+      next: orgUrl(),
       orgs: [
         {
           name: "TestOrg",
-          slug: "testorg",
+          slug: ORG_SLUG,
           projects: [
             {
               name: "TestProject",
@@ -346,7 +345,7 @@ test.describe("Slides speaker view", () => {
         },
       ],
     });
-    await page.goto("/app/testorg/testproject");
+    await page.goto(projectUrl());
     await page.getByRole("button", { name: "Speaker view" }).click();
     await expect(page.getByText("1 / 3")).toBeVisible();
 
@@ -375,11 +374,11 @@ test.describe("Slides speaker view", () => {
     e2eCommand,
   }) => {
     await e2eCommand.loginWithScenes({
-      next: "/o/testorg",
+      next: orgUrl(),
       orgs: [
         {
           name: "TestOrg",
-          slug: "testorg",
+          slug: ORG_SLUG,
           projects: [
             {
               name: "TestProject",
@@ -392,8 +391,8 @@ test.describe("Slides speaker view", () => {
     });
     const output = await page.context().newPage();
     try {
-      await output.goto("/render/testorg/testproject");
-      await page.goto("/app/testorg/testproject");
+      await output.goto(`/render/${ORG_SLUG}/testproject`);
+      await page.goto(projectUrl());
       await page.getByRole("button", { name: "Speaker view" }).click();
       await expect(page.getByText("1 / 3")).toBeVisible();
 
@@ -497,11 +496,11 @@ test.describe("Slides speaker view", () => {
       notes: [],
     });
     await e2eCommand.loginWithScenes({
-      next: "/o/testorg",
+      next: orgUrl(),
       orgs: [
         {
           name: "TestOrg",
-          slug: "testorg",
+          slug: ORG_SLUG,
           projects: [
             {
               name: "TestProject",
@@ -512,7 +511,7 @@ test.describe("Slides speaker view", () => {
         },
       ],
     });
-    await page.goto("/app/testorg/testproject");
+    await page.goto(projectUrl());
     await page.getByRole("button", { name: "Speaker view" }).click();
 
     // A deck imported without notes can still be given some
@@ -557,11 +556,11 @@ test.describe("Slides speaker view", () => {
     e2eCommand,
   }) => {
     await e2eCommand.loginWithScenes({
-      next: "/o/testorg",
+      next: orgUrl(),
       orgs: [
         {
           name: "TestOrg",
-          slug: "testorg",
+          slug: ORG_SLUG,
           projects: [
             {
               name: "TestProject",
@@ -572,7 +571,7 @@ test.describe("Slides speaker view", () => {
         },
       ],
     });
-    await page.goto("/app/testorg/testproject");
+    await page.goto(projectUrl());
     await page.getByRole("button", { name: "Speaker view" }).click();
     await expect(page.getByText("Custom notes one")).toBeVisible();
     await expect(page.getByText("Custom notes two")).toBeHidden();

@@ -8,13 +8,7 @@ import { ProjectPage } from "../../../pages/ProjectPage";
 // second one whose failure would replace the page with an error.
 
 test.describe("Remote - network coming back", () => {
-  test.beforeEach(
-    async ({ e2eCommand }) =>
-      await Promise.all([
-        e2eCommand.serverCommand("clearTestUsers"),
-        e2eCommand.serverCommand("clearTestOrganizations"),
-      ]),
-  );
+  test.beforeEach(async ({ e2eCommand }) => await e2eCommand.clearWorkerData());
 
   test("keeps its document connection", async ({
     page,
@@ -24,7 +18,14 @@ test.describe("Remote - network coming back", () => {
 
     const connections: string[] = [];
     page.on("websocket", (ws) => {
-      if (ws.url().includes("/wlink")) connections.push(ws.url());
+      // The preview panel's renderer has its own link; only the remote's counts
+      const url = new URL(ws.url());
+      if (
+        url.pathname === "/wlink" &&
+        url.searchParams.get("client") === "remote"
+      ) {
+        connections.push(ws.url());
+      }
     });
 
     await loginAndGoToProject();
@@ -60,7 +61,8 @@ test.describe("Remote - network coming back", () => {
         return;
       }
       ws.connectToServer();
-      live = ws;
+      // The preview panel's renderer connects too; the remote's is the one cut
+      if (new URL(ws.url()).searchParams.get("client") === "remote") live = ws;
     });
 
     await loginAndGoToProject();

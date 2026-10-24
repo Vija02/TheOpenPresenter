@@ -3,6 +3,8 @@ import type { OrganizationType } from "@repo/graphql";
 import { readFileSync } from "node:fs";
 import { basename, extname, isAbsolute, join } from "node:path";
 
+import { USERNAME, WORKER_TAG } from "./helpers/workerData";
+
 /**
  * Fixture paths are written relative to the e2e directory, which is where this
  * file lives — resolving against it rather than cwd keeps them working however
@@ -57,14 +59,24 @@ export class E2ECommandAPI {
       owner?: boolean;
     }[];
   }) {
+    // This worker's own user unless the spec names one
+    const body = { username: USERNAME, ...payload };
     const res = await this.page.goto(
-      `/E2EServerCommand?command=login${
-        payload ? `&payload=${encodeURIComponent(JSON.stringify(payload))}` : ""
-      }`,
+      `/E2EServerCommand?command=login&payload=${encodeURIComponent(
+        JSON.stringify(body),
+      )}`,
     );
     if (res && res.status() >= 500) {
       throw new Error(`login failed (${res.status()}): ${await res.text()}`);
     }
+  }
+
+  /**
+   * Deletes the orgs and users this worker created (see helpers/workerData).
+   * Safe to call while other workers are mid-test.
+   */
+  async clearWorkerData() {
+    await this.serverCommand("clearWorkerTestData", { tag: WORKER_TAG });
   }
 
   /**
@@ -132,6 +144,15 @@ export class E2ECommandAPI {
     configured: boolean;
     apiUrl: string | null;
   }>;
+
+  /**
+   * Deletes `test…-<tag>` orgs and `testuser…_<tag>` users. Use
+   * `clearWorkerData()` rather than calling this directly.
+   */
+  async serverCommand(
+    command: "clearWorkerTestData",
+    payload: { tag: string },
+  ): Promise<{ success: true }>;
 
   /**
    * Deletes a single organization
@@ -451,7 +472,7 @@ export class E2ECommandAPI {
       {
         headers: { "x-top-csrf-protection": "1" },
         maxRedirects: 0,
-        data: payload,
+        data: { username: USERNAME, ...payload },
       },
     );
     // 3xx is the expected success (the un-followed redirect).

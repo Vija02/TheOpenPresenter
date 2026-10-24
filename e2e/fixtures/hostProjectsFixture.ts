@@ -1,7 +1,13 @@
 import { BrowserContext, Page } from "@playwright/test";
 
+import { orgUrl, projectUrl, tagged, taggedUser } from "../helpers/workerData";
 import { HostProjectsPage } from "../pages/HostProjectsPage";
 import { test as base } from "./baseFixture";
+
+export const HOST_ORG = tagged("testhostorg");
+export const VIEWER_ORG = tagged("testviewerorg");
+const HOST_USER = taggedUser("testuser_host");
+const VIEWER_USER = taggedUser("testuser_viewer");
 
 type HostProjectsFixture = {
   hostProjectsPage: HostProjectsPage;
@@ -34,13 +40,13 @@ export const test = base.extend<HostProjectsFixture>({
 
     const fn = async () => {
       await e2eCommand.login({
-        username: "testuser_host",
+        username: HOST_USER,
         name: "Test Host User",
         verified: true,
         orgs: [
           {
             name: "TestHostOrg",
-            slug: "testhostorg",
+            slug: HOST_ORG,
             projects: [
               { name: "HostProject1", slug: "hostproject1" },
               { name: "HostProject2", slug: "hostproject2" },
@@ -51,22 +57,22 @@ export const test = base.extend<HostProjectsFixture>({
       });
 
       await e2eCommand.login({
-        username: "testuser_viewer",
+        username: VIEWER_USER,
         name: "Test Viewer User",
         verified: true,
         orgs: [
           {
             name: "TestViewerOrg",
-            slug: "testviewerorg",
+            slug: VIEWER_ORG,
             projects: [],
           },
         ],
-        next: "/o/testviewerorg",
+        next: orgUrl(VIEWER_ORG),
       });
 
       await e2eCommand.serverCommand("createCloudConnection", {
-        organizationSlug: "testhostorg",
-        targetOrganizationSlug: "testviewerorg",
+        organizationSlug: HOST_ORG,
+        targetOrganizationSlug: VIEWER_ORG,
       });
 
       // Start the mock host device
@@ -76,13 +82,13 @@ export const test = base.extend<HostProjectsFixture>({
       // Use a SEPARATE browser context to avoid sharing cookies with viewer
       state.hostContext = await browser.newContext();
       state.hostPage = await state.hostContext.newPage();
-      
+
       // Login as host user in the separate context
-      const hostProjectUrl = "/app/testhostorg/hostproject1";
+      const hostProjectUrl = projectUrl(HOST_ORG, "hostproject1");
       await state.hostPage.goto(
         `/E2EServerCommand?command=login&payload=${encodeURIComponent(
           JSON.stringify({
-            username: "testuser_host",
+            username: HOST_USER,
             verified: true,
             next: hostProjectUrl,
           }),

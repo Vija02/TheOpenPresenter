@@ -1,15 +1,13 @@
 import { expect, test } from "../../../fixtures/screenFixture";
+import { WORKER_TAG } from "../../../helpers/workerData";
 import { ScreenAdminPage } from "../../../pages/ScreenGuest/ScreenAdminPage";
 
-const WORKER_TAG = `w${process.env.TEST_WORKER_INDEX ?? "0"}`;
 const ORG_SLUG = `testorg-policy-${WORKER_TAG}`;
 const SCREEN_SLUG = `testscreen-policy-${WORKER_TAG}`;
 const ORG_NAME = `TestOrg Policy ${WORKER_TAG}`;
 const USERNAME = `testuser_policy_${WORKER_TAG}`;
 
 test.describe("Screen control policy", () => {
-  test.describe.configure({ mode: "serial" });
-
   test.beforeEach(async ({ e2eCommand }) => {
     await e2eCommand.serverCommand("clearOrganizationBySlug", {
       slug: ORG_SLUG,

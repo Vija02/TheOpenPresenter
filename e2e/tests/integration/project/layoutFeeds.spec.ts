@@ -6,6 +6,7 @@ import {
   SAMPLE_SPEAKER_NOTES,
   buildGoogleSlidesScene,
 } from "../../../helpers/slidesSeed";
+import { WORKER_TAG } from "../../../helpers/workerData";
 import { ProjectPage } from "../../../pages/ProjectPage";
 import { RendererScreenPage } from "../../../pages/Renderer/RendererScreenPage";
 
@@ -19,7 +20,6 @@ import { RendererScreenPage } from "../../../pages/Renderer/RendererScreenPage";
  * nothing cannot pass.
  */
 
-const WORKER_TAG = `w${process.env.TEST_WORKER_INDEX ?? "0"}`;
 const ORG_SLUG = `testorg-feeds-${WORKER_TAG}`;
 const SCREEN_SLUG = `testscreen-feeds-${WORKER_TAG}`;
 const ORG_NAME = `TestOrg Feeds ${WORKER_TAG}`;
@@ -99,7 +99,7 @@ const closeLayoutEditor = async (page: Page) => {
   await expect(page.getByRole("dialog")).toBeHidden();
 };
 
-test.describe.serial("Layout feeds", () => {
+test.describe("Layout feeds", () => {
   test.beforeEach(async ({ e2eCommand }) => {
     await e2eCommand.serverCommand("clearOrganizationBySlug", {
       slug: ORG_SLUG,

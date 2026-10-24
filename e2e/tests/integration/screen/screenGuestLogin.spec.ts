@@ -1,12 +1,10 @@
 import { expect, test } from "../../../fixtures/screenFixture";
+import { WORKER_TAG } from "../../../helpers/workerData";
 
-const WORKER_TAG = `w${process.env.TEST_WORKER_INDEX ?? "0"}`;
 const ORG_SLUG = `testorg-guestlogin-${WORKER_TAG}`;
 const SCREEN_SLUG = `testscreen-guestlogin-${WORKER_TAG}`;
 
 test.describe("Screen guest login", () => {
-  test.describe.configure({ mode: "serial" });
-
   test.beforeEach(async ({ e2eCommand }) => {
     await e2eCommand.serverCommand("clearOrganizationBySlug", {
       slug: ORG_SLUG,

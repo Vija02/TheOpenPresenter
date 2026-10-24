@@ -36,14 +36,8 @@ const setupSlido = async ({
   await expect(page.getByPlaceholder("Paste your Slido link")).toBeVisible();
 };
 
-test.describe.serial("Slido Plugin", () => {
-  test.beforeEach(
-    async ({ e2eCommand }) =>
-      await Promise.all([
-        e2eCommand.serverCommand("clearTestUsers"),
-        e2eCommand.serverCommand("clearTestOrganizations"),
-      ]),
-  );
+test.describe("Slido Plugin", () => {
+  test.beforeEach(async ({ e2eCommand }) => await e2eCommand.clearWorkerData());
 
   test("starts with no event loaded and no preview", async ({
     page,

@@ -1,5 +1,8 @@
+import { ORG_SLUG, orgUrl, tagged } from "../helpers/workerData";
 import { CloudPage } from "../pages/CloudPage";
 import { test as base } from "./projectFixture";
+
+export const SYNC_ORG_SLUG = tagged("testsyncorg");
 
 type CloudFixture = {
   cloudPage: CloudPage;
@@ -12,18 +15,18 @@ export const test = base.extend<CloudFixture>({
     await use(cloudPage);
   },
   loginWithCloudProjects: async ({ e2eCommand }, use) => {
-    const fn = async (next: string = "/o/testorg") => {
+    const fn = async (next: string = orgUrl()) => {
       await e2eCommand.login({
         verified: true,
         orgs: [
           {
             name: "TestOrg",
-            slug: "testorg",
+            slug: ORG_SLUG,
             projects: [{ name: "TestProject", slug: "testproject" }],
           },
           {
             name: "TestSyncOrg",
-            slug: "testsyncorg",
+            slug: SYNC_ORG_SLUG,
             projects: [
               { name: "SyncProject", slug: "testsyncproject" },
               { name: "SyncProject2", slug: "testsyncproject2" },

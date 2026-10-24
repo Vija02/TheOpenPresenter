@@ -1,15 +1,8 @@
 import { expect, test } from "../../fixtures/organizationFixture";
+import { ORG_SLUG } from "../../helpers/workerData";
 
 test.describe("Project card menu", () => {
-  test.describe.configure({ mode: "serial" });
-
-  test.beforeEach(
-    async ({ e2eCommand }) =>
-      await Promise.all([
-        e2eCommand.serverCommand("clearTestUsers"),
-        e2eCommand.serverCommand("clearTestOrganizations"),
-      ]),
-  );
+  test.beforeEach(async ({ e2eCommand }) => await e2eCommand.clearWorkerData());
 
   test("duplicates with the default name", async ({
     page,
@@ -60,7 +53,7 @@ test.describe("Project card menu", () => {
 
     await expect(organizationPage.projectCardMenuRenderer).toHaveAttribute(
       "href",
-      "/render/testorg/testproject",
+      `/render/${ORG_SLUG}/testproject`,
     );
   });
 
@@ -73,7 +66,7 @@ test.describe("Project card menu", () => {
     await loginWithDefaultProject();
 
     await e2eCommand.serverCommand("setupScreen", {
-      orgSlug: "testorg",
+      orgSlug: ORG_SLUG,
       orgName: "TestOrg",
       slug: "testscreen",
       name: "Test Screen",

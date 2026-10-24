@@ -1,7 +1,7 @@
 import { expect, test } from "../../../fixtures/screenFixture";
+import { WORKER_TAG } from "../../../helpers/workerData";
 import { ConnectScreenPage } from "../../../pages/ConnectScreenPage";
 
-const WORKER_TAG = `w${process.env.TEST_WORKER_INDEX ?? "0"}`;
 const ORG_SLUG = `testorg-connect-${WORKER_TAG}`;
 const SCREEN_SLUG = `testscreen-connect-${WORKER_TAG}`;
 const ORG_NAME = `TestOrg Connect ${WORKER_TAG}`;
@@ -15,8 +15,6 @@ function mutateCode(code: string): string {
 }
 
 test.describe("Connect page", () => {
-  test.describe.configure({ mode: "serial" });
-
   test.beforeEach(async ({ e2eCommand }) => {
     await e2eCommand.serverCommand("clearOrganizationBySlug", {
       slug: ORG_SLUG,

@@ -211,6 +211,25 @@ async function runCommand(
       "delete from app_public.organizations where slug like 'test%'",
     );
     return { success: true };
+  } else if (command === "clearWorkerTestData") {
+    // Everything one Playwright worker created: orgs named `test…-<tag>` and
+    // users named `testuser…_<tag>`. Lets workers clean up without sweeping
+    // each other's data.
+    const { tag } = payload || {};
+    if (!/^w\d+$/.test(String(tag))) {
+      throw new Error("clearWorkerTestData requires a tag like 'w0'");
+    }
+    await deleteTestRows(
+      rootPgPool,
+      "delete from app_public.users where username like 'testuser%' and username like $1",
+      [`%\\_${tag}`],
+    );
+    await deleteTestRows(
+      rootPgPool,
+      "delete from app_public.organizations where slug like 'test%' and slug like $1",
+      [`%-${tag}`],
+    );
+    return { success: true };
   } else if (command === "clearBibleData") {
     await rootPgPool.query("delete from plugin_bible.translation_chapter");
     await rootPgPool.query("delete from plugin_bible.translation");
@@ -407,84 +426,90 @@ async function runCommand(
 
     const projectsToPopulate: { id: string; scenes: LoginScene[] }[] = [];
     const publicProjectIds: string[] = [];
-    const client = await rootPgPool.connect();
-    try {
-      await client.query("begin");
-      async function setSession(sess: any) {
-        await client.query(
-          "select set_config('jwt.claims.session_id', $1, true)",
-          [sess.uuid],
-        );
-      }
+    // Another worker's cleanup cascades through the same membership rows, so
+    // this can lose a deadlock too; a retry starts the transaction afresh.
+    await retryOnDeadlock(async () => {
+      projectsToPopulate.length = 0;
+      publicProjectIds.length = 0;
+      const client = await rootPgPool.connect();
       try {
-        await setSession(session);
-        await Promise.all(
-          orgs.map(
-            async ({
-              name,
-              slug,
-              projects = [],
-              owner = true,
-              organizationType,
-              isPublic,
-            }: {
-              name: string;
-              slug: string;
-              projects?: LoginProject[];
-              owner?: boolean;
-              organizationType?: OrganizationType;
-              isPublic?: boolean;
-            }) => {
-              if (!owner) {
-                await setSession(otherSession);
-              }
-              const organization = await createTestOrganization(
-                client,
-                slug,
+        await client.query("begin");
+        async function setSession(sess: any) {
+          await client.query(
+            "select set_config('jwt.claims.session_id', $1, true)",
+            [sess.uuid],
+          );
+        }
+        try {
+          await setSession(session);
+          await Promise.all(
+            orgs.map(
+              async ({
                 name,
+                slug,
+                projects = [],
+                owner = true,
                 organizationType,
                 isPublic,
-              );
-              if (!owner) {
-                await client.query(
-                  "select app_public.invite_to_organization($1::uuid, $2::citext, null::citext)",
-                  [organization.id, user.username],
+              }: {
+                name: string;
+                slug: string;
+                projects?: LoginProject[];
+                owner?: boolean;
+                organizationType?: OrganizationType;
+                isPublic?: boolean;
+              }) => {
+                if (!owner) {
+                  await setSession(otherSession);
+                }
+                const organization = await createTestOrganization(
+                  client,
+                  slug,
+                  name,
+                  organizationType,
+                  isPublic,
                 );
-                await setSession(session);
-                await client.query(
-                  `select app_public.accept_invitation_to_organization(organization_invitations.id)
-                   from app_public.organization_invitations
-                   where user_id = $1`,
-                  [user.id],
-                );
-              }
+                if (!owner) {
+                  await client.query(
+                    "select app_public.invite_to_organization($1::uuid, $2::citext, null::citext)",
+                    [organization.id, user.username],
+                  );
+                  await setSession(session);
+                  await client.query(
+                    `select app_public.accept_invitation_to_organization(organization_invitations.id)
+                     from app_public.organization_invitations
+                     where user_id = $1`,
+                    [user.id],
+                  );
+                }
 
-              for (const project of projects) {
-                const {
-                  rows: [created],
-                } = await client.query(
-                  `select * from app_public.create_full_project($1, $2, $3, $4) as p`,
-                  [organization.id, project.name, project.slug, []],
-                );
-                if (project.scenes && project.scenes.length > 0) {
-                  projectsToPopulate.push({
-                    id: created.id,
-                    scenes: project.scenes,
-                  });
+                for (const project of projects) {
+                  const {
+                    rows: [created],
+                  } = await client.query(
+                    `select * from app_public.create_full_project($1, $2, $3, $4) as p`,
+                    [organization.id, project.name, project.slug, []],
+                  );
+                  if (project.scenes && project.scenes.length > 0) {
+                    projectsToPopulate.push({
+                      id: created.id,
+                      scenes: project.scenes,
+                    });
+                  }
+                  if (project.isPublic) {
+                    publicProjectIds.push(created.id);
+                  }
                 }
-                if (project.isPublic) {
-                  publicProjectIds.push(created.id);
-                }
-              }
-            },
-          ),
-        );
+              },
+            ),
+          );
+        } finally {
+          await client.query("commit");
+        }
       } finally {
-        await client.query("commit");
+        await client.release();
       }
-    } finally {
-      await client.release();
-    }
+    });
 
     // Pre-populate project Y.Docs outside the user-session transaction so the
     // `document` bytea bypasses the visitor column grants.
@@ -884,33 +909,30 @@ async function runCommand(
   }
 }
 
-const TEST_ROWS_LOCK_KEY = 4_281_517;
-
 /**
- * Deleting users and deleting organizations cascade into the same membership
- * rows, so two of these running at once (a spec clearing both in a
- * Promise.all, or two workers) can deadlock and leave the rows behind. A
- * shared advisory lock makes them take turns.
+ * Runs `fn` again when Postgres cancels it to break a deadlock. Deleting users
+ * and deleting organizations cascade into the same membership rows, so
+ * cleanup and setup from parallel workers (or a spec clearing both in a
+ * Promise.all) can deadlock. Not a shared lock: one slow statement must not
+ * hold up every other worker.
  */
+async function retryOnDeadlock<T>(fn: () => Promise<T>): Promise<T> {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await fn();
+    } catch (e: any) {
+      if (e?.code !== "40P01" || attempt >= 5) throw e;
+      await new Promise((r) => setTimeout(r, 50 + Math.random() * 200));
+    }
+  }
+}
+
 async function deleteTestRows(
   rootPgPool: Pool,
   sql: string,
   params: unknown[] = [],
 ) {
-  const client = await rootPgPool.connect();
-  try {
-    await client.query("begin");
-    await client.query("select pg_advisory_xact_lock($1)", [
-      TEST_ROWS_LOCK_KEY,
-    ]);
-    await client.query(sql, params);
-    await client.query("commit");
-  } catch (e) {
-    await client.query("rollback");
-    throw e;
-  } finally {
-    client.release();
-  }
+  await retryOnDeadlock(() => rootPgPool.query(sql, params));
 }
 
 async function getOrCreateUser(
@@ -942,20 +964,32 @@ async function getOrCreateUser(
   }
 
   // Create new user if not found
-  const {
-    rows: [user],
-  } = await rootPgPool.query(
-    `SELECT * FROM app_private.really_create_user(
-        username := $1,
-        email := $2,
-        email_is_verified := $3,
-        name := $4,
-        avatar_url := $5,
-        password := $6
-      )`,
-    [username, email, verified, name, avatarUrl, password],
-  );
-  return user;
+  try {
+    const {
+      rows: [user],
+    } = await rootPgPool.query(
+      `SELECT * FROM app_private.really_create_user(
+          username := $1,
+          email := $2,
+          email_is_verified := $3,
+          name := $4,
+          avatar_url := $5,
+          password := $6
+        )`,
+      [username, email, verified, name, avatarUrl, password],
+    );
+    return user;
+  } catch (e: any) {
+    // Shared helper users (testuser_other) can be created by two workers at
+    // once; whoever loses the race uses the winner's row.
+    if (e?.code !== "23505") throw e;
+    const { rows } = await rootPgPool.query(
+      `SELECT * FROM app_public.users WHERE username = $1`,
+      [username],
+    );
+    if (rows.length === 0) throw e;
+    return rows[0];
+  }
 }
 
 async function createSession(rootPgPool: Pool, userId: string) {

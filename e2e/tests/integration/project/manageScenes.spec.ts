@@ -1,8 +1,8 @@
 import { type Page } from "@playwright/test";
 
 import { expect, test } from "../../../fixtures/screenFixture";
+import { WORKER_TAG } from "../../../helpers/workerData";
 
-const WORKER_TAG = `w${process.env.TEST_WORKER_INDEX ?? "0"}`;
 const ORG_SLUG = `testorg-scenes-${WORKER_TAG}`;
 const ORG_NAME = `TestOrg Scenes ${WORKER_TAG}`;
 const USERNAME = `testuser_scenes_${WORKER_TAG}`;

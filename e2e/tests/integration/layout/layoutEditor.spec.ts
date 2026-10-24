@@ -2,6 +2,7 @@ import type { Locator, Page } from "@playwright/test";
 
 import type { E2ECommandAPI } from "../../../e2eCommand";
 import { expect, test } from "../../../fixtures/projectFixture";
+import { ORG_SLUG } from "../../../helpers/workerData";
 import type { ProjectPage } from "../../../pages/ProjectPage";
 
 /**
@@ -150,15 +151,8 @@ const typeBlocks = async (page: Page, blocks: string[][]) => {
   }
 };
 
-test.describe.serial("Layout editor", () => {
-  test.beforeEach(
-    async ({ e2eCommand }) =>
-      await Promise.all([
-        e2eCommand.serverCommand("clearTestUsers"),
-        e2eCommand.serverCommand("clearTestOrganizations"),
-        e2eCommand.serverCommand("clearBibleData"),
-      ]),
-  );
+test.describe("Layout editor", () => {
+  test.beforeEach(async ({ e2eCommand }) => await e2eCommand.clearWorkerData());
 
   test("can move, resize and restyle an element from the inspector", async ({
     page,
@@ -831,15 +825,8 @@ test.describe.serial("Layout editor", () => {
  * in the naming scheme is a change in the contract, not an implementation
  * detail. The Bible template ships `bible-*` ids, so these never collide.
  */
-test.describe.serial("Adding elements", () => {
-  test.beforeEach(
-    async ({ e2eCommand }) =>
-      await Promise.all([
-        e2eCommand.serverCommand("clearTestUsers"),
-        e2eCommand.serverCommand("clearTestOrganizations"),
-        e2eCommand.serverCommand("clearBibleData"),
-      ]),
-  );
+test.describe("Adding elements", () => {
+  test.beforeEach(async ({ e2eCommand }) => await e2eCommand.clearWorkerData());
 
   /**
    * The node a shape's appearance is painted on.
@@ -1101,15 +1088,8 @@ test.describe.serial("Adding elements", () => {
  * a Meta chord the way a Mac would, and the handler accepts either modifier, so
  * Control exercises the same branch everywhere.
  */
-test.describe.serial("Editor shortcuts", () => {
-  test.beforeEach(
-    async ({ e2eCommand }) =>
-      await Promise.all([
-        e2eCommand.serverCommand("clearTestUsers"),
-        e2eCommand.serverCommand("clearTestOrganizations"),
-        e2eCommand.serverCommand("clearBibleData"),
-      ]),
-  );
+test.describe("Editor shortcuts", () => {
+  test.beforeEach(async ({ e2eCommand }) => await e2eCommand.clearWorkerData());
 
   const item = (dialog: Locator, id: string) =>
     dialog.locator(`[data-lay-id="${id}"]`);
@@ -1254,7 +1234,7 @@ test.describe.serial("Editor shortcuts", () => {
  * 390x844 is an iPhone 12. The exact numbers matter less than being under 768
  * and tall enough that a canvas capped at 55% still leaves a usable panel.
  */
-test.describe.serial("Layout editor on a phone", () => {
+test.describe("Layout editor on a phone", () => {
   // Desktop viewport, resized per test. Scene setup CANNOT run at phone width:
   // the remote app ships SidebarWeb and SidebarMobile as two trees toggled with
   // `hidden desktop:flex`, and `createPlugin` drives the web one's add-scene
@@ -1262,14 +1242,7 @@ test.describe.serial("Layout editor on a phone", () => {
   // because it is a context option and cannot be changed mid-test.
   test.use({ viewport: { width: 1280, height: 720 }, hasTouch: true });
 
-  test.beforeEach(
-    async ({ e2eCommand }) =>
-      await Promise.all([
-        e2eCommand.serverCommand("clearTestUsers"),
-        e2eCommand.serverCommand("clearTestOrganizations"),
-        e2eCommand.serverCommand("clearBibleData"),
-      ]),
-  );
+  test.beforeEach(async ({ e2eCommand }) => await e2eCommand.clearWorkerData());
 
   const PHONE = { width: 390, height: 844 };
 
@@ -1562,15 +1535,8 @@ test.describe.serial("Layout editor on a phone", () => {
  * result, not just the inspector's own state — the schema having a gradient
  * variant means nothing if the renderer drops it.
  */
-test.describe.serial("Gradient fill", () => {
-  test.beforeEach(
-    async ({ e2eCommand }) =>
-      await Promise.all([
-        e2eCommand.serverCommand("clearTestUsers"),
-        e2eCommand.serverCommand("clearTestOrganizations"),
-        e2eCommand.serverCommand("clearBibleData"),
-      ]),
-  );
+test.describe("Gradient fill", () => {
+  test.beforeEach(async ({ e2eCommand }) => await e2eCommand.clearWorkerData());
 
   const TRACK = ".lay--gradient-track";
   const STOP_ROW = ".lay--gradient-row";
@@ -1779,15 +1745,8 @@ test.describe.serial("Gradient fill", () => {
  * silently — a stored absolute URL would still render here and only fail later,
  * on another host.
  */
-test.describe.serial("Picture fill", () => {
-  test.beforeEach(
-    async ({ e2eCommand }) =>
-      await Promise.all([
-        e2eCommand.serverCommand("clearTestUsers"),
-        e2eCommand.serverCommand("clearTestOrganizations"),
-        e2eCommand.serverCommand("clearBibleData"),
-      ]),
-  );
+test.describe("Picture fill", () => {
+  test.beforeEach(async ({ e2eCommand }) => await e2eCommand.clearWorkerData());
 
   const PICKER = '[data-testid="media-picker-dialog"]';
   const IMAGE = "./dummyFiles/dummyImage.jpg";
@@ -1987,15 +1946,8 @@ test.describe.serial("Picture fill", () => {
  * the raw mp4 instead, which is a real code path (`useVideoUrl` falls back to
  * `url` when `hlsMediaName` is null) and irrelevant to what they assert.
  */
-test.describe.serial("Video fill", () => {
-  test.beforeEach(
-    async ({ e2eCommand }) =>
-      await Promise.all([
-        e2eCommand.serverCommand("clearTestUsers"),
-        e2eCommand.serverCommand("clearTestOrganizations"),
-        e2eCommand.serverCommand("clearBibleData"),
-      ]),
-  );
+test.describe("Video fill", () => {
+  test.beforeEach(async ({ e2eCommand }) => await e2eCommand.clearWorkerData());
 
   const PICKER = '[data-testid="media-picker-dialog"]';
   const VIDEO = "./dummyFiles/dummyVideo.mp4";
@@ -2071,7 +2023,7 @@ test.describe.serial("Video fill", () => {
     e2eCommand: E2ECommandAPI,
   ) => {
     await e2eCommand.seedVideoMedia({
-      orgSlug: "testorg",
+      orgSlug: ORG_SLUG,
       videoPath: VIDEO,
       posterPath: POSTER,
       duration: VIDEO_DURATION,

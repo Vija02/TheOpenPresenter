@@ -8,17 +8,10 @@ import { expect, test } from "../../../../../fixtures/planningCenterFixture";
  *
  * These specs never touch MyWorshipList, so an organization here starts with
  * no sources at all and the empty state is what greets it.
- *
- * Serial, like the other plugin specs: they all log in as the same `testorg`,
- * and the beforeEach sweep would pull that org out from under a sibling test
- * running at the same time.
  */
-test.describe.serial("Lyrics Presenter - Planning Center", () => {
+test.describe("Lyrics Presenter - Planning Center", () => {
   test.beforeEach(async ({ e2eCommand, requireFakePco }) => {
-    await Promise.all([
-      e2eCommand.serverCommand("clearTestUsers"),
-      e2eCommand.serverCommand("clearTestOrganizations"),
-    ]);
+    await e2eCommand.clearWorkerData();
     await requireFakePco();
   });
 

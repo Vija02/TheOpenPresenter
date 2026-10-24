@@ -1,7 +1,7 @@
 import { expect, test } from "../../../fixtures/screenFixture";
+import { WORKER_TAG } from "../../../helpers/workerData";
 import { ProjectPage } from "../../../pages/ProjectPage";
 
-const WORKER_TAG = `w${process.env.TEST_WORKER_INDEX ?? "0"}`;
 const ORG_SLUG = `testorg-phone-${WORKER_TAG}`;
 const ORG_NAME = `TestOrg Phone ${WORKER_TAG}`;
 const USERNAME = `testuser_phone_${WORKER_TAG}`;
@@ -36,7 +36,6 @@ test.describe("Present from phone", () => {
     context,
     e2eCommand,
   }) => {
-
     await login(e2eCommand);
 
     const projectPage = new ProjectPage(page, context);
@@ -55,7 +54,6 @@ test.describe("Present from phone", () => {
     context,
     e2eCommand,
   }) => {
-
     await login(e2eCommand);
 
     const projectPage = new ProjectPage(page, context);

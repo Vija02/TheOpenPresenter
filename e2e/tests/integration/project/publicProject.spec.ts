@@ -1,13 +1,8 @@
 import { expect, test } from "../../../fixtures/projectFixture";
+import { projectUrl } from "../../../helpers/workerData";
 
 test.describe("Public Project", () => {
-  test.beforeEach(
-    async ({ e2eCommand }) =>
-      await Promise.all([
-        e2eCommand.serverCommand("clearTestUsers"),
-        e2eCommand.serverCommand("clearTestOrganizations"),
-      ]),
-  );
+  test.beforeEach(async ({ e2eCommand }) => await e2eCommand.clearWorkerData());
 
   test("can toggle a project public and open it from an unauthenticated browser", async ({
     page,
@@ -27,12 +22,12 @@ test.describe("Public Project", () => {
     const privateContext = await browser.newContext();
     try {
       const privatePage = await privateContext.newPage();
-      await privatePage.goto("/app/testorg/testproject");
+      await privatePage.goto(projectUrl());
       await privatePage.waitForURL(
-        (url) => !/\/app\/testorg\/testproject/.test(url.pathname),
+        (url) => !url.pathname.includes(projectUrl()),
         { timeout: 10000 },
       );
-      expect(privatePage.url()).not.toContain("/app/testorg/testproject");
+      expect(privatePage.url()).not.toContain(projectUrl());
     } finally {
       await privateContext.close();
     }
@@ -58,13 +53,13 @@ test.describe("Public Project", () => {
     const unauthContext = await browser.newContext();
     try {
       const unauthPage = await unauthContext.newPage();
-      await unauthPage.goto("/app/testorg/testproject");
+      await unauthPage.goto(projectUrl());
 
       // The remote should load the public project — not redirect to login.
       await expect(unauthPage.locator(".rt--top-bar--project-name")).toHaveText(
         /TestProject/,
       );
-      await expect(unauthPage).toHaveURL(/\/app\/testorg\/testproject/);
+      await expect(unauthPage).toHaveURL(new RegExp(projectUrl()));
       await expect(
         unauthPage.getByRole("heading", { name: "Login" }),
       ).not.toBeVisible();
@@ -146,7 +141,7 @@ test.describe("Public Project", () => {
     const unauthContext = await browser.newContext();
     try {
       const unauthPage = await unauthContext.newPage();
-      await unauthPage.goto("/app/testorg/testproject");
+      await unauthPage.goto(projectUrl());
 
       // Wait for the public project Remote to render and the video
       // player plugin scene to mount.
