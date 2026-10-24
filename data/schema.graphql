@@ -6443,6 +6443,11 @@ type Query {
   ): OrganizationsConnection
   pluginMeta(organizationId: UUID): PluginMeta!
   project(id: UUID!): Project
+
+  """
+  The project at this org and project slug, if the current visitor may see it.
+  """
+  projectByOrgAndSlug(pOrgSlug: String!, pProjectSlug: String!): Project
   projectByOrganizationIdAndSlug(organizationId: UUID!, slug: String!): Project
 
   """Reads and enables pagination through a set of `ProjectMedia`."""
