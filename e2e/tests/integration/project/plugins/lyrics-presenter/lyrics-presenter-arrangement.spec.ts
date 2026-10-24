@@ -13,13 +13,7 @@ My chains are gone I've been set free
 My God my Savior has ransomed me`;
 
 test.describe("Lyrics Presenter Plugin - Arrangement Feature", () => {
-  test.beforeEach(
-    async ({ e2eCommand }) =>
-      await Promise.all([
-        e2eCommand.serverCommand("clearTestUsers"),
-        e2eCommand.serverCommand("clearTestOrganizations"),
-      ]),
-  );
+  test.beforeEach(async ({ e2eCommand }) => await e2eCommand.clearWorkerData());
 
   test("can arrange sections and verify changes are saved", async ({
     page,

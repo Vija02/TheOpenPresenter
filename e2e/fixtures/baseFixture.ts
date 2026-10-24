@@ -1,6 +1,12 @@
 import { type BrowserContext, type Page, test as base } from "@playwright/test";
 
 import { E2ECommandAPI } from "../e2eCommand";
+import {
+  ORG_NAME,
+  ORG_SLUG,
+  PROJECT_SLUG,
+  orgUrl,
+} from "../helpers/workerData";
 
 type OrgOwnerContextOptions = {
   orgSlug: string;
@@ -32,9 +38,9 @@ export const test = base.extend<BaseFixture>({
     await use(e2eCommandApi);
   },
   loginDefault: async ({ e2eCommand }, use) => {
-    const fn = async (next: string = "/o/testorg") => {
+    const fn = async (next: string = orgUrl()) => {
       await e2eCommand.login({
-        orgs: [{ name: "TestOrg", slug: "testorg" }],
+        orgs: [{ name: ORG_NAME, slug: ORG_SLUG }],
         next,
       });
     };
@@ -42,13 +48,13 @@ export const test = base.extend<BaseFixture>({
     await use(fn);
   },
   loginWithDefaultProject: async ({ e2eCommand }, use) => {
-    const fn = async (next: string = "/o/testorg") => {
+    const fn = async (next: string = orgUrl()) => {
       await e2eCommand.login({
         orgs: [
           {
-            name: "TestOrg",
-            slug: "testorg",
-            projects: [{ name: "TestProject", slug: "testproject" }],
+            name: ORG_NAME,
+            slug: ORG_SLUG,
+            projects: [{ name: "TestProject", slug: PROJECT_SLUG }],
           },
         ],
         next,

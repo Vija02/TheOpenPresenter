@@ -1,4 +1,5 @@
 import { expect, test } from "../../../../../fixtures/projectFixture";
+import { ORG_SLUG } from "../../../../../helpers/workerData";
 
 const TEST_SONG_CONTENT = `[Verse 1]
 Amazing grace how sweet the sound
@@ -19,13 +20,7 @@ And like a flood His mercy reigns
 Unending love amazing grace`;
 
 test.describe("Lyrics Presenter Plugin - Visual Regression", () => {
-  test.beforeEach(
-    async ({ e2eCommand }) =>
-      await Promise.all([
-        e2eCommand.serverCommand("clearTestUsers"),
-        e2eCommand.serverCommand("clearTestOrganizations"),
-      ]),
-  );
+  test.beforeEach(async ({ e2eCommand }) => await e2eCommand.clearWorkerData());
 
   test("renders lyrics with various style combinations", async ({
     page,
@@ -262,7 +257,7 @@ test.describe("Lyrics Presenter Plugin - Visual Regression", () => {
 
     // Already transcoded, so no waiting on ffmpeg. After login, which makes the org
     await e2eCommand.seedVideoMedia({
-      orgSlug: "testorg",
+      orgSlug: ORG_SLUG,
       videoPath: "./dummyFiles/dummyVideo.mp4",
       posterPath: "./dummyFiles/dummyImage.jpg",
       duration: 6.2,

@@ -2,6 +2,7 @@ import type { Locator, Page } from "@playwright/test";
 
 import type { E2ECommandAPI } from "../../../e2eCommand";
 import { expect, test } from "../../../fixtures/projectFixture";
+import { WORKER_TAG } from "../../../helpers/workerData";
 import { ProjectPage } from "../../../pages/ProjectPage";
 
 /**
@@ -29,14 +30,9 @@ import { ProjectPage } from "../../../pages/ProjectPage";
  */
 
 /**
- * Worker-scoped fixture names, as in slides-video.spec.ts.
- *
- * The shared `testorg` is unusable here: `clearTestOrganizations` deletes every
- * org whose slug starts with `test`, so running two browser projects (or any
- * other spec) in parallel means one run deletes the other's org mid-test. Own
- * org, own user, and cleanup scoped to exactly those two.
+ * Worker-scoped fixture names, as in slides-video.spec.ts: own org, own user,
+ * and cleanup scoped to exactly those two.
  */
-const WORKER_TAG = `w${process.env.TEST_WORKER_INDEX ?? "0"}`;
 const ORG = `testorg-insertdefaults-${WORKER_TAG}`;
 const PROJECT = "insert-defaults-project";
 // `users_username_check` caps a username at 24 characters, so this cannot spell
@@ -180,7 +176,7 @@ const videoLoops = async (scope: Locator): Promise<boolean> => {
   return video.evaluate((el: HTMLVideoElement) => el.loop);
 };
 
-test.describe.serial("Layout insert defaults", () => {
+test.describe("Layout insert defaults", () => {
   test.beforeEach(
     async ({ e2eCommand }) =>
       await Promise.all([

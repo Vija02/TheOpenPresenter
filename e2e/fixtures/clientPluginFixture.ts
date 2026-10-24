@@ -1,4 +1,5 @@
 import { ClientPluginApi, uniqueSlug } from "../helpers/clientPluginApi";
+import { tagged } from "../helpers/workerData";
 import { PluginsAdminPage } from "../pages/PluginsAdminPage";
 import { ProjectPage } from "../pages/ProjectPage";
 import { test as base } from "./baseFixture";
@@ -16,8 +17,8 @@ import { test as base } from "./baseFixture";
  * id by the remote, so every enabled plugin of every org lands in the scene
  * picker: leaving orgs behind makes each run slower than the last until the
  * picker is thousands of entries deep and these tests time out. The slug is
- * prefixed "test" so `clearTestOrganizations` can sweep anything a crashed run
- * left behind.
+ * worker-tagged so the worker's next `clearWorkerData` sweeps anything a
+ * crashed test left behind (and `globalSetup` anything from earlier runs).
  */
 
 export const PROJECT_SLUG = "testproject";
@@ -58,8 +59,7 @@ export const test = base.extend<ClientPluginFixture>({
     await use(new ProjectPage(page, context));
   },
   cplugin: async ({ page, context, e2eCommand }, use) => {
-    // "test" prefix so clearTestOrganizations can sweep leftovers.
-    const orgSlug = uniqueSlug("testcplugin");
+    const orgSlug = tagged(uniqueSlug("testcplugin"));
 
     await e2eCommand.login({
       orgs: [

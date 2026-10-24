@@ -1,15 +1,10 @@
-import { expect, test } from "../../../fixtures/cloudFixture";
+import { SYNC_ORG_SLUG, expect, test } from "../../../fixtures/cloudFixture";
+import { orgUrl } from "../../../helpers/workerData";
 import { LyricsPlugin } from "../../../pages/LyricsPlugin";
 import { ProjectPage } from "../../../pages/ProjectPage";
 
 test.describe("Cloud Document Sync", () => {
-  test.beforeEach(
-    async ({ e2eCommand }) =>
-      await Promise.all([
-        e2eCommand.serverCommand("clearTestUsers"),
-        e2eCommand.serverCommand("clearTestOrganizations"),
-      ]),
-  );
+  test.beforeEach(async ({ e2eCommand }) => await e2eCommand.clearWorkerData());
 
   test("sync document content properly", async ({
     context,
@@ -17,7 +12,7 @@ test.describe("Cloud Document Sync", () => {
     cloudPage,
     loginWithCloudProjects,
   }) => {
-    await loginWithCloudProjects("/o/testorg/cloud");
+    await loginWithCloudProjects(`${orgUrl()}/cloud`);
 
     // Set up cloud connection
     await cloudPage.hostInput.clear();
@@ -30,11 +25,11 @@ test.describe("Cloud Document Sync", () => {
     await popup.getByRole("heading", { name: "Login successful" });
     await popup.close();
 
-    await cloudPage.selectOrgButton("testsyncorg").click();
+    await cloudPage.selectOrgButton(SYNC_ORG_SLUG).click();
 
     // 1. Should sync over basic document
     const originalProjectPage = await context.newPage();
-    await originalProjectPage.goto("/o/testsyncorg");
+    await originalProjectPage.goto(orgUrl(SYNC_ORG_SLUG));
     await originalProjectPage.getByText("SyncProject2").click();
 
     // Create lyrics plugin and add specific content
@@ -64,7 +59,7 @@ test.describe("Cloud Document Sync", () => {
 
     // Open a new page to access the cloud org directly
     const newPage = await context.newPage();
-    await newPage.goto("/o/testorg");
+    await newPage.goto(orgUrl());
 
     // Find and open the synced project
     await expect(newPage.getByText("SyncProject2")).toBeVisible();

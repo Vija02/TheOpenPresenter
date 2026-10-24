@@ -8,6 +8,7 @@ import {
 
 import { expect, test } from "../../../fixtures/screenFixture";
 import { openManageOutputs } from "../../../helpers/outputs";
+import { WORKER_TAG } from "../../../helpers/workerData";
 
 /**
  * A screen set to a look shows each plugin's version of it. Here, lyrics on
@@ -15,7 +16,6 @@ import { openManageOutputs } from "../../../helpers/outputs";
  * next one, without building a layout by hand.
  */
 
-const WORKER_TAG = `w${process.env.TEST_WORKER_INDEX ?? "0"}`;
 const ORG_SLUG = `testorg-looks-${WORKER_TAG}`;
 const ORG_NAME = `TestOrg Looks ${WORKER_TAG}`;
 const USERNAME = `testuser_looks_${WORKER_TAG}`;
@@ -124,7 +124,7 @@ const login = (e2eCommand: any, withSlides = false) => {
   });
 };
 
-test.describe.serial("Screen looks", () => {
+test.describe("Screen looks", () => {
   test.beforeEach(async ({ e2eCommand }) => {
     await e2eCommand.serverCommand("clearOrganizationBySlug", {
       slug: ORG_SLUG,

@@ -3,10 +3,6 @@ import { expect, test } from "../../../../../fixtures/projectFixture";
 /**
  * Chords in the song editor: showing and hiding them, the chord toolbar, and
  * transposing.
- *
- * Serial, like the other plugin specs: they all log in as the same `testorg`,
- * and the beforeEach sweep would pull that org out from under a sibling test
- * running at the same time.
  */
 
 const PLAIN_SONG = `[Verse 1]
@@ -23,14 +19,8 @@ const OPENSONG_SONG = `[Intro]
 [Verse 1]
 [G]Amazing grace how [C]sweet the sound`;
 
-test.describe.serial("Lyrics Presenter - Chords", () => {
-  test.beforeEach(
-    async ({ e2eCommand }) =>
-      await Promise.all([
-        e2eCommand.serverCommand("clearTestUsers"),
-        e2eCommand.serverCommand("clearTestOrganizations"),
-      ]),
-  );
+test.describe("Lyrics Presenter - Chords", () => {
+  test.beforeEach(async ({ e2eCommand }) => await e2eCommand.clearWorkerData());
 
   test("hides chords by default and shows them on demand", async ({
     projectPage,

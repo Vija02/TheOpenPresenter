@@ -1,4 +1,5 @@
 import { expect, test } from "../../../../../fixtures/projectFixture";
+import { ORG_SLUG, projectUrl } from "../../../../../helpers/workerData";
 import {
   type StubVideo,
   stubVideoPlayerYoutube,
@@ -33,13 +34,7 @@ const long: StubVideo = {
 const autoplayOn = "Autoplay on: plays the next video when one finishes";
 
 test.describe("Video Player Plugin", () => {
-  test.beforeEach(
-    async ({ e2eCommand }) =>
-      await Promise.all([
-        e2eCommand.serverCommand("clearTestUsers"),
-        e2eCommand.serverCommand("clearTestOrganizations"),
-      ]),
-  );
+  test.beforeEach(async ({ e2eCommand }) => await e2eCommand.clearWorkerData());
 
   test("can search for a youtube video", async ({
     page,
@@ -74,12 +69,9 @@ test.describe("Video Player Plugin", () => {
   });
 });
 
-test.describe.serial("Video Player Plugin: Playlist", () => {
+test.describe("Video Player Plugin: Playlist", () => {
   test.beforeEach(async ({ e2eCommand, context }) => {
-    await Promise.all([
-      e2eCommand.serverCommand("clearTestUsers"),
-      e2eCommand.serverCommand("clearTestOrganizations"),
-    ]);
+    await e2eCommand.clearWorkerData();
     await stubVideoPlayerYoutube(context, [first, second, third, long]);
   });
 
@@ -267,16 +259,13 @@ test.describe.serial("Video Player Plugin: Playlist", () => {
 // can still search YouTube for a video.
 test.describe("Video Player Plugin: public access", () => {
   test.beforeEach(async ({ e2eCommand }) => {
-    await Promise.all([
-      e2eCommand.serverCommand("clearTestUsers"),
-      e2eCommand.serverCommand("clearTestOrganizations"),
-    ]);
+    await e2eCommand.clearWorkerData();
 
     await e2eCommand.loginWithScenes({
       orgs: [
         {
           name: "TestOrg",
-          slug: "testorg",
+          slug: ORG_SLUG,
           projects: [
             {
               name: "TestProject",
@@ -338,7 +327,7 @@ test.describe("Video Player Plugin: public access", () => {
         route.fulfill({ status: 200, contentType: "image/jpeg", body: "" }),
       );
 
-      await page.goto("/app/testorg/testproject");
+      await page.goto(projectUrl());
       await expect(page.getByText("No videos loaded yet.")).toBeVisible();
 
       await videoPlayerPlugin.searchInput.fill("test video");

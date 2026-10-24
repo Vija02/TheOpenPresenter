@@ -1,6 +1,6 @@
 import { expect, test } from "../../../fixtures/screenFixture";
+import { WORKER_TAG } from "../../../helpers/workerData";
 
-const WORKER_TAG = `w${process.env.TEST_WORKER_INDEX ?? "0"}`;
 const ORG_SLUG = `testorg-create-${WORKER_TAG}`;
 const ORG_NAME = `TestOrg Create ${WORKER_TAG}`;
 const USERNAME = `testuser_create_${WORKER_TAG}`;
@@ -8,8 +8,6 @@ const SCREEN_NAME = `Create Test Screen ${WORKER_TAG}`;
 const SCREEN_SLUG = `testscreen-create-${WORKER_TAG}`;
 
 test.describe("Create screen via UI", () => {
-  test.describe.configure({ mode: "serial" });
-
   test.beforeEach(async ({ e2eCommand }) => {
     await e2eCommand.serverCommand("clearOrganizationBySlug", {
       slug: ORG_SLUG,

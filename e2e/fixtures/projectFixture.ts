@@ -1,3 +1,4 @@
+import { projectUrl } from "../helpers/workerData";
 import { LyricsPlugin } from "../pages/LyricsPlugin";
 import { MusicPlayerPlugin } from "../pages/MusicPlayerPlugin";
 import { OrganizationPage } from "../pages/OrganizationPage";
@@ -37,7 +38,7 @@ export const test = base.extend<ProjectFixture>({
   },
   loginAndGoToProject: async ({ loginWithDefaultProject }, use) => {
     const fn = async () => {
-      await loginWithDefaultProject("/app/testorg/testproject");
+      await loginWithDefaultProject(projectUrl());
     };
 
     await use(fn);

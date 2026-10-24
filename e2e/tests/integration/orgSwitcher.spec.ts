@@ -1,13 +1,8 @@
 import { expect, test } from "../../fixtures/organizationFixture";
+import { ORG_SLUG, orgUrl, tagged } from "../../helpers/workerData";
 
 test.describe("OrgSwitcher", () => {
-  test.beforeEach(
-    async ({ e2eCommand }) =>
-      await Promise.all([
-        e2eCommand.serverCommand("clearTestUsers"),
-        e2eCommand.serverCommand("clearTestOrganizations"),
-      ]),
-  );
+  test.beforeEach(async ({ e2eCommand }) => await e2eCommand.clearWorkerData());
 
   test("can switch between organizations from the sidebar", async ({
     page,
@@ -15,13 +10,13 @@ test.describe("OrgSwitcher", () => {
   }) => {
     await e2eCommand.login({
       orgs: [
-        { name: "TestOrg", slug: "testorg" },
-        { name: "TestOrg Two", slug: "testorg-two" },
+        { name: "TestOrg", slug: ORG_SLUG },
+        { name: "TestOrg Two", slug: tagged("testorg-two") },
       ],
-      next: "/o/testorg",
+      next: orgUrl(),
     });
 
-    await expect(page).toHaveURL(/o\/testorg(\?|$|\/)/);
+    await expect(page).toHaveURL(new RegExp(`/o/${ORG_SLUG}(\\?|$|/)`));
 
     // Open the switcher popover
     const switcherTrigger = page.getByRole("button", {
@@ -30,9 +25,7 @@ test.describe("OrgSwitcher", () => {
     await switcherTrigger.click();
 
     await expect(page.getByText("Switch organization")).toBeVisible();
-    await expect(
-      page.getByRole("link", { name: /TestOrg$/ }),
-    ).toBeVisible();
+    await expect(page.getByRole("link", { name: /TestOrg$/ })).toBeVisible();
     await expect(
       page.getByRole("link", { name: /TestOrg Two$/ }),
     ).toBeVisible();
@@ -41,7 +34,9 @@ test.describe("OrgSwitcher", () => {
     await page.getByRole("link", { name: /TestOrg Two$/ }).click();
 
     // URL switches and the projects page for the new org renders
-    await expect(page).toHaveURL(/o\/testorg-two(\?|$|\/)/);
+    await expect(page).toHaveURL(
+      new RegExp(`/o/${tagged("testorg-two")}(\\?|$|/)`),
+    );
     await expect(
       page.getByRole("heading", { name: "Projects" }),
     ).toBeInViewport();
@@ -56,7 +51,7 @@ test.describe("OrgSwitcher", () => {
   }) => {
     await loginDefault();
 
-    await expect(page).toHaveURL(/o\/testorg(\?|$|\/)/);
+    await expect(page).toHaveURL(new RegExp(`/o/${ORG_SLUG}(\\?|$|/)`));
 
     await page.getByRole("button", { name: "Switch organization" }).click();
 

@@ -10,6 +10,11 @@ import {
   reachSlide,
 } from "../../../../../helpers/slidesRenderer";
 import { buildGoogleSlidesScene } from "../../../../../helpers/slidesSeed";
+import {
+  ORG_SLUG,
+  orgUrl,
+  projectUrl,
+} from "../../../../../helpers/workerData";
 import { ProjectPage } from "../../../../../pages/ProjectPage";
 
 // Drives the live Google Slides embed through one continuous journey
@@ -34,18 +39,18 @@ async function openDeck(
   e2eCommand: E2ECommandAPI,
 ): Promise<Page> {
   await e2eCommand.loginWithScenes({
-    next: "/o/testorg",
+    next: orgUrl(),
     orgs: [
       {
         name: "TestOrg",
-        slug: "testorg",
+        slug: ORG_SLUG,
         projects: [
           { name: "TestProject", slug: "testproject", scenes: [SCENE] },
         ],
       },
     ],
   });
-  await page.goto("/app/testorg/testproject");
+  await page.goto(projectUrl());
   const presentedPage = await projectPage.present();
   await expect(presentedPage.locator("iframe")).toBeVisible({
     timeout: 30 * 1000,
@@ -56,13 +61,7 @@ async function openDeck(
 }
 
 test.describe("Slides Plugin - Google Slides renderer", () => {
-  test.beforeEach(
-    async ({ e2eCommand }) =>
-      await Promise.all([
-        e2eCommand.serverCommand("clearTestUsers"),
-        e2eCommand.serverCommand("clearTestOrganizations"),
-      ]),
-  );
+  test.beforeEach(async ({ e2eCommand }) => await e2eCommand.clearWorkerData());
 
   test("renderer tracks build, transition & backward navigation end to end", async ({
     page,

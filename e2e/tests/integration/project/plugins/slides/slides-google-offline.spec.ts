@@ -4,6 +4,7 @@ import { writeFileSync } from "node:fs";
 import { expect, test } from "../../../../../fixtures/projectFixture";
 import { pressSettle } from "../../../../../helpers/slidesRenderer";
 import { buildGoogleSlidesScene } from "../../../../../helpers/slidesSeed";
+import { orgUrl, projectUrl, tagged } from "../../../../../helpers/workerData";
 
 // Checks the Google Slides embed still renders with no internet, once it has
 // been viewed online. Anything it still needs from the internet is listed in
@@ -58,13 +59,7 @@ async function walkDeck(pp: Page) {
 }
 
 test.describe("Slides Plugin - Google Slides offline", () => {
-  test.beforeEach(
-    async ({ e2eCommand }) =>
-      await Promise.all([
-        e2eCommand.serverCommand("clearTestUsers"),
-        e2eCommand.serverCommand("clearTestOrganizations"),
-      ]),
-  );
+  test.beforeEach(async ({ e2eCommand }) => await e2eCommand.clearWorkerData());
 
   test("renders from the proxy cache without internet", async ({
     page,
@@ -77,11 +72,11 @@ test.describe("Slides Plugin - Google Slides offline", () => {
     test.setTimeout(3 * 60 * 1000);
 
     await e2eCommand.loginWithScenes({
-      next: "/o/testgslideoffline",
+      next: orgUrl(tagged("testgslideoffline")),
       orgs: [
         {
           name: "TestOrg",
-          slug: "testgslideoffline",
+          slug: tagged("testgslideoffline"),
           projects: [
             { name: "TestProject", slug: "testproject", scenes: [SCENE] },
           ],
@@ -90,13 +85,15 @@ test.describe("Slides Plugin - Google Slides offline", () => {
     });
 
     // ── Online: view the deck once so the cache fills ────────────────────
-    await page.goto("/app/testgslideoffline/testproject");
+    await page.goto(projectUrl(tagged("testgslideoffline")));
     const pp = await projectPage.present();
     const frame = pp.locator("iframe");
     // The renderer's fullscreen button shows for 1.5s after the pointer moves,
     // so whether it's in a screenshot is down to timing
     const shoot = () =>
-      frame.screenshot({ mask: [pp.locator("button[aria-label$='fullscreen']")] });
+      frame.screenshot({
+        mask: [pp.locator("button[aria-label$='fullscreen']")],
+      });
     await expect(frame).toBeVisible({ timeout: 30 * 1000 });
     await pp.click("body");
     await pp.waitForLoadState("networkidle");
@@ -105,7 +102,10 @@ test.describe("Slides Plugin - Google Slides offline", () => {
     const online = await shoot();
 
     // ── Offline: reload everything with the internet cut off ─────────────
-    const { blocked, essential } = await goOffline(context, new URL(baseURL!).origin);
+    const { blocked, essential } = await goOffline(
+      context,
+      new URL(baseURL!).origin,
+    );
     const proxyCache: string[] = [];
     pp.on("response", (res) => {
       if (res.url().includes("/proxy-cache/")) {
@@ -133,9 +133,20 @@ test.describe("Slides Plugin - Google Slides offline", () => {
       await testInfo.attach(name, { path });
     }
 
-    expect(proxyCache.length, "no request went through the proxy cache").toBeGreaterThan(0);
-    expect(proxyCache.every((r) => r === "200 HIT"), proxyCache.join(", ")).toBe(true);
-    expect(offline.equals(online), "offline render differs from online").toBe(true);
-    expect([...essential].sort(), "requests that still need the internet").toEqual([]);
+    expect(
+      proxyCache.length,
+      "no request went through the proxy cache",
+    ).toBeGreaterThan(0);
+    expect(
+      proxyCache.every((r) => r === "200 HIT"),
+      proxyCache.join(", "),
+    ).toBe(true);
+    expect(offline.equals(online), "offline render differs from online").toBe(
+      true,
+    );
+    expect(
+      [...essential].sort(),
+      "requests that still need the internet",
+    ).toEqual([]);
   });
 });

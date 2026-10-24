@@ -1,15 +1,13 @@
 import { expect, test } from "../../../fixtures/screenFixture";
+import { WORKER_TAG } from "../../../helpers/workerData";
 import { ScreenAdminPage } from "../../../pages/ScreenGuest/ScreenAdminPage";
 
-const WORKER_TAG = `w${process.env.TEST_WORKER_INDEX ?? "0"}`;
 const ORG_SLUG = `testorg-session-${WORKER_TAG}`;
 const SCREEN_SLUG = `testscreen-session-${WORKER_TAG}`;
 const ORG_NAME = `TestOrg Session ${WORKER_TAG}`;
 const USERNAME = `testuser_session_${WORKER_TAG}`;
 
 test.describe("Screen session", () => {
-  test.describe.configure({ mode: "serial" });
-
   test.beforeEach(async ({ e2eCommand }) => {
     await e2eCommand.serverCommand("clearOrganizationBySlug", {
       slug: ORG_SLUG,

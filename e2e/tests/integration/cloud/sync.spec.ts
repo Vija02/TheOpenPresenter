@@ -1,16 +1,11 @@
-import { expect, test } from "../../../fixtures/cloudFixture";
+import { SYNC_ORG_SLUG, expect, test } from "../../../fixtures/cloudFixture";
+import { orgUrl } from "../../../helpers/workerData";
 import { OrgSettingCategoriesPage } from "../../../pages/OrgSettings/OrgSettingCategoriesPage";
 import { OrgSettingTagsPage } from "../../../pages/OrgSettings/OrgSettingTagsPage";
 import { OrganizationPage } from "../../../pages/OrganizationPage";
 
 test.describe("Cloud Sync", () => {
-  test.beforeEach(
-    async ({ e2eCommand }) =>
-      await Promise.all([
-        e2eCommand.serverCommand("clearTestUsers"),
-        e2eCommand.serverCommand("clearTestOrganizations"),
-      ]),
-  );
+  test.beforeEach(async ({ e2eCommand }) => await e2eCommand.clearWorkerData());
 
   test("sync project metadata properly", async ({
     context,
@@ -19,18 +14,22 @@ test.describe("Cloud Sync", () => {
     loginWithCloudProjects,
   }) => {
     test.slow();
-    await loginWithCloudProjects("/o/testorg/cloud");
+    await loginWithCloudProjects(`${orgUrl()}/cloud`);
 
     const pagePromises: Promise<any>[] = [];
     const cloudOrganizationPage = new OrganizationPage(await context.newPage());
-    pagePromises.push(cloudOrganizationPage.page.goto("/o/testsyncorg"));
+    pagePromises.push(cloudOrganizationPage.page.goto(orgUrl(SYNC_ORG_SLUG)));
     const cloudTagPage = new OrgSettingTagsPage(await context.newPage());
-    pagePromises.push(cloudTagPage.page.goto("/o/testsyncorg/settings/tags"));
+    pagePromises.push(
+      cloudTagPage.page.goto(`${orgUrl(SYNC_ORG_SLUG)}/settings/tags`),
+    );
     const cloudCategoryPage = new OrgSettingCategoriesPage(
       await context.newPage(),
     );
     pagePromises.push(
-      cloudCategoryPage.page.goto("/o/testsyncorg/settings/categories"),
+      cloudCategoryPage.page.goto(
+        `${orgUrl(SYNC_ORG_SLUG)}/settings/categories`,
+      ),
     );
 
     await cloudPage.hostInput.clear();
@@ -43,7 +42,7 @@ test.describe("Cloud Sync", () => {
     await popup.getByRole("heading", { name: "Login successful" });
     await popup.close();
 
-    await cloudPage.selectOrgButton("testsyncorg").click();
+    await cloudPage.selectOrgButton(SYNC_ORG_SLUG).click();
 
     // Setup done. Now let's start sync
     await cloudPage.startSyncButton.click();
@@ -51,7 +50,7 @@ test.describe("Cloud Sync", () => {
     await page.waitForTimeout(2000);
 
     const currentProjectPage = await context.newPage();
-    await currentProjectPage.goto("/o/testorg");
+    await currentProjectPage.goto(orgUrl());
 
     await expect(currentProjectPage.getByText("SyncProject2")).toBeInViewport();
 

@@ -1,6 +1,7 @@
 import { type Browser } from "@playwright/test";
 
 import { expect, test } from "../../../../../fixtures/projectFixture";
+import { ORG_SLUG, projectUrl } from "../../../../../helpers/workerData";
 import { LyricsPlugin } from "../../../../../pages/LyricsPlugin";
 
 // A public-link viewer (the marketing demo QR lands on one) has no session, so
@@ -29,14 +30,11 @@ const LYRICS_SCENE = {
   rendererPluginData: { songId: null, currentIndex: null, backgroundRun: null },
 };
 
-const PUBLIC_PROJECT_URL = "/app/testorg/testproject";
+const PUBLIC_PROJECT_URL = projectUrl();
 
 test.describe("Lyrics Presenter - public access", () => {
   test.beforeEach(async ({ e2eCommand }) => {
-    await Promise.all([
-      e2eCommand.serverCommand("clearTestUsers"),
-      e2eCommand.serverCommand("clearTestOrganizations"),
-    ]);
+    await e2eCommand.clearWorkerData();
 
     // POSTs the seed; unlike `login()` this doesn't navigate, so we never pay
     // for an authenticated app load we don't assert on.
@@ -44,7 +42,7 @@ test.describe("Lyrics Presenter - public access", () => {
       orgs: [
         {
           name: "TestOrg",
-          slug: "testorg",
+          slug: ORG_SLUG,
           projects: [
             {
               name: "TestProject",

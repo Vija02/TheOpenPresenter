@@ -7,6 +7,11 @@ import {
   buildPowerPointScene,
   routeOfficeSprites,
 } from "../../../../../helpers/slidesSeed";
+import {
+  ORG_SLUG,
+  orgUrl,
+  projectUrl,
+} from "../../../../../helpers/workerData";
 import { ProjectPage } from "../../../../../pages/ProjectPage";
 
 // Plays a PowerPoint import captured from PowerPoint for the web, with our own
@@ -27,18 +32,18 @@ async function openDeck(
 ): Promise<Page> {
   await routeOfficeSprites(page.context());
   await e2eCommand.loginWithScenes({
-    next: "/o/testorg",
+    next: orgUrl(),
     orgs: [
       {
         name: "TestOrg",
-        slug: "testorg",
+        slug: ORG_SLUG,
         projects: [
           { name: "TestProject", slug: "testproject", scenes: [SCENE] },
         ],
       },
     ],
   });
-  await page.goto("/app/testorg/testproject");
+  await page.goto(projectUrl());
   const presentedPage = await projectPage.present();
   await expect(presentedPage.getByTestId("office-slide")).toBeVisible({
     timeout: 30 * 1000,
@@ -55,13 +60,7 @@ async function jumpTo(page: Page, pp: Page, slide: number) {
 }
 
 test.describe("Slides Plugin - PowerPoint renderer", () => {
-  test.beforeEach(
-    async ({ e2eCommand }) =>
-      await Promise.all([
-        e2eCommand.serverCommand("clearTestUsers"),
-        e2eCommand.serverCommand("clearTestOrganizations"),
-      ]),
-  );
+  test.beforeEach(async ({ e2eCommand }) => await e2eCommand.clearWorkerData());
 
   test("plays builds, transitions and morph", async ({
     page,

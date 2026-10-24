@@ -1,13 +1,8 @@
 import { expect, test } from "../../../../../fixtures/projectFixture";
+import { orgUrl } from "../../../../../helpers/workerData";
 
 test.describe("Slides Plugin - Replace Import", () => {
-  test.beforeEach(
-    async ({ e2eCommand }) =>
-      await Promise.all([
-        e2eCommand.serverCommand("clearTestUsers"),
-        e2eCommand.serverCommand("clearTestOrganizations"),
-      ]),
-  );
+  test.beforeEach(async ({ e2eCommand }) => await e2eCommand.clearWorkerData());
 
   test("replacing an import keeps surviving slides in position and inserts new slides at the same place", async ({
     page,
@@ -57,7 +52,7 @@ test.describe("Slides Plugin - Replace Import", () => {
     const mediaCardSelector = '[data-testid="media-card"]';
 
     const mediaPageBefore = await context.newPage();
-    await mediaPageBefore.goto("/o/testorg/media");
+    await mediaPageBefore.goto(`${orgUrl()}/media`);
     await expect(
       mediaPageBefore.getByRole("heading", {
         name: "Media Library",
@@ -152,7 +147,7 @@ test.describe("Slides Plugin - Replace Import", () => {
 
     // --- Verify the replaced PDF media was deleted, and the new one was added ---
     const mediaPageAfter = await context.newPage();
-    await mediaPageAfter.goto("/o/testorg/media");
+    await mediaPageAfter.goto(`${orgUrl()}/media`);
     await expect(
       mediaPageAfter.getByRole("heading", {
         name: "Media Library",

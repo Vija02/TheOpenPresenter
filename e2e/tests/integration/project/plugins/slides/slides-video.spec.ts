@@ -7,6 +7,7 @@ import {
   buildVideoSlidesScene,
   seedVideo,
 } from "../../../../../helpers/videoSlidesSeed";
+import { WORKER_TAG } from "../../../../../helpers/workerData";
 
 /**
  * Video playback for layout-backed slides.
@@ -23,14 +24,9 @@ import {
  */
 
 /**
- * Worker-scoped fixture names.
- *
- * `clearTestOrganizations` deletes every org whose slug starts with `test`, so
- * a shared `testorg` means two parallel workers delete each other's data
- * mid-test. Tagging by worker keeps each one in its own org, and cleanup is
- * scoped to that slug rather than the global wipe.
+ * Worker-scoped fixture names (see helpers/workerData), with cleanup scoped to
+ * exactly this org and user.
  */
-const WORKER_TAG = `w${process.env.TEST_WORKER_INDEX ?? "0"}`;
 const ORG = `testorg-video-${WORKER_TAG}`;
 const PROJECT = "video-source-project";
 const USERNAME = `testuser_video_${WORKER_TAG}`;
@@ -107,7 +103,7 @@ const seedDeck = async (
   return video;
 };
 
-test.describe.serial("Slides video playback", () => {
+test.describe("Slides video playback", () => {
   test.setTimeout(60000);
 
   test.beforeEach(
@@ -319,7 +315,7 @@ test.describe.serial("Slides video playback", () => {
   });
 });
 
-test.describe.serial("Slides video volume", () => {
+test.describe("Slides video volume", () => {
   test.beforeEach(
     async ({ e2eCommand }) =>
       await Promise.all([
@@ -443,7 +439,7 @@ test.describe.serial("Slides video volume", () => {
   });
 });
 
-test.describe.serial("Slides video in the editor", () => {
+test.describe("Slides video in the editor", () => {
   test.setTimeout(60000);
 
   test.beforeEach(
