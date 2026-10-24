@@ -12,6 +12,8 @@ import { test as base } from "./projectFixture";
 
 const FAKE_PCO_PORT = Number(process.env.FAKE_PCO_PORT || 5680);
 const FAKE_PCO_URL = `http://localhost:${FAKE_PCO_PORT}`;
+/** Kept in step with scripts/fakePcoServer.ts. */
+const ACCOUNT_COOKIE = "e2e_pco_account";
 
 export type PcoSong = {
   id: string;
@@ -48,7 +50,10 @@ export type FakePco = {
    * look nothing like the cause.
    */
   accountId: string;
-  /** Declares the account the next connect will authorize. */
+  /**
+   * Declares this test's account, and points this browser's sign-ins at it
+   * (a cookie on the fake, so other workers' sign-ins are unaffected).
+   */
   scenario: (account?: Partial<PcoAccount>) => Promise<void>;
 };
 
@@ -59,7 +64,7 @@ type PlanningCenterFixture = {
 };
 
 export const test = base.extend<PlanningCenterFixture>({
-  fakePco: async ({ request }, use, testInfo) => {
+  fakePco: async ({ request, context }, use, testInfo) => {
     const accountId = `pco-${testInfo.project.name}-${testInfo.parallelIndex}-${testInfo.repeatEachIndex}-${Date.now().toString(36)}`;
 
     const fakePco: FakePco = {
@@ -71,6 +76,9 @@ export const test = base.extend<PlanningCenterFixture>({
         if (!res.ok()) {
           throw new Error(`fake-pco scenario failed: ${await res.text()}`);
         }
+        await context.addCookies([
+          { name: ACCOUNT_COOKIE, value: accountId, url: FAKE_PCO_URL },
+        ]);
       },
     };
 

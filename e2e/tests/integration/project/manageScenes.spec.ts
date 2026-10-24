@@ -133,9 +133,18 @@ test.describe("Manage scenes", () => {
       .poll(() => sidebarSceneNames(page))
       .toEqual(["Sermon", "Announcements", "Worship"]);
 
-    // Delete, after confirming
-    await dialog.getByRole("button", { name: "Delete Worship" }).click();
-    await page.getByRole("button", { name: "Delete", exact: true }).click();
+    // Delete, after confirming. dnd-kit swallows clicks for 50ms after a drop
+    // (so the drop itself doesn't click anything), and the sidebar can show
+    // the new order sooner than that, so retry until the confirm opens.
+    const confirmDelete = page.getByRole("button", {
+      name: "Delete",
+      exact: true,
+    });
+    await expect(async () => {
+      await dialog.getByRole("button", { name: "Delete Worship" }).click();
+      await expect(confirmDelete).toBeVisible({ timeout: 1000 });
+    }).toPass();
+    await confirmDelete.click();
     await expect(dialog.getByTestId("manage-scenes-row")).toHaveCount(2);
     await expect
       .poll(() => sidebarSceneNames(page))
