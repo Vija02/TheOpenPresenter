@@ -48,7 +48,10 @@ export type FakeGoogle = {
    */
   newAccountId: (label?: string) => string;
   /** Describes an account and makes it the one the next sign-in authorizes. */
-  signInAs: (accountId: string, account?: Partial<GoogleAccount>) => Promise<void>;
+  signInAs: (
+    accountId: string,
+    account?: Partial<GoogleAccount>,
+  ) => Promise<void>;
   /** A token for Google's in-browser sign-in to hand out ("import once"). */
   browserToken: (accountId: string) => Promise<string>;
   /** As if the user removed the app's access in their Google account. */
@@ -174,7 +177,9 @@ const GSI_SCRIPT = `
 })();
 `;
 
-const installDrivePicker = async (context: BrowserContext): Promise<DrivePicker> => {
+const installDrivePicker = async (
+  context: BrowserContext,
+): Promise<DrivePicker> => {
   let nextPick: { id: string; name: string } | null = null;
   let nextBrowserToken: string | null = null;
   let signIns = 0;
@@ -283,7 +288,8 @@ export const test = base.extend<GoogleSlidesFixture>({
       // In CI the config starts the fake and sets the env, so anything else
       // means that broke
       if (process.env.CI) {
-        if (!fakeUp) throw new Error(`fake Google not up on ${FAKE_GOOGLE_URL}`);
+        if (!fakeUp)
+          throw new Error(`fake Google not up on ${FAKE_GOOGLE_URL}`);
         if (!wiring.configured) {
           throw new Error("the server has no Google Slides client secret set");
         }

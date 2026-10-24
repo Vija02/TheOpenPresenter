@@ -1,6 +1,7 @@
 import type { BrowserContext, Page } from "@playwright/test";
 
 import { expect, test } from "../../../../../fixtures/projectFixture";
+import { ORG_SLUG, projectUrl } from "../../../../../helpers/workerData";
 import {
   type StubPlaylist,
   type StubVideo,
@@ -59,12 +60,9 @@ const putSomethingOnScreen = async (
   await page.getByRole("button", { name: "Go live" }).click();
 };
 
-test.describe.serial("Music Player Plugin: Playlist", () => {
+test.describe("Music Player Plugin: Playlist", () => {
   test.beforeEach(async ({ e2eCommand, context }) => {
-    await Promise.all([
-      e2eCommand.serverCommand("clearTestUsers"),
-      e2eCommand.serverCommand("clearTestOrganizations"),
-    ]);
+    await e2eCommand.clearWorkerData();
     await stubYoutube(context, [first, second, third, fourth], [worshipSet]);
   });
 
@@ -522,16 +520,13 @@ test.describe.serial("Music Player Plugin: Playlist", () => {
 // can still search YouTube and add tracks by link.
 test.describe("Music Player Plugin: public access", () => {
   test.beforeEach(async ({ e2eCommand }) => {
-    await Promise.all([
-      e2eCommand.serverCommand("clearTestUsers"),
-      e2eCommand.serverCommand("clearTestOrganizations"),
-    ]);
+    await e2eCommand.clearWorkerData();
 
     await e2eCommand.loginWithScenes({
       orgs: [
         {
           name: "TestOrg",
-          slug: "testorg",
+          slug: ORG_SLUG,
           projects: [
             {
               name: "TestProject",
@@ -585,7 +580,7 @@ test.describe("Music Player Plugin: public access", () => {
     });
     try {
       await stubYoutube(context, [first, second]);
-      await page.goto("/app/testorg/testproject");
+      await page.goto(projectUrl());
       await expect(page.getByText("Start the music")).toBeVisible();
 
       await musicPlayerPlugin.submit("worship");

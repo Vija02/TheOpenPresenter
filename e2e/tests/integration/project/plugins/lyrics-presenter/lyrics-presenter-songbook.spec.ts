@@ -11,13 +11,7 @@ Amazing grace how sweet the sound
 That saved a wretch like me`;
 
 test.describe("Lyrics Presenter - Songbook & Import", () => {
-  test.beforeEach(
-    async ({ e2eCommand }) =>
-      await Promise.all([
-        e2eCommand.serverCommand("clearTestUsers"),
-        e2eCommand.serverCommand("clearTestOrganizations"),
-      ]),
-  );
+  test.beforeEach(async ({ e2eCommand }) => await e2eCommand.clearWorkerData());
 
   // ---------------------------------------------------------------------------
   // Importing a single song

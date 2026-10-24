@@ -1,4 +1,5 @@
-import { expect, test } from "../../../fixtures/cloudFixture";
+import { SYNC_ORG_SLUG, expect, test } from "../../../fixtures/cloudFixture";
+import { orgUrl } from "../../../helpers/workerData";
 import { LyricsPlugin } from "../../../pages/LyricsPlugin";
 import { ProjectPage } from "../../../pages/ProjectPage";
 
@@ -12,15 +13,7 @@ import { ProjectPage } from "../../../pages/ProjectPage";
  * is open, so a local edit travels up on its own.
  */
 test.describe("Cloud Document Bridge", () => {
-  test.describe.configure({ mode: "serial" });
-
-  test.beforeEach(
-    async ({ e2eCommand }) =>
-      await Promise.all([
-        e2eCommand.serverCommand("clearTestUsers"),
-        e2eCommand.serverCommand("clearTestOrganizations"),
-      ]),
-  );
+  test.beforeEach(async ({ e2eCommand }) => await e2eCommand.clearWorkerData());
 
   test("a local edit reaches the cloud without a sync run", async ({
     context,
@@ -28,7 +21,7 @@ test.describe("Cloud Document Bridge", () => {
     cloudPage,
     loginWithCloudProjects,
   }) => {
-    await loginWithCloudProjects("/o/testorg/cloud");
+    await loginWithCloudProjects(`${orgUrl()}/cloud`);
 
     await cloudPage.hostInput.clear();
     await cloudPage.hostInput.fill("http://localhost:5678");
@@ -39,7 +32,7 @@ test.describe("Cloud Document Bridge", () => {
     await popup.getByRole("heading", { name: "Login successful" });
     await popup.close();
 
-    await cloudPage.selectOrgButton("testsyncorg").click();
+    await cloudPage.selectOrgButton(SYNC_ORG_SLUG).click();
 
     // `testorg` is the local org; it pulls from `testsyncorg` on the far side.
     // One sync run first, so SyncProject2 exists locally and is paired with a
@@ -49,7 +42,7 @@ test.describe("Cloud Document Bridge", () => {
 
     // Open the LOCAL copy and edit it. The bridge should carry this upward.
     const localProject = await context.newPage();
-    await localProject.goto("/o/testorg");
+    await localProject.goto(orgUrl());
     await expect(localProject.getByText("SyncProject2")).toBeVisible({
       timeout: 20_000,
     });
@@ -68,7 +61,7 @@ test.describe("Cloud Document Bridge", () => {
     // Deliberately no second `startSyncButton` click: if this only passes with
     // one, the bridge is not doing anything and the worker is.
     const remoteProject = await context.newPage();
-    await remoteProject.goto("/o/testsyncorg");
+    await remoteProject.goto(orgUrl(SYNC_ORG_SLUG));
     await remoteProject.getByText("SyncProject2").click();
 
     await expect(remoteProject.getByText("Amazing Grace").first()).toBeVisible({

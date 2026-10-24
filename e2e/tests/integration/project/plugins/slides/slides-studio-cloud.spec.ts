@@ -3,6 +3,7 @@ import { type Page, mergeTests } from "@playwright/test";
 import { test as canvaTest } from "../../../../../fixtures/canvaFixture";
 import { test as googleTest } from "../../../../../fixtures/googleSlidesFixture";
 import { expect } from "../../../../../fixtures/projectFixture";
+import { ORG_SLUG } from "../../../../../helpers/workerData";
 
 /**
  * The cloud's half of Google Slides and Canva for Studio. Studio has no client
@@ -14,14 +15,10 @@ import { expect } from "../../../../../fixtures/projectFixture";
  * browser half is a page visiting the URL Studio would open. Studio's own
  * half (its UI and the import itself) is not covered: it needs a second
  * server linked to this one.
- *
- * Serial, like the other plugin specs: they all log in as the same `testorg`,
- * and the beforeEach sweep would pull that org out from under a sibling test.
  */
 
 const test = mergeTests(canvaTest, googleTest);
 
-const ORG_SLUG = "testorg";
 const DECK = { id: "deck-sunday", name: "Sunday Service" };
 
 /** Calls a cloud route the way Studio does. */
@@ -51,13 +48,10 @@ const visitInBrowser = async (page: Page, url: string) => {
   return tab;
 };
 
-test.describe.serial("Slides Plugin - Studio through the cloud", () => {
+test.describe("Slides Plugin - Studio through the cloud", () => {
   test.beforeEach(
     async ({ e2eCommand, requireFakeCanva, requireFakeGoogle }) => {
-      await Promise.all([
-        e2eCommand.serverCommand("clearTestUsers"),
-        e2eCommand.serverCommand("clearTestOrganizations"),
-      ]);
+      await e2eCommand.clearWorkerData();
       await requireFakeCanva();
       await requireFakeGoogle();
     },
@@ -104,7 +98,9 @@ test.describe.serial("Slides Plugin - Studio through the cloud", () => {
       const connectionId = (intent.result as { connectionId: string })
         .connectionId;
 
-      const status = await (await cloud(page).get("canva/remote/status")).json();
+      const status = await (
+        await cloud(page).get("canva/remote/status")
+      ).json();
       expect(status.connections).toEqual([
         expect.objectContaining({ id: connectionId, label: "Worship Team" }),
       ]);
@@ -116,8 +112,9 @@ test.describe.serial("Slides Plugin - Studio through the cloud", () => {
       expect((await token.json()).accessToken).toMatch(/^access-/);
 
       expect(
-        (await cloud(page).post("canva/remote/disconnect", { connectionId }))
-          .status(),
+        (
+          await cloud(page).post("canva/remote/disconnect", { connectionId })
+        ).status(),
       ).toBe(200);
       const after = await (await cloud(page).get("canva/remote/status")).json();
       expect(after.connections).toEqual([]);
@@ -148,7 +145,9 @@ test.describe.serial("Slides Plugin - Studio through the cloud", () => {
       const { grantId } = intent.result as { grantId: string };
       expect(grantId).toBeTruthy();
 
-      const status = await (await cloud(page).get("canva/remote/status")).json();
+      const status = await (
+        await cloud(page).get("canva/remote/status")
+      ).json();
       expect(status.connections).toEqual([]);
 
       // Listing designs leaves it; the import consumes it
@@ -183,7 +182,9 @@ test.describe.serial("Slides Plugin - Studio through the cloud", () => {
       expect(intent.status).toBe("failed");
       expect(intent.error).toBe("Canva sign-in was cancelled.");
 
-      const status = await (await cloud(page).get("canva/remote/status")).json();
+      const status = await (
+        await cloud(page).get("canva/remote/status")
+      ).json();
       expect(status.connections).toEqual([]);
     });
 
@@ -362,7 +363,9 @@ test.describe.serial("Slides Plugin - Studio through the cloud", () => {
       });
       const { intentId, url } = await begin.json();
       const tab = await visitInBrowser(page, url);
-      await expect(tab.getByText("Google sign-in was cancelled.")).toBeVisible();
+      await expect(
+        tab.getByText("Google sign-in was cancelled."),
+      ).toBeVisible();
 
       const intent = (await (
         await cloud(page).get("google/remote/intent", { id: intentId })

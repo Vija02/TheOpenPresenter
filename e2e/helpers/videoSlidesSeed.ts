@@ -3,6 +3,7 @@ import {
   createShapeElement,
   createTextElement,
 } from "../../packages/layout/src/schema/defaults";
+import { videoPaint } from "../../packages/layout/src/schema/paint";
 import type { E2ECommandAPI } from "../e2eCommand";
 
 /**
@@ -67,13 +68,7 @@ const videoSlideDoc = (video: SeededVideo, { playback, label }: SlideOptions) =>
         id: VIDEO_ELEMENT_ID,
         kind: "rect",
         rect: { x: 0, y: 0, w: 100, h: 100 },
-        fill: {
-          type: "video",
-          video: layoutVideo(video),
-          fit: "cover",
-          opacity: 1,
-          playback,
-        },
+        fill: videoPaint(layoutVideo(video), "cover", 1, playback),
       }),
       createTextElement({
         id: LABEL_ELEMENT_ID,

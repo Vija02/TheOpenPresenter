@@ -1,13 +1,8 @@
 import { expect, test } from "../../fixtures/organizationFixture";
+import { ORG_SLUG } from "../../helpers/workerData";
 
 test.describe("NavigationSmokeTest", () => {
-  test.beforeEach(
-    async ({ e2eCommand }) =>
-      await Promise.all([
-        e2eCommand.serverCommand("clearTestUsers"),
-        e2eCommand.serverCommand("clearTestOrganizations"),
-      ]),
-  );
+  test.beforeEach(async ({ e2eCommand }) => await e2eCommand.clearWorkerData());
 
   test("can access all pages without error", async ({
     page,
@@ -16,7 +11,7 @@ test.describe("NavigationSmokeTest", () => {
   }) => {
     await loginDefault();
 
-    await expect(page).toHaveURL(/o\/testorg/);
+    await expect(page).toHaveURL(new RegExp(`/o/${ORG_SLUG}`));
 
     await page
       .getByRole("button", { name: "Back to organization overview" })

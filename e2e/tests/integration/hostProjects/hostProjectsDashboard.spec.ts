@@ -1,10 +1,14 @@
-import { expect, test } from "../../../fixtures/hostProjectsFixture";
+import {
+  VIEWER_ORG,
+  expect,
+  test,
+} from "../../../fixtures/hostProjectsFixture";
+import { orgUrl } from "../../../helpers/workerData";
 
 test.describe("Host Projects - Dashboard", () => {
   test.beforeEach(async ({ e2eCommand, clearAllActiveDevices }) => {
     await Promise.all([
-      e2eCommand.serverCommand("clearTestUsers"),
-      e2eCommand.serverCommand("clearTestOrganizations"),
+      e2eCommand.clearWorkerData(),
       e2eCommand.serverCommand("stopMockHostDevice"),
       clearAllActiveDevices(),
     ]);
@@ -25,7 +29,7 @@ test.describe("Host Projects - Dashboard", () => {
 
     const { hostPage } = await setupHostProjectsEnvironment();
 
-    await page.goto("/o/testviewerorg");
+    await page.goto(orgUrl(VIEWER_ORG));
     await page.waitForLoadState("networkidle");
 
     await expect(hostProjectsPage.hostProjectsHeading).toBeVisible();

@@ -199,6 +199,7 @@ const AddHostButton = ({
         align="center"
         hideCloseButton
         className="w-[240px] max-h-[320px] overflow-y-auto p-1"
+        onCloseAutoFocus={(e) => e.preventDefault()}
       >
         {[...groups.entries()].map(([group, options]) => (
           <div key={group} className="flex flex-col">

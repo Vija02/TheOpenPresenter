@@ -1,13 +1,7 @@
 import { expect, test } from "../../../fixtures/projectFixture";
 
 test.describe("Key Press Navigation", () => {
-  test.beforeEach(
-    async ({ e2eCommand }) =>
-      await Promise.all([
-        e2eCommand.serverCommand("clearTestUsers"),
-        e2eCommand.serverCommand("clearTestOrganizations"),
-      ]),
-  );
+  test.beforeEach(async ({ e2eCommand }) => await e2eCommand.clearWorkerData());
 
   test("can navigate using keyboard arrows", async ({
     page,

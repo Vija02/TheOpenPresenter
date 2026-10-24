@@ -1,16 +1,11 @@
 import { expect, test } from "../../../../../fixtures/projectFixture";
+import { orgUrl } from "../../../../../helpers/workerData";
 
 test.describe("Slides Plugin - Multiple Imports", () => {
   // The PPTX goes through Microsoft's servers, which can be slow
   test.describe.configure({ timeout: 120 * 1000 });
 
-  test.beforeEach(
-    async ({ e2eCommand }) =>
-      await Promise.all([
-        e2eCommand.serverCommand("clearTestUsers"),
-        e2eCommand.serverCommand("clearTestOrganizations"),
-      ]),
-  );
+  test.beforeEach(async ({ e2eCommand }) => await e2eCommand.clearWorkerData());
 
   test("can add multiple imports and both render correctly", async ({
     page,
@@ -53,23 +48,28 @@ test.describe("Slides Plugin - Multiple Imports", () => {
       page
         .getByTestId("slide-container")
         .nth(slidesAfterFirst - 1)
-        .locator("img").first(),
+        .locator("img")
+        .first(),
     ).toBeVisible();
     await expect(
       page
         .getByTestId("slide-container")
         .nth(slidesAfterFirst)
-        .locator("img").first(),
+        .locator("img")
+        .first(),
     ).toBeVisible();
     await expect(
       page
         .getByTestId("slide-container")
         .nth(slidesAfterSecond - 1)
-        .locator("img").first(),
+        .locator("img")
+        .first(),
     ).toBeVisible();
 
     // The trailing "Add slide" placeholder is still there after both imports
-    await expect(page.locator("slides-remote").getByText("Add slide", { exact: true })).toBeVisible();
+    await expect(
+      page.locator("slides-remote").getByText("Add slide", { exact: true }),
+    ).toBeVisible();
 
     // --- Visually verify both imports render correctly on the present page ---
 
@@ -127,7 +127,7 @@ test.describe("Slides Plugin - Multiple Imports", () => {
 
     // --- Verify the PDF media exists BEFORE deletion ---
     const mediaPageBefore = await context.newPage();
-    await mediaPageBefore.goto("/o/testorg/media");
+    await mediaPageBefore.goto(`${orgUrl()}/media`);
     await expect(
       mediaPageBefore.getByRole("heading", {
         name: "Media Library",
@@ -171,7 +171,7 @@ test.describe("Slides Plugin - Multiple Imports", () => {
 
     // --- Verify the PDF media was deleted from the media library ---
     const mediaPageAfter = await context.newPage();
-    await mediaPageAfter.goto("/o/testorg/media");
+    await mediaPageAfter.goto(`${orgUrl()}/media`);
     await expect(
       mediaPageAfter.getByRole("heading", {
         name: "Media Library",

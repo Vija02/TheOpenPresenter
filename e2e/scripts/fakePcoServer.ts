@@ -16,12 +16,14 @@
  *   POST /__control/scenario      a test picks which fixture org it gets
  *   GET  /__control/health        liveness
  *
- * Everything is keyed by an opaque account id carried through the OAuth state,
- * so tests running in parallel workers cannot see each other's data.
+ * Everything is keyed by an opaque account id. Which account a sign-in
+ * authorizes comes from the `e2e_pco_account` cookie the test sets on its own
+ * browser context, so parallel workers never see each other's data.
  */
 import { type IncomingMessage, type ServerResponse, createServer } from "http";
 
 const PORT = Number(process.env.FAKE_PCO_PORT || 5680);
+const ACCOUNT_COOKIE = "e2e_pco_account";
 
 /* Wire types ---------------------------------------------------------------- */
 
@@ -183,8 +185,7 @@ const authed = (req: IncomingMessage): Account | null => {
  * The real authorize page asks the human to approve. There is nobody here, so
  * this redirects straight back to the app's callback with a code.
  *
- * The account id rides along in the `state` the plugin generated: the test put
- * it there by naming its scenario, and the plugin echoes state back verbatim.
+ * The account comes from the test's own cookie (see accountIdFromState).
  */
 const handleAuthorize = (
   req: IncomingMessage,
@@ -199,7 +200,7 @@ const handleAuthorize = (
     return;
   }
 
-  const accountId = accountIdFromState(state);
+  const accountId = accountIdFromState(state, req);
 
   // A test can ask for the user-denied path by naming that scenario.
   if (accountFor(accountId).denyAuthorization) {
@@ -222,22 +223,30 @@ const handleAuthorize = (
   res.end();
 };
 
+const cookie = (req: IncomingMessage, name: string): string | null => {
+  for (const part of String(req.headers.cookie ?? "").split(";")) {
+    const [key, ...rest] = part.trim().split("=");
+    if (key === name) return decodeURIComponent(rest.join("="));
+  }
+  return null;
+};
+
 /**
  * Which fixture account a `state` belongs to.
  *
  * The plugin's state is opaque random bytes, so it carries no scenario of its
- * own. Tests register a scenario before connecting and the most recent one
- * wins per worker; the state string keys the mapping after that, so a second
- * connect in the same test reuses the same account.
+ * own. The account is the one named by the cookie on the browser that is
+ * signing in, never a global "latest scenario", which parallel tests would
+ * overwrite. The state keys the mapping after that, so a second connect in the
+ * same test reuses the same account.
  */
 const stateAccounts = new Map<string, string>();
-let pendingAccountId: string | null = null;
 
-const accountIdFromState = (state: string): string => {
+const accountIdFromState = (state: string, req: IncomingMessage): string => {
   const known = stateAccounts.get(state);
   if (known) return known;
 
-  const accountId = pendingAccountId ?? "default";
+  const accountId = cookie(req, ACCOUNT_COOKIE) ?? "default";
   stateAccounts.set(state, accountId);
   accountFor(accountId);
   return accountId;
@@ -459,7 +468,7 @@ const handleControl = async (
   }
 
   /**
-   * Declares the account the next connect will authorize. Overrides let a test
+   * Declares an account's fixture data. Overrides let a test
    * ask for a person with no Services access, a denied authorization, an org
    * with no plans, and so on.
    */
@@ -475,7 +484,6 @@ const handleControl = async (
     }
 
     accounts.set(accountId, { ...defaultAccount(), ...account });
-    pendingAccountId = accountId;
     json(res, 200, { ok: true });
     return;
   }
@@ -495,7 +503,6 @@ const handleControl = async (
       for (const [token, id] of tokens) {
         if (id === accountId) tokens.delete(token);
       }
-      if (pendingAccountId === accountId) pendingAccountId = null;
     }
 
     json(res, 200, { ok: true });

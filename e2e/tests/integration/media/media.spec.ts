@@ -1,13 +1,8 @@
 import { expect, test } from "../../../fixtures/mediaFixture";
+import { orgUrl } from "../../../helpers/workerData";
 
 test.describe("Media Page", () => {
-  test.beforeEach(
-    async ({ e2eCommand }) =>
-      await Promise.all([
-        e2eCommand.serverCommand("clearTestUsers"),
-        e2eCommand.serverCommand("clearTestOrganizations"),
-      ]),
-  );
+  test.beforeEach(async ({ e2eCommand }) => await e2eCommand.clearWorkerData());
 
   test("can upload a video and see it process to completion", async ({
     page,
@@ -15,7 +10,7 @@ test.describe("Media Page", () => {
     loginDefault,
     uppyUploadFile,
   }) => {
-    await loginDefault("/o/testorg/media");
+    await loginDefault(`${orgUrl()}/media`);
 
     await expect(
       page.getByRole("heading", { name: "Media Library", exact: true }),
@@ -53,7 +48,7 @@ test.describe("Media Page", () => {
     loginDefault,
     uppyUploadFile,
   }) => {
-    await loginDefault("/o/testorg/media");
+    await loginDefault(`${orgUrl()}/media`);
 
     await mediaPage.uploadButton.click();
     await uppyUploadFile("./dummyFiles/dummyAudio.mp3");

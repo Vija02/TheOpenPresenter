@@ -2,6 +2,7 @@ import type { Locator, Page } from "@playwright/test";
 
 import type { E2ECommandAPI } from "../../../e2eCommand";
 import { expect, test } from "../../../fixtures/projectFixture";
+import { ORG_SLUG } from "../../../helpers/workerData";
 import type { ProjectPage } from "../../../pages/ProjectPage";
 
 /**
@@ -74,6 +75,20 @@ const section = (dialog: Locator, title: string) =>
     .filter({ has: dialog.page().getByRole("button", { name: title }) })
     .locator('[data-slot="accordion-content"]');
 
+/**
+ * Expands an inspector accordion and returns its body. Most sections start
+ * open, so a blind click would collapse them; the selects inside stay usable
+ * during the close animation, which hides the mistake on a fast machine.
+ */
+const openSection = async (dialog: Locator, title: string) => {
+  const trigger = dialog.getByRole("button", { name: title, exact: true });
+  if ((await trigger.getAttribute("aria-expanded")) !== "true") {
+    await trigger.click();
+  }
+  await expect(trigger).toHaveAttribute("aria-expanded", "true");
+  return section(dialog, title);
+};
+
 /** Computed style of the rendered text, which inherits from the styled node. */
 const textStyle = (page: Page, elementSelector: string, property: string) =>
   page
@@ -136,15 +151,8 @@ const typeBlocks = async (page: Page, blocks: string[][]) => {
   }
 };
 
-test.describe.serial("Layout editor", () => {
-  test.beforeEach(
-    async ({ e2eCommand }) =>
-      await Promise.all([
-        e2eCommand.serverCommand("clearTestUsers"),
-        e2eCommand.serverCommand("clearTestOrganizations"),
-        e2eCommand.serverCommand("clearBibleData"),
-      ]),
-  );
+test.describe("Layout editor", () => {
+  test.beforeEach(async ({ e2eCommand }) => await e2eCommand.clearWorkerData());
 
   test("can move, resize and restyle an element from the inspector", async ({
     page,
@@ -624,8 +632,7 @@ test.describe.serial("Layout editor", () => {
     expect(parseFloat(painted)).toBeGreaterThan(0);
 
     // --- outline ------------------------------------------------------------
-    await dialog.getByRole("button", { name: "Outline" }).click();
-    const outlinePanel = section(dialog, "Outline");
+    const outlinePanel = await openSection(dialog, "Outline");
     await row(outlinePanel, "Outline").locator("select").selectOption("on");
 
     // Strokes render as box-shadow rings rather than CSS borders, so that the
@@ -667,15 +674,17 @@ test.describe.serial("Layout editor", () => {
     const dialog = await openStyleModal({ loginAndGoToProject, projectPage });
     await dialog.locator(BODY).click();
 
-    await dialog.getByRole("button", { name: "Text effects" }).click();
-    const effects = section(dialog, "Text effects");
+    const effects = await openSection(dialog, "Text effects");
     await row(effects, "Stroke").locator("select").selectOption("on");
 
     // -webkit-text-stroke follows the letter shapes; the element outline is a
     // box-shadow ring. Both can be on at once, which is why they are separate
     // controls in separate sections.
-    const stroke = await textStyle(page, BODY, "-webkit-text-stroke-width");
-    expect(parseFloat(stroke)).toBeGreaterThan(0);
+    await expect
+      .poll(async () =>
+        parseFloat(await textStyle(page, BODY, "-webkit-text-stroke-width")),
+      )
+      .toBeGreaterThan(0);
 
     // Off again leaves no trace.
     await row(effects, "Stroke").locator("select").selectOption("none");
@@ -816,15 +825,8 @@ test.describe.serial("Layout editor", () => {
  * in the naming scheme is a change in the contract, not an implementation
  * detail. The Bible template ships `bible-*` ids, so these never collide.
  */
-test.describe.serial("Adding elements", () => {
-  test.beforeEach(
-    async ({ e2eCommand }) =>
-      await Promise.all([
-        e2eCommand.serverCommand("clearTestUsers"),
-        e2eCommand.serverCommand("clearTestOrganizations"),
-        e2eCommand.serverCommand("clearBibleData"),
-      ]),
-  );
+test.describe("Adding elements", () => {
+  test.beforeEach(async ({ e2eCommand }) => await e2eCommand.clearWorkerData());
 
   /**
    * The node a shape's appearance is painted on.
@@ -1001,6 +1003,11 @@ test.describe.serial("Adding elements", () => {
     await dialog.getByRole("button", { name: "Add picture" }).click();
     const picker = page.locator('[data-testid="media-picker-dialog"]');
     await expect(picker).toBeVisible();
+    // The dialog paints before it takes focus and starts listening for Escape;
+    // on a loaded runner a keypress in that gap goes nowhere.
+    await expect
+      .poll(() => picker.evaluate((el) => el.contains(document.activeElement)))
+      .toBe(true);
     await page.keyboard.press("Escape");
     await expect(picker).toBeHidden();
 
@@ -1081,15 +1088,8 @@ test.describe.serial("Adding elements", () => {
  * a Meta chord the way a Mac would, and the handler accepts either modifier, so
  * Control exercises the same branch everywhere.
  */
-test.describe.serial("Editor shortcuts", () => {
-  test.beforeEach(
-    async ({ e2eCommand }) =>
-      await Promise.all([
-        e2eCommand.serverCommand("clearTestUsers"),
-        e2eCommand.serverCommand("clearTestOrganizations"),
-        e2eCommand.serverCommand("clearBibleData"),
-      ]),
-  );
+test.describe("Editor shortcuts", () => {
+  test.beforeEach(async ({ e2eCommand }) => await e2eCommand.clearWorkerData());
 
   const item = (dialog: Locator, id: string) =>
     dialog.locator(`[data-lay-id="${id}"]`);
@@ -1234,7 +1234,7 @@ test.describe.serial("Editor shortcuts", () => {
  * 390x844 is an iPhone 12. The exact numbers matter less than being under 768
  * and tall enough that a canvas capped at 55% still leaves a usable panel.
  */
-test.describe.serial("Layout editor on a phone", () => {
+test.describe("Layout editor on a phone", () => {
   // Desktop viewport, resized per test. Scene setup CANNOT run at phone width:
   // the remote app ships SidebarWeb and SidebarMobile as two trees toggled with
   // `hidden desktop:flex`, and `createPlugin` drives the web one's add-scene
@@ -1242,14 +1242,7 @@ test.describe.serial("Layout editor on a phone", () => {
   // because it is a context option and cannot be changed mid-test.
   test.use({ viewport: { width: 1280, height: 720 }, hasTouch: true });
 
-  test.beforeEach(
-    async ({ e2eCommand }) =>
-      await Promise.all([
-        e2eCommand.serverCommand("clearTestUsers"),
-        e2eCommand.serverCommand("clearTestOrganizations"),
-        e2eCommand.serverCommand("clearBibleData"),
-      ]),
-  );
+  test.beforeEach(async ({ e2eCommand }) => await e2eCommand.clearWorkerData());
 
   const PHONE = { width: 390, height: 844 };
 
@@ -1542,15 +1535,8 @@ test.describe.serial("Layout editor on a phone", () => {
  * result, not just the inspector's own state — the schema having a gradient
  * variant means nothing if the renderer drops it.
  */
-test.describe.serial("Gradient fill", () => {
-  test.beforeEach(
-    async ({ e2eCommand }) =>
-      await Promise.all([
-        e2eCommand.serverCommand("clearTestUsers"),
-        e2eCommand.serverCommand("clearTestOrganizations"),
-        e2eCommand.serverCommand("clearBibleData"),
-      ]),
-  );
+test.describe("Gradient fill", () => {
+  test.beforeEach(async ({ e2eCommand }) => await e2eCommand.clearWorkerData());
 
   const TRACK = ".lay--gradient-track";
   const STOP_ROW = ".lay--gradient-row";
@@ -1759,15 +1745,8 @@ test.describe.serial("Gradient fill", () => {
  * silently — a stored absolute URL would still render here and only fail later,
  * on another host.
  */
-test.describe.serial("Picture fill", () => {
-  test.beforeEach(
-    async ({ e2eCommand }) =>
-      await Promise.all([
-        e2eCommand.serverCommand("clearTestUsers"),
-        e2eCommand.serverCommand("clearTestOrganizations"),
-        e2eCommand.serverCommand("clearBibleData"),
-      ]),
-  );
+test.describe("Picture fill", () => {
+  test.beforeEach(async ({ e2eCommand }) => await e2eCommand.clearWorkerData());
 
   const PICKER = '[data-testid="media-picker-dialog"]';
   const IMAGE = "./dummyFiles/dummyImage.jpg";
@@ -1967,15 +1946,8 @@ test.describe.serial("Picture fill", () => {
  * the raw mp4 instead, which is a real code path (`useVideoUrl` falls back to
  * `url` when `hlsMediaName` is null) and irrelevant to what they assert.
  */
-test.describe.serial("Video fill", () => {
-  test.beforeEach(
-    async ({ e2eCommand }) =>
-      await Promise.all([
-        e2eCommand.serverCommand("clearTestUsers"),
-        e2eCommand.serverCommand("clearTestOrganizations"),
-        e2eCommand.serverCommand("clearBibleData"),
-      ]),
-  );
+test.describe("Video fill", () => {
+  test.beforeEach(async ({ e2eCommand }) => await e2eCommand.clearWorkerData());
 
   const PICKER = '[data-testid="media-picker-dialog"]';
   const VIDEO = "./dummyFiles/dummyVideo.mp4";
@@ -2051,7 +2023,7 @@ test.describe.serial("Video fill", () => {
     e2eCommand: E2ECommandAPI,
   ) => {
     await e2eCommand.seedVideoMedia({
-      orgSlug: "testorg",
+      orgSlug: ORG_SLUG,
       videoPath: VIDEO,
       posterPath: POSTER,
       duration: VIDEO_DURATION,

@@ -1,14 +1,12 @@
 import { expect, test } from "../../../../fixtures/screenFixture";
+import { WORKER_TAG } from "../../../../helpers/workerData";
 
-const WORKER_TAG = `w${process.env.TEST_WORKER_INDEX ?? "0"}`;
 const ORG_SLUG = `testorg-cpguest-${WORKER_TAG}`;
 const SCREEN_SLUG = `testscreen-cpguest-${WORKER_TAG}`;
 const ORG_NAME = `TestOrg ControlGuest ${WORKER_TAG}`;
 const USERNAME = `testuser_cpguest_${WORKER_TAG}`;
 
 test.describe("Screen /control as anonymous guest", () => {
-  test.describe.configure({ mode: "serial" });
-
   test.beforeEach(async ({ e2eCommand }) => {
     await e2eCommand.serverCommand("clearOrganizationBySlug", {
       slug: ORG_SLUG,

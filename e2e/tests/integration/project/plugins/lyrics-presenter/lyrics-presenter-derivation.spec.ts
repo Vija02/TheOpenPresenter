@@ -2,6 +2,7 @@ import type { Locator, Page } from "@playwright/test";
 
 import { expect, test } from "../../../../../fixtures/screenFixture";
 import { openManageOutputs } from "../../../../../helpers/outputs";
+import { WORKER_TAG } from "../../../../../helpers/workerData";
 
 /**
  * Lyrics on a confidence monitor: a live content element showing the lyrics
@@ -11,7 +12,6 @@ import { openManageOutputs } from "../../../../../helpers/outputs";
  * same way the screen does.
  */
 
-const WORKER_TAG = `w${process.env.TEST_WORKER_INDEX ?? "0"}`;
 const ORG_SLUG = `testorg-lyderiv-${WORKER_TAG}`;
 const ORG_NAME = `TestOrg Lyrics Deriv ${WORKER_TAG}`;
 const USERNAME = `testuser_lyderiv_${WORKER_TAG}`;
@@ -107,7 +107,7 @@ const derivationSelect = (page: Page, label: string) =>
     .locator("select")
     .first();
 
-test.describe.serial("Lyrics Presenter - Confidence monitor", () => {
+test.describe("Lyrics Presenter - Confidence monitor", () => {
   test.beforeEach(async ({ e2eCommand }) => {
     await e2eCommand.serverCommand("clearOrganizationBySlug", {
       slug: ORG_SLUG,

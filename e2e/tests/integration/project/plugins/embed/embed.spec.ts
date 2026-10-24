@@ -35,14 +35,8 @@ const setupEmbed = async ({
   await expect(page.getByPlaceholder("Paste a web address")).toBeVisible();
 };
 
-test.describe.serial("Embed Plugin", () => {
-  test.beforeEach(
-    async ({ e2eCommand }) =>
-      await Promise.all([
-        e2eCommand.serverCommand("clearTestUsers"),
-        e2eCommand.serverCommand("clearTestOrganizations"),
-      ]),
-  );
+test.describe("Embed Plugin", () => {
+  test.beforeEach(async ({ e2eCommand }) => await e2eCommand.clearWorkerData());
 
   test("starts on the empty state with no preview", async ({
     page,

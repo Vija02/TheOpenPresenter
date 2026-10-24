@@ -1,3 +1,4 @@
+import { ORG_SLUG } from "../helpers/workerData";
 import { ScreenControlPage } from "../pages/ScreenGuest/ScreenControlPage";
 import { ScreenLoginPage } from "../pages/ScreenGuest/ScreenLoginPage";
 import { ScreenRequestPage } from "../pages/ScreenGuest/ScreenRequestPage";
@@ -45,17 +46,14 @@ type ScreenFixture = {
   setupScreenGuest: (
     options?: SetupGuestOptions,
   ) => Promise<ScreenGuestContext>;
-  loginAsAnonGuest: (
-    ctx: ScreenContext,
-    displayName?: string,
-  ) => Promise<void>;
+  loginAsAnonGuest: (ctx: ScreenContext, displayName?: string) => Promise<void>;
   loginAsRegisteredGuest: (
     ctx: ScreenContext,
     credential: string,
   ) => Promise<void>;
 };
 
-const DEFAULT_ORG_SLUG = "testorg";
+const DEFAULT_ORG_SLUG = ORG_SLUG;
 const DEFAULT_ORG_NAME = "TestOrg";
 const DEFAULT_SCREEN_SLUG = "testscreen";
 const DEFAULT_SCREEN_NAME = "Test Screen";

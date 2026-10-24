@@ -80,13 +80,7 @@ const sendFile = async (visitorPage: Page, file: string) => {
 };
 
 test.describe("Slides Plugin - public upload links", () => {
-  test.beforeEach(
-    async ({ e2eCommand }) =>
-      await Promise.all([
-        e2eCommand.serverCommand("clearTestUsers"),
-        e2eCommand.serverCommand("clearTestOrganizations"),
-      ]),
-  );
+  test.beforeEach(async ({ e2eCommand }) => await e2eCommand.clearWorkerData());
 
   test("a visitor with the link can send a slide into the scene", async ({
     page,

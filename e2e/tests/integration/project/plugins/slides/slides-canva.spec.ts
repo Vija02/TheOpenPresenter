@@ -7,9 +7,6 @@ import { expect, test } from "../../../../../fixtures/canvaFixture";
  * connected accounts, "Import once", and visitors on a public upload link.
  * Sign-in, token storage, one-time grants, design listing and the export are
  * all real; only Canva is a stand-in.
- *
- * Serial, like the other plugin specs: they all log in as the same `testorg`,
- * and the beforeEach sweep would pull that org out from under a sibling test.
  */
 
 const WELCOME = "Welcome Slides";
@@ -115,12 +112,9 @@ const visitorSendsDesign = async (visitor: BrowserContext, url: string) => {
   return visitorPage;
 };
 
-test.describe.serial("Slides Plugin - Canva", () => {
+test.describe("Slides Plugin - Canva", () => {
   test.beforeEach(async ({ e2eCommand, requireFakeCanva }) => {
-    await Promise.all([
-      e2eCommand.serverCommand("clearTestUsers"),
-      e2eCommand.serverCommand("clearTestOrganizations"),
-    ]);
+    await e2eCommand.clearWorkerData();
     await requireFakeCanva();
   });
 
@@ -158,12 +152,16 @@ test.describe.serial("Slides Plugin - Canva", () => {
     await openSlides({ projectPage, loginAndGoToProject });
     await canvaCard(page).click();
     await signInThroughPopup(page, () =>
-      chooserOf(page).getByRole("button", { name: /^Import once/ }).click(),
+      chooserOf(page)
+        .getByRole("button", { name: /^Import once/ })
+        .click(),
     );
 
     // Straight to the designs, with no account in between
     const picker = designPickerOf(page);
-    await expect(picker.getByText("Signed in for this import only")).toBeVisible();
+    await expect(
+      picker.getByText("Signed in for this import only"),
+    ).toBeVisible();
     await picker.getByText(WELCOME).click();
     await expectImported(page);
     expect(await fakeCanva.exportCount(account)).toBe(1);
@@ -259,7 +257,11 @@ test.describe.serial("Slides Plugin - Canva", () => {
 
     const visitor = await browser.newContext();
     try {
-      await fakeCanva.signInAs(shared, { displayName: "Shared Account" }, visitor);
+      await fakeCanva.signInAs(
+        shared,
+        { displayName: "Shared Account" },
+        visitor,
+      );
       await visitorSendsDesign(visitor, url);
       // A second visitor sign-in used to delete what the first had taken over
       await visitorSendsDesign(visitor, url);
@@ -271,9 +273,7 @@ test.describe.serial("Slides Plugin - Canva", () => {
     await page.reload();
     await openAddSlides(page);
     await canvaCard(page).click();
-    await expect(
-      chooserOf(page).getByText(/^Added by /),
-    ).toBeVisible();
+    await expect(chooserOf(page).getByText(/^Added by /)).toBeVisible();
     await chooserOf(page).getByText("Shared Account").click();
     await expect(designPickerOf(page).getByText(WELCOME)).toBeVisible();
   });

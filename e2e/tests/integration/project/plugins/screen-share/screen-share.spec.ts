@@ -52,14 +52,8 @@ const setupScreenShare = async ({
   await expect(page.getByText("Share your screen live")).toBeVisible();
 };
 
-test.describe.serial("Screen Share Plugin", () => {
-  test.beforeEach(
-    async ({ e2eCommand }) =>
-      await Promise.all([
-        e2eCommand.serverCommand("clearTestUsers"),
-        e2eCommand.serverCommand("clearTestOrganizations"),
-      ]),
-  );
+test.describe("Screen Share Plugin", () => {
+  test.beforeEach(async ({ e2eCommand }) => await e2eCommand.clearWorkerData());
 
   test("can create the scene and shows the idle empty state", async ({
     page,

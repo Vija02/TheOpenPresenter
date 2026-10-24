@@ -5,8 +5,6 @@ import { expect, test } from "../../../../../fixtures/projectFixture";
 /**
  * The musician view: the full song with chords, following the live slide,
  * with each viewer free to look ahead at another song.
- *
- * Serial, like the other plugin specs: they all log in as the same `testorg`.
  */
 
 const CHORDED_SONG = `[Verse 1]
@@ -41,14 +39,8 @@ const PLAIN_SONG = `[Verse 1]
 Amazing grace how sweet the sound
 That saved a wretch like me`;
 
-test.describe.serial("Lyrics Presenter - Musician view", () => {
-  test.beforeEach(
-    async ({ e2eCommand }) =>
-      await Promise.all([
-        e2eCommand.serverCommand("clearTestUsers"),
-        e2eCommand.serverCommand("clearTestOrganizations"),
-      ]),
-  );
+test.describe("Lyrics Presenter - Musician view", () => {
+  test.beforeEach(async ({ e2eCommand }) => await e2eCommand.clearWorkerData());
 
   test("follows the live slide, and looks ahead without changing the screen", async ({
     page,

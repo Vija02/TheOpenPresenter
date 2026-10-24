@@ -1,6 +1,7 @@
 import type { Page } from "@playwright/test";
 
 import { expect, test } from "../../../../../fixtures/projectFixture";
+import { ORG_SLUG, projectUrl } from "../../../../../helpers/workerData";
 import type { ProjectPage } from "../../../../../pages/ProjectPage";
 
 type SetupBiblePluginArgs = {
@@ -17,6 +18,21 @@ const setupBiblePlugin = async ({
   await expect(
     projectPage.page.getByText("Add a passage to get started"),
   ).toBeVisible();
+};
+
+/**
+ * Adds a passage from the search bar. A just-chosen translation loads its book
+ * index in the background and Add refuses until it has, so retry while the
+ * app says it is still loading.
+ */
+const addPassage = async (page: Page, reference: string) => {
+  await page.getByTestId("bible-search-input").fill(reference);
+  await expect(async () => {
+    await page.getByTestId("bible-search-add").click();
+    await expect(page.getByText(/Loading translation/)).toBeHidden({
+      timeout: 1000,
+    });
+  }).toPass();
 };
 
 const selectTranslation = async (projectPage: ProjectPage, name: string) => {
@@ -48,15 +64,8 @@ const attachTranslationToCatalog = async (page: Page, name: string) => {
     .setInputFiles("./dummyFiles/bible-test-translation.xml");
 };
 
-test.describe.serial("Bible Plugin", () => {
-  test.beforeEach(
-    async ({ e2eCommand }) =>
-      await Promise.all([
-        e2eCommand.serverCommand("clearTestUsers"),
-        e2eCommand.serverCommand("clearTestOrganizations"),
-        e2eCommand.serverCommand("clearBibleData"),
-      ]),
-  );
+test.describe("Bible Plugin", () => {
+  test.beforeEach(async ({ e2eCommand }) => await e2eCommand.clearWorkerData());
 
   test("can add a verse by reference", async ({
     page,
@@ -65,8 +74,7 @@ test.describe.serial("Bible Plugin", () => {
   }) => {
     await setupBiblePlugin({ loginAndGoToProject, projectPage });
 
-    await page.getByTestId("bible-search-input").fill("John 3:16");
-    await page.getByTestId("bible-search-add").click();
+    await addPassage(page, "John 3:16");
 
     await expect(page.getByText("John 3:16").first()).toBeVisible();
     await expect(
@@ -119,14 +127,12 @@ test.describe.serial("Bible Plugin", () => {
   }) => {
     await setupBiblePlugin({ loginAndGoToProject, projectPage });
 
-    await page.getByTestId("bible-search-input").fill("John 3:16");
-    await page.getByTestId("bible-search-add").click();
+    await addPassage(page, "John 3:16");
     await expect(page.getByTestId("slide-container").first()).toContainText(
       "For God so loved the world",
     );
 
-    await page.getByTestId("bible-search-input").fill("John 3:17");
-    await page.getByTestId("bible-search-add").click();
+    await addPassage(page, "John 3:17");
 
     const passages = page.getByTestId("slide-container");
     await expect(passages.first()).toContainText("John 3:16");
@@ -192,8 +198,7 @@ test.describe.serial("Bible Plugin", () => {
 
     await expect(settings).toBeHidden();
 
-    await page.getByTestId("bible-search-input").fill("John 3:16");
-    await page.getByTestId("bible-search-add").click();
+    await addPassage(page, "John 3:16");
 
     await expect(page.getByText("John 3:16").first()).toBeVisible();
     await expect(page.getByText("World English Bible").first()).toBeVisible();
@@ -241,8 +246,7 @@ test.describe.serial("Bible Plugin", () => {
     await settings.getByRole("button", { name: "Save" }).click();
     await expect(settings).toBeHidden();
 
-    await page.getByTestId("bible-search-input").fill("John 3:16");
-    await page.getByTestId("bible-search-add").click();
+    await addPassage(page, "John 3:16");
 
     await expect(page.getByText("John 3:16").first()).toBeVisible();
     await expect(page.getByText("E2E Test Bible").first()).toBeVisible();
@@ -266,6 +270,13 @@ test.describe.serial("Bible Plugin", () => {
       .getByPlaceholder("Search by name or abbreviation...")
       .fill("hcsb");
     const catalogName = "English HCSB 2004 - Copyrighted Only For Website";
+    // The search is debounced and its results replace the whole list, rows
+    // included. The row is already visible from the unfiltered list, so
+    // without this the upload dialog opens from a row that is then swapped
+    // out, taking the dialog with it.
+    await expect(
+      settings.getByText(/^Showing 1 of 1 matching translations/),
+    ).toBeVisible();
     await expect(settings.getByText(catalogName)).toBeVisible();
 
     await attachTranslationToCatalog(page, catalogName);
@@ -281,8 +292,7 @@ test.describe.serial("Bible Plugin", () => {
     await settings.getByRole("button", { name: "Save" }).click();
     await expect(settings).toBeHidden();
 
-    await page.getByTestId("bible-search-input").fill("John 3:16");
-    await page.getByTestId("bible-search-add").click();
+    await addPassage(page, "John 3:16");
 
     await expect(page.getByText("John 3:16").first()).toBeVisible();
     await expect(page.getByText(catalogName).first()).toBeVisible();
@@ -296,17 +306,13 @@ test.describe.serial("Bible Plugin", () => {
 // public catalog and passage lookups must still work for them.
 test.describe("Bible Plugin - public access", () => {
   test.beforeEach(async ({ e2eCommand }) => {
-    await Promise.all([
-      e2eCommand.serverCommand("clearTestUsers"),
-      e2eCommand.serverCommand("clearTestOrganizations"),
-      e2eCommand.serverCommand("clearBibleData"),
-    ]);
+    await e2eCommand.clearWorkerData();
 
     await e2eCommand.loginWithScenes({
       orgs: [
         {
           name: "TestOrg",
-          slug: "testorg",
+          slug: ORG_SLUG,
           projects: [
             {
               name: "TestProject",
@@ -338,13 +344,12 @@ test.describe("Bible Plugin - public access", () => {
     const context = await browser.newContext();
     const page = await context.newPage();
     try {
-      await page.goto("/app/testorg/testproject");
+      await page.goto(projectUrl());
       await expect(
         page.getByText("Add a passage to get started"),
       ).toBeVisible();
 
-      await page.getByTestId("bible-search-input").fill("John 3:16");
-      await page.getByTestId("bible-search-add").click();
+      await addPassage(page, "John 3:16");
       await expect(page.getByTestId("slide-container").first()).toContainText(
         "For God so loved the world",
       );

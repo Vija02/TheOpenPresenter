@@ -1,6 +1,7 @@
 import { Browser, expect, test } from "@playwright/test";
 
 import { E2ECommandAPI } from "../../e2eCommand";
+import { taggedUser } from "../../helpers/workerData";
 
 const PASSWORD = "TestUserPassword";
 const SESSION_COOKIE_NAME = "connect.sid";
@@ -8,10 +9,9 @@ const SESSION_COOKIE_NAME = "connect.sid";
 const DAY_SECONDS = 24 * 60 * 60;
 
 /**
- * Each test gets its OWN username. The tests in this file run in parallel and
- * the only available cleanup helpers are global (`clearTestUsers` deletes every
- * `testuser%` row), so a shared username meant one test's setup deleted the
- * user another test was mid-login with.
+ * Each test gets its OWN username. Tests in this file can run back to back on
+ * one worker, and each deletes its user up front, so a shared username would
+ * let one test's setup delete the user another was mid-login with.
  */
 const createUser = async (
   page: import("@playwright/test").Page,
@@ -33,7 +33,7 @@ test.describe("Login remember-me cookie expiry", () => {
     page,
     request,
   }) => {
-    const username = "testuser_rm_default";
+    const username = taggedUser("testuser_rm_default");
     const cleanup = await createUser(page, request, username);
 
     try {
@@ -70,7 +70,7 @@ test.describe("Login remember-me cookie expiry", () => {
   });
 
   test("Remember me unchecked → ~3 day cookie", async ({ page, request }) => {
-    const username = "testuser_rm_off";
+    const username = taggedUser("testuser_rm_off");
     const cleanup = await createUser(page, request, username);
 
     try {
@@ -115,7 +115,7 @@ test.describe("Login remember-me cookie expiry", () => {
     page,
     request,
   }) => {
-    const username = "testuser_qr_on";
+    const username = taggedUser("testuser_qr_on");
     const cleanup = await createUser(page, request, username);
 
     try {
@@ -138,7 +138,7 @@ test.describe("Login remember-me cookie expiry", () => {
     page,
     request,
   }) => {
-    const username = "testuser_qr_off";
+    const username = taggedUser("testuser_qr_off");
     const cleanup = await createUser(page, request, username);
 
     try {

@@ -1,9 +1,9 @@
 import { expect, test } from "../../../fixtures/screenFixture";
+import { WORKER_TAG } from "../../../helpers/workerData";
 import { LyricsPlugin } from "../../../pages/LyricsPlugin";
 import { ProjectPage } from "../../../pages/ProjectPage";
 import { RendererScreenPage } from "../../../pages/Renderer/RendererScreenPage";
 
-const WORKER_TAG = `w${process.env.TEST_WORKER_INDEX ?? "0"}`;
 const ORG_SLUG = `testorg-renderer-${WORKER_TAG}`;
 const ORG_NAME = `TestOrg Renderer ${WORKER_TAG}`;
 const SCREEN_SLUG = `testscreen-renderer-${WORKER_TAG}`;
@@ -46,8 +46,6 @@ const lyricsScene = (songTitle: string, marker: string) => {
 };
 
 test.describe("Screen renderer reflects project selection", () => {
-  test.describe.configure({ mode: "serial" });
-
   test.beforeEach(async ({ e2eCommand }) => {
     await e2eCommand.serverCommand("clearOrganizationBySlug", {
       slug: ORG_SLUG,

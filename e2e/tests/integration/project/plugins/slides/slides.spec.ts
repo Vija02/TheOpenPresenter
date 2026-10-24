@@ -1,13 +1,7 @@
 import { expect, test } from "../../../../../fixtures/projectFixture";
 
 test.describe("Slides Plugin", () => {
-  test.beforeEach(
-    async ({ e2eCommand }) =>
-      await Promise.all([
-        e2eCommand.serverCommand("clearTestUsers"),
-        e2eCommand.serverCommand("clearTestOrganizations"),
-      ]),
-  );
+  test.beforeEach(async ({ e2eCommand }) => await e2eCommand.clearWorkerData());
 
   test("can upload pdf and it is shown", async ({
     page,
@@ -19,9 +13,7 @@ test.describe("Slides Plugin", () => {
 
     await projectPage.createPlugin("Slides");
 
-    await expect(page.getByRole("heading")).toContainText(
-      "Upload your slides",
-    );
+    await expect(page.getByRole("heading")).toContainText("Upload your slides");
     await expect(page.getByText("Google Slides")).toBeVisible();
 
     // Upload the file via unified Dropzone
@@ -55,9 +47,7 @@ test.describe("Slides Plugin", () => {
 
     await projectPage.createPlugin("Slides");
 
-    await expect(page.getByRole("heading")).toContainText(
-      "Upload your slides",
-    );
+    await expect(page.getByRole("heading")).toContainText("Upload your slides");
     await expect(page.getByText("Google Slides")).toBeVisible();
 
     // Upload the file via unified Dropzone
@@ -91,9 +81,7 @@ test.describe("Slides Plugin", () => {
 
     await projectPage.createPlugin("Slides");
 
-    await expect(page.getByRole("heading")).toContainText(
-      "Upload your slides",
-    );
+    await expect(page.getByRole("heading")).toContainText("Upload your slides");
 
     // Upload the file via unified Dropzone
     await uppyUploadFile("./dummyFiles/dummyImage.jpg");

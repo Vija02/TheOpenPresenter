@@ -1,13 +1,8 @@
 import { expect, test } from "../../fixtures/organizationFixture";
+import { ORG_SLUG } from "../../helpers/workerData";
 
 test.describe("OrganizationPage", () => {
-  test.beforeEach(
-    async ({ e2eCommand }) =>
-      await Promise.all([
-        e2eCommand.serverCommand("clearTestUsers"),
-        e2eCommand.serverCommand("clearTestOrganizations"),
-      ]),
-  );
+  test.beforeEach(async ({ e2eCommand }) => await e2eCommand.clearWorkerData());
 
   test("can create a new project", async ({
     page,
@@ -21,7 +16,7 @@ test.describe("OrganizationPage", () => {
     await organizationPage.newProjectButton.click();
     await organizationPage.newProjectSaveButton.click();
 
-    await expect(page).toHaveURL(/app\/testorg/);
+    await expect(page).toHaveURL(new RegExp(`/app/${ORG_SLUG}`));
   });
 
   test("can import a new project", async ({

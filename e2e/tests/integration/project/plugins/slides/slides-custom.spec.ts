@@ -40,14 +40,8 @@ const filmstrip = (page: Page) => page.getByTestId("custom-slide-filmstrip");
 /** One filmstrip thumbnail (each is a bordered card holding a preview + row). */
 const filmstripSlides = (page: Page) => filmstrip(page).locator("> div");
 
-test.describe.serial("Slides Plugin - custom slides", () => {
-  test.beforeEach(
-    async ({ e2eCommand }) =>
-      await Promise.all([
-        e2eCommand.serverCommand("clearTestUsers"),
-        e2eCommand.serverCommand("clearTestOrganizations"),
-      ]),
-  );
+test.describe("Slides Plugin - custom slides", () => {
+  test.beforeEach(async ({ e2eCommand }) => await e2eCommand.clearWorkerData());
 
   test("creates a deck from the empty state and it appears in the grid", async ({
     page,

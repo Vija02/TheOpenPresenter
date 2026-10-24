@@ -69,14 +69,10 @@ const textStyle = (page: Page, elementSelector: string, property: string) =>
       property,
     );
 
-test.describe.serial("Layout AI editing", () => {
+test.describe("Layout AI editing", () => {
   test.beforeEach(async ({ e2eCommand, requireFakeAi }) => {
     await requireFakeAi("layout");
-    await Promise.all([
-      e2eCommand.serverCommand("clearTestUsers"),
-      e2eCommand.serverCommand("clearTestOrganizations"),
-      e2eCommand.serverCommand("clearBibleData"),
-    ]);
+    await e2eCommand.clearWorkerData();
   });
 
   test("runs the tool loop, streams its progress and applies the edit", async ({

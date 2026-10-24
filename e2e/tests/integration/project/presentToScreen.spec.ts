@@ -1,8 +1,8 @@
 import { expect, test } from "../../../fixtures/screenFixture";
+import { WORKER_TAG } from "../../../helpers/workerData";
 import { ProjectPage } from "../../../pages/ProjectPage";
 import { RendererScreenPage } from "../../../pages/Renderer/RendererScreenPage";
 
-const WORKER_TAG = `w${process.env.TEST_WORKER_INDEX ?? "0"}`;
 const ORG_SLUG = `testorg-present-${WORKER_TAG}`;
 const SCREEN_SLUG = `testscreen-present-${WORKER_TAG}`;
 const ORG_NAME = `TestOrg Present ${WORKER_TAG}`;
@@ -107,7 +107,6 @@ test.describe("Present to a screen from the remote", () => {
     context,
     e2eCommand,
   }) => {
-
     await e2eCommand.login({
       username: USERNAME,
       orgs: [
@@ -133,7 +132,6 @@ test.describe("Present to a screen from the remote", () => {
     context,
     e2eCommand,
   }) => {
-
     await e2eCommand.login({
       username: USERNAME,
       orgs: [

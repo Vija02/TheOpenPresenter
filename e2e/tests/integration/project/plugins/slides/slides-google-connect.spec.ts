@@ -11,9 +11,6 @@ import {
  * fake Google (e2e/scripts/fakeGoogleServer.ts). The sign-in, token storage,
  * refresh, revocation and import are all real; only Google, its Drive Picker
  * widget and its in-browser sign-in ("import once") are stand-ins.
- *
- * Serial, like the other plugin specs: they all log in as the same `testorg`,
- * and the beforeEach sweep would pull that org out from under a sibling test.
  */
 
 const DECK = { id: "deck-sunday", name: "Sunday Service" };
@@ -94,12 +91,9 @@ const connectAndImport = async (page: Page, drivePicker: DrivePicker) => {
   await expectImported(page);
 };
 
-test.describe.serial("Slides Plugin - Google Slides accounts", () => {
+test.describe("Slides Plugin - Google Slides accounts", () => {
   test.beforeEach(async ({ e2eCommand, requireFakeGoogle }) => {
-    await Promise.all([
-      e2eCommand.serverCommand("clearTestUsers"),
-      e2eCommand.serverCommand("clearTestOrganizations"),
-    ]);
+    await e2eCommand.clearWorkerData();
     await requireFakeGoogle();
   });
 
@@ -185,7 +179,9 @@ test.describe.serial("Slides Plugin - Google Slides accounts", () => {
     await openSlides({ projectPage, loginAndGoToProject });
     await connectAndImport(page, drivePicker);
 
-    expect((await fakeGoogle.activity(account)).refreshCount).toBeGreaterThan(0);
+    expect((await fakeGoogle.activity(account)).refreshCount).toBeGreaterThan(
+      0,
+    );
   });
 
   test("connects a second account alongside the first", async ({
@@ -240,7 +236,10 @@ test.describe.serial("Slides Plugin - Google Slides accounts", () => {
     const chooser = accountChooserOf(page);
     await chooser.getByRole("button", { name: "Disconnect" }).click();
     // The confirm popover's own button
-    await page.getByRole("button", { name: "Disconnect", exact: true }).last().click();
+    await page
+      .getByRole("button", { name: "Disconnect", exact: true })
+      .last()
+      .click();
 
     // The last account is gone; the chooser stays, offering the other ways in
     await expect(chooser.getByText("worship@example.com")).toBeHidden();

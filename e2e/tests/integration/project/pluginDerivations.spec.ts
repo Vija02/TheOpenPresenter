@@ -3,13 +3,13 @@ import type { Page } from "@playwright/test";
 import { expect, test } from "../../../fixtures/screenFixture";
 import { openManageOutputs } from "../../../helpers/outputs";
 import { buildGoogleSlidesScene } from "../../../helpers/slidesSeed";
+import { WORKER_TAG } from "../../../helpers/workerData";
 
 /**
  * Derivations are declared by the plugin, so the controls in the layout
  * inspector are whatever `slides` registered, not a fixed Previous/Next list.
  */
 
-const WORKER_TAG = `w${process.env.TEST_WORKER_INDEX ?? "0"}`;
 const ORG_SLUG = `testorg-deriv-${WORKER_TAG}`;
 const ORG_NAME = `TestOrg Deriv ${WORKER_TAG}`;
 const USERNAME = `testuser_deriv_${WORKER_TAG}`;
@@ -63,7 +63,7 @@ const offsetInput = (page: Page) =>
     .getByRole("textbox")
     .first();
 
-test.describe.serial("Plugin-declared derivations", () => {
+test.describe("Plugin-declared derivations", () => {
   test.beforeEach(async ({ e2eCommand }) => {
     await e2eCommand.serverCommand("clearOrganizationBySlug", {
       slug: ORG_SLUG,

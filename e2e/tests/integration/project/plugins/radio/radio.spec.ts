@@ -1,15 +1,14 @@
 import { OrganizationType } from "@repo/graphql";
 
 import { expect, test } from "../../../../../fixtures/projectFixture";
+import {
+  projectUrl,
+  tagged,
+  taggedUser,
+} from "../../../../../helpers/workerData";
 
-test.describe.serial("Music Player Plugin: Radio", () => {
-  test.beforeEach(
-    async ({ e2eCommand }) =>
-      await Promise.all([
-        e2eCommand.serverCommand("clearTestUsers"),
-        e2eCommand.serverCommand("clearTestOrganizations"),
-      ]),
-  );
+test.describe("Music Player Plugin: Radio", () => {
+  test.beforeEach(async ({ e2eCommand }) => await e2eCommand.clearWorkerData());
 
   test("worship organization only sees worship sources", async ({
     page,
@@ -18,16 +17,16 @@ test.describe.serial("Music Player Plugin: Radio", () => {
     musicPlayerPlugin,
   }) => {
     await e2eCommand.login({
-      username: "testuser_church",
+      username: taggedUser("testuser_church"),
       orgs: [
         {
           name: "TestChurch",
-          slug: "testchurch",
+          slug: tagged("testchurch"),
           organizationType: OrganizationType.Church,
           projects: [{ name: "TestProject", slug: "testproject" }],
         },
       ],
-      next: "/app/testchurch/testproject",
+      next: projectUrl(tagged("testchurch")),
     });
 
     await projectPage.createPlugin("Music Player");
@@ -45,16 +44,16 @@ test.describe.serial("Music Player Plugin: Radio", () => {
     musicPlayerPlugin,
   }) => {
     await e2eCommand.login({
-      username: "testuser_venue",
+      username: taggedUser("testuser_venue"),
       orgs: [
         {
           name: "TestVenue",
-          slug: "testvenue",
+          slug: tagged("testvenue"),
           organizationType: OrganizationType.Venue,
           projects: [{ name: "TestProject", slug: "testproject" }],
         },
       ],
-      next: "/app/testvenue/testproject",
+      next: projectUrl(tagged("testvenue")),
     });
 
     await projectPage.createPlugin("Music Player");
