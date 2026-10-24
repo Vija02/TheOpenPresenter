@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict evAxr5CNCieQThFNbfHK4dlzI2Ii2f9zqw0YlG2jbrHLVkeBjWUzVcxhchzE6Lr
+\restrict TVbZtMPT2jPWk2Z1Fi8fpLgVYWRWB1ZFvXyaZOUDIElSyAZC8ZlDXdaUfh1K5ie
 
 -- Dumped from database version 17.0 (Debian 17.0-1.pgdg120+1)
 -- Dumped by pg_dump version 18.6
@@ -300,6 +300,18 @@ CREATE TYPE app_public.video_transcode_status AS ENUM (
     'completed',
     'failed'
 );
+
+
+--
+-- Name: organization_id_by_slug(text); Type: FUNCTION; Schema: app_hidden; Owner: -
+--
+
+CREATE FUNCTION app_hidden.organization_id_by_slug(p_slug text) RETURNS uuid
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+    AS $$
+  select id from app_public.organizations where slug = p_slug;
+$$;
 
 
 --
@@ -2507,6 +2519,27 @@ CREATE FUNCTION app_public.organizations_public_search(search_string text) RETUR
     AS $$
   select * from app_public.organizations o where o.is_public is true AND o.name ILIKE '%' || search_string || '%';
 $$;
+
+
+--
+-- Name: project_by_org_and_slug(text, text); Type: FUNCTION; Schema: app_public; Owner: -
+--
+
+CREATE FUNCTION app_public.project_by_org_and_slug(p_org_slug text, p_project_slug text) RETURNS app_public.projects
+    LANGUAGE sql STABLE
+    AS $$
+  select p.*
+  from app_public.projects p
+  where p.organization_id = app_hidden.organization_id_by_slug(p_org_slug)
+    and p.slug = p_project_slug;
+$$;
+
+
+--
+-- Name: FUNCTION project_by_org_and_slug(p_org_slug text, p_project_slug text); Type: COMMENT; Schema: app_public; Owner: -
+--
+
+COMMENT ON FUNCTION app_public.project_by_org_and_slug(p_org_slug text, p_project_slug text) IS 'The project at this org and project slug, if the current visitor may see it.';
 
 
 --
@@ -6822,6 +6855,14 @@ GRANT USAGE ON SCHEMA public TO theopenpresenter_visitor;
 
 
 --
+-- Name: FUNCTION organization_id_by_slug(p_slug text); Type: ACL; Schema: app_hidden; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_hidden.organization_id_by_slug(p_slug text) FROM PUBLIC;
+GRANT ALL ON FUNCTION app_hidden.organization_id_by_slug(p_slug text) TO theopenpresenter_visitor;
+
+
+--
 -- Name: FUNCTION assert_valid_password(new_password text); Type: ACL; Schema: app_private; Owner: -
 --
 
@@ -7433,6 +7474,14 @@ GRANT ALL ON FUNCTION app_public.organizations_current_user_is_owner(org app_pub
 
 REVOKE ALL ON FUNCTION app_public.organizations_public_search(search_string text) FROM PUBLIC;
 GRANT ALL ON FUNCTION app_public.organizations_public_search(search_string text) TO theopenpresenter_visitor;
+
+
+--
+-- Name: FUNCTION project_by_org_and_slug(p_org_slug text, p_project_slug text); Type: ACL; Schema: app_public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_public.project_by_org_and_slug(p_org_slug text, p_project_slug text) FROM PUBLIC;
+GRANT ALL ON FUNCTION app_public.project_by_org_and_slug(p_org_slug text, p_project_slug text) TO theopenpresenter_visitor;
 
 
 --
@@ -8241,5 +8290,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE theopenpresenter REVOKE ALL ON FUNCTIONS FROM 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict evAxr5CNCieQThFNbfHK4dlzI2Ii2f9zqw0YlG2jbrHLVkeBjWUzVcxhchzE6Lr
+\unrestrict TVbZtMPT2jPWk2Z1Fi8fpLgVYWRWB1ZFvXyaZOUDIElSyAZC8ZlDXdaUfh1K5ie
 

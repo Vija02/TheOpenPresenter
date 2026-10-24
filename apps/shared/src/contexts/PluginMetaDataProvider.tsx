@@ -17,9 +17,7 @@ type Project = NonNullable<
   | NonNullable<
       RendererBasePluginQuery["organizationBySlug"]
     >["projects"]["nodes"][number]
-  | NonNullable<
-      RendererBasePluginQuery["publicOrGuestProject"]
-    >["nodes"][number]
+  | RendererBasePluginQuery["publicOrGuestProject"]
 >;
 
 type PluginMeta =
@@ -90,16 +88,10 @@ export function PluginMetaDataProvider({
     ) {
       return pluginMetaData?.organizationBySlug?.projects.nodes[0];
     }
-    if (
-      pluginMetaData?.publicOrGuestProject?.nodes &&
-      pluginMetaData?.publicOrGuestProject?.nodes.length > 0
-    ) {
-      return pluginMetaData?.publicOrGuestProject?.nodes[0];
-    }
-    return null;
+    return pluginMetaData?.publicOrGuestProject ?? null;
   }, [
     pluginMetaData?.organizationBySlug?.projects.nodes,
-    pluginMetaData?.publicOrGuestProject?.nodes,
+    pluginMetaData?.publicOrGuestProject,
   ]);
 
   const projectId = project?.id ?? null;
@@ -118,17 +110,11 @@ export function PluginMetaDataProvider({
     ) {
       return pluginMetaData?.organizationBySlug?.id;
     }
-    if (
-      pluginMetaData?.publicOrGuestProject?.nodes &&
-      pluginMetaData?.publicOrGuestProject?.nodes.length > 0
-    ) {
-      return pluginMetaData?.publicOrGuestProject.nodes[0].organizationId;
-    }
-    return null;
+    return pluginMetaData?.publicOrGuestProject?.organizationId ?? null;
   }, [
     pluginMetaData?.organizationBySlug?.id,
     pluginMetaData?.organizationBySlug?.projects.nodes,
-    pluginMetaData?.publicOrGuestProject?.nodes,
+    pluginMetaData?.publicOrGuestProject,
   ]);
 
   const isMember =

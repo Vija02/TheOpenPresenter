@@ -29,15 +29,16 @@ query RendererBasePlugin($orgSlug: String!, $projectSlug: String!) {
     }
   }
 
-  publicOrGuestProject: projects(condition: { slug: $projectSlug }) {
-    nodes {
-      id
-      name
-      isPublic
-      organizationId
-      createdAt
-      targetDate
-    }
+  publicOrGuestProject: projectByOrgAndSlug(
+    pOrgSlug: $orgSlug
+    pProjectSlug: $projectSlug
+  ) {
+    id
+    name
+    isPublic
+    organizationId
+    createdAt
+    targetDate
   }
 }
 
