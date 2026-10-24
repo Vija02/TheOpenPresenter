@@ -270,6 +270,13 @@ test.describe("Bible Plugin", () => {
       .getByPlaceholder("Search by name or abbreviation...")
       .fill("hcsb");
     const catalogName = "English HCSB 2004 - Copyrighted Only For Website";
+    // The search is debounced and its results replace the whole list, rows
+    // included. The row is already visible from the unfiltered list, so
+    // without this the upload dialog opens from a row that is then swapped
+    // out, taking the dialog with it.
+    await expect(
+      settings.getByText(/^Showing 1 of 1 matching translations/),
+    ).toBeVisible();
     await expect(settings.getByText(catalogName)).toBeVisible();
 
     await attachTranslationToCatalog(page, catalogName);
