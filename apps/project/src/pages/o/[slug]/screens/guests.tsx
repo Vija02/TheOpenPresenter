@@ -64,7 +64,7 @@ const OrganizationGuestsPage = () => {
         <Link asChild>
           <WouterLink href={`/o/${orgSlug}/screens`}>
             <VscArrowLeft />
-            Back to screens
+            Back to virtual screens
           </WouterLink>
         </Link>
       </div>

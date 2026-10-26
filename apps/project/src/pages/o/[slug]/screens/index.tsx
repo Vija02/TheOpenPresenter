@@ -79,7 +79,7 @@ const OrganizationScreensPage = () => {
                 toggler={({ onToggle }) => (
                   <Button variant="success" onClick={onToggle}>
                     <FaPlus />
-                    New screen
+                    New virtual screen
                   </Button>
                 )}
               >

@@ -129,7 +129,7 @@ export const ProjectCard = ({
                 )}
                 {assignableScreens.length > 0 && (
                   <PopoverSubMenu
-                    label="Assign to screen"
+                    label="Assign to virtual screen"
                     icon={<VscScreenNormal />}
                     contentClassName="max-h-80 overflow-y-auto"
                   >
