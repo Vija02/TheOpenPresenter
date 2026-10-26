@@ -82,6 +82,7 @@ const TranslationRow = ({
   onRemove,
   onToggleFavorite,
 }: RowProps) => {
+  const { isPublicAccess } = usePluginAPI();
   const usable = isUsable(t);
   const badge = BADGE[t.availability];
   return (
@@ -190,6 +191,14 @@ const TranslationRow = ({
             </Button>
           </div>
         )
+      ) : isPublicAccess ? (
+        // Uploads are saved to an organization, which public visitors lack
+        <span title="Uploading isn't available in public projects">
+          <Button size="sm" variant="outline" className="shrink-0" disabled>
+            <VscCloudUpload />
+            Upload
+          </Button>
+        </span>
       ) : (
         <OverlayToggle
           toggler={({ onToggle: openUploads }) => (
@@ -456,16 +465,18 @@ const SettingsModal = () => {
         <DialogHeader className="pb-4">
           <div className="flex items-center gap-2">
             <DialogTitle>Bible Settings</DialogTitle>
-            <OverlayToggle
-              toggler={({ onToggle: openUploads }) => (
-                <Button size="xs" variant="outline" onClick={openUploads}>
-                  <VscCloudUpload />
-                  Add translation
-                </Button>
-              )}
-            >
-              <TranslationsModal />
-            </OverlayToggle>
+            {!pluginApi.isPublicAccess && (
+              <OverlayToggle
+                toggler={({ onToggle: openUploads }) => (
+                  <Button size="xs" variant="outline" onClick={openUploads}>
+                    <VscCloudUpload />
+                    Add translation
+                  </Button>
+                )}
+              >
+                <TranslationsModal />
+              </OverlayToggle>
+            )}
           </div>
         </DialogHeader>
 
