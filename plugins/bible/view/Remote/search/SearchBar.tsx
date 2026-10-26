@@ -14,6 +14,7 @@ import { readableError } from "../../errors";
 import { usePluginAPI } from "../../pluginApi";
 import { trpc } from "../../trpc";
 import { useCustomTranslations } from "../translations/customTranslations";
+import { usePreferences } from "../usePreferences";
 import BiblePicker from "./BiblePicker";
 import { parseReferenceInIndex, suggestBooks } from "./bookIndex";
 
@@ -40,17 +41,14 @@ const SearchBar = () => {
   } = useCustomTranslations();
 
   // Catalog translations the org selected in Settings.
-  const prefsQuery = trpc.bible.preferences.get.useQuery(
-    { pluginId },
-    { refetchOnWindowFocus: false },
-  );
+  const prefs = usePreferences();
   const selectedCatalogIds = useMemo(() => {
-    const ids = prefsQuery.data?.translationIds?.length
-      ? prefsQuery.data.translationIds
+    const ids = prefs.data?.translationIds?.length
+      ? prefs.data.translationIds
       : [DEFAULT_TRANSLATION_ID];
     return ids.filter((id) => !getCustom(id));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [prefsQuery.data, customTranslations]);
+  }, [prefs.data, customTranslations]);
 
   const catalogMetaQuery = trpc.bible.catalog.byIds.useQuery(
     { pluginId, ids: selectedCatalogIds },
@@ -63,8 +61,8 @@ const SearchBar = () => {
   const [input, setInput] = useState("");
   // The translation used for lookups is always the org's primary preference.
   const translation =
-    prefsQuery.data?.primaryTranslationId ??
-    prefsQuery.data?.translationIds?.[0] ??
+    prefs.data?.primaryTranslationId ??
+    prefs.data?.translationIds?.[0] ??
     DEFAULT_TRANSLATION_ID;
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);

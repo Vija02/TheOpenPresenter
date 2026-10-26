@@ -300,6 +300,42 @@ test.describe("Bible Plugin", () => {
       "E2E custom translation verse text",
     );
   });
+
+  test("a saved template is used by the next Bible scene", async ({
+    page,
+    projectPage,
+    loginAndGoToProject,
+  }) => {
+    await setupBiblePlugin({ loginAndGoToProject, projectPage });
+    // Tells this scene apart from the next one
+    await addPassage(page, "John 3:16");
+    await expect(page.getByTestId("slide-container").first()).toContainText(
+      "For God so loved the world",
+    );
+
+    await page.getByRole("button", { name: "Style" }).click();
+    const dialog = page.getByRole("dialog", { name: "Slide Template" });
+    await expect(dialog.locator(".lay--editor-surface")).toBeVisible();
+    await dialog.getByRole("button", { name: "Add text" }).click();
+    await expect(dialog.locator('[data-lay-id="text-1"]')).toBeVisible();
+
+    const templateSaved = page.waitForResponse(
+      (res) => res.url().includes("bible.template.save") && res.ok(),
+    );
+    await dialog.getByRole("button", { name: "Save" }).click();
+    await expect(dialog).toBeHidden();
+    await templateSaved;
+
+    await projectPage.createPlugin("Bible");
+    await expect(page.getByText("Add a passage to get started")).toBeVisible();
+
+    await page.getByRole("button", { name: "Style" }).click();
+    const reopened = page.getByRole("dialog", { name: "Slide Template" });
+    await expect(reopened.locator(".lay--editor-surface")).toBeVisible();
+    await expect(reopened.locator('[data-lay-id="text-1"]')).toContainText(
+      "Your text here",
+    );
+  });
 });
 
 // A public-link viewer (the logged-out demo lands on one) has no session. The
@@ -363,6 +399,68 @@ test.describe("Bible Plugin - public access", () => {
           .first(),
       ).toBeVisible();
       await expect(settings.getByTestId("bible-catalog-error")).toHaveCount(0);
+    } finally {
+      await context.close();
+    }
+  });
+
+  test("a logged-out viewer can't upload, but their settings stick to the scene", async ({
+    browser,
+  }) => {
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    try {
+      await page.goto(projectUrl());
+      await expect(
+        page.getByText("Add a passage to get started"),
+      ).toBeVisible();
+
+      await page.getByTestId("bible-settings").click();
+      const settings = page.getByRole("dialog", { name: "Bible Settings" });
+      await expect(settings).toBeVisible();
+      await expect(
+        settings.getByRole("button", { name: "Add translation" }),
+      ).toHaveCount(0);
+
+      // Copyrighted entries can't be attached without an organization
+      await settings
+        .getByPlaceholder("Search by name or abbreviation...")
+        .fill("hcsb");
+      await expect(
+        settings.getByText(/^Showing 1 of 1 matching translations/),
+      ).toBeVisible();
+      await expect(
+        settings
+          .getByTestId("bible-translation-row")
+          .filter({ hasText: "English HCSB 2004" })
+          .getByRole("button", { name: "Upload" }),
+      ).toBeDisabled();
+
+      await settings
+        .getByPlaceholder("Search by name or abbreviation...")
+        .fill("world english bible");
+      await settings.getByRole("button", { name: "Ready to use" }).click();
+      const webRow = settings
+        .getByTestId("bible-translation-row")
+        .filter({ hasText: "World English Bible · WEB" });
+      await webRow.getByRole("button", { name: "Use" }).click();
+      await settings.getByRole("button", { name: "Save" }).click();
+      await expect(settings).toBeHidden();
+
+      await addPassage(page, "John 3:16");
+      await expect(page.getByTestId("slide-container").first()).toContainText(
+        "his only born Son",
+      );
+
+      // Kept on the scene, so it survives a reload
+      await page.reload();
+      await page.getByTestId("bible-settings").click();
+      await expect(
+        settings
+          .getByTestId("bible-translation-row")
+          .filter({ hasText: "World English Bible · WEB" })
+          .getByText("Primary", { exact: true }),
+      ).toBeVisible();
     } finally {
       await context.close();
     }

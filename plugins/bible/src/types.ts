@@ -65,10 +65,20 @@ export type BibleBookIndex = BibleBookMeta[];
 // Plugin data (persisted base data + per-renderer state)
 // ---------------------------------------------------------------------------
 
+/** Which translations to offer, normally saved per organization */
+export type BiblePreferences = {
+  languages: string[];
+  translationIds: string[];
+  primaryTranslationId: string | null;
+  favoriteIds: string[];
+};
+
 export type PluginBaseData = {
   passages: BiblePassage[];
   template?: LayoutDoc | null;
   showVerseNumbers?: boolean;
+  // Local preference for public projects
+  preferences?: BiblePreferences | null;
 };
 
 export type PluginRendererData = {
