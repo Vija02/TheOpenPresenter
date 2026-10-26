@@ -18,10 +18,7 @@ export const useCreateSampleProject = () => {
 
       // Null when the organization already has a project
       if (data?.createSampleProject?.projectId) {
-        captureEvent("project_created", {
-          source: "sample",
-          has_target_date: true,
-        });
+        captureEvent("project_created", { source: "sample" });
       }
     },
     [createSampleProject],
