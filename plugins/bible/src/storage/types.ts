@@ -1,7 +1,14 @@
 import { ServerPluginApi } from "@repo/base-plugin/server";
 import type { LayoutDoc } from "@repo/layout";
 
-import { BibleBookMeta, PluginBaseData, PluginRendererData } from "../types";
+import {
+  BibleBookMeta,
+  BiblePreferences,
+  PluginBaseData,
+  PluginRendererData,
+} from "../types";
+
+export type { BiblePreferences };
 
 export type Api = ServerPluginApi<PluginBaseData, PluginRendererData>;
 
@@ -27,13 +34,6 @@ export type TranslationSummary = {
   updatedAt: string;
   // null = standalone upload, listed as its own row
   catalogId: string | null;
-};
-
-export type BiblePreferences = {
-  languages: string[];
-  translationIds: string[];
-  primaryTranslationId: string | null;
-  favoriteIds: string[];
 };
 
 export type SavedTemplate = {

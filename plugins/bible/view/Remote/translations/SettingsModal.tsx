@@ -23,6 +23,7 @@ import type { CatalogTranslation } from "../../../src/catalog";
 import { readableError } from "../../errors";
 import { usePluginAPI } from "../../pluginApi";
 import { trpc } from "../../trpc";
+import { usePreferences } from "../usePreferences";
 import TranslationsModal from "./TranslationsModal";
 
 // Availability -> small badge shown on each row.
@@ -245,7 +246,6 @@ const SettingsModal = () => {
   const { isOpen, onToggle } = useOverlayToggle();
   const pluginApi = usePluginAPI();
   const pluginId = pluginApi.pluginContext.pluginId;
-  const utils = trpc.useUtils();
 
   // Draft state seeded from saved prefs once loaded.
   const [languages, setLanguages] = useState<string[]>([]);
@@ -264,10 +264,7 @@ const SettingsModal = () => {
     return () => clearTimeout(id);
   }, [query]);
 
-  const prefsQuery = trpc.bible.preferences.get.useQuery(
-    { pluginId },
-    { refetchOnWindowFocus: false },
-  );
+  const prefs = usePreferences();
   const languagesQuery = trpc.bible.catalog.languages.useQuery(
     { pluginId },
     { refetchOnWindowFocus: false },
@@ -296,15 +293,14 @@ const SettingsModal = () => {
       refetchOnWindowFocus: false,
     },
   );
-  const setMutation = trpc.bible.preferences.set.useMutation();
 
   useEffect(() => {
-    if (!prefsQuery.data) return;
-    setLanguages(prefsQuery.data.languages);
-    setSelectedIds(prefsQuery.data.translationIds);
-    setPrimaryId(prefsQuery.data.primaryTranslationId);
-    setFavoriteIds(prefsQuery.data.favoriteIds ?? []);
-  }, [prefsQuery.data]);
+    if (!prefs.data) return;
+    setLanguages(prefs.data.languages);
+    setSelectedIds(prefs.data.translationIds);
+    setPrimaryId(prefs.data.primaryTranslationId);
+    setFavoriteIds(prefs.data.favoriteIds ?? []);
+  }, [prefs.data]);
 
   const languageOptions = useMemo(
     () => languagesQuery.data ?? [],
@@ -434,25 +430,23 @@ const SettingsModal = () => {
   const save = async () => {
     setSaving(true);
     try {
-      await setMutation.mutateAsync({
-        pluginId,
+      await prefs.save({
         languages,
         translationIds: selectedIds,
         primaryTranslationId: primaryId,
         favoriteIds,
       });
-      await utils.bible.preferences.get.invalidate();
       setSaved(true);
       onToggle?.();
     } catch {
-      // setMutation.error carries the message shown in the footer.
+      // prefs.saveError carries the message shown in the footer.
     } finally {
       setSaving(false);
     }
   };
 
-  const loadError = listQuery.error ?? prefsQuery.error;
-  const loading = !loadError && (listQuery.isLoading || prefsQuery.isLoading);
+  const loadError = listQuery.error ?? prefs.error;
+  const loading = !loadError && (listQuery.isLoading || prefs.isLoading);
   // A primary translation is always required before saving.
   const needsPrimary = !primaryId;
 
@@ -556,7 +550,7 @@ const SettingsModal = () => {
                       variant="outline"
                       onClick={() => {
                         listQuery.refetch();
-                        prefsQuery.refetch();
+                        prefs.refetch();
                       }}
                     >
                       Try again
@@ -644,9 +638,9 @@ const SettingsModal = () => {
         </DialogBody>
 
         <DialogFooter className="pt-0 pb-3 justify-end items-center gap-2">
-          {setMutation.isError ? (
+          {prefs.saveError ? (
             <span className="text-sm text-red-600">
-              {readableError(setMutation.error, "Could not save settings.")}
+              {readableError(prefs.saveError, "Could not save settings.")}
             </span>
           ) : (
             needsPrimary && (
