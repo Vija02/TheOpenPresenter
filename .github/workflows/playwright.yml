@@ -84,11 +84,27 @@ jobs:
         with:
           path: ~/.cache/ms-playwright
           key: ${{ runner.os }}-playwright-${{ hashFiles('**/yarn.lock') }}
+      - name: Cache turbo build
+        uses: actions/cache@v4
+        with:
+          path: .turbo/cache
+          # Exact hit when re-running a commit; otherwise the latest earlier
+          # cache, so packages this commit didn't touch skip their build
+          key: ${{ runner.os }}-turbo-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-
       - name: yarn, lint, build and test
         run: |
           cp .env.ci .env
-          # Setup Cloudflared (Tunnel for testing PPT)
+          # Setup Cloudflared (Tunnel for testing PPT). Started now, but its URL
+          # only goes into .env after the build: turbo hashes .env, and a
+          # per-shard URL would make every shard miss the build cache.
           cloudflared tunnel --url http://localhost:5678 > /tmp/cloudflared.log 2>&1 &
+
+          yarn --no-immutable
+          CONFIRM_DROP=1 yarn setup
+          yarn build
+
           TUNNEL_URL=""
           for i in $(seq 1 30); do
             TUNNEL_URL=$(grep -oE 'https://[a-z0-9-]+\.trycloudflare\.com' /tmp/cloudflared.log | head -1 || true)
@@ -99,9 +115,6 @@ jobs:
           echo "PUBLIC_ROOT_URL: $TUNNEL_URL"
           echo -e "\nPUBLIC_ROOT_URL=$TUNNEL_URL" >> .env
 
-          yarn --no-immutable
-          CONFIRM_DROP=1 yarn setup
-          yarn build
           if [ "${{ steps.pw-cache.outputs.cache-hit }}" == "true" ]; then
             yarn e2e playwright install-deps chromium firefox
           else
