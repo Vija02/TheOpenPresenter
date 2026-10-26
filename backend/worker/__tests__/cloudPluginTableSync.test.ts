@@ -36,6 +36,8 @@ const SETLIST_SOURCES = "plugin_lyrics_presenter.setlist_source";
 const BIBLE_PREFERENCES = "plugin_bible.bible_preference";
 const RECENT_SONGS = "plugin_lyrics_presenter.recent_song";
 const CATEGORIES = "app_public.categories";
+const UPLOAD_LINKS = "plugin_slides.upload_link";
+const UPLOADS = "plugin_slides.upload_link_upload";
 const ORG_PREFIX = "testpluginsync";
 
 type Row = Record<string, unknown>;
@@ -106,6 +108,10 @@ beforeAll(async () => {
     {
       pluginName: "bible",
       migrationsPath: path.join(plugins, "bible/migrations"),
+    },
+    {
+      pluginName: "slides",
+      migrationsPath: path.join(plugins, "slides/migrations"),
     },
   ]);
   const { tables } = await introspectCloudSyncTables(pool);
@@ -603,6 +609,188 @@ describe("syncPluginTables", () => {
       expect(fake.tables.get(CATEGORIES)!.map((r) => r.name)).toEqual([
         "Sunday AM",
       ]);
+    });
+  });
+
+  describe("references to projects and media", () => {
+    const CLOUD_PROJECT_ID = "c2000000-0000-4000-8000-000000000001";
+    const LINK_ID = "11000000-0000-4000-8000-000000000001";
+    const MEDIA_ID = "33000000-0000-4000-8000-000000000001";
+
+    /** A project here, as project sync leaves one it pulled from the cloud. */
+    const pulledProject = async () =>
+      (
+        await query(
+          `insert into app_public.projects
+             (organization_id, slug, name, cloud_project_id, cloud_connection_id)
+           values ($1, 'easter', 'Easter', $2, $3) returning id`,
+          [orgId, CLOUD_PROJECT_ID, connection.id],
+        )
+      )[0].id as string;
+
+    const cloudLink = (updatedAt = "2026-01-01T00:00:00+00:00"): Row => ({
+      id: LINK_ID,
+      organization_id: CLOUD_ORG_ID,
+      project_id: CLOUD_PROJECT_ID,
+      scene_id: "scene",
+      plugin_id: "plugin",
+      token: `token-${LINK_ID}`,
+      label: null,
+      max_attempts: null,
+      attempt_count: 0,
+      expires_at: null,
+      is_active: true,
+      created_by_user_id: null,
+      created_at: "2026-01-01T00:00:00+00:00",
+      updated_at: updatedAt,
+    });
+
+    const localLinks = () =>
+      query(
+        `select id, project_id from ${UPLOAD_LINKS} where organization_id = $1`,
+        [orgId],
+      );
+
+    it("pulls a row under the local id of the project it names", async () => {
+      const projectId = await pulledProject();
+      fake.tables.set(UPLOAD_LINKS, [cloudLink()]);
+
+      expect(await sync()).toMatchObject({ pulled: 1, failedTables: 0 });
+      expect(await localLinks()).toEqual([
+        { id: LINK_ID, project_id: projectId },
+      ]);
+
+      // Translated the same way when compared, so nothing moves again.
+      expect(await sync()).toMatchObject({ pulled: 0, pushed: 0 });
+    });
+
+    it("leaves a row whose project is not here yet for a later sync", async () => {
+      fake.tables.set(UPLOAD_LINKS, [cloudLink()]);
+
+      expect(await sync()).toMatchObject({ pulled: 0, failedTables: 0 });
+      expect(await localLinks()).toEqual([]);
+
+      const projectId = await pulledProject();
+      expect(await sync()).toMatchObject({ pulled: 1 });
+      expect(await localLinks()).toEqual([
+        { id: LINK_ID, project_id: projectId },
+      ]);
+    });
+
+    it("pushes a row under the cloud id of the project it names", async () => {
+      const projectId = await pulledProject();
+      await query(
+        `insert into ${UPLOAD_LINKS}
+           (id, organization_id, project_id, scene_id, plugin_id, token)
+         values ($1, $2, $3, 'scene', 'plugin', 'token-local')`,
+        [LINK_ID, orgId, projectId],
+      );
+
+      expect(await sync()).toMatchObject({ pushed: 1, pushRejected: 0 });
+      expect(fake.tables.get(UPLOAD_LINKS)).toMatchObject([
+        { id: LINK_ID, project_id: CLOUD_PROJECT_ID },
+      ]);
+    });
+
+    it("holds back a row whose project is not on the cloud yet, without deleting it", async () => {
+      const [{ id: projectId }] = await query(
+        `insert into app_public.projects (organization_id, slug, name)
+         values ($1, 'offline', 'Offline') returning id`,
+        [orgId],
+      );
+      await query(
+        `insert into ${UPLOAD_LINKS}
+           (id, organization_id, project_id, scene_id, plugin_id, token)
+         values ($1, $2, $3, 'scene', 'plugin', 'token-offline')`,
+        [LINK_ID, orgId, projectId],
+      );
+
+      expect(await sync()).toMatchObject({ pushed: 0, deletedLocally: 0 });
+      expect(fake.pushed.get(UPLOAD_LINKS)).toBeUndefined();
+      expect(await localLinks()).toHaveLength(1);
+
+      // Project sync creates it on the cloud under the same id.
+      await query(
+        `update app_public.projects
+         set cloud_project_id = id, cloud_connection_id = $2 where id = $1`,
+        [projectId, connection.id],
+      );
+      expect(await sync()).toMatchObject({ pushed: 1 });
+      expect(fake.tables.get(UPLOAD_LINKS)).toMatchObject([
+        { id: LINK_ID, project_id: projectId },
+      ]);
+    });
+
+    it("leaves an upload whose media is not here yet for a later sync", async () => {
+      await pulledProject();
+      fake.tables.set(UPLOAD_LINKS, [cloudLink()]);
+      fake.tables.set(UPLOADS, [
+        {
+          id: "22000000-0000-4000-8000-000000000001",
+          organization_id: CLOUD_ORG_ID,
+          upload_link_id: LINK_ID,
+          media_id: MEDIA_ID,
+          original_name: "slides.pdf",
+          uploader_name: "Sam",
+          import_id: null,
+          thumbnail_media_names: null,
+          replaced_at: null,
+          created_at: "2026-01-01T00:00:00+00:00",
+          updated_at: "2026-01-01T00:00:00+00:00",
+        },
+      ]);
+
+      await sync();
+      const uploads = () =>
+        query(`select id from ${UPLOADS} where organization_id = $1`, [orgId]);
+      expect(await uploads()).toEqual([]);
+
+      // The media job brings it over under the same id.
+      await query(
+        `insert into app_public.medias
+           (id, media_name, file_offset, organization_id)
+         values ($1, 'slides.pdf', 0, $2)`,
+        [MEDIA_ID, orgId],
+      );
+      await sync();
+      expect(await uploads()).toHaveLength(1);
+    });
+
+    it("pulls again an update skipped because its media is not here yet", async () => {
+      await pulledProject();
+      const upload = (mediaId: string | null, updatedAt: string): Row => ({
+        id: "22000000-0000-4000-8000-000000000002",
+        organization_id: CLOUD_ORG_ID,
+        upload_link_id: LINK_ID,
+        media_id: mediaId,
+        original_name: "slides.pdf",
+        uploader_name: "Sam",
+        import_id: null,
+        thumbnail_media_names: null,
+        replaced_at: null,
+        created_at: "2026-01-01T00:00:00+00:00",
+        updated_at: updatedAt,
+      });
+      fake.tables.set(UPLOAD_LINKS, [cloudLink()]);
+      fake.tables.set(UPLOADS, [upload(null, "2026-01-01T00:00:00+00:00")]);
+      await sync();
+
+      fake.tables.set(UPLOADS, [upload(MEDIA_ID, "2026-01-02T00:00:00+00:00")]);
+      await sync();
+      const mediaHere = () =>
+        query(`select media_id from ${UPLOADS} where organization_id = $1`, [
+          orgId,
+        ]);
+      expect(await mediaHere()).toEqual([{ media_id: null }]);
+
+      await query(
+        `insert into app_public.medias
+           (id, media_name, file_offset, organization_id)
+         values ($1, 'slides.pdf', 0, $2)`,
+        [MEDIA_ID, orgId],
+      );
+      await sync();
+      expect(await mediaHere()).toEqual([{ media_id: MEDIA_ID }]);
     });
   });
 });

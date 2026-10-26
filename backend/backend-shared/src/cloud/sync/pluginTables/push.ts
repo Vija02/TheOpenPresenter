@@ -1,7 +1,12 @@
 import { WithPgClient } from "../../../types";
 import { inBatches } from "../cloudQuery";
 import type { PushChange, PushResult } from "./cloud";
-import { CloudSyncTable, quoteIdent, rowKeySql } from "./introspection";
+import {
+  CloudSyncTable,
+  quoteIdent,
+  quoteLiteral,
+  rowKeySql,
+} from "./introspection";
 
 /**
  * The local half of sending changes up. Both steps derive what to do from
@@ -93,6 +98,24 @@ export const pushLocalChanges = async (
   const target = targetOf(table);
   const org = quoteIdent(table.organizationColumn);
 
+  // Project references go up as the cloud's ids. A row whose project is not
+  // on the cloud yet waits for a later sync, but still counts as present here.
+  const projectOf = (c: string) =>
+    `(select p from app_public.projects p where p.id = l.${quoteIdent(c)})`;
+  const cloudProjects = table.projectColumns
+    .map(
+      (c) =>
+        ` || jsonb_build_object(${quoteLiteral(c)}, (${projectOf(c)}).cloud_project_id)`,
+    )
+    .join("");
+  const ready =
+    table.projectColumns
+      .map(
+        (c) =>
+          `(l.${quoteIdent(c)} is null or (${projectOf(c)}).cloud_connection_id = $1)`,
+      )
+      .join(" and ") || "true";
+
   const { rows: all } = await withPgClient((pgClient) =>
     pgClient.query<PendingChange>(
       `
@@ -102,21 +125,23 @@ export const pushLocalChanges = async (
           where cloud_connection_id = $1 and entity = $2
         ),
         local as (
-          select ${rowKeySql(table, "l")} as row_key, to_jsonb(l) as row,
-            l.updated_at
+          select ${rowKeySql(table, "l")} as row_key,
+            to_jsonb(l)${cloudProjects} as row,
+            l.updated_at, ${ready} as ready
           from ${target} l where l.${org} = $3
         )
         select 'create' as kind, local.row_key, local.row,
           to_jsonb(local.updated_at) #>> '{}' as local_updated_at,
           null as expected
         from local
-        where not exists (select 1 from state where state.row_key = local.row_key)
+        where local.ready
+          and not exists (select 1 from state where state.row_key = local.row_key)
         union all
         select 'update', local.row_key, local.row,
           to_jsonb(local.updated_at) #>> '{}',
           to_jsonb(state.cloud_updated_at) #>> '{}'
         from local join state on state.row_key = local.row_key
-        where local.updated_at <> state.local_updated_at
+        where local.ready and local.updated_at <> state.local_updated_at
         union all
         select 'delete', state.row_key, null, null,
           to_jsonb(state.cloud_updated_at) #>> '{}'

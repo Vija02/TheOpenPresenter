@@ -57,6 +57,7 @@ import {
   createLink,
   listLinksForPlugin,
   listUploadsForPlugin,
+  queueProjectCloudSync,
   revokeLink,
 } from "./uploadLink/db";
 import { buildUploadLinkDeps } from "./uploadLink/deps";
@@ -470,7 +471,14 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
             listLinksForPlugin(serverPluginApi, pluginId),
             listUploadsForPlugin(serverPluginApi, pluginId),
           ]);
-          return { links, uploads, baseUrl: getUploadLinkBaseUrl() };
+          // The scene may not be loaded on this server; its links know too.
+          const projectId =
+            loadedContext[pluginId]?.projectId ?? links[0]?.project_id ?? null;
+          const baseUrl = await getUploadLinkBaseUrl(
+            serverPluginApi,
+            projectId,
+          );
+          return { links, uploads, baseUrl };
         }),
       createUploadLink: t.procedure
         .input(
@@ -499,13 +507,28 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
               userId: ctx.userId,
             });
 
-            return { link, baseUrl: getUploadLinkBaseUrl() };
+            await queueProjectCloudSync(
+              serverPluginApi,
+              loadedContextData.projectId,
+            );
+            return {
+              link,
+              baseUrl: await getUploadLinkBaseUrl(
+                serverPluginApi,
+                loadedContextData.projectId,
+              ),
+            };
           },
         ),
       revokeUploadLink: t.procedure
         .input(z.object({ pluginId: z.string(), id: z.string() }))
         .mutation(async ({ input: { pluginId, id } }) => {
-          await revokeLink(serverPluginApi, { id, pluginId });
+          const projectId = await revokeLink(serverPluginApi, {
+            id,
+            pluginId,
+          });
+          if (projectId)
+            await queueProjectCloudSync(serverPluginApi, projectId);
         }),
 
       removeImport: t.procedure

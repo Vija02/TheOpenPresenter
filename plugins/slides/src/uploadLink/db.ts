@@ -85,7 +85,7 @@ export const listLinksForPlugin = async (
             cur.thumbnail_media_names as current_thumbnail_media_names,
             cur.created_at as current_uploaded_at
      from upload_link l
-     left join upload_link_upload cur on cur.id = l.current_upload_id
+     left join lateral (${CURRENT_UPLOAD}) cur on true
      where l.plugin_id = $1
      order by l.created_at desc`,
     [pluginId],
@@ -111,6 +111,19 @@ export const listUploadsForPlugin = async (
   return rows;
 };
 
+/**
+ * The upload live on link `l`: imported, and not replaced since. Uploads can
+ * arrive on either side of a cloud connection, so this is derived rather than
+ * stored on the link.
+ */
+export const CURRENT_UPLOAD = `
+  select * from upload_link_upload u
+  where u.upload_link_id = l.id
+    and u.import_id is not null and u.replaced_at is null
+  order by u.created_at desc
+  limit 1
+`;
+
 /** The upload currently live on a link, if any. */
 export const findCurrentUpload = async (
   serverPluginApi: ServerPluginApi,
@@ -119,13 +132,12 @@ export const findCurrentUpload = async (
   original_name: string | null;
   thumbnail_media_names: string[] | null;
 } | null> => {
-  if (!link.current_upload_id) return null;
-
   const db = serverPluginApi.getDangerousRootPluginDb(pluginName);
   const { rows } = await db.query(
-    `select original_name, thumbnail_media_names
-     from upload_link_upload where id = $1`,
-    [link.current_upload_id],
+    `select cur.original_name, cur.thumbnail_media_names
+     from (select $1::uuid as id) l
+     cross join lateral (${CURRENT_UPLOAD}) cur`,
+    [link.id],
   );
   return rows[0] ?? null;
 };
@@ -148,9 +160,49 @@ export const revokeLink = async (
 ) => {
   const db = serverPluginApi.getDangerousRootPluginDb(pluginName);
   // Scoped by pluginId so a caller can only revoke links on their own scene.
-  await db.query(
+  const { rows } = await db.query<{ project_id: string }>(
     `update upload_link set is_active = false, updated_at = now()
-     where id = $1 and plugin_id = $2`,
+     where id = $1 and plugin_id = $2
+     returning project_id`,
     [id, pluginId],
+  );
+  return rows[0]?.project_id ?? null;
+};
+
+/**
+ * The cloud a project syncs with, if any. Its links are opened there, since a
+ * cloud address works from anywhere and this one may not.
+ */
+export const findProjectCloudHost = async (
+  serverPluginApi: ServerPluginApi,
+  projectId: string,
+): Promise<string | null> => {
+  const db = serverPluginApi.getDangerousRootPluginDb(pluginName);
+  const { rows } = await db.query<{ host: string }>(
+    `select c.host from app_public.projects p
+     join app_public.cloud_connections c on c.id = p.cloud_connection_id
+     where p.id = $1 and c.target_organization_slug is not null`,
+    [projectId],
+  );
+  return rows[0]?.host ?? null;
+};
+
+/** Sync a project's cloud connection soon, so a link change reaches the cloud. */
+export const queueProjectCloudSync = async (
+  serverPluginApi: ServerPluginApi,
+  projectId: string,
+) => {
+  const db = serverPluginApi.getDangerousRootPluginDb(pluginName);
+  await db.query(
+    `select graphile_worker.add_job(
+       'cloud_connection__sync',
+       json_build_object('id', c.id),
+       job_key := 'cloud_connection__sync:' || c.id,
+       job_key_mode := 'preserve_run_at'
+     )
+     from app_public.projects p
+     join app_public.cloud_connections c on c.id = p.cloud_connection_id
+     where p.id = $1 and c.target_organization_slug is not null`,
+    [projectId],
   );
 };

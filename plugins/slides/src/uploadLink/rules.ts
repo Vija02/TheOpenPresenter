@@ -10,7 +10,6 @@ export interface UploadLinkRow {
   label: string | null;
   max_attempts: number | null;
   attempt_count: number;
-  current_upload_id: string | null;
   expires_at: Date | string | null;
   is_active: boolean;
 }
