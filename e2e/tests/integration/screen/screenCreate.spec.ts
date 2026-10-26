@@ -33,12 +33,12 @@ test.describe("Create screen via UI", () => {
     ).toBeVisible();
 
     // Empty state: click the "New screen" button inside the empty placeholder.
-    await page.getByRole("button", { name: "New screen" }).click();
+    await page.getByRole("button", { name: "New virtual screen" }).click();
 
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();
     await expect(
-      dialog.getByRole("heading", { name: "New Screen" }),
+      dialog.getByRole("heading", { name: "New Virtual Screen" }),
     ).toBeVisible();
 
     await dialog
@@ -81,7 +81,7 @@ test.describe("Create screen via UI", () => {
       next: `/o/${ORG_SLUG}/screens`,
     });
 
-    await page.getByRole("button", { name: "New screen" }).click();
+    await page.getByRole("button", { name: "New virtual screen" }).click();
 
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();

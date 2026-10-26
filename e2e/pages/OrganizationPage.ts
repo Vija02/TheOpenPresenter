@@ -66,7 +66,7 @@ export class OrganizationPage {
       name: "Open renderer",
     });
     this.projectCardMenuAssignToScreen = page.getByRole("button", {
-      name: "Assign to screen",
+      name: "Assign to virtual screen",
     });
     this.projectCardMenuScreen = (name: string) =>
       page.getByRole("button", { name });

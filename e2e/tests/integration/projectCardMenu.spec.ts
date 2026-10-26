@@ -84,7 +84,7 @@ test.describe("Project card menu", () => {
 
     await organizationPage.projectCardMenuScreen("Test Screen").click();
 
-    await expect(page.getByText("Project assigned to screen")).toBeVisible();
+    await expect(page.getByText("Project assigned to virtual screen")).toBeVisible();
 
     // Reload rather than reopening against the live refetch, which swaps the
     // card out mid-click. This also proves the assignment persisted.
