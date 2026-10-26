@@ -14,6 +14,21 @@ const isReplayEnabled = (surface: AnalyticsSurface) =>
     ? appData.getAnalyticsRendererReplayEnabled()
     : appData.getAnalyticsReplayEnabled();
 
+// Local development runs on localhost. We drop these events so a developer's
+// errors and activity never reach production analytics.
+const isLocalhost = () => {
+  const hostname = window.location.hostname.toLowerCase();
+  return (
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    hostname === "0.0.0.0" ||
+    hostname === "::1" ||
+    hostname.endsWith(".local")
+  );
+};
+
+const isDevelopment = (env: string) => env === "development" || isLocalhost();
+
 export const initAnalytics = ({ surface, env }: InitAnalyticsOptions) => {
   const key = appData.getAnalyticsKey();
 
@@ -43,6 +58,10 @@ export const initAnalytics = ({ surface, env }: InitAnalyticsOptions) => {
     person_profiles: "identified_only",
     before_send: (event) => {
       if (!event) {
+        return null;
+      }
+
+      if (isDevelopment(env)) {
         return null;
       }
 
