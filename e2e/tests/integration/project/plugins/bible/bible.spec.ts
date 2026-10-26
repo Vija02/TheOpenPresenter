@@ -326,7 +326,9 @@ test.describe("Bible Plugin", () => {
     await expect(dialog).toBeHidden();
     await templateSaved;
 
-    await projectPage.createPlugin("Bible");
+    // The first scene is also called "Bible", so pick from the creator itself
+    await projectPage.newSceneButton.click({ force: true });
+    await projectPage.sceneCreatorOption("Bible").click();
     await expect(page.getByText("Add a passage to get started")).toBeVisible();
 
     await page.getByRole("button", { name: "Style" }).click();
