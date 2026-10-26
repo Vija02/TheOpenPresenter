@@ -252,19 +252,19 @@ const WebPresentButton = ({
         </button>
 
         <div className="px-3 pt-3 pb-1 text-xs font-medium text-tertiary">
-          Present to a screen
+          Present to a virtual screen
         </div>
 
         {fetching && !data && (
           <div className="px-3 py-2 text-sm text-tertiary">
-            Loading screens…
+            Loading virtual screens…
           </div>
         )}
         {!fetching && screens.length === 0 && (
           <div className="px-3 py-6 text-center text-sm text-tertiary">
-            <p className="mb-2">No screens set up yet.</p>
+            <p className="mb-2">No virtual screens set up yet.</p>
             <Link href={appendSearch(`/o/${orgSlug}/screens`)}>
-              Set up a screen
+              Set up a virtual screen
             </Link>
           </div>
         )}
@@ -312,8 +312,8 @@ const WebPresentButton = ({
                 href={adminHref}
                 variant="unstyled"
                 className="shrink-0 flex items-center justify-center w-9 self-stretch rounded text-tertiary opacity-0 transition-opacity hover:text-secondary focus-visible:opacity-100 group-hover:opacity-100"
-                title="Screen settings"
-                aria-label="Screen settings"
+                title="Virtual screen settings"
+                aria-label="Virtual screen settings"
               >
                 <MdSettings />
               </Link>
@@ -324,8 +324,8 @@ const WebPresentButton = ({
                   disabled={assigning}
                   onClick={() => handleUnassign(screen.id, screen.name)}
                   className="shrink-0 flex items-center justify-center w-9 self-stretch rounded text-tertiary cursor-pointer transition-colors hover:text-secondary disabled:opacity-60 disabled:cursor-not-allowed"
-                  title="Stop presenting to this screen"
-                  aria-label="Stop presenting to this screen"
+                  title="Stop presenting to this virtual screen"
+                  aria-label="Stop presenting to this virtual screen"
                 >
                   <MdOutlineCancelPresentation />
                 </button>
