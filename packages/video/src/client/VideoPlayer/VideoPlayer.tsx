@@ -111,7 +111,18 @@ export const VideoPlayer = ({
         const tolerance = 2;
         if (manual || Math.abs(currentTime - targetTimeSeconds) > tolerance) {
           if (ref.current) ref.current.currentTime = targetTimeSeconds;
-          if (computedPlaying) ref.current?.play();
+          if (computedPlaying) {
+            // react-player also drives this element through `playing`, so a pause
+            // or a new source load can abort this imperative play. That rejects
+            // with an AbortError we can ignore, because the video still follows
+            // the shared playback state. Let any other error surface.
+            ref.current?.play().catch((err) => {
+              if (err instanceof DOMException && err.name === "AbortError") {
+                return;
+              }
+              throw err;
+            });
+          }
           hasInitialSeekRef.current = true;
         }
       }
