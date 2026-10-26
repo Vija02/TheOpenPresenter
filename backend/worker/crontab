@@ -16,3 +16,4 @@
 0 0 * * * medias__cleanExpiredUploads
 30 0 * * * projects__cleanExpiredDemoProjects
 */5 * * * * renderer_sessions__closeStale
+15 * * * * medias__queueMissingAudioTranscodes {minAgeSeconds:600}
