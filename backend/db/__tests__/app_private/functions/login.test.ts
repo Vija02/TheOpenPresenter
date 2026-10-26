@@ -137,6 +137,7 @@ it("too many login attempts resets after 5 minutes", () =>
         "first_failed_reset_password_attempt": null,
         "last_login_at": "[DATE]",
         "password_hash": "[hash]",
+        "password_reset_required": false,
         "reset_password_token": null,
         "reset_password_token_generated": null,
         "user_id": "[ID]",

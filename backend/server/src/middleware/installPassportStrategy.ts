@@ -209,6 +209,12 @@ export default (
       next(e);
       return;
     }
-    step2Middleware(req, res, next);
+    step2Middleware(req, res, (err?: any) => {
+      if (err?.code === "EMLNK" || err?.code === "EMTKN") {
+        res.redirect(`/login?error=${err.code}`);
+        return;
+      }
+      next(err);
+    });
   });
 };
