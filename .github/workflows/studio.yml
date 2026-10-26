@@ -76,6 +76,7 @@ jobs:
         shell: bash
         env:
           TOP_RUNTIME_PUBKEY: ${{ secrets.RUNTIME_PUBLIC_KEY }}
+          TOP_ANALYTICS_KEY: ${{ vars.ANALYTICS_KEY }}
         run: cargo build --release --target ${{ matrix.rust_target }}
 
       - name: Stage the sidecar
@@ -239,6 +240,7 @@ jobs:
       - name: Build the runtime manager
         env:
           TOP_RUNTIME_PUBKEY: ${{ secrets.RUNTIME_PUBLIC_KEY }}
+          TOP_ANALYTICS_KEY: ${{ vars.ANALYTICS_KEY }}
         run: cargo build --release --manifest-path native-apps/runtime-manager/Cargo.toml
 
       - name: Stage the sidecar
