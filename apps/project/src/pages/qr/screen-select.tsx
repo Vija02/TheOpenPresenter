@@ -68,14 +68,17 @@ const QrScreenSelectPage = () => {
       if (b.id === lastSelectedOrganizationId) return 1;
       return 0;
     });
-  }, [data?.currentUser?.organizationMemberships?.nodes, lastSelectedOrganizationId]);
+  }, [
+    data?.currentUser?.organizationMemberships?.nodes,
+    lastSelectedOrganizationId,
+  ]);
 
   const orgsWithScreens = allOrgs.filter(
     (org) => (org.screens?.nodes?.length ?? 0) > 0,
   );
 
   return (
-    <SharedLayoutLoggedIn title="Select Screen" query={query}>
+    <SharedLayoutLoggedIn title="Select Virtual Screen" query={query}>
       <div className="max-w-lg mx-auto py-4 sm:py-8">
         {!id ? (
           <Alert variant="destructive" title="Missing id">
@@ -86,8 +89,8 @@ const QrScreenSelectPage = () => {
             <header className="text-center mb-8">
               <h1 className="text-2xl font-bold mb-2">Connect this TV</h1>
               <p className="text-secondary text-sm">
-                Create or pick a screen from your organization to assign to your
-                TV.
+                Create or pick a virtual screen from your organization to assign
+                to your TV.
               </p>
             </header>
 
@@ -146,7 +149,7 @@ const OrgSection = ({ org, screens, onSelect }: OrgSectionProps) => {
             <div className="min-w-0 flex-1">
               <p className="font-medium truncate">{screen.name}</p>
               <p className="text-xs text-tertiary truncate">
-                Tap to select this screen
+                Tap to select this virtual screen
               </p>
             </div>
             <VscChevronRight className="shrink-0 text-tertiary" size={18} />
@@ -164,7 +167,7 @@ const OrgSection = ({ org, screens, onSelect }: OrgSectionProps) => {
               </div>
               <div className="min-w-0 flex-1">
                 <p className="font-medium truncate text-tertiary">
-                  Create new screen
+                  Create new virtual screen
                 </p>
               </div>
             </button>
@@ -179,9 +182,9 @@ const OrgSection = ({ org, screens, onSelect }: OrgSectionProps) => {
 
 const EmptyNoAccess = () => (
   <div className="border border-stroke rounded-lg p-8 text-center bg-white">
-    <p className="font-medium mb-1">No screens available</p>
+    <p className="font-medium mb-1">No virtual screens available</p>
     <p className="text-secondary text-sm">
-      You don't have access to any organizations with screens.
+      You don't have access to any organizations with virtual screens.
     </p>
   </div>
 );
@@ -197,9 +200,9 @@ const EmptyNoScreens = ({ orgs }: EmptyNoScreensProps) => {
         <div className="inline-flex items-center justify-center size-12 rounded-full bg-gray-100 mb-3">
           <PiTelevisionSimple className="text-tertiary" size={22} />
         </div>
-        <p className="font-medium mb-1">No screens yet</p>
+        <p className="font-medium mb-1">No virtual screens yet</p>
         <p className="text-secondary text-sm mb-5">
-          Create your first screen in{" "}
+          Create your first virtual screen in{" "}
           <span className="font-medium text-primary">{orgs[0]!.name}</span> to
           get started.
         </p>
@@ -207,7 +210,7 @@ const EmptyNoScreens = ({ orgs }: EmptyNoScreensProps) => {
           toggler={({ onToggle }) => (
             <Button variant="success" onClick={onToggle}>
               <FaPlus />
-              Create screen
+              Create virtual screen
             </Button>
           )}
         >
@@ -223,9 +226,9 @@ const EmptyNoScreens = ({ orgs }: EmptyNoScreensProps) => {
         <div className="inline-flex items-center justify-center size-12 rounded-full bg-gray-100 mb-3">
           <PiTelevisionSimple className="text-tertiary" size={22} />
         </div>
-        <p className="font-medium mb-1">No screens yet</p>
+        <p className="font-medium mb-1">No virtual screens yet</p>
         <p className="text-secondary text-sm">
-          Pick an organization to create your first screen.
+          Pick an organization to create your first virtual screen.
         </p>
       </div>
       <h2 className="text-xs font-semibold uppercase tracking-wide text-tertiary px-1 mb-2">
@@ -249,7 +252,7 @@ const EmptyNoScreens = ({ orgs }: EmptyNoScreensProps) => {
                 <div className="min-w-0 flex-1">
                   <p className="font-medium truncate">{org.name}</p>
                   <p className="text-xs text-tertiary truncate">
-                    Create a new screen
+                    Create a new virtual screen
                   </p>
                 </div>
                 <div className="flex items-center justify-center size-8 rounded-full bg-gray-100 shrink-0">

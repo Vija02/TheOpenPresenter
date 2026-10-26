@@ -63,9 +63,11 @@ const OrganizationPage = () => {
       try {
         await setExistingProjectToScreen({ screenId, projectId });
         publish();
-        toast.success("Project assigned to screen");
+        toast.success("Project assigned to virtual screen");
       } catch (e: any) {
-        toast.error("Error occurred when assigning to screen: " + e.message);
+        toast.error(
+          "Error occurred when assigning to virtual screen: " + e.message,
+        );
       }
     },
     [setExistingProjectToScreen, publish],

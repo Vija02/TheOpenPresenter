@@ -58,14 +58,14 @@ const OrganizationSlugScreenDetailPage = () => {
 
   return (
     <SharedOrgLayout
-      title={screen ? screen.name : "Screen"}
+      title={screen ? screen.name : "Virtual Screen"}
       sharedOrgQuery={query}
     >
       <div className="mb-4">
         <Link asChild>
           <WouterLink href={`/o/${orgSlug}/screens`}>
             <VscArrowLeft />
-            Back to screens
+            Back to virtual screens
           </WouterLink>
         </Link>
       </div>
@@ -181,7 +181,7 @@ const ScreenAdminInner = ({
     try {
       await deleteScreen({ id: screen.id });
       publish();
-      toast.success("Screen deleted");
+      toast.success("Virtual screen deleted");
       setLocation(`/o/${orgSlug}/screens`, { replace: true });
     } catch (e: any) {
       toast.error("Failed to delete: " + e.message);
@@ -239,7 +239,7 @@ const ScreenAdminInner = ({
         <div className="border border-fill-destructive/50 rounded">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4 p-4">
             <div className="min-w-0">
-              <p className="font-semibold">Delete this screen</p>
+              <p className="font-semibold">Delete this virtual screen</p>
               <p className="text-sm text-secondary">
                 Once you delete a screen, all screen sessions will be ended. To
                 reuse the same QR code, you will need to recreate a screen with
@@ -247,14 +247,18 @@ const ScreenAdminInner = ({
               </p>
             </div>
             <PopConfirm
-              title="Delete this screen?"
+              title="Delete this virtual screen?"
               okText="Delete"
               okButtonProps={{ variant: "destructive" }}
               onConfirm={onDelete}
             >
-              <Button variant="destructive" size="sm" className="self-start md:self-auto shrink-0">
+              <Button
+                variant="destructive"
+                size="sm"
+                className="self-start md:self-auto shrink-0"
+              >
                 <VscTrash />
-                Delete screen
+                Delete virtual screen
               </Button>
             </PopConfirm>
           </div>

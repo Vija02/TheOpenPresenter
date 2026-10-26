@@ -67,20 +67,14 @@ const CreateScreenModal = ({ organizationId }: CreateScreenModalPropTypes) => {
           has_custom_slug: Boolean(rawSlug),
         });
         publish();
-        toast.success("Screen created");
+        toast.success("Virtual screen created");
         onToggle?.();
         resetData?.();
       } catch (e: any) {
         setError(e);
       }
     },
-    [
-      createScreen,
-      onToggle,
-      organizationId,
-      publish,
-      resetData,
-    ],
+    [createScreen, onToggle, organizationId, publish, resetData],
   );
 
   return (
@@ -91,7 +85,7 @@ const CreateScreenModal = ({ organizationId }: CreateScreenModalPropTypes) => {
           render={<form onSubmit={form.handleSubmit(handleSubmit)} />}
         >
           <DialogHeader>
-            <DialogTitle>New Screen</DialogTitle>
+            <DialogTitle>New Virtual Screen</DialogTitle>
           </DialogHeader>
           <DialogBody>
             {error && (
