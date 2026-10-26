@@ -1,0 +1,18 @@
+query ShareProjectCloud($orgSlug: String!, $projectSlug: String!) {
+  organizationBySlug(slug: $orgSlug) {
+    id
+    cloudConnections(first: 1) {
+      nodes {
+        id
+        host
+        targetOrganizationSlug
+      }
+    }
+    projects(condition: { slug: $projectSlug }) {
+      nodes {
+        id
+        cloudConnectionId
+      }
+    }
+  }
+}

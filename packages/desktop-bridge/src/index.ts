@@ -8,7 +8,7 @@ import {
   present,
   stopPresenting,
 } from "./present";
-import { localIp, openExternal } from "./system";
+import { canReach, localIp, openExternal } from "./system";
 import type { DesktopHost } from "./types";
 
 export { detectHost } from "./host";
@@ -31,6 +31,7 @@ export const desktop = {
   onPresentingChanged,
   openExternal,
   localIp,
+  canReach,
   closeSelf,
 };
 

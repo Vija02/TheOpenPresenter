@@ -7,31 +7,43 @@ import { OurGraphQLContext } from "../../graphile.config";
 export const cloudProjectSync = makeExtendSchemaPlugin(() => ({
   typeDefs: gql`
     extend type Query {
-      cloudProjectSyncList(organizationSlug: String!): JSON!
+      cloudProjectSyncList(organizationSlug: String!, version: Int): JSON!
     }
 
     extend type Mutation {
-      cloudProjectSyncPush(organizationSlug: String!, changes: JSON!): JSON!
+      cloudProjectSyncPush(
+        organizationSlug: String!
+        changes: JSON!
+        version: Int
+      ): JSON!
     }
   `,
   resolvers: {
     Query: {
       async cloudProjectSyncList(
         _query: unknown,
-        args: { organizationSlug: string },
+        args: { organizationSlug: string; version?: number | null },
         context: OurGraphQLContext,
       ) {
         const organizationId = await cloud.findCloudOrganizationId(
           context.pgClient,
           args.organizationSlug,
         );
-        return cloud.listCloudProjects(context.pgClient, organizationId);
+        return cloud.listCloudProjects(
+          context.pgClient,
+          organizationId,
+          cloud.projectSyncVersion(args.version),
+        );
       },
     },
     Mutation: {
       async cloudProjectSyncPush(
         _mutation: unknown,
-        args: { organizationSlug: string; changes: cloud.ProjectPushChange[] },
+        args: {
+          organizationSlug: string;
+          changes: cloud.ProjectPushChange[];
+          version?: number | null;
+        },
         context: OurGraphQLContext,
       ) {
         const organizationId = await cloud.findCloudOrganizationId(
@@ -48,6 +60,7 @@ export const cloudProjectSync = makeExtendSchemaPlugin(() => ({
           organizationId,
           user_id,
           args.changes ?? [],
+          cloud.projectSyncVersion(args.version),
         );
       },
     },

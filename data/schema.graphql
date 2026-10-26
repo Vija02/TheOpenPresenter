@@ -3688,7 +3688,7 @@ type Mutation {
   cloudMediaSyncPush(links: JSON!, metadata: JSON!, organizationSlug: String!): JSON!
   cloudOrganizationSyncPush(expected: JSON!, organizationSlug: String!, value: JSON!): JSON!
   cloudPluginTablePush(changes: JSON!, organizationSlug: String!, schemaName: String!, tableName: String!): JSON!
-  cloudProjectSyncPush(changes: JSON!, organizationSlug: String!): JSON!
+  cloudProjectSyncPush(changes: JSON!, organizationSlug: String!, version: Int): JSON!
 
   """Use this mutation to complete a media"""
   completeMedia(
@@ -6012,7 +6012,7 @@ type Query {
   cloudOrganizationSyncGet(organizationSlug: String!): JSON!
   cloudPluginTableKeys(organizationSlug: String!, schemaName: String!, tableName: String!): JSON!
   cloudPluginTableRows(keys: JSON!, organizationSlug: String!, schemaName: String!, tableName: String!): JSON!
-  cloudProjectSyncList(organizationSlug: String!): JSON!
+  cloudProjectSyncList(organizationSlug: String!, version: Int): JSON!
   cloudSyncRun(id: UUID!): CloudSyncRun
 
   """Reads and enables pagination through a set of `CloudSyncRun`."""
