@@ -22,6 +22,7 @@ import {
 import { passageToFrame } from "../../src/template/toFrame";
 import { BiblePassage } from "../../src/types";
 import { usePluginAPI } from "../pluginApi";
+import { trpc } from "../trpc";
 
 const PREVIEW_PASSAGE: BiblePassage = {
   id: "preview",
@@ -47,6 +48,7 @@ const StyleModal = () => {
   const savedShowVerseNumbers = pluginApi.scene.useData(
     (x) => x.pluginData.showVerseNumbers,
   );
+  const saveTemplateMutation = trpc.bible.template.save.useMutation();
 
   // Staged locally and committed on Save
   const [doc, setDoc] = useState<LayoutDoc>(() =>
@@ -84,6 +86,23 @@ const StyleModal = () => {
     // cloneDoc also strips `undefined`
     mutableSceneData.pluginData.template = cloneDoc(doc);
     mutableSceneData.pluginData.showVerseNumbers = showVerseNumbers;
+    // Remembered for the organization's next Bible scene. Public visitors
+    // have no organization to save to.
+    if (!pluginApi.isPublicAccess) {
+      saveTemplateMutation.mutate(
+        {
+          pluginId: pluginApi.pluginContext.pluginId,
+          template: cloneDoc(doc),
+          showVerseNumbers,
+        },
+        {
+          onError: () =>
+            pluginApi.remote.toast.error(
+              "Couldn't save this template for new Bible scenes",
+            ),
+        },
+      );
+    }
     onToggle?.();
   };
 
