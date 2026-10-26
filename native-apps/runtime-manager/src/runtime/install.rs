@@ -21,6 +21,7 @@ use crate::storage::cas::Cas;
 use crate::storage::link;
 use crate::storage::paths::Layout;
 use crate::storage::platform::Platform;
+use crate::storage::version;
 
 /// Reported as the install runs so the shell can show a progress bar.
 #[derive(Debug, Clone)]
@@ -366,33 +367,56 @@ impl<'a> Installer<'a> {
     /// each one re-ships whatever the previous one touched.
     fn delta_chain(&self, from: &str, to: &str) -> Option<Vec<String>> {
         const MAX_HOPS: usize = 12;
+        // Each probe is a request with nothing shown in the UI. Past this,
+        // the full pack is the quicker way there.
+        const MAX_PROBES: usize = 64;
 
-        let known = self.published_versions();
+        // Deltas are only ever built from earlier versions on the same
+        // channel, so only those published after `from`, up to `to`, can be
+        // on the path. Probing every pair of a long index took minutes.
+        let nightly = version::is_prerelease(to);
+        let known: Vec<String> = self
+            .published_versions()
+            .into_iter()
+            .filter(|v| version::is_prerelease(v) == nightly)
+            .collect();
+        let start = known.iter().position(|v| v == from)?;
+        let end = known.iter().position(|v| v == to)?;
+        if end <= start {
+            return None;
+        }
+
+        let mut probes = 0;
         let mut queue = std::collections::VecDeque::new();
         let mut seen = HashSet::new();
-        queue.push_back((from.to_string(), Vec::new()));
-        seen.insert(from.to_string());
+        queue.push_back((start, Vec::new()));
+        seen.insert(start);
 
         while let Some((at, path)) = queue.pop_front() {
             if path.len() >= MAX_HOPS {
                 continue;
             }
-            for next in &known {
-                if next == &at || seen.contains(next) {
+            // Nearest to the target first, so a long hop is found early.
+            for next in (at + 1..=end).rev() {
+                if seen.contains(&next) {
                     continue;
                 }
-                let key = fetch::delta_pack_key(&self.platform, &at, next);
+                probes += 1;
+                if probes > MAX_PROBES {
+                    return None;
+                }
+                let key = fetch::delta_pack_key(&self.platform, &known[at], &known[next]);
                 if !self.source.exists(&key) {
                     continue;
                 }
 
                 let mut extended = path.clone();
                 extended.push(key);
-                if next == to {
+                if next == end {
                     return Some(extended);
                 }
-                seen.insert(next.clone());
-                queue.push_back((next.clone(), extended));
+                seen.insert(next);
+                queue.push_back((next, extended));
             }
         }
         None

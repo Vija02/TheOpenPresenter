@@ -4,6 +4,13 @@ import { useCallback, useState } from "react";
 import { api } from "../bridge/ipc";
 import { useUpdateState } from "../shared/useUpdateState";
 
+const OFFLINE_ERROR =
+  /net::ERR_(NAME_NOT_RESOLVED|INTERNET_DISCONNECTED|NETWORK_CHANGED|ADDRESS_UNREACHABLE|CONNECTION_\w+|TIMED_OUT|PROXY_CONNECTION_FAILED)/;
+
+function isOffline(message: string): boolean {
+  return OFFLINE_ERROR.test(message);
+}
+
 /** App updates, in the About panel. */
 export function AppUpdate() {
   const [state, setState] = useUpdateState();
@@ -54,7 +61,9 @@ export function AppUpdate() {
         <>
           <p className="muted">
             {state.status === "error"
-              ? "Could not check for updates."
+              ? isOffline(state.message)
+                ? "Could not check for updates. Check your internet connection and try again."
+                : "Could not check for updates."
               : "This app is up to date."}
           </p>
           <Button
