@@ -32,6 +32,7 @@ export default function Home() {
   const rawNext = searchParams.get("next");
   const hasKiosk = searchParams.has("kiosk");
   const email = searchParams.get("email") ?? "";
+  const authErrorCode = searchParams.get("error");
 
   const next: string = isSafe(rawNext?.toString() ?? null)
     ? rawNext!.toString()
@@ -55,6 +56,7 @@ export default function Home() {
                 onSuccessRedirectTo={next}
                 autoOpenQRLogin={hasKiosk}
                 defaultEmail={email}
+                authErrorCode={authErrorCode}
               />
             </div>
           </div>
@@ -77,6 +79,7 @@ interface LoginFormProps {
   setError: (error: Error | CombinedError | null) => void;
   autoOpenQRLogin?: boolean;
   defaultEmail?: string;
+  authErrorCode?: string | null;
 }
 
 function LoginForm({
@@ -85,6 +88,7 @@ function LoginForm({
   setError,
   autoOpenQRLogin,
   defaultEmail = "",
+  authErrorCode,
 }: LoginFormProps) {
   const [, login] = useLoginMutation();
   const [, navigate] = useLocation();
@@ -101,10 +105,12 @@ function LoginForm({
   });
 
   const rememberMe = form.watch("rememberMe");
+  const [passwordResetRequired, setPasswordResetRequired] = useState(false);
 
   const onSubmit = useCallback(
     async (values: FormInputs) => {
       setError(null);
+      setPasswordResetRequired(false);
       try {
         await login(
           {
@@ -129,6 +135,8 @@ function LoginForm({
             type: "manual",
             message: "Incorrect e-mail or password",
           });
+        } else if (code === "PWRST") {
+          setPasswordResetRequired(true);
         } else {
           setError(e);
         }
@@ -179,6 +187,28 @@ function LoginForm({
             label="Keep me signed in"
             data-testid="loginpage-input-rememberme"
           />
+
+          {authErrorCode === "EMLNK" || authErrorCode === "EMTKN" ? (
+            <Alert variant="warning" title="You already have an account">
+              An account with this email already exists. Sign in with your
+              password, then you can connect other sign in methods from your
+              settings.
+            </Alert>
+          ) : null}
+
+          {passwordResetRequired ? (
+            <Alert variant="warning" title="Please reset your password">
+              For your security, you need to set a new password before signing
+              in with it. You can also continue with Google or GitHub above.{" "}
+              <Link asChild>
+                <WouterLink
+                  href={`/forgot?email=${encodeURIComponent(form.getValues("username"))}`}
+                >
+                  Reset password
+                </WouterLink>
+              </Link>
+            </Alert>
+          ) : null}
 
           {error ? (
             <Alert variant="destructive" title="Login failed">

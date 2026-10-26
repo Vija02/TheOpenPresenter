@@ -1,10 +1,14 @@
 import { PoolClient } from "pg";
 import { expect, it } from "vitest";
 
-
-
-import { asRoot, becomeUser, createUsers, snapshotSafe, withRootDb, withUserDb } from "../../helpers";
-
+import {
+  asRoot,
+  becomeUser,
+  createUsers,
+  snapshotSafe,
+  withRootDb,
+  withUserDb,
+} from "../../helpers";
 
 async function addEmail(client: PoolClient, email: string, verified = false) {
   const {
@@ -23,6 +27,10 @@ async function addEmail(client: PoolClient, email: string, verified = false) {
   }
   return row;
 }
+
+// Unverified accounts can't add emails themselves
+const addEmailAsRoot = (client: PoolClient, email: string, verified = false) =>
+  asRoot(client, () => addEmail(client, email, verified));
 
 it("can add an email (unverified), receive code, verify email (and marks account as verified)", () =>
   withUserDb(async (client, user) => {
@@ -91,7 +99,7 @@ it("can promote a verified email to primary over an unverified email", () =>
   withRootDb(async (client) => {
     const [user] = await createUsers(client, 1, false);
     await becomeUser(client, user);
-    const email = await addEmail(client, "newemail@example.com");
+    const email = await addEmailAsRoot(client, "newemail@example.com");
     expect(email.is_primary).toBe(false);
     // Mark new email verified
     await asRoot(client, () =>
@@ -158,10 +166,10 @@ it("cannot delete last verified email", () =>
     const [user] = await createUsers(client, 1, false);
     await becomeUser(client, user);
 
-    await addEmail(client, "newemail1@example.com", true);
-    await addEmail(client, "newemail2@example.com", true);
-    await addEmail(client, "newemail3@example.com", false);
-    const email4 = await addEmail(client, "newemail4@example.com", false);
+    await addEmailAsRoot(client, "newemail1@example.com", true);
+    await addEmailAsRoot(client, "newemail2@example.com", true);
+    await addEmailAsRoot(client, "newemail3@example.com", false);
+    const email4 = await addEmailAsRoot(client, "newemail4@example.com", false);
 
     const promise = client.query(
       "delete from app_public.user_emails where user_id = $1 and id <> $2",
@@ -177,9 +185,9 @@ it("cannot delete last unverified email if no verified emails", () =>
     const [user] = await createUsers(client, 1, false);
     await becomeUser(client, user);
 
-    await addEmail(client, "newemail1@example.com", false);
-    await addEmail(client, "newemail2@example.com", false);
-    await addEmail(client, "newemail3@example.com", false);
+    await addEmailAsRoot(client, "newemail1@example.com", false);
+    await addEmailAsRoot(client, "newemail2@example.com", false);
+    await addEmailAsRoot(client, "newemail3@example.com", false);
 
     const promise = client.query(
       "delete from app_public.user_emails where user_id = $1",
@@ -195,12 +203,12 @@ it("can delete all but one verified email", () =>
     const [user] = await createUsers(client, 1, false);
     await becomeUser(client, user);
 
-    await addEmail(client, "newemail1@example.com", true);
-    const email2 = await addEmail(client, "newemail2@example.com", true);
-    await addEmail(client, "newemail3@example.com", true);
-    await addEmail(client, "newemail4@example.com", false);
-    await addEmail(client, "newemail5@example.com", false);
-    await addEmail(client, "newemail6@example.com", false);
+    await addEmailAsRoot(client, "newemail1@example.com", true);
+    const email2 = await addEmailAsRoot(client, "newemail2@example.com", true);
+    await addEmailAsRoot(client, "newemail3@example.com", true);
+    await addEmailAsRoot(client, "newemail4@example.com", false);
+    await addEmailAsRoot(client, "newemail5@example.com", false);
+    await addEmailAsRoot(client, "newemail6@example.com", false);
 
     await client.query(
       "delete from app_public.user_emails where user_id = $1 and id <> $2",
@@ -219,10 +227,10 @@ it("can delete all but one email if unverified", () =>
     const [user] = await createUsers(client, 1, false);
     await becomeUser(client, user);
 
-    await addEmail(client, "newemail1@example.com", false);
-    const email2 = await addEmail(client, "newemail2@example.com", false);
-    await addEmail(client, "newemail3@example.com", false);
-    await addEmail(client, "newemail4@example.com", false);
+    await addEmailAsRoot(client, "newemail1@example.com", false);
+    const email2 = await addEmailAsRoot(client, "newemail2@example.com", false);
+    await addEmailAsRoot(client, "newemail3@example.com", false);
+    await addEmailAsRoot(client, "newemail4@example.com", false);
 
     await client.query(
       "delete from app_public.user_emails where user_id = $1 and id <> $2",
@@ -234,4 +242,12 @@ it("can delete all but one email if unverified", () =>
     );
     expect(rows).toHaveLength(1);
     expect(rows[0].id).toEqual(email2.id);
+  }));
+it("cannot add an email while unverified", () =>
+  withRootDb(async (client) => {
+    const [user] = await createUsers(client, 1, false);
+    await becomeUser(client, user);
+    await expect(addEmail(client, "newemail@example.com")).rejects.toThrow(
+      /row-level security/,
+    );
   }));

@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict DWUd60izk0x6p2Qn1ErdAzJfgUd0Bfbe1ZyQQKFOkIw1dXxvUFhoaJIBf4E4Onf
+\restrict 8rtO9iTlts2mu9R9nz1hfGQhVyosM8N2WOsjBZB0jNbqVZw5uI8XayG8PQyA11J
 
 -- Dumped from database version 17.0 (Debian 17.0-1.pgdg120+1)
 -- Dumped by pg_dump version 18.6
@@ -423,6 +423,33 @@ $$;
 
 
 --
+-- Name: claim_unverified_account(uuid, public.citext); Type: FUNCTION; Schema: app_private; Owner: -
+--
+
+CREATE FUNCTION app_private.claim_unverified_account(f_user_id uuid, f_email public.citext) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+    AS $$
+begin
+  update app_public.user_emails
+    set is_verified = true, is_primary = true
+    where user_id = f_user_id and email = f_email;
+
+  update app_private.user_secrets
+    set
+      password_reset_required = password_hash is not null,
+      reset_password_token = null,
+      reset_password_token_generated = null,
+      delete_account_token = null,
+      delete_account_token_generated = null
+    where user_id = f_user_id;
+
+  delete from app_private.sessions where user_id = f_user_id;
+end;
+$$;
+
+
+--
 -- Name: current_session_can_control_screen(uuid); Type: FUNCTION; Schema: app_private; Owner: -
 --
 
@@ -612,10 +639,12 @@ declare
   v_matched_user_id uuid;
   v_matched_authentication_id uuid;
   v_email citext;
+  v_email_verified boolean;
   v_name text;
   v_avatar_url text;
   v_user app_public.users;
   v_user_email app_public.user_emails;
+  v_unverified_user_ids uuid[];
 begin
   -- See if a user account already matches these details
   select id, user_id
@@ -630,73 +659,85 @@ begin
   end if;
 
   v_email = f_profile ->> 'email';
+  v_email_verified = coalesce((f_profile ->> 'email_verified')::boolean, false);
   v_name := f_profile ->> 'name';
   v_avatar_url := f_profile ->> 'avatar_url';
 
   if v_matched_authentication_id is null then
     if f_user_id is not null then
       -- Link new account to logged in user account
+      if not exists(select 1 from app_public.users where id = f_user_id and is_verified is true) then
+        if v_email_verified and exists(
+          select 1 from app_public.user_emails where user_id = f_user_id and email = v_email
+        ) then
+          update app_public.user_emails
+            set is_verified = true, is_primary = true
+            where user_id = f_user_id and email = v_email;
+        else
+          raise exception 'Please verify your email before connecting other sign in methods.' using errcode = 'VRFY3';
+        end if;
+      end if;
+      v_matched_user_id = f_user_id;
+    elsif v_email is not null and v_email_verified then
+      -- See if the email is registered
+      select * into v_user_email from app_public.user_emails where email = v_email and is_verified is true;
+      if v_user_email is not null then
+        -- User exists!
+        v_matched_user_id = v_user_email.user_id;
+      else
+        select array_agg(distinct user_id) into v_unverified_user_ids
+          from app_public.user_emails where email = v_email;
+        if v_unverified_user_ids is not null then
+          if array_length(v_unverified_user_ids, 1) > 1 or exists(
+            select 1 from app_public.user_emails
+              where user_id = v_unverified_user_ids[1] and (is_verified is true or email <> v_email)
+          ) or exists(
+            select 1 from app_public.user_authentications
+              where user_id = v_unverified_user_ids[1]
+          ) then
+            raise exception 'An account with this email already exists. Sign in with your password, then connect this account from your settings.' using errcode = 'EMLNK';
+          end if;
+          perform app_private.claim_unverified_account(v_unverified_user_ids[1], v_email);
+          v_matched_user_id = v_unverified_user_ids[1];
+        end if;
+      end if;
+    end if;
+
+    if v_matched_user_id is not null then
       insert into app_public.user_authentications (user_id, service, identifier, details) values
-        (f_user_id, f_service, f_identifier, f_profile) returning id, user_id into v_matched_authentication_id, v_matched_user_id;
+        (v_matched_user_id, f_service, f_identifier, f_profile) returning id into v_matched_authentication_id;
       insert into app_private.user_authentication_secrets (user_authentication_id, details) values
         (v_matched_authentication_id, f_auth_details);
       perform graphile_worker.add_job(
         'user__audit',
         json_build_object(
           'type', 'linked_account',
-          'user_id', f_user_id,
+          'user_id', v_matched_user_id,
           'extra1', f_service,
           'extra2', f_identifier,
           'current_user_id', app_public.current_user_id()
         ));
-    elsif v_email is not null then
-      -- See if the email is registered
-      select * into v_user_email from app_public.user_emails where email = v_email and is_verified is true;
-      if v_user_email is not null then
-        -- User exists!
-        insert into app_public.user_authentications (user_id, service, identifier, details) values
-          (v_user_email.user_id, f_service, f_identifier, f_profile) returning id, user_id into v_matched_authentication_id, v_matched_user_id;
-        insert into app_private.user_authentication_secrets (user_authentication_id, details) values
-          (v_matched_authentication_id, f_auth_details);
-        perform graphile_worker.add_job(
-          'user__audit',
-          json_build_object(
-            'type', 'linked_account',
-            'user_id', f_user_id,
-            'extra1', f_service,
-            'extra2', f_identifier,
-            'current_user_id', app_public.current_user_id()
-          ));
-      end if;
     end if;
   end if;
-  if v_matched_user_id is null and f_user_id is null and v_matched_authentication_id is null then
+
+  if v_matched_user_id is null then
     -- Create and return a new user account
-    return app_private.register_user(f_service, f_identifier, f_profile, f_auth_details, true);
-  else
-    if v_matched_authentication_id is not null then
-      update app_public.user_authentications
-        set details = f_profile
-        where id = v_matched_authentication_id;
-      update app_private.user_authentication_secrets
-        set details = f_auth_details
-        where user_authentication_id = v_matched_authentication_id;
-      update app_public.users
-        set
-          name = coalesce(users.name, v_name),
-          avatar_url = coalesce(users.avatar_url, v_avatar_url)
-        where id = v_matched_user_id
-        returning  * into v_user;
-      return v_user;
-    else
-      -- v_matched_authentication_id is null
-      -- -> v_matched_user_id is null (they're paired)
-      -- -> f_user_id is not null (because the if clause above)
-      -- -> v_matched_authentication_id is not null (because of the separate if block above creating a user_authentications)
-      -- -> contradiction.
-      raise exception 'This should not occur';
-    end if;
+    return app_private.register_user(f_service, f_identifier, f_profile, f_auth_details, v_email_verified);
   end if;
+
+  update app_public.user_authentications
+    set details = f_profile
+    where id = v_matched_authentication_id;
+  update app_private.user_authentication_secrets
+    set details = f_auth_details
+    where user_authentication_id = v_matched_authentication_id;
+  update app_public.users
+    set
+      name = coalesce(users.name, v_name),
+      avatar_url = coalesce(users.avatar_url, v_avatar_url)
+    where id = v_matched_user_id
+    returning * into v_user;
+  return v_user;
 end;
 $$;
 
@@ -770,6 +811,9 @@ begin
     -- Not too many login attempts, let's check the password.
     -- NOTE: `password_hash` could be null, this is fine since `NULL = NULL` is null, and null is falsy.
     if v_user_secret.password_hash = crypt(password, v_user_secret.password_hash) then
+      if v_user_secret.password_reset_required then
+        raise exception 'Please reset your password to continue signing in with it.' using errcode = 'PWRST';
+      end if;
       -- Excellent - they're logged in! Let's reset the attempt tracking
       update app_private.user_secrets
       set failed_password_attempts = 0, first_failed_password_attempt = null, last_login_at = now()
@@ -1425,6 +1469,23 @@ $$;
 --
 
 COMMENT ON FUNCTION app_private.tg_user_email_secrets__insert_with_user_email() IS 'Ensures that every user_email record has an associated user_email_secret record.';
+
+
+--
+-- Name: tg_user_secrets__clear_password_reset_required(); Type: FUNCTION; Schema: app_private; Owner: -
+--
+
+CREATE FUNCTION app_private.tg_user_secrets__clear_password_reset_required() RETURNS trigger
+    LANGUAGE plpgsql
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+    AS $$
+begin
+  if new.password_hash is distinct from old.password_hash then
+    new.password_reset_required = false;
+  end if;
+  return new;
+end;
+$$;
 
 
 --
@@ -3673,7 +3734,8 @@ CREATE TABLE app_private.user_secrets (
     failed_reset_password_attempts integer DEFAULT 0 NOT NULL,
     first_failed_reset_password_attempt timestamp with time zone,
     delete_account_token text,
-    delete_account_token_generated timestamp with time zone
+    delete_account_token_generated timestamp with time zone,
+    password_reset_required boolean DEFAULT false NOT NULL
 );
 
 
@@ -5205,6 +5267,13 @@ CREATE TRIGGER _100_timestamps BEFORE INSERT OR UPDATE ON app_private.organizati
 
 
 --
+-- Name: user_secrets _200_clear_password_reset_required; Type: TRIGGER; Schema: app_private; Owner: -
+--
+
+CREATE TRIGGER _200_clear_password_reset_required BEFORE UPDATE ON app_private.user_secrets FOR EACH ROW EXECUTE FUNCTION app_private.tg_user_secrets__clear_password_reset_required();
+
+
+--
 -- Name: categories _100_timestamps; Type: TRIGGER; Schema: app_public; Owner: -
 --
 
@@ -6279,7 +6348,9 @@ CREATE POLICY insert_own ON app_public.screens FOR INSERT WITH CHECK ((organizat
 -- Name: user_emails insert_own; Type: POLICY; Schema: app_public; Owner: -
 --
 
-CREATE POLICY insert_own ON app_public.user_emails FOR INSERT WITH CHECK ((user_id = app_public.current_user_id()));
+CREATE POLICY insert_own ON app_public.user_emails FOR INSERT WITH CHECK (((user_id = app_public.current_user_id()) AND (EXISTS ( SELECT 1
+   FROM app_public.users
+  WHERE ((users.id = app_public.current_user_id()) AND (users.is_verified IS TRUE))))));
 
 
 --
@@ -6959,6 +7030,13 @@ REVOKE ALL ON FUNCTION app_private.authenticate_screen_guest(p_screen_id uuid, p
 
 
 --
+-- Name: FUNCTION claim_unverified_account(f_user_id uuid, f_email public.citext); Type: ACL; Schema: app_private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_private.claim_unverified_account(f_user_id uuid, f_email public.citext) FROM PUBLIC;
+
+
+--
 -- Name: FUNCTION current_session_can_control_screen(p_screen_id uuid); Type: ACL; Schema: app_private; Owner: -
 --
 
@@ -7152,6 +7230,13 @@ REVOKE ALL ON FUNCTION app_private.tg_tasks__update_project_updated_at() FROM PU
 --
 
 REVOKE ALL ON FUNCTION app_private.tg_user_email_secrets__insert_with_user_email() FROM PUBLIC;
+
+
+--
+-- Name: FUNCTION tg_user_secrets__clear_password_reset_required(); Type: ACL; Schema: app_private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_private.tg_user_secrets__clear_password_reset_required() FROM PUBLIC;
 
 
 --
@@ -8373,5 +8458,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE theopenpresenter REVOKE ALL ON FUNCTIONS FROM 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict DWUd60izk0x6p2Qn1ErdAzJfgUd0Bfbe1ZyQQKFOkIw1dXxvUFhoaJIBf4E4Onf
+\unrestrict 8rtO9iTlts2mu9R9nz1hfGQhVyosM8N2WOsjBZB0jNbqVZw5uI8XayG8PQyA11J
 

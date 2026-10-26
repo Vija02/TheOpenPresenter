@@ -11,7 +11,7 @@ import { Alert, Button, Form, InputControl, Link } from "@repo/ui";
 import { useCallback, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { CombinedError } from "urql";
-import { Link as WouterLink } from "wouter";
+import { Link as WouterLink, useSearchParams } from "wouter";
 import { z } from "zod";
 
 const formSchema = z.object({
@@ -23,6 +23,7 @@ type FormInputs = z.infer<typeof formSchema>;
 const ForgotPassword = () => {
   const [error, setError] = useState<Error | CombinedError | null>(null);
   const query = useSharedQuery();
+  const [searchParams] = useSearchParams();
 
   const [, forgotPassword] = useForgotPasswordMutation();
   const [successfulEmail, setSuccessfulEmail] = useState<string | null>(null);
@@ -34,7 +35,7 @@ const ForgotPassword = () => {
   const form = useForm<FormInputs>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email: "",
+      email: searchParams.get("email") ?? "",
     },
   });
 

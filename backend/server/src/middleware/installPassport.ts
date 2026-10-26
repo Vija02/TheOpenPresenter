@@ -88,15 +88,20 @@ export default async (app: Express) => {
         clientID: process.env.GITHUB_KEY,
         clientSecret: process.env.GITHUB_SECRET,
         scope: ["user:email"],
+        allRawEmails: true,
       },
       {},
-      async (profile, _accessToken, _refreshToken, _extra, _req) => ({
-        id: profile.id,
-        displayName: profile.displayName || "",
-        username: profile.username,
-        avatarUrl: get(profile, "photos.0.value"),
-        email: profile.email || get(profile, "emails.0.value"),
-      }),
+      async (profile, _accessToken, _refreshToken, _extra, _req) => {
+        const primaryEmail = profile.emails?.find((e: any) => e.primary);
+        return {
+          id: profile.id,
+          displayName: profile.displayName || "",
+          username: profile.username,
+          avatarUrl: get(profile, "photos.0.value"),
+          email: primaryEmail?.value ?? profile.email,
+          profile: { email_verified: primaryEmail?.verified === true },
+        };
+      },
       ["token", "tokenSecret"],
     );
   }
@@ -123,6 +128,9 @@ export default async (app: Express) => {
           username: get(profile, "name.givenName"),
           avatarUrl: get(profile, "photos.0.value"),
           email: profile.email || get(profile, "emails.0.value"),
+          profile: {
+            email_verified: get(profile, "emails.0.verified") === true,
+          },
         };
       },
       ["token", "tokenSecret"],
