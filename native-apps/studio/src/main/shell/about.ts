@@ -9,6 +9,7 @@ export const WEBSITE_URL = "https://theopenpresenter.com";
 export type AboutInfo = {
   appVersion: string;
   runtimeVersion: string | null;
+  runtimePendingVersion: string | null;
   runtimeRunning: boolean;
   managerVersion: string | null;
   electron: string;
@@ -22,16 +23,21 @@ export async function aboutInfo(): Promise<AboutInfo> {
   const settings = getSettings();
 
   let runtimeVersion: string | null = null;
+  let runtimePendingVersion: string | null = null;
   let managerVersion: string | null = null;
   let runtimeRunning = false;
 
   try {
     const status = (await runtime.status()) as {
       current?: string | null;
+      runningVersion?: string | null;
       managerVersion?: string;
       running?: boolean;
     };
-    runtimeVersion = status.current ?? null;
+    runtimeVersion = status.runningVersion ?? status.current ?? null;
+    if (status.current && status.current !== runtimeVersion) {
+      runtimePendingVersion = status.current;
+    }
     managerVersion = status.managerVersion ?? null;
     runtimeRunning = status.running === true || runtime.url != null;
   } catch {
@@ -47,6 +53,7 @@ export async function aboutInfo(): Promise<AboutInfo> {
   return {
     appVersion: app.getVersion(),
     runtimeVersion,
+    runtimePendingVersion,
     runtimeRunning,
     managerVersion,
     electron: process.versions.electron,

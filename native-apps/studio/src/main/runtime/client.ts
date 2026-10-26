@@ -24,6 +24,7 @@ export type RuntimeStatus = {
   migratedSchemaVersion: number;
   crashCount: number;
   running: boolean;
+  runningVersion: string | null;
 };
 
 export type ProgressEvent = {
@@ -386,7 +387,7 @@ export class RuntimeClient extends EventEmitter {
         return {
           url,
           httpPort: url ? Number(new URL(url).port || 80) : 0,
-          version: status.current ?? "",
+          version: status.runningVersion ?? status.current ?? "",
         };
       }
     })().finally(() => {

@@ -136,22 +136,7 @@ impl Manager {
             Command::RemoteStop => self.remote_stop(),
             Command::RemoteStatus => self.remote_status(),
             Command::Shutdown => {
-                self.holders.clear();
-                let unheld = crate::storage::lock::release(self.layout.root());
-
-                if unheld {
-                    if let Some(supervisor) = self.supervisor.take() {
-                        supervisor.stop().ok();
-                    }
-                    self.running = None;
-                } else {
-                    // Deliberately leaked: dropping the Supervisor would
-                    // close the runtime's stdin, and killing it here is
-                    // exactly what the remaining holders are asking us not
-                    // to do. TOP_MANAGED tells the runtime to ignore the
-                    // closed pipe.
-                    std::mem::forget(self.supervisor.take());
-                }
+                let unheld = self.release_all();
 
                 Ok(serde_json::json!({
                     "shuttingDown": true,
@@ -170,7 +155,10 @@ impl Manager {
             "lastGood": state.last_good,
             "migratedSchemaVersion": state.migrated_schema_version,
             "crashCount": state.crash_count,
-            "running": self.supervisor.is_some(),
+            // A runtime joined through the lock file has no supervisor here,
+            // but is still running, and may be an older version than `current`.
+            "running": self.supervisor.is_some() || self.running.is_some(),
+            "runningVersion": self.running.as_ref().map(|(_, version)| version),
             "managerVersion": env!("CARGO_PKG_VERSION"),
         }))
     }
@@ -342,6 +330,37 @@ impl Manager {
         Ok(result)
     }
 
+    /// Drop every claim this process has, stopping the runtime if nobody
+    /// else is holding it up. Returns whether it was stopped.
+    pub fn release_all(&mut self) -> bool {
+        self.holders.clear();
+
+        // Read before releasing, as in `stop`. Only a runtime this manager
+        // joined: one it never touched is not its to stop.
+        let foreign_pid = crate::storage::lock::read(self.layout.root())
+            .filter(|_| self.supervisor.is_none() && self.running.is_some())
+            .and_then(|l| l.runtime_pid);
+
+        let unheld = crate::storage::lock::release(self.layout.root());
+        if unheld {
+            if let Some(supervisor) = self.supervisor.take() {
+                supervisor.stop().ok();
+            } else if let Some(pid) = foreign_pid {
+                // Left running, a joined runtime outlives every holder and
+                // the next launch adopts it, serving an old version.
+                stop_by_pid(pid);
+            }
+            self.running = None;
+        } else {
+            // Deliberately leaked: dropping the Supervisor would close the
+            // runtime's stdin, and killing it here is exactly what the
+            // remaining holders are asking us not to do. TOP_MANAGED tells
+            // the runtime to ignore the closed pipe.
+            std::mem::forget(self.supervisor.take());
+        }
+        unheld
+    }
+
     /// Release a holder, stopping the runtime when the last one lets go.
     fn stop(&mut self, holder: Option<String>, force: bool) -> Result<serde_json::Value> {
         let name = holder.unwrap_or_else(|| "default".into());
@@ -418,13 +437,18 @@ impl Manager {
 
         // Someone else may already be serving this root
         if let Some(existing) = crate::storage::lock::read(self.layout.root()) {
-            if let (Some(port), true) = (
-                existing.http_port,
-                existing
-                    .runtime_pid
-                    .map(crate::storage::lock::process_alive)
-                    .unwrap_or(false),
-            ) {
+            // A port is only recorded once the runtime answered on it, so
+            // one that no longer answers means the lock is stale, even when
+            // its pid is alive: a hung runtime, or a pid since reused.
+            // Joining it hands the app a dead address.
+            let serving = existing
+                .runtime_pid
+                .map(crate::storage::lock::process_alive)
+                .unwrap_or(false)
+                && existing
+                    .http_port
+                    .is_some_and(|port| wait_for_http(port, Duration::from_secs(1)));
+            if let (Some(port), true) = (existing.http_port, serving) {
                 let lock = crate::storage::lock::RuntimeLock {
                     manager_pid: existing.manager_pid,
                     runtime_pid: existing.runtime_pid,
@@ -452,6 +476,9 @@ impl Manager {
             if let Some(port) = existing.http_port {
                 self.preferred_port.get_or_insert(port);
             }
+            // Its holders were holding up a runtime that is not there.
+            // Kept, they would stop this one being released on quit.
+            crate::storage::lock::clear(self.layout.root());
         }
 
         // Registered only once the runtime is actually up

@@ -539,17 +539,7 @@ fn serve(mut manager: Manager) -> Result<()> {
     // stdin closed: this shell is gone. Release its claim, and stop the
     // runtime only if nobody else is holding it up. A desktop app quitting
     // should not take down a server a second window or the CLI is using.
-    let unheld = top_runtime_manager::storage::lock::release(manager.layout.root());
-    if unheld {
-        if let Some(supervisor) = manager.supervisor.take() {
-            supervisor.stop().ok();
-        }
-    } else {
-        // Leaked on purpose: dropping it closes the runtime's stdin, and
-        // stopping it is what the remaining holders are asking us not to
-        // do. TOP_MANAGED makes the runtime ignore the closed pipe.
-        std::mem::forget(manager.supervisor.take());
-    }
+    manager.release_all();
     Ok(())
 }
 

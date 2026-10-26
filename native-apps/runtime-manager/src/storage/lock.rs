@@ -131,6 +131,11 @@ pub fn write(root: &Path, lock: &RuntimeLock) -> Result<()> {
         .with_context(|| format!("Failed to write {}", path.display()))
 }
 
+/// Remove the lock outright, for one found to describe nothing.
+pub fn clear(root: &Path) {
+    let _ = fs::remove_file(lock_path(root));
+}
+
 /// Drop this process's claim.
 pub fn release(root: &Path) -> bool {
     let Some(mut lock) = read(root) else {
