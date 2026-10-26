@@ -28,18 +28,9 @@ export function RuntimeManager() {
   const [channel, setChannel] = useState<string>(DEFAULT_CHANNEL);
   const [progress, setProgress] = useState<ProgressPayload | null>(null);
 
-  // Diverges from the activated version only between switching and
-  // restarting. Captured on first load because nothing else reports it.
-  const [runningVersion, setRunningVersion] = useState<string | null>(null);
-
   const refresh = useCallback(async () => {
     try {
-      const next = await api.runtimeStatus();
-      setStatus(next);
-      setRunningVersion((previous) => {
-        if (previous) return previous;
-        return next.available && next.running ? next.current : null;
-      });
+      setStatus(await api.runtimeStatus());
     } catch (error) {
       setProblem(error instanceof Error ? error.message : String(error));
     }
@@ -101,8 +92,7 @@ export function RuntimeManager() {
     setBusy("restart");
     setProblem(null);
     try {
-      const result = await api.restartRuntime();
-      setRunningVersion(result.version);
+      await api.restartRuntime();
       await refresh();
     } catch (error) {
       setProblem(error instanceof Error ? error.message : String(error));
@@ -129,7 +119,10 @@ export function RuntimeManager() {
   const ready = status?.available === true ? status : null;
   const installed = ready?.installed ?? [];
   const current = ready?.current ?? null;
-  const pendingVersion = pendingRestartVersion(runningVersion, current);
+  const pendingVersion = pendingRestartVersion(
+    ready?.runningVersion ?? null,
+    current,
+  );
   const updatable = available && available !== current;
   const unreachable = status?.available === false ? status : null;
 

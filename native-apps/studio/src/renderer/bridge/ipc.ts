@@ -24,6 +24,7 @@ export type RuntimeStatus =
       migratedSchemaVersion: number;
       crashCount: number;
       running: boolean;
+      runningVersion: string | null;
       url: string | null;
     };
 
@@ -39,6 +40,8 @@ export type RemoteStatus = {
 export type AboutInfo = {
   appVersion: string;
   runtimeVersion: string | null;
+  /** Activated but not running yet, when that differs from `runtimeVersion`. */
+  runtimePendingVersion: string | null;
   runtimeRunning: boolean;
   managerVersion: string | null;
   electron: string;

@@ -62,6 +62,11 @@ export function About() {
                 {info.runtimeRunning ? " · running" : " · stopped"}
               </span>
             )}
+            {info?.runtimePendingVersion && (
+              <span className="muted">
+                {` · ${info.runtimePendingVersion} after restart`}
+              </span>
+            )}
           </dd>
           <dt>Manager</dt>
           <dd className="mono">{info?.managerVersion ?? "Unavailable"}</dd>

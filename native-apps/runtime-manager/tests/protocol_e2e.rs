@@ -371,6 +371,7 @@ process.stdin.resume();
     let status = manager.request(5, serde_json::json!({"cmd": "status"}));
     assert_eq!(status["result"]["current"], "1.0.0");
     assert_eq!(status["result"]["running"], true);
+    assert_eq!(status["result"]["runningVersion"], "1.0.0");
 
     let stop = manager.request(6, serde_json::json!({"cmd": "stop"}));
     assert_eq!(stop["ok"], true);
@@ -1641,5 +1642,120 @@ fn shutdown_leaves_a_runtime_another_process_is_using() {
     assert!(
         wait_until_closed(port, std::time::Duration::from_secs(20)),
         "the last holder leaving should stop the server"
+    );
+}
+
+/// A lock whose port no longer answers is stale, even when its pid looks
+/// alive: a hung runtime, or a pid reused by something else. Joining it
+/// gave the app a dead address and a black window.
+#[test]
+fn start_ignores_a_lock_whose_port_does_not_answer() {
+    use top_runtime_manager::storage::lock;
+
+    let (root, cdn, key, pubkey) = fixture();
+    publish(
+        cdn.path(),
+        &key,
+        "1.0.0",
+        1,
+        "run_server.mjs",
+        &[("run_server.mjs", SHARED_SERVER.as_bytes())],
+    );
+
+    let mut manager = Manager::start(root.path(), cdn.path(), &pubkey);
+    manager.request(
+        1,
+        serde_json::json!({"cmd": "ensure", "channel": "stable", "activate": true}),
+    );
+
+    // A port nothing listens on, under a pid that is certainly alive.
+    let dead_port = std::net::TcpListener::bind("127.0.0.1:0")
+        .unwrap()
+        .local_addr()
+        .unwrap()
+        .port();
+    let me = std::process::id();
+    lock::write(
+        root.path(),
+        &lock::RuntimeLock {
+            manager_pid: me,
+            runtime_pid: Some(me),
+            http_port: Some(dead_port),
+            version: Some("0.9.0".into()),
+            holders: vec![lock::Holder {
+                pid: me,
+                name: "desktop-shell".into(),
+            }],
+            remote: None,
+        },
+    )
+    .unwrap();
+
+    let started = manager.request(
+        2,
+        serde_json::json!({"cmd": "start", "holder": "desktop-shell"}),
+    );
+    assert_eq!(started["ok"], true, "start failed: {started}");
+    assert_eq!(
+        started["result"]["reused"], false,
+        "a lock nobody answers for must not be joined: {started}"
+    );
+    assert_eq!(started["result"]["version"], "1.0.0");
+
+    let held = lock::read(root.path()).expect("the new runtime should hold the lock");
+    assert!(
+        held.holders.iter().all(|h| h.pid != me),
+        "the stale holders should be gone: {:?}",
+        held.holders
+    );
+
+    manager.request(3, serde_json::json!({"cmd": "shutdown"}));
+}
+
+/// A runtime left behind by an earlier app session, then joined, must stop
+/// when the joining app quits. Otherwise it outlives every holder and each
+/// later launch adopts it, serving whatever version it was started on.
+#[test]
+fn shutdown_stops_a_joined_runtime_when_it_is_the_last_holder() {
+    let (root, cdn, key, pubkey) = fixture();
+    publish(
+        cdn.path(),
+        &key,
+        "1.0.0",
+        1,
+        "run_server.mjs",
+        &[("run_server.mjs", SHARED_SERVER.as_bytes())],
+    );
+
+    let mut first = Manager::start(root.path(), cdn.path(), &pubkey);
+    first.request(
+        1,
+        serde_json::json!({"cmd": "ensure", "channel": "stable", "activate": true}),
+    );
+    let started = first.request(
+        2,
+        serde_json::json!({"cmd": "start", "holder": "desktop-shell"}),
+    );
+    let port = started["result"]["httpPort"].as_u64().unwrap();
+
+    let mut second = Manager::start(root.path(), cdn.path(), &pubkey);
+    let joined = second.request(
+        1,
+        serde_json::json!({"cmd": "start", "holder": "desktop-shell"}),
+    );
+    assert_eq!(joined["result"]["foreign"], true, "should join: {joined}");
+
+    // The first leaves its runtime behind for the second.
+    first.request(3, serde_json::json!({"cmd": "shutdown"}));
+    drop(first);
+
+    let bye = second.request(2, serde_json::json!({"cmd": "shutdown"}));
+    assert_eq!(
+        bye["result"]["runtimeStopped"], true,
+        "nobody holds it any more: {bye}"
+    );
+    assert!(
+        wait_until_closed(port, std::time::Duration::from_secs(20)),
+        "the last holder quitting should stop a runtime it joined"
     );
 }
