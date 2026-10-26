@@ -306,15 +306,15 @@ describe("a project only here", () => {
 
     expect(await sync()).toMatchObject({ pushed: 1, pulled: 0 });
 
-    expect(fake.projects).toEqual([
-      expect.objectContaining({
+    expect(fake.projects).toMatchObject([
+      {
         id: localId,
         value: value("Christmas", {
           targetDate: "2027-12-25T07:00:00.500000Z",
           category: "Youth",
           tags: ["band", "choir"],
         }),
-      }),
+      },
     ]);
     expect(await localProjects()).toEqual([
       expect.objectContaining({
@@ -406,8 +406,8 @@ describe("a project only here", () => {
     await editLocal(localId, "name = 'Christmas Eve'");
     expect(await sync()).toMatchObject({ pushed: 1, pulled: 0 });
 
-    expect(fake.projects).toEqual([
-      expect.objectContaining({ id: localId, value: value("Christmas Eve") }),
+    expect(fake.projects).toMatchObject([
+      { id: localId, value: value("Christmas Eve") },
     ]);
     expect((await localProjects())[0].value.name).toBe("Christmas Eve");
     await expectQuietSync();
@@ -474,14 +474,14 @@ describe("a project on both sides", () => {
       category: "Youth",
       tags: ["Acoustic", "choir"],
     });
-    expect(fake.projectPushes).toEqual([
+    expect(fake.projectPushes).toMatchObject([
       {
         id: cloudId,
         expected: { value: synced, updatedAt: expect.any(String) },
         value: edited,
       },
     ]);
-    expect(fake.projects[0]!.value).toEqual(edited);
+    expect(fake.projects[0]!.value).toMatchObject(edited);
     await expectQuietSync();
   });
 
@@ -491,7 +491,7 @@ describe("a project on both sides", () => {
 
     await sync();
 
-    expect(fake.projects[0]!.value).toEqual(value("Easter"));
+    expect(fake.projects[0]!.value).toMatchObject(value("Easter"));
   });
 
   it("pulls metadata edited on the cloud, including clearing it", async () => {
@@ -512,7 +512,7 @@ describe("a project on both sides", () => {
     expect(await sync()).toMatchObject({ merged: 1, pushed: 1, pulled: 0 });
 
     const both = value("Easter Sunday", { category: "Youth", tags: ["band"] });
-    expect(fake.projects[0]!.value).toEqual(both);
+    expect(fake.projects[0]!.value).toMatchObject(both);
     expect((await localByCloudId(cloudId))!.value).toEqual(both);
     await expectQuietSync();
   });
@@ -528,7 +528,7 @@ describe("a project on both sides", () => {
       category: "Sunday",
       tags: ["Acoustic", "choir"],
     });
-    expect(fake.projects[0]!.value).toEqual(merged);
+    expect(fake.projects[0]!.value).toMatchObject(merged);
     expect((await localByCloudId(cloudId))!.value).toEqual(merged);
     await expectQuietSync();
   });
@@ -563,7 +563,7 @@ describe("a project on both sides", () => {
     editOnCloud(cloudId, { tags: [] });
 
     expect(await sync()).toMatchObject({ merged: 1, pushed: 1, pulled: 0 });
-    expect(fake.projects[0]!.value).toEqual(
+    expect(fake.projects[0]!.value).toMatchObject(
       value("Local", { category: "Sunday" }),
     );
     await expectQuietSync();
@@ -579,7 +579,7 @@ describe("a project on both sides", () => {
     fake.beforeProjectPush = null;
     await sync();
     const all = value("Local", { category: "Youth" });
-    expect(fake.projects[0]!.value).toEqual(all);
+    expect(fake.projects[0]!.value).toMatchObject(all);
     expect((await localByCloudId(cloudId))!.value).toEqual(all);
   });
 
@@ -599,7 +599,7 @@ describe("a project on both sides", () => {
       targetDate: "2027-01-01T00:00:00.000000Z",
     });
     expect((await localByCloudId(cloudId))!.value).toEqual(all);
-    expect(fake.projects[0]!.value).toEqual(all);
+    expect(fake.projects[0]!.value).toMatchObject(all);
     await expectQuietSync();
   });
 
@@ -642,7 +642,7 @@ describe("a project on both sides", () => {
 
     fake.rejectProjectPushes = false;
     expect(await sync()).toMatchObject({ pushed: 1 });
-    expect(fake.projectPushes[1]!.expected!.value).toEqual(synced);
+    expect(fake.projectPushes[1]!.expected!.value).toMatchObject(synced);
     expect(fake.projects[0]!.value.name).toBe("Local");
   });
 
@@ -678,8 +678,8 @@ describe("a project deleted on the cloud", () => {
 
     expect(await sync()).toMatchObject({ deletedLocally: 0, pushed: 1 });
 
-    expect(fake.projects).toEqual([
-      expect.objectContaining({ id: cloudId, value: value("Kept") }),
+    expect(fake.projects).toMatchObject([
+      { id: cloudId, value: value("Kept") },
     ]);
     await expectQuietSync();
   });
@@ -968,7 +968,7 @@ describe("projects pulled before sync kept state", () => {
 
   it("are adopted when the cloud still has them", async () => {
     await pulledByOldSync();
-    onCloud(cloudId, value("Old"));
+    onCloud(cloudId, value("Old", { slug: "old", isPublic: false }));
 
     expect(await sync()).toMatchObject({ pushed: 0, pulled: 0 });
     await expectQuietSync();
@@ -996,8 +996,106 @@ describe("projects pulled before sync kept state", () => {
     await editLocal(id, "name = 'Edited'");
 
     expect(await sync()).toMatchObject({ deletedLocally: 0, pushed: 1 });
-    expect(fake.projects).toEqual([
-      expect.objectContaining({ id: cloudId, value: value("Edited") }),
+    expect(fake.projects).toMatchObject([
+      { id: cloudId, value: value("Edited") },
     ]);
+  });
+});
+
+describe("slug and public flag", () => {
+  const v2 = (name: string, slug: string, isPublic = false) =>
+    value(name, { slug, isPublic });
+
+  const here = async (id: string) =>
+    (
+      await query(
+        `select id, slug::text, is_public from app_public.projects
+         where cloud_project_id = $1`,
+        [id],
+      )
+    )[0];
+
+  it("pulls a cloud project under the cloud's slug and public flag", async () => {
+    onCloud(cloudId, v2("Easter", "easter", true));
+
+    expect(await sync()).toMatchObject({ pulled: 1, added: 1 });
+    expect(await here(cloudId)).toMatchObject({
+      slug: "easter",
+      is_public: true,
+    });
+    await expectQuietSync();
+  });
+
+  it("settles on the slug here when the cloud's is taken here", async () => {
+    await query(
+      `insert into app_public.projects (organization_id, slug, name, is_temporary)
+       values ($1, 'easter', 'Guest', true)`,
+      [orgId],
+    );
+    onCloud(cloudId, v2("Easter", "easter"));
+
+    await sync();
+    const { slug } = await here(cloudId);
+    expect(slug).not.toBe("easter");
+
+    // Sent back, so both sides give it the same address.
+    await sync();
+    expect(fake.projects[0]!.value.slug).toBe(slug);
+    await expectQuietSync();
+  });
+
+  it("creates a project made here under its own slug and public flag", async () => {
+    const id = await createLocal("Easter");
+    await editLocal(id, "slug = 'easter', is_public = true");
+
+    expect(await sync()).toMatchObject({ pushed: 1 });
+    expect(fake.projects[0]!.value).toMatchObject({
+      slug: "easter",
+      isPublic: true,
+    });
+    await expectQuietSync();
+  });
+
+  it("gives a project synced before these fields the cloud's", async () => {
+    onCloud(cloudId, v2("Easter", "easter", true));
+    await sync();
+    // As an older version left it: its own slug and flag, and a synced value
+    // without either.
+    await editLocal(
+      (await here(cloudId)).id,
+      "slug = 'random-words', is_public = false",
+    );
+    await query(
+      `update app_private.cloud_sync_rows
+       set synced_value = synced_value - 'slug' - 'isPublic'
+       where cloud_connection_id = $1`,
+      [connection.id],
+    );
+
+    await sync();
+    expect(await here(cloudId)).toMatchObject({
+      slug: "easter",
+      is_public: true,
+    });
+    await expectQuietSync();
+  });
+
+  it("pushes a slug renamed here, and pulls a public flag changed on the cloud", async () => {
+    onCloud(cloudId, v2("Easter", "easter"));
+    await sync();
+
+    await editLocal((await here(cloudId)).id, "slug = 'easter-sunday'");
+    editOnCloud(cloudId, { isPublic: true });
+
+    expect(await sync()).toMatchObject({ merged: 1 });
+    expect(await here(cloudId)).toMatchObject({
+      slug: "easter-sunday",
+      is_public: true,
+    });
+    expect(fake.projects[0]!.value).toMatchObject({
+      slug: "easter-sunday",
+      isPublic: true,
+    });
+    await expectQuietSync();
   });
 });

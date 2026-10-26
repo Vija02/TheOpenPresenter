@@ -198,6 +198,34 @@ describe("GraphQL", () => {
     ]);
   });
 
+  it("pushes and lists slug and public flag when asked for version 2", async () => {
+    const id = "9a000000-0000-4000-8000-0000000000ab";
+    const value = {
+      name: "Easter",
+      targetDate: null,
+      category: null,
+      tags: [],
+      slug: "easter-v2",
+      isPublic: true,
+    };
+
+    const [created] = await call(
+      "cloudProjectSyncPush",
+      `mutation ($s: String!, $c: JSON!) { cloudProjectSyncPush(organizationSlug: $s, changes: $c, version: 2) }`,
+      { s: orgSlug, c: [{ id, expected: null, value, slug: "easter-v2" }] },
+    );
+
+    expect(created).toMatchObject({ status: "applied" });
+    const listed = await call(
+      "cloudProjectSyncList",
+      `query ($s: String!) { cloudProjectSyncList(organizationSlug: $s, version: 2) }`,
+      { s: orgSlug },
+    );
+    expect(listed.find((p: { id: string }) => p.id === id).value).toEqual(
+      value,
+    );
+  });
+
   describe("organization settings", () => {
     const GET = `query ($s: String!) { cloudOrganizationSyncGet(organizationSlug: $s) }`;
     const PUSH = `mutation ($s: String!, $e: JSON!, $v: JSON!) {
@@ -211,9 +239,9 @@ describe("GraphQL", () => {
     const edited = { ...created, organizationType: "church", isPublic: true };
 
     it("pushes and gets them", async () => {
-      expect(await call("cloudOrganizationSyncGet", GET, { s: orgSlug })).toEqual(
-        created,
-      );
+      expect(
+        await call("cloudOrganizationSyncGet", GET, { s: orgSlug }),
+      ).toEqual(created);
 
       expect(
         await call("cloudOrganizationSyncPush", PUSH, {
@@ -222,9 +250,9 @@ describe("GraphQL", () => {
           v: edited,
         }),
       ).toEqual({ status: "applied" });
-      expect(await call("cloudOrganizationSyncGet", GET, { s: orgSlug })).toEqual(
-        edited,
-      );
+      expect(
+        await call("cloudOrganizationSyncGet", GET, { s: orgSlug }),
+      ).toEqual(edited);
     });
 
     it("refuses a push based on settings the cloud no longer has", async () => {
@@ -256,9 +284,9 @@ describe("GraphQL", () => {
           v: edited,
         }),
       ).toEqual({ status: "rejected", reason: "not allowed on the cloud" });
-      expect(await call("cloudOrganizationSyncGet", GET, { s: orgSlug })).toEqual(
-        created,
-      );
+      expect(
+        await call("cloudOrganizationSyncGet", GET, { s: orgSlug }),
+      ).toEqual(created);
     });
   });
 

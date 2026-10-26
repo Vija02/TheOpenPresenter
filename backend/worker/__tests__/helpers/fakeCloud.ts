@@ -335,6 +335,19 @@ export const startFakeCloud = async (syncTables: CloudSyncTable[]) => {
     );
   };
 
+  /**
+   * As the cloud lists it. Tests give most projects only the older fields, so
+   * the rest are filled in as a cloud would have them.
+   */
+  const listed = (project: CloudProject): CloudProject => ({
+    ...project,
+    value: {
+      slug: `cloud-${project.id.slice(0, 8)}`,
+      isPublic: false,
+      ...project.value,
+    },
+  });
+
   const applyProjectPush = (changes: ProjectPushChange[]) => {
     fake.projectPushes.push(...changes);
     return changes.map((change) => {
@@ -343,13 +356,13 @@ export const startFakeCloud = async (syncTables: CloudSyncTable[]) => {
       const current = fake.projects[index];
       if (fake.rejectProjectPushes) return rejected("rejected by the test");
       if (!change.expected) {
-        if (current && same(current.value, change.value)) {
+        if (current && same(listed(current).value, change.value)) {
           return { status: "applied", updatedAt: current.updatedAt };
         }
         if (current) return rejected("already exists on the cloud");
       } else if (!current) {
         return rejected("missing on the cloud");
-      } else if (!same(current.value, change.expected.value)) {
+      } else if (!same(listed(current).value, change.expected.value)) {
         return rejected("changed on the cloud");
       }
       if (!change.value) {
@@ -436,7 +449,7 @@ export const startFakeCloud = async (syncTables: CloudSyncTable[]) => {
       case "cloudPluginTablePush":
         return { data: { [field]: applyTablePush(entity, variables.changes) } };
       case "cloudProjectSyncList":
-        return { data: { [field]: fake.projects } };
+        return { data: { [field]: fake.projects.map(listed) } };
       case "cloudProjectSyncPush":
         return { data: { [field]: applyProjectPush(variables.changes) } };
       case "cloudMediaSyncPage":

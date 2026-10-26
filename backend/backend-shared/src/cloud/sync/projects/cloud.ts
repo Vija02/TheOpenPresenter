@@ -2,6 +2,7 @@ import type { QueryResult, QueryResultRow } from "pg";
 
 import {
   ProjectSyncValue,
+  ProjectSyncVersion,
   applyProjectSyncValue,
   projectSyncValueSql,
 } from "./value";
@@ -43,6 +44,7 @@ export type ProjectPushResult =
 export const listCloudProjects = async (
   client: Queryable,
   organizationId: string,
+  version: ProjectSyncVersion = 1,
 ): Promise<CloudProject[]> => {
   const {
     rows: [row],
@@ -52,7 +54,7 @@ export const listCloudProjects = async (
         'id', p.id,
         'createdAt', p.created_at,
         'updatedAt', p.updated_at,
-        'value', ${projectSyncValueSql("p")}
+        'value', ${projectSyncValueSql("p", version)}
       )), '[]'::jsonb) as projects
       from app_public.projects p
       where p.organization_id = $1 and not p.is_temporary
@@ -75,12 +77,19 @@ export const applyPushedProjectChanges = async (
   organizationId: string,
   userId: string | null,
   changes: ProjectPushChange[],
+  version: ProjectSyncVersion = 1,
 ): Promise<ProjectPushResult[]> => {
   const results: ProjectPushResult[] = [];
   for (const change of changes) {
     await client.query("savepoint cloud_project_push");
     try {
-      const result = await applyOne(client, organizationId, userId, change);
+      const result = await applyOne(
+        client,
+        organizationId,
+        userId,
+        change,
+        version,
+      );
       if (result.status === "applied") {
         await client.query("release savepoint cloud_project_push");
       } else {
@@ -103,6 +112,7 @@ const applyOne = async (
   organizationId: string,
   userId: string | null,
   change: ProjectPushChange,
+  version: ProjectSyncVersion,
 ): Promise<ProjectPushResult> => {
   const {
     rows: [current],
@@ -112,9 +122,9 @@ const applyOne = async (
     same_as_pushed: boolean;
   }>(
     `
-      select ${projectSyncValueSql("p")} = $3::jsonb as value_matches,
+      select ${projectSyncValueSql("p", version)} = $3::jsonb as value_matches,
         p.updated_at = $4::timestamptz as updated_at_matches,
-        ${projectSyncValueSql("p")} = $5::jsonb as same_as_pushed
+        ${projectSyncValueSql("p", version)} = $5::jsonb as same_as_pushed
       from app_public.projects p
       where p.id = $1 and p.organization_id = $2
       for update
@@ -147,10 +157,18 @@ const applyOne = async (
   }
 
   if (!current) {
+    // A slug taken here gets a suffix rather than failing the create. The
+    // next sync then takes this slug back to the side that pushed it.
     await client.query(
       `insert into app_public.projects
          (id, organization_id, creator_user_id, slug, name)
-       values ($1, $2, $3, $4, $5)`,
+       values ($1, $2, $3,
+         case when exists (
+           select 1 from app_public.projects
+           where organization_id = $2 and slug = $4
+         ) then $4 || '-' || substr(md5(random()::text), 1, 6)
+         else $4 end,
+         $5)`,
       [change.id, organizationId, userId, change.slug, change.value.name],
     );
   }

@@ -380,6 +380,96 @@ describe("listCloudProjects", () => {
   });
 });
 
+describe("version 2: slug and public flag", () => {
+  it("creates and lists them, leaving them out of the older shape", async () => {
+    await asMember(async ({ client, orgId, userId }) => {
+      const pushed = value("Easter", { slug: "easter", isPublic: true });
+      const [result] = await applyPushedProjectChanges(
+        client,
+        orgId,
+        userId,
+        [create(PROJECT_ID, pushed)],
+        2,
+      );
+
+      expect(result).toMatchObject({ status: "applied" });
+      expect((await listCloudProjects(client, orgId, 2))[0]!.value).toEqual(
+        pushed,
+      );
+      expect((await listCloudProjects(client, orgId))[0]!.value).toEqual(
+        value("Easter"),
+      );
+    });
+  });
+
+  it("gives a create whose slug is taken a suffix, rather than failing it", async () => {
+    await asMember(
+      async ({ client, orgId, userId }) => {
+        const [result] = await applyPushedProjectChanges(
+          client,
+          orgId,
+          userId,
+          [
+            create(
+              PROJECT_ID,
+              value("Easter", { slug: "pushed", isPublic: false }),
+            ),
+          ],
+          2,
+        );
+
+        expect(result).toMatchObject({ status: "applied" });
+        const listed = await listCloudProjects(client, orgId, 2);
+        const ours = listed.find((p) => p.id === PROJECT_ID)!;
+        expect(ours.value.slug).toMatch(/^pushed-[0-9a-f]{6}$/);
+      },
+      async ({ client, orgId }) => {
+        await client.query(
+          `insert into app_public.projects (id, organization_id, slug, name)
+           values ($2, $1, 'pushed', 'Other')`,
+          [orgId, OTHER_ID],
+        );
+      },
+    );
+  });
+
+  it("updates them when the change was based on what is there", async () => {
+    await asMember(async ({ client, orgId, userId }) => {
+      const before = value("Easter", { slug: "easter", isPublic: false });
+      const [created] = await applyPushedProjectChanges(
+        client,
+        orgId,
+        userId,
+        [create(PROJECT_ID, before)],
+        2,
+      );
+      const after = { ...before, slug: "easter-sunday", isPublic: true };
+
+      const [result] = await applyPushedProjectChanges(
+        client,
+        orgId,
+        userId,
+        [
+          {
+            id: PROJECT_ID,
+            expected: {
+              value: before,
+              updatedAt: (created as { updatedAt: string }).updatedAt,
+            },
+            value: after,
+          },
+        ],
+        2,
+      );
+
+      expect(result).toMatchObject({ status: "applied" });
+      expect((await listCloudProjects(client, orgId, 2))[0]!.value).toEqual(
+        after,
+      );
+    });
+  });
+});
+
 describe("findCloudOrganizationId", () => {
   it("refuses an organization the user is not a member of", async () => {
     await asMember(async ({ client }) => {

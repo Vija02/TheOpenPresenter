@@ -9,14 +9,37 @@ export type ProjectSyncValue = {
   category: string | null;
   /** Sorted, so equal sets compare equal. */
   tags: string[];
+  /** From version 2. Absent for older local instances. */
+  slug?: string;
+  isPublic?: boolean;
 };
+
+/**
+ * 1: name, date, category and tags. 2: also slug and isPublic. The cloud is
+ * always at least as new as a local instance, but serves older ones the shape
+ * they ask for: a value of another shape never compares equal.
+ */
+export type ProjectSyncVersion = 1 | 2;
+export const PROJECT_SYNC_VERSION: ProjectSyncVersion = 2;
+
+/** What a caller asked for, capped at what this side knows. */
+export const projectSyncVersion = (
+  requested: number | null | undefined,
+): ProjectSyncVersion =>
+  Math.max(
+    1,
+    Math.min(requested ?? 1, PROJECT_SYNC_VERSION),
+  ) as ProjectSyncVersion;
 
 /**
  * Both sides build the value with this, and compare it with jsonb equality, so
  * it must produce the same jsonb on each. Hence the `C` collation: tag order
  * must not depend on either server's locale.
  */
-export const projectSyncValueSql = (alias: string): string => `
+export const projectSyncValueSql = (
+  alias: string,
+  version: ProjectSyncVersion = 1,
+): string => `
   jsonb_build_object(
     'name', ${alias}.name,
     'targetDate', to_char(
@@ -33,7 +56,14 @@ export const projectSyncValueSql = (alias: string): string => `
       join app_public.tags t on t.id = pt.tag_id
       where pt.project_id = ${alias}.id
     ), '[]'::jsonb)
-  )
+  )${
+    version >= 2
+      ? ` || jsonb_build_object(
+    'slug', ${alias}.slug::text,
+    'isPublic', ${alias}.is_public
+  )`
+      : ""
+  }
 `;
 
 type Queryable = {
@@ -78,10 +108,26 @@ export const applyProjectSyncValue = async (
   if (missing.length > 0) return { missing };
 
   await client.query(
-    `update app_public.projects
-     set name = $2, target_date = $3::timestamptz, category_id = $4
+    `update app_public.projects p
+     set name = $2, target_date = $3::timestamptz, category_id = $4,
+       slug = case
+         when $5::text is null or exists (
+           select 1 from app_public.projects o
+           where o.organization_id = p.organization_id
+             and o.slug = $5 and o.id <> p.id
+         ) then p.slug
+         else $5
+       end,
+       is_public = coalesce($6::boolean, p.is_public)
      where id = $1`,
-    [project.id, value.name, value.targetDate, refs!.category_id],
+    [
+      project.id,
+      value.name,
+      value.targetDate,
+      refs!.category_id,
+      value.slug ?? null,
+      value.isPublic ?? null,
+    ],
   );
   const ids = Object.values(tagIds);
   await client.query(

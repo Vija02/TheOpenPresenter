@@ -1,5 +1,8 @@
 import { desktop } from "@repo/desktop-bridge";
-import { useUpdateProjectMutation } from "@repo/graphql";
+import {
+  useShareProjectCloudQuery,
+  useUpdateProjectMutation,
+} from "@repo/graphql";
 import { usePluginMetaData } from "@repo/shared";
 import {
   Button,
@@ -23,6 +26,21 @@ const ShareQRModal = () => {
   const { project, orgSlug, projectSlug, refetch } = usePluginMetaData();
   const search = useSearch();
   const [localIp, setLocalIp] = useState<string | null>(null);
+  const [cloudReachable, setCloudReachable] = useState<boolean | null>(null);
+  const [chosen, setChosen] = useState<"cloud" | "local" | null>(null);
+
+  const [{ data: cloudData }] = useShareProjectCloudQuery({
+    variables: { orgSlug, projectSlug },
+    pause: !isOpen,
+  });
+  const cloudConnection =
+    cloudData?.organizationBySlug?.cloudConnections.nodes[0] ?? null;
+  const synced =
+    !!cloudData?.organizationBySlug?.projects.nodes[0]?.cloudConnectionId;
+  const cloudHost =
+    synced && cloudConnection?.targetOrganizationSlug
+      ? cloudConnection.host
+      : null;
 
   const [{ fetching: loading }, updateProject] = useUpdateProjectMutation();
 
@@ -48,7 +66,24 @@ const ShareQRModal = () => {
     desktop.localIp().then(setLocalIp);
   }, [isOpen]);
 
+  useEffect(() => {
+    if (!isOpen || !cloudHost) return;
+    setCloudReachable(null);
+    desktop.canReach(cloudHost).then(setCloudReachable);
+  }, [isOpen, cloudHost]);
+
+  // The cloud link works from anywhere, so it is the default whenever the
+  // cloud answers. The local one only works on the same network.
+  const cloudLink =
+    !!cloudHost &&
+    (chosen === "cloud" || (chosen === null && cloudReachable === true));
+
   const shareUrl = useMemo(() => {
+    if (cloudLink && cloudHost && cloudConnection?.targetOrganizationSlug) {
+      const baseUrl = `${cloudHost.replace(/\/+$/, "")}/app/${cloudConnection.targetOrganizationSlug}/${projectSlug}`;
+      return search ? `${baseUrl}?${search}` : baseUrl;
+    }
+
     let origin = window.location.origin;
 
     if (localIp) {
@@ -61,7 +96,15 @@ const ShareQRModal = () => {
 
     const baseUrl = `${origin}/app/${orgSlug}/${projectSlug}`;
     return search ? `${baseUrl}?${search}` : baseUrl;
-  }, [orgSlug, projectSlug, search, localIp]);
+  }, [
+    orgSlug,
+    projectSlug,
+    search,
+    localIp,
+    cloudLink,
+    cloudHost,
+    cloudConnection?.targetOrganizationSlug,
+  ]);
 
   return (
     <Dialog open={isOpen ?? false} onOpenChange={onToggle ?? (() => {})}>
@@ -98,7 +141,23 @@ const ShareQRModal = () => {
             </div>
           </div>
         </DialogBody>
-        <DialogFooter>
+        <DialogFooter className="justify-between">
+          {cloudHost ? (
+            <Button
+              variant="ghost"
+              size="xs"
+              className="text-secondary self-center"
+              onClick={() => setChosen(cloudLink ? "local" : "cloud")}
+            >
+              {cloudLink
+                ? "Use local network link"
+                : cloudReachable === false
+                  ? "Cloud unreachable. Use cloud link anyway"
+                  : "Use cloud link"}
+            </Button>
+          ) : (
+            <span />
+          )}
           <Button variant="outline" onClick={onToggle}>
             Close
           </Button>

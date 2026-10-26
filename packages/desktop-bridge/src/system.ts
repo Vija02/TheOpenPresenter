@@ -16,6 +16,15 @@ export async function openExternal(url: string): Promise<void> {
   window.open(url, "_blank", "noopener,noreferrer");
 }
 
+/** Whether this machine can reach `url`. Null where the host cannot tell. */
+export async function canReach(url: string): Promise<boolean | null> {
+  const electron = electronBridge();
+  if (electron) {
+    return (await electron.invoke("host:check", url)) === true;
+  }
+  return null;
+}
+
 /** The machine's LAN address, for the share QR code */
 export async function localIp(): Promise<string | null> {
   const electron = electronBridge();

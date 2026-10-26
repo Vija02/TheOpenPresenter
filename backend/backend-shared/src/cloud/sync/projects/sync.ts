@@ -13,6 +13,7 @@ import type {
   ProjectPushResult,
 } from "./cloud";
 import {
+  PROJECT_SYNC_VERSION,
   ProjectSyncValue,
   applyProjectSyncValue,
   projectSyncValueSql,
@@ -20,13 +21,21 @@ import {
 
 // Not codegen'd: these fields return JSON.
 const CLOUD_PROJECT_SYNC_LIST = `
-  query CloudProjectSyncList($organizationSlug: String!) {
-    cloudProjectSyncList(organizationSlug: $organizationSlug)
+  query CloudProjectSyncList($organizationSlug: String!, $version: Int) {
+    cloudProjectSyncList(organizationSlug: $organizationSlug, version: $version)
   }
 `;
 const CLOUD_PROJECT_SYNC_PUSH = `
-  mutation CloudProjectSyncPush($organizationSlug: String!, $changes: JSON!) {
-    cloudProjectSyncPush(organizationSlug: $organizationSlug, changes: $changes)
+  mutation CloudProjectSyncPush(
+    $organizationSlug: String!
+    $changes: JSON!
+    $version: Int
+  ) {
+    cloudProjectSyncPush(
+      organizationSlug: $organizationSlug
+      changes: $changes
+      version: $version
+    )
   }
 `;
 
@@ -138,7 +147,10 @@ export const syncProjects = async (
   const organizationSlug = cloudConnection.target_organization_slug;
   const { cloudProjectSyncList: cloudProjects } = await queryCloud<{
     cloudProjectSyncList: CloudProject[];
-  }>(urqlClient, CLOUD_PROJECT_SYNC_LIST, { organizationSlug });
+  }>(urqlClient, CLOUD_PROJECT_SYNC_LIST, {
+    organizationSlug,
+    version: PROJECT_SYNC_VERSION,
+  });
 
   const rows = await compare(withPgClient, cloudConnection, cloudProjects);
   const counts: ProjectSyncCounts = {
@@ -408,7 +420,9 @@ const sameValue = (a: ProjectSyncValue, b: ProjectSyncValue) =>
   a.name === b.name &&
   a.targetDate === b.targetDate &&
   a.category === b.category &&
-  a.tags.join("\0") === b.tags.join("\0");
+  a.tags.join("\0") === b.tags.join("\0") &&
+  a.slug === b.slug &&
+  a.isPublic === b.isPublic;
 
 /** UTF-8 byte order, as `collate "C"` sorts on both sides. */
 const byteOrder = (a: string, b: string) =>
@@ -427,7 +441,7 @@ export const mergeValues = (
   local: ProjectSyncValue,
   cloud: ProjectSyncValue,
 ): ProjectSyncValue => {
-  const field = <K extends "name" | "targetDate" | "category">(key: K) =>
+  const field = <K extends keyof ProjectSyncValue>(key: K) =>
     local[key] !== base[key] && cloud[key] === base[key]
       ? local[key]
       : cloud[key];
@@ -439,6 +453,8 @@ export const mergeValues = (
     targetDate: field("targetDate"),
     category: field("category"),
     tags: [...tags].sort(byteOrder),
+    slug: field("slug"),
+    isPublic: field("isPublic"),
   };
 };
 
@@ -479,7 +495,7 @@ const compare = async (
         local as (
           select p.id, p.cloud_project_id, p.cloud_connection_id, p.slug,
             p.updated_at, p.cloud_last_updated,
-            ${projectSyncValueSql("p")} as value
+            ${projectSyncValueSql("p", PROJECT_SYNC_VERSION)} as value
           from app_public.projects p
           where p.organization_id = $4 and not p.is_temporary
         ),
@@ -546,7 +562,7 @@ const pull = (
         const {
           rows: [current],
         } = await pgClient.query(
-          `select ${projectSyncValueSql("p")} = $2::jsonb as unchanged
+          `select ${projectSyncValueSql("p", PROJECT_SYNC_VERSION)} = $2::jsonb as unchanged
            from app_public.projects p where p.id = $1
            for update`,
           [localId, JSON.stringify(row.local_value)],
@@ -632,7 +648,7 @@ const push = async (
   }>(
     urqlClient,
     CLOUD_PROJECT_SYNC_PUSH,
-    { organizationSlug, changes },
+    { organizationSlug, changes, version: PROJECT_SYNC_VERSION },
     "mutation",
   );
   return cloudProjectSyncPush;

@@ -375,8 +375,8 @@ describe("cloud_connection__sync", () => {
     await runTask();
 
     // The fake rejects a project naming anything it lacks, as the cloud does.
-    expect(fake.projects).toEqual([
-      expect.objectContaining({
+    expect(fake.projects).toMatchObject([
+      {
         id: localId,
         value: {
           name: "Wedding",
@@ -384,7 +384,7 @@ describe("cloud_connection__sync", () => {
           category: "Weddings",
           tags: ["strings"],
         },
-      }),
+      },
     ]);
     expect(fake.requests.indexOf("cloudPluginTablePush")).toBeLessThan(
       fake.requests.indexOf("cloudProjectSyncPush"),
