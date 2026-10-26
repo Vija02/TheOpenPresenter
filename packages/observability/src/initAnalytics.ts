@@ -14,17 +14,18 @@ const isReplayEnabled = (surface: AnalyticsSurface) =>
     ? appData.getAnalyticsRendererReplayEnabled()
     : appData.getAnalyticsReplayEnabled();
 
+// Only true once PostHog has actually been initialised
+let isAnalyticsEnabled = false;
+
 export const initAnalytics = ({ surface, env }: InitAnalyticsOptions) => {
+  // Don't pollute analytics with local development traffic
+  if (env === "development") {
+    return;
+  }
+
   const key = appData.getAnalyticsKey();
 
   if (!key) {
-    if (env === "development") {
-      console.error(
-        new Error(
-          "ANALYTICS_KEY variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once ANALYTICS_KEY is configured",
-        ),
-      );
-    }
     return;
   }
 
@@ -56,6 +57,7 @@ export const initAnalytics = ({ surface, env }: InitAnalyticsOptions) => {
       };
     },
   });
+  isAnalyticsEnabled = true;
 };
 
 export type IdentifyOptions = {
@@ -71,7 +73,7 @@ export const identifyUser = ({
   organizationId,
   organizationSlug,
 }: IdentifyOptions) => {
-  if (!appData.getAnalyticsKey()) {
+  if (!isAnalyticsEnabled) {
     return;
   }
 
@@ -86,7 +88,7 @@ export const identifyUser = ({
 };
 
 export const resetAnalytics = () => {
-  if (!appData.getAnalyticsKey() || !hasIdentified) {
+  if (!isAnalyticsEnabled || !hasIdentified) {
     return;
   }
 
@@ -98,7 +100,7 @@ export const captureEvent = (
   event: string,
   properties?: Record<string, unknown>,
 ) => {
-  if (!appData.getAnalyticsKey()) {
+  if (!isAnalyticsEnabled) {
     return;
   }
 
@@ -106,7 +108,7 @@ export const captureEvent = (
 };
 
 export const captureException = (error: Error) => {
-  if (!appData.getAnalyticsKey()) {
+  if (!isAnalyticsEnabled) {
     return;
   }
 
