@@ -1,11 +1,11 @@
-import { Express } from "express";
+import { Express, Request } from "express";
 import { get } from "lodash";
 import passport from "passport";
 import { Strategy as GitHubStrategy } from "passport-github2";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 
-import { getWebsocketMiddlewares } from "../app";
 import { cleanupScreenGuestSession } from "../api/screen/helpers";
+import { getWebsocketMiddlewares } from "../app";
 import { getRootPgPool } from "./installDatabasePools";
 import installPassportQRStrategy from "./installPassportQRStrategy";
 import installPassportStrategy from "./installPassportStrategy";
@@ -110,7 +110,12 @@ export default async (app: Express) => {
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
         scope: ["profile", "email"],
       },
-      {},
+      (req: Request) => ({
+        loginHint:
+          typeof req.query.login_hint === "string"
+            ? req.query.login_hint
+            : undefined,
+      }),
       async (profile, _accessToken, _refreshToken, _extra, _req) => {
         return {
           id: profile.id,

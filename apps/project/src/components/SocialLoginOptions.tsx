@@ -33,6 +33,8 @@ export interface SocialLoginOptionsProps {
   buttonTextFromService?: (service: string) => string;
   autoOpenQRLogin?: boolean;
   showQRLogin?: boolean;
+  loginHint?: string;
+  services?: string[];
 }
 
 function defaultButtonTextFromService(service: string) {
@@ -45,8 +47,13 @@ export function SocialLoginOptions({
   buttonTextFromService = defaultButtonTextFromService,
   autoOpenQRLogin = false,
   showQRLogin = true,
+  loginHint,
+  services,
 }: SocialLoginOptionsProps) {
   const persistSessionParam = persistSession ? "&persist-session=1" : "";
+  const loginHintParam = loginHint
+    ? `&login_hint=${encodeURIComponent(loginHint)}`
+    : "";
   const qrToggleRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
@@ -56,28 +63,32 @@ export function SocialLoginOptions({
   }, [autoOpenQRLogin]);
 
   const hrefFor = (service: string) =>
-    `/auth/${service}?next=${encodeURIComponent(next)}${persistSessionParam}`;
+    `/auth/${service}?next=${encodeURIComponent(next)}${persistSessionParam}${loginHintParam}`;
 
   return (
     <div className="stack-col gap-2 w-full">
       <div className="stack-row gap-2 w-full">
-        {socialProviders.map((provider) => (
-          <Button
-            key={provider.service}
-            asChild
-            variant="outline"
-            size="lg"
-            className="flex-1 hover:no-underline"
-            data-testid={`loginpage-social-${provider.service}`}
-          >
-            <a href={hrefFor(provider.service)}>
-              <provider.icon
-                className={`size-5 ${provider.iconClassName ?? ""}`}
-              />
-              {buttonTextFromService(provider.label)}
-            </a>
-          </Button>
-        ))}
+        {socialProviders
+          .filter(
+            (provider) => !services || services.includes(provider.service),
+          )
+          .map((provider) => (
+            <Button
+              key={provider.service}
+              asChild
+              variant="outline"
+              size="lg"
+              className="flex-1 hover:no-underline"
+              data-testid={`loginpage-social-${provider.service}`}
+            >
+              <a href={hrefFor(provider.service)}>
+                <provider.icon
+                  className={`size-5 ${provider.iconClassName ?? ""}`}
+                />
+                {buttonTextFromService(provider.label)}
+              </a>
+            </Button>
+          ))}
       </div>
 
       {showQRLogin && (

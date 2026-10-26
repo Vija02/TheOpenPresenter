@@ -189,3 +189,93 @@ it("Can accept an invitation that was sent to an email address", () =>
     expect(membership.is_owner).toEqual(false);
     expect(membership.is_billing_contact).toEqual(false);
   }));
+
+async function invitationPreview(
+  client: PoolClient,
+  invitationId: string,
+  code: string | null = null,
+) {
+  const {
+    rows: [row],
+  } = await client.query(
+    `select (p).* from app_public.invitation_preview($1, $2) p`,
+    [invitationId, code],
+  );
+  return row;
+}
+
+it("Can preview an email invitation while logged out", () =>
+  withRootDb(async (client) => {
+    const [organizationOwner] = await createUsers(client, 1, true);
+    await becomeUser(client, organizationOwner);
+    const [organization] = await createOrganizations(client, 1);
+    await inviteToOrganization(
+      client,
+      organization.id,
+      null,
+      "new@example.com",
+    );
+    await becomeRoot(client);
+    const {
+      rows: [invitation],
+    } = await client.query(
+      `select * from app_public.organization_invitations order by id desc limit 1`,
+    );
+
+    await becomeUser(client, null);
+    expect(
+      await invitationPreview(client, invitation.id, invitation.code),
+    ).toEqual({
+      organization_name: organization.name,
+      email: "new@example.com",
+      has_account: false,
+    });
+    expect(
+      (await invitationPreview(client, invitation.id, "wrong"))
+        .organization_name,
+    ).toBeNull();
+  }));
+
+it("Verifies the invited email when accepting with the code", () =>
+  withRootDb(async (client) => {
+    const [organizationOwner] = await createUsers(client, 1, true);
+    const [invitee] = await createUsers(client, 1, false);
+    await becomeUser(client, organizationOwner);
+    const [organization] = await createOrganizations(client, 1);
+    await inviteToOrganization(client, organization.id, null, invitee._email);
+    await becomeRoot(client);
+    const {
+      rows: [invitation],
+    } = await client.query(
+      `select * from app_public.organization_invitations order by id desc limit 1`,
+    );
+
+    await becomeUser(client, null);
+    expect(
+      (await invitationPreview(client, invitation.id, invitation.code))
+        .has_account,
+    ).toEqual(true);
+
+    await becomeUser(client, invitee);
+    await acceptInvitationToOrganization(
+      client,
+      invitation.id,
+      invitation.code,
+    );
+
+    await becomeRoot(client);
+    const {
+      rows: [userEmail],
+    } = await client.query(
+      `select * from app_public.user_emails where user_id = $1`,
+      [invitee.id],
+    );
+    expect(userEmail.is_verified).toEqual(true);
+    expect(userEmail.is_primary).toEqual(true);
+    const {
+      rows: [user],
+    } = await client.query(`select * from app_public.users where id = $1`, [
+      invitee.id,
+    ]);
+    expect(user.is_verified).toEqual(true);
+  }));

@@ -31,6 +31,7 @@ export default function Home() {
   const [searchParams] = useSearchParams();
   const rawNext = searchParams.get("next");
   const hasKiosk = searchParams.has("kiosk");
+  const email = searchParams.get("email") ?? "";
 
   const next: string = isSafe(rawNext?.toString() ?? null)
     ? rawNext!.toString()
@@ -53,6 +54,7 @@ export default function Home() {
                 setError={setError}
                 onSuccessRedirectTo={next}
                 autoOpenQRLogin={hasKiosk}
+                defaultEmail={email}
               />
             </div>
           </div>
@@ -74,6 +76,7 @@ interface LoginFormProps {
   error: Error | CombinedError | null;
   setError: (error: Error | CombinedError | null) => void;
   autoOpenQRLogin?: boolean;
+  defaultEmail?: string;
 }
 
 function LoginForm({
@@ -81,6 +84,7 @@ function LoginForm({
   error,
   setError,
   autoOpenQRLogin,
+  defaultEmail = "",
 }: LoginFormProps) {
   const [, login] = useLoginMutation();
   const [, navigate] = useLocation();
@@ -90,7 +94,7 @@ function LoginForm({
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      username: "",
+      username: defaultEmail,
       password: "",
       rememberMe: true,
     },

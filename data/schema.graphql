@@ -2525,6 +2525,12 @@ type ForgotPasswordPayload {
   clientMutationId: String
 }
 
+type InvitationPreview {
+  email: String
+  hasAccount: Boolean
+  organizationName: String
+}
+
 """All input for the `inviteToOrganization` mutation."""
 input InviteToOrganizationInput {
   """
@@ -6053,6 +6059,11 @@ type Query {
   currentUserCanAccessProject(projectId: UUID!): Boolean
   currentUserCanAccessScreen(screenId: UUID!): Boolean
   currentUserCanAccessTag(tagId: UUID!): Boolean
+
+  """
+  Public summary of an invitation so the invitee can be guided to sign in or sign up. Returns null when the invitation or code does not match.
+  """
+  invitationPreview(code: String, invitationId: UUID!): InvitationPreview
   media(id: UUID!): Media
 
   """Reads and enables pagination through a set of `MediaAudioMetadatum`."""
