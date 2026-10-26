@@ -104,7 +104,10 @@ export function SharedLayout({
       !error &&
       forbidsLoggedOut
     ) {
-      const fullLocation = location + (searchString ? `?${searchString}` : "");
+      const nextParams = new URLSearchParams(searchString);
+      nextParams.delete("kiosk");
+      const nextSearch = nextParams.toString();
+      const fullLocation = location + (nextSearch ? `?${nextSearch}` : "");
       const loginUrl = `/login?next=${encodeURIComponent(fullLocation)}${hasKiosk ? "&kiosk" : ""}`;
       return <Redirect href={loginUrl} />;
     }
