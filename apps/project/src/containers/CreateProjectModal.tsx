@@ -115,6 +115,7 @@ const CreateProjectModal = ({
         }
 
         captureEvent("project_created", {
+          source: "modal",
           has_name: data.name !== "",
           has_category: data.categoryId !== UNCATEGORIZED,
           tag_count: selectedTagIds.length,
