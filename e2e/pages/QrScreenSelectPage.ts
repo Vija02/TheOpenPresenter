@@ -24,11 +24,11 @@ export class QrScreenSelectPage {
     });
     this.missingIdAlert = this.page.getByText("Missing id");
     this.noAccessMessage = this.page.getByText(
-      "You don't have access to any organizations with screens.",
+      "You don't have access to any organizations with virtual screens.",
     );
-    this.noScreensYetMessage = this.page.getByText("No screens yet");
+    this.noScreensYetMessage = this.page.getByText("No virtual screens yet");
     this.createScreenButton = this.page.getByRole("button", {
-      name: "Create screen",
+      name: "Create virtual screen",
       exact: true,
     });
     this.yourOrganizationsHeading = this.page.getByRole("heading", {
@@ -62,7 +62,7 @@ export class QrScreenSelectPage {
     return this.page
       .locator("section")
       .filter({ has: this.orgSectionHeading(orgName) })
-      .getByRole("button", { name: "Create new screen" });
+      .getByRole("button", { name: "Create new virtual screen" });
   }
 
   /**
@@ -70,7 +70,7 @@ export class QrScreenSelectPage {
    */
   orgEmptyStateRow(orgName: string): Locator {
     return this.page.getByRole("button", {
-      name: new RegExp(`${orgName}.*Create a new screen`, "s"),
+      name: new RegExp(`${orgName}.*Create a new virtual screen`, "s"),
     });
   }
 

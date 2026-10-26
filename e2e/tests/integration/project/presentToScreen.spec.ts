@@ -123,7 +123,7 @@ test.describe("Present to a screen from the remote", () => {
     await page.goto(`/app/${ORG_SLUG}/${PROJECT_SLUG}`);
     await projectPage.openPresentMenu();
 
-    await expect(page.getByText("No screens set up yet.")).toBeVisible();
+    await expect(page.getByText("No virtual screens set up yet.")).toBeVisible();
     await expect(projectPage.noScreensSetUpLink).toBeVisible();
   });
 

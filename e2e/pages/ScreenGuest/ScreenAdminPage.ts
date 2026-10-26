@@ -20,7 +20,7 @@ export class ScreenAdminPage {
 
   constructor(public readonly page: Page) {
     this.backToScreensLink = page.getByRole("link", {
-      name: "Back to screens",
+      name: "Back to virtual screens",
     });
     this.screenHeading = page.getByRole("heading", { level: 1 });
     this.setupButton = page.getByRole("button", { name: "Setup" });
@@ -46,7 +46,7 @@ export class ScreenAdminPage {
     this.dangerZoneHeading = page.getByRole("heading", { name: "Danger zone" });
 
     this.deleteScreenButton = page.getByRole("button", {
-      name: "Delete screen",
+      name: "Delete virtual screen",
     });
     // PopConfirm confirmation button — distinct from the trigger above.
     this.confirmDeleteButton = page.getByRole("button", {

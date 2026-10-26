@@ -89,12 +89,12 @@ export class ProjectPage {
 
   get stopPresentingButton(): Locator {
     return this.page.getByRole("button", {
-      name: "Stop presenting to this screen",
+      name: "Stop presenting to this virtual screen",
     });
   }
 
   get noScreensSetUpLink(): Locator {
-    return this.page.getByRole("link", { name: "Set up a screen" });
+    return this.page.getByRole("link", { name: "Set up a virtual screen" });
   }
 
   // --- Present from phone ---
@@ -118,7 +118,7 @@ export class ProjectPage {
   }
 
   get stopPresentingOverlayButton(): Locator {
-    // Exact, so it doesn't also match "Stop presenting to this screen".
+    // Exact, so it doesn't also match "Stop presenting to this virtual screen".
     return this.page.getByRole("button", {
       name: "Stop presenting",
       exact: true,
