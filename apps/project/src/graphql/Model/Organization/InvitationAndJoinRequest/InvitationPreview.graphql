@@ -1,0 +1,8 @@
+query InvitationPreview($id: UUID!, $code: String) {
+  ...SharedLayout_Query
+  invitationPreview(invitationId: $id, code: $code) {
+    organizationName
+    email
+    hasAccount
+  }
+}

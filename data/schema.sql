@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict TVbZtMPT2jPWk2Z1Fi8fpLgVYWRWB1ZFvXyaZOUDIElSyAZC8ZlDXdaUfh1K5ie
+\restrict DWUd60izk0x6p2Qn1ErdAzJfgUd0Bfbe1ZyQQKFOkIw1dXxvUFhoaJIBf4E4Onf
 
 -- Dumped from database version 17.0 (Debian 17.0-1.pgdg120+1)
 -- Dumped by pg_dump version 18.6
@@ -158,6 +158,17 @@ CREATE TYPE app_public.cloud_sync_run_status AS ENUM (
     'in_progress',
     'completed',
     'failed'
+);
+
+
+--
+-- Name: invitation_preview; Type: TYPE; Schema: app_public; Owner: -
+--
+
+CREATE TYPE app_public.invitation_preview AS (
+	organization_name text,
+	email public.citext,
+	has_account boolean
 );
 
 
@@ -1448,13 +1459,31 @@ CREATE FUNCTION app_public.accept_invitation_to_organization(invitation_id uuid,
     AS $$
 declare
   v_organization app_public.organizations;
+  v_email citext;
 begin
   v_organization = app_public.organization_for_invitation(invitation_id, code);
+
+  select email into v_email from app_public.organization_invitations where id = invitation_id;
 
   -- Accept the user into the organization
   insert into app_public.organization_memberships (organization_id, user_id)
     values(v_organization.id, app_public.current_user_id())
     on conflict do nothing;
+
+  if v_email is not null then
+    update app_public.user_emails
+    set
+      is_verified = true,
+      is_primary = is_primary or not exists(
+        select 1 from app_public.user_emails other_email where other_email.user_id = user_emails.user_id and other_email.is_primary is true
+      )
+    where user_id = app_public.current_user_id()
+    and email = v_email
+    and is_verified is false
+    and not exists(
+      select 1 from app_public.user_emails other_email where other_email.email = v_email and other_email.is_verified is true
+    );
+  end if;
 
   -- Delete the invitation
   delete from app_public.organization_invitations where id = invitation_id;
@@ -2253,6 +2282,52 @@ $$;
 --
 
 COMMENT ON FUNCTION app_public.forgot_password(email public.citext) IS 'If you''ve forgotten your password, give us one of your email addresses and we''ll send you a reset token. Note this only works if you have added an email address!';
+
+
+--
+-- Name: invitation_preview(uuid, text); Type: FUNCTION; Schema: app_public; Owner: -
+--
+
+CREATE FUNCTION app_public.invitation_preview(invitation_id uuid, code text DEFAULT NULL::text) RETURNS app_public.invitation_preview
+    LANGUAGE plpgsql STABLE SECURITY DEFINER
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+    AS $$
+declare
+  v_invitation app_public.organization_invitations;
+  v_result app_public.invitation_preview;
+begin
+  select * into v_invitation from app_public.organization_invitations where id = invitation_id;
+
+  if v_invitation is null then
+    return null;
+  end if;
+
+  if v_invitation.user_id is null and v_invitation.code is distinct from invitation_preview.code then
+    return null;
+  end if;
+
+  select name into v_result.organization_name
+    from app_public.organizations where id = v_invitation.organization_id;
+
+  if v_invitation.user_id is not null then
+    v_result.has_account = true;
+  else
+    v_result.email = v_invitation.email;
+    v_result.has_account = exists(
+      select 1 from app_public.user_emails where user_emails.email = v_invitation.email
+    );
+  end if;
+
+  return v_result;
+end;
+$$;
+
+
+--
+-- Name: FUNCTION invitation_preview(invitation_id uuid, code text); Type: COMMENT; Schema: app_public; Owner: -
+--
+
+COMMENT ON FUNCTION app_public.invitation_preview(invitation_id uuid, code text) IS 'Public summary of an invitation so the invitee can be guided to sign in or sign up. Returns null when the invitation or code does not match.';
 
 
 --
@@ -7399,6 +7474,14 @@ GRANT ALL ON FUNCTION app_public.forgot_password(email public.citext) TO theopen
 
 
 --
+-- Name: FUNCTION invitation_preview(invitation_id uuid, code text); Type: ACL; Schema: app_public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_public.invitation_preview(invitation_id uuid, code text) FROM PUBLIC;
+GRANT ALL ON FUNCTION app_public.invitation_preview(invitation_id uuid, code text) TO theopenpresenter_visitor;
+
+
+--
 -- Name: FUNCTION invite_to_organization(organization_id uuid, username public.citext, email public.citext); Type: ACL; Schema: app_public; Owner: -
 --
 
@@ -8290,5 +8373,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE theopenpresenter REVOKE ALL ON FUNCTIONS FROM 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict TVbZtMPT2jPWk2Z1Fi8fpLgVYWRWB1ZFvXyaZOUDIElSyAZC8ZlDXdaUfh1K5ie
+\unrestrict DWUd60izk0x6p2Qn1ErdAzJfgUd0Bfbe1ZyQQKFOkIw1dXxvUFhoaJIBf4E4Onf
 
