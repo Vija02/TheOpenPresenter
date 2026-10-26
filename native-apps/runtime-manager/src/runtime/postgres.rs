@@ -139,17 +139,20 @@ mod tests {
     use super::*;
     use std::process::{Child, Command};
 
-    /// A long-running process with a chosen name, run as `sleep`.
+    /// A long-running process with a chosen name: a shell blocked reading
+    /// its stdin, which stays open for as long as the `Child` lives.
     fn named_process(dir: &Path, name: &str) -> Child {
-        let sleep = ["/bin/sleep", "/usr/bin/sleep"]
-            .into_iter()
-            .find(|p| Path::new(p).exists())
-            .expect("no sleep binary");
         // A link rather than a copy: exec'ing a freshly written binary
-        // races other test threads forking ("Text file busy").
+        // races other test threads forking ("Text file busy"). Not `sleep`:
+        // multi-call coreutils (uutils on Ubuntu 26.04) refuse to run under
+        // a name that isn't theirs.
         let bin = dir.join(name);
-        std::os::unix::fs::symlink(sleep, &bin).unwrap();
-        Command::new(bin).arg("30").spawn().unwrap()
+        std::os::unix::fs::symlink("/bin/sh", &bin).unwrap();
+        Command::new(bin)
+            .args(["-c", "read _"])
+            .stdin(std::process::Stdio::piped())
+            .spawn()
+            .unwrap()
     }
 
     fn write_pid_file(pgdata: &Path, pid: u32, data_dir: &Path) {
@@ -171,6 +174,8 @@ mod tests {
         // Reaped as it exits, the way init reaps a real orphan. Left
         // unreaped it would linger as a zombie, which still answers
         // `kill(pid, 0)`, and the stop would sit out both grace periods.
+        // `wait` closes stdin first, which would end it before the stop.
+        let _stdin = orphan.stdin.take();
         let reaper = std::thread::spawn(move || orphan.wait());
 
         let started = Instant::now();
