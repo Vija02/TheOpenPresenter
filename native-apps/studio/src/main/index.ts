@@ -10,6 +10,7 @@ import {
   resolveRootUrl,
   resolveRuntimeSource,
 } from "./settings/store";
+import { setupCrashReporting } from "./shell/crashes";
 import { reportDiagnosis } from "./shell/diagnostics";
 import { logShell } from "./shell/log";
 import { setupMenu } from "./shell/menu";
@@ -92,6 +93,8 @@ if (!gotLock) {
 } else {
   /** True while startup is deciding which window to show. */
   let routing = true;
+
+  setupCrashReporting();
 
   app.on("second-instance", () => {
     const win = getMainWindow();

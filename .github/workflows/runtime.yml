@@ -107,6 +107,7 @@ jobs:
         shell: bash
         env:
           TOP_RUNTIME_PUBKEY: ${{ secrets.RUNTIME_PUBLIC_KEY }}
+          TOP_ANALYTICS_KEY: ${{ vars.ANALYTICS_KEY }}
         run: |
           cargo build --release \
             --bin top-runtime-publish \
@@ -293,6 +294,7 @@ jobs:
         env:
           RUNTIME_SIGNING_KEY: ${{ secrets.RUNTIME_SIGNING_KEY }}
           TOP_RUNTIME_PUBKEY: ${{ secrets.RUNTIME_PUBLIC_KEY }}
+          TOP_ANALYTICS_KEY: ${{ vars.ANALYTICS_KEY }}
         run: |
           set -euo pipefail
           BIN=native-apps/runtime-manager/target/release/top-runtime-manager

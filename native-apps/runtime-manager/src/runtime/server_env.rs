@@ -114,6 +114,13 @@ impl ServerEnv<'_> {
         set("DISABLE_HSTS", "1".into());
         set("ALLOW_ANY_ORIGIN", "1".into());
 
+        // Baked in by CI for shipped builds only, so local development of
+        // the manager never reports. Opt out with `ANALYTICS_KEY=` in .env.
+        if let Some(key) = option_env!("TOP_ANALYTICS_KEY").filter(|k| !k.is_empty()) {
+            set("ANALYTICS_KEY", key.into());
+            set("DEPLOYMENT_ENV", "studio-local".into());
+        }
+
         for name in FORWARDED {
             if let Ok(value) = std::env::var(name) {
                 set(name, value);
