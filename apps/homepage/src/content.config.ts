@@ -10,6 +10,8 @@ const blog = defineCollection({
       title: z.string(),
       // Shown on the card in /blog and used as the meta description.
       description: z.string(),
+      // Skip the description as the lead paragraph under the H1
+      hideLead: z.boolean().default(false),
       // Small uppercase label above the title. Keep the set small so the hub
       // page stays scannable, e.g. "Product", "Behind the scenes", "Churches".
       category: z.string().default("Product"),

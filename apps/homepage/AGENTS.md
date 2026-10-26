@@ -57,11 +57,13 @@ They live in an Astro content collection so a new post is one file.
    RSS feed automatically; there is no index to update.
 2. Frontmatter (`title`, `description`, `category`, `publishDate` required;
    `author`, `minutes`, `updatedDate`, `cover`, `coverAlt`, `coverVideo`,
-   `draft` optional). A header video uses `coverVideo` with an absolute path
+   `draft`, `hideLead` optional). A header video uses `coverVideo` with an absolute path
    under `public/`; `cover` is a relative image import. `coverVideo` wins when
    both are set. Both render between the byline and the body.
    `description` is used three times: the meta description, the card blurb on
    `/blog`, and the lead paragraph under the H1. Write it to work as all three.
+   If the body already opens with the same sentence, set `hideLead: true` to
+   drop the lead paragraph; the meta description and card still use it.
 3. Reading time is estimated from the body at 200 wpm. Set `minutes` to override.
 4. `draft: true` renders in `astro dev` but is dropped from the production build.
 
