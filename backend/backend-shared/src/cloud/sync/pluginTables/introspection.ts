@@ -38,6 +38,13 @@ export type CloudSyncTable = {
   localIdentityColumns: string[];
   /** Columns referencing users. Users differ per instance, so these are cleared. */
   userColumns: string[];
+  /**
+   * Columns referencing projects. A project pulled from the cloud has its own
+   * id here, so these are translated through `projects.cloud_project_id`.
+   */
+  projectColumns: string[];
+  /** Columns referencing media, which keep their id on both sides. */
+  mediaColumns: string[];
   pluginReferences: PluginReference[];
   conflict: ConflictStrategy;
   copyLabelColumn: string | null;
@@ -75,6 +82,8 @@ type Queryable = {
 
 const ORGANIZATIONS = "app_public.organizations";
 const USERS = "app_public.users";
+const PROJECTS = "app_public.projects";
+const MEDIAS = "app_public.medias";
 
 export const quoteIdent = (identifier: string): string =>
   `"${identifier.replace(/"/g, '""')}"`;
@@ -116,6 +125,8 @@ export const resolveCloudSyncTable = (
 
   let organizationColumn: string | null = null;
   const userColumns: string[] = [];
+  const projectColumns: string[] = [];
+  const mediaColumns: string[] = [];
   const pluginReferences: PluginReference[] = [];
   visiting.add(raw);
   for (const fk of raw.foreign_keys) {
@@ -126,6 +137,14 @@ export const resolveCloudSyncTable = (
       organizationColumn = fk.columns[0]!;
     } else if (fk.references === USERS && fk.columns.length === 1) {
       userColumns.push(fk.columns[0]!);
+    } else if (
+      (fk.references === PROJECTS || fk.references === MEDIAS) &&
+      fk.columns.length === 1 &&
+      fk.referenced_columns.join() === "id"
+    ) {
+      (fk.references === PROJECTS ? projectColumns : mediaColumns).push(
+        fk.columns[0]!,
+      );
     } else {
       const reference = resolvePluginReference(fk, marked, visiting);
       if ("error" in reference) return reference;
@@ -147,6 +166,9 @@ export const resolveCloudSyncTable = (
   const key = orgScoped ?? primary;
   if (!key) {
     return { error: "has no primary key or unique constraint" };
+  }
+  if (key.columns.some((c) => projectColumns.includes(c))) {
+    return { error: "is keyed by a project, whose id differs between sides" };
   }
 
   // A copy needs its own key, which only a generated primary key can give,
@@ -187,6 +209,8 @@ export const resolveCloudSyncTable = (
     rowKeyColumns: key.columns.filter((c) => c !== organizationColumn),
     localIdentityColumns: primary && primary !== key ? primary.columns : [],
     userColumns,
+    projectColumns,
+    mediaColumns,
     pluginReferences,
     conflict,
     copyLabelColumn,
@@ -198,8 +222,8 @@ const resolvePluginReference = (
   marked: RawCloudSyncTable[],
   visiting: Set<RawCloudSyncTable>,
 ): PluginReference | { error: string } => {
-  // Ids of anything outside synced plugin tables (projects, media, unmarked
-  // tables) differ between the sides, so the row would point at nothing.
+  // Ids of anything else outside synced plugin tables (unmarked tables) differ
+  // between the sides, so the row would point at nothing.
   const cannot = {
     error: `references ${fk.references}, which cannot be synced by id`,
   };

@@ -7,6 +7,7 @@ import { logger } from "@repo/observability";
 import bodyParser from "body-parser";
 import type { RequestHandler } from "express";
 import multer from "multer";
+import { networkInterfaces } from "os";
 
 import { pluginName } from "../consts";
 import { PPT_EXTENSIONS, classifySlideFile } from "../importers/fileTypes";
@@ -14,6 +15,7 @@ import { registerPublicCanvaRoutes } from "./canvaRoutes";
 import {
   findCurrentUpload,
   findLinkByToken,
+  findProjectCloudHost,
   lookupOrganizationName,
 } from "./db";
 import {
@@ -33,9 +35,42 @@ import {
 /** Cap on a single public upload */
 export const MAX_UPLOAD_BYTES = 50 * 1024 * 1024;
 
-export const getUploadLinkBaseUrl = (): string => {
-  const root = process.env.ROOT_URL ?? "";
+export const getUploadLinkBaseUrl = async (
+  serverPluginApi: ServerPluginApi,
+  projectId: string | null,
+): Promise<string> => {
+  const cloudHost = projectId
+    ? await findProjectCloudHost(serverPluginApi, projectId)
+    : null;
+  const root = cloudHost?.replace(/\/+$/, "") ?? reachableRootUrl();
   return `${root}/plugin/${pluginName}/upload`;
+};
+
+/** This server's address, as other devices on the network reach it. */
+const reachableRootUrl = (): string => {
+  const root = process.env.ROOT_URL ?? "";
+  try {
+    const url = new URL(root);
+    if (url.hostname !== "localhost" && url.hostname !== "127.0.0.1") {
+      return root;
+    }
+    const lan = lanAddress();
+    if (lan) url.hostname = lan;
+    return url.origin;
+  } catch {
+    return root;
+  }
+};
+
+const lanAddress = (): string | null => {
+  for (const addresses of Object.values(networkInterfaces())) {
+    for (const address of addresses ?? []) {
+      if (address.family !== "IPv4" || address.internal) continue;
+      if (address.address.startsWith("169.254.")) continue;
+      return address.address;
+    }
+  }
+  return null;
 };
 
 /** What the public file picker offers. Derived, not hand-written. */

@@ -81,10 +81,39 @@ describe("resolveCloudSyncTable", () => {
     ).toMatchObject({ keyColumns: ["organization_id", "source"] });
   });
 
-  it("refuses a table referencing rows whose ids differ between instances", () => {
+  it("translates project references, and keeps media ones as they are", () => {
     expect(
       resolveCloudSyncTable(
         raw({
+          foreign_keys: [
+            orgFk,
+            {
+              columns: ["project_id"],
+              references: "app_public.projects",
+              referenced_columns: ["id"],
+            },
+            {
+              columns: ["media_id"],
+              references: "app_public.medias",
+              referenced_columns: ["id"],
+            },
+          ],
+        }),
+      ),
+    ).toMatchObject({
+      projectColumns: ["project_id"],
+      mediaColumns: ["media_id"],
+    });
+  });
+
+  it("refuses a table keyed by a project, whose id differs between instances", () => {
+    expect(
+      resolveCloudSyncTable(
+        raw({
+          unique_keys: [
+            { primary: true, columns: ["id"] },
+            { primary: false, columns: ["organization_id", "project_id"] },
+          ],
           foreign_keys: [
             orgFk,
             {
@@ -96,7 +125,26 @@ describe("resolveCloudSyncTable", () => {
         }),
       ),
     ).toEqual({
-      error: "references app_public.projects, which cannot be synced by id",
+      error: "is keyed by a project, whose id differs between sides",
+    });
+  });
+
+  it("refuses a table referencing rows whose ids differ between instances", () => {
+    expect(
+      resolveCloudSyncTable(
+        raw({
+          foreign_keys: [
+            orgFk,
+            {
+              columns: ["screen_id"],
+              references: "app_public.screens",
+              referenced_columns: ["id"],
+            },
+          ],
+        }),
+      ),
+    ).toEqual({
+      error: "references app_public.screens, which cannot be synced by id",
     });
   });
 

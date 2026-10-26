@@ -169,6 +169,19 @@ const applyOne = async (
   const row: Record<string, unknown> = {};
   for (const c of columns) row[c] = change.row[c];
 
+  const outside = await referenceOutsideOrganization(
+    client,
+    table,
+    organizationId,
+    row,
+  );
+  if (outside) {
+    return {
+      status: "rejected",
+      reason: `${outside} is not in this organization`,
+    };
+  }
+
   if (!current) {
     row[table.organizationColumn] = organizationId;
     for (const c of userColumns) row[c] = userId;
@@ -213,6 +226,47 @@ const applyOne = async (
     [...params, JSON.stringify(row)],
   );
   return { status: "applied", updatedAt: updated!.updated_at };
+};
+
+/**
+ * The first column naming a row of another organization. Foreign keys ignore
+ * RLS, so without this a pushed row could point into another organization.
+ */
+const referenceOutsideOrganization = async (
+  client: Queryable,
+  table: CloudSyncTable,
+  organizationId: string,
+  row: Record<string, unknown>,
+): Promise<string | null> => {
+  const references = [
+    ...table.projectColumns.map((column) => ({
+      column,
+      target: "app_public.projects",
+      key: "id",
+      org: "organization_id",
+    })),
+    ...table.mediaColumns.map((column) => ({
+      column,
+      target: "app_public.medias",
+      key: "id",
+      org: "organization_id",
+    })),
+    ...table.pluginReferences.map((ref) => ({
+      column: ref.column,
+      target: `${quoteIdent(ref.schema)}.${quoteIdent(ref.table)}`,
+      key: quoteIdent(ref.keyColumn),
+      org: quoteIdent(ref.organizationColumn),
+    })),
+  ];
+  for (const { column, target, key, org } of references) {
+    if (row[column] == null) continue;
+    const { rows } = await client.query(
+      `select 1 from ${target} where ${key} = $1 and ${org} = $2`,
+      [row[column], organizationId],
+    );
+    if (rows.length === 0) return column;
+  }
+  return null;
 };
 
 /** What the caller may write, which column-level grants can narrow. */

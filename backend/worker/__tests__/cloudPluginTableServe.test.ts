@@ -37,6 +37,10 @@ beforeAll(async () => {
       pluginName: "bible",
       migrationsPath: path.join(plugins, "bible/migrations"),
     },
+    {
+      pluginName: "slides",
+      migrationsPath: path.join(plugins, "slides/migrations"),
+    },
   ]);
   ({ tables } = await introspectCloudSyncTables(pool));
 });
@@ -367,6 +371,139 @@ describe("as the cloud's visitor role", () => {
       await expect(
         findCloudOrganizationId(client, "testpluginserve-other"),
       ).rejects.toThrow("Organization not found");
+    });
+  });
+});
+
+describe("upload links", () => {
+  /** As the cloud applies a push: the member's own role, under RLS. */
+  const becomeMember = async (
+    client: PoolClient,
+    orgId: string,
+    userId: string,
+  ) => {
+    await client.query(
+      `insert into app_public.organization_memberships (organization_id, user_id)
+       values ($1, $2)`,
+      [orgId, userId],
+    );
+    const {
+      rows: [session],
+    } = await client.query(
+      "insert into app_private.sessions (user_id) values ($1) returning uuid",
+      [userId],
+    );
+    await client.query(
+      `select set_config('role', $1, true), set_config('jwt.claims.session_id', $2, true)`,
+      [process.env.DATABASE_VISITOR, session.uuid],
+    );
+  };
+
+  const linkRow = (id: string, projectId: string) => ({
+    id,
+    organization_id: OTHER_ORG_ID,
+    project_id: projectId,
+    scene_id: "scene",
+    plugin_id: "plugin",
+    token: `token-${id}`,
+    attempt_count: 0,
+    is_active: true,
+  });
+
+  it("refuses a link naming another organization's project", async () => {
+    await inCloud(async ({ client, orgId, userId }) => {
+      const {
+        rows: [other],
+      } = await client.query(
+        `insert into app_public.organizations (slug, name)
+         values ('testpluginserve-other', 'Other') returning id`,
+      );
+      const {
+        rows: [project],
+      } = await client.query(
+        `insert into app_public.projects (organization_id, slug, name)
+         values ($1, 'theirs', 'Theirs') returning id`,
+        [other.id],
+      );
+      await becomeMember(client, orgId, userId);
+
+      const linkId = "11000000-0000-4000-8000-000000000002";
+      const [result] = await applyPushedChanges(
+        client,
+        tableNamed("upload_link"),
+        orgId,
+        userId,
+        [
+          {
+            key: { id: linkId },
+            expectedUpdatedAt: null,
+            row: linkRow(linkId, project.id),
+          },
+        ],
+      );
+
+      expect(result).toEqual({
+        status: "rejected",
+        reason: "project_id is not in this organization",
+      });
+    });
+  });
+
+  it("lets a member push a link and an upload to it", async () => {
+    await inCloud(async ({ client, orgId, userId }) => {
+      const {
+        rows: [project],
+      } = await client.query(
+        `insert into app_public.projects (organization_id, slug, name)
+         values ($1, 'easter', 'Easter') returning id`,
+        [orgId],
+      );
+      const {
+        rows: [media],
+      } = await client.query(
+        `insert into app_public.medias (media_name, file_offset, organization_id)
+         values ('slides.pdf', 0, $1) returning id`,
+        [orgId],
+      );
+      await becomeMember(client, orgId, userId);
+
+      const linkId = "11000000-0000-4000-8000-000000000001";
+      const [link] = await applyPushedChanges(
+        client,
+        tableNamed("upload_link"),
+        orgId,
+        userId,
+        [
+          {
+            key: { id: linkId },
+            expectedUpdatedAt: null,
+            row: linkRow(linkId, project.id),
+          },
+        ],
+      );
+      const uploadId = "22000000-0000-4000-8000-000000000001";
+      const [upload] = await applyPushedChanges(
+        client,
+        tableNamed("upload_link_upload"),
+        orgId,
+        userId,
+        [
+          {
+            key: { id: uploadId },
+            expectedUpdatedAt: null,
+            row: {
+              id: uploadId,
+              organization_id: OTHER_ORG_ID,
+              upload_link_id: linkId,
+              media_id: media.id,
+              original_name: "slides.pdf",
+            },
+          },
+        ],
+      );
+
+      expect(link).toMatchObject({ status: "applied" });
+      expect(upload).toMatchObject({ status: "applied" });
     });
   });
 });

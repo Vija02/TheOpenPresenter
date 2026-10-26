@@ -222,8 +222,18 @@ type Action = "insert" | "same" | "overwrite" | "conflict";
 
 const applyCloudPluginRows = async (
   { withPgClient, cloudConnection, table, entity }: Ctx,
-  cloudRows: Record<string, unknown>[],
+  pulledRows: Record<string, unknown>[],
 ): Promise<{ pulled: number; conflicts: number }> => {
+  const cloudRows = await withPgClient((pgClient) =>
+    withLocalProjects(
+      pgClient,
+      table,
+      cloudConnection.organization_id,
+      pulledRows,
+    ),
+  );
+  if (cloudRows.length === 0) return { pulled: 0, conflicts: 0 };
+
   // The cloud may run a newer plugin version with columns we lack; only write
   // what exists here, and let local defaults fill the rest.
   const columns = Object.keys(cloudRows[0]!).filter(
@@ -266,18 +276,25 @@ const applyCloudPluginRows = async (
     cross join lateral jsonb_populate_record(null::${target}, e.r) c
   `;
   // Rows pointing at a row this org does not have (not pulled, or deleted
-  // here) are skipped rather than failing the batch on the foreign key.
+  // here) are skipped rather than failing the batch on the foreign key. Media
+  // arrive in their own job after this one, so theirs can lag a sync behind.
   const referencesPresent =
-    table.pluginReferences
-      .map((ref) => {
+    [
+      ...table.pluginReferences.map((ref) => {
         const column = `c.${quoteIdent(ref.column)}`;
         return `(${column} is null or exists (
           select 1 from ${quoteIdent(ref.schema)}.${quoteIdent(ref.table)} r
           where r.${quoteIdent(ref.keyColumn)} = ${column}
             and r.${quoteIdent(ref.organizationColumn)} = c.${org}
         ))`;
-      })
-      .join(" and ") || "true";
+      }),
+      ...table.mediaColumns.map((c) => {
+        const column = `c.${quoteIdent(c)}`;
+        return `(${column} is null or exists (
+          select 1 from app_public.medias m where m.id = ${column}
+        ))`;
+      }),
+    ].join(" and ") || "true";
 
   return withPgClient(async (pgClient) => {
     await pgClient.query("BEGIN");
@@ -345,11 +362,13 @@ const applyCloudPluginRows = async (
           select $2, $3, ${rowKeySql(table, "c")}, (e.r->>'updated_at')::timestamptz, l.updated_at
           from ${incomingRows}
           join ${target} l on ${keyMatch}
+          -- Only rows applied or already equal: a skipped one is pulled again.
+          where e.idx = any($4::bigint[])
           on conflict (cloud_connection_id, entity, row_key) do update
             set cloud_updated_at = excluded.cloud_updated_at,
                 local_updated_at = excluded.local_updated_at
         `,
-        params,
+        [...params, classified.map((x) => x.idx)],
       );
 
       await pgClient.query("COMMIT");
@@ -358,6 +377,49 @@ const applyCloudPluginRows = async (
       await pgClient.query("ROLLBACK");
       throw err;
     }
+  });
+};
+
+/**
+ * The cloud's rows with their project references made local. A row naming a
+ * project not here yet is left out; with no state recorded, a later sync
+ * pulls it again.
+ */
+const withLocalProjects = async (
+  pgClient: Parameters<Parameters<WithPgClient>[0]>[0],
+  table: CloudSyncTable,
+  organizationId: string,
+  rows: Record<string, unknown>[],
+): Promise<Record<string, unknown>[]> => {
+  if (table.projectColumns.length === 0) return rows;
+  const cloudIds = [
+    ...new Set(
+      rows.flatMap((row) =>
+        table.projectColumns
+          .map((c) => row[c])
+          .filter((id): id is string => typeof id === "string"),
+      ),
+    ),
+  ];
+  const { rows: projects } = await pgClient.query<{
+    cloud_id: string;
+    id: string;
+  }>(
+    `select cloud_project_id::text as cloud_id, id::text as id
+     from app_public.projects
+     where organization_id = $1 and cloud_project_id = any($2::uuid[])`,
+    [organizationId, cloudIds],
+  );
+  const localId = new Map(projects.map((p) => [p.cloud_id, p.id]));
+  return rows.flatMap((row) => {
+    const out = { ...row };
+    for (const c of table.projectColumns) {
+      if (typeof out[c] !== "string") continue;
+      const id = localId.get(out[c] as string);
+      if (!id) return [];
+      out[c] = id;
+    }
+    return [out];
   });
 };
 

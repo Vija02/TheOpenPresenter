@@ -1,6 +1,7 @@
 import type { ServerPluginApi } from "@repo/base-plugin/server";
 
 import { pluginName } from "../consts";
+import { CURRENT_UPLOAD } from "./db";
 import { UploadLinkRow, checkUploadLink } from "./rules";
 
 /**
@@ -44,23 +45,23 @@ export const claimUploadSlot = async (
     }
 
     // Whatever is live right now is what the new upload replaces.
-    let previousImportId: string | null = null;
-    if (link.current_upload_id) {
-      const { rows: prev } = await client.query<{ import_id: string | null }>(
-        `select import_id from upload_link_upload where id = $1`,
-        [link.current_upload_id],
-      );
-      previousImportId = prev[0]?.import_id ?? null;
-    }
+    const { rows: prev } = await client.query<{ import_id: string | null }>(
+      `select cur.import_id
+       from (select $1::uuid as id) l
+       cross join lateral (${CURRENT_UPLOAD}) cur`,
+      [link.id],
+    );
+    const previousImportId = prev[0]?.import_id ?? null;
 
     const {
       rows: [upload],
     } = await client.query(
       `insert into upload_link_upload
-         (upload_link_id, media_id, original_name, uploader_name)
-       values ($1, $2, $3, $4)
+         (organization_id, upload_link_id, media_id, original_name,
+          uploader_name)
+       values ($1, $2, $3, $4, $5)
        returning id`,
-      [link.id, mediaId, originalName, uploaderName],
+      [link.organization_id, link.id, mediaId, originalName, uploaderName],
     );
 
     // Every try costs an attempt, replacement or not.
@@ -129,11 +130,6 @@ export const recordImportId = async (
        set replaced_at = now()
        where upload_link_id = $1 and id <> $2 and replaced_at is null`,
       [uploadLinkId, uploadId],
-    );
-
-    await client.query(
-      `update upload_link set current_upload_id = $1 where id = $2`,
-      [uploadId, uploadLinkId],
     );
   });
 };

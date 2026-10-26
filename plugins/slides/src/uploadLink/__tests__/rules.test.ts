@@ -17,7 +17,6 @@ const link = (overrides: Partial<UploadLinkRow> = {}): UploadLinkRow => ({
   label: null,
   max_attempts: null,
   attempt_count: 0,
-  current_upload_id: null,
   expires_at: null,
   is_active: true,
   ...overrides,
@@ -107,7 +106,6 @@ describe("attempt limits", () => {
     const replacing = link({
       max_attempts: 3,
       attempt_count: 1,
-      current_upload_id: "upload-1",
     });
     expect(checkUploadLink(replacing)).toEqual({ ok: true });
   });
