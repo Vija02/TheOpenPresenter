@@ -43,6 +43,7 @@ const { data } = post;
     updatedTime={data.updatedDate ? isoDate(data.updatedDate) : undefined}
     minutes={readingMinutes(post)}
     author={data.author}
+    hideLead={data.hideLead}
   >
     {data.description}
   </BlogHeader>

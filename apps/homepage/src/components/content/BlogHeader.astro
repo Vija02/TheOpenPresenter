@@ -15,6 +15,7 @@ interface Props {
   minutes: number;
   author: string;
   avatar?: ImageMetadata;
+  hideLead?: boolean;
 }
 
 const {
@@ -28,6 +29,7 @@ const {
   minutes,
   author,
   avatar = defaultAvatar,
+  hideLead = false,
 } = Astro.props;
 ---
 
@@ -44,9 +46,13 @@ const {
   >
     {title}
   </h1>
-  <p class="text-xl text-gray-600 dark:text-gray-300 mb-6">
-    <slot />
-  </p>
+  {
+    !hideLead && (
+      <p class="text-xl text-gray-600 dark:text-gray-300 mb-6">
+        <slot />
+      </p>
+    )
+  }
   <div class="flex items-center gap-3">
     <Image
       src={avatar}
