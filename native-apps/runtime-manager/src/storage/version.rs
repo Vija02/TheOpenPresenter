@@ -95,6 +95,11 @@ pub fn compare(a: &str, b: &str) -> Ordering {
     }
 }
 
+/// Whether this is a prerelease, such as a nightly.
+pub fn is_prerelease(version: &str) -> bool {
+    !parse(version).pre.is_empty()
+}
+
 /// Sort newest-first, which is the order a version list should be read in.
 pub fn sort_newest_first(versions: &mut [String]) {
     versions.sort_by(|a, b| compare(b, a));
@@ -117,6 +122,13 @@ mod tests {
             sorted(&["0.0.2", "0.0.10", "0.0.9"]),
             vec!["0.0.10", "0.0.9", "0.0.2"]
         );
+    }
+
+    #[test]
+    fn tells_nightlies_from_releases() {
+        assert!(is_prerelease("0.0.0-nightly.20261026.ede1277"));
+        assert!(!is_prerelease("0.12.1"));
+        assert!(!is_prerelease("0.12.1+abc"));
     }
 
     #[test]

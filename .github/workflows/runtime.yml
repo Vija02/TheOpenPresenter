@@ -201,12 +201,16 @@ jobs:
           cat > "$SEED_SCRIPT" <<'PY'
           import json, sys
           versions = json.load(open(sys.argv[1])).get("versions", [])
-          print(" ".join(versions[-3:]))
+          nightly = "-" in sys.argv[2]
+          same = [v for v in versions if ("-" in v) == nightly]
+          print(" ".join(same[-3:]))
           PY
 
-          # Build deltas from the most recent few. Older than that, a client
-          # is better served by the full pack than by a long delta chain.
-          PREVS=$(python3 "$SEED_SCRIPT" "$SEED")
+          # Build deltas from the most recent few on the same channel. A
+          # stable user never has a nightly installed, so a delta from one is
+          # no use to them. Older than that, a client is better served by the
+          # full pack than by a long delta chain.
+          PREVS=$(python3 "$SEED_SCRIPT" "$SEED" "${{ steps.version.outputs.value }}")
 
           ARGS=""
           for v in $PREVS; do
