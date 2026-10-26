@@ -1,4 +1,5 @@
 import { ServerPluginApi } from "@repo/base-plugin/server";
+import type { LayoutDoc } from "@repo/layout";
 
 import { BibleBookMeta, PluginBaseData, PluginRendererData } from "../types";
 
@@ -33,4 +34,9 @@ export type BiblePreferences = {
   translationIds: string[];
   primaryTranslationId: string | null;
   favoriteIds: string[];
+};
+
+export type SavedTemplate = {
+  template: LayoutDoc;
+  showVerseNumbers: boolean;
 };

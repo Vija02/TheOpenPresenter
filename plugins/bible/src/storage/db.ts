@@ -6,6 +6,7 @@ import {
   BiblePreferences,
   ChapterInput,
   RequestAuth,
+  SavedTemplate,
   TranslationSummary,
 } from "./types";
 
@@ -271,5 +272,38 @@ export const setPreferences = async (
       args.primaryTranslationId,
       JSON.stringify(args.favoriteIds),
     ],
+  );
+};
+
+/** Server-side, when seeding a new scene */
+export const getSavedTemplate = async (
+  api: Api,
+  organizationId: string,
+): Promise<SavedTemplate | null> => {
+  const db = api.getDangerousRootPluginDb(pluginName);
+  const { rows } = await db.query<SavedTemplate>(
+    `select template, show_verse_numbers as "showVerseNumbers"
+       from bible_template
+      where organization_id = $1
+      limit 1`,
+    [organizationId],
+  );
+  return rows[0] ?? null;
+};
+
+export const setSavedTemplate = async (
+  api: Api,
+  auth: RequestAuth,
+  organizationId: string,
+  { template, showVerseNumbers }: SavedTemplate,
+): Promise<void> => {
+  const db = api.getPluginDb(pluginName, auth);
+  await db.query(
+    `insert into bible_template (organization_id, template, show_verse_numbers)
+      values ($1, $2::jsonb, $3)
+      on conflict (organization_id) do update set
+        template = excluded.template,
+        show_verse_numbers = excluded.show_verse_numbers`,
+    [organizationId, JSON.stringify(template), showVerseNumbers],
   );
 };

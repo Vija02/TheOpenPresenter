@@ -7,8 +7,11 @@ import {
 } from "@repo/base-plugin/server";
 import { VIDEO_VOLUME_KEY } from "@repo/base-types";
 import { OrganizationType } from "@repo/graphql";
+import type { LayoutDoc } from "@repo/layout";
 import { logger } from "@repo/observability";
 import path from "path";
+import { proxy } from "valtio";
+import { bind } from "valtio-yjs";
 import * as Y from "yjs";
 import z from "zod";
 
@@ -36,9 +39,11 @@ import {
   createTranslation,
   deleteTranslation,
   getPreferences,
+  getSavedTemplate,
   listTranslations,
   resolveFromDb,
   setPreferences,
+  setSavedTemplate,
 } from "./storage";
 import { BiblePassage, PluginBaseData, PluginRendererData } from "./types";
 import { activateVerse, yjsActivationTarget } from "./verseActivation";
@@ -53,7 +58,9 @@ export const init = (
     path.join(__dirname, "../migrations"),
   );
 
-  serverPluginApi.onPluginDataCreated(pluginName, onPluginDataCreated);
+  serverPluginApi.onPluginDataCreated(pluginName, (pluginInfo, context) =>
+    onPluginDataCreated(serverPluginApi, pluginInfo, context),
+  );
   serverPluginApi.onPluginDataLoaded(pluginName, onPluginDataLoaded);
   serverPluginApi.onRendererDataCreated(pluginName, onRendererDataCreated);
 
@@ -151,10 +158,38 @@ export const init = (
   );
 };
 
-const onPluginDataCreated = (pluginInfo: ObjectToTypedMap<Plugin>) => {
+const onPluginDataCreated = (
+  serverPluginApi: ServerPluginApi<PluginBaseData, PluginRendererData>,
+  pluginInfo: ObjectToTypedMap<Plugin>,
+  context: PluginContext,
+) => {
   pluginInfo.get("pluginData")?.set("passages", new Y.Array());
 
-  return {};
+  // Start from the organization's last saved template
+  const data = proxy(pluginInfo.toJSON() as Plugin<PluginBaseData>);
+  const unbind = bind(data, pluginInfo as any);
+  let disposed = false;
+  void (async () => {
+    try {
+      const saved = await getSavedTemplate(
+        serverPluginApi,
+        context.organizationId,
+      );
+      // Leave it alone if someone already styled this scene meanwhile
+      if (!saved || disposed || data.pluginData.template) return;
+      data.pluginData.template = saved.template;
+      data.pluginData.showVerseNumbers = saved.showVerseNumbers;
+    } catch (err) {
+      logger.error({ err }, "bible: failed to load saved template");
+    }
+  })();
+
+  return {
+    dispose: () => {
+      disposed = true;
+      unbind();
+    },
+  };
 };
 
 const onPluginDataLoaded = (
@@ -371,6 +406,31 @@ const getAppRouter =
                 primaryTranslationId: input.primaryTranslationId ?? null,
                 favoriteIds: input.favoriteIds,
               });
+              return { success: true };
+            }),
+        },
+
+        // The organization's template for new scenes
+        template: {
+          save: t.procedure
+            .input(
+              z.object({
+                pluginId: z.string(),
+                template: z.object({}).passthrough(),
+                showVerseNumbers: z.boolean(),
+              }),
+            )
+            .mutation(async ({ input, ctx }) => {
+              const { organizationId } = resolveContext(input.pluginId);
+              await setSavedTemplate(
+                serverPluginApi,
+                authOf(ctx),
+                organizationId,
+                {
+                  template: input.template as unknown as LayoutDoc,
+                  showVerseNumbers: input.showVerseNumbers,
+                },
+              );
               return { success: true };
             }),
         },
