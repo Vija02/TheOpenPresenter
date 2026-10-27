@@ -155,6 +155,7 @@ export async function makeApp({
   }
   await middleware.installCloudConnection(app);
   await middleware.installCloudSyncOnStart(app);
+  await middleware.installCloudSyncLive(app);
   await middleware.installDeviceHostHandler(app);
   await middleware.installDeviceServerHandler(app);
   await middleware.installDiagnostics(app);

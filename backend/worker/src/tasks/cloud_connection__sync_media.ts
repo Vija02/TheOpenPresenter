@@ -1,6 +1,6 @@
 import { cloud, media } from "@repo/backend-shared";
 import { logger } from "@repo/observability";
-import { Task, WithPgClient } from "graphile-worker";
+import { Task } from "graphile-worker";
 
 interface CloudConnectionSyncMediaPayload {
   cloudConnectionId: string;
@@ -15,9 +15,13 @@ interface CloudConnectionSyncMediaPayload {
  * In practice, this shouldn't happen as each media should be scoped to an organization
  * But if a user were to sync between 2 organization in the same system, this would hit
  */
-const task: Task = async (inPayload, { withPgClient }) => {
+const task: Task = async (inPayload, helpers) => {
   const payload: CloudConnectionSyncMediaPayload = inPayload as any;
   const { cloudConnectionId, externalProjectIds, syncRunId } = payload;
+  const withPgClient = cloud.withCloudSyncOrigin(
+    helpers.withPgClient,
+    cloudConnectionId,
+  );
 
   const log = logger.child({
     task: "cloud_connection__sync_media",
