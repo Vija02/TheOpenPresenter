@@ -1027,6 +1027,16 @@ type CloudOrganization {
   slug: String!
 }
 
+type CloudSyncHint {
+  """The table that changed, e.g. app_public.projects"""
+  entity: String
+
+  """
+  The cloud connection id of the studio whose sync made the change, if any
+  """
+  origin: String
+}
+
 enum CloudSyncItemStatus {
   FAILED
   PENDING
@@ -8451,6 +8461,11 @@ input StringListFilter {
 The root subscription type: contains realtime events you can subscribe to with the `subscription` operation.
 """
 type Subscription {
+  """
+  Triggered when something cloud sync covers changes in the organization.
+  """
+  cloudOrganizationChanged(organizationSlug: String!): CloudSyncHint
+
   """Triggered when the logged in user's record is updated in some way."""
   currentUserUpdated: UserSubscriptionPayload
 

@@ -3,6 +3,7 @@ import { Readable, Transform } from "stream";
 import type { ReadableStream as WebReadableStream } from "stream/web";
 
 import type { MediaHandlerInterface } from "../../../media/types";
+import { CLOUD_SYNC_ORIGIN_HEADER } from "../queue";
 import type { CloudMedia } from "./cloud";
 
 /** The cloud's media files, as they move between the two stores. */
@@ -73,6 +74,7 @@ export const downloadMedia = async ({
 export const uploadMedia = async ({
   host,
   sessionCookie,
+  cloudConnectionId,
   cloudOrganizationId,
   media,
   read,
@@ -80,6 +82,7 @@ export const uploadMedia = async ({
 }: {
   host: string;
   sessionCookie: string;
+  cloudConnectionId: string;
   cloudOrganizationId: string;
   media: LocalMedia;
   read: () => Promise<Readable>;
@@ -100,6 +103,7 @@ export const uploadMedia = async ({
     // Keep it as it is here: no reprocessing, and the same kind of media.
     "cloud-sync": "1",
     "cloud-sync-user-uploaded": media.is_user_uploaded ? "1" : "0",
+    [CLOUD_SYNC_ORIGIN_HEADER]: cloudConnectionId,
   };
 
   let offset = 0;

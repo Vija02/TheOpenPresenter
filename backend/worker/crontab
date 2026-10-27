@@ -17,3 +17,4 @@
 30 0 * * * projects__cleanExpiredDemoProjects
 */5 * * * * renderer_sessions__closeStale
 */15 * * * * cloud_connection__sync_all
+*/5 * * * * cloud_sync_presence__clean

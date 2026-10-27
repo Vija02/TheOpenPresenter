@@ -102,6 +102,7 @@
     "@types/serialize-javascript": "^5.0.4",
     "@types/set-cookie-parser": "^2",
     "@types/uid-safe": "^2",
+    "graphql-subscriptions": "^1.1.0",
     "mock-req": "^0.2.0",
     "tsup": "^8.3.6",
     "vitest": "^2.1.8"

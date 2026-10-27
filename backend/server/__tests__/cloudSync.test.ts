@@ -1,8 +1,14 @@
 import express from "express";
-import { ExecutionResult, GraphQLSchema, graphql } from "graphql";
+import {
+  ExecutionResult,
+  GraphQLSchema,
+  graphql,
+  parse,
+  subscribe,
+} from "graphql";
 import { Server } from "http";
 import { AddressInfo } from "net";
-import { Pool } from "pg";
+import { Client, Pool } from "pg";
 import {
   PostGraphileOptions,
   createPostGraphileSchema,
@@ -74,8 +80,9 @@ const query = async (text: string, params: unknown[] = []) =>
 const asUser = async (
   source: string,
   variables: Record<string, unknown>,
+  headers: Record<string, string> = {},
 ): Promise<ExecutionResult<Record<string, any>>> => {
-  const req: any = { user: { session_id: sessionId }, headers: {} };
+  const req: any = { user: { session_id: sessionId }, headers };
   const pgSettings = await (options.pgSettings as any)(req);
   return withPostGraphileContext(
     { ...options, pgPool: pool, pgSettings, pgForceTransaction: true },
@@ -138,6 +145,30 @@ beforeEach(async () => {
   );
   sessionId = (await createSession(pool, user!.id)).uuid;
 });
+
+/**
+ * The hints sent for the organization while `run` runs. A studio listens
+ * for them: the cloud only hints organizations that have one.
+ */
+const hintsDuring = async (run: () => Promise<unknown>) => {
+  await query(
+    `insert into app_private.cloud_sync_presence (organization_id) values ($1)`,
+    [orgId],
+  );
+  const listener = new Client({ connectionString: TEST_DATABASE_URL });
+  await listener.connect();
+  const hints: unknown[] = [];
+  listener.on("notification", (n) => hints.push(JSON.parse(n.payload!)));
+  try {
+    await listener.query(`LISTEN "cloud_sync:${orgId}"`);
+    await run();
+    // Notifications committed before this round trip arrive before its answer.
+    await listener.query("select 1");
+    return hints;
+  } finally {
+    await listener.end();
+  }
+};
 
 afterEach(async () => {
   await query(
@@ -224,6 +255,157 @@ describe("GraphQL", () => {
     expect(listed.find((p: { id: string }) => p.id === id).value).toEqual(
       value,
     );
+  });
+
+  describe("live sync hints", () => {
+    const value = { name: "Easter", targetDate: null, category: null, tags: [] };
+    const push = (id: string, headers?: Record<string, string>) =>
+      asUser(
+        PROJECT_PUSH,
+        { s: orgSlug, c: [{ id, expected: null, value, slug: `p-${id}` }] },
+        headers,
+      );
+
+    it("marks a studio's sync writes with its connection", async () => {
+      const origin = "01a17ce0-030e-7afc-8a2c-a73df77ad96f";
+
+      const hints = await hintsDuring(() =>
+        push("9a000000-0000-4000-8000-0000000000b1", {
+          "x-cloud-sync-origin": origin,
+        }),
+      );
+
+      expect(hints).toEqual([{ entity: "app_public.projects", origin }]);
+    });
+
+    it("leaves other writes, and a malformed origin, unmarked", async () => {
+      const hints = await hintsDuring(async () => {
+        await push("9a000000-0000-4000-8000-0000000000b2");
+        await push("9a000000-0000-4000-8000-0000000000b3", {
+          "x-cloud-sync-origin": "'; drop table x; --",
+        });
+      });
+
+      // A transaction each, so a hint each.
+      expect(hints).toEqual([
+        { entity: "app_public.projects", origin: null },
+        { entity: "app_public.projects", origin: null },
+      ]);
+    });
+
+    it("serves them as a subscription", () => {
+      expect(
+        schema.getSubscriptionType()?.getFields().cloudOrganizationChanged,
+      ).toBeDefined();
+    });
+
+    describe("subscription", () => {
+      const SUBSCRIBE = `subscription ($s: String!) {
+        cloudOrganizationChanged(organizationSlug: $s) { entity origin }
+      }`;
+      let liveSchema: GraphQLSchema;
+      let pubsub: import("graphql-subscriptions").PubSub;
+
+      beforeAll(async () => {
+        // What @graphile/pg-pubsub gives the schema; it publishes NOTIFYs.
+        const { PubSub } = await import("graphql-subscriptions");
+        pubsub = new PubSub();
+        liveSchema = await createPostGraphileSchema(pool, "app_public", {
+          ...options,
+          graphileBuildOptions: { ...options.graphileBuildOptions, pubsub },
+        });
+      });
+
+      const subscribeAsUser = async (slug: string) => {
+        const req: any = { user: { session_id: sessionId }, headers: {} };
+        const pgSettings = await (options.pgSettings as any)(req);
+        return withPostGraphileContext(
+          { ...options, pgPool: pool, pgSettings, pgForceTransaction: true },
+          async (context: any) => {
+            const extra = await options.additionalGraphQLContextFromRequest!(
+              req,
+              {} as any,
+            );
+            const result = await subscribe({
+              schema: liveSchema,
+              document: parse(SUBSCRIBE),
+              contextValue: { ...context, ...extra },
+              variableValues: { s: slug },
+            });
+            await context.pgClient.query("commit");
+            return result as AsyncIterableIterator<ExecutionResult> &
+              ExecutionResult;
+          },
+        );
+      };
+      const presences = async () =>
+        (
+          await query(
+            `select count(*)::int as n from app_private.cloud_sync_presence
+             where organization_id = $1`,
+            [orgId],
+          )
+        )[0].n;
+
+      it("counts the studio present, and passes hints on, until it leaves", async () => {
+        const events = await subscribeAsUser(orgSlug);
+        expect(await presences()).toBe(1);
+
+        const next = events.next();
+        await pubsub.publish(`cloud_sync:${orgId}`, {
+          entity: "app_public.tags",
+          origin: null,
+        });
+        expect((await next).value).toEqual({
+          data: {
+            cloudOrganizationChanged: { entity: "app_public.tags", origin: null },
+          },
+        });
+
+        await events.return!();
+        expect(await presences()).toBe(0);
+      });
+
+      it("counts each studio, so one leaving leaves the other", async () => {
+        const first = await subscribeAsUser(orgSlug);
+        const second = await subscribeAsUser(orgSlug);
+        expect(await presences()).toBe(2);
+
+        await first.return!();
+
+        expect(await presences()).toBe(1);
+        await second.return!();
+      });
+
+      it("starts listening only once presence is recorded", async () => {
+        const { withPresence } = await import("../src/api/cloud/cloudLiveSync");
+        const listen = vi.fn();
+
+        // No such organization, so the presence insert fails.
+        await expect(
+          withPresence(pool, "9a000000-0000-4000-8000-00000000dead", listen),
+        ).rejects.toThrow();
+
+        expect(listen).not.toHaveBeenCalled();
+      });
+
+      it("refuses an organization the user is not in, even a public one", async () => {
+        await query(
+          `insert into app_public.organizations (slug, name, is_public)
+           values ($1, 'Other', true)`,
+          [`${orgSlug}-other`],
+        );
+
+        const result = await subscribeAsUser(`${orgSlug}-other`);
+
+        expect(result.errors?.[0]?.message).toBe(
+          "You do not have access to this organization",
+        );
+        expect(
+          (await query(`select count(*)::int as n from app_private.cloud_sync_presence`))[0].n,
+        ).toBe(0);
+      });
+    });
   });
 
   describe("organization settings", () => {
@@ -404,6 +586,7 @@ describe("GraphQL", () => {
 describe("tus uploads from the sync client", () => {
   let server: Server;
   let host: string;
+  const cloudConnectionId = "01a17ce0-030e-7afc-8a2c-a73df77ad9aa";
 
   beforeAll(async () => {
     const app = express();
@@ -427,12 +610,17 @@ describe("tus uploads from the sync client", () => {
     await new Promise((resolve) => server.close(resolve));
   });
 
-  const upload = async (content: string, isUserUploaded: boolean) => {
+  const upload = async (
+    content: string,
+    isUserUploaded: boolean,
+    origin = cloudConnectionId,
+  ) => {
     const { cloud } = await import("@repo/backend-shared");
     const mediaName = `${typeidUnboxed("media")}.jpg`;
     await cloud.uploadMedia({
       host,
       sessionCookie: `session=${sessionId}`,
+      cloudConnectionId: origin,
       cloudOrganizationId: orgId,
       media: {
         id: "",
@@ -446,6 +634,22 @@ describe("tus uploads from the sync client", () => {
     });
     return mediaName;
   };
+
+  it("marks the upload's completion with the studio's connection", async () => {
+    const hints = await hintsDuring(() => upload("hinted", true));
+
+    expect(hints).toEqual([
+      { entity: "app_public.medias", origin: cloudConnectionId },
+    ]);
+  });
+
+  it("ignores an origin that is not a connection id", async () => {
+    const hints = await hintsDuring(() =>
+      upload("hinted", true, "'; drop table x; --"),
+    );
+
+    expect(hints).toEqual([{ entity: "app_public.medias", origin: null }]);
+  });
 
   const stored = async (mediaName: string) => {
     const [row] = await query(
