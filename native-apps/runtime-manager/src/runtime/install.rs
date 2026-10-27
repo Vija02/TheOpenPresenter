@@ -358,8 +358,14 @@ impl<'a> Installer<'a> {
             }
         }
 
+        // One index fetch and one probe budget for every starting point:
+        // per starting version, each re-fetched the index and could spend
+        // the whole budget, so a machine with a few old runtimes installed
+        // sat on hundreds of silent requests before downloading anything.
+        let published = self.published_versions();
+        let mut probes = 0;
         for from in &installed {
-            if let Some(chain) = self.delta_chain(from, to_version) {
+            if let Some(chain) = self.delta_chain(&published, from, to_version, &mut probes) {
                 return chain;
             }
         }
@@ -378,28 +384,33 @@ impl<'a> Installer<'a> {
     /// enough chain is worse than the single full pack it avoids: past
     /// roughly this many hops the deltas also stop being smaller, since
     /// each one re-ships whatever the previous one touched.
-    fn delta_chain(&self, from: &str, to: &str) -> Option<Vec<String>> {
+    fn delta_chain(
+        &self,
+        published: &[String],
+        from: &str,
+        to: &str,
+        probes: &mut usize,
+    ) -> Option<Vec<String>> {
         const MAX_HOPS: usize = 12;
         // Each probe is a request with nothing shown in the UI. Past this,
-        // the full pack is the quicker way there.
+        // the full pack is the quicker way there. Shared across every
+        // starting version tried.
         const MAX_PROBES: usize = 64;
 
         // Deltas are only ever built from earlier versions on the same
         // channel, so only those published after `from`, up to `to`, can be
         // on the path. Probing every pair of a long index took minutes.
         let nightly = version::is_prerelease(to);
-        let known: Vec<String> = self
-            .published_versions()
-            .into_iter()
+        let known: Vec<&String> = published
+            .iter()
             .filter(|v| version::is_prerelease(v) == nightly)
             .collect();
-        let start = known.iter().position(|v| v == from)?;
-        let end = known.iter().position(|v| v == to)?;
+        let start = known.iter().position(|v| *v == from)?;
+        let end = known.iter().position(|v| *v == to)?;
         if end <= start {
             return None;
         }
 
-        let mut probes = 0;
         let mut queue = std::collections::VecDeque::new();
         let mut seen = HashSet::new();
         queue.push_back((start, Vec::new()));
@@ -414,8 +425,8 @@ impl<'a> Installer<'a> {
                 if seen.contains(&next) {
                     continue;
                 }
-                probes += 1;
-                if probes > MAX_PROBES {
+                *probes += 1;
+                if *probes > MAX_PROBES {
                     return None;
                 }
                 let key = fetch::delta_pack_key(&self.platform, &known[at], &known[next]);
