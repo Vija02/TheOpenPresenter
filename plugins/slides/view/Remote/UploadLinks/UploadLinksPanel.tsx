@@ -1,3 +1,4 @@
+import { desktop } from "@repo/desktop-bridge";
 import {
   Accordion,
   AccordionContent,
@@ -12,7 +13,7 @@ import {
   PopConfirm,
   SelectControl,
 } from "@repo/ui";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { FaCopy, FaLink, FaTrash } from "react-icons/fa6";
 
@@ -61,7 +62,24 @@ export const UploadLinksPanel = () => {
     defaultValues: { label: "", maxAttempts: 5, expiresIn: "never" },
   });
 
-  const urlFor = (token: string) => `${data?.baseUrl ?? ""}/${token}`;
+  const [localIp, setLocalIp] = useState<string | null>(null);
+  useEffect(() => {
+    desktop.localIp().then(setLocalIp);
+  }, []);
+
+  const baseUrl = (() => {
+    const base = data?.baseUrl ?? "";
+    if (!localIp) return base;
+    try {
+      const url = new URL(base);
+      if (url.hostname === "localhost" || url.hostname === "127.0.0.1") {
+        url.hostname = localIp;
+        return url.toString().replace(/\/+$/, "");
+      }
+    } catch {}
+    return base;
+  })();
+  const urlFor = (token: string) => `${baseUrl}/${token}`;
 
   const handleCreate = async ({
     label,
