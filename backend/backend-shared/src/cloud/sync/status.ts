@@ -1,4 +1,5 @@
 import { WithPgClient } from "../../types";
+import { CloudSyncTrigger } from "./queue";
 
 export type MediaPhaseStatus = "syncing" | "synced" | "failed";
 
@@ -8,6 +9,7 @@ export const createSyncRun = async (
     organizationId: string;
     cloudConnectionId: string;
     forceResync: boolean;
+    trigger?: CloudSyncTrigger;
   },
 ): Promise<string> => {
   const {
@@ -16,11 +18,16 @@ export const createSyncRun = async (
     pgClient.query(
       `
         INSERT INTO app_public.cloud_sync_runs
-          (organization_id, cloud_connection_id, status, force_resync, started_at)
-        VALUES ($1, $2, 'in_progress', $3, now())
+          (organization_id, cloud_connection_id, status, force_resync, trigger, started_at)
+        VALUES ($1, $2, 'in_progress', $3, $4, now())
         RETURNING id
       `,
-      [params.organizationId, params.cloudConnectionId, params.forceResync],
+      [
+        params.organizationId,
+        params.cloudConnectionId,
+        params.forceResync,
+        params.trigger ?? null,
+      ],
     ),
   );
   return row.id;

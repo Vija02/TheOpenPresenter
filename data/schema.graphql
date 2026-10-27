@@ -1074,6 +1074,7 @@ type CloudSyncRun {
   totalBytes: BigInt!
   totalMedia: Int!
   totalProjects: Int!
+  trigger: CloudSyncTrigger
   updatedAt: Datetime!
   updatedProjects: Int!
 }
@@ -1168,6 +1169,17 @@ enum CloudSyncRunsOrderBy {
   ORGANIZATION_ID_DESC
   PRIMARY_KEY_ASC
   PRIMARY_KEY_DESC
+}
+
+enum CloudSyncTrigger {
+  CLOUD_CHANGE
+  CLOUD_MEDIA_CHANGE
+  LOCAL_CHANGE
+  LOCAL_MEDIA_CHANGE
+  MANUAL
+  RECONNECT
+  SCHEDULE
+  START
 }
 
 input CompleteMediaInput {

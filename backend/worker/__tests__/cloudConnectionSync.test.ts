@@ -364,6 +364,15 @@ describe("cloud_connection__sync", () => {
       });
     });
 
+    it("records why it ran", async () => {
+      await runLive();
+      expect(await lastRun()).toMatchObject({ trigger: "local_change" });
+
+      // A job queued before the trigger was recorded.
+      await runTask();
+      expect(await lastRun()).toMatchObject({ trigger: null });
+    });
+
     it("still syncs media when a project arrives", async () => {
       fake.projects.push({
         id: randomUUID(),
