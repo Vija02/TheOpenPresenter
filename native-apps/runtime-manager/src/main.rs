@@ -64,6 +64,9 @@ fn install_interrupt_handler() {
 fn main() -> Result<()> {
     tracing_subscriber::fmt()
         .with_writer(std::io::stderr)
+        // A shell reading this through a pipe writes it to a log file, where
+        // colour codes are just noise.
+        .with_ansi(std::io::stderr().is_terminal())
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_env("TOP_RUNTIME_LOG")
                 .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("info")),
