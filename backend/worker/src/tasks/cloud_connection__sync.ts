@@ -2,22 +2,20 @@ import { cloud } from "@repo/backend-shared";
 import { logger } from "@repo/observability";
 import { Task } from "graphile-worker";
 
-interface CloudConnectionSyncPayload {
-  /**
-   * request id
-   */
-  id: string;
-  force_resync?: boolean;
-}
-
-const task: Task = async (inPayload, { addJob, withPgClient }) => {
-  const payload: CloudConnectionSyncPayload = inPayload as any;
-  const { id: cloudConnectionId, force_resync } = payload;
+const task: Task = async (inPayload, helpers) => {
+  const payload: cloud.CloudSyncPayload = inPayload as any;
+  const { id: cloudConnectionId, force_resync, trigger, media = true } = payload;
+  const { addJob } = helpers;
+  const withPgClient = cloud.withCloudSyncOrigin(
+    helpers.withPgClient,
+    cloudConnectionId,
+  );
 
   let log = logger.child({
     task: "cloud_connection__sync",
     cloudConnectionId,
     forceResync: !!force_resync,
+    trigger,
   });
   const startedAt = Date.now();
   log.info("Starting cloud connection sync");
@@ -134,13 +132,28 @@ const task: Task = async (inPayload, { addJob, withPgClient }) => {
     await cloud.completeSyncRunProjects(withPgClient, syncRunId);
     log.info("Project sync phase complete");
 
-    // Trigger media sync
-    await addJob("cloud_connection__sync_media", {
-      cloudConnectionId: cloudConnectionId,
-      externalProjectIds: cloudProjectIds,
-      force_resync,
-      syncRunId,
-    });
+    // A project new here may bring media links with it, whatever asked.
+    if (!media && counts.added === 0) {
+      await cloud.setSyncRunMediaStatus(withPgClient, syncRunId, "synced");
+      log.info(
+        { durationMs: Date.now() - startedAt },
+        "Project sync done; media not asked for",
+      );
+      return;
+    }
+
+    // Trigger media sync. One at a time per connection, apart from the
+    // project sync so a long transfer does not hold up live changes.
+    await addJob(
+      "cloud_connection__sync_media",
+      {
+        cloudConnectionId: cloudConnectionId,
+        externalProjectIds: cloudProjectIds,
+        force_resync,
+        syncRunId,
+      },
+      { queueName: `cloud_sync_media:${cloudConnectionId}` },
+    );
     log.info(
       {
         externalProjectCount: cloudProjectIds.length,

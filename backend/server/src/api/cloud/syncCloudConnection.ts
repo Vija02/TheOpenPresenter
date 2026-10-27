@@ -1,3 +1,4 @@
+import { cloud } from "@repo/backend-shared";
 import { gql, makeExtendSchemaPlugin } from "graphile-utils";
 
 import { OurGraphQLContext } from "../../graphile.config";
@@ -43,18 +44,10 @@ export const syncCloudConnection = makeExtendSchemaPlugin(() => ({
         }
 
         try {
-          await rootPgPool.query(
-            `
-              select graphile_worker.add_job(
-                'cloud_connection__sync',
-                json_build_object(
-                  'id', $1::uuid,
-                  'force_resync', $2::boolean
-                )
-              );
-            `,
-            [cloudConnectionId, forceResync],
-          );
+          await cloud.queueCloudSync(rootPgPool, cloudConnectionId, {
+            trigger: "manual",
+            forceResync,
+          });
 
           return { success: true };
         } catch (e: any) {

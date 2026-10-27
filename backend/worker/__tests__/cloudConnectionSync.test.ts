@@ -346,7 +346,40 @@ describe("cloud_connection__sync", () => {
     expect(addJob).toHaveBeenCalledWith(
       "cloud_connection__sync_media",
       expect.objectContaining({ externalProjectIds: [cloudId] }),
+      { queueName: `cloud_sync_media:${connectionId}` },
     );
+  });
+
+  describe("live runs", () => {
+    const runLive = () =>
+      task({ id: connectionId, trigger: "local_change", media: false }, helpers());
+
+    it("skips the media sync when not asked for it", async () => {
+      await runLive();
+
+      expect(addJob).not.toHaveBeenCalled();
+      expect(await lastRun()).toMatchObject({
+        status: "completed",
+        media_status: "synced",
+      });
+    });
+
+    it("still syncs media when a project arrives", async () => {
+      fake.projects.push({
+        id: randomUUID(),
+        createdAt: "2026-02-01T00:00:00.000Z",
+        updatedAt: fake.now(),
+        value: { name: "New", targetDate: null, category: null, tags: [] },
+      });
+
+      await runLive();
+
+      expect(addJob).toHaveBeenCalledWith(
+        "cloud_connection__sync_media",
+        expect.anything(),
+        expect.anything(),
+      );
+    });
   });
 
   it("pushes a project and the category and tags it names, in one run", async () => {
