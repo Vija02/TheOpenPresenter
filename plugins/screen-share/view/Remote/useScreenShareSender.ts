@@ -31,10 +31,14 @@ export const useScreenShareSender = () => {
   const awarenessData = pluginApi.awareness.useAwarenessData();
 
   const mutableSceneData = pluginApi.scene.useValtioData();
-  const isSharing = pluginApi.scene.useData((x) => x.pluginData.isSharing);
-  const sessionId = pluginApi.scene.useData((x) => x.pluginData.sessionId);
+  const isSharing = pluginApi.scene.useData(
+    (x) => x.pluginData?.isSharing ?? false,
+  );
+  const sessionId = pluginApi.scene.useData(
+    (x) => x.pluginData?.sessionId ?? null,
+  );
   const sharerAwarenessUserId = pluginApi.scene.useData(
-    (x) => x.pluginData.sharerAwarenessUserId,
+    (x) => x.pluginData?.sharerAwarenessUserId ?? null,
   );
 
   const iceServersQuery = useIceServers();
@@ -84,20 +88,23 @@ export const useScreenShareSender = () => {
 
   const stopShare = useCallback(() => {
     localTeardown();
+    const pluginData = mutableSceneData.pluginData;
     // Clear the shared state only if we still own it
-    if (mutableSceneData.pluginData.sharerAwarenessUserId === currentUserId) {
-      mutableSceneData.pluginData.isSharing = false;
-      mutableSceneData.pluginData.sharerAwarenessUserId = null;
-      mutableSceneData.pluginData.sessionId = null;
+    if (pluginData?.sharerAwarenessUserId === currentUserId) {
+      pluginData.isSharing = false;
+      pluginData.sharerAwarenessUserId = null;
+      pluginData.sessionId = null;
     }
   }, [localTeardown, mutableSceneData, currentUserId]);
 
   // Stop the current share even if another operator owns it
   const stopSharedScreen = useCallback(() => {
     localTeardown();
-    mutableSceneData.pluginData.isSharing = false;
-    mutableSceneData.pluginData.sharerAwarenessUserId = null;
-    mutableSceneData.pluginData.sessionId = null;
+    const pluginData = mutableSceneData.pluginData;
+    if (!pluginData) return;
+    pluginData.isSharing = false;
+    pluginData.sharerAwarenessUserId = null;
+    pluginData.sessionId = null;
   }, [localTeardown, mutableSceneData]);
 
   const startShare = useCallback(async () => {
@@ -142,13 +149,27 @@ export const useScreenShareSender = () => {
       t.addEventListener("ended", () => stopShare());
     });
 
+    // The scene data can disappear while the picker is open (e.g. scene deleted)
+    const pluginData = mutableSceneData.pluginData;
+    if (!pluginData) {
+      localTeardown();
+      return;
+    }
+
     // Announce over awareness first, then flip the shared state. Writing a new
     // sessionId + our own id is what overrides any operator already sharing.
     publish();
-    mutableSceneData.pluginData.isSharing = true;
-    mutableSceneData.pluginData.sharerAwarenessUserId = currentUserId;
-    mutableSceneData.pluginData.sessionId = newSessionId;
-  }, [currentUserId, mutableSceneData, pluginId, publish, stopShare]);
+    pluginData.isSharing = true;
+    pluginData.sharerAwarenessUserId = currentUserId;
+    pluginData.sessionId = newSessionId;
+  }, [
+    currentUserId,
+    localTeardown,
+    mutableSceneData,
+    pluginId,
+    publish,
+    stopShare,
+  ]);
 
   // We hold a capture but are no longer the active sharer (overridden, session
   // changed, or sharing stopped). Drop it without clobbering the new owner.
