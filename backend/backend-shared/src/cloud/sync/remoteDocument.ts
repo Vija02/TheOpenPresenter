@@ -23,8 +23,8 @@ export const websocketWithCookie = (
     }
   };
 
-export const websocketUrl = (host: string): string => {
-  const url = new URL("/wlink", host);
+export const websocketUrl = (host: string, path = "/wlink"): string => {
+  const url = new URL(path, host);
   url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
   return url.toString();
 };

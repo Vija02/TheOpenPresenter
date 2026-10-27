@@ -77,9 +77,14 @@ export const cloudMediaSync = makeExtendSchemaPlugin(() => ({
           context.pgClient,
           args.organizationSlug,
         );
+        const withRootPgClient = withPgClientFromPool(context.rootPgPool);
         const handler = new media[
           process.env.STORAGE_TYPE as "file" | "s3"
-        ].mediaHandler(withPgClientFromPool(context.rootPgPool));
+        ].mediaHandler(
+          context.cloudSyncOrigin
+            ? cloud.withCloudSyncOrigin(withRootPgClient, context.cloudSyncOrigin)
+            : withRootPgClient,
+        );
         return cloud.deleteSyncedMedia(
           context.pgClient,
           context.rootPgPool,

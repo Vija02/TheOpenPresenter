@@ -1,4 +1,4 @@
-import { media } from "@repo/backend-shared";
+import { cloud, media } from "@repo/backend-shared";
 import {
   ALLOWED_IMAGE_WIDTH,
   PROCESSED_IMAGE_FORMATS,
@@ -340,13 +340,20 @@ export default (app: Express) => {
       const mediaId = splittedKey[0];
       const uuid = toUUID(mediaId as TypeId<string>);
 
-      await rootPgPool.query(
-        `UPDATE app_public.medias
-          SET 
-            is_complete = $1
-          WHERE id = $2
-        `,
-        [true, uuid],
+      const origin = cloud.cloudSyncOriginFromHeaders(req.headers);
+      const withPgClient =
+        req.headers["cloud-sync"] && origin
+          ? cloud.withCloudSyncOrigin(rootWithPgClient, origin)
+          : rootWithPgClient;
+      await withPgClient((client) =>
+        client.query(
+          `UPDATE app_public.medias
+            SET 
+              is_complete = $1
+            WHERE id = $2
+          `,
+          [true, uuid],
+        ),
       );
 
       // Synced media arrive with their derived media and metadata.

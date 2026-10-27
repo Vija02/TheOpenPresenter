@@ -304,6 +304,7 @@ export const syncMedia = async (
         uploadMedia({
           host: cloudConnection.host,
           sessionCookie: cloudConnection.session_cookie,
+          cloudConnectionId: cloudConnection.id,
           cloudOrganizationId: cloud.organizationId,
           media,
           read: () => mediaHandler.getReadable(media.media_name),

@@ -1,15 +1,17 @@
 /*
  * Give hints (notify) when something changes on our table that
  * needs to be synced. Only sends a notify when the org is in
- * cloud connection.
- * Fail fast on cloud for performance
+ * cloud connection (studio), or has a studio subscribed to it (cloud:
+ * `app_private.cloud_sync_presence`).
+ * Fail fast when neither for performance
  */
 create function app_private.tg__cloud_sync_hint() returns trigger as $$
 declare
   v_row jsonb;
   v_organization_id uuid;
 begin
-  if not exists (select 1 from app_public.cloud_connections) then
+  if not exists (select 1 from app_public.cloud_connections)
+    and not exists (select 1 from app_private.cloud_sync_presence) then
     return null;
   end if;
 
@@ -26,6 +28,10 @@ begin
   if exists (
     select 1 from app_public.cloud_connections
     where organization_id = v_organization_id
+  ) or exists (
+    select 1 from app_private.cloud_sync_presence
+    where organization_id = v_organization_id
+      and seen_at > now() - interval '90 seconds'
   ) then
     perform pg_notify(
       'cloud_sync:' || v_organization_id,

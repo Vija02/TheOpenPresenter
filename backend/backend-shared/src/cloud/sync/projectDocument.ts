@@ -44,9 +44,12 @@ export const syncProjectDocument = async (
     return;
   }
 
-  const urqlClient = getUrqlClientFromCloudConnection(
-    projectAndCloudConnection,
-  );
+  const urqlClient = getUrqlClientFromCloudConnection({
+    // The row's own `id` is the project's
+    id: projectAndCloudConnection.cloud_connection_id,
+    host: projectAndCloudConnection.host,
+    session_cookie: projectAndCloudConnection.session_cookie,
+  });
 
   const projectDocumentRes = await urqlClient.query<ProjectDocumentQuery>(
     ProjectDocumentDocument,

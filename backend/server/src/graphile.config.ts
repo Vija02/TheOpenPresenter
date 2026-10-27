@@ -1,4 +1,5 @@
 // Requires license key
+import { cloud } from "@repo/backend-shared";
 import PgSimplifyInflectorPlugin from "@graphile-contrib/pg-simplify-inflector";
 import GraphilePro from "@graphile/pro";
 import { Request, Response } from "express";
@@ -25,6 +26,7 @@ export interface OurGraphQLContext {
   sessionId: string | null;
   screenGuestSessionId: string | null;
   screenGuestSessionOrganizationId: string | null;
+  cloudSyncOrigin: string | null;
   req: Request;
   rootPgPool: Pool;
   login(user: any): Promise<void>;
@@ -274,6 +276,9 @@ export function getPostGraphileOptions({
          */
         "jwt.claims.session_id": sessionId,
         "jwt.claims.screen_guest_session_id": screenGuestSessionId,
+
+        // A studio's sync writing here: its own writes hint everyone but itself
+        "app.cloud_sync_origin": cloud.cloudSyncOriginFromHeaders(req.headers),
       };
     },
 
@@ -294,6 +299,9 @@ export function getPostGraphileOptions({
         screenGuestSessionOrganizationId: uuidOrNull(
           req.session?.screenGuestSession?.organizationId,
         ),
+
+        // For writes made outside the request's transaction
+        cloudSyncOrigin: cloud.cloudSyncOriginFromHeaders(req.headers),
 
         // Underlying request
         // To read/write session blob

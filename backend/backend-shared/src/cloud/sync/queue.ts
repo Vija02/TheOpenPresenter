@@ -17,7 +17,13 @@ export type CloudSyncTrigger =
   /** A change here to something sync covers, other than media. */
   | "local_change"
   /** A change here to media or their use in projects. */
-  | "local_media_change";
+  | "local_media_change"
+  /** The cloud says something other than media changed there. */
+  | "cloud_change"
+  /** The cloud says media or their use in projects changed there. */
+  | "cloud_media_change"
+  /** Back in touch with the cloud; what changed meanwhile was missed. */
+  | "reconnect";
 
 export type CloudSyncPayload = {
   id: string;
@@ -48,6 +54,17 @@ const PLANS: Record<CloudSyncTrigger, Plan> = {
     mode: "replace",
     media: true,
   },
+  // Folded in with changes here: one sync covers both sides.
+  cloud_change: { key: ":live", delayMs: 2000, mode: "replace", media: false },
+  cloud_media_change: {
+    key: ":media",
+    delayMs: 10000,
+    mode: "replace",
+    media: true,
+  },
+  // Could have missed media too; under the media key so a live change
+  // within the delay does not replace it with one that skips media.
+  reconnect: { key: ":media", delayMs: 2000, mode: "replace", media: true },
 };
 
 /** Queue a sync of one cloud connection */
@@ -96,6 +113,23 @@ export const queueAllCloudSyncs = async (
     await queueCloudSync(client, id, { trigger });
   }
   return rows.map((r) => r.id);
+};
+
+/**
+ * Sent by a studio's sync on every request to the cloud, so the cloud's
+ * hints of those writes carry the studio's connection id and it ignores them.
+ */
+export const CLOUD_SYNC_ORIGIN_HEADER = "x-cloud-sync-origin";
+
+// Any version: connection ids are v7.
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** The origin a request carries, if it is a connection id at all. */
+export const cloudSyncOriginFromHeaders = (
+  headers: Record<string, string | string[] | undefined>,
+): string | null => {
+  const origin = headers[CLOUD_SYNC_ORIGIN_HEADER];
+  return typeof origin === "string" && UUID.test(origin) ? origin : null;
 };
 
 export const withCloudSyncOrigin =

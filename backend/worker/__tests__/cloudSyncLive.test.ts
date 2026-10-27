@@ -125,6 +125,46 @@ describe("change hints", () => {
     ).toEqual([]);
   });
 
+  it("hints an organization with a studio listening, as the cloud does", async () => {
+    const [{ id: cloudOrg }] = await query(
+      `insert into app_public.organizations (slug, name)
+       values ($1, 'On the cloud') returning id`,
+      [`${ORG_PREFIX}-cloud-${Date.now()}`],
+    );
+    await listener.query(`LISTEN "cloud_sync:${cloudOrg}"`);
+    const write = () =>
+      query(
+        `insert into app_public.categories (organization_id, name)
+         values ($1, $2)`,
+        [cloudOrg, randomUUID()],
+      );
+    const cloudHints = async () => {
+      await listener.query("select 1");
+      return notifications.filter((n) => n.channel === `cloud_sync:${cloudOrg}`);
+    };
+
+    await write();
+    expect(await cloudHints()).toEqual([]);
+
+    // Said so too long ago: gone quiet.
+    await query(
+      `insert into app_private.cloud_sync_presence (organization_id, seen_at)
+       values ($1, now() - interval '2 minutes')`,
+      [cloudOrg],
+    );
+    await write();
+    expect(await cloudHints()).toEqual([]);
+
+    await query(
+      `update app_private.cloud_sync_presence set seen_at = now()
+       where organization_id = $1`,
+      [cloudOrg],
+    );
+    await write();
+
+    expect(await cloudHints()).toHaveLength(1);
+  });
+
   it("hints a project created, renamed and deleted here", async () => {
     const id = await createProject();
     await query(`update app_public.projects set name = 'Renamed' where id = $1`, [
