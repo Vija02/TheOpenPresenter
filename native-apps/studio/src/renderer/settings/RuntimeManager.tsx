@@ -9,6 +9,7 @@ import {
 } from "../bridge/ipc";
 import { RuntimeProgress } from "../shared/RuntimeProgress";
 import { CHANNELS, DEFAULT_CHANNEL, channelNote } from "../shared/channels";
+import { useRuntimeUpdateState } from "../shared/useUpdateState";
 
 function pendingRestartVersion(
   runningVersion: string | null,
@@ -27,6 +28,10 @@ export function RuntimeManager() {
   const [problem, setProblem] = useState<string | null>(null);
   const [channel, setChannel] = useState<string>(DEFAULT_CHANNEL);
   const [progress, setProgress] = useState<ProgressPayload | null>(null);
+  // An update started from the popup. The manager runs one command at a
+  // time, so `status` waits behind that download until it finishes.
+  const popupUpdate = useRuntimeUpdateState();
+  const popupDownloading = popupUpdate.status === "downloading";
 
   const refresh = useCallback(async () => {
     try {
@@ -39,6 +44,11 @@ export function RuntimeManager() {
   useEffect(() => {
     void refresh();
   }, [refresh]);
+
+  // The popup's download just finished: what is installed has changed.
+  useEffect(() => {
+    if (popupUpdate.status === "ready") void refresh();
+  }, [popupUpdate.status, refresh]);
 
   useEffect(() => listen<ProgressPayload>("runtime:progress", setProgress), []);
 
@@ -135,7 +145,7 @@ export function RuntimeManager() {
       ) : (
         <dl className="facts">
           <dt>In use</dt>
-          <dd>{current ?? "None installed"}</dd>
+          <dd>{!ready ? "Loading…" : (current ?? "None installed")}</dd>
         </dl>
       )}
 
@@ -151,7 +161,14 @@ export function RuntimeManager() {
         </div>
       )}
 
-      {!unreachable && (
+      {popupDownloading && (
+        <>
+          <p className="muted">Updating to {popupUpdate.version}…</p>
+          <RuntimeProgress progress={popupUpdate.progress} />
+        </>
+      )}
+
+      {!unreachable && !popupDownloading && (
         <>
           <div className="row">
             <Button
