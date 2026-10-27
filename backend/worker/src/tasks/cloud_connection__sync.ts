@@ -57,6 +57,7 @@ const task: Task = async (inPayload, helpers) => {
       organizationId: cloudConnection.organization_id,
       cloudConnectionId: cloudConnection.id,
       forceResync: !!force_resync,
+      trigger,
     });
     log = log.child({ syncRunId });
     log.info("Created sync run");
