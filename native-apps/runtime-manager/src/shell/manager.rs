@@ -49,6 +49,10 @@ pub struct Manager {
     /// Port the next `start` should try first, so a restarted runtime comes
     /// back where windows, the remote tunnel and LAN links expect it.
     preferred_port: Option<u16>,
+    /// Version a crash restart should bring back, rather than `current`:
+    /// a newer runtime activated while this one served waits for a
+    /// deliberate restart, not one mid-service.
+    preferred_version: Option<String>,
 }
 
 impl Manager {
@@ -67,6 +71,7 @@ impl Manager {
             marked_good: false,
             restarts: Vec::new(),
             preferred_port: None,
+            preferred_version: None,
         })
     }
 
@@ -483,10 +488,13 @@ impl Manager {
 
         // Registered only once the runtime is actually up
         let state = self.state()?;
-        let version = state
-            .current
-            .clone()
-            .context("No runtime is active. Run `ensure` first.")?;
+        let version = match self.preferred_version.take() {
+            Some(v) if !v.is_empty() && self.layout.runtime_dir(&v).is_dir() => v,
+            _ => state
+                .current
+                .clone()
+                .context("No runtime is active. Run `ensure` first.")?,
+        };
 
         // Entry and plugin list both come from the runtime's own
         // manifest, so a release declares what it is rather than the
@@ -651,6 +659,7 @@ impl Manager {
     fn on_exit(&mut self, code: Option<i32>) {
         let clean = code == Some(0);
         let serving_port = self.running.as_ref().map(|(port, _)| *port);
+        let serving_version = self.running.as_ref().map(|(_, version)| version.clone());
         let holders = std::mem::take(&mut self.holders);
         self.supervisor = None;
         self.running = None;
@@ -684,6 +693,7 @@ impl Manager {
             }
         }
 
+        let reverted = reverted_to.is_some();
         emit(&Event::Exited {
             code,
             reverted_to,
@@ -691,6 +701,11 @@ impl Manager {
         });
 
         if let Some(port) = restart_port {
+            // A revert means that version is the problem; otherwise come back
+            // on what was serving.
+            if !reverted {
+                self.preferred_version = serving_version;
+            }
             self.restart(port, holders);
         }
     }
@@ -727,6 +742,7 @@ impl Manager {
         let mut names = holders.into_iter();
         let started = self.start(names.next());
         self.preferred_port = None;
+        self.preferred_version = None;
 
         match started {
             Ok(result) => {
