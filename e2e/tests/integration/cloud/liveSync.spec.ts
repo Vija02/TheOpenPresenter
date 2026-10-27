@@ -85,5 +85,12 @@ test.describe("Cloud Live Sync", () => {
     // Studio to cloud.
     await renameProject(local, "SyncProject", "Renamed in the studio");
     await expectAfterReload(remote.page, "Renamed in the studio");
+
+    // The cloud page, never reloaded, shows live runs as a line, not a card.
+    await expect(page.getByTestId("live-sync-status")).toContainText(
+      /Synced .* ago/,
+      { timeout: LIVE_TIMEOUT },
+    );
+    await expect(page.getByText("Latest sync")).toHaveCount(0);
   });
 });
