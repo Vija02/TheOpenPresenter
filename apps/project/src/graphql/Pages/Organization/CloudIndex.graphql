@@ -14,30 +14,6 @@ query OrganizationCloudIndexPage($slug: String!) {
         }
         targetOrganizationSlug
         sessionCookieExpiry
-        cloudSyncRuns(orderBy: CREATED_AT_DESC, first: 1) {
-          nodes {
-            id
-            status
-            forceResync
-            totalProjects
-            projectsToSync
-            syncedProjects
-            addedProjects
-            updatedProjects
-            failedProjects
-            projectsToDelete
-            deletedProjects
-            mediaStatus
-            totalMedia
-            syncedMedia
-            totalBytes
-            downloadedBytes
-            error
-            startedAt
-            completedAt
-            createdAt
-          }
-        }
       }
     }
   }

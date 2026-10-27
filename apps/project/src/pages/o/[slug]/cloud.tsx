@@ -4,6 +4,7 @@ import { desktop } from "@repo/desktop-bridge";
 import {
   useDeleteCloudConnectionMutation,
   useOrganizationCloudIndexPageQuery,
+  useOrganizationCloudLatestSyncRunQuery,
   useSelectTargetOrganizationCloudConnectionMutation,
   useSyncCloudConnectionMutation,
 } from "@repo/graphql";
@@ -11,6 +12,7 @@ import { extractError, globalState } from "@repo/lib";
 import {
   Alert,
   Button,
+  DateDisplayRelative,
   Input,
   Option,
   Popover,
@@ -101,7 +103,19 @@ type SyncRun = {
   startedAt?: string | null;
   completedAt?: string | null;
   createdAt: string;
+  trigger?: string | null;
 };
+
+const QUIET_TRIGGERS = new Set([
+  "LOCAL_CHANGE",
+  "LOCAL_MEDIA_CHANGE",
+  "CLOUD_CHANGE",
+  "CLOUD_MEDIA_CHANGE",
+  "RECONNECT",
+  "SCHEDULE",
+]);
+const isQuietRun = (run: SyncRun) =>
+  !run.forceResync && QUIET_TRIGGERS.has(String(run.trigger));
 
 const formatBytes = (bytes: number) => {
   if (!bytes || bytes < 0) return "0 B";
@@ -330,11 +344,61 @@ const SyncProgress = ({ run }: { run: SyncRun }) => {
   );
 };
 
+const LiveSyncStatus = ({ run }: { run: SyncRun }) => {
+  // Keep "… ago" current between polls.
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const interval = setInterval(() => setTick((t) => t + 1), 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const { isActive } = getRunState(run);
+  const failed = run.status === "FAILED" || run.mediaStatus === "FAILED";
+  const at = new Date(run.completedAt ?? run.startedAt ?? run.createdAt);
+  const dot = isActive
+    ? "bg-blue-500 animate-pulse"
+    : failed
+      ? "bg-red-500"
+      : "bg-green-500";
+
+  return (
+    <div
+      className="mt-4 rounded-lg border border-stroke p-4"
+      data-testid="live-sync-status"
+    >
+      <div className="flex items-center justify-between gap-4 text-sm">
+        <span className="inline-flex items-center gap-2">
+          <span className={`h-2 w-2 rounded-full ${dot}`} />
+          {isActive ? (
+            "Syncing changes..."
+          ) : (
+            <span>
+              {failed ? "Last sync failed " : "Synced "}
+              <DateDisplayRelative date={at} />
+            </span>
+          )}
+        </span>
+        <span className="text-xs text-tertiary">
+          Changes sync automatically
+        </span>
+      </div>
+      {failed && run.failedProjects > 0 && (
+        <p className="mt-2 text-xs text-red-600">
+          {run.failedProjects}{" "}
+          {run.failedProjects === 1 ? "project" : "projects"} failed to sync
+        </p>
+      )}
+      {failed && run.error && (
+        <p className="mt-2 text-xs text-red-600 break-words">{run.error}</p>
+      )}
+    </div>
+  );
+};
+
 const OrganizationCloudPage = () => {
   const slug = useOrganizationSlug();
   const query = useOrganizationCloudIndexPageQuery({ variables: { slug } });
   const { data } = query[0];
-  const reexecuteQuery = query[1];
   const [error, setError] = useState<Error | CombinedError | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [pollActive, setPollActive] = useState(false);
@@ -358,7 +422,13 @@ const OrganizationCloudPage = () => {
   const connectDropdown = useDisclosure();
   const syncDropdown = useDisclosure();
 
-  const latestRun = cloudConnection?.cloudSyncRuns?.nodes?.[0] ?? null;
+  const [runQuery, reexecuteRunQuery] = useOrganizationCloudLatestSyncRunQuery({
+    variables: { slug },
+    pause: !cloudConnection?.targetOrganizationSlug,
+  });
+  const latestRun = (runQuery.data?.organizationBySlug?.cloudConnections
+    .nodes?.[0]?.cloudSyncRuns?.nodes?.[0] ?? null) as SyncRun | null;
+  const isLatestRunQuiet = latestRun ? isQuietRun(latestRun) : false;
 
   const runState = latestRun
     ? getRunState({
@@ -368,15 +438,19 @@ const OrganizationCloudPage = () => {
     : null;
   const isRunActive = runState?.isActive ?? false;
   const isRunTerminal = runState?.isTerminal ?? false;
+  // A live run is no reason to hold off a sync someone asks for.
+  const isWaitedRunActive = isRunActive && !isLatestRunQuiet;
 
-  // Poll while a sync run is active
+  // Quickly while a sync runs; otherwise slowly, to show live syncs.
+  const isPolling = pollActive || isRunActive;
   useEffect(() => {
-    if (!pollActive && !isRunActive) return;
-    const interval = setInterval(() => {
-      reexecuteQuery({ requestPolicy: "network-only" });
-    }, 2000);
+    if (!cloudConnection?.targetOrganizationSlug) return;
+    const interval = setInterval(
+      () => reexecuteRunQuery({ requestPolicy: "network-only" }),
+      isPolling ? 2000 : 10000,
+    );
     return () => clearInterval(interval);
-  }, [pollActive, isRunActive, reexecuteQuery]);
+  }, [cloudConnection?.targetOrganizationSlug, isPolling, reexecuteRunQuery]);
 
   useEffect(() => {
     if (pollActive && isRunTerminal) {
@@ -484,12 +558,12 @@ const OrganizationCloudPage = () => {
       try {
         await syncCloudConnection({ cloudConnectionId: cloudConnection.id });
         setPollActive(true);
-        reexecuteQuery({ requestPolicy: "network-only" });
+        reexecuteRunQuery({ requestPolicy: "network-only" });
       } catch (err) {
         setError(err as Error);
       }
     }
-  }, [cloudConnection, syncCloudConnection, reexecuteQuery]);
+  }, [cloudConnection, syncCloudConnection, reexecuteRunQuery]);
   const onForceSync = useCallback(async () => {
     if (cloudConnection) {
       setError(null);
@@ -499,12 +573,12 @@ const OrganizationCloudPage = () => {
           forceResync: true,
         });
         setPollActive(true);
-        reexecuteQuery({ requestPolicy: "network-only" });
+        reexecuteRunQuery({ requestPolicy: "network-only" });
       } catch (err) {
         setError(err as Error);
       }
     }
-  }, [cloudConnection, syncCloudConnection, reexecuteQuery]);
+  }, [cloudConnection, syncCloudConnection, reexecuteRunQuery]);
 
   const onUnlink = useCallback(async () => {
     if (cloudConnection) {
@@ -732,12 +806,14 @@ const OrganizationCloudPage = () => {
               <div className="flex">
                 <Button
                   onClick={onSync}
-                  isLoading={isSyncFetching || isRunActive}
-                  disabled={isSyncFetching || isRunActive}
+                  isLoading={isSyncFetching || isWaitedRunActive}
+                  disabled={isSyncFetching || isWaitedRunActive}
                   variant="outline"
                   className="rounded-r-none border-r-0"
                 >
-                  {isSyncFetching || isRunActive ? "Syncing..." : "Start Sync"}
+                  {isSyncFetching || isWaitedRunActive
+                    ? "Syncing..."
+                    : "Start Sync"}
                 </Button>
                 <Popover
                   open={syncDropdown.open}
@@ -747,7 +823,7 @@ const OrganizationCloudPage = () => {
                     <Button
                       variant="outline"
                       className="rounded-l-none px-2"
-                      disabled={isSyncFetching || isRunActive}
+                      disabled={isSyncFetching || isWaitedRunActive}
                     >
                       <IoChevronDown />
                     </Button>
@@ -773,7 +849,12 @@ const OrganizationCloudPage = () => {
                 </Popover>
               </div>
 
-              {latestRun && <SyncProgress run={latestRun as SyncRun} />}
+              {latestRun &&
+                (isLatestRunQuiet ? (
+                  <LiveSyncStatus run={latestRun} />
+                ) : (
+                  <SyncProgress run={latestRun} />
+                ))}
             </div>
           )}
         </div>
