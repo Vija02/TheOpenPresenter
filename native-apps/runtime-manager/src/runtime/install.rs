@@ -245,8 +245,17 @@ impl<'a> Installer<'a> {
         let total = missing.len() as u64;
         let mut bytes_done = 0u64;
 
+        let packs = self.choose_packs(version);
+        // Which pack an update used is otherwise invisible: a full download
+        // where a small delta should have done looks the same, just slower.
+        tracing::info!(
+            "Updating to {version}: {total} file(s) missing, installed {:?}, packs {:?}",
+            self.layout.installed_versions(),
+            packs
+        );
+
         let mut packs_applied = 0usize;
-        for pack_key in self.choose_packs(version) {
+        for pack_key in packs {
             // Throttled: a 64KB read every few milliseconds would flood the
             // shell with JSON.
             let mut last_report: Option<Instant> = None;
@@ -262,8 +271,12 @@ impl<'a> Installer<'a> {
                         total: size,
                     });
                 });
-            let Ok(pack) = fetched else {
-                continue;
+            let pack = match fetched {
+                Ok(pack) => pack,
+                Err(e) => {
+                    tracing::warn!("Could not fetch {pack_key}: {e:#}");
+                    continue;
+                }
             };
             let pack_bytes = pack.len() as u64;
             let base = bytes_done;

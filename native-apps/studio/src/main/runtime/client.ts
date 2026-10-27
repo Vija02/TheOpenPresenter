@@ -153,7 +153,9 @@ export class RuntimeClient extends EventEmitter {
     child.stderr.on("data", (chunk: string) => {
       for (const line of chunk.split("\n")) {
         if (!line.trim()) continue;
-        console.log("[runtime-manager]", line);
+        // Into the shell log too: what the manager decided during an update
+        // is otherwise only visible with a console attached.
+        logShell("info", "[runtime-manager]", line);
         // The manager validates its signing key before reading a single
         // command, and that failure is otherwise invisible.
         this.stderrTail.push(line);
