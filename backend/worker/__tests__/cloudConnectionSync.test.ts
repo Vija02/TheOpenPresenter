@@ -382,6 +382,130 @@ describe("cloud_connection__sync", () => {
     });
   });
 
+  describe("run records", () => {
+    /** Started `ageHours` ago, a minute apart. */
+    const addRuns = async (
+      count: number,
+      { completed = true, ageHours = 0 } = {},
+    ) => {
+      const client = await pool.connect();
+      try {
+        await client.query("begin");
+        // Or the timestamps trigger sets `created_at` to now.
+        await client.query("set local session_replication_role = replica");
+        await client.query(
+          `insert into app_public.cloud_sync_runs
+             (organization_id, cloud_connection_id, status, created_at, completed_at)
+           select $1, $2, 'completed',
+                  now() - make_interval(hours => $5, mins => n),
+                  case when $4 then now() end
+           from generate_series(1, $3) n`,
+          [orgId, connectionId, count, completed, ageHours],
+        );
+        await client.query("commit");
+      } finally {
+        client.release();
+      }
+    };
+    const runCount = async () =>
+      (
+        await query(
+          `select count(*)::int as count from app_public.cloud_sync_runs
+           where cloud_connection_id = $1`,
+          [connectionId],
+        )
+      )[0].count;
+
+    it("keeps only the latest 100 per connection", async () => {
+      await addRuns(150);
+
+      await runTask();
+
+      expect(await runCount()).toBe(100);
+      expect(await lastRun()).toMatchObject({ status: "completed" });
+    });
+
+    it("keeps unfinished ones, whose media job may still update them", async () => {
+      await addRuns(100);
+      await addRuns(5, { completed: false, ageHours: 2 });
+
+      await runTask();
+
+      expect(await runCount()).toBe(105);
+    });
+
+    it("deletes unfinished ones a day old, left by a worker that died", async () => {
+      await addRuns(100);
+      await addRuns(5, { completed: false, ageHours: 25 });
+
+      await runTask();
+
+      expect(await runCount()).toBe(100);
+    });
+  });
+
+  describe("document bridges", () => {
+    let listener: import("pg").PoolClient;
+    let notified: string[];
+
+    beforeEach(async () => {
+      notified = [];
+      listener = await pool.connect();
+      listener.on("notification", (msg) => {
+        if (msg.channel === "cloud_bridge") notified.push(msg.payload!);
+      });
+      await listener.query("listen cloud_bridge");
+    });
+    afterEach(async () => {
+      await listener.query("unlisten cloud_bridge");
+      // Pooled: the next test may get the same client.
+      listener.removeAllListeners("notification");
+      listener.release();
+    });
+    // Notifications arrive before the answer to a later query.
+    const settle = () => listener.query("select 1");
+
+    it("says so when a project created here gets its cloud copy", async () => {
+      await query(
+        `insert into app_public.projects (organization_id, slug, name)
+         values ($1, 'n', 'New here')`,
+        [orgId],
+      );
+
+      await runTask();
+      await settle();
+
+      expect(notified).toEqual([connectionId]);
+    });
+
+    it("says so when the cloud deleted a project", async () => {
+      const cloudId = randomUUID();
+      fake.projects.push({
+        id: cloudId,
+        createdAt: "2026-02-01T00:00:00.000Z",
+        updatedAt: fake.now(),
+        value: { name: "Doomed", targetDate: null, category: null, tags: [] },
+      });
+      await runTask();
+      await settle();
+      notified = [];
+      fake.projects.splice(0);
+
+      await runTask();
+      await settle();
+
+      expect(await localProjects()).toEqual([]);
+      expect(notified).toEqual([connectionId]);
+    });
+
+    it("stays quiet when nothing was connected or deleted", async () => {
+      await runTask();
+      await settle();
+
+      expect(notified).toEqual([]);
+    });
+  });
+
   it("pushes a project and the category and tags it names, in one run", async () => {
     await query(
       `insert into app_public.categories (organization_id, name)

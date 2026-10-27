@@ -60,6 +60,12 @@ const task: Task = async (inPayload, helpers) => {
     });
     log = log.child({ syncRunId });
     log.info("Created sync run");
+    try {
+      const pruned = await cloud.pruneSyncRuns(withPgClient, cloudConnectionId);
+      if (pruned > 0) log.info({ pruned }, "Pruned old sync runs");
+    } catch (pruneErr) {
+      log.warn({ err: pruneErr }, "Failed to prune old sync runs");
+    }
 
     // ========================================================================== //
     // ======================== The organization's settings ===================== //
@@ -125,6 +131,9 @@ const task: Task = async (inPayload, helpers) => {
       updated: counts.pulled - counts.added,
     });
     log.info(counts, "Synced projects");
+    if (counts.connected > 0 || counts.deletedLocally > 0) {
+      await cloud.notifyBridges(withPgClient, cloudConnectionId);
+    }
 
     await syncTables(true);
 

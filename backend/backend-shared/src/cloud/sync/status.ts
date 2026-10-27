@@ -182,3 +182,32 @@ export const setSyncRunMediaStatus = async (
     ),
   );
 };
+
+/** Runs kept per connection */
+const KEPT_SYNC_RUNS = 100;
+
+/**
+ * Delete all but the latest runs of a connection
+ */
+export const pruneSyncRuns = async (
+  withPgClient: WithPgClient,
+  cloudConnectionId: string,
+): Promise<number> => {
+  const { rowCount } = await withPgClient((pgClient) =>
+    pgClient.query(
+      `
+        DELETE FROM app_public.cloud_sync_runs
+          WHERE cloud_connection_id = $1
+            AND id NOT IN (
+              SELECT id FROM app_public.cloud_sync_runs
+                WHERE cloud_connection_id = $1
+                ORDER BY created_at DESC
+                LIMIT $2
+            )
+            AND (completed_at IS NOT NULL OR created_at < now() - interval '1 day')
+      `,
+      [cloudConnectionId, KEPT_SYNC_RUNS],
+    ),
+  );
+  return rowCount ?? 0;
+};
