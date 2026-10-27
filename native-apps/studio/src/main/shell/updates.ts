@@ -5,8 +5,7 @@ import pkg from "electron-updater";
 import { type ProgressEvent, runtime } from "../runtime/client";
 import { DEFAULT_CHANNEL, getSettings } from "../settings/store";
 import { logShell, shellLogger } from "./log";
-import { refreshMenu } from "./menu";
-import { closeUpdateWindow, openUpdateWindow, showAppWindow } from "./windows";
+import { closeUpdateWindow, openUpdateWindow } from "./windows";
 
 const { autoUpdater } = pkg;
 
@@ -153,8 +152,9 @@ async function downloadAppUpdate(): Promise<void> {
 }
 
 /**
- * Restart into whatever has been downloaded. A new app means restarting the
- * whole app; a new runtime alone only needs the server restarted.
+ * Restart into whatever has been downloaded. A new app goes through the
+ * installer; a new runtime alone relaunches the app, so every window comes
+ * back against the new server rather than reconnecting to it.
  */
 export async function installUpdate(): Promise<void> {
   const appReady = state.status === "ready";
@@ -168,19 +168,18 @@ export async function installUpdate(): Promise<void> {
   }
 
   closeUpdateWindow();
-  await activatePendingRuntime();
+  // `before-quit` switches to the downloaded runtime on the way out.
   if (runtimeState.status === "ready" && runtimeState.needsRestart) {
-    try {
-      await runtime.stopRuntime(true);
-      const result = await runtime.startRuntime();
-      showAppWindow(runtime.url ?? result.url);
-      refreshMenu();
-    } catch (err) {
-      logShell("error", "[updates] runtime restart failed:", err);
-      throw err;
-    }
+    relaunchApp();
+    return;
   }
   setRuntimeState({ status: "none" });
+}
+
+/** Quit and start again. `before-quit` shuts the runtime down cleanly. */
+export function relaunchApp(): void {
+  app.relaunch();
+  app.quit();
 }
 
 /** How the quit guard is bypassed for an install. */

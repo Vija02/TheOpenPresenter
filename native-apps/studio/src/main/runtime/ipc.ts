@@ -11,6 +11,7 @@ import {
 import { reportDiagnosis } from "../shell/diagnostics";
 import { logShell } from "../shell/log";
 import { refreshMenu } from "../shell/menu";
+import { relaunchApp } from "../shell/updates";
 import { showAppWindow } from "../shell/windows";
 import { runtime } from "./client";
 import { registerTicket } from "./remote";
@@ -103,14 +104,8 @@ export function registerRuntimeIPC(): void {
 
   ipcMain.handle("runtime:stop", () => runtime.stopRuntime());
 
-  ipcMain.handle("runtime:restart", async () => {
-    await runtime.stopRuntime(true);
-    const result = await runtime.startRuntime();
-    const url = runtime.url ?? result.url;
-    showAppWindow(url);
-    refreshMenu();
-    return { ...result, url, lanAddress: localAddress() };
-  });
+  /** Restart onto a newly activated runtime: the whole app, not just the server. */
+  ipcMain.handle("runtime:restart", () => relaunchApp());
 
   ipcMain.handle("runtime:prune", (_event, keep: string[]) =>
     runtime.prune(keep),

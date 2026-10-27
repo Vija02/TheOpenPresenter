@@ -130,8 +130,6 @@ export function UpdatePrompt() {
   }
 
   if (parts.length > 0 && parts.every((status) => status === "ready")) {
-    // A new runtime on its own only needs the server restarted, not the app.
-    const serverOnly = !hasApp;
     const restartNeeded =
       hasApp || (runtime.status === "ready" && runtime.needsRestart);
     return (
@@ -142,15 +140,13 @@ export function UpdatePrompt() {
         <p className="muted">
           {!restartNeeded
             ? "It will be used next time the server starts."
-            : serverOnly
-              ? "Restarting the server takes a few seconds. Anything on screen will reconnect."
-              : "Restart to start using it, or it will be applied next time the app starts."}
+            : "Restart to start using it, or it will be applied next time the app starts."}
         </p>
         <div className="row">
           {restartNeeded ? (
             <>
               <Button onClick={() => void api.installUpdate()}>
-                {serverOnly ? "Restart server now" : "Restart now"}
+                Restart now
               </Button>
               <Button variant="outline" onClick={later}>
                 Later
