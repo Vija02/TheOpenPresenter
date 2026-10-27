@@ -87,16 +87,14 @@ export function RuntimeManager() {
     }
   };
 
-  /** Restart onto the activated version, then re-read what is running. */
+  /** Relaunch the app onto the activated version. Stays busy until it goes. */
   const restart = async () => {
     setBusy("restart");
     setProblem(null);
     try {
       await api.restartRuntime();
-      await refresh();
     } catch (error) {
       setProblem(error instanceof Error ? error.message : String(error));
-    } finally {
       setBusy(null);
     }
   };
@@ -144,11 +142,11 @@ export function RuntimeManager() {
       {pendingVersion && (
         <div className="notice">
           <p>
-            The server is still running {pendingVersion}. Restart it to use{" "}
+            The server is still running {pendingVersion}. Restart the app to use{" "}
             {current}.
           </p>
           <Button onClick={() => void restart()} disabled={busy !== null}>
-            {busy === "restart" ? "Restarting…" : "Restart the instance"}
+            {busy === "restart" ? "Restarting…" : "Restart now"}
           </Button>
         </div>
       )}

@@ -237,14 +237,8 @@ export const api = {
     }>("runtime:install", channel),
   activateRuntime: (version: string) =>
     invoke<{ version: string }>("runtime:activate", version),
-  /** Stop and start the runtime, so an activated version takes effect. */
-  restartRuntime: () =>
-    invoke<{
-      url: string;
-      httpPort: number;
-      version: string;
-      lanAddress: string | null;
-    }>("runtime:restart"),
+  /** Relaunch the app, so an activated runtime version takes effect. */
+  restartRuntime: () => invoke<void>("runtime:restart"),
   runtimeStart: (args?: { open?: boolean; organizationSlug?: string }) =>
     invoke<{
       url: string;
