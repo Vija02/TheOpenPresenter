@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 8rtO9iTlts2mu9R9nz1hfGQhVyosM8N2WOsjBZB0jNbqVZw5uI8XayG8PQyA11J
+\restrict TmLWoIueawJY5RIYGz15SyicM8x2Qv4Vr3vqvvRmfe2nJ8lU5NW6JJgc8ZFc0Oz
 
 -- Dumped from database version 17.0 (Debian 17.0-1.pgdg120+1)
 -- Dumped by pg_dump version 18.6
@@ -158,6 +158,22 @@ CREATE TYPE app_public.cloud_sync_run_status AS ENUM (
     'in_progress',
     'completed',
     'failed'
+);
+
+
+--
+-- Name: cloud_sync_trigger; Type: TYPE; Schema: app_public; Owner: -
+--
+
+CREATE TYPE app_public.cloud_sync_trigger AS ENUM (
+    'start',
+    'manual',
+    'schedule',
+    'local_change',
+    'local_media_change',
+    'cloud_change',
+    'cloud_media_change',
+    'reconnect'
 );
 
 
@@ -335,6 +351,49 @@ CREATE FUNCTION app_private.assert_valid_password(new_password text) RETURNS voi
 begin
 end;
 $$;
+
+
+--
+-- Name: attach_cloud_sync_hints(); Type: FUNCTION; Schema: app_private; Owner: -
+--
+
+CREATE FUNCTION app_private.attach_cloud_sync_hints() RETURNS void
+    LANGUAGE plpgsql
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+    AS $_$
+declare
+  v_table record;
+begin
+  for v_table in
+    select n.nspname as schema_name, c.relname as table_name, (
+      select a.attname from pg_constraint con
+      join pg_attribute a on a.attrelid = c.oid and a.attnum = con.conkey[1]
+      where con.conrelid = c.oid and con.contype = 'f'
+        and con.confrelid = 'app_public.organizations'::regclass
+        and cardinality(con.conkey) = 1
+      limit 1
+    ) as organization_column
+    from pg_class c
+    join pg_namespace n on n.oid = c.relnamespace
+    where c.relkind = 'r'
+      and (n.nspname like 'plugin\_%' or n.nspname = 'app_public')
+      and obj_description(c.oid, 'pg_class') ~ '(^|\s)@cloudSync(\s|$)'
+      and not exists (
+        select 1 from pg_trigger t
+        where t.tgrelid = c.oid and t.tgname = '_900_cloud_sync_hint'
+      )
+  loop
+    -- The sync refuses such a table too.
+    continue when v_table.organization_column is null;
+    execute format(
+      'create trigger _900_cloud_sync_hint
+         after insert or update or delete on %I.%I
+         for each row execute procedure app_private.tg__cloud_sync_hint(%L)',
+      v_table.schema_name, v_table.table_name, v_table.organization_column
+    );
+  end loop;
+end;
+$_$;
 
 
 SET default_tablespace = '';
@@ -1135,6 +1194,54 @@ begin
   values (new.id, now())
   on conflict (screen_id) do update
     set last_seen_by_admin_at = excluded.last_seen_by_admin_at;
+  return null;
+end;
+$$;
+
+
+--
+-- Name: tg__cloud_sync_hint(); Type: FUNCTION; Schema: app_private; Owner: -
+--
+
+CREATE FUNCTION app_private.tg__cloud_sync_hint() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+    AS $$
+declare
+  v_row jsonb;
+  v_organization_id uuid;
+begin
+  if not exists (select 1 from app_public.cloud_connections)
+    and not exists (select 1 from app_private.cloud_sync_presence) then
+    return null;
+  end if;
+
+  v_row := to_jsonb(case when TG_OP = 'DELETE' then OLD else NEW end);
+  if TG_ARGV[1] = 'project' then
+    -- Gone already when the project's own delete cascaded here
+    select organization_id into v_organization_id
+    from app_public.projects
+    where id = (v_row ->> TG_ARGV[0])::uuid;
+  else
+    v_organization_id := (v_row ->> TG_ARGV[0])::uuid;
+  end if;
+
+  if exists (
+    select 1 from app_public.cloud_connections
+    where organization_id = v_organization_id
+  ) or exists (
+    select 1 from app_private.cloud_sync_presence
+    where organization_id = v_organization_id
+      and seen_at > now() - interval '90 seconds'
+  ) then
+    perform pg_notify(
+      'cloud_sync:' || v_organization_id,
+      json_build_object(
+        'entity', TG_TABLE_SCHEMA || '.' || TG_TABLE_NAME,
+        'origin', nullif(current_setting('app.cloud_sync_origin', true), '')
+      )::text
+    );
+  end if;
   return null;
 end;
 $$;
@@ -3529,6 +3636,17 @@ COMMENT ON FUNCTION app_public.verify_email(user_email_id uuid, token text) IS '
 
 
 --
+-- Name: cloud_sync_presence; Type: TABLE; Schema: app_private; Owner: -
+--
+
+CREATE TABLE app_private.cloud_sync_presence (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    organization_id uuid NOT NULL,
+    seen_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
 -- Name: cloud_sync_rows; Type: TABLE; Schema: app_private; Owner: -
 --
 
@@ -3861,7 +3979,8 @@ CREATE TABLE app_public.cloud_sync_runs (
     started_at timestamp with time zone,
     completed_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    trigger app_public.cloud_sync_trigger
 );
 
 
@@ -4171,6 +4290,14 @@ COMMENT ON COLUMN app_public.user_authentications.identifier IS 'A unique identi
 --
 
 COMMENT ON COLUMN app_public.user_authentications.details IS 'Additional profile details extracted from this login method';
+
+
+--
+-- Name: cloud_sync_presence cloud_sync_presence_pkey; Type: CONSTRAINT; Schema: app_private; Owner: -
+--
+
+ALTER TABLE ONLY app_private.cloud_sync_presence
+    ADD CONSTRAINT cloud_sync_presence_pkey PRIMARY KEY (id);
 
 
 --
@@ -4571,6 +4698,13 @@ ALTER TABLE ONLY app_public.users
 
 ALTER TABLE ONLY app_public.users
     ADD CONSTRAINT users_username_key UNIQUE (username);
+
+
+--
+-- Name: cloud_sync_presence_organization_id_idx; Type: INDEX; Schema: app_private; Owner: -
+--
+
+CREATE INDEX cloud_sync_presence_organization_id_idx ON app_private.cloud_sync_presence USING btree (organization_id);
 
 
 --
@@ -5596,10 +5730,88 @@ CREATE TRIGGER _900_cleanup_unused_media AFTER DELETE ON app_public.project_medi
 
 
 --
+-- Name: categories _900_cloud_sync_hint; Type: TRIGGER; Schema: app_public; Owner: -
+--
+
+CREATE TRIGGER _900_cloud_sync_hint AFTER INSERT OR DELETE OR UPDATE ON app_public.categories FOR EACH ROW EXECUTE FUNCTION app_private.tg__cloud_sync_hint('organization_id');
+
+
+--
+-- Name: project_medias _900_cloud_sync_hint; Type: TRIGGER; Schema: app_public; Owner: -
+--
+
+CREATE TRIGGER _900_cloud_sync_hint AFTER INSERT OR DELETE ON app_public.project_medias FOR EACH ROW EXECUTE FUNCTION app_private.tg__cloud_sync_hint('project_id', 'project');
+
+
+--
+-- Name: project_tags _900_cloud_sync_hint; Type: TRIGGER; Schema: app_public; Owner: -
+--
+
+CREATE TRIGGER _900_cloud_sync_hint AFTER INSERT OR DELETE OR UPDATE ON app_public.project_tags FOR EACH ROW EXECUTE FUNCTION app_private.tg__cloud_sync_hint('project_id', 'project');
+
+
+--
+-- Name: tags _900_cloud_sync_hint; Type: TRIGGER; Schema: app_public; Owner: -
+--
+
+CREATE TRIGGER _900_cloud_sync_hint AFTER INSERT OR DELETE OR UPDATE ON app_public.tags FOR EACH ROW EXECUTE FUNCTION app_private.tg__cloud_sync_hint('organization_id');
+
+
+--
+-- Name: medias _900_cloud_sync_hint_delete; Type: TRIGGER; Schema: app_public; Owner: -
+--
+
+CREATE TRIGGER _900_cloud_sync_hint_delete AFTER DELETE ON app_public.medias FOR EACH ROW EXECUTE FUNCTION app_private.tg__cloud_sync_hint('organization_id');
+
+
+--
+-- Name: projects _900_cloud_sync_hint_delete; Type: TRIGGER; Schema: app_public; Owner: -
+--
+
+CREATE TRIGGER _900_cloud_sync_hint_delete AFTER DELETE ON app_public.projects FOR EACH ROW WHEN ((NOT old.is_temporary)) EXECUTE FUNCTION app_private.tg__cloud_sync_hint('organization_id');
+
+
+--
+-- Name: medias _900_cloud_sync_hint_insert; Type: TRIGGER; Schema: app_public; Owner: -
+--
+
+CREATE TRIGGER _900_cloud_sync_hint_insert AFTER INSERT ON app_public.medias FOR EACH ROW WHEN (new.is_complete) EXECUTE FUNCTION app_private.tg__cloud_sync_hint('organization_id');
+
+
+--
+-- Name: projects _900_cloud_sync_hint_insert; Type: TRIGGER; Schema: app_public; Owner: -
+--
+
+CREATE TRIGGER _900_cloud_sync_hint_insert AFTER INSERT ON app_public.projects FOR EACH ROW WHEN ((NOT new.is_temporary)) EXECUTE FUNCTION app_private.tg__cloud_sync_hint('organization_id');
+
+
+--
+-- Name: medias _900_cloud_sync_hint_update; Type: TRIGGER; Schema: app_public; Owner: -
+--
+
+CREATE TRIGGER _900_cloud_sync_hint_update AFTER UPDATE ON app_public.medias FOR EACH ROW WHEN ((((((old.is_complete IS DISTINCT FROM new.is_complete) OR (old.media_name IS DISTINCT FROM new.media_name)) OR (old.original_name IS DISTINCT FROM new.original_name)) OR (old.tags IS DISTINCT FROM new.tags)) AND new.is_complete)) EXECUTE FUNCTION app_private.tg__cloud_sync_hint('organization_id');
+
+
+--
+-- Name: projects _900_cloud_sync_hint_update; Type: TRIGGER; Schema: app_public; Owner: -
+--
+
+CREATE TRIGGER _900_cloud_sync_hint_update AFTER UPDATE ON app_public.projects FOR EACH ROW WHEN (((((old.name IS DISTINCT FROM new.name) OR (old.target_date IS DISTINCT FROM new.target_date)) OR (old.category_id IS DISTINCT FROM new.category_id)) OR (old.is_temporary IS DISTINCT FROM new.is_temporary))) EXECUTE FUNCTION app_private.tg__cloud_sync_hint('organization_id');
+
+
+--
 -- Name: user_emails _900_send_verification_email; Type: TRIGGER; Schema: app_public; Owner: -
 --
 
 CREATE TRIGGER _900_send_verification_email AFTER INSERT ON app_public.user_emails FOR EACH ROW WHEN ((new.is_verified IS FALSE)) EXECUTE FUNCTION app_private.tg__add_job('user_emails__send_verification');
+
+
+--
+-- Name: cloud_sync_presence cloud_sync_presence_organization_id_fkey; Type: FK CONSTRAINT; Schema: app_private; Owner: -
+--
+
+ALTER TABLE ONLY app_private.cloud_sync_presence
+    ADD CONSTRAINT cloud_sync_presence_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES app_public.organizations(id) ON DELETE CASCADE;
 
 
 --
@@ -7016,6 +7228,13 @@ REVOKE ALL ON FUNCTION app_private.assert_valid_password(new_password text) FROM
 
 
 --
+-- Name: FUNCTION attach_cloud_sync_hints(); Type: ACL; Schema: app_private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_private.attach_cloud_sync_hints() FROM PUBLIC;
+
+
+--
 -- Name: TABLE screen_guest_sessions; Type: ACL; Schema: app_public; Owner: -
 --
 
@@ -7146,6 +7365,13 @@ REVOKE ALL ON FUNCTION app_private.tg__add_job() FROM PUBLIC;
 --
 
 REVOKE ALL ON FUNCTION app_private.tg__bump_screen_heartbeat_on_project_set() FROM PUBLIC;
+
+
+--
+-- Name: FUNCTION tg__cloud_sync_hint(); Type: ACL; Schema: app_private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_private.tg__cloud_sync_hint() FROM PUBLIC;
 
 
 --
@@ -8458,5 +8684,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE theopenpresenter REVOKE ALL ON FUNCTIONS FROM 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 8rtO9iTlts2mu9R9nz1hfGQhVyosM8N2WOsjBZB0jNbqVZw5uI8XayG8PQyA11J
+\unrestrict TmLWoIueawJY5RIYGz15SyicM8x2Qv4Vr3vqvvRmfe2nJ8lU5NW6JJgc8ZFc0Oz
 
