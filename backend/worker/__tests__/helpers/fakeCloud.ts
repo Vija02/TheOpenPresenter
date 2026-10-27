@@ -1,5 +1,13 @@
 import { Hocuspocus, WebSocketLike } from "@hocuspocus/server";
 import { uuidFromMediaId } from "@repo/lib";
+import { EventEmitter, on } from "events";
+import {
+  GraphQLNonNull,
+  GraphQLObjectType,
+  GraphQLSchema,
+  GraphQLString,
+} from "graphql";
+import { useServer } from "graphql-ws/lib/use/ws";
 import { IncomingMessage, Server, ServerResponse, createServer } from "http";
 import { AddressInfo } from "net";
 import { WebSocketServer } from "ws";
@@ -131,8 +139,17 @@ export const startFakeCloud = async (syncTables: CloudSyncTable[]) => {
     /** Media the cloud answers "inUse" for, as if put to use meanwhile. */
     refuseDeletes: new Set<string>(),
 
+    // ----- Live sync -----
+    /** Open `cloudOrganizationChanged` subscriptions. */
+    hintSubscribers: 0,
+    /** Tell subscribed studios something changed, as the cloud's trigger does. */
+    hint: (entity: string, origin: string | null = null) => {
+      hints.emit("hint", { entity, origin });
+    },
+
     close: async () => {},
   };
+  const hints = new EventEmitter();
 
   const tableOf = (entity: string) =>
     syncTables.find((t) => `${t.schema}.${t.table}` === entity)!;
@@ -615,8 +632,68 @@ export const startFakeCloud = async (syncTables: CloudSyncTable[]) => {
       if (project) project.updatedAt = fake.now();
     },
   });
+  // `/graphql`, for the one subscription live sync uses.
+  const hintWss = new WebSocketServer({ noServer: true });
+  // Counted until `return()`, which a generator would only run once an
+  // event arrived, as the real cloud's `withPresence` does.
+  const listen = (): AsyncIterableIterator<unknown> => {
+    const events = on(hints, "hint");
+    fake.hintSubscribers += 1;
+    let open = true;
+    const iterator: AsyncIterableIterator<unknown> = {
+      next: async () => {
+        const result = await events.next();
+        return result.done
+          ? result
+          : { done: false, value: { cloudOrganizationChanged: result.value[0] } };
+      },
+      return: async () => {
+        if (open) fake.hintSubscribers -= 1;
+        open = false;
+        return events.return!();
+      },
+      [Symbol.asyncIterator]: () => iterator,
+    };
+    return iterator;
+  };
+  useServer(
+    {
+      schema: new GraphQLSchema({
+        query: new GraphQLObjectType({
+          name: "Query",
+          fields: { ok: { type: GraphQLString } },
+        }),
+        subscription: new GraphQLObjectType({
+          name: "Subscription",
+          fields: {
+            cloudOrganizationChanged: {
+              type: new GraphQLObjectType({
+                name: "CloudSyncHint",
+                fields: {
+                  entity: { type: GraphQLString },
+                  origin: { type: GraphQLString },
+                },
+              }),
+              args: {
+                organizationSlug: { type: new GraphQLNonNull(GraphQLString) },
+              },
+              subscribe: () => listen(),
+            },
+          },
+        }),
+      }),
+    },
+    hintWss,
+  );
+
   const wss = new WebSocketServer({ noServer: true });
   server.on("upgrade", (request, socket, head) => {
+    if (request.url?.startsWith("/graphql")) {
+      hintWss.handleUpgrade(request, socket, head, (ws) =>
+        hintWss.emit("connection", ws, request),
+      );
+      return;
+    }
     wss.handleUpgrade(request, socket, head, (ws) => {
       const url = new URL(request.url ?? "/", `http://${request.headers.host}`);
       const headers = new Headers();
@@ -639,8 +716,11 @@ export const startFakeCloud = async (syncTables: CloudSyncTable[]) => {
   await new Promise<void>((resolve) => server.listen(0, resolve));
   fake.url = `http://localhost:${(server.address() as AddressInfo).port}`;
   fake.close = async () => {
-    for (const client of wss.clients) client.terminate();
+    for (const client of [...wss.clients, ...hintWss.clients]) {
+      client.terminate();
+    }
     wss.close();
+    hintWss.close();
     await new Promise((resolve) => server.close(resolve));
   };
   return fake;
