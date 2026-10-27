@@ -126,8 +126,8 @@ export default (app: Express) => {
         `,
         [mediaDetails.uuid, width, outputExtension],
       );
-      res.redirect(
-        301,
+      redirectForever(
+        res,
         `/media/data/${constructMediaName(mediaIdFromUUID(row.processed_media_id), outputExtension)}`,
       );
 
@@ -152,7 +152,7 @@ export default (app: Express) => {
 
       // If requested size is bigger than original file, skip the resize and just give the original file
       if (!converting && mediaRow.width && width > mediaRow.width) {
-        res.redirect(301, `/media/data/${req.params.mediaName}`);
+        redirectForever(res, `/media/data/${req.params.mediaName}`);
         return;
       }
 
@@ -193,7 +193,7 @@ export default (app: Express) => {
 
         // Again, if requested size is bigger than original file, skip the resize and just give the original file
         if (!converting && metadata.width && width > metadata.width) {
-          res.redirect(301, `/media/data/${req.params.mediaName}`);
+          redirectForever(res, `/media/data/${req.params.mediaName}`);
           return;
         }
       }
@@ -248,8 +248,8 @@ export default (app: Express) => {
 
       fs.rmSync(tempFilePath);
 
-      res.redirect(
-        301,
+      redirectForever(
+        res,
         `/media/data/${constructMediaName(processedMediaId, outputExtension)}`,
       );
     } catch (err) {
@@ -466,6 +466,11 @@ export default (app: Express) => {
     },
   );
 };
+
+function redirectForever(res: express.Response, url: string) {
+  res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+  res.redirect(301, url);
+}
 
 function isValidURL(string: string) {
   try {
