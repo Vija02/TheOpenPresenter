@@ -71,7 +71,10 @@ const PLANS: Record<CloudSyncTrigger, Plan> = {
 export const queueCloudSync = async (
   client: Queryable,
   cloudConnectionId: string,
-  { trigger, forceResync }: { trigger: CloudSyncTrigger; forceResync?: boolean },
+  {
+    trigger,
+    forceResync,
+  }: { trigger: CloudSyncTrigger; forceResync?: boolean },
 ): Promise<void> => {
   const plan = PLANS[trigger];
   const payload: CloudSyncPayload = {
@@ -144,7 +147,24 @@ export const withCloudSyncOrigin =
         return await callback(pgClient);
       } finally {
         const reset = () =>
-          pgClient.query(`select set_config('app.cloud_sync_origin', '', false)`);
+          pgClient.query(
+            `select set_config('app.cloud_sync_origin', '', false)`,
+          );
         await reset().catch(() => pgClient.query("rollback").then(reset));
       }
     });
+
+// Send this so that our bridge is up to date for new projects
+export const CLOUD_BRIDGE_CHANNEL = "cloud_bridge";
+
+export const notifyBridges = async (
+  withPgClient: WithPgClient,
+  cloudConnectionId: string,
+): Promise<void> => {
+  await withPgClient((pgClient) =>
+    pgClient.query("select pg_notify($1, $2)", [
+      CLOUD_BRIDGE_CHANNEL,
+      cloudConnectionId,
+    ]),
+  );
+};

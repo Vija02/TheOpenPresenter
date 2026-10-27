@@ -5,6 +5,8 @@ import { PoolClient } from "pg";
 
 import { isCloudEnabled } from "../api/cloud/cloudEnabled";
 import { getShutdownActions } from "../app";
+import { hocuspocus } from "../hocuspocusInstance";
+import { refreshLoadedBridges } from "./cloudDocumentBridge";
 import { getRootPgPool } from "./installDatabasePools";
 
 /**
@@ -156,6 +158,11 @@ export default async (app: Express) => {
       logger.error({ err, connectionId }, "Failed to queue live cloud sync");
     });
 
+  const refreshBridges = () =>
+    refreshLoadedBridges(rootPgPool, hocuspocus.documents).catch((err) => {
+      logger.error({ err }, "Failed to refresh cloud document bridges");
+    });
+
   const onHint = (organizationId: string, payload: string | undefined) => {
     let hint: Hint = {};
     try {
@@ -185,6 +192,8 @@ export default async (app: Express) => {
         refreshChannels(client).catch((err) => {
           logger.error({ err }, "Failed to refresh cloud sync channels");
         });
+      } else if (msg.channel === cloud.CLOUD_BRIDGE_CHANNEL) {
+        refreshBridges();
       } else if (msg.channel.startsWith("cloud_sync:")) {
         onHint(msg.channel.slice("cloud_sync:".length), msg.payload);
       }
@@ -197,10 +206,12 @@ export default async (app: Express) => {
     });
 
     await client.query(`LISTEN "${CONNECTIONS_CHANNEL}"`);
+    await client.query(`LISTEN "${cloud.CLOUD_BRIDGE_CHANNEL}"`);
     await refreshChannels(client);
 
     // Hints sent while nobody listened are gone; sync to catch up.
     if (reconnecting) {
+      refreshBridges();
       for (const connections of byOrganization.values()) {
         for (const { id } of connections) queue(id, "local_change");
       }

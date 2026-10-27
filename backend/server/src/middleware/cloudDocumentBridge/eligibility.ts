@@ -2,7 +2,7 @@ import { logger } from "@repo/observability";
 import type { Pool } from "pg";
 import type * as Y from "yjs";
 
-import { closeBridge, openBridge } from "./registry";
+import { closeBridge, getSyncState, openBridge } from "./registry";
 
 /**
  * Whether our project should be bridged to the cloud.
@@ -88,4 +88,33 @@ export const unbridgeProject = async (
   localProjectId: string,
 ): Promise<void> => {
   await closeBridge(localProjectId);
+};
+
+const UUID =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export const refreshLoadedBridges = async (
+  pool: Pool,
+  documents: ReadonlyMap<string, Y.Doc>,
+): Promise<void> => {
+  const ids = [...documents.keys()].filter((id) => UUID.test(id));
+  if (ids.length === 0) return;
+  const { rows } = await pool.query<{ id: string; connected: boolean }>(
+    `select id,
+            cloud_connection_id is not null and cloud_project_id is not null
+              as connected
+       from app_public.projects
+      where id = any($1::uuid[])`,
+    [ids],
+  );
+  const connected = new Map(rows.map((row) => [row.id, row.connected]));
+  for (const id of ids) {
+    const bridged = getSyncState(id) !== null;
+    if (!connected.has(id)) {
+      if (bridged) await closeBridge(id);
+    } else if (connected.get(id) && !bridged) {
+      const document = documents.get(id);
+      if (document) await bridgeProjectIfEligible(pool, id, document);
+    }
+  }
 };
