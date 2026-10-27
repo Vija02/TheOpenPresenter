@@ -149,7 +149,7 @@ export const useScreenShareSender = () => {
       t.addEventListener("ended", () => stopShare());
     });
 
-    // The scene data can disappear while the picker is open (e.g. scene deleted)
+    // pluginData can go missing while the picker is open
     const pluginData = mutableSceneData.pluginData;
     if (!pluginData) {
       localTeardown();
