@@ -102,6 +102,8 @@ export type ProjectSyncCounts = {
   pushed: number;
   pushRejected: number;
   deletedLocally: number;
+  /** Projects here that now have a cloud copy, e.g. created here. */
+  connected: number;
   /** Pulls that name a category or tag missing here; retried next sync. */
   skipped: number;
   /** Edited on both sides, and combined field by field. */
@@ -160,6 +162,7 @@ export const syncProjects = async (
     pushed: 0,
     pushRejected: 0,
     deletedLocally: 0,
+    connected: 0,
     skipped: 0,
     merged: 0,
     documentsSynced: 0,
@@ -291,6 +294,7 @@ export const syncProjects = async (
     }
     counts.pulled += 1;
     if (!row.in_local) counts.added += 1;
+    else if (row.never_connected) counts.connected += 1;
     synced.push(result);
   }
 
@@ -356,7 +360,7 @@ export const syncProjects = async (
 
   // Including projects whose create landed in an earlier sync whose response
   // was lost, and ones pulled before sync kept state.
-  await bookkeep(
+  counts.connected += await bookkeep(
     withPgClient,
     `update app_public.projects set cloud_connection_id = $2
      where id = any($1) and cloud_connection_id is distinct from $2`,
@@ -470,8 +474,9 @@ const bookkeep = (withPgClient: WithPgClient, sql: string, params: unknown[]) =>
     await pgClient.query("begin");
     try {
       await pgClient.query("set local session_replication_role = replica");
-      await pgClient.query(sql, params);
+      const { rowCount } = await pgClient.query(sql, params);
       await pgClient.query("commit");
+      return rowCount ?? 0;
     } catch (err) {
       await pgClient.query("rollback");
       throw err;
