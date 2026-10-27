@@ -16,7 +16,6 @@ import { logShell } from "./shell/log";
 import { setupMenu } from "./shell/menu";
 import { setupTray } from "./shell/tray";
 import {
-  activatePendingRuntime,
   checkAtLaunch,
   isInstallingUpdate,
   setupUpdates,
@@ -163,9 +162,8 @@ if (!gotLock) {
     event.preventDefault();
     shuttingDown = true;
     closeAllPresentWindows();
-    // A runtime downloaded and left for "later" is switched to on the way out.
-    activatePendingRuntime()
-      .then(() => runtime.shutdown())
+    runtime
+      .shutdown()
       .catch((err) => logShell("error", "[main] runtime shutdown failed:", err))
       .finally(() => app.quit());
   });

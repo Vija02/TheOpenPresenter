@@ -168,7 +168,6 @@ export async function installUpdate(): Promise<void> {
   }
 
   closeUpdateWindow();
-  // `before-quit` switches to the downloaded runtime on the way out.
   if (runtimeState.status === "ready" && runtimeState.needsRestart) {
     relaunchApp();
     return;
@@ -191,7 +190,6 @@ export function isInstallingUpdate(): boolean {
 
 async function shutdownForInstall(): Promise<void> {
   installing = true;
-  await activatePendingRuntime();
   if (runtime.isRunning) {
     await runtime
       .shutdown()
@@ -217,8 +215,6 @@ export type RuntimeUpdateState =
   | { status: "error"; version: string; message: string };
 
 let runtimeState: RuntimeUpdateState = { status: "none" };
-/** Downloaded while the server was running, so not yet switched to. */
-let pendingActivation: string | null = null;
 
 export function runtimeUpdateState(): RuntimeUpdateState {
   return runtimeState;
@@ -280,11 +276,11 @@ async function downloadRuntimeUpdate(): Promise<void> {
   };
   runtime.on("progress", onProgress);
   try {
-    // Switching the version under a running server would let a crash respawn
-    // it on the new one mid-service, so that waits for a restart.
+    // Activated straight away: a running server keeps its version until it
+    // is restarted, and the manager brings a crashed one back on that same
+    // version rather than the new one.
     const status = await runtime.status();
-    const result = await runtime.ensure(channel(), !status.running);
-    pendingActivation = result.activated ? null : result.version;
+    const result = await runtime.ensure(channel(), true);
     setRuntimeState({
       status: "ready",
       version: result.version,
@@ -299,20 +295,5 @@ async function downloadRuntimeUpdate(): Promise<void> {
     });
   } finally {
     runtime.off("progress", onProgress);
-  }
-}
-
-/**
- * Switch to a runtime downloaded while the server was running. Called on the
- * way out, so "Later" still means the next start uses it.
- */
-export async function activatePendingRuntime(): Promise<void> {
-  if (!pendingActivation || !runtime.isRunning) return;
-  const version = pendingActivation;
-  pendingActivation = null;
-  try {
-    await runtime.activate(version);
-  } catch (err) {
-    logShell("error", "[updates] runtime activation failed:", err);
   }
 }

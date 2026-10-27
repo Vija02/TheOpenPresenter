@@ -49,15 +49,16 @@ export function registerRuntimeIPC(): void {
 
   /** Download a runtime. Progress streams over `runtime:progress` */
   ipcMain.handle("runtime:install", async (_event, channel?: string) => {
+    // Activated even under a running server, so settings can offer the
+    // restart onto it. The server keeps its version until then.
     const status = await runtime.status().catch(() => null);
-    const activate = !status?.running;
 
     const result = await runtime.ensure(
       channel ?? getSettings().channel ?? DEFAULT_CHANNEL,
-      activate,
+      true,
     );
 
-    return { ...result, pendingRestart: !activate };
+    return { ...result, pendingRestart: !!status?.running };
   });
 
   ipcMain.handle("runtime:activate", (_event, version: string) =>
