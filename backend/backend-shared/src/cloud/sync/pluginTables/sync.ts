@@ -61,6 +61,8 @@ type Counts = {
   pushRejected: number;
 };
 
+type CloudKeys = { key: unknown; updatedAt: string }[];
+
 type SyncOptions = {
   forceResync: boolean;
   deletes?: boolean;
@@ -104,12 +106,20 @@ export const syncPluginTables = async (
     failedTables: 0,
   };
 
-  for (const table of tables) {
+  const cloudKeys = tables.map((table) => {
+    const keys = fetchCloudKeys(urqlClient, cloudConnection, table);
+    // Awaited in turn below; until then, a failure is not unhandled.
+    keys.catch(() => {});
+    return keys;
+  });
+
+  for (const [i, table] of tables.entries()) {
     const entity = `${table.schema}.${table.table}`;
     const log = logger.child({ entity });
     try {
       const counts = await syncCloudPluginTable(
         { withPgClient, urqlClient, cloudConnection, table, entity },
+        await cloudKeys[i]!,
         options,
       );
       for (const k of Object.keys(counts) as (keyof Counts)[]) {
@@ -129,20 +139,37 @@ export const syncPluginTables = async (
   return total;
 };
 
+const cloudVariablesFor = (
+  cloudConnection: CloudConnection,
+  table: CloudSyncTable,
+) => ({
+  organizationSlug: cloudConnection.target_organization_slug,
+  schemaName: table.schema,
+  tableName: table.table,
+});
+
+const fetchCloudKeys = async (
+  urqlClient: Client,
+  cloudConnection: CloudConnection,
+  table: CloudSyncTable,
+): Promise<CloudKeys> => {
+  const { cloudPluginTableKeys } = await queryCloud<{
+    cloudPluginTableKeys: CloudKeys;
+  }>(
+    urqlClient,
+    CLOUD_PLUGIN_TABLE_KEYS,
+    cloudVariablesFor(cloudConnection, table),
+  );
+  return cloudPluginTableKeys;
+};
+
 const syncCloudPluginTable = async (
   ctx: Ctx,
+  cloudKeys: CloudKeys,
   { forceResync, deletes = true }: SyncOptions,
 ): Promise<Counts> => {
   const { withPgClient, urqlClient, cloudConnection, table, entity } = ctx;
-  const cloudVariables = {
-    organizationSlug: cloudConnection.target_organization_slug,
-    schemaName: table.schema,
-    tableName: table.table,
-  };
-
-  const { cloudPluginTableKeys: cloudKeys } = await queryCloud<{
-    cloudPluginTableKeys: { key: unknown; updatedAt: string }[];
-  }>(urqlClient, CLOUD_PLUGIN_TABLE_KEYS, cloudVariables);
+  const cloudVariables = cloudVariablesFor(cloudConnection, table);
 
   // Compared in Postgres so the cloud's timestamps keep full precision.
   const {
