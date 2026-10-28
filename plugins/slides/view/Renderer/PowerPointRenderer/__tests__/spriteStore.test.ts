@@ -1,4 +1,4 @@
-import { renderHook, waitFor } from "@testing-library/react";
+import { cleanup, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // The store is module-level (sheets outlive renders), so each test loads it fresh
@@ -35,6 +35,8 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  // Unmounting frees sheets, which needs the stubbed URL
+  cleanup();
   vi.unstubAllGlobals();
   decodeMock.mockClear();
 });
@@ -76,6 +78,29 @@ describe("useSpriteStore", () => {
     });
     await waitFor(() => expect(result.current.allLoaded).toBe(true));
     rerender({ all: ["a.webp"], required: [], decodeUrls: [] });
+    expect(URL.revokeObjectURL).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps sheets another store still wants", async () => {
+    const { useSpriteStore } = await loadStore();
+    // The presenter's main slide and its previews share one page
+    const renderer = renderHook((p) => useSpriteStore(p), {
+      initialProps: { all: ["a.webp", "b.webp"], required: [], decodeUrls: [] },
+    });
+    await waitFor(() => expect(renderer.result.current.allLoaded).toBe(true));
+
+    // Already in memory, so drawn from it on the very first render
+    const preview = renderHook(() =>
+      useSpriteStore({ all: ["b.webp"], required: ["b.webp"], decodeUrls: [] }),
+    );
+    expect(preview.result.current.ready).toBe(true);
+    expect(preview.result.current.resolve("b.webp")).toMatch(/^blob:/);
+
+    renderer.rerender({ all: ["a.webp"], required: [], decodeUrls: [] });
+    expect(URL.revokeObjectURL).not.toHaveBeenCalled();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+
+    preview.unmount();
     expect(URL.revokeObjectURL).toHaveBeenCalledTimes(1);
   });
 });
