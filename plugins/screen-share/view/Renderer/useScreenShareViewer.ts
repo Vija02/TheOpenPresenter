@@ -30,10 +30,14 @@ export const useScreenShareViewer = () => {
   const awarenessObj = pluginApi.awareness.awarenessObj;
   const awarenessData = pluginApi.awareness.useAwarenessData();
 
-  const isSharing = pluginApi.scene.useData((x) => x.pluginData.isSharing);
-  const sessionId = pluginApi.scene.useData((x) => x.pluginData.sessionId);
+  const isSharing = pluginApi.scene.useData(
+    (x) => x.pluginData?.isSharing ?? false,
+  );
+  const sessionId = pluginApi.scene.useData(
+    (x) => x.pluginData?.sessionId ?? null,
+  );
   const sharerAwarenessUserId = pluginApi.scene.useData(
-    (x) => x.pluginData.sharerAwarenessUserId,
+    (x) => x.pluginData?.sharerAwarenessUserId ?? null,
   );
 
   const iceServersQuery = useIceServers();
