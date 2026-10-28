@@ -135,6 +135,7 @@ jobs:
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          RUNTIME_BASE_URL: ${{ secrets.RUNTIME_BASE_URL }}
         run: |
           set -euo pipefail
 
@@ -155,13 +156,92 @@ jobs:
 
           # Under the hardened runtime, unsigned downloaded dylibs will not
           # load at all, so every Mach-O in the payload has to be signed.
-          while IFS= read -r -d '' f; do
-            if file "$f" | grep -qE 'Mach-O'; then
-              codesign --force --options runtime --timestamp \
-                --keychain "$KEYCHAIN" \
-                --sign "$APPLE_SIGNING_IDENTITY" "$f"
-            fi
-          done < <(find "$RUNTIME_DIR" -type f -print0)
+          # Signing embeds a timestamp, so a binary signed afresh gets a new
+          # hash every release and every update re-downloads all of them.
+          # A binary an earlier release already signed is reused from the
+          # CDN instead, found by its hash before signing.
+          SIGN_SCRIPT="$RUNNER_TEMP/sign.py"
+          cat > "$SIGN_SCRIPT" <<'PY'
+          import hashlib, json, os, shutil, subprocess, sys, tempfile, urllib.request
+
+          root, base, slug, out, keychain = sys.argv[1:6]
+          identity = os.environ["APPLE_SIGNING_IDENTITY"]
+          identity_hash = hashlib.sha256(identity.encode()).hexdigest()
+          MAGICS = {b"\xfe\xed\xfa\xce", b"\xfe\xed\xfa\xcf", b"\xce\xfa\xed\xfe", b"\xcf\xfa\xed\xfe"}
+
+          def is_macho(path):
+              with open(path, "rb") as f:
+                  head = f.read(8)
+              if head[:4] in MAGICS:
+                  return True
+              # Universal binaries share their magic with Java class files,
+              # which give a version number where these give a slice count.
+              return head[:4] == b"\xca\xfe\xba\xbe" and 0 < int.from_bytes(head[4:8], "big") < 20
+
+          def sha256(path):
+              h = hashlib.sha256()
+              with open(path, "rb") as f:
+                  for chunk in iter(lambda: f.read(1 << 20), b""):
+                      h.update(chunk)
+              return h.hexdigest()
+
+          def fetch(url):
+              with urllib.request.urlopen(url, timeout=120) as r:
+                  return r.read()
+
+          signed = {}
+          try:
+              published = json.loads(fetch(f"{base}/signed/{slug}.json"))
+              if published.get("identity") == identity_hash:
+                  signed = published.get("signed", {})
+          except Exception as e:
+              print(f"no signed map to reuse from: {e}")
+
+          def reuse(path, signed_hash):
+              raw = fetch(f"{base}/blobs/{signed_hash[:2]}/{signed_hash}")
+              if raw[:4] == b"\x28\xb5\x2f\xfd":
+                  raw = subprocess.run(["zstd", "-dq"], input=raw, capture_output=True, check=True).stdout
+              if hashlib.sha256(raw).hexdigest() != signed_hash:
+                  return False
+              with tempfile.NamedTemporaryFile(delete=False) as tmp:
+                  tmp.write(raw)
+              shutil.copymode(path, tmp.name)
+              ok = subprocess.run(["codesign", "--verify", "--strict", tmp.name]).returncode == 0
+              if ok:
+                  shutil.move(tmp.name, path)
+              else:
+                  os.unlink(tmp.name)
+              return ok
+
+          reused = fresh = 0
+          for dirpath, _, names in os.walk(root):
+              for name in names:
+                  path = os.path.join(dirpath, name)
+                  if os.path.islink(path) or not is_macho(path):
+                      continue
+                  unsigned = sha256(path)
+                  previous = signed.get(unsigned)
+                  try:
+                      if previous and reuse(path, previous):
+                          reused += 1
+                          continue
+                  except Exception as e:
+                      print(f"could not reuse {path}: {e}")
+                  subprocess.run(["codesign", "--force", "--options", "runtime", "--timestamp",
+                                  "--keychain", keychain, "--sign", identity, path], check=True)
+                  signed[unsigned] = sha256(path)
+                  fresh += 1
+
+          os.makedirs(os.path.dirname(out), exist_ok=True)
+          with open(out, "w") as f:
+              json.dump({"identity": identity_hash, "signed": signed}, f)
+          print(f"reused {reused} signed binaries, signed {fresh}")
+          PY
+
+          python3 "$SIGN_SCRIPT" "$RUNTIME_DIR" \
+            "${RUNTIME_BASE_URL:-https://runtime.theopenpresenter.com}" \
+            "${{ matrix.slug }}" "$RUNNER_TEMP/cdn/signed/${{ matrix.slug }}.json" \
+            "$KEYCHAIN"
 
           security delete-keychain "$KEYCHAIN"
 
@@ -447,6 +527,14 @@ jobs:
           echo "syncing versions"
           s3 sync cdn/versions "s3://$R2_BUCKET/versions" \
             --cache-control "public, max-age=60" --no-progress
+
+          # Which signed binary each unsigned one became, so the next
+          # release reuses it rather than signing it again.
+          if [ -d cdn/signed ]; then
+            echo "syncing signed binary map"
+            s3 sync cdn/signed "s3://$R2_BUCKET/signed" \
+              --cache-control "public, max-age=60" --no-progress
+          fi
 
           echo "syncing channel pointer"
           s3 sync cdn/channels "s3://$R2_BUCKET/channels" \
