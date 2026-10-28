@@ -389,4 +389,28 @@ describe("queueCloudSync", () => {
       }),
     ]);
   });
+
+  it("never postpones a live sync already waiting", async () => {
+    const mediaRunAt = () =>
+      query(`select run_at from graphile_worker.jobs where key = $1`, [
+        `cloud_connection__sync:${connectionId}:media`,
+      ]).then((rows) => rows[0].run_at.getTime());
+
+    await queueCloudSync(pool, connectionId, {
+      trigger: "local_media_change",
+    });
+    const first = await mediaRunAt();
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    await queueCloudSync(pool, connectionId, {
+      trigger: "cloud_media_change",
+    });
+
+    expect(await mediaRunAt()).toBe(first);
+    expect(await jobs()).toEqual([
+      expect.objectContaining({
+        payload: expect.objectContaining({ trigger: "cloud_media_change" }),
+        delayed: true,
+      }),
+    ]);
+  });
 });

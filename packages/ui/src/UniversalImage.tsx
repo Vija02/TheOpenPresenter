@@ -7,7 +7,9 @@ import {
 } from "@repo/lib";
 import { ReactNode, useEffect, useMemo, useRef, useState } from "react";
 
-const DEFAULT_RETRY_DELAYS_MS = [1000, 2000, 4000, 8000, 15000];
+const DEFAULT_RETRY_DELAYS_MS = [
+  1000, 2000, 4000, 8000, 15000, 15000
+];
 
 // Cache-bust so the browser doesn't reuse the failed response
 const withRetry = (url: string, attempt: number) =>

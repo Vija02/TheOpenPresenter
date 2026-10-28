@@ -40,31 +40,21 @@ type Plan = {
   media: boolean;
 };
 
+const LIVE = { delayMs: 500, mode: "preserve_run_at" } as const;
+
 const PLANS: Record<CloudSyncTrigger, Plan> = {
   // Never postpone a full sync already queued.
   start: { key: "", delayMs: 0, mode: "preserve_run_at", media: true },
   schedule: { key: "", delayMs: 0, mode: "preserve_run_at", media: true },
   manual: { key: "", delayMs: 0, mode: "replace", media: true },
-  // Each change pushes the run back, so a burst of edits is one sync.
-  local_change: { key: ":live", delayMs: 2000, mode: "replace", media: false },
-  // Media sync pages every media and moves files; wait longer.
-  local_media_change: {
-    key: ":media",
-    delayMs: 10000,
-    mode: "replace",
-    media: true,
-  },
+  local_change: { key: ":live", ...LIVE, media: false },
+  local_media_change: { key: ":media", ...LIVE, media: true },
   // Folded in with changes here: one sync covers both sides.
-  cloud_change: { key: ":live", delayMs: 2000, mode: "replace", media: false },
-  cloud_media_change: {
-    key: ":media",
-    delayMs: 10000,
-    mode: "replace",
-    media: true,
-  },
+  cloud_change: { key: ":live", ...LIVE, media: false },
+  cloud_media_change: { key: ":media", ...LIVE, media: true },
   // Could have missed media too; under the media key so a live change
   // within the delay does not replace it with one that skips media.
-  reconnect: { key: ":media", delayMs: 2000, mode: "replace", media: true },
+  reconnect: { key: ":media", ...LIVE, media: true },
 };
 
 /** Queue a sync of one cloud connection */
