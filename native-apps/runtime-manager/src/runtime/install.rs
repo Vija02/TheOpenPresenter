@@ -429,7 +429,7 @@ impl<'a> Installer<'a> {
                 if *probes > MAX_PROBES {
                     return None;
                 }
-                let key = fetch::delta_pack_key(&self.platform, &known[at], &known[next]);
+                let key = fetch::delta_pack_key(&self.platform, known[at], known[next]);
                 if !self.source.exists(&key) {
                     continue;
                 }
