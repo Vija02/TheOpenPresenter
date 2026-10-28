@@ -17,6 +17,15 @@ const entries = new Map<string, Entry>();
 /** Decoded images we hold on to; letting go lets the browser drop the pixels */
 const decoded = new Map<string, HTMLImageElement>();
 
+const claims = new Map<symbol, ReadonlySet<string>>();
+const decodeClaims = new Map<symbol, ReadonlySet<string>>();
+
+const claimed = (from: Map<symbol, ReadonlySet<string>>) => {
+  const all = new Set<string>();
+  for (const urls of from.values()) urls.forEach((url) => all.add(url));
+  return all;
+};
+
 const load = (url: string): Entry => {
   const existing = entries.get(url);
   if (existing) return existing;
@@ -46,8 +55,9 @@ const decode = async (url: string) => {
   await img.decode().catch(() => {});
 };
 
-/** Frees sheets no slide uses any more */
-const forget = (keep: ReadonlySet<string>) => {
+/** Frees sheets no store wants any more */
+const forget = () => {
+  const keep = claimed(claims);
   for (const [url, entry] of entries) {
     if (keep.has(url)) continue;
     if (entry.blobUrl) URL.revokeObjectURL(entry.blobUrl);
@@ -55,6 +65,17 @@ const forget = (keep: ReadonlySet<string>) => {
     decoded.delete(url);
   }
 };
+
+/** Lets go of decoded sheets no store wants decoded any more */
+const releaseDecoded = () => {
+  const keep = claimed(decodeClaims);
+  for (const url of decoded.keys()) {
+    if (!keep.has(url)) decoded.delete(url);
+  }
+};
+
+/** Downloaded already, possibly by another store */
+const isDownloaded = (url: string) => !!entries.get(url)?.blobUrl;
 
 /**
  * Downloads every url in `all`, decodes those in `decodeUrls` (letting go of
@@ -70,11 +91,23 @@ export const useSpriteStore = ({
   required: string[];
   decodeUrls: string[];
 }) => {
+  const [token] = useState(() => Symbol("sprites"));
   const [loaded, setLoaded] = useState<ReadonlySet<string>>(new Set());
+
+  useEffect(
+    () => () => {
+      claims.delete(token);
+      decodeClaims.delete(token);
+      forget();
+      releaseDecoded();
+    },
+    [token],
+  );
 
   useEffect(() => {
     let cancelled = false;
-    forget(new Set(all));
+    claims.set(token, new Set(all));
+    forget();
     for (const url of all) {
       void load(url).done.then(() => {
         if (cancelled) return;
@@ -84,28 +117,29 @@ export const useSpriteStore = ({
     return () => {
       cancelled = true;
     };
-  }, [all]);
+  }, [all, token]);
 
   useEffect(() => {
-    const wanted = new Set(decodeUrls);
-    for (const url of decoded.keys()) {
-      if (!wanted.has(url)) decoded.delete(url);
-    }
+    decodeClaims.set(token, new Set(decodeUrls));
+    releaseDecoded();
     // Decode from memory, so wait for each download first
     for (const url of decodeUrls) {
       void load(url).done.then(() => decode(url));
     }
-  }, [decodeUrls]);
+  }, [decodeUrls, token]);
+
+  const has = (url: string) => loaded.has(url) || isDownloaded(url);
 
   // A new function as sheets arrive, so memos built on it swap in blob urls
   const resolve = useMemo(
-    () => (url: string) => (loaded.has(url) ? spriteUrl(url) : url),
+    () => (url: string) => spriteUrl(url),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [loaded],
   );
 
   return {
-    allLoaded: all.every((url) => loaded.has(url)),
-    ready: required.every((url) => loaded.has(url)),
+    allLoaded: all.every(has),
+    ready: required.every(has),
     resolve,
   };
 };

@@ -1,6 +1,8 @@
+import { useWebPSupport } from "@repo/lib";
 import { useMemo } from "react";
 
 import { SETTLED } from "../../../src/office/evaluate";
+import { collectSlideImageIds } from "../../../src/office/normalize";
 import {
   compileTimeline,
   groupForClickCount,
@@ -11,8 +13,11 @@ import {
   type ResolveImage,
 } from "../../Renderer/PowerPointRenderer/OfficeSlideView";
 import { officeImageResolver } from "../../Renderer/PowerPointRenderer/officeImageUrl";
+import { useSpriteStore } from "../../Renderer/PowerPointRenderer/spriteStore";
 import { usePluginAPI } from "../../pluginApi";
 import type { PreviewStep } from "./SidePreviews";
+
+const NO_URLS: string[] = [];
 
 /**
  * A PowerPoint step as it looks once finished. Our player is deterministic,
@@ -27,13 +32,38 @@ export const OfficeStepPreview = ({ step }: { step: PreviewStep }) => {
     () => (slide ? compileTimeline(slide) : null),
     [slide],
   );
-  const resolveImage = useMemo<ResolveImage>(
-    // Previews are small: the 640px copies are plenty
+  const webpSupport = useWebPSupport();
+  // Previews are small: the 640px copies are plenty
+  const resolveNetwork = useMemo<ResolveImage | null>(
     () =>
-      deck
+      deck && webpSupport !== null
         ? officeImageResolver(deck, pluginApi.media, "preview")
-        : () => undefined,
-    [deck, pluginApi.media],
+        : null,
+    [deck, webpSupport, pluginApi.media],
+  );
+  const deckUrls = useMemo(() => {
+    if (!deck || !resolveNetwork) return NO_URLS;
+    const urls = new Set<string>();
+    for (const deckSlide of deck.slides) {
+      for (const id of collectSlideImageIds(deckSlide)) {
+        const image = resolveNetwork(id);
+        if (image) urls.add(image.url);
+      }
+    }
+    return [...urls];
+  }, [deck, resolveNetwork]);
+  const sprites = useSpriteStore({
+    all: deckUrls,
+    required: NO_URLS,
+    decodeUrls: NO_URLS,
+  });
+  const resolveSprite = sprites.resolve;
+  const resolveImage = useMemo<ResolveImage>(
+    () => (imageId) => {
+      const image = resolveNetwork?.(imageId);
+      return image && { ...image, url: resolveSprite(image.url) };
+    },
+    [resolveNetwork, resolveSprite],
   );
 
   if (!deck || !slide || !timeline) return null;
