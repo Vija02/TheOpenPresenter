@@ -8,6 +8,7 @@ import { usePluginData } from "./PluginDataProvider";
 type AwarenessProviderType = {
   awarenessData: {
     user?: AwarenessUserData;
+    bridged?: true;
   }[];
 };
 

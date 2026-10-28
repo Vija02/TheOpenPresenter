@@ -1,9 +1,18 @@
 import {
   HocuspocusProvider,
   HocuspocusProviderWebsocket,
+  MessageType,
 } from "@hocuspocus/provider";
+import type { Document } from "@hocuspocus/server";
 import { cloud } from "@repo/backend-shared";
 import { logger } from "@repo/observability";
+import * as encoding from "lib0/encoding";
+import {
+  type Awareness,
+  applyAwarenessUpdate,
+  encodeAwarenessUpdate,
+  removeAwarenessStates,
+} from "y-protocols/awareness";
 import * as Y from "yjs";
 
 import { BRIDGE_ORIGIN, isEcho, isEmptyUpdate } from "./protocol";
@@ -17,7 +26,18 @@ import { BRIDGE_ORIGIN, isEcho, isEmptyUpdate } from "./protocol";
  *
  * Updates flow both ways, tagged with `BRIDGE_ORIGIN` so an applied update is
  * recognized as an echo rather than sent straight back.
+ *
+ * Awareness is relayed too, so each side sees the other side's clients as if
+ * they were connected locally. Plugins rely on this for presence-based cleanup
+ * and for signaling (e.g. screen-share's WebRTC handshake). Relayed states
+ * carry `bridged: true` so consumers can tell them apart from direct clients.
  */
+
+type AwarenessChange = {
+  added: number[];
+  updated: number[];
+  removed: number[];
+};
 
 export type BridgeStatus =
   | "connecting"
@@ -33,7 +53,7 @@ type BridgeOptions = {
   host: string;
   sessionCookie: string;
   remoteProjectId: string;
-  localDoc: Y.Doc;
+  localDoc: Document;
 } & BridgeEvents;
 
 export class ProjectBridge {
@@ -42,6 +62,9 @@ export class ProjectBridge {
   private readonly remoteDoc = new Y.Doc();
   private detachLocal: (() => void) | null = null;
   private destroyed = false;
+
+  private readonly localClients = new Set<number>();
+  private readonly remoteClients = new Set<number>();
 
   public status: BridgeStatus = "connecting";
 
@@ -79,6 +102,7 @@ export class ProjectBridge {
       onSynced: () => {
         this.setStatus("connected");
         this.pushLocalState();
+        this.pushLocalAwareness();
       },
       onDisconnect: () => {
         if (this.status === "unauthorized") return;
@@ -107,10 +131,73 @@ export class ProjectBridge {
     };
     localDoc.on("update", onLocalUpdate);
 
+    const remoteAwareness = this.provider.awareness!;
+
+    // Remote -> local awareness
+    const onRemoteAwareness = (change: AwarenessChange, origin: unknown) => {
+      if (this.destroyed || isEcho(origin)) return;
+      const clients = changedClients(change).filter(
+        (id) => id !== remoteAwareness.clientID && !this.localClients.has(id),
+      );
+      if (clients.length === 0) return;
+      clients.forEach((id) => this.remoteClients.add(id));
+      applyAwarenessUpdate(
+        localDoc.awareness,
+        encodeBridgedUpdate(remoteAwareness, clients),
+        BRIDGE_ORIGIN,
+      );
+    };
+    remoteAwareness.on("update", onRemoteAwareness);
+
+    // Local -> remote awareness
+    const onLocalAwareness = (change: AwarenessChange, origin: unknown) => {
+      if (this.destroyed || isEcho(origin)) return;
+      const clients = changedClients(change).filter(
+        (id) => !this.remoteClients.has(id),
+      );
+      if (clients.length === 0) return;
+      clients.forEach((id) => this.localClients.add(id));
+      this.sendLocalAwareness(clients);
+    };
+    localDoc.awareness.on("update", onLocalAwareness);
+
     this.detachLocal = () => {
       localDoc.off("update", onLocalUpdate);
       this.remoteDoc.off("update", onRemoteUpdate);
+      localDoc.awareness.off("update", onLocalAwareness);
+      remoteAwareness.off("update", onRemoteAwareness);
     };
+  }
+
+  /**
+   * Send local clients' awareness to the remote.
+   * Note: the remote server drops relayed removals, so a local client that
+   * leaves lingers there until its awareness times out (~30s).
+   */
+  private sendLocalAwareness(clients: number[]): void {
+    if (!this.provider?.synced || !this.socket) return;
+    const encoder = encoding.createEncoder();
+    encoding.writeVarString(encoder, this.options.remoteProjectId);
+    encoding.writeVarUint(encoder, MessageType.Awareness);
+    encoding.writeVarUint8Array(
+      encoder,
+      encodeBridgedUpdate(this.options.localDoc.awareness, clients),
+    );
+    this.socket.send(encoding.toUint8Array(encoder));
+  }
+
+  /**
+   * The remote forgets our relayed clients whenever the connection drops, so
+   * republish all of them on every sync.
+   */
+  private pushLocalAwareness(): void {
+    if (this.destroyed) return;
+    const clients = [
+      ...this.options.localDoc.awareness.getStates().keys(),
+    ].filter((id) => !this.remoteClients.has(id));
+    if (clients.length === 0) return;
+    clients.forEach((id) => this.localClients.add(id));
+    this.sendLocalAwareness(clients);
   }
 
   /**
@@ -137,6 +224,7 @@ export class ProjectBridge {
     this.destroyed = true;
     this.detachLocal?.();
     this.detachLocal = null;
+    dropClients(this.options.localDoc.awareness, this.remoteClients);
     try {
       this.provider?.destroy();
       this.socket?.destroy();
@@ -148,3 +236,24 @@ export class ProjectBridge {
     this.remoteDoc.destroy();
   }
 }
+
+/** Encode the given clients' states, flagged as having crossed the bridge. */
+const encodeBridgedUpdate = (awareness: Awareness, clients: number[]) => {
+  const states = new Map<number, Record<string, any>>();
+  for (const id of clients) {
+    const state = awareness.getStates().get(id);
+    if (state) states.set(id, { ...state, bridged: true });
+  }
+  return encodeAwarenessUpdate(awareness, clients, states);
+};
+
+const changedClients = ({ added, updated, removed }: AwarenessChange) =>
+  added.concat(updated, removed);
+
+/** Remove the remote side's clients that are still present locally. */
+const dropClients = (awareness: Awareness, clients: Set<number>) => {
+  const present = [...clients].filter((id) => awareness.getStates().has(id));
+  if (present.length > 0) {
+    removeAwarenessStates(awareness, present, BRIDGE_ORIGIN);
+  }
+};

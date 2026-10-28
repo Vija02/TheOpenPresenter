@@ -1,6 +1,6 @@
+import type { Document } from "@hocuspocus/server";
 import { logger } from "@repo/observability";
 import type { Pool } from "pg";
-import type * as Y from "yjs";
 
 import { closeBridge, getSyncState, openBridge } from "./registry";
 
@@ -55,7 +55,7 @@ export const lookupCloudTarget = async (
 export const bridgeProjectIfEligible = async (
   pool: Pool,
   localProjectId: string,
-  localDoc: Y.Doc,
+  localDoc: Document,
 ): Promise<void> => {
   try {
     const target = await lookupCloudTarget(pool, localProjectId);
@@ -90,12 +90,11 @@ export const unbridgeProject = async (
   await closeBridge(localProjectId);
 };
 
-const UUID =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export const refreshLoadedBridges = async (
   pool: Pool,
-  documents: ReadonlyMap<string, Y.Doc>,
+  documents: ReadonlyMap<string, Document>,
 ): Promise<void> => {
   const ids = [...documents.keys()].filter((id) => UUID.test(id));
   if (ids.length === 0) return;
