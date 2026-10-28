@@ -108,6 +108,7 @@ export type AwarenessState = (AwarenessStateContext & AwarenessStateData)[];
 
 export type AwarenessStore<T extends object = {}> = T & {
   user: AwarenessUserData;
+  bridged?: true;
 };
 export type AwarenessUserData = {
   id: string;

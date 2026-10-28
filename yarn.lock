@@ -10711,6 +10711,7 @@ __metadata:
     graphql-subscriptions: "npm:^1.1.0"
     helmet: "npm:^7.2.0"
     http-proxy-middleware: "npm:^3.0.5"
+    lib0: "npm:^0.2.98"
     lodash: "npm:^4.17.21"
     mock-req: "npm:^0.2.0"
     morgan: "npm:^1.10.0"
@@ -10737,6 +10738,7 @@ __metadata:
     vite-express: "npm:^0.21.1"
     vitest: "npm:^2.1.8"
     ws: "npm:^8.21.1"
+    y-protocols: "npm:^1.0.6"
     yjs: "npm:13.6.26"
     zod: "npm:^4.4.3"
   languageName: unknown
@@ -24830,6 +24832,19 @@ __metadata:
     0gentesthtml: bin/gentesthtml.js
     0serve: bin/0serve.js
   checksum: 10c0/074097bcb90a002449cfddaa11552f11d088e38233f0a20a3358b08d7d1952b2f5a491fb63e63ccf66a8ec037e16d82d40a27601bbacf5ded0d2ec810bdf550e
+  languageName: node
+  linkType: hard
+
+"lib0@npm:^0.2.98":
+  version: 0.2.119
+  resolution: "lib0@npm:0.2.119"
+  dependencies:
+    isomorphic.js: "npm:^0.2.4"
+  bin:
+    0ecdsa-generate-keypair: bin/0ecdsa-generate-keypair.js
+    0gentesthtml: bin/gentesthtml.js
+    0serve: bin/0serve.js
+  checksum: 10c0/722277c01158cc560c4cdc6093803435d5c1c1ed278a7ccfca4693968cc8a8ff361a0bbfcf7d76d6085c8b65716d381af81cf8d415bd9b5e48428df8896393bf
   languageName: node
   linkType: hard
 

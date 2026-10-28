@@ -68,6 +68,7 @@
     "graphql": "^15.9.0",
     "helmet": "^7.2.0",
     "http-proxy-middleware": "^3.0.5",
+    "lib0": "^0.2.98",
     "lodash": "^4.17.21",
     "morgan": "^1.10.0",
     "multer": "^2.2.0",
@@ -91,6 +92,7 @@
     "valtio-yjs": "^0.6.0",
     "vite-express": "^0.21.1",
     "ws": "^8.21.1",
+    "y-protocols": "^1.0.6",
     "yjs": "13.6.26",
     "zod": "^4.4.3"
   },
