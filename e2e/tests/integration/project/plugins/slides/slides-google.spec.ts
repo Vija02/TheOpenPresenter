@@ -69,8 +69,7 @@ test.describe("Slides Plugin - Google Slides renderer", () => {
     e2eCommand,
   }) => {
     const pp = await openDeck(page, projectPage, e2eCommand);
-    const frame = pp.locator("iframe");
-    const shot = (name: string) => expect(frame).toHaveScreenshot(name, SHOT);
+    const shot = (name: string) => expect(pp).toHaveScreenshot(name, SHOT);
 
     // ── Slide 2: the -1 autoplay rewind ──────────────────────────────────
     await reachSlide(page, SLIDE_2);
