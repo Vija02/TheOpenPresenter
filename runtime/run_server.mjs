@@ -1,6 +1,7 @@
 import { spawn } from "child_process";
 import dotenv from "dotenv";
 import fs from "fs";
+import os from "os";
 import path from "path";
 
 // Since we're running locally, we can just hard-code these values
@@ -12,6 +13,10 @@ const DATABASE_VISITOR = "theopenpresenter_visitor";
 const DATABASE_NAME = "theopenpresenter";
 
 const PORT = Number(process.env.TOP_PG_PORT ?? 7949);
+
+const WORKER_JOBS =
+  Number(process.env.TOP_WORKER_JOBS) ||
+  Math.min(8, Math.max(2, Math.floor(os.availableParallelism() / 2)));
 
 const childProcesses = new Set();
 
@@ -277,6 +282,10 @@ async function main() {
       graphileWorkerJsPath,
       "--crontab",
       "../crontab",
+      "--jobs",
+      String(WORKER_JOBS),
+      "--max-pool-size",
+      String(Math.max(10, WORKER_JOBS * 2)),
     ],
     {
       cwd: path.resolve(
