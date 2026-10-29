@@ -29,6 +29,9 @@ import {
 import { checkHost, isLoggedIn, localAddress, logout } from "./host";
 import { cloudOrganizations } from "./organizations";
 
+/** Created by a migration for the demo; see `cloud:local-organizations`. */
+const DEMO_ORGANIZATION_SLUG = "demo";
+
 /** Signing in, and linking this install to a cloud organisation. */
 export function registerCloudIPC(): void {
   // -- Host / session -------------------------------------------------------
@@ -193,7 +196,8 @@ export function registerCloudIPC(): void {
   /** Every organisation on this install, cloud-backed or not. */
   ipcMain.handle("cloud:local-organizations", async () => {
     if (!runtime.url) throw new Error("The local server is not running.");
-    return allOrganizations(runtime.url);
+    const organizations = await allOrganizations(runtime.url);
+    return organizations.filter((o) => o.slug !== DEMO_ORGANIZATION_SLUG);
   });
 
   /** Name this install's organisation, for someone not connecting. */
