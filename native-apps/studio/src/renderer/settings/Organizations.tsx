@@ -1,4 +1,26 @@
-import { Button, Input } from "@repo/ui";
+import {
+  Button,
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  Input,
+  Popover,
+  PopoverContent,
+  PopoverMenuItem,
+  PopoverTrigger,
+} from "@repo/ui";
+import {
+  ChevronDownIcon,
+  CloudIcon,
+  EllipsisIcon,
+  HardDriveIcon,
+  PlusIcon,
+  Trash2Icon,
+} from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 import {
@@ -36,6 +58,7 @@ export function Organizations({
     null,
   );
   const [busy, setBusy] = useState<string | null>(null);
+  const [removing, setRemoving] = useState<LocalOrganization | null>(null);
 
   const refresh = useCallback(() => {
     api
@@ -100,9 +123,34 @@ export function Organizations({
       <div className="section-head">
         <h3>Organizations</h3>
         {mode === "idle" && (
-          <Button variant="link" onClick={() => setMode("creating")}>
-            New local organization
-          </Button>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm">
+                <PlusIcon />
+                Add new
+                <ChevronDownIcon />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent
+              align="end"
+              hideArrow
+              hideCloseButton
+              className="w-64 p-1"
+            >
+              <PopoverMenuItem
+                label="Local organization"
+                description="Kept on this computer only"
+                icon={<HardDriveIcon className="size-4" />}
+                onClick={() => setMode("creating")}
+              />
+              <PopoverMenuItem
+                label="Cloud organization"
+                description="Sync with cloud server"
+                icon={<CloudIcon className="size-4" />}
+                onClick={() => void startConnecting()}
+              />
+            </PopoverContent>
+          </Popover>
         )}
       </div>
 
@@ -118,24 +166,44 @@ export function Organizations({
           {orgs.map((org) => (
             <li key={org.id} className="org-row">
               <span className="org-row-name">{org.name || org.slug}</span>
-              {org.cloudHost ? (
-                <span className="org-row-sync" title={org.cloudHost}>
-                  Synced to {hostLabel(org.cloudHost)}
-                </span>
-              ) : (
-                <span className="muted">On this computer only</span>
-              )}
+              <span className="org-row-end">
+                {org.cloudHost ? (
+                  <span className="org-row-sync" title={org.cloudHost}>
+                    Synced to {hostLabel(org.cloudHost)}
+                  </span>
+                ) : (
+                  <span className="muted">Local only</span>
+                )}
+                {org.isOwner && (
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="xs"
+                        aria-label={`More options for ${org.name || org.slug}`}
+                      >
+                        <EllipsisIcon />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      align="end"
+                      hideArrow
+                      hideCloseButton
+                      className="w-44 p-1"
+                    >
+                      <PopoverMenuItem
+                        label="Remove"
+                        icon={<Trash2Icon className="size-4" />}
+                        className="org-row-remove"
+                        onClick={() => setRemoving(org)}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                )}
+              </span>
             </li>
           ))}
         </ul>
-      )}
-
-      {mode === "idle" && (
-        <div className="row">
-          <Button variant="outline" onClick={() => void startConnecting()}>
-            Connect a cloud organization
-          </Button>
-        </div>
       )}
 
       {mode === "creating" && (
@@ -197,6 +265,128 @@ export function Organizations({
           </Button>
         </div>
       )}
+
+      {removing && (
+        <RemoveOrganizationDialog
+          org={removing}
+          onClose={() => setRemoving(null)}
+          onRemoved={() => {
+            setRemoving(null);
+            refresh();
+          }}
+        />
+      )}
     </>
+  );
+}
+
+function count(n: number, noun: string): string {
+  return `${n} ${noun}${n === 1 ? "" : "s"}`;
+}
+
+function RemoveOrganizationDialog({
+  org,
+  onClose,
+  onRemoved,
+}: {
+  org: LocalOrganization;
+  onClose: () => void;
+  onRemoved: () => void;
+}) {
+  const name = org.name || org.slug;
+  const synced = !!org.cloudHost;
+  const [typed, setTyped] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const confirmed = typed.trim() === name.trim();
+
+  const remove = async () => {
+    if (!confirmed || busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await api.removeOrganization(org.id);
+      onRemoved();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        if (!open && !busy) onClose();
+      }}
+    >
+      <DialogContent size="lg" className="remove-org-dialog">
+        <DialogHeader>
+          <DialogTitle>
+            {synced ? `Remove ${name} from this computer?` : `Delete ${name}?`}
+          </DialogTitle>
+          <DialogDescription>
+            {synced
+              ? `This stops syncing with ${hostLabel(org.cloudHost!)} and deletes the copy on this computer.`
+              : "This organization is only on this computer, so this cannot be undone."}
+          </DialogDescription>
+        </DialogHeader>
+        <DialogBody>
+          <div className="remove-org">
+            <p>Deleted from this computer:</p>
+            <ul>
+              <li>{count(org.projectCount, "project")}</li>
+              <li>{count(org.mediaCount, "file")} in the media library</li>
+              <li>Songs, Bible settings, looks and everything else in it</li>
+            </ul>
+            {synced ? (
+              <p className="remove-org-safe">
+                Nothing is deleted on {hostLabel(org.cloudHost!)}
+                {org.cloudOrganizationSlug
+                  ? ` (${org.cloudOrganizationSlug})`
+                  : ""}
+                . You can connect and download it again.
+              </p>
+            ) : (
+              <p className="remove-org-danger">
+                There is no other copy. Once deleted, it is gone for good.
+              </p>
+            )}
+            <label className="remove-org-confirm">
+              <span>
+                Type <strong>{name}</strong> to confirm
+              </span>
+              <Input
+                type="text"
+                value={typed}
+                autoFocus
+                disabled={busy}
+                onChange={(event) => setTyped(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") void remove();
+                }}
+              />
+            </label>
+            {error && <p className="remove-org-danger">{error}</p>}
+          </div>
+        </DialogBody>
+        <DialogFooter>
+          <Button variant="outline" disabled={busy} onClick={onClose}>
+            Cancel
+          </Button>
+          <Button
+            variant="destructive"
+            disabled={!confirmed || busy}
+            onClick={() => void remove()}
+          >
+            {busy
+              ? "Deleting…"
+              : synced
+                ? "Stop syncing and delete"
+                : "Delete permanently"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -902,6 +902,54 @@ code {
   margin: 0;
 }
 
+.org-row-end {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.org-row-remove,
+.org-row-remove:hover {
+  color: var(--danger);
+}
+
+/* The settings window is narrower than the breakpoint where dialogs stop
+   going full screen, so keep this one a dialog at any width. */
+.remove-org-dialog {
+  width: calc(100% - 32px);
+  max-width: 32rem;
+  height: auto;
+  max-height: calc(100dvh - 32px);
+  border-radius: 0.5rem;
+}
+
+/* What removing an organisation takes with it, spelled out before the one
+   step that confirms it. */
+.remove-org p {
+  margin: 0 0 8px;
+}
+
+.remove-org ul {
+  margin: 0 0 14px;
+  padding-left: 20px;
+}
+
+.remove-org-safe {
+  color: var(--accent);
+}
+
+.remove-org-danger {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.remove-org-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 16px;
+}
+
 /* Sign-in state, at the top of the Account section. A banner rather than a
    fact row: it is the thing that decides what everything below it can do. */
 .cloud-banner {
