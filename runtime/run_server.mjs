@@ -245,6 +245,7 @@ async function main() {
     DISABLE_HSTS: "1",
     // Allows access from any origin
     ALLOW_ANY_ORIGIN: "1",
+    UV_THREADPOOL_SIZE: "32",
 
     // Public base for outbound media fetch (e.g. Office Online), without
     // changing ROOT_URL. Only set in special setups (e.g. CI tunnel).

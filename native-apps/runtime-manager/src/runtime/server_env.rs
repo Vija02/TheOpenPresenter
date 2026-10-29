@@ -113,6 +113,7 @@ impl ServerEnv<'_> {
         // would make the browser refuse it.
         set("DISABLE_HSTS", "1".into());
         set("ALLOW_ANY_ORIGIN", "1".into());
+        set("UV_THREADPOOL_SIZE", "32".into());
 
         // Baked in by CI for shipped builds only, so local development of
         // the manager never reports. Opt out with `ANALYTICS_KEY=` in .env.

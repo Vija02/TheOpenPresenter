@@ -9,7 +9,14 @@ const defaultEmail = "autologin@theopenpresenter.com";
 
 export default (app: Express) => {
   if (process.env.AUTO_LOGIN === "1") {
-    const autoLoginMiddleware: RequestHandler = async (req, _res, next) => {
+    const autoLoginMiddleware: RequestHandler = (req, res, next) => {
+      autoLogin(req, res, next).catch(next);
+    };
+    const autoLogin = async (
+      req: Parameters<RequestHandler>[0],
+      _res: Parameters<RequestHandler>[1],
+      next: Parameters<RequestHandler>[2],
+    ) => {
       const login = (user: any) =>
         new Promise<void>((resolve, reject) => {
           req.login(user, { session: true, keepSessionInfo: true }, (err) =>
