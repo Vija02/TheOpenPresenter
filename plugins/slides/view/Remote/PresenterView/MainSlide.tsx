@@ -50,10 +50,7 @@ export const MainSlide = ({
         style={boxStyle}
       >
         {slide ? (
-          // Google's embed draws the slide ~2px short of its frame on the right
-          // and bottom, showing its black page there. Oversize the frame and
-          // let the box clip the strip.
-          <div className="pointer-events-none absolute left-0 top-0 h-[calc(100%+2px)] w-[calc(100%+2px)]">
+          <div className="pointer-events-none absolute inset-0">
             <MirrorRendererData>
               <Renderer />
             </MirrorRendererData>
