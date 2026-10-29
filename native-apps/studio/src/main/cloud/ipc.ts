@@ -23,6 +23,7 @@ import {
   localOrganization,
   nameLocalOrganization,
   removeConnection,
+  removeOrganization,
   selectOrganization,
   startSync,
 } from "./connection";
@@ -224,6 +225,15 @@ export function registerCloudIPC(): void {
         args.organizationId,
         args.deleteOrganization,
       );
+    },
+  );
+
+  /** Delete an organisation from this computer, unlinking it first. */
+  ipcMain.handle(
+    "cloud:remove-organization",
+    async (_event, args: { organizationId: string }) => {
+      if (!runtime.url) throw new Error("The local server is not running.");
+      return removeOrganization(runtime.url, args.organizationId);
     },
   );
 }

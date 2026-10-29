@@ -114,6 +114,10 @@ export async function allOrganizations(base: string): Promise<
     name: string;
     cloudHost: string | null;
     cloudOrganizationSlug: string | null;
+    cloudConnectionId: string | null;
+    isOwner: boolean;
+    projectCount: number;
+    mediaCount: number;
   }[]
 > {
   const data = await graphql<{
@@ -122,8 +126,15 @@ export async function allOrganizations(base: string): Promise<
         id: string;
         slug: string;
         name: string;
+        currentUserIsOwner: boolean | null;
+        projects: { totalCount: number };
+        medias: { totalCount: number };
         cloudConnections: {
-          nodes: { host: string; targetOrganizationSlug: string | null }[];
+          nodes: {
+            id: string;
+            host: string;
+            targetOrganizationSlug: string | null;
+          }[];
         };
       }[];
     };
@@ -136,8 +147,16 @@ export async function allOrganizations(base: string): Promise<
             id
             slug
             name
+            currentUserIsOwner
+            projects {
+              totalCount
+            }
+            medias(condition: { isUserUploaded: true }) {
+              totalCount
+            }
             cloudConnections {
               nodes {
+                id
                 host
                 targetOrganizationSlug
               }
@@ -157,6 +176,10 @@ export async function allOrganizations(base: string): Promise<
       name: org.name,
       cloudHost: connection?.host ?? null,
       cloudOrganizationSlug: connection?.targetOrganizationSlug ?? null,
+      cloudConnectionId: connection?.id ?? null,
+      isOwner: !!org.currentUserIsOwner,
+      projectCount: org.projects?.totalCount ?? 0,
+      mediaCount: org.medias?.totalCount ?? 0,
     };
   });
 }
@@ -416,21 +439,23 @@ export async function nameLocalOrganization(
 /** Stop syncing an organization, optionally deleting it. */
 export async function removeConnection(
   base: string,
-  cloudConnectionId: string,
+  cloudConnectionId: string | null,
   organizationId: string,
   deleteOrganization: boolean,
 ): Promise<void> {
-  await graphql(
-    base,
-    `
-      mutation ($id: UUID!) {
-        deleteCloudConnection(input: { id: $id }) {
-          clientMutationId
+  if (cloudConnectionId) {
+    await graphql(
+      base,
+      `
+        mutation ($id: UUID!) {
+          deleteCloudConnection(input: { id: $id }) {
+            clientMutationId
+          }
         }
-      }
-    `,
-    { id: cloudConnectionId },
-  );
+      `,
+      { id: cloudConnectionId },
+    );
+  }
 
   if (!deleteOrganization) return;
 
@@ -445,4 +470,25 @@ export async function removeConnection(
     `,
     { id: organizationId },
   );
+}
+
+export async function removeOrganization(
+  base: string,
+  organizationId: string,
+): Promise<void> {
+  const org = (await allOrganizations(base)).find(
+    (o) => o.id === organizationId,
+  );
+  if (!org) return;
+  if (!org.isOwner) {
+    throw new Error("Only an owner of this organization can delete it.");
+  }
+
+  await removeConnection(base, org.cloudConnectionId, organizationId, true);
+
+  // The server skips the delete, without an error, for anyone but an owner
+  const left = await allOrganizations(base);
+  if (left.some((o) => o.id === organizationId)) {
+    throw new Error(`${org.name || org.slug} could not be deleted.`);
+  }
 }

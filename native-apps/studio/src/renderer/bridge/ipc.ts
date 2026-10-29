@@ -68,6 +68,12 @@ export type LocalOrganization = {
   cloudHost: string | null;
   /** The organization it mirrors on that server. */
   cloudOrganizationSlug: string | null;
+  cloudConnectionId: string | null;
+  /** Only owners can delete it. */
+  isOwner: boolean;
+  projectCount: number;
+  /** The library's uploads, not what was derived from them. */
+  mediaCount: number;
 };
 
 /** A link between this local server and a cloud organisation. */
@@ -311,6 +317,12 @@ export const api = {
     organizationId: string;
     deleteOrganization: boolean;
   }) => invoke<void>("cloud:remove-connection", args),
+
+  /**
+   * Delete an organization from this computer.
+   */
+  removeOrganization: (organizationId: string) =>
+    invoke<void>("cloud:remove-organization", { organizationId }),
 
   /** Organisations on this install. */
   localOrganizations: () =>
