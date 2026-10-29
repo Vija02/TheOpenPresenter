@@ -265,6 +265,9 @@ async function main() {
     ),
   };
 
+  // Release locks on start in case some hangs
+  await pg.releaseWorkerLocks();
+
   console.log("Starting Worker...");
   runCommand(
     nodeBinaryPath,

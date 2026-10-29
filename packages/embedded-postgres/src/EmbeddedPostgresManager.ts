@@ -225,6 +225,40 @@ export class EmbeddedPostgresManager {
     }
   }
 
+  // Frees the jobs and queues still locked by workers of an earlier run
+  async releaseWorkerLocks(): Promise<void> {
+    if (!this.pg) {
+      return;
+    }
+
+    const client: Client = this.pg.getPgClient(this.config.databaseName);
+    try {
+      await client.connect();
+      const { rows } = await client.query<{ locked_by: string }>(
+        `select locked_by from graphile_worker._private_jobs
+         where locked_by is not null
+         union
+         select locked_by from graphile_worker._private_job_queues
+         where locked_by is not null`,
+      );
+      if (rows.length === 0) {
+        return;
+      }
+      await client.query("select graphile_worker.force_unlock_workers($1)", [
+        rows.map((r) => r.locked_by),
+      ]);
+      console.log(`Released locks held by ${rows.length} stale worker(s)`);
+    } catch (err) {
+      console.warn("Failed to release stale worker locks:", err);
+    } finally {
+      try {
+        await client.end();
+      } catch {
+        // ignore
+      }
+    }
+  }
+
   // Ensures the graphile-worker schema exists
   private async ensureWorkerSchema(): Promise<void> {
     if (!this.migrationManager || !this.pg) {
