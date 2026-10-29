@@ -107,14 +107,26 @@ export const GoogleSlideRenderer = ({
         position: "absolute",
         inset: 0,
         opacity: isActive ? 1 : 0,
+        overflow: "hidden",
       }}
     >
-      <RenderView
-        ref={ref}
-        key={slideSrc}
-        src={slideSrc}
-        onLoad={() => setLoaded(true)}
-      />
+      {/* Fix border issue */}
+      <div
+        style={{
+          position: "absolute",
+          left: -2,
+          top: -1,
+          right: -4,
+          bottom: -3,
+        }}
+      >
+        <RenderView
+          ref={ref}
+          key={slideSrc}
+          src={slideSrc}
+          onLoad={() => setLoaded(true)}
+        />
+      </div>
     </div>
   );
 };
