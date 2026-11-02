@@ -1,20 +1,27 @@
-import { BUILT_IN_LOOK_KEYS, Scene } from "@repo/base-plugin";
 import { PluginAPIContext } from "@repo/base-plugin/client";
 import {
   HostElement,
   HostSource,
   LayoutDoc,
   LookTarget,
+  SAMPLE_TARGET,
   activeFeeds,
   bindLookTarget,
-  builtInPluginLook,
   cloneDoc,
   createLayoutDoc,
   lookBackdrop,
+  pluginLookChoice,
+  resolvePluginLook,
+  sampleProjectState,
   selfHost,
 } from "@repo/layout";
 import { LayoutInsertDefaults, LayoutWorkbench } from "@repo/layout/editor";
-import { LayoutHostCatalog, useFeedData } from "@repo/layout/react";
+import {
+  FeedSourceResolver,
+  LayoutHostCatalog,
+  resolveFeedSources,
+  useFeedData,
+} from "@repo/layout/react";
 import { useData, usePluginData, usePluginMetaData } from "@repo/shared";
 import {
   Button,
@@ -25,10 +32,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@repo/ui";
-import { sortBy } from "lodash-es";
 import { useCallback, useMemo, useState } from "react";
 import { useSearch } from "wouter";
 
+import { lookName as nameOfLook } from "../outputKinds";
 import { useFeedSourceResolver } from "./useFeedSourceResolver";
 import { useLayoutEditorApis } from "./useLayoutEditorApis";
 import { useRegisteredPluginMeta } from "./useRegisteredPluginMeta";
@@ -51,33 +58,6 @@ const starterLook = (): LayoutDoc =>
     ],
   });
 
-const useSampleContent = (pluginName: string): LookTarget | null => {
-  const data = useData();
-
-  return useMemo(() => {
-    const scenes = sortBy(
-      Object.entries(data.data).filter(
-        (entry): entry is [string, Scene] =>
-          (entry[1] as Scene).type === "scene",
-      ),
-      ([, scene]) => scene.order,
-    );
-
-    for (const [sceneId, scene] of scenes) {
-      for (const [pluginId, plugin] of Object.entries(scene.children ?? {})) {
-        if (plugin.plugin !== pluginName) continue;
-        // The renderer holding this plugin's live state
-        const rendererId =
-          Object.keys(data.renderer).find(
-            (id) => data.renderer[id]?.children?.[sceneId]?.[pluginId],
-          ) ?? "1";
-        return { rendererId, sceneId, pluginId };
-      }
-    }
-    return null;
-  }, [data.data, data.renderer, pluginName]);
-};
-
 type LookEditorModalProps = {
   isOpen: boolean;
   lookKey: string;
@@ -95,18 +75,33 @@ const LookEditorModal = ({
   const mainState = usePluginData().mainState!;
   const { orgSlug, projectSlug } = usePluginMetaData();
   const search = useSearch();
-  const { fieldsByPlugin, bindingsByPlugin, titleByPlugin, looks } =
-    useRegisteredPluginMeta();
+  const {
+    fieldsByPlugin,
+    bindingsByPlugin,
+    titleByPlugin,
+    looks,
+    sampleByPlugin,
+  } = useRegisteredPluginMeta();
   const { mediaPickerApi, videoPluginApi } = useLayoutEditorApis();
 
   const pluginTitle = titleByPlugin.get(pluginName) ?? pluginName;
-  const lookName =
-    BUILT_IN_LOOK_KEYS.find((look) => look.key === lookKey)?.name ?? lookKey;
+  const lookName = nameOfLook(data.looks, lookKey);
 
-  const builtIn = useMemo(
-    () => builtInPluginLook(looks, pluginName, lookKey),
-    [looks, pluginName, lookKey],
-  );
+  // What the look shows without a change of its own: its picked style
+  const fallback = useMemo(() => {
+    const projectLooks = { ...(data.looks ?? {}) };
+    const look = projectLooks[lookKey];
+    if (look?.plugins?.[pluginName]) {
+      const plugins = { ...look.plugins };
+      delete plugins[pluginName];
+      projectLooks[lookKey] = { ...look, plugins };
+    }
+    return {
+      doc: resolvePluginLook(looks, projectLooks, pluginName, lookKey),
+      choice: pluginLookChoice(looks, projectLooks, pluginName, lookKey),
+    };
+  }, [looks, data.looks, pluginName, lookKey]);
+  const builtIn = fallback.doc;
   const saved = data.looks?.[lookKey]?.plugins?.[pluginName] as
     | LayoutDoc
     | undefined;
@@ -117,7 +112,9 @@ const LookEditorModal = ({
   );
   const [isDirty, setIsDirty] = useState(false);
 
-  const sample = useSampleContent(pluginName);
+  // Shown with the plugin's made-up content, as in the looks library
+  const pluginSample = sampleByPlugin.get(pluginName) ?? null;
+  const sample: LookTarget | null = pluginSample ? SAMPLE_TARGET : null;
 
   const bindSource = useCallback(
     (source: HostSource): HostSource =>
@@ -129,9 +126,9 @@ const LookEditorModal = ({
     (element: HostElement) => {
       if (!sample) return null;
       const params = new URLSearchParams(search);
-      params.set("renderer", sample.rendererId);
-      params.set("preview", "1");
       params.delete("hostElement");
+      params.set("lookSample", lookKey);
+      params.set("samplePlugin", pluginName);
       params.set(
         "hostSpec",
         JSON.stringify({
@@ -141,7 +138,7 @@ const LookEditorModal = ({
       );
       return `/render/${orgSlug}/${projectSlug}?${params.toString()}`;
     },
-    [sample, search, bindSource, orgSlug, projectSlug],
+    [sample, search, bindSource, orgSlug, projectSlug, lookKey, pluginName],
   );
 
   const hostCatalog = useMemo<LayoutHostCatalog>(
@@ -167,8 +164,16 @@ const LookEditorModal = ({
     [doc, sample],
   );
   const feeds = useMemo(() => activeFeeds(bound), [bound]);
-  const resolveFeedSources = useFeedSourceResolver();
-  const feedData = useFeedData(feeds, resolveFeedSources);
+  const resolveProjectFeeds = useFeedSourceResolver();
+  const resolveSampleFeeds = useMemo<FeedSourceResolver | null>(() => {
+    if (!pluginSample) return null;
+    const state = sampleProjectState(pluginName, pluginSample);
+    return (feed) => resolveFeedSources(state, feed);
+  }, [pluginName, pluginSample]);
+  const feedData = useFeedData(
+    feeds,
+    resolveSampleFeeds ?? resolveProjectFeeds,
+  );
 
   const handleChange = useCallback((next: LayoutDoc) => {
     setDoc(cloneDoc(next));
@@ -186,7 +191,11 @@ const LookEditorModal = ({
     const look = mainState.looks?.[lookKey];
     if (look) {
       delete look.plugins[pluginName];
-      if (Object.keys(look.plugins).length === 0) {
+      if (
+        !look.base &&
+        !look.hidden &&
+        Object.keys(look.plugins).length === 0
+      ) {
         delete mainState.looks![lookKey];
       }
     }
@@ -208,7 +217,7 @@ const LookEditorModal = ({
             >
               &larr;
             </button>
-            {lookName} look - {pluginTitle}
+            {pluginTitle} on {lookName}
           </DialogTitle>
         </DialogHeader>
 
@@ -231,7 +240,9 @@ const LookEditorModal = ({
         <DialogFooter className="px-4 py-3 border-t border-stroke shrink-0">
           {saved && (
             <Button variant="outline" onClick={handleReset} className="mr-auto">
-              Reset to {builtIn ? "built-in" : "main"}
+              {fallback.choice.kind === "style"
+                ? `Reset to ${fallback.choice.style.name}`
+                : "Reset to main"}
             </Button>
           )}
           <Button variant="outline" onClick={onClose}>

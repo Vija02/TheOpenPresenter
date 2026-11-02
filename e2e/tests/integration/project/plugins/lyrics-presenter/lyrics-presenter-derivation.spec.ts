@@ -1,7 +1,10 @@
 import type { Locator, Page } from "@playwright/test";
 
 import { expect, test } from "../../../../../fixtures/screenFixture";
-import { openManageOutputs } from "../../../../../helpers/outputs";
+import {
+  openManageOutputs,
+  openOutputLayout,
+} from "../../../../../helpers/outputs";
 import { WORKER_TAG } from "../../../../../helpers/workerData";
 
 /**
@@ -81,7 +84,7 @@ const placeLyrics = async (page: Page): Promise<Locator> => {
   await expect(
     page.getByRole("heading", { name: "Outputs", exact: true }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Configure" }).click();
+  await openOutputLayout(page);
   await expect(page.getByText(/Layout Settings/)).toBeVisible();
 
   await page.getByRole("button", { name: "Add live content" }).click();

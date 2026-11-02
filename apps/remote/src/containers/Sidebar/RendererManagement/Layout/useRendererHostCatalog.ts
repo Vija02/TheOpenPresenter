@@ -1,6 +1,11 @@
-import { BUILT_IN_LOOK_KEYS, Scene } from "@repo/base-plugin";
+import { Scene } from "@repo/base-plugin";
 import type { DataBinding, DerivationField } from "@repo/base-types";
-import { HostElement, HostSource, MAIN_PROGRAM_ID } from "@repo/layout";
+import {
+  HostElement,
+  HostSource,
+  MAIN_PROGRAM_ID,
+  listLooks,
+} from "@repo/layout";
 import { HostSourceOption, LayoutHostCatalog } from "@repo/layout/react";
 import { useData, usePluginMetaData } from "@repo/shared";
 import { sortBy } from "lodash-es";
@@ -140,7 +145,14 @@ export const useRendererHostCatalog = (outputId: string): LayoutHostCatalog => {
       previewUrl,
       derivationFields,
       dataBindings,
-      looks: BUILT_IN_LOOK_KEYS,
+      looks: listLooks(data.looks).filter((look) => !look.hidden),
     };
-  }, [data.renderer, data.data, previewUrl, derivationFields, dataBindings]);
+  }, [
+    data.renderer,
+    data.data,
+    data.looks,
+    previewUrl,
+    derivationFields,
+    dataBindings,
+  ]);
 };

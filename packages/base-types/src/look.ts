@@ -28,10 +28,6 @@ export type PluginLook<Doc = unknown> = {
 
 export const DEFAULT_STYLE = "default";
 
-/**
- * The colours plugins' samples share, so a look's previews sit together.
- * TheOpenPresenter's own: theopenpresenter.com's dark grey and teal
- */
 export const SAMPLE_COLORS = {
   background: "#1d1d20",
   surface: "#2e2e33",
