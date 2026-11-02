@@ -10,6 +10,7 @@ import {
   remoteWebComponentTag,
   rendererWebComponentTag,
 } from "./consts";
+import { sample } from "./sample";
 import { PluginBaseData, PluginRendererData } from "./types";
 
 export const init = (
@@ -20,6 +21,7 @@ export const init = (
   });
   serverPluginApi.registerTrpcAppRouter(getAppRouter);
   serverPluginApi.onPluginDataCreated(pluginName, onPluginDataCreated);
+  serverPluginApi.registerSample(pluginName, sample);
   serverPluginApi.registerSceneCreator(pluginName, {
     title: "Slido",
     description: "Show live Slido polls and Q&A on the screen",

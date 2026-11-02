@@ -34,6 +34,7 @@ import {
   resolveContext,
   unregisterLoadedPlugin,
 } from "./registry";
+import { sample } from "./sample";
 import { screenLooks } from "./screenLooks";
 import {
   createTranslation,
@@ -63,6 +64,8 @@ export const init = (
   );
   serverPluginApi.onPluginDataLoaded(pluginName, onPluginDataLoaded);
   serverPluginApi.onRendererDataCreated(pluginName, onRendererDataCreated);
+
+  serverPluginApi.registerSample(pluginName, sample);
 
   serverPluginApi.registerSceneCreator(pluginName, {
     title: "Bible",

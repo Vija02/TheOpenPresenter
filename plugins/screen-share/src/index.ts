@@ -15,12 +15,14 @@ import {
   remoteWebComponentTag,
   rendererWebComponentTag,
 } from "./consts";
+import { sample } from "./sample";
 import { IceServer, PluginBaseData, PluginRendererData } from "./types";
 
 export const init = (serverPluginApi: ServerPluginApi) => {
   serverPluginApi.onPluginDataCreated(pluginName, onPluginDataCreated);
   serverPluginApi.onPluginDataLoaded(pluginName, onPluginDataLoaded);
   serverPluginApi.onRendererDataCreated(pluginName, onRendererDataCreated);
+  serverPluginApi.registerSample(pluginName, sample);
   serverPluginApi.registerSceneCreator(pluginName, {
     title: "Screen Share",
     description: "Share your screen live to any display",

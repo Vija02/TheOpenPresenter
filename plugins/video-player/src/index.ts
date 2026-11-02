@@ -32,6 +32,7 @@ import {
   migratePluginDataV1ToV2,
   migrateRendererDataV1ToV2,
 } from "./migrate/v1";
+import { sample } from "./sample";
 import { PluginBaseData, PluginRendererData } from "./types";
 
 // TODO: HACK: Remove this soon
@@ -57,6 +58,7 @@ export const init = (serverPluginApi: ServerPluginApi) => {
   serverPluginApi.onPluginDataLoaded(pluginName, onPluginDataLoaded);
   serverPluginApi.onRendererDataCreated(pluginName, onRendererDataCreated);
   serverPluginApi.onRendererDataLoaded(pluginName, onRendererDataLoaded);
+  serverPluginApi.registerSample(pluginName, sample);
   serverPluginApi.registerSceneCreator(pluginName, {
     title: "Video Player",
     description:

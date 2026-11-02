@@ -18,6 +18,7 @@ export const pluginMeta = makeExtendSchemaPlugin(() => ({
       registeredDerivationFields: [RegisteredDerivationFields!]!
       registeredDataBindings: [RegisteredDataBindings!]!
       registeredLooks: [RegisteredLooks!]!
+      registeredSamples: [RegisteredSample!]!
       clientPluginViews: [ClientPluginView!]!
     }
 
@@ -34,6 +35,11 @@ export const pluginMeta = makeExtendSchemaPlugin(() => ({
     type RegisteredLooks {
       pluginName: String!
       looks: JSON!
+    }
+
+    type RegisteredSample {
+      pluginName: String!
+      sample: JSON!
     }
 
     type SceneCreator {
@@ -156,6 +162,12 @@ export const pluginMeta = makeExtendSchemaPlugin(() => ({
               pluginName: x.pluginName,
               looks: x.looks,
             })),
+            registeredSamples: serverPluginApi
+              .getRegisteredSamples()
+              .map((x) => ({
+                pluginName: x.pluginName,
+                sample: x.sample,
+              })),
             clientPluginViews,
           };
         } catch (e: any) {

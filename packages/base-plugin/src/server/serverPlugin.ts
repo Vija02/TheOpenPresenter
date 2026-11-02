@@ -3,6 +3,7 @@ import type {
   DataBinding,
   DerivationField,
   PluginLook,
+  PluginSample,
 } from "@repo/base-types";
 import { OrganizationType } from "@repo/graphql";
 import { mediaIdFromUUID } from "@repo/lib";
@@ -141,6 +142,10 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
   protected registeredLooks: {
     pluginName: string;
     looks: PluginLook[];
+  }[] = [];
+  protected registeredSamples: {
+    pluginName: string;
+    sample: PluginSample;
   }[] = [];
   protected registeredAiCapabilities = new Map<string, AnyAiCapability>();
 
@@ -286,6 +291,11 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
   /** The plugin's own versions of looks. A screen falls back to main */
   public registerLooks(pluginName: string, looks: PluginLook[]) {
     this.registeredLooks.push({ pluginName, looks });
+  }
+
+  /** Content to preview the plugin with, eg. in a look */
+  public registerSample(pluginName: string, sample: PluginSample) {
+    this.registeredSamples.push({ pluginName, sample });
   }
 
   public registerAiCapability<T>(capability: AiCapability<T>) {
@@ -630,6 +640,10 @@ export class ServerPluginApiPrivate extends ServerPluginApi {
   }
   getRegisteredLooks() {
     return this.registeredLooks;
+  }
+
+  getRegisteredSamples() {
+    return this.registeredSamples;
   }
   getRegisteredAiCapabilities() {
     return this.registeredAiCapabilities;

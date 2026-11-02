@@ -37,6 +37,7 @@ import type { Look } from "./looks";
 import { getPcoOAuthConfig } from "./planningCenter/oauth";
 import { createPlanningCenterRouter } from "./planningCenter/router";
 import { registerPlanningCenterRoutes } from "./planningCenter/routes";
+import { sample } from "./sample";
 import { screenLooks } from "./screenLooks";
 import {
   SETLIST_SOURCES,
@@ -111,6 +112,7 @@ export const init = (
   serverPluginApi.onPluginDataCreated(pluginName, onPluginDataCreated);
   serverPluginApi.onPluginDataLoaded(pluginName, onPluginDataLoaded);
   serverPluginApi.onRendererDataCreated(pluginName, onRendererDataCreated);
+  serverPluginApi.registerSample(pluginName, sample);
   serverPluginApi.registerSceneCreator(pluginName, {
     title: "Lyrics Presenter",
     description: "Display song lyrics to the screen",
