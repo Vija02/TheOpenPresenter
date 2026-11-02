@@ -265,7 +265,7 @@ test.describe("Screen looks", () => {
       .click();
     await expect(
       page.getByRole("button", { name: "Edit", exact: true }),
-    ).toHaveCount(0);
+    ).toBeDisabled();
     await page.getByRole("button", { name: "Duplicate", exact: true }).click();
     await expect(page.getByLabel("Name")).toHaveValue(
       "Confidence monitor copy",
