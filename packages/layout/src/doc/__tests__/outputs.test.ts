@@ -35,15 +35,31 @@ const legacyLayout = (() => {
 })();
 
 describe("readOutputs", () => {
-  it("gives a new project a main output on program 1", () => {
+  it("gives a new project a main output and a confidence monitor", () => {
     const outputs = readOutputs({ renderer: { "1": { layout: null } } });
-    expect(Object.keys(outputs)).toEqual(["1"]);
+    expect(Object.keys(outputs)).toEqual(["1", "2"]);
     expect(outputs["1"]!.name).toBe("Main");
     expect(simpleOutputInfo(outputs["1"]!.layout)).toEqual({
       programId: "1",
       look: "main",
       followOverlay: true,
     });
+    expect(outputs["2"]!.name).toBe("Confidence monitor");
+    expect(simpleOutputInfo(outputs["2"]!.layout)).toEqual({
+      programId: "1",
+      look: "confidence",
+      followOverlay: false,
+    });
+  });
+
+  it("adds no confidence monitor next to an old custom layout", () => {
+    const outputs = readOutputs({
+      renderer: {
+        "1": { layout: null },
+        "2": { layout: { enabled: true, doc: legacyLayout } },
+      },
+    });
+    expect(Object.keys(outputs)).toEqual(["1", "2"]);
   });
 
   it("keeps an old screen's custom layout as its output", () => {
