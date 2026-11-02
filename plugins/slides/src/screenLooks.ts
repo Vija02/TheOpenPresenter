@@ -1,10 +1,10 @@
 import { CONFIDENCE_LOOK_KEY, type PluginLook } from "@repo/base-types";
 import {
   type LayoutDoc,
-  selfHost,
   createLayoutDoc,
   createTextElement,
   lookBackdrop,
+  selfHost,
 } from "@repo/layout";
 
 import {
@@ -69,10 +69,51 @@ const presenterView = (): LayoutDoc => ({
   feeds: [{ name: FEED, source: { kind: "self" }, derivation: null }],
 });
 
+/** The live and next slides, side by side at the same size */
+const liveAndNext = (): LayoutDoc =>
+  createLayoutDoc({
+    fitMode: "letterbox",
+    elements: [
+      lookBackdrop(),
+      selfHost({
+        id: "live",
+        name: "Live",
+        rect: { x: 1.5, y: 27, w: 47.5, h: 47.5 },
+        params: { [OFFSET_PARAM]: 0 },
+      }),
+      selfHost({
+        id: "next",
+        name: "Next",
+        rect: { x: 51, y: 27, w: 47.5, h: 47.5 },
+        params: { [OFFSET_PARAM]: 1 },
+      }),
+      createTextElement({
+        id: "live-label",
+        name: "Live label",
+        rect: { x: 1.5, y: 20, w: 47.5, h: 6 },
+        content: "Live",
+        style: { fontSize: 2, color: "#9CA3AF", valign: "bottom" },
+      }),
+      createTextElement({
+        id: "next-label",
+        name: "Next label",
+        rect: { x: 51, y: 20, w: 47.5, h: 6 },
+        content: "Next",
+        style: { fontSize: 2, color: "#9CA3AF", valign: "bottom" },
+      }),
+    ],
+  });
+
 export const screenLooks: PluginLook<LayoutDoc>[] = [
   {
     key: CONFIDENCE_LOOK_KEY,
-    name: "Confidence monitor",
+    name: "Presenter view",
     doc: presenterView(),
+  },
+  {
+    key: CONFIDENCE_LOOK_KEY,
+    name: "Live + next",
+    style: "live-next",
+    doc: liveAndNext(),
   },
 ];
