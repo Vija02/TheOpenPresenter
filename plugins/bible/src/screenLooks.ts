@@ -6,7 +6,7 @@ import { OFFSET_PARAM } from "./derivation";
 export const screenLooks: PluginLook<LayoutDoc>[] = [
   {
     key: CONFIDENCE_LOOK_KEY,
-    name: "Confidence monitor",
+    name: "Live + next",
     doc: defaultConfidenceLook({ offsetParam: OFFSET_PARAM }),
   },
 ];

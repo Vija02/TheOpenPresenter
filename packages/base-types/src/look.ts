@@ -13,16 +13,40 @@ export const BUILT_IN_LOOK_KEYS: { key: string; name: string }[] = [
   { key: OVERLAY_LOOK_KEY, name: "Overlay" },
 ];
 
-/** A plugin's version of a look */
+/**
+ * One of a plugin's styles for a look. A plugin can have several for each:
+ * the first is the one it shows unless a project picks another
+ */
 export type PluginLook<Doc = unknown> = {
+  /** The look it is for, eg. confidence */
   key: string;
   name: string;
   doc: Doc;
+  /** Tells a plugin's styles for one look apart. Defaults to "default" */
+  style?: string;
+};
+
+export const DEFAULT_STYLE = "default";
+
+/** Made-up content for preview */
+export type PluginSample = {
+  pluginData?: Record<string, unknown>;
+  rendererData?: Record<string, unknown>;
+  /** A picture shown in the plugin's place */
+  image?: string;
 };
 
 export type ProjectLook<Doc = unknown> = {
   /** By plugin name. A plugin missing here shows its built-in version */
   plugins: Record<string, Doc>;
+  /** For a project's own look, eg. a second confidence monitor's */
+  name?: string | null;
+  /** A project's own look shows this look for plugins it hasn't changed */
+  base?: string | null;
+  /** The style picked for each plugin, by plugin name */
+  styles?: Record<string, string> | null;
+  /** Turned off: not offered when picking a screen's look */
+  hidden?: boolean | null;
 };
 
 export type ProjectLooks<Doc = unknown> = Record<string, ProjectLook<Doc>>;

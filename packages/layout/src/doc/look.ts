@@ -1,4 +1,10 @@
-import type { ProjectLooks } from "@repo/base-types";
+import {
+  BUILT_IN_LOOK_KEYS,
+  DEFAULT_STYLE,
+  type PluginLook,
+  type ProjectLook,
+  type ProjectLooks,
+} from "@repo/base-types";
 
 import {
   createHostElement,
@@ -116,30 +122,161 @@ export type RegisteredPluginLooks = {
   looks: unknown;
 }[];
 
+export type PluginStyle = PluginLook<LayoutDoc> & { style: string };
+
+/** A plugin's styles for a look, its default first */
+export const pluginStyles = (
+  registered: RegisteredPluginLooks | null | undefined,
+  pluginName: string,
+  lookKey: string,
+): PluginStyle[] =>
+  (registered ?? [])
+    .filter((entry) => entry.pluginName === pluginName)
+    .flatMap((entry) => entry.looks as PluginLook<LayoutDoc>[])
+    .filter((look) => look.key === lookKey)
+    .map((look, index) => ({
+      ...look,
+      style: look.style ?? (index === 0 ? DEFAULT_STYLE : `style-${index}`),
+    }));
+
+/** The plugin's default style for a look */
 export const builtInPluginLook = (
   registered: RegisteredPluginLooks | null | undefined,
   pluginName: string,
   lookKey: string,
-): LayoutDoc | null => {
-  for (const entry of registered ?? []) {
-    if (entry.pluginName !== pluginName) continue;
-    const found = (entry.looks as { key: string; doc: LayoutDoc }[]).find(
-      (look) => look.key === lookKey,
-    );
-    if (found) return found.doc;
+): LayoutDoc | null =>
+  pluginStyles(registered, pluginName, lookKey)[0]?.doc ?? null;
+
+/** Bounds a chain of `base` looks, in case one points back at itself */
+const MAX_LOOK_DEPTH = 8;
+
+export type PluginLookChoice =
+  /** Changed for this look */
+  | { kind: "own" }
+  /** One of the plugin's styles, picked here or on a look it starts from */
+  | { kind: "style"; style: PluginStyle }
+  /** The plugin as it always shows */
+  | { kind: "plain" };
+
+/**
+ * How a plugin shows in a look: changed for it, else the style it picks,
+ * else as its base look shows it, else the plugin's default style
+ */
+export const pluginLookChoice = (
+  registered: RegisteredPluginLooks | null | undefined,
+  projectLooks: ProjectLooks | null | undefined,
+  pluginName: string,
+  lookKey: string,
+): PluginLookChoice => {
+  const styles = pluginStyles(
+    registered,
+    pluginName,
+    rootLookKey(projectLooks, lookKey),
+  );
+  let key: string | null | undefined = lookKey;
+  for (let depth = 0; key && depth < MAX_LOOK_DEPTH; depth++) {
+    const look: ProjectLook | undefined = projectLooks?.[key];
+    if (look?.plugins?.[pluginName]) return { kind: "own" };
+    const picked = look?.styles?.[pluginName];
+    const byName = picked && styles.find((entry) => entry.style === picked);
+    if (byName) return { kind: "style", style: byName };
+    if (!look?.base) break;
+    key = look.base;
   }
-  return null;
+  return styles[0] ? { kind: "style", style: styles[0] } : { kind: "plain" };
 };
 
 /**
- * How a plugin shows in a look: the project's own version, else the
- * plugin's. Null shows the plugin as it always does
+ * The layout a plugin shows in a look, as `pluginLookChoice` picks it. Null
+ * shows the plugin as it always does
  */
 export const resolvePluginLook = (
   registered: RegisteredPluginLooks | null | undefined,
   projectLooks: ProjectLooks | null | undefined,
   pluginName: string,
   lookKey: string,
-): LayoutDoc | null =>
-  (projectLooks?.[lookKey]?.plugins?.[pluginName] as LayoutDoc | undefined) ??
-  builtInPluginLook(registered, pluginName, lookKey);
+): LayoutDoc | null => {
+  const choice = pluginLookChoice(
+    registered,
+    projectLooks,
+    pluginName,
+    lookKey,
+  );
+  if (choice.kind === "style") return choice.style.doc;
+  if (choice.kind === "plain") return null;
+  // The first look on the way that changed it
+  let key: string | null | undefined = lookKey;
+  for (let depth = 0; key && depth < MAX_LOOK_DEPTH; depth++) {
+    const own = projectLooks?.[key]?.plugins?.[pluginName];
+    if (own) return own as LayoutDoc;
+    key = projectLooks?.[key]?.base;
+  }
+  return null;
+};
+
+/** The built-in look a project's own look starts from, eg. confidence */
+export const rootLookKey = (
+  projectLooks: ProjectLooks | null | undefined,
+  lookKey: string,
+): string => {
+  let key = lookKey;
+  for (let depth = 0; depth < MAX_LOOK_DEPTH; depth++) {
+    const base = projectLooks?.[key]?.base;
+    if (!base) return key;
+    key = base;
+  }
+  return key;
+};
+
+/** A key for a project's own look that no other look uses */
+export const newProjectLookKey = (
+  projectLooks: ProjectLooks | null | undefined,
+  base: string,
+): string => {
+  let n = 2;
+  while (projectLooks?.[`${base}-${n}`]) n += 1;
+  return `${base}-${n}`;
+};
+
+export type LookSummary = {
+  key: string;
+  name: string;
+  /** The built-in look it starts from, eg. confidence */
+  type: string;
+  builtIn: boolean;
+  /** Turned off: not offered when picking a screen's look */
+  hidden: boolean;
+};
+
+/** Every look in a project: by type, each built-in one before its copies */
+export const listLooks = (
+  projectLooks: ProjectLooks | null | undefined,
+): LookSummary[] => {
+  const builtInKeys = BUILT_IN_LOOK_KEYS.map((look) => look.key);
+  const builtIns = BUILT_IN_LOOK_KEYS.map(
+    ({ key, name }): LookSummary => ({
+      key,
+      name,
+      type: key,
+      builtIn: true,
+      hidden: !!projectLooks?.[key]?.hidden,
+    }),
+  );
+  const own = Object.entries(projectLooks ?? {})
+    .filter(([key, look]) => !builtInKeys.includes(key) && !!look?.base)
+    .map(
+      ([key, look]): LookSummary => ({
+        key,
+        name: look.name || key,
+        type: rootLookKey(projectLooks, key),
+        builtIn: false,
+        hidden: !!look.hidden,
+      }),
+    );
+  const order = (type: string) => {
+    const index = builtInKeys.indexOf(type);
+    return index === -1 ? builtInKeys.length : index;
+  };
+  // Stable: the built-in one first, then its copies as they were made
+  return [...builtIns, ...own].sort((a, b) => order(a.type) - order(b.type));
+};
