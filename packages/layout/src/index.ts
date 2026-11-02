@@ -5,6 +5,7 @@ export * from "./doc/edit";
 export * from "./doc/look";
 export * from "./doc/outputs";
 export * from "./doc/rendererLayout";
+export * from "./doc/sample";
 export * from "./doc/videoState";
 export * from "./fonts/registry";
 export * from "./geometry/rect";

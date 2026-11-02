@@ -28,6 +28,8 @@ import uaParser from "ua-parser-js";
 import { v4 } from "uuid";
 import { proxy, useSnapshot } from "valtio";
 import { bind } from "valtio-yjs";
+import { Awareness } from "y-protocols/awareness";
+import type * as Y from "yjs";
 
 import { useError } from "./ErrorProvider";
 import { usePluginMetaData } from "./PluginMetaDataProvider";
@@ -35,6 +37,7 @@ import { useAwarenessState } from "./awarenessState";
 
 type PluginDataProviderType = {
   provider: HocuspocusProvider | null;
+  awareness: Awareness | null;
   mainYMap: YState | null;
   currentUserId: string | null;
   mainState: State | null;
@@ -55,6 +58,7 @@ type PluginDataProviderType = {
 
 const initialData: PluginDataProviderType = {
   provider: null,
+  awareness: null,
   mainYMap: null,
   currentUserId: null,
   mainState: null,
@@ -70,18 +74,19 @@ export const PluginDataContext =
 function PluginDataProviderInner({
   children,
   provider,
+  awareness,
+  document,
   currentUserId,
   rendererId,
 }: React.PropsWithChildren<{
-  provider: HocuspocusProvider;
+  provider: HocuspocusProvider | null;
+  awareness: Awareness | null;
+  document: Y.Doc;
   currentUserId: string;
   rendererId: string;
 }>) {
   const [bound, setBound] = useState(false);
-  const mainYMap = useMemo(
-    () => provider.document.getMap() as YState,
-    [provider.document],
-  );
+  const mainYMap = useMemo(() => document.getMap() as YState, [document]);
 
   const mainState = useMemo(() => proxy({} as State), []);
 
@@ -129,6 +134,7 @@ function PluginDataProviderInner({
     <PluginDataContext.Provider
       value={{
         provider,
+        awareness,
         mainYMap,
         currentUserId,
         mainState,
@@ -343,7 +349,39 @@ export const PluginDataProvider = ({
   return (
     <PluginDataProviderInner
       provider={provider}
+      awareness={provider.awareness}
+      document={provider.document}
       currentUserId={currentUserId}
+      rendererId={rendererId}
+    >
+      {children}
+    </PluginDataProviderInner>
+  );
+};
+
+/**
+ * Plugins below draw from a document of their own instead of the project's,
+ * eg. made-up content for a preview. Needs no connection
+ */
+export const LocalPluginDataProvider = ({
+  document,
+  rendererId,
+  children,
+}: {
+  document: Y.Doc;
+  rendererId: string;
+  children: React.ReactNode;
+}) => {
+  const { provider, currentUserId } = usePluginData();
+  const awareness = useMemo(() => new Awareness(document), [document]);
+  useEffect(() => () => awareness.destroy(), [awareness]);
+
+  return (
+    <PluginDataProviderInner
+      provider={provider}
+      awareness={awareness}
+      document={document}
+      currentUserId={currentUserId ?? "local"}
       rendererId={rendererId}
     >
       {children}
