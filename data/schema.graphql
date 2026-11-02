@@ -5368,6 +5368,7 @@ type PluginMeta {
   registeredLooks: [RegisteredLooks!]!
   registeredRemoteView: [RegisteredRemoteView!]!
   registeredRendererView: [RegisteredRendererView!]!
+  registeredSamples: [RegisteredSample!]!
   sceneCreator: [SceneCreator!]!
 }
 
@@ -6884,6 +6885,11 @@ type RegisteredRemoteView {
 type RegisteredRendererView {
   pluginName: String!
   tag: String!
+}
+
+type RegisteredSample {
+  pluginName: String!
+  sample: JSON!
 }
 
 """All input for the `releaseScreenControl` mutation."""

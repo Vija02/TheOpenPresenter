@@ -22,6 +22,7 @@ export {
   DEFAULT_STYLE,
   MAIN_LOOK_KEY,
   OVERLAY_LOOK_KEY,
+  SAMPLE_COLORS,
 } from "@repo/base-types";
 export type {
   PluginLook,

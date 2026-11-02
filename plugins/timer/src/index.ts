@@ -11,12 +11,14 @@ import {
   remoteWebComponentTag,
   rendererWebComponentTag,
 } from "./consts";
+import { sample } from "./sample";
 import { PluginRendererData } from "./types";
 
 export const init = (serverPluginApi: ServerPluginApi) => {
   serverPluginApi.registerTrpcAppRouter(getAppRouter);
   serverPluginApi.onPluginDataCreated(pluginName, onPluginDataCreated);
   serverPluginApi.onRendererDataCreated(pluginName, onRendererDataCreated);
+  serverPluginApi.registerSample(pluginName, sample);
   serverPluginApi.registerSceneCreator(pluginName, {
     title: "Timer",
     description: "Timer with rundown, wrap-up colors, and multiple modes",

@@ -38,6 +38,7 @@ import {
   loadedRendererDataGetter,
   loadedYjsData,
 } from "./loadedState";
+import { sample } from "./sample";
 import { screenLooks } from "./screenLooks";
 import {
   activateSlide,
@@ -111,6 +112,7 @@ export const init = (
   serverPluginApi.onPluginDataCreated(pluginName, onPluginDataCreated);
   serverPluginApi.onPluginDataLoaded(pluginName, onPluginDataLoaded);
   serverPluginApi.onRendererDataCreated(pluginName, onRendererDataCreated);
+  serverPluginApi.registerSample(pluginName, sample);
   serverPluginApi.registerSceneCreator(pluginName, {
     title: "Slides",
     description:

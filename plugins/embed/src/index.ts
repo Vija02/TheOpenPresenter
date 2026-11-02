@@ -10,6 +10,7 @@ import {
   remoteWebComponentTag,
   rendererWebComponentTag,
 } from "./consts";
+import { sample } from "./sample";
 
 export const init = (serverPluginApi: ServerPluginApi) => {
   serverPluginApi.registerCSPDirective(pluginName, {
@@ -19,6 +20,7 @@ export const init = (serverPluginApi: ServerPluginApi) => {
   });
   serverPluginApi.registerTrpcAppRouter(getAppRouter);
   serverPluginApi.onPluginDataCreated(pluginName, onPluginDataCreated);
+  serverPluginApi.registerSample(pluginName, sample);
   serverPluginApi.registerSceneCreator(pluginName, {
     title: "Embed",
     description: "Embed any 3rd party web pages",
