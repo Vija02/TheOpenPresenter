@@ -1,4 +1,4 @@
-import { MAIN_LOOK_KEY } from "@repo/base-types";
+import { CONFIDENCE_LOOK_KEY, MAIN_LOOK_KEY } from "@repo/base-types";
 
 import { createHostElement, createLayoutDoc } from "../schema/defaults";
 import { LayoutDoc } from "../schema/document";
@@ -6,7 +6,7 @@ import { HostElement } from "../schema/element";
 import { readRendererLayoutDoc } from "./rendererLayout";
 
 /**
- * A project may have multiple outputs. 
+ * A project may have multiple outputs.
  * This maps to any different thing it can show.
  */
 export type Output = {
@@ -124,8 +124,25 @@ export const readOutputs = (state: StoredState): Outputs => {
       layout: createSimpleOutputLayout(),
     };
   }
+
+  const hasCustom = Object.values(outputs).some(
+    (output) => !simpleOutputInfo(output.layout),
+  );
+  if (!hasCustom) {
+    outputs[nextOutputId(outputs)] = createConfidenceOutput();
+  }
   return outputs;
 };
+
+export const createConfidenceOutput = (
+  name = "Confidence monitor",
+): Output => ({
+  name,
+  layout: createSimpleOutputLayout({
+    look: CONFIDENCE_LOOK_KEY,
+    followOverlay: false,
+  }),
+});
 
 export const sortedOutputIds = (outputs: Outputs): string[] =>
   Object.keys(outputs).sort(byNumericId);
