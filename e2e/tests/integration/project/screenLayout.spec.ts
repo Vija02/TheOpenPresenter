@@ -1,5 +1,5 @@
 import { expect, test } from "../../../fixtures/screenFixture";
-import { openManageOutputs } from "../../../helpers/outputs";
+import { openManageOutputs, openOutputLayout } from "../../../helpers/outputs";
 import { WORKER_TAG } from "../../../helpers/workerData";
 import { ProjectPage } from "../../../pages/ProjectPage";
 import { RendererScreenPage } from "../../../pages/Renderer/RendererScreenPage";
@@ -60,7 +60,7 @@ const openLayoutEditor = async (page: any) => {
     page.getByRole("heading", { name: "Outputs", exact: true }),
   ).toBeVisible();
 
-  await page.getByRole("button", { name: "Configure" }).click();
+  await openOutputLayout(page);
   await expect(page.getByText(/Layout Settings/)).toBeVisible();
 };
 
@@ -175,7 +175,7 @@ test.describe("Screen layouts", () => {
     await page.getByRole("button", { name: "Back" }).click();
 
     // Reopening reads the stored document back rather than starting empty.
-    await page.getByRole("button", { name: "Configure" }).click();
+    await openOutputLayout(page);
     await expect(page.getByText(/Layout Settings/)).toBeVisible();
     await expect(page.locator("[data-lay-host]").first()).toBeVisible();
   });

@@ -7,7 +7,12 @@ import {
 } from "@repo/layout";
 
 import { expect, test } from "../../../fixtures/screenFixture";
-import { openManageOutputs } from "../../../helpers/outputs";
+import {
+  addOutput,
+  expandOutput,
+  openManageOutputs,
+  showAdvanced,
+} from "../../../helpers/outputs";
 import { WORKER_TAG } from "../../../helpers/workerData";
 
 /**
@@ -143,15 +148,16 @@ test.describe("Screen looks", () => {
 
     await page.goto(`/app/${ORG_SLUG}/${PROJECT_SLUG}`);
     await openManageOutputs(page);
-    await page.getByRole("button", { name: "Add confidence monitor" }).click();
 
-    // Set up already: the confidence look, ignoring Black/Clear
-    await expect(page.getByLabel("Look").nth(1)).toHaveValue("confidence");
+    // There from the start: the confidence look, ignoring Black/Clear
+    await expandOutput(page, "Confidence monitor");
     await expect(
-      page.getByRole("checkbox", { name: "Follow Black/Clear" }).nth(1),
+      page.getByRole("button", { name: "Look: Confidence monitor" }),
+    ).toBeVisible();
+    await showAdvanced(page);
+    await expect(
+      page.getByRole("switch", { name: "Go black with Black and Clear" }),
     ).not.toBeChecked();
-    // Scene picking is gone from the cards
-    await expect(page.getByRole("checkbox", { name: "Lyrics" })).toHaveCount(0);
     await page.screenshot({ path: "test-results/screen-looks-manage.png" });
 
     const monitor = await context.newPage();
@@ -193,10 +199,6 @@ test.describe("Screen looks", () => {
     await login(e2eCommand, true);
 
     await page.goto(`/app/${ORG_SLUG}/${PROJECT_SLUG}`);
-    await openManageOutputs(page);
-    await page.getByRole("button", { name: "Add confidence monitor" }).click();
-    await page.getByRole("button", { name: "Close" }).first().click();
-
     const monitor = await context.newPage();
     try {
       await monitor.goto(`/render/${ORG_SLUG}/${PROJECT_SLUG}?renderer=2`);
@@ -246,7 +248,7 @@ test.describe("Screen looks", () => {
     }
   });
 
-  test("an edited look shows on every confidence monitor", async ({
+  test("an edited look shows live on the screen using it", async ({
     page,
     context,
     e2eCommand,
@@ -255,7 +257,27 @@ test.describe("Screen looks", () => {
 
     await page.goto(`/app/${ORG_SLUG}/${PROJECT_SLUG}`);
     await openManageOutputs(page);
-    await page.getByRole("button", { name: "Add confidence monitor" }).click();
+    await page.getByRole("button", { name: "Looks", exact: true }).click();
+
+    // Built-in looks are copied to change them
+    await page
+      .getByRole("button", { name: "More for Confidence monitor" })
+      .click();
+    await expect(
+      page.getByRole("button", { name: "Edit", exact: true }),
+    ).toHaveCount(0);
+    await page.getByRole("button", { name: "Duplicate", exact: true }).click();
+    await expect(page.getByLabel("Name")).toHaveValue(
+      "Confidence monitor copy",
+    );
+    await page.getByRole("button", { name: "Back to looks" }).click();
+    await page.getByRole("button", { name: "Back to outputs" }).click();
+
+    await expandOutput(page, "Confidence monitor");
+    await page
+      .getByRole("button", { name: "Look: Confidence monitor" })
+      .click();
+    await page.getByRole("radio", { name: "Confidence monitor copy" }).click();
 
     const monitor = await context.newPage();
     try {
@@ -265,10 +287,15 @@ test.describe("Screen looks", () => {
         .filter({ hasText: /^Next$/ });
       await expect(nextLabel.first()).toBeVisible();
 
-      // Drop the "Next" label from slides' confidence look, and save it
-      await page.getByRole("button", { name: "Slides" }).click();
+      // Drop the "Next" label from slides on the copy, and save it
+      await page.getByRole("button", { name: "Edit look" }).click();
+      await page
+        .getByRole("button", {
+          name: "Customize Slides on Confidence monitor copy",
+        })
+        .click();
       await expect(
-        page.getByText("Confidence monitor look - Slides"),
+        page.getByText("Slides on Confidence monitor copy"),
       ).toBeVisible();
       await page
         .getByRole("dialog")
@@ -280,8 +307,10 @@ test.describe("Screen looks", () => {
       // The open monitor picks it up without a reload
       await expect(nextLabel).toHaveCount(0);
 
-      // And back to the built-in one
-      await page.getByRole("button", { name: "Reset to built-in" }).click();
+      // And back to where it started
+      await page
+        .getByRole("button", { name: "Reset to Presenter view" })
+        .click();
       await expect(nextLabel.first()).toBeVisible();
     } finally {
       await monitor.close();
@@ -296,10 +325,6 @@ test.describe("Screen looks", () => {
     await login(e2eCommand);
 
     await page.goto(`/app/${ORG_SLUG}/${PROJECT_SLUG}`);
-    await openManageOutputs(page);
-    await page.getByRole("button", { name: "Add confidence monitor" }).click();
-    await page.getByRole("button", { name: "Close" }).first().click();
-
     const monitor = await context.newPage();
     const main = await context.newPage();
     try {
@@ -335,7 +360,7 @@ test.describe("Screen looks", () => {
 
     await page.goto(`/app/${ORG_SLUG}/${PROJECT_SLUG}`);
     await openManageOutputs(page);
-    await page.getByRole("button", { name: "Add custom layout" }).click();
+    await addOutput(page, "custom layout");
     await expect(page.getByText(/Layout Settings - Custom/)).toBeVisible();
 
     // The live box it starts with, switched to the confidence look
@@ -352,7 +377,7 @@ test.describe("Screen looks", () => {
 
     const output = await context.newPage();
     try {
-      await output.goto(`/render/${ORG_SLUG}/${PROJECT_SLUG}?renderer=2`);
+      await output.goto(`/render/${ORG_SLUG}/${PROJECT_SLUG}?renderer=3`);
       const text = output.locator(".lay--text-content");
       for (const expected of [
         "Live line marker",
@@ -369,5 +394,245 @@ test.describe("Screen looks", () => {
     } finally {
       await output.close();
     }
+  });
+
+  test("a second confidence monitor can show a look of its own", async ({
+    page,
+    context,
+    e2eCommand,
+  }) => {
+    await login(e2eCommand, true);
+
+    await page.goto(`/app/${ORG_SLUG}/${PROJECT_SLUG}`);
+    await openManageOutputs(page);
+    await page.screenshot({ path: "test-results/outputs-default.png" });
+    await page.getByRole("button", { name: "Add output" }).click();
+    await page.screenshot({ path: "test-results/outputs-add.png" });
+    await page
+      .getByRole("region", { name: "Add an output" })
+      .getByText("Confidence monitor", { exact: true })
+      .click();
+
+    // Named on the way in
+    const name = page.getByLabel("Name");
+    await expect(name).toBeFocused();
+    await name.fill("Back stage");
+
+    // A new look, from the picker
+    await page
+      .getByRole("button", { name: "Look: Confidence monitor" })
+      .click();
+    await page.getByRole("button", { name: "Manage looks…" }).click();
+    await page
+      .getByRole("button", { name: "New confidence monitor look" })
+      .click();
+    await page.getByLabel("Name").fill("Back stage look");
+
+    const front = await context.newPage();
+    const back = await context.newPage();
+    try {
+      await front.goto(`/render/${ORG_SLUG}/${PROJECT_SLUG}?renderer=2`);
+      await back.goto(`/render/${ORG_SLUG}/${PROJECT_SLUG}?renderer=3`);
+      const nextLabel = (monitor: typeof front) =>
+        monitor.locator(".lay--text-content").filter({ hasText: /^Next$/ });
+      await expect(nextLabel(back).first()).toBeVisible();
+
+      // Drop the "Next" label from slides on the new look
+      await page
+        .getByRole("button", { name: "Customize Slides on Back stage look" })
+        .click();
+      await expect(page.getByText("Slides on Back stage look")).toBeVisible();
+      await page
+        .getByRole("dialog")
+        .locator('[data-lay-id="next-label"]')
+        .click();
+      await page.keyboard.press("Delete");
+      await page.getByRole("button", { name: "Save", exact: true }).click();
+      await page.getByRole("button", { name: "Back", exact: true }).click();
+
+      // Nothing shows it yet
+      await expect(nextLabel(back).first()).toBeVisible();
+
+      await page.getByRole("button", { name: "Back to looks" }).click();
+      await expect(
+        page.getByRole("region", { name: "Confidence monitors" }),
+      ).toBeInViewport();
+      // Overlays aren't needed here
+      await page
+        .getByRole("button", { name: "Overlay", exact: true, pressed: true })
+        .click();
+      await expect(
+        page.getByRole("button", { name: "Overlay", exact: true }),
+      ).toHaveAttribute("aria-pressed", "false");
+      await page.getByRole("button", { name: "Back to outputs" }).click();
+
+      await expandOutput(page, "Back stage");
+      await page
+        .getByRole("button", { name: "Look: Confidence monitor" })
+        .click();
+      await expect(page.getByRole("radio", { name: "Overlay" })).toHaveCount(0);
+      await page.getByRole("radio", { name: "Back stage look" }).click();
+      await expect(
+        page.getByRole("button", { name: "Look: Back stage look" }),
+      ).toBeVisible();
+
+      await expect(nextLabel(back)).toHaveCount(0);
+      await expect(nextLabel(front).first()).toBeVisible();
+    } finally {
+      await front.close();
+      await back.close();
+    }
+  });
+  test("looks show made-up content, switched without reloading", async ({
+    page,
+    e2eCommand,
+  }) => {
+    await login(e2eCommand);
+
+    await page.goto(`/app/${ORG_SLUG}/${PROJECT_SLUG}`);
+    await openManageOutputs(page);
+    await page.getByRole("button", { name: "Looks", exact: true }).click();
+
+    // The plugin's sample, not the project's song
+    const select = page.getByLabel("Preview with");
+    await select.selectOption("lyrics-presenter");
+    const preview = page.locator('iframe[title="Look preview"]').first();
+    const frame = preview.contentFrame();
+    await expect(frame.getByText(/Amazing grace/i).first()).toBeVisible();
+    await expect(frame.getByText("Live line marker")).toHaveCount(0);
+
+    // Every plugin with a sample, though the project doesn't use it
+    await frame.locator("body").evaluate(() => {
+      (window as unknown as { kept: boolean }).kept = true;
+    });
+    await select.selectOption("timer");
+    await expect(frame.getByText("25:00").first()).toBeVisible();
+    await select.selectOption("slides");
+    await expect(frame.getByText("Welcome").first()).toBeVisible();
+    await select.selectOption("bible");
+    await expect(frame.getByText(/For God so loved/).first()).toBeVisible();
+    // Live content from elsewhere shows as a picture
+    for (const plugin of ["screen-share", "video-player", "embed", "slido"]) {
+      await select.selectOption(plugin);
+      await expect(frame.locator('img[src^="data:image/svg"]')).toBeVisible();
+    }
+
+    // The same page throughout
+    expect(
+      await frame
+        .locator("body")
+        .evaluate(() => (window as unknown as { kept?: boolean }).kept),
+    ).toBe(true);
+  });
+  test("a look picks a style for each plugin", async ({
+    page,
+    context,
+    e2eCommand,
+  }) => {
+    await login(e2eCommand, true);
+
+    await page.goto(`/app/${ORG_SLUG}/${PROJECT_SLUG}`);
+    await openManageOutputs(page);
+    await page.getByRole("button", { name: "Looks", exact: true }).click();
+
+    // A new look shows each plugin's default style: slides with notes
+    await page
+      .getByRole("button", { name: "New confidence monitor look" })
+      .click();
+    await page.getByLabel("Name").fill("Stage look");
+    const slidesStyle = page.getByRole("button", {
+      name: /^Style of Slides on Stage look:/,
+    });
+    await expect(slidesStyle).toHaveAccessibleName(/Presenter view$/);
+
+    // Shown on the confidence monitor
+    await page.getByRole("button", { name: "Back to looks" }).click();
+    await page.getByRole("button", { name: "Back to outputs" }).click();
+    await expandOutput(page, "Confidence monitor");
+    await page
+      .getByRole("button", { name: "Look: Confidence monitor" })
+      .click();
+    await page.getByRole("radio", { name: "Stage look" }).click();
+
+    const monitor = await context.newPage();
+    try {
+      await monitor.goto(`/render/${ORG_SLUG}/${PROJECT_SLUG}?renderer=2`);
+      const text = (label: string | RegExp) =>
+        monitor.locator(".lay--text-content").filter({ hasText: label });
+      await expect(text("Deck slide one").first()).toBeVisible();
+      await expect(text("Notes for deck one")).toBeVisible();
+
+      // Another style for slides alone. Every plugin shows at once
+      await page.getByRole("button", { name: "Edit look" }).click();
+      const plugins = page.getByRole("region", {
+        name: "How each plugin shows",
+      });
+      await expect(plugins.getByRole("listitem")).toHaveCount(8);
+      await slidesStyle.click();
+      await page.getByRole("radio", { name: "Live + next" }).click();
+      await expect(slidesStyle).toHaveAccessibleName(/Live \+ next$/);
+      await expect(text(/^Next$/).first()).toBeVisible();
+      await expect(text("Notes for deck one")).toHaveCount(0);
+    } finally {
+      await monitor.close();
+    }
+  });
+
+  test("a look is deleted from its card, once no output shows it", async ({
+    page,
+    e2eCommand,
+  }) => {
+    await login(e2eCommand, true);
+    await page.goto(`/app/${ORG_SLUG}/${PROJECT_SLUG}`);
+    await openManageOutputs(page);
+    await page.getByRole("button", { name: "Looks", exact: true }).click();
+    await page
+      .getByRole("button", { name: "New confidence monitor look" })
+      .click();
+    await page.getByLabel("Name").fill("Spare look");
+    await page.getByRole("button", { name: "Back to looks" }).click();
+
+    // Built-in looks can only be turned off
+    await page
+      .getByRole("button", { name: "More for Confidence monitor" })
+      .click();
+    await expect(page.getByRole("button", { name: "Duplicate" })).toBeVisible();
+    await expect(page.getByRole("button", { name: /^Delete/ })).toBeDisabled();
+    await page.keyboard.press("Escape");
+
+    // Main is always on: shown, but can't be turned off
+    const main = page
+      .getByRole("region", { name: "Main view" })
+      .getByRole("button", { name: "Main", exact: true });
+    await expect(main).toHaveAttribute("aria-disabled", "true");
+    await main.click();
+    await expect(main).toHaveAttribute("aria-pressed", "true");
+    await page.getByRole("button", { name: "More for Main" }).click();
+    await expect(page.getByRole("button", { name: "Edit" })).toBeDisabled();
+    await page.keyboard.press("Escape");
+
+    // In use: says where
+    await page.getByRole("button", { name: "Back to outputs" }).click();
+    await expandOutput(page, "Confidence monitor");
+    await page.getByRole("button", { name: /^Look: / }).click();
+    await page.getByRole("radio", { name: "Spare look" }).click();
+    await page.getByRole("button", { name: "Looks", exact: true }).click();
+    await page.getByRole("button", { name: "More for Spare look" }).click();
+    await expect(page.getByRole("button", { name: /^Delete/ })).toBeDisabled();
+    await expect(
+      page.getByText("Pick another look on Confidence monitor first"),
+    ).toBeVisible();
+    await page.keyboard.press("Escape");
+
+    await page.getByRole("button", { name: "Back to outputs" }).click();
+    await page.getByRole("button", { name: /^Look: / }).click();
+    await page.getByRole("radio", { name: "Confidence monitor" }).click();
+    await page.getByRole("button", { name: "Looks", exact: true }).click();
+    await page.getByRole("button", { name: "More for Spare look" }).click();
+    await page.getByRole("button", { name: /^Delete/ }).click();
+    await page.getByTestId("popconfirm-confirm").click();
+    await expect(page.getByRole("button", { name: "Spare look" })).toHaveCount(
+      0,
+    );
   });
 });

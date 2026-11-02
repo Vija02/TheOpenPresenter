@@ -144,7 +144,13 @@ const MonitorLayout = ({
   );
 };
 
-const PresentMonitorModal = () => {
+export const PresentMonitorModal = ({
+  outputId,
+  outputName,
+}: {
+  outputId?: string;
+  outputName?: string;
+}) => {
   const { isOpen, onToggle } = useOverlayToggle();
 
   const { data: monitors, isLoading, isError } = useAvailableMonitors();
@@ -158,18 +164,13 @@ const PresentMonitorModal = () => {
   const { orgSlug, projectSlug } = usePluginMetaData();
   const search = useSearch();
   const { selectedRendererId } = useRendererSelection();
-  const isPresenting = (presenting ?? []).includes(selectedRendererId);
+  const targetId = outputId ?? selectedRendererId;
+  const isPresenting = (presenting ?? []).includes(targetId);
 
   const handleSelect = async (monitor: Monitor) => {
     setBusy(true);
     try {
-      await onPresentClick(
-        orgSlug,
-        projectSlug,
-        monitor,
-        search,
-        selectedRendererId,
-      );
+      await onPresentClick(orgSlug, projectSlug, monitor, search, targetId);
       await refetchPresenting();
       onToggle?.();
     } catch {
@@ -180,7 +181,7 @@ const PresentMonitorModal = () => {
   };
 
   const handleStop = async () => {
-    await desktop.stopPresenting(selectedRendererId);
+    await desktop.stopPresenting(targetId);
     await refetchPresenting();
   };
 
@@ -188,7 +189,9 @@ const PresentMonitorModal = () => {
     <Dialog open={isOpen ?? false} onOpenChange={onToggle ?? (() => {})}>
       <DialogContent size="xl">
         <DialogHeader>
-          <DialogTitle>Select monitor</DialogTitle>
+          <DialogTitle>
+            {outputName ? `Show ${outputName} on…` : "Select monitor"}
+          </DialogTitle>
         </DialogHeader>
         <DialogBody>
           {isLoading && (
