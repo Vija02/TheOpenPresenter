@@ -16,6 +16,7 @@ import { Route, Switch, useParams, useSearch } from "wouter";
 import { Body } from "./Body";
 import { FullscreenButton } from "./FullscreenButton";
 import { Screen } from "./Screen";
+import { LookSample } from "./preview/LookSample";
 
 void detectWebPSupport();
 
@@ -61,8 +62,21 @@ function Root() {
     return searchParams.get("hostSpec");
   }, [search]);
 
+  // A look with a plugin's made-up content, for the looks dialog
+  const lookSample = useMemo(() => {
+    const searchParams = new URLSearchParams(search);
+    const lookKey = searchParams.get("lookSample");
+    return lookKey
+      ? {
+          lookKey,
+          pluginName: searchParams.get("samplePlugin"),
+          style: searchParams.get("sampleStyle"),
+        }
+      : null;
+  }, [search]);
+
   useEffect(() => {
-    if (!hostElementId && !hostSpec) return;
+    if (!hostElementId && !hostSpec && !lookSample) return;
 
     const { documentElement, body } = document;
     documentElement.style.backgroundColor = "transparent";
@@ -72,7 +86,30 @@ function Root() {
       documentElement.style.backgroundColor = "";
       body.style.backgroundColor = "";
     };
-  }, [hostElementId, hostSpec]);
+  }, [hostElementId, hostSpec, lookSample]);
+
+  if (lookSample) {
+    return (
+      <PluginMetaDataProvider
+        orgSlug={orgSlug!}
+        projectSlug={projectSlug!}
+        type="renderer"
+      >
+        <ErrorProvider>
+          <AudioCheckProvider>
+            <div style={{ width: "100vw", height: "100dvh" }}>
+              <LookSample
+                lookKey={lookSample.lookKey}
+                initialPluginName={lookSample.pluginName}
+                style={lookSample.style ?? null}
+                hostSpec={hostSpec}
+              />
+            </div>
+          </AudioCheckProvider>
+        </ErrorProvider>
+      </PluginMetaDataProvider>
+    );
+  }
 
   return (
     <PluginMetaDataProvider

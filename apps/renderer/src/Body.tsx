@@ -59,6 +59,8 @@ import { useDisposable } from "use-disposable";
 import * as Y from "yjs";
 
 import { outputVolume } from "./outputVolume";
+import { parseHostSpec } from "./preview/hostSpec";
+import { SampleImageContext } from "./preview/sampleImage";
 import { trpcClient } from "./trpc";
 import { useFade } from "./useFade";
 
@@ -206,19 +208,18 @@ const LayoutOutputPluginApi = ({ children }: { children: ReactNode }) => {
   );
 };
 
-const parseHostSpec = (spec: string): HostElement | null => {
-  try {
-    const { source, derivation, look, followOverlay } = JSON.parse(spec);
-    if (!source?.kind) return null;
-    return {
-      source,
-      derivation: derivation ?? null,
-      look: look ?? null,
-      followOverlay: followOverlay ?? true,
-    } as HostElement;
-  } catch {
-    return null;
+const PluginOrSample = (props: React.ComponentProps<typeof PluginRenderer>) => {
+  const image = useContext(SampleImageContext);
+  if (image) {
+    return (
+      <img
+        src={image}
+        alt=""
+        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+      />
+    );
   }
+  return <PluginRenderer {...props} />;
 };
 
 /** Fills a layout's host elements with live application content */
@@ -226,7 +227,7 @@ const renderHostElement = ({ element }: { element: HostElement }) => (
   <HostBox element={element} />
 );
 
-const HostBox = ({ element }: { element: HostElement }) => {
+export const HostBox = ({ element }: { element: HostElement }) => {
   const { source, derivation } = element;
   const parentFollows = useContext(FollowOverlayContext);
   const preloadScenes = useContext(PreloadScenesContext);
@@ -250,7 +251,7 @@ const HostBox = ({ element }: { element: HostElement }) => {
       case "plugin":
         return (
           <ErrorBoundary FallbackComponent={ErrorAlert}>
-            <PluginRenderer
+            <PluginOrSample
               pluginId={source.pluginId}
               sceneId={source.sceneId}
               sourceRendererId={source.rendererId}
@@ -483,7 +484,7 @@ const PluginLookRenderer = React.memo(
       [lookDoc, sourceRendererId, sceneId, pluginId],
     );
 
-    if (!doc) return <PluginRenderer {...props} />;
+    if (!doc) return <PluginOrSample {...props} />;
 
     return (
       <div
@@ -527,7 +528,7 @@ const PluginRenderer = React.memo(
     const {
       getYJSPluginRenderer,
       getYJSPluginSceneData,
-      provider,
+      awareness,
       mainYMap,
       currentUserId,
       rendererId,
@@ -685,7 +686,7 @@ const PluginRenderer = React.memo(
         yjsPluginSceneData,
         yjsPluginRendererData,
         awarenessContext: {
-          awarenessObj: provider!.awareness!,
+          awarenessObj: awareness!,
           currentUserId: currentUserId!,
         } satisfies AwarenessContext,
         pluginContext,
@@ -751,7 +752,7 @@ const PluginRenderer = React.memo(
       pluginContext,
       pluginDiv,
       pluginInfo?.plugin,
-      provider,
+      awareness,
       removeError,
       effectiveRendererId,
       sceneId,
