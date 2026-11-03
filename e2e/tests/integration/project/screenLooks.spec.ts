@@ -156,7 +156,7 @@ test.describe("Screen looks", () => {
     ).toBeVisible();
     await showAdvanced(page);
     await expect(
-      page.getByRole("switch", { name: "Go black with Black and Clear" }),
+      page.getByRole("switch", { name: "Follow black and clear" }),
     ).not.toBeChecked();
     await page.screenshot({ path: "test-results/screen-looks-manage.png" });
 
@@ -493,12 +493,14 @@ test.describe("Screen looks", () => {
     await openManageOutputs(page);
     await page.getByRole("button", { name: "Looks", exact: true }).click();
 
-    // The plugin's sample, not the project's song
+    // The plugin's sample, live on its second verse, not the project's song
     const select = page.getByLabel("Preview with");
     await select.selectOption("lyrics-presenter");
     const preview = page.locator('iframe[title="Look preview"]').first();
     const frame = preview.contentFrame();
-    await expect(frame.getByText(/Amazing grace/i).first()).toBeVisible();
+    await expect(
+      frame.getByText(/grace that taught my heart/i).first(),
+    ).toBeVisible();
     await expect(frame.getByText("Live line marker")).toHaveCount(0);
 
     // Every plugin with a sample, though the project doesn't use it
@@ -605,7 +607,8 @@ test.describe("Screen looks", () => {
       .getByRole("region", { name: "Main view" })
       .getByRole("button", { name: "Main", exact: true });
     await expect(main).toHaveAttribute("aria-disabled", "true");
-    await main.click();
+    // Forced: it's aria-disabled, which Playwright won't click
+    await main.click({ force: true });
     await expect(main).toHaveAttribute("aria-pressed", "true");
     await page.getByRole("button", { name: "More for Main" }).click();
     await expect(page.getByRole("button", { name: "Edit" })).toBeDisabled();
