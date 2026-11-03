@@ -7,7 +7,7 @@ import {
   resolveRootUrl,
 } from "../settings/store";
 import { openExternalSafely } from "../shell/external";
-import { backToShellUI } from "../shell/windows";
+import { backToShellUI, refetchServerWindows } from "../shell/windows";
 import {
   BrowserLoginUnavailable,
   type LoginHandle,
@@ -186,11 +186,13 @@ export function registerCloudIPC(): void {
       args: { cloudOrg: { slug: string; name: string }; cloudUrl?: string },
     ) => {
       if (!runtime.url) throw new Error("The local server is not running.");
-      return connectCloudOrganization(
+      const result = await connectCloudOrganization(
         runtime.url,
         args.cloudUrl ?? DEFAULT_CLOUD_URL,
         args.cloudOrg,
       );
+      refetchServerWindows(runtime.url);
+      return result;
     },
   );
 
@@ -204,7 +206,9 @@ export function registerCloudIPC(): void {
   /** Name this install's organisation, for someone not connecting. */
   ipcMain.handle("cloud:name-organization", async (_event, name: string) => {
     if (!runtime.url) throw new Error("The local server is not running.");
-    return nameLocalOrganization(runtime.url, name);
+    const result = await nameLocalOrganization(runtime.url, name);
+    refetchServerWindows(runtime.url);
+    return result;
   });
 
   /** Stop syncing an organisation, optionally deleting it locally. */
@@ -219,12 +223,14 @@ export function registerCloudIPC(): void {
       },
     ) => {
       if (!runtime.url) throw new Error("The local server is not running.");
-      return removeConnection(
+      const result = await removeConnection(
         runtime.url,
         args.cloudConnectionId,
         args.organizationId,
         args.deleteOrganization,
       );
+      refetchServerWindows(runtime.url);
+      return result;
     },
   );
 
@@ -233,7 +239,9 @@ export function registerCloudIPC(): void {
     "cloud:remove-organization",
     async (_event, args: { organizationId: string }) => {
       if (!runtime.url) throw new Error("The local server is not running.");
-      return removeOrganization(runtime.url, args.organizationId);
+      const result = await removeOrganization(runtime.url, args.organizationId);
+      refetchServerWindows(runtime.url);
+      return result;
     },
   );
 }

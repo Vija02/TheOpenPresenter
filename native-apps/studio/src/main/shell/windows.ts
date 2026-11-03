@@ -149,6 +149,15 @@ export function isShowingServer(serverUrl: string): boolean {
   return windowsShowing(serverUrl).length > 0;
 }
 
+/** Re-run the queries on screen in `serverUrl`'s windows (see the web app's refetchExchange). */
+export function refetchServerWindows(serverUrl: string): void {
+  for (const win of windowsShowing(serverUrl)) {
+    win.webContents
+      .executeJavaScript(`window.dispatchEvent(new Event("top:refetch"))`)
+      .catch((err) => logShell("error", "[windows] refetch failed", err));
+  }
+}
+
 export function reloadServerWindows(previousUrl: string, url: string): void {
   let next: URL;
   try {
