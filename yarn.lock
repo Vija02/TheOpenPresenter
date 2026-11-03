@@ -33704,6 +33704,9 @@ __metadata:
     turbo: "npm:^2.3.3"
     typescript: "npm:5.9.3"
     vitest: "npm:^2.1.8"
+  dependenciesMeta:
+    better-sqlite3:
+      built: false
   languageName: unknown
   linkType: soft
 
