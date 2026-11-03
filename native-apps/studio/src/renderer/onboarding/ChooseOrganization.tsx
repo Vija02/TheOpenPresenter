@@ -1,8 +1,13 @@
 import { Button } from "@repo/ui";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-import { type CloudOrganization, api } from "../bridge/ipc";
+import { type CloudOrganization, type SyncProgress, api } from "../bridge/ipc";
 import { Logo } from "../shared/Logo";
+
+const POLL_MS = 500;
+// Give up on a run that never starts (sync failed to queue) or runs long.
+const NO_RUN_TIMEOUT_MS = 10_000;
+const SYNC_TIMEOUT_MS = 60_000;
 
 /**
  * Pick which cloud organisation this computer works with. Choosing creates the
@@ -20,6 +25,8 @@ export function ChooseOrganization({
 }) {
   const [options, setOptions] = useState<CloudOrganization[] | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const [syncing, setSyncing] = useState<SyncProgress | "waiting" | null>(null);
+  const skipWait = useRef<() => void>(() => undefined);
 
   useEffect(() => {
     api
@@ -35,12 +42,65 @@ export function ChooseOrganization({
     setBusy(org.slug);
     try {
       const connection = await api.connectCloudOrganization(org);
+      await waitForProjects(connection.id);
       onConnected(connection.localOrganizationSlug);
     } catch (err) {
       onError(err instanceof Error ? err.message : String(err));
       setBusy(null);
     }
   };
+
+  const waitForProjects = (cloudConnectionId: string) =>
+    new Promise<void>((resolve) => {
+      const started = Date.now();
+      let timer: ReturnType<typeof setTimeout>;
+      const done = () => {
+        clearTimeout(timer);
+        resolve();
+      };
+      skipWait.current = done;
+      setSyncing("waiting");
+
+      const poll = async () => {
+        const progress = await api
+          .syncProgress(cloudConnectionId)
+          .catch(() => null);
+        const elapsed = Date.now() - started;
+        if (progress) setSyncing(progress);
+        if (
+          (progress &&
+            progress.status !== "PENDING" &&
+            progress.status !== "IN_PROGRESS") ||
+          (!progress && elapsed > NO_RUN_TIMEOUT_MS) ||
+          elapsed > SYNC_TIMEOUT_MS
+        ) {
+          done();
+          return;
+        }
+        timer = setTimeout(() => void poll(), POLL_MS);
+      };
+      void poll();
+    });
+
+  if (syncing) {
+    return (
+      <section className="onboarding">
+        <Logo />
+        <h2>Getting your projects</h2>
+        <p className="muted">
+          {syncing !== "waiting" && syncing.projectsToSync > 0
+            ? `${syncing.syncedProjects} of ${syncing.projectsToSync} projects`
+            : "Checking the cloud…"}
+        </p>
+        <p className="muted">Media keeps downloading in the background.</p>
+        <div className="row">
+          <Button variant="link" onClick={() => skipWait.current()}>
+            Continue now
+          </Button>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="onboarding">

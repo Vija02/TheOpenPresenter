@@ -26,8 +26,10 @@ import {
   removeOrganization,
   selectOrganization,
   startSync,
+  syncProgress,
 } from "./connection";
 import { checkHost, isLoggedIn, localAddress, logout } from "./host";
+import { restartLiveRefresh, startLiveRefresh } from "./liveRefresh";
 import { cloudOrganizations } from "./organizations";
 
 /** Created by a migration for the demo; see `cloud:local-organizations`. */
@@ -35,6 +37,8 @@ const DEMO_ORGANIZATION_SLUG = "demo";
 
 /** Signing in, and linking this install to a cloud organisation. */
 export function registerCloudIPC(): void {
+  startLiveRefresh();
+
   // -- Host / session -------------------------------------------------------
   ipcMain.handle("host:check", (_event, url: string) => checkHost(url));
 
@@ -160,6 +164,15 @@ export function registerCloudIPC(): void {
     },
   );
 
+  ipcMain.handle(
+    "cloud:sync-progress",
+    async (_event, args: { cloudConnectionId: string }) => {
+      const base = runtime.url;
+      if (!base) throw new Error("The local server is not running.");
+      return syncProgress(base, args.cloudConnectionId);
+    },
+  );
+
   /**
    * Cloud organisations available to sign-in, before any connection exists.
    * Each is flagged with whether this install already mirrors it
@@ -192,6 +205,7 @@ export function registerCloudIPC(): void {
         args.cloudOrg,
       );
       refetchServerWindows(runtime.url);
+      void restartLiveRefresh();
       return result;
     },
   );
@@ -230,6 +244,7 @@ export function registerCloudIPC(): void {
         args.deleteOrganization,
       );
       refetchServerWindows(runtime.url);
+      void restartLiveRefresh();
       return result;
     },
   );
@@ -241,6 +256,7 @@ export function registerCloudIPC(): void {
       if (!runtime.url) throw new Error("The local server is not running.");
       const result = await removeOrganization(runtime.url, args.organizationId);
       refetchServerWindows(runtime.url);
+      void restartLiveRefresh();
       return result;
     },
   );
