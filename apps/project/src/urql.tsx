@@ -12,6 +12,8 @@ import {
   subscriptionExchange,
 } from "urql";
 
+import { refetchExchange } from "./refetchExchange";
+
 // Expose a method to reset the client
 // https://github.com/urql-graphql/urql/issues/297#issuecomment-504782794
 const URQLClientContext = React.createContext<{ resetClient: () => void }>({
@@ -61,6 +63,7 @@ const makeClient = (extraHeaders?: Record<string, string>) =>
     preferGetMethod: false,
     requestPolicy: "cache-and-network",
     exchanges: [
+      refetchExchange,
       cacheExchange,
       fetchExchange,
       subscriptionExchange({
