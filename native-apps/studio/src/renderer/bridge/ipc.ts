@@ -85,6 +85,13 @@ export type CloudConnection = {
   localOrganizationSlug?: string;
 };
 
+/** The project phase of a connection's latest sync run. */
+export type SyncProgress = {
+  status: "PENDING" | "IN_PROGRESS" | "COMPLETED" | "FAILED";
+  syncedProjects: number;
+  projectsToSync: number;
+};
+
 /** What the app is currently pointed at. Mirrors the main process summary. */
 export type ConnectionSummary = {
   location: "this-computer" | "remote";
@@ -336,4 +343,6 @@ export const api = {
     invoke<void>("cloud:select-organization", { cloudConnectionId, slug }),
   cloudSync: (cloudConnectionId: string) =>
     invoke<void>("cloud:sync", { cloudConnectionId }),
+  syncProgress: (cloudConnectionId: string) =>
+    invoke<SyncProgress | null>("cloud:sync-progress", { cloudConnectionId }),
 };

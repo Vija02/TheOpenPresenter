@@ -13,7 +13,7 @@ const HEADERS = {
 
 const SESSION_COOKIE = "connect.sid";
 
-async function localSessionHeader(
+export async function localSessionHeader(
   base: string,
 ): Promise<Record<string, string>> {
   try {
@@ -347,6 +347,40 @@ export async function startSync(
     `,
     { cloudConnectionId },
   );
+}
+
+export type SyncProgress = {
+  status: "PENDING" | "IN_PROGRESS" | "COMPLETED" | "FAILED";
+  syncedProjects: number;
+  projectsToSync: number;
+};
+
+/** The latest run's project phase, or null before the worker has begun one. */
+export async function syncProgress(
+  base: string,
+  cloudConnectionId: string,
+): Promise<SyncProgress | null> {
+  const data = await graphql<{
+    cloudConnection: { cloudSyncRuns: { nodes: SyncProgress[] } } | null;
+  }>(
+    base,
+    `
+      query ($cloudConnectionId: UUID!) {
+        cloudConnection(id: $cloudConnectionId) {
+          cloudSyncRuns(orderBy: CREATED_AT_DESC, first: 1) {
+            nodes {
+              status
+              syncedProjects
+              projectsToSync
+            }
+          }
+        }
+      }
+    `,
+    { cloudConnectionId },
+  );
+
+  return data.cloudConnection?.cloudSyncRuns.nodes[0] ?? null;
 }
 
 /** Connect a cloud organization, creating the local mirror for it. */
