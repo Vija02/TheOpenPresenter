@@ -4,7 +4,7 @@ description: "October brought the new desktop app with offline mode and cloud sy
 category: "Product"
 author: "Michael Salim"
 publishDate: 2026-11-04
-draft: true
+draft: false
 hideLead: true
 ---
 
