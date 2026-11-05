@@ -1,0 +1,122 @@
+---
+import {
+  PRICES,
+  calculateCosts,
+  formatGbp,
+  formatUsd,
+} from "../../lib/prodisplayPricing";
+
+interface Props {
+  body: string;
+  /** Free plan blurb after "Up to N screens." */
+  freeNote?: string;
+}
+
+const { body, freeNote = "" } = Astro.props;
+
+const EXAMPLE_SCREENS = 10;
+const example = calculateCosts(EXAMPLE_SCREENS, "yearly");
+
+const plans = [
+  {
+    name: "Free",
+    price: "£0",
+    per: "forever",
+    body: `Up to ${PRICES.freePlanScreens} screens. ${freeNote}`.trim(),
+    highlight: false,
+  },
+  {
+    name: "Cloud",
+    price: formatGbp(PRICES.cloudYearly),
+    per: "a year",
+    body: `Unlimited screens for the whole church, or ${formatGbp(PRICES.cloudMonthly)} a month.`,
+    highlight: true,
+  },
+  {
+    name: "Lifetime",
+    price: "£990",
+    per: "one time",
+    body: "Unlimited screens, paid once. Or self-host the open-source app for free.",
+    highlight: false,
+  },
+];
+---
+
+<section>
+  <div class="max-w-6xl mx-auto px-4 sm:px-6">
+    <div class="py-12 md:py-20 border-t border-gray-200 dark:border-gray-800">
+      <div class="max-w-3xl mx-auto text-center pb-12 md:pb-14">
+        <div
+          class="inline-flex items-center text-sm font-semibold tracking-wide uppercase text-brand-500 mb-2"
+        >
+          Pricing
+        </div>
+        <h2 class="h2 mb-4 font-red-hat-display">
+          One price for your whole church
+        </h2>
+        <p class="text-lg text-gray-600 dark:text-gray-400">
+          {body}
+        </p>
+      </div>
+
+      <div class="grid gap-6 md:grid-cols-3 mb-10">
+        {
+          plans.map((plan) => (
+            <div
+              class:list={[
+                "rounded-lg p-6 border",
+                plan.highlight
+                  ? "border-brand-200 dark:border-brand-500/30 bg-brand-50 dark:bg-brand-500/10"
+                  : "border-gray-200 dark:border-gray-800",
+              ]}
+              data-aos="fade-up"
+            >
+              <div
+                class:list={[
+                  "font-semibold mb-2",
+                  plan.highlight ? "text-brand-600 dark:text-brand-400" : "text-gray-900 dark:text-gray-100",
+                ]}
+              >
+                {plan.name}
+              </div>
+              <p class="mb-3">
+                <span class="font-red-hat-display text-3xl font-extrabold text-gray-900 dark:text-gray-100">
+                  {plan.price}
+                </span>
+                <span class="text-gray-500 dark:text-gray-400"> {plan.per}</span>
+              </p>
+              <p class="text-gray-600 dark:text-gray-400">{plan.body}</p>
+            </div>
+          ))
+        }
+      </div>
+
+      <div
+        class="rounded-lg bg-gray-50 dark:bg-gray-800/50 p-6 md:flex md:items-center md:justify-between gap-6"
+        data-aos="fade-up"
+      >
+        <p class="text-gray-600 dark:text-gray-300 mb-4 md:mb-0">
+          With {EXAMPLE_SCREENS} screens, per-screen signage at ${
+            PRICES.prodisplayPerScreenYearly
+          } each comes to
+          <strong class="font-semibold text-gray-900 dark:text-gray-100"
+            >{formatUsd(example.prodisplayPerYear)} a year</strong
+          >. On TheOpenPresenter it's
+          <strong class="font-semibold text-brand-600 dark:text-brand-400"
+            >{formatGbp(example.theOpenPresenter)}</strong
+          >, and the same if you add ten more.
+        </p>
+        <div class="flex flex-col sm:flex-row gap-3 shrink-0">
+          <a
+            class="btn-sm text-on-brand bg-brand-500 hover:bg-brand-400"
+            href="/pricing">See all plans</a
+          >
+          <a
+            class="btn-sm text-brand-500 border border-brand-500 hover:bg-white dark:hover:bg-gray-800"
+            href="/compare/prodisplay-alternative">Compare with ProDisplay</a
+          >
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

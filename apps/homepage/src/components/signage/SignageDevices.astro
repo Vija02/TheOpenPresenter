@@ -1,0 +1,71 @@
+---
+import { Image } from "astro:assets";
+import firestick from "../../assets/images/signage/devices/firestick.webp";
+import googletv from "../../assets/images/signage/devices/googletv.webp";
+import raspberrypi from "../../assets/images/signage/devices/raspberrypi.webp";
+import minipc from "../../assets/images/signage/devices/minipc.webp";
+import laptop from "../../assets/images/signage/devices/laptop.webp";
+
+// Drawings from tools/signage-illustration.mjs; captions match /download
+const devices = [
+  { name: "Fire TV Stick", body: "Our Fire TV app.", image: firestick },
+  { name: "Google TV", body: "Our Android TV and Google TV app.", image: googletv },
+  { name: "Raspberry Pi", body: "Our Linux app, or full screen in the browser.", image: raspberrypi },
+  { name: "Mini PC", body: "Like an Intel NUC, with our Windows or Linux app.", image: minipc },
+  { name: "Laptop", body: "Any browser, or our desktop app.", image: laptop },
+];
+---
+
+<section>
+  <div class="max-w-6xl mx-auto px-4 sm:px-6">
+    <div class="py-12 md:py-20 border-t border-gray-200 dark:border-gray-800">
+      <div class="max-w-3xl mx-auto text-center pb-12 md:pb-14">
+        <h2 class="h2 mb-4 font-red-hat-display">
+          A new screen in ten minutes
+        </h2>
+        <p class="text-lg text-gray-600 dark:text-gray-400">
+          Plug one of these into any TV, pair it to your church, and it's
+          ready.
+        </p>
+      </div>
+      <div
+        class="flex flex-wrap justify-center -mx-3 gap-y-10"
+        data-aos-id-signage-devices
+      >
+        {
+          devices.map((d, i) => (
+            <div
+              class="w-1/2 sm:w-1/3 lg:w-1/5 px-3 flex flex-col items-center text-center"
+              data-aos="fade-up"
+              data-aos-anchor="[data-aos-id-signage-devices]"
+              data-aos-delay={i * 80}
+            >
+              <div class="h-28 w-full flex items-center justify-center mb-4">
+                <Image
+                  src={d.image}
+                  alt=""
+                  widths={[200, 400]}
+                  sizes="200px"
+                  class="max-h-full w-auto max-w-[85%] object-contain"
+                />
+              </div>
+              <div class="font-red-hat-display text-lg font-black mb-1">
+                {d.name}
+              </div>
+              <p class="text-sm text-gray-600 dark:text-gray-400">{d.body}</p>
+            </div>
+          ))
+        }
+      </div>
+      <p class="text-center mt-12 text-gray-600 dark:text-gray-400">
+        <a href="/download#kiosk" class="text-brand-500 hover:text-brand-400 underline"
+          >Get the screen apps</a
+        >
+        <span class="mx-2" aria-hidden="true">·</span>
+        <a href="/how-to/present-on-tv" class="text-brand-500 hover:text-brand-400 underline"
+          >Set up a screen, step by step</a
+        >
+      </p>
+    </div>
+  </div>
+</section>

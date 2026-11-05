@@ -1,0 +1,68 @@
+---
+import { Image } from "astro:assets";
+import type { ImageMetadata } from "astro";
+
+// "Volunteers run it from their phone": copy on the left, the room's
+// illustration on the right (made with tools/signage-illustration.mjs).
+interface Props {
+  eyebrow: string;
+  title: string;
+  body: string;
+  bullets: string[];
+  image: ImageMetadata;
+  alt: string;
+}
+
+const { eyebrow, title, body, bullets, image, alt } = Astro.props;
+---
+
+<section>
+  <div class="max-w-6xl mx-auto px-4 sm:px-6">
+    <div class="py-12 md:py-20 border-t border-gray-200 dark:border-gray-800">
+      <div class="md:grid md:grid-cols-12 md:gap-12 lg:gap-16 items-center">
+        <div class="md:col-span-7 mb-10 md:mb-0 text-center md:text-left">
+          <div
+            class="inline-flex items-center text-sm font-semibold tracking-wide uppercase text-brand-500 mb-2"
+          >
+            {eyebrow}
+          </div>
+          <h2 class="h2 mb-4 font-red-hat-display">{title}</h2>
+          <p class="text-lg text-gray-600 dark:text-gray-400 mb-6">{body}</p>
+          <ul class="text-gray-600 dark:text-gray-400 text-left inline-block">
+            {
+              bullets.map((item) => (
+                <li class="flex items-start mb-3">
+                  <svg
+                    class="w-3 h-3 fill-current text-brand-400 mr-2 mt-1.5 shrink-0"
+                    viewBox="0 0 12 12"
+                    aria-hidden="true"
+                  >
+                    <path d="M10.28 2.28L3.989 8.575 1.695 6.28A1 1 0 00.28 7.695l3 3a1 1 0 001.414 0l7-7A1 1 0 0010.28 2.28z" />
+                  </svg>
+                  <span>{item}</span>
+                </li>
+              ))
+            }
+          </ul>
+          <p class="mt-2">
+            <a
+              href="/how-to/control-with-phone"
+              class="text-brand-500 hover:text-brand-400 underline"
+              >How phone control works</a
+            >
+          </p>
+        </div>
+
+        <div class="md:col-span-5" data-aos="fade-up">
+          <Image
+            src={image}
+            alt={alt}
+            widths={[600, 900, 1200]}
+            sizes="(min-width: 768px) 384px, 100vw"
+            class="w-full max-w-sm mx-auto h-auto"
+          />
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

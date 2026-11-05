@@ -1,0 +1,142 @@
+---
+import DefaultLayout from "../layouts/DefaultLayout.astro";
+import PageIllustration from "../components/PageIllustration.astro";
+import SignageHero from "../components/signage/SignageHero.astro";
+import SignageDevices from "../components/signage/SignageDevices.astro";
+import SignageFeatures from "../components/signage/SignageFeatures.astro";
+import SignageControl from "../components/signage/SignageControl.astro";
+import controlLobby from "../assets/images/signage/control-lobby.webp";
+import SignagePricing from "../components/signage/SignagePricing.astro";
+import SignageFaq from "../components/signage/SignageFaq.astro";
+import CtaSignup from "../components/CtaSignup.astro";
+import welcomeHome from "../assets/images/signage/lobby-welcome-home.jpg";
+import sundayWorship from "../assets/images/signage/lobby-sunday-worship.jpg";
+import notMeantAlone from "../assets/images/signage/lobby-not-meant-to-do-this-alone.jpg";
+import todaysTheme from "../assets/images/signage/lobby-todays-theme.jpg";
+import mainRoomWorship from "../assets/images/signage/main-room-worship.jpg";
+import seeYouNextTime from "../assets/images/signage/lobby-see-you-next-time.jpg";
+
+const rooms = [
+  { name: "Lobby", line: "Welcome home", live: true, image: welcomeHome },
+  { name: "Welcome desk", line: "Sunday worship", live: true, image: sundayWorship },
+  { name: "Café", line: "Community groups", live: true, image: notMeantAlone },
+  { name: "Foyer", line: "Today's theme", live: true, image: todaysTheme },
+  { name: "Overflow", line: "Main screen, live", live: true, image: mainRoomWorship },
+  { name: "Hallway", line: "Up next: See you next time", live: false, image: seeYouNextTime },
+];
+
+const features = [
+  {
+    title: "Announcements on a loop",
+    body: "Set slides to move on by themselves every few seconds and start again from the top. Nobody has to stand by the screen.",
+    icon: "loop",
+  },
+  {
+    title: "Edit in the tools you know",
+    body: "Sync a Google Slides deck or import PowerPoint, so the comms team updates announcements where they already work.",
+    icon: "slides",
+  },
+  {
+    title: "Countdown to the service",
+    body: "Show a countdown in the foyer so people know when to head in.",
+    icon: "timer",
+  },
+  {
+    title: "Overflow and foyer feeds",
+    body: "On the Cloud plan, any screen can follow the main screen in sync, so the overflow room and foyer see the lyrics and sermon slides too.",
+    icon: "mirror",
+  },
+  {
+    title: "Live web pages",
+    body: "Put your events page, a sign-up form or a live feed on screen, and it stays current on its own.",
+    icon: "web",
+  },
+  {
+    title: "Keeps playing offline",
+    body: "Content is saved to each screen, so a Wi-Fi drop doesn't leave a blank TV in the entrance.",
+    icon: "offline",
+  },
+] as const;
+
+const faqs = [
+  {
+    q: "What hardware do I need for each screen?",
+    a: "Any TV with a Fire TV Stick, Google TV or Android TV device plugged in. An old laptop, a mini PC or anything with a modern browser works too.",
+  },
+  {
+    q: "Can announcements cycle on their own?",
+    a: "Yes. Turn on autoplay for a set of slides, choose how long each one shows, and it loops until you change it.",
+  },
+  {
+    q: "Can different content show at different times of day?",
+    a: "Not yet. Today someone changes what each screen shows from their phone or a browser. Scheduling is on our list.",
+  },
+  {
+    q: "Can the lobby show what's happening in the main room?",
+    a: "Yes, on the Cloud plan. Any screen can follow the main screen in sync, which works well for a foyer, café or overflow room.",
+  },
+  {
+    q: "What happens if the internet drops?",
+    a: "Content is saved to each screen, so it keeps playing until the connection comes back.",
+  },
+  {
+    q: "Can the same account run our main service?",
+    a: "Yes. TheOpenPresenter is a full presentation app with lyrics, Bible, video and timers, so the main room and every lobby screen share one account and one plan.",
+  },
+];
+---
+
+<DefaultLayout
+  title="Church Lobby Screens & Announcements | TheOpenPresenter"
+  description="Announcements, countdowns and overflow feeds on every lobby screen for one flat price. Runs on a Fire TV Stick or any browser. Free for up to 3 screens."
+  demoWidget={false}
+>
+  <div
+    class="relative max-w-6xl mx-auto h-0 pointer-events-none -z-1"
+    aria-hidden="true"
+  >
+    <PageIllustration />
+  </div>
+  <SignageHero
+    eyebrow="For church lobbies"
+    title="Lobby screens that"
+    highlight="run themselves"
+    body="Announcements on a loop, a countdown to the service, and the main room in the overflow. Every screen in the building on one account, for one price."
+    bullets={[
+      "Free for up to 3 screens, no time limit",
+      "Runs on a Fire TV Stick or any browser",
+      "Update announcements from Google Slides or PowerPoint",
+    ]}
+    rooms={rooms}
+  />
+  <SignagePricing
+    body="No per-screen fees. No per-volunteer fees."
+    freeNote="Enough for the lobby and the café."
+  />
+  <SignageControl
+    eyebrow="Built for welcome teams"
+    title="Anyone on the team can update a screen"
+    body="From a phone, a tablet or a laptop: open the screen's link and tap the slide you want. Nothing to download, and nothing to learn."
+    bullets={[
+      "Works on any phone, tablet or laptop",
+      "Nothing to download or install",
+      "Update it at the welcome desk, or from home",
+    ]}
+    image={controlLobby}
+    alt="A wall-mounted lobby TV showing a Welcome home slide, with one hand holding a phone and another holding a tablet, both showing the screen's remote"
+  />
+  <SignageDevices />
+  <SignageFeatures
+    eyebrow="Set it and leave it"
+    title="Always up to date, never in the way"
+    body="Set each screen up once. The comms team updates the slides, and the screens keep cycling on their own."
+    features={features}
+  />
+  <SignageFaq faqs={faqs} />
+  <CtaSignup
+    title="Light up the lobby."
+    highlight="Free for up to 3 screens."
+    body="Plug in a TV stick, pick your announcements, and turn on autoplay. Add more screens whenever you need them."
+    demo={false}
+  />
+</DefaultLayout>

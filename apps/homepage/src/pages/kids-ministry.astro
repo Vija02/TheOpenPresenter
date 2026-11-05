@@ -1,0 +1,142 @@
+---
+import DefaultLayout from "../layouts/DefaultLayout.astro";
+import PageIllustration from "../components/PageIllustration.astro";
+import SignageHero from "../components/signage/SignageHero.astro";
+import SignageDevices from "../components/signage/SignageDevices.astro";
+import SignageFeatures from "../components/signage/SignageFeatures.astro";
+import SignageControl from "../components/signage/SignageControl.astro";
+import controlKids from "../assets/images/signage/control-kids.webp";
+import SignagePricing from "../components/signage/SignagePricing.astro";
+import SignageFaq from "../components/signage/SignageFaq.astro";
+import CtaSignup from "../components/CtaSignup.astro";
+import holyNight from "../assets/images/signage/holy-night.jpg";
+import firstChristmas from "../assets/images/signage/first-christmas.jpg";
+import tooWonderful from "../assets/images/signage/too-wonderful.jpg";
+import worship from "../assets/images/signage/worship.jpg";
+import christmasStar from "../assets/images/signage/christmas-star.jpg";
+import godJustTellMe from "../assets/images/signage/god-just-tell-me.jpg";
+
+const rooms = [
+  { name: "Nursery", line: "The Very First Christmas", live: true, image: firstChristmas },
+  { name: "Kids 3–5", line: "Worship: Too Wonderful", live: true, image: tooWonderful },
+  { name: "Kids 6–8", line: "Bible story: Holy Night", live: true, image: holyNight },
+  { name: "Kids 9–11", line: "Series: God, Just Tell Me", live: true, image: godJustTellMe },
+  { name: "Large group", line: "Large group worship", live: true, image: worship },
+  { name: "Check-in", line: "Welcome loop", live: false, image: christmasStar },
+];
+
+const features = [
+  {
+    title: "Bring the slides you have",
+    body: "Import PowerPoint files or sync a Google Slides deck, so this week's lesson slides go straight to the room.",
+    icon: "slides",
+  },
+  {
+    title: "Lesson videos from anywhere",
+    body: "Upload this week's Bible story video, or play it straight from YouTube or Vimeo.",
+    icon: "play",
+  },
+  {
+    title: "Kids' worship, with lyrics",
+    body: "Put lyrics up for the songs the kids sing, or play the worship videos. Same lyrics tools as the main service.",
+    icon: "music",
+  },
+  {
+    title: "Countdowns for transitions",
+    body: "A timer on screen for large group, small group and pick-up, so leaders and kids know what's next.",
+    icon: "timer",
+  },
+  {
+    title: "Keeps playing offline",
+    body: "Videos and slides are saved to each screen, so a Wi-Fi drop doesn't stop the lesson halfway through.",
+    icon: "offline",
+  },
+  {
+    title: "See every room at once",
+    body: "The screens page shows every classroom and what it's showing, so the kids' director can help a room without walking there.",
+    icon: "grid",
+  },
+] as const;
+
+const faqs = [
+  {
+    q: "What hardware do I need for each classroom?",
+    a: "Any TV with a Fire TV Stick, Google TV or Android TV device plugged in. An old laptop, a mini PC or anything with a modern browser works too.",
+  },
+  {
+    q: "Can I use Life.Church Open or other curriculum?",
+    a: "There's no direct integration yet. Download the videos and slides from the curriculum site and upload them, or play videos from YouTube and Vimeo.",
+  },
+  {
+    q: "Can content start in each room on a timetable?",
+    a: "Not yet. Today a leader starts each room from their phone or the TV. Scheduling is on our list. If you need it right now, our ProDisplay comparison covers it honestly.",
+  },
+  {
+    q: "How many volunteers can use it?",
+    a: "As many as you like, on every plan, with no per-user cost. Each room's leader can run their own screen from their phone at the same time.",
+  },
+  {
+    q: "What happens if the internet drops?",
+    a: "Content is saved to each screen, so it keeps playing until the connection comes back.",
+  },
+  {
+    q: "Can the same account run our main service?",
+    a: "Yes. TheOpenPresenter is a full presentation app with lyrics, bible, video and timers, so the main room and every kids' room share one account and one plan.",
+  },
+];
+---
+
+<DefaultLayout
+  title="Kids Ministry Screens for Every Classroom | TheOpenPresenter"
+  description="Put a screen in every kids' room for one flat price. Leaders run lessons, videos and worship from their phone. Runs on a Fire TV Stick. Free for up to 3 screens."
+  demoWidget={false}
+>
+  <div
+    class="relative max-w-6xl mx-auto h-0 pointer-events-none -z-1"
+    aria-hidden="true"
+  >
+    <PageIllustration />
+  </div>
+  <SignageHero
+    eyebrow="For kids ministry"
+    title="A screen in every kids' room at"
+    highlight="one price"
+    body="Lesson videos, worship lyrics and countdowns in every classroom. Each leader runs their own room from their phone, and adding a room never adds to the bill."
+    bullets={[
+      "Free for up to 3 screens, no time limit",
+      "Runs on a Fire TV Stick or any browser",
+      "No limit on volunteers, no cost per user",
+    ]}
+    rooms={rooms}
+  />
+  <SignagePricing
+    body="No per-screen fees. No per-volunteer fees."
+    freeNote="Enough to try it in a couple of classrooms."
+  />
+  <SignageControl
+    eyebrow="Built for volunteers"
+    title="Teachers control the screen from a tablet"
+    body="Keep a tablet in each room with the room saved to its home screen. Teachers tap a video or slide and it's on the TV. No app to install, and nothing to set up on Sunday morning."
+    bullets={[
+      "Save the room to the tablet's home screen",
+      "Tap a video or slide to put it on the TV",
+      "Or use your own phone, every leader at once",
+    ]}
+    image={controlKids}
+    alt="A classroom TV playing a Bible story video, and a hand holding a tablet with the room's remote open"
+  />
+  <SignageDevices />
+  <SignageFeatures
+    eyebrow="Everything a classroom needs"
+    title="All the power of TheOpenPresenter, in every room"
+    body="Every classroom gets the full app, not a cut-down player. The same tools you use for the main service."
+    features={features}
+  />
+  <SignageFaq faqs={faqs} />
+  <CtaSignup
+    title="Ready for this Sunday?"
+    highlight="Free for up to 3 rooms."
+    body="Plug in a TV stick, name the room, and hand the leader their phone. Add more rooms whenever you need them."
+    demo={false}
+  />
+</DefaultLayout>

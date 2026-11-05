@@ -61,3 +61,42 @@ After capturing, optionally save the Slides PNG with a 256-colour palette to
 roughly halve its size (it's flat UI; the lyrics one has photo backgrounds and
 would band). If a running `astro dev` then shows a stale or garbled
 screenshot, restart it and hard-refresh.
+
+## `signage-illustration.mjs` + `signage-compose.py`
+
+Make the illustrations in the "control the screen from a tablet" section
+of `/kids-ministry` and `/lobby-screens` (`SignageControl.astro`):
+`src/assets/images/signage/control-kids.webp` and `control-lobby.webp`.
+
+1. `signage-illustration.mjs` asks a Gemini image model for the scene on
+   white: for `kids`, a TV and a tablet held from the bottom right; for
+   `lobby`, a wall-mounted TV with a phone and a tablet below it. TV screens
+   are solid magenta and the remote's thumbnails cyan. Needs
+   `GEMINI_API_KEY` in the environment or `apps/homepage/.env.local`, on a
+   project with billing.
+2. `signage-compose.py` swaps those colours for the real frames and slides
+   (listed in its `SCENES`; the lobby's come from a Canva Sunday
+   worship template), removes the white background and crops to the
+   objects.
+
+```sh
+node tools/signage-illustration.mjs --scene kids --count 2 --out /tmp/signage  # --aspect 3:4 by default
+python3 tools/signage-compose.py /tmp/signage/kids-….jpeg kids src/assets/images/signage/control-kids.webp
+```
+
+Pick a draft where the TV and tablet face straight on.
+
+The same two scripts make the device drawings in "A new screen in ten
+minutes" (`SignageDevices.astro`, `src/assets/images/signage/devices/`). Use
+`--scene firestick|googletv|raspberrypi|minipc|laptop`; drafts are square,
+photoreal product shots. Google TV, Raspberry Pi and the mini PC are shot
+on a magenta chroma-key backdrop: compose them with `key` (it also removes
+magenta reflections). The Fire TV Stick and laptop are on a white studio
+backdrop: compose them with `photo`. Only the laptop has a placeholder (its
+screen).
+
+```sh
+node tools/signage-illustration.mjs --scene laptop --count 2 --out /tmp/signage
+python3 tools/signage-compose.py /tmp/signage/laptop-….jpeg laptop src/assets/images/signage/devices/laptop.webp photo
+python3 tools/signage-compose.py /tmp/signage/minipc-….jpeg minipc src/assets/images/signage/devices/minipc.webp key
+```

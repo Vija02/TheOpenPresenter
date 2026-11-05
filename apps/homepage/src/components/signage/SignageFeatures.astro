@@ -1,0 +1,66 @@
+---
+// 24×24 icon paths, picked by name from each page's feature list
+const ICONS = {
+  offline: "M5 20h14v-2H5v2zM13 2h-2v10.17l-3.59-3.58L6 10l6 6 6-6-1.41-1.41L13 12.17V2z",
+  grid: "M3 3h8v8H3V3zm10 0h8v8h-8V3zM3 13h8v8H3v-8zm10 0h8v8h-8v-8z",
+  phone: "M16 1H8a2 2 0 0 0-2 2v18a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2zm-4 21a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm4-4H8V4h8v14z",
+  slides: "M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z",
+  play: "M8 5v14l11-7L8 5z",
+  music: "M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z",
+  timer: "M15 1H9v2h6V1zm-4 13h2V8h-2v6zm8.03-6.61l1.42-1.42c-.43-.51-.9-.99-1.41-1.41l-1.42 1.42A8.96 8.96 0 0 0 12 4a9 9 0 1 0 9 9c0-2.12-.74-4.07-1.97-5.61zM12 20a7 7 0 1 1 0-14 7 7 0 0 1 0 14z",
+  loop: "M12 4V1L8 5l4 4V6a6 6 0 0 1 6 6c0 1.01-.25 1.97-.7 2.8l1.46 1.46A7.93 7.93 0 0 0 20 12a8 8 0 0 0-8-8zm0 14a6 6 0 0 1-6-6c0-1.01.25-1.97.7-2.8L5.24 7.74A7.93 7.93 0 0 0 4 12a8 8 0 0 0 8 8v3l4-4-4-4v3z",
+  web: "M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm6.93 6h-2.95a15.65 15.65 0 0 0-1.38-3.56A8.03 8.03 0 0 1 18.93 8zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14a8.2 8.2 0 0 1 0-4h3.38a16.5 16.5 0 0 0 0 4H4.26zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56A7.99 7.99 0 0 1 5.08 16zm2.95-8H5.08a7.99 7.99 0 0 1 4.33-3.56A15.65 15.65 0 0 0 8.03 8zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66a14.7 14.7 0 0 1 0-4h4.68a14.7 14.7 0 0 1 0 4zm.25 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56zM16.36 14a16.5 16.5 0 0 0 0-4h3.38a8.2 8.2 0 0 1 0 4h-3.38z",
+  mirror: "M21 3H3a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h5v2h8v-2h5a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm0 14H3V5h18v12z",
+};
+
+export type SignageIcon = keyof typeof ICONS;
+
+interface Props {
+  eyebrow: string;
+  title: string;
+  body: string;
+  features: readonly { title: string; body: string; icon: SignageIcon }[];
+}
+
+const { eyebrow, title, body, features } = Astro.props;
+---
+
+<section>
+  <div class="max-w-6xl mx-auto px-4 sm:px-6">
+    <div class="py-12 md:py-20 border-t border-gray-200 dark:border-gray-800">
+      <div class="max-w-3xl mx-auto text-center pb-12 md:pb-14">
+        <div
+          class="inline-flex items-center text-sm font-semibold tracking-wide uppercase text-brand-500 mb-2"
+        >
+          {eyebrow}
+        </div>
+        <h2 class="h2 mb-4 font-red-hat-display">{title}</h2>
+        <p class="text-lg text-gray-600 dark:text-gray-400">{body}</p>
+      </div>
+      <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3" data-aos-id-signage-features>
+        {
+          features.map((f, i) => (
+            <div
+              class="rounded-lg border border-gray-200 dark:border-gray-800 p-6"
+              data-aos="fade-up"
+              data-aos-anchor="[data-aos-id-signage-features]"
+              data-aos-delay={(i % 3) * 100}
+            >
+              <svg
+                class="w-8 h-8 fill-current text-brand-500 mb-4"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path d={ICONS[f.icon]} />
+              </svg>
+              <h3 class="font-red-hat-display text-xl font-black mb-2">
+                {f.title}
+              </h3>
+              <p class="text-gray-600 dark:text-gray-400">{f.body}</p>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </div>
+</section>

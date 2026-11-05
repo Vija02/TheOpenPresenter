@@ -28,7 +28,7 @@ const series = billings.map((billing) => {
 });
 const defaultMarker = yearlyUsd(DEFAULT_SCREENS, "yearly");
 const formatTick = (usd: number) => (usd === 0 ? "$0" : `$${usd / 1000}K`);
-const tableScreens = [1, 5, 6, 10, 20, 30, 40];
+const tableScreens = [1, 3, 4, 10, 20, 30, 40];
 
 const comparison = [
   {
@@ -40,7 +40,7 @@ const comparison = [
   {
     feature: "Free plan",
     pd: "First screen free for the first year",
-    top: "Up to 5 screens free, no time limit",
+    top: "Up to 3 screens free, no time limit",
     winner: "top",
   },
   {
@@ -120,7 +120,7 @@ const comparison = [
 const faqs = [
   {
     q: "How much does ProDisplay cost compared to TheOpenPresenter?",
-    a: "ProDisplay charges per screen: $19 a month or $149 a year for each one, with your first screen free for the first year. TheOpenPresenter charges per church. Up to 5 screens are free, and the Cloud plan is £190 a year for unlimited screens. There's also a £990 one-time Lifetime licence.",
+    a: "ProDisplay charges per screen: $19 a month or $149 a year for each one, with your first screen free for the first year. TheOpenPresenter charges per church. Up to 3 screens are free, and the Cloud plan is £190 a year for unlimited screens. There's also a £990 one-time Lifetime licence.",
   },
   {
     q: "Can I schedule content to play in each room at a set time?",
@@ -368,7 +368,7 @@ const lose = "text-gray-600 dark:text-gray-300";
           viewBox={`0 0 ${CHART.width} ${CHART.height}`}
           class="w-full min-w-[540px] h-auto cursor-crosshair select-none"
           role="img"
-          aria-label="Line chart of yearly cost against number of screens. ProDisplay rises by one screen's price for every screen added. TheOpenPresenter is free up to 5 screens and then stays flat on the Cloud plan."
+          aria-label="Line chart of yearly cost against number of screens. ProDisplay rises by one screen's price for every screen added. TheOpenPresenter is free up to 3 screens and then stays flat on the Cloud plan."
         >
           {
             CHART.yTicks.map((tick) => (
@@ -734,7 +734,7 @@ const lose = "text-gray-600 dark:text-gray-300";
         href="/register"
         class="text-brand-600 dark:text-brand-400 hover:underline font-medium"
         >Create an account</a
-      >. Up to 5 screens are free, no card needed.
+      >. Up to 3 screens are free, no card needed.
     </li>
     <li>
       <strong class="font-semibold">Set up one room.</strong> Plug a TV stick into
@@ -781,7 +781,7 @@ const lose = "text-gray-600 dark:text-gray-300";
     every room for one flat price, on inexpensive TV sticks,
     with volunteers in charge from their phones.
     <p slot="footer" class="text-sm text-gray-500 dark:text-gray-400 mt-6">
-      Free for up to 5 screens, no card needed.
+      Free for up to 3 screens, no card needed.
     </p>
   </WrapUpCta>
 

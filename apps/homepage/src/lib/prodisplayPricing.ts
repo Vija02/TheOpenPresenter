@@ -5,7 +5,7 @@ export const PRICES = {
   prodisplayPerScreenYearly: 149,
   cloudMonthly: 19,
   cloudYearly: 190,
-  freePlanScreens: 5,
+  freePlanScreens: 3,
 };
 
 export type Billing = "yearly" | "monthly";
@@ -74,7 +74,7 @@ export function yearlyUsd(screens: number, billing: Billing) {
 export function chartPaths(billing: Billing) {
   const pd = (n: number) => chartY(yearlyUsd(n, billing).prodisplay);
   const top = (n: number) => chartY(yearlyUsd(n, billing).theOpenPresenter);
-  // TheOpenPresenter steps from Free to Cloud between 5 and 6 screens
+  // TheOpenPresenter steps from Free to Cloud after the free screens
   const stepX = chartX(PRICES.freePlanScreens + 0.5);
   const last = CHART.maxScreens;
 
