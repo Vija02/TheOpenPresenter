@@ -1,0 +1,116 @@
+---
+// Live 3D scene (src/scripts/portable-stage.ts): a Sunday hall or a midweek
+// room, the usual way or with TheOpenPresenter. Labels are pinned to [x, y, z]
+// points and shown for one `state` (place-way).
+const labels: { state: string; text: string; at: number[]; side?: "right" | "left" }[] = [
+  { state: "hall-top", text: "iPad in the seats", at: [0.5, 1.45, 1.1], side: "right" },
+  { state: "hall-top", text: "No booth at the back", at: [3, 0.05, 4.4], side: "right" },
+  { state: "hall-usual", text: "A booth at the back", at: [3.2, 1.1, 4.3] },
+  { state: "hall-usual", text: "A cable down the hall", at: [5.12, 0.05, 1.0], side: "right" },
+  { state: "room-top", text: "Run it from your phone", at: [0.25, 0.45, 0.6] },
+  { state: "room-usual", text: "A laptop to set up", at: [2.6, 1.0, 1.6] },
+  { state: "room-usual", text: "A cable across the room", at: [2.25, 0.05, -2.3] },
+];
+const toggles = [
+  {
+    set: "place",
+    options: [
+      { value: "hall", label: "Sunday" },
+      { value: "room", label: "Midweek" },
+    ],
+  },
+  {
+    set: "way",
+    options: [
+      { value: "usual", label: "The usual way" },
+      { value: "top", label: "With TheOpenPresenter" },
+    ],
+  },
+];
+---
+
+<div
+  data-portable-stage
+  class="group"
+>
+  <div
+    class="relative aspect-[4/3] w-full select-none"
+    role="img"
+    aria-label="A 3D model of a church's setup: a Sunday hall with a projector, or a midweek room with a TV. The usual way shows a tech booth or a laptop with cables; with TheOpenPresenter a TV stick plugs into the projector or TV, run from an iPad or a phone."
+  >
+    <canvas class="absolute inset-0 w-full h-full"></canvas>
+    <!-- Magnifier on the TV stick, with TheOpenPresenter only -->
+    <svg
+      data-lens-line
+      data-on="false"
+      class="absolute inset-0 w-full h-full pointer-events-none opacity-0 transition-opacity duration-500 data-[on=true]:opacity-100"
+      viewBox="0 0 100 100"
+      preserveAspectRatio="none"
+      aria-hidden="true"
+    >
+      <line stroke="white" stroke-width="2" stroke-dasharray="5 4" vector-effect="non-scaling-stroke"></line>
+    </svg>
+    <div
+      data-lens
+      data-on="false"
+      class="absolute left-[9%] top-[12%] group-data-[place=hall]:left-[3%] group-data-[place=hall]:top-[4%] w-[30%] group-data-[place=hall]:w-[26%] aspect-square pointer-events-none opacity-0 scale-75 transition duration-500 data-[on=true]:opacity-100 data-[on=true]:scale-100"
+      aria-hidden="true"
+    >
+      <span class="absolute left-[14.6%] top-[85.4%] w-[11%] h-[42%] -translate-x-1/2 origin-top rotate-45 rounded bg-gray-800 ring-2 ring-white"></span>
+      <canvas class="relative w-full h-full rounded-full ring-4 ring-white shadow-xl bg-[#efe6da]"></canvas>
+      <span class="absolute left-1/2 -top-9 -translate-x-1/2 group-data-[place=hall]:top-[6%] group-data-[place=hall]:left-full group-data-[place=hall]:ml-2 group-data-[place=hall]:translate-x-0 whitespace-nowrap rounded bg-white/95 dark:bg-gray-900/90 ring-1 ring-gray-200 dark:ring-gray-700 shadow px-2 py-1 text-[11px] sm:text-xs font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-1.5">
+        <span class="w-1.5 h-1.5 rounded-full bg-brand-500"></span>
+        <span class="group-data-[place=hall]:hidden">A TV stick in the TV</span>
+        <span class="hidden group-data-[place=hall]:inline">A TV stick in the projector</span>
+      </span>
+    </div>
+    {
+      labels.map((l) => (
+        <span
+          data-at={JSON.stringify(l.at)}
+          data-state={l.state}
+          data-on="false"
+          class:list={[
+            "absolute flex items-center opacity-0 transition-opacity duration-500 group-data-ready:data-[on=true]:opacity-100 pointer-events-none",
+            l.side === "right"
+              ? "-translate-y-1/2 -ml-[5px] flex-row-reverse"
+              : l.side === "left"
+                ? "-translate-x-full -translate-y-1/2 ml-[5px]"
+                : "-translate-x-1/2 -translate-y-full mt-[5px] flex-col",
+          ]}
+          aria-hidden="true"
+        >
+          <!-- Callout above (or right of) the object, pinned to it -->
+          <span class="whitespace-nowrap rounded bg-white/95 dark:bg-gray-900/90 ring-1 ring-gray-200 dark:ring-gray-700 shadow px-2 py-1 text-[11px] sm:text-xs font-semibold text-gray-800 dark:text-gray-100">
+            {l.text}
+          </span>
+          <span class:list={["bg-white shadow", l.side ? "h-0.5 w-5 sm:w-7" : "w-0.5 h-5 sm:h-7"]} />
+          <span class:list={["w-2.5 h-2.5 rounded-full ring-2 ring-white", l.state.endsWith("usual") ? "bg-red-500" : "bg-brand-500"]} />
+        </span>
+      ))
+    }
+  </div>
+  <div class="flex flex-wrap justify-center items-center gap-2 sm:gap-3 mt-2">
+    {
+      toggles.map((t) => (
+        <div class="inline-flex rounded ring-1 ring-gray-200 dark:ring-gray-700 p-0.5 bg-white dark:bg-gray-900">
+          {t.options.map((o) => (
+            <button
+              type="button"
+              data-set={t.set}
+              data-value={o.value}
+              aria-pressed="false"
+              class="px-3 py-1.5 rounded-sm whitespace-nowrap text-xs sm:text-sm font-semibold text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 aria-pressed:bg-brand-500 aria-pressed:text-on-brand dark:aria-pressed:text-on-brand aria-pressed:hover:text-on-brand dark:aria-pressed:hover:text-on-brand"
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
+      ))
+    }
+  </div>
+</div>
+
+<script>
+  import "../../scripts/portable-stage";
+</script>

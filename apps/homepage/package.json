@@ -11,13 +11,15 @@
   "dependencies": {
     "@astrojs/sitemap": "^3.6.0",
     "aos": "^2.3.4",
-    "astro": "^5.17.1"
+    "astro": "^5.17.1",
+    "three": "^0.180.0"
   },
   "devDependencies": {
     "@repo/typescript-config": "*",
     "@tailwindcss/forms": "^0.5.10",
     "@tailwindcss/typography": "^0.5.16",
     "@tailwindcss/vite": "^4.1.10",
+    "@types/three": "^0.180.0",
     "sass": "^1.82.0",
     "tailwindcss": "^4.1.10",
     "typescript": "5.9.3"

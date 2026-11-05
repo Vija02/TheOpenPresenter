@@ -1,0 +1,347 @@
+---
+import DefaultLayout from "../layouts/DefaultLayout.astro";
+import PageIllustration from "../components/PageIllustration.astro";
+import PortableStage from "../components/portable/PortableStage.astro";
+import PortableRoomPlan from "../components/portable/PortableRoomPlan.astro";
+import GuestUploadChat from "../components/home/GuestUploadChat.astro";
+import SignageFeatures from "../components/signage/SignageFeatures.astro";
+import SignageFaq from "../components/signage/SignageFaq.astro";
+import CtaSignup from "../components/CtaSignup.astro";
+import { Image } from "astro:assets";
+import hopeCase from "../assets/images/portable/hope-case.jpg";
+
+const heroBullets = [
+  "Prepare from home or anywhere with a browser",
+  "Run lyrics and slides from a tablet or phone",
+  "No booth at the back, no cable down the hall",
+];
+
+const prepareBullets = [
+  "Several people can work on the same service at once",
+  "Sync a Google Slides deck or import PowerPoint",
+  "Send the guest speaker a link to upload their slides",
+  "Paste in a song and AI splits it into slides",
+];
+
+const boothBullets = [
+  "The device stays by the screen, TV or projector",
+  "Run it from a tablet or phone, anywhere in the room",
+  "The worship leader can run their own lyrics",
+];
+
+const steps = [
+  { title: "Plug in power, the screen and the sound", body: "Everything inside is already connected." },
+  { title: "Pick up the iPad", body: "The service was prepared during the week, so it's ready to go." },
+];
+
+const features = [
+  {
+    title: "Any phone or tablet is the remote",
+    body: "The remote runs in the browser. Nothing to install on the iPad, or on a volunteer's phone.",
+    icon: "phone",
+  },
+  {
+    title: "Or leave the laptop at home",
+    body: "Plug a TV stick into the screen and present straight to it. One less thing to carry.",
+    icon: "mirror",
+  },
+  {
+    title: "Works without the venue's Wi-Fi",
+    body: "Studio, our desktop app, runs offline on the laptop, so poor internet at the venue doesn't stop the service.",
+    icon: "offline",
+  },
+  {
+    title: "Lyrics and Bible built in",
+    body: "Song lyrics and over 2,300 Bible translations, from the same remote as everything else.",
+    icon: "music",
+  },
+  {
+    title: "Slides from where your team works",
+    body: "Sync Google Slides or import PowerPoint, so announcements and sermon slides come straight in.",
+    icon: "slides",
+  },
+  {
+    title: "Videos from anywhere",
+    body: "Upload a video, or play it from YouTube or Vimeo. No DVDs or USB sticks to pack.",
+    icon: "play",
+  },
+] as const;
+
+const faqs = [
+  {
+    q: "What if the venue has poor Wi-Fi?",
+    a: "We recommend using a laptop with our desktop app. It syncs online but works fully offline, so nothing gets disturbed if the connection goes down.",
+  },
+  {
+    q: "Do we need a laptop at all?",
+    a: "No. A TV stick (Fire TV, Google TV or Android TV) plugged into the screen works. We recommend bringing one if it's easy just as a backup.",
+  },
+  {
+    q: "Does TheOpenPresenter run our sound?",
+    a: "You can play music & video that you upload. You can also play from sources like Youtube and Vimeo.",
+  },
+  {
+    q: "Can more than one person control it?",
+    a: "Yes. Someone can run the slides from a tablet while the worship leader moves through the lyrics from the stage, with no limit on how many people help.",
+  },
+  {
+    q: "What does it cost?",
+    a: "You can start free, and it's free for churches under 50 people. Bigger churches pay one price for the whole church, not per user.",
+  },
+];
+---
+
+<DefaultLayout
+  title="Presentation Software for Portable Churches | TheOpenPresenter"
+  description="For churches that set up and pack down every week. Prepare the service from home, keep the laptop on stage, and run lyrics and slides from a tablet. No tech booth."
+  demoWidget={false}
+>
+  <div class="relative max-w-6xl mx-auto h-0 pointer-events-none -z-1" aria-hidden="true">
+    <PageIllustration />
+  </div>
+
+  <!-- Hero -->
+  <section>
+    <div class="max-w-6xl mx-auto px-4 sm:px-6">
+      <div class="pt-32 pb-10 md:pb-16">
+        <div class="md:grid md:grid-cols-12 md:gap-12 lg:gap-16 items-center">
+          <div class="md:col-span-6 mb-10 md:mb-0 text-center md:text-left">
+            <div
+              class="inline-flex items-center text-sm font-semibold tracking-wide uppercase text-brand-500 mb-3"
+              data-aos="fade-down"
+            >
+              For portable churches
+            </div>
+            <h1
+              class="h1 lg:text-4xl mb-3 font-red-hat-display font-black leading-tight"
+              data-aos="fade-down"
+              data-aos-delay="50"
+            >
+              Church in a rented hall,
+              <span class="bg-clip-text text-transparent bg-gradient-to-r from-brand-400 to-accent-500"
+                >without the tech booth</span
+              >
+            </h1>
+            <p
+              class="text-lg lg:text-xl mb-6 text-gray-700 dark:text-gray-300 leading-relaxed"
+              data-aos="fade-down"
+              data-aos-delay="100"
+            >
+              Build the service from home during the week. On the day, a laptop
+              or TV stick sits right by the screen or projector, and you
+              run it from an iPad or phone.
+            </p>
+            <div
+              class="flex flex-col sm:flex-row justify-center md:justify-start gap-3"
+              data-aos="fade-down"
+              data-aos-delay="150"
+            >
+              <a class="btn text-on-brand bg-brand-500 hover:bg-brand-400 shrink-0" href="/register">
+                Start free
+              </a>
+              <a
+                class="btn text-brand-500 bg-white hover:bg-gray-50 border border-brand-500 dark:bg-transparent dark:hover:bg-gray-800 shrink-0"
+                href="#hope-newcastle"
+              >
+                See how we do it
+              </a>
+            </div>
+            <ul
+              class="max-w-sm sm:max-w-md mx-auto md:max-w-none text-gray-600 dark:text-gray-400 mt-8 -mb-2 text-left"
+              data-aos="fade-down"
+              data-aos-delay="200"
+            >
+              {
+                heroBullets.map((item) => (
+                  <li class="flex items-center mb-2">
+                    <svg class="w-3 h-3 fill-current text-brand-400 mr-2 shrink-0" viewBox="0 0 12 12">
+                      <path d="M10.28 2.28L3.989 8.575 1.695 6.28A1 1 0 00.28 7.695l3 3a1 1 0 001.414 0l7-7A1 1 0 0010.28 2.28z" />
+                    </svg>
+                    <span>{item}</span>
+                  </li>
+                ))
+              }
+            </ul>
+          </div>
+          <div class="md:col-span-6" data-aos="fade-up" data-aos-delay="300">
+            <PortableStage />
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Ditch the booth -->
+  <section>
+    <div class="max-w-6xl mx-auto px-4 sm:px-6">
+      <div class="py-12 md:py-20 border-t border-gray-200 dark:border-gray-800">
+        <div class="max-w-3xl mx-auto text-center pb-12 md:pb-14">
+          <h2 class="h2 mb-4 font-red-hat-display">Ditch the tech booth at the back</h2>
+          <p class="text-lg text-gray-600 dark:text-gray-400">
+            A booth means a table to set up, a long cable down the hall and
+            someone stuck behind it all service. With TheOpenPresenter, the
+            laptop or TV stick stays where it plugs in, whether that's a
+            TV or a projector. You run it from a tablet or phone, from anywhere.
+          </p>
+        </div>
+        <div class="grid sm:grid-cols-2 gap-8 max-w-3xl mx-auto" data-aos-id-portable-plan>
+          <figure data-aos="fade-up" data-aos-anchor="[data-aos-id-portable-plan]">
+            <div class="max-w-[260px] mx-auto"><PortableRoomPlan booth={true} /></div>
+            <figcaption class="text-center mt-4">
+              <div class="font-red-hat-display font-black text-lg">The usual setup</div>
+              <div class="text-sm text-gray-600 dark:text-gray-400">
+                A booth at the back, a cable to the stage, an operator behind it
+              </div>
+            </figcaption>
+          </figure>
+          <figure data-aos="fade-up" data-aos-anchor="[data-aos-id-portable-plan]" data-aos-delay="100">
+            <div class="max-w-[260px] mx-auto"><PortableRoomPlan booth={false} /></div>
+            <figcaption class="text-center mt-4">
+              <div class="font-red-hat-display font-black text-lg">With TheOpenPresenter</div>
+              <div class="text-sm text-gray-600 dark:text-gray-400">
+                The device by the screen, and a tablet wherever you're sitting
+              </div>
+            </figcaption>
+          </figure>
+        </div>
+        <ul class="flex flex-col sm:flex-row flex-wrap justify-center gap-x-8 gap-y-2 mt-12 text-gray-600 dark:text-gray-400">
+          {
+            boothBullets.map((item) => (
+              <li class="flex items-center">
+                <svg class="w-3 h-3 fill-current text-brand-400 mr-2 shrink-0" viewBox="0 0 12 12">
+                  <path d="M10.28 2.28L3.989 8.575 1.695 6.28A1 1 0 00.28 7.695l3 3a1 1 0 001.414 0l7-7A1 1 0 0010.28 2.28z" />
+                </svg>
+                <span>{item}</span>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Prepare from anywhere -->
+  <section>
+    <div class="max-w-6xl mx-auto px-4 sm:px-6">
+      <div class="py-12 md:py-20 border-t border-gray-200 dark:border-gray-800">
+        <div class="md:grid md:grid-cols-12 md:gap-12 lg:gap-16 items-center">
+          <div class="md:col-span-7 mb-10 md:mb-0">
+            <div class="text-sm font-semibold tracking-wide uppercase text-brand-500 mb-2">
+              During the week
+            </div>
+            <h2 class="h2 mb-4 font-red-hat-display">Prepare from home</h2>
+            <p class="text-lg text-gray-600 dark:text-gray-400 mb-6">
+              Your service isn't stuck on the church laptop. Add
+              songs, Bible passages and slides from home on any computer, and
+              it's ready on the day.
+            </p>
+            <ul class="text-gray-600 dark:text-gray-400">
+              {
+                prepareBullets.map((item) => (
+                  <li class="flex items-center mb-2">
+                    <svg class="w-3 h-3 fill-current text-brand-400 mr-2 shrink-0" viewBox="0 0 12 12">
+                      <path d="M10.28 2.28L3.989 8.575 1.695 6.28A1 1 0 00.28 7.695l3 3a1 1 0 001.414 0l7-7A1 1 0 0010.28 2.28z" />
+                    </svg>
+                    <span>{item}</span>
+                  </li>
+                ))
+              }
+            </ul>
+          </div>
+          <div class="md:col-span-5 flex justify-center">
+            <GuestUploadChat class="w-full max-w-md" />
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Case study -->
+  <section id="hope-newcastle" class="scroll-mt-24">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6">
+      <div class="py-12 md:py-20 border-t border-gray-200 dark:border-gray-800">
+        <div class="md:grid md:grid-cols-12 md:gap-12 lg:gap-16 items-center">
+          <div class="md:col-span-6 mb-10 md:mb-0">
+            <div class="text-sm font-semibold tracking-wide uppercase text-brand-500 mb-2">
+              Case study
+            </div>
+            <h2 class="h2 mb-4 font-red-hat-display">How Hope Newcastle does it</h2>
+            <p class="text-lg text-gray-600 dark:text-gray-400 mb-4">
+              TheOpenPresenter started at Hope Newcastle, a church that meets
+              in a rented space and sets up and packs down every Sunday.
+            </p>
+            <p class="text-lg text-gray-600 dark:text-gray-400 mb-4">
+              We put both our mixer and laptop into a luggage. It lives
+              on the stage and the team runs everything from an iPad. Setting
+              up is quick, because there's almost nothing to set up.
+            </p>
+            <a href="/about" class="text-brand-500 hover:text-brand-400 underline">
+              Read how TheOpenPresenter started
+            </a>
+          </div>
+          <div class="md:col-span-6">
+            <!-- The real luggage as a photo, with sticky notes pointing at
+                 what's in it. Arrows use the photo's own pixels (1280x879). -->
+            <figure class="relative z-10 w-4/5 max-w-sm mx-auto mt-16 -mb-8 rotate-2 bg-white p-2.5 pb-3 shadow-xl ring-1 ring-black/5" data-aos="fade-down">
+              <div class="relative">
+                <Image src={hopeCase} widths={[400, 800]} sizes="(min-width: 768px) 384px, 80vw" alt="Hope Newcastle's open luggage with a Behringer XR18 digital mixer, a laptop and cables packed inside" class="w-full h-auto" />
+                <svg viewBox="0 0 1280 879" class="absolute inset-0 w-full h-full overflow-visible pointer-events-none" aria-hidden="true">
+                  <defs>
+                    <marker id="hope-arrow" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
+                      <path d="M0 0 L10 5 L0 10 z" fill="#f59e0b" />
+                    </marker>
+                  </defs>
+                  <g fill="none" stroke="#f59e0b" stroke-width="9" stroke-linecap="round" marker-end="url(#hope-arrow)">
+                    <path d="M170 -95 Q130 40 210 170" />
+                    <path d="M930 -95 Q960 40 800 150" />
+                    <path d="M1250 1000 Q1330 880 1215 780" />
+                  </g>
+                </svg>
+              </div>
+              <figcaption class="mt-2 text-center text-sm font-semibold text-gray-700">Our luggage, packed for Sunday</figcaption>
+              {
+                [
+                  { text: "Digital mixer, run from the iPad", class: "-top-14 -left-[8%] -rotate-3" },
+                  { text: "Laptop running TheOpenPresenter, run from the iPad", class: "-top-16 -right-[8%] rotate-2" },
+                  { text: "Lives on the stage", class: "-bottom-10 -right-[10%] -rotate-2" },
+                ].map((n) => (
+                  <span class:list={["absolute max-w-[10.5rem] bg-amber-200 px-2 py-1 text-xs font-semibold leading-snug text-gray-900 shadow-md", n.class]}>
+                    {n.text}
+                  </span>
+                ))
+              }
+            </figure>
+            <ol class="rounded-lg bg-gray-50 dark:bg-gray-800 ring-1 ring-gray-200 dark:ring-gray-700 p-6 pt-20 sm:p-8 sm:pt-20 space-y-6">
+              {
+                steps.map((s, i) => (
+                  <li class="flex gap-4" data-aos="fade-up" data-aos-delay={i * 80}>
+                    <span class="w-8 h-8 shrink-0 rounded bg-brand-500 text-on-brand font-black flex items-center justify-center">
+                      {i + 1}
+                    </span>
+                    <div>
+                      <div class="font-red-hat-display font-black text-lg">{s.title}</div>
+                      <p class="text-gray-600 dark:text-gray-400">{s.body}</p>
+                    </div>
+                  </li>
+                ))
+              }
+            </ol>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <SignageFeatures
+    eyebrow="Made to travel"
+    title="Built for a church that packs up every week"
+    body="TheOpenPresenter started at a portable church, so it's built around the way you set up."
+    features={features}
+  />
+  <SignageFaq faqs={faqs} />
+  <CtaSignup
+    title="Ready for this Sunday?"
+    highlight="Start free."
+    body="Build next Sunday's service from home, then run it from a tablet on the day. No card needed."
+  />
+</DefaultLayout>
