@@ -40,7 +40,9 @@ const useGooglePublicLink = ({
 }) => {
   const pluginApi = usePluginAPI();
   const pluginId = pluginApi.pluginContext.pluginId;
-  const mutation = trpc.slides.googleSlidesImportPublicLink.useMutation();
+  const mutation = trpc.slides.googleSlidesImportPublicLink.useMutation({
+    onError: (err) => pluginApi.remote.toast.error(err.message),
+  });
   const { mutate } = mutation;
 
   const config = useMemo<PublicLinkConfig>(
@@ -52,17 +54,12 @@ const useGooglePublicLink = ({
       validate: (url) => void parseGoogleSlidesLink(url),
       onSubmit: (url) => {
         const context = launchContextRef.current;
-        mutate(
-          { pluginId, url, replaceImportId: context.replaceImportId },
-          {
-            onError: (err) => pluginApi.remote.toast.error(err.message),
-          },
-        );
+        mutate({ pluginId, url, replaceImportId: context.replaceImportId });
         close();
         context.onComplete?.();
       },
     }),
-    [launchContextRef, close, mutate, pluginId, pluginApi],
+    [launchContextRef, close, mutate, pluginId],
   );
 
   return { config, isPending: mutation.isPending };

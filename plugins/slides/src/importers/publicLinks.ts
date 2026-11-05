@@ -49,9 +49,7 @@ export const parseGoogleSlidesLink = (input: string): string => {
 
   const id = path.match(/^\/presentation\/(?:u\/\d+\/)?d\/([\w-]{20,})/)?.[1];
   if (!id) {
-    throw new PublicLinkError(
-      "That isn't a link to a Google Slides presentation.",
-    );
+    throw new PublicLinkError("That isn't a Google Slides link.");
   }
   return id;
 };

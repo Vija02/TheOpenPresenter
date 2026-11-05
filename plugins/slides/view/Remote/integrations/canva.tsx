@@ -59,7 +59,9 @@ const CanvaController = ({ children }: IntegrationControllerProps) => {
   const handledIntentRef = useRef<string | null>(null);
 
   const statusQuery = trpc.slides.canvaStatus.useQuery({ pluginId });
-  const selectDesignMutation = trpc.slides.selectCanvaDesign.useMutation();
+  const selectDesignMutation = trpc.slides.selectCanvaDesign.useMutation({
+    onError: (err) => pluginApi.remote.toast.error(err.message),
+  });
   const disconnectMutation = trpc.slides.canvaDisconnect.useMutation();
   const beginSignInMutation = trpc.slides.canvaBeginSignIn.useMutation();
   const { mutateAsync: resolveLink } =
@@ -275,19 +277,16 @@ const CanvaController = ({ children }: IntegrationControllerProps) => {
       from: CanvaSource,
       { designId, title }: { designId: string; title: string },
     ) => {
-      selectDesignMutation.mutate(
-        {
-          pluginId,
-          ...from,
-          designId,
-          name: title,
-          replaceImportId: launchContextRef.current.replaceImportId,
-        },
-        { onError: (err) => pluginApi.remote.toast.error(err.message) },
-      );
+      selectDesignMutation.mutate({
+        pluginId,
+        ...from,
+        designId,
+        name: title,
+        replaceImportId: launchContextRef.current.replaceImportId,
+      });
       launchContextRef.current.onComplete?.();
     },
-    [selectDesignMutation, pluginId, pluginApi],
+    [selectDesignMutation, pluginId],
   );
 
   const handleSelected = useCallback(
