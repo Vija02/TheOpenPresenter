@@ -1,0 +1,259 @@
+---
+import DefaultLayout from "../layouts/DefaultLayout.astro";
+import PageIllustration from "../components/PageIllustration.astro";
+import CampusStage from "../components/campus/CampusStage.astro";
+import GuestUploadChat from "../components/home/GuestUploadChat.astro";
+import SignageFeatures from "../components/signage/SignageFeatures.astro";
+import SignageFaq from "../components/signage/SignageFaq.astro";
+import CtaSignup from "../components/CtaSignup.astro";
+
+const check = "M10.28 2.28L3.989 8.575 1.695 6.28A1 1 0 00.28 7.695l3 3a1 1 0 001.414 0l7-7A1 1 0 0010.28 2.28z";
+
+const heroBullets = [
+  "Nothing to install, no admin rights needed",
+  "Run lyrics and slides from your phone",
+  "Nothing left on the PC for the next booking",
+];
+
+const steps = [
+  { title: "Open your project on the lectern PC", body: "It runs in the browser, so there's nothing to install and no IT ticket." },
+  { title: "Present it full screen", body: "Click Present, open it in a new tab on the projector, and press F11." },
+  { title: "Scan the QR code with your phone", body: "Your phone becomes the remote, so you can sit with everyone else." },
+];
+
+const prepareBullets = [
+  "Several people can work on the same meeting at once",
+  "Sync a Google Slides deck or import PowerPoint",
+  "Send the guest speaker a link to upload their slides",
+  "Paste in a song and AI splits it into slides",
+];
+
+const features = [
+  {
+    title: "Runs in the browser",
+    body: "Works on the university's PC as it is. No install, no admin rights, no waiting on IT.",
+    icon: "web",
+  },
+  {
+    title: "Any phone is the remote",
+    body: "Scan a QR code and run the meeting from your seat. Nothing to install on the phone either.",
+    icon: "phone",
+  },
+  {
+    title: "Lyrics and Bible built in",
+    body: "Song lyrics and over 2,300 Bible translations, from the same remote as everything else.",
+    icon: "music",
+  },
+  {
+    title: "Slides from where your team works",
+    body: "Sync Google Slides or import PowerPoint, so talk slides and notices come straight in.",
+    icon: "slides",
+  },
+  {
+    title: "Videos from anywhere",
+    body: "Upload a video, or play it from YouTube or Vimeo. No USB sticks to bring.",
+    icon: "play",
+  },
+  {
+    title: "Booked a room with a TV?",
+    body: "Plug a TV stick into the screen and present straight to it, with no PC needed.",
+    icon: "mirror",
+  },
+] as const;
+
+const faqs = [
+  {
+    q: "Do we need to install anything on the university's PC?",
+    a: "No. TheOpenPresenter runs in the browser, so it works on a locked-down PC without admin rights.",
+  },
+  {
+    q: "What if the room doesn't have a PC?",
+    a: "Bring a laptop, or plug a TV stick (Fire TV, Google TV or Android TV) into the screen and present straight to it.",
+  },
+  {
+    q: "Does it work on campus Wi-Fi?",
+    a: "Yes. It runs over the internet, so the campus Wi-Fi is all you need. A phone hotspot is a handy backup.",
+  },
+  {
+    q: "Will anything be left on the PC?",
+    a: "No. Close the tab when you're done, and there's nothing left behind for the next booking.",
+  },
+  {
+    q: "What happens when our leaders change?",
+    a: "Your songs, slides and meetings belong to your group's account, not a leader's laptop. Add next year's team and they pick up where you left off.",
+  },
+  {
+    q: "What does it cost?",
+    a: "You can start free, with no card needed. See the pricing page for the full details.",
+  },
+];
+---
+
+<DefaultLayout
+  title="Presentation Software for Campus Ministries | TheOpenPresenter"
+  description="For student groups meeting in lecture theatres. Open a link on the lectern PC, with nothing to install, and run lyrics and slides from your phone."
+  demoWidget={false}
+>
+  <div class="relative max-w-6xl mx-auto h-0 pointer-events-none -z-1" aria-hidden="true">
+    <PageIllustration />
+  </div>
+
+  <!-- Hero -->
+  <section>
+    <div class="max-w-6xl mx-auto px-4 sm:px-6">
+      <div class="pt-32 pb-10 md:pb-16">
+        <div class="md:grid md:grid-cols-12 md:gap-12 lg:gap-16 items-center">
+          <div class="md:col-span-6 mb-10 md:mb-0 text-center md:text-left">
+            <div
+              class="inline-flex items-center text-sm font-semibold tracking-wide uppercase text-brand-500 mb-3"
+              data-aos="fade-down"
+            >
+              For campus ministries
+            </div>
+            <h1
+              class="h1 lg:text-4xl mb-3 font-red-hat-display font-black leading-tight"
+              data-aos="fade-down"
+              data-aos-delay="50"
+            >
+              Meet in a lecture theatre,
+              <span class="bg-clip-text text-transparent bg-gradient-to-r from-brand-400 to-accent-500"
+                >run it from any seat</span
+              >
+            </h1>
+            <p
+              class="text-lg lg:text-xl mb-6 text-gray-700 dark:text-gray-300 leading-relaxed"
+              data-aos="fade-down"
+              data-aos-delay="100"
+            >
+              Open a link on the lectern PC, with nothing to install, and run
+              lyrics and slides from your phone. No one has to sit at the
+              console at the front.
+            </p>
+            <div
+              class="flex flex-col sm:flex-row justify-center md:justify-start gap-3"
+              data-aos="fade-down"
+              data-aos-delay="150"
+            >
+              <a class="btn text-on-brand bg-brand-500 hover:bg-brand-400 shrink-0" href="/register">
+                Start free
+              </a>
+              <a
+                class="btn text-brand-500 bg-white hover:bg-gray-50 border border-brand-500 dark:bg-transparent dark:hover:bg-gray-800 shrink-0"
+                href="#how"
+              >
+                See how it works
+              </a>
+            </div>
+            <ul
+              class="max-w-sm sm:max-w-md mx-auto md:max-w-none text-gray-600 dark:text-gray-400 mt-8 -mb-2 text-left"
+              data-aos="fade-down"
+              data-aos-delay="200"
+            >
+              {
+                heroBullets.map((item) => (
+                  <li class="flex items-center mb-2">
+                    <svg class="w-3 h-3 fill-current text-brand-400 mr-2 shrink-0" viewBox="0 0 12 12">
+                      <path d={check} />
+                    </svg>
+                    <span>{item}</span>
+                  </li>
+                ))
+              }
+            </ul>
+          </div>
+          <div class="md:col-span-6" data-aos="fade-up" data-aos-delay="300">
+            <CampusStage />
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How it works -->
+  <section id="how" class="scroll-mt-24">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6">
+      <div class="py-12 md:py-20 border-t border-gray-200 dark:border-gray-800">
+        <div class="md:grid md:grid-cols-12 md:gap-12 lg:gap-16 items-center">
+          <div class="md:col-span-6 mb-10 md:mb-0">
+            <div class="text-sm font-semibold tracking-wide uppercase text-brand-500 mb-2">
+              On the day
+            </div>
+            <h2 class="h2 mb-4 font-red-hat-display">Nothing to install on the lectern PC</h2>
+            <p class="text-lg text-gray-600 dark:text-gray-400">
+              University PCs are locked down, and you only have the room for
+              an hour. TheOpenPresenter runs in the browser, so you're set up
+              in a couple of minutes on whatever PC the room has.
+            </p>
+          </div>
+          <div class="md:col-span-6">
+            <ol class="rounded-lg bg-gray-50 dark:bg-gray-800 ring-1 ring-gray-200 dark:ring-gray-700 p-6 sm:p-8 space-y-6">
+              {
+                steps.map((s, i) => (
+                  <li class="flex gap-4" data-aos="fade-up" data-aos-delay={i * 80}>
+                    <span class="w-8 h-8 shrink-0 rounded bg-brand-500 text-on-brand font-black flex items-center justify-center">
+                      {i + 1}
+                    </span>
+                    <div>
+                      <div class="font-red-hat-display font-black text-lg">{s.title}</div>
+                      <p class="text-gray-600 dark:text-gray-400">{s.body}</p>
+                    </div>
+                  </li>
+                ))
+              }
+            </ol>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Prepare together -->
+  <section>
+    <div class="max-w-6xl mx-auto px-4 sm:px-6">
+      <div class="py-12 md:py-20 border-t border-gray-200 dark:border-gray-800">
+        <div class="md:grid md:grid-cols-12 md:gap-12 lg:gap-16 items-center">
+          <div class="md:col-span-7 mb-10 md:mb-0">
+            <div class="text-sm font-semibold tracking-wide uppercase text-brand-500 mb-2">
+              During the week
+            </div>
+            <h2 class="h2 mb-4 font-red-hat-display">Prepare together, and hand it on</h2>
+            <p class="text-lg text-gray-600 dark:text-gray-400 mb-6">
+              Build the meeting from your room, the library or home. Everything
+              lives in your group's account, not on a leader's laptop, so when
+              the committee changes next year, the new team picks up where you
+              left off.
+            </p>
+            <ul class="text-gray-600 dark:text-gray-400">
+              {
+                prepareBullets.map((item) => (
+                  <li class="flex items-center mb-2">
+                    <svg class="w-3 h-3 fill-current text-brand-400 mr-2 shrink-0" viewBox="0 0 12 12">
+                      <path d={check} />
+                    </svg>
+                    <span>{item}</span>
+                  </li>
+                ))
+              }
+            </ul>
+          </div>
+          <div class="md:col-span-5 flex justify-center">
+            <GuestUploadChat class="w-full max-w-md" guest="Sam (speaking this week)" name="Sam" day="Thursday" when="Thursday, 7pm" file="Romans 8.pptx" />
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <SignageFeatures
+    eyebrow="Made for borrowed rooms"
+    title="Built for a group without its own building"
+    body="Lecture theatres, seminar rooms, the student union. TheOpenPresenter works with whatever screen the room has."
+    features={features}
+  />
+  <SignageFaq faqs={faqs} />
+  <CtaSignup
+    title="Ready for this week's meeting?"
+    highlight="Start free."
+    body="Build it with your team during the week, then run it from your phone on the night. No card needed."
+  />
+</DefaultLayout>

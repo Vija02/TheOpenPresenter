@@ -7,29 +7,42 @@
 // what comes back.
 interface Props {
   class?: string;
+  /** Who's sending slides, their first name, and the meeting it's for */
+  guest?: string;
+  name?: string;
+  day?: string;
+  when?: string;
+  file?: string;
 }
 
-const { class: className = "" } = Astro.props;
+const {
+  class: className = "",
+  guest = "Pastor Dave",
+  name = "Dave",
+  day = "Sunday",
+  when = "Sunday, 10:30",
+  file = "Hope in the storm.pptx",
+} = Astro.props;
 ---
 
 <div
   class:list={["guest-chat flex flex-col gap-2 rounded-lg bg-white p-3 sm:p-4 shadow-lg ring-1 ring-black/5 text-[13px] leading-snug font-[system-ui,-apple-system,'Segoe_UI',Roboto,sans-serif]", className]}
   data-reveal
   role="img"
-  aria-label="A message thread: you send Pastor Dave an upload link, he replies that he's uploaded his slides, and his PowerPoint is converted and added to Sunday's service"
+  aria-label={`A message thread: you send ${guest} an upload link, they reply that they've uploaded their slides, and the PowerPoint is converted and added to ${day}'s meeting`}
 >
   <div class="bubble self-end max-w-[85%] rounded-[18px] rounded-br-md bg-[#007AFF] px-3 py-2 text-white">
-    Hi Dave, could you drop your slides here before Sunday?
+    Hi {name}, could you drop your slides here before {day}?
     <span class="mt-1.5 flex items-center gap-1.5 rounded-lg bg-white/20 px-2 py-1 text-xs font-semibold">
       <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7 M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7" />
       </svg>
-      Upload slides for Sunday
+      Upload slides for {day}
     </span>
   </div>
 
   <div class="bubble self-start max-w-[85%] rounded-[18px] rounded-bl-md bg-[#E9E9EB] px-3 py-2 text-black">
-    <span class="block text-[11px] font-semibold text-[#8E8E93] mb-0.5">Pastor Dave</span>
+    <span class="block text-[11px] font-semibold text-[#8E8E93] mb-0.5">{guest}</span>
     Done, just uploaded them!
   </div>
 
@@ -37,7 +50,7 @@ const { class: className = "" } = Astro.props;
     <svg class="w-3.5 h-3.5 text-brand-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
       <path d="M5 12.5l4.5 4.5L19 7.5" />
     </svg>
-    <span><span class="font-semibold">Hope in the storm.pptx</span>: 18 slides added to Sunday, 10:30</span>
+    <span><span class="font-semibold">{file}</span>: 18 slides added to {when}</span>
   </div>
 </div>
 

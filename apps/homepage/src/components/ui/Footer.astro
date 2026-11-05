@@ -39,19 +39,14 @@ import Logo from "./Logo.astro";
       </div>
 
       <!-- Top area: Blocks -->
-      <div class="grid md:grid-cols-12 gap-8 lg:gap-20 mb-8 md:mb-12">
-        <!-- 1st block -->
-        <div class="md:col-span-2 lg:col-span-3">
-          <!-- Logo -->
-          <a class="inline-block" href="/" aria-label="TheOpenPresenter Logo">
-            <Logo />
-          </a>
-        </div>
+      <div class="mb-8 md:mb-12">
+        <!-- Logo, on its own row so the link columns get the full width -->
+        <a class="inline-block mb-8" href="/" aria-label="TheOpenPresenter Logo">
+          <Logo />
+        </a>
 
         <!-- Link columns -->
-        <div
-          class="md:col-span-10 lg:col-span-9 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8"
-        >
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8">
           <!-- 2nd block -->
           <div class="text-sm">
             <h6 class="font-medium uppercase mb-2">Screens</h6>
@@ -180,6 +175,14 @@ import Logo from "./Logo.astro";
                   href="/portable-church"
                 >
                   For portable churches
+                </a>
+              </li>
+              <li class="mb-1">
+                <a
+                  class="text-gray-600 dark:text-gray-400 hover:underline transition duration-150 ease-in-out"
+                  href="/campus-ministry"
+                >
+                  For campus ministries
                 </a>
               </li>
             </ul>

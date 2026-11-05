@@ -1,0 +1,77 @@
+---
+// Frame for a 3D diorama run by src/scripts/diorama/run.ts: the canvas,
+// labels pinned to [x, y, z] points and shown for one `state` (place-way),
+// and the toggles. Extras (like a magnifier) go in the default slot. The
+// wrapping component imports the scene's script.
+interface Props {
+  /** Matched by the scene script as [data-diorama=name] */
+  name: string;
+  ariaLabel: string;
+  labels: { state: string; text: string; at: number[]; side?: "right" | "left" }[];
+  /** Leave out when there's only one place */
+  places?: { value: string; label: string }[];
+}
+
+const { name, ariaLabel, labels, places } = Astro.props;
+const toggles = [
+  ...(places ? [{ set: "place", options: places }] : []),
+  {
+    set: "way",
+    options: [
+      { value: "usual", label: "The usual way" },
+      { value: "top", label: "With TheOpenPresenter" },
+    ],
+  },
+];
+---
+
+<div data-diorama={name} class="group">
+  <div class="relative aspect-[4/3] w-full select-none" role="img" aria-label={ariaLabel}>
+    <canvas class="absolute inset-0 w-full h-full"></canvas>
+    <slot />
+    {
+      labels.map((l) => (
+        <span
+          data-at={JSON.stringify(l.at)}
+          data-state={l.state}
+          data-on="false"
+          class:list={[
+            "absolute flex items-center opacity-0 transition-opacity duration-500 group-data-ready:data-[on=true]:opacity-100 pointer-events-none",
+            l.side === "right"
+              ? "-translate-y-1/2 -ml-[5px] flex-row-reverse"
+              : l.side === "left"
+                ? "-translate-x-full -translate-y-1/2 ml-[5px]"
+                : "-translate-x-1/2 -translate-y-full mt-[5px] flex-col",
+          ]}
+          aria-hidden="true"
+        >
+          <!-- Callout above (or right of) the object, pinned to it -->
+          <span class="whitespace-nowrap rounded bg-white/95 dark:bg-gray-900/90 ring-1 ring-gray-200 dark:ring-gray-700 shadow px-2 py-1 text-[11px] sm:text-xs font-semibold text-gray-800 dark:text-gray-100">
+            {l.text}
+          </span>
+          <span class:list={["bg-white shadow", l.side ? "h-0.5 w-5 sm:w-7" : "w-0.5 h-5 sm:h-7"]} />
+          <span class:list={["w-2.5 h-2.5 rounded-full ring-2 ring-white", l.state.endsWith("usual") ? "bg-red-500" : "bg-brand-500"]} />
+        </span>
+      ))
+    }
+  </div>
+  <div class="flex flex-wrap justify-center items-center gap-2 sm:gap-3 mt-2">
+    {
+      toggles.map((t) => (
+        <div class="inline-flex rounded ring-1 ring-gray-200 dark:ring-gray-700 p-0.5 bg-white dark:bg-gray-900">
+          {t.options.map((o) => (
+            <button
+              type="button"
+              data-set={t.set}
+              data-value={o.value}
+              aria-pressed="false"
+              class="px-3 py-1.5 rounded-sm whitespace-nowrap text-xs sm:text-sm font-semibold text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 aria-pressed:bg-brand-500 aria-pressed:text-on-brand dark:aria-pressed:text-on-brand aria-pressed:hover:text-on-brand dark:aria-pressed:hover:text-on-brand"
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
+      ))
+    }
+  </div>
+</div>

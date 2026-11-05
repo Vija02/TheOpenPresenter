@@ -1,0 +1,22 @@
+---
+import Diorama from "../diorama/Diorama.astro";
+
+// Live 3D scene (src/scripts/campus-stage.ts): a lecture theatre, the usual
+// way or with TheOpenPresenter.
+const labels: { state: string; text: string; at: number[]; side?: "right" | "left" }[] = [
+  { state: "theatre-top", text: "Open a link on the lectern PC", at: [-3.3, 2.1, -3.6] },
+  { state: "theatre-top", text: "Run it from your phone, in any seat", at: [1.0, 2.35, 1.8], side: "right" },
+  { state: "theatre-usual", text: "A laptop cabled into the console", at: [-2.9, 1.75, -3.3] },
+  { state: "theatre-usual", text: "Someone stuck at the front", at: [-2.0, 1.0, -4.3], side: "right" },
+];
+---
+
+<Diorama
+  name="campus"
+  ariaLabel="A 3D model of a lecture theatre with tiered seats and a lectern console at the front. The usual way, a laptop is cabled into the console and someone sits beside it; with TheOpenPresenter the lectern PC opens a link and a phone in the seats runs it."
+  labels={labels}
+/>
+
+<script>
+  import "../../scripts/campus-stage";
+</script>
