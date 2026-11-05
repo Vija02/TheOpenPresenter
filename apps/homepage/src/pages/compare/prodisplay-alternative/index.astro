@@ -45,7 +45,7 @@ const comparison = [
   },
   {
     feature: "Hardware for each room",
-    pd: "An Apple TV (Android coming soon)",
+    pd: "An Apple TV or a supported Google TV device",
     top: "Fire TV, Google TV, Android TV, or any device with a browser",
     winner: "top",
   },
@@ -87,8 +87,8 @@ const comparison = [
   },
   {
     feature: "Lyrics, Bible, and countdown timers",
-    pd: "Built for playing presentations",
-    top: "Yes, a full presentation app",
+    pd: "Not listed: images, video, and slides exported from ProPresenter",
+    top: "Yes, built in, in every room",
     winner: "top",
   },
   {
@@ -131,8 +131,12 @@ const faqs = [
     a: "Content is saved to the screen, so it keeps playing. That's true of both products.",
   },
   {
-    q: "Do I need an Apple TV?",
-    a: "No. TheOpenPresenter runs on Fire TV, Google TV, and Android TV, or on any device with a modern browser, including an old laptop or a mini PC. There's no Apple TV app.",
+    q: "What do I need in each room?",
+    a: "A TV and a small device to drive it. TheOpenPresenter runs on Fire TV, Google TV and Android TV, or on any device with a modern browser, including an old laptop, a mini PC or a Raspberry Pi. There's no Apple TV app. ProDisplay runs on Apple TV and select Google TV devices.",
+  },
+  {
+    q: "Can ProDisplay show lyrics or Bible verses?",
+    a: "Not as built-in features, as far as Renewed Vision describes it. ProDisplay's How it works page lists images, video, slides exported from ProPresenter and curriculum integrations, and doesn't mention lyrics, bible or countdown timers. So a song or a passage would be made in ProPresenter (a separate subscription) and exported. In TheOpenPresenter every room has lyrics, bible, timers and live web pages built in, and a leader can put up a new song or verse from their phone.",
   },
   {
     q: "Can I use Life.Church Open or Orange curriculum?",
@@ -165,7 +169,8 @@ const lose = "text-gray-600 dark:text-gray-300";
   >
     ProDisplay is Renewed Vision's new app for the screens outside your main
     auditorium: kids' rooms, lobbies, and hallways. It's built by the
-    ProPresenter team, it runs on Apple TV, and it's priced per screen.
+    ProPresenter team, it runs on Apple TV and select Google TV devices, and
+    it's priced per screen.
   </ArticleHeader>
 
   <p class="text-lg text-gray-600 dark:text-gray-300 mb-12">
@@ -193,7 +198,8 @@ const lose = "text-gray-600 dark:text-gray-300";
         </li>
         <li class="flex gap-3">
           <span class="text-brand-500 shrink-0">&#10003;</span>
-          Cheap screens: a Fire TV Stick or any browser, no Apple TV per room
+          Screens on almost anything: Fire TV, Android TV, a Raspberry Pi or
+          any browser
         </li>
         <li class="flex gap-3">
           <span class="text-brand-500 shrink-0">&#10003;</span>
@@ -230,7 +236,7 @@ const lose = "text-gray-600 dark:text-gray-300";
         </li>
         <li class="flex gap-3">
           <span class="text-gray-400 shrink-0">&bull;</span>
-          To stay all-Apple, with an Apple TV remote in every room
+          To use the Apple TVs you already have (we have no Apple TV app)
         </li>
       </ul>
     </div>
@@ -548,8 +554,9 @@ const lose = "text-gray-600 dark:text-gray-300";
     Prices are as listed on each company's site in October 2026. ProDisplay is
     priced in US dollars and TheOpenPresenter in pounds. The three-year totals
     include ProDisplay's free first screen in year one.
-    The Apple TV that ProDisplay needs in each room is extra; TheOpenPresenter
-    runs on a Fire TV Stick or any device with a browser.
+    Neither price includes the device in each room. ProDisplay needs an Apple
+    TV or a supported Google TV device; TheOpenPresenter also runs on a Fire
+    TV Stick, a Raspberry Pi or any device with a browser.
   </Tip>
   <p class="text-gray-600 dark:text-gray-300 mb-16">
     Prefer to pay once? The <a
