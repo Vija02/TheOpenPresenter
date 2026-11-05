@@ -7,7 +7,8 @@ import z from "zod";
 
 import { loadedContext } from "../../loadedState";
 import type { ImportHelpers } from "../helpers";
-import { listDesigns } from "./api";
+import { canvaDesignIdFromLink } from "../publicLinks";
+import { CanvaNoAccessError, getDesign, listDesigns } from "./api";
 import { createCanvaImporter } from "./importCanvaDesign";
 import {
   CanvaConnectionOption,
@@ -225,6 +226,53 @@ export const createCanvaRouter = (t: TRPCObject, deps: CanvaRouterDeps) => {
           };
         },
       ),
+
+    /**
+     * The design a pasted share link points at, and the first of `sources`
+     * that can open it. Canva's API can't read a design from its link alone.
+     */
+    canvaResolveLink: t.procedure
+      .input(
+        z.object({
+          pluginId: z.string(),
+          sources: z
+            .array(
+              z.object({
+                connectionId: z.string().optional(),
+                grantId: z.string().optional(),
+              }),
+            )
+            .min(1)
+            .max(20),
+          url: z.string().max(2048),
+        }),
+      )
+      .mutation(async ({ input: { pluginId, sources, url }, ctx }) => {
+        // Before following a short link on the caller's behalf
+        await requireMode(pluginId, ctx);
+        const designId = await canvaDesignIdFromLink(url);
+
+        // Only "can't open it" moves on to the next account; anything else
+        // (rate limits, Canva being down) is the real answer
+        for (const source of sources) {
+          const { accessToken } = await accessTokenFor(pluginId, source, ctx);
+          try {
+            const design = await getDesign(accessToken, designId);
+            return {
+              designId: design.id,
+              title: design.title ?? "Untitled design",
+              source,
+            };
+          } catch (err) {
+            if (!(err instanceof CanvaNoAccessError)) throw err;
+          }
+        }
+        throw sources.length > 1
+          ? new Error(
+              "None of your connected Canva accounts can open that design.",
+            )
+          : new CanvaNoAccessError();
+      }),
 
     canvaDisconnect: t.procedure
       .input(z.object({ pluginId: z.string(), connectionId: z.string() }))

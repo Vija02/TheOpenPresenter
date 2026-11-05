@@ -15,6 +15,7 @@
  *   GET  /rest/v1/users/me               the account's ids
  *   GET  /rest/v1/users/me/profile       the account's display name
  *   GET  /rest/v1/designs                the account's designs
+ *   GET  /rest/v1/designs/:id            one design, if the account has it
  *   POST /rest/v1/exports                exports a design (done at once)
  *   GET  /rest/v1/exports/:id            an export job
  *   GET  /__files/:id.pdf                an export's download
@@ -234,6 +235,19 @@ const handleApi = async (
       items: state.account.designs
         .filter((d) => !query || d.title.toLowerCase().includes(query))
         .map((d) => ({ id: d.id, title: d.title, page_count: 2 })),
+    });
+    return;
+  }
+
+  const design = path.match(/^\/designs\/([^/]+)$/);
+  if (design) {
+    const found = state.account.designs.find((d) => d.id === design[1]);
+    if (!found) {
+      json(res, 403, { code: "permission_denied", message: "no access" });
+      return;
+    }
+    json(res, 200, {
+      design: { id: found.id, title: found.title, page_count: 2 },
     });
     return;
   }

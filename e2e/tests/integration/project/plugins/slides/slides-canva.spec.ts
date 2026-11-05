@@ -175,6 +175,92 @@ test.describe("Slides Plugin - Canva", () => {
     await expect(chooser.getByText("Just Once")).toHaveCount(0);
   });
 
+  test("imports a design from a pasted share link", async ({
+    page,
+    projectPage,
+    loginAndGoToProject,
+    fakeCanva,
+  }) => {
+    const account = fakeCanva.newAccountId();
+    await fakeCanva.signInAs(account, { displayName: "Worship Team" });
+
+    await openSlides({ projectPage, loginAndGoToProject });
+    await connectAccount(page, "Worship Team");
+    await chooserOf(page).getByText("Worship Team").click();
+
+    const picker = designPickerOf(page);
+    const linkInput = picker.getByTestId("slides-public-link-input");
+
+    // Not a Canva link: caught before anything is sent
+    await linkInput.fill("https://example.com/design/abc");
+    await picker.getByTestId("slides-public-link-submit").click();
+    await expect(picker.getByRole("alert")).toContainText(
+      "isn't a Canva design link",
+    );
+
+    // A design this account can't open
+    await linkInput.fill(
+      "https://www.canva.com/design/design-someone-else/abc123/view",
+    );
+    await picker.getByTestId("slides-public-link-submit").click();
+    await expect(picker.getByRole("alert")).toContainText(
+      "can't open that design",
+    );
+    expect(await fakeCanva.exportCount(account)).toBe(0);
+
+    // One it can
+    await linkInput.fill(
+      "https://www.canva.com/design/design-notices/xyz789/edit?utm_source=sharebutton",
+    );
+    await picker.getByTestId("slides-public-link-submit").click();
+    await expect(picker).toBeHidden();
+    await expectImported(page);
+    expect(await fakeCanva.exportCount(account)).toBe(1);
+  });
+
+  test("the chooser's share link needs a connected account", async ({
+    page,
+    projectPage,
+    loginAndGoToProject,
+    fakeCanva,
+  }) => {
+    const account = fakeCanva.newAccountId();
+    await fakeCanva.signInAs(account, { displayName: "Worship Team" });
+
+    await openSlides({ projectPage, loginAndGoToProject });
+    await canvaCard(page).click();
+
+    // No account yet: shown, but disabled, and says why on hover
+    const option = chooserOf(page).getByTestId("slides-public-link-option");
+    await expect(option).toHaveAttribute("aria-disabled", "true");
+    await option.hover();
+    await expect(page.getByRole("tooltip")).toContainText(
+      "Connect a Canva account first",
+    );
+    await option.click({ force: true });
+    await expect(
+      chooserOf(page).getByTestId("slides-public-link-input"),
+    ).toHaveCount(0);
+
+    // Once connected, a link imports straight from the chooser
+    await signInThroughPopup(page, () =>
+      chooserOf(page)
+        .getByRole("button", { name: /^Connect (a|another) Canva account/ })
+        .click(),
+    );
+    const chooser = chooserOf(page);
+    await expect(chooser.getByText("Worship Team")).toBeVisible();
+    await chooser.getByTestId("slides-public-link-option").click();
+    await chooser
+      .getByTestId("slides-public-link-input")
+      .fill("https://www.canva.com/design/design-notices/xyz789/view");
+    await chooser.getByTestId("slides-public-link-submit").click();
+
+    await expect(chooser).toBeHidden();
+    await expectImported(page);
+    expect(await fakeCanva.exportCount(account)).toBe(1);
+  });
+
   test("disconnecting removes the account", async ({
     page,
     projectPage,

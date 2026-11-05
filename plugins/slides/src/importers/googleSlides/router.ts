@@ -8,6 +8,7 @@ import z from "zod";
 
 import { loadedContext } from "../../loadedState";
 import type { Importers } from "../index";
+import { parseGoogleSlidesLink } from "../publicLinks";
 import { getGoogleAppId, getGoogleClientId } from "./oauth";
 import {
   MAX_PICK_FILE_IDS,
@@ -208,6 +209,27 @@ export const createGoogleSlidesRouter = (
           });
         },
       ),
+
+    /** Imports a deck shared with "Anyone with the link" */
+    googleSlidesImportPublicLink: t.procedure
+      .input(
+        z.object({
+          pluginId: z.string(),
+          url: z.string().max(2048),
+          replaceImportId: z.string().optional(),
+        }),
+      )
+      .mutation(async ({ input: { pluginId, url, replaceImportId }, ctx }) => {
+        const { userId } = await requireMember(pluginId, ctx);
+        const presentationId = parseGoogleSlidesLink(url);
+        return importGoogleSlidesDeck({
+          pluginId,
+          presentationId,
+          token: null,
+          replaceImportId,
+          userId,
+        });
+      }),
 
     /** Imports a deck from a stored connection, local or remote. */
     selectGoogleSlide: t.procedure
