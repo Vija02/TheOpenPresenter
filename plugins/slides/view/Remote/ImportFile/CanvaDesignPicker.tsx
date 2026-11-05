@@ -12,9 +12,11 @@ import {
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { FaArrowRightArrowLeft } from "react-icons/fa6";
 
+import { parseCanvaLink } from "../../../src/importers/publicLinks";
 import { CanvaIconLogo } from "../../components/CanvaLogo";
 import { usePluginAPI } from "../../pluginApi";
 import { trpc } from "../../trpc";
+import { PublicLinkForm } from "../integrations/PublicLinkForm";
 
 export type CanvaSource = { connectionId: string } | { grantId: string };
 
@@ -67,6 +69,9 @@ export const CanvaDesignPicker = ({
     },
   );
 
+  const resolveLinkMutation = trpc.slides.canvaResolveLink.useMutation();
+  const { mutateAsync: resolveLink } = resolveLinkMutation;
+
   const designs = useMemo(
     () => listQuery.data?.pages.flatMap((p) => p.items) ?? [],
     [listQuery.data],
@@ -102,6 +107,25 @@ export const CanvaDesignPicker = ({
     [onSelected, onClose],
   );
 
+  const linkConfig = useMemo(
+    () => ({
+      title: "Paste a Canva link",
+      description: "",
+      placeholder: "https://www.canva.com/design/... or https://canva.link/...",
+      validate: (url: string) => void parseCanvaLink(url),
+      onSubmit: async (url: string) => {
+        if (!source) throw new Error("Choose a Canva account first.");
+        const design = await resolveLink({
+          pluginId,
+          sources: [source],
+          url,
+        });
+        handleSelect(design.designId, design.title);
+      },
+    }),
+    [source, resolveLink, pluginId, handleSelect],
+  );
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent size="3xl" className="md:max-w-[900px] md:min-h-[80vh]">
@@ -116,8 +140,16 @@ export const CanvaDesignPicker = ({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search your Canva designs..."
-            className="mb-4 shrink-0"
+            className="mb-3 shrink-0"
           />
+
+          <div className="mb-4 shrink-0">
+            <p className="text-xs text-secondary mb-1">
+              Or paste a share link to a design this account can open:
+            </p>
+            {/* Remounted on open, so it starts empty each time */}
+            <PublicLinkForm key={String(isOpen)} config={linkConfig} />
+          </div>
 
           {listQuery.isError && (
             <p className="text-red-600 text-sm">

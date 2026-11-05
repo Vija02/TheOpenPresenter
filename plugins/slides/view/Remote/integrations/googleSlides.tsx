@@ -1,12 +1,21 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  MutableRefObject,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { FcGoogle } from "react-icons/fc";
 
+import { parseGoogleSlidesLink } from "../../../src/importers/publicLinks";
 import { googleSlidesBrand } from "../../components/integrationBranding";
 import { usePluginAPI } from "../../pluginApi";
 import { listenToPopup, popupOpenedAt } from "../../popupMessages";
 import { trpc } from "../../trpc";
 import { SlidePicker } from "../ImportFile/SlidePicker";
 import { IntegrationAccountChooser } from "./IntegrationAccountChooser";
+import { PublicLinkConfig } from "./PublicLinkForm";
 import { claimExternalWindow, openExternally } from "./externalWindow";
 import {
   IntegrationControllerProps,
@@ -21,6 +30,43 @@ const GOOGLE_CONNECT_DESCRIPTION =
   "Stays connected, so you can pick again without signing in.";
 const GOOGLE_DISCONNECT_DESCRIPTION =
   "You will need to connect it again to pick from its Drive. Slides you have already imported are unaffected.";
+
+const useGooglePublicLink = ({
+  launchContextRef,
+  close,
+}: {
+  launchContextRef: MutableRefObject<IntegrationLaunchContext>;
+  close: () => void;
+}) => {
+  const pluginApi = usePluginAPI();
+  const pluginId = pluginApi.pluginContext.pluginId;
+  const mutation = trpc.slides.googleSlidesImportPublicLink.useMutation();
+  const { mutate } = mutation;
+
+  const config = useMemo<PublicLinkConfig>(
+    () => ({
+      title: "Paste a public link",
+      description:
+        'For a deck shared with "Anyone with the link". No sign-in needed.',
+      placeholder: "https://docs.google.com/presentation/d/...",
+      validate: (url) => void parseGoogleSlidesLink(url),
+      onSubmit: (url) => {
+        const context = launchContextRef.current;
+        mutate(
+          { pluginId, url, replaceImportId: context.replaceImportId },
+          {
+            onError: (err) => pluginApi.remote.toast.error(err.message),
+          },
+        );
+        close();
+        context.onComplete?.();
+      },
+    }),
+    [launchContextRef, close, mutate, pluginId, pluginApi],
+  );
+
+  return { config, isPending: mutation.isPending };
+};
 
 /** How a pick on the cloud starts. Mirrors RemotePickMode on the server. */
 type RemotePickMode = "pick" | "connect" | "once";
@@ -49,11 +95,42 @@ const GoogleSlidesController = (props: IntegrationControllerProps) => {
     case "remote":
       return <RemoteGoogleSlides {...props} />;
     case "unavailable":
-      return props.children({
-        isLoading: false,
-        open: () => pluginApi.remote.toast.error(status.reason),
-      });
+      return <PublicLinkOnlyGoogleSlides {...props} reason={status.reason} />;
   }
+};
+
+const PublicLinkOnlyGoogleSlides = ({
+  children,
+  reason,
+}: IntegrationControllerProps & { reason: string }) => {
+  const [isChooserOpen, setIsChooserOpen] = useState(false);
+  const launchContextRef = useRef<IntegrationLaunchContext>({});
+  const close = useCallback(() => setIsChooserOpen(false), []);
+  const publicLink = useGooglePublicLink({ launchContextRef, close });
+
+  return (
+    <>
+      {children({
+        isLoading: publicLink.isPending,
+        open: (context) => {
+          launchContextRef.current = context ?? {};
+          setIsChooserOpen(true);
+        },
+      })}
+
+      <IntegrationAccountChooser
+        isOpen={isChooserOpen}
+        onClose={close}
+        name="Google Slides"
+        icon={(className) => <FcGoogle className={className} />}
+        accounts={[]}
+        onChoose={() => {}}
+        disconnect={{ description: "", onConfirm: async () => {} }}
+        publicLink={publicLink.config}
+        notice={`${reason.trim().replace(/\.?$/, ".")} You can still import a deck shared with "Anyone with the link".`}
+      />
+    </>
+  );
 };
 
 /** The connection is stored on this server; the picker runs in-app. */
@@ -86,6 +163,11 @@ const StoredGoogleSlides = ({
   const openPickerRef = useRef<(() => void) | null>(null);
   const connectionIdRef = useRef<string | null>(null);
   const launchContextRef = useRef<IntegrationLaunchContext>({});
+  const closeChooser = useCallback(() => setIsChooserOpen(false), []);
+  const publicLink = useGooglePublicLink({
+    launchContextRef,
+    close: closeChooser,
+  });
 
   const tokenMutation = trpc.slides.googleSlidesPickerToken.useMutation();
   const selectMutation = trpc.slides.selectGoogleSlide.useMutation();
@@ -230,7 +312,8 @@ const StoredGoogleSlides = ({
               !!connectingFrom ||
               tokenMutation.isPending ||
               selectMutation.isPending ||
-              importOnceMutation.isPending,
+              importOnceMutation.isPending ||
+              publicLink.isPending,
             open: (context) => {
               launchContextRef.current = context ?? {};
               setIsChooserOpen(true);
@@ -264,6 +347,7 @@ const StoredGoogleSlides = ({
           setIsChooserOpen(false);
           importOnce();
         }}
+        publicLink={publicLink.config}
         disconnect={{
           description: GOOGLE_DISCONNECT_DESCRIPTION,
           onConfirm: async (connectionId) => {
@@ -305,6 +389,11 @@ const RemoteGoogleSlides = ({ children }: IntegrationControllerProps) => {
     context: IntegrationLaunchContext;
   } | null>(null);
   const launchContextRef = useRef<IntegrationLaunchContext>({});
+  const closeChooser = useCallback(() => setIsChooserOpen(false), []);
+  const publicLink = useGooglePublicLink({
+    launchContextRef,
+    close: closeChooser,
+  });
 
   // Effects can run twice for one result; import it once
   const handledIntentRef = useRef<string | null>(null);
@@ -420,7 +509,8 @@ const RemoteGoogleSlides = ({ children }: IntegrationControllerProps) => {
         isLoading:
           beginMutation.isPending ||
           selectMutation.isPending ||
-          importOnceMutation.isPending,
+          importOnceMutation.isPending ||
+          publicLink.isPending,
         open: (context) => {
           launchContextRef.current = context ?? {};
           setIsChooserOpen(true);
@@ -443,6 +533,7 @@ const RemoteGoogleSlides = ({ children }: IntegrationControllerProps) => {
           onClick: () => void begin("connect"),
         }}
         onImportOnce={() => void begin("once")}
+        publicLink={publicLink.config}
         disconnect={{
           description: GOOGLE_DISCONNECT_DESCRIPTION,
           onConfirm: async (connectionId) => {

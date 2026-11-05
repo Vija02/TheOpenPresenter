@@ -1,5 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import type { CanvaConnectionOption } from "../../../src/importers/canva/provider";
+import { parseCanvaLink } from "../../../src/importers/publicLinks";
 import { CanvaIconLogo } from "../../components/CanvaLogo";
 import { canvaBrand } from "../../components/integrationBranding";
 import { usePluginAPI } from "../../pluginApi";
@@ -10,6 +12,7 @@ import {
   CanvaSource,
 } from "../ImportFile/CanvaDesignPicker";
 import { IntegrationAccountChooser } from "./IntegrationAccountChooser";
+import { PublicLinkConfig } from "./PublicLinkForm";
 import { claimExternalWindow, openExternally } from "./externalWindow";
 import {
   IntegrationControllerProps,
@@ -18,6 +21,9 @@ import {
 } from "./types";
 
 const log = (...args: unknown[]) => console.log("[canva]", ...args);
+
+// Stable, so memos that depend on the list don't rebuild every render
+const NO_CONNECTIONS: CanvaConnectionOption[] = [];
 
 /** How long to wait for the sign-in popup before giving up. */
 const CONNECT_TIMEOUT_MS = 3 * 60 * 1000;
@@ -56,6 +62,8 @@ const CanvaController = ({ children }: IntegrationControllerProps) => {
   const selectDesignMutation = trpc.slides.selectCanvaDesign.useMutation();
   const disconnectMutation = trpc.slides.canvaDisconnect.useMutation();
   const beginSignInMutation = trpc.slides.canvaBeginSignIn.useMutation();
+  const { mutateAsync: resolveLink } =
+    trpc.slides.canvaResolveLink.useMutation();
   const signInStatusQuery = trpc.slides.canvaSignInStatus.useQuery(
     { pluginId, intentId: cloudSignIn?.intentId ?? "" },
     {
@@ -68,8 +76,8 @@ const CanvaController = ({ children }: IntegrationControllerProps) => {
   const refetchStatus = statusQuery.refetch;
 
   const status = statusQuery.data;
-  const connections =
-    status && "connections" in status ? status.connections : [];
+  const connections: CanvaConnectionOption[] =
+    status && "connections" in status ? status.connections : NO_CONNECTIONS;
 
   const openPicker = useCallback((next: CanvaSource) => {
     setSource(next);
@@ -262,13 +270,15 @@ const CanvaController = ({ children }: IntegrationControllerProps) => {
     setIsChooserOpen(true);
   }, []);
 
-  const handleSelected = useCallback(
-    ({ designId, title }: { designId: string; title: string }) => {
-      if (!source) return;
+  const importDesign = useCallback(
+    (
+      from: CanvaSource,
+      { designId, title }: { designId: string; title: string },
+    ) => {
       selectDesignMutation.mutate(
         {
           pluginId,
-          ...source,
+          ...from,
           designId,
           name: title,
           replaceImportId: launchContextRef.current.replaceImportId,
@@ -277,7 +287,41 @@ const CanvaController = ({ children }: IntegrationControllerProps) => {
       );
       launchContextRef.current.onComplete?.();
     },
-    [selectDesignMutation, pluginId, pluginApi, source],
+    [selectDesignMutation, pluginId, pluginApi],
+  );
+
+  const handleSelected = useCallback(
+    (design: { designId: string; title: string }) => {
+      if (source) importDesign(source, design);
+    },
+    [importDesign, source],
+  );
+
+  // Canva only exports designs an account can open, so a link goes through
+  // whichever connected account can open it
+  const publicLink = useMemo<PublicLinkConfig>(
+    () => ({
+      title: "Paste a share link",
+      description: "Imports through a connected account that can open it.",
+      placeholder: "https://www.canva.com/design/... or https://canva.link/...",
+      disabledReason:
+        connections.length === 0
+          ? "Connect a Canva account first. We need this due to a Canva limitation."
+          : undefined,
+      validate: (url) => void parseCanvaLink(url),
+      onSubmit: async (url) => {
+        const design = await resolveLink({
+          pluginId,
+          sources: connections.map((c) => ({ connectionId: c.id })),
+          url,
+        });
+        const { connectionId } = design.source;
+        if (!connectionId) return;
+        setIsChooserOpen(false);
+        importDesign({ connectionId }, design);
+      },
+    }),
+    [connections, resolveLink, pluginId, importDesign],
   );
 
   const activeConnectionId =
@@ -315,6 +359,7 @@ const CanvaController = ({ children }: IntegrationControllerProps) => {
           onClick: () => startConnect("connect"),
         }}
         onImportOnce={() => startConnect("once")}
+        publicLink={publicLink}
         disconnect={{
           description:
             "Everyone in this organization will lose access to its designs until it is connected again. Slides you have already imported are unaffected.",

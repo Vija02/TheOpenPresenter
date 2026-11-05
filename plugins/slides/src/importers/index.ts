@@ -74,6 +74,44 @@ const readPptSpeakerNotes = async (
   }
 };
 
+/**
+ * A logged-out read of a deck that isn't shared publicly gets a 404, or is
+ * sent to Google's sign-in page, rather than the content asked for. The PDF is
+ * only read once the embed worked, so its refusal means downloading is off.
+ */
+const assertPublicGoogleResponse = (
+  res: { status: number; headers: Record<string, unknown>; request?: any },
+  kind: "embed" | "pdf",
+) => {
+  const finalUrl: string | undefined = res.request?.res?.responseUrl;
+  const contentType = String(res.headers["content-type"] ?? "");
+  const isSignIn =
+    !!finalUrl && new URL(finalUrl).hostname === "accounts.google.com";
+  const expected = kind === "embed" ? "text/html" : "application/pdf";
+
+  if (res.status === 404) {
+    throw new Error("Couldn't find that presentation. Check the link.");
+  }
+  if (res.status === 429 || res.status >= 500) {
+    throw new Error("Google Slides isn't responding. Try again in a minute.");
+  }
+  if (
+    isSignIn ||
+    res.status === 401 ||
+    res.status === 403 ||
+    !contentType.startsWith(expected)
+  ) {
+    throw new Error(
+      kind === "embed"
+        ? 'That presentation isn\'t public. Set it to "Anyone with the link" in Google Slides.'
+        : "The owner has turned off downloading for this presentation. Connect your Google account instead.",
+    );
+  }
+  if (res.status < 200 || res.status >= 300) {
+    throw new Error("Google Slides returned an error. Try again.");
+  }
+};
+
 export const createImporters = (
   serverPluginApi: ServerPluginApi,
   { getBaseImport, finalizeImport }: ImportHelpers,
@@ -261,7 +299,9 @@ export const createImporters = (
   };
 
   /**
-   * Import a Google Slides deck using an OAuth token from the browser.
+   * Import a Google Slides deck. With a token it reads through the user's
+   * Google account; without one the deck must be shared with "Anyone with the
+   * link", and is read the way a logged-out visitor would.
    */
   const importGoogleSlidesDeck = async ({
     pluginId,
@@ -274,7 +314,7 @@ export const createImporters = (
   }: {
     pluginId: string;
     presentationId: string;
-    token: string;
+    token: string | null;
     name?: string;
     replaceImportId?: string;
     userId: string | null;
@@ -300,17 +340,23 @@ export const createImporters = (
     };
     loadedPlugin.pluginData.imports[newImport.importId] = newImport;
 
+    const authHeaders: Record<string, string> = token
+      ? { Authorization: `Bearer ${token}` }
+      : {};
+
     try {
       // Step 1: Fetch HTML embed
-      log.info("Fetching HTML embed");
+      log.info({ isPublic: !token }, "Fetching HTML embed");
       const htmlData = await axios(
         googleUrl(
           `https://docs.google.com/presentation/d/${presentationId}/embed?rm=minimal`,
         ),
         {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: authHeaders,
+          validateStatus: (status) => !token || (status >= 200 && status < 300),
         },
       );
+      if (!token) assertPublicGoogleResponse(htmlData, "embed");
 
       const ctx_media = {
         serverPluginApi,
@@ -320,20 +366,27 @@ export const createImporters = (
         pluginId,
       };
 
-      // Step 2: Start image downloads immediately
-      log.info("Starting image downloads and PDF download in parallel...");
-      const imageProcessor = createImageProcessor(htmlData.data, ctx_media);
-
-      // Step 3: Download PDF in parallel with image downloads
-      const pdfRes = await axios(
+      // Step 2: Start the PDF download
+      const pdfRequest = axios(
         googleUrl(
-          `https://docs.google.com/feeds/download/presentations/Export?id=${presentationId}&exportFormat=pdf`,
+          token
+            ? `https://docs.google.com/feeds/download/presentations/Export?id=${presentationId}&exportFormat=pdf`
+            : `https://docs.google.com/presentation/d/${presentationId}/export/pdf`,
         ),
         {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: authHeaders,
           responseType: "arraybuffer",
+          validateStatus: (status) => !token || (status >= 200 && status < 300),
         },
       );
+      // A public deck can still refuse its PDF, so check before caching
+      // anything; with a token the images start right away
+      if (!token) assertPublicGoogleResponse(await pdfRequest, "pdf");
+
+      // Step 3: Download images while the PDF finishes
+      log.info("Starting image downloads and PDF download in parallel...");
+      const imageProcessor = createImageProcessor(htmlData.data, ctx_media);
+      const pdfRes = await pdfRequest;
       const pdfBuffer = Buffer.from(pdfRes.data);
       log.info(`Downloaded PDF (${pdfBuffer.length} bytes)`);
 
@@ -472,7 +525,9 @@ export const createImporters = (
         `Google Slides import completed in ${elapsed}ms`,
       );
 
-      if (driveVideos.length > 0) {
+      // Drive videos need a signed-in account; a public import can still
+      // give access to them later from the deck
+      if (token && driveVideos.length > 0) {
         void fetchDriveVideos({
           pluginId,
           importId: newImport.importId,

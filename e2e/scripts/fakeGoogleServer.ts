@@ -17,6 +17,11 @@
  *   POST /revoke                                 ends a grant
  *   GET  /presentation/d/:id/embed               the deck's embed HTML
  *   GET  /feeds/download/presentations/Export    the deck as PDF
+ *   GET  /presentation/d/:id/export/pdf          the deck as PDF, logged out
+ *
+ * A deck whose id starts with `public-` is shared with "Anyone with the
+ * link": its embed and logged-out export need no token. Any other deck
+ * refuses a logged-out read.
  *   POST /__control/scenario                     a test describes an account
  *   POST /__control/revoke                       as if the user removed access
  *   POST /__control/browser-token                a token as Google's in-browser
@@ -161,11 +166,17 @@ const handleAuthorize = (
   const codeChallenge = url.searchParams.get("code_challenge") ?? "";
 
   if (!redirectUri) {
-    json(res, 400, { error: "invalid_request", error_description: "redirect_uri" });
+    json(res, 400, {
+      error: "invalid_request",
+      error_description: "redirect_uri",
+    });
     return;
   }
   if (url.searchParams.get("code_challenge_method") !== "S256") {
-    json(res, 400, { error: "invalid_request", error_description: "PKCE S256" });
+    json(res, 400, {
+      error: "invalid_request",
+      error_description: "PKCE S256",
+    });
     return;
   }
 
@@ -278,6 +289,23 @@ const embedHtml = (presentationId: string) => `<!doctype html>
 <body><div class="punch-viewer-content"></div></body></html>`;
 
 const handleSlides = (req: IncomingMessage, res: ServerResponse, url: URL) => {
+  const deckId = url.pathname.match(/^\/presentation\/d\/([^/]+)\//)?.[1];
+  if (deckId?.startsWith("public-")) {
+    if (url.pathname.endsWith("/embed")) {
+      res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
+      res.end(embedHtml(deckId));
+      return;
+    }
+    if (url.pathname.endsWith("/export/pdf")) {
+      res.writeHead(200, {
+        "Content-Type": "application/pdf",
+        "Content-Length": SAMPLE_PDF.length,
+      });
+      res.end(SAMPLE_PDF);
+      return;
+    }
+  }
+
   const accountId = authed(req);
   if (!accountId) {
     res.writeHead(401);
@@ -382,14 +410,18 @@ const server = createServer((req, res) => {
   const done = (async () => {
     if (path.startsWith("/__control/")) return handleControl(req, res, url);
     if (path === "/o/oauth2/v2/auth") return handleAuthorize(req, res, url);
-    if (path === "/token" && req.method === "POST") return handleToken(req, res);
+    if (path === "/token" && req.method === "POST")
+      return handleToken(req, res);
     if (path === "/v1/userinfo") return handleUserinfo(req, res);
-    if (path === "/revoke" && req.method === "POST") return handleRevoke(res, url);
+    if (path === "/revoke" && req.method === "POST")
+      return handleRevoke(res, url);
     if (path.startsWith("/presentation/") || path.startsWith("/feeds/")) {
       return handleSlides(req, res, url);
     }
 
-    json(res, 404, { error: `fake-google: no route for ${req.method} ${path}` });
+    json(res, 404, {
+      error: `fake-google: no route for ${req.method} ${path}`,
+    });
   })();
 
   done.catch((err) => {
